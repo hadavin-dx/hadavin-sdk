@@ -1,0 +1,36 @@
+### tests/test_migration_postgres.py::test_a_parameter_grant_is_refused_by_a_real_server rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+______________ test_a_parameter_grant_is_refused_by_a_real_server ______________
+tests/test_migration_postgres.py:1619: in test_a_parameter_grant_is_refused_by_a_real_server
+    with pytest.raises(ConfigError, match="server settings it must not change") as e:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_a_parameter_grant_is_refused_by_a_real_server
+1 failed in 0.55s
+
+### tests/test_migration_wiring.py::test_a_parameter_grant_is_refused_before_any_file_runs rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+____________ test_a_parameter_grant_is_refused_before_any_file_runs ____________
+tests/test_migration_wiring.py:906: in test_a_parameter_grant_is_refused_before_any_file_runs
+    mig.migrate("postgresql://unused")
+src/hadavin_sdk/store/migrate.py:1050: in migrate
+    saved = _check_read_back(
+src/hadavin_sdk/store/migrate.py:833: in _check_read_back
+    now = _read_back(db, named)
+          ^^^^^^^^^^^^^^^^^^^^^
+src/hadavin_sdk/store/migrate.py:542: in _read_back
+    values = tuple(db.execute(_READBACK_VALUES_SQL).fetchone())
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_migration_wiring.py:126: in execute
+    return _Result([self._next(self.values, "settings")])
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_migration_wiring.py:118: in _next
+    raise AssertionError(f"the run read the {what} more often than this test scripted")
+E   AssertionError: the run read the settings more often than this test scripted
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_a_parameter_grant_is_refused_before_any_file_runs
+1 failed in 0.45s
+

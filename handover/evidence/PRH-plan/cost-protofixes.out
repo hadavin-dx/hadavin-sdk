@@ -1,0 +1,20 @@
+MODE protofixes
+F1a | safe_head | forged placeholder: False | marker: False
+F1a | redact_text(no escaping step: judge, vendor screen, model-written) | forged placeholder: False | marker: False
+F1b | safe_head | forged placeholder: False | marker: False
+F1b | redact_text(no escaping step: judge, vendor screen, model-written) | forged placeholder: False | marker: False
+F1c | safe_head | forged placeholder: False | marker: False
+F1c | redact_text(no escaping step: judge, vendor screen, model-written) | forged placeholder: False | marker: False
+F1e | safe_head | forged placeholder: False | marker: False
+F1e | redact_text(no escaping step: judge, vendor screen, model-written) | forged placeholder: False | marker: False
+F1g | safe_head | forged placeholder: False | marker: False
+F1g | redact_text(no escaping step: judge, vendor screen, model-written) | forged placeholder: False | marker: False
+plain ASCII log | chars=262144 | wall=0.51s cpu=0.51s placeholders=0
+tab table | chars=262144 | wall=0.48s cpu=0.46s placeholders=0
+JSON | chars=262144 | wall=0.49s cpu=0.47s placeholders=0
+coloured output | chars=262144 | wall=0.42s cpu=0.39s placeholders=0
+colour change inside a word | chars=262144 | wall=0.81s cpu=0.77s placeholders=0
+shell with line continuations | chars=262144 | wall=0.60s cpu=0.57s placeholders=0
+Hindi | chars=262144 | wall=1.30s cpu=1.27s placeholders=0
+Persian with emoji | chars=262144 | wall=1.92s cpu=1.88s placeholders=0
+HOSTILE >256 values + BEL in words | chars=262144 | wall=0.82s cpu=0.82s placeholders=9913

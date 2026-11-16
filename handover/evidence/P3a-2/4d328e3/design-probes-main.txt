@@ -1,0 +1,179 @@
+\set ON_ERROR_STOP 0
+\echo ############ server
+############ server
+SELECT version();
+                                                                 version                                                                  
+------------------------------------------------------------------------------------------------------------------------------------------
+ PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+(1 row)
+
+\echo ############ P7 defaults on a fresh database (role with no grants)
+############ P7 defaults on a fresh database (role with no grants)
+CREATE ROLE dp_norole_adca347c NOLOGIN;
+CREATE ROLE
+CREATE FUNCTION dp_fn_adca347c() RETURNS int LANGUAGE sql AS 'SELECT 1';
+CREATE FUNCTION
+CREATE TYPE dp_ty_adca347c AS ENUM ('a');
+CREATE TYPE
+SELECT 'db_connect' k, has_database_privilege('dp_norole_adca347c', current_database(), 'CONNECT') v
+UNION ALL SELECT 'db_temp', has_database_privilege('dp_norole_adca347c', current_database(), 'TEMPORARY')
+UNION ALL SELECT 'db_create', has_database_privilege('dp_norole_adca347c', current_database(), 'CREATE')
+UNION ALL SELECT 'schema_public_usage', has_schema_privilege('dp_norole_adca347c','public','USAGE')
+UNION ALL SELECT 'schema_public_create', has_schema_privilege('dp_norole_adca347c','public','CREATE')
+UNION ALL SELECT 'fn_execute', has_function_privilege('dp_norole_adca347c','dp_fn_adca347c()','EXECUTE')
+UNION ALL SELECT 'type_usage', has_type_privilege('dp_norole_adca347c','dp_ty_adca347c','USAGE')
+UNION ALL SELECT 'lang_plpgsql', has_language_privilege('dp_norole_adca347c','plpgsql','USAGE')
+UNION ALL SELECT 'lang_sql', has_language_privilege('dp_norole_adca347c','sql','USAGE');
+          k           | v 
+----------------------+---
+ db_connect           | t
+ db_temp              | t
+ db_create            | f
+ schema_public_usage  | t
+ schema_public_create | f
+ fn_execute           | t
+ type_usage           | t
+ lang_plpgsql         | t
+ lang_sql             | t
+(9 rows)
+
+\echo ---- P7 ALTER ROLE <itself> SET search_path as a non-superuser (done in session below)
+---- P7 ALTER ROLE <itself> SET search_path as a non-superuser (done in session below)
+\echo ############ P4 WITH INHERIT FALSE
+############ P4 WITH INHERIT FALSE
+CREATE ROLE dp_boss_adca347c;
+CREATE ROLE
+CREATE ROLE dp_r_adca347c LOGIN;
+CREATE ROLE
+CREATE TABLE dp_tbl_adca347c (a int);
+CREATE TABLE
+ALTER TABLE dp_tbl_adca347c OWNER TO dp_boss_adca347c;
+ALTER TABLE
+GRANT SELECT ON dp_tbl_adca347c TO dp_boss_adca347c;
+GRANT
+GRANT dp_boss_adca347c TO dp_r_adca347c WITH INHERIT FALSE;
+GRANT ROLE
+SELECT 'has_table_priv_SELECT' k, has_table_privilege('dp_r_adca347c','dp_tbl_adca347c','SELECT')::text v
+UNION ALL SELECT 'pg_has_role MEMBER', pg_has_role('dp_r_adca347c','dp_boss_adca347c','MEMBER')::text
+UNION ALL SELECT 'pg_has_role USAGE', pg_has_role('dp_r_adca347c','dp_boss_adca347c','USAGE')::text
+UNION ALL SELECT 'pg_has_role SET', pg_has_role('dp_r_adca347c','dp_boss_adca347c','SET')::text;
+           k           |   v   
+-----------------------+-------
+ has_table_priv_SELECT | false
+ pg_has_role MEMBER    | true
+ pg_has_role USAGE     | false
+ pg_has_role SET       | true
+(4 rows)
+
+\echo ############ P5 pg_shdepend
+############ P5 pg_shdepend
+CREATE ROLE dp_owner_adca347c;
+CREATE ROLE
+CREATE ROLE dp_acl_adca347c;
+CREATE ROLE
+CREATE SCHEMA dp_s_adca347c;
+CREATE SCHEMA
+CREATE TABLE dp_s_adca347c.t_owned (a int, b int); ALTER TABLE dp_s_adca347c.t_owned OWNER TO dp_owner_adca347c;
+CREATE TABLE
+ALTER TABLE
+CREATE FUNCTION dp_s_adca347c.f_owned() RETURNS int LANGUAGE sql AS 'SELECT 1'; ALTER FUNCTION dp_s_adca347c.f_owned() OWNER TO dp_owner_adca347c;
+CREATE FUNCTION
+ALTER FUNCTION
+ALTER SCHEMA dp_s_adca347c OWNER TO dp_owner_adca347c;
+ALTER SCHEMA
+CREATE TYPE dp_s_adca347c.ty_owned AS ENUM ('a'); ALTER TYPE dp_s_adca347c.ty_owned OWNER TO dp_owner_adca347c;
+CREATE TYPE
+ALTER TYPE
+GRANT SELECT ON dp_s_adca347c.t_owned TO dp_acl_adca347c;
+GRANT
+GRANT SELECT (a) ON dp_s_adca347c.t_owned TO dp_acl_adca347c;
+GRANT
+GRANT EXECUTE ON FUNCTION dp_s_adca347c.f_owned() TO dp_acl_adca347c;
+GRANT
+GRANT USAGE ON SCHEMA dp_s_adca347c TO dp_acl_adca347c;
+GRANT
+GRANT CONNECT ON DATABASE hadavin_test_dp_adca347c TO dp_acl_adca347c;
+GRANT
+GRANT USAGE ON TYPE dp_s_adca347c.ty_owned TO dp_acl_adca347c;
+GRANT
+GRANT USAGE ON LANGUAGE plpgsql TO dp_acl_adca347c;
+GRANT
+SELECT lo_create(778800) \gset dp_lo_
+SELECT '--lo oid--', :'dp_lo_lo_create';
+  ?column?  | ?column? 
+------------+----------
+ --lo oid-- | 778800
+(1 row)
+
+GRANT SELECT ON LARGE OBJECT :dp_lo_lo_create TO dp_acl_adca347c;
+GRANT
+ALTER DEFAULT PRIVILEGES FOR ROLE dp_owner_adca347c GRANT SELECT ON TABLES TO dp_acl_adca347c;
+ALTER DEFAULT PRIVILEGES
+ALTER DEFAULT PRIVILEGES FOR ROLE dp_owner_adca347c IN SCHEMA dp_s_adca347c GRANT SELECT ON TABLES TO dp_acl_adca347c;
+ALTER DEFAULT PRIVILEGES
+\echo -- shdepend for dp_owner (owns)
+-- shdepend for dp_owner (owns)
+SELECT deptype, classid::regclass::text, refobjid::regrole::text FROM pg_shdepend s JOIN pg_database d ON d.oid=s.dbid WHERE d.datname=current_database() AND refobjid=(SELECT oid FROM pg_roles WHERE rolname='dp_owner_adca347c') ORDER BY 1,2;
+ deptype |    classid     |     refobjid      
+---------+----------------+-------------------
+ o       | pg_class       | dp_owner_adca347c
+ o       | pg_default_acl | dp_owner_adca347c
+ o       | pg_default_acl | dp_owner_adca347c
+ o       | pg_namespace   | dp_owner_adca347c
+ o       | pg_proc        | dp_owner_adca347c
+ o       | pg_type        | dp_owner_adca347c
+(6 rows)
+
+\echo -- shdepend for dp_acl (acl grantee); defacl rows show as pg_default_acl
+-- shdepend for dp_acl (acl grantee); defacl rows show as pg_default_acl
+SELECT deptype, classid::regclass::text, count(*) FROM pg_shdepend s JOIN pg_database d ON d.oid=s.dbid WHERE d.datname=current_database() AND refobjid=(SELECT oid FROM pg_roles WHERE rolname='dp_acl_adca347c') GROUP BY 1,2 ORDER BY 2;
+ deptype |    classid     | count 
+---------+----------------+-------
+ a       | pg_class       |     2
+ a       | pg_default_acl |     2
+ a       | pg_language    |     1
+ a       | pg_largeobject |     1
+ a       | pg_namespace   |     1
+ a       | pg_proc        |     1
+ a       | pg_type        |     1
+(7 rows)
+
+\echo ############ P6 catalog tables with aclitem[] columns
+############ P6 catalog tables with aclitem[] columns
+SELECT c.relname, a.attname FROM pg_catalog.pg_attribute a JOIN pg_catalog.pg_class c ON c.oid = a.attrelid JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'pg_catalog' AND a.atttypid = 'aclitem[]'::regtype AND c.relkind = 'r' ORDER BY 1,2;
+         relname         |  attname  
+-------------------------+-----------
+ pg_attribute            | attacl
+ pg_class                | relacl
+ pg_database             | datacl
+ pg_default_acl          | defaclacl
+ pg_foreign_data_wrapper | fdwacl
+ pg_foreign_server       | srvacl
+ pg_init_privs           | initprivs
+ pg_language             | lanacl
+ pg_largeobject_metadata | lomacl
+ pg_namespace            | nspacl
+ pg_parameter_acl        | paracl
+ pg_proc                 | proacl
+ pg_tablespace           | spcacl
+ pg_type                 | typacl
+(14 rows)
+
+\echo ############ P2/P3 constraint-trigger firing (see separate session script)
+############ P2/P3 constraint-trigger firing (see separate session script)
+\echo ############ cleanup
+############ cleanup
+DROP OWNED BY dp_acl_adca347c, dp_owner_adca347c, dp_boss_adca347c, dp_r_adca347c, dp_norole_adca347c CASCADE;
+DROP OWNED
+DROP TYPE IF EXISTS dp_ty_adca347c; DROP FUNCTION IF EXISTS dp_fn_adca347c();
+DROP TYPE
+DROP FUNCTION
+DROP TABLE IF EXISTS dp_tbl_adca347c;
+psql:/home/user/build/ev-p3a2r12-scripts/design-probes.sql:59: NOTICE:  table "dp_tbl_adca347c" does not exist, skipping
+DROP TABLE
+DROP ROLE dp_acl_adca347c; DROP ROLE dp_owner_adca347c; DROP ROLE dp_boss_adca347c; DROP ROLE dp_r_adca347c; DROP ROLE dp_norole_adca347c;
+DROP ROLE
+DROP ROLE
+DROP ROLE
+DROP ROLE
+DROP ROLE

@@ -1,0 +1,1 @@
+checkpoint 1 (about 00:17 UTC): worktree, venv (with --all-extras --group test --group scan), own Postgres on port 54896 ready; lint/bandit/scans/gitleaks/handover check done; fail-before done (20 failed, 179 passed); probes a-e run. Waiting for heavy.sh: full suite, bind mutants, stage mutants. Next: write RESULTS.md, stop Postgres.

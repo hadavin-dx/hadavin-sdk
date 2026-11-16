@@ -1,0 +1,10 @@
+wt run 1 load=5.17 4.96 3.77 wt n=50 still open at bound+0.5s: 0 of 50; longest life 2.1s; median 2.09s
+wt run 2 load=5.17 4.96 3.77 wt n=50 still open at bound+0.5s: 0 of 50; longest life 2.2s; median 2.11s
+wt run 3 load=5.23 4.98 3.78 wt n=50 still open at bound+0.5s: 0 of 50; longest life 2.2s; median 2.12s
+wt run 4 load=5.21 4.98 3.79 wt n=50 still open at bound+0.5s: 0 of 50; longest life 2.2s; median 2.10s
+wt run 5 load=5.21 4.98 3.79 wt n=50 still open at bound+0.5s: 0 of 50; longest life 2.2s; median 2.11s
+wt-old run 1 load=5.20 4.98 3.80 wt-old n=50 still open at bound+0.5s: 43 of 50; longest life 41.1s; median 41.07s
+wt-old run 2 load=5.37 5.06 3.88 wt-old n=50 still open at bound+0.5s: 41 of 50; longest life 41.1s; median 41.07s
+wt-old run 3 load=5.57 5.15 3.96 wt-old n=50 still open at bound+0.5s: 43 of 50; longest life 41.1s; median 41.07s
+wt-old run 4 load=5.73 5.24 4.05 wt-old n=50 still open at bound+0.5s: 43 of 50; longest life 41.1s; median 41.06s
+wt-old run 5 load=5.69 5.29 4.11 wt-old n=50 still open at bound+0.5s: 42 of 50; longest life 42.1s; median 41.06s

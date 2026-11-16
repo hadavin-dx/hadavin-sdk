@@ -1,0 +1,30 @@
+diff --git a/tests/test_file_reader_refusals.py b/tests/test_file_reader_refusals.py
+index 12a8706..2ca0582 100644
+--- a/tests/test_file_reader_refusals.py
++++ b/tests/test_file_reader_refusals.py
+@@ -105,7 +105,7 @@ def test_n8n_api_key_file_and_workflow_file_that_are_pipes_are_refused_not_waite
+     pipe = tmp_path / "pipe"
+     os.mkfifo(pipe)
+     code, out = _child([str(SCRIPTS / "n8n_api.py"), "list"], N8N_API_KEY_FILE=str(pipe), N8N_URL="http://127.0.0.1:1")
+-    assert (code, out) == (1, "the n8n API key file cannot be read\n")
++    assert (code, out) == (4, "the n8n API key file cannot be read\n")  # 4 = key file refused (round 7)
+     key = tmp_path / "key"
+     key.write_text("abc12345\n", encoding="utf-8")
+     code, out = _child(
+diff --git a/tests/test_smtp_provider.py b/tests/test_smtp_provider.py
+index 5cded3d..ec72515 100644
+--- a/tests/test_smtp_provider.py
++++ b/tests/test_smtp_provider.py
+@@ -555,9 +555,9 @@ def test_one_call_is_bounded_in_total_not_only_per_step(certs: Certs, pwfile: Pa
+ def test_a_non_ascii_user_is_a_clear_fixed_error_not_a_crash(certs: Certs, pwfile: Path, servers: list[Any]) -> None:
+     srv = FakeImap(certs.cert, certs.key, HOST, {"INBOX": []})
+     servers.append(srv)
+-    s = ImapSettings(HOST, "usér", pwfile, port=srv.port, timeout_seconds=3.0, ssl_context=certs.ctx)
+-    with pytest.raises(ImapCountError, match="characters the mailbox login cannot carry"):
+-        counts_by_key(s, "L-")
++    with pytest.raises(ImapCountError, match="plain printable ASCII"):  # round 7: refused where the settings are made
++        ImapSettings(HOST, "usér", pwfile, port=srv.port, timeout_seconds=3.0, ssl_context=certs.ctx)
++    assert srv.commands == []  # no connection was made
+ 
+ 
+ def test_settings_do_not_print_addresses_or_paths() -> None:

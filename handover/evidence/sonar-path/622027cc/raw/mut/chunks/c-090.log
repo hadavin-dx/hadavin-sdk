@@ -1,0 +1,12 @@
+sdk /home/user/build/E-work/mut-tree/src/hadavin_sdk/__init__.py
+ok  KILLED         R7c the part before the LAST dot decides, not the first  [test_pin_r7_the_part_before_the_first_dot_decides] t=5s
+ok  KILLED         R7d spaces before the dot hide a device name  [test_pin_r7_spaces_before_the_dot_do_not_hide_a_device_name] t=6s
+ok  KILLED         R5c join does not check the base text  [test_pin_r5_join_refuses_a_wide_base_text_that_resolves_shor] t=7s
+ok  KILLED         R5d join does not check the joined path  [test_pin_r5_join_refuses_a_long_joined_path_when_base_and_na] t=8s
+ok  KILLED         R5e inside does not check the base text  [test_pin_r5_inside_refuses_a_long_base_text] t=9s
+ok  KILLED         R5f inside does not check the path text (shared tail)  [test_pin_r5_inside_refuses_a_long_path_text] t=10s
+ok  KILLED         R5g the operator check does not check the text  [test_pin_r5_operator_dir_refuses_a_long_text] t=11s
+ok  KILLED         R5i the text check does not check the length  [test_pin_r5_operator_dir_refuses_a_long_text] t=12s
+ok  CRASH          R10b a RuntimeError from resolve (a symlink loop on 3.12) escapes  [test_pin_r10_a_runtime_error_from_resolve_is_refused_as_r10] t=14s
+ok  KILLED         R11c an existing file is accepted as a folder when it need not exist  [test_pin_r11_an_existing_file_is_refused_as_a_folder_even_wh] t=17s
+SLICE 90:100 10 of 10 good; problems: []; elapsed 17s

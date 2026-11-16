@@ -1,0 +1,33 @@
+== AUTHOR PROTOTYPE + ERRATA rev 2 fixes on main
+L1 key cut by ESC[0m | untrusted: MASKED ; tool: MASKED ; error_reason: MASKED ; safe_head: MASKED
+L2 key cut by U+FE0F | untrusted: MASKED ; tool: MASKED ; error_reason: MASKED ; safe_head: MASKED
+L3 key cut by backspace | untrusted: MASKED ; tool: MASKED ; error_reason: MASKED ; safe_head: MASKED
+L4 e-mail cut by U+FE0F in the domain | untrusted: MASKED ; tool: MASKED ; error_reason: MASKED ; safe_head: MASKED
+L5 key name cut by U+034F | untrusted: MASKED ; tool: MASKED ; error_reason: MASKED ; safe_head: MASKED
+L6 handed-out secret cut by ESC[0m (tool path) | untrusted: LEAKED ; tool: MASKED ; error_reason: MASKED ; safe_head: LEAKED
+L7 password value cut by ESC[0m | untrusted: MASKED ; tool: MASKED ; error_reason: MASKED ; safe_head: MASKED
+L8 key cut by NUL (tool path) | untrusted: MASKED ; tool: MASKED ; error_reason: MASKED ; safe_head: MASKED
+L9 key cut by ESC(B ESC[m | untrusted: MASKED ; tool: MASKED ; error_reason: MASKED ; safe_head: MASKED
+L10 key cut by U+3164 | untrusted: MASKED ; tool: MASKED ; error_reason: MASKED ; safe_head: MASKED
+L11 key cut by %1b[0m | untrusted: MASKED ; tool: MASKED ; error_reason: MASKED ; safe_head: MASKED
+L12 handed-out secret cut by U+009B 0m mid word | untrusted: LEAKED ; tool: MASKED ; error_reason: MASKED ; safe_head: LEAKED
+N1 key cut by TAB (not promised) | untrusted: LEAKED ; tool: LEAKED ; error_reason: LEAKED ; safe_head: LEAKED
+N2 key cut by backslash + line break | untrusted: LEAKED ; tool: LEAKED ; error_reason: LEAKED ; safe_head: LEAKED
+N3 key cut by U+2028 (reads as a space) | untrusted: LEAKED ; tool: LEAKED ; error_reason: LEAKED ; safe_head: LEAKED
+N4 X backspace overstrike | untrusted: MASKED ; tool: MASKED ; error_reason: MASKED ; safe_head: MASKED
+G1 word BEL key (boundary kept) | untrusted: MASKED ; tool: MASKED ; error_reason: MASKED ; safe_head: MASKED
+G2 word ESC[0m key | untrusted: MASKED ; tool: MASKED ; error_reason: MASKED ; safe_head: MASKED
+G3 mixed: one key cut, another glued | untrusted: MASKED ; tool: MASKED ; error_reason: MASKED ; safe_head: MASKED
+F1a | untrusted: handled ; tool: handled ; error_reason: handled
+F1b | untrusted: handled ; tool: handled ; error_reason: FORGED PLACEHOLDER
+F1c | untrusted: handled ; tool: handled ; error_reason: handled
+F1d | untrusted: handled ; tool: handled ; error_reason: handled
+F1e | untrusted: handled ; tool: handled ; error_reason: handled
+F1g | untrusted: handled ; tool: handled ; error_reason: handled
+B1 | untrusted: handled ; tool: handled ; error_reason: handled
+B1b | untrusted: handled ; tool: handled ; error_reason: handled
+B2 | untrusted: handled ; tool: handled ; error_reason: handled
+B2b | untrusted: handled ; tool: handled ; error_reason: handled
+X5 BEL joint marker | untrusted: handled ; tool: handled ; error_reason: handled
+X6 placeholder cut by BEL | untrusted: handled ; tool: handled ; error_reason: handled
+X7 VS16 in placeholder | untrusted: handled ; tool: handled ; error_reason: handled

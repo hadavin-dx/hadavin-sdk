@@ -1,0 +1,90 @@
+[project]
+name = "hadavin-sdk"
+version = "0.1.0"
+description = "Shared building blocks for Hadavin's AI builds"
+readme = "README.md"
+requires-python = ">=3.12"
+license = "LicenseRef-Proprietary"
+license-files = ["LICENSE"]
+authors = [{ name = "Hadavin" }]
+# PyPI refuses any upload carrying this classifier.
+classifiers = ["Private :: Do Not Upload"]
+# Base: typed models, settings and YAML config only. No vendor SDK; each cloud backend is an optional extra added
+# when a build needs it. Pins are at least 7 days old (Dependabot cooldown).
+dependencies = [
+    "markdown-it-py==4.2.0",
+    "pydantic==2.14.1",
+    "pydantic-settings==2.16.1",
+    "pyyaml==6.0.3",
+]
+
+# Optional extras: install only the backends a client uses (design 12.5). `gemini` and `openai_compat` use
+# the standard library and need none.
+[project.optional-dependencies]
+anthropic = ["anthropic[vertex]==2.1.0"]
+aws = ["boto3==1.43.118", "cryptography==50.0.2"]
+signer = ["cryptography==50.0.2"]
+pg = ["psycopg[binary]==3.3.6"]
+# The Ask-your-data demo (demos/ask-your-data): its own parser and driver pins.
+askdata = ["sqlglot==30.24.0", "psycopg[binary]==3.3.6"]
+# Cloud-neutral backends: secret stores (P4b; `vault` and `mounted_file` need no extra), audit signers and
+# anchors (P3b).
+azure = [
+    "azure-identity==1.26.0",
+    "azure-keyvault-keys==4.11.3",
+    "azure-keyvault-secrets==4.11.3",
+    "azure-storage-blob==12.31.0",
+    "cryptography==50.0.2",
+]
+gcp = [
+    "cryptography==50.0.2",
+    "google-cloud-kms==3.18.0",
+    "google-cloud-secret-manager==2.31.0",
+    "google-cloud-storage==3.17.1",
+]
+
+[project.scripts]
+hadavin-sdk = "hadavin_sdk.cli:main"
+
+[dependency-groups]
+dev = ["pytest==9.1.1", "ruff==0.17.1"]
+# Contract-suite stand-ins for cloud services (CI installs it with every extra).
+test = ["moto[s3,kms,secretsmanager]==5.2.4", "pglast==8.7"]
+# Free scanners that keep working when the repository turns private.
+scan = ["pip-audit==2.10.1", "bandit==1.9.4", "zizmor==1.31.1"]
+
+[build-system]
+requires = ["uv_build>=0.12,<0.14"]
+build-backend = "uv_build"
+
+[tool.uv]
+# Release cooldown comes from Dependabot (7 days); pins are exact so the lock only changes through its PRs.
+default-groups = ["dev"]
+# Transitive packages of the azure/gcp extras whose newest releases were under 7 days old when locked
+# (2026-10-31); Dependabot moves these once they age.
+exclude-newer-package = { google-api-core = "2026-10-24T00:00:00Z", grpcio = "2026-10-24T00:00:00Z", grpcio-status = "2026-10-24T00:00:00Z" }
+
+[tool.ruff]
+line-length = 100
+# The temporary handover folder holds verbatim copies for the cloud session; it is removed before the final merge.
+extend-exclude = ["handover", ".claude"]
+src = ["src", "tests", "demos"]
+
+[tool.ruff.lint]
+extend-select = ["B", "DTZ", "I", "S", "TID", "UP"]
+
+[tool.ruff.lint.flake8-tidy-imports]
+# Absolute imports only: the import rules in tests/ read module names, and a relative import hides one.
+ban-relative-imports = "all"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# Repo root on sys.path so fixture check modules (tests.fixtures.checks) resolve by name.
+pythonpath = ["."]
+markers = [
+    "live: calls a real paid or cloud service; CI deselects it, run only on the owner's yes",
+    "perf: timing tests (redaction patterns, end to end with views); CI runs them in their own step, which blocks a merge",
+]

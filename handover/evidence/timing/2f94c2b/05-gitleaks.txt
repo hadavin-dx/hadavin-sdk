@@ -1,0 +1,6 @@
+sha=2f94c2b28df25bca9bb28d6a50d13f8c292c19c9
+cmd=gitleaks git --log-opts origin/main..HEAD (v8.30.1, sha256-verified)
+[90m5:13PM[0m [32mINF[0m [1m6 commits scanned.[0m
+[90m5:13PM[0m [32mINF[0m [1mscanned ~94692 bytes (94.69 KB) in 266ms[0m
+[90m5:13PM[0m [32mINF[0m [1mno leaks found[0m
+exit=0

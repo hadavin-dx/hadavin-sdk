@@ -1,0 +1,36 @@
+BASE HEAD 0dabf1fa7a2ed58e14b8bca13be1141ac59f9c71 (merge-base of origin/main and ef2adc7)
+python Python 3.13.18
+hadavin_sdk from /home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/__init__.py
+
+==================================== ERRORS ====================================
+___________ ERROR collecting tests/test_migration_numbers_guards.py ____________
+tests/test_migration_numbers_guards.py:27: in <module>
+    mn_module.RELEASED_MANIFEST
+E   AttributeError: module 'hadavin_sdk.store.migration_numbers' has no attribute 'RELEASED_MANIFEST'
+______________ ERROR collecting tests/test_migration_postgres.py _______________
+ImportError while importing test module '/home/user/build/EV-P73-ef2adc7/base/tests/test_migration_postgres.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_migration_postgres.py:20: in <module>
+    from tests.fixtures import runbook as rb
+tests/fixtures/runbook.py:12: in <module>
+    from hadavin_sdk.store.migration_numbers import RECIPE_TIMEOUTS
+E   ImportError: cannot import name 'RECIPE_TIMEOUTS' from 'hadavin_sdk.store.migration_numbers' (/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migration_numbers.py)
+________________ ERROR collecting tests/test_migration_rules.py ________________
+ImportError while importing test module '/home/user/build/EV-P73-ef2adc7/base/tests/test_migration_rules.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_migration_rules.py:375: in <module>
+    from tests.fixtures import runbook as rb
+tests/fixtures/runbook.py:12: in <module>
+    from hadavin_sdk.store.migration_numbers import RECIPE_TIMEOUTS
+E   ImportError: cannot import name 'RECIPE_TIMEOUTS' from 'hadavin_sdk.store.migration_numbers' (/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migration_numbers.py)
+!!!!!!!!!!!!!!!!!!! Interrupted: 3 errors during collection !!!!!!!!!!!!!!!!!!!!
+3 deselected, 3 errors in 1.07s
+exit=2

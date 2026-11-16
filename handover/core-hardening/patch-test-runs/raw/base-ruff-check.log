@@ -1,0 +1,7 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+   Building hadavin-sdk @ file:///tmp/c7/base
+      Built hadavin-sdk @ file:///tmp/c7/base
+Installed 76 packages in 1.09s
+All checks passed!
+
+[wall 2.6s maxrss_kb 52832 exit 0]

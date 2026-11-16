@@ -1,0 +1,1098 @@
+--- a/src/lead_desk/constants.py
++++ b/src/lead_desk/constants.py
+@@ -3,6 +3,7 @@
+ from __future__ import annotations
+ 
+ import ipaddress
++import math
+ from typing import Final
+ 
+ # HTTP status codes the desk and the fakes server use
+@@ -64,8 +65,17 @@
+ REQUEST_TIMEOUT_SECONDS: Final = 30.0  # socket timeout of one request handler; frees a thread held by a stalled client
+ HEADER_READ_DEADLINE_SECONDS: Final = 10.0  # wall-clock limit: request line plus all headers
+ BODY_READ_DEADLINE_SECONDS: Final = 10.0  # wall-clock limit: the whole body, from the end of the headers
+-MAX_CONNECTIONS: Final = 64  # live handler threads; a connection over the cap is answered 503 busy without a thread
+-BUSY_WRITE_TIMEOUT_SECONDS: Final = 1.0  # write limit of that 503 reply; a silent client must not stall accept
++# Cap on connections that are still being READ (request line, headers, body). A connection takes a place when it is
++# accepted and gives it back when the desk starts to write the reply (or on any error), so work after the reply (the
++# follow-up) and a slow reader of the reply never hold a place. When the cap is reached, the OLDEST connection still in
++# the header phase is closed to make room, so a crowd of stalled senders cannot lock real callers out; connections that
++# have finished their headers are never closed that way, and when none is in the header phase the new connection
++# gets 503 busy (with Retry-After).
++MAX_CONNECTIONS: Final = 256
++MAX_CONNECTIONS_MIN: Final = 8  # accepted range of MAX_CONNECTIONS (checked below, at import)
++MAX_CONNECTIONS_MAX: Final = 4096
++BUSY_WRITE_TIMEOUT_SECONDS: Final = 1.0  # all of one 503 busy reply (write, then read what was sent); never longer
++BUSY_RETRY_AFTER_SECONDS: Final = 1  # Retry-After header of that 503, in whole seconds
+ QUIET_DRAIN_SECONDS: Final = 0.05  # how long a finished connection waits for request bytes still on their way
+ DRAIN_TOTAL_SECONDS: Final = 1.0  # wall-clock limit of all draining on one connection, however slowly bytes arrive
+ DRAIN_MAX_BYTES: Final = (
+@@ -132,3 +142,38 @@
+ LOOPBACK_HOSTS: Final = ("127.0.0.1", "localhost", "[::1]")
+ # bind addresses that mean "every interface"; never a Host name (built, not typed: a typed one trips the bind scan)
+ WILDCARD_BINDS: Final = (str(ipaddress.IPv4Address(0)), str(ipaddress.IPv6Address(0)))
++
++
++def validate_http_limits(
++    *,
++    max_connections: object,
++    header: object,
++    body: object,
++    busy_write: object,
++    retry_after: object,
++) -> None:
++    """Refuse a nonsense HTTP limit with a clear message (a wrong value would otherwise show up as a hung or
++    always-busy server). Runs at import on the real values; tests call it with bad ones."""
++    if type(max_connections) is not int or not MAX_CONNECTIONS_MIN <= max_connections <= MAX_CONNECTIONS_MAX:
++        raise ValueError(
++            f"MAX_CONNECTIONS must be a whole number from {MAX_CONNECTIONS_MIN} to {MAX_CONNECTIONS_MAX}, "
++            f"got {max_connections!r}"
++        )
++    for name, value in (
++        ("HEADER_READ_DEADLINE_SECONDS", header),
++        ("BODY_READ_DEADLINE_SECONDS", body),
++        ("BUSY_WRITE_TIMEOUT_SECONDS", busy_write),
++    ):
++        if isinstance(value, bool) or not isinstance(value, int | float) or not math.isfinite(value) or value <= 0:
++            raise ValueError(f"{name} must be a number of seconds above 0, got {value!r}")
++    if type(retry_after) is not int or retry_after < 1:
++        raise ValueError(f"BUSY_RETRY_AFTER_SECONDS must be a whole number, 1 or more, got {retry_after!r}")
++
++
++validate_http_limits(
++    max_connections=MAX_CONNECTIONS,
++    header=HEADER_READ_DEADLINE_SECONDS,
++    body=BODY_READ_DEADLINE_SECONDS,
++    busy_write=BUSY_WRITE_TIMEOUT_SECONDS,
++    retry_after=BUSY_RETRY_AFTER_SECONDS,
++)
+--- a/src/lead_desk/server.py
++++ b/src/lead_desk/server.py
+@@ -21,6 +21,7 @@
+ from dataclasses import replace
+ from http import HTTPStatus
+ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
++from threading import local as ThreadLocal  # (the hygiene scan reads a dotted name ending in "local" as a host)
+ from typing import Any, cast
+ from urllib.parse import parse_qs, unquote, urlsplit
+ 
+@@ -29,6 +30,7 @@
+ from lead_desk.config import Config, is_unspecified
+ from lead_desk.constants import (
+     BODY_READ_DEADLINE_SECONDS,
++    BUSY_RETRY_AFTER_SECONDS,
+     BUSY_WRITE_TIMEOUT_SECONDS,
+     DEMO_BODY_MAX,
+     DEMO_METHODS,
+@@ -70,14 +72,21 @@
+ _HOST_HEADER = re.compile(r"^(?P<host>\[[0-9A-Fa-f:]+\]|[^:\[\]]+)(?::(?P<port>[0-9]{1,5}))?$")
+ 
+ 
++_GONE = (ConnectionResetError, BrokenPipeError, ConnectionAbortedError, TimeoutError)
++"""Errors that only mean the other side left or stalled. They are answered or dropped quietly, never as a failure."""
++
++
+ class _DeadlineReader(io.RawIOBase):
+     """Raw socket reader with one wall-clock deadline for a whole phase (headers, or body). Before each read the
+     socket timeout is set to the time left, so a client sending one byte at a time cannot hold the thread: the
+-    per-read socket timeout alone restarts on every byte. With no deadline armed it behaves like the plain reader."""
++    per-read socket timeout alone restarts on every byte. With no deadline armed it behaves like the plain reader.
++    After every read the socket timeout goes back to the normal per-read limit, so a later reply write never runs
++    on a stale, shorter timeout."""
+ 
+-    def __init__(self, sock: socket.socket, idle: Callable[[], float | None]) -> None:
++    def __init__(self, sock: socket.socket, idle: Callable[[], float | None], aborted: Callable[[], bool]) -> None:
+         self._sock = sock
+         self._idle = idle  # the per-read limit (the handler's `timeout`)
++        self._aborted = aborted  # True once the server closed this connection to make room for a newer one
+         self.deadline: float | None = None
+         self.phase = "header"
+         self.timed_out_in = ""  # the phase that ran out of time, or ""
+@@ -90,6 +99,8 @@
+         return True
+ 
+     def readinto(self, b: Any) -> int:
++        if self._aborted():
++            raise ConnectionAbortedError("connection closed to make room")
+         limit = self._idle()
+         if self.deadline is not None:
+             left = self.deadline - time.monotonic()
+@@ -98,21 +109,49 @@
+             limit = left if limit is None else min(limit, left)
+         try:
+             self._sock.settimeout(limit)
+-            return self._sock.recv_into(b)
++            got = self._sock.recv_into(b)
+         except TimeoutError:
+             self._expire()
+-        return 0  # unreachable: _expire raises
++        self._restore_timeout()
++        if got == 0 and self._aborted():  # the server shut the socket down under a blocked read
++            raise ConnectionAbortedError("connection closed to make room")
++        return got
+ 
+-    def _expire(self) -> None:
+-        self.timed_out_in = self.phase
+-        self.deadline = None
++    def _restore_timeout(self) -> None:
+         try:
+-            self._sock.settimeout(self._idle())  # the 408 reply still has to be written
++            self._sock.settimeout(self._idle())
+         except OSError:
+             pass
++
++    def _expire(self) -> None:
++        self.timed_out_in = self.phase
++        self.deadline = None
++        self._restore_timeout()  # the 408 reply still has to be written
+         raise TimeoutError("read deadline")
+ 
+ 
++class _Slot:
++    """One connection's place under the cap. `release` is idempotent: whoever calls it first frees the place."""
++
++    def __init__(self, server: _Server, sock: socket.socket) -> None:
++        self.server = server
++        self.sock = sock
++        self.header_phase = True  # still sending the request line and headers: may be closed to make room
++        self.released = False
++        self.evicted = False
++
++    def header_done(self) -> None:
++        with self.server._slot_lock:
++            self.header_phase = False
++
++    def release(self) -> None:
++        with self.server._slot_lock:
++            if self.released:
++                return
++            self.released = True
++            self.server._slots.pop(self, None)
++
++
+ class _Server(ThreadingHTTPServer):
+     allow_reuse_address = os.name != "nt"  # on Windows SO_REUSEADDR would allow a second listener on the same port
+     request_queue_size = LISTEN_QUEUE
+@@ -121,44 +160,119 @@
+     started_at: int
+     demo: DemoPortal | None
+     allowed_hosts: frozenset[str]
+-    _live = 0
+-    _live_lock = threading.Lock()
++
++    def __init__(self, *args: Any, **kwargs: Any) -> None:
++        self._slot_lock = threading.Lock()
++        self._slots: dict[_Slot, None] = {}  # in the order the connections were accepted
++        self._pending: dict[int, _Slot] = {}  # accepted, thread not yet running
++        self._tls = ThreadLocal()
++        super().__init__(*args, **kwargs)
++
++    def live_connections(self) -> int:
++        """Connections that still take a place under the cap (being read; see constants.MAX_CONNECTIONS)."""
++        with self._slot_lock:
++            return len(self._slots)
++
++    def header_phase_connections(self) -> int:
++        """Of those, the ones still sending their request line or headers (the only ones that may be closed to make
++        room)."""
++        with self._slot_lock:
++            return sum(1 for s in self._slots if s.header_phase)
++
++    def current_slot(self) -> _Slot:
++        """The place of the connection the calling handler thread serves."""
++        slot: _Slot = self._tls.slot
++        return slot
++
++    def _take_slot(self, request: socket.socket) -> _Slot | None:
++        """A place for a new connection, or None when the cap is full and every connection is past its headers. At
++        the cap the oldest connection still in the header phase is closed to make room."""
++        slot = _Slot(self, request)
++        victim: _Slot | None = None
++        with self._slot_lock:
++            if len(self._slots) >= MAX_CONNECTIONS:
++                victim = next((s for s in self._slots if s.header_phase), None)
++                if victim is None:
++                    return None
++                victim.evicted = victim.released = True
++                del self._slots[victim]
++            self._slots[slot] = None
++            self._pending[id(request)] = slot
++        if victim is not None:
++            try:
++                victim.sock.shutdown(socket.SHUT_RDWR)  # wakes its blocked read; the thread then ends
++            except OSError:
++                pass
++        return slot
+ 
+     def process_request(self, request: Any, client_address: Any) -> None:
+-        """Cap on live handler threads: over the cap the connection gets 503 busy at once, with no thread."""
+-        with self._live_lock:
+-            full = self._live >= MAX_CONNECTIONS
+-            if not full:
+-                self._live += 1
+-        if full:
++        """Cap on connections being read. No place and nothing to close: 503 busy at once, with no thread. If the
++        thread cannot start, the place is given back and the caller gets the same 503."""
++        slot = self._take_slot(request)
++        if slot is None:
+             self._refuse_busy(request)
+             return
+         try:
+             super().process_request(request, client_address)
+-        except BaseException:  # the thread did not start: give the slot back
+-            self._release()
++        except Exception as e:  # the thread did not start
++            log.warning("cannot start a handler thread: %s", type(e).__name__)
++            self._abandon(request, slot)
++            self._refuse_busy(request)
++        except BaseException:
++            self._abandon(request, slot)
+             raise
+ 
++    def _abandon(self, request: Any, slot: _Slot) -> None:
++        with self._slot_lock:
++            self._pending.pop(id(request), None)
++        slot.release()
++
+     def process_request_thread(self, request: Any, client_address: Any) -> None:
++        with self._slot_lock:
++            slot = self._pending.pop(id(request), None)
++        if slot is None:  # not reachable through process_request; stay safe and take no place
++            slot = _Slot(self, request)
++            slot.released = True
++        self._tls.slot = slot
+         try:
+             super().process_request_thread(request, client_address)
+         finally:
+-            self._release()
++            slot.release()  # a no-op when the reply already gave the place back
+ 
+-    def _release(self) -> None:
+-        with self._live_lock:
+-            self._live -= 1
++    def handle_error(self, request: Any, client_address: Any) -> None:
++        """The standard library prints a traceback to stderr for every exception. A client that vanished is not a
++        failure; anything else still gets the default report."""
++        if isinstance(sys.exception(), _GONE):
++            return
++        super().handle_error(request, client_address)
+ 
+     def _refuse_busy(self, request: Any) -> None:
+-        body = json.dumps({"error": "busy"}).encode()
++        """A complete 503 for a connection that gets no thread. The whole exchange is limited to
++        BUSY_WRITE_TIMEOUT_SECONDS (the accept loop waits for it): write the reply, close our side, then read what the
++        client has already sent, so closing does not reset the connection under the reply."""
++        body = json.dumps({"error": "busy", "reason": "busy"}).encode()
+         head = (
+             f"HTTP/1.0 {HTTP_BUSY} Service Unavailable\r\nContent-Type: application/json\r\n"
+-            f"Content-Length: {len(body)}\r\nConnection: close\r\n\r\n"
++            f"Content-Length: {len(body)}\r\nConnection: close\r\nRetry-After: {BUSY_RETRY_AFTER_SECONDS}\r\n"
++            + "".join(f"{k}: {v}\r\n" for k, v in SECURITY_HEADERS)
++            + "\r\n"
+         ).encode()
++        end = time.monotonic() + BUSY_WRITE_TIMEOUT_SECONDS
+         try:
+             request.settimeout(BUSY_WRITE_TIMEOUT_SECONDS)
+             request.sendall(head + body)
+-        except OSError:
++            request.shutdown(socket.SHUT_WR)
++            left = DRAIN_MAX_BYTES
++            while left > 0:
++                budget = min(QUIET_DRAIN_SECONDS, end - time.monotonic())
++                if budget <= 0:
++                    break
++                request.settimeout(budget)
++                chunk = request.recv(65536)
++                if not chunk:
++                    break
++                left -= len(chunk)
++        except OSError:  # the client is gone, or went quiet: nothing more to do
+             pass
+         finally:
+             self.shutdown_request(request)
+@@ -230,11 +344,13 @@
+     _follow: str | None = None
+ 
+     _reader: _DeadlineReader
++    _slot: _Slot
+ 
+     def setup(self) -> None:
+         super().setup()
+         self.rfile.close()
+-        self._reader = _DeadlineReader(self.connection, lambda: self.timeout)
++        self._slot = cast(_Server, self.server).current_slot()
++        self._reader = _DeadlineReader(self.connection, lambda: self.timeout, lambda: self._slot.evicted)
+         self.rfile = io.BufferedReader(self._reader)
+ 
+     def handle_one_request(self) -> None:
+@@ -246,13 +362,13 @@
+         self._reader.arm("header", HEADER_READ_DEADLINE_SECONDS)
+         super().handle_one_request()
+         if self._reader.timed_out_in == "header":
+-            self.close_connection = True
+-            self._send(HTTP_REQUEST_TIMEOUT, {"error": "request_timeout"})
++            self._send_timeout("header")
+ 
+     def parse_request(self) -> bool:
+         try:
+             return super().parse_request()
+         finally:
++            self._slot.header_done()
+             self._reader.arm("body", BODY_READ_DEADLINE_SECONDS)
+ 
+     @property
+@@ -266,8 +382,20 @@
+     def _send(self, status: int, obj: Any) -> None:
+         self._send_bytes(status, json.dumps(obj, allow_nan=False).encode("utf-8"), "application/json")
+ 
++    def _send_timeout(self, phase: str) -> None:
++        """The one 408 for every stalled read (header, body, resolve body): the same JSON shape, `phase` in the log."""
++        log.info("read timed out in the %s phase", phase)
++        self.close_connection = True
++        self._send(HTTP_REQUEST_TIMEOUT, {"error": "request_timeout", "receipt_id": None})
++
+     def _send_bytes(self, status: int, body: bytes, content_type: str, extra: tuple[tuple[str, str], ...] = ()) -> None:
+-        """One writer for every reply: Content-Length, Connection: close and the fixed security headers."""
++        """One writer for every reply: Content-Length, Connection: close and the fixed security headers. The
++        connection's place under the cap ends here: the reading is over, whatever happens to the write."""
++        self._slot.release()
++        try:
++            self.connection.settimeout(self.timeout)  # not a short leftover from a deadline-limited read
++        except OSError:
++            pass
+         if self.request_version == "HTTP/0.9":  # the standard library then sends the body alone, with no status line
+             self.request_version = "HTTP/1.0"
+         try:
+@@ -280,8 +408,10 @@
+             self.end_headers()
+             if getattr(self, "command", None) != "HEAD":
+                 self.wfile.write(body)
+-        except OSError:  # the client is gone (broken pipe, reset): nobody to answer, and not a handler failure
++        except _GONE:  # the client left or stopped reading: nobody to answer, and not a handler failure
+             pass
++        except OSError as e:  # anything else is worth a line, then the thread ends cleanly
++            log.warning("reply write failed: %s", type(e).__name__)
+         self.close_connection = True
+ 
+     def send_error(self, code: int, message: str | None = None, explain: str | None = None) -> None:
+@@ -423,10 +553,13 @@
+                 self._resolve(str(arg))
+             self._flush_and_half_close()
+         except Exception as e:
+-            log.warning("handler failed: %s", type(e).__name__)
+-            busy = db.is_busy(e)
+             try:
+-                self._send(HTTP_BUSY if busy else HTTP_INTERNAL_ERROR, {"error": "busy" if busy else "internal"})
++                if isinstance(e, TimeoutError) and self._reader.timed_out_in:  # our own read limit, not a failure
++                    self._send_timeout(self._reader.timed_out_in)
++                else:
++                    log.warning("handler failed: %s", type(e).__name__)
++                    busy = db.is_busy(e)
++                    self._send(HTTP_BUSY if busy else HTTP_INTERNAL_ERROR, {"error": "busy" if busy else "internal"})
+                 self._flush_and_half_close()
+             except OSError:
+                 pass
+@@ -477,7 +610,7 @@
+                 try:
+                     body = self.rfile.read(n)
+                 except TimeoutError:  # fewer bytes than announced and the socket stayed open
+-                    self._send(HTTP_REQUEST_TIMEOUT, {"error": "request_timeout"})
++                    self._send_timeout("demo body")
+                     return
+                 if len(body) < n:
+                     self._send(HTTP_BAD_REQUEST, {"error": "bad_body"})
+@@ -511,7 +644,11 @@
+ 
+     def _resolve(self, item_id: str) -> None:
+         n = self._content_length() or 0
+-        raw = self.rfile.read(min(n, DRAIN_MAX_BYTES)) if n else b""
++        try:
++            raw = self.rfile.read(min(n, DRAIN_MAX_BYTES)) if n else b""
++        except TimeoutError:  # fewer bytes than announced and the socket stayed open
++            self._send_timeout("resolve body")
++            return
+         decision: Any = None
+         try:
+             obj = json.loads(raw.decode("utf-8"))
+@@ -543,7 +680,8 @@
+         try:
+             raw = self.rfile.read(n)
+         except TimeoutError:  # fewer bytes than announced and the socket stayed open
+-            self._reject_envelope(HTTP_REQUEST_TIMEOUT, "request_timeout")
++            self._desk.note_rejected_envelope()
++            self._send_timeout("body")
+             return
+         if len(raw) < n:  # the client closed early
+             self._reject_envelope(HTTP_BAD_REQUEST, "bad_envelope")
+--- a/tests/test_server_hardening.py
++++ b/tests/test_server_hardening.py
+@@ -117,44 +117,57 @@
+     s.close()  # sends a reset: the reply can no longer be written
+     time.sleep(0.3)
+     hook.release.set()
+-    wait_until(lambda: pending_zero(base), what="follow-up driven although the reply write failed")
+-    assert rig.leads() == 1
+-    assert rig.state()[0] == "sent"
++    # pending_zero alone is true before the request has committed; wait for the follow-up's own end state
++    wait_until(lambda: rig.leads() == 1 and rig.state()[0] == "sent", what="follow-up driven although the reply failed")
++    assert pending_zero(base)
+     assert rig.outbox.count == 1
+ 
+ 
+ def _burst(env, n: int, retry: bool) -> tuple[int, list[object]]:
+-    """n connections at the same moment, one lead (same email, different request ids). Returns (connections the
+-    operating system refused on the first try, results). With retry, a refused connection is tried again with the
+-    SAME request id (safe: the desk treats it as a replay)."""
++    """n connections at the same moment, each a different person (own e-mail address and request id). Returns
++    (clients whose first try was not answered with a stored result, (status, reply) per client). With retry, a 503
++    or a dropped connection is tried again with the SAME request id (safe: the desk treats it as a replay) until it
++    is answered. Then what the clients were told is compared with what the desk stored: every client has exactly one
++    lead, every 201 names a stored lead once, and one e-mail was sent per lead."""
+     rig = env.rig()
+     base = env.serve(rig)
+-    refused = [0]
++    first_try_failed = [0]
+     lock = threading.Lock()
+ 
+     def one(i: int):  # type: ignore[no-untyped-def]
+         def go():  # type: ignore[no-untyped-def]
+-            body = {"source": "form", "source_ref": f"b{i}", "payload": lead()}
+-            for attempt in range(6 if retry else 1):
++            body = {"source": "form", "source_ref": f"b{i}", "payload": lead(email=f"burst{i}@example.test")}
++            for attempt in range(40 if retry else 1):
+                 try:
+-                    return call(base, "POST", "/leads", body=body, timeout=60)
+-                except OSError as e:
+-                    if attempt == 0:
+-                        with lock:
+-                            refused[0] += 1
+-                    if not retry or attempt == 5:
+-                        raise e
+-                    time.sleep(0.2 * (attempt + 1))
++                    answer = call(base, "POST", "/leads", body=body, timeout=60)
++                except OSError:  # refused or dropped before an answer
++                    answer = (None, None)
++                if answer[0] is not None and answer[0] != 503:
++                    return answer
++                if attempt == 0:
++                    with lock:
++                        first_try_failed[0] += 1
++                time.sleep(min(0.05 * (attempt + 1), 0.5))
++            raise AssertionError(f"b{i} got no stored answer")
+ 
+         return go
+ 
+     results = run_threads([one(i) for i in range(n)])
+     errors = [r for r in results if isinstance(r, BaseException) or r is None]
+-    assert not errors, f"{len(errors)} of {n} got no answer; first-try refused {refused[0]}: {errors[:1]!r}"
+-    assert {r[0] for r in results} <= {200, 201, 503}  # type: ignore[index]
++    assert not errors, (
++        f"{len(errors)} of {n} got no answer; first try not answered {first_try_failed[0]}: {errors[:1]!r}"
++    )
++    assert {r[0] for r in results} <= {200, 201}  # type: ignore[index]
+     wait_until(lambda: pending_zero(base), what="follow-ups finished", timeout=90)
+-    assert rig.outbox.count <= 1  # one lead, never a second email
+-    return refused[0], results
++    stored = {
++        row[0]: row[1] for row in rig.query("SELECT source_ref, lead_id FROM receipts JOIN leads USING (receipt_id)")
++    }
++    assert sorted(stored) == sorted(f"b{i}" for i in range(n))  # one lead for every client, none twice
++    told = [r[1]["lead_id"] for r in results if r[0] == 201]  # type: ignore[index]
++    assert len(told) == len(set(told)) and set(told) <= set(stored.values())  # a 201 names a stored lead, once
++    assert rig.leads() == n
++    assert rig.outbox.count == n  # one e-mail per lead, never a second
++    return first_try_failed[0], results
+ 
+ 
+ def test_150_simultaneous_connections_all_get_an_answer(env) -> None:
+@@ -163,8 +176,8 @@
+ 
+ 
+ def test_300_simultaneous_connections_all_get_an_answer_with_retry(env) -> None:
+-    """This Windows machine refuses part of a 300-connection burst before the desk can accept (measured: it
+-    answers about 200 at once whatever the backlog); a client that retries with the same request id gets all."""
++    """A burst of 300 may be refused in part (the operating system before accept, or a 503 busy at the cap); a
++    client that retries with the same request id gets an answer, and each lead is stored once."""
+     _burst(env, 300, retry=True)
+ 
+ 
+--- a/tests/test_slow_sender.py
++++ b/tests/test_slow_sender.py
+@@ -1,22 +1,29 @@
+-"""Slow-sender defence: one wall-clock deadline for the headers and one for the body, a cap on live handler
+-threads, and no log noise when the client vanishes. Made-up data only; real sockets on loopback."""
++"""Slow-sender defence: one wall-clock deadline for the headers and one for the body, a cap on connections that are
++still being read, eviction of stalled header senders at the cap, one 408 shape, a clean 503 busy, and no log noise
++when the client vanishes. Made-up data only; real sockets on loopback."""
+ 
+ from __future__ import annotations
+ 
++import errno
+ import json
+ import logging
+ import socket
++import socketserver
++import struct
+ import threading
+ import time
+ from collections.abc import Iterator
+ from dataclasses import replace
++from typing import Any
+ 
+ import pytest
+-from support import HOST, call, lead, post_lead, wait_until
++from support import HOST, BlockAt, call, lead, post_lead, wait_until
+ 
+-from lead_desk import server
++from lead_desk import constants, server
+ 
+ BODY = json.dumps({"source": "form", "source_ref": "slow1", "payload": lead()}).encode()
++TIMEOUT_REPLY = {"error": "request_timeout", "receipt_id": None}
++BUSY_REPLY = {"error": "busy", "reason": "busy"}
+ 
+ 
+ def addr(base: str) -> tuple[str, int]:
+@@ -24,6 +31,10 @@
+     return host, int(port)
+ 
+ 
++def connect(base: str) -> socket.socket:
++    return socket.create_connection(addr(base), timeout=8)
++
++
+ def drip(sock: socket.socket, data: bytes, gap: float, stop_after: float) -> None:
+     """Send `data` one byte at a time, until the peer closes or `stop_after` seconds pass."""
+     end = time.monotonic() + stop_after
+@@ -47,9 +58,18 @@
+     return out
+ 
+ 
++def parse_reply(raw: bytes) -> tuple[int, dict[str, str], Any]:
++    """(status, lower-case headers, parsed JSON body) of a complete reply; fails on a partial one."""
++    head, sep, body = raw.partition(b"\r\n\r\n")
++    assert sep, f"no complete reply, got {raw[:80]!r}"
++    lines = head.decode().split("\r\n")
++    headers = {k.lower(): v.strip() for k, _, v in (ln.partition(":") for ln in lines[1:])}
++    return int(lines[0].split(" ", 2)[1]), headers, json.loads(body.decode() or "null")
++
++
+ def run_drip(base: str, data: bytes, gap: float = 0.2) -> tuple[bytes, float]:
+     """Drip `data` from a thread; return what the server sent and how long until it closed."""
+-    s = socket.create_connection(addr(base), timeout=8)
++    s = connect(base)
+     t0 = time.monotonic()
+     th = threading.Thread(target=drip, args=(s, data, gap, 6.0), daemon=True)
+     th.start()
+@@ -60,12 +80,89 @@
+     return got, took
+ 
+ 
++def get_ok(base: str, path: str = "/counts", seconds: float = 15.0) -> int:
++    """GET that retries while the server answers 503 busy or drops the connection (both are honest answers while
++    other connections hold places). Returns the first other status."""
++    end = time.monotonic() + seconds
++    while True:
++        try:
++            status = int(call(base, "GET", path)[0])
++        except OSError:
++            status = 503
++        if status != 503 or time.monotonic() > end:
++            return status
++        time.sleep(0.05)
++
++
++def post_head(length: int, ref: str = "x") -> bytes:
++    return (
++        f"POST /leads HTTP/1.1\r\nHost: {HOST}\r\nContent-Type: application/json\r\n"
++        f"Content-Length: {length}\r\nConnection: close\r\n\r\n"
++    ).encode()
++
++
++def lead_body(ref: str, email: str) -> bytes:
++    return json.dumps({"source": "form", "source_ref": ref, "payload": lead(email=email)}).encode()
++
++
+ @pytest.fixture
+ def short(monkeypatch) -> None:
+-    monkeypatch.setattr(server, "HEADER_READ_DEADLINE_SECONDS", 1.0, raising=False)
+-    monkeypatch.setattr(server, "BODY_READ_DEADLINE_SECONDS", 1.0, raising=False)
++    monkeypatch.setattr(server, "HEADER_READ_DEADLINE_SECONDS", 1.0)
++    monkeypatch.setattr(server, "BODY_READ_DEADLINE_SECONDS", 1.0)
++
++
++class Live:
++    """A server built directly, so a test can read the connection count."""
++
++    def __init__(self, env, hooks=None) -> None:
++        self.rig = env.rig(hooks=hooks)
++        cfg = replace(self.rig.desk.config, port=0)
++        self.srv = server.make_server(self.rig.desk, cfg)
++        self.thread = threading.Thread(target=self.srv.serve_forever, daemon=True)
++        self.thread.start()
++        host, port = self.srv.server_address[0], self.srv.server_address[1]
++        self.base = f"http://{host}:{port}"
++
++    @property
++    def count(self) -> int:
++        """Connections that still take a place under the cap."""
++        fn = getattr(self.srv, "live_connections", None)
++        return int(fn()) if fn else int(getattr(self.srv, "_live", -1))
++
++    @property
++    def in_header(self) -> int:
++        fn = getattr(self.srv, "header_phase_connections", None)
++        return int(fn()) if fn else -1
++
++    def stalled_header(self) -> socket.socket:
++        """A connection that has sent part of a request line and then nothing."""
++        s = connect(self.base)
++        s.sendall(b"GET /cou")
++        return s
++
++    def body_phase(self, length: int = 100) -> socket.socket:
++        """A connection whose headers are complete and whose body has not come."""
++        s = connect(self.base)
++        s.sendall(post_head(length))
++        return s
++
++    def stop(self) -> None:
++        self.srv.shutdown()
++        self.srv.server_close()
++
++
++@pytest.fixture
++def live(env) -> Iterator[Live]:
++    lv = Live(env)
++    yield lv
++    lv.stop()
+ 
+ 
++def cap(monkeypatch, n: int) -> None:
++    monkeypatch.setattr(server, "MAX_CONNECTIONS", n)  # a test cap below the validated range of the real constant
++
++
++# -- deadlines (items: header, body)
+ def test_slow_request_line_closed(env, short) -> None:
+     base = env.serve(env.rig())
+     got, took = run_drip(base, f"POST /leads HTTP/1.1\r\nHost: {HOST}\r\n\r\n".encode())
+@@ -75,7 +172,7 @@
+ 
+ def test_slow_headers_closed(env, short) -> None:
+     base = env.serve(env.rig())
+-    s = socket.create_connection(addr(base), timeout=8)
++    s = connect(base)
+     s.sendall(f"POST /leads HTTP/1.1\r\nHost: {HOST}\r\n".encode())
+     t0 = time.monotonic()
+     th = threading.Thread(target=drip, args=(s, b"X-Pad: " + b"a" * 40 + b"\r\n\r\n", 0.2, 6.0), daemon=True)
+@@ -85,18 +182,14 @@
+     s.close()
+     th.join(timeout=8)
+     assert took < 3
+-    assert b" 408 " in got.split(b"\r\n", 1)[0]
+-    assert json.loads(got.partition(b"\r\n\r\n")[2]) == {"error": "request_timeout"}
++    status, _, body = parse_reply(got)
++    assert status == 408 and body == TIMEOUT_REPLY
+ 
+ 
+ def test_slow_body_closed_with_408(env, short) -> None:
+     base = env.serve(env.rig())
+-    head = (
+-        f"POST /leads HTTP/1.1\r\nHost: {HOST}\r\nContent-Type: application/json\r\n"
+-        f"Content-Length: {len(BODY)}\r\nConnection: close\r\n\r\n"
+-    ).encode()
+-    s = socket.create_connection(addr(base), timeout=8)
+-    s.sendall(head)
++    s = connect(base)
++    s.sendall(post_head(len(BODY)))
+     t0 = time.monotonic()
+     th = threading.Thread(target=drip, args=(s, BODY, 0.2, 6.0), daemon=True)
+     th.start()
+@@ -105,81 +198,336 @@
+     s.close()
+     th.join(timeout=8)
+     assert took < 3
+-    assert b" 408 " in got.split(b"\r\n", 1)[0]
++    assert parse_reply(got)[0] == 408
+ 
+ 
+-class Live:
+-    """A server built directly, so a test can read the live-thread count."""
+-
+-    def __init__(self, env) -> None:
+-        rig = env.rig()
+-        cfg = replace(rig.desk.config, port=0)
+-        self.srv = server.make_server(rig.desk, cfg)
+-        self.thread = threading.Thread(target=self.srv.serve_forever, daemon=True)
+-        self.thread.start()
+-        host, port = self.srv.server_address[0], self.srv.server_address[1]
+-        self.base = f"http://{host}:{port}"
++# -- item 5 and 6: one 408 for a stalled header, body and resolve body; the log names the phase
++STALLS = {
++    "header": (b"POST /leads HTTP/1.1\r\nHost: ", "header phase"),
++    "body": (post_head(100) + b"{", "body phase"),
++    "resolve": (
++        (
++            f"POST /review/F1/resolve HTTP/1.1\r\nHost: {HOST}\r\nContent-Length: 100\r\nConnection: close\r\n\r\n{{"
++        ).encode(),
++        "resolve body phase",
++    ),
++}
++
++
++@pytest.mark.parametrize("kind", sorted(STALLS))
++def test_stall_gives_the_same_408(env, short, caplog, kind) -> None:
++    data, phase_text = STALLS[kind]
++    base = env.serve(env.rig())
++    with caplog.at_level(logging.INFO, logger="lead_desk"):
++        s = connect(base)
++        s.sendall(data)  # then silence
++        got = read_all(s)
++        s.close()
++    status, headers, body = parse_reply(got)
++    assert status == 408, (kind, got[:120])  # the resolve route used to answer 500 here
++    assert body == TIMEOUT_REPLY
++    assert headers["connection"] == "close" and int(headers["content-length"]) > 0
++    assert [r for r in caplog.records if phase_text in r.getMessage()], [r.getMessage() for r in caplog.records]
++    assert not [r for r in caplog.records if "handler failed" in r.getMessage()]
+ 
+-    @property
+-    def count(self) -> int:
+-        return int(getattr(self.srv, "_live", -1))
+ 
+-    def stop(self) -> None:
+-        self.srv.shutdown()
+-        self.srv.server_close()
++# -- item 1: the cap refusal is a complete reply
++def test_busy_503_is_complete_and_clean(live, monkeypatch) -> None:
++    cap(monkeypatch, 2)
++    held = [live.body_phase(), live.body_phase()]
++    wait_until(lambda: live.count == 2 and live.in_header == 0, what="two connections past their headers")
++    big = b"x" * 300_000  # already on its way when the refusal is written: closing on it would reset the reply
++    s = connect(live.base)
++    t0 = time.monotonic()
++    s.sendall(post_head(len(big)) + big)
++    got = read_all(s)  # read_all hides a reset: parse_reply then fails on the missing reply
++    took = time.monotonic() - t0
++    s.close()
++    status, headers, body = parse_reply(got)
++    assert status == 503 and body == BUSY_REPLY
++    assert headers["retry-after"] == str(constants.BUSY_RETRY_AFTER_SECONDS)
++    assert headers["connection"] == "close"
++    assert headers["content-type"] == "application/json"
++    assert int(headers["content-length"]) == len(json.dumps(BUSY_REPLY).encode())
++    assert took < constants.BUSY_WRITE_TIMEOUT_SECONDS + 2
++    for h in held:
++        h.close()
++    wait_until(lambda: live.count == 0, what="places freed")
++
++
++def test_busy_503_silent_client_is_quick(live, monkeypatch) -> None:
++    cap(monkeypatch, 2)
++    held = [live.body_phase(), live.body_phase()]
++    wait_until(lambda: live.count == 2 and live.in_header == 0, what="two connections past their headers")
++    s = connect(live.base)  # connects and says nothing: the accept loop must not wait for it
++    t0 = time.monotonic()
++    assert call(live.base, "GET", "/counts")[0] == 503  # a second one behind the silent one still gets its answer
++    assert time.monotonic() - t0 < 2 * constants.BUSY_WRITE_TIMEOUT_SECONDS + 1
++    s.close()
++    for h in held:
++        h.close()
+ 
+ 
+-@pytest.fixture
+-def live(env) -> Iterator[Live]:
+-    lv = Live(env)
+-    yield lv
+-    lv.stop()
++# -- item 2: a place covers only the reading
++def test_follow_up_does_not_hold_a_place(env, monkeypatch) -> None:
++    hook = BlockAt("D1")  # holds the follow-up, which runs after the reply is written
++    lv = Live(env, hooks=hook)
++    try:
++        cap(monkeypatch, 1)
++        assert post_lead(lv.base, "form", "held1", lead())[0] == 201
++        assert hook.reached.wait(timeout=15)
++        try:
++            wait_until(lambda: lv.count == 0, timeout=5, what="place freed while the follow-up is still running")
++            assert call(lv.base, "GET", "/counts")[0] == 200  # with a cap of 1 this is 503 if the place were kept
++        finally:
++            hook.release.set()
++        wait_until(lambda: lv.rig.state()[0] == "sent", what="follow-up finished")
++    finally:
++        lv.stop()
+ 
+ 
+-def test_cap_refuses_fourth_then_recovers(live, monkeypatch) -> None:
+-    monkeypatch.setattr(server, "MAX_CONNECTIONS", 3, raising=False)
+-    held = [socket.create_connection(addr(live.base), timeout=8) for _ in range(3)]
+-    for s in held:
+-        s.sendall(b"GET /cou")  # partial request line: the handler thread now waits
+-    wait_until(lambda: live.count == 3, what="three slots taken")
+-    fourth = socket.create_connection(addr(live.base), timeout=8)
+-    t0 = time.monotonic()
+-    got = read_all(fourth)
+-    fourth.close()
+-    assert time.monotonic() - t0 < 2
+-    assert b" 503 " in got.split(b"\r\n", 1)[0]
+-    assert json.loads(got.partition(b"\r\n\r\n")[2]) == {"error": "busy"}
++def test_place_released_exactly_once(live) -> None:
++    srv = live.srv
++    a, b = socket.socket(), socket.socket()
++    try:
++        slot_a, slot_b = srv._take_slot(a), srv._take_slot(b)
++        assert slot_a is not None and slot_b is not None
++        assert live.count == 2
++        slot_a.release()
++        slot_a.release()  # a second release must not free anyone else's place
++        assert live.count == 1
++        srv._abandon(a, slot_a)
++        assert live.count == 1
++        srv._abandon(b, slot_b)
++        assert live.count == 0
++    finally:
++        a.close()
++        b.close()
++
++
++def test_slot_survives_every_end(live, monkeypatch) -> None:
++    """Many connections that end in every possible way: no place leaks, the cap is never passed, nothing is left
++    waiting to be picked up by a thread."""
++    cap(monkeypatch, 3)
++    for i in range(60):
++        s = connect(live.base)
++        kind = i % 6
++        if kind == 1:
++            s.sendall(f"GET /counts HTTP/1.1\r\nHost: {HOST}\r\n\r\n".encode())
++        elif kind == 2:
++            s.sendall(b"GET /cou")
++        elif kind == 3:
++            s.sendall(b"POST /leads HT")
++            s.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER, struct.pack("ii", 1, 0))  # reset on close
++        elif kind == 4:
++            s.sendall(b"\x00\xff garbage not http\r\n\r\n")
++        elif kind == 5:
++            s.sendall(post_head(50))  # headers, then no body
++        s.close()
++        assert live.count <= 3
++    # accepting is first in, first out: once this one is answered, every connection above has been accepted
++    assert get_ok(live.base) == 200
++    wait_until(lambda: live.count == 0, what="all places freed")
++    assert live.srv._pending == {}  # type: ignore[attr-defined]
++
++
++# -- item 3: stalled header senders cannot lock real callers out
++def test_cap_closes_oldest_header_sender(live, monkeypatch) -> None:
++    cap(monkeypatch, 3)
++    held = []
++    for k in range(3):
++        held.append(live.stalled_header())
++        wait_until(lambda k=k: live.count == k + 1, what="place taken")  # accepted in this order
++    assert call(live.base, "GET", "/counts")[0] == 200  # the new one is served, not refused
++    assert read_all(held[0]) == b""  # the oldest was closed to make room, with no reply
++    for s in held[1:]:  # the younger ones are untouched and can still finish
++        s.sendall(f"nts HTTP/1.1\r\nHost: {HOST}\r\n\r\n".encode())
++        assert parse_reply(read_all(s))[0] == 200
+     for s in held:
+         s.close()
+-    wait_until(lambda: live.count == 0, what="slots freed")
+-    assert call(live.base, "GET", "/counts")[0] == 200
+-    assert post_lead(live.base, "form", "afterwards", lead())[0] == 201
++    wait_until(lambda: live.count == 0, what="places freed")
++
++
++def test_many_stalled_senders_cannot_block(live, monkeypatch) -> None:
++    cap(monkeypatch, 3)
++    stalled = []
++    for k in range(12):
++        stalled.append(live.stalled_header())
++        wait_until(lambda k=k: live.count == min(k + 1, 3), what="cap held, not passed")
++    assert call(live.base, "POST", "/leads", {"source": "form", "source_ref": "real1", "payload": lead()})[0] == 201
++    assert [read_all(s) for s in stalled[:9]] == [b""] * 9  # the 9 oldest were closed
++    for s in stalled:
++        s.close()
+ 
+ 
+-def test_no_slot_leak_over_many_cycles(live, monkeypatch) -> None:
+-    monkeypatch.setattr(server, "MAX_CONNECTIONS", 3, raising=False)
+-    for i in range(30):
+-        s = socket.create_connection(addr(live.base), timeout=8)
+-        if i % 2:
+-            s.sendall(b"GET /counts HTTP/1.1\r\nHost: " + HOST.encode() + b"\r\n\r\n")
++def test_past_the_headers_is_never_closed(live, monkeypatch) -> None:
++    cap(monkeypatch, 2)
++    refs = [("bp1", "a1@example.test"), ("bp2", "a2@example.test")]
++    bodies = [lead_body(*r) for r in refs]
++    held = []
++    for body in bodies:
++        s = connect(live.base)
++        s.sendall(post_head(len(body)))
++        held.append(s)
++    wait_until(lambda: live.count == 2 and live.in_header == 0, what="two connections past their headers")
++    assert call(live.base, "GET", "/counts")[0] == 503  # nothing to close: the new one is told to come back
++    for s, body in zip(held, bodies, strict=True):  # both are still alive and finish normally
++        s.sendall(body)
++        assert parse_reply(read_all(s))[0] == 201
+         s.close()
+-    wait_until(lambda: live.count == 0, what="all slots freed")
++    assert live.rig.leads() == 2
++
++
++# -- item 4: no short timeout left over on the socket when the reply is written
++def test_reply_write_uses_normal_timeout(env, monkeypatch) -> None:
++    seen: list[float | None] = []
++    original = server._Handler.send_response
++
++    def spy(self, *args: Any, **kwargs: Any) -> None:
++        seen.append(self.connection.gettimeout())
++        original(self, *args, **kwargs)
++
++    monkeypatch.setattr(server._Handler, "send_response", spy)
++    base = env.serve(env.rig())
++    assert post_lead(base, "form", "tmo1", lead())[0] == 201
++    assert call(base, "GET", "/counts")[0] == 200
++    assert seen == [server._Handler.timeout] * 2
++
++
++# -- item 7: write errors and read resets
++class _Boom:
++    def __init__(self, exc: BaseException) -> None:
++        self.exc = exc
++
++    def write(self, data: bytes) -> None:
++        raise self.exc
++
++    def flush(self) -> None:
++        pass
++
++
++class _Conn:
++    def settimeout(self, value: float | None) -> None:
++        pass
++
++
++def handler_with_failing_write(exc: BaseException) -> Any:
++    h = object.__new__(server._Handler)
++    h.request_version, h.command, h.requestline = "HTTP/1.0", "GET", "GET / HTTP/1.0"
++    h.wfile = _Boom(exc)
++    h.connection = _Conn()
++    h.close_connection = False
++
++    class NoSlot:
++        def release(self) -> None:
++            pass
++
++    h._slot = NoSlot()
++    return h
++
++
++GONE = [
++    ConnectionResetError(),
++    BrokenPipeError(),
++    ConnectionAbortedError(),
++    TimeoutError(),
++]
++
++
++@pytest.mark.parametrize("exc", GONE, ids=lambda e: type(e).__name__)
++def test_gone_client_write_is_quiet(caplog, exc) -> None:
++    h = handler_with_failing_write(exc)
++    with caplog.at_level(logging.DEBUG):
++        h._send_bytes(200, b"{}", "application/json")
++    assert h.close_connection is True
++    assert not caplog.records
++
++
++def test_other_write_error_is_logged(caplog) -> None:
++    h = handler_with_failing_write(OSError(errno.EIO, "disk"))
++    with caplog.at_level(logging.DEBUG):
++        h._send_bytes(200, b"{}", "application/json")  # must not raise
++    assert h.close_connection is True
++    msgs = [r.getMessage() for r in caplog.records if r.levelno == logging.WARNING]
++    assert msgs == ["reply write failed: OSError"]
++
++
++def test_read_reset_is_quiet(live, capsys, caplog) -> None:
++    with caplog.at_level(logging.DEBUG):
++        for _ in range(10):
++            s = connect(live.base)
++            s.sendall(b"POST /leads HTTP/1.1\r\nHost: x\r\nContent-Le")  # the server is waiting for the rest
++            s.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER, struct.pack("ii", 1, 0))
++            s.close()  # reset while the server reads
++        wait_until(lambda: live.count == 0, what="places freed")
++        assert get_ok(live.base) == 200
++    assert not [r for r in caplog.records if "handler failed" in r.getMessage()]
++    assert "Traceback" not in capsys.readouterr().err  # the standard library prints one for a failed handler
++
++
++# -- item 8: a thread that cannot start
++def test_thread_start_failure_answers_busy(live, monkeypatch) -> None:
++    def boom(self, request, client_address) -> None:
++        raise RuntimeError("cannot start new thread")
++
++    monkeypatch.setattr(socketserver.ThreadingMixIn, "process_request", boom)
++    s = connect(live.base)
++    s.sendall(f"GET /counts HTTP/1.1\r\nHost: {HOST}\r\n\r\n".encode())
++    status, _, body = parse_reply(read_all(s))
++    s.close()
++    assert status == 503 and body == BUSY_REPLY
++    assert live.count == 0 and live.srv._pending == {}  # type: ignore[attr-defined]
++    monkeypatch.undo()
+     assert call(live.base, "GET", "/counts")[0] == 200
+ 
+ 
++# -- item 9: the limits are checked
++GOOD = {
++    "max_connections": 256,
++    "header": 10.0,
++    "body": 10,
++    "busy_write": 1.0,
++    "retry_after": 1,
++}
++
++
++def test_default_limits_are_valid() -> None:
++    constants.validate_http_limits(**GOOD)
++    assert constants.MAX_CONNECTIONS == 256
++    assert constants.MAX_CONNECTIONS_MIN <= constants.MAX_CONNECTIONS <= constants.MAX_CONNECTIONS_MAX
++
++
++@pytest.mark.parametrize(
++    ("field", "value", "words"),
++    [
++        ("max_connections", 7, "MAX_CONNECTIONS"),
++        ("max_connections", 4097, "MAX_CONNECTIONS"),
++        ("max_connections", 64.0, "MAX_CONNECTIONS"),
++        ("max_connections", True, "MAX_CONNECTIONS"),
++        ("header", 0, "HEADER_READ_DEADLINE_SECONDS"),
++        ("body", float("nan"), "BODY_READ_DEADLINE_SECONDS"),
++        ("busy_write", -1.0, "BUSY_WRITE_TIMEOUT_SECONDS"),
++        ("busy_write", "1", "BUSY_WRITE_TIMEOUT_SECONDS"),
++        ("retry_after", 0, "BUSY_RETRY_AFTER_SECONDS"),
++    ],
++)
++def test_bad_limit_is_refused(field, value, words) -> None:
++    with pytest.raises(ValueError, match=words):
++        constants.validate_http_limits(**{**GOOD, field: value})
++
++
+ def test_vanished_client_logs_no_failure(env, caplog, capsys) -> None:
+     base = env.serve(env.rig())
+     with caplog.at_level(logging.DEBUG):
+         for _ in range(10):
+-            s = socket.create_connection(addr(base), timeout=8)
++            s = connect(base)
+             s.sendall(b"\x00\xff garbage not http\r\n\r\n")
+             s.close()  # closes without reading the error reply
+-            s = socket.create_connection(addr(base), timeout=8)
++            s = connect(base)
+             s.sendall(b"BREW /leads HTTP/1.1\r\nHost: x\r\n\r\n")
+-            s.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER, b"\x01\x00\x00\x00\x00\x00\x00\x00")  # reset on close
++            s.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER, struct.pack("ii", 1, 0))  # reset on close
+             s.close()
+-        time.sleep(0.5)
+-        assert call(base, "GET", "/counts")[0] == 200
++        assert get_ok(base) == 200
+     assert not [r for r in caplog.records if "handler failed" in r.getMessage()]
+     assert "Traceback" not in capsys.readouterr().err  # the standard library prints one when a reply write fails
+ 

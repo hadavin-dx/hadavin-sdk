@@ -1,0 +1,116 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+......................................................................FF [ 26%]
+FFFFFFFFF.F.F.F.F.............F......................................... [ 52%]
+...................................................................xxxxx [ 78%]
+xxxxxxxxxx.................F..........................x.....             [100%]
+=================================== FAILURES ===================================
+E   AttributeError: module 'hadavin_sdk.guard.redact' has no attribute 'KEY_PREFIX_MAX'
+/home/user/build/EV-Q8b-13ea6b75/fb_old/tests/test_q8b_batch2.py:58: AttributeError: module 'hadavin_sdk.guard.redact' has no attribute 'KEY_PREFIX_MAX'
+E   AssertionError: a value glued to a key is readable: 126 cases, first ['<EMAIL_1>=<A>', '<EMAIL_1>=<A>']
+    assert not ['<EMAIL_1>=<A>', '<EMAIL_1>=<A>', '<EMAIL_1>=<A>', '<EMAIL_1>=<A>', '<EMAIL_1>=<A>', '<EMAIL_1>=<A>', ...]
+/home/user/build/EV-Q8b-13ea6b75/fb_old/tests/test_q8b_batch2.py:74: AssertionError: a value glued to a key is readable: 126 cases, first ['<EMAIL_1>=<A>', '<EMAIL_1>=<A>']
+E   AssertionError: a value behind a word of these lengths is readable: [41, 42, 255, 1000]
+    assert not [41, 42, 255, 1000]
+/home/user/build/EV-Q8b-13ea6b75/fb_old/tests/test_q8b_batch2.py:79: AssertionError: a value behind a word of these lengths is readable: [41, 42, 255, 1000]
+E   AttributeError: module 'hadavin_sdk.guard.redact' has no attribute 'KEY_PREFIX_MAX'
+/home/user/build/EV-Q8b-13ea6b75/fb_old/tests/test_q8b_batch2.py:84: AttributeError: module 'hadavin_sdk.guard.redact' has no attribute 'KEY_PREFIX_MAX'
+E   AssertionError: a word of the value is readable: [('access-key', 'card'), ('access-key', 'walk'), ('access-key', 'notice'), ('access-token', 'walk'), ('access_key', 'card')]
+    assert not [('access-key', 'card'), ('access-key', 'walk'), ('access-key', 'notice'), ('access-token', 'walk'), ('access_key', 'card'), ('access_key', 'walk'), ...]
+/home/user/build/EV-Q8b-13ea6b75/fb_old/tests/test_q8b_batch2.py:104: AssertionError: a word of the value is readable: [('access-key', 'card'), ('access-key', 'walk'), ('access-key', 'notice'), ('access-token', 'walk'), ('access_key', 'card')]
+E   assert ('whole_assignment_values' not in '"""Approval...n        )\n'
+      
+      'whole_assignment_values' is contained here:
+        dropped (`whole_assignment_values`); no
+            # other text is removed or joined. Placeholders already in the text (`<IPV4_1>`) survive sanitising (tested) and are
+            # seeded into the map so a new one never reuses their number.
+            text = text.replace("\x00", "")
+            mapping = _seeded(text)...
+      
+      ...Full output truncated, use '-vv' to show)
+/home/user/build/EV-Q8b-13ea6b75/fb_old/tests/test_q8b_batch2.py:110: assert ('whole_assignment_values' not in '"""Approval...n        )\n'
+E   AssertionError: assert 'run --password=<SECRET_1>' == 'run --passwo...--target prod'
+      
+      - run --password=<SECRET_1> --force --target prod
+      + run --password=<SECRET_1>
+/home/user/build/EV-Q8b-13ea6b75/fb_old/tests/test_q8b_batch2.py:116: AssertionError: assert 'run --password=<SECRET_1>' == 'run --passwo...--target prod'
+E   AssertionError: agent-ops asks to run restart_service v1 (reversible) on crm. Inputs: {}. Expected: Expected: rotate token=<SECRET_1>
+    assert ('abc12345' not in 'agent-ops a...n=<SECRET_1>'
+      
+      'abc12345' is contained here:
+        =<SECRET_1> and None)
+     +  where None = <function search at 0x7f68dc5a8360>(' Plan [0-9a-f]{12}\\.$', 'agent-ops asks to run restart_service v1 (reversible) on crm. Inputs: {}. Expected: Expected: rotate token=<SECRET_1>')
+     +    where <function search at 0x7f68dc5a8360> = re.search
+/home/user/build/EV-Q8b-13ea6b75/fb_old/tests/test_q8b_batch2.py:133: AssertionError: agent-ops asks to run restart_service v1 (reversible) on crm. Inputs: {}. Expected: Expected: rotate token=<SECRET_1>
+E   AssertionError: 'password=correct horse battery staple' -> 'password=<SECRET_1> horse battery staple'
+    assert not ['horse', 'battery', 'staple']
+     +  where ['horse', 'battery', 'staple'] = _readable('password=<SECRET_1> horse battery staple')
+/home/user/build/EV-Q8b-13ea6b75/fb_old/tests/test_q8b_batch2.py:147: AssertionError: 'password=correct horse battery staple' -> 'password=<SECRET_1> horse battery staple'
+E   AssertionError: 24 cases leak, first ["card: '[link removed] correct horse battery staple'", "notice: '[link removed] correct horse battery staple'"]
+    assert not ["card: '[link removed] correct horse battery staple'", "notice: '[link removed] correct horse battery staple'", "card...card: '[link removed] = correct horse battery staple'", "notice: '[link removed] = correct horse battery staple'", ...]
+/home/user/build/EV-Q8b-13ea6b75/fb_old/tests/test_q8b_batch2.py:174: AssertionError: 24 cases leak, first ["card: '[link removed] correct horse battery staple'", "notice: '[link removed] correct horse battery staple'"]
+E   AssertionError: [link removed] correct horse battery staple
+    assert not ['correct', 'horse', 'battery', 'staple']
+     +  where ['correct', 'horse', 'battery', 'staple'] = _readable('[link removed] correct horse battery staple')
+/home/user/build/EV-Q8b-13ea6b75/fb_old/tests/test_q8b_batch2.py:179: AssertionError: [link removed] correct horse battery staple
+E   AssertionError: a value after Bearer is readable: 69 cases, first [('Authorization: Bearer password=correct horse battery staple', 'Authorization: Bearer <SECRET_1> horse battery staple'), ('Bearer passphrase=correct horse battery staple', 'Bearer passphrase=correct horse battery staple'), ('Authorization: Bearer passphrase=correct horse battery staple', 'Authorization: Bearer <SECRET_1> horse battery staple')]
+    assert not [('Authorization: Bearer password=correct horse battery staple', 'Authorization: Bearer <SECRET_1> horse battery stapl...orization: Bearer api_key=correct horse battery staple', 'Authorization: Bearer <SECRET_1> horse battery staple'), ...]
+/home/user/build/EV-Q8b-13ea6b75/fb_old/tests/test_q8b_batch2.py:197: AssertionError: a value after Bearer is readable: 69 cases, first [('Authorization: Bearer password=correct horse battery staple', 'Authorization: Bearer <SECRET_1> horse battery staple'), ('Bearer passphrase=correct horse battery staple', 'Bearer passphrase=correct horse battery staple'), ('Authorization: Bearer passphrase=correct horse battery staple', 'Authorization: Bearer <SECRET_1> horse battery staple')]
+E   TypeError: render_shadow() got an unexpected keyword argument 'target_labels'
+/home/user/build/EV-Q8b-13ea6b75/fb_old/tests/test_q8b_batch2.py:232: TypeError: render_shadow() got an unexpected keyword argument 'target_labels'
+E   AssertionError: assert False
+     +  where False = <built-in method endswith of str object at 0x7f68da4bafb0>('--force --target prod')
+     +    where <built-in method endswith of str object at 0x7f68da4bafb0> = 'run --password=<SECRET_1>'.endswith
+     +      where 'run --password=<SECRET_1>' = clean('run --password=correct horse battery staple --force --target prod')
+/home/user/build/EV-Q8b-13ea6b75/fb_old/tests/test_q8b_batch2.py:253: AssertionError: assert False
+E   AssertionError: a glued spelling is readable on the card: 'usersession=<SECRET_1> horse battery staple'
+    assert not ['horse', 'battery', 'staple']
+     +  where ['horse', 'battery', 'staple'] = _readable('usersession=<SECRET_1> horse battery staple')
+/home/user/build/EV-Q8b-13ea6b75/fb_old/tests/test_q8b_batch2.py:273: AssertionError: a glued spelling is readable on the card: 'usersession=<SECRET_1> horse battery staple'
+E   AssertionError: a card path skips redact_for_people: its body is ['defang_domains(whole_assignment_values(runmap.redact_text(text, mapping, neutralise=_neutralise)))']
+    assert ['defang_doma...eutralise)))'] == ['defang_doma...neutralise))']
+      
+      At index 0 diff: 'defang_domains(whole_assignment_values(runmap.redact_text(text, mapping, neutralise=_neutralise)))' != 'defang_domains(runmap.redact_text(text, mapping, neutralise=_neutralise))'
+      Use -v to get more diff
+/home/user/build/EV-Q8b-13ea6b75/fb_old/tests/test_q8b_card_text.py:340: AssertionError: a card path skips redact_for_people: its body is ['defang_domains(whole_assignment_values(runmap.redact_text(text, mapping, neutralise=_neutralise)))']
+E   AssertionError: <EMAIL_1>=<SECRET_1>
+    assert '<EMAIL_1>=<SECRET_1>' == '<EMAIL_1>password=<SECRET_1>'
+      
+      - <EMAIL_1>password=<SECRET_1>
+      ?          --------
+      + <EMAIL_1>=<SECRET_1>
+/home/user/build/EV-Q8b-13ea6b75/fb_old/tests/test_q8b_glued_and_whole_values.py:70: AssertionError: <EMAIL_1>=<SECRET_1>
+=========================== short test summary info ============================
+FAILED tests/test_q8b_batch2.py::test_the_prefix_bound_is_one_shared_name - A...
+FAILED tests/test_q8b_batch2.py::test_a_key_glued_to_an_address_of_any_length_keeps_its_value_masked
+FAILED tests/test_q8b_batch2.py::test_a_key_glued_to_a_long_identifier_keeps_its_value_masked
+FAILED tests/test_q8b_batch2.py::test_a_key_glued_to_an_arn_at_every_distance_is_masked
+FAILED tests/test_q8b_batch2.py::test_every_spelling_of_every_key_masks_a_value_with_spaces_on_every_path
+FAILED tests/test_q8b_batch2.py::test_there_is_no_second_key_list_in_the_card_code
+FAILED tests/test_q8b_batch2.py::test_a_card_keeps_flags_and_words_after_a_masked_value
+FAILED tests/test_q8b_batch2.py::test_the_plan_line_survives_a_masked_value_at_the_end_of_the_text
+FAILED tests/test_q8b_batch2.py::test_the_walk_masks_the_words_after_a_value_and_a_passphrase
+FAILED tests/test_q8b_batch2.py::test_a_link_glued_to_a_credential_key_keeps_the_value_masked
+FAILED tests/test_q8b_batch2.py::test_an_address_link_glued_to_a_credential_key_keeps_the_value_masked
+FAILED tests/test_q8b_batch2.py::test_a_credential_key_after_a_bearer_word_is_masked_whole
+FAILED tests/test_q8b_batch2.py::test_the_shadow_card_shows_the_target_label
+FAILED tests/test_q8b_batch2.py::test_a_flag_with_a_value_that_has_spaces_is_masked_whole
+FAILED tests/test_q8b_batch2.py::test_the_card_path_masks_glued_key_spellings_and_makes_no_new_fence
+FAILED tests/test_q8b_card_text.py::test_n8_only_one_function_feeds_a_card - ...
+FAILED tests/test_q8b_glued_and_whole_values.py::test_r1_the_address_is_masked_too_when_a_key_is_glued_to_it
+XFAIL tests/test_q8b_credential_keys.py::test_x1_a_composite_value_is_masked_where_repeated - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x2_a_value_over_255_characters_is_masked_where_repeated - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x3_a_value_with_both_quote_marks_is_masked_where_repeated - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x4_a_value_nested_under_a_credential_key_is_masked_where_repeated - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x5_a_number_is_masked_where_repeated[under a credential key] - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x5_a_number_is_masked_where_repeated[env entry value] - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x6_a_respelled_copy_is_masked[base64] - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x6_a_respelled_copy_is_masked[capitals] - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x6_a_respelled_copy_is_masked[wrapped over two lines] - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x6_a_respelled_copy_is_masked[double space] - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x6_a_respelled_copy_is_masked[hex] - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x7_a_very_short_value_is_masked_where_repeated[1 character] - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x7_a_very_short_value_is_masked_where_repeated[2 characters] - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x7_a_very_short_value_is_masked_where_repeated[3 characters glued to a letter] - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x8_the_copy_without_the_escape_sequence_is_masked - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_random.py::test_x9_a_value_with_special_characters_is_masked_where_it_is_repeated - Q8d: sweep of registered secrets before the patterns
+17 failed, 243 passed, 16 xfailed in 56.57s

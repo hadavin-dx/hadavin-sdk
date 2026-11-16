@@ -1,0 +1,5 @@
+python tools/scan_repo.py at 8382bdd: rc=1
+tests/test_migration_postgres.py:3221: credential-literal
+git blame of that line: commit 31ffaa06 (inside the four-commit delta)
+same tool on origin/main 2a8c2aac: rc=0, no output
+same tool on HEAD~4 42fc2597 (clean checkout): rc=0, no output

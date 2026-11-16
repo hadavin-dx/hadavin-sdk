@@ -1,0 +1,6 @@
+      1 FAILED tests/test_q8a_live_overrides.py::test_a_config_error_never_shows_the_value_that_was_refused
+     21 FAILED tests/test_q8a_live_overrides.py::test_a_step_refuses_an_object_that_says_it_is_a_tick_context_outside_demo
+      1 FAILED tests/test_q8a_live_overrides.py::test_a_tick_context_cannot_be_subclassed
+      2 FAILED tests/test_q8a_live_overrides.py::test_run_tick_refuses_a_step_name_used_twice_outside_demo
+      1 FAILED tests/test_stage_names.py::test_pilot_and_prod_refuse_a_tick_whose_step_list_lacks_a_built_in_step
+      1 FAILED tests/test_stage_names.py::test_pilot_and_prod_refuse_a_time_or_a_step_list_handed_to_the_tick

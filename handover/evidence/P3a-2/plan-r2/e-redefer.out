@@ -1,0 +1,29 @@
+Pager usage is off.
+== setup, as the plain migration role emig that owns schema app (no superuser anywhere below)
+CREATE ROLE
+CREATE SCHEMA
+SET
+CREATE TABLE
+CREATE TABLE
+== the file: a deferred constraint trigger whose function defers again and queues a second row; the second row grants
+CREATE FUNCTION
+CREATE TRIGGER
+BEGIN
+INSERT 0 1
+== step 5: SET CONSTRAINTS ALL IMMEDIATE (LATE2 i=1 fires here)
+psql:e-redefer.sql:17: NOTICE:  LATE2 fired, i=1
+SET CONSTRAINTS
+== step 6 stand-in: the access list just before COMMIT
+ before_commit 
+---------------
+ 
+(1 row)
+
+== step 7: COMMIT (LATE2 i=2 fires here)
+psql:e-redefer.sql:21: NOTICE:  LATE2 fired, i=2
+COMMIT
+        after_commit         
+-----------------------------
+ {emig=arwdDxt/emig,=r/emig}
+(1 row)
+

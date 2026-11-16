@@ -1,0 +1,33 @@
+MUTANT A-01-m16  VERDICT: KILLED
+description: event no longer kept in memory when outbox fails (audit loss)
+base commit: b4cce5b6ae80b45125604b8295ebb35bd2ea1c2c   root: /tmp/c8/wA   file: src/hadavin_sdk/audit/chain.py
+command: env -i PATH=/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin HOME=/root PYTHONDONTWRITEBYTECODE=1 /tmp/c8/wA/.venv/bin/python -m pytest -q -p no:cacheprovider --tb=line -rf tests/test_a01_audit_reconcile.py tests/test_p7_tick.py tests/test_s2_audit.py tests/test_p3b_neutral_audit.py   (cwd=/tmp/c8/wA)
+rc: 1
+restore check: diff <saved original> <file after restore>: rc=0 (0 = identical)
+pytest summary line: 1 failed, 103 passed in 18.40s
+first failing test: tests/test_a01_audit_reconcile.py::test_when_the_outbox_table_also_fails_an_error_line_is_logged
+all failing tests (1): tests/test_a01_audit_reconcile.py::test_when_the_outbox_table_also_fails_an_error_line_is_logged
+--- OLD TEXT (full) ---
+                    type(exc2).__name__,
+                    event.event_id,
+                )
+                self._pending.append(event)
+--- NEW TEXT (full) ---
+                    type(exc2).__name__,
+                    event.event_id,
+                )
+--- PYTEST OUTPUT (full) ---
+....F................................................................... [ 69%]
+................................                                         [100%]
+=================================== FAILURES ===================================
+E   AssertionError: assert ('held in memory only' in 'ERROR    hadavin_sdk.audit.chain:chain.py:235 audit outbox not written (OSError): event evt-1ff5d1bb40b345f6abf17eca8bd94d7b is held in memory only\n' and 0 == 1)
+     +  where 'ERROR    hadavin_sdk.audit.chain:chain.py:235 audit outbox not written (OSError): event evt-1ff5d1bb40b345f6abf17eca8bd94d7b is held in memory only\n' = <_pytest.logging.LogCaptureFixture object at 0x7fedd88ee8b0>.text
+     +  and   0 = len([])
+     +    where [] = <hadavin_sdk.audit.chain.ChainAudit object at 0x7fedd87b0190>._pending
+------------------------------ Captured log call -------------------------------
+ERROR    hadavin_sdk.audit.chain:chain.py:235 audit outbox not written (OSError): event evt-1ff5d1bb40b345f6abf17eca8bd94d7b is held in memory only
+/tmp/c8/wA/tests/test_a01_audit_reconcile.py:74: AssertionError: assert ('held in memory only' in 'ERROR    hadavin_sdk.audit.chain:chain.py:235 audit outbox not written (OSError): event evt-1ff5d1bb40b345f6abf17eca8bd94d7b is held in memory only\n' and 0 == 1)
+=========================== short test summary info ============================
+FAILED tests/test_a01_audit_reconcile.py::test_when_the_outbox_table_also_fails_an_error_line_is_logged
+1 failed, 103 passed in 18.40s
+

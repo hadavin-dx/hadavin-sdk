@@ -1,0 +1,28 @@
+base 2742c1bfe510bfb13cfac5d3424bac3d8d6324c5
+hadavin_sdk /home/user/build/WT-P1da/src/hadavin_sdk
+seed 1
+S1	card	samples=50	redraws=1	exact=50	LEAK=0	OVERMASK=0	OTHER=0	longest_hidden=40
+S1	model	samples=50	redraws=1	exact=50	LEAK=0	OVERMASK=0	OTHER=0	longest_hidden=40
+S2	card	samples=25	redraws=0	exact=25	LEAK=0	OVERMASK=0	OTHER=0	longest_hidden=40
+S2	model	samples=25	redraws=0	exact=25	LEAK=0	OVERMASK=0	OTHER=0	longest_hidden=40
+S2x	card	samples=67	redraws=0	exact=67	LEAK=0	OVERMASK=0	OTHER=0	longest_hidden=10
+S2x	model	samples=67	redraws=0	exact=67	LEAK=0	OVERMASK=0	OTHER=0	longest_hidden=10
+S3	card	samples=25	redraws=1	exact=25	LEAK=0	OVERMASK=0	OTHER=0	longest_hidden=50
+S3	model	samples=25	redraws=1	exact=25	LEAK=0	OVERMASK=0	OTHER=0	longest_hidden=50
+S4	card	samples=50	redraws=0	exact=50	LEAK=0	OVERMASK=0	OTHER=0	longest_hidden=40
+S4	model	samples=50	redraws=0	exact=50	LEAK=0	OVERMASK=0	OTHER=0	longest_hidden=40
+S5	card	samples=50	redraws=0	exact=50	LEAK=0	OVERMASK=0	OTHER=0	longest_hidden=40
+S5	model	samples=50	redraws=0	exact=50	LEAK=0	OVERMASK=0	OTHER=0	longest_hidden=40
+  OVERMASK S5x card: input='password=v&ziU&ne; delta papa juliet tango india' output='password=<SECRET_2> delta papa juliet tango india' expected='password=<P>; delta papa juliet tango india'
+  OVERMASK S5x card: input='auth_token=vR&eU&ge; oscar sierra' output='auth_token=<SECRET_2> oscar sierra' expected='auth_token=<P>; oscar sierra'
+S5x	card	samples=268	redraws=0	exact=266	LEAK=0	OVERMASK=2	OTHER=0	longest_hidden=10
+  OVERMASK S5x model: input='password=v&ziU&ne; delta papa juliet tango india' output='password=<SECRET_2> delta papa juliet tango india' expected='password=<P>; delta papa juliet tango india'
+  OVERMASK S5x model: input='auth_token=vR&eU&ge; oscar sierra' output='auth_token=<SECRET_2> oscar sierra' expected='auth_token=<P>; oscar sierra'
+S5x	model	samples=268	redraws=0	exact=266	LEAK=0	OVERMASK=2	OTHER=0	longest_hidden=10
+S6	card	samples=50	redraws=0	exact=50	LEAK=0	OVERMASK=0	OTHER=0	longest_hidden=73
+S6	model	samples=50	redraws=0	exact=50	LEAK=0	OVERMASK=0	OTHER=0	longest_hidden=73
+S7	card	samples=20	redraws=0	exact=20	LEAK=0	OVERMASK=0	OTHER=0	longest_hidden=12
+S7	model	samples=20	redraws=0	exact=20	LEAK=0	OVERMASK=0	OTHER=0	longest_hidden=12
+REAL	card	samples=30	redraws=0	exact=30	LEAK=0	OVERMASK=0	OTHER=0	longest_hidden=19
+REAL	model	samples=30	redraws=0	exact=30	LEAK=0	OVERMASK=0	OTHER=0	longest_hidden=19
+total samples 635

@@ -1,0 +1,116 @@
+FFFFFFF...FFF.FFFFFFFFFFFFF.FFF.                                         [100%]
+=================================== FAILURES ===================================
+E   AssertionError: wrong wording for 'a?b': 
+    assert '' == 'PathRefused:...oes not allow'
+      
+      - PathRefused: hash file: contains a character Windows does not allow
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch4.py:45: AssertionError: wrong wording for 'a?b':
+E   AssertionError: wrong wording for 'a?b': 
+    assert '' == 'PathRefused:...oes not allow'
+      
+      - PathRefused: mounted secret: contains a character Windows does not allow
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch4.py:55: AssertionError: wrong wording for 'a?b':
+E   Failed: DID NOT RAISE ConfigError
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch4.py:68: Failed: DID NOT RAISE ConfigError
+E   Failed: DID NOT RAISE ConfigError
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch4.py:68: Failed: DID NOT RAISE ConfigError
+E   Failed: DID NOT RAISE ConfigError
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch4.py:68: Failed: DID NOT RAISE ConfigError
+E   Failed: DID NOT RAISE ConfigError
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch4.py:68: Failed: DID NOT RAISE ConfigError
+E   Failed: DID NOT RAISE ConfigError
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch4.py:68: Failed: DID NOT RAISE ConfigError
+E   AssertionError: wrong wording: IsADirectoryError: [Errno 21] Is a directory: 11
+    assert 'IsADirectory...directory: 11' == 'ConfigError:... regular file'
+      
+      - ConfigError: secret 'd' is not a regular file
+      + IsADirectoryError: [Errno 21] Is a directory: 11
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch4.py:129: AssertionError: wrong wording: IsADirectoryError: [Errno 21] Is a directory: 11
+E   AssertionError: the file moved over a link a person planted
+    assert False
+     +  where False = is_file()
+     +    where is_file = (PosixPath('/tmp/pytest-of-unknown/pytest-1089/test_local_dir_reconcile_leave0/aud/outbox') / 'bad.json').is_file
+     +      where PosixPath('/tmp/pytest-of-unknown/pytest-1089/test_local_dir_reconcile_leave0/aud/outbox') = <hadavin_sdk.audit.local_dir.LocalDirSink object at 0x7f098de21160>.outbox
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch4.py:144: AssertionError: the file moved over a link a person planted
+E   AssertionError: assert False
+     +  where False = is_symlink()
+     +    where is_symlink = (PosixPath('/tmp/pytest-of-unknown/pytest-1089/test_local_dir_reconcile_leave1/aud/outbox') / 'linked.json').is_symlink
+     +      where PosixPath('/tmp/pytest-of-unknown/pytest-1089/test_local_dir_reconcile_leave1/aud/outbox') = <hadavin_sdk.audit.local_dir.LocalDirSink object at 0x7f098de06e90>.outbox
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch4.py:159: AssertionError: assert False
+E   Failed: DID NOT RAISE PathRefused
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch4.py:187: Failed: DID NOT RAISE PathRefused
+E   AssertionError: Regex pattern did not match.
+      Expected regex: 'bundle file: path escapes its folder'
+      Actual message: 'bundle case-001: symbolic links are refused'
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch4.py:203: AssertionError: Regex pattern did not match.
+E   AssertionError: wrong wording: 
+    assert 'bundle folder: contains a control character' in ''
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch4.py:214: AssertionError: wrong wording:
+E   AssertionError: wrong wording: BundleError: bundle con: folder name must look like case-001
+    assert False
+     +  where False = <built-in method startswith of str object at 0x7f098de93ad0>('PathRefused: bundle folder: ')
+     +    where <built-in method startswith of str object at 0x7f098de93ad0> = 'BundleError: bundle con: folder name must look like case-001'.startswith
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch4.py:223: AssertionError: wrong wording: BundleError: bundle con: folder name must look like case-001
+E   Failed: DID NOT RAISE PathRefused
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch4.py:238: Failed: DID NOT RAISE PathRefused
+E   ImportError: cannot import name '_mark_failed' from 'hadavin_sdk.k1b.replay' (/home/user/build/E-work/a-tree/src/hadavin_sdk/k1b/replay.py)
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch4.py:245: ImportError: cannot import name '_mark_failed' from 'hadavin_sdk.k1b.replay' (/home/user/build/E-work/a-tree/src/hadavin_sdk/k1b/replay.py)
+E   AttributeError: <module 'hadavin_sdk.k1b.replay' from '/home/user/build/E-work/a-tree/src/hadavin_sdk/k1b/replay.py'> has no attribute '_mark_failed'
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch4.py:272: AttributeError: <module 'hadavin_sdk.k1b.replay' from '/home/user/build/E-work/a-tree/src/hadavin_sdk/k1b/replay.py'> has no attribute '_mark_failed'
+E   AttributeError: <module 'hadavin_sdk.k1b.replay' from '/home/user/build/E-work/a-tree/src/hadavin_sdk/k1b/replay.py'> has no attribute '_mark_failed'
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch4.py:290: AttributeError: <module 'hadavin_sdk.k1b.replay' from '/home/user/build/E-work/a-tree/src/hadavin_sdk/k1b/replay.py'> has no attribute '_mark_failed'
+E   AssertionError: wrong wording: KeyError: 'r'
+    assert False
+     +  where False = <built-in method startswith of str object at 0x7f098d17c930>('PathRefused: recording: ')
+     +    where <built-in method startswith of str object at 0x7f098d17c930> = "KeyError: 'r'".startswith
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch4.py:313: AssertionError: wrong wording: KeyError: 'r'
+E   TypeError: atomic_write() takes 2 positional arguments but 3 were given
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch4.py:319: TypeError: atomic_write() takes 2 positional arguments but 3 were given
+E   TypeError: atomic_write() takes 2 positional arguments but 3 were given
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch4.py:331: TypeError: atomic_write() takes 2 positional arguments but 3 were given
+E   TypeError: atomic_write() takes 2 positional arguments but 3 were given
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch4.py:343: TypeError: atomic_write() takes 2 positional arguments but 3 were given
+E   AssertionError: assert (PermissionError(13, 'denied') is None)
+     +  where PermissionError(13, 'denied') = ConfigError('cannot read: a.txt').__cause__
+     +    where ConfigError('cannot read: a.txt') = <ExceptionInfo ConfigError('cannot read: a.txt') tblen=2>.value
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch4.py:359: AssertionError: assert (PermissionError(13, 'denied') is None)
+E   AssertionError: wrong wording for 'a:b': TypeError: atomic_write() takes 2 positional arguments but 3 were given
+    assert False
+     +  where False = <built-in method startswith of str object at 0x7f098d184340>('PathRefused: output file: ')
+     +    where <built-in method startswith of str object at 0x7f098d184340> = 'TypeError: atomic_write() takes 2 positional arguments but 3 were given'.startswith
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch4.py:383: AssertionError: wrong wording for 'a:b': TypeError: atomic_write() takes 2 positional arguments but 3 were given
+E   AssertionError: wrong wording: ConfigError: signer ed25519_local: no key file at /tmp/pytest-of-unknown/pytest-1089/test_build_local_refuses_a_key0/k‮
+    assert False
+     +  where False = <built-in method startswith of str object at 0x7f098de8e760>('PathRefused: signer key file: contains a control character')
+     +    where <built-in method startswith of str object at 0x7f098de8e760> = 'ConfigError: signer ed25519_local: no key file at /tmp/pytest-of-unknown/pytest-1089/test_build_local_refuses_a_key0/k\u202e'.startswith
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch4.py:399: AssertionError: wrong wording: ConfigError: signer ed25519_local: no key file at /tmp/pytest-of-unknown/pytest-1089/test_build_local_refuses_a_key0/k‮
+E   AttributeError: 'LocalDirSink' object has no attribute '_object'. Did you mean: 'objects'?
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch4.py:410: AttributeError: 'LocalDirSink' object has no attribute '_object'. Did you mean: 'objects'?
+=========================== short test summary info ============================
+FAILED tests/test_pathguard_batch4.py::test_hash_files_refuses_a_name_with_a_colon_device_name_or_trailing_dot
+FAILED tests/test_pathguard_batch4.py::test_secrets_file_refuses_a_secret_name_with_a_colon_device_name_or_trailing_dot
+FAILED tests/test_pathguard_batch4.py::test_answers_file_name_with_a_colon_device_name_or_trailing_dot_is_refused[a?b]
+FAILED tests/test_pathguard_batch4.py::test_answers_file_name_with_a_colon_device_name_or_trailing_dot_is_refused[con]
+FAILED tests/test_pathguard_batch4.py::test_answers_file_name_with_a_colon_device_name_or_trailing_dot_is_refused[x.]
+FAILED tests/test_pathguard_batch4.py::test_answers_file_name_with_a_colon_device_name_or_trailing_dot_is_refused[vault:token]
+FAILED tests/test_pathguard_batch4.py::test_answers_file_name_with_a_colon_device_name_or_trailing_dot_is_refused[aux.txt]
+FAILED tests/test_pathguard_batch4.py::test_secrets_file_says_not_found_and_not_a_regular_file
+FAILED tests/test_pathguard_batch4.py::test_local_dir_reconcile_leaves_a_corrupt_file_when_its_name_in_corrupt_is_a_link
+FAILED tests/test_pathguard_batch4.py::test_local_dir_reconcile_leaves_a_link_to_a_file_outside_the_outbox
+FAILED tests/test_pathguard_batch4.py::test_signer_key_path_refuses_a_parent_link_that_resolves_to_a_folder_with_a_control_character
+FAILED tests/test_pathguard_batch4.py::test_bundle_manifest_that_is_a_link_out_is_refused_with_the_pathguard_wording
+FAILED tests/test_pathguard_batch4.py::test_bundle_folder_under_a_parent_with_a_control_character_is_refused
+FAILED tests/test_pathguard_batch4.py::test_bundles_folder_entry_with_a_reserved_name_is_refused_as_a_path_refusal
+FAILED tests/test_pathguard_batch4.py::test_score_check_layout_refuses_a_run_folder_that_is_a_link_out
+FAILED tests/test_pathguard_batch4.py::test_replay_mark_failed_writes_nothing_into_a_folder_with_a_control_character
+FAILED tests/test_pathguard_batch4.py::test_replay_keeps_the_first_error_and_names_it_when_marking_is_interrupted
+FAILED tests/test_pathguard_batch4.py::test_replay_marking_failure_leaves_the_first_error_with_a_note
+FAILED tests/test_pathguard_batch4.py::test_fake_llm_refuses_a_recording_name_that_is_a_link_out
+FAILED tests/test_pathguard_batch4.py::test_atomic_write_creates_its_file_for_the_owner_only
+FAILED tests/test_pathguard_batch4.py::test_atomic_write_errors_carry_no_path
+FAILED tests/test_pathguard_batch4.py::test_atomic_write_rename_error_carries_no_path
+FAILED tests/test_pathguard_batch4.py::test_hash_files_read_error_is_raised_without_a_chain
+FAILED tests/test_pathguard_batch4.py::test_atomic_write_refuses_a_data_name_with_a_colon_or_a_device_name
+FAILED tests/test_pathguard_batch4.py::test_build_local_refuses_a_key_path_with_a_control_character_as_a_path_refusal
+FAILED tests/test_pathguard_batch4.py::test_local_dir_object_names_are_joined_through_pathguard
+26 failed, 6 passed in 0.54s

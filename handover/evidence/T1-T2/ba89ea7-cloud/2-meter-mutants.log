@@ -1,0 +1,18 @@
+HEAD ba89ea751e0197ff64bd20143cd606eaa6529d01
+CMD /home/user/build/venv-t1t2-313/bin/python tests/meter_mutants.py
+ok  KILLED       L1 daily check is > instead of >= (one extra call at the exact cap)  [test_a_cap_that_is_a_multiple_of_the_cost_is_never_overshot_]
+ok  KILLED       L2 the daily check is gone  [test_one_caller_at_a_time_admits_ceil_cap_over_cost_and_over]
+ok  KILLED       L3 monthly check is > instead of >= (one extra call at the exact cap)  [test_the_monthly_cap_binds_when_it_is_lower_than_the_daily_c]
+ok  KILLED       L4 charge returns totals but records nothing  [test_one_caller_at_a_time_admits_ceil_cap_over_cost_and_over]
+ok  KILLED       L5 blocked also writes (a read adds spend)  [test_reads_never_change_a_total_and_a_replay_gives_the_same_]
+ok  KILLED       L6 charge books the day one hour late  [test_every_charge_lands_in_its_own_day_and_month_exactly_onc]
+ok  KILLED       L7 blocked reads yesterday's bucket  [test_the_daily_budget_stops_at_the_cap_and_frees_at_utc_midn]
+ok  KILLED       L8 now() reads the machine's local wall clock, not UTC  [test_the_real_now_is_aware_utc_and_books_23_00_utc_on_the_10]
+ok  KILLED       S1 the ledger double counts a day  [test_every_charge_lands_in_its_own_day_and_month_exactly_onc]
+ok  KILLED       S2 the month total sums every month (spend_totals)  [test_a_month_total_does_not_carry_over_31_days]
+ok  KILLED       S3 the month total sums every agent (spend_totals)  [test_one_agent_never_sees_another_agents_spend]
+ok  KILLED       S4 the month total a charge returns sums every month (add_spend)  [test_a_charge_returns_the_total_of_its_own_month_only]
+ok  KILLED       S5 the month total a charge returns sums every agent (add_spend)  [test_a_charge_returns_only_its_own_agents_month_total]
+ok  KILLED       S6 a charge replaces the day total instead of adding to it  [test_every_charge_lands_in_its_own_day_and_month_exactly_onc]
+14 of 14 good; problems: []
+exit=0

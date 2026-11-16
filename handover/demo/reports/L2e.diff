@@ -1,0 +1,2610 @@
+diff -ruN a/live_l2/README-L2.md b/live_l2/README-L2.md
+--- a/live_l2/README-L2.md	2026-11-09 19:52:50.747914029 +0000
++++ b/live_l2/README-L2.md	2026-11-09 20:16:30.878111812 +0000
+@@ -8,6 +8,9 @@
+ | `load_driver.py` | Sends requests to the desk's `POST /leads` on a fixed schedule and writes the **request log**. |
+ | `fake_model.py` | A fake model endpoint over HTTP, with modes you can switch while it runs. Writes the **model call log**. |
+ | `http_qualifier.py` | `HttpQualifier`: a desk Qualifier (`qualify(lead_id, email_key)`) that calls the fake model over HTTP. |
++| `catcher.py` | A tiny SMTP catcher with run-time modes; writes the **catcher log**. |
++| `campaign.py` | Runs the scenario catalogue (desk, model, catcher, load, checks) and saves each scenario folder. |
++| `recheck.py` | Re-runs the checks over a saved scenario folder (copy; never touches it), with the bounds the run stored. |
+ | `check_invariants.py` | The seven checks, run after a scenario has drained. Exit code 0 only if all seven hold. |
+ 
+ ## Input and output formats (the contract between the tools)
+@@ -40,26 +43,36 @@
+ and the run's identity: `intended_requests`, `distinct_request_ids`, `id_prefix` (every request id is `<prefix>-<n>`),
+ `run_id` (a random marker; every request carries it in its message, so it is stored in the book) and `email_domain`
+ (each lead's email is `<request id>@<domain>`). Check 1 and 2 use them to reject a stale or foreign book.
++`intended_list` = every intended `[door, request_id]` pair, so check 1 compares the log with the plan by identity, not
++only by count (a missing request together with a duplicated line still fails). `retry_window_seconds` = the driver's retry
++window (None: the default 5 retries); the crash scenarios use 15 s so a request outlives a desk restart.
+ `max_in_flight` = workers x threads: a burst larger than that is not fully at one moment.
+ 
+ ### Desk book (the desk's SQLite file; opened read-only)
+-Tables used: `receipts(source, source_ref, receipt_id)`, `leads(lead_id)`, `followups(lead_id, state, crm_done, updated_at)`.
++Tables used: `receipts(receipt_id, source, source_ref, payload, outcome, outcome_lead_id, decided_at)`,
++`leads(lead_id, receipt_id, email)`, `followups(lead_id, state, crm_done, updated_at, last_error)`.
++`followups.crm_done`: 0 = CRM step not started, 2 = a put was started and its end is not known, 1 = done.
+ 
+ ### SMTP catcher log (written by the catcher of lane part (b), read by check 3)
+ One line per accepted message: `{ts, send_key, message_id, to, subject, body_sha256, mode}`. `send_key` equals the
+-follow-up's `lead_id` (contract.md, "Follow-up drive"). Only `send_key` is read.
++follow-up's `lead_id` (contract.md, "Follow-up drive"). Read: `send_key`, `to` (must equal the lead's own address, any
++letter case) and `mode`. `mode` is the catcher mode in force when the line was written. A message the catcher could not
++decode (a broken charset) is still recorded, with `"undecodable": true`.
+ 
+ ### CRM dump (read by check 4)
+ JSON: either the fakes server reply of `GET /fake/crm` (`{"count": n, "rows": [{"lead_id", "record"}]}`) or a bare list
+ of such rows. Only `lead_id` is read.
+ 
+ ### Model call log (written by `fake_model.py`, read by check 5)
+-One line per call to `/v1/qualify`: `{ts, lead_id, mode, status}`. `mode` is the mode in force for the call, `status`
+-the HTTP status sent (`499` = the client had gone before the answer was written; only in `timeout` mode).
++Two lines per call to `/v1/qualify`: an `arrival` line when the call starts (`{ts, lead_id, mode, event: "arrival"}`)
++and a `result` line when it ends (`{ts, lead_id, mode, event: "result", status}`). `mode` is the mode in force for the
++call, `status` the HTTP status sent (`499` = the client had gone before the answer was written; `timeout` mode). Calls are
++counted from the arrival lines (a call held until the campaign stopped has no result line). A log from before the
++arrival lines (no `event` key) counts each row as one call, and `recheck` says so (a RERUN line).
+ 
+ ### Drain marker (optional; written by the campaign runner, read by check 7)
+-JSON `{"drained_ts": <epoch seconds>}`: the first moment the runner saw `pending = sending = 0` in the book (or
+-`null` if it never did). Without it check 7 falls back to the newest `followups.updated_at`, which has whole-second
++JSON `{"drained_ts": <epoch seconds>, "timed_out": <true when the runner gave up waiting>}`: the first moment the runner
++saw `pending = sending = 0` in the book (or `null` if it never did). Without it check 7 falls back to the newest `followups.updated_at`, which has whole-second
+ resolution.
+ 
+ ## The seven checks (`python -m live_l2.check_invariants --help`)
+@@ -75,28 +88,36 @@
+    (a repeat through the other door is the same person), matched by email (`no-lead:<email>`, `foreign-lead:<email>`),
+    so a book where every lead is lost fails. Every `new` verdict has its lead; a receipt with no verdict or with a
+    `review` verdict (the driver sends only valid made-up data) fails.
+-3. **Messages.** At most one catcher message per `send_key`; no key that belongs to no lead; every settled follow-up
++3. **Messages.** Every message goes to the lead's own address (`r-<id>@example.test`; case ignored). At most one catcher message per `send_key`; no key that belongs to no lead; every settled follow-up
+    (`sent`, `failed`, `unknown`) with zero messages must be exactly one in state `failed` or `unknown`, and every
+    `failed`/`unknown` one must have zero, except: an `unknown` with a message needs a last_error that says the email
+    may have left (`ambiguous`, `crash_while_sending`, `ambiguous_prior`, `mode_mismatch`), and a `failed` with a message
+    needs `ambiguous`, `crash_while_sending` or `ambiguous_prior` (the final 250 came late or never, the catcher kept the
+-   mail). Both are counted in the values. Follow-ups still `pending`/`sending` are left to check 2.
+-4. **CRM.** Allowed rows = the leads with `crm_done = 1` (each must be there) plus the "listed unknowns": leads with
++   mail). Both are counted in the values. Every `failed` follow-up needs a `last_error`. `--max-unknown` / `--max-failed` are
++ceilings (derived per scenario, see below). With `--expect` the check also proves the scenario's faults really happened:
++leads submitted in a healthy window ended `sent`; the catcher recorded the mode it was put in (`slow`,
++`drop-after-data`) at least once and at least one follow-up ended `unknown`; no message was recorded while the catcher
++was `down` (1 s tolerance for a session that began before). Follow-ups still `pending`/`sending` are left to check 2.
++4. **CRM.** A `sent` lead must have `crm_done = 1` and a CRM row. Allowed rows = the leads with `crm_done = 1` (each must be there) plus the "listed unknowns": leads with
+    `crm_done = 2` (a put was started, its end unknown) or a follow-up in state `unknown` (each may or may not be there).
+    Fails on a missing `crm_done = 1` row, a row for any other lead, a lead twice, or a row for a lead the book does not hold.
+ 5. **Model calls per lead** are at most `--model-bound`, counted from the fake model's `arrival` lines. The bound is
+    stated per scenario (`campaign.model_bound_for`, field `Scenario.model_bound`): a model that answers costs ONE call
+    per lead (the label is stored), plus `MODEL_CALL_SLACK` (1) in a scenario that kills the desk; a model that is down
+    at any time in the run (modes timeout, rate_limit, malformed_json, refusal, server_error, or a flap into one) may be
+-   asked on every automatic try, `SEND_MAX_ATTEMPTS` (5) + slack = 6. Without `--model-bound` the generic ceiling 6
+-   applies. The first campaign used one global 3 and flagged five scenarios that were within the real limit.
++   asked on every automatic try, `SEND_MAX_ATTEMPTS` (5) + slack = 6. Without `--model-bound` the bound is 1 (a
++   model that is down must say so). Modes `malformed_label`, and `slow` with a client timeout shorter than 3 s, count as down.
++   With `--expect`: an empty or result-only log fails, every lead must have been asked, the down modes must really
++   have been called (and the rate-limit and server-error modes must show non-200 results), no lead is asked again after
++   a usable answer, at most 8 leads are asked twice in a crash scenario, and no lead gets more than 5 failed calls. The first campaign used one global 3 and flagged five scenarios that were within the real limit.
+ 6. **503 rate** = responses with code 503 / all tries, plus how many requests saw a 503 and how many ended on one.
+-   Reported always; it fails only above `--max-503-rate` (default: no ceiling).
++   Check 6 is **report only** when no `--max-503-rate` is given (the table says so); every campaign scenario states a
++   ceiling (0, or 0.10 for `dupmix-30pct`), so in a campaign it fails above it.
+ 7. **Drain time** = drain moment minus the last `intended_ts`; fails above `--max-drain-seconds` (default 120).
+ 
+ Each check lists its first 10 offending ids (check 1: `door:request_id`; others: lead ids). Output: a plain-text
+ table, then the JSON result (or `--json PATH`). Exit code: 0 all hold, 1 a check failed, 2 an input file is missing or
+-not in the formats above.
++not in the formats above, or `--intended` is given and the facts file is missing (the run must say what it planned).
+ 
+ ## Scenarios (`load_driver.py --scenario ...`)
+ 
+@@ -127,27 +148,35 @@
+ and records `internal:<class name>` on the follow-up (back to `pending`, `failed` at the retry cap).
+ Wire it in a campaign launcher with `HttpQualifier("http://127.0.0.1:<port>", timeout)` in place of `RecordedQualifier`.
+ 
+-## Campaign scenarios and their check-5 bound (generated from `campaign.catalogue()`; a test pins the numbers)
++## Campaign scenarios, bounds and expected evidence (generated by `campaign.scenario_table()`; a test pins it)
+ 
+-| Scenario | Load | Model | Kill | Model-call bound |
+-|---|---|---|---|---|
+-| burst-10 | burst:10 | ok | no | 1 |
+-| burst-200 | burst:200 | ok | no | 1 |
+-| burst-1000 | burst:1000 | ok | no | 1 |
+-| rate-20x60 | rate:20:60 | ok | no | 1 |
+-| dupmix-30pct | dupmix:1200:0.3:20 | ok | no | 1 |
+-| crash-A | rate:20:20 | ok | yes | 2 |
+-| crash-A2 | rate:20:20 | ok | yes | 2 |
+-| crash-B | rate:20:20 | ok | yes | 2 |
+-| crash-D1 | rate:20:20 | ok | yes | 2 |
+-| crash-D2 | rate:20:20 | ok | yes | 2 |
+-| model-slow | rate:10:30 | slow | no | 1 |
+-| model-timeout | rate:10:20 | timeout | no | 6 |
+-| model-429 | rate:10:20 | rate_limit | no | 6 |
+-| model-malformed | rate:10:20 | malformed_json | no | 6 |
+-| model-refusal | rate:10:20 | refusal | no | 6 |
+-| model-5xx | rate:10:20 | server_error | no | 6 |
+-| model-flaps | rate:10:30 | ok, server_error, timeout | no | 6 |
+-| catcher-down | rate:10:30 | ok | no | 1 |
+-| catcher-drop-after-data | rate:10:20 | ok | no | 1 |
+-| catcher-slow | rate:10:20 | ok | no | 1 |
++Ceilings are stored in each run's `summary.json` (`bounds`), so `recheck` judges an old run by the limits it ran under.
++The failed ceiling for a dependency that is down is derived, not guessed: `min(leads, ceil(rate x (window seconds + 1 s
++for each window)))`: every lead submitted inside the fault window can run out its 5 automatic tries and end `failed`, and
++no others may. Leads submitted in a healthy window (3 s after a recovery, 2 s before the next fault) must end `sent`.
++Crash scenarios skip the healthy rule (a send in flight at the kill is `unknown` by design) and cap `unknown` at 8
++(`DRIVE_MAX`). The 503 ceiling is 0 except `dupmix-30pct` (0.10: the measured rate of the first campaign was 0.0596, so
++that ceiling is a regression guard, not a derived limit).
++
++| Scenario | Load | Model | Kill | Model-call bound | Unknown ceiling | Failed ceiling (arithmetic) | 503 ceiling | Retry window |
++|---|---|---|---|---|---|---|---|---|
++| burst-10 | burst:10 | ok | no | 1 | 0 | 0 | 0 | none |
++| burst-200 | burst:200 | ok | no | 1 | 0 | 0 | 0 | none |
++| burst-1000 | burst:1000 | ok | no | 1 | 0 | 0 | 0 | none |
++| rate-20x60 | rate:20:60 | ok | no | 1 | 0 | 0 | 0 | none |
++| dupmix-30pct | dupmix:1200:0.3:20 | ok | no | 1 | 0 | 0 | 0.1 | none |
++| crash-A | rate:20:20 | ok | yes | 2 | 8 | 0 | 0 | 15 s |
++| crash-A2 | rate:20:20 | ok | yes | 2 | 8 | 0 | 0 | 15 s |
++| crash-B | rate:20:20 | ok | yes | 2 | 8 | 0 | 0 | 15 s |
++| crash-D1 | rate:20:20 | ok | yes | 2 | 8 | 0 | 0 | 15 s |
++| crash-D2 | rate:20:20 | ok | yes | 2 | 8 | 0 | 0 | 15 s |
++| model-slow | rate:10:30 | slow | no | 1 | 0 | 0 | 0 | none |
++| model-timeout | rate:10:20 | timeout | no | 6 | 0 | min(200, ceil(10 x (20 s + 1 x 1 s))) = 200 | 0 | none |
++| model-429 | rate:10:20 | rate_limit | no | 6 | 0 | min(200, ceil(10 x (20 s + 1 x 1 s))) = 200 | 0 | none |
++| model-malformed | rate:10:20 | malformed_json | no | 6 | 0 | min(200, ceil(10 x (20 s + 1 x 1 s))) = 200 | 0 | none |
++| model-refusal | rate:10:20 | refusal | no | 6 | 0 | min(200, ceil(10 x (20 s + 1 x 1 s))) = 200 | 0 | none |
++| model-5xx | rate:10:20 | server_error | no | 6 | 0 | min(200, ceil(10 x (20 s + 1 x 1 s))) = 200 | 0 | none |
++| model-flaps | rate:10:30 | ok, server_error, timeout | no | 6 | 0 | min(300, ceil(10 x (15 s + 2 x 1 s))) = 170 | 0 | none |
++| catcher-down | rate:10:30 | ok | no | 1 | 0 | min(300, ceil(10 x (15 s + 1 x 1 s))) = 160 | 0 | none |
++| catcher-drop-after-data | rate:10:20 | ok | no | 1 | none (counted) | 0 | 0 | none |
++| catcher-slow | rate:10:20 | ok | no | 1 | none (counted) | 0 | 0 | none |
+diff -ruN a/live_l2/campaign.py b/live_l2/campaign.py
+--- a/live_l2/campaign.py	2026-11-09 19:52:50.747700446 +0000
++++ b/live_l2/campaign.py	2026-11-09 20:21:08.232819549 +0000
+@@ -17,6 +17,7 @@
+ 
+ import argparse
+ import json
++import math
+ import os
+ import shutil
+ import signal
+@@ -30,9 +31,17 @@
+ from pathlib import Path
+ from typing import Any
+ 
++from lead_desk.config import Config
+ from lead_desk.constants import EXIT_ANOTHER_DESK, EXIT_SIMULATED_KILL
+ from lead_desk.gate import DRIVE_MAX, SEND_MAX_ATTEMPTS
+-from live_l2.check_invariants import MODEL_CALL_SLACK
++from live_l2.check_invariants import (
++    MODEL_CALL_SLACK,
++    MODEL_CALLS_WHEN_UP,
++    MODEL_DOWN_MODES,
++    Expect,
++)
++from live_l2.fake_model import SLOW_SECONDS as MODEL_SLOW_SECONDS
++from live_l2.load_driver import MAX_RETRY_WINDOW_SECONDS, parse_scenario
+ 
+ ROOT = Path(__file__).resolve().parent.parent
+ PYTHON = sys.executable
+@@ -42,6 +51,8 @@
+ RESTART_DELAY_SECONDS = 0.3
+ SAMPLE_SECONDS = 1.0
+ FIRST_EVENT_SECONDS = 3.0
++DRIVER_TIMEOUT_SECONDS = 1800.0  # the whole load; the driver's process group is killed after this
++EVENT_JOIN_SECONDS = 60.0
+ SUPERVISOR_JOIN_SECONDS = (
+     START_TIMEOUT_SECONDS + RESTART_DELAY_SECONDS + 5.0
+ )  # a restart in progress may take this long
+@@ -50,8 +61,26 @@
+ # ONE call per lead (the label is stored), plus the slack when the desk is killed mid-call; only a model that is down
+ # (no label gets stored) may be asked on every automatic try.
+ MODEL_CALL_BOUND = SEND_MAX_ATTEMPTS + MODEL_CALL_SLACK
+-MODEL_DOWN_MODES = frozenset({"timeout", "rate_limit", "malformed_json", "refusal", "server_error"})
+-MODEL_CALLS_WHEN_UP = 1
++# A scenario that kills the desk makes the driver keep retrying this long (a restart takes the 0.3 s delay above plus
++# the start itself, a second or two; the default of 5 retries 0.1 s apart lasts half a second). At most the driver's
++# own limit; checked when the module loads.
++CRASH_RETRY_WINDOW_SECONDS = 15.0
++assert 0 < CRASH_RETRY_WINDOW_SECONDS <= MAX_RETRY_WINDOW_SECONDS  # noqa: S101 (constant validation at import)
++# check 3 ceiling on `failed` follow-ups, from the fault window: a lead can only end `failed` when ALL its automatic
++# tries fall inside a window where the model or the mail server is down, so the leads submitted inside the windows (rate
++# x seconds) bound it; FAULT_MARGIN_SECONDS per window covers a send that started just before the fault.
++FAULT_MARGIN_SECONDS = 1.0
++# leads submitted in a healthy stretch must end `sent`: HEALTHY_AFTER_SECONDS after a recovery (a lead submitted just
++# after still meets the old state), HEALTHY_BEFORE_SECONDS before the next fault (its first drive runs at once)
++HEALTHY_AFTER_SECONDS = 3.0
++HEALTHY_BEFORE_SECONDS = 2.0
++EVENT_LATE_SECONDS = 1.5  # a scheduled event that fired later than this after its time is a harness fault
++# check 6: share of tries the desk may answer 503. The desk answers 503 only when more than INFLIGHT_MAX requests are
++# in the desk for longer than the wait; the first campaign saw zero in every scenario except dupmix (0.0596: repeats of
++# one request racing through both doors). Zero for everything else; dupmix gets a regression ceiling above the measured
++# value (a measured number, not a derived limit); the retries absorb it, and a request that ends on 503 fails check 1.
++DEFAULT_MAX_503_RATE = 0.0
++DUPMIX_MAX_503_RATE = 0.10
+ CATCHER_SLOW_SECONDS = 7  # longer than the send timeout below, so every send ends "maybe sent"
+ CATCHER_SLOW_SEND_TIMEOUT_SECONDS = 2  # DESK_SEND_TIMEOUT_SECONDS for that scenario (the default is 5)
+ 
+@@ -71,11 +100,20 @@
+     # Ceilings for check 3 (None = counted and printed, not limited). Unknown follow-ups come only from a crash at the
+     # send (at most DRIVE_MAX sends run at once, so at most that many are in flight at the kill) or from a catcher that
+     # hangs up or answers too late (every send is then "maybe sent"). Failed ones come only from a dependency that is
+-    # down for longer than the automatic retries last (SEND_MAX_ATTEMPTS tries).
++    # down for longer than the automatic retries last (SEND_MAX_ATTEMPTS tries): max_failed=None here means "derive it
++    # from the fault window" (derive_max_failed, run when the catalogue is built), never "no limit".
+     max_unknown: int | None = 0
+     max_failed: int | None = 0
+     desk_env: dict[str, str] = field(default_factory=dict)  # extra desk settings for this scenario
+     model_bound: int = 0  # check 5: most model calls for one lead; 0 = derived from the modes (model_bound_for)
++    max_503_rate: float = DEFAULT_MAX_503_RATE  # check 6 ceiling (share of tries answered 503)
++    retry_window: float | None = None  # load driver retry window in seconds (None: the default 5 retries)
++
++
++def is_model_down(mode: str, timeout: float) -> bool:
++    """A model mode that never gives the desk a usable label. `slow` answers after MODEL_SLOW_SECONDS, so with a client
++    timeout shorter than that it is down too (every call is cut off)."""
++    return mode in MODEL_DOWN_MODES or (mode == "slow" and timeout < MODEL_SLOW_SECONDS)
+ 
+ 
+ def model_bound_for(sc: Scenario) -> int:
+@@ -83,11 +121,86 @@
+     desk kill can lose a call. Model down at any time in the run: one call per automatic try, plus the slack."""
+     modes = {sc.model_mode} | {e[2] for e in sc.events if e[1] == "model"}
+     killed = any(e[1] == "crash" for e in sc.events)
+-    if modes & MODEL_DOWN_MODES:
++    if any(is_model_down(m, sc.model_timeout) for m in modes):
+         return SEND_MAX_ATTEMPTS + MODEL_CALL_SLACK
+     return MODEL_CALLS_WHEN_UP + (MODEL_CALL_SLACK if killed else 0)
+ 
+ 
++def load_numbers(sc: Scenario) -> tuple[float, float, int]:
++    """(requests per second, seconds the load lasts, leads) of the scenario's load. A burst is one moment (rate = N)."""
++    name, nums = parse_scenario(sc.load)
++    if name == "burst":
++        return nums[0], 1.0, int(nums[0])
++    if name == "rate":
++        return nums[0], nums[1], int(nums[0] * nums[1])
++    total = int(nums[0])
++    repeats = min(round(total * nums[1]), total - 1)
++    rate = nums[2] if len(nums) > 2 else 200.0  # noqa: PLR2004 (load_driver.DUPMIX_DEFAULT_RATE)
++    return rate, (total - repeats) / rate, total - repeats
++
++
++def static_windows(sc: Scenario, kind: str, down: Any) -> list[tuple[float, float]]:
++    """(start, end) seconds after the load start in which the model (kind "model") or the mail server (kind "catcher")
++    is down per `down(mode)`, from the scenario's first mode and its events. An unrecovered fault ends with the load."""
++    _, seconds, _ = load_numbers(sc)
++    first = sc.model_mode if kind == "model" else sc.catcher_mode
++    timeline = [(0.0, first)] + sorted((e[0], e[2]) for e in sc.events if e[1] == kind)
++    windows: list[tuple[float, float]] = []
++    for i, (at, mode) in enumerate(timeline):
++        end = timeline[i + 1][0] if i + 1 < len(timeline) else max(seconds, at)
++        if down(mode) and end > at:
++            windows.append((at, end))
++    return windows
++
++
++def derive_max_failed(sc: Scenario) -> int:
++    """Ceiling on `failed` follow-ups for a scenario whose model or mail server is down for a while. A lead can only
++    fail when all SEND_MAX_ATTEMPTS automatic tries fall inside a down window, so it must have been submitted inside the
++    window: ceiling = ceil(rate x (total window seconds + FAULT_MARGIN_SECONDS per window)), at most all leads.
++    Worked values are in README-L2.md (generated from this function)."""
++    rate, _, leads = load_numbers(sc)
++    windows = static_windows(sc, "model", lambda m: is_model_down(m, sc.model_timeout)) + static_windows(
++        sc, "catcher", lambda m: m.split()[0] == "down"
++    )
++    if not windows:
++        return 0
++    seconds = sum(b - a for a, b in windows) + FAULT_MARGIN_SECONDS * len(windows)
++    return min(leads, math.ceil(rate * seconds))
++
++
++def failed_arithmetic(sc: Scenario) -> str:
++    rate, _, leads = load_numbers(sc)
++    windows = static_windows(sc, "model", lambda m: is_model_down(m, sc.model_timeout)) + static_windows(
++        sc, "catcher", lambda m: m.split()[0] == "down"
++    )
++    if not windows:
++        return "0 (no window)"
++    total = sum(b - a for a, b in windows)
++    return (
++        f"min({leads}, ceil({rate:g} x ({total:g} s + {len(windows)} x {FAULT_MARGIN_SECONDS:g} s))) = "
++        f"{derive_max_failed(sc)}"
++    )
++
++
++def scenario_table() -> str:
++    """The Markdown table in README-L2.md (a test pins it): bounds and ceilings per scenario."""
++    head = (
++        "| Scenario | Load | Model | Kill | Model-call bound | Unknown ceiling | Failed ceiling (arithmetic) | "
++        "503 ceiling | Retry window |\n|---|---|---|---|---|---|---|---|---|"
++    )
++    rows = [head]
++    for sc in catalogue():
++        modes = [sc.model_mode] + [e[2] for e in sc.events if e[1] == "model" and e[2] not in (sc.model_mode,)]
++        killed = any(e[1] == "crash" for e in sc.events)
++        rows.append(
++            f"| {sc.name} | {sc.load} | {', '.join(dict.fromkeys(modes))} | {'yes' if killed else 'no'} | "
++            f"{sc.model_bound} | {'none (counted)' if sc.max_unknown is None else sc.max_unknown} | "
++            f"{failed_arithmetic(sc) if sc.max_failed else sc.max_failed} | {sc.max_503_rate:g} | "
++            f"{'none' if sc.retry_window is None else f'{sc.retry_window:g} s'} |"
++        )
++    return "\n".join(rows)
++
++
+ def crash(point: str, at: float = FIRST_EVENT_SECONDS) -> tuple[float, str, str]:
+     return (at, "crash", point)
+ 
+@@ -99,7 +212,10 @@
+         Scenario("burst-1000", "burst:1000"),
+         Scenario("rate-20x60", "rate:20:60"),
+         Scenario(
+-            "dupmix-30pct", "dupmix:1200:0.3:20", note="30% repeats, half through the other door at the same moment"
++            "dupmix-30pct",
++            "dupmix:1200:0.3:20",
++            note="30% repeats, half through the other door at the same moment",
++            max_503_rate=DUPMIX_MAX_503_RATE,
+         ),
+     ]
+     for point in ("A", "A2", "B", "D1", "D2"):
+@@ -110,6 +226,7 @@
+                 events=[crash(point)],
+                 note=f"desk killed at crash point {point}",
+                 max_unknown=DRIVE_MAX,
++                retry_window=CRASH_RETRY_WINDOW_SECONDS,
+             )
+         )
+     s += [
+@@ -156,6 +273,8 @@
+     ]
+     for sc in s:
+         sc.model_bound = sc.model_bound or model_bound_for(sc)
++        if sc.max_failed is None:
++            sc.max_failed = derive_max_failed(sc)
+     return s
+ 
+ 
+@@ -167,8 +286,11 @@
+     driver_exit: int | None,
+     drained_ts: float | None,
+     runner_error: str | None = None,
++    events_thread_alive: bool = False,
+ ) -> list[str]:
+-    """Faults of the run itself (not of the desk): a scenario that did not run as planned proves nothing."""
++    """Faults of the run itself (not of the desk): a scenario that did not run as planned proves nothing. Every
++    scheduled event (crash, model mode, catcher mode) must have fired, and on time: an event that is missing, or that
++    fired more than EVENT_LATE_SECONDS after its moment, means the fault was not there when the scenario says it was."""
+     faults: list[str] = []
+     if runner_error:
+         faults.append(f"runner error: {runner_error}")
+@@ -181,6 +303,17 @@
+             faults.append(f"unexpected desk exit code {r.get('exit_code')}")
+         if r.get("restart_failed"):
+             faults.append(f"desk restart failed: {r['restart_failed']}")
++    if events_thread_alive:
++        faults.append("the event thread was still running when the load ended: an event was late or never fired")
++    for kind in ("model", "catcher"):
++        planned = [e for e in sc.events if e[1] == kind]
++        fired = [e for e in events_fired if e.get("kind") == kind]
++        if len(fired) != len(planned):
++            faults.append(f"{len(planned)} {kind} event(s) planned, {len(fired)} fired")
++    for e in events_fired:
++        late = e.get("late_s")
++        if late is not None and float(late) > EVENT_LATE_SECONDS:
++            faults.append(f"{e.get('kind')} event for {e.get('at')} s fired {float(late):.1f} s late")
+     crashes = [e for e in sc.events if e[1] == "crash"]
+     kills = [r for r in restarts if r.get("exit_code") == EXIT_SIMULATED_KILL]
+     if crashes:
+@@ -197,6 +330,106 @@
+     return faults
+ 
+ 
++def _catcher_faulty(mode_text: str, send_timeout: float) -> bool:
++    """A catcher mode that stops a send from ending in a clean 250 (down, reject, hang-up, or an answer later than the
++    desk waits)."""
++    words = mode_text.split()
++    if not words:
++        return False
++    if words[0] in ("down", "reject", "drop-after-data"):
++        return True
++    try:
++        return words[0] == "slow" and len(words) > 1 and float(words[1]) >= send_timeout
++    except ValueError:
++        return False
++
++
++def _timeline(
++    sc: Scenario, kind: str, events_fired: list[dict[str, Any]], start: float, end: float | None
++) -> list[tuple[float, float | None, str]]:
++    """(from, to, mode) segments of the model or catcher mode on the wall clock, from the events that really fired."""
++    first = sc.model_mode if kind == "model" else sc.catcher_mode
++    fired = sorted((float(e["ts"]), str(e["value"])) for e in events_fired if e.get("kind") == kind and "ts" in e)
++    points = [(start, first), *fired]
++    return [(t, points[i + 1][0] if i + 1 < len(points) else end, mode) for i, (t, mode) in enumerate(points)]
++
++
++def _merge(windows: list[tuple[float, float | None]]) -> list[tuple[float, float | None]]:
++    merged: list[tuple[float, float | None]] = []
++    for a, b in sorted(windows, key=lambda w: w[0]):
++        if merged and (merged[-1][1] is None or a <= merged[-1][1]):
++            last_b = merged[-1][1]
++            merged[-1] = (merged[-1][0], None if last_b is None or b is None else max(last_b, b))
++        else:
++            merged.append((a, b))
++    return merged
++
++
++def expectations_for(
++    sc: Scenario, events_fired: list[dict[str, Any]], leads: int, load_start: float, load_end: float | None
++) -> Expect:
++    """What this scenario must have proven (check_invariants.Expect), from the events that really fired, the number of
++    leads and the wall-clock moments of the load. `load_end` None = open-ended."""
++    send_timeout = float(sc.desk_env.get("DESK_SEND_TIMEOUT_SECONDS", Config().send_timeout_seconds))
++    killed = any(e[1] == "crash" for e in sc.events)
++    model_seg = _timeline(sc, "model", events_fired, load_start, load_end)
++    catcher_seg = _timeline(sc, "catcher", events_fired, load_start, load_end)
++    down = [(a, b) for a, b, m in model_seg if is_model_down(m, sc.model_timeout)]
++    faulty_catcher = [(a, b) for a, b, m in catcher_seg if _catcher_faulty(m, send_timeout)]
++    quiet = [(a, b) for a, b, m in catcher_seg if m.split()[:1] == ["down"]]
++    whole_run = any(a <= load_start and b is None for a, b in down)
++    modes = {m for _, _, m in model_seg}
++    catcher_words = {m.split()[0] for _, _, m in catcher_seg if m.split() and _catcher_faulty(m, send_timeout)}
++    evidence_modes = tuple(sorted(catcher_words & {"slow", "drop-after-data"}))
++    healthy: list[tuple[float, float | None]] = []
++    if not killed:  # a kill leaves in-flight sends unknown by design: no "must be sent" rule there
++        unhealthy = _merge([*down, *faulty_catcher])
++        cursor: float | None = load_start
++        for a, b in unhealthy:
++            if cursor is not None and a > cursor:
++                lo = cursor + (HEALTHY_AFTER_SECONDS if cursor > load_start else 0.0)
++                hi = a - HEALTHY_BEFORE_SECONDS
++                if lo < hi:
++                    healthy.append((lo, hi))
++            cursor = b
++            if cursor is None:
++                break
++        if cursor is not None:
++            healthy.append((cursor + (HEALTHY_AFTER_SECONDS if cursor > load_start else 0.0), None))
++    return Expect(
++        model_expected=True,
++        min_down_calls=(leads if whole_run else 1) if down else 0,
++        min_non200_results=(leads if whole_run else 1) if down and modes & {"rate_limit", "server_error"} else 0,
++        catcher_modes=evidence_modes,
++        min_catcher_records=1 if evidence_modes else 0,
++        min_unknown=1 if evidence_modes else 0,
++        quiet_windows=tuple(quiet),
++        healthy_windows=tuple(healthy),
++        max_multi_call_leads=DRIVE_MAX if killed else None,
++        reask_after_answer_allowed=DRIVE_MAX if killed else 0,
++        max_down_calls_per_lead=SEND_MAX_ATTEMPTS + (MODEL_CALL_SLACK if killed else 0),
++        note=f"scenario {sc.name}",
++    )
++
++
++def run_group(argv: list[str], env: dict[str, str], timeout: float) -> tuple[int | None, str, str]:
++    """Run a child in its own process group and, on a timeout, kill the WHOLE group (the load driver's worker
++    processes included, so nothing keeps sending). Returns (exit code or None on timeout, stdout, stderr)."""
++    p = subprocess.Popen(  # noqa: S603
++        argv, env=env, cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, start_new_session=True
++    )
++    try:
++        out, err = p.communicate(timeout=timeout)
++        return p.returncode, out, err
++    except subprocess.TimeoutExpired:
++        try:
++            os.killpg(p.pid, signal.SIGKILL)
++        except OSError:
++            p.kill()
++        out, err = p.communicate()
++        return None, out or "", (err or "") + "\nkilled: the run timed out"
++
++
+ def free_port() -> int:
+     import socket
+ 
+@@ -319,6 +552,10 @@
+         self.procs: list[Proc] = []
+         self.desk: Proc | None = None
+         self.sup: threading.Thread | None = None
++        # set here, not in boot(): a boot that fails early must still leave a scenario that can be reported
++        self.crash_flag = self.dir / "crash.flag"
++        self.db = self.dir / "desk.sqlite3"
++        self.base = self.fakes_url = self.model_url = ""
+ 
+     def env(self, **kw: str) -> dict[str, str]:
+         e = {
+@@ -466,7 +703,15 @@
+                 self.model_mode_file.write_text(value)
+             elif kind == "catcher":
+                 self.catcher_mode_file.write_text(value)
+-            self.events_log.append({"ts": time.time(), "at": at, "kind": kind, "value": value})
++            self.events_log.append(
++                {
++                    "ts": time.time(),
++                    "at": at,
++                    "kind": kind,
++                    "value": value,
++                    "late_s": round(time.monotonic() - t0 - at, 3),
++                }
++            )
+ 
+     def drain(self) -> dict[str, Any]:
+         end = time.monotonic() + self.sc.drain_timeout
+@@ -492,6 +737,7 @@
+         sc, d = self.sc, self.dir
+         result: dict[str, Any] = {"scenario": sc.name, "load": sc.load, "note": sc.note, "events": sc.events}
+         started = time.time()
++        events_thread_alive = False
+         try:
+             self.boot()
+             self.sup = threading.Thread(target=self.supervise, daemon=True)
+@@ -499,7 +745,7 @@
+             t0 = time.monotonic()
+             ev = threading.Thread(target=self.fire_events, args=(t0,), daemon=True)
+             ev.start()
+-            driver = subprocess.run(  # noqa: S603
++            driver_rc, driver_out, driver_err = run_group(
+                 [
+                     PYTHON,
+                     "-m",
+@@ -516,18 +762,17 @@
+                     str(sc.threads),
+                     "--id-prefix",
+                     sc.name,
++                    *(["--retry-window", str(sc.retry_window)] if sc.retry_window is not None else []),
+                 ],
+-                env=self.env(),
+-                cwd=ROOT,
+-                capture_output=True,
+-                text=True,
+-                timeout=1800,
++                self.env(),
++                DRIVER_TIMEOUT_SECONDS,
+             )
+-            (d / "driver.out").write_text(driver.stdout + driver.stderr)
+-            result["driver_exit"] = driver.returncode
+-            result["driver_summary"] = _last_json_line(driver.stdout)
++            (d / "driver.out").write_text(driver_out + driver_err)
++            result["driver_exit"] = driver_rc if driver_rc is not None else -9  # None: killed after the timeout
++            result["driver_summary"] = _last_json_line(driver_out)
+             result["load_seconds"] = round(time.monotonic() - t0, 2)
+-            ev.join(timeout=60)
++            ev.join(timeout=EVENT_JOIN_SECONDS)
++            events_thread_alive = ev.is_alive()
+             drain = self.drain()
+             (d / "drain.json").write_text(json.dumps({"drained_ts": drain["drained_ts"]}))
+             result["drain"] = drain
+@@ -566,7 +811,17 @@
+             result.get("driver_exit"),
+             (result.get("drain") or {}).get("drained_ts"),
+             result.get("runner_error"),
++            events_thread_alive,
+         )
++        expect = self.expectations()
++        (d / "expect.json").write_text(json.dumps(expect.to_dict(), indent=2, default=str))
++        result["bounds"] = {
++            "model_bound": sc.model_bound or model_bound_for(sc),
++            "max_unknown": sc.max_unknown,
++            "max_failed": sc.max_failed,
++            "max_503_rate": sc.max_503_rate,
++            "expect": expect.to_dict(),
++        }
+         if self.samples:
+             result["desk_peak"] = {k: max(s[k] for s in self.samples) for k in ("rss_kb", "threads", "fds")}
+         checks = subprocess.run(  # noqa: S603
+@@ -588,6 +843,10 @@
+                 str(d / "drain.json"),
+                 "--model-bound",
+                 str(sc.model_bound or model_bound_for(sc)),
++                "--max-503-rate",
++                str(sc.max_503_rate),
++                "--expect",
++                str(d / "expect.json"),
+                 *(["--max-unknown", str(sc.max_unknown)] if sc.max_unknown is not None else []),
+                 *(["--max-failed", str(sc.max_failed)] if sc.max_failed is not None else []),
+                 "--json",
+@@ -607,6 +866,20 @@
+         (d / "summary.json").write_text(json.dumps(result, indent=2, default=str))
+         return result
+ 
++    def expectations(self) -> Expect:
++        """The scenario's expectations from what really happened: events that fired, leads, load start and end."""
++        rows: list[dict[str, Any]] = []
++        facts: dict[str, Any] = {}
++        try:
++            rows = [json.loads(x) for x in (self.dir / "requests.jsonl").read_text().splitlines() if x.strip()]
++            facts = json.loads((self.dir / "requests.jsonl.facts.json").read_text())
++        except (OSError, ValueError):
++            pass
++        ids = {str(r.get("request_id")) for r in rows}
++        starts = [float(r["intended_ts"]) for r in rows if r.get("intended_ts") is not None]
++        start = float(facts.get("first_intended_ts") or (min(starts) if starts else time.time()))
++        return expectations_for(self.sc, self.events_log, len(ids), start, max(starts) if starts else None)
++
+     def request_stats(self) -> dict[str, Any]:
+         rows = []
+         try:
+@@ -674,7 +947,15 @@
+         if a.drain_timeout is not None:
+             sc.drain_timeout = a.drain_timeout
+         print(f"== {sc.name} {time.strftime('%H:%M:%SZ', time.gmtime())}", flush=True)
+-        res = Run(sc, a.out, {}).run()
++        try:
++            res = Run(sc, a.out, {}).run()
++        except Exception as e:  # noqa: BLE001 (one scenario that cannot be run is recorded as failed; the rest go on)
++            res = {
++                "scenario": sc.name,
++                "load": sc.load,
++                "runner_error": f"{type(e).__name__}: {e}",
++                "checks_exit": None,
++            }
+         line = {
+             k: res.get(k)
+             for k in (
+diff -ruN a/live_l2/catcher.py b/live_l2/catcher.py
+--- a/live_l2/catcher.py	2026-11-09 19:52:50.749226166 +0000
++++ b/live_l2/catcher.py	2026-11-09 20:09:19.853058602 +0000
+@@ -5,7 +5,10 @@
+ Each accepted message becomes ONE line in the --out file (JSON): ts (epoch seconds), send_key (header X-Send-Key),
+ message_id, to (recipients joined by a comma), subject (decoded), body_sha256 (hex SHA-256 of the decoded text body
+ as UTF-8 with LF line ends, minus the one line break the sender adds at its end) and mode (the mode in force when it was
+-recorded).
++recorded). A message whose text cannot be decoded (an unknown or broken charset, bad encoding) is still recorded, as
++the server received it: `undecodable` true, `body_sha256` over the transfer-decoded bytes (or the raw message when even
++that fails), the header fields that could be read; then the normal reply of the mode follows (a real server accepts what
++it is given, so a lost record would hide a message that did arrive).
+ It prints `LISTENING <host> <port>` once the socket is open (use --port 0 for a free port).
+ 
+ Run-time mode: the CONTROL file (default `<out>.mode`) holds one word, read afresh on every command, so changing it
+@@ -32,6 +35,7 @@
+ from email import policy
+ from email.parser import BytesParser
+ from pathlib import Path
++from typing import Any
+ 
+ BACKLOG = 1024
+ LINE_LIMIT = 1 << 20  # one SMTP line (and one message) may be at most 1 MiB
+@@ -57,22 +61,42 @@
+     return words[0], seconds
+ 
+ 
++def _header(msg: Any, name: str) -> str:
++    try:
++        return str(msg.get(name, ""))
++    except Exception:  # noqa: BLE001 (a header the parser cannot decode is recorded as empty, never a lost message)
++        return ""
++
++
+ def record_of(raw: bytes, recipients: list[str], mode: str) -> dict[str, object]:
+     msg = BytesParser(policy=policy.default).parsebytes(raw)
+-    part = msg.get_body(preferencelist=("plain",))
+-    text = part.get_content() if part is not None else ""
+-    text = text.replace("\r\n", "\n")  # the sender's line ends travel as CRLF; the hash is over plain LF text
+-    if text.endswith("\n"):
+-        text = text[:-1]
+-    return {
++    undecodable = False
++    try:
++        part = msg.get_body(preferencelist=("plain",))
++        text = part.get_content() if part is not None else ""
++        body = text.replace("\r\n", "\n")  # the sender's line ends travel as CRLF; the hash is over plain LF text
++        if body.endswith("\n"):
++            body = body[:-1]
++        digest = hashlib.sha256(body.encode("utf-8")).hexdigest()
++    except (LookupError, UnicodeError, ValueError, KeyError, AttributeError):  # unknown charset, bad bytes, odd parts
++        undecodable = True
++        try:
++            payload = msg.get_payload(decode=True)
++            digest = hashlib.sha256(payload if isinstance(payload, bytes) else raw).hexdigest()
++        except Exception:  # noqa: BLE001 (the raw message is the last thing left to hash)
++            digest = hashlib.sha256(raw).hexdigest()
++    rec: dict[str, object] = {
+         "ts": round(time.time(), 3),
+-        "send_key": str(msg.get("X-Send-Key", "")),
+-        "message_id": str(msg.get("Message-ID", "")),
++        "send_key": _header(msg, "X-Send-Key"),
++        "message_id": _header(msg, "Message-ID"),
+         "to": ",".join(recipients),
+-        "subject": str(msg.get("Subject", "")),
+-        "body_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
++        "subject": _header(msg, "Subject"),
++        "body_sha256": digest,
+         "mode": mode,
+     }
++    if undecodable:
++        rec["undecodable"] = True
++    return rec
+ 
+ 
+ class Catcher:
+@@ -130,7 +154,20 @@
+                 body = data[: -len(b"\r\n.\r\n")].replace(b"\r\n..", b"\r\n.")
+                 if body.startswith(b".."):
+                     body = body[1:]
+-                self._write(record_of(body, recipients, mode))
++                try:
++                    rec = record_of(body, recipients, mode)
++                except Exception:  # noqa: BLE001 (a message that arrived is recorded even when it cannot be read at all)
++                    rec = {
++                        "ts": round(time.time(), 3),
++                        "send_key": "",
++                        "message_id": "",
++                        "to": ",".join(recipients),
++                        "subject": "",
++                        "body_sha256": hashlib.sha256(body).hexdigest(),
++                        "mode": mode,
++                        "undecodable": True,
++                    }
++                self._write(rec)
+                 if mode == "drop-after-data":
+                     return  # closed without the final reply
+                 if mode == "slow":
+diff -ruN a/live_l2/check_invariants.py b/live_l2/check_invariants.py
+--- a/live_l2/check_invariants.py	2026-11-09 19:52:50.748221977 +0000
++++ b/live_l2/check_invariants.py	2026-11-09 20:23:05.702935803 +0000
+@@ -2,8 +2,10 @@
+ 
+ Run: python -m live_l2.check_invariants --requests req.jsonl --book desk.sqlite3 --catcher mail.jsonl
+          --crm crm.json --model-log model.jsonl [--drain drain.json] [--facts req.jsonl.facts.json | --intended N]
+-         [--model-bound N] [--max-unknown N] [--max-failed N] [--json out.json]
+-Exit code 0 only when all seven checks hold; 1 when a check fails; 2 when an input file cannot be read."""
++         [--model-bound N] [--max-unknown N] [--max-failed N] [--max-503-rate X]
++         [--expect expect.json] [--json out.json]
++Exit code 0 only when all seven checks hold; 1 when a check fails; 2 when an input file cannot be read (the facts file
++included: it is always required, so a run whose marker test would be skipped is an input error, never a pass)."""
+ 
+ from __future__ import annotations
+ 
+@@ -12,7 +14,8 @@
+ import sqlite3
+ import sys
+ from collections import Counter
+-from collections.abc import Iterable, Mapping
++from collections.abc import Collection, Iterable, Mapping, Sequence
++from dataclasses import asdict, dataclass, field
+ from pathlib import Path
+ from typing import Any
+ 
+@@ -28,7 +31,14 @@
+ # applies depends on the scenario (campaign.model_bound_for, listed in README-L2.md); this module only holds the
+ # generic ceiling, used when no bound is given: the largest of them.
+ MODEL_CALL_SLACK = 1
+-DEFAULT_MODEL_CALL_BOUND = _SEND_MAX_ATTEMPTS + MODEL_CALL_SLACK
++MODEL_CALLS_WHEN_UP = 1
++MAX_MODEL_CALL_BOUND = _SEND_MAX_ATTEMPTS + MODEL_CALL_SLACK  # the largest bound any scenario may state (model down)
++DEFAULT_MODEL_CALL_BOUND = MODEL_CALLS_WHEN_UP  # a healthy model: one call per lead. A down model must be stated.
++# fake model modes whose answer is never a usable label (README-L2.md); a `slow` call is usable unless the client quit
++MODEL_DOWN_MODES = frozenset({"timeout", "rate_limit", "malformed_json", "malformed_label", "refusal", "server_error"})
++MODEL_USABLE_MODES = frozenset({"ok", "slow"})
++HTTP_OK = 200
++QUIET_START_TOLERANCE_SECONDS = 1.0  # a catcher session that began before `down` may still finish this long after it
+ DEFAULT_MAX_DRAIN_SECONDS = 120.0  # check 7: ceiling from the last intended send to "nothing pending or sending"
+ ACK_CODES = (200, 201, 202)  # reply codes that carry a receipt number (contract.md, HTTP table)
+ BUSY_CODE = 503
+@@ -46,13 +56,50 @@
+ CRM_INTENT_MARK = 2  # followups.crm_done: a put was started and its end is not known
+ CRM_DONE = 1
+ EXIT_OK, EXIT_FAIL, EXIT_INPUT = 0, 1, 2
++CHECK_RATE_503 = 6  # the id of the 503 check
++
++
++@dataclass(frozen=True)
++class Expect:
++    """What a scenario must have PROVEN about itself, besides the bounds (built by campaign.expectations_for, saved in
++    the scenario's summary, read back by recheck). Windows are (start, end) epoch seconds; end None = to the end."""
++
++    model_expected: bool = False  # the desk must have asked the model: every lead appears in the model log
++    min_down_calls: int = 0  # calls whose mode gives no usable label (a model that is down must have been asked)
++    min_non200_results: int = 0  # result lines with a status other than 200 (rate limit and server error modes)
++    catcher_modes: tuple[str, ...] = ()  # catcher records must carry one of these modes ...
++    min_catcher_records: int = 0  # ... at least this many times
++    min_unknown: int = 0  # at least this many follow-ups ended `unknown` (every send ends "maybe sent")
++    quiet_windows: tuple[tuple[float, float | None], ...] = ()  # the catcher is down: no record inside
++    healthy_windows: tuple[tuple[float, float | None], ...] = ()  # leads submitted inside must end `sent`
++    max_multi_call_leads: int | None = None  # leads with more than one model call (crash: at most DRIVE_MAX)
++    reask_after_answer_allowed: int = 0  # leads asked again AFTER a usable answer (crash: those lost to the kill)
++    max_down_calls_per_lead: int = _SEND_MAX_ATTEMPTS  # automatic tries while the model is down
++    note: str = field(default="", compare=False)
++
++    @classmethod
++    def from_dict(cls, obj: Mapping[str, Any]) -> Expect:
++        known = {k: v for k, v in obj.items() if k in cls.__dataclass_fields__}
++        for key in ("quiet_windows", "healthy_windows"):
++            known[key] = tuple((float(a), None if b is None else float(b)) for a, b in known.get(key, ()))
++        known["catcher_modes"] = tuple(known.get("catcher_modes", ()))
++        return cls(**known)
++
++    def to_dict(self) -> dict[str, Any]:
++        return asdict(self)
++
++
++def _inside(ts: float, windows: Sequence[tuple[float, float | None]]) -> bool:
++    return any(a <= ts and (b is None or ts <= b) for a, b in windows)
++
++
+ CHECK_NAMES = {
+     1: "every request id has a receipt; the request log is complete; the book holds only this run's requests",
+     2: "follow-up states add up to the leads submitted (one per request id); every verdict has its lead; nothing open",
+     3: "one message at most per key and recipient; unknown and failed only with a reason, within the ceiling",
+     4: "CRM rows match the leads marked done, plus the listed unknowns",
+-    5: "model calls per lead are within the bound",
+-    6: "503 rate reported (fails only above a set ceiling)",
++    5: "model calls per lead are within the bound; the model was asked as the scenario says",
++    6: "503 rate within the scenario's ceiling (report only when no ceiling is given)",
+     7: "drain time within the ceiling",
+ }
+ 
+@@ -120,6 +167,7 @@
+             refs = {int(i): (s, r) for i, s, r in conn.execute("SELECT receipt_id, source, source_ref FROM receipts")}
+             payloads = {int(i): str(p) for i, p in conn.execute("SELECT receipt_id, payload FROM receipts")}
+             lead_emails = {lid: str(k) for lid, k in conn.execute("SELECT lead_id, email_key FROM leads")}
++            lead_addresses = {lid: str(a) for lid, a in conn.execute("SELECT lead_id, email FROM leads")}
+         finally:
+             conn.close()
+     except sqlite3.Error as e:
+@@ -133,6 +181,7 @@
+         "refs": refs,
+         "payloads": payloads,
+         "lead_emails": lead_emails,
++        "lead_addresses": lead_addresses,
+     }
+ 
+ 
+@@ -162,7 +211,11 @@
+     """`intended` = how many requests the driver was told to send. The log must hold exactly that many lines: a driver
+     that died leaves a short (or empty) log, which would otherwise pass as "nothing was lost".
+     The accounting is three-way: intended (facts file) = logged (request log lines) = receipts (book, one per distinct
+-    door and request id). The book must hold only this run: a receipt the log does not know is a stale book; a request
++    door and request id). The comparison is by identity, not only by count: the facts file holds the full list of
++    intended (door, request id) pairs (`intended_list`), and the log must hold exactly that multiset: a request that is
++    missing together with a line that appears twice keeps the count and fails (`missing-from-log`, `not-intended`).
++    The distinct request ids must also equal the facts file's `distinct_request_ids`.
++    The book must hold only this run: a receipt the log does not know is a stale book; a request
+     id outside the run's id prefix, or a receipt payload without the run marker, is another run's."""
+     receipts: Mapping[tuple[str, str], int] = book["receipts"]
+     lost: list[str] = []
+@@ -180,6 +233,16 @@
+         if acked and key in receipts and r.get("receipt_id") is not None and r["receipt_id"] != receipts[key]:
+             mismatch.append(_rid(r))
+     short = ["request-log"] if (not reqs or (intended is not None and len(reqs) != intended)) else []
++    plan = (facts or {}).get("intended_list")
++    by_list: list[str] = []
++    if isinstance(plan, list):
++        planned = Counter((str(d), str(r)) for d, r in plan)
++        got = Counter((str(r.get("door")), str(r.get("request_id"))) for r in reqs)
++        by_list = [f"missing-from-log:{d}:{r}" for (d, r), n in sorted((planned - got).items()) for _ in range(n)]
++        by_list += [f"not-intended:{d}:{r}" for (d, r), n in sorted((got - planned).items()) for _ in range(n)]
++    ids_planned = (facts or {}).get("distinct_request_ids")
++    distinct_ids = len({str(r.get("request_id")) for r in reqs})
++    by_ids = ["distinct-request-ids"] if ids_planned is not None and int(ids_planned) != distinct_ids else []
+     refs: Mapping[int, tuple[str, str]] = book.get("refs", {})
+     stale = sorted(f"stale-book:{d}:{r}" for d, r in {v for v in refs.values()} - unique) if refs else []
+     prefix = (facts or {}).get("id_prefix")
+@@ -191,12 +254,18 @@
+     payloads: Mapping[int, str] = book.get("payloads", {})
+     other_run = [f"other-run:receipt:{i}" for i, text in payloads.items() if run_id and str(run_id) not in text]
+     marker_given = bool(prefix) and bool(run_id)
+-    bad = lost + mismatch + short + stale + sorted(set(foreign)) + other_run
++    bad = lost + mismatch + short + stale + sorted(set(foreign)) + other_run + by_list + by_ids
+     want = "not given" if intended is None else str(intended)
+     detail = (
+         f"{len(reqs)} log lines (intended {want}), {len(unique)} distinct request ids, {len(refs)} receipts in book, "
+         f"{len(lost)} without a receipt, {len(mismatch)} with a wrong receipt number, {len(stale)} receipts the log "
+-        f"does not know, {len(foreign)} outside the id prefix, {len(other_run)} without this run's marker"
++        f"does not know, {len(foreign)} outside the id prefix, {len(other_run)} without this run's marker; "
++        + (
++            f"{len(by_list)} differences from the intended list"
++            if isinstance(plan, list)
++            else "no intended list in the facts file: compared by count and distinct ids only"
++        )
++        + f"; distinct ids {distinct_ids} (facts {ids_planned})"
+         + ("" if marker_given else "; id prefix or run marker not in the facts file: stale-book test by marker skipped")
+     )
+     return _result(
+@@ -213,6 +282,10 @@
+             "foreign_ids": len(foreign),
+             "receipts_without_run_marker": len(other_run),
+             "marker_checked": marker_given,
++            "intended_list_checked": isinstance(plan, list),
++            "differences_from_intended_list": len(by_list),
++            "facts_distinct_request_ids": ids_planned,
++            "distinct_request_ids": distinct_ids,
+             "lost": len(lost),
+             "stored_but_client_unacked": unacked_stored,
+         },
+@@ -288,18 +361,31 @@
+     mail: list[dict[str, Any]],
+     max_unknown: int | None = None,
+     max_failed: int | None = None,
++    reqs: list[dict[str, Any]] | None = None,
++    expect: Expect | None = None,
++    facts: Mapping[str, Any] | None = None,
+ ) -> dict[str, Any]:
+     """A message is allowed only where the book can explain it. `unknown` with a message needs a last_error that says
+     the email may have left (AMBIGUOUS_ERRORS); `unknown` without one needs a last_error too (also crm_unconfirmed);
+-    `unknown` with no reason at all is a fault. `max_unknown` / `max_failed` are per-scenario ceilings (None: counted
+-    and printed, not limited)."""
++    `unknown` with no reason at all is a fault, and so is a `failed` with no reason. Every message goes to the lead's
++    own address (compared without regard to case) and to nobody else. `max_unknown` / `max_failed` are per-scenario
++    ceilings (None: counted and printed, not limited). `expect` adds the evidence the scenario must show: leads
++    submitted in a healthy window must end `sent`; the catcher recorded the mode it was put in; no message was recorded
++    while the catcher was down; at least `min_unknown` follow-ups ended unknown."""
+     followups: Mapping[str, tuple[str, int, int]] = book["followups"]
+     reasons: Mapping[str, tuple[str | None, int, int]] = book["reasons"]
++    addresses: Mapping[str, str] = book.get("lead_addresses", {})
+     per_key = Counter(str(m.get("send_key")) for m in mail)
+-    per_to = Counter(addr for m in mail for addr in str(m.get("to")).split(",") if addr)
++    per_to = Counter(addr.lower() for m in mail for addr in str(m.get("to")).split(",") if addr)
+     doubled = [k for k, n in per_key.items() if n > 1]
+     doubled_to = [f"to:{a}" for a, n in per_to.items() if n > 1]
+     stray = [k for k in per_key if k not in followups]
++    wrong_to = sorted(
++        f"wrong-recipient:{m.get('send_key')}"
++        for m in mail
++        if str(m.get("send_key")) in addresses
++        and [a.lower() for a in str(m.get("to")).split(",") if a] != [addresses[str(m.get("send_key"))].lower()]
++    )
+     settled = {lid for lid, (state, _, _) in followups.items() if state not in OPEN_STATES}
+     silent = {lid for lid in settled if per_key.get(lid, 0) == 0}
+     must_be_silent = {lid for lid in settled if followups[lid][0] in MESSAGE_FREE_STATES}
+@@ -319,7 +405,9 @@
+     unknown_all = sorted(lid for lid in settled if followups[lid][0] == "unknown")
+     unknown_with_mail = [lid for lid in unknown_all if lid not in silent]
+     unknown_no_mail = [lid for lid in unknown_all if lid in silent]
+-    failed_n = sum(1 for lid in settled if followups[lid][0] == "failed")
++    failed_ids = sorted(lid for lid in settled if followups[lid][0] == "failed")
++    failed_n = len(failed_ids)
++    no_reason = [f"failed-without-reason:{lid}" for lid in failed_ids if not reasons[lid][0]]
+     unattributed = [lid for lid in unknown_with_mail if reasons[lid][0] not in AMBIGUOUS_ERRORS] + [
+         lid for lid in unknown_no_mail if reasons[lid][0] not in UNKNOWN_NO_MESSAGE_ERRORS
+     ]
+@@ -328,15 +416,62 @@
+         over.append("ceiling:unknown")
+     if max_failed is not None and failed_n > max_failed:
+         over.append("ceiling:failed")
+-    bad = doubled + doubled_to + stray + lost_mail + unexpected + unattributed + over
++    evidence: list[str] = []
++    not_sent_healthy: list[str] = []
++    seen_records = 0
++    if expect is not None:
++        if expect.healthy_windows and reqs is not None:
++            first_ts: dict[str, float] = {}
++            for r in reqs:
++                if r.get("intended_ts") is not None:
++                    ref = str(r.get("request_id"))
++                    first_ts[ref] = min(float(r["intended_ts"]), first_ts.get(ref, float("inf")))
++            domain = str((facts or {}).get("email_domain") or EMAIL_DOMAIN)
++            by_email = {str(e).lower(): lid for lid, e in book.get("lead_emails", {}).items()}
++            for ref, ts in first_ts.items():
++                lid = by_email.get(f"{ref}@{domain}".lower())
++                if (
++                    lid is not None
++                    and lid in followups
++                    and _inside(ts, expect.healthy_windows)
++                    and followups[lid][0] != "sent"
++                ):
++                    not_sent_healthy.append(f"not-sent-in-healthy-window:{lid}")
++        if expect.catcher_modes:
++            seen_records = sum(1 for m in mail if m.get("mode") in expect.catcher_modes)
++            if seen_records < expect.min_catcher_records:
++                evidence.append("no-catcher-evidence")
++        if expect.quiet_windows:
++            quiet = [(a + QUIET_START_TOLERANCE_SECONDS, b) for a, b in expect.quiet_windows]
++            evidence += [
++                f"mail-while-down:{m.get('send_key')}" for m in mail if _inside(float(m.get("ts") or 0), quiet)
++            ]
++        if len(unknown_all) < expect.min_unknown:
++            evidence.append("too-few-unknown")
++    bad = (
++        doubled
++        + doubled_to
++        + stray
++        + lost_mail
++        + unexpected
++        + unattributed
++        + over
++        + wrong_to
++        + no_reason
++        + not_sent_healthy
++        + evidence
++    )
+     cap_u = "none" if max_unknown is None else max_unknown
+     cap_f = "none" if max_failed is None else max_failed
+     detail = (
+         f"{len(mail)} messages; {len(doubled)} keys more than once, {len(doubled_to)} recipients more than once, "
++        f"{len(wrong_to)} to the wrong recipient, "
+         f"{len(lost_mail)} sent without a message, {len(unexpected)} failed with a message and no fitting reason, "
+         f"{len(failed_with_mail)} failed with a message and a reason that fits, {len(stray)} keys of no "
+         f"lead; unknown {len(unknown_all)} ({len(unknown_with_mail)} with a message, {len(unknown_no_mail)} without; "
+-        f"ceiling {cap_u}; {len(unattributed)} without a fitting reason); failed {failed_n} (ceiling {cap_f})"
++        f"ceiling {cap_u}; {len(unattributed)} without a fitting reason); failed {failed_n} (ceiling {cap_f}; "
++        f"{len(no_reason)} without a reason); {len(not_sent_healthy)} leads from a healthy window not sent; "
++        f"{len(evidence)} evidence faults"
+     )
+     values = {
+         "messages": len(mail),
+@@ -350,7 +485,11 @@
+         "unknown_without_message": len(unknown_no_mail),
+         "unknown_without_fitting_reason": len(unattributed),
+         "failed": failed_n,
++        "failed_without_reason": len(no_reason),
+         "failed_with_message_and_reason": len(failed_with_mail),
++        "wrong_recipient": len(wrong_to),
++        "not_sent_in_healthy_window": len(not_sent_healthy),
++        "catcher_records_with_expected_mode": seen_records,
+         "max_unknown": max_unknown,
+         "max_failed": max_failed,
+     }
+@@ -360,7 +499,9 @@
+ def check_crm(book: Mapping[str, Any], crm_rows: list[dict[str, Any]]) -> dict[str, Any]:
+     """Expected = leads with crm_done=1 (must be present) plus unknowns (may be present): leads with crm_done=2
+     (a put was started, its end unknown) or a follow-up in state unknown. A row for any other lead, a lead_id twice,
+-    or a missing crm_done=1 row fails."""
++    or a missing crm_done=1 row fails. A lead in state `sent` must have crm_done=1: the desk writes the CRM step before
++    the send (desk.py `_crm_step`, then `_send_claimed`), so a `sent` lead without it lost its CRM follow-up and
++    a CRM row (no crm_done=1 means no row was demanded above, which is why this is its own rule)."""
+     followups: Mapping[str, tuple[str, int, int]] = book["followups"]
+     leads = set(book["leads"])
+     done = {lid for lid, (_, d, _) in followups.items() if d == CRM_DONE}
+@@ -371,11 +512,13 @@
+     extra = sorted(present - done - unknown)
+     twice = sorted(k for k, n in ids.items() if n > 1)
+     not_leads = sorted(present - leads)
+-    bad = missing + extra + twice + not_leads
++    sent_no_crm = sorted(lid for lid, (s, d, _) in followups.items() if s == "sent" and d != CRM_DONE)
++    bad = missing + extra + twice + not_leads + [f"sent-without-crm:{lid}" for lid in sent_no_crm]
+     lo, hi = len(done), len(done) + len(unknown)
+     detail = (
+         f"{len(crm_rows)} CRM rows; allowed {lo} to {hi} (done {lo} + up to {len(unknown)} unknown); "
+-        f"{len(missing)} missing, {len(extra)} not allowed, {len(twice)} twice"
++        f"{len(missing)} missing, {len(extra)} not allowed, {len(twice)} twice, {len(not_leads)} for no lead, "
++        f"{len(sent_no_crm)} sent without a finished CRM step"
+     )
+     values = {
+         "crm_rows": len(crm_rows),
+@@ -385,6 +528,8 @@
+         "missing": len(missing),
+         "extra": len(extra),
+         "twice": len(twice),
++        "not_leads": len(not_leads),
++        "sent_without_crm_done": len(sent_no_crm),
+     }
+     return _result(4, not bad, detail, bad, values)
+ 
+@@ -397,23 +542,84 @@
+     return arrivals or [r for r in model_rows if "event" not in r]
+ 
+ 
+-def check_model_calls(model_rows: list[dict[str, Any]], bound: int) -> dict[str, Any]:
++def _call_is_down(row: Mapping[str, Any]) -> bool:
++    """A call whose answer can never be a usable label (the fake's down modes)."""
++    return row.get("mode") in MODEL_DOWN_MODES
++
++
++def _asked_again_after_answer(model_rows: list[dict[str, Any]]) -> list[str]:
++    """Leads that arrived again after a usable answer (a 200 in mode ok or slow) was written for them. The desk stores
++    the label it gets, so a re-ask is a double model call, unless a desk kill lost the stored label."""
++    answered: set[str] = set()
++    again: set[str] = set()
++    for r in model_rows:
++        lead = str(r.get("lead_id"))
++        event = r.get("event")
++        if event in ("arrival", None) and lead in answered:
++            again.add(lead)
++        if event in ("result", None) and r.get("status") == HTTP_OK and r.get("mode") in MODEL_USABLE_MODES:
++            answered.add(lead)
++    return sorted(again)
++
++
++def check_model_calls(
++    model_rows: list[dict[str, Any]],
++    bound: int,
++    lead_ids: Collection[str] | None = None,
++    expect: Expect | None = None,
++) -> dict[str, Any]:
++    """Bound per lead, plus (with `expect`) proof the model was used as the scenario says: every lead was asked at
++    least once (an empty or result-only log fails), the down modes were really called, no lead was asked again after a
++    usable answer (beyond the crash allowance), at most `max_multi_call_leads` leads were asked twice or more, and no
++    lead was asked more than `max_down_calls_per_lead` times while the model gave no usable answer."""
+     calls = model_calls_of(model_rows)
+     per_lead = Counter(str(r.get("lead_id")) for r in calls)
+     over = [lid for lid, n in per_lead.items() if n > bound]
+     by_status = Counter(str(r.get("status")) for r in model_rows if r.get("event") != "arrival")
+     has_arrivals = any(r.get("event") == "arrival" for r in model_rows)
++    multi = sorted(lid for lid, n in per_lead.items() if n > 1)
++    again = _asked_again_after_answer(model_rows) if has_arrivals else []  # no arrival lines: the order is unknown
++    down_per_lead = Counter(str(r.get("lead_id")) for r in calls if _call_is_down(r))
++    down_calls = sum(down_per_lead.values())
++    non200 = sum(1 for r in model_rows if r.get("event") != "arrival" and r.get("status") not in (None, HTTP_OK))
++    faults: list[str] = []
++    if expect is not None:
++        if expect.model_expected:
++            if not calls:
++                faults.append("no-model-calls")
++            faults += [f"never-asked:{lid}" for lid in sorted(set(lead_ids or ()) - set(per_lead))]
++        if down_calls < expect.min_down_calls:
++            faults.append("model-fault-not-seen")
++        if non200 < expect.min_non200_results:
++            faults.append("too-few-non-200-results")
++        if expect.max_multi_call_leads is not None and len(multi) > expect.max_multi_call_leads:
++            faults += [f"asked-twice:{lid}" for lid in multi]
++        if len(again) > expect.reask_after_answer_allowed:
++            faults += [f"asked-after-answer:{lid}" for lid in again]
++        faults += [
++            f"too-many-failed-calls:{lid}" for lid, n in down_per_lead.items() if n > expect.max_down_calls_per_lead
++        ]
+     values = {
+         "bound": bound,
+         "calls": len(calls),
+         "counted_from": "arrival lines" if has_arrivals else "finished calls (no arrival lines in this log)",
+         "leads_called": len(per_lead),
+         "max_calls_one_lead": max(per_lead.values(), default=0),
++        "leads_with_more_than_one_call": len(multi),
++        "leads_asked_after_a_usable_answer": len(again),
++        "calls_in_down_modes": down_calls,
++        "non_200_results": non200,
+         "calls_by_status": dict(by_status),
++        "expected": expect.to_dict() if expect is not None else None,
+     }
+     most = values["max_calls_one_lead"]
+-    detail = f"{len(calls)} calls for {len(per_lead)} leads; most for one lead {most}; bound {bound}"
+-    return _result(5, not over, detail, over, values)
++    detail = (
++        f"{len(calls)} calls for {len(per_lead)} leads; most for one lead {most}; bound {bound}; "
++        f"{len(multi)} leads called more than once; {len(again)} asked again after an answer; "
++        f"{down_calls} calls in a down mode; {non200} results other than 200"
++        + ("" if expect is None else f"; {len(faults)} evidence faults")
++    )
++    return _result(5, not over and not faults, detail, over + faults, values)
+ 
+ 
+ def check_rate_503(reqs: list[dict[str, Any]], ceiling: float | None) -> dict[str, Any]:
+@@ -505,13 +711,14 @@
+     max_failed: int | None = None,
+     drain_timed_out: bool = False,
+     facts: Mapping[str, Any] | None = None,
++    expect: Expect | None = None,
+ ) -> dict[str, Any]:
+     checks = [
+         check_receipts(reqs, book, intended, facts),
+         check_partition(book, reqs, facts),
+-        check_messages(book, mail, max_unknown, max_failed),
++        check_messages(book, mail, max_unknown, max_failed, reqs, expect, facts),
+         check_crm(book, crm_rows),
+-        check_model_calls(model_rows, model_bound),
++        check_model_calls(model_rows, model_bound, book["leads"], expect),
+         check_rate_503(reqs, max_503_rate),
+         check_drain(reqs, book, drained_ts, max_drain_seconds, drain_timed_out),
+     ]
+@@ -527,7 +734,13 @@
+             lines.append(
+                 f"            first {len(c['offenders'])} of {c['offender_count']}: {', '.join(c['offenders'])}"
+             )
+-    lines.append("ALL 7 CHECKS HOLD" if result["ok"] else "AT LEAST ONE CHECK FAILED")
++    report_only = any(c["id"] == CHECK_RATE_503 and c["values"].get("ceiling") is None for c in result["checks"])
++    if not result["ok"]:
++        lines.append("AT LEAST ONE CHECK FAILED")
++    else:  # say it when check 6 only reported: "all seven" would otherwise mean six enforced and one counted
++        lines.append(
++            "ALL 7 CHECKS HOLD (check 6 report only: no ceiling given)" if report_only else "ALL 7 CHECKS HOLD"
++        )
+     return "\n".join(lines)
+ 
+ 
+@@ -544,13 +757,29 @@
+ 
+ 
+ def read_facts(facts: Path | None, requests: Path) -> dict[str, Any]:
+-    """The driver's facts file (default <requests>.facts.json); {} when it cannot be read."""
++    """The driver's facts file (default <requests>.facts.json). Missing or unreadable is an input error: without it
++    the marker, id-prefix and intended-list tests cannot run, and a check that silently skips is a pass that proves
++    less than it says."""
+     path = facts or requests.with_name(requests.name + ".facts.json")
+     try:
+         obj = json.loads(path.read_text(encoding="utf-8"))
+-    except (OSError, ValueError):
+-        return {}
+-    return obj if isinstance(obj, dict) else {}
++    except (OSError, ValueError) as e:
++        raise InputError(
++            f"cannot read the facts file {path} (give --facts, or keep it next to the request log): {e}"
++        ) from e
++    if not isinstance(obj, dict):
++        raise InputError(f"{path}: the facts file must hold a JSON object")
++    return obj
++
++
++def read_expect(path: Path | None) -> Expect | None:
++    if path is None:
++        return None
++    try:
++        obj = json.loads(path.read_text(encoding="utf-8"))
++        return Expect.from_dict(obj)
++    except (OSError, ValueError, TypeError, AttributeError) as e:
++        raise InputError(f"cannot read the expectations {path}: {e}") from e
+ 
+ 
+ def _intended(facts: Path | None, requests: Path, explicit: int | None) -> int:
+@@ -576,8 +805,15 @@
+     ap.add_argument("--intended", type=int, help="intended request count (instead of reading the facts file)")
+     ap.add_argument("--max-unknown", type=int, default=None, help="ceiling on follow-ups in state unknown")
+     ap.add_argument("--max-failed", type=int, default=None, help="ceiling on follow-ups in state failed")
+-    ap.add_argument("--model-bound", type=int, default=DEFAULT_MODEL_CALL_BOUND, help="most model calls for one lead")
+-    ap.add_argument("--max-503-rate", type=float, default=None)
++    ap.add_argument(
++        "--model-bound",
++        type=int,
++        default=DEFAULT_MODEL_CALL_BOUND,
++        help=f"most model calls for one lead; default {DEFAULT_MODEL_CALL_BOUND} (a healthy model); a scenario where "
++        f"the model is down must state its own (up to {MAX_MODEL_CALL_BOUND})",
++    )
++    ap.add_argument("--max-503-rate", type=float, default=None, help="ceiling on the share of tries answered 503")
++    ap.add_argument("--expect", type=Path, help="scenario expectations JSON (live_l2.check_invariants.Expect)")
+     ap.add_argument("--max-drain-seconds", type=float, default=DEFAULT_MAX_DRAIN_SECONDS)
+     ap.add_argument("--json", type=Path, help="write the JSON result here (default: print it after the table)")
+     a = ap.parse_args(argv)
+@@ -598,6 +834,7 @@
+             a.max_failed,
+             timed_out,
+             read_facts(a.facts, a.requests),
++            read_expect(a.expect),
+         )
+     except InputError as e:
+         print(f"INPUT ERROR: {e}", file=sys.stderr)
+diff -ruN a/live_l2/load_driver.py b/live_l2/load_driver.py
+--- a/live_l2/load_driver.py	2026-11-09 19:52:50.748729872 +0000
++++ b/live_l2/load_driver.py	2026-11-09 20:20:54.812126571 +0000
+@@ -4,12 +4,15 @@
+      scenarios: burst:N (N at one moment) | rate:R:D (R requests/s for D seconds) |
+                 dupmix:TOTAL:FRACTION (a share of the requests are repeats, some through both doors at once)
+ Open loop: each request has an INTENDED send time fixed before the run; a slow reply never moves a later request.
+-The actual send time and the lag are logged, so a driver that could not keep up shows in the log."""
++The actual send time and the lag are logged, so a driver that could not keep up shows in the log.
++Workers are separate processes watched by the parent: a worker that dies is reported (exit code 1 of the driver, its
++missing lines show in check 1) and never hangs the run; a worker whose parent is gone stops sending."""
+ 
+ from __future__ import annotations
+ 
+ import argparse
+ import json
++import math
+ import multiprocessing
+ import os
+ import platform
+@@ -49,6 +52,13 @@
+ DUPMIX_DEFAULT_RATE = 200.0  # requests per second for dupmix
+ RETRY_CODES = (503,)  # plus every network error and timeout
+ ACK_CODES = (200, 201, 202)
++# A desk that is killed and started again needs a few seconds. The default retry policy (MAX_RETRIES x BACKOFF) lasts
++# about half a second, so a request that arrives during a restart would end as a connection error. With a retry window a
++# request keeps retrying (503 and network errors) every WINDOW_BACKOFF_SECONDS until the window is over.
++WINDOW_BACKOFF_SECONDS = 0.25
++MAX_RETRY_WINDOW_SECONDS = REQUEST_DEADLINE_SECONDS  # a window longer than the request deadline would never be used
++WORKER_GRACE_SECONDS = 15.0  # slack on top of the longest a worker can legitimately take (see _worker_deadline)
++WORKER_POLL_SECONDS = 0.2
+ ID_PREFIX = "ld"
+ EMAIL_DOMAIN = "example.test"
+ RUN_ID_LENGTH = 10  # characters of the marker that every request of one run carries in its message
+@@ -83,14 +93,27 @@
+         return None, type(e).__name__, {}
+ 
+ 
+-def send_with_retries(url: str, item: dict[str, Any]) -> dict[str, Any]:
+-    """Send one intended request; retry 503 and network errors up to MAX_RETRIES within the deadline.
+-    Returns the log line (format in README-L2.md)."""
++def check_retry_window(seconds: float | None) -> float | None:
++    """None (use MAX_RETRIES) or a finite number of seconds, above 0 and at most MAX_RETRY_WINDOW_SECONDS."""
++    if seconds is None:
++        return None
++    if not math.isfinite(seconds) or not 0 < seconds <= MAX_RETRY_WINDOW_SECONDS:
++        raise ValueError(f"retry window must be above 0 and at most {MAX_RETRY_WINDOW_SECONDS} seconds")
++    return seconds
++
++
++def send_with_retries(url: str, item: dict[str, Any], retry_window: float | None = None) -> dict[str, Any]:
++    """Send one intended request; retry 503 and network errors up to MAX_RETRIES within the deadline, or, with a
++    `retry_window`, for that many seconds after the first try (a desk restart). Returns the log line (README-L2.md)."""
+     body = json.dumps(item["envelope"]).encode()
+     attempts: list[dict[str, Any]] = []
+     first = time.time()
+     reply: dict[str, Any] = {}
+-    for n in range(MAX_RETRIES + 1):
++    window = check_retry_window(retry_window)
++    pause = BACKOFF_SECONDS if window is None else WINDOW_BACKOFF_SECONDS
++    n = -1
++    while True:
++        n += 1
+         t0 = time.time()
+         try:
+             code, error, reply = _post(url, body)
+@@ -98,9 +121,11 @@
+             code, error, reply = None, type(e).__name__, {}
+         attempts.append({"ts": t0, "code": code, "error": error, "latency_s": round(time.time() - t0, 4)})
+         retry = code in RETRY_CODES or code is None
+-        if not retry or n == MAX_RETRIES or time.time() - first + BACKOFF_SECONDS > REQUEST_DEADLINE_SECONDS:
++        spent = time.time() - first
++        out_of_tries = n >= MAX_RETRIES if window is None else spent + pause > window
++        if not retry or out_of_tries or spent + pause > REQUEST_DEADLINE_SECONDS:
+             break
+-        time.sleep(BACKOFF_SECONDS)
++        time.sleep(pause)
+     last = attempts[-1]
+     final = last["code"] if last["code"] is not None else last["error"]
+     return {
+@@ -205,9 +230,13 @@
+     return items
+ 
+ 
+-def _worker(args: tuple[int, str, list[dict[str, Any]], int, Path]) -> None:
+-    """One worker process: threads take its items in intended-time order, wait until the intended moment, send."""
+-    index, url, items, threads, part = args
++def _worker(args: tuple[Any, ...]) -> None:
++    """One worker process: threads take its items in intended-time order, wait until the intended moment, send.
++    args = (index, url, items, threads, part[, retry window]). When the parent process is gone the worker stops
++    sending (its remaining items stay unlogged: the driver that started it is dead, nothing reads its log)."""
++    index, url, items, threads, part, *more = args
++    retry_window: float | None = more[0] if more else None
++    parent = os.getppid()
+     work: queue.Queue[dict[str, Any]] = queue.Queue()
+     for it in items:
+         work.put(it)
+@@ -223,9 +252,11 @@
+             wait = it["intended_ts"] - time.time()
+             if wait > 0:
+                 time.sleep(wait)
++            if os.getppid() != parent:  # orphaned: the parent died, so nobody will read this log
++                return
+             line = aborted_line(it)  # written by the finally below if nothing better exists: every item logs
+             try:
+-                line = send_with_retries(url, it)
++                line = send_with_retries(url, it) if retry_window is None else send_with_retries(url, it, retry_window)
+             except Exception as e:  # noqa: BLE001
+                 line = aborted_line(it, type(e).__name__)
+             finally:
+@@ -291,9 +322,63 @@
+     }
+ 
+ 
++def _worker_deadline(items: int, threads: int, last_intended_ts: float) -> float:
++    """The latest moment a worker can still be doing legitimate work: its last item's intended time, then every one of
++    its items waiting behind busy threads for a whole request (deadline plus one try), plus a grace."""
++    rounds = math.ceil(items / max(1, threads))
++    return last_intended_ts + rounds * (REQUEST_DEADLINE_SECONDS + ATTEMPT_TIMEOUT_SECONDS) + WORKER_GRACE_SECONDS
++
++
++def _run_workers(
++    ctx: Any, jobs: list[tuple[Any, ...]], deadlines: list[float], target: Any, poll: float = WORKER_POLL_SECONDS
++) -> str | None:
++    """Start one process per job and watch them. A worker that exits with a non-zero code, or is still running at its
++    deadline, is reported; the others go on. Every worker still alive at the end is stopped: nothing is left behind."""
++    procs = [ctx.Process(target=target, args=(job,), daemon=True) for job in jobs]
++    problems: list[str] = []
++    try:
++        for p in procs:
++            p.start()
++        reported: set[int] = set()
++        while any(p.is_alive() for p in procs):
++            now = time.time()
++            for k, p in enumerate(procs):
++                if not p.is_alive() and p.exitcode not in (0, None) and k not in reported:
++                    reported.add(k)
++                    problems.append(f"worker {k} exited with code {p.exitcode}")
++                if p.is_alive() and now > deadlines[k] and k not in reported:
++                    reported.add(k)
++                    problems.append(f"worker {k} did not finish in time")
++                    p.terminate()
++            time.sleep(poll)
++        for k, p in enumerate(procs):
++            if p.exitcode not in (0, None) and k not in reported:
++                problems.append(f"worker {k} exited with code {p.exitcode}")
++    finally:
++        for p in procs:
++            if p.is_alive():
++                p.terminate()
++        for p in procs:
++            p.join(timeout=5)
++            if p.is_alive():
++                p.kill()
++                p.join(timeout=5)
++    return "; ".join(problems) or None
++
++
+ def run(
+-    base_url: str, scenario: str, log: Path, facts_path: Path, workers: int, threads: int, seed: int, prefix: str
++    base_url: str,
++    scenario: str,
++    log: Path,
++    facts_path: Path,
++    workers: int,
++    threads: int,
++    seed: int,
++    prefix: str,
++    retry_window: float | None = None,
++    worker_target: Any = None,
+ ) -> dict[str, Any]:
++    check_retry_window(retry_window)
+     facts = machine_facts()
+     t0 = time.time() + START_LEAD_SECONDS
+     run_id = uuid.uuid4().hex[:RUN_ID_LENGTH]
+@@ -301,13 +386,15 @@
+     url = base_url.rstrip("/") + "/leads"
+     workers = max(1, min(workers, len(schedule) or 1))
+     parts = [log.with_name(f"{log.name}.part{k}") for k in range(workers)]
+-    jobs = [(k, url, schedule[k::workers], threads, parts[k]) for k in range(workers)]
++    jobs = [(k, url, schedule[k::workers], threads, parts[k], retry_window) for k in range(workers)]
+     facts.update(
+         scenario=scenario,
+         workers=workers,
+         threads_per_worker=threads,
+         intended_requests=len(schedule),
++        intended_list=[[it["door"], it["request_id"]] for it in schedule],  # check 1 compares the log with this list
+         distinct_request_ids=len({it["request_id"] for it in schedule}),
++        retry_window_seconds=retry_window,
+         id_prefix=prefix,
+         run_id=run_id,
+         email_domain=EMAIL_DOMAIN,
+@@ -317,11 +404,13 @@
+     )
+     facts_path.write_text(json.dumps(facts, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+     ctx = multiprocessing.get_context("spawn")
++    deadlines = [
++        _worker_deadline(len(j[2]), threads, max((it["intended_ts"] for it in j[2]), default=t0)) for j in jobs
++    ]
+     worker_error: str | None = None
+     try:
+-        with ctx.Pool(workers) as pool:
+-            pool.map(_worker, jobs, chunksize=1)
+-    except Exception as e:  # noqa: BLE001 (a dead worker process: keep what its part file holds, report the failure)
++        worker_error = _run_workers(ctx, jobs, deadlines, worker_target or _worker)
++    except Exception as e:  # noqa: BLE001 (a worker that could not start: keep what the part files hold, report it)
+         worker_error = f"{type(e).__name__}: {e}"
+     lines: list[dict[str, Any]] = []
+     for p in parts:
+@@ -360,14 +449,22 @@
+     ap.add_argument("--threads", type=int, default=DEFAULT_THREADS, help="threads in each worker process")
+     ap.add_argument("--seed", type=int, default=1)
+     ap.add_argument("--id-prefix", default=ID_PREFIX, help="request ids are <prefix>-<n>; change it for every run")
++    ap.add_argument(
++        "--retry-window",
++        type=float,
++        default=None,
++        help=f"seconds a request retries 503 and network errors (a restart); at most {MAX_RETRY_WINDOW_SECONDS}; "
++        f"default: {MAX_RETRIES} retries",
++    )
+     a = ap.parse_args(argv)
+     try:
+         parse_scenario(a.scenario)
++        check_retry_window(a.retry_window)
+     except ValueError as e:
+         print(f"ERROR: {e}", file=sys.stderr)
+         return 2
+     facts = a.facts or a.log.with_name(a.log.name + ".facts.json")
+-    summary = run(a.base_url, a.scenario, a.log, facts, a.workers, a.threads, a.seed, a.id_prefix)
++    summary = run(a.base_url, a.scenario, a.log, facts, a.workers, a.threads, a.seed, a.id_prefix, a.retry_window)
+     print(json.dumps(summary, sort_keys=True))
+     if summary["logged"] != summary["intended"] or summary.get("worker_error"):
+         print(f"ERROR: logged {summary['logged']} of {summary['intended']} intended requests", file=sys.stderr)
+diff -ruN a/live_l2/recheck.py b/live_l2/recheck.py
+--- a/live_l2/recheck.py	2026-11-09 19:52:50.747330516 +0000
++++ b/live_l2/recheck.py	2026-11-09 20:23:05.707669081 +0000
+@@ -6,7 +6,9 @@
+ folder is never touched), catcher.jsonl, crm.json, model.jsonl, drain.json, summary.json, catcher.mode, crash.flag
+ (absent = consumed). Prints the seven checks, the run faults, and what this old data CANNOT show (RERUN lines).
+ Exit code: 0 all seven checks hold and no run fault; 1 a check or run fault failed; 2 input unreadable;
+-3 checks hold but at least one RERUN reason remains (the data lacks what a new check needs)."""
++3 checks hold but at least one RERUN reason remains (the data lacks what a new check needs).
++The bounds (model-call bound, unknown and failed ceilings, 503 ceiling, expectations) are the ones the run stored in its
++summary.json at run time. A folder from before that falls back to today's catalogue and says so on a BOUNDS line."""
+ 
+ from __future__ import annotations
+ 
+@@ -15,11 +17,12 @@
+ import shutil
+ import sys
+ import tempfile
++from collections import Counter
+ from pathlib import Path
+ from typing import Any
+ 
+ from live_l2 import check_invariants as ci
+-from live_l2.campaign import Scenario, catalogue, harness_faults, model_bound_for
++from live_l2.campaign import Scenario, catalogue, expectations_for, harness_faults, model_bound_for
+ 
+ EXIT_RERUN = 3
+ SCENARIO_FILES = (
+@@ -58,6 +61,12 @@
+             "model.jsonl has no arrival lines: a call held in timeout mode is logged only after the hold, so check 5 "
+             "may undercount calls the campaign cut short"
+         )
++    per_lead = Counter(str(r.get("lead_id")) for r in model_rows if "event" not in r)
++    if not has_arrivals and any(n > 1 for n in per_lead.values()):
++        reasons.append(
++            "model.jsonl has no arrival lines and some lead has more than one call: a second call that came after an "
++            "answer cannot be told from two calls that raced, so `asked again after an answer` is not judged"
++        )
+     try:
+         mode = (d / "catcher.mode").read_text(encoding="utf-8").split()
+     except OSError:
+@@ -69,8 +78,38 @@
+     return reasons
+ 
+ 
++def _bounds(
++    sc: Scenario, summary: dict[str, Any], reqs: list[dict[str, Any]], facts: dict[str, Any]
++) -> tuple[dict[str, Any], str]:
++    """(bounds, where they came from). Saved bounds win; otherwise the catalogue's, with the expectations rebuilt from
++    the events the run logged."""
++    saved = summary.get("bounds")
++    if isinstance(saved, dict) and "model_bound" in saved:
++        return saved, "the saved run (summary.json bounds)"
++    ids = {str(r.get("request_id")) for r in reqs}
++    starts = [float(r["intended_ts"]) for r in reqs if r.get("intended_ts") is not None]
++    start = float(facts.get("first_intended_ts") or (min(starts) if starts else 0.0))
++    expect = expectations_for(sc, summary.get("events_fired") or [], len(ids), start, max(starts) if starts else None)
++    return (
++        {
++            "model_bound": sc.model_bound or model_bound_for(sc),
++            "max_unknown": sc.max_unknown,
++            "max_failed": sc.max_failed,
++            "max_503_rate": sc.max_503_rate,
++            "expect": expect.to_dict(),
++        },
++        "today's catalogue (the saved run stored no bounds)",
++    )
++
++
+ def recheck(d: Path) -> tuple[dict[str, Any], list[str], list[str]]:
+     """(check result, run faults, rerun reasons)."""
++    result, faults, reasons, _ = recheck_full(d)
++    return result, faults, reasons
++
++
++def recheck_full(d: Path) -> tuple[dict[str, Any], list[str], list[str], str]:
++    """(check result, run faults, rerun reasons, where the bounds came from)."""
+     summary = _read_json(d / "summary.json")
+     sc = _scenario(str(summary.get("scenario")))
+     with tempfile.TemporaryDirectory() as tmp:
+@@ -85,6 +124,7 @@
+     intended = ci._intended(d / "requests.jsonl.facts.json", d / "requests.jsonl", None)  # noqa: SLF001
+     facts = ci.read_facts(d / "requests.jsonl.facts.json", d / "requests.jsonl")
+     facts.setdefault("id_prefix", sc.name)  # the campaign always used the scenario name as the id prefix
++    bounds, source = _bounds(sc, summary, reqs, facts)
+     result = ci.run_checks(
+         reqs,
+         book,
+@@ -92,14 +132,15 @@
+         ci.read_crm(d / "crm.json"),
+         model_rows,
+         drained_ts,
+-        sc.model_bound or model_bound_for(sc),
+-        None,
++        int(bounds["model_bound"]),
++        bounds.get("max_503_rate"),
+         ci.DEFAULT_MAX_DRAIN_SECONDS,
+         intended,
+-        sc.max_unknown,
+-        sc.max_failed,
++        bounds.get("max_unknown"),
++        bounds.get("max_failed"),
+         timed_out,
+         facts,
++        ci.Expect.from_dict(bounds["expect"]) if bounds.get("expect") else None,
+     )
+     faults = harness_faults(
+         sc,
+@@ -111,7 +152,7 @@
+         summary.get("runner_error"),
+     )
+     reasons = rerun_reasons(sc, d, model_rows)
+-    return result, faults, reasons
++    return result, faults, reasons, source
+ 
+ 
+ def main(argv: list[str] | None = None) -> int:
+@@ -120,16 +161,17 @@
+     ap.add_argument("--json", type=Path, help="write the result here")
+     a = ap.parse_args(argv)
+     try:
+-        result, faults, reruns = recheck(a.dir)
++        result, faults, reruns, source = recheck_full(a.dir)
+     except ci.InputError as e:
+         print(f"INPUT ERROR: {e}", file=sys.stderr)
+         return ci.EXIT_INPUT
+     print(ci.render_table(result))
++    print(f"BOUNDS: from {source}")
+     print("RUN FAULTS: " + ("none" if not faults else "; ".join(faults)))
+     for r in reruns:
+         print(f"RERUN: {r}")
+     if a.json:
+-        out = {"result": result, "run_faults": faults, "rerun_reasons": reruns}
++        out = {"result": result, "run_faults": faults, "rerun_reasons": reruns, "bounds_from": source}
+         a.json.write_text(json.dumps(out, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+     if not result["ok"] or faults:
+         return ci.EXIT_FAIL
+diff -ruN a/src/lead_desk/smtp_outbox.py b/src/lead_desk/smtp_outbox.py
+--- a/src/lead_desk/smtp_outbox.py	2026-11-09 19:52:50.752910279 +0000
++++ b/src/lead_desk/smtp_outbox.py	2026-11-09 20:13:48.016529501 +0000
+@@ -20,7 +20,13 @@
+ encoded, a header the mail library refuses) is SendRefused before any network use, never "maybe sent".
+ A server that hangs up right after the 354 reply is "maybe sent" (the text went out; nothing can tell whether the
+ server kept it), never "unreachable": a retry would risk a second email.
+-A `timeout` of zero or less means "use DESK_SMTP_TIMEOUT_SECONDS".
++A `timeout` of zero or less means "use DESK_SMTP_TIMEOUT_SECONDS"; a NaN or infinite `timeout` (or setting) is a
++ValueError (raised before any network use), because a budget that never ends would break the "stuck" bound.
++Replies: a bare three-digit reply with no text is accepted (RFC 5321). A 5xx answer to EHLO is retried once as HELO
++(an old server); a refusal to HELO is SendRefused as for any other command.
++An unexpected exception type escaping the send (a bug in a library, an odd OS error; MemoryError is never caught) is
++mapped by the same rule as a known one: before the message text began -> SendUnreachable (nothing left, a retry is
++safe); once the text began -> SendAmbiguous (maybe sent). The same goes for the connect: SendUnreachable.
+ The whole send is bounded by ONE wall-clock budget (`timeout`); every socket read and write gets only what is left
+ of it, so a server that sends one byte at a time cannot stretch the call.
+ 
+@@ -32,6 +38,7 @@
+ 
+ import hashlib
+ import ipaddress
++import math
+ import re
+ import socket
+ import time
+@@ -50,12 +57,13 @@
+ # SMTP reply classes (RFC 5321 section 4.2)
+ _POSITIVE_DONE: Final = 2
+ _POSITIVE_INTERMEDIATE: Final = 3
++_PERMANENT_NEGATIVE: Final = 5
+ _REPLY_MAX_BYTES: Final = 65536  # a longer reply is treated as a broken server
+ _WIRE_POLICY: Final = policy.SMTP.clone(cte_type="7bit")  # text goes out as quoted-printable/base64, no 8BITMIME needed
+ _CRLF: Final = b"\r\n"
+ _BODY_END: Final = b"\r\n.\r\n"
+ _HOST_NAME = re.compile(r"^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*$")
+-_ADDRESS = re.compile(r"^[^\s<>\r\n\x00]+@[^\s<>\r\n\x00]+$")
++_ADDRESS = re.compile(r"^[^\s<>\r\n\x00,;\"()]+@[^\s<>\r\n\x00,;\"()]+$")  # no list or comment characters
+ _BAD_HEADER_CHARS = frozenset("\u2028\u2029")
+ 
+ DEFAULT_SMTP_PORT: Final = 2525  # a non-privileged port; the real port comes from DESK_SMTP_PORT
+@@ -84,8 +92,8 @@
+             raise ValueError("smtp from-address is not a plain ASCII address")
+         if not _HOST_NAME.fullmatch(self.message_id_domain):
+             raise ValueError("message-id domain must be a lower-case host name")
+-        if self.timeout_seconds <= 0:
+-            raise ValueError("smtp timeout must be positive")
++        if not math.isfinite(self.timeout_seconds) or self.timeout_seconds <= 0:
++            raise ValueError("smtp timeout must be a finite positive number")
+ 
+     @classmethod
+     def from_env(cls, env: Mapping[str, str]) -> SmtpSettings:
+@@ -141,6 +149,9 @@
+         end = buf.find(_CRLF)
+         while end != -1:
+             line = bytes(buf[:end])
++            if len(line) == 3 and line.isdigit():  # noqa: PLR2004 (RFC 5321: a reply may be the bare code)
++                del buf[: end + 2]
++                return int(line)
+             if len(line) >= 4 and line[:3].isdigit() and line[3:4] in (b" ", b"-"):  # noqa: PLR2004
+                 if line[3:4] == b" ":
+                     del buf[: end + 2]
+@@ -210,6 +221,8 @@
+             MessageError,
+         ) as e:  # ValueError covers UnicodeError; MessageError: header refused
+             raise SendRefused(type(e).__name__) from e
++        if not math.isfinite(timeout):
++            raise ValueError("send timeout must be a finite number")  # before any network use
+         budget = _Budget(timeout if timeout > 0 else self._s.timeout_seconds)
+         sock = self._connect(budget)
+         try:
+@@ -234,13 +247,18 @@
+             try:
+                 share = budget.left() / (len(addresses) - index)
+                 sock = socket.socket(family, socket.SOCK_STREAM)
+-            except (OSError, TimeoutError) as e:
++            except MemoryError:
++                raise
++            except Exception as e:  # noqa: BLE001 (nothing was connected yet: unreachable, a retry is safe)
+                 last = e
+                 break
+             try:
+                 sock.settimeout(share)
+                 sock.connect((host, self._s.port))
+-            except (OSError, TimeoutError) as e:  # refused, connect timeout, unreachable network
++            except MemoryError:
++                sock.close()
++                raise
++            except Exception as e:  # noqa: BLE001 (refused, connect timeout, unreachable network, anything odd)
+                 sock.close()
+                 last = e
+                 continue
+@@ -253,13 +271,18 @@
+         try:
+             code = _read_reply(sock, budget, buf)
+             self._expect_ok(code, "greeting")
+-            self._expect_ok(_command(sock, budget, buf, f"EHLO {self._s.message_id_domain}"), "ehlo")
++            ehlo = _command(sock, budget, buf, f"EHLO {self._s.message_id_domain}")
++            if ehlo // 100 == _PERMANENT_NEGATIVE:  # an old server that does not know EHLO: say HELO once
++                ehlo = _command(sock, budget, buf, f"HELO {self._s.message_id_domain}")
++            self._expect_ok(ehlo, "ehlo")
+             self._expect_ok(_command(sock, budget, buf, f"MAIL FROM:<{self._s.mail_from}>"), "mail")
+             self._expect_ok(_command(sock, budget, buf, f"RCPT TO:<{to}>"), "rcpt")
+             self._expect_ok(_command(sock, budget, buf, "DATA"), "data", intermediate=True)
+         except (SendRefused, SendUnreachable):
+             raise
+-        except (OSError, TimeoutError, _Closed) as e:
++        except MemoryError:
++            raise
++        except Exception as e:  # noqa: BLE001 (known and unknown alike: nothing of the text left)
+             raise SendUnreachable(type(e).__name__) from e
+         # Phase 2: the text starts to go out. From here every doubt is "maybe sent".
+         try:
+@@ -270,7 +293,9 @@
+             sock.settimeout(left)
+             sock.sendall(wire)
+             code = _read_reply(sock, budget, buf)
+-        except (OSError, TimeoutError, _Closed) as e:
++        except MemoryError:
++            raise
++        except Exception as e:  # noqa: BLE001 (known and unknown alike: the text began to go out, maybe sent)
+             raise SendAmbiguous(type(e).__name__) from e
+         if code // 100 != _POSITIVE_DONE:
+             raise SendAmbiguous(f"final reply {code}")
+diff -ruN a/tests/test_live_l2_e.py b/tests/test_live_l2_e.py
+--- a/tests/test_live_l2_e.py	1970-01-01 00:00:00.000000000 +0000
++++ b/tests/test_live_l2_e.py	2026-11-09 20:30:45.256512050 +0000
+@@ -0,0 +1,592 @@
++"""L2e: tests for the review findings F1 to F9 of the live-proof tools. Made-up data, loopback only."""
++
++from __future__ import annotations
++
++import json
++import multiprocessing
++import os
++import sys
++import time
++from copy import deepcopy
++from pathlib import Path
++from typing import Any
++
++import pytest
++from test_live_l2_tools import (
++    LEADS,
++    T0,
++    clean_saved_world,
++    failed,
++    make_book,
++    make_world,
++    run_world,
++    save_dir,
++    sync_receipt_ids,
++)
++
++from live_l2 import campaign, catcher, load_driver, recheck
++from live_l2 import check_invariants as ci
++
++EXP = getattr(ci, "Expect", dict)  # the old code has no Expect: its tests then fail, they do not break collection
++
++
++def all_sent_world(crm_done: int = 1, with_crm: bool = True) -> dict[str, Any]:
++    w = make_world()
++    w["leads"] = {k: ("sent", crm_done) for k in LEADS}
++    w["mail"] = [dict(w["mail"][0], send_key=k, message_id=f"m-{k}", to=f"r-{k}@example.test") for k in LEADS]
++    w["crm"] = [{"lead_id": k, "record": {}} for k in LEADS] if with_crm else []
++    return w
++
++
++# -- F1
++def test_sent_with_no_crm_fails_check_4(tmp_path: Path) -> None:
++    w = all_sent_world(crm_done=0, with_crm=False)
++    r = run_world(tmp_path, w)
++    assert 4 in failed(r)
++    assert "sent-without-crm:L1" in r["checks"][3]["offenders"]
++
++
++def test_all_sent_book_with_crm_passes(tmp_path: Path) -> None:
++    assert failed(run_world(tmp_path, all_sent_world())) == []
++
++
++# -- F2
++def test_failed_without_reason_fails(tmp_path: Path) -> None:
++    w = make_world()
++    w["leads"]["L5"] = ("failed", 1, None)
++    assert 3 in failed(run_world(tmp_path, w, max_failed=5))
++
++
++def test_all_failed_book_over_ceiling(tmp_path: Path) -> None:
++    w = make_world()
++    w["leads"] = {k: ("failed", 1, "unreachable") for k in LEADS}
++    w["mail"] = []
++    w["crm"] = [{"lead_id": k, "record": {}} for k in LEADS]
++    assert 3 in failed(run_world(tmp_path, w, max_failed=2))
++    assert 3 not in failed(run_world(tmp_path, w, max_failed=len(LEADS)))
++
++
++def test_unsent_lead_in_healthy_window(tmp_path: Path) -> None:
++    w = make_world()
++    ex = EXP(healthy_windows=((T0 - 1, None),))
++    r = run_world(tmp_path, w, expect=ex, max_failed=5, max_unknown=5)
++    assert 3 in failed(r)  # L5 failed and L6 unknown were submitted in a window that was healthy
++
++
++def test_derived_ceilings_follow_the_window() -> None:
++    for sc in campaign.catalogue():
++        if sc.name in ("catcher-down", "model-flaps"):
++            assert sc.max_failed is not None
++            assert 0 < sc.max_failed
++    assert "Failed ceiling" in campaign.scenario_table()
++
++
++# -- F3
++def test_empty_model_log_fails_if_expected(tmp_path: Path) -> None:
++    w = make_world()
++    w["model"] = []
++    assert 5 in failed(run_world(tmp_path, w, expect=EXP(model_expected=True)))
++
++
++def test_result_only_model_log_fails(tmp_path: Path) -> None:
++    w = make_world()
++    w["model"] = [{"ts": T0, "lead_id": k, "mode": "ok", "status": 200, "event": "result"} for k in LEADS]
++    assert 5 in failed(run_world(tmp_path, w, expect=EXP(model_expected=True)))
++
++
++def test_lead_never_asked_fails(tmp_path: Path) -> None:
++    w = make_world()
++    w["model"] = [r for r in w["model"] if r["lead_id"] != "L2"]
++    r = run_world(tmp_path, w, expect=EXP(model_expected=True))
++    assert "never-asked:L2" in r["checks"][4]["offenders"]
++
++
++def test_model_fault_must_be_seen(tmp_path: Path) -> None:
++    w = make_world()
++    r = run_world(tmp_path, w, expect=EXP(min_down_calls=1))
++    assert "model-fault-not-seen" in r["checks"][4]["offenders"]
++    r = run_world(tmp_path, w, expect=EXP(min_non200_results=1))
++    assert "too-few-non-200-results" in r["checks"][4]["offenders"]
++
++
++def test_catcher_mode_must_be_recorded(tmp_path: Path) -> None:
++    w = make_world()
++    r = run_world(tmp_path, w, expect=EXP(catcher_modes=("slow",), min_catcher_records=1))
++    assert 3 in failed(r)
++    w["mail"][0]["mode"] = "slow"
++    r = run_world(tmp_path, w, expect=EXP(catcher_modes=("slow",), min_catcher_records=1))
++    assert 3 not in failed(r)
++
++
++def test_drop_after_data_needs_an_unknown(tmp_path: Path) -> None:
++    w = all_sent_world()
++    r = run_world(tmp_path, w, expect=EXP(min_unknown=1))
++    assert 3 in failed(r)
++
++
++def test_mail_inside_down_window_fails(tmp_path: Path) -> None:
++    w = make_world()
++    r = run_world(tmp_path, w, expect=EXP(quiet_windows=((T0 - 5, T0 + 5),)))
++    assert 3 in failed(r)
++    assert 3 not in failed(run_world(tmp_path, w, expect=EXP(quiet_windows=((T0 + 50, T0 + 60),))))
++
++
++def planned(kind: str, value: str) -> campaign.Scenario:
++    return campaign.Scenario(name="x", load="burst:1", events=[(1.0, kind, value)])
++
++
++@pytest.mark.parametrize("kind", ["model", "catcher"])
++def test_missing_event_is_a_harness_fault(kind: str) -> None:
++    out = campaign.harness_faults(planned(kind, "ok"), [], [], False, 0, T0)
++    assert any(f"{kind} event" in f for f in out)
++
++
++def test_late_event_is_a_harness_fault() -> None:
++    fired = [{"kind": "model", "at": 1.0, "late_s": 9.0}]
++    out = campaign.harness_faults(planned("model", "ok"), [], fired, False, 0, T0)
++    assert any("late" in f for f in out)
++    ok = [{"kind": "model", "at": 1.0, "late_s": 0.1}]
++    assert campaign.harness_faults(planned("model", "ok"), [], ok, False, 0, T0) == []
++
++
++def test_live_event_thread_is_a_fault() -> None:
++    fired = [{"kind": "model", "at": 1.0, "late_s": 0.1}]
++    out = campaign.harness_faults(planned("model", "ok"), [], fired, False, 0, T0, None, True)
++    assert any("event thread" in f for f in out)
++
++
++# -- F4
++def pairs(lead: str, n: int, mode: str = "ok") -> list[dict[str, Any]]:
++    rows: list[dict[str, Any]] = []
++    for _ in range(n):
++        rows.append({"ts": T0, "lead_id": lead, "mode": mode, "event": "arrival"})
++        rows.append({"ts": T0, "lead_id": lead, "mode": mode, "event": "result", "status": 200})
++    return rows
++
++
++def test_multi_call_leads_are_capped() -> None:
++    rows = pairs("A", 2) + pairs("B", 2)
++    r = ci.check_model_calls(rows, 2, ["A", "B"], EXP(max_multi_call_leads=1, reask_after_answer_allowed=9))
++    assert r["ok"] is False
++    assert "asked-twice:A" in r["offenders"]
++    assert ci.check_model_calls(rows, 2, ["A", "B"], EXP(max_multi_call_leads=2, reask_after_answer_allowed=9))["ok"]
++
++
++def test_ask_after_answer_fails() -> None:
++    r = ci.check_model_calls(pairs("A", 2), 2, ["A"], EXP())
++    assert r["offenders"] == ["asked-after-answer:A"]
++
++
++def test_down_calls_per_lead_capped() -> None:
++    rows = [{"ts": T0, "lead_id": "A", "mode": "refusal", "event": "arrival"}] * 4
++    r = ci.check_model_calls(rows, 9, ["A"], EXP(max_down_calls_per_lead=3))
++    assert "too-many-failed-calls:A" in r["offenders"]
++
++
++def test_cli_default_bound_is_one() -> None:
++    assert ci.DEFAULT_MODEL_CALL_BOUND == 1
++    assert ci.DEFAULT_MODEL_CALL_BOUND != 6
++
++
++# -- F5
++def test_missing_id_plus_repeat_line_fails(tmp_path: Path) -> None:
++    w = clean_saved_world()
++    plan = [[r["door"], r["request_id"]] for r in w["reqs"]]
++    facts = {"intended_list": plan, "id_prefix": "r"}  # no distinct count: only the list can tell
++    assert 1 not in failed(run_world(tmp_path, deepcopy(w), facts=facts))
++    bad = deepcopy(w)
++    gone = bad["reqs"].pop(0)  # one intended request never sent: no receipt, no log line ...
++    bad["leads"].pop(gone["request_id"].removeprefix("r-"), None)
++    bad["reqs"].append(dict(bad["reqs"][0]))  # ... and another one logged twice: the line count still matches
++    r = run_world(tmp_path, bad, facts=facts)
++    assert 1 in failed(r)
++    offenders = " ".join(r["checks"][0]["offenders"])
++    assert "missing-from-log:" + gone["door"] + ":" + gone["request_id"] in offenders
++    assert "not-intended:" in offenders
++
++
++def test_distinct_id_count_must_match_facts(tmp_path: Path) -> None:
++    w = clean_saved_world()
++    facts = {"distinct_request_ids": 99, "id_prefix": "r"}
++    assert 1 in failed(run_world(tmp_path, w, facts=facts))
++
++
++# -- F6
++def test_foreign_receipt_fails_check_1(tmp_path: Path) -> None:
++    w = make_world()
++    w["ghost_new_receipt"] = True
++    assert failed(run_world(tmp_path, w))  # a verdict naming a lead the book lacks
++
++
++def test_lead_without_followup_row_fails(tmp_path: Path) -> None:
++    w = make_world()
++    w["leads"].pop("L4")  # no lead, no follow-up: the request r-L4 has no lead
++    assert 2 in failed(run_world(tmp_path, w))
++
++
++def test_stray_mail_fails(tmp_path: Path) -> None:
++    w = make_world()
++    w["mail"].append(dict(w["mail"][0], send_key="NOBODY", message_id="m-x", to="r-NOBODY@example.test"))
++    r = run_world(tmp_path, w)
++    assert 3 in failed(r)
++    assert "NOBODY" in r["checks"][2]["offenders"]
++
++
++def test_crm_twice_fails(tmp_path: Path) -> None:
++    w = make_world()
++    w["crm"].append({"lead_id": "L2", "record": {}})
++    r = run_world(tmp_path, w)
++    assert 4 in failed(r)
++    assert "L2" in r["checks"][3]["offenders"]
++
++
++def test_extra_and_not_leads_are_separate(tmp_path: Path) -> None:
++    w = make_world()
++    w["crm"].append({"lead_id": "L6", "record": {}})  # an allowed unknown
++    assert failed(run_world(tmp_path, w)) == []
++    w["crm"].append({"lead_id": "ghost", "record": {}})
++    r = run_world(tmp_path, w)
++    assert r["checks"][3]["offenders"] == ["ghost"]
++    w2 = make_world()
++    w2["crm"].append({"lead_id": "L5", "record": {}})  # L5 is failed with CRM done: a second row for it
++    assert 4 in failed(run_world(tmp_path, w2))
++
++
++def test_wrong_recipient_fails(tmp_path: Path) -> None:
++    w = make_world()
++    w["mail"][0]["to"] = "someone-else@example.test"
++    r = run_world(tmp_path, w)
++    assert "wrong-recipient:L1" in r["checks"][2]["offenders"]
++
++
++def test_recipient_compare_ignores_case(tmp_path: Path) -> None:
++    w = make_world()
++    w["mail"][0]["to"] = w["mail"][0]["to"].upper()
++    assert failed(run_world(tmp_path, w)) == []
++
++
++def test_check_6_report_only_is_stated(tmp_path: Path) -> None:
++    r = run_world(tmp_path, make_world())
++    assert "report only" in ci.CHECK_NAMES[6]
++    assert r["checks"][5]["ok"] is True
++    assert failed(run_world(tmp_path, make_world(), max_503_rate=0.0)) == [6]
++
++
++def test_catalogue_states_a_503_ceiling() -> None:
++    for sc in campaign.catalogue():
++        assert sc.max_503_rate is not None
++        assert 0.0 <= sc.max_503_rate < 1.0
++
++
++# -- F8
++def test_missing_facts_file_is_an_error(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
++    w = clean_saved_world()
++    d = save_dir(tmp_path, w, "s1")
++    (d / "requests.jsonl.facts.json").unlink()
++    code = ci.main(
++        [
++            "--requests",
++            str(d / "requests.jsonl"),
++            "--book",
++            str(d / "book.sqlite3"),
++            "--catcher",
++            str(d / "catcher.jsonl"),
++            "--crm",
++            str(d / "crm.json"),
++            "--model-log",
++            str(d / "model.jsonl"),
++            "--intended",
++            "5",
++        ]
++    )
++    assert code == ci.EXIT_INPUT
++
++
++# -- F9
++def test_model_down_modes_are_complete() -> None:
++    assert "malformed_label" in ci.MODEL_DOWN_MODES
++    assert campaign.is_model_down("slow", 0.5) is True
++    assert campaign.is_model_down("slow", 30.0) is False
++    sc = campaign.Scenario(name="x", load="burst:1", model_mode="slow", model_timeout=0.5)
++    assert campaign.model_bound_for(sc) == ci.MAX_MODEL_CALL_BOUND
++
++
++def test_retry_window_is_validated() -> None:
++    assert load_driver.check_retry_window(None) is None
++    assert load_driver.check_retry_window(5.0) == 5.0
++    for bad in (0.0, -1.0, float("nan"), float("inf"), load_driver.MAX_RETRY_WINDOW_SECONDS + 1):
++        with pytest.raises(ValueError, match="retry window"):
++            load_driver.check_retry_window(bad)
++
++
++def test_crash_scenarios_use_a_retry_window() -> None:
++    crashes = [sc for sc in campaign.catalogue() if any(e[1] == "crash" for e in sc.events)]
++    assert crashes
++    for sc in crashes:
++        assert sc.retry_window is not None
++        assert sc.retry_window >= campaign.CRASH_RETRY_WINDOW_SECONDS
++
++
++def test_boot_failure_is_recorded_goes_on(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
++    class Broken:
++        def __init__(self, sc: Any, out: Path, env: dict[str, str]) -> None:
++            self.sc = sc
++
++        def run(self) -> dict[str, Any]:
++            raise RuntimeError("desk would not start")
++
++    monkeypatch.setattr(campaign, "Run", Broken)
++    code = campaign.main(["--out", str(tmp_path), "--only", "burst-10,burst-200"])
++    assert code == 1
++    lines = [json.loads(x) for x in (tmp_path / "summary.jsonl").read_text(encoding="utf-8").splitlines()]
++    assert [x["scenario"] for x in lines] == ["burst-10", "burst-200"]  # the second one still ran
++    assert all("desk would not start" in x["runner_error"] for x in lines)
++
++
++def test_catcher_records_a_bad_charset() -> None:
++    raw = (
++        b"From: a@example.test\r\nTo: b@example.test\r\nSubject: s\r\nX-Send-Key: K1\r\n"
++        b"Content-Type: text/plain; charset=no-such-charset\r\nContent-Transfer-Encoding: 8bit\r\n\r\nbody\r\n"
++    )
++    rec = catcher.record_of(raw, ["b@example.test"], "ok")
++    assert rec["send_key"] == "K1"
++    assert rec["undecodable"] is True
++    assert len(str(rec["body_sha256"])) == 64
++
++
++def test_recheck_uses_saved_bounds(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
++    w = clean_saved_world()
++    bounds = {"model_bound": 1, "max_unknown": 0, "max_failed": 0, "max_503_rate": 0.0, "expect": None}
++    d = save_dir(tmp_path, w, "burst-10", bounds=bounds)
++    assert recheck.main([str(d)]) == ci.EXIT_OK
++    assert "BOUNDS: from the saved run" in capsys.readouterr().out
++    other = tmp_path / "other"
++    other.mkdir()
++    d2 = save_dir(other, w, "burst-10")
++    recheck.main([str(d2)])
++    assert "BOUNDS: from today's catalogue" in capsys.readouterr().out
++
++
++def test_recheck_saved_ceiling_beats_today(tmp_path: Path) -> None:
++    w = clean_saved_world()
++    w["model"] += [{"ts": T0, "lead_id": "L1", "mode": "ok", "status": 200}]  # a second call for L1
++    tight = {"model_bound": 1, "max_unknown": 0, "max_failed": 0, "max_503_rate": 0.0, "expect": None}
++    loose = dict(tight, model_bound=2)
++    a = tmp_path / "a"
++    b = tmp_path / "b"
++    a.mkdir()
++    b.mkdir()
++    assert recheck.main([str(save_dir(a, w, "burst-10", bounds=tight))]) == ci.EXIT_FAIL
++    assert (
++        recheck.main([str(save_dir(b, w, "burst-10", bounds=loose))]) == recheck.EXIT_RERUN
++    )  # holds, but the old log cannot show the order of the two calls
++
++
++# -- F7
++def exit_worker(job: Any) -> None:
++    os._exit(7)  # a worker killed from outside looks the same: a non-zero code and no result
++
++
++def hang_worker(job: Any) -> None:
++    time.sleep(60)
++
++
++def fine_worker(job: Any) -> None:
++    return None
++
++
++def test_dead_worker_is_reported_not_hung() -> None:
++    ctx = multiprocessing.get_context("spawn")
++    t0 = time.monotonic()
++    msg = load_driver._run_workers(ctx, [(0,), (1,)], [time.time() + 60] * 2, exit_worker, poll=0.05)
++    assert msg is not None and "exited with code 7" in msg
++    assert time.monotonic() - t0 < 30
++
++
++def test_stuck_worker_cut_at_its_deadline() -> None:
++    ctx = multiprocessing.get_context("spawn")
++    t0 = time.monotonic()
++    msg = load_driver._run_workers(ctx, [(0,)], [time.time() + 1.0], hang_worker, poll=0.05)
++    assert msg is not None and "did not finish in time" in msg
++    assert time.monotonic() - t0 < 30
++
++
++def test_good_workers_report_nothing() -> None:
++    ctx = multiprocessing.get_context("spawn")
++    assert load_driver._run_workers(ctx, [(0,)], [time.time() + 60], fine_worker, poll=0.05) is None
++
++
++def test_orphaned_worker_stops_sending(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
++    sent: list[str] = []
++    monkeypatch.setattr(load_driver, "send_with_retries", lambda url, it, *a: sent.append("x") or {})
++    real = os.getppid()
++    seen = iter([real])
++    monkeypatch.setattr(
++        load_driver.os, "getppid", lambda: next(seen, -1)
++    )  # the first call is the start; then "orphaned"
++    item = load_driver._item("form", "r1", time.time(), "burst:1", "first")
++    load_driver._worker((0, "http://127.0.0.1:1/leads", [item], 1, tmp_path / "p0"))
++    assert sent == []
++
++
++def test_parent_alive_worker_does_send(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
++    sent: list[str] = []
++    monkeypatch.setattr(load_driver, "send_with_retries", lambda url, it, *a: sent.append("x") or {})
++    item = load_driver._item("form", "r1", time.time(), "burst:1", "first")
++    load_driver._worker((0, "http://127.0.0.1:1/leads", [item], 1, tmp_path / "p0"))
++    assert sent == ["x"]
++
++
++def test_run_group_kills_the_whole_group() -> None:
++    code, _out, err = campaign.run_group([sys.executable, "-c", "import time; time.sleep(30)"], dict(os.environ), 1.0)
++    assert code is None
++    assert "timed out" in err
++
++
++def test_worker_deadline_grows_with_items() -> None:
++    a = load_driver._worker_deadline(10, 10, T0)
++    b = load_driver._worker_deadline(100, 10, T0)
++    assert b > a > T0
++
++
++def test_readme_pins_the_scenario_table() -> None:
++    text = (Path(__file__).resolve().parent.parent / "live_l2" / "README-L2.md").read_text(encoding="utf-8")
++    assert campaign.scenario_table() in text
++
++
++# -- mutation survivors of the first pass: one planted fault each
++def run_custom(
++    tmp_path: Path, w: dict[str, Any], sql: list[str] | None = None, drop_keys: tuple[str, ...] = (), **kw: Any
++) -> dict[str, Any]:
++    db = tmp_path / "custom.sqlite3"
++    if db.exists():
++        db.unlink()
++    sync_receipt_ids(w)
++    make_book(db, w["leads"])
++    if sql:
++        import sqlite3
++
++        conn = sqlite3.connect(db)
++        for stmt in sql:
++            conn.execute(stmt)
++        conn.commit()
++        conn.close()
++    book = ci.read_book(db)
++    for k in drop_keys:
++        book.pop(k)
++    kw.setdefault("intended", w["intended"])
++    return ci.run_checks(w["reqs"], book, w["mail"], w["crm"], w["model"], w["drained_ts"], **kw)
++
++
++def test_client_receipt_number_must_match(tmp_path: Path) -> None:
++    w = make_world()
++    w["reqs"][1]["receipt_id"] = 999
++    run = run_world(tmp_path, w)
++    assert 1 in failed(run)
++    assert "form:r-L2" in run["checks"][0]["offenders"]
++
++
++def test_foreign_receipt_is_named(tmp_path: Path) -> None:
++    w = make_world()
++    facts = {"id_prefix": "r"}
++    r = run_custom(
++        tmp_path,
++        w,
++        ["INSERT INTO receipts(source, source_ref, received_at, payload) VALUES ('form', 'zz-1', 1, '{}')"],
++        facts=facts,
++    )
++    assert any(o.startswith("foreign-receipt:") for o in r["checks"][0]["offenders"])
++
++
++def test_lead_with_no_followup_row_fails_2(tmp_path: Path) -> None:
++    r = run_custom(tmp_path, make_world(), ["DELETE FROM followups WHERE lead_id = 'L4'"])
++    assert 2 in failed(r)
++    assert "L4" in r["checks"][1]["offenders"]
++
++
++def test_receipt_without_verdict_fails_2(tmp_path: Path) -> None:
++    sql = ["INSERT INTO receipts(source, source_ref, received_at, payload) VALUES ('webhook', 'r-L2', 1, '{}')"]
++    r = run_custom(tmp_path, make_world(), sql)  # a repeat of a known request: no lead, no new id, no verdict
++    assert 2 in failed(r)
++    assert any(o.startswith("receipt:") for o in r["checks"][1]["offenders"])
++
++
++def test_review_verdict_alone_fails_2(tmp_path: Path) -> None:
++    sql = [
++        "INSERT INTO receipts(source, source_ref, received_at, payload, outcome, decided_at)"
++        " VALUES ('webhook', 'r-L2', 1, '{}', 'review', 1)"
++    ]
++    r = run_custom(tmp_path, make_world(), sql)
++    assert 2 in failed(r)
++    assert any(o.startswith("review:") for o in r["checks"][1]["offenders"])
++
++
++def test_lead_count_without_emails_fails_2(tmp_path: Path) -> None:
++    w = make_world()
++    w["leads"]["L7"] = ("sent", 1)  # a lead no request asked for
++    r = run_custom(tmp_path, w, drop_keys=("lead_emails",))
++    assert 2 in failed(r)
++    assert "lead-count" in r["checks"][1]["offenders"]
++
++
++def test_crm_row_for_lead_not_done_extra(tmp_path: Path) -> None:
++    w = make_world()
++    w["leads"]["L5"] = ("failed", 0, "unreachable")  # its CRM step never finished: no row is allowed
++    w["crm"] = [r for r in w["crm"] if r["lead_id"] != "L5"] + [{"lead_id": "L5", "record": {}}]
++    r = run_world(tmp_path, w)
++    assert 4 in failed(r)
++    assert r["checks"][3]["offenders"] == ["L5"]
++
++
++def test_empty_log_with_model_expected() -> None:
++    assert ci.check_model_calls([], 1, [], EXP(model_expected=True))["offenders"] == ["no-model-calls"]
++
++
++def test_no_send_time_fails_drain(tmp_path: Path) -> None:
++    w = make_world()
++    book_path = tmp_path / "b.sqlite3"
++    make_book(book_path, w["leads"])
++    out = ci.check_drain([], ci.read_book(book_path), T0, 120.0)
++    assert out["ok"] is False
++
++
++def test_old_log_cannot_prove_ask_after_answer() -> None:
++    rows = [{"ts": T0, "lead_id": "A", "mode": "ok", "status": 200}] * 2  # old format: one row per finished call
++    r = ci.check_model_calls(rows, 2, ["A"], EXP())
++    assert r["ok"] is True  # order unknown: two calls may have raced
++    assert ci.check_model_calls(rows, 1, ["A"], EXP())["ok"] is False  # the bound still holds
++
++
++def test_recheck_asks_for_a_rerun_on_raced_calls(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
++    w = clean_saved_world()
++    w["model"] = [*w["model"], dict(w["model"][0])]  # old format, one lead called twice
++    bounds = {"model_bound": 2, "max_unknown": 0, "max_failed": 0, "max_503_rate": 0.0, "expect": None}
++    d = save_dir(tmp_path, w, "burst-10", bounds=bounds)
++    assert recheck.main([str(d)]) == recheck.EXIT_RERUN
++    assert "cannot be told from two calls that raced" in capsys.readouterr().out
++
++
++@pytest.mark.parametrize("name", ["catcher-down", "model-flaps"])
++def test_all_failed_book_breaks_scenario_cap(tmp_path: Path, name: str) -> None:
++    sc = next(s for s in campaign.catalogue() if s.name == name)
++    assert sc.max_failed is not None
++    ids = [f"X{n}" for n in range(sc.max_failed + 1)]
++    w = make_world()
++    w["leads"] = {k: ("failed", 1, "unreachable") for k in ids}
++    w["reqs"] = [
++        {
++            "request_id": f"r-{k}",
++            "door": "form",
++            "intended_ts": T0,
++            "final_status": 201,
++            "attempts": [{"ts": T0, "code": 201, "error": None}],
++        }
++        for k in ids
++    ]
++    w["mail"], w["model"] = [], []
++    w["crm"] = [{"lead_id": k, "record": {}} for k in ids]
++    w["intended"] = len(ids)
++    result = run_world(tmp_path, w, max_failed=sc.max_failed)
++    assert 3 in failed(result)
++    assert "ceiling:failed" in result["checks"][2]["offenders"]
++    assert 3 not in failed(run_world(tmp_path, w, max_failed=len(ids)))
+diff -ruN a/tests/test_live_l2_tools.py b/tests/test_live_l2_tools.py
+--- a/tests/test_live_l2_tools.py	2026-11-09 19:52:50.754531873 +0000
++++ b/tests/test_live_l2_tools.py	2026-11-09 20:20:34.128475723 +0000
+@@ -109,7 +109,7 @@
+             "ts": T0,
+             "send_key": k,
+             "message_id": f"m-{k}",
+-            "to": f"{k}@example.test",
++            "to": f"r-{k}@example.test",  # the lead's own address (make_book gives each lead r-<id>@example.test)
+             "subject": "s",
+             "body_sha256": "b",
+             "mode": "keyed",
+@@ -118,7 +118,6 @@
+     ]
+     crm = [{"lead_id": k, "record": {}} for k in ("L1", "L2", "L3", "L4", "L5")]
+     model = [{"ts": T0, "lead_id": k, "mode": "ok", "status": 200} for k in LEADS]
+-    model.append({"ts": T0, "lead_id": "L2", "mode": "rate_limit", "status": 429})
+     return {
+         "reqs": reqs,
+         "mail": mail,
+@@ -179,7 +178,7 @@
+ 
+ 
+ def fault_five_model_calls(w: dict[str, Any]) -> None:
+-    w["model"] += [{"ts": T0, "lead_id": "L4", "mode": "ok", "status": 200}] * (ci.DEFAULT_MODEL_CALL_BOUND)
++    w["model"] += [{"ts": T0, "lead_id": "L4", "mode": "ok", "status": 200}] * ci.MAX_MODEL_CALL_BOUND
+ 
+ 
+ def fault_pending_left(w: dict[str, Any]) -> None:
+@@ -283,7 +282,9 @@
+     assert ci.main(bad) == ci.EXIT_INPUT
+     facts.unlink()  # without the intended count the log cannot be judged complete: an input error, never a pass
+     assert ci.main(argv) == ci.EXIT_INPUT
+-    assert ci.main([*argv, "--intended", str(len(w["reqs"]))]) == ci.EXIT_OK
++    # F8: --intended does not replace the facts file; without it the marker tests would be skipped, so it is an error
++    assert ci.main([*argv, "--intended", str(len(w["reqs"]))]) == ci.EXIT_INPUT
++    facts.write_text(json.dumps({"intended_requests": len(w["reqs"])}), encoding="utf-8")
+     drain.write_text(json.dumps({"drained_ts": None}), encoding="utf-8")  # the runner gave up waiting
+     assert ci.main([*argv, "--intended", str(len(w["reqs"]))]) == ci.EXIT_FAIL
+ 
+@@ -524,7 +525,7 @@
+     """L6 is an `unknown` follow-up; the CRM row is put (crm_done 1) so check 4 stays quiet."""
+     w["leads"]["L6"] = ("unknown", 1, last_error)
+     if mail:
+-        w["mail"].append(dict(w["mail"][0], send_key="L6", message_id="m-L6", to="L6@example.test"))
++        w["mail"].append(dict(w["mail"][0], send_key="L6", message_id="m-L6", to="r-L6@example.test"))
+     if crm:
+         w["crm"].append({"lead_id": "L6", "record": {}})
+ 
+@@ -573,10 +574,10 @@
+     """Different send keys, same recipient: the key alone would not show a double email (A2)."""
+     w = make_world()
+     with_unknown(w, "ambiguous", mail=True)
+-    w["mail"][-1]["to"] = "L1@example.test"
++    w["mail"][-1]["to"] = "r-L1@example.test"
+     result = run_world(tmp_path, w)
+     assert failed(result) == [3]
+-    assert "to:L1@example.test" in result["checks"][2]["offenders"]
++    assert "to:r-l1@example.test" in result["checks"][2]["offenders"]
+ 
+ 
+ def test_empty_request_log_fails_check_1(tmp_path: Path) -> None:
+@@ -617,7 +618,7 @@
+     """The book holds more leads than request ids were sent (B5)."""
+     w = make_world()
+     w["leads"]["L7"] = ("sent", 1)
+-    w["mail"].append(dict(w["mail"][0], send_key="L7", message_id="m-L7", to="L7@example.test"))
++    w["mail"].append(dict(w["mail"][0], send_key="L7", message_id="m-L7", to="r-L7@example.test"))
+     w["crm"].append({"lead_id": "L7", "record": {}})
+     result = run_world(tmp_path, w)
+     assert failed(result) == [1, 2]  # also check 1: the book holds a receipt the request log does not know
+@@ -635,15 +636,16 @@
+ def test_default_model_bound_follows_the_desk_cap() -> None:
+     from lead_desk.gate import SEND_MAX_ATTEMPTS
+ 
+-    assert ci.DEFAULT_MODEL_CALL_BOUND == SEND_MAX_ATTEMPTS + ci.MODEL_CALL_SLACK
+-    assert ci.DEFAULT_MODEL_CALL_BOUND > SEND_MAX_ATTEMPTS
++    assert ci.MAX_MODEL_CALL_BOUND == SEND_MAX_ATTEMPTS + ci.MODEL_CALL_SLACK
++    assert ci.MAX_MODEL_CALL_BOUND > SEND_MAX_ATTEMPTS
++    assert ci.DEFAULT_MODEL_CALL_BOUND == 1  # F4: the CLI default is one call per lead, a down model must say so
+ 
+ 
+ def test_five_model_calls_are_in_bound(tmp_path: Path) -> None:
+     """A desk that retries the model on every automatic try makes SEND_MAX_ATTEMPTS calls: correct, not a fault (B8)."""
+     w = make_world()
+     w["model"] += [{"ts": T0, "lead_id": "L4", "mode": "ok", "status": 200}] * 4  # 5 in all for L4
+-    result = run_world(tmp_path, w)
++    result = run_world(tmp_path, w, model_bound=ci.MAX_MODEL_CALL_BOUND)
+     assert failed(result) == []
+     assert result["checks"][4]["values"]["max_calls_one_lead"] == 5
+ 
+@@ -950,6 +952,10 @@
+     w["crm"] = [r for r in w["crm"] if r["lead_id"] not in ("L5", "L6")]
+     w["model"] = [r for r in w["model"] if r["lead_id"] in w["leads"] and r["status"] == 200]  # one call per lead
+     w["intended"] = len(w["reqs"])
++    for r in w["reqs"]:  # a saved scenario folder with no 503 at all (the catalogue's ceiling is 0 for most)
++        r["attempts"] = [a for a in r.get("attempts", []) if a["code"] != 503] or [
++            {"ts": T0, "code": 200, "error": None}
++        ]
+     return w
+ 
+ 
+@@ -976,14 +982,17 @@
+     assert "did not happen" in out
+ 
+ 
++NO_EXPECT_BOUNDS = {"model_bound": 1, "max_unknown": 0, "max_failed": 0, "max_503_rate": 0.0, "expect": None}
++
++
+ def test_recheck_reruns_no_arrival_lines(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+-    d = save_dir(tmp_path, clean_saved_world(), "model-timeout")
++    d = save_dir(tmp_path, clean_saved_world(), "model-timeout", bounds=NO_EXPECT_BOUNDS)
+     assert recheck.main([str(d)]) == recheck.EXIT_RERUN
+     assert "RERUN: model.jsonl has no arrival lines" in capsys.readouterr().out
+ 
+ 
+ def test_recheck_reruns_old_catcher_slow(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+-    d = save_dir(tmp_path, clean_saved_world(), "catcher-slow")
++    d = save_dir(tmp_path, clean_saved_world(), "catcher-slow", bounds=NO_EXPECT_BOUNDS)
+     (d / "catcher.mode").write_text("slow 3", encoding="utf-8")
+     assert recheck.main([str(d)]) == recheck.EXIT_RERUN
+     assert "nothing could become ambiguous" in capsys.readouterr().out
+@@ -1203,7 +1212,7 @@
+ def test_failed_with_message_and_reason_ok(tmp_path: Path, error: str) -> None:
+     """The final 250 came late or never: the mail is at the catcher, the desk ended on the automatic cap."""
+     w = make_world()
+-    w["mail"].append(dict(w["mail"][0], send_key="L5", message_id="m-L5", to="L5@example.test"))
++    w["mail"].append(dict(w["mail"][0], send_key="L5", message_id="m-L5", to="r-L5@example.test"))
+     w["leads"]["L5"] = ("failed", 1, error)
+     result = run_world(tmp_path, w)
+     assert failed(result) == []
+@@ -1213,7 +1222,7 @@
+ @pytest.mark.parametrize("error", ["unreachable", "refused", None])
+ def test_failed_mail_other_reason_fails(tmp_path: Path, error: str | None) -> None:
+     w = make_world()
+-    w["mail"].append(dict(w["mail"][0], send_key="L5", message_id="m-L5", to="L5@example.test"))
++    w["mail"].append(dict(w["mail"][0], send_key="L5", message_id="m-L5", to="r-L5@example.test"))
+     w["leads"]["L5"] = ("failed", 1, error)
+     assert failed(run_world(tmp_path, w)) == [3]
+ 
+diff -ruN a/tests/test_smtp_outbox.py b/tests/test_smtp_outbox.py
+--- a/tests/test_smtp_outbox.py	2026-11-09 19:52:50.754644148 +0000
++++ b/tests/test_smtp_outbox.py	2026-11-09 20:14:15.292716927 +0000
+@@ -107,7 +107,7 @@
+         if self.stage == "greeting_nonascii":
+             conn.sendall(b"\xff\xfe not a reply\r\n")
+             return
+-        conn.sendall(b"220 ok\r\n")
++        conn.sendall(b"220\r\n" if self.stage == "bare_codes" else b"220 ok\r\n")
+         f = conn.makefile("rb")
+         while True:
+             line = f.readline()
+@@ -131,10 +131,20 @@
+                     conn.sendall(b"what is this\r\n")
+                 elif self.stage == "final_nonascii_garbage":
+                     conn.sendall(b"\xff\xfe\xfd\r\n")
++                elif self.stage == "bare_codes":
++                    conn.sendall(b"250\r\n")
++                elif self.stage == "ehlo_502":
++                    conn.sendall(b"250 queued\r\n")
+                 elif self.stage == "final_nonascii_ok":
+                     conn.sendall("250 queued, danke sch\u00f6n \u2603\r\n".encode())
+                 return
+-            if self.stage == "data_450" and verb == b"MAIL":
++            if self.stage == "bare_codes":
++                conn.sendall(b"354\r\n" if verb == b"DATA" else b"250\r\n")
++            elif self.stage in ("ehlo_502", "ehlo_502_helo_550") and verb == b"EHLO":
++                conn.sendall(b"502 not implemented\r\n")
++            elif self.stage == "ehlo_502_helo_550" and verb == b"HELO":
++                conn.sendall(b"550 no\r\n")
++            elif self.stage == "data_450" and verb == b"MAIL":
+                 conn.sendall(b"450 try later\r\n")
+             elif self.stage == "silent_rcpt" and verb == b"RCPT":
+                 time.sleep(5)
+@@ -490,3 +500,92 @@
+     )
+     _crm, outbox, _q = load_smtp_adapters(cfg, {"DESK_SMTP_PORT": "2601"})
+     assert isinstance(outbox, SmtpOutbox) and outbox.capability == "blind"
++
++
++# -- L2e: SMTP minor items
++@pytest.mark.parametrize(
++    "bad",
++    ["a,b@example.test", "a;b@example.test", 'a"b@example.test', "a(b@example.test", "a)b@example.test", "a@b,c.test"],
++)
++def test_list_characters_in_to_refused(bad: str) -> None:
++    with pytest.raises(SendRefused):
++        box(free_port()).send("K-20", bad, SUBJECT, BODY, BUDGET)
++
++
++def test_bare_three_digit_replies_accepted(script: Callable[[str], Script]) -> None:
++    assert box(script("bare_codes").port).send("K-21", TO, SUBJECT, BODY, BUDGET) == "SENT"
++
++
++def test_ehlo_5xx_falls_back_to_helo(script: Callable[[str], Script]) -> None:
++    assert box(script("ehlo_502").port).send("K-22", TO, SUBJECT, BODY, BUDGET) == "SENT"
++
++
++def test_ehlo_5xx_then_helo_5xx_refused(script: Callable[[str], Script]) -> None:
++    with pytest.raises(SendRefused):
++        box(script("ehlo_502_helo_550").port).send("K-23", TO, SUBJECT, BODY, BUDGET)
++
++
++@pytest.mark.parametrize("bad", [float("nan"), float("inf"), float("-inf")])
++def test_non_finite_timeout_setting_refused(bad: float) -> None:
++    with pytest.raises(ValueError, match="finite"):
++        SmtpSettings(timeout_seconds=bad)
++    with pytest.raises(ValueError, match="finite"):
++        SmtpSettings.from_env({"DESK_SMTP_TIMEOUT_SECONDS": str(bad)})
++
++
++@pytest.mark.parametrize("bad", [float("nan"), float("inf")])
++def test_non_finite_send_timeout_refused(bad: float) -> None:
++    with pytest.raises(ValueError, match="finite"):
++        box(free_port()).send("K-24", TO, SUBJECT, BODY, bad)
++
++
++def test_odd_error_before_text_unreachable(script: Callable[[str], Script], monkeypatch: pytest.MonkeyPatch) -> None:
++    real = smtp_outbox._command
++
++    def boom(sock: socket.socket, budget: object, buf: bytearray, line: str) -> int:
++        if line.startswith("RCPT"):
++            raise RuntimeError("odd")
++        return real(sock, budget, buf, line)  # type: ignore[arg-type]
++
++    monkeypatch.setattr(smtp_outbox, "_command", boom)
++    with pytest.raises(SendUnreachable):
++        box(script("ok").port).send("K-25", TO, SUBJECT, BODY, BUDGET)
++
++
++def test_odd_error_after_text_ambiguous(catch: Catch, monkeypatch: pytest.MonkeyPatch) -> None:
++    def boom(*a: object, **k: object) -> int:
++        raise RuntimeError("odd")
++
++    real = smtp_outbox._read_reply
++    calls = {"n": 0}
++
++    def late(sock: socket.socket, budget: object, buf: bytearray) -> int:
++        calls["n"] += 1
++        if calls["n"] == 6:  # greeting, EHLO, MAIL, RCPT, DATA, then the final reply
++            return boom()
++        return real(sock, budget, buf)  # type: ignore[arg-type]
++
++    monkeypatch.setattr(smtp_outbox, "_read_reply", late)
++    with pytest.raises(SendAmbiguous):
++        catch.outbox().send("K-26", TO, SUBJECT, BODY, BUDGET)
++    wait_until(lambda: len(catch.records()) == 1, 3.0)
++
++
++def test_memory_error_is_not_swallowed(catch: Catch, monkeypatch: pytest.MonkeyPatch) -> None:
++    def boom(*a: object, **k: object) -> int:
++        raise MemoryError
++
++    monkeypatch.setattr(smtp_outbox, "_read_reply", boom)
++    with pytest.raises(MemoryError):
++        catch.outbox().send("K-27", TO, SUBJECT, BODY, BUDGET)
++
++
++def test_odd_error_in_connect_unreachable(monkeypatch: pytest.MonkeyPatch) -> None:
++    class Bad:
++        def __init__(self, *a: object) -> None:
++            raise RuntimeError("odd")
++
++    port = free_port()
++    monkeypatch.setattr(smtp_outbox.socket, "socket", Bad)
++    with pytest.raises(SendUnreachable):
++        box(port).send("K-28", TO, SUBJECT, BODY, BUDGET)

@@ -1,0 +1,283 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+......................................................................FF [ 26%]
+FFFFFFFFF.F.F.F.F.............F......................................... [ 52%]
+...................................................................xxxxx [ 78%]
+xxxxxxxxxx.................F..........................x.....             [100%]
+=========================== short test summary info ============================
+PASSED tests/test_k5_producers.py::test_each_producer_calls_its_redaction_function[tool result]
+PASSED tests/test_k5_producers.py::test_each_producer_calls_its_redaction_function[tool result, redaction step]
+PASSED tests/test_k5_producers.py::test_each_producer_calls_its_redaction_function[tool error reason]
+PASSED tests/test_k5_producers.py::test_each_producer_calls_its_redaction_function[k1b case bundle]
+PASSED tests/test_k5_producers.py::test_each_producer_calls_its_redaction_function[k1b stored raw model output]
+PASSED tests/test_k5_producers.py::test_each_producer_calls_its_redaction_function[evidence grounding]
+PASSED tests/test_k5_producers.py::test_each_producer_calls_its_redaction_function[evidence proposal inputs]
+PASSED tests/test_k5_producers.py::test_each_producer_calls_its_redaction_function[document and model-written arguments]
+PASSED tests/test_k5_producers.py::test_each_producer_calls_its_redaction_function[judge input]
+PASSED tests/test_k5_producers.py::test_each_producer_calls_its_redaction_function[vendor guardrail input]
+PASSED tests/test_k5_producers.py::test_each_producer_calls_its_redaction_function[injection screen log line]
+PASSED tests/test_k5_producers.py::test_each_producer_calls_its_redaction_function[extract validation errors]
+PASSED tests/test_k5_producers.py::test_each_producer_calls_its_redaction_function[tick error message]
+PASSED tests/test_k5_producers.py::test_each_producer_calls_its_redaction_function[approval card text]
+PASSED tests/test_k5_producers.py::test_each_producer_calls_its_redaction_function[approval summary]
+PASSED tests/test_k5_producers.py::test_each_producer_calls_its_redaction_function[eval case document]
+PASSED tests/test_k5_producers.py::test_every_redaction_function_reaches_the_one_choke_point[clean]
+PASSED tests/test_k5_producers.py::test_every_redaction_function_reaches_the_one_choke_point[redact_bounded]
+PASSED tests/test_k5_producers.py::test_every_redaction_function_reaches_the_one_choke_point[redact_for_people]
+PASSED tests/test_k5_producers.py::test_every_redaction_function_reaches_the_one_choke_point[redact_layered]
+PASSED tests/test_k5_producers.py::test_every_redaction_function_reaches_the_one_choke_point[redact_untrusted]
+PASSED tests/test_k5_producers.py::test_every_redaction_function_reaches_the_one_choke_point[redact_value]
+PASSED tests/test_k5_producers.py::test_every_redaction_function_reaches_the_one_choke_point[safe_head]
+PASSED tests/test_k5_producers.py::test_every_module_that_calls_a_model_is_registered
+PASSED tests/test_k5_producers.py::test_no_message_is_cut_with_a_slice_before_it_is_redacted
+PASSED tests/test_k5_producers.py::test_in_producer_functions_a_head_slice_only_follows_a_redaction
+PASSED tests/test_k5_round11.py::test_clean_never_returns_a_decoded_view_that_was_not_sanitised[entity mention]
+PASSED tests/test_k5_round11.py::test_clean_never_returns_a_decoded_view_that_was_not_sanitised[hex mention]
+PASSED tests/test_k5_round11.py::test_clean_never_returns_a_decoded_view_that_was_not_sanitised[percent command]
+PASSED tests/test_k5_round11.py::test_clean_never_returns_a_decoded_view_that_was_not_sanitised[percent image]
+PASSED tests/test_k5_round11.py::test_clean_never_returns_a_decoded_view_that_was_not_sanitised[percent link]
+PASSED tests/test_k5_round11.py::test_the_slack_block_never_shows_a_decoded_view_that_was_not_sanitised[entity mention]
+PASSED tests/test_k5_round11.py::test_the_slack_block_never_shows_a_decoded_view_that_was_not_sanitised[hex mention]
+PASSED tests/test_k5_round11.py::test_the_slack_block_never_shows_a_decoded_view_that_was_not_sanitised[percent command]
+PASSED tests/test_k5_round11.py::test_the_slack_block_never_shows_a_decoded_view_that_was_not_sanitised[percent image]
+PASSED tests/test_k5_round11.py::test_the_slack_block_never_shows_a_decoded_view_that_was_not_sanitised[percent link]
+PASSED tests/test_k5_round11.py::test_redact_text_applies_the_neutralise_hook_to_every_view_it_can_return
+PASSED tests/test_k5_round11.py::test_every_redact_text_call_that_feeds_a_card_passes_the_neutralise_hook
+PASSED tests/test_k5_round11.py::test_the_hook_check_itself_catches_a_missing_none_and_an_alias
+PASSED tests/test_k5_round11.py::test_only_clean_and_the_slack_block_call_the_card_sanitisers
+PASSED tests/test_k5_round11.py::test_a_second_markup_split_secret_of_the_same_kind_is_masked
+PASSED tests/test_k5_round11.py::test_an_ordinary_card_keeps_its_spaces_even_when_it_looks_like_a_header
+PASSED tests/test_k5_round11.py::test_pass_one_masks_survive_the_swap_for_every_value_terminator[%3B]
+PASSED tests/test_k5_round11.py::test_pass_one_masks_survive_the_swap_for_every_value_terminator[%26]
+PASSED tests/test_k5_round11.py::test_pass_one_masks_survive_the_swap_for_every_value_terminator[%22]
+PASSED tests/test_k5_round11.py::test_pass_one_masks_survive_the_swap_for_every_value_terminator[%27]
+PASSED tests/test_k5_round11.py::test_pass_one_masks_survive_the_swap_for_every_value_terminator[%2C]
+PASSED tests/test_k5_round11.py::test_pass_one_masks_survive_the_swap_for_every_value_terminator[%20]
+PASSED tests/test_k5_round11.py::test_a_secret_in_a_declared_free_text_proposal_field_is_masked_in_the_stored_plan_and_the_card[assignment]
+PASSED tests/test_k5_round11.py::test_a_secret_in_a_declared_free_text_proposal_field_is_masked_in_the_stored_plan_and_the_card[entity]
+PASSED tests/test_k5_round11.py::test_a_secret_in_a_declared_free_text_proposal_field_is_masked_in_the_stored_plan_and_the_card[percent]
+PASSED tests/test_k5_round11.py::test_percent_u_and_brace_unicode_escapes_are_decoded
+PASSED tests/test_k5_round11.py::test_clean_and_the_fake_channel_do_not_reuse_a_placeholder_number
+PASSED tests/test_k5_round11.py::test_the_bare_redactor_ban_also_catches_an_aliased_import
+PASSED tests/test_k5_round11.py::test_the_gitleaks_header_chain_regex_matches_the_three_planted_headers_and_nothing_longer
+PASSED tests/test_k5_round11.py::test_a_secret_in_a_tool_call_argument_is_masked_in_the_stored_call_record[assignment]
+PASSED tests/test_k5_round11.py::test_a_secret_in_a_tool_call_argument_is_masked_in_the_stored_call_record[entity]
+PASSED tests/test_k5_round11.py::test_a_secret_in_a_tool_call_argument_is_masked_in_the_stored_call_record[percent]
+PASSED tests/test_k5_round11.py::test_every_white_space_character_encoded_in_a_value_keeps_the_whole_value_masked[%0D]
+PASSED tests/test_k5_round11.py::test_every_white_space_character_encoded_in_a_value_keeps_the_whole_value_masked[%0B]
+PASSED tests/test_k5_round11.py::test_every_white_space_character_encoded_in_a_value_keeps_the_whole_value_masked[%0C]
+PASSED tests/test_k5_round11.py::test_every_white_space_character_encoded_in_a_value_keeps_the_whole_value_masked[%E2%80%A8]
+PASSED tests/test_k5_round11.py::test_every_white_space_character_encoded_in_a_value_keeps_the_whole_value_masked[%1C]
+PASSED tests/test_k5_round11.py::test_every_white_space_character_encoded_in_a_value_keeps_the_whole_value_masked[%C2%85]
+PASSED tests/test_k5_round11.py::test_a_value_with_a_plain_comma_and_an_encoded_one_is_masked_whole
+PASSED tests/test_k5_round11.py::test_junk_ahead_cannot_use_up_the_pairing_slots_and_a_long_value_is_masked_or_refused
+PASSED tests/test_k5_round11.py::test_the_tag_deleted_view_keeps_real_placeholders_and_line_breaks
+PASSED tests/test_k5_round11.py::test_more_pairable_values_than_the_bound_are_refused_not_skipped
+PASSED tests/test_k5_round11.py::test_a_plain_secret_and_a_markup_split_one_are_both_masked
+PASSED tests/test_k5_round11.py::test_markdown_cannot_be_formed_around_a_placeholder
+PASSED tests/test_q8b_batch2.py::test_a_link_alone_is_still_removed_whole
+PASSED tests/test_q8b_batch2.py::test_a_plain_bearer_token_is_masked_and_text_after_it_is_kept
+PASSED tests/test_q8b_batch2.py::test_a_value_with_a_control_character_is_never_written_unquoted
+PASSED tests/test_q8b_batch2.py::test_the_changelog_entry_is_the_same_text_as_limits
+PASSED tests/test_q8b_card_text.py::test_n4_an_address_outside_code
+PASSED tests/test_q8b_card_text.py::test_n5_every_way_a_card_text_is_built[summary()]
+PASSED tests/test_q8b_card_text.py::test_n5_every_way_a_card_text_is_built[render_shadow diagnosis]
+PASSED tests/test_q8b_card_text.py::test_n5_every_way_a_card_text_is_built[FakeChannel.send]
+PASSED tests/test_q8b_card_text.py::test_n5_every_way_a_card_text_is_built[FakeChannel.notify]
+PASSED tests/test_q8b_card_text.py::test_n5_every_way_a_card_text_is_built[SlackChannel._blocks with a raw summary]
+PASSED tests/test_q8b_card_text.py::test_n5_the_slack_block_shows_placeholders_for_a_raw_summary
+PASSED tests/test_q8b_card_text.py::test_n6_a_domain_after_a_placeholder
+PASSED tests/test_q8b_card_text.py::test_n6_f6b_a_domain_outside_code_is_bracketed
+PASSED tests/test_q8b_card_text.py::test_n6_f6c_no_mention_is_created
+PASSED tests/test_q8b_card_text.py::test_n6_a_mention_word_in_a_closed_fence_stays_as_written
+PASSED tests/test_q8b_card_text.py::test_n7_one_combined_card
+PASSED tests/test_q8b_card_text.py::test_n9_fixed_the_tag_stripped_candidate
+PASSED tests/test_q8b_card_text.py::test_n8_the_check_itself_catches_each_way_round
+PASSED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[see db01.corp.internal/evil.com/p?d=1 now]
+PASSED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[10.0.0.5..evil.com]
+PASSED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[10.0.0.5.evil.com]
+PASSED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[restart db01.corp.internal. Then wait.]
+PASSED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[see a/evil.com and /var/log/app.log now]
+PASSED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[# APPROVED by sec@example.com]
+PASSED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[# APPROVED]
+PASSED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[> ask sec@example.com]
+PASSED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[password=ab`cd bob.smith@example\u3002com `x` y]
+PASSED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[`bob.smith@example\u3002com`]
+PASSED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[password=ab`cd evil.com `evil.com` x]
+PASSED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[contact bob.smith@example.com]
+PASSED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[bob%2Esmith%40example%2Ecom]
+PASSED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[bob.smith&#64;example.com]
+PASSED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[see 123e4567-e89b-12d3-a456-426614174000.json]
+PASSED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[x\n```\nevil.com\n```\ny evil.com]
+PASSED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[ping 10.20.30.40@channel]
+PASSED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[`10.20.30.40@channel`]
+PASSED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[see `db01.corp.internal@here` now]
+PASSED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[x\n```\n10.20.30.40@channel\n```\ny]
+PASSED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[<i></i>hunter2secretXYZ3D\npassword=password=<i></i> hunter2secretXYZ</b>]
+PASSED tests/test_q8b_card_text.py::test_g8_a_summary_with_a_host_shaped_target
+PASSED tests/test_q8b_card_text.py::test_g8_an_ip_shaped_target_is_a_placeholder
+PASSED tests/test_q8b_card_text.py::test_g11_a_line_whose_only_change_is_a_masked_identifier_keeps_its_block_marker
+PASSED tests/test_q8b_card_text.py::test_g12_code_stays_code
+PASSED tests/test_q8b_credential_keys.py::test_s1_a_partly_masked_result_is_refused
+PASSED tests/test_q8b_credential_keys.py::test_s2_text_after_the_placeholder_is_refused
+PASSED tests/test_q8b_credential_keys.py::test_s3_a_result_without_its_key_is_refused
+PASSED tests/test_q8b_credential_keys.py::test_s4_two_placeholders_are_accepted
+PASSED tests/test_q8b_credential_keys.py::test_s5_a_look_alike_placeholder_is_refused
+PASSED tests/test_q8b_credential_keys.py::test_s6_what_is_written_to_the_redactor
+PASSED tests/test_q8b_credential_keys.py::test_s7_a_quoted_attempt_without_quotes_is_refused
+PASSED tests/test_q8b_credential_keys.py::test_t1_the_key_rule
+PASSED tests/test_q8b_credential_keys.py::test_t1_every_key_the_older_rule_accepted_is_still_accepted
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M1 PG+key, multi-word]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M1 env entry PG+key]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M1 pwd]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M1 DB+key]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M1 secretkey]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M1 secrets]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M1 root+key]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M1 accessKey]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M2 list in env entry]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M2 Name/Value]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M2 key/value]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[B1r authorization]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[B1r private_key]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[B1r privateKey]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[B1r bearer]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[B1r passphrase]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[B1r long-suffix key]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[B1r long-suffix key, one word]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[B1r 300-char multi-word]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[255 chars]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[256 chars]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M6 ESC inside value]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[F5 sweep]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[F5 a b]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[F5 both quotes]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[XF composite]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[1d near miss +00:00]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[B1 key_used one word]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[B1 key_used multi-word]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[B1 env API_KEY_TYPE]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[B1 client_secret_max]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[B1 gate refuses a word]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[B1 gate refuses a list]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[B1 gate refuses 11 digits]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M2 api_tokens list]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M2 refresh_tokens]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M2 tokens]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M2 session]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M2 JSESSIONID]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M2 auth]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M2 account_key]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M2 client-key-data]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M2 connect.sid]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M2 key2]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M2 token1]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M2 OLDPWD]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[look-alike value]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[one letter]
+PASSED tests/test_q8b_credential_keys.py::test_n1_an_entry_of_a_secret[M3 Secret username]
+PASSED tests/test_q8b_credential_keys.py::test_n1_an_entry_of_a_secret[M5 Secret DB_NAME b64]
+PASSED tests/test_q8b_credential_keys.py::test_n1_an_entry_of_a_secret[F5b Secret cfg]
+PASSED tests/test_q8b_credential_keys.py::test_n1_an_entry_of_a_secret[F5b Secret b64]
+PASSED tests/test_q8b_credential_keys.py::test_n1_an_entry_of_a_secret[M1 Secret LOG_LEVEL]
+PASSED tests/test_q8b_credential_keys.py::test_n1_an_entry_of_a_secret[M1 Secret credential key short]
+PASSED tests/test_q8b_credential_keys.py::test_n1_an_entry_of_a_secret[F5c Secret data under spec]
+PASSED tests/test_q8b_credential_keys.py::test_n1_an_entry_of_a_secret[F5c Secret stringData under spec]
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_secret_whose_data_is_not_a_map
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_number_in_a_named_entry
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_setting_key_is_masked
+PASSED tests/test_q8b_credential_keys.py::test_n1_a_list_under_a_setting_key
+PASSED tests/test_q8b_credential_keys.py::test_n2_a_value_is_masked_where_repeated[F5b repeat, pattern-free]
+PASSED tests/test_q8b_credential_keys.py::test_n2_a_value_is_masked_where_repeated[M3 Secret username + log]
+PASSED tests/test_q8b_credential_keys.py::test_n2_a_value_is_masked_where_repeated[M4 percent in value + copy]
+PASSED tests/test_q8b_credential_keys.py::test_n2_a_value_is_masked_where_repeated[M4 backslash-u in value + copy]
+PASSED tests/test_q8b_credential_keys.py::test_n2_a_value_is_masked_where_repeated[XF respelled, percent copy]
+PASSED tests/test_q8b_credential_keys.py::test_n2_a_secret_entry_is_masked_where_repeated
+PASSED tests/test_q8b_credential_keys.py::test_n2_decoded_copy_of_a_base64_entry
+PASSED tests/test_q8b_credential_keys.py::test_n2_a_json_escaped_copy[line1 horse\nline2 staple]
+PASSED tests/test_q8b_credential_keys.py::test_n2_a_json_escaped_copy[say "horse" twice]
+PASSED tests/test_q8b_credential_keys.py::test_n2_f5c_secret_data_under_spec
+PASSED tests/test_q8b_credential_keys.py::test_n3_no_fragment_for_an_esc_value
+PASSED tests/test_q8b_credential_keys.py::test_n3_no_fragment_of_a_multi_word_value
+PASSED tests/test_q8b_credential_keys.py::test_n3_no_fragment_of_a_one_letter_value
+PASSED tests/test_q8b_credential_keys.py::test_g1_a_one_word_value_is_one_placeholder
+PASSED tests/test_q8b_credential_keys.py::test_g2_a_message_is_not_a_credential
+PASSED tests/test_q8b_credential_keys.py::test_g3_a_timestamp_stays_and_near_misses_are_masked
+PASSED tests/test_q8b_credential_keys.py::test_g4_a_value_nested_under_a_credential_key_registers_nothing
+PASSED tests/test_q8b_credential_keys.py::test_g6_a_setting_about_a_credential_is_shown[{"password_policy_enabled": "true"}]
+PASSED tests/test_q8b_credential_keys.py::test_g6_a_setting_about_a_credential_is_shown[{"password_policy_enabled": true}]
+PASSED tests/test_q8b_credential_keys.py::test_g6_a_setting_about_a_credential_is_shown[{"token_expiry": 3600}]
+PASSED tests/test_q8b_credential_keys.py::test_g6_a_setting_about_a_credential_is_shown[{"token_expiry": "30d"}]
+PASSED tests/test_q8b_credential_keys.py::test_g6_a_setting_about_a_credential_is_shown[{"secret_count": 3}]
+PASSED tests/test_q8b_credential_keys.py::test_g6_a_setting_about_a_credential_is_shown[{"token_expires": "2026-11-25T00:00:00Z"}]
+PASSED tests/test_q8b_credential_keys.py::test_g6_a_setting_about_a_credential_is_shown[{"name": "TOKEN_TTL", "value": "15m"}]
+PASSED tests/test_q8b_credential_keys.py::test_g6_no_setting_is_shown_under_a_credential_parent_or_in_a_secret
+PASSED tests/test_q8b_credential_keys.py::test_g7_common_words_of_a_secret_stay_readable
+PASSED tests/test_q8b_credential_keys.py::test_g9_the_fixture_answers_the_same_tool_calls[spec.data]
+PASSED tests/test_q8b_credential_keys.py::test_g9_the_fixture_answers_the_same_tool_calls[spec.manifest]
+PASSED tests/test_q8b_credential_keys.py::test_g10_a_large_secret_is_bounded
+PASSED tests/test_q8b_glued_and_whole_values.py::test_r1_a_credential_key_glued_to_an_address_or_host_keeps_its_value_masked
+PASSED tests/test_q8b_glued_and_whole_values.py::test_r1_an_address_before_a_separated_key_is_unchanged
+PASSED tests/test_q8b_glued_and_whole_values.py::test_r1_property_every_assignment_value_is_masked_for_every_separator
+PASSED tests/test_q8b_glued_and_whole_values.py::test_r1_a_key_glued_to_an_identifier_in_every_case_and_with_a_quote
+PASSED tests/test_q8b_glued_and_whole_values.py::test_r1_the_guard_in_front_of_the_address_pattern_is_bounded
+PASSED tests/test_q8b_glued_and_whole_values.py::test_r2_a_value_with_spaces_is_masked_whole_on_a_card
+PASSED tests/test_q8b_glued_and_whole_values.py::test_r2_the_words_after_the_value_stop_at_the_next_key_and_the_line_end
+PASSED tests/test_q8b_glued_and_whole_values.py::test_r2_a_value_with_spaces_is_masked_whole_in_a_notice
+PASSED tests/test_q8b_glued_and_whole_values.py::test_r3_an_entry_with_a_name_and_a_key_is_named_by_either
+PASSED tests/test_q8b_glued_and_whole_values.py::test_r3_every_spelling_of_value_is_masked
+PASSED tests/test_q8b_glued_and_whole_values.py::test_r4_kind_secret_in_lower_case_is_a_secret
+PASSED tests/test_q8b_glued_and_whole_values.py::test_r4_a_secret_whose_data_is_not_a_map_masks_its_copy_in_a_log[correct horse battery staple]
+PASSED tests/test_q8b_glued_and_whole_values.py::test_r4_a_secret_whose_data_is_not_a_map_masks_its_copy_in_a_log[data1]
+PASSED tests/test_q8b_glued_and_whole_values.py::test_r4_a_secret_whose_data_is_not_a_map_masks_its_copy_in_a_log[7]
+PASSED tests/test_q8b_glued_and_whole_values.py::test_r4_the_budget_of_a_secret_counts_nested_texts
+PASSED tests/test_q8b_glued_and_whole_values.py::test_r4_the_budget_holds_for_credential_keys_too
+PASSED tests/test_q8b_glued_and_whole_values.py::test_r4_a_common_value_of_a_secret_stays_readable_where_it_is_repeated
+PASSED tests/test_q8b_glued_and_whole_values.py::test_r4_a_number_or_one_word_in_a_secret_is_not_registered
+PASSED tests/test_q8b_glued_and_whole_values.py::test_r5_every_exception_named_in_limits_is_what_the_walk_does
+PASSED tests/test_q8b_glued_and_whole_values.py::test_r6_a_key_with_a_letter_the_older_rule_read_as_ascii_is_still_a_key
+PASSED tests/test_q8b_glued_and_whole_values.py::test_r7_every_key_of_the_redactor_is_a_key_of_the_case_rule
+PASSED tests/test_q8b_glued_and_whole_values.py::test_r8_a_count_of_tokens_is_not_a_credential
+PASSED tests/test_q8b_glued_and_whole_values.py::test_r9_a_host_name_target_is_masked_and_a_label_is_shown
+PASSED tests/test_q8b_glued_and_whole_values.py::test_r9_the_label_reaches_the_request_card
+PASSED tests/test_q8b_glued_and_whole_values.py::test_r10_refused_credential_values_do_not_multiply_the_work
+PASSED tests/test_q8b_random.py::test_p1_the_shown_value_is_only_placeholders_or_the_fixed_mask
+PASSED tests/test_q8b_random.py::test_p1_a_plain_value_is_masked_where_it_is_repeated
+PASSED tests/test_q8b_random.py::test_x9_has_cases_to_check
+PASSED tests/test_q8b_random.py::test_p2_every_identifier_the_redactor_masks_is_masked_on_the_card
+PASSED tests/test_q8b_random.py::test_p2_no_bare_domain_is_outside_code
+PASSED tests/test_q8b_random.py::test_p2_cleaning_a_cleaned_text_changes_nothing
+PASSED tests/test_q8b_random.py::test_n9_nothing_the_first_view_masked_is_readable_in_the_returned_text
+XFAIL tests/test_q8b_credential_keys.py::test_x1_a_composite_value_is_masked_where_repeated - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x2_a_value_over_255_characters_is_masked_where_repeated - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x3_a_value_with_both_quote_marks_is_masked_where_repeated - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x4_a_value_nested_under_a_credential_key_is_masked_where_repeated - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x5_a_number_is_masked_where_repeated[under a credential key] - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x5_a_number_is_masked_where_repeated[env entry value] - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x6_a_respelled_copy_is_masked[base64] - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x6_a_respelled_copy_is_masked[capitals] - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x6_a_respelled_copy_is_masked[wrapped over two lines] - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x6_a_respelled_copy_is_masked[double space] - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x6_a_respelled_copy_is_masked[hex] - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x7_a_very_short_value_is_masked_where_repeated[1 character] - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x7_a_very_short_value_is_masked_where_repeated[2 characters] - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x7_a_very_short_value_is_masked_where_repeated[3 characters glued to a letter] - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x8_the_copy_without_the_escape_sequence_is_masked - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_random.py::test_x9_a_value_with_special_characters_is_masked_where_it_is_repeated - Q8d: sweep of registered secrets before the patterns
+FAILED tests/test_q8b_batch2.py::test_the_prefix_bound_is_one_shared_name - A...
+FAILED tests/test_q8b_batch2.py::test_a_key_glued_to_an_address_of_any_length_keeps_its_value_masked
+FAILED tests/test_q8b_batch2.py::test_a_key_glued_to_a_long_identifier_keeps_its_value_masked
+FAILED tests/test_q8b_batch2.py::test_a_key_glued_to_an_arn_at_every_distance_is_masked
+FAILED tests/test_q8b_batch2.py::test_every_spelling_of_every_key_masks_a_value_with_spaces_on_every_path
+FAILED tests/test_q8b_batch2.py::test_there_is_no_second_key_list_in_the_card_code
+FAILED tests/test_q8b_batch2.py::test_a_card_keeps_flags_and_words_after_a_masked_value
+FAILED tests/test_q8b_batch2.py::test_the_plan_line_survives_a_masked_value_at_the_end_of_the_text
+FAILED tests/test_q8b_batch2.py::test_the_walk_masks_the_words_after_a_value_and_a_passphrase
+FAILED tests/test_q8b_batch2.py::test_a_link_glued_to_a_credential_key_keeps_the_value_masked
+FAILED tests/test_q8b_batch2.py::test_an_address_link_glued_to_a_credential_key_keeps_the_value_masked
+FAILED tests/test_q8b_batch2.py::test_a_credential_key_after_a_bearer_word_is_masked_whole
+FAILED tests/test_q8b_batch2.py::test_the_shadow_card_shows_the_target_label
+FAILED tests/test_q8b_batch2.py::test_a_flag_with_a_value_that_has_spaces_is_masked_whole
+FAILED tests/test_q8b_batch2.py::test_the_card_path_masks_glued_key_spellings_and_makes_no_new_fence
+FAILED tests/test_q8b_card_text.py::test_n8_only_one_function_feeds_a_card - ...
+FAILED tests/test_q8b_glued_and_whole_values.py::test_r1_the_address_is_masked_too_when_a_key_is_glued_to_it
+17 failed, 243 passed, 16 xfailed in 41.02s

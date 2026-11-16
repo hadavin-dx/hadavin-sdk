@@ -1,0 +1,25 @@
+F
+=================================== FAILURES ===================================
+_ test_t6_every_entry_point_refuses_the_host_before_any_socket[quiet-0.0.0.0] __
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f57102aac60>
+call = <function _quiet at 0x7f570ee25a80>, host = '0.0.0.0'
+
+    @pytest.mark.parametrize("host", NOT_LOOPBACK)
+    @pytest.mark.parametrize(
+        "call",
+        [*ENTRY_POINTS.values(), _fakes_class],
+        ids=lambda f: f.__name__.strip("_"),
+    )
+    def test_t6_every_entry_point_refuses_the_host_before_any_socket(
+        monkeypatch: pytest.MonkeyPatch, call: Any, host: str
+    ) -> None:
+        sockets = _Sockets(monkeypatch)
+>       with pytest.raises(ValueError, match=LOOPBACK_HOST_TEXT):
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_r7t_findings.py:304: Failed
+=========================== short test summary info ============================
+FAILED tests/test_r7t_findings.py::test_t6_every_entry_point_refuses_the_host_before_any_socket[quiet-0.0.0.0]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 66 deselected in 0.23s

@@ -1,0 +1,67 @@
+...FFFFFFFF.....FFFF..FFFFF                                              [100%]
+=================================== FAILURES ===================================
+E   AssertionError: LocalDirSink L=256: a name over 255 bytes was accepted
+    assert ''
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch5.py:100: AssertionError: LocalDirSink L=256: a name over 255 bytes was accepted
+E   AssertionError: LocalDirSink L=257: a name over 255 bytes was accepted
+    assert ''
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch5.py:100: AssertionError: LocalDirSink L=257: a name over 255 bytes was accepted
+E   AssertionError: LocalDirSink L=300: a name over 255 bytes was accepted
+    assert ''
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch5.py:100: AssertionError: LocalDirSink L=300: a name over 255 bytes was accepted
+E   AssertionError: LocalDirSink L=1000: a name over 255 bytes was accepted
+    assert ''
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch5.py:100: AssertionError: LocalDirSink L=1000: a name over 255 bytes was accepted
+E   AssertionError: LocalDirSink L=4095: a name over 255 bytes was accepted
+    assert ''
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch5.py:100: AssertionError: LocalDirSink L=4095: a name over 255 bytes was accepted
+E   AssertionError: LocalDirSink L=4096: a name over 255 bytes was accepted
+    assert ''
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch5.py:100: AssertionError: LocalDirSink L=4096: a name over 255 bytes was accepted
+E   AssertionError: LocalDirSink L=4097: a name over 255 bytes was accepted
+    assert ''
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch5.py:100: AssertionError: LocalDirSink L=4097: a name over 255 bytes was accepted
+E   AssertionError: LocalDirSink L=5000: a name over 255 bytes was accepted
+    assert ''
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch5.py:100: AssertionError: LocalDirSink L=5000: a name over 255 bytes was accepted
+E   AssertionError: assert 'c?d.json' is None
+     +  where 'c?d.json' = write_outcome(AuditEvent(schema_version=1, event_id='c?d', ts=datetime.datetime(2026, 11, 13, 5, 42, 4, 336368, tzinfo=datetime.time...sion=None, rule_id=None, result=None, error_code=None, caught_by=None, output_hash=None, restored_hash=None, rows=None))
+     +    where write_outcome = <hadavin_sdk.audit.local_dir.LocalDirSink object at 0x7fbfa9101c50>.write_outcome
+     +    and   AuditEvent(schema_version=1, event_id='c?d', ts=datetime.datetime(2026, 11, 13, 5, 42, 4, 336368, tzinfo=datetime.time...sion=None, rule_id=None, result=None, error_code=None, caught_by=None, output_hash=None, restored_hash=None, rows=None) = _event('c?d')
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch5.py:156: AssertionError: assert 'c?d.json' is None
+E   AttributeError: 'LocalDirSink' object has no attribute 'refused_events'
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch5.py:170: AttributeError: 'LocalDirSink' object has no attribute 'refused_events'
+E   AttributeError: 'LocalDirSink' object has no attribute 'refused_events'
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch5.py:179: AttributeError: 'LocalDirSink' object has no attribute 'refused_events'
+E   AssertionError: [('X1 the temp file is not created exclusively (O_EXCL)', 0), ('X2 the temp file is not removed after a failed rename'...eplaces an existing symlink as the final name', 0), ('G2 atomic_write uses its own limit, not the shared one', 0), ...]
+    assert not [('X1 the temp file is not created exclusively (O_EXCL)', 0), ('X2 the temp file is not removed after a failed rename'...eplaces an existing symlink as the final name', 0), ('G2 atomic_write uses its own limit, not the shared one', 0), ...]
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch5.py:198: AssertionError: [('X1 the temp file is not created exclusively (O_EXCL)', 0), ('X2 the temp file is not removed after a failed rename'...eplaces an existing symlink as the final name', 0), ('G2 atomic_write uses its own limit, not the shared one', 0), ...]
+E   ValueError: lstat: embedded null character in path
+<frozen posixpath>:451: ValueError: lstat: embedded null character in path
+E   OSError: [Errno 36] File name too long: '/home/user/build/E-work/a-tree/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/b/__init__.py'
+/usr/local/lib/python3.13/pathlib/_local.py:515: OSError: [Errno 36] File name too long: '/home/user/build/E-work/a-tree/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/b/__init__.py'
+E   OSError: [Errno 36] File name too long: '/tmp/pytest-of-unknown/pytest-1091/test_a_key_file_name_too_long_0/kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk'
+/usr/local/lib/python3.13/pathlib/_local.py:515: OSError: [Errno 36] File name too long: '/tmp/pytest-of-unknown/pytest-1091/test_a_key_file_name_too_long_0/kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk'
+E   RuntimeError: Could not determine home directory.
+/usr/local/lib/python3.13/pathlib/_local.py:808: RuntimeError: Could not determine home directory.
+E   Failed: DID NOT RAISE ConfigError
+/home/user/build/E-work/a-tree/tests/test_pathguard_batch5.py:270: Failed: DID NOT RAISE ConfigError
+=========================== short test summary info ============================
+FAILED tests/test_pathguard_batch5.py::test_a_long_name_is_a_refusal_never_an_oserror_in_every_typed_path_entry_point[256]
+FAILED tests/test_pathguard_batch5.py::test_a_long_name_is_a_refusal_never_an_oserror_in_every_typed_path_entry_point[257]
+FAILED tests/test_pathguard_batch5.py::test_a_long_name_is_a_refusal_never_an_oserror_in_every_typed_path_entry_point[300]
+FAILED tests/test_pathguard_batch5.py::test_a_long_name_is_a_refusal_never_an_oserror_in_every_typed_path_entry_point[1000]
+FAILED tests/test_pathguard_batch5.py::test_a_long_name_is_a_refusal_never_an_oserror_in_every_typed_path_entry_point[4095]
+FAILED tests/test_pathguard_batch5.py::test_a_long_name_is_a_refusal_never_an_oserror_in_every_typed_path_entry_point[4096]
+FAILED tests/test_pathguard_batch5.py::test_a_long_name_is_a_refusal_never_an_oserror_in_every_typed_path_entry_point[4097]
+FAILED tests/test_pathguard_batch5.py::test_a_long_name_is_a_refusal_never_an_oserror_in_every_typed_path_entry_point[5000]
+FAILED tests/test_pathguard_batch5.py::test_an_outcome_with_a_bad_event_id_is_dropped_and_counted
+FAILED tests/test_pathguard_batch5.py::test_an_outcome_refused_for_another_reason_takes_the_outbox_path_not_the_drop
+FAILED tests/test_pathguard_batch5.py::test_a_loop_in_the_objects_folder_takes_the_outbox_path_too
+FAILED tests/test_pathguard_batch5.py::test_every_mutant_row_old_text_occurs_exactly_once_in_its_file
+FAILED tests/test_pathguard_batch5.py::test_a_mounted_secret_folder_with_a_nul_in_its_name_is_a_config_error_not_a_valueerror
+FAILED tests/test_pathguard_batch5.py::test_a_tool_module_part_longer_than_a_file_name_is_a_config_error
+FAILED tests/test_pathguard_batch5.py::test_a_key_file_name_too_long_for_the_system_is_a_refusal_not_an_oserror
+FAILED tests/test_pathguard_batch5.py::test_a_key_path_with_an_unknown_home_is_a_refusal_not_a_runtimeerror
+FAILED tests/test_pathguard_batch5.py::test_a_tools_file_for_an_agent_id_longer_than_a_file_name_is_refused_in_words
+17 failed, 10 passed in 0.51s

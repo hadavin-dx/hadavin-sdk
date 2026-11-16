@@ -1,0 +1,365 @@
+Probe 5(d), head 97fd202 (recorded only; these may be stated limits). Names:
+ESC = "\x1b"
+KEY  = "AKIA" + "IOSFODNN7" + "EXAMPLE"          (the AWS documentation example key, built from parts)
+PW   = "hun" + "ter" + "2sec" + "ret" + "XYZ"   (made-up value)
+PWK  = "pass" + "word="
+SEC  = "Tr0ub" + "4dor" + "-3xy" + "zQ"         (made-up handed-out secret of finding F2/F4)
+MAIL = "bob" + "@" + "example" + ".com"
+S7A  = "Zx9" + "&lt;" + "Qw7" + "!pa" + "ss"    (F7)
+S7B  = "pa" + "%41" + "ssw" + "0rd" + "-9"      (F7)
+S7C  = "Qz7" + "+/k" + "9Lm" + "~~v" + "Xy2" + "??b"   (F7, made up by the runner; its base64 holds + or /)
+S7D  = 54 made-up letters and digits in 18 groups of 3 (F7, long enough to straddle the 76-column base64 wrap)
+CARD = "4242"
+JWT  = three base64url parts built in code from {"alg":"HS256","typ":"JWT"}, {"sub":"made-up","name":"Nobody"} and 32 fixed made-up bytes
+fw(s) = each ASCII digit of s as its full-width digit; pct(s) = every byte as %XX; qp(s) = every byte as =XX.
+"encoded form still present" = the input token itself (the encoded spelling) stands unchanged in the output.
+
+[Cyrillic a (U+0430) in the key name] input (Python source): "p\u0430ssword=" + PW
+  redact_text(text, {}):
+    output: p\u0430ssword=<SECRET_1>
+    PW in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<SECRET_1>']
+  redact_text(text, {}, neutralise_untrusted):
+    output: p\u0430ssword=<SECRET_1>
+    PW in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<SECRET_1>']
+  prepare_output(text, {}, 16384, secrets):
+    output: p\u0430ssword=<SECRET_1>
+    PW in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<SECRET_1>']
+  error_reason(RuntimeError(text), secrets):
+    output: RuntimeError: p\u0430ssword=<SECRET_1>
+    PW in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<SECRET_1>']
+
+[Cyrillic o (U+043E) in the key name] input (Python source): "passw\u043erd=" + PW
+  redact_text(text, {}):
+    output: passw\u043erd=<SECRET_1>
+    PW in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<SECRET_1>']
+  redact_text(text, {}, neutralise_untrusted):
+    output: passw\u043erd=<SECRET_1>
+    PW in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<SECRET_1>']
+  prepare_output(text, {}, 16384, secrets):
+    output: passw\u043erd=<SECRET_1>
+    PW in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<SECRET_1>']
+  error_reason(RuntimeError(text), secrets):
+    output: RuntimeError: passw\u043erd=<SECRET_1>
+    PW in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<SECRET_1>']
+
+[Cyrillic a, c, o, p in the key name] input (Python source): "\u0440\u0430ssw\u043erd=" + PW
+  redact_text(text, {}):
+    output: \u0440\u0430ssw\u043erd=<SECRET_1>
+    PW in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<SECRET_1>']
+  redact_text(text, {}, neutralise_untrusted):
+    output: \u0440\u0430ssw\u043erd=<SECRET_1>
+    PW in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<SECRET_1>']
+  prepare_output(text, {}, 16384, secrets):
+    output: \u0440\u0430ssw\u043erd=<SECRET_1>
+    PW in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<SECRET_1>']
+  error_reason(RuntimeError(text), secrets):
+    output: RuntimeError: \u0440\u0430ssw\u043erd=<SECRET_1>
+    PW in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<SECRET_1>']
+
+[Cyrillic capital letters in the key (A, K, I -> U+0410, U+041A, U+0406)] input (Python source): "\u0410\u041a\u0406\u0410" + KEY[4:]
+  redact_text(text, {}):
+    output: [line withheld: look-alike text hid a protected value] <APIKEY_1>
+    KEY in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<APIKEY_1>']
+  redact_text(text, {}, neutralise_untrusted):
+    output: [line withheld: look-alike text hid a protected value] <APIKEY_1>
+    KEY in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<APIKEY_1>']
+  prepare_output(text, {}, 16384, secrets):
+    output: [line withheld: look-alike text hid a protected value] <APIKEY_1>
+    KEY in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<APIKEY_1>']
+  error_reason(RuntimeError(text), secrets):
+    output: RuntimeError: [line withheld: look-alike text hid a protected value] <APIKEY_1>
+    KEY in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<APIKEY_1>']
+
+[full-width digits in the value] input (Python source): PWK + fw(PW)
+  redact_text(text, {}):
+    output: password=<SECRET_2>
+    PW in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<SECRET_2>']
+  redact_text(text, {}, neutralise_untrusted):
+    output: password=<SECRET_2>
+    PW in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<SECRET_2>']
+  prepare_output(text, {}, 16384, secrets):
+    output: password=<SECRET_2>
+    PW in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<SECRET_2>']
+  error_reason(RuntimeError(text), secrets):
+    output: RuntimeError: password=<SECRET_2>
+    PW in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<SECRET_2>']
+
+[full-width digit in the key] input (Python source): fw(KEY)
+  redact_text(text, {}):
+    output: <APIKEY_2>
+    KEY in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<APIKEY_2>']
+  redact_text(text, {}, neutralise_untrusted):
+    output: <APIKEY_2>
+    KEY in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<APIKEY_2>']
+  prepare_output(text, {}, 16384, secrets):
+    output: <APIKEY_2>
+    KEY in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<APIKEY_2>']
+  error_reason(RuntimeError(text), secrets):
+    output: RuntimeError: <APIKEY_2>
+    KEY in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<APIKEY_2>']
+
+[full-width digits, card number with single spaces] input (Python source): "card " + " ".join([fw(CARD)] * 4)
+  redact_text(text, {}):
+    output: card <CREDITCARD_1>
+    -; encoded form still present=False; placeholders in output=['<CREDITCARD_1>']; 16 digits in order after NFKC = False
+  redact_text(text, {}, neutralise_untrusted):
+    output: card <CREDITCARD_1>
+    -; encoded form still present=False; placeholders in output=['<CREDITCARD_1>']; 16 digits in order after NFKC = False
+  prepare_output(text, {}, 16384, secrets):
+    output: card <CREDITCARD_1>
+    -; encoded form still present=False; placeholders in output=['<CREDITCARD_1>']; 16 digits in order after NFKC = False
+  error_reason(RuntimeError(text), secrets):
+    output: RuntimeError: card <CREDITCARD_1>
+    -; encoded form still present=False; placeholders in output=['<CREDITCARD_1>']; 16 digits in order after NFKC = False
+
+[base64 of the key] input (Python source): base64.b64encode(KEY.encode()).decode()
+  redact_text(text, {}):
+    output: <ENCODED INPUT TOKEN 28 chars>
+    KEY in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=True; placeholders in output=[]
+  redact_text(text, {}, neutralise_untrusted):
+    output: <ENCODED INPUT TOKEN 28 chars>
+    KEY in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=True; placeholders in output=[]
+  prepare_output(text, {}, 16384, secrets):
+    output: <ENCODED INPUT TOKEN 28 chars>
+    KEY in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=True; placeholders in output=[]
+  error_reason(RuntimeError(text), secrets):
+    output: RuntimeError: <ENCODED INPUT TOKEN 28 chars>
+    KEY in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=True; placeholders in output=[]
+
+[base64 of name=value] input (Python source): base64.b64encode((PWK + PW).encode()).decode()
+  redact_text(text, {}):
+    output: <ENCODED INPUT TOKEN 36 chars>
+    PW in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=True; placeholders in output=[]
+  redact_text(text, {}, neutralise_untrusted):
+    output: <ENCODED INPUT TOKEN 36 chars>
+    PW in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=True; placeholders in output=[]
+  prepare_output(text, {}, 16384, secrets):
+    output: <ENCODED INPUT TOKEN 36 chars>
+    PW in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=True; placeholders in output=[]
+  error_reason(RuntimeError(text), secrets):
+    output: RuntimeError: <ENCODED INPUT TOKEN 36 chars>
+    PW in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=True; placeholders in output=[]
+
+[hex of the key] input (Python source): KEY.encode().hex()
+  redact_text(text, {}):
+    output: <ENCODED INPUT TOKEN 40 chars>
+    KEY in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=True; placeholders in output=[]
+  redact_text(text, {}, neutralise_untrusted):
+    output: <ENCODED INPUT TOKEN 40 chars>
+    KEY in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=True; placeholders in output=[]
+  prepare_output(text, {}, 16384, secrets):
+    output: <ENCODED INPUT TOKEN 40 chars>
+    KEY in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=True; placeholders in output=[]
+  error_reason(RuntimeError(text), secrets):
+    output: RuntimeError: <ENCODED INPUT TOKEN 40 chars>
+    KEY in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=True; placeholders in output=[]
+
+[hex of name=value] input (Python source): (PWK + PW).encode().hex()
+  redact_text(text, {}):
+    output: <ENCODED INPUT TOKEN 50 chars>
+    PW in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=True; placeholders in output=[]
+  redact_text(text, {}, neutralise_untrusted):
+    output: <ENCODED INPUT TOKEN 50 chars>
+    PW in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=True; placeholders in output=[]
+  prepare_output(text, {}, 16384, secrets):
+    output: <ENCODED INPUT TOKEN 50 chars>
+    PW in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=True; placeholders in output=[]
+  error_reason(RuntimeError(text), secrets):
+    output: RuntimeError: <ENCODED INPUT TOKEN 50 chars>
+    PW in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=True; placeholders in output=[]
+
+[quoted-printable, first letter of the key] input (Python source): "=41" + KEY[1:]
+  redact_text(text, {}):
+    output: <ENCODED INPUT TOKEN 22 chars>
+    KEY in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=True; placeholders in output=[]
+  redact_text(text, {}, neutralise_untrusted):
+    output: <ENCODED INPUT TOKEN 22 chars>
+    KEY in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=True; placeholders in output=[]
+  prepare_output(text, {}, 16384, secrets):
+    output: <ENCODED INPUT TOKEN 22 chars>
+    KEY in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=True; placeholders in output=[]
+  error_reason(RuntimeError(text), secrets):
+    output: RuntimeError: <ENCODED INPUT TOKEN 22 chars>
+    KEY in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=True; placeholders in output=[]
+
+[quoted-printable, every letter of the key] input (Python source): qp(KEY)
+  redact_text(text, {}):
+    output: <ENCODED INPUT TOKEN 60 chars>
+    KEY in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=True; placeholders in output=[]
+  redact_text(text, {}, neutralise_untrusted):
+    output: <ENCODED INPUT TOKEN 60 chars>
+    KEY in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=True; placeholders in output=[]
+  prepare_output(text, {}, 16384, secrets):
+    output: <ENCODED INPUT TOKEN 60 chars>
+    KEY in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=True; placeholders in output=[]
+  error_reason(RuntimeError(text), secrets):
+    output: RuntimeError: <ENCODED INPUT TOKEN 60 chars>
+    KEY in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=True; placeholders in output=[]
+
+[quoted-printable soft line break inside the key] input (Python source): KEY[:10] + "=\n" + KEY[10:]
+  redact_text(text, {}):
+    output: <ENCODED INPUT TOKEN 22 chars>
+    KEY in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=True; placeholders in output=[]
+  redact_text(text, {}, neutralise_untrusted):
+    output: <ENCODED INPUT TOKEN 22 chars>
+    KEY in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=True; placeholders in output=[]
+  prepare_output(text, {}, 16384, secrets):
+    output: <ENCODED INPUT TOKEN 22 chars>
+    KEY in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=True; placeholders in output=[]
+  error_reason(RuntimeError(text), secrets):
+    output: RuntimeError: <ENCODED INPUT TOKEN 22 chars>
+    KEY in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=True; placeholders in output=[]
+
+[quoted-printable of name=value (quopri)] input (Python source): quopri.encodestring((PWK + PW).encode(), quotetabs=True).decode()
+  redact_text(text, {}):
+    output: password=<SECRET_1>
+    PW in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<SECRET_1>']
+  redact_text(text, {}, neutralise_untrusted):
+    output: password=<SECRET_1>
+    PW in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<SECRET_1>']
+  prepare_output(text, {}, 16384, secrets):
+    output: password=<SECRET_1>
+    PW in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<SECRET_1>']
+  error_reason(RuntimeError(text), secrets):
+    output: RuntimeError: password=<SECRET_1>
+    PW in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<SECRET_1>']
+
+[percent-encoding once, first letter of the key] input (Python source): "%41" + KEY[1:]
+  redact_text(text, {}):
+    output: <APIKEY_1>
+    KEY in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<APIKEY_1>']
+  redact_text(text, {}, neutralise_untrusted):
+    output: <APIKEY_1>
+    KEY in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<APIKEY_1>']
+  prepare_output(text, {}, 16384, secrets):
+    output: <APIKEY_1>
+    KEY in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<APIKEY_1>']
+  error_reason(RuntimeError(text), secrets):
+    output: RuntimeError: <APIKEY_1>
+    KEY in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<APIKEY_1>']
+
+[percent-encoding once, every letter of the key] input (Python source): pct(KEY)
+  redact_text(text, {}):
+    output: <APIKEY_1>
+    KEY in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<APIKEY_1>']
+  redact_text(text, {}, neutralise_untrusted):
+    output: <APIKEY_1>
+    KEY in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<APIKEY_1>']
+  prepare_output(text, {}, 16384, secrets):
+    output: <APIKEY_1>
+    KEY in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<APIKEY_1>']
+  error_reason(RuntimeError(text), secrets):
+    output: RuntimeError: <APIKEY_1>
+    KEY in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<APIKEY_1>']
+
+[percent-encoding twice, first letter of the key] input (Python source): "%2541" + KEY[1:]
+  redact_text(text, {}):
+    output: <APIKEY_1>
+    KEY in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<APIKEY_1>']
+  redact_text(text, {}, neutralise_untrusted):
+    output: <APIKEY_1>
+    KEY in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<APIKEY_1>']
+  prepare_output(text, {}, 16384, secrets):
+    output: <APIKEY_1>
+    KEY in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<APIKEY_1>']
+  error_reason(RuntimeError(text), secrets):
+    output: RuntimeError: <APIKEY_1>
+    KEY in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<APIKEY_1>']
+
+[percent-encoding twice, every letter of the key] input (Python source): pct(pct(KEY))
+  redact_text(text, {}):
+    output: <APIKEY_1>
+    KEY in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<APIKEY_1>']
+  redact_text(text, {}, neutralise_untrusted):
+    output: <APIKEY_1>
+    KEY in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<APIKEY_1>']
+  prepare_output(text, {}, 16384, secrets):
+    output: <APIKEY_1>
+    KEY in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<APIKEY_1>']
+  error_reason(RuntimeError(text), secrets):
+    output: RuntimeError: <APIKEY_1>
+    KEY in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<APIKEY_1>']
+
+[percent-encoding once, name=value] input (Python source): pct(PWK + PW)
+  redact_text(text, {}):
+    output: password=<SECRET_1>
+    PW in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<SECRET_1>']
+  redact_text(text, {}, neutralise_untrusted):
+    output: password=<SECRET_1>
+    PW in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<SECRET_1>']
+  prepare_output(text, {}, 16384, secrets):
+    output: password=<SECRET_1>
+    PW in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<SECRET_1>']
+  error_reason(RuntimeError(text), secrets):
+    output: RuntimeError: password=<SECRET_1>
+    PW in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<SECRET_1>']
+
+[percent-encoding twice, name=value] input (Python source): pct(pct(PWK + PW))
+  redact_text(text, {}):
+    output: password=<SECRET_1>
+    PW in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<SECRET_1>']
+  redact_text(text, {}, neutralise_untrusted):
+    output: password=<SECRET_1>
+    PW in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<SECRET_1>']
+  prepare_output(text, {}, 16384, secrets):
+    output: password=<SECRET_1>
+    PW in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<SECRET_1>']
+  error_reason(RuntimeError(text), secrets):
+    output: RuntimeError: password=<SECRET_1>
+    PW in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<SECRET_1>']
+
+[percent-encoding once, the = only] input (Python source): "pass" + "word%3D" + PW
+  redact_text(text, {}):
+    output: password=<SECRET_1>
+    PW in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<SECRET_1>']
+  redact_text(text, {}, neutralise_untrusted):
+    output: password=<SECRET_1>
+    PW in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<SECRET_1>']
+  prepare_output(text, {}, 16384, secrets):
+    output: password=<SECRET_1>
+    PW in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<SECRET_1>']
+  error_reason(RuntimeError(text), secrets):
+    output: RuntimeError: password=<SECRET_1>
+    PW in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<SECRET_1>']
+
+[percent-encoding twice, the = only] input (Python source): "pass" + "word%253D" + PW
+  redact_text(text, {}):
+    output: password=<SECRET_1>
+    PW in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<SECRET_1>']
+  redact_text(text, {}, neutralise_untrusted):
+    output: password=<SECRET_1>
+    PW in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<SECRET_1>']
+  prepare_output(text, {}, 16384, secrets):
+    output: password=<SECRET_1>
+    PW in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<SECRET_1>']
+  error_reason(RuntimeError(text), secrets):
+    output: RuntimeError: password=<SECRET_1>
+    PW in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<SECRET_1>']
+
+[percent-encoding once, e-mail address @] input (Python source): MAIL.replace("@", "%40")
+  redact_text(text, {}):
+    output: <EMAIL_2>
+    MAIL in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<EMAIL_2>']
+  redact_text(text, {}, neutralise_untrusted):
+    output: <EMAIL_2>
+    MAIL in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<EMAIL_2>']
+  prepare_output(text, {}, 16384, secrets):
+    output: <EMAIL_2>
+    MAIL in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<EMAIL_2>']
+  error_reason(RuntimeError(text), secrets):
+    output: RuntimeError: <EMAIL_2>
+    MAIL in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<EMAIL_2>']
+
+[percent-encoding twice, e-mail address @] input (Python source): MAIL.replace("@", "%2540")
+  redact_text(text, {}):
+    output: <EMAIL_1>
+    MAIL in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<EMAIL_1>']
+  redact_text(text, {}, neutralise_untrusted):
+    output: <EMAIL_1>
+    MAIL in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<EMAIL_1>']
+  prepare_output(text, {}, 16384, secrets):
+    output: <EMAIL_1>
+    MAIL in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<EMAIL_1>']
+  error_reason(RuntimeError(text), secrets):
+    output: RuntimeError: <EMAIL_1>
+    MAIL in clear: whole=False hidden-gap=False whole-after-NFKC=False; encoded form still present=False; placeholders in output=['<EMAIL_1>']

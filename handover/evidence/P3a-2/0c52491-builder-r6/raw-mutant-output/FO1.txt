@@ -1,0 +1,13 @@
+### tests/test_migration_postgres.py::test_a_procedure_and_an_aggregate_get_their_own_words_and_the_printed_lines_run rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_a_procedure_and_an_aggregate_get_their_own_words_and_the_printed_lines_run _
+tests/test_migration_postgres.py:1730: in test_a_procedure_and_an_aggregate_get_their_own_words_and_the_printed_lines_run
+    assert any(s.startswith("ALTER PROCEDURE") for s in statements), statements
+E   AssertionError: ['ALTER FUNCTION "hadavin_test_d40a065b4393"."hadavin_test_agg"(integer) OWNER TO "mig_26353bb4d6";', 'ALTER FUNCTION ...353bb4d6";', 'ALTER FUNCTION "hadavin_test_d40a065b4393"."hadavin_test_proc"(IN a integer) OWNER TO "mig_26353bb4d6";']
+E   assert False
+E    +  where False = any(<generator object test_a_procedure_and_an_aggregate_get_their_own_words_and_the_printed_lines_run.<locals>.<genexpr> at 0x7f7f1f2a7510>)
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_a_procedure_and_an_aggregate_get_their_own_words_and_the_printed_lines_run
+1 failed in 0.67s
+

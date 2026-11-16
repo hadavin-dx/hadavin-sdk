@@ -1,0 +1,13 @@
+# P2a round 5, adversarial (egm:egm-design), head 60fedf6. Condensed. Verdict: 1 BLOCKER, 7 MAJOR, 9 MINOR. Reviewer ran no git and no PG; DB claims are from saved S-output.
+| id | sev | problem | fix |
+|---|---|---|---|
+| R5-1 | BLOCKER (until lead item 11 decided) | Runtime keeps `SELECT, UPDATE` on kill_switch: a looping holder of `FOR UPDATE` (S21) or `LOCK TABLE` blocks every stop and can hang reads (read helper has no lock/statement timeout). Contradicts A13(3) read-only. | Stop through a SECURITY DEFINER function, no runtime UPDATE; else role-level idle_in_transaction/statement/lock timeouts, timeouts on read helper, S-run with LOCK TABLE; stop calling it a "delay". |
+| R5-2 | MAJOR | Problem says running programs refuse actions after stop; `StopGate` is called nowhere; real enforcement is `limits.blocked` in agent_loop. P2a-1c (~425 lines, 53 mutants) protects nothing in core. | Wire the gate or move P2a-1c to v1.1; reword Problem. |
+| R5-3 | MAJOR | P2a-2 still creates mutation_runner/judge/testing/__init__ that P1m owns; counts overlap. | Remove, depend on P1m, recompute counts (41/190). |
+| R5-4 | MAJOR | `kill_switch.by` unconstrained on OFF->ON; runtime holds UPDATE on all columns incl. schema_version. | Column-level `UPDATE ("on","by")`; trigger regex on `by`; add to effective_problems; real-login tests. |
+| R5-5 | MAJOR | PENDING LEAD 13 recommended "yes" (system-principal allow-list) lets runtime code forge system stop. | Answer "no"; document `limits whois`. |
+| R5-6 | MAJOR | Reconciliation matches audit rows the runtime can forge; probe runs in the monitored party. | State the limit; external reader of `kill_switch_resets` is the alarm; drop the out-of-band-detection claim. |
+| R5-7 | MAJOR | G2 drop wrong: with a hand-applied guard file and no migrate, tgenabled stays `O` and replica role skips the trigger. | Restore G2, kill with hand-applied-file test; counts 82/190+1. |
+| R5-8 | MAJOR | P4d.md:31 says UPDATE is removed from runtime (false); reserve-after-stop window has no owner; separate short connection for set_kill_switch unanswered; S mutants overlap P4d w8. | Name owner; answer; ask P4d to fix; de-duplicate. |
+| R5-9 | MAJOR | Of 77 new rows only G3 names a killer; some equivalent or catalog-only. | Killer per row; mark catalog-only; drop unkillable. |
+| R5-10..R5-17 | MINOR | S6/S20 id collision and S9/S17/S23 evidence gaps; resets triggers ENABLE ORIGIN and no TRUNCATE trigger; label not UNIQUE (breakglass); hand-applied file owner mismatch; restore(True) on OFF store liveness trap; pseudo-role refusal needed in P2a-1 (P4b2 adds later); P2a-2 and P2a-3 have no core caller (~90 rows, cut); rollback text-equality test cannot fail. | Per report. |

@@ -1,0 +1,18 @@
+.F                                                                       [100%]
+=================================== FAILURES ===================================
+_______ test_a_flag_split_by_a_format_field_is_found_by_the_glued_pieces _______
+
+    def test_a_flag_split_by_a_format_field_is_found_by_the_glued_pieces() -> None:
+        """The pieces `--`, `{}`, `keep` stand in a list (no `+`, no call to fold): only the glued
+        text with its format fields removed holds the flag (mutant K10)."""
+>       assert keep_self_tests_that_leak(_SOURCES["glue"]) == (["test_a"], 1)
+E       AssertionError: assert ([], 0) == (['test_a'], 1)
+E         
+E         At index 0 diff: [] != ['test_a']
+E         Use -v to get more diff
+
+tests/survivor_tests_T2.py:33: AssertionError
+=========================== short test summary info ============================
+FAILED tests/survivor_tests_T2.py::test_a_flag_split_by_a_format_field_is_found_by_the_glued_pieces
+1 failed, 1 passed in 0.04s
+restored tests/keep_scan.py 15fec8c4cf36

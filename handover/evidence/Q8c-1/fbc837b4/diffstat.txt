@@ -1,0 +1,10 @@
+ CHANGELOG.md                                 |  12 +-
+ docs/declared-permissions.md                 | 155 +++++++-----
+ src/hadavin_sdk/actions/secrets_vault.py     |   6 +-
+ src/hadavin_sdk/sources/kubernetes.py        |  40 +++-
+ tests/fixtures/policy_sources_2026-11-11.txt |  10 +-
+ tests/policy_mutants.py                      | 142 +++++++++--
+ tests/test_policy_engine.py                  |  57 ++++-
+ tests/test_policy_guard.py                   | 339 +++++++++++++++++++++++----
+ tools/policy_page.py                         | 321 +++++++++++++++++++++----
+ 9 files changed, 912 insertions(+), 170 deletions(-)

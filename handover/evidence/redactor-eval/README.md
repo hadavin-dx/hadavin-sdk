@@ -1,0 +1,3 @@
+# Redactor evaluation set (2026-11-06)
+corpus.json: 30 hostile inputs + 48 must-mask lines + 14 must-keep lines (the last two equal tests' privacy_corpus.py at commit ce70eb5). score_common.py: span-level scoring (FULL = the sensitive value is gone from the masked output after NFKC folding; PARTIAL; MISS; must-keep KEPT/ALTERED). t_*.py: how each tool was run. Results and caveats: egm/hadavin-sdk/redactor-libs/evidence-1.md and lead-reading-1.md. Home advantage: the corpus is ours; add client-shaped synthetic text before trusting a new tool on it.
+Re-run a new library: copy t_presidio.py, change the analyzer, keep score_common.py unchanged.

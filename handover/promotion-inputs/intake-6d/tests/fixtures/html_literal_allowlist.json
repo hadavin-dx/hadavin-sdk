@@ -1,0 +1,96 @@
+{
+ "adapters/fake_erp.py": {
+  "literals": [
+   "e9273af366d48401"
+  ],
+  "reason": "less-than operator, regular-expression text, SQL or message text; not markup"
+ },
+ "budget.py": {
+  "literals": [
+   "0dd11303d8d405bc",
+   "2add38e79bb10aae"
+  ],
+  "reason": "less-than operators in sentences and messages; not markup"
+ },
+ "checks.py": {
+  "literals": [
+   "274934b4423d881f",
+   "4742aad883804d34",
+   "6ddca18eae27b3b5",
+   "b9c50b9131285952",
+   "d307509e4e5c5818",
+   "fcd3723a7b142ce0",
+   "fd42e2f6f301ca65"
+  ],
+  "reason": "less-than operator, regular-expression text, SQL or message text; not markup"
+ },
+ "egress.py": {
+  "literals": [
+   "c332d9ccc23b7e21"
+  ],
+  "reason": "less-than operator, regular-expression text, SQL or message text; not markup"
+ },
+ "ground.py": {
+  "literals": [
+   "308e3bc8e691625c",
+   "4e21a5f80a90eee5",
+   "bfd7632ebea635e8",
+   "f79ff5a5ca8f9944",
+   "faa07eeeb1dd79a7"
+  ],
+  "reason": "less-than operator, regular-expression text, SQL or message text; not markup"
+ },
+ "invoicecheck.py": {
+  "literals": [
+   "3a5d0e8c3ed487e5",
+   "6ae77dd7cae79f86",
+   "8a87ab4d71819c7e",
+   "e24ba240e310bbbd",
+   "f7f64c0e10048c92"
+  ],
+  "reason": "less-than operator, regular-expression text, SQL or message text; not markup"
+ },
+ "model_anthropic.py": {
+  "literals": [
+   "6a50d91874fdcf39",
+   "945d0f89898d9b65"
+  ],
+  "reason": "prompt delimiter text sent to the AI model; not markup"
+ },
+ "queue_schema.py": {
+  "literals": [
+   "257276dfccd42015",
+   "385b260251fa7c86",
+   "39c2aa5b743dad27",
+   "422a17d630c2250d",
+   "9401d0c1032bc43c",
+   "fb7b4ec2f336f739"
+  ],
+  "reason": "less-than operator, regular-expression text, SQL or message text; not markup"
+ },
+ "reader.py": {
+  "literals": [
+   "6a50d91874fdcf39",
+   "945d0f89898d9b65"
+  ],
+  "reason": "invoice delimiter text the reader refuses in files; not markup"
+ },
+ "routes.py": {
+  "literals": [
+   "08081638a8f6b97e"
+  ],
+  "reason": "regular-expression named group (?P<id>...) in the item-id pattern; not markup"
+ },
+ "rules.py": {
+  "literals": [
+   "e9273af366d48401"
+  ],
+  "reason": "less-than operator, regular-expression text, SQL or message text; not markup"
+ },
+ "tools.py": {
+  "literals": [
+   "e9273af366d48401"
+  ],
+  "reason": "less-than operator, regular-expression text, SQL or message text; not markup"
+ }
+}

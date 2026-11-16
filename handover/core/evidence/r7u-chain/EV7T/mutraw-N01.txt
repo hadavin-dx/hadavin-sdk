@@ -1,0 +1,20 @@
+..........F
+=================================== FAILURES ===================================
+_ test_t2_a_counter_is_known_only_when_a_file_was_found_read_whole_and_holds_the_created_number _
+
+    def test_t2_a_counter_is_known_only_when_a_file_was_found_read_whole_and_holds_the_created_number() -> None:
+        """Each of the three conditions alone (kills the mutants that drop one): no file found, one unreadable, no
+        number of created contacts."""
+        assert rrc.counter_is_known(rrc.CounterRead({"created": 3}, 2, 0))
+>       assert not rrc.counter_is_known(rrc.CounterRead({"created": 3}, 0, 0))
+E       AssertionError: assert not True
+E        +  where True = <function counter_is_known at 0x7fca811e4360>(CounterRead(totals={'created': 3}, files=0, unreadable=0))
+E        +    where <function counter_is_known at 0x7fca811e4360> = rrc.counter_is_known
+E        +    and   CounterRead(totals={'created': 3}, files=0, unreadable=0) = <class 'run_real_check.CounterRead'>({'created': 3}, 0, 0)
+E        +      where <class 'run_real_check.CounterRead'> = rrc.CounterRead
+
+tests/test_r7t_findings.py:122: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r7t_findings.py::test_t2_a_counter_is_known_only_when_a_file_was_found_read_whole_and_holds_the_created_number
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 10 passed, 126 deselected in 0.26s

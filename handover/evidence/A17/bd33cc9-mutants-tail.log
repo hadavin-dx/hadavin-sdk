@@ -1,0 +1,50 @@
+  try:\n        pass\n    except Exception as exc:\n"
+            '        raise ConfigError(f"plant {exc}")\n'
+        )
+        with (copy / "audit" / "signer.py").open("a", encoding="utf-8") as handle:
+            handle.write(plant)
+        after = scan(copy)
+        new = [s for s in after if s.key not in before]
+        assert len(new) == 1
+        assert (new[0].symbol, new[0].auto_reason) == ("plant", "exception-variable")
+        report = compare(after, load_csv(TABLE))
+>       assert report.unclassified == [new[0].key]
+E       AssertionError: assert ['actions/sec...47b1::1', ...] == ['audit/signe...08a7d81ec::1']
+E         
+E         At index 0 diff: 'actions/secrets_file.py::MountedFileProvider._fetch::99e7ae3d776f0dc6::1' != 'audit/signer.py::plant::8094c3108a7d81ec::1'
+E         Left contains 14 more items, first extra item: 'actions/secrets_file.py::MountedFileProvider._fetch::afa803d568d2eeb8::1'
+E         Use -v to get more diff
+
+tests/test_config_error_sites.py:256: AssertionError
+_________ test_f1_guards_tell_apart_branches_loops_handlers_and_withs __________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-14661/test_f1_guards_tell_apart_bran0')
+
+    def test_f1_guards_tell_apart_branches_loops_handlers_and_withs(tmp_path: Path) -> None:
+        body = (
+            "def f(x, y):\n    if x:\n        raise ConfigError('s')\n    else:\n        raise ConfigError('s')\n"
+            "    for i in x:\n        raise ConfigError('s')\n    for i in y:\n        raise ConfigError('s')\n"
+            "    try:\n        pass\n    except KeyError:\n        raise ConfigError('s')\n"
+            "    except IndexError:\n        raise ConfigError('s')\n"
+            "    with x:\n        raise ConfigError('s')\n    with y:\n        raise ConfigError('s')\n"
+        )
+        found = sites_of(tmp_path, body)
+        assert len(found) == 8
+        assert len({s.key for s in found}) == 8
+>       assert all(s.key.endswith("::1") for s in found)
+E       assert False
+E        +  where False = all(<generator object test_f1_guards_tell_apart_branches_loops_handlers_and_withs.<locals>.<genexpr> at 0x7f610e2bb850>)
+
+tests/test_config_error_sites.py:619: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_config_error_sites.py::test_committed_table_matches_source
+FAILED tests/test_config_error_sites.py::test_planted_unclassified_site_is_refused
+FAILED tests/test_config_error_sites.py::test_f1_guards_tell_apart_branches_loops_handlers_and_withs
+3 failed, 244 passed, 1 xfailed in 7.04s
+M41   KILLED   exit=1 failed=3 
+      the guard text omits the field a construction sits in (if body and else look alike)
+      expected killer: test_f1_guards_tell_apart_branches_loops_handlers_and_withs
+        failed: test_committed_table_matches_source
+        failed: test_planted_unclassified_site_is_refused
+        failed: test_f1_guards_tell_apart_branches_loops_handlers_and_withs
+summary: KILLED=46 of 46

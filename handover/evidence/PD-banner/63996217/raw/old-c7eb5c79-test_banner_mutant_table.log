@@ -1,0 +1,72 @@
+F.............F......                                                    [100%]
+=================================== FAILURES ===================================
+_ test_every_row_of_the_table_has_its_own_label_and_a_search_text_found_exactly_once _
+
+    def test_every_row_of_the_table_has_its_own_label_and_a_search_text_found_exactly_once() -> None:
+>       assert bm.non_unique_rows() == []
+               ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_banner_mutant_table.py:16: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/banner_mutants.py:2579: in non_unique_rows
+    text = (Path(root) / m.file).read_text(encoding="utf-8")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/pathlib/_local.py:546: in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/local/lib/python3.13/pathlib/_abc.py:632: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/home/user/build/wt/ER13-old-c7eb5c79/tools/fixed_run.py')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/home/user/build/wt/ER13-old-c7eb5c79/tools/fixed_run.py'
+
+/usr/local/lib/python3.13/pathlib/_local.py:537: FileNotFoundError
+_____________ test_the_changelog_states_the_row_count_of_the_table _____________
+
+    def test_the_changelog_states_the_row_count_of_the_table() -> None:
+        text = (Path(bm.ROOT) / "CHANGELOG.md").read_text(encoding="utf-8")
+>       assert f"the table has {bm.ROW_COUNT} rows" in text, (
+            f"the CHANGELOG does not say that the table has {bm.ROW_COUNT} rows"
+        )
+E       AssertionError: the CHANGELOG does not say that the table has 333 rows
+E       assert 'the table has 333 rows' in '# Changelog\n\n## Unreleased\n\n### Upgrade steps\n- **Breaking: the first stage is now called `demo`; `environment: ...495991b7852b855`\n  - `tools/mutation_runner.py`: `489517fb224f0598e14244ded1b37fe2a68be69e2396e56e450be0d8b1c0a1a7`\n'
+
+tests/test_banner_mutant_table.py:299: AssertionError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_banner_mutant_table.py::test_the_table_has_no_loose_expectation_left
+PASSED tests/test_banner_mutant_table.py::test_a_planted_duplicate_or_missing_search_text_or_repeated_label_is_reported
+PASSED tests/test_banner_mutant_table.py::test_no_row_has_a_generic_or_shortened_expectation
+PASSED tests/test_banner_mutant_table.py::test_no_row_changes_nothing
+PASSED tests/test_banner_mutant_table.py::test_a_planted_generic_expectation_or_a_row_that_changes_nothing_is_reported
+PASSED tests/test_banner_mutant_table.py::test_no_row_has_a_bare_type_a_did_not_raise_a_mid_comparison_fragment_or_an_unexplained_shared_assert
+PASSED tests/test_banner_mutant_table.py::test_every_same_assert_entry_names_a_group_that_exists_and_has_a_reason
+PASSED tests/test_banner_mutant_table.py::test_planted_shapes_are_each_reported
+PASSED tests/test_banner_mutant_table.py::test_pin_the_crash_rows_are_exactly_the_pinned_set_and_only_they_expect_an_interpreter_message
+PASSED tests/test_banner_mutant_table.py::test_pin_a_planted_interpreter_message_outside_the_pinned_set_is_reported
+PASSED tests/test_banner_mutant_table.py::test_pin_rows_killed_by_the_same_first_failing_line_of_one_killer_are_reported
+PASSED tests/test_banner_mutant_table.py::test_pin_every_killer_named_in_the_table_is_a_test_that_exists_in_its_file
+PASSED tests/test_banner_mutant_table.py::test_pin_the_row_count_constant_is_the_number_of_rows_in_the_text_of_the_table
+PASSED tests/test_banner_mutant_table.py::test_pin_every_expectation_of_a_row_is_made_of_text_its_killer_can_print
+PASSED tests/test_banner_mutant_table.py::test_pin_a_planted_expectation_that_no_string_of_the_killer_can_print_is_reported
+PASSED tests/test_banner_mutant_table.py::test_pin_every_computed_expectation_has_a_reason_and_is_not_seen_by_the_static_check
+PASSED tests/test_banner_mutant_table.py::test_pin_every_equivalent_mutation_has_a_reason_and_its_line_is_still_in_the_file
+PASSED tests/test_banner_mutant_table.py::test_pin_a_planted_expectation_found_only_elsewhere_in_the_test_file_is_reported
+PASSED tests/test_banner_mutant_table.py::test_pin_three_loose_expectations_and_a_short_one_are_each_reported
+FAILED tests/test_banner_mutant_table.py::test_every_row_of_the_table_has_its_own_label_and_a_search_text_found_exactly_once
+FAILED tests/test_banner_mutant_table.py::test_the_changelog_states_the_row_count_of_the_table
+2 failed, 19 passed in 5.99s

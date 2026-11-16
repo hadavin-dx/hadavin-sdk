@@ -1,0 +1,732 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+.....................................................................FFF [ 26%]
+FF.F.FFF.F.FFFFFFFFFFFFF.FFFFF.FFFFFFFFFFFFFFFFFFFFFF.FFFFF.FF.F.FFFFFFF [ 52%]
+FFFF.FF....FFFFFFFF..F.....FFFFFFFFFFFF.F......FFFFF.F...FFFFFFFF.xxFxxx [ 78%]
+xxxxxxxxF..F.F.FFF.FFFFFFFFFFF.FFFF.FFFFFFF.FFFFFF.FFx.FFFF              [100%]
+=================================== FAILURES ===================================
+E   AttributeError: module 'hadavin_sdk.guard.redact' has no attribute 'KEY_PREFIX_MAX'
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_batch2.py:58: AttributeError: module 'hadavin_sdk.guard.redact' has no attribute 'KEY_PREFIX_MAX'
+E   AssertionError: a value glued to a key is readable: 96 cases, first ['<EMAIL_1>=<A>', '<EMAIL_1>=<A>']
+    assert not ['<EMAIL_1>=<A>', '<EMAIL_1>=<A>', '<EMAIL_1>=<A>', '<EMAIL_1>: <A>', '<EMAIL_1>: <A>', '<EMAIL_1>: <A>', ...]
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_batch2.py:74: AssertionError: a value glued to a key is readable: 96 cases, first ['<EMAIL_1>=<A>', '<EMAIL_1>=<A>']
+E   AssertionError: a value behind a word of these lengths is readable: [41, 42, 255, 1000]
+    assert not [41, 42, 255, 1000]
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_batch2.py:79: AssertionError: a value behind a word of these lengths is readable: [41, 42, 255, 1000]
+E   AttributeError: module 'hadavin_sdk.guard.redact' has no attribute 'KEY_PREFIX_MAX'
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_batch2.py:84: AttributeError: module 'hadavin_sdk.guard.redact' has no attribute 'KEY_PREFIX_MAX'
+E   AttributeError: module 'hadavin_sdk.guard.redact' has no attribute 'KEY_ALTERNATIVES'
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_batch2.py:47: AttributeError: module 'hadavin_sdk.guard.redact' has no attribute 'KEY_ALTERNATIVES'
+E   AssertionError: user=bob is not kept: 'password=<SECRET_1> horse battery staple user=bob'
+    assert 'password=<SE...aple user=bob' == 'password=<SECRET_1> user=bob'
+      
+      - password=<SECRET_1> user=bob
+      + password=<SECRET_1> horse battery staple user=bob
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_batch2.py:115: AssertionError: user=bob is not kept: 'password=<SECRET_1> horse battery staple user=bob'
+E   AssertionError: 'password=correct horse battery staple' -> 'password=<SECRET_1> horse battery staple'
+    assert not ['horse', 'battery', 'staple']
+     +  where ['horse', 'battery', 'staple'] = _readable('password=<SECRET_1> horse battery staple')
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_batch2.py:147: AssertionError: 'password=correct horse battery staple' -> 'password=<SECRET_1> horse battery staple'
+E   AssertionError: 30 cases leak, first ["card: '[link removed] correct horse battery staple'", "notice: '[link removed] correct horse battery staple'"]
+    assert not ["card: '[link removed] correct horse battery staple'", "notice: '[link removed] correct horse battery staple'", "card...card: '[link removed] = correct horse battery staple'", "notice: '[link removed] = correct horse battery staple'", ...]
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_batch2.py:174: AssertionError: 30 cases leak, first ["card: '[link removed] correct horse battery staple'", "notice: '[link removed] correct horse battery staple'"]
+E   AssertionError: [link removed] correct horse battery staple
+    assert not ['correct', 'horse', 'battery', 'staple']
+     +  where ['correct', 'horse', 'battery', 'staple'] = _readable('[link removed] correct horse battery staple')
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_batch2.py:179: AssertionError: [link removed] correct horse battery staple
+E   AssertionError: a value after Bearer is readable: 127 cases, first [('Bearer password=correct horse battery staple', 'Bearer password=<SECRET_1> horse battery staple'), ('Authorization: Bearer password=correct horse battery staple', 'Authorization: Bearer <SECRET_1> horse battery staple'), ('authorization=password=correct horse battery staple', 'authorization=<SECRET_1> horse battery staple')]
+    assert not [('Bearer password=correct horse battery staple', 'Bearer password=<SECRET_1> horse battery staple'), ('Authorization:...ple'), ('authorization=passphrase=correct horse battery staple', 'authorization=<SECRET_1> horse battery staple'), ...]
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_batch2.py:197: AssertionError: a value after Bearer is readable: 127 cases, first [('Bearer password=correct horse battery staple', 'Bearer password=<SECRET_1> horse battery staple'), ('Authorization: Bearer password=correct horse battery staple', 'Authorization: Bearer <SECRET_1> horse battery staple'), ('authorization=password=correct horse battery staple', 'authorization=<SECRET_1> horse battery staple')]
+E   TypeError: render_shadow() got an unexpected keyword argument 'target_labels'
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_batch2.py:232: TypeError: render_shadow() got an unexpected keyword argument 'target_labels'
+E   AttributeError: module 'hadavin_sdk.k1b.redaction' has no attribute '_attempts'
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_batch2.py:243: AttributeError: module 'hadavin_sdk.k1b.redaction' has no attribute '_attempts'
+E   AssertionError: a word of a flag value is readable: 'run --password=<SECRET_1> horse battery staple'
+    assert not ['horse', 'battery', 'staple']
+     +  where ['horse', 'battery', 'staple'] = _readable('run --password=<SECRET_1> horse battery staple')
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_batch2.py:252: AssertionError: a word of a flag value is readable: 'run --password=<SECRET_1> horse battery staple'
+E   ValueError: substring not found
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_batch2.py:261: ValueError: substring not found
+E   AssertionError: a glued spelling is readable on the card: 'dbpass=<SECRET_1> horse battery staple'
+    assert not ['horse', 'battery', 'staple']
+     +  where ['horse', 'battery', 'staple'] = _readable('dbpass=<SECRET_1> horse battery staple')
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_batch2.py:273: AssertionError: a glued spelling is readable on the card: 'dbpass=<SECRET_1> horse battery staple'
+E   AssertionError: an identifier is readable on the card (sweep): 'contact bob.smith@example[.]com'; an identifier is readable on the card (host): 'restart db01[.]corp[.]internal now'; an identifier is readable on the card (percent): 'bob%2Esmith%40example%2Ecom'; an identifier is readable on the card (entity): 'bob[.]smith&amp;#64;example[.]com'; an identifier is readable on the card (tag split): 'bob@example[.]com'; an identifier is readable on the card (wide dot): 'bob.smith@example[.]com'; an identifier is readable on the card (zero width): 'bob.smith@example[.]com'; an identifier is readable on the card (tilde fence): 'see\n~~~\nbob.smith@example[.]com\n~~~\nend'; an identifier is readable on the card (angle): 'from ‹bob[.]smith@example[.]com> today'
+    assert not ["an identifier is readable on the card (sweep): 'contact bob.smith@example[.]com'", "an identifier is readable on the... (tag split): 'bob@example[.]com'", "an identifier is readable on the card (wide dot): 'bob.smith@example[.]com'", ...]
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_card_text.py:98: AssertionError: an identifier is readable on the card (sweep): 'contact bob.smith@example[.]com'; an identifier is readable on the card (host): 'restart db01[.]corp[.]internal now'; an identifier is readable on the card (percent): 'bob%2Esmith%40example%2Ecom'; an identifier is readable on the card (entity): 'bob[.]smith&amp;#64;example[.]com'; an identifier is readable on the card (tag split): 'bob@example[.]com'; an identifier is readable on the card (wide dot): 'bob.smith@example[.]com'; an identifier is readable on the card (zero width): 'bob.smith@example[.]com'; an identifier is readable on the card (tilde fence): 'see\n~~~\nbob.smith@example[.]com\n~~~\nend'; an identifier is readable on the card (angle): 'from ‹bob[.]smith@example[.]com> today'
+E   AssertionError: an identifier is readable on the card (summary()): ['bob.smith@example.com', 'db01.corp.internal'] in 'agent-ops asks to run restart_service v1 (reversible) on crm. Inputs: {"host":"db01[.]corp[.]internal","owner":"bob.smith@example[.]com"}. Expected: service restarted. Plan 835fbc298329.'
+    assert not ['bob.smith@example.com', 'db01.corp.internal']
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_card_text.py:143: AssertionError: an identifier is readable on the card (summary()): ['bob.smith@example.com', 'db01.corp.internal'] in 'agent-ops asks to run restart_service v1 (reversible) on crm. Inputs: {"host":"db01[.]corp[.]internal","owner":"bob.smith@example[.]com"}. Expected: service restarted. Plan 835fbc298329.'
+E   AssertionError: an identifier is readable on the card (render_shadow diagnosis): ['bob.smith@example.com', 'db01.corp.internal'] in 'Agent\'s view: not checked, do not run\nDiagnosis: contact bob.smith@example[.]com at db01[.]corp[.]internal\nProposed action: restart_service v1 on crm\nInputs: {"service":"orders"}\nExpected: service restarted\nEvidence (call ids): c1\nWould be refused: r\nPlan 61565324e8c4.'
+    assert not ['bob.smith@example.com', 'db01.corp.internal']
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_card_text.py:143: AssertionError: an identifier is readable on the card (render_shadow diagnosis): ['bob.smith@example.com', 'db01.corp.internal'] in 'Agent\'s view: not checked, do not run\nDiagnosis: contact bob.smith@example[.]com at db01[.]corp[.]internal\nProposed action: restart_service v1 on crm\nInputs: {"service":"orders"}\nExpected: service restarted\nEvidence (call ids): c1\nWould be refused: r\nPlan 61565324e8c4.'
+E   AssertionError: an identifier is readable on the card (FakeChannel.send): ['bob.smith@example.com', 'db01.corp.internal'] in 'contact bob.smith@example[.]com at db01[.]corp[.]internal'
+    assert not ['bob.smith@example.com', 'db01.corp.internal']
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_card_text.py:143: AssertionError: an identifier is readable on the card (FakeChannel.send): ['bob.smith@example.com', 'db01.corp.internal'] in 'contact bob.smith@example[.]com at db01[.]corp[.]internal'
+E   AssertionError: an identifier is readable on the card (FakeChannel.notify): ['bob.smith@example.com', 'db01.corp.internal'] in 'contact bob.smith@example[.]com at db01[.]corp[.]internal'
+    assert not ['bob.smith@example.com', 'db01.corp.internal']
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_card_text.py:143: AssertionError: an identifier is readable on the card (FakeChannel.notify): ['bob.smith@example.com', 'db01.corp.internal'] in 'contact bob.smith@example[.]com at db01[.]corp[.]internal'
+E   AssertionError: an identifier is readable on the card (SlackChannel._blocks with a raw summary): ['bob.smith@example.com', 'db01.corp.internal'] in 'contact bob.smith@example[.]com at db01[.]corp[.]internal'
+    assert not ['bob.smith@example.com', 'db01.corp.internal']
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_card_text.py:143: AssertionError: an identifier is readable on the card (SlackChannel._blocks with a raw summary): ['bob.smith@example.com', 'db01.corp.internal'] in 'contact bob.smith@example[.]com at db01[.]corp[.]internal'
+E   AssertionError: an identifier is readable on the card: 'contact bob.smith@example[.]com at db01[.]corp[.]internal'
+    assert None
+     +  where None = <function fullmatch at 0x7f95435a82c0>('contact <EMAIL_[0-9]+> at <HOSTNAME_[0-9]+>', 'contact bob.smith@example[.]com at db01[.]corp[.]internal')
+     +    where <function fullmatch at 0x7f95435a82c0> = re.fullmatch
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_card_text.py:150: AssertionError: an identifier is readable on the card: 'contact bob.smith@example[.]com at db01[.]corp[.]internal'
+E   AssertionError: a bare domain is outside code: 'see db01[.]corp[.]internal/evil.com/p?d=1 now'; a bare domain is outside code: '<IPV4_1>..evil.com'; a bare domain is outside code: 'see a/evil.com and /var/log/app.log now'; a bare domain is outside code: '10[.]0[.]0[.]5[.]evil[.]com'; an identifier is readable on the card: '10[.]0[.]0[.]5[.]evil[.]com'
+    assert not ["a bare domain is outside code: 'see db01[.]corp[.]internal/evil.com/p?d=1 now'", "a bare domain is outside code: '<I...s outside code: '10[.]0[.]0[.]5[.]evil[.]com'", "an identifier is readable on the card: '10[.]0[.]0[.]5[.]evil[.]com'"]
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_card_text.py:180: AssertionError: a bare domain is outside code: 'see db01[.]corp[.]internal/evil.com/p?d=1 now'; a bare domain is outside code: '<IPV4_1>..evil.com'; a bare domain is outside code: 'see a/evil.com and /var/log/app.log now'; a bare domain is outside code: '10[.]0[.]0[.]5[.]evil[.]com'; an identifier is readable on the card: '10[.]0[.]0[.]5[.]evil[.]com'
+E   AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_card_text.py:200: AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+E   AssertionError: a mention was created: 'x\n```\n<IPV4_1>@channel\n```\ny <IPV4_1>@channel'
+    assert ('@channel' not in 'y <IPV4_1>@channel'
+      
+      '@channel' is contained here:
+        y <IPV4_1>@channel)
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_card_text.py:225: AssertionError: a mention was created: 'x\n```\n<IPV4_1>@channel\n```\ny <IPV4_1>@channel'
+E   AssertionError: an identifier is readable on the card: ['bob.smith@example.com', 'db01.corp.internal'] in '\u200b# APPROVED by bob.smith@example[.]com\nrestart db01[.]corp[.]internal/evil.com now, ask <IPV4_1>@channel\npassword=<SECRET_1> evil.com `evil[.]com` x\n```\nkeep evil.com\n```\nsee /var/log/app.log'
+    assert not ['bob.smith@example.com', 'db01.corp.internal']
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_card_text.py:238: AssertionError: an identifier is readable on the card: ['bob.smith@example.com', 'db01.corp.internal'] in '\u200b# APPROVED by bob.smith@example[.]com\nrestart db01[.]corp[.]internal/evil.com now, ask <IPV4_1>@channel\npassword=<SECRET_1> evil.com `evil[.]com` x\n```\nkeep evil.com\n```\nsee /var/log/app.log'
+E   AssertionError: readable in the returned text: ['password='] in '<SECRET_2>3D\npassword=<SECRET_1>'
+    assert not ['password=']
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_card_text.py:252: AssertionError: readable in the returned text: ['password='] in '<SECRET_2>3D\npassword=<SECRET_1>'
+E   AssertionError: a card path skips redact_for_people: ['channel.py:29 redact_text in clean', 'channel.py:36 redact_text in clean', 'slack_channel.py:81 redact_text in _blocks']
+    assert not ['channel.py:29 redact_text in clean', 'channel.py:36 redact_text in clean', 'slack_channel.py:81 redact_text in _blocks']
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_card_text.py:331: AssertionError: a card path skips redact_for_people: ['channel.py:29 redact_text in clean', 'channel.py:36 redact_text in clean', 'slack_channel.py:81 redact_text in _blocks']
+E   AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_card_text.py:390: AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+E   AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_card_text.py:390: AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+E   AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_card_text.py:390: AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+E   AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_card_text.py:390: AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+E   AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_card_text.py:390: AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+E   AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_card_text.py:390: AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+E   AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_card_text.py:390: AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+E   AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_card_text.py:390: AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+E   AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_card_text.py:390: AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+E   AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_card_text.py:390: AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+E   AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_card_text.py:390: AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+E   AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_card_text.py:390: AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+E   AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_card_text.py:390: AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+E   AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_card_text.py:390: AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+E   AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_card_text.py:390: AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+E   AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_card_text.py:390: AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+E   AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_card_text.py:390: AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+E   AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_card_text.py:390: AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+E   AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_card_text.py:390: AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+E   AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_card_text.py:390: AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+E   AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_card_text.py:390: AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+E   AssertionError: agent-ops asks to run restart_service v1 (reversible) on db01[.]corp[.]internal. Inputs: {"service":"orders"}. Expected: service restarted. Plan 61af727de23c.
+    assert ('db01.corp.internal' not in 'agent-ops a...1af727de23c.'
+      
+      'db01.corp.internal' is contained here:
+        af727de23c. and 'db01' not in 'agent-ops a...1af727de23c.'
+      
+      'db01' is contained here:
+        sible) on db01[.]corp[.]internal. Inputs: {"service":"orders"}. Expected: service restarted. Plan 61af727de23c.
+      ?           ++++)
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_card_text.py:398: AssertionError: agent-ops asks to run restart_service v1 (reversible) on db01[.]corp[.]internal. Inputs: {"service":"orders"}. Expected: service restarted. Plan 61af727de23c.
+E   AssertionError: ​# APPROVED by sec@example[.]com
+    assert False
+     +  where False = <built-in method startswith of str object at 0x7f954165a5b0>('# APPROVED by <')
+     +    where <built-in method startswith of str object at 0x7f954165a5b0> = '\u200b# APPROVED by sec@example[.]com'.startswith
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_card_text.py:412: AssertionError: ​# APPROVED by sec@example[.]com
+E   AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_card_text.py:419: AttributeError: module 'hadavin_sdk.approvals.gate' has no attribute 'defang_domains'
+E   AssertionError: a partly masked value was accepted: '<SECRET_1> rest'
+    assert '<SECRET_1> rest' == '<SECRET_REDACTED>'
+      
+      - <SECRET_REDACTED>
+      + <SECRET_1> rest
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:113: AssertionError: a partly masked value was accepted: '<SECRET_1> rest'
+E   AssertionError: text after the placeholder was accepted: '<SECRET_1>x'
+    assert '<SECRET_1>x' == '<SECRET_REDACTED>'
+      
+      - <SECRET_REDACTED>
+      + <SECRET_1>x
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:118: AssertionError: text after the placeholder was accepted: '<SECRET_1>x'
+E   AssertionError: a result without its key was accepted: 'p<SECRET_1>ssword=<SECRET_1>'
+    assert 'p<SECRET_1>ssword=<SECRET_1>' == '<SECRET_REDACTED>'
+      
+      - <SECRET_REDACTED>
+      + p<SECRET_1>ssword=<SECRET_1>
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:125: AssertionError: a result without its key was accepted: 'p<SECRET_1>ssword=<SECRET_1>'
+E   AssertionError: a look-alike placeholder was accepted: '<secret_1>'
+    assert '<secret_1>' == '<SECRET_REDACTED>'
+      
+      - <SECRET_REDACTED>
+      + <secret_1>
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:138: AssertionError: a look-alike placeholder was accepted: '<secret_1>'
+E   AssertionError: a value that is not plain was written under its real key: ['password=qx zj', 'qx zj']
+    assert ['password=qx zj', 'qx zj'] == ['secret="qx zj"', 'qx zj']
+      
+      At index 0 diff: 'password=qx zj' != 'secret="qx zj"'
+      Use -v to get more diff
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:149: AssertionError: a value that is not plain was written under its real key: ['password=qx zj', 'qx zj']
+E   AssertionError: the key rule changed: not a credential key any more: ['PGPASSWORD', 'pwd', 'DBPassword', 'secretkey', 'secrets', 'rootpassword', 'accessKey', 'api_tokens', 'refresh_tokens', 'tokens', 'session', 'JSESSIONID', 'auth', 'account_key', 'client-key-data', 'connect.sid', 'password2', 'token1', 'OLDPWD']
+    assert not ['PGPASSWORD', 'pwd', 'DBPassword', 'secretkey', 'secrets', 'rootpassword', ...]
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:232: AssertionError: the key rule changed: not a credential key any more: ['PGPASSWORD', 'pwd', 'DBPassword', 'secretkey', 'secrets', 'rootpassword', 'accessKey', 'api_tokens', 'refresh_tokens', 'tokens', 'session', 'JSESSIONID', 'auth', 'account_key', 'client-key-data', 'connect.sid', 'password2', 'token1', 'OLDPWD']
+E   AssertionError: part of the value is readable (M1 PG+key, multi-word): shown as 'correct horse battery staple'
+    assert False
+     +  where False = shape_ok('correct horse battery staple')
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:343: AssertionError: part of the value is readable (M1 PG+key, multi-word): shown as 'correct horse battery staple'
+E   AssertionError: part of the value is readable (M1 env entry PG+key): shown as 'hunter2secretXYZ'
+    assert False
+     +  where False = shape_ok('hunter2secretXYZ')
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:343: AssertionError: part of the value is readable (M1 env entry PG+key): shown as 'hunter2secretXYZ'
+E   AssertionError: part of the value is readable (M1 pwd): shown as 'hunter2secretXYZ'
+    assert False
+     +  where False = shape_ok('hunter2secretXYZ')
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:343: AssertionError: part of the value is readable (M1 pwd): shown as 'hunter2secretXYZ'
+E   AssertionError: part of the value is readable (M1 DB+key): shown as 'correct horse battery staple'
+    assert False
+     +  where False = shape_ok('correct horse battery staple')
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:343: AssertionError: part of the value is readable (M1 DB+key): shown as 'correct horse battery staple'
+E   AssertionError: part of the value is readable (M1 secretkey): shown as 'correct horse battery staple'
+    assert False
+     +  where False = shape_ok('correct horse battery staple')
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:343: AssertionError: part of the value is readable (M1 secretkey): shown as 'correct horse battery staple'
+E   AssertionError: part of the value is readable (M1 secrets): shown as 'correct horse battery staple'
+    assert False
+     +  where False = shape_ok('correct horse battery staple')
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:343: AssertionError: part of the value is readable (M1 secrets): shown as 'correct horse battery staple'
+E   AssertionError: part of the value is readable (M1 root+key): shown as 'correct horse battery staple'
+    assert False
+     +  where False = shape_ok('correct horse battery staple')
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:343: AssertionError: part of the value is readable (M1 root+key): shown as 'correct horse battery staple'
+E   AssertionError: part of the value is readable (M1 accessKey): shown as 'correct horse battery staple'
+    assert False
+     +  where False = shape_ok('correct horse battery staple')
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:343: AssertionError: part of the value is readable (M1 accessKey): shown as 'correct horse battery staple'
+E   AssertionError: part of the value is readable (M2 list in env entry): shown as ['correct horse battery staple', 42]
+    assert False
+     +  where False = shape_ok(['correct horse battery staple', 42])
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:343: AssertionError: part of the value is readable (M2 list in env entry): shown as ['correct horse battery staple', 42]
+E   AssertionError: part of the value is readable (M2 Name/Value): shown as 'correct horse battery staple'
+    assert False
+     +  where False = shape_ok('correct horse battery staple')
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:343: AssertionError: part of the value is readable (M2 Name/Value): shown as 'correct horse battery staple'
+E   AssertionError: part of the value is readable (M2 key/value): shown as 'correct horse battery staple'
+    assert False
+     +  where False = shape_ok('correct horse battery staple')
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:343: AssertionError: part of the value is readable (M2 key/value): shown as 'correct horse battery staple'
+E   AssertionError: part of the value is readable (B1r private_key): shown as '<SECRET_1> horse battery staple'
+    assert False
+     +  where False = shape_ok('<SECRET_1> horse battery staple')
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:343: AssertionError: part of the value is readable (B1r private_key): shown as '<SECRET_1> horse battery staple'
+E   AssertionError: part of the value is readable (B1r privateKey): shown as '<SECRET_1> horse battery staple'
+    assert False
+     +  where False = shape_ok('<SECRET_1> horse battery staple')
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:343: AssertionError: part of the value is readable (B1r privateKey): shown as '<SECRET_1> horse battery staple'
+E   AssertionError: part of the value is readable (B1r 300-char multi-word): shown as '<SECRET_1> bravo charlie delta echo foxtrot <SECRET_1> bravo charlie delta echo foxtrot <SECRET_1> bravo charlie delta echo foxtrot <SECRET_1> bravo charlie delta echo foxtrot <SECRET_1> bravo charlie delta echo foxtrot <SECRET_1> bravo charlie delta echo foxtrot <SECRET_1> bravo charlie delta echo foxtrot <SECRET_1> bravo charlie delta e'
+    assert False
+     +  where False = shape_ok('<SECRET_1> bravo charlie delta echo foxtrot <SECRET_1> bravo charlie delta echo foxtrot <SECRET_1> bravo charlie delt...ECRET_1> bravo charlie delta echo foxtrot <SECRET_1> bravo charlie delta echo foxtrot <SECRET_1> bravo charlie delta e')
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:343: AssertionError: part of the value is readable (B1r 300-char multi-word): shown as '<SECRET_1> bravo charlie delta echo foxtrot <SECRET_1> bravo charlie delta echo foxtrot <SECRET_1> bravo charlie delta echo foxtrot <SECRET_1> bravo charlie delta echo foxtrot <SECRET_1> bravo charlie delta echo foxtrot <SECRET_1> bravo charlie delta echo foxtrot <SECRET_1> bravo charlie delta echo foxtrot <SECRET_1> bravo charlie delta e'
+E   AssertionError: part of the value is readable (255 chars): shown as '<SECRET_1> cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab '
+    assert False
+     +  where False = shape_ok('<SECRET_1> cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd a... ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab ')
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:343: AssertionError: part of the value is readable (255 chars): shown as '<SECRET_1> cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab '
+E   AssertionError: part of the value is readable (256 chars): shown as '<SECRET_1> cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab c'
+    assert False
+     +  where False = shape_ok('<SECRET_1> cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd a...ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab c')
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:343: AssertionError: part of the value is readable (256 chars): shown as '<SECRET_1> cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab cd ab c'
+E   AssertionError: part of the value is readable (M6 ESC inside value): shown as '<SECRET_1> 2secretXYZ'
+    assert False
+     +  where False = shape_ok('<SECRET_1> 2secretXYZ')
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:343: AssertionError: part of the value is readable (M6 ESC inside value): shown as '<SECRET_1> 2secretXYZ'
+E   AssertionError: part of the value is readable (F5 sweep): shown as '<SECRET_1> horse battery staple'
+    assert False
+     +  where False = shape_ok('<SECRET_1> horse battery staple')
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:343: AssertionError: part of the value is readable (F5 sweep): shown as '<SECRET_1> horse battery staple'
+E   AssertionError: part of the value is readable (F5 a b): shown as 'p<SECRET_1>ssword=<SECRET_1> b'
+    assert False
+     +  where False = shape_ok('p<SECRET_1>ssword=<SECRET_1> b')
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:343: AssertionError: part of the value is readable (F5 a b): shown as 'p<SECRET_1>ssword=<SECRET_1> b'
+E   AssertionError: part of the value is readable (F5 both quotes): shown as '<SECRET_1>"word \'tail\' part'
+    assert False
+     +  where False = shape_ok('<SECRET_1>"word \'tail\' part')
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:343: AssertionError: part of the value is readable (F5 both quotes): shown as '<SECRET_1>"word \'tail\' part'
+E   AssertionError: part of the value is readable (XF composite): shown as '<EMAIL_1> Zx9 tail'
+    assert False
+     +  where False = shape_ok('<EMAIL_1> Zx9 tail')
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:343: AssertionError: part of the value is readable (XF composite): shown as '<EMAIL_1> Zx9 tail'
+E   AssertionError: part of the value is readable (B1 key_used multi-word): shown as '<SECRET_1> horse battery staple'
+    assert False
+     +  where False = shape_ok('<SECRET_1> horse battery staple')
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:343: AssertionError: part of the value is readable (B1 key_used multi-word): shown as '<SECRET_1> horse battery staple'
+E   AssertionError: part of the value is readable (M2 api_tokens list): shown as ['correct horse battery staple']
+    assert False
+     +  where False = shape_ok(['correct horse battery staple'])
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:343: AssertionError: part of the value is readable (M2 api_tokens list): shown as ['correct horse battery staple']
+E   AssertionError: part of the value is readable (M2 refresh_tokens): shown as 'correct horse battery staple'
+    assert False
+     +  where False = shape_ok('correct horse battery staple')
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:343: AssertionError: part of the value is readable (M2 refresh_tokens): shown as 'correct horse battery staple'
+E   AssertionError: part of the value is readable (M2 tokens): shown as 'correct horse battery staple'
+    assert False
+     +  where False = shape_ok('correct horse battery staple')
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:343: AssertionError: part of the value is readable (M2 tokens): shown as 'correct horse battery staple'
+E   AssertionError: part of the value is readable (M2 session): shown as 'correct horse battery staple'
+    assert False
+     +  where False = shape_ok('correct horse battery staple')
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:343: AssertionError: part of the value is readable (M2 session): shown as 'correct horse battery staple'
+E   AssertionError: part of the value is readable (M2 JSESSIONID): shown as 'hunter2secretXYZ'
+    assert False
+     +  where False = shape_ok('hunter2secretXYZ')
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:343: AssertionError: part of the value is readable (M2 JSESSIONID): shown as 'hunter2secretXYZ'
+E   AssertionError: part of the value is readable (M2 auth): shown as 'correct horse battery staple'
+    assert False
+     +  where False = shape_ok('correct horse battery staple')
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:343: AssertionError: part of the value is readable (M2 auth): shown as 'correct horse battery staple'
+E   AssertionError: part of the value is readable (M2 account_key): shown as 'correct horse battery staple'
+    assert False
+     +  where False = shape_ok('correct horse battery staple')
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:343: AssertionError: part of the value is readable (M2 account_key): shown as 'correct horse battery staple'
+E   AssertionError: part of the value is readable (M2 client-key-data): shown as 'correct horse battery staple'
+    assert False
+     +  where False = shape_ok('correct horse battery staple')
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:343: AssertionError: part of the value is readable (M2 client-key-data): shown as 'correct horse battery staple'
+E   AssertionError: part of the value is readable (M2 connect.sid): shown as 'hunter2secretXYZ'
+    assert False
+     +  where False = shape_ok('hunter2secretXYZ')
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:343: AssertionError: part of the value is readable (M2 connect.sid): shown as 'hunter2secretXYZ'
+E   AssertionError: part of the value is readable (M2 key2): shown as 'correct horse battery staple'
+    assert False
+     +  where False = shape_ok('correct horse battery staple')
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:343: AssertionError: part of the value is readable (M2 key2): shown as 'correct horse battery staple'
+E   AssertionError: part of the value is readable (M2 token1): shown as 'correct horse battery staple'
+    assert False
+     +  where False = shape_ok('correct horse battery staple')
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:343: AssertionError: part of the value is readable (M2 token1): shown as 'correct horse battery staple'
+E   AssertionError: part of the value is readable (M2 OLDPWD): shown as '/srv/app'
+    assert False
+     +  where False = shape_ok('/srv/app')
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:343: AssertionError: part of the value is readable (M2 OLDPWD): shown as '/srv/app'
+E   AssertionError: part of the value is readable (one letter): shown as 'p<SECRET_1>ssword=<SECRET_1>'
+    assert False
+     +  where False = shape_ok('p<SECRET_1>ssword=<SECRET_1>')
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:343: AssertionError: part of the value is readable (one letter): shown as 'p<SECRET_1>ssword=<SECRET_1>'
+E   AssertionError: part of the value is readable (F5c Secret data under spec): shown as {'DB_USER': 'cG9zdGdyZXM='}
+    assert False
+     +  where False = shape_ok({'DB_USER': 'cG9zdGdyZXM='})
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:343: AssertionError: part of the value is readable (F5c Secret data under spec): shown as {'DB_USER': 'cG9zdGdyZXM='}
+E   AssertionError: part of the value is readable (F5c Secret stringData under spec): shown as {'cfg': 'correct horse battery staple'}
+    assert False
+     +  where False = shape_ok({'cfg': 'correct horse battery staple'})
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:343: AssertionError: part of the value is readable (F5c Secret stringData under spec): shown as {'cfg': 'correct horse battery staple'}
+E   AssertionError: part of the value is readable: a Secret whose data is not a map: {'kind': 'Secret', 'data': 'correct horse battery staple'}
+    assert ('horse' not in '{"kind": "S...ery staple"}'
+      
+      'horse' is contained here:
+        {"kind": "Secret", "data": "correct horse battery staple"}
+      ?                                     +++++)
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:375: AssertionError: part of the value is readable: a Secret whose data is not a map: {'kind': 'Secret', 'data': 'correct horse battery staple'}
+E   AssertionError: part of the value is readable: a number in a named entry: {'name': 'DB_PASSWORD', 'value': 12345678}
+    assert 12345678 == '<SECRET_REDACTED>'
+     +  where '<SECRET_REDACTED>' = R.MASKED
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:390: AssertionError: part of the value is readable: a number in a named entry: {'name': 'DB_PASSWORD', 'value': 12345678}
+E   AssertionError: a value under a setting key was shown: {'token_expiry': '<SECRET_1> 30d'}; a value under a setting key was shown: {'secret_count': '<SECRET_1> tr0ub4dor'}
+    assert not ["a value under a setting key was shown: {'token_expiry': '<SECRET_1> 30d'}", "a value under a setting key was shown: {'secret_count': '<SECRET_1> tr0ub4dor'}"]
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:417: AssertionError: a value under a setting key was shown: {'token_expiry': '<SECRET_1> 30d'}; a value under a setting key was shown: {'secret_count': '<SECRET_1> tr0ub4dor'}
+E   AssertionError: readable in the log line (F5b repeat, pattern-free): ['horse', 'battery', 'staple'] in 'login with <SECRET_1> horse battery staple failed; <SECRET_1> answer'
+    assert not ['horse', 'battery', 'staple']
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:447: AssertionError: readable in the log line (F5b repeat, pattern-free): ['horse', 'battery', 'staple'] in 'login with <SECRET_1> horse battery staple failed; <SECRET_1> answer'
+E   AssertionError: readable in the log line (XF respelled, percent copy): ['horse', 'battery', 'staple'] in 'GET /login?p=correct%20horse%20battery%20staple'
+    assert not ['horse', 'battery', 'staple']
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:447: AssertionError: readable in the log line (XF respelled, percent copy): ['horse', 'battery', 'staple'] in 'GET /login?p=correct%20horse%20battery%20staple'
+E   AssertionError: readable in the log line: ['horse', 'battery', 'staple'] in 'login with correct horse battery staple failed'
+    assert not ['horse', 'battery', 'staple']
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:455: AssertionError: readable in the log line: ['horse', 'battery', 'staple'] in 'login with correct horse battery staple failed'
+E   AssertionError: readable in the log line: ['horse', 'battery', 'staple'] in 'login with correct horse battery staple failed'
+    assert not ['horse', 'battery', 'staple']
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:464: AssertionError: readable in the log line: ['horse', 'battery', 'staple'] in 'login with correct horse battery staple failed'
+E   AssertionError: readable in the log line: {"annotations": {"last-applied-configuration": "{\"stringData\": {\"cfg\": \"line1 horse\\nline2 staple\"}}"}}
+    assert ('horse' not in '{"annotatio...aple\\"}}"}}'
+      
+      'horse' is contained here:
+        : \"line1 horse\\nline2 staple\"}}"}}
+      ?           +++++)
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:480: AssertionError: readable in the log line: {"annotations": {"last-applied-configuration": "{\"stringData\": {\"cfg\": \"line1 horse\\nline2 staple\"}}"}}
+E   AssertionError: readable in the log line: {"annotations": {"last-applied-configuration": "{\"stringData\": {\"cfg\": \"say \\\"horse\\\" twice\"}}"}}
+    assert ('horse' not in '{"annotatio...wice\\"}}"}}'
+      
+      'horse' is contained here:
+        \"say \\\"horse\\\" twice\"}}"}}
+      ?           +++++)
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:480: AssertionError: readable in the log line: {"annotations": {"last-applied-configuration": "{\"stringData\": {\"cfg\": \"say \\\"horse\\\" twice\"}}"}}
+E   AssertionError: readable in the log line (spec.data): ['start', 'boom code=7', 'boom again', 'information: retry in 5s', 'orders-api timeout on port 5432 as postgres in prod', 'debug=true orders_count=3 env prod', 'login as postgres with Zq7xkW2vy9JtR4m refused', 'start']
+    assert not ['login as postgres with Zq7xkW2vy9JtR4m refused']
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:528: AssertionError: readable in the log line (spec.data): ['start', 'boom code=7', 'boom again', 'information: retry in 5s', 'orders-api timeout on port 5432 as postgres in prod', 'debug=true orders_count=3 env prod', 'login as postgres with Zq7xkW2vy9JtR4m refused', 'start']
+E   AssertionError: a fragment was registered: 'the <SECRET_1> came'
+    assert 'the <SECRET_1> came' == 'the hunter came'
+      
+      - the hunter came
+      + the <SECRET_1> came
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:543: AssertionError: a fragment was registered: 'the <SECRET_1> came'
+E   AssertionError: a fragment was registered: 'login with <SECRET_1> horse battery staple failed; <SECRET_1> answer'
+    assert False
+     +  where False = <built-in method endswith of str object at 0x7f9541dee800>('failed; correct answer')
+     +    where <built-in method endswith of str object at 0x7f9541dee800> = 'login with <SECRET_1> horse battery staple failed; <SECRET_1> answer'.endswith
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:550: AssertionError: a fragment was registered: 'login with <SECRET_1> horse battery staple failed; <SECRET_1> answer'
+[XPASS(strict)] Q8d: sweep of registered secrets before the patterns
+[XPASS(strict)] Q8d: sweep of registered secrets b
+[XPASS(strict)] Q8d: sweep of registered secrets before the patterns
+[XPASS(strict)] Q8d: sweep of registered secrets b
+E   AssertionError: part of the value is readable: near miss '2026-11-11 10:00:00Z' shown as {'token': '<SECRET_1> 10:00:00Z'}
+    assert False
+     +  where False = shape_ok('<SECRET_1> 10:00:00Z')
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:667: AssertionError: part of the value is readable: near miss '2026-11-11 10:00:00Z' shown as {'token': '<SECRET_1> 10:00:00Z'}
+E   AssertionError: assert {'password_po...ET_REDACTED>'} == {'password_po...bled': 'true'}
+      
+      Differing items:
+      {'password_policy_enabled': '<SECRET_REDACTED>'} != {'password_policy_enabled': 'true'}
+      Use -v to get more diff
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:694: AssertionError: assert {'password_po...ET_REDACTED>'} == {'password_po...bled': 'true'}
+E   AssertionError: assert {'token_expir...ET_REDACTED>'} == {'token_expiry': 3600}
+      
+      Differing items:
+      {'token_expiry': '<SECRET_REDACTED>'} != {'token_expiry': 3600}
+      Use -v to get more diff
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:694: AssertionError: assert {'token_expir...ET_REDACTED>'} == {'token_expiry': 3600}
+E   AssertionError: assert {'token_expiry': '<SECRET_1>'} == {'token_expiry': '30d'}
+      
+      Differing items:
+      {'token_expiry': '<SECRET_1>'} != {'token_expiry': '30d'}
+      Use -v to get more diff
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:694: AssertionError: assert {'token_expiry': '<SECRET_1>'} == {'token_expiry': '30d'}
+E   AssertionError: assert {'secret_coun...ET_REDACTED>'} == {'secret_count': 3}
+      
+      Differing items:
+      {'secret_count': '<SECRET_REDACTED>'} != {'secret_count': 3}
+      Use -v to get more diff
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:694: AssertionError: assert {'secret_coun...ET_REDACTED>'} == {'secret_count': 3}
+E   AssertionError: assert {'name': 'TOK... '<SECRET_1>'} == {'name': 'TOK...value': '15m'}
+      
+      Omitting 1 identical items, use -vv to show
+      Differing items:
+      {'value': '<SECRET_1>'} != {'value': '15m'}
+      Use -v to get more diff
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:694: AssertionError: assert {'name': 'TOK... '<SECRET_1>'} == {'name': 'TOK...value': '15m'}
+E   AssertionError: {'name': 'password_policy_enabled', 'value': {'mode': 'tr0ub4dor'}}
+    assert 'tr0ub4dor' not in '{"name": "p...tr0ub4dor"}}'
+      
+      'tr0ub4dor' is contained here:
+        {"mode": "tr0ub4dor"}}
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:703: AssertionError: {'name': 'password_policy_enabled', 'value': {'mode': 'tr0ub4dor'}}
+E   AssertionError: {'message': 'user <NAME_1> NAME denied'}
+    assert None
+     +  where None = <function search at 0x7f95435a8360>('user <SECRET_[0-9]+> NAME denied', 'user <NAME_1> NAME denied')
+     +    where <function search at 0x7f95435a8360> = re.search
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:727: AssertionError: {'message': 'user <NAME_1> NAME denied'}
+E   AssertionError: strings outside the Secret that changed: []
+    assert 0 == 1
+     +  where 0 = len([])
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:787: AssertionError: strings outside the Secret that changed: []
+E   AssertionError: strings outside the Secret that changed: []
+    assert 0 == 1
+     +  where 0 = len([])
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:787: AssertionError: strings outside the Secret that changed: []
+E   AttributeError: module 'hadavin_sdk.k1b.redaction' has no attribute 'MAX_REGISTERED_ENTRIES'
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_credential_keys.py:810: AttributeError: module 'hadavin_sdk.k1b.redaction' has no attribute 'MAX_REGISTERED_ENTRIES'
+E   AssertionError: a value glued to a credential key is readable: 129 cases, first [('tool', 'bob.smith@example.compassword=<A>', '<EMAIL_1>=<A>'), ('tool', 'bob.smith@example.comtoken=<A>', '<EMAIL_1>=<A>'), ('tool', 'bob.smith@example.comsecret=<A>', '<EMAIL_1>=<A>')]
+    assert not [('tool', 'bob.smith@example.compassword=<A>', '<EMAIL_1>=<A>'), ('tool', 'bob.smith@exa...=<A>'), ('tool', 'bob.smith@example.comapikey=<A>', '<EMAIL_1>=<A>'), ...]
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_glued_and_whole_values.py:60: AssertionError: a value glued to a credential key is readable: 129 cases, first [('tool', 'bob.smith@example.compassword=<A>', '<EMAIL_1>=<A>'), ('tool', 'bob.smith@example.comtoken=<A>', '<EMAIL_1>=<A>'), ('tool', 'bob.smith@example.comsecret=<A>', '<EMAIL_1>=<A>')]
+E   AssertionError: an address is readable beside a glued key: 'bob.smith@example[.]compassword=<SECRET_1>'
+    assert ('bob' not in 'bob.smith@e...d=<SECRET_1>'
+      
+      'bob' is contained here:
+        bob.smith@example[.]compassword=<SECRET_1>
+      ? +++)
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_glued_and_whole_values.py:67: AssertionError: an address is readable beside a glued key: 'bob.smith@example[.]compassword=<SECRET_1>'
+E   AssertionError: bob.smith@example[.]com password=<SECRET_1>
+    assert 'bob.smith@ex...rd=<SECRET_1>' == '<EMAIL_1> pa...rd=<SECRET_1>'
+      
+      - <EMAIL_1> password=<SECRET_1>
+      + bob.smith@example[.]com password=<SECRET_1>
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_glued_and_whole_values.py:75: AssertionError: bob.smith@example[.]com password=<SECRET_1>
+E   AssertionError: a value glued to a credential key is readable: 74 cases, first [('tool', 'x@y.zseCreT=<A> tail', '<EMAIL_1>=<A> tail'), ('card', 'arn:aws:s3:::bucketcredEntiaL=<A> tail', '<ARN_1>=<A> tail'), ('tool', 'arn:aws:s3:::bucketcredEntiaL=<A> tail', '<ARN_1>=<A> tail')]
+    assert not [('tool', 'x@y.zseCreT=<A> tail', '<EMAIL_1>=<A> tail'), ('card', 'arn:aws:s3:::bucketcredEntiaL=zqz...70yyz3v tail'), ('card', 'arn:aws:s3:::bucketAuthoriZatION=<A> tail', '<ARN_1>=<A> tail'), ...]
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_glued_and_whole_values.py:92: AssertionError: a value glued to a credential key is readable: 74 cases, first [('tool', 'x@y.zseCreT=<A> tail', '<EMAIL_1>=<A> tail'), ('card', 'arn:aws:s3:::bucketcredEntiaL=<A> tail', '<ARN_1>=<A> tail'), ('tool', 'arn:aws:s3:::bucketcredEntiaL=<A> tail', '<ARN_1>=<A> tail')]
+E   AssertionError: a value glued to a credential key is readable: ['arn:aws:s3:::bucketPASSWORD=<A>', 'arn:aws:s3:::bucketpassword":"<A>"', '10.0.0.1Authorization=<A>', 'HTTP_AUTHORIZATION=<A>', 'example.comauthorization=<A>']
+    assert not ['arn:aws:s3:::bucketPASSWORD=<A>', 'arn:aws:s3:::bucketpassword":"<A>"', '10.0.0.1Authorization=<A>', 'HTTP_AUTHORIZATION=<A>', 'example.comauthorization=<A>']
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_glued_and_whole_values.py:109: AssertionError: a value glued to a credential key is readable: ['arn:aws:s3:::bucketPASSWORD=<A>', 'arn:aws:s3:::bucketpassword":"<A>"', '10.0.0.1Authorization=<A>', 'HTTP_AUTHORIZATION=<A>', 'example.comauthorization=<A>']
+E   AssertionError: a value with spaces is readable on the card: {'equals': 'password=<SECRET_1> horse battery staple', 'colon': 'password: <SECRET_1> horse battery staple', 'percent': 'password=<SECRET_1> horse battery staple', 'token': 'token=<SECRET_1> horse battery staple', 'after text': 'login with password=<SECRET_1> horse battery staple'}
+    assert not {'equals': 'password=<SECRET_1> horse battery staple', 'colon': 'password: <SECRET_1> horse battery staple', 'percent': 'password=<SECRET_1> horse battery staple', 'token': 'token=<SECRET_1> horse battery staple', ...}
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_glued_and_whole_values.py:145: AssertionError: a value with spaces is readable on the card: {'equals': 'password=<SECRET_1> horse battery staple', 'colon': 'password: <SECRET_1> horse battery staple', 'percent': 'password=<SECRET_1> horse battery staple', 'token': 'token=<SECRET_1> horse battery staple', 'after text': 'login with password=<SECRET_1> horse battery staple'}
+E   AssertionError: assert 'db password=...orse user=bob' == 'db password=...T_1> user=bob'
+      
+      - db password=<SECRET_1> user=bob
+      + db password=<SECRET_1> horse user=bob
+      ?                        ++++++
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_glued_and_whole_values.py:155: AssertionError: assert 'db password=...orse user=bob' == 'db password=...T_1> user=bob'
+E   AssertionError: a value with spaces is readable on the card: 'password=<SECRET_1> horse battery staple'
+    assert 'password=<SE...attery staple' == 'password=<SECRET_1>'
+      
+      - password=<SECRET_1>
+      + password=<SECRET_1> horse battery staple
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_glued_and_whole_values.py:163: AssertionError: a value with spaces is readable on the card: 'password=<SECRET_1> horse battery staple'
+E   AssertionError: an entry with a name and a key shows its value: [{'name': 'db', 'key': 'password', 'value': '<A>'}, {'NAME': 'db', 'KEY': 'password', 'Value': '<A>'}, {'key': 'password', 'name': 'db', 'value': '<A>'}, {'KEY': 'password', 'NAME': 'db', 'Value': '<A>'}]
+    assert not [{'name': 'db', 'key': 'password', 'value': '<A>'}, {'NAME': 'db', 'KEY': 'password', 'Value': 'zqhunte...sword', 'name': 'db', 'value': '<A>'}, {'KEY': 'password', 'NAME': 'db', 'Value': '<A>'}]
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_glued_and_whole_values.py:180: AssertionError: an entry with a name and a key shows its value: [{'name': 'db', 'key': 'password', 'value': '<A>'}, {'NAME': 'db', 'KEY': 'password', 'Value': '<A>'}, {'key': 'password', 'name': 'db', 'value': '<A>'}, {'KEY': 'password', 'NAME': 'db', 'Value': '<A>'}]
+E   AssertionError: a Secret in lower case is shown: [{'kind': 'secret', 'stringData': {'cfg': 'orders-svc-ab12cd'}}, {'message': 'user orders-svc-ab12cd denied'}]
+    assert 'orders-svc-ab12cd' not in "[{'kind': '...cd denied'}]"
+      
+      'orders-svc-ab12cd' is contained here:
+         {'cfg': 'orders-svc-ab12cd'}}, {'message': 'user orders-svc-ab12cd denied'}]
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_glued_and_whole_values.py:196: AssertionError: a Secret in lower case is shown: [{'kind': 'secret', 'stringData': {'cfg': 'orders-svc-ab12cd'}}, {'message': 'user orders-svc-ab12cd denied'}]
+E   AssertionError: the copy of a Secret value is readable in a log: 'the correct horse battery staple came'
+    assert 'horse' not in 'the correct... staple came'
+      
+      'horse' is contained here:
+        the correct horse battery staple came
+      ?             +++++
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_glued_and_whole_values.py:215: AssertionError: the copy of a Secret value is readable in a log: 'the correct horse battery staple came'
+E   AssertionError: the copy of a Secret value is readable in a log: 'the correct horse battery staple came'
+    assert 'horse' not in 'the correct... staple came'
+      
+      'horse' is contained here:
+        the correct horse battery staple came
+      ?             +++++
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_glued_and_whole_values.py:215: AssertionError: the copy of a Secret value is readable in a log: 'the correct horse battery staple came'
+E   AssertionError: assert 7 == '<SECRET_REDACTED>'
+     +  where '<SECRET_REDACTED>' = R.MASKED
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_glued_and_whole_values.py:213: AssertionError: assert 7 == '<SECRET_REDACTED>'
+E   AssertionError: the first text of a Secret is readable in a log (flat): 'first <A> last <A>'
+    assert '<A>' not in 'first zq000...9secretvalue'
+      
+      '<A>' is contained here:
+        first <A> last <A>
+      ?       +++++++++++++++++
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_glued_and_whole_values.py:230: AssertionError: the first text of a Secret is readable in a log (flat): 'first <A> last <A>'
+E   AssertionError: the budget of a Secret was passed under credential keys: 'copy <SECRET_300> and <SECRET_1>'
+    assert ('<A>' not in 'copy <SECRE...d <SECRET_1>'
+      
+      '<A>' is contained here:
+      ?                                 ---------------
+        copy <SECRET_300> and <SECRET_1> and '<A>' in 'copy <SECRET_300> and <SECRET_1>')
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_glued_and_whole_values.py:245: AssertionError: the budget of a Secret was passed under credential keys: 'copy <SECRET_300> and <SECRET_1>'
+E   AssertionError: assert 'one lower-case word' in 'The redactor is pattern based. It does not catch names in free text, customer or project names, ticket numbers, value...es of the values the patterns do not know. Masking is a first filter, not proof that no client data reached the model.'
+     +  where 'The redactor is pattern based. It does not catch names in free text, customer or project names, ticket numbers, value...es of the values the patterns do not know. Masking is a first filter, not proof that no client data reached the model.' = R.LIMITS
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_glued_and_whole_values.py:263: AssertionError: assert 'one lower-case word' in 'The redactor is pattern based. It does not catch names in free text, customer or project names, ticket numbers, value...es of the values the patterns do not know. Masking is a first filter, not proof that no client data reached the model.'
+E   AssertionError: LIMITS contradicts the code: ["LIMITS does not name 'a text that is exactly a UTC time'", "LIMITS does not name 'a true, false or null value'", "LIMITS does not name 'a setting about a credential'", "the walk does not show 'a setting about a credential' as written"]
+    assert not ["LIMITS does not name 'a text that is exactly a UTC time'", "LIMITS does not name 'a true, false or null value'", "LIMITS does not name 'a setting about a credential'", "the walk does not show 'a setting about a credential' as written"]
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_glued_and_whole_values.py:301: AssertionError: LIMITS contradicts the code: ["LIMITS does not name 'a text that is exactly a UTC time'", "LIMITS does not name 'a true, false or null value'", "LIMITS does not name 'a setting about a credential'", "the walk does not show 'a setting about a credential' as written"]
+E   AssertionError: a key the older rule accepted is refused (letter case folding): ['ſession', 'seſsion', 'sesſion', 'sessİon', 'sessıon']
+    assert not ['ſession', 'seſsion', 'sesſion', 'sessİon', 'sessıon']
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_glued_and_whole_values.py:336: AssertionError: a key the older rule accepted is refused (letter case folding): ['ſession', 'seſsion', 'sesſion', 'sessİon', 'sessıon']
+E   AttributeError: module 'hadavin_sdk.guard.redact' has no attribute 'KEY_ALTERNATIVES'
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_glued_and_whole_values.py:370: AttributeError: module 'hadavin_sdk.guard.redact' has no attribute 'KEY_ALTERNATIVES'
+E   AssertionError: a credential key is not masked: tokens
+    assert False
+     +  where False = <function sensitive at 0x7f95418665c0>('tokens')
+     +    where <function sensitive at 0x7f95418665c0> = R.sensitive
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_glued_and_whole_values.py:390: AssertionError: a credential key is not masked: tokens
+E   assert ('db01' not in 'agent-ops a...8334cce4d71.'
+      
+      'db01' is contained here:
+        sible) on db01[.]corp[.]internal. Inputs: {"n":1}. Expected: service restarted. Plan c8334cce4d71.
+      ?           ++++)
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_glued_and_whole_values.py:407: assert ('db01' not in 'agent-ops a...8334cce4d71.'
+E   TypeError: Approvals.__init__() got an unexpected keyword argument 'target_labels'
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_glued_and_whole_values.py:434: TypeError: Approvals.__init__() got an unexpected keyword argument 'target_labels'
+E   AssertionError: part of the value is readable: 2391 cases, first [('authorization', '62jwz0k13j09vzx72zj35&#59;66kvww57v51xk0j0q44\u20099v7v63751\t&0qv', '<SECRET_1>\u20099v7v63751\t&0qvw4w8\u200990175xz\xa0\u2003%20‹SECRET_1›\x1f6w80z@\x1c＇<APIKEY_1>\u200aw78z41\x1eqyyz26yv＇73738w6q416q0\t91x28q\xa04kwj27yw\u2001,<HIGHENTROPY_1>\x1cvw76110.20.30.40y989y11jzvk7'), ('authorization', "3425k7x68xv038qzz71k7v@AKIAIOSFODNN7EXAMPLE\u2001';'ａｂ", "<SECRET_1>\u2001';'ａｂ"), ('refresh_tokens', '&ａｂjv8zq\\u0', '&ａｂjv8zq\\u0')]
+    assert not [('authorization', '62jwz0k13j09vzx72zj35&#59;66kvww57v51xk0j0q44\u20099v7v63751\t&0qv', '<SECRET_1>\u20099v7v63751\t&...DNN7EXAM', '2x484qk68q43v55741zjw608z\u200d\u1680<HIGHENTROPY_1>;1v2wqz5q37yz1xv0;\x1dj1405"\u205f2j6v5ａｂ\u202f'), ...]
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_random.py:156: AssertionError: part of the value is readable: 2391 cases, first [('authorization', '62jwz0k13j09vzx72zj35&#59;66kvww57v51xk0j0q44\u20099v7v63751\t&0qv', '<SECRET_1>\u20099v7v63751\t&0qvw4w8\u200990175xz\xa0\u2003%20‹SECRET_1›\x1f6w80z@\x1c＇<APIKEY_1>\u200aw78z41\x1eqyyz26yv＇73738w6q416q0\t91x28q\xa04kwj27yw\u2001,<HIGHENTROPY_1>\x1cvw76110.20.30.40y989y11jzvk7'), ('authorization', "3425k7x68xv038qzz71k7v@AKIAIOSFODNN7EXAMPLE\u2001';'ａｂ", "<SECRET_1>\u2001';'ａｂ"), ('refresh_tokens', '&ａｂjv8zq\\u0', '&ａｂjv8zq\\u0')]
+E   AssertionError: readable in the log line: 497 of 628 cases, first [('bearer', '1w4552304\u200aw40k2&3k', 'saw 1w4552304\u200aw40k2&3k there'), ('passphrase', '6y072z', 'saw 6y072z there'), ('password_for_the_primary_database_replica', '7z3yq1164&#59;wzy', 'saw 7z3yq1164&#59;wzy there')]
+    assert not [('bearer', '1w4552304\u200aw40k2&3k', 'saw 1w4552304\u200aw40k2&3k there'), ('passphrase', '6y072z', 'saw 6y072z ther...'6vq30z6%3B91q37813y0y53q94qq8187v029yyv6"394158y76x5y24xwk9\t', 'saw <SECRET_1>"394158y76x5y24xwk9\t1jxw there'), ...]
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_random.py:164: AssertionError: readable in the log line: 497 of 628 cases, first [('bearer', '1w4552304\u200aw40k2&3k', 'saw 1w4552304\u200aw40k2&3k there'), ('passphrase', '6y072z', 'saw 6y072z there'), ('password_for_the_primary_database_replica', '7z3yq1164&#59;wzy', 'saw 7z3yq1164&#59;wzy there')]
+E   AssertionError: an identifier is readable on the card: 2619 texts, first [('pay-api.prod.svc.cluster.local wiki.corp.internal a.b-c@mail.corp.example.org10.20.30.40', 'pay-api[.]prod[.]svc[.]cluster[.]local wiki[.]corp[.]internal a.b-c@mail[.]corp[.]example.org10.20.30.40', ['wiki.corp.internal']), (' \t\t  **  priya.nair@example.co.in ', '\u200b \t\t  **  priya.nair@example[.]co[.]in ', ['priya.nair@example.co.in'])]
+    assert not [('pay-api.prod.svc.cluster.local wiki.corp.internal a.b-c@mail.corp.example.org10.20.30.40', 'pay-api[.]prod[.]svc[.]...vil.com &lt; ', 'bob.smith@example[.]com: :  `\u200b`\u200b`\n  evil[.]com &amp;lt; ', ['bob.smith@example.com']), ...]
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_random.py:234: AssertionError: an identifier is readable on the card: 2619 texts, first [('pay-api.prod.svc.cluster.local wiki.corp.internal a.b-c@mail.corp.example.org10.20.30.40', 'pay-api[.]prod[.]svc[.]cluster[.]local wiki[.]corp[.]internal a.b-c@mail[.]corp[.]example.org10.20.30.40', ['wiki.corp.internal']), (' \t\t  **  priya.nair@example.co.in ', '\u200b \t\t  **  priya.nair@example[.]co[.]in ', ['priya.nair@example.co.in'])]
+E   AssertionError: a bare domain is outside code: 1801 texts, first [('pay-api.prod.svc.cluster.local wiki.corp.internal a.b-c@mail.corp.example.org10.20.30.40', 'pay-api[.]prod[.]svc[.]cluster[.]local wiki[.]corp[.]internal a.b-c@mail[.]corp[.]example.org10.20.30.40', ['a.b-c@mail[.]corp[.]example.org10.20.30.40']), (' \t\t  **  priya.nair@example.co.in ', '\u200b \t\t  **  priya.nair@example[.]co[.]in ', ['priya.nair@example[.]co[.]in'])]
+    assert not [('pay-api.prod.svc.cluster.local wiki.corp.internal a.b-c@mail.corp.example.org10.20.30.40', 'pay-api[.]prod[.]svc[.]... @here ', 'db01[.]corp[.]internal priya.nair@example[.]co[.]in  \t\t at-here ', ['priya.nair@example[.]co[.]in']), ...]
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_random.py:241: AssertionError: a bare domain is outside code: 1801 texts, first [('pay-api.prod.svc.cluster.local wiki.corp.internal a.b-c@mail.corp.example.org10.20.30.40', 'pay-api[.]prod[.]svc[.]cluster[.]local wiki[.]corp[.]internal a.b-c@mail[.]corp[.]example.org10.20.30.40', ['a.b-c@mail[.]corp[.]example.org10.20.30.40']), (' \t\t  **  priya.nair@example.co.in ', '\u200b \t\t  **  priya.nair@example[.]co[.]in ', ['priya.nair@example[.]co[.]in'])]
+E   AssertionError: 12 texts, first [(' \n```\n db01.corp.internal@here', ' \n`\u200b`\u200b`\n db01[.]<HOSTNAME_1>@here', ' \n`\u200b`\u200b`\n db01[.]<HOSTNAME_1>at-here'), ('pay-api.prod.svc.cluster.local@here', 'pay-api[.]prod[.]svc[.]<HOSTNAME_1>@here', 'pay-api[.]prod[.]svc[.]<HOSTNAME_1>at-here')]
+    assert not [(' \n```\n db01.corp.internal@here', ' \n`\u200b`\u200b`\n db01[.]<HOSTNAME_1>@here', ' \n`\u200b`\u200b`\n db01[.]<H...i[.]corp[.]internal  wiki[.]corp[.]internal  priya.nair@example[.]co[.]in a.b-c@mail[.]corp[.]example[.]org \n '), ...]
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_random.py:248: AssertionError: 12 texts, first [(' \n```\n db01.corp.internal@here', ' \n`\u200b`\u200b`\n db01[.]<HOSTNAME_1>@here', ' \n`\u200b`\u200b`\n db01[.]<HOSTNAME_1>at-here'), ('pay-api.prod.svc.cluster.local@here', 'pay-api[.]prod[.]svc[.]<HOSTNAME_1>@here', 'pay-api[.]prod[.]svc[.]<HOSTNAME_1>at-here')]
+E   AssertionError: readable in the returned text: 1 texts, first [('<i></i>hunter2secretXYZ3D\npassword=password=<i></i> hunter2secretXYZ</b>', ['password='])]
+    assert not [('<i></i>hunter2secretXYZ3D\npassword=password=<i></i> hunter2secretXYZ</b>', ['password='])]
+/home/user/build/EV-Q8b-13ea6b75/fb_main/tests/test_q8b_random.py:293: AssertionError: readable in the returned text: 1 texts, first [('<i></i>hunter2secretXYZ3D\npassword=password=<i></i> hunter2secretXYZ</b>', ['password='])]
+=========================== short test summary info ============================
+FAILED tests/test_q8b_batch2.py::test_the_prefix_bound_is_one_shared_name - A...
+FAILED tests/test_q8b_batch2.py::test_a_key_glued_to_an_address_of_any_length_keeps_its_value_masked
+FAILED tests/test_q8b_batch2.py::test_a_key_glued_to_a_long_identifier_keeps_its_value_masked
+FAILED tests/test_q8b_batch2.py::test_a_key_glued_to_an_arn_at_every_distance_is_masked
+FAILED tests/test_q8b_batch2.py::test_every_spelling_of_every_key_masks_a_value_with_spaces_on_every_path
+FAILED tests/test_q8b_batch2.py::test_a_card_keeps_flags_and_words_after_a_masked_value
+FAILED tests/test_q8b_batch2.py::test_the_walk_masks_the_words_after_a_value_and_a_passphrase
+FAILED tests/test_q8b_batch2.py::test_a_link_glued_to_a_credential_key_keeps_the_value_masked
+FAILED tests/test_q8b_batch2.py::test_an_address_link_glued_to_a_credential_key_keeps_the_value_masked
+FAILED tests/test_q8b_batch2.py::test_a_credential_key_after_a_bearer_word_is_masked_whole
+FAILED tests/test_q8b_batch2.py::test_the_shadow_card_shows_the_target_label
+FAILED tests/test_q8b_batch2.py::test_a_value_with_a_control_character_is_never_written_unquoted
+FAILED tests/test_q8b_batch2.py::test_a_flag_with_a_value_that_has_spaces_is_masked_whole
+FAILED tests/test_q8b_batch2.py::test_the_changelog_entry_is_the_same_text_as_limits
+FAILED tests/test_q8b_batch2.py::test_the_card_path_masks_glued_key_spellings_and_makes_no_new_fence
+FAILED tests/test_q8b_card_text.py::test_n4_an_address_outside_code - Asserti...
+FAILED tests/test_q8b_card_text.py::test_n5_every_way_a_card_text_is_built[summary()]
+FAILED tests/test_q8b_card_text.py::test_n5_every_way_a_card_text_is_built[render_shadow diagnosis]
+FAILED tests/test_q8b_card_text.py::test_n5_every_way_a_card_text_is_built[FakeChannel.send]
+FAILED tests/test_q8b_card_text.py::test_n5_every_way_a_card_text_is_built[FakeChannel.notify]
+FAILED tests/test_q8b_card_text.py::test_n5_every_way_a_card_text_is_built[SlackChannel._blocks with a raw summary]
+FAILED tests/test_q8b_card_text.py::test_n5_the_slack_block_shows_placeholders_for_a_raw_summary
+FAILED tests/test_q8b_card_text.py::test_n6_a_domain_after_a_placeholder - As...
+FAILED tests/test_q8b_card_text.py::test_n6_f6c_no_mention_is_created - Attri...
+FAILED tests/test_q8b_card_text.py::test_n6_a_mention_word_in_a_closed_fence_stays_as_written
+FAILED tests/test_q8b_card_text.py::test_n7_one_combined_card - AssertionErro...
+FAILED tests/test_q8b_card_text.py::test_n9_fixed_the_tag_stripped_candidate
+FAILED tests/test_q8b_card_text.py::test_n8_only_one_function_feeds_a_card - ...
+FAILED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[see db01.corp.internal/evil.com/p?d=1 now]
+FAILED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[10.0.0.5..evil.com]
+FAILED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[10.0.0.5.evil.com]
+FAILED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[restart db01.corp.internal. Then wait.]
+FAILED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[see a/evil.com and /var/log/app.log now]
+FAILED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[# APPROVED by sec@example.com]
+FAILED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[# APPROVED]
+FAILED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[> ask sec@example.com]
+FAILED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[password=ab`cd bob.smith@example\u3002com `x` y]
+FAILED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[`bob.smith@example\u3002com`]
+FAILED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[password=ab`cd evil.com `evil.com` x]
+FAILED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[contact bob.smith@example.com]
+FAILED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[bob%2Esmith%40example%2Ecom]
+FAILED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[bob.smith&#64;example.com]
+FAILED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[see 123e4567-e89b-12d3-a456-426614174000.json]
+FAILED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[x\n```\nevil.com\n```\ny evil.com]
+FAILED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[ping 10.20.30.40@channel]
+FAILED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[`10.20.30.40@channel`]
+FAILED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[see `db01.corp.internal@here` now]
+FAILED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[x\n```\n10.20.30.40@channel\n```\ny]
+FAILED tests/test_q8b_card_text.py::test_g5_the_last_step_and_clean_change_nothing_the_second_time[<i></i>hunter2secretXYZ3D\npassword=password=<i></i> hunter2secretXYZ</b>]
+FAILED tests/test_q8b_card_text.py::test_g8_a_summary_with_a_host_shaped_target
+FAILED tests/test_q8b_card_text.py::test_g11_a_line_whose_only_change_is_a_masked_identifier_keeps_its_block_marker
+FAILED tests/test_q8b_card_text.py::test_g12_code_stays_code - AttributeError...
+FAILED tests/test_q8b_credential_keys.py::test_s1_a_partly_masked_result_is_refused
+FAILED tests/test_q8b_credential_keys.py::test_s2_text_after_the_placeholder_is_refused
+FAILED tests/test_q8b_credential_keys.py::test_s3_a_result_without_its_key_is_refused
+FAILED tests/test_q8b_credential_keys.py::test_s5_a_look_alike_placeholder_is_refused
+FAILED tests/test_q8b_credential_keys.py::test_s6_what_is_written_to_the_redactor
+FAILED tests/test_q8b_credential_keys.py::test_t1_the_key_rule - AssertionErr...
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M1 PG+key, multi-word]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M1 env entry PG+key]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M1 pwd]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M1 DB+key]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M1 secretkey]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M1 secrets]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M1 root+key]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M1 accessKey]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M2 list in env entry]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M2 Name/Value]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M2 key/value]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[B1r private_key]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[B1r privateKey]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[B1r 300-char multi-word]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[255 chars]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[256 chars]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M6 ESC inside value]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[F5 sweep]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[F5 a b]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[F5 both quotes]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[XF composite]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[B1 key_used multi-word]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M2 api_tokens list]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M2 refresh_tokens]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M2 tokens]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M2 session]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M2 JSESSIONID]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M2 auth]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M2 account_key]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M2 client-key-data]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M2 connect.sid]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M2 key2]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M2 token1]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[M2 OLDPWD]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[one letter]
+FAILED tests/test_q8b_credential_keys.py::test_n1_an_entry_of_a_secret[F5c Secret data under spec]
+FAILED tests/test_q8b_credential_keys.py::test_n1_an_entry_of_a_secret[F5c Secret stringData under spec]
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_secret_whose_data_is_not_a_map
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_number_in_a_named_entry
+FAILED tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_setting_key_is_masked
+FAILED tests/test_q8b_credential_keys.py::test_n2_a_value_is_masked_where_repeated[F5b repeat, pattern-free]
+FAILED tests/test_q8b_credential_keys.py::test_n2_a_value_is_masked_where_repeated[XF respelled, percent copy]
+FAILED tests/test_q8b_credential_keys.py::test_n2_a_secret_entry_is_masked_where_repeated
+FAILED tests/test_q8b_credential_keys.py::test_n2_decoded_copy_of_a_base64_entry
+FAILED tests/test_q8b_credential_keys.py::test_n2_a_json_escaped_copy[line1 horse\nline2 staple]
+FAILED tests/test_q8b_credential_keys.py::test_n2_a_json_escaped_copy[say "horse" twice]
+FAILED tests/test_q8b_credential_keys.py::test_n2_f5c_secret_data_under_spec
+FAILED tests/test_q8b_credential_keys.py::test_n3_no_fragment_for_an_esc_value
+FAILED tests/test_q8b_credential_keys.py::test_n3_no_fragment_of_a_multi_word_value
+FAILED tests/test_q8b_credential_keys.py::test_x3_a_value_with_both_quote_marks_is_masked_where_repeated
+FAILED tests/test_q8b_credential_keys.py::test_x8_the_copy_without_the_escape_sequence_is_masked
+FAILED tests/test_q8b_credential_keys.py::test_g3_a_timestamp_stays_and_near_misses_are_masked
+FAILED tests/test_q8b_credential_keys.py::test_g6_a_setting_about_a_credential_is_shown[{"password_policy_enabled": "true"}]
+FAILED tests/test_q8b_credential_keys.py::test_g6_a_setting_about_a_credential_is_shown[{"token_expiry": 3600}]
+FAILED tests/test_q8b_credential_keys.py::test_g6_a_setting_about_a_credential_is_shown[{"token_expiry": "30d"}]
+FAILED tests/test_q8b_credential_keys.py::test_g6_a_setting_about_a_credential_is_shown[{"secret_count": 3}]
+FAILED tests/test_q8b_credential_keys.py::test_g6_a_setting_about_a_credential_is_shown[{"name": "TOKEN_TTL", "value": "15m"}]
+FAILED tests/test_q8b_credential_keys.py::test_g6_no_setting_is_shown_under_a_credential_parent_or_in_a_secret
+FAILED tests/test_q8b_credential_keys.py::test_g7_common_words_of_a_secret_stay_readable
+FAILED tests/test_q8b_credential_keys.py::test_g9_the_fixture_answers_the_same_tool_calls[spec.data]
+FAILED tests/test_q8b_credential_keys.py::test_g9_the_fixture_answers_the_same_tool_calls[spec.manifest]
+FAILED tests/test_q8b_credential_keys.py::test_g10_a_large_secret_is_bounded
+FAILED tests/test_q8b_glued_and_whole_values.py::test_r1_a_credential_key_glued_to_an_address_or_host_keeps_its_value_masked
+FAILED tests/test_q8b_glued_and_whole_values.py::test_r1_the_address_is_masked_too_when_a_key_is_glued_to_it
+FAILED tests/test_q8b_glued_and_whole_values.py::test_r1_an_address_before_a_separated_key_is_unchanged
+FAILED tests/test_q8b_glued_and_whole_values.py::test_r1_property_every_assignment_value_is_masked_for_every_separator
+FAILED tests/test_q8b_glued_and_whole_values.py::test_r1_a_key_glued_to_an_identifier_in_every_case_and_with_a_quote
+FAILED tests/test_q8b_glued_and_whole_values.py::test_r2_a_value_with_spaces_is_masked_whole_on_a_card
+FAILED tests/test_q8b_glued_and_whole_values.py::test_r2_the_words_after_the_value_stop_at_the_next_key_and_the_line_end
+FAILED tests/test_q8b_glued_and_whole_values.py::test_r2_a_value_with_spaces_is_masked_whole_in_a_notice
+FAILED tests/test_q8b_glued_and_whole_values.py::test_r3_an_entry_with_a_name_and_a_key_is_named_by_either
+FAILED tests/test_q8b_glued_and_whole_values.py::test_r4_kind_secret_in_lower_case_is_a_secret
+FAILED tests/test_q8b_glued_and_whole_values.py::test_r4_a_secret_whose_data_is_not_a_map_masks_its_copy_in_a_log[correct horse battery staple]
+FAILED tests/test_q8b_glued_and_whole_values.py::test_r4_a_secret_whose_data_is_not_a_map_masks_its_copy_in_a_log[data1]
+FAILED tests/test_q8b_glued_and_whole_values.py::test_r4_a_secret_whose_data_is_not_a_map_masks_its_copy_in_a_log[7]
+FAILED tests/test_q8b_glued_and_whole_values.py::test_r4_the_budget_of_a_secret_counts_nested_texts
+FAILED tests/test_q8b_glued_and_whole_values.py::test_r4_the_budget_holds_for_credential_keys_too
+FAILED tests/test_q8b_glued_and_whole_values.py::test_r4_a_common_value_of_a_secret_stays_readable_where_it_is_repeated
+FAILED tests/test_q8b_glued_and_whole_values.py::test_r5_every_exception_named_in_limits_is_what_the_walk_does
+FAILED tests/test_q8b_glued_and_whole_values.py::test_r6_a_key_with_a_letter_the_older_rule_read_as_ascii_is_still_a_key
+FAILED tests/test_q8b_glued_and_whole_values.py::test_r7_every_key_of_the_redactor_is_a_key_of_the_case_rule
+FAILED tests/test_q8b_glued_and_whole_values.py::test_r8_a_count_of_tokens_is_not_a_credential
+FAILED tests/test_q8b_glued_and_whole_values.py::test_r9_a_host_name_target_is_masked_and_a_label_is_shown
+FAILED tests/test_q8b_glued_and_whole_values.py::test_r9_the_label_reaches_the_request_card
+FAILED tests/test_q8b_random.py::test_p1_the_shown_value_is_only_placeholders_or_the_fixed_mask
+FAILED tests/test_q8b_random.py::test_p1_a_plain_value_is_masked_where_it_is_repeated
+FAILED tests/test_q8b_random.py::test_p2_every_identifier_the_redactor_masks_is_masked_on_the_card
+FAILED tests/test_q8b_random.py::test_p2_no_bare_domain_is_outside_code - Ass...
+FAILED tests/test_q8b_random.py::test_p2_cleaning_a_cleaned_text_changes_nothing
+FAILED tests/test_q8b_random.py::test_n9_nothing_the_first_view_masked_is_readable_in_the_returned_text
+XFAIL tests/test_q8b_credential_keys.py::test_x1_a_composite_value_is_masked_where_repeated - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x2_a_value_over_255_characters_is_masked_where_repeated - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x4_a_value_nested_under_a_credential_key_is_masked_where_repeated - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x5_a_number_is_masked_where_repeated[under a credential key] - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x5_a_number_is_masked_where_repeated[env entry value] - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x6_a_respelled_copy_is_masked[base64] - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x6_a_respelled_copy_is_masked[capitals] - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x6_a_respelled_copy_is_masked[wrapped over two lines] - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x6_a_respelled_copy_is_masked[double space] - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x6_a_respelled_copy_is_masked[hex] - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x7_a_very_short_value_is_masked_where_repeated[1 character] - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x7_a_very_short_value_is_masked_where_repeated[2 characters] - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x7_a_very_short_value_is_masked_where_repeated[3 characters glued to a letter] - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_random.py::test_x9_a_value_with_special_characters_is_masked_where_it_is_repeated - Q8d: sweep of registered secrets before the patterns
+148 failed, 113 passed, 14 xfailed in 34.47s

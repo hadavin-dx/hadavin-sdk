@@ -1,0 +1,2 @@
+tests/test_stage_names.py::test_an_empty_tools_manifest_does_not_refuse_tools_allowed_but_a_manifest_with_tools_does
+tests/test_stage_names.py::test_the_guard_sees_a_name_printed_outside_the_filter

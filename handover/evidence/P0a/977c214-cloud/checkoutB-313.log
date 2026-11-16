@@ -1,0 +1,69 @@
+HEAD 977c214fd0c78284249e03c7f914ec0eb090487d
+$ pytest tests/test_no_pglast_in_runtime.py (checkout B: plus src/pkg/.venv/lib/z.py importing pglast)
+============================= test session starts ==============================
+platform linux -- Python 3.13.18, pytest-9.2.0, pluggy-1.7.0 -- /home/user/build/venv-p71-977c214-313/bin/python
+rootdir: /home/user/build/EV-P71-977c214/wt-nested
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 39 items
+
+tests/test_no_pglast_in_runtime.py::test_repository_ships_no_pglast FAILED [  2%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[clean] PASSED     [  5%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[non-test group] PASSED [  7%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[uppercase and leading space] PASSED [ 10%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[at-form] PASSED   [ 12%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[include-group] PASSED [ 15%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[runtime dependency] PASSED [ 17%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[optional extra] PASSED [ 20%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[tool.uv sources] PASSED [ 23%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[uv.lock missing] PASSED [ 25%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[tool.uv constraint] PASSED [ 28%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[lock edge from runtime package] PASSED [ 30%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[lock group other than test] PASSED [ 33%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[import in src] PASSED [ 35%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[import submodule] PASSED [ 38%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[from submodule] PASSED [ 41%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[import_module string] PASSED [ 43%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[prose string is fine] PASSED [ 46%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[missing src] PASSED [ 48%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[vendored dir] PASSED [ 51%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[vendored binary] PASSED [ 53%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[vendored macOS binary] PASSED [ 56%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[vendored Windows binary] PASSED [ 58%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[cyclic include-group has no name] PASSED [ 61%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[cyclic pair still finds pglast] PASSED [ 64%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[top-level .venv import is skipped] PASSED [ 66%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[top-level node_modules vendored is skipped] PASSED [ 69%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[top-level .venv alone is not a scanned file] PASSED [ 71%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[nested .venv import is scanned] PASSED [ 74%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[nested node_modules vendored is scanned] PASSED [ 76%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[nested .venv under tools is scanned] PASSED [ 79%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[unparsable python file] PASSED [ 82%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[unparsable stub file] PASSED [ 84%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[null byte in python file] PASSED [ 87%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[upper-case binary suffix] PASSED [ 89%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[venv-like name outside the skip list is scanned] PASSED [ 92%]
+tests/test_no_pglast_in_runtime.py::test_unreadable_directory_raises PASSED [ 94%]
+tests/test_no_pglast_in_runtime.py::test_missing_tree_raises PASSED      [ 97%]
+tests/test_no_pglast_in_runtime.py::test_symlinked_dir_is_not_entered PASSED [100%]
+
+=================================== FAILURES ===================================
+_______________________ test_repository_ships_no_pglast ________________________
+
+    def test_repository_ships_no_pglast():
+>       assert violations(ROOT) == []
+E       AssertionError: assert ['src: pkg/.v...ports pglast'] == []
+E         
+E         Left contains one more item: 'src: pkg/.venv/lib/z.py imports pglast'
+E         
+E         Full diff: (-: missing in left side, +: extra in left side)
+E         - []
+E         + [
+E         +     'src: pkg/.venv/lib/z.py imports pglast',
+E         + ]
+
+tests/test_no_pglast_in_runtime.py:145: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_no_pglast_in_runtime.py::test_repository_ships_no_pglast - ...
+========================= 1 failed, 38 passed in 0.49s =========================
+exit=1

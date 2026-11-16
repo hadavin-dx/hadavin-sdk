@@ -1,0 +1,50 @@
+testsuite attributes: {'tests': '10648', 'failures': '1', 'errors': '0', 'skipped': '12', 'time': '381.954'}
+counted from testcase elements: {'passed': 10635, 'skipped': 12, 'failure': 1} total 10648
+SKIPPED  tests.contracts.test_llm::test_a_malformed_answer_is_a_provider_error[bedrock] | Stubber refuses a malformed Converse shape before the kind sees it
+FAILURE  tests.test_migration_numbers::test_the_timing_harness_flags_a_quadratic_stand_in | E       AssertionError: a quadratic function must be flagged
+SKIPPED  tests.test_policy_engine::test_vault_secrets_the_allowed_read_works_with_only_the_generated_policy | needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, so a refusal there would show nothing. CI runs these against its Vault service and requires them.
+SKIPPED  tests.test_policy_engine::test_vault_secrets_the_read_is_refused_when_its_grant_is_removed | needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, so a refusal there would show nothing. CI runs these against its Vault service and requires them.
+SKIPPED  tests.test_policy_engine::test_vault_secrets_the_never_list_requests_are_refused_and_the_admin_control_is_not | needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, so a refusal there would show nothing. CI runs these against its Vault service and requires them.
+SKIPPED  tests.test_policy_engine::test_plant_a_vault_policy_widened_to_the_whole_mount_fails_the_refusal_check | needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, so a refusal there would show nothing. CI runs these against its Vault service and requires them.
+SKIPPED  tests.test_policy_engine::test_plant_the_admin_token_in_place_of_the_runtime_token_fails_the_refusal_check | needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, so a refusal there would show nothing. CI runs these against its Vault service and requires them.
+SKIPPED  tests.test_policy_engine::test_vault_transit_signing_and_the_public_key_work_with_only_the_generated_policy | needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, so a refusal there would show nothing. CI runs these against its Vault service and requires them.
+SKIPPED  tests.test_policy_engine::test_vault_transit_a_request_is_refused_when_its_grant_is_removed[R18] | needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, so a refusal there would show nothing. CI runs these against its Vault service and requires them.
+SKIPPED  tests.test_policy_engine::test_vault_transit_a_request_is_refused_when_its_grant_is_removed[R19] | needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, so a refusal there would show nothing. CI runs these against its Vault service and requires them.
+SKIPPED  tests.test_policy_engine::test_vault_transit_the_never_list_requests_are_refused_and_the_admin_control_is_not | needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, so a refusal there would show nothing. CI runs these against its Vault service and requires them.
+SKIPPED  tests.test_policy_engine::test_plant_a_transit_policy_widened_to_every_key_fails_the_refusal_check | needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, so a refusal there would show nothing. CI runs these against its Vault service and requires them.
+SKIPPED  tests.test_policy_engine::test_plant_the_admin_token_in_place_of_the_transit_runtime_token_fails_the_refusal_check | needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, so a refusal there would show nothing. CI runs these against its Vault service and requires them.
+Excerpt of the full-suite log for the one failure (branch head 7af1380, full run):
+153:______________ test_the_timing_harness_flags_a_quadratic_stand_in ______________
+154-
+155-    @pytest.mark.perf
+156:    def test_the_timing_harness_flags_a_quadratic_stand_in():
+157-        def quadratic(t: str) -> float:
+158-            return _median_time(lambda s: sum(s.count("a", 0, i) for i in range(0, len(s), 64)), t)
+159-    
+160->       assert timing.is_superlinear(quadratic, "a", 16 * 1024, 256 * 1024), (
+161-            "a quadratic function must be flagged"
+162-        )
+163-E       AssertionError: a quadratic function must be flagged
+164-E       assert False
+165:E        +  where False = <function is_superlinear at 0x7fef222525c0>(<function test_the_timing_harness_flags_a_quadratic_stand_in.<locals>.quadratic at 0x7feef29cf4c0>, 'a', (16 * 1024), (256 * 1024))
+166-E        +    where <function is_superlinear at 0x7fef222525c0> = timing.is_superlinear
+167-
+168-tests/test_migration_numbers.py:836: AssertionError
+169-=========================== short test summary info ============================
+170-SKIPPED [1] tests/contracts/test_llm.py:95: Stubber refuses a malformed Converse shape before the kind sees it
+171-SKIPPED [1] tests/test_policy_engine.py:211: needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, so a refusal there would show nothing. CI runs these against its Vault service and requires them.
+172-SKIPPED [1] tests/test_policy_engine.py:217: needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, so a refusal there would show nothing. CI runs these against its Vault service and requires them.
+173-SKIPPED [1] tests/test_policy_engine.py:225: needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, so a refusal there would show nothing. CI runs these against its Vault service and requires them.
+174-SKIPPED [1] tests/test_policy_engine.py:239: needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, so a refusal there would show nothing. CI runs these against its Vault service and requires them.
+175-SKIPPED [1] tests/test_policy_engine.py:251: needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, so a refusal there would show nothing. CI runs these against its Vault service and requires them.
+176-SKIPPED [1] tests/test_policy_engine.py:307: needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, so a refusal there would show nothing. CI runs these against its Vault service and requires them.
+177-SKIPPED [2] tests/test_policy_engine.py:320: needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, so a refusal there would show nothing. CI runs these against its Vault service and requires them.
+178-SKIPPED [1] tests/test_policy_engine.py:335: needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, so a refusal there would show nothing. CI runs these against its Vault service and requires them.
+179-SKIPPED [1] tests/test_policy_engine.py:347: needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, so a refusal there would show nothing. CI runs these against its Vault service and requires them.
+180-SKIPPED [1] tests/test_policy_engine.py:359: needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, so a refusal there would show nothing. CI runs these against its Vault service and requires them.
+181-1 failed, 10635 passed, 12 skipped in 382.01s (0:06:22)
+
+Rerun of tests/test_migration_numbers.py alone, clean origin/main 2a8c2aac:
+133 passed in 3.29s
+Rerun of the same file alone, branch head 7af1380:
+133 passed in 3.33s

@@ -1,0 +1,110 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+== behaviour 1: six overrides x stages
+['pilot'] secrets= -> ConfigError: secrets= is for tests; configure backends.secrets in pilot and prod
+['pilot'] channel= -> ConfigError: channel= is for tests; configure backends.channel in pilot and prod
+['pilot'] detector= -> ConfigError: detector= is for tests; configure backends.detector in pilot and prod
+['pilot'] llm= -> ConfigError: llm= is for tests; configure backends.llm in pilot and prod
+['pilot'] clock= -> ConfigError: clock= is for tests; it is refused in pilot and prod
+['pilot'] timeout_s= -> ConfigError: timeout_s= is for tests; it is refused in pilot and prod
+['prod'] secrets= -> ConfigError: secrets= is for tests; configure backends.secrets in pilot and prod
+['prod'] channel= -> ConfigError: channel= is for tests; configure backends.channel in pilot and prod
+['prod'] detector= -> ConfigError: detector= is for tests; configure backends.detector in pilot and prod
+['prod'] llm= -> ConfigError: llm= is for tests; configure backends.llm in pilot and prod
+['prod'] clock= -> ConfigError: clock= is for tests; it is refused in pilot and prod
+['prod'] timeout_s= -> ConfigError: timeout_s= is for tests; it is refused in pilot and prod
+['staging'] secrets= -> ConfigError: secrets= is for tests; configure backends.secrets in pilot and prod
+['staging'] channel= -> ConfigError: channel= is for tests; configure backends.channel in pilot and prod
+['staging'] detector= -> ConfigError: detector= is for tests; configure backends.detector in pilot and prod
+['staging'] llm= -> ConfigError: llm= is for tests; configure backends.llm in pilot and prod
+['staging'] clock= -> ConfigError: clock= is for tests; it is refused in pilot and prod
+['staging'] timeout_s= -> ConfigError: timeout_s= is for tests; it is refused in pilot and prod
+['dev'] secrets= -> ConfigError: secrets= is for tests; configure backends.secrets in pilot and prod
+['dev'] channel= -> ConfigError: channel= is for tests; configure backends.channel in pilot and prod
+['dev'] detector= -> ConfigError: detector= is for tests; configure backends.detector in pilot and prod
+['dev'] llm= -> ConfigError: llm= is for tests; configure backends.llm in pilot and prod
+['dev'] clock= -> ConfigError: clock= is for tests; it is refused in pilot and prod
+['dev'] timeout_s= -> ConfigError: timeout_s= is for tests; it is refused in pilot and prod
+['test'] secrets= -> ConfigError: secrets= is for tests; configure backends.secrets in pilot and prod
+['test'] channel= -> ConfigError: channel= is for tests; configure backends.channel in pilot and prod
+['test'] detector= -> ConfigError: detector= is for tests; configure backends.detector in pilot and prod
+['test'] llm= -> ConfigError: llm= is for tests; configure backends.llm in pilot and prod
+['test'] clock= -> ConfigError: clock= is for tests; it is refused in pilot and prod
+['test'] timeout_s= -> ConfigError: timeout_s= is for tests; it is refused in pilot and prod
+['Demo'] secrets= -> ConfigError: secrets= is for tests; configure backends.secrets in pilot and prod
+['Demo'] channel= -> ConfigError: channel= is for tests; configure backends.channel in pilot and prod
+['Demo'] detector= -> ConfigError: detector= is for tests; configure backends.detector in pilot and prod
+['Demo'] llm= -> ConfigError: llm= is for tests; configure backends.llm in pilot and prod
+['Demo'] clock= -> ConfigError: clock= is for tests; it is refused in pilot and prod
+['Demo'] timeout_s= -> ConfigError: timeout_s= is for tests; it is refused in pilot and prod
+['DEMO'] secrets= -> ConfigError: secrets= is for tests; configure backends.secrets in pilot and prod
+['DEMO'] channel= -> ConfigError: channel= is for tests; configure backends.channel in pilot and prod
+['DEMO'] detector= -> ConfigError: detector= is for tests; configure backends.detector in pilot and prod
+['DEMO'] llm= -> ConfigError: llm= is for tests; configure backends.llm in pilot and prod
+['DEMO'] clock= -> ConfigError: clock= is for tests; it is refused in pilot and prod
+['DEMO'] timeout_s= -> ConfigError: timeout_s= is for tests; it is refused in pilot and prod
+['demo '] secrets= -> ConfigError: secrets= is for tests; configure backends.secrets in pilot and prod
+['demo '] channel= -> ConfigError: channel= is for tests; configure backends.channel in pilot and prod
+['demo '] detector= -> ConfigError: detector= is for tests; configure backends.detector in pilot and prod
+['demo '] llm= -> ConfigError: llm= is for tests; configure backends.llm in pilot and prod
+['demo '] clock= -> ConfigError: clock= is for tests; it is refused in pilot and prod
+['demo '] timeout_s= -> ConfigError: timeout_s= is for tests; it is refused in pilot and prod
+[''] secrets= -> ConfigError: secrets= is for tests; configure backends.secrets in pilot and prod
+[''] channel= -> ConfigError: channel= is for tests; configure backends.channel in pilot and prod
+[''] detector= -> ConfigError: detector= is for tests; configure backends.detector in pilot and prod
+[''] llm= -> ConfigError: llm= is for tests; configure backends.llm in pilot and prod
+[''] clock= -> ConfigError: clock= is for tests; it is refused in pilot and prod
+[''] timeout_s= -> ConfigError: timeout_s= is for tests; it is refused in pilot and prod
+['pilot '] secrets= -> ConfigError: secrets= is for tests; configure backends.secrets in pilot and prod
+['pilot '] channel= -> ConfigError: channel= is for tests; configure backends.channel in pilot and prod
+['pilot '] detector= -> ConfigError: detector= is for tests; configure backends.detector in pilot and prod
+['pilot '] llm= -> ConfigError: llm= is for tests; configure backends.llm in pilot and prod
+['pilot '] clock= -> ConfigError: clock= is for tests; it is refused in pilot and prod
+['pilot '] timeout_s= -> ConfigError: timeout_s= is for tests; it is refused in pilot and prod
+== falsy objects, pilot
+[pilot] falsy channel=<__main__.FalsyChannel object at 0x7fc6adad4050> -> ConfigError: channel= is for tests; configure backends.channel in pilot and prod
+[pilot] falsy secrets=<__main__.FalsySecrets object at 0x7fc6adad7a10> -> ConfigError: secrets= is for tests; configure backends.secrets in pilot and prod
+[pilot] falsy detector=0 -> ConfigError: detector= is for tests; configure backends.detector in pilot and prod
+[pilot] falsy llm='' -> ConfigError: llm= is for tests; configure backends.llm in pilot and prod
+[pilot] falsy timeout_s=0 -> ConfigError: timeout_s= is for tests; it is refused in pilot and prod
+[pilot] falsy timeout_s=0.0 -> ConfigError: timeout_s= is for tests; it is refused in pilot and prod
+[pilot] falsy timeout_s=False -> ConfigError: timeout_s= is for tests; it is refused in pilot and prod
+[pilot] falsy clock=0 -> ConfigError: clock= is for tests; it is refused in pilot and prod
+[pilot] falsy sources={} -> ConfigError: sources= is for tests; configure Config.sources in pilot and prod
+[pilot] falsy tools={} -> ConfigError: tools= (plain callables) is for replay and tests; use tools/<agent>.yaml in pilot and prod
+== two overrides: order
+[pilot] timeout_s + llm + secrets -> ConfigError: secrets= is for tests; configure backends.secrets in pilot and prod
+== hold_run_ids accepted when live (reaches a later error, not the override refusal)
+[pilot] hold_run_ids -> ConfigError: secret pg-dsn cannot be read at start-up (ConfigError)
+== behaviour 2: vault token
+[secrets {} pilot] (load_config ok) build -> ConfigError: environment pilot: refused: secrets: vault auth token (the default; set auth: kubernetes (recommended) or auth: approle)
+[secrets {} prod] (load_config ok) build -> ConfigError: environment prod: refused: secrets: vault auth token (the default; set auth: kubernetes (recommended) or auth: approle)
+[secrets {'auth': 'token'} pilot] (load_config ok) build -> ConfigError: environment pilot: refused: secrets: vault auth token (the default; set auth: kubernetes (recommended) or auth: approle)
+[secrets {'auth': 'token'} prod] (load_config ok) build -> ConfigError: environment prod: refused: secrets: vault auth token (the default; set auth: kubernetes (recommended) or auth: approle)
+[secrets {'auth': 'kubernetes', 'role': 'r'} pilot] (load_config ok) build -> ConfigError: secret pg-dsn cannot be read at start-up (ConfigError)
+[secrets {'auth': 'kubernetes', 'role': 'r'} prod] (load_config ok) build -> ConfigError: secret audit-key cannot be read at start-up (ConfigError)
+[secrets {'auth': 'approle', 'role_id': 'x', 'secret_id_env': 'S'} pilot] (load_config ok) build -> ConfigError: secret pg-dsn cannot be read at start-up (ConfigError)
+[secrets {'auth': 'approle', 'role_id': 'x', 'secret_id_env': 'S'} prod] (load_config ok) build -> ConfigError: secret audit-key cannot be read at start-up (ConfigError)
+[signer {} pilot] (load_config ok) build -> ConfigError: environment pilot: refused: signer: vault_transit auth token (the default; set auth: kubernetes (recommended) or auth: approle)
+[signer {} prod] (load_config ok) build -> ConfigError: environment prod: refused: signer: vault_transit auth token (the default; set auth: kubernetes (recommended) or auth: approle)
+[signer {'auth': 'token'} pilot] (load_config ok) build -> ConfigError: environment pilot: refused: signer: vault_transit auth token (the default; set auth: kubernetes (recommended) or auth: approle)
+[signer {'auth': 'token'} prod] (load_config ok) build -> ConfigError: environment prod: refused: signer: vault_transit auth token (the default; set auth: kubernetes (recommended) or auth: approle)
+[signer {'auth': 'kubernetes', 'role': 'r'} pilot] (load_config ok) build -> ConfigError: secret pg-dsn cannot be read at start-up (ConfigError)
+[signer {'auth': 'kubernetes', 'role': 'r'} prod] (load_config ok) build -> ConfigError: secret pg-dsn cannot be read at start-up (ConfigError)
+[signer {'auth': 'approle', 'role_id': 'x', 'secret_id_env': 'S'} pilot] (load_config ok) build -> ConfigError: secret pg-dsn cannot be read at start-up (ConfigError)
+[signer {'auth': 'approle', 'role_id': 'x', 'secret_id_env': 'S'} prod] (load_config ok) build -> ConfigError: secret pg-dsn cannot be read at start-up (ConfigError)
+== demo accepts overrides and vault token
+[demo] secrets= -> ConfigError: secret fixture-token cannot be read at start-up (KeyError)
+[demo] channel= -> no exception; returned App
+[demo] detector= -> no exception; returned App
+[demo] llm= -> no exception; returned App
+[demo] clock= -> no exception; returned App
+[demo] timeout_s= -> no exception; returned App
+[demo] secrets= (with the secret present) -> no exception; returned App
+[demo] timeout_s=0 -> ConfigError: timeout_s= must be an int or float between 0.001 and 3600
+[demo] timeout_s=-1 -> ConfigError: timeout_s= must be an int or float between 0.001 and 3600
+[demo] timeout_s=inf -> ConfigError: timeout_s= must be an int or float between 0.001 and 3600
+[demo] timeout_s=nan -> ConfigError: timeout_s= must be an int or float between 0.001 and 3600
+[demo] timeout_s=True -> ConfigError: timeout_s= must be an int or float between 0.001 and 3600
+[demo] timeout_s=3601 -> ConfigError: timeout_s= must be an int or float between 0.001 and 3600
+[demo] timeout_s=0.0005 -> ConfigError: timeout_s= must be an int or float between 0.001 and 3600
+[demo] timeout_s='5' -> ConfigError: timeout_s= must be an int or float between 0.001 and 3600

@@ -1,0 +1,6 @@
+U="uv run --all-extras --group test"
+echo "== 3a meter_mutants (memory, all)"; $U python tests/meter_mutants.py; echo "meter_mutants_exit=$?"
+echo "== git status after memory mutants"; git status --short; echo "git_status_lines=$(git status --short | wc -l)"
+echo "== 3b postgres_mutants with DSN"; HADAVIN_TEST_PG_DSN=postgresql://postgres@127.0.0.1:5432/mut $U python tests/postgres_mutants.py; echo "postgres_mutants_dsn_exit=$?"
+echo "== git status after pg mutants"; git status --short; echo "git_status_lines=$(git status --short | wc -l)"
+echo "== 3c postgres_mutants without DSN (expect 2)"; env -u HADAVIN_TEST_PG_DSN $U python tests/postgres_mutants.py; echo "postgres_mutants_nodsn_exit=$?"

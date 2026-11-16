@@ -1,0 +1,280 @@
+Probe 5(c), head 97fd202. Names:
+ESC = "\x1b"
+KEY  = "AKIA" + "IOSFODNN7" + "EXAMPLE"          (the AWS documentation example key, built from parts)
+PW   = "hun" + "ter" + "2sec" + "ret" + "XYZ"   (made-up value)
+PWK  = "pass" + "word="
+SEC  = "Tr0ub" + "4dor" + "-3xy" + "zQ"         (made-up handed-out secret of finding F2/F4)
+MAIL = "bob" + "@" + "example" + ".com"
+S7A  = "Zx9" + "&lt;" + "Qw7" + "!pa" + "ss"    (F7)
+S7B  = "pa" + "%41" + "ssw" + "0rd" + "-9"      (F7)
+S7C  = "Qz7" + "+/k" + "9Lm" + "~~v" + "Xy2" + "??b"   (F7, made up by the runner; its base64 holds + or /)
+S7D  = 54 made-up letters and digits in 18 groups of 3 (F7, long enough to straddle the 76-column base64 wrap)
+CARD = "4242"
+JWT  = three base64url parts built in code from {"alg":"HS256","typ":"JWT"}, {"sub":"made-up","name":"Nobody"} and 32 fixed made-up bytes
+Carriers: 'key ' + KEY + ' seen'; 'mail ' + MAIL + ' seen'; PWK + PW (the tracked secret is PW; the item is inserted at every offset 1..len-1 of the whole token, so for the third carrier also inside the name).
+Single cases: 16 items x every inner offset of each token = 912. Pair cases: 2,000, random.Random(77), pair k = the (k mod 136)-th of the 136 unordered pairs with repetition, carrier and two offsets drawn at random.
+Counted per path (computed by code): whole = secret stands in the output as it is; hidden-gap = its letters in order with only not-shown characters, marks or white space between them (categories Cc, Cf, Mn, Me, Zs, Zl, Zp, runmap.is_hidden, U+3164, U+115F, U+1160, U+FFA0; up to 16 per gap; includes whole); loose-gap = hidden-gap also allowing the visible characters [ ] 0 m ; t and backslash in a gap; part8 = no gap match but a piece of 8 or more characters of the secret stands in the output; raised = the call raised (for error_reason: the fixed note came back).
+any-hit = whole, hidden-gap, loose-gap or part8 (each case once). Offsets of the key=value token: 1..8 are inside the name, 9 is between the equals sign and the value, 10..24 are inside the value.
+For the tools functions with [secret], the handed-out secret is the tracked secret (KEY, MAIL or PW).
+
+=== path: redact_text(text, {}) (6.0 s wall for 2912 cases) ===
+  pair   | AWS-example-shaped key | cases=624 | whole=0 | hidden-gap=0 | loose-gap=24 | part8=6 | raised=0 | any-hit=30 | any-hit without the backslash + line break item=0 | any-hit where the first insert is inside the name (key=value only, offset <= 8)=0
+  pair   | e-mail address         | cases=724 | whole=0 | hidden-gap=0 | loose-gap=76 | part8=0 | raised=0 | any-hit=76 | any-hit without the backslash + line break item=0 | any-hit where the first insert is inside the name (key=value only, offset <= 8)=0
+  pair   | key=value secret       | cases=652 | whole=13 | hidden-gap=13 | loose-gap=16 | part8=28 | raised=0 | any-hit=44 | any-hit without the backslash + line break item=0 | any-hit where the first insert is inside the name (key=value only, offset <= 8)=33
+  single | AWS-example-shaped key | cases=304 | whole=0 | hidden-gap=0 | loose-gap=11 | part8=1 | raised=0 | any-hit=12 | any-hit without the backslash + line break item=0 | any-hit where the first insert is inside the name (key=value only, offset <= 8)=0
+  single | e-mail address         | cases=224 | whole=0 | hidden-gap=0 | loose-gap=11 | part8=0 | raised=0 | any-hit=11 | any-hit without the backslash + line break item=0 | any-hit where the first insert is inside the name (key=value only, offset <= 8)=0
+  single | key=value secret       | cases=384 | whole=9 | hidden-gap=9 | loose-gap=9 | part8=8 | raised=0 | any-hit=17 | any-hit without the backslash + line break item=0 | any-hit where the first insert is inside the name (key=value only, offset <= 8)=8
+  TOTAL  | cases=2912 | whole=22 | hidden-gap=22 | loose-gap=147 | part8=43 | raised=0 | any-hit=190 | any-hit without the backslash + line break item=0 | any-hit where the first insert is inside the name (key=value only, offset <= 8)=41
+  single cases with a hit, by carrier, item and kind of hit (count of offsets):
+    AWS-example-shaped key | backslash + line break | loose-gap | 11
+    AWS-example-shaped key | backslash + line break | part8 | 1
+    e-mail address | backslash + line break | loose-gap | 11
+    key=value secret | backslash + line break | part8 | 8
+    key=value secret | backslash + line break | whole | 9
+  example [pair, AWS-example-shaped key, loose-gap]: ESC[0m at offset 4 and backslash + line break at offset 7 -> key <LEAKED 20 chars with 3 other characters between the letters> seen
+  example [pair, AWS-example-shaped key, loose-gap]: U+FE0F at offset 9 and backslash + line break at offset 9 -> key <LEAKED 20 chars with 3 other characters between the letters> seen
+  example [pair, AWS-example-shaped key, loose-gap]: U+200B at offset 1 and backslash + line break at offset 4 -> key <LEAKED 20 chars with 3 other characters between the letters> seen
+  example [pair, AWS-example-shaped key, part8]: OSC (ESC ] 0 ; t BEL) at offset 1 and backslash + line break at offset 12 -> key <APIKEY_2>\\\n<LEAKED part 8 of 20 chars> seen
+  example [pair, AWS-example-shaped key, part8]: U+009B 0 m at offset 7 and backslash + line break at offset 10 -> key <APIKEY_1>\\\n<LEAKED part 10 of 20 chars> seen
+  example [pair, AWS-example-shaped key, part8]: ESC[0m at offset 2 and backslash + line break at offset 12 -> key <APIKEY_3>\\\n<LEAKED part 8 of 20 chars> seen
+  example [pair, e-mail address, loose-gap]: OSC (ESC ] 0 ; t BEL) at offset 10 and backslash + line break at offset 12 -> mail <LEAKED 15 chars with 3 other characters between the letters> seen
+  example [pair, e-mail address, loose-gap]: tab run (3 tabs) at offset 8 and backslash + line break at offset 8 -> mail <LEAKED 15 chars with 5 other characters between the letters> seen
+  example [pair, e-mail address, loose-gap]: backspace at offset 1 and backslash + line break at offset 10 -> mail <LEAKED 15 chars with 3 other characters between the letters> seen
+  example [pair, key=value secret, loose-gap]: backslash + line break at offset 1 and backslash + line break at offset 23 -> p\\\nassword=<LEAKED 16 chars with 2 other characters between the letters>
+  example [pair, key=value secret, loose-gap]: backslash + line break at offset 4 and backslash + line break at offset 11 -> pass\\\nword=<LEAKED 16 chars with 2 other characters between the letters>
+  example [pair, key=value secret, loose-gap]: backslash + line break at offset 6 and backslash + line break at offset 12 -> passwo\\\nrd=<LEAKED 16 chars with 2 other characters between the letters>
+  example [pair, key=value secret, part8]: backslash + line break at offset 10 and backslash + line break at offset 11 -> password=<SECRET_1>\nu\\\n<LEAKED part 14 of 16 chars>
+  example [pair, key=value secret, part8]: tab run (3 tabs) at offset 6 and backslash + line break at offset 11 -> passwo\t\t\trd=<SECRET_1>\n<LEAKED part 14 of 16 chars>
+  example [pair, key=value secret, part8]: backspace at offset 1 and backslash + line break at offset 14 -> p\x08assword=<SECRET_1>\n<LEAKED part 11 of 16 chars>
+  example [pair, key=value secret, whole]: U+115F at offset 1 and backslash + line break at offset 8 -> p\u115fassword\\\n=<LEAKED 16 chars>
+  example [pair, key=value secret, whole]: combining acute U+0301 at offset 3 and backslash + line break at offset 6 -> pas\u0301swo\\\nrd=<LEAKED 16 chars>
+  example [pair, key=value secret, whole]: ESC[0m at offset 3 and backslash + line break at offset 4 -> pas s\\\nword=<LEAKED 16 chars>
+  example [single, AWS-example-shaped key, loose-gap]: backslash + line break at offset 1 -> key <LEAKED 20 chars with 2 other characters between the letters> seen
+  example [single, AWS-example-shaped key, loose-gap]: backslash + line break at offset 2 -> key <LEAKED 20 chars with 2 other characters between the letters> seen
+  example [single, AWS-example-shaped key, loose-gap]: backslash + line break at offset 3 -> key <LEAKED 20 chars with 2 other characters between the letters> seen
+  example [single, AWS-example-shaped key, part8]: backslash + line break at offset 12 -> key <APIKEY_1>\\\n<LEAKED part 8 of 20 chars> seen
+  example [single, e-mail address, loose-gap]: backslash + line break at offset 3 -> mail <LEAKED 15 chars with 2 other characters between the letters> seen
+  example [single, e-mail address, loose-gap]: backslash + line break at offset 4 -> mail <LEAKED 15 chars with 2 other characters between the letters> seen
+  example [single, e-mail address, loose-gap]: backslash + line break at offset 5 -> mail <LEAKED 15 chars with 2 other characters between the letters> seen
+  example [single, key=value secret, part8]: backslash + line break at offset 10 -> password=<SECRET_1>\n<LEAKED part 15 of 16 chars>
+  example [single, key=value secret, part8]: backslash + line break at offset 11 -> password=<SECRET_1>\n<LEAKED part 14 of 16 chars>
+  example [single, key=value secret, part8]: backslash + line break at offset 12 -> password=<SECRET_1>\n<LEAKED part 13 of 16 chars>
+  example [single, key=value secret, whole]: backslash + line break at offset 1 -> p\\\nassword=<LEAKED 16 chars>
+  example [single, key=value secret, whole]: backslash + line break at offset 2 -> pa\\\nssword=<LEAKED 16 chars>
+  example [single, key=value secret, whole]: backslash + line break at offset 3 -> pas\\\nsword=<LEAKED 16 chars>
+
+=== path: redact_text(text, {}, neutralise_untrusted) (7.5 s wall for 2912 cases) ===
+  pair   | AWS-example-shaped key | cases=624 | whole=0 | hidden-gap=0 | loose-gap=24 | part8=6 | raised=0 | any-hit=30 | any-hit without the backslash + line break item=0 | any-hit where the first insert is inside the name (key=value only, offset <= 8)=0
+  pair   | e-mail address         | cases=724 | whole=0 | hidden-gap=0 | loose-gap=76 | part8=0 | raised=0 | any-hit=76 | any-hit without the backslash + line break item=0 | any-hit where the first insert is inside the name (key=value only, offset <= 8)=0
+  pair   | key=value secret       | cases=652 | whole=13 | hidden-gap=13 | loose-gap=16 | part8=28 | raised=0 | any-hit=44 | any-hit without the backslash + line break item=0 | any-hit where the first insert is inside the name (key=value only, offset <= 8)=33
+  single | AWS-example-shaped key | cases=304 | whole=0 | hidden-gap=0 | loose-gap=11 | part8=1 | raised=0 | any-hit=12 | any-hit without the backslash + line break item=0 | any-hit where the first insert is inside the name (key=value only, offset <= 8)=0
+  single | e-mail address         | cases=224 | whole=0 | hidden-gap=0 | loose-gap=11 | part8=0 | raised=0 | any-hit=11 | any-hit without the backslash + line break item=0 | any-hit where the first insert is inside the name (key=value only, offset <= 8)=0
+  single | key=value secret       | cases=384 | whole=9 | hidden-gap=9 | loose-gap=9 | part8=8 | raised=0 | any-hit=17 | any-hit without the backslash + line break item=0 | any-hit where the first insert is inside the name (key=value only, offset <= 8)=8
+  TOTAL  | cases=2912 | whole=22 | hidden-gap=22 | loose-gap=147 | part8=43 | raised=0 | any-hit=190 | any-hit without the backslash + line break item=0 | any-hit where the first insert is inside the name (key=value only, offset <= 8)=41
+  single cases with a hit, by carrier, item and kind of hit (count of offsets):
+    AWS-example-shaped key | backslash + line break | loose-gap | 11
+    AWS-example-shaped key | backslash + line break | part8 | 1
+    e-mail address | backslash + line break | loose-gap | 11
+    key=value secret | backslash + line break | part8 | 8
+    key=value secret | backslash + line break | whole | 9
+  example [pair, AWS-example-shaped key, loose-gap]: ESC[0m at offset 4 and backslash + line break at offset 7 -> key <LEAKED 20 chars with 3 other characters between the letters> seen
+  example [pair, AWS-example-shaped key, loose-gap]: U+FE0F at offset 9 and backslash + line break at offset 9 -> key <LEAKED 20 chars with 3 other characters between the letters> seen
+  example [pair, AWS-example-shaped key, loose-gap]: U+200B at offset 1 and backslash + line break at offset 4 -> key <LEAKED 20 chars with 3 other characters between the letters> seen
+  example [pair, AWS-example-shaped key, part8]: OSC (ESC ] 0 ; t BEL) at offset 1 and backslash + line break at offset 12 -> key <APIKEY_2>\\\n<LEAKED part 8 of 20 chars> seen
+  example [pair, AWS-example-shaped key, part8]: U+009B 0 m at offset 7 and backslash + line break at offset 10 -> key <APIKEY_1>\\\n<LEAKED part 10 of 20 chars> seen
+  example [pair, AWS-example-shaped key, part8]: ESC[0m at offset 2 and backslash + line break at offset 12 -> key <APIKEY_3>\\\n<LEAKED part 8 of 20 chars> seen
+  example [pair, e-mail address, loose-gap]: OSC (ESC ] 0 ; t BEL) at offset 10 and backslash + line break at offset 12 -> mail <LEAKED 15 chars with 3 other characters between the letters> seen
+  example [pair, e-mail address, loose-gap]: tab run (3 tabs) at offset 8 and backslash + line break at offset 8 -> mail <LEAKED 15 chars with 5 other characters between the letters> seen
+  example [pair, e-mail address, loose-gap]: backspace at offset 1 and backslash + line break at offset 10 -> mail <LEAKED 15 chars with 3 other characters between the letters> seen
+  example [pair, key=value secret, loose-gap]: backslash + line break at offset 1 and backslash + line break at offset 23 -> p\\\nassword=<LEAKED 16 chars with 2 other characters between the letters>
+  example [pair, key=value secret, loose-gap]: backslash + line break at offset 4 and backslash + line break at offset 11 -> pass\\\nword=<LEAKED 16 chars with 2 other characters between the letters>
+  example [pair, key=value secret, loose-gap]: backslash + line break at offset 6 and backslash + line break at offset 12 -> passwo\\\nrd=<LEAKED 16 chars with 2 other characters between the letters>
+  example [pair, key=value secret, part8]: backslash + line break at offset 10 and backslash + line break at offset 11 -> password=<SECRET_1>\nu\\\n<LEAKED part 14 of 16 chars>
+  example [pair, key=value secret, part8]: tab run (3 tabs) at offset 6 and backslash + line break at offset 11 -> passwo\t\t\trd=<SECRET_1>\n<LEAKED part 14 of 16 chars>
+  example [pair, key=value secret, part8]: backspace at offset 1 and backslash + line break at offset 14 -> p\x08assword=<SECRET_1>\n<LEAKED part 11 of 16 chars>
+  example [pair, key=value secret, whole]: U+115F at offset 1 and backslash + line break at offset 8 -> p\u115fassword\\\n=<LEAKED 16 chars>
+  example [pair, key=value secret, whole]: combining acute U+0301 at offset 3 and backslash + line break at offset 6 -> pas\u0301swo\\\nrd=<LEAKED 16 chars>
+  example [pair, key=value secret, whole]: ESC[0m at offset 3 and backslash + line break at offset 4 -> pas s\\\nword=<LEAKED 16 chars>
+  example [single, AWS-example-shaped key, loose-gap]: backslash + line break at offset 1 -> key <LEAKED 20 chars with 2 other characters between the letters> seen
+  example [single, AWS-example-shaped key, loose-gap]: backslash + line break at offset 2 -> key <LEAKED 20 chars with 2 other characters between the letters> seen
+  example [single, AWS-example-shaped key, loose-gap]: backslash + line break at offset 3 -> key <LEAKED 20 chars with 2 other characters between the letters> seen
+  example [single, AWS-example-shaped key, part8]: backslash + line break at offset 12 -> key <APIKEY_1>\\\n<LEAKED part 8 of 20 chars> seen
+  example [single, e-mail address, loose-gap]: backslash + line break at offset 3 -> mail <LEAKED 15 chars with 2 other characters between the letters> seen
+  example [single, e-mail address, loose-gap]: backslash + line break at offset 4 -> mail <LEAKED 15 chars with 2 other characters between the letters> seen
+  example [single, e-mail address, loose-gap]: backslash + line break at offset 5 -> mail <LEAKED 15 chars with 2 other characters between the letters> seen
+  example [single, key=value secret, part8]: backslash + line break at offset 10 -> password=<SECRET_1>\n<LEAKED part 15 of 16 chars>
+  example [single, key=value secret, part8]: backslash + line break at offset 11 -> password=<SECRET_1>\n<LEAKED part 14 of 16 chars>
+  example [single, key=value secret, part8]: backslash + line break at offset 12 -> password=<SECRET_1>\n<LEAKED part 13 of 16 chars>
+  example [single, key=value secret, whole]: backslash + line break at offset 1 -> p\\\nassword=<LEAKED 16 chars>
+  example [single, key=value secret, whole]: backslash + line break at offset 2 -> pa\\\nssword=<LEAKED 16 chars>
+  example [single, key=value secret, whole]: backslash + line break at offset 3 -> pas\\\nsword=<LEAKED 16 chars>
+
+=== path: prepare_output(text, {}, 16384, None) (7.4 s wall for 2912 cases) ===
+  pair   | AWS-example-shaped key | cases=624 | whole=0 | hidden-gap=0 | loose-gap=24 | part8=6 | raised=0 | any-hit=30 | any-hit without the backslash + line break item=0 | any-hit where the first insert is inside the name (key=value only, offset <= 8)=0
+  pair   | e-mail address         | cases=724 | whole=0 | hidden-gap=0 | loose-gap=76 | part8=0 | raised=0 | any-hit=76 | any-hit without the backslash + line break item=0 | any-hit where the first insert is inside the name (key=value only, offset <= 8)=0
+  pair   | key=value secret       | cases=652 | whole=13 | hidden-gap=13 | loose-gap=16 | part8=28 | raised=0 | any-hit=44 | any-hit without the backslash + line break item=0 | any-hit where the first insert is inside the name (key=value only, offset <= 8)=33
+  single | AWS-example-shaped key | cases=304 | whole=0 | hidden-gap=0 | loose-gap=11 | part8=1 | raised=0 | any-hit=12 | any-hit without the backslash + line break item=0 | any-hit where the first insert is inside the name (key=value only, offset <= 8)=0
+  single | e-mail address         | cases=224 | whole=0 | hidden-gap=0 | loose-gap=11 | part8=0 | raised=0 | any-hit=11 | any-hit without the backslash + line break item=0 | any-hit where the first insert is inside the name (key=value only, offset <= 8)=0
+  single | key=value secret       | cases=384 | whole=9 | hidden-gap=9 | loose-gap=9 | part8=8 | raised=0 | any-hit=17 | any-hit without the backslash + line break item=0 | any-hit where the first insert is inside the name (key=value only, offset <= 8)=8
+  TOTAL  | cases=2912 | whole=22 | hidden-gap=22 | loose-gap=147 | part8=43 | raised=0 | any-hit=190 | any-hit without the backslash + line break item=0 | any-hit where the first insert is inside the name (key=value only, offset <= 8)=41
+  single cases with a hit, by carrier, item and kind of hit (count of offsets):
+    AWS-example-shaped key | backslash + line break | loose-gap | 11
+    AWS-example-shaped key | backslash + line break | part8 | 1
+    e-mail address | backslash + line break | loose-gap | 11
+    key=value secret | backslash + line break | part8 | 8
+    key=value secret | backslash + line break | whole | 9
+  example [pair, AWS-example-shaped key, loose-gap]: ESC[0m at offset 4 and backslash + line break at offset 7 -> key <LEAKED 20 chars with 3 other characters between the letters> seen
+  example [pair, AWS-example-shaped key, loose-gap]: U+FE0F at offset 9 and backslash + line break at offset 9 -> key <LEAKED 20 chars with 3 other characters between the letters> seen
+  example [pair, AWS-example-shaped key, loose-gap]: U+200B at offset 1 and backslash + line break at offset 4 -> key <LEAKED 20 chars with 3 other characters between the letters> seen
+  example [pair, AWS-example-shaped key, part8]: OSC (ESC ] 0 ; t BEL) at offset 1 and backslash + line break at offset 12 -> key <APIKEY_2>\\\n<LEAKED part 8 of 20 chars> seen
+  example [pair, AWS-example-shaped key, part8]: U+009B 0 m at offset 7 and backslash + line break at offset 10 -> key <APIKEY_1>\\\n<LEAKED part 10 of 20 chars> seen
+  example [pair, AWS-example-shaped key, part8]: ESC[0m at offset 2 and backslash + line break at offset 12 -> key <APIKEY_3>\\\n<LEAKED part 8 of 20 chars> seen
+  example [pair, e-mail address, loose-gap]: OSC (ESC ] 0 ; t BEL) at offset 10 and backslash + line break at offset 12 -> mail <LEAKED 15 chars with 3 other characters between the letters> seen
+  example [pair, e-mail address, loose-gap]: tab run (3 tabs) at offset 8 and backslash + line break at offset 8 -> mail <LEAKED 15 chars with 5 other characters between the letters> seen
+  example [pair, e-mail address, loose-gap]: backspace at offset 1 and backslash + line break at offset 10 -> mail <LEAKED 15 chars with 3 other characters between the letters> seen
+  example [pair, key=value secret, loose-gap]: backslash + line break at offset 1 and backslash + line break at offset 23 -> p\\\nassword=<LEAKED 16 chars with 2 other characters between the letters>
+  example [pair, key=value secret, loose-gap]: backslash + line break at offset 4 and backslash + line break at offset 11 -> pass\\\nword=<LEAKED 16 chars with 2 other characters between the letters>
+  example [pair, key=value secret, loose-gap]: backslash + line break at offset 6 and backslash + line break at offset 12 -> passwo\\\nrd=<LEAKED 16 chars with 2 other characters between the letters>
+  example [pair, key=value secret, part8]: backslash + line break at offset 10 and backslash + line break at offset 11 -> password=<SECRET_1>\nu\\\n<LEAKED part 14 of 16 chars>
+  example [pair, key=value secret, part8]: tab run (3 tabs) at offset 6 and backslash + line break at offset 11 -> passwo\t\t\trd=<SECRET_1>\n<LEAKED part 14 of 16 chars>
+  example [pair, key=value secret, part8]: backspace at offset 1 and backslash + line break at offset 14 -> p\x08assword=<SECRET_1>\n<LEAKED part 11 of 16 chars>
+  example [pair, key=value secret, whole]: U+115F at offset 1 and backslash + line break at offset 8 -> p\u115fassword\\\n=<LEAKED 16 chars>
+  example [pair, key=value secret, whole]: combining acute U+0301 at offset 3 and backslash + line break at offset 6 -> pas\u0301swo\\\nrd=<LEAKED 16 chars>
+  example [pair, key=value secret, whole]: ESC[0m at offset 3 and backslash + line break at offset 4 -> pas s\\\nword=<LEAKED 16 chars>
+  example [single, AWS-example-shaped key, loose-gap]: backslash + line break at offset 1 -> key <LEAKED 20 chars with 2 other characters between the letters> seen
+  example [single, AWS-example-shaped key, loose-gap]: backslash + line break at offset 2 -> key <LEAKED 20 chars with 2 other characters between the letters> seen
+  example [single, AWS-example-shaped key, loose-gap]: backslash + line break at offset 3 -> key <LEAKED 20 chars with 2 other characters between the letters> seen
+  example [single, AWS-example-shaped key, part8]: backslash + line break at offset 12 -> key <APIKEY_1>\\\n<LEAKED part 8 of 20 chars> seen
+  example [single, e-mail address, loose-gap]: backslash + line break at offset 3 -> mail <LEAKED 15 chars with 2 other characters between the letters> seen
+  example [single, e-mail address, loose-gap]: backslash + line break at offset 4 -> mail <LEAKED 15 chars with 2 other characters between the letters> seen
+  example [single, e-mail address, loose-gap]: backslash + line break at offset 5 -> mail <LEAKED 15 chars with 2 other characters between the letters> seen
+  example [single, key=value secret, part8]: backslash + line break at offset 10 -> password=<SECRET_1>\n<LEAKED part 15 of 16 chars>
+  example [single, key=value secret, part8]: backslash + line break at offset 11 -> password=<SECRET_1>\n<LEAKED part 14 of 16 chars>
+  example [single, key=value secret, part8]: backslash + line break at offset 12 -> password=<SECRET_1>\n<LEAKED part 13 of 16 chars>
+  example [single, key=value secret, whole]: backslash + line break at offset 1 -> p\\\nassword=<LEAKED 16 chars>
+  example [single, key=value secret, whole]: backslash + line break at offset 2 -> pa\\\nssword=<LEAKED 16 chars>
+  example [single, key=value secret, whole]: backslash + line break at offset 3 -> pas\\\nsword=<LEAKED 16 chars>
+
+=== path: error_reason(RuntimeError(text), None) (4.8 s wall for 2912 cases) ===
+  pair   | AWS-example-shaped key | cases=624 | whole=0 | hidden-gap=0 | loose-gap=24 | part8=6 | raised=0 | any-hit=30 | any-hit without the backslash + line break item=0 | any-hit where the first insert is inside the name (key=value only, offset <= 8)=0
+  pair   | e-mail address         | cases=724 | whole=0 | hidden-gap=0 | loose-gap=76 | part8=0 | raised=0 | any-hit=76 | any-hit without the backslash + line break item=0 | any-hit where the first insert is inside the name (key=value only, offset <= 8)=0
+  pair   | key=value secret       | cases=652 | whole=13 | hidden-gap=13 | loose-gap=16 | part8=28 | raised=0 | any-hit=44 | any-hit without the backslash + line break item=0 | any-hit where the first insert is inside the name (key=value only, offset <= 8)=33
+  single | AWS-example-shaped key | cases=304 | whole=0 | hidden-gap=0 | loose-gap=11 | part8=1 | raised=0 | any-hit=12 | any-hit without the backslash + line break item=0 | any-hit where the first insert is inside the name (key=value only, offset <= 8)=0
+  single | e-mail address         | cases=224 | whole=0 | hidden-gap=0 | loose-gap=11 | part8=0 | raised=0 | any-hit=11 | any-hit without the backslash + line break item=0 | any-hit where the first insert is inside the name (key=value only, offset <= 8)=0
+  single | key=value secret       | cases=384 | whole=9 | hidden-gap=9 | loose-gap=9 | part8=8 | raised=0 | any-hit=17 | any-hit without the backslash + line break item=0 | any-hit where the first insert is inside the name (key=value only, offset <= 8)=8
+  TOTAL  | cases=2912 | whole=22 | hidden-gap=22 | loose-gap=147 | part8=43 | raised=0 | any-hit=190 | any-hit without the backslash + line break item=0 | any-hit where the first insert is inside the name (key=value only, offset <= 8)=41
+  single cases with a hit, by carrier, item and kind of hit (count of offsets):
+    AWS-example-shaped key | backslash + line break | loose-gap | 11
+    AWS-example-shaped key | backslash + line break | part8 | 1
+    e-mail address | backslash + line break | loose-gap | 11
+    key=value secret | backslash + line break | part8 | 8
+    key=value secret | backslash + line break | whole | 9
+  example [pair, AWS-example-shaped key, loose-gap]: ESC[0m at offset 4 and backslash + line break at offset 7 -> RuntimeError: key <LEAKED 20 chars with 3 other characters between the letters> seen
+  example [pair, AWS-example-shaped key, loose-gap]: U+FE0F at offset 9 and backslash + line break at offset 9 -> RuntimeError: key <LEAKED 20 chars with 3 other characters between the letters> seen
+  example [pair, AWS-example-shaped key, loose-gap]: U+200B at offset 1 and backslash + line break at offset 4 -> RuntimeError: key <LEAKED 20 chars with 3 other characters between the letters> seen
+  example [pair, AWS-example-shaped key, part8]: OSC (ESC ] 0 ; t BEL) at offset 1 and backslash + line break at offset 12 -> RuntimeError: key <APIKEY_2>\\\n<LEAKED part 8 of 20 chars> seen
+  example [pair, AWS-example-shaped key, part8]: U+009B 0 m at offset 7 and backslash + line break at offset 10 -> RuntimeError: key <APIKEY_1>\\\n<LEAKED part 10 of 20 chars> seen
+  example [pair, AWS-example-shaped key, part8]: ESC[0m at offset 2 and backslash + line break at offset 12 -> RuntimeError: key <APIKEY_3>\\\n<LEAKED part 8 of 20 chars> seen
+  example [pair, e-mail address, loose-gap]: OSC (ESC ] 0 ; t BEL) at offset 10 and backslash + line break at offset 12 -> RuntimeError: mail <LEAKED 15 chars with 3 other characters between the letters> seen
+  example [pair, e-mail address, loose-gap]: tab run (3 tabs) at offset 8 and backslash + line break at offset 8 -> RuntimeError: mail <LEAKED 15 chars with 5 other characters between the letters> seen
+  example [pair, e-mail address, loose-gap]: backspace at offset 1 and backslash + line break at offset 10 -> RuntimeError: mail <LEAKED 15 chars with 3 other characters between the letters> seen
+  example [pair, key=value secret, loose-gap]: backslash + line break at offset 1 and backslash + line break at offset 23 -> RuntimeError: p\\\nassword=<LEAKED 16 chars with 2 other characters between the letters>
+  example [pair, key=value secret, loose-gap]: backslash + line break at offset 4 and backslash + line break at offset 11 -> RuntimeError: pass\\\nword=<LEAKED 16 chars with 2 other characters between the letters>
+  example [pair, key=value secret, loose-gap]: backslash + line break at offset 6 and backslash + line break at offset 12 -> RuntimeError: passwo\\\nrd=<LEAKED 16 chars with 2 other characters between the letters>
+  example [pair, key=value secret, part8]: backslash + line break at offset 10 and backslash + line break at offset 11 -> RuntimeError: password=<SECRET_1>\nu\\\n<LEAKED part 14 of 16 chars>
+  example [pair, key=value secret, part8]: tab run (3 tabs) at offset 6 and backslash + line break at offset 11 -> RuntimeError: passwo\t\t\trd=<SECRET_1>\n<LEAKED part 14 of 16 chars>
+  example [pair, key=value secret, part8]: backspace at offset 1 and backslash + line break at offset 14 -> RuntimeError: p\x08assword=<SECRET_1>\n<LEAKED part 11 of 16 chars>
+  example [pair, key=value secret, whole]: U+115F at offset 1 and backslash + line break at offset 8 -> RuntimeError: p\u115fassword\\\n=<LEAKED 16 chars>
+  example [pair, key=value secret, whole]: combining acute U+0301 at offset 3 and backslash + line break at offset 6 -> RuntimeError: pas\u0301swo\\\nrd=<LEAKED 16 chars>
+  example [pair, key=value secret, whole]: ESC[0m at offset 3 and backslash + line break at offset 4 -> RuntimeError: pas s\\\nword=<LEAKED 16 chars>
+  example [single, AWS-example-shaped key, loose-gap]: backslash + line break at offset 1 -> RuntimeError: key <LEAKED 20 chars with 2 other characters between the letters> seen
+  example [single, AWS-example-shaped key, loose-gap]: backslash + line break at offset 2 -> RuntimeError: key <LEAKED 20 chars with 2 other characters between the letters> seen
+  example [single, AWS-example-shaped key, loose-gap]: backslash + line break at offset 3 -> RuntimeError: key <LEAKED 20 chars with 2 other characters between the letters> seen
+  example [single, AWS-example-shaped key, part8]: backslash + line break at offset 12 -> RuntimeError: key <APIKEY_1>\\\n<LEAKED part 8 of 20 chars> seen
+  example [single, e-mail address, loose-gap]: backslash + line break at offset 3 -> RuntimeError: mail <LEAKED 15 chars with 2 other characters between the letters> seen
+  example [single, e-mail address, loose-gap]: backslash + line break at offset 4 -> RuntimeError: mail <LEAKED 15 chars with 2 other characters between the letters> seen
+  example [single, e-mail address, loose-gap]: backslash + line break at offset 5 -> RuntimeError: mail <LEAKED 15 chars with 2 other characters between the letters> seen
+  example [single, key=value secret, part8]: backslash + line break at offset 10 -> RuntimeError: password=<SECRET_1>\n<LEAKED part 15 of 16 chars>
+  example [single, key=value secret, part8]: backslash + line break at offset 11 -> RuntimeError: password=<SECRET_1>\n<LEAKED part 14 of 16 chars>
+  example [single, key=value secret, part8]: backslash + line break at offset 12 -> RuntimeError: password=<SECRET_1>\n<LEAKED part 13 of 16 chars>
+  example [single, key=value secret, whole]: backslash + line break at offset 1 -> RuntimeError: p\\\nassword=<LEAKED 16 chars>
+  example [single, key=value secret, whole]: backslash + line break at offset 2 -> RuntimeError: pa\\\nssword=<LEAKED 16 chars>
+  example [single, key=value secret, whole]: backslash + line break at offset 3 -> RuntimeError: pas\\\nsword=<LEAKED 16 chars>
+
+=== path: prepare_output(text, {}, 16384, [secret]) (3.0 s wall for 2912 cases) ===
+  pair   | AWS-example-shaped key | cases=624 | whole=0 | hidden-gap=0 | loose-gap=24 | part8=6 | raised=0 | any-hit=30 | any-hit without the backslash + line break item=0 | any-hit where the first insert is inside the name (key=value only, offset <= 8)=0
+  pair   | e-mail address         | cases=724 | whole=0 | hidden-gap=0 | loose-gap=76 | part8=0 | raised=0 | any-hit=76 | any-hit without the backslash + line break item=0 | any-hit where the first insert is inside the name (key=value only, offset <= 8)=0
+  pair   | key=value secret       | cases=652 | whole=0 | hidden-gap=0 | loose-gap=3 | part8=28 | raised=0 | any-hit=31 | any-hit without the backslash + line break item=0 | any-hit where the first insert is inside the name (key=value only, offset <= 8)=20
+  single | AWS-example-shaped key | cases=304 | whole=0 | hidden-gap=0 | loose-gap=11 | part8=1 | raised=0 | any-hit=12 | any-hit without the backslash + line break item=0 | any-hit where the first insert is inside the name (key=value only, offset <= 8)=0
+  single | e-mail address         | cases=224 | whole=0 | hidden-gap=0 | loose-gap=11 | part8=0 | raised=0 | any-hit=11 | any-hit without the backslash + line break item=0 | any-hit where the first insert is inside the name (key=value only, offset <= 8)=0
+  single | key=value secret       | cases=384 | whole=0 | hidden-gap=0 | loose-gap=0 | part8=8 | raised=0 | any-hit=8 | any-hit without the backslash + line break item=0 | any-hit where the first insert is inside the name (key=value only, offset <= 8)=0
+  TOTAL  | cases=2912 | whole=0 | hidden-gap=0 | loose-gap=125 | part8=43 | raised=0 | any-hit=168 | any-hit without the backslash + line break item=0 | any-hit where the first insert is inside the name (key=value only, offset <= 8)=20
+  single cases with a hit, by carrier, item and kind of hit (count of offsets):
+    AWS-example-shaped key | backslash + line break | loose-gap | 11
+    AWS-example-shaped key | backslash + line break | part8 | 1
+    e-mail address | backslash + line break | loose-gap | 11
+    key=value secret | backslash + line break | part8 | 8
+  example [pair, AWS-example-shaped key, loose-gap]: ESC[0m at offset 4 and backslash + line break at offset 7 -> key <LEAKED 20 chars with 3 other characters between the letters> seen
+  example [pair, AWS-example-shaped key, loose-gap]: U+FE0F at offset 9 and backslash + line break at offset 9 -> key <LEAKED 20 chars with 3 other characters between the letters> seen
+  example [pair, AWS-example-shaped key, loose-gap]: U+200B at offset 1 and backslash + line break at offset 4 -> key <LEAKED 20 chars with 3 other characters between the letters> seen
+  example [pair, AWS-example-shaped key, part8]: OSC (ESC ] 0 ; t BEL) at offset 1 and backslash + line break at offset 12 -> key <APIKEY_2>\\\n<LEAKED part 8 of 20 chars> seen
+  example [pair, AWS-example-shaped key, part8]: U+009B 0 m at offset 7 and backslash + line break at offset 10 -> key <APIKEY_1>\\\n<LEAKED part 10 of 20 chars> seen
+  example [pair, AWS-example-shaped key, part8]: ESC[0m at offset 2 and backslash + line break at offset 12 -> key <APIKEY_3>\\\n<LEAKED part 8 of 20 chars> seen
+  example [pair, e-mail address, loose-gap]: OSC (ESC ] 0 ; t BEL) at offset 10 and backslash + line break at offset 12 -> mail <LEAKED 15 chars with 3 other characters between the letters> seen
+  example [pair, e-mail address, loose-gap]: tab run (3 tabs) at offset 8 and backslash + line break at offset 8 -> mail <LEAKED 15 chars with 5 other characters between the letters> seen
+  example [pair, e-mail address, loose-gap]: backspace at offset 1 and backslash + line break at offset 10 -> mail <LEAKED 15 chars with 3 other characters between the letters> seen
+  example [pair, key=value secret, loose-gap]: backslash + line break at offset 1 and backslash + line break at offset 23 -> p\\\nassword=<LEAKED 16 chars with 2 other characters between the letters>
+  example [pair, key=value secret, loose-gap]: backslash + line break at offset 4 and backslash + line break at offset 11 -> pass\\\nword=<LEAKED 16 chars with 2 other characters between the letters>
+  example [pair, key=value secret, loose-gap]: backslash + line break at offset 6 and backslash + line break at offset 12 -> passwo\\\nrd=<LEAKED 16 chars with 2 other characters between the letters>
+  example [pair, key=value secret, part8]: backslash + line break at offset 10 and backslash + line break at offset 11 -> password=<SECRET_1>\nu\\\n<LEAKED part 14 of 16 chars>
+  example [pair, key=value secret, part8]: tab run (3 tabs) at offset 6 and backslash + line break at offset 11 -> passwo\t\t\trd=<SECRET_1>\n<LEAKED part 14 of 16 chars>
+  example [pair, key=value secret, part8]: backspace at offset 1 and backslash + line break at offset 14 -> p\x08assword=<SECRET_1>\n<LEAKED part 11 of 16 chars>
+  example [single, AWS-example-shaped key, loose-gap]: backslash + line break at offset 1 -> key <LEAKED 20 chars with 2 other characters between the letters> seen
+  example [single, AWS-example-shaped key, loose-gap]: backslash + line break at offset 2 -> key <LEAKED 20 chars with 2 other characters between the letters> seen
+  example [single, AWS-example-shaped key, loose-gap]: backslash + line break at offset 3 -> key <LEAKED 20 chars with 2 other characters between the letters> seen
+  example [single, AWS-example-shaped key, part8]: backslash + line break at offset 12 -> key <APIKEY_1>\\\n<LEAKED part 8 of 20 chars> seen
+  example [single, e-mail address, loose-gap]: backslash + line break at offset 3 -> mail <LEAKED 15 chars with 2 other characters between the letters> seen
+  example [single, e-mail address, loose-gap]: backslash + line break at offset 4 -> mail <LEAKED 15 chars with 2 other characters between the letters> seen
+  example [single, e-mail address, loose-gap]: backslash + line break at offset 5 -> mail <LEAKED 15 chars with 2 other characters between the letters> seen
+  example [single, key=value secret, part8]: backslash + line break at offset 10 -> password=<SECRET_1>\n<LEAKED part 15 of 16 chars>
+  example [single, key=value secret, part8]: backslash + line break at offset 11 -> password=<SECRET_1>\n<LEAKED part 14 of 16 chars>
+  example [single, key=value secret, part8]: backslash + line break at offset 12 -> password=<SECRET_1>\n<LEAKED part 13 of 16 chars>
+
+=== path: error_reason(RuntimeError(text), [secret]) (2.2 s wall for 2912 cases) ===
+  pair   | AWS-example-shaped key | cases=624 | whole=0 | hidden-gap=0 | loose-gap=24 | part8=6 | raised=0 | any-hit=30 | any-hit without the backslash + line break item=0 | any-hit where the first insert is inside the name (key=value only, offset <= 8)=0
+  pair   | e-mail address         | cases=724 | whole=0 | hidden-gap=0 | loose-gap=76 | part8=0 | raised=0 | any-hit=76 | any-hit without the backslash + line break item=0 | any-hit where the first insert is inside the name (key=value only, offset <= 8)=0
+  pair   | key=value secret       | cases=652 | whole=0 | hidden-gap=0 | loose-gap=3 | part8=28 | raised=0 | any-hit=31 | any-hit without the backslash + line break item=0 | any-hit where the first insert is inside the name (key=value only, offset <= 8)=20
+  single | AWS-example-shaped key | cases=304 | whole=0 | hidden-gap=0 | loose-gap=11 | part8=1 | raised=0 | any-hit=12 | any-hit without the backslash + line break item=0 | any-hit where the first insert is inside the name (key=value only, offset <= 8)=0
+  single | e-mail address         | cases=224 | whole=0 | hidden-gap=0 | loose-gap=11 | part8=0 | raised=0 | any-hit=11 | any-hit without the backslash + line break item=0 | any-hit where the first insert is inside the name (key=value only, offset <= 8)=0
+  single | key=value secret       | cases=384 | whole=0 | hidden-gap=0 | loose-gap=0 | part8=8 | raised=0 | any-hit=8 | any-hit without the backslash + line break item=0 | any-hit where the first insert is inside the name (key=value only, offset <= 8)=0
+  TOTAL  | cases=2912 | whole=0 | hidden-gap=0 | loose-gap=125 | part8=43 | raised=0 | any-hit=168 | any-hit without the backslash + line break item=0 | any-hit where the first insert is inside the name (key=value only, offset <= 8)=20
+  single cases with a hit, by carrier, item and kind of hit (count of offsets):
+    AWS-example-shaped key | backslash + line break | loose-gap | 11
+    AWS-example-shaped key | backslash + line break | part8 | 1
+    e-mail address | backslash + line break | loose-gap | 11
+    key=value secret | backslash + line break | part8 | 8
+  example [pair, AWS-example-shaped key, loose-gap]: ESC[0m at offset 4 and backslash + line break at offset 7 -> RuntimeError: key <LEAKED 20 chars with 3 other characters between the letters> seen
+  example [pair, AWS-example-shaped key, loose-gap]: U+FE0F at offset 9 and backslash + line break at offset 9 -> RuntimeError: key <LEAKED 20 chars with 3 other characters between the letters> seen
+  example [pair, AWS-example-shaped key, loose-gap]: U+200B at offset 1 and backslash + line break at offset 4 -> RuntimeError: key <LEAKED 20 chars with 3 other characters between the letters> seen
+  example [pair, AWS-example-shaped key, part8]: OSC (ESC ] 0 ; t BEL) at offset 1 and backslash + line break at offset 12 -> RuntimeError: key <APIKEY_2>\\\n<LEAKED part 8 of 20 chars> seen
+  example [pair, AWS-example-shaped key, part8]: U+009B 0 m at offset 7 and backslash + line break at offset 10 -> RuntimeError: key <APIKEY_1>\\\n<LEAKED part 10 of 20 chars> seen
+  example [pair, AWS-example-shaped key, part8]: ESC[0m at offset 2 and backslash + line break at offset 12 -> RuntimeError: key <APIKEY_3>\\\n<LEAKED part 8 of 20 chars> seen
+  example [pair, e-mail address, loose-gap]: OSC (ESC ] 0 ; t BEL) at offset 10 and backslash + line break at offset 12 -> RuntimeError: mail <LEAKED 15 chars with 3 other characters between the letters> seen
+  example [pair, e-mail address, loose-gap]: tab run (3 tabs) at offset 8 and backslash + line break at offset 8 -> RuntimeError: mail <LEAKED 15 chars with 5 other characters between the letters> seen
+  example [pair, e-mail address, loose-gap]: backspace at offset 1 and backslash + line break at offset 10 -> RuntimeError: mail <LEAKED 15 chars with 3 other characters between the letters> seen
+  example [pair, key=value secret, loose-gap]: backslash + line break at offset 1 and backslash + line break at offset 23 -> RuntimeError: p\\\nassword=<LEAKED 16 chars with 2 other characters between the letters>
+  example [pair, key=value secret, loose-gap]: backslash + line break at offset 4 and backslash + line break at offset 11 -> RuntimeError: pass\\\nword=<LEAKED 16 chars with 2 other characters between the letters>
+  example [pair, key=value secret, loose-gap]: backslash + line break at offset 6 and backslash + line break at offset 12 -> RuntimeError: passwo\\\nrd=<LEAKED 16 chars with 2 other characters between the letters>
+  example [pair, key=value secret, part8]: backslash + line break at offset 10 and backslash + line break at offset 11 -> RuntimeError: password=<SECRET_1>\nu\\\n<LEAKED part 14 of 16 chars>
+  example [pair, key=value secret, part8]: tab run (3 tabs) at offset 6 and backslash + line break at offset 11 -> RuntimeError: passwo\t\t\trd=<SECRET_1>\n<LEAKED part 14 of 16 chars>
+  example [pair, key=value secret, part8]: backspace at offset 1 and backslash + line break at offset 14 -> RuntimeError: p\x08assword=<SECRET_1>\n<LEAKED part 11 of 16 chars>
+  example [single, AWS-example-shaped key, loose-gap]: backslash + line break at offset 1 -> RuntimeError: key <LEAKED 20 chars with 2 other characters between the letters> seen
+  example [single, AWS-example-shaped key, loose-gap]: backslash + line break at offset 2 -> RuntimeError: key <LEAKED 20 chars with 2 other characters between the letters> seen
+  example [single, AWS-example-shaped key, loose-gap]: backslash + line break at offset 3 -> RuntimeError: key <LEAKED 20 chars with 2 other characters between the letters> seen
+  example [single, AWS-example-shaped key, part8]: backslash + line break at offset 12 -> RuntimeError: key <APIKEY_1>\\\n<LEAKED part 8 of 20 chars> seen
+  example [single, e-mail address, loose-gap]: backslash + line break at offset 3 -> RuntimeError: mail <LEAKED 15 chars with 2 other characters between the letters> seen
+  example [single, e-mail address, loose-gap]: backslash + line break at offset 4 -> RuntimeError: mail <LEAKED 15 chars with 2 other characters between the letters> seen
+  example [single, e-mail address, loose-gap]: backslash + line break at offset 5 -> RuntimeError: mail <LEAKED 15 chars with 2 other characters between the letters> seen
+  example [single, key=value secret, part8]: backslash + line break at offset 10 -> RuntimeError: password=<SECRET_1>\n<LEAKED part 15 of 16 chars>
+  example [single, key=value secret, part8]: backslash + line break at offset 11 -> RuntimeError: password=<SECRET_1>\n<LEAKED part 14 of 16 chars>
+  example [single, key=value secret, part8]: backslash + line break at offset 12 -> RuntimeError: password=<SECRET_1>\n<LEAKED part 13 of 16 chars>

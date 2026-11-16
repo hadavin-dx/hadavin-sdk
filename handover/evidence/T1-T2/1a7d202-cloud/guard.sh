@@ -1,0 +1,6 @@
+U="uv run --all-extras --group test"
+F="tests/test_pg_dsn_guard.py tests/contracts"
+echo "== 4a CI=true no DSN (HADAVIN_TEST_PG_DSN unset): $F"
+CI=true env -u HADAVIN_TEST_PG_DSN $U pytest -q -p no:cacheprovider -rfEs -m "not live and not perf" $F; echo "guard_ci_nodsn_exit=$?"
+echo "== 4b CI=true with DSN"
+CI=true HADAVIN_TEST_PG_DSN=postgresql://postgres@127.0.0.1:5432/mut $U pytest -q -p no:cacheprovider -rfEs -m "not live and not perf" $F; echo "guard_ci_dsn_exit=$?"

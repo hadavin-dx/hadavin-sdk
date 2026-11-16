@@ -1,0 +1,176 @@
+== (a) run_tick(app, steps=...) ; a new app for every row
+    tick.STEPS names: ['sweep', 'reconcile', 'stuck', 'checkpoint', 'purge_evidence', 'reprobe_sources']
+(a) demo app (build, stage demo), steps=[] -> no exception; returned 0
+    recording step ran: []; steps with a tick state in the store after the call: []
+(a) demo app (build, stage demo), steps=[one recording step] -> no exception; returned 0
+    recording step ran: ['recorded']; steps with a tick state in the store after the call: ['recorded']
+(a) demo app (build, stage demo), steps=tick.STEPS (the module's own list object) -> no exception; returned 0
+    recording step ran: []; steps with a tick state in the store after the call: ['sweep', 'reconcile', 'stuck', 'checkpoint', 'purge_evidence', 'reprobe_sources']
+(a) demo app (build, stage demo), steps=() (empty tuple) -> no exception; returned 0
+    recording step ran: []; steps with a tick state in the store after the call: []
+(a) demo app (build, stage demo), steps=(one recording step,) (tuple) -> no exception; returned 0
+    recording step ran: ['recorded']; steps with a tick state in the store after the call: ['recorded']
+(a) demo app (build, stage demo), steps=generator of one recording step -> no exception; returned 0
+    recording step ran: ['recorded']; steps with a tick state in the store after the call: ['recorded']
+(a) demo app (build, stage demo), steps=None -> no exception; returned 0
+    recording step ran: []; steps with a tick state in the store after the call: ['sweep', 'reconcile', 'stuck', 'checkpoint', 'purge_evidence', 'reprobe_sources']
+(a) demo app (build, stage demo), steps=falsy non-list object (class with __bool__ False, iterates to one recording step) -> no exception; returned 0
+    recording step ran: ['recorded']; steps with a tick state in the store after the call: ['recorded']
+(a) demo app (build, stage demo), steps=0 (extra) -> TypeError: 'int' object is not iterable
+    recording step ran: []; steps with a tick state in the store after the call: []
+(a) demo app (build, stage demo), steps=False (extra) -> TypeError: 'bool' object is not iterable
+    recording step ran: []; steps with a tick state in the store after the call: []
+(a) demo app (build, stage demo), steps='' (extra) -> no exception; returned 0
+    recording step ran: []; steps with a tick state in the store after the call: []
+(a) pilot app (pilot config, planted backends), steps=[] -> ConfigError: steps= is for tests; it is refused in pilot and prod
+    recording step ran: []; steps with a tick state in the store after the call: []
+(a) pilot app (pilot config, planted backends), steps=[one recording step] -> ConfigError: steps= is for tests; it is refused in pilot and prod
+    recording step ran: []; steps with a tick state in the store after the call: []
+(a) pilot app (pilot config, planted backends), steps=tick.STEPS (the module's own list object) -> ConfigError: steps= is for tests; it is refused in pilot and prod
+    recording step ran: []; steps with a tick state in the store after the call: []
+(a) pilot app (pilot config, planted backends), steps=() (empty tuple) -> ConfigError: steps= is for tests; it is refused in pilot and prod
+    recording step ran: []; steps with a tick state in the store after the call: []
+(a) pilot app (pilot config, planted backends), steps=(one recording step,) (tuple) -> ConfigError: steps= is for tests; it is refused in pilot and prod
+    recording step ran: []; steps with a tick state in the store after the call: []
+(a) pilot app (pilot config, planted backends), steps=generator of one recording step -> ConfigError: steps= is for tests; it is refused in pilot and prod
+    recording step ran: []; steps with a tick state in the store after the call: []
+(a) pilot app (pilot config, planted backends), steps=None -> no exception; returned 0
+    recording step ran: []; steps with a tick state in the store after the call: ['sweep', 'reconcile', 'stuck', 'checkpoint', 'purge_evidence', 'reprobe_sources']
+(a) pilot app (pilot config, planted backends), steps=falsy non-list object (class with __bool__ False, iterates to one recording step) -> ConfigError: steps= is for tests; it is refused in pilot and prod
+    recording step ran: []; steps with a tick state in the store after the call: []
+(a) pilot app (pilot config, planted backends), steps=0 (extra) -> ConfigError: steps= is for tests; it is refused in pilot and prod
+    recording step ran: []; steps with a tick state in the store after the call: []
+(a) pilot app (pilot config, planted backends), steps=False (extra) -> ConfigError: steps= is for tests; it is refused in pilot and prod
+    recording step ran: []; steps with a tick state in the store after the call: []
+(a) pilot app (pilot config, planted backends), steps='' (extra) -> ConfigError: steps= is for tests; it is refused in pilot and prod
+    recording step ran: []; steps with a tick state in the store after the call: []
+(a) prod app (pilot config copied with stage prod, planted backends), steps=[] -> ConfigError: steps= is for tests; it is refused in pilot and prod
+    recording step ran: []; steps with a tick state in the store after the call: []
+(a) prod app (pilot config copied with stage prod, planted backends), steps=[one recording step] -> ConfigError: steps= is for tests; it is refused in pilot and prod
+    recording step ran: []; steps with a tick state in the store after the call: []
+(a) prod app (pilot config copied with stage prod, planted backends), steps=tick.STEPS (the module's own list object) -> ConfigError: steps= is for tests; it is refused in pilot and prod
+    recording step ran: []; steps with a tick state in the store after the call: []
+(a) prod app (pilot config copied with stage prod, planted backends), steps=() (empty tuple) -> ConfigError: steps= is for tests; it is refused in pilot and prod
+    recording step ran: []; steps with a tick state in the store after the call: []
+(a) prod app (pilot config copied with stage prod, planted backends), steps=(one recording step,) (tuple) -> ConfigError: steps= is for tests; it is refused in pilot and prod
+    recording step ran: []; steps with a tick state in the store after the call: []
+(a) prod app (pilot config copied with stage prod, planted backends), steps=generator of one recording step -> ConfigError: steps= is for tests; it is refused in pilot and prod
+    recording step ran: []; steps with a tick state in the store after the call: []
+(a) prod app (pilot config copied with stage prod, planted backends), steps=None -> no exception; returned 0
+    recording step ran: []; steps with a tick state in the store after the call: ['sweep', 'reconcile', 'stuck', 'checkpoint', 'purge_evidence', 'reprobe_sources']
+(a) prod app (pilot config copied with stage prod, planted backends), steps=falsy non-list object (class with __bool__ False, iterates to one recording step) -> ConfigError: steps= is for tests; it is refused in pilot and prod
+    recording step ran: []; steps with a tick state in the store after the call: []
+(a) prod app (pilot config copied with stage prod, planted backends), steps=0 (extra) -> ConfigError: steps= is for tests; it is refused in pilot and prod
+    recording step ran: []; steps with a tick state in the store after the call: []
+(a) prod app (pilot config copied with stage prod, planted backends), steps=False (extra) -> ConfigError: steps= is for tests; it is refused in pilot and prod
+    recording step ran: []; steps with a tick state in the store after the call: []
+(a) prod app (pilot config copied with stage prod, planted backends), steps='' (extra) -> ConfigError: steps= is for tests; it is refused in pilot and prod
+    recording step ran: []; steps with a tick state in the store after the call: []
+(a) extra: pilot the way the run_tick tests build it (_demo_app_at: demo app, config copied with stage pilot), steps=[] -> ConfigError: steps= is for tests; it is refused in pilot and prod
+    recording step ran: []; steps with a tick state in the store after the call: []
+(a) extra: pilot the way the run_tick tests build it (_demo_app_at: demo app, config copied with stage pilot), steps=[one recording step] -> ConfigError: steps= is for tests; it is refused in pilot and prod
+    recording step ran: []; steps with a tick state in the store after the call: []
+(a) extra: pilot the way the run_tick tests build it (_demo_app_at: demo app, config copied with stage pilot), steps=tick.STEPS (the module's own list object) -> ConfigError: steps= is for tests; it is refused in pilot and prod
+    recording step ran: []; steps with a tick state in the store after the call: []
+(a) extra: pilot the way the run_tick tests build it (_demo_app_at: demo app, config copied with stage pilot), steps=() (empty tuple) -> ConfigError: steps= is for tests; it is refused in pilot and prod
+    recording step ran: []; steps with a tick state in the store after the call: []
+(a) extra: pilot the way the run_tick tests build it (_demo_app_at: demo app, config copied with stage pilot), steps=(one recording step,) (tuple) -> ConfigError: steps= is for tests; it is refused in pilot and prod
+    recording step ran: []; steps with a tick state in the store after the call: []
+(a) extra: pilot the way the run_tick tests build it (_demo_app_at: demo app, config copied with stage pilot), steps=generator of one recording step -> ConfigError: steps= is for tests; it is refused in pilot and prod
+    recording step ran: []; steps with a tick state in the store after the call: []
+(a) extra: pilot the way the run_tick tests build it (_demo_app_at: demo app, config copied with stage pilot), steps=None -> no exception; returned 0
+    recording step ran: []; steps with a tick state in the store after the call: ['sweep', 'reconcile', 'stuck', 'checkpoint', 'purge_evidence', 'reprobe_sources']
+(a) extra: pilot the way the run_tick tests build it (_demo_app_at: demo app, config copied with stage pilot), steps=falsy non-list object (class with __bool__ False, iterates to one recording step) -> ConfigError: steps= is for tests; it is refused in pilot and prod
+    recording step ran: []; steps with a tick state in the store after the call: []
+(a) extra: pilot the way the run_tick tests build it (_demo_app_at: demo app, config copied with stage pilot), steps=0 (extra) -> ConfigError: steps= is for tests; it is refused in pilot and prod
+    recording step ran: []; steps with a tick state in the store after the call: []
+(a) extra: pilot the way the run_tick tests build it (_demo_app_at: demo app, config copied with stage pilot), steps=False (extra) -> ConfigError: steps= is for tests; it is refused in pilot and prod
+    recording step ran: []; steps with a tick state in the store after the call: []
+(a) extra: pilot the way the run_tick tests build it (_demo_app_at: demo app, config copied with stage pilot), steps='' (extra) -> ConfigError: steps= is for tests; it is refused in pilot and prod
+    recording step ran: []; steps with a tick state in the store after the call: []
+== (b) run_tick(app, now=X, steps=Y), both given, pilot app (planted backends)
+(b) pilot, now=future (today + 500 days), steps=[] -> ConfigError: now= is for tests; it is refused in pilot and prod
+    recording step ran: []; steps with a tick state in the store after the call: []
+(b) pilot, now=future, steps=[one recording step] -> ConfigError: now= is for tests; it is refused in pilot and prod
+    recording step ran: []; steps with a tick state in the store after the call: []
+(b) pilot, now=datetime(2020,1,1,UTC), steps=tick.STEPS -> ConfigError: now= is for tests; it is refused in pilot and prod
+    recording step ran: []; steps with a tick state in the store after the call: []
+(b) pilot, now=None, steps=[] (reference: only steps given) -> ConfigError: steps= is for tests; it is refused in pilot and prod
+    recording step ran: []; steps with a tick state in the store after the call: []
+(b) pilot, now=future, steps=None (reference: only now given) -> ConfigError: now= is for tests; it is refused in pilot and prod
+    recording step ran: []; steps with a tick state in the store after the call: []
+== (c) tick.purge_evidence(tick.TickContext(app, <time>)) called by hand on a pilot app (planted backends)
+       rows planted by the runner in the app's own in-memory store (made-up run ids ev-run-*):
+       tool calls created today, 10 days ago, 100 days ago; one redaction map per run id (put today)
+    [pilot] app.config.environment='pilot'; app.store=MemoryStore; app.purge_store=MemoryStore; same object as app.store: False; retention=Retention(tool_calls_days=30, redaction_maps_days=30, hold_labelled=True, held_maps_max_days=400, held_tool_calls_max_days=400, purge_every_s=86400)
+    before: tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; redaction maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(c) pilot app, purge_evidence(TickContext(app, time = today + 500 days)) -> no exception; returned None
+    after:  tool calls left: []; redaction maps left: []
+    [prod] app.config.environment='prod'; app.store=MemoryStore; app.purge_store=MemoryStore; same object as app.store: False; retention=Retention(tool_calls_days=30, redaction_maps_days=30, hold_labelled=True, held_maps_max_days=400, held_tool_calls_max_days=400, purge_every_s=86400)
+    before: tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; redaction maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(c) prod app, purge_evidence(TickContext(app, time = today + 500 days)) -> no exception; returned None
+    after:  tool calls left: []; redaction maps left: []
+    [pilot] app.config.environment='pilot'; app.store=MemoryStore; app.purge_store=MemoryStore; same object as app.store: False; retention=Retention(tool_calls_days=30, redaction_maps_days=30, hold_labelled=True, held_maps_max_days=400, held_tool_calls_max_days=400, purge_every_s=86400)
+    before: tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; redaction maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(c) pilot app, purge_evidence(TickContext(app, time = today + 31 days)) -> no exception; returned None
+    after:  tool calls left: []; redaction maps left: []
+    [prod] app.config.environment='prod'; app.store=MemoryStore; app.purge_store=MemoryStore; same object as app.store: False; retention=Retention(tool_calls_days=30, redaction_maps_days=30, hold_labelled=True, held_maps_max_days=400, held_tool_calls_max_days=400, purge_every_s=86400)
+    before: tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; redaction maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(c) prod app, purge_evidence(TickContext(app, time = today + 31 days)) -> no exception; returned None
+    after:  tool calls left: []; redaction maps left: []
+    [pilot] app.config.environment='pilot'; app.store=MemoryStore; app.purge_store=MemoryStore; same object as app.store: False; retention=Retention(tool_calls_days=30, redaction_maps_days=30, hold_labelled=True, held_maps_max_days=400, held_tool_calls_max_days=400, purge_every_s=86400)
+    before: tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; redaction maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(c) pilot app, purge_evidence(TickContext(app, time = today (reference))) -> no exception; returned None
+    after:  tool calls left: ['ev-run-today', 'ev-run-10d']; redaction maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+    [prod] app.config.environment='prod'; app.store=MemoryStore; app.purge_store=MemoryStore; same object as app.store: False; retention=Retention(tool_calls_days=30, redaction_maps_days=30, hold_labelled=True, held_maps_max_days=400, held_tool_calls_max_days=400, purge_every_s=86400)
+    before: tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; redaction maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(c) prod app, purge_evidence(TickContext(app, time = today (reference))) -> no exception; returned None
+    after:  tool calls left: ['ev-run-today', 'ev-run-10d']; redaction maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(c-reference) pilot app, run_tick(app, now=today + 500 days) -> ConfigError: now= is for tests; it is refused in pilot and prod
+    after:  tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; redaction maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+== (d1) build(..., timeout_s=x) in demo
+(d1) demo build timeout_s=0 -> ConfigError: timeout_s= must be an int or float between 0 (not included) and 3600
+(d1) demo build timeout_s=-1 -> ConfigError: timeout_s= must be an int or float between 0 (not included) and 3600
+(d1) demo build timeout_s=True -> ConfigError: timeout_s= must be an int or float between 0 (not included) and 3600
+(d1) demo build timeout_s=1e-9 -> no exception; returned App(environment='demo', executor=Executor, executor.timeout_s=1e-09 (type float))
+(d1) demo build timeout_s=5e-324 -> no exception; returned App(environment='demo', executor=Executor, executor.timeout_s=5e-324 (type float))
+(d1) demo build timeout_s=0.5 -> no exception; returned App(environment='demo', executor=Executor, executor.timeout_s=0.5 (type float))
+(d1) demo build timeout_s=3600 -> no exception; returned App(environment='demo', executor=Executor, executor.timeout_s=3600 (type int))
+(d1) demo build timeout_s=3600.0000001 -> ConfigError: timeout_s= must be an int or float between 0 (not included) and 3600
+(d1) demo build timeout_s=3601 -> ConfigError: timeout_s= must be an int or float between 0 (not included) and 3600
+(d1) demo build timeout_s=10**400 -> ConfigError: timeout_s= must be an int or float between 0 (not included) and 3600
+(d1) demo build timeout_s=float('inf') -> ConfigError: timeout_s= must be an int or float between 0 (not included) and 3600
+(d1) demo build timeout_s=float('nan') -> ConfigError: timeout_s= must be an int or float between 0 (not included) and 3600
+(d1) demo build timeout_s=Decimal('2.5') -> ConfigError: timeout_s= must be an int or float between 0 (not included) and 3600
+(d1) demo build timeout_s=Fraction(5, 2) -> ConfigError: timeout_s= must be an int or float between 0 (not included) and 3600
+(d1) demo build timeout_s='5' -> ConfigError: timeout_s= must be an int or float between 0 (not included) and 3600
+(d1-reference) demo build, timeout_s not passed -> no exception; returned App(environment='demo', executor=Executor, executor.timeout_s=10.0 (type float))
+== (d2) the same values written as `executor_timeout_s: <text>` in a demo config.yaml (one line appended by the
+       runner to the fixture copy; YAML has no Decimal or Fraction, so those two are written as the plain texts shown);
+       then load_config, then build with no timeout_s keyword
+(d2) python value 0; yaml text `executor_timeout_s: 0`; load_config -> ConfigError: 1 validation error for Config\nexecutor_timeout_s\n  Input should be greater than 0 [type=greater_than]\n    For further information visit https://errors.pydantic.dev/2.14/v/greater_than
+(d2) python value -1; yaml text `executor_timeout_s: -1`; load_config -> ConfigError: 1 validation error for Config\nexecutor_timeout_s\n  Input should be greater than 0 [type=greater_than]\n    For further information visit https://errors.pydantic.dev/2.14/v/greater_than
+(d2) python value True; yaml text `executor_timeout_s: true`; load_config -> no exception; returned executor_timeout_s=1.0 (type float)
+     then build(demo, no timeout_s keyword) -> no exception; returned App(environment='demo', executor=Executor, executor.timeout_s=1.0 (type float))
+(d2) python value 1e-9; yaml text `executor_timeout_s: 1.0e-9`; load_config -> no exception; returned executor_timeout_s=1e-09 (type float)
+     then build(demo, no timeout_s keyword) -> no exception; returned App(environment='demo', executor=Executor, executor.timeout_s=1e-09 (type float))
+(d2) python value 5e-324; yaml text `executor_timeout_s: 5.0e-324`; load_config -> no exception; returned executor_timeout_s=5e-324 (type float)
+     then build(demo, no timeout_s keyword) -> no exception; returned App(environment='demo', executor=Executor, executor.timeout_s=5e-324 (type float))
+(d2) python value 0.5; yaml text `executor_timeout_s: 0.5`; load_config -> no exception; returned executor_timeout_s=0.5 (type float)
+     then build(demo, no timeout_s keyword) -> no exception; returned App(environment='demo', executor=Executor, executor.timeout_s=0.5 (type float))
+(d2) python value 3600; yaml text `executor_timeout_s: 3600`; load_config -> no exception; returned executor_timeout_s=3600.0 (type float)
+     then build(demo, no timeout_s keyword) -> no exception; returned App(environment='demo', executor=Executor, executor.timeout_s=3600.0 (type float))
+(d2) python value 3600.0000001; yaml text `executor_timeout_s: 3600.0000001`; load_config -> no exception; returned executor_timeout_s=3600.0000001 (type float)
+     then build(demo, no timeout_s keyword) -> no exception; returned App(environment='demo', executor=Executor, executor.timeout_s=3600.0000001 (type float))
+(d2) python value 3601; yaml text `executor_timeout_s: 3601`; load_config -> no exception; returned executor_timeout_s=3601.0 (type float)
+     then build(demo, no timeout_s keyword) -> no exception; returned App(environment='demo', executor=Executor, executor.timeout_s=3601.0 (type float))
+(d2) python value 10**400; yaml text `executor_timeout_s: 1 followed by 400 zeros`; load_config -> ConfigError: 1 validation error for Config\nexecutor_timeout_s\n  Input should be a valid number [type=float_type]\n    For further information visit https://errors.pydantic.dev/2.14/v/float_type
+(d2) python value float('inf'); yaml text `executor_timeout_s: .inf`; load_config -> no exception; returned executor_timeout_s=inf (type float)
+     then build(demo, no timeout_s keyword) -> no exception; returned App(environment='demo', executor=Executor, executor.timeout_s=inf (type float))
+(d2) python value float('nan'); yaml text `executor_timeout_s: .nan`; load_config -> ConfigError: 1 validation error for Config\nexecutor_timeout_s\n  Input should be greater than 0 [type=greater_than]\n    For further information visit https://errors.pydantic.dev/2.14/v/greater_than
+(d2) python value Decimal('2.5'); yaml text `executor_timeout_s: 2.5`; load_config -> no exception; returned executor_timeout_s=2.5 (type float)
+     then build(demo, no timeout_s keyword) -> no exception; returned App(environment='demo', executor=Executor, executor.timeout_s=2.5 (type float))
+(d2) python value Fraction(5, 2); yaml text `executor_timeout_s: 5/2`; load_config -> ConfigError: 1 validation error for Config\nexecutor_timeout_s\n  Input should be a valid number, unable to parse string as a number [type=float_parsing]\n    For further information visit https://errors.pydantic.dev/2.14/v/float_parsing
+(d2) python value '5'; yaml text `executor_timeout_s: '5'`; load_config -> no exception; returned executor_timeout_s=5.0 (type float)
+     then build(demo, no timeout_s keyword) -> no exception; returned App(environment='demo', executor=Executor, executor.timeout_s=5.0 (type float))
+== end of probes

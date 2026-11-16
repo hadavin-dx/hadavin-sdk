@@ -1,0 +1,1 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="1" failures="0" skipped="0" tests="1" time="0.194" timestamp="2026-11-13T05:48:37.178705+00:00" hostname="vm"><testcase classname="" name="tests.test_changelog_claims" time="0.000"><error message="collection failure">E   StopIteration</error></testcase></testsuite></testsuites>

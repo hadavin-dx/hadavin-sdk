@@ -1,0 +1,9 @@
+# PR84 round 2 codebase-details review, head 5a78d59 (snapshot only, nothing run)
+Verdict: 0 Blocker, 2 Major, nits.
+## Major
+- M-A: extra runner tests/stage_mutants.py gets step name `stage-mutants` = built-in step name; cmd_run opens log with "w" (first log overwritten), cmd_report last-wins, so a failing built-in can read green. Fix: refuse duplicate NAME in cmd_run / check_mutants, or report fails on repeated row. (evidence.yml:168-178, evidence_step.py:117-155)
+- M-B: Vault token passed as HADAVIN_TEST_VAULT_TOKEN (evidence.yml:95-96,139); reader exists in on-disk tests/contracts/kinds/secrets_neutral.py:45 but not confirmed at tested ref; workflow does not say tested ref must contain the reader. Add header note + check.
+## Nits (all to fix in same batch, minors not re-reviewed)
+1 upload-artifact@cf430e0 pin/inputs unchecked. 2 header says "same test command as CI" but flags differ (-rfEs vs -rs): say "same test selection". 4 test_the_old_pattern_lost_the_exit_code_under_bash_e tests a literal string (say so/drop from guard count); docstring claims every step has a timeout but only run: steps checked; docstring item 9 does not name the two stage words, bare `dev` not caught. 5 fresh full-suite log at 5a78d59 needed; scanner in test_stage_names may flag the literal staging in line 91/134. 6 check_pythons huge digit string ValueError (exit 1 not 2), 3.99/3.012 pass allowlist; long runner name -> NOT RUN; timed-out step reported NOT RUN (wording); report omits skipped counts; PYTHONUNBUFFERED=1; raw logs unmasked (low risk). 7 concurrency comment wording ("one waiting run is kept"); unused env SHA; rejected-ref message should say pull/N/head unsupported.
+## NOT CHECKED by reviewer
+upload-artifact pin, old text vs guard tests, fresh run, test_stage_names scanner, mutation_runner_mutants.py existence, .evidence-tools nested checkout effects.

@@ -1,0 +1,13 @@
+### tests/test_migration_wiring.py::test_the_hold_connection_is_given_the_password_of_the_connection rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_______ test_the_hold_connection_is_given_the_password_of_the_connection _______
+tests/test_migration_wiring.py:1552: in test_the_hold_connection_is_given_the_password_of_the_connection
+    assert f"password={made_up}" in holds[0].server, holds[0].server
+E   AssertionError: dbname=made_up host=made-up-host port=5999 application_name=hadavin_test_migrator_0d96ab45
+E   assert 'password=pw-made-up' in 'dbname=made_up host=made-up-host port=5999 application_name=hadavin_test_migrator_0d96ab45'
+E    +  where 'dbname=made_up host=made-up-host port=5999 application_name=hadavin_test_migrator_0d96ab45' = <tests.test_migration_wiring._Hold object at 0x7fa2ef061940>.server
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_the_hold_connection_is_given_the_password_of_the_connection
+1 failed in 0.43s
+

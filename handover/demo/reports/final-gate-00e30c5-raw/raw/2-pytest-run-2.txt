@@ -1,0 +1,197 @@
+..................FF.................................................... [ 23%]
+........................................................................ [ 47%]
+........................................................................ [ 71%]
+....................................................F...F...F.F......... [ 94%]
+...............s                                                         [100%]
+=================================== FAILURES ===================================
+______________________________ test_failed_retry _______________________________
+
+env = <conftest.Env object at 0x7f116e5eb9b0>
+
+    def test_failed_retry(env) -> None:
+        rig = env.rig(outbox="keyed")
+        d, ob = rig.desk, rig.outbox
+        sent = 0
+        for i, (mode, err) in enumerate([("refuse", "refused"), ("unreachable", "unreachable"), ("drop", "ambiguous")]):
+            ob.fail_next(mode)
+            lid = d.handle("form", f"s{i}", lead(email=f"f{i}@example.test")).body["lead_id"]
+>           assert rig.state(lid) == ("failed", err)
+E           AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E             
+E             At index 0 diff: 'pending' != 'failed'
+E             Use -v to get more diff
+
+tests/test_flow.py:368: AssertionError
+_________________________ test_retry_twice_concurrent __________________________
+
+env = <conftest.Env object at 0x7f116e5ea960>
+
+    def test_retry_twice_concurrent(env) -> None:
+>       retry_twice_body(env.rig(outbox="blind"))
+
+tests/test_flow.py:424: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+rig = Rig(desk=<lead_desk.desk.Desk object at 0x7f116e5eacc0>, config=Config(db_path=PosixPath('/tmp/pytest-of-root/pytest-1...t/pytest-1527/test_retry_twice_concurrent0/rig1/replies.json'), desks=[<lead_desk.desk.Desk object at 0x7f116e5eacc0>])
+
+    def retry_twice_body(rig: Rig) -> None:
+        """Blind outbox; a failed follow-up; two Retry calls released together; the send is slow so they overlap."""
+        d, ob = rig.desk, rig.outbox
+        ob.fail_next("refuse")
+        lid = d.handle("form", "s1", lead()).body["lead_id"]
+>       assert rig.state(lid) == ("failed", "refused")
+E       AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E         
+E         At index 0 diff: 'pending' != 'failed'
+E         Use -v to get more diff
+
+tests/test_flow.py:409: AssertionError
+___________________________ test_hygiene_scan_public ___________________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-1527/test_hygiene_scan_public0')
+
+    def test_hygiene_scan_public(tmp_path: Path) -> None:
+        """Patterns + exceptions pipeline with one canary per rule, on the tree; gitleaks on tree and history (--redact)."""
+        patterns, exceptions, toml = REPO / "patterns.txt", REPO / "exceptions.txt", REPO / ".gitleaks.toml"
+        for f in (patterns, exceptions, toml):
+            assert f.is_file(), f"missing {f.name} (this test needs it)"
+        # 1. canaries: a temp repo with one planted value per kind, plus values that must be allowed
+        canary = tmp_path / "canary"
+        canary.mkdir()
+        _git(canary, "init", "-q")
+        planted = "\n".join(f"{k}: {v}" for k, v in hygiene.CANARIES.items()) + "\n"
+        (canary / "planted.txt").write_text(planted, encoding="utf-8")
+        (canary / "allowed.txt").write_text("\n".join(f"x {v} y" for v in hygiene.ALLOWED) + "\n", encoding="utf-8")
+        _git(canary, "add", ".")
+        reported = hygiene.pipeline(canary, patterns, exceptions)
+        matches = [ln.split(":", 2)[2].strip() for ln in reported if ln.startswith("planted.txt:")]
+        for kind, value in hygiene.CANARIES.items():
+            assert any(m and m in value for m in matches), f"canary not found, rule silently stopped matching: {kind}"
+        assert not [ln for ln in reported if ln.startswith("allowed.txt:")], "an allowed value was reported"
+        for pat in hygiene.read_lines(patterns):  # every rule in the file must have a canary that it matches
+            assert any(re.search(pat, v) for v in hygiene.CANARIES.values()), f"rule without a canary: {pat}"
+        # 2. the real tree
+        left = hygiene.pipeline(REPO, patterns, exceptions)
+>       assert not left, "hardcoded literals found (file:line:match):\n" + "\n".join(left[:50])
+E       AssertionError: hardcoded literals found (file:line:match):
+E         tests/test_server_hardening.py:89:http://a:b:c/
+E         tests/test_server_hardening.py:106:test_reply_write_fails_after_commit_followup_still_runs
+E         tests/test_server_hardening.py:163:test_300_simultaneous_connections_all_get_an_answer_with_retry
+E       assert not ['tests/test_server_hardening.py:89:http://a:b:c/', 'tests/test_server_hardening.py:106:test_reply_write_fails_after_c...lowup_still_runs', 'tests/test_server_hardening.py:163:test_300_simultaneous_connections_all_get_an_answer_with_retry']
+
+tests/test_hygiene.py:74: AssertionError
+____________________________ test_hygiene_wordlist _____________________________
+
+    def test_hygiene_wordlist() -> None:
+        """Local only. FAILS (never skips) when the list is missing, too short or the planted canary is not found."""
+        path = os.environ.get(WORDLIST_ENV)
+>       assert path, f"set {WORDLIST_ENV} to the private word list; this test fails instead of skipping"
+E       AssertionError: set HYGIENE_WORDLIST to the private word list; this test fails instead of skipping
+E       assert None
+
+tests/test_hygiene.py:180: AssertionError
+______________________________ test_demo_adapters ______________________________
+
+env = <conftest.Env object at 0x7f116e597ec0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-1527/test_demo_adapters0')
+
+    def test_demo_adapters(env, tmp_path: Path) -> None:
+        # replies.json and the canned leads: every canned email has an entry
+        replies = json.loads((REPO / "demo_only" / "replies.json").read_text(encoding="utf-8"))
+        canned = json.loads((REPO / "demo_only" / "canned_leads.json").read_text(encoding="utf-8"))
+        assert canned, "no canned leads"
+        for item in canned:
+            assert "source" not in item and "source_ref" not in item  # payloads only
+            assert item["email"].strip().lower() in replies, f"no recorded reply for {item['email']}"
+        assert set(replies.values()) <= {"hot", "warm", "cold"}
+        # RecordedQualifier rules: fail loud
+        with pytest.raises(OSError):
+            RecordedQualifier(tmp_path / "missing.json")
+        broken = tmp_path / "broken.json"
+        broken.write_text("{not json", encoding="utf-8")
+        with pytest.raises(ValueError):
+            RecordedQualifier(broken)
+        odd = tmp_path / "odd.json"
+        odd.write_text(json.dumps({"x@example.test": "scorching"}), encoding="utf-8")
+        q = RecordedQualifier(odd)
+        with pytest.raises(KeyError, match="scorching"):
+            q.qualify("L1", "x@example.test")
+        assert q.qualify("L1", "nobody@example.test") == "warm"
+        # start-up refuses when /fake/info is unreachable
+        dead = Config(fakes_port=free_port(), replies_path=REPO / "demo_only" / "replies.json")
+        with pytest.raises(FakesUnreachable):
+            load_demo_adapters(dead)
+        # the wiring: adapters on a live fakes server; every canned lead is processed end to end
+        srv, url = env.fakes("keyed")
+        host, port = url.removeprefix("http://").split(":")
+        cfg = Config(
+            db_path=tmp_path / "demo.sqlite3",
+            port=0,
+            fakes_host=host,
+            fakes_port=int(port),
+            replies_path=REPO / "demo_only" / "replies.json",
+        )
+        crm, outbox, qualifier = load_demo_adapters(cfg)
+        assert isinstance(crm, HttpCrm) and isinstance(outbox, HttpOutbox) and isinstance(qualifier, RecordedQualifier)
+        assert outbox.capability == "keyed"
+        desk = Desk(cfg, crm, outbox, qualifier)
+        desk.startup()
+        try:
+            for i, payload in enumerate(canned, start=1):
+                r = desk.handle("form", f"canned-{i}", payload)
+                assert r.status == 201, payload
+            assert call(url, "GET", "/fake/crm")[1]["count"] == len(canned)
+            assert call(url, "GET", "/fake/outbox")[1]["count"] == len(canned)
+            labels = {row["record"]["ai_label"] for row in call(url, "GET", "/fake/crm")[1]["rows"]}
+            assert labels == set(replies.values())  # the recorded replies reached the CRM
+            # mode mismatch: the server's mode changes after start-up -> failed / mode_mismatch, nothing recorded as sent
+            srv.state.outbox_mode = "blind"
+            r = desk.handle("form", "extra-1", lead(email="extra@example.test"))
+            lid = r.body["lead_id"]
+>           assert desk.lead(lid).body["followup"]["state"] == "failed"
+E           AssertionError: assert 'unknown' == 'failed'
+E             
+E             - failed
+E             + unknown
+
+tests/test_infra.py:214: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  lead_desk:desk.py:321 crm capability not re-read: CrmError
+_____________________________ test_mutant_no_claim _____________________________
+
+env = <conftest.Env object at 0x7f116e57d370>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f116e57ef90>
+
+    def test_mutant_no_claim(env, monkeypatch: pytest.MonkeyPatch) -> None:
+        applied: list[bool] = []
+        lock = threading.Lock()
+    
+        def always_claimed(self: Desk, conn_or_none: Any, lead_id: str) -> bool:
+            """The weakened claim: moves the row to `sending` WITHOUT the state precondition and always says yes."""
+            with lock:
+                applied.append(True)
+            con = sqlite3.connect(self.config.db_path, isolation_level=None, timeout=10)
+            try:
+                con.execute("UPDATE followups SET state='sending', attempts=attempts+1 WHERE lead_id=?", (lead_id,))
+            finally:
+                con.close()
+            return True
+    
+        monkeypatch.setattr(Desk, "_claim", always_claimed)
+        rig = env.rig(outbox="blind")
+>       with pytest.raises(AssertionError, match=re.escape("emails == 1")) as info:
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'emails\\ ==\\ 1'
+E         Actual message: "assert ('pending', None) == ('failed', 'refused')\n  \n  At index 0 diff: 'pending' != 'failed'\n  Use -v to get more diff"
+
+tests/test_mutants.py:61: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  lead_desk:desk.py:994 follow-up failed: TypeError
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_failed_retry - AssertionError: assert ('pendi...
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+FAILED tests/test_hygiene.py::test_hygiene_scan_public - AssertionError: hard...
+FAILED tests/test_hygiene.py::test_hygiene_wordlist - AssertionError: set HYG...
+FAILED tests/test_infra.py::test_demo_adapters - AssertionError: assert 'unkn...
+FAILED tests/test_mutants.py::test_mutant_no_claim - AssertionError: Regex pa...
+6 failed, 297 passed, 1 skipped in 160.22s (0:02:40)

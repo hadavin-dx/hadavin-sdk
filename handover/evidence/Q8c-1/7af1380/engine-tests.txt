@@ -1,0 +1,52 @@
+### tests/test_policy_engine.py -v -rs, no Vault address, HADAVIN_REQUIRE_VAULT_ENGINE not set (exit code 0)
+tests/test_policy_engine.py::test_the_engine_tests_run_skip_or_fail_by_the_environment PASSED [  7%]
+tests/test_policy_engine.py::test_ci_requires_the_engine_tests_in_both_jobs_that_have_a_vault_service PASSED [ 15%]
+tests/test_policy_engine.py::test_vault_secrets_the_allowed_read_works_with_only_the_generated_policy SKIPPED [ 23%]
+tests/test_policy_engine.py::test_vault_secrets_the_read_is_refused_when_its_grant_is_removed SKIPPED [ 30%]
+tests/test_policy_engine.py::test_vault_secrets_the_never_list_requests_are_refused_and_the_admin_control_is_not SKIPPED [ 38%]
+tests/test_policy_engine.py::test_plant_a_vault_policy_widened_to_the_whole_mount_fails_the_refusal_check SKIPPED [ 46%]
+tests/test_policy_engine.py::test_plant_the_admin_token_in_place_of_the_runtime_token_fails_the_refusal_check SKIPPED [ 53%]
+tests/test_policy_engine.py::test_vault_transit_signing_and_the_public_key_work_with_only_the_generated_policy SKIPPED [ 61%]
+tests/test_policy_engine.py::test_vault_transit_a_request_is_refused_when_its_grant_is_removed[R18] SKIPPED [ 69%]
+tests/test_policy_engine.py::test_vault_transit_a_request_is_refused_when_its_grant_is_removed[R19] SKIPPED [ 76%]
+tests/test_policy_engine.py::test_vault_transit_the_never_list_requests_are_refused_and_the_admin_control_is_not SKIPPED [ 84%]
+tests/test_policy_engine.py::test_plant_a_transit_policy_widened_to_every_key_fails_the_refusal_check SKIPPED [ 92%]
+tests/test_policy_engine.py::test_plant_the_admin_token_in_place_of_the_transit_runtime_token_fails_the_refusal_check SKIPPED [100%]
+SKIPPED [1] tests/test_policy_engine.py:211: needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, so a refusal there would show nothing. CI runs these against its Vault service and requires them.
+SKIPPED [1] tests/test_policy_engine.py:217: needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, so a refusal there would show nothing. CI runs these against its Vault service and requires them.
+SKIPPED [1] tests/test_policy_engine.py:225: needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, so a refusal there would show nothing. CI runs these against its Vault service and requires them.
+SKIPPED [1] tests/test_policy_engine.py:239: needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, so a refusal there would show nothing. CI runs these against its Vault service and requires them.
+SKIPPED [1] tests/test_policy_engine.py:251: needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, so a refusal there would show nothing. CI runs these against its Vault service and requires them.
+SKIPPED [1] tests/test_policy_engine.py:307: needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, so a refusal there would show nothing. CI runs these against its Vault service and requires them.
+SKIPPED [2] tests/test_policy_engine.py:320: needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, so a refusal there would show nothing. CI runs these against its Vault service and requires them.
+SKIPPED [1] tests/test_policy_engine.py:335: needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, so a refusal there would show nothing. CI runs these against its Vault service and requires them.
+SKIPPED [1] tests/test_policy_engine.py:347: needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, so a refusal there would show nothing. CI runs these against its Vault service and requires them.
+SKIPPED [1] tests/test_policy_engine.py:359: needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, so a refusal there would show nothing. CI runs these against its Vault service and requires them.
+======================== 2 passed, 11 skipped in 2.12s =========================
+
+### the same with HADAVIN_REQUIRE_VAULT_ENGINE=1 and no address (exit code 1)
+tests/test_policy_engine.py::test_the_engine_tests_run_skip_or_fail_by_the_environment PASSED [  7%]
+tests/test_policy_engine.py::test_ci_requires_the_engine_tests_in_both_jobs_that_have_a_vault_service PASSED [ 15%]
+tests/test_policy_engine.py::test_vault_secrets_the_allowed_read_works_with_only_the_generated_policy ERROR [ 23%]
+tests/test_policy_engine.py::test_vault_secrets_the_read_is_refused_when_its_grant_is_removed ERROR [ 30%]
+tests/test_policy_engine.py::test_vault_secrets_the_never_list_requests_are_refused_and_the_admin_control_is_not ERROR [ 38%]
+tests/test_policy_engine.py::test_plant_a_vault_policy_widened_to_the_whole_mount_fails_the_refusal_check ERROR [ 46%]
+tests/test_policy_engine.py::test_plant_the_admin_token_in_place_of_the_runtime_token_fails_the_refusal_check ERROR [ 53%]
+tests/test_policy_engine.py::test_vault_transit_signing_and_the_public_key_work_with_only_the_generated_policy ERROR [ 61%]
+tests/test_policy_engine.py::test_vault_transit_a_request_is_refused_when_its_grant_is_removed[R18] ERROR [ 69%]
+tests/test_policy_engine.py::test_vault_transit_a_request_is_refused_when_its_grant_is_removed[R19] ERROR [ 76%]
+tests/test_policy_engine.py::test_vault_transit_the_never_list_requests_are_refused_and_the_admin_control_is_not ERROR [ 84%]
+tests/test_policy_engine.py::test_plant_a_transit_policy_widened_to_every_key_fails_the_refusal_check ERROR [ 92%]
+tests/test_policy_engine.py::test_plant_the_admin_token_in_place_of_the_transit_runtime_token_fails_the_refusal_check ERROR [100%]
+E           Failed: HADAVIN_REQUIRE_VAULT_ENGINE=1 but HADAVIN_TEST_VAULT_ADDR is not set: the Vault engine tests must run here
+E           Failed: HADAVIN_REQUIRE_VAULT_ENGINE=1 but HADAVIN_TEST_VAULT_ADDR is not set: the Vault engine tests must run here
+E           Failed: HADAVIN_REQUIRE_VAULT_ENGINE=1 but HADAVIN_TEST_VAULT_ADDR is not set: the Vault engine tests must run here
+E           Failed: HADAVIN_REQUIRE_VAULT_ENGINE=1 but HADAVIN_TEST_VAULT_ADDR is not set: the Vault engine tests must run here
+E           Failed: HADAVIN_REQUIRE_VAULT_ENGINE=1 but HADAVIN_TEST_VAULT_ADDR is not set: the Vault engine tests must run here
+E           Failed: HADAVIN_REQUIRE_VAULT_ENGINE=1 but HADAVIN_TEST_VAULT_ADDR is not set: the Vault engine tests must run here
+E           Failed: HADAVIN_REQUIRE_VAULT_ENGINE=1 but HADAVIN_TEST_VAULT_ADDR is not set: the Vault engine tests must run here
+E           Failed: HADAVIN_REQUIRE_VAULT_ENGINE=1 but HADAVIN_TEST_VAULT_ADDR is not set: the Vault engine tests must run here
+E           Failed: HADAVIN_REQUIRE_VAULT_ENGINE=1 but HADAVIN_TEST_VAULT_ADDR is not set: the Vault engine tests must run here
+E           Failed: HADAVIN_REQUIRE_VAULT_ENGINE=1 but HADAVIN_TEST_VAULT_ADDR is not set: the Vault engine tests must run here
+E           Failed: HADAVIN_REQUIRE_VAULT_ENGINE=1 but HADAVIN_TEST_VAULT_ADDR is not set: the Vault engine tests must run here
+========================= 2 passed, 11 errors in 1.57s =========================

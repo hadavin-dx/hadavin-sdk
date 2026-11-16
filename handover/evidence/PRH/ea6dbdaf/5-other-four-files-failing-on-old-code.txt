@@ -1,0 +1,4 @@
+FAILED tests/test_prh_hidden_unit.py::test_readings_are_the_same_set_everywhere
+FAILED tests/test_prh_steps.py::test_pass_bound_holds_for_a_seeded_search
+FAILED tests/test_prh_steps.py::test_every_regression_row_needs_at_most_eight_passes
+FAILED tests/test_prh_tools.py::test_scrub_character_reading_with_a_sequence_is_withheld

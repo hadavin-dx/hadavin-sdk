@@ -1,0 +1,50 @@
+TREE /tmp/dpld3-base fix3 start 10:41:05 cores=4 Mem:           16086        1295        2606          93       12849       14790
+[keyed] same n=500: n=500 status={200: 499, 201: 1} 5xx=0 client_errors={} max_latency_s=2.31
+   desk_counts={'received': 500, 'new': 1, 'duplicate': 499, 'review': 0, 'open': 0, 'rejected_envelopes': 0, 'pending_followups': 0, 'expected_match': None, 'ok': None}
+   followup_states= {'sent': 1} open_receipts= 0
+   received=500 vs new+dup+review+rejected=500 (failed/unknown shown in open/pending) lost_receipt=0
+   crm_rows=1 distinct_leads_in_crm=1 max_rows_per_lead=1; emails=1 distinct_recipients=1 max_emails_per_lead=1; expected_leads=1
+--- done keyed same 500 10:41:11
+[keyed] same n=1000: n=1000 status={200: 999, 201: 1} 5xx=0 client_errors={} max_latency_s=4.24
+   desk_counts={'received': 1000, 'new': 1, 'duplicate': 999, 'review': 0, 'open': 0, 'rejected_envelopes': 0, 'pending_followups': 0, 'expected_match': None, 'ok': None}
+   followup_states= {'sent': 1} open_receipts= 0
+   received=1000 vs new+dup+review+rejected=1000 (failed/unknown shown in open/pending) lost_receipt=0
+   crm_rows=1 distinct_leads_in_crm=1 max_rows_per_lead=1; emails=1 distinct_recipients=1 max_emails_per_lead=1; expected_leads=1
+--- done keyed same 1000 10:41:19
+[keyed] diff n=500: n=500 status={201: 500} 5xx=0 client_errors={} max_latency_s=3.30
+   desk_counts={'received': 500, 'new': 500, 'duplicate': 0, 'review': 0, 'open': 0, 'rejected_envelopes': 0, 'pending_followups': 0, 'expected_match': None, 'ok': None}
+   followup_states= {'sent': 500} open_receipts= 0
+   received=500 vs new+dup+review+rejected=500 (failed/unknown shown in open/pending) lost_receipt=0
+   crm_rows=500 distinct_leads_in_crm=500 max_rows_per_lead=1; emails=500 distinct_recipients=500 max_emails_per_lead=1; expected_leads=500
+--- done keyed diff 500 10:41:25
+[keyed] diff n=1000: n=1000 status={201: 994, 503: 6} 5xx=6 client_errors={} max_latency_s=5.91
+   desk_counts={'received': 994, 'new': 994, 'duplicate': 0, 'review': 0, 'open': 0, 'rejected_envelopes': 0, 'pending_followups': 0, 'expected_match': None, 'ok': None}
+   followup_states= {'sent': 994} open_receipts= 0
+   received=994 vs new+dup+review+rejected=994 (failed/unknown shown in open/pending) lost_receipt=0
+   crm_rows=994 distinct_leads_in_crm=994 max_rows_per_lead=1; emails=994 distinct_recipients=994 max_emails_per_lead=1; expected_leads=1000
+--- done keyed diff 1000 10:41:35
+[blind] same n=500: n=500 status={200: 499, 201: 1} 5xx=0 client_errors={} max_latency_s=2.34
+   desk_counts={'received': 500, 'new': 1, 'duplicate': 499, 'review': 0, 'open': 0, 'rejected_envelopes': 0, 'pending_followups': 0, 'expected_match': None, 'ok': None}
+   followup_states= {'sent': 1} open_receipts= 0
+   received=500 vs new+dup+review+rejected=500 (failed/unknown shown in open/pending) lost_receipt=0
+   crm_rows=1 distinct_leads_in_crm=1 max_rows_per_lead=1; emails=1 distinct_recipients=1 max_emails_per_lead=1; expected_leads=1
+--- done blind same 500 10:41:41
+[blind] same n=1000: n=1000 status={201: 1, 200: 999} 5xx=0 client_errors={} max_latency_s=3.58
+   desk_counts={'received': 1000, 'new': 1, 'duplicate': 999, 'review': 0, 'open': 0, 'rejected_envelopes': 0, 'pending_followups': 0, 'expected_match': None, 'ok': None}
+   followup_states= {'sent': 1} open_receipts= 0
+   received=1000 vs new+dup+review+rejected=1000 (failed/unknown shown in open/pending) lost_receipt=0
+   crm_rows=1 distinct_leads_in_crm=1 max_rows_per_lead=1; emails=1 distinct_recipients=1 max_emails_per_lead=1; expected_leads=1
+--- done blind same 1000 10:41:48
+[blind] diff n=500: n=500 status={201: 500} 5xx=0 client_errors={} max_latency_s=3.72
+   desk_counts={'received': 500, 'new': 500, 'duplicate': 0, 'review': 0, 'open': 0, 'rejected_envelopes': 0, 'pending_followups': 0, 'expected_match': None, 'ok': None}
+   followup_states= {'sent': 500} open_receipts= 0
+   received=500 vs new+dup+review+rejected=500 (failed/unknown shown in open/pending) lost_receipt=0
+   crm_rows=500 distinct_leads_in_crm=500 max_rows_per_lead=1; emails=500 distinct_recipients=500 max_emails_per_lead=1; expected_leads=500
+--- done blind diff 500 10:41:55
+[blind] diff n=1000: n=1000 status={201: 891, 503: 109} 5xx=109 client_errors={} max_latency_s=7.24
+   desk_counts={'received': 911, 'new': 891, 'duplicate': 0, 'review': 0, 'open': 20, 'rejected_envelopes': 0, 'pending_followups': 0, 'expected_match': None, 'ok': None}
+   followup_states= {'sent': 891} open_receipts= 20
+   received=911 vs new+dup+review+rejected=891 (failed/unknown shown in open/pending) lost_receipt=20
+   crm_rows=891 distinct_leads_in_crm=891 max_rows_per_lead=1; emails=891 distinct_recipients=891 max_emails_per_lead=1; expected_leads=1000
+--- done blind diff 1000 10:42:06
+ALLDONE

@@ -1,0 +1,12 @@
+### tests/test_migration_postgres.py::test_the_session_user_is_checked_for_membership_too rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_____________ test_the_session_user_is_checked_for_membership_too ______________
+tests/test_migration_postgres.py:1588: in test_the_session_user_is_checked_for_membership_too
+    with pytest.raises(ConfigError, match="built-in server role"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_the_session_user_is_checked_for_membership_too
+1 failed in 0.60s
+

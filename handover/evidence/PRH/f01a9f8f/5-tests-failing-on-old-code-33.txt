@@ -1,0 +1,33 @@
+FAILED tests/test_prh_b8.py::test_b8_i6_the_withheld_share_is_bounded
+FAILED tests/test_prh_b9.py::test_b9_e1_a_key_cut_by_a_backslash_e_spelling_of_esc_is_masked[charset]
+FAILED tests/test_prh_b9.py::test_b9_e1_a_key_cut_by_a_backslash_e_spelling_of_esc_is_masked[colour]
+FAILED tests/test_prh_b9.py::test_b9_e2_a_value_whose_tail_an_unterminated_string_opener_swallowed_is_withheld
+FAILED tests/test_prh_b9.py::test_b9_e3_a_handed_out_value_spaced_out_with_any_whitespace_is_masked[nbsp]
+FAILED tests/test_prh_b9.py::test_b9_e3_a_handed_out_value_spaced_out_with_any_whitespace_is_masked[newline]
+FAILED tests/test_prh_b9.py::test_b9_e3_a_handed_out_value_spaced_out_with_any_whitespace_is_masked[space_tab]
+FAILED tests/test_prh_b9.py::test_b9_e3_a_handed_out_value_spaced_out_with_any_whitespace_is_masked[tab]
+FAILED tests/test_prh_b9.py::test_b9_e3_a_handed_out_value_spaced_out_with_any_whitespace_is_masked[zwsp_space]
+FAILED tests/test_prh_b9.py::test_b9_g3_a_value_only_inside_an_unterminated_string_body_is_not_shown_and_not_withheld[dcs]
+FAILED tests/test_prh_b9.py::test_b9_g3_a_value_only_inside_an_unterminated_string_body_is_not_shown_and_not_withheld[osc_c1]
+FAILED tests/test_prh_b9.py::test_b9_g3_a_value_only_inside_an_unterminated_string_body_is_not_shown_and_not_withheld[osc_esc]
+FAILED tests/test_prh_b9.py::test_b9_g5_a_key_written_with_any_separator_is_masked[comma and space]
+FAILED tests/test_prh_b9.py::test_b9_g5_a_key_written_with_any_separator_is_masked[dash with spaces]
+FAILED tests/test_prh_b9.py::test_b9_g5_a_key_written_with_any_separator_is_masked[dash]
+FAILED tests/test_prh_b9.py::test_b9_g5_a_key_written_with_any_separator_is_masked[new line]
+FAILED tests/test_prh_b9.py::test_b9_g5_a_key_written_with_any_separator_is_masked[no-break space]
+FAILED tests/test_prh_b9.py::test_b9_g5_a_key_written_with_any_separator_is_masked[space and zero-width]
+FAILED tests/test_prh_b9.py::test_b9_g5_a_key_written_with_any_separator_is_masked[tab]
+FAILED tests/test_prh_b9.py::test_b9_g5_a_key_written_with_any_separator_is_masked[two spaces]
+FAILED tests/test_prh_b9.py::test_b9_g5_a_spaced_key_with_text_around_it[a bracket and a comma after it-(A K I A I O S F O D N N 7 E X A M P L E), next-(<APIKEY_1>), next]
+FAILED tests/test_prh_b9.py::test_b9_g5_a_spaced_key_with_text_around_it[a full stop after it-see A K I A I O S F O D N N 7 E X A M P L E.-see <APIKEY_1>.]
+FAILED tests/test_prh_b9.py::test_b9_g5_a_spaced_key_with_text_around_it[a one-letter word in front-a A K I A I O S F O D N N 7 E X A M P L E-a <APIKEY_1>]
+FAILED tests/test_prh_b9.py::test_b9_g5_a_spaced_key_with_text_around_it[glued to its key name-key=A K I A I O S F O D N N 7 E X A M P L E-key=<APIKEY_1>]
+FAILED tests/test_prh_b9.py::test_b9_g5_a_spaced_value_after_its_key_word_is_read_with_the_key_word
+FAILED tests/test_prh_b9.py::test_b9_g7_more_runs_than_the_cap_withhold_the_text
+FAILED tests/test_prh_b9.py::test_b9_g8_a_short_value_in_a_soft_conflict_withholds
+FAILED tests/test_prh_b9.py::test_b9_g8_one_copy_of_a_short_value_cut_by_a_charset_sequence_is_not_left_readable
+FAILED tests/test_prh_b9.py::test_b9_g9_a_spaced_key_beside_a_cut_copy_is_masked_or_the_text_is_withheld[bell_inside_the_run]
+FAILED tests/test_prh_b9.py::test_b9_g9_a_spaced_key_beside_a_cut_copy_is_masked_or_the_text_is_withheld[plain_run]
+FAILED tests/test_prh_b9_docs.py::test_b9_g5_security_says_a_value_of_no_pattern_shape_is_not_read
+FAILED tests/test_prh_b9_docs.py::test_b9_g6_the_measured_withheld_share_in_security_matches_the_recorded_evidence
+FAILED tests/test_prh_b9_docs.py::test_b9_g6_the_spaced_out_numbers_in_security_are_the_live_constants

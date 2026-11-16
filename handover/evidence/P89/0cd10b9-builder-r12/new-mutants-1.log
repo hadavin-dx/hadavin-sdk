@@ -1,0 +1,63 @@
+ok  KILLED       runner: an absolute path is accepted  [test_a_mutant_path_that_is_absolute_or_names_a_drive_is_refu]
+ok  KILLED       runner: a dotdot part is accepted  [test_a_mutant_path_with_a_dotdot_part_is_refused]
+ok  KILLED       runner: a link out of the tree is accepted  [test_inside_refuses_a_path_through_a_link_out_of_the_tree]
+ok  KILLED       runner: the tree itself is accepted as a file  [test_inside_refuses_the_tree_itself]
+ok  KILLED       runner: a short expect is accepted  [test_a_mutant_with_a_short_expect_is_refused]
+ok  KILLED       runner: a dash path is accepted as a relative path  [test_a_path_that_starts_with_a_dash_is_refused_in_both_gramm]
+ok  KILLED       runner: an at-sign path is accepted  [test_a_path_that_starts_with_an_at_sign_is_refused_because_p]
+ok  KILLED       runner: a nested run_mutants call is accepted  [test_run_mutants_is_not_re_entrant_and_a_nested_call_leaves_]
+ok  KILLED       judge: an expect found in the test id is accepted  [test_mutation_judge_verdicts]
+ok  KILLED       runner: a test_file outside the copied tests is accepted  [test_a_test_file_that_is_not_among_the_copied_tests_fails_be]
+ok  KILLED       runner: allow_crash without a crash_type is accepted  [test_allow_crash_without_a_crash_type_is_refused]
+ok  KILLED       runner: a stream name is accepted  [test_a_mutant_path_with_a_stream_name_is_refused]
+ok  KILLED       runner: a conftest path with a keyword part is accepted  [test_a_conftest_with_a_python_keyword_part_is_refused]
+ok  KILLED       runner: a conftest path with a non-ASCII part is accepted  [test_a_conftest_with_a_non_ascii_part_is_refused]
+ok  KILLED       runner: a conftest path that does not end in .py is accepted  [test_a_conftest_that_does_not_end_in_py_is_refused]
+ok  KILLED       runner: any tree file is accepted as a conftest  [test_a_conftest_must_be_called_conftest_or_lie_in_a_tests_fo]
+ok  KILLED       runner: a baseline that skips is accepted  [test_forbid_skips_refuses_a_baseline_that_skips]
+ok  KILLED       runner: a canary run that skips is accepted  [test_a_canary_run_that_skips_is_refused_under_forbid_skips]
+ok  KILLED       runner: a lock file of another user is accepted  [test_a_lock_file_of_another_user_is_refused]
+ok  KILLED       runner: a lock file with a wide mode is accepted  [test_a_lock_file_with_a_wider_mode_is_refused]
+ok  KILLED       runner: a lock file that is not a regular file is accepted  [test_a_lock_file_that_is_not_a_regular_file_is_refused]
+ok  KILLED       runner: a lock file with two names is accepted  [test_a_lock_file_with_two_hard_links_is_refused]
+ok  KILLED       runner: a value with a quote mark is accepted  [test_a_value_with_a_quote_mark_is_refused_and_the_message_na]
+ok  KILLED       runner: a quote mark is not an odd character  [test_a_value_with_a_quote_mark_is_refused_and_the_message_na]
+ok  KILLED       runner: a backslash is not an odd character  [test_a_value_with_a_backslash_is_refused_and_the_message_nam]
+ok  KILLED       runner: a control character below the space is not odd  [test_a_value_with_a_control_character_is_refused_and_the_mes]
+ok  KILLED       runner: the DEL character is not odd  [test_a_value_with_a_control_character_is_refused_and_the_mes]
+BAD WRONG_REASON runner: a space is a control character  [test_the_printable_ascii_range_is_accepted_and_the_character]
+      first line: E           ValueError: HADAVIN_TEST_PG_DSN is refused: its value holds a control character. The runner hides a secret by looking for its plain text, 
+ok  KILLED       runner: the first non-ASCII character is accepted  [test_a_value_with_a_non_ascii_character_is_refused_and_the_m]
+BAD WRONG_REASON runner: a non-ASCII character is accepted  [test_a_value_with_a_non_ascii_character_is_refused_and_the_m]
+      first line: E       AssertionError: a value with the first non-ASCII character was not refused
+ok  KILLED       runner: a password that decodes to an odd character is accepted  [test_a_password_that_decodes_to_an_odd_character_is_refused_]
+ok  KILLED       runner: the refusal shows the value  [test_a_value_with_a_quote_mark_is_refused_and_the_message_na]
+ok  KILLED       runner: the passwd word is not read  [test_passwd_and_pwd_words_are_secrets]
+ok  KILLED       runner: the pwd word is not read  [test_passwd_and_pwd_words_are_secrets]
+ok  KILLED       runner: the password word is read only in lower case  [test_passwd_and_pwd_words_are_secrets]
+BAD SURVIVED     runner: the password after a password word is not a secret  []
+      first line: 
+ok  KILLED       runner: a semicolon does not end an unquoted password  [test_the_pieces_of_an_unquoted_password_that_holds_a_semicol]
+ok  KILLED       runner: the rest of an unquoted password is not a secret  [test_an_unquoted_password_with_a_semicolon_or_an_ampersand_i]
+ok  KILLED       runner: the pieces of an unquoted password are not secrets  [test_the_pieces_of_an_unquoted_password_that_holds_a_semicol]
+ok  KILLED       runner: an ampersand does not split an unquoted password  [test_the_pieces_of_an_unquoted_password_that_holds_a_semicol]
+ok  KILLED       runner: a piece of exactly the password piece minimum is not a secret  [test_the_pieces_of_an_unquoted_password_that_holds_a_semicol]
+ok  KILLED       runner: a piece one short of the password piece minimum is a secret  [test_the_pieces_of_an_unquoted_password_that_holds_a_semicol]
+BAD WRONG_REASON runner: a line with a hostile number of dots is scanned  [test_a_line_with_a_hostile_number_of_dots_is_replaced_fast]
+      first line: E       AssertionError: a line with a hostile number of dots was not replaced as a whole: 'E   [REDACTED]...[REDACTED]...[REDACTED]...[REDACTED]...[RE
+BAD WRONG_REASON runner: a shortened value is not masked at its start  [test_the_fragment_scan_agrees_with_the_plain_definition]
+      first line: E           AssertionError: the fast scan found other spans than the plain definition: 'bcaaabbdddcacba.c.babaccbd...dcbadbc.abdaaba.' 'bddab'
+BAD WRONG_REASON runner: a shortened value is not masked at its end  [test_the_fragment_scan_agrees_with_the_plain_definition]
+      first line: E           AssertionError: the fast scan found other spans than the plain definition: '.bcadbabaabc.d.ccd.c.....bdb.db.dccabab.bbcdbdd.d' 'bcadabd'
+BAD WRONG_REASON runner: the tail scan window is one short  [test_the_fragment_scan_agrees_with_the_plain_definition]
+      first line: E           AssertionError: the largest head and tail of a 3-character secret were not both found: 'sv...vy'
+BAD WRONG_REASON runner: a value that overlaps itself is found once  [test_a_value_inside_a_bigger_secret_or_overlapping_another_i]
+      first line: E       AssertionError: a secret that overlaps itself left a rest readable
+BAD SURVIVED     runner: every masked character gets its own mark  []
+      first line: 
+BAD SURVIVED     runner: a value of exactly the edge minimum is looked for in pieces  []
+      first line: 
+BAD WRONG_REASON runner: a plus in a URL password is not read as a space  [test_a_plus_in_a_url_password_is_also_read_as_a_space]
+      first line: E       AssertionError: the plus-as-space form of the password was not a secret
+39 of 50 good; problems: ['runner: a space is a control character', 'runner: a non-ASCII character is accepted', 'runner: the password after a password word is not a secret', 'runner: a line with a hostile number of dots is scanned', 'runner: a shortened value is not masked at its start', 'runner: a shortened value is not masked at its end', 'runner: the tail scan window is one short', 'runner: a value that overlaps itself is found once', 'runner: every masked character gets its own mark', 'runner: a value of exactly the edge minimum is looked for in pieces', 'runner: a plus in a URL password is not read as a space']
+exit=1

@@ -1,0 +1,31 @@
+head under test: new tests at d1dff3a, src and tests/fixtures from 0c52491; python Python 3.13.18 postgres 16.15
+        try:
+            with (
+                psycopg.connect(make_conninfo(DSN, dbname=db_x), autocommit=True) as in_x,
+                psycopg.connect(make_conninfo(DSN, dbname=db_y), autocommit=True) as in_y,
+            ):
+                with (
+                    monkeypatch.context() as as_that_process
+                ):  # only the hold is made as the other process
+                    as_that_process.setattr(helper, "_TOKEN", name.rsplit("_", 1)[1])
+                    as_that_process.setattr(helper, "PLAIN_ROLE", name)
+                    helper._hold_the_role(in_x)
+                try:
+>                   assert name not in helper.sweep_stale_roles(in_y), (
+                        "a live process's role was dropped"
+                    )
+E                   AssertionError: a live process's role was dropped
+E                   assert 'hadavin_test_migrator_35540def' not in ['hadavin_test_migrator_35540def']
+E                    +  where ['hadavin_test_migrator_35540def'] = <function sweep_stale_roles at 0x7fb6cc6f27a0>(<psycopg.Connection [IDLE] (host=127.0.0.1 port=56073 user=postgres database=hadavin_test_db_ed9a834b) at 0x7fb6c9d256d0>)
+E                    +    where <function sweep_stale_roles at 0x7fb6cc6f27a0> = helper.sweep_stale_roles
+
+tests/test_migration_postgres.py:2052: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_the_managed_names_are_the_grant_map_the_ledger_and_the_functions_the_files_create
+FAILED tests/test_migration_wiring.py::test_a_plain_function_name_is_folded_to_lower_case_and_a_quoted_one_is_read_whole
+FAILED tests/test_migration_wiring.py::test_a_function_of_another_schema_is_not_a_managed_name
+FAILED tests/test_migration_wiring.py::test_a_name_is_folded_as_the_server_folds_it_and_is_read_only_at_the_start_of_a_statement
+FAILED tests/test_migration_wiring.py::test_the_live_process_lock_is_taken_on_the_server_that_makes_the_role
+FAILED tests/test_migration_wiring.py::test_the_hold_connection_is_closed_when_the_lock_cannot_be_taken
+FAILED tests/test_migration_postgres.py::test_a_role_held_from_one_database_is_not_swept_from_another_database_of_the_server
+7 failed, 5 passed, 213 deselected in 1.13s

@@ -1,0 +1,104 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+FFFFFF........................................                           [100%]
+=================================== FAILURES ===================================
+______________________ test_the_step_is_in_the_tick_list _______________________
+
+    def test_the_step_is_in_the_tick_list():
+>       assert "audit_reconcile" in [s.name for s in tick.STEPS]
+E       AssertionError: assert 'audit_reconcile' in ['sweep', 'reconcile', 'stuck', 'checkpoint', 'purge_evidence', 'reprobe_sources']
+
+tests/test_a01_audit_reconcile.py:31: AssertionError
+______________ test_the_step_drains_the_outbox_and_logs_the_count ______________
+
+caplog = <_pytest.logging.LogCaptureFixture object at 0x7f42db239160>
+
+    def test_the_step_drains_the_outbox_and_logs_the_count(caplog):
+        log = audit.ChainAudit(audit._Db.memory())
+        real = log._append
+        log._append = lambda e: (_ for _ in ()).throw(OSError("down"))
+        first = _event(1)
+        assert log.write_outcome(first) is None
+        assert log._db.run("SELECT event_id FROM audit_outbox") == [(first.event_id,)]
+        log._append = real
+        caplog.set_level(logging.INFO, logger="hadavin_sdk.tick")
+>       tick.audit_reconcile(TickContext(_FakeApp(log), now=None))
+        ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.runtime.tick' has no attribute 'audit_reconcile'
+
+tests/test_a01_audit_reconcile.py:43: AttributeError
+___________________ test_a_kind_without_reconcile_is_skipped ___________________
+
+caplog = <_pytest.logging.LogCaptureFixture object at 0x7f42db043610>
+
+    def test_a_kind_without_reconcile_is_skipped(caplog):
+        caplog.set_level(logging.INFO, logger="hadavin_sdk.tick")
+>       tick.audit_reconcile(TickContext(_FakeApp(object()), now=None))
+        ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.runtime.tick' has no attribute 'audit_reconcile'
+
+tests/test_a01_audit_reconcile.py:50: AttributeError
+_______ test_a_failed_outcome_write_logs_type_and_id_but_never_the_body ________
+
+caplog = <_pytest.logging.LogCaptureFixture object at 0x7f42db043d90>
+
+    def test_a_failed_outcome_write_logs_type_and_id_but_never_the_body(caplog):
+        log = audit.ChainAudit(audit._Db.memory())
+        log._append = lambda e: (_ for _ in ()).throw(OSError("secret-looking detail"))
+        ev = _event(2)
+        with caplog.at_level(logging.WARNING, logger="hadavin_sdk.audit.chain"):
+            log.write_outcome(ev)
+>       assert "OSError" in caplog.text and ev.event_id in caplog.text
+E       AssertionError: assert ('OSError' in '')
+E        +  where '' = <_pytest.logging.LogCaptureFixture object at 0x7f42db043d90>.text
+
+tests/test_a01_audit_reconcile.py:60: AssertionError
+________ test_when_the_outbox_table_also_fails_an_error_line_is_logged _________
+
+caplog = <_pytest.logging.LogCaptureFixture object at 0x7f42db24e2c0>
+
+    def test_when_the_outbox_table_also_fails_an_error_line_is_logged(caplog):
+        log = audit.ChainAudit(audit._Db.memory())
+        log._append = lambda e: (_ for _ in ()).throw(OSError("down"))
+    
+        def broken_run(*a, **k):
+            raise OSError("table down")
+    
+        log._db.run = broken_run
+        with caplog.at_level(logging.ERROR, logger="hadavin_sdk.audit.chain"):
+            log.write_outcome(_event(3))
+>       assert "held in memory only" in caplog.text and len(log._pending) == 1
+E       AssertionError: assert ('held in memory only' in '')
+E        +  where '' = <_pytest.logging.LogCaptureFixture object at 0x7f42db24e2c0>.text
+
+tests/test_a01_audit_reconcile.py:74: AssertionError
+_______________ test_steps_order_and_summary_line_is_not_a_step ________________
+
+app = App(config=Config(environment='dev', routes={'default': Route(model_id='fake-model', input_usd_per_mtok=Decimal('3.00'...aba0>, sources={}, disabled_sources=set(), purge_store=<hadavin_sdk.store.memory.MemoryStore object at 0x7f42db239fd0>)
+caplog = <_pytest.logging.LogCaptureFixture object at 0x7f42db24f100>
+
+    def test_steps_order_and_summary_line_is_not_a_step(app, caplog):
+>       assert [s.name for s in tick.STEPS] == [
+            "sweep",
+            "reconcile",
+            "stuck",
+            "checkpoint",
+            "purge_evidence",
+            "reprobe_sources",
+            "audit_reconcile",
+        ]
+E       AssertionError: assert ['sweep', 're...robe_sources'] == ['sweep', 're...sources', ...]
+E         
+E         Right contains one more item: 'audit_reconcile'
+E         Use -v to get more diff
+
+tests/test_p7_tick.py:82: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_a01_audit_reconcile.py::test_the_step_is_in_the_tick_list
+FAILED tests/test_a01_audit_reconcile.py::test_the_step_drains_the_outbox_and_logs_the_count
+FAILED tests/test_a01_audit_reconcile.py::test_a_kind_without_reconcile_is_skipped
+FAILED tests/test_a01_audit_reconcile.py::test_a_failed_outcome_write_logs_type_and_id_but_never_the_body
+FAILED tests/test_a01_audit_reconcile.py::test_when_the_outbox_table_also_fails_an_error_line_is_logged
+FAILED tests/test_p7_tick.py::test_steps_order_and_summary_line_is_not_a_step
+6 failed, 40 passed in 17.01s
+
+[wall 17.4s maxrss_kb 80516 exit 1]

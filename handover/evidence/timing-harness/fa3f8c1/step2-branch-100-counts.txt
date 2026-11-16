@@ -1,0 +1,11 @@
+xml files: 100
+pytest exit codes: {'0': 100}
+test_the_timing_harness_flags_a_quadratic_stand_in {'passed': 100}
+test_the_timing_harness_flags_a_quadratic_stand_in_that_is_fast_on_the_small_input {'passed': 100}
+test_the_timing_harness_passes_a_linear_and_an_n_log_n_stand_in[linear] {'passed': 100}
+test_the_timing_harness_passes_a_linear_and_an_n_log_n_stand_in[n-log-n] {'passed': 100}
+start 2026-11-11T14:26:07Z  14:26:07 up 58 min,  0 user,  load average: 3.77, 3.80, 3.89
+middle(run 50) 2026-11-11T14:27:41Z  14:27:41 up 59 min,  0 user,  load average: 5.89, 4.45, 4.11
+end 2026-11-11T14:29:30Z  14:29:30 up  1:01,  0 user,  load average: 7.21, 5.39, 4.49
+DONE
+

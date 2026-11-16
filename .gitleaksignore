@@ -1,0 +1,1 @@
+# gitleaks false positives, by fingerprint (commit:file:rule:line). Each line says why it is not a secret.

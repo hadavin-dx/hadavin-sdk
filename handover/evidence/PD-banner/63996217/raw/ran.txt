@@ -1,0 +1,8 @@
+tests/test_banner_mutant_table.py
+tests/test_changelog_numbers.py
+tests/test_demo_only_guard.py
+tests/test_demo_only_guard_ci.py
+tests/test_mode_banner.py
+tests/test_repo_rules.py
+tests/test_scan_repo.py
+tests/test_stage_names.py

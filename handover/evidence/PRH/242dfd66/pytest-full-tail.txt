@@ -1,0 +1,5 @@
+........................................................................ [ 99%]
+.......................................                                  [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/contracts/test_llm.py:95: Stubber refuses a malformed Converse shape before the kind sees it
+13286 passed, 1 skipped, 63 deselected in 631.24s (0:10:31)

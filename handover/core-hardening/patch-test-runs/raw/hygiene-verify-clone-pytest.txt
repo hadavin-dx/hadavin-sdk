@@ -1,0 +1,32 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+Using CPython 3.13.18 interpreter at: /usr/local/bin/python3
+Creating virtual environment at: .venv
+   Building hadavin-sdk @ file:///tmp/hv1/clone
+      Built hadavin-sdk @ file:///tmp/hv1/clone
+Installed 76 packages in 251ms
+============================= test session starts ==============================
+platform linux -- Python 3.13.18, pytest-9.1.1, pluggy-1.7.0
+rootdir: /tmp/hv1/clone
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 43 items
+
+tests/test_no_reference_material.py ...                                  [  6%]
+tests/test_repo_rules.py ..F.....................................        [100%]
+
+=================================== FAILURES ===================================
+________________________ test_licences_are_proprietary _________________________
+
+    def test_licences_are_proprietary():
+        files = tracked_files(ROOT)
+        assert {"LICENSE", "pyproject.toml"} <= set(files)
+>       assert licence_problems(ROOT, files) == []
+E       AssertionError: assert ['handover/pr...Hadavin', ...] == []
+E         
+E         Left contains 10 more items, first extra item: 'handover/promotion-inputs/apexc/LICENSE: not the proprietary licence text'
+E         Use -v to get more diff
+
+tests/test_repo_rules.py:120: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_repo_rules.py::test_licences_are_proprietary - AssertionErr...
+========================= 1 failed, 42 passed in 4.56s =========================

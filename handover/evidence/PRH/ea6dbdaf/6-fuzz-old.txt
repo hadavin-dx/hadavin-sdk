@@ -1,0 +1,5 @@
+tree /home/user/build/EV-PRHb8-ea6dbdaf/wt-old/src/hadavin_sdk/tools.py
+texts=4691 readable_stretch_leaks=477 withheld=371 redaction_errors=2
+leaks_by_category {'hand': 14, 'key': 12, 'long': 21, 'pw': 8, 'rand': 70, 'spaced': 21, 'spaced_esc': 21, 'spaced_unknown': 40, 'split': 270}
+withheld_by_category {'hand': 14, 'key': 21, 'long': 21, 'pw': 62, 'rand': 253}
+rc=0

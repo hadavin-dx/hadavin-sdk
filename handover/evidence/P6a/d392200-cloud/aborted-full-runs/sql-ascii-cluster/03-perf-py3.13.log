@@ -1,0 +1,34 @@
+HEAD=d3922003925722275704b84f580152d35dd90c9c
+python=Python 3.13.18
+cmd=pytest -q -m perf -rs -p no:cacheprovider
+start=2026-11-10T19:30:03Z
+
+T-E8 watchdog: pg_sleep(30) cancelled after 0.00s (watchdog 2.0s; the assertion allows 3.0s: the timer, the cancel round trip to the server and the connection close)
+F...........................                                             [100%]
+=================================== FAILURES ===================================
+________________ test_caps_watchdog_cancels_a_blocked_statement ________________
+
+db = Db(name='askdata_t_32d30b4e', base='dbname=postgres host=127.0.0.1 port=56172', admin_user='postgres', admin_pw=None, ro_role='askdata_t_32d30b4e_ro', ro_password='7OO7sH0yVou9UHuyD_TXxpmn', psql='/usr/bin/psql')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f613dd57620>
+
+    @pytest.mark.perf  # a wall-clock or CPU-time bound: it runs in the perf step, not the default suite
+    def test_caps_watchdog_cancels_a_blocked_statement(db, capsys):
+        timeout = 2.0
+        start = time.monotonic()
+        with pytest.raises(PgError) as caught:
+            PgSource(db.ro_dsn, limits=Limits(statement_timeout_s=timeout)).run("SELECT pg_sleep(30)")
+        elapsed = time.monotonic() - start
+        with capsys.disabled():
+            print(
+                f"\nT-E8 watchdog: pg_sleep(30) cancelled after {elapsed:.2f}s (watchdog {timeout}s; the assertion allows {timeout + 1}s: the timer, the cancel round trip to the server and the connection close)"
+            )
+>       assert caught.value.sqlstate == "57014"
+E       AssertionError: assert '25006' == '57014'
+E         
+E         - 57014
+E         + 25006
+
+tests/demo_askdata/test_pgsource_layers.py:142: AssertionError
+1 failed, 27 passed, 10516 deselected in 56.32s
+exit=1
+end=2026-11-10T19:31:01Z

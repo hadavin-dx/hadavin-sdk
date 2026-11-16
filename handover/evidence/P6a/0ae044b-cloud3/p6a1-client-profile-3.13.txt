@@ -1,0 +1,74 @@
+0ae044b25a3113244777cd078fc9a784647af924
+$ <build>/venv-p72-313/bin/python -m pytest tests/test_client_profile.py -q -rA
+...................................................................      [100%]
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_client_profile.py::test_the_stub_detector_fails_loudly_if_a_row_ever_runs_it
+PASSED tests/test_client_profile.py::test_t0_the_prod_fixture_loads
+PASSED tests/test_client_profile.py::test_t1a_secrets_env_is_refused_in_a_client_profile[pilot]
+PASSED tests/test_client_profile.py::test_t1a_secrets_env_is_refused_in_a_client_profile[prod]
+PASSED tests/test_client_profile.py::test_t1d_a_pilot_config_that_omits_store_is_refused
+PASSED tests/test_client_profile.py::test_t1e_a_demo_anchor_only_failure_does_not_advise_the_field
+PASSED tests/test_client_profile.py::test_t2a_demo_only_is_exactly_the_six_pairs
+PASSED tests/test_client_profile.py::test_t2b_every_pair_is_decided_with_a_reason
+PASSED tests/test_client_profile.py::test_t2c_planted_kind_in_neither_set_is_reported
+PASSED tests/test_client_profile.py::test_t2c_planted_pair_in_both_sets_is_reported
+PASSED tests/test_client_profile.py::test_t2c_planted_empty_reason_is_reported
+PASSED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[secrets-pilot]
+PASSED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[secrets-prod]
+PASSED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[channel-pilot]
+PASSED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[channel-prod]
+PASSED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[detector-pilot]
+PASSED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[detector-prod]
+PASSED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[llm-pilot]
+PASSED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[llm-prod]
+PASSED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[clock-pilot]
+PASSED tests/test_client_profile.py::test_t5b_each_test_double_is_refused_alone[clock-prod]
+PASSED tests/test_client_profile.py::test_t5c_all_at_once_names_all_in_signature_order
+PASSED tests/test_client_profile.py::test_t5f_sources_keeps_its_own_refusal
+PASSED tests/test_client_profile.py::test_t5h_tools_keeps_its_own_refusal
+PASSED tests/test_client_profile.py::test_t5g_no_door_in_src_or_demos
+PASSED tests/test_client_profile.py::test_t5g_planted_doors_are_reported[direct]
+PASSED tests/test_client_profile.py::test_t5g_planted_doors_are_reported[partial]
+PASSED tests/test_client_profile.py::test_t5g_planted_doors_are_reported[double_star]
+PASSED tests/test_client_profile.py::test_t5i_a_falsy_double_is_refused
+PASSED tests/test_client_profile.py::test_t5j_a_refusal_builds_nothing_first
+PASSED tests/test_client_profile.py::test_t5l_a_keyword_added_later_is_refused_by_default
+PASSED tests/test_client_profile.py::test_t5q_any_environment_that_is_not_demo_is_live[Demo]
+PASSED tests/test_client_profile.py::test_t5q_any_environment_that_is_not_demo_is_live[uat]
+PASSED tests/test_client_profile.py::test_t5q_any_environment_that_is_not_demo_is_live[]
+PASSED tests/test_client_profile.py::test_t5r_only_the_value_true_is_the_switch[no]
+PASSED tests/test_client_profile.py::test_t5r_only_the_value_true_is_the_switch[yes]
+PASSED tests/test_client_profile.py::test_t5r_only_the_value_true_is_the_switch[one]
+PASSED tests/test_client_profile.py::test_t5r_only_the_value_true_is_the_switch[list]
+PASSED tests/test_client_profile.py::test_t5m_no_override_passes_the_check[pilot]
+PASSED tests/test_client_profile.py::test_t5m_no_override_passes_the_check[prod]
+PASSED tests/test_client_profile.py::test_t5n_the_switch_lets_a_test_double_through
+PASSED tests/test_client_profile.py::test_t5o_the_live_hooks_need_no_switch[hold_run_ids]
+PASSED tests/test_client_profile.py::test_t5o_the_live_hooks_need_no_switch[timeout_s]
+PASSED tests/test_client_profile.py::test_t5p_the_live_hooks_are_exactly_two_parameters_of_build
+PASSED tests/test_client_profile.py::test_t5s_every_refused_keyword_has_a_sample
+PASSED tests/test_client_profile.py::test_t7a_a_real_llm_kind_in_demo_needs_the_field[anthropic]
+PASSED tests/test_client_profile.py::test_t7a_a_real_llm_kind_in_demo_needs_the_field[bedrock]
+PASSED tests/test_client_profile.py::test_t7a_a_real_llm_kind_in_demo_needs_the_field[gemini]
+PASSED tests/test_client_profile.py::test_t7a_a_real_llm_kind_in_demo_needs_the_field[openai_compat]
+PASSED tests/test_client_profile.py::test_t7a2_the_vendor_detector_in_demo_needs_the_field
+PASSED tests/test_client_profile.py::test_t7a4_every_detector_kind_is_local_or_refused_in_demo
+PASSED tests/test_client_profile.py::test_t7a5_a_detector_kind_nobody_reviewed_is_treated_as_sending_text_out
+PASSED tests/test_client_profile.py::test_t7a3_a_real_channel_kind_in_demo_needs_the_field
+PASSED tests/test_client_profile.py::test_t7b_with_the_field_a_real_llm_kind_loads_in_demo
+PASSED tests/test_client_profile.py::test_t7d_three_refusals_come_in_one_error
+PASSED tests/test_client_profile.py::test_t7e_the_field_is_refused_in_pilot_and_prod
+PASSED tests/test_client_profile.py::test_t7f_the_field_is_refused_in_any_environment_that_is_not_demo[Demo]
+PASSED tests/test_client_profile.py::test_t7f_the_field_is_refused_in_any_environment_that_is_not_demo[uat]
+PASSED tests/test_client_profile.py::test_t7f_the_field_is_refused_in_any_environment_that_is_not_demo[]
+PASSED tests/test_client_profile.py::test_t7g_the_field_still_loads_in_demo
+PASSED tests/test_client_profile.py::test_t7h_a_loose_yes_does_not_switch_the_field_on[yes]
+PASSED tests/test_client_profile.py::test_t7h_a_loose_yes_does_not_switch_the_field_on[1]
+PASSED tests/test_client_profile.py::test_t7h_a_loose_yes_does_not_switch_the_field_on[true]
+PASSED tests/test_client_profile.py::test_t7h_a_loose_yes_does_not_switch_the_field_on[on]
+PASSED tests/test_client_profile.py::test_t7i_a_value_that_is_not_a_bool_is_refused_at_load[word]
+PASSED tests/test_client_profile.py::test_t7i_a_value_that_is_not_a_bool_is_refused_at_load[null]
+PASSED tests/test_client_profile.py::test_t7i_a_value_that_is_not_a_bool_is_refused_at_load[list]
+67 passed in 1.22s
+exit=0

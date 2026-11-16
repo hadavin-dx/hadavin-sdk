@@ -1,0 +1,4 @@
+HEAD 0d843b4183becafaca8ddef74e529a93d0e3e398
+$ <venv>/bin/bandit -ll -q -r src tools
+/home/user/build/heavy.sh: line 6: <venv>/bin/bandit: No such file or directory
+exit=127

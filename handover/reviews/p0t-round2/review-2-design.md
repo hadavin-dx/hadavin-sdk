@@ -1,0 +1,9 @@
+# PR 67 (P0t, head 7835078) round 2 design review (egm-design), saved by the lead 2026-11-06, condensed
+Verdict: design right, not clean. Holds: config source only environment: in config.yaml; STAGES + Literal, DEMO_ONLY six pairs, no alias; refusal order right (dev check before validation, exact compare, no tidying); fail closed in app.py/deferred.py/registry.py (environment != "demo"); R449 followed; no new dependency. Not read: Settings (env var override unchecked), other branches' diffs.
+F1 Major evidence: run reports "1 failed, 9684 passed", failing test not named; fail-before is only an ImportError on STAGES, not an assertion failure.
+F2 Major: class test skips two pattern kinds for EVERY line under demos/ask-your-data/ and tests/demo_askdata/ (78 hits of dev in the demo alone): a real stage: dev there would pass unseen; fix: exact-line allowlist (file+line text+reason), stale entry fails, or narrow to eval-data files.
+F3 Major: four copies of the literal "demo" in live checks (app.py, deferred.py, registry.py, config.py:_cross_checks): one helper is_live(environment) in config.py; assert get_args(Config.model_fields["environment"].annotation) == STAGES.
+F4 Nit/Major over-build: 560-line test file, 124-line mutant runner, 8 regexes, ~30 look-alike cases mostly testing pydantic Literal; keep ~6 look-alike cases; stage_mutants.py has no CI step: add one or say run by hand at review.
+F5 Nit: message says "no longer allowed" not "renamed"; pydantic wrapper visible.
+F6 Nit: no rebase checklist in PR body (dev_cfg, DEV_ONLY, deferred.LIVE, fixture value, CHANGELOG line; test_k3_pilot.py 35 call sites, test_lockin_guard.py, fixtures/config/config.yaml).
+F7 Nit: stored-stage rule (map old dev to demo on read) only a CHANGELOG sentence: write it as a test requirement into the P3a and P4d tickets.

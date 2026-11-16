@@ -1,0 +1,14 @@
+..............F......                                                    [100%]
+=================================== FAILURES ===================================
+E   AssertionError: assert 'TypeError' == 'OSError'
+      
+      - OSError
+      + TypeError
+----------------------------- Captured stdout call -----------------------------
+replay complete: outputs in /tmp/pytest-of-root/pytest-29763/test_report_write_failure_leav0/out (see replay-report.md)
+----------------------------- Captured stderr call -----------------------------
+failed: TypeError (set HADAVIN_DEBUG=1 for the traceback)
+/home/user/build/ER-sonarpath4-a/tests/test_k1b_cli.py:233: AssertionError: assert 'TypeError' == 'OSError'
+=========================== short test summary info ============================
+FAILED tests/test_k1b_cli.py::test_report_write_failure_leaves_started_then_failed_and_no_score_run
+1 failed, 20 passed in 2.27s

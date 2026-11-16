@@ -1,0 +1,1 @@
+PR H fix batch b4 (head d08ec151, base e852b577). Issues 1-9 of goldfish_review_report-r-b3. Rung: reuse hidden.py/runmap choke point, no new dependency. Evidence: handover/evidence/PRH/b4/RESULTS.md. Open: full suite not re-run after the one-test fix; dblink demo test needs the default-socket Postgres.

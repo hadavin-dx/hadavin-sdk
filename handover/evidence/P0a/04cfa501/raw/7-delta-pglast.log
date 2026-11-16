@@ -1,0 +1,10 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+Using CPython 3.13.18 interpreter at: /usr/local/bin/python3
+Creating virtual environment at: .venv
+   Building hadavin-sdk @ file:///home/user/build/wt/ev-p0a-fix2-delta
+      Built hadavin-sdk @ file:///home/user/build/wt/ev-p0a-fix2-delta
+Installed 76 packages in 176ms
+........................................................................ [ 61%]
+.............................................                            [100%]
+117 passed in 0.55s
+pglast rc=0

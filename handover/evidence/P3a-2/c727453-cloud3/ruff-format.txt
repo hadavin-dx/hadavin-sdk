@@ -1,0 +1,4 @@
+c727453a1cad96f72cc78ff1a13fe4b792957d3b
+$ /home/user/build/venv-p73e-313/bin/ruff format --check src tests demos tools
+324 files already formatted
+exit=0

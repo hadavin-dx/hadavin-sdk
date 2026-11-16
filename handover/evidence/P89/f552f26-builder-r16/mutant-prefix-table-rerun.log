@@ -1,0 +1,9 @@
+177 files already formatted
+All checks passed!
+216 mutants; bad 0
+....................................................................     [100%]
+140 passed in 59.46s
+ok  KILLED       runner: the prefix table of a secret falls back to zero  [test_the_fragment_scan_agrees_with_the_plain_definition_on_r]
+1 of 1 good; problems: []
+
+[exited with code 0]

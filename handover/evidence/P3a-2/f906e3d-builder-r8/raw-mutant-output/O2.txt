@@ -1,0 +1,12 @@
+### tests/test_migration_postgres.py::test_tables_owned_by_another_role_are_refused_with_the_sql_that_hands_them_over rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_tables_owned_by_another_role_are_refused_with_the_sql_that_hands_them_over _
+tests/test_migration_postgres.py:1485: in test_tables_owned_by_another_role_are_refused_with_the_sql_that_hands_them_over
+    assert "ALTER TABLE" in msg and "audit_entries" in msg and f"owner {login}" in msg, msg
+E   AssertionError: the migration role mig_aae5bdd91d cannot change 1 object(s) of this package in schema hadavin_test_517a668b18ac that another role owns: hadavin_audit_append_only (owner postgres). A later migration that alters one of them would fail with 'must be owner', and the grants of migrate would do nothing without an error. Nothing was changed. Before anything is handed over, check two things. Objects of other applications in the schema are not listed and need no change, but a table of ANOTHER application that has the same name as one of this package's tables, for example spend or runs, looks the same here: do not hand that one over, point migrate at another schema instead. The same goes for a function: it is matched by name, so read the text of each listed function first and hand it over only when it is this package's own code, because the migration role would then own, and run, it; a function made SECURITY DEFINER runs with its owner's rights, so handing it over also hands over what it can do. Then a database administrator hands the objects to the migration role once, connected as a superuser or as a role that is a member of both the old owner and the migration role, with a file of SQL run as in CHANGELOG.md, Migration repair steps, case (h): ALTER FUNCTION "hadavin_test_517a668b18ac"."hadavin_audit_append_only"() OWNER TO "mig_aae5bdd91d";
+E   assert ('ALTER TABLE' in 'the migration role mig_aae5bdd91d cannot change 1 object(s) of this package in schema hadavin_test_517a668b18ac that ...r steps, case (h): ALTER FUNCTION "hadavin_test_517a668b18ac"."hadavin_audit_append_only"() OWNER TO "mig_aae5bdd91d";')
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_tables_owned_by_another_role_are_refused_with_the_sql_that_hands_them_over
+1 failed in 0.58s
+

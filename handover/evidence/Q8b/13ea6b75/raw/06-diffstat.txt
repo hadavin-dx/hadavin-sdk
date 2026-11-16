@@ -1,0 +1,15 @@
+ CHANGELOG.md                             |   4 +-
+ src/hadavin_sdk/app.py                   |   1 +
+ src/hadavin_sdk/approvals/cards.py       |   6 +-
+ src/hadavin_sdk/approvals/channel.py     |  41 +----
+ src/hadavin_sdk/approvals/gate.py        |   9 +-
+ src/hadavin_sdk/approvals/requests.py    |  37 ++++-
+ src/hadavin_sdk/guard/redact.py          | 105 ++++++++++--
+ src/hadavin_sdk/guard/runmap.py          |   3 +
+ src/hadavin_sdk/runtime/agent_loop.py    |  11 +-
+ tests/q8b_helpers.py                     |   6 +-
+ tests/q8b_mutants.py                     |  53 +++---
+ tests/test_q8b_batch2.py                 | 277 +++++++++++++++++++++++++++++++
+ tests/test_q8b_card_text.py              |   6 +-
+ tests/test_q8b_glued_and_whole_values.py |  39 ++++-
+ 14 files changed, 494 insertions(+), 104 deletions(-)

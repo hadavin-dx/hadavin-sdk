@@ -1,0 +1,67 @@
+{
+  "note": "Temporary copies of core modules that are in OPEN core PRs (#50 guard modules, #49 signed approvals); core_commit is the demo's pin (core main). `pr_snapshot` is the PR head the bytes were copied from; the re-sync after the PRs change is a later step. Switch to importing core after the PRs merge and the demo is re-pinned, then delete the copy (core_sync_check: remove_copy_after_pin). core_sha256 is the sha256 of the core file (LF).",
+  "core_pr": 49,
+  "core_commit": "6608146",
+  "files": {
+    "src/dealdesk/core_copy/textnorm.py": {
+      "core_path": "src/hadavin_sdk/guard/textnorm.py",
+      "core_sha256": "576b4cba43c70666db9020f6d3cc3d309ca7fda34e52ff3fd687d42a9d9d1200",
+      "core_pr": 50,
+      "pr_snapshot": "153d217",
+      "import_rewrite": [
+        [
+          "hadavin_sdk.guard._confusables",
+          "dealdesk.core_copy._confusables"
+        ]
+      ]
+    },
+    "src/dealdesk/core_copy/_confusables.py": {
+      "core_path": "src/hadavin_sdk/guard/_confusables.py",
+      "core_sha256": "41740c11734e2ec1e5a63f9325dffa04226c84f3b81b43c1b5c7e766f8a0ccfd",
+      "core_pr": 50,
+      "pr_snapshot": "153d217"
+    },
+    "src/dealdesk/core_copy/egress_text.py": {
+      "core_path": "src/hadavin_sdk/guard/egress_text.py",
+      "core_sha256": "632fac9949424b7fbb1421fb40f9f8d725e79b85fdc99d49e95ff650a278ed32",
+      "core_pr": 50,
+      "pr_snapshot": "153d217",
+      "import_rewrite": [
+        [
+          "hadavin_sdk.guard.textnorm",
+          "dealdesk.core_copy.textnorm"
+        ]
+      ]
+    },
+    "src/dealdesk/core_copy/approvals_signed.py": {
+      "core_path": "src/hadavin_sdk/approvals/signed.py",
+      "core_sha256": "5a303583b2a9197d6d120a1f6ff5ce7db25209ea98b5e4cbf6a42c0e549c3bff",
+      "core_pr": 49,
+      "pr_snapshot": "cd62212",
+      "import_rewrite": [
+        [
+          "hadavin_sdk.audit.signer",
+          "dealdesk.signing"
+        ],
+        [
+          "hadavin_sdk.errors",
+          "dealdesk.errors"
+        ]
+      ]
+    }
+  },
+  "allowed_local": {
+    "src/dealdesk/signing.py": {
+      "reason": "local re-implementation of the interface of core audit/signer.py (core PR #48, not merged); the only module importing cryptography",
+      "expires": "2026-12-31"
+    },
+    "src/dealdesk/textnorm.py": {
+      "reason": "thin wrapper over the copied core fold: two views (glued/spaced), injection phrases, name scans; the generic fold itself is core_copy/textnorm.py",
+      "expires": "2026-12-31"
+    }
+  },
+  "ignore": [
+    "data/",
+    "mutation/"
+  ]
+}

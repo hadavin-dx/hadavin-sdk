@@ -1,0 +1,35 @@
+.......................F
+=================================== FAILURES ===================================
+_ test_the_real_script_refuses_a_pipe_as_the_live_key_or_ledger_and_as_the_config_without_hanging _
+
+tmp_path = PosixPath('/home/user/build/rr6/tmp-B2/pytest-of-unknown/pytest-40/test_the_real_script_refuses_a9')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f260b5f3290>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f260b5f3ec0>
+
+    @FIFO_SKIP
+    def test_the_real_script_refuses_a_pipe_as_the_live_key_or_ledger_and_as_the_config_without_hanging(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr("builtins.input", _no_question)
+        fifo = tmp_path / "the.pipe"
+        os.mkfifo(fifo)
+        key = tmp_path / "k"
+        key.write_text(KEY, encoding="utf-8")
+        for setting in ("DESK_LIVE_KEY_FILE", "DESK_LIVE_LEDGER_PATH"):
+            cfg = _valid_config(tmp_path, **{**_live_lines(tmp_path, key), setting: str(fifo)})
+            result: list[int] = []
+            assert _within(15, lambda: result.append(rrc.main(["--config", str(cfg), "--live-model"])), unblock=fifo)
+            out = capsys.readouterr().out
+            assert result == [rrc.EXIT_REFUSED] and out.startswith(f"refused: {setting}: is not a regular file"), out
+        result = []
+>       assert _within(15, lambda: result.append(rrc.main(["--config", str(fifo)])), unblock=fifo)
+E       AssertionError: assert False
+E        +  where False = _within(15, <function test_the_real_script_refuses_a_pipe_as_the_live_key_or_ledger_and_as_the_config_without_hanging.<locals>.<lambda> at 0x7f260b5c2ac0>, unblock=PosixPath('/home/user/build/rr6/tmp-B2/pytest-of-unknown/pytest-40/test_the_real_script_refuses_a9/the.pipe'))
+
+tests/test_real_run_v6.py:289: AssertionError
+----------------------------- Captured stdout call -----------------------------
+refused: DESK_DB_PATH, DESK_HUBSPOT_KEY_FILE, DESK_HUBSPOT_MAX_CALLS, REAL_HUBSPOT_READBACK_MAX_CALLS, DESK_SMTPP_HOST, DESK_SMTPP_USER, DESK_SMTPP_PASSWORD_FILE, DESK_SMTPP_FROM, DESK_SMTPP_RECIPIENTS, DESK_SMTPP_MAX_SENDS, REAL_IMAP_1_USER, REAL_IMAP_1_PASSWORD_FILE, REAL_IMAP_2_USER, REAL_IMAP_2_PASSWORD_FILE: not set in the config file
+=========================== short test summary info ============================
+FAILED tests/test_real_run_v6.py::test_the_real_script_refuses_a_pipe_as_the_live_key_or_ledger_and_as_the_config_without_hanging
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 23 passed in 15.28s

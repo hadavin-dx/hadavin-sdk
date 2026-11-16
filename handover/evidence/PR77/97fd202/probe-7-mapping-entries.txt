@@ -1,0 +1,23 @@
+Probe 7, head 97fd202. Input (Python source): KEY[:4] + ESC + "[1m" + KEY[4:]   with KEY = "AKIA" + "IOSFODNN7" + "EXAMPLE", ESC = "\x1b".
+Mapping keys and the LENGTH of each value only (values are never printed).
+
+redact_text(text, {})
+  type of mapping: dict; number of entries: 2
+  output: <APIKEY_1>
+  key='<APIKEY_1>' value type=str value length=24 (equals the input text); key stands in the output text=True
+  key='<APIKEY_2>' value type=str value length=18 (other); key stands in the output text=False
+  entries not referenced by a placeholder in the output text: 1 of 2
+
+redact_text(text, {}, neutralise_untrusted)
+  type of mapping: dict; number of entries: 2
+  output: <APIKEY_1>
+  key='<APIKEY_1>' value type=str value length=24 (equals the input text); key stands in the output text=True
+  key='<APIKEY_2>' value type=str value length=18 (other); key stands in the output text=False
+  entries not referenced by a placeholder in the output text: 1 of 2
+
+prepare_output(text, {}, 16384, None)
+  type of mapping: dict; number of entries: 2
+  output: <APIKEY_1>
+  key='<APIKEY_1>' value type=str value length=24 (equals the input text); key stands in the output text=True
+  key='<APIKEY_2>' value type=str value length=18 (other); key stands in the output text=False
+  entries not referenced by a placeholder in the output text: 1 of 2

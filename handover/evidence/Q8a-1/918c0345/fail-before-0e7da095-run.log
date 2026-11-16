@@ -1,0 +1,294 @@
+........................................................................ [ 13%]
+........................................................................ [ 26%]
+........................................................................ [ 40%]
+........................................................................ [ 53%]
+........................................................................ [ 66%]
+.......F................................................................ [ 80%]
+...........................................F...F.F........F.........FFFF [ 93%]
+FF.F.......................F...F.F                                       [100%]
+=================================== FAILURES ===================================
+____ test_no_config_derived_name_is_put_in_a_message_outside_the_one_filter ____
+
+    def test_no_config_derived_name_is_put_in_a_message_outside_the_one_filter():
+        """The class (Issue 4 of round 8): text that a configuration file holds is printed only through `shown_name` (or
+        said by position or as the field). Looks at every f-string, `%`, `.format`, `+`, `raise X(name)` and log argument
+        of every module under src, for the KNOWN spellings listed above; the allowed exceptions have a reason, and an
+        exception that no longer matches a site is itself a failure."""
+        found, stale = _guard_violations()
+>       assert not found, "\n".join(found)
+E       AssertionError: actions/executor.py:148: [message] f'http_{status}'
+E         actions/executor.py:147: [message] f'http_{status}'
+E         actions/secrets_vault.py:144: [message] f'secrets vault: the configured auth mount ({kind}): sign-in refused ({status})'
+E         actions/secrets_vault.py:92: [message] f'Vault answered {status} with an unexpected JSON shape'
+E         actions/secrets_vault.py:116: [message] f'a secret: Vault answered {status}'
+E         actions/secrets_vault.py:90: [message] f'Vault answered {status} with a body that is not JSON'
+E         audit/signer_vault.py:43: [message] f"transit {path.split('/')[0]}: Vault answered {status} (key name not shown)"
+E         cli.py:159: [message] f"{run.agent_id}: {frac} = {run.pass_rate:.2f} (threshold {run.threshold:.2f}) -> {('GREEN' if run.green else 'RED')}, pass^k={_num(run.pass_k)}, abstain={_num(run.abstain_rate)}, bound={_num(run.upper_error_bound, 3)}"
+E         evals.py:38: [message] f'gate k must be at least 1, got {k}'
+E         guard/egress.py:33: [message] f"host not in egress.yaml: {host or '?'}"
+E         runtime/tick.py:133: [message] _LOG.debug('%s: moved by another worker, skipped', what)
+E       assert not ["actions/executor.py:148: [message] f'http_{status}'", "actions/executor.py:147: [message] f'http_{status}'", "action...ered {status}'", "actions/secrets_vault.py:90: [message] f'Vault answered {status} with a body that is not JSON'", ...]
+
+tests/test_stage_names.py:3502: AssertionError
+__________ test_the_claim_of_each_reason_holds_in_the_code[DESCRIBE] ___________
+
+reason = 'DESCRIBE'
+
+    @pytest.mark.parametrize("reason", sorted(CHECKS))
+    def test_the_claim_of_each_reason_holds_in_the_code(reason):
+        assert _rows(reason), f"no row uses {reason}: the reason is not needed"
+        problems = CHECKS[reason]()
+>       assert not problems, "\n".join(problems)
+E       AssertionError: describe shows 'Boom 503 https://host-with-secret.exampl' for a hostile detail
+E         describe shows 'Boom 503 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' for a hostile detail
+E         describe shows 'Boom 503 a\nb' for a hostile detail
+E         describe shows 'Boom 503 k=v' for a hostile detail
+E       assert not ["describe shows 'Boom 503 https://host-with-secret.exampl' for a hostile detail", "describe shows 'Boom 503 xxxxxxxxx... detail", "describe shows 'Boom 503 a\\nb' for a hostile detail", "describe shows 'Boom 503 k=v' for a hostile detail"]
+
+tests/test_guard_reasons.py:776: AssertionError
+____________ test_the_claim_of_each_reason_holds_in_the_code[HOST] _____________
+
+reason = 'HOST'
+
+    @pytest.mark.parametrize("reason", sorted(CHECKS))
+    def test_the_claim_of_each_reason_holds_in_the_code(reason):
+        assert _rows(reason), f"no row uses {reason}: the reason is not needed"
+>       problems = CHECKS[reason]()
+                   ^^^^^^^^^^^^^^^^
+
+tests/test_guard_reasons.py:775: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def check_host() -> list[str]:
+>       from hadavin_sdk.guard.egress import _HOSTNAME
+E       ImportError: cannot import name '_HOSTNAME' from 'hadavin_sdk.guard.egress' (/home/user/build/EV-Q8a1b13-918c0345/wt-old/src/hadavin_sdk/guard/egress.py)
+
+tests/test_guard_reasons.py:327: ImportError
+___________ test_the_claim_of_each_reason_holds_in_the_code[KEYVER] ____________
+
+reason = 'KEYVER'
+
+    @pytest.mark.parametrize("reason", sorted(CHECKS))
+    def test_the_claim_of_each_reason_holds_in_the_code(reason):
+        assert _rows(reason), f"no row uses {reason}: the reason is not needed"
+        problems = CHECKS[reason]()
+>       assert not problems, "\n".join(problems)
+E       AssertionError: the Vault status is printed without a number check
+E       assert not ['the Vault status is printed without a number check']
+
+tests/test_guard_reasons.py:776: AssertionError
+___________ test_the_claim_of_each_reason_holds_in_the_code[REPORT] ____________
+
+reason = 'REPORT'
+
+    @pytest.mark.parametrize("reason", sorted(CHECKS))
+    def test_the_claim_of_each_reason_holds_in_the_code(reason):
+        assert _rows(reason), f"no row uses {reason}: the reason is not needed"
+        problems = CHECKS[reason]()
+>       assert not problems, "\n".join(problems)
+E       AssertionError: Route.model_id has no pattern
+E       assert not ['Route.model_id has no pattern']
+
+tests/test_guard_reasons.py:776: AssertionError
+__________________ test_status_text_shows_only_a_real_number ___________________
+
+    def test_status_text_shows_only_a_real_number():
+>       from hadavin_sdk.errors import status_text
+E       ImportError: cannot import name 'status_text' from 'hadavin_sdk.errors' (/home/user/build/EV-Q8a1b13-918c0345/wt-old/src/hadavin_sdk/errors.py)
+
+tests/test_q8a1_b13_fixes.py:25: ImportError
+________ test_a_vault_sign_in_answered_with_a_text_status_says_no_text _________
+
+    def test_a_vault_sign_in_answered_with_a_text_status_says_no_text():
+        from hadavin_sdk.actions.secrets_vault import ConfigError, _login_with
+    
+        provider = SimpleNamespace(call=lambda *a, **k: (MARKER, {}))
+        with pytest.raises(ConfigError) as err:
+            _login_with(provider, "auth", {}, "approle")
+>       assert MARKER not in str(err.value) and "sign-in refused (?)" in str(err.value)
+E       AssertionError: assert ('zq-b13-Wm4-text' not in 'secrets vau...13-Wm4-text)'
+E         
+E         'zq-b13-Wm4-text' is contained here:
+E            refused (zq-b13-Wm4-text))
+
+tests/test_q8a1_b13_fixes.py:42: AssertionError
+_____________ test_the_refused_host_is_cut_to_host_name_characters _____________
+
+    def test_the_refused_host_is_cut_to_host_name_characters():
+        from hadavin_sdk.guard.egress import EgressRefused, egress_check
+    
+        for hostile in ("a b", "k=v", "x'y", "<t>", "a" * 300, "pa$$.example"):
+            with pytest.raises(EgressRefused) as err:
+                egress_check(hostile, frozenset({"api.example.com"}))
+>           assert hostile not in str(err.value), hostile
+E           AssertionError: a b
+E           assert 'a b' not in 'host not in...ss.yaml: a b'
+E             
+E             'a b' is contained here:
+E               host not in egress.yaml: a b
+E             ?                          +++
+
+tests/test_q8a1_b13_fixes.py:51: AssertionError
+___ test_a_provider_error_code_with_other_characters_is_dropped_by_describe ____
+
+    def test_a_provider_error_code_with_other_characters_is_dropped_by_describe():
+        from hadavin_sdk.llm.retry import describe
+    
+        class Boom(Exception):
+            status_code = 429
+    
+        nums = _numbers(7)
+        for _ in range(200):
+            code = "".join("ab-_. /?=&%\n\"'é"[next(nums) % 14] for _ in range(1 + next(nums) % 99))
+            out = describe(Boom("q"), lambda e, c=code: c)
+>           assert out == "Boom 429" or (
+                code and len(code) <= 80 and all(c in "ab-_. " for c in code) and out.endswith(code)
+            ), (code, out)
+E           AssertionError: ('b/ "
+E             /\'=_.', 'Boom 429 b/ "
+E             /\'=_.')
+E           assert ('Boom 429 b/ "\n/\'=_.' == 'Boom 429'
+E             
+E             - Boom 429
+E             + Boom 429 b/ "
+E             + /'=_. or ('b/ "\n/\'=_.' and 10 <= 80 and False))
+E            +  where 10 = len('b/ "\n/\'=_.')
+E            +  and   False = all(<generator object test_a_provider_error_code_with_other_characters_is_dropped_by_describe.<locals>.<genexpr> at 0x7fae32b8b510>)
+
+tests/test_q8a1_b13_fixes.py:68: AssertionError
+________ test_a_model_id_that_is_a_sentence_or_a_key_is_refused_at_load ________
+
+    def test_a_model_id_that_is_a_sentence_or_a_key_is_refused_at_load():
+        from pydantic import ValidationError
+    
+        from hadavin_sdk.config import Route
+    
+        base = {"input_usd_per_mtok": "1", "output_usd_per_mtok": "1", "max_tokens": 10}
+        for ok in ("claude-sonnet-5-5", "us.anthropic.claude-x-v1:0", "claude-y@20250514", "a/b"):
+            assert Route(model_id=ok, **base).model_id == ok
+        for bad in ("two words", "key=value", "", "-lead", "x" * 200, MARKER + "\n", "é"):
+>           with pytest.raises(ValidationError):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE ValidationError
+
+tests/test_q8a1_b13_fixes.py:83: Failed
+___ test_failed_takes_the_error_out_of_the_handler_and_lets_the_others_pass ____
+
+    def test_failed_takes_the_error_out_of_the_handler_and_lets_the_others_pass():
+>       from hadavin_sdk.errors import Failed
+E       ImportError: cannot import name 'Failed' from 'hadavin_sdk.errors' (/home/user/build/EV-Q8a1b13-918c0345/wt-old/src/hadavin_sdk/errors.py)
+
+tests/test_q8a1_b13_fixes.py:88: ImportError
+_________ test_no_src_module_uses_a_blind_handler_for_the_two_wrappers _________
+
+    def test_no_src_module_uses_a_blind_handler_for_the_two_wrappers():
+        """The two reasoned `noqa: BLE001` of round 12 are gone: the handler is the `Failed` context manager."""
+        from pathlib import Path
+    
+        src = Path(__file__).resolve().parent.parent / "src" / "hadavin_sdk"
+        for rel in ("errors.py", "llm/retry.py"):
+            text = (src / rel).read_text(encoding="utf-8")
+>           assert "noqa: BLE001" not in text, rel
+E           AssertionError: errors.py
+E           assert 'noqa: BLE001' not in '"""Errors s...oin(parts)\n'
+E             
+E             'noqa: BLE001' is contained here:
+E               s exc:  # noqa: BLE001 - THE one place that turns any library failure into its class name only
+E             ?           ++++++++++++
+E                       failure = type(exc).__name__
+E                   raise make_error(failure)
+E               ...
+E             
+E             ...Full output truncated, use '-vv' to show
+
+tests/test_q8a1_b13_fixes.py:124: AssertionError
+__________ test_tick_has_no_blind_handler_and_no_suppression_comment ___________
+
+    def test_tick_has_no_blind_handler_and_no_suppression_comment():
+        import ast
+        from pathlib import Path
+    
+        from hadavin_sdk.runtime import tick
+    
+        text = Path(tick.__file__).read_text(encoding="utf-8")
+>       assert "BLE001" not in text and "S110" not in text
+E       assert ('BLE001' not in '"""`hadavin...s() else 0\n'
+E         
+E         'BLE001' is contained here:
+E             # noqa: BLE001 - isolate the item; re-raised below
+E         ?           ++++++
+E                       _LOG.warning("%s: %s", what, type(exc).__name__)
+E                       first = first or exc
+E               if first is not None:...
+E         
+E         ...Full output truncated, use '-vv' to show)
+
+tests/test_q8a1_b13_fixes.py:166: AssertionError
+_______ test_the_transit_signer_shows_only_a_number_as_the_vault_status ________
+
+    def test_the_transit_signer_shows_only_a_number_as_the_vault_status():
+        from hadavin_sdk.actions.secrets_vault import VaultError
+        from hadavin_sdk.audit.signer_vault import VaultTransitSigner
+    
+        class Vault:
+            def __init__(self, status):
+                self.status = status
+    
+            def authed(self, method, path, body=None):
+                return self.status, {}
+    
+        text_status = "zq-b13-" + "Wm4" + "-status"
+        for status, shown in ((503, "503"), (text_status, "?"), (True, "?")):
+            signer = VaultTransitSigner(Vault(status), "transit", "key-name-b13", 1)
+            with pytest.raises(VaultError) as raised:
+                signer._call("GET", "keys/key-name-b13")
+>           assert f"Vault answered {shown} (key name not shown)" in str(raised.value)
+E           AssertionError: assert 'Vault answered ? (key name not shown)' in 'transit keys: Vault answered zq-b13-Wm4-status (key name not shown)'
+E            +  where 'transit keys: Vault answered zq-b13-Wm4-status (key name not shown)' = str(VaultError('transit keys: Vault answered zq-b13-Wm4-status (key name not shown)'))
+E            +    where VaultError('transit keys: Vault answered zq-b13-Wm4-status (key name not shown)') = <ExceptionInfo VaultError('transit keys: Vault answered zq-b13-Wm4-status (key name not shown)') tblen=2>.value
+
+tests/test_q8a1_b13_fixes.py:270: AssertionError
+_ test_the_gate_line_does_not_print_an_agent_id_that_the_registry_does_not_hold _
+
+live_cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-14915/test_the_gate_line_does_not_pr0/config')
+fake_system = <tests.fixtures.fake_system.FakeSystem object at 0x7fae2b493250>
+capsys = <_pytest.capture.CaptureFixture object at 0x7fae2b4b78c0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fae323cd160>
+
+    def test_the_gate_line_does_not_print_an_agent_id_that_the_registry_does_not_hold(
+        live_cfg_dir, fake_system, capsys, monkeypatch
+    ):
+        from hadavin_sdk import cli
+    
+        run = SimpleNamespace(
+            agent_id=MARKER, n=1, k=1, passed=1, pass_rate=1.0, threshold=1.0, green=True,
+            pass_k=1, abstain_rate=0.0, upper_error_bound=0.5,
+        )  # fmt: skip
+        monkeypatch.setattr(cli.evals, "gate", lambda *a, **k: run)
+        assert cli.main(["--config", str(live_cfg_dir), "gate", "test-agent"]) == 0
+        out = capsys.readouterr().out
+>       assert MARKER not in out and "GREEN" in out
+E       AssertionError: assert ('zq-b13-Wm4-text' not in 'zq-b13-Wm4-...ound=0.500\n'
+E         
+E         'zq-b13-Wm4-text' is contained here:
+E           zq-b13-Wm4-text: 1/1 = 1.00 (threshold 1.00) -> GREEN, pass^k=1.00, abstain=0.00, bound=0.500
+E         ? +++++++++++++++)
+
+tests/test_q8a1_b13_live.py:40: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_stage_names.py::test_no_config_derived_name_is_put_in_a_message_outside_the_one_filter
+FAILED tests/test_guard_reasons.py::test_the_claim_of_each_reason_holds_in_the_code[DESCRIBE]
+FAILED tests/test_guard_reasons.py::test_the_claim_of_each_reason_holds_in_the_code[HOST]
+FAILED tests/test_guard_reasons.py::test_the_claim_of_each_reason_holds_in_the_code[KEYVER]
+FAILED tests/test_guard_reasons.py::test_the_claim_of_each_reason_holds_in_the_code[REPORT]
+FAILED tests/test_q8a1_b13_fixes.py::test_status_text_shows_only_a_real_number
+FAILED tests/test_q8a1_b13_fixes.py::test_a_vault_sign_in_answered_with_a_text_status_says_no_text
+FAILED tests/test_q8a1_b13_fixes.py::test_the_refused_host_is_cut_to_host_name_characters
+FAILED tests/test_q8a1_b13_fixes.py::test_a_provider_error_code_with_other_characters_is_dropped_by_describe
+FAILED tests/test_q8a1_b13_fixes.py::test_a_model_id_that_is_a_sentence_or_a_key_is_refused_at_load
+FAILED tests/test_q8a1_b13_fixes.py::test_failed_takes_the_error_out_of_the_handler_and_lets_the_others_pass
+FAILED tests/test_q8a1_b13_fixes.py::test_no_src_module_uses_a_blind_handler_for_the_two_wrappers
+FAILED tests/test_q8a1_b13_fixes.py::test_tick_has_no_blind_handler_and_no_suppression_comment
+FAILED tests/test_q8a1_b13_fixes.py::test_the_transit_signer_shows_only_a_number_as_the_vault_status
+FAILED tests/test_q8a1_b13_live.py::test_the_gate_line_does_not_print_an_agent_id_that_the_registry_does_not_hold
+15 failed, 523 passed in 11.61s

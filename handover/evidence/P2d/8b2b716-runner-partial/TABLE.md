@@ -1,0 +1,14 @@
+# TABLE (head 8b2b716; PR63 core/P1a head 27ae996bf770)
+command | exit | lines | last line
+--|--|--|--
+01-sync313 | 2 | 5 | error: Distribution `hadavin-sdk==0.1.0 @ editable+.` can't be installed because it is marked as `--no-build` but has no binary distribution
+01-sync313 | 0 | 82 |  + xmltodict==1.0.4
+02-ruff-check | 0 | 2 | All checks passed!
+03-ruff-format | 1 | 22 | 1 file would be reformatted, 323 files already formatted
+04-scan_repo | 0 | 2 | 
+05-bandit | 0 | 10 | [tester]	WARNING	nosec encountered (B102), but no failed test on file src/hadavin_sdk/tools.py:389
+05b-bandit-1.9.4 | 0 | 10 | [tester]	WARNING	nosec encountered (B102), but no failed test on file src/hadavin_sdk/tools.py:389
+07-sync312 | 0 | 81 |  + xmltodict==1.0.4
+pytest-313 | 1 | 7708 | 148 failed, 10718 passed, 1 skipped, 37 deselected, 14 xfailed, 2 warnings, 27 errors in 434.04s (0:07:14)
+pytest-312 | 1 | 7667 | 148 failed, 10718 passed, 1 skipped, 37 deselected, 14 xfailed, 2 warnings, 27 errors in 640.95s (0:10:40)
+08-gitleaks|see log

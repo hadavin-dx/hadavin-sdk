@@ -1,0 +1,2 @@
+machine LAPTOP; pr 70 branch core/P1b-fixwip head b0f54b1360b488a0a0504056c58c0a602fdf2d01; python 3.12; postgres 16 docker port 55501
+== pytest (not live, not perf) with DSN

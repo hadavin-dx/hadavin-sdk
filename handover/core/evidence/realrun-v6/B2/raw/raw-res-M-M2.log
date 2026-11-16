@@ -1,0 +1,24 @@
+...............................F
+=================================== FAILURES ===================================
+________________ test_a_failing_console_probe_is_not_a_terminal ________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fd1e82db9e0>
+
+    def test_a_failing_console_probe_is_not_a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        for error in (OSError, ValueError, AttributeError):
+    
+            def broken(*_a: object, _error: type[Exception] = error, **_k: object) -> bool:
+                raise _error
+    
+            monkeypatch.setattr(sys, "stdin", _Terminal())
+            monkeypatch.setattr(tg, "_console_input", broken)
+>           assert tg.stdin_is_terminal() is False
+E           assert True is False
+E            +  where True = <function stdin_is_terminal at 0x7fd1e862b7e0>()
+E            +    where <function stdin_is_terminal at 0x7fd1e862b7e0> = tg.stdin_is_terminal
+
+tests/test_start_prompt_hardening.py:306: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_start_prompt_hardening.py::test_a_failing_console_probe_is_not_a_terminal
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 31 passed in 0.18s

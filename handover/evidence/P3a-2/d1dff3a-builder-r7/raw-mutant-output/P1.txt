@@ -1,0 +1,18 @@
+### tests/test_migration_postgres.py::test_runbook_case_b_renames_the_old_notes_row_back_and_migrate_accepts_it rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+__ test_runbook_case_b_renames_the_old_notes_row_back_and_migrate_accepts_it ___
+tests/test_migration_postgres.py:871: in test_runbook_case_b_renames_the_old_notes_row_back_and_migrate_accepts_it
+    rb.evidence_block(),
+    ^^^^^^^^^^^^^^^^^^^
+tests/fixtures/runbook.py:56: in evidence_block
+    return block_with("ADD COLUMN IF NOT EXISTS error")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/fixtures/runbook.py:43: in block_with
+    assert len(found) == 1, (fragment, len(found))
+           ^^^^^^^^^^^^^^^
+E   AssertionError: ('ADD COLUMN IF NOT EXISTS error', 0)
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_runbook_case_b_renames_the_old_notes_row_back_and_migrate_accepts_it
+1 failed in 0.54s
+

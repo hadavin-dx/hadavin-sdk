@@ -1,0 +1,28 @@
+MUTANT A-01-proof-m23  VERDICT: KILLED
+description: M4: local_dir write_outcome DuplicateEvent except removed
+base commit: b4cce5b6ae80b45125604b8295ebb35bd2ea1c2c   root: /tmp/c8b/kA   file: src/hadavin_sdk/audit/local_dir.py
+command: env -i PATH=/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin HOME=/root PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/tmp/c8b/kA/src /tmp/c8b/kA/.venv/bin/python -m pytest -q -p no:cacheprovider --tb=line -rf tests/test_a01_extra_proof.py   (cwd=/tmp/c8b/kA)
+rc: 1
+restore check: diff <saved original> <file after restore>: rc=0 (0 = identical)
+pytest summary line: 1 failed, 9 passed in 1.32s
+first failing test: tests/test_a01_extra_proof.py::test_local_dir_duplicate_outcome_is_not_an_outage
+all failing tests (1): tests/test_a01_extra_proof.py::test_local_dir_duplicate_outcome_is_not_an_outage
+--- OLD TEXT (full) ---
+        except DuplicateEvent:
+            return f"{event.event_id}.json"
+        except Exception as exc:
+--- NEW TEXT (full) ---
+        except Exception as exc:
+--- PYTEST OUTPUT (full) ---
+.....F....                                                               [100%]
+=================================== FAILURES ===================================
+E   AssertionError: assert None == 'evt-d076da60dd7245cfb42f27241424a6ed.json'
+     +  where None = write_outcome(AuditEvent(schema_version=1, event_id='evt-d076da60dd7245cfb42f27241424a6ed', ts=datetime.datetime(2026, 11, 16, 9, 32...sion=None, rule_id=None, result='OK', error_code=None, caught_by=None, output_hash=None, restored_hash=None, rows=None))
+     +    where write_outcome = <hadavin_sdk.audit.local_dir.LocalDirSink object at 0x7fee55fb0190>.write_outcome
+------------------------------ Captured log call -------------------------------
+WARNING  hadavin_sdk.audit.local_dir:local_dir.py:118 audit outcome not written (DuplicateEvent): event evt-d076da60dd7245cfb42f27241424a6ed goes to the outbox
+/tmp/c8b/kA/tests/test_a01_extra_proof.py:82: AssertionError: assert None == 'evt-d076da60dd7245cfb42f27241424a6ed.json'
+=========================== short test summary info ============================
+FAILED tests/test_a01_extra_proof.py::test_local_dir_duplicate_outcome_is_not_an_outage
+1 failed, 9 passed in 1.32s
+

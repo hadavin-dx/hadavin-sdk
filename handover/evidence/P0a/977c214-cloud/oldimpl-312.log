@@ -1,0 +1,353 @@
+HEAD 977c214fd0c78284249e03c7f914ec0eb090487d
+$ /home/user/build/venv-p71-977c214-312/bin/python -m pytest -v -p no:cacheprovider tests/test_old_impl_tmp.py
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.2.0, pluggy-1.7.0 -- /home/user/build/venv-p71-977c214-312/bin/python
+rootdir: /home/user/build/EV-P71-977c214/wt
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 39 items
+
+tests/test_old_impl_tmp.py::test_repository_ships_no_pglast PASSED       [  2%]
+tests/test_old_impl_tmp.py::test_guard_catches[clean] PASSED             [  5%]
+tests/test_old_impl_tmp.py::test_guard_catches[non-test group] PASSED    [  7%]
+tests/test_old_impl_tmp.py::test_guard_catches[uppercase and leading space] PASSED [ 10%]
+tests/test_old_impl_tmp.py::test_guard_catches[at-form] PASSED           [ 12%]
+tests/test_old_impl_tmp.py::test_guard_catches[include-group] PASSED     [ 15%]
+tests/test_old_impl_tmp.py::test_guard_catches[runtime dependency] PASSED [ 17%]
+tests/test_old_impl_tmp.py::test_guard_catches[optional extra] PASSED    [ 20%]
+tests/test_old_impl_tmp.py::test_guard_catches[tool.uv sources] PASSED   [ 23%]
+tests/test_old_impl_tmp.py::test_guard_catches[uv.lock missing] PASSED   [ 25%]
+tests/test_old_impl_tmp.py::test_guard_catches[tool.uv constraint] PASSED [ 28%]
+tests/test_old_impl_tmp.py::test_guard_catches[lock edge from runtime package] PASSED [ 30%]
+tests/test_old_impl_tmp.py::test_guard_catches[lock group other than test] PASSED [ 33%]
+tests/test_old_impl_tmp.py::test_guard_catches[import in src] PASSED     [ 35%]
+tests/test_old_impl_tmp.py::test_guard_catches[import submodule] PASSED  [ 38%]
+tests/test_old_impl_tmp.py::test_guard_catches[from submodule] PASSED    [ 41%]
+tests/test_old_impl_tmp.py::test_guard_catches[import_module string] PASSED [ 43%]
+tests/test_old_impl_tmp.py::test_guard_catches[prose string is fine] PASSED [ 46%]
+tests/test_old_impl_tmp.py::test_guard_catches[missing src] PASSED       [ 48%]
+tests/test_old_impl_tmp.py::test_guard_catches[vendored dir] PASSED      [ 51%]
+tests/test_old_impl_tmp.py::test_guard_catches[vendored binary] PASSED   [ 53%]
+tests/test_old_impl_tmp.py::test_guard_catches[vendored macOS binary] PASSED [ 56%]
+tests/test_old_impl_tmp.py::test_guard_catches[vendored Windows binary] PASSED [ 58%]
+tests/test_old_impl_tmp.py::test_guard_catches[cyclic include-group has no name] PASSED [ 61%]
+tests/test_old_impl_tmp.py::test_guard_catches[cyclic pair still finds pglast] PASSED [ 64%]
+tests/test_old_impl_tmp.py::test_guard_catches[top-level .venv import is skipped] PASSED [ 66%]
+tests/test_old_impl_tmp.py::test_guard_catches[top-level node_modules vendored is skipped] PASSED [ 69%]
+tests/test_old_impl_tmp.py::test_guard_catches[top-level .venv alone is not a scanned file] PASSED [ 71%]
+tests/test_old_impl_tmp.py::test_guard_catches[nested .venv import is scanned] FAILED [ 74%]
+tests/test_old_impl_tmp.py::test_guard_catches[nested node_modules vendored is scanned] FAILED [ 76%]
+tests/test_old_impl_tmp.py::test_guard_catches[nested .venv under tools is scanned] FAILED [ 79%]
+tests/test_old_impl_tmp.py::test_guard_catches[unparsable python file] FAILED [ 82%]
+tests/test_old_impl_tmp.py::test_guard_catches[unparsable stub file] FAILED [ 84%]
+tests/test_old_impl_tmp.py::test_guard_catches[null byte in python file] FAILED [ 87%]
+tests/test_old_impl_tmp.py::test_guard_catches[upper-case binary suffix] FAILED [ 89%]
+tests/test_old_impl_tmp.py::test_guard_catches[venv-like name outside the skip list is scanned] PASSED [ 92%]
+tests/test_old_impl_tmp.py::test_unreadable_directory_raises FAILED      [ 94%]
+tests/test_old_impl_tmp.py::test_missing_tree_raises FAILED              [ 97%]
+tests/test_old_impl_tmp.py::test_symlinked_dir_is_not_entered PASSED     [100%]
+
+=================================== FAILURES ===================================
+______________ test_guard_catches[nested .venv import is scanned] ______________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-4272/test_guard_catches_nested__ven0')
+case = 'nested .venv import is scanned'
+
+    @pytest.mark.parametrize("case", MUTANTS)
+    def test_guard_catches(tmp_path, case):
+        files = {"pyproject.toml": PYPROJECT, "uv.lock": LOCK} | {f"{t}/m.py": "x = 1\n" for t in TREES}
+        files |= MUTANTS[case][0]
+        for rel, text in files.items():
+            if text is not None:
+                (tmp_path / rel).parent.mkdir(parents=True, exist_ok=True)
+                (tmp_path / rel).write_text(text, "utf-8")
+>       assert violations(tmp_path) == MUTANTS[case][1]
+E       AssertionError: assert [] == ['src: pkg/.v...ports pglast']
+E         
+E         Right contains one more item: 'src: pkg/.venv/m.py imports pglast'
+E         
+E         Full diff: (-: missing in left side, +: extra in left side)
+E         + []
+E         - [
+E         -     'src: pkg/.venv/m.py imports pglast',
+E         - ]
+
+tests/test_old_impl_tmp.py:237: AssertionError
+_________ test_guard_catches[nested node_modules vendored is scanned] __________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-4272/test_guard_catches_nested_node0')
+case = 'nested node_modules vendored is scanned'
+
+    @pytest.mark.parametrize("case", MUTANTS)
+    def test_guard_catches(tmp_path, case):
+        files = {"pyproject.toml": PYPROJECT, "uv.lock": LOCK} | {f"{t}/m.py": "x = 1\n" for t in TREES}
+        files |= MUTANTS[case][0]
+        for rel, text in files.items():
+            if text is not None:
+                (tmp_path / rel).parent.mkdir(parents=True, exist_ok=True)
+                (tmp_path / rel).write_text(text, "utf-8")
+>       assert violations(tmp_path) == MUTANTS[case][1]
+E       AssertionError: assert [] == ['demos: vend...vendored dir']
+E         
+E         Right contains 2 more items, first extra item: 'demos: vendored _p.so'
+E         
+E         Full diff: (-: missing in left side, +: extra in left side)
+E         + []
+E         - [
+E         -     'demos: vendored _p.so',
+E         -     'demos: vendored dir',
+E         - ]
+
+tests/test_old_impl_tmp.py:237: AssertionError
+___________ test_guard_catches[nested .venv under tools is scanned] ____________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-4272/test_guard_catches_nested__ven1')
+case = 'nested .venv under tools is scanned'
+
+    @pytest.mark.parametrize("case", MUTANTS)
+    def test_guard_catches(tmp_path, case):
+        files = {"pyproject.toml": PYPROJECT, "uv.lock": LOCK} | {f"{t}/m.py": "x = 1\n" for t in TREES}
+        files |= MUTANTS[case][0]
+        for rel, text in files.items():
+            if text is not None:
+                (tmp_path / rel).parent.mkdir(parents=True, exist_ok=True)
+                (tmp_path / rel).write_text(text, "utf-8")
+>       assert violations(tmp_path) == MUTANTS[case][1]
+E       AssertionError: assert [] == ['tools: vend... _pglast.dll']
+E         
+E         Right contains one more item: 'tools: vendored _pglast.dll'
+E         
+E         Full diff: (-: missing in left side, +: extra in left side)
+E         + []
+E         - [
+E         -     'tools: vendored _pglast.dll',
+E         - ]
+
+tests/test_old_impl_tmp.py:237: AssertionError
+__________________ test_guard_catches[unparsable python file] __________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-4272/test_guard_catches_unparsable_0')
+case = 'unparsable python file'
+
+    @pytest.mark.parametrize("case", MUTANTS)
+    def test_guard_catches(tmp_path, case):
+        files = {"pyproject.toml": PYPROJECT, "uv.lock": LOCK} | {f"{t}/m.py": "x = 1\n" for t in TREES}
+        files |= MUTANTS[case][0]
+        for rel, text in files.items():
+            if text is not None:
+                (tmp_path / rel).parent.mkdir(parents=True, exist_ok=True)
+                (tmp_path / rel).write_text(text, "utf-8")
+>       assert violations(tmp_path) == MUTANTS[case][1]
+               ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_old_impl_tmp.py:237: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_old_impl_tmp.py:104: in violations
+    bad = [b for t in TREES for b in _code(root, t)]
+                                     ^^^^^^^^^^^^^^
+tests/test_old_impl_tmp.py:65: in _code
+    for n in ast.walk(ast.parse(p.read_text("utf-8"))):
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+source = 'def (:\n', filename = '<unknown>', mode = 'exec'
+type_comments = False, feature_version = -1
+
+    def parse(source, filename='<unknown>', mode='exec', *,
+              type_comments=False, feature_version=None):
+        """
+        Parse the source into an AST node.
+        Equivalent to compile(source, filename, mode, PyCF_ONLY_AST).
+        Pass type_comments=True to get back type comments where the syntax allows.
+        """
+        flags = PyCF_ONLY_AST
+        if type_comments:
+            flags |= PyCF_TYPE_COMMENTS
+        if feature_version is None:
+            feature_version = -1
+        elif isinstance(feature_version, tuple):
+            major, minor = feature_version  # Should be a 2-tuple.
+            if major != 3:
+                raise ValueError(f"Unsupported major version: {major}")
+            feature_version = minor
+        # Else it should be an int giving the minor version for 3.x.
+>       return compile(source, filename, mode, flags,
+                       _feature_version=feature_version)
+E         File "<unknown>", line 1
+E           def (:
+E               ^
+E       SyntaxError: invalid syntax
+
+/usr/lib/python3.12/ast.py:52: SyntaxError
+___________________ test_guard_catches[unparsable stub file] ___________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-4272/test_guard_catches_unparsable_1')
+case = 'unparsable stub file'
+
+    @pytest.mark.parametrize("case", MUTANTS)
+    def test_guard_catches(tmp_path, case):
+        files = {"pyproject.toml": PYPROJECT, "uv.lock": LOCK} | {f"{t}/m.py": "x = 1\n" for t in TREES}
+        files |= MUTANTS[case][0]
+        for rel, text in files.items():
+            if text is not None:
+                (tmp_path / rel).parent.mkdir(parents=True, exist_ok=True)
+                (tmp_path / rel).write_text(text, "utf-8")
+>       assert violations(tmp_path) == MUTANTS[case][1]
+               ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_old_impl_tmp.py:237: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_old_impl_tmp.py:104: in violations
+    bad = [b for t in TREES for b in _code(root, t)]
+                                     ^^^^^^^^^^^^^^
+tests/test_old_impl_tmp.py:65: in _code
+    for n in ast.walk(ast.parse(p.read_text("utf-8"))):
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+source = 'class :\n', filename = '<unknown>', mode = 'exec'
+type_comments = False, feature_version = -1
+
+    def parse(source, filename='<unknown>', mode='exec', *,
+              type_comments=False, feature_version=None):
+        """
+        Parse the source into an AST node.
+        Equivalent to compile(source, filename, mode, PyCF_ONLY_AST).
+        Pass type_comments=True to get back type comments where the syntax allows.
+        """
+        flags = PyCF_ONLY_AST
+        if type_comments:
+            flags |= PyCF_TYPE_COMMENTS
+        if feature_version is None:
+            feature_version = -1
+        elif isinstance(feature_version, tuple):
+            major, minor = feature_version  # Should be a 2-tuple.
+            if major != 3:
+                raise ValueError(f"Unsupported major version: {major}")
+            feature_version = minor
+        # Else it should be an int giving the minor version for 3.x.
+>       return compile(source, filename, mode, flags,
+                       _feature_version=feature_version)
+E         File "<unknown>", line 1
+E           class :
+E                 ^
+E       SyntaxError: invalid syntax
+
+/usr/lib/python3.12/ast.py:52: SyntaxError
+_________________ test_guard_catches[null byte in python file] _________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-4272/test_guard_catches_null_byte_i0')
+case = 'null byte in python file'
+
+    @pytest.mark.parametrize("case", MUTANTS)
+    def test_guard_catches(tmp_path, case):
+        files = {"pyproject.toml": PYPROJECT, "uv.lock": LOCK} | {f"{t}/m.py": "x = 1\n" for t in TREES}
+        files |= MUTANTS[case][0]
+        for rel, text in files.items():
+            if text is not None:
+                (tmp_path / rel).parent.mkdir(parents=True, exist_ok=True)
+                (tmp_path / rel).write_text(text, "utf-8")
+>       assert violations(tmp_path) == MUTANTS[case][1]
+               ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_old_impl_tmp.py:237: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_old_impl_tmp.py:104: in violations
+    bad = [b for t in TREES for b in _code(root, t)]
+                                     ^^^^^^^^^^^^^^
+tests/test_old_impl_tmp.py:65: in _code
+    for n in ast.walk(ast.parse(p.read_text("utf-8"))):
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+source = 'x = 1\x00\n', filename = '<unknown>', mode = 'exec'
+type_comments = False, feature_version = -1
+
+    def parse(source, filename='<unknown>', mode='exec', *,
+              type_comments=False, feature_version=None):
+        """
+        Parse the source into an AST node.
+        Equivalent to compile(source, filename, mode, PyCF_ONLY_AST).
+        Pass type_comments=True to get back type comments where the syntax allows.
+        """
+        flags = PyCF_ONLY_AST
+        if type_comments:
+            flags |= PyCF_TYPE_COMMENTS
+        if feature_version is None:
+            feature_version = -1
+        elif isinstance(feature_version, tuple):
+            major, minor = feature_version  # Should be a 2-tuple.
+            if major != 3:
+                raise ValueError(f"Unsupported major version: {major}")
+            feature_version = minor
+        # Else it should be an int giving the minor version for 3.x.
+>       return compile(source, filename, mode, flags,
+                       _feature_version=feature_version)
+E       SyntaxError: source code string cannot contain null bytes
+
+/usr/lib/python3.12/ast.py:52: SyntaxError
+_________________ test_guard_catches[upper-case binary suffix] _________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-4272/test_guard_catches_upper_case_0')
+case = 'upper-case binary suffix'
+
+    @pytest.mark.parametrize("case", MUTANTS)
+    def test_guard_catches(tmp_path, case):
+        files = {"pyproject.toml": PYPROJECT, "uv.lock": LOCK} | {f"{t}/m.py": "x = 1\n" for t in TREES}
+        files |= MUTANTS[case][0]
+        for rel, text in files.items():
+            if text is not None:
+                (tmp_path / rel).parent.mkdir(parents=True, exist_ok=True)
+                (tmp_path / rel).write_text(text, "utf-8")
+>       assert violations(tmp_path) == MUTANTS[case][1]
+E       AssertionError: assert [] == ['src: vendored _pglast.SO']
+E         
+E         Right contains one more item: 'src: vendored _pglast.SO'
+E         
+E         Full diff: (-: missing in left side, +: extra in left side)
+E         + []
+E         - [
+E         -     'src: vendored _pglast.SO',
+E         - ]
+
+tests/test_old_impl_tmp.py:237: AssertionError
+_______________________ test_unreadable_directory_raises _______________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-4272/test_unreadable_directory_rais0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f82379317f0>
+
+    def test_unreadable_directory_raises(tmp_path, monkeypatch):
+        (tmp_path / "src" / "sub").mkdir(parents=True)
+        real = os.scandir
+    
+        def deny(path="."):
+            if Path(path).name == "sub":
+                raise PermissionError(13, "denied", str(path))
+            return real(path)
+    
+        monkeypatch.setattr(os, "scandir", deny)
+>       with pytest.raises(PermissionError):
+E       Failed: DID NOT RAISE PermissionError
+
+tests/test_old_impl_tmp.py:250: Failed
+___________________________ test_missing_tree_raises ___________________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-4272/test_missing_tree_raises0')
+
+    def test_missing_tree_raises(tmp_path):
+>       with pytest.raises(FileNotFoundError):
+E       Failed: DID NOT RAISE FileNotFoundError
+
+tests/test_old_impl_tmp.py:255: Failed
+=========================== short test summary info ============================
+FAILED tests/test_old_impl_tmp.py::test_guard_catches[nested .venv import is scanned]
+FAILED tests/test_old_impl_tmp.py::test_guard_catches[nested node_modules vendored is scanned]
+FAILED tests/test_old_impl_tmp.py::test_guard_catches[nested .venv under tools is scanned]
+FAILED tests/test_old_impl_tmp.py::test_guard_catches[unparsable python file]
+FAILED tests/test_old_impl_tmp.py::test_guard_catches[unparsable stub file]
+FAILED tests/test_old_impl_tmp.py::test_guard_catches[null byte in python file]
+FAILED tests/test_old_impl_tmp.py::test_guard_catches[upper-case binary suffix]
+FAILED tests/test_old_impl_tmp.py::test_unreadable_directory_raises - Failed:...
+FAILED tests/test_old_impl_tmp.py::test_missing_tree_raises - Failed: DID NOT...
+========================= 9 failed, 30 passed in 5.54s =========================
+exit=1

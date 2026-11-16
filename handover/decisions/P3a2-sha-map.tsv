@@ -1,0 +1,50 @@
+old_sha_12	new_sha_12	on_core/P3a-2_(PR73 head)	subject
+7155fb440dac	bc3cddead7cd	yes	P3a-1: migration rule as pure functions (file numbers, late files, recipe, gone message, lexer, refusal list)
+e0b747fd2af8	c77f31900618	yes	P3a-2: wire migrate() to the migration rule; read-back after each file; release manifest
+e6ddf186ee0a	f2fdf78db0a7	yes	P3a-2: directory refusal test asserts MigrationNumberError
+93759193295f	236ea2966b0b	yes	P3a-2: CHANGELOG: correct the evidence migration name, add the migration checks to the upgrade steps
+cbd5e4f4515a	ca9223717d08	yes	P3a-1 fix 1: hidden-character refusal, dollar rule by name run, statement_text fails closed, plain-words messages, wider refusal list, released-file manifest, pglast differential test
+659f9e301440	79d14c2f7b63	yes	P3a-2: an empty current schema does not break the late-file check
+91a439d4069f	a658f2f5bc0b	yes	P3a-1 fix 1: correct one mutant expectation text
+627e7a93a442	fb7f6f29ec3e	yes	Merge origin/core/P3a (P3a-1 fix1) into core/P3a-2
+62fba0bb3d67	8f663d1bd692	yes	P3a-2: use lex() (statement_text now raises) in the grant scan after P3a-1 fix1
+66a5710c25e4	117a9d4e09b1	yes	P3a-2: keep one release manifest (fixtures/migrations_released.json from fix1); drop the duplicate
+606a9fe63082	a60b8b9b5118	yes	Merge remote-tracking branch 'origin/main' into core/P3a
+967d5a16fbe2	11332ec750dd	yes	Merge core/P3a (with main) into core/P3a-2; keep both CHANGELOG entries
+2cde7e2fd8d7	6003968f4fa2	yes	Merge origin/main (P3a-1 as merged, 0dabf1f) into core/P3a-2
+f1800879f76c	0bd67127850d	yes	P3a-2: role-membership erratum in migrate(), tripwire and skip/pair rules, CHANGELOG evidence name and Migration runbook
+cb313d6437a6	db5f2e22fce3	yes	P3a-2: migrate() uses MIGRATE_LOCK directly (P3a-1 guard test wants no second _LOCK); wiring test sees the lock key; psycopg required through require_module
+293bd45dd350	ce26acb8e518	yes	P3a-2: the require_module tests catch a skip, so a skip where a failure is required fails the test
+63658aaceadc	9259913a2b34	yes	P3a-2: two P3a-1 mutants expect the new failure text now that migrate.py imports the lock key and the folder
+d1d7dc47024d	4a2c033f5c41	yes	P3a-2: CHANGELOG repair path for an early evidence table (case g), case (b) fixed and run, case (c) released files, role-membership refusal reads names with a dollar sign, runbook steps run by tests
+889cfc042e97	fe595294eb6f	yes	P3a-2: tests and mutants for names that hold a dollar sign in the role-membership refusal
+ea402429072e	31eca9f21ea3	yes	P3a-2: move the dollar-name tests out of the CHANGELOG test file
+1e6b8960a5f7	cfd55df5444d	yes	P3a-2: round 2 fixes: migrate() checks the released list, read-back of role memberships, trigger key by name, recipe tests H1/H4, non-superuser test, case (e) tests, header timeouts, doc fixes
+98d042f493e7	2938209afe83	yes	P3a-2: a test that the recipe's own first line stops psql without -v (kills mutant R15)
+d01c84b443a3	0dd8098ac6d5	yes	P3a-2: fix the duplicate check= keyword in the psql test helper
+0d68cbbd2995	f800835515a1	yes	P3a-2: pin the released hashes, one source for the limits, migrate sets them
+7ed4c1043d27	2b5f9ac4619c	yes	P3a-2: keep the runbook helper's limits line on one line (mutant R32 anchor)
+43d68fdc5132	279ba1b99ad0	yes	P3a-2: the lock-wait test fails instead of hanging on code without the limit; fix two stale comments
+2e35f76e39ee	c389a389044f	yes	P3a-2: use limit values in the probe test that no mutant shares
+2b0941b7092e	987fa70e4c8b	yes	P3a-2: limits scope and order documented, plain error for a limit, duplicate json names refused
+b599db4c0efc	24610a6b7416	yes	P3a-2 round 1: one released-files list, trigger equality, privileged-role refusal, hash of the executed text, SQLSTATE, wider read-back
+6f2493aeea25	2d85c8731cee	yes	P3a-2 round 1 (lead correction q380): one released-files list inside the package, read by migrate() at run time
+c727453a1cad	f27fbb98ca9a	yes	P3a-2 fix batch: trigger read-back with a reviewed allow list, plain migration role only, checked-in mutants
+ef2adc75c1a8	bb4ae670cf02	yes	migrate: refuse borrowed rights and foreign-owned objects, key trigger allow list by table, fix mutant runner
+0354512b2b6e	ac7413b27852	yes	migrate: check session user, built-in roles, parameter grants, schema usage; fix ownership refusal; mutant runner per killer
+ffe896eb4e0b	56751b233ef6	yes	tests: one plain test role per test process, dropped at exit
+cb0930f4f17e	9cd5760eada3	yes	Migrations round 4: ownership refusal limited to this package's objects, scoped role read-back with a recheck after each file, parameter grants through memberships, MAINTAIN from 17, test-role and mutant-runner fixes, scrub of private ids
+acc5bfcd978b	9d68d7c78633	yes	Migrations round 5: role scope covers roles a named role belongs to, managed function names folded and quoted names read, portal table rights, stale test roles swept, stricter mutant runner, plain words for private ids
+0c5249112fee	3c2f1ed8ab5f	yes	migrate: portal role checked like the other roles, stricter mutant runner, test-role fixes (round 6)
+d1dff3adb6f1	ee3ec854614d	yes	migrate: cluster-wide liveness mark, schema-aware managed names, test logins with hashes, clearer changelog (round 7)
+adef142e7eb6	fe3b213993c4	yes	migrate: every test login passes its password, sweep and exit hook work across databases, clearer refusal and changelog (round 8)
+f906e3d9e976	562b2d995419	yes	test: the unlock-failure wiring test fails with an assertion head, not a chained driver error
+e0a9c9788010	17d8a550c3d0	yes	P3a-2 round 9: refuse rights for other roles and SECURITY DEFINER, lock wait ceiling, test helper hardening, wording
+ce3ade7312ec	f46552c2ac6e	yes	P3a-2 round 9: the failure message of the runner test no longer quotes the setup-problem marker
+d41a0c0c87c1	(dropped: handover-only commit)	yes	P3a-2 round 9: builder evidence
+cdf1c173d519	bba6ba4ae53d	yes	PR73 round 10: read-back over the whole database, schema and default rights, owner handover, lock wait limits, text refusal of rights on other places
+ac94d18fb1cf	42fc2597d893	yes	PR73 round 10: make the new tests run alone and kill their mutants (SD3-SD5, DP1, LW4, CL1, SW18)
+60b5c20b5b19	31ffaa062e7b	no	PR73 round 11: read back rights and owners of objects that existed before the run
+e2abc6ff15f0	6e866e882306	no	PR73 round 11: refuse the REPLICATION flag on the migration role (r10-05)
+b0b5c2e7ac24	aeaac529ec5f	no	Mutant list: use the real parameter ids of the owner-handover killers
+58acdcc46b5e	8382bdd5b0e3	no	Round 11 mutants: kill RA1b and DP5 with sharper tests, make SC11, SW20 and LV1-LV4 fail for the stated reason

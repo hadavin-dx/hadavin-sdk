@@ -1,0 +1,16 @@
+# Review aid for the scan guard: these files decide what the scans check, so a change to them should be read by the owner.
+# This file only names the reviewers. It protects nothing until the owner turns on "Require review from Code Owners"
+# in a repository ruleset (a repository setting, owner only; not done by this change).
+/tools/scan_repo.py @veerarakesh56
+/tools/scan_suppressions.txt @veerarakesh56
+/tools/scan_allowlist.txt @veerarakesh56
+/tools/scan_banned_extra.txt @veerarakesh56
+/tests/fixtures/*golden* @veerarakesh56
+/.github/ @veerarakesh56
+/.gitleaks* @veerarakesh56
+/tests/test_scan_repo.py @veerarakesh56
+/tests/test_scan_repo_mutations.py @veerarakesh56
+/tests/test_ci_gitleaks_scope.py @veerarakesh56
+/tests/test_ci_toolpath_step.py @veerarakesh56
+/pyproject.toml @veerarakesh56
+/uv.lock @veerarakesh56

@@ -1,0 +1,17 @@
+### tests/test_migration_postgres.py::test_one_connection_target_is_one_entry_whatever_the_search_path rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_______ test_one_connection_target_is_one_entry_whatever_the_search_path _______
+tests/test_migration_postgres.py:1989: in test_one_connection_target_is_one_entry_whatever_the_search_path
+    assert (
+E   assert "user=u dbnam...davin_test_a'" == "user=u dbnam...davin_test_b'"
+E     
+E     Skipping 57 identical leading characters in diff, use -v to show
+E     - avin_test_b'
+E     ?           ^
+E     + avin_test_a'
+E     ?           ^
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_one_connection_target_is_one_entry_whatever_the_search_path
+1 failed in 0.51s
+

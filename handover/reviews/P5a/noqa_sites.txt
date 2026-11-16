@@ -1,0 +1,10 @@
+# line	why it cannot be narrowed	test name
+160	reads __module__, __qualname__ and vars() of a class a hostile program built; a property or metaclass there may raise any Exception (named_class)	test_guard_catches_and_records[named_class]
+182	calls the check above on an object the caller supplied; any Exception from its attributes must give dynamic_class (class_name)	test_guard_catches_and_records[class_name]
+196	walks the class chain of a hostile exception; one class with a raising attribute must not hide the rest (own_code)	test_guard_catches_and_records[own_code]
+219	reads f_globals, co_filename of a frame object taken from a traceback a hostile program can build (counted_module)	test_guard_catches_and_records[counted_module]
+259	reads f_code of the same hostile frame objects (locator)	test_guard_catches_and_records[locator]
+308	calls pydantic error methods on an object that only claims to be a ValidationError (validation_text)	test_guard_catches_and_records[validation_text]
+392	reads .exceptions of an exception group subclass; a property there may raise any Exception (group_member)	test_guard_catches_and_records[group_member]
+448	the last net around the whole classifier: a diagnostic must come back whatever the exception object does (diagnose)	test_guard_catches_and_records[diagnose]
+498	reads fields of a Diagnostic that a caller may have forged; the line must come back (render)	test_guard_catches_and_records[render]

@@ -1,0 +1,15 @@
+hadavin_sdk file: /home/user/build/ER-pdbind11/src/hadavin_sdk/__init__.py
+
+== (6) pre-auth cost per request (ms), store scans, values charged
+1000 mixed rows run 1: 43.0 ms | store scanned 1x | values charged 101710 | result=()
+1000 mixed rows run 2: 52.1 ms | store scanned 1x | values charged 101710 | result=()
+1000 mixed rows run 3: 40.7 ms | store scanned 1x | values charged 101710 | result=()
+   seal compare alone (_runtime_ok, no scan of rows) x1000 on 1000-row store: 40.856 s total = 40.856 ms each, result=True
+2400 mixed rows run 1: 109.6 ms | store scanned 1x | values charged 243810 | result=()
+2400 mixed rows run 2: 104.7 ms | store scanned 1x | values charged 243810 | result=()
+2400 mixed rows run 3: 103.1 ms | store scanned 1x | values charged 243810 | result=()
+   seal compare alone (_runtime_ok, no scan of rows) x1000 on 2400-row store: 101.289 s total = 101.289 ms each, result=True
+store+channel+runtime.llm 150000 values each run 1: 122.0 ms | store scanned 1x | values charged 249666 | result=('held channel: not read in full, another object (MemoryStore) used most of the budget', 'held on_decided: function')
+store+channel+runtime.llm 150000 values each run 2: 124.9 ms | store scanned 1x | values charged 249666 | result=('held channel: not read in full, another object (MemoryStore) used most of the budget', 'held on_decided: function')
+store+channel+runtime.llm 150000 values each run 3: 119.9 ms | store scanned 1x | values charged 249666 | result=('held channel: not read in full, another object (MemoryStore) used most of the budget', 'held on_decided: function')
+rc=0

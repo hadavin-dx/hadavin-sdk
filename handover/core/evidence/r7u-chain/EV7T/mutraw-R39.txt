@@ -1,0 +1,28 @@
+.F
+=================================== FAILURES ===================================
+_ test_t4_any_non_empty_require_value_makes_a_missing_openssl_a_failure[true] __
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f655a2de570>
+value = 'true'
+
+    @pytest.mark.parametrize("value", ["1", "true", "yes", "TRUE", "2", "0", "on"])
+    def test_t4_any_non_empty_require_value_makes_a_missing_openssl_a_failure(
+        monkeypatch: pytest.MonkeyPatch, value: str
+    ) -> None:
+        from support import skip_or_fail_without_openssl
+    
+        monkeypatch.setenv("DPLD_REQUIRE_SCAN", value)
+        with pytest.raises(BaseException) as info:
+            skip_or_fail_without_openssl()
+>       assert info.type is pytest.fail.Exception, info.type
+E       AssertionError: <class 'Skipped'>
+E       assert <class 'Skipped'> is <class 'Failed'>
+E        +  where <class 'Skipped'> = <ExceptionInfo the openssl program is not installed, so no test certificate can be made tblen=3>.type
+E        +  and   <class 'Failed'> = <_pytest.outcomes._Fail object at 0x7f655c41af60>.Exception
+E        +    where <_pytest.outcomes._Fail object at 0x7f655c41af60> = pytest.fail
+
+tests/test_r7t_findings.py:163: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r7t_findings.py::test_t4_any_non_empty_require_value_makes_a_missing_openssl_a_failure[true]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 1 passed, 130 deselected in 0.25s

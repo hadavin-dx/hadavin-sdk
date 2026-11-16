@@ -1,0 +1,16 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+tools/mutation_runner.py:340: error: Cannot find implementation or library stub for module named "hadavin_sdk.testing.mutation"  [import-not-found]
+tools/mutation_runner.py:340: note: See https://mypy.readthedocs.io/en/stable/running_mypy.html#missing-imports
+tools/mutation_runner.py:1143: error: Module has no attribute "getuid"; maybe "getpid" or "getppid"?  [attr-defined]
+tools/mutation_runner.py:1154: error: Module has no attribute "getuid"; maybe "getpid" or "getppid"?  [attr-defined]
+tools/mutation_runner.py:1236: error: Module has no attribute "getuid"; maybe "getpid" or "getppid"?  [attr-defined]
+tools/mutation_runner.py:1276: error: Module has no attribute "getuid"; maybe "getpid" or "getppid"?  [attr-defined]
+tools/mutation_runner.py:1304: error: Module has no attribute "O_DIRECTORY"  [attr-defined]
+tools/mutation_runner.py:1304: error: Module has no attribute "O_NOFOLLOW"  [attr-defined]
+tools/mutation_runner.py:1516: error: Module has no attribute "P_PID"  [attr-defined]
+tools/mutation_runner.py:1516: error: Module has no attribute "WEXITED"  [attr-defined]
+tools/mutation_runner.py:1516: error: Module has no attribute "WNOHANG"  [attr-defined]
+tools/mutation_runner.py:1516: error: Module has no attribute "WNOWAIT"; maybe "P_NOWAIT"?  [attr-defined]
+tools/mutation_runner.py:1541: error: Module has no attribute "killpg"  [attr-defined]
+tools/mutation_runner.py:1541: error: Module has no attribute "SIGKILL"; maybe "SIGILL"?  [attr-defined]
+Found 13 errors in 1 file (checked 1 source file)

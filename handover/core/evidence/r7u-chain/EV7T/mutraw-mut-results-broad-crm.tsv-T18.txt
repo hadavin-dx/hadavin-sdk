@@ -1,0 +1,22 @@
+.......F
+=================================== FAILURES ===================================
+______ test_timeout_after_create_then_retry_finds_it_and_does_not_double _______
+
+rig = <test_crm_hubspot.Rig object at 0x7f6f3c4bb7d0>
+
+    def test_timeout_after_create_then_retry_finds_it_and_does_not_double(rig: Rig) -> None:
+        mode(rig, "timeout_after_create")
+        c = rig.crm(timeout_seconds=0.5)
+        with pytest.raises(CrmError) as e:
+            c.put("L-1", REC)
+>       assert e.value.nothing_stored is False  # unclear: the contact is in the CRM
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: assert True is False
+E        +  where True = CrmNothingStored('TimeoutError').nothing_stored
+E        +    where CrmNothingStored('TimeoutError') = <ExceptionInfo CrmNothingStored('TimeoutError') tblen=6>.value
+
+tests/test_crm_hubspot.py:158: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_crm_hubspot.py::test_timeout_after_create_then_retry_finds_it_and_does_not_double
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 7 passed in 4.90s

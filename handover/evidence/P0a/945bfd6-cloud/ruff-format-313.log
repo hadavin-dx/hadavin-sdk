@@ -1,0 +1,4 @@
+HEAD 945bfd6d21ddc7361b80d1976b159764ec195edd
+$ /home/user/build/venv-p71-945bfd6-313/bin/ruff format --check
+311 files already formatted
+exit=0

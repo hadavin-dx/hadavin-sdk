@@ -1,0 +1,9 @@
+20f8d0c8ca0c75ebbd45564772e64842ade158f8
+100644 9107c49d1dd3d0be8383e008ae71c251e8f91fbb 1	CHANGELOG.md
+100644 c5798a152ace966fad21cc622feec3931da6a362 2	CHANGELOG.md
+100644 5e8e9af6b8df9c63045ca382d27c0f275e225977 3	CHANGELOG.md
+
+Auto-merging CHANGELOG.md
+CONFLICT (content): Merge conflict in CHANGELOG.md
+Auto-merging src/hadavin_sdk/defaults.py
+Auto-merging src/hadavin_sdk/runtime/tick.py

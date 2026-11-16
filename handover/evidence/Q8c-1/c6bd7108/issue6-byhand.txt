@@ -1,0 +1,9 @@
+--- env=[2026-12-12]
+ENV HADAVIN_POLICY_FIXED_DAY = 2026-12-12 | tool sees (inside the test, after the autouse fixture): 2026-12-12
+1 passed in 0.08s
+--- env=[2026-12-11]
+ENV HADAVIN_POLICY_FIXED_DAY = 2026-12-11 | tool sees (inside the test, after the autouse fixture): 2026-12-11
+1 passed in 0.08s
+--- env=[]
+ENV HADAVIN_POLICY_FIXED_DAY = None | tool sees (inside the test, after the autouse fixture): 2026-11-12
+1 passed in 0.08s

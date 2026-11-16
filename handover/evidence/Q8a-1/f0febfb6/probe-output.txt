@@ -1,0 +1,85 @@
+env get(unset name)                                                       | plain     | ConfigError            | MSG: the secret is not set in the environment, or it is empty
+mounted_file get(missing name)                                            | plain     | ConfigError            | MSG: the secret was not found in the mounted folder
+mounted_file get(escape ../name)                                          | plain     | ConfigError            | MSG: path escapes its folder
+mounted_file get(absolute name)                                           | plain     | ConfigError            | MSG: path escapes its folder
+cache get(empty value)                                                    | plain     | ConfigError            | MSG: the secret is empty
+cache get(fetch raises, message holds name: ARTIFICIAL)                   | plain     | RuntimeError           | MSG: backend failure for <PLANTED>
+aws get(ResourceNotFound)                                                 | plain     | ConfigError            | MSG: the secret was not found in Secrets Manager
+aws get(AccessDenied raw error)                                           | plain     | ClientError            | MSG: An error occurred (AccessDeniedException) when calling the GetSecretValue operation: denied
+aws get(binary)                                                           | plain     | ConfigError            | MSG: the secret is binary; store it as a string
+azure get(invalid name chars)                                             | plain     | ConfigError            | MSG: a secret name: Azure names are letters, digits and '-'
+azure get(not found)                                                      | plain     | ConfigError            | MSG: the secret was not found in Azure Key Vault
+azure get(other http error)                                               | plain     | HttpResponseError      | MSG: denied
+gcp get(invalid name chars)                                               | plain     | ConfigError            | MSG: a secret name: GCP names are letters, digits, '_' and '-'
+gcp get(not found)                                                        | plain     | ConfigError            | MSG: the secret was not found in GCP Secret Manager
+gcp get(forbidden raw error)                                              | plain     | Forbidden              | MSG: 403 denied
+env get(unset name)                                                       | secretish | ConfigError            | MSG: the secret is not set in the environment, or it is empty
+mounted_file get(missing name)                                            | secretish | ConfigError            | MSG: the secret was not found in the mounted folder
+mounted_file get(escape ../name)                                          | secretish | ConfigError            | MSG: path escapes its folder
+mounted_file get(absolute name)                                           | secretish | ConfigError            | MSG: path escapes its folder
+cache get(empty value)                                                    | secretish | ConfigError            | MSG: the secret is empty
+cache get(fetch raises, message holds name: ARTIFICIAL)                   | secretish | RuntimeError           | MSG: backend failure for <PLANTED>
+aws get(ResourceNotFound)                                                 | secretish | ConfigError            | MSG: the secret was not found in Secrets Manager
+aws get(AccessDenied raw error)                                           | secretish | ClientError            | MSG: An error occurred (AccessDeniedException) when calling the GetSecretValue operation: denied
+aws get(binary)                                                           | secretish | ConfigError            | MSG: the secret is binary; store it as a string
+azure get(invalid name chars)                                             | secretish | ConfigError            | MSG: a secret name: Azure names are letters, digits and '-'
+azure get(not found)                                                      | secretish | ConfigError            | MSG: the secret was not found in Azure Key Vault
+azure get(other http error)                                               | secretish | HttpResponseError      | MSG: denied
+gcp get(invalid name chars)                                               | secretish | ConfigError            | MSG: a secret name: GCP names are letters, digits, '_' and '-'
+gcp get(not found)                                                        | secretish | ConfigError            | MSG: the secret was not found in GCP Secret Manager
+gcp get(forbidden raw error)                                              | secretish | Forbidden              | MSG: 403 denied
+vault get(invalid name chars)                                             | plain     | ConfigError            | MSG: a secret name: Vault names here are letters, digits, '.', '_', '-'
+vault get(404)                                                            | plain     | ConfigError            | MSG: the secret was not found in Vault
+vault get(500)                                                            | plain     | VaultError             | MSG: a secret: Vault answered 500
+vault get(200 no field)                                                   | plain     | ConfigError            | MSG: the secret has no field named by `field` in Vault
+vault get(200 html body holding the planted text)                         | plain     | VaultError             | MSG: Vault answered 200 with a body that is not JSON
+vault get(invalid name chars)                                             | secretish | ConfigError            | MSG: a secret name: Vault names here are letters, digits, '.', '_', '-'
+vault get(404)                                                            | secretish | ConfigError            | MSG: the secret was not found in Vault
+vault get(500)                                                            | secretish | VaultError             | MSG: a secret: Vault answered 500
+vault get(200 no field)                                                   | secretish | ConfigError            | MSG: the secret has no field named by `field` in Vault
+vault get(200 html body holding the planted text)                         | secretish | VaultError             | MSG: Vault answered 200 with a body that is not JSON
+config signer private_key_secret_name (load_config then build, demo)      | plain     | ConfigError            | MSG: the secret set in Ed25519LocalSettings.private_key_secret_name cannot be read at start-up (ConfigError)
+config signer private_key_secret_name + private_key_path (both set)       | plain     | ConfigError            | MSG: backends.signer (ed25519_local): 1 validation error for Ed25519LocalSettings |  |   Value error, set exactly one of private_key_path and private_key_secret_name [type=value_error]
+config signer unknown field holding value                                 | plain     | ConfigError            | MSG: backends.signer (ed25519_local): 1 validation error for Ed25519LocalSettings | <unknown key> |   Extra inputs are not permitted [type=extra_forbidden]
+config secrets mounted_file dir (load_config then build)                  | plain     | ConfigError            | MSG: secrets mounted_file: the configured dir is not a folder
+config secrets mounted_file ttl_s holding value                           | plain     | ConfigError            | MSG: backends.secrets (mounted_file): 1 validation error for MountedFileSettings | ttl_s |   Input should be a valid number, unable to parse string as a number [type=float_parsing]
+config secrets kind=aws_secrets_manager field holding value (load_config) | plain     | no-exception           | in_log=False
+config secrets kind=azure_key_vault field holding value (load_config)     | plain     | ConfigError            | MSG: backends.secrets (azure_key_vault): 1 validation error for AzureKeyVaultSettings | vault_url |   String should match pattern '^https://' [type=string_pattern_mismatch]
+config secrets kind=gcp_secret_manager field holding value (load_config)  | plain     | no-exception           | in_log=False
+config secrets kind=vault field holding value (load_config)               | plain     | ConfigError            | MSG: backends.secrets (vault): 1 validation error for VaultSettings |  |   Value error, address must be https (plain http only to this machine) [type=value_error]
+config secrets kind=env field holding value (load_config)                 | plain     | no-exception           | in_log=False
+golden case id and input_ref (load_registry then evals.gate, demo)        | plain     | ConfigError            | MSG: a golden input document (inputs_dir): cannot be read (FileNotFoundError)
+golden input_ref escaping inputs_dir                                      | plain     | ConfigError            | MSG: path escapes its folder
+action verify_check function reference outside check_modules              | plain     | ConfigError            | MSG: action send_email: verify_check is outside check_modules
+action rollback function reference outside check_modules                  | plain     | ConfigError            | MSG: action send_email: rollback is outside check_modules
+action verify_check module ok, function name = planted value              | plain     | no-exception           | in_log=False
+config signer private_key_secret_name (load_config then build, demo)      | secretish | ConfigError            | MSG: the secret set in Ed25519LocalSettings.private_key_secret_name cannot be read at start-up (ConfigError)
+config signer private_key_secret_name + private_key_path (both set)       | secretish | ConfigError            | MSG: backends.signer (ed25519_local): 1 validation error for Ed25519LocalSettings |  |   Value error, set exactly one of private_key_path and private_key_secret_name [type=value_error]
+config signer unknown field holding value                                 | secretish | ConfigError            | MSG: backends.signer (ed25519_local): 1 validation error for Ed25519LocalSettings | <unknown key> |   Extra inputs are not permitted [type=extra_forbidden]
+config secrets mounted_file dir (load_config then build)                  | secretish | ConfigError            | MSG: secrets mounted_file: the configured dir is not a folder
+config secrets mounted_file ttl_s holding value                           | secretish | ConfigError            | MSG: backends.secrets (mounted_file): 1 validation error for MountedFileSettings | ttl_s |   Input should be a valid number, unable to parse string as a number [type=float_parsing]
+config secrets kind=aws_secrets_manager field holding value (load_config) | secretish | no-exception           | in_log=False
+config secrets kind=azure_key_vault field holding value (load_config)     | secretish | ConfigError            | MSG: backends.secrets (azure_key_vault): 1 validation error for AzureKeyVaultSettings | vault_url |   String should match pattern '^https://' [type=string_pattern_mismatch]
+config secrets kind=gcp_secret_manager field holding value (load_config)  | secretish | no-exception           | in_log=False
+config secrets kind=vault field holding value (load_config)               | secretish | ConfigError            | MSG: backends.secrets (vault): 1 validation error for VaultSettings |  |   Value error, address must be https (plain http only to this machine) [type=value_error]
+config secrets kind=env field holding value (load_config)                 | secretish | no-exception           | in_log=False
+golden case id and input_ref (load_registry then evals.gate, demo)        | secretish | ConfigError            | MSG: a golden input document (inputs_dir): cannot be read (FileNotFoundError)
+golden input_ref escaping inputs_dir                                      | secretish | ConfigError            | MSG: path escapes its folder
+action verify_check function reference outside check_modules              | secretish | ConfigError            | MSG: action send_email: verify_check is outside check_modules
+action rollback function reference outside check_modules                  | secretish | ConfigError            | MSG: action send_email: rollback is outside check_modules
+action verify_check module ok, function name = planted value              | secretish | no-exception           | in_log=False
+40-char agent id, error in agent (unknown route)                          | id        | ConfigError            | MSG: agent <not shown>: model_route is not one of the configured routes
+40-char agent id, error in agent (unknown action in scope)                | id        | ConfigError            | MSG: agent <not shown>: scope_allowed entry 0 has no contract
+40-char agent id, duplicate agent id                                      | id        | ConfigError            | MSG: agents.yaml: duplicate id in entry 3
+hex-run agent id, error in agent (unknown route)                          | id        | ConfigError            | MSG: agent <not shown>: model_route is not one of the configured routes
+hex-run agent id, error in agent (unknown action in scope)                | id        | ConfigError            | MSG: agent <not shown>: scope_allowed entry 0 has no contract
+hex-run agent id, duplicate agent id                                      | id        | ConfigError            | MSG: agents.yaml: duplicate id in entry 3
+secret-shaped agent id, error in agent (unknown route)                    | id        | ConfigError            | MSG: agent <not shown>: model_route is not one of the configured routes
+secret-shaped agent id, error in agent (unknown action in scope)          | id        | ConfigError            | MSG: agent <not shown>: scope_allowed entry 0 has no contract
+secret-shaped agent id, duplicate agent id                                | id        | ConfigError            | MSG: agents.yaml: duplicate id in entry 3
+tool manifest max_output_bytes: 0                                         | secretish | ConfigError            | MSG: tools/test-agent.yaml: invalid tool entry (max_output_bytes)
+tool manifest max_output_bytes: planted text                              | secretish | ConfigError            | MSG: tools/test-agent.yaml: invalid tool entry (max_output_bytes)
+tool manifest unknown key named like a secret                             | secretish | ConfigError            | MSG: tools/test-agent.yaml: invalid tool entry (<unknown key>)
+tool manifest side_effect planted                                         | secretish | ConfigError            | MSG: tools/test-agent.yaml: invalid tool entry (side_effect)
+
+SCENARIOS=83 LEAKS(planted text found in message/traceback/log)=2

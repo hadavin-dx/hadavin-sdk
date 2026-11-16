@@ -1,0 +1,231 @@
+## a: new test file, no notes row
+--auto origin/main: exit 1; lines 1
+tests/test_zz_plant_a.py: the test test_plant_a_new_test_without_row is new or changed and has no row of its own in the notes
+
+
+## a: new test file, no notes row
+--auto c65d9c27: exit 1; lines 1
+tests/test_zz_plant_a.py: the test test_plant_a_new_test_without_row is new or changed and has no row of its own in the notes
+
+
+## b1: only a NEW unused function added to tests/k1b_support.py
+--auto origin/main: exit 0; lines 0
+
+
+
+## b1: only a NEW unused function added to tests/k1b_support.py
+--auto c65d9c27: exit 0; lines 0
+
+
+
+## b2: only a value used by many tests changed in tests/k1b_support.py (severity page -> ticket)
+--auto origin/main: exit 1; lines 108
+tests/test_k1b_bundle.py: the test test_alert_time_constant_is_a_valid_timestamp is new or changed and has no row of its own in the notes
+tests/test_k1b_bundle.py: the test test_bad_case_name_and_manifest_shape is new or changed and has no row of its own in the notes
+tests/test_k1b_bundle.py: the test test_bad_citations_cover_all_three_checks_and_first_three_only is new or changed and has no row of its own in the notes
+tests/test_k1b_bundle.py: the test test_blank_log_lines_do_not_shift_ids is new or changed and has no row of its own in the notes
+   ... (42 more lines in the raw log, not kept)
+
+## b2: only a value used by many tests changed in tests/k1b_support.py (severity page -> ticket)
+--auto c65d9c27: exit 1; lines 108
+tests/test_k1b_bundle.py: the test test_alert_time_constant_is_a_valid_timestamp is new or changed and has no row of its own in the notes
+tests/test_k1b_bundle.py: the test test_bad_case_name_and_manifest_shape is new or changed and has no row of its own in the notes
+tests/test_k1b_bundle.py: the test test_bad_citations_cover_all_three_checks_and_first_three_only is new or changed and has no row of its own in the notes
+tests/test_k1b_bundle.py: the test test_blank_log_lines_do_not_shift_ids is new or changed and has no row of its own in the notes
+   ... (42 more lines in the raw log, not kept)
+
+## b3: only the body of azure_secret_client (tests/contracts/http_fake.py) changed
+--auto origin/main: exit 1; lines 74
+tests/contracts/test_anchor.py: the test test_an_anchor_is_never_replaced is new or changed and has no row of its own in the notes
+tests/contracts/test_anchor.py: the test test_puts_read_back_and_a_lost_answer_retry_is_anchored is new or changed and has no row of its own in the notes
+tests/contracts/test_capabilities.py: the test test_a_detector_backend_error_is_a_flag is new or changed and has no row of its own in the notes
+tests/contracts/test_capabilities.py: the test test_a_detector_list_flags_if_any_member_flags is new or changed and has no row of its own in the notes
+   ... (38 more lines in the raw log, not kept)
+
+## b3: only the body of azure_secret_client (tests/contracts/http_fake.py) changed
+--auto c65d9c27: exit 1; lines 74
+tests/contracts/test_anchor.py: the test test_an_anchor_is_never_replaced is new or changed and has no row of its own in the notes
+tests/contracts/test_anchor.py: the test test_puts_read_back_and_a_lost_answer_retry_is_anchored is new or changed and has no row of its own in the notes
+tests/contracts/test_capabilities.py: the test test_a_detector_backend_error_is_a_flag is new or changed and has no row of its own in the notes
+tests/contracts/test_capabilities.py: the test test_a_detector_list_flags_if_any_member_flags is new or changed and has no row of its own in the notes
+   ... (38 more lines in the raw log, not kept)
+
+## b4: only the body of gcp_secret_client (tests/contracts/http_fake.py) changed
+--auto origin/main: exit 1; lines 75
+tests/contracts/test_anchor.py: the test test_an_anchor_is_never_replaced is new or changed and has no row of its own in the notes
+tests/contracts/test_anchor.py: the test test_puts_read_back_and_a_lost_answer_retry_is_anchored is new or changed and has no row of its own in the notes
+tests/contracts/test_capabilities.py: the test test_a_detector_backend_error_is_a_flag is new or changed and has no row of its own in the notes
+tests/contracts/test_capabilities.py: the test test_a_detector_list_flags_if_any_member_flags is new or changed and has no row of its own in the notes
+   ... (38 more lines in the raw log, not kept)
+
+## b4: only the body of gcp_secret_client (tests/contracts/http_fake.py) changed
+--auto c65d9c27: exit 1; lines 75
+tests/contracts/test_anchor.py: the test test_an_anchor_is_never_replaced is new or changed and has no row of its own in the notes
+tests/contracts/test_anchor.py: the test test_puts_read_back_and_a_lost_answer_retry_is_anchored is new or changed and has no row of its own in the notes
+tests/contracts/test_capabilities.py: the test test_a_detector_backend_error_is_a_flag is new or changed and has no row of its own in the notes
+tests/contracts/test_capabilities.py: the test test_a_detector_list_flags_if_any_member_flags is new or changed and has no row of its own in the notes
+   ... (38 more lines in the raw log, not kept)
+
+## b5: only the body of _azure (tests/contracts/kinds/secrets_neutral.py) changed
+--auto origin/main: exit 1; lines 74
+tests/contracts/test_anchor.py: the test test_an_anchor_is_never_replaced is new or changed and has no row of its own in the notes
+tests/contracts/test_anchor.py: the test test_puts_read_back_and_a_lost_answer_retry_is_anchored is new or changed and has no row of its own in the notes
+tests/contracts/test_capabilities.py: the test test_a_detector_backend_error_is_a_flag is new or changed and has no row of its own in the notes
+tests/contracts/test_capabilities.py: the test test_a_detector_list_flags_if_any_member_flags is new or changed and has no row of its own in the notes
+   ... (38 more lines in the raw log, not kept)
+
+## b5: only the body of _azure (tests/contracts/kinds/secrets_neutral.py) changed
+--auto c65d9c27: exit 1; lines 74
+tests/contracts/test_anchor.py: the test test_an_anchor_is_never_replaced is new or changed and has no row of its own in the notes
+tests/contracts/test_anchor.py: the test test_puts_read_back_and_a_lost_answer_retry_is_anchored is new or changed and has no row of its own in the notes
+tests/contracts/test_capabilities.py: the test test_a_detector_backend_error_is_a_flag is new or changed and has no row of its own in the notes
+tests/contracts/test_capabilities.py: the test test_a_detector_list_flags_if_any_member_flags is new or changed and has no row of its own in the notes
+   ... (38 more lines in the raw log, not kept)
+
+## b6: only FakeVault.__init__ (tests/contracts/vault_fake.py) changed (self.reads = 0 -> 1)
+--auto origin/main: exit 1; lines 85
+tests/contracts/test_anchor.py: the test test_an_anchor_is_never_replaced is new or changed and has no row of its own in the notes
+tests/contracts/test_anchor.py: the test test_puts_read_back_and_a_lost_answer_retry_is_anchored is new or changed and has no row of its own in the notes
+tests/contracts/test_capabilities.py: the test test_a_detector_backend_error_is_a_flag is new or changed and has no row of its own in the notes
+tests/contracts/test_capabilities.py: the test test_a_detector_list_flags_if_any_member_flags is new or changed and has no row of its own in the notes
+   ... (38 more lines in the raw log, not kept)
+
+## b6: only FakeVault.__init__ (tests/contracts/vault_fake.py) changed (self.reads = 0 -> 1)
+--auto c65d9c27: exit 1; lines 102
+tests/contracts/test_anchor.py: the test test_an_anchor_is_never_replaced is new or changed and has no row of its own in the notes
+tests/contracts/test_anchor.py: the test test_puts_read_back_and_a_lost_answer_retry_is_anchored is new or changed and has no row of its own in the notes
+tests/contracts/test_capabilities.py: the test test_a_detector_backend_error_is_a_flag is new or changed and has no row of its own in the notes
+tests/contracts/test_capabilities.py: the test test_a_detector_list_flags_if_any_member_flags is new or changed and has no row of its own in the notes
+   ... (38 more lines in the raw log, not kept)
+
+## b7: only fake_vault() (tests/contracts/vault_fake.py) changed
+--auto origin/main: exit 1; lines 85
+tests/contracts/test_anchor.py: the test test_an_anchor_is_never_replaced is new or changed and has no row of its own in the notes
+tests/contracts/test_anchor.py: the test test_puts_read_back_and_a_lost_answer_retry_is_anchored is new or changed and has no row of its own in the notes
+tests/contracts/test_capabilities.py: the test test_a_detector_backend_error_is_a_flag is new or changed and has no row of its own in the notes
+tests/contracts/test_capabilities.py: the test test_a_detector_list_flags_if_any_member_flags is new or changed and has no row of its own in the notes
+   ... (38 more lines in the raw log, not kept)
+
+## b7: only fake_vault() (tests/contracts/vault_fake.py) changed
+--auto c65d9c27: exit 1; lines 102
+tests/contracts/test_anchor.py: the test test_an_anchor_is_never_replaced is new or changed and has no row of its own in the notes
+tests/contracts/test_anchor.py: the test test_puts_read_back_and_a_lost_answer_retry_is_anchored is new or changed and has no row of its own in the notes
+tests/contracts/test_capabilities.py: the test test_a_detector_backend_error_is_a_flag is new or changed and has no row of its own in the notes
+tests/contracts/test_capabilities.py: the test test_a_detector_list_flags_if_any_member_flags is new or changed and has no row of its own in the notes
+   ... (38 more lines in the raw log, not kept)
+
+## c1: module-level pytestmark skip in tests/test_p4b_secrets.py
+--auto origin/main: exit 1; lines 22
+tests/test_p4b_secrets.py: the test test_a_fifo_in_the_mounted_folder_is_refused_without_hanging is new or changed and has no row of its own in the notes
+tests/test_p4b_secrets.py: the test test_a_missing_extra_names_the_pip_install is new or changed and has no row of its own in the notes
+tests/test_p4b_secrets.py: the test test_an_unreadable_mounted_file_is_a_config_error is new or changed and has no row of its own in the notes
+tests/test_p4b_secrets.py: the test test_azure_builds_with_default_azure_credential_and_refuses_bad_names is new or changed and has no row of its own in the notes
+   ... (19 more lines in the raw log, not kept)
+
+## c1: module-level pytestmark skip in tests/test_p4b_secrets.py
+--auto c65d9c27: exit 1; lines 22
+tests/test_p4b_secrets.py: the test test_a_fifo_in_the_mounted_folder_is_refused_without_hanging is new or changed and has no row of its own in the notes
+tests/test_p4b_secrets.py: the test test_a_missing_extra_names_the_pip_install is new or changed and has no row of its own in the notes
+tests/test_p4b_secrets.py: the test test_an_unreadable_mounted_file_is_a_config_error is new or changed and has no row of its own in the notes
+tests/test_p4b_secrets.py: the test test_azure_builds_with_default_azure_credential_and_refuses_bad_names is new or changed and has no row of its own in the notes
+   ... (19 more lines in the raw log, not kept)
+
+## c2: pytest_collection_modifyitems skip hook added to tests/conftest.py
+--auto origin/main: exit 1; lines 2005
+tests/conftest.py: the test pytest_collection_modifyitems is new or changed and has no row of its own in the notes
+tests/contracts/test_anchor.py: the test test_an_anchor_is_never_replaced is new or changed and has no row of its own in the notes
+tests/contracts/test_anchor.py: the test test_puts_read_back_and_a_lost_answer_retry_is_anchored is new or changed and has no row of its own in the notes
+tests/contracts/test_capabilities.py: the test test_a_detector_backend_error_is_a_flag is new or changed and has no row of its own in the notes
+   ... (38 more lines in the raw log, not kept)
+
+## c2: pytest_collection_modifyitems skip hook added to tests/conftest.py
+--auto c65d9c27: exit 1; lines 2135
+tests/conftest.py: the test pytest_collection_modifyitems is new or changed and has no row of its own in the notes
+tests/contracts/test_anchor.py: the test test_an_anchor_is_never_replaced is new or changed and has no row of its own in the notes
+tests/contracts/test_anchor.py: the test test_puts_read_back_and_a_lost_answer_retry_is_anchored is new or changed and has no row of its own in the notes
+tests/contracts/test_capabilities.py: the test test_a_detector_backend_error_is_a_flag is new or changed and has no row of its own in the notes
+   ... (38 more lines in the raw log, not kept)
+
+## c3: autouse fixture that calls pytest.skip added to tests/conftest.py
+--auto origin/main: exit 1; lines 2014
+tests/conftest.py: the test FIXTURES is new or changed and has no row of its own in the notes
+tests/conftest.py: the test _ISOLATED is new or changed and has no row of its own in the notes
+tests/conftest.py: the test _ISOLATED_PREFIXES is new or changed and has no row of its own in the notes
+tests/conftest.py: the test _plant_skip is new or changed and has no row of its own in the notes
+   ... (41 more lines in the raw log, not kept)
+
+## c3: autouse fixture that calls pytest.skip added to tests/conftest.py
+--auto c65d9c27: exit 1; lines 2144
+tests/conftest.py: the test FIXTURES is new or changed and has no row of its own in the notes
+tests/conftest.py: the test _ISOLATED is new or changed and has no row of its own in the notes
+tests/conftest.py: the test _ISOLATED_PREFIXES is new or changed and has no row of its own in the notes
+tests/conftest.py: the test _plant_skip is new or changed and has no row of its own in the notes
+   ... (41 more lines in the raw log, not kept)
+
+## c4: xfail collection hook added to tests/contracts/conftest.py
+--auto origin/main: exit 1; lines 75
+tests/contracts/conftest.py: the test pytest_collection_modifyitems is new or changed and has no row of its own in the notes
+tests/contracts/test_anchor.py: the test test_an_anchor_is_never_replaced is new or changed and has no row of its own in the notes
+tests/contracts/test_anchor.py: the test test_puts_read_back_and_a_lost_answer_retry_is_anchored is new or changed and has no row of its own in the notes
+tests/contracts/test_capabilities.py: the test test_a_detector_backend_error_is_a_flag is new or changed and has no row of its own in the notes
+   ... (38 more lines in the raw log, not kept)
+
+## c4: xfail collection hook added to tests/contracts/conftest.py
+--auto c65d9c27: exit 1; lines 75
+tests/contracts/conftest.py: the test pytest_collection_modifyitems is new or changed and has no row of its own in the notes
+tests/contracts/test_anchor.py: the test test_an_anchor_is_never_replaced is new or changed and has no row of its own in the notes
+tests/contracts/test_anchor.py: the test test_puts_read_back_and_a_lost_answer_retry_is_anchored is new or changed and has no row of its own in the notes
+tests/contracts/test_capabilities.py: the test test_a_detector_backend_error_is_a_flag is new or changed and has no row of its own in the notes
+   ... (38 more lines in the raw log, not kept)
+
+## d1: an extra row for a mutant that does not exist (unit cell `B99 no such mutant exists here`)
+--auto origin/main: exit 1; lines 1
+tests/policy_mutants.py: a row of the notes (notes of handover/evidence/Q8c-1/b14) names ``B99 no such mutant exists here``, which is no test, mutant or unit of that file
+
+
+## d1: an extra row for a mutant that does not exist (unit cell `B99 no such mutant exists here`)
+--auto c65d9c27: exit 1; lines 1
+tests/policy_mutants.py: a row of the notes (notes of handover/evidence/Q8c-1/b14) names ``B99 no such mutant exists here``, which is no test, mutant or unit of that file
+
+
+## d2: unit cell of the existing row gets a `;` item `B99 no such mutant exists here`
+--auto origin/main: exit 1; lines 2
+tests/policy_mutants.py: the mutant B14 notes check accepts a unit cell that names nothing that exists is new or changed and has no row of its own in the notes
+tests/policy_mutants.py: a row of the notes (notes of handover/evidence/Q8c-1/b14) names ``B14 notes check accepts a unit cell that names nothing that exists; B99 no such mutant ex`, which is no test, mutant or unit of that file
+
+
+## d2: unit cell of the existing row gets a `;` item `B99 no such mutant exists here`
+--auto c65d9c27: exit 1; lines 2
+tests/policy_mutants.py: the mutant B14 notes check accepts a unit cell that names nothing that exists is new or changed and has no row of its own in the notes
+tests/policy_mutants.py: a row of the notes (notes of handover/evidence/Q8c-1/b14) names ``B14 notes check accepts a unit cell that names nothing that exists; B99 no such mutant ex`, which is no test, mutant or unit of that file
+
+
+## d3: reason cell of the row names `test_no_such_test_anywhere`
+--auto origin/main: exit 1; lines 1
+tests/policy_mutants.py: the mutant B14 notes check accepts a unit cell that names nothing that exists has a row whose reason points at nothing: the test test_no_such_test_anywhere is in no test file
+
+
+## d3: reason cell of the row names `test_no_such_test_anywhere`
+--auto c65d9c27: exit 1; lines 1
+tests/policy_mutants.py: the mutant B14 notes check accepts a unit cell that names nothing that exists has a row whose reason points at nothing: the test test_no_such_test_anywhere is in no test file
+
+
+## d4: reason cell of the row names backticked `B99 no such mutant exists here`
+--auto origin/main: exit 1; lines 1
+tests/policy_mutants.py: the mutant B14 notes check accepts a unit cell that names nothing that exists has a row whose reason points at nothing: the mutant `B99 no such mutant exists here` is in no mutant file
+
+
+## d4: reason cell of the row names backticked `B99 no such mutant exists here`
+--auto c65d9c27: exit 1; lines 1
+tests/policy_mutants.py: the mutant B14 notes check accepts a unit cell that names nothing that exists has a row whose reason points at nothing: the mutant `B99 no such mutant exists here` is in no mutant file
+
+
+## e: new mutant `B11 notes check does not read class` (a substring of `B11 notes check does not read class methods`), no row of its own
+--auto origin/main: exit 1; lines 1
+tests/policy_mutants.py: the mutant B11 notes check does not read class is new or changed and has no row of its own in the notes
+
+
+## e: new mutant `B11 notes check does not read class` (a substring of `B11 notes check does not read class methods`), no row of its own
+--auto c65d9c27: exit 1; lines 1
+tests/policy_mutants.py: the mutant B11 notes check does not read class is new or changed and has no row of its own in the notes
+

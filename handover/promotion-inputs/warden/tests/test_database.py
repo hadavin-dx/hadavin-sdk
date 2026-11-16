@@ -1,0 +1,711 @@
+"""The read-only database evidence backend: engine selection, per-engine metric parsing, partial
+failures — and the tripwire that proves the module cannot write.
+
+The stubs mimic each driver's response SHAPE (what psycopg/pymysql/redis/pymongo/pymssql actually
+return), because that shape is the thing a unit test can get wrong and a live database cannot.
+"""
+
+from __future__ import annotations
+
+import ast
+import pathlib
+import typing
+
+import pytest
+
+from warden.database import (
+    _MSSQL,
+    DatabaseBackend,
+    _Mongo,
+    _MySQL,
+    _Postgres,
+    _Redis,
+    adapter_for,
+    dsn_of,
+    engine_of,
+)
+from warden.models import Alert, Severity
+from warden.tools import PARTIAL_PREFIX, ToolError, resolve_backend
+
+
+def _alert(**labels):
+    return Alert(
+        alert_id="inc-005", name="DBConnectionsStuck", severity=Severity.high, service="payments",
+        environment="staging", summary="pool exhausted", started_at="2026-08-26T00:00:00Z",
+        labels=labels,
+    )
+
+
+# ------------------------------------------------------------------ engine + DSN resolution
+
+@pytest.mark.parametrize("dsn,engine", [
+    ("postgresql://u:p@h:5432/db", "postgres"),
+    ("postgres://u:p@h/db", "postgres"),
+    ("mysql://u:p@h:3306/db", "mysql"),
+    ("mariadb://u:p@h/db", "mysql"),
+    ("redis://h:6379/0", "redis"),
+    ("rediss://h:6379/0", "redis"),
+    ("mongodb://h:27017/db", "mongo"),
+    ("mongodb+srv://h/db", "mongo"),
+    ("mssql://u:p@h:1433/db", "mssql"),
+    ("sqlserver://u:p@h/db", "mssql"),
+])
+def test_engine_is_read_from_the_dsn_scheme(dsn, engine):
+    assert engine_of(dsn) == engine
+
+
+def test_an_unsupported_scheme_is_refused_with_the_known_list():
+    with pytest.raises(ToolError, match="unsupported database DSN scheme"):
+        engine_of("oracle://u:p@h/db")
+
+
+def test_the_dsn_comes_from_the_environment_never_an_alert_label(monkeypatch):
+    """2026-09-27 audit: a `dsn` label chose which database WARDEN connects to and terminates on."""
+    monkeypatch.setenv("WARDEN_DB_DSN", "postgresql://env/db")
+    assert dsn_of(_alert(dsn="postgresql://label/db")) == "postgresql://env/db"
+    assert dsn_of(_alert()) == "postgresql://env/db"
+
+
+def test_no_dsn_anywhere_is_a_tool_error_not_a_silent_empty_read(monkeypatch):
+    monkeypatch.delenv("WARDEN_DB_DSN", raising=False)
+    alert = _alert()
+    with pytest.raises(ToolError, match="no database DSN"):
+        dsn_of(alert)
+
+
+@pytest.mark.parametrize("name,engine", [
+    ("postgres", "postgres"), ("postgresql", "postgres"), ("mysql", "mysql"), ("mariadb", "mysql"),
+    ("redis", "redis"), ("mongo", "mongo"), ("mongodb", "mongo"), ("mssql", "mssql"),
+    ("sqlserver", "mssql"), ("db", None), ("database", None),
+])
+def test_resolve_backend_maps_every_database_name(name, engine):
+    backend = resolve_backend(name)
+    assert isinstance(backend, DatabaseBackend)
+    assert backend._engine == engine
+
+
+def test_an_unknown_backend_lists_what_is_available():
+    with pytest.raises(ToolError) as exc:
+        resolve_backend("cassandra")
+    message = str(exc.value)
+    assert "postgres" in message
+    assert "mssql" in message
+    assert "k8s" in message
+
+
+def test_databases_have_no_deploys_so_p5_cannot_be_satisfied_by_one():
+    """P5 refuses a rollback without a deploy in evidence. A database never supplies one."""
+    assert DatabaseBackend(engine="postgres", conn=object()).deploys(_alert()) == []
+
+
+# ------------------------------------------------------------------ per-engine metric parsing
+
+class _SqlStub:
+    """Answers queries by substring, like a tiny fake server. Records what it was asked."""
+
+    def __init__(self, answers: dict[str, list]):
+        self.answers = answers
+        self.asked: list[str] = []
+
+    # psycopg / pymysql style: cursor() is a context manager
+    def cursor(self):
+        return _StubCursor(self)
+
+    def _answer(self, sql: str):
+        self.asked.append(" ".join(sql.split()))
+        for needle, rows in self.answers.items():
+            if needle.lower() in sql.lower():
+                if isinstance(rows, Exception):
+                    raise rows
+                return rows
+        raise AssertionError(f"stub has no answer for: {sql}")
+
+
+class _StubCursor:
+    def __init__(self, owner):
+        self.owner = owner
+        self.rows: list = []
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *a):
+        return False
+
+    def execute(self, sql, params=()):
+        self.rows = self.owner._answer(sql)
+
+    def fetchall(self):
+        return self.rows
+
+    def fetchone(self):
+        return self.rows[0] if self.rows else None
+
+
+def test_postgres_metrics_are_parsed_and_named_for_what_they_count():
+    conn = _SqlStub({
+        "count(*) from pg_stat_activity where state = 'idle in transaction'": [(25,)],
+        "count(*) from pg_stat_activity where state = 'active'": [(2,)],
+        "count(*) from pg_stat_activity": [(100,)],
+        "show max_connections": [("100",)],
+        "pg_locks": [(4,)],
+        "pg_last_xact_replay_timestamp": [(None,)],
+    })
+    m = _Postgres.metrics(conn)
+    assert m["active_connections"] == 100.0
+    assert m["idle_in_transaction"] == 25.0
+    assert m["long_running_queries"] == 2.0
+    assert m["max_connections"] == 100.0
+    assert m["locks_waiting"] == 4.0
+    assert m["connections_used_pct"] == 1.0
+    # NULL replay timestamp = a primary. Omitted, never reported as 0.0 (which reads as "no lag").
+    assert "replica_lag_seconds" not in m
+
+
+def test_postgres_reports_replica_lag_when_it_is_a_replica():
+    conn = _SqlStub({
+        "count(*) from pg_stat_activity where state = 'idle in transaction'": [(0,)],
+        "count(*) from pg_stat_activity where state = 'active'": [(0,)],
+        "count(*) from pg_stat_activity": [(5,)],
+        "show max_connections": [("100",)],
+        "pg_locks": [(0,)],
+        "pg_last_xact_replay_timestamp": [(12.5,)],
+    })
+    assert _Postgres.metrics(conn)["replica_lag_seconds"] == 12.5
+
+
+def test_aurora_refusing_the_replay_function_loses_no_other_metric():
+    """Wave 4 (2026-09-26): Aurora answers "Function pg_last_xact_replay_timestamp() is currently not
+    supported for Aurora", and that one error threw away every count - no database metrics on any
+    fault, and every verdict carried P8-PARTIAL-CONTEXT."""
+    conn = _SqlStub({
+        "count(*) from pg_stat_activity where state = 'idle in transaction'": [(1,)],
+        "count(*) from pg_stat_activity where state = 'active'": [(0,)],
+        "count(*) from pg_stat_activity": [(830,)],
+        "show max_connections": [("844",)],
+        "pg_locks": [(0,)],
+        "pg_last_xact_replay_timestamp": RuntimeError(
+            "Function pg_last_xact_replay_timestamp() is currently not supported for Aurora"),
+    })
+    m = _Postgres.metrics(conn)
+    assert m["active_connections"] == 830.0
+    assert m["max_connections"] == 844.0
+    assert "replica_lag_seconds" not in m
+
+
+def test_postgres_problem_ops_excludes_own_backend_and_redacts_query_text():
+    conn = _SqlStub({"pg_stat_activity": [(101, "idle in transaction", 900, "SELECT * FROM users WHERE email='a@b.io'")]})
+    lines = _Postgres.problem_ops(conn, 300)
+    assert lines
+    assert "pid=101" in lines[0]
+    assert "pid <> pg_backend_pid()" in conn.asked[0]
+    # Query text can carry PII. Since audit A-C-5 the backend returns it raw, like every other
+    # backend's lines, and node_redact scrubs it with the run's ONE placeholder map (a separate map
+    # here gave one placeholder two meanings). Nothing reads backend lines before node_redact.
+    from warden.graph import node_redact
+    from warden.models import Alert, ContextBundle
+
+    alert = Alert(alert_id="d", name="n", severity="high", service="orders", environment="staging",
+                  summary="s", started_at="2026-09-28T10:00:00Z")
+    out = node_redact({"alert": alert, "context": ContextBundle(logs=lines)})
+    assert "a@b.io" not in out["context"].logs[0], "query text can carry PII and must be redacted"
+
+
+def test_mysql_metrics_read_status_and_variables():
+    conn = _SqlStub({
+        "threads_connected": [("Threads_connected", "42")],
+        "max_connections": [("max_connections", "151")],
+        "innodb_trx": [(3,)],
+        "command = 'query'": [(1,)],
+    })
+    m = _MySQL.metrics(conn)
+    assert m["active_connections"] == 42.0
+    assert m["max_connections"] == 151.0
+    assert m["idle_in_transaction"] == 3.0
+    assert m["long_running_queries"] == 1.0
+
+
+def test_mssql_metrics_are_parsed():
+    conn = _SqlStub({
+        "open_transaction_count > 0": [(6,)],
+        "total_elapsed_time": [(2,)],
+        "is_user_process = 1": [(30,)],
+    })
+    m = _MSSQL.metrics(conn)
+    assert m["active_connections"] == 30.0
+    assert m["idle_in_transaction"] == 6.0
+    assert m["long_running_queries"] == 2.0
+
+
+class _RedisStub:
+    def __init__(self, clients, info=None):
+        self._clients = clients
+        self._info = info or {}
+
+    def info(self):
+        return self._info
+
+    def config_get(self, key):
+        return {"maxclients": "10000"}
+
+    def client_list(self):
+        return self._clients
+
+    def client_id(self):
+        return 1
+
+
+def test_redis_metrics_count_idle_clients_under_the_common_key():
+    conn = _RedisStub(
+        clients=[{"id": "1", "idle": "0", "addr": "10.0.0.1:5000"},
+                 {"id": "2", "idle": "900", "addr": "10.0.0.2:5001"},
+                 {"id": "3", "idle": "400", "addr": "10.0.0.3:5002"}],
+        info={"connected_clients": 3, "blocked_clients": 1, "used_memory": 1000,
+              "maxmemory": 4000, "evicted_keys": 7, "rejected_connections": 2},
+    )
+    m = _Redis.metrics(conn)
+    assert m["connected_clients"] == 3.0
+    assert m["blocked_clients"] == 1.0
+    assert m["evicted_keys"] == 7.0
+    assert m["memory_used_pct"] == 0.25
+    # two clients are idle past the 300s default -> exposed as idle_in_transaction so the reasoner
+    # treats a stuck Redis client like a stuck SQL connection.
+    assert m["idle_in_transaction"] == 2.0
+
+
+def test_redis_problem_ops_never_lists_its_own_client():
+    conn = _RedisStub(clients=[{"id": "1", "idle": "900", "addr": "x"},
+                               {"id": "2", "idle": "900", "addr": "y"}])
+    lines = _Redis.problem_ops(conn, 300)
+    assert len(lines) == 1, "client id 1 is this connection"
+    assert "id=2" in lines[0], "client id 1 is this connection"
+
+
+class _MongoStub:
+    def __init__(self, ops, conns=None):
+        self.admin = self
+        self._ops = ops
+        self._conns = conns or {"current": 10, "available": 90}
+
+    def command(self, name, *args, **kw):
+        if name == "serverStatus":
+            return {"connections": self._conns}
+        least = ((args[0] if args else {}).get("secs_running") or {}).get("$gte", 0)
+        return {"inprog": [op for op in self._ops if op.get("secs_running", 0) >= least]}
+
+
+def test_mongo_metrics_count_long_running_ops():
+    conn = _MongoStub(ops=[
+        {"secs_running": 900, "opid": 1, "ns": "warden.orders", "command": {"find": "orders"}},
+        {"secs_running": 70, "opid": 2, "ns": "warden.orders", "command": {"find": "orders"}},
+        {"secs_running": 1, "opid": 3, "ns": "warden.orders", "command": {"find": "orders"}},
+    ])
+    m = _Mongo.metrics(conn)
+    assert m["current_connections"] == 10.0
+    assert m["available_connections"] == 90.0
+    assert m["long_running_ops"] == 2.0        # >= 60s
+    assert m["idle_in_transaction"] == 1.0     # >= 300s
+    assert m["connections_used_pct"] == 0.1
+
+
+# ------------------------------------------------------------------ the contract + failures
+
+def test_logs_prefix_each_stuck_connection_with_the_engine():
+    conn = _SqlStub({"pg_stat_activity": [(101, "idle in transaction", 900, "SELECT 1")]})
+    lines = DatabaseBackend(engine="postgres", conn=conn).logs(_alert())
+    assert lines
+    assert lines[0].startswith("postgres stuck connection:")
+
+
+def test_a_failed_problem_op_read_is_a_PARTIAL_not_evidence():
+    """gather() routes a TOOL-PARTIAL line into tool_errors, where policy P8 sees it — it must never
+    be counted as a log line that looks like evidence."""
+    class Boom:
+        def cursor(self):
+            raise RuntimeError("permission denied for pg_stat_activity")
+
+    lines = DatabaseBackend(engine="postgres", conn=Boom()).logs(_alert())
+    assert len(lines) == 1
+    assert lines[0].startswith(PARTIAL_PREFIX)
+    assert "permission denied" in lines[0]
+
+
+def test_a_failed_metrics_read_is_a_hard_ToolError():
+    class Boom:
+        def cursor(self):
+            raise RuntimeError("connection refused")
+
+    backend, alert = DatabaseBackend(engine="postgres", conn=Boom()), _alert()
+    with pytest.raises(ToolError, match="database metrics read failed"):
+        backend.metrics(alert)
+
+
+def test_injecting_a_connection_without_an_engine_is_refused():
+    conn = object()
+    with pytest.raises(ToolError, match="also needs engine"):
+        DatabaseBackend(conn=conn)
+
+
+def test_every_engine_has_an_adapter():
+    for engine in ("postgres", "mysql", "redis", "mongo", "mssql"):
+        assert adapter_for(engine).engine == engine
+    with pytest.raises(ToolError, match="no database adapter"):
+        adapter_for("oracle")
+
+
+# ------------------------------------------------------------------ the read-only tripwire
+
+WRITE_VERBS = (
+    "pg_terminate", "killop", "client_kill", "client kill", "flushall", "flushdb",
+    "insert into", "update ", "delete from", "drop ", "truncate", "alter ", "grant ", "kill ",
+)
+
+
+# The calls that actually send something to a database server. A write verb only matters if it can
+# reach one of these.
+_EXECUTING_CALLS = frozenset({"execute", "executemany", "command", "run_command", "eval"})
+
+
+def _called_name(node: ast.Call) -> str:
+    func = node.func
+    return func.attr if isinstance(func, ast.Attribute) else getattr(func, "id", "")
+
+
+def _literal_str_args(node: ast.Call) -> list[str]:
+    """String literals passed positionally, including an f-string's literal parts — which is how
+    `f"KILL {int(spid)}"` stays visible to this check."""
+    out: list[str] = []
+    for arg in node.args:
+        if isinstance(arg, ast.Constant) and isinstance(arg.value, str):
+            out.append(arg.value)
+        elif isinstance(arg, ast.JoinedStr):
+            out.extend(
+                part.value for part in arg.values
+                if isinstance(part, ast.Constant) and isinstance(part.value, str)
+            )
+    return out
+
+
+def _executing_functions(tree: ast.AST) -> set[str]:
+    """Names of this module's OWN functions that can reach a database-executing call.
+
+    ⛔ This is the fix for a hole a mutation found. `database.py` never calls `.execute()` with a
+    literal: every adapter passes its SQL to the module's own `_rows(conn, sql)` helper, which then
+    calls `cur.execute(sql)` with a VARIABLE. A checker that only looked at literals handed directly
+    to `.execute()` therefore read ZERO statements out of the module it guards and passed vacuously
+    — `mutation_check.py`'s "the read-only database backend gains a write statement" replaced a
+    SELECT with a DELETE and the suite stayed green.
+
+    So: a function is 'executing' if it calls an executing call, or calls another executing function.
+    Iterated to a fixpoint, because the indirection can be more than one hop deep.
+    """
+    bodies: dict[str, set[str]] = {}
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            bodies[node.name] = {
+                _called_name(c) for c in ast.walk(node) if isinstance(c, ast.Call)
+            }
+    executing = {name for name, calls in bodies.items() if calls & _EXECUTING_CALLS}
+    changed = True
+    while changed:
+        changed = False
+        for name, calls in bodies.items():
+            if name not in executing and calls & executing:
+                executing.add(name)
+                changed = True
+    return executing
+
+
+def _alias_map(tree: ast.AST) -> dict[str, str]:
+    """Local aliases of a method, e.g. `r = cls._rows` — the form every adapter in `database.py`
+    uses, and one more way a literal reaches the server under a different name."""
+    out: dict[str, str] = {}
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Assign) or len(node.targets) != 1:
+            continue
+        target = node.targets[0]
+        if not isinstance(target, ast.Name):
+            continue
+        value = node.value
+        if isinstance(value, ast.Attribute):
+            out[target.id] = value.attr
+        elif isinstance(value, ast.Name):
+            out[target.id] = value.id
+    return out
+
+
+def _statements_this_module_can_execute(path: pathlib.Path) -> list[str]:
+    """Every string literal this module can get to a database server.
+
+    Deliberately NOT "every string literal in the file": that version flagged two innocent things and
+    would keep doing so. The module docstring NAMES the forbidden verbs in order to state the rule,
+    and `_MONGO_INTERNAL_COMMANDS` lists `killOp` precisely so it is never SELECTED. Both are
+    *mentions*, not *instances* — the mention-counted-as-instance trap this repo keeps meeting.
+
+    What matters is reachability: a literal handed to `.execute()` / `.command()` **or to one of this
+    module's own functions that reaches one**, directly or through an alias.
+    """
+    tree = ast.parse(path.read_text(encoding="utf-8"))
+    reachable = _EXECUTING_CALLS | _executing_functions(tree)
+    aliases = _alias_map(tree)
+    out: list[str] = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call):
+            continue
+        name = _called_name(node)
+        if name not in reachable and aliases.get(name) not in reachable:
+            continue
+        out.extend(_literal_str_args(node))
+    return out
+
+
+def test_the_read_backend_contains_no_executable_write_verb():
+    """Read-only BY CONSTRUCTION. The write path lives in platforms/db.py, behind its own
+    credential — exactly as the k8s read backend is separate from the k8s write backend."""
+    path = pathlib.Path(__file__).resolve().parents[1] / "src" / "warden" / "database.py"
+    offenders = [
+        (verb, s) for s in _statements_this_module_can_execute(path)
+        for verb in WRITE_VERBS if verb in s.lower()
+    ]
+    assert not offenders, f"write verb in the READ-ONLY backend: {offenders}"
+
+
+def test_the_tripwire_can_actually_fire():
+    """A guard nobody has watched fail is not a guard. The database platform DOES write, so the same
+    check must flag it — otherwise the test above passes for the wrong reason."""
+    path = pathlib.Path(__file__).resolve().parents[1] / "src" / "warden" / "platforms" / "db.py"
+    found = [
+        verb for s in _statements_this_module_can_execute(path)
+        for verb in WRITE_VERBS if verb in s.lower()
+    ]
+    assert found, "the tripwire found no write verb in the WRITE module - it cannot be trusted"
+
+
+def test_the_tripwire_reads_the_read_backend_at_all():
+    """The guard above can pass for the WORST reason: finding nothing because it looked nowhere.
+
+    `database.py` hands its SQL to `_rows(conn, sql)`, which calls `cur.execute(sql)` with a
+    variable — so a checker that only inspected literals passed straight to `.execute()` collected
+    ZERO statements and asserted `not []`. It was green and blind, and the mutation that replaces a
+    SELECT with a DELETE survived. Assert the collector actually sees the module's SQL.
+    """
+    path = pathlib.Path(__file__).resolve().parents[1] / "src" / "warden" / "database.py"
+    statements = _statements_this_module_can_execute(path)
+    assert len(statements) >= 10, f"expected the read backend's SQL, collected {len(statements)}"
+    joined = " ".join(statements).lower()
+    assert "pg_stat_activity" in joined, "PostgreSQL SQL not reached by the tripwire"
+    assert "information_schema.processlist" in joined, "MySQL SQL not reached by the tripwire"
+    assert "sys.dm_exec_sessions" in joined, "SQL Server SQL not reached by the tripwire"
+
+
+def test_the_tripwire_catches_a_write_hidden_behind_a_helper(tmp_path):
+    """The exact shape that got through: the write verb never touches `.execute()` directly.
+
+    A guard is only trusted here once it has been watched reject something, so this builds the
+    pattern deliberately and asserts it is flagged.
+    """
+    module = tmp_path / "sneaky.py"
+    module.write_text(
+        "class _Adapter:\n"
+        "    @staticmethod\n"
+        "    def _rows(conn, sql, params=()):\n"
+        "        with conn.cursor() as cur:\n"
+        "            cur.execute(sql, params)\n"
+        "            return cur.fetchall()\n"
+        "\n"
+        "    @classmethod\n"
+        "    def metrics(cls, conn):\n"
+        "        r = cls._rows\n"
+        "        return r(conn, 'DELETE FROM pg_locks WHERE NOT granted')\n",
+        encoding="utf-8",
+    )
+    found = [
+        verb for s in _statements_this_module_can_execute(module)
+        for verb in WRITE_VERBS if verb in s.lower()
+    ]
+    assert found, "a write verb reaching the server through a helper must be flagged"
+
+
+# ------------------------------------------------------------------ the clock-skew finding
+# Found against a REAL PostgreSQL container: 2 rounds in 10 missed a genuinely stuck connection,
+# and the server itself reported its age as MINUS 115 seconds - a state_change stamped in the future
+# by a host clock step. Such a connection can never satisfy `state_change < now() - interval`, so it
+# is invisible to both the evidence read and the terminator, forever and silently.
+
+def test_connections_whose_age_cannot_be_judged_are_reported_as_a_partial():
+    """Declining to terminate an unageable connection is right; doing it silently is not.
+
+    The TOOL-PARTIAL prefix routes this into tool_errors, which fires policy P8 and sends the
+    incident to a human — the correct answer to "there is something here I cannot measure".
+    """
+    conn = _SqlStub({
+        "state_change > now()": [(2,)],
+        "pg_stat_activity": [(101, "idle in transaction", 900, "SELECT 1")],
+    })
+    lines = _Postgres.problem_ops(conn, 300)
+    partials = [line for line in lines if line.startswith(PARTIAL_PREFIX)]
+    assert len(partials) == 1, f"clock-skewed connections must be surfaced: {lines}"
+    assert "future" in partials[0]
+    assert "clock skew" in partials[0]
+
+
+def test_no_clock_skew_means_no_noise():
+    conn = _SqlStub({
+        "state_change > now()": [(0,)],
+        "pg_stat_activity": [(101, "idle in transaction", 900, "SELECT 1")],
+    })
+    lines = _Postgres.problem_ops(conn, 300)
+    assert not any(line.startswith(PARTIAL_PREFIX) for line in lines)
+
+
+def test_a_partial_from_the_adapter_reaches_gather_with_its_prefix_intact():
+    """If logs() prefixed it as evidence, "I could not measure this" would be counted as a log line
+    the verifier treats as knowledge."""
+    conn = _SqlStub({
+        "state_change > now()": [(3,)],
+        "pg_stat_activity": [],
+        "pg_roles": [],  # the catalog read (database.access): its STATE lines are not this test's
+    })
+    lines = [ln for ln in DatabaseBackend(engine="postgres", conn=conn).logs(_alert()) if not ln.startswith("STATE ")]
+    assert len(lines) == 1
+    assert lines[0].startswith(PARTIAL_PREFIX), f"prefix was mangled: {lines[0]!r}"
+    assert "stuck connection" not in lines[0]
+
+
+# --------------------------------------------------------------------------- the sessions behind the counts
+
+
+class _ActivityStub:
+    """Answers each activity query by a distinctive fragment of its SQL."""
+
+    def __init__(self, *, long=(), blocked=(), pool=(10, 100), holders=()):
+        self.answers = [
+            ("wait_event_type is distinct from 'lock' and pid <> pg_backend_pid()", list(long)),
+            ("pg_blocking_pids(pid), extract", list(blocked)),
+            ("current_setting('max_connections')::int", [pool]),
+            ("group by 1, 2, 3", list(holders)),
+        ]
+
+    def cursor(self):
+        stub = self
+
+        class Cur:
+            rows: typing.ClassVar[list] = []
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *a):
+                return False
+
+            def execute(self, sql, params=()):
+                low = sql.lower()
+                self.rows = next((rows for frag, rows in stub.answers if frag in low), [])
+
+            def fetchall(self):
+                return self.rows
+
+        return Cur()
+
+
+def test_a_long_active_query_is_named_not_just_counted():
+    """⛔ RDS db-04: a 15-minute query showed as long_running_queries = 1 - no pid, no text, no
+    duration - and the model said "nothing to do" 3/3."""
+    lines = _Postgres.activity(_ActivityStub(long=[(4242, "warden", "report-job", "10.0.0.5", 540,
+                                                    "SELECT pg_sleep(900)")]))
+    # The client address is raw here on purpose: every evidence line is redacted downstream
+    # (gather/graph), the same as a log line - not twice, differently, in each backend.
+    assert lines == [("postgres long-running query: pid=4242 running 540s user=warden app=report-job "
+                     "client=10.0.0.5: SELECT pg_sleep(900)")], lines
+
+
+def test_a_blocked_session_names_its_blocker():
+    lines = _Postgres.activity(_ActivityStub(blocked=[(5001, [4934], 310, "LOCK TABLE t IN ACCESS EXCLUSIVE MODE")]))
+    assert any("pid=5001 waiting 310s on pid(s) 4934" in ln for ln in lines), lines
+
+
+def test_who_holds_the_connections_only_when_the_pool_is_under_pressure():
+    """RDS db-03: 63 of 79 connections in use, and nothing said who held them."""
+    holders = [("(none)", "10.0.0.9", "idle", 55)]
+    busy = _Postgres.activity(_ActivityStub(pool=(63, 79), holders=holders))
+    assert any("55 idle from app=(none)" in ln and "(63/79 in use)" in ln for ln in busy), busy
+    calm = _Postgres.activity(_ActivityStub(pool=(8, 79), holders=holders))
+    assert not any("connections held" in ln for ln in calm), "a healthy pool must not add evidence lines"
+
+
+def test_a_lock_waiter_is_not_counted_as_a_long_running_query():
+    """RDS db-05: two sessions queued behind a lock were reported as long_running_queries = 2."""
+    captured = []
+
+    class Stub(_SqlStub):
+        def _answer(self, sql):
+            captured.append(sql)
+            return super()._answer(sql)
+
+    conn = Stub({"pg_stat_activity": [(0,)], "show max_connections": [("100",)], "pg_locks": [(0,)],
+                 "pg_last_xact_replay_timestamp": [(None,)]})
+    _Postgres.metrics(conn)
+    long_q = next(q for q in captured if "60 seconds" in q)
+    assert "wait_event_type IS DISTINCT FROM 'Lock'" in long_q
+
+
+def test_mongo_asks_the_server_for_long_running_ops_only():
+    """Audit A-B-L8: currentOp came back unfiltered - one document, capped at 16 MB - and was filtered here."""
+    asked = []
+
+    class Recording(_MongoStub):
+        def command(self, name, *args, **kw):
+            asked.append((name, args))
+            return super().command(name, *args, **kw)
+
+    conn = Recording(ops=[{"secs_running": 900, "opid": 1, "ns": "warden.orders", "command": {"find": "o"}}])
+    _Mongo.metrics(conn)
+    _Mongo.problem_ops(conn, 300)
+    filters = [a[0] for n, a in asked if n == "currentOp"]
+    assert filters == [{"active": True, "secs_running": {"$gte": 60}}, {"active": True, "secs_running": {"$gte": 300}}]
+
+
+def test_postgres_counts_only_sessions_idle_in_a_transaction_past_the_threshold():
+    """Audit A-B-L9: a session between two statements of a transaction is idle for milliseconds."""
+    conn = _SqlStub({"idle in transaction": [(0,)], "SHOW max_connections": [(100,)], "count(*)": [(3,)]})
+    _Postgres.metrics(conn)
+    idle = [q for q in conn.asked if "idle in transaction" in q]
+    assert idle, idle
+    assert all("state_change < now() - make_interval" in q for q in idle), idle
+
+
+def test_every_connection_a_read_opens_is_closed(monkeypatch):
+    """Audit A-B-L7: each metrics() and logs() call opened a connection and never closed it."""
+    from warden import database
+
+    opened, closed = [], []
+
+    class Conn:
+        def close(self):
+            closed.append(self)
+
+    class Adapter:
+        engine = "postgres"
+
+        @staticmethod
+        def connect(dsn):
+            opened.append(Conn())
+            return opened[-1]
+
+        @staticmethod
+        def metrics(conn):
+            raise RuntimeError("permission denied")
+
+        @staticmethod
+        def problem_ops(conn, idle):
+            return []
+
+    monkeypatch.setattr(database, "adapter_for", lambda engine: Adapter)
+    backend = DatabaseBackend(dsn="postgresql://db.example/orders", engine="postgres")
+    alert = _alert()
+    with pytest.raises(ToolError, match="database metrics read failed: permission denied"):  # it still closes
+        backend.metrics(alert)
+    backend.logs(_alert())
+    assert len(opened) == 2
+    assert closed == opened
+

@@ -1,0 +1,89 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.18, pytest-9.1.1, pluggy-1.6.0
+rootdir: /tmp/dpld-s10
+configfile: pyproject.toml
+testpaths: tests
+collected 764 items
+
+tests/test_ai_after_claim.py ...                                         [  0%]
+tests/test_flow.py .....................                                 [  3%]
+tests/test_hardening.py .....                                            [  3%]
+tests/test_hardening_cloud.py .......................................... [  9%]
+.........                                                                [ 10%]
+tests/test_hardening_cloud_b.py ........................................ [ 15%]
+.....................................                                    [ 20%]
+tests/test_hardening_cloud_c.py .................................        [ 24%]
+tests/test_hardening_cloud_d.py ........................................ [ 30%]
+...................                                                      [ 32%]
+tests/test_hardening_cloud_e.py ..............                           [ 34%]
+tests/test_http.py .......                                               [ 35%]
+tests/test_hygiene.py ...F...F.                                          [ 36%]
+tests/test_infra.py ...                                                  [ 36%]
+tests/test_loss_path_s1g.py .......................                      [ 39%]
+tests/test_loss_path_s1h.py ..................                           [ 42%]
+tests/test_loss_path_s1i.py ........                                     [ 43%]
+tests/test_loss_path_s1j.py ......................                       [ 46%]
+tests/test_mutants.py ..                                                 [ 46%]
+tests/test_mutants_round2.py ......................                      [ 49%]
+tests/test_mutation_guards.py ...........................                [ 52%]
+tests/test_portal_api.py ............................................... [ 59%]
+........................................................................ [ 68%]
+..................................................                       [ 75%]
+tests/test_portal_log.py ............................................... [ 81%]
+..........                                                               [ 82%]
+tests/test_reaper_start_stop.py ......                                   [ 83%]
+tests/test_server_hardening.py ........................s                 [ 86%]
+tests/test_server_main_reaper.py ..                                      [ 86%]
+tests/test_slow_sender.py .............................................. [ 92%]
+.......................                                                  [ 95%]
+tests/test_stall_eviction.py ................................            [100%]
+
+=================================== FAILURES ===================================
+___________________________ test_hygiene_scan_public ___________________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3756/test_hygiene_scan_public0')
+
+    def test_hygiene_scan_public(tmp_path: Path) -> None:
+        """Patterns + exceptions pipeline with one canary per rule, on the tree; gitleaks on tree and history (--redact)."""
+        patterns, exceptions, toml = REPO / "patterns.txt", REPO / "exceptions.txt", REPO / ".gitleaks.toml"
+        for f in (patterns, exceptions, toml):
+            assert f.is_file(), f"missing {f.name} (this test needs it)"
+        # 1. canaries: a temp repo with one planted value per kind, plus values that must be allowed
+        canary = tmp_path / "canary"
+        canary.mkdir()
+        _git(canary, "init", "-q")
+        planted = "\n".join(f"{k}: {v}" for k, v in hygiene.CANARIES.items()) + "\n"
+        (canary / "planted.txt").write_text(planted, encoding="utf-8")
+        (canary / "allowed.txt").write_text("\n".join(f"x {v} y" for v in hygiene.ALLOWED) + "\n", encoding="utf-8")
+        _git(canary, "add", ".")
+        reported = hygiene.pipeline(canary, patterns, exceptions)
+        matches = [ln.split(":", 2)[2].strip() for ln in reported if ln.startswith("planted.txt:")]
+        for kind, value in hygiene.CANARIES.items():
+            assert any(m and m in value for m in matches), f"canary not found, rule silently stopped matching: {kind}"
+        assert not [ln for ln in reported if ln.startswith("allowed.txt:")], "an allowed value was reported"
+        for pat in hygiene.read_lines(patterns):  # every rule in the file must have a canary that it matches
+            assert any(re.search(pat, v) for v in hygiene.CANARIES.values()), f"rule without a canary: {pat}"
+        # 2. the real tree
+        left = hygiene.pipeline(REPO, patterns, exceptions)
+        assert not left, "hardcoded literals found (file:line:match):\n" + "\n".join(left[:50])
+        # 3. gitleaks (release binary; CI installs it with a checked SHA-256)
+        exe = os.environ.get(GITLEAKS_ENV) or shutil.which("gitleaks")
+>       assert exe, f"gitleaks binary not found: put it on PATH or set {GITLEAKS_ENV}"
+E       AssertionError: gitleaks binary not found: put it on PATH or set GITLEAKS_BIN
+E       assert None
+
+tests/test_hygiene.py:122: AssertionError
+____________________________ test_hygiene_wordlist _____________________________
+
+    def test_hygiene_wordlist() -> None:
+        """Local only. FAILS (never skips) when the list is missing, too short or the planted canary is not found."""
+        path = os.environ.get(WORDLIST_ENV)
+>       assert path, f"set {WORDLIST_ENV} to the private word list; this test fails instead of skipping"
+E       AssertionError: set HYGIENE_WORDLIST to the private word list; this test fails instead of skipping
+E       assert None
+
+tests/test_hygiene.py:229: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_hygiene.py::test_hygiene_scan_public - AssertionError: gitl...
+FAILED tests/test_hygiene.py::test_hygiene_wordlist - AssertionError: set HYG...
+============= 2 failed, 761 passed, 1 skipped in 338.84s (0:05:38) =============

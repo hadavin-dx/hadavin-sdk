@@ -1,0 +1,2351 @@
+sha=2f94c2b28df25bca9bb28d6a50d13f8c292c19c9 + tests/fixtures/timing.py from origin/main 2a8c2aac (git status: M  tests/fixtures/timing.py ?? .venv )
+cmd=pytest -q (all 10 changed test files, incl perf), src imported from the sibling worktree (identical: no src change in the diff)
+FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF..FFFFFFFFFFFFFFFFFFFFFFFFFFFFF [ 11%]
+FFFFFFFFFFFFFFF.FFFFFFFFFFFFFFFFFFFF....FFFFFFFFF.F..................... [ 22%]
+........................................................................ [ 34%]
+......................................................................F. [ 45%]
+................F....s....................F............................. [ 57%]
+..............FFF....................................................... [ 68%]
+........................................................................ [ 80%]
+.............FFFFF...................................................... [ 91%]
+......F................F.........................F.                      [100%]
+=================================== FAILURES ===================================
+______ test_the_harness_flags_a_quadratic_pattern_and_passes_a_linear_one ______
+
+    @pytest.mark.perf  # timing-based (8x the text, limit 24x): it belongs with the other timing tests, not in the unit suite
+    def test_the_harness_flags_a_quadratic_pattern_and_passes_a_linear_one():
+        quadratic = re.compile(r"\bcurl\b[^\r\n]*?[ \t]-u")  # the shape the command patterns had
+        bounded = re.compile(r"\bcurl\b[^\r\n]{0,1024}?[ \t]-u")
+        # 8x the text: a linear cost grows about 8x (limit 24x), a quadratic one about 64x
+>       slow = growth(quadratic, "curl ", small=4 * 1024, big=32 * 1024)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_k5_perf.py:68: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+pattern = re.compile('\\bcurl\\b[^\\r\\n]*?[ \\t]-u'), unit = 'curl '
+small = 4096, big = 32768
+
+    def growth(
+        pattern: re.Pattern[str], unit: str, small: int = SMALL, big: int = BIG
+    ) -> timing.Growth:
+>       return timing.growth(lambda t: _scan(pattern, t), unit, small, big)
+               ^^^^^^^^^^^^^
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'growth'
+
+tests/test_k5_perf.py:50: AttributeError
+____ test_no_redaction_pattern_is_super_linear_on_its_own_keywords_repeated ____
+
+    @pytest.mark.perf
+    def test_no_redaction_pattern_is_super_linear_on_its_own_keywords_repeated():
+        cases = [
+            (name, lambda t, p=pat: _scan(p, t), unit)
+            for name, pat in _redact_module().PATTERNS
+            for unit in _units(pat)
+        ]
+        assert len(cases) >= 150, "the sweep would look at too little"
+        # every slow pattern AND every pattern that could not be timed, each by name (a refusal does not stop the sweep)
+>       assert timing.problems(cases, SMALL, BIG) == []
+               ^^^^^^^^^^^^^^^
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'problems'
+
+tests/test_k5_perf.py:83: AttributeError
+___ test_redact_untrusted_end_to_end_is_not_super_linear_with_views[curl-u] ____
+
+unit = 'curl -u '
+
+    @pytest.mark.perf
+    @pytest.mark.parametrize(
+        "unit", E2E_UNITS, ids=["curl-u", "password", "fullwidth", "json-escape", "zero-width"]
+    )
+    def test_redact_untrusted_end_to_end_is_not_super_linear_with_views(unit):
+>       measured = timing.growth(_e2e, unit, 4 * 1024, 64 * 1024)
+                   ^^^^^^^^^^^^^
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'growth'
+
+tests/test_k5_perf.py:113: AttributeError
+__ test_redact_untrusted_end_to_end_is_not_super_linear_with_views[password] ___
+
+unit = 'password= '
+
+    @pytest.mark.perf
+    @pytest.mark.parametrize(
+        "unit", E2E_UNITS, ids=["curl-u", "password", "fullwidth", "json-escape", "zero-width"]
+    )
+    def test_redact_untrusted_end_to_end_is_not_super_linear_with_views(unit):
+>       measured = timing.growth(_e2e, unit, 4 * 1024, 64 * 1024)
+                   ^^^^^^^^^^^^^
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'growth'
+
+tests/test_k5_perf.py:113: AttributeError
+__ test_redact_untrusted_end_to_end_is_not_super_linear_with_views[fullwidth] __
+
+unit = 'ｐａｓｓｗｏｒｄ＝ '
+
+    @pytest.mark.perf
+    @pytest.mark.parametrize(
+        "unit", E2E_UNITS, ids=["curl-u", "password", "fullwidth", "json-escape", "zero-width"]
+    )
+    def test_redact_untrusted_end_to_end_is_not_super_linear_with_views(unit):
+>       measured = timing.growth(_e2e, unit, 4 * 1024, 64 * 1024)
+                   ^^^^^^^^^^^^^
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'growth'
+
+tests/test_k5_perf.py:113: AttributeError
+_ test_redact_untrusted_end_to_end_is_not_super_linear_with_views[json-escape] _
+
+unit = '\\u0070assword= '
+
+    @pytest.mark.perf
+    @pytest.mark.parametrize(
+        "unit", E2E_UNITS, ids=["curl-u", "password", "fullwidth", "json-escape", "zero-width"]
+    )
+    def test_redact_untrusted_end_to_end_is_not_super_linear_with_views(unit):
+>       measured = timing.growth(_e2e, unit, 4 * 1024, 64 * 1024)
+                   ^^^^^^^^^^^^^
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'growth'
+
+tests/test_k5_perf.py:113: AttributeError
+_ test_redact_untrusted_end_to_end_is_not_super_linear_with_views[zero-width] __
+
+unit = 'pass\u200bword= '
+
+    @pytest.mark.perf
+    @pytest.mark.parametrize(
+        "unit", E2E_UNITS, ids=["curl-u", "password", "fullwidth", "json-escape", "zero-width"]
+    )
+    def test_redact_untrusted_end_to_end_is_not_super_linear_with_views(unit):
+>       measured = timing.growth(_e2e, unit, 4 * 1024, 64 * 1024)
+                   ^^^^^^^^^^^^^
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'growth'
+
+tests/test_k5_perf.py:113: AttributeError
+_______ test_the_slowest_measured_shape_at_the_cap_stays_under_a_ceiling _______
+
+    @pytest.mark.perf
+    def test_the_slowest_measured_shape_at_the_cap_stays_under_a_ceiling():
+        """Measured 7.2 s for "curl -u " at 262,144 characters on a Windows laptop and 7.7 s in a container (2026-11-02).
+        The ceiling is 30 s (about 4x) and it is read on the rule's clock (`timing.CLOCK`: processor time, so another
+        program using the machine does not count; on Windows the wall clock), once: there is no second try. Size timeouts
+        around the measured number (see defaults.MAX_REDACT_CHARS)."""
+        from hadavin_sdk import defaults
+        from hadavin_sdk.guard import runmap
+    
+        text = ("curl -u " * (defaults.MAX_REDACT_CHARS // 8 + 1))[: defaults.MAX_REDACT_CHARS]
+>       started = timing.CLOCK()
+                  ^^^^^^^^^^^^
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'CLOCK'
+
+tests/test_k5_perf.py:129: AttributeError
+______________ test_a_linear_cost_passes_at_any_speed[1e-09-gap8] ______________
+
+scale = 1e-09, sizes = (1000, 8000)
+
+    @pytest.mark.parametrize("sizes", GAPS, ids=["gap8", "gap16"])
+    @pytest.mark.parametrize("scale", SPEEDS)
+    def test_a_linear_cost_passes_at_any_speed(scale, sizes):
+>       assert not Model(power(1), scale).is_superlinear(*sizes), "a linear cost was flagged"
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_timing_fixture.py:79: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_timing_fixture.Model object at 0x7fa01d30fb60>, small = 1000
+big = 8000
+
+    def is_superlinear(self, small: int = SMALL, big: int = BIG) -> bool:
+>       return timing.is_superlinear(self.fn, "a", small, big, clock=self.clock)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: is_superlinear() got an unexpected keyword argument 'clock'
+
+tests/test_timing_fixture.py:51: TypeError
+_____________ test_a_linear_cost_passes_at_any_speed[1e-09-gap16] ______________
+
+scale = 1e-09, sizes = (1000, 16000)
+
+    @pytest.mark.parametrize("sizes", GAPS, ids=["gap8", "gap16"])
+    @pytest.mark.parametrize("scale", SPEEDS)
+    def test_a_linear_cost_passes_at_any_speed(scale, sizes):
+>       assert not Model(power(1), scale).is_superlinear(*sizes), "a linear cost was flagged"
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_timing_fixture.py:79: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_timing_fixture.Model object at 0x7fa019f44b90>, small = 1000
+big = 16000
+
+    def is_superlinear(self, small: int = SMALL, big: int = BIG) -> bool:
+>       return timing.is_superlinear(self.fn, "a", small, big, clock=self.clock)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: is_superlinear() got an unexpected keyword argument 'clock'
+
+tests/test_timing_fixture.py:51: TypeError
+______________ test_a_linear_cost_passes_at_any_speed[1e-08-gap8] ______________
+
+scale = 1e-08, sizes = (1000, 8000)
+
+    @pytest.mark.parametrize("sizes", GAPS, ids=["gap8", "gap16"])
+    @pytest.mark.parametrize("scale", SPEEDS)
+    def test_a_linear_cost_passes_at_any_speed(scale, sizes):
+>       assert not Model(power(1), scale).is_superlinear(*sizes), "a linear cost was flagged"
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_timing_fixture.py:79: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_timing_fixture.Model object at 0x7fa019f456d0>, small = 1000
+big = 8000
+
+    def is_superlinear(self, small: int = SMALL, big: int = BIG) -> bool:
+>       return timing.is_superlinear(self.fn, "a", small, big, clock=self.clock)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: is_superlinear() got an unexpected keyword argument 'clock'
+
+tests/test_timing_fixture.py:51: TypeError
+_____________ test_a_linear_cost_passes_at_any_speed[1e-08-gap16] ______________
+
+scale = 1e-08, sizes = (1000, 16000)
+
+    @pytest.mark.parametrize("sizes", GAPS, ids=["gap8", "gap16"])
+    @pytest.mark.parametrize("scale", SPEEDS)
+    def test_a_linear_cost_passes_at_any_speed(scale, sizes):
+>       assert not Model(power(1), scale).is_superlinear(*sizes), "a linear cost was flagged"
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_timing_fixture.py:79: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_timing_fixture.Model object at 0x7fa01bf72d70>, small = 1000
+big = 16000
+
+    def is_superlinear(self, small: int = SMALL, big: int = BIG) -> bool:
+>       return timing.is_superlinear(self.fn, "a", small, big, clock=self.clock)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: is_superlinear() got an unexpected keyword argument 'clock'
+
+tests/test_timing_fixture.py:51: TypeError
+______________ test_a_linear_cost_passes_at_any_speed[1e-07-gap8] ______________
+
+scale = 1e-07, sizes = (1000, 8000)
+
+    @pytest.mark.parametrize("sizes", GAPS, ids=["gap8", "gap16"])
+    @pytest.mark.parametrize("scale", SPEEDS)
+    def test_a_linear_cost_passes_at_any_speed(scale, sizes):
+>       assert not Model(power(1), scale).is_superlinear(*sizes), "a linear cost was flagged"
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_timing_fixture.py:79: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_timing_fixture.Model object at 0x7fa01d3a50f0>, small = 1000
+big = 8000
+
+    def is_superlinear(self, small: int = SMALL, big: int = BIG) -> bool:
+>       return timing.is_superlinear(self.fn, "a", small, big, clock=self.clock)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: is_superlinear() got an unexpected keyword argument 'clock'
+
+tests/test_timing_fixture.py:51: TypeError
+_____________ test_a_linear_cost_passes_at_any_speed[1e-07-gap16] ______________
+
+scale = 1e-07, sizes = (1000, 16000)
+
+    @pytest.mark.parametrize("sizes", GAPS, ids=["gap8", "gap16"])
+    @pytest.mark.parametrize("scale", SPEEDS)
+    def test_a_linear_cost_passes_at_any_speed(scale, sizes):
+>       assert not Model(power(1), scale).is_superlinear(*sizes), "a linear cost was flagged"
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_timing_fixture.py:79: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_timing_fixture.Model object at 0x7fa01bb64dd0>, small = 1000
+big = 16000
+
+    def is_superlinear(self, small: int = SMALL, big: int = BIG) -> bool:
+>       return timing.is_superlinear(self.fn, "a", small, big, clock=self.clock)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: is_superlinear() got an unexpected keyword argument 'clock'
+
+tests/test_timing_fixture.py:51: TypeError
+______________ test_a_linear_cost_passes_at_any_speed[1e-05-gap8] ______________
+
+scale = 1e-05, sizes = (1000, 8000)
+
+    @pytest.mark.parametrize("sizes", GAPS, ids=["gap8", "gap16"])
+    @pytest.mark.parametrize("scale", SPEEDS)
+    def test_a_linear_cost_passes_at_any_speed(scale, sizes):
+>       assert not Model(power(1), scale).is_superlinear(*sizes), "a linear cost was flagged"
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_timing_fixture.py:79: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_timing_fixture.Model object at 0x7fa01af01480>, small = 1000
+big = 8000
+
+    def is_superlinear(self, small: int = SMALL, big: int = BIG) -> bool:
+>       return timing.is_superlinear(self.fn, "a", small, big, clock=self.clock)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: is_superlinear() got an unexpected keyword argument 'clock'
+
+tests/test_timing_fixture.py:51: TypeError
+_____________ test_a_linear_cost_passes_at_any_speed[1e-05-gap16] ______________
+
+scale = 1e-05, sizes = (1000, 16000)
+
+    @pytest.mark.parametrize("sizes", GAPS, ids=["gap8", "gap16"])
+    @pytest.mark.parametrize("scale", SPEEDS)
+    def test_a_linear_cost_passes_at_any_speed(scale, sizes):
+>       assert not Model(power(1), scale).is_superlinear(*sizes), "a linear cost was flagged"
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_timing_fixture.py:79: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_timing_fixture.Model object at 0x7fa01af01150>, small = 1000
+big = 16000
+
+    def is_superlinear(self, small: int = SMALL, big: int = BIG) -> bool:
+>       return timing.is_superlinear(self.fn, "a", small, big, clock=self.clock)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: is_superlinear() got an unexpected keyword argument 'clock'
+
+tests/test_timing_fixture.py:51: TypeError
+______________ test_a_linear_cost_passes_at_any_speed[0.001-gap8] ______________
+
+scale = 0.001, sizes = (1000, 8000)
+
+    @pytest.mark.parametrize("sizes", GAPS, ids=["gap8", "gap16"])
+    @pytest.mark.parametrize("scale", SPEEDS)
+    def test_a_linear_cost_passes_at_any_speed(scale, sizes):
+>       assert not Model(power(1), scale).is_superlinear(*sizes), "a linear cost was flagged"
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_timing_fixture.py:79: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_timing_fixture.Model object at 0x7fa01bb6ca50>, small = 1000
+big = 8000
+
+    def is_superlinear(self, small: int = SMALL, big: int = BIG) -> bool:
+>       return timing.is_superlinear(self.fn, "a", small, big, clock=self.clock)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: is_superlinear() got an unexpected keyword argument 'clock'
+
+tests/test_timing_fixture.py:51: TypeError
+_____________ test_a_linear_cost_passes_at_any_speed[0.001-gap16] ______________
+
+scale = 0.001, sizes = (1000, 16000)
+
+    @pytest.mark.parametrize("sizes", GAPS, ids=["gap8", "gap16"])
+    @pytest.mark.parametrize("scale", SPEEDS)
+    def test_a_linear_cost_passes_at_any_speed(scale, sizes):
+>       assert not Model(power(1), scale).is_superlinear(*sizes), "a linear cost was flagged"
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_timing_fixture.py:79: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_timing_fixture.Model object at 0x7fa01bb6c850>, small = 1000
+big = 16000
+
+    def is_superlinear(self, small: int = SMALL, big: int = BIG) -> bool:
+>       return timing.is_superlinear(self.fn, "a", small, big, clock=self.clock)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: is_superlinear() got an unexpected keyword argument 'clock'
+
+tests/test_timing_fixture.py:51: TypeError
+_____________ test_an_n_log_n_cost_passes_at_any_speed[1e-10-gap8] _____________
+
+scale = 1e-10, sizes = (1000, 8000)
+
+    @pytest.mark.parametrize("sizes", GAPS, ids=["gap8", "gap16"])
+    @pytest.mark.parametrize("scale", [1e-10, 1e-9, 1e-7, 1e-5])
+    def test_an_n_log_n_cost_passes_at_any_speed(scale, sizes):
+        # 8x the text: 8 * log(8000)/log(1000) = 10.4x (limit 24x); 16x the text: 22.4x (limit 48x)
+>       assert not Model(n_log_n, scale).is_superlinear(*sizes), "an n log n cost was flagged"
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_timing_fixture.py:86: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_timing_fixture.Model object at 0x7fa01bbf45f0>, small = 1000
+big = 8000
+
+    def is_superlinear(self, small: int = SMALL, big: int = BIG) -> bool:
+>       return timing.is_superlinear(self.fn, "a", small, big, clock=self.clock)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: is_superlinear() got an unexpected keyword argument 'clock'
+
+tests/test_timing_fixture.py:51: TypeError
+____________ test_an_n_log_n_cost_passes_at_any_speed[1e-10-gap16] _____________
+
+scale = 1e-10, sizes = (1000, 16000)
+
+    @pytest.mark.parametrize("sizes", GAPS, ids=["gap8", "gap16"])
+    @pytest.mark.parametrize("scale", [1e-10, 1e-9, 1e-7, 1e-5])
+    def test_an_n_log_n_cost_passes_at_any_speed(scale, sizes):
+        # 8x the text: 8 * log(8000)/log(1000) = 10.4x (limit 24x); 16x the text: 22.4x (limit 48x)
+>       assert not Model(n_log_n, scale).is_superlinear(*sizes), "an n log n cost was flagged"
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_timing_fixture.py:86: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_timing_fixture.Model object at 0x7fa01bbf4e60>, small = 1000
+big = 16000
+
+    def is_superlinear(self, small: int = SMALL, big: int = BIG) -> bool:
+>       return timing.is_superlinear(self.fn, "a", small, big, clock=self.clock)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: is_superlinear() got an unexpected keyword argument 'clock'
+
+tests/test_timing_fixture.py:51: TypeError
+_____________ test_an_n_log_n_cost_passes_at_any_speed[1e-09-gap8] _____________
+
+scale = 1e-09, sizes = (1000, 8000)
+
+    @pytest.mark.parametrize("sizes", GAPS, ids=["gap8", "gap16"])
+    @pytest.mark.parametrize("scale", [1e-10, 1e-9, 1e-7, 1e-5])
+    def test_an_n_log_n_cost_passes_at_any_speed(scale, sizes):
+        # 8x the text: 8 * log(8000)/log(1000) = 10.4x (limit 24x); 16x the text: 22.4x (limit 48x)
+>       assert not Model(n_log_n, scale).is_superlinear(*sizes), "an n log n cost was flagged"
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_timing_fixture.py:86: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_timing_fixture.Model object at 0x7fa01bb392b0>, small = 1000
+big = 8000
+
+    def is_superlinear(self, small: int = SMALL, big: int = BIG) -> bool:
+>       return timing.is_superlinear(self.fn, "a", small, big, clock=self.clock)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: is_superlinear() got an unexpected keyword argument 'clock'
+
+tests/test_timing_fixture.py:51: TypeError
+____________ test_an_n_log_n_cost_passes_at_any_speed[1e-09-gap16] _____________
+
+scale = 1e-09, sizes = (1000, 16000)
+
+    @pytest.mark.parametrize("sizes", GAPS, ids=["gap8", "gap16"])
+    @pytest.mark.parametrize("scale", [1e-10, 1e-9, 1e-7, 1e-5])
+    def test_an_n_log_n_cost_passes_at_any_speed(scale, sizes):
+        # 8x the text: 8 * log(8000)/log(1000) = 10.4x (limit 24x); 16x the text: 22.4x (limit 48x)
+>       assert not Model(n_log_n, scale).is_superlinear(*sizes), "an n log n cost was flagged"
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_timing_fixture.py:86: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_timing_fixture.Model object at 0x7fa01bb39b70>, small = 1000
+big = 16000
+
+    def is_superlinear(self, small: int = SMALL, big: int = BIG) -> bool:
+>       return timing.is_superlinear(self.fn, "a", small, big, clock=self.clock)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: is_superlinear() got an unexpected keyword argument 'clock'
+
+tests/test_timing_fixture.py:51: TypeError
+_____________ test_an_n_log_n_cost_passes_at_any_speed[1e-07-gap8] _____________
+
+scale = 1e-07, sizes = (1000, 8000)
+
+    @pytest.mark.parametrize("sizes", GAPS, ids=["gap8", "gap16"])
+    @pytest.mark.parametrize("scale", [1e-10, 1e-9, 1e-7, 1e-5])
+    def test_an_n_log_n_cost_passes_at_any_speed(scale, sizes):
+        # 8x the text: 8 * log(8000)/log(1000) = 10.4x (limit 24x); 16x the text: 22.4x (limit 48x)
+>       assert not Model(n_log_n, scale).is_superlinear(*sizes), "an n log n cost was flagged"
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_timing_fixture.py:86: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_timing_fixture.Model object at 0x7fa01af28a10>, small = 1000
+big = 8000
+
+    def is_superlinear(self, small: int = SMALL, big: int = BIG) -> bool:
+>       return timing.is_superlinear(self.fn, "a", small, big, clock=self.clock)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: is_superlinear() got an unexpected keyword argument 'clock'
+
+tests/test_timing_fixture.py:51: TypeError
+____________ test_an_n_log_n_cost_passes_at_any_speed[1e-07-gap16] _____________
+
+scale = 1e-07, sizes = (1000, 16000)
+
+    @pytest.mark.parametrize("sizes", GAPS, ids=["gap8", "gap16"])
+    @pytest.mark.parametrize("scale", [1e-10, 1e-9, 1e-7, 1e-5])
+    def test_an_n_log_n_cost_passes_at_any_speed(scale, sizes):
+        # 8x the text: 8 * log(8000)/log(1000) = 10.4x (limit 24x); 16x the text: 22.4x (limit 48x)
+>       assert not Model(n_log_n, scale).is_superlinear(*sizes), "an n log n cost was flagged"
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_timing_fixture.py:86: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_timing_fixture.Model object at 0x7fa01a334710>, small = 1000
+big = 16000
+
+    def is_superlinear(self, small: int = SMALL, big: int = BIG) -> bool:
+>       return timing.is_superlinear(self.fn, "a", small, big, clock=self.clock)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: is_superlinear() got an unexpected keyword argument 'clock'
+
+tests/test_timing_fixture.py:51: TypeError
+_____________ test_an_n_log_n_cost_passes_at_any_speed[1e-05-gap8] _____________
+
+scale = 1e-05, sizes = (1000, 8000)
+
+    @pytest.mark.parametrize("sizes", GAPS, ids=["gap8", "gap16"])
+    @pytest.mark.parametrize("scale", [1e-10, 1e-9, 1e-7, 1e-5])
+    def test_an_n_log_n_cost_passes_at_any_speed(scale, sizes):
+        # 8x the text: 8 * log(8000)/log(1000) = 10.4x (limit 24x); 16x the text: 22.4x (limit 48x)
+>       assert not Model(n_log_n, scale).is_superlinear(*sizes), "an n log n cost was flagged"
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_timing_fixture.py:86: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_timing_fixture.Model object at 0x7fa01bf37f50>, small = 1000
+big = 8000
+
+    def is_superlinear(self, small: int = SMALL, big: int = BIG) -> bool:
+>       return timing.is_superlinear(self.fn, "a", small, big, clock=self.clock)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: is_superlinear() got an unexpected keyword argument 'clock'
+
+tests/test_timing_fixture.py:51: TypeError
+____________ test_an_n_log_n_cost_passes_at_any_speed[1e-05-gap16] _____________
+
+scale = 1e-05, sizes = (1000, 16000)
+
+    @pytest.mark.parametrize("sizes", GAPS, ids=["gap8", "gap16"])
+    @pytest.mark.parametrize("scale", [1e-10, 1e-9, 1e-7, 1e-5])
+    def test_an_n_log_n_cost_passes_at_any_speed(scale, sizes):
+        # 8x the text: 8 * log(8000)/log(1000) = 10.4x (limit 24x); 16x the text: 22.4x (limit 48x)
+>       assert not Model(n_log_n, scale).is_superlinear(*sizes), "an n log n cost was flagged"
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_timing_fixture.py:86: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_timing_fixture.Model object at 0x7fa01bb4e6d0>, small = 1000
+big = 16000
+
+    def is_superlinear(self, small: int = SMALL, big: int = BIG) -> bool:
+>       return timing.is_superlinear(self.fn, "a", small, big, clock=self.clock)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: is_superlinear() got an unexpected keyword argument 'clock'
+
+tests/test_timing_fixture.py:51: TypeError
+__________ test_a_quadratic_cost_is_flagged_at_any_speed[1e-11-gap8] ___________
+
+scale = 1e-11, sizes = (1000, 8000)
+
+    @pytest.mark.parametrize("sizes", GAPS, ids=["gap8", "gap16"])
+    @pytest.mark.parametrize("scale", [1e-11, 1e-10, 1e-9, 1e-7, 1e-6, 1e-5])
+    def test_a_quadratic_cost_is_flagged_at_any_speed(scale, sizes):
+        # one small call takes from 10 microseconds to 10 seconds. The three fastest speeds are under the 4 ms an earlier
+        # version raised the small run to, where it flagged nothing.
+>       assert Model(power(2), scale).is_superlinear(*sizes), "a quadratic cost was not flagged"
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_timing_fixture.py:94: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_timing_fixture.Model object at 0x7fa01bb4fcd0>, small = 1000
+big = 8000
+
+    def is_superlinear(self, small: int = SMALL, big: int = BIG) -> bool:
+>       return timing.is_superlinear(self.fn, "a", small, big, clock=self.clock)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: is_superlinear() got an unexpected keyword argument 'clock'
+
+tests/test_timing_fixture.py:51: TypeError
+__________ test_a_quadratic_cost_is_flagged_at_any_speed[1e-11-gap16] __________
+
+scale = 1e-11, sizes = (1000, 16000)
+
+    @pytest.mark.parametrize("sizes", GAPS, ids=["gap8", "gap16"])
+    @pytest.mark.parametrize("scale", [1e-11, 1e-10, 1e-9, 1e-7, 1e-6, 1e-5])
+    def test_a_quadratic_cost_is_flagged_at_any_speed(scale, sizes):
+        # one small call takes from 10 microseconds to 10 seconds. The three fastest speeds are under the 4 ms an earlier
+        # version raised the small run to, where it flagged nothing.
+>       assert Model(power(2), scale).is_superlinear(*sizes), "a quadratic cost was not flagged"
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_timing_fixture.py:94: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_timing_fixture.Model object at 0x7fa01bb074d0>, small = 1000
+big = 16000
+
+    def is_superlinear(self, small: int = SMALL, big: int = BIG) -> bool:
+>       return timing.is_superlinear(self.fn, "a", small, big, clock=self.clock)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: is_superlinear() got an unexpected keyword argument 'clock'
+
+tests/test_timing_fixture.py:51: TypeError
+__________ test_a_quadratic_cost_is_flagged_at_any_speed[1e-10-gap8] ___________
+
+scale = 1e-10, sizes = (1000, 8000)
+
+    @pytest.mark.parametrize("sizes", GAPS, ids=["gap8", "gap16"])
+    @pytest.mark.parametrize("scale", [1e-11, 1e-10, 1e-9, 1e-7, 1e-6, 1e-5])
+    def test_a_quadratic_cost_is_flagged_at_any_speed(scale, sizes):
+        # one small call takes from 10 microseconds to 10 seconds. The three fastest speeds are under the 4 ms an earlier
+        # version raised the small run to, where it flagged nothing.
+>       assert Model(power(2), scale).is_superlinear(*sizes), "a quadratic cost was not flagged"
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_timing_fixture.py:94: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_timing_fixture.Model object at 0x7fa01bb06d50>, small = 1000
+big = 8000
+
+    def is_superlinear(self, small: int = SMALL, big: int = BIG) -> bool:
+>       return timing.is_superlinear(self.fn, "a", small, big, clock=self.clock)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: is_superlinear() got an unexpected keyword argument 'clock'
+
+tests/test_timing_fixture.py:51: TypeError
+__________ test_a_quadratic_cost_is_flagged_at_any_speed[1e-10-gap16] __________
+
+scale = 1e-10, sizes = (1000, 16000)
+
+    @pytest.mark.parametrize("sizes", GAPS, ids=["gap8", "gap16"])
+    @pytest.mark.parametrize("scale", [1e-11, 1e-10, 1e-9, 1e-7, 1e-6, 1e-5])
+    def test_a_quadratic_cost_is_flagged_at_any_speed(scale, sizes):
+        # one small call takes from 10 microseconds to 10 seconds. The three fastest speeds are under the 4 ms an earlier
+        # version raised the small run to, where it flagged nothing.
+>       assert Model(power(2), scale).is_superlinear(*sizes), "a quadratic cost was not flagged"
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_timing_fixture.py:94: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_timing_fixture.Model object at 0x7fa01bb06990>, small = 1000
+big = 16000
+
+    def is_superlinear(self, small: int = SMALL, big: int = BIG) -> bool:
+>       return timing.is_superlinear(self.fn, "a", small, big, clock=self.clock)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: is_superlinear() got an unexpected keyword argument 'clock'
+
+tests/test_timing_fixture.py:51: TypeError
+__________ test_a_quadratic_cost_is_flagged_at_any_speed[1e-09-gap8] ___________
+
+scale = 1e-09, sizes = (1000, 8000)
+
+    @pytest.mark.parametrize("sizes", GAPS, ids=["gap8", "gap16"])
+    @pytest.mark.parametrize("scale", [1e-11, 1e-10, 1e-9, 1e-7, 1e-6, 1e-5])
+    def test_a_quadratic_cost_is_flagged_at_any_speed(scale, sizes):
+        # one small call takes from 10 microseconds to 10 seconds. The three fastest speeds are under the 4 ms an earlier
+        # version raised the small run to, where it flagged nothing.
+>       assert Model(power(2), scale).is_superlinear(*sizes), "a quadratic cost was not flagged"
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_timing_fixture.py:94: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_timing_fixture.Model object at 0x7fa01bb06170>, small = 1000
+big = 8000
+
+    def is_superlinear(self, small: int = SMALL, big: int = BIG) -> bool:
+>       return timing.is_superlinear(self.fn, "a", small, big, clock=self.clock)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: is_superlinear() got an unexpected keyword argument 'clock'
+
+tests/test_timing_fixture.py:51: TypeError
+__________ test_a_quadratic_cost_is_flagged_at_any_speed[1e-09-gap16] __________
+
+scale = 1e-09, sizes = (1000, 16000)
+
+    @pytest.mark.parametrize("sizes", GAPS, ids=["gap8", "gap16"])
+    @pytest.mark.parametrize("scale", [1e-11, 1e-10, 1e-9, 1e-7, 1e-6, 1e-5])
+    def test_a_quadratic_cost_is_flagged_at_any_speed(scale, sizes):
+        # one small call takes from 10 microseconds to 10 seconds. The three fastest speeds are under the 4 ms an earlier
+        # version raised the small run to, where it flagged nothing.
+>       assert Model(power(2), scale).is_superlinear(*sizes), "a quadratic cost was not flagged"
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_timing_fixture.py:94: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_timing_fixture.Model object at 0x7fa01bb05c70>, small = 1000
+big = 16000
+
+    def is_superlinear(self, small: int = SMALL, big: int = BIG) -> bool:
+>       return timing.is_superlinear(self.fn, "a", small, big, clock=self.clock)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: is_superlinear() got an unexpected keyword argument 'clock'
+
+tests/test_timing_fixture.py:51: TypeError
+__________ test_a_quadratic_cost_is_flagged_at_any_speed[1e-07-gap8] ___________
+
+scale = 1e-07, sizes = (1000, 8000)
+
+    @pytest.mark.parametrize("sizes", GAPS, ids=["gap8", "gap16"])
+    @pytest.mark.parametrize("scale", [1e-11, 1e-10, 1e-9, 1e-7, 1e-6, 1e-5])
+    def test_a_quadratic_cost_is_flagged_at_any_speed(scale, sizes):
+        # one small call takes from 10 microseconds to 10 seconds. The three fastest speeds are under the 4 ms an earlier
+        # version raised the small run to, where it flagged nothing.
+>       assert Model(power(2), scale).is_superlinear(*sizes), "a quadratic cost was not flagged"
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_timing_fixture.py:94: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_timing_fixture.Model object at 0x7fa01bb04f50>, small = 1000
+big = 8000
+
+    def is_superlinear(self, small: int = SMALL, big: int = BIG) -> bool:
+>       return timing.is_superlinear(self.fn, "a", small, big, clock=self.clock)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: is_superlinear() got an unexpected keyword argument 'clock'
+
+tests/test_timing_fixture.py:51: TypeError
+__________ test_a_quadratic_cost_is_flagged_at_any_speed[1e-07-gap16] __________
+
+scale = 1e-07, sizes = (1000, 16000)
+
+    @pytest.mark.parametrize("sizes", GAPS, ids=["gap8", "gap16"])
+    @pytest.mark.parametrize("scale", [1e-11, 1e-10, 1e-9, 1e-7, 1e-6, 1e-5])
+    def test_a_quadratic_cost_is_flagged_at_any_speed(scale, sizes):
+        # one small call takes from 10 microseconds to 10 seconds. The three fastest speeds are under the 4 ms an earlier
+        # version raised the small run to, where it flagged nothing.
+>       assert Model(power(2), scale).is_superlinear(*sizes), "a quadratic cost was not flagged"
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_timing_fixture.py:94: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_timing_fixture.Model object at 0x7fa01bb076b0>, small = 1000
+big = 16000
+
+    def is_superlinear(self, small: int = SMALL, big: int = BIG) -> bool:
+>       return timing.is_superlinear(self.fn, "a", small, big, clock=self.clock)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: is_superlinear() got an unexpected keyword argument 'clock'
+
+tests/test_timing_fixture.py:51: TypeError
+__________ test_a_quadratic_cost_is_flagged_at_any_speed[1e-06-gap8] ___________
+
+scale = 1e-06, sizes = (1000, 8000)
+
+    @pytest.mark.parametrize("sizes", GAPS, ids=["gap8", "gap16"])
+    @pytest.mark.parametrize("scale", [1e-11, 1e-10, 1e-9, 1e-7, 1e-6, 1e-5])
+    def test_a_quadratic_cost_is_flagged_at_any_speed(scale, sizes):
+        # one small call takes from 10 microseconds to 10 seconds. The three fastest speeds are under the 4 ms an earlier
+        # version raised the small run to, where it flagged nothing.
+>       assert Model(power(2), scale).is_superlinear(*sizes), "a quadratic cost was not flagged"
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_timing_fixture.py:94: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_timing_fixture.Model object at 0x7fa01bb07930>, small = 1000
+big = 8000
+
+    def is_superlinear(self, small: int = SMALL, big: int = BIG) -> bool:
+>       return timing.is_superlinear(self.fn, "a", small, big, clock=self.clock)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: is_superlinear() got an unexpected keyword argument 'clock'
+
+tests/test_timing_fixture.py:51: TypeError
+__________ test_a_quadratic_cost_is_flagged_at_any_speed[1e-06-gap16] __________
+
+scale = 1e-06, sizes = (1000, 16000)
+
+    @pytest.mark.parametrize("sizes", GAPS, ids=["gap8", "gap16"])
+    @pytest.mark.parametrize("scale", [1e-11, 1e-10, 1e-9, 1e-7, 1e-6, 1e-5])
+    def test_a_quadratic_cost_is_flagged_at_any_speed(scale, sizes):
+        # one small call takes from 10 microseconds to 10 seconds. The three fastest speeds are under the 4 ms an earlier
+        # version raised the small run to, where it flagged nothing.
+>       assert Model(power(2), scale).is_superlinear(*sizes), "a quadratic cost was not flagged"
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_timing_fixture.py:94: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_timing_fixture.Model object at 0x7fa01bb07bb0>, small = 1000
+big = 16000
+
+    def is_superlinear(self, small: int = SMALL, big: int = BIG) -> bool:
+>       return timing.is_superlinear(self.fn, "a", small, big, clock=self.clock)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: is_superlinear() got an unexpected keyword argument 'clock'
+
+tests/test_timing_fixture.py:51: TypeError
+__________ test_a_quadratic_cost_is_flagged_at_any_speed[1e-05-gap8] ___________
+
+scale = 1e-05, sizes = (1000, 8000)
+
+    @pytest.mark.parametrize("sizes", GAPS, ids=["gap8", "gap16"])
+    @pytest.mark.parametrize("scale", [1e-11, 1e-10, 1e-9, 1e-7, 1e-6, 1e-5])
+    def test_a_quadratic_cost_is_flagged_at_any_speed(scale, sizes):
+        # one small call takes from 10 microseconds to 10 seconds. The three fastest speeds are under the 4 ms an earlier
+        # version raised the small run to, where it flagged nothing.
+>       assert Model(power(2), scale).is_superlinear(*sizes), "a quadratic cost was not flagged"
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_timing_fixture.py:94: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_timing_fixture.Model object at 0x7fa01bb05db0>, small = 1000
+big = 8000
+
+    def is_superlinear(self, small: int = SMALL, big: int = BIG) -> bool:
+>       return timing.is_superlinear(self.fn, "a", small, big, clock=self.clock)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: is_superlinear() got an unexpected keyword argument 'clock'
+
+tests/test_timing_fixture.py:51: TypeError
+__________ test_a_quadratic_cost_is_flagged_at_any_speed[1e-05-gap16] __________
+
+scale = 1e-05, sizes = (1000, 16000)
+
+    @pytest.mark.parametrize("sizes", GAPS, ids=["gap8", "gap16"])
+    @pytest.mark.parametrize("scale", [1e-11, 1e-10, 1e-9, 1e-7, 1e-6, 1e-5])
+    def test_a_quadratic_cost_is_flagged_at_any_speed(scale, sizes):
+        # one small call takes from 10 microseconds to 10 seconds. The three fastest speeds are under the 4 ms an earlier
+        # version raised the small run to, where it flagged nothing.
+>       assert Model(power(2), scale).is_superlinear(*sizes), "a quadratic cost was not flagged"
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_timing_fixture.py:94: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_timing_fixture.Model object at 0x7fa01bb07f70>, small = 1000
+big = 16000
+
+    def is_superlinear(self, small: int = SMALL, big: int = BIG) -> bool:
+>       return timing.is_superlinear(self.fn, "a", small, big, clock=self.clock)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: is_superlinear() got an unexpected keyword argument 'clock'
+
+tests/test_timing_fixture.py:51: TypeError
+_________________ test_the_smallest_exponent_a_gap_flags[gap8] _________________
+
+sizes = (1000, 8000), passes = 1.48, flagged = 1.58
+
+    @pytest.mark.parametrize(
+        ("sizes", "passes", "flagged"),
+        [((1000, 8000), 1.48, 1.58), ((1000, 16000), 1.35, 1.45), ((1000, 64000), 1.2, 1.3)],
+        ids=["gap8", "gap16", "gap64"],
+    )
+    def test_the_smallest_exponent_a_gap_flags(sizes, passes, flagged):
+        # 1 + log(3) / log(gap): 1.53 for 8, 1.40 for 16, 1.26 for 64. A wider gap sees a gentler growth.
+>       assert passes < timing.smallest_exponent_flagged(*sizes) < flagged, (
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            "the stated exponent is wrong"
+        )
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'smallest_exponent_flagged'
+
+tests/test_timing_fixture.py:104: AttributeError
+________________ test_the_smallest_exponent_a_gap_flags[gap16] _________________
+
+sizes = (1000, 16000), passes = 1.35, flagged = 1.45
+
+    @pytest.mark.parametrize(
+        ("sizes", "passes", "flagged"),
+        [((1000, 8000), 1.48, 1.58), ((1000, 16000), 1.35, 1.45), ((1000, 64000), 1.2, 1.3)],
+        ids=["gap8", "gap16", "gap64"],
+    )
+    def test_the_smallest_exponent_a_gap_flags(sizes, passes, flagged):
+        # 1 + log(3) / log(gap): 1.53 for 8, 1.40 for 16, 1.26 for 64. A wider gap sees a gentler growth.
+>       assert passes < timing.smallest_exponent_flagged(*sizes) < flagged, (
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            "the stated exponent is wrong"
+        )
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'smallest_exponent_flagged'
+
+tests/test_timing_fixture.py:104: AttributeError
+________________ test_the_smallest_exponent_a_gap_flags[gap64] _________________
+
+sizes = (1000, 64000), passes = 1.2, flagged = 1.3
+
+    @pytest.mark.parametrize(
+        ("sizes", "passes", "flagged"),
+        [((1000, 8000), 1.48, 1.58), ((1000, 16000), 1.35, 1.45), ((1000, 64000), 1.2, 1.3)],
+        ids=["gap8", "gap16", "gap64"],
+    )
+    def test_the_smallest_exponent_a_gap_flags(sizes, passes, flagged):
+        # 1 + log(3) / log(gap): 1.53 for 8, 1.40 for 16, 1.26 for 64. A wider gap sees a gentler growth.
+>       assert passes < timing.smallest_exponent_flagged(*sizes) < flagged, (
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            "the stated exponent is wrong"
+        )
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'smallest_exponent_flagged'
+
+tests/test_timing_fixture.py:104: AttributeError
+________________ test_a_fast_small_run_is_not_raised_to_a_floor ________________
+
+    def test_a_fast_small_run_is_not_raised_to_a_floor():
+        # 1 ms then 64 ms for 8x the size is quadratic. An earlier version raised the 1 ms to 4 ms and said "linear".
+>       assert timing.grows_faster_than_size(0.001, 0.064, SMALL, BIG), (
+            "a 1 ms small run was raised to a floor"
+        )
+E       AssertionError: a 1 ms small run was raised to a floor
+E       assert False
+E        +  where False = <function grows_faster_than_size at 0x7fa01d3cfec0>(0.001, 0.064, 1000, 8000)
+E        +    where <function grows_faster_than_size at 0x7fa01d3cfec0> = timing.grows_faster_than_size
+
+tests/test_timing_fixture.py:142: AssertionError
+____________ test_what_passes_is_a_small_quadratic_part_and_no_more ____________
+
+    def test_what_passes_is_a_small_quadratic_part_and_no_more():
+        # the docstring's plain words: at a gap of 16 a quadratic part of about 15 percent of the straight-line part of
+        # the small run passes (limit 48x); 17 percent is flagged
+        def with_square(q: float):
+            return lambda n: n + q * n * n / SMALL
+    
+>       assert not Model(with_square(0.14), 1e-9).is_superlinear(SMALL, FAR), "14 percent must pass"
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_timing_fixture.py:159: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_timing_fixture.Model object at 0x7fa01bb06170>, small = 1000
+big = 16000
+
+    def is_superlinear(self, small: int = SMALL, big: int = BIG) -> bool:
+>       return timing.is_superlinear(self.fn, "a", small, big, clock=self.clock)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: is_superlinear() got an unexpected keyword argument 'clock'
+
+tests/test_timing_fixture.py:51: TypeError
+____ test_a_fixed_cost_per_call_hides_even_a_quadratic_cost_at_a_gap_of_16 _____
+
+    def test_a_fixed_cost_per_call_hides_even_a_quadratic_cost_at_a_gap_of_16():
+        # the blind spot (a) of the docstring: a fixed cost of 5 times the small run's own work gives 43.5x, under 48x
+        small_work = SMALL * SMALL
+    
+        def fixed_plus_square(n: int) -> float:
+            return 5 * small_work + n * n
+    
+>       assert not Model(fixed_plus_square, 1e-9).is_superlinear(SMALL, FAR), "the stated blind spot"
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_timing_fixture.py:170: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_timing_fixture.Model object at 0x7fa01bb06f30>, small = 1000
+big = 16000
+
+    def is_superlinear(self, small: int = SMALL, big: int = BIG) -> bool:
+>       return timing.is_superlinear(self.fn, "a", small, big, clock=self.clock)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: is_superlinear() got an unexpected keyword argument 'clock'
+
+tests/test_timing_fixture.py:51: TypeError
+________ test_a_small_run_that_is_not_a_time_is_refused_not_passed[0.0] ________
+
+t_small = 0.0
+
+    @pytest.mark.parametrize("t_small", NOT_A_TIME)
+    def test_a_small_run_that_is_not_a_time_is_refused_not_passed(t_small):
+>       with pytest.raises(ValueError, match="the small run took"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_timing_fixture.py:183: Failed
+______ test_a_small_run_that_is_not_a_time_is_refused_not_passed[-0.001] _______
+
+t_small = -0.001
+
+    @pytest.mark.parametrize("t_small", NOT_A_TIME)
+    def test_a_small_run_that_is_not_a_time_is_refused_not_passed(t_small):
+>       with pytest.raises(ValueError, match="the small run took"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_timing_fixture.py:183: Failed
+________ test_a_small_run_that_is_not_a_time_is_refused_not_passed[nan] ________
+
+t_small = nan
+
+    @pytest.mark.parametrize("t_small", NOT_A_TIME)
+    def test_a_small_run_that_is_not_a_time_is_refused_not_passed(t_small):
+>       with pytest.raises(ValueError, match="the small run took"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_timing_fixture.py:183: Failed
+________ test_a_small_run_that_is_not_a_time_is_refused_not_passed[inf] ________
+
+t_small = inf
+
+    @pytest.mark.parametrize("t_small", NOT_A_TIME)
+    def test_a_small_run_that_is_not_a_time_is_refused_not_passed(t_small):
+>       with pytest.raises(ValueError, match="the small run took"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_timing_fixture.py:183: Failed
+_______ test_a_small_run_that_is_not_a_time_is_refused_not_passed[-inf] ________
+
+t_small = -inf
+
+    @pytest.mark.parametrize("t_small", NOT_A_TIME)
+    def test_a_small_run_that_is_not_a_time_is_refused_not_passed(t_small):
+>       with pytest.raises(ValueError, match="the small run took"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_timing_fixture.py:183: Failed
+_________ test_a_big_run_that_is_not_a_time_is_refused_not_passed[0.0] _________
+
+t_big = 0.0
+
+    @pytest.mark.parametrize("t_big", NOT_A_TIME)
+    def test_a_big_run_that_is_not_a_time_is_refused_not_passed(t_big):
+>       with pytest.raises(ValueError, match="the big run took"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_timing_fixture.py:189: Failed
+_______ test_a_big_run_that_is_not_a_time_is_refused_not_passed[-0.001] ________
+
+t_big = -0.001
+
+    @pytest.mark.parametrize("t_big", NOT_A_TIME)
+    def test_a_big_run_that_is_not_a_time_is_refused_not_passed(t_big):
+>       with pytest.raises(ValueError, match="the big run took"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_timing_fixture.py:189: Failed
+_________ test_a_big_run_that_is_not_a_time_is_refused_not_passed[nan] _________
+
+t_big = nan
+
+    @pytest.mark.parametrize("t_big", NOT_A_TIME)
+    def test_a_big_run_that_is_not_a_time_is_refused_not_passed(t_big):
+>       with pytest.raises(ValueError, match="the big run took"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_timing_fixture.py:189: Failed
+_________ test_a_big_run_that_is_not_a_time_is_refused_not_passed[inf] _________
+
+t_big = inf
+
+    @pytest.mark.parametrize("t_big", NOT_A_TIME)
+    def test_a_big_run_that_is_not_a_time_is_refused_not_passed(t_big):
+>       with pytest.raises(ValueError, match="the big run took"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_timing_fixture.py:189: Failed
+________ test_a_big_run_that_is_not_a_time_is_refused_not_passed[-inf] _________
+
+t_big = -inf
+
+    @pytest.mark.parametrize("t_big", NOT_A_TIME)
+    def test_a_big_run_that_is_not_a_time_is_refused_not_passed(t_big):
+>       with pytest.raises(ValueError, match="the big run took"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_timing_fixture.py:189: Failed
+_ test_sizes_that_cannot_show_a_quadratic_cost_are_refused_before_any_work[swapped] _
+
+sizes = (8000, 1000)
+
+    @pytest.mark.parametrize(
+        "sizes", BAD_SIZES, ids=["swapped", "equal", "negative", "zero", "just-under-8x", "4x"]
+    )
+    def test_sizes_that_cannot_show_a_quadratic_cost_are_refused_before_any_work(sizes):
+>       with pytest.raises(ValueError, match="sizes must be|at least 8 times"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_timing_fixture.py:200: Failed
+_ test_sizes_that_cannot_show_a_quadratic_cost_are_refused_before_any_work[equal] _
+
+sizes = (1000, 1000)
+
+    @pytest.mark.parametrize(
+        "sizes", BAD_SIZES, ids=["swapped", "equal", "negative", "zero", "just-under-8x", "4x"]
+    )
+    def test_sizes_that_cannot_show_a_quadratic_cost_are_refused_before_any_work(sizes):
+>       with pytest.raises(ValueError, match="sizes must be|at least 8 times"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_timing_fixture.py:200: Failed
+_ test_sizes_that_cannot_show_a_quadratic_cost_are_refused_before_any_work[negative] _
+
+sizes = (-5, 1000)
+
+    @pytest.mark.parametrize(
+        "sizes", BAD_SIZES, ids=["swapped", "equal", "negative", "zero", "just-under-8x", "4x"]
+    )
+    def test_sizes_that_cannot_show_a_quadratic_cost_are_refused_before_any_work(sizes):
+>       with pytest.raises(ValueError, match="sizes must be|at least 8 times"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_timing_fixture.py:200: Failed
+_ test_sizes_that_cannot_show_a_quadratic_cost_are_refused_before_any_work[zero] _
+
+sizes = (0, 1000)
+
+    @pytest.mark.parametrize(
+        "sizes", BAD_SIZES, ids=["swapped", "equal", "negative", "zero", "just-under-8x", "4x"]
+    )
+    def test_sizes_that_cannot_show_a_quadratic_cost_are_refused_before_any_work(sizes):
+        with pytest.raises(ValueError, match="sizes must be|at least 8 times"):
+>           timing.time_limit(0.1, *sizes)
+
+tests/test_timing_fixture.py:201: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+t_small = 0.1, small = 0, big = 1000
+
+    def time_limit(t_small: float, small: int, big: int) -> float:
+        """The most the big run may take."""
+>       return PER_SIZE * (big / small) * max(t_small, MIN_SMALL_S)
+                           ^^^^^^^^^^^
+E       ZeroDivisionError: division by zero
+
+tests/fixtures/timing.py:18: ZeroDivisionError
+_ test_sizes_that_cannot_show_a_quadratic_cost_are_refused_before_any_work[just-under-8x] _
+
+sizes = (1000, 7999)
+
+    @pytest.mark.parametrize(
+        "sizes", BAD_SIZES, ids=["swapped", "equal", "negative", "zero", "just-under-8x", "4x"]
+    )
+    def test_sizes_that_cannot_show_a_quadratic_cost_are_refused_before_any_work(sizes):
+>       with pytest.raises(ValueError, match="sizes must be|at least 8 times"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_timing_fixture.py:200: Failed
+_ test_sizes_that_cannot_show_a_quadratic_cost_are_refused_before_any_work[4x] _
+
+sizes = (1000, 4000)
+
+    @pytest.mark.parametrize(
+        "sizes", BAD_SIZES, ids=["swapped", "equal", "negative", "zero", "just-under-8x", "4x"]
+    )
+    def test_sizes_that_cannot_show_a_quadratic_cost_are_refused_before_any_work(sizes):
+>       with pytest.raises(ValueError, match="sizes must be|at least 8 times"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_timing_fixture.py:200: Failed
+_____________ test_a_gap_of_exactly_eight_is_the_smallest_allowed ______________
+
+    def test_a_gap_of_exactly_eight_is_the_smallest_allowed():
+>       timing.check_sizes(1000, 8000)
+        ^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'check_sizes'
+
+tests/test_timing_fixture.py:214: AttributeError
+________________ test_an_empty_unit_is_refused_before_any_work _________________
+
+    def test_an_empty_unit_is_refused_before_any_work():
+        model = Model(power(1), 1e-7)
+        with pytest.raises(ValueError, match="unit to repeat is empty"):
+>           timing.is_superlinear(model.fn, "", SMALL, BIG, clock=model.clock)
+E           TypeError: is_superlinear() got an unexpected keyword argument 'clock'
+
+tests/test_timing_fixture.py:222: TypeError
+______________ test_a_call_too_fast_to_time_is_refused_not_passed ______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fa01bf72ea0>
+
+    def test_a_call_too_fast_to_time_is_refused_not_passed(monkeypatch):
+>       monkeypatch.setattr(
+            timing, "MAX_CALLS", 1000
+        )  # the real cap is ten million calls: too slow for a unit test
+E       AttributeError: <module 'tests.fixtures.timing' from '/home/user/build/EV-timing2-fb/tests/fixtures/timing.py'> has no attribute 'MAX_CALLS'
+
+tests/test_timing_fixture.py:227: AttributeError
+______________ test_one_call_is_measured_to_its_true_time[1e-09] _______________
+
+scale = 1e-09
+
+    @pytest.mark.parametrize("scale", SPEEDS)
+    def test_one_call_is_measured_to_its_true_time(scale):
+        model = Model(power(1), scale)
+>       got = timing.seconds_per_call(model.fn, "a" * SMALL, model.clock)
+              ^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'seconds_per_call'
+
+tests/test_timing_fixture.py:247: AttributeError
+______________ test_one_call_is_measured_to_its_true_time[1e-08] _______________
+
+scale = 1e-08
+
+    @pytest.mark.parametrize("scale", SPEEDS)
+    def test_one_call_is_measured_to_its_true_time(scale):
+        model = Model(power(1), scale)
+>       got = timing.seconds_per_call(model.fn, "a" * SMALL, model.clock)
+              ^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'seconds_per_call'
+
+tests/test_timing_fixture.py:247: AttributeError
+______________ test_one_call_is_measured_to_its_true_time[1e-07] _______________
+
+scale = 1e-07
+
+    @pytest.mark.parametrize("scale", SPEEDS)
+    def test_one_call_is_measured_to_its_true_time(scale):
+        model = Model(power(1), scale)
+>       got = timing.seconds_per_call(model.fn, "a" * SMALL, model.clock)
+              ^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'seconds_per_call'
+
+tests/test_timing_fixture.py:247: AttributeError
+______________ test_one_call_is_measured_to_its_true_time[1e-05] _______________
+
+scale = 1e-05
+
+    @pytest.mark.parametrize("scale", SPEEDS)
+    def test_one_call_is_measured_to_its_true_time(scale):
+        model = Model(power(1), scale)
+>       got = timing.seconds_per_call(model.fn, "a" * SMALL, model.clock)
+              ^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'seconds_per_call'
+
+tests/test_timing_fixture.py:247: AttributeError
+______________ test_one_call_is_measured_to_its_true_time[0.001] _______________
+
+scale = 0.001
+
+    @pytest.mark.parametrize("scale", SPEEDS)
+    def test_one_call_is_measured_to_its_true_time(scale):
+        model = Model(power(1), scale)
+>       got = timing.seconds_per_call(model.fn, "a" * SMALL, model.clock)
+              ^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'seconds_per_call'
+
+tests/test_timing_fixture.py:247: AttributeError
+___ test_a_fast_call_is_batched_to_the_batch_length_and_repeated_five_times ____
+
+    def test_a_fast_call_is_batched_to_the_batch_length_and_repeated_five_times():
+        model = Model(power(1), 1e-9)  # one call: exactly 1 microsecond
+>       timing.seconds_per_call(model.fn, "a" * SMALL, model.clock)
+        ^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'seconds_per_call'
+
+tests/test_timing_fixture.py:257: AttributeError
+_ test_a_pause_while_the_batch_is_sized_cannot_shorten_the_batches_that_count __
+
+    def test_a_pause_while_the_batch_is_sized_cannot_shorten_the_batches_that_count():
+        # the first batch (one call of 1 microsecond) is paused for half a second and so looks long enough; the fastest of
+        # the repeats shows it is not, and the batch is sized again
+        model = Model(power(1), 1e-9, pause=0.5, spell=1)
+>       got = timing.seconds_per_call(model.fn, "a" * SMALL, model.clock)
+              ^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'seconds_per_call'
+
+tests/test_timing_fixture.py:270: AttributeError
+_ test_a_slow_call_is_run_once_to_size_the_batch_and_once_in_each_of_five_repeats _
+
+    def test_a_slow_call_is_run_once_to_size_the_batch_and_once_in_each_of_five_repeats():
+        model = Model(power(1), 1e-3)  # one call: 1 second
+>       timing.seconds_per_call(model.fn, "a" * SMALL, model.clock)
+        ^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'seconds_per_call'
+
+tests/test_timing_fixture.py:283: AttributeError
+________________________ test_the_two_sizes_take_turns _________________________
+
+    def test_the_two_sizes_take_turns():
+        model = Model(power(1), 1e-3)
+>       model.is_superlinear()
+
+tests/test_timing_fixture.py:292: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_timing_fixture.Model object at 0x7fa01bb28ff0>, small = 1000
+big = 8000
+
+    def is_superlinear(self, small: int = SMALL, big: int = BIG) -> bool:
+>       return timing.is_superlinear(self.fn, "a", small, big, clock=self.clock)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: is_superlinear() got an unexpected keyword argument 'clock'
+
+tests/test_timing_fixture.py:51: TypeError
+_________ test_a_coarse_clock_cannot_turn_a_fast_call_into_zero[0.001] _________
+
+tick = 0.001
+
+    @pytest.mark.parametrize("tick", [0.001, 0.005])
+    def test_a_coarse_clock_cannot_turn_a_fast_call_into_zero(tick):
+        # one small call takes 0.3 ms: read once on these clocks it shows 0 (or one whole tick)
+        model = Model(power(1), 3e-7, tick=tick)
+>       got = timing.seconds_per_call(model.fn, "a" * SMALL, model.clock)
+              ^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'seconds_per_call'
+
+tests/test_timing_fixture.py:302: AttributeError
+_________ test_a_coarse_clock_cannot_turn_a_fast_call_into_zero[0.005] _________
+
+tick = 0.005
+
+    @pytest.mark.parametrize("tick", [0.001, 0.005])
+    def test_a_coarse_clock_cannot_turn_a_fast_call_into_zero(tick):
+        # one small call takes 0.3 ms: read once on these clocks it shows 0 (or one whole tick)
+        model = Model(power(1), 3e-7, tick=tick)
+>       got = timing.seconds_per_call(model.fn, "a" * SMALL, model.clock)
+              ^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'seconds_per_call'
+
+tests/test_timing_fixture.py:302: AttributeError
+_________ test_a_pause_in_four_of_five_batches_changes_nothing[0.007] __________
+
+pause = 0.007
+
+    @pytest.mark.parametrize("pause", [0.007, 0.5, 30.0])
+    def test_a_pause_in_four_of_five_batches_changes_nothing(pause):
+        # a pause can only add time: the fastest batch is the one without it (a median of five would count a pause, and
+        # so would a single run)
+        model = Model(power(1), 1e-7, pause=pause)
+>       got = timing.seconds_per_call(model.fn, "a" * SMALL, model.clock)
+              ^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'seconds_per_call'
+
+tests/test_timing_fixture.py:315: AttributeError
+__________ test_a_pause_in_four_of_five_batches_changes_nothing[0.5] ___________
+
+pause = 0.5
+
+    @pytest.mark.parametrize("pause", [0.007, 0.5, 30.0])
+    def test_a_pause_in_four_of_five_batches_changes_nothing(pause):
+        # a pause can only add time: the fastest batch is the one without it (a median of five would count a pause, and
+        # so would a single run)
+        model = Model(power(1), 1e-7, pause=pause)
+>       got = timing.seconds_per_call(model.fn, "a" * SMALL, model.clock)
+              ^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'seconds_per_call'
+
+tests/test_timing_fixture.py:315: AttributeError
+__________ test_a_pause_in_four_of_five_batches_changes_nothing[30.0] __________
+
+pause = 30.0
+
+    @pytest.mark.parametrize("pause", [0.007, 0.5, 30.0])
+    def test_a_pause_in_four_of_five_batches_changes_nothing(pause):
+        # a pause can only add time: the fastest batch is the one without it (a median of five would count a pause, and
+        # so would a single run)
+        model = Model(power(1), 1e-7, pause=pause)
+>       got = timing.seconds_per_call(model.fn, "a" * SMALL, model.clock)
+              ^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'seconds_per_call'
+
+tests/test_timing_fixture.py:315: AttributeError
+____ test_a_slow_spell_over_several_batches_in_a_row_changes_nothing[0.5-2] ____
+
+spell = 2, pause = 0.5
+
+    @pytest.mark.parametrize("spell", [2, 3, 4, 5])
+    @pytest.mark.parametrize("pause", [0.5, 30.0])
+    def test_a_slow_spell_over_several_batches_in_a_row_changes_nothing(spell, pause):
+        # up to five batches in a row are slow, then as many are not: the sizes take turns, so each size keeps a clean
+        # batch. Timing all the small batches first would lose every one of them to a spell of five.
+        for scale in (1e-9, 1e-7, 1e-5):
+            linear = Model(power(1), scale, pause=pause, spell=spell)
+>           assert not linear.is_superlinear(SMALL, FAR), "linear, with a slow spell"
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_timing_fixture.py:332: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_timing_fixture.Model object at 0x7fa01bb294f0>, small = 1000
+big = 16000
+
+    def is_superlinear(self, small: int = SMALL, big: int = BIG) -> bool:
+>       return timing.is_superlinear(self.fn, "a", small, big, clock=self.clock)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: is_superlinear() got an unexpected keyword argument 'clock'
+
+tests/test_timing_fixture.py:51: TypeError
+____ test_a_slow_spell_over_several_batches_in_a_row_changes_nothing[0.5-3] ____
+
+spell = 3, pause = 0.5
+
+    @pytest.mark.parametrize("spell", [2, 3, 4, 5])
+    @pytest.mark.parametrize("pause", [0.5, 30.0])
+    def test_a_slow_spell_over_several_batches_in_a_row_changes_nothing(spell, pause):
+        # up to five batches in a row are slow, then as many are not: the sizes take turns, so each size keeps a clean
+        # batch. Timing all the small batches first would lose every one of them to a spell of five.
+        for scale in (1e-9, 1e-7, 1e-5):
+            linear = Model(power(1), scale, pause=pause, spell=spell)
+>           assert not linear.is_superlinear(SMALL, FAR), "linear, with a slow spell"
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_timing_fixture.py:332: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_timing_fixture.Model object at 0x7fa01bb296d0>, small = 1000
+big = 16000
+
+    def is_superlinear(self, small: int = SMALL, big: int = BIG) -> bool:
+>       return timing.is_superlinear(self.fn, "a", small, big, clock=self.clock)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: is_superlinear() got an unexpected keyword argument 'clock'
+
+tests/test_timing_fixture.py:51: TypeError
+____ test_a_slow_spell_over_several_batches_in_a_row_changes_nothing[0.5-4] ____
+
+spell = 4, pause = 0.5
+
+    @pytest.mark.parametrize("spell", [2, 3, 4, 5])
+    @pytest.mark.parametrize("pause", [0.5, 30.0])
+    def test_a_slow_spell_over_several_batches_in_a_row_changes_nothing(spell, pause):
+        # up to five batches in a row are slow, then as many are not: the sizes take turns, so each size keeps a clean
+        # batch. Timing all the small batches first would lose every one of them to a spell of five.
+        for scale in (1e-9, 1e-7, 1e-5):
+            linear = Model(power(1), scale, pause=pause, spell=spell)
+>           assert not linear.is_superlinear(SMALL, FAR), "linear, with a slow spell"
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_timing_fixture.py:332: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_timing_fixture.Model object at 0x7fa01bb28550>, small = 1000
+big = 16000
+
+    def is_superlinear(self, small: int = SMALL, big: int = BIG) -> bool:
+>       return timing.is_superlinear(self.fn, "a", small, big, clock=self.clock)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: is_superlinear() got an unexpected keyword argument 'clock'
+
+tests/test_timing_fixture.py:51: TypeError
+____ test_a_slow_spell_over_several_batches_in_a_row_changes_nothing[0.5-5] ____
+
+spell = 5, pause = 0.5
+
+    @pytest.mark.parametrize("spell", [2, 3, 4, 5])
+    @pytest.mark.parametrize("pause", [0.5, 30.0])
+    def test_a_slow_spell_over_several_batches_in_a_row_changes_nothing(spell, pause):
+        # up to five batches in a row are slow, then as many are not: the sizes take turns, so each size keeps a clean
+        # batch. Timing all the small batches first would lose every one of them to a spell of five.
+        for scale in (1e-9, 1e-7, 1e-5):
+            linear = Model(power(1), scale, pause=pause, spell=spell)
+>           assert not linear.is_superlinear(SMALL, FAR), "linear, with a slow spell"
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_timing_fixture.py:332: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_timing_fixture.Model object at 0x7fa01bb29950>, small = 1000
+big = 16000
+
+    def is_superlinear(self, small: int = SMALL, big: int = BIG) -> bool:
+>       return timing.is_superlinear(self.fn, "a", small, big, clock=self.clock)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: is_superlinear() got an unexpected keyword argument 'clock'
+
+tests/test_timing_fixture.py:51: TypeError
+___ test_a_slow_spell_over_several_batches_in_a_row_changes_nothing[30.0-2] ____
+
+spell = 2, pause = 30.0
+
+    @pytest.mark.parametrize("spell", [2, 3, 4, 5])
+    @pytest.mark.parametrize("pause", [0.5, 30.0])
+    def test_a_slow_spell_over_several_batches_in_a_row_changes_nothing(spell, pause):
+        # up to five batches in a row are slow, then as many are not: the sizes take turns, so each size keeps a clean
+        # batch. Timing all the small batches first would lose every one of them to a spell of five.
+        for scale in (1e-9, 1e-7, 1e-5):
+            linear = Model(power(1), scale, pause=pause, spell=spell)
+>           assert not linear.is_superlinear(SMALL, FAR), "linear, with a slow spell"
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_timing_fixture.py:332: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_timing_fixture.Model object at 0x7fa01bb2a490>, small = 1000
+big = 16000
+
+    def is_superlinear(self, small: int = SMALL, big: int = BIG) -> bool:
+>       return timing.is_superlinear(self.fn, "a", small, big, clock=self.clock)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: is_superlinear() got an unexpected keyword argument 'clock'
+
+tests/test_timing_fixture.py:51: TypeError
+___ test_a_slow_spell_over_several_batches_in_a_row_changes_nothing[30.0-3] ____
+
+spell = 3, pause = 30.0
+
+    @pytest.mark.parametrize("spell", [2, 3, 4, 5])
+    @pytest.mark.parametrize("pause", [0.5, 30.0])
+    def test_a_slow_spell_over_several_batches_in_a_row_changes_nothing(spell, pause):
+        # up to five batches in a row are slow, then as many are not: the sizes take turns, so each size keeps a clean
+        # batch. Timing all the small batches first would lose every one of them to a spell of five.
+        for scale in (1e-9, 1e-7, 1e-5):
+            linear = Model(power(1), scale, pause=pause, spell=spell)
+>           assert not linear.is_superlinear(SMALL, FAR), "linear, with a slow spell"
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_timing_fixture.py:332: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_timing_fixture.Model object at 0x7fa01bb2a850>, small = 1000
+big = 16000
+
+    def is_superlinear(self, small: int = SMALL, big: int = BIG) -> bool:
+>       return timing.is_superlinear(self.fn, "a", small, big, clock=self.clock)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: is_superlinear() got an unexpected keyword argument 'clock'
+
+tests/test_timing_fixture.py:51: TypeError
+___ test_a_slow_spell_over_several_batches_in_a_row_changes_nothing[30.0-4] ____
+
+spell = 4, pause = 30.0
+
+    @pytest.mark.parametrize("spell", [2, 3, 4, 5])
+    @pytest.mark.parametrize("pause", [0.5, 30.0])
+    def test_a_slow_spell_over_several_batches_in_a_row_changes_nothing(spell, pause):
+        # up to five batches in a row are slow, then as many are not: the sizes take turns, so each size keeps a clean
+        # batch. Timing all the small batches first would lose every one of them to a spell of five.
+        for scale in (1e-9, 1e-7, 1e-5):
+            linear = Model(power(1), scale, pause=pause, spell=spell)
+>           assert not linear.is_superlinear(SMALL, FAR), "linear, with a slow spell"
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_timing_fixture.py:332: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_timing_fixture.Model object at 0x7fa01bb2b750>, small = 1000
+big = 16000
+
+    def is_superlinear(self, small: int = SMALL, big: int = BIG) -> bool:
+>       return timing.is_superlinear(self.fn, "a", small, big, clock=self.clock)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: is_superlinear() got an unexpected keyword argument 'clock'
+
+tests/test_timing_fixture.py:51: TypeError
+___ test_a_slow_spell_over_several_batches_in_a_row_changes_nothing[30.0-5] ____
+
+spell = 5, pause = 30.0
+
+    @pytest.mark.parametrize("spell", [2, 3, 4, 5])
+    @pytest.mark.parametrize("pause", [0.5, 30.0])
+    def test_a_slow_spell_over_several_batches_in_a_row_changes_nothing(spell, pause):
+        # up to five batches in a row are slow, then as many are not: the sizes take turns, so each size keeps a clean
+        # batch. Timing all the small batches first would lose every one of them to a spell of five.
+        for scale in (1e-9, 1e-7, 1e-5):
+            linear = Model(power(1), scale, pause=pause, spell=spell)
+>           assert not linear.is_superlinear(SMALL, FAR), "linear, with a slow spell"
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_timing_fixture.py:332: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <tests.test_timing_fixture.Model object at 0x7fa01bb2b2f0>, small = 1000
+big = 16000
+
+    def is_superlinear(self, small: int = SMALL, big: int = BIG) -> bool:
+>       return timing.is_superlinear(self.fn, "a", small, big, clock=self.clock)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: is_superlinear() got an unexpected keyword argument 'clock'
+
+tests/test_timing_fixture.py:51: TypeError
+_______ test_the_collector_is_off_while_the_clock_runs_and_back_on_after _______
+
+    def test_the_collector_is_off_while_the_clock_runs_and_back_on_after():
+        was_on = gc.isenabled()
+        gc.enable()  # the test sets its own start state: the suite may run with the collector off
+        try:
+            seen = []
+>           timing.seconds_per_call(
+            ^^^^^^^^^^^^^^^^^^^^^^^
+                lambda _text: seen.append(gc.isenabled()), "a", itertools.count().__next__
+            )
+E           AttributeError: module 'tests.fixtures.timing' has no attribute 'seconds_per_call'
+
+tests/test_timing_fixture.py:355: AttributeError
+_____________ test_the_clock_is_processor_time_off_windows[linux] ______________
+
+platform = 'linux'
+
+    @pytest.mark.parametrize("platform", ["linux", "darwin", "cygwin", "freebsd"])
+    def test_the_clock_is_processor_time_off_windows(platform):
+        # processor time does not count the time another program had the processor
+>       assert timing.pick_clock(platform) is time.process_time, (
+               ^^^^^^^^^^^^^^^^^
+            "off Windows the rule must time processor time"
+        )
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'pick_clock'
+
+tests/test_timing_fixture.py:369: AttributeError
+_____________ test_the_clock_is_processor_time_off_windows[darwin] _____________
+
+platform = 'darwin'
+
+    @pytest.mark.parametrize("platform", ["linux", "darwin", "cygwin", "freebsd"])
+    def test_the_clock_is_processor_time_off_windows(platform):
+        # processor time does not count the time another program had the processor
+>       assert timing.pick_clock(platform) is time.process_time, (
+               ^^^^^^^^^^^^^^^^^
+            "off Windows the rule must time processor time"
+        )
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'pick_clock'
+
+tests/test_timing_fixture.py:369: AttributeError
+_____________ test_the_clock_is_processor_time_off_windows[cygwin] _____________
+
+platform = 'cygwin'
+
+    @pytest.mark.parametrize("platform", ["linux", "darwin", "cygwin", "freebsd"])
+    def test_the_clock_is_processor_time_off_windows(platform):
+        # processor time does not count the time another program had the processor
+>       assert timing.pick_clock(platform) is time.process_time, (
+               ^^^^^^^^^^^^^^^^^
+            "off Windows the rule must time processor time"
+        )
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'pick_clock'
+
+tests/test_timing_fixture.py:369: AttributeError
+____________ test_the_clock_is_processor_time_off_windows[freebsd] _____________
+
+platform = 'freebsd'
+
+    @pytest.mark.parametrize("platform", ["linux", "darwin", "cygwin", "freebsd"])
+    def test_the_clock_is_processor_time_off_windows(platform):
+        # processor time does not count the time another program had the processor
+>       assert timing.pick_clock(platform) is time.process_time, (
+               ^^^^^^^^^^^^^^^^^
+            "off Windows the rule must time processor time"
+        )
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'pick_clock'
+
+tests/test_timing_fixture.py:369: AttributeError
+_________________ test_the_clock_is_the_wall_clock_on_windows __________________
+
+    def test_the_clock_is_the_wall_clock_on_windows():
+        # on Windows processor time moves in 15.6 ms steps: too coarse for batches of 20 ms
+>       assert timing.pick_clock("win32") is time.perf_counter, (
+               ^^^^^^^^^^^^^^^^^
+            "on Windows the rule must use the wall clock"
+        )
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'pick_clock'
+
+tests/test_timing_fixture.py:376: AttributeError
+___________ test_the_rules_clock_is_the_one_picked_for_this_platform ___________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fa01bf73230>
+
+    def test_the_rules_clock_is_the_one_picked_for_this_platform(monkeypatch):
+>       assert timing.CLOCK is timing.pick_clock(sys.platform)
+               ^^^^^^^^^^^^
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'CLOCK'
+
+tests/test_timing_fixture.py:382: AttributeError
+________ test_the_work_gets_the_unit_repeated_to_exactly_the_two_sizes _________
+
+    def test_the_work_gets_the_unit_repeated_to_exactly_the_two_sizes():
+        seen = set()
+        model = Model(power(1), 1e-3)
+>       timing.is_superlinear(
+            lambda text: (seen.add(text), model.fn(text)), "abc", 5, 40, clock=model.clock
+        )
+E       TypeError: is_superlinear() got an unexpected keyword argument 'clock'
+
+tests/test_timing_fixture.py:395: TypeError
+______ test_a_sweep_names_each_slow_case_and_each_case_it_could_not_time _______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fa01bb679b0>
+
+    def test_a_sweep_names_each_slow_case_and_each_case_it_could_not_time(monkeypatch):
+>       monkeypatch.setattr(timing, "MAX_CALLS", 1000)
+E       AttributeError: <module 'tests.fixtures.timing' from '/home/user/build/EV-timing2-fb/tests/fixtures/timing.py'> has no attribute 'MAX_CALLS'
+
+tests/test_timing_fixture.py:405: AttributeError
+_________ test_a_failing_line_shows_both_times_the_ratio_and_the_limit _________
+
+    def test_a_failing_line_shows_both_times_the_ratio_and_the_limit():
+        # 1 ms at 1000 characters, 64 ms at 8000: 64 times as long for 8 times the text, limit 24 times
+>       line = str(timing.Growth(0.001, 0.064, SMALL, BIG))
+                   ^^^^^^^^^^^^^
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'Growth'
+
+tests/test_timing_fixture.py:434: AttributeError
+_ test_a_case_that_raises_keeps_its_type_and_is_named_with_the_problems_found_before_it _
+
+    def test_a_case_that_raises_keeps_its_type_and_is_named_with_the_problems_found_before_it():
+        slow = Model(power(2), 1e-9)
+    
+        def broken(text: str) -> None:
+            raise UnicodeEncodeError("ascii", text[:1], 0, 1, "made-up")
+    
+        cases = [("slow", slow.fn, "a"), ("broken", broken, "b")]
+        with pytest.raises(UnicodeEncodeError) as caught:
+>           timing.problems(cases, SMALL, BIG, clock=slow.clock)
+            ^^^^^^^^^^^^^^^
+E           AttributeError: module 'tests.fixtures.timing' has no attribute 'problems'
+
+tests/test_timing_fixture.py:451: AttributeError
+________ test_a_case_that_raises_a_value_error_is_not_called_untimeable ________
+
+    def test_a_case_that_raises_a_value_error_is_not_called_untimeable():
+        def broken(text: str) -> None:
+            raise ValueError("the case's own error")
+    
+        with pytest.raises(ValueError, match="the case's own error") as caught:
+>           timing.problems([("broken", broken, "b")], SMALL, BIG, clock=Model(power(1), 1e-7).clock)
+            ^^^^^^^^^^^^^^^
+E           AttributeError: module 'tests.fixtures.timing' has no attribute 'problems'
+
+tests/test_timing_fixture.py:464: AttributeError
+_ test_a_clock_difference_of_almost_nothing_is_refused_not_an_overflow[5e-324] _
+
+took = 5e-324
+
+    @pytest.mark.parametrize("took", [5e-324, 1e-300])
+    def test_a_clock_difference_of_almost_nothing_is_refused_not_an_overflow(took):
+        # calls * 1.2 * 0.02 / 5e-324 is infinity: math.ceil(infinity) used to raise OverflowError
+        ticks = itertools.cycle([0.0, took])
+>       with pytest.raises(timing.Untimeable, match="too fast to time"):
+                           ^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'Untimeable'
+
+tests/test_timing_fixture.py:475: AttributeError
+_ test_a_clock_difference_of_almost_nothing_is_refused_not_an_overflow[1e-300] _
+
+took = 1e-300
+
+    @pytest.mark.parametrize("took", [5e-324, 1e-300])
+    def test_a_clock_difference_of_almost_nothing_is_refused_not_an_overflow(took):
+        # calls * 1.2 * 0.02 / 5e-324 is infinity: math.ceil(infinity) used to raise OverflowError
+        ticks = itertools.cycle([0.0, took])
+>       with pytest.raises(timing.Untimeable, match="too fast to time"):
+                           ^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'Untimeable'
+
+tests/test_timing_fixture.py:475: AttributeError
+____ test_a_clock_that_gives_not_a_number_is_refused_not_returned_as_a_time ____
+
+    def test_a_clock_that_gives_not_a_number_is_refused_not_returned_as_a_time():
+        reads = itertools.cycle([0.0, float("nan")])
+>       with pytest.raises(timing.Untimeable):
+                           ^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'Untimeable'
+
+tests/test_timing_fixture.py:481: AttributeError
+_____ test_the_sizing_loops_end_by_construction_even_without_the_calls_cap _____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fa01af01480>
+
+    def test_the_sizing_loops_end_by_construction_even_without_the_calls_cap(monkeypatch):
+        # defence in depth: a clock stuck at zero and no cap on the calls still ends in a refusal, not a loop
+>       monkeypatch.setattr(timing, "MAX_CALLS", 10**30)
+E       AttributeError: <module 'tests.fixtures.timing' from '/home/user/build/EV-timing2-fb/tests/fixtures/timing.py'> has no attribute 'MAX_CALLS'
+
+tests/test_timing_fixture.py:487: AttributeError
+_ test_work_that_sleeps_is_refused_not_timed_from_a_few_microseconds_of_processor_time _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fa01af01590>
+
+    def test_work_that_sleeps_is_refused_not_timed_from_a_few_microseconds_of_processor_time(
+        monkeypatch,
+    ):
+>       monkeypatch.setattr(
+            timing, "MAX_CALLS", 2
+        )  # without the check the run would end at the cap, not after minutes
+E       AttributeError: <module 'tests.fixtures.timing' from '/home/user/build/EV-timing2-fb/tests/fixtures/timing.py'> has no attribute 'MAX_CALLS'
+
+tests/test_timing_fixture.py:500: AttributeError
+_ test_work_done_in_a_child_process_is_refused_because_processor_time_does_not_count_it _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fa01bb6e150>
+
+    def test_work_done_in_a_child_process_is_refused_because_processor_time_does_not_count_it(
+        monkeypatch,
+    ):
+>       monkeypatch.setattr(timing, "MAX_CALLS", 2)
+E       AttributeError: <module 'tests.fixtures.timing' from '/home/user/build/EV-timing2-fb/tests/fixtures/timing.py'> has no attribute 'MAX_CALLS'
+
+tests/test_timing_fixture.py:518: AttributeError
+_______________ test_ordinary_computing_is_not_taken_for_waiting _______________
+
+    def test_ordinary_computing_is_not_taken_for_waiting():
+>       got = timing.seconds_per_call(lambda text: sum(map(ord, text)), "a" * 2000)
+              ^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'seconds_per_call'
+
+tests/test_timing_fixture.py:527: AttributeError
+______________ test_the_waiting_check_is_for_the_real_clock_only _______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fa01bb6e650>
+
+    def test_the_waiting_check_is_for_the_real_clock_only(monkeypatch):
+        # with a made-up clock the wall time says nothing about the made-up seconds: no refusal for waiting
+>       monkeypatch.setattr(timing, "MAX_CALLS", 10)
+E       AttributeError: <module 'tests.fixtures.timing' from '/home/user/build/EV-timing2-fb/tests/fixtures/timing.py'> has no attribute 'MAX_CALLS'
+
+tests/test_timing_fixture.py:533: AttributeError
+___________ test_a_very_long_run_of_percent_bytes_takes_linear_time ____________
+
+    def test_a_very_long_run_of_percent_bytes_takes_linear_time():
+        # the old pattern took 1.0 s for 5000 such groups, 16 s for 20000 and 65 s for 40000 (measured once on the author's laptop, 2026-11-06); this is far less for 600000
+        hostile = [
+            "%C3" * 200_000 + "X",
+            "%C3" * 200_000,
+            "%C3" * 200_000 + "%",
+            "%C3" * 200_000 + "%A",
+        ]
+    
+        def run(texts):
+            return lambda: [runmap.partial_escape_start(t) for t in texts]
+    
+>       first = _fastest(run(hostile))
+                ^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_runmap_partial_escape.py:115: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+job = <function test_a_very_long_run_of_percent_bytes_takes_linear_time.<locals>.run.<locals>.<lambda> at 0x7fa01a36c7c0>
+repeats = 3
+
+    def _fastest(job, repeats: int = 3) -> float:
+        """The fastest of a few runs: one slow run on a busy machine does not decide the result."""
+        best = float("inf")
+        for _ in range(repeats):
+>           started = timing.CLOCK()
+                      ^^^^^^^^^^^^
+E           AttributeError: module 'tests.fixtures.timing' has no attribute 'CLOCK'
+
+tests/test_runmap_partial_escape.py:37: AttributeError
+_______ test_the_time_of_a_long_run_grows_no_faster_than_its_length[%C3] _______
+
+unit = '%C3'
+
+    @pytest.mark.perf
+    @pytest.mark.parametrize("unit", ["%C3", "%C3%A", "&#", "&#x4", "\\u", "%", "&a"])
+    def test_the_time_of_a_long_run_grows_no_faster_than_its_length(unit):
+        # the shared rule (`tests/fixtures/timing.py`) instead of "twice the input, under four times the time", which a
+        # quadratic cost (exactly four times) could pass: 8x the text may take at most 24x the time. The old pattern took about
+        # 0.2 s at 2000 groups and 10 s at 16000 groups here (a ratio of about 64), and only when the run is followed by a
+        # character that is not part of it: a run that ends the text is found at once, so the text below has both ends.
+>       measured = timing.growth(
+                   ^^^^^^^^^^^^^
+            lambda run: runmap.partial_escape_start("x" + run + "y"), unit, 6_000, 48_000
+        )
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'growth'
+
+tests/test_runmap_partial_escape.py:128: AttributeError
+______ test_the_time_of_a_long_run_grows_no_faster_than_its_length[%C3%A] ______
+
+unit = '%C3%A'
+
+    @pytest.mark.perf
+    @pytest.mark.parametrize("unit", ["%C3", "%C3%A", "&#", "&#x4", "\\u", "%", "&a"])
+    def test_the_time_of_a_long_run_grows_no_faster_than_its_length(unit):
+        # the shared rule (`tests/fixtures/timing.py`) instead of "twice the input, under four times the time", which a
+        # quadratic cost (exactly four times) could pass: 8x the text may take at most 24x the time. The old pattern took about
+        # 0.2 s at 2000 groups and 10 s at 16000 groups here (a ratio of about 64), and only when the run is followed by a
+        # character that is not part of it: a run that ends the text is found at once, so the text below has both ends.
+>       measured = timing.growth(
+                   ^^^^^^^^^^^^^
+            lambda run: runmap.partial_escape_start("x" + run + "y"), unit, 6_000, 48_000
+        )
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'growth'
+
+tests/test_runmap_partial_escape.py:128: AttributeError
+_______ test_the_time_of_a_long_run_grows_no_faster_than_its_length[&#] ________
+
+unit = '&#'
+
+    @pytest.mark.perf
+    @pytest.mark.parametrize("unit", ["%C3", "%C3%A", "&#", "&#x4", "\\u", "%", "&a"])
+    def test_the_time_of_a_long_run_grows_no_faster_than_its_length(unit):
+        # the shared rule (`tests/fixtures/timing.py`) instead of "twice the input, under four times the time", which a
+        # quadratic cost (exactly four times) could pass: 8x the text may take at most 24x the time. The old pattern took about
+        # 0.2 s at 2000 groups and 10 s at 16000 groups here (a ratio of about 64), and only when the run is followed by a
+        # character that is not part of it: a run that ends the text is found at once, so the text below has both ends.
+>       measured = timing.growth(
+                   ^^^^^^^^^^^^^
+            lambda run: runmap.partial_escape_start("x" + run + "y"), unit, 6_000, 48_000
+        )
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'growth'
+
+tests/test_runmap_partial_escape.py:128: AttributeError
+______ test_the_time_of_a_long_run_grows_no_faster_than_its_length[&#x4] _______
+
+unit = '&#x4'
+
+    @pytest.mark.perf
+    @pytest.mark.parametrize("unit", ["%C3", "%C3%A", "&#", "&#x4", "\\u", "%", "&a"])
+    def test_the_time_of_a_long_run_grows_no_faster_than_its_length(unit):
+        # the shared rule (`tests/fixtures/timing.py`) instead of "twice the input, under four times the time", which a
+        # quadratic cost (exactly four times) could pass: 8x the text may take at most 24x the time. The old pattern took about
+        # 0.2 s at 2000 groups and 10 s at 16000 groups here (a ratio of about 64), and only when the run is followed by a
+        # character that is not part of it: a run that ends the text is found at once, so the text below has both ends.
+>       measured = timing.growth(
+                   ^^^^^^^^^^^^^
+            lambda run: runmap.partial_escape_start("x" + run + "y"), unit, 6_000, 48_000
+        )
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'growth'
+
+tests/test_runmap_partial_escape.py:128: AttributeError
+_______ test_the_time_of_a_long_run_grows_no_faster_than_its_length[\\u] _______
+
+unit = '\\u'
+
+    @pytest.mark.perf
+    @pytest.mark.parametrize("unit", ["%C3", "%C3%A", "&#", "&#x4", "\\u", "%", "&a"])
+    def test_the_time_of_a_long_run_grows_no_faster_than_its_length(unit):
+        # the shared rule (`tests/fixtures/timing.py`) instead of "twice the input, under four times the time", which a
+        # quadratic cost (exactly four times) could pass: 8x the text may take at most 24x the time. The old pattern took about
+        # 0.2 s at 2000 groups and 10 s at 16000 groups here (a ratio of about 64), and only when the run is followed by a
+        # character that is not part of it: a run that ends the text is found at once, so the text below has both ends.
+>       measured = timing.growth(
+                   ^^^^^^^^^^^^^
+            lambda run: runmap.partial_escape_start("x" + run + "y"), unit, 6_000, 48_000
+        )
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'growth'
+
+tests/test_runmap_partial_escape.py:128: AttributeError
+________ test_the_time_of_a_long_run_grows_no_faster_than_its_length[%] ________
+
+unit = '%'
+
+    @pytest.mark.perf
+    @pytest.mark.parametrize("unit", ["%C3", "%C3%A", "&#", "&#x4", "\\u", "%", "&a"])
+    def test_the_time_of_a_long_run_grows_no_faster_than_its_length(unit):
+        # the shared rule (`tests/fixtures/timing.py`) instead of "twice the input, under four times the time", which a
+        # quadratic cost (exactly four times) could pass: 8x the text may take at most 24x the time. The old pattern took about
+        # 0.2 s at 2000 groups and 10 s at 16000 groups here (a ratio of about 64), and only when the run is followed by a
+        # character that is not part of it: a run that ends the text is found at once, so the text below has both ends.
+>       measured = timing.growth(
+                   ^^^^^^^^^^^^^
+            lambda run: runmap.partial_escape_start("x" + run + "y"), unit, 6_000, 48_000
+        )
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'growth'
+
+tests/test_runmap_partial_escape.py:128: AttributeError
+_______ test_the_time_of_a_long_run_grows_no_faster_than_its_length[&a] ________
+
+unit = '&a'
+
+    @pytest.mark.perf
+    @pytest.mark.parametrize("unit", ["%C3", "%C3%A", "&#", "&#x4", "\\u", "%", "&a"])
+    def test_the_time_of_a_long_run_grows_no_faster_than_its_length(unit):
+        # the shared rule (`tests/fixtures/timing.py`) instead of "twice the input, under four times the time", which a
+        # quadratic cost (exactly four times) could pass: 8x the text may take at most 24x the time. The old pattern took about
+        # 0.2 s at 2000 groups and 10 s at 16000 groups here (a ratio of about 64), and only when the run is followed by a
+        # character that is not part of it: a run that ends the text is found at once, so the text below has both ends.
+>       measured = timing.growth(
+                   ^^^^^^^^^^^^^
+            lambda run: runmap.partial_escape_start("x" + run + "y"), unit, 6_000, 48_000
+        )
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'growth'
+
+tests/test_runmap_partial_escape.py:128: AttributeError
+_____________________ test_other_long_runs_are_linear_too ______________________
+
+    def test_other_long_runs_are_linear_too():
+        texts = (
+            "&" * 300_000,
+            "&#" * 150_000,
+            "&" + "a" * 300_000 + "&",
+            "\\u" * 150_000,
+            "%" * 300_000,
+        )
+>       assert _fastest(lambda: [runmap.partial_escape_start(t) for t in texts]) < 60.0
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_runmap_partial_escape.py:142: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+job = <function test_other_long_runs_are_linear_too.<locals>.<lambda> at 0x7fa01a36c2c0>
+repeats = 3
+
+    def _fastest(job, repeats: int = 3) -> float:
+        """The fastest of a few runs: one slow run on a busy machine does not decide the result."""
+        best = float("inf")
+        for _ in range(repeats):
+>           started = timing.CLOCK()
+                      ^^^^^^^^^^^^
+E           AttributeError: module 'tests.fixtures.timing' has no attribute 'CLOCK'
+
+tests/test_runmap_partial_escape.py:37: AttributeError
+____________ test_a_run_the_old_pattern_took_seconds_on_is_instant _____________
+
+    def test_a_run_the_old_pattern_took_seconds_on_is_instant():
+        # 15 000 groups: the old repeated-group pattern needed an estimated 10 s here; a function that is linear needs milliseconds.
+        # This is the quick guard that fails fast if the quadratic pattern is ever put back (the larger test above would take hours).
+        text = "x" + "%C3" * 15_000 + "y"
+>       assert _fastest(lambda: [runmap.partial_escape_start(text)]) < 2.0
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_runmap_partial_escape.py:166: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+job = <function test_a_run_the_old_pattern_took_seconds_on_is_instant.<locals>.<lambda> at 0x7fa01a36dd00>
+repeats = 3
+
+    def _fastest(job, repeats: int = 3) -> float:
+        """The fastest of a few runs: one slow run on a busy machine does not decide the result."""
+        best = float("inf")
+        for _ in range(repeats):
+>           started = timing.CLOCK()
+                      ^^^^^^^^^^^^
+E           AttributeError: module 'tests.fixtures.timing' has no attribute 'CLOCK'
+
+tests/test_runmap_partial_escape.py:37: AttributeError
+__________________ test_g4_reads_hostile_text_in_linear_time ___________________
+
+    @pytest.mark.perf  # a wall-clock or CPU-time bound: it runs in the perf step, not the default suite
+    def test_g4_reads_hostile_text_in_linear_time():
+        """WARDEN review 2026-10-16: model text is attacker-shaped, so no input may make G4 backtrack."""
+        hostile = [
+            "aws " + "--a-b " * 600 + "!",
+            "aws " + "--a=b " * 600 + "!",
+            "kubectl " + "-a " * 1000 + "!",
+            "aws " + "--x-" * 900 + " x !",
+            "aws " + "-a b " * 700,
+            "rm -" + "r" * 3400,
+            "curl " + "a " * 1700,
+            "kubectl " * 500,
+            "gcloud a " * 400,
+            "GRANT" + " " * 3000 + "x",
+            "curl " * 700,
+            "a/" * 1700,
+            "kubectl.exe " * 290,
+            "git x " * 580,
+        ]
+>       started = timing.CLOCK()
+                  ^^^^^^^^^^^^
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'CLOCK'
+
+tests/test_g4_parity.py:263: AttributeError
+___________ test_the_worst_allowed_suffix_is_fast_on_a_hostile_name ____________
+
+    @pytest.mark.perf  # a wall-clock or CPU-time bound: it runs in the perf step, not the default suite
+    def test_the_worst_allowed_suffix_is_fast_on_a_hostile_name():
+        """Two overlapping variable repeats of 64 on a name that never matches: polynomial, and measured."""
+        from hadavin_sdk.runtime import evidence
+    
+        suffix = "[a]{1,64}[a]{1,64}-"
+        assert tools_mod.suffix_problem(suffix) is None
+>       t0 = timing.CLOCK()
+             ^^^^^^^^^^^^
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'CLOCK'
+
+tests/test_k5_fixes2.py:192: AttributeError
+__ test_fifty_handed_out_secrets_behind_an_encoding_layer_stay_within_a_bound __
+
+    @pytest.mark.perf
+    def test_fifty_handed_out_secrets_behind_an_encoding_layer_stay_within_a_bound():
+        """Each replace behind a layer re-runs the decode, so the cost grows with the secrets; a 20 KB result with 50
+        secrets (one percent-encoded copy of each) is the shape that exposes it."""
+        secrets = [f"Sec{i:03d}" + "Kq7#Zx" for i in range(50)]
+        raw = " ".join(_percent(s) for s in secrets) * 20 + " " + "y" * 5000
+>       t0 = timing.CLOCK()
+             ^^^^^^^^^^^^
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'CLOCK'
+
+tests/test_k5_fixes6.py:133: AttributeError
+___________ test_100kb_adversarial_layered_input_is_bounded[names0] ____________
+
+names = ['ent', 'pct']
+
+    @pytest.mark.perf
+    @pytest.mark.parametrize("names", [["ent", "pct"], ["pct"] * 4, ["u", "pct", "ent"]])
+    def test_100kb_adversarial_layered_input_is_bounded(names):
+        enc = stack(SHORT, names)
+        big = (enc + " ") * (100_000 // (len(enc) + 1))
+        soup = "%26%2310" * 12_500
+        for text in (big, soup, "%25" * 33_000 + "41"):
+>           t = timing.CLOCK()
+                ^^^^^^^^^^^^
+E           AttributeError: module 'tests.fixtures.timing' has no attribute 'CLOCK'
+
+tests/test_k5_layers.py:212: AttributeError
+___________ test_100kb_adversarial_layered_input_is_bounded[names1] ____________
+
+names = ['pct', 'pct', 'pct', 'pct']
+
+    @pytest.mark.perf
+    @pytest.mark.parametrize("names", [["ent", "pct"], ["pct"] * 4, ["u", "pct", "ent"]])
+    def test_100kb_adversarial_layered_input_is_bounded(names):
+        enc = stack(SHORT, names)
+        big = (enc + " ") * (100_000 // (len(enc) + 1))
+        soup = "%26%2310" * 12_500
+        for text in (big, soup, "%25" * 33_000 + "41"):
+>           t = timing.CLOCK()
+                ^^^^^^^^^^^^
+E           AttributeError: module 'tests.fixtures.timing' has no attribute 'CLOCK'
+
+tests/test_k5_layers.py:212: AttributeError
+___________ test_100kb_adversarial_layered_input_is_bounded[names2] ____________
+
+names = ['u', 'pct', 'ent']
+
+    @pytest.mark.perf
+    @pytest.mark.parametrize("names", [["ent", "pct"], ["pct"] * 4, ["u", "pct", "ent"]])
+    def test_100kb_adversarial_layered_input_is_bounded(names):
+        enc = stack(SHORT, names)
+        big = (enc + " ") * (100_000 // (len(enc) + 1))
+        soup = "%26%2310" * 12_500
+        for text in (big, soup, "%25" * 33_000 + "41"):
+>           t = timing.CLOCK()
+                ^^^^^^^^^^^^
+E           AttributeError: module 'tests.fixtures.timing' has no attribute 'CLOCK'
+
+tests/test_k5_layers.py:212: AttributeError
+_____________________________ test_lexer_is_linear _____________________________
+
+mn = <module 'hadavin_sdk.store.migration_numbers' from '/home/user/build/EV-timing2-2f94c2b/src/hadavin_sdk/store/migration_numbers.py'>
+
+    @pytest.mark.perf
+    def test_lexer_is_linear(mn):
+        small, big = 16 * 1024, 256 * 1024
+        units = ["'", '"', "$a$", "/*", "--", "E'\\", ";", "$a$ x ", "a$"]
+        cases = [(fn.__name__, fn, unit) for fn in (mn.lex, mn.refused_statements) for unit in units]
+>       assert timing.problems(cases, small, big) == []
+               ^^^^^^^^^^^^^^^
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'problems'
+
+tests/test_migration_numbers.py:812: AttributeError
+______________ test_the_timing_harness_flags_a_quadratic_stand_in ______________
+
+    @pytest.mark.perf
+    def test_the_timing_harness_flags_a_quadratic_stand_in():
+>       measured = timing.growth(_quadratic, "a", 16 * 1024, 256 * 1024)
+                   ^^^^^^^^^^^^^
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'growth'
+
+tests/test_migration_numbers.py:844: AttributeError
+___ test_the_timing_harness_passes_a_linear_and_an_n_log_n_stand_in[linear] ____
+
+stand_in = <function _linear at 0x7fa01bbc42c0>
+
+    @pytest.mark.perf
+    @pytest.mark.parametrize("stand_in", [_linear, _n_log_n], ids=["linear", "n-log-n"])
+    def test_the_timing_harness_passes_a_linear_and_an_n_log_n_stand_in(stand_in):
+>       measured = timing.growth(stand_in, "a", 16 * 1024, 256 * 1024)
+                   ^^^^^^^^^^^^^
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'growth'
+
+tests/test_migration_numbers.py:851: AttributeError
+___ test_the_timing_harness_passes_a_linear_and_an_n_log_n_stand_in[n-log-n] ___
+
+stand_in = <function _n_log_n at 0x7fa01bbc4360>
+
+    @pytest.mark.perf
+    @pytest.mark.parametrize("stand_in", [_linear, _n_log_n], ids=["linear", "n-log-n"])
+    def test_the_timing_harness_passes_a_linear_and_an_n_log_n_stand_in(stand_in):
+>       measured = timing.growth(stand_in, "a", 16 * 1024, 256 * 1024)
+                   ^^^^^^^^^^^^^
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'growth'
+
+tests/test_migration_numbers.py:851: AttributeError
+_ test_the_timing_harness_flags_a_quadratic_stand_in_that_is_fast_on_the_small_input _
+
+    @pytest.mark.perf
+    def test_the_timing_harness_flags_a_quadratic_stand_in_that_is_fast_on_the_small_input():
+        # 4 KiB takes well under a millisecond: the earlier 4 ms floor on the small run hid every quadratic cost this small
+>       measured = timing.growth(_quadratic, "a", 4 * 1024, 64 * 1024)
+                   ^^^^^^^^^^^^^
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'growth'
+
+tests/test_migration_numbers.py:860: AttributeError
+_______________ test_gone_message_caps_the_names_and_stays_fast ________________
+
+mn = <module 'hadavin_sdk.store.migration_numbers' from '/home/user/build/EV-timing2-2f94c2b/src/hadavin_sdk/store/migration_numbers.py'>
+
+    def test_gone_message_caps_the_names_and_stays_fast(mn):
+        applied = {f"{n % 9000 + 100:04d}_same" for n in range(5000)} | {
+            f"0100_x{n}" for n in range(5000)
+        }
+>       t0 = timing.CLOCK()
+             ^^^^^^^^^^^^
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'CLOCK'
+
+tests/test_migration_numbers_guards.py:340: AttributeError
+________________ test_every_mutant_still_applies_to_the_source _________________
+
+    def test_every_mutant_still_applies_to_the_source():
+        """The slow run is `python tests/migration_numbers_mutants.py` (its docstring has the command). This cheap check
+        runs with the ordinary tests: every mutant's `old` text is still in its file (so the mutation changes something),
+        differs from `new`, its killer test exists, and no mutant name is used twice."""
+        if not (ROOT / "tests" / "migration_numbers_mutants.py").is_file():
+            pytest.skip(
+                "the mutants file is not in this tree (the mutant runner copies only some test files)"
+            )
+        from tests import migration_numbers_mutants as mutants
+    
+        names = [m.name for m in mutants.M]
+        assert len(names) == len(set(names)) >= 36, "mutant names are unique and none was dropped"
+        for m in mutants.M:
+            text = (ROOT / m.file).read_text(encoding="utf-8")
+>           assert m.old in text, f"{m.name}: the text to change is no longer in {m.file}"
+E           AssertionError: o100: the timing limit is not a ratio (everything passes): the text to change is no longer in tests/fixtures/timing.py
+E           assert 'PER_SIZE, MIN_GROWTH = 3.0, 8' in '"""One rule for the linear-time tests (a test file never imports another test file).\n\nA cost is "linear enough" whe...t * (n // len(unit) + 1))[:n]) for n in (small, big))\n    return grows_faster_than_size(t_small, t_big, small, big)\n'
+E            +  where 'PER_SIZE, MIN_GROWTH = 3.0, 8' = Mutant(name='o100: the timing limit is not a ratio (everything passes)', file='tests/fixtures/timing.py', old='PER_SIZ...:test_a_quadratic_cost_is_flagged_at_any_speed[1e-11-gap8]', only_test='test_a_quadratic_cost_is_flagged_at_any_speed').old
+
+tests/test_migration_numbers_guards.py:558: AssertionError
+_____________________ test_redacting_many_lines_stays_fast _____________________
+
+    @pytest.mark.perf  # a wall-clock or CPU-time bound: it runs in the perf step, not the default suite
+    def test_redacting_many_lines_stays_fast():
+        """Third review (2026-09-30): 300 log lines took 68 s (122 s measured here) once there were more
+        found values than Python's regex cache holds; the same lines now take under a second."""
+    
+        from hadavin_sdk.guard.redact import redact_many
+    
+        lines = []
+        for i in range(300):
+            ip = f"10.{i % 250}.{i * 7 % 250}.{i * 13 % 250}"
+            lines.append(
+                f"checkout ERROR req={i:08x} from {ip} user=user{i}"
+                + "@"
+                + "example.org"
+                + " pass"
+                + "word="
+                + "tok_"
+                + f"{i:04d}"
+                + "q9Z" * 8
+                + " status=500"
+            )
+>       start = timing.CLOCK()
+                ^^^^^^^^^^^^
+E       AttributeError: module 'tests.fixtures.timing' has no attribute 'CLOCK'
+
+tests/warden_port/test_redaction_review2.py:97: AttributeError
+=========================== short test summary info ============================
+FAILED tests/test_k5_perf.py::test_the_harness_flags_a_quadratic_pattern_and_passes_a_linear_one
+FAILED tests/test_k5_perf.py::test_no_redaction_pattern_is_super_linear_on_its_own_keywords_repeated
+FAILED tests/test_k5_perf.py::test_redact_untrusted_end_to_end_is_not_super_linear_with_views[curl-u]
+FAILED tests/test_k5_perf.py::test_redact_untrusted_end_to_end_is_not_super_linear_with_views[password]
+FAILED tests/test_k5_perf.py::test_redact_untrusted_end_to_end_is_not_super_linear_with_views[fullwidth]
+FAILED tests/test_k5_perf.py::test_redact_untrusted_end_to_end_is_not_super_linear_with_views[json-escape]
+FAILED tests/test_k5_perf.py::test_redact_untrusted_end_to_end_is_not_super_linear_with_views[zero-width]
+FAILED tests/test_k5_perf.py::test_the_slowest_measured_shape_at_the_cap_stays_under_a_ceiling
+FAILED tests/test_timing_fixture.py::test_a_linear_cost_passes_at_any_speed[1e-09-gap8]
+FAILED tests/test_timing_fixture.py::test_a_linear_cost_passes_at_any_speed[1e-09-gap16]
+FAILED tests/test_timing_fixture.py::test_a_linear_cost_passes_at_any_speed[1e-08-gap8]
+FAILED tests/test_timing_fixture.py::test_a_linear_cost_passes_at_any_speed[1e-08-gap16]
+FAILED tests/test_timing_fixture.py::test_a_linear_cost_passes_at_any_speed[1e-07-gap8]
+FAILED tests/test_timing_fixture.py::test_a_linear_cost_passes_at_any_speed[1e-07-gap16]
+FAILED tests/test_timing_fixture.py::test_a_linear_cost_passes_at_any_speed[1e-05-gap8]
+FAILED tests/test_timing_fixture.py::test_a_linear_cost_passes_at_any_speed[1e-05-gap16]
+FAILED tests/test_timing_fixture.py::test_a_linear_cost_passes_at_any_speed[0.001-gap8]
+FAILED tests/test_timing_fixture.py::test_a_linear_cost_passes_at_any_speed[0.001-gap16]
+FAILED tests/test_timing_fixture.py::test_an_n_log_n_cost_passes_at_any_speed[1e-10-gap8]
+FAILED tests/test_timing_fixture.py::test_an_n_log_n_cost_passes_at_any_speed[1e-10-gap16]
+FAILED tests/test_timing_fixture.py::test_an_n_log_n_cost_passes_at_any_speed[1e-09-gap8]
+FAILED tests/test_timing_fixture.py::test_an_n_log_n_cost_passes_at_any_speed[1e-09-gap16]
+FAILED tests/test_timing_fixture.py::test_an_n_log_n_cost_passes_at_any_speed[1e-07-gap8]
+FAILED tests/test_timing_fixture.py::test_an_n_log_n_cost_passes_at_any_speed[1e-07-gap16]
+FAILED tests/test_timing_fixture.py::test_an_n_log_n_cost_passes_at_any_speed[1e-05-gap8]
+FAILED tests/test_timing_fixture.py::test_an_n_log_n_cost_passes_at_any_speed[1e-05-gap16]
+FAILED tests/test_timing_fixture.py::test_a_quadratic_cost_is_flagged_at_any_speed[1e-11-gap8]
+FAILED tests/test_timing_fixture.py::test_a_quadratic_cost_is_flagged_at_any_speed[1e-11-gap16]
+FAILED tests/test_timing_fixture.py::test_a_quadratic_cost_is_flagged_at_any_speed[1e-10-gap8]
+FAILED tests/test_timing_fixture.py::test_a_quadratic_cost_is_flagged_at_any_speed[1e-10-gap16]
+FAILED tests/test_timing_fixture.py::test_a_quadratic_cost_is_flagged_at_any_speed[1e-09-gap8]
+FAILED tests/test_timing_fixture.py::test_a_quadratic_cost_is_flagged_at_any_speed[1e-09-gap16]
+FAILED tests/test_timing_fixture.py::test_a_quadratic_cost_is_flagged_at_any_speed[1e-07-gap8]
+FAILED tests/test_timing_fixture.py::test_a_quadratic_cost_is_flagged_at_any_speed[1e-07-gap16]
+FAILED tests/test_timing_fixture.py::test_a_quadratic_cost_is_flagged_at_any_speed[1e-06-gap8]
+FAILED tests/test_timing_fixture.py::test_a_quadratic_cost_is_flagged_at_any_speed[1e-06-gap16]
+FAILED tests/test_timing_fixture.py::test_a_quadratic_cost_is_flagged_at_any_speed[1e-05-gap8]
+FAILED tests/test_timing_fixture.py::test_a_quadratic_cost_is_flagged_at_any_speed[1e-05-gap16]
+FAILED tests/test_timing_fixture.py::test_the_smallest_exponent_a_gap_flags[gap8]
+FAILED tests/test_timing_fixture.py::test_the_smallest_exponent_a_gap_flags[gap16]
+FAILED tests/test_timing_fixture.py::test_the_smallest_exponent_a_gap_flags[gap64]
+FAILED tests/test_timing_fixture.py::test_a_fast_small_run_is_not_raised_to_a_floor
+FAILED tests/test_timing_fixture.py::test_what_passes_is_a_small_quadratic_part_and_no_more
+FAILED tests/test_timing_fixture.py::test_a_fixed_cost_per_call_hides_even_a_quadratic_cost_at_a_gap_of_16
+FAILED tests/test_timing_fixture.py::test_a_small_run_that_is_not_a_time_is_refused_not_passed[0.0]
+FAILED tests/test_timing_fixture.py::test_a_small_run_that_is_not_a_time_is_refused_not_passed[-0.001]
+FAILED tests/test_timing_fixture.py::test_a_small_run_that_is_not_a_time_is_refused_not_passed[nan]
+FAILED tests/test_timing_fixture.py::test_a_small_run_that_is_not_a_time_is_refused_not_passed[inf]
+FAILED tests/test_timing_fixture.py::test_a_small_run_that_is_not_a_time_is_refused_not_passed[-inf]
+FAILED tests/test_timing_fixture.py::test_a_big_run_that_is_not_a_time_is_refused_not_passed[0.0]
+FAILED tests/test_timing_fixture.py::test_a_big_run_that_is_not_a_time_is_refused_not_passed[-0.001]
+FAILED tests/test_timing_fixture.py::test_a_big_run_that_is_not_a_time_is_refused_not_passed[nan]
+FAILED tests/test_timing_fixture.py::test_a_big_run_that_is_not_a_time_is_refused_not_passed[inf]
+FAILED tests/test_timing_fixture.py::test_a_big_run_that_is_not_a_time_is_refused_not_passed[-inf]
+FAILED tests/test_timing_fixture.py::test_sizes_that_cannot_show_a_quadratic_cost_are_refused_before_any_work[swapped]
+FAILED tests/test_timing_fixture.py::test_sizes_that_cannot_show_a_quadratic_cost_are_refused_before_any_work[equal]
+FAILED tests/test_timing_fixture.py::test_sizes_that_cannot_show_a_quadratic_cost_are_refused_before_any_work[negative]
+FAILED tests/test_timing_fixture.py::test_sizes_that_cannot_show_a_quadratic_cost_are_refused_before_any_work[zero]
+FAILED tests/test_timing_fixture.py::test_sizes_that_cannot_show_a_quadratic_cost_are_refused_before_any_work[just-under-8x]
+FAILED tests/test_timing_fixture.py::test_sizes_that_cannot_show_a_quadratic_cost_are_refused_before_any_work[4x]
+FAILED tests/test_timing_fixture.py::test_a_gap_of_exactly_eight_is_the_smallest_allowed
+FAILED tests/test_timing_fixture.py::test_an_empty_unit_is_refused_before_any_work
+FAILED tests/test_timing_fixture.py::test_a_call_too_fast_to_time_is_refused_not_passed
+FAILED tests/test_timing_fixture.py::test_one_call_is_measured_to_its_true_time[1e-09]
+FAILED tests/test_timing_fixture.py::test_one_call_is_measured_to_its_true_time[1e-08]
+FAILED tests/test_timing_fixture.py::test_one_call_is_measured_to_its_true_time[1e-07]
+FAILED tests/test_timing_fixture.py::test_one_call_is_measured_to_its_true_time[1e-05]
+FAILED tests/test_timing_fixture.py::test_one_call_is_measured_to_its_true_time[0.001]
+FAILED tests/test_timing_fixture.py::test_a_fast_call_is_batched_to_the_batch_length_and_repeated_five_times
+FAILED tests/test_timing_fixture.py::test_a_pause_while_the_batch_is_sized_cannot_shorten_the_batches_that_count
+FAILED tests/test_timing_fixture.py::test_a_slow_call_is_run_once_to_size_the_batch_and_once_in_each_of_five_repeats
+FAILED tests/test_timing_fixture.py::test_the_two_sizes_take_turns - TypeErro...
+FAILED tests/test_timing_fixture.py::test_a_coarse_clock_cannot_turn_a_fast_call_into_zero[0.001]
+FAILED tests/test_timing_fixture.py::test_a_coarse_clock_cannot_turn_a_fast_call_into_zero[0.005]
+FAILED tests/test_timing_fixture.py::test_a_pause_in_four_of_five_batches_changes_nothing[0.007]
+FAILED tests/test_timing_fixture.py::test_a_pause_in_four_of_five_batches_changes_nothing[0.5]
+FAILED tests/test_timing_fixture.py::test_a_pause_in_four_of_five_batches_changes_nothing[30.0]
+FAILED tests/test_timing_fixture.py::test_a_slow_spell_over_several_batches_in_a_row_changes_nothing[0.5-2]
+FAILED tests/test_timing_fixture.py::test_a_slow_spell_over_several_batches_in_a_row_changes_nothing[0.5-3]
+FAILED tests/test_timing_fixture.py::test_a_slow_spell_over_several_batches_in_a_row_changes_nothing[0.5-4]
+FAILED tests/test_timing_fixture.py::test_a_slow_spell_over_several_batches_in_a_row_changes_nothing[0.5-5]
+FAILED tests/test_timing_fixture.py::test_a_slow_spell_over_several_batches_in_a_row_changes_nothing[30.0-2]
+FAILED tests/test_timing_fixture.py::test_a_slow_spell_over_several_batches_in_a_row_changes_nothing[30.0-3]
+FAILED tests/test_timing_fixture.py::test_a_slow_spell_over_several_batches_in_a_row_changes_nothing[30.0-4]
+FAILED tests/test_timing_fixture.py::test_a_slow_spell_over_several_batches_in_a_row_changes_nothing[30.0-5]
+FAILED tests/test_timing_fixture.py::test_the_collector_is_off_while_the_clock_runs_and_back_on_after
+FAILED tests/test_timing_fixture.py::test_the_clock_is_processor_time_off_windows[linux]
+FAILED tests/test_timing_fixture.py::test_the_clock_is_processor_time_off_windows[darwin]
+FAILED tests/test_timing_fixture.py::test_the_clock_is_processor_time_off_windows[cygwin]
+FAILED tests/test_timing_fixture.py::test_the_clock_is_processor_time_off_windows[freebsd]
+FAILED tests/test_timing_fixture.py::test_the_clock_is_the_wall_clock_on_windows
+FAILED tests/test_timing_fixture.py::test_the_rules_clock_is_the_one_picked_for_this_platform
+FAILED tests/test_timing_fixture.py::test_the_work_gets_the_unit_repeated_to_exactly_the_two_sizes
+FAILED tests/test_timing_fixture.py::test_a_sweep_names_each_slow_case_and_each_case_it_could_not_time
+FAILED tests/test_timing_fixture.py::test_a_failing_line_shows_both_times_the_ratio_and_the_limit
+FAILED tests/test_timing_fixture.py::test_a_case_that_raises_keeps_its_type_and_is_named_with_the_problems_found_before_it
+FAILED tests/test_timing_fixture.py::test_a_case_that_raises_a_value_error_is_not_called_untimeable
+FAILED tests/test_timing_fixture.py::test_a_clock_difference_of_almost_nothing_is_refused_not_an_overflow[5e-324]
+FAILED tests/test_timing_fixture.py::test_a_clock_difference_of_almost_nothing_is_refused_not_an_overflow[1e-300]
+FAILED tests/test_timing_fixture.py::test_a_clock_that_gives_not_a_number_is_refused_not_returned_as_a_time
+FAILED tests/test_timing_fixture.py::test_the_sizing_loops_end_by_construction_even_without_the_calls_cap
+FAILED tests/test_timing_fixture.py::test_work_that_sleeps_is_refused_not_timed_from_a_few_microseconds_of_processor_time
+FAILED tests/test_timing_fixture.py::test_work_done_in_a_child_process_is_refused_because_processor_time_does_not_count_it
+FAILED tests/test_timing_fixture.py::test_ordinary_computing_is_not_taken_for_waiting
+FAILED tests/test_timing_fixture.py::test_the_waiting_check_is_for_the_real_clock_only
+FAILED tests/test_runmap_partial_escape.py::test_a_very_long_run_of_percent_bytes_takes_linear_time
+FAILED tests/test_runmap_partial_escape.py::test_the_time_of_a_long_run_grows_no_faster_than_its_length[%C3]
+FAILED tests/test_runmap_partial_escape.py::test_the_time_of_a_long_run_grows_no_faster_than_its_length[%C3%A]
+FAILED tests/test_runmap_partial_escape.py::test_the_time_of_a_long_run_grows_no_faster_than_its_length[&#]
+FAILED tests/test_runmap_partial_escape.py::test_the_time_of_a_long_run_grows_no_faster_than_its_length[&#x4]
+FAILED tests/test_runmap_partial_escape.py::test_the_time_of_a_long_run_grows_no_faster_than_its_length[\\u]
+FAILED tests/test_runmap_partial_escape.py::test_the_time_of_a_long_run_grows_no_faster_than_its_length[%]
+FAILED tests/test_runmap_partial_escape.py::test_the_time_of_a_long_run_grows_no_faster_than_its_length[&a]
+FAILED tests/test_runmap_partial_escape.py::test_other_long_runs_are_linear_too
+FAILED tests/test_runmap_partial_escape.py::test_a_run_the_old_pattern_took_seconds_on_is_instant
+FAILED tests/test_g4_parity.py::test_g4_reads_hostile_text_in_linear_time - A...
+FAILED tests/test_k5_fixes2.py::test_the_worst_allowed_suffix_is_fast_on_a_hostile_name
+FAILED tests/test_k5_fixes6.py::test_fifty_handed_out_secrets_behind_an_encoding_layer_stay_within_a_bound
+FAILED tests/test_k5_layers.py::test_100kb_adversarial_layered_input_is_bounded[names0]
+FAILED tests/test_k5_layers.py::test_100kb_adversarial_layered_input_is_bounded[names1]
+FAILED tests/test_k5_layers.py::test_100kb_adversarial_layered_input_is_bounded[names2]
+FAILED tests/test_migration_numbers.py::test_lexer_is_linear - AttributeError...
+FAILED tests/test_migration_numbers.py::test_the_timing_harness_flags_a_quadratic_stand_in
+FAILED tests/test_migration_numbers.py::test_the_timing_harness_passes_a_linear_and_an_n_log_n_stand_in[linear]
+FAILED tests/test_migration_numbers.py::test_the_timing_harness_passes_a_linear_and_an_n_log_n_stand_in[n-log-n]
+FAILED tests/test_migration_numbers.py::test_the_timing_harness_flags_a_quadratic_stand_in_that_is_fast_on_the_small_input
+FAILED tests/test_migration_numbers_guards.py::test_gone_message_caps_the_names_and_stays_fast
+FAILED tests/test_migration_numbers_guards.py::test_every_mutant_still_applies_to_the_source
+FAILED tests/warden_port/test_redaction_review2.py::test_redacting_many_lines_stays_fast
+129 failed, 497 passed, 1 skipped in 35.25s
+exit=1

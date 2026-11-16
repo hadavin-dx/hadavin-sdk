@@ -1,0 +1,8 @@
+SKIPPED tests.contracts.test_llm::test_a_malformed_answer_is_a_provider_error[bedrock] (time 0.016s)
+   message: Stubber refuses a malformed Converse shape before the kind sees it
+FAILURE tests.demo_askdata.test_validate_harm::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[copy-program] (time 0.010s)
+   message: psycopg.errors.InternalError_: could not close pipe to external command: Broken pipe
+   first E line: E           psycopg.errors.InternalError_: could not close pipe to external command: Broken pipe
+   last E line: E           psycopg.errors.InternalError_: could not close pipe to external command: Broken pipe
+SKIPPED tests.test_mutation_runner_keywords::test_a_lock_folder_that_cannot_be_made_is_a_clear_refusal (time 0.005s)
+   message: the account can write to a read-only folder (root)

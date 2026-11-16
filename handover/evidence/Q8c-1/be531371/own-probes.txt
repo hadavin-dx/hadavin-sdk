@@ -1,0 +1,26 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+kinds with policy: ['secrets/vault', 'signer/vault_transit', 'source/kubernetes']
+baseline cross_problems: []
+baseline data_problems: []
+BUILDER_ONLY: ('V-ACL', 'V-PARSE', 'B-ACL')
+cell ('2026-11-11', 'V-ACL') -> 2026-11-11, sources V-ACL (builder only)
+cell ('2026-11-11', 'V-POL', 'B-ACL') -> 2026-11-11, sources V-POL, B-ACL (builder only)
+cell ('2026-11-11', 'V-PARSE', 'K-AUTHZ') -> 2026-11-11, sources V-PARSE (builder only), K-AUTHZ
+cell ('2026-11-11', 'K-AUTHZ') -> 2026-11-11, sources K-AUTHZ
+grant0 read {mount}/data/{path_prefix}+
+never-vs-grant [never == grant path, same cap] '{mount}/data/{path_prefix}+' ('read',): 1 problem(s)
+never-vs-grant [never == grant path, other cap] '{mount}/data/{path_prefix}+' ('delete',): 0 problem(s)
+never-vs-grant [never == grant path, no caps] '{mount}/data/{path_prefix}+' (): 1 problem(s)
+never-vs-grant [never broader star] 'secret/*' ('read',): 0 problem(s)
+never-vs-grant [never disjoint] 'sys/policies/acl/*' ('read',): 0 problem(s)
+never-vs-grant [never wildcard + part] 'mount/data/+' ('read',): 1 problem(s)
+k8s grants: [('R20', 'apps/deployments in {namespaces}'), ('R21', 'core/events in {namespaces}'), ('R22', 'core/pods/log in {namespaces}')]
+k8s never names grant resource deployments -> 1
+k8s never secrets -> 0
+copy_ready secrets/vault False unchecked claims: 1 unverified grants: 0
+copy_ready signer/vault_transit False unchecked claims: 1 unverified grants: 0
+copy_ready source/kubernetes False unchecked claims: 3 unverified grants: 0
+page id V-ACL occurrences 1 without nearby builder-only text 0
+page id V-PARSE occurrences 1 without nearby builder-only text 0
+page id B-ACL occurrences 1 without nearby builder-only text 0
+page equals committed: True

@@ -1,0 +1,3 @@
+str ValidationError {'str': False, 'repr': False, 'errors': False, 'json': False}
+list ValidationError {'str': False, 'repr': False, 'errors': False, 'json': False}
+badjson ValidationError {'str': False, 'repr': False, 'errors': False, 'json': False}

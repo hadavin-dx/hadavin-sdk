@@ -1,0 +1,16 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+Traceback (most recent call last):
+  File "/home/user/build/EV-Q8b-13ea6b75/wt/tests/q8b_mutants.py", line 211, in <module>
+    res = run_mutants(
+        ROOT,
+    ...<11 lines>...
+        first_lines=first_lines,
+    )
+  File "/home/user/build/EV-Q8b-13ea6b75/wt/tools/mutation_runner.py", line 388, in run_mutants
+    return _run_mutants(
+        root, mutants, tests, extra_dirs, only, timeout, baseline_timeout, on_result,
+        {} if first_lines is None else first_lines,
+    )  # fmt: skip
+  File "/home/user/build/EV-Q8b-13ea6b75/wt/tools/mutation_runner.py", line 527, in _run_mutants
+    raise RuntimeError("the unmutated copy does not pass its tests")
+RuntimeError: the unmutated copy does not pass its tests

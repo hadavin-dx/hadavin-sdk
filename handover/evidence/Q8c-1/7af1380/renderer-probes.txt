@@ -1,0 +1,1528 @@
+############################## PAGE MODE (values=None)
+----------------------------------------------------------------------------------------------------
+render_vault(secrets/vault)
+  values = None
+  RENDERED TEXT (between the marker lines, verbatim):
+<<<<<<<<
+# R17: reads one named secret
+path "{mount}/data/{path_prefix}*" {
+  capabilities = ["read"]
+}
+>>>>>>>>
+  code check: path blocks found = [('{mount}/data/{path_prefix}*', ['read'])]
+  code check: path blocks expected from the POLICY literal = [('{mount}/data/{path_prefix}*', ['read'])]
+  code check: found == expected: True; non-comment lines outside the expected blocks: []
+  code check: count of 'path ' anywhere / at a line start / of 'capabilities': (1, 1, 1)
+----------------------------------------------------------------------------------------------------
+render_vault(signer/vault_transit)
+  values = None
+  RENDERED TEXT (between the marker lines, verbatim):
+<<<<<<<<
+# R18: signs each audit checkpoint and the start-up test message
+path "{transit_mount}/sign/{key_name}" {
+  capabilities = ["update"]
+}
+
+# R19: reads the pinned version's public key and the key type
+path "{transit_mount}/keys/{key_name}" {
+  capabilities = ["read"]
+}
+>>>>>>>>
+  code check: path blocks found = [('{transit_mount}/sign/{key_name}', ['update']), ('{transit_mount}/keys/{key_name}', ['read'])]
+  code check: path blocks expected from the POLICY literal = [('{transit_mount}/sign/{key_name}', ['update']), ('{transit_mount}/keys/{key_name}', ['read'])]
+  code check: found == expected: True; non-comment lines outside the expected blocks: []
+  code check: count of 'path ' anywhere / at a line start / of 'capabilities': (2, 2, 2)
+----------------------------------------------------------------------------------------------------
+render_kubernetes(source/kubernetes)
+  values = None
+  RENDERED TEXT (between the marker lines, verbatim):
+<<<<<<<<
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: "<ROLE_NAME>"
+  namespace: "{namespaces}"
+rules:
+  # R20: reads deployments, their rollout revision and images
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["list"]
+  # R21: reads events in the time window
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
+  # R22: reads one pod's log lines
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: "<ROLE_NAME>"
+  namespace: "{namespaces}"
+subjects:
+  - kind: ServiceAccount
+    name: "<SERVICE_ACCOUNT>"
+    namespace: "<SERVICE_ACCOUNT_NAMESPACE>"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: "<ROLE_NAME>"
+>>>>>>>>
+  code check: documents: 2
+  code check: kinds: ['Role', 'RoleBinding']
+  code check: namespaces in order: ['{namespaces}', '{namespaces}']
+  code check: every Role's rules equal the declared three: True
+  code check: any kind other than Role/RoleBinding: []
+  code check: unexpected top-level keys: []
+  code check: rule count per Role: [3]
+  code check: subjects: [[{'kind': 'ServiceAccount', 'name': '<SERVICE_ACCOUNT>', 'namespace': '<SERVICE_ACCOUNT_NAMESPACE>'}]]
+  code check: count of the text 'kind: ' at a line start: 2
+  code check: count of '- apiGroups' lines: 3
+############################## PLAIN VALUES
+----------------------------------------------------------------------------------------------------
+render_vault(secrets/vault)
+  values = {'mount': 'secret', 'path_prefix': 'hadavin/acme/'}
+  RENDERED TEXT (between the marker lines, verbatim):
+<<<<<<<<
+# R17: reads one named secret
+path "secret/data/hadavin/acme/*" {
+  capabilities = ["read"]
+}
+>>>>>>>>
+  code check: path blocks found = [('secret/data/hadavin/acme/*', ['read'])]
+  code check: path blocks expected from the POLICY literal = [('secret/data/hadavin/acme/*', ['read'])]
+  code check: found == expected: True; non-comment lines outside the expected blocks: []
+  code check: count of 'path ' anywhere / at a line start / of 'capabilities': (1, 1, 1)
+----------------------------------------------------------------------------------------------------
+render_vault(signer/vault_transit)
+  values = {'transit_mount': 'transit', 'key_name': 'audit-key'}
+  RENDERED TEXT (between the marker lines, verbatim):
+<<<<<<<<
+# R18: signs each audit checkpoint and the start-up test message
+path "transit/sign/audit-key" {
+  capabilities = ["update"]
+}
+
+# R19: reads the pinned version's public key and the key type
+path "transit/keys/audit-key" {
+  capabilities = ["read"]
+}
+>>>>>>>>
+  code check: path blocks found = [('transit/sign/audit-key', ['update']), ('transit/keys/audit-key', ['read'])]
+  code check: path blocks expected from the POLICY literal = [('transit/sign/audit-key', ['update']), ('transit/keys/audit-key', ['read'])]
+  code check: found == expected: True; non-comment lines outside the expected blocks: []
+  code check: count of 'path ' anywhere / at a line start / of 'capabilities': (2, 2, 2)
+----------------------------------------------------------------------------------------------------
+render_kubernetes(source/kubernetes)
+  values = {'namespaces': 'shop,payments', 'ROLE_NAME': 'hadavin-read', 'SERVICE_ACCOUNT': 'hadavin-agent', 'SERVICE_ACCOUNT_NAMESPACE': 'hadavin'}
+  RENDERED TEXT (between the marker lines, verbatim):
+<<<<<<<<
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: "hadavin-read"
+  namespace: "shop"
+rules:
+  # R20: reads deployments, their rollout revision and images
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["list"]
+  # R21: reads events in the time window
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
+  # R22: reads one pod's log lines
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: "hadavin-read"
+  namespace: "shop"
+subjects:
+  - kind: ServiceAccount
+    name: "hadavin-agent"
+    namespace: "hadavin"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: "hadavin-read"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: "hadavin-read"
+  namespace: "payments"
+rules:
+  # R20: reads deployments, their rollout revision and images
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["list"]
+  # R21: reads events in the time window
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
+  # R22: reads one pod's log lines
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: "hadavin-read"
+  namespace: "payments"
+subjects:
+  - kind: ServiceAccount
+    name: "hadavin-agent"
+    namespace: "hadavin"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: "hadavin-read"
+>>>>>>>>
+  code check: documents: 4
+  code check: kinds: ['Role', 'RoleBinding', 'Role', 'RoleBinding']
+  code check: namespaces in order: ['shop', 'shop', 'payments', 'payments']
+  code check: every Role's rules equal the declared three: True
+  code check: any kind other than Role/RoleBinding: []
+  code check: unexpected top-level keys: []
+  code check: rule count per Role: [3, 3]
+  code check: subjects: [[{'kind': 'ServiceAccount', 'name': 'hadavin-agent', 'namespace': 'hadavin'}]]
+  code check: count of the text 'kind: ' at a line start: 4
+  code check: count of '- apiGroups' lines: 6
+----------------------------------------------------------------------------------------------------
+render_kubernetes, one namespace
+  values = {'namespaces': 'shop', 'ROLE_NAME': 'hadavin-read', 'SERVICE_ACCOUNT': 'hadavin-agent', 'SERVICE_ACCOUNT_NAMESPACE': 'hadavin'}
+  RENDERED TEXT (between the marker lines, verbatim):
+<<<<<<<<
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: "hadavin-read"
+  namespace: "shop"
+rules:
+  # R20: reads deployments, their rollout revision and images
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["list"]
+  # R21: reads events in the time window
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
+  # R22: reads one pod's log lines
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: "hadavin-read"
+  namespace: "shop"
+subjects:
+  - kind: ServiceAccount
+    name: "hadavin-agent"
+    namespace: "hadavin"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: "hadavin-read"
+>>>>>>>>
+  code check: documents: 2
+  code check: kinds: ['Role', 'RoleBinding']
+  code check: namespaces in order: ['shop', 'shop']
+  code check: every Role's rules equal the declared three: True
+  code check: any kind other than Role/RoleBinding: []
+  code check: unexpected top-level keys: []
+  code check: rule count per Role: [3]
+  code check: subjects: [[{'kind': 'ServiceAccount', 'name': 'hadavin-agent', 'namespace': 'hadavin'}]]
+  code check: count of the text 'kind: ' at a line start: 2
+  code check: count of '- apiGroups' lines: 3
+############################## HOSTILE VALUES, one field at a time (the other fields keep the plain value)
+----------------------------------------------------------------------------------------------------
+secrets/vault: field mount = star
+  values = {'mount': '*', 'path_prefix': 'hadavin/acme/'}
+  RAISED ValueError: policy value 'mount' does not match its grammar: '*'
+----------------------------------------------------------------------------------------------------
+secrets/vault: field mount = question mark
+  values = {'mount': '?', 'path_prefix': 'hadavin/acme/'}
+  RAISED ValueError: policy value 'mount' does not match its grammar: '?'
+----------------------------------------------------------------------------------------------------
+secrets/vault: field mount = braces
+  values = {'mount': '{x}', 'path_prefix': 'hadavin/acme/'}
+  RAISED ValueError: policy value 'mount' does not match its grammar: '{x}'
+----------------------------------------------------------------------------------------------------
+secrets/vault: field mount = empty string
+  values = {'mount': '', 'path_prefix': 'hadavin/acme/'}
+  RAISED ValueError: policy value 'mount' does not match its grammar: ''
+----------------------------------------------------------------------------------------------------
+secrets/vault: field mount = dot-dot-slash
+  values = {'mount': '../', 'path_prefix': 'hadavin/acme/'}
+  RAISED ValueError: policy value 'mount' does not match its grammar: '../'
+----------------------------------------------------------------------------------------------------
+secrets/vault: field mount = newline
+  values = {'mount': 'a\nb', 'path_prefix': 'hadavin/acme/'}
+  RAISED ValueError: policy value 'mount' does not match its grammar: 'a\nb'
+----------------------------------------------------------------------------------------------------
+secrets/vault: field mount = newline at the end
+  values = {'mount': 'abc\n', 'path_prefix': 'hadavin/acme/'}
+  RAISED ValueError: policy value 'mount' does not match its grammar: 'abc\n'
+----------------------------------------------------------------------------------------------------
+secrets/vault: field mount = double quote
+  values = {'mount': 'a"b', 'path_prefix': 'hadavin/acme/'}
+  RAISED ValueError: policy value 'mount' does not match its grammar: 'a"b'
+----------------------------------------------------------------------------------------------------
+secrets/vault: field mount = single quote
+  values = {'mount': "a'b", 'path_prefix': 'hadavin/acme/'}
+  RAISED ValueError: policy value 'mount' does not match its grammar: "a'b"
+----------------------------------------------------------------------------------------------------
+secrets/vault: field mount = injection text
+  values = {'mount': '"} path "sys/*" {capabilities=["sudo"]', 'path_prefix': 'hadavin/acme/'}
+  RAISED ValueError: policy value 'mount' does not match its grammar: '"} path "sys/*" {capabilities=["sudo"]'
+----------------------------------------------------------------------------------------------------
+secrets/vault: field mount = 300 characters
+  values = {'mount': 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'path_prefix': 'hadavin/acme/'}
+  RENDERED TEXT (between the marker lines, verbatim):
+<<<<<<<<
+# R17: reads one named secret
+path "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/data/hadavin/acme/*" {
+  capabilities = ["read"]
+}
+>>>>>>>>
+  code check: path blocks found = [('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/data/hadavin/acme/*', ['read'])]
+  code check: path blocks expected from the POLICY literal = [('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/data/hadavin/acme/*', ['read'])]
+  code check: found == expected: True; non-comment lines outside the expected blocks: []
+  code check: count of 'path ' anywhere / at a line start / of 'capabilities': (1, 1, 1)
+----------------------------------------------------------------------------------------------------
+secrets/vault: field path_prefix = star
+  values = {'mount': 'secret', 'path_prefix': '*'}
+  RAISED ValueError: policy value 'path_prefix' does not match its grammar: '*'
+----------------------------------------------------------------------------------------------------
+secrets/vault: field path_prefix = question mark
+  values = {'mount': 'secret', 'path_prefix': '?'}
+  RAISED ValueError: policy value 'path_prefix' does not match its grammar: '?'
+----------------------------------------------------------------------------------------------------
+secrets/vault: field path_prefix = braces
+  values = {'mount': 'secret', 'path_prefix': '{x}'}
+  RAISED ValueError: policy value 'path_prefix' does not match its grammar: '{x}'
+----------------------------------------------------------------------------------------------------
+secrets/vault: field path_prefix = empty string
+  values = {'mount': 'secret', 'path_prefix': ''}
+  RAISED ValueError: policy value 'path_prefix' is empty: an empty prefix means the whole mount, and no policy text is produced for that
+----------------------------------------------------------------------------------------------------
+secrets/vault: field path_prefix = dot-dot-slash
+  values = {'mount': 'secret', 'path_prefix': '../'}
+  RAISED ValueError: policy value 'path_prefix' does not match its grammar: '../'
+----------------------------------------------------------------------------------------------------
+secrets/vault: field path_prefix = newline
+  values = {'mount': 'secret', 'path_prefix': 'a\nb'}
+  RAISED ValueError: policy value 'path_prefix' does not match its grammar: 'a\nb'
+----------------------------------------------------------------------------------------------------
+secrets/vault: field path_prefix = newline at the end
+  values = {'mount': 'secret', 'path_prefix': 'abc\n'}
+  RAISED ValueError: policy value 'path_prefix' does not match its grammar: 'abc\n'
+----------------------------------------------------------------------------------------------------
+secrets/vault: field path_prefix = double quote
+  values = {'mount': 'secret', 'path_prefix': 'a"b'}
+  RAISED ValueError: policy value 'path_prefix' does not match its grammar: 'a"b'
+----------------------------------------------------------------------------------------------------
+secrets/vault: field path_prefix = single quote
+  values = {'mount': 'secret', 'path_prefix': "a'b"}
+  RAISED ValueError: policy value 'path_prefix' does not match its grammar: "a'b"
+----------------------------------------------------------------------------------------------------
+secrets/vault: field path_prefix = injection text
+  values = {'mount': 'secret', 'path_prefix': '"} path "sys/*" {capabilities=["sudo"]'}
+  RAISED ValueError: policy value 'path_prefix' does not match its grammar: '"} path "sys/*" {capabilities=["sudo"]'
+----------------------------------------------------------------------------------------------------
+secrets/vault: field path_prefix = 300 characters
+  values = {'mount': 'secret', 'path_prefix': 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}
+  RAISED ValueError: policy value 'path_prefix' does not match its grammar: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+----------------------------------------------------------------------------------------------------
+signer/vault_transit: field transit_mount = star
+  values = {'transit_mount': '*', 'key_name': 'audit-key'}
+  RAISED ValueError: policy value 'transit_mount' does not match its grammar: '*'
+----------------------------------------------------------------------------------------------------
+signer/vault_transit: field transit_mount = question mark
+  values = {'transit_mount': '?', 'key_name': 'audit-key'}
+  RAISED ValueError: policy value 'transit_mount' does not match its grammar: '?'
+----------------------------------------------------------------------------------------------------
+signer/vault_transit: field transit_mount = braces
+  values = {'transit_mount': '{x}', 'key_name': 'audit-key'}
+  RAISED ValueError: policy value 'transit_mount' does not match its grammar: '{x}'
+----------------------------------------------------------------------------------------------------
+signer/vault_transit: field transit_mount = empty string
+  values = {'transit_mount': '', 'key_name': 'audit-key'}
+  RAISED ValueError: policy value 'transit_mount' does not match its grammar: ''
+----------------------------------------------------------------------------------------------------
+signer/vault_transit: field transit_mount = dot-dot-slash
+  values = {'transit_mount': '../', 'key_name': 'audit-key'}
+  RAISED ValueError: policy value 'transit_mount' does not match its grammar: '../'
+----------------------------------------------------------------------------------------------------
+signer/vault_transit: field transit_mount = newline
+  values = {'transit_mount': 'a\nb', 'key_name': 'audit-key'}
+  RAISED ValueError: policy value 'transit_mount' does not match its grammar: 'a\nb'
+----------------------------------------------------------------------------------------------------
+signer/vault_transit: field transit_mount = newline at the end
+  values = {'transit_mount': 'abc\n', 'key_name': 'audit-key'}
+  RAISED ValueError: policy value 'transit_mount' does not match its grammar: 'abc\n'
+----------------------------------------------------------------------------------------------------
+signer/vault_transit: field transit_mount = double quote
+  values = {'transit_mount': 'a"b', 'key_name': 'audit-key'}
+  RAISED ValueError: policy value 'transit_mount' does not match its grammar: 'a"b'
+----------------------------------------------------------------------------------------------------
+signer/vault_transit: field transit_mount = single quote
+  values = {'transit_mount': "a'b", 'key_name': 'audit-key'}
+  RAISED ValueError: policy value 'transit_mount' does not match its grammar: "a'b"
+----------------------------------------------------------------------------------------------------
+signer/vault_transit: field transit_mount = injection text
+  values = {'transit_mount': '"} path "sys/*" {capabilities=["sudo"]', 'key_name': 'audit-key'}
+  RAISED ValueError: policy value 'transit_mount' does not match its grammar: '"} path "sys/*" {capabilities=["sudo"]'
+----------------------------------------------------------------------------------------------------
+signer/vault_transit: field transit_mount = 300 characters
+  values = {'transit_mount': 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'key_name': 'audit-key'}
+  RENDERED TEXT (between the marker lines, verbatim):
+<<<<<<<<
+# R18: signs each audit checkpoint and the start-up test message
+path "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/sign/audit-key" {
+  capabilities = ["update"]
+}
+
+# R19: reads the pinned version's public key and the key type
+path "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/keys/audit-key" {
+  capabilities = ["read"]
+}
+>>>>>>>>
+  code check: path blocks found = [('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/sign/audit-key', ['update']), ('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/keys/audit-key', ['read'])]
+  code check: path blocks expected from the POLICY literal = [('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/sign/audit-key', ['update']), ('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/keys/audit-key', ['read'])]
+  code check: found == expected: True; non-comment lines outside the expected blocks: []
+  code check: count of 'path ' anywhere / at a line start / of 'capabilities': (2, 2, 2)
+----------------------------------------------------------------------------------------------------
+signer/vault_transit: field key_name = star
+  values = {'transit_mount': 'transit', 'key_name': '*'}
+  RAISED ValueError: policy value 'key_name' does not match its grammar: '*'
+----------------------------------------------------------------------------------------------------
+signer/vault_transit: field key_name = question mark
+  values = {'transit_mount': 'transit', 'key_name': '?'}
+  RAISED ValueError: policy value 'key_name' does not match its grammar: '?'
+----------------------------------------------------------------------------------------------------
+signer/vault_transit: field key_name = braces
+  values = {'transit_mount': 'transit', 'key_name': '{x}'}
+  RAISED ValueError: policy value 'key_name' does not match its grammar: '{x}'
+----------------------------------------------------------------------------------------------------
+signer/vault_transit: field key_name = empty string
+  values = {'transit_mount': 'transit', 'key_name': ''}
+  RAISED ValueError: policy value 'key_name' does not match its grammar: ''
+----------------------------------------------------------------------------------------------------
+signer/vault_transit: field key_name = dot-dot-slash
+  values = {'transit_mount': 'transit', 'key_name': '../'}
+  RAISED ValueError: policy value 'key_name' does not match its grammar: '../'
+----------------------------------------------------------------------------------------------------
+signer/vault_transit: field key_name = newline
+  values = {'transit_mount': 'transit', 'key_name': 'a\nb'}
+  RAISED ValueError: policy value 'key_name' does not match its grammar: 'a\nb'
+----------------------------------------------------------------------------------------------------
+signer/vault_transit: field key_name = newline at the end
+  values = {'transit_mount': 'transit', 'key_name': 'abc\n'}
+  RAISED ValueError: policy value 'key_name' does not match its grammar: 'abc\n'
+----------------------------------------------------------------------------------------------------
+signer/vault_transit: field key_name = double quote
+  values = {'transit_mount': 'transit', 'key_name': 'a"b'}
+  RAISED ValueError: policy value 'key_name' does not match its grammar: 'a"b'
+----------------------------------------------------------------------------------------------------
+signer/vault_transit: field key_name = single quote
+  values = {'transit_mount': 'transit', 'key_name': "a'b"}
+  RAISED ValueError: policy value 'key_name' does not match its grammar: "a'b"
+----------------------------------------------------------------------------------------------------
+signer/vault_transit: field key_name = injection text
+  values = {'transit_mount': 'transit', 'key_name': '"} path "sys/*" {capabilities=["sudo"]'}
+  RAISED ValueError: policy value 'key_name' does not match its grammar: '"} path "sys/*" {capabilities=["sudo"]'
+----------------------------------------------------------------------------------------------------
+signer/vault_transit: field key_name = 300 characters
+  values = {'transit_mount': 'transit', 'key_name': 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}
+  RENDERED TEXT (between the marker lines, verbatim):
+<<<<<<<<
+# R18: signs each audit checkpoint and the start-up test message
+path "transit/sign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" {
+  capabilities = ["update"]
+}
+
+# R19: reads the pinned version's public key and the key type
+path "transit/keys/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" {
+  capabilities = ["read"]
+}
+>>>>>>>>
+  code check: path blocks found = [('transit/sign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', ['update']), ('transit/keys/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', ['read'])]
+  code check: path blocks expected from the POLICY literal = [('transit/sign/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', ['update']), ('transit/keys/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', ['read'])]
+  code check: found == expected: True; non-comment lines outside the expected blocks: []
+  code check: count of 'path ' anywhere / at a line start / of 'capabilities': (2, 2, 2)
+----------------------------------------------------------------------------------------------------
+source/kubernetes: field namespaces = star
+  values = {'namespaces': '*', 'ROLE_NAME': 'hadavin-read', 'SERVICE_ACCOUNT': 'hadavin-agent', 'SERVICE_ACCOUNT_NAMESPACE': 'hadavin'}
+  RAISED ValueError: policy value 'namespaces' does not match its grammar: '*'
+----------------------------------------------------------------------------------------------------
+source/kubernetes: field namespaces = question mark
+  values = {'namespaces': '?', 'ROLE_NAME': 'hadavin-read', 'SERVICE_ACCOUNT': 'hadavin-agent', 'SERVICE_ACCOUNT_NAMESPACE': 'hadavin'}
+  RAISED ValueError: policy value 'namespaces' does not match its grammar: '?'
+----------------------------------------------------------------------------------------------------
+source/kubernetes: field namespaces = braces
+  values = {'namespaces': '{x}', 'ROLE_NAME': 'hadavin-read', 'SERVICE_ACCOUNT': 'hadavin-agent', 'SERVICE_ACCOUNT_NAMESPACE': 'hadavin'}
+  RAISED ValueError: policy value 'namespaces' does not match its grammar: '{x}'
+----------------------------------------------------------------------------------------------------
+source/kubernetes: field namespaces = empty string
+  values = {'namespaces': '', 'ROLE_NAME': 'hadavin-read', 'SERVICE_ACCOUNT': 'hadavin-agent', 'SERVICE_ACCOUNT_NAMESPACE': 'hadavin'}
+  RAISED ValueError: policy value 'namespaces' does not match its grammar: ''
+----------------------------------------------------------------------------------------------------
+source/kubernetes: field namespaces = dot-dot-slash
+  values = {'namespaces': '../', 'ROLE_NAME': 'hadavin-read', 'SERVICE_ACCOUNT': 'hadavin-agent', 'SERVICE_ACCOUNT_NAMESPACE': 'hadavin'}
+  RAISED ValueError: policy value 'namespaces' does not match its grammar: '../'
+----------------------------------------------------------------------------------------------------
+source/kubernetes: field namespaces = newline
+  values = {'namespaces': 'a\nb', 'ROLE_NAME': 'hadavin-read', 'SERVICE_ACCOUNT': 'hadavin-agent', 'SERVICE_ACCOUNT_NAMESPACE': 'hadavin'}
+  RAISED ValueError: policy value 'namespaces' does not match its grammar: 'a\nb'
+----------------------------------------------------------------------------------------------------
+source/kubernetes: field namespaces = newline at the end
+  values = {'namespaces': 'abc\n', 'ROLE_NAME': 'hadavin-read', 'SERVICE_ACCOUNT': 'hadavin-agent', 'SERVICE_ACCOUNT_NAMESPACE': 'hadavin'}
+  RAISED ValueError: policy value 'namespaces' does not match its grammar: 'abc\n'
+----------------------------------------------------------------------------------------------------
+source/kubernetes: field namespaces = double quote
+  values = {'namespaces': 'a"b', 'ROLE_NAME': 'hadavin-read', 'SERVICE_ACCOUNT': 'hadavin-agent', 'SERVICE_ACCOUNT_NAMESPACE': 'hadavin'}
+  RAISED ValueError: policy value 'namespaces' does not match its grammar: 'a"b'
+----------------------------------------------------------------------------------------------------
+source/kubernetes: field namespaces = single quote
+  values = {'namespaces': "a'b", 'ROLE_NAME': 'hadavin-read', 'SERVICE_ACCOUNT': 'hadavin-agent', 'SERVICE_ACCOUNT_NAMESPACE': 'hadavin'}
+  RAISED ValueError: policy value 'namespaces' does not match its grammar: "a'b"
+----------------------------------------------------------------------------------------------------
+source/kubernetes: field namespaces = injection text
+  values = {'namespaces': '"} path "sys/*" {capabilities=["sudo"]', 'ROLE_NAME': 'hadavin-read', 'SERVICE_ACCOUNT': 'hadavin-agent', 'SERVICE_ACCOUNT_NAMESPACE': 'hadavin'}
+  RAISED ValueError: policy value 'namespaces' does not match its grammar: '"} path "sys/*" {capabilities=["sudo"]'
+----------------------------------------------------------------------------------------------------
+source/kubernetes: field namespaces = 300 characters
+  values = {'namespaces': 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'ROLE_NAME': 'hadavin-read', 'SERVICE_ACCOUNT': 'hadavin-agent', 'SERVICE_ACCOUNT_NAMESPACE': 'hadavin'}
+  RENDERED TEXT (between the marker lines, verbatim):
+<<<<<<<<
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: "hadavin-read"
+  namespace: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+rules:
+  # R20: reads deployments, their rollout revision and images
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["list"]
+  # R21: reads events in the time window
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
+  # R22: reads one pod's log lines
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: "hadavin-read"
+  namespace: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+subjects:
+  - kind: ServiceAccount
+    name: "hadavin-agent"
+    namespace: "hadavin"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: "hadavin-read"
+>>>>>>>>
+  code check: documents: 2
+  code check: kinds: ['Role', 'RoleBinding']
+  code check: namespaces in order: ['aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa']
+  code check: every Role's rules equal the declared three: True
+  code check: any kind other than Role/RoleBinding: []
+  code check: unexpected top-level keys: []
+  code check: rule count per Role: [3]
+  code check: subjects: [[{'kind': 'ServiceAccount', 'name': 'hadavin-agent', 'namespace': 'hadavin'}]]
+  code check: count of the text 'kind: ' at a line start: 2
+  code check: count of '- apiGroups' lines: 3
+----------------------------------------------------------------------------------------------------
+source/kubernetes: field ROLE_NAME = star
+  values = {'namespaces': 'shop,payments', 'ROLE_NAME': '*', 'SERVICE_ACCOUNT': 'hadavin-agent', 'SERVICE_ACCOUNT_NAMESPACE': 'hadavin'}
+  RAISED ValueError: policy value 'ROLE_NAME' does not match its grammar: '*'
+----------------------------------------------------------------------------------------------------
+source/kubernetes: field ROLE_NAME = question mark
+  values = {'namespaces': 'shop,payments', 'ROLE_NAME': '?', 'SERVICE_ACCOUNT': 'hadavin-agent', 'SERVICE_ACCOUNT_NAMESPACE': 'hadavin'}
+  RAISED ValueError: policy value 'ROLE_NAME' does not match its grammar: '?'
+----------------------------------------------------------------------------------------------------
+source/kubernetes: field ROLE_NAME = braces
+  values = {'namespaces': 'shop,payments', 'ROLE_NAME': '{x}', 'SERVICE_ACCOUNT': 'hadavin-agent', 'SERVICE_ACCOUNT_NAMESPACE': 'hadavin'}
+  RAISED ValueError: policy value 'ROLE_NAME' does not match its grammar: '{x}'
+----------------------------------------------------------------------------------------------------
+source/kubernetes: field ROLE_NAME = empty string
+  values = {'namespaces': 'shop,payments', 'ROLE_NAME': '', 'SERVICE_ACCOUNT': 'hadavin-agent', 'SERVICE_ACCOUNT_NAMESPACE': 'hadavin'}
+  RAISED ValueError: policy value 'ROLE_NAME' does not match its grammar: ''
+----------------------------------------------------------------------------------------------------
+source/kubernetes: field ROLE_NAME = dot-dot-slash
+  values = {'namespaces': 'shop,payments', 'ROLE_NAME': '../', 'SERVICE_ACCOUNT': 'hadavin-agent', 'SERVICE_ACCOUNT_NAMESPACE': 'hadavin'}
+  RAISED ValueError: policy value 'ROLE_NAME' does not match its grammar: '../'
+----------------------------------------------------------------------------------------------------
+source/kubernetes: field ROLE_NAME = newline
+  values = {'namespaces': 'shop,payments', 'ROLE_NAME': 'a\nb', 'SERVICE_ACCOUNT': 'hadavin-agent', 'SERVICE_ACCOUNT_NAMESPACE': 'hadavin'}
+  RAISED ValueError: policy value 'ROLE_NAME' does not match its grammar: 'a\nb'
+----------------------------------------------------------------------------------------------------
+source/kubernetes: field ROLE_NAME = newline at the end
+  values = {'namespaces': 'shop,payments', 'ROLE_NAME': 'abc\n', 'SERVICE_ACCOUNT': 'hadavin-agent', 'SERVICE_ACCOUNT_NAMESPACE': 'hadavin'}
+  RAISED ValueError: policy value 'ROLE_NAME' does not match its grammar: 'abc\n'
+----------------------------------------------------------------------------------------------------
+source/kubernetes: field ROLE_NAME = double quote
+  values = {'namespaces': 'shop,payments', 'ROLE_NAME': 'a"b', 'SERVICE_ACCOUNT': 'hadavin-agent', 'SERVICE_ACCOUNT_NAMESPACE': 'hadavin'}
+  RAISED ValueError: policy value 'ROLE_NAME' does not match its grammar: 'a"b'
+----------------------------------------------------------------------------------------------------
+source/kubernetes: field ROLE_NAME = single quote
+  values = {'namespaces': 'shop,payments', 'ROLE_NAME': "a'b", 'SERVICE_ACCOUNT': 'hadavin-agent', 'SERVICE_ACCOUNT_NAMESPACE': 'hadavin'}
+  RAISED ValueError: policy value 'ROLE_NAME' does not match its grammar: "a'b"
+----------------------------------------------------------------------------------------------------
+source/kubernetes: field ROLE_NAME = injection text
+  values = {'namespaces': 'shop,payments', 'ROLE_NAME': '"} path "sys/*" {capabilities=["sudo"]', 'SERVICE_ACCOUNT': 'hadavin-agent', 'SERVICE_ACCOUNT_NAMESPACE': 'hadavin'}
+  RAISED ValueError: policy value 'ROLE_NAME' does not match its grammar: '"} path "sys/*" {capabilities=["sudo"]'
+----------------------------------------------------------------------------------------------------
+source/kubernetes: field ROLE_NAME = 300 characters
+  values = {'namespaces': 'shop,payments', 'ROLE_NAME': 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'SERVICE_ACCOUNT': 'hadavin-agent', 'SERVICE_ACCOUNT_NAMESPACE': 'hadavin'}
+  RENDERED TEXT (between the marker lines, verbatim):
+<<<<<<<<
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  namespace: "shop"
+rules:
+  # R20: reads deployments, their rollout revision and images
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["list"]
+  # R21: reads events in the time window
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
+  # R22: reads one pod's log lines
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  namespace: "shop"
+subjects:
+  - kind: ServiceAccount
+    name: "hadavin-agent"
+    namespace: "hadavin"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  namespace: "payments"
+rules:
+  # R20: reads deployments, their rollout revision and images
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["list"]
+  # R21: reads events in the time window
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
+  # R22: reads one pod's log lines
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+  namespace: "payments"
+subjects:
+  - kind: ServiceAccount
+    name: "hadavin-agent"
+    namespace: "hadavin"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+>>>>>>>>
+  code check: documents: 4
+  code check: kinds: ['Role', 'RoleBinding', 'Role', 'RoleBinding']
+  code check: namespaces in order: ['shop', 'shop', 'payments', 'payments']
+  code check: every Role's rules equal the declared three: True
+  code check: any kind other than Role/RoleBinding: []
+  code check: unexpected top-level keys: []
+  code check: rule count per Role: [3, 3]
+  code check: subjects: [[{'kind': 'ServiceAccount', 'name': 'hadavin-agent', 'namespace': 'hadavin'}]]
+  code check: count of the text 'kind: ' at a line start: 4
+  code check: count of '- apiGroups' lines: 6
+----------------------------------------------------------------------------------------------------
+source/kubernetes: field SERVICE_ACCOUNT = star
+  values = {'namespaces': 'shop,payments', 'ROLE_NAME': 'hadavin-read', 'SERVICE_ACCOUNT': '*', 'SERVICE_ACCOUNT_NAMESPACE': 'hadavin'}
+  RAISED ValueError: policy value 'SERVICE_ACCOUNT' does not match its grammar: '*'
+----------------------------------------------------------------------------------------------------
+source/kubernetes: field SERVICE_ACCOUNT = question mark
+  values = {'namespaces': 'shop,payments', 'ROLE_NAME': 'hadavin-read', 'SERVICE_ACCOUNT': '?', 'SERVICE_ACCOUNT_NAMESPACE': 'hadavin'}
+  RAISED ValueError: policy value 'SERVICE_ACCOUNT' does not match its grammar: '?'
+----------------------------------------------------------------------------------------------------
+source/kubernetes: field SERVICE_ACCOUNT = braces
+  values = {'namespaces': 'shop,payments', 'ROLE_NAME': 'hadavin-read', 'SERVICE_ACCOUNT': '{x}', 'SERVICE_ACCOUNT_NAMESPACE': 'hadavin'}
+  RAISED ValueError: policy value 'SERVICE_ACCOUNT' does not match its grammar: '{x}'
+----------------------------------------------------------------------------------------------------
+source/kubernetes: field SERVICE_ACCOUNT = empty string
+  values = {'namespaces': 'shop,payments', 'ROLE_NAME': 'hadavin-read', 'SERVICE_ACCOUNT': '', 'SERVICE_ACCOUNT_NAMESPACE': 'hadavin'}
+  RAISED ValueError: policy value 'SERVICE_ACCOUNT' does not match its grammar: ''
+----------------------------------------------------------------------------------------------------
+source/kubernetes: field SERVICE_ACCOUNT = dot-dot-slash
+  values = {'namespaces': 'shop,payments', 'ROLE_NAME': 'hadavin-read', 'SERVICE_ACCOUNT': '../', 'SERVICE_ACCOUNT_NAMESPACE': 'hadavin'}
+  RAISED ValueError: policy value 'SERVICE_ACCOUNT' does not match its grammar: '../'
+----------------------------------------------------------------------------------------------------
+source/kubernetes: field SERVICE_ACCOUNT = newline
+  values = {'namespaces': 'shop,payments', 'ROLE_NAME': 'hadavin-read', 'SERVICE_ACCOUNT': 'a\nb', 'SERVICE_ACCOUNT_NAMESPACE': 'hadavin'}
+  RAISED ValueError: policy value 'SERVICE_ACCOUNT' does not match its grammar: 'a\nb'
+----------------------------------------------------------------------------------------------------
+source/kubernetes: field SERVICE_ACCOUNT = newline at the end
+  values = {'namespaces': 'shop,payments', 'ROLE_NAME': 'hadavin-read', 'SERVICE_ACCOUNT': 'abc\n', 'SERVICE_ACCOUNT_NAMESPACE': 'hadavin'}
+  RAISED ValueError: policy value 'SERVICE_ACCOUNT' does not match its grammar: 'abc\n'
+----------------------------------------------------------------------------------------------------
+source/kubernetes: field SERVICE_ACCOUNT = double quote
+  values = {'namespaces': 'shop,payments', 'ROLE_NAME': 'hadavin-read', 'SERVICE_ACCOUNT': 'a"b', 'SERVICE_ACCOUNT_NAMESPACE': 'hadavin'}
+  RAISED ValueError: policy value 'SERVICE_ACCOUNT' does not match its grammar: 'a"b'
+----------------------------------------------------------------------------------------------------
+source/kubernetes: field SERVICE_ACCOUNT = single quote
+  values = {'namespaces': 'shop,payments', 'ROLE_NAME': 'hadavin-read', 'SERVICE_ACCOUNT': "a'b", 'SERVICE_ACCOUNT_NAMESPACE': 'hadavin'}
+  RAISED ValueError: policy value 'SERVICE_ACCOUNT' does not match its grammar: "a'b"
+----------------------------------------------------------------------------------------------------
+source/kubernetes: field SERVICE_ACCOUNT = injection text
+  values = {'namespaces': 'shop,payments', 'ROLE_NAME': 'hadavin-read', 'SERVICE_ACCOUNT': '"} path "sys/*" {capabilities=["sudo"]', 'SERVICE_ACCOUNT_NAMESPACE': 'hadavin'}
+  RAISED ValueError: policy value 'SERVICE_ACCOUNT' does not match its grammar: '"} path "sys/*" {capabilities=["sudo"]'
+----------------------------------------------------------------------------------------------------
+source/kubernetes: field SERVICE_ACCOUNT = 300 characters
+  values = {'namespaces': 'shop,payments', 'ROLE_NAME': 'hadavin-read', 'SERVICE_ACCOUNT': 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'SERVICE_ACCOUNT_NAMESPACE': 'hadavin'}
+  RENDERED TEXT (between the marker lines, verbatim):
+<<<<<<<<
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: "hadavin-read"
+  namespace: "shop"
+rules:
+  # R20: reads deployments, their rollout revision and images
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["list"]
+  # R21: reads events in the time window
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
+  # R22: reads one pod's log lines
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: "hadavin-read"
+  namespace: "shop"
+subjects:
+  - kind: ServiceAccount
+    name: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    namespace: "hadavin"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: "hadavin-read"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: "hadavin-read"
+  namespace: "payments"
+rules:
+  # R20: reads deployments, their rollout revision and images
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["list"]
+  # R21: reads events in the time window
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
+  # R22: reads one pod's log lines
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: "hadavin-read"
+  namespace: "payments"
+subjects:
+  - kind: ServiceAccount
+    name: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    namespace: "hadavin"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: "hadavin-read"
+>>>>>>>>
+  code check: documents: 4
+  code check: kinds: ['Role', 'RoleBinding', 'Role', 'RoleBinding']
+  code check: namespaces in order: ['shop', 'shop', 'payments', 'payments']
+  code check: every Role's rules equal the declared three: True
+  code check: any kind other than Role/RoleBinding: []
+  code check: unexpected top-level keys: []
+  code check: rule count per Role: [3, 3]
+  code check: subjects: [[{'kind': 'ServiceAccount', 'name': 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'namespace': 'hadavin'}]]
+  code check: count of the text 'kind: ' at a line start: 4
+  code check: count of '- apiGroups' lines: 6
+----------------------------------------------------------------------------------------------------
+source/kubernetes: field SERVICE_ACCOUNT_NAMESPACE = star
+  values = {'namespaces': 'shop,payments', 'ROLE_NAME': 'hadavin-read', 'SERVICE_ACCOUNT': 'hadavin-agent', 'SERVICE_ACCOUNT_NAMESPACE': '*'}
+  RAISED ValueError: policy value 'SERVICE_ACCOUNT_NAMESPACE' does not match its grammar: '*'
+----------------------------------------------------------------------------------------------------
+source/kubernetes: field SERVICE_ACCOUNT_NAMESPACE = question mark
+  values = {'namespaces': 'shop,payments', 'ROLE_NAME': 'hadavin-read', 'SERVICE_ACCOUNT': 'hadavin-agent', 'SERVICE_ACCOUNT_NAMESPACE': '?'}
+  RAISED ValueError: policy value 'SERVICE_ACCOUNT_NAMESPACE' does not match its grammar: '?'
+----------------------------------------------------------------------------------------------------
+source/kubernetes: field SERVICE_ACCOUNT_NAMESPACE = braces
+  values = {'namespaces': 'shop,payments', 'ROLE_NAME': 'hadavin-read', 'SERVICE_ACCOUNT': 'hadavin-agent', 'SERVICE_ACCOUNT_NAMESPACE': '{x}'}
+  RAISED ValueError: policy value 'SERVICE_ACCOUNT_NAMESPACE' does not match its grammar: '{x}'
+----------------------------------------------------------------------------------------------------
+source/kubernetes: field SERVICE_ACCOUNT_NAMESPACE = empty string
+  values = {'namespaces': 'shop,payments', 'ROLE_NAME': 'hadavin-read', 'SERVICE_ACCOUNT': 'hadavin-agent', 'SERVICE_ACCOUNT_NAMESPACE': ''}
+  RAISED ValueError: policy value 'SERVICE_ACCOUNT_NAMESPACE' does not match its grammar: ''
+----------------------------------------------------------------------------------------------------
+source/kubernetes: field SERVICE_ACCOUNT_NAMESPACE = dot-dot-slash
+  values = {'namespaces': 'shop,payments', 'ROLE_NAME': 'hadavin-read', 'SERVICE_ACCOUNT': 'hadavin-agent', 'SERVICE_ACCOUNT_NAMESPACE': '../'}
+  RAISED ValueError: policy value 'SERVICE_ACCOUNT_NAMESPACE' does not match its grammar: '../'
+----------------------------------------------------------------------------------------------------
+source/kubernetes: field SERVICE_ACCOUNT_NAMESPACE = newline
+  values = {'namespaces': 'shop,payments', 'ROLE_NAME': 'hadavin-read', 'SERVICE_ACCOUNT': 'hadavin-agent', 'SERVICE_ACCOUNT_NAMESPACE': 'a\nb'}
+  RAISED ValueError: policy value 'SERVICE_ACCOUNT_NAMESPACE' does not match its grammar: 'a\nb'
+----------------------------------------------------------------------------------------------------
+source/kubernetes: field SERVICE_ACCOUNT_NAMESPACE = newline at the end
+  values = {'namespaces': 'shop,payments', 'ROLE_NAME': 'hadavin-read', 'SERVICE_ACCOUNT': 'hadavin-agent', 'SERVICE_ACCOUNT_NAMESPACE': 'abc\n'}
+  RAISED ValueError: policy value 'SERVICE_ACCOUNT_NAMESPACE' does not match its grammar: 'abc\n'
+----------------------------------------------------------------------------------------------------
+source/kubernetes: field SERVICE_ACCOUNT_NAMESPACE = double quote
+  values = {'namespaces': 'shop,payments', 'ROLE_NAME': 'hadavin-read', 'SERVICE_ACCOUNT': 'hadavin-agent', 'SERVICE_ACCOUNT_NAMESPACE': 'a"b'}
+  RAISED ValueError: policy value 'SERVICE_ACCOUNT_NAMESPACE' does not match its grammar: 'a"b'
+----------------------------------------------------------------------------------------------------
+source/kubernetes: field SERVICE_ACCOUNT_NAMESPACE = single quote
+  values = {'namespaces': 'shop,payments', 'ROLE_NAME': 'hadavin-read', 'SERVICE_ACCOUNT': 'hadavin-agent', 'SERVICE_ACCOUNT_NAMESPACE': "a'b"}
+  RAISED ValueError: policy value 'SERVICE_ACCOUNT_NAMESPACE' does not match its grammar: "a'b"
+----------------------------------------------------------------------------------------------------
+source/kubernetes: field SERVICE_ACCOUNT_NAMESPACE = injection text
+  values = {'namespaces': 'shop,payments', 'ROLE_NAME': 'hadavin-read', 'SERVICE_ACCOUNT': 'hadavin-agent', 'SERVICE_ACCOUNT_NAMESPACE': '"} path "sys/*" {capabilities=["sudo"]'}
+  RAISED ValueError: policy value 'SERVICE_ACCOUNT_NAMESPACE' does not match its grammar: '"} path "sys/*" {capabilities=["sudo"]'
+----------------------------------------------------------------------------------------------------
+source/kubernetes: field SERVICE_ACCOUNT_NAMESPACE = 300 characters
+  values = {'namespaces': 'shop,payments', 'ROLE_NAME': 'hadavin-read', 'SERVICE_ACCOUNT': 'hadavin-agent', 'SERVICE_ACCOUNT_NAMESPACE': 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}
+  RENDERED TEXT (between the marker lines, verbatim):
+<<<<<<<<
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: "hadavin-read"
+  namespace: "shop"
+rules:
+  # R20: reads deployments, their rollout revision and images
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["list"]
+  # R21: reads events in the time window
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
+  # R22: reads one pod's log lines
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: "hadavin-read"
+  namespace: "shop"
+subjects:
+  - kind: ServiceAccount
+    name: "hadavin-agent"
+    namespace: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: "hadavin-read"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: "hadavin-read"
+  namespace: "payments"
+rules:
+  # R20: reads deployments, their rollout revision and images
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["list"]
+  # R21: reads events in the time window
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
+  # R22: reads one pod's log lines
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: "hadavin-read"
+  namespace: "payments"
+subjects:
+  - kind: ServiceAccount
+    name: "hadavin-agent"
+    namespace: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: "hadavin-read"
+>>>>>>>>
+  code check: documents: 4
+  code check: kinds: ['Role', 'RoleBinding', 'Role', 'RoleBinding']
+  code check: namespaces in order: ['shop', 'shop', 'payments', 'payments']
+  code check: every Role's rules equal the declared three: True
+  code check: any kind other than Role/RoleBinding: []
+  code check: unexpected top-level keys: []
+  code check: rule count per Role: [3, 3]
+  code check: subjects: [[{'kind': 'ServiceAccount', 'name': 'hadavin-agent', 'namespace': 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}]]
+  code check: count of the text 'kind: ' at a line start: 4
+  code check: count of '- apiGroups' lines: 6
+############################## SPECIAL CASES
+----------------------------------------------------------------------------------------------------
+source/kubernetes: namespace list with an empty member in the middle
+  values = {'namespaces': 'shop,,payments', 'ROLE_NAME': 'hadavin-read', 'SERVICE_ACCOUNT': 'hadavin-agent', 'SERVICE_ACCOUNT_NAMESPACE': 'hadavin'}
+  RAISED ValueError: policy value 'namespaces' does not match its grammar: ''
+----------------------------------------------------------------------------------------------------
+source/kubernetes: namespace list ending with a comma
+  values = {'namespaces': 'shop,', 'ROLE_NAME': 'hadavin-read', 'SERVICE_ACCOUNT': 'hadavin-agent', 'SERVICE_ACCOUNT_NAMESPACE': 'hadavin'}
+  RAISED ValueError: policy value 'namespaces' does not match its grammar: ''
+----------------------------------------------------------------------------------------------------
+source/kubernetes: namespace list starting with a comma
+  values = {'namespaces': ',shop', 'ROLE_NAME': 'hadavin-read', 'SERVICE_ACCOUNT': 'hadavin-agent', 'SERVICE_ACCOUNT_NAMESPACE': 'hadavin'}
+  RAISED ValueError: policy value 'namespaces' does not match its grammar: ''
+----------------------------------------------------------------------------------------------------
+source/kubernetes: namespace list with a space
+  values = {'namespaces': 'shop, payments', 'ROLE_NAME': 'hadavin-read', 'SERVICE_ACCOUNT': 'hadavin-agent', 'SERVICE_ACCOUNT_NAMESPACE': 'hadavin'}
+  RAISED ValueError: policy value 'namespaces' does not match its grammar: ' payments'
+----------------------------------------------------------------------------------------------------
+source/kubernetes: namespace kube-system
+  values = {'namespaces': 'kube-system', 'ROLE_NAME': 'hadavin-read', 'SERVICE_ACCOUNT': 'hadavin-agent', 'SERVICE_ACCOUNT_NAMESPACE': 'hadavin'}
+  RENDERED TEXT (between the marker lines, verbatim):
+<<<<<<<<
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: "hadavin-read"
+  namespace: "kube-system"
+rules:
+  # R20: reads deployments, their rollout revision and images
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["list"]
+  # R21: reads events in the time window
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
+  # R22: reads one pod's log lines
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: "hadavin-read"
+  namespace: "kube-system"
+subjects:
+  - kind: ServiceAccount
+    name: "hadavin-agent"
+    namespace: "hadavin"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: "hadavin-read"
+>>>>>>>>
+  code check: documents: 2
+  code check: kinds: ['Role', 'RoleBinding']
+  code check: namespaces in order: ['kube-system', 'kube-system']
+  code check: every Role's rules equal the declared three: True
+  code check: any kind other than Role/RoleBinding: []
+  code check: unexpected top-level keys: []
+  code check: rule count per Role: [3]
+  code check: subjects: [[{'kind': 'ServiceAccount', 'name': 'hadavin-agent', 'namespace': 'hadavin'}]]
+  code check: count of the text 'kind: ' at a line start: 2
+  code check: count of '- apiGroups' lines: 3
+----------------------------------------------------------------------------------------------------
+source/kubernetes: namespace list holding kube-system
+  values = {'namespaces': 'shop,kube-system', 'ROLE_NAME': 'hadavin-read', 'SERVICE_ACCOUNT': 'hadavin-agent', 'SERVICE_ACCOUNT_NAMESPACE': 'hadavin'}
+  RENDERED TEXT (between the marker lines, verbatim):
+<<<<<<<<
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: "hadavin-read"
+  namespace: "shop"
+rules:
+  # R20: reads deployments, their rollout revision and images
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["list"]
+  # R21: reads events in the time window
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
+  # R22: reads one pod's log lines
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: "hadavin-read"
+  namespace: "shop"
+subjects:
+  - kind: ServiceAccount
+    name: "hadavin-agent"
+    namespace: "hadavin"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: "hadavin-read"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: "hadavin-read"
+  namespace: "kube-system"
+rules:
+  # R20: reads deployments, their rollout revision and images
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["list"]
+  # R21: reads events in the time window
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
+  # R22: reads one pod's log lines
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: "hadavin-read"
+  namespace: "kube-system"
+subjects:
+  - kind: ServiceAccount
+    name: "hadavin-agent"
+    namespace: "hadavin"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: "hadavin-read"
+>>>>>>>>
+  code check: documents: 4
+  code check: kinds: ['Role', 'RoleBinding', 'Role', 'RoleBinding']
+  code check: namespaces in order: ['shop', 'shop', 'kube-system', 'kube-system']
+  code check: every Role's rules equal the declared three: True
+  code check: any kind other than Role/RoleBinding: []
+  code check: unexpected top-level keys: []
+  code check: rule count per Role: [3, 3]
+  code check: subjects: [[{'kind': 'ServiceAccount', 'name': 'hadavin-agent', 'namespace': 'hadavin'}]]
+  code check: count of the text 'kind: ' at a line start: 4
+  code check: count of '- apiGroups' lines: 6
+----------------------------------------------------------------------------------------------------
+source/kubernetes: the same namespace twice
+  values = {'namespaces': 'shop,shop', 'ROLE_NAME': 'hadavin-read', 'SERVICE_ACCOUNT': 'hadavin-agent', 'SERVICE_ACCOUNT_NAMESPACE': 'hadavin'}
+  RENDERED TEXT (between the marker lines, verbatim):
+<<<<<<<<
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: "hadavin-read"
+  namespace: "shop"
+rules:
+  # R20: reads deployments, their rollout revision and images
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["list"]
+  # R21: reads events in the time window
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
+  # R22: reads one pod's log lines
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: "hadavin-read"
+  namespace: "shop"
+subjects:
+  - kind: ServiceAccount
+    name: "hadavin-agent"
+    namespace: "hadavin"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: "hadavin-read"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: "hadavin-read"
+  namespace: "shop"
+rules:
+  # R20: reads deployments, their rollout revision and images
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["list"]
+  # R21: reads events in the time window
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
+  # R22: reads one pod's log lines
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: "hadavin-read"
+  namespace: "shop"
+subjects:
+  - kind: ServiceAccount
+    name: "hadavin-agent"
+    namespace: "hadavin"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: "hadavin-read"
+>>>>>>>>
+  code check: documents: 4
+  code check: kinds: ['Role', 'RoleBinding', 'Role', 'RoleBinding']
+  code check: namespaces in order: ['shop', 'shop', 'shop', 'shop']
+  code check: every Role's rules equal the declared three: True
+  code check: any kind other than Role/RoleBinding: []
+  code check: unexpected top-level keys: []
+  code check: rule count per Role: [3, 3]
+  code check: subjects: [[{'kind': 'ServiceAccount', 'name': 'hadavin-agent', 'namespace': 'hadavin'}]]
+  code check: count of the text 'kind: ' at a line start: 4
+  code check: count of '- apiGroups' lines: 6
+----------------------------------------------------------------------------------------------------
+source/kubernetes: namespace star in a list
+  values = {'namespaces': 'shop,*', 'ROLE_NAME': 'hadavin-read', 'SERVICE_ACCOUNT': 'hadavin-agent', 'SERVICE_ACCOUNT_NAMESPACE': 'hadavin'}
+  RAISED ValueError: policy value 'namespaces' does not match its grammar: '*'
+----------------------------------------------------------------------------------------------------
+source/kubernetes: SERVICE_ACCOUNT_NAMESPACE = kube-system
+  values = {'namespaces': 'shop,payments', 'ROLE_NAME': 'hadavin-read', 'SERVICE_ACCOUNT': 'hadavin-agent', 'SERVICE_ACCOUNT_NAMESPACE': 'kube-system'}
+  RENDERED TEXT (between the marker lines, verbatim):
+<<<<<<<<
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: "hadavin-read"
+  namespace: "shop"
+rules:
+  # R20: reads deployments, their rollout revision and images
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["list"]
+  # R21: reads events in the time window
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
+  # R22: reads one pod's log lines
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: "hadavin-read"
+  namespace: "shop"
+subjects:
+  - kind: ServiceAccount
+    name: "hadavin-agent"
+    namespace: "kube-system"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: "hadavin-read"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: "hadavin-read"
+  namespace: "payments"
+rules:
+  # R20: reads deployments, their rollout revision and images
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["list"]
+  # R21: reads events in the time window
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
+  # R22: reads one pod's log lines
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: "hadavin-read"
+  namespace: "payments"
+subjects:
+  - kind: ServiceAccount
+    name: "hadavin-agent"
+    namespace: "kube-system"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: "hadavin-read"
+>>>>>>>>
+  code check: documents: 4
+  code check: kinds: ['Role', 'RoleBinding', 'Role', 'RoleBinding']
+  code check: namespaces in order: ['shop', 'shop', 'payments', 'payments']
+  code check: every Role's rules equal the declared three: True
+  code check: any kind other than Role/RoleBinding: []
+  code check: unexpected top-level keys: []
+  code check: rule count per Role: [3, 3]
+  code check: subjects: [[{'kind': 'ServiceAccount', 'name': 'hadavin-agent', 'namespace': 'kube-system'}]]
+  code check: count of the text 'kind: ' at a line start: 4
+  code check: count of '- apiGroups' lines: 6
+----------------------------------------------------------------------------------------------------
+source/kubernetes: ROLE_NAME = cluster-admin
+  values = {'namespaces': 'shop,payments', 'ROLE_NAME': 'cluster-admin', 'SERVICE_ACCOUNT': 'hadavin-agent', 'SERVICE_ACCOUNT_NAMESPACE': 'hadavin'}
+  RENDERED TEXT (between the marker lines, verbatim):
+<<<<<<<<
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: "cluster-admin"
+  namespace: "shop"
+rules:
+  # R20: reads deployments, their rollout revision and images
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["list"]
+  # R21: reads events in the time window
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
+  # R22: reads one pod's log lines
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: "cluster-admin"
+  namespace: "shop"
+subjects:
+  - kind: ServiceAccount
+    name: "hadavin-agent"
+    namespace: "hadavin"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: "cluster-admin"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: "cluster-admin"
+  namespace: "payments"
+rules:
+  # R20: reads deployments, their rollout revision and images
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["list"]
+  # R21: reads events in the time window
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
+  # R22: reads one pod's log lines
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: "cluster-admin"
+  namespace: "payments"
+subjects:
+  - kind: ServiceAccount
+    name: "hadavin-agent"
+    namespace: "hadavin"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: "cluster-admin"
+>>>>>>>>
+  code check: documents: 4
+  code check: kinds: ['Role', 'RoleBinding', 'Role', 'RoleBinding']
+  code check: namespaces in order: ['shop', 'shop', 'payments', 'payments']
+  code check: every Role's rules equal the declared three: True
+  code check: any kind other than Role/RoleBinding: []
+  code check: unexpected top-level keys: []
+  code check: rule count per Role: [3, 3]
+  code check: subjects: [[{'kind': 'ServiceAccount', 'name': 'hadavin-agent', 'namespace': 'hadavin'}]]
+  code check: count of the text 'kind: ' at a line start: 4
+  code check: count of '- apiGroups' lines: 6
+----------------------------------------------------------------------------------------------------
+source/kubernetes: SERVICE_ACCOUNT = default
+  values = {'namespaces': 'shop,payments', 'ROLE_NAME': 'hadavin-read', 'SERVICE_ACCOUNT': 'default', 'SERVICE_ACCOUNT_NAMESPACE': 'hadavin'}
+  RENDERED TEXT (between the marker lines, verbatim):
+<<<<<<<<
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: "hadavin-read"
+  namespace: "shop"
+rules:
+  # R20: reads deployments, their rollout revision and images
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["list"]
+  # R21: reads events in the time window
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
+  # R22: reads one pod's log lines
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: "hadavin-read"
+  namespace: "shop"
+subjects:
+  - kind: ServiceAccount
+    name: "default"
+    namespace: "hadavin"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: "hadavin-read"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: "hadavin-read"
+  namespace: "payments"
+rules:
+  # R20: reads deployments, their rollout revision and images
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["list"]
+  # R21: reads events in the time window
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
+  # R22: reads one pod's log lines
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: "hadavin-read"
+  namespace: "payments"
+subjects:
+  - kind: ServiceAccount
+    name: "default"
+    namespace: "hadavin"
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: "hadavin-read"
+>>>>>>>>
+  code check: documents: 4
+  code check: kinds: ['Role', 'RoleBinding', 'Role', 'RoleBinding']
+  code check: namespaces in order: ['shop', 'shop', 'payments', 'payments']
+  code check: every Role's rules equal the declared three: True
+  code check: any kind other than Role/RoleBinding: []
+  code check: unexpected top-level keys: []
+  code check: rule count per Role: [3, 3]
+  code check: subjects: [[{'kind': 'ServiceAccount', 'name': 'default', 'namespace': 'hadavin'}]]
+  code check: count of the text 'kind: ' at a line start: 4
+  code check: count of '- apiGroups' lines: 6
+----------------------------------------------------------------------------------------------------
+secrets/vault: prefix that already ends with a star
+  values = {'mount': 'secret', 'path_prefix': 'hadavin/*'}
+  RAISED ValueError: policy value 'path_prefix' does not match its grammar: 'hadavin/*'
+----------------------------------------------------------------------------------------------------
+secrets/vault: prefix ending with star-slash
+  values = {'mount': 'secret', 'path_prefix': 'hadavin/*/'}
+  RAISED ValueError: policy value 'path_prefix' does not match its grammar: 'hadavin/*/'
+----------------------------------------------------------------------------------------------------
+secrets/vault: prefix that is only a star
+  values = {'mount': 'secret', 'path_prefix': '*'}
+  RAISED ValueError: policy value 'path_prefix' does not match its grammar: '*'
+----------------------------------------------------------------------------------------------------
+secrets/vault: prefix with a plus segment
+  values = {'mount': 'secret', 'path_prefix': '+/'}
+  RAISED ValueError: policy value 'path_prefix' does not match its grammar: '+/'
+----------------------------------------------------------------------------------------------------
+secrets/vault: prefix with no trailing slash
+  values = {'mount': 'secret', 'path_prefix': 'hadavin/acme'}
+  RAISED ValueError: policy value 'path_prefix' does not match its grammar: 'hadavin/acme'
+----------------------------------------------------------------------------------------------------
+secrets/vault: prefix that is one slash
+  values = {'mount': 'secret', 'path_prefix': '/'}
+  RAISED ValueError: policy value 'path_prefix' does not match its grammar: '/'
+----------------------------------------------------------------------------------------------------
+secrets/vault: prefix with a leading slash
+  values = {'mount': 'secret', 'path_prefix': '/hadavin/'}
+  RAISED ValueError: policy value 'path_prefix' does not match its grammar: '/hadavin/'
+----------------------------------------------------------------------------------------------------
+secrets/vault: prefix with a dot-dot segment
+  values = {'mount': 'secret', 'path_prefix': 'hadavin/../'}
+  RAISED ValueError: policy value 'path_prefix' does not match its grammar: 'hadavin/../'
+----------------------------------------------------------------------------------------------------
+secrets/vault: prefix with a dot segment
+  values = {'mount': 'secret', 'path_prefix': './'}
+  RAISED ValueError: policy value 'path_prefix' does not match its grammar: './'
+----------------------------------------------------------------------------------------------------
+secrets/vault: prefix with a double slash
+  values = {'mount': 'secret', 'path_prefix': 'hadavin//'}
+  RAISED ValueError: policy value 'path_prefix' does not match its grammar: 'hadavin//'
+----------------------------------------------------------------------------------------------------
+secrets/vault: 300-character valid prefix
+  values = {'mount': 'secret', 'path_prefix': 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/'}
+  RENDERED TEXT (between the marker lines, verbatim):
+<<<<<<<<
+# R17: reads one named secret
+path "secret/data/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/*" {
+  capabilities = ["read"]
+}
+>>>>>>>>
+  code check: path blocks found = [('secret/data/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/*', ['read'])]
+  code check: path blocks expected from the POLICY literal = [('secret/data/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/*', ['read'])]
+  code check: found == expected: True; non-comment lines outside the expected blocks: []
+  code check: count of 'path ' anywhere / at a line start / of 'capabilities': (1, 1, 1)
+----------------------------------------------------------------------------------------------------
+secrets/vault: mount ending with a star
+  values = {'mount': 'secret*', 'path_prefix': 'hadavin/acme/'}
+  RAISED ValueError: policy value 'mount' does not match its grammar: 'secret*'
+----------------------------------------------------------------------------------------------------
+secrets/vault: mount sys
+  values = {'mount': 'sys', 'path_prefix': 'hadavin/acme/'}
+  RENDERED TEXT (between the marker lines, verbatim):
+<<<<<<<<
+# R17: reads one named secret
+path "sys/data/hadavin/acme/*" {
+  capabilities = ["read"]
+}
+>>>>>>>>
+  code check: path blocks found = [('sys/data/hadavin/acme/*', ['read'])]
+  code check: path blocks expected from the POLICY literal = [('sys/data/hadavin/acme/*', ['read'])]
+  code check: found == expected: True; non-comment lines outside the expected blocks: []
+  code check: count of 'path ' anywhere / at a line start / of 'capabilities': (1, 1, 1)
+----------------------------------------------------------------------------------------------------
+secrets/vault: mount with a dot-dot segment
+  values = {'mount': 'secret/../sys', 'path_prefix': 'hadavin/acme/'}
+  RAISED ValueError: policy value 'mount' does not match its grammar: 'secret/../sys'
+----------------------------------------------------------------------------------------------------
+secrets/vault: mount with a plus
+  values = {'mount': '+', 'path_prefix': 'hadavin/acme/'}
+  RAISED ValueError: policy value 'mount' does not match its grammar: '+'
+----------------------------------------------------------------------------------------------------
+secrets/vault: mount with a trailing slash
+  values = {'mount': 'secret/', 'path_prefix': 'hadavin/acme/'}
+  RAISED ValueError: policy value 'mount' does not match its grammar: 'secret/'
+----------------------------------------------------------------------------------------------------
+signer/vault_transit: key name ending with a star
+  values = {'transit_mount': 'transit', 'key_name': 'audit*'}
+  RAISED ValueError: policy value 'key_name' does not match its grammar: 'audit*'
+----------------------------------------------------------------------------------------------------
+signer/vault_transit: key name with a slash
+  values = {'transit_mount': 'transit', 'key_name': 'audit/config'}
+  RAISED ValueError: policy value 'key_name' does not match its grammar: 'audit/config'
+----------------------------------------------------------------------------------------------------
+signer/vault_transit: key name of one dot
+  values = {'transit_mount': 'transit', 'key_name': '.'}
+  RAISED ValueError: policy value 'key_name' does not match its grammar: '.'
+----------------------------------------------------------------------------------------------------
+signer/vault_transit: key name dot-dot
+  values = {'transit_mount': 'transit', 'key_name': '..'}
+  RAISED ValueError: policy value 'key_name' does not match its grammar: '..'
+############################## MISSING, UNUSED AND NON-TEXT VALUES
+----------------------------------------------------------------------------------------------------
+secrets/vault: empty dict
+  values = {}
+  RAISED ValueError: policy value 'mount' is missing
+----------------------------------------------------------------------------------------------------
+secrets/vault: path_prefix missing
+  values = {'mount': 'secret'}
+  RAISED ValueError: policy value 'path_prefix' is missing
+----------------------------------------------------------------------------------------------------
+secrets/vault: an unused key
+  values = {'mount': 'secret', 'path_prefix': 'hadavin/acme/', 'key_name': 'x'}
+  RAISED ValueError: policy value 'key_name' is not used by this kind
+----------------------------------------------------------------------------------------------------
+secrets/vault: mount is None
+  values = {'mount': None, 'path_prefix': 'hadavin/acme/'}
+  RAISED ValueError: policy value 'mount' does not match its grammar: ''
+----------------------------------------------------------------------------------------------------
+secrets/vault: mount is a list
+  values = {'mount': ['secret'], 'path_prefix': 'hadavin/acme/'}
+  RAISED ValueError: policy value 'mount' does not match its grammar: ''
+----------------------------------------------------------------------------------------------------
+secrets/vault: mount is bytes
+  values = {'mount': b'secret', 'path_prefix': 'hadavin/acme/'}
+  RAISED ValueError: policy value 'mount' does not match its grammar: ''
+----------------------------------------------------------------------------------------------------
+source/kubernetes: namespaces is a list
+  values = {'namespaces': ['shop'], 'ROLE_NAME': 'hadavin-read', 'SERVICE_ACCOUNT': 'hadavin-agent', 'SERVICE_ACCOUNT_NAMESPACE': 'hadavin'}
+  RAISED ValueError: policy value 'namespaces' does not match its grammar: ''
+----------------------------------------------------------------------------------------------------
+source/kubernetes: ROLE_NAME missing
+  values = {'namespaces': 'shop,payments', 'SERVICE_ACCOUNT': 'hadavin-agent', 'SERVICE_ACCOUNT_NAMESPACE': 'hadavin'}
+  RAISED ValueError: policy value 'ROLE_NAME' is missing
+----------------------------------------------------------------------------------------------------
+render_vault given the Kubernetes policy
+  values = None
+  RAISED ValueError: render_vault takes a policy of platform vault
+----------------------------------------------------------------------------------------------------
+render_kubernetes given the Vault policy
+  values = None
+  RAISED ValueError: kubernetes_rules takes a policy of platform kubernetes_rbac

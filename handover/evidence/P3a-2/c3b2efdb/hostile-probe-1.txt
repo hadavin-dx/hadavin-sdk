@@ -1,0 +1,39 @@
+[1 terminate_backend before _take_the_lock] RAISED ConfigError: 'migrate stopped and kept nothing: while taking the migration lock, the database returned an error (57P01). The whole run is rolled back (a migration file that ended the transaction itself is the one exception, and is reported separately). Run migrate again.' | ledger_count_after=0
+[1 terminate_backend before _read_back] RAISED ConfigError: 'migrate stopped and kept nothing: while checking the rights the database already holds, the database returned an error (57P01). The whole run is rolled back (a migration file that ended the transaction itself is the one exception, and is reported separately). Run migrate again.' | ledger_count_after=0
+[1 terminate_backend before _check_read_back] RAISED ConfigError: 'migrate stopped and kept nothing: while applying 0001_core.sql, the database returned an error (57P01). The whole run is rolled back (a migration file that ended the transaction itself is the one exception, and is reported separately). Run migrate again.' | ledger_count_after=0
+[1 terminate_backend before _apply_grants] RETURNED 5 versions | ledger_count_after=5
+[1b closed connection before _read_back] RAISED ConfigError: 'migrate stopped and kept nothing: while checking the rights the database already holds, the database returned an error (OperationalError). The whole run is rolled back (a migration file that ended the transaction itself is the one exception, and is reported separately). Run migrate again.' | ledger_count_after=0
+[1b closed connection before _check_read_back] RAISED ConfigError: 'migrate stopped and kept nothing: while applying 0001_core.sql, the database returned an error (OperationalError). The whole run is rolled back (a migration file that ended the transaction itself is the one exception, and is reported separately). Run migrate again.' | ledger_count_after=0
+[1c file kills own backend] RAISED ConfigError: 'migrate stopped and kept nothing: while applying 0006_hostile_kill.sql, the database returned an error (57P01). The whole run is rolled back (a migration file that ended the transaction itself is the one exception, and is reported separately). Run migrate again.' | ledger_count_after=0
+[2 25P03 idle_in_transaction timeout] RAISED ConfigError: 'migrate stopped and kept nothing: while applying 0001_core.sql, the database returned an error (25P03). The whole run is rolled back (a migration file that ended the transaction itself is the one exception, and is reported separately). Run migrate again.' | ledger_count_after=0
+[2b classifier] sqlstate=25000 is_a_files_own_error(usable conn)=True
+[2b classifier] sqlstate=25001 is_a_files_own_error(usable conn)=True
+[2b classifier] sqlstate=25002 is_a_files_own_error(usable conn)=True
+[2b classifier] sqlstate=25003 is_a_files_own_error(usable conn)=True
+[2b classifier] sqlstate=25004 is_a_files_own_error(usable conn)=True
+[2b classifier] sqlstate=25005 is_a_files_own_error(usable conn)=True
+[2b classifier] sqlstate=25006 is_a_files_own_error(usable conn)=True
+[2b classifier] sqlstate=25007 is_a_files_own_error(usable conn)=True
+[2b classifier] sqlstate=25008 is_a_files_own_error(usable conn)=True
+[2b classifier] sqlstate=25P01 is_a_files_own_error(usable conn)=True
+[2b classifier] sqlstate=25P02 is_a_files_own_error(usable conn)=True
+[2b classifier] sqlstate=25P03 is_a_files_own_error(usable conn)=False
+[2b classifier] sqlstate=25P04 is_a_files_own_error(usable conn)=False
+[2b classifier] sqlstate=08006 is_a_files_own_error(usable conn)=False
+[2b classifier] sqlstate=57P01 is_a_files_own_error(usable conn)=False
+[2b classifier] sqlstate=53100 is_a_files_own_error(usable conn)=False
+[2b classifier] sqlstate=XX000 is_a_files_own_error(usable conn)=False
+[2b classifier] sqlstate=23505 is_a_files_own_error(usable conn)=True
+[2b classifier] sqlstate=42601 is_a_files_own_error(usable conn)=True
+[2b classifier] sqlstate=40001 is_a_files_own_error(usable conn)=True
+[2b classifier] sqlstate=22012 is_a_files_own_error(usable conn)=True
+[2b classifier] sqlstate=P0001 is_a_files_own_error(usable conn)=True
+[2b classifier] 23505 on closed conn: False
+[3a O8 owner changed mid-run, ENFORCE=False] RAISED ConfigError: 'migrate stopped and kept nothing: while applying 0001_core.sql, the database returned an error (42P01). The whole run is rolled back (a migration file that ended the transaction itself is the one exception, and is reported separately). Run migrate again.' | ledger_count_after=0
+[3b schema owner outside family at start (helper re-owns to plain role), ENFORCE=False] RETURNED 5 versions | ledger_count_after=5
+[3a O8 owner changed mid-run, ENFORCE=True] RAISED ConfigError: 'migrate stopped and kept nothing: while applying 0001_core.sql, the database returned an error (42P01). The whole run is rolled back (a migration file that ended the transaction itself is the one exception, and is reported separately). Run migrate again.' | ledger_count_after=0
+[3b schema owner outside family at start (helper re-owns to plain role), ENFORCE=True] RETURNED 5 versions | ledger_count_after=5
+[4a baseline (no third role)] RETURNED 5 versions | ledger_count_after=5
+[4b third-role SELECT on family table, no role argument] RAISED ConfigError: 'before any migration file ran, this database already holds rights that the grant map does not give:\n  - table hadavin_test_2563be777cbb.runs: evthird_a2ea1956 has SELECT; only the owner, the migration role and the grant map\'s roles may hold rights here. To remove: REVOKE SELECT ON TABLE "hadavin_test_2563be777cbb"."runs" FROM "evthird_a2ea1956";\nNothing was changed. No file ran. What to do: a database administrator r' | ledger_count_after=5
+[4c PUBLIC SELECT on family table, no role argument] RAISED ConfigError: 'before any migration file ran, this database already holds rights that the grant map does not give:\n  - table hadavin_test_2563be777cbb.runs: everyone (PUBLIC) has SELECT. To remove: REVOKE SELECT ON TABLE "hadavin_test_2563be777cbb"."runs" FROM PUBLIC;\nNothing was changed. No file ran. What to do: a database administrator runs the statements printed with each line (or removes the cause named there), then run migrate' | ledger_count_after=5
+DONE

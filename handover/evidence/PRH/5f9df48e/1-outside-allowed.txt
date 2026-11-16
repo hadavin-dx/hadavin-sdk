@@ -1,0 +1,16 @@
+handover/evidence/PRH/b6-checkpoint.md
+handover/evidence/PRH/b6/NOTES.md
+handover/evidence/PRH/b7/NOTES.md
+handover/evidence/PRH/b7/clean_corpus.py
+handover/evidence/PRH/b7/equivalence_100.out
+handover/evidence/PRH/b7/equivalence_100.py
+handover/evidence/PRH/b7/fail-before-c802cc0f.txt
+handover/evidence/PRH/b7/fuzz_classify.py
+handover/evidence/PRH/b7/repro/repro1_encoded_esc_first_letter.py
+handover/evidence/PRH/b7/repro/repro2_input_too_large.py
+src/hadavin_sdk/defaults.py
+src/hadavin_sdk/scrub_settings.py
+tests/fixtures/prh_accidental_pairs.json
+tests/fixtures/prh_main_passes.json
+tests/test_k5_fixes3.py
+tests/test_prh_b7.py

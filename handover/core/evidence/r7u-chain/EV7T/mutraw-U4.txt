@@ -1,0 +1,36 @@
+.F
+=================================== FAILURES ===================================
+_ test_t17_a_create_that_may_have_made_the_contact_is_counted_as_unknown[500] __
+
+tmp_path = PosixPath('/home/user/build/rr6/out/EV7T/tmp-mut/pytest-of-unknown/pytest-21/test_t17_a_create_that_may_hav1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fb846b0a1b0>
+how = '500'
+
+    @pytest.mark.parametrize("how", ["drop", "500", "408"])
+    def test_t17_a_create_that_may_have_made_the_contact_is_counted_as_unknown(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, how: str
+    ) -> None:
+        from test_crm_hubspot import REC, Rig
+    
+        from lead_desk.crm_hubspot import CrmError
+    
+        rig = Rig(tmp_path)
+        try:
+            crm, stats = _crm_with_stats(rig, tmp_path)
+            _create_then(monkeypatch, how)
+            with pytest.raises(CrmError):
+                crm.put("L-1", REC)
+            assert len(rig.state.contacts) == 1
+            written = _stats(stats)
+>           assert (written["created"], written["create_open"], written["create_unknown"]) == (0, 0, 1), written
+E           AssertionError: {'archives': 0, 'calls': 1, 'conflicts': 0, 'create_open': 0, ...}
+E           assert (0, 0, 0) == (0, 0, 1)
+E             
+E             At index 2 diff: 0 != 1
+E             Use -v to get more diff
+
+tests/test_r7t_findings.py:987: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r7t_findings.py::test_t17_a_create_that_may_have_made_the_contact_is_counted_as_unknown[500]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 1 passed, 131 deselected in 1.37s

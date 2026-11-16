@@ -1,0 +1,24 @@
+B1 (<Verdict.KILLED: 'KILLED'>, True) expect_in_first_line= True | "stage '' was not refused" | first: E       AssertionError: stage '' was not refused
+B2 (<Verdict.KILLED: 'KILLED'>, True) expect_in_first_line= True | "str 'crm' as real_services was not refused" | first: E       AssertionError: str 'crm' as real_services was not refused
+B2b (<Verdict.KILLED: 'KILLED'>, True) expect_in_first_line= True | "set {'crm'} as real_services was not refused" | first: E       AssertionError: set {'crm'} as real_services was not refused
+J3 (<Verdict.KILLED: 'KILLED'>, True) expect_in_first_line= True | 'innerHTML' | first: E       AssertionError: assert ['innerHTML',..., 'innerHTML'] == []
+B21 (<Verdict.KILLED: 'KILLED'>, True) expect_in_first_line= True | 'egress_hosts=' | first: E           AssertionError: egress_hosts=frozenset({'api.example.test'}): a configured address that leaves thi
+B22 (<Verdict.KILLED: 'KILLED'>, True) expect_in_first_line= True | 'sources=' | first: E           AssertionError: sources={'k': namespace(kind='kubernetes', settings={'api_url': 'https://k8s.examp
+B24 (<Verdict.KILLED: 'KILLED'>, True) expect_in_first_line= True | 'base_url=None)' | first: E           AssertionError: systems={'crm': namespace(base_url=None)}: a configured address that leaves this m
+B38 (<Verdict.KILLED: 'KILLED'>, True) expect_in_first_line= True | 'a\\\\b' | first: E           AssertionError: url 'http://127.0.0.1/a\\b'
+B39 (<Verdict.KILLED: 'KILLED'>, True) expect_in_first_line= True | '/a b' | first: E           AssertionError: url 'http://127.0.0.1/a b'
+B40 (<Verdict.KILLED: 'KILLED'>, True) expect_in_first_line= True | 'café' | first: E           AssertionError: url 'http://127.0.0.1/café'
+B41 (<Verdict.KILLED: 'KILLED'>, True) expect_in_first_line= True | '%2e%2e' | first: E           AssertionError: url 'http://127.0.0.1/%2e%2e'
+G30 (<Verdict.KILLED: 'KILLED'>, True) expect_in_first_line= True | 'ｄｅｍｏ' | first: E           AssertionError: ｄｅｍｏ_ｏｎｌｙ
+G38 (<Verdict.KILLED: 'KILLED'>, True) expect_in_first_line= True | 'submodule-in-product-root' | first: E       AssertionError: an exempt submodule gave hits: ['src/vendored: submodule-in-product-root (its files ca
+B59 (<Verdict.KILLED: 'KILLED'>, True) expect_in_first_line= True | "url 'http://[::1]:80x/'" | first: E           AssertionError: url 'http://[::1]:80x/'
+B60 (<Verdict.KILLED: 'KILLED'>, True) expect_in_first_line= True | "name 'Fiktiv': a banner with a real service, or a " | first: E           AssertionError: name 'Fiktiv': a banner with a real service, or a pilot or live one, claims made-u
+G51 (<Verdict.KILLED: 'KILLED'>, True) expect_in_first_line= True | 'Error: .gz' | first: E           AssertionError: .gz
+G52 (<Verdict.KILLED: 'KILLED'>, True) expect_in_first_line= True | 'Error: .tgz' | first: E           AssertionError: .tgz
+G53 (<Verdict.KILLED: 'KILLED'>, True) expect_in_first_line= True | 'Error: .tar' | first: E           AssertionError: .tar
+G54 (<Verdict.KILLED: 'KILLED'>, True) expect_in_first_line= True | 'Error: .bz2' | first: E           AssertionError: .bz2
+G55 (<Verdict.KILLED: 'KILLED'>, True) expect_in_first_line= True | 'Error: .xz' | first: E           AssertionError: .xz
+G56 (<Verdict.KILLED: 'KILLED'>, True) expect_in_first_line= True | 'binary utf-32-le' | first: E           AssertionError: binary utf-32-le
+G57 (<Verdict.KILLED: 'KILLED'>, True) expect_in_first_line= True | 'binary utf-32-be' | first: E           AssertionError: binary utf-32-be
+G81 (<Verdict.KILLED: 'KILLED'>, True) expect_in_first_line= True | 'named .png' | first: E               AssertionError: zstd named .png: []
+G82 (<Verdict.KILLED: 'KILLED'>, True) expect_in_first_line= True | 'named .woff2' | first: E               AssertionError: zstd named .woff2: []

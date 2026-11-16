@@ -1,0 +1,205 @@
+[
+ {
+  "id": "m01",
+  "file": "src/hadavin_sdk/runtime/tick.py",
+  "old": "    if fn is None:\n        return\n    _LOG.info(\"audit_reconcile",
+  "new": "    if fn is None:\n        return\n    _LOG.info(\"audit_reconcile",
+  "desc": "(no-op control)"
+ },
+ {
+  "id": "m02",
+  "file": "src/hadavin_sdk/runtime/tick.py",
+  "old": "    if fn is None:\n        return\n    _LOG.info(\"audit_reconcile drained=%d\", fn())",
+  "new": "    if fn is None:\n        return\n    _LOG.info(\"audit_reconcile drained=%d\", 0)",
+  "desc": "drain count logged as 0 and reconcile never called"
+ },
+ {
+  "id": "m03",
+  "file": "src/hadavin_sdk/runtime/tick.py",
+  "old": "    if fn is None:\n        return\n    _LOG.info(\"audit_reconcile drained=%d\", fn())",
+  "new": "    if fn is None:\n        return\n    fn()",
+  "desc": "drain runs but no log line"
+ },
+ {
+  "id": "m04",
+  "file": "src/hadavin_sdk/runtime/tick.py",
+  "old": "    if fn is None:\n        return\n    _LOG.info(\"audit_reconcile drained=%d\", fn())",
+  "new": "    return\n    _LOG.info(\"audit_reconcile drained=%d\", fn())",
+  "desc": "early return: step never drains"
+ },
+ {
+  "id": "m05",
+  "file": "src/hadavin_sdk/runtime/tick.py",
+  "old": "    if fn is None:\n        return\n    _LOG.info(\"audit_reconcile drained=%d\", fn())",
+  "new": "    _LOG.info(\"audit_reconcile drained=%d\", fn())",
+  "desc": "missing-reconcile guard removed (kind without reconcile crashes)"
+ },
+ {
+  "id": "m06",
+  "file": "src/hadavin_sdk/runtime/tick.py",
+  "old": "\"audit_reconcile drained=%d\", fn())",
+  "new": "\"audit_reconcile drained=%d\", fn() + 1)",
+  "desc": "logged count off by one"
+ },
+ {
+  "id": "m07",
+  "file": "src/hadavin_sdk/runtime/tick.py",
+  "old": "    TickStep(\"audit_reconcile\", 0, audit_reconcile),\n",
+  "new": "",
+  "desc": "step removed from STEPS"
+ },
+ {
+  "id": "m08",
+  "file": "src/hadavin_sdk/runtime/tick.py",
+  "old": "TickStep(\"audit_reconcile\", 0, audit_reconcile)",
+  "new": "TickStep(\"audit_reconcile\", 0, purge_evidence)",
+  "desc": "STEPS entry points at the wrong function"
+ },
+ {
+  "id": "m09",
+  "file": "src/hadavin_sdk/runtime/tick.py",
+  "old": "TickStep(\"audit_reconcile\", 0, audit_reconcile)",
+  "new": "TickStep(\"audit_reconcile\", 3600, audit_reconcile)",
+  "desc": "step interval 0 -> 3600 (not every tick)"
+ },
+ {
+  "id": "m10",
+  "file": "src/hadavin_sdk/audit/chain.py",
+  "old": "                \"audit outcome not appended (%s): event %s goes to the outbox\",\n                type(exc).__name__,\n                event.event_id,",
+  "new": "                \"audit outcome not appended (%s): event %s goes to the outbox\",\n                type(exc).__name__,\n                event.event_id,",
+  "desc": "(no-op control)"
+ },
+ {
+  "id": "m11",
+  "file": "src/hadavin_sdk/audit/chain.py",
+  "old": "            _LOG.warning(\n                \"audit outcome not appended (%s): event %s goes to the outbox\",\n                type(exc).__name__,\n                event.event_id,\n            )",
+  "new": "            pass",
+  "desc": "chain outbox WARNING removed"
+ },
+ {
+  "id": "m12",
+  "file": "src/hadavin_sdk/audit/chain.py",
+  "old": "\"audit outcome not appended (%s): event %s goes to the outbox\",\n                type(exc).__name__,\n                event.event_id,",
+  "new": "\"audit outcome not appended (%s): event %s goes to the outbox: %s\",\n                type(exc).__name__,\n                event.event_id, exc,",
+  "desc": "chain WARNING leaks the error text (redaction regression)"
+ },
+ {
+  "id": "m13",
+  "file": "src/hadavin_sdk/audit/chain.py",
+  "old": "\"audit outcome not appended (%s): event %s goes to the outbox\",\n                type(exc).__name__,\n                event.event_id,",
+  "new": "\"audit outcome not appended (%s): event %s goes to the outbox\",\n                type(exc).__name__,\n                event.run_id,",
+  "desc": "chain WARNING logs run id instead of event id"
+ },
+ {
+  "id": "m14",
+  "file": "src/hadavin_sdk/audit/chain.py",
+  "old": "_LOG.error(\n                    \"audit outbox not written",
+  "new": "_LOG.debug(\n                    \"audit outbox not written",
+  "desc": "memory-only ERROR downgraded to DEBUG"
+ },
+ {
+  "id": "m15",
+  "file": "src/hadavin_sdk/audit/chain.py",
+  "old": "                _LOG.error(\n                    \"audit outbox not written (%s): event %s is held in memory only\",\n                    type(exc2).__name__,\n                    event.event_id,\n                )\n",
+  "new": "",
+  "desc": "memory-only ERROR line removed"
+ },
+ {
+  "id": "m16",
+  "file": "src/hadavin_sdk/audit/chain.py",
+  "old": "                    type(exc2).__name__,\n                    event.event_id,\n                )\n                self._pending.append(event)",
+  "new": "                    type(exc2).__name__,\n                    event.event_id,\n                )",
+  "desc": "event no longer kept in memory when outbox fails (audit loss)"
+ },
+ {
+  "id": "m17",
+  "file": "src/hadavin_sdk/audit/local_dir.py",
+  "old": "            _LOG.warning(\n                \"audit outcome not written (%s): event %s goes to the outbox\",\n                type(exc).__name__,\n                event.event_id,\n            )\n",
+  "new": "",
+  "desc": "local_dir outbox WARNING removed"
+ },
+ {
+  "id": "m18",
+  "file": "src/hadavin_sdk/audit/local_dir.py",
+  "old": "\"audit outcome not written (%s): event %s goes to the outbox\",\n                type(exc).__name__,\n                event.event_id,",
+  "new": "\"audit outcome not written (%s): event %s goes to the outbox: %s\",\n                type(exc).__name__,\n                event.event_id, exc,",
+  "desc": "local_dir WARNING leaks the error text"
+ },
+ {
+  "id": "m19",
+  "file": "src/hadavin_sdk/audit/local_dir.py",
+  "old": "_LOG.warning(\n                \"audit outcome not written",
+  "new": "_LOG.debug(\n                \"audit outcome not written",
+  "desc": "local_dir WARNING downgraded to DEBUG"
+ },
+ {
+  "id": "m20",
+  "file": "src/hadavin_sdk/runtime/tick.py",
+  "old": "_LOG.info(\"audit_reconcile drained=%d\", fn())",
+  "new": "fn()\n    _LOG.info(\"audit_reconcile drained=%d\", 0)",
+  "desc": "M4: reconcile called but its result ignored (logs 0)"
+ },
+ {
+  "id": "m21",
+  "file": "src/hadavin_sdk/audit/chain.py",
+  "old": "        except DuplicateEvent:\n            return event.event_id\n        except Exception as exc:  # noqa: BLE001 - the contract is \"never raises\"",
+  "new": "        except Exception as exc:  # noqa: BLE001 - the contract is \"never raises\"",
+  "desc": "M4: chain write_outcome DuplicateEvent except removed (duplicate goes to outbox)"
+ },
+ {
+  "id": "m22",
+  "file": "src/hadavin_sdk/audit/chain.py",
+  "old": "        except DuplicateEvent:\n            return event.event_id\n",
+  "new": "        except DuplicateEvent:\n            return None\n",
+  "desc": "M4: chain write_outcome returns None for a duplicate instead of the event id"
+ },
+ {
+  "id": "m23",
+  "file": "src/hadavin_sdk/audit/local_dir.py",
+  "old": "        except DuplicateEvent:\n            return f\"{event.event_id}.json\"\n        except Exception as exc:",
+  "new": "        except Exception as exc:",
+  "desc": "M4: local_dir write_outcome DuplicateEvent except removed"
+ },
+ {
+  "id": "m24",
+  "file": "src/hadavin_sdk/audit/chain.py",
+  "old": "        for event in list(self._pending):\n            if self._drain(event):",
+  "new": "        for event in []:\n            if self._drain(event):",
+  "desc": "M4: chain reconcile never drains _pending"
+ },
+ {
+  "id": "m25",
+  "file": "src/hadavin_sdk/audit/chain.py",
+  "old": "                self._pending.remove(event)\n                done += 1",
+  "new": "                done += 1",
+  "desc": "M4: chain reconcile drains _pending but never removes the event (re-counted every run)"
+ },
+ {
+  "id": "m26",
+  "file": "src/hadavin_sdk/audit/local_dir.py",
+  "old": "        for event in list(self._pending):\n            try:\n                self._write(event)",
+  "new": "        for event in []:\n            try:\n                self._write(event)",
+  "desc": "M4: local_dir reconcile never drains _pending"
+ },
+ {
+  "id": "m27",
+  "file": "src/hadavin_sdk/runtime/tick.py",
+  "old": "    except Exception as exc:  # noqa: BLE001 - one step never stops the others\n        error =",
+  "new": "    except ZeroDivisionError as exc:  # noqa: BLE001 - one step never stops the others\n        error =",
+  "desc": "M4: run_tick step isolation removed (a raising step propagates)"
+ },
+ {
+  "id": "m28",
+  "file": "src/hadavin_sdk/runtime/tick.py",
+  "old": "        error = f\"{type(exc).__name__}: {_message(exc)}\"\n",
+  "new": "        error = None\n",
+  "desc": "M4: a raising step is no longer recorded as failed"
+ },
+ {
+  "id": "m29",
+  "file": "src/hadavin_sdk/audit/chain.py",
+  "old": "            return False\n        return True\n\n    def verify_object",
+  "new": "            return True\n        return True\n\n    def verify_object",
+  "desc": "M4: _drain reports success when the append failed (event dropped from the outbox)"
+ }
+]

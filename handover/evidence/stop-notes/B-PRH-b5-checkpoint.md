@@ -1,0 +1,5 @@
+# B-PRH-b5 checkpoint
+start 2026-11-12 00:54 UTC. 00:54: worktree made (core/prh-b5 at d08ec151). next: venv, repro.
+01:00 UTC checkpoint 1: DONE Issue 1 repro (B-PRH-b5-repro.md, key readable on head, masked on main); fix in tools._scrub (union over readings, spaced copy of chosen reading, characters reading only when hidden.leaves_text is false, else MARKER+TRUNCATED), hidden.characters_readings + Readings.characters_spaced, redact.py fallbacks return WITHHELD_NOTE; new tests in tests/test_prh_tools.py (pass). NEXT: mutants 53/54 rewrite + new mutants, hidden unit tests, redact fallback tests, Issues 3,4,5,6(C5),7,8, gate. BLOCKERS: none. commit sha: none yet.
+01:20 UTC checkpoint 2: DONE perf suppressions removed; mutants 21,21b,30,31,44b-d,53,54,57-68 all killed (mutants-subset*.log); fail-before run done (31 of 38 new ids fail on d08ec151, the 7 others explained in pr-notes); pr-notes written. NEXT: full gate (ruff, bandit, scan, stage mutants, prh_mutants alone in separate worktree, full suite with own Postgres, perf alone, gitleaks), commit, push. BLOCKERS: none. commit sha: none yet.
+02:00-ish final: head 3db0d34d pushed wip/cloud-prh-b5; gate done

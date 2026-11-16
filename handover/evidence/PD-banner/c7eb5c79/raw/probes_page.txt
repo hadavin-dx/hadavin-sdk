@@ -1,0 +1,17 @@
+sdk: /home/user/build/ER-pdbanner12-new/src/hadavin_sdk/__init__.py
+GOOD_DEMO keys: ['mode', 'overridden', 'real', 'stand_ins', 'standins', 'tag', 'text', 'tone']
+control: GOOD_DEMO                                             -> shownTone='demo' tone='demo' hidden=False threw='' htmlWrites=[] text=''
+demo, 'overridden' key missing                                 -> shownTone='unconfirmed' tone='unconfirmed' hidden=False threw='' htmlWrites=[] text=''
+demo, overridden = null                                        -> shownTone='unconfirmed' tone='unconfirmed' hidden=False threw='' htmlWrites=[] text=''
+demo, overridden = ['llm'] (named override)                    -> shownTone='unconfirmed' tone='unconfirmed' hidden=False threw='' htmlWrites=[] text=''
+demo, overridden = string                                      -> shownTone='unconfirmed' tone='unconfirmed' hidden=False threw='' htmlWrites=[] text=''
+demo tone with a real service listed                           -> shownTone='unconfirmed' tone='unconfirmed' hidden=False threw='' htmlWrites=[] text=''
+quiet tone, overridden missing                                 -> shownTone='unconfirmed' tone='unconfirmed' hidden=False threw='' htmlWrites=[] text=''
+quiet tone, overridden null                                    -> shownTone='unconfirmed' tone='unconfirmed' hidden=False threw='' htmlWrites=[] text=''
+demo with reworded text                                        -> shownTone='demo' tone='demo' hidden=False threw='' htmlWrites=[] text=''
+demo with text + appended words                                -> shownTone='demo' tone='demo' hidden=False threw='' htmlWrites=[] text=''
+demo with other tag                                            -> shownTone='demo' tone='demo' hidden=False threw='' htmlWrites=[] text=''
+demo tone with mode=prod                                       -> shownTone='unconfirmed' tone='unconfirmed' hidden=False threw='' htmlWrites=[] text=''
+python not_confirmed_banner()                                  -> shownTone='unconfirmed' tone='unconfirmed' hidden=False threw='' htmlWrites=[] text=''
+unconfirmed with reworded text                                 -> shownTone='unconfirmed' tone='unconfirmed' hidden=False threw='' htmlWrites=[] text=''
+banner undefined                                               -> shownTone='unconfirmed' tone='unconfirmed' hidden=False threw='' htmlWrites=[] text=''

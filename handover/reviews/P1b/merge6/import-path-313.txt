@@ -1,0 +1,4 @@
+HEAD 4f14ec88f287a589cb55e16952d974ff3d7383bc
+$ <build-dir>/bin/python -c import hadavin_sdk,sys,unicodedata;print(sys.version.split()[0],unicodedata.unidata_version,hadavin_sdk.__file__)
+3.13.18 15.1.0 <build-dir>/src/hadavin_sdk/__init__.py
+RC=0

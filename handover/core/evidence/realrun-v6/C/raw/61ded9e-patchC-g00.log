@@ -1,0 +1,43 @@
+........................................................................ [  8%]
+........................................................................ [ 17%]
+........................................................................ [ 26%]
+...........................................F............................ [ 35%]
+........................................................................ [ 44%]
+........................................................................ [ 52%]
+........................................................................ [ 61%]
+........................................................................ [ 70%]
+........................................................................ [ 79%]
+........................................................................ [ 88%]
+........................................................................ [ 96%]
+....................----------------------------------------.....                                                [100%]
+=================================== FAILURES ===================================
+____ test_a_missing_demo_folder_skips_when_allowed_and_stops_the_run_in_ci _____
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-C/.tmp-run/pytest-of-unknown/pytest-1/test_a_missing_demo_folder_ski0')
+
+    def test_a_missing_demo_folder_skips_when_allowed_and_stops_the_run_in_ci(tmp_path: Path) -> None:
+        (tmp_path / "a").mkdir()
+        allowed = _run(tmp_path / "a")
+>       assert allowed.returncode == 0 and "1 passed" in allowed.stdout, allowed.stdout + allowed.stderr
+E       AssertionError: ImportError while loading conftest '/home/user/build/rr6/tree-C/.tmp-run/pytest-of-unknown/pytest-1/test_a_missing_demo_folder_ski0/a/conftest.py'.
+E         conftest.py:33: in <module>
+E             from support import Rig, ServerDidNotStop, build_rig, stop_within
+E         E   ModuleNotFoundError: No module named 'support'
+E         
+E       assert (4 == 0)
+E        +  where 4 = CompletedProcess(args=['/home/user/build/rr6/venv312/bin/python', '-m', 'pytest', '-q', '-p', 'no:cacheprovider'], ret...om support import Rig, ServerDidNotStop, build_rig, stop_within\nE   ModuleNotFoundError: No module named 'support'\n").returncode
+
+tests/test_demo_folder_guard.py:40: AssertionError
+============================= slowest 8 durations ==============================
+35.65s call     tests/test_clock_steps.py::test_dry_run_survives_a_wall_clock_step[3600.0]
+35.47s call     tests/test_clock_steps.py::test_dry_run_survives_a_wall_clock_step[-120.0]
+28.39s call     tests/test_desk_edge_cases.py::test_burst_distinct_emails
+17.51s call     tests/test_desk_http_edge_cases.py::test_startup_50_pending
+15.48s call     tests/test_desk_edge_cases.py::test_startup_fast_reaper_sends
+7.06s call     tests/test_desk_http_edge_cases.py::test_decision_write_retries_7s
+7.06s call     tests/test_desk_http_edge_cases.py::test_receipt_write_retries_7s
+6.45s call     tests/test_desk_edge_cases.py::test_burst_same_email
+=========================== short test summary info ============================
+FAILED tests/test_demo_folder_guard.py::test_a_missing_demo_folder_skips_when_allowed_and_stops_the_run_in_ci
+1 failed, 816 passed in 269.16s (0:04:29)
+rc=1 wall=270s

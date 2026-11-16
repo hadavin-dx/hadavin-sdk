@@ -1,0 +1,263 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+.......s..s............................................................. [  0%]
+..............s......................................................... [  1%]
+.....................s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s [  2%]
+........................................................................ [  2%]
+................................................................ssssssss [  3%]
+.s....ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss [  4%]
+........................................................................ [  4%]
+......sss............................................................... [  5%]
+..........................sssssssssssssssssssss......................... [  6%]
+..........sssssssssssssssssssssss.....................................ss [  6%]
+........................................................................ [  7%]
+........................................................................ [  8%]
+........................................................................ [  8%]
+........................................................................ [  9%]
+.....................................................sssssssssssssssssss [ 10%]
+ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss [ 11%]
+ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss [ 11%]
+ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss [ 12%]
+sssssssssssssssss....................................................... [ 13%]
+...........................................ssss.ssssssssssss............ [ 13%]
+........................................................................ [ 14%]
+........................................................................ [ 15%]
+........................................................................ [ 15%]
+........................................................................ [ 16%]
+........................................................................ [ 17%]
+........................................................................ [ 17%]
+........................................................................ [ 18%]
+........................................................................ [ 19%]
+........................................................sssss........... [ 20%]
+.sss....s............................................................... [ 20%]
+.s...................................................................... [ 21%]
+........................................................................ [ 22%]
+........................................................................ [ 22%]
+........................................................................ [ 23%]
+........................................................................ [ 24%]
+........................................................................ [ 24%]
+........................................................................ [ 25%]
+........................................................................ [ 26%]
+........................................................................ [ 26%]
+........................................................................ [ 27%]
+........................................................................ [ 28%]
+........................................................................ [ 29%]
+........................................................................ [ 29%]
+........................................................................ [ 30%]
+........................................................................ [ 31%]
+........................................................................ [ 31%]
+........................................................................ [ 32%]
+........................................................................ [ 33%]
+........................................................................ [ 33%]
+........................................................................ [ 34%]
+........................................................................ [ 35%]
+........................................................................ [ 35%]
+........................................................................ [ 36%]
+........................................................................ [ 37%]
+........................................................................ [ 38%]
+........................................................................ [ 38%]
+........................................................................ [ 39%]
+........................................................................ [ 40%]
+........................................................................ [ 40%]
+........................................................................ [ 41%]
+........................................................................ [ 42%]
+........................................................................ [ 42%]
+........................................................................ [ 43%]
+........................................................................ [ 44%]
+........................................................................ [ 44%]
+........................................................................ [ 45%]
+........................................................................ [ 46%]
+........................................................................ [ 47%]
+........................................................................ [ 47%]
+........................................................................ [ 48%]
+........................................................................ [ 49%]
+........................................................................ [ 49%]
+........................................................................ [ 50%]
+........................................................................ [ 51%]
+........................................................................ [ 51%]
+........................................................................ [ 52%]
+........................................................................ [ 53%]
+........................................................................ [ 53%]
+........................................................................ [ 54%]
+........................................................................ [ 55%]
+........................................................................ [ 55%]
+........................................................................ [ 56%]
+.........................................................s.............. [ 57%]
+........................................................................ [ 58%]
+........................................................................ [ 58%]
+........................................................................ [ 59%]
+........................................................................ [ 60%]
+........................................................................ [ 60%]
+........................................................................ [ 61%]
+........................................................................ [ 62%]
+........................................................................ [ 62%]
+........................................................................ [ 63%]
+........................................................................ [ 64%]
+........................................................................ [ 64%]
+........................................................................ [ 65%]
+........................................................................ [ 66%]
+........................................................................ [ 67%]
+........................................................................ [ 67%]
+........................................................................ [ 68%]
+........................................................................ [ 69%]
+........................................................................ [ 69%]
+........................................................................ [ 70%]
+........................................................................ [ 71%]
+........................................................................ [ 71%]
+........................................................................ [ 72%]
+........................................................................ [ 73%]
+........................................................................ [ 73%]
+........................................................................ [ 74%]
+........................................................................ [ 75%]
+........................................................................ [ 76%]
+........................................................................ [ 76%]
+........................................................................ [ 77%]
+........................................................................ [ 78%]
+........................................................................ [ 78%]
+........................................................................ [ 79%]
+.............s.......................................................... [ 80%]
+....................................................ssssssss............ [ 80%]
+........................................................................ [ 81%]
+........................................................................ [ 82%]
+...................................................................s.... [ 82%]
+........................................................................ [ 83%]
+........................................................................ [ 84%]
+........................................................................ [ 85%]
+........................................................................ [ 85%]
+........................................................................ [ 86%]
+........................................................................ [ 87%]
+........................................................................ [ 87%]
+........................................................................ [ 88%]
+.............................................................sss.ss..... [ 89%]
+........................................................................ [ 89%]
+........................................................................ [ 90%]
+........................................................................ [ 91%]
+ssss.................................................................... [ 91%]
+........................................................................ [ 92%]
+........................................................................ [ 93%]
+........................................................................ [ 94%]
+........................................................................ [ 94%]
+.................................F...................................... [ 95%]
+........................................................................ [ 96%]
+...sss.................................................................. [ 96%]
+........................................................................ [ 97%]
+........................................................................ [ 98%]
+........................................................................ [ 98%]
+........................................................................ [ 99%]
+................................................                         [100%]
+=================================== FAILURES ===================================
+_______________________ test_the_old_stage_word_is_gone ________________________
+
+    def test_the_old_stage_word_is_gone():
+        found, _ = _scan()
+>       assert not found, "the old stage word is still used as a stage:\n" + "\n".join(found)
+E       AssertionError: the old stage word is still used as a stage:
+E         tests/test_evidence_workflow_guard.py:134 [value after a stage name] "staging stage": lambda t: t + "\n# stage: staging\n",
+E         tests/test_evidence_workflow_guard.py:15 [quoted literal] 9. stage names: only demo, pilot and prod appear (no "dev" or "staging" as a stage).
+E       assert not ['tests/test_evidence_workflow_guard.py:134 [value after a stage name] "staging stage": lambda t: t + "\\n# stage: sta...low_guard.py:15 [quoted literal] 9. stage names: only demo, pilot and prod appear (no "dev" or "staging" as a stage).']
+
+tests/test_stage_names.py:545: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_stage_names.py::test_the_old_stage_word_is_gone - Assertion...
+SKIPPED [1] tests/contracts/test_capabilities.py:36: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_capabilities.py:48: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_llm.py:95: Stubber refuses a malformed Converse shape before the kind sees it
+SKIPPED [1] tests/contracts/test_store.py:52: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store.py:61: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store.py:69: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store.py:78: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store.py:88: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store.py:101: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store.py:111: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store.py:118: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store.py:139: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store.py:147: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store.py:156: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store.py:164: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store.py:175: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store.py:186: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store.py:197: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store.py:206: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store.py:227: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store.py:264: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store.py:282: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store.py:300: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store.py:315: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store.py:325: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store.py:333: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store.py:339: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store.py:352: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store.py:360: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/demo_askdata/test_cli.py:21: HADAVIN_TEST_PG_DSN is not set (the CI postgres service, or a local container)
+SKIPPED [1] tests/demo_askdata/test_cli.py:31: HADAVIN_TEST_PG_DSN is not set (the CI postgres service, or a local container)
+SKIPPED [2] tests/demo_askdata/test_cli.py:41: HADAVIN_TEST_PG_DSN is not set (the CI postgres service, or a local container)
+SKIPPED [1] tests/demo_askdata/test_cli.py:50: HADAVIN_TEST_PG_DSN is not set (the CI postgres service, or a local container)
+SKIPPED [1] tests/demo_askdata/test_cli.py:57: HADAVIN_TEST_PG_DSN is not set (the CI postgres service, or a local container)
+SKIPPED [1] tests/demo_askdata/test_cli.py:65: HADAVIN_TEST_PG_DSN is not set (the CI postgres service, or a local container)
+SKIPPED [1] tests/demo_askdata/test_cli.py:72: HADAVIN_TEST_PG_DSN is not set (the CI postgres service, or a local container)
+SKIPPED [1] tests/demo_askdata/test_cli.py:84: HADAVIN_TEST_PG_DSN is not set (the CI postgres service, or a local container)
+SKIPPED [66] tests/demo_askdata/test_corpus_on_server.py:11: HADAVIN_TEST_PG_DSN is not set (the CI postgres service, or a local container)
+SKIPPED [1] tests/demo_askdata/test_gold_exec.py:46: HADAVIN_TEST_PG_DSN is not set (the CI postgres service, or a local container)
+SKIPPED [1] tests/demo_askdata/test_gold_exec.py:78: HADAVIN_TEST_PG_DSN is not set (the CI postgres service, or a local container)
+SKIPPED [1] tests/demo_askdata/test_gold_exec.py:89: HADAVIN_TEST_PG_DSN is not set (the CI postgres service, or a local container)
+SKIPPED [1] tests/demo_askdata/test_pgsource_layers.py:25: HADAVIN_TEST_PG_DSN is not set (the CI postgres service, or a local container)
+SKIPPED [1] tests/demo_askdata/test_pgsource_layers.py:35: HADAVIN_TEST_PG_DSN is not set (the CI postgres service, or a local container)
+SKIPPED [1] tests/demo_askdata/test_pgsource_layers.py:45: HADAVIN_TEST_PG_DSN is not set (the CI postgres service, or a local container)
+SKIPPED [7] tests/demo_askdata/test_pgsource_layers.py:69: HADAVIN_TEST_PG_DSN is not set (the CI postgres service, or a local container)
+SKIPPED [1] tests/demo_askdata/test_pgsource_layers.py:89: HADAVIN_TEST_PG_DSN is not set (the CI postgres service, or a local container)
+SKIPPED [1] tests/demo_askdata/test_pgsource_layers.py:96: HADAVIN_TEST_PG_DSN is not set (the CI postgres service, or a local container)
+SKIPPED [1] tests/demo_askdata/test_pgsource_layers.py:110: HADAVIN_TEST_PG_DSN is not set (the CI postgres service, or a local container)
+SKIPPED [1] tests/demo_askdata/test_pgsource_layers.py:116: HADAVIN_TEST_PG_DSN is not set (the CI postgres service, or a local container)
+SKIPPED [1] tests/demo_askdata/test_pgsource_layers.py:121: HADAVIN_TEST_PG_DSN is not set (the CI postgres service, or a local container)
+SKIPPED [1] tests/demo_askdata/test_pgsource_layers.py:150: HADAVIN_TEST_PG_DSN is not set (the CI postgres service, or a local container)
+SKIPPED [1] tests/demo_askdata/test_pgsource_layers.py:161: HADAVIN_TEST_PG_DSN is not set (the CI postgres service, or a local container)
+SKIPPED [1] tests/demo_askdata/test_pgsource_layers.py:172: HADAVIN_TEST_PG_DSN is not set (the CI postgres service, or a local container)
+SKIPPED [1] tests/demo_askdata/test_pgsource_layers.py:177: HADAVIN_TEST_PG_DSN is not set (the CI postgres service, or a local container)
+SKIPPED [1] tests/demo_askdata/test_pgsource_layers.py:185: HADAVIN_TEST_PG_DSN is not set (the CI postgres service, or a local container)
+SKIPPED [1] tests/demo_askdata/test_pgsource_layers.py:211: HADAVIN_TEST_PG_DSN is not set (the CI postgres service, or a local container)
+SKIPPED [16] tests/demo_askdata/test_roles.py:38: HADAVIN_TEST_PG_DSN is not set (the CI postgres service, or a local container)
+SKIPPED [4] tests/demo_askdata/test_roles.py:45: HADAVIN_TEST_PG_DSN is not set (the CI postgres service, or a local container)
+SKIPPED [1] tests/demo_askdata/test_roles.py:51: HADAVIN_TEST_PG_DSN is not set (the CI postgres service, or a local container)
+SKIPPED [1] tests/demo_askdata/test_roles.py:59: HADAVIN_TEST_PG_DSN is not set (the CI postgres service, or a local container)
+SKIPPED [1] tests/demo_askdata/test_roles.py:66: HADAVIN_TEST_PG_DSN is not set (the CI postgres service, or a local container)
+SKIPPED [2] tests/demo_askdata/test_seed.py:225: HADAVIN_TEST_PG_DSN is not set (the CI postgres service, or a local container)
+SKIPPED [38] tests/demo_askdata/test_validate_harm.py:171: HADAVIN_TEST_PG_DSN is not set (the CI postgres service, or a local container)
+SKIPPED [214] tests/demo_askdata/test_validate_harm.py:177: HADAVIN_TEST_PG_DSN is not set (the CI postgres service, or a local container)
+SKIPPED [1] tests/demo_askdata/test_verify_readonly.py:41: HADAVIN_TEST_PG_DSN is not set (the CI postgres service, or a local container)
+SKIPPED [1] tests/demo_askdata/test_verify_readonly.py:48: HADAVIN_TEST_PG_DSN is not set (the CI postgres service, or a local container)
+SKIPPED [1] tests/demo_askdata/test_verify_readonly.py:56: HADAVIN_TEST_PG_DSN is not set (the CI postgres service, or a local container)
+SKIPPED [1] tests/demo_askdata/test_verify_readonly.py:78: HADAVIN_TEST_PG_DSN is not set (the CI postgres service, or a local container)
+SKIPPED [9] tests/demo_askdata/test_verify_readonly.py:104: HADAVIN_TEST_PG_DSN is not set (the CI postgres service, or a local container)
+SKIPPED [1] tests/demo_askdata/test_verify_readonly.py:122: HADAVIN_TEST_PG_DSN is not set (the CI postgres service, or a local container)
+SKIPPED [1] tests/demo_askdata/test_verify_readonly.py:132: HADAVIN_TEST_PG_DSN is not set (the CI postgres service, or a local container)
+SKIPPED [1] tests/demo_askdata/test_wire.py:10: HADAVIN_TEST_PG_DSN is not set (the CI postgres service, or a local container)
+SKIPPED [1] tests/test_k2_migrations.py:214: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_k2_migrations.py:230: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_k2_migrations.py:249: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_k2_migrations.py:275: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [5] tests/contracts/kinds/store_postgres.py:24: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_k2_migrations.py:357: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_k2_migrations.py:374: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_k2_migrations.py:387: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_k2_migrations.py:430: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_k5_postgres.py:36: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_k5_round10_postgres.py:33: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_k5_round10_postgres.py:52: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_k5_round10_postgres.py:72: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_k5_round10_postgres.py:113: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_k5_round10_postgres.py:118: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_k5_round10_postgres.py:137: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_k5_round10_postgres.py:145: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_k5_round10_postgres.py:153: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_k5_round8_postgres.py:23: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_p2_postgres.py:157: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_p2_postgres.py:173: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_p2_postgres.py:246: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_p2_postgres.py:276: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_p7_store.py:136: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_p7_store.py:161: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_p7_store.py:166: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_p7_store.py:174: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/warden_port/test_audit_chain.py:609: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/warden_port/test_audit_chain.py:630: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+1 failed, 9961 passed, 454 skipped, 28 deselected in 310.43s (0:05:10)
+exit=1

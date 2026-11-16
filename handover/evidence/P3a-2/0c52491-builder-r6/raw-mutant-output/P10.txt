@@ -1,0 +1,13 @@
+### tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT pg_write_all_data TO {n}-app$on] rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT pg_write_all_data TO {n}-app$on] _
+tests/test_migration_names.py:71: in test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant
+    assert any(REFUSED in r for r in _reasons(sql)), sql
+E   AssertionError: GRANT pg_write_all_data TO app$on
+E   assert False
+E    +  where False = any(<generator object test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant.<locals>.<genexpr> at 0x7ff0f8120450>)
+=========================== short test summary info ============================
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT pg_write_all_data TO {n}-app$on]
+1 failed in 0.33s
+

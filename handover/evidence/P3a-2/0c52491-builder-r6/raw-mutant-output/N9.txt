@@ -1,0 +1,14 @@
+### tests/test_migration_rules.py::test_no_migration_test_skips_silently[tests/test_migration_postgres.py] rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+___ test_no_migration_test_skips_silently[tests/test_migration_postgres.py] ____
+tests/test_migration_rules.py:158: in test_no_migration_test_skips_silently
+    assert skip_violations((ROOT / name).read_text(encoding="utf-8")) == []
+E   AssertionError: assert ['line 77: py...if not DSN:`'] == []
+E     
+E     Left contains one more item: 'line 77: pytest.skip outside `if not DSN:`'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_migration_rules.py::test_no_migration_test_skips_silently[tests/test_migration_postgres.py]
+1 failed in 0.43s
+

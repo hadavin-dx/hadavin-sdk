@@ -1,0 +1,72 @@
+.......F...FFFFFFFFFFF......FFFFFFFFFF..F..F.FFFFFFFFFFFFFFFFFFFFFFFF                                                                                                                                                                                                                                [100%]
+========================================================================================================================================= short test summary info ==========================================================================================================================================
+PASSED tests/test_client_profile.py::test_the_prod_fixture_loads
+PASSED tests/test_client_profile.py::test_secrets_env_is_refused_in_a_client_profile[pilot]
+PASSED tests/test_client_profile.py::test_secrets_env_is_refused_in_a_client_profile[prod]
+PASSED tests/test_client_profile.py::test_a_pilot_config_that_omits_store_is_refused
+PASSED tests/test_client_profile.py::test_a_demo_anchor_only_failure_does_not_advise_the_field
+PASSED tests/test_client_profile.py::test_demo_only_is_exactly_the_six_pairs
+PASSED tests/test_client_profile.py::test_every_pair_is_decided_with_a_reason
+PASSED tests/test_client_profile.py::test_planted_kind_in_neither_set_is_reported
+PASSED tests/test_client_profile.py::test_planted_pair_in_both_sets_is_reported
+PASSED tests/test_client_profile.py::test_planted_empty_reason_is_reported
+PASSED tests/test_client_profile.py::test_sources_keeps_its_own_refusal
+PASSED tests/test_client_profile.py::test_tools_keeps_its_own_refusal
+PASSED tests/test_client_profile.py::test_no_door_in_src_or_demos
+PASSED tests/test_client_profile.py::test_planted_doors_are_reported[direct]
+PASSED tests/test_client_profile.py::test_planted_doors_are_reported[partial]
+PASSED tests/test_client_profile.py::test_planted_doors_are_reported[double_star]
+PASSED tests/test_client_profile.py::test_no_override_passes_the_check[pilot]
+PASSED tests/test_client_profile.py::test_no_override_passes_the_check[prod]
+PASSED tests/test_client_profile.py::test_the_live_hooks_need_no_switch[hold_run_ids]
+PASSED tests/test_client_profile.py::test_the_live_hooks_need_no_switch[timeout_s]
+PASSED tests/test_client_profile.py::test_every_refused_keyword_has_a_sample
+FAILED tests/test_client_profile.py::test_the_facts_stated_in_the_reasons_are_true - ImportError: cannot import name '_sends_text_out' from 'hadavin_sdk.config' (/home/user/build/B-P6a-base/src/hadavin_sdk/config.py)
+FAILED tests/test_client_profile.py::test_each_test_double_is_refused_alone[secrets-pilot] - tests.test_client_profile._Reached: signer
+FAILED tests/test_client_profile.py::test_each_test_double_is_refused_alone[secrets-prod] - tests.test_client_profile._Reached: signer
+FAILED tests/test_client_profile.py::test_each_test_double_is_refused_alone[channel-pilot] - tests.test_client_profile._Reached: signer
+FAILED tests/test_client_profile.py::test_each_test_double_is_refused_alone[channel-prod] - tests.test_client_profile._Reached: signer
+FAILED tests/test_client_profile.py::test_each_test_double_is_refused_alone[detector-pilot] - tests.test_client_profile._Reached: signer
+FAILED tests/test_client_profile.py::test_each_test_double_is_refused_alone[detector-prod] - tests.test_client_profile._Reached: signer
+FAILED tests/test_client_profile.py::test_each_test_double_is_refused_alone[llm-pilot] - tests.test_client_profile._Reached: signer
+FAILED tests/test_client_profile.py::test_each_test_double_is_refused_alone[llm-prod] - tests.test_client_profile._Reached: signer
+FAILED tests/test_client_profile.py::test_each_test_double_is_refused_alone[clock-pilot] - tests.test_client_profile._Reached: signer
+FAILED tests/test_client_profile.py::test_each_test_double_is_refused_alone[clock-prod] - tests.test_client_profile._Reached: signer
+FAILED tests/test_client_profile.py::test_all_at_once_names_all_in_signature_order - tests.test_client_profile._Reached: signer
+FAILED tests/test_client_profile.py::test_a_falsy_double_is_refused - tests.test_client_profile._Reached: signer
+FAILED tests/test_client_profile.py::test_a_refusal_builds_nothing_first - tests.test_client_profile._Reached: signer
+FAILED tests/test_client_profile.py::test_a_keyword_added_later_is_refused_by_default - AttributeError: module 'hadavin_sdk.app' has no attribute '_test_doubles_given'
+FAILED tests/test_client_profile.py::test_any_environment_that_is_not_demo_is_live[Demo] - tests.test_client_profile._Reached: signer
+FAILED tests/test_client_profile.py::test_any_environment_that_is_not_demo_is_live[uat] - tests.test_client_profile._Reached: signer
+FAILED tests/test_client_profile.py::test_any_environment_that_is_not_demo_is_live[] - tests.test_client_profile._Reached: signer
+FAILED tests/test_client_profile.py::test_only_the_value_true_is_the_switch[no] - TypeError: build() got an unexpected keyword argument 'allow_test_doubles'
+FAILED tests/test_client_profile.py::test_only_the_value_true_is_the_switch[yes] - TypeError: build() got an unexpected keyword argument 'allow_test_doubles'
+FAILED tests/test_client_profile.py::test_only_the_value_true_is_the_switch[one] - TypeError: build() got an unexpected keyword argument 'allow_test_doubles'
+FAILED tests/test_client_profile.py::test_only_the_value_true_is_the_switch[list] - TypeError: build() got an unexpected keyword argument 'allow_test_doubles'
+FAILED tests/test_client_profile.py::test_the_switch_lets_a_test_double_through - TypeError: build() got an unexpected keyword argument 'allow_test_doubles'
+FAILED tests/test_client_profile.py::test_the_live_hooks_are_exactly_two_parameters_of_build - AttributeError: module 'hadavin_sdk.app' has no attribute '_LIVE_HOOKS'
+FAILED tests/test_client_profile.py::test_a_real_llm_kind_in_demo_needs_the_field[anthropic] - Failed: DID NOT RAISE ConfigError
+FAILED tests/test_client_profile.py::test_a_real_llm_kind_in_demo_needs_the_field[bedrock] - Failed: DID NOT RAISE ConfigError
+FAILED tests/test_client_profile.py::test_a_real_llm_kind_in_demo_needs_the_field[gemini] - Failed: DID NOT RAISE ConfigError
+FAILED tests/test_client_profile.py::test_a_real_llm_kind_in_demo_needs_the_field[openai_compat] - Failed: DID NOT RAISE ConfigError
+FAILED tests/test_client_profile.py::test_the_vendor_detector_in_demo_needs_the_field - Failed: DID NOT RAISE ConfigError
+FAILED tests/test_client_profile.py::test_every_detector_kind_is_local_or_refused_in_demo - ImportError: cannot import name 'LOCAL_DETECTORS' from 'hadavin_sdk.backends.table' (/home/user/build/B-P6a-base/src/hadavin_sdk/backends/table.py)
+FAILED tests/test_client_profile.py::test_a_detector_kind_nobody_reviewed_is_treated_as_sending_text_out - ImportError: cannot import name '_sends_text_out' from 'hadavin_sdk.config' (/home/user/build/B-P6a-base/src/hadavin_sdk/config.py)
+FAILED tests/test_client_profile.py::test_the_local_detector_list_is_exactly_regex_and_llm_judge - ImportError: cannot import name 'LOCAL_DETECTORS' from 'hadavin_sdk.backends.table' (/home/user/build/B-P6a-base/src/hadavin_sdk/backends/table.py)
+FAILED tests/test_client_profile.py::test_a_real_channel_kind_in_demo_needs_the_field - Failed: DID NOT RAISE ConfigError
+FAILED tests/test_client_profile.py::test_with_the_field_a_real_llm_kind_loads_in_demo - hadavin_sdk.errors.ConfigError: 1 validation error for Config
+FAILED tests/test_client_profile.py::test_three_refusals_come_in_one_error - AssertionError: Regex pattern did not match.
+FAILED tests/test_client_profile.py::test_the_field_is_refused_in_pilot_and_prod - AssertionError: assert 'demo configs only' in '1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.de...
+FAILED tests/test_client_profile.py::test_the_field_is_refused_in_any_environment_that_is_not_demo[Demo] - AssertionError: Regex pattern did not match.
+FAILED tests/test_client_profile.py::test_the_field_is_refused_in_any_environment_that_is_not_demo[uat] - AssertionError: Regex pattern did not match.
+FAILED tests/test_client_profile.py::test_the_field_is_refused_in_any_environment_that_is_not_demo[] - AssertionError: Regex pattern did not match.
+FAILED tests/test_client_profile.py::test_the_field_still_loads_in_demo - hadavin_sdk.errors.ConfigError: 1 validation error for Config
+FAILED tests/test_client_profile.py::test_a_loose_yes_does_not_switch_the_field_on[yes] - AssertionError: assert 'valid boolean' in '1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic...
+FAILED tests/test_client_profile.py::test_a_loose_yes_does_not_switch_the_field_on[1] - AssertionError: assert 'valid boolean' in '1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.d...
+FAILED tests/test_client_profile.py::test_a_loose_yes_does_not_switch_the_field_on[true] - AssertionError: assert 'valid boolean' in '1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydanti...
+FAILED tests/test_client_profile.py::test_a_loose_yes_does_not_switch_the_field_on[on] - AssertionError: assert 'valid boolean' in '1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic....
+FAILED tests/test_client_profile.py::test_a_value_that_is_not_a_bool_is_refused_at_load[word] - AssertionError: assert 'valid boolean' in '1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.py...
+FAILED tests/test_client_profile.py::test_a_value_that_is_not_a_bool_is_refused_at_load[null] - AssertionError: assert 'valid boolean' in '1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.py...
+FAILED tests/test_client_profile.py::test_a_value_that_is_not_a_bool_is_refused_at_load[list] - AssertionError: assert 'valid boolean' in '1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.py...
+FAILED tests/test_client_profile.py::test_an_unquoted_yes_in_the_file_is_the_yaml_true - hadavin_sdk.errors.ConfigError: 1 validation error for Config
+48 failed, 21 passed in 1.22s

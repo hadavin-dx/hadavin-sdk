@@ -1,0 +1,41 @@
+# P6b2 round 3, adversarial review
+
+Status: REPORTED (saved from the reviewer hand-back, which is model output, not user authority).
+
+R3-ADV review of handover/tickets/P6b2.md revision 3 (905 lines, read in full), adversarial persona. Code checked on <repo>/hadavin-sdk-handover/src and /tests. I did not read anything under reviews/ or evidence/. No cite failed in what I spot-checked, and I found no real-looking secrets in the ticket. Verdict: no Blocker, 2 Majors, which is inside the order-20 limit of "no Blocker and at most 2 Majors". Both Majors are cheap to fix at the next resolve.
+
+| id | severity | ticket line | problem | fix |
+|---|---|---|---|---|
+| R3-ADV-1 | Major | 691, 778, 422 (mutant Ma37, row C8 f) | Mutant Ma37 ("_migrate loads the registry") is killed only by C8(f), "migrate succeeds on a folder with no agents, contracts or tools". `registry.py:207-246` shows `load_registry` globs `actions/*.yaml` and guards the tools folder with `is_dir()`. A missing folder gives empty results, not an error. So `load_registry` very probably succeeds on an empty folder and C8(f) passes with the mutant applied. That makes the mutant unkillable, and the claim "59 mutants each with a named killer" false. The registry body was not read in full: UNVERIFIED. | Make the killer observable. Patch `registry.load_registry` to raise, or to record calls, and assert it is never called in `_migrate`. Otherwise drop Ma37 and the count (59 becomes 58). |
+| R3-ADV-2 | Major | 429-449, 457-458, 467 (N2 with the operator folder) | N2 sits in `Config._cross_checks` (`config.py:350-373`). `load_config` runs it for every command: `migrate`, `limits` and `audit verify`, not only the runtime. N11 and the notes tell the operator to run `migrate` and `limits reset` from a separate pilot or prod folder. That config runs with `environment` set to pilot or prod, so N2 refuses it whenever one of the six variables is set. The common way to give an operator workstation cloud access is exactly those variables, for example `AWS_ACCESS_KEY_ID` for an `iam_auth` migration (N10 accepts `iam_auth`). Owner-visible limit 2 and V6 speak only of the runtime on a platform. The operator path is not stated. A builder has no rule for whether N2 applies to operator commands. | Decide it in the text. Either state in the owner-visible limits and Rollback that operator commands in pilot and prod also need an environment free of these variables, with V6 as the way out. Or scope N2 to `app.build` and the runtime entry points, with a row C9/A-row proving `migrate` is not refused. Add this as a PENDING LEAD line. |
+| R3-ADV-3 | Minor | 712 (U1 second case), 472 | The ticket does not check existing tests that assert the old https message text. My grep of `tests/` for "must be https" finds only an unrelated `endpoint_url` test (`tests/warden_port/test_audit_chain.py:362`). That is some evidence, but the ticket should say whether it was checked. | Add one line: "grep of tests/ for the old text found none (checked)". |
+| R3-ADV-4 | Minor | 546, fact 26, 720 (N2 test fallout) | The `delenv` change is open-ended ("every pilot or prod config test", two greps disagree). The conftest sets the AWS pair in `tests/conftest.py:34-35`. `tests/warden_port/fakes.py` and `test_redaction.py` also mention AWS key names (8 hits in 3 files). The ticket does not say whether those need `delenv`. The ticket only says the full suite decides. That is acceptable but the file list is not closed. | In the build, make the suite run the oracle. Record the final changed-test list in evidence. Add the warden_port hits to fact 26. |
+| R3-ADV-5 | Minor | 424, 455, 460 | Refusal texts embed `<ref>`, the secret name, which comes from operator config and is not shape-checked (line 413). A name with a newline or a long string, or one that looks like a secret, is echoed to stderr. | Print `repr()` of the ref, or cap and strip control characters. Add one C5 row. |
+| R3-ADV-6 | Minor | 463, 589, 596 | N10 closes the migration DSN's `passfile`/`service`/empty-password hole but not libpq's other environment fallbacks: `PGPASSWORD` still applies when the DSN has a password-less user and `iam_auth` is set. Owner-visible limit 3 covers host and sslmode only. | Say in limit 3 that `PGPASSWORD` and `PGPASSFILE` also apply when the DSN has `iam_auth`, or have `_migrate` refuse when `PGPASSWORD`/`PGPASSFILE` is present. |
+| R3-ADV-7 | Minor | 740 vs 536-539 | The row count is correct (9+5+10+7+3+1 = 35) and the mutant count is correct (59). The "Files" list omits row letters. Rows C8(a)/(d)/(e)/(f) skip (b) and (c) by design, so "C8" has 4 sub-rows but the C total counts it once. This is consistent, but the numbering gap invites a builder to ask. | Renumber C8 to a-d, or add a note. |
+| R3-ADV-8 | Nit | 546 | "four tests of fact 8" while fact 8 lists 3 files and 7 lines. The count of tests is not checked in the ticket. | Name the four test functions. |
+| R3-ADV-9 | Nit | 3, 31-94 | The revision changelog is about 65 lines of review ids. This helps tracing, but the ticket is long. The reader of the build sees the ticket after the changelog. | Move the changelog below the ticket after freeze, or leave it out. |
+
+**Template fields (17):** all present and in order. Package id, Path class, Depends on, Problem, Source, Target module, Interface, Neutral default, Files, Reused code, Security notes, Tests, Mutation plan, Evidence commands, Reviewers, Done, Rollback. No field is empty. The Done line copies the order-16 stop rule.
+
+**Verified (read in this review):**
+- `config.py:350-374`: `_cross_checks` has the https refusal printing `{system.base_url}` at `:359-363`; the `refused` list and the final `ValueError` are at `:365-373`. The edit point for N2 and U exists, and the base_url check has no environment condition.
+- `load_config` (`config.py:436-454`) maps `ValueError` to `ConfigError(str(exc))`; an explicit folder skips `Settings()`. A3's "pass an explicit folder" works.
+- `cli.py:312-346`: `_migrate` matches the ticket's description. It reads `HADAVIN_MIGRATE_DSN` at `:322`, builds a second `make("secrets")` at `:329`, and `store.iam_auth` exists.
+- `table.py`: `purge_dsn_secret_name` at `:120`, `iam_auth` at `:121`, `sslrootcert_secret_name` at `:130`; the validator is at `:133-137`. `migrate_credential_ref` and the P2a refs do not exist in `src` today, so F1 refers to P2a-1 names that are not in the code yet. This is flagged in UNVERIFIED.
+- `tests/conftest.py:34-35` sets the AWS pair.
+- `tests/__init__.py` exists, so evidence command 6 (`from tests.test_env_lint import`) works.
+- `test_lockin_guard.py` has `DYNAMIC_IMPORT_OK` (`:80`), `_dynamic_target` (`:96`), `import_problems` (`:108`) and `test_vendor_sdks_stay_inside_their_kind_modules` (`:189`).
+- LEAD-ORDERS line 119 (order 24 item 33): yes, P6b2 owns the base_url fix. Line 88: the S0 EXIT covers P6b.
+- Arithmetic: 35 rows and 59 mutants add up as written. ALLOW lists 12 entries (6 plus 6). The 31 identity declarations match the counts given (13 workload, 4 bootstrap).
+- Hot-file orders and the "P6b2-a merges before P6b2-b" dependency are self-consistent (I4 imports `AMBIENT`).
+
+**Not checked (UNVERIFIED):**
+- Facts 1, 3, 13, 14, 21 and the 13 ambient sites (AST scans or line cites in 20+ files); I re-read only the lines above.
+- The full body of `load_registry`; R3-ADV-1 rests on the glob and `is_dir` reads.
+- The `P2a`, `P5b3`, `P5c`, `P6a` and `P6b1` cross-cites; I only saw that P2a has `stop_credential_ref` and `reset_credential_ref` text.
+- `amendments.md` and `questions-for-lead.md` (A4/A6/A8/A9/A12/A14 and the order 22 item 25 wording the ticket quotes).
+- Whether `conninfo_to_dict` echoes DSN text (the ticket defers this to evidence command 0).
+- CI DSN shape (fact 18b), demos (fact 9), Python 3.12, and SDK precedence claims.
+- Whether the lint's rules would produce no false hits on the real tree (needs the build).
+- Whether this checkout equals commit `397ec97`, which the ticket cites for its facts. No cite I tested failed, so I found no drift.

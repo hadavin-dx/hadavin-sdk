@@ -1,0 +1,4 @@
+head=a3fe8fa1c1e7c748408d449e4c67cdc403772e59 (builder commit; this log's subject is named inside)
+scan at 397ec97: 200 scan at 74ee54f (P5b1 base): 203
+only at 397ec97: ['store/postgres.py::tls_mode::810bf714b5925087::1']
+only at 74ee54f: ['config.py::load_config::a82df3d8bd45ccce::1', 'store/migration_numbers.py::MigrationNumberError.__init__::3ef18624ada6657e::1', 'store/migration_numbers.py::check_migration_numbers::fc464faa6509b451::1', 'store/postgres.py::tls_mode::c8b038b0d24b4f40::1']

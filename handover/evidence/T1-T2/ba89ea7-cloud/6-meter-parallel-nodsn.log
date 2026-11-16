@@ -1,0 +1,84 @@
+HEAD ba89ea751e0197ff64bd20143cd606eaa6529d01
+CMD /home/user/build/venv-t1t2-313/bin/python -m pytest tests/test_t1_meter_parallel.py -p no:cacheprovider -rs -q
+FFFF                                                                     [100%]
+=================================== FAILURES ===================================
+________ test_50_parallel_calls_admit_at_most_floor_cap_over_cost[2.00] ________
+
+cap = '2.00'
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f900b4c7ce0>
+
+    @pytest.mark.parametrize("cap", ["2.00", "3.00"])
+    def test_50_parallel_calls_admit_at_most_floor_cap_over_cost(cap, monkeypatch):
+        limits, store, _ = build_limits(cap, HUGE, START, monkeypatch)
+        admitted = run_parallel(limits, admit_check_then_charge)
+        c = Decimal(cap)
+>       assert admitted <= math.floor(c / W), (
+            f"{admitted} of {CALLERS} parallel calls admitted for cap {cap}"
+        )
+E       AssertionError: 50 of 50 parallel calls admitted for cap 2.00
+E       assert 50 <= 2
+E        +  where 2 = <built-in function floor>((Decimal('2.00') / Decimal('1.00')))
+E        +    where <built-in function floor> = math.floor
+
+tests/test_t1_meter_parallel.py:38: AssertionError
+________ test_50_parallel_calls_admit_at_most_floor_cap_over_cost[3.00] ________
+
+cap = '3.00'
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f900b7bc9d0>
+
+    @pytest.mark.parametrize("cap", ["2.00", "3.00"])
+    def test_50_parallel_calls_admit_at_most_floor_cap_over_cost(cap, monkeypatch):
+        limits, store, _ = build_limits(cap, HUGE, START, monkeypatch)
+        admitted = run_parallel(limits, admit_check_then_charge)
+        c = Decimal(cap)
+>       assert admitted <= math.floor(c / W), (
+            f"{admitted} of {CALLERS} parallel calls admitted for cap {cap}"
+        )
+E       AssertionError: 50 of 50 parallel calls admitted for cap 3.00
+E       assert 50 <= 3
+E        +  where 3 = <built-in function floor>((Decimal('3.00') / Decimal('1.00')))
+E        +    where <built-in function floor> = math.floor
+
+tests/test_t1_meter_parallel.py:38: AssertionError
+_ test_50_parallel_calls_overshoot_a_non_multiple_cap_by_less_than_one_call[2.50] _
+
+cap = '2.50'
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f900b3bd7f0>
+
+    @pytest.mark.parametrize("cap", ["2.50", "1.50"])
+    def test_50_parallel_calls_overshoot_a_non_multiple_cap_by_less_than_one_call(cap, monkeypatch):
+        limits, store, _ = build_limits(cap, HUGE, START, monkeypatch)
+        admitted = run_parallel(limits, admit_check_then_charge)
+        c = Decimal(cap)
+        day = store.spend_totals(AGENT, START.date())[0]
+>       assert admitted <= math.ceil(c / W), (
+            f"{admitted} of {CALLERS} parallel calls admitted for cap {cap}"
+        )
+E       AssertionError: 50 of 50 parallel calls admitted for cap 2.50
+E       assert 50 <= 3
+E        +  where 3 = <built-in function ceil>((Decimal('2.50') / Decimal('1.00')))
+E        +    where <built-in function ceil> = math.ceil
+
+tests/test_t1_meter_parallel.py:50: AssertionError
+_ test_50_parallel_calls_overshoot_a_non_multiple_cap_by_less_than_one_call[1.50] _
+
+cap = '1.50'
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f900b357f00>
+
+    @pytest.mark.parametrize("cap", ["2.50", "1.50"])
+    def test_50_parallel_calls_overshoot_a_non_multiple_cap_by_less_than_one_call(cap, monkeypatch):
+        limits, store, _ = build_limits(cap, HUGE, START, monkeypatch)
+        admitted = run_parallel(limits, admit_check_then_charge)
+        c = Decimal(cap)
+        day = store.spend_totals(AGENT, START.date())[0]
+>       assert admitted <= math.ceil(c / W), (
+            f"{admitted} of {CALLERS} parallel calls admitted for cap {cap}"
+        )
+E       AssertionError: 50 of 50 parallel calls admitted for cap 1.50
+E       assert 50 <= 2
+E        +  where 2 = <built-in function ceil>((Decimal('1.50') / Decimal('1.00')))
+E        +    where <built-in function ceil> = math.ceil
+
+tests/test_t1_meter_parallel.py:50: AssertionError
+4 failed in 0.21s
+exit=1

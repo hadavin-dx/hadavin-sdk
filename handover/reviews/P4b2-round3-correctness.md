@@ -1,0 +1,67 @@
+# P4b2 round 3, correctness review
+Status: REPORTED (saved from the reviewer hand-back, which is model output, not user authority).
+
+ROUND 3 CORRECTNESS REVIEW of tickets/P4b2.md revision 4 (wrapping tickets/P4b1.md revision 3). Read-only. I did not read handover/reviews/ or handover/evidence/, and I ran nothing. Core = <repo>/src and tests. Core source files cited below are the ones I read on the current main; the ticket's "unchanged since ce70eb5" claim I did not check with git.
+
+Verdict: no Blocker. 3 Majors, 8 Minors, 4 Nits. Under order 20 item 6 (a round 4 needs no Blocker and at most 2 Majors), 3 Majors means no round 4: the fixes go in as build notes.
+
+| id | sev | ticket line | problem | fix |
+|---|---|---|---|---|
+| R3-COR-1 | Major | 107-108 (wrapper flow), rule 1 (49); P4b1.md:101 | The wrapper uses sibling `except ProviderError` / `except BaseException` clauses. An exception raised INSIDE the ProviderError handler is not caught by the sibling clause. Examples: `SpendMicro(max(reserved, unknown x W))` raising ValueError when a valid stamp's count x W passes the bound; any error in `billing_outcome` or the log line. That exception leaves the `with` body with nothing recorded, and P4b1:101 says "neither record nor release -> settle at the reserved worst case". For a call with max_attempts 3 that books reserved instead of the whole-call maximum, an under-booking of up to 2 x reserved. This breaks rule 1 ("every error on the billing path keeps the worst case or MORE"). G5 and G17 test only exceptions raised by the model, not by the handler. | Before `inner.chat`, call `h.record(<whole-call maximum>, measured=False)`. The last record wins (P4b1:98), so success or release overwrites it, and every unforeseen path then books the maximum. Or wrap the handler body in its own `try/except BaseException` that falls back to the whole-call maximum. Cap `unknown x W` at the whole-call maximum. Add a row where `billing_outcome` or `SpendMicro` raises inside the handler. |
+| R3-COR-2 | Major | 236 (tick step 6), E9 (266), mutant b6 (280) | The ticket says "a failed audit write is NOT swallowed ... the step is recorded failed". `AuditSink.write_outcome` never raises (`audit/protocol.py:23-25`; `audit/chain.py:215-229` falls back to the outbox table, then memory; `audit/local_dir.py:110-124` likewise). With the real sink the step records OK when the audit store is down, and E9's first half and mutant b6 describe a state that cannot occur. | Decide it. Either test only with a double that violates the sink contract and say so, or make the step check the returned `None` (event went to the outbox) and log a warning. Reword E9 and b6 to match. |
+| R3-COR-3 | Major | 229 (constants), PENDING LEAD 21 (358), v1.1 list (333) | The ticket keeps `METER_SWEEP_EVERY_S`, `_ROUNDS` and `_BATCH` as fixed constants, "a trade against the no-hardcoding rule". LEAD-ORDERS 24 item 32 (3:35Z, after this revision's 03:15) rules for P6b1 that "thresholds come from config; a fixed constant is not allowed". Whether that reaches P4b2 is unstated, so a builder must guess. It also blocks the P4b1 PL12 "no Config.meter" premise. Item 34 closes P4b1 (no round 4; build notes win). | Get a lead line now. Either "constant accepted for P4b2" (cite it), or flip to one validated field with `gt=0` and a test, as PL21 already sketches. |
+| R3-COR-4 | Minor | 55, 93, 103, 116 | How the call-scoped counter reaches `_retry` is left to the builder (argument or ContextVar). If it is an argument, `anthropic.py:122`, `gemini.py:86` and `bedrock.py:156` change too, but only `bedrock.py` and `openai_compat.py` are listed in Target, Files and the hot-file order. The file list depends on a choice nobody has made. | Fix the choice: a ContextVar set in `chat` and reset in `finally`, which touches only `common.py`, `retry.py` and bedrock's hook. Drop the "only if needed" `openai_compat.py` entry, or list all four kinds. |
+| R3-COR-5 | Minor | 99 vs 133 | Step (1) of `classify_attempt` says "hook if given, else `status(exc)`". T10 says a hook that raises or returns True/"400"/None "falls back to `status(exc)`". Whether a hook returning None falls through to `status(exc)` is unclear, and mutant a13 depends on it. | Write one rule. Proposed: hook result not an int means `status(exc)`, then the unsent walk. |
+| R3-COR-6 | Minor | 124-127 vs rule 12 (72); 117; 186 | T1-T4 are labelled "assertion fail-before" but they fail on H1 only because `billing_outcome` is missing. Rule 12 calls that "new feature; killed by mutants". Also `test_billing_contract.py` holds T rows (H1 = ce70eb5) and G rows (H2) in one file. Copying it to a ce70eb5 worktree (line 186) fails at import unless every H2 import is lazy. | Relabel T1-T4. Put T/L rows and G rows in separate files, or require lazy `importlib` imports in the shared file. The real assertion fail-before is G1 / G15: old code books the whole-call maximum for a never-sent error and usage only for 408-then-200. Say so. |
+| R3-COR-7 | Minor | 236 (step 6), 259-261 (S1, S3) | The tick step must catch SQLSTATE 42501, but the lock-in guard (done criterion, 322) forbids a new psycopg import, and `runtime/tick.py` has none. Core has no `InsufficientPrivilege` class and no store-layer translation of 42501 (grep of `src`). Core recognises driver errors by class name along the MRO (`store/protocol.py:29-38`). Rows S1 and S3 assert `InsufficientPrivilege`, which the store never raises. | Specify the test: `getattr(exc, "sqlstate", None) == "42501"`, or an MRO-name check, and no import. Reword S3 to the real exception. |
+| R3-COR-8 | Minor | 266 (E6), 233 | E6 expects a second tick to expire the last row. `tick.py:305-313`: a step with `every_s` 300 whose last run did not fail is SKIPPED for 300 s. A second `run_tick` at the same `ctx.now` does nothing. A backlog over 1,000 therefore drains at 1,000 per 5 minutes. | In E6, advance `now` by at least 300 s. State the drain rate in plain words. |
+| R3-COR-9 | Minor | 228 (app.py), 251-252, mutant b30/b37 | `platform_secrets.secret_names` (`platform_secrets.py:18-24`) collects every `*_secret_name` in the settings, and `bound()` allows all of them. The ticket nulls the maintenance field only in the new maintenance copy. The existing purge copy at `app.py:154-158` is not changed, so after this PR the purge store and the runtime store are allowed to resolve the maintenance secret. The runtime store is already built from `b.store` carrying both names. This weakens the stated separation. | In `app.py`, also set `maintenance_dsn_secret_name: None` in the purge copy, and nothing but its own name for the runtime store if the structure allows. Add a Q2 row for the purge copy. |
+| R3-COR-10 | Minor | 208, PENDING LEAD 25 | Check (c) ignores `admin_option`. A role with ADMIN OPTION on the maintenance login can grant itself SET and then expire rows. The ticket says it sees this and leaves it to the lead at build time, which is a decision left to the builder on a security path. | Decide now. Proposed: refuse `admin_option` for any role that is not the table owner or a superuser, and add an E10 sub-row. |
+| R3-COR-11 | Minor | 188 | The sibling check says "each catch site that charges money is routed through `billing_outcome`". That contradicts line 111, where `k1b/loop.py` keeps the PL54 whole-call maximum and does not use it. Catch sites exist at `k1b/loop.py:166-178` and `runtime/agent_loop.py:432-440`; the agent loop charges nothing on failure until P4c-2 wraps it. | Reword to "routed through `billing_outcome` OR intentionally the whole-call maximum", with a named list. |
+| R3-COR-12 | Minor | 112 | The log field `outcome=<released\|settled\|kept_worst_case\|booked_upper_bound>` has no mapping to cases. It is unclear which outcome a kept failure with a readable stamp or an unstamped one gets, or what a success logs (`reason=ok`). G1 and G3 assert the field set but not the values. | Add a 4-line table: case, outcome, reason. |
+| R3-COR-13 | Minor | 135 (L4), 105 | L4 requires "unsent = max_attempts, released" for the Anthropic kind. That needs the SDK's `__cause__` chain (APIConnectionError -> httpx.ConnectError -> ConnectionRefusedError) to be visible within 8 levels. The ticket's own UNVERIFIED list carries only the connect-timeout chain. If the chain differs, L4 fails for Anthropic with no stated fallback. | Add: if the chain is not visible, L4 for that kind becomes a keep row, as for Bedrock, and the CHANGELOG says so. |
+| R3-COR-14 | Nit | 266 (M4) | The step builds `Meter(store)` internally, so how "a test injects a meter value of 777" is not stated. | Name the seam, for example patch `Meter.orphan_age_s`. |
+| R3-COR-15 | Nit | 252 | The scheduler process holds both the runtime DSN and the maintenance DSN, as it already does for purge. The least-privilege note says "agents never hold it" but does not say the tick process holds two identities. | One sentence. |
+| R3-COR-16 | Nit | P4b1.md:354, 265 (other ticket) | The wrapped ticket cites `P4b2.md:95` (field) and `P4b2.md:133,165` (G16/a26). In this revision those are at 104 (`Reply` field), 146 (G16) and 179 (a26). Stale cites in P4b1. | Update when P4b1's build notes are written. |
+| R3-COR-17 | Nit | 91, template | The P4b2-a "Problem in plain words" is far over the template's 3-5 sentences. | Optional trim. |
+
+Template: both sub-tickets have all 17 fields in template order.
+
+Verified (read and checked):
+- Core `src` cites that hold:
+  - `llm/protocol.py:10-15`: both exception classes have docstrings only and no attributes.
+  - `llm/retry.py`: `status` 31-36, `retryable_status` 39-40, `_chain` 43-52, `transient` 55-63 (SSL at 56-57), `with_retry` 83-108 (pass-through 95-96).
+  - `llm/common.py`: `chat` 208-220, `_retry` 233-241, route/tools at 218-219, `Reply(` at 171.
+  - `openai_compat.py:118-125`: two requests, each through its own `_retry`.
+  - `_retry(` call sites: `anthropic.py:122`, `bedrock.py:156`, `gemini.py:86`.
+  - `llm/anthropic.py:37`: `max_retries: 0`. `bedrock.py:47-48`: connect timeout `min(10, ...)`, with `total_max_attempts: 1`.
+  - `models.py`: `Shape` extra="forbid" at 50-51; `Reply` at 289-297; `now` at 19-20.
+  - `llm/fake.py:54`; `limits.py:34-35` (`run_id="-"`); `deferred.py:33` (`LIVE = ("pilot","prod")`).
+  - `app.py:83-90` and 151-157; `backends/table.py:24`, 40, 120.
+  - `store/postgres.py:125-175`: connect plus `SET TIME ZONE` only.
+  - `store/migrate.py`: `Grant` at 24-37, `GRANTS` row style, `_ROLE` at 70 accepting `public`, `postgres` and `pg_monitor`, `_SAFE_CREATE`/`_ANY_CREATE`/`_UNREAD` at 80-87.
+- Tick cites hold:
+  - `tick.py:51-60`: `TickStep` validation; `STEPS` 249-266; `_message` 287-292; `_run_step` 295-332; `run_tick` 335-369.
+  - The step-list test is `test_p7_tick.py:81-89`; `:387-394` expects exit 4 on an unreachable Postgres; `:502-508` is a `migrate` CLI test.
+  - `tests/contracts/test_llm.py:73-107`: the throttle, malformed-answer (skipped for Bedrock) and refused-key rows exist as described.
+  - `Reply(` appears on 23 lines under `tests/` (12 files) and 2 in `src`.
+- P4d, P4a and P4b1 cites hold:
+  - `P4d.md:160` (signature, DB clock, "reserved for P4b2's pruning" wording), `:161` (kill switch), `:168` (`change refused`, P0001 at 183), `:170`, `:178` (claim sets status, settled_usd = reserved_usd, closed_at, expired_at).
+  - `P4a.md:315` and `:363` (request-2 re-raise as a new UsageMissing, C16), `:555-560` (PL51/54/55).
+  - `P4b1.md`: 98, 101, 102, 103, 105, 261-262, 265-268, 278, 280-281, 287, 291, 298, 313, 354, 403, 408, 412-413.
+- Counts add up: 37 test ids in P4b2-a, 28 in P4b2-b, 65 in total; mutants a1-a27 = 27 and b1-b37 minus the cut b8 = 36, so 63 live. The mutant tables list them contiguously.
+- Rule 6 figures re-derived: 2400, 3000, 1000, 6000, 2000, 4000 and 2000 are right. 605 s = max(600, 2 x 300 + 5). 10 rounds x 100 = 1,000. The excess over a cap is (max_attempts - 1) x reserved. The `_unknown_attempts` bound `request_bound x (max_attempts - 1)` covers 2 x (3 - 1) = 4 for the two-request kind.
+- The actor-trigger design (named role, deny-all start, one predicate, `ENABLE ALWAYS`, 42501) is internally consistent. It is consistent with P4d's claim, which sets settled_usd = reserved_usd and both timestamps, and with P4d's CHECKs.
+- The orders in force:
+  - Order 21 item 13 (keep the identity, exact rights, deny-all start) is honoured.
+  - Order 22 item 22: no pruning in v1; `P4c.md:16` is consistent.
+  - Orders 20 and 24 no-round-4 rule: honoured except R3-COR-3.
+
+Not checked (UNVERIFIED):
+- All Postgres behaviour: the column-grant `FOR UPDATE SKIP LOCKED`, `has_table_privilege` on column-only UPDATE, `pg_has_role` and `set_option` semantics, `ENABLE ALWAYS`, `42501` from `RAISE`, trigger firing order, `_scan` acceptance, the RDS IAM marker role.
+- P2a, P3a, P5b1 and P6a (their ticket text), `cli.py` migrate wiring, `tests/test_k2_migrations.py:128`, `table.py:593`, and P4c lines 34 and 171.
+- `handover/reviews/` and `handover/evidence/` (barred), so the PG 16.15 case B/D claims and the resolve rows are unchecked.
+- Real provider billing of failed requests; botocore, boto3 and httpx exception chains; whether any `Reply` serialiser (audit or plan hashing) would change with the new field.
+- Whether `Reply` assignment or `model_copy` is how `chat` sets the field (non-frozen model, so likely fine).
+- Python 3.12 runs.
+- The P1/P2d guard snapshot (not relevant here).

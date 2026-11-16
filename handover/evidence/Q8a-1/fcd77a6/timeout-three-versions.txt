@@ -1,0 +1,25 @@
+build(demo, timeout_s=x), one row per value, on three code versions (script timeout_base.py; EVIDENCE RUNNER, no judgement)
+columns: value -> origin/main 2a8c2aac || f6fad26f || head fcd77a68
+code under test: /home/user/build/EV-Q8a1c-fbmain/src/hadavin_sdk/__init__.py|code under test: /home/user/build/EV-Q8a1c-fbf6/src/hadavin_sdk/__init__.py|code under test: /home/user/build/EV-Q8a1-fcd77a6/src/hadavin_sdk/__init__.py
+timeout_s=0 -> no exception; executor.timeout_s='10.0' ||  ConfigError: timeout_s= must be greater than 0 ||  ConfigError: timeout_s= must be an int or float between 0 (not included) and 3600
+timeout_s=0.0 -> no exception; executor.timeout_s='10.0' ||  ConfigError: timeout_s= must be greater than 0 ||  ConfigError: timeout_s= must be an int or float between 0 (not included) and 3600
+timeout_s=-1 -> no exception; executor.timeout_s='-1' ||  ConfigError: timeout_s= must be greater than 0 ||  ConfigError: timeout_s= must be an int or float between 0 (not included) and 3600
+timeout_s=-0.5 -> no exception; executor.timeout_s='-0.5' ||  ConfigError: timeout_s= must be greater than 0 ||  ConfigError: timeout_s= must be an int or float between 0 (not included) and 3600
+timeout_s=True -> no exception; executor.timeout_s='True' ||  ConfigError: timeout_s= must be greater than 0 ||  ConfigError: timeout_s= must be an int or float between 0 (not included) and 3600
+timeout_s=False -> no exception; executor.timeout_s='10.0' ||  ConfigError: timeout_s= must be greater than 0 ||  ConfigError: timeout_s= must be an int or float between 0 (not included) and 3600
+timeout_s=nan -> no exception; executor.timeout_s='nan' ||  ConfigError: timeout_s= must be greater than 0 ||  ConfigError: timeout_s= must be an int or float between 0 (not included) and 3600
+timeout_s=inf -> no exception; executor.timeout_s='inf' ||  ConfigError: timeout_s= must be greater than 0 ||  ConfigError: timeout_s= must be an int or float between 0 (not included) and 3600
+timeout_s='5' -> no exception; executor.timeout_s='5' ||  ConfigError: timeout_s= must be greater than 0 ||  ConfigError: timeout_s= must be an int or float between 0 (not included) and 3600
+timeout_s=[5] -> no exception; executor.timeout_s='[5]' ||  ConfigError: timeout_s= must be greater than 0 ||  ConfigError: timeout_s= must be an int or float between 0 (not included) and 3600
+timeout_s=Decimal('2.5') -> no exception; executor.timeout_s='2.5' ||  ConfigError: timeout_s= must be greater than 0 ||  ConfigError: timeout_s= must be an int or float between 0 (not included) and 3600
+timeout_s=Fraction(5, 2) -> no exception; executor.timeout_s='5/2' ||  ConfigError: timeout_s= must be greater than 0 ||  ConfigError: timeout_s= must be an int or float between 0 (not included) and 3600
+timeout_s=10**400 -> no exception; executor.timeout_s='1000000000000000000000000000000000000000' ||  no exception; executor.timeout_s='1000000000000000000000000000000000000000' ||  ConfigError: timeout_s= must be an int or float between 0 (not included) and 3600
+timeout_s=3601 -> no exception; executor.timeout_s='3601' ||  no exception; executor.timeout_s='3601' ||  ConfigError: timeout_s= must be an int or float between 0 (not included) and 3600
+timeout_s=3600.1 -> no exception; executor.timeout_s='3600.1' ||  no exception; executor.timeout_s='3600.1' ||  ConfigError: timeout_s= must be an int or float between 0 (not included) and 3600
+timeout_s=3 -> no exception; executor.timeout_s='3' ||  no exception; executor.timeout_s='3' ||  no exception; executor.timeout_s='3'
+timeout_s=0.001 -> no exception; executor.timeout_s='0.001' ||  no exception; executor.timeout_s='0.001' ||  no exception; executor.timeout_s='0.001'
+timeout_s=2.5 -> no exception; executor.timeout_s='2.5' ||  no exception; executor.timeout_s='2.5' ||  no exception; executor.timeout_s='2.5'
+timeout_s=3600 -> no exception; executor.timeout_s='3600' ||  no exception; executor.timeout_s='3600' ||  no exception; executor.timeout_s='3600'
+timeout_s=3600.0 -> no exception; executor.timeout_s='3600.0' ||  no exception; executor.timeout_s='3600.0' ||  no exception; executor.timeout_s='3600.0'
+timeout_s=1e-09 -> no exception; executor.timeout_s='1e-09' ||  no exception; executor.timeout_s='1e-09' ||  no exception; executor.timeout_s='1e-09'
+timeout_s=5e-324 -> no exception; executor.timeout_s='5e-324' ||  no exception; executor.timeout_s='5e-324' ||  no exception; executor.timeout_s='5e-324'

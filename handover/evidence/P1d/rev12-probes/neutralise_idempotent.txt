@@ -1,0 +1,3 @@
+head 3da7a47 (src as on core/cloud-handover; P1d-a not merged, so _neutralise still defangs)
+cmd: uv run --all-extras --group test python -I handover/evidence/P1d/rev12-probes/neutralise_idempotent.py ; rc=0
+inputs 2907 non-idempotent 0 placeholder-changed 0

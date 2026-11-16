@@ -1,0 +1,10 @@
+# core/ci-lint-set eeaa502: design review (egm-design; condensed by cloud worker). 1 Blocker, 6 Major, nits
+B1 ruff `select` replaced `extend-select`: E4/E7/E9 (ruff default) dropped (bare except E722, E711/E712/E721, E731, E741, syntax/IO errors); docs/lint-tools.md line 53 claims they are there (false); pyproject comment wrong. Fix: add E4,E7,E9 (W only deliberately); record count.
+M1 PLC0415 off globally (430 in tests, 19 in src): scope to tests/** per-file-ignore, fix or per-file-ignore the ~19 src files.
+M2 SIM112 global for 2 findings: scope to the files.
+M3 no licence check of new locked packages (ast-serialize, librt, mypy-extensions, pathspec (MPL-2.0 from memory, UNVERIFIED), click, grimp, requirements-parser, types-s3transfer, boto3-stubs, botocore-stubs); ruff-pre-commit LICENSE never read (read at pinned tag). Add CI step that fails on GPL/AGPL/LGPL in the uv export package set.
+M4 mypy exclude (28 files, 79 errors) covers redact, runmap, chain, signers, gate, executor, postgres, config; no ratchet. Fix: per-module ignore_errors overrides + check that fails when a listed file is clean or missing; prioritise by risk. Explain 96 vs 79 arithmetic.
+M5 vulture whitelist is name-global and has no stale-entry check; count tests/demos/tools as usages or add a check that each name still exists; duplicate names.
+M6 lint PR deleted gate._views/_rendered/_ANSI_AS_TEXT/_RENDERED_MARKUP/import html = unfinished fix (R9-O1) for the open redaction hole; keep (whitelist) until its own EGM round. Check redact.py PATTERNS.extend and runmap renames covered by tests.
+Nits: lint-set not a required check (owner-only); pyright 1.1.414 stale, re-run with current version or reword; lychee not trialled; ruff version pinned twice by hand (CI check); fail-before proofs thin (no plant for new families/RUF100; pre-commit hook never run; CI job never run); uv.lock new markers/uv version; botocore pin = runtime dependency change, in changelog; actionlint checksum source unrecorded.
+UNVERIFIED by reviewer: transitive licences, E4/E7/E9 finding count, RUF100 0-vs-158, whitelist "checked by search", rest of diff (~50 mechanical hunks).

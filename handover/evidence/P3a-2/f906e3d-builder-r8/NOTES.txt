@@ -1,0 +1,10 @@
+Round 8, branch core/P3a-2, new head f906e3d (= adef142 + one test-only commit). Python 3.12.3 and 3.13, Postgres 16.15.
+NOT run: Postgres 17 (owner-only); non-UTF-8 cluster; the owner-only items. Full suites (3.12, 3.13: 10804 passed, 1 skipped each) and the full
+mutant run (179/180 on adef142; SW12 was BROKEN-classified for a chained-error head, fixed in f906e3d, re-run alone: killed with an AssertionError head)
+ran on adef142; f906e3d changes only test_a_failed_unlock_does_not_fail_the_setup (wiring + rules files re-run: 183 passed). No full re-run on f906e3d.
+Scram proof: second throwaway cluster p73scram (port 56074, initdb -A scram-sha-256, pg_hba scram-sha-256 for 127.0.0.1, random password, started and stopped by me):
+619 passed, 1 skipped on the affected files (tests-scram-affected.txt, password masked).
+Fail-before (d1dff3a): fail-before-d1dff3a.txt: 9 failed, 7 passed with the new tests on the old code; guard test lists 7 password-less logins on the old tree.
+The 7 passing: wording-only changes (killed by mutants ML1, GM1), password forwarding (old fixture already forwarded; SW10 covers), real-server cannot-see test (SW11 + wiring test cover).
+Older mutants O1, T1, T7 show a driver error line in the raw output, but their other killing tests fail with DID NOT RAISE / assertion heads (same as round 7).
+Lead decisions left open, defaults kept: fixed per-file timeouts (kept); pg_database_owner exemption (kept); scope beyond the ticket (kept); rolreplication check (not added).

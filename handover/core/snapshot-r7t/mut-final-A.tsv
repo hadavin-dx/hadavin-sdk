@@ -1,0 +1,45 @@
+R07	demo_only/bad_request.py	t5	KILLED	['1 failed, 131 deselected in 0.20s']
+R07	restored-byte-equal=True
+R10n	scripts/run_real_check.py	t1	KILLED	['1 failed, 89 deselected in 0.21s']
+R10n	restored-byte-equal=True
+R10b	scripts/run_real_check.py	t1	KILLED	['1 failed, 89 deselected in 0.20s']
+R10b	restored-byte-equal=True
+R19	scripts/run_real_check.py	t2	KILLED	['1 failed, 126 deselected in 0.31s']
+R19	restored-byte-equal=True
+R20	scripts/run_real_check.py	t2	KILLED	['1 failed, 126 deselected in 0.22s']
+R20	restored-byte-equal=True
+R27	scripts/run_real_check.py	t3	KILLED	['1 failed, 137 deselected in 37.21s']
+R27	restored-byte-equal=True
+R39	tests/support.py	t4	KILLED	['1 failed, 1 passed, 130 deselected in 0.22s']
+R39	restored-byte-equal=True
+N01	scripts/run_real_check.py	t2	KILLED	['1 failed, 10 passed, 126 deselected in 0.30s']
+N01	restored-byte-equal=True
+N02	scripts/run_real_check.py	t2	KILLED	['1 failed, 1 passed, 126 deselected in 0.23s']
+N02	restored-byte-equal=True
+N03	scripts/run_real_check.py	t2	KILLED	['1 failed, 9 passed, 126 deselected in 0.27s']
+N03	restored-byte-equal=True
+N04	scripts/run_real_check.py	s3e or t9	KILLED	['1 failed, 2 passed, 180 deselected in 150.11s (0:02:30)']
+N04	restored-byte-equal=True
+N05	scripts/run_real_check.py	t9	KILLED	['1 failed, 2 passed, 134 deselected in 210.92s (0:03:30)']
+N05	restored-byte-equal=True
+N06	scripts/run_real_check.py	t2	KILLED	['1 failed, 1 passed, 126 deselected in 0.26s']
+N06	restored-byte-equal=True
+N07	scripts/run_real_check.py	t2	KILLED	['1 failed, 4 passed, 126 deselected in 0.27s']
+N07	restored-byte-equal=True
+N08	scripts/run_real_check.py	t7	KILLED	['1 failed, 135 deselected in 0.21s']
+N08	restored-byte-equal=True
+N09	scripts/run_real_check.py	t7	KILLED	['1 failed, 135 deselected in 0.20s']
+N09	restored-byte-equal=True
+N10	demo_only/bad_request.py	t6c or t12	KILLED	['1 failed, 113 deselected in 0.24s']
+N10	restored-byte-equal=True
+N11	demo_only/fakes_server.py	t6	KILLED	['1 failed, 12 passed, 87 deselected in 0.24s']
+N11	restored-byte-equal=True
+N12	demo_only/fake_imap.py	t6	KILLED	['1 failed, 20 passed, 87 deselected in 0.25s']
+N12	restored-byte-equal=True
+N13	demo_only/fake_smtp_tls.py	t6	KILLED	['1 failed, 25 passed, 87 deselected in 0.26s']
+N13	restored-byte-equal=True
+N14	scripts/run_real_check.py	t8	KILLED	['1 failed, 135 deselected in 0.28s']
+N14	restored-byte-equal=True
+N15	NOT-APPLIED count=0
+N16	scripts/run_real_check.py	t9	KILLED	['1 failed, 134 deselected in 65.15s (0:01:05)']
+N16	restored-byte-equal=True

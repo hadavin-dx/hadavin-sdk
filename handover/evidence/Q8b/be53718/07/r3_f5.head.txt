@@ -1,0 +1,52 @@
+B1 PW_used one word || {'password_used': '<SECRET_1>'}
+B1 PW_used multi-word || {'password_used': '<SECRET_1>'}
+B1 env API_KEY_TYPE || {'name': 'API_KEY_TYPE', 'value': '<SECRET_1>'}
+B1 token_policy dict || {'token_policy': {'default': '<SECRET_REDACTED>'}}
+B1 client_secret_max || {'client_secret_max': '<SECRET_1>'}
+B1 gate: flag 'true' || {'password_policy_enabled': 'true'}
+B1 gate: bool || {'password_policy_enabled': True}
+B1 gate: number || {'token_expiry': 3600}
+B1 gate: '30d' || {'token_expiry': '30d'}
+B1 gate: count || {'secret_count': 3}
+B1 gate: timestamp || {'token_expires': '2026-11-25T00:00:00Z'}
+B1 gate: env TOKEN_TTL || {'name': 'TOKEN_TTL', 'value': '15m'}
+B1 gate refuses a word || {'password_policy_enabled': '<SECRET_1>'}
+B1 gate refuses a list || {'password_policy_enabled': ['<SECRET_REDACTED>', '<SECRET_1>']}
+B1 gate refuses 11 digits || {'token_expiry': '<PHONE_1>'}
+B1 gate under a credential parent || {'credentials': {'password_policy_enabled': '<SECRET_REDACTED>'}}
+M2 api_tokens list || {'api_tokens': ['<SECRET_1>']}
+M2 refresh_tokens || {'refresh_tokens': '<SECRET_1>'}
+M2 tokens || {'tokens': '<SECRET_1>'}
+M2 prompt_tokens || {'prompt_tokens': 812}
+M2 total_tokens || {'total_tokens': 1000}
+M2 tokens_used || {'tokens_used': 1234}
+M2 session || {'session': '<SECRET_1>'}
+M2 JSESSIONID || {'JSESSIONID': '<SECRET_1>'}
+M2 auth || {'auth': '<SECRET_1>'}
+M2 account_key || {'account_key': '<SECRET_1>'}
+M2 client-key-data || {'client-key-data': '<SECRET_1>'}
+M2 connect.sid || {'connect.sid': '<SECRET_1>'}
+M2 PW2 || {'password2': '<SECRET_1>'}
+M2 token1 || {'token1': '<SECRET_1>'}
+M2 OLDPWD || {'name': 'OLDPWD', 'value': '<SECRET_1>'}
+M2 author || {'author': 'Priya Nair'}
+M1 Secret of common words + logs || [{'kind': 'Secret', 'data': {'LOG_LEVEL': '<SECRET_1>', 'DEBUG': '<SECRET_2>', 'ENV': '<SECRET_3>', 'PORT': '<SECRET_4>', 'DB_USER': '<SECRET_5>', 'DB_NAME': '<SECRET_7>', 'DB_PASSWORD': '<SECRET_9>'}}, {'level': 'info', 'message': 'information: retry in 5s', 'service': 'orders'}, {'level': 'error', 'message': 'orders-api timeout on port 5432 as postgres in prod; debug=true; orders_count=3'}]
+M1 Secret LOG_LEVEL only || [{'kind': 'Secret', 'data': {'LOG_LEVEL': '<SECRET_1>'}}, {'level': 'info', 'message': 'information: retry in 5s'}]
+M1 row 37 DB_NAME || [{'kind': 'Secret', 'data': {'DB_NAME': '<SECRET_1>'}}, {'message': 'orders-api timeout'}]
+M1 row 46 username || [{'kind': 'Secret', 'stringData': {'username': '<SECRET_1>'}}, {'message': 'user <SECRET_1> NAME denied'}]
+M1 row 35 same placeholder || [{'kind': 'Secret', 'data': {'p': '<SECRET_3>'}}, {'message': 'login with <SECRET_3> failed'}]
+M1 row 34 cfg || [{'kind': 'Secret', 'stringData': {'cfg': '<SECRET_1>'}}, {'message': 'login with <SECRET_1> failed'}]
+M1 Secret credential key short || [{'kind': 'Secret', 'stringData': {'db_password': '<SECRET_1>'}}, {'message': 'x<SECRET_1>y <SECRET_1>'}]
+M4 3 characters || [{'pin_token': '<SECRET_1>'}, {'message': 'xab1y and <SECRET_1> alone'}]
+M4 2 characters || [{'pin_token': '<SECRET_1>'}, {'message': 'a1 alone'}]
+M4 env number + log || [{'name': 'DB_PASSWORD', 'value': '<SECRET_REDACTED>'}, {'message': 'pin 12345678 used'}]
+M4 percent in value + copy || [{'password': '<SECRET_1>'}, {'message': 'saw <SECRET_1> and <SECRET_1>'}]
+M4 backslash-u in value + copy || [{'password': '<SECRET_1>'}, {'message': 'saw <SECRET_1> and <SECRET_2>'}]
+M4 ESC value + copies || [{'password': '<SECRET_1>'}, {'message': 'saw hunter<SECRET_2> and <SECRET_1>'}]
+look-alike value || {'password': '<SECRET_1>'}
+look-alike + log || [{'password': '<SECRET_1>'}, {'token': '<SECRET_2>'}, {'message': 'see <SECRET_1>'}]
+one letter || {'password': '<SECRET_1>'}
+one letter + log || [{'password': '<SECRET_1>'}, {'message': 'a cat and a hat'}]
+G4 credentials.user + log || [{'credentials': {'user': '<SECRET_REDACTED>'}}, {'message': 'svc restarted'}]
+large Secret: 2000 entries x ~203 chars = 406890 value chars; one pass: 4002 redactor calls, 418100 counted chars; cap per pass 2*MAX_BUNDLE_CHARS = 4194304; 3.8s
+exit 0

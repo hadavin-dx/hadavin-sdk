@@ -1,0 +1,2 @@
+3.13.18 15.1.0 <build-dir>/src/hadavin_sdk/__init__.py
+3.12.13 15.0.0 <build-dir>/src/hadavin_sdk/__init__.py

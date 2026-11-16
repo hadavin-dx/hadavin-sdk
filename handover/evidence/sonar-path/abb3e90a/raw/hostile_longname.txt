@@ -1,0 +1,5 @@
+/home/user/build/ER-sonarpath4-head/src/hadavin_sdk/__init__.py
+operator_dir(must_exist=False) 256-byte component -> OSError [Errno 36] File name too long: '<TMP>/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | path in text: True
+operator_file(must_exist=False) 256-byte component -> OSError [Errno 36] File name too long: '<TMP>/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | path in text: True
+LocalDirSink(root with 256-byte component) -> OSError [Errno 36] File name too long: '<TMP>/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | path in text: True
+operator_dir(must_exist=True) 256-byte -> PathRefused x: cannot be resolved | path in text: False

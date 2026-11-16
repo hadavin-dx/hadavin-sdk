@@ -1,0 +1,8 @@
+# pdst9c831f70-codebase-r1: part 3 (kind classification, loopback-only stand-ins), head 9c831f70, round 1, codebase details
+Source: hand-back of the codebase reviewer (acca3539c68345a13), condensed by the lead. MODE-SAFETY path. Read only; ran nothing. 0 Blocker, 2 Major, 5 Minor, 3 Nit. Snapshot /home/user/build/snap/pd-standins-9c831f70.
+- M1 (Major) reuse: netguard.LOOPBACK_LITERALS / is_loopback_literal added but unused; inline loopback sets stay in backends/table.py:68, config.py:186, guard/http.py:21, llm/openai_compat.py:37, actions/secrets_vault.py:67, store/postgres.py:63. Point them at netguard or state the deferral in the PR body.
+- M2 (Major) CHANGELOG.md:22 lists six stand-ins; code and test have seven (secrets/fake missing).
+- Minor: 3 host rule (is_loopback_host accepts 127.8.9.10, LOCALHOST, [::1]; request paths accept only exact literals) document or align; 4 _HOST_LIKE name heuristic bypassable (dsn, server, bind, uri, socket; hosts=lambda s: []); 5 stand_in_host_problem only in config._one, not in factory.py:64 / direct Backends; 6 2000-host fuzz near-tautology, no seen-true/seen-false assert, hand-mutates global TABLE; 7 mutant gaps (re.IGNORECASE, role != stand_in continue, hosts is None short-circuit; S6 pins statement text, not behaviour).
+- Nit: dead `n != "kind"`; stray docstring in `planted` fixture; try/except in test_a_real_kind_may_name_any_host.
+- Checked true: spelling counts, CI step wired, no demo names, stage names, old-code collection failure.
+- Not checked: no tests/mutants/lint run; tools/mutation_runner.py signature; ci_security_golden.json test.

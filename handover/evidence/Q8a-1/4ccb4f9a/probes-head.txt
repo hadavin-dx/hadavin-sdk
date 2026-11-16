@@ -1,0 +1,224 @@
+clean | systems.base_url | fw@+fw: | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=True suppress=True | text: '1 validation error for Config\n\n  Value error, system fixture-records: base_url is not a valid URL [type=value_error]'
+ok-no-error | systems.base_url | fw@+fw: | load_registry(clean config + mutated other files) | OK
+clean | openai_compat.base_url | fw@+fw: | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=True suppress=True | text: 'backends.llm (openai_compat): 1 validation error for OpenAICompatSettings\n\n  Value error, not a valid URL [type=value_error]'
+ok-no-error | openai_compat.base_url | fw@+fw: | load_registry(clean config + mutated other files) | OK
+clean | vault.address | fw@+fw: | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=True suppress=True | text: 'backends.secrets (vault): 1 validation error for VaultSettings\n\n  Value error, not a valid URL [type=value_error]'
+ok-no-error | vault.address | fw@+fw: | load_registry(clean config + mutated other files) | OK
+clean | systems.base_url | fw@ only (login-less user) | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=True suppress=True | text: '1 validation error for Config\n\n  Value error, system fixture-records: base_url is not a valid URL [type=value_error]'
+ok-no-error | systems.base_url | fw@ only (login-less user) | load_registry(clean config + mutated other files) | OK
+clean | openai_compat.base_url | fw@ only (login-less user) | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=True suppress=True | text: 'backends.llm (openai_compat): 1 validation error for OpenAICompatSettings\n\n  Value error, not a valid URL [type=value_error]'
+ok-no-error | openai_compat.base_url | fw@ only (login-less user) | load_registry(clean config + mutated other files) | OK
+clean | vault.address | fw@ only (login-less user) | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=True suppress=True | text: 'backends.secrets (vault): 1 validation error for VaultSettings\n\n  Value error, not a valid URL [type=value_error]'
+ok-no-error | vault.address | fw@ only (login-less user) | load_registry(clean config + mutated other files) | OK
+clean | systems.base_url | fw: port marker | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=True suppress=True | text: '1 validation error for Config\n\n  Value error, system fixture-records: base_url is not a valid URL [type=value_error]'
+ok-no-error | systems.base_url | fw: port marker | load_registry(clean config + mutated other files) | OK
+clean | openai_compat.base_url | fw: port marker | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=True suppress=True | text: 'backends.llm (openai_compat): 1 validation error for OpenAICompatSettings\n\n  Value error, not a valid URL [type=value_error]'
+ok-no-error | openai_compat.base_url | fw: port marker | load_registry(clean config + mutated other files) | OK
+clean | vault.address | fw: port marker | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=True suppress=True | text: 'backends.secrets (vault): 1 validation error for VaultSettings\n\n  Value error, not a valid URL [type=value_error]'
+ok-no-error | vault.address | fw: port marker | load_registry(clean config + mutated other files) | OK
+clean | systems.base_url | fw: bad port 99999x | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=True suppress=True | text: '1 validation error for Config\n\n  Value error, system fixture-records: base_url is not a valid URL [type=value_error]'
+ok-no-error | systems.base_url | fw: bad port 99999x | load_registry(clean config + mutated other files) | OK
+clean | openai_compat.base_url | fw: bad port 99999x | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=True suppress=True | text: 'backends.llm (openai_compat): 1 validation error for OpenAICompatSettings\n\n  Value error, not a valid URL [type=value_error]'
+ok-no-error | openai_compat.base_url | fw: bad port 99999x | load_registry(clean config + mutated other files) | OK
+clean | vault.address | fw: bad port 99999x | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=True suppress=True | text: 'backends.secrets (vault): 1 validation error for VaultSettings\n\n  Value error, not a valid URL [type=value_error]'
+ok-no-error | vault.address | fw: bad port 99999x | load_registry(clean config + mutated other files) | OK
+clean | systems.base_url | fw# fragment | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=True suppress=True | text: '1 validation error for Config\n\n  Value error, system fixture-records: base_url is not a valid URL [type=value_error]'
+ok-no-error | systems.base_url | fw# fragment | load_registry(clean config + mutated other files) | OK
+clean | openai_compat.base_url | fw# fragment | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=True suppress=True | text: 'backends.llm (openai_compat): 1 validation error for OpenAICompatSettings\n\n  Value error, not a valid URL [type=value_error]'
+ok-no-error | openai_compat.base_url | fw# fragment | load_registry(clean config + mutated other files) | OK
+clean | vault.address | fw# fragment | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=True suppress=True | text: 'backends.secrets (vault): 1 validation error for VaultSettings\n\n  Value error, not a valid URL [type=value_error]'
+ok-no-error | vault.address | fw# fragment | load_registry(clean config + mutated other files) | OK
+clean | systems.base_url | fw/ path | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=True suppress=True | text: '1 validation error for Config\n\n  Value error, system fixture-records: base_url is not a valid URL [type=value_error]'
+ok-no-error | systems.base_url | fw/ path | load_registry(clean config + mutated other files) | OK
+clean | openai_compat.base_url | fw/ path | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=True suppress=True | text: 'backends.llm (openai_compat): 1 validation error for OpenAICompatSettings\n\n  Value error, not a valid URL [type=value_error]'
+ok-no-error | openai_compat.base_url | fw/ path | load_registry(clean config + mutated other files) | OK
+clean | vault.address | fw/ path | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=True suppress=True | text: 'backends.secrets (vault): 1 validation error for VaultSettings\n\n  Value error, not a valid URL [type=value_error]'
+ok-no-error | vault.address | fw/ path | load_registry(clean config + mutated other files) | OK
+clean | systems.base_url | fw? query | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=True suppress=True | text: '1 validation error for Config\n\n  Value error, system fixture-records: base_url is not a valid URL [type=value_error]'
+ok-no-error | systems.base_url | fw? query | load_registry(clean config + mutated other files) | OK
+clean | openai_compat.base_url | fw? query | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=True suppress=True | text: 'backends.llm (openai_compat): 1 validation error for OpenAICompatSettings\n\n  Value error, not a valid URL [type=value_error]'
+ok-no-error | openai_compat.base_url | fw? query | load_registry(clean config + mutated other files) | OK
+clean | vault.address | fw? query | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=True suppress=True | text: 'backends.secrets (vault): 1 validation error for VaultSettings\n\n  Value error, not a valid URL [type=value_error]'
+ok-no-error | vault.address | fw? query | load_registry(clean config + mutated other files) | OK
+clean | systems.base_url | small@ small: | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=True suppress=True | text: '1 validation error for Config\n\n  Value error, system fixture-records: base_url is not a valid URL [type=value_error]'
+ok-no-error | systems.base_url | small@ small: | load_registry(clean config + mutated other files) | OK
+clean | openai_compat.base_url | small@ small: | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=True suppress=True | text: 'backends.llm (openai_compat): 1 validation error for OpenAICompatSettings\n\n  Value error, not a valid URL [type=value_error]'
+ok-no-error | openai_compat.base_url | small@ small: | load_registry(clean config + mutated other files) | OK
+clean | vault.address | small@ small: | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=True suppress=True | text: 'backends.secrets (vault): 1 validation error for VaultSettings\n\n  Value error, not a valid URL [type=value_error]'
+ok-no-error | vault.address | small@ small: | load_registry(clean config + mutated other files) | OK
+clean | systems.base_url | a/c char (U+2100) | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=True suppress=True | text: '1 validation error for Config\n\n  Value error, system fixture-records: base_url is not a valid URL [type=value_error]'
+ok-no-error | systems.base_url | a/c char (U+2100) | load_registry(clean config + mutated other files) | OK
+clean | openai_compat.base_url | a/c char (U+2100) | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=True suppress=True | text: 'backends.llm (openai_compat): 1 validation error for OpenAICompatSettings\n\n  Value error, not a valid URL [type=value_error]'
+ok-no-error | openai_compat.base_url | a/c char (U+2100) | load_registry(clean config + mutated other files) | OK
+clean | vault.address | a/c char (U+2100) | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=True suppress=True | text: 'backends.secrets (vault): 1 validation error for VaultSettings\n\n  Value error, not a valid URL [type=value_error]'
+ok-no-error | vault.address | a/c char (U+2100) | load_registry(clean config + mutated other files) | OK
+clean | systems.base_url | c/o char (U+2105) | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=True suppress=True | text: '1 validation error for Config\n\n  Value error, system fixture-records: base_url is not a valid URL [type=value_error]'
+ok-no-error | systems.base_url | c/o char (U+2105) | load_registry(clean config + mutated other files) | OK
+clean | openai_compat.base_url | c/o char (U+2105) | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=True suppress=True | text: 'backends.llm (openai_compat): 1 validation error for OpenAICompatSettings\n\n  Value error, not a valid URL [type=value_error]'
+ok-no-error | openai_compat.base_url | c/o char (U+2105) | load_registry(clean config + mutated other files) | OK
+clean | vault.address | c/o char (U+2105) | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=True suppress=True | text: 'backends.secrets (vault): 1 validation error for VaultSettings\n\n  Value error, not a valid URL [type=value_error]'
+ok-no-error | vault.address | c/o char (U+2105) | load_registry(clean config + mutated other files) | OK
+ok-no-error | systems.base_url | fw brackets | load_config | OK
+ok-no-error | systems.base_url | fw brackets | load_registry | OK
+ok-no-error | openai_compat.base_url | fw brackets | load_config | OK
+ok-no-error | openai_compat.base_url | fw brackets | load_registry | OK
+ok-no-error | vault.address | fw brackets | load_config | OK
+ok-no-error | vault.address | fw brackets | load_registry | OK
+clean | systems.base_url | ascii [ unbalanced | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=True suppress=True | text: '1 validation error for Config\n\n  Value error, system fixture-records: base_url is not a valid URL [type=value_error]'
+ok-no-error | systems.base_url | ascii [ unbalanced | load_registry(clean config + mutated other files) | OK
+clean | openai_compat.base_url | ascii [ unbalanced | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=True suppress=True | text: 'backends.llm (openai_compat): 1 validation error for OpenAICompatSettings\n\n  Value error, not a valid URL [type=value_error]'
+ok-no-error | openai_compat.base_url | ascii [ unbalanced | load_registry(clean config + mutated other files) | OK
+clean | vault.address | ascii [ unbalanced | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=True suppress=True | text: 'backends.secrets (vault): 1 validation error for VaultSettings\n\n  Value error, not a valid URL [type=value_error]'
+ok-no-error | vault.address | ascii [ unbalanced | load_registry(clean config + mutated other files) | OK
+clean | systems.base_url | ascii bracket bad ipv6 | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=True suppress=True | text: '1 validation error for Config\n\n  Value error, system fixture-records: base_url is not a valid URL [type=value_error]'
+ok-no-error | systems.base_url | ascii bracket bad ipv6 | load_registry(clean config + mutated other files) | OK
+clean | openai_compat.base_url | ascii bracket bad ipv6 | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=True suppress=True | text: 'backends.llm (openai_compat): 1 validation error for OpenAICompatSettings\n\n  Value error, not a valid URL [type=value_error]'
+ok-no-error | openai_compat.base_url | ascii bracket bad ipv6 | load_registry(clean config + mutated other files) | OK
+clean | vault.address | ascii bracket bad ipv6 | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=True suppress=True | text: 'backends.secrets (vault): 1 validation error for VaultSettings\n\n  Value error, not a valid URL [type=value_error]'
+ok-no-error | vault.address | ascii bracket bad ipv6 | load_registry(clean config + mutated other files) | OK
+clean | systems.base_url | ascii bad port | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=True suppress=True | text: '1 validation error for Config\n\n  Value error, system fixture-records: base_url is not a valid URL [type=value_error]'
+ok-no-error | systems.base_url | ascii bad port | load_registry(clean config + mutated other files) | OK
+clean | openai_compat.base_url | ascii bad port | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=True suppress=True | text: 'backends.llm (openai_compat): 1 validation error for OpenAICompatSettings\n\n  Value error, not a valid URL [type=value_error]'
+ok-no-error | openai_compat.base_url | ascii bad port | load_registry(clean config + mutated other files) | OK
+clean | vault.address | ascii bad port | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=True suppress=True | text: 'backends.secrets (vault): 1 validation error for VaultSettings\n\n  Value error, not a valid URL [type=value_error]'
+ok-no-error | vault.address | ascii bad port | load_registry(clean config + mutated other files) | OK
+clean | systems.base_url | ascii userinfo | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=True suppress=True | text: '1 validation error for Config\n\n  Value error, system fixture-records: base_url must not contain a login [type=value_error]'
+ok-no-error | systems.base_url | ascii userinfo | load_registry(clean config + mutated other files) | OK
+ok-no-error | openai_compat.base_url | ascii userinfo | load_config | OK
+ok-no-error | openai_compat.base_url | ascii userinfo | load_registry | OK
+ok-no-error | vault.address | ascii userinfo | load_config | OK
+ok-no-error | vault.address | ascii userinfo | load_registry | OK
+ok-no-error | systems.base_url | fw percent | load_config | OK
+ok-no-error | systems.base_url | fw percent | load_registry | OK
+ok-no-error | openai_compat.base_url | fw percent | load_config | OK
+ok-no-error | openai_compat.base_url | fw percent | load_registry | OK
+ok-no-error | vault.address | fw percent | load_config | OK
+ok-no-error | vault.address | fw percent | load_registry | OK
+clean | systems.base_url | scheme fw colon | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=True suppress=True | text: '1 validation error for Config\n\n  Value error, system fixture-records: base_url must be https (http only for loopback with allow_insecure_loopback) [type=value_error]'
+ok-no-error | systems.base_url | scheme fw colon | load_registry(clean config + mutated other files) | OK
+clean | openai_compat.base_url | no-scheme marker | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=True suppress=True | text: 'backends.llm (openai_compat): 1 validation error for OpenAICompatSettings\n\n  Value error, base_url must be https (plain http only to this machine, with no key) [type=value_error]'
+ok-no-error | openai_compat.base_url | no-scheme marker | load_registry(clean config + mutated other files) | OK
+clean | vault.address | no-scheme marker | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=True suppress=True | text: 'backends.secrets (vault): 1 validation error for VaultSettings\n\n  Value error, address must be https (plain http only to this machine) [type=value_error]'
+ok-no-error | vault.address | no-scheme marker | load_registry(clean config + mutated other files) | OK
+ok-no-error | broken YAML tools/test-agent.yaml (marker on bad line) | load_config | OK
+hidden-in-suppressed-context-only | broken YAML tools/test-agent.yaml (marker on bad line) | load_registry | ConfigError | str=0 repr=0 chain=2 traceback=0 cause=False ctx=True suppress=True | text: 'not valid YAML (line 3, column 6)'
+ok-no-error | broken YAML tools/test-agent.yaml (tab + marker) | load_config | OK
+hidden-in-suppressed-context-only | broken YAML tools/test-agent.yaml (tab + marker) | load_registry | ConfigError | str=0 repr=0 chain=1 traceback=0 cause=False ctx=True suppress=True | text: 'not valid YAML (line 2, column 1)'
+hidden-in-suppressed-context-only | broken YAML config.yaml (marker on bad line) | load_config | ConfigError | str=0 repr=0 chain=2 traceback=0 cause=False ctx=True suppress=True | text: 'not valid YAML (line 28, column 2)'
+ok-no-error | broken YAML config.yaml (marker on bad line) | load_registry(clean config + mutated other files) | OK
+hidden-in-suppressed-context-only | broken YAML config.yaml (bad indent+marker) | load_config | ConfigError | str=0 repr=0 chain=1 traceback=0 cause=False ctx=True suppress=True | text: 'not valid YAML (line 27, column 8)'
+ok-no-error | broken YAML config.yaml (bad indent+marker) | load_registry(clean config + mutated other files) | OK
+clean | duplicate key config.yaml (marker) | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=False suppress=False | text: 'duplicate key (line 27)'
+ok-no-error | duplicate key config.yaml (marker) | load_registry(clean config + mutated other files) | OK
+ok-no-error | broken YAML agents.yaml | load_config | OK
+hidden-in-suppressed-context-only | broken YAML agents.yaml | load_registry | ConfigError | str=0 repr=0 chain=1 traceback=0 cause=False ctx=True suppress=True | text: 'not valid YAML (line 14, column 1)'
+ok-no-error | broken YAML principals.yaml | load_config | OK
+hidden-in-suppressed-context-only | broken YAML principals.yaml | load_registry | ConfigError | str=0 repr=0 chain=1 traceback=0 cause=False ctx=True suppress=True | text: 'not valid YAML (line 15, column 1)'
+ok-no-error | broken YAML chains.yaml | load_config | OK
+hidden-in-suppressed-context-only | broken YAML chains.yaml | load_registry | ConfigError | str=0 repr=0 chain=1 traceback=0 cause=False ctx=True suppress=True | text: 'not valid YAML (line 11, column 1)'
+hidden-in-suppressed-context-only | broken YAML egress.yaml | load_config | ConfigError | str=0 repr=0 chain=1 traceback=0 cause=False ctx=True suppress=True | text: 'not valid YAML (line 5, column 1)'
+ok-no-error | broken YAML egress.yaml | load_registry(clean config + mutated other files) | n/a: clean config failed ConfigError
+ok-no-error | broken YAML actions/lookup_record.yaml | load_config | OK
+hidden-in-suppressed-context-only | broken YAML actions/lookup_record.yaml | load_registry | ConfigError | str=0 repr=0 chain=1 traceback=0 cause=False ctx=True suppress=True | text: 'not valid YAML (line 27, column 1)'
+clean | YAML non-utf8 bytes + marker config.yaml | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=True suppress=True | text: 'a value was refused (UnicodeDecodeError)'
+ok-no-error | YAML non-utf8 bytes + marker config.yaml | load_registry(clean config + mutated other files) | OK
+ok-no-error | YAML non-utf8 bytes + marker tools/test-agent.yaml | load_config | OK
+clean | YAML non-utf8 bytes + marker tools/test-agent.yaml | load_registry | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=True suppress=True | text: 'a value was refused (UnicodeDecodeError)'
+clean | YAML anchors/tags marker config.yaml | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=True suppress=True | text: 'not valid YAML (line 27, column 4)'
+ok-no-error | YAML anchors/tags marker config.yaml | load_registry(clean config + mutated other files) | OK
+hidden-in-suppressed-context-only | YAML alias unknown config.yaml | load_config | ConfigError | str=0 repr=0 chain=2 traceback=0 cause=False ctx=True suppress=True | text: 'not valid YAML (line 27, column 4)'
+ok-no-error | YAML alias unknown config.yaml | load_registry(clean config + mutated other files) | OK
+hidden-in-suppressed-context-only | unknown KEY marker | config.yaml | load_config | ConfigError | str=0 repr=0 chain=1 traceback=0 cause=False ctx=True suppress=True | text: '1 validation error for Config\n<unknown key>\n  Extra inputs are not permitted [type=extra_forbidden]'
+ok-no-error | unknown KEY marker | config.yaml | load_registry(clean config + mutated other files) | OK
+ok-no-error | unknown KEY marker | agents.yaml | load_config | OK
+hidden-in-suppressed-context-only | unknown KEY marker | agents.yaml | load_registry | ConfigError | str=0 repr=0 chain=1 traceback=0 cause=False ctx=True suppress=True | text: '1 validation error for AgentRecord\n<unknown key>\n  Extra inputs are not permitted [type=extra_forbidden]'
+ok-no-error | unknown KEY marker | principals.yaml | load_config | OK
+hidden-in-suppressed-context-only | unknown KEY marker | principals.yaml | load_registry | ConfigError | str=0 repr=0 chain=1 traceback=0 cause=False ctx=True suppress=True | text: '1 validation error for Principal\n<unknown key>\n  Extra inputs are not permitted [type=extra_forbidden]'
+ok-no-error | unknown KEY marker | chains.yaml | load_config | OK
+hidden-in-suppressed-context-only | unknown KEY marker | chains.yaml | load_registry | ConfigError | str=0 repr=0 chain=1 traceback=0 cause=False ctx=True suppress=True | text: '1 validation error for Chain\n<unknown key>\n  Extra inputs are not permitted [type=extra_forbidden]'
+ok-no-error | unknown KEY marker | actions/lookup_record.yaml | load_config | OK
+hidden-in-suppressed-context-only | unknown KEY marker | actions/lookup_record.yaml | load_registry | ConfigError | str=0 repr=0 chain=1 traceback=0 cause=False ctx=True suppress=True | text: '1 validation error for ActionContract\n<unknown key>\n  Extra inputs are not permitted [type=extra_forbidden]'
+ok-no-error | unknown KEY marker | egress.yaml | load_config | OK
+ok-no-error | unknown KEY marker | egress.yaml | load_registry | OK
+hidden-in-suppressed-context-only | unknown KEY marker nested | config.yaml routes.default | load_config | ConfigError | str=0 repr=0 chain=1 traceback=0 cause=False ctx=True suppress=True | text: '1 validation error for Config\nroutes.default.<unknown key>\n  Extra inputs are not permitted [type=extra_forbidden]'
+ok-no-error | unknown KEY marker nested | config.yaml routes.default | load_registry(clean config + mutated other files) | OK
+clean | unknown KEY marker nested | config.yaml backends | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=False suppress=False | text: 'backends: 1 unknown capability name(s); known: secrets, signer, anchor, store, audit, llm, detector, channel'
+ok-no-error | unknown KEY marker nested | config.yaml backends | load_registry(clean config + mutated other files) | OK
+hidden-in-suppressed-context-only | unknown KEY marker nested | config.yaml systems.x | load_config | ConfigError | str=0 repr=0 chain=1 traceback=0 cause=False ctx=True suppress=True | text: '1 validation error for Config\nsystems.fixture-records.<unknown key>\n  Extra inputs are not permitted [type=extra_forbidden]'
+ok-no-error | unknown KEY marker nested | config.yaml systems.x | load_registry(clean config + mutated other files) | OK
+hidden-in-suppressed-context-only | unknown KEY marker nested | config.yaml backends.llm kind settings | load_config | ConfigError | str=0 repr=0 chain=1 traceback=0 cause=False ctx=True suppress=True | text: 'backends.llm (fake): 1 validation error for FakeLLMSettings\n<unknown key>\n  Extra inputs are not permitted [type=extra_forbidden]'
+ok-no-error | unknown KEY marker nested | config.yaml backends.llm kind settings | load_registry(clean config + mutated other files) | OK
+ok-no-error | unknown KEY marker | tools/test-agent.yaml entry | load_config | OK
+hidden-in-suppressed-context-only | unknown KEY marker | tools/test-agent.yaml entry | load_registry | ConfigError | str=0 repr=0 chain=1 traceback=0 cause=False ctx=True suppress=True | text: 'tools/test-agent.yaml: invalid tool entry (<unknown key>)'
+ok-no-error | unknown KEY marker | agents.yaml budget_usd | load_config | OK
+hidden-in-suppressed-context-only | unknown KEY marker | agents.yaml budget_usd | load_registry | ConfigError | str=0 repr=0 chain=1 traceback=0 cause=False ctx=True suppress=True | text: '1 validation error for AgentRecord\nbudget_usd.<unknown key>\n  Extra inputs are not permitted [type=extra_forbidden]'
+ok-no-error | unknown KEY marker | actions executor | load_config | OK
+hidden-in-suppressed-context-only | unknown KEY marker | actions executor | load_registry | ConfigError | str=0 repr=0 chain=1 traceback=0 cause=False ctx=True suppress=True | text: '1 validation error for ActionContract\nexecutor.http.<unknown key>\n  Extra inputs are not permitted [type=extra_forbidden]'
+ok-no-error | unknown KEY marker | chains step | load_config | OK
+hidden-in-suppressed-context-only | unknown KEY marker | chains step | load_registry | ConfigError | str=0 repr=0 chain=1 traceback=0 cause=False ctx=True suppress=True | text: '1 validation error for Chain\nsteps.0.<unknown key>\n  Extra inputs are not permitted [type=extra_forbidden]'
+ok-no-error | unknown VALUE model_route | agents.yaml | load_config | OK
+LEAK-READABLE | unknown VALUE model_route | agents.yaml | load_registry | ConfigError | str=1 repr=1 chain=1 traceback=1 cause=False ctx=False suppress=False | text: 'agent test-agent: unknown model_route zq-probe-mk4417'
+     MARKER LINE: hadavin_sdk.errors.ConfigError: agent test-agent: unknown model_route zq-probe-mk4417
+ok-no-error | unknown VALUE scope name | agents.yaml scope_allowed | load_config | OK
+LEAK-READABLE | unknown VALUE scope name | agents.yaml scope_allowed | load_registry | ConfigError | str=1 repr=1 chain=1 traceback=1 cause=False ctx=False suppress=False | text: 'agent test-agent: no contract for zq-probe-mk4417'
+     MARKER LINE: hadavin_sdk.errors.ConfigError: agent test-agent: no contract for zq-probe-mk4417
+ok-no-error | unknown VALUE status | agents.yaml | load_config | OK
+hidden-in-suppressed-context-only | unknown VALUE status | agents.yaml | load_registry | ConfigError | str=0 repr=0 chain=1 traceback=0 cause=False ctx=True suppress=True | text: "1 validation error for AgentRecord\nstatus\n  Input should be 'draft', 'live' or 'retired' [type=literal_error]"
+ok-no-error | unknown VALUE data_class | agents.yaml | load_config | OK
+hidden-in-suppressed-context-only | unknown VALUE data_class | agents.yaml | load_registry | ConfigError | str=0 repr=0 chain=1 traceback=0 cause=False ctx=True suppress=True | text: "1 validation error for AgentRecord\ndata_class\n  Input should be 'public', 'internal', 'confidential' or 'restricted' [type=literal_error]"
+ok-no-error | unknown VALUE tools_allowed | agents.yaml | load_config | OK
+ok-no-error | unknown VALUE tools_allowed | agents.yaml | load_registry | OK
+clean | unknown VALUE environment | config.yaml | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=True suppress=True | text: "1 validation error for Config\nenvironment\n  Input should be 'demo', 'pilot' or 'prod' [type=literal_error]"
+ok-no-error | unknown VALUE environment | config.yaml | load_registry(clean config + mutated other files) | OK
+clean | unknown VALUE backend kind | config.yaml | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=False suppress=False | text: 'backend store: unknown kind; known: memory, postgres'
+ok-no-error | unknown VALUE backend kind | config.yaml | load_registry(clean config + mutated other files) | OK
+clean | unknown VALUE backend kind (mapping) | config.yaml | load_config | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=False suppress=False | text: 'backend llm: unknown kind; known: anthropic, bedrock, fake, gemini, openai_compat'
+ok-no-error | unknown VALUE backend kind (mapping) | config.yaml | load_registry(clean config + mutated other files) | OK
+ok-no-error | unknown VALUE route key | config.yaml routes | load_config | OK
+ok-no-error | unknown VALUE route key | config.yaml routes | load_registry | OK
+ok-no-error | unknown VALUE system name | actions target_system | load_config | OK
+LEAK-READABLE | unknown VALUE system name | actions target_system | load_registry | ConfigError | str=1 repr=1 chain=1 traceback=1 cause=False ctx=False suppress=False | text: 'action lookup_record: unknown system zq-probe-mk4417'
+     MARKER LINE: hadavin_sdk.errors.ConfigError: action lookup_record: unknown system zq-probe-mk4417
+ok-no-error | unknown VALUE chain_id | actions | load_config | OK
+LEAK-READABLE | unknown VALUE chain_id | actions | load_registry | ConfigError | str=1 repr=1 chain=1 traceback=1 cause=False ctx=False suppress=False | text: 'action lookup_record: unknown chain zq-probe-mk4417'
+     MARKER LINE: hadavin_sdk.errors.ConfigError: action lookup_record: unknown chain zq-probe-mk4417
+ok-no-error | unknown VALUE risk_class | actions | load_config | OK
+hidden-in-suppressed-context-only | unknown VALUE risk_class | actions | load_registry | ConfigError | str=0 repr=0 chain=1 traceback=0 cause=False ctx=True suppress=True | text: "1 validation error for ActionContract\nrisk_class\n  Input should be 'read_only', 'reversible' or 'sign_off' [type=literal_error]"
+ok-no-error | unknown VALUE executor kind | actions | load_config | OK
+LEAK-READABLE | unknown VALUE executor kind | actions | load_registry | ConfigError | str=1 repr=1 chain=3 traceback=1 cause=False ctx=True suppress=True | text: "1 validation error for ActionContract\nexecutor\n  Input tag 'zq-probe-mk4417' found using 'kind' does not match any of the expected tags: 'none', 'manual', 'http' [type=union_tag_invalid]"
+     MARKER LINE:   Input tag 'zq-probe-mk4417' found using 'kind' does not match any of the expected tags: 'none', 'manual', 'http' [type=union_tag_invalid]
+ok-no-error | unknown VALUE approver_of | principals | load_config | OK
+ok-no-error | unknown VALUE approver_of | principals | load_registry | OK
+ok-no-error | unknown VALUE principal kind | principals | load_config | OK
+hidden-in-suppressed-context-only | unknown VALUE principal kind | principals | load_registry | ConfigError | str=0 repr=0 chain=1 traceback=0 cause=False ctx=True suppress=True | text: "1 validation error for Principal\nkind\n  Input should be 'person' or 'service' [type=literal_error]"
+ok-no-error | unknown VALUE approver_ids | chains | load_config | OK
+ok-no-error | unknown VALUE approver_ids | chains | load_registry | OK
+ok-no-error | unknown VALUE rights | principals | load_config | OK
+ok-no-error | unknown VALUE rights | principals | load_registry | OK
+ok-no-error | unknown VALUE egress host | egress.yaml | load_config | OK
+ok-no-error | unknown VALUE egress host | egress.yaml | load_registry | OK
+ok-no-error | unknown VALUE check_modules | config.yaml | load_config | OK
+clean | unknown VALUE check_modules | config.yaml | load_registry | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=False suppress=False | text: 'action create_draft_record: <not shown> is outside check_modules; action create_draft_record: <not shown> is outside check_modules; action delete_record: <not shown> is outside check_modules; action lookup_record: <not shown> is outside check_modules; action send_email: <not shown> is outside check_'
+ok-no-error | unknown VALUE prompt_file | agents.yaml | load_config | OK
+clean | unknown VALUE prompt_file | agents.yaml | load_registry | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=False suppress=False | text: 'agent test-agent: prompt_file missing'
+ok-no-error | unknown VALUE verify_check | actions | load_config | OK
+LEAK-READABLE | unknown VALUE verify_check | actions | load_registry | ConfigError | str=1 repr=1 chain=1 traceback=1 cause=False ctx=False suppress=False | text: 'action lookup_record: zq-probe-mk4417 is outside check_modules'
+     MARKER LINE: hadavin_sdk.errors.ConfigError: action lookup_record: zq-probe-mk4417 is outside check_modules
+ok-no-error | unknown VALUE tool file name (no agent) | tools/<marker>.yaml | load_config | OK
+LEAK-READABLE | unknown VALUE tool file name (no agent) | tools/<marker>.yaml | load_registry | ConfigError | str=2 repr=2 chain=2 traceback=2 cause=False ctx=False suppress=False | text: 'tools/zq-probe-mk4417.yaml: no agent zq-probe-mk4417'
+     MARKER LINE: hadavin_sdk.errors.ConfigError: tools/zq-probe-mk4417.yaml: no agent zq-probe-mk4417
+ok-no-error | unknown VALUE tool function/operations/hosts/secret_names | tools/test-agent.yaml | load_config | OK
+LEAK-READABLE | unknown VALUE tool function/operations/hosts/secret_names | tools/test-agent.yaml | load_registry | ConfigError | str=1 repr=1 chain=1 traceback=1 cause=False ctx=False suppress=False | text: "tools/test-agent.yaml: tool t: its function is outside tool_modules; tools/test-agent.yaml: tool t is not in the agent's tools_allowed; tools/test-agent.yaml: action lookup_record input id must say `identifier: true` or `identifier: false`; tools/test-agent.yaml: action create_draft_record input tit"
+     MARKER LINE: hadavin_sdk.errors.ConfigError: tools/test-agent.yaml: tool t: its function is outside tool_modules; tools/test-agent.yaml: tool t is not in the agent's tools_allowed; tools/test-agent.yaml: action lookup_record input id must say `identifier: true` or `identifier: false`; tools/test-agent.yaml: action create_draft_record input title must say `identifier: true` or `identifier: false`; tools/test-agent.yaml: action create_draft_record input amount must say `identifier: true` or `identifier: false`; tools/test-agent.yaml: action delete_record input id must say `identifier: true` or `identifier: false`; tools/test-agent.yaml: tool t: operation zq-probe-mk4417 is not on the read list of tool_modules
+ok-no-error | unknown VALUE tool side_effect | tools/test-agent.yaml | load_config | OK
+hidden-in-suppressed-context-only | unknown VALUE tool side_effect | tools/test-agent.yaml | load_registry | ConfigError | str=0 repr=0 chain=1 traceback=0 cause=False ctx=True suppress=True | text: 'tools/test-agent.yaml: invalid tool entry (side_effect)'
+ok-no-error | unknown VALUE tool name pattern | tools/test-agent.yaml | load_config | OK
+hidden-in-suppressed-context-only | unknown VALUE tool name pattern | tools/test-agent.yaml | load_registry | ConfigError | str=0 repr=0 chain=1 traceback=0 cause=False ctx=True suppress=True | text: 'tools/test-agent.yaml: invalid tool entry (name)'
+ok-no-error | duplicate tool name marker | tools/test-agent.yaml | load_config | OK
+clean | duplicate tool name marker | tools/test-agent.yaml | load_registry | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=False suppress=False | text: 'tools/test-agent.yaml: duplicate tool t_a'
+ok-no-error | tools/test-agent.yaml top-level not a list (marker) | load_config | OK
+clean | tools/test-agent.yaml top-level not a list (marker) | load_registry | ConfigError | str=0 repr=0 chain=0 traceback=0 cause=False ctx=False suppress=False | text: 'tools/test-agent.yaml: expected a list of tools'
+ok-no-error | tools/test-agent.yaml entry not a dict (marker string) | load_config | OK
+hidden-in-suppressed-context-only | tools/test-agent.yaml entry not a dict (marker string) | load_registry | ConfigError | str=0 repr=0 chain=1 traceback=0 cause=False ctx=True suppress=True | text: 'tools/test-agent.yaml: invalid tool entry (?)'
+
+TOTAL probes=107 readable-marker-results=8

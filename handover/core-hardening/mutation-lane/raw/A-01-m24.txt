@@ -1,0 +1,20 @@
+MUTANT A-01-m24  VERDICT: SURVIVED
+description: M4: chain reconcile never drains _pending
+base commit: b4cce5b6ae80b45125604b8295ebb35bd2ea1c2c   root: /tmp/c8/wA   file: src/hadavin_sdk/audit/chain.py
+command: env -i PATH=/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin HOME=/root PYTHONDONTWRITEBYTECODE=1 /tmp/c8/wA/.venv/bin/python -m pytest -q -p no:cacheprovider --tb=line -rf tests/test_a01_audit_reconcile.py tests/test_p7_tick.py tests/test_s2_audit.py tests/test_p3b_neutral_audit.py   (cwd=/tmp/c8/wA)
+rc: 0
+restore check: diff <saved original> <file after restore>: rc=0 (0 = identical)
+pytest summary line: 104 passed in 18.02s
+first failing test: -
+all failing tests (0): -
+--- OLD TEXT (full) ---
+        for event in list(self._pending):
+            if self._drain(event):
+--- NEW TEXT (full) ---
+        for event in []:
+            if self._drain(event):
+--- PYTEST OUTPUT (full) ---
+........................................................................ [ 69%]
+................................                                         [100%]
+104 passed in 18.02s
+

@@ -1,0 +1,12 @@
+BAD SURVIVED     54 the scrub does not search the consuming reading  []
+      first line: 
+BAD WRONG_REASON 59 the character reading is a result although the text holds a control sequence  [test_scrub_character_reading_with_a_sequence_is_withheld]
+      first line: E       AssertionError: the secret stood, or a sequence body was shown: 'a <SECRET_REDACTED> ; INFO user[0m<SECRET_REDACTED>'
+BAD SURVIVED     84 the scrub's decoded readings lack the character reading (batch 7)  []
+      first line: 
+BAD SURVIVED     93 direct redact() does not read the ignorable characters (batch 7)  []
+      first line: 
+BAD SURVIVED     111 the collapsed spaced run may refuse a text on its own (no soft rule)  []
+      first line: 
+109 of 114 good; problems: ['54 the scrub does not search the consuming reading', '59 the character reading is a result although the text holds a control sequence', "84 the scrub's decoded readings lack the character reading (batch 7)", '93 direct redact() does not read the ignorable characters (batch 7)', '111 the collapsed spaced run may refuse a text on its own (no soft rule)']
+109 of 114 good; problems: ['54 the scrub does not search the consuming reading', '59 the character reading is a result although the text holds a control sequence', "84 the scrub's decoded readings lack the character reading (batch 7)", '93 direct redact() does not read the ignorable characters (batch 7)', '111 the collapsed spaced run may refuse a text on its own (no soft rule)']

@@ -1,0 +1,7 @@
+flaky wt run 1 rc=1 1 failed in 0.62s 20:37:24
+flaky wt-main run 1 rc=1 1 failed in 0.67s 20:37:26
+flaky wt run 2 rc=1 1 failed in 0.69s 20:37:28
+flaky wt-main run 2 rc=0 1 passed in 0.76s 20:37:30
+flaky wt run 3 rc=1 1 failed in 0.66s 20:37:32
+flaky wt-main run 3 rc=1 1 failed in 0.69s 20:37:34
+done

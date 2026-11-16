@@ -1,0 +1,8 @@
+== NEW (0dabf1f + the rev-7 redact.py entries)
+K43a 'passwordk*30="<SECRET_1>"' False
+K43b "passwordk*30='<SECRET_1>'" False
+K43a_card_like 'x passwordk*30="<SECRET_1>"' False
+== BASE 0dabf1f
+K43a 'passwordk*30="Tq7mZ 4xKp2Vb9Lr3NcW8dYh6uJs"' True
+K43b "passwordk*30='Tq7mZ 4xKp2Vb9Lr3NcW8dYh6uJs'" True
+K43a_card_like 'x passwordk*30="Tq7mZ 4xKp2Vb9Lr3NcW8dYh6uJs"' True

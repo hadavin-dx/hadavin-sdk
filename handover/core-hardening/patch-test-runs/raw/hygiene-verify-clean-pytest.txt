@@ -1,0 +1,17 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+Using CPython 3.13.18 interpreter at: /usr/local/bin/python3
+Creating virtual environment at: .venv
+   Building hadavin-sdk @ file:///tmp/hv1/clean
+      Built hadavin-sdk @ file:///tmp/hv1/clean
+Installed 76 packages in 166ms
+============================= test session starts ==============================
+platform linux -- Python 3.13.18, pytest-9.1.1, pluggy-1.7.0
+rootdir: /tmp/hv1/clean
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 43 items
+
+tests/test_no_reference_material.py ...                                  [  6%]
+tests/test_repo_rules.py ........................................        [100%]
+
+============================== 43 passed in 0.70s ==============================

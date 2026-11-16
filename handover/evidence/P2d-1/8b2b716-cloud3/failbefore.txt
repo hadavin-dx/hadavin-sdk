@@ -1,0 +1,1557 @@
+HEAD(tests) 8b2b716 + src (redact.py runmap.py defaults.py) from P1a parent 2572847ee58681988a8e845906ecf2b90c5c4bca; PYTHONPATH=/home/user/build/EV-P77-8b2b716/old/src
+F.F.FFFFF..FFFF.FFFFF.FFFFFFFFFFFF.FF.FFFFxxxx.x.xFFFFFF.FFFFFFFFFFFFF.F [ 79%]
+FFFF.FFFFFEEF.....F                                                      [100%]
+==================================== ERRORS ====================================
+_ ERROR at setup of test_err_1_a_fold_error_refuses_in_redact_text_and_passes_through_redact _
+
+    @pytest.fixture
+    def clean_char_cache():
+>       redact_mod._char_class.cache_clear()
+        ^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.guard.redact' has no attribute '_char_class'
+
+tests/test_redact_fold_seams.py:15: AttributeError
+_______ ERROR at setup of test_seam_2_fold_is_called_with_exact_str_only _______
+
+    @pytest.fixture
+    def clean_char_cache():
+>       redact_mod._char_class.cache_clear()
+        ^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.guard.redact' has no attribute '_char_class'
+
+tests/test_redact_fold_seams.py:15: AttributeError
+=================================== FAILURES ===================================
+_ test_redact_masks_a_value_hidden_behind_look_alikes_on_the_line_and_leaves_other_text_alone _
+
+    def test_redact_masks_a_value_hidden_behind_look_alikes_on_the_line_and_leaves_other_text_alone():
+        from hadavin_sdk.guard.redact import redact
+    
+        r = redact("mail al" + chr(0x456) + "ce@example.com now")
+>       assert (
+            "alice" not in r.text
+            and "<EMAIL_1>" in r.text
+            and r.mapping == {"<EMAIL_1>": "alice@example.com"}
+        )  # the folded value
+E       AssertionError: assert ('alice' not in 'mail alі<EMAIL_1> now'
+E         
+E         'alice' is contained here:
+E           mail alі<EMAIL_1> now and '<EMAIL_1>' in 'mail alі<EMAIL_1> now' and {'<EMAIL_1>':...@example.com'} == {'<EMAIL_1>':...@example.com'}
+E        +  where 'mail alі<EMAIL_1> now' = RedactionResult(text='mail alі<EMAIL_1> now', mapping={'<EMAIL_1>': 'ce@example.com'}).text
+E         
+E         Differing items:
+E         {'<EMAIL_1>': 'ce@example.com'} != {'<EMAIL_1>': 'alice@example.com'}
+E         Use -v to get more diff)
+
+tests/test_redact_fold.py:74: AssertionError
+________ test_benign_multilingual_corpus_has_a_zero_false_withhold_rate ________
+
+    def test_benign_multilingual_corpus_has_a_zero_false_withhold_rate():
+        corpus = BENIGN_EMAIL + BENIGN_PLAIN
+        withheld = [ln for ln in corpus if FOLD_NOTE in redact(ln).text]
+        rate = len(withheld) / len(corpus)
+        assert rate == 0.0, (
+            rate,
+            withheld,
+        )  # FAIL-BEFORE: every accented-address line was withheld whole
+        for ln in BENIGN_PLAIN:
+            assert redact(ln).text == ln, ln
+        for ln in BENIGN_EMAIL:
+            r = redact(ln)
+>           assert "<EMAIL_1>" in r.text and "@" not in r.text, (ln, r.text)
+E           AssertionError: ('écrire à josé@exemple.fr bientôt', 'écrire à josé@exemple.fr bientôt')
+E           assert ('<EMAIL_1>' in 'écrire à josé@exemple.fr bientôt')
+E            +  where 'écrire à josé@exemple.fr bientôt' = RedactionResult(text='écrire à josé@exemple.fr bientôt', mapping={}).text
+
+tests/test_redact_fold.py:119: AssertionError
+________ test_attacks_are_still_withheld_whole_and_never_emitted_folded ________
+
+    def test_attacks_are_still_withheld_whole_and_never_emitted_folded():
+        cyr = chr(0x410) + "KIA" + "IOSFODNN7EXAMPLE"
+        fw = "<!channel>".translate({ord(c): ord(c) + 0xFEE0 for c in "<>!abcdefghijklmnopqrstuvwxyz"})
+        for ln in (f"key {cyr} {fw}", f"{fw} {cyr}", "mail al" + chr(0x456) + "ce@example.com now"):
+            out = redact(ln).text
+>           assert out.startswith(FOLD_NOTE), (ln, out)
+E           AssertionError: ('key АKIAIOSFODNN7EXAMPLE ＜！ｃｈａｎｎｅｌ＞', 'key АKIAIOSFODNN7EXAMPLE ＜！ｃｈａｎｎｅｌ＞')
+E           assert False
+E            +  where False = <built-in method startswith of str object at 0x7f506ca271b0>('<no FOLD_NOTE on this head>')
+E            +    where <built-in method startswith of str object at 0x7f506ca271b0> = 'key АKIAIOSFODNN7EXAMPLE ＜！ｃｈａｎｎｅｌ＞'.startswith
+
+tests/test_redact_fold.py:138: AssertionError
+__ test_a_lookalike_copy_of_a_value_that_also_stands_in_clear_is_still_a_hit ___
+
+    def test_a_lookalike_copy_of_a_value_that_also_stands_in_clear_is_still_a_hit():
+        ln = f"first {KEY} then second {chr(0x410)}{KEY[1:]}"
+        out = redact(ln).text
+>       assert KEY not in textnorm.fold(out), (
+            out
+        )  # FAIL-BEFORE: a set compare saw "nothing new"; the look-alike copy stayed in the text
+E       AssertionError: first <APIKEY_1> then second АKIAIOSFODNN7EXAMPLE
+E       assert 'AKIAIOSFODNN7EXAMPLE' not in 'first <APIK...ODNN7EXAMPLE'
+E         
+E         'AKIAIOSFODNN7EXAMPLE' is contained here:
+E           first <APIKEY_1> then second AKIAIOSFODNN7EXAMPLE
+
+tests/test_redact_fold.py:147: AssertionError
+_ test_in_place_masking_cases[mail jose\u0301@example.com now-mail <EMAIL_1> now-jose@example.com] _
+
+line = 'mail josé@example.com now', expected = 'mail <EMAIL_1> now'
+value = 'jose@example.com'
+
+    @pytest.mark.parametrize(
+        ("line", "expected", "value"),
+        [
+            (
+                "mail josé@example.com now",
+                "mail <EMAIL_1> now",
+                "jose@example.com",
+            ),  # a combining mark inside the value
+            (
+                "x ́josé@example.coḿ y",
+                "x ́<EMAIL_1>́ y",
+                "jose@example.com",
+            ),  # marks around it stay where they were
+            (
+                "mail al\u200bice@example.com now",
+                "mail <EMAIL_1> now",
+                "alice@example.com",
+            ),  # a zero-width space inside the local part
+            (
+                "\u200balice@example.com\u200b",
+                "\u200b<EMAIL_1>\u200b",
+                "alice@example.com",
+            ),  # leading and trailing zero-width spaces
+            (
+                "mail alice@example.com end",
+                "mail <EMAIL_1> end",
+                "alice@example.com",
+            ),  # no-break spaces
+            (
+                "key AKIAIOSFODNN7EXAMPLE end",
+                "key <APIKEY_1> end",
+                KEY,
+            ),  # a Kelvin sign inside the value: masked whole
+            (
+                "a josé@example.com b maría@example.com c",
+                "a <EMAIL_1> b <EMAIL_2> c",
+                "jose@example.com",
+            ),  # two values, offsets of the second
+            (
+                "Acme™ mail josé@example.com … done",
+                "Acme™ mail <EMAIL_1> … done",
+                "jose@example.com",
+            ),  # signs outside the value stay
+            (
+                "ﬁle josé@example.com",
+                "ﬁle <EMAIL_1>",
+                "jose@example.com",
+            ),  # a ligature outside the value
+            (
+                "Cookie: sid=josé@example.com; a=bé",
+                "Cookie: <SECRET_1>",
+                None,
+            ),  # two rounds change the text, a third finds nothing
+        ],
+    )
+    def test_in_place_masking_cases(line, expected, value):
+        r = redact(line)
+>       assert r.text == expected, (line, r.text)
+E       AssertionError: ('mail josé@example.com now', 'mail josé@example.com now')
+E       assert 'mail josé@example.com now' == 'mail <EMAIL_1> now'
+E         
+E         - mail <EMAIL_1> now
+E         + mail josé@example.com now
+
+tests/test_redact_fold.py:209: AssertionError
+_ test_in_place_masking_cases[x \u0301jos\xe9@example.com\u0301 y-x \u0301<EMAIL_1>\u0301 y-jose@example.com] _
+
+line = 'x ́josé@example.coḿ y', expected = 'x ́<EMAIL_1>́ y'
+value = 'jose@example.com'
+
+    @pytest.mark.parametrize(
+        ("line", "expected", "value"),
+        [
+            (
+                "mail josé@example.com now",
+                "mail <EMAIL_1> now",
+                "jose@example.com",
+            ),  # a combining mark inside the value
+            (
+                "x ́josé@example.coḿ y",
+                "x ́<EMAIL_1>́ y",
+                "jose@example.com",
+            ),  # marks around it stay where they were
+            (
+                "mail al\u200bice@example.com now",
+                "mail <EMAIL_1> now",
+                "alice@example.com",
+            ),  # a zero-width space inside the local part
+            (
+                "\u200balice@example.com\u200b",
+                "\u200b<EMAIL_1>\u200b",
+                "alice@example.com",
+            ),  # leading and trailing zero-width spaces
+            (
+                "mail alice@example.com end",
+                "mail <EMAIL_1> end",
+                "alice@example.com",
+            ),  # no-break spaces
+            (
+                "key AKIAIOSFODNN7EXAMPLE end",
+                "key <APIKEY_1> end",
+                KEY,
+            ),  # a Kelvin sign inside the value: masked whole
+            (
+                "a josé@example.com b maría@example.com c",
+                "a <EMAIL_1> b <EMAIL_2> c",
+                "jose@example.com",
+            ),  # two values, offsets of the second
+            (
+                "Acme™ mail josé@example.com … done",
+                "Acme™ mail <EMAIL_1> … done",
+                "jose@example.com",
+            ),  # signs outside the value stay
+            (
+                "ﬁle josé@example.com",
+                "ﬁle <EMAIL_1>",
+                "jose@example.com",
+            ),  # a ligature outside the value
+            (
+                "Cookie: sid=josé@example.com; a=bé",
+                "Cookie: <SECRET_1>",
+                None,
+            ),  # two rounds change the text, a third finds nothing
+        ],
+    )
+    def test_in_place_masking_cases(line, expected, value):
+        r = redact(line)
+>       assert r.text == expected, (line, r.text)
+E       AssertionError: ('x ́josé@example.coḿ y', 'x ́josé@example.coḿ y')
+E       assert 'x ́josé@example.coḿ y' == 'x ́<EMAIL_1>́ y'
+E         
+E         - x ́<EMAIL_1>́ y
+E         + x ́josé@example.coḿ y
+
+tests/test_redact_fold.py:209: AssertionError
+_ test_in_place_masking_cases[mail al\u200bice@example.com now-mail <EMAIL_1> now-alice@example.com] _
+
+line = 'mail al\u200bice@example.com now', expected = 'mail <EMAIL_1> now'
+value = 'alice@example.com'
+
+    @pytest.mark.parametrize(
+        ("line", "expected", "value"),
+        [
+            (
+                "mail josé@example.com now",
+                "mail <EMAIL_1> now",
+                "jose@example.com",
+            ),  # a combining mark inside the value
+            (
+                "x ́josé@example.coḿ y",
+                "x ́<EMAIL_1>́ y",
+                "jose@example.com",
+            ),  # marks around it stay where they were
+            (
+                "mail al\u200bice@example.com now",
+                "mail <EMAIL_1> now",
+                "alice@example.com",
+            ),  # a zero-width space inside the local part
+            (
+                "\u200balice@example.com\u200b",
+                "\u200b<EMAIL_1>\u200b",
+                "alice@example.com",
+            ),  # leading and trailing zero-width spaces
+            (
+                "mail alice@example.com end",
+                "mail <EMAIL_1> end",
+                "alice@example.com",
+            ),  # no-break spaces
+            (
+                "key AKIAIOSFODNN7EXAMPLE end",
+                "key <APIKEY_1> end",
+                KEY,
+            ),  # a Kelvin sign inside the value: masked whole
+            (
+                "a josé@example.com b maría@example.com c",
+                "a <EMAIL_1> b <EMAIL_2> c",
+                "jose@example.com",
+            ),  # two values, offsets of the second
+            (
+                "Acme™ mail josé@example.com … done",
+                "Acme™ mail <EMAIL_1> … done",
+                "jose@example.com",
+            ),  # signs outside the value stay
+            (
+                "ﬁle josé@example.com",
+                "ﬁle <EMAIL_1>",
+                "jose@example.com",
+            ),  # a ligature outside the value
+            (
+                "Cookie: sid=josé@example.com; a=bé",
+                "Cookie: <SECRET_1>",
+                None,
+            ),  # two rounds change the text, a third finds nothing
+        ],
+    )
+    def test_in_place_masking_cases(line, expected, value):
+        r = redact(line)
+>       assert r.text == expected, (line, r.text)
+E       AssertionError: ('mail al\u200bice@example.com now', 'mail al\u200b<EMAIL_1> now')
+E       assert 'mail al\u200b<EMAIL_1> now' == 'mail <EMAIL_1> now'
+E         
+E         - mail <EMAIL_1> now
+E         + mail al​<EMAIL_1> now
+E         ?      +++
+
+tests/test_redact_fold.py:209: AssertionError
+_ test_in_place_masking_cases[key A\u212aIAIOSFODNN7EXAMPLE end-key <APIKEY_1> end-AKIAIOSFODNN7EXAMPLE] _
+
+line = 'key AKIAIOSFODNN7EXAMPLE end', expected = 'key <APIKEY_1> end'
+value = 'AKIAIOSFODNN7EXAMPLE'
+
+    @pytest.mark.parametrize(
+        ("line", "expected", "value"),
+        [
+            (
+                "mail josé@example.com now",
+                "mail <EMAIL_1> now",
+                "jose@example.com",
+            ),  # a combining mark inside the value
+            (
+                "x ́josé@example.coḿ y",
+                "x ́<EMAIL_1>́ y",
+                "jose@example.com",
+            ),  # marks around it stay where they were
+            (
+                "mail al\u200bice@example.com now",
+                "mail <EMAIL_1> now",
+                "alice@example.com",
+            ),  # a zero-width space inside the local part
+            (
+                "\u200balice@example.com\u200b",
+                "\u200b<EMAIL_1>\u200b",
+                "alice@example.com",
+            ),  # leading and trailing zero-width spaces
+            (
+                "mail alice@example.com end",
+                "mail <EMAIL_1> end",
+                "alice@example.com",
+            ),  # no-break spaces
+            (
+                "key AKIAIOSFODNN7EXAMPLE end",
+                "key <APIKEY_1> end",
+                KEY,
+            ),  # a Kelvin sign inside the value: masked whole
+            (
+                "a josé@example.com b maría@example.com c",
+                "a <EMAIL_1> b <EMAIL_2> c",
+                "jose@example.com",
+            ),  # two values, offsets of the second
+            (
+                "Acme™ mail josé@example.com … done",
+                "Acme™ mail <EMAIL_1> … done",
+                "jose@example.com",
+            ),  # signs outside the value stay
+            (
+                "ﬁle josé@example.com",
+                "ﬁle <EMAIL_1>",
+                "jose@example.com",
+            ),  # a ligature outside the value
+            (
+                "Cookie: sid=josé@example.com; a=bé",
+                "Cookie: <SECRET_1>",
+                None,
+            ),  # two rounds change the text, a third finds nothing
+        ],
+    )
+    def test_in_place_masking_cases(line, expected, value):
+        r = redact(line)
+>       assert r.text == expected, (line, r.text)
+E       AssertionError: ('key AKIAIOSFODNN7EXAMPLE end', 'key AKIAIOSFODNN7EXAMPLE end')
+E       assert 'key AKIAIOSFODNN7EXAMPLE end' == 'key <APIKEY_1> end'
+E         
+E         - key <APIKEY_1> end
+E         + key AKIAIOSFODNN7EXAMPLE end
+
+tests/test_redact_fold.py:209: AssertionError
+_ test_in_place_masking_cases[a jos\xe9@example.com b mar\xeda@example.com c-a <EMAIL_1> b <EMAIL_2> c-jose@example.com] _
+
+line = 'a josé@example.com b maría@example.com c'
+expected = 'a <EMAIL_1> b <EMAIL_2> c', value = 'jose@example.com'
+
+    @pytest.mark.parametrize(
+        ("line", "expected", "value"),
+        [
+            (
+                "mail josé@example.com now",
+                "mail <EMAIL_1> now",
+                "jose@example.com",
+            ),  # a combining mark inside the value
+            (
+                "x ́josé@example.coḿ y",
+                "x ́<EMAIL_1>́ y",
+                "jose@example.com",
+            ),  # marks around it stay where they were
+            (
+                "mail al\u200bice@example.com now",
+                "mail <EMAIL_1> now",
+                "alice@example.com",
+            ),  # a zero-width space inside the local part
+            (
+                "\u200balice@example.com\u200b",
+                "\u200b<EMAIL_1>\u200b",
+                "alice@example.com",
+            ),  # leading and trailing zero-width spaces
+            (
+                "mail alice@example.com end",
+                "mail <EMAIL_1> end",
+                "alice@example.com",
+            ),  # no-break spaces
+            (
+                "key AKIAIOSFODNN7EXAMPLE end",
+                "key <APIKEY_1> end",
+                KEY,
+            ),  # a Kelvin sign inside the value: masked whole
+            (
+                "a josé@example.com b maría@example.com c",
+                "a <EMAIL_1> b <EMAIL_2> c",
+                "jose@example.com",
+            ),  # two values, offsets of the second
+            (
+                "Acme™ mail josé@example.com … done",
+                "Acme™ mail <EMAIL_1> … done",
+                "jose@example.com",
+            ),  # signs outside the value stay
+            (
+                "ﬁle josé@example.com",
+                "ﬁle <EMAIL_1>",
+                "jose@example.com",
+            ),  # a ligature outside the value
+            (
+                "Cookie: sid=josé@example.com; a=bé",
+                "Cookie: <SECRET_1>",
+                None,
+            ),  # two rounds change the text, a third finds nothing
+        ],
+    )
+    def test_in_place_masking_cases(line, expected, value):
+        r = redact(line)
+>       assert r.text == expected, (line, r.text)
+E       AssertionError: ('a josé@example.com b maría@example.com c', 'a josé@example.com b marí<EMAIL_1> c')
+E       assert 'a josé@examp...rí<EMAIL_1> c' == 'a <EMAIL_1> b <EMAIL_2> c'
+E         
+E         - a <EMAIL_1> b <EMAIL_2> c
+E         + a josé@example.com b marí<EMAIL_1> c
+
+tests/test_redact_fold.py:209: AssertionError
+_ test_in_place_masking_cases[Acme\u2122 mail jos\xe9@example.com \u2026 done-Acme\u2122 mail <EMAIL_1> \u2026 done-jose@example.com] _
+
+line = 'Acme™ mail josé@example.com … done'
+expected = 'Acme™ mail <EMAIL_1> … done', value = 'jose@example.com'
+
+    @pytest.mark.parametrize(
+        ("line", "expected", "value"),
+        [
+            (
+                "mail josé@example.com now",
+                "mail <EMAIL_1> now",
+                "jose@example.com",
+            ),  # a combining mark inside the value
+            (
+                "x ́josé@example.coḿ y",
+                "x ́<EMAIL_1>́ y",
+                "jose@example.com",
+            ),  # marks around it stay where they were
+            (
+                "mail al\u200bice@example.com now",
+                "mail <EMAIL_1> now",
+                "alice@example.com",
+            ),  # a zero-width space inside the local part
+            (
+                "\u200balice@example.com\u200b",
+                "\u200b<EMAIL_1>\u200b",
+                "alice@example.com",
+            ),  # leading and trailing zero-width spaces
+            (
+                "mail alice@example.com end",
+                "mail <EMAIL_1> end",
+                "alice@example.com",
+            ),  # no-break spaces
+            (
+                "key AKIAIOSFODNN7EXAMPLE end",
+                "key <APIKEY_1> end",
+                KEY,
+            ),  # a Kelvin sign inside the value: masked whole
+            (
+                "a josé@example.com b maría@example.com c",
+                "a <EMAIL_1> b <EMAIL_2> c",
+                "jose@example.com",
+            ),  # two values, offsets of the second
+            (
+                "Acme™ mail josé@example.com … done",
+                "Acme™ mail <EMAIL_1> … done",
+                "jose@example.com",
+            ),  # signs outside the value stay
+            (
+                "ﬁle josé@example.com",
+                "ﬁle <EMAIL_1>",
+                "jose@example.com",
+            ),  # a ligature outside the value
+            (
+                "Cookie: sid=josé@example.com; a=bé",
+                "Cookie: <SECRET_1>",
+                None,
+            ),  # two rounds change the text, a third finds nothing
+        ],
+    )
+    def test_in_place_masking_cases(line, expected, value):
+        r = redact(line)
+>       assert r.text == expected, (line, r.text)
+E       AssertionError: ('Acme™ mail josé@example.com … done', 'Acme™ mail josé@example.com … done')
+E       assert 'Acme™ mail j...le.com … done' == 'Acme™ mail <EMAIL_1> … done'
+E         
+E         - Acme™ mail <EMAIL_1> … done
+E         + Acme™ mail josé@example.com … done
+
+tests/test_redact_fold.py:209: AssertionError
+_ test_in_place_masking_cases[\ufb01le jos\xe9@example.com-\ufb01le <EMAIL_1>-jose@example.com] _
+
+line = 'ﬁle josé@example.com', expected = 'ﬁle <EMAIL_1>'
+value = 'jose@example.com'
+
+    @pytest.mark.parametrize(
+        ("line", "expected", "value"),
+        [
+            (
+                "mail josé@example.com now",
+                "mail <EMAIL_1> now",
+                "jose@example.com",
+            ),  # a combining mark inside the value
+            (
+                "x ́josé@example.coḿ y",
+                "x ́<EMAIL_1>́ y",
+                "jose@example.com",
+            ),  # marks around it stay where they were
+            (
+                "mail al\u200bice@example.com now",
+                "mail <EMAIL_1> now",
+                "alice@example.com",
+            ),  # a zero-width space inside the local part
+            (
+                "\u200balice@example.com\u200b",
+                "\u200b<EMAIL_1>\u200b",
+                "alice@example.com",
+            ),  # leading and trailing zero-width spaces
+            (
+                "mail alice@example.com end",
+                "mail <EMAIL_1> end",
+                "alice@example.com",
+            ),  # no-break spaces
+            (
+                "key AKIAIOSFODNN7EXAMPLE end",
+                "key <APIKEY_1> end",
+                KEY,
+            ),  # a Kelvin sign inside the value: masked whole
+            (
+                "a josé@example.com b maría@example.com c",
+                "a <EMAIL_1> b <EMAIL_2> c",
+                "jose@example.com",
+            ),  # two values, offsets of the second
+            (
+                "Acme™ mail josé@example.com … done",
+                "Acme™ mail <EMAIL_1> … done",
+                "jose@example.com",
+            ),  # signs outside the value stay
+            (
+                "ﬁle josé@example.com",
+                "ﬁle <EMAIL_1>",
+                "jose@example.com",
+            ),  # a ligature outside the value
+            (
+                "Cookie: sid=josé@example.com; a=bé",
+                "Cookie: <SECRET_1>",
+                None,
+            ),  # two rounds change the text, a third finds nothing
+        ],
+    )
+    def test_in_place_masking_cases(line, expected, value):
+        r = redact(line)
+>       assert r.text == expected, (line, r.text)
+E       AssertionError: ('ﬁle josé@example.com', 'ﬁle josé@example.com')
+E       assert 'ﬁle josé@example.com' == 'ﬁle <EMAIL_1>'
+E         
+E         - ﬁle <EMAIL_1>
+E         + ﬁle josé@example.com
+
+tests/test_redact_fold.py:209: AssertionError
+__ test_a_sign_inside_a_value_withholds_the_line_instead_of_masking_around_it __
+
+    def test_a_sign_inside_a_value_withholds_the_line_instead_of_masking_around_it():
+        # an ellipsis or a one-half sign INSIDE the matched value is a flagged character: the whole line goes, never a half-masked value
+        for ln in ("mail jose…@example.com", "mail jos½@example.com"):
+>           assert redact(ln).text.startswith(FOLD_NOTE), ln
+E           AssertionError: mail jose…@example.com
+E           assert False
+E            +  where False = <built-in method startswith of str object at 0x7f506cfca9c0>('<no FOLD_NOTE on this head>')
+E            +    where <built-in method startswith of str object at 0x7f506cfca9c0> = 'mail jose…@example.com'.startswith
+E            +      where 'mail jose…@example.com' = RedactionResult(text='mail jose…@example.com', mapping={}).text
+E            +        where RedactionResult(text='mail jose…@example.com', mapping={}) = redact('mail jose…@example.com')
+
+tests/test_redact_fold.py:231: AssertionError
+__________ test_the_cases_that_fall_back_to_withholding_leak_nothing ___________
+
+    def test_the_cases_that_fall_back_to_withholding_leak_nothing():
+        for ln in ("mail jose…@example.com", "key " + chr(0x410) + KEY[1:] + " x"):
+            out = redact(ln).text
+>           assert "jose" not in _fold(out) and KEY not in _fold(out), out
+E           AssertionError: mail jose…@example.com
+E           assert ('jose' not in 'mail jose...@example.com'
+E             
+E             'jose' is contained here:
+E               mail jose...@example.com
+E             ?      ++++)
+
+tests/test_redact_fold.py:237: AssertionError
+______ test_four_rounds_that_never_converge_fall_through_to_the_withhold _______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f506cb6ba80>
+
+    def test_four_rounds_that_never_converge_fall_through_to_the_withhold(monkeypatch):
+>       assert hasattr(_Redactor, "_mask_in_place"), "hook missing on this head"
+E       AssertionError: hook missing on this head
+E       assert False
+E        +  where False = hasattr(_Redactor, '_mask_in_place')
+
+tests/test_redact_fold.py:241: AssertionError
+_ test_the_malformed_offset_is_caught_by_a_value_in_front_of_and_behind_other_text _
+
+    def test_the_malformed_offset_is_caught_by_a_value_in_front_of_and_behind_other_text():
+        # the output must be the original text with ONLY the value replaced: every other character, accents included, in its place
+        ln = "café été josé@example.com naïve über"
+>       assert redact(ln).text == "café été <EMAIL_1> naïve über"
+E       AssertionError: assert 'café été jos...om naïve über' == 'café été <EM...1> naïve über'
+E         
+E         - café été <EMAIL_1> naïve über
+E         + café été josé@example.com naïve über
+
+tests/test_redact_fold.py:257: AssertionError
+_____ test_a_multi_line_value_that_only_the_fold_sees_is_replaced_not_left _____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f506d0bc640>
+
+    def test_a_multi_line_value_that_only_the_fold_sees_is_replaced_not_left(monkeypatch):
+        pat = re.compile(r"BEGINX\nKEY=([A-Z0-9]{8})")
+        monkeypatch.setattr(redact_mod, "PATTERNS", [*redact_mod.PATTERNS, ("SECRET", pat)])
+        text = "BEGINX\nKEY=ABCD" + chr(0x412) + "EFG\nafter café"
+        out = redact(text).text
+>       assert "ABCD" not in _fold(out) and "EFG" not in _fold(out), (
+            out
+        )  # FAIL-BEFORE: the match starts on an ASCII line that nothing treated
+E       AssertionError: BEGINX
+E         KEY=ABCDВEFG
+E         after café
+E       assert ('ABCD' not in 'BEGINX KEY=...G after cafe'
+E         
+E         'ABCD' is contained here:
+E           BEGINX KEY=ABCDBEFG after cafe
+E         ?            ++++)
+
+tests/test_redact_fold.py:265: AssertionError
+_ test_an_account_number_below_an_accented_or_full_width_keyword_is_masked_when_a_bank_word_stands_elsewhere _
+
+    def test_an_account_number_below_an_accented_or_full_width_keyword_is_masked_when_a_bank_word_stands_elsewhere():
+        accent = "BSB 062-000\naccó" + "unt number 12345678"
+        wide = "BSB 062-000\n" + "".join(chr(ord(c) + 0xFEE0) for c in "account") + " number 12345678"
+        for text in (accent, wide):
+            out = redact(text).text
+>           assert "12345678" not in _fold(out), out  # FAIL-BEFORE: the number stayed in clear
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AssertionError: BSB <BANKCODE_1>
+E             accóunt number 12345678
+E           assert '12345678' not in 'BSB <BANKCO...ber 12345678'
+E             
+E             '12345678' is contained here:
+E               BSB <BANKCODE_1> account number 12345678
+E             ?                                 ++++++++
+
+tests/test_redact_fold.py:284: AssertionError
+___ test_one_half_is_masked_around_but_a_full_width_slash_is_still_an_attack ___
+
+    def test_one_half_is_masked_around_but_a_full_width_slash_is_still_an_attack():
+>       assert (
+            redact("½ cup, mail josé@example.com now").text == "½ cup, mail <EMAIL_1> now"
+        )  # FAIL-BEFORE: withheld
+E       AssertionError: assert '½ cup, mail ...ample.com now' == '½ cup, mail <EMAIL_1> now'
+E         
+E         - ½ cup, mail <EMAIL_1> now
+E         + ½ cup, mail josé@example.com now
+
+tests/test_redact_fold.py:291: AssertionError
+_____ test_table_1_every_single_letter_lookalike_in_a_canary_key_is_masked _____
+
+    def test_table_1_every_single_letter_lookalike_in_a_canary_key_is_masked():
+        entries = _single_letter_entries(string.ascii_letters + string.digits)
+        assert len(entries) >= 500, len(entries)
+        body = CANARY[3:]
+        leaks = []
+        for look, letter in entries:
+            spelled = "sk-" + body.replace(letter, look, 1)
+            out = redact("the key " + spelled + " end").text
+            folded = textnorm.fold(out)
+            if any(w in folded for w in _windows(CANARY)):
+                leaks.append((hex(ord(look)), letter))
+>       assert not leaks, (len(leaks), leaks[:5])
+E       AssertionError: (633, [('0xd7', 'x'), ('0xd8', 'O'), ('0xf8', 'o'), ('0x110', 'D'), ('0x126', 'H')])
+E       assert not [('0xd7', 'x'), ('0xd8', 'O'), ('0xf8', 'o'), ('0x110', 'D'), ('0x126', 'H'), ('0x131', 'i'), ...]
+
+tests/test_redact_fold.py:333: AssertionError
+______ test_table_2_every_single_letter_lookalike_in_an_aws_key_is_masked ______
+
+    def test_table_2_every_single_letter_lookalike_in_an_aws_key_is_masked():
+        entries = _single_letter_entries(KEY)
+        assert len(entries) >= 100, len(entries)
+        leaks = []
+        for look, letter in entries:
+            spelled = KEY.replace(letter, look, 1)
+            out = redact("the key " + spelled + " end").text
+            if any(w in textnorm.fold(out) for w in _windows(KEY)):
+                leaks.append((hex(ord(look)), letter))
+>       assert not leaks, (len(leaks), leaks[:5])
+E       AssertionError: (192, [('0xd8', 'O'), ('0x110', 'D'), ('0x141', 'L'), ('0x18a', 'D'), ('0x18b', 'D')])
+E       assert not [('0xd8', 'O'), ('0x110', 'D'), ('0x141', 'L'), ('0x18a', 'D'), ('0x18b', 'D'), ('0x191', 'F'), ...]
+
+tests/test_redact_fold.py:345: AssertionError
+_ test_digits_1_digits_of_every_script_in_an_iban_and_a_card_leave_no_run_of_eight _
+
+    def test_digits_1_digits_of_every_script_in_an_iban_and_a_card_leave_no_run_of_eight():
+        bases = _decimal_zero_scripts()
+        assert len(bases) >= 60, len(bases)
+        iban = "GB82" + "WEST" + "12345698765432"
+        card = "4111 1111 1111 1111"
+        for base in bases:
+            for text in (iban, card):
+                spelled = "".join(chr(base + int(c)) if c.isdigit() else c for c in text)
+                out = redact("pay " + spelled + " now").text
+>               assert not re.search(r"[0-9]{8}", textnorm.fold(out)), (hex(base), text, out)
+E               AssertionError: ('0x660', 'GB82WEST12345698765432', 'pay GB٨٢WEST١٢٣٤٥٦٩٨٧٦٥٤٣٢ now')
+E               assert not <re.Match object; span=(12, 20), match='12345698'>
+E                +  where <re.Match object; span=(12, 20), match='12345698'> = <function search at 0x7f506e74e020>('[0-9]{8}', 'pay GB82WEST12345698765432 now')
+E                +    where <function search at 0x7f506e74e020> = re.search
+E                +    and   'pay GB82WEST12345698765432 now' = <function fold at 0x7f506ce3b100>('pay GB٨٢WEST١٢٣٤٥٦٩٨٧٦٥٤٣٢ now')
+E                +      where <function fold at 0x7f506ce3b100> = textnorm.fold
+
+tests/test_redact_fold.py:363: AssertionError
+________ test_align_2_the_alignment_agrees_with_the_fold_or_steps_aside ________
+
+    def test_align_2_the_alignment_agrees_with_the_fold_or_steps_aside():
+>       _old_tree_guard()
+
+tests/test_redact_fold.py:367: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _old_tree_guard() -> None:
+>       assert hasattr(_Redactor, "_mask_in_place"), "hook missing on this head"
+E       AssertionError: hook missing on this head
+E       assert False
+E        +  where False = hasattr(_Redactor, '_mask_in_place')
+
+tests/test_redact_fold.py:311: AssertionError
+___ test_d1_1_a_fraction_slash_beside_an_accented_address_is_masked_in_place ___
+
+    def test_d1_1_a_fraction_slash_beside_an_accented_address_is_masked_in_place():
+        slash = chr(0x2044)
+        text = "mail josé@exemple.fr 1" + slash + "2 end"
+>       assert redact(text).text == "mail <EMAIL_1> 1" + slash + "2 end"
+E       AssertionError: assert 'mail josé@exemple.fr 1⁄2 end' == 'mail <EMAIL_1> 1⁄2 end'
+E         
+E         - mail <EMAIL_1> 1⁄2 end
+E         + mail josé@exemple.fr 1⁄2 end
+
+tests/test_redact_fold.py:395: AssertionError
+_ test_ascii_1_an_ascii_text_with_no_non_ascii_value_never_enters_the_fold_scan _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f506cf0f530>
+
+    def test_ascii_1_an_ascii_text_with_no_non_ascii_value_never_enters_the_fold_scan(monkeypatch):
+>       assert hasattr(_Redactor, "_fold_scan"), "hook missing on this head"
+E       AssertionError: hook missing on this head
+E       assert False
+E        +  where False = hasattr(_Redactor, '_fold_scan')
+
+tests/test_redact_fold.py:402: AssertionError
+_ test_ascii_2_a_bank_word_on_a_non_ascii_line_widens_the_masking_on_an_ascii_line _
+
+    def test_ascii_2_a_bank_word_on_a_non_ascii_line_widens_the_masking_on_an_ascii_line():
+>       _old_tree_guard()
+
+tests/test_redact_fold.py:414: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _old_tree_guard() -> None:
+>       assert hasattr(_Redactor, "_mask_in_place"), "hook missing on this head"
+E       AssertionError: hook missing on this head
+E       assert False
+E        +  where False = hasattr(_Redactor, '_mask_in_place')
+
+tests/test_redact_fold.py:311: AssertionError
+_____ test_ascii_3_a_block_that_starts_on_an_ascii_line_is_withheld_whole ______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f506ca29260>
+
+    def test_ascii_3_a_block_that_starts_on_an_ascii_line_is_withheld_whole(monkeypatch):
+>       _old_tree_guard()
+
+tests/test_redact_fold.py:424: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _old_tree_guard() -> None:
+>       assert hasattr(_Redactor, "_mask_in_place"), "hook missing on this head"
+E       AssertionError: hook missing on this head
+E       assert False
+E        +  where False = hasattr(_Redactor, '_mask_in_place')
+
+tests/test_redact_fold.py:311: AssertionError
+_ test_ascii_4_an_ascii_text_that_adds_a_key_builds_once_with_one_fold_per_non_ascii_value _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f506d0d07c0>
+
+    def test_ascii_4_an_ascii_text_that_adds_a_key_builds_once_with_one_fold_per_non_ascii_value(
+        monkeypatch,
+    ):
+>       _old_tree_guard()
+
+tests/test_redact_fold.py:436: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _old_tree_guard() -> None:
+>       assert hasattr(_Redactor, "_mask_in_place"), "hook missing on this head"
+E       AssertionError: hook missing on this head
+E       assert False
+E        +  where False = hasattr(_Redactor, '_mask_in_place')
+
+tests/test_redact_fold.py:311: AssertionError
+_ test_sep_1_a_value_split_by_line_separators_is_masked_or_withheld_never_left _
+
+    def test_sep_1_a_value_split_by_line_separators_is_masked_or_withheld_never_left():
+        rng = random.Random(20261106)  # noqa: S311 - seeded test generator
+        seps = ["
+    ", "\u0085", "\u000b", "\r\n", "\r", "\n"]
+        for _ in range(300):
+            sep = rng.choice(seps)
+            look = rng.choice([chr(0x430), chr(0x435), chr(0x43E), chr(0x2D0)])
+            head = "".join(rng.choice([c, look]) if c in "aeo" else c for c in "hunter-secret-a1b2c3")
+            text = f"password: {head}{sep}mail josé@exemple.fr{sep}note " + head
+>           out = redact(text).text
+            assert "exemple.fr" not in textnorm.fold(out), (repr(text), out)
+E           AssertionError: ("'password: hunter-secret-a1b2c3\
+E             mail josé@exemple.fr\
+E             note hunter-secret-a1b2c3'", 'password: <SECRET_1>
+E             mail josé@exemple.fr
+E             note <SECRET_1>')
+E           assert 'exemple.fr' not in 'password: <...e <SECRET_1>'
+E             
+E             'exemple.fr' is contained here:
+E               password: <SECRET_1> mail jose@exemple.fr note <SECRET_1>
+E             ?                                ++++++++++
+
+tests/test_redact_fold.py:467: AssertionError
+________________ test_map_1_the_map_holds_the_written_spelling _________________
+
+    def test_map_1_the_map_holds_the_written_spelling():
+>       _old_tree_guard()
+
+tests/test_redact_fold.py:489: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _old_tree_guard() -> None:
+>       assert hasattr(_Redactor, "_mask_in_place"), "hook missing on this head"
+E       AssertionError: hook missing on this head
+E       assert False
+E        +  where False = hasattr(_Redactor, '_mask_in_place')
+
+tests/test_redact_fold.py:311: AssertionError
+_ test_map_2_two_spellings_get_two_placeholders_and_restore_only_the_plain_one _
+
+    def test_map_2_two_spellings_get_two_placeholders_and_restore_only_the_plain_one():
+>       _old_tree_guard()
+
+tests/test_redact_fold.py:501: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _old_tree_guard() -> None:
+>       assert hasattr(_Redactor, "_mask_in_place"), "hook missing on this head"
+E       AssertionError: hook missing on this head
+E       assert False
+E        +  where False = hasattr(_Redactor, '_mask_in_place')
+
+tests/test_redact_fold.py:311: AssertionError
+________ test_map_4_two_occurrences_get_two_placeholders_in_both_orders ________
+
+    def test_map_4_two_occurrences_get_two_placeholders_in_both_orders():
+>       _old_tree_guard()
+
+tests/test_redact_fold.py:539: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _old_tree_guard() -> None:
+>       assert hasattr(_Redactor, "_mask_in_place"), "hook missing on this head"
+E       AssertionError: hook missing on this head
+E       assert False
+E        +  where False = hasattr(_Redactor, '_mask_in_place')
+
+tests/test_redact_fold.py:311: AssertionError
+_ test_map_5_a_precomposed_name_is_restored_and_a_decomposed_one_stays_a_placeholder _
+
+    def test_map_5_a_precomposed_name_is_restored_and_a_decomposed_one_stays_a_placeholder():
+        pre = "customer name: José García"
+        dec = "customer name: " + unicodedata.normalize("NFD", "José García")
+        assert pre != dec
+        for text, restorable in ((pre, True), (dec, False)):
+            r = redact(text)
+            assert PH.search(r.text), (text, r.text)
+            back = runmap.restore_text(r.text, r.mapping)
+>           assert (back == text) is restorable, (repr(back), repr(text))
+E           AssertionError: ("'customer name: José García'", "'customer name: José García'")
+E           assert ('customer nam... Garci\u0301a' == 'customer nam... Garci\u0301a'
+E             
+E               customer name: José García) is False
+
+tests/test_redact_fold.py:569: AssertionError
+__ test_map_6_a_clear_copy_of_the_folded_spelling_is_masked_by_the_alias_key ___
+
+    def test_map_6_a_clear_copy_of_the_folded_spelling_is_masked_by_the_alias_key():
+>       _old_tree_guard()
+
+tests/test_redact_fold.py:573: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _old_tree_guard() -> None:
+>       assert hasattr(_Redactor, "_mask_in_place"), "hook missing on this head"
+E       AssertionError: hook missing on this head
+E       assert False
+E        +  where False = hasattr(_Redactor, '_mask_in_place')
+
+tests/test_redact_fold.py:311: AssertionError
+_________________ test_fold_note_1_the_note_is_the_fixed_text __________________
+
+    def test_fold_note_1_the_note_is_the_fixed_text():
+>       assert (
+            getattr(redact_mod, "FOLD_NOTE", None)
+            == "[line withheld: look-alike text hid a protected value]"
+        )
+E       AssertionError: assert None == '[line withheld: look-alike text hid a protected value]'
+E        +  where None = getattr(redact_mod, 'FOLD_NOTE', None)
+
+tests/test_redact_fold.py:591: AssertionError
+_ test_restore_1_a_withheld_line_placeholder_restores_a_value_not_in_the_input _
+
+    def test_restore_1_a_withheld_line_placeholder_restores_a_value_not_in_the_input():
+        text = "mail josé@example.com ／／ x"
+        r = redact(text)
+>       assert r.text.startswith(FOLD_NOTE)
+E       AssertionError: assert False
+E        +  where False = <built-in method startswith of str object at 0x7f506cfd4f30>('<no FOLD_NOTE on this head>')
+E        +    where <built-in method startswith of str object at 0x7f506cfd4f30> = 'mail josé@example.com ／／ x'.startswith
+E        +      where 'mail josé@example.com ／／ x' = RedactionResult(text='mail josé@example.com ／／ x', mapping={}).text
+
+tests/test_redact_fold.py:678: AssertionError
+_ test_sweep_1_a_clear_copy_after_a_written_variant_gets_the_same_placeholder __
+
+    def test_sweep_1_a_clear_copy_after_a_written_variant_gets_the_same_placeholder():
+>       _old_tree_guard()
+
+tests/test_redact_fold.py:686: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _old_tree_guard() -> None:
+>       assert hasattr(_Redactor, "_mask_in_place"), "hook missing on this head"
+E       AssertionError: hook missing on this head
+E       assert False
+E        +  where False = hasattr(_Redactor, '_mask_in_place')
+
+tests/test_redact_fold.py:311: AssertionError
+_ test_sweep_3_the_pieces_of_a_written_variant_are_swept_like_the_plain_value __
+
+    def test_sweep_3_the_pieces_of_a_written_variant_are_swept_like_the_plain_value():
+>       _old_tree_guard()
+
+tests/test_redact_fold.py:699: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _old_tree_guard() -> None:
+>       assert hasattr(_Redactor, "_mask_in_place"), "hook missing on this head"
+E       AssertionError: hook missing on this head
+E       assert False
+E        +  where False = hasattr(_Redactor, '_mask_in_place')
+
+tests/test_redact_fold.py:311: AssertionError
+_ test_sweep_6_an_alias_key_that_is_a_prefix_of_a_longer_stored_value_raises_nothing _
+
+    def test_sweep_6_an_alias_key_that_is_a_prefix_of_a_longer_stored_value_raises_nothing():
+>       _old_tree_guard()
+
+tests/test_redact_fold.py:707: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _old_tree_guard() -> None:
+>       assert hasattr(_Redactor, "_mask_in_place"), "hook missing on this head"
+E       AssertionError: hook missing on this head
+E       assert False
+E        +  where False = hasattr(_Redactor, '_mask_in_place')
+
+tests/test_redact_fold.py:311: AssertionError
+__________ test_reg_1a_a_discarded_round_leaves_no_orphan_placeholder __________
+
+    def test_reg_1a_a_discarded_round_leaves_no_orphan_placeholder():
+>       _old_tree_guard()
+
+tests/test_redact_fold.py:716: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _old_tree_guard() -> None:
+>       assert hasattr(_Redactor, "_mask_in_place"), "hook missing on this head"
+E       AssertionError: hook missing on this head
+E       assert False
+E        +  where False = hasattr(_Redactor, '_mask_in_place')
+
+tests/test_redact_fold.py:311: AssertionError
+________ test_reg_1b_non_converging_rounds_leave_no_orphan_placeholder _________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f506caa0950>
+
+    def test_reg_1b_non_converging_rounds_leave_no_orphan_placeholder(monkeypatch):
+>       _old_tree_guard()
+
+tests/test_redact_fold.py:725: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _old_tree_guard() -> None:
+>       assert hasattr(_Redactor, "_mask_in_place"), "hook missing on this head"
+E       AssertionError: hook missing on this head
+E       assert False
+E        +  where False = hasattr(_Redactor, '_mask_in_place')
+
+tests/test_redact_fold.py:311: AssertionError
+___ test_text_before_a_masked_value_is_kept_once_between_two_in_place_masks ____
+
+    def test_text_before_a_masked_value_is_kept_once_between_two_in_place_masks():
+>       _old_tree_guard()
+
+tests/test_redact_fold.py:763: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    def _old_tree_guard() -> None:
+>       assert hasattr(_Redactor, "_mask_in_place"), "hook missing on this head"
+E       AssertionError: hook missing on this head
+E       assert False
+E        +  where False = hasattr(_Redactor, '_mask_in_place')
+
+tests/test_redact_fold.py:311: AssertionError
+________ test_many_short_non_ascii_lines_cost_no_per_line_pattern_runs _________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f506caa2850>
+
+    def test_many_short_non_ascii_lines_cost_no_per_line_pattern_runs(monkeypatch):
+>       assert hasattr(_Redactor, "_dry_hits"), "hook missing on this head"
+E       AssertionError: hook missing on this head
+E       assert False
+E        +  where False = hasattr(_Redactor, '_dry_hits')
+
+tests/test_redact_fold_budget.py:18: AssertionError
+_______ test_the_fold_scan_stops_at_the_time_budget_with_input_too_large _______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f506ca88410>
+
+    def test_the_fold_scan_stops_at_the_time_budget_with_input_too_large(monkeypatch):
+        monkeypatch.setattr(defaults, "REDACT_BUDGET_S", -1.0)
+>       with pytest.raises(InputTooLarge):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE InputTooLarge
+
+tests/test_redact_fold_budget.py:39: Failed
+_____________ test_the_budget_is_checked_inside_the_per_line_work ______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f506c89c050>
+
+    def test_the_budget_is_checked_inside_the_per_line_work(monkeypatch):
+>       assert hasattr(_Redactor, "_over_budget"), "hook missing on this head"
+E       AssertionError: hook missing on this head
+E       assert False
+E        +  where False = hasattr(_Redactor, '_over_budget')
+
+tests/test_redact_fold_budget.py:58: AssertionError
+_____________ test_line_hits_asks_for_the_budget_once_per_pattern ______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f506ca6f230>
+
+    def test_line_hits_asks_for_the_budget_once_per_pattern(monkeypatch):
+>       assert hasattr(_Redactor, "_line_hits"), "hook missing on this head"
+E       AssertionError: hook missing on this head
+E       assert False
+E        +  where False = hasattr(_Redactor, '_line_hits')
+
+tests/test_redact_fold_budget.py:71: AssertionError
+_____________ test_one_deadline_covers_the_text_and_all_its_views ______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f506ca6c9f0>
+
+    def test_one_deadline_covers_the_text_and_all_its_views(monkeypatch):
+        seen = []
+        real = redact_mod.redact
+    
+        def spy(text, **kw):
+            seen.append(kw.get("_deadline"))
+            return real(text, **kw)
+    
+        monkeypatch.setattr("hadavin_sdk.guard.runmap.redact", spy)
+        redact_text("mail josé@example.com %41KIA" + "IOSFODNN7EXAMPLE café", {})
+>       assert (
+            len(seen) >= 2 and all(d is not None for d in seen) and len(set(seen)) == 1
+        )  # FAIL-BEFORE: no deadline passed, 6 s per view
+E       assert (2 >= 2 and False)
+E        +  where 2 = len([None, None])
+E        +  and   False = all(<generator object test_one_deadline_covers_the_text_and_all_its_views.<locals>.<genexpr> at 0x7f506c936330>)
+
+tests/test_redact_fold_budget.py:91: AssertionError
+____________ test_a_spent_budget_refuses_before_any_line_is_treated ____________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f506ca2edd0>
+
+    def test_a_spent_budget_refuses_before_any_line_is_treated(monkeypatch):
+>       assert hasattr(_Redactor, "_folded_line"), "hook missing on this head"
+E       AssertionError: hook missing on this head
+E       assert False
+E        +  where False = hasattr(_Redactor, '_folded_line')
+
+tests/test_redact_fold_budget.py:97: AssertionError
+_________ test_a_suspect_line_loops_only_the_patterns_that_matched_it __________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f506cb0f4d0>
+
+    def test_a_suspect_line_loops_only_the_patterns_that_matched_it(monkeypatch):
+>       assert hasattr(_Redactor, "_mask_in_place"), "hook missing on this head"
+E       AssertionError: hook missing on this head
+E       assert False
+E        +  where False = hasattr(_Redactor, '_mask_in_place')
+
+tests/test_redact_fold_budget.py:111: AssertionError
+_________ test_the_budget_is_cpu_time_of_the_thread_not_the_wall_clock _________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f506cb0f110>
+
+    def test_the_budget_is_cpu_time_of_the_thread_not_the_wall_clock(monkeypatch):
+        def forbidden():
+            raise AssertionError("the wall clock was read")
+    
+        monkeypatch.setattr(time, "monotonic", forbidden)
+>       assert (
+            redact("café josé@example.com").text == "café <EMAIL_1>"
+        )  # FAIL-BEFORE: read time.monotonic
+E       AssertionError: assert 'café josé@example.com' == 'café <EMAIL_1>'
+E         
+E         - café <EMAIL_1>
+E         + café josé@example.com
+
+tests/test_redact_fold_budget.py:131: AssertionError
+________________ test_the_cookie_line_really_takes_three_rounds ________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f506c86ee60>
+
+    def test_the_cookie_line_really_takes_three_rounds(monkeypatch):
+>       assert hasattr(_Redactor, "_aligned_fold"), "hook missing on this head"
+E       AssertionError: hook missing on this head
+E       assert False
+E        +  where False = hasattr(_Redactor, '_aligned_fold')
+
+tests/test_redact_fold_budget.py:138: AssertionError
+__________ test_aligned_fold_checks_the_budget_every_4096_characters ___________
+
+    def test_aligned_fold_checks_the_budget_every_4096_characters():
+>       assert hasattr(_Redactor, "_aligned_fold"), "hook missing on this head"
+E       AssertionError: hook missing on this head
+E       assert False
+E        +  where False = hasattr(_Redactor, '_aligned_fold')
+
+tests/test_redact_fold_budget.py:149: AssertionError
+________ test_a_pattern_that_matched_nowhere_in_a_line_is_not_run_on_it ________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f506c86f330>
+
+    def test_a_pattern_that_matched_nowhere_in_a_line_is_not_run_on_it(monkeypatch):
+>       assert hasattr(_Redactor, "_fold_scan"), "hook missing on this head"
+E       AssertionError: hook missing on this head
+E       assert False
+E        +  where False = hasattr(_Redactor, '_fold_scan')
+
+tests/test_redact_fold_budget.py:155: AssertionError
+___________ test_mid_1_the_budget_is_checked_in_the_middle_of_a_line ___________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f506c8a04b0>
+
+    def test_mid_1_the_budget_is_checked_in_the_middle_of_a_line(monkeypatch):
+>       assert hasattr(_Redactor, "_aligned_fold"), "hook missing on this head"
+E       AssertionError: hook missing on this head
+E       assert False
+E        +  where False = hasattr(_Redactor, '_aligned_fold')
+
+tests/test_redact_fold_budget.py:211: AssertionError
+____ test_budget_1b_the_check_after_stage_one_runs_before_any_decoded_mask _____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f506c8908c0>
+
+    def test_budget_1b_the_check_after_stage_one_runs_before_any_decoded_mask(monkeypatch):
+        calls = []
+        real = runmap._decoded_masks
+        monkeypatch.setattr(runmap, "_decoded_masks", lambda *a, **k: calls.append(1) or real(*a, **k))
+        monkeypatch.setattr(runmap.time, "thread_time", CountedClock(0.0, 1, 100.0))
+>       with pytest.raises(InputTooLarge):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE InputTooLarge
+
+tests/test_redact_fold_budget.py:239: Failed
+______________ test_budget_2_the_deadline_is_shared_by_every_view ______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f506c8eb550>
+
+    def test_budget_2_the_deadline_is_shared_by_every_view(monkeypatch):
+        text = "pw=ab%41 x " + BS + "u0041"
+        assert len(runmap._views(text)) == 2
+        assert redact(text).mapping == {}
+        seen = []
+        real = runmap.redact
+        monkeypatch.setattr(runmap, "redact", lambda *a, **k: seen.append(1) or real(*a, **k))
+        monkeypatch.setattr(runmap.time, "thread_time", CountedClock(0.0, 3, 100.0))
+>       with pytest.raises(InputTooLarge):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE InputTooLarge
+
+tests/test_redact_fold_budget.py:252: Failed
+__________________ test_budget_3_the_alias_build_is_budgeted ___________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f506c8e9a50>
+
+    def test_budget_3_the_alias_build_is_budgeted(monkeypatch):
+>       assert hasattr(_Redactor, "_over_budget"), "hook missing on this head"
+E       AssertionError: hook missing on this head
+E       assert False
+E        +  where False = hasattr(_Redactor, '_over_budget')
+
+tests/test_redact_fold_budget.py:258: AssertionError
+_ test_hostile_2_many_stored_originals_with_an_encoding_mark_stop_at_the_first_check _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f506c7ec910>
+
+    def test_hostile_2_many_stored_originals_with_an_encoding_mark_stop_at_the_first_check(
+        monkeypatch,
+    ):
+        originals = [f"ab{i:04d}%3Bzq9x" for i in range(300)]
+        mapping = runmap.RunMap({f"<NAME_{i + 1}>": o for i, o in enumerate(originals)})
+        undone = []
+        real_undo = runmap.undo
+    
+        def spy(t, *a, **k):
+            if t in originals:  # `_views` calls `undo` once on the whole text: not counted
+                undone.append(t)
+            return real_undo(t, *a, **k)
+    
+        monkeypatch.setattr(runmap, "undo", spy)
+        monkeypatch.setattr(runmap.time, "thread_time", CountedClock(0.0, 2, 100.0))
+        with pytest.raises(InputTooLarge):
+            redact_text(" ".join(originals), mapping)
+>       assert len(undone) <= 1, len(undone)  # without the per-original check (mutant DM-1): 256
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: 256
+E       assert 256 <= 1
+E        +  where 256 = len(['ab0000%3Bzq9x', 'ab0001%3Bzq9x', 'ab0002%3Bzq9x', 'ab0003%3Bzq9x', 'ab0004%3Bzq9x', 'ab0005%3Bzq9x', ...])
+
+tests/test_redact_fold_budget.py:286: AssertionError
+____ test_hostile_2b_the_check_sits_at_the_top_of_the_loop_before_any_skip _____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f506c7ed4e0>
+
+    def test_hostile_2b_the_check_sits_at_the_top_of_the_loop_before_any_skip(monkeypatch):
+        class CountingMap(dict):
+            yielded = 0
+    
+            def items(self):
+                for kv in list(super().items()):
+                    CountingMap.yielded += 1
+                    yield kv
+    
+        current = CountingMap({f"<NAME_{i}>": f"plain{i}" for i in range(300)})
+        current["<NAME_999>"] = "ab%3Bzq9x"
+        monkeypatch.setattr(runmap.time, "thread_time", lambda: 100.0)
+        with pytest.raises(InputTooLarge):
+>           runmap._decoded_masks(current, "ab%3Bzq9x", 0.0)
+E           TypeError: _decoded_masks() takes 2 positional arguments but 3 were given
+
+tests/test_redact_fold_budget.py:302: TypeError
+_______ test_the_live_secret_path_masks_a_key_hidden_behind_look_alikes ________
+
+    def test_the_live_secret_path_masks_a_key_hidden_behind_look_alikes():
+        # the REAL entry point of approval and channel text: channel.clean = redact -> sanitise -> redact (the G5 re-scan)
+        from hadavin_sdk.approvals.channel import clean
+    
+        spoofed = "key AK" + chr(0x406) + "A" + chr(0x406) + "OSFODNN7EXAMPLE end"
+        assert "AKIAIOSFODNN7EXAMPLE" not in clean(spoofed)
+>       assert chr(0x406) not in clean(spoofed)
+E       AssertionError: assert 'І' not in 'key AKІAІOS...7EXAMPLE end'
+E         
+E         'І' is contained here:
+E           key AKІAІOSFODNN7EXAMPLE end
+E         ?       +
+
+tests/test_redact_fold_property.py:34: AssertionError
+_ test_text_changed_after_the_mask_is_masked_again_whatever_look_alikes_hide_the_key _
+
+    def test_text_changed_after_the_mask_is_masked_again_whatever_look_alikes_hide_the_key():
+        # class lesson of PR #42: anything transformed AFTER the redact step must be re-checked. Seeded fuzz through the real entry point.
+        from hadavin_sdk.approvals.channel import clean
+    
+        key = "AKIA" + "IOSFODNN7EXAMPLE"
+        alike = {
+            "A": chr(0x410),
+            "I": chr(0x406),
+            "O": chr(0x41E),
+            "S": chr(0x405),
+            "E": chr(0x415),
+            "P": chr(0x420),
+        }
+        rng = random.Random(50)  # noqa: S311  # a seeded test fuzz, not a secret
+        for _ in range(300):
+            text = "".join(
+                alike[c]
+                if c in alike and rng.random() < 0.5
+                else c + (chr(0x200B) if rng.random() < 0.15 else "")
+                for c in key
+            )
+            out = clean(f"the key {text} was pasted")
+>           assert key not in out and textnorm.fold(out).count(key) == 0, (text, out)
+E           AssertionError: ('АKIАI\u200bОS\u200bFODNN7EXAMPLЕ', 'the key АKIАI\u200bОSFODNN7EXAMPLЕ was pasted')
+E           assert ('AKIAIOSFODNN7EXAMPLE' not in 'the key АKI...Е was pasted'
+E             
+E             'AKIAIOSFODNN7EXAMPLE' is contained here:
+E             ?                                  --------------------
+E               the key АKIАI​ОSFODNN7EXAMPLЕ was pasted and 1 == 0)
+E            +  where 1 = <built-in method count of str object at 0x7f506c880cb0>('AKIAIOSFODNN7EXAMPLE')
+E            +    where <built-in method count of str object at 0x7f506c880cb0> = 'the key AKIAIOSFODNN7EXAMPLE was pasted'.count
+E            +      where 'the key AKIAIOSFODNN7EXAMPLE was pasted' = <function fold at 0x7f506ce3b100>('the key АKIАI\u200bОSFODNN7EXAMPLЕ was pasted')
+E            +        where <function fold at 0x7f506ce3b100> = textnorm.fold
+
+tests/test_redact_fold_property.py:59: AssertionError
+_ test_a_fold_on_hit_rewrite_never_emits_folded_text_so_nothing_goes_live_after_the_neutralising _
+
+    def test_a_fold_on_hit_rewrite_never_emits_folded_text_so_nothing_goes_live_after_the_neutralising():
+        # class lesson of PR #42 INSIDE the redactor: the second redact of channel.clean runs after sanitise and withhold; its fold-on-hit rewrite
+        # used to emit the FOLDED line, turning full-width text into live mentions, links, commands and fences nobody had neutralised.
+        from hadavin_sdk.approvals.channel import clean
+        from hadavin_sdk.guard.redact import redact
+    
+        key = chr(0x410) + "KIA" + "IOSFODNN7EXAMPLE"
+        payload = "<!channel> @here kubectl delete pods https://evil.example/x ```".translate(_FW)
+        for text in (
+            f"{key} {payload}",
+            f"{chr(0x410)}KIA<b>IOSFODNN7EXAMPLE {payload}",
+            f"{payload} {key}",
+        ):
+            out = clean(text)
+>           assert "AKIAIOSFODNN7EXAMPLE" not in textnorm.fold(out), (text, out)
+E           AssertionError: ('АKIAIOSFODNN7EXAMPLE ＜！ｃｈａｎｎｅｌ＞ ＠ｈｅｒｅ ｋｕｂｅｃｔｌ ｄｅｌｅｔｅ ｐｏｄｓ ｈｔｔｐｓ：／／ｅｖｉｌ.ｅｘａｍｐｌｅ／ｘ ｀｀｀', 'АKIAIOSFODNN7EXAMPLE ＜！ｃｈａｎｎｅｌ＞ ＠ｈｅｒｅ ｋｕｂｅｃｔｌ ｄｅｌｅｔｅ ｐｏｄｓ ｈｔｔｐｓ：／／ｅｖｉｌ[.]ｅｘａｍｐｌｅ／ｘ ｀｀｀')
+E           assert 'AKIAIOSFODNN7EXAMPLE' not in 'AKIAIOSFODN...xample/x ```'
+E             
+E             'AKIAIOSFODNN7EXAMPLE' is contained here:
+E               AKIAIOSFODNN7EXAMPLE <!channel> @here kubectl delete pods https://evil[.]example/x ```
+E             ? ++++++++++++++++++++
+
+tests/test_redact_fold_property.py:76: AssertionError
+_______ test_the_look_alike_fuzz_keeps_both_the_key_and_live_syntax_out ________
+
+    def test_the_look_alike_fuzz_keeps_both_the_key_and_live_syntax_out():
+        from hadavin_sdk.approvals.channel import clean
+    
+        key = "AKIA" + "IOSFODNN7EXAMPLE"
+        alike = {
+            "A": chr(0x410),
+            "I": chr(0x406),
+            "O": chr(0x41E),
+            "S": chr(0x405),
+            "E": chr(0x415),
+            "P": chr(0x420),
+        }
+        payloads = [
+            "<!channel>", "<!here>", "@here", "@channel", "kubectl delete pods", "https://evil.example/x", "```", "[x](http://e.example)",
+        ]  # fmt: skip
+        rng = random.Random(51)  # noqa: S311  # a seeded test fuzz, not a secret
+        for _ in range(300):
+            text = "".join(
+                alike[c]
+                if c in alike and rng.random() < 0.5
+                else c + (chr(0x200B) if rng.random() < 0.15 else "")
+                for c in key
+            )
+            if (
+                rng.random() < 0.5
+            ):  # a tag INSIDE the key: redact finds no key until the sanitiser has removed the tag
+                at = rng.randrange(1, len(text) - 1)
+                text = text[:at] + "<b>" + text[at:]
+            live = rng.choice(payloads)
+            live = live.translate(_FW) if rng.random() < 0.7 else live
+            line = rng.choice([f"the key {text} {live} end", f"{live} {text}", f"{text}<b>{live}"])
+            out = clean(line)
+>           assert key not in textnorm.fold(out), (line, out)
+E           AssertionError: ('the key АKІAIОSFODNN7E\u200bXАMРLЕ @channel end', 'the key АKІAIОSFODNN7EXАMРLЕ at-channel end')
+E           assert 'AKIAIOSFODNN7EXAMPLE' not in 'the key AKI...-channel end'
+E             
+E             'AKIAIOSFODNN7EXAMPLE' is contained here:
+E               the key AKIAIOSFODNN7EXAMPLE at-channel end
+
+tests/test_redact_fold_property.py:118: AssertionError
+_ test_surr_1_a_lone_surrogate_leaves_no_clear_address_and_raises_only_a_redaction_error _
+
+    def test_surr_1_a_lone_surrogate_leaves_no_clear_address_and_raises_only_a_redaction_error():
+        text = "a" + "\ud800" + "b josé@exemple.fr"
+        for call in (lambda: redact(text).text, lambda: runmap.redact_text(text, {})):
+            try:
+                out = call()
+            except runmap.RedactionError:
+                continue
+>           assert "exemple.fr" not in out, out
+E           AssertionError: a\ud800b jos\xe9@exemple.fr
+E           assert 'exemple.fr' not in 'a\ud800b josé@exemple.fr'
+E             
+E             'exemple.fr' is contained here:
+E               a\ud800b jos\xe9@exemple.fr
+
+tests/test_redact_fold_seams.py:27: AssertionError
+___________ test_seam_3_a_str_subclass_is_masked_like_the_plain_text ___________
+
+    def test_seam_3_a_str_subclass_is_masked_like_the_plain_text():
+        class S(str):
+            pass
+    
+        plain = redact("mail josé@exemple.fr and key AKIAIOSFODNN7EXAMPLE")
+        sub = redact(S("mail josé@exemple.fr and key AKIAIOSFODNN7EXAMPLE"))
+        assert sub.text == plain.text and sub.mapping == plain.mapping
+>       assert runmap.redact_text(S("mail josé@exemple.fr"), {}) == "mail <EMAIL_1>"
+E       AssertionError: assert 'mail josé@exemple.fr' == 'mail <EMAIL_1>'
+E         
+E         - mail <EMAIL_1>
+E         + mail josé@exemple.fr
+
+tests/test_redact_fold_seams.py:78: AssertionError
+___ test_a_fold_on_hit_line_stays_note_only_through_every_producer_and_view ____
+
+    def test_a_fold_on_hit_line_stays_note_only_through_every_producer_and_view():
+        # a key hidden behind Cyrillic look-alikes (with or without a tag split) next to full-width live syntax: the redactor's fold-on-hit
+        # rewrite must emit the fixed note and placeholders only, never folded text, so no mention, link, command or fence goes live
+        import importlib
+    
+        from hadavin_sdk.guard import textnorm
+    
+        FOLD_NOTE = getattr(
+            importlib.import_module("hadavin_sdk.guard.redact"),
+            "FOLD_NOTE",
+            "<no FOLD_NOTE on this head>",
+        )
+    
+        fw = str.maketrans({c: chr(ord(c) + 0xFEE0) for c in "<>!@:/`abcdefghijklmnopqrstuvwxyz"})
+        payloads = [
+            "<!channel>", "<!here>", "@here", "@channel", "kubectl delete pods", "https://evil.example/x", "```", "[x](http://e.example)",
+        ]  # fmt: skip
+        live = ("<!", "@here", "@channel", "://", "kubectl delete", "](")
+        alike = {"A": chr(0x410), "I": chr(0x406), "O": chr(0x41E), "S": chr(0x405), "E": chr(0x415)}
+        key = "AKIA" + "IOSFODNN7EXAMPLE"
+        rng = random.Random(SEED + 1)  # noqa: S311 - a seeded test generator
+        names = sorted(PRODUCERS)
+        for _ in range(300):
+            text = "".join(alike[c] if c in alike and rng.random() < 0.5 else c for c in key)
+            if rng.random() < 0.5:  # a tag inside the key: no hit until the tag is gone
+                at = rng.randrange(1, len(text) - 1)
+                text = text[:at] + "<b>" + text[at:]
+            pay = rng.choice(payloads)
+            pay = pay.translate(fw) if rng.random() < 0.7 else pay
+            line = rng.choice([f"the key {text} {pay} end", f"{pay} {text}", f"{text} {pay}"])
+            tagged = "<b>" in text
+            # producers that neutralise text a person reads (clean, slack) get every case; the others only the untagged ones
+            pool = [n for n in names if n in {"clean", "slack"}] if tagged else names
+            for name in rng.sample(pool, 1) + ["clean"]:
+                try:
+                    out = PRODUCERS[name](line)
+                except runmap.RedactionError:
+                    continue  # refused: nothing shown (fail closed)
+                low, folded = out.lower(), textnorm.fold(out).lower()
+>               assert key not in textnorm.fold(out), (name, line, out)
+E               AssertionError: ('prepare_output', '[ｘ](ｈｔｔｐ：／／ｅ.ｅｘａｍｐｌｅ) АKIАIОSFОDNN7EXАMPLE', '[ｘ](ｈｔｔｐ：／／ｅ.ｅｘａｍｐｌｅ) АKIАIОSFОDNN7EXАMPLE')
+E               assert 'AKIAIOSFODNN7EXAMPLE' not in '[x](http://...ODNN7EXAMPLE'
+E                 
+E                 'AKIAIOSFODNN7EXAMPLE' is contained here:
+E                   [x](http://e.example) AKIAIOSFODNN7EXAMPLE
+
+tests/test_k5_round12_fuzz.py:252: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_redact_fold.py::test_redact_masks_a_value_hidden_behind_look_alikes_on_the_line_and_leaves_other_text_alone
+FAILED tests/test_redact_fold.py::test_benign_multilingual_corpus_has_a_zero_false_withhold_rate
+FAILED tests/test_redact_fold.py::test_attacks_are_still_withheld_whole_and_never_emitted_folded
+FAILED tests/test_redact_fold.py::test_a_lookalike_copy_of_a_value_that_also_stands_in_clear_is_still_a_hit
+FAILED tests/test_redact_fold.py::test_in_place_masking_cases[mail jose\u0301@example.com now-mail <EMAIL_1> now-jose@example.com]
+FAILED tests/test_redact_fold.py::test_in_place_masking_cases[x \u0301jos\xe9@example.com\u0301 y-x \u0301<EMAIL_1>\u0301 y-jose@example.com]
+FAILED tests/test_redact_fold.py::test_in_place_masking_cases[mail al\u200bice@example.com now-mail <EMAIL_1> now-alice@example.com]
+FAILED tests/test_redact_fold.py::test_in_place_masking_cases[key A\u212aIAIOSFODNN7EXAMPLE end-key <APIKEY_1> end-AKIAIOSFODNN7EXAMPLE]
+FAILED tests/test_redact_fold.py::test_in_place_masking_cases[a jos\xe9@example.com b mar\xeda@example.com c-a <EMAIL_1> b <EMAIL_2> c-jose@example.com]
+FAILED tests/test_redact_fold.py::test_in_place_masking_cases[Acme\u2122 mail jos\xe9@example.com \u2026 done-Acme\u2122 mail <EMAIL_1> \u2026 done-jose@example.com]
+FAILED tests/test_redact_fold.py::test_in_place_masking_cases[\ufb01le jos\xe9@example.com-\ufb01le <EMAIL_1>-jose@example.com]
+FAILED tests/test_redact_fold.py::test_a_sign_inside_a_value_withholds_the_line_instead_of_masking_around_it
+FAILED tests/test_redact_fold.py::test_the_cases_that_fall_back_to_withholding_leak_nothing
+FAILED tests/test_redact_fold.py::test_four_rounds_that_never_converge_fall_through_to_the_withhold
+FAILED tests/test_redact_fold.py::test_the_malformed_offset_is_caught_by_a_value_in_front_of_and_behind_other_text
+FAILED tests/test_redact_fold.py::test_a_multi_line_value_that_only_the_fold_sees_is_replaced_not_left
+FAILED tests/test_redact_fold.py::test_an_account_number_below_an_accented_or_full_width_keyword_is_masked_when_a_bank_word_stands_elsewhere
+FAILED tests/test_redact_fold.py::test_one_half_is_masked_around_but_a_full_width_slash_is_still_an_attack
+FAILED tests/test_redact_fold.py::test_table_1_every_single_letter_lookalike_in_a_canary_key_is_masked
+FAILED tests/test_redact_fold.py::test_table_2_every_single_letter_lookalike_in_an_aws_key_is_masked
+FAILED tests/test_redact_fold.py::test_digits_1_digits_of_every_script_in_an_iban_and_a_card_leave_no_run_of_eight
+FAILED tests/test_redact_fold.py::test_align_2_the_alignment_agrees_with_the_fold_or_steps_aside
+FAILED tests/test_redact_fold.py::test_d1_1_a_fraction_slash_beside_an_accented_address_is_masked_in_place
+FAILED tests/test_redact_fold.py::test_ascii_1_an_ascii_text_with_no_non_ascii_value_never_enters_the_fold_scan
+FAILED tests/test_redact_fold.py::test_ascii_2_a_bank_word_on_a_non_ascii_line_widens_the_masking_on_an_ascii_line
+FAILED tests/test_redact_fold.py::test_ascii_3_a_block_that_starts_on_an_ascii_line_is_withheld_whole
+FAILED tests/test_redact_fold.py::test_ascii_4_an_ascii_text_that_adds_a_key_builds_once_with_one_fold_per_non_ascii_value
+FAILED tests/test_redact_fold.py::test_sep_1_a_value_split_by_line_separators_is_masked_or_withheld_never_left
+FAILED tests/test_redact_fold.py::test_map_1_the_map_holds_the_written_spelling
+FAILED tests/test_redact_fold.py::test_map_2_two_spellings_get_two_placeholders_and_restore_only_the_plain_one
+FAILED tests/test_redact_fold.py::test_map_4_two_occurrences_get_two_placeholders_in_both_orders
+FAILED tests/test_redact_fold.py::test_map_5_a_precomposed_name_is_restored_and_a_decomposed_one_stays_a_placeholder
+FAILED tests/test_redact_fold.py::test_map_6_a_clear_copy_of_the_folded_spelling_is_masked_by_the_alias_key
+FAILED tests/test_redact_fold.py::test_fold_note_1_the_note_is_the_fixed_text
+FAILED tests/test_redact_fold.py::test_restore_1_a_withheld_line_placeholder_restores_a_value_not_in_the_input
+FAILED tests/test_redact_fold.py::test_sweep_1_a_clear_copy_after_a_written_variant_gets_the_same_placeholder
+FAILED tests/test_redact_fold.py::test_sweep_3_the_pieces_of_a_written_variant_are_swept_like_the_plain_value
+FAILED tests/test_redact_fold.py::test_sweep_6_an_alias_key_that_is_a_prefix_of_a_longer_stored_value_raises_nothing
+FAILED tests/test_redact_fold.py::test_reg_1a_a_discarded_round_leaves_no_orphan_placeholder
+FAILED tests/test_redact_fold.py::test_reg_1b_non_converging_rounds_leave_no_orphan_placeholder
+FAILED tests/test_redact_fold.py::test_text_before_a_masked_value_is_kept_once_between_two_in_place_masks
+FAILED tests/test_redact_fold_budget.py::test_many_short_non_ascii_lines_cost_no_per_line_pattern_runs
+FAILED tests/test_redact_fold_budget.py::test_the_fold_scan_stops_at_the_time_budget_with_input_too_large
+FAILED tests/test_redact_fold_budget.py::test_the_budget_is_checked_inside_the_per_line_work
+FAILED tests/test_redact_fold_budget.py::test_line_hits_asks_for_the_budget_once_per_pattern
+FAILED tests/test_redact_fold_budget.py::test_one_deadline_covers_the_text_and_all_its_views
+FAILED tests/test_redact_fold_budget.py::test_a_spent_budget_refuses_before_any_line_is_treated
+FAILED tests/test_redact_fold_budget.py::test_a_suspect_line_loops_only_the_patterns_that_matched_it
+FAILED tests/test_redact_fold_budget.py::test_the_budget_is_cpu_time_of_the_thread_not_the_wall_clock
+FAILED tests/test_redact_fold_budget.py::test_the_cookie_line_really_takes_three_rounds
+FAILED tests/test_redact_fold_budget.py::test_aligned_fold_checks_the_budget_every_4096_characters
+FAILED tests/test_redact_fold_budget.py::test_a_pattern_that_matched_nowhere_in_a_line_is_not_run_on_it
+FAILED tests/test_redact_fold_budget.py::test_mid_1_the_budget_is_checked_in_the_middle_of_a_line
+FAILED tests/test_redact_fold_budget.py::test_budget_1b_the_check_after_stage_one_runs_before_any_decoded_mask
+FAILED tests/test_redact_fold_budget.py::test_budget_2_the_deadline_is_shared_by_every_view
+FAILED tests/test_redact_fold_budget.py::test_budget_3_the_alias_build_is_budgeted
+FAILED tests/test_redact_fold_budget.py::test_hostile_2_many_stored_originals_with_an_encoding_mark_stop_at_the_first_check
+FAILED tests/test_redact_fold_budget.py::test_hostile_2b_the_check_sits_at_the_top_of_the_loop_before_any_skip
+FAILED tests/test_redact_fold_property.py::test_the_live_secret_path_masks_a_key_hidden_behind_look_alikes
+FAILED tests/test_redact_fold_property.py::test_text_changed_after_the_mask_is_masked_again_whatever_look_alikes_hide_the_key
+FAILED tests/test_redact_fold_property.py::test_a_fold_on_hit_rewrite_never_emits_folded_text_so_nothing_goes_live_after_the_neutralising
+FAILED tests/test_redact_fold_property.py::test_the_look_alike_fuzz_keeps_both_the_key_and_live_syntax_out
+FAILED tests/test_redact_fold_seams.py::test_surr_1_a_lone_surrogate_leaves_no_clear_address_and_raises_only_a_redaction_error
+FAILED tests/test_redact_fold_seams.py::test_seam_3_a_str_subclass_is_masked_like_the_plain_text
+FAILED tests/test_k5_round12_fuzz.py::test_a_fold_on_hit_line_stays_note_only_through_every_producer_and_view
+65 failed, 18 passed, 3 deselected, 6 xfailed, 2 errors in 19.60s
+exit=1

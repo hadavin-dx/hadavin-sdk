@@ -1,0 +1,94 @@
+\echo == server
+== server
+SELECT version();
+                                                                 version                                                                  
+------------------------------------------------------------------------------------------------------------------------------------------
+ PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+(1 row)
+
+\echo == (a) SQL-standard function body
+== (a) SQL-standard function body
+CREATE SCHEMA hadavin_test_p_4f95fb05;
+CREATE SCHEMA
+SET search_path = hadavin_test_p_4f95fb05;
+SET
+CREATE FUNCTION f() RETURNS int LANGUAGE sql RETURN 1;
+CREATE FUNCTION
+SELECT proname, prosrc, prosrc = '' AS prosrc_is_empty, prosrc IS NULL AS prosrc_is_null, prosqlbody IS NOT NULL AS has_sqlbody, pg_get_function_sqlbody(oid) AS sqlbody FROM pg_proc WHERE proname = 'f' AND pronamespace = 'hadavin_test_p_4f95fb05'::regnamespace;
+ proname | prosrc | prosrc_is_empty | prosrc_is_null | has_sqlbody | sqlbody  
+---------+--------+-----------------+----------------+-------------+----------
+ f       |        | t               | f              | t           | RETURN 1
+(1 row)
+
+SELECT pg_get_functiondef('hadavin_test_p_4f95fb05.f()'::regprocedure);
+                   pg_get_functiondef                   
+--------------------------------------------------------
+ CREATE OR REPLACE FUNCTION hadavin_test_p_4f95fb05.f()+
+  RETURNS integer                                      +
+  LANGUAGE sql                                         +
+ RETURN 1                                              +
+ 
+(1 row)
+
+\echo == (b) default privileges
+== (b) default privileges
+CREATE ROLE hadavin_test_r_4f95fb05;
+CREATE ROLE
+CREATE ROLE hadavin_test_x_4f95fb05;
+CREATE ROLE
+CREATE SCHEMA hadavin_test_s_4f95fb05;
+CREATE SCHEMA
+SELECT count(*) AS rows_before FROM pg_default_acl;
+ rows_before 
+-------------
+           0
+(1 row)
+
+ALTER DEFAULT PRIVILEGES FOR ROLE hadavin_test_r_4f95fb05 GRANT EXECUTE ON FUNCTIONS TO hadavin_test_x_4f95fb05;
+ALTER DEFAULT PRIVILEGES
+SELECT oid, defaclrole::regrole, defaclnamespace, defaclnamespace::regnamespace AS nsp, defaclobjtype, defaclacl FROM pg_default_acl ORDER BY oid;
+  oid  |       defaclrole        | defaclnamespace | nsp | defaclobjtype |                                                            defaclacl                                                             
+-------+-------------------------+-----------------+-----+---------------+----------------------------------------------------------------------------------------------------------------------------------
+ 22992 | hadavin_test_r_4f95fb05 |               0 | -   | f             | {=X/hadavin_test_r_4f95fb05,hadavin_test_r_4f95fb05=X/hadavin_test_r_4f95fb05,hadavin_test_x_4f95fb05=X/hadavin_test_r_4f95fb05}
+(1 row)
+
+ALTER DEFAULT PRIVILEGES FOR ROLE hadavin_test_r_4f95fb05 IN SCHEMA hadavin_test_s_4f95fb05 GRANT EXECUTE ON FUNCTIONS TO hadavin_test_x_4f95fb05;
+ALTER DEFAULT PRIVILEGES
+SELECT oid, defaclrole::regrole, defaclnamespace, defaclnamespace::regnamespace AS nsp, defaclobjtype, defaclacl FROM pg_default_acl ORDER BY oid;
+  oid  |       defaclrole        | defaclnamespace |           nsp           | defaclobjtype |                                                            defaclacl                                                             
+-------+-------------------------+-----------------+-------------------------+---------------+----------------------------------------------------------------------------------------------------------------------------------
+ 22992 | hadavin_test_r_4f95fb05 |               0 | -                       | f             | {=X/hadavin_test_r_4f95fb05,hadavin_test_r_4f95fb05=X/hadavin_test_r_4f95fb05,hadavin_test_x_4f95fb05=X/hadavin_test_r_4f95fb05}
+ 22993 | hadavin_test_r_4f95fb05 |           22991 | hadavin_test_s_4f95fb05 | f             | {hadavin_test_x_4f95fb05=X/hadavin_test_r_4f95fb05}
+(2 rows)
+
+\ddp
+                                            Default access privileges
+          Owner          |         Schema          |   Type   |                 Access privileges                 
+-------------------------+-------------------------+----------+---------------------------------------------------
+ hadavin_test_r_4f95fb05 | hadavin_test_s_4f95fb05 | function | hadavin_test_x_4f95fb05=X/hadavin_test_r_4f95fb05
+ hadavin_test_r_4f95fb05 |                         | function | =X/hadavin_test_r_4f95fb05                       +
+                         |                         |          | hadavin_test_r_4f95fb05=X/hadavin_test_r_4f95fb05+
+                         |                         |          | hadavin_test_x_4f95fb05=X/hadavin_test_r_4f95fb05
+(2 rows)
+
+\echo == cleanup
+== cleanup
+DROP OWNED BY hadavin_test_r_4f95fb05;
+DROP OWNED
+DROP OWNED BY hadavin_test_x_4f95fb05;
+DROP OWNED
+SELECT count(*) AS rows_after_drop_owned FROM pg_default_acl;
+ rows_after_drop_owned 
+-----------------------
+                     0
+(1 row)
+
+DROP SCHEMA hadavin_test_p_4f95fb05 CASCADE;
+psql:/home/user/build/ev-p3a2r12-scripts/probe6ab.sql:23: NOTICE:  drop cascades to function f()
+DROP SCHEMA
+DROP SCHEMA hadavin_test_s_4f95fb05 CASCADE;
+DROP SCHEMA
+DROP ROLE hadavin_test_r_4f95fb05;
+DROP ROLE
+DROP ROLE hadavin_test_x_4f95fb05;
+DROP ROLE

@@ -1,0 +1,29 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+## import /home/user/build/EV-Q8b-13ea6b75/fb_main/src/hadavin_sdk/__init__.py
+size small=25000 large=100000; columns: shape | path | t(small) s | t(large) s | ratio | len(text large)
+long domain run + glued key | walk | 0.0677 | 0.2634 | 3.9 | 100035
+long domain run + glued key | card | 0.0559 | 0.2518 | 4.5 | 100035
+long host run, no @, + glued key | walk | 0.0385 | 0.2537 | 6.6 | 100031
+long host run, no @, + glued key | card | 0.0701 | 0.3516 | 5.0 | 100031
+dotted 250-char labels + key | walk | 0.0289 | 0.0784 | 2.7 | 100215
+dotted 250-char labels + key | card | 0.0292 | 0.1432 | 4.9 | 100215
+long run of key word | walk | 0.0607 | 0.3023 | 5.0 | 100000
+long run of key word | card | 0.0659 | 0.3132 | 4.8 | 100000
+long run of key= | walk | 0.0655 | 0.5003 | 7.6 | 99999
+long run of key= | card | 0.1499 | 0.4800 | 3.2 | 99999
+long run of key=value pairs | walk | 0.0528 | 0.1972 | 3.7 | 100000
+long run of key=value pairs | card | 0.0851 | 0.3993 | 4.7 | 100000
+long run of spaces after key= | walk | 0.0438 | 0.1785 | 4.1 | 100030
+long run of spaces after key= | card | 0.0510 | 0.1881 | 3.7 | 100030
+key= then spaces only | walk | 0.0562 | 0.1674 | 3.0 | 100009
+key= then spaces only | card | 0.0502 | 0.2364 | 4.7 | 100009
+key then many words | walk | 0.0373 | 0.1603 | 4.3 | 100028
+key then many words | card | 0.0573 | 0.2437 | 4.3 | 100028
+many short addresses | walk | 0.0401 | 0.1855 | 4.6 | 100000
+many short addresses | card | 0.0930 | 0.5563 | 6.0 | 100000
+Bearer run | walk | 0.0312 | 0.1232 | 3.9 | 99990
+Bearer run | card | 0.0547 | 0.2394 | 4.4 | 99990
+link then key run | walk | 0.0425 | 0.1677 | 3.9 | 96960
+link then key run | card | 0.0661 | 0.2537 | 3.8 | 96960
+tabs and newlines run | walk | 0.0352 | 0.1565 | 4.4 | 100010
+tabs and newlines run | card | 0.1133 | 0.4323 | 3.8 | 100010

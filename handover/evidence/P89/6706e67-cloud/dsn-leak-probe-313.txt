@@ -1,0 +1,13 @@
+6706e6728483b67e549101b1680111a4c2b89471
+$ pytest -q -rs tests/test_mutation_runner.py tests/test_p7_store.py
+........................................................................ [ 90%]
+........                                                                 [100%]
+80 passed in 22.91s
+$ pytest -q -rs tests/test_mutation_runner_keywords.py tests/test_p7_store.py
+SKIPPED [1] tests/test_p7_store.py:161: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_p7_store.py:166: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/test_p7_store.py:174: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+62 passed, 4 skipped in 9.21s
+$ pytest -q -rs tests/test_mutation_runner_meta.py tests/test_p7_store.py
+...........................                                              [100%]
+27 passed in 2.38s

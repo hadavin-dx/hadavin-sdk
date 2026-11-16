@@ -1,0 +1,3 @@
+# core/P5b2-main delta review (InvalidRunId -> Code.config_invalid), egm:egm-codebase-details (Fable 5.2), snapshot 3b9617e4, read-only
+Verdict: CORRECT (nearest fit by the table's own conventions; `unqualified` is a gate state, `validation_failed` is for pydantic models, `internal_bug` is for own-data defects). Key format right, pinned test table consistent, exception message is a constant (no value leak). No Blocker/Major. One nit: no comment explaining the judgement call -> FIXED by lead with a one-line comment (EGM skipped: one-line mechanical edit; ruff check + format clean; tests/test_diagnostic_codes.py 13 passed without Postgres).
+Not checked by reviewer: guard/diagnostic.py rendering, rest of the test file, any run.

@@ -1,0 +1,34 @@
+.......................................FF..                              [100%]
+=================================== FAILURES ===================================
+__________________ test_channel_names_its_callback_path[fake] __________________
+
+channel_factory = <function channel_factory.<locals>.<lambda> at 0x7fa8b48c2e80>
+
+    def test_channel_names_its_callback_path(channel_factory):
+        """Every channel kind names the one URL path the receiver answers for it (no fallback path exists)."""
+        from hadavin_sdk.approvals import channel as channel_module
+    
+        # grammar and length, as the receiver checks
+        valid = getattr(channel_module, "valid_callback_path", None)
+>       assert valid is not None
+E       assert None is not None
+
+tests/contracts/test_capabilities.py:160: AssertionError
+_________________ test_channel_names_its_callback_path[slack] __________________
+
+channel_factory = <function channel_factory.<locals>.<lambda> at 0x7fa8b488f6a0>
+
+    def test_channel_names_its_callback_path(channel_factory):
+        """Every channel kind names the one URL path the receiver answers for it (no fallback path exists)."""
+        from hadavin_sdk.approvals import channel as channel_module
+    
+        # grammar and length, as the receiver checks
+        valid = getattr(channel_module, "valid_callback_path", None)
+>       assert valid is not None
+E       assert None is not None
+
+tests/contracts/test_capabilities.py:160: AssertionError
+=========================== short test summary info ============================
+FAILED tests/contracts/test_capabilities.py::test_channel_names_its_callback_path[fake]
+FAILED tests/contracts/test_capabilities.py::test_channel_names_its_callback_path[slack]
+2 failed, 41 passed in 2.11s

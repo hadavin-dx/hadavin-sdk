@@ -1,0 +1,30 @@
+### tests/test_migration_wiring.py::test_a_privileged_migration_role_is_refused_before_any_file_runs rc=1
+FFFF                                                                     [100%]
+=================================== FAILURES ===================================
+__ test_a_privileged_migration_role_is_refused_before_any_file_runs[rolsuper] __
+tests/test_migration_wiring.py:845: in test_a_privileged_migration_role_is_refused_before_any_file_runs
+    assert "SELECT 1;\n" not in db.log
+E   assert 'SELECT 1;\n' not in ['SELECT pg_advisory_xact_lock(%s)', "SET LOCAL lock_timeout = '5s';", "SET LOCAL statement_timeout = '60s';", "SELECT...ersion TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())', 'SELECT version FROM schema_migrations', ...]
+E    +  where ['SELECT pg_advisory_xact_lock(%s)', "SET LOCAL lock_timeout = '5s';", "SET LOCAL statement_timeout = '60s';", "SELECT...ersion TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())', 'SELECT version FROM schema_migrations', ...] = <tests.test_migration_wiring._Db object at 0x7fd39e3967b0>.log
+_ test_a_privileged_migration_role_is_refused_before_any_file_runs[rolcreaterole] _
+tests/test_migration_wiring.py:845: in test_a_privileged_migration_role_is_refused_before_any_file_runs
+    assert "SELECT 1;\n" not in db.log
+E   assert 'SELECT 1;\n' not in ['SELECT pg_advisory_xact_lock(%s)', "SET LOCAL lock_timeout = '5s';", "SET LOCAL statement_timeout = '60s';", "SELECT...ersion TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())', 'SELECT version FROM schema_migrations', ...]
+E    +  where ['SELECT pg_advisory_xact_lock(%s)', "SET LOCAL lock_timeout = '5s';", "SET LOCAL statement_timeout = '60s';", "SELECT...ersion TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())', 'SELECT version FROM schema_migrations', ...] = <tests.test_migration_wiring._Db object at 0x7fd39d69d090>.log
+_ test_a_privileged_migration_role_is_refused_before_any_file_runs[rolcreatedb] _
+tests/test_migration_wiring.py:845: in test_a_privileged_migration_role_is_refused_before_any_file_runs
+    assert "SELECT 1;\n" not in db.log
+E   assert 'SELECT 1;\n' not in ['SELECT pg_advisory_xact_lock(%s)', "SET LOCAL lock_timeout = '5s';", "SET LOCAL statement_timeout = '60s';", "SELECT...ersion TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())', 'SELECT version FROM schema_migrations', ...]
+E    +  where ['SELECT pg_advisory_xact_lock(%s)', "SET LOCAL lock_timeout = '5s';", "SET LOCAL statement_timeout = '60s';", "SELECT...ersion TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())', 'SELECT version FROM schema_migrations', ...] = <tests.test_migration_wiring._Db object at 0x7fd39d69d450>.log
+_ test_a_privileged_migration_role_is_refused_before_any_file_runs[rolbypassrls] _
+tests/test_migration_wiring.py:845: in test_a_privileged_migration_role_is_refused_before_any_file_runs
+    assert "SELECT 1;\n" not in db.log
+E   assert 'SELECT 1;\n' not in ['SELECT pg_advisory_xact_lock(%s)', "SET LOCAL lock_timeout = '5s';", "SET LOCAL statement_timeout = '60s';", "SELECT...ersion TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())', 'SELECT version FROM schema_migrations', ...]
+E    +  where ['SELECT pg_advisory_xact_lock(%s)', "SET LOCAL lock_timeout = '5s';", "SET LOCAL statement_timeout = '60s';", "SELECT...ersion TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())', 'SELECT version FROM schema_migrations', ...] = <tests.test_migration_wiring._Db object at 0x7fd39d5076f0>.log
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_a_privileged_migration_role_is_refused_before_any_file_runs[rolsuper]
+FAILED tests/test_migration_wiring.py::test_a_privileged_migration_role_is_refused_before_any_file_runs[rolcreaterole]
+FAILED tests/test_migration_wiring.py::test_a_privileged_migration_role_is_refused_before_any_file_runs[rolcreatedb]
+FAILED tests/test_migration_wiring.py::test_a_privileged_migration_role_is_refused_before_any_file_runs[rolbypassrls]
+4 failed in 0.46s
+

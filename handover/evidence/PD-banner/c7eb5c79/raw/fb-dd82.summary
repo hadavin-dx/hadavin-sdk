@@ -1,0 +1,9 @@
+test_mode_banner: 33 failed, 143 passed in 11.63s
+test_demo_only_guard: 9 failed, 138 passed in 11.60s
+test_demo_only_guard_ci: 8 passed in 0.06s
+test_banner_mutant_table: 3 failed, 17 passed in 5.02s
+test_changelog_numbers: 4 failed, 2 passed in 0.06s
+test_repo_rules: 40 passed in 0.56s
+test_scan_repo: 31 passed in 2.23s
+test_workflow_files_parse: 4 passed in 0.04s
+test_stage_names: 1 failed, 96 passed in 3.63s

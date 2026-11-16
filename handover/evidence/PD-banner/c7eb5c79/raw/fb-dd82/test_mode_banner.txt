@@ -1,0 +1,212 @@
+........................................................................ [ 40%]
+........................................F..........F......FF....F...F... [ 81%]
+..FFFFFFFFFFFFFFFF.F.FFFFFFFFF.F                                         [100%]
+=================================== FAILURES ===================================
+E   AssertionError: painted odd unconfirmed {'mode': 'demo', 'tone': 'unconfirmed', 'tag': 'UNCONFIRMED', 'text': 'Every record here is made-up demo data.', 'standins': '', 'real': [], 'stand_ins': [], 'overridden': ['llm']}: [{'cls': 'mode-banner__tag', 'text': 'UNCONFIRMED'}, {'cls': 'mode-banner__text', 'text': ' The mode of this system could not be confirmed. Treat everything here as real.'}]
+    assert ('unconfirmed' == 'unconfirmed'
+      
+        unconfirmed and ' The mode of...here as real.' == ' The mode of...ed here: llm.'
+      
+      Skipping 68 identical leading characters in diff, use -v to show
+      - re as real. These parts were supplied by code and are not checked here: llm.
+      + re as real.)
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:2211: AssertionError: painted odd unconfirmed {'mode': 'demo', 'tone': 'unconfirmed', 'tag': 'UNCONFIRMED', 'text': 'Every record here is made-up demo data.', 'standins': '', 'real': [], 'stand_ins': [], 'overridden': ['llm']}: [{'cls': 'mode-banner__tag', 'text': 'UNCONFIRMED'}, {'cls': 'mode-banner__text', 'text': ' The mode of this system could not be confirmed. Treat everything here as real.'}]
+E   AssertionError: painted a forged text 'The mode of this system could not be confirmed. Treat everything here as real. Every record here is made-up demo data.': [{'cls': 'mode-banner__tag', 'text': 'UNCONFIRMED'}, {'cls': 'mode-banner__text', 'text': ' The mode of this system could not be confirmed. Treat everything here as real.'}]
+    assert ' The mode of...here as real.' == ' The mode of...ed here: llm.'
+      
+      Skipping 68 identical leading characters in diff, use -v to show
+      - re as real. These parts were supplied by code and are not checked here: llm.
+      + re as real.
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:2468: AssertionError: painted a forged text 'The mode of this system could not be confirmed. Treat everything here as real. Every record here is made-up demo data.': [{'cls': 'mode-banner__tag', 'text': 'UNCONFIRMED'}, {'cls': 'mode-banner__text', 'text': ' The mode of this system could not be confirmed. Treat everything here as real.'}]
+E   AssertionError: Regex pattern did not match.
+      Expected regex: 'cannot be deep-copied'
+      Actual message: "cannot pickle '_thread.lock' object"
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:2729: AssertionError: Regex pattern did not match.
+E   AssertionError: an app of plain parts was deep-copied
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:2748: AssertionError: an app of plain parts was deep-copied
+E   AssertionError: assert {'config_dir'...nly compared'} == {'config_dir'... at run time'}
+      
+      Omitting 2 identical items, use -vv to show
+      Differing items:
+      {'timeout_s': 'a number of seconds handed to the executor; checked: it is not called, only compared'} != {'timeout_s': 'a number of seconds handed to the executor (`Executor(timeout_s=...)`, as its network timeout); the executor reads it only as a timeout; it is typed as a number in the signature of `build` and not checked at run time'}
+      Use -v to get more diff
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:2828: AssertionError: assert {'config_dir'...nly compared'} == {'config_dir'... at run time'}
+E   AssertionError: the names of the overrides were not shown: [{'cls': 'mode-banner__tag', 'text': 'UNCONFIRMED'}, {'cls': 'mode-banner__text', 'text': ' The mode of this system could not be confirmed. Treat everything here as real.'}]
+    assert ' The mode of...here as real.' == ' The mode of...: tools, llm.'
+      
+      Skipping 68 identical leading characters in diff, use -v to show
+      - re as real. These parts were supplied by code and are not checked here: tools, llm.
+      + re as real.
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:2907: AssertionError: the names of the overrides were not shown: [{'cls': 'mode-banner__tag', 'text': 'UNCONFIRMED'}, {'cls': 'mode-banner__text', 'text': ' The mode of this system could not be confirmed. Treat everything here as real.'}]
+E   AssertionError: a deleted tool spec left a made-up banner
+    assert 'demo' == 'unconfirmed'
+      
+      - unconfirmed
+      + demo
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3006: AssertionError: a deleted tool spec left a made-up banner
+E   AssertionError: a deleted tool spec was not seen
+    assert 'demo' == 'unconfirmed'
+      
+      - unconfirmed
+      + demo
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3017: AssertionError: a deleted tool spec was not seen
+E   AssertionError: a host added after build left a made-up banner
+    assert 'real' == 'unconfirmed'
+      
+      - unconfirmed
+      + real
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3031: AssertionError: a host added after build left a made-up banner
+E   AssertionError: cleared sources left a made-up banner
+    assert 'demo' == 'unconfirmed'
+      
+      - unconfirmed
+      + demo
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3046: AssertionError: cleared sources left a made-up banner
+E   AssertionError: a replaced config source was not seen
+    assert 'real' == 'unconfirmed'
+      
+      - unconfirmed
+      + real
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3059: AssertionError: a replaced config source was not seen
+E   AssertionError: a function replaced: the banner stayed made-up
+    assert 'demo' == 'unconfirmed'
+      
+      - unconfirmed
+      + demo
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3081: AssertionError: a function replaced: the banner stayed made-up
+E   AssertionError: a replaced contract was not seen
+    assert 'demo' == 'unconfirmed'
+      
+      - unconfirmed
+      + demo
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3092: AssertionError: a replaced contract was not seen
+E   AssertionError: the banner error was logged below warning level: ['DEBUG', 'DEBUG']
+    assert False
+     +  where False = all(<generator object test_a_banner_error_is_logged_once_at_warning_level_with_the_exception_type.<locals>.<genexpr> at 0x7feb35fd7440>)
+------------------------------ Captured log call -------------------------------
+DEBUG    hadavin_sdk.app:app.py:175 mode banner: the connected parts of the app could not be read
+DEBUG    hadavin_sdk.app:app.py:175 mode banner: the connected parts of the app could not be read
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3127: AssertionError: the banner error was logged below warning level: ['DEBUG', 'DEBUG']
+E   AssertionError: the outer catch-all did not warn: ['mode banner: the app could not be read']
+    assert False
+     +  where False = any(<generator object test_an_error_in_the_services_or_in_the_banner_is_logged_at_warning_level_too.<locals>.<genexpr> at 0x7feb350aee90>)
+------------------------------ Captured log call -------------------------------
+DEBUG    hadavin_sdk.app:app.py:192 mode banner: the app could not be read
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3154: AssertionError: the outer catch-all did not warn: ['mode banner: the app could not be read']
+E   AssertionError: painted demo with overridden missing
+    assert (False is False and 'demo' == 'unconfirmed'
+      
+      - unconfirmed
+      + demo)
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:444: AssertionError: painted demo with overridden missing
+E   AssertionError: the page painted demo with overridden missing
+    assert 'demo' == 'unconfirmed'
+      
+      - unconfirmed
+      + demo
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3226: AssertionError: the page painted demo with overridden missing
+E   AssertionError: config.systems['fixture-records'] is not among the connected parts
+    assert "config.systems['fixture-records']" in {'approvals', 'approvals.audit', 'approvals.channel', 'approvals.channel._secret', 'approvals.channel.cards', 'approvals.channel.fail_cards', ...}
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3265: AssertionError: config.systems['fixture-records'] is not among the connected parts
+E   AssertionError: config.systems was missing and the parts were read all the same
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3288: AssertionError: config.systems was missing and the parts were read all the same
+E   AssertionError: assert 'demo' == 'unconfirmed'
+      
+      - unconfirmed
+      + demo
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3311: AssertionError: assert 'demo' == 'unconfirmed'
+E   AssertionError: () was accepted as the names of the overrides
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3328: AssertionError: () was accepted as the names of the overrides
+E   AssertionError: assert 'demo' == 'unconfirmed'
+      
+      - unconfirmed
+      + demo
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3353: AssertionError: assert 'demo' == 'unconfirmed'
+E   AssertionError: a tool spec without hosts: nothing was logged at warning level
+    assert 0 >= 1
+     +  where 0 = len([])
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3471: AssertionError: a tool spec without hosts: nothing was logged at warning level
+E   AssertionError: the error was logged 2 times for two banners (one expected)
+    assert 2 == 1
+     +  where 2 = len([<LogRecord: hadavin_sdk.app, 10, /home/user/build/ER-pdbanner12-dd82/src/hadavin_sdk/app.py, 175, "mode banner: the c...build/ER-pdbanner12-dd82/src/hadavin_sdk/app.py, 175, "mode banner: the connected parts of the app could not be read">])
+------------------------------ Captured log call -------------------------------
+DEBUG    hadavin_sdk.app:app.py:175 mode banner: the connected parts of the app could not be read
+DEBUG    hadavin_sdk.app:app.py:175 mode banner: the connected parts of the app could not be read
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3515: AssertionError: the error was logged 2 times for two banners (one expected)
+E   AssertionError: a replaced agent was not seen
+    assert 'demo' == 'unconfirmed'
+      
+      - unconfirmed
+      + demo
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3535: AssertionError: a replaced agent was not seen
+E   AssertionError: a replaced principal was not seen
+    assert 'demo' == 'unconfirmed'
+      
+      - unconfirmed
+      + demo
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3547: AssertionError: a replaced principal was not seen
+E   AssertionError: a replaced chain was not seen
+    assert 'demo' == 'unconfirmed'
+      
+      - unconfirmed
+      + demo
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3559: AssertionError: a replaced chain was not seen
+E   AssertionError: a replaced system was not seen
+    assert 'demo' == 'unconfirmed'
+      
+      - unconfirmed
+      + demo
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3571: AssertionError: a replaced system was not seen
+E   AssertionError: a replaced manifest of an agent was not seen
+    assert 'demo' == 'unconfirmed'
+      
+      - unconfirmed
+      + demo
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3586: AssertionError: a replaced manifest of an agent was not seen
+E   AssertionError: a stage changed after build (demo to pilot) was read as 'quiet'
+    assert 'quiet' == 'unconfirmed'
+      
+      - unconfirmed
+      + quiet
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3600: AssertionError: a stage changed after build (demo to pilot) was read as 'quiet'
+E   AssertionError: a toolbox without an attribute dictionary was not refused
+/home/user/build/ER-pdbanner12-dd82/tests/refusal.py:22: AssertionError: a toolbox without an attribute dictionary was not refused
+E   AssertionError: a per-agent tool entry that is a list was not refused
+/home/user/build/ER-pdbanner12-dd82/tests/refusal.py:22: AssertionError: a per-agent tool entry that is a list was not refused
+E   AttributeError: module 'hadavin_sdk.app' has no attribute '_UNREADABLE'
+/home/user/build/ER-pdbanner12-dd82/tests/test_mode_banner.py:3657: AttributeError: module 'hadavin_sdk.app' has no attribute '_UNREADABLE'
+=========================== short test summary info ============================
+FAILED tests/test_mode_banner.py::test_an_unconfirmed_banner_with_other_tag_or_text_is_painted_with_the_pages_words_and_the_names
+FAILED tests/test_mode_banner.py::test_a_forged_unconfirmed_text_is_not_painted_only_the_exact_words_and_a_note_built_by_the_page
+FAILED tests/test_mode_banner.py::test_copies_of_a_built_app_which_keep_the_same_parts_stay_known_and_the_others_do_not
+FAILED tests/test_mode_banner.py::test_a_deep_copy_of_an_app_that_could_be_copied_is_refused_as_well
+FAILED tests/test_mode_banner.py::test_the_not_connectivity_reasons_say_what_was_checked
+FAILED tests/test_mode_banner.py::test_a_reworded_not_confirmed_text_is_painted_by_the_page_as_its_english_fallback_with_the_names
+FAILED tests/test_mode_banner.py::test_a_tool_spec_deleted_after_build_reads_unconfirmed
+FAILED tests/test_mode_banner.py::test_a_tool_spec_without_a_host_deleted_after_build_reads_unconfirmed
+FAILED tests/test_mode_banner.py::test_the_address_of_a_system_changed_after_build_reads_unconfirmed
+FAILED tests/test_mode_banner.py::test_config_sources_cleared_after_build_reads_unconfirmed
+FAILED tests/test_mode_banner.py::test_a_config_source_replaced_after_build_reads_unconfirmed
+FAILED tests/test_mode_banner.py::test_a_toolbox_function_or_spec_swapped_after_build_reads_unconfirmed
+FAILED tests/test_mode_banner.py::test_an_action_contract_replaced_or_added_after_build_reads_unconfirmed
+FAILED tests/test_mode_banner.py::test_a_banner_error_is_logged_once_at_warning_level_with_the_exception_type
+FAILED tests/test_mode_banner.py::test_an_error_in_the_services_or_in_the_banner_is_logged_at_warning_level_too
+FAILED tests/test_mode_banner.py::test_a_banner_without_overridden_is_not_painted_as_demo_or_quiet_by_the_page
+FAILED tests/test_mode_banner.py::test_the_page_and_python_both_read_a_null_overridden_as_unknown_for_demo_and_quiet
+FAILED tests/test_mode_banner.py::test_a_real_built_app_lists_every_named_container_entry_in_its_connected_parts
+FAILED tests/test_mode_banner.py::test_a_named_container_that_is_missing_stops_the_reading_and_names_it
+FAILED tests/test_mode_banner.py::test_an_app_sealed_while_a_container_is_missing_reads_unconfirmed_and_build_goes_on
+FAILED tests/test_mode_banner.py::test_a_plain_tuple_cannot_seal_an_app_and_a_sealed_app_cannot_be_given_a_new_answer
+FAILED tests/test_mode_banner.py::test_a_hand_made_app_is_unconfirmed_even_after_a_stray_seal_call
+FAILED tests/test_mode_banner.py::test_a_config_the_banner_cannot_read_does_not_stop_build_and_reads_unconfirmed
+FAILED tests/test_mode_banner.py::test_a_banner_error_is_logged_once_at_warning_level_whatever_the_name_of_the_log_helper
+FAILED tests/test_mode_banner.py::test_a_replaced_agent_entry_after_build_reads_unconfirmed
+FAILED tests/test_mode_banner.py::test_a_replaced_principal_entry_after_build_reads_unconfirmed
+FAILED tests/test_mode_banner.py::test_a_replaced_chain_entry_after_build_reads_unconfirmed
+FAILED tests/test_mode_banner.py::test_a_replaced_system_entry_after_build_reads_unconfirmed
+FAILED tests/test_mode_banner.py::test_a_replaced_tool_manifest_of_an_agent_after_build_reads_unconfirmed
+FAILED tests/test_mode_banner.py::test_a_stage_changed_after_build_reads_unconfirmed
+FAILED tests/test_mode_banner.py::test_a_toolbox_without_an_attribute_dictionary_is_an_error_that_names_it
+FAILED tests/test_mode_banner.py::test_a_per_agent_tool_entry_that_is_not_a_mapping_is_an_error_that_names_it
+FAILED tests/test_mode_banner.py::test_each_unreadable_shape_seals_as_unreadable_and_reads_unconfirmed_with_nothing_handed_in
+33 failed, 143 passed in 11.63s

@@ -1,0 +1,9 @@
+head: 7442c0f4eb7b3df9504e23065314720892cc35a3
+command: pytest -q -m perf -rs -p no:cacheprovider
+start: 2026-11-06T03:58:40Z
+-----
+s.........................                                               [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/demo_askdata/test_pgsource_layers.py:131: HADAVIN_TEST_PG_DSN is not set (the CI postgres service, or a local container)
+25 passed, 1 skipped, 10059 deselected in 51.69s
+exit: 0

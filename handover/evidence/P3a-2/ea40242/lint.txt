@@ -1,0 +1,9 @@
+HEAD ea402429072e3f1396eb9e7e9258f605d1002930
+$ ruff check src tests demos
+Uninstalled 1 package in 3ms
+Installed 1 package in 4ms
+All checks passed!
+rc=0
+$ ruff format --check src tests demos
+319 files already formatted
+rc=0

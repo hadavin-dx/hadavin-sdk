@@ -1,0 +1,21 @@
+# 3.12: uv run --python 3.12 --no-project --with mypy mypy --platform win32 --python-version 3.12 --ignore-missing-imports? (no) tools/mutation_runner.py
+Downloading mypy (14.8MiB)
+ Downloaded mypy
+Installed 6 packages in 86ms
+tools/mutation_runner.py:334: error: Cannot find implementation or library stub for module named "hadavin_sdk.testing.mutation"  [import-not-found]
+tools/mutation_runner.py:334: note: See https://mypy.readthedocs.io/en/stable/running_mypy.html#missing-imports
+tools/mutation_runner.py:1129: error: Module has no attribute "getuid"; maybe "getpid" or "getppid"?  [attr-defined]
+tools/mutation_runner.py:1140: error: Module has no attribute "getuid"; maybe "getpid" or "getppid"?  [attr-defined]
+tools/mutation_runner.py:1208: error: Module has no attribute "fchmod"; maybe "chmod"?  [attr-defined]
+tools/mutation_runner.py:1223: error: Module has no attribute "getuid"; maybe "getpid" or "getppid"?  [attr-defined]
+tools/mutation_runner.py:1251: error: Module has no attribute "O_DIRECTORY"  [attr-defined]
+tools/mutation_runner.py:1251: error: Module has no attribute "O_NOFOLLOW"  [attr-defined]
+tools/mutation_runner.py:1305: error: Module has no attribute "getuid"; maybe "getpid" or "getppid"?  [attr-defined]
+tools/mutation_runner.py:1470: error: Module has no attribute "P_PID"  [attr-defined]
+tools/mutation_runner.py:1470: error: Module has no attribute "WEXITED"  [attr-defined]
+tools/mutation_runner.py:1470: error: Module has no attribute "WNOHANG"  [attr-defined]
+tools/mutation_runner.py:1470: error: Module has no attribute "WNOWAIT"; maybe "P_NOWAIT"?  [attr-defined]
+tools/mutation_runner.py:1495: error: Module has no attribute "killpg"  [attr-defined]
+tools/mutation_runner.py:1495: error: Module has no attribute "SIGKILL"; maybe "SIGILL"?  [attr-defined]
+Found 14 errors in 1 file (checked 1 source file)
+exit=0

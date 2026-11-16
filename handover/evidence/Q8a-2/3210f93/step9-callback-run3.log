@@ -1,0 +1,12 @@
+........................................................................ [ 67%]
+..................................                                       [100%]
+============================= slowest 8 durations ==============================
+1.22s call     tests/test_q8a2_callback.py::test_a_failure_while_a_signed_click_is_recorded_is_answered_500_and_logged_once_without_its_text
+1.06s call     tests/test_q8a2_callback.py::test_a_caller_that_resets_while_the_body_is_read_causes_no_traceback
+1.01s call     tests/test_q8a2_callback.py::test_a_request_that_sends_less_than_it_announces_frees_its_thread_within_the_bound
+1.00s call     tests/test_q8a2_callback.py::test_a_request_that_arrives_too_slowly_is_dropped_at_the_bound_however_it_is_sent[first line]
+1.00s call     tests/test_q8a2_callback.py::test_a_request_that_arrives_too_slowly_is_dropped_at_the_bound_however_it_is_sent[headers]
+0.56s call     tests/test_q8a2_callback.py::test_a_near_miss_of_a_path_is_not_served[slack]
+0.55s call     tests/test_q8a2_callback.py::test_a_near_miss_of_a_path_is_not_served[fake]
+0.53s call     tests/test_q8a2_callback.py::test_a_correctly_signed_click_on_a_doubled_slash_is_not_handled
+106 passed in 21.78s

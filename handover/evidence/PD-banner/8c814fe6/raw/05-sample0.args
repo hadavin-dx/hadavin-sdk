@@ -1,0 +1,20 @@
+G5c the name is matched in lower case only
+R13A1 a stage that is not text is not an error
+R9D14 the name check reads the whole line for every equals sign
+G37 UTF-16 text in a text file is not searched
+B59 a url is not checked for text after the host
+B51 a padded bare host is read as this machine
+G43 an empty or spanned zip is not recognised
+J8 tone demo is accepted with another mode
+R7B1 hold_run_ids is not an override
+G49 compiled Python from version 3000 is not recognised
+R7E4 a file of only the MZ mark and NUL bytes is not a program kind
+N5 the overrides are ignored by the banner
+N3 the hosts of a tool spec are read without the collection check
+G9b files that git ignores are scanned
+B55 tool modules with an empty manifest count as nothing
+B46 a name next to a word character is matched
+G55 an .xz ending is not refused
+B83 a tag longer than the page shows is returned
+B54 an agent entry that is not a mapping is not refused
+B84 the not-confirmed words are not checked for length and emptiness

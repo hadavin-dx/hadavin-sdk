@@ -1,0 +1,4 @@
+tests/test_no_hardcoded_values.py
+tests/test_no_reference_material.py
+tests/test_scan_repo.py
+tests/test_migration_numbers_guards.py

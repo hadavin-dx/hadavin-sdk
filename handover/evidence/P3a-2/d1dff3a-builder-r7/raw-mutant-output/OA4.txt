@@ -1,0 +1,16 @@
+### tests/test_migration_wiring.py::test_the_ownership_query_gets_the_managed_names rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_______________ test_the_ownership_query_gets_the_managed_names ________________
+tests/test_migration_wiring.py:1022: in test_the_ownership_query_gets_the_managed_names
+    assert len(given) == 1 and given[0][0] == given[0][1], given
+E   AssertionError: [(['approval_decisions', 'approval_decisions_seq_seq', 'approval_requests', 'audit_checkpoints', 'audit_entries', 'audit_outbox', ...], [])]
+E   assert (1 == 1 and ['approval_de..._outbox', ...] == []
+E    +  where 1 = len([(['approval_decisions', 'approval_decisions_seq_seq', 'approval_requests', 'audit_checkpoints', 'audit_entries', 'audit_outbox', ...], [])])
+E     
+E     Left contains 18 more items, first extra item: 'approval_decisions'
+E     Use -v to get more diff)
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_the_ownership_query_gets_the_managed_names
+1 failed in 0.41s
+

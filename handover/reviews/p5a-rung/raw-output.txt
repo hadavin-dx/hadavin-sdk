@@ -1,0 +1,42 @@
+# Raw output of reviews/p5a-rung/rung_probe.py, 2026-11-06, Python 3.13 -I, scrubadub 2.0.1, presidio-analyzer 2.2.366 + spaCy en_core_web_sm 3.8.0, structlog 26.1.0, pydantic 2.14.1. Made-up data only (reserved domain example.invalid).
+=== A. scrubbers on foreign message text (rung 4: scrubadub 2.0.1) ===
+plain_email          LEAK=False out='bad value {{EMAIL}} in column 3'
+name_in_valueerror   LEAK=True  out='invoice total 1234.56 does not match line items for Jane Doe Holdings'
+qp_email             LEAK=True  out='cannot parse jane.doe=40example.invalid'
+pct_email            LEAK=True  out='cannot parse jane.doe%40example.invalid'
+fullwidth_email      LEAK=True  out='cannot parse ｊａｎｅ.ｄｏｅ＠example.invalid'
+zerowidth_email      LEAK=True  out='cannot parse j\u200ba\u200bn\u200be\u200b.\u200bd\u200bo\u200b{{EMAIL}}'
+cyrillic_name        LEAK=True  out='customer Jаne Doe unknown'
+iban_spaced_lower    LEAK=True  out='account de89 3704 0044 0532 0130 00 rejected'
+iban_plain           LEAK=True  out='account DE89370400440532013000 rejected'
+scrubadub: 8 of 9 rows still hold the canary
+
+=== B. scrubbers (rung 4: presidio-analyzer 2.2.366, spaCy en_core_web_sm 3.8.0, default recognizers) ===
+plain_email          LEAK=False found=['URL', 'URL'] out='bad value <X>e@<X>valid in column 3'
+name_in_valueerror   LEAK=False found=['ORGANIZATION'] out='invoice total 1234.56 does not match line items for <X>'
+qp_email             LEAK=False found=['URL', 'URL'] out='cannot parse <X>e=<X>valid'
+pct_email            LEAK=False found=['PERSON', 'URL', 'URL'] out='cannot parse <X>'
+fullwidth_email      LEAK=True  found=['URL'] out='cannot parse ｊａｎｅ.ｄｏｅ＠<X>valid'
+zerowidth_email      LEAK=True  found=['URL'] out='cannot parse j\u200ba\u200bn\u200be\u200b.\u200bd\u200bo\u200be@<X>valid'
+cyrillic_name        LEAK=False found=['PERSON'] out='customer <X> unknown'
+iban_spaced_lower    LEAK=False found=['ORGANIZATION', 'DATE_TIME', 'IBAN_CODE'] out='account <X>'
+iban_plain           LEAK=False found=['IBAN_CODE'] out='account <X> rejected'
+presidio: 2 of 9 rows still hold the canary
+
+=== C. pydantic 2.14.1 ValidationError: what the safe-looking options still return ===
+pydantic 2.14.1
+entry {'type': 'uuid_parsing', 'loc': ('ident',), 'msg': 'Input should be a valid UUID, invalid character: found `J` at 0'}
+entry {'type': 'extra_forbidden', 'loc': ('Jane_Doe',), 'msg': 'Extra inputs are not permitted'}
+str(e) contains canary: True
+custom error type field = 'bad_Jane_Doe' -> 'type' is NOT always a closed name
+
+=== D. logging / structlog / traceback default rendering of an exception ===
+traceback.format_exception holds canary: True
+logging.exception output holds canary: True
+structlog format_exc_info holds canary: True
+structlog JSON log line holds canary: True
+
+# stderr (network warnings from tldextract/spacy; last 3 lines)
+
+# pip-licenses on the probe venv (scrubadub + presidio-analyzer + spaCy model + structlog + pydantic): 69 packages; licence text not matching MIT/BSD/Apache/ISC/PSF/MPL:
+"python-stdnum","2.2","GNU Lesser General Public License v2 or later (LGPLv2+)"

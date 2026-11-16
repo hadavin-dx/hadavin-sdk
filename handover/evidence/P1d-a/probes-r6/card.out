@@ -1,0 +1,16 @@
+== orig
+BTK_https '`a [link removed] password=<SECRET_1> b'
+BTK_bare '`a evil.com password=<SECRET_1> b'
+BTK_bare2 '`a evil.com/p password=<SECRET_1> b'
+MENT_span '` x password=<SECRET_1> b'
+MENT_span2 '` x password=<SECRET_1> b'
+MENT_plain ' x password=<SECRET_1> b'
+Q23 '?password=<SECRET_1>&x==1 y'
+== atomq
+BTK_https '`a [link removed] password=<SECRET_1> b'
+BTK_bare '`a evil.com password=<SECRET_1> b'
+BTK_bare2 '`a evil.com/p password=<SECRET_1> b'
+MENT_span '` x password=<SECRET_1> b'
+MENT_span2 '` x password=<SECRET_1> b'
+MENT_plain ' x password=<SECRET_1> b'
+Q23 '?password=<SECRET_1>&x==1 y'

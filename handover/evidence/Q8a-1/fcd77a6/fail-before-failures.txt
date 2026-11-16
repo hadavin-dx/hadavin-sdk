@@ -1,0 +1,40 @@
+(a) origin/main
+ERROR ::tests.test_q8a_live_overrides :: collection failure
+FAILURE tests.test_stage_names::test_pilot_and_prod_refuse_a_test_object_handed_to_build :: AssertionError: a live build took a test object ('pilot'): "secret 'pg-dsn' cannot be read at start-up" / assert "secret 'pg-d...d at start-up" == 'channel= is ...ilot and prod' / - channel= is for tests; configure backends.channel in pilot and prod / + secret 'pg-dsn' cannot be read at start-up
+FAILURE tests.test_stage_names::test_pilot_and_prod_refuse_sources_and_tools_handed_to_build :: AssertionError: a live build took sources= ('pilot', _FalsyDict of 1): "secret 'pg-dsn' cannot be read at start-up" / assert False / +  where False = <built-in method startswith of str object at 0x7fe7588a80f0>('sources= is for tests') / +    where <built-in method startswith of str object at 0x7fe7588a80f0> = "secret 'pg-dsn' cannot be read at start-up".startswith
+FAILURE tests.test_stage_names::test_demo_refuses_a_timeout_that_is_out_of_range :: AssertionError: demo took timeout_s=0: '' / assert '' == 'timeout_s= m...ded) and 3600' / - timeout_s= must be an int or float between 0 (not included) and 3600
+FAILURE tests.test_stage_names::test_pilot_and_prod_refuse_a_static_vault_token :: AssertionError: a static Vault token was accepted for secrets (pilot, {}): "secret 'pg-dsn' cannot be read at start-up" / assert "secret 'pg-d...d at start-up" == 'environment ...uth: approle)' / - environment pilot: refused: secrets: vault auth token (the default; set auth: kubernetes (recommended) or auth: approle) / + secret 'pg-dsn' cannot be read at start-up
+FAILURE tests.test_stage_names::test_pilot_and_prod_refuse_a_time_or_a_step_list_handed_to_the_tick :: AssertionError: a live tick took a time handed to it ('pilot'): '' / assert '' == 'now= is for ...ilot and prod' / - now= is for tests; it is refused in pilot and prod
+
+(b) f6fad26f
+FAILURE tests.test_q8a_live_overrides::test_demo_refuses_a_timeout_outside_the_range_or_of_another_type[0] :: AssertionError: / - timeout_s= must be greater than 0 / + timeout_s= must be an int or float between 0 (not included) and 3600
+FAILURE tests.test_q8a_live_overrides::test_demo_refuses_a_timeout_outside_the_range_or_of_another_type[0.0] :: AssertionError: / - timeout_s= must be greater than 0 / + timeout_s= must be an int or float between 0 (not included) and 3600
+FAILURE tests.test_q8a_live_overrides::test_demo_refuses_a_timeout_outside_the_range_or_of_another_type[-1] :: AssertionError: / - timeout_s= must be greater than 0 / + timeout_s= must be an int or float between 0 (not included) and 3600
+FAILURE tests.test_q8a_live_overrides::test_demo_refuses_a_timeout_outside_the_range_or_of_another_type[-0.5] :: AssertionError: / - timeout_s= must be greater than 0 / + timeout_s= must be an int or float between 0 (not included) and 3600
+FAILURE tests.test_q8a_live_overrides::test_demo_refuses_a_timeout_outside_the_range_or_of_another_type[True] :: AssertionError: / - timeout_s= must be greater than 0 / + timeout_s= must be an int or float between 0 (not included) and 3600
+FAILURE tests.test_q8a_live_overrides::test_demo_refuses_a_timeout_outside_the_range_or_of_another_type[False] :: AssertionError: / - timeout_s= must be greater than 0 / + timeout_s= must be an int or float between 0 (not included) and 3600
+FAILURE tests.test_q8a_live_overrides::test_demo_refuses_a_timeout_outside_the_range_or_of_another_type[nan] :: AssertionError: / - timeout_s= must be greater than 0 / + timeout_s= must be an int or float between 0 (not included) and 3600
+FAILURE tests.test_q8a_live_overrides::test_demo_refuses_a_timeout_outside_the_range_or_of_another_type[inf] :: AssertionError: / - timeout_s= must be greater than 0 / + timeout_s= must be an int or float between 0 (not included) and 3600
+FAILURE tests.test_q8a_live_overrides::test_demo_refuses_a_timeout_outside_the_range_or_of_another_type['5'] :: AssertionError: / - timeout_s= must be greater than 0 / + timeout_s= must be an int or float between 0 (not included) and 3600
+FAILURE tests.test_q8a_live_overrides::test_demo_refuses_a_timeout_outside_the_range_or_of_another_type[[5]] :: AssertionError: / - timeout_s= must be greater than 0 / + timeout_s= must be an int or float between 0 (not included) and 3600
+FAILURE tests.test_q8a_live_overrides::test_demo_refuses_a_timeout_outside_the_range_or_of_another_type[Decimal('2.5] :: AssertionError: / - timeout_s= must be greater than 0 / + timeout_s= must be an int or float between 0 (not included) and 3600
+FAILURE tests.test_q8a_live_overrides::test_demo_refuses_a_timeout_outside_the_range_or_of_another_type[Fraction(5, ] :: AssertionError: / - timeout_s= must be greater than 0 / + timeout_s= must be an int or float between 0 (not included) and 3600
+FAILURE tests.test_q8a_live_overrides::test_demo_refuses_a_timeout_outside_the_range_or_of_another_type[100000000000] :: Failed: DID NOT RAISE ConfigError
+FAILURE tests.test_q8a_live_overrides::test_demo_refuses_a_timeout_outside_the_range_or_of_another_type[3601] :: Failed: DID NOT RAISE ConfigError
+FAILURE tests.test_q8a_live_overrides::test_demo_refuses_a_timeout_outside_the_range_or_of_another_type[3600.1] :: Failed: DID NOT RAISE ConfigError
+FAILURE tests.test_q8a_live_overrides::test_run_tick_refuses_a_given_step_list_outside_demo[pilot-one-step] :: Failed: DID NOT RAISE ConfigError
+FAILURE tests.test_q8a_live_overrides::test_run_tick_refuses_a_given_step_list_outside_demo[pilot-empty-list] :: Failed: DID NOT RAISE ConfigError
+FAILURE tests.test_q8a_live_overrides::test_run_tick_refuses_a_given_step_list_outside_demo[prod-one-step] :: Failed: DID NOT RAISE ConfigError
+FAILURE tests.test_q8a_live_overrides::test_run_tick_refuses_a_given_step_list_outside_demo[prod-empty-list] :: Failed: DID NOT RAISE ConfigError
+FAILURE tests.test_q8a_live_overrides::test_run_tick_refuses_a_given_step_list_outside_demo[staging-one-step] :: Failed: DID NOT RAISE ConfigError
+FAILURE tests.test_q8a_live_overrides::test_run_tick_refuses_a_given_step_list_outside_demo[staging-empty-list] :: Failed: DID NOT RAISE ConfigError
+FAILURE tests.test_q8a_live_overrides::test_run_tick_refuses_a_given_step_list_outside_demo[Demo-one-step] :: Failed: DID NOT RAISE ConfigError
+FAILURE tests.test_q8a_live_overrides::test_run_tick_refuses_a_given_step_list_outside_demo[Demo-empty-list] :: Failed: DID NOT RAISE ConfigError
+FAILURE tests.test_q8a_live_overrides::test_run_tick_refuses_a_given_step_list_outside_demo[demo -one-step] :: Failed: DID NOT RAISE ConfigError
+FAILURE tests.test_q8a_live_overrides::test_run_tick_refuses_a_given_step_list_outside_demo[demo -empty-list] :: Failed: DID NOT RAISE ConfigError
+FAILURE tests.test_q8a_live_overrides::test_run_tick_refuses_a_given_step_list_outside_demo[-one-step] :: Failed: DID NOT RAISE ConfigError
+FAILURE tests.test_q8a_live_overrides::test_run_tick_refuses_a_given_step_list_outside_demo[-empty-list] :: Failed: DID NOT RAISE ConfigError
+FAILURE tests.test_q8a_live_overrides::test_run_tick_refuses_a_given_step_list_outside_demo[None-one-step] :: Failed: DID NOT RAISE ConfigError
+FAILURE tests.test_q8a_live_overrides::test_run_tick_refuses_a_given_step_list_outside_demo[None-empty-list] :: Failed: DID NOT RAISE ConfigError
+FAILURE tests.test_stage_names::test_demo_refuses_a_timeout_that_is_out_of_range :: AssertionError: demo took timeout_s=0: 'timeout_s= must be greater than 0' / assert 'timeout_s= m...reater than 0' == 'timeout_s= m...ded) and 3600' / - timeout_s= must be an int or float between 0 (not included) and 3600 / + timeout_s= must be greater than 0
+FAILURE tests.test_stage_names::test_pilot_and_prod_refuse_a_time_or_a_step_list_handed_to_the_tick :: AssertionError: a live tick took a step list handed to it ('pilot'): '', ran ['recorded'] / assert ('' == 'steps= is fo...ilot and prod' / - steps= is for tests; it is refused in pilot and prod)

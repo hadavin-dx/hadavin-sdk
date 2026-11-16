@@ -1,0 +1,36 @@
+.....F
+=================================== FAILURES ===================================
+______ test_real_check_dry_fakes_without_assume_yes_also_needs_a_terminal ______
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7f18a918f1d0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f18a918fef0>
+
+    def test_real_check_dry_fakes_without_assume_yes_also_needs_a_terminal(
+        capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(sys, "stdin", _Pipe("y\n"))
+>       assert rrc.main(["--dry-fakes"]) == rrc.EXIT_REFUSED  # DryFakes is not even constructed (it raises)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_start_prompt_hardening.py:129: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:1098: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:1125: in _run
+    fakes = DryFakes(dry_folder, a.dry_port_base, a.dry_smtp_script)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+_a = (PosixPath('/home/user/build/rr6/tmp-B2/real-dry-w70546a1'), None, 'ok')
+_k = {}
+
+    def _boom(*_a: Any, **_k: Any) -> NoReturn:
+>       raise Reached
+E       test_start_prompt_hardening.Reached
+
+tests/test_start_prompt_hardening.py:60: Reached
+=========================== short test summary info ============================
+FAILED tests/test_start_prompt_hardening.py::test_real_check_dry_fakes_without_assume_yes_also_needs_a_terminal
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 5 passed in 0.13s

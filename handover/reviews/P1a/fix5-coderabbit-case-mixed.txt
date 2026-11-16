@@ -1,0 +1,21 @@
+'Paul' 'РАUL' True True True
+'paul' 'PАUL' True True True
+'Paul' 'pаul' True True True
+'PAUL' 'paul' True True True
+'Ǆ' 'ǆ' True True True
+'ǅ' 'DŽ' True True True
+'ς' 'Σ' True True True
+'ß' 'SS' True True True
+'İstanbul' 'istanbul' True True True
+'ı' 'I' True True True
+'Kelvin' 'Kelvin' True True True
+'ǰ' 'J̌' True True True
+'ΐ' 'Ϊ́' True True True
+'Ꭺlice' 'alice' True True True
+'ᴀlice' 'ALICE' True True True
+'Alice' 'αlice' True True True
+'ALICE' 'αlice' True True True
+'Ⅷ' 'viii' True True True
+'ﬁne' 'FINE' True True True
+'ꓮlice' 'aLICE' True True True
+asymmetric: []

@@ -1,0 +1,105 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+.FFF......F.FF                                                           [100%]
+=================================== FAILURES ===================================
+____ test_a_wip_cloud_lane_branch_with_a_handover_file_passes[wip/cloud-x] _____
+
+repo = PosixPath('/tmp/pytest-of-root/pytest-24349/test_a_wip_cloud_lane_branch_w0/r')
+branch = 'wip/cloud-x'
+
+    @pytest.mark.parametrize("branch", ["wip/cloud-x", "wip/cloud-245-B-P4da2", "wip/cloud-a.b_c"])
+    def test_a_wip_cloud_lane_branch_with_a_handover_file_passes(repo, branch):
+        _lane_branch(repo, branch)
+        rc, out = _run_guard(repo)
+>       assert rc == 0, out
+E       AssertionError: handover/reviews/x/round1.md
+E         files under handover/ exist in the history of HEAD or of a branch other than core/cloud-handover: the temporary allowlist would hide generic keys in them
+E         
+E       assert 1 == 0
+
+tests/test_ci_guard_wip_lanes.py:120: AssertionError
+_ test_a_wip_cloud_lane_branch_with_a_handover_file_passes[wip/cloud-245-B-P4da2] _
+
+repo = PosixPath('/tmp/pytest-of-root/pytest-24349/test_a_wip_cloud_lane_branch_w1/r')
+branch = 'wip/cloud-245-B-P4da2'
+
+    @pytest.mark.parametrize("branch", ["wip/cloud-x", "wip/cloud-245-B-P4da2", "wip/cloud-a.b_c"])
+    def test_a_wip_cloud_lane_branch_with_a_handover_file_passes(repo, branch):
+        _lane_branch(repo, branch)
+        rc, out = _run_guard(repo)
+>       assert rc == 0, out
+E       AssertionError: handover/reviews/x/round1.md
+E         files under handover/ exist in the history of HEAD or of a branch other than core/cloud-handover: the temporary allowlist would hide generic keys in them
+E         
+E       assert 1 == 0
+
+tests/test_ci_guard_wip_lanes.py:120: AssertionError
+__ test_a_wip_cloud_lane_branch_with_a_handover_file_passes[wip/cloud-a.b_c] ___
+
+repo = PosixPath('/tmp/pytest-of-root/pytest-24349/test_a_wip_cloud_lane_branch_w2/r')
+branch = 'wip/cloud-a.b_c'
+
+    @pytest.mark.parametrize("branch", ["wip/cloud-x", "wip/cloud-245-B-P4da2", "wip/cloud-a.b_c"])
+    def test_a_wip_cloud_lane_branch_with_a_handover_file_passes(repo, branch):
+        _lane_branch(repo, branch)
+        rc, out = _run_guard(repo)
+>       assert rc == 0, out
+E       AssertionError: handover/reviews/x/round1.md
+E         files under handover/ exist in the history of HEAD or of a branch other than core/cloud-handover: the temporary allowlist would hide generic keys in them
+E         
+E       assert 1 == 0
+
+tests/test_ci_guard_wip_lanes.py:120: AssertionError
+___ test_a_head_built_on_a_lane_commit_still_fails_even_if_a_lane_ref_has_it ___
+
+repo = PosixPath('/tmp/pytest-of-root/pytest-24349/test_a_head_built_on_a_lane_co0/r')
+
+    def test_a_head_built_on_a_lane_commit_still_fails_even_if_a_lane_ref_has_it(repo):
+        """The lane refs are subtracted from the range, so only the separate check of HEAD's own history sees this."""
+        sha = _lane_branch(repo, "wip/cloud-x")
+        _git(repo, "merge", "-q", "--no-edit", sha)  # HEAD now contains the lane commit
+        _remove(repo, HANDOVER_FILE, "delete the file again: the tree is clean, the history is not")
+        rc, out = _run_guard(repo)
+        assert rc == 1, out
+>       assert "history of HEAD itself" in out
+E       AssertionError: assert 'history of HEAD itself' in 'handover/reviews/x/round1.md\nhandover/reviews/x/round1.md\nfiles under handover/ exist in the history of HEAD or of a branch other than core/cloud-handover: the temporary allowlist would hide generic keys in them\n'
+
+tests/test_ci_guard_wip_lanes.py:140: AssertionError
+_ test_an_ignore_entry_on_a_wip_cloud_branch_is_accepted_and_on_another_branch_is_stale _
+
+repo = PosixPath('/tmp/pytest-of-root/pytest-24349/test_an_ignore_entry_on_a_wip_0/r')
+
+    def test_an_ignore_entry_on_a_wip_cloud_branch_is_accepted_and_on_another_branch_is_stale(repo):
+        lane = _lane_branch(repo, "wip/cloud-x")
+        keep = _git(repo, "rev-parse", "HEAD")
+        other = _commit(repo, "notes/x.txt", "x\n", "a commit on another branch, outside handover/")
+        _ref(repo, "core/other", other)
+        _git(repo, "reset", "-q", "--hard", keep)
+        # the ignore list must exist in the tree of HEAD: commit it on the clean branch
+        _commit(repo, ".gitleaksignore", _ignore_entry(lane), "ignore entry on a lane commit")
+        rc, out = _run_guard(repo)
+>       assert rc == 0, out
+E       AssertionError: stale ignore entry (not on a named handover branch): 0ecd25cda33c85538cf78893f08573601cb3621d
+E         handover/reviews/x/round1.md
+E         files under handover/ exist in the history of HEAD or of a branch other than core/cloud-handover: the temporary allowlist would hide generic keys in them
+E         
+E       assert 1 == 0
+
+tests/test_ci_guard_wip_lanes.py:163: AssertionError
+___________ test_the_step_text_has_no_unquoted_glob_and_a_valid_name ___________
+
+    def test_the_step_text_has_no_unquoted_glob_and_a_valid_name():
+        step = _step(_load(), STEP)
+        assert ": " not in step["name"]
+>       assert "'--remotes=origin/wip/cloud-*'" in step["run"]
+E       assert "'--remotes=origin/wip/cloud-*'" in 'fail=0\n[ "$(git rev-parse --is-shallow-repository)" = false ] || { echo "shallow clone: the history checks below wou...-handover: the temporary allowlist would hide generic keys in them"; fail=1; fi\n  rm -f "$gl_tmp"\nfi\nexit "$fail"\n'
+
+tests/test_ci_guard_wip_lanes.py:173: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_ci_guard_wip_lanes.py::test_a_wip_cloud_lane_branch_with_a_handover_file_passes[wip/cloud-x]
+FAILED tests/test_ci_guard_wip_lanes.py::test_a_wip_cloud_lane_branch_with_a_handover_file_passes[wip/cloud-245-B-P4da2]
+FAILED tests/test_ci_guard_wip_lanes.py::test_a_wip_cloud_lane_branch_with_a_handover_file_passes[wip/cloud-a.b_c]
+FAILED tests/test_ci_guard_wip_lanes.py::test_a_head_built_on_a_lane_commit_still_fails_even_if_a_lane_ref_has_it
+FAILED tests/test_ci_guard_wip_lanes.py::test_an_ignore_entry_on_a_wip_cloud_branch_is_accepted_and_on_another_branch_is_stale
+FAILED tests/test_ci_guard_wip_lanes.py::test_the_step_text_has_no_unquoted_glob_and_a_valid_name
+6 failed, 8 passed in 1.62s
+rc=1

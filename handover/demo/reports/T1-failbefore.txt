@@ -1,0 +1,14 @@
+#4	KILLED	src/lead_desk/schema.sql	test_email_key_unique_in_sql | test_email_key_race_only_index	/tmp/dpld-t1/tests/test_mutation_guards.py:84: Failed: DID NOT RAISE IntegrityError
+#4	restored diff rc=0
+#11	KILLED	src/lead_desk/schema.sql	test_source_ref_bounds_in_sql | test_source_ref_128_through_desk	/tmp/dpld-t1/tests/test_mutation_guards.py:60: sqlite3.IntegrityError: CHECK constraint failed: length(source_ref) BETWEEN 1 AND 127
+#11	restored diff rc=0
+#12	KILLED	src/lead_desk/desk.py	test_source_ref_one_char_and_empty	/tmp/dpld-t1/tests/test_mutation_guards.py:150: AssertionError: assert 400 == 201
+#12	restored diff rc=0
+#13	KILLED	src/lead_desk/desk.py	test_claim_clears_send_started[states0-pending]	/tmp/dpld-t1/tests/test_mutation_guards.py:170: AssertionError: a claim must clear the send mark
+#13	restored diff rc=0
+#20	KILLED	src/lead_desk/desk.py	test_requeue_age_boundary_direct | test_requeue_age_boundary_in_reaper	/tmp/dpld-t1/tests/test_mutation_guards.py:204: AssertionError: assert ('sending', None) == ('pending', '...hile_sending')
+#20	restored diff rc=0
+#21	KILLED	src/lead_desk/desk.py	test_stalled_receipt_age_boundary	/tmp/dpld-t1/tests/test_mutation_guards.py:241: AssertionError: assert None == 'new'
+#21	restored diff rc=0
+#26	KILLED	src/lead_desk/desk.py	test_future_receipt_by_own_clock	/tmp/dpld-t1/tests/test_mutation_guards.py:258: AssertionError: assert None == 'new'
+#26	restored diff rc=0

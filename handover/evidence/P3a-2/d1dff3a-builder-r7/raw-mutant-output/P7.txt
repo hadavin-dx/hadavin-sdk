@@ -1,0 +1,16 @@
+### tests/test_migration_postgres.py::test_runbook_case_b_renames_the_old_notes_row_back_and_migrate_accepts_it rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+__ test_runbook_case_b_renames_the_old_notes_row_back_and_migrate_accepts_it ___
+tests/test_migration_postgres.py:873: in test_runbook_case_b_renames_the_old_notes_row_back_and_migrate_accepts_it
+    assert done.returncode == 0, done.stderr
+E   AssertionError: psql:hand.sql:20: NOTICE:  column "error" of relation "tool_calls" already exists, skipping
+E     psql:hand.sql:30: ERROR:  the columns of the evidence tables differ from 0005_evidence.sql in more than the error column: stop, a person must look
+E     CONTEXT:  PL/pgSQL function inline_code_block line 8 at RAISE
+E     
+E   assert 3 == 0
+E    +  where 3 = CompletedProcess(args=['/usr/bin/env', 'psql', '-X', '-v', 'ON_ERROR_STOP=1', '-f', 'hand.sql'], returncode=3, stdout=...more than the error column: stop, a person must look\nCONTEXT:  PL/pgSQL function inline_code_block line 8 at RAISE\n').returncode
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_runbook_case_b_renames_the_old_notes_row_back_and_migrate_accepts_it
+1 failed in 0.66s
+

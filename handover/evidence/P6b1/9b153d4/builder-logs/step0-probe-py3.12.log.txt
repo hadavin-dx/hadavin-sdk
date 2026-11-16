@@ -1,0 +1,53 @@
+head=4a0976ffdbda144f768ee7118b5d2ef65c757d47
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+python 3.12.13
+checked_on='2026-11-05'            ACCEPT
+checked_on=datetime.date(2026, 11, 5) ACCEPT
+checked_on='2026-13-45'            REFUSE 1 validation error for NoTrainingStatement | checked_on |   Value error, checked_on must be a date written YYYY-MM-DD [type=value_error] |     For further infor
+checked_on='2026-02-30'            REFUSE 1 validation error for NoTrainingStatement | checked_on |   Value error, checked_on must be a date written YYYY-MM-DD [type=value_error] |     For further infor
+checked_on='0000-00-00'            REFUSE 1 validation error for NoTrainingStatement | checked_on |   Value error, checked_on must be a date written YYYY-MM-DD [type=value_error] |     For further infor
+checked_on='2026-11-05\n'          REFUSE 1 validation error for NoTrainingStatement | checked_on |   Value error, checked_on must be a date written YYYY-MM-DD [type=value_error] |     For further infor
+checked_on=0                       REFUSE 1 validation error for NoTrainingStatement | checked_on |   Value error, checked_on must be a date written YYYY-MM-DD [type=value_error] |     For further infor
+checked_on=86400                   REFUSE 1 validation error for NoTrainingStatement | checked_on |   Value error, checked_on must be a date written YYYY-MM-DD [type=value_error] |     For further infor
+checked_on=1767225600              REFUSE 1 validation error for NoTrainingStatement | checked_on |   Value error, checked_on must be a date written YYYY-MM-DD [type=value_error] |     For further infor
+checked_on='1767225600'            REFUSE 1 validation error for NoTrainingStatement | checked_on |   Value error, checked_on must be a date written YYYY-MM-DD [type=value_error] |     For further infor
+checked_on=1767225600.0            REFUSE 1 validation error for NoTrainingStatement | checked_on |   Value error, checked_on must be a date written YYYY-MM-DD [type=value_error] |     For further infor
+checked_on='0'                     REFUSE 1 validation error for NoTrainingStatement | checked_on |   Value error, checked_on must be a date written YYYY-MM-DD [type=value_error] |     For further infor
+checked_on=True                    REFUSE 1 validation error for NoTrainingStatement | checked_on |   Value error, checked_on must be a date written YYYY-MM-DD [type=value_error] |     For further infor
+checked_on=None                    REFUSE 1 validation error for NoTrainingStatement | checked_on |   Value error, checked_on must be a date written YYYY-MM-DD [type=value_error] |     For further infor
+checked_on=datetime.datetime(2026, 11, 5, 0, 0) REFUSE 1 validation error for NoTrainingStatement | checked_on |   Value error, checked_on must be a date written YYYY-MM-DD [type=value_error] |     For further infor
+checked_on='2026-11-05T00:00:00'   REFUSE 1 validation error for NoTrainingStatement | checked_on |   Value error, checked_on must be a date written YYYY-MM-DD [type=value_error] |     For further infor
+checked_on='٢٠٢٦-١١-٠٥'            REFUSE 1 validation error for NoTrainingStatement | checked_on |   Value error, checked_on must be a date written YYYY-MM-DD [type=value_error] |     For further infor
+checked_on='２０２６-１１-０５'            REFUSE 1 validation error for NoTrainingStatement | checked_on |   Value error, checked_on must be a date written YYYY-MM-DD [type=value_error] |     For further infor
+reference len 2                    REFUSE 1 validation error for NoTrainingStatement | reference |   Value error, reference must be 8 to 200 characters: letters, digits, spaces and . _ : / # -, starting
+reference len 7                    REFUSE 1 validation error for NoTrainingStatement | reference |   Value error, reference must be 8 to 200 characters: letters, digits, spaces and . _ : / # -, starting
+reference len 8                    ACCEPT
+reference len 200                  ACCEPT
+reference len 201                  REFUSE 1 validation error for NoTrainingStatement | reference |   Value error, reference must be 8 to 200 characters: letters, digits, spaces and . _ : / # -, starting
+reference len 210                  REFUSE 1 validation error for NoTrainingStatement | reference |   Value error, reference must be 8 to 200 characters: letters, digits, spaces and . _ : / # -, starting
+reference NUL                      REFUSE 1 validation error for NoTrainingStatement | reference |   Value error, reference must be 8 to 200 characters: letters, digits, spaces and . _ : / # -, starting
+reference tab                      REFUSE 1 validation error for NoTrainingStatement | reference |   Value error, reference must be 8 to 200 characters: letters, digits, spaces and . _ : / # -, starting
+reference newline                  REFUSE 1 validation error for NoTrainingStatement | reference |   Value error, reference must be 8 to 200 characters: letters, digits, spaces and . _ : / # -, starting
+reference @                        REFUSE 1 validation error for NoTrainingStatement | reference |   Value error, reference must be 8 to 200 characters: letters, digits, spaces and . _ : / # -, starting
+reference 12 digits                REFUSE 1 validation error for NoTrainingStatement | reference |   Value error, reference must be 8 to 200 characters: letters, digits, spaces and . _ : / # -, starting
+reference split id                 ACCEPT
+host len 253                       ACCEPT
+host len 254                       REFUSE 1 validation error for NoTrainingStatement | hosts |   Value error, each host must be 1 to 253 characters: letters, digits and . _ : - [type=value_error] |     
+host ::1                           ACCEPT
+host newline                       REFUSE 1 validation error for NoTrainingStatement | hosts |   Value error, each host must be 1 to 253 characters: letters, digits and . _ : - [type=value_error] |     
+host slash                         REFUSE 1 validation error for NoTrainingStatement | hosts |   Value error, each host must be 1 to 253 characters: letters, digits and . _ : - [type=value_error] |     
+host 12 digits                     ACCEPT
+hosts empty                        REFUSE 1 validation error for NoTrainingStatement | hosts |   List should have at least 1 item after validation, not 0 [type=too_short] |     For further information v
+hosts 9                            REFUSE 1 validation error for NoTrainingStatement | hosts |   List should have at most 8 items after validation, not 9 [type=too_long] |     For further information vi
+hosts bare str                     REFUSE 1 validation error for NoTrainingStatement | hosts |   Input should be a valid list [type=list_type] |     For further information visit https://errors.pydantic
+str of one ValidationError:
+ 1 validation error for NoTrainingStatement
+checked_on
+  Value error, checked_on must be a date written YYYY-MM-DD [type=value_error]
+    For further information visit https://errors.pydantic.dev/2.14/v/value_error
+C 2026-13-45 -> month must be in 1..12
+py 2026-13-45 -> Invalid isoformat string: '2026-13-45'
+C 2026-02-30 -> day is out of range for month
+py 2026-02-30 -> Invalid isoformat string: '2026-02-30'
+C 0000-00-00 -> year 0 is out of range
+py 0000-00-00 -> Invalid isoformat string: '0000-00-00'

@@ -1,0 +1,15 @@
+head: 7442c0f4eb7b3df9504e23065314720892cc35a3
+command: uv build --out-dir <out-dir> && python -I -c "import sys,zipfile,tarfile,glob; w=zipfile.ZipFile(glob.glob(sys.argv[1]+'/*.whl')[0]).namelist(); s=tarfile.open(glob.glob(sys.argv[1]+'/*.tar.gz')[0]).getnames(); print('wheel files:',len(w)); print('sdist files:',len(s)); print('wheel entries under tools/:',[n for n in w if n.startswith('tools/')]); print('sdist entries under tools/:',[n for n in s if '/tools/' in n]); print('wheel has testing/mutation.py:',any(n.endswith('testing/mutation.py') for n in w))" <out-dir>
+start: 2026-11-06T03:59:33Z
+-----
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+Building source distribution...
+Building wheel from source distribution...
+Successfully built <out-dir>/hadavin_sdk-0.1.0.tar.gz
+Successfully built <out-dir>/hadavin_sdk-0.1.0-py3-none-any.whl
+wheel files: 130
+sdist files: 130
+wheel entries under tools/: []
+sdist entries under tools/: []
+wheel has testing/mutation.py: True
+exit: 0

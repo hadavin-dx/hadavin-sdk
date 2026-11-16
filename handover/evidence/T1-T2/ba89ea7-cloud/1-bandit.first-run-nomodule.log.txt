@@ -1,0 +1,4 @@
+HEAD ba89ea751e0197ff64bd20143cd606eaa6529d01
+CMD /home/user/build/venv-t1t2-313/bin/python -m bandit -q -r src demos tools -ll
+/home/user/build/venv-t1t2-313/bin/python: No module named bandit
+exit=1

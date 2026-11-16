@@ -1,0 +1,34 @@
+....................F
+=================================== FAILURES ===================================
+________ test_the_banner_shows_where_each_key_goes_before_the_question _________
+
+tmp_path = PosixPath('/home/user/build/rr6/tmp-B2/pytest-of-unknown/pytest-17/test_the_banner_shows_where_ea0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f6099a846b0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6099ceb170>
+
+    def test_the_banner_shows_where_each_key_goes_before_the_question(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        assert rrc.host_of(HUBSPOT_BASE_URL) == CRM_HOST
+        monkeypatch.setattr(sys, "stdin", _Terminal())
+        cfg = _config(tmp_path, DESK_SMTPP_HOST="smtp.example.test", REAL_IMAP_1_HOST="mail1.example.test")
+        cfg.write_text(cfg.read_text(encoding="utf-8") + "\nREAL_IMAP_2_HOST=mail2.example.test\n", encoding="utf-8")
+        shown = _answer(monkeypatch, "")
+        assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_STOPPED
+        out = capsys.readouterr().out
+        for line in (
+            f"HubSpot key         -> {CRM_HOST}",
+            "mail sending login  -> smtp.example.test",
+            "mailbox 1 login    -> mail1.example.test",
+            "mailbox 2 login    -> mail2.example.test",
+            "model key           -> none (recorded replies)",
+        ):
+>           assert line in out, line
+E           AssertionError: mailbox 1 login    -> mail1.example.test
+E           assert 'mailbox 1 login    -> mail1.example.test' in 'people: 12 + a twin (same person, second address); desk processes: 2 (one crash)\nworst case HubSpot calls: 10 by the...l sending login  -> smtp.example.test\n  model key           -> none (recorded replies)\nstopped, nothing was called\n'
+
+tests/test_start_prompt_hardening.py:194: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_start_prompt_hardening.py::test_the_banner_shows_where_each_key_goes_before_the_question
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 20 passed in 0.16s

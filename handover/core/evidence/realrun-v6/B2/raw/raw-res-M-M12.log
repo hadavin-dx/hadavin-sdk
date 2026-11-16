@@ -1,0 +1,28 @@
+F
+=================================== FAILURES ===================================
+_________ test_real_check_refuses_a_stdin_that_is_not_a_terminal[y\n] __________
+
+tmp_path = PosixPath('/home/user/build/rr6/tmp-B2/pytest-of-unknown/pytest-16/test_real_check_refuses_a_stdi0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7fdaf908d220>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fdaf908af00>
+piped = 'y\n'
+
+    @pytest.mark.parametrize("piped", ["y\n", "yes\n", "n\n", "", CRM_HOST + "\n"])
+    def test_real_check_refuses_a_stdin_that_is_not_a_terminal(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, piped: str
+    ) -> None:
+        monkeypatch.setattr(sys, "stdin", _Pipe(piped))
+>       assert rrc.main(["--config", str(_config(tmp_path))]) == rrc.EXIT_REFUSED == 2  # the exit code is part of the rule
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: assert 1 == 2
+E        +  where 1 = <function main at 0x7fdaf8deba60>(['--config', '/home/user/build/rr6/tmp-B2/pytest-of-unknown/pytest-16/test_real_check_refuses_a_stdi0/c.env'])
+E        +    where <function main at 0x7fdaf8deba60> = rrc.main
+E        +  and   2 = rrc.EXIT_REFUSED
+
+tests/test_start_prompt_hardening.py:119: AssertionError
+----------------------------- Captured stdout call -----------------------------
+refused: standard input: it is not a terminal (a pipe, a file, the NUL device or a scheduled job), but this script asks a question and needs a person at a terminal, so nothing was started. Run it from your own terminal
+=========================== short test summary info ============================
+FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_a_stdin_that_is_not_a_terminal[y\n]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed in 0.10s

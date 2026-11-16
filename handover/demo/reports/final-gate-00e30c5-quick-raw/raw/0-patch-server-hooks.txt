@@ -1,0 +1,1 @@
+PATCHED hooks 1 and 2 in /tmp/final-gate-quick-fix7/src/dpld-fix7-00e30c5/src/lead_desk/server.py | hook 3: constants.LISTEN_QUEUE = 1024

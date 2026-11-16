@@ -1,0 +1,5 @@
+# Static-pass v2 citation check (egm comprehension), condensed copy, 2026-11-16
+All openable cites MATCH (plan :288/:289, :493, :298, :223, :248, :335-336, :341, :420, :525; v9 :19 :22 :26 :29 :35 :36 :121 :143 :200 :237 :335 :405; builder report facts). No claim marked "run" that was only read; "holds by construction" gone.
+Could not open: flow files (only on origin/cloud/flows-audit), mf_leads.sql, claims-all-on patch, fill_flows.py, drive.py, n8n_drive.py:139. All mf-*.json cites UNCHECKED by this reviewer.
+Fix: "read" label on rows mixing this-pass and first-pass reads (label "read in first pass, not re-opened": mf_leads.sql, retry settings, lease, CrmIdOk :159); "re-read" claims unconfirmed (author's word); "spend limit not in n8n path" rests on unchecked mf-sub-crm-mail.json:28.
+Wording: Claim, lease, MailClaim, CrmIdOk, OwnsClaim1, loopback, cmp, byte-identical, film-v5/real-v5, R8/R15/R17, P-C2, N5, B2, case A/B unexplained; put "Once-only end to end is NOT shown" first; gloss "builder report item 7" as "someone proposed emptying old lead rows before the run; not done"; state outright that the "20" in 20/45/120 is unexplained.

@@ -1,0 +1,26 @@
+### tests/test_migration_wiring.py::test_a_new_role_membership_after_a_file_is_refused rc=0
+.                                                                        [100%]
+1 passed in 0.38s
+
+### tests/test_migration_wiring.py::test_the_membership_is_read_after_every_file_and_before_its_ledger_row rc=0
+.                                                                        [100%]
+1 passed in 0.43s
+
+### tests/test_migration_postgres.py::test_h11_a_role_grant_hidden_in_a_function_body_is_refused rc=1
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+__ test_h11_a_role_grant_hidden_in_a_function_body_is_refused[function_body] ___
+tests/test_migration_postgres.py:429: in test_h11_a_role_grant_hidden_in_a_function_body_is_refused
+    with pytest.raises(ConfigError) as e:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+_ test_h11_a_role_grant_hidden_in_a_function_body_is_refused[function_body_with_admin_option] _
+tests/test_migration_postgres.py:429: in test_h11_a_role_grant_hidden_in_a_function_body_is_refused
+    with pytest.raises(ConfigError) as e:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_h11_a_role_grant_hidden_in_a_function_body_is_refused[function_body]
+FAILED tests/test_migration_postgres.py::test_h11_a_role_grant_hidden_in_a_function_body_is_refused[function_body_with_admin_option]
+2 failed in 0.76s
+

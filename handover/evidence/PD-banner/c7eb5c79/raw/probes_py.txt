@@ -1,0 +1,43 @@
+sdk: /home/user/build/ER-pdbanner12-new/src/hadavin_sdk/__init__.py
+control: untouched sealed app                                          -> tone='demo' tag='DEMO' text='Every record here is made-up demo data. Nothing '
+control: sealed with real-host tool spec                               -> tone='real' tag='DEMO' text='Real services are connected: component tool-host'
+deleted tool spec after seal                                           -> tone='unconfirmed' tag='UNCONFIRMED' text='The mode of this system could not be confirmed. '
+deleted registry.agents entry                                          -> tone='unconfirmed' tag='UNCONFIRMED' text='The mode of this system could not be confirmed. '
+replaced registry.agents entry (copy)                                  -> tone='unconfirmed' tag='UNCONFIRMED' text='The mode of this system could not be confirmed. '
+control: unknown source                                                -> tone='real' tag='DEMO' text='Real services are connected: component read-sour'
+cleared config.sources                                                 -> tone='unconfirmed' tag='UNCONFIRMED' text='The mode of this system could not be confirmed. '
+toolbox _fns replaced                                                  -> tone='unconfirmed' tag='UNCONFIRMED' text='The mode of this system could not be confirmed. '
+toolbox specs entry replaced                                           -> tone='unconfirmed' tag='UNCONFIRMED' text='The mode of this system could not be confirmed. '
+toolbox specs cleared                                                  -> tone='unconfirmed' tag='UNCONFIRMED' text='The mode of this system could not be confirmed. '
+mode banner: the connected parts of the app could not be read (TypeError): showing the not-confirmed banner
+config.sources attribute removed                                       -> tone='unconfirmed' tag='UNCONFIRMED' text='The mode of this system could not be confirmed. '
+registry.tools = None                                                  -> tone='unconfirmed' tag='UNCONFIRMED' text='The mode of this system could not be confirmed. '
+config.systems = None                                                  -> tone='unconfirmed' tag='UNCONFIRMED' text='The mode of this system could not be confirmed. '
+config.systems cleared                                                 -> tone='unconfirmed' tag='UNCONFIRMED' text='The mode of this system could not be confirmed. '
+config.systems entry added                                             -> tone='unconfirmed' tag='UNCONFIRMED' text='The mode of this system could not be confirmed. '
+dataclasses.replace(app)                                               -> tone='unconfirmed' tag='UNCONFIRMED' text='The mode of this system could not be confirmed. '
+copy.copy(app)                                                         -> tone='demo' tag='DEMO' text='Every record here is made-up demo data. Nothing '
+copy.deepcopy(app)                                                     -> RAISED TypeError: an App cannot be deep-copied: it holds live connections; build another App, or use copy.copy
+app._seal(()) on unsealed app (plain tuple)                            -> RAISED TypeError: an app is sealed only with the names that build worked out
+  ...then banner of that app                                           -> tone='unconfirmed' tag='UNCONFIRMED' text='The mode of this system could not be confirmed. '
+app._seal(()) on sealed app (plain tuple)                              -> RAISED TypeError: an app is sealed only with the names that build worked out
+  ...then banner of that app                                           -> tone='demo' tag='DEMO' text='Every record here is made-up demo data. Nothing '
+never sealed                                                           -> tone='unconfirmed' tag='UNCONFIRMED' text='The mode of this system could not be confirmed. '
+object.__setattr__(config.environment,'pilot') after seal at demo      -> tone='unconfirmed' tag='UNCONFIRMED' text='The mode of this system could not be confirmed. '
+object.__setattr__(config.environment,'prod') after seal at demo       -> tone='unconfirmed' tag='UNCONFIRMED' text='The mode of this system could not be confirmed. '
+mode banner: the connected parts of the app could not be read (Surprise): showing the not-confirmed banner
+app.py ~295 (_known_overrides): _stage raises Surprise                 -> tone='unconfirmed' tag='UNCONFIRMED' text='The mode of this system could not be confirmed. '
+app.py ~295 (_known_overrides): _connected_parts raises Surprise       -> tone='unconfirmed' tag='UNCONFIRMED' text='The mode of this system could not be confirmed. '
+mode banner: the app could not be read (Surprise): showing the not-confirmed banner
+app.py ~312 (App.mode_banner): banner_or_unconfirmed raises Surprise   -> tone='unconfirmed' tag='UNCONFIRMED' text='The mode of this system could not be confirmed. '
+mode banner could not be built (Surprise): showing the not-confirmed banner
+mode_banner.py ~731 (banner_or_unconfirmed): banner_from_config raises, via app -> tone='unconfirmed' tag='UNCONFIRMED' text='The mode of this system could not be confirmed. '
+mode banner could not be built (Surprise): showing the not-confirmed banner
+mode_banner.py ~731 direct banner_or_unconfirmed(config)               -> tone='unconfirmed' tag='UNCONFIRMED' text='The mode of this system could not be confirmed. '
+mode_banner.py ~759 (_not_confirmed_that_cannot_fail): words raise (direct) -> tone='unconfirmed' tag='UNCONFIRMED' text='The mode of this system could not be confirmed. '
+mode banner could not be built (Surprise): showing the not-confirmed banner
+both ~731 and ~759: banner_from_config raises + bad words, direct      -> tone='unconfirmed' tag='UNCONFIRMED' text='The mode of this system could not be confirmed. '
+mode banner could not be built (Surprise): showing the not-confirmed banner
+both, via app.mode_banner(words=BadWords)                              -> tone='unconfirmed' tag='UNCONFIRMED' text='The mode of this system could not be confirmed. '
+app.py ~471 is the approval-card post, not a banner site; hooks.post_card: Delivery(ok=False, ref=None, reason='Surprise')
+banner after that: unconfirmed

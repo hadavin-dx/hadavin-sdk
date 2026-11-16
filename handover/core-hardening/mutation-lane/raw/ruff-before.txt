@@ -1,0 +1,1360 @@
+handover/core-hardening/mutation-lane/make_mutants_v2.py:1:1: I001 [*] Import block is un-sorted or un-formatted
+handover/core-hardening/mutation-lane/make_mutants_v2.py:8:14: C408 Unnecessary `dict()` call (rewrite as a literal)
+handover/core-hardening/mutation-lane/make_mutants_v2.py:60:7: UP031 Use format specifiers instead of percent format
+handover/core-hardening/mutation-lane/make_mutants_v2.py:141:1: S101 Use of `assert` detected
+handover/core-hardening/mutation-lane/make_mutants_v2.py:144:105: SIM115 Use a context manager for opening files
+handover/core-hardening/mutation-lane/run.py:1:1: EXE001 Shebang is present but file is not executable
+handover/core-hardening/mutation-lane/run.py:75:11: S603 `subprocess` call: check for execution of untrusted input
+handover/core-hardening/mutation-lane/run.py:75:11: PLW1510 `subprocess.run` without explicit `check` argument
+handover/core-hardening/mutation-lane/run.py:75:26: S607 Starting a process with a partial executable path
+handover/core-hardening/mutation-lane/run.py:76:11: S603 `subprocess` call: check for execution of untrusted input
+handover/core-hardening/mutation-lane/run.py:76:11: PLW1510 `subprocess.run` without explicit `check` argument
+handover/core-hardening/mutation-lane/run.py:76:26: S607 Starting a process with a partial executable path
+handover/core-hardening/mutation-lane/run.py:79:5: S603 `subprocess` call: check for execution of untrusted input
+handover/core-hardening/mutation-lane/run.py:79:20: S607 Starting a process with a partial executable path
+handover/core-hardening/mutation-lane/run.py:81:13: S603 `subprocess` call: check for execution of untrusted input
+handover/core-hardening/mutation-lane/run.py:81:13: PLW1510 `subprocess.run` without explicit `check` argument
+handover/core-hardening/mutation-lane/run.py:81:28: S607 Starting a process with a partial executable path
+handover/core-hardening/mutation-lane/run.py:87:24: S603 `subprocess` call: check for execution of untrusted input
+handover/core-hardening/mutation-lane/run.py:87:24: PLW1510 `subprocess.run` without explicit `check` argument
+handover/core-hardening/mutation-lane/run.py:87:39: S607 Starting a process with a partial executable path
+handover/core-hardening/mutation-lane/run.py:91:14: S603 `subprocess` call: check for execution of untrusted input
+handover/core-hardening/mutation-lane/run.py:91:14: PLW1510 `subprocess.run` without explicit `check` argument
+handover/core-hardening/mutation-lane/run.py:91:29: S607 Starting a process with a partial executable path
+handover/core-hardening/mutation-lane/run.py:137:12: S603 `subprocess` call: check for execution of untrusted input
+handover/core-hardening/mutation-lane/run.py:181:13: S603 `subprocess` call: check for execution of untrusted input
+handover/core-hardening/mutation-lane/run.py:181:13: PLW1510 `subprocess.run` without explicit `check` argument
+handover/core-hardening/mutation-lane/run.py:181:28: S607 Starting a process with a partial executable path
+handover/core-hardening/mutation-lane/run.py:239:12: SIM115 Use a context manager for opening files
+handover/core-hardening/mutation-lane/run.py:270:24: SIM115 Use a context manager for opening files
+handover/core-hardening/mutation-lane/run.py:274:32: SIM115 Use a context manager for opening files
+handover/core-hardening/mutation-lane/run.py:280:13: S603 `subprocess` call: check for execution of untrusted input
+handover/core-hardening/mutation-lane/run.py:280:13: PLW1510 `subprocess.run` without explicit `check` argument
+handover/core-hardening/mutation-lane/run.py:280:28: S607 Starting a process with a partial executable path
+Found 33 errors.
+[*] 1 fixable with the `--fix` option (1 hidden fix can be enabled with the `--unsafe-fixes` option).
+unformatted: File would be reformatted
+    --> handover/core-hardening/mutation-lane/make_mutants_v2.py:2:1
+     |
+1    | import json, sys, pathlib
+2    +
+3    | TREE = pathlib.Path(sys.argv[1])
+     - CFG = "src/hadavin_sdk/config.py"; DEF = "src/hadavin_sdk/defaults.py"; TAB = "src/hadavin_sdk/backends/table.py"
+     - TICK = "src/hadavin_sdk/runtime/tick.py"; CH = "src/hadavin_sdk/audit/chain.py"; LD = "src/hadavin_sdk/audit/local_dir.py"
+     - T1 = "tests/test_c01_route_limits.py::"; T2 = "tests/test_a01_audit_reconcile.py::"; T3 = "tests/test_p7_tick.py::"
+4    + CFG = "src/hadavin_sdk/config.py"
+5    + DEF = "src/hadavin_sdk/defaults.py"
+6    + TAB = "src/hadavin_sdk/backends/table.py"
+7    + TICK = "src/hadavin_sdk/runtime/tick.py"
+8    + CH = "src/hadavin_sdk/audit/chain.py"
+9    + LD = "src/hadavin_sdk/audit/local_dir.py"
+10   + T1 = "tests/test_c01_route_limits.py::"
+11   + T2 = "tests/test_a01_audit_reconcile.py::"
+12   + T3 = "tests/test_p7_tick.py::"
+13   | M = []
+14   +
+15   +
+16   | def m(id, file, old, new, desc, expect, killer):
+17   |     M.append(dict(id=id, file=file, old=old, new=new, desc=desc, expect=expect, killer=killer))
+18   +
+19   +
+20   | K, S, E = "KILLED", "SURVIVE (gap)", "SURVIVE (equivalent)"
+21   | # ---------------- C-01 ----------------
+     - m("C2-01", CFG, '        if not v.is_finite():\n            raise ValueError("a price must be a finite number")\n        return v', '        return v',
+     -   "Route._finite validator removed (NaN/Infinity price accepted by the route itself)", "SURVIVE (double cover: README says pydantic's Money already refuses NaN/Infinity; confirm by run)",
+     -   T1+"test_nan_and_infinity_are_a_clean_config_error_never_a_crash[...] only if pydantic stops refusing")
+     - m("C2-02", CFG, "        if not v.is_finite():", "        if v.is_finite():", "v2 _finite flipped: every finite price refused", K, T1+"test_a_priced_live_route_still_loads (and most of the file)")
+     - m("C2-03", CFG, "    return price.is_finite() and (price > 0", "    return price.is_finite() or (price > 0", "_price_ok: is_finite and -> or (NaN raises, Infinity passes)", K, T1+"test_the_price_predicate_is_total_even_where_pydantic_is_bypassed")
+     - m("C2-04", CFG, "    return price.is_finite() and (price > 0", "    return (price > 0", "_price_ok: is_finite term dropped (NaN raises InvalidOperation, Infinity passes)", K, T1+"test_the_price_predicate_is_total_even_where_pydantic_is_bypassed")
+     - m("C2-05", CFG, "    return price.is_finite() and (price > 0", "    return not price.is_finite() and (price > 0", "_price_ok: is_finite negated", K, T1+"test_a_priced_live_route_still_loads")
+     - m("C2-06", CFG, "price > 0 or (zero_ok and price == 0))", "price >= 0 or (zero_ok and price == 0))", "price > 0 became >= 0 (price 0 always allowed)", K, T1+"test_a_zero_or_negative_price_is_refused_for_a_live_model[0-*]")
+     - m("C2-07", CFG, "price > 0 or (zero_ok and price == 0))", "price > 1 or (zero_ok and price == 0))", "price floor 1 (tiny positive price refused)", K, T1+"test_a_tiny_positive_price_is_accepted_on_purpose")
+     - m("C2-08", CFG, "price > 0 or (zero_ok and price == 0))", "price > 0 or (zero_ok or price == 0))", "zero_ok and -> or (price 0 always allowed)", K, T1+"test_a_zero_or_negative_price_is_refused_for_a_live_model[0-*]")
+     - m("C2-09", CFG, "price > 0 or (zero_ok and price == 0))", "price > 0 and (zero_ok and price == 0))", "or -> and (nothing passes)", K, T1+"test_a_priced_live_route_still_loads")
+     - m("C2-10", CFG, "price > 0 or (zero_ok and price == 0))", "price > 0 or (zero_ok and price >= 0))", "zero_ok branch allows negative prices", K, T1+"test_the_flag_never_lets_a_negative_or_non_finite_price_through")
+     - m("C2-11", CFG, "price > 0 or (zero_ok and price == 0))", "price > 0 or (price == 0))", "zero_ok ignored: price 0 always allowed", K, T1+"test_a_zero_or_negative_price_is_refused_for_a_live_model[0-*]")
+     - m("C2-12", CFG, "    local_free = bool(getattr(llm, \"keyless_loopback\", False))", "    local_free = not bool(getattr(llm, \"keyless_loopback\", False))", "local_free inverted", K, T1+"test_zero_by_design_works_only_on_a_keyless_loopback_model; test_the_flag_is_refused_when_the_model_is_not_keyless_loopback[*]")
+     - m("C2-13", CFG, "    local_free = bool(getattr(llm, \"keyless_loopback\", False))", "    local_free = bool(getattr(llm, \"keyless_loopback\", True))", "local_free default True for kinds without the property (anthropic)", K, T1+"test_the_flag_is_refused_when_the_model_is_not_keyless_loopback[llm0]")
+     - m("C2-14", CFG, "    local_free = bool(getattr(llm, \"keyless_loopback\", False))", "    local_free = True", "local_free always true", K, T1+"test_the_flag_is_refused_when_the_model_is_not_keyless_loopback[*]")
+     - m("C2-15", CFG, "            zero_ok = r.price_is_zero_by_design and local_free", "            zero_ok = r.price_is_zero_by_design or local_free", "zero_ok: flag and loopback -> or (a local model priced 0 with no flag passes)", K, T1+"test_a_local_model_with_price_0_but_no_flag_is_refused")
+     - m("C2-16", CFG, "            zero_ok = r.price_is_zero_by_design and local_free", "            zero_ok = r.price_is_zero_by_design", "zero_ok: loopback term dropped (flag alone lets price 0 pass on any live kind)", "SURVIVE? (flag-refused tests use a positive price, and the flag message is still emitted; a test with price 0 + flag on a remote kind must also assert 'needs a price above 0')", "none known; proposed: price 0 + flag on LIVE_LLM expects BOTH refusal texts")
+     - m("C2-17", CFG, "            if r.price_is_zero_by_design and not local_free:", "            if r.price_is_zero_by_design and local_free:", "flag refusal condition inverted", K, T1+"test_the_flag_is_refused_when_the_model_is_not_keyless_loopback[*]")
+     - m("C2-18", CFG, "            if r.price_is_zero_by_design and not local_free:", "            if False:", "flag-on-wrong-kind refusal removed", K, T1+"test_the_flag_is_refused_when_the_model_is_not_keyless_loopback[*]")
+     - m("C2-19", CFG, "                _price_ok(r.input_usd_per_mtok, zero_ok=zero_ok)\n                and _price_ok(r.output_usd_per_mtok, zero_ok=zero_ok)", "                _price_ok(r.input_usd_per_mtok, zero_ok=zero_ok)\n                or _price_ok(r.output_usd_per_mtok, zero_ok=zero_ok)", "one field zero is enough to pass (and -> or)", K, T1+"test_a_zero_or_negative_price_is_refused_for_a_live_model[0-*] (one field zero each)")
+     - m("C2-20", CFG, "                _price_ok(r.input_usd_per_mtok, zero_ok=zero_ok)\n                and _price_ok(r.output_usd_per_mtok, zero_ok=zero_ok)", "                _price_ok(r.input_usd_per_mtok, zero_ok=zero_ok)\n                and _price_ok(r.input_usd_per_mtok, zero_ok=zero_ok)", "output price no longer checked (input checked twice)", K, T1+"test_a_zero_or_negative_price_is_refused_for_a_live_model[0-output_usd_per_mtok]")
+     - m("C2-21", CFG, "                _price_ok(r.input_usd_per_mtok, zero_ok=zero_ok)\n                and _price_ok(r.output_usd_per_mtok, zero_ok=zero_ok)", "                _price_ok(r.output_usd_per_mtok, zero_ok=zero_ok)\n                and _price_ok(r.output_usd_per_mtok, zero_ok=zero_ok)", "input price no longer checked", K, T1+"test_a_zero_or_negative_price_is_refused_for_a_live_model[0-input_usd_per_mtok]")
+     - m("C2-22", CFG, "    live = llm.kind != \"fake\"", "    live = llm.kind == \"fake\"", "live inverted", K, T1+"test_a_zero_or_negative_price_is_refused_for_a_live_model[*]; test_the_fake_model_may_cost_nothing")
+     - m("C2-23", CFG, "    live = llm.kind != \"fake\"", "    live = True", "price check also on the fake kind", K, T1+"test_the_fake_model_may_cost_nothing")
+     - m("C2-24", CFG, "        if live:\n            zero_ok", "        if live and name == \"default\":\n            zero_ok", "price check only on the route named default (route-position gap)", "SURVIVE? (the second route in the at-once test has a good price)", "none known; proposed: route 'zcheap' priced 0 expects refusal naming it")
+     - m("C2-25", CFG, "    for name, r in sorted(routes.items()):", "    for name, r in sorted(routes.items())[-1:]:", "only the LAST route (sorted) checked", K, T1+"test_every_route_refusal_is_reported_at_once (default lost)")
+     - m("C2-26", CFG, "    for name, r in sorted(routes.items()):", "    for name, r in sorted(routes.items())[:1]:", "only the FIRST route (sorted) checked", K, T1+"test_every_route_refusal_is_reported_at_once (route second lost)")
+     - m("C2-27", CFG, "    for name, r in sorted(routes.items()):", "    for name, r in routes.items():", "routes not sorted (message order only)", E, "none: only the order of the refusal lines changes; the tests use `in text`")
+     - m("C2-28", CFG, "                out.append(f\"route {name}: a live model needs a price above 0\")", "                out.append(\"a live model needs a price above 0\")", "route name dropped from the price message", K, T1+"test_every_route_refusal_is_reported_at_once")
+     - m("C2-29", CFG, "        if r.max_tokens > max_route_tokens:", "        if r.max_tokens >= max_route_tokens:", "max_tokens > became >= (ceiling value refused)", K, T1+"test_max_tokens_at_the_ceiling_loads")
+     - m("C2-30", CFG, "        if r.max_tokens > max_route_tokens:", "        if r.max_tokens > max_route_tokens + 1:", "max_tokens ceiling off by one (200_001 loads)", K, T1+"test_max_tokens_above_the_ceiling_is_refused[200001]")
+     - m("C2-31", CFG, "        if r.max_tokens > max_route_tokens:", "        if r.max_tokens < max_route_tokens:", "max_tokens comparison reversed", K, T1+"test_max_tokens_at_the_ceiling_loads; test_max_tokens_above_the_ceiling_is_refused[*]")
+     - m("C2-32", CFG, "refused = _route_refusals(self.routes, self.backends.llm, self.max_route_tokens)", "refused = _route_refusals(self.routes, self.backends.llm, defaults.MAX_ROUTE_TOKENS)", "configured max_route_tokens ignored (default used)", K, T1+"test_the_ceiling_is_a_config_field_and_can_be_lowered")
+     - m("C2-33", CFG, "refused = _route_refusals(self.routes, self.backends.llm, self.max_route_tokens)", "refused = []", "route refusals not collected at all", K, T1+"most tests")
+     - m("C2-34", CFG, "    max_route_tokens: int = Field(default=defaults.MAX_ROUTE_TOKENS, gt=0)", "    max_route_tokens: int = Field(default=defaults.MAX_ROUTE_TOKENS, gt=1)", "ceiling field gt=0 -> gt=1 (a ceiling of 1 refused)", "SURVIVE? (only 0 is tested)", "none known; proposed: max_route_tokens=1 with max_tokens=1 loads")
+     - m("C2-35", CFG, "    max_route_tokens: int = Field(default=defaults.MAX_ROUTE_TOKENS, gt=0)", "    max_route_tokens: int = Field(default=defaults.MAX_ROUTE_TOKENS, ge=0)", "ceiling field gt=0 -> ge=0 (0 allowed)", K, T1+"test_the_ceiling_field_itself_must_be_above_zero")
+     - m("C2-36", CFG, "    max_tokens: int = Field(gt=0)", "    max_tokens: int = Field(gt=1)", "route max_tokens gt=0 -> gt=1", K, T1+"test_max_tokens_boundary_at_the_bottom")
+     - m("C2-37", CFG, "    max_tokens: int = Field(gt=0)", "    max_tokens: int = Field(ge=0)", "route max_tokens gt=0 -> ge=0 (0 allowed)", K, T1+"test_max_tokens_boundary_at_the_bottom")
+     - m("C2-38", CFG, "    max_tokens: int = Field(gt=0)", "    max_tokens: int", "route max_tokens lower bound removed (0 and -1 allowed)", K, T1+"test_max_tokens_boundary_at_the_bottom")
+     - m("C2-39", CFG, "    price_is_zero_by_design: bool = False", "    price_is_zero_by_design: bool = True", "flag defaults to true", K, T1+"test_the_flag_defaults_to_false_and_does_not_change_the_agent_hash_input; test_a_local_model_with_price_0_but_no_flag_is_refused")
+     - for old, new, d, ex, k in [
+     -  ("MAX_ROUTE_TOKENS = 200_000", "MAX_ROUTE_TOKENS = 1", "ceiling literal 1", K, "test_max_tokens_at_the_ceiling_loads"),
+     -  ("MAX_ROUTE_TOKENS = 200_000", "MAX_ROUTE_TOKENS = 0", "ceiling literal 0 (every route refused)", K, "test_max_tokens_at_the_ceiling_loads"),
+     -  ("MAX_ROUTE_TOKENS = 200_000", "MAX_ROUTE_TOKENS = -1", "ceiling literal -1", K, "test_max_tokens_at_the_ceiling_loads"),
+     -  ("MAX_ROUTE_TOKENS = 200_000", "MAX_ROUTE_TOKENS = 200_001", "ceiling literal 200_001", K, "test_max_tokens_above_the_ceiling_is_refused[200001]"),
+     -  ("MAX_ROUTE_TOKENS = 200_000", "MAX_ROUTE_TOKENS = 199_999", "ceiling literal 199_999", K, "test_max_tokens_at_the_ceiling_loads"),
+     -  ("MAX_ROUTE_TOKENS = 200_000", "MAX_ROUTE_TOKENS = 2_000_000", "ceiling literal 2_000_000 (the extra-zero typo it guards)", K, "test_max_tokens_above_the_ceiling_is_refused[*]"),
+     - ]:
+     -     m("C2-%02d" % (len([x for x in M if x['id'].startswith('C2')]) + 1), DEF, old, new, d, ex, T1+k)
+     - m("C2-46", TAB, "        return not self.api_key_secret_name and urlsplit(self.base_url).hostname in _LOOPBACK", "        return urlsplit(self.base_url).hostname in _LOOPBACK", "keyless_loopback: key term dropped (a loopback model WITH a key counts as free)", K, T1+"test_the_flag_is_refused_when_the_model_is_not_keyless_loopback[llm1] (LOCAL_WITH_KEY)")
+     - m("C2-47", TAB, "        return not self.api_key_secret_name and urlsplit(self.base_url).hostname in _LOOPBACK", "        return not self.api_key_secret_name", "keyless_loopback: host term dropped (any keyless host counts as local)", K, T1+"test_the_flag_is_refused_when_the_model_is_not_keyless_loopback[llm2] (REMOTE_NO_KEY)")
+     - m("C2-48", TAB, "        return not self.api_key_secret_name and urlsplit(self.base_url).hostname in _LOOPBACK", "        return not self.api_key_secret_name or urlsplit(self.base_url).hostname in _LOOPBACK", "keyless_loopback: and -> or", K, T1+"llm1 and llm2 cases")
+     - m("C2-49", TAB, "        return not self.api_key_secret_name and urlsplit(self.base_url).hostname in _LOOPBACK", "        return not self.api_key_secret_name and urlsplit(self.base_url).hostname not in _LOOPBACK", "keyless_loopback: host test inverted", K, T1+"test_zero_by_design_works_only_on_a_keyless_loopback_model")
+     - m("C2-50", TAB, "        return not self.api_key_secret_name and urlsplit(self.base_url).hostname in _LOOPBACK", "        return bool(self.api_key_secret_name) and urlsplit(self.base_url).hostname in _LOOPBACK", "keyless_loopback: key test inverted", K, T1+"test_zero_by_design_works_only_on_a_keyless_loopback_model")
+     - m("C2-51", TAB, '_LOOPBACK = {"127.0.0.1", "localhost", "::1"}', '_LOOPBACK = {"127.0.0.1", "localhost", "::1", "example.com"}', "loopback set widened by one remote host (also widens the existing http check at line ~80: only the new route-price use is the target here)", "SURVIVE? (no test uses a remote host in the set)", "none known; equivalent for the tests, real for the rule; proposed: a keyless route to a non-loopback host is refused (REMOTE_NO_KEY covers example.com only through the host name `models.example.com`, which is not in the set)")
+     - # ---------------- A-01 ----------------
+     - m("A2-01", TICK, '    TickStep("audit_drain", 0, audit_drain),', '    TickStep("audit_drain", 3600, audit_drain),', "step interval 0 -> 3600 (not every tick)", K, T2+"test_the_step_entry_points_at_the_right_function_and_runs_every_tick")
+     - m("A2-02", TICK, '    TickStep("audit_drain", 0, audit_drain),', '    TickStep("audit_drain", 0, reconcile),', "STEPS entry points at the approvals reconcile", K, T2+"test_the_step_entry_points_at_the_right_function_and_runs_every_tick")
+     - m("A2-03", TICK, '    TickStep("audit_drain", 0, audit_drain),\n', '', "step removed from STEPS", K, T2+"test_the_step_entry_points_at_the_right_function_and_runs_every_tick; "+T3+"the step-order list test")
+     - m("A2-04", TICK, "    if remaining > 0:", "    if remaining >= 0:", "failing rule: remaining > 0 -> >= 0 (always fails)", K, T2+"test_an_empty_outbox_is_green_and_says_zero")
+     - m("A2-05", TICK, "    if remaining > 0:", "    if remaining > 1:", "failing rule: remaining > 0 -> > 1 (one waiting event is green)", K, T2+"test_a_database_that_stays_down_leaves_the_step_failing")
+     - m("A2-06", TICK, '        raise RuntimeError(f"audit events still waiting: {remaining} (corrupt {corrupt})")', "        return", "failing rule: raise removed", K, T2+"test_a_damaged_row_fails_the_step_every_tick_but_never_blocks_the_rows_behind_it; test_a_stuck_outbox_stops_last_ok_at_from_advancing_and_exits_1")
+     - m("A2-07", TICK, "    remaining = backlog() if backlog is not None else 0", "    try:\n        remaining = backlog() if backlog is not None else 0\n    except Exception:\n        remaining = 0", "backlog() exception swallowed (unknown looks like empty)", K, T2+"test_an_unreadable_outbox_table_fails_the_step_not_a_green_zero")
+     - m("A2-08", TICK, "    remaining = backlog() if backlog is not None else 0", "    remaining = 0", "remaining forced to 0", K, T2+"test_a_database_that_stays_down_leaves_the_step_failing")
+     - m("A2-09", TICK, "    corrupt = getattr(audit, \"last_corrupt\", 0)", "    corrupt = 0", "corrupt count not read", K, T2+"test_a_damaged_row_fails_the_step_every_tick_but_never_blocks_the_rows_behind_it; test_local_dir_corrupt_outbox_file_is_moved_aside_counted_and_logged")
+     - m("A2-10", TICK, '    _LOG.info("audit_drain drained=%d remaining=%d corrupt=%d", drained, remaining, corrupt)', '    _LOG.info("audit_drain drained=%d remaining=%d corrupt=%d", 0, remaining, corrupt)', "drained count logged as 0", K, T2+"test_the_step_drains_the_outbox_and_logs_the_counts")
+     - m("A2-11", TICK, "    if fn is None:\n        _LOG.info(", "    if False:\n        _LOG.info(", "missing-reconcile guard removed", K, T2+"test_a_kind_without_reconcile_logs_one_line_and_passes")
+     - m("A2-12", TICK, "    drained = fn()", "    drained = 0", "reconcile never called", K, T2+"test_the_step_drains_the_outbox_and_logs_the_counts")
+     - m("A2-13", CH, "        self.last_corrupt = 0\n        done = 0\n        for event in list(self._pending):\n            if self._drain(event):", "        done = 0\n        for event in list(self._pending):\n            if self._drain(event):", "chain: last_corrupt not reset at the start of reconcile", "SURVIVE? (no test reconciles twice, first with a bad row, then clean)", "none known; proposed: reconcile twice, second run has no bad row, expect last_corrupt == 0")
+     - m("A2-14", LD, "        self.last_corrupt = 0\n        done = 0", "        done = 0", "local_dir: last_corrupt not reset at the start of reconcile", "SURVIVE? (same gap)", "none known; same proposed test for LocalDirSink")
+     - m("A2-15", CH, "                    event_id,\n                )\n                continue\n            if self._drain(event):", "                    event_id,\n                )\n            if self._drain(event):", "chain: corrupt-row continue removed (the bad row falls through to the drain with a stale or unbound event)", K, T2+"test_a_bad_row_is_skipped_logged_counted_and_the_good_row_behind_it_is_drained")
+     - m("A2-16", CH, "                self.last_corrupt += 1", "                pass", "chain: corrupt rows not counted", K, T2+"test_a_bad_row_is_skipped_...(last_corrupt == 1)")
+     - m("A2-17", LD, "                self.last_corrupt += 1", "                pass", "local_dir: corrupt files not counted", K, T2+"test_local_dir_corrupt_outbox_file_is_moved_aside_counted_and_logged")
+     - m("A2-18", CH, "            except ValueError as exc:\n                self.last_corrupt += 1", "            except KeyError as exc:\n                self.last_corrupt += 1", "chain: damaged row no longer caught (blocks the rows behind it)", K, T2+"test_a_bad_row_is_skipped_...")
+     - m("A2-19", LD, "                os.replace(path, self.outbox / \"corrupt\" / path.name)", "                pass", "local_dir: corrupt file not moved aside", K, T2+"test_local_dir_corrupt_outbox_file_is_moved_aside_counted_and_logged")
+     - m("A2-20", CH, 'ORDER BY event_id")', '")', "drain: ORDER BY removed", "SURVIVE? (tests do not assert the drain order of two or more rows)", "none known; proposed: three outbox rows inserted out of order, assert the chain order equals the agreed order")
+     - m("A2-21", CH, 'ORDER BY event_id")', 'ORDER BY event_id DESC")', "drain: order swapped (descending)", "SURVIVE? (same)", "same proposed test")
+     - m("A2-22", CH, "                    continue\n                done += 1\n        return done\n\n    def backlog", "                    pass\n                done += 1\n        return done\n\n    def backlog", "chain: a failed DELETE is counted as drained (continue removed)", K, T2+"test_a_row_that_was_written_but_cannot_be_deleted_is_not_counted_and_stays_waiting")
+     - m("A2-23", CH, '                    self._db.run("DELETE FROM audit_outbox WHERE event_id = ?", (event_id,))', "                    pass", "chain: DELETE never runs after the append (outbox never shrinks)", K, T2+"test_the_step_drains_the_outbox_and_logs_the_counts")
+     - m("A2-24", CH, '                    self._db.run("DELETE FROM audit_outbox WHERE event_id = ?", (event_id,))\n                except Exception as exc:', '                    self._db.run("DELETE FROM audit_outbox WHERE event_id = ?", (event_id,))\n                except KeyError as exc:', "chain: failed DELETE no longer caught (reconcile raises)", K, T2+"test_a_row_that_was_written_but_cannot_be_deleted_is_not_counted_and_stays_waiting")
+     - m("A2-25", CH, "        except DuplicateEvent:\n            pass\n        except Exception:  # noqa: BLE001 - stays queued, retried next time\n            return False", "        except Exception:  # noqa: BLE001 - stays queued, retried next time\n            return False", "chain _drain: DuplicateEvent swallow removed (a duplicate stays in the outbox forever)", K, T2+"test_a_row_that_was_written_but_cannot_be_deleted_... (second reconcile == 2)")
+     - m("A2-26", CH, "        except Exception:  # noqa: BLE001 - stays queued, retried next time\n            return False\n        return True", "        except Exception:  # noqa: BLE001 - stays queued, retried next time\n            return True\n        return True", "chain _drain: failure reported as success (event dropped from the outbox)", K, T2+"test_a_database_that_stays_down_leaves_the_step_failing")
+     - m("A2-27", CH, "            if self._drain(event):\n                self._pending.remove(event)\n                done += 1", "            if self._drain(event):\n                done += 1", "chain: drained memory event never removed (re-counted every run)", "SURVIVE? (no v2 test drains _pending successfully)", "none known; proposed (from the v1 proof tests): test_chain_reconcile_drains_memory_only_events_once")
+     - m("A2-28", CH, "            if self._drain(event):\n                self._pending.remove(event)\n                done += 1", "            if False:\n                self._pending.remove(event)\n                done += 1", "chain: memory events never drained", "SURVIVE? (same gap)", "same proposed test")
+     - m("A2-29", CH, "        except DuplicateEvent:\n            return event.event_id\n        except Exception as exc:  # noqa: BLE001 - the contract is \"never raises\"", "        except KeyError:\n            return event.event_id\n        except Exception as exc:  # noqa: BLE001 - the contract is \"never raises\"", "chain write_outcome: DuplicateEvent except removed (a duplicate goes to the outbox)", K, T2+"test_a_duplicate_outcome_returns_the_event_id_and_logs_nothing")
+     - m("A2-30", CH, "        except DuplicateEvent:\n            return event.event_id\n        except Exception as exc:  # noqa: BLE001 - the contract is \"never raises\"", "        except DuplicateEvent:\n            return None\n        except Exception as exc:  # noqa: BLE001 - the contract is \"never raises\"", "chain write_outcome: duplicate returns None", K, T2+"test_a_duplicate_outcome_returns_the_event_id_and_logs_nothing")
+22   + m(
+23   +     "C2-01",
+24   +     CFG,
+25   +     '        if not v.is_finite():\n            raise ValueError("a price must be a finite number")\n        return v',
+26   +     "        return v",
+27   +     "Route._finite validator removed (NaN/Infinity price accepted by the route itself)",
+28   +     "SURVIVE (double cover: README says pydantic's Money already refuses NaN/Infinity; confirm by run)",
+29   +     T1
+30   +     + "test_nan_and_infinity_are_a_clean_config_error_never_a_crash[...] only if pydantic stops refusing",
+31   + )
+32   + m(
+33   +     "C2-02",
+34   +     CFG,
+35   +     "        if not v.is_finite():",
+36   +     "        if v.is_finite():",
+37   +     "v2 _finite flipped: every finite price refused",
+38   +     K,
+39   +     T1 + "test_a_priced_live_route_still_loads (and most of the file)",
+40   + )
+41   + m(
+42   +     "C2-03",
+43   +     CFG,
+44   +     "    return price.is_finite() and (price > 0",
+45   +     "    return price.is_finite() or (price > 0",
+46   +     "_price_ok: is_finite and -> or (NaN raises, Infinity passes)",
+47   +     K,
+48   +     T1 + "test_the_price_predicate_is_total_even_where_pydantic_is_bypassed",
+49   + )
+50   + m(
+51   +     "C2-04",
+52   +     CFG,
+53   +     "    return price.is_finite() and (price > 0",
+54   +     "    return (price > 0",
+55   +     "_price_ok: is_finite term dropped (NaN raises InvalidOperation, Infinity passes)",
+56   +     K,
+57   +     T1 + "test_the_price_predicate_is_total_even_where_pydantic_is_bypassed",
+58   + )
+59   + m(
+60   +     "C2-05",
+61   +     CFG,
+62   +     "    return price.is_finite() and (price > 0",
+63   +     "    return not price.is_finite() and (price > 0",
+64   +     "_price_ok: is_finite negated",
+65   +     K,
+66   +     T1 + "test_a_priced_live_route_still_loads",
+67   + )
+68   + m(
+69   +     "C2-06",
+70   +     CFG,
+71   +     "price > 0 or (zero_ok and price == 0))",
+72   +     "price >= 0 or (zero_ok and price == 0))",
+73   +     "price > 0 became >= 0 (price 0 always allowed)",
+74   +     K,
+75   +     T1 + "test_a_zero_or_negative_price_is_refused_for_a_live_model[0-*]",
+76   + )
+77   + m(
+78   +     "C2-07",
+79   +     CFG,
+80   +     "price > 0 or (zero_ok and price == 0))",
+81   +     "price > 1 or (zero_ok and price == 0))",
+82   +     "price floor 1 (tiny positive price refused)",
+83   +     K,
+84   +     T1 + "test_a_tiny_positive_price_is_accepted_on_purpose",
+85   + )
+86   + m(
+87   +     "C2-08",
+88   +     CFG,
+89   +     "price > 0 or (zero_ok and price == 0))",
+90   +     "price > 0 or (zero_ok or price == 0))",
+91   +     "zero_ok and -> or (price 0 always allowed)",
+92   +     K,
+93   +     T1 + "test_a_zero_or_negative_price_is_refused_for_a_live_model[0-*]",
+94   + )
+95   + m(
+96   +     "C2-09",
+97   +     CFG,
+98   +     "price > 0 or (zero_ok and price == 0))",
+99   +     "price > 0 and (zero_ok and price == 0))",
+100  +     "or -> and (nothing passes)",
+101  +     K,
+102  +     T1 + "test_a_priced_live_route_still_loads",
+103  + )
+104  + m(
+105  +     "C2-10",
+106  +     CFG,
+107  +     "price > 0 or (zero_ok and price == 0))",
+108  +     "price > 0 or (zero_ok and price >= 0))",
+109  +     "zero_ok branch allows negative prices",
+110  +     K,
+111  +     T1 + "test_the_flag_never_lets_a_negative_or_non_finite_price_through",
+112  + )
+113  + m(
+114  +     "C2-11",
+115  +     CFG,
+116  +     "price > 0 or (zero_ok and price == 0))",
+117  +     "price > 0 or (price == 0))",
+118  +     "zero_ok ignored: price 0 always allowed",
+119  +     K,
+120  +     T1 + "test_a_zero_or_negative_price_is_refused_for_a_live_model[0-*]",
+121  + )
+122  + m(
+123  +     "C2-12",
+124  +     CFG,
+125  +     '    local_free = bool(getattr(llm, "keyless_loopback", False))',
+126  +     '    local_free = not bool(getattr(llm, "keyless_loopback", False))',
+127  +     "local_free inverted",
+128  +     K,
+129  +     T1
+130  +     + "test_zero_by_design_works_only_on_a_keyless_loopback_model; test_the_flag_is_refused_when_the_model_is_not_keyless_loopback[*]",
+131  + )
+132  + m(
+133  +     "C2-13",
+134  +     CFG,
+135  +     '    local_free = bool(getattr(llm, "keyless_loopback", False))',
+136  +     '    local_free = bool(getattr(llm, "keyless_loopback", True))',
+137  +     "local_free default True for kinds without the property (anthropic)",
+138  +     K,
+139  +     T1 + "test_the_flag_is_refused_when_the_model_is_not_keyless_loopback[llm0]",
+140  + )
+141  + m(
+142  +     "C2-14",
+143  +     CFG,
+144  +     '    local_free = bool(getattr(llm, "keyless_loopback", False))',
+145  +     "    local_free = True",
+146  +     "local_free always true",
+147  +     K,
+148  +     T1 + "test_the_flag_is_refused_when_the_model_is_not_keyless_loopback[*]",
+149  + )
+150  + m(
+151  +     "C2-15",
+152  +     CFG,
+153  +     "            zero_ok = r.price_is_zero_by_design and local_free",
+154  +     "            zero_ok = r.price_is_zero_by_design or local_free",
+155  +     "zero_ok: flag and loopback -> or (a local model priced 0 with no flag passes)",
+156  +     K,
+157  +     T1 + "test_a_local_model_with_price_0_but_no_flag_is_refused",
+158  + )
+159  + m(
+160  +     "C2-16",
+161  +     CFG,
+162  +     "            zero_ok = r.price_is_zero_by_design and local_free",
+163  +     "            zero_ok = r.price_is_zero_by_design",
+164  +     "zero_ok: loopback term dropped (flag alone lets price 0 pass on any live kind)",
+165  +     "SURVIVE? (flag-refused tests use a positive price, and the flag message is still emitted; a test with price 0 + flag on a remote kind must also assert 'needs a price above 0')",
+166  +     "none known; proposed: price 0 + flag on LIVE_LLM expects BOTH refusal texts",
+167  + )
+168  + m(
+169  +     "C2-17",
+170  +     CFG,
+171  +     "            if r.price_is_zero_by_design and not local_free:",
+172  +     "            if r.price_is_zero_by_design and local_free:",
+173  +     "flag refusal condition inverted",
+174  +     K,
+175  +     T1 + "test_the_flag_is_refused_when_the_model_is_not_keyless_loopback[*]",
+176  + )
+177  + m(
+178  +     "C2-18",
+179  +     CFG,
+180  +     "            if r.price_is_zero_by_design and not local_free:",
+181  +     "            if False:",
+182  +     "flag-on-wrong-kind refusal removed",
+183  +     K,
+184  +     T1 + "test_the_flag_is_refused_when_the_model_is_not_keyless_loopback[*]",
+185  + )
+186  + m(
+187  +     "C2-19",
+188  +     CFG,
+189  +     "                _price_ok(r.input_usd_per_mtok, zero_ok=zero_ok)\n                and _price_ok(r.output_usd_per_mtok, zero_ok=zero_ok)",
+190  +     "                _price_ok(r.input_usd_per_mtok, zero_ok=zero_ok)\n                or _price_ok(r.output_usd_per_mtok, zero_ok=zero_ok)",
+191  +     "one field zero is enough to pass (and -> or)",
+192  +     K,
+193  +     T1 + "test_a_zero_or_negative_price_is_refused_for_a_live_model[0-*] (one field zero each)",
+194  + )
+195  + m(
+196  +     "C2-20",
+197  +     CFG,
+198  +     "                _price_ok(r.input_usd_per_mtok, zero_ok=zero_ok)\n                and _price_ok(r.output_usd_per_mtok, zero_ok=zero_ok)",
+199  +     "                _price_ok(r.input_usd_per_mtok, zero_ok=zero_ok)\n                and _price_ok(r.input_usd_per_mtok, zero_ok=zero_ok)",
+200  +     "output price no longer checked (input checked twice)",
+201  +     K,
+202  +     T1 + "test_a_zero_or_negative_price_is_refused_for_a_live_model[0-output_usd_per_mtok]",
+203  + )
+204  + m(
+205  +     "C2-21",
+206  +     CFG,
+207  +     "                _price_ok(r.input_usd_per_mtok, zero_ok=zero_ok)\n                and _price_ok(r.output_usd_per_mtok, zero_ok=zero_ok)",
+208  +     "                _price_ok(r.output_usd_per_mtok, zero_ok=zero_ok)\n                and _price_ok(r.output_usd_per_mtok, zero_ok=zero_ok)",
+209  +     "input price no longer checked",
+210  +     K,
+211  +     T1 + "test_a_zero_or_negative_price_is_refused_for_a_live_model[0-input_usd_per_mtok]",
+212  + )
+213  + m(
+214  +     "C2-22",
+215  +     CFG,
+216  +     '    live = llm.kind != "fake"',
+217  +     '    live = llm.kind == "fake"',
+218  +     "live inverted",
+219  +     K,
+220  +     T1
+221  +     + "test_a_zero_or_negative_price_is_refused_for_a_live_model[*]; test_the_fake_model_may_cost_nothing",
+222  + )
+223  + m(
+224  +     "C2-23",
+225  +     CFG,
+226  +     '    live = llm.kind != "fake"',
+227  +     "    live = True",
+228  +     "price check also on the fake kind",
+229  +     K,
+230  +     T1 + "test_the_fake_model_may_cost_nothing",
+231  + )
+232  + m(
+233  +     "C2-24",
+234  +     CFG,
+235  +     "        if live:\n            zero_ok",
+236  +     '        if live and name == "default":\n            zero_ok',
+237  +     "price check only on the route named default (route-position gap)",
+238  +     "SURVIVE? (the second route in the at-once test has a good price)",
+239  +     "none known; proposed: route 'zcheap' priced 0 expects refusal naming it",
+240  + )
+241  + m(
+242  +     "C2-25",
+243  +     CFG,
+244  +     "    for name, r in sorted(routes.items()):",
+245  +     "    for name, r in sorted(routes.items())[-1:]:",
+246  +     "only the LAST route (sorted) checked",
+247  +     K,
+248  +     T1 + "test_every_route_refusal_is_reported_at_once (default lost)",
+249  + )
+250  + m(
+251  +     "C2-26",
+252  +     CFG,
+253  +     "    for name, r in sorted(routes.items()):",
+254  +     "    for name, r in sorted(routes.items())[:1]:",
+255  +     "only the FIRST route (sorted) checked",
+256  +     K,
+257  +     T1 + "test_every_route_refusal_is_reported_at_once (route second lost)",
+258  + )
+259  + m(
+260  +     "C2-27",
+261  +     CFG,
+262  +     "    for name, r in sorted(routes.items()):",
+263  +     "    for name, r in routes.items():",
+264  +     "routes not sorted (message order only)",
+265  +     E,
+266  +     "none: only the order of the refusal lines changes; the tests use `in text`",
+267  + )
+268  + m(
+269  +     "C2-28",
+270  +     CFG,
+271  +     '                out.append(f"route {name}: a live model needs a price above 0")',
+272  +     '                out.append("a live model needs a price above 0")',
+273  +     "route name dropped from the price message",
+274  +     K,
+275  +     T1 + "test_every_route_refusal_is_reported_at_once",
+276  + )
+277  + m(
+278  +     "C2-29",
+279  +     CFG,
+280  +     "        if r.max_tokens > max_route_tokens:",
+281  +     "        if r.max_tokens >= max_route_tokens:",
+282  +     "max_tokens > became >= (ceiling value refused)",
+283  +     K,
+284  +     T1 + "test_max_tokens_at_the_ceiling_loads",
+285  + )
+286  + m(
+287  +     "C2-30",
+288  +     CFG,
+289  +     "        if r.max_tokens > max_route_tokens:",
+290  +     "        if r.max_tokens > max_route_tokens + 1:",
+291  +     "max_tokens ceiling off by one (200_001 loads)",
+292  +     K,
+293  +     T1 + "test_max_tokens_above_the_ceiling_is_refused[200001]",
+294  + )
+295  + m(
+296  +     "C2-31",
+297  +     CFG,
+298  +     "        if r.max_tokens > max_route_tokens:",
+299  +     "        if r.max_tokens < max_route_tokens:",
+300  +     "max_tokens comparison reversed",
+301  +     K,
+302  +     T1 + "test_max_tokens_at_the_ceiling_loads; test_max_tokens_above_the_ceiling_is_refused[*]",
+303  + )
+304  + m(
+305  +     "C2-32",
+306  +     CFG,
+307  +     "refused = _route_refusals(self.routes, self.backends.llm, self.max_route_tokens)",
+308  +     "refused = _route_refusals(self.routes, self.backends.llm, defaults.MAX_ROUTE_TOKENS)",
+309  +     "configured max_route_tokens ignored (default used)",
+310  +     K,
+311  +     T1 + "test_the_ceiling_is_a_config_field_and_can_be_lowered",
+312  + )
+313  + m(
+314  +     "C2-33",
+315  +     CFG,
+316  +     "refused = _route_refusals(self.routes, self.backends.llm, self.max_route_tokens)",
+317  +     "refused = []",
+318  +     "route refusals not collected at all",
+319  +     K,
+320  +     T1 + "most tests",
+321  + )
+322  + m(
+323  +     "C2-34",
+324  +     CFG,
+325  +     "    max_route_tokens: int = Field(default=defaults.MAX_ROUTE_TOKENS, gt=0)",
+326  +     "    max_route_tokens: int = Field(default=defaults.MAX_ROUTE_TOKENS, gt=1)",
+327  +     "ceiling field gt=0 -> gt=1 (a ceiling of 1 refused)",
+328  +     "SURVIVE? (only 0 is tested)",
+329  +     "none known; proposed: max_route_tokens=1 with max_tokens=1 loads",
+330  + )
+331  + m(
+332  +     "C2-35",
+333  +     CFG,
+334  +     "    max_route_tokens: int = Field(default=defaults.MAX_ROUTE_TOKENS, gt=0)",
+335  +     "    max_route_tokens: int = Field(default=defaults.MAX_ROUTE_TOKENS, ge=0)",
+336  +     "ceiling field gt=0 -> ge=0 (0 allowed)",
+337  +     K,
+338  +     T1 + "test_the_ceiling_field_itself_must_be_above_zero",
+339  + )
+340  + m(
+341  +     "C2-36",
+342  +     CFG,
+343  +     "    max_tokens: int = Field(gt=0)",
+344  +     "    max_tokens: int = Field(gt=1)",
+345  +     "route max_tokens gt=0 -> gt=1",
+346  +     K,
+347  +     T1 + "test_max_tokens_boundary_at_the_bottom",
+348  + )
+349  + m(
+350  +     "C2-37",
+351  +     CFG,
+352  +     "    max_tokens: int = Field(gt=0)",
+353  +     "    max_tokens: int = Field(ge=0)",
+354  +     "route max_tokens gt=0 -> ge=0 (0 allowed)",
+355  +     K,
+356  +     T1 + "test_max_tokens_boundary_at_the_bottom",
+357  + )
+358  + m(
+359  +     "C2-38",
+360  +     CFG,
+361  +     "    max_tokens: int = Field(gt=0)",
+362  +     "    max_tokens: int",
+363  +     "route max_tokens lower bound removed (0 and -1 allowed)",
+364  +     K,
+365  +     T1 + "test_max_tokens_boundary_at_the_bottom",
+366  + )
+367  + m(
+368  +     "C2-39",
+369  +     CFG,
+370  +     "    price_is_zero_by_design: bool = False",
+371  +     "    price_is_zero_by_design: bool = True",
+372  +     "flag defaults to true",
+373  +     K,
+374  +     T1
+375  +     + "test_the_flag_defaults_to_false_and_does_not_change_the_agent_hash_input; test_a_local_model_with_price_0_but_no_flag_is_refused",
+376  + )
+377  + for old, new, d, ex, k in [
+378  +     (
+379  +         "MAX_ROUTE_TOKENS = 200_000",
+380  +         "MAX_ROUTE_TOKENS = 1",
+381  +         "ceiling literal 1",
+382  +         K,
+383  +         "test_max_tokens_at_the_ceiling_loads",
+384  +     ),
+385  +     (
+386  +         "MAX_ROUTE_TOKENS = 200_000",
+387  +         "MAX_ROUTE_TOKENS = 0",
+388  +         "ceiling literal 0 (every route refused)",
+389  +         K,
+390  +         "test_max_tokens_at_the_ceiling_loads",
+391  +     ),
+392  +     (
+393  +         "MAX_ROUTE_TOKENS = 200_000",
+394  +         "MAX_ROUTE_TOKENS = -1",
+395  +         "ceiling literal -1",
+396  +         K,
+397  +         "test_max_tokens_at_the_ceiling_loads",
+398  +     ),
+399  +     (
+400  +         "MAX_ROUTE_TOKENS = 200_000",
+401  +         "MAX_ROUTE_TOKENS = 200_001",
+402  +         "ceiling literal 200_001",
+403  +         K,
+404  +         "test_max_tokens_above_the_ceiling_is_refused[200001]",
+405  +     ),
+406  +     (
+407  +         "MAX_ROUTE_TOKENS = 200_000",
+408  +         "MAX_ROUTE_TOKENS = 199_999",
+409  +         "ceiling literal 199_999",
+410  +         K,
+411  +         "test_max_tokens_at_the_ceiling_loads",
+412  +     ),
+413  +     (
+414  +         "MAX_ROUTE_TOKENS = 200_000",
+415  +         "MAX_ROUTE_TOKENS = 2_000_000",
+416  +         "ceiling literal 2_000_000 (the extra-zero typo it guards)",
+417  +         K,
+418  +         "test_max_tokens_above_the_ceiling_is_refused[*]",
+419  +     ),
+420  + ]:
+421  +     m(
+422  +         "C2-%02d" % (len([x for x in M if x["id"].startswith("C2")]) + 1),
+423  +         DEF,
+424  +         old,
+425  +         new,
+426  +         d,
+427  +         ex,
+428  +         T1 + k,
+429  +     )
+430  + m(
+431  +     "C2-46",
+432  +     TAB,
+433  +     "        return not self.api_key_secret_name and urlsplit(self.base_url).hostname in _LOOPBACK",
+434  +     "        return urlsplit(self.base_url).hostname in _LOOPBACK",
+435  +     "keyless_loopback: key term dropped (a loopback model WITH a key counts as free)",
+436  +     K,
+437  +     T1 + "test_the_flag_is_refused_when_the_model_is_not_keyless_loopback[llm1] (LOCAL_WITH_KEY)",
+438  + )
+439  + m(
+440  +     "C2-47",
+441  +     TAB,
+442  +     "        return not self.api_key_secret_name and urlsplit(self.base_url).hostname in _LOOPBACK",
+443  +     "        return not self.api_key_secret_name",
+444  +     "keyless_loopback: host term dropped (any keyless host counts as local)",
+445  +     K,
+446  +     T1 + "test_the_flag_is_refused_when_the_model_is_not_keyless_loopback[llm2] (REMOTE_NO_KEY)",
+447  + )
+448  + m(
+449  +     "C2-48",
+450  +     TAB,
+451  +     "        return not self.api_key_secret_name and urlsplit(self.base_url).hostname in _LOOPBACK",
+452  +     "        return not self.api_key_secret_name or urlsplit(self.base_url).hostname in _LOOPBACK",
+453  +     "keyless_loopback: and -> or",
+454  +     K,
+455  +     T1 + "llm1 and llm2 cases",
+456  + )
+457  + m(
+458  +     "C2-49",
+459  +     TAB,
+460  +     "        return not self.api_key_secret_name and urlsplit(self.base_url).hostname in _LOOPBACK",
+461  +     "        return not self.api_key_secret_name and urlsplit(self.base_url).hostname not in _LOOPBACK",
+462  +     "keyless_loopback: host test inverted",
+463  +     K,
+464  +     T1 + "test_zero_by_design_works_only_on_a_keyless_loopback_model",
+465  + )
+466  + m(
+467  +     "C2-50",
+468  +     TAB,
+469  +     "        return not self.api_key_secret_name and urlsplit(self.base_url).hostname in _LOOPBACK",
+470  +     "        return bool(self.api_key_secret_name) and urlsplit(self.base_url).hostname in _LOOPBACK",
+471  +     "keyless_loopback: key test inverted",
+472  +     K,
+473  +     T1 + "test_zero_by_design_works_only_on_a_keyless_loopback_model",
+474  + )
+475  + m(
+476  +     "C2-51",
+477  +     TAB,
+478  +     '_LOOPBACK = {"127.0.0.1", "localhost", "::1"}',
+479  +     '_LOOPBACK = {"127.0.0.1", "localhost", "::1", "example.com"}',
+480  +     "loopback set widened by one remote host (also widens the existing http check at line ~80: only the new route-price use is the target here)",
+481  +     "SURVIVE? (no test uses a remote host in the set)",
+482  +     "none known; equivalent for the tests, real for the rule; proposed: a keyless route to a non-loopback host is refused (REMOTE_NO_KEY covers example.com only through the host name `models.example.com`, which is not in the set)",
+483  + )
+484  + # ---------------- A-01 ----------------
+485  + m(
+486  +     "A2-01",
+487  +     TICK,
+488  +     '    TickStep("audit_drain", 0, audit_drain),',
+489  +     '    TickStep("audit_drain", 3600, audit_drain),',
+490  +     "step interval 0 -> 3600 (not every tick)",
+491  +     K,
+492  +     T2 + "test_the_step_entry_points_at_the_right_function_and_runs_every_tick",
+493  + )
+494  + m(
+495  +     "A2-02",
+496  +     TICK,
+497  +     '    TickStep("audit_drain", 0, audit_drain),',
+498  +     '    TickStep("audit_drain", 0, reconcile),',
+499  +     "STEPS entry points at the approvals reconcile",
+500  +     K,
+501  +     T2 + "test_the_step_entry_points_at_the_right_function_and_runs_every_tick",
+502  + )
+503  + m(
+504  +     "A2-03",
+505  +     TICK,
+506  +     '    TickStep("audit_drain", 0, audit_drain),\n',
+507  +     "",
+508  +     "step removed from STEPS",
+509  +     K,
+510  +     T2
+511  +     + "test_the_step_entry_points_at_the_right_function_and_runs_every_tick; "
+512  +     + T3
+513  +     + "the step-order list test",
+514  + )
+515  + m(
+516  +     "A2-04",
+517  +     TICK,
+518  +     "    if remaining > 0:",
+519  +     "    if remaining >= 0:",
+520  +     "failing rule: remaining > 0 -> >= 0 (always fails)",
+521  +     K,
+522  +     T2 + "test_an_empty_outbox_is_green_and_says_zero",
+523  + )
+524  + m(
+525  +     "A2-05",
+526  +     TICK,
+527  +     "    if remaining > 0:",
+528  +     "    if remaining > 1:",
+529  +     "failing rule: remaining > 0 -> > 1 (one waiting event is green)",
+530  +     K,
+531  +     T2 + "test_a_database_that_stays_down_leaves_the_step_failing",
+532  + )
+533  + m(
+534  +     "A2-06",
+535  +     TICK,
+536  +     '        raise RuntimeError(f"audit events still waiting: {remaining} (corrupt {corrupt})")',
+537  +     "        return",
+538  +     "failing rule: raise removed",
+539  +     K,
+540  +     T2
+541  +     + "test_a_damaged_row_fails_the_step_every_tick_but_never_blocks_the_rows_behind_it; test_a_stuck_outbox_stops_last_ok_at_from_advancing_and_exits_1",
+542  + )
+543  + m(
+544  +     "A2-07",
+545  +     TICK,
+546  +     "    remaining = backlog() if backlog is not None else 0",
+547  +     "    try:\n        remaining = backlog() if backlog is not None else 0\n    except Exception:\n        remaining = 0",
+548  +     "backlog() exception swallowed (unknown looks like empty)",
+549  +     K,
+550  +     T2 + "test_an_unreadable_outbox_table_fails_the_step_not_a_green_zero",
+551  + )
+552  + m(
+553  +     "A2-08",
+554  +     TICK,
+555  +     "    remaining = backlog() if backlog is not None else 0",
+556  +     "    remaining = 0",
+557  +     "remaining forced to 0",
+558  +     K,
+559  +     T2 + "test_a_database_that_stays_down_leaves_the_step_failing",
+560  + )
+561  + m(
+562  +     "A2-09",
+563  +     TICK,
+564  +     '    corrupt = getattr(audit, "last_corrupt", 0)',
+565  +     "    corrupt = 0",
+566  +     "corrupt count not read",
+567  +     K,
+568  +     T2
+569  +     + "test_a_damaged_row_fails_the_step_every_tick_but_never_blocks_the_rows_behind_it; test_local_dir_corrupt_outbox_file_is_moved_aside_counted_and_logged",
+570  + )
+571  + m(
+572  +     "A2-10",
+573  +     TICK,
+574  +     '    _LOG.info("audit_drain drained=%d remaining=%d corrupt=%d", drained, remaining, corrupt)',
+575  +     '    _LOG.info("audit_drain drained=%d remaining=%d corrupt=%d", 0, remaining, corrupt)',
+576  +     "drained count logged as 0",
+577  +     K,
+578  +     T2 + "test_the_step_drains_the_outbox_and_logs_the_counts",
+579  + )
+580  + m(
+581  +     "A2-11",
+582  +     TICK,
+583  +     "    if fn is None:\n        _LOG.info(",
+584  +     "    if False:\n        _LOG.info(",
+585  +     "missing-reconcile guard removed",
+586  +     K,
+587  +     T2 + "test_a_kind_without_reconcile_logs_one_line_and_passes",
+588  + )
+589  + m(
+590  +     "A2-12",
+591  +     TICK,
+592  +     "    drained = fn()",
+593  +     "    drained = 0",
+594  +     "reconcile never called",
+595  +     K,
+596  +     T2 + "test_the_step_drains_the_outbox_and_logs_the_counts",
+597  + )
+598  + m(
+599  +     "A2-13",
+600  +     CH,
+601  +     "        self.last_corrupt = 0\n        done = 0\n        for event in list(self._pending):\n            if self._drain(event):",
+602  +     "        done = 0\n        for event in list(self._pending):\n            if self._drain(event):",
+603  +     "chain: last_corrupt not reset at the start of reconcile",
+604  +     "SURVIVE? (no test reconciles twice, first with a bad row, then clean)",
+605  +     "none known; proposed: reconcile twice, second run has no bad row, expect last_corrupt == 0",
+606  + )
+607  + m(
+608  +     "A2-14",
+609  +     LD,
+610  +     "        self.last_corrupt = 0\n        done = 0",
+611  +     "        done = 0",
+612  +     "local_dir: last_corrupt not reset at the start of reconcile",
+613  +     "SURVIVE? (same gap)",
+614  +     "none known; same proposed test for LocalDirSink",
+615  + )
+616  + m(
+617  +     "A2-15",
+618  +     CH,
+619  +     "                    event_id,\n                )\n                continue\n            if self._drain(event):",
+620  +     "                    event_id,\n                )\n            if self._drain(event):",
+621  +     "chain: corrupt-row continue removed (the bad row falls through to the drain with a stale or unbound event)",
+622  +     K,
+623  +     T2 + "test_a_bad_row_is_skipped_logged_counted_and_the_good_row_behind_it_is_drained",
+624  + )
+625  + m(
+626  +     "A2-16",
+627  +     CH,
+628  +     "                self.last_corrupt += 1",
+629  +     "                pass",
+630  +     "chain: corrupt rows not counted",
+631  +     K,
+632  +     T2 + "test_a_bad_row_is_skipped_...(last_corrupt == 1)",
+633  + )
+634  + m(
+635  +     "A2-17",
+636  +     LD,
+637  +     "                self.last_corrupt += 1",
+638  +     "                pass",
+639  +     "local_dir: corrupt files not counted",
+640  +     K,
+641  +     T2 + "test_local_dir_corrupt_outbox_file_is_moved_aside_counted_and_logged",
+642  + )
+643  + m(
+644  +     "A2-18",
+645  +     CH,
+646  +     "            except ValueError as exc:\n                self.last_corrupt += 1",
+647  +     "            except KeyError as exc:\n                self.last_corrupt += 1",
+648  +     "chain: damaged row no longer caught (blocks the rows behind it)",
+649  +     K,
+650  +     T2 + "test_a_bad_row_is_skipped_...",
+651  + )
+652  + m(
+653  +     "A2-19",
+654  +     LD,
+655  +     '                os.replace(path, self.outbox / "corrupt" / path.name)',
+656  +     "                pass",
+657  +     "local_dir: corrupt file not moved aside",
+658  +     K,
+659  +     T2 + "test_local_dir_corrupt_outbox_file_is_moved_aside_counted_and_logged",
+660  + )
+661  + m(
+662  +     "A2-20",
+663  +     CH,
+664  +     'ORDER BY event_id")',
+665  +     '")',
+666  +     "drain: ORDER BY removed",
+667  +     "SURVIVE? (tests do not assert the drain order of two or more rows)",
+668  +     "none known; proposed: three outbox rows inserted out of order, assert the chain order equals the agreed order",
+669  + )
+670  + m(
+671  +     "A2-21",
+672  +     CH,
+673  +     'ORDER BY event_id")',
+674  +     'ORDER BY event_id DESC")',
+675  +     "drain: order swapped (descending)",
+676  +     "SURVIVE? (same)",
+677  +     "same proposed test",
+678  + )
+679  + m(
+680  +     "A2-22",
+681  +     CH,
+682  +     "                    continue\n                done += 1\n        return done\n\n    def backlog",
+683  +     "                    pass\n                done += 1\n        return done\n\n    def backlog",
+684  +     "chain: a failed DELETE is counted as drained (continue removed)",
+685  +     K,
+686  +     T2 + "test_a_row_that_was_written_but_cannot_be_deleted_is_not_counted_and_stays_waiting",
+687  + )
+688  + m(
+689  +     "A2-23",
+690  +     CH,
+691  +     '                    self._db.run("DELETE FROM audit_outbox WHERE event_id = ?", (event_id,))',
+692  +     "                    pass",
+693  +     "chain: DELETE never runs after the append (outbox never shrinks)",
+694  +     K,
+695  +     T2 + "test_the_step_drains_the_outbox_and_logs_the_counts",
+696  + )
+697  + m(
+698  +     "A2-24",
+699  +     CH,
+700  +     '                    self._db.run("DELETE FROM audit_outbox WHERE event_id = ?", (event_id,))\n                except Exception as exc:',
+701  +     '                    self._db.run("DELETE FROM audit_outbox WHERE event_id = ?", (event_id,))\n                except KeyError as exc:',
+702  +     "chain: failed DELETE no longer caught (reconcile raises)",
+703  +     K,
+704  +     T2 + "test_a_row_that_was_written_but_cannot_be_deleted_is_not_counted_and_stays_waiting",
+705  + )
+706  + m(
+707  +     "A2-25",
+708  +     CH,
+709  +     "        except DuplicateEvent:\n            pass\n        except Exception:  # noqa: BLE001 - stays queued, retried next time\n            return False",
+710  +     "        except Exception:  # noqa: BLE001 - stays queued, retried next time\n            return False",
+711  +     "chain _drain: DuplicateEvent swallow removed (a duplicate stays in the outbox forever)",
+712  +     K,
+713  +     T2 + "test_a_row_that_was_written_but_cannot_be_deleted_... (second reconcile == 2)",
+714  + )
+715  + m(
+716  +     "A2-26",
+717  +     CH,
+718  +     "        except Exception:  # noqa: BLE001 - stays queued, retried next time\n            return False\n        return True",
+719  +     "        except Exception:  # noqa: BLE001 - stays queued, retried next time\n            return True\n        return True",
+720  +     "chain _drain: failure reported as success (event dropped from the outbox)",
+721  +     K,
+722  +     T2 + "test_a_database_that_stays_down_leaves_the_step_failing",
+723  + )
+724  + m(
+725  +     "A2-27",
+726  +     CH,
+727  +     "            if self._drain(event):\n                self._pending.remove(event)\n                done += 1",
+728  +     "            if self._drain(event):\n                done += 1",
+729  +     "chain: drained memory event never removed (re-counted every run)",
+730  +     "SURVIVE? (no v2 test drains _pending successfully)",
+731  +     "none known; proposed (from the v1 proof tests): test_chain_reconcile_drains_memory_only_events_once",
+732  + )
+733  + m(
+734  +     "A2-28",
+735  +     CH,
+736  +     "            if self._drain(event):\n                self._pending.remove(event)\n                done += 1",
+737  +     "            if False:\n                self._pending.remove(event)\n                done += 1",
+738  +     "chain: memory events never drained",
+739  +     "SURVIVE? (same gap)",
+740  +     "same proposed test",
+741  + )
+742  + m(
+743  +     "A2-29",
+744  +     CH,
+745  +     '        except DuplicateEvent:\n            return event.event_id\n        except Exception as exc:  # noqa: BLE001 - the contract is "never raises"',
+746  +     '        except KeyError:\n            return event.event_id\n        except Exception as exc:  # noqa: BLE001 - the contract is "never raises"',
+747  +     "chain write_outcome: DuplicateEvent except removed (a duplicate goes to the outbox)",
+748  +     K,
+749  +     T2 + "test_a_duplicate_outcome_returns_the_event_id_and_logs_nothing",
+750  + )
+751  + m(
+752  +     "A2-30",
+753  +     CH,
+754  +     '        except DuplicateEvent:\n            return event.event_id\n        except Exception as exc:  # noqa: BLE001 - the contract is "never raises"',
+755  +     '        except DuplicateEvent:\n            return None\n        except Exception as exc:  # noqa: BLE001 - the contract is "never raises"',
+756  +     "chain write_outcome: duplicate returns None",
+757  +     K,
+758  +     T2 + "test_a_duplicate_outcome_returns_the_event_id_and_logs_nothing",
+759  + )
+760  |
+761  | # --- reorder of the except clauses (built from the file text so old/new are exact) ---
+762  | src = (TREE / CH).read_text()
+     - a = src.index('        except DuplicateEvent:\n            return event.event_id\n        except Exception as exc:  # noqa: BLE001 - the contract is "never raises"')
+     - b = src.index("                self._pending.append(event)\n            return None\n", a) + len("                self._pending.append(event)\n            return None\n")
+763  + a = src.index(
+764  +     '        except DuplicateEvent:\n            return event.event_id\n        except Exception as exc:  # noqa: BLE001 - the contract is "never raises"'
+765  + )
+766  + b = src.index("                self._pending.append(event)\n            return None\n", a) + len(
+767  +     "                self._pending.append(event)\n            return None\n"
+768  + )
+769  | blk = src[a:b]
+770  | dup = "        except DuplicateEvent:\n            return event.event_id\n"
+     - rest = blk[len(dup):]
+     - m("A2-31", CH, blk, rest + dup, "chain write_outcome: `except Exception` placed BEFORE `except DuplicateEvent` (the duplicate branch is dead; a duplicate goes to the outbox)", K, T2+"test_a_duplicate_outcome_returns_the_event_id_and_logs_nothing")
+     - m("A2-32", CH, '            _LOG.warning(\n                "audit outcome not appended (%s): event %s goes to the outbox",\n                type(exc).__name__,\n                event.event_id,\n            )\n', "", "chain: outbox warning removed", K, T2+"test_a_failed_outcome_write_logs_type_and_id_but_never_the_body")
+     - m("A2-33", CH, '_LOG.warning(\n                "audit outcome not appended', '_LOG.debug(\n                "audit outcome not appended', "chain: outbox warning downgraded to DEBUG", K, T2+"test_a_failed_outcome_write_logs_type_and_id_but_never_the_body")
+     - m("A2-34", CH, '"audit outcome not appended (%s): event %s goes to the outbox",\n                type(exc).__name__,', '"audit outcome not appended (%s): event %s goes to the outbox",\n                exc,', "chain: warning leaks the error text", K, T2+"test_a_failed_outcome_write_logs_type_and_id_but_never_the_body")
+     - m("A2-35", CH, 'goes to the outbox",\n                type(exc).__name__,\n                event.event_id,', 'goes to the outbox",\n                type(exc).__name__,\n                event.run_id,', "chain: warning logs the run id instead of the event id", K, T2+"test_a_failed_outcome_write_logs_type_and_id_but_never_the_body")
+     - m("A2-36", CH, '_LOG.error(\n                    "audit outbox not written', '_LOG.debug(\n                    "audit outbox not written', "chain: memory-only ERROR downgraded to DEBUG", K, T2+"test_when_the_outbox_table_also_fails_an_error_line_is_logged")
+     - m("A2-37", CH, "                self._pending.append(event)\n            return None\n", "            return None\n", "chain: event no longer kept in memory when the outbox write also fails (audit loss)", K, T2+"test_when_the_outbox_table_also_fails_an_error_line_is_logged (len(_pending) == 1)")
+     - m("A2-38", CH, "        return len(self._pending) + int(rows[0][0])", "        return int(rows[0][0])", "chain backlog: memory events not counted", K, T2+"test_events_held_in_memory_count_as_remaining")
+     - m("A2-39", CH, "        return len(self._pending) + int(rows[0][0])", "        return len(self._pending)", "chain backlog: table rows not counted", K, T2+"test_a_database_that_stays_down_leaves_the_step_failing")
+     - m("A2-40", CH, '            _LOG.warning("audit outbox not readable (%s): retried next tick", type(exc).__name__)\n            return done', "            return done", "chain: unreadable-table warning removed", "SURVIVE? (no test asserts this line)", "none known; proposed: caplog on a failing SELECT expects one WARNING with the type only")
+     - m("A2-41", LD, '            _LOG.warning(\n                "audit outcome not written (%s): event %s goes to the outbox",\n                type(exc).__name__,\n                event.event_id,\n            )\n', "", "local_dir: outbox warning removed", K, T2+"test_the_local_dir_kind_logs_one_warning_with_type_and_id_never_the_error_text")
+     - m("A2-42", LD, '_LOG.warning(\n                "audit outcome not written', '_LOG.debug(\n                "audit outcome not written', "local_dir: warning downgraded to DEBUG", K, T2+"test_the_local_dir_kind_logs_one_warning_...")
+     - m("A2-43", LD, '"audit outcome not written (%s): event %s goes to the outbox",\n                type(exc).__name__,', '"audit outcome not written (%s): event %s goes to the outbox",\n                exc,', "local_dir: warning leaks the error text", K, T2+"test_the_local_dir_kind_logs_one_warning_...")
+     - m("A2-44", LD, "        except DuplicateEvent:\n            return f\"{event.event_id}.json\"\n        except Exception as exc:", "        except KeyError:\n            return f\"{event.event_id}.json\"\n        except Exception as exc:", "local_dir write_outcome: DuplicateEvent except removed", K, T2+"test_the_local_dir_duplicate_path_logs_nothing")
+     - m("A2-45", LD, "            except Exception:  # noqa: BLE001\n                self._pending.append(event)\n            return None", "            except Exception:  # noqa: BLE001\n                pass\n            return None", "local_dir: event dropped when the outbox folder is also unusable", "SURVIVE? (no v2 test makes the outbox unusable)", "none known; proposed (v1 proof test): test_local_dir_reconcile_drains_memory_only_events_once")
+     - m("A2-46", LD, "            self._pending.remove(event)\n            done += 1\n        if not self.outbox.exists():", "            done += 1\n        if not self.outbox.exists():", "local_dir reconcile: drained memory event never removed", "SURVIVE? (same gap)", "same proposed test")
+     - m("A2-47", LD, "            path.unlink()\n            done += 1", "            done += 1", "local_dir reconcile: outbox file never deleted after a successful write", K, T2+"test_the_real_local_dir_kind_drains_through_the_tick_step (outbox empty)")
+     - m("A2-48", LD, "            except DuplicateEvent:\n                pass\n            except Exception:  # noqa: BLE001, S112 - safe to swallow: the file is not unlinked", "            except Exception:  # noqa: BLE001, S112 - safe to swallow: the file is not unlinked", "local_dir reconcile: DuplicateEvent on an outbox file no longer absorbed (file stays forever)", "SURVIVE? (no test puts an already-written event in the outbox folder)", "none known; proposed: write the event, copy it into outbox/, reconcile expects the file gone")
+     - m("A2-49", LD, "        return len(self._pending) + waiting", "        return waiting", "local_dir backlog: memory events not counted", "SURVIVE? (no local_dir test holds events only in memory)", "none known; proposed: _pending with unusable outbox, backlog() == 1")
+     - m("A2-50", LD, '        waiting = len(list(self.outbox.glob("*.json"))) if self.outbox.exists() else 0', '        waiting = len(list(self.outbox.glob("*"))) if self.outbox.exists() else 0', "local_dir backlog: counts everything in outbox (the corrupt/ folder, temp files)", K, T2+"test_local_dir_corrupt_outbox_file_is_moved_aside_counted_and_logged (corrupt/ would count as 1)")
+     - m("A2-51", LD, '        waiting = len(list(self.outbox.glob("*.json"))) if self.outbox.exists() else 0', '        waiting = 0', "local_dir backlog: files never counted", K, T2+"test_a_stuck_outbox_stops_last_ok_at_from_advancing_and_exits_1")
+     - m("A2-52", LD, '                _LOG.error(\n                    "audit outbox file not readable', '                _LOG.debug(\n                    "audit outbox file not readable', "local_dir: corrupt-file ERROR downgraded to DEBUG", "SURVIVE? (the test uses caplog at INFO and asserts the counts, not this line)", "none known; proposed: caplog at ERROR expects the file name and type only")
+     - m("A2-53", CH, '                _LOG.error(\n                    "audit outbox row not readable', '                _LOG.debug(\n                    "audit outbox row not readable', "chain: corrupt-row ERROR downgraded to DEBUG", K, T2+"test_a_bad_row_is_skipped_logged_counted_... (asserts ValidationError and the id in caplog.text at INFO; DEBUG is not captured at INFO)")
+771  + rest = blk[len(dup) :]
+772  + m(
+773  +     "A2-31",
+774  +     CH,
+775  +     blk,
+776  +     rest + dup,
+777  +     "chain write_outcome: `except Exception` placed BEFORE `except DuplicateEvent` (the duplicate branch is dead; a duplicate goes to the outbox)",
+778  +     K,
+779  +     T2 + "test_a_duplicate_outcome_returns_the_event_id_and_logs_nothing",
+780  + )
+781  + m(
+782  +     "A2-32",
+783  +     CH,
+784  +     '            _LOG.warning(\n                "audit outcome not appended (%s): event %s goes to the outbox",\n                type(exc).__name__,\n                event.event_id,\n            )\n',
+785  +     "",
+786  +     "chain: outbox warning removed",
+787  +     K,
+788  +     T2 + "test_a_failed_outcome_write_logs_type_and_id_but_never_the_body",
+789  + )
+790  + m(
+791  +     "A2-33",
+792  +     CH,
+793  +     '_LOG.warning(\n                "audit outcome not appended',
+794  +     '_LOG.debug(\n                "audit outcome not appended',
+795  +     "chain: outbox warning downgraded to DEBUG",
+796  +     K,
+797  +     T2 + "test_a_failed_outcome_write_logs_type_and_id_but_never_the_body",
+798  + )
+799  + m(
+800  +     "A2-34",
+801  +     CH,
+802  +     '"audit outcome not appended (%s): event %s goes to the outbox",\n                type(exc).__name__,',
+803  +     '"audit outcome not appended (%s): event %s goes to the outbox",\n                exc,',
+804  +     "chain: warning leaks the error text",
+805  +     K,
+806  +     T2 + "test_a_failed_outcome_write_logs_type_and_id_but_never_the_body",
+807  + )
+808  + m(
+809  +     "A2-35",
+810  +     CH,
+811  +     'goes to the outbox",\n                type(exc).__name__,\n                event.event_id,',
+812  +     'goes to the outbox",\n                type(exc).__name__,\n                event.run_id,',
+813  +     "chain: warning logs the run id instead of the event id",
+814  +     K,
+815  +     T2 + "test_a_failed_outcome_write_logs_type_and_id_but_never_the_body",
+816  + )
+817  + m(
+818  +     "A2-36",
+819  +     CH,
+820  +     '_LOG.error(\n                    "audit outbox not written',
+821  +     '_LOG.debug(\n                    "audit outbox not written',
+822  +     "chain: memory-only ERROR downgraded to DEBUG",
+823  +     K,
+824  +     T2 + "test_when_the_outbox_table_also_fails_an_error_line_is_logged",
+825  + )
+826  + m(
+827  +     "A2-37",
+828  +     CH,
+829  +     "                self._pending.append(event)\n            return None\n",
+830  +     "            return None\n",
+831  +     "chain: event no longer kept in memory when the outbox write also fails (audit loss)",
+832  +     K,
+833  +     T2 + "test_when_the_outbox_table_also_fails_an_error_line_is_logged (len(_pending) == 1)",
+834  + )
+835  + m(
+836  +     "A2-38",
+837  +     CH,
+838  +     "        return len(self._pending) + int(rows[0][0])",
+839  +     "        return int(rows[0][0])",
+840  +     "chain backlog: memory events not counted",
+841  +     K,
+842  +     T2 + "test_events_held_in_memory_count_as_remaining",
+843  + )
+844  + m(
+845  +     "A2-39",
+846  +     CH,
+847  +     "        return len(self._pending) + int(rows[0][0])",
+848  +     "        return len(self._pending)",
+849  +     "chain backlog: table rows not counted",
+850  +     K,
+851  +     T2 + "test_a_database_that_stays_down_leaves_the_step_failing",
+852  + )
+853  + m(
+854  +     "A2-40",
+855  +     CH,
+856  +     '            _LOG.warning("audit outbox not readable (%s): retried next tick", type(exc).__name__)\n            return done',
+857  +     "            return done",
+858  +     "chain: unreadable-table warning removed",
+859  +     "SURVIVE? (no test asserts this line)",
+860  +     "none known; proposed: caplog on a failing SELECT expects one WARNING with the type only",
+861  + )
+862  + m(
+863  +     "A2-41",
+864  +     LD,
+865  +     '            _LOG.warning(\n                "audit outcome not written (%s): event %s goes to the outbox",\n                type(exc).__name__,\n                event.event_id,\n            )\n',
+866  +     "",
+867  +     "local_dir: outbox warning removed",
+868  +     K,
+869  +     T2 + "test_the_local_dir_kind_logs_one_warning_with_type_and_id_never_the_error_text",
+870  + )
+871  + m(
+872  +     "A2-42",
+873  +     LD,
+874  +     '_LOG.warning(\n                "audit outcome not written',
+875  +     '_LOG.debug(\n                "audit outcome not written',
+876  +     "local_dir: warning downgraded to DEBUG",
+877  +     K,
+878  +     T2 + "test_the_local_dir_kind_logs_one_warning_...",
+879  + )
+880  + m(
+881  +     "A2-43",
+882  +     LD,
+883  +     '"audit outcome not written (%s): event %s goes to the outbox",\n                type(exc).__name__,',
+884  +     '"audit outcome not written (%s): event %s goes to the outbox",\n                exc,',
+885  +     "local_dir: warning leaks the error text",
+886  +     K,
+887  +     T2 + "test_the_local_dir_kind_logs_one_warning_...",
+888  + )
+889  + m(
+890  +     "A2-44",
+891  +     LD,
+892  +     '        except DuplicateEvent:\n            return f"{event.event_id}.json"\n        except Exception as exc:',
+893  +     '        except KeyError:\n            return f"{event.event_id}.json"\n        except Exception as exc:',
+894  +     "local_dir write_outcome: DuplicateEvent except removed",
+895  +     K,
+896  +     T2 + "test_the_local_dir_duplicate_path_logs_nothing",
+897  + )
+898  + m(
+899  +     "A2-45",
+900  +     LD,
+901  +     "            except Exception:  # noqa: BLE001\n                self._pending.append(event)\n            return None",
+902  +     "            except Exception:  # noqa: BLE001\n                pass\n            return None",
+903  +     "local_dir: event dropped when the outbox folder is also unusable",
+904  +     "SURVIVE? (no v2 test makes the outbox unusable)",
+905  +     "none known; proposed (v1 proof test): test_local_dir_reconcile_drains_memory_only_events_once",
+906  + )
+907  + m(
+908  +     "A2-46",
+909  +     LD,
+910  +     "            self._pending.remove(event)\n            done += 1\n        if not self.outbox.exists():",
+911  +     "            done += 1\n        if not self.outbox.exists():",
+912  +     "local_dir reconcile: drained memory event never removed",
+913  +     "SURVIVE? (same gap)",
+914  +     "same proposed test",
+915  + )
+916  + m(
+917  +     "A2-47",
+918  +     LD,
+919  +     "            path.unlink()\n            done += 1",
+920  +     "            done += 1",
+921  +     "local_dir reconcile: outbox file never deleted after a successful write",
+922  +     K,
+923  +     T2 + "test_the_real_local_dir_kind_drains_through_the_tick_step (outbox empty)",
+924  + )
+925  + m(
+926  +     "A2-48",
+927  +     LD,
+928  +     "            except DuplicateEvent:\n                pass\n            except Exception:  # noqa: BLE001, S112 - safe to swallow: the file is not unlinked",
+929  +     "            except Exception:  # noqa: BLE001, S112 - safe to swallow: the file is not unlinked",
+930  +     "local_dir reconcile: DuplicateEvent on an outbox file no longer absorbed (file stays forever)",
+931  +     "SURVIVE? (no test puts an already-written event in the outbox folder)",
+932  +     "none known; proposed: write the event, copy it into outbox/, reconcile expects the file gone",
+933  + )
+934  + m(
+935  +     "A2-49",
+936  +     LD,
+937  +     "        return len(self._pending) + waiting",
+938  +     "        return waiting",
+939  +     "local_dir backlog: memory events not counted",
+940  +     "SURVIVE? (no local_dir test holds events only in memory)",
+941  +     "none known; proposed: _pending with unusable outbox, backlog() == 1",
+942  + )
+943  + m(
+944  +     "A2-50",
+945  +     LD,
+946  +     '        waiting = len(list(self.outbox.glob("*.json"))) if self.outbox.exists() else 0',
+947  +     '        waiting = len(list(self.outbox.glob("*"))) if self.outbox.exists() else 0',
+948  +     "local_dir backlog: counts everything in outbox (the corrupt/ folder, temp files)",
+949  +     K,
+950  +     T2
+951  +     + "test_local_dir_corrupt_outbox_file_is_moved_aside_counted_and_logged (corrupt/ would count as 1)",
+952  + )
+953  + m(
+954  +     "A2-51",
+955  +     LD,
+956  +     '        waiting = len(list(self.outbox.glob("*.json"))) if self.outbox.exists() else 0',
+957  +     "        waiting = 0",
+958  +     "local_dir backlog: files never counted",
+959  +     K,
+960  +     T2 + "test_a_stuck_outbox_stops_last_ok_at_from_advancing_and_exits_1",
+961  + )
+962  + m(
+963  +     "A2-52",
+964  +     LD,
+965  +     '                _LOG.error(\n                    "audit outbox file not readable',
+966  +     '                _LOG.debug(\n                    "audit outbox file not readable',
+967  +     "local_dir: corrupt-file ERROR downgraded to DEBUG",
+968  +     "SURVIVE? (the test uses caplog at INFO and asserts the counts, not this line)",
+969  +     "none known; proposed: caplog at ERROR expects the file name and type only",
+970  + )
+971  + m(
+972  +     "A2-53",
+973  +     CH,
+974  +     '                _LOG.error(\n                    "audit outbox row not readable',
+975  +     '                _LOG.debug(\n                    "audit outbox row not readable',
+976  +     "chain: corrupt-row ERROR downgraded to DEBUG",
+977  +     K,
+978  +     T2
+979  +     + "test_a_bad_row_is_skipped_logged_counted_... (asserts ValidationError and the id in caplog.text at INFO; DEBUG is not captured at INFO)",
+980  + )
+981  |
+--------------------------------------------------------------------------------
+990  |     if x["old"] == x["new"]:
+     -         print("NOOP", x["id"]); bad += 1
+991  +         print("NOOP", x["id"])
+992  +         bad += 1
+993  | ids = [x["id"] for x in M]
+994  | assert len(ids) == len(set(ids)), "duplicate ids"
+995  | print(len(M), "mutants;", bad, "problems")
+996  | if len(sys.argv) > 2:
+     -     json.dump([{k: x[k] for k in ("id", "file", "old", "new", "desc", "expect", "killer")} for x in M], open(sys.argv[2], "w"), indent=1)
+997  +     json.dump(
+998  +         [{k: x[k] for k in ("id", "file", "old", "new", "desc", "expect", "killer")} for x in M],
+999  +         open(sys.argv[2], "w"),
+1000 +         indent=1,
+1001 +     )
+     |
+
+unformatted: File would be reformatted
+   --> handover/core-hardening/mutation-lane/run.py:69:45
+    |
+68  |             p = pathlib.Path(dp) / f
+    -             out[str(p.relative_to(root))] = sha256(p.read_bytes()) if not p.is_symlink() else "symlink:" + os.readlink(p)
+69  +             out[str(p.relative_to(root))] = (
+70  +                 sha256(p.read_bytes()) if not p.is_symlink() else "symlink:" + os.readlink(p)
+71  +             )
+72  |     return out
+--------------------------------------------------------------------------------
+76  |     """Fresh `git archive <sha>` extract (+ patches) into dest: the one source of truth for original bytes."""
+    -     top = subprocess.run(["git", "-C", repo, "rev-parse", "--show-toplevel"], capture_output=True, text=True).stdout.strip() or repo
+    -     arc = subprocess.run(["git", "-C", top, "archive", sha], capture_output=True)  # from the top: a subfolder would archive only itself
+77  +     top = (
+78  +         subprocess.run(
+79  +             ["git", "-C", repo, "rev-parse", "--show-toplevel"], capture_output=True, text=True
+80  +         ).stdout.strip()
+81  +         or repo
+82  +     )
+83  +     arc = subprocess.run(
+84  +         ["git", "-C", top, "archive", sha], capture_output=True
+85  +     )  # from the top: a subfolder would archive only itself
+86  |     if arc.returncode != 0:
+    -         raise Refused(f"git archive {sha} failed in {repo}: {arc.stderr.decode(errors='replace')[:200]}")
+87  +         raise Refused(
+88  +             f"git archive {sha} failed in {repo}: {arc.stderr.decode(errors='replace')[:200]}"
+89  +         )
+90  |     subprocess.run(["tar", "-x", "-C", str(dest)], input=arc.stdout, check=True)
+91  |     for pf in patches:
+    -         r = subprocess.run(["patch", "-p1", "-s", "-d", str(dest), "-i", str(pathlib.Path(pf).resolve())], capture_output=True, text=True)
+92  +         r = subprocess.run(
+93  +             ["patch", "-p1", "-s", "-d", str(dest), "-i", str(pathlib.Path(pf).resolve())],
+94  +             capture_output=True,
+95  +             text=True,
+96  +         )
+97  |         if r.returncode != 0:
+--------------------------------------------------------------------------------
+101 | def refuse_real_repo(root: pathlib.Path, repo: str) -> None:
+    -     top = pathlib.Path(subprocess.run(["git", "-C", repo, "rev-parse", "--show-toplevel"], capture_output=True, text=True).stdout.strip() or repo).resolve()
+102 +     top = pathlib.Path(
+103 +         subprocess.run(
+104 +             ["git", "-C", repo, "rev-parse", "--show-toplevel"], capture_output=True, text=True
+105 +         ).stdout.strip()
+106 +         or repo
+107 +     ).resolve()
+108 |     root = root.resolve()
+109 |     if root == top or top in root.parents or root in top.parents:
+    -         raise Refused(f"--root {root} is, contains or lies inside the real repository {top}: use a scratch copy")
+    -     inside = subprocess.run(["git", "-C", str(root), "rev-parse", "--is-inside-work-tree"], capture_output=True, text=True)
+110 +         raise Refused(
+111 +             f"--root {root} is, contains or lies inside the real repository {top}: use a scratch copy"
+112 +         )
+113 +     inside = subprocess.run(
+114 +         ["git", "-C", str(root), "rev-parse", "--is-inside-work-tree"],
+115 +         capture_output=True,
+116 +         text=True,
+117 +     )
+118 |     if inside.returncode == 0 and inside.stdout.strip() == "true":
+    -         raise Refused(f"--root {root} is inside a git work tree: use a plain scratch copy (git archive + patch)")
+119 +         raise Refused(
+120 +             f"--root {root} is inside a git work tree: use a plain scratch copy (git archive + patch)"
+121 +         )
+122 |
+--------------------------------------------------------------------------------
+164 |     ]
+    -     proc = subprocess.Popen(cmd, cwd=root, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, start_new_session=True)
+165 +     proc = subprocess.Popen(
+166 +         cmd,
+167 +         cwd=root,
+168 +         stdout=subprocess.PIPE,
+169 +         stderr=subprocess.STDOUT,
+170 +         text=True,
+171 +         start_new_session=True,
+172 +     )
+173 |     try:
+--------------------------------------------------------------------------------
+198 |     if orig != ref_bytes:  # hash baseline from git archive, not from the file on disk
+    -         raise Refused(f"{m['file']} differs from the git archive reference (sha256 {sha256(orig)[:12]} vs {sha256(ref_bytes)[:12]}): refusing")
+199 +         raise Refused(
+200 +             f"{m['file']} differs from the git archive reference (sha256 {sha256(orig)[:12]} vs {sha256(ref_bytes)[:12]}): refusing"
+201 +         )
+202 |     STATE.mkdir(parents=True, exist_ok=True, mode=0o700)
+--------------------------------------------------------------------------------
+211 |         backup.write_bytes(orig)
+    -         marker.write_text(json.dumps({"root": str(root), "file": m["file"], "backup": str(backup), "orig_sha256": sha256(orig), "mutant": f"{a.prefix}-{m['id']}"}))
+212 +         marker.write_text(
+213 +             json.dumps(
+214 +                 {
+215 +                     "root": str(root),
+216 +                     "file": m["file"],
+217 +                     "backup": str(backup),
+218 +                     "orig_sha256": sha256(orig),
+219 +                     "mutant": f"{a.prefix}-{m['id']}",
+220 +                 }
+221 +             )
+222 +         )
+223 |         try:
+--------------------------------------------------------------------------------
+231 |         if d.returncode != 0 or not same_hash:
+    -             print("RESTORE FAILED", m["id"], "(marker and backup kept; run --restore)", file=sys.stderr)
+232 +             print(
+233 +                 "RESTORE FAILED",
+234 +                 m["id"],
+235 +                 "(marker and backup kept; run --restore)",
+236 +                 file=sys.stderr,
+237 +             )
+238 |             sys.exit(3)
+239 |         marker.unlink()
+240 |         backup.unlink()
+    -         verdict = "TIMEOUT" if rc is None else "SURVIVED" if rc == 0 else "KILLED" if rc == 1 else f"ERROR rc={rc}"
+241 +         verdict = (
+242 +             "TIMEOUT"
+243 +             if rc is None
+244 +             else "SURVIVED"
+245 +             if rc == 0
+246 +             else "KILLED"
+247 +             if rc == 1
+248 +             else f"ERROR rc={rc}"
+249 +         )
+250 |     last, failed = summary(out)
+--------------------------------------------------------------------------------
+264 |     results.append(
+    -         {"id": m["id"], "desc": m.get("desc", ""), "verdict": verdict, "rc": rc, "first": failed[0] if failed else "", "n_failed": len(failed), "summary": last}
+265 +         {
+266 +             "id": m["id"],
+267 +             "desc": m.get("desc", ""),
+268 +             "verdict": verdict,
+269 +             "rc": rc,
+270 +             "first": failed[0] if failed else "",
+271 +             "n_failed": len(failed),
+272 +             "summary": last,
+273 +         }
+274 |     )
+--------------------------------------------------------------------------------
+291 |     ap.add_argument("--out-json")
+    -     ap.add_argument("--pythonpath", help="only for the proof copies, whose venv .pth points at another tree")
+    -     ap.add_argument("--repo", default=str(pathlib.Path(__file__).resolve().parent), help="a folder inside the repository that holds --sha (default: this script's folder)")
+    -     ap.add_argument("--patch", action="append", default=[], help="patch applied (-p1) on top of the git archive to get the expected tree; repeatable")
+    -     ap.add_argument("--extra", action="append", default=[], help="path (relative to root) of a file that may exist in root beyond the reference, e.g. proof tests; repeatable")
+    -     ap.add_argument("--restore", action="store_true", help="restore a file left planted by a killed run, then exit")
+292 +     ap.add_argument(
+293 +         "--pythonpath", help="only for the proof copies, whose venv .pth points at another tree"
+294 +     )
+295 +     ap.add_argument(
+296 +         "--repo",
+297 +         default=str(pathlib.Path(__file__).resolve().parent),
+298 +         help="a folder inside the repository that holds --sha (default: this script's folder)",
+299 +     )
+300 +     ap.add_argument(
+301 +         "--patch",
+302 +         action="append",
+303 +         default=[],
+304 +         help="patch applied (-p1) on top of the git archive to get the expected tree; repeatable",
+305 +     )
+306 +     ap.add_argument(
+307 +         "--extra",
+308 +         action="append",
+309 +         default=[],
+310 +         help="path (relative to root) of a file that may exist in root beyond the reference, e.g. proof tests; repeatable",
+311 +     )
+312 +     ap.add_argument(
+313 +         "--restore",
+314 +         action="store_true",
+315 +         help="restore a file left planted by a killed run, then exit",
+316 +     )
+317 |     a = ap.parse_args(argv[: argv.index("--")] if "--" in argv else argv)
+--------------------------------------------------------------------------------
+330 |     except OSError:
+    -         sys.exit(f"REFUSED: another run holds the lock for {root}; two runs on one tree would plant over each other")
+331 +         sys.exit(
+332 +             f"REFUSED: another run holds the lock for {root}; two runs on one tree would plant over each other"
+333 +         )
+334 |     marker = STATE / f"{key_for(root)}.planted.json"
+--------------------------------------------------------------------------------
+349 |         if diffs:
+    -             raise Refused(f"scratch tree differs from git archive {a.sha} + patches in {len(diffs)} file(s), first: {diffs[:3]}: it may hold a planted change; rebuild it from the archive")
+350 +             raise Refused(
+351 +                 f"scratch tree differs from git archive {a.sha} + patches in {len(diffs)} file(s), first: {diffs[:3]}: it may hold a planted change; rebuild it from the archive"
+352 +             )
+353 |         pathlib.Path(a.raw).mkdir(parents=True, exist_ok=True)
+--------------------------------------------------------------------------------
+361 |             print("baseline", rc, last)
+    -         ms = json.load(open(a.list)) if a.list else [{"id": a.id, "file": a.file, "old": a.old, "new": a.new, "desc": a.desc}]
+362 +         ms = (
+363 +             json.load(open(a.list))
+364 +             if a.list
+365 +             else [{"id": a.id, "file": a.file, "old": a.old, "new": a.new, "desc": a.desc}]
+366 +         )
+367 |         for m in ms:
+--------------------------------------------------------------------------------
+375 |         excl = [x for d in sorted(SKIP_DIRS) for x in ("-x", d)]
+    -         r = subprocess.run(["diff", "-rq", *excl, str(fresh), str(root)], capture_output=True, text=True)
+376 +         r = subprocess.run(
+377 +             ["diff", "-rq", *excl, str(fresh), str(root)], capture_output=True, text=True
+378 +         )
+379 |         (pathlib.Path(a.raw) / f"{a.prefix}-tree-diff.txt").write_text(
+--------------------------------------------------------------------------------
+398 |     a, b = tree_files(ref), tree_files(root)
+    -     out = [f for f in sorted(set(a) | set(b)) if a.get(f) != b.get(f) and not (f in extra and f not in a)]
+399 +     out = [
+400 +         f
+401 +         for f in sorted(set(a) | set(b))
+402 +         if a.get(f) != b.get(f) and not (f in extra and f not in a)
+403 +     ]
+404 |     return out
+    |
+
+2 files would be reformatted

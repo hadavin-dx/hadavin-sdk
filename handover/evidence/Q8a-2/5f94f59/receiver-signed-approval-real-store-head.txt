@@ -1,0 +1,7 @@
+EVPROBE hadavin_sdk: /home/user/build/EV-Q8a2-5f94f59/src/hadavin_sdk/__init__.py
+EVPROBE channel FakeChannel, path '/channel/actions', port 36879
+EVPROBE signed with the wrong secret -> 401
+EVPROBE correctly signed, user who is not an approver -> 200 | request status now: PENDING
+EVPROBE correctly signed approval by an approver -> 200 | request status now: APPROVED
+EVPROBE the same signed approval sent again -> 200 | request status now: APPROVED
+EVPROBE correctly signed approval, two slashes in front of the path -> 404

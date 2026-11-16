@@ -1,0 +1,11 @@
+# PR63 (core/P1a, head bf955e9) result review, design critic, round 1 re-run (condensed; read-only reviewer, ran nothing)
+VERDICT: NOT READY. 2 Blockers, 4 Majors, 4 Nits.
+B1 Built code != frozen ticket P1.md: 23 public names vs 17 (drops same_person, fold_key, check_pinned_unidata; adds identity_keys, could_be_same_person, fold_views, squeeze_views, scan_needles, value_scripts, key_tag, require_pinned_unidata, ViewTooShort); needle API the ticket cut to v1.1; 4 new TEXTNORM_MIN_* constants (ticket: 3); no fold loop/TEXTNORM_MAX_PASSES; alg=fold4, UCD 15.1.0, 852 entries (ticket fold1, 18.0.0, 677); 128 mutants (ticket 41); CHANGELOG shows rounds fix4-fix7 with no ticket revision or lead order. Fix: superseding ticket/lead order approving each deviation, or back to the ticket.
+B2 Evidence cannot show the stop rule at this head: no mutation run output (128 mutants), no fail-before run, only truncated full-312 (no summary/exit), no 3.13 result, no textnorm-only/perf/generator/wheel-licence output; ruff/format run on src tests demos only, ticket requires tools too.
+M3 DENY same-person bypass: identity_keys/could_be_same_person do not use marks-dropped views (textnorm.py:780-787, 765-769): "alice"+U+0903 compares different. Include marks-dropped variants or accept in writing with negative test+mutant+CHANGELOG.
+M4 Weighted size bound (len(view)<=W(raw)) only tested per single code point; run/save seeded multi-character property (SEAM-1 DoS bound).
+M5 Hardcoded textnorm.py:262 _PINNED_PYTHON="3.13" and :852 "15.1.0" (second copy of defaults.TEXTNORM_PINNED_UNIDATA); derive from constant + patch test.
+M6 test_the_checked_in_table_matches_its_digest (must never skip) not confirmed to exist.
+Nits: `# fmt: skip` at :860-863 (no suppressions); unrelated edit tests/test_k5_round9.py:239; 190-line docstring of review history, overlapping terms (spelling variant/check name/view/key); CHANGELOG names P1b owner of app.build/scan_needles inconsistently with ticket.
+OK: _checked is the single choke point (type then size before per-char work); stdlib only; TextnormError not ValueError; AllowVerdict.__bool__ raises; tables read-only; no assert.
+NOT REVIEWED: test bodies (test_textnorm.py 2903 lines etc.), mutants killers, tools/, _confusables.py contents, fixtures, 3.13 result, CI gates, rest of DIFF and ticket after line 160.

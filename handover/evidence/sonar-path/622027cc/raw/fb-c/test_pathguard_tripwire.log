@@ -1,0 +1,20 @@
+F.F..................................................................... [ 90%]
+........                                                                 [100%]
+=================================== FAILURES ===================================
+E   AssertionError: unchecked paths:
+      src/hadavin_sdk/audit/signer.py | key_path | .resolve: 2 hit(s), the list says 1
+      src/hadavin_sdk/k1b/score.py | _check_layout | .iterdir: listed (1) but no hit is left
+    assert ['src/hadavin... hit is left'] == []
+      
+      Left contains 2 more items, first extra item: 'src/hadavin_sdk/audit/signer.py | key_path | .resolve: 2 hit(s), the list says 1'
+      Use -v to get more diff
+/home/user/build/E-work/c-tree/tests/test_pathguard_tripwire.py:471: AssertionError: unchecked paths:
+E   AssertionError: assert ['src/hadavin...it/signer.py'] == []
+      
+      Left contains 3 more items, first extra item: 'src/hadavin_sdk/audit/signer.py | key_path | .is_symlink: operator_dir is never called in src/hadavin_sdk/audit/signer.py'
+      Use -v to get more diff
+/home/user/build/E-work/c-tree/tests/test_pathguard_tripwire.py:539: AssertionError: assert ['src/hadavin...it/signer.py'] == []
+=========================== short test summary info ============================
+FAILED tests/test_pathguard_tripwire.py::test_no_file_operation_in_the_package_works_on_an_unchecked_path_unless_listed_with_a_reason
+FAILED tests/test_pathguard_tripwire.py::test_every_listed_row_names_a_validator_that_exists_and_is_called
+2 failed, 78 passed in 1.15s

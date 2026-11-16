@@ -1,0 +1,490 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+.........F.F.FFFFFFFFF..........F.F..................................... [ 17%]
+........................................................................ [ 34%]
+........................................................................ [ 51%]
+........................................................................ [ 68%]
+........................................................................ [ 85%]
+.........................................FFF.FF............              [100%]
+=================================== FAILURES ===================================
+______ test_a_marker_is_a_whole_word_and_something_to_look_up_follows_it _______
+
+    def test_a_marker_is_a_whole_word_and_something_to_look_up_follows_it():
+        # whole words: "implant" is not "plant", "controller" is not "control"
+        for bad in (
+            "an implant of the new rule with B11 in it",
+            "the controller of the loop with B11 in it",
+            "the replant B11 changed the day here",
+        ):
+>           assert "names no killing mutant" in nlc.reason_problem(bad), (
+                f"a marker found inside another word was accepted: {bad}"
+            )
+E           AssertionError: a marker found inside another word was accepted: an implant of the new rule with B11 in it
+E           assert 'names no killing mutant' in ''
+E            +  where '' = <function reason_problem at 0x7fc3f95360c0>('an implant of the new rule with B11 in it')
+E            +    where <function reason_problem at 0x7fc3f95360c0> = nlc.reason_problem
+
+tests/test_notes_lines_check.py:142: AssertionError
+_ test_auto_reads_the_changed_test_and_notes_files_and_says_when_there_are_no_notes _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-16127/test_auto_reads_the_changed_te0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fc3f7ac5ba0>
+capsys = <_pytest.capture.CaptureFixture object at 0x7fc3f7c092b0>
+
+    def test_auto_reads_the_changed_test_and_notes_files_and_says_when_there_are_no_notes(
+        tmp_path, monkeypatch, capsys
+    ):
+        base = _repo(tmp_path, monkeypatch)
+        (tmp_path / "tests" / "test_one.py").write_text(NEW, encoding="utf-8")
+        (tmp_path / "tests" / "sub").mkdir()
+        (tmp_path / "tests" / "sub" / "test_deep.py").write_text(
+            "def test_deep():\n    assert 1\n", encoding="utf-8"
+        )
+        _git(tmp_path, "add", "-A")
+        _git(tmp_path, "commit", "-q", "-m", "tests changed")
+        found = nlc.auto_files(f"{base}~1")
+        assert not isinstance(found, str), f"auto_files refused a good change: {found}"
+>       assert (found[2], found[3]) == (
+                ^^^^^^^^
+            ["tests/sub/test_deep.py", "tests/test_one.py"],
+            [],
+        ), "the changed test files of the change (a nested one too) were not found"
+E       IndexError: tuple index out of range
+
+/home/user/build/EV-Q8c1b12-6d219217/fb/tests/test_notes_lines_check.py:219: IndexError
+_ test_a_helper_imported_from_another_tests_module_lists_each_test_that_uses_it _
+
+    def test_a_helper_imported_from_another_tests_module_lists_each_test_that_uses_it():
+        # every way a test module names what another test module holds
+        listed = (["test_uses"], [])
+>       for changed, unchanged in (_used_through("from tests.helpers import helper", "helper()"),):
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_notes_lines_check.py:281: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+import_text = 'from tests.helpers import helper', use_text = 'helper()'
+inside = False
+
+    def _used_through(import_text: str, use_text: str, inside: bool = False):
+        """(changed, gone) for a test that uses `helper` of tests/helpers.py through the import form given, when that
+        helper changed and the test file did not."""
+        if inside:
+            source = f"def test_uses():\n    {import_text}\n    assert {use_text}\n\n\ndef test_free():\n    assert 1\n"
+        else:
+            source = f"{import_text}\n\n\ndef test_uses():\n    assert {use_text}\n\n\ndef test_free():\n    assert 1\n"
+        old = _loader({"tests/helpers.py": HELPER_OLD})
+        new = _loader({"tests/helpers.py": HELPER_NEW})
+>       return nlc.changed_tests(source, source, "tests/test_x.py", old, new), nlc.changed_tests(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            source, source, "tests/test_x.py", old, old
+        )
+E       TypeError: changed_tests() takes 2 positional arguments but 5 were given
+
+tests/test_notes_lines_check.py:273: TypeError
+_ test_a_changed_module_level_import_or_augmented_assignment_lists_the_tests_that_use_the_name _
+
+    def test_a_changed_module_level_import_or_augmented_assignment_lists_the_tests_that_use_the_name():
+        base = (
+            "import json as codec\nLIMIT = 1\nLIMIT += 1\n\n\n"
+            "def test_import():\n    assert codec\n\n\n"
+            "def test_limit():\n    assert LIMIT\n\n\n"
+            "def test_free():\n    assert 1\n"
+        )
+        other_import = base.replace("import json as codec", "import pickle as codec")
+        other_add = base.replace("LIMIT += 1", "LIMIT += 2")
+>       assert nlc.changed_tests(base, other_import) == (["test_import"], []), (
+            "a changed module-level import did not list the test that uses the name"
+        )
+E       AssertionError: a changed module-level import did not list the test that uses the name
+E       assert ([], []) == (['test_import'], [])
+E         
+E         At index 0 diff: [] != ['test_import']
+E         Use -v to get more diff
+
+tests/test_notes_lines_check.py:311: AssertionError
+_ test_an_autouse_fixture_that_changed_lists_every_test_of_the_file_and_another_fixture_does_not _
+
+    def test_an_autouse_fixture_that_changed_lists_every_test_of_the_file_and_another_fixture_does_not():
+        base = (
+            "import pytest\n\n\n"
+            "@pytest.fixture(autouse=True)\ndef always():\n    return 1\n\n\n"
+            "@pytest.fixture\ndef named():\n    return 1\n\n\n"
+            "def test_a():\n    assert 1\n\n\ndef test_b():\n    assert 2\n"
+        )
+        changed_autouse = base.replace("def always():\n    return 1", "def always():\n    return 2")
+        changed_named = base.replace("def named():\n    return 1", "def named():\n    return 2")
+>       assert nlc.changed_tests(base, changed_autouse) == (["test_a", "test_b"], []), (
+            "a changed autouse fixture did not list every test of the file"
+        )
+E       AssertionError: a changed autouse fixture did not list every test of the file
+E       assert ([], []) == (['test_a', 'test_b'], [])
+E         
+E         At index 0 diff: [] != ['test_a', 'test_b']
+E         Use -v to get more diff
+
+tests/test_notes_lines_check.py:328: AssertionError
+_ test_a_new_altered_or_removed_mutant_and_a_fall_in_the_count_are_seen_in_the_mutant_files _
+
+    def test_a_new_altered_or_removed_mutant_and_a_fall_in_the_count_are_seen_in_the_mutant_files():
+        rel = "tests/policy_mutants.py"
+        new = MUTANTS_OLD.replace("mutant('A one', 'f')", "mutant('A one', 'g')")
+        added = MUTANTS_OLD.replace("]\n", "    mutant('A four', 'f'),\n]\n")
+        removed = MUTANTS_OLD.replace("    mutant('A three', 'f'),\n", "")
+        builder = MUTANTS_OLD.replace("return (name, file)", "return (file, name)")
+>       assert nlc.changed_tests(MUTANTS_OLD, new, rel) == (["A one"], []), (
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            "an altered mutant was not listed"
+        )
+E       TypeError: changed_tests() takes 2 positional arguments but 3 were given
+
+tests/test_notes_lines_check.py:348: TypeError
+_ test_a_conftest_function_and_a_fixture_file_are_units_and_a_file_outside_the_kinds_is_none _
+
+    def test_a_conftest_function_and_a_fixture_file_are_units_and_a_file_outside_the_kinds_is_none():
+        conf = "def make():\n    return 1\n\n\nclass Box:\n    size = 1\n"
+>       changed, gone = nlc.changed_tests(
+            conf, conf.replace("return 1", "return 2"), "tests/conftest.py"
+        )
+E       TypeError: changed_tests() takes 2 positional arguments but 3 were given
+
+tests/test_notes_lines_check.py:380: TypeError
+_ test_auto_diffs_from_the_merge_base_to_the_head_commit_and_reads_blobs_not_the_working_folder _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-16127/test_auto_diffs_from_the_merge0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fc3f7c32360>
+capsys = <_pytest.capture.CaptureFixture object at 0x7fc3f7cb3890>
+
+    def test_auto_diffs_from_the_merge_base_to_the_head_commit_and_reads_blobs_not_the_working_folder(
+        tmp_path, monkeypatch, capsys
+    ):
+        _repo(tmp_path, monkeypatch)
+        _rev(tmp_path, "branch", "-m", "main")
+        base = _rev(tmp_path, "rev-parse", "HEAD")
+        _rev(tmp_path, "checkout", "-q", "-b", "pr")
+        (tmp_path / "tests" / "test_one.py").write_text(NEW, encoding="utf-8")
+        notes_dir = tmp_path / "handover" / "evidence" / "T-1" / "b1"
+        notes_dir.mkdir(parents=True)
+        (notes_dir / "NOTES.md").write_text(
+            row("test_one.py", "test_b") + row("test_one.py", "test_c"), encoding="utf-8"
+        )
+        _rev(tmp_path, "add", "-A")
+        _rev(tmp_path, "commit", "-q", "-m", "pr head")
+        head = _rev(tmp_path, "rev-parse", "HEAD")
+        _rev(tmp_path, "checkout", "-q", "main")
+        (tmp_path / "tests" / "test_main_only.py").write_text(
+            "def test_m():\n    assert 1\n", encoding="utf-8"
+        )
+        _rev(tmp_path, "add", "-A")
+        _rev(tmp_path, "commit", "-q", "-m", "main moves on")
+        moved = _rev(tmp_path, "rev-parse", "HEAD")
+        _rev(tmp_path, "merge", "-q", "--no-ff", "-m", "merge", "pr")  # the shape the runner checks out
+        # the base is the tip of main (moved), the head is the pull request commit: the change is what `pr` did
+        # since it left main, not what main did after that
+>       found = nlc.auto_files(moved, head)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: auto_files() takes 1 positional argument but 2 were given
+
+/home/user/build/EV-Q8c1b12-6d219217/fb/tests/test_notes_lines_check.py:438: TypeError
+_ test_auto_reads_a_failed_diff_or_a_missing_common_ancestor_as_a_problem_never_as_no_change _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-16127/test_auto_reads_a_failed_diff_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fc3f7c32ad0>
+capsys = <_pytest.capture.CaptureFixture object at 0x7fc3f7ac76f0>
+
+    def test_auto_reads_a_failed_diff_or_a_missing_common_ancestor_as_a_problem_never_as_no_change(
+        tmp_path, monkeypatch, capsys
+    ):
+        base = _repo(tmp_path, monkeypatch)
+        (tmp_path / "tests" / "test_one.py").write_text(NEW, encoding="utf-8")
+        _rev(tmp_path, "add", "-A")
+        _rev(tmp_path, "commit", "-q", "-m", "change")
+        real = nlc._git
+    
+        def failing(*args):
+            if args[0] == "diff":
+                return subprocess.CompletedProcess(args, 128, stdout="", stderr="fatal: bad object")
+            return real(*args)
+    
+        monkeypatch.setattr(nlc, "_git", failing)
+        found = nlc.auto_files(f"{base}~1")
+>       assert isinstance(found, str) and "failed" in found, (
+            f"a failed diff was read as a result: {found}"
+        )
+E       AssertionError: a failed diff was read as a result: ([], [])
+E       assert (False)
+E        +  where False = isinstance(([], []), str)
+
+/home/user/build/EV-Q8c1b12-6d219217/fb/tests/test_notes_lines_check.py:479: AssertionError
+_ test_auto_lists_both_names_of_a_renamed_test_file_so_the_old_tests_are_not_lost _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-16127/test_auto_lists_both_names_of_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fc3f7a98f50>
+capsys = <_pytest.capture.CaptureFixture object at 0x7fc3f7ac7950>
+
+    def test_auto_lists_both_names_of_a_renamed_test_file_so_the_old_tests_are_not_lost(
+        tmp_path, monkeypatch, capsys
+    ):
+        base = _repo(tmp_path, monkeypatch)
+        _rev(tmp_path, "mv", "tests/test_one.py", "tests/test_renamed.py")
+        _rev(tmp_path, "commit", "-q", "-m", "rename only")
+        found = nlc.auto_files(f"{base}~1")
+        assert not isinstance(found, str), found
+>       assert found[2] == ["tests/test_one.py", "tests/test_renamed.py"], (
+               ^^^^^^^^
+            f"a renamed test file lists {found[2]}: the old name is hidden by rename detection"
+        )
+E       IndexError: tuple index out of range
+
+/home/user/build/EV-Q8c1b12-6d219217/fb/tests/test_notes_lines_check.py:509: IndexError
+_ test_two_mutant_names_that_hold_the_same_backticked_word_each_need_their_own_row _
+
+    def test_two_mutant_names_that_hold_the_same_backticked_word_each_need_their_own_row():
+        rel = "tests/policy_mutants.py"
+        one = "A the setting `path_prefix` is read as one part only"
+        two = "A a part of the setting `path_prefix` is not ended by a slash"
+        row = "| policy_mutants.py | {} | new | killing mutant: A1 see `fail-before.log` |\n"
+        both = row.format(one) + row.format(two)
+>       assert nlc.problems([one, two], [], both, rel) == [], (
+            "two rows with the same backticked word were refused"
+        )
+E       AssertionError: two rows with the same backticked word were refused
+E       assert ['tests/polic...in the notes'] == []
+E         
+E         Left contains 2 more items, first extra item: 'tests/policy_mutants.py: the test A the setting `path_prefix` is read as one part only is new or changed and has no row of its own in the notes'
+E         Use -v to get more diff
+
+tests/test_notes_lines_check.py:525: AssertionError
+_ test_ci_runs_the_builder_notes_check_on_pull_requests_with_the_base_fetched __
+
+    def test_ci_runs_the_builder_notes_check_on_pull_requests_with_the_base_fetched():
+        steps = _yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8"))[
+            "jobs"
+        ]["check"]["steps"]
+>       assert not _notes_step_problem(steps), _notes_step_problem(steps)
+E       AssertionError: the notes step does not run `--auto` with the base in BASE_SHA and the head in HEAD_SHA
+E       assert not 'the notes step does not run `--auto` with the base in BASE_SHA and the head in HEAD_SHA'
+E        +  where 'the notes step does not run `--auto` with the base in BASE_SHA and the head in HEAD_SHA' = _notes_step_problem([{'uses': 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1', 'with': {'persist-credentials': False}}, {'uses...'name': 'Secrets and banned names in the tracked files (the repo is public)', 'run': 'python tools/scan_repo.py'}, ...])
+
+tests/test_policy_docs.py:160: AssertionError
+_ test_the_notes_check_on_a_made_up_merge_commit_reads_the_pull_request_head_not_the_merge _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-16127/test_the_notes_check_on_a_made0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fc3f7cb7d50>
+capsys = <_pytest.capture.CaptureFixture object at 0x7fc3f7a7bbf0>
+
+    def test_the_notes_check_on_a_made_up_merge_commit_reads_the_pull_request_head_not_the_merge(
+        tmp_path, monkeypatch, capsys
+    ):
+        """The runner checks out a merge commit; the step must work from the pull request head commit and the common
+        ancestor. Rebuild that shape in a made-up repository and run the command line the workflow step holds (read
+        from ci.yml, with its two environment values filled in), so a change of the step changes this test's input."""
+        import shlex
+    
+        from tools import notes_lines_check as nlc
+    
+        from tests.test_notes_lines_check import _rev
+    
+        steps = _yaml.safe_load((ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8"))[
+            "jobs"
+        ]["check"]["steps"]
+        (step,) = [s for s in steps if "tools/notes_lines_check.py" in s.get("run", "")]
+        monkeypatch.chdir(tmp_path)
+        _rev(tmp_path, "init", "-q", "-b", "main")
+        (tmp_path / "tests").mkdir()
+        (tmp_path / "tests/test_one.py").write_text("def test_a():\n    assert 1\n", encoding="utf-8")
+        _rev(tmp_path, "add", "-A")
+        _rev(tmp_path, "commit", "-q", "-m", "base")
+        base_sha = _rev(tmp_path, "rev-parse", "HEAD")
+        _rev(tmp_path, "checkout", "-q", "-b", "pr")
+        (tmp_path / "tests/test_one.py").write_text(
+            "def test_a():\n    assert 1\n\n\ndef test_new():\n    assert 2\n", encoding="utf-8"
+        )
+        _rev(tmp_path, "add", "-A")
+        _rev(tmp_path, "commit", "-q", "-m", "pr head")
+        head_sha = _rev(tmp_path, "rev-parse", "HEAD")
+        _rev(tmp_path, "checkout", "-q", "main")
+        (tmp_path / "other.txt").write_text("main moved on\n", encoding="utf-8")
+        _rev(tmp_path, "add", "-A")
+        _rev(tmp_path, "commit", "-q", "-m", "main moves")
+        _rev(tmp_path, "merge", "-q", "--no-ff", "-m", "merge", "pr")  # the checked-out merge commit
+        words = shlex.split(step["run"].strip())
+>       assert words[:2] == ["python", "tools/notes_lines_check.py"], f"the step runs {words[:2]}"
+E       AssertionError: the step runs ['git', 'fetch']
+E       assert ['git', 'fetch'] == ['python', 't...nes_check.py']
+E         
+E         At index 0 diff: 'git' != 'python'
+E         Use -v to get more diff
+
+/home/user/build/EV-Q8c1b12-6d219217/fb/tests/test_policy_docs.py:236: AssertionError
+_ test_with_both_dated_lists_empty_the_page_names_no_day_and_the_commands_still_report _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-16127/test_with_both_dated_lists_emp0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fc3f7bdac80>
+capsys = <_pytest.capture.CaptureFixture object at 0x7fc3f9308680>
+
+    def test_with_both_dated_lists_empty_the_page_names_no_day_and_the_commands_still_report(
+        tmp_path, monkeypatch, capsys
+    ):
+        # The end state of the ticket: nothing is waiting for a check. `review_date()` has no day then, and the page,
+        # `--write` and `--check` must work and say so (a `min()` of nothing raised ValueError before). Two parts:
+        # (1) with the kind modules of today (they still hold unchecked names and claims) both commands REFUSE, one
+        # line per unchecked entry: that is the rule working, not a fault; (2) with the dated-list rules given the
+        # policies of the end state (`_end_state`), everything else real, both commands pass on any day.
+        unchecked = {(k, lab) for k, lab, e in pp.entries(_policies()) if e.verified is None}
+        claimed = {(k, lab) for k, lab, e in pp.entries(_policies()) if e.claims_unverified}
+        root = _tree(tmp_path)
+        monkeypatch.setattr(pp, "ROOT", root)
+        monkeypatch.setattr(pp, "DATA_ROOT", root)
+        monkeypatch.setattr(pp, "PENDING_NAMES", {})
+        monkeypatch.setattr(pp, "PENDING_CLAIMS", {})
+        assert pp.main(["--write"], today=DECIDED) == 1 and not (root / pp.PAGE).exists(), (
+            "--write wrote the page with both dated lists empty although the kind modules hold unchecked entries"
+        )
+        refused = capsys.readouterr().err.splitlines()
+        assert len(refused) == len(unchecked) + len(claimed), refused
+        assert all(
+            "no PENDING_NAMES entry" in ln or "no PENDING_CLAIMS entry" in ln for ln in refused
+        ), refused
+        assert pp.main(["--check"], today=DECIDED) == 1, (
+            "--check passed with both dated lists empty although the kind modules hold unchecked entries"
+        )
+        capsys.readouterr()
+        monkeypatch.undo()
+>       _end_state(monkeypatch, root)
+
+tests/test_policy_guard.py:4970: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fc3f7bdac80>
+root = PosixPath('/tmp/pytest-of-root/pytest-16127/test_with_both_dated_lists_emp0')
+
+    def _end_state(monkeypatch, root: Path) -> None:
+        """The END state, written as the person who empties the lists would write it, and checked by the REAL rules:
+        both dated lists empty; the four lists at the head of the sources file written as the empty marker (in the tmp
+        copy `root`); every name checked and no claim left (the kind modules are read through `_cleared_policy`: the
+        kind modules of today still hold unchecked entries, that is what the dated lists are for); and the notes of
+        class claim or pending, whose claim or pending name is gone, moved to class code. `read_marks`,
+        `claim_mark_problems`, `note_problems`, `name_pending_problems`, `claim_pending_problems`, `--check` and
+        `--write` all run for real on that data; nothing is stubbed."""
+        classes = {
+            k: ("code",) if v and v[0] in ("claim", "pending") else v
+            for k, v in pp.NOTE_CLASSES.items()
+        }
+        sources = root / pp.SOURCES
+>       marker = pp.EMPTY_MARKER
+                 ^^^^^^^^^^^^^^^
+E       AttributeError: module 'tools.policy_page' has no attribute 'EMPTY_MARKER'
+
+tests/test_policy_guard.py:4922: AttributeError
+_____ test_the_date_tests_branches_for_an_empty_list_run_in_the_end_state ______
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-16127/test_the_date_tests_branches_f0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fc3f93cf770>
+
+    def test_the_date_tests_branches_for_an_empty_list_run_in_the_end_state(tmp_path, monkeypatch):
+        # The "no entry" branches of the date tests run on no day today (both lists hold entries): a typo in one would
+        # first show on the day the lists are emptied. Each body is run once here, on the end state of `_end_state`.
+        root = _tree(tmp_path)
+>       _end_state(monkeypatch, root)
+
+tests/test_policy_guard.py:5032: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fc3f93cf770>
+root = PosixPath('/tmp/pytest-of-root/pytest-16127/test_the_date_tests_branches_f0')
+
+    def _end_state(monkeypatch, root: Path) -> None:
+        """The END state, written as the person who empties the lists would write it, and checked by the REAL rules:
+        both dated lists empty; the four lists at the head of the sources file written as the empty marker (in the tmp
+        copy `root`); every name checked and no claim left (the kind modules are read through `_cleared_policy`: the
+        kind modules of today still hold unchecked entries, that is what the dated lists are for); and the notes of
+        class claim or pending, whose claim or pending name is gone, moved to class code. `read_marks`,
+        `claim_mark_problems`, `note_problems`, `name_pending_problems`, `claim_pending_problems`, `--check` and
+        `--write` all run for real on that data; nothing is stubbed."""
+        classes = {
+            k: ("code",) if v and v[0] in ("claim", "pending") else v
+            for k, v in pp.NOTE_CLASSES.items()
+        }
+        sources = root / pp.SOURCES
+>       marker = pp.EMPTY_MARKER
+                 ^^^^^^^^^^^^^^^
+E       AttributeError: module 'tools.policy_page' has no attribute 'EMPTY_MARKER'
+
+tests/test_policy_guard.py:4922: AttributeError
+_ test_each_of_the_four_lists_may_be_the_word_none_and_an_empty_line_or_a_mixed_one_is_refused _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-16127/test_each_of_the_four_lists_ma0')
+
+    def test_each_of_the_four_lists_may_be_the_word_none_and_an_empty_line_or_a_mixed_one_is_refused(
+        tmp_path,
+    ):
+        body = _text(pp.SOURCES)
+        real = pp.read_marks(ROOT)
+        (tmp_path / pp.SOURCES).parent.mkdir(parents=True, exist_ok=True)
+    
+        def read(**lists: str) -> pp.Marks:
+            (tmp_path / pp.SOURCES).write_text(_head_with(body, **lists), encoding="utf-8")
+            return pp.read_marks(tmp_path)
+    
+        for key, attr in (
+            ("BUILDER_ONLY", "builder_only"),
+            ("PARTLY_BUILDER_ONLY", "partly_builder_only"),
+            ("CLAIM_READ_BY_BUILDER", "builder_read"),
+            ("CLAIM_READ_BY_NOBODY", "nobody_read"),
+        ):
+            try:
+>               got = read(**{key: pp.EMPTY_MARKER})
+                                   ^^^^^^^^^^^^^^^
+E               AttributeError: module 'tools.policy_page' has no attribute 'EMPTY_MARKER'
+
+tests/test_policy_guard.py:5064: AttributeError
+_ test_the_page_head_describes_unchecked_claims_only_while_a_claim_mark_is_listed _
+
+    def test_the_page_head_describes_unchecked_claims_only_while_a_claim_mark_is_listed():
+        real = pp.head(pp.read_marks(ROOT))
+        assert "Some claims are weaker than that" in real and "No claim on this page" not in real, (
+            "with claims listed the head does not describe the unchecked claims"
+        )
+        none = pp.head(pp.Marks((), (), (), ()))
+>       assert "No claim on this page is waiting for a check" in none, (
+            "with no claim listed the head does not say that no claim is waiting"
+        )
+E       AssertionError: with no claim listed the head does not say that no claim is waiting
+E       assert 'No claim on this page is waiting for a check' in '# Declared permissions per backend kind\n\nGenerated by `python tools/policy_page.py --write` from the `POLICY` liter...ying the audit trail builds the signer, so a\n  process that only verifies still needs the signing permission today.\n'
+
+tests/test_policy_guard.py:5129: AssertionError
+_ test_the_overdue_message_says_renew_all_or_none_and_lists_everything_a_renewal_or_an_emptying_touches _
+
+    def test_the_overdue_message_says_renew_all_or_none_and_lists_everything_a_renewal_or_an_emptying_touches():
+        pending = {("secrets/vault", "x"): pp.Pending("r", "t", DECIDED, DECIDED + timedelta(days=30))}
+        lines = pp.pending_problems(
+            "PENDING_NAMES", pending, {("secrets/vault", "x")}, DECIDED + timedelta(days=31)
+        )
+>       assert len(lines) == 1 and "Renew all or none" in lines[0], (
+            f"the overdue message does not say to renew all or none: {lines}"
+        )
+E       AssertionError: the overdue message does not say to renew all or none: ["PENDING_NAMES ('secrets/vault', 'x') is overdue (review_by 2026-12-11): t. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it"]
+E       assert (1 == 1 and 'Renew all or none' in "PENDING_NAMES ('secrets/vault', 'x') is overdue (review_by 2026-12-11): t. What to do: finish that work and delete th...e finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it")
+E        +  where 1 = len(["PENDING_NAMES ('secrets/vault', 'x') is overdue (review_by 2026-12-11): t. What to do: finish that work and delete t... finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it"])
+
+tests/test_policy_guard.py:5146: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_notes_lines_check.py::test_a_marker_is_a_whole_word_and_something_to_look_up_follows_it
+FAILED tests/test_notes_lines_check.py::test_auto_reads_the_changed_test_and_notes_files_and_says_when_there_are_no_notes
+FAILED tests/test_notes_lines_check.py::test_a_helper_imported_from_another_tests_module_lists_each_test_that_uses_it
+FAILED tests/test_notes_lines_check.py::test_a_changed_module_level_import_or_augmented_assignment_lists_the_tests_that_use_the_name
+FAILED tests/test_notes_lines_check.py::test_an_autouse_fixture_that_changed_lists_every_test_of_the_file_and_another_fixture_does_not
+FAILED tests/test_notes_lines_check.py::test_a_new_altered_or_removed_mutant_and_a_fall_in_the_count_are_seen_in_the_mutant_files
+FAILED tests/test_notes_lines_check.py::test_a_conftest_function_and_a_fixture_file_are_units_and_a_file_outside_the_kinds_is_none
+FAILED tests/test_notes_lines_check.py::test_auto_diffs_from_the_merge_base_to_the_head_commit_and_reads_blobs_not_the_working_folder
+FAILED tests/test_notes_lines_check.py::test_auto_reads_a_failed_diff_or_a_missing_common_ancestor_as_a_problem_never_as_no_change
+FAILED tests/test_notes_lines_check.py::test_auto_lists_both_names_of_a_renamed_test_file_so_the_old_tests_are_not_lost
+FAILED tests/test_notes_lines_check.py::test_two_mutant_names_that_hold_the_same_backticked_word_each_need_their_own_row
+FAILED tests/test_policy_docs.py::test_ci_runs_the_builder_notes_check_on_pull_requests_with_the_base_fetched
+FAILED tests/test_policy_docs.py::test_the_notes_check_on_a_made_up_merge_commit_reads_the_pull_request_head_not_the_merge
+FAILED tests/test_policy_guard.py::test_with_both_dated_lists_empty_the_page_names_no_day_and_the_commands_still_report
+FAILED tests/test_policy_guard.py::test_the_date_tests_branches_for_an_empty_list_run_in_the_end_state
+FAILED tests/test_policy_guard.py::test_each_of_the_four_lists_may_be_the_word_none_and_an_empty_line_or_a_mixed_one_is_refused
+FAILED tests/test_policy_guard.py::test_the_page_head_describes_unchecked_claims_only_while_a_claim_mark_is_listed
+FAILED tests/test_policy_guard.py::test_the_overdue_message_says_renew_all_or_none_and_lists_everything_a_renewal_or_an_emptying_touches
+18 failed, 401 passed in 8.70s

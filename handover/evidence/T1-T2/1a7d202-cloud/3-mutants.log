@@ -1,0 +1,68 @@
+HEAD=1a7d2029013deff2054c4c18f73663f21aaa7c3c py=3.13 dsn=unset CI=unset
+unset: AWS_ ANTHROPIC_ AZURE_ GOOGLE_ GCP_ VAULT_ OPENAI_ GEMINI_ CLOUDSDK_ CI GH_TOKEN GITHUB_TOKEN HADAVIN_TEST_PG_DSN (then set DSN if given)
+== 3a meter_mutants (memory, all)
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+ok  KILLED       L1 daily check is > instead of >= (one extra call at the exact cap)  [test_a_cap_that_is_a_multiple_of_the_cost_is_never_overshot_]
+ok  KILLED       L2 the daily check is gone  [test_one_caller_at_a_time_admits_ceil_cap_over_cost_and_over]
+ok  KILLED       L3 monthly check is > instead of >= (one extra call at the exact cap)  [test_the_monthly_cap_binds_when_it_is_lower_than_the_daily_c]
+ok  KILLED       L4 charge returns totals but records nothing  [test_a_charge_is_recorded_in_the_ledger]
+ok  KILLED       L5 blocked also writes (a read adds spend)  [test_reads_never_change_a_total[2026-03-10T12:00:00+00:00]]
+ok  KILLED       L6 charge books the day one hour late  [test_a_charge_at_23_30_utc_is_booked_on_its_own_day]
+ok  KILLED       L7 blocked reads yesterday's bucket  [test_the_daily_budget_is_read_for_today_not_yesterday]
+ok  KILLED       L8 now() reads the machine's local wall clock, not UTC  [test_the_real_now_is_aware_utc_and_books_23_00_utc_on_the_10]
+ok  KILLED       L9 a caller over both caps is told about the daily one only  [test_both_budgets_over_their_caps_are_both_named]
+ok  KILLED       L10 the daily check fires half a dollar early (a cost that is not W is cut short)  [test_one_caller_at_a_time_admits_ceil_cap_over_cost_and_over]
+ok  KILLED       L11 charge turns a negative cost into 0 (the flip the pin test must notice)  [test_pin_today_a_negative_or_infinite_charge_is_booked_as_it]
+ok  KILLED       L12 charge turns a NaN cost into 0 (the flip the NaN pin must notice)  [test_pin_today_a_nan_charge_is_booked_and_then_every_check_r]
+ok  KILLED       L13 a daily budget of 0 means no daily limit  [test_a_budget_of_zero_blocks_the_first_call[daily]]
+ok  KILLED       L14 a monthly budget of 0 means no monthly limit  [test_a_budget_of_zero_blocks_the_first_call[monthly]]
+ok  KILLED       S1 the ledger double counts a day  [test_two_charges_on_one_day_add_up]
+ok  KILLED       S2 the month total sums every month (spend_totals)  [test_a_month_total_does_not_carry_over_31_days]
+ok  KILLED       S3 the month total sums every agent (spend_totals)  [test_one_agent_never_sees_another_agents_spend]
+ok  KILLED       S4 the month total a charge returns sums every month (add_spend)  [test_a_charge_returns_the_total_of_its_own_month_only]
+ok  KILLED       S5 the month total a charge returns sums every agent (add_spend)  [test_a_charge_returns_only_its_own_agents_month_total]
+ok  KILLED       S6 a charge replaces the day total instead of adding to it  [test_two_charges_on_one_day_add_up]
+ok  KILLED       S7 the year is dropped from the month a charge returns (add_spend)  [test_the_same_month_of_another_year_is_a_different_month]
+ok  KILLED       S8 the year is dropped from the month a read returns (spend_totals)  [test_the_same_month_of_another_year_is_a_different_month]
+22 of 22 good; problems: []
+meter_mutants_exit=0
+== git status after memory mutants
+git_status_lines=0
+== 3b postgres_mutants with DSN
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+baseline rc=0 :: 98 passed, 98 deselected in 15.48s
+ok  P1 day counter replaced instead of added
+      [test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-03-10T12:00:00+00:00]] /tmp/pgmut_u_t61kl9/tests/contracts/test_store_time_rules.py:91: AssertionError: the day total of two charges on one day did not add up: 0.70
+ok  P2 month counter replaced instead of added
+      [test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-03-10T12:00:00+00:00]] /tmp/pgmut_pijthx0n/tests/contracts/test_store_time_rules.py:92: AssertionError: the month total of two charges did not add up: 0.70
+ok  P3 add_spend books the month one month early (a valid first-of-month date, so the CHECK passes)
+      [test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-03-10T12:00:00+00:00]] /tmp/pgmut_oh3pepl8/tests/contracts/test_store_time_rules.py:60: AssertionError: 6min: read at 2026-03-10 12:00:00+00:00
+ok  P3b add_spend keys the month counter by the day (killed by the schema CHECK, an error, not an assertion)
+      [test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-03-10T12:00:00+00:00]] n3.13/site-packages/psycopg/cursor.py:117: psycopg.errors.CheckViolation: new row for relation "spend_month" violates check constraint "spend_month_month_check"
+ok  P4 spend_totals reads the month counter by the day
+      [test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-03-10T12:00:00+00:00]] /tmp/pgmut_lff94aho/tests/contracts/test_store_time_rules.py:60: AssertionError: 6min: read at 2026-03-10 12:00:00+00:00
+ok  P5 spend_totals reads the day counter of any agent
+      [test_one_agent_never_sees_another_agents_spend[postgres]] /tmp/pgmut_bb5m54h7/tests/contracts/test_store_time_rules.py:313: AssertionError: spend_totals showed this agent's spend to another agent
+ok  P6 spend_totals reads the month counter of any agent
+      [test_one_agent_never_sees_another_agents_spend[postgres]] /tmp/pgmut_y1h4w26p/tests/contracts/test_store_time_rules.py:313: AssertionError: spend_totals showed this agent's spend to another agent
+ok  P7 the day counter ignores every charge after the first
+      [test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-03-10T12:00:00+00:00]] /tmp/pgmut_ozmsyrqf/tests/contracts/test_store_time_rules.py:91: AssertionError: the day total of two charges on one day did not add up: 0.30
+ok  P8 the month counter ignores every charge after the first
+      [test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-03-10T12:00:00+00:00]] /tmp/pgmut_9hqv4sar/tests/contracts/test_store_time_rules.py:92: AssertionError: the month total of two charges did not add up: 0.30
+ok  P9 the year is dropped from the month key (add_spend and spend_totals)
+      [test_the_same_month_of_another_year_is_a_different_month[postgres]] nrdmsq1/tests/contracts/test_store_time_rules.py:158: AssertionError: a March of another year was added to the March of 2026: (Decimal('0.10'), Decimal('0.20'))
+ok  P10 the day is taken from the database server's clock, not from the caller
+      [test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-03-10T12:00:00+00:00]] /tmp/pgmut_js52dy_m/tests/contracts/test_store_time_rules.py:173: AssertionError: a charge on a past date is not on that date
+ok  P11 the day counter rounds a charge to cents
+      [test_a_charge_smaller_than_a_cent_is_neither_rounded_nor_lost[postgres]] /tmp/pgmut_m7anmm7l/tests/contracts/test_store_time_rules.py:183: AssertionError: the first tiny charge was rounded
+ok  P12 the month counter is never written (every charge adds 0 to it)
+      [test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-03-10T12:00:00+00:00]] /tmp/pgmut_wclghh0p/tests/contracts/test_store_time_rules.py:56: AssertionError: 6min: charge 0 at 2026-03-10 12:00:00+00:00
+13 of 13 mutants killed as described; no problems
+postgres_mutants_dsn_exit=0
+== git status after pg mutants
+git_status_lines=0
+== 3c postgres_mutants without DSN (expect 2)
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+HADAVIN_TEST_PG_DSN is not set: the postgres cases would be skipped and prove nothing
+postgres_mutants_nodsn_exit=2
+exit=0

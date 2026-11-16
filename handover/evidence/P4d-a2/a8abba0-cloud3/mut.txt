@@ -1,0 +1,24 @@
+== baseline (unmutated): PASS ['32 passed, 56 deselected in 6.25s']
+== a1-1 require_backend never fails (always skips): KILLED (rc=1) sel=tests/contracts/test_store_registry.py
+    FAILED tests/contracts/test_store_registry.py::test_pg_schema_fails_instead_of_skipping_in_ci_without_a_database
+    1 failed, 1 passed in 0.28s
+== a1-2a session-end skip check removed: KILLED (rc=1) sel=tests/contracts/test_store_registry.py
+    FAILED tests/contracts/test_store_registry.py::test_session_check_catches_a_silent_backend_skip
+    1 failed, 20 passed in 0.27s
+== a1-2b session-end counts ALL skips: KILLED (rc=1) sel=tests/contracts/test_store_registry.py
+    FAILED tests/contracts/test_store_registry.py::test_session_check_ignores_a_legitimate_skip_like_test_llm
+    1 failed, 21 passed in 0.24s
+== a1-2c session-end check inactive under the fail rule: KILLED (rc=1) sel=tests/contracts/test_store_registry.py
+    FAILED tests/contracts/test_store_registry.py::test_session_check_catches_a_silent_backend_skip
+    1 failed, 20 passed in 0.21s
+== a1-3 proxy counts fixture calls (records outside test body): KILLED (rc=1) sel=tests/contracts/test_store_registry.py
+    FAILED tests/contracts/test_store_registry.py::test_proxy_records_public_calls_made_in_a_test_body_only
+    1 failed, 15 passed in 0.24s
+== a1-4 postgres store_pair yields one connection twice: KILLED (rc=1) sel=tests/contracts/test_store.py -k store_pair_gives_two_handles
+    FAILED tests/contracts/test_store.py::test_store_pair_gives_two_handles_on_the_same_data[postgres]
+    1 failed, 1 passed, 56 deselected in 0.44s
+== a1-5 memory pair is two separate stores (pair identity/shared data lost): KILLED (rc=1) sel=tests/contracts/test_store.py -k store_pair_gives_two_handles
+    FAILED tests/contracts/test_store.py::test_store_pair_gives_two_handles_on_the_same_data[memory]
+    1 failed, 56 deselected in 0.09s
+== a1-6 connect_runtime returns the admin connection: KILLED (rc=1) sel=tests/contracts/test_store_reserve_pg.py tests/contracts/test_store_reserve_proofs_pg.py -k current_user or runtime or r
+exit=0

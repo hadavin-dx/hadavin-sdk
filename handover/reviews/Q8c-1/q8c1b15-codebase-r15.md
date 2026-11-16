@@ -1,0 +1,25 @@
+# q8c1b15-codebase-r15: Q8c-1 batch 15, head ccb63021 (code = 3ad1cc45), round 15, persona codebase details
+
+Source: hand-back of the codebase reviewer (agent a7d491cdc342d5441), saved by the lead (condensed). SECURITY path (no round cap). Read-only; no independent evidence existed when read. 0 Blocker, 1 Major (N1), Minor N2-N6, Nits N7. Snapshot `/home/user/build/snap/q8c1b15-ccb63021`. Verdict: groups 1, 2, 4, 5 (Vault, Kubernetes) and the evidence group hold; group 3 mostly closed, run-time import rule half-fixed.
+
+## Major
+- **N1** Run-time import name: "the one rule" is not kept (tools/notes_lines_check.py:488-492 `_dynamic_files`, :353-359, docstring :70-73; test `test_a_module_imported_by_a_name_built_at_run_time_lists_every_test_that_could_reach_it`). Docstring says an unreadable name lists every test of the file; code does so only when the file imports no package of `tests` (:491). With any `from tests.x import y` an unreadable name (`import_module(name)`, `import_module(MODS[i])`, `.format(...)`) reaches only the imported folders; the test pins this exception, contradicting docstring and CHANGELOG. The prefix is read only from `n.args[0]`: `import_module(name=f"tests.x.{n}")` records no prefix. `for m in MODS: import_module(m)` with one ordinary tests import lists no test: rt3 exits 0. Same class as r14 group 3. Fix: apply the fallback to every unreadable name regardless of other imports; read keyword `name=`; or state the real rule in docstring and CHANGELOG; tests for the mixed and keyword cases.
+
+## Minor
+- **N2** CHANGELOG.md:325 names `tests/test_policy_changelog.py` for the four fast tests; they are in `tests/test_policy_renewal_copy.py:138-163` (NOTES slip 1 says moved). Name the right file.
+- **N3** Row counts in the printed renewal steps ("36", "1", "35", tools/policy_page.py, CHANGELOG:325) are not pinned: plant asserts only `asked > 0` (tests/test_policy_renewal_copy.py:164). Reword to "about" or assert within a range.
+- **N4** Untested branches of the new notes-check rules: `getfuncargvalue` (:282), `_literal_start` `%` branch, `__import__` prefix (:356), `-pNAME` attached form, `pytest.ini`/`tox.ini`/`setup.cfg` in `_config_plugins` (:511-521), `pytest_plugins` annotated assignment, relative or chained star imports, walrus inside AugAssign. One input per branch.
+- **N5** Blind spots not stated: walrus in default argument or module-level decorator (:308, :314); run-time fixture names (`getfixturevalue(f"fx_{n}")`) and `lazy_fixture("x")`; `tests/zz/__init__.py` not matched by the dotted-prefix rule (`tests.zz` vs prefix `tests.zz.`); alias calls (`imp = importlib.import_module`). State them in the docstring limits.
+- **N6** `extra_files` in tools/mutation_runner.py (patch 2007-2009, 2017-2020; test patch ~1199-1230): docstring says a link is left out, no link test; the per-mutant copy has no `mkdir(parents)` (a nested entry raises OSError; the snapshot step does mkdir); the new lines have no mutant, only a unit test. Add a link test, a mkdir, or say "root files only".
+
+## Nits (N7)
+Import before the docstring of `_renew_and_check` (tests/test_policy_changelog.py:324-329); CLI refusal test covers `tick` only while CHANGELOG says "the commands that load the config exit 2" (tests/test_k1b_cli.py ~300); notes_lines_check.py:65-67 docstring "not in a conftest" paragraph stale; GATES.md:13 records `--auto a50d5b2e` not `--auto <PR base>` as CI (ci.yml:111), GATES.md:16 gitleaks on an earlier head.
+
+## r14 groups against the snapshot
+Group 1 fixed (`_rows_for_the_renewal` tests/test_policy_renewal_copy.py:76-118, three mutants; numbers not pinned: N3). Group 2 fixed (four fast tests :138-163, ten B15 mutants, `_assert_the_copy_follows_the_steps` :28-68; rows 116/117 honest; CHANGELOG file name wrong: N2). Group 3 partly (as10, ut1/ut2, fx1, cf10/cf11, star fixed with tests and mutants; rt3 N1; C5 one-table limit stated and pinned). Group 4 fixed. Group 5 Vault fixed at settings (backends/table.py:283-306), start-up (secrets_vault.py:155-157) and `_fetch` (:116-118, before login), constructor open on purpose (transit signer), `model_construct` tested, 3 mutants, CLI exit-2 test; Kubernetes documented and pinned (`test_the_page_says_that_the_kubernetes_start_up_check_does_not_refuse_an_over_broad_read`), not a code change. Evidence group: `*` counts corrected (7, 5, 1).
+
+## Checked and found fine
+Order and containment in build, `_fetch`, validator; SHAPES guard lines match; `VAULT_EMPTY_PREFIX` text equal across CHANGELOG, page, tests; no new grant in src; `_walrus_names`, `_star_stems`, `FIXTURE_BY_TEXT`, `_named_files`, `_config_plugins` read as intended; `-p no:x` skipped; star import transitive; `_class_extras` over-lists only; re-pointed B12/B14 mutants.
+
+## Not checked
+No code, tests or mutants run; manifest sha of tools/mutation_runner.py (a36adb7d...) not recomputed; policy_mutants.py and test_policy_guard.py bodies beyond added hunks; NOTES section C rows beyond line 60; CI notes step on GitHub; Vault server tests; first renewal 2026-12-12.

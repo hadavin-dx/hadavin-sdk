@@ -1,0 +1,29 @@
+C1 live multi-line check removed	KILLED	FAILED tests/test_core_key_readers.py::test_live_accept_and_refuse_equal_the_old_rule_except_a_key_of_more_than_one_line	1 failed, 76 passed in 0.99s	1
+C2 hubspot short key says 'no key' again	KILLED	FAILED tests/test_core_key_readers.py::test_the_reason_text_of_every_refused_key_file_is_the_new_fixed_text[hubspot-texts0]	1 failed, 77 passed in 1.19s	2
+C3 hubspot accepts blanks	KILLED	FAILED tests/test_core_key_readers.py::test_hubspot_accept_and_refuse_are_identical_to_the_old_rule_on_1512_key_files	1 failed, 74 passed in 0.57s	1
+C4 hubspot min length off by one	KILLED	FAILED tests/test_core_key_readers.py::test_hubspot_accept_and_refuse_are_identical_to_the_old_rule_on_1512_key_files	1 failed, 74 passed in 0.47s	1
+C5 smtp ascii check off	KILLED	FAILED tests/test_core_key_readers.py::test_smtp_accept_and_refuse_are_identical_to_the_old_rule_on_1512_key_files	1 failed, 75 passed in 0.70s	1
+C6 smtp message holds the secret	KILLED	FAILED tests/test_core_key_readers.py::test_the_reason_text_of_every_refused_key_file_is_the_new_fixed_text[smtp-texts1]	1 failed, 78 passed in 1.72s	2
+C7 live message holds the path	KILLED	FAILED tests/test_core_key_readers.py::test_the_reason_text_of_every_refused_key_file_is_the_new_fixed_text[live-texts2]	1 failed, 79 passed in 1.70s	2
+C8 hubspot message holds the key	KILLED	FAILED tests/test_core_key_readers.py::test_the_reason_text_of_every_refused_key_file_is_the_new_fixed_text[hubspot-texts0]	1 failed, 77 passed in 1.30s	2
+C9 live empty and multi order swapped	SURVIVED		86 passed in 3.79s	4
+N1 db folder check off	KILLED	FAILED tests/test_real_run_v6.py::test_a_book_path_below_a_regular_file_is_refused_before_the_question[direct]	1 failed, 3 passed in 0.20s	1
+N2 special file check off (real)	KILLED	FAILED tests/test_real_run_v6.py::test_the_real_script_refuses_a_pipe_for_any_file_setting_without_hanging[DESK_HUBSPOT_KEY_FILE]	1 failed, 14 passed in 15.25s	16
+N3 config pipe check off	KILLED	FAILED tests/test_real_run_v6.py::test_the_real_script_refuses_a_pipe_as_the_live_key_or_ledger_and_as_the_config_without_hanging	1 failed, 23 passed in 15.28s	16
+N4 blank result check off	KILLED	FAILED tests/test_real_run_v6.py::test_a_blank_result_file_says_it_is_empty_not_that_it_is_a_folder[empty]	1 failed, 7 passed in 0.15s	1
+N5 same-file check off	KILLED	FAILED tests/test_real_run_v6.py::test_a_result_file_that_names_a_key_a_password_the_book_or_the_config_is_refused	1 failed, 9 passed in 0.21s	1
+N6 result pipe check off	KILLED	FAILED tests/test_real_run_v6.py::test_a_result_file_that_is_a_pipe_is_refused_not_written	1 failed, 13 passed in 0.23s	1
+N7 live key pipe check off	KILLED	FAILED tests/test_real_run_v6.py::test_the_live_script_refuses_a_pipe_as_key_file_or_ledger_without_hanging	1 failed, 24 passed in 15.26s	16
+N8 live ledger pipe check off	KILLED	FAILED tests/test_real_run_v6.py::test_the_live_script_refuses_a_pipe_as_key_file_or_ledger_without_hanging	1 failed, 24 passed in 20.24s	21
+N9 leads cap off	KILLED	FAILED tests/test_real_run_v6.py::test_every_refusal_of_the_live_script_is_one_line_with_the_option_and_never_echoes_the_value[over29---leads]	1 failed, 54 passed in 3.15s	4
+N10 runs cap off	KILLED	FAILED tests/test_real_run_v6.py::test_every_refusal_of_the_live_script_is_one_line_with_the_option_and_never_echoes_the_value[over33---runs]	1 failed, 58 passed in 0.51s	1
+N11 parser echoes argparse text	KILLED	FAILED tests/test_real_run_v6.py::test_an_argparse_error_of_the_live_script_is_the_same_one_line_without_the_words_typed[unknown]	1 failed, 63 passed in 0.58s	1
+N12 setting names not translated	KILLED	FAILED tests/test_real_run_v6.py::test_every_refusal_of_the_live_script_is_one_line_with_the_option_and_never_echoes_the_value[over1---cap-run]	1 failed, 26 passed in 0.37s	1
+N13 no-terminal text without slot	KILLED	FAILED tests/test_real_run_v6.py::test_the_live_script_refuses_without_a_terminal_in_the_same_form	1 failed, 70 passed in 0.73s	1
+N14 type text echoes the value	KILLED	FAILED tests/test_real_run_v6.py::test_the_texts_of_the_two_argument_types_are_exact	1 failed, 69 passed in 0.59s	1
+N15 is_special_file always false	KILLED	FAILED tests/test_real_run_v6.py::test_precheck_knows_pipes_sockets_and_devices_and_leaves_files_and_folders_alone	1 failed in 0.20s	1
+N16 folder_part always false	KILLED	FAILED tests/test_real_run_v6.py::test_precheck_folder_part_is_a_file - Asser...	1 failed, 1 passed in 0.12s	1
+N17 same_file no realpath fallback	KILLED	FAILED tests/test_real_run_v6.py::test_precheck_same_file_by_path_link_and_hard_link	1 failed, 2 passed in 0.13s	0
+N18 named files omit the config	KILLED	FAILED tests/test_real_run_v6.py::test_a_result_file_that_names_a_key_a_password_the_book_or_the_config_is_refused	1 failed, 9 passed in 0.23s	1
+N19 named files only _FILE	KILLED	FAILED tests/test_real_run_v6.py::test_a_result_file_that_names_a_key_a_password_the_book_or_the_config_is_refused	1 failed, 9 passed in 0.23s	1
+N20 result checked after question order (dir test off)	SURVIVED		86 passed in 3.83s	4

@@ -1,0 +1,20 @@
+.........F
+=================================== FAILURES ===================================
+____ test_t2_a_counter_without_the_number_of_created_contacts_is_not_known _____
+
+tmp_path = PosixPath('/home/user/build/rr6/out/EV7T/tmp-mut/pytest-of-unknown/pytest-4/test_t2_a_counter_without_the_0')
+
+    def test_t2_a_counter_without_the_number_of_created_contacts_is_not_known(tmp_path: Path) -> None:
+        (tmp_path / "desk-raaaaaa-1.hubspot.json").write_text('{"calls": 4}', encoding="utf-8")
+>       assert not rrc.counter_is_known(rrc.read_counter_files_checked(tmp_path, ".hubspot.json", "raaaaaa"))
+E       AssertionError: assert not True
+E        +  where True = <function counter_is_known at 0x7faa2a0f4360>(CounterRead(totals={'calls': 4}, files=1, unreadable=0))
+E        +    where <function counter_is_known at 0x7faa2a0f4360> = rrc.counter_is_known
+E        +    and   CounterRead(totals={'calls': 4}, files=1, unreadable=0) = <function read_counter_files_checked at 0x7faa2a0f4ae0>(PosixPath('/home/user/build/rr6/out/EV7T/tmp-mut/pytest-of-unknown/pytest-4/test_t2_a_counter_without_the_0'), '.hubspot.json', 'raaaaaa')
+E        +      where <function read_counter_files_checked at 0x7faa2a0f4ae0> = rrc.read_counter_files_checked
+
+tests/test_r7t_findings.py:115: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r7t_findings.py::test_t2_a_counter_without_the_number_of_created_contacts_is_not_known
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 9 passed, 126 deselected in 0.26s

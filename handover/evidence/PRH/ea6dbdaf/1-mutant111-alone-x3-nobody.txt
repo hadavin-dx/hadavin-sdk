@@ -1,0 +1,12 @@
+BAD SURVIVED     111 the collapsed spaced run may refuse a text on its own (no soft rule)  []
+      first line: 
+0 of 1 good; problems: ['111 the collapsed spaced run may refuse a text on its own (no soft rule)']
+rc=1
+BAD SURVIVED     111 the collapsed spaced run may refuse a text on its own (no soft rule)  []
+      first line: 
+0 of 1 good; problems: ['111 the collapsed spaced run may refuse a text on its own (no soft rule)']
+rc=1
+BAD SURVIVED     111 the collapsed spaced run may refuse a text on its own (no soft rule)  []
+      first line: 
+0 of 1 good; problems: ['111 the collapsed spaced run may refuse a text on its own (no soft rule)']
+rc=1

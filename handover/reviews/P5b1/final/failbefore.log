@@ -1,0 +1,400 @@
+        """Status 400 alone is not retried; only the code table can make this one retried (BN-10)."""
+        wire = make_wire(B)
+        try:
+            fx = {
+                "request_match": {"method": "POST"},
+                "status": 400,
+                "headers": {},
+                "body": {"Error": {"Code": "ServiceQuotaExceededException", "Message": CANARY}},
+            }
+            err = run_chat(wire, *[copy.deepcopy(fx) for _ in range(3)])
+            assert type(err) is X and len(wire.requests) == 3
+>           assert (err.status, err.error_type, err.retry_count, err.retryable) == (
+                    ^^^^^^^^^^
+                400,
+                T.quota,
+                3,
+                True,
+            )
+E           AttributeError: 'ProviderExhausted' object has no attribute 'status'
+
+tests/test_provider_errors_wire.py:604: AttributeError
+__ test_r16_status_424_has_no_status_table_type_but_the_code_table_gives_one ___
+
+    def test_r16_status_424_has_no_status_table_type_but_the_code_table_gives_one():
+>       from hadavin_sdk.llm.provider_facts import (
+            status_error_type,  # new module: imported here so the file collects on the base
+        )
+E       ModuleNotFoundError: No module named 'hadavin_sdk.llm.provider_facts'
+
+tests/test_provider_errors_wire.py:618: ModuleNotFoundError
+_____________ test_r14b_amazon_library_debug_log_holds_the_canary ______________
+
+caplog = <_pytest.logging.LogCaptureFixture object at 0x7ff97c9d2b30>
+
+    @pytest.mark.xfail(
+        strict=True,
+        raises=AssertionError,
+        reason="library log records hold provider text; P5b4 moves this row to what the process emits",
+    )
+    def test_r14b_amazon_library_debug_log_holds_the_canary(caplog):
+        boto3 = pytest.importorskip("boto3", reason="needs extra aws")
+        from botocore import UNSIGNED
+        from botocore.config import Config
+    
+        from hadavin_sdk.llm.bedrock import BedrockLLM
+    
+        body = b'{"message":"' + CANARY.encode() + b'"}'
+        reply_bytes = reply(
+            "HTTP/1.1 403 Forbidden",
+            {
+                "Content-Type": "application/json",
+                "x-amzn-ErrorType": "AccessDeniedException",
+                "X-Canary": CANARY,
+                "Content-Length": str(len(body)),
+            },
+            body,
+        )
+        with RawServer(repeat=reply_bytes) as raw:
+            client = boto3.client(
+                "bedrock-runtime",
+                region_name="contract-region-1",
+                endpoint_url=raw.url,
+                config=Config(signature_version=UNSIGNED, retries={"total_max_attempts": 1}),
+            )
+            routes = {
+                k: r.model_copy(update={"model_id": "in.anthropic.contract-model"})
+                for k, r in ROUTES.items()
+            }
+            caplog.set_level(logging.DEBUG)
+            with pytest.raises(ProviderError) as got:
+                BedrockLLM(client, routes, 3, sleep=lambda s: None).chat(**CALL)
+>           assert raw.requests >= 1 and (got.value.status, got.value.error_type) == (403, T.permission)
+                                          ^^^^^^^^^^^^^^^^
+E           AttributeError: 'ProviderError' object has no attribute 'status'
+
+tests/test_provider_errors_wire.py:701: AttributeError
+------------------------------ Captured log call -------------------------------
+DEBUG    botocore.hooks:hooks.py:238 Event before-parameter-build.bedrock-runtime.Converse: calling handler <function generate_idempotent_uuid at 0x7ff984004540>
+DEBUG    botocore.hooks:hooks.py:238 Event before-parameter-build.bedrock-runtime.Converse: calling handler <function _handle_request_validation_mode_member at 0x7ff984007240>
+DEBUG    botocore.regions:regions.py:522 Calling endpoint provider with parameters: {'Region': 'contract-region-1', 'UseDualStack': False, 'UseFIPS': False, 'Endpoint': 'http://127.0.0.1:46369'}
+DEBUG    botocore.regions:regions.py:537 Endpoint provider result: http://127.0.0.1:46369
+DEBUG    botocore.hooks:hooks.py:238 Event before-call.bedrock-runtime.Converse: calling handler <function add_recursion_detection_header at 0x7ff983fe3f60>
+DEBUG    botocore.hooks:hooks.py:238 Event before-call.bedrock-runtime.Converse: calling handler <function inject_api_version_header_if_needed at 0x7ff984006020>
+DEBUG    botocore.endpoint:endpoint.py:114 Making request for OperationModel(name=Converse) with params: {'url_path': '/model/in.anthropic.contract-model/converse', 'query_string': {}, 'method': 'POST', 'headers': {'Content-Type': 'application/json', 'User-Agent': 'Boto3/1.43.122 md/Botocore#1.43.122 ua/2.1 os/linux#6.18.44-fc-v310 md/arch#x86_64 lang/python#3.13.18 md/pyimpl#CPython m/Z,b,N,D cfg/retry-mode#legacy Botocore/1.43.122'}, 'body': b'{"messages": [{"role": "user", "content": [{"text": "Process the attached request document."}]}], "inferenceConfig": {"maxTokens": 64}, "system": [{"text": "Be exact."}]}', 'url': 'http://127.0.0.1:46369/model/in.anthropic.contract-model/converse', 'context': {'client_region': 'contract-region-1', 'client_config': <botocore.config.Config object at 0x7ff975e1f890>, 'has_streaming_input': False, 'auth_type': None, 'unsigned_payload': None, 'auth_options': ['aws.auth#sigv4', 'smithy.api#httpBearerAuth']}}
+DEBUG    botocore.hooks:hooks.py:238 Event request-created.bedrock-runtime.Converse: calling handler <bound method RequestSigner.handler of <botocore.signers.RequestSigner object at 0x7ff9694916d0>>
+DEBUG    botocore.hooks:hooks.py:238 Event choose-signer.bedrock-runtime.Converse: calling handler <function set_operation_specific_signer at 0x7ff984004220>
+DEBUG    botocore.hooks:hooks.py:238 Event choose-signer.bedrock-runtime.Converse: calling handler <function _set_auth_scheme_preference_signer at 0x7ff984007380>
+DEBUG    botocore.hooks:hooks.py:238 Event request-created.bedrock-runtime.Converse: calling handler <bound method UserAgentString.rebuild_and_replace_user_agent_handler of <botocore.useragent.UserAgentString object at 0x7ff97ca1e8e0>>
+DEBUG    botocore.hooks:hooks.py:238 Event request-created.bedrock-runtime.Converse: calling handler <function add_retry_headers at 0x7ff984006a20>
+DEBUG    botocore.endpoint:endpoint.py:265 Sending http request: <AWSPreparedRequest stream_output=False, method=POST, url=http://127.0.0.1:46369/model/in.anthropic.contract-model/converse, headers={'Content-Type': b'application/json', 'User-Agent': b'Boto3/1.43.122 md/Botocore#1.43.122 ua/2.1 os/linux#6.18.44-fc-v310 md/arch#x86_64 lang/python#3.13.18 md/pyimpl#CPython m/Z,b,N,D cfg/retry-mode#legacy Botocore/1.43.122', 'amz-sdk-invocation-id': b'48eeb7e8-15d8-4596-8f2a-ee4c44696a49', 'amz-sdk-request': b'attempt=1', 'Content-Length': '170'}>
+DEBUG    botocore.hooks:hooks.py:238 Event before-send.bedrock-runtime.Converse: calling handler <moto.core.botocore_stubber.BotocoreStubber object at 0x7ff9823d3770>
+DEBUG    urllib3.connectionpool:connectionpool.py:247 Starting new HTTP connection (1): 127.0.0.1:46369
+DEBUG    urllib3.connectionpool:connectionpool.py:550 http://127.0.0.1:46369 "POST /model/in.anthropic.contract-model/converse HTTP/1.1" 403 24
+DEBUG    botocore.parsers:parsers.py:255 Response headers: {'Content-Type': 'application/json', 'x-amzn-ErrorType': 'AccessDeniedException', 'X-Canary': 'CANARY-zq7', 'Content-Length': '24', 'Connection': 'close'}
+DEBUG    botocore.parsers:parsers.py:256 Response body:
+b'{"message":"CANARY-zq7"}'
+DEBUG    botocore.parsers:parsers.py:255 Response headers: {'Content-Type': 'application/json', 'x-amzn-ErrorType': 'AccessDeniedException', 'X-Canary': 'CANARY-zq7', 'Content-Length': '24', 'Connection': 'close'}
+DEBUG    botocore.parsers:parsers.py:256 Response body:
+b'{"message":"CANARY-zq7"}'
+DEBUG    botocore.hooks:hooks.py:238 Event needs-retry.bedrock-runtime.Converse: calling handler <botocore.retryhandler.RetryHandler object at 0x7ff968fcb1d0>
+DEBUG    botocore.retryhandler:retryhandler.py:211 No retry needed.
+________ test_r1p_every_variant_of_a_row_is_clean[HC-provider_attrs-68] ________
+
+row = Row(id='HC-provider_attrs-68', cls='provider_attrs', ledger=(), kind='exception', status='active', owner_step='R1P', s...der_http: 'provider_http'>, why='an adapter that raises; a hook returning the wrong type; a facts subclass', reason='')
+
+    @pytest.mark.parametrize("row", [r for r in R1P_EXC if r.spec.get("variants")], ids=lambda r: r.id)
+    def test_r1p_every_variant_of_a_row_is_clean(row):
+        for variant in row.spec["variants"]:
+>           err = corpus.build_exception({**row.spec, "args": (variant,)})
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_provider_errors_wire.py:724: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/data/c18a_hostile_corpus.py:636: in build_exception
+    return FACTORIES[spec["factory"]](*spec["args"])  # type: ignore[index, operator]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+variant = 'raises'
+
+    def _f_retried_hook(variant: str) -> BaseException:
+>       from hadavin_sdk.llm import provider_facts as pf
+E       ImportError: cannot import name 'provider_facts' from 'hadavin_sdk.llm' (<build-dir>/src/hadavin_sdk/llm/__init__.py)
+
+tests/data/c18a_hostile_corpus.py:306: ImportError
+________ test_r1p_every_variant_of_a_row_is_clean[HC-hostile_class-69] _________
+
+row = Row(id='HC-hostile_class-69', cls='hostile_class', ledger=(), kind='exception', status='active', owner_step='R1P', spe...', expect_code=<Code.provider_http: 'provider_http'>, why='Gemini parser errors from a malformed 200 reply', reason='')
+
+    @pytest.mark.parametrize("row", [r for r in R1P_EXC if r.spec.get("variants")], ids=lambda r: r.id)
+    def test_r1p_every_variant_of_a_row_is_clean(row):
+        for variant in row.spec["variants"]:
+            err = corpus.build_exception({**row.spec, "args": (variant,)})
+>           assert type(err) is P and err.status is None and err.request_id is None
+                                      ^^^^^^^^^^
+E           AttributeError: 'ProviderError' object has no attribute 'status'
+
+tests/test_provider_errors_wire.py:725: AttributeError
+____ test_r1p_hostile_class_rows_print_class_text_only[HC-hostile_class-61] ____
+
+row = Row(id='HC-hostile_class-61', cls='hostile_class', ledger=(), kind='exception', status='active', owner_step='R1P', spe... expect_code=<Code.provider_http: 'provider_http'>, why='a dynamic class named with a space and an at sign', reason='')
+
+    @pytest.mark.parametrize(
+        "row", [r for r in R1P_EXC if r.id.startswith("HC-hostile_class")], ids=lambda r: r.id
+    )
+    def test_r1p_hostile_class_rows_print_class_text_only(row):
+        err = corpus.build_exception(row.spec)
+        label, _, rest = str(err).partition(": ")
+        assert label in ("openai_compat", "bedrock", "gemini")
+>       assert rest.split(" ")[0] in LIB | {"ValueError", "KeyError"}
+E       AssertionError: assert 'x' in ({'dynamic_class', 'foreign_class'} | {'KeyError', 'ValueError'})
+
+tests/test_provider_errors_wire.py:742: AssertionError
+____ test_r1p_hostile_class_rows_print_class_text_only[HC-hostile_class-62] ____
+
+row = Row(id='HC-hostile_class-62', cls='hostile_class', ledger=(), kind='exception', status='active', owner_step='R1P', spe...=<Code.provider_http: 'provider_http'>, why='a legal identifier of 100 characters (the 100-character name)', reason='')
+
+    @pytest.mark.parametrize(
+        "row", [r for r in R1P_EXC if r.id.startswith("HC-hostile_class")], ids=lambda r: r.id
+    )
+    def test_r1p_hostile_class_rows_print_class_text_only(row):
+        err = corpus.build_exception(row.spec)
+        label, _, rest = str(err).partition(": ")
+        assert label in ("openai_compat", "bedrock", "gemini")
+>       assert rest.split(" ")[0] in LIB | {"ValueError", "KeyError"}
+E       AssertionError: assert 'Quentin_Abernathyzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz' in ({'dynamic_class', 'foreign_class'} | {'KeyError', 'ValueError'})
+
+tests/test_provider_errors_wire.py:742: AssertionError
+____ test_r1p_hostile_class_rows_print_class_text_only[HC-hostile_class-63] ____
+
+row = Row(id='HC-hostile_class-63', cls='hostile_class', ledger=(), kind='exception', status='active', owner_step='R1P', spe...ct='golden', expect_code=<Code.provider_auth: 'provider_auth'>, why='a modelled Amazon access-denied error', reason='')
+
+    @pytest.mark.parametrize(
+        "row", [r for r in R1P_EXC if r.id.startswith("HC-hostile_class")], ids=lambda r: r.id
+    )
+    def test_r1p_hostile_class_rows_print_class_text_only(row):
+        err = corpus.build_exception(row.spec)
+        label, _, rest = str(err).partition(": ")
+        assert label in ("openai_compat", "bedrock", "gemini")
+>       assert rest.split(" ")[0] in LIB | {"ValueError", "KeyError"}
+E       AssertionError: assert 'ClientError' in ({'dynamic_class', 'foreign_class'} | {'KeyError', 'ValueError'})
+
+tests/test_provider_errors_wire.py:742: AssertionError
+____ test_r1p_hostile_class_rows_print_class_text_only[HC-hostile_class-64] ____
+
+row = Row(id='HC-hostile_class-64', cls='hostile_class', ledger=(), kind='exception', status='active', owner_step='R1P', spe...ammar', expect_code=<Code.provider_http: 'provider_http'>, why='a class whose module name raises when read', reason='')
+
+    @pytest.mark.parametrize(
+        "row", [r for r in R1P_EXC if r.id.startswith("HC-hostile_class")], ids=lambda r: r.id
+    )
+    def test_r1p_hostile_class_rows_print_class_text_only(row):
+        err = corpus.build_exception(row.spec)
+        label, _, rest = str(err).partition(": ")
+        assert label in ("openai_compat", "bedrock", "gemini")
+>       assert rest.split(" ")[0] in LIB | {"ValueError", "KeyError"}
+E       AssertionError: assert 'E' in ({'dynamic_class', 'foreign_class'} | {'KeyError', 'ValueError'})
+
+tests/test_provider_errors_wire.py:742: AssertionError
+_________________ test_r1p_scenario_rows[HC-provider_attrs-65] _________________
+
+row = Row(id='HC-provider_attrs-65', cls='provider_attrs', ledger=(), kind='scenario', status='active', owner_step='R1P', sp...uentin Abernathy',), expect='no_canary', expect_code=None, why="a raw reply 'HTTP/1.1 777 IGNORE <canary>'", reason='')
+
+    @pytest.mark.parametrize("row", R1P_SCN, ids=lambda r: r.id)
+    def test_r1p_scenario_rows(row):
+        err, requests = _scenario_error(row.spec["case"])
+        line = render(diagnose(err, step="model_call"))
+        assert grammar_ok(line, "A") and not leaks(line, row.canaries + (CANARY,)), line
+>       assert all(CANARY not in text for text in _everywhere(err))
+E       assert False
+E        +  where False = all(<generator object test_r1p_scenario_rows.<locals>.<genexpr> at 0x7ff969165220>)
+
+tests/test_provider_errors_wire.py:770: AssertionError
+_____________ test_throttling_waits_and_other_errors_are_failures ______________
+
+wire = <tests.contracts.kinds.llm_wire.BedrockWire object at 0x7ff97c8ebaf0>
+
+    def test_throttling_waits_and_other_errors_are_failures(wire):
+        throttle = wire.scenario("throttle")
+        with pytest.raises(ProviderExhausted):
+            wire.serve(throttle, throttle, throttle).chat(**CALL)
+        with pytest.raises(ProviderError) as denied:
+            wire.serve(wire.scenario("denied")).chat(**CALL)
+        assert not isinstance(denied.value, ProviderExhausted)
+>       assert denied.value.status == 403
+               ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'ProviderError' object has no attribute 'status'
+
+tests/warden_port/test_bedrock_provider_r16.py:70: AttributeError
+=============================== warnings summary ===============================
+tests/test_provider_errors_wire.py::test_r1_golden_wire_rows[row3-anthropic]
+  <build-dir>/lib/python3.13/site-packages/_pytest/unraisableexception.py:63: PytestUnraisableExceptionWarning: Exception ignored in: <function _TemporaryFileCloser.__del__ at 0x7ff985ac58a0>
+  
+  Traceback (most recent call last):
+    File "/usr/local/lib/python3.13/tempfile.py", line 527, in __del__
+      self.cleanup()
+      ~~~~~~~~~~~~^^
+    File "/usr/local/lib/python3.13/tempfile.py", line 507, in cleanup
+      self.file.close()
+      ~~~~~~~~~~~~~~~^^
+    File "<build-dir>/tests/test_provider_errors_failbefore.py", line 510, in close
+      raise RuntimeError("close")
+  RuntimeError: close
+  
+  Enable tracemalloc to get traceback where the object was allocated.
+  See https://docs.pytest.org/en/stable/how-to/capture-warnings.html#resource-warnings for more info.
+    warnings.warn(pytest.PytestUnraisableExceptionWarning(msg))
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/contracts/test_llm.py::test_a_refused_key_reports_its_status_and_closed_type[anthropic.api]
+FAILED tests/contracts/test_llm.py::test_a_refused_key_reports_its_status_and_closed_type[anthropic.foundry]
+FAILED tests/contracts/test_llm.py::test_a_refused_key_reports_its_status_and_closed_type[anthropic.vertex]
+FAILED tests/contracts/test_llm.py::test_a_refused_key_reports_its_status_and_closed_type[bedrock]
+FAILED tests/contracts/test_llm.py::test_a_refused_key_reports_its_status_and_closed_type[gemini]
+FAILED tests/contracts/test_llm.py::test_a_refused_key_reports_its_status_and_closed_type[openai_compat]
+FAILED tests/contracts/test_llm.py::test_three_throttles_report_the_retry_facts[anthropic.api]
+FAILED tests/contracts/test_llm.py::test_three_throttles_report_the_retry_facts[anthropic.foundry]
+FAILED tests/contracts/test_llm.py::test_three_throttles_report_the_retry_facts[anthropic.vertex]
+FAILED tests/contracts/test_llm.py::test_three_throttles_report_the_retry_facts[bedrock]
+FAILED tests/contracts/test_llm.py::test_three_throttles_report_the_retry_facts[gemini]
+FAILED tests/contracts/test_llm.py::test_three_throttles_report_the_retry_facts[openai_compat]
+FAILED tests/test_diagnostic.py::test_diagnose_never_raises_on_exception - Im...
+FAILED tests/test_diagnostic.py::test_provider_attributes_are_read_with_exact_types
+FAILED tests/test_diagnostic.py::test_provider_codes_follow_status_then_type
+FAILED tests/test_diagnostic_hostile.py::test_row[HC-provider_attrs-01] - Ass...
+FAILED tests/test_diagnostic_hostile.py::test_row[HC-hostile_class-63] - Asse...
+FAILED tests/test_diagnostic_hostile.py::test_row[HC-provider_attrs-68] - Imp...
+FAILED tests/test_diagnostic_hostile.py::test_every_active_row_has_teeth - Im...
+FAILED tests/test_diagnostics_old_writers.py::test_old_writers[HC-hostile_class-62]
+FAILED tests/test_diagnostics_old_writers.py::test_old_writers[HC-provider_attrs-68]
+FAILED tests/test_llm_text_channels.py::test_r7_the_llm_sources_have_no_unsanctioned_text_channel
+FAILED tests/test_p5p6_followups.py::test_bedrock_reports_status_and_closed_type
+FAILED tests/test_provider_errors_failbefore.py::test_r5_a_decision_that_crashed_is_the_billed_class[status_code-raises]
+FAILED tests/test_provider_errors_failbefore.py::test_r5_a_decision_that_crashed_is_the_billed_class[status_code-recursion]
+FAILED tests/test_provider_errors_failbefore.py::test_r5_a_decision_that_crashed_is_the_billed_class[reason-raises]
+FAILED tests/test_provider_errors_failbefore.py::test_r5_a_decision_that_crashed_is_the_billed_class[reason-eq-raises]
+FAILED tests/test_provider_errors_failbefore.py::test_r5_a_decision_that_crashed_is_the_billed_class[hook-raises]
+FAILED tests/test_provider_errors_failbefore.py::test_r5_a_decision_that_crashed_is_the_billed_class[bool-raises-BN1c]
+FAILED tests/test_provider_errors_failbefore.py::test_r5_a_decision_that_crashed_is_the_billed_class[class-property-raises-BN4]
+FAILED tests/test_provider_errors_failbefore.py::test_r5_a_decision_that_crashed_is_the_billed_class[bedrock-response-list]
+FAILED tests/test_provider_errors_failbefore.py::test_r5_a_decision_that_crashed_is_the_billed_class[bedrock-error-str]
+FAILED tests/test_provider_errors_failbefore.py::test_r5_a_decision_that_crashed_is_the_billed_class[bedrock-meta-list]
+FAILED tests/test_provider_errors_failbefore.py::test_r5_attempt_two_hook_failure_is_billed_with_attempt_two
+FAILED tests/test_provider_errors_failbefore.py::test_r5_bn1a_a_truthy_hook_result_is_retried_to_exhaustion
+FAILED tests/test_provider_errors_failbefore.py::test_r5_bn1b_a_falsy_hook_result_is_refused_at_once
+FAILED tests/test_provider_errors_failbefore.py::test_r5_claude_body_cases[str-subclass-body]
+FAILED tests/test_provider_errors_failbefore.py::test_r5_claude_body_cases[5mib-body]
+FAILED tests/test_provider_errors_failbefore.py::test_r5_claude_body_cases[dict-subclass-body-401]
+FAILED tests/test_provider_errors_failbefore.py::test_r5_claude_body_cases[type-int]
+FAILED tests/test_provider_errors_failbefore.py::test_r5_claude_body_cases[type-list]
+FAILED tests/test_provider_errors_failbefore.py::test_r5_claude_body_cases[type-str-subclass]
+FAILED tests/test_provider_errors_failbefore.py::test_r5_claude_body_cases[type-10kb-with-newline-and-email]
+FAILED tests/test_provider_errors_failbefore.py::test_r5_claude_body_cases[type-injected-short-code]
+FAILED tests/test_provider_errors_failbefore.py::test_r5_bedrock_code_not_a_short_exact_string_gives_the_status_type[int]
+FAILED tests/test_provider_errors_failbefore.py::test_r5_bedrock_code_not_a_short_exact_string_gives_the_status_type[list]
+FAILED tests/test_provider_errors_failbefore.py::test_r5_bedrock_code_not_a_short_exact_string_gives_the_status_type[str-subclass]
+FAILED tests/test_provider_errors_failbefore.py::test_r5_bedrock_code_not_a_short_exact_string_gives_the_status_type[10kb]
+FAILED tests/test_provider_errors_failbefore.py::test_r5_bedrock_short_injected_code_is_other
+FAILED tests/test_provider_errors_failbefore.py::test_r5_bedrock_http_status_values_outside_the_range_are_none['429']
+FAILED tests/test_provider_errors_failbefore.py::test_r5_bedrock_http_status_values_outside_the_range_are_none[True]
+FAILED tests/test_provider_errors_failbefore.py::test_r5_bedrock_http_status_values_outside_the_range_are_none[0]
+FAILED tests/test_provider_errors_failbefore.py::test_r5_bedrock_http_status_values_outside_the_range_are_none[-1]
+FAILED tests/test_provider_errors_failbefore.py::test_r5_bedrock_http_status_values_outside_the_range_are_none[429.5]
+FAILED tests/test_provider_errors_failbefore.py::test_r5_bedrock_http_status_values_outside_the_range_are_none[99999]
+FAILED tests/test_provider_errors_failbefore.py::test_r5_bedrock_http_status_values_outside_the_range_are_none[100000000000]
+FAILED tests/test_provider_errors_failbefore.py::test_r5_claude_request_ids[None]
+FAILED tests/test_provider_errors_failbefore.py::test_r5_claude_request_ids[b'req_ABCDEFGH]
+FAILED tests/test_provider_errors_failbefore.py::test_r5_claude_request_ids['req_AAAAAAAAA]
+FAILED tests/test_provider_errors_failbefore.py::test_r5_claude_request_ids['req_ABCDEFGH\\]
+FAILED tests/test_provider_errors_failbefore.py::test_r5_claude_request_ids['req_\u0660\u0661\u0662\u0663\u0664\u0665\u0666\u0667']
+FAILED tests/test_provider_errors_failbefore.py::test_r5_claude_request_ids['ABCDEFGHIJ']
+FAILED tests/test_provider_errors_failbefore.py::test_r5_claude_request_ids['req_ABCDEFGH']
+FAILED tests/test_provider_errors_failbefore.py::test_r5_bedrock_uuid_with_trailing_newline_is_refused
+FAILED tests/test_provider_errors_failbefore.py::test_r5_hook_returning_the_wrong_type_or_a_subclass_or_raising_gives_no_facts
+FAILED tests/test_provider_errors_failbefore.py::test_r5_cause_cycle_and_a_status_that_changes_between_reads
+FAILED tests/test_provider_errors_failbefore.py::test_r6_500_random_hostile_failures_keep_the_message_grammar
+FAILED tests/test_provider_errors_failbefore.py::test_r8a_refused_at_once_closes_the_connection_without_a_read
+FAILED tests/test_provider_errors_failbefore.py::test_r8b_three_retried_attempts_close_all_three
+FAILED tests/test_provider_errors_failbefore.py::test_r8c_a_close_that_raises_never_replaces_the_real_error
+FAILED tests/test_provider_errors_failbefore.py::test_r9_detail_hook_is_removed_everywhere
+FAILED tests/test_provider_errors_failbefore.py::test_r10_a_wait_computation_that_raises_is_a_decision_failure[headers.get-raises]
+FAILED tests/test_provider_errors_failbefore.py::test_r10_a_wait_computation_that_raises_is_a_decision_failure[headers-property-raises]
+FAILED tests/test_provider_errors_failbefore.py::test_r10_a_wait_computation_that_raises_is_a_decision_failure[response-property-raises]
+FAILED tests/test_provider_errors_failbefore.py::test_r17_the_traceback_never_prints_the_original_error_text[urlerror-reason]
+FAILED tests/test_provider_errors_failbefore.py::test_r17_the_traceback_never_prints_the_original_error_text[bedrock-message]
+FAILED tests/test_provider_errors_wire.py::test_r1_golden_wire_rows[row1-anthropic]
+FAILED tests/test_provider_errors_wire.py::test_r1_golden_wire_rows[row2-anthropic]
+FAILED tests/test_provider_errors_wire.py::test_r1_golden_wire_rows[row3-anthropic]
+FAILED tests/test_provider_errors_wire.py::test_r1_golden_wire_rows[row4-anthropic]
+FAILED tests/test_provider_errors_wire.py::test_r1_golden_wire_rows[row5-anthropic]
+FAILED tests/test_provider_errors_wire.py::test_r1_golden_wire_rows[row6-anthropic]
+FAILED tests/test_provider_errors_wire.py::test_r1_golden_wire_rows[row7-anthropic]
+FAILED tests/test_provider_errors_wire.py::test_r1_golden_wire_rows[row12-bedrock]
+FAILED tests/test_provider_errors_wire.py::test_r1_golden_wire_rows[row13-bedrock]
+FAILED tests/test_provider_errors_wire.py::test_r1_golden_wire_rows[row14-bedrock]
+FAILED tests/test_provider_errors_wire.py::test_r1_golden_wire_rows[row15-bedrock]
+FAILED tests/test_provider_errors_wire.py::test_r1_golden_wire_rows[row18-openai]
+FAILED tests/test_provider_errors_wire.py::test_r1_golden_wire_rows[row19-openai]
+FAILED tests/test_provider_errors_wire.py::test_r1_golden_wire_rows[row20-openai]
+FAILED tests/test_provider_errors_wire.py::test_r1_golden_wire_rows[row21-openai]
+FAILED tests/test_provider_errors_wire.py::test_r1_golden_wire_rows[row26-gemini]
+FAILED tests/test_provider_errors_wire.py::test_r1_golden_wire_rows[row27-gemini]
+FAILED tests/test_provider_errors_wire.py::test_r1_golden_wire_rows[row29-anthropic]
+FAILED tests/test_provider_errors_wire.py::test_r1_golden_wire_rows[row29-openai]
+FAILED tests/test_provider_errors_wire.py::test_r1_golden_wire_rows[row29-gemini]
+FAILED tests/test_provider_errors_wire.py::test_r1_golden_wire_rows[row29-bedrock]
+FAILED tests/test_provider_errors_wire.py::test_r1_golden_wire_rows[row32-anthropic]
+FAILED tests/test_provider_errors_wire.py::test_r1_row11_bedrock_throttle_carries_the_uuid_request_id
+FAILED tests/test_provider_errors_wire.py::test_r1_row8_claude_connection_refused_three_times
+FAILED tests/test_provider_errors_wire.py::test_r1_row22_openai_connection_refused_three_times
+FAILED tests/test_provider_errors_wire.py::test_r1_row25_openai_302_is_provider_http_with_status_only
+FAILED tests/test_provider_errors_wire.py::test_r1_stand_in_rows[row9] - Attr...
+FAILED tests/test_provider_errors_wire.py::test_r1_stand_in_rows[row16] - Att...
+FAILED tests/test_provider_errors_wire.py::test_r1_stand_in_rows[row17] - Att...
+FAILED tests/test_provider_errors_wire.py::test_r1_stand_in_rows[row23] - Att...
+FAILED tests/test_provider_errors_wire.py::test_r1_stand_in_rows[row24] - Att...
+FAILED tests/test_provider_errors_wire.py::test_r1_stand_in_rows[row31] - Att...
+FAILED tests/test_provider_errors_wire.py::test_r1_row10_vertex_refresh_error_is_authentication
+FAILED tests/test_provider_errors_wire.py::test_r1_row28_a_provider_error_raised_in_call_passes_through_unchanged
+FAILED tests/test_provider_errors_wire.py::test_r1_row30_status_777_without_oserror_is_retried_three_times_and_has_no_status
+FAILED tests/test_provider_errors_wire.py::test_r2_openai_request_counts_by_status[401-1]
+FAILED tests/test_provider_errors_wire.py::test_r2_openai_request_counts_by_status[400-1]
+FAILED tests/test_provider_errors_wire.py::test_r2_openai_request_counts_by_status[404-1]
+FAILED tests/test_provider_errors_wire.py::test_r2_openai_request_counts_by_status[429-3]
+FAILED tests/test_provider_errors_wire.py::test_r2_openai_request_counts_by_status[500-3]
+FAILED tests/test_provider_errors_wire.py::test_r2_openai_request_counts_by_status[408-3]
+FAILED tests/test_provider_errors_wire.py::test_r2_openai_request_counts_by_status[777-3]
+FAILED tests/test_provider_errors_wire.py::test_r2_openai_request_counts_by_status[302-1]
+FAILED tests/test_provider_errors_wire.py::test_r2_claude_library_777_is_retried_three_times
+FAILED tests/test_provider_errors_wire.py::test_r11a_status_line_text_never_reaches_the_error
+FAILED tests/test_provider_errors_wire.py::test_r11b_long_header_line_is_one_request_class_text_only
+FAILED tests/test_provider_errors_wire.py::test_r11c_status_1000_is_one_request_class_text_only
+FAILED tests/test_provider_errors_wire.py::test_r11e_claude_library_non_json_5_mib_body_on_a_401
+FAILED tests/test_provider_errors_wire.py::test_r13_wire_rows_1_5_12_32 - Ass...
+FAILED tests/test_provider_errors_wire.py::test_r13_row11_bedrock_uuid_request_id_is_shown
+FAILED tests/test_provider_errors_wire.py::test_r13_stand_in_rows_16_17_24 - ...
+FAILED tests/test_provider_errors_wire.py::test_r13_row10_vertex_refresh_error
+FAILED tests/test_provider_errors_wire.py::test_r16_every_modelled_converse_code[ThrottlingException]
+FAILED tests/test_provider_errors_wire.py::test_r16_every_modelled_converse_code[ModelNotReadyException]
+FAILED tests/test_provider_errors_wire.py::test_r16_every_modelled_converse_code[ModelTimeoutException]
+FAILED tests/test_provider_errors_wire.py::test_r16_every_modelled_converse_code[InternalServerException]
+FAILED tests/test_provider_errors_wire.py::test_r16_every_modelled_converse_code[ServiceUnavailableException]
+FAILED tests/test_provider_errors_wire.py::test_r16_every_modelled_converse_code[AccessDeniedException]
+FAILED tests/test_provider_errors_wire.py::test_r16_every_modelled_converse_code[ResourceNotFoundException]
+FAILED tests/test_provider_errors_wire.py::test_r16_every_modelled_converse_code[ValidationException]
+FAILED tests/test_provider_errors_wire.py::test_r16_every_modelled_converse_code[ModelErrorException]
+FAILED tests/test_provider_errors_wire.py::test_r16_bn10_quota_code_at_http_400_is_retried_by_the_code_alone
+FAILED tests/test_provider_errors_wire.py::test_r16_status_424_has_no_status_table_type_but_the_code_table_gives_one
+FAILED tests/test_provider_errors_wire.py::test_r14b_amazon_library_debug_log_holds_the_canary
+FAILED tests/test_provider_errors_wire.py::test_r1p_every_variant_of_a_row_is_clean[HC-provider_attrs-68]
+FAILED tests/test_provider_errors_wire.py::test_r1p_every_variant_of_a_row_is_clean[HC-hostile_class-69]
+FAILED tests/test_provider_errors_wire.py::test_r1p_hostile_class_rows_print_class_text_only[HC-hostile_class-61]
+FAILED tests/test_provider_errors_wire.py::test_r1p_hostile_class_rows_print_class_text_only[HC-hostile_class-62]
+FAILED tests/test_provider_errors_wire.py::test_r1p_hostile_class_rows_print_class_text_only[HC-hostile_class-63]
+FAILED tests/test_provider_errors_wire.py::test_r1p_hostile_class_rows_print_class_text_only[HC-hostile_class-64]
+FAILED tests/test_provider_errors_wire.py::test_r1p_scenario_rows[HC-provider_attrs-65]
+FAILED tests/warden_port/test_bedrock_provider_r16.py::test_throttling_waits_and_other_errors_are_failures
+SKIPPED [1] tests/contracts/test_llm.py:95: Stubber refuses a malformed Converse shape before the kind sees it
+148 failed, 398 passed, 1 skipped, 84 xfailed, 1 warning in 94.12s (0:01:34)
+RC=1

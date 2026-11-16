@@ -1,0 +1,4 @@
+UNCHECKED size: 12
+['BUNDLE', 'CARD', 'KIND', 'LLMREQ', 'MODELTEXT', 'NUM', 'NUMFIELD', 'PKGERR', 'PROC', 'REDACTED', 'STOREID', 'URL']
+UNREAD in REASONS: False
+reasons total: 45

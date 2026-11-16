@@ -1,0 +1,49 @@
+HEAD e957592d8006080addab74c37987e4b139cf0bad
+ M CHANGELOG.md
+ M tests/fixtures/mutation_manifest.json
+ M tests/mutation_runner_mutants.py
+ok  KILLED       runner: the password of a URL is not a secret  [test_masked_replaces_the_value_and_the_url_password]
+ok  KILLED       runner: the unencoded-separator URL passwords are not read  [test_a_url_password_with_unencoded_separators_is_masked]
+ok  KILLED       runner: a refused permission is not named as the cause  [test_a_lock_file_that_cannot_be_opened_names_the_cause]
+ok  KILLED       runner: a password that decodes to an odd character is accepted  [test_a_password_that_decodes_to_an_odd_character_is_refused_]
+ok  KILLED       runner: the password after a password word is not a secret  [test_the_pieces_of_an_unquoted_password_that_holds_a_semicol]
+ok  KILLED       runner: the rest of an unquoted password is not a secret  [test_an_unquoted_password_with_a_semicolon_or_an_ampersand_i]
+ok  KILLED       runner: only the first decoding step is checked for odd characters  [test_a_password_that_was_encoded_twice_or_more_is_decoded_un]
+ok  KILLED       runner: the lock file name depends on the password  [test_the_lock_file_name_does_not_depend_on_the_password]
+ok  KILLED       runner: the lock file name ignores the port of a URL  [test_the_lock_file_name_does_not_depend_on_the_password]
+ok  KILLED       runner: the lock file name ignores the database of a URL  [test_the_lock_file_name_does_not_depend_on_the_password]
+BAD SURVIVED     runner: values that are no address get a name of their own  []
+      first line: 
+BAD OTHER_TEST   runner: the lock grammar reads text after the database (a prefix match)  [test_the_lock_name_input_is_exactly_the_allowed_parts_or_unp]
+      first line: E       AssertionError: the lock name input for a case with 30 characters was not the expected one
+BAD SURVIVED     runner: the lock grammar reads a URL query  []
+      first line: 
+BAD OTHER_TEST   runner: the lock grammar reads a path of more than one part  [test_the_lock_name_input_is_exactly_the_allowed_parts_or_unp]
+      first line: E       AssertionError: the lock name input for a case with 24 characters was not the expected one
+BAD OTHER_TEST   runner: the lock grammar lets the login hold a slash  [test_the_lock_name_input_is_exactly_the_allowed_parts_or_unp]
+      first line: E       AssertionError: the lock name input for a case with 37 characters was not the expected one
+BAD OTHER_TEST   runner: the lock grammar keeps the case of a URL host  [test_the_lock_name_input_is_exactly_the_allowed_parts_or_unp]
+      first line: E       AssertionError: the lock name input for a case with 41 characters was not the expected one
+BAD OTHER_TEST   runner: the lock grammar reads a key=value host of any shape  [test_the_lock_name_input_is_exactly_the_allowed_parts_or_unp]
+      first line: E       AssertionError: the lock name input for a case with 18 characters was not the expected one
+BAD OTHER_TEST   runner: the lock grammar reads a key=value port of any shape  [test_the_lock_name_input_is_exactly_the_allowed_parts_or_unp]
+      first line: E       AssertionError: the lock name input for a case with 15 characters was not the expected one
+BAD OTHER_TEST   runner: the lock grammar reads a key=value database of any shape  [test_the_lock_name_input_is_exactly_the_allowed_parts_or_unp]
+      first line: E       AssertionError: the lock name input for a case with 17 characters was not the expected one
+BAD OTHER_TEST   runner: the lock grammar reads a key=value host address of any shape  [test_the_lock_name_input_is_exactly_the_allowed_parts_or_unp]
+      first line: E       AssertionError: the lock name input for a case with 19 characters was not the expected one
+BAD OTHER_TEST   runner: the lock grammar accepts a password word in a key  [test_the_lock_name_input_is_exactly_the_allowed_parts_or_unp]
+      first line: E       AssertionError: the lock name input for a case with 30 characters was not the expected one
+BAD OTHER_TEST   runner: the lock grammar skips blank words of a key=value address  [test_the_lock_name_input_is_exactly_the_allowed_parts_or_unp]
+      first line: E       AssertionError: the lock name input for a case with 16 characters was not the expected one
+ok  KILLED       runner: a repeated password word adds a word each time  [test_many_repeats_of_one_option_are_few_secrets_and_fast]
+ok  KILLED       runner: the number of texts to hide has no ceiling  [test_a_password_in_many_encoded_layers_is_refused_fast_witho]
+ok  KILLED       runner: a line with many dots and many values is scanned  [test_a_line_with_many_dots_and_many_secrets_is_replaced_not_]
+ok  KILLED       runner: the plus step stops at a form seen before  [test_a_plus_that_comes_from_a_percent_code_is_read_as_a_spac]
+ok  KILLED       runner: every password word text is decoded and refused  [test_the_text_after_a_password_word_and_a_space_is_not_decod]
+BAD SURVIVED     runner: the text after a password word and a space is not hidden  []
+      first line: 
+ok  KILLED       runner: a text with ? or # between a colon and an @ is decoded and refused  [test_a_host_with_a_port_is_not_read_as_a_url_login_and_a_num]
+ok  KILLED       runner: the text between a colon and an @ is not a candidate  [test_a_host_with_a_port_is_not_read_as_a_url_login_and_a_num]
+17 of 30 good; problems: ['runner: values that are no address get a name of their own', 'runner: the lock grammar reads text after the database (a prefix match)', 'runner: the lock grammar reads a URL query', 'runner: the lock grammar reads a path of more than one part', 'runner: the lock grammar lets the login hold a slash', 'runner: the lock grammar keeps the case of a URL host', 'runner: the lock grammar reads a key=value host of any shape', 'runner: the lock grammar reads a key=value port of any shape', 'runner: the lock grammar reads a key=value database of any shape', 'runner: the lock grammar reads a key=value host address of any shape', 'runner: the lock grammar accepts a password word in a key', 'runner: the lock grammar skips blank words of a key=value address', 'runner: the text after a password word and a space is not hidden']
+exit=1

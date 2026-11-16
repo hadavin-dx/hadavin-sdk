@@ -1,0 +1,5 @@
+16:30Z checkpoint 1: worktree made, merged origin/main, conflicts resolved (theirs for 5 files + P3a-2 50 test lines re-appended; stale test_migration_numbers_fix1.py removed). merge not yet committed. Next: env sync, items B/C/D, evidence.
+16:37Z checkpoint 2: merge committed 2cde7e2; items B,C2,C3,D coded in 2nd commit (tests/test_migration_rules.py, fixtures/dsn_skip.py, CHANGELOG runbook, migrate docstring). Own PG16 on 55434 running (stop at end). Next: mutants file, fail-before, then final gates.
+16:42Z checkpoint 3: head cb313d6; lint/bandit/scan_repo green; fail-before saved. Starting full suites 3.13 and 3.12 (own PG16 on 55434, UTF8 cluster; first cluster was SQL_ASCII and gave bytes - re-made).
+17:00Z checkpoint 4: final head 293bd45. First concurrent suites gave 1 failed each (create-role cluster-global race, my doing), re-run sequential 10506 passed on cb313d6; N6 survived -> test fixed -> new head 293bd45; fail-before/lint/bandit/scan done at 293bd45; full chain (suites, mutants, stage, perf) running via runall.sh.
+2026-11-06T17:28:07Z FINAL: evidence.md written, PR 73 body updated (draft), server on 55434 stopped. Head 63658aa.

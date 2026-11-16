@@ -1,0 +1,56 @@
+module: /home/user/build/EV-Q8a1b11-c6028abb/wt-old/src/hadavin_sdk/__init__.py
+rows 718 LEAK rows 88
+  anthropic.client             leak=False 6
+  anthropic.client             leak=True  6
+  k8s.probe_scope              leak=False 252
+  k8s.rules_problems_direct    leak=True  9
+  k8s.scope_problems           leak=False 252
+  k8s.settings_form            leak=False 27
+  migrate.role                 leak=True  21
+  secrets.aws                  leak=False 12
+  secrets.aws                  leak=True  16
+  secrets.azure                leak=False 18
+  secrets.azure                leak=True  9
+  secrets.gcp                  leak=False 9
+  secrets.gcp                  leak=True  18
+  settings                     leak=False 54
+  settings                     leak=True  9
+  outcome anthropic.client raised ConfigError 9
+  outcome anthropic.client returned  3
+  outcome k8s.probe_scope raised SourceError 54
+  outcome k8s.probe_scope returned  198
+  outcome k8s.rules_problems_direct returned  9
+  outcome k8s.scope_problems returned  252
+  outcome k8s.settings_form raised ValidationError 12
+  outcome k8s.settings_form returned  15
+  outcome migrate.role raised ConfigError 21
+  outcome secrets.aws raised E 1
+  outcome secrets.aws raised RuntimeError 27
+  outcome secrets.azure raised ConfigError 15
+  outcome secrets.azure raised RuntimeError 12
+  outcome secrets.gcp raised ConfigError 3
+  outcome secrets.gcp raised RuntimeError 24
+  outcome settings raised ValidationError 54
+  outcome settings returned  9
+LEAK EXAMPLES:
+   k8s.rules_problems_direct label=zq-pro.. marker=0 returned
+   k8s.rules_problems_direct label=namesp.. marker=0 returned
+   k8s.rules_problems_direct label=namesp.. marker=0 returned
+   secrets.gcp marker=0 error=quotes_path name_is_marker=False raised RuntimeError
+   secrets.gcp marker=0 error=quotes_path name_is_marker=True raised RuntimeError
+   secrets.gcp marker=0 error=quotes_name name_is_marker=False raised RuntimeError
+   secrets.aws marker=0 error=quotes_path name_is_marker=True raised RuntimeError
+   secrets.aws marker=0 error=quotes_name name_is_marker=False raised RuntimeError
+   secrets.aws marker=0 error=quotes_name name_is_marker=True raised RuntimeError
+   secrets.azure marker=0 error=quotes_path name_is_marker=True raised RuntimeError
+   secrets.azure marker=0 error=quotes_name name_is_marker=True raised RuntimeError
+   secrets.azure marker=0 error=quotes_url name_is_marker=True raised RuntimeError
+   settings aws.region extra key m=0 7 x raised ValidationError
+   settings aws.region extra key m=0 7/x raised ValidationError
+   settings aws.region extra key m=0 17_ raised ValidationError
+   anthropic.client vertex ValueError quotes url m=0 raised ConfigError
+   anthropic.client foundry ValueError quotes url m=0 raised ConfigError
+   anthropic.client vertex ValueError quotes url m=1 raised ConfigError
+   migrate.role runtime_role= marker=0 raised ConfigError
+   migrate.role runtime_role= marker+quote marker=0 raised ConfigError
+   migrate.role portal_role= marker=0 raised ConfigError

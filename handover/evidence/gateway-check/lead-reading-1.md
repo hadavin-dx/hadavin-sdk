@@ -1,0 +1,12 @@
+# Gateway check: lead reading of evidence-1.md (2026-11-06). Facts are the evidence file's; the reading is the lead's.
+FACTS (single worker, non-streaming, one fake provider, LiteLLM proxy with Postgres, key cap 0.05, 0.01 per call)
+- Sequential 20 rapid calls: 5 ok, 15 refused (422); spend 0.05 = cap, no overshoot. Pattern was 200,200,422,200,... (decisions flip-flopped).
+- 20 concurrent calls: 1 ok, 19 refused, spend 0.01, repeated on 4 fresh keys. Refusal text quoted "Current cost" 16.39 / 24.59 for a key whose database spend was 0.01 (cause not investigated).
+- budget_duration "10s": key still refused 60 s later (reset is a scheduled job; longer wait not tested).
+- Presidio default analyzer (en_core_web_lg, no custom recognizers, detection only): 30 hostile inputs found 17 missed 13; repo must-mask corpus 48 lines found 34 missed 14; flagged 7 of 14 must-keep evidence lines (false positives). MISSED in the hostile set: plain AWS-style key, sk-ant style key, password assignment, full-width and Cyrillic and zero-width and percent and HTML-entity spellings of keys, card digits with zero-width spaces.
+- Not tested: multi-worker, streaming, slow spend writes, SQLite, Presidio custom recognizers, the anonymizer step, Kong, Portkey, Concentrate (paid/closed), LiteLLM audit logs (paid tier).
+READING
+1. Budget cap: LiteLLM's key budget WORKED in the simple test and did not overshoot; under concurrency it refused almost everything (safe for money, bad for availability, cause unexplained). This does not show it is wrong, and it does not show it gives our guarantees (reserve before, settle after, exact decimal, per-run cap, fail closed on unknown billing). It is a real alternative for a client who already runs it.
+2. Masking: default Presidio is NOT enough for our standard: it misses secrets and the look-alike/encoded spellings, and flags half of the keep-lines. It could be extended with custom recognizers and a pre-normaliser, which is what our redactor is. So P5c is not redundant, but a gateway/Presidio can be an optional second layer.
+3. A gateway is one more service the client must run and secure (database, admin key, scheduled jobs).
+DECISION (lead, within standing authority; nothing cut): keep P4b1/P4b2/P5c as ticketed. Add a gateway adapter as an OUTLINED alternative with a trigger (a client already runs a gateway) to the meter and redactor kinds' option lists (no-single-dependency + tool ladder rung 2). Later, a wider test if a client asks (multi-worker, streaming).

@@ -1,0 +1,24 @@
+# pdbanner-482f7dcc-codebase-r3: part 6 (mode banner, demo-only guard), head 482f7dcc, round 3, persona codebase details
+
+Source: hand-back of the codebase reviewer (agent a188bfd8), saved by the lead (condensed). SECURITY / mode-safety path. Read-only, nothing run. Snapshot `/home/user/build/snap/pdbanner-482f7dcc`. 1 Blocker, 1 Major, 4 Minor, Nits. Lead check: tools.py at head (origin/wip/cloud-pd-banner) has `egress_check(url, frozenset(spec.hosts))` at line 585 and the "in-process boundary is code review" comment at 493, so Blocker 1 is real at head.
+
+## Blocker
+- **1** A tool can reach a real host in a demo config, so "Nothing here is sent to real systems" can be false (mode_banner.py:275-290 `_outside_endpoints` docstring; CHANGELOG batch 4 "A tool module reaches only those systems, hosts and sources, so it adds nothing"). `tools.py:585` checks `ctx.fetch` against the tool manifest's own `hosts`; `Config.egress_hosts`, `systems`, `sources` do not bound that list (config.py:326-341 no cross-check; tools.py:221-236 checks spelling only); tools.py:492-493 says the in-process boundary is code review, a tool module can open a socket itself. Round 2 design M2 named "tool"; batch 4 dismisses it on a false premise. Failing input: demo config, `llm: fake`, `store: memory`, no systems/egress_hosts/sources, `tool_modules: [mymod]`, tool manifest `hosts: [records.example.com]`: expected a real banner, got tone demo and "Nothing here is sent to real customers or real systems." Smallest honest fix: count a non-empty `tool_modules` as one real service, or reword the sentence to what is checked; test either way.
+
+## Major
+- **2** CHANGELOG says the page script "never leaves the banner blank"; mode_banner.js:78-110: with `appendChild` throwing and any non-empty `textContent` write throwing (probe `failing-all-writes`), `fill()` clears the text first, the last-resort write also throws, element ends unhidden with empty text (reads as "all real"). Test `test_a_failed_last_resort_write_never_leaves_the_banner_hidden` asserts only `hidden is False`; J12 pins only the unhide. Fix: write the fallback text before clearing, or reword to "never hidden"; assert the text too.
+
+## Minor
+- **3** `_is_this_machine` (mode_banner.py:242-251, :263-272) is a fifth private loopback copy (config.py:150 `_LOOPBACK`, guard/http.py:21 `LOOPBACK`, backends/table.py:68, llm/openai_compat.py:37, guard/egress.py:13 `normalise_host`, app.py:348-350 `_source_host`); banner accepts all of 127.0.0.0/8, the connection guard only three names. Reuse `guard.http.LOOPBACK` and `normalise_host`. No repo test banning private loopback lists was found.
+- **4** `_check_what_is_claimed` (mode_banner.py:205) substring test vs the page's whole-word `hasName` (mode_banner.js:27-36, boundary `[A-Za-z0-9]`, `_NAME_OK` also allows `.`, `_`, `-`): name "CRM" accepted inside "CRM-lite"; B28 reaches the demo check only because "record" appears in "Every record here". Make the rules equal; fix the B28 fixture.
+- **5** getattr defaults fail open (:281, 284, 287). J14 only proves the "CRMS" suffix: no "CRMS and CRM" or "xCRM" case. B23 killed by a DNS-name row only; no `systems` case with a non-loopback IP literal. B20-B25 share the loose expect "AssertionError: ('". No mutant for the `source.settings` build-failure path of B25.
+- **6** Guard tests and mutants miss the UTF-8 binary branch (the "real binary" fixture holds both NUL and invalid UTF-8; deleting the `UnicodeDecodeError` branch of `_looks_binary` survives) and the exempt-submodule branch (a mutant dropping `and rel not in exempt`, demo_only_guard.py:241, survives). `_looks_binary` reads the whole file, then `_scan_file` again. A polyglot with a NUL in the first 8k named `.png` is skipped: CHANGELOG "skipped only when it really is binary" overclaims.
+
+## Nit
+- 7 `EXTERNAL_SYSTEMS`, `EGRESS_HOSTS`, `READ_SOURCES` missing from `__all__` (:38-46); module docstring "Rules the tests pin" omits the endpoint fields and the claim check; tests/test_workflow_files_parse.py change is line-wrap only; a gitlink whose directory is missing gives no hit (demo_only_guard.py:235-236); G29 passes on old code, only the dash rows differ.
+
+## Checked and found fine
+Rows B26, B27, B28, J10, J11, J12 (unhide), G24-G26 (old string present once, test fails under the mutation); B5 and B7 expectations; `_url_leaves_this_machine` precedence and odd inputs (`localhost@evil`, `127.0.0.1.evil.com` count as leaving); `localhost.` and `[::1]` accepted; `KubernetesSettings.api_url` usage; new tests fail on old code except the negative control; JS freeze keeps exports; no third-party loopback list added.
+
+## Not checked
+STAGES and `make_cfg` of the real-config test (sibling main has no stages.py); mutation_runner `crash=`/`expect` semantics; ci.yml; mode_banner.css; ipaddress behaviour across Python versions; UTF-16 text; mutant time limits.

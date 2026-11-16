@@ -1,0 +1,28 @@
+# Finding map, P1a fix3, head 68efd66 (file:line at that head)
+
+The ledger rows BL-hadavin-sdk-p1a-005..013 are not readable from the builder side (the ledger holds no such rows in the files I can read),
+so the table is keyed by the review finding text (design F1-F11, codebase F1-F13). The lead aligns ids to rows. Mutant numbers are the
+1-based position in tests/textnorm_mutants.py (69 in all).
+
+| Finding | Fix location | Test(s) | Mutant(s) |
+|---|---|---|---|
+| design F1 BLOCKER, Greek look-alike + U+0345 (lead probe 3) | textnorm.py:332 `_READINGS`, :339 `_prefix`, :348 `_finish`, :366 `_views`, :394 `fold_views`, :411 `squeeze_views`, :467 `identity_keys`, :475 `same_person` | test_a_greek_look_alike_with_ypogegrammeni_is_the_latin_word_for_same_person_and_for_a_scan; test_lead_probe_3_a_greek_look_alike_with_ypogegrammeni_against_the_latin_word; test_a_ypogegrammeni_after_any_greek_letter_leaves_the_readings_of_the_word_matching (every Greek letter, lower and upper); test_every_greek_look_alike_of_the_table_plus_ypogegrammeni_is_the_latin_word | 55, 56, 57, 58, 62, 64, 65 |
+| design F9 MINOR, U+0345 exemption too wide (test_textnorm.py ~:414-417, :437-438, :737 at the old head) | exemption removed from the single-key symmetry tests and replaced by an exact one | test_identity_keys_and_same_person_hold_for_every_code_point_the_single_key_and_case_symmetry; test_same_person_is_case_symmetric_for_pairs_built_from_the_table_and_the_narrowed_exemption_is_exact; test_random_strings_are_idempotent_case_symmetric_and_stable_under_inserted_marks; test_u0345_is_an_iota_after_a_greek_letter_and_is_removed_everywhere_else | 51, 52, 53, 54 |
+| codebase F1 MAJOR, four capitals (Eta/Mu/Nu/Upsilon; lead probe 4) | textnorm.py:348 `_finish` (`table_first`), :332 `_READINGS` (reading c), :475 `same_person`, :496 `allow_equal` | test_the_four_greek_capitals_that_look_like_latin_capitals_are_the_same_person (Howard, Mark, Nick, Yan); test_lead_probe_4_the_four_capitals_against_the_latin_names; test_every_table_source_is_the_same_person_as_the_text_it_looks_like; test_the_readings_are_not_transitive_and_over_match_on_purpose | 57, 58, 60, 61, 63 |
+| design F1 fix shape, a fixed small set of readings | textnorm.py:332 (3 readings), :366 `_views` (dedup, fixed order) | test_identity_keys_is_a_small_fixed_set_that_holds_the_single_key; test_fold_views_and_squeeze_views_hold_the_single_fold_and_are_bounded; test_a_key_made_on_another_unicode_version_carries_the_tag_on_every_reading | 59 (unbounded), 66 (tag on each reading) |
+| design F6 MINOR, linear work before the size refusal | textnorm.py:275 `_checked` (length compared before `_weight` at :268) | test_the_cheap_length_check_runs_before_any_per_character_work; perf: test_a_huge_text_of_distinct_characters_is_refused_from_its_length_alone, test_a_text_of_distinct_characters_at_the_cap_is_weighed_and_read_in_linear_time, test_a_text_of_a_greek_letter_and_ypogegrammeni_pairs_at_the_cap_is_read_in_linear_time | 67, 68 (and 32-34 for the weight rule) |
+| codebase F12 NIT, `_canon` vs D146, symmetry over all code points | textnorm.py:436 `_canon` (NFKD, case fold, NFKD, case fold), :509 `names_equal` | test_names_equal_and_the_canonical_form_are_case_symmetric_for_every_code_point (U+0131 the one pinned exception) | 69 (the second fold itself is not testable: no mutant) |
+| design F8 NIT, removed mutant with a wrong sentence | tests/textnorm_mutants.py: mutant restored | killed by test_u0345_is_an_iota_after_a_greek_letter_and_is_removed_everywhere_else | 54 |
+| design F11 / codebase F6 / design F3 (part), dead TEXTNORM_MAX_PASSES | removed from defaults.py; CHANGELOG line rewritten | test_the_public_names_are_exactly_the_listed_twenty_two (no constant is exported); meta tests | none (a removal) |
+| design F3 MAJOR, rung table missing | PR 63 description (rung table, R448); not code | none | none |
+| codebase F5 MINOR, punctuation limit unnamed | textnorm.py:114 "Honest limits" (PUNCTUATION named); CHANGELOG fold4 entry | corpus rows r085, r114-r117 stay strict xfail (tests/test_textnorm_differential.py) | none |
+| codebase F7 MINOR, 15.1-only table sources | _confusables.py:4 notice, tools/gen_confusables.py:12 docstring and :66 header, CHANGELOG | test_no_table_source_is_in_a_dropped_category_or_unassigned (tests/test_textnorm_generator.py:73; 0 unassigned sources, notice text asserted) | none |
+| design F2 MAJOR, dead entries claim | does not reproduce (0 unassigned sources, now asserted); drop-vs-mark policy for unassigned input is P1b | same test as above | none |
+| codebase F8 NIT, generator test docstring | tests/test_textnorm_generator.py:73-83 | same test | none |
+| codebase F9 NIT, "step 6" | textnorm.py:27 and :29 now read step 7 | none (text) | none |
+| codebase F11 MINOR, notice must travel with copies | CHANGELOG ("MUST NOT BE STRIPPED"), _confusables.py:4 notice | test_no_table_source_is_in_a_dropped_category_or_unassigned (asserts "MUST NOT BE REMOVED"); test_the_manifest_pins_the_files_a_demo_copies | none |
+| design F10 NIT, stage wording | textnorm.py:94 and :535 (pilot and prod); CHANGELOG (demo) | none (text) | none |
+| design F5 MINOR, advisory pin guard | not in fix3 (P1b: app.build refusal) | none | none |
+| codebase F2, F3, F13; design F4 (egress, injection, runmap/evidence) | not in fix3; recorded for P1b (BN-18) | none | none |
+| codebase F4 / design F7 MINOR, evidence gaps | evidence directory fix3 (ruff, format, bandit, both Pythons, old-head run); Windows 408 vs 429 still UNVERIFIED | fail-before-oldhead-py313.txt | none |
+| codebase F10 MINOR, no 3.14 job | not in fix3 | none | none |

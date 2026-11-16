@@ -1,0 +1,1136 @@
+"""StackBackend (WARDEN_BACKEND=stack), against fake AWS clients - no account, no network.
+
+The load-bearing tests are the two at the bottom: the IAM role in terraform/fullstack/reader.tf is
+checked against every call this module (and the AwsBackend it reuses) makes, in both directions,
+and the module is walked for anything write-shaped.
+"""
+
+from __future__ import annotations
+
+import ast
+import inspect
+import io
+import json
+import pathlib
+import re
+import zipfile
+from datetime import UTC, datetime, timedelta
+from types import SimpleNamespace
+
+import pytest
+
+from fakes import HUNTER2, dsn, secret_value
+from warden import aws_backend, aws_stack
+from warden.aws_stack import StackBackend, parse_tracebacks, source_excerpt
+from warden.models import Alert, Severity
+from warden.tools import PARTIAL_PREFIX, gather, resolve_backend
+
+ROOT = pathlib.Path(__file__).resolve().parents[1]
+NOW = datetime.now(UTC).replace(microsecond=0)
+P = "warden-dev-"
+
+
+# --------------------------------------------------------------------------- fakes
+
+
+class Fake:
+    """A boto3-shaped client: each method returns a canned value, raises it, or calls it."""
+
+    def __init__(self, **methods):
+        self.meta = SimpleNamespace(region_name="ap-south-2")
+        self.calls: list[tuple[str, dict]] = []
+        self._methods = methods
+
+    def __getattr__(self, name):
+        if name.startswith("_"):
+            raise AttributeError(name)
+
+        def call(**kwargs):
+            self.calls.append((name, kwargs))
+            value = self._methods[name]
+            if isinstance(value, Exception):
+                raise value
+            return value(**kwargs) if callable(value) else value
+
+        return call
+
+
+class ClientError(Exception):
+    def __init__(self, code):
+        super().__init__(f"An error occurred ({code})")
+        self.response = {"Error": {"Code": code}}
+
+
+def _cw(values: dict[str, list[float]] | None = None):
+    """get_metric_data answering by MetricName (or 'expr' for an Expression query)."""
+    values = values if values is not None else {}
+
+    def get_metric_data(MetricDataQueries, **_):
+        out = []
+        for q in MetricDataQueries:
+            name = q["MetricStat"]["Metric"]["MetricName"] if "MetricStat" in q else "expr"
+            out.append({"Id": q["Id"], "Values": list(values.get(name, []))})
+        return {"MetricDataResults": out}
+
+    return Fake(get_metric_data=get_metric_data)
+
+
+def _events(group_messages: dict[str, list[tuple[str, str]]]):
+    """filter_log_events by group: {group: [(stream, message), ...]}."""
+    ts = int(NOW.timestamp() * 1000)
+    return Fake(filter_log_events=lambda logGroupName, **_: {"events": [
+        {"logStreamName": s, "timestamp": ts, "message": m}
+        for s, m in group_messages.get(logGroupName, [])
+    ]},
+        # Logs Insights (R22): two minutes with error lines, counted by CloudWatch.
+        start_query=lambda **_: {"queryId": "q-1"},
+        get_query_results=lambda queryId: {"status": "Complete", "results": [
+            [{"field": "bin(1m)", "value": "2026-01-01 00:00:00.000"}, {"field": "n", "value": "3"}],
+            [{"field": "bin(1m)", "value": "2026-01-01 00:01:00.000"}, {"field": "n", "value": "5"}]]},
+        stop_query=lambda queryId: {"success": True})
+
+
+_SECRET_VALUE = secret_value("super")
+
+
+def _lambda(**over):
+    methods = {
+        "get_alias": {"FunctionVersion": "7"},
+        "get_function_configuration": {"Timeout": 1, "MemorySize": 256, "Environment": {
+            "Variables": {"TABLE_NAME": "warden-dev-carts", "REDIS_HOST": "cache.internal",
+                          "DB_PASSWORD": _SECRET_VALUE, "API_TOKEN": "tok-123"}}},
+        "get_function_concurrency": {"ReservedConcurrentExecutions": 0},
+        "list_versions_by_function": {"Versions": [
+            {"Version": "$LATEST"},
+            {"Version": "6", "LastModified": (NOW - timedelta(days=3)).strftime("%Y-%m-%dT%H:%M:%S.000+0000")},
+            {"Version": "7", "LastModified": (NOW - timedelta(minutes=4)).strftime("%Y-%m-%dT%H:%M:%S.000+0000")},
+        ]},
+        "list_event_source_mappings": {"EventSourceMappings": []},
+        "get_function": {"Code": {"Location": "https://bucket.example/pkg.zip"}},
+    }
+    methods.update(over)
+    return Fake(**methods)
+
+
+def _sqs(policy_allows=True):
+    queues = {
+        f"{P}orders": {"ApproximateNumberOfMessages": "120", "ApproximateNumberOfMessagesNotVisible": "5",
+                       "VisibilityTimeout": "30",
+                       "RedrivePolicy": json.dumps({"deadLetterTargetArn": f"arn:aws:sqs:ap-south-2:1:{P}orders-dlq",
+                                                    "maxReceiveCount": 3})},
+        f"{P}orders-dlq": {"ApproximateNumberOfMessages": "14"},
+        f"{P}payments": {"ApproximateNumberOfMessages": "2", "ApproximateNumberOfMessagesNotVisible": "0",
+                         "VisibilityTimeout": "60"},
+        f"{P}notifications": {"Policy": json.dumps({"Statement": [{
+            "Effect": "Allow", "Principal": {"Service": "sns.amazonaws.com"}, "Action": "sqs:SendMessage",
+            "Condition": {"ArnEquals": {"aws:SourceArn": f"arn:aws:sns:ap-south-2:1:{P}order-events"
+                                        if policy_allows else "arn:aws:sns:ap-south-2:1:other"}}}]})},
+    }
+    return Fake(
+        get_queue_url=lambda QueueName: {"QueueUrl": f"https://sqs/{QueueName}"},
+        get_queue_attributes=lambda QueueUrl, AttributeNames: {"Attributes": {
+            k: v for k, v in queues[QueueUrl.rsplit("/", 1)[1]].items() if k in AttributeNames}},
+    )
+
+
+def _ecs():
+    arn = "arn:aws:ecs:ap-south-2:1:task-definition/orders-api:"
+    return Fake(
+        describe_services={"services": [{
+            "status": "ACTIVE", "runningCount": 2, "desiredCount": 2, "pendingCount": 0,
+            "taskDefinition": arn + "8",
+            "networkConfiguration": {"awsvpcConfiguration": {"securityGroups": ["sg-0ecs"]}},
+            "deployments": [
+                {"status": "PRIMARY", "createdAt": NOW - timedelta(minutes=3), "taskDefinition": arn + "8"},
+                {"status": "ACTIVE", "createdAt": NOW - timedelta(days=1), "taskDefinition": arn + "7"},
+            ]}], "failures": []},
+        describe_task_definition=lambda taskDefinition: {"taskDefinition": {
+            "taskRoleArn": "arn:aws:iam::1:role/warden-dev-orders-api-task",
+            "containerDefinitions": [{"image": f"app:{taskDefinition.rsplit(':', 1)[1]}"}]}},
+        list_tasks={"taskArns": ["arn:aws:ecs:ap-south-2:1:task/c/0123456789abcdef"]},
+        describe_tasks={"tasks": [{
+            "taskArn": "arn:aws:ecs:ap-south-2:1:task/c/0123456789abcdef", "taskDefinitionArn": arn + "8",
+            "stopCode": "TaskFailedToStart", "stoppedAt": NOW - timedelta(minutes=2),
+            "stoppedReason": "ResourceInitializationError: unable to pull secrets or registry auth: "
+                             "ResourceNotFoundException: Secrets Manager can't find the specified secret.",
+            "containers": [{"name": "app"}]}]},
+    )
+
+
+class FakeK8s:
+    def __init__(self):
+        self.alerts = []
+
+    def logs(self, alert):
+        self.alerts.append(alert)
+        return ["EVENT BackOff Pod/catalog-api-1: back-off", "catalog-api-1/app 2026 boom"]
+
+    def metrics(self, alert):
+        return {"pods_ready": 0.0, "restart_count": 4.0}
+
+    def deploys(self, alert):
+        return [{"deployment": alert.labels["deployment"], "revision": "3", "image": "cat:bad",
+                 "previous_image": "cat:good", "at": NOW.isoformat(), "by": "kubernetes"}]
+
+
+class FakeDb:
+    def __init__(self, dsn):
+        self.dsn = dsn
+
+    def metrics(self, alert):
+        return {"connections_active": 90.0, "max_connections": 100.0}
+
+    def logs(self, alert):
+        return [f"postgres stuck connection: pid 42 on {self.dsn}"]
+
+
+def _clients(**over):
+    c = {
+        "lambda": _lambda(),
+        "logs": _events({}),
+        "cloudwatch": _cw(),
+        "ecs": _ecs(),
+        "sqs": _sqs(),
+        "dynamodb": Fake(describe_table={"Table": {
+            "TableStatus": "ACTIVE", "BillingModeSummary": {"BillingMode": "PROVISIONED"},
+            "ProvisionedThroughput": {"ReadCapacityUnits": 1, "WriteCapacityUnits": 1}}}),
+        "elasticache": Fake(
+            describe_replication_groups={"ReplicationGroups": [{"MemberClusters": [f"{P}redis-001", f"{P}redis-002"],
+                                                                "NodeGroups": [{"PrimaryEndpoint": {"Port": 6379}}]}]},
+            # As AWS answers: by the cluster id asked, and events by the source asked.
+            describe_cache_clusters=lambda CacheClusterId: {"CacheClusters": [c for c in [
+                {"CacheClusterId": f"{P}redis-001", "ReplicationGroupId": f"{P}redis",
+                 "CacheClusterStatus": "available", "CacheNodeType": "cache.t4g.micro",
+                 "SecurityGroups": [{"SecurityGroupId": "sg-0redis"}]},
+                {"CacheClusterId": f"{P}redis-002", "ReplicationGroupId": f"{P}redis",
+                 "CacheClusterStatus": "modifying", "CacheNodeType": "cache.t4g.micro",
+                 "SecurityGroups": [{"SecurityGroupId": "sg-0redis"}]},
+                {"CacheClusterId": "other-001", "ReplicationGroupId": "someone-else", "CacheClusterStatus": "available"}]
+                if c["CacheClusterId"] == CacheClusterId]},
+            describe_events=lambda SourceIdentifier, **_: {"Events": [e for e in [
+                {"SourceIdentifier": f"{P}redis-001", "Date": NOW, "Message": "Failover complete"},
+                {"SourceIdentifier": "someone-else", "Date": NOW, "Message": "not ours"}]
+                if e["SourceIdentifier"] == SourceIdentifier]}),
+        "rds": Fake(
+            describe_db_clusters={"DBClusters": [{"Status": "available", "DBClusterMembers": [
+                {"DBInstanceIdentifier": f"{P}aurora-1", "IsClusterWriter": True},
+                {"DBInstanceIdentifier": f"{P}aurora-2", "IsClusterWriter": False}]}]},
+            describe_db_log_files={"DescribeDBLogFiles": [{"LogFileName": "error/postgresql.log", "LastWritten": 1}]},
+            download_db_log_file_portion={"LogFileData": "2026-10-15 05:29:01 UTC::@:[1]:LOG: checkpoint\n"
+                                                         "2026-10-15 05:29:02 UTC:10.0.0.9(5):warden_dev_app@shop:[7]:FATAL:  password "
+                                                         "authentication failed for user \"warden_dev_app\"\n"},
+            describe_db_instances={"DBInstances": [
+                {"DBInstanceIdentifier": f"{P}aurora-1", "DBInstanceStatus": "available",
+                 "PerformanceInsightsEnabled": True, "DbiResourceId": "db-WRITER"},
+                {"DBInstanceIdentifier": f"{P}aurora-2", "DBInstanceStatus": "available",
+                 "PerformanceInsightsEnabled": True, "DbiResourceId": "db-READER"}]},
+            describe_events=lambda SourceIdentifier, **_: {"Events": [e for e in [
+                {"SourceIdentifier": f"{P}aurora", "Date": NOW, "Message": "Completed failover to DB instance"}]
+                if e["SourceIdentifier"] == SourceIdentifier]}),
+        "elbv2": Fake(
+            describe_load_balancers={"LoadBalancers": [{"AvailabilityZones": [
+                {"ZoneName": "test-region-1a"}, {"ZoneName": "test-region-1b"}]}]},
+            describe_load_balancer_attributes={"Attributes": [{"Key": "zonal_shift.config.enabled", "Value": "true"}]},
+            describe_target_groups={"TargetGroups": [{
+                "TargetGroupArn": f"arn:aws:elasticloadbalancing:ap-south-2:1:targetgroup/{P}orders/abc",
+                "HealthCheckPath": "/healthz", "HealthCheckPort": "traffic-port", "Matcher": {"HttpCode": "200"},
+                "LoadBalancerArns": [f"arn:aws:elasticloadbalancing:ap-south-2:1:loadbalancer/app/{P}alb/def"]}]},
+            describe_target_health={"TargetHealthDescriptions": [
+                {"Target": {"Id": "10.42.0.12", "Port": 8080}, "TargetHealth": {
+                    "State": "unhealthy", "Reason": "Target.ResponseCodeMismatch",
+                    "Description": "Health checks failed with these codes: [404]"}},
+                {"Target": {"Id": "10.42.0.13", "Port": 8080}, "TargetHealth": {"State": "healthy"}}]}),
+        "apigatewayv2": Fake(get_apis={"Items": [{"Name": f"{P}api", "ApiId": "a1"}]}),
+        "secretsmanager": Fake(describe_secret={"Name": f"{P}db-app", "LastChangedDate": NOW - timedelta(minutes=10)}),
+        "sns": Fake(list_subscriptions_by_topic={"Subscriptions": [
+            {"Protocol": "sqs", "Endpoint": f"arn:aws:sqs:ap-south-2:1:{P}notifications"}]}),
+        "events": Fake(describe_rule={"State": "DISABLED", "ScheduleExpression": "rate(5 minutes)"}),
+        "sts": Fake(get_caller_identity={"Account": "1"}),
+        "cloudtrail": Fake(lookup_events=lambda **kw: {"Events": []}),
+        # ⛔ Every client the backend builds MUST be faked here: a missing one makes StackBackend build
+        # a REAL boto3 client inside a unit test (test_no_real_client_is_ever_built guards it).
+        "ec2": Fake(describe_security_groups={"SecurityGroups": [{"GroupId": "sg-0redis", "IpPermissions": [
+            {"IpProtocol": "tcp", "FromPort": 6379, "ToPort": 6379, "UserIdGroupPairs": [{"GroupId": "sg-0lambda"}]},
+            {"IpProtocol": "tcp", "FromPort": 22, "ToPort": 22, "UserIdGroupPairs": [{"GroupId": "sg-0other"}]}]}]}),
+        "eks": Fake(describe_cluster={"cluster": {"resourcesVpcConfig": {
+            "clusterSecurityGroupId": "sg-0eks", "securityGroupIds": []}}},
+            list_nodegroups={"nodegroups": [f"{P}ng"]},
+            describe_nodegroup={"nodegroup": {"status": "DEGRADED", "health": {"issues": [
+                {"code": "InsufficientFreeAddresses", "message": "Subnet has insufficient free IP addresses"}]}}}),
+        "autoscaling": Fake(describe_scaling_activities={"Activities": [
+            {"StartTime": NOW - timedelta(minutes=6), "StatusCode": "Successful",
+             "Cause": "At 2026-10-10T07:00:00Z a scheduled action update of AutoScalingGroup constraints to min: 2, "
+                      "max: 8, desired: 2 changing the desired capacity from 6 to 2."},
+            {"StartTime": NOW - timedelta(hours=5), "StatusCode": "Successful", "Cause": "an old one"}]}),
+        "stepfunctions": Fake(
+            list_executions={"executions": [{"executionArn": "arn:aws:states:ap-south-2:1:execution:m:e1"}]},
+            describe_execution={"error": "States.TaskFailed", "cause": "KeyError: 'sku'", "stopDate": NOW}),
+        "pi": Fake(get_resource_metrics=lambda **kw: {"MetricList": [
+            {"Key": {"Metric": "db.load.avg"}, "DataPoints": [{"Value": 1.5}, {"Value": 4.0}]},
+            {"Key": {"Metric": "db.load.avg", "Dimensions": {"db.wait_event_type.name": "Lock"}},
+             "DataPoints": [{"Value": 3.2}]}]}),
+    }
+    c.update(over)
+    return c
+
+
+def _zip(files: dict[str, str]) -> bytes:
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as zf:
+        for name, text in files.items():
+            zf.writestr(name, text)
+    return buf.getvalue()
+
+
+APP_PY = "\n".join(f"line{n}" for n in range(1, 41)) + "\n    sku = body['sku']\nline42\nline43\nline44\nline45\n"
+
+
+def _backend(clients=None, **kw):
+    kw.setdefault("k8s_factory", FakeK8s)
+    kw.setdefault("db_factory", FakeDb)
+    kw.setdefault("download", lambda url: _zip({"app.py": APP_PY}))
+    return StackBackend(clients=clients or _clients(), **kw)
+
+
+def _alert(**labels):
+    return Alert(alert_id="fs-1", name="CheckoutErrors", severity=Severity.high, service="shop",
+                 environment="prod", summary="5xx on checkout", started_at=NOW.isoformat(),
+                 labels={"app": "shop", **labels})
+
+
+FULL = dict(
+    lambda_=f"{P}checkout", sqs=f"{P}orders", dynamodb_table=f"{P}carts", elasticache=f"{P}redis",
+    aurora_cluster=f"{P}aurora", alb_target_group=f"{P}orders", apigw=f"{P}api", ecs_cluster=f"{P}ecs",
+    ecs_service=f"{P}orders-api", namespace="shop", deployment="catalog-api", secret=f"{P}db-app",
+    sns_topic=f"{P}order-events", eventbridge_rule=f"{P}reconcile-5m",
+)
+
+
+def _full_alert(**over):
+    labels = {**FULL, **over}
+    labels["lambda"] = labels.pop("lambda_")
+    return _alert(**labels)
+
+
+@pytest.fixture
+def dsns(monkeypatch):
+    monkeypatch.setenv("WARDEN_STACK_DB_PRIMARY_RO_DSN", "postgresql://writer")
+    monkeypatch.setenv("WARDEN_STACK_DB_REPLICA_RO_DSN", "postgresql://reader")
+
+
+# --------------------------------------------------------------------------- happy path
+
+
+def test_every_reader_emits_the_contract_lines(dsns):
+    b = _backend(_clients(logs=_events({
+        f"/aws/lambda/{P}checkout": [("2026/09/26/[7]abc", "START RequestId: x"), ("2026/09/26/[7]abc", "hello")],
+        f"/ecs/{P}orders-api": [("ecs/app/1", "GET /orders 500")],
+    })))
+    lines = b.logs(_full_alert())
+    assert not [x for x in lines if x.startswith(PARTIAL_PREFIX)], lines
+    z = NOW.strftime("%Y-%m-%dT%H:%M:%SZ")
+    expected = [
+        f"LOG lambda/{P}checkout {z} hello",
+        f"LOG ecs/{P}orders-api {z} GET /orders 500",
+        "LOG k8s/shop/catalog-api EVENT BackOff Pod/catalog-api-1: back-off",
+        (f"CONFIG lambda {P}checkout timeout=1s memory=256MB reserved_concurrency=0 "
+         "env=[API_TOKEN,DB_PASSWORD,REDIS_HOST=cache.internal,TABLE_NAME=warden-dev-carts] "
+         "version=7 alias_live=7"),
+        f"QUEUE {P}orders visible=120 in_flight=5 dlq={P}orders-dlq dlq_visible=14 max_receive=3",
+        f"POLICY sqs {P}notifications allows_sns_topic={P}order-events:yes",
+        f"TABLE {P}carts billing=PROVISIONED rcu=1 wcu=1 status=ACTIVE",
+        f"EVENT elasticache {P}redis {z} Failover complete",
+        f"EVENT aurora {P}aurora {z} Completed failover to DB instance",
+        f"CLUSTER aurora {P}aurora writer={P}aurora-1 readers=[{P}aurora-2] status=available",
+        (f"TARGET {P}orders 10.42.0.12:8080 unhealthy Target.ResponseCodeMismatch: "
+         "Health checks failed with these codes: [404]"),
+        f"TARGETGROUP {P}orders health_path=/healthz port=traffic-port matcher=200",
+        f"SECRET {P}db-app changed {(NOW - timedelta(minutes=10)).strftime('%Y-%m-%dT%H:%M:%SZ')} (metadata only)",
+        f"RULE {P}reconcile-5m State=DISABLED schedule=rate(5 minutes)",
+        "postgres stuck connection: pid 42 on postgresql://writer",
+        "[reader] postgres stuck connection: pid 42 on postgresql://reader",
+    ]
+    for line in expected:
+        assert line in lines, line
+    assert not any("START RequestId" in x for x in lines)
+    assert not any("not ours" in x for x in lines)
+    # Environment variable NAMES only - a value would be a secret in the evidence.
+    # Secret-looking NAMES are shown without their value, so no fix can ever write a value back blind.
+    assert not any(_SECRET_VALUE in x or "tok-123" in x for x in lines)
+
+
+def test_metrics_use_the_contract_names(dsns):
+    b = _backend(_clients(cloudwatch=_cw({
+        "Errors": [3, 4], "Throttles": [0], "Invocations": [10, 10], "Duration": [900, 1000],
+        "ConcurrentExecutions": [2], "ApproximateAgeOfOldestMessage": [30, 600],
+        "ConsumedReadCapacityUnits": [30, 60], "ConsumedWriteCapacityUnits": [120],
+        "ReadThrottleEvents": [1], "WriteThrottleEvents": [5, 6], "expr": [7],
+        "DatabaseMemoryUsagePercentage": [91], "Evictions": [3], "CurrConnections": [4],
+        "EngineCPUUtilization": [12], "ReplicationLag": [0.5], "DatabaseConnections": [80],
+        "AuroraReplicaLag": [20], "ACUUtilization": [99], "CPUUtilization": [70], "Deadlocks": [0],
+        "HTTPCode_Target_5XX_Count": [2], "HTTPCode_ELB_5XX_Count": [1], "TargetResponseTime": [0.2],
+        "5xx": [9], "4xx": [1], "Latency": [1500], "NumberOfNotificationsFailed": [4],
+        "NumberOfNotificationsDelivered": [0],
+    })))
+    m = b.metrics(_full_alert())
+    assert m["lambda_errors"] == 7
+    assert m["lambda_duration_max_ms"] == 1000
+    assert m["lambda_timeout_s"] == 1
+    assert m["lambda_memory_mb"] == 256
+    assert m["lambda_reserved_concurrency"] == 0
+    assert m["lambda_concurrent_executions"] == 2
+    assert m["sqs_visible"] == 120
+    assert m["sqs_in_flight"] == 5
+    assert m["sqs_oldest_age_s"] == 600
+    assert m["sqs_visibility_timeout_s"] == 30
+    assert m["dlq_visible"] == 14
+    assert m["sqs_max_receive_count"] == 3
+    assert m["ddb_provisioned_wcu"] == 1
+    assert m["ddb_consumed_rcu"] == 1.0
+    assert m["ddb_consumed_wcu"] == 2.0
+    assert m["ddb_write_throttle_events"] == 11
+    assert m["ddb_throttled_requests"] == 7
+    assert m["redis_memory_pct"] == 91  # summed across the two nodes
+    assert m["redis_evictions"] == 6
+    assert m["redis_nodes_total"] == 2
+    assert m["redis_nodes_available"] == 1
+    assert m["aurora_connections"] == 80
+    assert m["aurora_replica_lag_ms"] == 20
+    assert m["aurora_acu_utilization_pct"] == 99
+    assert m["aurora_members_available"] == 2
+    assert m["connections_active"] == 90
+    assert m["reader_connections_active"] == 90
+    assert m["alb_unhealthy_hosts"] == 1
+    assert m["alb_healthy_hosts"] == 1
+    assert m["alb_target_5xx"] == 2
+    assert m["apigw_5xx"] == 9
+    assert m["apigw_latency_ms"] == 1500
+    assert m["tasks_running"] == 2  # AwsBackend's names, unchanged
+    assert m["pods_ready"] == 0  # KubernetesBackend's names, one Deployment: no suffix
+    assert m["sns_notifications_failed"] == 4
+    assert m["rule_enabled"] == 0
+    assert 590 <= m["secret_changed_age_s"] <= 610
+
+
+def test_absent_metrics_are_absent_not_zero(dsns):
+    m = _backend().metrics(_full_alert())  # CloudWatch has no datapoint for anything
+    for key in ("lambda_errors", "lambda_throttles", "sqs_oldest_age_s", "ddb_consumed_rcu",
+                "redis_memory_pct", "aurora_connections", "alb_target_5xx", "apigw_5xx",
+                "sns_notifications_failed", "rule_invocations", "cpu_utilization_pct"):
+        assert key not in m, key
+    # ...while exact API figures are still there.
+    assert m["lambda_timeout_s"] == 1
+    assert m["rule_enabled"] == 0
+
+
+def test_no_reserved_concurrency_and_no_esm_are_absent():
+    b = _backend(_clients(**{"lambda": _lambda(get_function_concurrency={})}))
+    m = b.metrics(_alert(**{"lambda": f"{P}checkout"}))
+    assert "lambda_reserved_concurrency" not in m
+    assert "lambda_esm_enabled" not in m
+
+
+def test_esm_line_and_enabled_flag():
+    lam = _lambda(list_event_source_mappings={"EventSourceMappings": [{
+        "EventSourceArn": f"arn:aws:sqs:ap-south-2:1:{P}orders", "State": "Disabled", "BatchSize": 5,
+        "LastProcessingResult": "OK"}]})
+    b = _backend(_clients(**{"lambda": lam}))
+    a = _alert(**{"lambda": f"{P}order-processor"})
+    assert f"ESM {P}order-processor <- {P}orders State=Disabled BatchSize=5 LastProcessingResult=OK" in b.logs(a)
+    assert b.metrics(a)["lambda_esm_enabled"] == 0
+
+
+def test_deploys_carry_kind_and_previous(dsns):
+    deploys = _backend().deploys(_full_alert())
+    by_kind = {d["kind"]: d for d in deploys}
+    assert by_kind["lambda"]["version"] == "7"
+    assert by_kind["lambda"]["previous"] == "6"
+    assert by_kind["ecs"]["image"] == "app:8"
+    assert by_kind["ecs"]["previous_image"] == "app:7"
+    # previous/version are family:revision - what an ECS rollback command aims at.
+    assert re.fullmatch(r"[\w-]+:\d+", by_kind["ecs"]["previous"]), by_kind["ecs"]
+    assert re.fullmatch(r"[\w-]+:\d+", by_kind["ecs"]["version"]), by_kind["ecs"]
+    assert by_kind["k8s"]["image"] == "cat:bad"
+    assert by_kind["k8s"]["previous"] == "cat:good"
+    assert by_kind["secret"]["service"] == f"{P}db-app"  # reported, but as a secret, not code
+    assert all(d["at"].endswith("Z") for d in deploys)
+
+
+def test_an_ecs_deploy_names_the_revision_it_moved_from_and_why():
+    """Plant check for aws_stack._ecs_deploy: `previous` is the revision before, never the new one."""
+    from warden.aws_stack import _ecs_deploy
+
+    got = _ecs_deploy("svc", {"at": "2026-10-10T12:00:00+00:00", "task_definition": "fam:8",
+                              "previous_task_definition": "fam:7", "image": "app:8", "previous_image": "app:7",
+                              "revision": "8", "rolled_back_from": "fam:9", "changed": "environment"})
+    assert got == {"kind": "ecs", "service": "svc", "at": "2026-10-10T12:00:00Z", "version": "fam:8",
+                   "previous": "fam:7", "image": "app:8", "previous_image": "app:7", "revision": "8",
+                   "rolled_back_from": "fam:9", "changed": "environment"}
+
+
+def test_an_ecs_deploy_with_no_rollback_or_config_change_carries_neither():
+    from warden.aws_stack import _ecs_deploy
+
+    got = _ecs_deploy("svc", {"at": "2026-10-10T12:00:00+00:00", "task_definition": "fam:8"})
+    assert "rolled_back_from" not in got
+    assert "changed" not in got
+
+
+def test_an_old_lambda_version_is_not_a_deploy():
+    lam = _lambda(get_alias={"FunctionVersion": "6"})
+    assert _backend(_clients(**{"lambda": lam})).deploys(_alert(**{"lambda": f"{P}checkout"})) == []
+
+
+def test_several_lambdas_queues_rules_and_deployments_get_suffixes():
+    b = _backend()
+    m = b.metrics(_alert(**{"lambda": f"{P}checkout,{P}notifier", "sqs": f"{P}orders,{P}payments",
+                            "eventbridge_rule": f"{P}reconcile-5m,{P}traffic-1m",
+                            "namespace": "shop", "deployment": "catalog-api,cart-worker"}))
+    for key in ("lambda_timeout_s__checkout", "lambda_timeout_s__notifier", "sqs_visible__orders",
+                "sqs_visible__payments", "dlq_visible__orders", "rule_enabled__reconcile-5m",
+                "rule_enabled__traffic-1m", "pods_ready__catalog-api", "pods_ready__cart-worker"):
+        assert key in m, key
+    assert "lambda_timeout_s" not in m
+    assert "sqs_visible" not in m
+    assert "pods_ready" not in m
+
+
+def test_k8s_is_read_per_deployment_with_its_own_selector():
+    k = FakeK8s()
+    b = _backend(k8s_factory=lambda: k)
+    b.logs(_alert(namespace="shop", deployment="catalog-api,cart-worker"))
+    assert sorted(a.labels["selector"] for a in k.alerts) == ["app=cart-worker", "app=catalog-api"]
+
+
+def test_one_read_serves_all_three_methods():
+    lam = _lambda()
+    b = _backend(_clients(**{"lambda": lam}))
+    a = _alert(**{"lambda": f"{P}checkout"})
+    b.logs(a), b.metrics(a), b.deploys(a)
+    assert sum(1 for name, _ in lam.calls if name == "get_function_configuration") == 1
+
+
+def test_config_reads_the_live_alias_version():
+    lam = _lambda()
+    _backend(_clients(**{"lambda": lam})).logs(_alert(**{"lambda": f"{P}checkout"}))
+    assert ("get_function_configuration", {"FunctionName": f"{P}checkout", "Qualifier": "live"}) in lam.calls
+
+
+# --------------------------------------------------------------------------- isolation
+
+
+def test_a_failing_reader_is_a_partial_and_the_others_still_read(dsns):
+    clients = _clients(dynamodb=Fake(describe_table=ClientError("AccessDeniedException")))
+    bundle = gather(_full_alert(), backend=_backend(clients), timeout=30)
+    assert any(e.startswith("logs: dynamodb: ") and "AccessDenied" in e for e in bundle.tool_errors)
+    assert not any(x.startswith("TABLE ") for x in bundle.logs)
+    assert bundle.metrics["lambda_timeout_s"] == 1
+    assert bundle.metrics["rule_enabled"] == 0
+    assert any(x.startswith("QUEUE ") for x in bundle.logs)
+
+
+def test_a_failed_metric_read_keeps_the_api_evidence_and_says_so():
+    clients = _clients(cloudwatch=Fake(get_metric_data=RuntimeError("throttled")))
+    b = _backend(clients)
+    a = _alert(**{"lambda": f"{P}checkout"})
+    lines = b.logs(a)
+    # A plain RuntimeError says nothing structured about how it failed: its words are not trusted.
+    assert f"{PARTIAL_PREFIX}lambda/{P}checkout metrics: [failed (unclassified)] throttled" in lines
+    assert any(x.startswith("CONFIG lambda") for x in lines)
+    assert b.metrics(a)["lambda_timeout_s"] == 1
+
+
+def test_a_failed_config_read_keeps_the_lambda_logs():
+    lam = _lambda(get_function_configuration=RuntimeError("denied"))
+    b = _backend(_clients(**{"lambda": lam}, logs=_events({f"/aws/lambda/{P}checkout": [("s", "boom")]})))
+    lines = b.logs(_alert(**{"lambda": f"{P}checkout"}))
+    assert any(x.endswith(" boom") and x.startswith(f"LOG lambda/{P}checkout") for x in lines)
+    assert f"{PARTIAL_PREFIX}lambda/{P}checkout: [failed (unclassified)] denied" in lines
+
+
+def test_a_missing_alias_is_normal_not_a_partial():
+    lam = _lambda(get_alias=ClientError("ResourceNotFoundException"))
+    lines = _backend(_clients(**{"lambda": lam})).logs(_alert(**{"lambda": f"{P}notifier"}))
+    assert not [x for x in lines if x.startswith(PARTIAL_PREFIX)]
+    assert any("alias_live=-" in x for x in lines)
+
+
+def test_a_missing_dsn_is_a_partial_not_silence(monkeypatch):
+    monkeypatch.delenv("WARDEN_STACK_DB_PRIMARY_RO_DSN", raising=False)
+    monkeypatch.delenv("WARDEN_STACK_DB_REPLICA_RO_DSN", raising=False)
+    lines = _backend().logs(_alert(aurora_cluster=f"{P}aurora"))
+    assert any(x.startswith(f"{PARTIAL_PREFIX}aurora-db-writer: [failed (unclassified)] WARDEN_STACK_DB_PRIMARY_RO_DSN") for x in lines)
+    assert any(x.startswith("CLUSTER aurora") for x in lines)
+
+
+def test_an_alert_with_no_stack_labels_is_an_error_not_an_empty_bill_of_health():
+    bundle = gather(_alert(), backend=_backend(), timeout=10)
+    assert bundle.tool_errors
+    assert not bundle.metrics
+
+
+def test_sns_policy_that_no_longer_allows_the_topic():
+    lines = _backend(_clients(sqs=_sqs(policy_allows=False))).logs(_alert(sns_topic=f"{P}order-events"))
+    assert f"POLICY sqs {P}notifications allows_sns_topic={P}order-events:no" in lines
+
+
+def test_secret_is_read_as_metadata_only():
+    sm = Fake(describe_secret={"LastChangedDate": NOW, "SecretString": "never-shown"})
+    lines = _backend(_clients(secretsmanager=sm)).logs(_alert(secret=f"{P}db-app"))
+    assert [name for name, _ in sm.calls] == ["describe_secret"]
+    assert not any("never-shown" in x for x in lines)
+
+
+def test_a_secret_scheduled_for_deletion_is_said():
+    """G10 held-out set (2026-10-10): DescribeSecret's DeletedDate was dropped, so the model never learnt that every read
+    of the secret now fails - and that RestoreSecret can bring it back inside the recovery window."""
+    sm = Fake(describe_secret={"LastChangedDate": NOW, "DeletedDate": NOW - timedelta(minutes=5)})
+    lines = _backend(_clients(secretsmanager=sm)).logs(_alert(secret=f"{P}db-app"))
+    when = (NOW - timedelta(minutes=5)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    assert f"SECRET {P}db-app scheduled for deletion {when} (metadata only)" in lines
+    live = _backend(_clients(secretsmanager=Fake(describe_secret={"LastChangedDate": NOW}))).logs(_alert(secret=f"{P}db-app"))
+    assert not any("scheduled for deletion" in x for x in live)
+
+
+# --------------------------------------------------------------------------- code-level evidence
+
+
+def _v(lines, version="7"):
+    return [(x, version) for x in lines]
+
+
+def test_traceback_in_one_lambda_runtime_event():
+    msg = ("[ERROR] KeyError: 'sku'\rTraceback (most recent call last):\r"
+           '  File "/var/lang/lib/python3.12/runpy.py", line 9, in run\r    x()\r'
+           '  File "/var/task/app.py", line 12, in handler\r    return process(body)\r'
+           '  File "/var/task/lib/orders.py", line 41, in process\r    sku = body["sku"]')
+    [tb] = parse_tracebacks(_v(msg.splitlines()))
+    assert (tb["path"], tb["line"], tb["func"], tb["exception"]) == ("lib/orders.py", 41, "process", "KeyError: 'sku'")
+
+
+def test_traceback_over_several_events_with_non_task_frames_skipped():
+    lines = ["[ERROR] 2026-09-26 req-1 checkout failed", "Traceback (most recent call last):",
+             '  File "/var/task/app.py", line 42, in handler', "    sku = body['sku']",
+             '  File "/opt/python/botocore/client.py", line 960, in _make_api_call', "    raise error",
+             "botocore.errorfactory.ResourceNotFoundException: Requested resource not found", "next line"]
+    [tb] = parse_tracebacks(_v(lines))
+    assert (tb["path"], tb["line"], tb["func"]) == ("app.py", 42, "handler")
+    assert tb["exception"].startswith("botocore.errorfactory.ResourceNotFoundException")
+
+
+def test_a_traceback_entirely_outside_var_task_yields_no_frame():
+    lines = ["Traceback (most recent call last):", '  File "/var/runtime/bootstrap.py", line 1, in main',
+             "RuntimeError: x"]
+    assert parse_tracebacks(_v(lines)) == []
+
+
+def test_source_excerpt_marks_the_failing_line():
+    out = source_excerpt(f"{P}checkout", _zip({"app.py": APP_PY}), "app.py", 41)
+    assert out[0] == f"SOURCE {P}checkout app.py:38 | line38"
+    assert f"SOURCE {P}checkout app.py:41 >|     sku = body['sku']" in out
+    assert len(out) == 7
+
+
+def test_code_and_source_lines_from_the_running_version():
+    msg = "[ERROR] KeyError: 'sku'\rTraceback (most recent call last):\r  File \"/var/task/app.py\", line 41, in handler"
+    lam = _lambda()
+    b = _backend(_clients(**{"lambda": lam}, logs=_events({f"/aws/lambda/{P}checkout": [("2026/09/26/[7]x", msg)]})))
+    lines = b.logs(_alert(**{"lambda": f"{P}checkout"}))
+    assert f"CODE {P}checkout app.py:41 in handler: KeyError: 'sku'" in lines
+    assert f"SOURCE {P}checkout app.py:41 >|     sku = body['sku']" in lines
+    assert ("get_function", {"FunctionName": f"{P}checkout", "Qualifier": "7"}) in lam.calls
+
+
+def test_no_more_than_max_code_frames_distinct_tracebacks_become_code_lines(monkeypatch):
+    """Plant check for aws_stack._code_lines: the cap on distinct frames holds."""
+    monkeypatch.setattr(aws_stack, "MAX_CODE_FRAMES", 1)
+    tb = "[ERROR] KeyError: 'sku'\rTraceback (most recent call last):\r  File \"/var/task/app.py\", line {}, in handler"
+    logs = _events({f"/aws/lambda/{P}checkout": [("s/[7]x", tb.format(41)), ("s/[7]y", tb.format(42))]})
+    lines = _backend(_clients(logs=logs)).logs(_alert(**{"lambda": f"{P}checkout"}))
+    assert [ln for ln in lines if ln.startswith("CODE ")] == [f"CODE {P}checkout app.py:41 in handler: KeyError: 'sku'"]
+
+
+def test_a_failed_code_download_keeps_the_frame_and_reports_the_gap():
+    msg = "[ERROR] KeyError: 'sku'\rTraceback (most recent call last):\r  File \"/var/task/app.py\", line 41, in handler"
+
+    def fail(url):
+        raise TimeoutError("timed out")
+
+    b = _backend(_clients(logs=_events({f"/aws/lambda/{P}checkout": [("s/[7]x", msg)]})), download=fail)
+    lines = b.logs(_alert(**{"lambda": f"{P}checkout"}))
+    assert f"CODE {P}checkout app.py:41 in handler: KeyError: 'sku'" in lines
+    assert f"{PARTIAL_PREFIX}lambda/{P}checkout code: [timed out] timed out" in lines
+
+
+def test_download_is_https_only_and_size_capped(monkeypatch):
+    with pytest.raises(Exception, match="https"):
+        aws_stack._download("file:///etc/passwd")
+    monkeypatch.setattr(aws_stack, "CODE_MAX_BYTES", 10)
+    monkeypatch.setattr(aws_stack.web, "urlopen", lambda url, timeout: io.BytesIO(b"x" * 11))
+    with pytest.raises(Exception, match="larger than 10"):
+        aws_stack._download("https://bucket.example/pkg.zip")
+
+
+# --------------------------------------------------------------------------- wiring
+
+
+def test_resolve_backend_knows_stack(monkeypatch):
+    monkeypatch.setenv("AWS_DEFAULT_REGION", "ap-south-2")
+    monkeypatch.setenv("AWS_ACCESS_KEY_ID", "x")
+    monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "x")
+    assert isinstance(resolve_backend("stack"), StackBackend)
+
+
+# --------------------------------------------------------------------------- the boundary
+
+
+def _dotted(node) -> str:
+    parts: list[str] = []
+    while isinstance(node, ast.Attribute):
+        parts.append(node.attr)
+        node = node.value
+    if isinstance(node, ast.Name):
+        parts.append(node.id)
+    return ".".join(reversed(parts))
+
+
+def _tree(module):
+    return ast.parse(pathlib.Path(inspect.getsourcefile(module)).read_text(encoding="utf-8"))
+
+
+# boto3 client attribute (in both modules) -> IAM service prefix.
+_CLIENT_PREFIX = {
+    "_lambda": "lambda", "_logs": "logs", "_cw": "cloudwatch", "_ecs": "ecs", "_sqs": "sqs",
+    "_ddb": "dynamodb", "_ec": "elasticache", "_rds": "rds", "_elb": "elasticloadbalancing",
+    "_ec2": "ec2", "_eks": "eks", "_pi": "pi",
+    "_apigw": "apigateway", "_sm": "secretsmanager", "_sns": "sns", "_events": "events", "_sts": "sts",
+    "_ct": "cloudtrail", "_asg": "autoscaling", "_sfn": "states", "_iam": "iam",
+}
+_NOT_CLIENTS = {"_aws", "_bound"}  # the reused AwsBackend (its calls are collected from aws_backend.py); the
+# per-incident backends of the cloud runtime (G9-A2b), whose calls are this module's own
+# Where the IAM action is not the CamelCase of the boto3 method.
+_ACTION_OVERRIDES = {
+    ("_rds", "describe_db_clusters"): "rds:DescribeDBClusters",
+    ("_rds", "describe_db_instances"): "rds:DescribeDBInstances",
+    ("_rds", "describe_db_log_files"): "rds:DescribeDBLogFiles",
+    ("_rds", "download_db_log_file_portion"): "rds:DownloadDBLogFilePortion",
+}
+
+
+def _api_calls() -> set[tuple[str, str]]:
+    found: set[tuple[str, str]] = set()
+    for module in (aws_stack, aws_backend):
+        for node in ast.walk(_tree(module)):
+            # A client method handed to the pager (`_pages(self._ec.describe_events, ...)`) is called by it.
+            if isinstance(node, ast.Call) and _dotted(node.func) == "_pages" and isinstance(node.args[0], ast.Attribute):
+                attr = _dotted(node.args[0].value).split(".", 1)[1]
+                assert attr in _CLIENT_PREFIX, f"unmapped client attribute self.{attr}"
+                found.add((attr, node.args[0].attr))
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute):
+                target = _dotted(node.func.value)
+                if target.startswith("self._") and target.count(".") == 1:
+                    attr = target.split(".", 1)[1]
+                    if attr in _NOT_CLIENTS or target == "self._images":
+                        continue
+                    assert attr in _CLIENT_PREFIX, f"unmapped client attribute self.{attr}"
+                    found.add((attr, node.func.attr))
+    return found
+
+
+def _xray_calls() -> set[str]:
+    """X-Ray's reader (src/warden/xray.py) calls a client it is handed (`xray.get_trace_summaries(...)`), not a
+    `self._` one: its calls are collected here, so its grant is held to the code like the rest."""
+    from warden import xray
+
+    found = {f"xray:{''.join(p.title() for p in node.func.attr.split('_'))}" for node in ast.walk(_tree(xray))
+             if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and _dotted(node.func.value) == "xray"}
+    assert found, "the AST walk found no X-Ray call - the test itself has rotted"
+    return found
+
+
+def _quota_calls() -> set[str]:
+    """The quota reader (src/warden/quotas.py, B14) calls the clients it is handed: `client.list_service_quotas(...)`
+    and `cloudwatch.get_metric_data(...)` - collected here, so its grant is held to the code like the rest."""
+    from warden import quotas
+
+    prefix = {"client": "servicequotas", "cloudwatch": "cloudwatch"}
+    found = {f"{prefix[_dotted(node.func.value)]}:{''.join(p.title() for p in node.func.attr.split('_'))}"
+             for node in ast.walk(_tree(quotas)) if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute)
+             and _dotted(node.func.value) in prefix}
+    assert found == {"servicequotas:ListServiceQuotas", "cloudwatch:GetMetricData"}, found
+    return found
+
+
+def _iam_action(attr: str, method: str) -> str:
+    if attr == "_apigw":
+        # API Gateway v2 authorises every read as apigateway:GET on the resource path.
+        assert method.startswith("get_"), method
+        return "apigateway:GET"
+    if (attr, method) in _ACTION_OVERRIDES:
+        return _ACTION_OVERRIDES[(attr, method)]
+    return f"{_CLIENT_PREFIX[attr]}:{''.join(p.title() for p in method.split('_'))}"
+
+
+def _granted() -> set[str]:
+    text = (ROOT / "terraform" / "fullstack" / "reader.tf").read_text(encoding="utf-8")
+    block = re.search(r'data "aws_iam_policy_document" "fs_reader" \{.*?\n\}\n', text, re.DOTALL)
+    assert block, "fs_reader policy document not found in terraform/fullstack/reader.tf"
+    lists = re.findall(r"actions\s*=\s*\[(.*?)\]", block.group(0), re.DOTALL)
+    assert lists, "no actions in fs_reader"
+    return {a for chunk in lists for a in re.findall(r'"([^"]+)"', chunk)}
+
+
+# ⭐ The ONE grant that is not a call in the code. rds-db:connect is not an AWS API WARDEN invokes:
+# the harness signs WARDEN's warden_ro database token with this role's assumed credentials
+# (scenarios/fullstack_cli.py warden_dsns), and Aurora checks the grant when WARDEN connects. So the
+# reader role must hold it, as warden_ro only (terraform/fullstack/reader.tf), and nothing in
+# aws_stack.py / aws_backend.py calls it. Named here so it cannot grow into a general loophole.
+NOT_A_CALL = {"rds-db:connect"}
+
+
+def test_iam_policy_grants_exactly_what_the_code_calls():
+    called = {_iam_action(a, m) for a, m in _api_calls()} | _xray_calls() | _quota_calls()
+    granted = _granted() - NOT_A_CALL
+    assert NOT_A_CALL <= _granted(), "the harness signs WARDEN's database token with the reader role"
+    assert len(called) > 20, "the AST walk found too few calls - the test itself has rotted"
+    assert called == granted, (
+        f"IAM policy and code disagree.\n"
+        f"  code calls but policy does not grant: {sorted(called - granted)}\n"
+        f"  policy grants but code never calls:   {sorted(granted - called)}"
+    )
+
+
+def test_every_granted_action_is_a_read():
+    for action in _granted() - NOT_A_CALL:
+        verb = action.split(":", 1)[1]
+        # StartQuery / StopQuery run and cancel a Logs Insights query: IAM's own access level for both is Read.
+        # SimulatePrincipalPolicy evaluates the role's policies and returns a decision: IAM's access level for it is Read.
+        assert (action in ("apigateway:GET", "logs:StartQuery", "logs:StopQuery", "rds:DownloadDBLogFilePortion",
+                           "iam:SimulatePrincipalPolicy")
+                or verb.startswith(("Describe", "Get", "List", "Filter", "Lookup"))), action
+    for forbidden in ("secretsmanager:GetSecretValue", "s3:GetObject", "ssm:GetParameter"):
+        assert not any(a.startswith(forbidden) for a in _granted()), forbidden
+
+
+def test_the_stack_backend_cannot_write_checked_on_the_ast():
+    write_shaped = re.compile(
+        r"^(create|delete|update|put|send|invoke|purge|modify|reboot|failover|terminate|start|stop|"
+        r"tag|untag|register|deregister|run|restore|attach|detach|set|associate|disassociate|"
+        r"execute|publish|enable|disable|rotate|copy|receive|change)_"
+    )
+    never = {"get_secret_value", "get_object", "get_parameter", "get_parameters",
+             "get_parameters_by_path", "make_api_call", "extract", "extractall", "write_bytes",
+             "write_text", "system", "popen", "Popen", "check_output"}
+    # A Logs Insights query is read only (IAM access level Read): starting and stopping one changes no resource.
+    reads = {"self._logs.start_query", "self._logs.stop_query"}
+    offenders: list[str] = []
+    for node in ast.walk(_tree(aws_stack)):
+        if isinstance(node, ast.Call):
+            name = _dotted(node.func)
+            leaf = name.rsplit(".", 1)[-1]
+            if (write_shaped.match(leaf) or leaf in never) and name not in reads:
+                offenders.append(name)
+            if leaf == "open" or (leaf == "ZipFile" and any(
+                    isinstance(a, ast.Constant) and a.value in ("w", "a", "x") for a in node.args)):
+                offenders.append(f"file write {name}")
+            if leaf == "getattr" and node.args and _dotted(node.args[0]).startswith("self._"):
+                offenders.append("dynamic lookup on an AWS client")
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            mods = [a.name for a in node.names] + ([node.module] if isinstance(node, ast.ImportFrom) else [])
+            offenders += [f"import {m}" for m in mods
+                          if m and m.split(".")[0] in ("subprocess", "shlex", "pty", "tempfile", "shutil")]
+    assert not offenders, f"aws_stack.py must not be able to write; found: {offenders}"
+
+
+def test_no_account_id_or_email_in_the_owned_files():
+    for path in (ROOT / "src/warden/aws_stack.py", ROOT / "terraform/fullstack/reader.tf"):
+        text = path.read_text(encoding="utf-8")
+        assert not re.search(r"(?<!\d)\d{12}(?!\d)", text), path
+        assert not re.search(r"[\w.+-]+@[\w-]+\.[\w.]+", text), path
+
+
+def test_no_real_client_is_ever_built():
+    """_clients() must fake every client StackBackend needs, or a unit test reaches real AWS."""
+    from warden import aws_stack
+
+    needed = set(aws_stack.NEEDED_CLIENTS)
+    assert needed, f"not faked: {sorted(needed - set(_clients()))}"
+    assert needed <= set(_clients()), f"not faked: {sorted(needed - set(_clients()))}"
+
+
+def test_the_cache_network_path_is_evidence(dsns):
+    """An unreachable cache is a missing ingress rule; the report can only name it if these lines exist."""
+    b = _backend(_clients())
+    lines = b.logs(_full_alert(eks_cluster=f"{P}eks"))
+    assert f"REPLGROUP {P}redis node_type=cache.t4g.micro sgs=[sg-0redis]" in lines
+    assert "SG sg-0redis ingress tcp/6379 from=[sg-0lambda]" in lines, [x for x in lines if x.startswith("SG")]
+    assert f"APPSG ecs/{P}orders-api sgs=[sg-0ecs]" in lines
+    # The task role (not the execution role): what a refused IAM database login is granted back to.
+    assert f"TASKROLE ecs/{P}orders-api role={P}orders-api-task" in lines
+    assert f"APPSG eks/{P}eks sgs=[sg-0eks]" in lines
+
+
+def test_the_only_database_login_the_reader_role_holds_is_wardens_own_reader():
+    text = (ROOT / "terraform" / "fullstack" / "reader.tf").read_text(encoding="utf-8")
+    block = re.search(r'statement \{\s*sid\s*=\s*"ConnectAsWardenRo"(.*?)\n  \}', text, re.DOTALL).group(1)
+    assert re.findall(r"resources\s*=\s*\[(.+)\]", block) == ['local.dbuser_arn["ro"]']
+
+
+def test_a_lambda_rollback_targets_the_version_that_served_traffic_not_the_numerically_previous(dsns):
+    """Wave 4 rolled checkout back onto the previous fault's broken version twice (fs-01 -> 6,
+    fs-02 -> 7) while version 3 had served the traffic for hours."""
+    def served(MetricDataQueries, **_):
+        # As CloudWatch answers: per five-minute period. Version 3 served cleanly for hours; version 6, deployed
+        # three hours ago, a few erring calls since (2026-10-16: the evidence reads the same rule as the plan).
+        good = [NOW - timedelta(hours=6) + timedelta(minutes=5 * i) for i in range(36)]
+        bad = [NOW - timedelta(hours=3) + timedelta(minutes=5 * i) for i in range(30)]
+        out = []
+        for q in MetricDataQueries:
+            dims = {d["Name"]: d["Value"] for d in q.get("MetricStat", {}).get("Metric", {}).get("Dimensions", [])}
+            v, errors = dims.get("ExecutedVersion"), q["MetricStat"]["Metric"]["MetricName"] == "Errors"
+            stamps = good if v == "3" else bad if v == "6" else []
+            value = (0.0 if v == "3" else 1.0) if errors else (25.0 if v == "3" else 4.0)
+            out.append({"Id": q["Id"], "Timestamps": stamps, "Values": [value] * len(stamps)})
+        return {"MetricDataResults": out}
+
+    def t(delta):
+        return (NOW - delta).strftime("%Y-%m-%dT%H:%M:%S.000+0000")
+
+    lam = _lambda(list_versions_by_function={"Versions": [
+        {"Version": "3", "LastModified": t(timedelta(days=5))}, {"Version": "6", "LastModified": t(timedelta(hours=3))},
+        {"Version": "7", "LastModified": t(timedelta(minutes=4))}]})
+    d = next(x for x in _backend(_clients(**{"lambda": lam, "cloudwatch": Fake(get_metric_data=served)}))
+             .deploys(_full_alert()) if x["kind"] == "lambda")
+    assert d["version"] == "7"
+    assert d["previous"] == "3"
+    assert d["previous_basis"].startswith("served live traffic")
+
+    def silent(MetricDataQueries, **_):
+        return {"MetricDataResults": [{"Id": q["Id"], "Values": []} for q in MetricDataQueries]}
+
+    d = next(x for x in _backend(_clients(**{"lambda": lam, "cloudwatch": Fake(get_metric_data=silent)}))
+             .deploys(_full_alert()) if x["kind"] == "lambda")
+    assert d["previous"] == "6"
+    assert d["previous_basis"].startswith("numerically previous")
+
+
+def test_the_readers_grants_are_scoped_to_the_stack_where_aws_allows_it():
+    """Audit A-I-19: every read was Resource "*". Where the action takes a resource and the code passes its identity,
+    the grant names only the stack's own resources (AWS's Service Reference, read 2026-10-01)."""
+    text = (ROOT / "terraform" / "fullstack" / "reader.tf").read_text(encoding="utf-8")
+    own = re.search(r'sid\s*=\s*"ReadOwnStack"(.*?)\n  \}', text, re.DOTALL).group(1)
+    anywhere = re.search(r'sid\s*=\s*"ReadAnywhere"(.*?)\n  \}', text, re.DOTALL).group(1)
+    resources = re.findall(r'"(arn:[^"]+)"', own)
+    assert resources, resources
+    assert all(r.endswith("${local.name}-*") for r in resources), resources
+    assert '"*"' not in own
+    scoped = set(re.findall(r'"([a-z0-9-]+:[A-Za-z]+)"', own))
+    assert {"lambda:GetFunction", "logs:FilterLogEvents", "logs:StartQuery", "rds:DescribeDBClusters",
+            "sqs:GetQueueAttributes"} <= scoped
+    # Only what AWS cannot scope, or what the code calls with no identity, keeps "*".
+    assert set(re.findall(r'"([a-z0-9-]+:[A-Za-z]+)"', anywhere)) == {
+        "cloudwatch:GetMetricData", "ec2:DescribeSecurityGroups", "ecs:DescribeTaskDefinition",
+        "elasticache:DescribeCacheClusters", "elasticache:DescribeEvents", "elasticloadbalancing:DescribeTargetGroups",
+        "elasticloadbalancing:DescribeTargetHealth", "lambda:ListEventSourceMappings", "rds:DescribeDBInstances",
+        "rds:DescribeEvents", "sts:GetCallerIdentity",
+        # The universal alarm reader (G9-A2a): ListMetrics and LookupEvents take no resource.
+        "cloudwatch:ListMetrics", "cloudtrail:LookupEvents",
+        # Logs Insights results and cancel name a query id, not a resource: AWS gives them no resource type (R22).
+        "logs:GetQueryResults", "logs:StopQuery",
+        # An ALB's zones and zonal-shift setting (G9-D): no resource type (AWS's service reference JSON, 2026-10-10).
+        "elasticloadbalancing:DescribeLoadBalancers", "elasticloadbalancing:DescribeLoadBalancerAttributes",
+        # A group's scaling activities (G10-C2): no resource type, no condition key (service reference, 2026-10-10).
+        "autoscaling:DescribeScalingActivities",
+        # A workload's subnets, their route tables and network ACLs (G10-C4): EC2 describes take no resource.
+        "ec2:DescribeSubnets", "ec2:DescribeRouteTables", "ec2:DescribeNetworkAcls",
+        # Failed traces (G10-54): X-Ray's GetTraceSummaries has no resource type.
+        "xray:GetTraceSummaries",
+        # A service's quotas (B14): ListServiceQuotas names a service code, not a resource.
+        "servicequotas:ListServiceQuotas"}
+
+
+# The resource part of each ARN format the reader names, from AWS's Service Reference (read 2026-10-01).
+_ARN_FORMATS = {
+    "cloudwatch": ["alarm:{AlarmName}"],  # AWS's Service Reference: arn:aws:cloudwatch:r:a:alarm:{AlarmName}
+    "dynamodb": ["table/{TableName}"], "ecs": ["service/{ClusterName}/{ServiceName}"],
+    "elasticache": ["replicationgroup:{ReplicationGroupId}"], "eks": ["cluster/{ClusterName}"],
+    "events": ["rule/{RuleName}", "rule/{EventBusName}/{RuleName}"], "lambda": ["function:{FunctionName}"],
+    "logs": ["log-group:{LogGroupName}"], "rds": ["cluster:{DbClusterInstanceName}", "db:{DbInstanceName}"],
+    "secretsmanager": ["secret:{SecretId}"], "sns": ["{TopicName}"], "sqs": ["{QueueName}"],
+}
+
+
+def test_every_reader_arn_has_the_shape_aws_gives_its_resource():
+    """Seventh review (2026-10-01): the scoping test checked where each action sits, not its ARN - seven format
+    mutants passed (`table/` -> `tables/`, `cluster:` -> `db:`, a typo in `/aws/lambda/`, an sqs prefix...). Each ARN
+    must be its service's published format with the stack's name where the resource's name goes."""
+    text = (ROOT / "terraform" / "fullstack" / "reader.tf").read_text(encoding="utf-8")
+    own = re.search(r'sid\s*=\s*"ReadOwnStack"(.*?)\n  \}', text, re.DOTALL).group(1)
+    arns = re.findall(r'"arn:aws:([a-z0-9-]+):\$\{local\.reader_arn\}:([^"]+)"', own)
+    assert len(arns) == 14, arns  # + the stack's alarms (G9-A2a), + its database instances' error logs (2026-10-15)
+    # Each service once (two log groups, a cluster and its instances), so a grant moved to another service's prefix is
+    # caught.
+    assert sorted(s for s, _ in arns) == sorted([*_ARN_FORMATS, "logs", "rds"]), arns
+    for service, resource in arns:
+        # A name the grant covers, `/` included (an ECS service's ARN holds its cluster); it must fit the format, the
+        # format's own text exact and any name in its {slots}.
+        # Nothing widens it before the stack's name: `service/*/warden-dev-*` was R7-D3's own shape (eighth review).
+        assert "*" not in resource.split("${local.name}")[0], (service, resource)
+        covered = resource.replace("${local.name}-*", "warden-dev-x/y")
+        shapes = ["".join(".+" if i % 2 else re.escape(part) for i, part in enumerate(re.split(r"\{([A-Za-z]+)\}", f)))
+                  for f in _ARN_FORMATS[service]]
+        assert any(re.fullmatch(shape, covered) for shape in shapes), (service, resource, shapes)
+    logs = [r for s, r in arns if s == "logs"]
+    assert sorted(logs) == ["log-group:/aws/lambda/${local.name}-*", "log-group:/ecs/${local.name}-*"], logs
+
+
+def test_every_page_of_a_listing_is_read_and_a_cap_says_so(monkeypatch):
+    """Audit A-B-M8, A-B-L3, A-B-L4: listings were read one page deep."""
+    pages = {None: {"Items": [1], "Next": "a"}, "a": {"Items": [2], "Next": "b"}, "b": {"Items": [3]}}
+    got, cut = aws_stack._pages(lambda Marker=None: pages[Marker], "Items", next_token="Next")
+    assert (got, cut) == ([1, 2, 3], False)
+    monkeypatch.setattr(aws_stack, "LIST_MAX_PAGES", 2)
+    got, cut = aws_stack._pages(lambda Marker=None: pages[Marker], "Items", next_token="Next")
+    assert (got, cut) == ([1, 2], True)
+
+
+def test_events_are_asked_for_by_source_and_every_page_read():
+    """Audit A-B-L4: the whole account's events, one page of them, could hold none of the cluster's."""
+    calls = []
+
+    def describe_events(SourceIdentifier, SourceType, Marker=None, **_):
+        calls.append((SourceIdentifier, SourceType, Marker))
+        if SourceIdentifier == f"{P}aurora" and Marker is None:
+            return {"Events": [], "Marker": "m2"}
+        if SourceIdentifier == f"{P}aurora":
+            return {"Events": [{"SourceIdentifier": f"{P}aurora", "Date": NOW, "Message": "on page two"}]}
+        return {"Events": []}
+
+    clients = _clients()
+    clients["rds"]._methods["describe_events"] = describe_events
+    lines = _backend(clients).logs(_alert(aurora_cluster=f"{P}aurora"))
+    assert any("on page two" in x for x in lines), lines
+    assert (f"{P}aurora", "db-cluster", "m2") in calls
+    assert (f"{P}aurora-1", "db-instance", None) in calls
+
+
+def test_lambda_versions_past_the_cap_are_not_taken_for_the_newest(monkeypatch):
+    """Audit A-B-L3: versions come oldest first; a truncated list named an old version the newest."""
+    monkeypatch.setattr(aws_stack, "LIST_MAX_PAGES", 1)
+    lam = _lambda(list_versions_by_function={"Versions": [{"Version": "1"}], "NextMarker": "more"})
+    clients = _clients()
+    clients["lambda"] = lam
+    lines = _backend(clients).logs(_alert(**{"lambda": f"{P}checkout"}))
+    assert any("versions" in x and "truncated" in x for x in lines), lines
+    assert not any("version=1 " in x for x in lines)
+
+
+@pytest.mark.parametrize("name, value, shown", [
+    ("TABLE_NAME", "warden-dev-carts", True), ("REDIS_HOST", "cache.internal", True), ("AWS_REGION", "x-1", True),
+    ("DATABASE_URL", dsn("postgres", "app", HUNTER2, "db.internal/orders"), False), ("CONN", "app:" + HUNTER2, False),
+    ("PWD", HUNTER2, False), ("UPSTREAM", HUNTER2, False), ("DB_HOST", "app@db.internal", False),
+    ("API_TOKEN_NAME", "x", False), ("SERVICE", "orders", True), ("DB_USER", "orders_app", True),
+])
+def test_an_environment_value_is_shown_only_under_a_configuration_name(name, value, shown):
+    """Audit A-B-M9: values were shown unless the name looked secret - `DATABASE_URL` carried a password out."""
+    [item] = aws_stack._env_items({name: value})
+    assert (item == f"{name}={value}") is shown, item
+
+
+@pytest.mark.parametrize("path", [".env", "config/.env", "app.py/../.env", "../app.py", "secrets.json", "a" + chr(92) + "b.py",
+                                  "app.PY.bak", ""])
+def test_a_traceback_cannot_make_warden_read_a_non_python_file(path):
+    """Audit A-B-M17: the source path comes from traceback text in the logs, which anyone writing a log line
+    controls; a forged `File "/var/task/.env"` read the package's .env into the evidence."""
+    package = _zip({"app.py": APP_PY, ".env": "DB_PASSWORD=x", "config/.env": "y", "secrets.json": "{}"})
+    with pytest.raises(ValueError):
+        aws_stack.source_excerpt("fn", package, path, 1)
+    assert aws_stack.source_excerpt("fn", package, "app.py", 41)[3].endswith("sku = body['sku']")
+
+
+def test_a_series_cloudwatch_could_not_finish_is_said():
+    """Audit A-B-M18: a result with StatusCode PartialData read as a complete series."""
+    def get_metric_data(MetricDataQueries, **_):
+        return {"MetricDataResults": [{"Id": q["Id"], "Values": [1.0], "StatusCode": "PartialData"}
+                                      for q in MetricDataQueries]}
+
+    clients = _clients()
+    clients["cloudwatch"] = Fake(get_metric_data=get_metric_data)
+    lines = _backend(clients).logs(_alert(sqs=f"{P}orders"))
+    assert any("PartialData" in x for x in lines if x.startswith(aws_stack.PARTIAL_PREFIX)), lines
+
+
+def test_the_sg_line_names_cidr_ranges_and_prefix_lists_too():
+    """Audit A-B-L5: a rule opening the cache port to a CIDR or a prefix list was read as no rule."""
+    clients = _clients()
+    clients["ec2"] = Fake(describe_security_groups={"SecurityGroups": [{"GroupId": "sg-0redis", "IpPermissions": [
+        {"IpProtocol": "tcp", "FromPort": 6379, "ToPort": 6379, "IpRanges": [{"CidrIp": "10.0.0.0/16"}],
+         "PrefixListIds": [{"PrefixListId": "pl-0abc"}], "UserIdGroupPairs": [{"GroupId": "sg-0app"}]},
+        {"IpProtocol": "tcp", "FromPort": 22, "ToPort": 22, "IpRanges": [{"CidrIp": "0.0.0.0/0"}]}]}]})
+    lines = _backend(clients).logs(_alert(elasticache=f"{P}redis"))
+    [sg] = [x for x in lines if x.startswith("SG sg-0redis")]
+    assert "10.0.0.0/16" in sg, sg
+    assert "pl-0abc" in sg, sg
+    assert "sg-0app" in sg, sg
+    assert "0.0.0.0/0" not in sg, sg
+
+
+def test_a_fault_flags_value_never_reaches_the_evidence():
+    """Audit A-B-M12: `DDB_EXTRA_LATENCY_MS=2000` was shown. The opaque flag names are not names whose values
+    WARDEN shows."""
+    from scenarios.ops_fullstack import FLAGS
+
+    for fault, (name, _baseline, value) in FLAGS.items():
+        assert aws_stack._env_items({name: value}) == [name], (fault, name)
+
+
+def test_the_watched_environments_reader_role_grants_every_call_the_stack_backend_makes():
+    """G9-A2b (2026-10-10): the cloud runtime's read zone runs this backend in `warden-<env>-platform-reader`; a call the
+    role does not grant is an AccessDenied found during a real incident."""
+
+    called = {_iam_action(a, m) for a, m in _api_calls()}
+    import reader_iam
+
+    granted = reader_iam.granted()
+    assert called <= granted, sorted(called - granted)
+
+
+def test_an_albs_zones_its_zonal_shift_setting_and_its_hosts_per_zone_are_read():
+    """G9-D: an impaired zone shows as one zone with no healthy host while the others serve - the evidence for
+    shift_traffic - and the zonal-shift setting says whether ARC can act on this load balancer at all."""
+    per_zone = {("HealthyHostCount", "test-region-1a"): 0.0, ("UnHealthyHostCount", "test-region-1a"): 2.0,
+                ("HealthyHostCount", "test-region-1b"): 2.0, ("UnHealthyHostCount", "test-region-1b"): 0.0}
+
+    def get_metric_data(MetricDataQueries, **_):
+        out = []
+        for q in MetricDataQueries:
+            metric = q["MetricStat"]["Metric"]
+            zone = {d["Name"]: d["Value"] for d in metric["Dimensions"]}.get("AvailabilityZone")
+            value = per_zone.get((metric["MetricName"], zone))
+            out.append({"Id": q["Id"], "Values": [] if value is None else [value]})
+        return {"MetricDataResults": out}
+
+    b = _backend(_clients(cloudwatch=Fake(get_metric_data=get_metric_data)))
+    alert = _alert(alb_target_group=f"{P}orders")
+    assert f"CONFIG alb {P}alb zones=test-region-1a,test-region-1b zonal_shift=true" in b.logs(alert)
+    m = b.metrics(alert)
+    assert m["alb_healthy_hosts_test-region-1a"] == 0
+    assert m["alb_unhealthy_hosts_test-region-1a"] == 2
+    assert m["alb_healthy_hosts_test-region-1b"] == 2
+    assert m["alb_unhealthy_hosts_test-region-1b"] == 0
+
+
+def test_a_rule_on_a_custom_bus_is_read_on_that_bus():
+    """G10 review (2026-10-10): DescribeRule looked on the default bus only, so a rule on a custom bus read as a failed
+    read. The alarm's EventBusName dimension (label `event_bus`) names the bus for the describe and the metrics."""
+    events = Fake(describe_rule={"State": "DISABLED", "ScheduleExpression": "-"})
+    cw = Fake(get_metric_data={"MetricDataResults": []})
+    lines = _backend(_clients(events=events, cloudwatch=cw)).logs(
+        _alert(eventbridge_rule=f"{P}created", event_bus=f"{P}orders-bus"))
+    assert ("describe_rule", {"Name": f"{P}created", "EventBusName": f"{P}orders-bus"}) in events.calls
+    assert f"RULE {P}created State=DISABLED schedule=- bus={P}orders-bus" in lines
+    dims = [q["MetricStat"]["Metric"]["Dimensions"] for _, kw in cw.calls for q in kw["MetricDataQueries"]]
+    assert {"Name": "EventBusName", "Value": f"{P}orders-bus"} in dims[0]
+    default = Fake(describe_rule={"State": "ENABLED"})
+    _backend(_clients(events=default)).logs(_alert(eventbridge_rule=f"{P}nightly"))
+    assert ("describe_rule", {"Name": f"{P}nightly"}) in default.calls

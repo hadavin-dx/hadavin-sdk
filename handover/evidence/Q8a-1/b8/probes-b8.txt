@@ -1,0 +1,124 @@
+clean | PATH agents.yaml prompt_file = missing | load_registry | ConfigError | marker(str/repr/traceback)=0/0/0 suppress=False | 'agent test-agent: prompt_file missing'
+ok-no-error | PATH agents.yaml prompt_file = missing | load_config | OK
+clean | PATH agents.yaml prompt_file = over-long | load_registry | ConfigError | marker(str/repr/traceback)=0/0/0 suppress=False | 'agent test-agent: prompt_file escapes the config folder'
+ok-no-error | PATH agents.yaml prompt_file = over-long | load_config | OK
+clean | PATH agents.yaml prompt_file = null byte | load_registry | ConfigError | marker(str/repr/traceback)=0/0/0 suppress=False | 'agent test-agent: prompt_file escapes the config folder'
+ok-no-error | PATH agents.yaml prompt_file = null byte | load_config | OK
+clean | PATH agents.yaml prompt_file = loop | load_registry | ConfigError | marker(str/repr/traceback)=0/0/0 suppress=False | 'agent test-agent: prompt_file missing'
+ok-no-error | PATH agents.yaml prompt_file = loop | load_config | OK
+clean | PATH agents.yaml prompt_file = folder | load_registry | ConfigError | marker(str/repr/traceback)=0/0/0 suppress=False | 'agent test-agent: prompt_file missing'
+ok-no-error | PATH agents.yaml prompt_file = folder | load_config | OK
+ok-no-error | PATH config golden_dir = missing | load_config | OK
+ok-no-error | PATH config golden_dir = missing | load_registry | OK
+ok-no-error | PATH config golden_dir = over-long | load_config | OK
+ok-no-error | PATH config golden_dir = over-long | load_registry | OK
+ok-no-error | PATH config golden_dir = null byte | load_config | OK
+ok-no-error | PATH config golden_dir = null byte | load_registry | OK
+ok-no-error | PATH config golden_dir = loop | load_config | OK
+ok-no-error | PATH config golden_dir = loop | load_registry | OK
+ok-no-error | PATH config golden_dir = folder | load_config | OK
+ok-no-error | PATH config golden_dir = folder | load_registry | OK
+ok-no-error | PATH config inputs_dir = missing | load_config | OK
+ok-no-error | PATH config inputs_dir = missing | load_registry | OK
+ok-no-error | PATH config inputs_dir = over-long | load_config | OK
+ok-no-error | PATH config inputs_dir = over-long | load_registry | OK
+ok-no-error | PATH config inputs_dir = null byte | load_config | OK
+ok-no-error | PATH config inputs_dir = null byte | load_registry | OK
+ok-no-error | PATH config inputs_dir = loop | load_config | OK
+ok-no-error | PATH config inputs_dir = loop | load_registry | OK
+ok-no-error | PATH config inputs_dir = folder | load_config | OK
+ok-no-error | PATH config inputs_dir = folder | load_registry | OK
+ok-no-error | PATH config llm.recorded_dir = missing | load_config | OK
+ok-no-error | PATH config llm.recorded_dir = missing | load_registry | OK
+ok-no-error | PATH config llm.recorded_dir = over-long | load_config | OK
+ok-no-error | PATH config llm.recorded_dir = over-long | load_registry | OK
+ok-no-error | PATH config llm.recorded_dir = null byte | load_config | OK
+ok-no-error | PATH config llm.recorded_dir = null byte | load_registry | OK
+ok-no-error | PATH config llm.recorded_dir = loop | load_config | OK
+ok-no-error | PATH config llm.recorded_dir = loop | load_registry | OK
+ok-no-error | PATH config llm.recorded_dir = folder | load_config | OK
+ok-no-error | PATH config llm.recorded_dir = folder | load_registry | OK
+ok-no-error | PATH config audit.dir = missing | load_config | OK
+ok-no-error | PATH config audit.dir = missing | load_registry | OK
+ok-no-error | PATH config audit.dir = over-long | load_config | OK
+ok-no-error | PATH config audit.dir = over-long | load_registry | OK
+ok-no-error | PATH config audit.dir = null byte | load_config | OK
+ok-no-error | PATH config audit.dir = null byte | load_registry | OK
+ok-no-error | PATH config audit.dir = loop | load_config | OK
+ok-no-error | PATH config audit.dir = loop | load_registry | OK
+ok-no-error | PATH config audit.dir = folder | load_config | OK
+ok-no-error | PATH config audit.dir = folder | load_registry | OK
+clean | PATH config sources.k8s.ca_file = missing | load_registry | ConfigError | marker(str/repr/traceback)=0/0/0 suppress=False | 'source k8s: ca_file is not a file in the config folder'
+ok-no-error | PATH config sources.k8s.ca_file = missing | load_config | OK
+clean | PATH config sources.k8s.ca_file = over-long | load_registry | ConfigError | marker(str/repr/traceback)=0/0/0 suppress=False | 'source k8s: ca_file escapes the config folder or cannot be resolved'
+ok-no-error | PATH config sources.k8s.ca_file = over-long | load_config | OK
+clean | PATH config sources.k8s.ca_file = null byte | load_registry | ConfigError | marker(str/repr/traceback)=0/0/0 suppress=False | 'source k8s: ca_file escapes the config folder or cannot be resolved'
+ok-no-error | PATH config sources.k8s.ca_file = null byte | load_config | OK
+clean | PATH config sources.k8s.ca_file = loop | load_registry | ConfigError | marker(str/repr/traceback)=0/0/0 suppress=False | 'source k8s: ca_file is not a file in the config folder'
+ok-no-error | PATH config sources.k8s.ca_file = loop | load_config | OK
+clean | PATH config sources.k8s.ca_file = folder | load_registry | ConfigError | marker(str/repr/traceback)=0/0/0 suppress=False | 'source k8s: ca_file is not a file in the config folder'
+ok-no-error | PATH config sources.k8s.ca_file = folder | load_config | OK
+clean | UNREADABLE config.yaml is a loop of links | load_config | ConfigError | marker(str/repr/traceback)=0/0/0 suppress=True | 'config.yaml: cannot be read (OSError)'
+ok-no-error | UNREADABLE config.yaml is a loop of links | load_registry(clean config + mutated other files) | OK
+clean | UNREADABLE egress.yaml is a loop of links | load_config | ConfigError | marker(str/repr/traceback)=0/0/0 suppress=True | 'egress.yaml: cannot be read (OSError)'
+ok-no-error | UNREADABLE egress.yaml is a loop of links | load_registry(clean config + mutated other files) | OK
+clean | UNREADABLE agents.yaml is a loop of links | load_registry | ConfigError | marker(str/repr/traceback)=0/0/0 suppress=True | 'agents.yaml: cannot be read (OSError)'
+ok-no-error | UNREADABLE agents.yaml is a loop of links | load_config | OK
+clean | UNREADABLE principals.yaml is a loop of links | load_registry | ConfigError | marker(str/repr/traceback)=0/0/0 suppress=True | 'principals.yaml: cannot be read (OSError)'
+ok-no-error | UNREADABLE principals.yaml is a loop of links | load_config | OK
+clean | UNREADABLE chains.yaml is a loop of links | load_registry | ConfigError | marker(str/repr/traceback)=0/0/0 suppress=True | 'chains.yaml: cannot be read (OSError)'
+ok-no-error | UNREADABLE chains.yaml is a loop of links | load_config | OK
+clean | UNREADABLE actions/ is a file | load_registry | ConfigError | marker(str/repr/traceback)=0/0/0 suppress=True | 'the actions/ folder: cannot be read (NotADirectoryError)'
+ok-no-error | UNREADABLE actions/ is a file | load_config | OK
+clean | UNREADABLE tools/test-agent.yaml is a folder | load_registry | ConfigError | marker(str/repr/traceback)=0/0/0 suppress=True | "tools/test-agent.yaml (an agent's tool manifest): cannot be read (IsADirectoryError)"
+ok-no-error | UNREADABLE tools/test-agent.yaml is a folder | load_config | OK
+clean | SHAPE hex32 agent id + unknown scope | load_registry | ConfigError | marker(str/repr/traceback)=0/0/0 suppress=False | 'agent <not shown>: scope_allowed entry 0 has no contract'
+ok-no-error | SHAPE hex32 agent id + unknown scope | load_config | OK
+clean | SHAPE hex32 principal id + unknown right | load_registry | ConfigError | marker(str/repr/traceback)=0/0/0 suppress=False | 'principal <not shown>: rights entry 0 names no action'
+ok-no-error | SHAPE hex32 principal id + unknown right | load_config | OK
+clean | SHAPE hex32 action id + bad chain | load_registry | ConfigError | marker(str/repr/traceback)=0/0/0 suppress=False | 'agent test-agent: scope_allowed entry 0 has no contract; action <not shown>: chain_id names no chain; principal svc:test-agent: rights entry'
+ok-no-error | SHAPE hex32 action id + bad chain | load_config | OK
+clean | SHAPE hex32 chain id + unknown approver | load_registry | ConfigError | marker(str/repr/traceback)=0/0/0 suppress=False | 'action create_draft_record: chain_id names no chain; action delete_record: chain_id names no chain; action lookup_record: chain_id names no '
+ok-no-error | SHAPE hex32 chain id + unknown approver | load_config | OK
+clean | SHAPE hex64 agent id + unknown scope | load_registry | ConfigError | marker(str/repr/traceback)=0/0/0 suppress=False | 'agent <not shown>: scope_allowed entry 0 has no contract'
+ok-no-error | SHAPE hex64 agent id + unknown scope | load_config | OK
+clean | SHAPE hex64 principal id + unknown right | load_registry | ConfigError | marker(str/repr/traceback)=0/0/0 suppress=False | 'principal <not shown>: rights entry 0 names no action'
+ok-no-error | SHAPE hex64 principal id + unknown right | load_config | OK
+clean | SHAPE hex64 action id + bad chain | load_registry | ConfigError | marker(str/repr/traceback)=0/0/0 suppress=False | 'agent test-agent: scope_allowed entry 0 has no contract; action <not shown>: chain_id names no chain; principal svc:test-agent: rights entry'
+ok-no-error | SHAPE hex64 action id + bad chain | load_config | OK
+clean | SHAPE hex64 chain id + unknown approver | load_registry | ConfigError | marker(str/repr/traceback)=0/0/0 suppress=False | 'action create_draft_record: chain_id names no chain; action delete_record: chain_id names no chain; action lookup_record: chain_id names no '
+ok-no-error | SHAPE hex64 chain id + unknown approver | load_config | OK
+clean | SHAPE long-token agent id + unknown scope | load_registry | ConfigError | marker(str/repr/traceback)=0/0/0 suppress=False | 'agent <not shown>: scope_allowed entry 0 has no contract'
+ok-no-error | SHAPE long-token agent id + unknown scope | load_config | OK
+clean | SHAPE long-token principal id + unknown right | load_registry | ConfigError | marker(str/repr/traceback)=0/0/0 suppress=False | 'principal <not shown>: rights entry 0 names no action'
+ok-no-error | SHAPE long-token principal id + unknown right | load_config | OK
+clean | SHAPE long-token action id + bad chain | load_registry | ConfigError | marker(str/repr/traceback)=0/0/0 suppress=False | 'agent test-agent: scope_allowed entry 0 has no contract; action <not shown>: chain_id names no chain; principal svc:test-agent: rights entry'
+ok-no-error | SHAPE long-token action id + bad chain | load_config | OK
+clean | SHAPE long-token chain id + unknown approver | load_registry | ConfigError | marker(str/repr/traceback)=0/0/0 suppress=False | 'action create_draft_record: chain_id names no chain; action delete_record: chain_id names no chain; action lookup_record: chain_id names no '
+ok-no-error | SHAPE long-token chain id + unknown approver | load_config | OK
+clean | SHAPE digit-run agent id + unknown scope | load_registry | ConfigError | marker(str/repr/traceback)=0/0/0 suppress=False | 'agent <not shown>: scope_allowed entry 0 has no contract'
+ok-no-error | SHAPE digit-run agent id + unknown scope | load_config | OK
+clean | SHAPE digit-run principal id + unknown right | load_registry | ConfigError | marker(str/repr/traceback)=0/0/0 suppress=False | 'principal <not shown>: rights entry 0 names no action'
+ok-no-error | SHAPE digit-run principal id + unknown right | load_config | OK
+clean | SHAPE digit-run action id + bad chain | load_registry | ConfigError | marker(str/repr/traceback)=0/0/0 suppress=False | 'agent test-agent: scope_allowed entry 0 has no contract; action <not shown>: chain_id names no chain; principal svc:test-agent: rights entry'
+ok-no-error | SHAPE digit-run action id + bad chain | load_config | OK
+clean | SHAPE digit-run chain id + unknown approver | load_registry | ConfigError | marker(str/repr/traceback)=0/0/0 suppress=False | 'action create_draft_record: chain_id names no chain; action delete_record: chain_id names no chain; action lookup_record: chain_id names no '
+ok-no-error | SHAPE digit-run chain id + unknown approver | load_config | OK
+clean | SHAPE forty-one agent id + unknown scope | load_registry | ConfigError | marker(str/repr/traceback)=0/0/0 suppress=False | 'agent <not shown>: scope_allowed entry 0 has no contract'
+ok-no-error | SHAPE forty-one agent id + unknown scope | load_config | OK
+clean | SHAPE forty-one principal id + unknown right | load_registry | ConfigError | marker(str/repr/traceback)=0/0/0 suppress=False | 'principal <not shown>: rights entry 0 names no action'
+ok-no-error | SHAPE forty-one principal id + unknown right | load_config | OK
+clean | SHAPE forty-one action id + bad chain | load_registry | ConfigError | marker(str/repr/traceback)=0/0/0 suppress=False | 'agent test-agent: scope_allowed entry 0 has no contract; action <not shown>: chain_id names no chain; principal svc:test-agent: rights entry'
+ok-no-error | SHAPE forty-one action id + bad chain | load_config | OK
+clean | SHAPE forty-one chain id + unknown approver | load_registry | ConfigError | marker(str/repr/traceback)=0/0/0 suppress=False | 'action create_draft_record: chain_id names no chain; action delete_record: chain_id names no chain; action lookup_record: chain_id names no '
+ok-no-error | SHAPE forty-one chain id + unknown approver | load_config | OK
+clean | SHAPE sk-style agent id + unknown scope | load_registry | ConfigError | marker(str/repr/traceback)=0/0/0 suppress=False | 'agent <not shown>: scope_allowed entry 0 has no contract'
+ok-no-error | SHAPE sk-style agent id + unknown scope | load_config | OK
+clean | SHAPE sk-style principal id + unknown right | load_registry | ConfigError | marker(str/repr/traceback)=0/0/0 suppress=False | 'principal <not shown>: rights entry 0 names no action'
+ok-no-error | SHAPE sk-style principal id + unknown right | load_config | OK
+clean | SHAPE sk-style action id + bad chain | load_registry | ConfigError | marker(str/repr/traceback)=0/0/0 suppress=False | 'agent test-agent: scope_allowed entry 0 has no contract; action <not shown>: chain_id names no chain; principal svc:test-agent: rights entry'
+ok-no-error | SHAPE sk-style action id + bad chain | load_config | OK
+clean | SHAPE sk-style chain id + unknown approver | load_registry | ConfigError | marker(str/repr/traceback)=0/0/0 suppress=False | 'action create_draft_record: chain_id names no chain; action delete_record: chain_id names no chain; action lookup_record: chain_id names no '
+ok-no-error | SHAPE sk-style chain id + unknown approver | load_config | OK
+
+TOTAL rows=61 error-results=41 readable=0

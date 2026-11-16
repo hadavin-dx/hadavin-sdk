@@ -1,0 +1,28 @@
+### tests/test_migration_wiring.py::test_a_removed_role_membership_is_refused rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+__________________ test_a_removed_role_membership_is_refused ___________________
+tests/test_migration_wiring.py:762: in test_a_removed_role_membership_is_refused
+    err, _, _ = _run(monkeypatch, tmp_path, [START, START], [[], []], members=[[EDGE], []])
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_migration_wiring.py:175: in _run
+    applied_now = mig.migrate("postgresql://unused", **kw)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/hadavin_sdk/store/migrate.py:1024: in migrate
+    saved = _check_read_back(
+src/hadavin_sdk/store/migrate.py:807: in _check_read_back
+    now = _read_back(db, named)
+          ^^^^^^^^^^^^^^^^^^^^^
+src/hadavin_sdk/store/migrate.py:542: in _read_back
+    values = tuple(db.execute(_READBACK_VALUES_SQL).fetchone())
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_migration_wiring.py:126: in execute
+    return _Result([self._next(self.values, "settings")])
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_migration_wiring.py:118: in _next
+    raise AssertionError(f"the run read the {what} more often than this test scripted")
+E   AssertionError: the run read the settings more often than this test scripted
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_a_removed_role_membership_is_refused
+1 failed in 0.40s
+

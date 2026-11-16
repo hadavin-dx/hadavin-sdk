@@ -1,0 +1,122 @@
+..............................FFFFF.............FFF..................... [ 96%]
+...                                                                      [100%]
+=================================== FAILURES ===================================
+E   AssertionError: the ASCII JSON form survived the masking: {"dsn": "host=db.invalid user=svc password=[REDACTED]\"\u00e9Xy9Zq1"}
+    assert 'Xy9Zq1' not in '{"dsn": "ho...00e9Xy9Zq1"}'
+      
+      'Xy9Zq1' is contained here:
+        D]\"\u00e9Xy9Zq1"}
+      ?           ++++++
+/tmp/claude-0/r4/oldtree/tests/test_mutation_runner_keywords.py:628: AssertionError: the ASCII JSON form survived the masking: {"dsn": "host=db.invalid user=svc password=[REDACTED]\"\u00e9Xy9Zq1"}
+E   AssertionError: the repr of the UTF-8 bytes survived the masking: E   b'host=db.invalid user=svc password=[REDACTED]"\xc3\xa9Xy9Zq1'
+    assert 'Xy9Zq1' not in "E   b'host=...\\xa9Xy9Zq1'"
+      
+      'Xy9Zq1' is contained here:
+        ]"\xc3\xa9Xy9Zq1'
+      ?           ++++++
+/tmp/claude-0/r4/oldtree/tests/test_mutation_runner_keywords.py:637: AssertionError: the repr of the UTF-8 bytes survived the masking: E   b'host=db.invalid user=svc password=[REDACTED]"\xc3\xa9Xy9Zq1'
+E   AssertionError: case 5: the json form of a random value survived: 'E   AssertionError: assert \'host=db.invalid user=svc password=\\"VGgnHGhrPUER8Jb66p\' == \'other\''
+    assert ('gnHGhrPUER8Jb66p' not in "E   Asserti...' == 'other'"
+      
+      'gnHGhrPUER8Jb66p' is contained here:
+        sword=\"VGgnHGhrPUER8Jb66p' == 'other')
+/tmp/claude-0/r4/oldtree/tests/test_mutation_runner_keywords.py:661: AssertionError: case 5: the json form of a random value survived: 'E   AssertionError: assert \'host=db.invalid user=svc password=\\"VGgnHGhrPUER8Jb66p\' == \'other\''
+E   AssertionError: a short secret inside the tail hid the shortened long secret: E   assert '[REDACTED]...Kd7[REDACTED]vnQe3Rj9' == 'other'
+    assert ('vnQe3Rj9' not in "E   assert ...' == 'other'"
+      
+      'vnQe3Rj9' is contained here:
+        E   assert '[REDACTED]...Kd7[REDACTED]vnQe3Rj9' == 'other'
+      ?                                       ++++++++)
+/tmp/claude-0/r4/oldtree/tests/test_mutation_runner_keywords.py:678: AssertionError: a short secret inside the tail hid the shortened long secret: E   assert '[REDACTED]...Kd7[REDACTED]vnQe3Rj9' == 'other'
+E   AssertionError: a line with a hostile number of dots was not replaced as a whole: 'E   [REDACTED]...[REDACTED]...[REDACTED]...[REDACTED]...[REDACTED]...[REDACTED].'
+    assert ('more than' in 'E   [REDACTED]...[REDACTED]...[REDACTED]...[REDACTED]...[REDACTED]...[REDACTED]...[REDACTED]...[REDACTED]...[REDACTED.....[REDACTED]...[REDACTED]...[REDACTED]...[REDACTED]...[REDACTED]...[REDACTED]...[REDACTED]...[REDACTED]...d=[REDACTED]')
+/tmp/claude-0/r4/oldtree/tests/test_mutation_runner_keywords.py:691: AssertionError: a line with a hostile number of dots was not replaced as a whole: 'E   [REDACTED]...[REDACTED]...[REDACTED]...[REDACTED]...[REDACTED]...[REDACTED].'
+E   AssertionError: a planted symbolic link was followed or refused otherwise: None
+    assert (False)
+     +  where False = isinstance(None, RuntimeError)
+/tmp/claude-0/r4/oldtree/tests/test_mutation_runner_keywords.py:965: AssertionError: a planted symbolic link was followed or refused otherwise: None
+E   AssertionError: the canary timeout was not in words: the unmutated copy no longer passes its tests after mutant 'flip' (exit code -1000): the shared test database holds what the mutant left behind, so the verdicts of the later mutants would not be reliable
+    assert ('timed out' in "the unmutated copy no longer passes its tests after mutant 'flip' (exit code -1000): the shared test database holds what the mutant left behind, so the verdicts of the later mutants would not be reliable")
+/tmp/claude-0/r4/oldtree/tests/test_mutation_runner_keywords.py:992: AssertionError: the canary timeout was not in words: the unmutated copy no longer passes its tests after mutant 'flip' (exit code -1000): the shared test database holds what the mutant left behind, so the verdicts of the later mutants would not be reliable
+E   AssertionError: the reaped canary was not in words: the unmutated copy no longer passes its tests after mutant 'flip' (exit code -1001): the shared test database holds what the mutant left behind, so the verdicts of the later mutants would not be reliable
+    assert ('reaped' in "the unmutated copy no longer passes its tests after mutant 'flip' (exit code -1001): the shared test database holds what the mutant left behind, so the verdicts of the later mutants would not be reliable")
+/tmp/claude-0/r4/oldtree/tests/test_mutation_runner_keywords.py:999: AssertionError: the reaped canary was not in words: the unmutated copy no longer passes its tests after mutant 'flip' (exit code -1001): the shared test database holds what the mutant left behind, so the verdicts of the later mutants would not be reliable
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_mutation_runner_keywords.py::test_the_guard_fails_a_test_that_deletes_the_database_address_and_puts_nothing_back
+PASSED tests/test_mutation_runner_keywords.py::test_conftest_loads_the_given_file_as_a_plugin_and_without_it_nothing_is_loaded
+PASSED tests/test_mutation_runner_keywords.py::test_a_mutant_is_judged_with_the_conftest_loaded
+PASSED tests/test_mutation_runner_keywords.py::test_a_conftest_that_is_not_a_plain_python_path_is_refused_before_anything_runs
+PASSED tests/test_mutation_runner_keywords.py::test_a_conftest_with_a_python_keyword_part_is_refused
+PASSED tests/test_mutation_runner_keywords.py::test_a_conftest_with_a_non_ascii_part_is_refused
+PASSED tests/test_mutation_runner_keywords.py::test_a_conftest_that_does_not_end_in_py_is_refused
+PASSED tests/test_mutation_runner_keywords.py::test_a_conftest_must_be_called_conftest_or_lie_in_a_tests_folder
+PASSED tests/test_mutation_runner_keywords.py::test_a_conftest_path_that_is_valid_but_missing_is_a_value_error_before_any_temp_folder
+PASSED tests/test_mutation_runner_keywords.py::test_pass_env_hands_the_listed_variable_to_the_child_and_default_does_not
+PASSED tests/test_mutation_runner_keywords.py::test_a_mutant_run_sees_the_passed_variable
+PASSED tests/test_mutation_runner_keywords.py::test_pass_env_never_widens_to_other_variables
+PASSED tests/test_mutation_runner_keywords.py::test_pass_env_with_an_unset_variable_passes_nothing
+PASSED tests/test_mutation_runner_keywords.py::test_an_unlisted_env_name_is_refused_before_anything_runs
+PASSED tests/test_mutation_runner_keywords.py::test_the_pytest_step_refuses_an_unlisted_env_name_by_itself
+PASSED tests/test_mutation_runner_keywords.py::test_a_bare_string_for_pass_env_is_refused_not_read_letter_by_letter
+PASSED tests/test_mutation_runner_keywords.py::test_property_no_name_outside_the_allowlist_is_ever_accepted
+PASSED tests/test_mutation_runner_keywords.py::test_property_the_allowlist_holds_only_the_test_database_address
+PASSED tests/test_mutation_runner_keywords.py::test_pass_env_values_never_reach_first_lines
+PASSED tests/test_mutation_runner_keywords.py::test_pass_env_values_never_reach_the_failing_test_id_of_a_row
+PASSED tests/test_mutation_runner_keywords.py::test_the_baseline_skip_message_never_holds_the_passed_value
+PASSED tests/test_mutation_runner_keywords.py::test_masked_replaces_the_value_and_the_url_password
+PASSED tests/test_mutation_runner_keywords.py::test_a_percent_encoded_password_is_masked_in_both_forms
+PASSED tests/test_mutation_runner_keywords.py::test_a_shortened_value_is_masked_by_its_fragments
+PASSED tests/test_mutation_runner_keywords.py::test_pass_env_values_shortened_by_pytest_never_reach_first_lines
+PASSED tests/test_mutation_runner_keywords.py::test_a_password_after_a_password_word_or_in_a_url_query_is_a_secret
+PASSED tests/test_mutation_runner_keywords.py::test_a_value_with_a_backslash_is_masked_as_repr_prints_it
+PASSED tests/test_mutation_runner_keywords.py::test_a_value_with_a_non_ascii_letter_is_masked_as_unicode_escape_prints_it
+PASSED tests/test_mutation_runner_keywords.py::test_passwd_and_pwd_words_and_a_quoted_password_are_secrets
+PASSED tests/test_mutation_runner_keywords.py::test_a_fragment_of_exactly_the_minimum_length_is_masked_and_a_shorter_one_is_not
+PASSED tests/test_mutation_runner_keywords.py::test_the_fragment_scan_agrees_with_the_plain_definition
+PASSED tests/test_mutation_runner_keywords.py::test_a_database_that_a_mutant_left_dirty_stops_the_run_after_that_mutant
+PASSED tests/test_mutation_runner_keywords.py::test_a_clean_database_costs_one_extra_run_per_mutant_and_changes_no_row
+PASSED tests/test_mutation_runner_keywords.py::test_without_a_passed_value_there_is_no_extra_run
+PASSED tests/test_mutation_runner_keywords.py::test_the_canary_runs_the_unmutated_copy
+PASSED tests/test_mutation_runner_keywords.py::test_a_passed_name_set_to_an_empty_text_still_gets_the_canary
+PASSED tests/test_mutation_runner_keywords.py::test_a_canary_run_that_skips_is_refused_under_forbid_skips
+PASSED tests/test_mutation_runner_keywords.py::test_a_canary_run_that_skips_passes_without_forbid_skips
+PASSED tests/test_mutation_runner_keywords.py::test_a_copy_that_cannot_be_rebuilt_for_the_canary_is_a_clear_refusal
+PASSED tests/test_mutation_runner_keywords.py::test_a_second_runner_with_the_same_passed_value_is_refused
+PASSED tests/test_mutation_runner_keywords.py::test_the_lock_is_still_held_while_the_mutants_run
+PASSED tests/test_mutation_runner_keywords.py::test_a_lock_that_fails_for_another_reason_is_not_called_another_run
+PASSED tests/test_mutation_runner_keywords.py::test_a_lock_file_that_cannot_be_opened_is_a_clear_refusal
+PASSED tests/test_mutation_runner_keywords.py::test_a_canary_run_with_an_exit_code_shows_the_code
+PASSED tests/test_mutation_runner_keywords.py::test_default_counts_a_run_with_a_skipped_test_as_before
+PASSED tests/test_mutation_runner_keywords.py::test_forbid_skips_makes_a_mutant_run_with_a_skipped_test_an_error_not_a_kill
+PASSED tests/test_mutation_runner_keywords.py::test_forbid_skips_refuses_a_baseline_that_skips
+PASSED tests/test_mutation_runner_keywords.py::test_forbid_skips_counts_an_expected_failure_as_a_skip
+PASSED tests/test_mutation_runner_keywords.py::test_forbid_skips_leaves_a_clean_run_alone
+PASSED tests/test_mutation_runner_keywords.py::test_skipped_tests_reads_skips_and_refuses_doctype
+PASSED tests/test_mutation_runner_keywords.py::test_forbid_skips_with_a_missing_or_empty_junit_file_is_an_error_row_never_judged
+PASSED tests/test_mutation_runner_keywords.py::test_a_default_call_passes_pytest_no_plugin_and_no_env_names
+PASSED tests/test_mutation_runner_keywords.py::test_the_default_child_environment_has_no_database_address
+PASSED tests/test_mutation_runner_keywords.py::test_judge_never_returns_killed_for_an_empty_failing_test_id
+PASSED tests/test_mutation_runner_keywords.py::test_a_run_that_fails_with_no_junit_file_is_never_a_kill_even_without_forbid_skips
+PASSED tests/test_mutation_runner_keywords.py::test_a_baseline_that_left_no_usable_junit_file_is_refused_under_forbid_skips
+PASSED tests/test_mutation_runner_keywords.py::test_a_test_file_that_cannot_be_imported_is_an_error_row_never_a_kill
+PASSED tests/test_mutation_runner_keywords.py::test_read_junit_marks_a_collection_error_of_a_real_pytest_run
+PASSED tests/test_mutation_runner_keywords.py::test_a_fixture_error_in_the_mutant_run_is_an_error_row_not_a_kill
+PASSED tests/test_mutation_runner_keywords.py::test_a_teardown_error_of_a_fixture_is_an_error_row_not_a_kill
+PASSED tests/test_mutation_runner_keywords.py::test_a_failing_body_and_a_failing_teardown_are_judged_by_the_failure
+PASSED tests/test_mutation_runner_keywords.py::test_a_fixture_error_and_a_skipped_test_in_one_run_are_a_fixture_error
+PASSED tests/test_mutation_runner_keywords.py::test_the_skipped_tests_row_keeps_a_masked_message
+PASSED tests/test_mutation_runner_keywords.py::test_a_skipped_tests_row_without_a_failure_says_which_tests_were_skipped
+PASSED tests/test_mutation_runner_keywords.py::test_fixture_errors_reads_setup_and_teardown_errors_only
+PASSED tests/test_mutation_runner_keywords.py::test_read_junit_gives_the_same_answers_as_the_three_single_readers_in_one_parse
+PASSED tests/test_mutation_runner_keywords.py::test_a_mutant_whose_old_text_is_absent_is_an_error_not_a_kill
+FAILED tests/test_mutation_runner_keywords.py::test_a_value_is_masked_as_json_writes_it
+FAILED tests/test_mutation_runner_keywords.py::test_a_value_is_masked_as_the_repr_of_its_bytes_prints_it
+FAILED tests/test_mutation_runner_keywords.py::test_masking_removes_a_random_value_in_every_printed_form_whole_or_shortened
+FAILED tests/test_mutation_runner_keywords.py::test_a_short_secret_inside_a_shortened_long_one_does_not_hide_the_long_one
+FAILED tests/test_mutation_runner_keywords.py::test_a_line_with_a_hostile_number_of_dots_is_replaced_fast
+FAILED tests/test_mutation_runner_keywords.py::test_a_lock_file_that_is_a_symbolic_link_is_refused_and_the_file_has_mode_0600
+FAILED tests/test_mutation_runner_keywords.py::test_a_canary_run_that_timed_out_says_so
+FAILED tests/test_mutation_runner_keywords.py::test_a_canary_run_that_was_reaped_says_so
+8 failed, 67 passed in 30.81s
+exit=1

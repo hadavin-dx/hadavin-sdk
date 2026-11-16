@@ -1,0 +1,23 @@
+{
+  "hash": "87988eefa9464d8fff691cfd1580cb8c3bf3d03f491fc56fd4f46c22113debb3",
+  "plan": {
+    "action_id": "restart_service",
+    "action_version": 2,
+    "agent_id": "agent-a",
+    "created_at": "2026-11-01T09:30:00Z",
+    "expected_outcome": "service healthy",
+    "idempotency_key": "idem-1",
+    "inputs": {
+      "count": "3",
+      "service": "checkout"
+    },
+    "plan_id": "pln-fixture-v1",
+    "risk_class": "reversible",
+    "run_id": "run-fixture-v1",
+    "schema_version": 1,
+    "target": {
+      "ref": null,
+      "system": "ops-api"
+    }
+  }
+}

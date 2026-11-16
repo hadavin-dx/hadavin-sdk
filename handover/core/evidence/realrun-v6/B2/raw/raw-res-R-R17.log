@@ -1,0 +1,71 @@
+........................................................................ [ 50%]
+.............................................................F
+=================================== FAILURES ===================================
+___________ test_every_refusal_before_the_question_has_the_same_form ___________
+
+tmp_path = PosixPath('/home/user/build/rr6/tmp-B2/pytest-of-unknown/pytest-105/test_every_refusal_before_the_0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f31677da420>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f3166ea4680>
+
+    def test_every_refusal_before_the_question_has_the_same_form(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr("builtins.input", _no_question)
+        ok = _valid_config(tmp_path)
+        bad_line = tmp_path / "bad-line.env"
+        bad_line.write_text("not a pair\n", encoding="utf-8")
+        cases: list[tuple[list[str], dict[str, str], str]] = [
+            (["--assume-yes"], {}, "--assume-yes"),
+            (["--keep"], {}, "--keep"),
+            ([], {}, "--config"),  # no --config
+            (["--config", str(tmp_path / "nope.env")], {}, "--config"),
+            (["--config", str(bad_line)], {}, "--config"),
+            (["--config"], {"REAL_PERSONS": "3"}, "REAL_PERSONS"),
+            (["--config"], {"DESK_BIND": ALL_ADDRESSES}, "DESK_BIND"),
+            (["--config"], {"DESK_SEND_TIMEOUT_SECONDS": "abc"}, "DESK_SEND_TIMEOUT_SECONDS"),
+            (["--config"], {"DESK_HUBSPOT_BASE_URL": "http://" + "hs.example" + ".org"}, "DESK_HUBSPOT_BASE_URL"),
+            (["--config"], {"DESK_SMTPP_PORT": "99999"}, "DESK_SMTPP_PORT"),
+            (["--config"], {"REAL_IMAP_1_PORT": "99999"}, "REAL_IMAP_1_PORT"),
+            (["--config"], {"DESK_SMTPP_RECIPIENTS": "a@example.test"}, "REAL_IMAP_n_USER"),
+            (["--config"], {"REAL_DRAIN_SECONDS": "0"}, "REAL_DRAIN_SECONDS"),
+            (["--config"], {"DESK_HUBSPOT_KEY_FILE": str(tmp_path / "no-key")}, "DESK_HUBSPOT_KEY_FILE"),
+            (["--config"], {"DESK_NUDGE_TO": "a@example.test"}, "DESK_NUDGE_TO"),
+        ]
+        for args, over, setting in cases:
+            monkeypatch.chdir(tmp_path)
+            if args == ["--config"]:
+                argv = ["--config", str(_valid_config(tmp_path, **over))]
+            elif args in (["--keep"], ["--assume-yes"]):
+                argv = ["--config", str(ok), *args]
+            else:
+                argv = args
+            out = _one_refusal(rrc.main(argv), capsys)
+            assert out.startswith(f"refused: {setting}: "), (setting, out)
+        # the missing-names refusal names the names, then says what is wrong with them
+        empty = tmp_path / "empty.env"
+        empty.write_text("DESK_PORT=1\n", encoding="utf-8")
+>       assert _one_refusal(rrc.main(["--config", str(empty)]), capsys).endswith(": not set in the config file\n")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+/home/user/build/rr6/tree-M/tests/test_take_script_refusals.py:668: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+rc = 2, capsys = <_pytest.capture.CaptureFixture object at 0x7f31677da420>
+want = 2
+
+    def _one_refusal(rc: int, capsys: pytest.CaptureFixture[str], want: int = rrc.EXIT_REFUSED) -> str:
+        out = capsys.readouterr().out
+        assert rc == want
+>       assert _REFUSAL_LINE.fullmatch(out), out  # exactly one line: refused: <SETTING>: <text>
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: refused: DESK_DB_PATH, DESK_HUBSPOT_KEY_FILE, DESK_HUBSPOT_MAX_CALLS, REAL_HUBSPOT_READBACK_MAX_CALLS, DESK_SMTPP_HOST, DESK_SMTPP_USER, DESK_SMTPP_PASSWORD_FILE, DESK_SMTPP_FROM, DESK_SMTPP_RECIPIENTS, DESK_SMTPP_MAX_SENDS, REAL_IMAP_1_USER, REAL_IMAP_1_PASSWORD_FILE, REAL_IMAP_2_USER, REAL_IMAP_2_PASSWORD_FILE lack
+E         
+E       assert None
+E        +  where None = <built-in method fullmatch of re.Pattern object at 0x7f31679a7640>('refused: DESK_DB_PATH, DESK_HUBSPOT_KEY_FILE, DESK_HUBSPOT_MAX_CALLS, REAL_HUBSPOT_READBACK_MAX_CALLS, DESK_SMTPP_HOS... DESK_SMTPP_MAX_SENDS, REAL_IMAP_1_USER, REAL_IMAP_1_PASSWORD_FILE, REAL_IMAP_2_USER, REAL_IMAP_2_PASSWORD_FILE lack\n')
+E        +    where <built-in method fullmatch of re.Pattern object at 0x7f31679a7640> = re.compile('refused: [A-Za-z0-9_,\\- ]+: \\S.*\\n').fullmatch
+
+/home/user/build/rr6/tree-M/tests/test_take_script_refusals.py:626: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_take_script_refusals.py::test_every_refusal_before_the_question_has_the_same_form
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 133 passed in 119.48s (0:01:59)

@@ -1,0 +1,16 @@
+### tests/test_migration_postgres.py::test_the_plain_test_role_and_what_it_owns_are_dropped_when_the_process_exits rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_the_plain_test_role_and_what_it_owns_are_dropped_when_the_process_exits _
+tests/test_migration_postgres.py:2468: in test_the_plain_test_role_and_what_it_owns_are_dropped_when_the_process_exits
+    assert not _role_exists(role), "the role is still on the server"
+E   AssertionError: the role is still on the server
+E   assert not True
+E    +  where True = _role_exists('hadavin_test_migrator_2be0dcb0')
+----------------------------- Captured stdout call -----------------------------
+test role hadavin_test_migrator_2be0dcb0 was not dropped: DependentObjectsStillExist
+test role hadavin_test_migrator_2be0dcb0 was not dropped: DependentObjectsStillExist
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_the_plain_test_role_and_what_it_owns_are_dropped_when_the_process_exits
+1 failed in 1.19s
+

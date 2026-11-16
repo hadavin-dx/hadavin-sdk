@@ -1,0 +1,14 @@
+154:_ test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[copy-program] _
+155-
+156-attack = Attack(name='copy-program', sql="COPY (SELECT 1) TO PROGRAM 'echo x'", rule='V03', category='writes', harm='exec')
+157-shared = 'user=postgres dbname=askdata_h_12a95d11 host=127.0.0.1 port=56110'
+158-
+159-    @pytest.mark.parametrize("attack", READERS, ids=[a.name for a in READERS])
+160-    def test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated(attack, shared):
+161->       assert prove_harm(attack, shared)
+162-               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+163-
+164-tests/demo_askdata/test_validate_harm.py:179: 
+165-_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+166-tests/demo_askdata/test_validate_harm.py:133: in prove_harm
+199:E           psycopg.errors.InternalError_: could not close pipe to external command: Broken pipe

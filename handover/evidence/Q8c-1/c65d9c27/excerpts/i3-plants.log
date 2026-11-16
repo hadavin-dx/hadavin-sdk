@@ -1,0 +1,110 @@
+=== plant a-new-test-no-row (HEAD 3b2ae808)
+--- --auto origin/main
+rc=1
+tests/test_zz_plant_a.py: the test test_plant_a_new_test_without_row is new or changed and has no row of its own in the notes
+--- --auto 6d219217
+rc=1
+tests/test_zz_plant_a.py: the test test_plant_a_new_test_without_row is new or changed and has no row of its own in the notes
+=== plant b1-helper-k1b_support-added-function (HEAD 6b70ea38)
+--- --auto origin/main
+rc=0
+--- --auto 6d219217
+rc=0
+=== plant b2-helper-k1b_support-used-value-changed (HEAD d46d8307)
+--- --auto origin/main
+rc=1
+tests/test_k1b_bundle.py: the test test_alert_time_constant_is_a_valid_timestamp is new or changed and has no row of its own in the notes
+tests/test_k1b_bundle.py: the test test_bad_case_name_and_manifest_shape is new or changed and has no row of its own in the notes
+tests/test_k1b_bundle.py: the test test_bad_citations_cover_all_three_checks_and_first_three_only is new or changed and has no row of its own in the notes
+tests/test_k1b_bundle.py: the test test_blank_log_lines_do_not_shift_ids is new or changed and has no row of its own in the notes
+tests/test_k1b_bundle.py: the test test_bundle_refusals is new or changed and has no row of its own in the notes
+tests/test_k1b_bundle.py: the test test_bundle_set_hash_changes_with_content is new or changed and has no row of its own in the notes
+tests/test_k1b_bundle.py: the test test_bundle_without_optional_parts_is_valid is new or changed and has no row of its own in the notes
+tests/test_k1b_bundle.py: the test test_deploys_k8s_runbook is new or changed and has no row of its own in the notes
+tests/test_k1b_bundle.py: the test test_good_bundle_loads_with_ids is new or changed and has no row of its own in the notes
+tests/test_k1b_bundle.py: the test test_good_ids_pass_grammar is new or changed and has no row of its own in the notes
+tests/test_k1b_bundle.py: the test test_list_data is new or changed and has no row of its own in the notes
+tests/test_k1b_bundle.py: the test test_list_data_is_capped is new or changed and has no row of its own in the notes
+(lines total: 108)
+--- --auto 6d219217
+rc=1
+tests/test_k1b_bundle.py: the test test_alert_time_constant_is_a_valid_timestamp is new or changed and has no row of its own in the notes
+tests/test_k1b_bundle.py: the test test_bad_case_name_and_manifest_shape is new or changed and has no row of its own in the notes
+tests/test_k1b_bundle.py: the test test_bad_citations_cover_all_three_checks_and_first_three_only is new or changed and has no row of its own in the notes
+tests/test_k1b_bundle.py: the test test_blank_log_lines_do_not_shift_ids is new or changed and has no row of its own in the notes
+tests/test_k1b_bundle.py: the test test_bundle_refusals is new or changed and has no row of its own in the notes
+tests/test_k1b_bundle.py: the test test_bundle_set_hash_changes_with_content is new or changed and has no row of its own in the notes
+tests/test_k1b_bundle.py: the test test_bundle_without_optional_parts_is_valid is new or changed and has no row of its own in the notes
+tests/test_k1b_bundle.py: the test test_deploys_k8s_runbook is new or changed and has no row of its own in the notes
+tests/test_k1b_bundle.py: the test test_good_bundle_loads_with_ids is new or changed and has no row of its own in the notes
+tests/test_k1b_bundle.py: the test test_good_ids_pass_grammar is new or changed and has no row of its own in the notes
+tests/test_k1b_bundle.py: the test test_list_data is new or changed and has no row of its own in the notes
+tests/test_k1b_bundle.py: the test test_list_data_is_capped is new or changed and has no row of its own in the notes
+(lines total: 108)
+=== plant b3-helper-contracts-http_fake-used-function-body (HEAD 913c47a1)
+--- --auto origin/main
+rc=0
+(lines total: 0)
+--- --auto 6d219217
+rc=0
+(lines total: 0)
+=== plant b4-helper-http_fake-gcp_secret_client-body-imported-by-name-inside-a-function (HEAD 583b1cac)
+--- --auto origin/main
+rc=1
+tests/test_p4b_secrets.py: the test test_gcp_fetch_is_bounded_with_no_retry is new or changed and has no row of its own in the notes
+(lines total: 1)
+=== plant b5-helper-secrets_neutral-_azure-body (HEAD f37eec06)
+--- --auto origin/main
+rc=0
+(lines total: 0)
+=== plant c1-module-pytestmark-skip-in-test_p4b_secrets (HEAD f88081f7)
+--- --auto origin/main
+rc=1
+tests/test_p4b_secrets.py: the test test_a_fifo_in_the_mounted_folder_is_refused_without_hanging is new or changed and has no row of its own in the notes
+tests/test_p4b_secrets.py: the test test_a_missing_extra_names_the_pip_install is new or changed and has no row of its own in the notes
+tests/test_p4b_secrets.py: the test test_an_unreadable_mounted_file_is_a_config_error is new or changed and has no row of its own in the notes
+tests/test_p4b_secrets.py: the test test_azure_builds_with_default_azure_credential_and_refuses_bad_names is new or changed and has no row of its own in the notes
+tests/test_p4b_secrets.py: the test test_azure_client_timeouts_and_retries_are_bounded is new or changed and has no row of its own in the notes
+tests/test_p4b_secrets.py: the test test_every_secrets_module_is_a_secret_holder is new or changed and has no row of its own in the notes
+(lines total: 22)
+=== plant c2-conftest-skip-hook-added (HEAD e7af3e6d)
+--- --auto origin/main
+rc=1
+tests/conftest.py: the test pytest_collection_modifyitems is new or changed and has no row of its own in the notes
+(lines total: 1)
+=== plant c3-conftest-autouse-skip-fixture-added (HEAD 119113e8)
+--- --auto origin/main
+rc=1
+tests/conftest.py: the test FIXTURES is new or changed and has no row of its own in the notes
+tests/conftest.py: the test _ISOLATED is new or changed and has no row of its own in the notes
+tests/conftest.py: the test _ISOLATED_PREFIXES is new or changed and has no row of its own in the notes
+tests/conftest.py: the test _plant_skip is new or changed and has no row of its own in the notes
+tests/conftest.py: the test cfg_dir is new or changed and has no row of its own in the notes
+tests/conftest.py: the test fake_system is new or changed and has no row of its own in the notes
+(lines total: 9)
+=== plant c4-subfolder-conftest-xfail-hook-added (HEAD 7da5882b)
+--- --auto origin/main
+rc=1
+tests/contracts/conftest.py: the test pytest_collection_modifyitems is new or changed and has no row of its own in the notes
+(lines total: 1)
+=== plant d-notes-row-reason-names-nonexistent-mutant (HEAD c5980160)
+--- --auto origin/main
+rc=0
+(lines total: 0)
+=== plant d2-notes-row-reason-names-nonexistent-test (HEAD f2c8d7c9)
+--- --auto origin/main
+rc=1
+tests/policy_mutants.py: the mutant B10 the 16 kinds follow the tool's decision day when it moves has a row whose reason points at nothing: the test test_no_such_test_anywhere is in no test file
+(lines total: 1)
+=== plant e-new-mutant-name-is-substring-of-another-rows-cell (HEAD 3a7f14e6)
+--- --auto origin/main
+rc=1
+tests/policy_mutants.py: the mutant B11 notes check ignores is new or changed and has no row of its own in the notes
+(lines total: 1)
+=== plant d3-extra-row-for-nonexistent-mutant-in-unit-cell (HEAD 9df69b22)
+--- --auto origin/main rc=0
+(lines total: 0)
+=== plant d4-reason-cell-names-nonexistent-mutant (HEAD 3667eacf)
+--- --auto origin/main rc=1
+tests/policy_mutants.py: the mutant B10 the 16 kinds follow the tool's decision day when it moves has a row whose reason points at nothing: the mutant `B99 no such mutant exists here` is in no mutant file
+(lines total: 1)

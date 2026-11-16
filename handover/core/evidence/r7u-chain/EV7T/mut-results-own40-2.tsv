@@ -1,0 +1,26 @@
+N15	src/lead_desk/run_stats.py	tests/test_r7t_findings.py -k t15 or t17 or t18 or t10 tests/test_crm_hubspot.py	KILLED	['1 failed, 176 deselected in 0.39s']
+N15	restored-byte-equal=True
+N16	src/lead_desk/run_stats.py	tests/test_r7t_findings.py -k t15 or t17 or t18 or t10 tests/test_crm_hubspot.py	KILLED	['1 failed, 176 deselected in 0.34s']
+N16	restored-byte-equal=True
+N17	src/lead_desk/run_stats.py	tests/test_r7t_findings.py -k t15 or t17 or t18 or t10 tests/test_crm_hubspot.py	KILLED	['1 failed, 176 deselected in 0.32s']
+N17	restored-byte-equal=True
+N18	src/lead_desk/run_stats.py	tests/test_r7t_findings.py -k t15 or t17 or t18 or t10 tests/test_crm_hubspot.py	KILLED	['1 failed, 176 deselected in 0.38s']
+N18	restored-byte-equal=True
+N19	demo_only/bad_request.py	tests/test_r7t_findings.py -k t6 or t12	KILLED	['1 failed, 47 passed, 66 deselected in 0.92s']
+N19	restored-byte-equal=True
+N20	demo_only/bad_request.py	tests/test_r7t_findings.py -k t6 or t12	KILLED	['1 failed, 47 passed, 66 deselected in 1.10s']
+N20	restored-byte-equal=True
+N21	src/lead_desk/config.py	tests/test_r7t_findings.py -k t6 or t12	KILLED	['1 failed, 57 passed, 66 deselected in 0.83s']
+N21	restored-byte-equal=True
+N22	src/lead_desk/config.py	tests/test_r7t_findings.py -k t6 or t12	SURVIVED	['72 passed, 66 deselected in 1.69s']
+N22	restored-byte-equal=True
+N23	src/lead_desk/config.py	tests/test_r7t_findings.py -k t6 or t12	KILLED	['1 failed, 66 deselected in 0.24s']
+N23	restored-byte-equal=True
+N24	src/lead_desk/config.py	tests/test_r7t_findings.py -k t6 or t12	SURVIVED	['72 passed, 66 deselected in 0.91s']
+N24	restored-byte-equal=True
+N25	demo_only/bad_request.py	tests/test_r7t_findings.py -k t6 or t12	KILLED	['1 failed, 66 deselected in 0.23s']
+N25	restored-byte-equal=True
+N26	scripts/run_real_check.py	tests/test_r7t_findings.py -k t1 or t2 or t3 or t7 or t9 or t15 or t17 tests/test_r7s_findings.py	KILLED	['1 failed, 2 passed, 118 deselected in 0.31s']
+N26	restored-byte-equal=True
+N27	scripts/run_real_check.py	tests/test_r7t_findings.py -k t1 or t2 or t3 or t7 or t9 or t15 or t17 tests/test_r7s_findings.py	KILLED	['1 failed, 53 passed, 118 deselected in 202.27s (0:03:22)']
+N27	restored-byte-equal=True

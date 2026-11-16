@@ -1,0 +1,19 @@
+#  result  check
+-  ------  -----
+1  PASS    every request id has a receipt; the request log is complete; the book holds only this run's requests
+            200 log lines (intended 200), 200 distinct request ids, 200 receipts in book, 0 without a receipt, 0 with a wrong receipt number, 0 receipts the log does not know, 0 outside the id prefix, 0 without this run's marker; no intended list in the facts file: compared by count and distinct ids only; distinct ids 200 (facts 200)
+2  PASS    follow-up states add up to the leads submitted (one per request id); every verdict has its lead; nothing open
+            pending 0 + sending 0 + sent 200 + failed 0 + unknown 0 = 200; leads 200; distinct request ids 200; 0 receipts without a verdict; 0 new verdicts without a lead; 0 review verdicts; 0 leads missing or not from this run
+3  PASS    one message at most per key and recipient; unknown and failed only with a reason, within the ceiling
+            200 messages; 0 keys more than once, 0 recipients more than once, 0 to the wrong recipient, 0 sent without a message, 0 failed with a message and no fitting reason, 0 failed with a message and a reason that fits, 0 keys of no lead; unknown 0 (0 with a message, 0 without; ceiling 0; 0 without a fitting reason); failed 0 (ceiling 0; 0 without a reason); 0 leads from a healthy window not sent; 0 evidence faults
+4  PASS    CRM rows match the leads marked done, plus the listed unknowns
+            200 CRM rows; allowed 200 to 200 (done 200 + up to 0 unknown); 0 missing, 0 not allowed, 0 twice, 0 for no lead, 0 sent without a finished CRM step
+5  PASS    model calls per lead are within the bound; the model was asked as the scenario says
+            200 calls for 200 leads; most for one lead 1; bound 1; 0 leads called more than once; 0 asked again after an answer; 0 calls in a down mode; 0 results other than 200; 0 evidence faults
+6  PASS    503 rate within the scenario's ceiling (report only when no ceiling is given)
+            0 of 200 attempts got 503 (rate 0.0000); 0 of 200 requests saw one; 0 ended on 503; ceiling 0.0
+7  PASS    drain time within the ceiling
+            2.52 s from the last intended send to drained (ceiling 120.0 s; marker); 0 pending, 0 sending, 0 receipts without a verdict
+ALL 7 CHECKS HOLD
+BOUNDS: from today's catalogue (the saved run stored no bounds)
+RUN FAULTS: none

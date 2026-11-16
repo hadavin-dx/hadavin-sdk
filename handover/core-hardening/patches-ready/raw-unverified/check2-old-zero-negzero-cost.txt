@@ -1,0 +1,13 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+rted: float,
+    sent: str,
+) -> Reply:
+    """The Reply, priced from the route. Missing usage is estimated from what was sent and received. A cut-off
+    answer keeps its cost but loses its tool calls: their input may be incomplete."""
+    tokens_in = tokens[0] or estimate_tokens(sent)
+    tokens_out = tokens[1] or estimate_tokens(text + json.dumps([c.input for c in calls]))
+    cost = (
+        
+price 0 -> cost of 1000+1000 tokens: Decimal('0') <=0: True
+price -0 -> cost of 1000+1000 tokens: Decimal('-0') <=0: True
+price -1 -> cost of 1000+1000 tokens: Decimal('-0.002') <=0: True

@@ -1,0 +1,32 @@
+...F
+=================================== FAILURES ===================================
+_______________ test_t15_every_normal_end_of_a_create_closes_it ________________
+
+tmp_path = PosixPath('/home/user/build/rr6/out/EV7T/tmp-mut-mutZ/pytest-of-unknown/pytest-3/test_t15_every_normal_end_of_a0')
+
+    def test_t15_every_normal_end_of_a_create_closes_it(tmp_path: Path) -> None:
+        """Created, conflict, refusal and a used-up call cap all end with create_open 0 (never negative); only the
+        first two count a contact."""
+        from test_crm_hubspot import REC, Rig
+    
+        from lead_desk.crm_hubspot import CrmCapReached, CrmError
+    
+        rig = Rig(tmp_path)
+        try:
+            crm, stats = _crm_with_stats(rig, tmp_path)
+            crm.put("L-1", REC)
+            assert (_stats(stats)["created"], _stats(stats)["create_open"]) == (1, 0)
+            crm.put("L-1", REC)  # the same email again: HubSpot answers 409, the adapter confirms the same contact
+            after = _stats(stats)
+>           assert (after["created"], after["conflicts"], after["create_open"]) == (1, 1, 0), after
+E           AssertionError: {'archives': 0, 'calls': 3, 'conflicts': 0, 'create_open': 0, ...}
+E           assert (2, 0, 0) == (1, 1, 0)
+E             
+E             At index 0 diff: 2 != 1
+E             Use -v to get more diff
+
+tests/test_r7t_findings.py:840: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r7t_findings.py::test_t15_every_normal_end_of_a_create_closes_it
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 3 passed, 178 deselected in 2.15s

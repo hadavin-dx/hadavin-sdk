@@ -1,0 +1,430 @@
+FFFFFFFFFFFFFFFF                                                         [100%]
+=================================== FAILURES ===================================
+_ test_t15_the_counting_rule_takes_open_creates_as_possible_contacts_and_never_more_than_the_leads _
+
+    def test_t15_the_counting_rule_takes_open_creates_as_possible_contacts_and_never_more_than_the_leads() -> None:
+        f = rrc.contacts_not_accounted_for
+>       assert f(8, 8, 1, 9) == 1  # the window: 8 counted, 1 open, the list showed 8 of 9
+               ^^^^^^^^^^^^^
+E       TypeError: contacts_not_accounted_for() takes 2 positional arguments but 4 were given
+
+tests/test_r7t_findings.py:764: TypeError
+_ test_t15_the_window_after_the_request_and_before_the_count_leaves_the_create_open _
+
+tmp_path = PosixPath('/home/user/build/rr6/out/R7T/tmp/pytest-of-unknown/pytest-20/test_t15_the_window_after_the_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f33cfd42180>
+
+    def test_t15_the_window_after_the_request_and_before_the_count_leaves_the_create_open(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from test_crm_hubspot import REC, Rig
+    
+        from lead_desk.crm_hubspot import HubspotCrm
+    
+        rig = Rig(tmp_path)
+        try:
+            crm, stats = _crm_with_stats(rig, tmp_path)
+    
+            def stop_before_the_count(self: Any, outcome: str | None) -> None:
+                raise _Killed
+    
+>           monkeypatch.setattr(HubspotCrm, "_settle_create", stop_before_the_count)
+E           AttributeError: <class 'lead_desk.crm_hubspot.HubspotCrm'> has no attribute '_settle_create'
+
+tests/test_r7t_findings.py:789: AttributeError
+_______ test_t15_the_window_before_the_reply_also_leaves_the_create_open _______
+
+tmp_path = PosixPath('/home/user/build/rr6/out/R7T/tmp/pytest-of-unknown/pytest-20/test_t15_the_window_before_the0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f33cf96c4a0>
+
+    def test_t15_the_window_before_the_reply_also_leaves_the_create_open(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from test_crm_hubspot import REC, Rig
+    
+        from lead_desk.crm_hubspot import HubspotCrm
+    
+        rig = Rig(tmp_path)
+        try:
+            crm, stats = _crm_with_stats(rig, tmp_path)
+    
+            def stop_in_the_request(self: Any, *a: Any, **k: Any) -> None:
+                raise _Killed
+    
+            monkeypatch.setattr(HubspotCrm, "_once", stop_in_the_request)
+            with pytest.raises(_Killed):
+                crm.put("L-1", REC)
+>           assert _stats(stats)["create_open"] == 1
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           KeyError: 'create_open'
+
+tests/test_r7t_findings.py:821: KeyError
+_______________ test_t15_every_normal_end_of_a_create_closes_it ________________
+
+tmp_path = PosixPath('/home/user/build/rr6/out/R7T/tmp/pytest-of-unknown/pytest-20/test_t15_every_normal_end_of_a0')
+
+    def test_t15_every_normal_end_of_a_create_closes_it(tmp_path: Path) -> None:
+        """Created, conflict, refusal and a used-up call cap all end with create_open 0 (never negative); only the
+        first two count a contact."""
+        from test_crm_hubspot import REC, Rig
+    
+        from lead_desk.crm_hubspot import CrmCapReached, CrmError
+    
+        rig = Rig(tmp_path)
+        try:
+            crm, stats = _crm_with_stats(rig, tmp_path)
+            crm.put("L-1", REC)
+>           assert (_stats(stats)["created"], _stats(stats)["create_open"]) == (1, 0)
+                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           KeyError: 'create_open'
+
+tests/test_r7t_findings.py:837: KeyError
+_ test_t15_a_run_with_a_window_in_the_counter_and_a_hidden_contact_ends_as_failed _
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7f33cf96c050>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f33cf96c380>
+
+    def test_t15_a_run_with_a_window_in_the_counter_and_a_hidden_contact_ends_as_failed(
+        capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """The scenario of the failing r7s test with the window forced instead of timed: the sum of `created` is one too
+        low, one create is open and one contact is hidden by list lag (floor F3 silent). Must be failed and say so."""
+        monkeypatch.setattr(rrc, "HubspotCrm", _hiding_crm(1))
+        monkeypatch.setattr(rrc, "floor_checks", lambda *_a, **_k: [])
+>       _window_in_the_counter(monkeypatch, created_less=1, open_more=1)
+
+tests/test_r7t_findings.py:884: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f33cf96c380>
+created_less = 1, open_more = 1, unknown_instead = False
+
+    def _window_in_the_counter(
+        monkeypatch: pytest.MonkeyPatch, created_less: int, open_more: int, unknown_instead: bool = False
+    ) -> None:
+        """Make the HubSpot counter of the real dry run read as if a desk had been stopped in the window: `created_less`
+        created contacts not counted and `open_more` creates open. Only the totals change; the run itself is real."""
+>       real = rrc.read_counter_files_checked
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'run_real_check' has no attribute 'read_counter_files_checked'
+
+tests/test_r7t_findings.py:862: AttributeError
+_ test_t15_a_window_in_the_counter_with_nothing_hidden_is_no_false_alarm[made-and-listed] _
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7f33cf9827e0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f33cf96e8a0>
+created_less = 1, open_more = 1
+
+    @pytest.mark.parametrize(("created_less", "open_more"), [(1, 1), (0, 1)], ids=["made-and-listed", "retried"])
+    def test_t15_a_window_in_the_counter_with_nothing_hidden_is_no_false_alarm(
+        capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, created_less: int, open_more: int
+    ) -> None:
+        """The window alone, when the list shows every contact, must not fail the run (the crash drill hits it on
+        purpose): the open create made the contact and it is listed, or it was retried (more possible than leads)."""
+        monkeypatch.setattr(rrc, "HubspotCrm", _hiding_crm(0))
+>       _window_in_the_counter(monkeypatch, created_less, open_more)
+
+tests/test_r7t_findings.py:897: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f33cf96e8a0>
+created_less = 1, open_more = 1, unknown_instead = False
+
+    def _window_in_the_counter(
+        monkeypatch: pytest.MonkeyPatch, created_less: int, open_more: int, unknown_instead: bool = False
+    ) -> None:
+        """Make the HubSpot counter of the real dry run read as if a desk had been stopped in the window: `created_less`
+        created contacts not counted and `open_more` creates open. Only the totals change; the run itself is real."""
+>       real = rrc.read_counter_files_checked
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'run_real_check' has no attribute 'read_counter_files_checked'
+
+tests/test_r7t_findings.py:862: AttributeError
+_ test_t15_a_window_in_the_counter_with_nothing_hidden_is_no_false_alarm[retried] _
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7f33cf982030>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f33cf9807a0>
+created_less = 0, open_more = 1
+
+    @pytest.mark.parametrize(("created_less", "open_more"), [(1, 1), (0, 1)], ids=["made-and-listed", "retried"])
+    def test_t15_a_window_in_the_counter_with_nothing_hidden_is_no_false_alarm(
+        capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, created_less: int, open_more: int
+    ) -> None:
+        """The window alone, when the list shows every contact, must not fail the run (the crash drill hits it on
+        purpose): the open create made the contact and it is listed, or it was retried (more possible than leads)."""
+        monkeypatch.setattr(rrc, "HubspotCrm", _hiding_crm(0))
+>       _window_in_the_counter(monkeypatch, created_less, open_more)
+
+tests/test_r7t_findings.py:897: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f33cf9807a0>
+created_less = 0, open_more = 1, unknown_instead = False
+
+    def _window_in_the_counter(
+        monkeypatch: pytest.MonkeyPatch, created_less: int, open_more: int, unknown_instead: bool = False
+    ) -> None:
+        """Make the HubSpot counter of the real dry run read as if a desk had been stopped in the window: `created_less`
+        created contacts not counted and `open_more` creates open. Only the totals change; the run itself is real."""
+>       real = rrc.read_counter_files_checked
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'run_real_check' has no attribute 'read_counter_files_checked'
+
+tests/test_r7t_findings.py:862: AttributeError
+_ test_t15_a_create_that_waits_on_a_429_and_then_succeeds_opens_and_closes_exactly_once _
+
+tmp_path = PosixPath('/home/user/build/rr6/out/R7T/tmp/pytest-of-unknown/pytest-20/test_t15_a_create_that_waits_o0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f33cf983aa0>
+
+    def test_t15_a_create_that_waits_on_a_429_and_then_succeeds_opens_and_closes_exactly_once(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """One put is one open create however many request attempts the 429 waits cause (kills a count per attempt).
+        The wait is replaced by a recorder (no real timing)."""
+        import types
+    
+        from test_crm_hubspot import REC, Rig
+    
+        from lead_desk import crm_hubspot
+    
+        waited: list[float] = []
+        monkeypatch.setattr(
+            crm_hubspot, "time", types.SimpleNamespace(sleep=waited.append, monotonic=time.monotonic)
+        )
+        rig = Rig(tmp_path)
+        try:
+            crm, stats = _crm_with_stats(rig, tmp_path)
+            rig.state.mode, rig.state.times, rig.state.retry_after = "r429", 2, "0.01"
+            crm.put("L-1", REC)
+            written = _stats(stats)
+>           assert (written["creates"], written["created"], written["create_open"]) == (3, 1, 0), written
+                                                            ^^^^^^^^^^^^^^^^^^^^^^
+E           KeyError: 'create_open'
+
+tests/test_r7t_findings.py:946: KeyError
+_ test_t17_a_create_that_may_have_made_the_contact_is_counted_as_unknown[drop] _
+
+tmp_path = PosixPath('/home/user/build/rr6/out/R7T/tmp/pytest-of-unknown/pytest-20/test_t17_a_create_that_may_hav0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f33cf982720>
+how = 'drop'
+
+    @pytest.mark.parametrize("how", ["drop", "500", "408"])
+    def test_t17_a_create_that_may_have_made_the_contact_is_counted_as_unknown(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, how: str
+    ) -> None:
+        from test_crm_hubspot import REC, Rig
+    
+        from lead_desk.crm_hubspot import CrmError
+    
+        rig = Rig(tmp_path)
+        try:
+            crm, stats = _crm_with_stats(rig, tmp_path)
+            _create_then(monkeypatch, how)
+            with pytest.raises(CrmError):
+                crm.put("L-1", REC)
+            assert len(rig.state.contacts) == 1
+            written = _stats(stats)
+>           assert (written["created"], written["create_open"], written["create_unknown"]) == (0, 0, 1), written
+                                        ^^^^^^^^^^^^^^^^^^^^^^
+E           KeyError: 'create_open'
+
+tests/test_r7t_findings.py:989: KeyError
+_ test_t17_a_create_that_may_have_made_the_contact_is_counted_as_unknown[500] __
+
+tmp_path = PosixPath('/home/user/build/rr6/out/R7T/tmp/pytest-of-unknown/pytest-20/test_t17_a_create_that_may_hav1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f33cf9805f0>
+how = '500'
+
+    @pytest.mark.parametrize("how", ["drop", "500", "408"])
+    def test_t17_a_create_that_may_have_made_the_contact_is_counted_as_unknown(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, how: str
+    ) -> None:
+        from test_crm_hubspot import REC, Rig
+    
+        from lead_desk.crm_hubspot import CrmError
+    
+        rig = Rig(tmp_path)
+        try:
+            crm, stats = _crm_with_stats(rig, tmp_path)
+            _create_then(monkeypatch, how)
+            with pytest.raises(CrmError):
+                crm.put("L-1", REC)
+            assert len(rig.state.contacts) == 1
+            written = _stats(stats)
+>           assert (written["created"], written["create_open"], written["create_unknown"]) == (0, 0, 1), written
+                                        ^^^^^^^^^^^^^^^^^^^^^^
+E           KeyError: 'create_open'
+
+tests/test_r7t_findings.py:989: KeyError
+_ test_t17_a_create_that_may_have_made_the_contact_is_counted_as_unknown[408] __
+
+tmp_path = PosixPath('/home/user/build/rr6/out/R7T/tmp/pytest-of-unknown/pytest-20/test_t17_a_create_that_may_hav2')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f33cf98be90>
+how = '408'
+
+    @pytest.mark.parametrize("how", ["drop", "500", "408"])
+    def test_t17_a_create_that_may_have_made_the_contact_is_counted_as_unknown(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, how: str
+    ) -> None:
+        from test_crm_hubspot import REC, Rig
+    
+        from lead_desk.crm_hubspot import CrmError
+    
+        rig = Rig(tmp_path)
+        try:
+            crm, stats = _crm_with_stats(rig, tmp_path)
+            _create_then(monkeypatch, how)
+            with pytest.raises(CrmError):
+                crm.put("L-1", REC)
+            assert len(rig.state.contacts) == 1
+            written = _stats(stats)
+>           assert (written["created"], written["create_open"], written["create_unknown"]) == (0, 0, 1), written
+                                        ^^^^^^^^^^^^^^^^^^^^^^
+E           KeyError: 'create_open'
+
+tests/test_r7t_findings.py:989: KeyError
+___________ test_t17_a_429_after_the_waits_proves_nothing_was_stored ___________
+
+tmp_path = PosixPath('/home/user/build/rr6/out/R7T/tmp/pytest-of-unknown/pytest-20/test_t17_a_429_after_the_waits0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f33cfd43260>
+
+    def test_t17_a_429_after_the_waits_proves_nothing_was_stored(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        import types
+    
+        from test_crm_hubspot import REC, Rig
+    
+        from lead_desk import crm_hubspot
+        from lead_desk.crm_hubspot import CrmBusy
+    
+        monkeypatch.setattr(
+            crm_hubspot, "time", types.SimpleNamespace(sleep=lambda _s: None, monotonic=time.monotonic)
+        )
+        rig = Rig(tmp_path)
+        try:
+            crm, stats = _crm_with_stats(rig, tmp_path)
+            rig.state.mode, rig.state.times, rig.state.retry_after = "r429", 99, "0.01"
+            with pytest.raises(CrmBusy):
+                crm.put("L-1", REC)
+            written = _stats(stats)
+>           assert (written["create_open"], written["create_unknown"], len(rig.state.contacts)) == (0, 0, 0), written
+                    ^^^^^^^^^^^^^^^^^^^^^^
+E           KeyError: 'create_open'
+
+tests/test_r7t_findings.py:1016: KeyError
+_ test_t17_an_unknown_create_with_nothing_hidden_is_no_false_alarm[made-and-listed] _
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7f33cf9586e0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f33cf95b1d0>
+window = (1, 1)
+
+    @pytest.mark.parametrize("window", [(1, 1), (0, 1)], ids=["made-and-listed", "retried"])
+    def test_t17_an_unknown_create_with_nothing_hidden_is_no_false_alarm(
+        capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, window: tuple[int, int]
+    ) -> None:
+        monkeypatch.setattr(rrc, "HubspotCrm", _hiding_crm(0))
+>       _window_in_the_counter(monkeypatch, window[0], window[1], unknown_instead=True)
+
+tests/test_r7t_findings.py:1026: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f33cf95b1d0>
+created_less = 1, open_more = 1, unknown_instead = True
+
+    def _window_in_the_counter(
+        monkeypatch: pytest.MonkeyPatch, created_less: int, open_more: int, unknown_instead: bool = False
+    ) -> None:
+        """Make the HubSpot counter of the real dry run read as if a desk had been stopped in the window: `created_less`
+        created contacts not counted and `open_more` creates open. Only the totals change; the run itself is real."""
+>       real = rrc.read_counter_files_checked
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'run_real_check' has no attribute 'read_counter_files_checked'
+
+tests/test_r7t_findings.py:862: AttributeError
+__ test_t17_an_unknown_create_with_nothing_hidden_is_no_false_alarm[retried] ___
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7f33cf800e00>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f33cf800f80>
+window = (0, 1)
+
+    @pytest.mark.parametrize("window", [(1, 1), (0, 1)], ids=["made-and-listed", "retried"])
+    def test_t17_an_unknown_create_with_nothing_hidden_is_no_false_alarm(
+        capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, window: tuple[int, int]
+    ) -> None:
+        monkeypatch.setattr(rrc, "HubspotCrm", _hiding_crm(0))
+>       _window_in_the_counter(monkeypatch, window[0], window[1], unknown_instead=True)
+
+tests/test_r7t_findings.py:1026: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f33cf800f80>
+created_less = 0, open_more = 1, unknown_instead = True
+
+    def _window_in_the_counter(
+        monkeypatch: pytest.MonkeyPatch, created_less: int, open_more: int, unknown_instead: bool = False
+    ) -> None:
+        """Make the HubSpot counter of the real dry run read as if a desk had been stopped in the window: `created_less`
+        created contacts not counted and `open_more` creates open. Only the totals change; the run itself is real."""
+>       real = rrc.read_counter_files_checked
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'run_real_check' has no attribute 'read_counter_files_checked'
+
+tests/test_r7t_findings.py:862: AttributeError
+_ test_t17_an_unknown_create_and_a_contact_the_list_does_not_show_ends_as_failed _
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7f33cf801580>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f33cf801340>
+
+    def test_t17_an_unknown_create_and_a_contact_the_list_does_not_show_ends_as_failed(
+        capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(rrc, "HubspotCrm", _hiding_crm(1))
+        monkeypatch.setattr(rrc, "floor_checks", lambda *_a, **_k: [])
+>       _window_in_the_counter(monkeypatch, 1, 1, unknown_instead=True)
+
+tests/test_r7t_findings.py:1037: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f33cf801340>
+created_less = 1, open_more = 1, unknown_instead = True
+
+    def _window_in_the_counter(
+        monkeypatch: pytest.MonkeyPatch, created_less: int, open_more: int, unknown_instead: bool = False
+    ) -> None:
+        """Make the HubSpot counter of the real dry run read as if a desk had been stopped in the window: `created_less`
+        created contacts not counted and `open_more` creates open. Only the totals change; the run itself is real."""
+>       real = rrc.read_counter_files_checked
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'run_real_check' has no attribute 'read_counter_files_checked'
+
+tests/test_r7t_findings.py:862: AttributeError
+_ test_t18_a_counters_file_that_cannot_be_written_stops_the_create_before_it_is_sent _
+
+tmp_path = PosixPath('/home/user/build/rr6/out/R7T/tmp/pytest-of-unknown/pytest-20/test_t18_a_counters_file_that_0')
+
+    def test_t18_a_counters_file_that_cannot_be_written_stops_the_create_before_it_is_sent(tmp_path: Path) -> None:
+        from test_crm_hubspot import REC, Rig
+    
+>       from lead_desk.crm_hubspot import CrmCounterUnwritable
+E       ImportError: cannot import name 'CrmCounterUnwritable' from 'lead_desk.crm_hubspot' (/home/user/build/rr6/out/R7T/old2x/tree/src/lead_desk/crm_hubspot.py)
+
+tests/test_r7t_findings.py:1049: ImportError
+=========================== short test summary info ============================
+FAILED tests/test_r7t_findings.py::test_t15_the_counting_rule_takes_open_creates_as_possible_contacts_and_never_more_than_the_leads
+FAILED tests/test_r7t_findings.py::test_t15_the_window_after_the_request_and_before_the_count_leaves_the_create_open
+FAILED tests/test_r7t_findings.py::test_t15_the_window_before_the_reply_also_leaves_the_create_open
+FAILED tests/test_r7t_findings.py::test_t15_every_normal_end_of_a_create_closes_it
+FAILED tests/test_r7t_findings.py::test_t15_a_run_with_a_window_in_the_counter_and_a_hidden_contact_ends_as_failed
+FAILED tests/test_r7t_findings.py::test_t15_a_window_in_the_counter_with_nothing_hidden_is_no_false_alarm[made-and-listed]
+FAILED tests/test_r7t_findings.py::test_t15_a_window_in_the_counter_with_nothing_hidden_is_no_false_alarm[retried]
+FAILED tests/test_r7t_findings.py::test_t15_a_create_that_waits_on_a_429_and_then_succeeds_opens_and_closes_exactly_once
+FAILED tests/test_r7t_findings.py::test_t17_a_create_that_may_have_made_the_contact_is_counted_as_unknown[drop]
+FAILED tests/test_r7t_findings.py::test_t17_a_create_that_may_have_made_the_contact_is_counted_as_unknown[500]
+FAILED tests/test_r7t_findings.py::test_t17_a_create_that_may_have_made_the_contact_is_counted_as_unknown[408]
+FAILED tests/test_r7t_findings.py::test_t17_a_429_after_the_waits_proves_nothing_was_stored
+FAILED tests/test_r7t_findings.py::test_t17_an_unknown_create_with_nothing_hidden_is_no_false_alarm[made-and-listed]
+FAILED tests/test_r7t_findings.py::test_t17_an_unknown_create_with_nothing_hidden_is_no_false_alarm[retried]
+FAILED tests/test_r7t_findings.py::test_t17_an_unknown_create_and_a_contact_the_list_does_not_show_ends_as_failed
+FAILED tests/test_r7t_findings.py::test_t18_a_counters_file_that_cannot_be_written_stops_the_create_before_it_is_sent
+16 failed, 122 deselected in 4.78s

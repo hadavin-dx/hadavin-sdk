@@ -1,0 +1,28 @@
+HEAD 98a3ed95bca4acac88d77b29d4f26846f7f9ce9b
+CMD env -u CI -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY -u AWS_CA_BUNDLE -u ANTHROPIC_BASE_URL -u GH_TOKEN -u GITHUB_TOKEN -u HADAVIN_TEST_PG_DSN CI=true /home/user/build/venv-a21a-313/bin/python -m pytest tests/contracts/test_t1_meter_cap.py -p no:randomly -p no:cacheprovider -q -rs
+......EEEEEE.E.E.E.E.E                                                   [100%]
+==================================== ERRORS ====================================
+_ ERROR at setup of test_one_caller_at_a_time_admits_ceil_cap_over_cost_and_overshoots_by_less_than_one_call[postgres-2.00-1.00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_one_caller_at_a_time_admits_ceil_cap_over_cost_and_overshoots_by_less_than_one_call[postgres-2.50-1.00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_one_caller_at_a_time_admits_ceil_cap_over_cost_and_overshoots_by_less_than_one_call[postgres-1.50-1.00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_one_caller_at_a_time_admits_ceil_cap_over_cost_and_overshoots_by_less_than_one_call[postgres-0.50-1.00] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_one_caller_at_a_time_admits_ceil_cap_over_cost_and_overshoots_by_less_than_one_call[postgres-1.00-0.60] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_one_caller_at_a_time_admits_ceil_cap_over_cost_and_overshoots_by_less_than_one_call[postgres-1.00-0.30] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_a_cap_that_is_a_multiple_of_the_cost_is_never_overshot_when_one_at_a_time[postgres] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_the_monthly_cap_binds_when_it_is_lower_than_the_daily_cap[postgres] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_____ ERROR at setup of test_a_charge_is_recorded_in_the_ledger[postgres] ______
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_both_budgets_over_their_caps_are_both_named[postgres] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+_ ERROR at setup of test_the_harness_passes_a_meter_that_reserves_before_the_call[postgres] _
+HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+11 passed, 11 errors in 0.17s
+exit=1

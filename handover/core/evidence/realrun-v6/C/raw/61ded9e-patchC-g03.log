@@ -1,0 +1,28 @@
+.....sssssss.sssssssssssss..sss......................................... [ 10%]
+...............ssssssssssssssssssssssssss............................... [ 21%]
+.........sssssssssssssssssssssssssssssssss..........ss..s............... [ 31%]
+........................................................................ [ 42%]
+........................................................................ [ 52%]
+........................................................................ [ 63%]
+........................................................................ [ 73%]
+........................................................................ [ 84%]
+........................................................................ [ 94%]
+.................................s..                                     [100%]
+============================= slowest 8 durations ==============================
+64.38s call     tests/test_real_check_dry.py::test_dry_fakes_leave_no_certificate_or_key_folder_behind
+63.98s call     tests/test_real_check_dry.py::test_a_dry_run_where_every_send_ends_in_doubt_fails
+62.96s call     tests/test_real_check_dry.py::test_a_failed_crm_read_back_ends_with_counts_a_result_file_and_a_clean_up_note
+34.46s call     tests/test_real_check_dry.py::test_dry_fakes_run_end_to_end
+12.92s call     tests/test_scrub_n8n_export.py::test_each_pattern_scans_one_megabyte_of_its_worst_shapes_in_linear_time[_clean]
+8.37s call     tests/test_scrub_n8n_export.py::test_each_pattern_scans_one_megabyte_of_its_worst_shapes_in_linear_time[_LOCAL_BROKEN]
+4.29s call     tests/test_reset_scripts.py::test_reset_sh_waits_for_a_desk_that_needs_a_few_seconds_to_stop
+3.55s call     tests/test_scrub_n8n_export.py::test_each_pattern_scans_one_megabyte_of_its_worst_shapes_in_linear_time[URL]
+=========================== short test summary info ============================
+SKIPPED [70] tests/test_portal_lead_pages.py:113: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [12] tests/test_portal_browser.py:27: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_portal_wording_and_masking.py:171: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_portal_wording_and_masking.py:204: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_portal_wording_and_masking.py:257: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_server_hardening.py:224: measurement run: set LEAD_DESK_LOAD_N
+598 passed, 86 skipped in 377.50s (0:06:17)
+rc=0 wall=378s

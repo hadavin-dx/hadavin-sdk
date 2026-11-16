@@ -1,0 +1,84 @@
+== OLD code (clean tree) ==
+______________________________ test_failed_retry _______________________________
+    def test_failed_retry(env) -> None:
+>           assert rig.state(lid) == ("failed", err)
+E           AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E             
+E             At index 0 diff: 'pending' != 'failed'
+E             Use -v to get more diff
+        """Blind outbox; a failed follow-up; two Retry calls released together; the send is slow so they overlap."""
+>       assert rig.state(lid) == ("failed", "refused")
+E       AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E         
+E         At index 0 diff: 'pending' != 'failed'
+E         Use -v to get more diff
+E       AssertionError: another desk is using this database
+E         
+E       assert b'another desk is using this database' not in b'another desk is using this database\n'
+            # mode mismatch: the server's mode changes after start-up -> failed / mode_mismatch, nothing recorded as sent
+>           assert desk.lead(lid).body["followup"]["state"] == "failed"
+E           AssertionError: assert 'unknown' == 'failed'
+E             
+E             - failed
+E             + unknown
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'emails\\ ==\\ 1'
+E         Actual message: "assert ('pending', None) == ('failed', 'refused')\n  \n  At index 0 diff: 'pending' != 'failed'\n  Use -v to get more diff"
+WARNING  lead_desk:desk.py:1021 follow-up failed: TypeError
+E       AssertionError: gitleaks binary not found: put it on PATH or set GITLEAKS_BIN
+E       assert None
+E       AssertionError: set HYGIENE_WORDLIST to the private word list; this test fails instead of skipping
+E       assert None
+        wait_until(lambda: pending_zero(base), what="follow-up driven although the reply write failed")
+E       AssertionError: assert 0 == 1
+E        +  where 0 = leads()
+E        +    where leads = Rig(desk=<lead_desk.desk.Desk object at 0x7f7dae23c2b0>, config=Config(db_path=PosixPath('/tmp/pytest-of-root/pytest-2...ytest-2400/test_reply_write_fails_after_c0/rig1/replies.json'), desks=[
+FAILED tests/test_flow.py::test_failed_retry - AssertionError: assert ('pendi...
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+FAILED tests/test_hardening_cloud_b.py::test_f14_lock_file_unopenable - Asser...
+FAILED tests/test_infra.py::test_demo_adapters - AssertionError: assert 'unkn...
+FAILED tests/test_mutants.py::test_mutant_no_claim - AssertionError: Regex pa...
+FAILED tests/test_hygiene.py::test_hygiene_scan_public - AssertionError: gitl...
+FAILED tests/test_hygiene.py::test_hygiene_wordlist - AssertionError: set HYG...
+FAILED tests/test_server_hardening.py::test_reply_write_fails_after_commit_followup_still_runs
+8 failed, 7 passed in 7.49s
+
+== NEW code ==
+______________________________ test_failed_retry _______________________________
+    def test_failed_retry(env) -> None:
+>           assert rig.state(lid) == ("failed", err)
+E           AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E             
+E             At index 0 diff: 'pending' != 'failed'
+E             Use -v to get more diff
+        """Blind outbox; a failed follow-up; two Retry calls released together; the send is slow so they overlap."""
+>       assert rig.state(lid) == ("failed", "refused")
+E       AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E         
+E         At index 0 diff: 'pending' != 'failed'
+E         Use -v to get more diff
+E       AssertionError: another desk is using this database
+E         
+E       assert b'another desk is using this database' not in b'another desk is using this database\n'
+            # mode mismatch: the server's mode changes after start-up -> failed / mode_mismatch, nothing recorded as sent
+>           assert desk.lead(lid).body["followup"]["state"] == "failed"
+E           AssertionError: assert 'unknown' == 'failed'
+E             
+E             - failed
+E             + unknown
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'emails\\ ==\\ 1'
+E         Actual message: "assert ('pending', None) == ('failed', 'refused')\n  \n  At index 0 diff: 'pending' != 'failed'\n  Use -v to get more diff"
+WARNING  lead_desk:desk.py:1021 follow-up failed: TypeError
+E       AssertionError: gitleaks binary not found: put it on PATH or set GITLEAKS_BIN
+E       assert None
+E       AssertionError: set HYGIENE_WORDLIST to the private word list; this test fails instead of skipping
+E       assert None
+FAILED tests/test_flow.py::test_failed_retry - AssertionError: assert ('pendi...
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+FAILED tests/test_hardening_cloud_b.py::test_f14_lock_file_unopenable - Asser...
+FAILED tests/test_infra.py::test_demo_adapters - AssertionError: assert 'unkn...
+FAILED tests/test_mutants.py::test_mutant_no_claim - AssertionError: Regex pa...
+FAILED tests/test_hygiene.py::test_hygiene_scan_public - AssertionError: gitl...
+FAILED tests/test_hygiene.py::test_hygiene_wordlist - AssertionError: set HYG...
+7 failed, 8 passed in 7.52s

@@ -1,0 +1,153 @@
+== T1 the real repository as --root is refused (exit 2)
+REFUSED: --root /home/user/hadavin-sdk is inside a git work tree: use a plain scratch copy (git archive + patch)
+  exit code 2
+  PASS: T1 exit 2
+== T2 SIGKILL while a mutant is planted
+  file now: return1
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 32: kill: (14600) - No such process
+  FAIL: T2 file stays planted
+== T3 the next run refuses and says how to restore
+m1 KILLED tests/test_fast.py::test_f
+tree diff rc 0
+  exit code 0
+  FAIL: T3 exit 2
+== T4 marker lost: the tree check against a fresh git archive still refuses
+mv: cannot stat '/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/st-old/tmpstate/hadavin-mutation-lane/*.planted.json': No such file or directory
+m1 KILLED tests/test_fast.py::test_f
+tree diff rc 0
+  exit code 0
+  FAIL: T4 exit 2
+mv: cannot stat '/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/st-old/mk/*.planted.json': No such file or directory
+== T5 --restore puts the saved original back
+no marker: nothing to restore
+  PASS: T5 file restored
+  PASS: T5 state folder empty
+== T6 SIGTERM during a run restores the file and removes the marker
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 42: kill: (16048) - No such process
+  exit code 0
+  FAIL: T6 exit 143
+  PASS: T6 file restored
+  PASS: T6 state empty
+== T7 SIGINT likewise, exit code read directly from $?
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 44: kill: (17058) - No such process
+  exit code 0
+  FAIL: T7 exit 130
+  PASS: T7 file restored
+  PASS: T7 state empty
+== T8 two runs at once: the second is refused by the lock, and the first is still alive
+m1 KILLED tests/test_fast.py::test_f
+tree diff rc 0
+  second run exit code 0
+  FAIL: T8 second refused (2)
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 23: kill: (19737) - No such process
+  FAIL: T8 first run still alive
+  FAIL: T8 file still planted by the first
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 48: kill: (19737) - No such process
+  PASS: T8 file restored after
+== T9 a clean run to the end: KILLED, backup gone, tree diff clean, exit 0
+m1 KILLED tests/test_fast.py::test_f
+tree diff rc 0
+  exit code 0
+  PASS: T9 exit 0
+  PASS: T9 state empty
+rc: 0 (0 = identical; 1 = differences listed)
+== T10 absolute path as the mutant file is refused (exit 2), nothing planted
+m1 KILLED tests/test_fast.py::test_f
+tree diff rc 0
+  exit code 0
+  FAIL: T10 exit 2
+  PASS: T10 file unchanged
+  PASS: T10 state empty
+== T11 '..' in the mutant file is refused (exit 2)
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/run.py.OLD", line 306, in <module>
+    main()
+    ~~~~^^
+  File "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/run.py.OLD", line 272, in main
+    one(a, tests, m, results, ref)
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/run.py.OLD", line 162, in one
+    ref_bytes = (ref / m["file"]).read_bytes()
+  File "/usr/local/lib/python3.13/pathlib/_abc.py", line 625, in read_bytes
+    with self.open(mode='rb') as f:
+         ~~~~~~~~~^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/pathlib/_local.py", line 537, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/st-old/tmpstate/mutation-ref-fqwly7mc/ref/../root/src/mod.py'
+  exit code 1
+  FAIL: T11 exit 2
+  PASS: T11 file unchanged
+== T12 symlinked folders inside the scratch root
+m1 KILLED tests/test_fast.py::test_f
+tree diff rc 1
+  (extra symlinked folder 'evil') exit code 0
+  FAIL: T12b exit 2
+  PASS: T12b real repo file unchanged
+REFUSED: scratch tree differs from git archive e48975f3f7c1708227d4a92a2b1ba1a54cf2b94f + patches in 1 file(s), first: ['src/mod.py']: it may hold a planted change; rebuild it from the archive
+  (src itself is a link to the real repo) exit code 2
+  PASS: T12a exit 2
+  PASS: T12a real repo file unchanged
+== T13 git cannot tell (rev-parse fails): fail closed
+m1 KILLED tests/test_fast.py::test_f
+tree diff rc 0
+  (work-tree check fails) exit code 0
+  FAIL: T13a exit 2
+m1 KILLED tests/test_fast.py::test_f
+tree diff rc 0
+  (show-toplevel fails) exit code 0
+  FAIL: T13b exit 2
+== T14 a leftover file after the loop gives a non-zero exit; a declared --extra does not
+  undeclared leftover: exit code 0
+  FAIL: T14a exit 4
+  declared --extra: exit code 0
+  PASS: T14b exit 0
+== T15 SIGKILL of run.py leaves the test group alive; --restore stops it and restores
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 70: kill: (22652) - No such process
+  FAIL: T15 orphan pytest alive
+no marker: nothing to restore
+  PASS: T15 orphan stopped
+  PASS: T15 file restored
+== T16 SIGHUP restores too (exit 129)
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 74: kill: (27097) - No such process
+  exit code 0
+  FAIL: T16 exit 129
+  PASS: T16 file restored
+== T17 --restore while a run is live is refused (lock)
+no marker: nothing to restore
+  exit code 0
+  FAIL: T17 exit 2
+  FAIL: T17 run still planted
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 77: kill: (28768) - No such process
+== T18 a mutant id that climbs out of --raw is refused
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/run.py.OLD", line 306, in <module>
+    main()
+    ~~~~^^
+  File "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/run.py.OLD", line 272, in main
+    one(a, tests, m, results, ref)
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/run.py.OLD", line 203, in one
+    (pathlib.Path(a.raw) / f"{a.prefix}-{m['id']}.txt").write_text(text)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/usr/local/lib/python3.13/pathlib/_local.py", line 555, in write_text
+    return PathBase.write_text(self, data, encoding, errors, newline)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/pathlib/_abc.py", line 651, in write_text
+    with self.open(mode='w', encoding=encoding, errors=errors, newline=newline) as f:
+         ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/pathlib/_local.py", line 537, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/st-old/rawT/X-../escape.txt'
+  exit code 1
+  FAIL: T18 exit 2
+  PASS: T18 no file outside raw
+== T19 an error while the tests start (no .venv python) still removes the marker
+m1 ERROR rc=127 
+tree diff rc 0
+  exit code 0
+  FAIL: T19 exit 2
+  PASS: T19 file unchanged
+  PASS: T19 state empty
+FAILED CHECKS: 20

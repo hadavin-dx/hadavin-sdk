@@ -1,0 +1,41 @@
+HEAD 945bfd6d21ddc7361b80d1976b159764ec195edd
+$ pytest tests/test_no_pglast_in_runtime.py (nested checkout)
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.2.0, pluggy-1.7.0 -- /home/user/build/venv-p71-945bfd6-312/bin/python
+rootdir: /home/user/build/EV-P71-945bfd6/wt-nested
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 29 items
+
+tests/test_no_pglast_in_runtime.py::test_repository_ships_no_pglast PASSED [  3%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[clean] PASSED     [  6%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[non-test group] PASSED [ 10%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[uppercase and leading space] PASSED [ 13%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[at-form] PASSED   [ 17%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[include-group] PASSED [ 20%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[runtime dependency] PASSED [ 24%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[optional extra] PASSED [ 27%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[tool.uv sources] PASSED [ 31%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[uv.lock missing] PASSED [ 34%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[tool.uv constraint] PASSED [ 37%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[lock edge from runtime package] PASSED [ 41%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[lock group other than test] PASSED [ 44%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[import in src] PASSED [ 48%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[import submodule] PASSED [ 51%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[from submodule] PASSED [ 55%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[import_module string] PASSED [ 58%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[prose string is fine] PASSED [ 62%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[missing src] PASSED [ 65%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[vendored dir] PASSED [ 68%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[vendored binary] PASSED [ 72%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[vendored macOS binary] PASSED [ 75%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[vendored Windows binary] PASSED [ 79%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[cyclic include-group has no name] PASSED [ 82%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[cyclic pair still finds pglast] PASSED [ 86%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[nested .venv import is skipped] PASSED [ 89%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[nested node_modules vendored is skipped] PASSED [ 93%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[nested .venv alone is not a scanned file] PASSED [ 96%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[venv-like name outside the skip list is scanned] PASSED [100%]
+
+============================== 29 passed in 0.54s ==============================
+exit=0

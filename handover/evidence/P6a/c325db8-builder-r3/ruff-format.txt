@@ -1,0 +1,3 @@
+$ ruff format --check src tests demos tools
+318 files already formatted
+exit=0

@@ -1,0 +1,28 @@
+xml files: 30
+pytest exit codes: {'0': 28, '1': 2}
+test_the_timing_harness_flags_a_quadratic_stand_in {'passed': 29, 'failure': 1}
+test_the_timing_harness_flags_a_quadratic_stand_in_that_is_fast_on_the_small_input {'passed': 30}
+test_the_timing_harness_passes_a_linear_and_an_n_log_n_stand_in[linear] {'passed': 30}
+test_the_timing_harness_passes_a_linear_and_an_n_log_n_stand_in[n-log-n] {'passed': 29, 'failure': 1}
+FIRST ('test_the_timing_harness_flags_a_quadratic_stand_in', 'failure') | AssertionError: a quadratic function must be flagged
+FIRST ('test_the_timing_harness_passes_a_linear_and_an_n_log_n_stand_in[n-log-n]', 'failure') | AssertionError: _n_log_n is linear enough and must not be flagged
+start 2026-11-11T14:29:38Z  14:29:38 up  1:01,  0 user,  load average: 7.12, 5.41, 4.50
+middle(run 15) 2026-11-11T14:31:06Z  14:31:06 up  1:03,  0 user,  load average: 10.10, 6.80, 5.08
+end 2026-11-11T14:32:29Z  14:32:29 up  1:04,  0 user,  load average: 10.85, 7.82, 5.58
+DONE
+
+runs that failed under own 4-loop overload: 2 and 18
+--- run-2
+E       AssertionError: a quadratic function must be flagged
+E       assert False
+E        +  where False = <function is_superlinear at 0x7f5e43de2c00>(_quadratic, 'a', (16 * 1024), (256 * 1024))
+E        +    where <function is_superlinear at 0x7f5e43de2c00> = timing.is_superlinear
+FAILED tests/test_migration_numbers.py::test_the_timing_harness_flags_a_quadratic_stand_in
+1 failed, 3 passed, 132 deselected in 4.51s
+--- run-18
+E       AssertionError: _n_log_n is linear enough and must not be flagged
+E       assert not True
+E        +  where True = <function is_superlinear at 0x7f257cadac00>(<function _n_log_n at 0x7f257c94a660>, 'a', (16 * 1024), (256 * 1024))
+E        +    where <function is_superlinear at 0x7f257cadac00> = timing.is_superlinear
+FAILED tests/test_migration_numbers.py::test_the_timing_harness_passes_a_linear_and_an_n_log_n_stand_in[n-log-n]
+1 failed, 3 passed, 132 deselected in 4.82s

@@ -1,0 +1,13 @@
+main worktree HEAD=2a8c2aac89f83dd0a45af0412563b59ff4fe5632 dirty-before=0
+ M tests/contracts/test_capabilities.py
+ M tests/test_lockin_guard.py
+ M tests/test_p7_tick.py
+?? tests/test_q8a2_callback.py
+imported /home/user/build/EV-Q8a2f-main/src/hadavin_sdk/__init__.py
+pytest rc=2 dur=5s last: 1 error in 0.69s
+collection/import error lines: 3
+restored dirty-after=0
+run A (4 files incl. tests/test_p7_tick.py): rc=2, collection ImportError: cannot import name 'handle_action' from hadavin_sdk.approvals.receiver (main). 0 tests ran.
+run B (3 files): pytest rc=1 dur=54s last: 94 failed, 246 passed in 49.82s
+restored dirty-after=0
+{('failed', 'test_q8a2_callback'): 63, ('passed', 'test_q8a2_callback'): 9, ('passed', 'test_lockin_guard'): 196, ('failed', 'test_lockin_guard'): 29, ('passed', 'contracts'): 41, ('failed', 'contracts'): 2}

@@ -1,0 +1,11 @@
+### tests/test_migration_rules.py::test_the_migrate_docstring_says_where_role_membership_is_changed rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_______ test_the_migrate_docstring_says_where_role_membership_is_changed _______
+tests/test_migration_rules.py:273: in test_the_migrate_docstring_says_where_role_membership_is_changed
+    assert "migrate()`'s own Python step, with the role as an argument" in doc
+E   assert "migrate()`'s own Python step, with the role as an argument" in 'Apply pending migrations; return the versions applied by this call. With `runtime_role`, give it the privileges `GRAN...tion body that the file then calls) is found by the read-back of `pg_auth_members` after the file and refuses the run.'
+=========================== short test summary info ============================
+FAILED tests/test_migration_rules.py::test_the_migrate_docstring_says_where_role_membership_is_changed
+1 failed in 0.34s
+

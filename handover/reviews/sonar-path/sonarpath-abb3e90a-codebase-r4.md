@@ -1,0 +1,14 @@
+# SONAR-PATH round 4, codebase reviewer (egm-codebase-details), head abb3e90a
+
+Read-only, snapshot /home/user/build/snap/sonarpath-abb3e90a/. Condensed by the lead session from the inline report. Result: 0 Blocker, 4 Major, several Nit. PARTIAL review: nothing run; the builder baseline (99 failed / 121 passed) never run by the reviewer. No SonarCloud claim.
+
+Suppressions on added lines: real markers 0 (two added test lines only spell "pragma: no cover" in a string). The diff REMOVES `# fmt: skip` in tests/test_k1b_cli.py (two sites around DIFF.patch:3602, :3624) and tests/test_k1b_replay.py (~:3648): reflow churn unrelated to the path work.
+
+M1 two mutant rows no longer match the source: tests/pathguard_mutants.py:1118 old text `source, pem = str(settings.private_key_path), path.read_bytes()` (real signer.py:115-118 is multi-line); :1053 old text `except (KeyboardInterrupt, MemoryError) as stop:` (real replay.py:322-325 multi-line). Rows cannot apply; re-run full table at final head.
+M2 label rule inconsistent: tests/test_pathguard_batch3.py:85-91 generates test_pin_r4_range_NN but they probe rules absent on main (fail there), docstring :3-5 "evidence file"; tests/test_pathguard_callers.py:59 and :68 labelled pin while their docstring (:3-4) says they fail on main; baseline unverified.
+M3 tests/test_pathguard_callers.py:3-4 false docstring ("the real run in the pull request body"; behavioural failure) contradicts pin/control labels; other tests (:77, :91) unlabelled.
+M4 tripwire limits incomplete (tests/test_pathguard_tripwire.py, fixtures/pathguard_exceptions.txt): redundant outer guard score.py:217 `out = pathguard.operator_dir(outputs_dir(out), what="outputs folder")` exists only so the scan passes; its mutant row (pathguard_mutants.py:340) removes both guards together; scan accepts a name assigned from a pathguard call in the same function without checking it is the name reaching the banned call; state limits in the docstring.
+
+Nits: N1 stale citation tests/test_pathguard_sites.py:5. N2 R4 table (20 ranges) three copies agree, check not mechanical: add one test deriving the count from CONTROL_RANGES vs CHANGELOG. N3 local_dir.py:173-174 recomputes join per entry: hoist. N4 atomic.py behaviour matches CHANGELOG; claims:188 asserts only that the old two-argument form raises: pin the exact exception type. N5 CHANGELOG bullet lookups not all ticked. N6 callers' guard choice and R10/R11 mapping match the CHANGELOG; no defect except M1 and the M4 outer guard. N7 `_within` is the shared tail, no other duplicate. N8 revert the fmt:skip reflow in test_k1b_cli.py and test_k1b_replay.py or split it.
+
+Not checked: any run; mutant table lines 64-180 and 1100-1123 partly; batch3 lines 130-740, batch4 1-100 and 170-380, sites after line 260; parts of secrets_vault, config, judge, fake; per-test old-code status.

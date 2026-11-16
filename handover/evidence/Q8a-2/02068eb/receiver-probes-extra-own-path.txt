@@ -1,0 +1,68 @@
+tree: head-02068ebe hadavin_sdk: /home/user/build/EV-Q8a2-02068eb/src/hadavin_sdk/__init__.py
+
+== kind fake: callback_path attribute '/channel/actions'; forms built from '/channel/actions'
+   POST '/channel/actions' bad signature -> HTTP/1.0 401 Unauthorized
+   POST '//channel/actions' bad signature -> HTTP/1.0 401 Unauthorized
+   POST '///channel/actions' bad signature -> HTTP/1.0 401 Unauthorized
+   POST '////channel/actions' bad signature -> HTTP/1.0 401 Unauthorized
+   POST '/channel/actions/' bad signature -> HTTP/1.0 404 Not Found
+   POST '/CHANNEL/ACTIONS' bad signature -> HTTP/1.0 404 Not Found
+   POST '/channel/actions?x=1' bad signature -> HTTP/1.0 404 Not Found
+   POST '/channel/actions#f' bad signature -> HTTP/1.0 404 Not Found
+   POST '/channel/actions%2f' bad signature -> HTTP/1.0 404 Not Found
+   POST '/x/../channel/actions' bad signature -> HTTP/1.0 404 Not Found
+   POST 'http://127.0.0.1/channel/actions' bad signature -> HTTP/1.0 404 Not Found
+   POST '/channel/actions ' bad signature -> HTTP/1.0 401 Unauthorized
+   POST '\\channel/actions' bad signature -> HTTP/1.0 404 Not Found
+   server closed; thread alive: False
+
+== kind slack: callback_path attribute '/slack/actions'; forms built from '/slack/actions'
+   POST '/slack/actions' bad signature -> HTTP/1.0 401 Unauthorized
+   POST '//slack/actions' bad signature -> HTTP/1.0 401 Unauthorized
+   POST '///slack/actions' bad signature -> HTTP/1.0 401 Unauthorized
+   POST '////slack/actions' bad signature -> HTTP/1.0 401 Unauthorized
+   POST '/slack/actions/' bad signature -> HTTP/1.0 404 Not Found
+   POST '/SLACK/ACTIONS' bad signature -> HTTP/1.0 404 Not Found
+   POST '/slack/actions?x=1' bad signature -> HTTP/1.0 404 Not Found
+   POST '/slack/actions#f' bad signature -> HTTP/1.0 404 Not Found
+   POST '/slack/actions%2f' bad signature -> HTTP/1.0 404 Not Found
+   POST '/x/../slack/actions' bad signature -> HTTP/1.0 404 Not Found
+   POST 'http://127.0.0.1/slack/actions' bad signature -> HTTP/1.0 404 Not Found
+   POST '/slack/actions ' bad signature -> HTTP/1.0 401 Unauthorized
+   POST '\\slack/actions' bad signature -> HTTP/1.0 404 Not Found
+   server closed; thread alive: False
+rc=0
+tree: origin-main-2a8c2aac hadavin_sdk: /home/user/build/EV-Q8a2-02068eb-main/src/hadavin_sdk/__init__.py
+
+== kind fake: callback_path attribute None; forms built from '/slack/actions'
+   POST '/slack/actions' bad signature -> HTTP/1.0 401 Unauthorized
+   POST '//slack/actions' bad signature -> HTTP/1.0 401 Unauthorized
+   POST '///slack/actions' bad signature -> HTTP/1.0 401 Unauthorized
+   POST '////slack/actions' bad signature -> HTTP/1.0 401 Unauthorized
+   POST '/slack/actions/' bad signature -> HTTP/1.0 404 Not Found
+   POST '/SLACK/ACTIONS' bad signature -> HTTP/1.0 404 Not Found
+   POST '/slack/actions?x=1' bad signature -> HTTP/1.0 404 Not Found
+   POST '/slack/actions#f' bad signature -> HTTP/1.0 404 Not Found
+   POST '/slack/actions%2f' bad signature -> HTTP/1.0 404 Not Found
+   POST '/x/../slack/actions' bad signature -> HTTP/1.0 404 Not Found
+   POST 'http://127.0.0.1/slack/actions' bad signature -> HTTP/1.0 404 Not Found
+   POST '/slack/actions ' bad signature -> HTTP/1.0 401 Unauthorized
+   POST '\\slack/actions' bad signature -> HTTP/1.0 404 Not Found
+   server closed; thread alive: False
+
+== kind slack: callback_path attribute None; forms built from '/slack/actions'
+   POST '/slack/actions' bad signature -> HTTP/1.0 401 Unauthorized
+   POST '//slack/actions' bad signature -> HTTP/1.0 401 Unauthorized
+   POST '///slack/actions' bad signature -> HTTP/1.0 401 Unauthorized
+   POST '////slack/actions' bad signature -> HTTP/1.0 401 Unauthorized
+   POST '/slack/actions/' bad signature -> HTTP/1.0 404 Not Found
+   POST '/SLACK/ACTIONS' bad signature -> HTTP/1.0 404 Not Found
+   POST '/slack/actions?x=1' bad signature -> HTTP/1.0 404 Not Found
+   POST '/slack/actions#f' bad signature -> HTTP/1.0 404 Not Found
+   POST '/slack/actions%2f' bad signature -> HTTP/1.0 404 Not Found
+   POST '/x/../slack/actions' bad signature -> HTTP/1.0 404 Not Found
+   POST 'http://127.0.0.1/slack/actions' bad signature -> HTTP/1.0 404 Not Found
+   POST '/slack/actions ' bad signature -> HTTP/1.0 401 Unauthorized
+   POST '\\slack/actions' bad signature -> HTTP/1.0 404 Not Found
+   server closed; thread alive: False
+rc=0

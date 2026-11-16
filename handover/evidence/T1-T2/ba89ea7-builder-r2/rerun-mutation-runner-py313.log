@@ -1,0 +1,4 @@
+...........................................................              [100%]
+59 passed in 23.04s
+FAILED tests/test_mutation_runner.py::test_the_runner_wires_pinned_so_another_failing_test_is_other_test
+1 failed, 58 passed in 23.40s

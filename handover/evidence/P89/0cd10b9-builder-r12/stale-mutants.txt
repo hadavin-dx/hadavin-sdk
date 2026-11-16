@@ -1,0 +1,69 @@
+snippet gone | runner: a percent-decoded password is not masked
+snippet gone & killer gone | runner: a shortened value is not masked by its fragments
+killer gone | runner: a shortened value is not masked at its start
+killer gone | runner: a shortened value is not masked at its end
+snippet gone | runner: the password after a password word is not a secret
+snippet gone & killer gone | runner: the stripped-text minimum is one too long
+killer gone | runner: the passwd word is not read
+killer gone | runner: the pwd word is not read
+snippet gone & killer gone | runner: a quoted password is not read
+snippet gone & killer gone | runner: the unicode_escape form of a value is not a secret
+snippet gone & killer gone | runner: the UTF-8 JSON form of a value is not a secret
+snippet gone & killer gone | runner: the bytes form of a value is not a secret
+snippet gone | runner: a line with a hostile number of dots is scanned
+snippet gone & killer gone | runner: a quote mark written with a backslash is not a form
+snippet gone & killer gone | runner: the double-quote-escaped forms are not built
+snippet gone & killer gone | runner: a libpq backslash escape is not undone
+snippet gone & killer gone | runner: a backslash in an unquoted password ends it
+snippet gone & killer gone | runner: a huge number of matches is scanned
+snippet gone & killer gone | runner: the repr form of a value is not a form
+snippet gone & killer gone | runner: the plain form of a value is not a form
+snippet gone & killer gone | runner: the printed layers are not kept
+snippet gone & killer gone | runner: the ASCII JSON whole-text encoder is not built
+snippet gone & killer gone | runner: the rest of an unquoted password is not a secret
+killer gone | runner: a backslash and a newline end a quoted password
+snippet gone | runner: a plus in a URL password is not read as a space
+snippet gone | runner: a percent code is read only with the plus rule
+snippet gone & killer gone | runner: only one layer of printing is built
+snippet gone & killer gone | runner: the both-quote-kinds print is not built
+snippet gone & killer gone | runner: the ascii whole-text encoder is not built
+snippet gone & killer gone | runner: a single quote is never escaped in a layer-0 form
+snippet gone & killer gone | runner: layer-0 forms with an unescaped double quote are not built
+snippet gone & killer gone | runner: the printed forms of a password are not built
+snippet gone & killer gone | runner: a printed text is not kept as it is
+snippet gone & killer gone | runner: a both-quote print is cut one character too long
+snippet gone & killer gone | runner: a both-quote print is cut one character too short
+snippet gone & killer gone | runner: the both-quote context holds one quote kind only
+snippet gone & killer gone | runner: a short stripped text gets a stripped pattern
+snippet gone & killer gone | runner: the escapes of a character are not looks of it
+snippet gone & killer gone | runner: the quote marks before a match are left
+snippet gone & killer gone | runner: the b of a bytes print is left
+snippet gone & killer gone | runner: the quote marks after a match are left
+snippet gone & killer gone | runner: the stripped-text match uses the forms, not the plain texts
+snippet gone & killer gone | runner: too many stripped-text matches are not refused
+snippet gone & killer gone | runner: a short secret gets no run pattern
+snippet gone & killer gone | runner: a run pattern hides the quote mark beside it
+snippet gone & killer gone | runner: a run of quote marks is not one mark in a run pattern
+snippet gone & killer gone | runner: the backslash of an escape right after a run is required again
+snippet gone & killer gone | runner: a secret of only quote marks gets no run limit
+snippet gone & killer gone | runner: the run limit is one too long
+snippet gone & killer gone | runner: the run limit is one too short
+snippet gone & killer gone | runner: a secret of only quote marks hides every quote mark
+snippet gone & killer gone | runner: the head and the tail next to dots are not looked for
+snippet gone & killer gone | runner: the tail is looked for in the wrong direction
+snippet gone & killer gone | runner: a long base gets a run pattern too
+snippet gone & killer gone | runner: a base of exactly the stripped minimum gets a run pattern
+snippet gone | runner: a one-character head is hidden by the edge pattern
+snippet gone | runner: a one-character tail is hidden by the edge pattern
+killer gone | runner: the pieces of an unquoted password are not secrets
+killer gone | runner: a piece of exactly the password piece minimum is not a secret
+killer gone | runner: a piece one short of the password piece minimum is a secret
+snippet gone & killer gone | runner: the secret caches stay after a run
+snippet gone & killer gone | runner: a run match starts one character late in a printed text
+snippet gone & killer gone | runner: a run match ends one character early in a printed text
+snippet gone & killer gone | runner: a match that ends with a run ends before its last mark
+snippet gone & killer gone | runner: a cut inside the escape of a character is not followed
+snippet gone & killer gone | runner: a head is hidden wherever it stands
+snippet gone & killer gone | runner: only the shortest head is hidden
+snippet gone & killer gone | runner: only the shortest tail is hidden
+207

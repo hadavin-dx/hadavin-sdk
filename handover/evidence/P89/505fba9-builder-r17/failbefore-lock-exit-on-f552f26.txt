@@ -1,0 +1,37 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_____ test_an_exit_right_after_the_lock_is_taken_still_gives_the_lock_back _____
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-14023/test_an_exit_right_after_the_l0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f5225be89d0>
+
+    def test_an_exit_right_after_the_lock_is_taken_still_gives_the_lock_back(tmp_path, monkeypatch):
+        value = str(tmp_path / "state.flag")
+        monkeypatch.setenv(DSN_NAME, value)
+        root = _tree(tmp_path, {CORE_TEST: USES_GO})
+        entered = contextlib.ExitStack.enter_context
+    
+        def enter_then_exit(self, manager):
+            entered(self, manager)
+            raise SystemExit(7)
+    
+        with monkeypatch.context() as patched:
+            patched.setattr(contextlib.ExitStack, "enter_context", enter_then_exit)
+            # ``caught`` keeps the traceback, and with it the frame of the run, alive: a lock that only the garbage collector would give back stays held
+            with pytest.raises(SystemExit) as caught:
+                _run(root, [FLIP], pass_env=(DSN_NAME,))
+        assert caught.value.code == 7, (
+            "the run did not end with the exit that was raised after the lock"
+        )
+        try:
+            rows = _run(root, [FLIP], pass_env=(DSN_NAME,))
+        except RuntimeError:
+>           raise AssertionError(
+                "an exit right after the lock was taken left the lock held: the next run was refused"
+            ) from None
+E           AssertionError: an exit right after the lock was taken left the lock held: the next run was refused
+
+tests/test_mutation_runner_keywords.py:999: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_mutation_runner_keywords.py::test_an_exit_right_after_the_lock_is_taken_still_gives_the_lock_back
+1 failed, 133 deselected in 0.43s

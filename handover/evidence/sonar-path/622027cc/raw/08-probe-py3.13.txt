@@ -1,0 +1,31 @@
+sdk /home/user/build/E-head/src/hadavin_sdk/__init__.py 3.13.18
+join name 255B: OK -> '/tmp/pgprobe-9vgtpnyt/SECRETMARKaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+component name 255B: OK -> 'SECRETMARKaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+join name 256B: PathRefused rule=R5 msg='probe: too long' leak_in_msg=False cause=None suppress_ctx=False context=None context_holds_path=None
+component name 256B: PathRefused rule=R5 msg='probe: too long' leak_in_msg=False cause=None suppress_ctx=False context=None context_holds_path=None
+join name 300B: PathRefused rule=R5 msg='probe: too long' leak_in_msg=False cause=None suppress_ctx=False context=None context_holds_path=None
+component name 300B: PathRefused rule=R5 msg='probe: too long' leak_in_msg=False cause=None suppress_ctx=False context=None context_holds_path=None
+join NUL name: PathRefused rule=R4 msg='probe: contains a control character' leak_in_msg=False cause=None suppress_ctx=False context=None context_holds_path=None
+join colon: PathRefused rule=R3 msg='probe: contains a colon' leak_in_msg=False cause=None suppress_ctx=False context=None context_holds_path=None
+join device 'CON': PathRefused rule=R7 msg='probe: reserved device name' leak_in_msg=False cause=None suppress_ctx=False context=None context_holds_path=None
+join device 'nul': PathRefused rule=R7 msg='probe: reserved device name' leak_in_msg=False cause=None suppress_ctx=False context=None context_holds_path=None
+join device 'COM1': PathRefused rule=R7 msg='probe: reserved device name' leak_in_msg=False cause=None suppress_ctx=False context=None context_holds_path=None
+join device 'con.txt': PathRefused rule=R7 msg='probe: reserved device name' leak_in_msg=False cause=None suppress_ctx=False context=None context_holds_path=None
+join device 'LPT¹': PathRefused rule=R7 msg='probe: reserved device name' leak_in_msg=False cause=None suppress_ctx=False context=None context_holds_path=None
+join device 'CON  ': PathRefused rule=R6 msg='probe: ends with a dot or space' leak_in_msg=False cause=None suppress_ctx=False context=None context_holds_path=None
+join trailing 'SECRETMARK.': PathRefused rule=R6 msg='probe: ends with a dot or space' leak_in_msg=False cause=None suppress_ctx=False context=None context_holds_path=None
+join trailing 'SECRETMARK ': PathRefused rule=R6 msg='probe: ends with a dot or space' leak_in_msg=False cause=None suppress_ctx=False context=None context_holds_path=None
+join trailing 'SECRETMARK..': PathRefused rule=R6 msg='probe: ends with a dot or space' leak_in_msg=False cause=None suppress_ctx=False context=None context_holds_path=None
+join trailing '..': PathRefused rule=R1 msg='probe: not a plain name' leak_in_msg=False cause=None suppress_ctx=False context=None context_holds_path=None
+base 300B component: OK -> '/tmp/pgprobe-9vgtpnyt/SECRETMARKbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+base NUL: PathRefused rule=R4 msg='probe: contains a control character' leak_in_msg=False cause=None suppress_ctx=False context=None context_holds_path=None
+inside NUL path: PathRefused rule=R4 msg='probe: contains a control character' leak_in_msg=False cause=None suppress_ctx=False context=None context_holds_path=None
+path >4096B: PathRefused rule=R5 msg='probe: too long' leak_in_msg=False cause=None suppress_ctx=False context=None context_holds_path=None
+symlink loop must_exist: PathRefused rule=R10 msg='probe: cannot be resolved' leak_in_msg=False cause=None suppress_ctx=True context=OSError context_holds_path=True
+symlink loop non-strict: OK -> '/tmp/pgprobe-9vgtpnyt/loop/x'
+operator_dir loop: PathRefused rule=R10 msg='probe: cannot be resolved' leak_in_msg=False cause=None suppress_ctx=True context=OSError context_holds_path=True
+operator_file missing: PathRefused rule=R10 msg='probe: cannot be resolved' leak_in_msg=False cause=None suppress_ctx=True context=FileNotFoundError context_holds_path=True
+operator_dir missing: PathRefused rule=R10 msg='probe: cannot be resolved' leak_in_msg=False cause=None suppress_ctx=True context=FileNotFoundError context_holds_path=True
+join kind=dir on file: PathRefused rule=R11 msg='probe: not a folder' leak_in_msg=False cause=None suppress_ctx=False context=None context_holds_path=None
+join escape via symlink: PathRefused rule=R8 msg='probe: path escapes its folder' leak_in_msg=False cause=None suppress_ctx=False context=None context_holds_path=None
+255B ok in 255 base: OK -> '/tmp/pgprobe-9vgtpnyt/eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'

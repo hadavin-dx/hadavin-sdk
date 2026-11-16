@@ -1,0 +1,162 @@
+........................................................................ [ 52%]
+.F................................................................       [100%]
+=================================== FAILURES ===================================
+___________ test_t6b_every_def_with_a_host_parameter_is_in_the_table ___________
+
+    def test_t6b_every_def_with_a_host_parameter_is_in_the_table() -> None:
+        """How a new one is caught: a def in demo_only with a parameter named host, bind, address and the like that is in
+        neither ENTRY_POINTS (called with every bad host above) nor NOT_A_BIND (with a reason) fails this test and is
+        named."""
+        found = set(_demo_only_defs())
+        known = set(ENTRY_POINTS) | set(NOT_A_BIND)
+        new = found - known
+>       assert new == set(), f"new def with a host parameter, add it to ENTRY_POINTS or NOT_A_BIND: {new}"
+E       AssertionError: new def with a host parameter, add it to ENTRY_POINTS or NOT_A_BIND: {('demo_only/bad_request.py', 'require_loopback_host')}
+E       assert {('demo_only/...opback_host')} == set()
+E         
+E         Extra items in the left set:
+E         ('demo_only/bad_request.py', 'require_loopback_host')
+E         Use -v to get more diff
+
+tests/test_r7t_findings.py:380: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r7t_findings.py::test_t6b_every_def_with_a_host_parameter_is_in_the_table
+PASSED tests/test_r7t_findings.py::test_t1_the_counting_rule_and_an_unknown_counter
+PASSED tests/test_r7t_findings.py::test_t2_the_counter_reader_takes_exactly_the_files_of_the_run_and_the_suffix
+PASSED tests/test_r7t_findings.py::test_t2_the_checked_reader_counts_files_and_unreadable_files
+PASSED tests/test_r7t_findings.py::test_t2_a_file_that_is_not_a_set_of_whole_numbers_is_unreadable_and_never_a_crash['{"created": ']
+PASSED tests/test_r7t_findings.py::test_t2_a_file_that_is_not_a_set_of_whole_numbers_is_unreadable_and_never_a_crash['[]']
+PASSED tests/test_r7t_findings.py::test_t2_a_file_that_is_not_a_set_of_whole_numbers_is_unreadable_and_never_a_crash['{"created": [1]}']
+PASSED tests/test_r7t_findings.py::test_t2_a_file_that_is_not_a_set_of_whole_numbers_is_unreadable_and_never_a_crash['{"created": "x"}']
+PASSED tests/test_r7t_findings.py::test_t2_a_file_that_is_not_a_set_of_whole_numbers_is_unreadable_and_never_a_crash['']
+PASSED tests/test_r7t_findings.py::test_t2_a_file_that_is_not_a_set_of_whole_numbers_is_unreadable_and_never_a_crash['null']
+PASSED tests/test_r7t_findings.py::test_t2_a_folder_with_the_name_of_a_counter_file_is_unreadable
+PASSED tests/test_r7t_findings.py::test_t2_a_counter_without_the_number_of_created_contacts_is_not_known
+PASSED tests/test_r7t_findings.py::test_t2_a_counter_is_known_only_when_a_file_was_found_read_whole_and_holds_the_created_number
+PASSED tests/test_r7t_findings.py::test_t2_the_same_tag_other_kinds_of_file_are_not_read_into_the_hubspot_sum
+PASSED tests/test_r7t_findings.py::test_t3_a_result_file_that_could_not_be_written_ends_the_run_as_failed
+PASSED tests/test_r7t_findings.py::test_t4_any_non_empty_require_value_makes_a_missing_openssl_a_failure[1]
+PASSED tests/test_r7t_findings.py::test_t4_any_non_empty_require_value_makes_a_missing_openssl_a_failure[true]
+PASSED tests/test_r7t_findings.py::test_t4_any_non_empty_require_value_makes_a_missing_openssl_a_failure[yes]
+PASSED tests/test_r7t_findings.py::test_t4_any_non_empty_require_value_makes_a_missing_openssl_a_failure[TRUE]
+PASSED tests/test_r7t_findings.py::test_t4_any_non_empty_require_value_makes_a_missing_openssl_a_failure[2]
+PASSED tests/test_r7t_findings.py::test_t4_any_non_empty_require_value_makes_a_missing_openssl_a_failure[0]
+PASSED tests/test_r7t_findings.py::test_t4_any_non_empty_require_value_makes_a_missing_openssl_a_failure[on]
+PASSED tests/test_r7t_findings.py::test_t4_an_empty_require_value_is_the_same_as_unset
+PASSED tests/test_r7t_findings.py::test_t5_a_client_that_left_is_silent[exc0]
+PASSED tests/test_r7t_findings.py::test_t5_a_client_that_left_is_silent[exc1]
+PASSED tests/test_r7t_findings.py::test_t5_a_client_that_left_is_silent[exc2]
+PASSED tests/test_r7t_findings.py::test_t5_a_client_that_left_is_silent[exc3]
+PASSED tests/test_r7t_findings.py::test_t5_every_other_error_is_reported[exc0]
+PASSED tests/test_r7t_findings.py::test_t5_every_other_error_is_reported[exc1]
+PASSED tests/test_r7t_findings.py::test_t5_every_other_error_is_reported[exc2]
+PASSED tests/test_r7t_findings.py::test_t6_every_entry_point_refuses_the_host_before_any_socket[quiet-0.0.0.0]
+PASSED tests/test_r7t_findings.py::test_t6_every_entry_point_refuses_the_host_before_any_socket[quiet-192.0.2.1]
+PASSED tests/test_r7t_findings.py::test_t6_every_entry_point_refuses_the_host_before_any_socket[quiet-]
+PASSED tests/test_r7t_findings.py::test_t6_every_entry_point_refuses_the_host_before_any_socket[quiet-::]
+PASSED tests/test_r7t_findings.py::test_t6_every_entry_point_refuses_the_host_before_any_socket[quiet-example.com]
+PASSED tests/test_r7t_findings.py::test_t6_every_entry_point_refuses_the_host_before_any_socket[hubspot-0.0.0.0]
+PASSED tests/test_r7t_findings.py::test_t6_every_entry_point_refuses_the_host_before_any_socket[hubspot-192.0.2.1]
+PASSED tests/test_r7t_findings.py::test_t6_every_entry_point_refuses_the_host_before_any_socket[hubspot-]
+PASSED tests/test_r7t_findings.py::test_t6_every_entry_point_refuses_the_host_before_any_socket[hubspot-::]
+PASSED tests/test_r7t_findings.py::test_t6_every_entry_point_refuses_the_host_before_any_socket[hubspot-example.com]
+PASSED tests/test_r7t_findings.py::test_t6_every_entry_point_refuses_the_host_before_any_socket[fakes_factory-0.0.0.0]
+PASSED tests/test_r7t_findings.py::test_t6_every_entry_point_refuses_the_host_before_any_socket[fakes_factory-192.0.2.1]
+PASSED tests/test_r7t_findings.py::test_t6_every_entry_point_refuses_the_host_before_any_socket[fakes_factory-]
+PASSED tests/test_r7t_findings.py::test_t6_every_entry_point_refuses_the_host_before_any_socket[fakes_factory-::]
+PASSED tests/test_r7t_findings.py::test_t6_every_entry_point_refuses_the_host_before_any_socket[fakes_factory-example.com]
+PASSED tests/test_r7t_findings.py::test_t6_every_entry_point_refuses_the_host_before_any_socket[model-0.0.0.0]
+PASSED tests/test_r7t_findings.py::test_t6_every_entry_point_refuses_the_host_before_any_socket[model-192.0.2.1]
+PASSED tests/test_r7t_findings.py::test_t6_every_entry_point_refuses_the_host_before_any_socket[model-]
+PASSED tests/test_r7t_findings.py::test_t6_every_entry_point_refuses_the_host_before_any_socket[model-::]
+PASSED tests/test_r7t_findings.py::test_t6_every_entry_point_refuses_the_host_before_any_socket[model-example.com]
+PASSED tests/test_r7t_findings.py::test_t6_every_entry_point_refuses_the_host_before_any_socket[imap-0.0.0.0]
+PASSED tests/test_r7t_findings.py::test_t6_every_entry_point_refuses_the_host_before_any_socket[imap-192.0.2.1]
+PASSED tests/test_r7t_findings.py::test_t6_every_entry_point_refuses_the_host_before_any_socket[imap-]
+PASSED tests/test_r7t_findings.py::test_t6_every_entry_point_refuses_the_host_before_any_socket[imap-::]
+PASSED tests/test_r7t_findings.py::test_t6_every_entry_point_refuses_the_host_before_any_socket[imap-example.com]
+PASSED tests/test_r7t_findings.py::test_t6_every_entry_point_refuses_the_host_before_any_socket[smtp-0.0.0.0]
+PASSED tests/test_r7t_findings.py::test_t6_every_entry_point_refuses_the_host_before_any_socket[smtp-192.0.2.1]
+PASSED tests/test_r7t_findings.py::test_t6_every_entry_point_refuses_the_host_before_any_socket[smtp-]
+PASSED tests/test_r7t_findings.py::test_t6_every_entry_point_refuses_the_host_before_any_socket[smtp-::]
+PASSED tests/test_r7t_findings.py::test_t6_every_entry_point_refuses_the_host_before_any_socket[smtp-example.com]
+PASSED tests/test_r7t_findings.py::test_t6_every_entry_point_refuses_the_host_before_any_socket[fakes_class-0.0.0.0]
+PASSED tests/test_r7t_findings.py::test_t6_every_entry_point_refuses_the_host_before_any_socket[fakes_class-192.0.2.1]
+PASSED tests/test_r7t_findings.py::test_t6_every_entry_point_refuses_the_host_before_any_socket[fakes_class-]
+PASSED tests/test_r7t_findings.py::test_t6_every_entry_point_refuses_the_host_before_any_socket[fakes_class-::]
+PASSED tests/test_r7t_findings.py::test_t6_every_entry_point_refuses_the_host_before_any_socket[fakes_class-example.com]
+PASSED tests/test_r7t_findings.py::test_t6_a_blank_host_is_refused_by_every_entry_point[]
+PASSED tests/test_r7t_findings.py::test_t6_a_blank_host_is_refused_by_every_entry_point[ ]
+PASSED tests/test_r7t_findings.py::test_t6_a_blank_host_is_refused_by_every_entry_point[\t]
+PASSED tests/test_r7t_findings.py::test_t6_a_blank_host_is_refused_by_every_entry_point[\n]
+PASSED tests/test_r7t_findings.py::test_t6_an_unset_host_still_means_the_configured_loopback_default[unset]
+PASSED tests/test_r7t_findings.py::test_t6_an_unset_host_still_means_the_configured_loopback_default[None]
+PASSED tests/test_r7t_findings.py::test_t6_the_mail_fakes_still_listen_on_this_computer[127.0.0.1_0]
+PASSED tests/test_r7t_findings.py::test_t6_the_mail_fakes_still_listen_on_this_computer[localhost]
+PASSED tests/test_r7t_findings.py::test_t6_the_mail_fakes_still_listen_on_this_computer[127.0.0.1_1]
+PASSED tests/test_r7t_findings.py::test_t6b_every_bind_call_in_demo_only_sits_in_a_table_entry
+PASSED tests/test_r7t_findings.py::test_t6b_every_class_that_extends_a_server_class_inherits_the_refusal
+PASSED tests/test_r7t_findings.py::test_t6c_the_refusal_fails_closed_on_a_host_that_is_not_text[None]
+PASSED tests/test_r7t_findings.py::test_t6c_the_refusal_fails_closed_on_a_host_that_is_not_text[b'127.0.0.1']
+PASSED tests/test_r7t_findings.py::test_t6c_the_refusal_fails_closed_on_a_host_that_is_not_text[0]
+PASSED tests/test_r7t_findings.py::test_t6c_the_refusal_fails_closed_on_a_host_that_is_not_text[('127.0.0.1',)]
+PASSED tests/test_r7t_findings.py::test_t7_an_empty_or_missing_tag_is_refused_not_turned_into_untagged_files['']
+PASSED tests/test_r7t_findings.py::test_t7_an_empty_or_missing_tag_is_refused_not_turned_into_untagged_files[None]
+PASSED tests/test_r7t_findings.py::test_t7_the_desk_has_no_default_tag
+PASSED tests/test_r7t_findings.py::test_t8_a_port_of_zero_is_refused_and_an_absent_port_is_the_default
+PASSED tests/test_r7t_findings.py::test_t8_the_run_uses_that_one_function
+PASSED tests/test_r7t_findings.py::test_t8b_the_dry_smtp_script_default_is_chosen_by_none_not_by_truth
+PASSED tests/test_r7t_findings.py::test_t9_a_missing_counter_with_a_hidden_contact_ends_as_failed
+PASSED tests/test_r7t_findings.py::test_t9_a_counter_the_desk_could_not_write_ends_the_real_run_as_failed
+PASSED tests/test_r7t_findings.py::test_t9_a_missing_counter_alone_ends_as_failed_even_when_nothing_is_hidden
+PASSED tests/test_r7t_findings.py::test_t9_a_counter_that_can_be_read_still_ends_with_zero
+PASSED tests/test_r7t_findings.py::test_t10_the_counter_file_is_never_half_written
+PASSED tests/test_r7t_findings.py::test_t10_the_target_name_is_only_ever_changed_by_a_replace
+PASSED tests/test_r7t_findings.py::test_t11_no_test_compares_the_require_flag_to_a_value
+PASSED tests/test_r7t_findings.py::test_t12_every_hostile_spelling_is_refused_before_any_socket[None]
+PASSED tests/test_r7t_findings.py::test_t12_every_hostile_spelling_is_refused_before_any_socket[' ']
+PASSED tests/test_r7t_findings.py::test_t12_every_hostile_spelling_is_refused_before_any_socket['\\t']
+PASSED tests/test_r7t_findings.py::test_t12_every_hostile_spelling_is_refused_before_any_socket['\\n']
+PASSED tests/test_r7t_findings.py::test_t12_every_hostile_spelling_is_refused_before_any_socket['0']
+PASSED tests/test_r7t_findings.py::test_t12_every_hostile_spelling_is_refused_before_any_socket['127.1']
+PASSED tests/test_r7t_findings.py::test_t12_every_hostile_spelling_is_refused_before_any_socket['localhost.']
+PASSED tests/test_r7t_findings.py::test_t12_every_hostile_spelling_is_refused_before_any_socket['[::]']
+PASSED tests/test_r7t_findings.py::test_t12_every_hostile_spelling_is_refused_before_any_socket['::']
+PASSED tests/test_r7t_findings.py::test_t12_every_hostile_spelling_is_refused_before_any_socket['0x7f.0.0.1']
+PASSED tests/test_r7t_findings.py::test_t12_every_hostile_spelling_is_refused_before_any_socket['127.0.0.1 ']
+PASSED tests/test_r7t_findings.py::test_t12_every_hostile_spelling_is_refused_before_any_socket[' localhost']
+PASSED tests/test_r7t_findings.py::test_t12_every_hostile_spelling_is_refused_before_any_socket[b'127.0.0.1']
+PASSED tests/test_r7t_findings.py::test_t12_every_hostile_spelling_is_refused_before_any_socket[b'localhost']
+PASSED tests/test_r7t_findings.py::test_t12_every_hostile_spelling_is_refused_before_any_socket[0]
+PASSED tests/test_r7t_findings.py::test_t12_every_hostile_spelling_is_refused_before_any_socket[('127.0.0.1',)]
+PASSED tests/test_r7t_findings.py::test_t12_the_shared_rule_answers_yes_to_a_loopback_spelling_and_promises_no_listener[LOCALHOST]
+PASSED tests/test_r7t_findings.py::test_t12_the_shared_rule_answers_yes_to_a_loopback_spelling_and_promises_no_listener[LocalHost]
+PASSED tests/test_r7t_findings.py::test_t12_the_shared_rule_answers_yes_to_a_loopback_spelling_and_promises_no_listener[::ffff:127.0.0.1]
+PASSED tests/test_r7t_findings.py::test_t12_the_shared_rule_answers_yes_to_a_loopback_spelling_and_promises_no_listener[[::1]]
+PASSED tests/test_r7t_findings.py::test_t12_the_shared_rule_answers_yes_to_a_loopback_spelling_and_promises_no_listener[127.0.0.2]
+PASSED tests/test_r7t_findings.py::test_t13_the_banner_figure_is_worst_case_usd_of_the_longest_request_times_the_factors[claude-sonnet-5-5-2-10-8]
+PASSED tests/test_r7t_findings.py::test_t13_the_banner_figure_is_worst_case_usd_of_the_longest_request_times_the_factors[mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm-0.5-2.5-13]
+PASSED tests/test_r7t_findings.py::test_t13_the_banner_figure_is_worst_case_usd_of_the_longest_request_times_the_factors[claude-opus-5-5-4-20-9]
+PASSED tests/test_r7t_findings.py::test_t14_the_guard_sees_each_way_of_skipping_on_openssl[import pytest\n@pytest.mark.skipif(shutil.which('openssl') is None, reason='x')\ndef test_a(): pass]
+PASSED tests/test_r7t_findings.py::test_t14_the_guard_sees_each_way_of_skipping_on_openssl[import pytest\npytestmark = pytest.mark.skipif(not HAVE_OPENSSL, reason='openssl')\n]
+PASSED tests/test_r7t_findings.py::test_t14_the_guard_sees_each_way_of_skipping_on_openssl[import pytest\nssl = pytest.importorskip('openssl_helper')\n]
+PASSED tests/test_r7t_findings.py::test_t14_no_test_file_skips_on_openssl_through_skipif_or_importorskip
+PASSED tests/test_r7t_findings.py::test_t15_the_counting_rule_takes_open_creates_as_possible_contacts_and_never_more_than_the_leads
+PASSED tests/test_r7t_findings.py::test_t15_the_window_after_the_request_and_before_the_count_leaves_the_create_open
+PASSED tests/test_r7t_findings.py::test_t15_the_window_before_the_reply_also_leaves_the_create_open
+PASSED tests/test_r7t_findings.py::test_t15_every_normal_end_of_a_create_closes_it
+PASSED tests/test_r7t_findings.py::test_t15_a_run_with_a_window_in_the_counter_and_a_hidden_contact_ends_as_failed
+PASSED tests/test_r7t_findings.py::test_t15_a_window_in_the_counter_with_nothing_hidden_is_no_false_alarm[made-and-listed]
+PASSED tests/test_r7t_findings.py::test_t15_a_window_in_the_counter_with_nothing_hidden_is_no_false_alarm[retried]
+PASSED tests/test_r7t_findings.py::test_t16_a_mail_the_desk_did_not_count_is_still_counted_by_the_mailbox_and_fails_the_floor
+PASSED tests/test_r7t_findings.py::test_t15_a_create_that_waits_on_a_429_and_then_succeeds_opens_and_closes_exactly_once
+PASSED tests/test_r7t_findings.py::test_t17_a_create_that_may_have_made_the_contact_is_counted_as_unknown[drop]
+PASSED tests/test_r7t_findings.py::test_t17_a_create_that_may_have_made_the_contact_is_counted_as_unknown[500]
+PASSED tests/test_r7t_findings.py::test_t17_a_create_that_may_have_made_the_contact_is_counted_as_unknown[408]
+PASSED tests/test_r7t_findings.py::test_t17_a_429_after_the_waits_proves_nothing_was_stored
+PASSED tests/test_r7t_findings.py::test_t17_an_unknown_create_with_nothing_hidden_is_no_false_alarm[made-and-listed]
+PASSED tests/test_r7t_findings.py::test_t17_an_unknown_create_with_nothing_hidden_is_no_false_alarm[retried]
+PASSED tests/test_r7t_findings.py::test_t17_an_unknown_create_and_a_contact_the_list_does_not_show_ends_as_failed
+PASSED tests/test_r7t_findings.py::test_t18_a_counters_file_that_cannot_be_written_stops_the_create_before_it_is_sent
+1 failed, 137 passed in 415.81s (0:06:55)
+rc=1

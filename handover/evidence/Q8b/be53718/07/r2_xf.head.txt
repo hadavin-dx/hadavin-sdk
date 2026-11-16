@@ -1,0 +1,7 @@
+XF respelled: base64 of a stringData value || {'annotations': {'last-applied-configuration': 'Y29ycmVjdCBob3JzZSBiYXR0ZXJ5IHN0YXBsZQ=='}}
+XF respelled: hex || {'annotations': {'last-applied-configuration': '636f727265637420686f727365206261747465727920737461706c65'}}
+XF respelled: upper case || {'annotations': {'last-applied-configuration': 'CORRECT HORSE BATTERY STAPLE'}}
+XF respelled: wrapped over two lines || {'annotations': {'last-applied-configuration': 'correct horse\nbattery staple'}}
+XF respelled: double space || {'annotations': {'last-applied-configuration': 'correct  horse battery staple'}}
+XF respelled: JSON inside JSON (annotation of an annotation) || {'annotations': {'last-applied-configuration': '"{\\"cfg\\": \\"<SECRET_1>\\"}"'}}
+exit 0

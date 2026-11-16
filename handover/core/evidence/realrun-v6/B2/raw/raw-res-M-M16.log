@@ -1,0 +1,24 @@
+......................F
+=================================== FAILURES ===================================
+____ test_an_unreplaced_or_odd_mailbox_host_is_refused_before_the_question _____
+
+tmp_path = PosixPath('/home/user/build/rr6/tmp-B2/pytest-of-unknown/pytest-20/test_an_unreplaced_or_odd_mail0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f2a154405c0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f2a154434d0>
+
+    def test_an_unreplaced_or_odd_mailbox_host_is_refused_before_the_question(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(sys, "stdin", _Terminal())
+        for bad in ("<IMAP_HOST>", "mail host", "mail.example.test/x", "-mail.example.test", "mail@example.test", "é.test"):
+            assert rrc.main(["--config", str(_config(tmp_path, REAL_IMAP_2_HOST=bad))]) == rrc.EXIT_REFUSED, bad
+            out = capsys.readouterr().out
+            assert "refused: REAL_IMAP_2_HOST: is required and must be a host name" in out and "To start" not in out
+>       with pytest.raises(ValueError, match="REAL_IMAP_1_HOST is required"):  # no fallback inside imap_settings either
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_start_prompt_hardening.py:227: Failed
+=========================== short test summary info ============================
+FAILED tests/test_start_prompt_hardening.py::test_an_unreplaced_or_odd_mailbox_host_is_refused_before_the_question
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 22 passed in 0.17s

@@ -1,0 +1,7 @@
+src/lead_desk/crm_hubspot.py	tests/test_r7t_findings.py -k t15 or t17 or t18 or t10 tests/test_crm_hubspot.py
+src/lead_desk/crm_hubspot.py	tests/test_r7t_findings.py -k t15 or t17 or t18 or t10 tests/test_crm_hubspot.py
+src/lead_desk/run_stats.py	tests/test_r7t_findings.py -k t15 or t17 or t18 or t10 tests/test_crm_hubspot.py
+src/lead_desk/config.py	tests/test_r7t_findings.py -k t6 or t12
+src/lead_desk/config.py	tests/test_r7t_findings.py -k t6 or t12
+scripts/run_real_check.py	tests/test_r7t_findings.py -k t1 or t2 or t3 or t7 or t9 or t15 or t17 tests/test_r7
+scripts/run_real_check.py	tests/test_r7t_findings.py -k t1 or t2 or t3 or t7 or t9 or t15 or t17 tests/test_r7

@@ -1,0 +1,39 @@
+copied /home/user/build/rr6/tree-R7T -> /home/user/build/rr6/tree-R7U
+diff A: 33183 bytes, 2 files
+diff B: 19300 bytes, 3 files
+diff C: 25227 bytes, 10 files
+applied A: 2 files
+applied C: 10 files
+  note (B): Hunk #1 succeeded at 1002 (offset 46 lines).
+  note (B): Hunk #2 succeeded at 1359 (offset 48 lines).
+  note (B): Hunk #1 succeeded at 516 (offset -1 lines).
+  note (B): Hunk #2 succeeded at 643 (offset -1 lines).
+  note (B): Hunk #3 succeeded at 912 (offset -1 lines).
+applied B: 3 files
+== overlapping files (touched by 2 or more diffs) ==
+  scripts/run_real_check.py  [AB]
+  tests/test_r7t_findings.py  [BC]
+== each builder's changed files vs the merged tree ==
+  A: scripts/run_real_check.py DIFFERS between builder tree and merged tree
+  A: 1 files identical in merged tree, 1 differ; changed in builder tree but not in its diff (first 10 names): none
+  B: scripts/run_real_check.py DIFFERS between builder tree and merged tree
+  B: tests/test_r7t_findings.py DIFFERS between builder tree and merged tree
+  B: 1 files identical in merged tree, 2 differ; changed in builder tree but not in its diff (first 10 names): none
+  C: tests/test_r7t_findings.py DIFFERS between builder tree and merged tree
+  C: 9 files identical in merged tree, 1 differ; changed in builder tree but not in its diff (first 10 names): none
+== diff -rq merged tree vs /home/user/build/rr6/tree-R7T ==
+Files BASE/demo_only/bad_request.py and NEW/demo_only/bad_request.py differ
+Files BASE/demo_only/fake_imap.py and NEW/demo_only/fake_imap.py differ
+Files BASE/demo_only/fake_smtp_tls.py and NEW/demo_only/fake_smtp_tls.py differ
+Files BASE/scripts/run_real_check.py and NEW/scripts/run_real_check.py differ
+Files BASE/src/lead_desk/config.py and NEW/src/lead_desk/config.py differ
+Files BASE/src/lead_desk/crm_hubspot.py and NEW/src/lead_desk/crm_hubspot.py differ
+Only in NEW/src/lead_desk: loopback.py
+Files BASE/src/lead_desk/run_stats.py and NEW/src/lead_desk/run_stats.py differ
+Files BASE/tests/test_r7t_findings.py and NEW/tests/test_r7t_findings.py differ
+Only in NEW/tests: test_r7u_a_findings.py
+Only in NEW/tests: test_r7u_b_findings.py
+Only in NEW/tests: test_r7u_c_findings.py
+Files BASE/tools/refusing_args.py and NEW/tools/refusing_args.py differ
+total lines: 13  (full: /home/user/build/rr6/tree-R7U-merge-report/summary-vs-base.txt)
+MERGE OK: /home/user/build/rr6/tree-R7U

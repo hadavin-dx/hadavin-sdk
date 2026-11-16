@@ -1,0 +1,708 @@
+sdk /home/user/build/er14-H/src/hadavin_sdk/__init__.py
+IN  'Bearer a'
+  guard='Bearer a'
+  core ='Bearer a'
+  guard-shows-more-than-core=[]
+IN  'Bearer a'
+  guard='Bearer a'
+  core ='Bearer a'
+  guard-shows-more-than-core=[]
+IN  'Basic a'
+  guard='Basic a'
+  core ='Basic a'
+  guard-shows-more-than-core=[]
+IN  'bearer a'
+  guard='bearer a'
+  core ='bearer a'
+  guard-shows-more-than-core=[]
+IN  'Authorization: Bearer a'
+  guard='Authorization: <hidden>'
+  core ='Authorization: Bearer a'
+  guard-shows-more-than-core=[]
+IN  'Bearer aa'
+  guard='Bearer aa'
+  core ='Bearer aa'
+  guard-shows-more-than-core=[]
+IN  'Bearer aB'
+  guard='Bearer aB'
+  core ='Bearer aB'
+  guard-shows-more-than-core=[]
+IN  'Basic aB'
+  guard='Basic aB'
+  core ='Basic aB'
+  guard-shows-more-than-core=[]
+IN  'bearer aB'
+  guard='bearer aB'
+  core ='bearer aB'
+  guard-shows-more-than-core=[]
+IN  'Authorization: Bearer aB'
+  guard='Authorization: <hidden>'
+  core ='Authorization: Bearer aB'
+  guard-shows-more-than-core=[]
+IN  'Bearer aaa'
+  guard='Bearer aaa'
+  core ='Bearer aaa'
+  guard-shows-more-than-core=[]
+IN  'Bearer aB3'
+  guard='Bearer <hidden>'
+  core ='Bearer aB3'
+  guard-shows-more-than-core=[]
+IN  'Basic aB3'
+  guard='Basic <hidden>'
+  core ='Basic aB3'
+  guard-shows-more-than-core=[]
+IN  'bearer aB3'
+  guard='bearer <hidden>'
+  core ='bearer aB3'
+  guard-shows-more-than-core=[]
+IN  'Authorization: Bearer aB3'
+  guard='Authorization: <hidden>'
+  core ='Authorization: Bearer aB3'
+  guard-shows-more-than-core=[]
+IN  'Bearer aaaa'
+  guard='Bearer aaaa'
+  core ='Bearer aaaa'
+  guard-shows-more-than-core=[]
+IN  'Bearer aB3a'
+  guard='Bearer <hidden>'
+  core ='Bearer aB3a'
+  guard-shows-more-than-core=[]
+IN  'Basic aB3a'
+  guard='Basic <hidden>'
+  core ='Basic aB3a'
+  guard-shows-more-than-core=[]
+IN  'bearer aB3-'
+  guard='bearer <hidden>'
+  core ='bearer aB3-'
+  guard-shows-more-than-core=[]
+IN  'Authorization: Bearer aB3a'
+  guard='Authorization: <hidden>'
+  core ='Authorization: Bearer aB3a'
+  guard-shows-more-than-core=[]
+IN  'Bearer aaaaa'
+  guard='Bearer aaaaa'
+  core ='Bearer aaaaa'
+  guard-shows-more-than-core=[]
+IN  'Bearer aB3aB'
+  guard='Bearer <hidden>'
+  core ='Bearer aB3aB'
+  guard-shows-more-than-core=[]
+IN  'Basic aB3aB'
+  guard='Basic <hidden>'
+  core ='Basic aB3aB'
+  guard-shows-more-than-core=[]
+IN  'bearer aB3-a'
+  guard='bearer <hidden>'
+  core ='bearer aB3-a'
+  guard-shows-more-than-core=[]
+IN  'Authorization: Bearer aB3aB'
+  guard='Authorization: <hidden>'
+  core ='Authorization: Bearer aB3aB'
+  guard-shows-more-than-core=[]
+IN  'Bearer aaaaaa'
+  guard='Bearer aaaaaa'
+  core ='Bearer aaaaaa'
+  guard-shows-more-than-core=[]
+IN  'Bearer aB3aB3'
+  guard='Bearer <hidden>'
+  core ='Bearer aB3aB3'
+  guard-shows-more-than-core=[]
+IN  'Basic aB3aB3'
+  guard='Basic <hidden>'
+  core ='Basic aB3aB3'
+  guard-shows-more-than-core=[]
+IN  'bearer aB3-aB'
+  guard='bearer <hidden>'
+  core ='bearer aB3-aB'
+  guard-shows-more-than-core=[]
+IN  'Authorization: Bearer aB3aB3'
+  guard='Authorization: <hidden>'
+  core ='Authorization: Bearer aB3aB3'
+  guard-shows-more-than-core=[]
+IN  'Bearer aaaaaaa'
+  guard='Bearer aaaaaaa'
+  core ='Bearer aaaaaaa'
+  guard-shows-more-than-core=[]
+IN  'Bearer aB3aB3a'
+  guard='Bearer <hidden>'
+  core ='Bearer aB3aB3a'
+  guard-shows-more-than-core=[]
+IN  'Basic aB3aB3a'
+  guard='Basic <hidden>'
+  core ='Basic aB3aB3a'
+  guard-shows-more-than-core=[]
+IN  'bearer aB3-aB3'
+  guard='bearer <hidden>'
+  core ='bearer aB3-aB3'
+  guard-shows-more-than-core=[]
+IN  'Authorization: Bearer aB3aB3a'
+  guard='Authorization: <hidden>'
+  core ='Authorization: Bearer aB3aB3a'
+  guard-shows-more-than-core=[]
+IN  'Bearer aaaaaaaa'
+  guard='Bearer aaaaaaaa'
+  core ='Bearer aaaaaaaa'
+  guard-shows-more-than-core=[]
+IN  'Bearer aB3aB3aB'
+  guard='Bearer <hidden>'
+  core ='Bearer aB3aB3aB'
+  guard-shows-more-than-core=[]
+IN  'Basic aB3aB3aB'
+  guard='Basic <hidden>'
+  core ='Basic <BASIC_1>'
+  guard-shows-more-than-core=[]
+IN  'bearer aB3-aB3-'
+  guard='bearer <hidden>'
+  core ='bearer aB3-aB3-'
+  guard-shows-more-than-core=[]
+IN  'Authorization: Bearer aB3aB3aB'
+  guard='Authorization: <hidden>'
+  core ='Authorization: Bearer <SECRET_1>'
+  guard-shows-more-than-core=[]
+IN  'Bearer aaaaaaaaa'
+  guard='Bearer aaaaaaaaa'
+  core ='Bearer aaaaaaaaa'
+  guard-shows-more-than-core=[]
+IN  'Bearer aB3aB3aB3'
+  guard='Bearer <hidden>'
+  core ='Bearer aB3aB3aB3'
+  guard-shows-more-than-core=[]
+IN  'Basic aB3aB3aB3'
+  guard='Basic <hidden>'
+  core ='Basic <BASIC_1>'
+  guard-shows-more-than-core=[]
+IN  'bearer aB3-aB3-a'
+  guard='bearer <hidden>'
+  core ='bearer aB3-aB3-a'
+  guard-shows-more-than-core=[]
+IN  'Authorization: Bearer aB3aB3aB3'
+  guard='Authorization: <hidden>'
+  core ='Authorization: Bearer <SECRET_1>'
+  guard-shows-more-than-core=[]
+IN  'Bearer aaaaaaaaaa'
+  guard='Bearer aaaaaaaaaa'
+  core ='Bearer aaaaaaaaaa'
+  guard-shows-more-than-core=[]
+IN  'Bearer aB3aB3aB3a'
+  guard='Bearer <hidden>'
+  core ='Bearer aB3aB3aB3a'
+  guard-shows-more-than-core=[]
+IN  'Basic aB3aB3aB3a'
+  guard='Basic <hidden>'
+  core ='Basic <BASIC_1>'
+  guard-shows-more-than-core=[]
+IN  'bearer aB3-aB3-aB'
+  guard='bearer <hidden>'
+  core ='bearer aB3-aB3-aB'
+  guard-shows-more-than-core=[]
+IN  'Authorization: Bearer aB3aB3aB3a'
+  guard='Authorization: <hidden>'
+  core ='Authorization: Bearer <SECRET_1>'
+  guard-shows-more-than-core=[]
+IN  'Bearer aaaaaaaaaaa'
+  guard='Bearer aaaaaaaaaaa'
+  core ='Bearer aaaaaaaaaaa'
+  guard-shows-more-than-core=[]
+IN  'Bearer aB3aB3aB3aB'
+  guard='Bearer <hidden>'
+  core ='Bearer aB3aB3aB3aB'
+  guard-shows-more-than-core=[]
+IN  'Basic aB3aB3aB3aB'
+  guard='Basic <hidden>'
+  core ='Basic <BASIC_1>'
+  guard-shows-more-than-core=[]
+IN  'bearer aB3-aB3-aB3'
+  guard='bearer <hidden>'
+  core ='bearer aB3-aB3-aB3'
+  guard-shows-more-than-core=[]
+IN  'Authorization: Bearer aB3aB3aB3aB'
+  guard='Authorization: <hidden>'
+  core ='Authorization: Bearer <SECRET_1>'
+  guard-shows-more-than-core=[]
+IN  'Bearer aaaaaaaaaaaa'
+  guard='Bearer <hidden>'
+  core ='Bearer <BEARER_1>'
+  guard-shows-more-than-core=[]
+IN  'Bearer aB3aB3aB3aB3'
+  guard='Bearer <hidden>'
+  core ='Bearer <BEARER_1>'
+  guard-shows-more-than-core=[]
+IN  'Basic aB3aB3aB3aB3'
+  guard='Basic <hidden>'
+  core ='Basic <BASIC_1>'
+  guard-shows-more-than-core=[]
+IN  'bearer aB3-aB3-aB3-'
+  guard='bearer <hidden>'
+  core ='bearer <BEARER_1>'
+  guard-shows-more-than-core=[]
+IN  'Authorization: Bearer aB3aB3aB3aB3'
+  guard='Authorization: <hidden>'
+  core ='Authorization: Bearer <BEARER_1>'
+  guard-shows-more-than-core=[]
+IN  'Bearer aaaaaaaaaaaaa'
+  guard='Bearer <hidden>'
+  core ='Bearer <BEARER_1>'
+  guard-shows-more-than-core=[]
+IN  'Bearer aB3aB3aB3aB3a'
+  guard='Bearer <hidden>'
+  core ='Bearer <BEARER_1>'
+  guard-shows-more-than-core=[]
+IN  'Basic aB3aB3aB3aB3a'
+  guard='Basic <hidden>'
+  core ='Basic <BASIC_1>'
+  guard-shows-more-than-core=[]
+IN  'bearer aB3-aB3-aB3-a'
+  guard='bearer <hidden>'
+  core ='bearer <BEARER_1>'
+  guard-shows-more-than-core=[]
+IN  'Authorization: Bearer aB3aB3aB3aB3a'
+  guard='Authorization: <hidden>'
+  core ='Authorization: Bearer <BEARER_1>'
+  guard-shows-more-than-core=[]
+IN  'Bearer aaaaaaaaaaaaaa'
+  guard='Bearer <hidden>'
+  core ='Bearer <BEARER_1>'
+  guard-shows-more-than-core=[]
+IN  'Bearer aB3aB3aB3aB3aB'
+  guard='Bearer <hidden>'
+  core ='Bearer <BEARER_1>'
+  guard-shows-more-than-core=[]
+IN  'Basic aB3aB3aB3aB3aB'
+  guard='Basic <hidden>'
+  core ='Basic <BASIC_1>'
+  guard-shows-more-than-core=[]
+IN  'bearer aB3-aB3-aB3-aB'
+  guard='bearer <hidden>'
+  core ='bearer <BEARER_1>'
+  guard-shows-more-than-core=[]
+IN  'Authorization: Bearer aB3aB3aB3aB3aB'
+  guard='Authorization: <hidden>'
+  core ='Authorization: Bearer <BEARER_1>'
+  guard-shows-more-than-core=[]
+IN  'Bearer aaaaaaaaaaaaaaa'
+  guard='Bearer <hidden>'
+  core ='Bearer <BEARER_1>'
+  guard-shows-more-than-core=[]
+IN  'Bearer aB3aB3aB3aB3aB3'
+  guard='Bearer <hidden>'
+  core ='Bearer <BEARER_1>'
+  guard-shows-more-than-core=[]
+IN  'Basic aB3aB3aB3aB3aB3'
+  guard='Basic <hidden>'
+  core ='Basic <BASIC_1>'
+  guard-shows-more-than-core=[]
+IN  'bearer aB3-aB3-aB3-aB3'
+  guard='bearer <hidden>'
+  core ='bearer <BEARER_1>'
+  guard-shows-more-than-core=[]
+IN  'Authorization: Bearer aB3aB3aB3aB3aB3'
+  guard='Authorization: <hidden>'
+  core ='Authorization: Bearer <BEARER_1>'
+  guard-shows-more-than-core=[]
+IN  'Bearer aaaaaaaaaaaaaaaa'
+  guard='Bearer <hidden>'
+  core ='Bearer <BEARER_1>'
+  guard-shows-more-than-core=[]
+IN  'Bearer aB3aB3aB3aB3aB3a'
+  guard='Bearer <hidden>'
+  core ='Bearer <BEARER_1>'
+  guard-shows-more-than-core=[]
+IN  'Basic aB3aB3aB3aB3aB3a'
+  guard='Basic <hidden>'
+  core ='Basic <BASIC_1>'
+  guard-shows-more-than-core=[]
+IN  'bearer aB3-aB3-aB3-aB3-'
+  guard='bearer <hidden>'
+  core ='bearer <BEARER_1>'
+  guard-shows-more-than-core=[]
+IN  'Authorization: Bearer aB3aB3aB3aB3aB3a'
+  guard='Authorization: <hidden>'
+  core ='Authorization: Bearer <BEARER_1>'
+  guard-shows-more-than-core=[]
+IN  'Bearer aaaaaaaaaaaaaaaaa'
+  guard='Bearer <hidden>'
+  core ='Bearer <BEARER_1>'
+  guard-shows-more-than-core=[]
+IN  'Bearer aB3aB3aB3aB3aB3aB'
+  guard='Bearer <hidden>'
+  core ='Bearer <BEARER_1>'
+  guard-shows-more-than-core=[]
+IN  'Basic aB3aB3aB3aB3aB3aB'
+  guard='Basic <hidden>'
+  core ='Basic <BASIC_1>'
+  guard-shows-more-than-core=[]
+IN  'bearer aB3-aB3-aB3-aB3-a'
+  guard='bearer <hidden>'
+  core ='bearer <BEARER_1>'
+  guard-shows-more-than-core=[]
+IN  'Authorization: Bearer aB3aB3aB3aB3aB3aB'
+  guard='Authorization: <hidden>'
+  core ='Authorization: Bearer <BEARER_1>'
+  guard-shows-more-than-core=[]
+IN  'Bearer aaaaaaaaaaaaaaaaaa'
+  guard='Bearer <hidden>'
+  core ='Bearer <BEARER_1>'
+  guard-shows-more-than-core=[]
+IN  'Bearer aB3aB3aB3aB3aB3aB3'
+  guard='Bearer <hidden>'
+  core ='Bearer <BEARER_1>'
+  guard-shows-more-than-core=[]
+IN  'Basic aB3aB3aB3aB3aB3aB3'
+  guard='Basic <hidden>'
+  core ='Basic <BASIC_1>'
+  guard-shows-more-than-core=[]
+IN  'bearer aB3-aB3-aB3-aB3-aB'
+  guard='bearer <hidden>'
+  core ='bearer <BEARER_1>'
+  guard-shows-more-than-core=[]
+IN  'Authorization: Bearer aB3aB3aB3aB3aB3aB3'
+  guard='Authorization: <hidden>'
+  core ='Authorization: Bearer <BEARER_1>'
+  guard-shows-more-than-core=[]
+IN  'Bearer aaaaaaaaaaaaaaaaaaa'
+  guard='Bearer <hidden>'
+  core ='Bearer <BEARER_1>'
+  guard-shows-more-than-core=[]
+IN  'Bearer aB3aB3aB3aB3aB3aB3a'
+  guard='Bearer <hidden>'
+  core ='Bearer <BEARER_1>'
+  guard-shows-more-than-core=[]
+IN  'Basic aB3aB3aB3aB3aB3aB3a'
+  guard='Basic <hidden>'
+  core ='Basic <BASIC_1>'
+  guard-shows-more-than-core=[]
+IN  'bearer aB3-aB3-aB3-aB3-aB3'
+  guard='bearer <hidden>'
+  core ='bearer <BEARER_1>'
+  guard-shows-more-than-core=[]
+IN  'Authorization: Bearer aB3aB3aB3aB3aB3aB3a'
+  guard='Authorization: <hidden>'
+  core ='Authorization: Bearer <BEARER_1>'
+  guard-shows-more-than-core=[]
+IN  'Bearer aaaaaaaaaaaaaaaaaaaaaaaa'
+  guard='Bearer <hidden>'
+  core ='Bearer <BEARER_1>'
+  guard-shows-more-than-core=[]
+IN  'Bearer aB3aB3aB3aB3aB3aB3aB3aB3'
+  guard='Bearer <hidden>'
+  core ='Bearer <BEARER_1>'
+  guard-shows-more-than-core=[]
+IN  'Basic aB3aB3aB3aB3aB3aB3aB3aB3'
+  guard='Basic <hidden>'
+  core ='Basic <BASIC_1>'
+  guard-shows-more-than-core=[]
+IN  'bearer aB3-aB3-aB3-aB3-aB3-aB3-'
+  guard='bearer <hidden>'
+  core ='bearer <BEARER_1>'
+  guard-shows-more-than-core=[]
+IN  'Authorization: Bearer aB3aB3aB3aB3aB3aB3aB3aB3'
+  guard='Authorization: <hidden>'
+  core ='Authorization: Bearer <BEARER_1>'
+  guard-shows-more-than-core=[]
+IN  'Bearer aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+  guard='Bearer <hidden>'
+  core ='Bearer <BEARER_1>'
+  guard-shows-more-than-core=[]
+IN  'Bearer aB3aB3aB3aB3aB3aB3aB3aB3aB3aB3'
+  guard='Bearer <hidden>'
+  core ='Bearer <BEARER_1>'
+  guard-shows-more-than-core=[]
+IN  'Basic aB3aB3aB3aB3aB3aB3aB3aB3aB3aB3'
+  guard='Basic <hidden>'
+  core ='Basic <BASIC_1>'
+  guard-shows-more-than-core=[]
+IN  'bearer aB3-aB3-aB3-aB3-aB3-aB3-aB3-aB3-'
+  guard='bearer <hidden>'
+  core ='bearer <BEARER_1>'
+  guard-shows-more-than-core=[]
+IN  'Authorization: Bearer aB3aB3aB3aB3aB3aB3aB3aB3aB3aB3'
+  guard='Authorization: <hidden>'
+  core ='Authorization: Bearer <BEARER_1>'
+  guard-shows-more-than-core=[]
+IN  'Bearer ab-cd-ef-gh'
+  guard='Bearer ab-cd-ef-gh'
+  core ='Bearer ab-cd-ef-gh'
+  guard-shows-more-than-core=[]
+IN  'Bearer abc_def-ghi.jkl'
+  guard='Bearer <hidden>'
+  core ='Bearer <BEARER_1>'
+  guard-shows-more-than-core=[]
+IN  'Bearer abcdefgh=='
+  guard='Bearer abcdefgh=='
+  core ='Bearer abcdefgh=='
+  guard-shows-more-than-core=[]
+IN  'Basic YWJjOmRlZg=='
+  guard='Basic <hidden>'
+  core ='Basic <BASIC_1>'
+  guard-shows-more-than-core=[]
+IN  'basic YWJjOmRlZg'
+  guard='basic <hidden>'
+  core ='basic <BASIC_1>'
+  guard-shows-more-than-core=[]
+IN  'Bearer'
+  guard='Bearer'
+  core ='Bearer'
+  guard-shows-more-than-core=[]
+IN  'Bearer '
+  guard='Bearer '
+  core ='Bearer '
+  guard-shows-more-than-core=[]
+IN  'Bearer  abcdefgh'
+  guard='Bearer  abcdefgh'
+  core ='Bearer  abcdefgh'
+  guard-shows-more-than-core=[]
+IN  'Authorization: Basic YWJjOmRlZg=='
+  guard='Authorization: <hidden>'
+  core ='Authorization: Basic <BASIC_1>'
+  guard-shows-more-than-core=[]
+IN  'authorization=Bearer abcdefgh'
+  guard='authorization=<hidden>'
+  core ='authorization=Bearer <SECRET_1>'
+  guard-shows-more-than-core=[]
+IN  'authorization="Bearer abcdefgh"'
+  guard='authorization=<hidden>'
+  core ='authorization="Bearer <SECRET_1>"'
+  guard-shows-more-than-core=[]
+IN  "authorization='Bearer abcdefgh'"
+  guard='authorization=<hidden>'
+  core ="authorization='Bearer <SECRET_1>'"
+  guard-shows-more-than-core=[]
+IN  'authorization="abcdefgh"'
+  guard='authorization=<hidden>'
+  core ='authorization="<SECRET_1>"'
+  guard-shows-more-than-core=[]
+IN  "authorization='abc def'"
+  guard='authorization=<hidden>'
+  core ="authorization='abc def'"
+  guard-shows-more-than-core=[]
+IN  'Authorization: "tok en"'
+  guard='Authorization: <hidden>'
+  core ='Authorization: "tok en"'
+  guard-shows-more-than-core=[]
+IN  'Authorization: Digest user=x response=abc'
+  guard='Authorization: <hidden>'
+  core ='Authorization: Digest user=x response=abc'
+  guard-shows-more-than-core=[]
+IN  'Authorization: x y z until end of line k=v'
+  guard='Authorization: <hidden>'
+  core ='Authorization: x y z until end of line k=v'
+  guard-shows-more-than-core=[]
+IN  'Authorization: abc, def; ghi'
+  guard='Authorization: <hidden>'
+  core ='Authorization: abc, def; ghi'
+  guard-shows-more-than-core=[]
+IN  'note authorization: abcdef tail words'
+  guard='note authorization: <hidden>'
+  core ='note authorization: abcdef tail words'
+  guard-shows-more-than-core=[]
+IN  'AUTHORIZATION: Token abc123'
+  guard='AUTHORIZATION: <hidden>'
+  core ='AUTHORIZATION: Token abc123'
+  guard-shows-more-than-core=[]
+IN  'authorization=abc123 more'
+  guard='authorization=<hidden> more'
+  core ='authorization=abc123 more'
+  guard-shows-more-than-core=[]
+IN  'authorization = abc123'
+  guard='authorization = abc123'
+  core ='authorization = abc123'
+  guard-shows-more-than-core=[]
+IN  'Authorization:abc'
+  guard='Authorization: <hidden>'
+  core ='Authorization:abc'
+  guard-shows-more-than-core=[]
+IN  'bypass=true'
+  guard='bypass=true'
+  core ='bypass=true'
+  guard-shows-more-than-core=[]
+IN  'bypass=false'
+  guard='bypass=false'
+  core ='bypass=false'
+  guard-shows-more-than-core=[]
+IN  'bypass=yes'
+  guard='bypass=yes'
+  core ='bypass=yes'
+  guard-shows-more-than-core=[]
+IN  'bypass=no'
+  guard='bypass=no'
+  core ='bypass=no'
+  guard-shows-more-than-core=[]
+IN  'bypass=on'
+  guard='bypass=on'
+  core ='bypass=on'
+  guard-shows-more-than-core=[]
+IN  'bypass=off'
+  guard='bypass=off'
+  core ='bypass=off'
+  guard-shows-more-than-core=[]
+IN  'bypass=0'
+  guard='bypass=0'
+  core ='bypass=<SECRET_1>'
+  guard-shows-more-than-core=['bypass=0']
+IN  'bypass=1'
+  guard='bypass=1'
+  core ='bypass=<SECRET_1>'
+  guard-shows-more-than-core=['bypass=1']
+IN  'bypass=abc123'
+  guard='bypass=<hidden>'
+  core ='bypass=<SECRET_1>'
+  guard-shows-more-than-core=[]
+IN  'bypass=truex'
+  guard='bypass=<hidden>'
+  core ='bypass=<SECRET_1>'
+  guard-shows-more-than-core=[]
+IN  'bypass=2'
+  guard='bypass=<hidden>'
+  core ='bypass=<SECRET_1>'
+  guard-shows-more-than-core=[]
+IN  'x bypass=yes!'
+  guard='x bypass=<hidden>'
+  core ='x bypass=<SECRET_1>'
+  guard-shows-more-than-core=[]
+IN  'bypass=true,abc123'
+  guard='bypass=<hidden>'
+  core ='bypass=<SECRET_1>'
+  guard-shows-more-than-core=[]
+IN  'bypass=TRUE'
+  guard='bypass=TRUE'
+  core ='bypass=TRUE'
+  guard-shows-more-than-core=[]
+IN  'bypass=True'
+  guard='bypass=True'
+  core ='bypass=True'
+  guard-shows-more-than-core=[]
+IN  'bypass: true'
+  guard='bypass: true'
+  core ='bypass: true'
+  guard-shows-more-than-core=[]
+IN  'bypass = true'
+  guard='bypass = true'
+  core ='bypass = true'
+  guard-shows-more-than-core=[]
+IN  'bypass='
+  guard='bypass=<hidden>'
+  core ='bypass='
+  guard-shows-more-than-core=[]
+IN  'bypass=true abc123'
+  guard='bypass=<hidden> abc123'
+  core ='bypass=true abc123'
+  guard-shows-more-than-core=[]
+IN  'bypass=abc123 true'
+  guard='bypass=<hidden> true'
+  core ='bypass=<SECRET_1> true'
+  guard-shows-more-than-core=[]
+IN  'bypass=falsey'
+  guard='bypass=<hidden>'
+  core ='bypass=<SECRET_1>'
+  guard-shows-more-than-core=[]
+IN  'bypass=yesterday'
+  guard='bypass=<hidden>'
+  core ='bypass=<SECRET_1>'
+  guard-shows-more-than-core=[]
+IN  'bypass=nope'
+  guard='bypass=<hidden>'
+  core ='bypass=<SECRET_1>'
+  guard-shows-more-than-core=[]
+IN  'bypass=1234'
+  guard='bypass=<hidden>'
+  core ='bypass=<SECRET_1>'
+  guard-shows-more-than-core=[]
+IN  'bypass=0x1'
+  guard='bypass=<hidden>'
+  core ='bypass=<SECRET_1>'
+  guard-shows-more-than-core=[]
+IN  'bypass=none'
+  guard='bypass=<hidden>'
+  core ='bypass=none'
+  guard-shows-more-than-core=[]
+IN  'bypass=null'
+  guard='bypass=<hidden>'
+  core ='bypass=null'
+  guard-shows-more-than-core=[]
+IN  "bypass='abc123'"
+  guard='bypass=<hidden>'
+  core ="bypass='<SECRET_1>'"
+  guard-shows-more-than-core=[]
+IN  'bypass="abc123"'
+  guard='bypass=<hidden>'
+  core ='bypass="<SECRET_1>"'
+  guard-shows-more-than-core=[]
+IN  'bypass="true"'
+  guard='bypass=<hidden>'
+  core ='bypass="true"'
+  guard-shows-more-than-core=[]
+IN  'bypass=true;abc123'
+  guard='bypass=<hidden>'
+  core ='bypass=true;abc123'
+  guard-shows-more-than-core=[]
+IN  'bypass=true&x=abc123'
+  guard='bypass=<hidden>'
+  core ='bypass=true&x=abc123'
+  guard-shows-more-than-core=[]
+IN  '--bypass=true'
+  guard='--bypass=true'
+  core ='--bypass=true'
+  guard-shows-more-than-core=[]
+IN  '--bypass abc123'
+  guard='--bypass abc123'
+  core ='--bypass abc123'
+  guard-shows-more-than-core=[]
+IN  'BYPASS=abc123'
+  guard='BYPASS=<hidden>'
+  core ='BYPASS=<SECRET_1>'
+  guard-shows-more-than-core=[]
+IN  'my_bypass=abc123'
+  guard='my_bypass=abc123'
+  core ='my_bypass=<SECRET_1>'
+  guard-shows-more-than-core=['my_bypass=abc123']
+IN  'bypass_key=abc'
+  guard='bypass_key=<hidden>'
+  core ='bypass_key=abc'
+  guard-shows-more-than-core=[]
+IN  'bypass-token=abc123'
+  guard='bypass-token=<hidden>'
+  core ='bypass-token=<SECRET_1>'
+  guard-shows-more-than-core=[]
+IN  'x-bypass=abc123'
+  guard='x-bypass=abc123'
+  core ='x-bypass=<SECRET_1>'
+  guard-shows-more-than-core=['x-bypass=abc123']
+IN  'token=abc123'
+  guard='token=<hidden>'
+  core ='token=<SECRET_1>'
+  guard-shows-more-than-core=[]
+IN  'password=hunter2'
+  guard='password=<hidden>'
+  core ='password=<SECRET_1>'
+  guard-shows-more-than-core=[]
+IN  'secret=abc'
+  guard='secret=<hidden>'
+  core ='secret=<SECRET_1>'
+  guard-shows-more-than-core=[]
+IN  'api_key=abc123def'
+  guard='api_key=<hidden>'
+  core ='api_key=<SECRET_1>'
+  guard-shows-more-than-core=[]
+IN  'https://user:pass@host/x'
+  guard='https://<hidden>@host/x'
+  core ='https://user:<URLCRED_1>@host/x'
+  guard-shows-more-than-core=[]
+IN  'https://h/x?token=abc123&y=1'
+  guard='https://h/x?token=<hidden>'
+  core ='https://h/x?token=<SECRET_1>&y=1'
+  guard-shows-more-than-core=[]
+IN  'AKIAIOSFODNN7EXAMPLE'
+  guard='AKIAIOSFODNN7EXAMPLE'
+  core ='<APIKEY_1>'
+  guard-shows-more-than-core=['AKIAIOSFODNN7EXAMPLE']
+IN  'ghp_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+  guard='ghp_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+  core ='<APIKEY_1>'
+  guard-shows-more-than-core=['ghp_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa']
+TOTAL inputs 175 guard-shows-more 6
+MORE: 'bypass=0'
+MORE: 'bypass=1'
+MORE: 'my_bypass=abc123'
+MORE: 'x-bypass=abc123'
+MORE: 'AKIAIOSFODNN7EXAMPLE'
+MORE: 'ghp_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'

@@ -1,0 +1,95 @@
+## import /home/user/build/EV-Q8b-bcb2bfec/wt/src/hadavin_sdk/__init__.py
+[F3 key ASCII password] in={"password": "<made-up-value-B>"}
+   out={"card": "password=<SECRET_1>", "walk": {"password": "<SECRET_1>"}}
+   readable=[]
+[F3 key ſ (U+017F) paſſword] in={"pa\u017f\u017fword": "<made-up-value-B>"}
+   out={"card": "pa\u017f\u017fword=<SECRET_1>", "walk": {"pa\u017f\u017fword": "<SECRET_1>"}}
+   readable=[]
+[F3 key ſ in token (toĸen K-kra)] in={"to\u0138en": "<made-up-value-B>"}
+   out={"card": "to\u0138en=<made-up-value-B>", "walk": {"to\u0138en": "<made-up-value-B>"}}
+   readable=['<made-up-value-B>']
+[F3 key İ (U+0130) in ApİKey] in={"Ap\u0130Key": "<made-up-value-B>"}
+   out={"card": "Ap\u0130Key=<SECRET_1>", "walk": {"Ap\u0130Key": "<SECRET_1>"}}
+   readable=[]
+[F3 key İ in SECRET key sEcrİt] in={"s\u0130cret": "<made-up-value-B>"}
+   out={"card": "s\u0130cret=<made-up-value-B>", "walk": {"s\u0130cret": "<made-up-value-B>"}}
+   readable=['<made-up-value-B>']
+[F3 key ı (U+0131) apıkey] in={"ap\u0131key": "<made-up-value-B>"}
+   out={"card": "ap\u0131key=<SECRET_1>", "walk": {"ap\u0131key": "<SECRET_1>"}}
+   readable=[]
+[F3 key ı passwıord] in={"passw\u0131ord": "<made-up-value-B>"}
+   out={"card": "passw\u0131ord=<made-up-value-B>", "walk": {"passw\u0131ord": "<made-up-value-B>"}}
+   readable=['<made-up-value-B>']
+[F3 key Kelvin K (U+212A) TOKEN] in={"TO\u212aEN": "<made-up-value-B>"}
+   out={"card": "TO\u212aEN=<SECRET_1>", "walk": {"TO\u212aEN": "<SECRET_1>"}}
+   readable=[]
+[F3 key ſecret] in={"\u017fecret": "<made-up-value-B>"}
+   out={"card": "\u017fecret=<SECRET_1>", "walk": {"\u017fecret": "<SECRET_1>"}}
+   readable=[]
+[F3 key ſecret_key] in={"\u017fecret_key": "<made-up-value-B>"}
+   out={"card": "\u017fecret_key=<SECRET_1>", "walk": {"\u017fecret_key": "<SECRET_1>"}}
+   readable=[]
+[F3 key PASSWORD upper] in={"PASSWORD": "<made-up-value-B>"}
+   out={"card": "PASSWORD=<SECRET_1>", "walk": {"PASSWORD": "<SECRET_1>"}}
+   readable=[]
+[F3 key ß in paßword] in={"pa\u00dfword": "<made-up-value-B>"}
+   out={"card": "pa\u00dfword=<made-up-value-B>", "walk": {"pa\u00dfword": "<SECRET_1>"}}
+   readable=['<made-up-value-B>']
+[F3 key fullwidth password] in={"\uff50assword": "<made-up-value-B>"}
+   out={"card": "password=<SECRET_1>", "walk": {"\uff50assword": "<SECRET_1>"}}
+   readable=[]
+[F3 key dotted capital İ Authorization] in={"Author\u0130zation": "<made-up-value-B>"}
+   out={"card": "Author\u0130zation=<SECRET_1>", "walk": {"Author\u0130zation": "<SECRET_1>"}}
+   readable=[]
+[F3 kind ASCII Secret] in={"data": {"UNLISTED": "<made-up-value-B-in-base64>"}, "kind": "Secret"}
+   out=[{"data": {"UNLISTED": "<SECRET_3>"}, "kind": "Secret"}, {"message": "seen <SECRET_3> here"}]
+   readable=[]
+[F3 kind ſecret lower long s] in={"data": {"UNLISTED": "<made-up-value-B-in-base64>"}, "kind": "\u017fecret"}
+   out=[{"data": {"UNLISTED": "<SECRET_3>"}, "kind": "\u017fecret"}, {"message": "seen <SECRET_3> here"}]
+   readable=[]
+[F3 kind ſecret capital S] in={"data": {"UNLISTED": "<made-up-value-B-in-base64>"}, "kind": "\u017fECRET"}
+   out=[{"data": {"UNLISTED": "<SECRET_3>"}, "kind": "\u017fECRET"}, {"message": "seen <SECRET_3> here"}]
+   readable=[]
+[F3 kind SECRET] in={"data": {"UNLISTED": "<made-up-value-B-in-base64>"}, "kind": "SECRET"}
+   out=[{"data": {"UNLISTED": "<SECRET_3>"}, "kind": "SECRET"}, {"message": "seen <SECRET_3> here"}]
+   readable=[]
+[F3 kind secret] in={"data": {"UNLISTED": "<made-up-value-B-in-base64>"}, "kind": "secret"}
+   out=[{"data": {"UNLISTED": "<SECRET_3>"}, "kind": "secret"}, {"message": "seen <SECRET_3> here"}]
+   readable=[]
+[F3 kind Secret + İ] in={"data": {"UNLISTED": "<made-up-value-B-in-base64>"}, "kind": "S\u0130cret"}
+   out=[{"data": {"UNLISTED": "<made-up-value-B-in-base64>"}, "kind": "S\u0130cret"}, {"message": "seen <made-up-value-B> here"}]
+   readable=['<made-up-value-B>', '<made-up-value-B-in-base64>']
+[F3 kind Secret + ı] in={"data": {"UNLISTED": "<made-up-value-B-in-base64>"}, "kind": "Secret\u0131"}
+   out=[{"data": {"UNLISTED": "<made-up-value-B-in-base64>"}, "kind": "Secret\u0131"}, {"message": "seen <made-up-value-B> here"}]
+   readable=['<made-up-value-B>', '<made-up-value-B-in-base64>']
+[F3 kind Kelvin none] in={"data": {"UNLISTED": "<made-up-value-B-in-base64>"}, "kind": "Secret\u212a"}
+   out=[{"data": {"UNLISTED": "<made-up-value-B-in-base64>"}, "kind": "Secret\u212a"}, {"message": "seen <made-up-value-B> here"}]
+   readable=['<made-up-value-B>', '<made-up-value-B-in-base64>']
+[F3 kind Secret NBSP] in={"data": {"UNLISTED": "<made-up-value-B-in-base64>"}, "kind": "Secret\u00a0"}
+   out=[{"data": {"UNLISTED": "<made-up-value-B-in-base64>"}, "kind": "Secret\u00a0"}, {"message": "seen <made-up-value-B> here"}]
+   readable=['<made-up-value-B>', '<made-up-value-B-in-base64>']
+[F3 kind Secret ZWSP] in={"data": {"UNLISTED": "<made-up-value-B-in-base64>"}, "kind": "Sec\u200bret"}
+   out=[{"data": {"UNLISTED": "<made-up-value-B-in-base64>"}, "kind": "Sec\u200bret"}, {"message": "seen <made-up-value-B> here"}]
+   readable=['<made-up-value-B>', '<made-up-value-B-in-base64>']
+[F3 kind Secret NFKC fullwidth] in={"data": {"UNLISTED": "<made-up-value-B-in-base64>"}, "kind": "\uff33ecret"}
+   out=[{"data": {"UNLISTED": "<made-up-value-B-in-base64>"}, "kind": "\uff33ecret"}, {"message": "seen <made-up-value-B> here"}]
+   readable=['<made-up-value-B>', '<made-up-value-B-in-base64>']
+[CAP entries N=255] repeat copies readable=0 first=[] last=[] ; values under own key unchanged=0; fixed-mask entries=0
+[CAP entries N=256] repeat copies readable=0 first=[] last=[] ; values under own key unchanged=0; fixed-mask entries=0
+[CAP entries N=257] repeat copies readable=1 first=[256] last=[256] ; values under own key unchanged=0; fixed-mask entries=1
+[CAP entries N=300] repeat copies readable=44 first=[256] last=[299] ; values under own key unchanged=0; fixed-mask entries=44
+[CAP entries N=1000] repeat copies readable=744 first=[256] last=[999] ; values under own key unchanged=0; fixed-mask entries=744
+[CAP two Secrets + spec] readable repeats: 0 0
+[CAP value length 254] repeat readable=False key masked=True
+[CAP Secret entry length 254] repeat readable=False key masked=True
+[CAP value length 255] repeat readable=False key masked=True
+[CAP Secret entry length 255] repeat readable=False key masked=True
+[CAP value length 256] repeat readable=False key masked=True
+[CAP Secret entry length 256] repeat readable=False key masked=True
+[CAP value length 257] repeat readable=False key masked=True
+[CAP Secret entry length 257] repeat readable=False key masked=True
+[CAP value length 300] repeat readable=False key masked=True
+[CAP Secret entry length 300] repeat readable=False key masked=True
+[CAP value length 1000] repeat readable=False key masked=True
+[CAP Secret entry length 1000] repeat readable=False key masked=True
+[CAP spaced value 255] out_pw={"password": "<SECRET_1>"} repeat={"message": "leak <SECRET_1> end"}

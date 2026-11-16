@@ -1,0 +1,16 @@
+# Citation check of OWNER-STEPS-realrun-v8.md (condensed copy of hand-back aef5e3f9), 2026-11-16
+Read-only, nothing run. Read v8 whole, v8-CHANGES, v8-NOTES, AGENT-SCOPE, DECISION-one-store, FACTS, v3, plan v5 whole. Not read: run_real_check_n8n.py, hubspot_probe.py, stage.env, memory files. APPLIED-S9.md absent (C9 not applied).
+## MISMATCHES
+1. L9,91,179,219,229 "two throwaway Gmail accounts and their app passwords already done": FACTS:2-3 say ONE throwaway Gmail, no sender account; only v3:35 supports two (RECEIVER and SENDER). The "already done" list overstates FACTS. (open since v7)
+2. Backstop (L20,21,133,178,228): sheet matches AGENT-SCOPE:15-16 and plan:271 (stage.env setting, US$180 of 189); FACTS:3 says "in-code". Sheet's rule (backstop <= yes total) means the owner must say no on every run unless the file is lowered; sheet does not say what the owner does while the file still shows 180 (v8-NOTES Q1 knows).
+3. Row 13 gating (L63 vs L89, L196-197, L106, L275): step I.2 gated only by row 15, step C.3 only by row 9 in prose but rows 9 and 13 in table. C.1,C.2,D,T,G,I.3,I.7 consistent. (open since v7)
+4. L343 "BL-wp6-G1 could not be found in the inputs": AGENT-SCOPE:23 contains it; it is about v5 flows reading $env.DESK_*/$env.MF_* inside nodes while the start script blocks env access in nodes; the real take needs a take-time literal substitution into a local copy of the flows, "not yet built". Not about the head; missing from the sheet's not-proven list; relevant to the real run. (v8-CHANGES L23 and NOTES Q21 repeat the error)
+5. Crash-safe ban (L40,292,298): plan:476,505 "Only a DM PASS lets the claim cover that window" (DM runs on real n8n 2.46.6 with stub SMTP/CRM); sheet is stricter; L292 ties "processed once" to the plan's DM check while L298 says the rehearsal never lifts the ban; not stated which counts; L14,L40 call the rehearsal "stand-in programs" but the plan uses real n8n.
+6. L20,178,228 row 8 "says it holds settings and no key": row 8 definition (L58) lists only paths (NOTES Q14).
+7. L38 cites "step 0 item 7": the bold statement is at L164 (item 6).
+8. Table row "E.5 finish" (L99) has no label in step E prose (L238 unlabelled); E.3 not named either.
+9. `python3` vs v3 `python` for run_real_check_n8n.py (L219,278,108): no source gives python3.
+10. L220 "bad login stops the run (exit 2)": inferred (v3:172 lists exit 2 for a refusal).
+11-14. v8-CHANGES/NOTES wrong line numbers: Secret files is L29 not L22; cost section L129-136 not L127-135; backstop bullet L133 not L134; "Exit code" entry is L38 (citation had no number).
+## No source: hubspot_probe.py flags/table text/7 calls/8th call; "2 or 3 contacts" (the 2 is the sheet's inference); retire check "no more than twice" (v3 says rerun later); start retry removal is intentional (v3:98 allowed one); same Linux user, "model program stopped", "go step 0", "run started" cue are new in v7/v8; all click paths marked "(path not checked)".
+## Matches: dates and weekdays (own arithmetic), 18:29Z=23:59 IST, 15:00Z=20:30 IST, 18:14:40Z=23:44:40 IST, 14-minute start refusal, US$189, 3 people 2+10+1=13, addresses/subject, marker/lock names, label demo, y + 6-digit + run name, 2 s minimum, exit codes 0-3, retire check exit 0/3/2, F quote, archive = DELETE, boxes before 0,E,F,G,I, bans list, DECISION corrections, step names, rule refs, row refs.

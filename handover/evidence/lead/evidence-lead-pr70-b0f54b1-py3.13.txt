@@ -1,0 +1,5 @@
+machine LAPTOP; pr 70 branch core/P1b-fixwip head b0f54b1360b488a0a0504056c58c0a602fdf2d01; python 3.13; postgres 16 docker port 55500
+== pytest (not live, not perf) with DSN
+FAILED tests/test_textnorm.py::test_the_minimum_view_length_is_one_number_per_kind_of_view_and_a_short_value_is_refused
+1 failed, 10828 passed, 422 skipped, 44 deselected in 1259.83s (0:20:59)
+done 09:42Z

@@ -1,0 +1,470 @@
+diff --git a/scripts/feed.py b/scripts/feed.py
+index a61dc11..1190eb3 100644
+--- a/scripts/feed.py
++++ b/scripts/feed.py
+@@ -28,6 +28,7 @@ from refusals import EXIT_REFUSED, EXIT_UNREACHABLE, refusal
+ from lead_desk.config import Config
+ from lead_desk.constants import SOURCES
+ from lead_desk.envnum import SettingRefused
++from lead_desk.regfile import load_json_file
+ from lead_desk.urls import desk_origin
+ 
+ CANNED = Path("demo_only") / "canned_leads.json"
+@@ -60,8 +61,8 @@ def build_envelope(source: str, index: int, leads: list[dict[str, object]]) -> d
+ def load_leads() -> list[dict[str, object]]:
+     """The canned leads; a missing, unreadable or wrong file is a refusal (the path is relative: run from the root)."""
+     try:
+-        leads = json.loads(CANNED.read_text(encoding="utf-8"))
+-    except (OSError, ValueError):  # no file, a folder, not UTF-8, not JSON (UnicodeError and JSONDecodeError)
++        leads = load_json_file(CANNED)
++    except (OSError, ValueError):  # no file, a pipe or folder, too big, not UTF-8, not JSON, nested too deeply
+         leads = None
+     if not isinstance(leads, list) or not leads or not all(isinstance(x, dict) for x in leads):
+         raise FeedRefused(
+diff --git a/scripts/n8n_api.py b/scripts/n8n_api.py
+index d7638f8..73e6d5c 100644
+--- a/scripts/n8n_api.py
++++ b/scripts/n8n_api.py
+@@ -46,6 +46,7 @@ from http_guard import open_http  # noqa: E402
+ 
+ from lead_desk.config import is_loopback_host  # noqa: E402
+ from lead_desk.envnum import SettingRefused, split_url  # noqa: E402
++from lead_desk.regfile import load_json_file, open_regular  # noqa: E402
+ from tools.pathconfine import confine_existing  # noqa: E402
+ 
+ REFUSED = (
+@@ -93,7 +94,7 @@ def _read_key() -> str:
+     if not name:
+         raise SystemExit("N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key")
+     try:
+-        with Path(name).open("rb") as f:  # a directory, a missing or an unreadable file: OSError
++        with open_regular(name) as f:  # a pipe, a folder, a missing or an unreadable file: OSError
+             raw = f.read(MAX_KEY + 1)  # never the whole of a huge file: a key is short
+         key = raw.decode("utf-8").strip()  # bytes that are not text: UnicodeDecodeError (a ValueError)
+     except (OSError, ValueError) as e:
+@@ -191,7 +192,7 @@ def main(a: list[str]) -> int:
+             say(w["name"], "active" if w["active"] else "inactive")
+     elif cmd == "import":
+         try:
+-            wf = json.loads(confine_existing(a[2], what="FILE").read_text(encoding="utf-8"))
++            wf = load_json_file(confine_existing(a[2], what="FILE"))
+             wf.setdefault("settings", {})
+             str(wf["name"])  # a workflow file without a name is refused here, not after the call
+         except (OSError, ValueError, KeyError, AttributeError, RuntimeError) as e:  # no file, not JSON (or nested too
+diff --git a/scripts/run_real_check.py b/scripts/run_real_check.py
+index 3129904..7d046e7 100644
+--- a/scripts/run_real_check.py
++++ b/scripts/run_real_check.py
+@@ -103,6 +103,7 @@ from lead_desk.imap_count import (  # noqa: E402
+ )
+ from lead_desk.live_claude import LiveError, LiveQualifier, SpendLedger, worst_case_usd  # noqa: E402
+ from lead_desk.loader import load_approvers  # noqa: E402
++from lead_desk.regfile import FileRefused, load_json_file, read_regular_text  # noqa: E402
+ from lead_desk.smtp_provider import (  # noqa: E402
+     ProviderSettings,
+     SmtpProviderOutbox,
+@@ -745,9 +746,9 @@ def load_env(path: Path) -> dict[str, str]:
+     # paths it names (book, run folder, keys) are used as written
+     config = confine_anywhere(path, what="--config")
+     try:
+-        text = config.read_text(encoding="utf-8")
+-    except UnicodeError:  # its text names a byte value and its place in the file: say only what is wrong
+-        raise ValueError("the config file is not UTF-8 text: save it as plain UTF-8 text") from None
++        text = read_regular_text(config)
++    except FileRefused:  # not UTF-8 or over 1 MiB; a byte value and its place in the file are never named
++        raise ValueError("the config file is not UTF-8 text (or is over 1 MiB): save it as plain UTF-8 text") from None
+     for n, raw in enumerate(text.splitlines(), 1):
+         line = raw.strip()
+         if not line or line.startswith("#"):
+@@ -1057,8 +1058,8 @@ def read_counter_files(run_dir: Path, suffix: str) -> dict[str, int]:
+     total: Counter[str] = Counter()
+     for p in sorted(run_dir.glob(f"desk-*{suffix}")):
+         try:
+-            total.update({k: int(v) for k, v in json.loads(p.read_text(encoding="utf-8")).items()})
+-        except (OSError, ValueError):
++            total.update({k: int(v) for k, v in load_json_file(p).items()})
++        except (OSError, ValueError, AttributeError):
+             pass
+     return dict(total)
+ 
+diff --git a/src/lead_desk/regfile.py b/src/lead_desk/regfile.py
+index 4672a94..8ffd783 100644
+--- a/src/lead_desk/regfile.py
++++ b/src/lead_desk/regfile.py
+@@ -7,9 +7,10 @@ which every reader already turns into its own fixed "cannot be read" text (never
+ 
+ from __future__ import annotations
+ 
++import json
+ import os
+ import stat
+-from typing import IO
++from typing import IO, Any
+ 
+ _FLAGS = os.O_RDONLY | getattr(os, "O_NONBLOCK", 0) | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_BINARY", 0)
+ 
+@@ -33,3 +34,40 @@ def open_regular(path: str | os.PathLike[str]) -> IO[bytes]:
+     except BaseException:
+         os.close(fd)
+         raise
++
++
++MAX_JSON_BYTES = 16 * 1024 * 1024  # a made-up lead list or an n8n export is a few kilobytes; this stops a huge file
++MAX_TEXT_BYTES = 1024 * 1024  # a settings or counter file
++
++
++class FileRefused(ValueError):
++    """The file is regular but its content cannot be used: too big, not UTF-8 text, not JSON, or nested so deeply
++    that the JSON reader gave up (RecursionError). The text is fixed and never holds the path or the content."""
++
++
++def read_regular_bytes(path: str | os.PathLike[str], max_bytes: int) -> bytes:
++    """The whole content of a regular file of at most `max_bytes` bytes. A pipe, a device, a folder or a missing file
++    raises OSError (open_regular); a bigger file raises FileRefused (at most max_bytes + 1 bytes are ever read)."""
++    with open_regular(path) as f:
++        data = f.read(max_bytes + 1)
++    if len(data) > max_bytes:
++        raise FileRefused("the file is too big")
++    return data
++
++
++def read_regular_text(path: str | os.PathLike[str], max_bytes: int = MAX_TEXT_BYTES) -> str:
++    """read_regular_bytes decoded as UTF-8; bytes that are not UTF-8 text raise FileRefused."""
++    try:
++        return read_regular_bytes(path, max_bytes).decode("utf-8")
++    except UnicodeError:
++        raise FileRefused("the file is not UTF-8 text") from None
++
++
++def load_json_file(path: str | os.PathLike[str], max_bytes: int = MAX_JSON_BYTES) -> Any:
++    """The JSON value in a regular file. Every way the content can be wrong (too big, not UTF-8, not JSON, nested too
++    deeply) is one FileRefused; a file that cannot be opened as a regular file is an OSError."""
++    text = read_regular_text(path, max_bytes)
++    try:
++        return json.loads(text)
++    except (ValueError, RecursionError):  # JSONDecodeError is a ValueError; 100000 nested brackets: RecursionError
++        raise FileRefused("the file is not JSON that can be read") from None
+diff --git a/tests/test_file_reader_refusals.py b/tests/test_file_reader_refusals.py
+new file mode 100644
+index 0000000..dd16a43
+--- /dev/null
++++ b/tests/test_file_reader_refusals.py
+@@ -0,0 +1,223 @@
++"""Class: a script that reads a file the person NAMED (or parses its content) ends with ONE plain `refused:` or "cannot
++read" line, never a Python traceback and never a wait for ever. Two causes: (1) a pipe (FIFO) has no end, so a plain
++read waits for ever; (2) JSON nested 100000 deep ends the parser in a RecursionError. Every script and tool reads such a
++file through `lead_desk.regfile` (open_regular, a size cap, one FileRefused for a bad content). Also pins the literal
++exit codes (2 refused, 3 unreachable) from OUTSIDE the constants in scripts/refusals.py and the edges of --index.
++Every script runs in its own process with a 5 second limit; made-up data only; no network."""
++
++from __future__ import annotations
++
++import json
++import os
++import socket
++import subprocess  # noqa: S404
++import sys
++from pathlib import Path
++
++import pytest
++
++REPO = Path(__file__).resolve().parents[1]
++SCRIPTS = REPO / "scripts"
++sys.path.insert(0, str(SCRIPTS))
++from feed import FeedRefused, build_envelope  # noqa: E402
++
++LEADS = json.loads((REPO / "demo_only" / "canned_leads.json").read_text(encoding="utf-8"))
++FIFO = pytest.mark.skipif(not hasattr(os, "mkfifo"), reason="no named pipes on this platform")
++DEEP = "[" * 100000 + "]" * 100000
++
++
++def _child(args: list[str], cwd: Path = REPO, limit: float = 5, **env: str) -> tuple[int, str]:
++    """Run a script in its own process; a child that is still running after `limit` seconds fails the test."""
++    base = {k: v for k, v in os.environ.items() if not k.startswith(("DESK_", "N8N_"))}
++    base.update(PYTHONPATH=str(REPO / "src"), PYTHONDONTWRITEBYTECODE="1", **env)
++    try:
++        done = subprocess.run(  # noqa: S603
++            [sys.executable, *args],
++            cwd=cwd,
++            env=base,
++            capture_output=True,
++            text=True,
++            timeout=limit,
++            stdin=subprocess.DEVNULL,
++        )
++    except subprocess.TimeoutExpired:
++        pytest.fail(f"the script was still waiting after {limit} seconds (a pipe or a hang)")
++    return done.returncode, done.stdout + done.stderr
++
++
++def _free_port() -> int:
++    with socket.socket() as s:
++        s.bind(("127.0.0.1", 0))
++        return int(s.getsockname()[1])
++
++
++def _canned_in(tmp_path: Path, how: str) -> Path:
++    folder = tmp_path / "demo_only"
++    folder.mkdir()
++    target = folder / "canned_leads.json"
++    if how == "fifo":
++        os.mkfifo(target)
++    else:
++        target.write_text(DEEP, encoding="utf-8")
++    return tmp_path
++
++
++# -- (1) the file readers ---------------------------------------------------------------------------------------------
++
++
++@pytest.mark.parametrize("how", ["deep", pytest.param("fifo", marks=FIFO)])
++def test_feed_canned_file_that_is_deeply_nested_or_a_pipe_is_one_refusal_line(tmp_path: Path, how: str) -> None:
++    root = _canned_in(tmp_path, how)
++    code, out = _child(
++        [str(SCRIPTS / "feed.py"), "--source", "form", "--index", "1"], cwd=root, DESK_PORT=str(_free_port())
++    )
++    assert "Traceback" not in out and "RecursionError" not in out, out
++    assert code == 2, (code, out)
++    assert out.strip().startswith("refused: canned leads: demo_only/canned_leads.json cannot be read"), out
++    assert len(out.strip().splitlines()) == 1, out
++
++
++@pytest.mark.parametrize("how", ["deep", pytest.param("fifo", marks=FIFO), "folder"])
++def test_scrub_input_that_is_deeply_nested_a_pipe_or_a_folder_is_one_refusal_line(tmp_path: Path, how: str) -> None:
++    src = tmp_path / "in.json"
++    if how == "fifo":
++        os.mkfifo(src)
++    elif how == "folder":
++        src.mkdir()
++    else:
++        src.write_text(DEEP, encoding="utf-8")
++    code, out = _child(["-m", "tools.scrub_n8n_export", str(src), str(tmp_path / "out.json")])
++    assert "Traceback" not in out and "RecursionError" not in out, out
++    assert code == 2 and out.strip().startswith("refused: in.json: "), (code, out)
++    assert len(out.strip().splitlines()) == 1, out
++    assert not (tmp_path / "out.json").exists()
++
++
++@FIFO
++def test_n8n_api_key_file_and_workflow_file_that_are_pipes_are_refused_not_waited_for(tmp_path: Path) -> None:
++    pipe = tmp_path / "pipe"
++    os.mkfifo(pipe)
++    code, out = _child([str(SCRIPTS / "n8n_api.py"), "list"], N8N_API_KEY_FILE=str(pipe), N8N_URL="http://127.0.0.1:1")
++    assert "Traceback" not in out and code != 0 and "cannot read the n8n API key file" in out, (code, out)
++    key = tmp_path / "key"
++    key.write_text("abc123\n", encoding="utf-8")
++    code, out = _child(
++        [str(SCRIPTS / "n8n_api.py"), "import", str(pipe)],
++        cwd=tmp_path,
++        N8N_API_KEY_FILE=str(key),
++        N8N_URL="http://127.0.0.1:1",
++        LEAD_DESK_PATH_ROOTS=str(tmp_path),
++    )
++    assert "Traceback" not in out and code != 0 and "cannot read a workflow" in out, (code, out)
++
++
++def test_n8n_api_workflow_file_nested_too_deeply_is_refused(tmp_path: Path) -> None:
++    key = tmp_path / "key"
++    key.write_text("abc123\n", encoding="utf-8")
++    wf = tmp_path / "wf.json"
++    wf.write_text(DEEP, encoding="utf-8")
++    code, out = _child(
++        [str(SCRIPTS / "n8n_api.py"), "import", str(wf)],
++        cwd=tmp_path,
++        N8N_API_KEY_FILE=str(key),
++        N8N_URL="http://127.0.0.1:1",
++        LEAD_DESK_PATH_ROOTS=str(tmp_path),
++    )
++    assert "Traceback" not in out and code != 0 and "cannot read a workflow" in out, (code, out)
++
++
++@FIFO
++def test_run_real_check_config_that_is_a_pipe_is_refused_not_waited_for(tmp_path: Path) -> None:
++    """load_env is what reads the settings file (main asks for a terminal first, so it is called here directly)."""
++    pipe = tmp_path / "config.env"
++    os.mkfifo(pipe)
++    prog = (
++        "import sys, pathlib; sys.path.insert(0, sys.argv[1]); import run_real_check as r\n"
++        "try:\n    r.load_env(pathlib.Path(sys.argv[2]))\nexcept OSError:\n    print('OSERROR')\n"
++    )
++    code, out = _child(["-c", prog, str(SCRIPTS), str(pipe)])
++    assert code == 0 and out.strip() == "OSERROR", (code, out)
++    deep = tmp_path / "deep.env"
++    deep.write_bytes(b"\xff\xfe")
++    code, out = _child(["-c", prog.replace("except OSError", "except ValueError"), str(SCRIPTS), str(deep)])
++    assert code == 0 and out.strip() == "OSERROR", (code, out)
++
++
++def test_the_one_reader_refuses_every_bad_content_with_one_error_type(tmp_path: Path) -> None:
++    from lead_desk.regfile import MAX_JSON_BYTES, FileRefused, load_json_file, read_regular_text
++
++    for name, data in {
++        "deep": DEEP.encode(),
++        "rubbish": b"{bad",
++        "not-utf8": b"\xff\xfe\x00[]",
++        "big": b" " * (MAX_JSON_BYTES + 1),
++    }.items():
++        p = tmp_path / name
++        p.write_bytes(data)
++        with pytest.raises(FileRefused) as seen:
++            load_json_file(p)
++        assert str(p) not in str(seen.value)
++    edge = tmp_path / "edge"
++    edge.write_bytes(b"[1]" + b" " * (MAX_JSON_BYTES - 3))
++    assert load_json_file(edge) == [1]  # exactly the cap is accepted
++    with pytest.raises(FileRefused):
++        read_regular_text(edge, MAX_JSON_BYTES - 1)
++    with pytest.raises(OSError):
++        load_json_file(tmp_path)  # a folder
++    with pytest.raises(OSError):
++        load_json_file(tmp_path / "missing")
++
++
++def test_every_file_read_in_scripts_and_tools_goes_through_the_one_reader() -> None:
++    """The sibling sweep, pinned: no `json.load(s)`, `.read_text(`, `.read_bytes(` or `open(` on a named file is left
++    in a script or tool, except the files listed here (repository-owned files, not named by a person)."""
++    own = {
++        ("scripts/check_schema.py", "SCHEMA.read_text"),  # the repository's own schema.sql
++        ("tools/hygiene.py", "path.read_text"),  # term lists passed by the repository's own tests and CI
++        ("tools/hygiene.py", "(repo / f).read_text"),  # tracked files found by `git ls-files`
++        ("tools/pathconfine.py", "Path(argv[2])"),  # the explanation in the module text, not a read
++    }
++    bad = []
++    for folder in ("scripts", "tools"):
++        for py in sorted((REPO / folder).glob("*.py")):
++            for n, line in enumerate(py.read_text(encoding="utf-8").splitlines(), 1):
++                code = line.split("#")[0]
++                for key in (".read_text(", ".read_bytes(", "json.load(", "Path(name).open("):
++                    if key in code and not any(py.as_posix().endswith(f) and w in code for f, w in own):
++                        bad.append(f"{py.name}:{n}")
++    assert not bad, bad
++
++
++# -- (2) the two survivors --------------------------------------------------------------------------------------------
++
++
++def test_feed_index_edges_last_valid_index_is_accepted_and_the_two_neighbours_are_refused() -> None:
++    last = len(LEADS)
++    assert build_envelope("form", last, LEADS)["source_ref"] == f"canned-{last}"
++    assert build_envelope("form", 1, LEADS)["source_ref"] == "canned-1"
++    for bad in (0, last + 1, -1):
++        with pytest.raises(FeedRefused):
++            build_envelope("form", bad, LEADS)
++
++
++def test_feed_last_valid_index_reaches_the_desk_step_and_the_next_one_does_not() -> None:
++    last = len(LEADS)
++    port = str(_free_port())  # nothing listens there
++    code, out = _child([str(SCRIPTS / "feed.py"), "--source", "form", "--index", str(last)], DESK_PORT=port)
++    assert code == 3 and out.startswith("refused: the desk: "), (code, out)  # the index was accepted
++    code, out = _child([str(SCRIPTS / "feed.py"), "--source", "form", "--index", str(last + 1)], DESK_PORT=port)
++    assert code == 2 and out.startswith("refused: --index: "), (code, out)
++    code, out = _child([str(SCRIPTS / "feed.py"), "--source", "form", "--index", "0"], DESK_PORT=port)
++    assert code == 2 and out.startswith("refused: --index: "), (code, out)
++
++
++def test_the_exit_codes_are_two_and_three_whatever_the_constants_say() -> None:
++    """The numbers are part of what run_live_check.py, run_real_check.py and the .sh files rely on: pinned as
++    literals, seen from outside the process (the constants in scripts/refusals.py are not imported here)."""
++    port = str(_free_port())
++    code, _ = _child([str(SCRIPTS / "feed.py"), "--source", "form", "--index", "0"], DESK_PORT=port)
++    assert code == 2
++    code, _ = _child([str(SCRIPTS / "feed.py"), "--source", "form", "--index", "1"], DESK_PORT=port)
++    assert code == 3
++    code, _ = _child(["-m", "tools.scrub_n8n_export", "only-one-argument"])
++    assert code == 2
+diff --git a/tests/test_n8n_api_url.py b/tests/test_n8n_api_url.py
+index fc39f31..149820d 100644
+--- a/tests/test_n8n_api_url.py
++++ b/tests/test_n8n_api_url.py
+@@ -503,7 +503,9 @@ def test_a_key_file_that_is_a_directory_is_a_clean_message_with_the_error_type_o
+ ) -> None:
+     (tmp_path / "keydir").mkdir()
+     msg = _key_file_refusal(monkeypatch, tmp_path / "keydir")
+-    assert "key file" in msg and ("IsADirectoryError" in msg or "PermissionError" in msg)  # Windows: PermissionError
++    assert "key file" in msg and (
++        "NotRegularFile" in msg or "PermissionError" in msg
++    )  # a folder is refused by lead_desk.regfile; Windows: PermissionError
+     assert "keydir" not in msg
+ 
+ 
+@@ -648,7 +650,7 @@ def test_a_workflow_file_nested_a_hundred_thousand_levels_deep_is_a_clean_messag
+     mod = _load(monkeypatch, tmp_path, None)
+     with pytest.raises(SystemExit) as e:
+         mod.main(["n8n_api.py", "import", str(f)])
+-    assert "cannot read a workflow" in _message(e) and "RecursionError" in _message(e)
++    assert "cannot read a workflow" in _message(e) and "FileRefused" in _message(e)  # regfile maps RecursionError
+ 
+ 
+ def test_a_body_that_cannot_be_encoded_is_a_clean_message(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+diff --git a/tests/test_survivor_r20_config_read.py b/tests/test_survivor_r20_config_read.py
+index 5771f3a..e9d7913 100644
+--- a/tests/test_survivor_r20_config_read.py
++++ b/tests/test_survivor_r20_config_read.py
+@@ -17,6 +17,8 @@ sys.path.insert(0, str(REPO / "scripts"))
+ import run_real_check as rrc  # noqa: E402
+ from test_real_check_dry import _valid_config  # noqa: E402
+ 
++from lead_desk import regfile  # noqa: E402
++
+ 
+ def test_a_config_file_whose_read_fails_is_refused_with_one_fixed_line(
+     tmp_path: Path,
+@@ -25,17 +27,17 @@ def test_a_config_file_whose_read_fails_is_refused_with_one_fixed_line(
+     a_terminal: None,
+ ) -> None:
+     cfg = _valid_config(tmp_path)
+-    real_read_text = Path.read_text
++    real_open_regular = regfile.open_regular  # the one reader every script uses (lead_desk.regfile)
+ 
+-    def read_text(self: Path, *args: object, **kwargs: object) -> str:
+-        if self.name == cfg.name:
+-            raise PermissionError(13, "denied", str(self))  # the OS error text holds the path
+-        return real_read_text(self, *args, **kwargs)  # type: ignore[arg-type]
++    def open_regular(path: object) -> object:
++        if Path(str(path)).name == cfg.name:
++            raise PermissionError(13, "denied", str(path))  # the OS error text holds the path
++        return real_open_regular(path)  # type: ignore[arg-type]
+ 
+     def no_question(prompt: str = "") -> str:
+         raise AssertionError("the start question was asked")
+ 
+-    monkeypatch.setattr(Path, "read_text", read_text)
++    monkeypatch.setattr(regfile, "open_regular", open_regular)
+     monkeypatch.setattr("builtins.input", no_question)
+     assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
+     out = capsys.readouterr().out
+diff --git a/tools/scrub_n8n_export.py b/tools/scrub_n8n_export.py
+index 743cc20..ae454aa 100644
+--- a/tools/scrub_n8n_export.py
++++ b/tools/scrub_n8n_export.py
+@@ -49,11 +49,13 @@ import sys
+ from pathlib import Path
+ from typing import Any
+ 
+-try:  # started as a script (python tools/scrub_n8n_export.py): the repository folder is not on the path yet
+-    from tools.pathconfine import PathRefused, confine, confine_existing
+-except ModuleNotFoundError:
+-    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+-    from tools.pathconfine import PathRefused, confine, confine_existing
++_REPO = Path(__file__).resolve().parents[1]
++for _p in (str(_REPO / "src"), str(_REPO)):  # started as a script: neither folder is on the path yet
++    if _p not in sys.path:
++        sys.path.insert(0, _p)
++
++from lead_desk.regfile import load_json_file  # noqa: E402
++from tools.pathconfine import PathRefused, confine, confine_existing  # noqa: E402
+ 
+ TOP = ("name", "active", "nodes", "connections")
+ SETTINGS = ("executionOrder",)  # add a key here only when the demo needs that setting
+@@ -194,8 +196,8 @@ def main(argv: list[str]) -> int:
+         print(f"refused: {e}")
+         return 2
+     try:
+-        wf = json.loads(src_path.read_text(encoding="utf-8"))
+-    except (OSError, ValueError, RuntimeError):  # unreadable, not UTF-8, not JSON, nested too deeply (RecursionError)
++        wf = load_json_file(src_path)
++    except (OSError, ValueError, RuntimeError):  # unreadable, a pipe, too big, not UTF-8, not JSON, nested too deeply
+         print("refused: in.json: cannot be read as a JSON workflow file")
+         return 2
+     nodes = wf.get("nodes", []) if isinstance(wf, dict) else None

@@ -1,0 +1,6 @@
+run 1 load 4.39 4.57 4.77
+run 1 rc=0 wall=22.653270609s 106 passed in 21.96s
+run 2 load 4.26 4.52 4.75
+run 2 rc=0 wall=22.609840821s 106 passed in 22.07s
+run 3 load 4.27 4.50 4.74
+run 3 rc=0 wall=22.372082578s 106 passed in 21.78s

@@ -1,0 +1,5 @@
+## import /home/user/build/EV-Q8b-bcb2bfec/main/src/hadavin_sdk/__init__.py
+[CAP3 3 Secrets x 200] readable repeats: 600 of 600
+[CAP list under credential key, 300 items] readable in log: 300 ; list items readable under key: 300
+[CAP map under credential key, 300 entries] readable in log: 300
+[CAP late entry same value as first] readable: True

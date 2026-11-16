@@ -1,0 +1,7 @@
+I7 the re-encoded forms are not secrets
+replaced: '    for form in (quote(text, safe=""), quote(text), quote_plus(text)):'
+by: '    for form in ():'
+summary: FAILED tests/test_mutation_runner_keywords.py::test_the_re_encoded_forms_of_a_url_password_are_secrets
+exit=1
+FAILED kept tests:
+test_the_re_encoded_forms_of_a_url_password_are_secrets

@@ -1,0 +1,12 @@
+### tests/test_migration_wiring.py::test_the_live_process_lock_is_taken_on_the_connection_target_that_makes_the_role rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_the_live_process_lock_is_taken_on_the_connection_target_that_makes_the_role _
+tests/test_migration_wiring.py:1433: in test_the_live_process_lock_is_taken_on_the_connection_target_that_makes_the_role
+    assert "made-up-host" in holds[0].server and "5999" in holds[0].server
+E   AssertionError: assert ('made-up-host' in 'host=localhost')
+E    +  where 'host=localhost' = <tests.test_migration_wiring._Hold object at 0x7f4b6fbed940>.server
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_the_live_process_lock_is_taken_on_the_connection_target_that_makes_the_role
+1 failed in 0.40s
+

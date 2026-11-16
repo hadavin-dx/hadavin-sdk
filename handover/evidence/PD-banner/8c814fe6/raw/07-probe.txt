@@ -1,0 +1,27 @@
+file /home/user/build/er14-H/tools/fixed_run.py
+string argv                      started=0 -> TypeError: run_fixed takes a non-empty list or tuple of arguments, never a string
+empty list                       started=0 -> TypeError: run_fixed takes a non-empty list or tuple of arguments, never a string
+empty tuple                      started=0 -> TypeError: run_fixed takes a non-empty list or tuple of arguments, never a string
+NUL in arg                       started=0 -> TypeError: run_fixed takes texts or paths without a NUL character
+NUL in prog                      started=0 -> TypeError: run_fixed takes texts or paths without a NUL character
+shell=True                       started=0 -> ValueError: run_fixed does not accept ['shell']: no shell, no executable, no hooks
+executable=                      started=0 -> ValueError: run_fixed does not accept ['executable']: no shell, no executable, no hooks
+preexec_fn                       started=0 -> ValueError: run_fixed does not accept ['preexec_fn']: no shell, no executable, no hooks
+stdin=                           started=0 -> ValueError: run_fixed does not accept ['stdin']: no shell, no executable, no hooks
+stdout=                          started=0 -> ValueError: run_fixed does not accept ['stdout']: no shell, no executable, no hooks
+close_fds/start_new_session      started=0 -> ValueError: run_fixed does not accept ['start_new_session']: no shell, no executable, no hooks
+bytes argv                       started=0 -> TypeError: run_fixed takes texts or paths without a NUL character
+int in argv                      started=0 -> TypeError: expected str, bytes or os.PathLike object, not int
+None argv                        started=0 -> TypeError: run_fixed takes a non-empty list or tuple of arguments, never a string
+set argv                         started=0 -> TypeError: run_fixed takes a non-empty list or tuple of arguments, never a string
+generator argv                   started=0 -> TypeError: run_fixed takes a non-empty list or tuple of arguments, never a string
+dict argv                        started=0 -> TypeError: run_fixed takes a non-empty list or tuple of arguments, never a string
+missing prog                     started=0 -> SystemExit: no-such-program-xyz was not found on the PATH; nothing here guesses
+check missing (kwarg-only)       started=0 -> TypeError: run_fixed() missing 1 required keyword-only argument: 'check'
+ok list                          started=1 -> OK 'ok\n'
+ok tuple+Path                    started=1 -> OK 'p\n'
+env dict ok                      started=1 -> OK 'A=1\n'
+str subclass argv                started=0 -> TypeError: run_fixed takes a non-empty list or tuple of arguments, never a string
+list subclass argv               started=1 -> OK 'sub\n'
+argv0 starts with dash           started=0 -> SystemExit: -x was not found on the PATH; nothing here guesses
+relative prog ./                 started=0 -> SystemExit: ./nothing was not found on the PATH; nothing here guesses

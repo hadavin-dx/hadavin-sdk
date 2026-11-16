@@ -1,0 +1,6 @@
+a request ended with an error: ConnectionResetError while handling AttributeError
+a request ended with an error: AttributeError
+a request ended with an error: AttributeError
+a request ended with an error: ConnectionResetError while handling AttributeError
+a request ended with an error: AttributeError
+a request ended with an error: AttributeError

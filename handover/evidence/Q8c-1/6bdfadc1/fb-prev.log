@@ -1,0 +1,200 @@
+...............................................FFFFF.................... [ 23%]
+........FF.............................................................. [ 47%]
+........................................................................ [ 70%]
+.....................................................F.................. [ 94%]
+.ssssssssssss....                                                        [100%]
+=================================== FAILURES ===================================
+__ test_every_grant_name_is_verified_or_pending_and_every_source_id_resolves ___
+
+    def test_every_grant_name_is_verified_or_pending_and_every_source_id_resolves():
+>       assert name_problems(_policies(), PENDING_NAMES, set(source_ids()), TODAY) == []
+E       assert ['PENDING_NAM...te the entry'] == []
+E         
+E         Left contains 3 more items, first extra item: "PENDING_NAMES ('secrets/vault', 'never:{mount}/undelete/*') is fixed or gone: delete the entry"
+E         Use -v to get more diff
+
+tests/test_policy_guard.py:1484: AssertionError
+_ test_pr1_grants_are_all_named_in_a_source_and_only_r17_has_an_unchecked_claim _
+
+    def test_pr1_grants_are_all_named_in_a_source_and_only_r17_has_an_unchecked_claim():
+        grants = {g.id: g for p in _policies().values() for g in p.grants}
+        same(sorted(grants), ["R17", "R18", "R19", "R20", "R21", "R22"])
+        for g in grants.values():
+            assert g.verified is not None and g.verified[0] == "2026-11-11", g.id
+            assert g.confirmed_live is None, g.id
+>           same(g.claims_unverified, R17_CLAIM if g.id == "R17" else ())
+
+tests/test_policy_guard.py:1496: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+found = ()
+expected = ('the + matches exactly one whole path part, nothing deeper',)
+
+    def same(found: object, expected: object) -> None:
+        """`found == expected`, with both written out in full in the failure message (pytest shortens a long
+        list in the first line, and the mutant runner reads that line)."""
+>       assert found == expected, f"reported {found!r}, expected {expected!r}"
+E       AssertionError: reported (), expected ('the + matches exactly one whole path part, nothing deeper',)
+E       assert () == ('the + match...hing deeper',)
+E         
+E         Right contains one more item: 'the + matches exactly one whole path part, nothing deeper'
+E         Use -v to get more diff
+
+tests/test_policy_guard.py:164: AssertionError
+_ test_the_builder_only_claims_are_not_shown_as_checked_and_r17_has_no_copy_ready_text _
+
+    def test_the_builder_only_claims_are_not_shown_as_checked_and_r17_has_no_copy_ready_text():
+        """Fix batch 2: the `+` claim and three never-list paths were read by the builder only (fixture header)."""
+        policies = _policies()
+>       same(
+            {k: pp.copy_ready(p) for k, p in policies.items()},
+            {"secrets/vault": False, "signer/vault_transit": True, "source/kubernetes": True},
+        )
+
+tests/test_policy_guard.py:1502: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+found = {'secrets/vault': True, 'signer/vault_transit': True, 'source/kubernetes': True}
+expected = {'secrets/vault': False, 'signer/vault_transit': True, 'source/kubernetes': True}
+
+    def same(found: object, expected: object) -> None:
+        """`found == expected`, with both written out in full in the failure message (pytest shortens a long
+        list in the first line, and the mutant runner reads that line)."""
+>       assert found == expected, f"reported {found!r}, expected {expected!r}"
+E       AssertionError: reported {'secrets/vault': True, 'signer/vault_transit': True, 'source/kubernetes': True}, expected {'secrets/vault': False, 'signer/vault_transit': True, 'source/kubernetes': True}
+E       assert {'secrets/vau...rnetes': True} == {'secrets/vau...rnetes': True}
+E         
+E         Omitting 2 identical items, use -vv to show
+E         Differing items:
+E         {'secrets/vault': True} != {'secrets/vault': False}
+E         Use -v to get more diff
+
+tests/test_policy_guard.py:164: AssertionError
+________ test_plant_an_unverified_grant_with_no_pending_entry_is_caught ________
+
+    def test_plant_an_unverified_grant_with_no_pending_entry_is_caught():
+        policies = _with_grant("secrets/vault", verified=None)
+>       same(
+            name_problems(policies, PENDING_NAMES, set(source_ids()), DECIDED),
+            [
+                (
+                    "secrets/vault R17: the name is not found in a vendor source (verified is None) and has no "
+                    "PENDING_NAMES entry"
+                )
+            ],
+        )
+
+tests/test_policy_guard.py:1531: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+found = ['secrets/vault R17: the name is not found in a vendor source (verified is None) and has no PENDING_NAMES entry', "PEN...y", "PENDING_NAMES ('signer/vault_transit', 'never:{transit_mount}/byok-export/*') is fixed or gone: delete the entry"]
+expected = ['secrets/vault R17: the name is not found in a vendor source (verified is None) and has no PENDING_NAMES entry']
+
+    def same(found: object, expected: object) -> None:
+        """`found == expected`, with both written out in full in the failure message (pytest shortens a long
+        list in the first line, and the mutant runner reads that line)."""
+>       assert found == expected, f"reported {found!r}, expected {expected!r}"
+E       AssertionError: reported ['secrets/vault R17: the name is not found in a vendor source (verified is None) and has no PENDING_NAMES entry', "PENDING_NAMES ('secrets/vault', 'never:{mount}/undelete/*') is fixed or gone: delete the entry", "PENDING_NAMES ('secrets/vault', 'never:{mount}/subkeys/*') is fixed or gone: delete the entry", "PENDING_NAMES ('signer/vault_transit', 'never:{transit_mount}/byok-export/*') is fixed or gone: delete the entry"], expected ['secrets/vault R17: the name is not found in a vendor source (verified is None) and has no PENDING_NAMES entry']
+E       assert ['secrets/vau...te the entry'] == ['secrets/vau..._NAMES entry']
+E         
+E         Left contains 3 more items, first extra item: "PENDING_NAMES ('secrets/vault', 'never:{mount}/undelete/*') is fixed or gone: delete the entry"
+E         Use -v to get more diff
+
+tests/test_policy_guard.py:164: AssertionError
+____________ test_plant_a_source_id_that_does_not_resolve_is_caught ____________
+
+    def test_plant_a_source_id_that_does_not_resolve_is_caught():
+        policies = _with_grant("secrets/vault", verified=("2026-11-11", "V-NOPE"))
+>       same(
+            name_problems(policies, PENDING_NAMES, set(source_ids()), DECIDED),
+            ["secrets/vault grant R17: source id V-NOPE is not in the sources file"],
+        )
+
+tests/test_policy_guard.py:1553: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+found = ["PENDING_NAMES ('secrets/vault', 'never:{mount}/undelete/*') is fixed or gone: delete the entry", "PENDING_NAMES ('se...export/*') is fixed or gone: delete the entry", 'secrets/vault grant R17: source id V-NOPE is not in the sources file']
+expected = ['secrets/vault grant R17: source id V-NOPE is not in the sources file']
+
+    def same(found: object, expected: object) -> None:
+        """`found == expected`, with both written out in full in the failure message (pytest shortens a long
+        list in the first line, and the mutant runner reads that line)."""
+>       assert found == expected, f"reported {found!r}, expected {expected!r}"
+E       AssertionError: reported ["PENDING_NAMES ('secrets/vault', 'never:{mount}/undelete/*') is fixed or gone: delete the entry", "PENDING_NAMES ('secrets/vault', 'never:{mount}/subkeys/*') is fixed or gone: delete the entry", "PENDING_NAMES ('signer/vault_transit', 'never:{transit_mount}/byok-export/*') is fixed or gone: delete the entry", 'secrets/vault grant R17: source id V-NOPE is not in the sources file'], expected ['secrets/vault grant R17: source id V-NOPE is not in the sources file']
+E       assert ['PENDING_NAM...sources file'] == ['secrets/vau...sources file']
+E         
+E         At index 0 diff: "PENDING_NAMES ('secrets/vault', 'never:{mount}/undelete/*') is fixed or gone: delete the entry" != 'secrets/vault grant R17: source id V-NOPE is not in the sources file'
+E         Left contains 3 more items, first extra item: "PENDING_NAMES ('secrets/vault', 'never:{mount}/subkeys/*') is fixed or gone: delete the entry"
+E         Use -v to get more diff
+
+tests/test_policy_guard.py:164: AssertionError
+______________ test_the_committed_page_equals_what_the_data_gives ______________
+
+    def test_the_committed_page_equals_what_the_data_gives():
+        page = ROOT / pp.PAGE
+        assert page.is_file(), f"{pp.PAGE} is missing: run `python tools/policy_page.py --write`"
+>       assert page.read_text(encoding="utf-8") == pp.page(ROOT), (
+            f"{pp.PAGE} differs from the data: run `python tools/policy_page.py --write` and commit"
+        )
+E       AssertionError: docs/declared-permissions.md differs from the data: run `python tools/policy_page.py --write` and commit
+E       assert '# Declared p...` (channel)\n' == '# Declared p...` (channel)\n'
+E         
+E         Skipping 1533 identical leading characters in diff, use -v to show
+E         + ese tests.
+E         - ese tests. Trigger to run them against OpenBao: a deployment chooses OpenBao, or the review date
+E         -   2026-12-11, whichever comes first (ledger row BL-core-q8c1-openbao).
+E           - The test token holds the generated policy and nothing else. That does not represent sign-in through an
+E             AppRole or a Kubernetes role: there the role's own settings and the identity groups of the signed-in entity...
+E         
+E         ...Full output truncated, use '-vv' to show
+
+tests/test_policy_guard.py:1693: AssertionError
+_____ test_the_page_states_its_limits_and_offers_text_for_the_three_kinds ______
+
+    def test_the_page_states_its_limits_and_offers_text_for_the_three_kinds():
+        text = pp.page(ROOT)
+        # the Vault secrets kind has no copy-ready text while its `+` claim is unchecked (fix batch 2)
+>       assert text.count("```hcl") == 1 and text.count("```yaml") == 1
+E       AssertionError: assert (2 == 1)
+E        +  where 2 = <built-in method count of str object at 0x24e3f700>('```hcl')
+E        +    where <built-in method count of str object at 0x24e3f700> = '# Declared permissions per backend kind\n\nGenerated by `python tools/policy_page.py --write` from the `POLICY` liter...n- `bedrock` (llm)\n- `openai_compat` (llm)\n- `gemini` (llm)\n- `bedrock_guardrail` (detector)\n- `slack` (channel)\n'.count
+
+tests/test_policy_guard.py:1702: AssertionError
+_______ test_plant_m16_an_unverified_never_list_name_needs_a_dated_entry _______
+
+    def test_plant_m16_an_unverified_never_list_name_needs_a_dated_entry():
+>       same(
+            name_problems(_policies(), {}, set(source_ids()), DECIDED),
+            [
+                f"{kind} never:{name}: the name is not found in a vendor source (verified is None) "
+                "and has no PENDING_NAMES entry"
+                for kind, name in (
+                    ("secrets/vault", "{mount}/subkeys/*"),
+                    ("secrets/vault", "{mount}/undelete/*"),
+                    ("signer/vault_transit", "{transit_mount}/byok-export/*"),
+                    ("source/kubernetes", "admin"),
+                    ("source/kubernetes", "cluster-admin"),
+                    ("source/kubernetes", "edit"),
+                )
+            ],
+        )
+
+tests/test_policy_guard.py:2718: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+found = ['source/kubernetes never:admin: the name is not found in a vendor source (verified is None) and has no PENDING_NAMES ...rce/kubernetes never:edit: the name is not found in a vendor source (verified is None) and has no PENDING_NAMES entry']
+expected = ['secrets/vault never:{mount}/subkeys/*: the name is not found in a vendor source (verified is None) and has no PENDIN...rce/kubernetes never:edit: the name is not found in a vendor source (verified is None) and has no PENDING_NAMES entry']
+
+    def same(found: object, expected: object) -> None:
+        """`found == expected`, with both written out in full in the failure message (pytest shortens a long
+        list in the first line, and the mutant runner reads that line)."""
+>       assert found == expected, f"reported {found!r}, expected {expected!r}"
+E       AssertionError: reported ['source/kubernetes never:admin: the name is not found in a vendor source (verified is None) and has no PENDING_NAMES entry', 'source/kubernetes never:cluster-admin: the name is not found in a vendor source (verified is None) and has no PENDING_NAMES entry', 'source/kubernetes never:edit: the name is not found in a vendor source (verified is None) and has no PENDING_NAMES entry'], expected ['secrets/vault never:{mount}/subkeys/*: the name is not found in a vendor source (verified is None) and has no PENDING_NAMES entry', 'secrets/vault never:{mount}/undelete/*: the name is not found in a vendor source (verified is None) and has no PENDING_NAMES entry', 'signer/vault_transit never:{transit_mount}/byok-export/*: the name is not found in a vendor source (verified is None) and has no PENDING_NAMES entry', 'source/kubernetes never:admin: the name is not found in a vendor source (verified is None) and has no PENDING_NAMES entry', 'source/kubernetes never:cluster-admin: the name is not found in a vendor source (verified is None) and has no PENDING_NAMES entry', 'source/kubernetes never:edit: the name is not found in a vendor source (verified is None) and has no PENDING_NAMES entry']
+E       assert ['source/kube..._NAMES entry'] == ['secrets/vau..._NAMES entry']
+E         
+E         At index 0 diff: 'source/kubernetes never:admin: the name is not found in a vendor source (verified is None) and has no PENDING_NAMES entry' != 'secrets/vault never:{mount}/subkeys/*: the name is not found in a vendor source (verified is None) and has no PENDING_NAMES entry'
+E         Right contains 3 more items, first extra item: 'source/kubernetes never:admin: the name is not found in a vendor source (verified is None) and has no PENDING_NAMES entry'
+E         Use -v to get more diff
+
+tests/test_policy_guard.py:164: AssertionError
+8 failed, 285 passed, 12 skipped in 6.45s

@@ -1,0 +1,10 @@
+== CI scope: ruff check src tests demos tools
+All checks passed!
+rc=0
+334 files already formatted
+rc=0
+[tester]	WARNING	nosec encountered (B608), but no failed test on file demos/ask-your-data/db/lumen.py:723
+[tester]	WARNING	nosec encountered (B608), but no failed test on file demos/ask-your-data/db/lumen.py:723
+[tester]	WARNING	nosec encountered (B102), but no failed test on file src/hadavin_sdk/tools.py:394
+[tester]	WARNING	nosec encountered (B102), but no failed test on file src/hadavin_sdk/tools.py:394
+rc=0

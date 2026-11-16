@@ -1,0 +1,359 @@
+Using CPython 3.13.18 interpreter at: /usr/local/bin/python3
+Creating virtual environment at: .venv
+   Building hadavin-sdk @ file:///tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/c5v5/pr2
+      Built hadavin-sdk @ file:///tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/c5v5/pr2
+Installed 76 packages in 187ms
+FFFFFFFFFFFFFFFF..FF.F.                                                  [100%]
+=================================== FAILURES ===================================
+_____ test_a_zero_or_negative_price_is_refused[0-input_usd_per_mtok-pilot] _____
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-285/test_a_zero_or_negative_price_0')
+env = 'pilot', field = 'input_usd_per_mtok', price = '0'
+
+    @pytest.mark.parametrize("env", ["pilot", "prod"])
+    @pytest.mark.parametrize("field", ["input_usd_per_mtok", "output_usd_per_mtok"])
+    @pytest.mark.parametrize("price", ["0", "0.00", "-1"])
+    def test_a_zero_or_negative_price_is_refused(tmp_path, env, field, price):
+>       with pytest.raises(ConfigError, match="needs a price above 0"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigError
+
+tests/test_c01_minimal_route_limits.py:32: Failed
+_____ test_a_zero_or_negative_price_is_refused[0-input_usd_per_mtok-prod] ______
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-285/test_a_zero_or_negative_price_1')
+env = 'prod', field = 'input_usd_per_mtok', price = '0'
+
+    @pytest.mark.parametrize("env", ["pilot", "prod"])
+    @pytest.mark.parametrize("field", ["input_usd_per_mtok", "output_usd_per_mtok"])
+    @pytest.mark.parametrize("price", ["0", "0.00", "-1"])
+    def test_a_zero_or_negative_price_is_refused(tmp_path, env, field, price):
+>       with pytest.raises(ConfigError, match="needs a price above 0"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'needs a price above 0'
+E         Actual message: '1 validation error for Config\n  Value error, environment prod: refused: anchor: none, signer ed25519_local with a key file (use private_key_secret_name) [type=value_error]\n    For further information visit https://errors.pydantic.dev/2.14/v/value_error'
+
+tests/test_c01_minimal_route_limits.py:32: AssertionError
+____ test_a_zero_or_negative_price_is_refused[0-output_usd_per_mtok-pilot] _____
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-285/test_a_zero_or_negative_price_2')
+env = 'pilot', field = 'output_usd_per_mtok', price = '0'
+
+    @pytest.mark.parametrize("env", ["pilot", "prod"])
+    @pytest.mark.parametrize("field", ["input_usd_per_mtok", "output_usd_per_mtok"])
+    @pytest.mark.parametrize("price", ["0", "0.00", "-1"])
+    def test_a_zero_or_negative_price_is_refused(tmp_path, env, field, price):
+>       with pytest.raises(ConfigError, match="needs a price above 0"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigError
+
+tests/test_c01_minimal_route_limits.py:32: Failed
+_____ test_a_zero_or_negative_price_is_refused[0-output_usd_per_mtok-prod] _____
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-285/test_a_zero_or_negative_price_3')
+env = 'prod', field = 'output_usd_per_mtok', price = '0'
+
+    @pytest.mark.parametrize("env", ["pilot", "prod"])
+    @pytest.mark.parametrize("field", ["input_usd_per_mtok", "output_usd_per_mtok"])
+    @pytest.mark.parametrize("price", ["0", "0.00", "-1"])
+    def test_a_zero_or_negative_price_is_refused(tmp_path, env, field, price):
+>       with pytest.raises(ConfigError, match="needs a price above 0"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'needs a price above 0'
+E         Actual message: '1 validation error for Config\n  Value error, environment prod: refused: anchor: none, signer ed25519_local with a key file (use private_key_secret_name) [type=value_error]\n    For further information visit https://errors.pydantic.dev/2.14/v/value_error'
+
+tests/test_c01_minimal_route_limits.py:32: AssertionError
+___ test_a_zero_or_negative_price_is_refused[0.00-input_usd_per_mtok-pilot] ____
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-285/test_a_zero_or_negative_price_4')
+env = 'pilot', field = 'input_usd_per_mtok', price = '0.00'
+
+    @pytest.mark.parametrize("env", ["pilot", "prod"])
+    @pytest.mark.parametrize("field", ["input_usd_per_mtok", "output_usd_per_mtok"])
+    @pytest.mark.parametrize("price", ["0", "0.00", "-1"])
+    def test_a_zero_or_negative_price_is_refused(tmp_path, env, field, price):
+>       with pytest.raises(ConfigError, match="needs a price above 0"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigError
+
+tests/test_c01_minimal_route_limits.py:32: Failed
+____ test_a_zero_or_negative_price_is_refused[0.00-input_usd_per_mtok-prod] ____
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-285/test_a_zero_or_negative_price_5')
+env = 'prod', field = 'input_usd_per_mtok', price = '0.00'
+
+    @pytest.mark.parametrize("env", ["pilot", "prod"])
+    @pytest.mark.parametrize("field", ["input_usd_per_mtok", "output_usd_per_mtok"])
+    @pytest.mark.parametrize("price", ["0", "0.00", "-1"])
+    def test_a_zero_or_negative_price_is_refused(tmp_path, env, field, price):
+>       with pytest.raises(ConfigError, match="needs a price above 0"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'needs a price above 0'
+E         Actual message: '1 validation error for Config\n  Value error, environment prod: refused: anchor: none, signer ed25519_local with a key file (use private_key_secret_name) [type=value_error]\n    For further information visit https://errors.pydantic.dev/2.14/v/value_error'
+
+tests/test_c01_minimal_route_limits.py:32: AssertionError
+___ test_a_zero_or_negative_price_is_refused[0.00-output_usd_per_mtok-pilot] ___
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-285/test_a_zero_or_negative_price_6')
+env = 'pilot', field = 'output_usd_per_mtok', price = '0.00'
+
+    @pytest.mark.parametrize("env", ["pilot", "prod"])
+    @pytest.mark.parametrize("field", ["input_usd_per_mtok", "output_usd_per_mtok"])
+    @pytest.mark.parametrize("price", ["0", "0.00", "-1"])
+    def test_a_zero_or_negative_price_is_refused(tmp_path, env, field, price):
+>       with pytest.raises(ConfigError, match="needs a price above 0"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigError
+
+tests/test_c01_minimal_route_limits.py:32: Failed
+___ test_a_zero_or_negative_price_is_refused[0.00-output_usd_per_mtok-prod] ____
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-285/test_a_zero_or_negative_price_7')
+env = 'prod', field = 'output_usd_per_mtok', price = '0.00'
+
+    @pytest.mark.parametrize("env", ["pilot", "prod"])
+    @pytest.mark.parametrize("field", ["input_usd_per_mtok", "output_usd_per_mtok"])
+    @pytest.mark.parametrize("price", ["0", "0.00", "-1"])
+    def test_a_zero_or_negative_price_is_refused(tmp_path, env, field, price):
+>       with pytest.raises(ConfigError, match="needs a price above 0"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'needs a price above 0'
+E         Actual message: '1 validation error for Config\n  Value error, environment prod: refused: anchor: none, signer ed25519_local with a key file (use private_key_secret_name) [type=value_error]\n    For further information visit https://errors.pydantic.dev/2.14/v/value_error'
+
+tests/test_c01_minimal_route_limits.py:32: AssertionError
+____ test_a_zero_or_negative_price_is_refused[-1-input_usd_per_mtok-pilot] _____
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-285/test_a_zero_or_negative_price_8')
+env = 'pilot', field = 'input_usd_per_mtok', price = '-1'
+
+    @pytest.mark.parametrize("env", ["pilot", "prod"])
+    @pytest.mark.parametrize("field", ["input_usd_per_mtok", "output_usd_per_mtok"])
+    @pytest.mark.parametrize("price", ["0", "0.00", "-1"])
+    def test_a_zero_or_negative_price_is_refused(tmp_path, env, field, price):
+>       with pytest.raises(ConfigError, match="needs a price above 0"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigError
+
+tests/test_c01_minimal_route_limits.py:32: Failed
+_____ test_a_zero_or_negative_price_is_refused[-1-input_usd_per_mtok-prod] _____
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-285/test_a_zero_or_negative_price_9')
+env = 'prod', field = 'input_usd_per_mtok', price = '-1'
+
+    @pytest.mark.parametrize("env", ["pilot", "prod"])
+    @pytest.mark.parametrize("field", ["input_usd_per_mtok", "output_usd_per_mtok"])
+    @pytest.mark.parametrize("price", ["0", "0.00", "-1"])
+    def test_a_zero_or_negative_price_is_refused(tmp_path, env, field, price):
+>       with pytest.raises(ConfigError, match="needs a price above 0"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'needs a price above 0'
+E         Actual message: '1 validation error for Config\n  Value error, environment prod: refused: anchor: none, signer ed25519_local with a key file (use private_key_secret_name) [type=value_error]\n    For further information visit https://errors.pydantic.dev/2.14/v/value_error'
+
+tests/test_c01_minimal_route_limits.py:32: AssertionError
+____ test_a_zero_or_negative_price_is_refused[-1-output_usd_per_mtok-pilot] ____
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-285/test_a_zero_or_negative_price_10')
+env = 'pilot', field = 'output_usd_per_mtok', price = '-1'
+
+    @pytest.mark.parametrize("env", ["pilot", "prod"])
+    @pytest.mark.parametrize("field", ["input_usd_per_mtok", "output_usd_per_mtok"])
+    @pytest.mark.parametrize("price", ["0", "0.00", "-1"])
+    def test_a_zero_or_negative_price_is_refused(tmp_path, env, field, price):
+>       with pytest.raises(ConfigError, match="needs a price above 0"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigError
+
+tests/test_c01_minimal_route_limits.py:32: Failed
+____ test_a_zero_or_negative_price_is_refused[-1-output_usd_per_mtok-prod] _____
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-285/test_a_zero_or_negative_price_11')
+env = 'prod', field = 'output_usd_per_mtok', price = '-1'
+
+    @pytest.mark.parametrize("env", ["pilot", "prod"])
+    @pytest.mark.parametrize("field", ["input_usd_per_mtok", "output_usd_per_mtok"])
+    @pytest.mark.parametrize("price", ["0", "0.00", "-1"])
+    def test_a_zero_or_negative_price_is_refused(tmp_path, env, field, price):
+>       with pytest.raises(ConfigError, match="needs a price above 0"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'needs a price above 0'
+E         Actual message: '1 validation error for Config\n  Value error, environment prod: refused: anchor: none, signer ed25519_local with a key file (use private_key_secret_name) [type=value_error]\n    For further information visit https://errors.pydantic.dev/2.14/v/value_error'
+
+tests/test_c01_minimal_route_limits.py:32: AssertionError
+__________ test_max_tokens_over_the_ceiling_is_refused[200001-pilot] ___________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-285/test_max_tokens_over_the_ceili0')
+env = 'pilot', tokens = 200001
+
+    @pytest.mark.parametrize("env", ["pilot", "prod"])
+    @pytest.mark.parametrize("tokens", [200_001, 2_000_000])
+    def test_max_tokens_over_the_ceiling_is_refused(tmp_path, env, tokens):
+>       with pytest.raises(ConfigError, match="above max_route_tokens"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigError
+
+tests/test_c01_minimal_route_limits.py:39: Failed
+___________ test_max_tokens_over_the_ceiling_is_refused[200001-prod] ___________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-285/test_max_tokens_over_the_ceili1')
+env = 'prod', tokens = 200001
+
+    @pytest.mark.parametrize("env", ["pilot", "prod"])
+    @pytest.mark.parametrize("tokens", [200_001, 2_000_000])
+    def test_max_tokens_over_the_ceiling_is_refused(tmp_path, env, tokens):
+>       with pytest.raises(ConfigError, match="above max_route_tokens"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'above max_route_tokens'
+E         Actual message: '1 validation error for Config\n  Value error, environment prod: refused: anchor: none, signer ed25519_local with a key file (use private_key_secret_name) [type=value_error]\n    For further information visit https://errors.pydantic.dev/2.14/v/value_error'
+
+tests/test_c01_minimal_route_limits.py:39: AssertionError
+__________ test_max_tokens_over_the_ceiling_is_refused[2000000-pilot] __________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-285/test_max_tokens_over_the_ceili2')
+env = 'pilot', tokens = 2000000
+
+    @pytest.mark.parametrize("env", ["pilot", "prod"])
+    @pytest.mark.parametrize("tokens", [200_001, 2_000_000])
+    def test_max_tokens_over_the_ceiling_is_refused(tmp_path, env, tokens):
+>       with pytest.raises(ConfigError, match="above max_route_tokens"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigError
+
+tests/test_c01_minimal_route_limits.py:39: Failed
+__________ test_max_tokens_over_the_ceiling_is_refused[2000000-prod] ___________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-285/test_max_tokens_over_the_ceili3')
+env = 'prod', tokens = 2000000
+
+    @pytest.mark.parametrize("env", ["pilot", "prod"])
+    @pytest.mark.parametrize("tokens", [200_001, 2_000_000])
+    def test_max_tokens_over_the_ceiling_is_refused(tmp_path, env, tokens):
+>       with pytest.raises(ConfigError, match="above max_route_tokens"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'above max_route_tokens'
+E         Actual message: '1 validation error for Config\n  Value error, environment prod: refused: anchor: none, signer ed25519_local with a key file (use private_key_secret_name) [type=value_error]\n    For further information visit https://errors.pydantic.dev/2.14/v/value_error'
+
+tests/test_c01_minimal_route_limits.py:39: AssertionError
+______________________ test_the_ceiling_comes_from_config ______________________
+
+config_dir = PosixPath('/tmp/pytest-of-root/pytest-285/test_the_ceiling_comes_from_co0/pilot')
+
+    def load_config(config_dir: Path | None = None) -> Config:
+        """Every start-up problem (missing HADAVIN_CONFIG_DIR, bad YAML, bad values) is a ConfigError."""
+        try:
+            root = Path(config_dir) if config_dir else Settings().config_dir  # type: ignore[call-arg]
+            raw = _read_yaml(root / "config.yaml")
+            egress = _read_yaml(root / "egress.yaml").get("hosts") or []
+            if early := deferred.key_problems("config.yaml", raw):
+                raise ConfigError("; ".join(early))
+            if moved := [k for k in MOVED if k in raw]:
+                raise ConfigError("; ".join(f"{k} moved to {MOVED[k]}" for k in moved))
+            for key in ("golden_dir", "inputs_dir"):
+                if key in raw:
+                    raw[key] = root / raw[key]
+            raw["backends"] = parse_backends(raw.get("backends"), root)
+>           return Config(**raw, egress_hosts=frozenset(egress), root=root)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           pydantic_core._pydantic_core.ValidationError: 1 validation error for Config
+E           max_route_tokens
+E             Extra inputs are not permitted [type=extra_forbidden]
+E               For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden
+
+src/hadavin_sdk/config.py:450: ValidationError
+
+The above exception was the direct cause of the following exception:
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-285/test_the_ceiling_comes_from_co0')
+
+    def test_the_ceiling_comes_from_config(tmp_path):
+        cfg_ok = pilot_cfg(tmp_path, config={**_route(max_tokens=5000), "max_route_tokens": 5000})
+>       assert load_config(cfg_ok).max_route_tokens == 5000
+               ^^^^^^^^^^^^^^^^^^^
+
+tests/test_c01_minimal_route_limits.py:59: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+config_dir = PosixPath('/tmp/pytest-of-root/pytest-285/test_the_ceiling_comes_from_co0/pilot')
+
+    def load_config(config_dir: Path | None = None) -> Config:
+        """Every start-up problem (missing HADAVIN_CONFIG_DIR, bad YAML, bad values) is a ConfigError."""
+        try:
+            root = Path(config_dir) if config_dir else Settings().config_dir  # type: ignore[call-arg]
+            raw = _read_yaml(root / "config.yaml")
+            egress = _read_yaml(root / "egress.yaml").get("hosts") or []
+            if early := deferred.key_problems("config.yaml", raw):
+                raise ConfigError("; ".join(early))
+            if moved := [k for k in MOVED if k in raw]:
+                raise ConfigError("; ".join(f"{k} moved to {MOVED[k]}" for k in moved))
+            for key in ("golden_dir", "inputs_dir"):
+                if key in raw:
+                    raw[key] = root / raw[key]
+            raw["backends"] = parse_backends(raw.get("backends"), root)
+            return Config(**raw, egress_hosts=frozenset(egress), root=root)
+        except ConfigError:
+            raise
+        except (ValueError, TypeError, yaml.YAMLError) as exc:  # pydantic errors are ValueErrors
+>           raise ConfigError(str(exc)) from exc
+E           hadavin_sdk.errors.ConfigError: 1 validation error for Config
+E           max_route_tokens
+E             Extra inputs are not permitted [type=extra_forbidden]
+E               For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden
+
+src/hadavin_sdk/config.py:454: ConfigError
+____ test_route_refusals_are_listed_together_with_the_environment_refusals _____
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-285/test_route_refusals_are_listed0')
+
+    def test_route_refusals_are_listed_together_with_the_environment_refusals(tmp_path):
+        # Guards the `refused +=` joins: a route problem must not drop, or be dropped by, an environment refusal.
+        root = pilot_cfg(tmp_path, config=_route(input_usd_per_mtok="0"))
+        path = root / "config.yaml"
+        raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+        raw["allow_insecure_loopback"] = True
+        path.write_text(yaml.safe_dump(raw), encoding="utf-8")
+        with pytest.raises(ConfigError) as err:
+            load_config(root)
+        text = str(err.value)
+        assert "allow_insecure_loopback" in text
+>       assert "needs a price above 0" in text
+E       AssertionError: assert 'needs a price above 0' in '1 validation error for Config\n  Value error, environment pilot: refused: allow_insecure_loopback [type=value_error]\n    For further information visit https://errors.pydantic.dev/2.14/v/value_error'
+
+tests/test_c01_minimal_route_limits.py:77: AssertionError
+______ test_the_shared_rule_is_one_predicate_for_zero_and_negative_prices ______
+
+    def test_the_shared_rule_is_one_predicate_for_zero_and_negative_prices():
+        from decimal import Decimal
+    
+>       from hadavin_sdk.config import Route, route_prices_above_zero
+E       ImportError: cannot import name 'route_prices_above_zero' from 'hadavin_sdk.config' (/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/c5v5/pr2/src/hadavin_sdk/config.py)
+
+tests/test_c01_minimal_route_limits.py:94: ImportError
+=========================== short test summary info ============================
+FAILED tests/test_c01_minimal_route_limits.py::test_a_zero_or_negative_price_is_refused[0-input_usd_per_mtok-pilot]
+FAILED tests/test_c01_minimal_route_limits.py::test_a_zero_or_negative_price_is_refused[0-input_usd_per_mtok-prod]
+FAILED tests/test_c01_minimal_route_limits.py::test_a_zero_or_negative_price_is_refused[0-output_usd_per_mtok-pilot]
+FAILED tests/test_c01_minimal_route_limits.py::test_a_zero_or_negative_price_is_refused[0-output_usd_per_mtok-prod]
+FAILED tests/test_c01_minimal_route_limits.py::test_a_zero_or_negative_price_is_refused[0.00-input_usd_per_mtok-pilot]
+FAILED tests/test_c01_minimal_route_limits.py::test_a_zero_or_negative_price_is_refused[0.00-input_usd_per_mtok-prod]
+FAILED tests/test_c01_minimal_route_limits.py::test_a_zero_or_negative_price_is_refused[0.00-output_usd_per_mtok-pilot]
+FAILED tests/test_c01_minimal_route_limits.py::test_a_zero_or_negative_price_is_refused[0.00-output_usd_per_mtok-prod]
+FAILED tests/test_c01_minimal_route_limits.py::test_a_zero_or_negative_price_is_refused[-1-input_usd_per_mtok-pilot]
+FAILED tests/test_c01_minimal_route_limits.py::test_a_zero_or_negative_price_is_refused[-1-input_usd_per_mtok-prod]
+FAILED tests/test_c01_minimal_route_limits.py::test_a_zero_or_negative_price_is_refused[-1-output_usd_per_mtok-pilot]
+FAILED tests/test_c01_minimal_route_limits.py::test_a_zero_or_negative_price_is_refused[-1-output_usd_per_mtok-prod]
+FAILED tests/test_c01_minimal_route_limits.py::test_max_tokens_over_the_ceiling_is_refused[200001-pilot]
+FAILED tests/test_c01_minimal_route_limits.py::test_max_tokens_over_the_ceiling_is_refused[200001-prod]
+FAILED tests/test_c01_minimal_route_limits.py::test_max_tokens_over_the_ceiling_is_refused[2000000-pilot]
+FAILED tests/test_c01_minimal_route_limits.py::test_max_tokens_over_the_ceiling_is_refused[2000000-prod]
+FAILED tests/test_c01_minimal_route_limits.py::test_the_ceiling_comes_from_config
+FAILED tests/test_c01_minimal_route_limits.py::test_route_refusals_are_listed_together_with_the_environment_refusals
+FAILED tests/test_c01_minimal_route_limits.py::test_the_shared_rule_is_one_predicate_for_zero_and_negative_prices
+19 failed, 4 passed in 0.72s
+rc=1

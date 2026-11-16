@@ -1,0 +1,32 @@
+..............F
+=================================== FAILURES ===================================
+_________ test_no_vendor_address_constant_is_used_as_a_default_in_src __________
+
+    def test_no_vendor_address_constant_is_used_as_a_default_in_src() -> None:
+        """The three vendor addresses live in constants.py. The only use in src/ is the live settings' check that a key goes
+        to the provider's own host (config.py). Any other use (a dataclass default, a `.get(name, VENDOR)`) fails here."""
+        used: dict[str, set[str]] = {}
+        for path in sorted((REPO / "src").rglob("*.py")):
+            if path.name == "constants.py":
+                continue
+            for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+                names = {a.name for a in node.names} if isinstance(node, ast.ImportFrom) else set()
+                if isinstance(node, ast.Name):
+                    names.add(node.id)
+                hit = names & _VENDOR_ADDRESS_NAMES
+                if hit:
+                    used.setdefault(path.name, set()).update(hit)
+>       assert used == {"config.py": {"LIVE_DEFAULT_BASE_URL"}}, used
+E       AssertionError: {'config.py': {'LIVE_DEFAULT_BASE_URL'}, 'crm_hubspot.py': {'HUBSPOT_BASE_URL'}}
+E       assert {'config.py':...OT_BASE_URL'}} == {'config.py':...LT_BASE_URL'}}
+E         
+E         Omitting 1 identical items, use -vv to show
+E         Left contains 1 more item:
+E         {'crm_hubspot.py': {'HUBSPOT_BASE_URL'}}
+E         Use -v to get more diff
+
+tests/test_desk_address_required.py:244: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_desk_address_required.py::test_no_vendor_address_constant_is_used_as_a_default_in_src
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 14 passed in 0.55s

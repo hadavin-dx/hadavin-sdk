@@ -1,0 +1,172 @@
+{
+ "changed_chars": 23,
+ "counts": {
+  "SECRET": 9
+ },
+ "distinct_log_lines_changed": [
+  "login as postgres with Zq7xkW2vy9JtR4m refused"
+ ],
+ "levels": [
+  "error",
+  "info"
+ ],
+ "secret_shown": [
+  {
+   "as_of": "2026-01-01T09:00:00Z",
+   "events": [],
+   "kind": "Secret",
+   "name": "orders-conn",
+   "spec": {
+    "data": {
+     "DB_NAME": "<SECRET_7>",
+     "DB_PASSWORD": "<SECRET_9>",
+     "DB_USER": "<SECRET_5>",
+     "DEBUG": "<SECRET_2>",
+     "ENV": "<SECRET_3>",
+     "LOG_LEVEL": "<SECRET_1>",
+     "PORT": "<SECRET_4>"
+    },
+    "kind": "Secret"
+   }
+  }
+ ],
+ "services": [
+  "api",
+  "db",
+  "orders",
+  "postgres"
+ ],
+ "shown_logs": [
+  [
+   "info",
+   "api",
+   "start"
+  ],
+  [
+   "error",
+   "db",
+   "boom code=7"
+  ],
+  [
+   "error",
+   "api",
+   "boom again"
+  ],
+  [
+   "info",
+   "orders",
+   "information: retry in 5s"
+  ],
+  [
+   "error",
+   "orders",
+   "orders-api timeout on port 5432 as postgres in prod"
+  ],
+  [
+   "info",
+   "api",
+   "debug=true orders_count=3 env prod"
+  ],
+  [
+   "error",
+   "db",
+   "login as postgres with <SECRET_9> refused"
+  ],
+  [
+   "info",
+   "postgres",
+   "start"
+  ]
+ ],
+ "strings_changed": 1,
+ "strings_outside_secret": 114,
+ "tool_ids": {
+  "get_deploys {\"service\": \"api\"}": [
+   "deploys.json#0"
+  ],
+  "get_deploys {\"service\": \"db\"}": "{\"result\": \"no data in the snapshot for this request\"}",
+  "get_deploys {\"service\": \"orders\"}": "{\"result\": \"no data in the snapshot for this request\"}",
+  "get_deploys {\"service\": \"postgres\"}": "{\"result\": \"no data in the snapshot for this request\"}",
+  "get_deploys {}": [
+   "deploys.json#0"
+  ],
+  "get_k8s {\"kind\": \"Deployment\", \"name\": \"api\"}": [
+   "k8s/001.json#events.0",
+   "k8s/001.json#spec"
+  ],
+  "get_k8s {\"kind\": \"Secret\", \"name\": \"orders-conn\"}": [
+   "k8s/002.json#spec"
+  ],
+  "get_k8s {}": [
+   "k8s/001.json#events.0",
+   "k8s/001.json#spec",
+   "k8s/002.json#spec"
+  ],
+  "get_runbook {\"name\": \"runbooks/001.md\"}": [
+   "runbooks/001.md#0",
+   "runbooks/001.md#1",
+   "runbooks/001.md#2"
+  ],
+  "get_runbook {}": [
+   "runbooks/001.md#0",
+   "runbooks/001.md#1",
+   "runbooks/001.md#2"
+  ],
+  "list_data {}": "{\"k8s\": [{\"file\": \"k8s/001.json\", \"kind\": \"Deployment\", \"name\": \"api\"}, {\"file\": \"k8s/002.json\", \"kind\": \"Secret\", \"name\": \"orders-conn\"}], \"logs\": [{\"file\": \"logs/001.jsonl\", \"services\": [\"api\", \"db\"]}, {\"file\": \"logs/002.jsonl\", \"services\": [\"api\", \"db\", \"orders\", \"postgres\"]}], \"metrics\": [{\"file\": \"metrics/001.json\", \"query\": \"cpu\"}], \"runbooks\": [{\"file\": \"runbooks/001.md\", \"title\": \"Latency runbook\"}]}",
+  "query_logs {\"contains\": \"5432\"}": [
+   "logs/002.jsonl#1"
+  ],
+  "query_logs {\"contains\": \"info\"}": [
+   "logs/002.jsonl#0"
+  ],
+  "query_logs {\"contains\": \"orders\"}": [
+   "logs/002.jsonl#1",
+   "logs/002.jsonl#2"
+  ],
+  "query_logs {\"contains\": \"postgres\"}": [
+   "logs/002.jsonl#1",
+   "logs/002.jsonl#3"
+  ],
+  "query_logs {\"contains\": \"prod\"}": [
+   "logs/002.jsonl#1",
+   "logs/002.jsonl#2"
+  ],
+  "query_logs {\"contains\": \"retry\"}": [
+   "logs/002.jsonl#0"
+  ],
+  "query_logs {\"contains\": \"true\"}": [
+   "logs/002.jsonl#2"
+  ],
+  "query_logs {\"service\": \"api\"}": [
+   "logs/001.jsonl#0",
+   "logs/001.jsonl#2",
+   "logs/002.jsonl#2"
+  ],
+  "query_logs {\"service\": \"db\"}": [
+   "logs/001.jsonl#1",
+   "logs/002.jsonl#3"
+  ],
+  "query_logs {\"service\": \"orders\"}": [
+   "logs/002.jsonl#0",
+   "logs/002.jsonl#1"
+  ],
+  "query_logs {\"service\": \"postgres\"}": [
+   "logs/002.jsonl#4"
+  ],
+  "query_logs {}": [
+   "logs/001.jsonl#0",
+   "logs/001.jsonl#1",
+   "logs/001.jsonl#2",
+   "logs/002.jsonl#0",
+   "logs/002.jsonl#1",
+   "logs/002.jsonl#2",
+   "logs/002.jsonl#3",
+   "logs/002.jsonl#4"
+  ],
+  "query_metrics {\"query\": \"cpu\"}": [
+   "metrics/001.json#0",
+   "metrics/001.json#1",
+   "metrics/001.json#2"
+  ]
+ }
+}

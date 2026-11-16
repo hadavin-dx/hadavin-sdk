@@ -1,0 +1,9 @@
+MODE main | hadavin_sdk from /home/user/build/prh-author/main/src/hadavin_sdk/__init__.py
+D1a handed-out secret + G2 key | tool | key MASKED | handed-out MASKED
+D1a handed-out secret + G2 key | error | key MASKED | handed-out MASKED
+D1b handed-out secret cut + G1 key | tool | key MASKED | handed-out LEAKED
+D1b handed-out secret cut + G1 key | error | key MASKED | handed-out LEAKED
+D1c control: G2 key alone | tool | key MASKED | handed-out MASKED
+D1c control: G2 key alone | error | key MASKED | handed-out MASKED
+D1d control: handed-out secret alone, cut | tool | key MASKED | handed-out LEAKED
+D1d control: handed-out secret alone, cut | error | key MASKED | handed-out LEAKED

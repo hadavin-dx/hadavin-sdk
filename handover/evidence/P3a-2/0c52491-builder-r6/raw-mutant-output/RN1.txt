@@ -1,0 +1,14 @@
+### tests/test_migration_rules.py::test_the_mutant_runner_refuses_an_unknown_id rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________ test_the_mutant_runner_refuses_an_unknown_id _________________
+tests/test_migration_rules.py:708: in test_the_mutant_runner_refuses_an_unknown_id
+    assert mm.unknown_ids("M88,TYPO") == ["TYPO"]
+E   AssertionError: assert [] == ['TYPO']
+E     
+E     Right contains one more item: 'TYPO'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_migration_rules.py::test_the_mutant_runner_refuses_an_unknown_id
+1 failed in 0.38s
+

@@ -1,0 +1,18 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+....F.                                                                   [100%]
+=================================== FAILURES ===================================
+____ test_g_every_search_string_occurs_exactly_once_in_the_file_it_targets _____
+
+    def test_g_every_search_string_occurs_exactly_once_in_the_file_it_targets():
+        lines = []
+        for m in mm.M:
+            text = (ROOT / m.file).read_text(encoding="utf-8")
+            count = text.count(m.old)
+>           assert count == 1, f"{m.name}: the search string occurs {count} times in {m.file}"
+E           AssertionError: runner: the child inherits the whole environment: the search string occurs 0 times in tools/mutation_runner.py
+E           assert 0 == 1
+
+tests/test_mutation_runner_meta.py:177: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_mutation_runner_meta.py::test_g_every_search_string_occurs_exactly_once_in_the_file_it_targets
+1 failed, 5 passed in 7.71s

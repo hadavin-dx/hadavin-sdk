@@ -1,0 +1,2437 @@
+EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE [ 50%]
+EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE  [100%]
+==================================== ERRORS ====================================
+_ ERROR at setup of test_a_bad_hubspot_key_file_is_refused_before_the_question[None] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f59b3e0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_bad_hubspot_key_file_is_refused_before_the_question[made-up-key-0002\nmade-up-key-0002\n] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f598140>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_bad_hubspot_key_file_is_refused_before_the_question[short] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f598710>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_bad_hubspot_key_file_is_refused_before_the_question[b'\\xff\\xfek\\x00k\\x00k\\x00k\\x00k\\x00k\\x00k\\x00k\\x00k\\x00'] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f597ad0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_bad_hubspot_key_file_is_refused_before_the_question[b'\\xc3(\\xc3(\\xc3(\\xc3(\\xc3(\\xc3(\\xc3(\\xc3(\\xc3('] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1eebd0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_memory_book_is_refused_like_the_desk_and_leaves_no_file _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1f2030>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_config_that_is_not_utf8_is_refused_without_a_byte_value _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1cb680>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_dry_fakes_folder_is_deleted_also_when_the_self_test_fails _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1b8ad0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_readback_note_says_plainly_when_no_contact_was_created _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1baf60>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_live_check_without_a_terminal_stops_with_one_line_not_a_traceback _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1b8740>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+___ ERROR at setup of test_live_check_exits_non_zero_when_every_call_failed ____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1b93d0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_live_check_refuses_a_bad_key_file_before_the_question[missing] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1cbce0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_live_check_refuses_a_bad_key_file_before_the_question[short] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1efcb0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_________ ERROR at setup of test_keep_without_the_self_test_is_refused _________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f597ad0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_closing_line_of_a_self_test_tells_how_to_keep_the_logs _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f689ee0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_bad_mail_password_file_is_refused_before_the_question[DESK_SMTPP_PASSWORD_FILE-missing] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f59a090>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_bad_mail_password_file_is_refused_before_the_question[DESK_SMTPP_PASSWORD_FILE-two-lines] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f59baa0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_bad_mail_password_file_is_refused_before_the_question[DESK_SMTPP_PASSWORD_FILE-too-short] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1b9340>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_bad_mail_password_file_is_refused_before_the_question[DESK_SMTPP_PASSWORD_FILE-utf16] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1b9a60>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_1_PASSWORD_FILE-missing] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1bac60>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_1_PASSWORD_FILE-two-lines] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1bb0e0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_1_PASSWORD_FILE-too-short] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1a8cb0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_1_PASSWORD_FILE-utf16] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1a8650>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_2_PASSWORD_FILE-missing] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1bb8c0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_2_PASSWORD_FILE-two-lines] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1baf60>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_2_PASSWORD_FILE-too-short] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1b9fa0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_2_PASSWORD_FILE-utf16] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f59a360>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_bad_live_model_key_file_is_refused_before_the_question[missing] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f599460>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_bad_live_model_key_file_is_refused_before_the_question[too-short] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f5978c0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_bad_live_model_key_file_is_refused_before_the_question[empty] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1f2960>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_live_key_file_is_not_looked_at_without_the_live_flag _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1ca0c0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_______ ERROR at setup of test_a_three_character_key_is_called_too_short _______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1a8a70>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_own_tempdir_puts_temporary_folders_under_the_test_folder _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1a8470>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_every_keep_self_test_in_the_suite_uses_its_own_temp_folder _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1a8ad0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[plain list, no fixture] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1ab020>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+__ ERROR at setup of test_the_scan_judges_every_sample_source[single quotes] ___
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1a90a0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[split on spaces] __
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1a8da0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[abbreviated keep] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1a8500>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[abbreviated self-test] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1cbad0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[keep with a value] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f597bc0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[fixture as parameter] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f59baa0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[flags built by plus] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1b8320>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[flags built by an f-string] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1b87d0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[flags built by join] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1b8650>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+______ ERROR at setup of test_the_scan_judges_every_sample_source[bytes] _______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1b2540>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[class attribute] __
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1b27e0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[method without fixture] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1b1370>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[method with fixture] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1bb8f0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+___ ERROR at setup of test_the_scan_judges_every_sample_source[module level] ___
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1ba780>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[helper with the fixture still counts as a leak] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f599400>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[helper that returns only the keep flag] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1ed850>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[async test without fixture] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f203800>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[async test with fixture] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1a88f0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+___ ERROR at setup of test_the_scan_judges_every_sample_source[usefixtures] ____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1a9f10>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[decorator that only contains the word] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1b3290>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[another marker that names the word as an argument] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1b2570>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[skipif reason that only contains the word] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1b0860>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[parameter with a default] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1b3200>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[only the word tempfile] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f16bb30>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+___ ERROR at setup of test_the_scan_judges_every_sample_source[real setattr] ___
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1b3260>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[real setattr by dotted name] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f6cc5c0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[real setattr inside with] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f6cea80>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[setattr of another module] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1b1a00>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[setattr to None is a no-op] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1b0830>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[setattr on a local object called tempfile] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1b1850>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[setattr under if False] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f2025a0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[setattr under try] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1abec0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[child program with the setattr only] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1aa090>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[child program with the setattr and its own environment] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1ee480>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[child program with the fixture] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1ee060>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[a nested helper belongs to its test] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1f3ec0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[a docstring that talks about the flags] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1f0b30>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[the self-test without keep] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1edf40>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[keep refused without the self-test, in a test] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1aae40>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[flags built by format] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1aaf30>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[flags built by a percent format] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1b3a40>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[flags built by a percent format with a tuple] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1b31d0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[keep word assigned before the plus] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f201d90>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[keep word assigned in the module and used in a test] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f6cf050>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[keep word assigned in a class] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f68be90>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[flag assigned whole in a name] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1f3cb0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[order of pieces follows the source] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1f2570>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[format with its own fixture] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1c9c40>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[the temp folder patch comes after the run] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1cb1d0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[the temp folder patch comes before the run] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1f2690>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[the patch names the system temp folder as a literal] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1f3950>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[the patch names the system temp folder by gettempdir] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f6cfe90>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[the patch names a folder built from tmp_path] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1b2ae0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[the patch names a folder from the tmp_path_factory] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1b00b0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[the patch names a name that has nothing to do with tmp_path] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f201970>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[usefixtures by the mark spelling] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1abce0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[a decorator called usefixtures on any object] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1efc50>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[a bare function called usefixtures] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1cbb30>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[a local object called monkeypatch] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1c9c10>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[monkeypatch is not a parameter at all] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f597bc0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[monkeypatch rebound by a with] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1d81a0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[monkeypatch rebound by an import] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f59ac30>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_judges_every_sample_source[flags in two lists that are added together] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1caf00>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_reads_the_pieces_of_a_place_in_source_order __
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1ca750>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+___________ ERROR at setup of test_the_sample_file_has_all_its_cases ___________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1ab7d0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_scan_reads_every_python_file_under_tests_not_only_test_files _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1b3470>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_______ ERROR at setup of test_a_clean_self_test_deletes_its_folder_too ________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f6cf380>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_bad_smtp_ca_file_is_refused_before_the_question[missing] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f201970>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_bad_smtp_ca_file_is_refused_before_the_question[not-a-certificate] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1f21e0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_bad_smtp_ca_file_is_refused_before_the_question[a-folder] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1f3560>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_bad_imap_ca_file_is_refused_before_the_question_and_named[missing] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1bb4d0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_bad_imap_ca_file_is_refused_before_the_question_and_named[not-a-certificate] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1684d0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_bad_leadflow_file_is_refused_before_the_question[missing] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f168f20>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_bad_leadflow_file_is_refused_before_the_question[not-json] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1b9a30>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_bad_leadflow_file_is_refused_before_the_question[wrong-keys] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1f2f60>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_bad_leadflow_file_is_refused_before_the_question[not-an-object] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f6cfe90>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_bad_leadflow_file_is_refused_before_the_question[not-utf8] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1b14c0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_leadflow_with_reminders_but_no_nudge_address_is_refused_before_the_question _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1a98b0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_bad_approvers_file_is_refused_before_the_question[missing] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1c8080>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_bad_approvers_file_is_refused_before_the_question[not-json] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f2025a0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_bad_approvers_file_is_refused_before_the_question[shape] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f599be0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_bad_approvers_file_is_refused_before_the_question[entry] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1689e0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_bad_replies_file_is_refused_before_the_question[missing] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f169790>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_bad_replies_file_is_refused_before_the_question[not-json] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f16a9f0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_bad_replies_file_is_refused_before_the_question[not-an-object] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f169820>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_setting_the_desk_refuses_is_refused_before_the_question _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f201340>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_____ ERROR at setup of test_valid_files_of_every_kind_reach_the_question ______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1ca930>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_two_line_live_key_is_refused_before_the_question_in_both_scripts _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1ab320>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_damaged_live_ledger_is_refused_before_the_question_in_both_scripts _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f6ce750>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_new_live_ledger_is_fine_and_the_check_writes_nothing _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1f2180>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_result_path_that_cannot_hold_a_file_is_refused_before_the_question[a-folder-the result path is a folder: give a file path] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1b9760>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_result_path_that_cannot_hold_a_file_is_refused_before_the_question[no-folder-the folder for the result file does not exist] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f16bf50>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_result_path_that_cannot_hold_a_file_is_refused_before_the_question[folder-is-a-file-the folder for the result file does not exist] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1682f0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_usable_result_path_reaches_the_question_and_nothing_is_written _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f16a420>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_result_file_that_cannot_be_written_after_the_run_does_not_end_in_a_traceback _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f181be0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_read_back_failure_path_still_ends_with_its_exit_code_when_the_result_cannot_be_written _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1811c0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+____ ERROR at setup of test_the_ledger_read_takes_no_lock_and_makes_nothing ____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f182ff0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_new_live_ledger_in_the_real_script_makes_no_folder_before_the_question _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f168050>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+__ ERROR at setup of test_every_refusal_before_the_question_has_the_same_form __
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f16a990>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+________ ERROR at setup of test_the_bind_refusal_names_the_setting_once ________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1f27e0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_certificate_refusal_has_this_exact_wording[DESK_SMTPP_CA_FILE] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1b3950>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_certificate_refusal_has_this_exact_wording[REAL_IMAP_1_CA_FILE] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f599c70>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_certificate_refusal_has_this_exact_wording[REAL_IMAP_2_CA_FILE] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1edcd0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_the_docs_state_the_refusal_form_and_the_result_file_check _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f202660>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_a_result_file_that_fails_after_a_whole_dry_run_still_cleans_up_and_exits_3 _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1803b0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_an_unexpected_error_before_the_question_keeps_the_form_and_leaks_no_path[os-error-no-path] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f1830e0>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_an_unexpected_error_before_the_question_keeps_the_form_and_leaks_no_path[no-name] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f180980>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+_ ERROR at setup of test_an_unexpected_error_before_the_question_keeps_the_form_and_leaks_no_path[name-split] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f100f183b30>
+
+    @pytest.fixture
+    def a_terminal(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Stand in for a person at a terminal, on any platform: the check scripts refuse a stdin that is not one, and the
+        Windows console test (GetConsoleMode) cannot pass for a test's captured stream. Tests that use this fixture mock
+        `input` themselves and must never reach a real desk, fake or network call with an answer that starts a run."""
+        scripts = str(Path(__file__).resolve().parents[1] / "scripts")
+        if scripts not in sys.path:
+            sys.path.insert(0, scripts)
+>       import terminal_guard
+E       ModuleNotFoundError: No module named 'terminal_guard'
+
+tests/conftest.py:193: ModuleNotFoundError
+=========================== short test summary info ============================
+ERROR tests/test_take_script_refusals.py::test_a_bad_hubspot_key_file_is_refused_before_the_question[None]
+ERROR tests/test_take_script_refusals.py::test_a_bad_hubspot_key_file_is_refused_before_the_question[made-up-key-0002\nmade-up-key-0002\n]
+ERROR tests/test_take_script_refusals.py::test_a_bad_hubspot_key_file_is_refused_before_the_question[short]
+ERROR tests/test_take_script_refusals.py::test_a_bad_hubspot_key_file_is_refused_before_the_question[b'\\xff\\xfek\\x00k\\x00k\\x00k\\x00k\\x00k\\x00k\\x00k\\x00k\\x00']
+ERROR tests/test_take_script_refusals.py::test_a_bad_hubspot_key_file_is_refused_before_the_question[b'\\xc3(\\xc3(\\xc3(\\xc3(\\xc3(\\xc3(\\xc3(\\xc3(\\xc3(']
+ERROR tests/test_take_script_refusals.py::test_memory_book_is_refused_like_the_desk_and_leaves_no_file
+ERROR tests/test_take_script_refusals.py::test_a_config_that_is_not_utf8_is_refused_without_a_byte_value
+ERROR tests/test_take_script_refusals.py::test_dry_fakes_folder_is_deleted_also_when_the_self_test_fails
+ERROR tests/test_take_script_refusals.py::test_the_readback_note_says_plainly_when_no_contact_was_created
+ERROR tests/test_take_script_refusals.py::test_live_check_without_a_terminal_stops_with_one_line_not_a_traceback
+ERROR tests/test_take_script_refusals.py::test_live_check_exits_non_zero_when_every_call_failed
+ERROR tests/test_take_script_refusals.py::test_live_check_refuses_a_bad_key_file_before_the_question[missing]
+ERROR tests/test_take_script_refusals.py::test_live_check_refuses_a_bad_key_file_before_the_question[short]
+ERROR tests/test_take_script_refusals.py::test_keep_without_the_self_test_is_refused
+ERROR tests/test_take_script_refusals.py::test_the_closing_line_of_a_self_test_tells_how_to_keep_the_logs
+ERROR tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[DESK_SMTPP_PASSWORD_FILE-missing]
+ERROR tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[DESK_SMTPP_PASSWORD_FILE-two-lines]
+ERROR tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[DESK_SMTPP_PASSWORD_FILE-too-short]
+ERROR tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[DESK_SMTPP_PASSWORD_FILE-utf16]
+ERROR tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_1_PASSWORD_FILE-missing]
+ERROR tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_1_PASSWORD_FILE-two-lines]
+ERROR tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_1_PASSWORD_FILE-too-short]
+ERROR tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_1_PASSWORD_FILE-utf16]
+ERROR tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_2_PASSWORD_FILE-missing]
+ERROR tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_2_PASSWORD_FILE-two-lines]
+ERROR tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_2_PASSWORD_FILE-too-short]
+ERROR tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_2_PASSWORD_FILE-utf16]
+ERROR tests/test_take_script_refusals.py::test_a_bad_live_model_key_file_is_refused_before_the_question[missing]
+ERROR tests/test_take_script_refusals.py::test_a_bad_live_model_key_file_is_refused_before_the_question[too-short]
+ERROR tests/test_take_script_refusals.py::test_a_bad_live_model_key_file_is_refused_before_the_question[empty]
+ERROR tests/test_take_script_refusals.py::test_the_live_key_file_is_not_looked_at_without_the_live_flag
+ERROR tests/test_take_script_refusals.py::test_a_three_character_key_is_called_too_short
+ERROR tests/test_take_script_refusals.py::test_own_tempdir_puts_temporary_folders_under_the_test_folder
+ERROR tests/test_take_script_refusals.py::test_every_keep_self_test_in_the_suite_uses_its_own_temp_folder
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[plain list, no fixture]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[single quotes]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[split on spaces]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[abbreviated keep]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[abbreviated self-test]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[keep with a value]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[fixture as parameter]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[flags built by plus]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[flags built by an f-string]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[flags built by join]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[bytes]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[class attribute]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[method without fixture]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[method with fixture]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[module level]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[helper with the fixture still counts as a leak]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[helper that returns only the keep flag]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[async test without fixture]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[async test with fixture]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[usefixtures]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[decorator that only contains the word]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[another marker that names the word as an argument]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[skipif reason that only contains the word]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[parameter with a default]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[only the word tempfile]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[real setattr]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[real setattr by dotted name]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[real setattr inside with]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[setattr of another module]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[setattr to None is a no-op]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[setattr on a local object called tempfile]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[setattr under if False]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[setattr under try]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[child program with the setattr only]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[child program with the setattr and its own environment]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[child program with the fixture]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[a nested helper belongs to its test]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[a docstring that talks about the flags]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[the self-test without keep]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[keep refused without the self-test, in a test]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[flags built by format]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[flags built by a percent format]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[flags built by a percent format with a tuple]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[keep word assigned before the plus]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[keep word assigned in the module and used in a test]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[keep word assigned in a class]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[flag assigned whole in a name]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[order of pieces follows the source]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[format with its own fixture]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[the temp folder patch comes after the run]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[the temp folder patch comes before the run]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[the patch names the system temp folder as a literal]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[the patch names the system temp folder by gettempdir]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[the patch names a folder built from tmp_path]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[the patch names a folder from the tmp_path_factory]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[the patch names a name that has nothing to do with tmp_path]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[usefixtures by the mark spelling]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[a decorator called usefixtures on any object]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[a bare function called usefixtures]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[a local object called monkeypatch]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[monkeypatch is not a parameter at all]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[monkeypatch rebound by a with]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[monkeypatch rebound by an import]
+ERROR tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[flags in two lists that are added together]
+ERROR tests/test_take_script_refusals.py::test_the_scan_reads_the_pieces_of_a_place_in_source_order
+ERROR tests/test_take_script_refusals.py::test_the_sample_file_has_all_its_cases
+ERROR tests/test_take_script_refusals.py::test_the_scan_reads_every_python_file_under_tests_not_only_test_files
+ERROR tests/test_take_script_refusals.py::test_a_clean_self_test_deletes_its_folder_too
+ERROR tests/test_take_script_refusals.py::test_a_bad_smtp_ca_file_is_refused_before_the_question[missing]
+ERROR tests/test_take_script_refusals.py::test_a_bad_smtp_ca_file_is_refused_before_the_question[not-a-certificate]
+ERROR tests/test_take_script_refusals.py::test_a_bad_smtp_ca_file_is_refused_before_the_question[a-folder]
+ERROR tests/test_take_script_refusals.py::test_a_bad_imap_ca_file_is_refused_before_the_question_and_named[missing]
+ERROR tests/test_take_script_refusals.py::test_a_bad_imap_ca_file_is_refused_before_the_question_and_named[not-a-certificate]
+ERROR tests/test_take_script_refusals.py::test_a_bad_leadflow_file_is_refused_before_the_question[missing]
+ERROR tests/test_take_script_refusals.py::test_a_bad_leadflow_file_is_refused_before_the_question[not-json]
+ERROR tests/test_take_script_refusals.py::test_a_bad_leadflow_file_is_refused_before_the_question[wrong-keys]
+ERROR tests/test_take_script_refusals.py::test_a_bad_leadflow_file_is_refused_before_the_question[not-an-object]
+ERROR tests/test_take_script_refusals.py::test_a_bad_leadflow_file_is_refused_before_the_question[not-utf8]
+ERROR tests/test_take_script_refusals.py::test_a_leadflow_with_reminders_but_no_nudge_address_is_refused_before_the_question
+ERROR tests/test_take_script_refusals.py::test_a_bad_approvers_file_is_refused_before_the_question[missing]
+ERROR tests/test_take_script_refusals.py::test_a_bad_approvers_file_is_refused_before_the_question[not-json]
+ERROR tests/test_take_script_refusals.py::test_a_bad_approvers_file_is_refused_before_the_question[shape]
+ERROR tests/test_take_script_refusals.py::test_a_bad_approvers_file_is_refused_before_the_question[entry]
+ERROR tests/test_take_script_refusals.py::test_a_bad_replies_file_is_refused_before_the_question[missing]
+ERROR tests/test_take_script_refusals.py::test_a_bad_replies_file_is_refused_before_the_question[not-json]
+ERROR tests/test_take_script_refusals.py::test_a_bad_replies_file_is_refused_before_the_question[not-an-object]
+ERROR tests/test_take_script_refusals.py::test_a_setting_the_desk_refuses_is_refused_before_the_question
+ERROR tests/test_take_script_refusals.py::test_valid_files_of_every_kind_reach_the_question
+ERROR tests/test_take_script_refusals.py::test_a_two_line_live_key_is_refused_before_the_question_in_both_scripts
+ERROR tests/test_take_script_refusals.py::test_a_damaged_live_ledger_is_refused_before_the_question_in_both_scripts
+ERROR tests/test_take_script_refusals.py::test_a_new_live_ledger_is_fine_and_the_check_writes_nothing
+ERROR tests/test_take_script_refusals.py::test_a_result_path_that_cannot_hold_a_file_is_refused_before_the_question[a-folder-the result path is a folder: give a file path]
+ERROR tests/test_take_script_refusals.py::test_a_result_path_that_cannot_hold_a_file_is_refused_before_the_question[no-folder-the folder for the result file does not exist]
+ERROR tests/test_take_script_refusals.py::test_a_result_path_that_cannot_hold_a_file_is_refused_before_the_question[folder-is-a-file-the folder for the result file does not exist]
+ERROR tests/test_take_script_refusals.py::test_a_usable_result_path_reaches_the_question_and_nothing_is_written
+ERROR tests/test_take_script_refusals.py::test_a_result_file_that_cannot_be_written_after_the_run_does_not_end_in_a_traceback
+ERROR tests/test_take_script_refusals.py::test_the_read_back_failure_path_still_ends_with_its_exit_code_when_the_result_cannot_be_written
+ERROR tests/test_take_script_refusals.py::test_the_ledger_read_takes_no_lock_and_makes_nothing
+ERROR tests/test_take_script_refusals.py::test_a_new_live_ledger_in_the_real_script_makes_no_folder_before_the_question
+ERROR tests/test_take_script_refusals.py::test_every_refusal_before_the_question_has_the_same_form
+ERROR tests/test_take_script_refusals.py::test_the_bind_refusal_names_the_setting_once
+ERROR tests/test_take_script_refusals.py::test_the_certificate_refusal_has_this_exact_wording[DESK_SMTPP_CA_FILE]
+ERROR tests/test_take_script_refusals.py::test_the_certificate_refusal_has_this_exact_wording[REAL_IMAP_1_CA_FILE]
+ERROR tests/test_take_script_refusals.py::test_the_certificate_refusal_has_this_exact_wording[REAL_IMAP_2_CA_FILE]
+ERROR tests/test_take_script_refusals.py::test_the_docs_state_the_refusal_form_and_the_result_file_check
+ERROR tests/test_take_script_refusals.py::test_a_result_file_that_fails_after_a_whole_dry_run_still_cleans_up_and_exits_3
+ERROR tests/test_take_script_refusals.py::test_an_unexpected_error_before_the_question_keeps_the_form_and_leaks_no_path[os-error-no-path]
+ERROR tests/test_take_script_refusals.py::test_an_unexpected_error_before_the_question_keeps_the_form_and_leaks_no_path[no-name]
+ERROR tests/test_take_script_refusals.py::test_an_unexpected_error_before_the_question_keeps_the_form_and_leaks_no_path[name-split]
+143 errors in 1.17s
+rc=1 wall=1s

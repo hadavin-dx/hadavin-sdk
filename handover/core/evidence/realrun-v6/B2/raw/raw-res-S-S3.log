@@ -1,0 +1,21 @@
+..............F
+=================================== FAILURES ===================================
+__________ test_the_scan_judges_every_sample_source[class attribute] ___________
+
+name = 'class attribute', leaks = ['<class T>'], found = 1
+source = 'class T:\n    ARGS = ["--dry-fakes", "--keep"]'
+
+    @pytest.mark.parametrize(("name", "leaks", "found", "source"), _scan_cases(), ids=[c[0] for c in _scan_cases()])
+    def test_the_scan_judges_every_sample_source(name: str, leaks: list[str], found: int, source: str) -> None:
+>       assert keep_self_tests_that_leak(source) == (leaks, found), name
+E       AssertionError: class attribute
+E       assert ([], 0) == (['<class T>'], 1)
+E         
+E         At index 0 diff: [] != ['<class T>']
+E         Use -v to get more diff
+
+tests/test_take_script_refusals.py:300: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[class attribute]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 14 passed, 70 deselected in 43.93s

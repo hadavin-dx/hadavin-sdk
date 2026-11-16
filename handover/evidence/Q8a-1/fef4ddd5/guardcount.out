@@ -1,0 +1,9 @@
+modules in src: 109 | exempt prefixes: 8 | modules scanned: 101
+sites seen by the guard: 590
+allowance rows: GUARD_ALLOWED 118 + NEW_ALLOWED 445 = ALL_ALLOWED 563
+sites matched to an allowance row: 590 (distinct rows used: 563 )
+FOUND (not allowed): 0
+STALE: 0
+NEW_ALLOWED rows by reason: {'ACCESS': 1, 'ARG': 4, 'BUILT': 1, 'BUNDLE': 38, 'CALLER': 2, 'CARD': 22, 'CATALOG': 2, 'CLASSNAMES': 1, 'CLUSTER': 4, 'CONSTANT': 1, 'DESCRIBE': 4, 'DIGEST': 1, 'FIELDS': 1, 'GEN': 1, 'HOST': 1, 'KEYREF': 1, 'KEYVER': 3, 'KIND': 6, 'LABEL': 6, 'LISTED': 11, 'LITERAL': 1, 'LLMREQ': 30, 'MIGNAMES': 26, 'MIGSQL': 8, 'MODELTEXT': 2, 'NUM': 10, 'NUMFIELD': 6, 'OBJECTS': 10, 'PATH': 1, 'PATTERNFIELD': 1, 'PKGERR': 5, 'PLACE': 14, 'PROC': 95, 'PYDANTICTYPE': 1, 'REDACTED': 4, 'REPORT': 30, 'ROWID': 6, 'SCHEMA': 3, 'SEQ': 1, 'SIGN': 5, 'STATE': 2, 'STOREID': 39, 'TABLEKEYS': 4, 'TAGS': 2, 'THREAD': 2, 'TIME': 6, 'URL': 8, 'WORDS': 12}
+UNCHECKED set: ['CARD', 'REDACTED', 'STOREID', 'URL'] rows: {'CARD': 22, 'REDACTED': 4, 'STOREID': 39, 'URL': 8} total rows: 73
+reasons in REASONS: 48

@@ -1,0 +1,8 @@
+I1 FAILED tests/test_mutation_runner_keywords.py::test_a_password_that_was_encoded_twice_or_more_is_decoded_until_it_stops_changing 7
+I2 FAILED tests/test_mutation_runner_keywords.py::test_a_one_character_secret_hides_every_such_character_as_the_docstring_says 21
+Traceback (most recent call last):
+  File "/tmp/claude-0/failbefore16.py", line 30, in <module>
+    assert t.count(old) == 1, (tag, t.count(old))
+           ^^^^^^^^^^^^^^^^^
+AssertionError: ('I3', 0)
+exit=1

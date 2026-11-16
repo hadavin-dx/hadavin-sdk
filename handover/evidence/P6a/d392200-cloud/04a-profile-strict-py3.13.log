@@ -1,0 +1,9 @@
+HEAD=d3922003925722275704b84f580152d35dd90c9c
+python=Python 3.13.18
+cmd=pytest -q -rs -p no:cacheprovider tests/test_client_profile.py tests/test_strict_flags.py
+start=2026-11-10T19:29:52Z
+........................................................................ [ 61%]
+..............................................                           [100%]
+118 passed in 6.93s
+exit=0
+end=2026-11-10T19:30:00Z

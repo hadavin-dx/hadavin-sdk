@@ -1,0 +1,6 @@
+ruff-check | rc=0 | 1s | last: All checks passed!
+ruff-format | rc=0 | 0s | last: 323 files already formatted
+bandit | rc=0 | 1s | last: Files skipped (0):
+scan-repo | rc=0 | 1s | last: 
+suppress grep rc=1 hits=0
+gitleaks rc=0 last: [90m4:22PM[0m [32mINF[0m [1mscanned ~127536 bytes (127.54 KB) in 200ms[0m [90m4:22PM[0m [32mINF[0m [1mno leaks found[0m 

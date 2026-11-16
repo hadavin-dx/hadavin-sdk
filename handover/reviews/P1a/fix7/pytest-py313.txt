@@ -1,0 +1,14 @@
+bf955e98af9eda1b895b9a1e347e99f6e1ad5cb3
+DSN port 55435, python 3.13, HADAVIN_REQUIRE_PINNED_UNIDATA=true, run alone (a concurrent run shares the cluster roles and collided once)
+            for fn in (mn.lex, mn.refused_statements)
+            for unit in units
+            if timing.is_superlinear(lambda t, f=fn: _median_time(f, t), unit, small, big)
+        ]
+>       assert not slow, slow
+E       AssertionError: [('refused_statements', "E'\\"), ('refused_statements', 'a$')]
+E       assert not [('refused_statements', "E'\\"), ('refused_statements', 'a$')]
+
+tests/test_migration_numbers.py:828: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_migration_numbers.py::test_lexer_is_linear - AssertionError...
+1 failed, 11094 passed, 1 skipped, 10 xfailed in 703.83s (0:11:43)

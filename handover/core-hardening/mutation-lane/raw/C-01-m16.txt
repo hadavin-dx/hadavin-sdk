@@ -1,0 +1,21 @@
+MUTANT C-01-m16  VERDICT: SURVIVED
+description: (no-op control: identical text)
+base commit: b4cce5b6ae80b45125604b8295ebb35bd2ea1c2c   root: /tmp/c8/wC   file: src/hadavin_sdk/config.py
+command: env -i PATH=/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin HOME=/root PYTHONDONTWRITEBYTECODE=1 /tmp/c8/wC/.venv/bin/python -m pytest -q -p no:cacheprovider --tb=line -rf tests/test_c01_route_limits.py   (cwd=/tmp/c8/wC)
+rc: 0
+restore check: diff <saved original> <file after restore>: rc=0 (0 = identical)
+pytest summary line: 10 passed in 0.36s
+first failing test: -
+all failing tests (0): -
+--- OLD TEXT (full) ---
+sorted(
+                n
+                for n, r
+--- NEW TEXT (full) ---
+sorted(
+                n
+                for n, r
+--- PYTEST OUTPUT (full) ---
+..........                                                               [100%]
+10 passed in 0.36s
+

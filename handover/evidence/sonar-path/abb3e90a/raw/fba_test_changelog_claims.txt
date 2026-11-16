@@ -1,0 +1,82 @@
+.............................F.FFFFFFFFFFFF.FFFFFF.....F.                [100%]
+=================================== FAILURES ===================================
+E   ImportError: cannot import name 'outputs_dir' from 'hadavin_sdk.k1b.score' (/home/user/build/ER-sonarpath4-a/src/hadavin_sdk/k1b/score.py)
+/home/user/build/ER-sonarpath4-a/tests/test_changelog_claims.py:107: ImportError: cannot import name 'outputs_dir' from 'hadavin_sdk.k1b.score' (/home/user/build/ER-sonarpath4-a/src/hadavin_sdk/k1b/score.py)
+E   TypeError: atomic_write() takes 2 positional arguments but 3 were given
+/home/user/build/ER-sonarpath4-a/tests/test_changelog_claims.py:180: TypeError: atomic_write() takes 2 positional arguments but 3 were given
+E   TypeError: atomic_write() takes 2 positional arguments but 3 were given
+/home/user/build/ER-sonarpath4-a/tests/test_changelog_claims.py:203: TypeError: atomic_write() takes 2 positional arguments but 3 were given
+E   TypeError: atomic_write() takes 2 positional arguments but 3 were given
+/home/user/build/ER-sonarpath4-a/tests/test_changelog_claims.py:226: TypeError: atomic_write() takes 2 positional arguments but 3 were given
+E   AssertionError: a digest behind a link must count as unreadable, not as missing
+    assert None == ''
+     +  where None = <function _recorded_digest at 0x7f3e4fd71ee0>(PosixPath('/tmp/pytest-of-root/pytest-29760/test_a_digest_file_that_is_a_l0/run'))
+/home/user/build/ER-sonarpath4-a/tests/test_changelog_claims.py:244: AssertionError: a digest behind a link must count as unreadable, not as missing
+E   Failed: DID NOT RAISE ConfigError
+/home/user/build/ER-sonarpath4-a/tests/test_changelog_claims.py:270: Failed: DID NOT RAISE ConfigError
+E   ImportError: cannot import name 'outputs_dir' from 'hadavin_sdk.k1b.score' (/home/user/build/ER-sonarpath4-a/src/hadavin_sdk/k1b/score.py)
+/home/user/build/ER-sonarpath4-a/tests/test_changelog_claims.py:276: ImportError: cannot import name 'outputs_dir' from 'hadavin_sdk.k1b.score' (/home/user/build/ER-sonarpath4-a/src/hadavin_sdk/k1b/score.py)
+E   Failed: DID NOT RAISE ConfigError
+/home/user/build/ER-sonarpath4-a/tests/test_changelog_claims.py:311: Failed: DID NOT RAISE ConfigError
+E   AssertionError: assert PosixPath('/tmp/pytest-of-root/pytest-29760/test_golden_and_inputs_dir_may0/config/../golden') == PosixPath('/tmp/pytest-of-root/pytest-29760/test_golden_and_inputs_dir_may0/golden')
+     +  where PosixPath('/tmp/pytest-of-root/pytest-29760/test_golden_and_inputs_dir_may0/config/../golden') = Config(environment='demo', routes={'default': Route(model_id='fake-model', input_usd_per_mtok=Decimal('3.00'), output_....0, made_up_data_only=False, root=PosixPath('/tmp/pytest-of-root/pytest-29760/test_golden_and_inputs_dir_may0/config')).golden_dir
+     +  and   PosixPath('/tmp/pytest-of-root/pytest-29760/test_golden_and_inputs_dir_may0/golden') = resolve()
+     +    where resolve = (PosixPath('/tmp/pytest-of-root/pytest-29760/test_golden_and_inputs_dir_may0') / 'golden').resolve
+/home/user/build/ER-sonarpath4-a/tests/test_changelog_claims.py:325: AssertionError: assert PosixPath('/tmp/pytest-of-root/pytest-29760/test_golden_and_inputs_dir_may0/config/../golden') == PosixPath('/tmp/pytest-of-root/pytest-29760/test_golden_and_inputs_dir_may0/golden')
+E   hadavin_sdk.k1b.bundle.BundleError: bundle con: folder name must look like case-001
+/home/user/build/ER-sonarpath4-a/src/hadavin_sdk/k1b/bundle.py:190: hadavin_sdk.k1b.bundle.BundleError: bundle con: folder name must look like case-001
+E   Failed: DID NOT RAISE PathRefused
+/home/user/build/ER-sonarpath4-a/tests/test_changelog_claims.py:351: Failed: DID NOT RAISE PathRefused
+E   IsADirectoryError: [Errno 21] Is a directory: '/tmp/pytest-of-root/pytest-29760/test_the_failure_audit_code_of0/out/score/score-report.md.tmp' -> '/tmp/pytest-of-root/pytest-29760/test_the_failure_audit_code_of0/out/score/score-report.md'
+/home/user/build/ER-sonarpath4-a/src/hadavin_sdk/k1b/atomic.py:16: IsADirectoryError: [Errno 21] Is a directory: '/tmp/pytest-of-root/pytest-29760/test_the_failure_audit_code_of0/out/score/score-report.md.tmp' -> '/tmp/pytest-of-root/pytest-29760/test_the_failure_audit_code_of0/out/score/score-report.md'
+E   Failed: DID NOT RAISE AuditUnavailable
+/home/user/build/ER-sonarpath4-a/tests/test_changelog_claims.py:421: Failed: DID NOT RAISE AuditUnavailable
+E   AssertionError: hashing.py
+    assert 'pathguard.' in '"""One digest over a set of files, used by K1b for bundle sets and replay outputs."""\n\nfrom __future__ import annot...tries.items()):\n        outer.update(name + b"\\0" + digest.encode("ascii") + b"\\n")\n    return outer.hexdigest()\n'
+     +  where '"""One digest over a set of files, used by K1b for bundle sets and replay outputs."""\n\nfrom __future__ import annot...tries.items()):\n        outer.update(name + b"\\0" + digest.encode("ascii") + b"\\n")\n    return outer.hexdigest()\n' = read_text(encoding='utf-8')
+     +    where read_text = (PosixPath('/home/user/build/ER-sonarpath4-a/src/hadavin_sdk') / 'hashing.py').read_text
+/home/user/build/ER-sonarpath4-a/tests/test_changelog_claims.py:466: AssertionError: hashing.py
+E   AssertionError: k1b/score.py:load_answers holds no operator_file assignment
+    assert {}
+/home/user/build/ER-sonarpath4-a/tests/test_changelog_claims.py:508: AssertionError: k1b/score.py:load_answers holds no operator_file assignment
+E   AssertionError: k1b/score.py:_recorded_digest holds no join assignment
+    assert {}
+/home/user/build/ER-sonarpath4-a/tests/test_changelog_claims.py:508: AssertionError: k1b/score.py:_recorded_digest holds no join assignment
+E   AssertionError: hashing.py:hash_files holds no inside assignment
+    assert {}
+/home/user/build/ER-sonarpath4-a/tests/test_changelog_claims.py:508: AssertionError: hashing.py:hash_files holds no inside assignment
+E   AssertionError: actions/secrets_file.py:MountedFileProvider._fetch holds no inside assignment
+    assert {}
+/home/user/build/ER-sonarpath4-a/tests/test_changelog_claims.py:508: AssertionError: actions/secrets_file.py:MountedFileProvider._fetch holds no inside assignment
+E   AssertionError: assert JSONDecodeError('Expecting property name enclosed in double quotes: line 1 column 2 (char 1)') is None
+     +  where JSONDecodeError('Expecting property name enclosed in double quotes: line 1 column 2 (char 1)') = ConfigError('cause list: services.json is missing or not valid JSON').__cause__
+/home/user/build/ER-sonarpath4-a/tests/test_changelog_claims.py:562: AssertionError: assert JSONDecodeError('Expecting property name enclosed in double quotes: line 1 column 2 (char 1)') is None
+E   AssertionError: src/hadavin_sdk/cli.py: nosonar
+    assert 2 <= 0
+     +  where 2 = <built-in method count of str object at 0xb0c8d90>('nosonar')
+     +    where <built-in method count of str object at 0xb0c8d90> = '"""hadavin-sdk cli.\n\n  hadavin-sdk [--config dir] gate <agent> [--k k]        exit 0 when green, 1 when below the t...", exc)\n    print(f"kill switch off (by {by})")\n    return 0\n\n\nif __name__ == "__main__":\n    sys.exit(main())\n'.count
+     +  and   0 = <built-in method get of dict object at 0x7f3e50236b00>('nosonar', 0)
+     +    where <built-in method get of dict object at 0x7f3e50236b00> = {'noqa': 4}.get
+/home/user/build/ER-sonarpath4-a/tests/test_changelog_claims.py:653: AssertionError: src/hadavin_sdk/cli.py: nosonar
+=========================== short test summary info ============================
+FAILED tests/test_changelog_claims.py::test_each_message_the_entry_quotes_is_the_message_the_code_gives
+FAILED tests/test_changelog_claims.py::test_the_atomic_write_signature_temp_name_mode_and_untouched_taken_name
+FAILED tests/test_changelog_claims.py::test_atomic_write_refuses_what_it_cannot_replace_without_a_path
+FAILED tests/test_changelog_claims.py::test_atomic_write_os_errors_carry_no_path_and_no_chain
+FAILED tests/test_changelog_claims.py::test_a_digest_file_that_is_a_link_out_is_unreadable_and_a_nul_gives_exit_2
+FAILED tests/test_changelog_claims.py::test_outputs_files_raises_for_a_missing_folder
+FAILED tests/test_changelog_claims.py::test_paths_are_resolved_and_absolute_whatever_the_current_folder
+FAILED tests/test_changelog_claims.py::test_confined_keeps_its_escape_text_and_refuses_the_wide_set_and_a_long_path
+FAILED tests/test_changelog_claims.py::test_golden_and_inputs_dir_may_point_outside_the_config_folder
+FAILED tests/test_changelog_claims.py::test_a_bundles_entry_with_a_reserved_name_is_a_path_refusal_and_a_plain_wrong_name_is_not
+FAILED tests/test_changelog_claims.py::test_key_path_checks_before_it_makes_a_folder_and_its_messages_hold_no_path
+FAILED tests/test_changelog_claims.py::test_the_failure_audit_code_of_score_is_the_refusal_name
+FAILED tests/test_changelog_claims.py::test_local_dir_refuses_an_id_drops_the_outcome_and_skips_a_link
+FAILED tests/test_changelog_claims.py::test_hash_files_fake_llm_judge_and_secrets_folder_go_through_pathguard
+FAILED tests/test_changelog_claims.py::test_the_last_check_sits_on_the_lines_right_before_the_read_and_only_its_path_is_read[k1b/score.py-load_answers-operator_file]
+FAILED tests/test_changelog_claims.py::test_the_last_check_sits_on_the_lines_right_before_the_read_and_only_its_path_is_read[k1b/score.py-_recorded_digest-join]
+FAILED tests/test_changelog_claims.py::test_the_last_check_sits_on_the_lines_right_before_the_read_and_only_its_path_is_read[hashing.py-hash_files-inside]
+FAILED tests/test_changelog_claims.py::test_the_last_check_sits_on_the_lines_right_before_the_read_and_only_its_path_is_read[actions/secrets_file.py-MountedFileProvider._fetch-inside]
+FAILED tests/test_changelog_claims.py::test_errors_in_the_cause_list_bundle_and_hashing_checks_have_no_chain
+FAILED tests/test_changelog_claims.py::test_the_suppression_bullet_matches_the_files_and_the_counts
+20 failed, 37 passed in 0.33s

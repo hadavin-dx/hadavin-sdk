@@ -1,0 +1,41 @@
+/rr6/out/EV7T/tmp-mut-mutY2/pytest-of-unknown/pytest-2/test_t10_the_counter_file_is_n0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f932ccede20>
+
+    def test_t10_the_counter_file_is_never_half_written(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """The write is a temporary file, then os.replace. A stop (a kill, a full disk) during the write leaves the
+        previous whole file in place; a stop before the replace leaves only the temporary file."""
+        import lead_desk.run_stats as rs
+    
+        target = tmp_path / "desk-raaaaaa-1.hubspot.json"
+        rs.write_stats(target, {"created": 1})
+        assert json.loads(target.read_text(encoding="utf-8")) == {"created": 1}
+    
+        real_dumps = rs.json.dumps
+    
+        def dying(data: Any, **kw: Any) -> str:
+            raise OSError("the disk is full")
+    
+        monkeypatch.setattr(rs.json, "dumps", dying)
+>       rs.write_stats(target, {"created": 2})  # swallowed by design: a counter file must never break a send
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_r7t_findings.py:566: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/lead_desk/run_stats.py:30: in write_stats
+    write_stats_strict(path, data)
+src/lead_desk/run_stats.py:24: in write_stats_strict
+    f.write(json.dumps(dict(data), sort_keys=True))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+data = {'created': 2}, kw = {'sort_keys': True}
+
+    def dying(data: Any, **kw: Any) -> str:
+>       raise OSError("the disk is full")
+E       OSError: the disk is full
+
+tests/test_r7t_findings.py:563: OSError
+=========================== short test summary info ============================
+FAILED tests/test_r7t_findings.py::test_t10_the_counter_file_is_never_half_written
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 176 deselected in 0.32s

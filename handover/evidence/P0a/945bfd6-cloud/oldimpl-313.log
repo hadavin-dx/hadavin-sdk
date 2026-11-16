@@ -1,0 +1,216 @@
+HEAD 945bfd6d21ddc7361b80d1976b159764ec195edd
+$ /home/user/build/venv-p71-945bfd6-313/bin/python -m pytest -v -p no:cacheprovider tests/test_old_impl_tmp.py
+============================= test session starts ==============================
+platform linux -- Python 3.13.18, pytest-9.2.0, pluggy-1.7.0 -- /home/user/build/venv-p71-945bfd6-313/bin/python
+rootdir: /home/user/build/EV-P71-945bfd6/wt
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 29 items
+
+tests/test_old_impl_tmp.py::test_repository_ships_no_pglast PASSED       [  3%]
+tests/test_old_impl_tmp.py::test_guard_catches[clean] PASSED             [  6%]
+tests/test_old_impl_tmp.py::test_guard_catches[non-test group] PASSED    [ 10%]
+tests/test_old_impl_tmp.py::test_guard_catches[uppercase and leading space] PASSED [ 13%]
+tests/test_old_impl_tmp.py::test_guard_catches[at-form] PASSED           [ 17%]
+tests/test_old_impl_tmp.py::test_guard_catches[include-group] PASSED     [ 20%]
+tests/test_old_impl_tmp.py::test_guard_catches[runtime dependency] PASSED [ 24%]
+tests/test_old_impl_tmp.py::test_guard_catches[optional extra] PASSED    [ 27%]
+tests/test_old_impl_tmp.py::test_guard_catches[tool.uv sources] PASSED   [ 31%]
+tests/test_old_impl_tmp.py::test_guard_catches[uv.lock missing] PASSED   [ 34%]
+tests/test_old_impl_tmp.py::test_guard_catches[tool.uv constraint] PASSED [ 37%]
+tests/test_old_impl_tmp.py::test_guard_catches[lock edge from runtime package] PASSED [ 41%]
+tests/test_old_impl_tmp.py::test_guard_catches[lock group other than test] PASSED [ 44%]
+tests/test_old_impl_tmp.py::test_guard_catches[import in src] PASSED     [ 48%]
+tests/test_old_impl_tmp.py::test_guard_catches[import submodule] PASSED  [ 51%]
+tests/test_old_impl_tmp.py::test_guard_catches[from submodule] PASSED    [ 55%]
+tests/test_old_impl_tmp.py::test_guard_catches[import_module string] PASSED [ 58%]
+tests/test_old_impl_tmp.py::test_guard_catches[prose string is fine] PASSED [ 62%]
+tests/test_old_impl_tmp.py::test_guard_catches[missing src] PASSED       [ 65%]
+tests/test_old_impl_tmp.py::test_guard_catches[vendored dir] PASSED      [ 68%]
+tests/test_old_impl_tmp.py::test_guard_catches[vendored binary] PASSED   [ 72%]
+tests/test_old_impl_tmp.py::test_guard_catches[vendored macOS binary] FAILED [ 75%]
+tests/test_old_impl_tmp.py::test_guard_catches[vendored Windows binary] PASSED [ 79%]
+tests/test_old_impl_tmp.py::test_guard_catches[cyclic include-group has no name] FAILED [ 82%]
+tests/test_old_impl_tmp.py::test_guard_catches[cyclic pair still finds pglast] FAILED [ 86%]
+tests/test_old_impl_tmp.py::test_guard_catches[nested .venv import is skipped] FAILED [ 89%]
+tests/test_old_impl_tmp.py::test_guard_catches[nested node_modules vendored is skipped] FAILED [ 93%]
+tests/test_old_impl_tmp.py::test_guard_catches[nested .venv alone is not a scanned file] FAILED [ 96%]
+tests/test_old_impl_tmp.py::test_guard_catches[venv-like name outside the skip list is scanned] PASSED [100%]
+
+=================================== FAILURES ===================================
+__________________ test_guard_catches[vendored macOS binary] ___________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-4260/test_guard_catches_vendored_ma0')
+case = 'vendored macOS binary'
+
+    @pytest.mark.parametrize("case", MUTANTS)
+    def test_guard_catches(tmp_path, case):
+        files = {"pyproject.toml": PYPROJECT, "uv.lock": LOCK} | {f"{t}/m.py": "x = 1\n" for t in TREES}
+        files |= MUTANTS[case][0]
+        for rel, text in files.items():
+            if text is not None:
+                (tmp_path / rel).parent.mkdir(parents=True, exist_ok=True)
+                (tmp_path / rel).write_text(text, "utf-8")
+>       assert violations(tmp_path) == MUTANTS[case][1]
+E       AssertionError: assert [] == ['src: vendor...pglast.dylib']
+E         
+E         Right contains one more item: 'src: vendored _pglast.dylib'
+E         
+E         Full diff: (-: missing in left side, +: extra in left side)
+E         + []
+E         - [
+E         -     'src: vendored _pglast.dylib',
+E         - ]
+
+tests/test_old_impl_tmp.py:204: AssertionError
+_____________ test_guard_catches[cyclic include-group has no name] _____________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-4260/test_guard_catches_cyclic_incl0')
+case = 'cyclic include-group has no name'
+
+    @pytest.mark.parametrize("case", MUTANTS)
+    def test_guard_catches(tmp_path, case):
+        files = {"pyproject.toml": PYPROJECT, "uv.lock": LOCK} | {f"{t}/m.py": "x = 1\n" for t in TREES}
+        files |= MUTANTS[case][0]
+        for rel, text in files.items():
+            if text is not None:
+                (tmp_path / rel).parent.mkdir(parents=True, exist_ok=True)
+                (tmp_path / rel).write_text(text, "utf-8")
+>       assert violations(tmp_path) == MUTANTS[case][1]
+               ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_old_impl_tmp.py:204: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_old_impl_tmp.py:92: in violations
+    bad += [f"group {g}" for g in groups if g != "test" and _hit(_flat(groups, g))]
+                                                            ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_old_impl_tmp.py:37: in _hit
+    return any(_is(d["name"] if isinstance(d, dict) else d) for d in deps)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+.0 = <generator object _flat at 0x7f7591816a40>
+
+>   return any(_is(d["name"] if isinstance(d, dict) else d) for d in deps)
+                   ^^^^^^^^^
+E   KeyError: 'name'
+
+tests/test_old_impl_tmp.py:37: KeyError
+______________ test_guard_catches[cyclic pair still finds pglast] ______________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-4260/test_guard_catches_cyclic_pair0')
+case = 'cyclic pair still finds pglast'
+
+    @pytest.mark.parametrize("case", MUTANTS)
+    def test_guard_catches(tmp_path, case):
+        files = {"pyproject.toml": PYPROJECT, "uv.lock": LOCK} | {f"{t}/m.py": "x = 1\n" for t in TREES}
+        files |= MUTANTS[case][0]
+        for rel, text in files.items():
+            if text is not None:
+                (tmp_path / rel).parent.mkdir(parents=True, exist_ok=True)
+                (tmp_path / rel).write_text(text, "utf-8")
+>       assert violations(tmp_path) == MUTANTS[case][1]
+               ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_old_impl_tmp.py:204: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_old_impl_tmp.py:92: in violations
+    bad += [f"group {g}" for g in groups if g != "test" and _hit(_flat(groups, g))]
+                                                            ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_old_impl_tmp.py:37: in _hit
+    return any(_is(d["name"] if isinstance(d, dict) else d) for d in deps)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+.0 = <generator object _flat at 0x7f7591817240>
+
+>   return any(_is(d["name"] if isinstance(d, dict) else d) for d in deps)
+                   ^^^^^^^^^
+E   KeyError: 'name'
+
+tests/test_old_impl_tmp.py:37: KeyError
+______________ test_guard_catches[nested .venv import is skipped] ______________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-4260/test_guard_catches_nested__ven0')
+case = 'nested .venv import is skipped'
+
+    @pytest.mark.parametrize("case", MUTANTS)
+    def test_guard_catches(tmp_path, case):
+        files = {"pyproject.toml": PYPROJECT, "uv.lock": LOCK} | {f"{t}/m.py": "x = 1\n" for t in TREES}
+        files |= MUTANTS[case][0]
+        for rel, text in files.items():
+            if text is not None:
+                (tmp_path / rel).parent.mkdir(parents=True, exist_ok=True)
+                (tmp_path / rel).write_text(text, "utf-8")
+>       assert violations(tmp_path) == MUTANTS[case][1]
+E       AssertionError: assert ['src: .venv/...ports pglast'] == []
+E         
+E         Left contains one more item: 'src: .venv/lib/m.py imports pglast'
+E         
+E         Full diff: (-: missing in left side, +: extra in left side)
+E         - []
+E         + [
+E         +     'src: .venv/lib/m.py imports pglast',
+E         + ]
+
+tests/test_old_impl_tmp.py:204: AssertionError
+_________ test_guard_catches[nested node_modules vendored is skipped] __________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-4260/test_guard_catches_nested_node0')
+case = 'nested node_modules vendored is skipped'
+
+    @pytest.mark.parametrize("case", MUTANTS)
+    def test_guard_catches(tmp_path, case):
+        files = {"pyproject.toml": PYPROJECT, "uv.lock": LOCK} | {f"{t}/m.py": "x = 1\n" for t in TREES}
+        files |= MUTANTS[case][0]
+        for rel, text in files.items():
+            if text is not None:
+                (tmp_path / rel).parent.mkdir(parents=True, exist_ok=True)
+                (tmp_path / rel).write_text(text, "utf-8")
+>       assert violations(tmp_path) == MUTANTS[case][1]
+E       AssertionError: assert ['demos: vend...vendored dir'] == []
+E         
+E         Left contains 2 more items, first extra item: 'demos: vendored _p.so'
+E         
+E         Full diff: (-: missing in left side, +: extra in left side)
+E         - []
+E         + [
+E         +     'demos: vendored _p.so',
+E         +     'demos: vendored dir',
+E         + ]
+
+tests/test_old_impl_tmp.py:204: AssertionError
+_________ test_guard_catches[nested .venv alone is not a scanned file] _________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-4260/test_guard_catches_nested__ven1')
+case = 'nested .venv alone is not a scanned file'
+
+    @pytest.mark.parametrize("case", MUTANTS)
+    def test_guard_catches(tmp_path, case):
+        files = {"pyproject.toml": PYPROJECT, "uv.lock": LOCK} | {f"{t}/m.py": "x = 1\n" for t in TREES}
+        files |= MUTANTS[case][0]
+        for rel, text in files.items():
+            if text is not None:
+                (tmp_path / rel).parent.mkdir(parents=True, exist_ok=True)
+                (tmp_path / rel).write_text(text, "utf-8")
+>       assert violations(tmp_path) == MUTANTS[case][1]
+E       AssertionError: assert [] == ['src: no pyt...file scanned']
+E         
+E         Right contains one more item: 'src: no python file scanned'
+E         
+E         Full diff: (-: missing in left side, +: extra in left side)
+E         + []
+E         - [
+E         -     'src: no python file scanned',
+E         - ]
+
+tests/test_old_impl_tmp.py:204: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_old_impl_tmp.py::test_guard_catches[vendored macOS binary]
+FAILED tests/test_old_impl_tmp.py::test_guard_catches[cyclic include-group has no name]
+FAILED tests/test_old_impl_tmp.py::test_guard_catches[cyclic pair still finds pglast]
+FAILED tests/test_old_impl_tmp.py::test_guard_catches[nested .venv import is skipped]
+FAILED tests/test_old_impl_tmp.py::test_guard_catches[nested node_modules vendored is skipped]
+FAILED tests/test_old_impl_tmp.py::test_guard_catches[nested .venv alone is not a scanned file]
+========================= 6 failed, 23 passed in 0.45s =========================
+exit=1

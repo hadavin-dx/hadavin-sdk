@@ -1,0 +1,18 @@
+....................................................F
+=================================== FAILURES ===================================
+_ test_t15_the_counting_rule_takes_open_creates_as_possible_contacts_and_never_more_than_the_leads _
+
+    def test_t15_the_counting_rule_takes_open_creates_as_possible_contacts_and_never_more_than_the_leads() -> None:
+        f = rrc.contacts_not_accounted_for
+        assert f(8, 8, 1, 9) == 1  # the window: 8 counted, 1 open, the list showed 8 of 9
+        assert f(8, 9, 1, 9) == 0  # the open create did make a contact and the list shows it
+>       assert f(9, 9, 1, 9) == 0  # the open create was retried by the next desk: 10 possible, but only 9 leads
+        ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       assert 1 == 0
+E        +  where 1 = <function contacts_not_accounted_for at 0x7fdd9605f740>(9, 9, 1, 9)
+
+tests/test_r7t_findings.py:766: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r7t_findings.py::test_t15_the_counting_rule_takes_open_creates_as_possible_contacts_and_never_more_than_the_leads
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 52 passed, 118 deselected in 193.76s (0:03:13)

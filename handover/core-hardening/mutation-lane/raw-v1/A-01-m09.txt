@@ -1,0 +1,8 @@
+src/hadavin_sdk/runtime/tick.py
+step interval 0 -> 3600 (not every tick)
+OLD: TickStep("audit_reconcile", 0, audit_reconcile)
+NEW: TickStep("audit_reconcile", 3600, audit_reconcile)
+
+........................................................................ [ 69%]
+................................                                         [100%]
+104 passed in 17.57s

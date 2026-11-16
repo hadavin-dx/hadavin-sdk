@@ -1,0 +1,2 @@
+tree /home/user/build/EV-PRHb6-c802cc0f/wt-main/src/hadavin_sdk/tools.py
+N=3000 withheld=47 (1.6%) readable_secret_window_in_output=1408 exceptions={} first_exc_input=None

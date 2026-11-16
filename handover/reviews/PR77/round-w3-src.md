@@ -1,0 +1,8 @@
+# A11a / PR77 (core/P2d-1, 8b2b716) - fresh reviewer, slice: non-test src. Read only; all inputs UNRUN (derived by reading).
+Coverage: textnorm.py 1-669 all; redact.py 860-1440, 1570-1640 + changed hunks; runmap.py 225-537; defaults.py 28-60; _confusables.py 1-60 + greps. Ticket 1-115 only. Not read: redact.py 1-859, 1440-1570, runmap 1-224, ticket tests/mutants 116-400.
+- F1 MAJOR redact.py 941-943 (_alias_key), 1043-1061 (_fold_scan), 1209-1225: redactor scans with `fold` only, never fold_views/squeeze_views (textnorm docstring 17-28, 121-140 says a redaction MUST scan both). Spacing marks (Mc), modifier letters (Lm), modifier symbols (Sk) and Greek+U+0345 hide a secret. Inputs: (a) "AKIA"+chr(0x093E)+"IOSFODNN7EXAMPLE"; (b) "AKIAIOSFODNN7"+chr(0x02B0)+"EXAMPLE"; (c) chr(0x0391)+chr(0x0345)+"KIAIOSFODNN7EXAMPLE"; (d) "sk-"+"a"*10+chr(0x0903)+"a"*10. runmap._views keeps Mc too; _alias_key has the same gap. Fix class: scan marks-dropped views / add Mc,Lm,Sk removal with position map; row per code point.
+- F2 Minor textnorm._weight/_checked uncached and unclocked; all-distinct ~200k code points line is slow (estimate, unmeasured). Fails closed.
+- F3 Minor chr(0xAC01)*90000 on one line: W=270000 > 262144 -> TextTooLong, whole document refused.
+- F4 Minor redact.py 1084-1092: overlapping multi-line fold-only block B starting inside block A may leave its tail in clear (reasoned, no input).
+- F5 Nit _withhold eol default. F6 Nit ASCII line never folded so "sk-"+"a"*10+"\x7f"+"a"*10 not masked (not a regression). F7 Nit restore after alias sweep gives accented spelling.
+Sound: _folded_line journal/rollback, _aligned_fold end check, _mask_in_place overlap, has_hidden_channel regex, budget plumbing.

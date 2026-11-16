@@ -1,0 +1,364 @@
+diff --git a/.github/workflows/lint.yml b/.github/workflows/lint.yml
+index e42a55f..1af8a12 100644
+--- a/.github/workflows/lint.yml
++++ b/.github/workflows/lint.yml
+@@ -96,4 +96,6 @@ jobs:
+           DPLD_REQUIRE_SCAN: "1"
+           # the demo_only folder must be in the checkout: without it most test files would skip and the run would look green
+           DPLD_REQUIRE_DEMO: "1"
++          # a skipped count check (last line of the collector not the plain total) would hide a stale number in docs/tests.md
++          DPLD_REQUIRE_COUNT: "1"
+         run: python -m pytest -q
+diff --git a/.github/workflows/sonar.yml b/.github/workflows/sonar.yml
+index 9d66085..a4b536a 100644
+--- a/.github/workflows/sonar.yml
++++ b/.github/workflows/sonar.yml
+@@ -48,6 +48,8 @@ jobs:
+         env:
+           # the demo_only folder must be in the checkout: without it most test files would skip and the figure would be wrong
+           DPLD_REQUIRE_DEMO: "1"
++          # a skipped count check would hide a stale number in docs/tests.md
++          DPLD_REQUIRE_COUNT: "1"
+         run: python -m pytest -q --cov --cov-report=xml:coverage.xml
+       - name: Cache SonarQube packages
+         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+diff --git a/README.md b/README.md
+index 5d458a6..184dfff 100644
+--- a/README.md
++++ b/README.md
+@@ -17,7 +17,7 @@
+ 
+ After the steps in "Try it" below, three things confirm that it works. Every number below comes from the demo programs (the stand-ins), not from a real CRM or mail system.
+ 
+-* The first lead gets `"verdict": "new"`. The same request sent again gets `"replayed": true`, and it makes no second lead and no second email. The same person through the other door gets `"verdict": "duplicate"`; its `receipt_id` is 3, not 2, because sending a request again uses up a receipt number in the database (SQLite, which keeps the records, counts it), so receipt numbers can skip but are never reused.
++* The first lead gets `"verdict": "new"`. The same request sent again gets `"replayed": true`: no second lead and no second email. The desk writes down every arrival, including the repeat, and the numbering never goes back, so number 2 is taken by the repeat. The same person through the other door therefore gets `"verdict": "duplicate"` with `receipt_id` 3, not 2. Receipt numbers can skip but are never reused.
+ * The counts page shows 2 requests received, 1 new, 1 duplicate.
+ * The demo mail system holds exactly one email.
+ 
+@@ -34,7 +34,7 @@ In a browser, http://127.0.0.1:8765/ui/ shows the portal: overview, leads, items
+ * **Request id**: a label the sender puts on each submission. The same label twice means "this is a repeat". The portal calls it "Request number".
+ * **Receipt**: the desk's first note about a request, written before anything else happens.
+ * **Verdict**: the desk's answer: `new` (first time this email is seen), `duplicate` (seen before under another request number) or `review` (incomplete, a person must look).
+-* **Replayed**: the same request number came again, so the desk gave back its stored answer and changed nothing.
++* **Replayed**: the same request number came again, so the desk gave back its stored answer. It made no second lead and no second email; it only used one receipt number and added one to that request's count of arrivals (the `attempts` column).
+ * **Door**: the way a request arrived: `form` or `webhook`. The portal calls it "Source".
+ * **Keyed and blind**: a keyed mail system recognises a repeat of the same send key and sends only once; a blind one does not. The same two words apply to a CRM: a keyed CRM keeps one row however often it is asked with the same key; a blind CRM stores a row every time.
+ * **UNKNOWN**: the desk cannot tell whether a follow-up email left. It does not guess and does not resend; a person must check.
+@@ -59,7 +59,7 @@ You need Linux or Windows (macOS was not tried), Python 3.12 or newer and git, a
+     bash scripts/start_all.sh keyed            # starts the demo servers and the desk in the background
+     for i in 1 2 3 4 5 6 7 8 9 10; do curl -sf http://127.0.0.1:8765/counts >/dev/null && break; sleep 1; done; curl -i http://127.0.0.1:8765/counts # waits up to 10 seconds; it works when the first line starts with "HTTP/1" and has 200, and the numbers are all 0
+     python scripts/feed.py --source form --index 1       # sends one lead; prints 201 ... "verdict": "new"
+-    python scripts/feed.py --source form --index 1       # the same request again: 201 and "replayed": true, nothing changes
++    python scripts/feed.py --source form --index 1       # the same request again: 201 and "replayed": true, no second lead, no second email (it uses one receipt number)
+     python scripts/feed.py --source webhook --index 1    # same person through the other door: "verdict": "duplicate", "receipt_id": 3 (the repeated request above used number 2 up)
+     curl http://127.0.0.1:8765/counts              # received 2, new 1, duplicate 1 (the repeated request number is answered from the stored answer, not counted again)
+     curl http://127.0.0.1:8766/fake/outbox         # "count": 1  (one email, not two)
+@@ -76,7 +76,7 @@ Run both scripts with `bash`, as above: they use bash's `[[ ]]` tests, so `sh sc
+     .\scripts\start_all.ps1 keyed    # prints "started: ..." with two process ids
+     Start-Sleep 3; Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8765/counts | Select-Object -ExpandProperty Content    # should answer with numbers (all 0)
+     python scripts\feed.py --source form --index 1       # prints 201 ... "verdict": "new"
+-    python scripts\feed.py --source form --index 1       # the same request again: 201 and "replayed": true, nothing changes
++    python scripts\feed.py --source form --index 1       # the same request again: 201 and "replayed": true, no second lead, no second email (it uses one receipt number)
+     python scripts\feed.py --source webhook --index 1    # same person, other door: "verdict": "duplicate", "receipt_id": 3 (the repeated request above used number 2 up)
+     Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8765/counts | Select-Object -ExpandProperty Content    # received 2, new 1, duplicate 1 (the replayed id is not counted again)
+     Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8766/fake/outbox | Select-Object -ExpandProperty Content    # "count": 1
+@@ -93,7 +93,7 @@ The reset script refuses, with one line of reason and nothing deleted, in these
+ 
+ Claimed, for this demo setup only:
+ 
+-* The same request number sent again gets the stored answer and changes nothing.
++* The same request number sent again gets the stored answer: no second lead and no second email. It only uses one receipt number and adds one to that request's count of arrivals.
+ * The same email under a different request number is a duplicate: no second CRM row, no second email, and the AI step is not asked.
+ * An incomplete request goes to a review list with a reason and gets no follow-up.
+ * The desk was stopped at ten named crash points (and an eleventh, N1, for the reminder email) and restarted. Of the ten, nine are simulated by an exception inside the program; only one (D2) is a real process kill. The tests assert at most one lead, one CRM row and one email. Where it cannot tell whether an email left, the follow-up is listed as UNKNOWN for a person.
+@@ -127,7 +127,7 @@ The first question of the project was whether n8n on its own handles duplicates
+ 
+ ## Tests and more commands
+ 
+-The tests need development tools, installed from a lock file into the `.venv` folder so that nothing else on your computer changes. The commands for Windows and Linux are in `docs/tests.md`; the test command itself is `python -m pytest -q`. Supported: Windows with Python 3.13 and `requirements-dev-win.txt`, or Linux x86_64 with Python 3.12 and `requirements-dev.txt`; any other combination was not tried. If pip prints a hash mismatch, you are using the wrong lock file or Python version for your computer. The full run is long: the last timed full run took 16 minutes 33 seconds for 2516 tests (`docs/tests.md`), the suite has grown since (the current count is in the same page), and the full run was not timed again. The full run needs a git clone (some tests read the list of tracked files with git).
++The tests need development tools, installed from a lock file into the `.venv` folder so that nothing else on your computer changes. The commands for Windows and Linux are in `docs/tests.md`; the test command itself is `python -m pytest -q`. Supported: Windows with Python 3.13 and `requirements-dev-win.txt`, or Linux x86_64 with Python 3.12 and `requirements-dev.txt`; any other combination was not tried. If pip prints a hash mismatch, you are using the wrong lock file or Python version for your computer. The full run is long: the last timed full run took 16 minutes 33 seconds for 2516 tests, counted on an earlier commit (`docs/tests.md`), the suite has grown since (the current count is in the same page), and the full run was not timed again. The full run needs a git clone (some tests read the list of tracked files with git).
+ 
+ The desk alone: `PYTHONPATH=src python -m lead_desk.server`. Writing `blind` instead of `keyed` in the start command starts a mail system that cannot recognise repeats. On Windows, set `PYTHONPATH` with `;` between entries when two are needed (`src;.`).
+ 
+diff --git a/docs/limits.md b/docs/limits.md
+index b249bba..93aa746 100644
+--- a/docs/limits.md
++++ b/docs/limits.md
+@@ -68,7 +68,7 @@ This page holds the detail behind the short "What is not claimed" list in the RE
+ * A crash is simulated inside the program (the test raises an exception at the point) for all ten crash points and for the eleventh, N1 (the reminder email, `tests/test_reminder_email.py`). A real process kill (the desk process ends at once, no clean-up) at a NAMED crash point was done only at D2: twice with the demo mail system over HTTP (keyed and blind), and once with a real mail catcher process that receives mail over SMTP (blind sender).
+   * A second kind of real kill, at a moment nobody chose, was tried in a Linux container: the real desk process was ended once while a load ran (the script that did this and its logs are not shipped; the load driver and the after-load checks are, see `load_tools/README.md`). In every one of those runs every follow-up ended `sent`, so they back the after-load checks and the retry story, not the UNKNOWN path. Power loss was not tested.
+ * Loads of 10,000 requests were not run, and none of the burst figures in "Load and limits" were measured on a second Windows computer. The desk is for one computer and one process. There is no login: it listens on this computer only unless you change `DESK_BIND`, and then anyone who can reach that address can read the desk's records (see "The portal and the desk process" below).
+-* Run on two systems: Windows with Python 3.13 (the Windows lock file) and Linux with Python 3.12 (a Docker container, the Linux lock file). The full test suite was run on both on 2026-11-12: Windows with Python 3.13 2449 passed, 15 skipped; Linux with Python 3.12 (a container) 2462 passed, 2 skipped; no test failed on either (the logs are not shipped). The skipped tests need another operating system, a tool that machine did not have, or the load measurement. Edits made after those runs changed only documentation and one test file, which was run on its own. The checks in `.github/workflows/lint.yml` are configured, but no run of them is claimed here. The load figures were not measured on another operating system.
++* Run on two systems: Windows with Python 3.13 (the Windows lock file) and Linux with Python 3.12 (a Docker container, the Linux lock file). The full test suite was run on both on 2026-11-12 (on an earlier commit, not named here; the commit of this tree was not run in full): Windows with Python 3.13 2449 passed, 15 skipped; Linux with Python 3.12 (a container) 2462 passed, 2 skipped; no test failed on either (the logs are not shipped). The skipped tests need another operating system, a tool that machine did not have, or the load measurement. Edits made after those runs changed only documentation and one test file, which was run on its own. The checks in `.github/workflows/lint.yml` are configured, but no run of them is claimed here. The load figures were not measured on another operating system.
+ * n8n crashing before the request reaches the desk. Other n8n versions or set-ups: no n8n-only result is claimed here: the n8n tries were one pattern, one computer, made-up data, tried once.
+ * Reminders (when the lead owner feature is on): a lead is reminded once after the wait if its step is still before `reminder_until`, even if its follow-up email has not been sent yet, because the reminder asks whether the lead moved on, not whether the email was sent. A lead created while the feature was off has no owner, step or reminder, and the step route answers `no_state` for it; only leads created after the switch are covered. A reminder is never sent a second time: one that failed or could not be confirmed is listed for a person.
+ * A person answering "not sent" wrongly for an UNKNOWN follow-up on a mail system that cannot recognise repeats (then a second email can go).
+diff --git a/docs/settings.md b/docs/settings.md
+index 8ac18b3..f36fa83 100644
+--- a/docs/settings.md
++++ b/docs/settings.md
+@@ -126,4 +126,5 @@ Fixed in code, not settings (`src/lead_desk/constants.py`): the SQLite busy wait
+ * `LEAD_DESK_LOAD_N` and `LEAD_DESK_LOAD_RETRY` are read only by one optional measurement test (`tests/test_server_hardening.py`, `test_measure_burst`): with `LEAD_DESK_LOAD_N=<number of simultaneous connections>` it fires that burst at a desk it starts itself and prints the status counts (`LEAD_DESK_LOAD_RETRY=1` lets the senders retry a refused connection); without `LEAD_DESK_LOAD_N` the test is skipped.
+ * `DPLD_REQUIRE_SCAN` and `GITLEAKS_BIN` are read only by two test files, `tests/test_hygiene.py` and `tests/test_gitleaks_exceptions.py` (the second takes both names from the first). `DPLD_REQUIRE_SCAN` acts on any non-empty value (even `0`): it makes a missing gitleaks program a failure and also scans the git history. `GITLEAKS_BIN` is the path of the gitleaks program (if it is not set, the program is looked up on `PATH`). A hand-run secret scan must start in the repository root (`gitleaks dir .`, as `.github/workflows/lint.yml` does): the allowance for the lock files (`requirements-*.txt`) and the workflow files in `.gitleaks.toml` is anchored at the root, so a scan given an absolute folder path reports them.
+ * `LEAD_DESK_PATH_ROOTS` (read by the load tools, `scripts/n8n_api.py import` and `tools/scrub_n8n_export.py`; not by the desk): extra folders, separated by `:` (`;` on Windows), where those tools may read and write the files named on their command line. Without it only the folder the tool was started in, the repository folder and the system temporary folder are allowed (`load_tools/README.md`). Not affected: `scripts/run_real_check.py`, which reads the config you give it from any folder (a file in a folder you can list), and the files named inside that config (`docs/real-services.md`, "Where the files may be").
++* `DPLD_REQUIRE_COUNT` is read only by `tests/test_docs_match_tools.py`. When the test collector's last line is not the plain `N tests collected in S seconds` (for example on a computer where a test file cannot be imported), the three tests that compare `docs/tests.md` with the collector skip. With `DPLD_REQUIRE_COUNT` set to any non-empty value (even `0`, as for `DPLD_REQUIRE_SCAN`) they fail instead, so a skip cannot hide a stale test count. CI sets it in `.github/workflows/lint.yml` and `.github/workflows/sonar.yml`.
+ * `DPLD_REQUIRE_DEMO` is read only by `tests/conftest.py`. With `DPLD_REQUIRE_DEMO=1` a checkout that has no `demo_only` folder stops the test run at the start (exit code 2) instead of skipping the test files that need it (CI sets it, so a lost folder cannot make the run look green). Without it a missing folder skips each such test file as one item and the other files still run.
+diff --git a/docs/tests.md b/docs/tests.md
+index 87fdde4..53641b5 100644
+--- a/docs/tests.md
++++ b/docs/tests.md
+@@ -23,7 +23,7 @@ The SonarQube job (`.github/workflows/sonar.yml`) also measures how much of the
+ 
+ The settings are in `pyproject.toml` (`[tool.coverage.run]`); the report `coverage.xml` is read by the SonarQube scan through `sonar.python.coverage.reportPaths`. The browser tests skip without Playwright, so the figure counts code that only they reach as not run.
+ 
+-The desk alone: `PYTHONPATH=src python -m lead_desk.server`. The crash scene (the demo servers must already be running, for example started with `python -m demo_only.fakes_server`): `PYTHONPATH=src:. python scripts/crash_desk.py` (the `.` is needed: a script started by its path does not see the repository folder, and the desk then stops with `the folder demo_only is missing`), then write a point name (for example `D2`) into the flag file it prints, and the next time the desk reaches that point it ends at once. On Windows set `PYTHONPATH` with `;` between the two entries (`src;.`). The tests set the path for their own processes. Writing `blind` instead of `keyed` in the start command starts a mail system that cannot recognise repeats.
++The desk alone: `PYTHONPATH=src python -m lead_desk.server`. The crash scene (the demo servers must already be running, for example started with `python -m demo_only.fakes_server`): `PYTHONPATH=src:. python scripts/crash_desk.py` (the `.` is needed: a script started by its path does not see the repository folder, and the desk then stops with `the folder demo_only is missing`), then write a point name (for example `D2`) into the flag file it prints, and the next time the desk reaches that point it ends at once. On Windows set `PYTHONPATH` with `;` between the two entries (`src;.`); the crash scene was not run on Windows, only the Linux form was. The tests set the path for their own processes. Writing `blind` instead of `keyed` in the start command starts a mail system that cannot recognise repeats.
+ 
+ The desk's settings (the `DESK_*` names, plus the extra names of the real-services script and `N8N_URL`, `N8N_API_KEY_FILE` and the `DPLD_*` names; n8n's own `N8N_PORT` and similar are in `docs/n8n-recipe.md`) are in `docs/settings.md`; the exit codes of the desk are in `docs/limits.md`.
+ 
+@@ -57,12 +57,12 @@ Measured on Linux with Python 3.12, one run, 2026-11-12: a new `.venv` with both
+ 
+ * **The Chromium build must match the Playwright version.** A "build" is the numbered release of the browser that Playwright downloads. Playwright 1.63.0, the version in the lock, looks for build 1243, which is what `playwright install chromium` fetches for it. A newer Playwright wants a newer build: the Playwright 1.65.1 package names build 1254 (both build numbers were read from the `playwright/driver/package/browsers.json` file inside each package on 2026-11-12). If only build 1243 is installed, a newer Playwright does not find its build and every browser test is skipped with a "BrowserType.launch: Executable doesn't exist" message. Keep the Playwright version in the lock and the installed build together.
+ * **Where the browser is not in the default place,** set `PLAYWRIGHT_BROWSERS_PATH` to the folder that holds it: the tests start the browser with no path of their own.
+-* **How many tests there are now, and how to count them:** `python -m pytest --collect-only -q` prints one line for each test (its full name) and, as its last line, `N tests collected in S seconds`. With `-qq` it prints one line for each test file instead (for example `tests/test_x.py: 8`), with no total line; the numbers on those lines add up to the same N. This tree holds 3989 tests in 97 test files (counted that way on Linux with Python 3.12 and the browser tools installed; a computer without them can print a different last line). `tests/test_docs_match_tools.py` runs both forms and fails when this sentence is out of date, so change the two numbers when you add or remove tests. The figures in the next bullets are older: each belongs to the commit it names, and none of them is the count of this tree.
++* **How many tests there are now, and how to count them:** `python -m pytest --collect-only -q` prints one line for each test (its full name) and, as its last line, `N tests collected in S seconds`. With `-qq` it prints one line for each test file instead (for example `tests/test_x.py: 8`), with no total line; the numbers on those lines add up to the same N. This tree holds 3993 tests in 97 test files (counted that way on Linux with Python 3.12 and the browser tools installed; a computer without them can print a different last line). `tests/test_docs_match_tools.py` runs both forms and fails when this sentence is out of date, so change the two numbers when you add or remove tests. The figures in the next bullets are older: each belongs to the commit it names, and none of them is the count of this tree.
+ * **Counts from earlier full runs, each on its own commit (Linux, Python 3.12):** without Playwright, 2349 passed and 116 skipped (two earlier review runs, on commits bee6fff4 and 43110e7; 2465 tests in all). With Playwright 1.63.0, the run on commit 43110e7 got 2 failed, 2460 passed and 3 skipped; the 2 failures were the two sidebar tests, which at that time needed Pillow. A run on commit 558d37f plus the earlier documentation fixes and this change's lock files, with Playwright, got 2462 passed and 3 skipped (2465 tests) in 958 s. The 3 skipped are: the secret scan in `tests/test_hygiene.py` (no `gitleaks` program installed), the load measurement (it runs only when `LEAD_DESK_LOAD_N` is set), and one test that runs only on Windows.
+ * **An earlier full run on this lock (2516 tests, not the count of this tree):** Linux, Python 3.12, commit 2ce1f98 (the head of the branch `pr-3-tests` on 2026-11-12, before the coverage commit 0841f36) plus this change (the two browser lock files, the sidebar test change and the allowance lines), Playwright 1.63.0, Chromium build 1243, Node 22 (v22.23.4), no `gitleaks` program on the path, one serial process, 2516 tests: 2513 passed and 3 skipped in 16 minutes 33 seconds (993 s), no failure. The 3 skipped are the same three as above. The two sidebar tests pass in it: the browser reads the screenshot's pixels itself and no image library is installed. **Why 2462 became 2513:** commit 2ce1f98 holds 51 more tests than 558d37f (2516 against 2465, both counted with `python -m pytest --collect-only -q`): 49 in the new file `tests/test_except_clause_hierarchy.py`, 1 more in `tests/test_lead_crm_copy.py` and 1 more in `tests/test_portal_mode.py` (2465 + 51 = 2516; 2462 + 51 = 2513). Commit 0841f36 (the coverage settings) collects the same 2516 tests. That commit was not run in full. It adds a `[tool.coverage.run]` section in `pyproject.toml`, which only the `coverage` program reads, and it edits `exceptions.txt` and `.gitleaks.toml`, which `tests/test_hygiene.py` reads; it changes no other test or test setting. The hygiene tests were run with a real `gitleaks` program on the final tree and passed (10 tests passed with gitleaks 8.30.1 and DPLD_REQUIRE_SCAN=1).
+ * **Skips reported without Playwright (eight test files, 0841f36 plus this change):** the eight files are `test_mode_safety.py`, `test_portal_browser.py`, `test_portal_lead_pages.py`, `test_portal_mode.py`, `test_portal_wording_and_masking.py`, `test_portal_layout.py`, `test_portal_look.py` and `test_stage_confirm_browser.py`. Two runs, 2026-11-12, one process each, Python 3.12, no Playwright installed: with Node on the path, **114 passed and 113 skipped** (82.7 s and 83.0 s in two runs); with Node not on the path, **92 passed and 135 skipped** (80.6 s). The difference, 22 tests (114 - 92), is the set of tests that need Node: 1 in `test_mode_safety.py` (line 174), 2 in `test_portal_lead_pages.py` (line 488, "no node") and 19 in `test_portal_mode.py`. The 113 browser skips are counted by the line where the skip is reported, not by test file (22 at line 109 of `test_mode_safety.py`, 28 at line 27 of `test_portal_browser.py`, 60 at line 113 of `test_portal_lead_pages.py`, 3 in `test_portal_wording_and_masking.py` at lines 171, 204 and 257; the helper functions that skip sit in those files, so tests from other browser files are counted there too).
+ * **No full run without Node was done on this commit.** The only complete runs are the ones named above, all with Node on the path. Nothing in this document is a measured full-suite count for a computer without Node. To measure it, run on a computer with the lock installed (Linux bash; give that one command a `PATH` that does not hold the folder with Node, for example `PATH=$(dirname "$(command -v python)") python -m pytest -q -rs`, then check that `command -v node` prints nothing under that `PATH`). The number of "node is not installed" and "no node" lines in its output, 22 for the eight files, shows how many tests were skipped for that reason.
+-* **A count of 2329 passed and 135 skipped (from the project owner's own computer):** its cause is not known, and no figure here confirms it. The nearest fit, as an inference only, is a run without Node on the path (Node missing skips 22 tests in the eight files above), but the totals do not match a full run of this commit (2516 tests; 2329 + 135 = 2464), so the two numbers are not reconciled. What is unknown: that computer's operating system, whether `gitleaks` was installed there, whether Node was present, and the exact commit. If you see a count near 2329/135, run `python -m pytest -q -rs` and look for "node is not installed".
++* **A count of 2329 passed and 135 skipped (from the project owner's own computer):** its cause is not known, and no figure here confirms it. The nearest fit, as an inference only, is a run without Node on the path (Node missing skips 22 tests in the eight files above), but the totals do not match a full run of an earlier commit (2516 tests there, not the count of this tree; 2329 + 135 = 2464), so the two numbers are not reconciled. What is unknown: that computer's operating system, whether `gitleaks` was installed there, whether Node was present, and the exact commit. If you see a count near 2329/135, run `python -m pytest -q -rs` and look for "node is not installed".
+ 
+ ## Quality checks and what to do when a check fails
+ 
+@@ -100,7 +100,7 @@ The table below says which tests show each promise. "Tests named" means the test
+ 
+ | # | Promise, in plain words | Tests that show it |
+ |---|---|---|
+-| P1 | (a) A second submission with a different request number and the same email is recorded as a duplicate with the NAMES of the fields that differ; no second CRM row, no second email. (b) The same request number sent again gets the original answer marked `replayed` and changes nothing. | (a) `test_cross_source_dupe`, `test_dupe_diff_first_untouched`, `test_write_once_triggers`; (b) `test_replay_same_source_ref`, `test_concurrent_same_source_ref` |
++| P1 | (a) A second submission with a different request number and the same email is recorded as a duplicate with the NAMES of the fields that differ; no second CRM row, no second email. (b) The same request number sent again gets the original answer marked `replayed`: no second lead and no second email (it only uses one receipt number and adds one to that request's count of arrivals). | (a) `test_cross_source_dupe`, `test_dupe_diff_first_untouched`, `test_write_once_triggers`; (b) `test_replay_same_source_ref`, `test_concurrent_same_source_ref` |
+ | P2 | A duplicate never reaches the AI step: the demo AI's call counter does not go up for it. | `test_dedupe_before_ai` |
+ | P3 | A submission with no name, no email, an invalid email or a wrongly typed field goes to the review list with a reason and gets no follow-up. | `test_incomplete_to_review` |
+ | P4 | Stopped at each crash point and restarted: in these tests no run produced more than one lead, more than one CRM row or more than one email (see the crash-point table for what a blind CRM or mail system does). A wrong "not sent" answer by a person can cause a second email on a blind mail system. | `test_crash_resume_each_point` and `test_crash_resume_after_*` in `tests/test_flow.py`: together they stop the desk at each of the ten crash points, with keyed and with blind mail systems (C0 and C1 also with keyed and blind CRMs); real kills: `tests/test_http.py::test_crash_d2_subprocess` (keyed and blind, demo mail over HTTP), `test_crash_d2_subprocess_with_*` in `tests/test_http.py` (real mail catcher) |
+diff --git a/load_tools/README.md b/load_tools/README.md
+index 9ad5402..c9527e9 100644
+--- a/load_tools/README.md
++++ b/load_tools/README.md
+@@ -14,20 +14,27 @@ Not covered, on purpose: `scripts/run_real_check.py` reads its config from any f
+ 
+ ## A whole run, start to finish (Linux, bash, from the repository root)
+ 
+-This is the run the checks were written for: the desk sends its mail to the catcher, the load driver sends made-up leads, and the checks read what the desk, the catcher and the demo CRM hold afterwards. It was run as written (30 requests, all seven checks held). Every file stays in `data/load/` (the `data/` folder is git-ignored and inside the repository, which is where the tools accept paths).
++This is the run the checks were written for: the desk sends its mail to the catcher, the load driver sends made-up leads, and the checks read what the desk, the catcher and the demo CRM hold afterwards. It was run once as written on 2026-11-13 (UTC) on one Linux computer with no network except loopback: the driver sent 30 requests (24 different request numbers, because 6 were repeats), the desk made 21 leads and sent 21 emails to the catcher, and all seven checks held (exit code 0). That run is not repeated by any test, so a later change to a tool can make this recipe out of date without a red test.
++
++The recipe is safe to start next to the "Try it" demo of the main README: it uses its own ports (desk 18765, demo CRM 18766, catcher 12525) and its own desk book `data/load/desk.sqlite3`, and its first line deletes the folder `data/load` (git-ignored, inside the repository, which is where the tools accept paths) so that no earlier book or log is mixed in. Each server is waited for (up to 20 seconds) before the next step; if a line prints `no answer from <address>`, stop the programs with `kill $(jobs -p)` and read the logs in `data/load`. The run takes a few seconds.
+ 
+     export PYTHONPATH=src:.
+-    mkdir -p data/load
+-    python load_tools/catcher.py --out data/load/mail.jsonl --port 2525 > data/load/catcher.log 2>&1 &
+-    python -m demo_only.fakes_server --outbox keyed --port 8766 > data/load/fakes.log 2>&1 &
+-    DESK_OUTBOX=smtp DESK_SMTP_PORT=2525 python -m lead_desk.server > data/load/desk.log 2>&1 &
+-    python -m load_tools.load_driver --base-url http://127.0.0.1:8765 --scenario dupmix:30:0.3 --log data/load/req.jsonl
+-    curl -s http://127.0.0.1:8765/counts      # repeat until "pending_followups" is 0: the desk has finished every follow-up
+-    curl -s http://127.0.0.1:8766/fake/crm > data/load/crm.json
++    rm -rf data/load && mkdir -p data/load                    # a fresh folder, so no earlier book or log is mixed in
++    wait_for() { for i in $(seq 1 20); do curl -sf "$1" >/dev/null 2>&1 && return 0; sleep 1; done; echo "no answer from $1" >&2; return 1; }
++    python load_tools/catcher.py --out data/load/mail.jsonl --port 12525 > data/load/catcher.log 2>&1 &
++    python -m demo_only.fakes_server --outbox keyed --port 18766 > data/load/fakes.log 2>&1 &
++    wait_for http://127.0.0.1:18766/fake/crm
++    DESK_DB_PATH=data/load/desk.sqlite3 DESK_PORT=18765 DESK_FAKES_URL=http://127.0.0.1:18766 DESK_OUTBOX=smtp DESK_SMTP_HOST=127.0.0.1 DESK_SMTP_PORT=12525 python -m lead_desk.server > data/load/desk.log 2>&1 &
++    wait_for http://127.0.0.1:18765/counts
++    python -m load_tools.load_driver --base-url http://127.0.0.1:18765 --scenario dupmix:30:0.3 --log data/load/req.jsonl
++    for i in $(seq 1 60); do curl -s http://127.0.0.1:18765/counts | grep -q '"pending_followups": 0' && break; sleep 1; done; curl -s http://127.0.0.1:18765/counts
++    curl -s http://127.0.0.1:18766/fake/crm > data/load/crm.json
+     : > data/load/model.jsonl
+-    python -m load_tools.check_invariants --requests data/load/req.jsonl --book data/desk.sqlite3 --catcher data/load/mail.jsonl --crm data/load/crm.json --model-log data/load/model.jsonl
++    python -m load_tools.check_invariants --requests data/load/req.jsonl --book data/load/desk.sqlite3 --catcher data/load/mail.jsonl --crm data/load/crm.json --model-log data/load/model.jsonl
++    echo "check_invariants exit code: $?"
++    kill $(jobs -p)
+ 
+-Why each part is there: `DESK_OUTBOX=smtp` makes the desk send real mail messages (to the catcher on this computer) instead of calling the demo mail stand-in, so the catcher log can show what arrived; the demo CRM stand-in (started by `demo_only.fakes_server`) still receives the CRM calls, and `/fake/crm` is its dump for check 4. The empty `model.jsonl` is right for this run: the desk uses the pre-written model answers, so there is no model call to record and check 5 reports 0 calls for 0 leads (to see real call counts, start the fake model server described below with `--call-log` and point the desk at it). The checks print a table and then a JSON result; the exit code is 0 only when all seven hold. When you are done, stop the three background programs (`kill %1 %2 %3` in the same shell). To run again against the same desk book, give the driver a new `--id-prefix` (see Scenarios below).
++Why each part is there: `DESK_OUTBOX=smtp` makes the desk send real mail messages (to the catcher on this computer) instead of calling the demo mail stand-in, so the catcher log can show what arrived; the demo CRM stand-in (started by `demo_only.fakes_server`) still receives the CRM calls, and `/fake/crm` is its dump for check 4. The empty `model.jsonl` is right for this run: the desk uses the pre-written model answers, so there is no model call to record and check 5 reports 0 calls for 0 leads (to see real call counts, start the fake model server described below with `--call-log` and point the desk at it). The checks print a table and then a JSON result; the exit code is 0 only when all seven hold. The last line stops the three background programs. To run again against the same desk book, give the driver a new `--id-prefix` (see Scenarios below); the recipe above starts from a fresh folder each time.
+ 
+ ## Input and output formats (the contract between the tools)
+ 
+diff --git a/scripts/crash_desk.py b/scripts/crash_desk.py
+index 8f61393..85a0877 100644
+--- a/scripts/crash_desk.py
++++ b/scripts/crash_desk.py
+@@ -1,8 +1,8 @@
+ """Run the desk so that it can be stopped on purpose at one named moment (used to try the crash recovery by hand).
+ 
+ Run from the repository root, with the demo servers already running:  PYTHONPATH=src:. python scripts/crash_desk.py
+-(on Windows: set PYTHONPATH=src;. first). The `.` is needed: a script started by its path does not see the repository
+-folder, and without it the desk stops with "the folder demo_only is missing".
++(on Windows: set PYTHONPATH=src;. first; only the Linux form was run). The `.` is needed: a script started by
++its path does not see the repository folder, and without it the desk stops with "the folder demo_only is missing".
+ It starts the normal desk with the shared crash hook. Nothing happens until you create the flag file; its content is
+ one point name from lead_desk.hooks.ALL_HOOK_POINTS. The next time the desk reaches that point it prints
+ "simulate crash" and ends the process at once with exit code 137 (like a power cut), and the flag file is removed.
+diff --git a/tests/test_docs_match_tools.py b/tests/test_docs_match_tools.py
+index 8d624c5..4897ad9 100644
+--- a/tests/test_docs_match_tools.py
++++ b/tests/test_docs_match_tools.py
+@@ -7,6 +7,7 @@ Made-up data only."""
+ 
+ from __future__ import annotations
+ 
++import ntpath
+ import os
+ import re
+ import subprocess
+@@ -48,6 +49,22 @@ def _collect(flag: str) -> list[str]:
+     return [line for line in done.stdout.splitlines() if line.strip()]
+ 
+ 
++# set to any non-empty value: a skipped count check is then a failure (docs/settings.md)
++REQUIRE_COUNT_ENV = "DPLD_REQUIRE_COUNT"
++
++
++def _plain_total_or_skip(last: str) -> re.Match[str]:
++    """The match of the plain total line, or (no switch set) a skip, or (switch set) a failure: a skip must not hide
++    a stale number in docs/tests.md in the run that is meant to catch it."""
++    match = TOTAL_LINE.match(last)
++    if match is None:
++        message = f"the last line is not the plain total on this computer: {last!r}"
++        if os.environ.get(REQUIRE_COUNT_ENV):
++            pytest.fail(f"{message} (and {REQUIRE_COUNT_ENV} is set, so this is not a skip)")
++        pytest.skip(message)
++    return match
++
++
+ @pytest.fixture(scope="module")
+ def collected_q() -> list[str]:
+     return _collect("-q")
+@@ -59,10 +76,7 @@ def collected_qq() -> list[str]:
+ 
+ 
+ def test_the_q_form_prints_one_line_per_test_and_a_total_as_its_last_line(collected_q: list[str]) -> None:
+-    last = collected_q[-1]
+-    match = TOTAL_LINE.match(last)
+-    if match is None:  # a module that cannot be imported here (no browser tools) changes the wording of this line
+-        pytest.skip(f"the last line is not the plain total on this computer: {last!r}")
++    match = _plain_total_or_skip(collected_q[-1])  # an unusable module (no browser tools) can change this line
+     assert len(collected_q) - 1 == int(match.group(1))  # one line per test, then the total
+     assert all("::" in line for line in collected_q[:-1])
+     assert "one line for each test" in TESTS_PAGE and "`N tests collected in S seconds`" in TESTS_PAGE
+@@ -74,10 +88,11 @@ def test_the_qq_form_prints_one_line_per_file_whose_numbers_add_up_and_no_total(
+     files = [FILE_LINE.match(line) for line in collected_qq]
+     assert all(files), [line for line, m in zip(collected_qq, files, strict=True) if m is None][:3]
+     assert not any("collected" in line for line in collected_qq)  # no total line in this form
+-    match = TOTAL_LINE.match(collected_q[-1])
+-    if match is None:
+-        pytest.skip("the plain total is not printed on this computer")
++    match = _plain_total_or_skip(collected_q[-1])
+     assert sum(int(m.group(2)) for m in files if m) == int(match.group(1))
++    # the page says what this form prints, in the words the reader will look for
++    assert "`-qq` it prints one line for each test file instead" in TESTS_PAGE
++    assert "with no total line" in TESTS_PAGE
+ 
+ 
+ def test_the_page_states_the_number_of_tests_and_files_that_the_collector_counts(
+@@ -85,11 +100,12 @@ def test_the_page_states_the_number_of_tests_and_files_that_the_collector_counts
+ ) -> None:
+     said = COUNT_SENTENCE.search(TESTS_PAGE)
+     assert said is not None, "docs/tests.md must say 'This tree holds N tests in M test files'"
+-    match = TOTAL_LINE.match(collected_q[-1])
+-    if match is None:
+-        pytest.skip(f"the last line is not the plain total on this computer: {collected_q[-1]!r}")
+-    assert int(said.group(1)) == int(match.group(1)), "docs/tests.md: the test count is out of date"
+-    assert int(said.group(2)) == len(collected_qq), "docs/tests.md: the test file count is out of date"
++    match = _plain_total_or_skip(collected_q[-1])
++    assert (int(said.group(1)), int(said.group(2))) == (int(match.group(1)), len(collected_qq)), (
++        f"docs/tests.md is out of date: it says {said.group(1)} tests in {said.group(2)} test files, the collector"
++        f" counts {match.group(1)} tests in {len(collected_qq)} test files; change the sentence to"
++        f" 'This tree holds {match.group(1)} tests in {len(collected_qq)} test files'"
++    )
+ 
+ 
+ def _documented_python_path(text: str) -> str:
+@@ -102,6 +118,17 @@ def test_the_two_texts_that_start_the_crash_script_name_the_same_path() -> None:
+     assert _documented_python_path(TESTS_PAGE) == _documented_python_path(CRASH_SCRIPT)
+ 
+ 
++def test_the_windows_form_is_the_linux_form_with_semicolons_and_is_said_to_be_unrun() -> None:
++    """The Windows form is not run here: the test pins only that its text is the Linux entries joined by `;` (the
++    separator of ntpath, which is what Windows uses) and that both texts say only the Linux form was run."""
++    entries = _documented_python_path(TESTS_PAGE).split(":")
++    windows = ";".join(entries)
++    assert ntpath.pathsep == ";" and windows == "src;."
++    assert f"(`{windows}`)" in TESTS_PAGE and f"set PYTHONPATH={windows} first" in CRASH_SCRIPT
++    assert "was not run on Windows, only the Linux form was" in TESTS_PAGE
++    assert "only the Linux form was run" in CRASH_SCRIPT
++
++
+ def test_the_crash_script_starts_with_the_path_the_page_gives(env, tmp_path: Path) -> None:
+     """Start it as the page says (relative path entries, the repository as the working folder), arm the flag file and
+     see the real stop at point D2. The old text said `PYTHONPATH=src`; then the desk stops with `the folder demo_only
+@@ -152,10 +179,52 @@ def test_the_probe_checks_the_token_variable_name_only_when_calls_are_confirmed(
+ ) -> None:
+     """docs/hubspot-probe.md: `--plan` does not look at the name; with `--yes-spend-calls` a bad name is refused and
+     never printed. No call is made in any of the three runs."""
+-    bad = "not a name"
++    bad = "qzx9 not-a-name 7kv"
+     assert hp.main(["--plan", "--token-env", bad]) == hp.EXIT_OK
+     assert hp.main(["--token-env", bad]) == hp.EXIT_REFUSED  # refused earlier, for the missing confirmation
+     assert hp.main(["--yes-spend-calls", str(hp.PLANNED_CALLS), "--token-env", bad]) == hp.EXIT_REFUSED
+     out = capsys.readouterr().out
+     assert "must be the NAME of an environment variable" in out and bad not in out
+     assert "`--plan` does not look at the name" in PROBE_PAGE
++
++
++def _page_lines() -> list[tuple[str, str]]:
++    names = ["README.md", "versions.md", "load_tools/README.md"]
++    pages = [REPO / n for n in names] + sorted((REPO / "docs").glob("*.md"))
++    return [(p.name, line) for p in pages for line in p.read_text(encoding="utf-8").splitlines()]
++
++
++def test_no_page_says_that_sending_a_request_again_changes_nothing() -> None:
++    """The desk gives the stored answer, but it also uses up one receipt number and adds one to that request's count
++    of arrivals (`receipts.attempts`), so "changes nothing" on a line about a repeated request is wrong (the README
++    said it in four places and docs/tests.md in one)."""
++    about_repeat = re.compile(r"replay|sent again|same request|comes again|came again|again gets", re.IGNORECASE)
++    claim = re.compile(r"changes? nothing|nothing changes", re.IGNORECASE)
++    bad = [(n, line[:80]) for n, line in _page_lines() if about_repeat.search(line) and claim.search(line)]
++    assert not bad, bad
++    assert "It only uses one receipt number and adds one to that request's count of arrivals" in README
++    assert "it only uses one receipt number and adds one to that request's count of arrivals" in TESTS_PAGE
++
++
++def test_every_old_test_count_is_named_as_from_an_earlier_commit() -> None:
++    """The count of this tree comes from the collector (the test above); a figure from an older run must say so on the
++    same line, or a reader takes it for the number of tests today."""
++    old = re.compile(r"\b(2516|2465|2464)\b")
++    marked = re.compile(r"earlier (commit|full run|full runs)", re.IGNORECASE)
++    bad = [(n, line[:80]) for n, line in _page_lines() if old.search(line) and not marked.search(line)]
++    assert not bad, bad
++    for name in ("versions.md", "docs/limits.md"):  # dated pass counts name what they were run on
++        text = (REPO / name).read_text(encoding="utf-8")
++        assert "on an earlier commit, not named here" in text, name
++
++
++def test_the_load_tools_recipe_has_its_own_book_and_ports_and_waits_for_each_server() -> None:
++    """load_tools/README.md "A whole run": it must not touch the desk book or the ports of the README's "Try it"
++    run (a book with other leads fails the checks), and it must wait for each server before the next step."""
++    text = (REPO / "load_tools" / "README.md").read_text(encoding="utf-8")
++    assert "rm -rf data/load && mkdir -p data/load" in text
++    assert "DESK_DB_PATH=data/load/desk.sqlite3" in text and "--book data/load/desk.sqlite3" in text
++    assert "DESK_PORT=18765" in text and "wait_for http://127.0.0.1:18765/counts" in text
++    assert "wait_for http://127.0.0.1:18766/fake/crm" in text
++    assert "data/desk.sqlite3" not in text and "8765/" not in text.replace("18765/", "")
++    assert "It was run once as written on 2026-11-13" in text and "is not repeated by any test" in text
+diff --git a/versions.md b/versions.md
+index 59df0fb..9dbb1e6 100644
+--- a/versions.md
++++ b/versions.md
+@@ -6,7 +6,7 @@ The versions the demo was run with, on one Windows computer. Nothing here is a c
+ | Item | Value | How read |
+ |---|---|---|
+ | Python used on the Windows computer | 3.13.3 (MSC v.1943, 64 bit) | `python --version` |
+-| Python required | 3.12 or newer (`requires-python`). 3.12 is the lowest version the package allows; the full test suite was run on 2026-11-12: Windows with Python 3.13 2449 passed, 15 skipped; Linux with Python 3.12 (a container) 2462 passed, 2 skipped; no test failed on either (the logs are not shipped). The skipped tests need another operating system, a tool that machine did not have, or the load measurement. Edits made after those runs changed only documentation and one test file, which was run on its own. | pyproject.toml |
++| Python required | 3.12 or newer (`requires-python`). 3.12 is the lowest version the package allows; the full test suite was run on 2026-11-12 (on an earlier commit, not named here; the commit of this tree was not run in full): Windows with Python 3.13 2449 passed, 15 skipped; Linux with Python 3.12 (a container) 2462 passed, 2 skipped; no test failed on either (the logs are not shipped). The skipped tests need another operating system, a tool that machine did not have, or the load measurement. Edits made after those runs changed only documentation and one test file, which was run on its own. | pyproject.toml |
+ | SQLite library | 3.49.1 (needs 3.24 or newer for `ON CONFLICT ... DO UPDATE`) | `sqlite3.sqlite_version` |
+ | Runtime dependencies | none (Python standard library only) | pyproject.toml |
+ 

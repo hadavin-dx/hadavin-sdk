@@ -1,0 +1,304 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+........................................................................ [ 20%]
+...........F.F.......................................................... [ 41%]
+........................................................................ [ 62%]
+..................................................FFF................... [ 83%]
+.....................................FF..FFFF.FF........                 [100%]
+=================================== FAILURES ===================================
+______________ test_the_committed_page_equals_what_the_data_gives ______________
+
+    def test_the_committed_page_equals_what_the_data_gives():
+        page = ROOT / pp.PAGE
+        assert page.is_file(), f"{pp.PAGE} is missing: run `python tools/policy_page.py --write`"
+        assert page.read_text(encoding="utf-8") == pp.page(ROOT), (
+            f"{pp.PAGE} differs from the data: run `python tools/policy_page.py --write` and commit"
+        )
+>       assert pp.main(["--check"]) == 0
+E       AssertionError: assert 1 == 0
+E        +  where 1 = <function main at 0x7fb31da32160>(['--check'])
+E        +    where <function main at 0x7fb31da32160> = pp.main
+
+tests/test_policy_guard.py:1718: AssertionError
+----------------------------- Captured stderr call -----------------------------
+policy page: PENDING_NAMES ('secrets/vault', 'never:{mount}/undelete/*') is overdue (review_by 2026-12-11): an evidence run that finds the path in the listed sources, then set `verified` and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it
+policy page: PENDING_NAMES ('secrets/vault', 'never:{mount}/subkeys/*') is overdue (review_by 2026-12-11): an evidence run that finds the path in the listed sources, then set `verified` and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it
+policy page: PENDING_NAMES ('signer/vault_transit', 'never:{transit_mount}/byok-export/*') is overdue (review_by 2026-12-11): an evidence run that finds the path in the listed sources, then set `verified` and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it
+policy page: PENDING_NAMES ('source/kubernetes', 'never:cluster-admin') is overdue (review_by 2026-12-11): an evidence run that finds the name in source K-SRC, then set `verified` and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it
+policy page: PENDING_NAMES ('source/kubernetes', 'never:admin') is overdue (review_by 2026-12-11): an evidence run that finds the name in source K-SRC, then set `verified` and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it
+policy page: PENDING_NAMES ('source/kubernetes', 'never:edit') is overdue (review_by 2026-12-11): an evidence run that finds the name in source K-SRC, then set `verified` and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it
+policy page: PENDING_CLAIMS ('secrets/vault', 'R17') is overdue (review_by 2026-12-11): an evidence run that reads the sources named in the fixture header, then set `claims_unverified` to () and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it
+policy page: PENDING_CLAIMS ('signer/vault_transit', 'R18') is overdue (review_by 2026-12-11): an evidence run that reads the sources named in the fixture header, then set `claims_unverified` to () and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it
+policy page: PENDING_CLAIMS ('source/kubernetes', 'R20') is overdue (review_by 2026-12-11): an evidence run that reads the sources named in the fixture header, then set `claims_unverified` to () and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it
+policy page: PENDING_CLAIMS ('source/kubernetes', 'R21') is overdue (review_by 2026-12-11): an evidence run that reads the sources named in the fixture header, then set `claims_unverified` to () and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it
+policy page: PENDING_CLAIMS ('source/kubernetes', 'R22') is overdue (review_by 2026-12-11): an evidence run that reads the sources named in the fixture header, then set `claims_unverified` to () and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it
+policy page: PENDING_CLAIMS ('source/kubernetes', 'free:0') is overdue (review_by 2026-12-11): an evidence run that reads the sources named in the fixture header, then set `claims_unverified` to () and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it
+policy page: PENDING_CLAIMS ('source/kubernetes', 'never:create') is overdue (review_by 2026-12-11): an evidence run that reads the sources named in the fixture header, then set `claims_unverified` to () and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it
+_________ test_plant_a_page_that_differs_from_the_data_fails_the_check _________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9148/test_plant_a_page_that_differs0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fb31d9852b0>
+capsys = <_pytest.capture.CaptureFixture object at 0x7fb31c797770>
+
+    def test_plant_a_page_that_differs_from_the_data_fails_the_check(tmp_path, monkeypatch, capsys):
+        (tmp_path / "docs").mkdir()
+        (tmp_path / pp.PAGE).write_text(pp.page(ROOT) + "edited by hand\n", encoding="utf-8")
+        monkeypatch.setattr(pp, "ROOT", tmp_path)
+        assert pp.main(["--check"]) == 1
+>       assert "differs from the data" in capsys.readouterr().err
+E       assert 'differs from the data' in "policy page: PENDING_NAMES ('secrets/vault', 'never:{mount}/undelete/*') is overdue (review_by 2026-12-11): an eviden...finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it\n"
+E        +  where "policy page: PENDING_NAMES ('secrets/vault', 'never:{mount}/undelete/*') is overdue (review_by 2026-12-11): an eviden...finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it\n" = CaptureResult(out='', err="policy page: PENDING_NAMES ('secrets/vault', 'never:{mount}/undelete/*') is overdue (review...inished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it\n").err
+E        +    where CaptureResult(out='', err="policy page: PENDING_NAMES ('secrets/vault', 'never:{mount}/undelete/*') is overdue (review...inished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it\n") = readouterr()
+E        +      where readouterr = <_pytest.capture.CaptureFixture object at 0x7fb31c797770>.readouterr
+
+tests/test_policy_guard.py:1745: AssertionError
+___ test_the_data_of_this_repository_breaks_no_rule_the_command_line_checks ____
+
+    def test_the_data_of_this_repository_breaks_no_rule_the_command_line_checks():
+>       assert pp.data_problems(ROOT) == []
+E       assert ['PENDING_NAM...fter it', ...] == []
+E         
+E         Left contains 13 more items, first extra item: "PENDING_NAMES ('secrets/vault', 'never:{mount}/undelete/*') is overdue (review_by 2026-12-11): an evidence run that f...e finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it"
+E         Use -v to get more diff
+
+tests/test_policy_guard.py:2611: AssertionError
+_ test_plant_m10_check_reports_each_data_problem_in_one_line_with_exit_code_1 __
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9148/test_plant_m10_check_reports_e0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fb31cab77e0>
+capsys = <_pytest.capture.CaptureFixture object at 0x7fb31cb339d0>
+
+    def test_plant_m10_check_reports_each_data_problem_in_one_line_with_exit_code_1(
+        tmp_path, monkeypatch, capsys
+    ):
+        root = _tree(tmp_path)
+>       assert pp.data_problems(root) == []
+E       assert ['PENDING_NAM...fter it', ...] == []
+E         
+E         Left contains 13 more items, first extra item: "PENDING_NAMES ('secrets/vault', 'never:{mount}/undelete/*') is overdue (review_by 2026-12-11): an evidence run that f...e finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it"
+E         Use -v to get more diff
+
+tests/test_policy_guard.py:2618: AssertionError
+_______ test_m10_write_makes_a_missing_docs_folder_and_check_then_passes _______
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9148/test_m10_write_makes_a_missing0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fb31cab7e00>
+
+    def test_m10_write_makes_a_missing_docs_folder_and_check_then_passes(tmp_path, monkeypatch):
+        monkeypatch.setattr(pp, "ROOT", tmp_path)
+        assert not (tmp_path / "docs").exists()
+>       assert pp.main(["--write"]) == 0 and pp.main(["--check"]) == 0
+E       AssertionError: assert (1 == 0)
+E        +  where 1 = <function main at 0x7fb31da32160>(['--write'])
+E        +    where <function main at 0x7fb31da32160> = pp.main
+
+tests/test_policy_guard.py:2676: AssertionError
+----------------------------- Captured stderr call -----------------------------
+policy page: PENDING_NAMES ('secrets/vault', 'never:{mount}/undelete/*') is overdue (review_by 2026-12-11): an evidence run that finds the path in the listed sources, then set `verified` and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it
+policy page: PENDING_NAMES ('secrets/vault', 'never:{mount}/subkeys/*') is overdue (review_by 2026-12-11): an evidence run that finds the path in the listed sources, then set `verified` and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it
+policy page: PENDING_NAMES ('signer/vault_transit', 'never:{transit_mount}/byok-export/*') is overdue (review_by 2026-12-11): an evidence run that finds the path in the listed sources, then set `verified` and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it
+policy page: PENDING_NAMES ('source/kubernetes', 'never:cluster-admin') is overdue (review_by 2026-12-11): an evidence run that finds the name in source K-SRC, then set `verified` and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it
+policy page: PENDING_NAMES ('source/kubernetes', 'never:admin') is overdue (review_by 2026-12-11): an evidence run that finds the name in source K-SRC, then set `verified` and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it
+policy page: PENDING_NAMES ('source/kubernetes', 'never:edit') is overdue (review_by 2026-12-11): an evidence run that finds the name in source K-SRC, then set `verified` and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it
+policy page: PENDING_CLAIMS ('secrets/vault', 'R17') is overdue (review_by 2026-12-11): an evidence run that reads the sources named in the fixture header, then set `claims_unverified` to () and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it
+policy page: PENDING_CLAIMS ('signer/vault_transit', 'R18') is overdue (review_by 2026-12-11): an evidence run that reads the sources named in the fixture header, then set `claims_unverified` to () and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it
+policy page: PENDING_CLAIMS ('source/kubernetes', 'R20') is overdue (review_by 2026-12-11): an evidence run that reads the sources named in the fixture header, then set `claims_unverified` to () and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it
+policy page: PENDING_CLAIMS ('source/kubernetes', 'R21') is overdue (review_by 2026-12-11): an evidence run that reads the sources named in the fixture header, then set `claims_unverified` to () and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it
+policy page: PENDING_CLAIMS ('source/kubernetes', 'R22') is overdue (review_by 2026-12-11): an evidence run that reads the sources named in the fixture header, then set `claims_unverified` to () and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it
+policy page: PENDING_CLAIMS ('source/kubernetes', 'free:0') is overdue (review_by 2026-12-11): an evidence run that reads the sources named in the fixture header, then set `claims_unverified` to () and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it
+policy page: PENDING_CLAIMS ('source/kubernetes', 'never:create') is overdue (review_by 2026-12-11): an evidence run that reads the sources named in the fixture header, then set `claims_unverified` to () and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it
+_ test_a_byte_order_mark_is_read_the_same_by_the_row_the_id_and_the_claim_parsers _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9148/test_a_byte_order_mark_is_read0')
+
+    def test_a_byte_order_mark_is_read_the_same_by_the_row_the_id_and_the_claim_parsers(tmp_path):
+        for first in ("# BUILDER-ONLY:", "# CLAIM-READ-BY-BUILDER:", "V-POL | "):
+            root = _tree(tmp_path / first[:6].strip("#| "))
+            plain_rows = pp.source_ids(root)
+            lines = _head(root).split("\n")
+            moved = next(ln for ln in lines if ln.startswith(first))
+            lines.remove(moved)
+            (root / pp.SOURCES).write_bytes("\n".join([moved, *lines]).encode("utf-8-sig"))
+            assert (root / pp.SOURCES).read_bytes().startswith(b"\xef\xbb\xbf")
+>           assert pp.data_problems(root) == [], (
+                f"a file with a byte-order mark before `{first}` is refused somewhere"
+            )
+E           AssertionError: a file with a byte-order mark before `# BUILDER-ONLY:` is refused somewhere
+E           assert ['PENDING_NAM...fter it', ...] == []
+E             
+E             Left contains 13 more items, first extra item: "PENDING_NAMES ('secrets/vault', 'never:{mount}/undelete/*') is overdue (review_by 2026-12-11): an evidence run that f...e finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it"
+E             Use -v to get more diff
+
+tests/test_policy_guard.py:3815: AssertionError
+_ test_the_check_command_reports_a_name_or_claim_with_no_dated_entry_and_a_stale_or_overdue_entry _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fb31c8d27b0>
+capsys = <_pytest.capture.CaptureFixture object at 0x7fb31cb32fd0>
+
+    def test_the_check_command_reports_a_name_or_claim_with_no_dated_entry_and_a_stale_or_overdue_entry(
+        monkeypatch, capsys
+    ):
+        monkeypatch.setattr(pp, "PENDING_NAMES", {})
+        code, lines = _check(monkeypatch, capsys, ROOT)
+>       assert code == 1 and len(lines) == len(PENDING_NAMES), lines
+E       AssertionError: ['policy page: secrets/vault never:{mount}/subkeys/*: the name is not found in a vendor source (verified is None) and ...ubernetes never:edit: the name is not found in a vendor source (verified is None) and has no PENDING_NAMES entry', ...]
+E       assert (1 == 1 and 13 == 6)
+E        +  where 13 = len(['policy page: secrets/vault never:{mount}/subkeys/*: the name is not found in a vendor source (verified is None) and ...ubernetes never:edit: the name is not found in a vendor source (verified is None) and has no PENDING_NAMES entry', ...])
+E        +  and   6 = len({('secrets/vault', 'never:{mount}/undelete/*'): Pending(reason='the path was read in the vendor source by the builder ...et `verified` and delete this entry', decided=datetime.date(2026, 11, 11), review_by=datetime.date(2026, 12, 11)), ...})
+
+tests/test_policy_guard.py:3833: AssertionError
+_ test_a_missing_marks_line_in_the_head_is_one_problem_of_the_check_not_a_traceback[# BUILDER-ONLY:] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9148/test_a_missing_marks_line_in_t0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fb31c8dde80>
+capsys = <_pytest.capture.CaptureFixture object at 0x7fb31ca0d480>
+tag = '# BUILDER-ONLY:'
+
+    @pytest.mark.parametrize(
+        "tag",
+        [
+            "# BUILDER-ONLY:",
+            "# PARTLY-BUILDER-ONLY:",
+            "# CLAIM-READ-BY-BUILDER:",
+            "# CLAIM-READ-BY-NOBODY:",
+        ],
+    )
+    def test_a_missing_marks_line_in_the_head_is_one_problem_of_the_check_not_a_traceback(
+        tmp_path, monkeypatch, capsys, tag
+    ):
+        root = _tree(tmp_path)
+        assert _head(root).count(tag) == 1
+        (root / pp.SOURCES).write_text(_head(root).replace(tag, "# X:"), encoding="utf-8")
+        code, lines = _check(monkeypatch, capsys, root)
+>       assert code == 1 and len(lines) == 1, lines
+E       AssertionError: ["policy page: PENDING_NAMES ('secrets/vault', 'never:{mount}/undelete/*') is overdue (review_by 2026-12-11): an evide...shed now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it", ...]
+E       assert (1 == 1 and 14 == 1)
+E        +  where 14 = len(["policy page: PENDING_NAMES ('secrets/vault', 'never:{mount}/undelete/*') is overdue (review_by 2026-12-11): an evide...shed now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it", ...])
+
+tests/test_policy_guard.py:3919: AssertionError
+_ test_a_missing_marks_line_in_the_head_is_one_problem_of_the_check_not_a_traceback[# PARTLY-BUILDER-ONLY:] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9148/test_a_missing_marks_line_in_t1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fb31c8df930>
+capsys = <_pytest.capture.CaptureFixture object at 0x7fb31d94be10>
+tag = '# PARTLY-BUILDER-ONLY:'
+
+    @pytest.mark.parametrize(
+        "tag",
+        [
+            "# BUILDER-ONLY:",
+            "# PARTLY-BUILDER-ONLY:",
+            "# CLAIM-READ-BY-BUILDER:",
+            "# CLAIM-READ-BY-NOBODY:",
+        ],
+    )
+    def test_a_missing_marks_line_in_the_head_is_one_problem_of_the_check_not_a_traceback(
+        tmp_path, monkeypatch, capsys, tag
+    ):
+        root = _tree(tmp_path)
+        assert _head(root).count(tag) == 1
+        (root / pp.SOURCES).write_text(_head(root).replace(tag, "# X:"), encoding="utf-8")
+        code, lines = _check(monkeypatch, capsys, root)
+>       assert code == 1 and len(lines) == 1, lines
+E       AssertionError: ["policy page: PENDING_NAMES ('secrets/vault', 'never:{mount}/undelete/*') is overdue (review_by 2026-12-11): an evide...shed now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it", ...]
+E       assert (1 == 1 and 14 == 1)
+E        +  where 14 = len(["policy page: PENDING_NAMES ('secrets/vault', 'never:{mount}/undelete/*') is overdue (review_by 2026-12-11): an evide...shed now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it", ...])
+
+tests/test_policy_guard.py:3919: AssertionError
+_ test_a_missing_marks_line_in_the_head_is_one_problem_of_the_check_not_a_traceback[# CLAIM-READ-BY-BUILDER:] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9148/test_a_missing_marks_line_in_t2')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fb31c8dec10>
+capsys = <_pytest.capture.CaptureFixture object at 0x7fb31c994ef0>
+tag = '# CLAIM-READ-BY-BUILDER:'
+
+    @pytest.mark.parametrize(
+        "tag",
+        [
+            "# BUILDER-ONLY:",
+            "# PARTLY-BUILDER-ONLY:",
+            "# CLAIM-READ-BY-BUILDER:",
+            "# CLAIM-READ-BY-NOBODY:",
+        ],
+    )
+    def test_a_missing_marks_line_in_the_head_is_one_problem_of_the_check_not_a_traceback(
+        tmp_path, monkeypatch, capsys, tag
+    ):
+        root = _tree(tmp_path)
+        assert _head(root).count(tag) == 1
+        (root / pp.SOURCES).write_text(_head(root).replace(tag, "# X:"), encoding="utf-8")
+        code, lines = _check(monkeypatch, capsys, root)
+>       assert code == 1 and len(lines) == 1, lines
+E       AssertionError: ["policy page: PENDING_NAMES ('secrets/vault', 'never:{mount}/undelete/*') is overdue (review_by 2026-12-11): an evide...shed now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it", ...]
+E       assert (1 == 1 and 14 == 1)
+E        +  where 14 = len(["policy page: PENDING_NAMES ('secrets/vault', 'never:{mount}/undelete/*') is overdue (review_by 2026-12-11): an evide...shed now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it", ...])
+
+tests/test_policy_guard.py:3919: AssertionError
+_ test_a_missing_marks_line_in_the_head_is_one_problem_of_the_check_not_a_traceback[# CLAIM-READ-BY-NOBODY:] _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-9148/test_a_missing_marks_line_in_t3')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fb31cab7690>
+capsys = <_pytest.capture.CaptureFixture object at 0x7fb31cb7e7a0>
+tag = '# CLAIM-READ-BY-NOBODY:'
+
+    @pytest.mark.parametrize(
+        "tag",
+        [
+            "# BUILDER-ONLY:",
+            "# PARTLY-BUILDER-ONLY:",
+            "# CLAIM-READ-BY-BUILDER:",
+            "# CLAIM-READ-BY-NOBODY:",
+        ],
+    )
+    def test_a_missing_marks_line_in_the_head_is_one_problem_of_the_check_not_a_traceback(
+        tmp_path, monkeypatch, capsys, tag
+    ):
+        root = _tree(tmp_path)
+        assert _head(root).count(tag) == 1
+        (root / pp.SOURCES).write_text(_head(root).replace(tag, "# X:"), encoding="utf-8")
+        code, lines = _check(monkeypatch, capsys, root)
+>       assert code == 1 and len(lines) == 1, lines
+E       AssertionError: ["policy page: PENDING_NAMES ('secrets/vault', 'never:{mount}/undelete/*') is overdue (review_by 2026-12-11): an evide...shed now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it", ...]
+E       assert (1 == 1 and 14 == 1)
+E        +  where 14 = len(["policy page: PENDING_NAMES ('secrets/vault', 'never:{mount}/undelete/*') is overdue (review_by 2026-12-11): an evide...shed now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it", ...])
+
+tests/test_policy_guard.py:3919: AssertionError
+_ test_a_malformed_note_class_is_one_problem_line_of_the_check_and_no_traceback _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fb31c8df150>
+capsys = <_pytest.capture.CaptureFixture object at 0x7fb31cb7e7a0>
+
+    def test_a_malformed_note_class_is_one_problem_line_of_the_check_and_no_traceback(
+        monkeypatch, capsys
+    ):
+        for name in sorted(BAD_CLASSES):
+            cls, why = BAD_CLASSES[name]
+            with monkeypatch.context() as m:
+                m.setitem(pp.NOTE_CLASSES, _KEY, cls)
+                code, lines = _check_or_fail(m, capsys)
+>           assert code == 1 and len(lines) == 1, (
+                f"a malformed class is not one problem line ({name}): {lines}"
+            )
+E           AssertionError: a malformed class is not one problem line (a bare text): ["policy page: PENDING_NAMES ('secrets/vault', 'never:{mount}/undelete/*') is overdue (review_by 2026-12-11): an evidence run that finds the path in the listed sources, then set `verified` and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it", "policy page: PENDING_NAMES ('secrets/vault', 'never:{mount}/subkeys/*') is overdue (review_by 2026-12-11): an evidence run that finds the path in the listed sources, then set `verified` and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it", "policy page: PENDING_NAMES ('signer/vault_transit', 'never:{transit_mount}/byok-export/*') is overdue (review_by 2026-12-11): an evidence run that finds the path in the listed sources, then set `verified` and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it", "policy page: PENDING_NAMES ('source/kubernetes', 'never:cluster-admin') is overdue (review_by 2026-12-11): an evidence run that finds the name in source K-SRC, then set `verified` and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it", "policy page: PENDING_NAMES ('source/kubernetes', 'never:admin') is overdue (review_by 2026-12-11): an evidence run that finds the name in source K-SRC, then set `verified` and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it", "policy page: PENDING_NAMES ('source/kubernetes', 'never:edit') is overdue (review_by 2026-12-11): an evidence run that finds the name in source K-SRC, then set `verified` and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it", "policy page: PENDING_CLAIMS ('secrets/vault', 'R17') is overdue (review_by 2026-12-11): an evidence run that reads the sources named in the fixture header, then set `claims_unverified` to () and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it", "policy page: PENDING_CLAIMS ('signer/vault_transit', 'R18') is overdue (review_by 2026-12-11): an evidence run that reads the sources named in the fixture header, then set `claims_unverified` to () and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it", "policy page: PENDING_CLAIMS ('source/kubernetes', 'R20') is overdue (review_by 2026-12-11): an evidence run that reads the sources named in the fixture header, then set `claims_unverified` to () and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it", "policy page: PENDING_CLAIMS ('source/kubernetes', 'R21') is overdue (review_by 2026-12-11): an evidence run that reads the sources named in the fixture header, then set `claims_unverified` to () and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it", "policy page: PENDING_CLAIMS ('source/kubernetes', 'R22') is overdue (review_by 2026-12-11): an evidence run that reads the sources named in the fixture header, then set `claims_unverified` to () and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it", "policy page: PENDING_CLAIMS ('source/kubernetes', 'free:0') is overdue (review_by 2026-12-11): an evidence run that reads the sources named in the fixture header, then set `claims_unverified` to () and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it", "policy page: PENDING_CLAIMS ('source/kubernetes', 'never:create') is overdue (review_by 2026-12-11): an evidence run that reads the sources named in the fixture header, then set `claims_unverified` to () and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it", "policy page: NOTE_CLASSES entry ('signer/vault_transit', 'In the call column'): its class is not a non-empty tuple"]
+E           assert (1 == 1 and 14 == 1)
+E            +  where 14 = len(["policy page: PENDING_NAMES ('secrets/vault', 'never:{mount}/undelete/*') is overdue (review_by 2026-12-11): an evide...shed now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it", ...])
+
+tests/test_policy_guard.py:3969: AssertionError
+_ test_a_malformed_note_class_key_is_one_problem_line_of_the_check_and_no_traceback _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fb31c8ea0b0>
+capsys = <_pytest.capture.CaptureFixture object at 0x7fb31ca89950>
+
+    def test_a_malformed_note_class_key_is_one_problem_line_of_the_check_and_no_traceback(
+        monkeypatch, capsys
+    ):
+        for key in (("secrets/vault",), (1, "x"), "secrets/vault", ("a", "b", "c")):
+            with monkeypatch.context() as m:
+                m.setitem(pp.NOTE_CLASSES, key, ("code",))
+                code, lines = _check_or_fail(m, capsys)
+>           assert code == 1 and len(lines) == 1, f"a malformed key is not one problem line: {lines}"
+E           AssertionError: a malformed key is not one problem line: ["policy page: PENDING_NAMES ('secrets/vault', 'never:{mount}/undelete/*') is overdue (review_by 2026-12-11): an evidence run that finds the path in the listed sources, then set `verified` and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it", "policy page: PENDING_NAMES ('secrets/vault', 'never:{mount}/subkeys/*') is overdue (review_by 2026-12-11): an evidence run that finds the path in the listed sources, then set `verified` and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it", "policy page: PENDING_NAMES ('signer/vault_transit', 'never:{transit_mount}/byok-export/*') is overdue (review_by 2026-12-11): an evidence run that finds the path in the listed sources, then set `verified` and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it", "policy page: PENDING_NAMES ('source/kubernetes', 'never:cluster-admin') is overdue (review_by 2026-12-11): an evidence run that finds the name in source K-SRC, then set `verified` and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it", "policy page: PENDING_NAMES ('source/kubernetes', 'never:admin') is overdue (review_by 2026-12-11): an evidence run that finds the name in source K-SRC, then set `verified` and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it", "policy page: PENDING_NAMES ('source/kubernetes', 'never:edit') is overdue (review_by 2026-12-11): an evidence run that finds the name in source K-SRC, then set `verified` and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it", "policy page: PENDING_CLAIMS ('secrets/vault', 'R17') is overdue (review_by 2026-12-11): an evidence run that reads the sources named in the fixture header, then set `claims_unverified` to () and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it", "policy page: PENDING_CLAIMS ('signer/vault_transit', 'R18') is overdue (review_by 2026-12-11): an evidence run that reads the sources named in the fixture header, then set `claims_unverified` to () and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it", "policy page: PENDING_CLAIMS ('source/kubernetes', 'R20') is overdue (review_by 2026-12-11): an evidence run that reads the sources named in the fixture header, then set `claims_unverified` to () and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it", "policy page: PENDING_CLAIMS ('source/kubernetes', 'R21') is overdue (review_by 2026-12-11): an evidence run that reads the sources named in the fixture header, then set `claims_unverified` to () and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it", "policy page: PENDING_CLAIMS ('source/kubernetes', 'R22') is overdue (review_by 2026-12-11): an evidence run that reads the sources named in the fixture header, then set `claims_unverified` to () and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it", "policy page: PENDING_CLAIMS ('source/kubernetes', 'free:0') is overdue (review_by 2026-12-11): an evidence run that reads the sources named in the fixture header, then set `claims_unverified` to () and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it", "policy page: PENDING_CLAIMS ('source/kubernetes', 'never:create') is overdue (review_by 2026-12-11): an evidence run that reads the sources named in the fixture header, then set `claims_unverified` to () and delete this entry. What to do: finish that work and delete the entry; or, if it cannot be finished now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it", "policy page: NOTE_CLASSES entry ('secrets/vault',): its key is not a tuple of two texts (kind, note)"]
+E           assert (1 == 1 and 14 == 1)
+E            +  where 14 = len(["policy page: PENDING_NAMES ('secrets/vault', 'never:{mount}/undelete/*') is overdue (review_by 2026-12-11): an evide...shed now, decide again: set `decided` to the day of the new decision and `review_by` to at most 92 days after it", ...])
+
+tests/test_policy_guard.py:3984: AssertionError
+13 failed, 331 passed in 6.23s

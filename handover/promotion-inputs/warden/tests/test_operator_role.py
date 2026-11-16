@@ -1,0 +1,153 @@
+"""The operator identity after W0-now: a role the laptop reaches through IAM Roles Anywhere with a
+TPM-held key, replacing the IAM user and its long-lived access key (audit A-I-4, owner rule "no
+long-lived keys").
+
+What must hold: the role can read and check, and nothing else. Its one write-shaped action is
+assuming the read-only sweep role. No database login, no IAM change, no self-edit. Only the laptop's
+certificate, through the one trust anchor, can assume it.
+"""
+
+from __future__ import annotations
+
+import fnmatch
+import importlib.util
+import json
+import pathlib
+
+import pytest
+
+ROOT = pathlib.Path(__file__).resolve().parents[1]
+POLICY = json.loads((ROOT / "iam" / "operator" / "policy.json").read_text(encoding="utf-8"))
+TRUST = json.loads((ROOT / "iam" / "operator" / "trust.json").read_text(encoding="utf-8"))
+
+_spec = importlib.util.spec_from_file_location("roles_anywhere_cert", ROOT / "scripts" / "roles_anywhere_cert.py")
+rac = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(rac)
+
+READ_VERBS = ("Get", "List", "Describe", "Validate", "Check", "Simulate")
+REGIONAL = ("bedrock:", "servicequotas:", "rolesanywhere:")
+ANCHOR = "arn:aws:rolesanywhere:ap-south-2:111122223333:trust-anchor/0f1e2d3c-4b5a-6978-8796-a5b4c3d2e1f0"
+
+
+def _list(x):
+    return [x] if isinstance(x, str) else list(x)
+
+
+def _allow_statements():
+    return [st for st in POLICY["Statement"] if st["Effect"] == "Allow"]
+
+
+CHAIN = ("sts:AssumeRole", "sts:SetSourceIdentity")
+
+
+def test_every_allowed_action_only_reads_except_assuming_the_sweep_role():
+    for st in _allow_statements():
+        assert "NotAction" not in st, st["Sid"]
+        assert "NotResource" not in st, st["Sid"]
+        for action in _list(st["Action"]):
+            name = action.split(":")[1]
+            assert "*" not in action, action
+            if action in CHAIN:  # the read-only sweep role, and the dev harness role (R18: its own identity)
+                assert _list(st["Resource"]) in (["arn:aws:iam::*:role/warden-ops-sweep"],
+                                                 ["arn:aws:iam::*:role/warden-dev-harness"]), st["Sid"]
+                assert st.get("Condition") == {"StringEquals": {"aws:ResourceAccount": "${aws:PrincipalAccount}"}}
+            else:
+                assert name.startswith(READ_VERBS), action
+
+
+def test_the_sweep_role_is_assumed_only_in_the_callers_own_account():
+    """Fourth review (2026-09-30, D #4): `arn:aws:iam::*:role/<sweep>` let the operator assume a role of that
+    name in ANY account. The account is the caller's own, with no account number in the repo. And the role the
+    policy lets it assume is the one the sweep script assumes: the runtime environment's (renamed 2026-10-16)."""
+    sweep = next(st for st in _allow_statements() if st["Sid"] == "SweepEveryRegionReadOnly")
+    assert sweep.get("Condition") == {"StringEquals": {"aws:ResourceAccount": "${aws:PrincipalAccount}"}}
+    spec = importlib.util.spec_from_file_location("account_sweep", ROOT / "scripts" / "account_sweep.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    from warden.environments import EnvironmentPolicies, names
+
+    assert mod.ROLE == f"{names(EnvironmentPolicies.load().runtime_environment).prefix}-sweep"
+    assert _list(sweep["Resource"]) == [f"arn:aws:iam::*:role/{mod.ROLE}"]
+
+def test_chaining_into_the_sweep_role_keeps_the_source_identity():
+    """A Roles Anywhere session always has a source identity (the certificate CN). IAM: when a role
+    assumes another, sts:SetSourceIdentity must be allowed in the caller's policy AND the target's
+    trust policy, or the AssumeRole fails (independent review, 2026-09-28). The session's certificate tags
+    are carried along too, so the trust must also allow sts:TagSession (refused without it, live 2026-10-02)."""
+    import importlib.util
+    import types
+
+    sweep = next(st for st in _allow_statements() if st["Sid"] == "SweepEveryRegionReadOnly")
+    assert sorted(_list(sweep["Action"])) == sorted(CHAIN)
+    spec = importlib.util.spec_from_file_location("account_sweep", ROOT / "scripts" / "account_sweep.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    written = {}
+
+    class _Sts:
+        def get_caller_identity(self):
+            return {"Account": "111122223333"}
+
+    session = types.SimpleNamespace(client=lambda name, **kw: _Sts())
+    mod.TRUST_FILE = types.SimpleNamespace(write_text=lambda text, encoding: written.setdefault("t", text))
+    assert mod.main(["--write-trust"], session=session) == 0
+    (st,) = json.loads(written["t"])["Statement"]
+    assert sorted(_list(st["Action"])) == sorted((*CHAIN, "sts:TagSession"))
+    assert st["Principal"] == {"AWS": "arn:aws:iam::111122223333:role/warden-ops-operator"}
+
+
+@pytest.mark.parametrize("forbidden", ["rds-db:", "iam:Create", "iam:Put", "iam:Attach", "iam:Update",
+                                       "iam:Delete", "iam:Set", "bedrock:", "servicequotas:", "secretsmanager:Put",
+                                       "secretsmanager:Create", "secretsmanager:GetSecretValue", "kms:"])
+def test_no_database_login_no_iam_change_no_model_call(forbidden):
+    actions = [a for st in _allow_statements() for a in _list(st["Action"])]
+    assert not [a for a in actions if a.startswith(forbidden)]
+
+
+def test_secrets_are_only_the_ops_ones_and_never_their_values():
+    """Secrets audit, 2026-10-16: the laptop read the value of every warden/ops/* secret, and nothing it runs needs one
+    (the benchmarks read their tools' keys in the cloud runtime). It may see that a secret is there, not what it is.
+    No Bedrock either (owner, 2026-10-09)."""
+    granted = [a for st in _allow_statements() for a in _list(st["Action"]) if a.startswith("secretsmanager:")]
+    assert granted == ["secretsmanager:DescribeSecret"]
+    for st in _allow_statements():
+        if any(a.startswith("secretsmanager:") for a in _list(st["Action"])):
+            assert _list(st["Resource"]) == ["arn:aws:secretsmanager:ap-south-2:*:secret:warden/ops/*"]
+
+
+def test_regional_reads_are_locked_to_the_home_region():
+    for st in _allow_statements():
+        if any(a.startswith(REGIONAL) for a in _list(st["Action"])):
+            assert st["Condition"] == {"StringEquals": {"aws:RequestedRegion": "ap-south-2"}}, st["Sid"]
+
+
+def test_fits_the_managed_policy_limit():
+    assert len(json.dumps(POLICY, separators=(",", ":"))) <= 6144
+
+
+def test_only_roles_anywhere_with_the_laptop_certificate_through_one_anchor_may_assume():
+    (st,) = TRUST["Statement"]
+    assert st["Effect"] == "Allow"
+    assert st["Principal"] == {"Service": "rolesanywhere.amazonaws.com"}
+    assert sorted(st["Action"]) == ["sts:AssumeRole", "sts:SetSourceIdentity", "sts:TagSession"]
+    assert st["Condition"]["ArnEquals"]["aws:SourceArn"].endswith(":trust-anchor/<TRUST_ANCHOR_ID>")
+    assert st["Condition"]["StringEquals"] == {"aws:PrincipalTag/x509Subject/CN": rac.SUBJECT_CN,
+                                               "aws:PrincipalTag/x509Subject/O": rac.ORG}
+
+
+def test_the_local_trust_names_the_exact_anchor_and_leaves_no_placeholder():
+    doc = rac.render_trust(ANCHOR)
+    assert "<" not in doc
+    assert json.loads(doc)["Statement"][0]["Condition"]["ArnEquals"]["aws:SourceArn"] == ANCHOR
+
+
+@pytest.mark.parametrize("bad", ["", "arn:aws:rolesanywhere:us-east-1:111122223333:trust-anchor/x",
+                                 ANCHOR.replace("trust-anchor", "profile"), ANCHOR + "/extra"])
+def test_anything_but_a_home_region_anchor_arn_is_refused(bad):
+    with pytest.raises(ValueError):
+        rac.render_trust(bad)
+
+
+def test_the_filled_in_trust_is_never_committed():
+    patterns = [ln.strip() for ln in (ROOT / ".gitignore").read_text(encoding="utf-8").splitlines()]
+    assert any(fnmatch.fnmatch("iam/operator/trust.local.json", p) for p in patterns if p)

@@ -1,0 +1,13 @@
+### tests/test_migration_wiring.py::test_the_maintain_privilege_is_asked_about_from_postgresql_17_only rc=1
+F.                                                                       [100%]
+=================================== FAILURES ===================================
+_ test_the_maintain_privilege_is_asked_about_from_postgresql_17_only[160015-False] _
+tests/test_migration_wiring.py:1159: in test_the_maintain_privilege_is_asked_about_from_postgresql_17_only
+    assert ("MAINTAIN" in db.asked) is asked, db.asked
+E   AssertionError: ['DELETE', 'TRUNCATE', 'REFERENCES', 'TRIGGER', 'MAINTAIN']
+E   assert ('MAINTAIN' in ['DELETE', 'TRUNCATE', 'REFERENCES', 'TRIGGER', 'MAINTAIN']) is False
+E    +  where ['DELETE', 'TRUNCATE', 'REFERENCES', 'TRIGGER', 'MAINTAIN'] = <tests.test_migration_wiring._Privileges object at 0x7f800f41e7b0>.asked
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_the_maintain_privilege_is_asked_about_from_postgresql_17_only[160015-False]
+1 failed, 1 passed in 0.41s
+

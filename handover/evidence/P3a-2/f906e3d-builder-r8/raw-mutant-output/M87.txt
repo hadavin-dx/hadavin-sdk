@@ -1,0 +1,13 @@
+### tests/test_migration_numbers.py::test_scan_sees_create_inside_bodies_and_strings rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_______________ test_scan_sees_create_inside_bodies_and_strings ________________
+tests/test_migration_numbers.py:939: in test_scan_sees_create_inside_bodies_and_strings
+    assert any("hidden_body" in p for p in body), body
+E   AssertionError: ['GRANTS names approval_decisions, which no migration creates', 'GRANTS names approval_decisions_seq_seq, which no mig...'GRANTS names audit_entries, which no migration creates', 'GRANTS names audit_outbox, which no migration creates', ...]
+E   assert False
+E    +  where False = any(<generator object test_scan_sees_create_inside_bodies_and_strings.<locals>.<genexpr> at 0x7ff2bfa505f0>)
+=========================== short test summary info ============================
+FAILED tests/test_migration_numbers.py::test_scan_sees_create_inside_bodies_and_strings
+1 failed in 0.40s
+

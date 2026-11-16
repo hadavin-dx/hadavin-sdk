@@ -1,0 +1,8 @@
+# A4 round 3, security lens (egm-design reviewer, read-only, code read only, nothing run)
+Snapshot: /home/user/build/snap/A4r3. Verdict: no Blocker. Sound: start_work vs eviction under one lock, every storing route calls start_work first, lock order, follow-up/double-send claims, handler counter.
+Majors (all availability, no stored loss, no double send):
+1. Eviction picks the oldest reading slot by age, not by stall: under a 300-1000 client burst a complete request waiting for CPU can be reset with no reply (server.py:228-236, 163-169). Fix: evict only slots with no progress for a minimum age, else 503 the newcomer.
+2. A non-reading client holds a handler thread up to 30 s in sendall (server.py:464, constants 65/81); 1024 such clients make every request 503. Fix: short total write deadline for replies.
+3. MAX_HANDLER_THREADS 1024 not tied to RLIMIT_NOFILE: EMFILE spin on accept, 500s, follow-ups failing as unreachable count as automatic tries. Fix: check at start-up, do not count fd-exhaustion as tries.
+Nits: 4 _refuse_busy drains on the accept loop (50 ms per refused silent connection); 5 stop_background/start_background race can run two reapers briefly (desk.py:435-459; claims prevent double send); 6 only KeyboardInterrupt handled, no SIGTERM, lock closed before a timed-out reaper ends; 7 contract.md:16 says "still sending headers" but body-phase is evictable too; "once its whole request has been read" is imprecise; contract test count stale.
+Test gaps named: eviction at the cap, eviction vs start_work race, MAX_HANDLER_THREADS 503, 503 body and Retry-After, non-reading reply client, concurrent stop/start (reviewer read only 3 test files; other files may cover some).

@@ -1,0 +1,104 @@
+mutant 49: 'now if state == "sent" else None,' -> 'now,' in src/lead_desk/desk.py
+..FFFFF...............                                                   [100%]
+=================================== FAILURES ===================================
+_____________________ test_sent_sets_time_and_clears_error _____________________
+
+env = <conftest.Env object at 0x7fae08a03d90>
+
+    def test_sent_sets_time_and_clears_error(env) -> None:
+        rig = env.rig()
+        lid = _new_lead(rig)
+        rig.outbox.fail_next("unreachable")
+        rig.desk.run_followup(lid)
+>       assert _row(rig, lid)[:3] == ("pending", "unreachable", None)
+E       AssertionError: assert ('pending', '...', 1700000000) == ('pending', '...chable', None)
+E         
+E         At index 2 diff: 1700000000 != None
+E         Use -v to get more diff
+
+tests/test_mutants_round2.py:57: AssertionError
+_____________ test_unsent_result_has_no_sent_time[refuse-pending] ______________
+
+env = <conftest.Env object at 0x7fae089e0cd0>, mode = 'refuse'
+expected = 'pending'
+
+    @pytest.mark.parametrize("mode, expected", [("refuse", "pending"), ("unreachable", "pending"), ("drop", "failed")])
+    def test_unsent_result_has_no_sent_time(env, mode: str, expected: str) -> None:
+        rig = env.rig()
+        lid = _new_lead(rig)
+        if mode == "drop":  # keyed sender, unclear end, cap reached: failed
+            sql_exec(rig.db_path, "UPDATE followups SET auto_attempts=99 WHERE lead_id=?", (lid,))
+        rig.outbox.fail_next(mode)  # type: ignore[arg-type]
+        rig.desk.run_followup(lid)
+        state, err, sent_at, _ = _row(rig, lid)
+        assert state == expected and err is not None
+>       assert sent_at is None
+E       assert 1700000000 is None
+
+tests/test_mutants_round2.py:74: AssertionError
+___________ test_unsent_result_has_no_sent_time[unreachable-pending] ___________
+
+env = <conftest.Env object at 0x7fae08abe060>, mode = 'unreachable'
+expected = 'pending'
+
+    @pytest.mark.parametrize("mode, expected", [("refuse", "pending"), ("unreachable", "pending"), ("drop", "failed")])
+    def test_unsent_result_has_no_sent_time(env, mode: str, expected: str) -> None:
+        rig = env.rig()
+        lid = _new_lead(rig)
+        if mode == "drop":  # keyed sender, unclear end, cap reached: failed
+            sql_exec(rig.db_path, "UPDATE followups SET auto_attempts=99 WHERE lead_id=?", (lid,))
+        rig.outbox.fail_next(mode)  # type: ignore[arg-type]
+        rig.desk.run_followup(lid)
+        state, err, sent_at, _ = _row(rig, lid)
+        assert state == expected and err is not None
+>       assert sent_at is None
+E       assert 1700000000 is None
+
+tests/test_mutants_round2.py:74: AssertionError
+_______________ test_unsent_result_has_no_sent_time[drop-failed] _______________
+
+env = <conftest.Env object at 0x7fae08abed70>, mode = 'drop'
+expected = 'failed'
+
+    @pytest.mark.parametrize("mode, expected", [("refuse", "pending"), ("unreachable", "pending"), ("drop", "failed")])
+    def test_unsent_result_has_no_sent_time(env, mode: str, expected: str) -> None:
+        rig = env.rig()
+        lid = _new_lead(rig)
+        if mode == "drop":  # keyed sender, unclear end, cap reached: failed
+            sql_exec(rig.db_path, "UPDATE followups SET auto_attempts=99 WHERE lead_id=?", (lid,))
+        rig.outbox.fail_next(mode)  # type: ignore[arg-type]
+        rig.desk.run_followup(lid)
+        state, err, sent_at, _ = _row(rig, lid)
+        assert state == expected and err is not None
+>       assert sent_at is None
+E       assert 1700000000 is None
+
+tests/test_mutants_round2.py:74: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  lead_desk:desk.py:1223 send ended unclear: SendAmbiguous
+___________________ test_blind_unclear_end_has_no_sent_time ____________________
+
+env = <conftest.Env object at 0x7fae08a59eb0>
+
+    def test_blind_unclear_end_has_no_sent_time(env) -> None:
+        rig = env.rig(outbox=BlindOutbox())
+        lid = _new_lead(rig)
+        rig.outbox.fail_next("drop")
+        rig.desk.run_followup(lid)
+        state, err, sent_at, _ = _row(rig, lid)
+>       assert (state, err, sent_at) == ("unknown", "ambiguous", None)
+E       AssertionError: assert ('unknown', '...', 1700000000) == ('unknown', 'ambiguous', None)
+E         
+E         At index 2 diff: 1700000000 != None
+E         Use -v to get more diff
+
+tests/test_mutants_round2.py:83: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  lead_desk:desk.py:1223 send ended unclear: SendAmbiguous
+=========================== short test summary info ============================
+FAILED tests/test_mutants_round2.py::test_sent_sets_time_and_clears_error - A...
+FAILED tests/test_mutants_round2.py::test_unsent_result_has_no_sent_time[refuse-pending]
+FAILED tests/test_mutants_round2.py::test_unsent_result_has_no_sent_time[unreachable-pending]
+FAILED tests/test_mutants_round2.py::test_unsent_result_has_no_sent_time[drop-failed]
+FAILED tests/test_mutants_round2.py::test_blind_unclear_end_has_no_sent_time
+5 failed, 17 passed in 0.22s

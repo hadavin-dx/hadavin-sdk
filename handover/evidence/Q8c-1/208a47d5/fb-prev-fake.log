@@ -1,0 +1,21 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+.....FF................................................................. [ 20%]
+........................................................................ [ 40%]
+........................................................................ [ 61%]
+........................................................................ [ 81%]
+...............................................................F.        [100%]
+=================================== FAILURES ===================================
+E   AssertionError: ci.yml has no step `python tools/policy_page.py --check`
+    assert 'python tools/policy_page.py --check' in ['', '', 'uv sync --locked --no-build --all-extras --group test', 'ruff check src tests demos tools', 'ruff format --check src tests demos tools', 'python tools/scan_repo.py', ...]
+/home/user/build/EV-Q8c1b8-208a47d5/wtold/tests/test_policy_docs.py:100: AssertionError: ci.yml has no step `python tools/policy_page.py --check`
+E   AssertionError: the changelog entry does not say the date guard starts the day after the earliest review_by
+    assert 'fail from the day after the earliest `review_by`' in '- **Declared permissions for three backend kinds** (ticket Q8c, part 1): `vault` (secrets), `vault_transit` (signer) ...he tests and in `python tools/policy_page.py --check`; from that day `--write` stops too, until the dates are renewed.'
+/home/user/build/EV-Q8c1b8-208a47d5/wtold/tests/test_policy_docs.py:111: AssertionError: the changelog entry does not say the date guard starts the day after the earliest review_by
+E   AssertionError: the tool docstring holds a date that is in no dated list: ['2026-12-12']
+    assert not {'2026-12-12'}
+/home/user/build/EV-Q8c1b8-208a47d5/wtold/tests/test_policy_guard.py:4145: AssertionError: the tool docstring holds a date that is in no dated list: ['2026-12-12']
+=========================== short test summary info ============================
+FAILED tests/test_policy_docs.py::test_ci_runs_the_policy_page_check_right_after_the_policy_mutants
+FAILED tests/test_policy_docs.py::test_the_changelog_names_the_start_of_the_date_guard_by_rule_and_calls_it_a_reminder
+FAILED tests/test_policy_guard.py::test_the_tool_docstring_holds_no_date_that_is_not_in_the_dated_lists
+3 failed, 350 passed in 6.58s

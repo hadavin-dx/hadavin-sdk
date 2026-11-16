@@ -1,0 +1,7 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+Building wheel...
+Successfully built /tmp/p6a-wheel/hadavin_sdk-0.1.0-py3-none-any.whl
+hadavin_sdk-0.1.0-py3-none-any.whl
+hadavin_sdk/backends/table.py                  1980-01-01 00:00:00        22872
+hadavin_sdk/config.py                          1980-01-01 00:00:00        24744
+0

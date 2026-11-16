@@ -1,0 +1,16 @@
+......ss...............................sssss....ssssssssssssssssssssssss [ 29%]
+sssssssssssss..........sssssssssssssssssssssss......sssssss.ssssssssssss [ 59%]
+s..ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss....... [ 89%]
+...ss..s...ssssssssssssss                                                [100%]
+=========================== short test summary info ============================
+SKIPPED [22] tests/test_mode_safety.py:110: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [28] tests/test_portal_browser.py:27: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [113] tests/test_portal_lead_pages.py:113: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_portal_wording_and_masking.py:171: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_portal_wording_and_masking.py:204: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_portal_wording_and_masking.py:257: could not import 'playwright.sync_api': No module named 'playwright'
+75 passed, 166 skipped in 109.43s (0:01:49)
+
+real	1m50.042s
+user	0m4.356s
+sys	0m0.826s

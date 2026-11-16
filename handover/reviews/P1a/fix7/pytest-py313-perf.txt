@@ -1,0 +1,13 @@
+bf955e98af9eda1b895b9a1e347e99f6e1ad5cb3
+python 3.13, -m perf alone
+heavy slot 1
+
+T-E8 watchdog: pg_sleep(30) cancelled after 2.01s (watchdog 2.0s; the assertion allows 3.0s: the timer, the cancel round trip to the server and the connection close)
+.....................................                                    [100%]
+============================= slowest 5 durations ==============================
+16.55s call     tests/test_k5_perf.py::test_no_redaction_pattern_is_super_linear_on_its_own_keywords_repeated
+15.76s call     tests/demo_askdata/test_validate_fuzz.py::test_fuzz_2000_cases_hold_the_invariant
+6.69s call     tests/test_k5_perf.py::test_the_harness_flags_a_quadratic_pattern_and_passes_a_linear_one
+5.09s call     tests/test_textnorm_perf.py::test_a_text_of_distinct_characters_at_the_cap_is_weighed_and_read_in_linear_time
+4.14s call     tests/test_textnorm_perf.py::test_scan_needles_and_the_script_views_of_a_text_at_the_cap_are_built_in_linear_time
+37 passed, 11069 deselected in 76.13s (0:01:16)

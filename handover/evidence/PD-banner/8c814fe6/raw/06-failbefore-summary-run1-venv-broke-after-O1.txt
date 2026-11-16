@@ -1,0 +1,21 @@
+O1 strict test_mode_banner rc=2 1 error in 1.57s
+O1 strict test_demo_only_guard rc=2 1 error in 0.77s
+O1 strict test_banner_mutant_table rc=1 3 failed, 19 passed in 69.33s (0:01:09)
+O1 strict test_changelog_numbers rc=2 1 error in 0.64s
+O1 shim test_mode_banner rc=1 ........................................F..........F
+O1 shim test_demo_only_guard rc=1 16 failed, 142 passed in 27.02s
+O1 shim test_banner_mutant_table rc=1 3 failed, 19 passed in 14.90s
+O1 shim test_changelog_numbers rc=1 8 failed, 3 passed in 31.89s
+O2 strict test_mode_banner rc=2 1 error in 0.94s
+O2 strict test_demo_only_guard rc=2 1 error in 0.68s
+O2 strict test_banner_mutant_table rc=1 2 failed, 20 passed in 11.70s
+O2 strict test_changelog_numbers rc=1 /home/user/build/venv-3.13/bin/python: No module named pytest
+O2 shim test_mode_banner rc=1 /home/user/build/venv-3.13/bin/python: No module named pytest
+O2 shim test_demo_only_guard rc=1 /home/user/build/venv-3.13/bin/python: No module named pytest
+O2 shim test_banner_mutant_table rc=1 /home/user/build/venv-3.13/bin/python: No module named pytest
+O2 shim test_changelog_numbers rc=1 /home/user/build/venv-3.13/bin/python: No module named pytest
+O3 shim test_mode_banner rc=1 /home/user/build/venv-3.13/bin/python: No module named pytest
+O3 shim test_demo_only_guard rc=1 /home/user/build/venv-3.13/bin/python: No module named pytest
+O3 shim test_banner_mutant_table rc=1 /home/user/build/venv-3.13/bin/python: No module named pytest
+O3 shim test_changelog_numbers rc=1 /home/user/build/venv-3.13/bin/python: No module named pytest
+FBDONE

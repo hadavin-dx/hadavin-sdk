@@ -1,0 +1,270 @@
+name: CI
+
+# Required checks for main: "check" and "security" (defined here). A third job, "tests-py312" (the tests on Python 3.12), is not a
+# required check yet (a repository setting the lead takes to the owner). CodeQL (GitHub default setup) and SonarCloud (an
+# external app) also gate merges but are configured outside this file. The tools in this file are free and keep
+# working when the repository turns private; CodeQL default setup is NOT free on a private repository (paid).
+on:
+  push:
+    branches: [main]
+  pull_request:
+    # A draft pull request runs no CI; it runs when marked ready for review and on every push after that.
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [main]
+  # Weekly, so pip-audit and the scanners see newly published problems in code nothing changed.
+  schedule:
+    - cron: "23 3 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  GITLEAKS_VERSION: "8.30.1"
+  GITLEAKS_SHA256: "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb"
+  # Trivy's GitHub Actions were compromised in March 2026, so the release binary is used, checksum-verified.
+  TRIVY_VERSION: "0.76.0"
+  TRIVY_SHA256: "e24b1c51293c1b15e4ba8d45bbc7891ba053f90278ec2698f3562c993e145fe7"
+
+jobs:
+  check:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    # The postgres store's contract suite runs against this throwaway database (no data, no secrets: trust
+    # auth on a container that lives only for this job).
+    services:
+      postgres:
+        image: postgres:17.10@sha256:7958605b474b3d264a969cb3a123d6aa00ad1e1fe9da8a69984dabb704d93317
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      # The `vault` secrets kind's contract suite runs against a real Vault dev server (in-memory, unsealed,
+      # throwaway; the root token is the dev-mode convention, not a secret). 2.2.0, published 2026-10-15.
+      vault:
+        image: hashicorp/vault:2.2.0@sha256:e0acd3c681bdf57f002d7214e5d050b876e1704678005c6b0406dd96a65be919
+        env:
+          VAULT_DEV_ROOT_TOKEN_ID: root
+          VAULT_DEV_LISTEN_ADDRESS: 0.0.0.0:8200
+          SKIP_SETCAP: "true"
+        ports:
+          - 8200:8200
+        options: >-
+          --health-cmd "VAULT_ADDR=http://127.0.0.1:8200 vault status"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
+        with:
+          version: "0.13.6"
+          checksum: "f29c3e94ffabd7e6f3ba521dba169a9b7ec12100bf3257087f0f24f6123f3645"
+          python-version: "3.13"
+          activate-environment: true
+          cache-suffix: "ci-check"
+      - name: Install (locked, every backend extra and the contract-suite test group)
+        run: uv sync --locked --no-build --all-extras --group test
+      - name: Lint
+        run: ruff check src tests demos tools
+      - name: Format
+        run: ruff format --check src tests demos tools
+      - name: Secrets and banned names in the tracked files (the repo is public)
+        run: python tools/scan_repo.py
+      - name: The postgres client the database tests shell out to is present (else they would skip silently)
+        run: psql --version
+      - name: Tests (no live calls)
+        env:
+          HADAVIN_TEST_PG_DSN: postgresql://postgres@localhost:5432/postgres
+          HADAVIN_TEST_VAULT_ADDR: http://127.0.0.1:8200
+          HADAVIN_REQUIRE_PINNED_UNIDATA: "1"  # the text-folding tables are built for Unicode 15.1.0 (Python 3.13); another interpreter must fail, not skip
+        run: pytest -q -m "not live and not perf" -rs
+      - name: Stage-rename mutants (each reverted guard must be killed by its named test) (blocks)
+        run: python tests/stage_mutants.py
+      # Timing tests have their own step and it blocks: the check is a ratio (4x text, limit 12x time) with wall
+      # clock, so a noisy runner moves both runs alike; a real super-linear pattern is a merge blocker.
+      - name: Performance of the redaction patterns (blocks)
+        env:
+          HADAVIN_TEST_PG_DSN: postgresql://postgres@localhost:5432/postgres  # one perf test needs the postgres service
+        run: pytest -q -m perf -rs
+
+  # The tests again on the oldest supported Python (pyproject: requires-python >=3.12); everything else runs once, on 3.13. A separate
+  # job and not a matrix of "check": a matrix would rename the required check "check" to "check (3.13)". Python 3.12.3 differs from
+  # 3.13 in how argparse treats a word after "--" (a mutation-runner test failed there only), which is why this job exists.
+  tests-py312:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:17.10@sha256:7958605b474b3d264a969cb3a123d6aa00ad1e1fe9da8a69984dabb704d93317
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      vault:
+        image: hashicorp/vault:2.2.0@sha256:e0acd3c681bdf57f002d7214e5d050b876e1704678005c6b0406dd96a65be919
+        env:
+          VAULT_DEV_ROOT_TOKEN_ID: root
+          VAULT_DEV_LISTEN_ADDRESS: 0.0.0.0:8200
+          SKIP_SETCAP: "true"
+        ports:
+          - 8200:8200
+        options: >-
+          --health-cmd "VAULT_ADDR=http://127.0.0.1:8200 vault status"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
+        with:
+          version: "0.13.6"
+          checksum: "f29c3e94ffabd7e6f3ba521dba169a9b7ec12100bf3257087f0f24f6123f3645"
+          python-version: "3.12"
+          activate-environment: true
+          cache-suffix: "ci-tests-py312"
+      - name: Install (locked, every backend extra and the contract-suite test group)
+        run: uv sync --locked --no-build --all-extras --group test
+      - name: The postgres client the database tests shell out to is present (else they would skip silently)
+        run: psql --version
+      - name: Tests on Python 3.12 (no live calls)
+        env:
+          HADAVIN_TEST_PG_DSN: postgresql://postgres@localhost:5432/postgres
+          HADAVIN_TEST_VAULT_ADDR: http://127.0.0.1:8200
+        run: pytest -q -m "not live and not perf" -rs
+
+  security:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0  # gitleaks scans the history reachable from the checked-out head; the ignore-list checks need every branch
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2  # v10.3.3
+        with:
+          version: "0.13.6"
+          checksum: "f29c3e94ffabd7e6f3ba521dba169a9b7ec12100bf3257087f0f24f6123f3645"
+          python-version: "3.13"
+          activate-environment: true
+          cache-suffix: "ci-security"
+      - name: Install the scanners (locked)
+        run: uv sync --locked --no-build --only-group scan
+      - name: System tools resolve outside the workspace
+        # .venv/bin comes first on PATH (activate-environment), and a locked package can ship a program with a system tool's name.
+        # Pass 1 uses only shell builtins (nothing from PATH runs before it is checked). Pass 2 follows every link with the
+        # now-checked readlink. python3, uv and uvx may sit in .venv/bin by design, but then must be links to a file outside the workspace.
+        # Limit: bash and sh are started by the runner before this step, so the step cannot vouch for them. That is covered by the
+        # locked scan group (uv sync --locked --only-group scan). --no-build only stops a source distribution from being built at install
+        # time; a wheel can still ship a .pth file that runs at Python start, so the lock (exact hashes) is the control, not --no-build.
+        run: |
+          sys_tools="readlink sha256sum tar curl git grep date tr cut sort head mktemp rm touch"
+          venv_tools="python3 uv uvx"
+          [ -n "$GITHUB_WORKSPACE" ] || { echo "GITHUB_WORKSPACE is empty"; exit 1; }
+          for c in $sys_tools $venv_tools; do
+            p=$(command -v "$c") || { echo "$c not found"; exit 1; }
+            case "$p" in /*) ;; *) echo "$c is not a file: $p"; exit 1;; esac
+            venv_ok=0
+            case " $venv_tools " in *" $c "*) case "$p" in "$GITHUB_WORKSPACE"/.venv/bin/*) venv_ok=1;; esac;; esac
+            case "$p" in "$GITHUB_WORKSPACE"/*) [ "$venv_ok" = 1 ] || { echo "$c resolves inside the workspace: $p"; exit 1; };; esac
+          done
+          wr=$(readlink -f -- "$GITHUB_WORKSPACE") || exit 1
+          case "$wr" in /*) ;; *) echo "cannot resolve the workspace: $wr"; exit 1;; esac
+          for c in $sys_tools $venv_tools; do
+            p=$(command -v "$c") || exit 1
+            r=$(readlink -f -- "$p") || { echo "cannot resolve $c: $p"; exit 1; }
+            case "$r" in /*) ;; *) echo "cannot resolve $c: $p"; exit 1;; esac
+            case "$r" in "$GITHUB_WORKSPACE"/*|"$wr"/*) echo "$c is a link into the workspace: $p -> $r"; exit 1;; esac
+          done
+          [ -z "$(git ls-files -- .venv)" ] || { echo "files under .venv are tracked"; exit 1; }
+      - name: Dependencies with known vulnerabilities (every locked package, hashes required)
+        run: |
+          uv export --locked --all-extras --all-groups --no-emit-project --format requirements-txt -o "$RUNNER_TEMP/locked.txt"
+          pip-audit -r "$RUNNER_TEMP/locked.txt" --require-hashes --disable-pip
+      - name: Python security lint
+        run: bandit -q -r src demos tools -ll
+      # Semgrep runs in its own isolated environment (pinned version): its own old dependencies would otherwise fail
+      # the vulnerability audit of this project's lock, and they never ship with the core.
+      - name: Static analysis (Semgrep community rules)
+        run: uvx --no-build --exclude-newer 2026-10-21T00:00:00Z --from "semgrep==1.181.0" semgrep scan --config p/python --config p/secrets --metrics=off --error --quiet src tests demos tools
+      - name: Workflow audit
+        run: zizmor --offline --format plain .github
+      - name: Stale gitleaks ignore entries (each commit must exist on a fetched branch and not on main; entries expire)
+        run: |
+          fail=0
+          [ "$(git rev-parse --is-shallow-repository)" = false ] || { echo "shallow clone: the history checks below would be blind"; fail=1; }
+          git rev-parse --verify -q origin/main > /dev/null || { echo "origin/main is missing"; fail=1; }
+          [ -f .gitleaksignore ] || { echo ".gitleaksignore is missing"; fail=1; touch .gitleaksignore; }
+          # any line that is not blank, not a comment and not a 40-hex fingerprint entry escapes the checks below
+          if grep -nvE '^(#|$|[0-9a-f]{40}:[^:]+:(generic-api-key|curl-auth-user|private-key):[0-9]+$)' .gitleaksignore | cut -d: -f1 | grep .; then echo "malformed gitleaks ignore line(s) at the line numbers above (entry = <40-hex sha>:<path>:<generic-api-key|curl-auth-user|private-key>:<line>)"; fail=1; fi
+          while read -r sha; do
+            [ -n "$sha" ] || continue
+            if ! git branch -r --contains "$sha" | grep -qE '^ *origin/(core/cloud-handover|handover-src/c1a-8460813|core/P2d-1)$'; then echo "stale ignore entry (not on a named handover branch): $sha"; fail=1; fi
+            if git merge-base --is-ancestor "$sha" origin/main; then echo "ignore entry is in main history (needs an owner decision): $sha"; fail=1; fi
+          done < <(grep -oE '^[0-9a-f]{40}' .gitleaksignore | sort -u)
+          [ "$(grep -cE '^# EXPIRES ' .gitleaksignore || true)" -le 1 ] || { echo "more than one EXPIRES line"; fail=1; }
+          exp=$(grep -oE '^# EXPIRES [0-9]{4}-[0-9]{2}-[0-9]{2}$' .gitleaksignore | head -1 | cut -d' ' -f3 || true)
+          if [ -n "$exp" ] && [ "$(date -u -d "$exp" +%F 2>/dev/null)" != "$exp" ]; then echo "EXPIRES is not a real date: $exp"; fail=1; fi
+          if [ -z "$exp" ] && grep -qE '^[0-9a-f]{40}:' .gitleaksignore; then echo "entries exist but no '# EXPIRES YYYY-MM-DD' line"; fail=1; fi
+          if [ -n "$exp" ] && [ "$(date -u +%F)" \> "$exp" ]; then echo "gitleaks ignore entries expired on $exp"; fail=1; fi
+          if [ -n "$exp" ] && [ "$exp" \> "$(date -u -d '+90 days' +%F)" ]; then echo "EXPIRES is more than 90 days ahead: $exp"; fail=1; fi
+          # the temporary allowlist in .gitleaks.toml lives and dies with branch core/cloud-handover and the same EXPIRES date
+          [ -f .gitleaks.toml ] || { echo ".gitleaks.toml is missing"; fail=1; touch .gitleaks.toml; }
+          if grep -qE 'targetRules|handover/' .gitleaks.toml; then
+            have_branch=1
+            git rev-parse --verify -q origin/core/cloud-handover > /dev/null || { have_branch=0; echo "temporary allowlist in .gitleaks.toml outlived branch core/cloud-handover: delete it"; fail=1; }
+            [ -n "$exp" ] || { echo "temporary allowlist in .gitleaks.toml needs the EXPIRES date in .gitleaksignore"; fail=1; }
+            # the allowlist is path-wide, not branch-wide: no such path may exist in this checkout's TREE, nor in the history of
+            # HEAD or of any fetched branch other than the one named branch (git errors fail the step; -z avoids path quoting)
+            pat='^handover/(reviews|tickets|evidence)/'
+            gl_tmp=$(mktemp)
+            git ls-tree -r -z --name-only HEAD > "$gl_tmp" || { echo "git ls-tree failed"; fail=1; }
+            if tr '\0' '\n' < "$gl_tmp" | grep -E "$pat"; then echo "files under handover/ are in this checkout's tree: the temporary allowlist would hide generic keys in them"; fail=1; fi
+            if [ "$have_branch" = 1 ]; then range="HEAD --all --not origin/core/cloud-handover"; else range="HEAD --all"; fi
+            # shellcheck disable=SC2086
+            git log -m --name-only -z --format= $range -- > "$gl_tmp" || { echo "git log failed"; fail=1; }
+            if tr '\0' '\n' < "$gl_tmp" | grep -E "$pat"; then echo "files under handover/ exist in the history of HEAD or of a branch other than core/cloud-handover: the temporary allowlist would hide generic keys in them"; fail=1; fi
+            rm -f "$gl_tmp"
+          fi
+          exit "$fail"
+      - name: Secrets in the history of the checked-out head (gitleaks, checksum-verified binary)
+        run: |
+          curl -sSfL --retry 5 --retry-all-errors --retry-delay 5 --connect-timeout 30 --proto "=https" --proto-redir "=https" --tlsv1.2 -o "$RUNNER_TEMP/gitleaks.tgz" \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          echo "${GITLEAKS_SHA256}  $RUNNER_TEMP/gitleaks.tgz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/gitleaks.tgz" -C "$RUNNER_TEMP" gitleaks
+          # scope: only commits reachable from the checked-out head (--log-opts=HEAD). Without it gitleaks scans every fetched
+          # ref (--all), so another branch's content (handover notes, backup branches) fails every pull request.
+          "$RUNNER_TEMP/gitleaks" git --redact --no-banner --exit-code 1 --config .gitleaks.toml --log-opts=HEAD \
+            --report-format json --report-path "$RUNNER_TEMP/gl.json" . || {
+            # the secret itself is redacted; print only where it is, so a false positive can be fingerprinted
+            python3 -c 'import json,sys; [print(f["RuleID"], f["File"], f["StartLine"], f["Commit"][:10], f["Fingerprint"]) for f in json.load(open(sys.argv[1]))]' "$RUNNER_TEMP/gl.json"
+            exit 1
+          }
+      - name: Vulnerabilities, misconfigurations and secrets in the files (Trivy, checksum-verified binary)
+        run: |
+          curl -sSfL --retry 5 --retry-all-errors --retry-delay 5 --connect-timeout 30 --proto "=https" --proto-redir "=https" --tlsv1.2 -o "$RUNNER_TEMP/trivy.tgz" \
+            "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz"
+          echo "${TRIVY_SHA256}  $RUNNER_TEMP/trivy.tgz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/trivy.tgz" -C "$RUNNER_TEMP" trivy
+          "$RUNNER_TEMP/trivy" fs --skip-dirs .venv --scanners vuln,misconfig,secret --severity HIGH,CRITICAL --exit-code 1 --no-progress .

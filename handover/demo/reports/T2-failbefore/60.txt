@@ -1,0 +1,22 @@
+mutant 60: 'match = None if expected is None else received == expected' -> 'match = None if expected is None else received >= expected' in src/lead_desk/desk.py
+.............F........                                                   [100%]
+=================================== FAILURES ===================================
+_______________________ test_counts_match_needs_equality _______________________
+
+env = <conftest.Env object at 0x7f476ffff3f0>
+
+    def test_counts_match_needs_equality(env) -> None:
+        rig = env.rig()
+        _new_lead(rig, "a1")
+        _new_lead(rig, "a2", "other@example.test")
+        assert rig.desk.counts(2).body["expected_match"] is True
+        for expected in (1, 3):
+            body = rig.desk.counts(expected).body
+            assert body["received"] == 2
+>           assert body["expected_match"] is False and body["ok"] is False
+E           assert (True is False)
+
+tests/test_mutants_round2.py:140: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_mutants_round2.py::test_counts_match_needs_equality - asser...
+1 failed, 21 passed in 0.19s

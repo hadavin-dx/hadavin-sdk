@@ -1,0 +1,13 @@
+(a) origin/main, failures grouped by first error text (count, text)
+      1 collection failure
+      1 AssertionError: a live build took a test object ('pilot'): "secret 'pg-dsn' cannot be read at start-up" / assert "secret 'pg-d...d at start-up" == 'channel= is ...ilot and prod' / - channel= is for tests; configure backends.channel in pilot and prod / + secret 'pg-dsn' cannot be read at start-up
+      1 AssertionError: a live build took sources= ('pilot', _FalsyDict of 1): "secret 'pg-dsn' cannot be read at start-up" / assert False / +  where False = <built-in method startswith of str object at 0x…>('sources= is for tests') / +    where <built-in method startswith of str object at 0x…> = "secret 'pg-dsn' cannot be read at start-up".startswith
+      1 AssertionError: demo took timeout_s=0: '' / assert '' == 'timeout_s= m...ded) and 3600' / - timeout_s= must be an int or float between 0 (not included) and 3600
+      1 AssertionError: a static Vault token was accepted for secrets (pilot, {}): "secret 'pg-dsn' cannot be read at start-up" / assert "secret 'pg-d...d at start-up" == 'environment ...uth: approle)' / - environment pilot: refused: secrets: vault auth token (the default; set auth: kubernetes (recommended) or auth: approle) / + secret 'pg-dsn' cannot be read at start-up
+      1 AssertionError: a live tick took a time handed to it ('pilot'): '' / assert '' == 'now= is for ...ilot and prod' / - now= is for tests; it is refused in pilot and prod
+
+(b) f6fad26f
+     17 Failed: DID NOT RAISE ConfigError
+     12 AssertionError: / - timeout_s= must be greater than 0 / + timeout_s= must be an int or float between 0 (not included) and 3600
+      1 AssertionError: demo took timeout_s=0: 'timeout_s= must be greater than 0' / assert 'timeout_s= m...reater than 0' == 'timeout_s= m...ded) and 3600' / - timeout_s= must be an int or float between 0 (not included) and 3600 / + timeout_s= must be greater than 0
+      1 AssertionError: a live tick took a step list handed to it ('pilot'): '', ran ['recorded'] / assert ('' == 'steps= is fo...ilot and prod' / - steps= is for tests; it is refused in pilot and prod)

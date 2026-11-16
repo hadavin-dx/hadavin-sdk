@@ -1,0 +1,41 @@
+
+EVLOAD hadavin_sdk: /home/user/build/EV-Q8a2-r4/src/hadavin_sdk/__init__.py | default read timeout: 10.0 s
+EVLOAD path '/channel/actions' port 36673; load average at start: ['2.68', '3.81', '4.43']; threads alive: 3
+    baseline, no slow connections: signed: n=10 statuses=[200] min=2.3 median=13.0 p90=19.8 max=21.4 ms
+    baseline, no slow connections: bad-sig: n=10 statuses=[401] min=0.4 median=2.1 p90=4.2 max=12.2 ms
+  -- silent: 50 connections opened in 1102 ms; threads alive now 44
+    at +1.1s with 50 held: signed: n=5 statuses=[200] min=1.8 median=1.9 p90=2.1 max=3.0 ms
+    at +1.1s with 50 held: bad-sig: n=5 statuses=[401] min=0.6 median=0.6 p90=0.6 max=0.8 ms
+    at +3.0s with 50 held: signed: n=5 statuses=[200] min=7.6 median=10.8 p90=10.9 max=11.7 ms
+    at +3.0s with 50 held: bad-sig: n=5 statuses=[401] min=0.6 median=1.0 p90=4.0 max=4.2 ms
+    at +8.0s with 50 held: signed: n=5 statuses=[200] min=2.2 median=2.5 p90=2.6 max=3.6 ms
+    at +8.0s with 50 held: bad-sig: n=5 statuses=[401] min=0.5 median=0.7 p90=0.8 max=0.9 ms
+  after the 10.0s bound (+2s): 45 of 50 connections closed by the server; threads alive now 3
+      after release: signed: n=5 statuses=[200] min=1.8 median=2.0 p90=2.9 max=4.3 ms
+      after release: bad-sig: n=5 statuses=[401] min=0.3 median=0.4 p90=0.5 max=0.5 ms
+  -- short_body: 50 connections opened in 1085 ms; threads alive now 37
+    at +1.1s with 50 held: signed: n=5 statuses=[200] min=1.7 median=2.3 p90=5.9 max=16.7 ms
+    at +1.1s with 50 held: bad-sig: n=5 statuses=[401] min=0.4 median=0.5 p90=0.7 max=4.0 ms
+    at +3.0s with 50 held: signed: n=5 statuses=[200] min=2.7 median=2.8 p90=2.9 max=4.5 ms
+    at +3.0s with 50 held: bad-sig: n=5 statuses=[401] min=0.7 median=0.9 p90=1.0 max=1.2 ms
+    at +8.0s with 50 held: signed: n=5 statuses=[200] min=1.5 median=1.7 p90=1.8 max=3.4 ms
+    at +8.0s with 50 held: bad-sig: n=5 statuses=[401] min=0.4 median=0.5 p90=0.6 max=0.6 ms
+  after the 10.0s bound (+2s): 47 of 50 connections closed by the server; threads alive now 4
+      after release: signed: n=5 statuses=[200] min=1.5 median=1.7 p90=1.9 max=3.5 ms
+      after release: bad-sig: n=5 statuses=[401] min=0.3 median=0.4 p90=0.4 max=0.5 ms
+  -- partial_first_line: 50 connections opened in 1075 ms; threads alive now 52
+    at +1.1s with 50 held: signed: n=5 statuses=[200] min=1.5 median=10.3 p90=15.8 max=17.3 ms
+    at +1.1s with 50 held: bad-sig: n=5 statuses=[401] min=0.4 median=0.6 p90=1.5 max=2.6 ms
+    at +3.0s with 50 held: signed: n=5 statuses=[200] min=2.4 median=2.6 p90=4.4 max=6.7 ms
+    at +3.0s with 50 held: bad-sig: n=5 statuses=[401] min=0.5 median=0.6 p90=0.6 max=0.8 ms
+    at +8.0s with 50 held: signed: n=5 statuses=[200] min=1.9 median=2.0 p90=2.1 max=3.2 ms
+    at +8.0s with 50 held: bad-sig: n=5 statuses=[401] min=0.6 median=0.6 p90=0.7 max=0.8 ms
+  after the 10.0s bound (+2s): 50 of 50 connections closed by the server; threads alive now 3
+      after release: signed: n=5 statuses=[200] min=1.6 median=1.7 p90=2.0 max=2.7 ms
+      after release: bad-sig: n=5 statuses=[401] min=0.4 median=0.4 p90=0.5 max=0.5 ms
+  -- extra: silent x200 opened in 1232 ms; threads alive 130
+      with 200 held: signed: n=5 statuses=[200] min=1.3 median=1.3 p90=4.5 max=16.6 ms
+      with 200 held: bad-sig: n=5 statuses=[401] min=0.3 median=0.4 p90=0.5 max=2.9 ms
+EVLOAD done; threads alive: 2
+.
+1 passed in 43.72s

@@ -1,0 +1,39 @@
+--- a/tests/test_file_call_guard.py	2026-11-13 19:59:44.691231994 +0000
++++ b/tests/test_file_call_guard.py	2026-11-13 21:28:00.830546655 +0000
+@@ -859,6 +859,9 @@
+ 
+ 
+ def test_a_planted_call_in_every_guarded_folder_is_found(tmp_path: Path) -> None:
++    # the loop below walks GUARDED_FOLDERS itself, so a folder taken out of that tuple would be skipped by the loop: the
++    # list of guarded folders is therefore written out here once more and must stay equal to it
++    assert GUARDED_FOLDERS == ("src/lead_desk", "load_tools", "demo_only", "scripts", "tools")
+     for folder in GUARDED_FOLDERS:
+         root = _plant(tmp_path / folder.replace("/", "_"), "import os\nos.listdir('x')", folder)
+         assert any(p.startswith(f"{folder}/planted.py") for p in _problems(root, {}, {})), folder
+@@ -870,4 +873,25 @@
+ 
+ 
+ def test_the_listed_exceptions_are_each_used_once_and_have_a_reason() -> None:
+-    assert all(reason.strip() for reason in {**ALLOWED_IMPORTS, **ALLOWED_CALLS}.values())
++    """Each table on its own (merging them could let one hide a gap in the other). A dict literal silently keeps only
++    the LAST of two equal keys, so the table text is read and a repeated key is a failure. Whether each entry is still
++    used is checked by the sweep test above (`_problems`)."""
++    for name, table in (("ALLOWED_IMPORTS", ALLOWED_IMPORTS), ("ALLOWED_CALLS", ALLOWED_CALLS)):
++        assert table, name
++        for (rel, what), reason in table.items():
++            assert reason.strip(), f"{name}: {rel} {what} has no reason"
++            assert what.strip(), f"{name}: {rel} names nothing"
++            assert (REPO / rel).is_file(), f"{name}: {rel} is not a file of this repository"
++    found = set()
++    for node in ast.parse(Path(__file__).read_text(encoding="utf-8")).body:
++        if (
++            isinstance(node, ast.Assign)
++            and isinstance(node.targets[0], ast.Name)
++            and node.targets[0].id in {"ALLOWED_IMPORTS", "ALLOWED_CALLS"}
++            and isinstance(node.value, ast.Dict)
++        ):
++            keys = [ast.literal_eval(k) for k in node.value.keys if k is not None]
++            repeated = sorted({k for k in keys if keys.count(k) > 1})
++            assert not repeated, f"{node.targets[0].id} names a key twice (the later one hides the first): {repeated}"
++            found.add(node.targets[0].id)
++    assert found == {"ALLOWED_IMPORTS", "ALLOWED_CALLS"}, "the two tables were not found as plain dict literals"

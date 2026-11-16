@@ -1,0 +1,22 @@
+# pdbanner-3d7967cb-codebase-r5: Part 6 batch 5, head 3d7967cb, round 5, persona codebase details
+
+Source: hand-back of the codebase reviewer (agent ad8968d64), saved by the lead (condensed). Mode-safety path. Static read of the snapshot only (first 644 of 2940 delta lines; final state from files/); nothing run; normalise_host, LOOPBACK, ToolContext.fetch, ToolSpec.hosts type not seen. 0 Blocker, 2 Major, 7 Minor, nits.
+
+## Major
+- **M1** tests/test_mode_banner.py:422-445 (`test_a_missing_or_odd_banner_is_never_hidden_it_says_not_confirmed`): entries #4-#9 (`tag ""`, `text 5`, `text "x"*601`, `standins 7`, ...) lack `real` and `stand_ins`, so they hit `isTextList(undefined)` before the field under test. A mutant deleting `if (!isText(tag) || !isText(text)) return NOT_CONFIRMED;` (mode_banner.js:54) survives; no J row for it; J5 (MAX_TEXT 6000) killed only via the standins case #10. Fix: build each entry as `{**GOOD_DEMO, field: odd}`; add a J row for the isText(tag)/(text) line.
+- **M2** tools/demo_only_guard.py:360-372: on Python 3.13 (recalled, unconfirmed against the repo runtime) `Path.is_symlink/is_dir/is_file` swallow every OSError; with an unreadable parent `lexists` is False and the entry takes `continue` ("gone from the disk"), no hit. Contradicts "a hit, never a skip". Test `test_an_entry_git_lists_that_cannot_be_read_is_a_hit_not_a_skip` (tests/test_demo_only_guard.py:678) only monkeypatches Path.open. Fix: `os.lstat`, only FileNotFoundError = gone; chmod test skipped as root. (Same as design M3.)
+
+## Minor
+- **m3** copy_without_folder.ignore (:511): `tracked` has file paths only, so a tracked directory whose name matches `copy_exclude` (`src/hadavin_sdk/credentials/`, `.env.d/`) is dropped with its tracked files; test :897 covers files only. Fix: directory counts as tracked when any tracked path starts with `rel + "/"`. Design note: a name deny-list over a full copy is incomplete (`.git-credentials`, `*.tfvars`, `.pgpass`, `secrets.yaml`, ignored build output); copying exactly `tracked_paths(repo)` removes both gaps.
+- **m4** CHANGELOG.md:214 guard entry: suffix list shorter than REFUSED_SUFFIXES (.gz .tgz .tar .bz2 .xz missing); UTF-8/UTF-16 text vs UTF-32 later (self-contradictory); "no token or key reaches the child" is environment-only (HOME allowed); "Round 5 (fail closed)" is review-process language.
+- **m5** CHANGELOG.md:214 banner entry: `banner_from_config(config, names)` "the one way" vs `banner_or_unconfirmed`; signature omits required `tool_specs`; "now REQUIRES", "now reads" inside a new feature; tool_modules counted also for an empty mapping, not only `tool_specs=None`.
+- **m6** demo_only_guard.py:79 dangling comment; docstring :27-29 says "\xNN" but printable emits \uNNNN and \UNNNNNNNN; DEFAULT_SKIP_SUFFIXES has dead entries (.pyc .so .zip .gz .whl refused first).
+- **m7** weak `expect` fragments in tests/banner_mutants.py: B23, G9c "did not match", J6 "boom" match almost any failure; B28 half-equivalent (shadowed by names-segment check); several pytest repr-truncation strings brittle; `test_the_table_has_no_loose_expectation_left` rejects only "assert" or under 4 characters; nothing checks old != new.
+- **m8** tests/test_demo_only_guard_ci.py:41 asserts `HADAVIN_REQUIRE_NODE: "1"` in the whole job, not in the pytest step block.
+- **m9** copy run drops HADAVIN_TEST_PG_DSN and HADAVIN_TEST_VAULT_ADDR, so DB and Vault tests skip in the copy; one toml comment.
+
+## Nits
+`_clean_names(..., words=None)` weaker default (make required); `ConfigLike.egress_hosts` typed Iterable[str] but a generator raises TypeError; `tag` length not checked in Python (page rejects over 600; fails safe); `not_confirmed(words)` in the except can raise on malformed words; mode_banner.js:88-90 comment states only the safe case (old text under new tone, data-mode not cleared); mode_banner_probe.js:29 scenario `failing-tone-attr` makes every setAttribute throw.
+
+## Verified OK
+One loopback decision (`_is_this_machine`), no second list; every call site passes `tool_specs=` by keyword (no-default case expects TypeError); 180 rows, every `old` string occurs once in the final files, labels unique, planted-duplicate test correct; fill orders tone/text/clear/nodes/mode/unhide and fallback unhide/tone/text/mode; size cap on stat and bounded read, FIFO never opened, magic constants and offsets correct, UTF-8/16/32 both byte orders, printable categories, allow-listed child env, CI node step in both jobs; no E731 or unused import seen.

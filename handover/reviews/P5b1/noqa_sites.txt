@@ -1,0 +1,37 @@
+P5b1 BLE001 sites (order 93). 9 sites, all with a same-line "never-raise guard: ..." reason, each calling neverraise.record(Site.<x>)
+(a counter by closed site name; no exception text kept). No S110/S112, no per-file ignore, no contextlib.suppress.
+Test for every site: tests/test_never_raise_guards.py (one test per file; each also proves KeyboardInterrupt/SystemExit propagate).
+Line numbers are at the commit that adds this file; P5a's own sites (about 15 more in diagnostic.py) are P5a's and are untouched.
+
+src/hadavin_sdk/guard/diagnostic.py:235  Site.diag_attrs_unreadable
+  why it cannot be narrowed: vars(exc) on a hostile object runs arbitrary property/__getattr__ code that can raise any Exception.
+  test: test_diagnostic_guards_catch_record_and_let_base_exceptions_through
+src/hadavin_sdk/guard/diagnostic.py:480  Site.diag_provider_class_check
+  why: cls.__module__ / __qualname__ on a hostile metaclass can raise any Exception.
+  test: test_diagnostic_guards_catch_record_and_let_base_exceptions_through
+src/hadavin_sdk/llm/provider_facts.py:86  Site.facts_safe_attr
+  why: getattr on a provider error with a hostile property can raise any Exception.
+  test: test_provider_facts_guards_catch_record_and_let_base_exceptions_through
+src/hadavin_sdk/llm/provider_facts.py:103  Site.facts_adapter_hook
+  why: an adapter hook (anthropic/bedrock/default facts) is foreign-shaped code reading foreign objects; any Exception is possible.
+  test: test_provider_facts_guards_catch_record_and_let_base_exceptions_through
+src/hadavin_sdk/llm/retry.py:122  Site.retry_class_text
+  why: class_name_of is declared never-raise; this is the belt-and-braces fallback if that contract is ever broken (tested by replacing it).
+  test: test_retry_guards_catch_record_and_let_base_exceptions_through
+src/hadavin_sdk/llm/retry.py:138  Site.retry_close_failed_http
+  why: HTTPError.close() on a subclass with hostile code can raise any Exception; it must never replace the real provider error.
+  test: test_retry_guards_catch_record_and_let_base_exceptions_through
+src/hadavin_sdk/llm/retry.py:156  Site.retry_classify   (REVIEWER JUDGMENT NEEDED)
+  why: the call is foreign code and can raise anything; every failure must leave as a ProviderError. Every path out of this handler
+  raises a ProviderError/ProviderExhausted or retries. A bare "raise"/"from exc" would change the deliberate "from None" (no provider text
+  in __cause__). It records every absorbed call failure, so the counter counts failures, not bugs. It is a classifier more than a silent guard.
+  test: test_retry_guards_catch_record_and_let_base_exceptions_through
+src/hadavin_sdk/llm/retry.py:161  Site.retry_decision
+  why: the transient/retryable test is foreign-shaped; a crash is booked as the billed class (the request was sent).
+  test: test_retry_guards_catch_record_and_let_base_exceptions_through
+src/hadavin_sdk/llm/retry.py:191  Site.retry_wait
+  why: retry_after reads a foreign response header; a crash is booked as the billed class (no extra request).
+  test: test_retry_guards_catch_record_and_let_base_exceptions_through
+
+REMOVED instead of suppressed: the per-fact try/except blocks in diagnostic._provider_facts and _bounded_attr (4 sites). They guarded
+only exact-type checks on values of an exact dict, which cannot raise; removing them changed no behaviour.

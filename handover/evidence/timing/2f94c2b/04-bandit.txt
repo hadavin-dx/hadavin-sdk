@@ -1,0 +1,12 @@
+sha=2f94c2b28df25bca9bb28d6a50d13f8c292c19c9
+cmd=/tmp/claude-0/bandit-venv/bin/bandit -q -r src demos tools -ll
+[tester]	WARNING	nosec encountered (B608), but no failed test on file demos/ask-your-data/db/lumen.py:723
+[tester]	WARNING	nosec encountered (B608), but no failed test on file demos/ask-your-data/db/lumen.py:723
+[manager]	WARNING	Test in comment: SafeLoader is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: subclass is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: the is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: pinned is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: bytes is not a test name or id, ignoring
+[tester]	WARNING	nosec encountered (B102), but no failed test on file src/hadavin_sdk/tools.py:389
+[tester]	WARNING	nosec encountered (B102), but no failed test on file src/hadavin_sdk/tools.py:389
+exit=0

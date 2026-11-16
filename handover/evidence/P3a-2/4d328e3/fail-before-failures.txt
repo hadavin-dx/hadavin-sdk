@@ -1,0 +1,138 @@
+ERROR ::tests.test_migration_compare
+    E   AttributeError: module 'hadavin_sdk.store.migrate' has no attribute '_FUNCTION_FIELDS'. Did you mean: '_FUNCTION_CREATE'?
+FAILURE tests.test_migration_postgres::test_one_table_owned_by_another_role_is_enough_to_refuse_and_a_function_is_named
+    E       ValueError: too many values to unpack (expected 2)
+FAILURE tests.test_migration_postgres::test_a_procedure_and_an_aggregate_get_their_own_words_and_the_printed_lines_run
+    E       ValueError: too many values to unpack (expected 2)
+FAILURE tests.test_migration_postgres::test_a_partition_owned_by_another_role_is_listed
+    E       ValueError: too many values to unpack (expected 2)
+FAILURE tests.test_migration_postgres::test_a_name_with_a_newline_is_never_copied_into_a_printed_statement
+    E       ValueError: too many values to unpack (expected 2)
+FAILURE tests.test_migration_postgres::test_every_statement_is_printed_when_more_than_the_shown_names_are_foreign
+    E       ValueError: too many values to unpack (expected 2)
+FAILURE tests.test_migration_postgres::test_objects_of_an_installed_extension_are_not_listed
+    E       ValueError: too many values to unpack (expected 2)
+FAILURE tests.test_migration_postgres::test_the_function_half_of_the_ownership_check_finds_a_function_alone
+    E       ValueError: too many values to unpack (expected 2)
+FAILURE tests.test_migration_postgres::test_an_aggregate_with_no_arguments_is_printed_with_a_star
+    E       ValueError: too many values to unpack (expected 2)
+FAILURE tests.test_migration_postgres::test_a_table_made_by_dynamic_sql_and_opened_to_everyone_is_refused
+    E       AssertionError: Regex pattern did not match.
+FAILURE tests.test_migration_postgres::test_a_right_given_on_a_table_that_existed_before_the_run_is_refused[table]
+    E       AssertionError: Regex pattern did not match.
+FAILURE tests.test_migration_postgres::test_a_right_given_on_a_table_that_existed_before_the_run_is_refused[column]
+    E       AssertionError: Regex pattern did not match.
+FAILURE tests.test_migration_postgres::test_a_second_right_on_a_column_that_already_had_one_is_refused
+    E       AssertionError: Regex pattern did not match.
+FAILURE tests.test_migration_postgres::test_a_right_given_on_a_table_of_another_schema_is_refused
+    E       AssertionError: Regex pattern did not match.
+FAILURE tests.test_migration_postgres::test_an_owner_handed_over_by_dynamic_sql_is_refused_for_every_kind[table-table]
+    E           assert 'the table hadavin_test_o_af5d1b0928.hadavin_test_o was handed to hadavin_test_ow_f6116371' in "after the migration files ran, rights that this package does not give are in place, in schema hadavin_test_cab24a5daac7 or elsewhere in this database: the table or sequence hadavin_test
+FAILURE tests.test_migration_postgres::test_an_owner_handed_over_by_dynamic_sql_is_refused_for_every_kind[sequence-sequence]
+    E           assert 'the sequence hadavin_test_o_1354b14775.hadavin_test_o was handed to hadavin_test_ow_8a6342f9' in "after the migration files ran, rights that this package does not give are in place, in schema hadavin_test_3f50943775bd or elsewhere in this database: the table or sequence hadavin_t
+FAILURE tests.test_migration_postgres::test_an_owner_handed_over_by_dynamic_sql_is_refused_for_every_kind[view-view]
+    E           assert 'the view hadavin_test_o_b140780d49.hadavin_test_o was handed to hadavin_test_ow_a8fe79de' in "after the migration files ran, rights that this package does not give are in place, in schema hadavin_test_986e66b31398 or elsewhere in this database: the table or sequence hadavin_test_
+FAILURE tests.test_migration_postgres::test_a_foreign_table_that_a_file_opens_to_everyone_is_refused
+    E           AssertionError: Regex pattern did not match.
+FAILURE tests.test_migration_postgres::test_a_right_that_a_named_role_may_pass_on_is_refused_on_a_table_of_the_grant_map[table]
+    E           assert 'hadavin_test_nr_a9d50902 may pass SELECT on the table hadavin_test_e973a7ae5668.runs on to others' in "after the migration files ran, rights that this package does not give are in place, in schema hadavin_test_e973a7ae5668 or elsewhere in this database: hadavin_test_gv_a070b7ea h
+FAILURE tests.test_migration_postgres::test_a_right_that_a_named_role_may_pass_on_is_refused_on_a_table_of_the_grant_map[column]
+    E           assert 'hadavin_test_nr_eb0aec44 may pass SELECT on the table hadavin_test_b9723bae9982.runs, column run_id on to others' in "after the migration files ran, rights that this package does not give are in place, in schema hadavin_test_b9723bae9982 or elsewhere in this database: hadavin_tes
+FAILURE tests.test_migration_postgres::test_a_named_role_gets_no_right_on_what_is_not_in_the_grant_map[select]
+    E       Failed: DID NOT RAISE ConfigError
+FAILURE tests.test_migration_postgres::test_a_named_role_gets_no_right_on_what_is_not_in_the_grant_map[column_select]
+    E       Failed: DID NOT RAISE ConfigError
+FAILURE tests.test_migration_postgres::test_a_named_role_gets_no_right_on_what_is_not_in_the_grant_map[insert]
+    E       assert 'hadavin_test_nr_f8bfd9d4 has INSERT on the table hadavin_test_o_836412b821.hadavin_test_x' in "after the migration files ran, rights that this package does not give are in place, in schema hadavin_test_c9e61f143674 or elsewhere in this database: hadavin_test_nr_f8bfd9d4 has INSERT on
+FAILURE tests.test_migration_postgres::test_a_named_role_gets_no_right_on_what_is_not_in_the_grant_map[delete]
+    E       assert 'hadavin_test_nr_8376fe91 has DELETE on the table hadavin_test_o_623ccaab75.hadavin_test_x' in "after the migration files ran, rights that this package does not give are in place, in schema hadavin_test_49a38d09613e or elsewhere in this database: hadavin_test_nr_8376fe91 has DELETE on
+FAILURE tests.test_migration_postgres::test_a_named_role_gets_no_right_on_what_is_not_in_the_grant_map[sequence_usage]
+    E       Failed: DID NOT RAISE ConfigError
+FAILURE tests.test_migration_postgres::test_a_named_role_gets_no_right_on_what_is_not_in_the_grant_map[sequence_select]
+    E       Failed: DID NOT RAISE ConfigError
+FAILURE tests.test_migration_postgres::test_a_named_role_gets_no_right_on_what_is_not_in_the_grant_map[sequence_update]
+    E       assert 'hadavin_test_nr_2605dc91 has UPDATE on the sequence hadavin_test_o_12b5a482f8.hadavin_test_x' in "after the migration files ran, rights that this package does not give are in place, in schema hadavin_test_ff5eb61fbb12 or elsewhere in this database: hadavin_test_nr_2605dc91 has UPDATE
+FAILURE tests.test_migration_postgres::test_a_named_role_gets_no_right_on_what_is_not_in_the_grant_map[view_select]
+    E       Failed: DID NOT RAISE ConfigError
+FAILURE tests.test_migration_postgres::test_default_rights_are_read_for_every_schema_and_for_the_roles_the_migration_role_belongs_to[named_select]
+    E           Failed: DID NOT RAISE ConfigError
+FAILURE tests.test_migration_postgres::test_default_rights_are_read_for_every_schema_and_for_the_roles_the_migration_role_belongs_to[member_role_select]
+    E           Failed: DID NOT RAISE ConfigError
+FAILURE tests.test_migration_postgres::test_the_database_owner_pseudo_role_is_refused_on_a_schema_it_does_not_own
+    E       Failed: DID NOT RAISE ConfigError
+FAILURE tests.test_migration_postgres::test_what_another_session_commits_during_the_run_does_not_stop_the_run
+    E           hadavin_sdk.errors.ConfigError: after the migration files ran, rights that this package does not give are in place, in schema hadavin_test_ba54779ffa72 or elsewhere in this database: PUBLIC has CREATE on the schema hadavin_test_else_2c114000 itself; PUBLIC has INSERT on hadavin_test_o_3e
+FAILURE tests.test_migration_postgres::test_a_change_by_another_session_to_a_table_of_the_migration_role_is_refused_and_the_message_names_that_cause
+    E       AssertionError: Regex pattern did not match.
+FAILURE tests.test_migration_postgres::test_a_security_definer_function_of_the_migration_role_that_no_file_made_is_refused[the_migration_role]
+    E           Failed: DID NOT RAISE ConfigError
+FAILURE tests.test_migration_postgres::test_a_security_definer_function_of_the_migration_role_that_no_file_made_is_refused[a_role_it_belongs_to]
+    E           Failed: DID NOT RAISE ConfigError
+FAILURE tests.test_migration_postgres::test_every_part_of_a_function_that_a_file_can_change_makes_it_a_changed_function[sql_standard_body]
+    E       AssertionError: the replaced function was not seen as changed: everyone may still call it
+FAILURE tests.test_migration_postgres::test_a_default_right_for_the_migration_role_itself_and_the_servers_own_default_are_not_a_strangers[tables_in_the_run_schema]
+    E           hadavin_sdk.errors.ConfigError: after the migration files ran, rights that this package does not give are in place, in schema hadavin_test_4af8004af268 or elsewhere in this database: hadavin_test_migrator_e2203840 gets SELECT on every new table that hadavin_test_dr_97a74765 makes in hada
+FAILURE tests.test_migration_postgres::test_a_default_right_for_the_migration_role_itself_and_the_servers_own_default_are_not_a_strangers[functions_everywhere]
+    E           hadavin_sdk.errors.ConfigError: after the migration files ran, rights that this package does not give are in place, in schema hadavin_test_9ddb4704a7a3 or elsewhere in this database: PUBLIC gets EXECUTE on every new function that hadavin_test_dr_bfd9d8bd makes in every schema (a default 
+FAILURE tests.test_migration_postgres::test_a_default_right_for_the_migration_role_itself_and_the_servers_own_default_are_not_a_strangers[sequences_everywhere]
+    E           hadavin_sdk.errors.ConfigError: after the migration files ran, rights that this package does not give are in place, in schema hadavin_test_f867fc052972 or elsewhere in this database: hadavin_test_migrator_e2203840 gets USAGE on every new sequence that hadavin_test_dr_9185a376 makes in ev
+FAILURE tests.test_migration_postgres::test_a_default_right_for_the_migration_role_itself_and_the_servers_own_default_are_not_a_strangers[types_everywhere]
+    E           hadavin_sdk.errors.ConfigError: after the migration files ran, rights that this package does not give are in place, in schema hadavin_test_5982ea02bc2a or elsewhere in this database: PUBLIC gets USAGE on every new type that hadavin_test_dr_b6815743 makes in every schema (a default right,
+FAILURE tests.test_migration_postgres::test_a_default_right_for_a_named_role_or_for_everyone_is_refused_for_functions_sequences_and_types[named_functions_everywhere]
+    E           assert 'hadavin_test_nr_0c971ad4 gets EXECUTE on every new function that hadavin_test_migrator_e2203840 makes in every schema' in "after the migration files ran, rights that this package does not give are in place, in schema hadavin_test_cfdf4fee868b or elsewhere in this database: PUBLIC
+FAILURE tests.test_migration_postgres::test_a_default_right_for_a_named_role_or_for_everyone_is_refused_for_functions_sequences_and_types[named_sequences_in_a_schema]
+    E           Failed: DID NOT RAISE ConfigError
+FAILURE tests.test_migration_postgres::test_a_default_right_for_a_named_role_or_for_everyone_is_refused_for_functions_sequences_and_types[named_types_everywhere]
+    E           assert 'hadavin_test_nr_5afc1790 gets USAGE on every new type that hadavin_test_migrator_e2203840 makes in every schema' in "after the migration files ran, rights that this package does not give are in place, in schema hadavin_test_ad78b8fa8787 or elsewhere in this database: PUBLIC gets 
+FAILURE tests.test_migration_postgres::test_a_default_right_for_a_named_role_or_for_everyone_is_refused_for_functions_sequences_and_types[everyone_functions_in_a_schema]
+    E           assert 'PUBLIC gets EXECUTE on every new function that hadavin_test_migrator_e2203840 makes in the schema hadavin_test_798ba6e56b07' in "after the migration files ran, rights that this package does not give are in place, in schema hadavin_test_798ba6e56b07 or elsewhere in this database: 
+FAILURE tests.test_migration_postgres::test_a_default_right_for_a_named_role_or_for_everyone_is_refused_for_functions_sequences_and_types[everyone_sequences_everywhere]
+    E           assert 'REVOKE USAGE ON SEQUENCES FROM' in "after the migration files ran, rights that this package does not give are in place, in schema hadavin_test_5e627b3839e8 or elsewhere in this database: PUBLIC gets USAGE on every new sequence that hadavin_test_migrator_e2203840 makes in every sc
+FAILURE tests.test_migration_postgres::test_a_named_role_gets_no_right_on_a_function
+    E       Failed: DID NOT RAISE ConfigError
+FAILURE tests.test_migration_postgres::test_a_function_that_is_called_like_a_table_of_the_grant_map_is_not_this_packages[the_migration_role]
+    E           hadavin_sdk.errors.ConfigError: after the migration files ran, rights that this package does not give are in place, in schema hadavin_test_711cfe853a04 or elsewhere in this database: PUBLIC has EXECUTE on the function spend(); hadavin_test_mc_a90e8e6d has EXECUTE on the function spend().
+FAILURE tests.test_migration_postgres::test_a_function_that_is_called_like_a_table_of_the_grant_map_is_not_this_packages[another_role]
+    E       hadavin_sdk.errors.ConfigError: the migration role hadavin_test_migrator_e2203840 cannot change 1 object(s) of this package in schema hadavin_test_4912943f0753 that another role owns: spend (owner hadavin_test_mc_5ccc6e86). A later migration that alters one of them would fail with 'must be o
+FAILURE tests.test_migration_postgres::test_a_named_role_that_can_read_a_foreign_table_in_the_run_schema_is_refused
+    E           Failed: DID NOT RAISE ConfigError
+FAILURE tests.test_migration_postgres::test_a_prepared_transaction_that_holds_the_migration_lock_is_named_as_one
+    E           AssertionError: Regex pattern did not match.
+FAILURE tests.test_migration_postgres::test_with_the_printed_role_an_owner_handed_over_is_the_one_cause_of_the_refusal
+    E           AssertionError: assert 'the table or...gration role)' == 'the table ha...gration role)'
+FAILURE tests.test_migration_postgres::test_with_the_printed_role_the_schema_and_default_right_checks_hold
+    E           hadavin_sdk.errors.ConfigError: after the migration files ran, rights that this package does not give are in place, in schema hadavin_test_390d283fa9b2 or elsewhere in this database: PUBLIC gets EXECUTE on every new function that hadavin_test_pg_9eecd575 makes in every schema (a default 
+FAILURE tests.test_migration_rules::test_handing_an_object_to_another_role_is_refused_by_the_text_rule[ALTER TABLE t ADD COLUMN rename int, OWNER TO r]
+    E       AssertionError: ('ALTER TABLE t ADD COLUMN rename int, OWNER TO r', [])
+FAILURE tests.test_migration_rules::test_handing_an_object_to_another_role_is_refused_by_the_text_rule[ALTER TYPE rename OWNER TO r]
+    E       AssertionError: ('ALTER TYPE rename OWNER TO r', [])
+FAILURE tests.test_migration_rules::test_handing_an_object_to_another_role_is_refused_by_the_text_rule[ALTER TABLE a$rename OWNER TO r]
+    E       AssertionError: ('ALTER TABLE a$rename OWNER TO r', [])
+FAILURE tests.test_migration_rules::test_handing_an_object_to_another_role_is_refused_by_the_text_rule[ALTER TABLE t RENAME owner TO boss, OWNER TO r]
+    E       AssertionError: ('ALTER TABLE t RENAME owner TO boss, OWNER TO r', [])
+FAILURE tests.test_migration_rules::test_handing_an_object_to_another_role_is_refused_by_the_text_rule[ALTER SEQUENCE rename OWNER TO r]
+    E       AssertionError: ('ALTER SEQUENCE rename OWNER TO r', [])
+FAILURE tests.test_migration_rules::test_the_owner_refusal_holds_under_noise[-]
+    E       AssertionError: ['ALTER TABLE t ADD COLUMN rename int, OWNER TO r', 'ALTER TYPE rename OWNER TO r', 'ALTER TABLE a$rename OWNER TO r', 'ALTER TABLE t RENAME owner TO boss, OWNER TO r', 'ALTER SEQUENCE rename OWNER TO r']
+FAILURE tests.test_migration_rules::test_the_owner_refusal_holds_under_noise[-- on\n-]
+    E       AssertionError: ['ALTER TABLE t ADD COLUMN rename int, OWNER TO r', 'ALTER TYPE rename OWNER TO r', 'ALTER TABLE a$rename OWNER TO r', 'ALTER TABLE t RENAME owner TO boss, OWNER TO r', 'ALTER SEQUENCE rename OWNER TO r']
+FAILURE tests.test_migration_rules::test_the_owner_refusal_holds_under_noise[/* on */ -]
+    E       AssertionError: ['ALTER TABLE t ADD COLUMN rename int, OWNER TO r', 'ALTER TYPE rename OWNER TO r', 'ALTER TABLE a$rename OWNER TO r', 'ALTER TABLE t RENAME owner TO boss, OWNER TO r', 'ALTER SEQUENCE rename OWNER TO r']
+FAILURE tests.test_migration_rules::test_the_owner_refusal_holds_under_noise[- -- on]
+    E       AssertionError: ['ALTER TABLE t ADD COLUMN rename int, OWNER TO r', 'ALTER TYPE rename OWNER TO r', 'ALTER TABLE a$rename OWNER TO r', 'ALTER TABLE t RENAME owner TO boss, OWNER TO r', 'ALTER SEQUENCE rename OWNER TO r']
+FAILURE tests.test_migration_rules::test_the_owner_refusal_holds_under_noise[- /* on */]
+    E       AssertionError: ['ALTER TABLE t ADD COLUMN rename int, OWNER TO r', 'ALTER TYPE rename OWNER TO r', 'ALTER TABLE a$rename OWNER TO r', 'ALTER TABLE t RENAME owner TO boss, OWNER TO r', 'ALTER SEQUENCE rename OWNER TO r']
+FAILURE tests.test_migration_rules::test_the_owner_refusal_holds_under_noise[/* on */ - -- on\n]
+    E       AssertionError: ['ALTER TABLE t ADD COLUMN rename int, OWNER TO r', 'ALTER TYPE rename OWNER TO r', 'ALTER TABLE a$rename OWNER TO r', 'ALTER TABLE t RENAME owner TO boss, OWNER TO r', 'ALTER SEQUENCE rename OWNER TO r']
+FAILURE tests.test_migration_rules::test_every_migrate_mutant_still_applies_to_the_source
+    E       AssertionError: assert ['OA4: the ol...ctly 1)', ...] == []
+FAILURE tests.test_migration_wiring::test_the_ownership_query_gets_the_managed_names
+    E       AssertionError: the made-up files of this test create no function
+FAILURE tests.test_migration_wiring::test_the_managed_names_are_the_grant_map_the_ledger_and_the_functions_the_files_create
+    E       ValueError: too many values to unpack (expected 2)
+FAILURE tests.test_migration_wiring::test_a_plain_function_name_is_folded_to_lower_case_and_a_quoted_one_is_read_whole
+    E       assert {'Q"x', 'a b'... 'mixed_case'} <= {' ', 'a', 'b'}
+FAILURE tests.test_migration_wiring::test_a_function_of_another_schema_is_not_a_managed_name
+    E       AssertionError: {'_', 'a', 'c', 'd', 'e', 'i', ...}
+FAILURE tests.test_migration_wiring::test_a_name_is_folded_as_the_server_folds_it_and_is_read_only_at_the_start_of_a_statement
+    E       AssertionError: {'_', 'a', 'c', 'd', 'e', 'i', ...}

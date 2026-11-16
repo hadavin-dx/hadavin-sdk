@@ -1,0 +1,424 @@
+./demo_only/portal_demo.py:noqa
+./demo_only/portal_demo.py:noqa
+./demo_only/portal_demo.py:noqa
+./demo_only/portal_demo.py:noqa
+./demo_only/portal_demo.py:noqa
+./demo_only/fakes_server.py:noqa
+./demo_only/fake_smtp_tls.py:noqa
+./demo_only/fake_hubspot.py:noqa
+./demo_only/fake_model_server.py:noqa
+./demo_only/fake_model_server.py:noqa
+./demo_only/fake_model_server.py:noqa
+./demo_only/burst.py:noqa
+./demo_only/burst.py:noqa
+./demo_only/burst.py:type: ignore
+./src/lead_desk/live_claude.py:noqa
+./src/lead_desk/live_claude.py:noqa
+./src/lead_desk/live_claude.py:noqa
+./src/lead_desk/live_claude.py:nosec
+./src/lead_desk/live_claude.py:noqa
+./src/lead_desk/live_claude.py:nosec
+./src/lead_desk/live_claude.py:type: ignore
+./src/lead_desk/trace.py:noqa
+./src/lead_desk/trace.py:type: ignore
+./src/lead_desk/trace.py:type: ignore
+./src/lead_desk/trace.py:type: ignore
+./src/lead_desk/trace.py:type: ignore
+./src/lead_desk/trace.py:type: ignore
+./src/lead_desk/trace.py:type: ignore
+./src/lead_desk/config.py:type: ignore
+./src/lead_desk/config.py:noqa
+./src/lead_desk/config.py:noqa
+./src/lead_desk/config.py:type: ignore
+./src/lead_desk/config.py:type: ignore
+./src/lead_desk/smtp_provider.py:noqa
+./src/lead_desk/smtp_provider.py:noqa
+./src/lead_desk/smtp_provider.py:noqa
+./src/lead_desk/desk.py:noqa
+./src/lead_desk/desk.py:noqa
+./src/lead_desk/desk.py:noqa
+./src/lead_desk/desk.py:noqa
+./src/lead_desk/desk.py:noqa
+./src/lead_desk/desk.py:noqa
+./src/lead_desk/smtp_outbox.py:noqa
+./src/lead_desk/smtp_outbox.py:noqa
+./src/lead_desk/smtp_outbox.py:noqa
+./src/lead_desk/smtp_outbox.py:noqa
+./src/lead_desk/smtp_outbox.py:noqa
+./src/lead_desk/smtp_outbox.py:noqa
+./src/lead_desk/imap_count.py:noqa
+./src/lead_desk/imap_count.py:type: ignore
+./src/lead_desk/adapters.py:noqa
+./src/lead_desk/adapters.py:nosec
+./src/lead_desk/adapters.py:noqa
+./src/lead_desk/adapters.py:nosec
+./src/lead_desk/constants.py:type: ignore
+./src/lead_desk/constants.py:type: ignore
+./src/lead_desk/constants.py:type: ignore
+./src/lead_desk/constants.py:type: ignore
+./src/lead_desk/constants.py:type: ignore
+./src/lead_desk/constants.py:type: ignore
+./src/lead_desk/crm_hubspot.py:noqa
+./src/lead_desk/crm_hubspot.py:noqa
+./src/lead_desk/crm_hubspot.py:nosec
+./src/lead_desk/crm_hubspot.py:noqa
+./src/lead_desk/crm_hubspot.py:type: ignore
+./src/lead_desk/crm_hubspot.py:noqa
+./src/lead_desk/crm_hubspot.py:nosec
+./src/lead_desk/lockfile.py:noqa
+./src/lead_desk/server.py:type: ignore
+./src/lead_desk/server.py:noqa
+./src/lead_desk/server.py:noqa
+./src/lead_desk/server.py:noqa
+./src/lead_desk/server.py:noqa
+./.github/workflows/semgrep.yml:nosemgrep
+./load_tools/catcher.py:noqa
+./load_tools/load_driver.py:noqa
+./load_tools/load_driver.py:noqa
+./load_tools/load_driver.py:noqa
+./load_tools/load_driver.py:noqa
+./scripts/run_live_check.py:noqa
+./scripts/run_live_check.py:noqa
+./scripts/run_live_check.py:noqa
+./scripts/run_live_check.py:type: ignore
+./scripts/run_live_check.py:type: ignore
+./scripts/run_live_check.py:type: ignore
+./scripts/feed.py:noqa
+./scripts/http_guard.py:noqa
+./scripts/http_guard.py:nosec
+./scripts/http_guard.py:noqa
+./scripts/http_guard.py:nosec
+./scripts/run_real_check.py:noqa
+./scripts/run_real_check.py:noqa
+./scripts/run_real_check.py:noqa
+./scripts/run_real_check.py:noqa
+./scripts/run_real_check.py:noqa
+./scripts/run_real_check.py:noqa
+./scripts/run_real_check.py:noqa
+./scripts/run_real_check.py:noqa
+./scripts/run_real_check.py:noqa
+./scripts/run_real_check.py:noqa
+./scripts/run_real_check.py:noqa
+./scripts/run_real_check.py:noqa
+./scripts/run_real_check.py:noqa
+./scripts/run_real_check.py:noqa
+./scripts/run_real_check.py:noqa
+./scripts/run_real_check.py:noqa
+./scripts/run_real_check.py:noqa
+./scripts/run_real_check.py:noqa
+./scripts/run_real_check.py:noqa
+./scripts/run_real_check.py:noqa
+./scripts/run_real_check.py:noqa
+./scripts/run_real_check.py:noqa
+./scripts/n8n_api.py:noqa
+./scripts/n8n_api.py:noqa
+./scripts/n8n_api.py:noqa
+./scripts/n8n_api.py:noqa
+./scripts/n8n_api.py:noqa
+./scripts/hubspot_probe.py:noqa
+./scripts/hubspot_probe.py:noqa
+./scripts/hubspot_probe.py:noqa
+./scripts/hubspot_probe.py:noqa
+./scripts/hubspot_probe.py:nosec
+./scripts/hubspot_probe.py:noqa
+./scripts/hubspot_probe.py:noqa
+./tests/test_crm_hubspot.py:type: ignore
+./tests/test_demo_folder_guard.py:noqa
+./tests/test_hung_adapter_calls.py:noqa
+./tests/test_hung_adapter_calls.py:noqa
+./tests/test_hung_adapter_calls.py:type: ignore
+./tests/test_sonar_p2_gaps.py:type: ignore
+./tests/test_sonar_p2_gaps.py:type: ignore
+./tests/test_gitleaks_exceptions.py:noqa
+./tests/test_gitleaks_exceptions.py:noqa
+./tests/test_gitleaks_exceptions.py:noqa
+./tests/test_gitleaks_exceptions.py:noqa
+./tests/test_reset_scripts.py:noqa
+./tests/test_reset_scripts.py:noqa
+./tests/test_reset_scripts.py:noqa
+./tests/test_reset_scripts.py:noqa
+./tests/test_reset_scripts.py:noqa
+./tests/test_reset_scripts.py:noqa
+./tests/test_reset_scripts.py:noqa
+./tests/test_load_tools.py:noqa
+./tests/test_load_tools.py:noqa
+./tests/test_load_tools.py:noqa
+./tests/test_load_tools.py:noqa
+./tests/test_load_tools.py:type: ignore
+./tests/test_load_tools.py:noqa
+./tests/test_load_tools.py:noqa
+./tests/test_load_tools.py:noqa
+./tests/test_codeant_demo_only.py:noqa
+./tests/test_codeant_demo_only.py:noqa
+./tests/test_reset_ps1_links.py:noqa
+./tests/test_hubspot_probe.py:noqa
+./tests/test_hubspot_probe.py:noqa
+./tests/test_burst_retry.py:type: ignore
+./tests/test_portal_log_poll.py:noqa
+./tests/test_portal_log_poll.py:noqa
+./tests/test_portal_log_poll.py:type: ignore
+./tests/test_codeant_hygiene.py:noqa
+./tests/test_review_item_edge_cases.py:noqa
+./tests/test_review_item_edge_cases.py:noqa
+./tests/test_vendor_hosts.py:noqa
+./tests/test_vendor_hosts.py:noqa
+./tests/test_vendor_hosts.py:noqa
+./tests/test_vendor_hosts.py:noqa
+./tests/test_vendor_hosts.py:noqa
+./tests/test_standins_body_before_answer.py:noqa
+./tests/test_standins_body_before_answer.py:noqa
+./tests/test_codeant_desk.py:noqa
+./tests/test_scrub_n8n_export.py:noqa
+./tests/test_portal_look.py:type: ignore
+./tests/test_model_stamp_and_reaper.py:noqa
+./tests/test_model_stamp_and_reaper.py:noqa
+./tests/test_model_stamp_and_reaper.py:type: ignore
+./tests/test_server_hardening.py:type: ignore
+./tests/test_server_hardening.py:type: ignore
+./tests/test_server_hardening.py:type: ignore
+./tests/test_server_hardening.py:type: ignore
+./tests/test_server_hardening.py:type: ignore
+./tests/test_http.py:type: ignore
+./tests/test_portal_browser.py:noqa
+./tests/test_claim_checks_and_crm_mode.py:noqa
+./tests/test_claim_checks_and_crm_mode.py:noqa
+./tests/test_claim_checks_and_crm_mode.py:type: ignore
+./tests/test_claim_checks_and_crm_mode.py:noqa
+./tests/test_mutants.py:noqa
+./tests/test_mutants.py:noqa
+./tests/test_portal_layout.py:type: ignore
+./tests/test_portal_layout.py:noqa
+./tests/test_later_approval.py:noqa
+./tests/test_live_claude.py:type: ignore
+./tests/test_live_claude.py:noqa
+./tests/test_live_claude.py:noqa
+./tests/test_live_claude.py:noqa
+./tests/test_http_guard.py:noqa
+./tests/test_http_guard.py:noqa
+./tests/test_no_placeholders.py:noqa
+./tests/test_no_placeholders.py:noqa
+./tests/test_stamp_locks_and_budget.py:noqa
+./tests/test_stamp_locks_and_budget.py:noqa
+./tests/test_stamp_locks_and_budget.py:type: ignore
+./tests/test_stamp_locks_and_budget.py:type: ignore
+./tests/test_n8n_proof_result.py:type: ignore
+./tests/test_n8n_proof_result.py:noqa
+./tests/test_n8n_proof_result.py:type: ignore
+./tests/support.py:noqa
+./tests/support.py:noqa
+./tests/support.py:noqa
+./tests/support.py:noqa
+./tests/support.py:type: ignore
+./tests/support.py:noqa
+./tests/support.py:noqa
+./tests/support.py:noqa
+./tests/support.py:noqa
+./tests/support.py:noqa
+./tests/support.py:noqa
+./tests/support.py:noqa
+./tests/support.py:noqa
+./tests/support.py:noqa
+./tests/support.py:noqa
+./tests/support.py:noqa
+./tests/test_mode_safety.py:noqa
+./tests/test_mode_safety.py:noqa
+./tests/test_mode_safety.py:noqa
+./tests/test_mode_safety.py:type: ignore
+./tests/test_mode_safety.py:noqa
+./tests/test_later_messages.py:type: ignore
+./tests/test_ledger_amounts.py:noqa
+./tests/test_ledger_amounts.py:nosec
+./tests/test_ledger_amounts.py:noqa
+./tests/test_ledger_amounts.py:nosec
+./tests/test_path_confinement.py:type: ignore
+./tests/test_path_confinement.py:type: ignore
+./tests/test_path_confinement.py:type: ignore
+./tests/test_path_confinement.py:type: ignore
+./tests/test_path_confinement.py:type: ignore
+./tests/test_server_stop_guard.py:type: ignore
+./tests/test_mutation_guards.py:noqa
+./tests/test_mutation_guards.py:noqa
+./tests/test_smtp_provider.py:noqa
+./tests/test_followup_edge_cases.py:noqa
+./tests/test_followup_edge_cases.py:noqa
+./tests/test_portal_lead_pages.py:noqa
+./tests/test_portal_lead_pages.py:noqa
+./tests/test_portal_lead_pages.py:noqa
+./tests/test_portal_lead_pages.py:noqa
+./tests/test_portal_lead_pages.py:type: ignore
+./tests/test_crash_points.py:noqa
+./tests/test_crash_points.py:noqa
+./tests/test_n8n_api_url.py:noqa
+./tests/test_n8n_api_url.py:noqa
+./tests/test_n8n_api_url.py:noqa
+./tests/test_portal_wording_and_masking.py:type: ignore
+./tests/test_portal_wording_and_masking.py:noqa
+./tests/test_portal_wording_and_masking.py:noqa
+./tests/test_portal_wording_and_masking.py:noqa
+./tests/test_mutants_more.py:type: ignore
+./tests/test_mutants_more.py:type: ignore
+./tests/test_mutants_more.py:type: ignore
+./tests/test_smtp_outbox.py:noqa
+./tests/test_smtp_outbox.py:noqa
+./tests/test_smtp_outbox.py:type: ignore
+./tests/test_lead_owner_assignment.py:noqa
+./tests/test_lead_owner_assignment.py:noqa
+./tests/test_env_numbers.py:noqa
+./tests/test_env_numbers.py:noqa
+./tests/test_env_numbers.py:noqa
+./tests/test_env_numbers.py:noqa
+./tests/test_env_numbers.py:noqa
+./tests/test_env_numbers.py:noqa
+./tests/test_env_numbers.py:noqa
+./tests/test_env_numbers.py:noqa
+./tests/test_env_numbers.py:noqa
+./tests/test_env_numbers.py:nosec
+./tests/test_hung_model_call.py:noqa
+./tests/test_hung_model_call.py:noqa
+./tests/test_hung_model_call.py:type: ignore
+./tests/test_portal_api.py:type: ignore
+./tests/test_portal_api.py:noqa
+./tests/test_portal_api.py:noqa
+./tests/test_portal_api.py:type: ignore
+./tests/test_portal_api.py:type: ignore
+./tests/test_portal_api.py:type: ignore
+./tests/test_portal_api.py:type: ignore
+./tests/test_portal_api.py:type: ignore
+./tests/test_slow_sender.py:type: ignore
+./tests/test_slow_sender.py:type: ignore
+./tests/test_slow_sender.py:type: ignore
+./tests/test_slow_sender.py:type: ignore
+./tests/test_slow_sender.py:type: ignore
+./tests/test_slow_sender.py:type: ignore
+./tests/test_slow_sender.py:type: ignore
+./tests/test_slow_sender.py:noqa
+./tests/test_portal_mode.py:noqa
+./tests/test_portal_mode.py:noqa
+./tests/test_portal_mode.py:noqa
+./tests/test_portal_mode.py:noqa
+./tests/test_portal_mode.py:noqa
+./tests/test_portal_mode.py:noqa
+./tests/test_portal_mode.py:type: ignore
+./tests/test_portal_mode.py:type: ignore
+./tests/test_portal_mode.py:type: ignore
+./tests/test_portal_mode.py:type: ignore
+./tests/test_portal_mode.py:type: ignore
+./tests/test_portal_mode.py:type: ignore
+./tests/test_portal_mode.py:noqa
+./tests/test_portal_mode.py:noqa
+./tests/test_portal_mode.py:type: ignore
+./tests/test_portal_mode.py:type: ignore
+./tests/test_portal_mode.py:type: ignore
+./tests/test_portal_mode.py:type: ignore
+./tests/test_portal_mode.py:type: ignore
+./tests/test_portal_mode.py:type: ignore
+./tests/test_portal_mode.py:type: ignore
+./tests/test_portal_mode.py:type: ignore
+./tests/test_portal_mode.py:type: ignore
+./tests/test_portal_mode.py:type: ignore
+./tests/test_portal_mode.py:type: ignore
+./tests/test_portal_mode.py:noqa
+./tests/test_portal_mode.py:noqa
+./tests/test_portal_mode.py:noqa
+./tests/test_portal_mode.py:noqa
+./tests/test_clock_steps.py:noqa
+./tests/test_clock_steps.py:noqa
+./tests/test_infra.py:noqa
+./tests/test_reaper_start_stop.py:type: ignore
+./tests/test_reaper_start_stop.py:type: ignore
+./tests/test_reaper_start_stop.py:type: ignore
+./tests/conftest.py:type: ignore
+./tests/conftest.py:noqa
+./tests/conftest.py:noqa
+./tests/test_except_clause_hierarchy.py:type: ignore
+./tests/test_except_clause_hierarchy.py:type: ignore
+./tests/test_migration_triggers.py:noqa
+./tests/test_mirror_gate.py:noqa
+./tests/test_mirror_gate.py:type: ignore
+./tests/test_hygiene.py:noqa
+./tests/test_hygiene.py:noqa
+./tests/test_hygiene.py:noqa
+./tests/test_hygiene.py:noqa
+./tests/test_hygiene.py:noqa
+./tests/test_hygiene.py:noqa
+./tests/test_hygiene.py:noqa
+./tests/test_nosemgrep_form.py:nosemgrep
+./tests/test_nosemgrep_form.py:nosemgrep
+./tests/test_nosemgrep_form.py:nosemgrep
+./tests/test_nosemgrep_form.py:nosemgrep
+./tests/test_nosemgrep_form.py:nosemgrep
+./tests/test_nosemgrep_form.py:nosemgrep
+./tests/test_nosemgrep_form.py:nosemgrep
+./tests/test_nosemgrep_form.py:nosemgrep
+./tests/test_nosemgrep_form.py:nosemgrep
+./tests/test_nosemgrep_form.py:nosemgrep
+./tests/test_nosemgrep_form.py:nosemgrep
+./tests/test_nosemgrep_form.py:nosemgrep
+./tests/test_nosemgrep_form.py:nosemgrep
+./tests/test_nosemgrep_form.py:nosemgrep
+./tests/test_nosemgrep_form.py:nosemgrep
+./tests/test_nosemgrep_form.py:nosemgrep
+./tests/test_nosemgrep_form.py:nosemgrep
+./tests/test_nosemgrep_form.py:nosemgrep
+./tests/test_nosemgrep_form.py:nosemgrep
+./tests/test_nosemgrep_form.py:nosemgrep
+./tests/test_nosemgrep_form.py:nosemgrep
+./tests/test_nosemgrep_form.py:nosemgrep
+./tests/test_nosemgrep_form.py:nosemgrep
+./tests/test_nosemgrep_form.py:nosemgrep
+./tests/test_nosemgrep_form.py:nosemgrep
+./tests/test_nosemgrep_form.py:nosemgrep
+./tests/test_nosemgrep_form.py:nosemgrep
+./tests/test_nosemgrep_form.py:nosemgrep
+./tests/test_nosemgrep_form.py:nosemgrep
+./tests/test_nosemgrep_form.py:nosemgrep
+./tests/test_fakes_body_before_answer.py:noqa
+./tests/test_fakes_body_before_answer.py:noqa
+./tests/test_fakes_body_before_answer.py:noqa
+./tests/test_fakes_body_before_answer.py:noqa
+./tests/test_fakes_body_before_answer.py:noqa
+./tests/test_real_check_dry.py:noqa
+./tests/test_real_check_dry.py:noqa
+./tests/test_real_check_dry.py:noqa
+./tests/test_real_check_dry.py:type: ignore
+./tests/test_desk_http_edge_cases.py:noqa
+./tests/test_desk_http_edge_cases.py:type: ignore
+./tests/test_codeant_fakes.py:noqa
+./tests/test_codeant_fakes.py:type: ignore
+./tests/test_codeant_fakes.py:type: ignore
+./tests/test_codeant_fakes.py:type: ignore
+./tests/test_codeant_fakes.py:type: ignore
+./tests/test_codeant_fakes.py:noqa
+./tests/test_codeant_fakes.py:noqa
+./tests/test_stall_eviction.py:type: ignore
+./tests/test_stall_eviction.py:type: ignore
+./tests/test_stall_eviction.py:type: ignore
+./tests/test_stall_eviction.py:type: ignore
+./tests/test_stall_eviction.py:type: ignore
+./tests/test_stall_eviction.py:type: ignore
+./tests/test_stall_eviction.py:type: ignore
+./tests/test_portal_demo.py:type: ignore
+./tests/test_portal_demo.py:type: ignore
+./tests/test_portal_demo.py:type: ignore
+./tests/test_portal_demo.py:noqa
+./tests/test_portal_demo.py:type: ignore
+./tests/test_portal_demo.py:type: ignore
+./tests/test_portal_demo.py:noqa
+./tests/test_portal_demo.py:type: ignore
+./tests/test_portal_demo.py:type: ignore
+./tests/test_portal_demo.py:type: ignore
+./tests/test_portal_demo.py:type: ignore
+./tests/test_portal_demo.py:type: ignore
+./tools/hygiene.py:noqa
+./tools/hygiene.py:noqa
+./tools/hygiene.py:noqa
+./tools/hygiene.py:noqa
+./docs/tests.md:nosemgrep
+./docs/tests.md:nosemgrep
+./docs/tests.md:nosemgrep
+./docs/tests.md:nosemgrep
+./docs/tests.md:nosemgrep
+./docs/tests.md:nosemgrep
+./docs/tests.md:nosemgrep
+./docs/tests.md:nosemgrep
+./docs/tests.md:nosemgrep

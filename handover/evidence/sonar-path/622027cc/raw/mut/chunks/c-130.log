@@ -1,0 +1,12 @@
+sdk /home/user/build/E-work/mut-tree/src/hadavin_sdk/__init__.py
+ok  CRASH          S-local_dir reconcile crashes on a corrupt folder that is a link out  [test_local_dir_reconcile_leaves_a_corrupt_file_when_the_corr] t=9s
+ok  KILLED         S-hashing the folder is not guarded  [test_the_hash_folder_is_checked_and_a_missing_one_has_one_pl] t=11s
+ok  KILLED         S-secrets_file the folder is not guarded  [test_secrets_folder_is_checked_when_the_provider_is_built] t=16s
+ok  KILLED         S-fake_llm the recording folder is not guarded  [test_fake_llm_recording_folder_and_names_go_through_pathguar] t=53s
+ok  CRASH          S-judge qualify does not check the golden file  [test_judge_qualify_checks_the_golden_file_path] t=56s
+ok  KILLED         S-tools the module name is not checked before a path is built  [test_control_tool_module_names_are_checked_before_any_path_i] t=58s
+ok  KILLED         S-config a folder setting that is not text is not explained  [test_site_config_folder_setting_that_is_not_text_says_so_pla] t=60s
+ok  KILLED         H the suppression check is case-sensitive  [test_control_the_suppression_check_finds_every_spelling_in_a] t=63s
+ok  CRASH          S-hashing a name is not folded and contained before the join (confined removed)  [test_hash_files_canonical_names_and_errors] t=65s
+ok  KILLED         S-hashing the last check is removed (no join before the read)  [test_control_hash_files_says_not_a_file_for_a_missing_name_a] t=66s
+SLICE 130:140 10 of 10 good; problems: []; elapsed 68s

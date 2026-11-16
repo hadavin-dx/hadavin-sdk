@@ -1,0 +1,73 @@
+--- a/src/hadavin_sdk/approvals/gate.py
++++ b/src/hadavin_sdk/approvals/gate.py
+@@ -4,7 +4,12 @@
+ (`sanitise_text` and its helpers) and G4 (`withhold_commands`, rewritten platform-neutral and fail closed).
+ Not ported (WARDEN outbound policy): enforce, hedge,
+ leaked_kinds/data_leaks/assembled_kinds/where_withheld, for_terminal,
+-outbound_data, sanitise_data, GateResult. The original module notes follow.
++outbound_data, sanitise_data, GateResult. So rule G5 (a separate check that blocks a message when a secret
++is still in the final text) and rule G2 (unverifiable claims) are NOT built here. What exists instead: approval
++and channel text is redacted once, last, in `approvals/channel.py` (`clean`) with the same patterns as everywhere
++else; that is a final redaction, not an independent second check, and nothing blocks a message after it.
++The original module notes follow; read the G5 and G2 parts, and the list of ways out, as the original
++design only.
+ 
+ The outbound gate: the last check on what WARDEN says before it leaves the process.
+ 
+@@ -39,11 +44,11 @@
+   - removals run until nothing changes: removing one token could join the rest into a link or image;
+   - a line the gate changed starts no block (heading, quote, list, fence, indented code);
+   - a mention becomes `at-here` (`(at)here` after a removed link was a link).
+-- **G5, leaks.** If the final text still contains anything the redactor classes as secret (every
++- **G5, leaks (original design, NOT built here).** If the final text still contains anything the redactor classes as secret (every
+   kind except the identifiers an operator may choose to show), the message is BLOCKED and a stub
+   goes out instead: a person reads the full report locally.
+ 
+-- **G2, unverifiable claims** (`hedge`, Phase 1). The model may write "no customer impact", "no data
++- **G2, unverifiable claims** (`hedge`, Phase 1; original design, NOT built here). The model may write "no customer impact", "no data
+   was lost" or "the issue is resolved". WARDEN verifies none of these: it reads no impact data, and
+   it checks no outcome (that is Phase 2's success check). Each such claim in model-written text is
+   marked `[unverified: ...]` where it stands. "The root cause is" is not marked: the report already
+@@ -55,12 +60,12 @@
+   (models.ModelProse, discuss.Answer). A change goes only through a catalogue plan and a signed
+   approval.
+ 
+-Every way out uses this module (audit A-C-8):
++Every way out uses this module (audit A-C-8; original design, `enforce` and the others are not ported):
+ - chat sinks: `enforce`, with G5 also over the text as built, before notify re-redacts it;
+ - stdout: `for_terminal`;
+ - MCP results and generic webhooks: `outbound_data`.
+ 
+-Verdicts: PASS (unchanged), REWRITE (G3 removed something), BLOCK (G5). G1 (every claim grounded) is
++Verdicts: PASS (unchanged), REWRITE (G3 removed something), BLOCK (G5, not built here). G1 (every claim grounded) is
+ P13 in the verifier; the report says when it fired.
+ """
+ 
+--- a/src/hadavin_sdk/guard/redact.py
++++ b/src/hadavin_sdk/guard/redact.py
+@@ -13,9 +13,12 @@
+ text: a value found in any of them is masked in all of them (redact_many, second review 2026-09-30).
+ 
+ ⚠ What this is not (audit A-C-23): nothing here can see a secret NO pattern matches. The patterns are
+-the control; HIGHENTROPY is their backstop; the outbound gate's G5 re-runs them, independently, on
+-everything that leaves. (A re-scan inside redact() used the sweep's own rule and could never fire, so
+-it was removed - second review, 2026-09-30.)
++the control; HIGHENTROPY is their backstop. There is NO separate check that blocks a message after
++redaction: the outbound gate's G5 (a re-scan of the final text) is not built in this repository
++(approvals/gate.py says so). What exists is a final redaction of approval and channel text
++(approvals/channel.py, `clean`), which runs these same patterns once, last; it is not independent of them.
++(A re-scan inside redact() used the sweep's own rule and could never fire, so it was removed - second
++review, 2026-09-30.)
+ """
+ 
+ from __future__ import annotations
+--- a/tests/warden_port/test_gate.py
++++ b/tests/warden_port/test_gate.py
+@@ -1,6 +1,6 @@
+ """Ported from WARDEN tests/test_gate.py (main a1e76cbf, veerarakesh56/warden). Kept 4 tests; dropped 13 that need WARDEN-only modules or unported gate policy (listed in the PR).
+ 
+-The outbound gate v0 (Phase 0): G3 untrusted-text hygiene, G5 leak block, and the Slack wiring.
++The outbound gate v0 (Phase 0): G3 untrusted-text hygiene and the Slack wiring (the G5 leak block is not ported here).
+ 
+ The attack these pin: a log line (anyone who can make the application log can write one) carries a
+ markdown image or link whose URL holds data; the model repeats it in its hypothesis; the report goes

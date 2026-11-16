@@ -1,0 +1,12 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+variables set in this process: VAULT_TOKEN, VAULT_SECRET_ID (made-up values, not printed); proxies -> 127.0.0.1:9
+recorder self-check connect -> ConnectionRefusedError
+(e) pilot secrets vault auth=token -> ConfigError: environment pilot: refused: secrets: vault auth token (the default; set auth: kubernetes (recommended) or auth: approle)
+(e) pilot secrets vault auth=<left out> -> ConfigError: environment pilot: refused: secrets: vault auth token (the default; set auth: kubernetes (recommended) or auth: approle)
+(e) pilot signer vault_transit auth=token -> ConfigError: environment pilot: refused: signer: vault_transit auth token (the default; set auth: kubernetes (recommended) or auth: approle)
+(e) pilot signer vault_transit auth=<left out> -> ConfigError: environment pilot: refused: signer: vault_transit auth token (the default; set auth: kubernetes (recommended) or auth: approle)
+(e) prod secrets vault auth=token -> ConfigError: environment prod: refused: secrets: vault auth token (the default; set auth: kubernetes (recommended) or auth: approle)
+(e) prod secrets vault auth=<left out> -> ConfigError: environment prod: refused: secrets: vault auth token (the default; set auth: kubernetes (recommended) or auth: approle)
+(e) prod signer vault_transit auth=token -> ConfigError: environment prod: refused: signer: vault_transit auth token (the default; set auth: kubernetes (recommended) or auth: approle)
+(e) prod signer vault_transit auth=<left out> -> ConfigError: environment prod: refused: signer: vault_transit auth token (the default; set auth: kubernetes (recommended) or auth: approle)
+(e-control) pilot secrets vault auth=approle -> ConfigError: secret 'pg-dsn' cannot be read at start-up

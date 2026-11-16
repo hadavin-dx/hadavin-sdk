@@ -1,0 +1,4 @@
+# checkpoint pdbanner-b16 (stopped by owner order 06:55Z)
+Done (code only, probed by hand, NO test run): tools/demo_only_guard.py masker: (a) names that contain "bypass" but are not exactly the bare word (--bypass, a.bypass, x-bypass, bypass_key) are hidden; (b) bare scheme word + token hides at 16+ token characters only (letter+digit rule removed; shorter stays as the core's 12/8 rules).
+Next: items 1-12 of r15 brief: fixed_run refusals (sh/bash/etc, interpreter eval flags) + S603 text + docstring; migrate direct starts / sweep all git ls-files; update MASKER_CLAIMS and CHANGELOG masker paragraph (rows Bearer a1b2c3 now stays visible); J27/R10C2 killer tests; test-name reference line 520; fail-before relabel from real old-tree runs; 461 long lines; ruff 0.17.1 and mutant table on 3.12.
+Blockers: mutation_runner Popen/start_new_session starts cannot move to run_fixed (it uses subprocess.run and refuses those keywords).

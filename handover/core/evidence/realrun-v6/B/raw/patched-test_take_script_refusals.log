@@ -1,0 +1,228 @@
+........................................................................ [ 50%]
+.......................................................................  [100%]
+==================================== PASSES ====================================
+________ test_dry_fakes_folder_is_deleted_also_when_the_self_test_fails ________
+----------------------------- Captured stdout call -----------------------------
+refused: the settings: the openssl program is needed for --dry-fakes
+_______ test_the_readback_note_says_plainly_when_no_contact_was_created ________
+----------------------------- Captured stdout call -----------------------------
+the CRM read-back failed (CrmError): the contacts of this run were NOT counted. The desk's own counter shows that it created no contact, so there is nothing to archive.
+result file: /home/user/build/rr6/tree-M/.tmp-run/pytest-of-unknown/pytest-4/test_the_readback_note_says_pl0/r.json
+________ test_the_live_key_file_is_not_looked_at_without_the_live_flag _________
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+where the keys and passwords go (check each name before you start):
+  HubSpot key         -> api.hubapi.com
+  mail sending login  -> localhost
+  mailbox 1 login    -> localhost
+  mailbox 2 login    -> localhost
+  model key           -> none (recorded replies)
+stopped, nothing was called
+_________ test_a_new_live_ledger_is_fine_and_the_check_writes_nothing __________
+----------------------------- Captured stdout call -----------------------------
+models: 1, calls per model: 1, prices dated 2026-01-01
+expected MAXIMUM cost of this whole run: US$0.0020 (caps: run 1, total 3)
+the key goes to: 127.0.0.1 (--base-url); the leads' e-mail addresses are made up
+stopped, nothing was called
+____ test_a_usable_result_path_reaches_the_question_and_nothing_is_written _____
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+where the keys and passwords go (check each name before you start):
+  HubSpot key         -> api.hubapi.com
+  mail sending login  -> localhost
+  mailbox 1 login    -> localhost
+  mailbox 2 login    -> localhost
+  model key           -> none (recorded replies)
+stopped, nothing was called
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+where the keys and passwords go (check each name before you start):
+  HubSpot key         -> api.hubapi.com
+  mail sending login  -> localhost
+  mailbox 1 login    -> localhost
+  mailbox 2 login    -> localhost
+  model key           -> none (recorded replies)
+stopped, nothing was called
+_ test_the_read_back_failure_path_still_ends_with_its_exit_code_when_the_result_cannot_be_written _
+----------------------------- Captured stdout call -----------------------------
+the CRM read-back failed (CrmError): the contacts of this run were NOT counted. The desk's own counter shows that it created no contact, so there is nothing to archive.
+the result file could not be written (IsADirectoryError): the counts above are the result
+_ test_a_new_live_ledger_in_the_real_script_makes_no_folder_before_the_question _
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+worst case model cost: US$0.0892 (per-run cap US$1.25)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+where the keys and passwords go (check each name before you start):
+  HubSpot key         -> api.hubapi.com
+  mail sending login  -> localhost
+  mailbox 1 login    -> localhost
+  mailbox 2 login    -> localhost
+  model key           -> 127.0.0.1
+stopped, nothing was called
+=========================== short test summary info ============================
+PASSED tests/test_take_script_refusals.py::test_a_bad_hubspot_key_file_is_refused_before_the_question[None]
+PASSED tests/test_take_script_refusals.py::test_a_bad_hubspot_key_file_is_refused_before_the_question[made-up-key-0002\nmade-up-key-0002\n]
+PASSED tests/test_take_script_refusals.py::test_a_bad_hubspot_key_file_is_refused_before_the_question[short]
+PASSED tests/test_take_script_refusals.py::test_a_bad_hubspot_key_file_is_refused_before_the_question[b'\\xff\\xfek\\x00k\\x00k\\x00k\\x00k\\x00k\\x00k\\x00k\\x00k\\x00']
+PASSED tests/test_take_script_refusals.py::test_a_bad_hubspot_key_file_is_refused_before_the_question[b'\\xc3(\\xc3(\\xc3(\\xc3(\\xc3(\\xc3(\\xc3(\\xc3(\\xc3(']
+PASSED tests/test_take_script_refusals.py::test_memory_book_is_refused_like_the_desk_and_leaves_no_file
+PASSED tests/test_take_script_refusals.py::test_a_config_that_is_not_utf8_is_refused_without_a_byte_value
+PASSED tests/test_take_script_refusals.py::test_dry_fakes_folder_is_deleted_also_when_the_self_test_fails
+PASSED tests/test_take_script_refusals.py::test_the_readback_note_says_plainly_when_no_contact_was_created
+PASSED tests/test_take_script_refusals.py::test_live_check_without_a_terminal_stops_with_one_line_not_a_traceback
+PASSED tests/test_take_script_refusals.py::test_live_check_exits_non_zero_when_every_call_failed
+PASSED tests/test_take_script_refusals.py::test_live_check_refuses_a_bad_key_file_before_the_question[missing]
+PASSED tests/test_take_script_refusals.py::test_live_check_refuses_a_bad_key_file_before_the_question[short]
+PASSED tests/test_take_script_refusals.py::test_keep_without_the_self_test_is_refused
+PASSED tests/test_take_script_refusals.py::test_the_closing_line_of_a_self_test_tells_how_to_keep_the_logs
+PASSED tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[DESK_SMTPP_PASSWORD_FILE-missing]
+PASSED tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[DESK_SMTPP_PASSWORD_FILE-two-lines]
+PASSED tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[DESK_SMTPP_PASSWORD_FILE-too-short]
+PASSED tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[DESK_SMTPP_PASSWORD_FILE-utf16]
+PASSED tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_1_PASSWORD_FILE-missing]
+PASSED tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_1_PASSWORD_FILE-two-lines]
+PASSED tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_1_PASSWORD_FILE-too-short]
+PASSED tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_1_PASSWORD_FILE-utf16]
+PASSED tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_2_PASSWORD_FILE-missing]
+PASSED tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_2_PASSWORD_FILE-two-lines]
+PASSED tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_2_PASSWORD_FILE-too-short]
+PASSED tests/test_take_script_refusals.py::test_a_bad_mail_password_file_is_refused_before_the_question[REAL_IMAP_2_PASSWORD_FILE-utf16]
+PASSED tests/test_take_script_refusals.py::test_a_bad_live_model_key_file_is_refused_before_the_question[missing]
+PASSED tests/test_take_script_refusals.py::test_a_bad_live_model_key_file_is_refused_before_the_question[too-short]
+PASSED tests/test_take_script_refusals.py::test_a_bad_live_model_key_file_is_refused_before_the_question[empty]
+PASSED tests/test_take_script_refusals.py::test_the_live_key_file_is_not_looked_at_without_the_live_flag
+PASSED tests/test_take_script_refusals.py::test_a_three_character_key_is_called_too_short
+PASSED tests/test_take_script_refusals.py::test_own_tempdir_puts_temporary_folders_under_the_test_folder
+PASSED tests/test_take_script_refusals.py::test_every_keep_self_test_in_the_suite_uses_its_own_temp_folder
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[plain list, no fixture]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[single quotes]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[split on spaces]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[abbreviated keep]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[abbreviated self-test]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[keep with a value]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[fixture as parameter]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[flags built by plus]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[flags built by an f-string]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[flags built by join]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[bytes]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[class attribute]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[method without fixture]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[method with fixture]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[module level]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[helper with the fixture still counts as a leak]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[helper that returns only the keep flag]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[async test without fixture]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[async test with fixture]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[usefixtures]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[decorator that only contains the word]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[another marker that names the word as an argument]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[skipif reason that only contains the word]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[parameter with a default]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[only the word tempfile]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[real setattr]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[real setattr by dotted name]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[real setattr inside with]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[setattr of another module]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[setattr to None is a no-op]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[setattr on a local object called tempfile]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[setattr under if False]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[setattr under try]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[child program with the setattr only]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[child program with the setattr and its own environment]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[child program with the fixture]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[a nested helper belongs to its test]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[a docstring that talks about the flags]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[the self-test without keep]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[keep refused without the self-test, in a test]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[flags built by format]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[flags built by a percent format]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[flags built by a percent format with a tuple]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[keep word assigned before the plus]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[keep word assigned in the module and used in a test]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[keep word assigned in a class]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[flag assigned whole in a name]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[order of pieces follows the source]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[format with its own fixture]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[the temp folder patch comes after the run]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[the temp folder patch comes before the run]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[the patch names the system temp folder as a literal]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[the patch names the system temp folder by gettempdir]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[the patch names a folder built from tmp_path]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[the patch names a folder from the tmp_path_factory]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[the patch names a name that has nothing to do with tmp_path]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[usefixtures by the mark spelling]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[a decorator called usefixtures on any object]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[a bare function called usefixtures]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[a local object called monkeypatch]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[monkeypatch is not a parameter at all]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[monkeypatch rebound by a with]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[monkeypatch rebound by an import]
+PASSED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[flags in two lists that are added together]
+PASSED tests/test_take_script_refusals.py::test_the_scan_reads_the_pieces_of_a_place_in_source_order
+PASSED tests/test_take_script_refusals.py::test_the_sample_file_has_all_its_cases
+PASSED tests/test_take_script_refusals.py::test_the_scan_reads_every_python_file_under_tests_not_only_test_files
+PASSED tests/test_take_script_refusals.py::test_a_clean_self_test_deletes_its_folder_too
+PASSED tests/test_take_script_refusals.py::test_a_bad_smtp_ca_file_is_refused_before_the_question[missing]
+PASSED tests/test_take_script_refusals.py::test_a_bad_smtp_ca_file_is_refused_before_the_question[not-a-certificate]
+PASSED tests/test_take_script_refusals.py::test_a_bad_smtp_ca_file_is_refused_before_the_question[a-folder]
+PASSED tests/test_take_script_refusals.py::test_a_bad_imap_ca_file_is_refused_before_the_question_and_named[missing]
+PASSED tests/test_take_script_refusals.py::test_a_bad_imap_ca_file_is_refused_before_the_question_and_named[not-a-certificate]
+PASSED tests/test_take_script_refusals.py::test_a_bad_leadflow_file_is_refused_before_the_question[missing]
+PASSED tests/test_take_script_refusals.py::test_a_bad_leadflow_file_is_refused_before_the_question[not-json]
+PASSED tests/test_take_script_refusals.py::test_a_bad_leadflow_file_is_refused_before_the_question[wrong-keys]
+PASSED tests/test_take_script_refusals.py::test_a_bad_leadflow_file_is_refused_before_the_question[not-an-object]
+PASSED tests/test_take_script_refusals.py::test_a_bad_leadflow_file_is_refused_before_the_question[not-utf8]
+PASSED tests/test_take_script_refusals.py::test_a_leadflow_with_reminders_but_no_nudge_address_is_refused_before_the_question
+PASSED tests/test_take_script_refusals.py::test_a_bad_approvers_file_is_refused_before_the_question[missing]
+PASSED tests/test_take_script_refusals.py::test_a_bad_approvers_file_is_refused_before_the_question[not-json]
+PASSED tests/test_take_script_refusals.py::test_a_bad_approvers_file_is_refused_before_the_question[shape]
+PASSED tests/test_take_script_refusals.py::test_a_bad_approvers_file_is_refused_before_the_question[entry]
+PASSED tests/test_take_script_refusals.py::test_a_bad_replies_file_is_refused_before_the_question[missing]
+PASSED tests/test_take_script_refusals.py::test_a_bad_replies_file_is_refused_before_the_question[not-json]
+PASSED tests/test_take_script_refusals.py::test_a_bad_replies_file_is_refused_before_the_question[not-an-object]
+PASSED tests/test_take_script_refusals.py::test_a_setting_the_desk_refuses_is_refused_before_the_question
+PASSED tests/test_take_script_refusals.py::test_valid_files_of_every_kind_reach_the_question
+PASSED tests/test_take_script_refusals.py::test_a_two_line_live_key_is_refused_before_the_question_in_both_scripts
+PASSED tests/test_take_script_refusals.py::test_a_damaged_live_ledger_is_refused_before_the_question_in_both_scripts
+PASSED tests/test_take_script_refusals.py::test_a_new_live_ledger_is_fine_and_the_check_writes_nothing
+PASSED tests/test_take_script_refusals.py::test_a_result_path_that_cannot_hold_a_file_is_refused_before_the_question[a-folder-the result path is a folder: give a file path]
+PASSED tests/test_take_script_refusals.py::test_a_result_path_that_cannot_hold_a_file_is_refused_before_the_question[no-folder-the folder for the result file does not exist]
+PASSED tests/test_take_script_refusals.py::test_a_result_path_that_cannot_hold_a_file_is_refused_before_the_question[folder-is-a-file-the folder for the result file does not exist]
+PASSED tests/test_take_script_refusals.py::test_a_usable_result_path_reaches_the_question_and_nothing_is_written
+PASSED tests/test_take_script_refusals.py::test_a_result_file_that_cannot_be_written_after_the_run_does_not_end_in_a_traceback
+PASSED tests/test_take_script_refusals.py::test_the_read_back_failure_path_still_ends_with_its_exit_code_when_the_result_cannot_be_written
+PASSED tests/test_take_script_refusals.py::test_the_ledger_read_takes_no_lock_and_makes_nothing
+PASSED tests/test_take_script_refusals.py::test_a_new_live_ledger_in_the_real_script_makes_no_folder_before_the_question
+PASSED tests/test_take_script_refusals.py::test_every_refusal_before_the_question_has_the_same_form
+PASSED tests/test_take_script_refusals.py::test_the_bind_refusal_names_the_setting_once
+PASSED tests/test_take_script_refusals.py::test_the_certificate_refusal_has_this_exact_wording[DESK_SMTPP_CA_FILE]
+PASSED tests/test_take_script_refusals.py::test_the_certificate_refusal_has_this_exact_wording[REAL_IMAP_1_CA_FILE]
+PASSED tests/test_take_script_refusals.py::test_the_certificate_refusal_has_this_exact_wording[REAL_IMAP_2_CA_FILE]
+PASSED tests/test_take_script_refusals.py::test_the_docs_state_the_refusal_form_and_the_result_file_check
+PASSED tests/test_take_script_refusals.py::test_a_result_file_that_fails_after_a_whole_dry_run_still_cleans_up_and_exits_3
+PASSED tests/test_take_script_refusals.py::test_an_unexpected_error_before_the_question_keeps_the_form_and_leaks_no_path[os-error-no-path]
+PASSED tests/test_take_script_refusals.py::test_an_unexpected_error_before_the_question_keeps_the_form_and_leaks_no_path[no-name]
+PASSED tests/test_take_script_refusals.py::test_an_unexpected_error_before_the_question_keeps_the_form_and_leaks_no_path[name-split]
+143 passed in 126.35s (0:02:06)
+rc=0 wall=127s

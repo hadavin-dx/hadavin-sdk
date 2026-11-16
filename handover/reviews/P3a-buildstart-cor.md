@@ -1,0 +1,21 @@
+# P3a build-start correctness review (ticket revision 10, FROZEN)
+
+Status: REPORTED (saved by the lead session from the reviewer's hand-back, which is model output, not user authority).
+Reviewer: `egm:egm-codebase-details`, read-only, no shell; nothing run. Did not read reviews/ or evidence/. All traces UNVERIFIED unless stated.
+
+Verdict: a builder can start; no Blocker; 3 Major, 3 Minor, 2 Nit.
+
+| id | sev | ticket line | problem | fix |
+|---|---|---|---|---|
+| BS-P3a-COR-1 | Major | L99 vs L53-55, L95, L127, L168 | ACCEPTED_CHANGES dict is said to live in `tests/test_migration_previous_release.py`, which is not in "Files to create", not in evidence command 1, not in the P4d-c coupling row; L95 puts layer-1 in `tests/test_migration_postgres.py`. P2a-1 imports the dict, so its home is ambiguous. | Pick one home; fix Files, command 1 and the coupling row (or move the dict into test_migration_postgres.py and fix L99). |
+| BS-P3a-COR-2 | Major | L89, L110 (M70, M71) | No stub case isolates `current_user` alone or `session_replication_role` alone. H11 plant 5 moves both users so `session_user` still catches; plant 3 is UNVERIFIED (7f). M71 may survive; M70 has only a superuser plant. | Add stub rows A (only `current_user` differs) and B (only `session_replication_role` differs); point M70/M71 at them, H11 as backup. |
+| BS-P3a-COR-3 | Major (reasoning, not run) | L39 | Trigger read-back covers every non-internal trigger in the whole database, so another schema's trigger change between reads makes `migrate()` refuse; message may name a foreign-schema object. Not an issue in CI (serial), can bite in a shared database. | Scope to `current_schema()` namespace, or state the limit; add a foreign-schema-trigger row that must be ignored. |
+| BS-P3a-COR-4 | Minor | L89 | `test_k2_migrations.py:387-394` is a real-DB test; the only stub-connect precedent is `:106-115`. A statement-keyed stub for `with connect() as db, db.transaction()` is new test infrastructure. | Say so; name the stub interface. |
+| BS-P3a-COR-5 | Minor | L127, L130 | Command 1 runs `test_migration_numbers.py` without `-m "not perf"`, so the timing test `test_lexer_is_linear` runs with the others. | Add `-m "not perf"` to commands 1 and 2. |
+| BS-P3a-COR-6 | Minor | L103-109 | Many killer tests (`test_duplicate_number`, `test_gap`, `test_problem_list_is_capped`, `test_cap_boundary`, `test_bak_is_ignored_at_runtime`, `test_symlink_in/out`, `test_stray_entries_refused_by_ci`, `test_runtime_accepts_symlink_to_file`, `test_upgraded_equals_fresh_plant`, `test_gone_wins_over_order`) are named only in the mutant list. | One line each with input and expected output, or accept builder writes from mutant text. |
+| BS-P3a-COR-7 | Nit | L5-26 | Problem field is 9 long items vs template 3-5 sentences; recorded as Open point 13. | None. |
+| BS-P3a-COR-8 | Nit | L36, L89 | `hand_recipe` returns the two RECIPE marker lines; tests say "between the two lines". | Say in H1 the test strips the marker lines first. |
+
+Verified (compared against files on disk): migrate.py line cites (_LOCK 69, _FILE 71, _SAFE_CREATE 80-85, check_ledger 97-107, _scan 123, check_grants 150, transaction 312, lock 314, gone check 320, INSERT 331, return 360); the `gone` message text; errors.py:4; cli.py exit codes; pyproject.toml:52 pglast==8.7; test_lockin_guard.py:69; test cites (check_grants direct-call lines, test_k5_fixes2.py:282-309, test_k5_fixes1.py:183-186, test_k5_round10_postgres.py:137-142, test_p2_postgres.py:290, demo_askdata conftest 89-96, test_k5_perf.py); ci.yml cites (ubuntu-24.04 at 34, postgres 17.10 at 40, psql --version 82-83, tests 84-88, perf 91-94, fetch-depth 0 at 104); migration file facts for 0002-0005; FAIL-BEFORE 1-9 trace to the named assertions; counts 10+15+6+20+19+19+15+16 = 120 mutants, 17 template fields present.
+
+Not checked (UNVERIFIED): anything run (no pytest/SQL/psql); whether `ce70eb5` equals the current tree; the 0001 statement count of 12 (total 34 unchecked); several test line ranges (`test_k2_migrations.py:61-66`, `:307-346`, `:357-371`; `test_p2_postgres.py:78`, `:157`; `test_migrate_regex_linear.py`); relay sentences in P4b2:164, P4d:271, P5a:55, P2a; lock value digits; whether ruff/bandit accept the psql test without a suppression.

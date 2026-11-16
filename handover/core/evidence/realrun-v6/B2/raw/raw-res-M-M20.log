@@ -1,0 +1,18 @@
+.................................................................F
+=================================== FAILURES ===================================
+___ test_the_guard_finds_every_way_python_can_read_a_person[alias of input] ____
+
+name = 'alias of input'
+
+    @pytest.mark.parametrize("name", sorted(READS))
+    def test_the_guard_finds_every_way_python_can_read_a_person(name: str) -> None:
+>       assert reads_a_person(READS[name]), name
+E       AssertionError: alias of input
+E       assert []
+E        +  where [] = reads_a_person("ask = input\nask('a')")
+
+tests/test_start_prompt_hardening.py:647: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[alias of input]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 65 passed in 0.31s

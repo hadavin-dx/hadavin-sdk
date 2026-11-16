@@ -1,0 +1,15 @@
+tree /home/user/build/EV-PRHb9-f01a9f8f/wt/src/hadavin_sdk/guard/redact.py
+files=494 lines=89815 lines_with_a_spaced_run_at_all=29 lines_changed=11
+positive control (example key spaced out) runs found: 1
+ordinary spaced texts changed: [False, False, False, False, False, False, False]
+  changed: /home/user/build/EV-PRHb9-f01a9f8f/wt/handover/evidence/PRH/b8/failbefore-test_prh_b8.txt:157: 'E       AssertionError: key: A K I A I O S F O D N N 7 E X A M P L E end'
+  changed: /home/user/build/EV-PRHb9-f01a9f8f/wt/handover/evidence/PRH/b8/failbefore-test_prh_b8.txt:161: "E        +      where <built-in method replace of str object at 0x7fc0aa4c94d0> = 'key: A K I A I O "
+  changed: /home/user/build/EV-PRHb9-f01a9f8f/wt/handover/evidence/PRH/b8/failbefore-test_prh_b8.txt:222: 'E       AssertionError: key: A K I A I O S F O D N N 7 E X A M P L E end'
+  changed: /home/user/build/EV-PRHb9-f01a9f8f/wt/handover/evidence/PRH/b8/failbefore-test_prh_b8.txt:226: 'E         + key: A K I A I O S F O D N N 7 E X A M P L E end'
+  changed: /home/user/build/EV-PRHb9-f01a9f8f/wt/handover/evidence/PRH/b9/failbefore-ea6dbdaf.txt:2085: 'FAILED tests/test_prh_b9.py::test_b9_g5_a_spaced_key_with_text_around_it[glued to its key name-key=A'
+  changed: /home/user/build/EV-PRHb9-f01a9f8f/wt/handover/evidence/PRH/b9/failbefore-ea6dbdaf.txt:2086: 'FAILED tests/test_prh_b9.py::test_b9_g5_a_spaced_key_with_text_around_it[a one-letter word in front-'
+  changed: /home/user/build/EV-PRHb9-f01a9f8f/wt/handover/evidence/PRH/b9/failbefore-ea6dbdaf.txt:2087: 'FAILED tests/test_prh_b9.py::test_b9_g5_a_spaced_key_with_text_around_it[a full stop after it-see A '
+  changed: /home/user/build/EV-PRHb9-f01a9f8f/wt/handover/evidence/PRH/b9/failbefore-ea6dbdaf.txt:2088: 'FAILED tests/test_prh_b9.py::test_b9_g5_a_spaced_key_with_text_around_it[a bracket and a comma after'
+  changed: /home/user/build/EV-PRHb9-f01a9f8f/wt/handover/evidence/PRH/b9/spaced_rate_repo.txt:5: "  changed: /home/user/build/B-PRH-b9/handover/evidence/PRH/b8/failbefore-test_prh_b8.txt:157: 'E    "
+  changed: /home/user/build/EV-PRHb9-f01a9f8f/wt/handover/evidence/PRH/b9/spaced_rate_repo.txt:7: "  changed: /home/user/build/B-PRH-b9/handover/evidence/PRH/b8/failbefore-test_prh_b8.txt:222: 'E    "
+  changed: /home/user/build/EV-PRHb9-f01a9f8f/wt/handover/evidence/PRH/b9/spaced_rate_repo.txt:8: "  changed: /home/user/build/B-PRH-b9/handover/evidence/PRH/b8/failbefore-test_prh_b8.txt:226: 'E    "

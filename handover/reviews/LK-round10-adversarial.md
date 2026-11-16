@@ -1,0 +1,37 @@
+# Look-alike leak design, round 10, adversarial review (draft 10, 203 lines)
+
+Status: REPORTED (complete; saved by the lead session from the reviewer's hand-back, which is model output, not user authority).
+Reviewer: `egm:egm-design`, read-only, nothing run, did not read `reviews/`. Read the design in full, LEAD-ORDERS 8 and 11-15, questions-for-lead Q11/Q12, amendments A4, P1.md and P2d.md by grep, snapshot redact.py/runmap.py/tools.py. Every trace UNVERIFIED.
+
+Verdict: no Blocker; 4 Major. A whole copy passes the count form only in the Korean/Indic case (M-A). Counts all check out.
+
+## MAJOR
+
+- **M-A The count form assumes every key step acts on one character at a time; P1 rev 14 says NFKC joins across a boundary (design lines 46, 8, 42-43; P1 line 55).** The argument needs the key of the put-back form to be the concatenation of per-segment keys. P1 line 55 names join cases: a Hangul conjoining jamo after a syllable, and two-part Mc vowel signs in 11 scripts. Scenario (made-up): V is a stored 12-syllable Korean value ending in LV syllable U+B85C; text = `<ADDRESS_1>` + trailing-consonant jamo U+11A8 ... + a decomposed-jamo copy of V, on a bare `redact`/`redact_many` path (`redact_text` masks the copy through its canonical view). The put-back "...로"+U+11A8 joins under NFKC, O's own occurrence of k disappears from the form key, c = 1, e = 1, rule c > e does not fire, a whole copy is sent. Same for the 11 Mc scripts and the start of O. Fix, any one: set an original's contribution to e to 0 when its first/last/neighbouring character is in P1's join set (ask P1 to export a predicate; cost is one more self-refusal class, measured by P-1's Korean texts); or compute e on the real form (probably too costly). Also: rewrite the line-46 "stated limits" sentence to cite rev 14 and say "NFKC joins", not "NFKD"; add a row (Korean token + jamo + decomposed copy: refused) and a mutant; make GOLD-1 alphabets include Hangul and Indic (ASCII-only today, line 125).
+- **M-B The owner-facing summary says more than the table supports (lines 139, 9(c), 56, 126).** Line 139 says the check stops a known value of 12 or more characters written whole in look-alike letters; 9(c) "covered on every path in the table". The strict xfails are whole copies that are sent: LK-STROKE (148 Latin stroke/bar letters), LK-BE, LK-ETA2, LK-LATIN, LK-ENT-AMP (a few percent of random 16+ character secrets), LK-ENC. Line 56's CHANGELOG list names only short secrets, encoded, partial and self-refusal. Fix: add one sentence to line 139 and the CHANGELOG list ("Some look-alike letters ... are not yet read as their plain letter, so a whole copy written with them is sent until P1 takes the generator rule."), before the lead shows the owner the table (order 15 standard).
+- **M-C P-1's IN/OUT measure mixes true catches, special corpora and false refusals (lines 133, 9(b), 139).** Order 13(1) asks for refusals on benign documents. The corpus includes stored names written in capitals, padded, re-broken, accented (a refusal there is a correct catch), and 50 of 450 texts (11%) built to trigger self-refusal; 30% of the 40 Greek/Cyrillic refusing is 12 of 450, so OUT would come from corpus mix. Greek initials Beta/Zeta/Eta/Mu/Nu/Upsilon cover many first names; all-capital Russian uses soft sign/yeru (ОБЛАСТЬ). Near-cap texts' place in the 450 unclear. Fix: apply the 1-in-200 rule to a base set (no variant copy, no Greek/Cyrillic); report variant-copy refusals as "caught"; report Greek/Cyrillic self-refusal per script as its own gate (deployment-language flag, or state in the owner summary that Greek and Russian-language clients are not served until LKV-17); print the confidence interval (2 of 450 has a 95% upper bound about 1.6%).
+- **M-D The "smallest design" test: the count form was never compared with a window rule on the same corpus (lines 29, 46, 125, 163 LKV-18, 195).** GOLD-1's oracle is "any 8-character window of V's key present in output", stronger than the check. A window check on the token-left text would close LK-PH-FRAG, LK-PART and LK-INSERT in clear parts with no put-back, counts, min/unfiltered list, length bound or one-pass rule, and no self-refusal; cost is false refusals for word-like values (e.g. stored "MyPassword2024" and any text with "password"). Fix: before the lead accepts the count form, have P-1 also measure an 8-character window and a 16-character window (whole-key rule below 16 characters) on the same texts; give the lead both rates.
+
+## NIT / process
+
+- N1: questions-for-lead.md Q11 item 2 describes draft 7's rule; the draft-10 trade-offs (PL-LK-52, PL-LK-53, P-1 gating S0 EXIT) have no entry. Put them in a Q13; mark Q11 item 2 superseded.
+- N2: finding ids "M1/M2/M3" clash with mutants M1-M4; rename (e.g. R9-M1).
+- N3: partial-copy sentence too soft: say a key shown with its tail cut off or one letter dropped in the middle is easy to hit; a character added at either end IS caught; only a middle insert is not.
+- N4: lines 8 and 46 omit step 1b and NFKC and cite "revision 13".
+- N5: the two header paragraphs (lines 2-3) run to about 3,000 words of history; move to a changelog file, keep a 5-line status.
+- N6: "about 55 new lines" (line 32) not credible; re-estimate after M-A and M-D.
+- N7: LK-LATER's "not a path to a model" (section 10, PL-LK-55) rests on `runtime/evidence.py` 169-220, which nobody has read; do not state it as fact.
+
+## Attacks that held (no pass found other than M-A)
+
+Superadditivity for per-character keys (mapping, earlier `password=` call, `redact_many`, decoded form); tokens existing only in the decoded form; token inside a copy, piece masked as a new value, adjacent token pair, stored original holding V, one original under two tokens; neutralised untrusted text (runmap.py 320-325); fail-closed on RedactionError (all handlers withhold or end the run); one-pass put-back is right (`_place` redact.py 1229); tag characters (LK-TAG-PB gives killer M61); empty-list `min()` raises ValueError and `redact_text` refuses (FR-44 kills M60).
+
+## Self-refusal cost: stated honestly, with gaps
+
+The letter set is a stand-in figure (152 code points on a stand-in of the old fold); the text names only 9 letters; full set unknown until P1b exists (may include mathematical Greek, Coptic). The cost is a run ending on loop paths; add one sentence in section 1 that a Greek name with initial Nu, Mu, Beta, Eta or Zeta stored as NAME/ADDRESS (outcome IN) ends the run every time it is seen, including first sighting (the value is never stored; refusal is before the map update). Same cost class as M-A. The self-needle exemption is correctly rejected as unsound (Nu vs Eta); LKV-17 is the exact fix.
+
+## Counts: all verified from the file
+
+50 LK ids in 46 table lines + GOLD-1; strict xfail 11 (13 if OUT); FR rows 39; mutants M1-M62 + M9b + M18b + M18c = 65; deleted 22; live 43 (41 in P2d-2, 2 in P2d-2b); LKV 16 open; PL-LK 1-56; constants 2 (IN) or 3 (OUT). Killer mapping plausible for FR-2/M20/M50, FR-2b/M56, FR-2c/M57, FR-37/M55, FR-40/M54, FR-41a/M59, FR-44/M60, LK-TAG-PB/M61, FR-45/M62, LK-ETA-COUNT/M58, LK-ENT-VAL/M53, LK-PH-UNDO/M52, LK-PH-FRAG/M51, LK-ORDER/M48, FR-8/M47, LK-SPLIT-MANY/M32. Stale P2d "limit 4"/"tier N" lines 22, 78, 170, 264, 274, 307, 335, 339 match the design's list. Order 15 wording verbatim at lines 9(c), 139, 159.
+
+Not checked: no P1b code exists, so every key property rests on stand-ins and P1's text; timing; whether `redact_value` output reaches a model; P2d beyond grep.

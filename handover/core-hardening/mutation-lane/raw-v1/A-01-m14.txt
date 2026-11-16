@@ -1,0 +1,16 @@
+src/hadavin_sdk/audit/chain.py
+memory-only ERROR downgraded to DEBUG
+OLD: _LOG.error(
+                    "audit outbox not written
+NEW: _LOG.debug(
+                    "audit outbox not written
+
+....F
+=================================== FAILURES ===================================
+E   AssertionError: assert ('held in memory only' in '')
+     +  where '' = <_pytest.logging.LogCaptureFixture object at 0x7fcd04aea780>.text
+/tmp/c8/wA/tests/test_a01_audit_reconcile.py:74: AssertionError: assert ('held in memory only' in '')
+=========================== short test summary info ============================
+FAILED tests/test_a01_audit_reconcile.py::test_when_the_outbox_table_also_fails_an_error_line_is_logged
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 4 passed in 0.84s

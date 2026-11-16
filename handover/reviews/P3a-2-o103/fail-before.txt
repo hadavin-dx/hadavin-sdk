@@ -1,0 +1,19 @@
+HEAD 63658aaceadc2f3e8e5429c5d01681c3b8b42f67
+FAIL-BEFORE on base 967d5a1 (remote head of core/P3a-2) with only these files copied in from the final head: tests/test_migration_rules.py tests/fixtures/dsn_skip.py tests/test_migration_wiring.py tests/test_migration_postgres.py
+import path: <build-dir>/fb/src/hadavin_sdk/__init__.py
+FAILED tests/test_migration_rules.py::test_every_caller_in_the_package_uses_the_right_form
+FAILED tests/test_migration_rules.py::test_the_scan_calls_the_pair_function_and_hand_recipe_the_raising_one
+FAILED tests/test_migration_rules.py::test_the_migrate_docstring_says_where_role_membership_is_changed
+FAILED tests/test_migration_rules.py::test_the_changelog_never_gives_the_false_evidence_name
+FAILED tests/test_migration_rules.py::test_the_changelog_no_longer_advises_dropping_the_evidence_tables
+FAILED tests/test_migration_rules.py::test_the_runbook_carries_the_real_lock_the_command_and_every_case
+6 failed, 79 passed in 0.74s
+
+--- skip rule against the BASE's own wiring/postgres files (importorskip in both):
+FAILED tests/test_migration_rules.py::test_no_p3a2_test_skips_silently[tests/test_migration_wiring.py]
+FAILED tests/test_migration_rules.py::test_no_p3a2_test_skips_silently[tests/test_migration_postgres.py]
+2 failed, 1 passed, 51 deselected in 0.17s
+
+--- merge commit 2cde7e2 (merge only, before the cb313d6 fix): P3a-1's guard test against P3a-2's migrate.py
+FAILED tests/test_migration_numbers_guards.py::test_the_lock_key_and_the_folder_are_the_ones_migrate_uses
+1 failed, 75 deselected in 0.12s

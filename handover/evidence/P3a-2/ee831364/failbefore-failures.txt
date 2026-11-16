@@ -1,0 +1,47 @@
+FAILED tests/test_k5_fixes2.py::test_a_database_that_applied_the_old_name_is_refused_and_nothing_is_applied
+FAILED tests/test_k5_round10_postgres.py::test_a_privilege_inherited_from_another_role_is_refused
+FAILED tests/test_k5_round10_postgres.py::test_create_on_the_schema_is_refused_for_the_purge_role
+FAILED tests/test_k5_round10_postgres.py::test_a_superuser_as_the_purge_role_is_refused
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT pg_write_all_data TO {n}-app$on]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT pg_write_all_data TO {n}-on$x]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT pg_write_all_data TO {n}-a$on$b]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT pg_write_all_data TO {n}-x$on$]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r TO {n}-app$on]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r TO {n}-on$x]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r TO {n}-a$on$b]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r TO {n}-x$on$]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT {n} TO s-app$on]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT {n} TO s-on$x]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT {n} TO s-a$on$b]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT {n} TO s-x$on$]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[REVOKE r FROM {n}-app$on]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[REVOKE r FROM {n}-on$x]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[REVOKE r FROM {n}-a$on$b]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[REVOKE r FROM {n}-x$on$]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[REVOKE {n} FROM s-app$on]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[REVOKE {n} FROM s-on$x]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[REVOKE {n} FROM s-a$on$b]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[REVOKE {n} FROM s-x$on$]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r\nTO {n}-app$on]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r\nTO {n}-on$x]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r\nTO {n}-a$on$b]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r\nTO {n}-x$on$]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[/* on */ GRANT r TO {n} -- on-app$on]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[/* on */ GRANT r TO {n} -- on-on$x]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[/* on */ GRANT r TO {n} -- on-a$on$b]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[/* on */ GRANT r TO {n} -- on-x$on$]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r TO {n}, "on"-app$on]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r TO {n}, "on"-on$x]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r TO {n}, "on"-a$on$b]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r TO {n}, "on"-x$on$]
+FAILED tests/test_migration_names.py::test_every_short_name_over_the_dollar_alphabet_is_refused_in_a_role_grant
+FAILED tests/test_migration_names.py::test_the_word_boundary_is_used_only_where_a_match_refuses
+FAILED tests/test_migration_names.py::test_the_name_boundary_agrees_with_the_lexer_character_set
+FAILED tests/test_migration_numbers.py::test_recipe_order_and_command - Attri...
+FAILED tests/test_migration_numbers.py::test_each_set_form_is_refused[SET LOCAL lock_timeout = '10s']
+FAILED tests/test_migration_numbers.py::test_each_set_form_is_refused[set  local  statement_timeout TO 0]
+FAILED tests/test_migration_numbers.py::test_each_set_form_is_refused[SET LOCAL statement_timeout = '1h']
+FAILED tests/test_migration_numbers.py::test_the_two_time_limits_are_refused_in_the_text_scan_not_only_by_the_read_back
+FAILED tests/test_migration_numbers.py::test_scan_comment_ends_at_cr - Assert...
+FAILED tests/test_migration_numbers.py::test_scan_double_dash_in_string - Ass...
+FAILED tests/test_migration_numbers.py::test_scan_reads_the_given_text_not_the_file

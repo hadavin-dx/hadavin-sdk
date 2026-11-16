@@ -1,0 +1,90 @@
+# Part 6 batch 11 notes (per-test old-code results, from real runs; temp worktrees at dd827d79 and cdbe1445, current test files copied in)
+
+Tests new or changed since dd827d79: 86 (new in batch 11: 27). Columns: test, dd827d79, cdbe1445, renamed to
+
+- test_changelog_numbers.py::test_the_changelog_limits_of_the_bearer_and_basic_rules_are_the_numbers_of_their_patterns | dd827d79 FAIL | cdbe1445 FAIL | new in batch 11
+- test_changelog_numbers.py::test_the_changelog_names_four_product_folders_and_the_settings_list_them | dd827d79 pass | cdbe1445 pass | new in batch 11
+- test_changelog_numbers.py::test_the_changelog_pyc_range_is_the_rule_of_the_code_with_the_numbers_of_its_two_interpreters | dd827d79 FAIL | cdbe1445 FAIL | new in batch 11
+- test_changelog_numbers.py::test_the_changelog_says_the_masker_has_as_many_passes_as_the_code_lists | dd827d79 FAIL | cdbe1445 FAIL | new in batch 11
+- test_changelog_numbers.py::test_the_changelog_size_cap_and_head_length_are_the_numbers_of_the_code | dd827d79 pass | cdbe1445 pass | new in batch 11
+- test_changelog_numbers.py::test_the_three_equal_listings_and_the_one_superset_are_the_files_the_changelog_names | dd827d79 FAIL | cdbe1445 FAIL | new in batch 11
+- test_demo_only_guard.py::test_a_basic_token_after_a_secret_looking_name_is_hidden_with_its_scheme_word | dd827d79 FAIL | cdbe1445 pass | existing
+- test_demo_only_guard.py::test_a_bearer_token_after_a_secret_looking_name_is_hidden_with_its_scheme_word | dd827d79 FAIL | cdbe1445 pass | existing
+- test_demo_only_guard.py::test_a_chain_of_45_links_is_a_hit_and_the_rule_text_names_both_causes | dd827d79 FAIL | cdbe1445 pass | new in batch 11
+- test_demo_only_guard.py::test_a_copy_keeps_the_file_mode_where_os_has_no_fchmod | dd827d79 pass | cdbe1445 pass | existing
+- test_demo_only_guard.py::test_a_loader_behind_a_folder_that_became_a_link_is_a_hit | dd827d79 FAIL | cdbe1445 pass | existing
+- test_demo_only_guard.py::test_an_entry_swapped_between_the_check_and_the_copy_is_refused_in_words_never_a_traceback | dd827d79 FAIL | cdbe1445 pass | existing
+- test_demo_only_guard.py::test_an_exempt_file_behind_a_folder_that_became_a_link_is_a_hit | dd827d79 FAIL | cdbe1445 pass | existing
+- test_demo_only_guard.py::test_pin_a_bearer_token_of_11_characters_stays_visible_as_on_main | dd827d79 FAIL | cdbe1445 pass | new in batch 11
+- test_demo_only_guard.py::test_pin_a_copy_keeps_the_file_mode_when_os_has_fchmod | dd827d79 pass | cdbe1445 pass | existing
+- test_demo_only_guard.py::test_pin_a_file_that_is_only_the_mz_mark_and_nul_bytes_is_a_hit | dd827d79 pass | cdbe1445 pass | existing
+- test_demo_only_guard.py::test_pin_a_file_that_is_only_the_rar_mark_and_nul_bytes_is_a_hit | dd827d79 pass | cdbe1445 pass | existing
+- test_demo_only_guard.py::test_pin_a_line_that_names_the_folder_in_another_spelling_is_a_hit | dd827d79 pass | cdbe1445 pass | existing
+- test_demo_only_guard.py::test_pin_bzip2_needs_a_block_or_end_of_stream_mark | dd827d79 pass | cdbe1445 pass | existing
+- test_demo_only_guard.py::test_pin_bzip2_needs_a_level_from_1_to_9 | dd827d79 pass | cdbe1445 pass | existing
+- test_demo_only_guard.py::test_pin_every_file_type_is_read_not_only_a_list_of_endings | dd827d79 pass | cdbe1445 pass | existing
+- test_demo_only_guard.py::test_pin_git_message_hides_names_with_key_or_token_but_shows_a_bare_word_like_bypass | dd827d79 pass | cdbe1445 pass | existing
+- test_demo_only_guard.py::test_pin_plain_text_that_starts_like_a_mark_and_utf16_text_are_not_hits | dd827d79 pass | cdbe1445 pass | existing
+- test_demo_only_guard.py::test_pin_the_colon_form_is_left_alone_by_the_masker | dd827d79 pass | cdbe1445 pass | new in batch 11
+- test_demo_only_guard.py::test_pin_the_folder_inside_a_product_root_is_a_hit_at_any_depth_and_in_any_spelling | dd827d79 pass | cdbe1445 pass | existing
+- test_demo_only_guard.py::test_pin_the_masker_costs_time_in_proportion_to_the_line_and_never_raises_on_a_long_line | dd827d79 pass | cdbe1445 pass | existing
+- test_demo_only_guard.py::test_pin_the_masker_time_grows_in_proportion_not_in_the_square | dd827d79 pass | cdbe1445 pass | existing
+- test_demo_only_guard.py::test_the_copy_run_marker_behind_a_folder_that_became_a_link_is_a_hit | dd827d79 FAIL | cdbe1445 pass | existing
+- test_demo_only_guard.py::test_the_masker_hides_the_scheme_word_and_the_token_of_a_bearer_and_a_basic_line | dd827d79 FAIL | cdbe1445 pass | new in batch 11
+- test_demo_only_guard.py::test_the_masker_reads_each_character_a_bounded_number_of_times_whatever_the_line | dd827d79 pass | cdbe1445 pass | new in batch 11
+- test_mode_banner.py::test_a_banner_error_is_logged_once_at_warning_level_whatever_the_name_of_the_log_helper | dd827d79 FAIL | cdbe1445 pass | new in batch 11
+- test_mode_banner.py::test_a_banner_error_is_logged_once_at_warning_level_with_the_exception_type | dd827d79 FAIL | cdbe1445 pass | existing
+- test_mode_banner.py::test_a_banner_without_overridden_is_not_painted_as_demo_or_quiet_by_the_page | dd827d79 FAIL | cdbe1445 pass | existing
+- test_mode_banner.py::test_a_config_source_replaced_after_build_reads_unconfirmed | dd827d79 FAIL | cdbe1445 FAIL | existing
+- test_mode_banner.py::test_a_config_the_banner_cannot_read_does_not_stop_build_and_reads_unconfirmed | dd827d79 FAIL | cdbe1445 FAIL | new in batch 11
+- test_mode_banner.py::test_a_deep_copy_of_an_app_that_could_be_copied_is_refused_as_well | dd827d79 FAIL | cdbe1445 pass | existing
+- test_mode_banner.py::test_a_forged_unconfirmed_text_is_not_painted_only_the_exact_words_and_a_note_built_by_the_page | dd827d79 FAIL | cdbe1445 pass | existing
+- test_mode_banner.py::test_a_hand_made_app_is_unconfirmed_even_after_a_stray_seal_call | dd827d79 FAIL | cdbe1445 FAIL | new in batch 11
+- test_mode_banner.py::test_a_named_container_that_is_missing_stops_the_reading_and_names_it | dd827d79 FAIL | cdbe1445 FAIL | new in batch 11
+- test_mode_banner.py::test_a_plain_tuple_cannot_seal_an_app_and_a_sealed_app_cannot_be_given_a_new_answer | dd827d79 FAIL | cdbe1445 FAIL | new in batch 11
+- test_mode_banner.py::test_a_real_built_app_lists_every_named_container_entry_in_its_connected_parts | dd827d79 FAIL | cdbe1445 pass | new in batch 11
+- test_mode_banner.py::test_a_replaced_agent_entry_after_build_reads_unconfirmed | dd827d79 FAIL | cdbe1445 FAIL | new in batch 11
+- test_mode_banner.py::test_a_replaced_chain_entry_after_build_reads_unconfirmed | dd827d79 FAIL | cdbe1445 FAIL | new in batch 11
+- test_mode_banner.py::test_a_replaced_principal_entry_after_build_reads_unconfirmed | dd827d79 FAIL | cdbe1445 FAIL | new in batch 11
+- test_mode_banner.py::test_a_replaced_system_entry_after_build_reads_unconfirmed | dd827d79 FAIL | cdbe1445 FAIL | new in batch 11
+- test_mode_banner.py::test_a_replaced_tool_manifest_of_an_agent_after_build_reads_unconfirmed | dd827d79 FAIL | cdbe1445 FAIL | new in batch 11
+- test_mode_banner.py::test_a_reworded_not_confirmed_text_is_painted_by_the_page_as_its_english_fallback_with_the_names | dd827d79 FAIL | cdbe1445 pass | existing
+- test_mode_banner.py::test_a_source_value_replaced_or_changed_in_place_reads_unconfirmed | dd827d79 FAIL | cdbe1445 FAIL | existing
+- test_mode_banner.py::test_a_tool_spec_deleted_after_build_reads_unconfirmed | dd827d79 FAIL | cdbe1445 FAIL | existing
+- test_mode_banner.py::test_a_tool_spec_without_a_host_deleted_after_build_reads_unconfirmed | dd827d79 FAIL | cdbe1445 FAIL | existing
+- test_mode_banner.py::test_a_toolbox_function_or_spec_swapped_after_build_reads_unconfirmed | dd827d79 FAIL | cdbe1445 FAIL | existing
+- test_mode_banner.py::test_an_action_contract_replaced_or_added_after_build_reads_unconfirmed | dd827d79 FAIL | cdbe1445 FAIL | existing
+- test_mode_banner.py::test_an_app_copied_or_changed_after_build_gives_the_unconfirmed_banner | dd827d79 FAIL | cdbe1445 FAIL | existing
+- test_mode_banner.py::test_an_app_sealed_while_a_container_is_missing_reads_unconfirmed_and_build_goes_on | dd827d79 FAIL | cdbe1445 FAIL | new in batch 11
+- test_mode_banner.py::test_an_error_in_the_services_or_in_the_banner_is_logged_at_warning_level_too | dd827d79 FAIL | cdbe1445 FAIL | existing
+- test_mode_banner.py::test_an_unconfirmed_banner_with_other_tag_or_text_is_painted_with_the_pages_words_and_the_names | dd827d79 FAIL | cdbe1445 pass | new in batch 11
+- test_mode_banner.py::test_config_sources_cleared_after_build_reads_unconfirmed | dd827d79 FAIL | cdbe1445 FAIL | existing
+- test_mode_banner.py::test_copies_of_a_built_app_which_keep_the_same_parts_stay_known_and_the_others_do_not | dd827d79 FAIL | cdbe1445 FAIL | existing
+- test_mode_banner.py::test_pin_a_banner_that_contradicts_itself_is_not_painted_as_given | dd827d79 pass | cdbe1445 pass | existing
+- test_mode_banner.py::test_pin_a_bare_string_dict_set_or_non_list_is_refused_not_read_by_accident | dd827d79 pass | cdbe1445 pass | existing
+- test_mode_banner.py::test_pin_a_deep_copy_of_a_built_app_raises_on_the_old_code_too | dd827d79 pass | cdbe1445 pass | new in batch 11
+- test_mode_banner.py::test_pin_a_forged_tag_on_an_unconfirmed_banner_is_painted_as_the_pages_own_tag | dd827d79 pass | cdbe1445 pass | existing
+- test_mode_banner.py::test_pin_a_generator_for_names_or_the_service_lists_or_the_reserved_words_is_refused | dd827d79 pass | cdbe1445 pass | existing
+- test_mode_banner.py::test_pin_a_normal_production_tick_keeps_its_banner | dd827d79 FAIL | cdbe1445 FAIL | existing
+- test_mode_banner.py::test_pin_a_tampered_or_stub_app_gives_the_unconfirmed_banner_and_never_raises | dd827d79 FAIL | cdbe1445 FAIL | existing
+- test_mode_banner.py::test_pin_a_text_of_ten_million_characters_is_refused_at_once_and_astral_characters_count_once | dd827d79 pass | cdbe1445 pass | existing
+- test_mode_banner.py::test_pin_an_object_first_set_on_a_part_after_build_reads_unconfirmed | dd827d79 FAIL | cdbe1445 FAIL | existing
+- test_mode_banner.py::test_pin_an_unconfirmed_banner_keeps_the_override_names_in_its_note_and_odd_unconfirmed_fields_are_not_painted | dd827d79 pass | cdbe1445 pass | existing
+- test_mode_banner.py::test_pin_an_unconfirmed_banner_that_also_lists_real_services_or_a_second_line_is_the_plain_fallback | dd827d79 pass | cdbe1445 pass | existing
+- test_mode_banner.py::test_pin_an_unknown_or_oddly_typed_override_list_is_refused | dd827d79 pass | cdbe1445 pass | existing
+- test_mode_banner.py::test_pin_banner_from_config_has_no_default_for_overridden | dd827d79 pass | cdbe1445 pass | existing
+- test_mode_banner.py::test_pin_banner_or_unconfirmed_has_no_default_for_overridden | dd827d79 pass | cdbe1445 pass | existing
+- test_mode_banner.py::test_pin_given_overrides_counts_an_object_and_a_filled_mapping_but_not_an_empty_one | dd827d79 pass | cdbe1445 pass | existing
+- test_mode_banner.py::test_pin_names_in_follows_the_table | dd827d79 pass | cdbe1445 pass | existing
+- test_mode_banner.py::test_pin_overridden_none_raises_a_value_error_in_banner_from_config | dd827d79 pass | cdbe1445 pass | existing
+- test_mode_banner.py::test_pin_overridden_none_says_it_is_not_known_and_gives_the_unconfirmed_banner | dd827d79 pass | cdbe1445 pass | existing
+- test_mode_banner.py::test_pin_property_the_made_up_claim_never_appears_next_to_a_real_service | dd827d79 pass | cdbe1445 pass | existing
+- test_mode_banner.py::test_pin_the_blank_set_of_python_and_of_the_page_literal_is_one_set | dd827d79 pass | cdbe1445 pass | existing
+- test_mode_banner.py::test_pin_the_lists_are_required_so_an_unchecked_call_cannot_say_nothing_real | dd827d79 pass | cdbe1445 pass | existing
+- test_mode_banner.py::test_pin_the_old_public_names_are_gone_and_banner_from_config_is_the_only_entry | dd827d79 pass | cdbe1445 pass | existing
+- test_mode_banner.py::test_pin_the_page_and_python_agree_on_every_row_of_the_name_table | dd827d79 pass | cdbe1445 pass | existing
+- test_mode_banner.py::test_pin_the_page_lists_of_overrides_and_the_note_words_agree_with_python | dd827d79 pass | cdbe1445 pass | existing
+- test_mode_banner.py::test_pin_the_seal_keeps_a_replaced_part_alive_so_its_number_cannot_be_reused | dd827d79 FAIL | cdbe1445 FAIL | existing
+- test_mode_banner.py::test_the_address_of_a_system_changed_after_build_reads_unconfirmed | dd827d79 FAIL | cdbe1445 FAIL | existing
+- test_mode_banner.py::test_the_banner_of_a_real_app_is_the_same_after_an_agent_run | dd827d79 FAIL | cdbe1445 FAIL | new in batch 11
+- test_mode_banner.py::test_the_page_and_python_agree_on_a_missing_or_null_overridden_for_demo_and_quiet | dd827d79 FAIL | cdbe1445 pass | new in batch 11

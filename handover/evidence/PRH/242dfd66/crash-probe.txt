@@ -1,0 +1,3 @@
+wt has RedactorCrash: True {'plain': 'raised RedactorCrash', 'hidden': 'raised RedactorCrash', 'handed': 'raised RedactorCrash', 'spaced': 'raised RedactorCrash', 'error_reason': 'raised RedactorCrash', 'safe_head': 'raised RedactorCrash'}
+wt-old has RedactorCrash: True {'plain': 'raised RedactorCrash', 'hidden': 'raised RedactorCrash', 'handed': 'raised RedactorCrash', 'spaced': 'raised RedactorCrash', 'error_reason': 'RETURNED', 'safe_head': 'RETURNED'}
+wt-main has RedactorCrash: False {'plain': 'raised RedactionError', 'hidden': 'raised RedactionError', 'handed': 'raised RedactionError', 'spaced': 'raised RedactionError', 'error_reason': 'RETURNED', 'safe_head': 'RETURNED'}

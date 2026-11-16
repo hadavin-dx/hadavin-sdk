@@ -1,0 +1,37 @@
+FFFFFFF........................F                                         [100%]
+=================================== FAILURES ===================================
+E   AssertionError: wrong wording for 'a?b': 
+    assert '' == 'PathRefused:...oes not allow'
+      
+      - PathRefused: hash file: contains a character Windows does not allow
+/home/user/build/E-work/c-tree/tests/test_pathguard_batch4.py:45: AssertionError: wrong wording for 'a?b':
+E   AssertionError: wrong wording for 'a?b': 
+    assert '' == 'PathRefused:...oes not allow'
+      
+      - PathRefused: mounted secret: contains a character Windows does not allow
+/home/user/build/E-work/c-tree/tests/test_pathguard_batch4.py:55: AssertionError: wrong wording for 'a?b':
+E   Failed: DID NOT RAISE ConfigError
+/home/user/build/E-work/c-tree/tests/test_pathguard_batch4.py:68: Failed: DID NOT RAISE ConfigError
+E   Failed: DID NOT RAISE ConfigError
+/home/user/build/E-work/c-tree/tests/test_pathguard_batch4.py:68: Failed: DID NOT RAISE ConfigError
+E   Failed: DID NOT RAISE ConfigError
+/home/user/build/E-work/c-tree/tests/test_pathguard_batch4.py:68: Failed: DID NOT RAISE ConfigError
+E   Failed: DID NOT RAISE ConfigError
+/home/user/build/E-work/c-tree/tests/test_pathguard_batch4.py:68: Failed: DID NOT RAISE ConfigError
+E   Failed: DID NOT RAISE ConfigError
+/home/user/build/E-work/c-tree/tests/test_pathguard_batch4.py:68: Failed: DID NOT RAISE ConfigError
+E   assert ["src/hadavin...n file'", ...] == []
+      
+      Left contains 8 more items, first extra item: "src/hadavin_sdk/actions/secrets_file.py: pathguard.inside what='mounted secret'"
+      Use -v to get more diff
+/home/user/build/E-work/c-tree/tests/test_pathguard_batch4.py:463: assert ["src/hadavin...n file'", ...] == []
+=========================== short test summary info ============================
+FAILED tests/test_pathguard_batch4.py::test_hash_files_refuses_a_name_with_a_colon_device_name_or_trailing_dot
+FAILED tests/test_pathguard_batch4.py::test_secrets_file_refuses_a_secret_name_with_a_colon_device_name_or_trailing_dot
+FAILED tests/test_pathguard_batch4.py::test_answers_file_name_with_a_colon_device_name_or_trailing_dot_is_refused[a?b]
+FAILED tests/test_pathguard_batch4.py::test_answers_file_name_with_a_colon_device_name_or_trailing_dot_is_refused[con]
+FAILED tests/test_pathguard_batch4.py::test_answers_file_name_with_a_colon_device_name_or_trailing_dot_is_refused[x.]
+FAILED tests/test_pathguard_batch4.py::test_answers_file_name_with_a_colon_device_name_or_trailing_dot_is_refused[vault:token]
+FAILED tests/test_pathguard_batch4.py::test_answers_file_name_with_a_colon_device_name_or_trailing_dot_is_refused[aux.txt]
+FAILED tests/test_pathguard_batch4.py::test_control_every_converted_call_site_has_a_mutant_row_or_an_equivalent_entry
+8 failed, 24 passed in 0.61s

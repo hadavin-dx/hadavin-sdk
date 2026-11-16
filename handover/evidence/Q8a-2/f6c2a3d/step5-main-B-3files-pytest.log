@@ -1,0 +1,2035 @@
+FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF....FFFFFFFFFFFFFFFFFFFFFF..... [ 21%]
+...................................FF.F................................. [ 42%]
+........................................................................ [ 63%]
+..................................................FFFFFFFFFFFFFFFFFFFFFF [ 84%]
+FFFF............................................FF..                     [100%]
+=================================== FAILURES ===================================
+_______________ test_the_fake_kind_is_served_on_the_neutral_path _______________
+
+    def test_the_fake_kind_is_served_on_the_neutral_path():
+        with _served(FakeChannel(SIG)) as port:
+>           assert _post(port, NEUTRAL, UNSIGNED) == 401  # reached the signature check
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AssertionError: assert 404 == 401
+E            +  where 404 = _post(46485, '/channel/actions', b'payload=x')
+
+tests/test_q8a2_callback.py:107: AssertionError
+______________ test_the_fake_kind_does_not_answer_the_vendor_path ______________
+
+    def test_the_fake_kind_does_not_answer_the_vendor_path():
+        with _served(FakeChannel(SIG)) as port:
+>           assert _post(port, VENDOR) == 404
+E           AssertionError: assert 401 == 404
+E            +  where 401 = _post(42131, '/slack/actions')
+
+tests/test_q8a2_callback.py:112: AssertionError
+______________ test_a_future_kind_is_served_on_its_own_path_only _______________
+
+    def test_a_future_kind_is_served_on_its_own_path_only():
+        with _served(FutureChannel(SIG)) as port:
+>           assert _post(port, FutureChannel.callback_path, UNSIGNED) == 401
+E           AssertionError: assert 404 == 401
+E            +  where 404 = _post(37763, '/future-kind/actions', b'payload=x')
+E            +    where '/future-kind/actions' = FutureChannel.callback_path
+
+tests/test_q8a2_callback.py:117: AssertionError
+______________ test_serve_refuses_a_malformed_callback_path[None] ______________
+
+value = None
+
+    @pytest.mark.parametrize("value", BAD_PATHS, ids=repr)
+    def test_serve_refuses_a_malformed_callback_path(value):
+>       _assert_serve_refuses(_with_path(value), f"channel fake: {REFUSAL}")
+
+tests/test_q8a2_callback.py:158: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+channel = <tests.test_q8a2_callback.BadPathChannel object at 0x7fe7c7ba5fd0>
+message = 'channel fake: callback_path must be a path such as /channel/actions'
+
+    def _assert_serve_refuses(channel, message: str) -> None:
+        server = None
+        try:
+>           with pytest.raises(ConfigError, match=re.escape(message)):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE ConfigError
+
+tests/test_q8a2_callback.py:149: Failed
+_______________ test_serve_refuses_a_malformed_callback_path[''] _______________
+
+value = ''
+
+    @pytest.mark.parametrize("value", BAD_PATHS, ids=repr)
+    def test_serve_refuses_a_malformed_callback_path(value):
+>       _assert_serve_refuses(_with_path(value), f"channel fake: {REFUSAL}")
+
+tests/test_q8a2_callback.py:158: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+channel = <tests.test_q8a2_callback.BadPathChannel object at 0x7fe7c7ba57f0>
+message = 'channel fake: callback_path must be a path such as /channel/actions'
+
+    def _assert_serve_refuses(channel, message: str) -> None:
+        server = None
+        try:
+>           with pytest.raises(ConfigError, match=re.escape(message)):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE ConfigError
+
+tests/test_q8a2_callback.py:149: Failed
+________ test_serve_refuses_a_malformed_callback_path['slack/actions'] _________
+
+value = 'slack/actions'
+
+    @pytest.mark.parametrize("value", BAD_PATHS, ids=repr)
+    def test_serve_refuses_a_malformed_callback_path(value):
+>       _assert_serve_refuses(_with_path(value), f"channel fake: {REFUSAL}")
+
+tests/test_q8a2_callback.py:158: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+channel = <tests.test_q8a2_callback.BadPathChannel object at 0x7fe7c7ba6270>
+message = 'channel fake: callback_path must be a path such as /channel/actions'
+
+    def _assert_serve_refuses(channel, message: str) -> None:
+        server = None
+        try:
+>           with pytest.raises(ConfigError, match=re.escape(message)):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE ConfigError
+
+tests/test_q8a2_callback.py:149: Failed
+_____________ test_serve_refuses_a_malformed_callback_path['/a b'] _____________
+
+value = '/a b'
+
+    @pytest.mark.parametrize("value", BAD_PATHS, ids=repr)
+    def test_serve_refuses_a_malformed_callback_path(value):
+>       _assert_serve_refuses(_with_path(value), f"channel fake: {REFUSAL}")
+
+tests/test_q8a2_callback.py:158: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+channel = <tests.test_q8a2_callback.BadPathChannel object at 0x7fe7c7ba57f0>
+message = 'channel fake: callback_path must be a path such as /channel/actions'
+
+    def _assert_serve_refuses(channel, message: str) -> None:
+        server = None
+        try:
+>           with pytest.raises(ConfigError, match=re.escape(message)):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE ConfigError
+
+tests/test_q8a2_callback.py:149: Failed
+_____________ test_serve_refuses_a_malformed_callback_path['/a?x'] _____________
+
+value = '/a?x'
+
+    @pytest.mark.parametrize("value", BAD_PATHS, ids=repr)
+    def test_serve_refuses_a_malformed_callback_path(value):
+>       _assert_serve_refuses(_with_path(value), f"channel fake: {REFUSAL}")
+
+tests/test_q8a2_callback.py:158: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+channel = <tests.test_q8a2_callback.BadPathChannel object at 0x7fe7c7ba5fd0>
+message = 'channel fake: callback_path must be a path such as /channel/actions'
+
+    def _assert_serve_refuses(channel, message: str) -> None:
+        server = None
+        try:
+>           with pytest.raises(ConfigError, match=re.escape(message)):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE ConfigError
+
+tests/test_q8a2_callback.py:149: Failed
+___________ test_serve_refuses_a_malformed_callback_path['/a/../b'] ____________
+
+value = '/a/../b'
+
+    @pytest.mark.parametrize("value", BAD_PATHS, ids=repr)
+    def test_serve_refuses_a_malformed_callback_path(value):
+>       _assert_serve_refuses(_with_path(value), f"channel fake: {REFUSAL}")
+
+tests/test_q8a2_callback.py:158: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+channel = <tests.test_q8a2_callback.BadPathChannel object at 0x7fe7c7ba6120>
+message = 'channel fake: callback_path must be a path such as /channel/actions'
+
+    def _assert_serve_refuses(channel, message: str) -> None:
+        server = None
+        try:
+>           with pytest.raises(ConfigError, match=re.escape(message)):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE ConfigError
+
+tests/test_q8a2_callback.py:149: Failed
+______________ test_serve_refuses_a_malformed_callback_path['/'] _______________
+
+value = '/'
+
+    @pytest.mark.parametrize("value", BAD_PATHS, ids=repr)
+    def test_serve_refuses_a_malformed_callback_path(value):
+>       _assert_serve_refuses(_with_path(value), f"channel fake: {REFUSAL}")
+
+tests/test_q8a2_callback.py:158: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+channel = <tests.test_q8a2_callback.BadPathChannel object at 0x7fe7c7ba5a90>
+message = 'channel fake: callback_path must be a path such as /channel/actions'
+
+    def _assert_serve_refuses(channel, message: str) -> None:
+        server = None
+        try:
+>           with pytest.raises(ConfigError, match=re.escape(message)):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE ConfigError
+
+tests/test_q8a2_callback.py:149: Failed
+____________ test_serve_refuses_a_malformed_callback_path['/a//b'] _____________
+
+value = '/a//b'
+
+    @pytest.mark.parametrize("value", BAD_PATHS, ids=repr)
+    def test_serve_refuses_a_malformed_callback_path(value):
+>       _assert_serve_refuses(_with_path(value), f"channel fake: {REFUSAL}")
+
+tests/test_q8a2_callback.py:158: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+channel = <tests.test_q8a2_callback.BadPathChannel object at 0x7fe7c7ba63c0>
+message = 'channel fake: callback_path must be a path such as /channel/actions'
+
+    def _assert_serve_refuses(channel, message: str) -> None:
+        server = None
+        try:
+>           with pytest.raises(ConfigError, match=re.escape(message)):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE ConfigError
+
+tests/test_q8a2_callback.py:149: Failed
+______________ test_serve_refuses_a_malformed_callback_path['/A'] ______________
+
+value = '/A'
+
+    @pytest.mark.parametrize("value", BAD_PATHS, ids=repr)
+    def test_serve_refuses_a_malformed_callback_path(value):
+>       _assert_serve_refuses(_with_path(value), f"channel fake: {REFUSAL}")
+
+tests/test_q8a2_callback.py:158: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+channel = <tests.test_q8a2_callback.BadPathChannel object at 0x7fe7c7ba6510>
+message = 'channel fake: callback_path must be a path such as /channel/actions'
+
+    def _assert_serve_refuses(channel, message: str) -> None:
+        server = None
+        try:
+>           with pytest.raises(ConfigError, match=re.escape(message)):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE ConfigError
+
+tests/test_q8a2_callback.py:149: Failed
+_ test_serve_refuses_a_malformed_callback_path['/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'] _
+
+value = '/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+
+    @pytest.mark.parametrize("value", BAD_PATHS, ids=repr)
+    def test_serve_refuses_a_malformed_callback_path(value):
+>       _assert_serve_refuses(_with_path(value), f"channel fake: {REFUSAL}")
+
+tests/test_q8a2_callback.py:158: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+channel = <tests.test_q8a2_callback.BadPathChannel object at 0x7fe7c7ba6660>
+message = 'channel fake: callback_path must be a path such as /channel/actions'
+
+    def _assert_serve_refuses(channel, message: str) -> None:
+        server = None
+        try:
+>           with pytest.raises(ConfigError, match=re.escape(message)):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE ConfigError
+
+tests/test_q8a2_callback.py:149: Failed
+_______________ test_serve_refuses_a_malformed_callback_path[5] ________________
+
+value = 5
+
+    @pytest.mark.parametrize("value", BAD_PATHS, ids=repr)
+    def test_serve_refuses_a_malformed_callback_path(value):
+>       _assert_serve_refuses(_with_path(value), f"channel fake: {REFUSAL}")
+
+tests/test_q8a2_callback.py:158: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+channel = <tests.test_q8a2_callback.BadPathChannel object at 0x7fe7c7ba67b0>
+message = 'channel fake: callback_path must be a path such as /channel/actions'
+
+    def _assert_serve_refuses(channel, message: str) -> None:
+        server = None
+        try:
+>           with pytest.raises(ConfigError, match=re.escape(message)):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE ConfigError
+
+tests/test_q8a2_callback.py:149: Failed
+____________ test_serve_refuses_a_malformed_callback_path['/a\\n'] _____________
+
+value = '/a\n'
+
+    @pytest.mark.parametrize("value", BAD_PATHS, ids=repr)
+    def test_serve_refuses_a_malformed_callback_path(value):
+>       _assert_serve_refuses(_with_path(value), f"channel fake: {REFUSAL}")
+
+tests/test_q8a2_callback.py:158: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+channel = <tests.test_q8a2_callback.BadPathChannel object at 0x7fe7c7ba6900>
+message = 'channel fake: callback_path must be a path such as /channel/actions'
+
+    def _assert_serve_refuses(channel, message: str) -> None:
+        server = None
+        try:
+>           with pytest.raises(ConfigError, match=re.escape(message)):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE ConfigError
+
+tests/test_q8a2_callback.py:149: Failed
+_____________ test_serve_refuses_a_malformed_callback_path['/a/'] ______________
+
+value = '/a/'
+
+    @pytest.mark.parametrize("value", BAD_PATHS, ids=repr)
+    def test_serve_refuses_a_malformed_callback_path(value):
+>       _assert_serve_refuses(_with_path(value), f"channel fake: {REFUSAL}")
+
+tests/test_q8a2_callback.py:158: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+channel = <tests.test_q8a2_callback.BadPathChannel object at 0x7fe7c7ba6a50>
+message = 'channel fake: callback_path must be a path such as /channel/actions'
+
+    def _assert_serve_refuses(channel, message: str) -> None:
+        server = None
+        try:
+>           with pytest.raises(ConfigError, match=re.escape(message)):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE ConfigError
+
+tests/test_q8a2_callback.py:149: Failed
+_____________ test_serve_refuses_a_malformed_callback_path['/-a'] ______________
+
+value = '/-a'
+
+    @pytest.mark.parametrize("value", BAD_PATHS, ids=repr)
+    def test_serve_refuses_a_malformed_callback_path(value):
+>       _assert_serve_refuses(_with_path(value), f"channel fake: {REFUSAL}")
+
+tests/test_q8a2_callback.py:158: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+channel = <tests.test_q8a2_callback.BadPathChannel object at 0x7fe7c7ba6ba0>
+message = 'channel fake: callback_path must be a path such as /channel/actions'
+
+    def _assert_serve_refuses(channel, message: str) -> None:
+        server = None
+        try:
+>           with pytest.raises(ConfigError, match=re.escape(message)):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE ConfigError
+
+tests/test_q8a2_callback.py:149: Failed
+_____________ test_serve_refuses_a_malformed_callback_path['/a-'] ______________
+
+value = '/a-'
+
+    @pytest.mark.parametrize("value", BAD_PATHS, ids=repr)
+    def test_serve_refuses_a_malformed_callback_path(value):
+>       _assert_serve_refuses(_with_path(value), f"channel fake: {REFUSAL}")
+
+tests/test_q8a2_callback.py:158: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+channel = <tests.test_q8a2_callback.BadPathChannel object at 0x7fe7c7ba6cf0>
+message = 'channel fake: callback_path must be a path such as /channel/actions'
+
+    def _assert_serve_refuses(channel, message: str) -> None:
+        server = None
+        try:
+>           with pytest.raises(ConfigError, match=re.escape(message)):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE ConfigError
+
+tests/test_q8a2_callback.py:149: Failed
+_____________ test_serve_refuses_a_malformed_callback_path[b'/a'] ______________
+
+value = b'/a'
+
+    @pytest.mark.parametrize("value", BAD_PATHS, ids=repr)
+    def test_serve_refuses_a_malformed_callback_path(value):
+>       _assert_serve_refuses(_with_path(value), f"channel fake: {REFUSAL}")
+
+tests/test_q8a2_callback.py:158: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+channel = <tests.test_q8a2_callback.BadPathChannel object at 0x7fe7c7ba6ba0>
+message = 'channel fake: callback_path must be a path such as /channel/actions'
+
+    def _assert_serve_refuses(channel, message: str) -> None:
+        server = None
+        try:
+>           with pytest.raises(ConfigError, match=re.escape(message)):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE ConfigError
+
+tests/test_q8a2_callback.py:149: Failed
+______ test_serve_refuses_a_channel_without_a_callback_path_and_names_it _______
+
+    def test_serve_refuses_a_channel_without_a_callback_path_and_names_it():
+>       _assert_serve_refuses(BareChannel(), f"channel bare: {REFUSAL}")
+
+tests/test_q8a2_callback.py:162: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+channel = <tests.test_q8a2_callback.BareChannel object at 0x7fe7c7ba6a50>
+message = 'channel bare: callback_path must be a path such as /channel/actions'
+
+    def _assert_serve_refuses(channel, message: str) -> None:
+        server = None
+        try:
+>           with pytest.raises(ConfigError, match=re.escape(message)):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE ConfigError
+
+tests/test_q8a2_callback.py:149: Failed
+_ test_the_name_in_the_refusal_is_one_bounded_printable_line_whatever_its_source[''-'Plain'-'Plain'] _
+
+name = '', class_name = 'Plain', shown = 'Plain'
+
+    @pytest.mark.parametrize(
+        ("name", "class_name", "shown"),
+        [
+            ("", "Plain", "Plain"),  # no usable name: the class name is shown
+            (7, "Plain", "Plain"),
+            (None, "Plain", "Plain"),
+            ("two\nlines", "Plain", "two?lines"),  # whichever was chosen gets the same one check
+            ("tab\there", "Plain", "tab?here"),
+            (None, "two\nlines", "two?lines"),
+            ("", "esc\x1b[31m", "esc?[31m"),
+            ("n" * 100, "Plain", "n" * 64),
+            (None, "C" * 100, "C" * 64),
+            (_LoudStr("quiet"), "Plain", "quiet"),
+        ],
+        ids=repr,
+    )
+    def test_the_name_in_the_refusal_is_one_bounded_printable_line_whatever_its_source(
+        name, class_name, shown
+    ):
+        channel = type(class_name, (), {"name": name})()
+        server = None
+        try:
+>           with pytest.raises(ConfigError) as refused:
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE ConfigError
+
+tests/test_q8a2_callback.py:202: Failed
+_ test_the_name_in_the_refusal_is_one_bounded_printable_line_whatever_its_source[7-'Plain'-'Plain'] _
+
+name = 7, class_name = 'Plain', shown = 'Plain'
+
+    @pytest.mark.parametrize(
+        ("name", "class_name", "shown"),
+        [
+            ("", "Plain", "Plain"),  # no usable name: the class name is shown
+            (7, "Plain", "Plain"),
+            (None, "Plain", "Plain"),
+            ("two\nlines", "Plain", "two?lines"),  # whichever was chosen gets the same one check
+            ("tab\there", "Plain", "tab?here"),
+            (None, "two\nlines", "two?lines"),
+            ("", "esc\x1b[31m", "esc?[31m"),
+            ("n" * 100, "Plain", "n" * 64),
+            (None, "C" * 100, "C" * 64),
+            (_LoudStr("quiet"), "Plain", "quiet"),
+        ],
+        ids=repr,
+    )
+    def test_the_name_in_the_refusal_is_one_bounded_printable_line_whatever_its_source(
+        name, class_name, shown
+    ):
+        channel = type(class_name, (), {"name": name})()
+        server = None
+        try:
+>           with pytest.raises(ConfigError) as refused:
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE ConfigError
+
+tests/test_q8a2_callback.py:202: Failed
+_ test_the_name_in_the_refusal_is_one_bounded_printable_line_whatever_its_source[None-'Plain'-'Plain'] _
+
+name = None, class_name = 'Plain', shown = 'Plain'
+
+    @pytest.mark.parametrize(
+        ("name", "class_name", "shown"),
+        [
+            ("", "Plain", "Plain"),  # no usable name: the class name is shown
+            (7, "Plain", "Plain"),
+            (None, "Plain", "Plain"),
+            ("two\nlines", "Plain", "two?lines"),  # whichever was chosen gets the same one check
+            ("tab\there", "Plain", "tab?here"),
+            (None, "two\nlines", "two?lines"),
+            ("", "esc\x1b[31m", "esc?[31m"),
+            ("n" * 100, "Plain", "n" * 64),
+            (None, "C" * 100, "C" * 64),
+            (_LoudStr("quiet"), "Plain", "quiet"),
+        ],
+        ids=repr,
+    )
+    def test_the_name_in_the_refusal_is_one_bounded_printable_line_whatever_its_source(
+        name, class_name, shown
+    ):
+        channel = type(class_name, (), {"name": name})()
+        server = None
+        try:
+>           with pytest.raises(ConfigError) as refused:
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE ConfigError
+
+tests/test_q8a2_callback.py:202: Failed
+_ test_the_name_in_the_refusal_is_one_bounded_printable_line_whatever_its_source['two\\nlines'-'Plain'-'two?lines'] _
+
+name = 'two\nlines', class_name = 'Plain', shown = 'two?lines'
+
+    @pytest.mark.parametrize(
+        ("name", "class_name", "shown"),
+        [
+            ("", "Plain", "Plain"),  # no usable name: the class name is shown
+            (7, "Plain", "Plain"),
+            (None, "Plain", "Plain"),
+            ("two\nlines", "Plain", "two?lines"),  # whichever was chosen gets the same one check
+            ("tab\there", "Plain", "tab?here"),
+            (None, "two\nlines", "two?lines"),
+            ("", "esc\x1b[31m", "esc?[31m"),
+            ("n" * 100, "Plain", "n" * 64),
+            (None, "C" * 100, "C" * 64),
+            (_LoudStr("quiet"), "Plain", "quiet"),
+        ],
+        ids=repr,
+    )
+    def test_the_name_in_the_refusal_is_one_bounded_printable_line_whatever_its_source(
+        name, class_name, shown
+    ):
+        channel = type(class_name, (), {"name": name})()
+        server = None
+        try:
+>           with pytest.raises(ConfigError) as refused:
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE ConfigError
+
+tests/test_q8a2_callback.py:202: Failed
+_ test_the_name_in_the_refusal_is_one_bounded_printable_line_whatever_its_source['tab\\there'-'Plain'-'tab?here'] _
+
+name = 'tab\there', class_name = 'Plain', shown = 'tab?here'
+
+    @pytest.mark.parametrize(
+        ("name", "class_name", "shown"),
+        [
+            ("", "Plain", "Plain"),  # no usable name: the class name is shown
+            (7, "Plain", "Plain"),
+            (None, "Plain", "Plain"),
+            ("two\nlines", "Plain", "two?lines"),  # whichever was chosen gets the same one check
+            ("tab\there", "Plain", "tab?here"),
+            (None, "two\nlines", "two?lines"),
+            ("", "esc\x1b[31m", "esc?[31m"),
+            ("n" * 100, "Plain", "n" * 64),
+            (None, "C" * 100, "C" * 64),
+            (_LoudStr("quiet"), "Plain", "quiet"),
+        ],
+        ids=repr,
+    )
+    def test_the_name_in_the_refusal_is_one_bounded_printable_line_whatever_its_source(
+        name, class_name, shown
+    ):
+        channel = type(class_name, (), {"name": name})()
+        server = None
+        try:
+>           with pytest.raises(ConfigError) as refused:
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE ConfigError
+
+tests/test_q8a2_callback.py:202: Failed
+_ test_the_name_in_the_refusal_is_one_bounded_printable_line_whatever_its_source[None-'two\\nlines'-'two?lines'] _
+
+name = None, class_name = 'two\nlines', shown = 'two?lines'
+
+    @pytest.mark.parametrize(
+        ("name", "class_name", "shown"),
+        [
+            ("", "Plain", "Plain"),  # no usable name: the class name is shown
+            (7, "Plain", "Plain"),
+            (None, "Plain", "Plain"),
+            ("two\nlines", "Plain", "two?lines"),  # whichever was chosen gets the same one check
+            ("tab\there", "Plain", "tab?here"),
+            (None, "two\nlines", "two?lines"),
+            ("", "esc\x1b[31m", "esc?[31m"),
+            ("n" * 100, "Plain", "n" * 64),
+            (None, "C" * 100, "C" * 64),
+            (_LoudStr("quiet"), "Plain", "quiet"),
+        ],
+        ids=repr,
+    )
+    def test_the_name_in_the_refusal_is_one_bounded_printable_line_whatever_its_source(
+        name, class_name, shown
+    ):
+        channel = type(class_name, (), {"name": name})()
+        server = None
+        try:
+>           with pytest.raises(ConfigError) as refused:
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE ConfigError
+
+tests/test_q8a2_callback.py:202: Failed
+_ test_the_name_in_the_refusal_is_one_bounded_printable_line_whatever_its_source[''-'esc\\x1b[31m'-'esc?[31m'] _
+
+name = '', class_name = 'esc\x1b[31m', shown = 'esc?[31m'
+
+    @pytest.mark.parametrize(
+        ("name", "class_name", "shown"),
+        [
+            ("", "Plain", "Plain"),  # no usable name: the class name is shown
+            (7, "Plain", "Plain"),
+            (None, "Plain", "Plain"),
+            ("two\nlines", "Plain", "two?lines"),  # whichever was chosen gets the same one check
+            ("tab\there", "Plain", "tab?here"),
+            (None, "two\nlines", "two?lines"),
+            ("", "esc\x1b[31m", "esc?[31m"),
+            ("n" * 100, "Plain", "n" * 64),
+            (None, "C" * 100, "C" * 64),
+            (_LoudStr("quiet"), "Plain", "quiet"),
+        ],
+        ids=repr,
+    )
+    def test_the_name_in_the_refusal_is_one_bounded_printable_line_whatever_its_source(
+        name, class_name, shown
+    ):
+        channel = type(class_name, (), {"name": name})()
+        server = None
+        try:
+>           with pytest.raises(ConfigError) as refused:
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE ConfigError
+
+tests/test_q8a2_callback.py:202: Failed
+_ test_the_name_in_the_refusal_is_one_bounded_printable_line_whatever_its_source['nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn'-'Plain'-'nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn'] _
+
+name = 'nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn'
+class_name = 'Plain'
+shown = 'nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn'
+
+    @pytest.mark.parametrize(
+        ("name", "class_name", "shown"),
+        [
+            ("", "Plain", "Plain"),  # no usable name: the class name is shown
+            (7, "Plain", "Plain"),
+            (None, "Plain", "Plain"),
+            ("two\nlines", "Plain", "two?lines"),  # whichever was chosen gets the same one check
+            ("tab\there", "Plain", "tab?here"),
+            (None, "two\nlines", "two?lines"),
+            ("", "esc\x1b[31m", "esc?[31m"),
+            ("n" * 100, "Plain", "n" * 64),
+            (None, "C" * 100, "C" * 64),
+            (_LoudStr("quiet"), "Plain", "quiet"),
+        ],
+        ids=repr,
+    )
+    def test_the_name_in_the_refusal_is_one_bounded_printable_line_whatever_its_source(
+        name, class_name, shown
+    ):
+        channel = type(class_name, (), {"name": name})()
+        server = None
+        try:
+>           with pytest.raises(ConfigError) as refused:
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE ConfigError
+
+tests/test_q8a2_callback.py:202: Failed
+_ test_the_name_in_the_refusal_is_one_bounded_printable_line_whatever_its_source[None-'CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC'-'CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC'] _
+
+name = None
+class_name = 'CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC'
+shown = 'CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC'
+
+    @pytest.mark.parametrize(
+        ("name", "class_name", "shown"),
+        [
+            ("", "Plain", "Plain"),  # no usable name: the class name is shown
+            (7, "Plain", "Plain"),
+            (None, "Plain", "Plain"),
+            ("two\nlines", "Plain", "two?lines"),  # whichever was chosen gets the same one check
+            ("tab\there", "Plain", "tab?here"),
+            (None, "two\nlines", "two?lines"),
+            ("", "esc\x1b[31m", "esc?[31m"),
+            ("n" * 100, "Plain", "n" * 64),
+            (None, "C" * 100, "C" * 64),
+            (_LoudStr("quiet"), "Plain", "quiet"),
+        ],
+        ids=repr,
+    )
+    def test_the_name_in_the_refusal_is_one_bounded_printable_line_whatever_its_source(
+        name, class_name, shown
+    ):
+        channel = type(class_name, (), {"name": name})()
+        server = None
+        try:
+>           with pytest.raises(ConfigError) as refused:
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE ConfigError
+
+tests/test_q8a2_callback.py:202: Failed
+_ test_the_name_in_the_refusal_is_one_bounded_printable_line_whatever_its_source[loud\nstr-'Plain'-'quiet'] _
+
+name = loud
+str, class_name = 'Plain', shown = 'quiet'
+
+    @pytest.mark.parametrize(
+        ("name", "class_name", "shown"),
+        [
+            ("", "Plain", "Plain"),  # no usable name: the class name is shown
+            (7, "Plain", "Plain"),
+            (None, "Plain", "Plain"),
+            ("two\nlines", "Plain", "two?lines"),  # whichever was chosen gets the same one check
+            ("tab\there", "Plain", "tab?here"),
+            (None, "two\nlines", "two?lines"),
+            ("", "esc\x1b[31m", "esc?[31m"),
+            ("n" * 100, "Plain", "n" * 64),
+            (None, "C" * 100, "C" * 64),
+            (_LoudStr("quiet"), "Plain", "quiet"),
+        ],
+        ids=repr,
+    )
+    def test_the_name_in_the_refusal_is_one_bounded_printable_line_whatever_its_source(
+        name, class_name, shown
+    ):
+        channel = type(class_name, (), {"name": name})()
+        server = None
+        try:
+>           with pytest.raises(ConfigError) as refused:
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE ConfigError
+
+tests/test_q8a2_callback.py:202: Failed
+_____________ test_the_refusal_states_the_rule_for_a_callback_path _____________
+
+    def test_the_refusal_states_the_rule_for_a_callback_path():
+>       with pytest.raises(ConfigError) as refused:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigError
+
+tests/test_q8a2_callback.py:213: Failed
+__________________ test_a_str_subclass_is_not_a_callback_path __________________
+
+    def test_a_str_subclass_is_not_a_callback_path():
+        """A subclass could bring its own comparison and so match every request path."""
+        from hadavin_sdk.approvals import channel as channel_module
+    
+        valid = getattr(channel_module, "valid_callback_path", None)
+>       assert valid is not None
+E       assert None is not None
+
+tests/test_q8a2_callback.py:233: AssertionError
+______________ test_the_path_is_read_once_when_the_server_starts _______________
+
+    def test_the_path_is_read_once_when_the_server_starts():
+        """A path changed on the channel after start does not move the server: the path answered is the one that was
+        checked at start."""
+        channel = FutureChannel(SIG)
+        with _served(channel) as port:
+            channel.callback_path = "/moved/actions"
+>           assert _post(port, FutureChannel.callback_path, UNSIGNED) == 401
+E           AssertionError: assert 404 == 401
+E            +  where 404 = _post(44105, '/future-kind/actions', b'payload=x')
+E            +    where '/future-kind/actions' = FutureChannel.callback_path
+
+tests/test_q8a2_callback.py:244: AssertionError
+___________ test_one_checker_holds_the_grammar_and_the_length_limit ____________
+
+    def test_one_checker_holds_the_grammar_and_the_length_limit():
+        from hadavin_sdk.approvals import channel as channel_module
+    
+        valid = getattr(channel_module, "valid_callback_path", None)
+>       assert valid is not None
+E       assert None is not None
+
+tests/test_q8a2_callback.py:255: AssertionError
+_________ test_a_double_slash_in_front_of_the_path_is_not_served[fake] _________
+
+make = <function <lambda> at 0x7fe7c7bb14e0>
+
+    @pytest.mark.parametrize(
+        "make", [lambda: FakeChannel(SIG), lambda: _slack()], ids=["fake", "slack"]
+    )
+    def test_a_double_slash_in_front_of_the_path_is_not_served(make):
+        """The standard library server rewrites a request target that starts with `//` to one `/`; the receiver
+        compares the target as it was sent, so the rewritten form does not reach the signature check."""
+        channel = make()
+        path = _path_before_and_after(channel)
+        with _served(channel) as port:
+            for slashes in ("/", "//", "///"):  # two, three and four slashes in front
+>               assert _post(port, slashes + path) == 404, slashes
+E               AssertionError: /
+E               assert 401 == 404
+E                +  where 401 = _post(43257, ('/' + '/slack/actions'))
+
+tests/test_q8a2_callback.py:273: AssertionError
+________ test_a_double_slash_in_front_of_the_path_is_not_served[slack] _________
+
+make = <function <lambda> at 0x7fe7c7bb1580>
+
+    @pytest.mark.parametrize(
+        "make", [lambda: FakeChannel(SIG), lambda: _slack()], ids=["fake", "slack"]
+    )
+    def test_a_double_slash_in_front_of_the_path_is_not_served(make):
+        """The standard library server rewrites a request target that starts with `//` to one `/`; the receiver
+        compares the target as it was sent, so the rewritten form does not reach the signature check."""
+        channel = make()
+        path = _path_before_and_after(channel)
+        with _served(channel) as port:
+            for slashes in ("/", "//", "///"):  # two, three and four slashes in front
+>               assert _post(port, slashes + path) == 404, slashes
+E               AssertionError: /
+E               assert 401 == 404
+E                +  where 401 = _post(34249, ('/' + '/slack/actions'))
+
+tests/test_q8a2_callback.py:273: AssertionError
+____________________ test_each_kind_names_its_callback_path ____________________
+
+    def test_each_kind_names_its_callback_path():
+>       assert getattr(FakeChannel, "callback_path", None) == NEUTRAL
+E       AssertionError: assert None == '/channel/actions'
+E        +  where None = getattr(FakeChannel, 'callback_path', None)
+
+tests/test_q8a2_callback.py:278: AssertionError
+________________ test_the_handler_was_renamed_without_an_alias _________________
+
+    def test_the_handler_was_renamed_without_an_alias():
+>       assert hasattr(receiver, "handle_action")
+E       AssertionError: assert False
+E        +  where False = hasattr(receiver, 'handle_action')
+
+tests/test_q8a2_callback.py:283: AssertionError
+_______ test_handle_action_refuses_an_oversize_body_and_a_bad_signature ________
+
+    def test_handle_action_refuses_an_oversize_body_and_a_bad_signature():
+        handle = getattr(receiver, "handle_action", None)
+>       assert handle is not None
+E       assert None is not None
+
+tests/test_q8a2_callback.py:290: AssertionError
+_____ test_property_paths_of_the_grammar_are_accepted_up_to_64_characters ______
+
+    def test_property_paths_of_the_grammar_are_accepted_up_to_64_characters():
+        draws = _Draws(8802)
+        for _ in range(500):
+            path = _valid_path(draws)
+>           assert _checked_path(path) == path
+                   ^^^^^^^^^^^^^^^^^^^
+
+tests/test_q8a2_callback.py:336: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = '/j-98y0/ppmntw9cd31/869d/r/ainx/lxis/s-o/ib'
+
+    def _checked_path(value):
+        check = getattr(receiver, "callback_path", None)
+>       assert check is not None
+E       assert None is not None
+
+tests/test_q8a2_callback.py:298: AssertionError
+_ test_property_one_foreign_character_empty_segment_or_missing_slash_is_refused _
+
+    def test_property_one_foreign_character_empty_segment_or_missing_slash_is_refused():
+        draws = _Draws(8803)
+        paths = [_valid_path(draws, 2 + draws.below(39)) for _ in range(300)]
+        # every foreign character is tried (in turn, at a drawn position), not a sample of them
+        for i, char in enumerate(FOREIGN):
+            path = paths[i % len(paths)]
+            at = draws.below(len(path) + 1)
+            with pytest.raises(ConfigError, match=re.escape(REFUSAL)):
+>               _checked_path(path[:at] + char + path[at:])
+
+tests/test_q8a2_callback.py:357: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+value = '/8-m/ykeb8\x00'
+
+    def _checked_path(value):
+        check = getattr(receiver, "callback_path", None)
+>       assert check is not None
+E       assert None is not None
+
+tests/test_q8a2_callback.py:298: AssertionError
+_ test_a_malformed_or_oversize_content_length_is_refused_with_a_normal_answer[b'Content-Length: 9999999999999999999999-413_0] _
+
+header = b'Content-Length: 9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999...9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999'
+status = 413, capsys = <_pytest.capture.CaptureFixture object at 0x7fe7c7ba63c0>
+
+    @pytest.mark.parametrize(("header", "status"), BAD_LENGTHS, ids=lambda v: repr(v)[:40])
+    def test_a_malformed_or_oversize_content_length_is_refused_with_a_normal_answer(
+        header, status, capsys
+    ):
+        with _served(FakeChannel(SIG)) as port:
+>           assert _raw(port, _request(NEUTRAL, header))[0] == status
+E           assert None == 413
+
+tests/test_q8a2_callback.py:475: AssertionError
+----------------------------- Captured stderr call -----------------------------
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 44648)
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/http/server.py", line 451, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/http/server.py", line 439, in handle_one_request
+    method()
+    ~~~~~~^^
+  File "/home/user/build/EV-Q8a2f-main/src/hadavin_sdk/approvals/receiver.py", line 46, in do_POST
+    length = int(raw) if raw.isascii() and raw.isdigit() else -1
+             ~~~^^^^^
+ValueError: Exceeds the limit (4300 digits) for integer string conversion: value has 4301 digits; use sys.set_int_max_str_digits() to increase the limit
+----------------------------------------
+_ test_a_malformed_or_oversize_content_length_is_refused_with_a_normal_answer[b'Content-Length: 9999999999999999999999-413_1] _
+
+header = b'Content-Length: 9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999...9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999'
+status = 413, capsys = <_pytest.capture.CaptureFixture object at 0x7fe7c7b8d950>
+
+    @pytest.mark.parametrize(("header", "status"), BAD_LENGTHS, ids=lambda v: repr(v)[:40])
+    def test_a_malformed_or_oversize_content_length_is_refused_with_a_normal_answer(
+        header, status, capsys
+    ):
+        with _served(FakeChannel(SIG)) as port:
+>           assert _raw(port, _request(NEUTRAL, header))[0] == status
+E           assert None == 413
+
+tests/test_q8a2_callback.py:475: AssertionError
+----------------------------- Captured stderr call -----------------------------
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 52798)
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/http/server.py", line 451, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/http/server.py", line 439, in handle_one_request
+    method()
+    ~~~~~~^^
+  File "/home/user/build/EV-Q8a2f-main/src/hadavin_sdk/approvals/receiver.py", line 46, in do_POST
+    length = int(raw) if raw.isascii() and raw.isdigit() else -1
+             ~~~^^^^^
+ValueError: Exceeds the limit (4300 digits) for integer string conversion: value has 60000 digits; use sys.set_int_max_str_digits() to increase the limit
+----------------------------------------
+_ test_a_malformed_or_oversize_content_length_is_refused_with_a_normal_answer[b'Content-Length: 9999999999999'-413] _
+
+header = b'Content-Length: 9999999999999', status = 413
+capsys = <_pytest.capture.CaptureFixture object at 0x7fe7c7b8df90>
+
+    @pytest.mark.parametrize(("header", "status"), BAD_LENGTHS, ids=lambda v: repr(v)[:40])
+    def test_a_malformed_or_oversize_content_length_is_refused_with_a_normal_answer(
+        header, status, capsys
+    ):
+        with _served(FakeChannel(SIG)) as port:
+>           assert _raw(port, _request(NEUTRAL, header))[0] == status
+E           assert 404 == 413
+
+tests/test_q8a2_callback.py:475: AssertionError
+_ test_a_malformed_or_oversize_content_length_is_refused_with_a_normal_answer[b'Content-Length: 0000000000005'-413] _
+
+header = b'Content-Length: 0000000000005', status = 413
+capsys = <_pytest.capture.CaptureFixture object at 0x7fe7c7630e90>
+
+    @pytest.mark.parametrize(("header", "status"), BAD_LENGTHS, ids=lambda v: repr(v)[:40])
+    def test_a_malformed_or_oversize_content_length_is_refused_with_a_normal_answer(
+        header, status, capsys
+    ):
+        with _served(FakeChannel(SIG)) as port:
+>           assert _raw(port, _request(NEUTRAL, header))[0] == status
+E           assert 404 == 413
+
+tests/test_q8a2_callback.py:475: AssertionError
+_ test_a_malformed_or_oversize_content_length_is_refused_with_a_normal_answer[b'Content-Length: +5'-400] _
+
+header = b'Content-Length: +5', status = 400
+capsys = <_pytest.capture.CaptureFixture object at 0x7fe7c7632520>
+
+    @pytest.mark.parametrize(("header", "status"), BAD_LENGTHS, ids=lambda v: repr(v)[:40])
+    def test_a_malformed_or_oversize_content_length_is_refused_with_a_normal_answer(
+        header, status, capsys
+    ):
+        with _served(FakeChannel(SIG)) as port:
+>           assert _raw(port, _request(NEUTRAL, header))[0] == status
+E           assert 404 == 400
+
+tests/test_q8a2_callback.py:475: AssertionError
+_ test_a_malformed_or_oversize_content_length_is_refused_with_a_normal_answer[b'Content-Length: -5'-400] _
+
+header = b'Content-Length: -5', status = 400
+capsys = <_pytest.capture.CaptureFixture object at 0x7fe7c8206c30>
+
+    @pytest.mark.parametrize(("header", "status"), BAD_LENGTHS, ids=lambda v: repr(v)[:40])
+    def test_a_malformed_or_oversize_content_length_is_refused_with_a_normal_answer(
+        header, status, capsys
+    ):
+        with _served(FakeChannel(SIG)) as port:
+>           assert _raw(port, _request(NEUTRAL, header))[0] == status
+E           assert 404 == 400
+
+tests/test_q8a2_callback.py:475: AssertionError
+_ test_a_malformed_or_oversize_content_length_is_refused_with_a_normal_answer[b'Content-Length: 5 5'-400] _
+
+header = b'Content-Length: 5 5', status = 400
+capsys = <_pytest.capture.CaptureFixture object at 0x7fe7c7c7b680>
+
+    @pytest.mark.parametrize(("header", "status"), BAD_LENGTHS, ids=lambda v: repr(v)[:40])
+    def test_a_malformed_or_oversize_content_length_is_refused_with_a_normal_answer(
+        header, status, capsys
+    ):
+        with _served(FakeChannel(SIG)) as port:
+>           assert _raw(port, _request(NEUTRAL, header))[0] == status
+E           assert 404 == 400
+
+tests/test_q8a2_callback.py:475: AssertionError
+_ test_a_malformed_or_oversize_content_length_is_refused_with_a_normal_answer[b'Content-Length: 5,5'-400] _
+
+header = b'Content-Length: 5,5', status = 400
+capsys = <_pytest.capture.CaptureFixture object at 0x7fe7c7c7b020>
+
+    @pytest.mark.parametrize(("header", "status"), BAD_LENGTHS, ids=lambda v: repr(v)[:40])
+    def test_a_malformed_or_oversize_content_length_is_refused_with_a_normal_answer(
+        header, status, capsys
+    ):
+        with _served(FakeChannel(SIG)) as port:
+>           assert _raw(port, _request(NEUTRAL, header))[0] == status
+E           assert 404 == 400
+
+tests/test_q8a2_callback.py:475: AssertionError
+_ test_a_malformed_or_oversize_content_length_is_refused_with_a_normal_answer[b'Content-Length: 0x5'-400] _
+
+header = b'Content-Length: 0x5', status = 400
+capsys = <_pytest.capture.CaptureFixture object at 0x7fe7c7b95950>
+
+    @pytest.mark.parametrize(("header", "status"), BAD_LENGTHS, ids=lambda v: repr(v)[:40])
+    def test_a_malformed_or_oversize_content_length_is_refused_with_a_normal_answer(
+        header, status, capsys
+    ):
+        with _served(FakeChannel(SIG)) as port:
+>           assert _raw(port, _request(NEUTRAL, header))[0] == status
+E           assert 404 == 400
+
+tests/test_q8a2_callback.py:475: AssertionError
+_ test_a_malformed_or_oversize_content_length_is_refused_with_a_normal_answer[b'Content-Length: 5.0'-400] _
+
+header = b'Content-Length: 5.0', status = 400
+capsys = <_pytest.capture.CaptureFixture object at 0x7fe7c7b95550>
+
+    @pytest.mark.parametrize(("header", "status"), BAD_LENGTHS, ids=lambda v: repr(v)[:40])
+    def test_a_malformed_or_oversize_content_length_is_refused_with_a_normal_answer(
+        header, status, capsys
+    ):
+        with _served(FakeChannel(SIG)) as port:
+>           assert _raw(port, _request(NEUTRAL, header))[0] == status
+E           assert 404 == 400
+
+tests/test_q8a2_callback.py:475: AssertionError
+_ test_a_malformed_or_oversize_content_length_is_refused_with_a_normal_answer[b'Content-Length:'-400] _
+
+header = b'Content-Length:', status = 400
+capsys = <_pytest.capture.CaptureFixture object at 0x7fe7c7c668a0>
+
+    @pytest.mark.parametrize(("header", "status"), BAD_LENGTHS, ids=lambda v: repr(v)[:40])
+    def test_a_malformed_or_oversize_content_length_is_refused_with_a_normal_answer(
+        header, status, capsys
+    ):
+        with _served(FakeChannel(SIG)) as port:
+>           assert _raw(port, _request(NEUTRAL, header))[0] == status
+E           assert 404 == 400
+
+tests/test_q8a2_callback.py:475: AssertionError
+_ test_a_malformed_or_oversize_content_length_is_refused_with_a_normal_answer[b'Content-Length: \\xb2'-400] _
+
+header = b'Content-Length: \xb2', status = 400
+capsys = <_pytest.capture.CaptureFixture object at 0x7fe7c7c663f0>
+
+    @pytest.mark.parametrize(("header", "status"), BAD_LENGTHS, ids=lambda v: repr(v)[:40])
+    def test_a_malformed_or_oversize_content_length_is_refused_with_a_normal_answer(
+        header, status, capsys
+    ):
+        with _served(FakeChannel(SIG)) as port:
+>           assert _raw(port, _request(NEUTRAL, header))[0] == status
+E           assert 404 == 400
+
+tests/test_q8a2_callback.py:475: AssertionError
+_ test_a_malformed_or_oversize_content_length_is_refused_with_a_normal_answer[b'Content-Length: \\xd9\\xa5'-400] _
+
+header = b'Content-Length: \xd9\xa5', status = 400
+capsys = <_pytest.capture.CaptureFixture object at 0x7fe7c77fc910>
+
+    @pytest.mark.parametrize(("header", "status"), BAD_LENGTHS, ids=lambda v: repr(v)[:40])
+    def test_a_malformed_or_oversize_content_length_is_refused_with_a_normal_answer(
+        header, status, capsys
+    ):
+        with _served(FakeChannel(SIG)) as port:
+>           assert _raw(port, _request(NEUTRAL, header))[0] == status
+E           assert 404 == 400
+
+tests/test_q8a2_callback.py:475: AssertionError
+_ test_a_malformed_or_oversize_content_length_is_refused_with_a_normal_answer[b'Content-Length: 9\\r\\nContent-Length: 9-400] _
+
+header = b'Content-Length: 9\r\nContent-Length: 9', status = 400
+capsys = <_pytest.capture.CaptureFixture object at 0x7fe7c8262eb0>
+
+    @pytest.mark.parametrize(("header", "status"), BAD_LENGTHS, ids=lambda v: repr(v)[:40])
+    def test_a_malformed_or_oversize_content_length_is_refused_with_a_normal_answer(
+        header, status, capsys
+    ):
+        with _served(FakeChannel(SIG)) as port:
+>           assert _raw(port, _request(NEUTRAL, header))[0] == status
+E           assert 404 == 400
+
+tests/test_q8a2_callback.py:475: AssertionError
+_ test_a_malformed_or_oversize_content_length_is_refused_with_a_normal_answer[b'Content-Length: 0\\r\\nContent-Length: 9-400] _
+
+header = b'Content-Length: 0\r\nContent-Length: 9', status = 400
+capsys = <_pytest.capture.CaptureFixture object at 0x7fe7c78fda50>
+
+    @pytest.mark.parametrize(("header", "status"), BAD_LENGTHS, ids=lambda v: repr(v)[:40])
+    def test_a_malformed_or_oversize_content_length_is_refused_with_a_normal_answer(
+        header, status, capsys
+    ):
+        with _served(FakeChannel(SIG)) as port:
+>           assert _raw(port, _request(NEUTRAL, header))[0] == status
+E           assert 404 == 400
+
+tests/test_q8a2_callback.py:475: AssertionError
+____ test_the_body_length_reader_never_raises_and_accepts_only_plain_digits ____
+
+    def test_the_body_length_reader_never_raises_and_accepts_only_plain_digits():
+        read = getattr(receiver, "body_length", None)
+>       assert read is not None
+E       assert None is not None
+
+tests/test_q8a2_callback.py:483: AssertionError
+_ test_a_request_that_sends_less_than_it_announces_frees_its_thread_within_the_bound _
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7fe7c836ee10>
+
+    def test_a_request_that_sends_less_than_it_announces_frees_its_thread_within_the_bound(capsys):
+        """Content-Length 100, nine bytes sent, connection held open: the server gives up after the read bound and
+        closes without an answer (what the standard library server does for a timeout)."""
+        with _served(FakeChannel(SIG), read_timeout_s=0.5) as port:
+            status, taken = _raw(
+                port, _request(NEUTRAL, b"Content-Length: 100", body=UNSIGNED), wait_s=4
+            )
+>           assert status is None and taken < 2.5, (status, taken)
+E           AssertionError: (404, 0.004395587999169948)
+E           assert (404 is None)
+
+tests/test_q8a2_callback.py:505: AssertionError
+_ test_a_request_that_arrives_too_slowly_is_dropped_at_the_bound_however_it_is_sent[first line] _
+
+start = b'POST /chan'
+capsys = <_pytest.capture.CaptureFixture object at 0x7fe7c7611010>
+
+    @pytest.mark.parametrize(
+        "start",
+        [b"POST /chan", b"POST /channel/actions HTTP/1.1\r\nHost: x\r\nContent-Le"],
+        ids=["first line", "headers"],
+    )
+    def test_a_request_that_arrives_too_slowly_is_dropped_at_the_bound_however_it_is_sent(
+        start, capsys
+    ):
+        """The bound is for the whole request: a sender that keeps the connection alive with one byte every 0.2
+        seconds is dropped at the same moment as one that sends nothing more."""
+        with _served(FakeChannel(SIG), read_timeout_s=0.6) as port:
+            started = time.monotonic()
+            with socket.create_connection(("127.0.0.1", port), timeout=5) as conn:
+                conn.sendall(start)
+                closed = False
+                for _ in range(20):  # at most 4 seconds of dripping
+                    time.sleep(0.2)
+                    try:
+                        conn.sendall(b"a")
+                        conn.settimeout(0.01)
+                        try:
+                            closed = conn.recv(1) == b""
+                        except TimeoutError:
+                            closed = False
+                    except ConnectionError:
+                        closed = True
+                    if closed:
+                        break
+>           assert closed and time.monotonic() - started < 2.5
+E           assert (False)
+
+tests/test_q8a2_callback.py:539: AssertionError
+----------------------------- Captured stderr call -----------------------------
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 52742)
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/http/server.py", line 451, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/http/server.py", line 429, in handle_one_request
+    if not self.parse_request():
+           ~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/http/server.py", line 340, in parse_request
+    self.send_error(
+    ~~~~~~~~~~~~~~~^
+        HTTPStatus.BAD_REQUEST,
+        ^^^^^^^^^^^^^^^^^^^^^^^
+        "Bad HTTP/0.9 request type (%r)" % command)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/http/server.py", line 506, in send_error
+    self.wfile.write(body)
+    ~~~~~~~~~~~~~~~~^^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 845, in write
+    self._sock.sendall(b)
+    ~~~~~~~~~~~~~~~~~~^^^
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+_ test_a_request_that_arrives_too_slowly_is_dropped_at_the_bound_however_it_is_sent[headers] _
+
+start = b'POST /channel/actions HTTP/1.1\r\nHost: x\r\nContent-Le'
+capsys = <_pytest.capture.CaptureFixture object at 0x7fe7c785dbd0>
+
+    @pytest.mark.parametrize(
+        "start",
+        [b"POST /chan", b"POST /channel/actions HTTP/1.1\r\nHost: x\r\nContent-Le"],
+        ids=["first line", "headers"],
+    )
+    def test_a_request_that_arrives_too_slowly_is_dropped_at_the_bound_however_it_is_sent(
+        start, capsys
+    ):
+        """The bound is for the whole request: a sender that keeps the connection alive with one byte every 0.2
+        seconds is dropped at the same moment as one that sends nothing more."""
+        with _served(FakeChannel(SIG), read_timeout_s=0.6) as port:
+            started = time.monotonic()
+            with socket.create_connection(("127.0.0.1", port), timeout=5) as conn:
+                conn.sendall(start)
+                closed = False
+                for _ in range(20):  # at most 4 seconds of dripping
+                    time.sleep(0.2)
+                    try:
+                        conn.sendall(b"a")
+                        conn.settimeout(0.01)
+                        try:
+                            closed = conn.recv(1) == b""
+                        except TimeoutError:
+                            closed = False
+                    except ConnectionError:
+                        closed = True
+                    if closed:
+                        break
+>           assert closed and time.monotonic() - started < 2.5
+E           assert (False)
+
+tests/test_q8a2_callback.py:539: AssertionError
+----------------------------- Captured stderr call -----------------------------
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 43106)
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/http/server.py", line 451, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/http/server.py", line 439, in handle_one_request
+    method()
+    ~~~~~~^^
+  File "/home/user/build/EV-Q8a2f-main/src/hadavin_sdk/approvals/receiver.py", line 60, in do_POST
+    self.wfile.write(out)
+    ~~~~~~~~~~~~~~~~^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 845, in write
+    self._sock.sendall(b)
+    ~~~~~~~~~~~~~~~~~~^^^
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+_______ test_a_caller_that_leaves_before_the_answer_causes_no_traceback ________
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7fe7c785dde0>
+
+    def test_a_caller_that_leaves_before_the_answer_causes_no_traceback(capsys):
+        """Content-Length 100, nine bytes, then the caller resets the connection: the answer cannot be written."""
+        with _served(FakeChannel(SIG), read_timeout_s=3) as port:
+            for _ in range(5):
+                conn = socket.create_connection(("127.0.0.1", port), timeout=5)
+                conn.sendall(_request(NEUTRAL, b"Content-Length: 100", body=UNSIGNED))
+                time.sleep(0.05)
+                # linger 0: closing sends a reset, so the server's write fails
+                conn.setsockopt(
+                    socket.SOL_SOCKET, socket.SO_LINGER, b"\x01\x00\x00\x00\x00\x00\x00\x00"
+                )
+                conn.close()
+            time.sleep(0.3)
+>           assert _raw(port, _request(NEUTRAL, b"Content-Length: 9", body=UNSIGNED))[0] == 401
+E           assert 404 == 401
+
+tests/test_q8a2_callback.py:556: AssertionError
+_ test_a_failure_while_a_signed_click_is_recorded_is_answered_500_without_a_traceback _
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7fe7c78a8410>
+
+    def test_a_failure_while_a_signed_click_is_recorded_is_answered_500_without_a_traceback(capsys):
+        channel = FakeChannel(SIG)
+        headers, body = _signed()
+        for approvals in (_approvals(channel), _Recording(channel, RuntimeError("store is down"))):
+            with _served(channel, approvals) as port:  # `_approvals` has no store at all
+                status, _ = _raw(port, _request(_path_before_and_after(channel), *headers, body=body))
+>               assert status == 500
+E               assert None == 500
+
+tests/test_q8a2_callback.py:596: AssertionError
+----------------------------- Captured stderr call -----------------------------
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 53072)
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/http/server.py", line 451, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/http/server.py", line 439, in handle_one_request
+    method()
+    ~~~~~~^^
+  File "/home/user/build/EV-Q8a2f-main/src/hadavin_sdk/approvals/receiver.py", line 54, in do_POST
+    status, out = handle_slack_action(
+                  ~~~~~~~~~~~~~~~~~~~^
+        approvals, dict(self.headers), self.rfile.read(length)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "/home/user/build/EV-Q8a2f-main/src/hadavin_sdk/approvals/receiver.py", line 30, in handle_slack_action
+    _, reason = approvals.receive(headers, body, record_only=True)
+                ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/build/EV-Q8a2f-main/src/hadavin_sdk/approvals/requests.py", line 79, in receive
+    return self.decide(d, record_only=record_only)
+           ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/build/EV-Q8a2f-main/src/hadavin_sdk/approvals/requests.py", line 148, in decide
+    req = self.store.get_approval_request(d.approval_id)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'NoneType' object has no attribute 'get_approval_request'
+----------------------------------------
+_______ test_a_correctly_signed_click_on_a_doubled_slash_is_not_handled ________
+
+    def test_a_correctly_signed_click_on_a_doubled_slash_is_not_handled():
+        """The real change of comparing the path as written: before, a correctly SIGNED request to `//<path>` was
+        handled like one to `<path>` (the standard library had already rewritten it). Now it is answered 404 and the
+        click is never looked at."""
+        channel = FakeChannel(SIG)
+        approvals = _Recording(channel, NotFound("no such approval"))
+        path = _path_before_and_after(channel)
+        headers, body = _signed()
+        with _served(channel, approvals) as port:
+            assert _raw(port, _request(path, *headers, body=body))[0] == 200
+            assert approvals.verified == 1
+            wrong, _ = _signed("another" + "-secret")
+            assert _raw(port, _request(path, *wrong, body=body))[0] == 401
+            assert approvals.verified == 1
+>           assert _raw(port, _request("/" + path, b"Content-Length: 0"))[0] == 404
+E           assert 401 == 404
+
+tests/test_q8a2_callback.py:615: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  hadavin_sdk.receiver:receiver.py:32 channel action for an unknown approval
+_______________________ test_core_logic_names_no_vendor ________________________
+
+    def test_core_logic_names_no_vendor():
+>       assert literal_problems(SRC, VENDOR_MODULES, LITERAL_OK, WORD_IN_OK) == []
+E       assert ["hadavin_sdk...ack/actions'"] == []
+E         
+E         Left contains one more item: "hadavin_sdk.approvals.receiver:18: vendor word in a string in '/slack/actions'"
+E         Use -v to get more diff
+
+tests/test_lockin_guard.py:1175: AssertionError
+___________________ test_core_names_no_vendor_in_identifiers ___________________
+
+    def test_core_names_no_vendor_in_identifiers():
+>       assert identifier_problems(SRC, VENDOR_MODULES, IDENTIFIER_OK, TABLE_VENDOR_NAMES) == []
+E       assert ["hadavin_sdk..._ALIAS'", ...] == []
+E         
+E         Left contains 10 more items, first extra item: "hadavin_sdk.approvals.gate:102: vendor word 'slack' in the name '_SLACK'"
+E         Use -v to get more diff
+
+tests/test_lockin_guard.py:1179: AssertionError
+_______________ test_the_receiver_file_names_no_vendor_anywhere ________________
+
+    def test_the_receiver_file_names_no_vendor_anywhere():
+        """The approval receiver serves every channel kind, so it is held to more than the scans: no vendor word in
+        its code, comments or docstrings."""
+        text = (SRC / _RECEIVER).read_text(encoding="utf-8")
+>       assert [m.group(0) for m in _WHOLE_WORD.finditer(text)] == []
+E       AssertionError: assert ['slack', 'Sl... 'slack', ...] == []
+E         
+E         Left contains 9 more items, first extra item: 'slack'
+E         Use -v to get more diff
+
+tests/test_lockin_guard.py:1204: AssertionError
+_ test_each_literal_allowance_covers_exactly_its_own_hits[hadavin_sdk.approvals.gate:aws] _
+
+key = ('hadavin_sdk.approvals.gate', 'aws')
+
+    @pytest.mark.parametrize(
+        "key", sorted(_LITERAL_OK_LABELS), ids=lambda key: f"{key[0]}:{key[1][:30]}"
+    )
+    def test_each_literal_allowance_covers_exactly_its_own_hits(key):
+        rest = {k: v for k, v in LITERAL_OK.items() if k != key}
+        mod, text = key
+>       assert _without_lines(literal_problems(SRC, VENDOR_MODULES, rest, WORD_IN_OK)) == [
+            f"{mod}: {label} in {text[:50]!r}" for label in _LITERAL_OK_LABELS[key]
+        ]
+E       assert ["hadavin_sdk...ack/actions'"] == ["hadavin_sdk...ame in 'aws'"]
+E         
+E         Left contains one more item: "hadavin_sdk.approvals.receiver: vendor word in a string in '/slack/actions'"
+E         Use -v to get more diff
+
+tests/test_lockin_guard.py:2018: AssertionError
+_ test_each_literal_allowance_covers_exactly_its_own_hits[hadavin_sdk.approvals.gate:gcloud] _
+
+key = ('hadavin_sdk.approvals.gate', 'gcloud')
+
+    @pytest.mark.parametrize(
+        "key", sorted(_LITERAL_OK_LABELS), ids=lambda key: f"{key[0]}:{key[1][:30]}"
+    )
+    def test_each_literal_allowance_covers_exactly_its_own_hits(key):
+        rest = {k: v for k, v in LITERAL_OK.items() if k != key}
+        mod, text = key
+>       assert _without_lines(literal_problems(SRC, VENDOR_MODULES, rest, WORD_IN_OK)) == [
+            f"{mod}: {label} in {text[:50]!r}" for label in _LITERAL_OK_LABELS[key]
+        ]
+E       assert ["hadavin_sdk...ack/actions'"] == ["hadavin_sdk... in 'gcloud'"]
+E         
+E         Left contains one more item: "hadavin_sdk.approvals.receiver: vendor word in a string in '/slack/actions'"
+E         Use -v to get more diff
+
+tests/test_lockin_guard.py:2018: AssertionError
+_ test_each_literal_allowance_covers_exactly_its_own_hits[hadavin_sdk.approvals.gate:s3] _
+
+key = ('hadavin_sdk.approvals.gate', 's3')
+
+    @pytest.mark.parametrize(
+        "key", sorted(_LITERAL_OK_LABELS), ids=lambda key: f"{key[0]}:{key[1][:30]}"
+    )
+    def test_each_literal_allowance_covers_exactly_its_own_hits(key):
+        rest = {k: v for k, v in LITERAL_OK.items() if k != key}
+        mod, text = key
+>       assert _without_lines(literal_problems(SRC, VENDOR_MODULES, rest, WORD_IN_OK)) == [
+            f"{mod}: {label} in {text[:50]!r}" for label in _LITERAL_OK_LABELS[key]
+        ]
+E       assert ["hadavin_sdk...ack/actions'"] == ["hadavin_sdk...name in 's3'"]
+E         
+E         Left contains one more item: "hadavin_sdk.approvals.receiver: vendor word in a string in '/slack/actions'"
+E         Use -v to get more diff
+
+tests/test_lockin_guard.py:2018: AssertionError
+_ test_each_literal_allowance_covers_exactly_its_own_hits[hadavin_sdk.backends.table:gcs_retention_lock] _
+
+key = ('hadavin_sdk.backends.table', 'gcs_retention_lock')
+
+    @pytest.mark.parametrize(
+        "key", sorted(_LITERAL_OK_LABELS), ids=lambda key: f"{key[0]}:{key[1][:30]}"
+    )
+    def test_each_literal_allowance_covers_exactly_its_own_hits(key):
+        rest = {k: v for k, v in LITERAL_OK.items() if k != key}
+        mod, text = key
+>       assert _without_lines(literal_problems(SRC, VENDOR_MODULES, rest, WORD_IN_OK)) == [
+            f"{mod}: {label} in {text[:50]!r}" for label in _LITERAL_OK_LABELS[key]
+        ]
+E       assert ["hadavin_sdk...ention_lock'"] == ["hadavin_sdk...ention_lock'"]
+E         
+E         At index 0 diff: "hadavin_sdk.approvals.receiver: vendor word in a string in '/slack/actions'" != "hadavin_sdk.backends.table: vendor word in a string in 'gcs_retention_lock'"
+E         Left contains one more item: "hadavin_sdk.backends.table: vendor word in a string in 'gcs_retention_lock'"
+E         Use -v to get more diff
+
+tests/test_lockin_guard.py:2018: AssertionError
+_ test_each_literal_allowance_covers_exactly_its_own_hits[hadavin_sdk.backends.table:iam_auth needs region (and pip] _
+
+key = ('hadavin_sdk.backends.table', 'iam_auth needs region (and pip install hadavin-sdk[aws])')
+
+    @pytest.mark.parametrize(
+        "key", sorted(_LITERAL_OK_LABELS), ids=lambda key: f"{key[0]}:{key[1][:30]}"
+    )
+    def test_each_literal_allowance_covers_exactly_its_own_hits(key):
+        rest = {k: v for k, v in LITERAL_OK.items() if k != key}
+        mod, text = key
+>       assert _without_lines(literal_problems(SRC, VENDOR_MODULES, rest, WORD_IN_OK)) == [
+            f"{mod}: {label} in {text[:50]!r}" for label in _LITERAL_OK_LABELS[key]
+        ]
+E       assert ["hadavin_sdk...hadavin-sdk'"] == ["hadavin_sdk...hadavin-sdk'"]
+E         
+E         At index 0 diff: "hadavin_sdk.approvals.receiver: vendor word in a string in '/slack/actions'" != "hadavin_sdk.backends.table: vendor word in a string in 'iam_auth needs region (and pip install hadavin-sdk'"
+E         Left contains one more item: "hadavin_sdk.backends.table: vendor word in a string in 'iam_auth needs region (and pip install hadavin-sdk'"
+E         Use -v to get more diff
+
+tests/test_lockin_guard.py:2018: AssertionError
+_ test_each_literal_allowance_covers_exactly_its_own_hits[hadavin_sdk.config:backends.<capability>.region o] _
+
+key = ('hadavin_sdk.config', 'backends.<capability>.region on each AWS kind')
+
+    @pytest.mark.parametrize(
+        "key", sorted(_LITERAL_OK_LABELS), ids=lambda key: f"{key[0]}:{key[1][:30]}"
+    )
+    def test_each_literal_allowance_covers_exactly_its_own_hits(key):
+        rest = {k: v for k, v in LITERAL_OK.items() if k != key}
+        mod, text = key
+>       assert _without_lines(literal_problems(SRC, VENDOR_MODULES, rest, WORD_IN_OK)) == [
+            f"{mod}: {label} in {text[:50]!r}" for label in _LITERAL_OK_LABELS[key]
+        ]
+E       assert ["hadavin_sdk...ch AWS kind'"] == ["hadavin_sdk...ch AWS kind'"]
+E         
+E         At index 0 diff: "hadavin_sdk.approvals.receiver: vendor word in a string in '/slack/actions'" != "hadavin_sdk.config: vendor word in a string in 'backends.<capability>.region on each AWS kind'"
+E         Left contains one more item: "hadavin_sdk.config: vendor word in a string in 'backends.<capability>.region on each AWS kind'"
+E         Use -v to get more diff
+
+tests/test_lockin_guard.py:2018: AssertionError
+_ test_each_literal_allowance_covers_exactly_its_own_hits[hadavin_sdk.config:backends.channel: {kind: slack] _
+
+key = ('hadavin_sdk.config', 'backends.channel: {kind: slack, channel_id, signing_secret_name, bot_token_secret_name}')
+
+    @pytest.mark.parametrize(
+        "key", sorted(_LITERAL_OK_LABELS), ids=lambda key: f"{key[0]}:{key[1][:30]}"
+    )
+    def test_each_literal_allowance_covers_exactly_its_own_hits(key):
+        rest = {k: v for k, v in LITERAL_OK.items() if k != key}
+        mod, text = key
+>       assert _without_lines(literal_problems(SRC, VENDOR_MODULES, rest, WORD_IN_OK)) == [
+            f"{mod}: {label} in {text[:50]!r}" for label in _LITERAL_OK_LABELS[key]
+        ]
+E       assert ["hadavin_sdk..._id, signin'"] == ["hadavin_sdk..._id, signin'"]
+E         
+E         At index 0 diff: "hadavin_sdk.approvals.receiver: vendor word in a string in '/slack/actions'" != "hadavin_sdk.config: vendor word in a string in 'backends.channel: {kind: slack, channel_id, signin'"
+E         Left contains one more item: "hadavin_sdk.config: vendor word in a string in 'backends.channel: {kind: slack, channel_id, signin'"
+E         Use -v to get more diff
+
+tests/test_lockin_guard.py:2018: AssertionError
+_ test_each_literal_allowance_covers_exactly_its_own_hits[hadavin_sdk.config:slack] _
+
+key = ('hadavin_sdk.config', 'slack')
+
+    @pytest.mark.parametrize(
+        "key", sorted(_LITERAL_OK_LABELS), ids=lambda key: f"{key[0]}:{key[1][:30]}"
+    )
+    def test_each_literal_allowance_covers_exactly_its_own_hits(key):
+        rest = {k: v for k, v in LITERAL_OK.items() if k != key}
+        mod, text = key
+>       assert _without_lines(literal_problems(SRC, VENDOR_MODULES, rest, WORD_IN_OK)) == [
+            f"{mod}: {label} in {text[:50]!r}" for label in _LITERAL_OK_LABELS[key]
+        ]
+E       assert ["hadavin_sdk...e in 'slack'"] == ["hadavin_sdk...e in 'slack'"]
+E         
+E         At index 0 diff: "hadavin_sdk.approvals.receiver: vendor word in a string in '/slack/actions'" != "hadavin_sdk.config: bare vendor name in 'slack'"
+E         Left contains one more item: "hadavin_sdk.config: bare vendor name in 'slack'"
+E         Use -v to get more diff
+
+tests/test_lockin_guard.py:2018: AssertionError
+_ test_each_literal_allowance_covers_exactly_its_own_hits[hadavin_sdk.guard.producers:guard/bedrock_guardrail.py] _
+
+key = ('hadavin_sdk.guard.producers', 'guard/bedrock_guardrail.py')
+
+    @pytest.mark.parametrize(
+        "key", sorted(_LITERAL_OK_LABELS), ids=lambda key: f"{key[0]}:{key[1][:30]}"
+    )
+    def test_each_literal_allowance_covers_exactly_its_own_hits(key):
+        rest = {k: v for k, v in LITERAL_OK.items() if k != key}
+        mod, text = key
+>       assert _without_lines(literal_problems(SRC, VENDOR_MODULES, rest, WORD_IN_OK)) == [
+            f"{mod}: {label} in {text[:50]!r}" for label in _LITERAL_OK_LABELS[key]
+        ]
+E       assert ["hadavin_sdk...uardrail.py'"] == ["hadavin_sdk...uardrail.py'"]
+E         
+E         At index 0 diff: "hadavin_sdk.approvals.receiver: vendor word in a string in '/slack/actions'" != "hadavin_sdk.guard.producers: vendor word in a string in 'guard/bedrock_guardrail.py'"
+E         Left contains one more item: "hadavin_sdk.guard.producers: vendor word in a string in 'guard/bedrock_guardrail.py'"
+E         Use -v to get more diff
+
+tests/test_lockin_guard.py:2018: AssertionError
+_ test_each_literal_allowance_covers_exactly_its_own_hits[hadavin_sdk.llm.openai_compat:^(?:gpt-[\\w.-]+|o\\d[\\w.-]*|cha] _
+
+key = ('hadavin_sdk.llm.openai_compat', '^(?:gpt-[\\w.-]+|o\\d[\\w.-]*|chatgpt-[\\w.-]+)$')
+
+    @pytest.mark.parametrize(
+        "key", sorted(_LITERAL_OK_LABELS), ids=lambda key: f"{key[0]}:{key[1][:30]}"
+    )
+    def test_each_literal_allowance_covers_exactly_its_own_hits(key):
+        rest = {k: v for k, v in LITERAL_OK.items() if k != key}
+        mod, text = key
+>       assert _without_lines(literal_problems(SRC, VENDOR_MODULES, rest, WORD_IN_OK)) == [
+            f"{mod}: {label} in {text[:50]!r}" for label in _LITERAL_OK_LABELS[key]
+        ]
+E       assert ["hadavin_sdk...\\\\w.-]+)$'"] == ["hadavin_sdk...\\\\w.-]+)$'"]
+E         
+E         At index 0 diff: "hadavin_sdk.approvals.receiver: vendor word in a string in '/slack/actions'" != "hadavin_sdk.llm.openai_compat: model id in '^(?:gpt-[\\\\w.-]+|o\\\\d[\\\\w.-]*|chatgpt-[\\\\w.-]+)$'"
+E         Left contains one more item: "hadavin_sdk.llm.openai_compat: model id in '^(?:gpt-[\\\\w.-]+|o\\\\d[\\\\w.-]*|chatgpt-[\\\\w.-]+)$'"
+E         Use -v to get more diff
+
+tests/test_lockin_guard.py:2018: AssertionError
+_ test_each_literal_allowance_covers_exactly_its_own_hits[hadavin_sdk.llm.openai_compat:openai_compat] _
+
+key = ('hadavin_sdk.llm.openai_compat', 'openai_compat')
+
+    @pytest.mark.parametrize(
+        "key", sorted(_LITERAL_OK_LABELS), ids=lambda key: f"{key[0]}:{key[1][:30]}"
+    )
+    def test_each_literal_allowance_covers_exactly_its_own_hits(key):
+        rest = {k: v for k, v in LITERAL_OK.items() if k != key}
+        mod, text = key
+>       assert _without_lines(literal_problems(SRC, VENDOR_MODULES, rest, WORD_IN_OK)) == [
+            f"{mod}: {label} in {text[:50]!r}" for label in _LITERAL_OK_LABELS[key]
+        ]
+E       assert ["hadavin_sdk...enai_compat'"] == ["hadavin_sdk...enai_compat'"]
+E         
+E         At index 0 diff: "hadavin_sdk.approvals.receiver: vendor word in a string in '/slack/actions'" != "hadavin_sdk.llm.openai_compat: vendor word in a string in 'openai_compat'"
+E         Left contains one more item: "hadavin_sdk.llm.openai_compat: vendor word in a string in 'openai_compat'"
+E         Use -v to get more diff
+
+tests/test_lockin_guard.py:2018: AssertionError
+_ test_each_literal_allowance_covers_exactly_its_own_hits[hadavin_sdk.store.postgres:store postgres with iam_auth n] _
+
+key = ('hadavin_sdk.store.postgres', 'store postgres with iam_auth needs: pip install hadavin-sdk[aws]')
+
+    @pytest.mark.parametrize(
+        "key", sorted(_LITERAL_OK_LABELS), ids=lambda key: f"{key[0]}:{key[1][:30]}"
+    )
+    def test_each_literal_allowance_covers_exactly_its_own_hits(key):
+        rest = {k: v for k, v in LITERAL_OK.items() if k != key}
+        mod, text = key
+>       assert _without_lines(literal_problems(SRC, VENDOR_MODULES, rest, WORD_IN_OK)) == [
+            f"{mod}: {label} in {text[:50]!r}" for label in _LITERAL_OK_LABELS[key]
+        ]
+E       assert ["hadavin_sdk... install ha'"] == ["hadavin_sdk... install ha'"]
+E         
+E         At index 0 diff: "hadavin_sdk.approvals.receiver: vendor word in a string in '/slack/actions'" != "hadavin_sdk.store.postgres: vendor word in a string in 'store postgres with iam_auth needs: pip install ha'"
+E         Left contains one more item: "hadavin_sdk.store.postgres: vendor word in a string in 'store postgres with iam_auth needs: pip install ha'"
+E         Use -v to get more diff
+
+tests/test_lockin_guard.py:2018: AssertionError
+_ test_each_literal_allowance_covers_exactly_its_own_hits[hadavin_sdk.tools:.metadata.google.internal] _
+
+key = ('hadavin_sdk.tools', '.metadata.google.internal')
+
+    @pytest.mark.parametrize(
+        "key", sorted(_LITERAL_OK_LABELS), ids=lambda key: f"{key[0]}:{key[1][:30]}"
+    )
+    def test_each_literal_allowance_covers_exactly_its_own_hits(key):
+        rest = {k: v for k, v in LITERAL_OK.items() if k != key}
+        mod, text = key
+>       assert _without_lines(literal_problems(SRC, VENDOR_MODULES, rest, WORD_IN_OK)) == [
+            f"{mod}: {label} in {text[:50]!r}" for label in _LITERAL_OK_LABELS[key]
+        ]
+E       assert ["hadavin_sdk...le.internal'"] == ["hadavin_sdk...le.internal'"]
+E         
+E         At index 0 diff: "hadavin_sdk.approvals.receiver: vendor word in a string in '/slack/actions'" != "hadavin_sdk.tools: vendor word in a string in '.metadata.google.internal'"
+E         Left contains one more item: "hadavin_sdk.tools: vendor word in a string in '.metadata.google.internal'"
+E         Use -v to get more diff
+
+tests/test_lockin_guard.py:2018: AssertionError
+_ test_each_literal_allowance_covers_exactly_its_own_hits[hadavin_sdk.tools:metadata.google.internal] _
+
+key = ('hadavin_sdk.tools', 'metadata.google.internal')
+
+    @pytest.mark.parametrize(
+        "key", sorted(_LITERAL_OK_LABELS), ids=lambda key: f"{key[0]}:{key[1][:30]}"
+    )
+    def test_each_literal_allowance_covers_exactly_its_own_hits(key):
+        rest = {k: v for k, v in LITERAL_OK.items() if k != key}
+        mod, text = key
+>       assert _without_lines(literal_problems(SRC, VENDOR_MODULES, rest, WORD_IN_OK)) == [
+            f"{mod}: {label} in {text[:50]!r}" for label in _LITERAL_OK_LABELS[key]
+        ]
+E       assert ["hadavin_sdk...le.internal'"] == ["hadavin_sdk...le.internal'"]
+E         
+E         At index 0 diff: "hadavin_sdk.approvals.receiver: vendor word in a string in '/slack/actions'" != "hadavin_sdk.tools: vendor word in a string in 'metadata.google.internal'"
+E         Left contains one more item: "hadavin_sdk.tools: vendor word in a string in 'metadata.google.internal'"
+E         Use -v to get more diff
+
+tests/test_lockin_guard.py:2018: AssertionError
+_ test_each_word_allowance_covers_exactly_its_own_hits[hadavin_sdk.approvals.gate:_URL:slack] _
+
+key = ('hadavin_sdk.approvals.gate', '_URL', 'slack')
+
+    @pytest.mark.parametrize("key", sorted(_WORD_IN_OK_LINES), ids=":".join)
+    def test_each_word_allowance_covers_exactly_its_own_hits(key):
+        """Without the entry the scan reports the strings of that one assignment that hold the word, and nothing
+        else: no other module, no other assignment, no stale line for a neighbouring entry."""
+        rest = {k: v for k, v in WORD_IN_OK.items() if k != key}
+        mod, name, _ = key
+        found = literal_problems(SRC, VENDOR_MODULES, LITERAL_OK, rest)
+>       assert len(found) == _WORD_IN_OK_LINES[key], found
+E       AssertionError: ["hadavin_sdk.approvals.gate:89: vendor word in a string in '(?:\\\\b[a-z][a-z0-9+.\\\\-]{0,30}://|(?<![\\\\w:])://[\\\\w-]'", "hadavin_sdk.approvals.receiver:18: vendor word in a string in '/slack/actions'"]
+E       assert 2 == 1
+E        +  where 2 = len(["hadavin_sdk.approvals.gate:89: vendor word in a string in '(?:\\\\b[a-z][a-z0-9+.\\\\-]{0,30}://|(?<![\\\\w:])://[\\\\w-]'", "hadavin_sdk.approvals.receiver:18: vendor word in a string in '/slack/actions'"])
+
+tests/test_lockin_guard.py:2030: AssertionError
+_ test_each_word_allowance_covers_exactly_its_own_hits[hadavin_sdk.approvals.gate:_URL:teams] _
+
+key = ('hadavin_sdk.approvals.gate', '_URL', 'teams')
+
+    @pytest.mark.parametrize("key", sorted(_WORD_IN_OK_LINES), ids=":".join)
+    def test_each_word_allowance_covers_exactly_its_own_hits(key):
+        """Without the entry the scan reports the strings of that one assignment that hold the word, and nothing
+        else: no other module, no other assignment, no stale line for a neighbouring entry."""
+        rest = {k: v for k, v in WORD_IN_OK.items() if k != key}
+        mod, name, _ = key
+        found = literal_problems(SRC, VENDOR_MODULES, LITERAL_OK, rest)
+>       assert len(found) == _WORD_IN_OK_LINES[key], found
+E       AssertionError: ["hadavin_sdk.approvals.gate:89: vendor word in a string in '(?:\\\\b[a-z][a-z0-9+.\\\\-]{0,30}://|(?<![\\\\w:])://[\\\\w-]'", "hadavin_sdk.approvals.receiver:18: vendor word in a string in '/slack/actions'"]
+E       assert 2 == 1
+E        +  where 2 = len(["hadavin_sdk.approvals.gate:89: vendor word in a string in '(?:\\\\b[a-z][a-z0-9+.\\\\-]{0,30}://|(?<![\\\\w:])://[\\\\w-]'", "hadavin_sdk.approvals.receiver:18: vendor word in a string in '/slack/actions'"])
+
+tests/test_lockin_guard.py:2030: AssertionError
+_ test_each_word_allowance_covers_exactly_its_own_hits[hadavin_sdk.approvals.gate:_WRITE_SHAPES:s3] _
+
+key = ('hadavin_sdk.approvals.gate', '_WRITE_SHAPES', 's3')
+
+    @pytest.mark.parametrize("key", sorted(_WORD_IN_OK_LINES), ids=":".join)
+    def test_each_word_allowance_covers_exactly_its_own_hits(key):
+        """Without the entry the scan reports the strings of that one assignment that hold the word, and nothing
+        else: no other module, no other assignment, no stale line for a neighbouring entry."""
+        rest = {k: v for k, v in WORD_IN_OK.items() if k != key}
+        mod, name, _ = key
+        found = literal_problems(SRC, VENDOR_MODULES, LITERAL_OK, rest)
+>       assert len(found) == _WORD_IN_OK_LINES[key], found
+E       AssertionError: ["hadavin_sdk.approvals.gate:648: vendor word in a string in '\\\\bpg_(?:cancel|terminate)_backend\\\\s*\\\\(|\\\\bALT...Z][A-Z, ]{0,80}\\\\bON\\\\b|\\\\b('", "hadavin_sdk.approvals.receiver:18: vendor word in a string in '/slack/actions'"]
+E       assert 3 == 2
+E        +  where 3 = len(["hadavin_sdk.approvals.gate:648: vendor word in a string in '\\\\bpg_(?:cancel|terminate)_backend\\\\s*\\\\(|\\\\bALT...Z][A-Z, ]{0,80}\\\\bON\\\\b|\\\\b('", "hadavin_sdk.approvals.receiver:18: vendor word in a string in '/slack/actions'"])
+
+tests/test_lockin_guard.py:2030: AssertionError
+_ test_each_word_allowance_covers_exactly_its_own_hits[hadavin_sdk.guard.runmap:_GRAMMAR:aws] _
+
+key = ('hadavin_sdk.guard.runmap', '_GRAMMAR', 'aws')
+
+    @pytest.mark.parametrize("key", sorted(_WORD_IN_OK_LINES), ids=":".join)
+    def test_each_word_allowance_covers_exactly_its_own_hits(key):
+        """Without the entry the scan reports the strings of that one assignment that hold the word, and nothing
+        else: no other module, no other assignment, no stale line for a neighbouring entry."""
+        rest = {k: v for k, v in WORD_IN_OK.items() if k != key}
+        mod, name, _ = key
+        found = literal_problems(SRC, VENDOR_MODULES, LITERAL_OK, rest)
+>       assert len(found) == _WORD_IN_OK_LINES[key], found
+E       AssertionError: ["hadavin_sdk.approvals.receiver:18: vendor word in a string in '/slack/actions'", "hadavin_sdk.guard.runmap:215: vend...adavin_sdk.guard.runmap:215: vendor word in a string in 'arn:aws[a-z\\\\-]*:[a-z0-9\\\\-]*:[a-z0-9\\\\-]*:(?:[0-9]{1'"]
+E       assert 4 == 3
+E        +  where 4 = len(["hadavin_sdk.approvals.receiver:18: vendor word in a string in '/slack/actions'", "hadavin_sdk.guard.runmap:215: vend...adavin_sdk.guard.runmap:215: vendor word in a string in 'arn:aws[a-z\\\\-]*:[a-z0-9\\\\-]*:[a-z0-9\\\\-]*:(?:[0-9]{1'"])
+
+tests/test_lockin_guard.py:2030: AssertionError
+__________ test_each_name_allowance_covers_exactly_its_own_hit[key0] ___________
+
+key = ('hadavin_sdk.approvals.gate', '_AWS_READ_PREFIXES')
+
+    @pytest.mark.parametrize("key", sorted(_IDENTIFIER_OK_WORDS))
+    def test_each_name_allowance_covers_exactly_its_own_hit(key):
+        rest = {k: v for k, v in IDENTIFIER_OK.items() if k != key}
+        mod, name = key[0], key[1].removeprefix(MODULE_NAME_KEY).rpartition(".")[2]
+        found = identifier_problems(SRC, VENDOR_MODULES, rest, TABLE_VENDOR_NAMES)
+        word, places = _IDENTIFIER_OK_WORDS[key]
+        # one line for each line of the module on which the name is bound or read
+>       assert _without_lines(found) == [f"{mod}: vendor word {word!r} in the name {name!r}"] * places
+E       assert ["hadavin_sdk...action'", ...] == ["hadavin_sdk...AD_PREFIXES'"]
+E         
+E         At index 0 diff: "hadavin_sdk.approvals.gate: vendor word 'slack' in the name '_SLACK'" != "hadavin_sdk.approvals.gate: vendor word 'aws' in the name '_AWS_READ_PREFIXES'"
+E         Left contains 10 more items, first extra item: "hadavin_sdk.approvals.gate: vendor word 'aws' in the name '_AWS_READ_PREFIXES'"
+E         Use -v to get more diff
+
+tests/test_lockin_guard.py:2052: AssertionError
+__________ test_each_name_allowance_covers_exactly_its_own_hit[key1] ___________
+
+key = ('hadavin_sdk.backends.table', 'GcsRetentionLockSettings')
+
+    @pytest.mark.parametrize("key", sorted(_IDENTIFIER_OK_WORDS))
+    def test_each_name_allowance_covers_exactly_its_own_hit(key):
+        rest = {k: v for k, v in IDENTIFIER_OK.items() if k != key}
+        mod, name = key[0], key[1].removeprefix(MODULE_NAME_KEY).rpartition(".")[2]
+        found = identifier_problems(SRC, VENDOR_MODULES, rest, TABLE_VENDOR_NAMES)
+        word, places = _IDENTIFIER_OK_WORDS[key]
+        # one line for each line of the module on which the name is bound or read
+>       assert _without_lines(found) == [f"{mod}: vendor word {word!r} in the name {name!r}"] * places
+E       assert ["hadavin_sdk...ttings'", ...] == ["hadavin_sdk...ockSettings'"]
+E         
+E         At index 0 diff: "hadavin_sdk.approvals.gate: vendor word 'slack' in the name '_SLACK'" != "hadavin_sdk.backends.table: vendor word 'gcs' in the name 'GcsRetentionLockSettings'"
+E         Left contains 10 more items, first extra item: "hadavin_sdk.approvals.receiver: vendor word 'slack' in the name 'handle_slack_action'"
+E         Use -v to get more diff
+
+tests/test_lockin_guard.py:2052: AssertionError
+__________ test_each_name_allowance_covers_exactly_its_own_hit[key2] ___________
+
+key = ('hadavin_sdk.backends.table', 'OpenAICompatSettings')
+
+    @pytest.mark.parametrize("key", sorted(_IDENTIFIER_OK_WORDS))
+    def test_each_name_allowance_covers_exactly_its_own_hit(key):
+        rest = {k: v for k, v in IDENTIFIER_OK.items() if k != key}
+        mod, name = key[0], key[1].removeprefix(MODULE_NAME_KEY).rpartition(".")[2]
+        found = identifier_problems(SRC, VENDOR_MODULES, rest, TABLE_VENDOR_NAMES)
+        word, places = _IDENTIFIER_OK_WORDS[key]
+        # one line for each line of the module on which the name is bound or read
+>       assert _without_lines(found) == [f"{mod}: vendor word {word!r} in the name {name!r}"] * places
+E       assert ["hadavin_sdk...ttings'", ...] == ["hadavin_sdk...patSettings'"]
+E         
+E         At index 0 diff: "hadavin_sdk.approvals.gate: vendor word 'slack' in the name '_SLACK'" != "hadavin_sdk.backends.table: vendor word 'openai' in the name 'OpenAICompatSettings'"
+E         Left contains 10 more items, first extra item: "hadavin_sdk.approvals.receiver: vendor word 'slack' in the name 'handle_slack_action'"
+E         Use -v to get more diff
+
+tests/test_lockin_guard.py:2052: AssertionError
+__________ test_each_name_allowance_covers_exactly_its_own_hit[key3] ___________
+
+key = ('hadavin_sdk.llm.openai_compat', 'OpenAICompatLLM')
+
+    @pytest.mark.parametrize("key", sorted(_IDENTIFIER_OK_WORDS))
+    def test_each_name_allowance_covers_exactly_its_own_hit(key):
+        rest = {k: v for k, v in IDENTIFIER_OK.items() if k != key}
+        mod, name = key[0], key[1].removeprefix(MODULE_NAME_KEY).rpartition(".")[2]
+        found = identifier_problems(SRC, VENDOR_MODULES, rest, TABLE_VENDOR_NAMES)
+        word, places = _IDENTIFIER_OK_WORDS[key]
+        # one line for each line of the module on which the name is bound or read
+>       assert _without_lines(found) == [f"{mod}: vendor word {word!r} in the name {name!r}"] * places
+E       assert ["hadavin_sdk..._ALIAS'", ...] == ["hadavin_sdk...AICompatLLM'"]
+E         
+E         At index 0 diff: "hadavin_sdk.approvals.gate: vendor word 'slack' in the name '_SLACK'" != "hadavin_sdk.llm.openai_compat: vendor word 'openai' in the name 'OpenAICompatLLM'"
+E         Left contains 10 more items, first extra item: "hadavin_sdk.approvals.receiver: vendor word 'slack' in the name 'handle_slack_action'"
+E         Use -v to get more diff
+
+tests/test_lockin_guard.py:2052: AssertionError
+__________ test_each_name_allowance_covers_exactly_its_own_hit[key4] ___________
+
+key = ('hadavin_sdk.llm.openai_compat', 'module:llm.openai_compat')
+
+    @pytest.mark.parametrize("key", sorted(_IDENTIFIER_OK_WORDS))
+    def test_each_name_allowance_covers_exactly_its_own_hit(key):
+        rest = {k: v for k, v in IDENTIFIER_OK.items() if k != key}
+        mod, name = key[0], key[1].removeprefix(MODULE_NAME_KEY).rpartition(".")[2]
+        found = identifier_problems(SRC, VENDOR_MODULES, rest, TABLE_VENDOR_NAMES)
+        word, places = _IDENTIFIER_OK_WORDS[key]
+        # one line for each line of the module on which the name is bound or read
+>       assert _without_lines(found) == [f"{mod}: vendor word {word!r} in the name {name!r}"] * places
+E       assert ["hadavin_sdk...compat'", ...] == ["hadavin_sdk...enai_compat'"]
+E         
+E         At index 0 diff: "hadavin_sdk.approvals.gate: vendor word 'slack' in the name '_SLACK'" != "hadavin_sdk.llm.openai_compat: vendor word 'openai' in the name 'openai_compat'"
+E         Left contains 10 more items, first extra item: "hadavin_sdk.approvals.gate: vendor word 'slack' in the name '_SLACK'"
+E         Use -v to get more diff
+
+tests/test_lockin_guard.py:2052: AssertionError
+__________ test_each_name_allowance_covers_exactly_its_own_hit[key5] ___________
+
+key = ('hadavin_sdk.store.postgres', 'auth_aws')
+
+    @pytest.mark.parametrize("key", sorted(_IDENTIFIER_OK_WORDS))
+    def test_each_name_allowance_covers_exactly_its_own_hit(key):
+        rest = {k: v for k, v in IDENTIFIER_OK.items() if k != key}
+        mod, name = key[0], key[1].removeprefix(MODULE_NAME_KEY).rpartition(".")[2]
+        found = identifier_problems(SRC, VENDOR_MODULES, rest, TABLE_VENDOR_NAMES)
+        word, places = _IDENTIFIER_OK_WORDS[key]
+        # one line for each line of the module on which the name is bound or read
+>       assert _without_lines(found) == [f"{mod}: vendor word {word!r} in the name {name!r}"] * places
+E       assert ["hadavin_sdk..._ALIAS'", ...] == ["hadavin_sdk...e 'auth_aws'"]
+E         
+E         At index 0 diff: "hadavin_sdk.approvals.gate: vendor word 'slack' in the name '_SLACK'" != "hadavin_sdk.store.postgres: vendor word 'aws' in the name 'auth_aws'"
+E         Left contains 10 more items, first extra item: "hadavin_sdk.approvals.receiver: vendor word 'slack' in the name 'handle_slack_action'"
+E         Use -v to get more diff
+
+tests/test_lockin_guard.py:2052: AssertionError
+_ test_removing_one_name_from_the_pinned_table_set_reports_that_name_and_what_is_inside_it _
+
+    def test_removing_one_name_from_the_pinned_table_set_reports_that_name_and_what_is_inside_it():
+        """Exactly: every reported line is in the kind table, and it either names the removed thing (where it is
+        defined and where the table reads it) or stands inside its definition."""
+        tree = ast.parse((SRC / PKG / "backends" / "table.py").read_text(encoding="utf-8"))
+        tops = {top.name: top for top in tree.body if isinstance(top, ast.ClassDef | ast.FunctionDef)}
+        for name in sorted(TABLE_VENDOR_NAMES):
+            found = identifier_problems(SRC, VENDOR_MODULES, IDENTIFIER_OK, TABLE_VENDOR_NAMES - {name})
+            inside = range(tops[name].lineno, tops[name].end_lineno + 1)
+            assert any(
+                f"{_TABLE_MODULE}:{tops[name].lineno}: " in f and f"name {name!r}" in f for f in found
+            )
+            for line in found:
+                m = re.fullmatch(
+                    rf"{re.escape(_TABLE_MODULE)}:(\d+): vendor word '\w+' in the name '(\w+)'", line
+                )
+>               assert m and (m.group(2) == name or int(m.group(1)) in inside), (name, line)
+E               AssertionError: ('AnthropicSettings', "hadavin_sdk.approvals.gate:102: vendor word 'slack' in the name '_SLACK'")
+E               assert (None)
+
+tests/test_lockin_guard.py:2070: AssertionError
+______ test_a_vendor_path_or_name_planted_in_the_real_receiver_is_caught _______
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-2537/test_a_vendor_path_or_name_pla0')
+
+    def test_a_vendor_path_or_name_planted_in_the_real_receiver_is_caught(tmp_path):
+        """A copy of the real tree with one vendor path and one vendor name appended to the receiver: each scan
+        reports its line. The real tree is never written."""
+        shutil.copytree(SRC / PKG, tmp_path / PKG, ignore=shutil.ignore_patterns("__pycache__"))
+>       assert literal_problems(tmp_path, VENDOR_MODULES, LITERAL_OK, WORD_IN_OK) == []
+E       assert ["hadavin_sdk...ack/actions'"] == []
+E         
+E         Left contains one more item: "hadavin_sdk.approvals.receiver:18: vendor word in a string in '/slack/actions'"
+E         Use -v to get more diff
+
+tests/test_lockin_guard.py:2077: AssertionError
+__________________ test_channel_names_its_callback_path[fake] __________________
+
+channel_factory = <function channel_factory.<locals>.<lambda> at 0x7fe7c41d62a0>
+
+    def test_channel_names_its_callback_path(channel_factory):
+        """Every channel kind names the one URL path the receiver answers for it (no fallback path exists)."""
+        from hadavin_sdk.approvals import channel as channel_module
+    
+        # grammar and length, as the receiver checks
+        valid = getattr(channel_module, "valid_callback_path", None)
+>       assert valid is not None
+E       assert None is not None
+
+tests/contracts/test_capabilities.py:160: AssertionError
+_________________ test_channel_names_its_callback_path[slack] __________________
+
+channel_factory = <function channel_factory.<locals>.<lambda> at 0x7fe7c41d6ac0>
+
+    def test_channel_names_its_callback_path(channel_factory):
+        """Every channel kind names the one URL path the receiver answers for it (no fallback path exists)."""
+        from hadavin_sdk.approvals import channel as channel_module
+    
+        # grammar and length, as the receiver checks
+        valid = getattr(channel_module, "valid_callback_path", None)
+>       assert valid is not None
+E       assert None is not None
+
+tests/contracts/test_capabilities.py:160: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_q8a2_callback.py::test_the_fake_kind_is_served_on_the_neutral_path
+FAILED tests/test_q8a2_callback.py::test_the_fake_kind_does_not_answer_the_vendor_path
+FAILED tests/test_q8a2_callback.py::test_a_future_kind_is_served_on_its_own_path_only
+FAILED tests/test_q8a2_callback.py::test_serve_refuses_a_malformed_callback_path[None]
+FAILED tests/test_q8a2_callback.py::test_serve_refuses_a_malformed_callback_path['']
+FAILED tests/test_q8a2_callback.py::test_serve_refuses_a_malformed_callback_path['slack/actions']
+FAILED tests/test_q8a2_callback.py::test_serve_refuses_a_malformed_callback_path['/a b']
+FAILED tests/test_q8a2_callback.py::test_serve_refuses_a_malformed_callback_path['/a?x']
+FAILED tests/test_q8a2_callback.py::test_serve_refuses_a_malformed_callback_path['/a/../b']
+FAILED tests/test_q8a2_callback.py::test_serve_refuses_a_malformed_callback_path['/']
+FAILED tests/test_q8a2_callback.py::test_serve_refuses_a_malformed_callback_path['/a//b']
+FAILED tests/test_q8a2_callback.py::test_serve_refuses_a_malformed_callback_path['/A']
+FAILED tests/test_q8a2_callback.py::test_serve_refuses_a_malformed_callback_path['/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa']
+FAILED tests/test_q8a2_callback.py::test_serve_refuses_a_malformed_callback_path[5]
+FAILED tests/test_q8a2_callback.py::test_serve_refuses_a_malformed_callback_path['/a\\n']
+FAILED tests/test_q8a2_callback.py::test_serve_refuses_a_malformed_callback_path['/a/']
+FAILED tests/test_q8a2_callback.py::test_serve_refuses_a_malformed_callback_path['/-a']
+FAILED tests/test_q8a2_callback.py::test_serve_refuses_a_malformed_callback_path['/a-']
+FAILED tests/test_q8a2_callback.py::test_serve_refuses_a_malformed_callback_path[b'/a']
+FAILED tests/test_q8a2_callback.py::test_serve_refuses_a_channel_without_a_callback_path_and_names_it
+FAILED tests/test_q8a2_callback.py::test_the_name_in_the_refusal_is_one_bounded_printable_line_whatever_its_source[''-'Plain'-'Plain']
+FAILED tests/test_q8a2_callback.py::test_the_name_in_the_refusal_is_one_bounded_printable_line_whatever_its_source[7-'Plain'-'Plain']
+FAILED tests/test_q8a2_callback.py::test_the_name_in_the_refusal_is_one_bounded_printable_line_whatever_its_source[None-'Plain'-'Plain']
+FAILED tests/test_q8a2_callback.py::test_the_name_in_the_refusal_is_one_bounded_printable_line_whatever_its_source['two\\nlines'-'Plain'-'two?lines']
+FAILED tests/test_q8a2_callback.py::test_the_name_in_the_refusal_is_one_bounded_printable_line_whatever_its_source['tab\\there'-'Plain'-'tab?here']
+FAILED tests/test_q8a2_callback.py::test_the_name_in_the_refusal_is_one_bounded_printable_line_whatever_its_source[None-'two\\nlines'-'two?lines']
+FAILED tests/test_q8a2_callback.py::test_the_name_in_the_refusal_is_one_bounded_printable_line_whatever_its_source[''-'esc\\x1b[31m'-'esc?[31m']
+FAILED tests/test_q8a2_callback.py::test_the_name_in_the_refusal_is_one_bounded_printable_line_whatever_its_source['nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn'-'Plain'-'nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn']
+FAILED tests/test_q8a2_callback.py::test_the_name_in_the_refusal_is_one_bounded_printable_line_whatever_its_source[None-'CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC'-'CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC']
+FAILED tests/test_q8a2_callback.py::test_the_name_in_the_refusal_is_one_bounded_printable_line_whatever_its_source[loud\nstr-'Plain'-'quiet']
+FAILED tests/test_q8a2_callback.py::test_the_refusal_states_the_rule_for_a_callback_path
+FAILED tests/test_q8a2_callback.py::test_a_str_subclass_is_not_a_callback_path
+FAILED tests/test_q8a2_callback.py::test_the_path_is_read_once_when_the_server_starts
+FAILED tests/test_q8a2_callback.py::test_one_checker_holds_the_grammar_and_the_length_limit
+FAILED tests/test_q8a2_callback.py::test_a_double_slash_in_front_of_the_path_is_not_served[fake]
+FAILED tests/test_q8a2_callback.py::test_a_double_slash_in_front_of_the_path_is_not_served[slack]
+FAILED tests/test_q8a2_callback.py::test_each_kind_names_its_callback_path - ...
+FAILED tests/test_q8a2_callback.py::test_the_handler_was_renamed_without_an_alias
+FAILED tests/test_q8a2_callback.py::test_handle_action_refuses_an_oversize_body_and_a_bad_signature
+FAILED tests/test_q8a2_callback.py::test_property_paths_of_the_grammar_are_accepted_up_to_64_characters
+FAILED tests/test_q8a2_callback.py::test_property_one_foreign_character_empty_segment_or_missing_slash_is_refused
+FAILED tests/test_q8a2_callback.py::test_a_malformed_or_oversize_content_length_is_refused_with_a_normal_answer[b'Content-Length: 9999999999999999999999-413_0]
+FAILED tests/test_q8a2_callback.py::test_a_malformed_or_oversize_content_length_is_refused_with_a_normal_answer[b'Content-Length: 9999999999999999999999-413_1]
+FAILED tests/test_q8a2_callback.py::test_a_malformed_or_oversize_content_length_is_refused_with_a_normal_answer[b'Content-Length: 9999999999999'-413]
+FAILED tests/test_q8a2_callback.py::test_a_malformed_or_oversize_content_length_is_refused_with_a_normal_answer[b'Content-Length: 0000000000005'-413]
+FAILED tests/test_q8a2_callback.py::test_a_malformed_or_oversize_content_length_is_refused_with_a_normal_answer[b'Content-Length: +5'-400]
+FAILED tests/test_q8a2_callback.py::test_a_malformed_or_oversize_content_length_is_refused_with_a_normal_answer[b'Content-Length: -5'-400]
+FAILED tests/test_q8a2_callback.py::test_a_malformed_or_oversize_content_length_is_refused_with_a_normal_answer[b'Content-Length: 5 5'-400]
+FAILED tests/test_q8a2_callback.py::test_a_malformed_or_oversize_content_length_is_refused_with_a_normal_answer[b'Content-Length: 5,5'-400]
+FAILED tests/test_q8a2_callback.py::test_a_malformed_or_oversize_content_length_is_refused_with_a_normal_answer[b'Content-Length: 0x5'-400]
+FAILED tests/test_q8a2_callback.py::test_a_malformed_or_oversize_content_length_is_refused_with_a_normal_answer[b'Content-Length: 5.0'-400]
+FAILED tests/test_q8a2_callback.py::test_a_malformed_or_oversize_content_length_is_refused_with_a_normal_answer[b'Content-Length:'-400]
+FAILED tests/test_q8a2_callback.py::test_a_malformed_or_oversize_content_length_is_refused_with_a_normal_answer[b'Content-Length: \\xb2'-400]
+FAILED tests/test_q8a2_callback.py::test_a_malformed_or_oversize_content_length_is_refused_with_a_normal_answer[b'Content-Length: \\xd9\\xa5'-400]
+FAILED tests/test_q8a2_callback.py::test_a_malformed_or_oversize_content_length_is_refused_with_a_normal_answer[b'Content-Length: 9\\r\\nContent-Length: 9-400]
+FAILED tests/test_q8a2_callback.py::test_a_malformed_or_oversize_content_length_is_refused_with_a_normal_answer[b'Content-Length: 0\\r\\nContent-Length: 9-400]
+FAILED tests/test_q8a2_callback.py::test_the_body_length_reader_never_raises_and_accepts_only_plain_digits
+FAILED tests/test_q8a2_callback.py::test_a_request_that_sends_less_than_it_announces_frees_its_thread_within_the_bound
+FAILED tests/test_q8a2_callback.py::test_a_request_that_arrives_too_slowly_is_dropped_at_the_bound_however_it_is_sent[first line]
+FAILED tests/test_q8a2_callback.py::test_a_request_that_arrives_too_slowly_is_dropped_at_the_bound_however_it_is_sent[headers]
+FAILED tests/test_q8a2_callback.py::test_a_caller_that_leaves_before_the_answer_causes_no_traceback
+FAILED tests/test_q8a2_callback.py::test_a_failure_while_a_signed_click_is_recorded_is_answered_500_without_a_traceback
+FAILED tests/test_q8a2_callback.py::test_a_correctly_signed_click_on_a_doubled_slash_is_not_handled
+FAILED tests/test_lockin_guard.py::test_core_logic_names_no_vendor - assert [...
+FAILED tests/test_lockin_guard.py::test_core_names_no_vendor_in_identifiers
+FAILED tests/test_lockin_guard.py::test_the_receiver_file_names_no_vendor_anywhere
+FAILED tests/test_lockin_guard.py::test_each_literal_allowance_covers_exactly_its_own_hits[hadavin_sdk.approvals.gate:aws]
+FAILED tests/test_lockin_guard.py::test_each_literal_allowance_covers_exactly_its_own_hits[hadavin_sdk.approvals.gate:gcloud]
+FAILED tests/test_lockin_guard.py::test_each_literal_allowance_covers_exactly_its_own_hits[hadavin_sdk.approvals.gate:s3]
+FAILED tests/test_lockin_guard.py::test_each_literal_allowance_covers_exactly_its_own_hits[hadavin_sdk.backends.table:gcs_retention_lock]
+FAILED tests/test_lockin_guard.py::test_each_literal_allowance_covers_exactly_its_own_hits[hadavin_sdk.backends.table:iam_auth needs region (and pip]
+FAILED tests/test_lockin_guard.py::test_each_literal_allowance_covers_exactly_its_own_hits[hadavin_sdk.config:backends.<capability>.region o]
+FAILED tests/test_lockin_guard.py::test_each_literal_allowance_covers_exactly_its_own_hits[hadavin_sdk.config:backends.channel: {kind: slack]
+FAILED tests/test_lockin_guard.py::test_each_literal_allowance_covers_exactly_its_own_hits[hadavin_sdk.config:slack]
+FAILED tests/test_lockin_guard.py::test_each_literal_allowance_covers_exactly_its_own_hits[hadavin_sdk.guard.producers:guard/bedrock_guardrail.py]
+FAILED tests/test_lockin_guard.py::test_each_literal_allowance_covers_exactly_its_own_hits[hadavin_sdk.llm.openai_compat:^(?:gpt-[\\w.-]+|o\\d[\\w.-]*|cha]
+FAILED tests/test_lockin_guard.py::test_each_literal_allowance_covers_exactly_its_own_hits[hadavin_sdk.llm.openai_compat:openai_compat]
+FAILED tests/test_lockin_guard.py::test_each_literal_allowance_covers_exactly_its_own_hits[hadavin_sdk.store.postgres:store postgres with iam_auth n]
+FAILED tests/test_lockin_guard.py::test_each_literal_allowance_covers_exactly_its_own_hits[hadavin_sdk.tools:.metadata.google.internal]
+FAILED tests/test_lockin_guard.py::test_each_literal_allowance_covers_exactly_its_own_hits[hadavin_sdk.tools:metadata.google.internal]
+FAILED tests/test_lockin_guard.py::test_each_word_allowance_covers_exactly_its_own_hits[hadavin_sdk.approvals.gate:_URL:slack]
+FAILED tests/test_lockin_guard.py::test_each_word_allowance_covers_exactly_its_own_hits[hadavin_sdk.approvals.gate:_URL:teams]
+FAILED tests/test_lockin_guard.py::test_each_word_allowance_covers_exactly_its_own_hits[hadavin_sdk.approvals.gate:_WRITE_SHAPES:s3]
+FAILED tests/test_lockin_guard.py::test_each_word_allowance_covers_exactly_its_own_hits[hadavin_sdk.guard.runmap:_GRAMMAR:aws]
+FAILED tests/test_lockin_guard.py::test_each_name_allowance_covers_exactly_its_own_hit[key0]
+FAILED tests/test_lockin_guard.py::test_each_name_allowance_covers_exactly_its_own_hit[key1]
+FAILED tests/test_lockin_guard.py::test_each_name_allowance_covers_exactly_its_own_hit[key2]
+FAILED tests/test_lockin_guard.py::test_each_name_allowance_covers_exactly_its_own_hit[key3]
+FAILED tests/test_lockin_guard.py::test_each_name_allowance_covers_exactly_its_own_hit[key4]
+FAILED tests/test_lockin_guard.py::test_each_name_allowance_covers_exactly_its_own_hit[key5]
+FAILED tests/test_lockin_guard.py::test_removing_one_name_from_the_pinned_table_set_reports_that_name_and_what_is_inside_it
+FAILED tests/test_lockin_guard.py::test_a_vendor_path_or_name_planted_in_the_real_receiver_is_caught
+FAILED tests/contracts/test_capabilities.py::test_channel_names_its_callback_path[fake]
+FAILED tests/contracts/test_capabilities.py::test_channel_names_its_callback_path[slack]
+94 failed, 246 passed in 49.82s

@@ -1,0 +1,83 @@
+{
+  "floor_bps": {
+    "business": 6000,
+    "enterprise": 5500,
+    "team": 6500
+  },
+  "note": "authored per currency; no conversion; cogs and floor are INTERNAL and must never reach a rep or a quote (HZ-9)",
+  "plans": {
+    "business": {
+      "AUD": {
+        "cogs_seat": 18000,
+        "list_seat": 90000
+      },
+      "CAD": {
+        "cogs_seat": 16200,
+        "list_seat": 81000
+      },
+      "EUR": {
+        "cogs_seat": 11040,
+        "list_seat": 55200
+      },
+      "GBP": {
+        "cogs_seat": 9600,
+        "list_seat": 48000
+      },
+      "USD": {
+        "cogs_seat": 12000,
+        "list_seat": 60000
+      }
+    },
+    "enterprise": {
+      "AUD": {
+        "cogs_seat": 32400,
+        "list_seat": 180000
+      },
+      "CAD": {
+        "cogs_seat": 29160,
+        "list_seat": 162000
+      },
+      "EUR": {
+        "cogs_seat": 19872,
+        "list_seat": 110400
+      },
+      "GBP": {
+        "cogs_seat": 17280,
+        "list_seat": 96000
+      },
+      "USD": {
+        "cogs_seat": 21600,
+        "list_seat": 120000
+      }
+    },
+    "team": {
+      "AUD": {
+        "cogs_seat": 9000,
+        "list_seat": 36000
+      },
+      "CAD": {
+        "cogs_seat": 8100,
+        "list_seat": 32400
+      },
+      "EUR": {
+        "cogs_seat": 5520,
+        "list_seat": 22080
+      },
+      "GBP": {
+        "cogs_seat": 4800,
+        "list_seat": 19200
+      },
+      "USD": {
+        "cogs_seat": 6000,
+        "list_seat": 24000
+      }
+    }
+  },
+  "standard_terms": {
+    "billing": "annual_prepay",
+    "payment_terms_days": 30,
+    "sla_tier": "standard",
+    "term_years": 1
+  },
+  "version": "pb-2026-11-a"
+}

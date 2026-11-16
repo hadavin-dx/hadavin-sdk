@@ -1,0 +1,12 @@
+### tests/test_migration_postgres.py::test_a_role_without_the_grant_option_is_refused_when_its_grants_would_do_nothing rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_a_role_without_the_grant_option_is_refused_when_its_grants_would_do_nothing _
+tests/test_migration_postgres.py:1687: in test_a_role_without_the_grant_option_is_refused_when_its_grants_would_do_nothing
+    with pytest.raises(ConfigError, match="cannot use the schema"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_a_role_without_the_grant_option_is_refused_when_its_grants_would_do_nothing
+1 failed in 0.59s
+

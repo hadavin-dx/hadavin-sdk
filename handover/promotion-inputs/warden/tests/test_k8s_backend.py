@@ -1,0 +1,898 @@
+"""KubernetesBackend, against a stubbed API.
+
+The live path is covered by tests/integration/ and the CI `k8s` job against a real k3d cluster.
+These tests exist for the failure modes that are hard to stage on demand against a real API
+server, and for the properties that must never regress. Several were written AFTER an adversarial
+review found the first version wanting; those say so in their docstrings.
+"""
+
+from __future__ import annotations
+
+import ast
+import inspect
+import pathlib
+import re
+from datetime import UTC, datetime, timedelta
+from types import SimpleNamespace as NS
+
+import pytest
+import yaml
+
+from fakes import HUNTER2
+from warden import evidence, k8s_backend
+from warden.k8s_backend import KubernetesBackend, _to_mib
+from warden.models import (
+    ActionKind,
+    Alert,
+    Citation,
+    Hypothesis,
+    RemediationProposal,
+    RootCause,
+    Severity,
+    VerdictStatus,
+)
+from warden.tools import PARTIAL_PREFIX, ToolError, gather
+from warden.verifier import verify
+
+ROOT = pathlib.Path(__file__).resolve().parents[1]
+
+
+# --------------------------------------------------------------------------- fakes
+
+
+ALERT_AT = datetime(2026, 8, 22, tzinfo=UTC)  # _alert's started_at: deploys are dated from it (A-B-M10)
+
+
+def _alert(**labels):
+    return Alert(
+        alert_id="k8s-1", name="PodOOMKilled", severity=Severity.high, service="checkout",
+        environment="prod", summary="oom", started_at="2026-08-22T00:00:00Z", labels=labels,
+    )
+
+
+def _cs(name="checkout", *, restarts=0, last_reason=None, cur_reason=None, waiting=None):
+    return NS(
+        name=name,
+        restart_count=restarts,
+        last_state=NS(terminated=NS(reason=last_reason) if last_reason else None),
+        state=NS(
+            terminated=NS(reason=cur_reason) if cur_reason else None,
+            waiting=NS(reason=waiting) if waiting else None,
+        ),
+    )
+
+
+def _pod(name="checkout-abc", *, restarts=0, last_reason=None, cur_reason=None, waiting=None,
+         ready=True, mem_limit="48Mi", phase="Running", init_statuses=(), created=None):
+    return NS(
+        metadata=NS(name=name, creation_timestamp=created or datetime.now(UTC)),
+        spec=NS(
+            containers=[NS(name="checkout", resources=NS(limits={"memory": mem_limit} if mem_limit else {}))],
+            init_containers=[],
+        ),
+        status=NS(
+            phase=phase,
+            conditions=[NS(type="Ready", status="True" if ready else "False")],
+            container_statuses=[_cs(restarts=restarts, last_reason=last_reason,
+                                    cur_reason=cur_reason, waiting=waiting)],
+            init_container_statuses=list(init_statuses),
+            ephemeral_container_statuses=None,
+        ),
+    )
+
+
+def _event(reason, msg="", kind="Pod", name="checkout-abc", ts=None):
+    return NS(reason=reason, message=msg, last_timestamp=ts, event_time=None,
+              involved_object=NS(kind=kind, name=name))
+
+
+class FakeCore:
+    def __init__(self, pods=(), events=(), log_text="line1\nline2", log_raises=False,
+                 events_raise=False):
+        self._pods, self._events = list(pods), list(events)
+        self._log, self._log_raises, self._events_raise = log_text, log_raises, events_raise
+        self.calls: list[str] = []
+
+    def list_namespaced_pod(self, ns, label_selector=None, **kw):
+        assert "_request_timeout" in kw, "every API call must carry a socket timeout"
+        self.calls.append(f"list_namespaced_pod {ns} {label_selector}")
+        return NS(items=self._pods)
+
+    def list_namespaced_event(self, ns, **kw):
+        assert "_request_timeout" in kw
+        self.calls.append(f"list_namespaced_event {ns}")
+        if self._events_raise:
+            raise RuntimeError("events forbidden (403)")
+        return NS(items=self._events)
+
+    def read_namespaced_pod_log(self, name, ns, container=None, **kw):
+        assert kw.get("_preload_content") is False, "logs must be read raw - see _log_text()"
+        assert "_request_timeout" in kw
+        self.calls.append(f"read_namespaced_pod_log {ns}/{name}/{container}")
+        self.log_kwargs = getattr(self, "log_kwargs", []) + [kw]
+        if self._log_raises:
+            raise RuntimeError("(400)\nReason: Bad Request\nHTTP response headers: secret-ish")
+        return self._log
+
+
+def _rs(revision, images, *, created=None, owner_uid="dep-uid"):
+    return NS(
+        metadata=NS(
+            annotations={"deployment.kubernetes.io/revision": str(revision)},
+            creation_timestamp=created or ALERT_AT - timedelta(minutes=5),
+            owner_references=[NS(kind="Deployment", uid=owner_uid)],
+        ),
+        spec=NS(template=NS(spec=NS(containers=[NS(image=i) for i in images]))),
+    )
+
+
+class FakeApps:
+    def __init__(self, deployment="present", replicasets=(), status=None, replicas=2):
+        self._dep, self._rs, self._status = deployment, list(replicasets), status
+        self._replicas = replicas
+
+    def read_namespaced_deployment(self, name, ns, **kw):
+        assert "_request_timeout" in kw
+        if self._status:
+            raise _ApiErr(self._status)
+        if self._dep is None:
+            raise _ApiErr(404)
+        return NS(metadata=NS(uid="dep-uid"),
+                  spec=NS(replicas=self._replicas, selector=NS(match_labels={"app": "checkout"})))
+
+    def list_namespaced_replica_set(self, ns, label_selector=None, **kw):
+        assert "_request_timeout" in kw
+        return NS(items=self._rs)
+
+
+class _ApiErr(Exception):
+    def __init__(self, status):
+        super().__init__(f"api {status}")
+        self.status = status
+
+
+def _backend(core=None, apps=None):
+    return KubernetesBackend(core=core or FakeCore(pods=[_pod()]), apps=apps or FakeApps())
+
+
+# --------------------------------------------------------------------------- metrics
+
+
+def test_oom_kill_is_detected_from_last_state():
+    m = _backend(FakeCore(pods=[_pod(restarts=4, last_reason="OOMKilled")])).metrics(_alert())
+    assert m["oom_killed_containers"] == 1
+    assert m["restart_count"] == 4
+    assert m["pods_total"] == 1
+    assert m["memory_limit_mib"] == 48.0
+
+
+def test_oom_kill_in_current_state_also_counts():
+    m = _backend(FakeCore(pods=[_pod(cur_reason="OOMKilled", ready=False)])).metrics(_alert())
+    assert m["oom_killed_containers"] == 1
+
+
+def test_oom_in_both_states_counts_once_per_container():
+    m = _backend(FakeCore(pods=[_pod(last_reason="OOMKilled", cur_reason="OOMKilled")])).metrics(_alert())
+    assert m["oom_killed_containers"] == 1, "it is a count of CONTAINERS showing OOM, not of states"
+
+
+def test_restarts_sum_across_pods():
+    m = _backend(FakeCore(pods=[_pod("a", restarts=2), _pod("b", restarts=5)])).metrics(_alert())
+    assert m["restart_count"] == 7
+
+
+def test_crashloop_and_readiness_are_counted():
+    pods = [_pod("a", waiting="CrashLoopBackOff", ready=False), _pod("b", ready=True)]
+    m = _backend(FakeCore(pods=pods)).metrics(_alert())
+    assert m["crashloop_containers"] == 1
+    assert m["pods_ready"] == 1
+    assert m["pods_total"] == 2
+
+
+def test_init_container_oom_is_visible():
+    """Review finding: a pod stuck in Init:OOMKilled reported zero OOM kills, zero restarts.
+
+    The kubelet puts the init container's status in a DIFFERENT list.
+    """
+    pod = _pod(ready=False, init_statuses=[_cs("migrate", restarts=7, last_reason="OOMKilled",
+                                               waiting="CrashLoopBackOff")])
+    m = _backend(FakeCore(pods=[pod])).metrics(_alert())
+    assert m["oom_killed_containers"] == 1
+    assert m["restart_count"] == 7
+    assert m["crashloop_containers"] == 1
+
+
+def test_dead_pods_are_not_the_workload():
+    """Review finding: Evicted/Failed pods keep their labels and were being counted and log-read."""
+    pods = [_pod("live", restarts=1), _pod("evicted", restarts=9, phase="Failed"),
+            _pod("done", restarts=3, phase="Succeeded")]
+    m = _backend(FakeCore(pods=pods)).metrics(_alert())
+    assert m["pods_total"] == 1
+    assert m["restart_count"] == 1
+
+
+def test_no_matching_pods_is_an_error_not_a_clean_bill_of_health():
+    """Review finding: a typo in the namespace yielded six zero metrics that the verifier read as
+    'inspected, fine'. Zero pods means the backend inspected NOTHING.
+
+    A typo'd namespace has no Deployment in it either - that is what keeps this an error now that a
+    Deployment which exists with zero pods is reported as evidence instead."""
+    b = _backend(FakeCore(pods=[]), FakeApps(deployment=None))
+    alert = _alert()
+    with pytest.raises(ToolError, match="no live pods match"):
+        b.metrics(alert)
+    with pytest.raises(ToolError):
+        b.logs(alert)
+
+
+def test_no_pods_reaches_the_verifier_as_a_tool_error():
+    ctx = gather(_alert(), _backend(FakeCore(pods=[]), FakeApps(deployment=None)), timeout=2.0)
+    assert any("no live pods match" in e for e in ctx.tool_errors)
+    assert ctx.is_empty()
+
+
+def test_unparseable_limit_is_omitted_not_zero():
+    """Review finding: 0.0 is indistinguishable from 'no limit' in the prompt."""
+    m = _backend(FakeCore(pods=[_pod(mem_limit="lots")])).metrics(_alert())
+    assert "memory_limit_mib" not in m
+
+
+# --------------------------------------------------------------------------- logs
+
+
+def test_events_are_scoped_to_this_workload():
+    """Review finding: every other service's crash loop in the namespace was attributed to this alert."""
+    events = [
+        _event("BackOff", "ours", name="checkout-abc"),
+        _event("BackOff", "NOT ours", name="cart-7f9c"),
+        _event("OOMKilling", "node-level", kind="Node", name="worker-1"),
+        _event("FailedCreate", "ours", kind="ReplicaSet", name="checkout-5d9f"),
+        _event("FailedCreate", "NOT ours", kind="ReplicaSet", name="cart-5d9f"),
+        _event("Scheduled", "noise", name="checkout-abc"),
+    ]
+    lines = _backend(FakeCore(pods=[_pod()], events=events)).logs(_alert())
+    joined = "\n".join(lines)
+    assert "ours" in joined
+    assert "NOT ours" not in joined
+    assert "NODE-EVENT OOMKilling" in joined, "node-level events are kept, but labelled"
+    assert "Scheduled" not in joined
+
+
+def test_events_failing_does_not_lose_the_pod_logs():
+    """Review finding: the events call sat outside any try, so an events 403 took the logs with it."""
+    lines = _backend(FakeCore(pods=[_pod()], events_raise=True)).logs(_alert())
+    assert any(line.endswith("line2") for line in lines)
+    assert any(line.startswith(PARTIAL_PREFIX + "events") for line in lines)
+
+
+@pytest.mark.parametrize(
+    "payload,expected_lines",
+    [
+        ("2026-01-01T00:00:00Z a\n2026-01-01T00:00:01Z b", 2),
+        (b"2026-01-01T00:00:00Z a\n2026-01-01T00:00:01Z b", 2),
+        ("b'2026-01-01T00:00:00Z a\\n2026-01-01T00:00:01Z b'", 2),
+        (NS(data=b"2026-01-01T00:00:00Z a\n2026-01-01T00:00:01Z b"), 2),
+    ],
+    ids=["str", "bytes", "bytes-repr-as-str", "response-object"],
+)
+def test_log_text_handles_every_shape_the_client_has_returned(payload, expected_lines):
+    """Against a real k3s cluster the client returned the REPR of bytes as a str."""
+    lines = [line for line in _backend(FakeCore(pods=[_pod()], log_text=payload)).logs(_alert())
+             if not line.startswith(("EVENT", "NODE-EVENT", PARTIAL_PREFIX))]
+    assert len(lines) == expected_lines, lines
+    assert all("\\n" not in line and not line.split(" ", 1)[1].startswith("b'") for line in lines)
+
+
+def test_a_failed_log_read_is_a_partial_failure_not_evidence():
+    """Review finding: a log-read failure became a log LINE that policy P9 counted as evidence
+    while P8 never fired. It now travels with the TOOL-PARTIAL prefix and gather() routes it."""
+    ctx = gather(_alert(), _backend(FakeCore(pods=[_pod()], log_raises=True)), timeout=2.0)
+    assert not any(PARTIAL_PREFIX in line or "Bad Request" in line for line in ctx.logs)
+    assert any("logs: checkout-abc/checkout" in e for e in ctx.tool_errors)
+    assert all("\n" not in e and "headers" not in e for e in ctx.tool_errors), "one line, no headers"
+
+
+def test_log_reads_are_capped_and_newest_first(monkeypatch):
+    """Review finding: O(pods x containers) sequential reads with no cap blew the tool budget."""
+    monkeypatch.setattr(k8s_backend, "LOG_MAX_PODS", 2)
+    t0 = datetime.now(UTC)
+    pods = [_pod(f"p{i}", created=t0 - timedelta(minutes=i)) for i in range(5)]
+    core = FakeCore(pods=pods)
+    _backend(core).logs(_alert())
+    reads = [c for c in core.calls if c.startswith("read_namespaced_pod_log")]
+    assert len(reads) == 2
+    assert reads[0].endswith("/p0/checkout")
+    assert reads[1].endswith("/p1/checkout")
+
+
+# --------------------------------------------------------------------------- deploys
+
+
+def test_image_change_is_a_deploy():
+    rs = [_rs(1, ["acme/checkout:old"], created=ALERT_AT - timedelta(days=2)),
+          _rs(2, ["acme/checkout:new"], created=ALERT_AT - timedelta(minutes=5))]
+    d = _backend(apps=FakeApps(replicasets=rs)).deploys(_alert())
+    assert len(d) == 1
+    assert d[0]["revision"] == "2"
+    assert "new" in d[0]["image"]
+    assert "old" in d[0]["previous_image"]
+
+
+def test_rollout_restart_is_not_a_deploy():
+    """Review finding: a `kubectl rollout restart` bumps the revision with the image unchanged, and
+    was reported as a deploy - so policy P5 would have allowed a 'rollback' that changes nothing."""
+    rs = [_rs(1, ["acme/checkout:9f2c1ab"], created=ALERT_AT - timedelta(days=2)),
+          _rs(2, ["acme/checkout:9f2c1ab"], created=ALERT_AT - timedelta(minutes=5))]
+    assert _backend(apps=FakeApps(replicasets=rs)).deploys(_alert()) == []
+
+
+def _rs_with(rev, created, *, image="acme/checkout:9f2c1ab", annotations=None, **container):
+    return NS(
+        metadata=NS(annotations={"deployment.kubernetes.io/revision": str(rev)}, creation_timestamp=created,
+                    owner_references=[NS(kind="Deployment", uid="dep-uid")]),
+        spec=NS(template=NS(metadata=NS(annotations=annotations or {}),
+                            spec=NS(containers=[NS(image=image, **container)]))),
+    )
+
+
+def _two(before: dict, after: dict):
+    rs = [_rs_with(1, ALERT_AT - timedelta(days=2), **before), _rs_with(2, ALERT_AT - timedelta(minutes=5), **after)]
+    return _backend(apps=FakeApps(replicasets=rs)).deploys(_alert())
+
+
+def test_a_template_change_with_no_image_change_is_a_deploy():
+    """The recorded incident k8s-03 (read 2026-10-11): a memory limit lowered on the same image. Only images were
+    compared, so it was "a restart, not a deploy" - no deploy record, and the rollback was never proposed (0 of 6
+    runs). The record names WHICH part changed and never a value."""
+    limits = lambda mib: NS(limits={"memory": f"{mib}Mi"})
+    [d] = _two({"resources": limits(256)}, {"resources": limits(48)})
+    assert d["changed"] == "resources"
+    assert d["image"] == d["previous_image"]
+    assert d["revision"] == "2"
+    before, after = "old-secret", HUNTER2
+    [d] = _two({"env": [NS(name="DB_PASSWORD", value=before)]}, {"env": [NS(name="DB_PASSWORD", value=after)]})
+    assert d["changed"] == "env"
+    assert HUNTER2 not in str(d)
+    assert "DB_PASSWORD" not in str(d)
+    [d] = _two({"image": "a:1", "command": ["run"]}, {"image": "a:2", "command": ["run", "--fast"]})
+    assert d["changed"] == "image,command"
+    [d] = _two({}, {"readiness_probe": NS(http_get=NS(path="/ready"))})
+    assert d["changed"] == "readiness_probe"
+
+
+def test_a_restart_that_only_stamps_the_template_is_still_no_deploy():
+    stamp = {"kubectl.kubernetes.io/restartedAt": "2026-10-10T07:55:00Z"}
+    same = {"resources": NS(limits={"memory": "256Mi"}), "env": [NS(name="A", value="1")]}
+    assert _two(same, {**same, "annotations": stamp}) == []
+
+
+def test_the_parts_of_a_template_are_not_resources_a_target_may_name():
+    from warden import evidence
+    from warden.models import ContextBundle
+
+    context = ContextBundle(recent_deploys=[{"deployment": "checkout", "revision": "2", "changed": "image,env"}])
+    inventory = evidence.inventory(_alert(), context)
+    assert "checkout" in inventory
+    assert not {"image", "env", "image,env"} & inventory
+
+
+def test_init_container_only_image_change_is_a_deploy():
+    """A deploy that bumps ONLY a migration/init-container image (app container unchanged) is a real
+    template change. _images() compared app containers alone, so it read as a no-op restart, hid the
+    deploy, and P5 then blocked the legitimate rollback of a failing migration. Init images count."""
+    def _rs_init(rev, app_img, init_img, created):
+        return NS(
+            metadata=NS(
+                annotations={"deployment.kubernetes.io/revision": str(rev)},
+                creation_timestamp=created,
+                owner_references=[NS(kind="Deployment", uid="dep-uid")],
+            ),
+            spec=NS(template=NS(spec=NS(
+                init_containers=[NS(image=init_img)],
+                containers=[NS(image=app_img)],
+            ))),
+        )
+    rs = [_rs_init(1, "app:v9", "migrate:v1", ALERT_AT - timedelta(days=2)),
+          _rs_init(2, "app:v9", "migrate:v2", ALERT_AT - timedelta(minutes=5))]
+    d = _backend(apps=FakeApps(replicasets=rs)).deploys(_alert())
+    assert len(d) == 1, "an init-container-only image change must be detected as a deploy"
+
+
+def test_first_rollout_counts():
+    rs = [_rs(1, ["acme/checkout:v1"], created=ALERT_AT - timedelta(minutes=5))]
+    assert len(_backend(apps=FakeApps(replicasets=rs)).deploys(_alert())) == 1
+
+
+def test_old_change_is_not_evidence():
+    rs = [_rs(1, ["a:1"], created=ALERT_AT - timedelta(days=9)),
+          _rs(2, ["a:2"], created=ALERT_AT - timedelta(days=3))]
+    assert _backend(apps=FakeApps(replicasets=rs)).deploys(_alert()) == []
+
+
+def test_replicasets_owned_by_another_deployment_are_ignored():
+    rs = [_rs(1, ["a:1"], owner_uid="someone-else")]
+    assert _backend(apps=FakeApps(replicasets=rs)).deploys(_alert()) == []
+
+
+def test_naive_timestamps_do_not_raise():
+    """Review finding: a stubbed client returning a naive datetime made aware-minus-naive raise."""
+    naive = datetime.now(UTC).replace(tzinfo=None)  # no zone on purpose: that IS the test
+    rs = [_rs(1, ["a:1"], created=naive)]
+    assert isinstance(_backend(apps=FakeApps(replicasets=rs)).deploys(_alert()), list)
+
+
+def test_missing_deployment_is_an_empty_list_not_an_error():
+    assert _backend(apps=FakeApps(deployment=None)).deploys(_alert()) == []
+
+
+def test_non_404_api_errors_are_not_swallowed():
+    """A 403 means the RBAC is wrong. Hiding it would make a broken deployment look healthy."""
+    backend, alert = _backend(apps=FakeApps(status=403)), _alert()
+    with pytest.raises(_ApiErr) as exc:
+        backend.deploys(alert)
+    assert exc.value.status == 403
+
+
+# --------------------------------------------------------------------------- alert -> workload
+
+
+def test_alert_labels_override_namespace_and_selector():
+    core = FakeCore(pods=[_pod()])
+    _backend(core).metrics(_alert(namespace="payments", selector="tier=web"))
+    assert core.calls[-1] == "list_namespaced_pod payments tier=web"
+
+
+def test_env_default_namespace(monkeypatch):
+    monkeypatch.setenv("WARDEN_K8S_NAMESPACE", "shop")
+    core = FakeCore(pods=[_pod()])
+    _backend(core).metrics(_alert())
+    assert core.calls[-1].startswith("list_namespaced_pod shop ")
+
+
+# --------------------------------------------------------------------------- through gather()
+
+
+def test_unreachable_api_becomes_partial_context_not_a_crash():
+    class DeadCore:
+        def list_namespaced_pod(self, *a, **k): raise ConnectionError("dial tcp: refused")
+        def list_namespaced_event(self, *a, **k): raise ConnectionError("dial tcp: refused")
+        def read_namespaced_pod_log(self, *a, **k): raise ConnectionError("dial tcp: refused")
+
+    ctx = gather(_alert(), KubernetesBackend(core=DeadCore(), apps=FakeApps()), timeout=2.0)
+    assert len(ctx.tool_errors) >= 2
+    assert ctx.is_empty()
+
+
+def _scale_up_verdict_on_oom(*, ready: bool, backoff: bool = True):
+    pods = [_pod(restarts=6, last_reason="OOMKilled", ready=ready)]
+    events = [_event("BackOff", "Back-off restarting failed container")] if backoff else []
+    b = _backend(FakeCore(pods=pods, events=events, log_text="starting\nKilled"))
+    ctx = gather(_alert(), b, timeout=2.0)
+    assert ctx.metrics["oom_killed_containers"] == 1
+    assert not ctx.is_empty()
+    oom = [Citation(id=i.id, quote=i.text) for i in evidence.index(ctx).values()
+           if i.text.startswith("oom_killed_containers=")]
+    return verify(
+        _alert(), ctx, RootCause(hypothesis="OOM", confidence=0.74, citations=oom,
+                                 hypotheses=[Hypothesis(cause="OOM"), Hypothesis(cause="another cause", why_rejected="nothing in the evidence shows it")]),
+        RemediationProposal(action=ActionKind.scale_up, target="checkout", reasoning="r",
+                            expected_effect="e", blast_radius="single_service", reversible=True),
+    )
+
+
+def test_live_shaped_oom_evidence_reaches_scale_up_verdict():
+    """The plumbing claim: live-shaped OOM evidence travels through gather() to a real verdict, not
+    a thin-evidence refusal. With the only pod OOM-killed and NOT ready, scaling out cannot help - no
+    replica serves traffic, so load is not filling memory - and since 2026-09-25 P11 escalates it.
+    That was the shape of all three EKS runs the gate wrongly let through; this test asserted
+    approved_for_human for it until then."""
+    verdict = _scale_up_verdict_on_oom(ready=False)
+    assert verdict.status is VerdictStatus.escalated
+    assert verdict.policy_ids == ["P11-ACTION-CONTRADICTS-EVIDENCE"], "only the contradiction may fire"
+
+
+def test_scale_up_on_oom_still_passes_when_a_pod_is_serving():
+    """The other side, so P11 cannot quietly become "never scale on OOM": with a ready pod that is NOT
+    backing off, memory can grow with load and scaling out can relieve it."""
+    # Asserts the policy, not the final status: with the back-off event gone the evidence is thin and
+    # P9 escalates - correctly, and for a reason unrelated to this claim.
+    assert "P11-ACTION-CONTRADICTS-EVIDENCE" not in _scale_up_verdict_on_oom(ready=True, backoff=False).policy_ids
+
+
+def test_a_crash_looping_pod_that_is_ready_between_crashes_is_still_failing():
+    """⛔ CI, 2026-09-25: the same OOM workload read ready=1 from outside the cluster and ready=0 from
+    inside it seconds apart - a pod with no readiness probe is Ready between crashes - so P11 fired on
+    one run and not the other. A back-off record means failing, whatever readiness says."""
+    v = _scale_up_verdict_on_oom(ready=True, backoff=True)
+    assert "P11-ACTION-CONTRADICTS-EVIDENCE" in v.policy_ids
+
+
+# --------------------------------------------------------------------------- the invariants
+
+
+def _dotted(node: ast.AST) -> str:
+    """'self._core.delete_namespaced_pod' for an Attribute chain, '' otherwise."""
+    parts = []
+    while isinstance(node, ast.Attribute):
+        parts.append(node.attr)
+        node = node.value
+    if isinstance(node, ast.Name):
+        parts.append(node.id)
+    return ".".join(reversed(parts))
+
+
+def test_backend_cannot_write_checked_on_the_ast_not_the_text():
+    """A tripwire, not the boundary. RBAC is the boundary, and this test says so.
+
+    Review finding: the first version was a regex over the source text - bypassed by
+    `connect_post_*_exec`, `api_client.call_api(..., "DELETE")`, `subprocess`, and `getattr` with a
+    concatenated name; and it false-positived on the word "kubectl" in a docstring. This walks the
+    AST: real call expressions and real imports, never prose.
+    """
+    src = pathlib.Path(inspect.getsourcefile(k8s_backend)).read_text(encoding="utf-8")
+    tree = ast.parse(src)
+
+    write_method = re.compile(
+        r"^(create|patch|delete|replace|update|delete_collection)_|^connect_(post|put|delete|patch)_"
+    )
+    offenders: list[str] = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call):
+            name = _dotted(node.func)
+            leaf = name.rsplit(".", 1)[-1]
+            if write_method.match(leaf):
+                offenders.append(f"write-shaped call {name}")
+            if leaf in ("call_api", "request", "system", "popen", "run", "Popen", "check_output"):
+                offenders.append(f"escape hatch {name}")
+            if leaf == "getattr" and node.args and _dotted(node.args[0]).startswith("self._"):
+                offenders.append("dynamic lookup on the API client")
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            mods = [a.name for a in node.names] + ([node.module] if isinstance(node, ast.ImportFrom) else [])
+            for m in mods:
+                if m and m.split(".")[0] in ("subprocess", "shlex", "pty"):
+                    offenders.append(f"import {m}")
+    assert not offenders, f"k8s_backend.py must not be able to write; found: {offenders}"
+
+
+def test_rbac_manifest_is_structurally_read_only():
+    """Structural, not textual. Review finding: the old grep passed with `roleRef: cluster-admin`,
+    with `verbs: [get, list, delete]` (unquoted), and with a block-list `- delete`."""
+    docs = [d for d in yaml.safe_load_all((ROOT / "k8s" / "rbac.yaml").read_text(encoding="utf-8")) if d]
+    kinds = {d["kind"] for d in docs}
+    assert "ClusterRoleBinding" not in kinds, "cluster-wide binding"
+    assert kinds == {"ServiceAccount", "ClusterRole", "RoleBinding"}
+
+    roles = {d["metadata"]["name"]: d for d in docs if d["kind"] == "ClusterRole"}
+    allowed_verbs = {"get", "list"}
+    allowed_resources = {"pods", "pods/log", "events", "deployments", "replicasets", "horizontalpodautoscalers"}
+    for name, role in roles.items():
+        for rule in role["rules"]:
+            assert set(rule["verbs"]) <= allowed_verbs, f"{name}: {rule}"
+            assert set(rule["resources"]) <= allowed_resources, f"{name}: {rule}"
+            assert "*" not in rule.get("apiGroups", []), f"{name}: wildcard apiGroup"
+
+    bindings = [d for d in docs if d["kind"] == "RoleBinding"]
+    assert bindings, "no RoleBinding"
+    for b in bindings:
+        ref = b["roleRef"]
+        assert ref["kind"] == "ClusterRole", (f"RoleBinding points at {ref} - must reference the ClusterRole defined in this file, "
+            "never a built-in like cluster-admin/admin/edit")
+        assert ref["name"] in roles, (f"RoleBinding points at {ref} - must reference the ClusterRole defined in this file, "
+            "never a built-in like cluster-admin/admin/edit")
+        for s in b["subjects"]:
+            assert s["kind"] == "ServiceAccount"
+            assert s["name"] == "warden"
+            assert s["namespace"] == "warden"
+
+    sa = next(d for d in docs if d["kind"] == "ServiceAccount")
+    assert sa.get("automountServiceAccountToken") is False
+
+
+def test_rbac_grants_exactly_what_the_code_calls():
+    """'Minimal' is checkable by subtraction. Review finding: 12 of 16 granted pairs had no caller."""
+    src = pathlib.Path(inspect.getsourcefile(k8s_backend)).read_text(encoding="utf-8")
+    needed = set()
+    if "list_namespaced_pod(" in src: needed.add(("", "pods", "list"))
+    if "read_namespaced_pod_log(" in src: needed.add(("", "pods/log", "get"))
+    if "list_namespaced_event(" in src: needed.add(("", "events", "list"))
+    if "read_namespaced_deployment(" in src: needed.add(("apps", "deployments", "get"))
+    if "list_namespaced_replica_set(" in src: needed.add(("apps", "replicasets", "list"))
+    if "list_namespaced_horizontal_pod_autoscaler(" in src: needed.add(("autoscaling", "horizontalpodautoscalers", "list"))
+
+    docs = [d for d in yaml.safe_load_all((ROOT / "k8s" / "rbac.yaml").read_text(encoding="utf-8")) if d]
+    granted = set()
+    for d in docs:
+        if d["kind"] != "ClusterRole":
+            continue
+        for rule in d["rules"]:
+            for g in rule["apiGroups"]:
+                for r in rule["resources"]:
+                    for v in rule["verbs"]:
+                        granted.add((g, r, v))
+    assert granted == needed, f"granted-but-unused: {granted - needed}; needed-but-missing: {needed - granted}"
+
+
+def test_job_manifest_cannot_hang_or_lose_evidence():
+    """Review findings: no activeDeadlineSeconds (a stalled run kept the Job active forever, proven
+    live) and a 1-hour TTL that deleted the only record of the diagnosis."""
+    job = yaml.safe_load((ROOT / "k8s" / "job.yaml").read_text(encoding="utf-8"))
+    spec = job["spec"]
+    assert 0 < spec["activeDeadlineSeconds"] <= 900
+    assert spec["ttlSecondsAfterFinished"] >= 7 * 24 * 3600
+    assert "generateName" in job["metadata"], "Jobs are immutable"
+    assert "name" not in job["metadata"], "Jobs are immutable"
+    pod = spec["template"]["spec"]
+    assert pod["serviceAccountName"] == "warden"
+    assert pod["securityContext"]["runAsNonRoot"] is True
+    assert pod["securityContext"]["runAsUser"] == 10001
+    c = pod["containers"][0]["securityContext"]
+    assert c["readOnlyRootFilesystem"] is True
+    assert c["allowPrivilegeEscalation"] is False
+    assert c["capabilities"]["drop"] == ["ALL"]
+
+
+def test_job_pod_satisfies_restricted_pss_so_it_runs_on_eks_not_just_k3d():
+    """EKS / GKE / AKS ENFORCE the `restricted` Pod Security Standard; k3d (the CI cluster) can be
+    lax. A Job that is admitted on k3d but missing a `restricted` requirement would be REJECTED on
+    EKS — the classic 'works in CI, fails in prod' gap. This checks every restricted rule that is
+    visible in the manifest, cluster-independently, so the deploy-everywhere claim cannot regress.
+
+    The one people forget is seccompProfile: RuntimeDefault — it is required by `restricted` and its
+    absence is the single most common reason a hardened-looking pod is refused on managed Kubernetes.
+    """
+    job = yaml.safe_load((ROOT / "k8s" / "job.yaml").read_text(encoding="utf-8"))
+    pod = job["spec"]["template"]["spec"]
+    psc = pod.get("securityContext", {})
+    csc = pod["containers"][0].get("securityContext", {})
+
+    # seccomp must be set at pod OR container level, to RuntimeDefault (or Localhost)
+    seccomp = psc.get("seccompProfile") or csc.get("seccompProfile") or {}
+    assert seccomp.get("type") in ("RuntimeDefault", "Localhost"), "restricted requires a seccompProfile"
+
+    assert psc.get("runAsNonRoot") is True
+    assert csc.get("allowPrivilegeEscalation") is False
+    assert csc.get("capabilities", {}).get("drop") == ["ALL"]
+    # add is empty or only the one capability restricted permits
+    assert set(csc.get("capabilities", {}).get("add", [])) <= {"NET_BIND_SERVICE"}
+    assert csc.get("privileged") in (None, False)
+
+    # host namespaces and hostPath volumes are forbidden by baseline/restricted
+    for host_key in ("hostNetwork", "hostPID", "hostIPC"):
+        assert pod.get(host_key) in (None, False), f"{host_key} is forbidden under restricted"
+    for vol in pod.get("volumes", []):
+        assert "hostPath" not in vol, "hostPath volumes are forbidden under restricted"
+
+    # and the namespace must actually ENFORCE restricted, or none of the above is checked at admission
+    ns = yaml.safe_load((ROOT / "k8s" / "namespace.yaml").read_text(encoding="utf-8"))
+    assert ns["metadata"]["labels"]["pod-security.kubernetes.io/enforce"] == "restricted"
+
+
+# --------------------------------------------------------------------------- quantities
+
+
+@pytest.mark.parametrize("q,mib", [
+    ("48Mi", 48.0), ("1Gi", 1024.0), ("512Ki", 0.5), ("1048576", 1.0),
+    ("1.5Gi", 1536.0), ("1Ti", 1024 * 1024.0), ("500k", 500e3 / 2**20), ("1e6", 1e6 / 2**20),
+])
+def test_memory_quantities_parse(q, mib):
+    assert _to_mib(q) == pytest.approx(mib)
+
+
+@pytest.mark.parametrize("q", ["lots", "", None])
+def test_unparseable_quantity_is_none(q):
+    assert _to_mib(q) is None
+
+
+
+# --------------------------------------------------------------------------- zero pods, API reasons
+
+
+def test_a_deployment_scaled_to_zero_is_evidence_not_a_failed_read():
+    """⛔ EKS k8s-07: the Deployment was scaled to 0 and WARDEN reported only "no live pods match" as
+    a tool error, with no metrics at all - "scaled to zero" and "outage" looked identical."""
+    b = _backend(FakeCore(pods=[], events=[_event("ScalingReplicaSet",
+                                                  "Scaled down replica set checkout-7b to 0 from 2",
+                                                  kind="Deployment", name="checkout")]),
+                 FakeApps(replicas=0))
+    m = b.metrics(_alert())
+    assert m["pods_total"] == 0
+    assert m["pods_ready"] == 0
+    assert m["replicas_desired"] == 0
+    lines = b.logs(_alert())
+    assert any("ScalingReplicaSet" in ln and "to 0" in ln for ln in lines), lines
+
+
+def test_desired_replicas_sit_next_to_the_pods_that_exist():
+    m = _backend(FakeCore(pods=[_pod()]), FakeApps(replicas=3)).metrics(_alert())
+    assert m["pods_total"] == 1
+    assert m["replicas_desired"] == 3
+
+
+def test_an_api_failure_keeps_the_servers_reason():
+    """⛔ EKS k8s-04: a log read on a container that never started returned 400 with the reason in
+    the body; only "(400)" survived, so the read looked like a bare tool failure."""
+    from warden.k8s_backend import _api_error
+
+    class ApiException(Exception):
+        status = 400
+        body = ('{"kind":"Status","message":"container \\"checkout\\" in pod \\"checkout-54c9\\" is '
+                'waiting to start: trying and failing to pull image","reason":"BadRequest","code":400}')
+
+        def __str__(self):
+            return "(400)\nReason: Bad Request\nHTTP response headers: ..."
+
+    out = _api_error(ApiException())
+    assert out.startswith("[rejected as a bad request] (400) ")
+    assert "trying and failing to pull image" in out
+
+
+def test_a_failed_log_read_is_not_labelled_logs_twice():
+    core = FakeCore(pods=[_pod()], log_raises=True)
+    ctx = gather(_alert(), _backend(core), timeout=2.0)
+    assert ctx.tool_errors, ctx.tool_errors
+    assert not any("logs: logs:" in e for e in ctx.tool_errors), ctx.tool_errors
+
+
+# --------------------------------------------------------------------------- checks WARDEN runs itself
+
+
+class _CoreWithPrevious(FakeCore):
+    """Returns different text for the crashed container (`previous=True`), and can fail it."""
+
+    def __init__(self, *a, previous_text="fatal: out of memory", previous_status=None, **kw):
+        super().__init__(*a, **kw)
+        self.previous_calls: list[str] = []
+        self._prev_text, self._prev_status = previous_text, previous_status
+
+    def read_namespaced_pod_log(self, name, ns, container=None, **kw):
+        if kw.get("previous"):
+            self.previous_calls.append(f"{name}/{container}")
+            if self._prev_status:
+                exc = RuntimeError(f"({self._prev_status})")
+                exc.status = self._prev_status
+                raise exc
+            return NS(data=self._prev_text.encode())
+        return super().read_namespaced_pod_log(name, ns, container=container, **kw)
+
+
+def test_warden_reports_how_each_crashed_container_last_died():
+    """`kubectl describe pod`'s useful part, done by WARDEN from the pod status it already reads."""
+    pod = _pod(restarts=6, last_reason="OOMKilled", waiting="CrashLoopBackOff", ready=False)
+    pod.status.container_statuses[0].last_state.terminated.exit_code = 137
+    lines = _backend(_CoreWithPrevious(pods=[pod])).logs(_alert())
+    status = [ln for ln in lines if ln.startswith("STATUS ")]
+    assert status == [("STATUS checkout-abc/checkout: restarts 6; last exit: OOMKilled (code 137); "
+                      "now waiting: CrashLoopBackOff")], status
+
+
+def test_a_healthy_pod_adds_no_status_line_and_no_previous_read():
+    core = _CoreWithPrevious(pods=[_pod()])
+    lines = _backend(core).logs(_alert())
+    assert not any(ln.startswith("STATUS ") for ln in lines)
+    assert core.previous_calls == [], "a container that never restarted has no previous output to read"
+
+
+def test_a_restarted_container_running_again_still_says_how_it_last_died():
+    """Restarts alone earn a STATUS line: a container back up and running hides its last crash otherwise
+    (plant check for k8s_backend._container_status_line)."""
+    lines = _backend(_CoreWithPrevious(pods=[_pod(restarts=2, last_reason="Error")])).logs(_alert())
+    status = [ln for ln in lines if ln.startswith("STATUS ")]
+    assert status == ["STATUS checkout-abc/checkout: restarts 2; last exit: Error (code ?)"], status
+
+
+def test_the_crashed_containers_own_output_is_read():
+    """`kubectl logs --previous`: the fatal line is in the container that died, not the one restarted."""
+    core = _CoreWithPrevious(pods=[_pod(restarts=3, last_reason="Error")], previous_text="fatal: configuration invalid")
+    lines = _backend(core).logs(_alert())
+    assert core.previous_calls == ["checkout-abc/checkout"]
+    assert "checkout-abc/checkout (previous) fatal: configuration invalid" in lines
+
+
+def test_no_previous_container_is_the_normal_answer_not_a_failed_read():
+    core = _CoreWithPrevious(pods=[_pod(restarts=1, last_reason="Error")], previous_status=400)
+    ctx = gather(_alert(), _backend(core), timeout=2.0)
+    assert not any("(previous)" in e for e in ctx.tool_errors), ctx.tool_errors
+
+
+def test_a_forbidden_previous_read_is_reported_as_partial():
+    core = _CoreWithPrevious(pods=[_pod(restarts=1, last_reason="Error")], previous_status=403)
+    ctx = gather(_alert(), _backend(core), timeout=2.0)
+    assert any("(previous)" in e and "403" in e for e in ctx.tool_errors), ctx.tool_errors
+
+
+def test_rollout_history_lists_the_last_revisions_newest_first():
+    rs = [_rs(1, ["python:3.12-alpine"]), _rs(2, ["python:3.12.7-alpine"]), _rs(3, ["python:bad-tag"])]
+    lines = _backend(FakeCore(pods=[_pod()]), FakeApps(replicasets=rs)).logs(_alert())
+    history = [ln for ln in lines if ln.startswith("ROLLOUT ")]
+    assert [h.split(":")[0] for h in history] == [
+        "ROLLOUT revision 3 (current)", "ROLLOUT revision 2", "ROLLOUT revision 1"]
+    assert "python:bad-tag" in history[0]
+
+
+# --------------------------------------------------------------------------- HPA (sixth read)
+
+
+class FakeAutoscaling:
+    def __init__(self, hpas=(), raises=None):
+        self._hpas, self._raises = list(hpas), raises
+
+    def list_namespaced_horizontal_pod_autoscaler(self, ns, **kw):
+        assert "_request_timeout" in kw
+        if self._raises:
+            raise _ApiErr(self._raises)
+        return NS(items=self._hpas)
+
+
+def _hpa(target="checkout", kind="Deployment", lo=2, hi=10, cur=3, want=5):
+    return NS(spec=NS(scale_target_ref=NS(kind=kind, name=target), min_replicas=lo, max_replicas=hi),
+              status=NS(current_replicas=cur, desired_replicas=want))
+
+
+def test_hpa_owning_the_deployment_is_reported():
+    """A manual scale of an HPA-managed Deployment is undone within seconds - the report must know."""
+    b = KubernetesBackend(core=FakeCore(pods=[_pod()]), apps=FakeApps(),
+                          autoscaling=FakeAutoscaling([_hpa(target="other"), _hpa()]))
+    m = b.metrics(_alert())
+    assert (m["hpa_min_replicas"], m["hpa_max_replicas"]) == (2.0, 10.0)
+    assert (m["hpa_current_replicas"], m["hpa_desired_replicas"]) == (3.0, 5.0)
+
+
+def test_hpa_for_another_workload_or_kind_is_ignored():
+    b = KubernetesBackend(core=FakeCore(pods=[_pod()]), apps=FakeApps(),
+                          autoscaling=FakeAutoscaling([_hpa(target="other"), _hpa(kind="StatefulSet")]))
+    assert not any(k.startswith("hpa_") for k in b.metrics(_alert()))
+
+
+def test_hpa_forbidden_is_omitted_not_a_failed_read():
+    """An install without the sixth grant must not escalate every incident on a 403."""
+    b = KubernetesBackend(core=FakeCore(pods=[_pod()]), apps=FakeApps(),
+                          autoscaling=FakeAutoscaling(raises=403))
+    ctx = gather(_alert(), b, timeout=2.0)
+    assert ctx.tool_errors == []
+    assert not any(k.startswith("hpa_") for k in ctx.metrics)
+
+
+def test_an_earlier_incidents_events_and_logs_are_not_this_ones_evidence():
+    """Wave 4's healthy control read readiness-probe failures and start-up logs from an hour before
+    the alert (another fault's rollout) and proposed rolling catalog-api back onto a broken image.
+    Events and live container logs now reach back LOG_LOOKBACK only, like the AWS side."""
+    from datetime import UTC, datetime, timedelta
+
+    now = datetime.now(UTC)
+    events = [_event("Unhealthy", "an hour ago", ts=now - timedelta(hours=1)),
+              _event("Unhealthy", "just now", ts=now - timedelta(minutes=2))]
+    core = FakeCore(pods=[_pod()], events=events)
+    joined = " | ".join(_backend(core).logs(_alert()))
+    assert "just now" in joined
+    assert "an hour ago" not in joined
+    live = [kw for kw in core.log_kwargs if not kw.get("previous")]
+    assert live
+    assert all(kw.get("since_seconds") == 15 * 60 for kw in live)
+
+
+def test_every_page_of_the_namespaces_events_is_read():
+    """Audit A-B-M7: one page of a busy namespace's events could hold none of this workload's."""
+    class Paged(FakeCore):
+        def list_namespaced_event(self, ns, **kw):
+            self.calls.append(f"events {kw.get('_continue')}")
+            if kw.get("_continue") == "p2":
+                return NS(items=[_event("BackOff", "the workload's own event")], metadata=NS(_continue=None))
+            return NS(items=[_event("Pulled", "noise", name="other-pod")], metadata=NS(_continue="p2"))
+
+    core = Paged(pods=[_pod()])
+    lines = _backend(core).logs(_alert())
+    assert any("the workload's own event" in x for x in lines), lines
+    assert core.calls.count("events p2") == 1
+
+
+def test_another_deployment_sharing_the_name_prefix_lends_no_events():
+    """Audit A-B-L6: events were matched by name prefix, so `checkout` took `checkout-api`'s rollout events."""
+    events = [_event("ScalingReplicaSet", "ours", kind="Deployment", name="checkout"),
+              _event("ScalingReplicaSet", "theirs", kind="Deployment", name="checkout-api"),
+              _event("FailedCreate", "our rs", kind="ReplicaSet", name="checkout-7d9f8b6c4"),
+              _event("FailedCreate", "their rs", kind="ReplicaSet", name="checkout-api-5c6d7")]
+    lines = " ".join(_backend(FakeCore(pods=[_pod()], events=events)).logs(_alert()))
+    assert "ours" in lines
+    assert "our rs" in lines
+    assert "theirs" not in lines
+    assert "their rs" not in lines

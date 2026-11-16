@@ -1,0 +1,33 @@
+.FFFF.FF.                                                                [100%]
+=================================== FAILURES ===================================
+E   AssertionError: 11116 short values printed 3 to 5 times left something readable, first: ('é', (4, 0, 0))
+    assert not [('é', (4, 0, 0)), ('é', (4, 0, 1)), ('é', (4, 0, 2)), ('é', (4, 0, 3)), ('é', (4, 0, 4)), ('é', (4, 0, 5)), ...]
+/home/user/build/EV-P89-r10/fb/tests/test_mutation_runner_keywords.py:2081: AssertionError: 11116 short values printed 3 to 5 times left something readable, first: ('é', (4, 0, 0))
+E   AssertionError: 2553 long quote runs were not hidden, first: ("'", (2, 2, 2, 1))
+    assert not [("'", (2, 2, 2, 1)), ("'", (1, 5, 3, 2, 0)), ("'", (1, 3, 2, 1, 1)), ("'", (3, 2, 5, 2, 4)), ('"', (2, 3, 1, 3, 2)), ('"', (4, 4, 3, 4, 0)), ...]
+/home/user/build/EV-P89-r10/fb/tests/test_mutation_runner_keywords.py:2105: AssertionError: 2553 long quote runs were not hidden, first: ("'", (2, 2, 2, 1))
+E   AttributeError: <module 'tools.mutation_runner' from '/home/user/build/EV-P89-r10/fb/tools/mutation_runner.py'> has no attribute '_stripped_spans'
+/home/user/build/EV-P89-r10/fb/tests/test_mutation_runner_keywords.py:1804: AttributeError: <module 'tools.mutation_runner' from '/home/user/build/EV-P89-r10/fb/tools/mutation_runner.py'> has no attribute '_stripped_spans'
+E   AssertionError: 672 head or tail pieces next to '...' were left, first: ((0, 0, 0), "'\\'\\\\\\'host=db....p;x&y@z\\\\\\\\n\\\\\\'\\''")
+    assert not [((0, 0, 0), "'\\'\\\\\\'host=db....p;x&y@z\\\\\\\\n\\\\\\'\\''"), ((0, 0, 1), "'\\'\\\\\\'host=db....p;x&y@z\\\\\\\\n...4), "b'\\'\\\\\\'host=db....p;x&y@z\\\\\\\\n\\\\\\'\\''"), ((0, 0, 5), "'\\\\'host=db....p;x&y@z\\\\\\\\n\\\\''"), ...]
+/home/user/build/EV-P89-r10/fb/tests/test_mutation_runner_keywords.py:2188: AssertionError: 672 head or tail pieces next to '...' were left, first: ((0, 0, 0), "'\\'\\\\\\'host=db....p;x&y@z\\\\\\\\n\\\\\\'\\''")
+E   AssertionError: a run of backslashes where the secret has a quote mark was not hidden
+    assert 'E>ab\\\\\\c' == 'E>[REDACTED]'
+      
+      - E>[REDACTED]
+      + E>ab\\\c
+/home/user/build/EV-P89-r10/fb/tests/test_mutation_runner_keywords.py:2228: AssertionError: a run of backslashes where the secret has a quote mark was not hidden
+E   AssertionError: the stripped-text match built 0 patterns for 373 written forms: one per plain text is enough
+    assert 0 == 4
+     +  where 0 = len([])
+     +  and   4 = len(('host=db.invalid user=svc password=it\'s"\\éXy9Zq1\x01😀 50%+up;x&y@z\n', 'it\'s"\\éXy9Zq1\x01😀', 'it\'s"éXy9Zq1\x01😀', 'it'))
+     +    where ('host=db.invalid user=svc password=it\'s"\\éXy9Zq1\x01😀 50%+up;x&y@z\n', 'it\'s"\\éXy9Zq1\x01😀', 'it\'s"éXy9Zq1\x01😀', 'it') = ('host=db.invalid user=svc password=it\\\\\\\\\\\\\'s\\\\\\\\\\"\\\\\\\\\\\\xc3\\\\xa9Xy9Zq1\\\\x01\\\\xf0\\\\x9f\\\\x...'s"\\éXy9Zq1\x01😀', 'it\'s\\"éXy9Zq1\x01😀', 'it\'s"\\éXy9Zq1\x01😀', 'it\\\'s"éXy9Zq1\x01😀', 'it\'s"éXy9Zq1\x01😀', 'it').bases
+/home/user/build/EV-P89-r10/fb/tests/test_mutation_runner_keywords.py:2246: AssertionError: the stripped-text match built 0 patterns for 373 written forms: one per plain text is enough
+=========================== short test summary info ============================
+FAILED tests/test_mutation_runner_keywords.py::test_a_short_value_printed_three_to_five_times_leaves_nothing_readable
+FAILED tests/test_mutation_runner_keywords.py::test_a_short_value_that_is_only_quote_marks_and_backslashes_leaves_no_long_run
+FAILED tests/test_mutation_runner_keywords.py::test_a_head_or_tail_cut_inside_an_escape_is_hidden
+FAILED tests/test_mutation_runner_keywords.py::test_the_head_and_the_tail_next_to_dots_are_hidden_at_any_print_depth
+FAILED tests/test_mutation_runner_keywords.py::test_a_short_secret_does_not_hide_plain_text_that_has_no_quote_mark_where_its_own_has_one
+FAILED tests/test_mutation_runner_keywords.py::test_the_stripped_text_match_builds_one_pattern_per_plain_text_not_one_per_written_form
+6 failed, 3 passed, 112 deselected in 2.21s

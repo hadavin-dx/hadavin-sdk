@@ -1,0 +1,175 @@
+........................................................................ [ 55%]
+.........................................................                [100%]
+==================================== PASSES ====================================
+_______ test_typing_the_destination_host_starts_the_run[api.hubapi.com] ________
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+where the keys and passwords go (check each name before you start):
+  HubSpot key         -> api.hubapi.com
+  mail sending login  -> localhost
+  mailbox 1 login    -> localhost
+  mailbox 2 login    -> localhost
+  model key           -> none (recorded replies)
+______ test_typing_the_destination_host_starts_the_run[  API.HUBAPI.COM ] ______
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+where the keys and passwords go (check each name before you start):
+  HubSpot key         -> api.hubapi.com
+  mail sending login  -> localhost
+  mailbox 1 login    -> localhost
+  mailbox 2 login    -> localhost
+  model key           -> none (recorded replies)
+__________ test_live_check_assume_yes_is_for_a_loopback_address_only ___________
+----------------------------- Captured stdout call -----------------------------
+models: 1, calls per model: 1, prices dated 2026-01-01
+expected MAXIMUM cost of this whole run: US$0.0009 (caps: run 1, total 3)
+the key goes to: 127.0.0.1 (--base-url); the leads' e-mail addresses are made up
+________________ test_live_check_typing_the_host_starts_the_run ________________
+----------------------------- Captured stdout call -----------------------------
+models: 1, calls per model: 1, prices dated 2026-01-01
+expected MAXIMUM cost of this whole run: US$0.0009 (caps: run 1, total 3)
+the key goes to: localhost (--base-url); the leads' e-mail addresses are made up
+=========================== short test summary info ============================
+PASSED tests/test_start_prompt_hardening.py::test_real_check_refuses_a_stdin_that_is_not_a_terminal[y\n]
+PASSED tests/test_start_prompt_hardening.py::test_real_check_refuses_a_stdin_that_is_not_a_terminal[yes\n]
+PASSED tests/test_start_prompt_hardening.py::test_real_check_refuses_a_stdin_that_is_not_a_terminal[n\n]
+PASSED tests/test_start_prompt_hardening.py::test_real_check_refuses_a_stdin_that_is_not_a_terminal[]
+PASSED tests/test_start_prompt_hardening.py::test_real_check_refuses_a_stdin_that_is_not_a_terminal[api.hubapi.com\n]
+PASSED tests/test_start_prompt_hardening.py::test_real_check_dry_fakes_without_assume_yes_also_needs_a_terminal
+PASSED tests/test_start_prompt_hardening.py::test_real_check_assume_yes_with_dry_fakes_is_the_one_scripted_use
+PASSED tests/test_start_prompt_hardening.py::test_real_check_a_real_run_never_takes_assume_yes
+PASSED tests/test_start_prompt_hardening.py::test_a_terminal_reaches_the_question_and_a_wrong_answer_stops
+PASSED tests/test_start_prompt_hardening.py::test_only_the_destination_host_starts_the_real_check_never_a_y[y]
+PASSED tests/test_start_prompt_hardening.py::test_only_the_destination_host_starts_the_real_check_never_a_y[Y]
+PASSED tests/test_start_prompt_hardening.py::test_only_the_destination_host_starts_the_real_check_never_a_y[yes]
+PASSED tests/test_start_prompt_hardening.py::test_only_the_destination_host_starts_the_real_check_never_a_y[]
+PASSED tests/test_start_prompt_hardening.py::test_only_the_destination_host_starts_the_real_check_never_a_y[ ]
+PASSED tests/test_start_prompt_hardening.py::test_only_the_destination_host_starts_the_real_check_never_a_y[n]
+PASSED tests/test_start_prompt_hardening.py::test_only_the_destination_host_starts_the_real_check_never_a_y[yes\ty]
+PASSED tests/test_start_prompt_hardening.py::test_only_the_destination_host_starts_the_real_check_never_a_y[api.hubapi.com.evil.test]
+PASSED tests/test_start_prompt_hardening.py::test_only_the_destination_host_starts_the_real_check_never_a_y[x.api.hubapi.com]
+PASSED tests/test_start_prompt_hardening.py::test_typing_the_destination_host_starts_the_run[api.hubapi.com]
+PASSED tests/test_start_prompt_hardening.py::test_typing_the_destination_host_starts_the_run[  API.HUBAPI.COM ]
+PASSED tests/test_start_prompt_hardening.py::test_the_banner_shows_where_each_key_goes_before_the_question
+PASSED tests/test_start_prompt_hardening.py::test_the_banner_shows_the_model_host_with_the_live_model
+PASSED tests/test_start_prompt_hardening.py::test_an_unreplaced_or_odd_mailbox_host_is_refused_before_the_question
+PASSED tests/test_start_prompt_hardening.py::test_stdin_is_a_terminal_only_when_it_says_so[None]
+PASSED tests/test_start_prompt_hardening.py::test_stdin_is_a_terminal_only_when_it_says_so[stdin1]
+PASSED tests/test_start_prompt_hardening.py::test_stdin_is_a_terminal_only_when_it_says_so[stdin2]
+PASSED tests/test_start_prompt_hardening.py::test_stdin_is_a_terminal_only_when_it_says_so[stdin3]
+PASSED tests/test_start_prompt_hardening.py::test_stdin_is_a_terminal_only_when_it_says_so[stdin4]
+PASSED tests/test_start_prompt_hardening.py::test_real_streams_that_are_not_terminals
+PASSED tests/test_start_prompt_hardening.py::test_a_real_pseudo_terminal_is_a_terminal_on_linux
+PASSED tests/test_start_prompt_hardening.py::test_windows_needs_a_console_not_just_isatty
+PASSED tests/test_start_prompt_hardening.py::test_a_failing_console_probe_is_not_a_terminal
+PASSED tests/test_start_prompt_hardening.py::test_ask_to_start_never_reads_what_is_not_a_terminal_and_never_takes_y
+PASSED tests/test_start_prompt_hardening.py::test_live_check_refuses_a_stdin_that_is_not_a_terminal[y\n]
+PASSED tests/test_start_prompt_hardening.py::test_live_check_refuses_a_stdin_that_is_not_a_terminal[yes\n]
+PASSED tests/test_start_prompt_hardening.py::test_live_check_refuses_a_stdin_that_is_not_a_terminal[n\n]
+PASSED tests/test_start_prompt_hardening.py::test_live_check_refuses_a_stdin_that_is_not_a_terminal[]
+PASSED tests/test_start_prompt_hardening.py::test_live_check_refuses_a_stdin_that_is_not_a_terminal[127.0.0.1\n]
+PASSED tests/test_start_prompt_hardening.py::test_live_check_assume_yes_is_for_a_loopback_address_only
+PASSED tests/test_start_prompt_hardening.py::test_live_check_assume_yes_refuses_a_loopback_lookalike[http://127.0.0.1.evil.test]
+PASSED tests/test_start_prompt_hardening.py::test_live_check_assume_yes_refuses_a_loopback_lookalike[http://localhost.evil.test]
+PASSED tests/test_start_prompt_hardening.py::test_live_check_assume_yes_refuses_a_loopback_lookalike[http://127.0.0.1@evil.test]
+PASSED tests/test_start_prompt_hardening.py::test_live_check_assume_yes_refuses_a_loopback_lookalike[http://[::1]@evil.test]
+PASSED tests/test_start_prompt_hardening.py::test_live_check_assume_yes_refuses_a_loopback_lookalike[http://0.0.0.0]
+PASSED tests/test_start_prompt_hardening.py::test_live_check_assume_yes_refuses_a_loopback_lookalike[http://127.1]
+PASSED tests/test_start_prompt_hardening.py::test_live_check_assume_yes_refuses_a_loopback_lookalike[http://2130706433]
+PASSED tests/test_start_prompt_hardening.py::test_live_check_assume_yes_refuses_a_loopback_lookalike[http://localhost.]
+PASSED tests/test_start_prompt_hardening.py::test_live_check_assume_yes_refuses_a_loopback_lookalike[http://127.0.0.1%2eevil.test]
+PASSED tests/test_start_prompt_hardening.py::test_live_check_has_no_default_address
+PASSED tests/test_start_prompt_hardening.py::test_live_check_a_closed_terminal_is_a_stop_not_a_traceback
+PASSED tests/test_start_prompt_hardening.py::test_live_check_a_y_or_a_wrong_host_stops[y]
+PASSED tests/test_start_prompt_hardening.py::test_live_check_a_y_or_a_wrong_host_stops[yes]
+PASSED tests/test_start_prompt_hardening.py::test_live_check_a_y_or_a_wrong_host_stops[]
+PASSED tests/test_start_prompt_hardening.py::test_live_check_a_y_or_a_wrong_host_stops[n]
+PASSED tests/test_start_prompt_hardening.py::test_live_check_a_y_or_a_wrong_host_stops[localhost.evil.test]
+PASSED tests/test_start_prompt_hardening.py::test_live_check_typing_the_host_starts_the_run
+PASSED tests/test_start_prompt_hardening.py::test_real_check_refuses_an_address_the_settings_do_not_name[absent-DESK_HUBSPOT_BASE_URL]
+PASSED tests/test_start_prompt_hardening.py::test_real_check_refuses_an_address_the_settings_do_not_name[absent-REAL_IMAP_1_HOST]
+PASSED tests/test_start_prompt_hardening.py::test_real_check_refuses_an_address_the_settings_do_not_name[absent-REAL_IMAP_2_HOST]
+PASSED tests/test_start_prompt_hardening.py::test_real_check_refuses_an_address_the_settings_do_not_name[blank-DESK_HUBSPOT_BASE_URL]
+PASSED tests/test_start_prompt_hardening.py::test_real_check_refuses_an_address_the_settings_do_not_name[blank-REAL_IMAP_1_HOST]
+PASSED tests/test_start_prompt_hardening.py::test_real_check_refuses_an_address_the_settings_do_not_name[blank-REAL_IMAP_2_HOST]
+PASSED tests/test_start_prompt_hardening.py::test_real_check_the_live_model_address_must_be_named_too
+PASSED tests/test_start_prompt_hardening.py::test_unnamed_remote_default_unit
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[__import__]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[alias of input]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[breakpoint]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[builtins.input]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[click.confirm]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[eval]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[fileinput]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[for line in sys.stdin]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[from builtins import input as i]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[from getpass import getpass as g]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[from msvcrt import getwch]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[from sys import stdin]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[getattr]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[getpass.getpass]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[import getpass as gp]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[import sys as s]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[importlib]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[input]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[input as a callback]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[io.open(0)]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[msvcrt.getch]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[open CONIN$]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[open('/dev/stdin')]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[open(0)]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[os.fdopen(0)]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[os.read(0, n)]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[pdb]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[rich prompt]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[shell read in a string]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[sys.__stdin__]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[sys.stdin.buffer.read]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[sys.stdin.read]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[sys.stdin.readline]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[typer.prompt]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_does_not_cry_wolf[a child's pipe]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_does_not_cry_wolf[a descriptor in a variable]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_does_not_cry_wolf[a word]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_does_not_cry_wolf[an attribute named input]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_does_not_cry_wolf[an option name]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_does_not_cry_wolf[isatty only]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_does_not_cry_wolf[msvcrt locking]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_does_not_cry_wolf[no stdin for the child]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_does_not_cry_wolf[select on sockets]
+PASSED tests/test_start_prompt_hardening.py::test_the_guard_does_not_cry_wolf[stdout and stderr]
+PASSED tests/test_start_prompt_hardening.py::test_the_shell_guard_finds_a_prompt[/dev/tty]
+PASSED tests/test_start_prompt_hardening.py::test_the_shell_guard_finds_a_prompt[Console.ReadLine]
+PASSED tests/test_start_prompt_hardening.py::test_the_shell_guard_finds_a_prompt[Get-Credential]
+PASSED tests/test_start_prompt_hardening.py::test_the_shell_guard_finds_a_prompt[Host.UI.Prompt]
+PASSED tests/test_start_prompt_hardening.py::test_the_shell_guard_finds_a_prompt[Read-Host]
+PASSED tests/test_start_prompt_hardening.py::test_the_shell_guard_finds_a_prompt[pause]
+PASSED tests/test_start_prompt_hardening.py::test_the_shell_guard_finds_a_prompt[read -p]
+PASSED tests/test_start_prompt_hardening.py::test_the_shell_guard_finds_a_prompt[read -p with a quoted prompt and no option]
+PASSED tests/test_start_prompt_hardening.py::test_the_shell_guard_finds_a_prompt[read -r in a loop]
+PASSED tests/test_start_prompt_hardening.py::test_the_shell_guard_finds_a_prompt[read after a semicolon]
+PASSED tests/test_start_prompt_hardening.py::test_the_shell_guard_finds_a_prompt[read after then]
+PASSED tests/test_start_prompt_hardening.py::test_the_shell_guard_finds_a_prompt[read in a pipe]
+PASSED tests/test_start_prompt_hardening.py::test_the_shell_guard_finds_a_prompt[select]
+PASSED tests/test_start_prompt_hardening.py::test_the_shell_guard_finds_a_prompt[set /p]
+PASSED tests/test_start_prompt_hardening.py::test_the_shell_guard_does_not_cry_wolf[a comment]
+PASSED tests/test_start_prompt_hardening.py::test_the_shell_guard_does_not_cry_wolf[a path]
+PASSED tests/test_start_prompt_hardening.py::test_the_shell_guard_does_not_cry_wolf[a word in a message]
+PASSED tests/test_start_prompt_hardening.py::test_the_shell_guard_does_not_cry_wolf[readonly]
+PASSED tests/test_start_prompt_hardening.py::test_only_the_terminal_guard_reads_a_person_in_the_whole_repository
+PASSED tests/test_start_prompt_hardening.py::test_no_shell_script_asks_a_question
+PASSED tests/test_start_prompt_hardening.py::test_a_caller_checks_for_a_terminal_before_it_asks_and_the_guard_does_too
+129 passed in 1.47s
+rc=0 wall=2s

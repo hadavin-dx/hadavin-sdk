@@ -1,0 +1,202 @@
+.............................................s.......................... [  1%]
+........................................................................ [  2%]
+........................................................................ [  3%]
+........................................................................ [  4%]
+........................................................................ [  5%]
+........................................................................ [  6%]
+........................................................................ [  7%]
+........................................................................ [  9%]
+........................................................................ [ 10%]
+........................................................................ [ 11%]
+........................................................................ [ 12%]
+........................................................................ [ 13%]
+........................................................................ [ 14%]
+........................................................................ [ 15%]
+........................................................................ [ 17%]
+........................................................................ [ 18%]
+........................................................................ [ 19%]
+........................................................................ [ 20%]
+.........................................F..F........................... [ 21%]
+........................................................................ [ 22%]
+........................................................................ [ 23%]
+........................................................................ [ 25%]
+........................................................................ [ 26%]
+........................................................................ [ 27%]
+........................................................................ [ 28%]
+........................................................................ [ 29%]
+........................................................................ [ 30%]
+........................................................................ [ 31%]
+............................................s........................... [ 33%]
+........................................................................ [ 34%]
+........................................................................ [ 35%]
+........................................................................ [ 36%]
+...............................s........................................ [ 37%]
+........................................................................ [ 38%]
+........................................................................ [ 39%]
+........................................................................ [ 41%]
+........................................................................ [ 42%]
+........................................................................ [ 43%]
+.....................................................F.................. [ 44%]
+........................................................................ [ 45%]
+........................................................................ [ 46%]
+........................................................................ [ 47%]
+........................................................................ [ 49%]
+........................................................................ [ 50%]
+........................................................................ [ 51%]
+........................................................................ [ 52%]
+........................................................................ [ 53%]
+........................................................................ [ 54%]
+........................................................................ [ 55%]
+........................................................................ [ 57%]
+........................................................................ [ 58%]
+........................................................................ [ 59%]
+.....................................................ss............
+REPLANT: 145 of 145 shapes found; missed: []
+..... [ 60%]
+........................................................................ [ 61%]
+........................................................................ [ 62%]
+........................................................................ [ 63%]
+........................................................................ [ 65%]
+........................................................................ [ 66%]
+........................................................................ [ 67%]
+........................................................................ [ 68%]
+........................................................................ [ 69%]
+........................................................................ [ 70%]
+........................................................................ [ 71%]
+........................................................................ [ 73%]
+........................................................................ [ 74%]
+........................................................................ [ 75%]
+........................................................................ [ 76%]
+........................................................................ [ 77%]
+........................................................................ [ 78%]
+........................................................................ [ 79%]
+........................................................................ [ 81%]
+........................................................................ [ 82%]
+........................................................................ [ 83%]
+........................................................................ [ 84%]
+........................................................................ [ 85%]
+........................................................................ [ 86%]
+........................................................................ [ 87%]
+........................................................................ [ 89%]
+.....................................................................s.. [ 90%]
+........................................................................ [ 91%]
+........................................................................ [ 92%]
+........................................................................ [ 93%]
+........................................................................ [ 94%]
+........................................................................ [ 95%]
+........................................................................ [ 97%]
+........................................................................ [ 98%]
+................................s....................................... [ 99%]
+.........................................                                [100%]
+=================================== FAILURES ===================================
+_______________________ test_no_demo_only_outside_loader _______________________
+
+    def test_no_demo_only_outside_loader() -> None:
+        """src/ may name demo_only only in loader.py; tests/, scripts/, conftest.py, README and docs may."""
+        offenders = [
+            str(p.relative_to(REPO))
+            for p in sorted(SRC.rglob("*"))
+            if p.is_file()
+            and p.suffix in (".py", ".sql", ".md", ".txt", ".toml")
+            and p.name != "loader.py"
+            and "demo_only" in p.read_text(encoding="utf-8", errors="replace")
+        ]
+>       assert not offenders, f"src/ files that name demo_only (only loader.py may): {offenders}"
+E       AssertionError: src/ files that name demo_only (only loader.py may): ['src/lead_desk/loopback.py']
+E       assert not ['src/lead_desk/loopback.py']
+
+tests/test_hygiene.py:73: AssertionError
+___________________________ test_hygiene_scan_public ___________________________
+
+tmp_path = PosixPath('/home/user/build/rr6/out/EV7U/tmp-full/pytest-of-unknown/pytest-0/test_hygiene_scan_public0')
+
+    def test_hygiene_scan_public(tmp_path: Path) -> None:
+        """Patterns + exceptions pipeline with one canary per rule, on the tree; gitleaks on tree and history (--redact)."""
+        patterns, exceptions, toml = REPO / "patterns.txt", REPO / "exceptions.txt", REPO / ".gitleaks.toml"
+        for f in (patterns, exceptions, toml):
+            assert f.is_file(), f"missing {f.name} (this test needs it)"
+        # 1. canaries: a temp repo with one planted value per kind, plus values that must be allowed
+        canary = tmp_path / "canary"
+        canary.mkdir()
+        _git(canary, "init", "-q")
+        planted = "\n".join(f"{k}: {v}" for k, v in hygiene.CANARIES.items()) + "\n"
+        (canary / "planted.txt").write_text(planted, encoding="utf-8")
+        (canary / "allowed.txt").write_text("\n".join(f"x {v} y" for v in hygiene.ALLOWED) + "\n", encoding="utf-8")
+        _git(canary, "add", ".")
+        reported = hygiene.pipeline(canary, patterns, exceptions)
+        matches = [ln.split(":", 2)[2].strip() for ln in reported if ln.startswith("planted.txt:")]
+        for kind, value in hygiene.CANARIES.items():
+            assert any(m and m in value for m in matches), f"canary not found, rule silently stopped matching: {kind}"
+        assert not [ln for ln in reported if ln.startswith("allowed.txt:")], "an allowed value was reported"
+        for pat in hygiene.read_lines(patterns):  # every rule in the file must have a canary that it matches
+            assert any(re.search(pat, v) for v in hygiene.CANARIES.values()), f"rule without a canary: {pat}"
+        # 2. the real tree
+        left = hygiene.pipeline(REPO, patterns, exceptions)
+>       assert not left, "hardcoded literals found (file:line:match):\n" + "\n".join(left)
+E       AssertionError: hardcoded literals found (file:line:match):
+E         src/lead_desk/loopback.py:12:0.0.0.0
+E         tests/test_r7u_b_findings.py:269:t9_a_counter_the_desk_could_not_write_ends_the_real_run_as_failed
+E         tests/test_r7u_c_findings.py:127:y:\n
+E         tests/test_r7u_c_findings.py:129:r:\n
+E       assert not ['src/lead_desk/loopback.py:12:0.0.0.0', 'tests/test_r7u_b_findings.py:269:t9_a_counter_the_desk_could_not_write_ends_the_real_run_as_failed', 'tests/test_r7u_c_findings.py:127:y:\\n', 'tests/test_r7u_c_findings.py:129:r:\\n']
+
+tests/test_hygiene.py:147: AssertionError
+_______________________ test_only_loader_names_demo_only _______________________
+
+    def test_only_loader_names_demo_only() -> None:
+        offenders = [
+            str(p.relative_to(REPO))
+            for p in sorted((REPO / "src").rglob("*.py"))
+            if "demo_only" in p.read_text(encoding="utf-8") and p.name != "loader.py"
+        ]
+>       assert not offenders, offenders
+E       AssertionError: ['src/lead_desk/loopback.py']
+E       assert not ['src/lead_desk/loopback.py']
+
+tests/test_portal_demo.py:308: AssertionError
+=============================== warnings summary ===============================
+tests/test_book_folder_refusals.py: 9 warnings
+tests/test_special_output_files.py: 41 warnings
+  /usr/lib/python3.12/multiprocessing/popen_fork.py:66: DeprecationWarning: This process (pid=8173) is multi-threaded, use of fork() may lead to deadlocks in the child.
+    self.pid = os.fork()
+
+tests/test_r7_mail_context.py::test_f4_the_default_context_passes_and_an_old_minimum_version_is_refused
+  /home/user/build/rr6/out/EV7U/stage/tests/test_r7_mail_context.py:401: DeprecationWarning: ssl.TLSVersion.TLSv1 is deprecated
+    ctx.minimum_version = ssl.TLSVersion.TLSv1
+
+tests/test_r7_mail_context.py::test_f4_the_outbox_refuses_such_a_context_at_construction
+  /home/user/build/rr6/out/EV7U/stage/tests/test_r7_mail_context.py:421: DeprecationWarning: ssl.TLSVersion.TLSv1 is deprecated
+    ctx.minimum_version = ssl.TLSVersion.TLSv1
+
+tests/test_r7c_mail6_killers.py::test_m6_d05_a_mailbox_connection_refused_for_its_tls_version_gets_no_logout_either
+  /home/user/build/rr6/out/EV7U/stage/tests/test_r7c_mail6_killers.py:95: DeprecationWarning: ssl.TLSVersion.TLSv1 is deprecated
+    srv._ctx.minimum_version = ssl.TLSVersion.TLSv1
+
+tests/test_r7c_mail6_killers.py::test_m6_d05_a_mailbox_connection_refused_for_its_tls_version_gets_no_logout_either
+  /home/user/build/rr6/out/EV7U/stage/tests/test_r7c_mail6_killers.py:96: DeprecationWarning: ssl.TLSVersion.TLSv1_1 is deprecated
+    srv._ctx.maximum_version = ssl.TLSVersion.TLSv1_1
+
+tests/test_r7m_new.py::test_f1_smtp_login_never_goes_out_over_a_tls_version_below_1_2[ssl]
+tests/test_r7m_new.py::test_f1_smtp_login_never_goes_out_over_a_tls_version_below_1_2[starttls]
+tests/test_r7m_new.py::test_f1_imap_login_never_goes_out_over_a_tls_version_below_1_2
+  /home/user/build/rr6/out/EV7U/stage/tests/test_r7m_new.py:44: DeprecationWarning: ssl.TLSVersion.TLSv1 is deprecated
+    server_ctx.minimum_version = ssl.TLSVersion.TLSv1
+
+tests/test_r7m_new.py::test_f1_smtp_login_never_goes_out_over_a_tls_version_below_1_2[ssl]
+tests/test_r7m_new.py::test_f1_smtp_login_never_goes_out_over_a_tls_version_below_1_2[starttls]
+tests/test_r7m_new.py::test_f1_imap_login_never_goes_out_over_a_tls_version_below_1_2
+  /home/user/build/rr6/out/EV7U/stage/tests/test_r7m_new.py:45: DeprecationWarning: ssl.TLSVersion.TLSv1_1 is deprecated
+    server_ctx.maximum_version = ssl.TLSVersion.TLSv1_1
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_hygiene.py::test_no_demo_only_outside_loader - AssertionErr...
+FAILED tests/test_hygiene.py::test_hygiene_scan_public - AssertionError: hard...
+FAILED tests/test_portal_demo.py::test_only_loader_names_demo_only - Assertio...
+SKIPPED [1] tests/test_book_folder_refusals.py:237: root can read any file
+SKIPPED [1] tests/test_n8n_api_url.py:524: root (and Windows) can read a file with no permissions
+SKIPPED [1] tests/test_path_confinement.py:285: ntpath.isreserved needs Python 3.13
+SKIPPED [2] tests/test_r7b_fake_deep_and_head.py:58: only the model fake has /v1/messages
+SKIPPED [1] tests/test_server_hardening.py:224: measurement run: set LEAD_DESK_LOAD_N
+SKIPPED [1] tests/test_stall_eviction.py:526: the reset that destroys the reply happens on Windows only
+3 failed, 6295 passed, 7 skipped, 60 warnings in 3768.88s (1:02:48)

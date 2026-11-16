@@ -1,0 +1,52 @@
+FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF                                                                                                                                                                                                                                                    [100%]
+========================================================================================================================================= short test summary info ==========================================================================================================================================
+FAILED tests/test_strict_flags.py::test_a_safety_flag_loads_only_from_a_real_bool[made_up_data_only] - hadavin_sdk.errors.ConfigError: 1 validation error for Config
+FAILED tests/test_strict_flags.py::test_a_safety_flag_loads_only_from_a_real_bool[allow_insecure_loopback] - Failed: DID NOT RAISE any of (ConfigError, ValidationError)
+FAILED tests/test_strict_flags.py::test_a_safety_flag_loads_only_from_a_real_bool[k1b.redact] - Failed: DID NOT RAISE any of (ConfigError, ValidationError)
+FAILED tests/test_strict_flags.py::test_a_safety_flag_loads_only_from_a_real_bool[retention.hold_labelled] - Failed: DID NOT RAISE any of (ConfigError, ValidationError)
+FAILED tests/test_strict_flags.py::test_a_safety_flag_loads_only_from_a_real_bool[anchor.retention_ack] - Failed: DID NOT RAISE any of (ConfigError, ValidationError)
+FAILED tests/test_strict_flags.py::test_a_safety_flag_loads_only_from_a_real_bool[store.iam_auth] - Failed: DID NOT RAISE any of (ConfigError, ValidationError)
+FAILED tests/test_strict_flags.py::test_a_safety_flag_loads_only_from_a_real_bool[openai_compat.max_completion_tokens] - Failed: DID NOT RAISE any of (ConfigError, ValidationError)
+FAILED tests/test_strict_flags.py::test_a_safety_flag_loads_only_from_a_real_bool[tool.cluster_http] - Failed: DID NOT RAISE any of (ConfigError, ValidationError)
+FAILED tests/test_strict_flags.py::test_a_safety_flag_loads_only_from_a_real_bool[contract.targets_production] - Failed: DID NOT RAISE any of (ConfigError, ValidationError)
+FAILED tests/test_strict_flags.py::test_a_safety_flag_loads_only_from_a_real_bool[contract.changes_spend] - Failed: DID NOT RAISE any of (ConfigError, ValidationError)
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[yes-GateRun] - Failed: DID NOT RAISE ValidationError
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[yes-ReplayRecord] - Failed: DID NOT RAISE ValidationError
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[yes-KillSwitch] - Failed: DID NOT RAISE ValidationError
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[yes-Verdict] - Failed: DID NOT RAISE ValidationError
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[yes-RunResult] - Failed: DID NOT RAISE ValidationError
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[yes-ToolCallRecord] - Failed: DID NOT RAISE ValidationError
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[1-GateRun] - Failed: DID NOT RAISE ValidationError
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[1-ReplayRecord] - Failed: DID NOT RAISE ValidationError
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[1-KillSwitch] - Failed: DID NOT RAISE ValidationError
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[1-Verdict] - Failed: DID NOT RAISE ValidationError
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[1-RunResult] - Failed: DID NOT RAISE ValidationError
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[1-ToolCallRecord] - Failed: DID NOT RAISE ValidationError
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[true-GateRun] - Failed: DID NOT RAISE ValidationError
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[true-ReplayRecord] - Failed: DID NOT RAISE ValidationError
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[true-KillSwitch] - Failed: DID NOT RAISE ValidationError
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[true-Verdict] - Failed: DID NOT RAISE ValidationError
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[true-RunResult] - Failed: DID NOT RAISE ValidationError
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[true-ToolCallRecord] - Failed: DID NOT RAISE ValidationError
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[on-GateRun] - Failed: DID NOT RAISE ValidationError
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[on-ReplayRecord] - Failed: DID NOT RAISE ValidationError
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[on-KillSwitch] - Failed: DID NOT RAISE ValidationError
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[on-Verdict] - Failed: DID NOT RAISE ValidationError
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[on-RunResult] - Failed: DID NOT RAISE ValidationError
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[on-ToolCallRecord] - Failed: DID NOT RAISE ValidationError
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[no-GateRun] - Failed: DID NOT RAISE ValidationError
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[no-ReplayRecord] - Failed: DID NOT RAISE ValidationError
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[no-KillSwitch] - Failed: DID NOT RAISE ValidationError
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[no-Verdict] - Failed: DID NOT RAISE ValidationError
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[no-RunResult] - Failed: DID NOT RAISE ValidationError
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[no-ToolCallRecord] - Failed: DID NOT RAISE ValidationError
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[0-GateRun] - Failed: DID NOT RAISE ValidationError
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[0-ReplayRecord] - Failed: DID NOT RAISE ValidationError
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[0-KillSwitch] - Failed: DID NOT RAISE ValidationError
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[0-Verdict] - Failed: DID NOT RAISE ValidationError
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[0-RunResult] - Failed: DID NOT RAISE ValidationError
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[0-ToolCallRecord] - Failed: DID NOT RAISE ValidationError
+FAILED tests/test_strict_flags.py::test_a_hand_edited_gate_line_cannot_qualify_an_agent - Failed: DID NOT RAISE ConfigError
+FAILED tests/test_strict_flags.py::test_a_hand_edited_replay_line_cannot_qualify_an_agent - Failed: DID NOT RAISE ConfigError
+FAILED tests/test_strict_flags.py::test_every_bool_field_is_strict_and_every_module_imports - AssertionError: loose bool fields (make them StrictBool): ['hadavin_sdk.actions.contract.ActionContract.changes_spend', 'hadavin_sdk.actions.contract.ActionContract.targets_production', 'hadavin_sdk.back...
+49 failed in 2.73s

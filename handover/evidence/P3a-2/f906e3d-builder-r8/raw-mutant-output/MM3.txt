@@ -1,0 +1,14 @@
+### tests/test_migration_numbers_guards.py::test_released_problems_catches_an_edit_a_deletion_and_a_low_new_number rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+____ test_released_problems_catches_an_edit_a_deletion_and_a_low_new_number ____
+tests/test_migration_numbers_guards.py:410: in test_released_problems_catches_an_edit_a_deletion_and_a_low_new_number
+    assert mn.released_problems(tmp_path, manifest) == [
+E   AssertionError: assert [] == ['0002_zz: a ...one (0002_b)']
+E     
+E     Right contains one more item: '0002_zz: a new migration is numbered at or below the highest released one (0002_b)'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_migration_numbers_guards.py::test_released_problems_catches_an_edit_a_deletion_and_a_low_new_number
+1 failed in 0.37s
+

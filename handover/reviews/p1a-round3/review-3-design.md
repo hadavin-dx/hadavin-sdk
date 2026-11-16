@@ -1,0 +1,41 @@
+# P1a PR 63, review round 3, design critic (egm:egm-design), head 2f818f2
+Reviewer ran nothing; read code, CHANGELOG, diff and the lead's evidence files 10-15 and reviews 1-2. NOT READ by the reviewer: the ticket P1a.md and P1 BN-12..17 (the lead gave a wrong path: tickets are under handover\tickets\ of the cloud branch worktree; the path used did not resolve), build notes, fixtures, most of tests/test_textnorm.py, tools/mutation_runner. Saved by the lead from the hand-back; wording condensed, content unchanged.
+Verdict: NOT CLEAN. 1 Blocker, 3 Major, 4 Minor, 2 Nit.
+
+## F1 BLOCKER: U+0345 after a Greek letter is a one-character evasion of name matching and redaction views
+textnorm.py:268-285 (_subscript_iota), called at :289 for every mode. Example: "admin" written as Greek alpha + U+0345 + "dmin": key "aidmin" != "admin", so same_person, squeeze and the blocklist miss it; "passw" + omicron + U+0345 + "rd=" folds to "passwoird=" and the keyword scan misses it. A run of marks gives a run of "i" of attacker's choosing. has_mixed_script is no backstop for all-Greek look-alike words. This breaks the property review 2 demanded (any mark inserted leaves the key unchanged); the docstring admits it. False split in the other direction: the same polytonic Greek name with/without the subscript gets two keys.
+Suggested fix: do not let one key carry both policies: identity_keys(raw) returns policy A (U+0345 always dropped) and policy B (iota rule); same_person / allow_equal true if A==A or B==B; every redaction view scans both; squeeze likewise. At minimum the always-drop key for redaction and blocklists, with case symmetry for Greek capitals a separate comparator. Tests: Greek look-alike + U+0345 equals the Latin word via same_person and via redaction; the mark-insertion property over EVERY Greek letter; remove the blanket exemption (F9).
+LEAD VERIFICATION (evidence-lead-16-probe-3.txt, Windows py3.13.3 unidata 15.1.0): identity_key('ᾳdmin') = 'aidmin' vs 'admin'; same_person False; squeeze 'AIDMIN' vs 'ADMIN'. CONFIRMED.
+
+## F2 MAJOR: P1a ships the Unicode 18.0.0 table against a 15.1.0 pin; characters unassigned in 15.1.0 are dropped before the table is looked at
+_confusables.py:1-3; textnorm.py:151 and :263-265 (Cn dropped before lookup); tests/test_textnorm_generator.py:73-80 allows Cn table sources and only prints their count. Reviewer's consequence: table entries whose source is new since 15.1.0 are dead, and a look-alike letter from Unicode 16+ is silently dropped, not folded ("b" + new look-alike of o + "b" gives "bb", not "bob").
+LEAD VERIFICATION: single-character table sources that are Cn on this interpreter: 0 (probe 3). So the "dead entries" part is NOT confirmed (the generator already excludes them). The input-side evasion (a Unicode 16-18 look-alike typed on a 15.1.0 interpreter is unassigned and dropped by design) is still true in principle and is a policy question for P1b. Fix asked: assert the count in a test; decide the policy for Cn input (drop vs mark) with a hostile-input test; regenerate the table from the data version matching the pin; say plainly in P1b.
+
+## F3 MAJOR: CODE-LAST rung table missing from the PR
+No rung table or "CODE-LAST n/a" in CHANGELOG, diff or src. Higher rungs to name: ICU SpoofChecker.getSkeleton, PyPI confusables packages, unicodedata + vendored UTS #39 table (chosen). Reviewer: KEEP-CODE for a thin wrapper is defensible (identity/redaction is a listed guarantee; the case-symmetric idempotent key, the U+0345 policy and the version tag are not provided by ICU or libraries); not defensible without a table: the size (generator, 53 mutants, 4 fixtures, 6 test files for one function) and the dead constant TEXTNORM_MAX_PASSES (defaults.py:139-141), speculative for P1b. Fix: table in the PR description or CHANGELOG with source and date per rung; move TEXTNORM_MAX_PASSES to P1b.
+
+## F4 MAJOR (class-level): other canonical forms do not fold like the new function
+runmap.py:276-295 (canonical, _canonical_view): NFKC and drops only Cf; keeps Mn (U+034F), Cc, invisible filler letters (U+3164, U+115F/1160, U+2800, U+FFA0), private use; no look-alike or digit fold. evidence.py:57,91-98 compares grounding with canonical().casefold(). egress.py:16 NFKC + lower() on a host (an allow path: exact matching is right, not a finding). Until the redactor uses fold, "pass" + U+034F + "word" and Cyrillic look-alikes pass the redaction scan that fold would catch. Fix: P1b lists runmap.canonical and evidence.py as migration targets, with a test that every redaction view equals fold's view on the mark and look-alike corpus; record in the ledger now.
+
+## F5 MINOR: the pin guard is advisory
+Only require_pinned_unidata() fails closed (textnorm.py:400-420); identity_key / same_person / fold run on 3.12 (Unicode 15.0.0) or 3.14. A key stored on 3.13 and compared on another version never matches: fail-open for a DENY. Not attacker-exploitable; nothing stores a key in v1; the docstring overstates. Fix: P1b test that app.build fails on an unpinned interpreter; consider identity_key raising UnidataMismatch unless allow_unpinned=True (demo stage only). Tag handling is sound.
+
+## F6 MINOR: the size check does linear work before refusing
+textnorm.py:233-237, 240-249: _weight runs Counter(text) over the whole input and about 6 normalise/translate operations per distinct character before comparing to the cap. A 1.1M-distinct-character string (about 4 MB) costs seconds before TextTooLong; the perf test covers one repeated character only. Every weight is at least 1. Fix: cheap len(text) > TEXTNORM_MAX_CHARS check first; perf row for a huge distinct-character input.
+
+## F7 MINOR: evidence gaps
+evidence-12 Windows tests ran on CPython 3.12.14 (Unicode 15.0.0): 408 passed, 5 xfailed; Linux 429 passed on 3.12 and 3.13; the 21-test difference is unexplained; Windows evidence on the pinned 3.13.3 is only the probe files; the Windows mutant run shows no interpreter; the count of unassigned table sources is in no evidence file. (LEAD NOTE: the reviewer is right: my Windows worktree venv was created with 3.12.14, not the pin. My labelling slip; re-run on 3.13 after the fix.)
+
+## F8 NIT: the removed mutant "no case fold before the marks are dropped" is not equivalent
+tests/textnorm_mutants.py:12 says the early case fold is gone and redundant; re-adding an early casefold() before the drop turns U+0345 into an iota everywhere (the review 2 blocker), so output changes. It is killed by the new DROPS test (mutant 51), so no coverage lost, but the written reason is wrong. Fix: restore it as a killed mutant, or change the sentence to "covered by mutant 51". "600,000 random strings" only shows the strings are indifferent, not the mutation.
+
+## F9 MINOR: the U+0345 symmetry exemption is too wide
+tests/test_textnorm.py:414-417 exempts any text containing U+0345 from the all-code-point, pair and random symmetry tests (also :737); :438 pins that the single asymmetric text is exactly "ͅ". Shapes such as Greek letter + U+0345 + other characters or Latin + U+0345 + Greek are never symmetry-tested apart from the per-letter test at :626. Fix: exempt only the exact known-asymmetric shapes (part of F1).
+
+## F10 NIT: stage wording
+textnorm.py:71,403 use "development" and "tests" as environment names; bible R449 allows only demo, pilot, prod.
+
+## F11 NIT: TEXTNORM_MAX_PASSES dead until P1b (see F3).
+
+## Answers to the lead's questions
+1 Fold correct and idempotent as built, case-symmetric except the stated exemptions; the U+0345 exception is NOT safe (F1); hostile uses: evasion of identity and redaction matching, false split of polytonic vs monotonic spellings, inflated key by a run of marks (bounded by the weight cap). 2 Mutant removal: wording unsound, no coverage lost (F8). 3 Tag logic sound; guard advisory (F5); pre-cap work (F6); TEXTNORM_MAX_PASSES read by nothing (F11); perf ceilings (5 s at cap) may flake on a loaded CI; no row for has_mixed_script, a Greek + U+0345 dense input, or distinct-character input. 4 Table source UTS #39 18.0.0 dated 2026-08-06 with pinned sha256; licence notice present, text hashed and tested, shipped via license-files; P1a ships the 18.0.0 vs 15.1.0 mismatch (F2). 5 CODE-LAST partly justified (F3). 6 Class gaps: F4.

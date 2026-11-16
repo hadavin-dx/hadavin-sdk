@@ -1,0 +1,15 @@
+matrix: 29 effects x 10 carriers x 2 variants = 580; empty by logic 40 (20 pairs x 2); generated cells 540 (= 580 - 40); of them ended at step 0 by the text rules, nothing ran: 32 (16 effects x 2, carrier C1 only); reach the data checks: 508; expected refused 517; expected to return (pinned, table 3) 23
+other carriers: C6b 58; C8 44; C9 58; C13 24; variant (O) 20; pre-existing (C12, administrator) 36 x 2 = 72; controls 21; compositions 200 (seed 20261112); total cells and controls 837
+server refuses it to a plain role (C12 only), effects E09: a right on a foreign table or foreign server: the plain role cannot create one (needs a foreign data wrapper owned by an administrator)
+server refuses it to a plain role (C12 only), effects E13: EXECUTE on a function of another owner: the plain role cannot grant on what it does not own
+server refuses it to a plain role (C12 only), effects E23 E24 E25: a tablespace, a parameter, a foreign server: only an administrator can grant on them
+server refuses it to a plain role (C12 only), effects E29 E30 E31 E32 E33 E36 E38 E39: memberships, role flags, a default right set by another role, a right granted by another role: CREATEROLE or another login is needed
+NOT BUILT, E21 under variant (C): USAGE on a language needs a trusted language that an extension makes; measured: this server has no trusted-language extension (pg_language holds internal, c, sql, plpgsql only), so there is nothing to grant on
+NOT BUILT, E19-E21 under variants (T) and (U): the same reason: (T) and (U) need a trusted-language extension
+NOT BUILT, E28-schema, owner outside the family, at the start of the run: a schema that another role outside the family owns before the run starts is NOT refused (the strict reading of rule O8 is OFF behind a named switch; the choice is the lead's question q-p3a2-o8-schema-owner); a schema owned by a role of the family's group is control K8 (fourth form); a named role that takes the schema over during the run is refused (test_e28_...)
+not promised, E27: a table owned by a group with a second member: a control, not a promise (control K7)
+not promised, X01t X11 X12: a table owned by a role outside the family and a right on it held by a third role (ticket 1.4): not judged; a function of another application callable by everyone (3.4 line 3): not judged; a SECURITY DEFINER function of another application: nobody outside the package may call it, not judged
+.pre-existing (C12) cells: 36 effects x 2 variants = 72; of them 18 are a state of a role nobody named (no role argument): pinned as 'returns normally', see the decision above; the other 54 are refused with 'No file ran'; wording gaps: []
+of the 72 cells, 24 return normally (pinned: 18 named-role states with no role argument and 6 not-judged states) and 48 are refused
+.
+2 passed, 1101 deselected in 0.21s

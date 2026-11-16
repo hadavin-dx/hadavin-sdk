@@ -1,0 +1,49 @@
+BAD SURVIVED     M18v the Kubernetes settings echo the refused input again (strict_model.py)  []
+      first line: 
+--
+BAD ERROR        Z21 a stale allowance is no longer reported (guard)  [SNIPPET NOT FOUND]
+      first line: 
+--
+BAD SURVIVED     Z65 reason NUM: the store contract says purge_tool_calls gives text (protocol.py)  []
+      first line: 
+--
+BAD OTHER_TEST   Z90 a failing detector is logged with its text (injection.py)  [test_a_failing_detector_is_logged_by_class_only[plain-error]]
+      first line: E       AssertionError: the failing detector is logged with its text or without its class
+--
+BAD ERROR        Z128 round 15: shown_id shows any text (errors.py)  [SNIPPET NOT FOUND]
+      first line: 
+--
+BAD SURVIVED     Z152 round 16: the values of a dict are not read (guard)  []
+      first line: 
+--
+BAD WRONG_REASON Z154 round 16: str, repr and format of an unproven value make no text (guard)  [test_the_guard_finds_each_planted_fault_alone[X11 the text o]
+      first line: E       AssertionError: ('X11 the text of an exception kept in a variable', ['m.py:6: [message] A(m)'])
+--
+BAD SURVIVED     Z159 round 16: an attribute of a library result is proven by a write elsewhere (guard)  []
+      first line: 
+--
+BAD ERROR        Z163 round 16: a log call with a number directive is read as text (guard)  [SNIPPET NOT FOUND]
+      first line: 
+--
+BAD WRONG_REASON Z184 round 16: shown_name returns the name without the word-like test (errors.py), FILTER check  [test_the_claim_of_each_reason_holds_in_the_code[FILTER]]
+      first line: E       TypeError: descriptor '__str__' requires a 'str' object but received a 'NoneType'
+--
+BAD ERROR        Z190 round 17: every argument after a text directive is dropped as a number (guard)  [SNIPPET NOT FOUND]
+      first line: 
+--
+BAD SURVIVED     Z192 round 17: validate lets the first error through (hidden_input.py)  []
+      first line: 
+BAD SURVIVED     Z193 round 17: validate_json lets the first error through (hidden_input.py)  []
+      first line: 
+BAD SURVIVED     Z194 round 17: validate_strings lets the first error through (hidden_input.py)  []
+      first line: 
+--
+BAD SURVIVED     Z209 round 17: `insert` is not a stored-record call (guard)  []
+      first line: 
+--
+BAD CRASH        Z221 round 17: write_intent of an unplain id raises a bare ValueError again (local_dir.py)  [test_write_intent_of_an_unplain_event_id_raises_audit_unavai]
+      first line: E           ValueError: event_id is not a plain file name
+--
+BAD SURVIVED     Z223 round 17: the read path takes an index key that is not a plain name (verify_object, local_dir.py)  []
+      first line: 
+388 of 405 good; problems: ['M18v the Ku

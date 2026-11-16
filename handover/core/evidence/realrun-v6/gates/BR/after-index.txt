@@ -1,0 +1,11 @@
+tests/test_mode_safety.py rc=0 wall=26s
+tests/test_portal_browser.py rc=0 wall=24s
+tests/test_portal_drawer_long_name.py rc=0 wall=8s
+tests/test_portal_layout.py rc=0 wall=84s
+tests/test_portal_lead_pages.py rc=0 wall=44s
+tests/test_portal_long_values.py rc=0 wall=19s
+tests/test_portal_look.py rc=0 wall=32s
+tests/test_portal_phone_layout.py rc=0 wall=41s
+tests/test_portal_wording_and_masking.py rc=0 wall=7s
+tests/test_stage_confirm_browser.py rc=0 wall=29s
+DONE

@@ -1,0 +1,21 @@
+ok  CRASH        M16g the one YAML reader lets a YAML error through again (config.py)  [test_the_one_yaml_reader_gives_a
+ok  CRASH        M16h read_configured lets a decode error through (errors.py)  [test_a_tool_file_that_is_not_utf8_is_rep
+ok  CRASH        M17i a tool call with an unreadable URL lets the URL error through (tools.py)  [test_a_tool_call_with_a
+ok  CRASH        M17q a file that cannot be opened lets the OS error through (errors.py)  [test_a_registry_file_that_is_
+ok  CRASH        M17s a list used as a YAML key lets the TypeError through (config.py)  [test_a_yaml_key_that_is_a_list_
+ok  CRASH        M17v a CA file is opened without the one reader (app.py)  [test_a_tls_ca_file_that_cannot_be_read_is_re
+ok  CRASH        M17zb a login in a tool URL is no longer refused (tools.py)  [test_a_tool_call_with_a_login_in_the_url_
+ok  CRASH        M18j an over-long file name lets the OS error through at load (registry.py)  [test_a_ca_file_that_is_no
+ok  CRASH        M18k an empty manifest narrows tools_allowed again (registry.py)  [test_an_empty_tools_manifest_does_no
+ok  CRASH        M18l approver_ids are checked for a chain nobody names (registry.py)  [test_a_chain_that_no_principal_n
+ok  CRASH        M18q a non-text manifest key lets the TypeError through (tools.py)  [test_a_manifest_entry_with_a_non_t
+ok  CRASH        M18t a missing golden set file is no longer read as empty (registry.py)  [test_a_prompt_or_golden_file_
+ok  CRASH        M18u a prompt file is opened without the one reader (registry.py)  [test_a_prompt_or_golden_file_that_c
+ok  CRASH        M19c the AWS provider quotes a plain-word secret name again (secrets_aws.py)  [test_every_secret_provid
+ok  CRASH        M19d the Vault provider quotes a plain-word secret name again (secrets_vault.py)  [test_every_secret_pr
+ok  CRASH        M19j a tool module file is read without the one reader (tools.py)  [test_a_tool_module_file_that_cannot
+ok  CRASH        Z27 `Failed` lets every error through (nothing is taken out of the handler)  [test_call_class_only_rais
+ok  CRASH        Z62 tick _safe_log: only a KeyError is swallowed  [test_safe_log_never_raises]
+ok  CRASH        Z259 round 19: a mapping with a key that is not text is not refused as a validation problem, model_vali
+ok  CRASH        Z260 round 19: a mapping with a key that is not text is not refused as a validation problem, model_vali
+ok  CRASH        Z261 round 19: the key check takes no key as not text (hidden_input.py)  [test_a_mapping_with_a_key_tha

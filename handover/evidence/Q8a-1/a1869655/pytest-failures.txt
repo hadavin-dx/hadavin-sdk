@@ -1,0 +1,14 @@
+FAILED tests/contracts/test_secrets.py::test_a_missing_name_is_a_config_error_at_the_start_up_probe[aws_secrets_manager]
+FAILED tests/contracts/test_secrets.py::test_a_missing_name_is_a_config_error_at_the_start_up_probe[azure_key_vault]
+FAILED tests/contracts/test_secrets.py::test_a_missing_name_is_a_config_error_at_the_start_up_probe[env]
+FAILED tests/contracts/test_secrets.py::test_a_missing_name_is_a_config_error_at_the_start_up_probe[fake]
+FAILED tests/contracts/test_secrets.py::test_a_missing_name_is_a_config_error_at_the_start_up_probe[gcp_secret_manager]
+FAILED tests/contracts/test_secrets.py::test_a_missing_name_is_a_config_error_at_the_start_up_probe[mounted_file]
+FAILED tests/contracts/test_secrets.py::test_a_missing_name_is_a_config_error_at_the_start_up_probe[vault]
+FAILED tests/test_k3_pilot_env.py::test_k3_http_refused_in_pilot - AssertionE...
+FAILED tests/test_p2_postgres.py::test_cli_limits_without_a_readable_dsn_is_a_config_error
+FAILED tests/test_s3_gate.py::test_bad_unknown_chain - AssertionError: Regex ...
+FAILED tests/warden_port/test_audit_chain.py::test_audit_verify_that_cannot_build_its_store_could_not_verify
+======================= 11 failed, 350 passed in 24.85s ========================
+SKIPPED [1] tests/contracts/test_llm.py:95: Stubber refuses a malformed Converse shape before the kind sees it
+12 failed, 10973 passed, 1 skipped, 28 deselected in 294.40s (0:04:54)

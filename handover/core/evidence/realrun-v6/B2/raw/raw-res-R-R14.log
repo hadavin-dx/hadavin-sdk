@@ -1,0 +1,26 @@
+........................................................................ [ 50%]
+..............................................................F
+=================================== FAILURES ===================================
+_________________ test_the_bind_refusal_names_the_setting_once _________________
+
+tmp_path = PosixPath('/home/user/build/rr6/tmp-B2/pytest-of-unknown/pytest-102/test_the_bind_refusal_names_th0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7ff30af46db0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7ff30a5d1ac0>
+
+    def test_the_bind_refusal_names_the_setting_once(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr("builtins.input", _no_question)
+        cfg = _valid_config(tmp_path, DESK_BIND=ALL_ADDRESSES)
+        assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
+        out = capsys.readouterr().out
+>       assert out.startswith("refused: DESK_BIND: is not a loopback address") and out.count("DESK_BIND") == 1
+E       AssertionError: assert (False)
+E        +  where False = <built-in method startswith of str object at 0x7ff30a530370>('refused: DESK_BIND: is not a loopback address')
+E        +    where <built-in method startswith of str object at 0x7ff30a530370> = 'refused: DESK_BIND: DESK_BIND is not a loopback address while a real service is set (crm, mail): anyone who can reach the port could write to it. Bind to 127.0.0.1\n'.startswith
+
+tests/test_take_script_refusals.py:684: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_take_script_refusals.py::test_the_bind_refusal_names_the_setting_once
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 134 passed in 89.09s (0:01:29)

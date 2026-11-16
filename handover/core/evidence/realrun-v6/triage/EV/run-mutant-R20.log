@@ -1,0 +1,40 @@
+F..                                                                      [100%]
+=================================== FAILURES ===================================
+______ test_a_config_file_whose_read_fails_is_refused_with_one_fixed_line ______
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-EV2/.tmp-run/pytest-of-unknown/pytest-1/test_a_config_file_whose_read_0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f713a9f3500>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f713a9f3440>
+a_terminal = None
+
+    def test_a_config_file_whose_read_fails_is_refused_with_one_fixed_line(
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+        a_terminal: None,
+    ) -> None:
+        cfg = _valid_config(tmp_path)
+        real_read_text = Path.read_text
+    
+        def read_text(self: Path, *args: object, **kwargs: object) -> str:
+            if self.name == cfg.name:
+                raise PermissionError(13, "denied", str(self))  # the OS error text holds the path
+            return real_read_text(self, *args, **kwargs)  # type: ignore[arg-type]
+    
+        def no_question(prompt: str = "") -> str:
+            raise AssertionError("the start question was asked")
+    
+        monkeypatch.setattr(Path, "read_text", read_text)
+        monkeypatch.setattr("builtins.input", no_question)
+        assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
+        out = capsys.readouterr().out
+>       assert out == "refused: --config: the config file cannot be read\n"
+E       AssertionError: assert 'refused: FileNotFoundError\n' == 'refused: --c...not be read\n'
+E         
+E         - refused: --config: the config file cannot be read
+E         + refused: FileNotFoundError
+
+tests/test_survivor_r20_config_read.py:42: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_survivor_r20_config_read.py::test_a_config_file_whose_read_fails_is_refused_with_one_fixed_line
+1 failed, 2 passed in 0.10s

@@ -1,0 +1,48 @@
+203451264e72d872d23d80b4d63d35e7b5df4460
+== textnorm minimum-length constants: defaults.py
+150:TEXTNORM_MINIMUM_FLOOR = 2
+157:TEXTNORM_MIN_SPELLING_CHARS = 2
+160:TEXTNORM_MIN_SQUEEZE_CHARS = 4
+163:TEXTNORM_MIN_SCRIPT_CHARS = 4
+165:TEXTNORM_MIN_IDEOGRAPH_CHARS = 2
+168:TEXTNORM_MIN_DIGIT_CHARS = 6
+178:TEXTNORM_INSERTION_MIN_CHARS = 12
+179:TEXTNORM_INSERTION_MIN_CHARS_BY_SCRIPT = (
+== exposed in textnorm.__all__?
+no MIN/FLOOR name in __all__
+827:_MINIMUM_NAMES = (
+855:    out = tuple(_whole_number(name, floor) for name in _MINIMUM_NAMES)
+== tests pinning scan_holds error classes
+tests/test_textnorm_order137.py:224:    """Killer: ``register: a refused value is registered``. ``register_value`` raises what ``scan_holds`` raises."""
+tests/test_textnorm_scan.py:893:    refused(NotText, "scan_holds accepted bytes as the value", scan_holds, text="x", value=b"x")
+tests/test_textnorm_scan.py:894:    refused(NotText, "scan_holds accepted bytes as the text", scan_holds, text=b"x", value="x")
+57:def refused(exc, message, fn, *args, **kwargs):
+def test_scan_holds_refuses_a_value_with_an_empty_view_and_a_text_may_have_one():
+    """A value with no letter or digit has an empty squeeze view, which is found in EVERY text: it would match all (and
+    skipping it would match none). Rule: RAISE ``EmptyView``, for every empty or invisible-only or punctuation-only or marks-only value, even
+    when the text itself would not hold it. A value in a script with no ASCII letter (Chinese, Arabic, Thai, Hindi) is NOT empty: it has a
+def test_scan_holds_refuses_a_value_too_short_to_scan_instead_of_answering_false():
+    """P1a fix7: ``scan_needles`` raises ``ViewTooShort`` for a Latin value of three letters or fewer and for a value only a spelling view can
+    find. ``scan_holds`` must let it out (the caller REFUSES); an answer of False would mean 'not found' for a value that was never searched."""
+    for value in ("Amy", "abc", "ab", "a", "ab-c", "w\u5bc6", "5\u5bc6"):
+tests/test_textnorm_perf.py:250:def test_scan_holds_of_a_text_at_the_cap_for_a_latin_and_for_a_script_value():
+tests/test_textnorm_round1.py:316:def test_m13_scan_holds_takes_keywords_only_and_no_caller_passes_two_positional_strings():
+tests/test_textnorm_scan.py:841:def test_scan_holds_reads_both_fold_views_and_squeeze_views_on_both_sides():
+tests/test_textnorm_scan.py:868:def test_scan_holds_refuses_a_value_with_an_empty_view_and_a_text_may_have_one():
+tests/test_textnorm_scan.py:969:def test_scan_holds_refuses_a_value_too_short_to_scan_instead_of_answering_false():
+tests/test_textnorm_scan.py:988:def test_scan_holds_reads_the_text_with_the_scripts_of_the_value_so_a_foreign_letter_does_not_hide_it():
+tests/test_textnorm_scan.py:1013:def test_scan_holds_reads_the_scan_keys_of_the_value():
+tests/test_textnorm_siblings.py:239:def test_scan_holds_finds_the_password_for_every_mc_lm_and_sk_code_point():
+== class-raising asserts in scan tests (file:line)
+tests/test_textnorm_scan.py:870:     skipping it would match none). Rule: RAISE ``EmptyView``, for every empty or invisible-only or punctuation-only or marks-only value, even
+tests/test_textnorm_scan.py:875:             EmptyView,
+tests/test_textnorm_scan.py:882:             EmptyView,
+tests/test_textnorm_scan.py:888:     assert issubclass(EmptyView, textnorm.TextnormError)
+tests/test_textnorm_scan.py:893:     refused(NotText, "scan_holds accepted bytes as the value", scan_holds, text="x", value=b"x")
+tests/test_textnorm_scan.py:894:     refused(NotText, "scan_holds accepted bytes as the text", scan_holds, text=b"x", value="x")
+tests/test_textnorm_scan.py:896:         TextTooLong, "scan_holds accepted a long text", scan_holds, text="a" * (CAP + 1), value="x"
+tests/test_textnorm_scan.py:899:         TextTooLong, "scan_holds accepted a long value", scan_holds, text="x", value="a" * (CAP + 1)
+tests/test_textnorm_scan.py:965: # ---- P1b merge 7: the P1a fix7 API (scripts per value, one minimum per kind of view, ViewTooShort) ------------------------------------------
+tests/test_textnorm_scan.py:970:     """P1a fix7: ``scan_needles`` raises ``ViewTooShort`` for a Latin value of three letters or fewer and for a value only a spelling view can
+tests/test_textnorm_scan.py:975:                 ViewTooShort,
+tests/test_textnorm_scan.py:981:     assert issubclass(ViewTooShort, textnorm.TextnormError)

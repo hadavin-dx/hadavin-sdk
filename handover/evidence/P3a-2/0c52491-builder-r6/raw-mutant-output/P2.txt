@@ -1,0 +1,13 @@
+### tests/test_migration_rules.py::test_the_changelog_keeps_a_repair_path_for_an_early_evidence_table rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+______ test_the_changelog_keeps_a_repair_path_for_an_early_evidence_table ______
+tests/test_migration_rules.py:428: in test_the_changelog_keeps_a_repair_path_for_an_early_evidence_table
+    assert "block of case (g)" in rb.case("b") and "block of case (g)" in rb.case("e")
+E   AssertionError: assert ('block of case (g)' in '- **(b) A renamed file, or a ledger row that was renamed.** Find the file in the folder whose name after the number i...issing `tool_calls.error` before the file commits. Without that block the rename would accept a broken table for good.')
+E    +  where '- **(b) A renamed file, or a ledger row that was renamed.** Find the file in the folder whose name after the number i...issing `tool_calls.error` before the file commits. Without that block the rename would accept a broken table for good.' = <function case at 0x7fd8b4b05e40>('b')
+E    +    where <function case at 0x7fd8b4b05e40> = rb.case
+=========================== short test summary info ============================
+FAILED tests/test_migration_rules.py::test_the_changelog_keeps_a_repair_path_for_an_early_evidence_table
+1 failed in 0.40s
+

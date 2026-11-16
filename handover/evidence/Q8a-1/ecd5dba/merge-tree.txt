@@ -1,0 +1,7 @@
+aebe5c0ac40e360c58d997614b052636c20ed46c
+CHANGELOG.md
+
+Auto-merging CHANGELOG.md
+CONFLICT (content): Merge conflict in CHANGELOG.md
+Auto-merging src/hadavin_sdk/defaults.py
+Auto-merging src/hadavin_sdk/runtime/tick.py

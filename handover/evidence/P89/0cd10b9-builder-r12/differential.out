@@ -1,0 +1,34 @@
+differing lines by the mark that stands beside the dots: {'doublequote': 2956, 'backslash': 2941, 'quote': 3043}
+DSNs refused by the new rule (a percent sign that decodes to an odd character): 6
+cases=59880 same=50940 different=8940 kinds={'mark-beside-dots:old-hides-more': 8940}
+== mark-beside-dots:old-hides-more first 6 of 8940
+DSN : user=svc password=O3sQzCUsk78c host=db.internal.example.org dbname=mutants
+LINE: E   assert ['user=svc pas"..."name=mutants']
+OLD : E   assert [[REDACTED]...[REDACTED]]
+NEW : E   assert ['user=svc pas"..."name=mutants']
+
+DSN : user=svc password=O3sQzCUsk78c host=db.internal.example.org dbname=mutants
+LINE: E   assert ['user=svc\...\=mutants']
+OLD : E   assert [[REDACTED]...[REDACTED]]
+NEW : E   assert ['user=svc\...\=mutants']
+
+DSN : user=svc password=O3sQzCUsk78c host=db.internal.example.org dbname=mutants
+LINE: E   assert ['user=s\...\utants']
+OLD : E   assert [[REDACTED]...[REDACTED]]
+NEW : E   assert ['user=s\...\utants']
+
+DSN : host=db.internal.example.org port=5432 dbname=mutants user=svc password=9lBa3vjF
+LINE: E   assert ['host=db.in\...\d=9lBa3vjF']
+OLD : E   assert [[REDACTED]...[REDACTED]]
+NEW : E   assert ['host=db.in\...\d=[REDACTED]']
+
+DSN : host=db.internal.example.org port=5432 dbname=mutants user=svc password=9lBa3vjF
+LINE: E   assert ['host=db.intern'...'sword=9lBa3vjF']
+OLD : E   assert [[REDACTED]...[REDACTED]]
+NEW : E   assert ['host=db.intern'...'sword=[REDACTED]']
+
+DSN : host=db.internal.example.org port=5432 dbname=mutants user=svc password=9lBa3vjF
+LINE: E   assert ['host=db.inte"..."ord=9lBa3vjF']
+OLD : E   assert [[REDACTED]...[REDACTED]]
+NEW : E   assert ['host=db.inte"..."ord=[REDACTED]']
+

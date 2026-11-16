@@ -1,0 +1,9 @@
+# Part 6 round 15 codebase review (egm-codebase-details a969e991), head 20c369f0
+Read-only reviewer, ran nothing. Verdict: 0 Blocker, 5 Major (all wording/test-scope, no runtime defect), 7 nits.
+M1 "ONE place the project starts a program / only waiver / one marker" (tools/fixed_run.py 1-11, tests/fixed_run.py 1-5, CHANGELOG batch 15) is stronger than the tests: marker count covers 4 files, _program_starts sweep a fixed list, FOLLOW_UP_DIRECT_STARTS exempts 9 files. Fix: sweep every tracked .py file or name the covered files.
+M2 "only through the helper" sweep: could not confirm rejected-sample cases for os.system, os.popen, os.exec*/os.spawn*, `from os import system`.
+M3 masker comment demo_only_guard.py 315-352 says it "copies five passes of the core rules"; it is a separate line-oriented implementation with extra rules (Digest to end of line, bypass plain-flag, re-hide guard). Say "mirrors in shape"; wraps mangled.
+M4 tests/test_banner_mutant_table.py:520 broken test-name reference in a comment.
+M5 CHANGELOG "366 rows / each row was run" is an execution claim with no run log; the count 366 is true; test_changelog_numbers pins the number only.
+N1 orphan wraps demo_only_guard.py 588-592; N2 orphan comment test_demo_only_guard.py 3275-3277; N3 orphan comment mode_banner.py 839-840; N4 over-100-column added lines (fixed_run.py:42 pragma 102 cols, PLAIN_TEST ~1030, long mutant rows, awkward wraps 2119-2121, 1734-1736); N5 noqa trailing text omits the non-empty list-or-tuple check; N6 duplicated _load_fixed_run: check the equality test compares the whole body incl. docstring; N7 fixed_run docstring: ALLOWED_KEYWORDS permits `input`, say so.
+Verified OK: 366 rows, R15 old texts occur once, killers for R15/B12/R13A8/R13A9 exist, run_fixed validation matches tests, single S603 marker at fixed_run.py:42, call sites use fixed lists, masker edges match tests, READ_ERRORS five types/six sites.

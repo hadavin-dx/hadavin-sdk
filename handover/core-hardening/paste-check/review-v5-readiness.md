@@ -1,0 +1,8 @@
+# C3b plan-v5-repin-v5.patch, round 2 readiness review (egm reviewer, condensed copy), 2026-11-16
+Read-only; nothing run. No Blocker. v4 blockers B1, B2 and majors M1-M8 closed in the patch text; facts nits N1-N3, N5, N6, N8 closed; N4 closed in plan but REPORT-repin-v5.md section 1 item 4 still says "accepts exit 3x" (contradiction, fix).
+New Majors:
+M-1 P-4b cannot be followed without guessing: no concrete stand-in recipe for a process whose environ the user cannot read on WSL; the uid filter (stat -c %u /proc/<pid> = my uid) may skip exactly the non-dumpable processes it should find (kernel behaviour recalled, not tested). Fix: concrete recipe in LEAD-FILL list and say the filter must be proven against the real stand-in.
+M-2 Lead procedure is one ~7,000-word paragraph (plan line 3). Fix: numbered lead checklist, commands in separate code blocks, PIN= edit points marked.
+M-3 No lead instruction for producing the patched plan on the laptop (patch -p1 order: fixes patch first, then this one; counts 24/10/2 hold only in that order; Git Bash may lack patch).
+Minor: PROGRESS.md must be append-only (a rewrite erases LEAD-GO/LEAD-YES lines); acceptance rule stuck cases (return 3 with sys.exit(main()), a + comment "exit code 3"); patch line 120 names superseded LEAD-FILL-list.md (should be -v5); LEAD-FILL Q1 wrongly says P-1 not started (P-3b runs after P-1); step (e) should use count/files mode first; S13 wording circular (13.4 before 13.5); header says HEAD_PIN.
+Not checked: counts 24/10/2 not recomputed; round 5 files not on disk; nothing run in Git Bash/PowerShell/WSL; PF and nlite-fix5 paths are guesses.

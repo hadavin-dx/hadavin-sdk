@@ -1,0 +1,22 @@
+chunk 0:10 try 1 rc=0 1
+chunk 10:20 try 1 rc=0 1
+chunk 20:30 try 1 rc=0 1
+chunk 30:40 try 1 rc=0 1
+chunk 40:50 try 1 rc=0 1
+chunk 50:60 try 1 rc=0 1
+chunk 60:70 try 1 rc=0 1
+chunk 70:80 try 1 rc=0 0
+chunk 70:80 try 2 rc=0 1
+chunk 80:90 try 1 rc=0 0
+chunk 80:90 try 2 rc=0 1
+chunk 90:100 try 1 rc=0 1
+chunk 100:110 try 1 rc=0 1
+chunk 110:120 try 1 rc=0 1
+chunk 120:130 try 1 rc=0 1
+chunk 130:140 try 1 rc=0 1
+chunk 140:150 try 1 rc=0 1
+chunk 150:160 try 1 rc=0 0
+chunk 150:160 try 2 rc=0 1
+chunk 160:170 try 1 rc=0 1
+chunk 170:175 try 1 rc=0 1
+DONE

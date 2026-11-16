@@ -1,0 +1,53 @@
+{
+  "now": 1794240000,
+  "rows": [
+    {
+      "lead_id": "L0c4d8e2f6a19",
+      "name": "Linus Demo",
+      "email": "linus@example.test",
+      "company": "Demo Systems",
+      "source": "form",
+      "first_request_id": "ui-1794239905000-1",
+      "created_at": 1794239905,
+      "state": "unknown",
+      "ai_label": "cold",
+      "attempts": 1,
+      "arrivals": 1,
+      "repeats": 0,
+      "updated_at": 1794239907
+    },
+    {
+      "lead_id": "L7b2e9d0c1a34",
+      "name": "Grace Sample",
+      "email": "grace@example.test",
+      "company": "Sample Works",
+      "source": "form",
+      "first_request_id": "ui-1794239700000-1",
+      "created_at": 1794239800,
+      "state": "sent",
+      "ai_label": "warm",
+      "attempts": 1,
+      "arrivals": 1,
+      "repeats": 9,
+      "updated_at": 1794239801
+    },
+    {
+      "lead_id": "L3f9a1c2b4d5e",
+      "name": "Ada Example",
+      "email": "Ada@Example.test",
+      "company": "Example Ltd",
+      "source": "form",
+      "first_request_id": "ui-1794239720000-1",
+      "created_at": 1794239720,
+      "state": "sent",
+      "ai_label": "hot",
+      "attempts": 1,
+      "arrivals": 2,
+      "repeats": 1,
+      "updated_at": 1794239721
+    }
+  ],
+  "total": 3,
+  "offset": 0,
+  "limit": 50
+}

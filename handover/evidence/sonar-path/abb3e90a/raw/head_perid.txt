@@ -1,0 +1,379 @@
+PASSED tests/test_pathguard.py::test_r1_empty_and_dot_names_are_refused
+PASSED tests/test_pathguard.py::test_r2_a_separator_is_refused_on_every_os
+PASSED tests/test_pathguard.py::test_r3_a_colon_is_refused_on_every_os
+PASSED tests/test_pathguard.py::test_r4_a_control_character_is_refused_in_a_name
+PASSED tests/test_pathguard.py::test_r4_a_control_character_is_refused_in_an_operator_path
+PASSED tests/test_pathguard.py::test_r5_a_name_over_255_utf8_bytes_is_refused
+PASSED tests/test_pathguard.py::test_r5_a_path_over_4096_characters_is_refused
+PASSED tests/test_pathguard.py::test_r6_a_trailing_dot_or_space_is_refused
+PASSED tests/test_pathguard.py::test_r7_a_reserved_device_name_is_refused
+PASSED tests/test_pathguard.py::test_r7_names_that_only_look_like_devices_are_allowed
+PASSED tests/test_pathguard.py::test_a_plain_name_is_returned_unchanged
+PASSED tests/test_pathguard.py::test_r8_a_link_out_of_the_base_is_refused
+PASSED tests/test_pathguard.py::test_r8_join_refuses_a_link_that_leaves_the_base_even_without_must_exist
+PASSED tests/test_pathguard.py::test_a_link_that_stays_inside_the_base_is_allowed
+PASSED tests/test_pathguard.py::test_r9_absolute_drive_rooted_and_unc_names_are_refused
+PASSED tests/test_pathguard.py::test_r10_a_path_that_cannot_be_resolved_is_refused
+PASSED tests/test_pathguard.py::test_r10_a_symlink_loop_is_refused
+PASSED tests/test_pathguard.py::test_r11_the_wrong_type_is_refused
+PASSED tests/test_pathguard.py::test_join_applies_component_to_every_name
+PASSED tests/test_pathguard.py::test_join_with_no_names_returns_the_resolved_base_and_empty_names_are_refused
+PASSED tests/test_pathguard.py::test_ordinary_names_work[with space.txt]
+PASSED tests/test_pathguard.py::test_ordinary_names_work[caf\xe9.txt]
+PASSED tests/test_pathguard.py::test_ordinary_names_work[\u65e5\u672c.json]
+PASSED tests/test_pathguard.py::test_ordinary_names_work[a.b.c]
+PASSED tests/test_pathguard.py::test_ordinary_names_work[name4]
+PASSED tests/test_pathguard.py::test_ordinary_names_work[UPPER.JSON]
+PASSED tests/test_pathguard.py::test_ordinary_names_work[dash-name_1.md]
+PASSED tests/test_pathguard.py::test_the_refusal_text_names_the_argument_and_never_the_value
+PASSED tests/test_pathguard.py::test_operator_dir_accepts_a_folder_that_will_be_created
+PASSED tests/test_pathguard.py::test_pin_confined_keeps_its_pinned_wording_for_a_dotdot_and_for_a_link
+PASSED tests/test_pathguard.py::test_pin_confined_does_not_gain_the_windows_name_rules
+PASSED tests/test_pathguard.py::test_confined_turns_a_nul_into_a_config_error
+PASSED tests/test_pathguard.py::test_a_nul_in_the_cause_list_folder_is_a_config_error
+PASSED tests/test_pathguard.py::test_pin_key_path_keeps_the_word_outside_and_its_order
+PASSED tests/test_pathguard.py::test_atomic_write_writes_utf8_with_unix_newlines_and_backslash_escapes
+PASSED tests/test_pathguard.py::test_atomic_write_replaces_an_existing_file
+PASSED tests/test_pathguard.py::test_atomic_write_refuses_a_name_that_is_not_a_plain_name
+PASSED tests/test_pathguard.py::test_atomic_write_needs_a_base_and_a_name
+PASSED tests/test_pathguard.py::test_atomic_write_refuses_a_name_whose_temp_name_would_be_too_long
+PASSED tests/test_pathguard.py::test_atomic_write_does_not_write_through_a_link_that_leaves_the_folder
+PASSED tests/test_pathguard.py::test_atomic_write_temp_name_is_random_and_not_chosen_by_the_caller
+PASSED tests/test_pathguard.py::test_atomic_write_temp_name_keeps_the_tmp_suffix
+PASSED tests/test_pathguard.py::test_atomic_write_creates_its_temp_file_exclusively
+PASSED tests/test_pathguard.py::test_atomic_write_removes_its_temp_file_when_the_rename_fails
+PASSED tests/test_pathguard.py::test_atomic_write_removes_its_temp_file_when_the_write_fails
+PASSED tests/test_pathguard.py::test_atomic_write_removes_its_temp_file_on_ctrl_c
+PASSED tests/test_pathguard.py::test_random_names_never_change_anything_outside_the_base
+PASSED tests/test_pathguard.py::test_r10_a_value_error_from_resolve_is_refused_as_r10
+PASSED tests/test_pathguard.py::test_r4_a_nul_in_a_whole_path_is_refused_explicitly
+PASSED tests/test_pathguard_batch3.py::test_pin_r4_range_00
+PASSED tests/test_pathguard_batch3.py::test_pin_r4_range_01
+PASSED tests/test_pathguard_batch3.py::test_pin_r4_range_02
+PASSED tests/test_pathguard_batch3.py::test_pin_r4_range_03
+PASSED tests/test_pathguard_batch3.py::test_pin_r4_range_04
+PASSED tests/test_pathguard_batch3.py::test_pin_r4_range_05
+PASSED tests/test_pathguard_batch3.py::test_pin_r4_range_06
+PASSED tests/test_pathguard_batch3.py::test_pin_r4_range_07
+PASSED tests/test_pathguard_batch3.py::test_pin_r4_range_08
+PASSED tests/test_pathguard_batch3.py::test_pin_r4_range_09
+PASSED tests/test_pathguard_batch3.py::test_pin_r4_range_10
+PASSED tests/test_pathguard_batch3.py::test_pin_r4_range_11
+PASSED tests/test_pathguard_batch3.py::test_pin_r4_range_12
+PASSED tests/test_pathguard_batch3.py::test_pin_r4_range_13
+PASSED tests/test_pathguard_batch3.py::test_pin_r4_range_14
+PASSED tests/test_pathguard_batch3.py::test_pin_r4_range_15
+PASSED tests/test_pathguard_batch3.py::test_pin_r4_range_16
+PASSED tests/test_pathguard_batch3.py::test_pin_r4_range_17
+PASSED tests/test_pathguard_batch3.py::test_pin_r4_range_18
+PASSED tests/test_pathguard_batch3.py::test_pin_r4_range_19
+PASSED tests/test_pathguard_batch3.py::test_r4_there_are_twenty_named_ranges_and_none_overlaps
+PASSED tests/test_pathguard_batch3.py::test_pin_r6_a_trailing_dot_is_refused
+PASSED tests/test_pathguard_batch3.py::test_pin_r6_a_trailing_space_is_refused
+PASSED tests/test_pathguard_batch3.py::test_pin_r7_the_part_before_the_first_dot_decides
+PASSED tests/test_pathguard_batch3.py::test_pin_r7_spaces_before_the_dot_do_not_hide_a_device_name
+PASSED tests/test_pathguard_batch3.py::test_control_r7_a_name_that_only_starts_like_a_device_is_allowed
+PASSED tests/test_pathguard_batch3.py::test_pin_r5_join_refuses_a_long_base_text
+PASSED tests/test_pathguard_batch3.py::test_pin_r5_join_refuses_a_wide_base_text_that_resolves_short
+PASSED tests/test_pathguard_batch3.py::test_pin_r5_join_refuses_a_long_joined_path_when_base_and_names_are_short
+PASSED tests/test_pathguard_batch3.py::test_pin_r5_inside_refuses_a_long_base_text
+PASSED tests/test_pathguard_batch3.py::test_pin_r5_inside_refuses_a_long_path_text
+PASSED tests/test_pathguard_batch3.py::test_pin_r5_operator_dir_refuses_a_long_text
+PASSED tests/test_pathguard_batch3.py::test_pin_r5_operator_file_refuses_a_long_text
+PASSED tests/test_pathguard_batch3.py::test_pin_r5_operator_text_refuses_a_long_text
+PASSED tests/test_pathguard_batch3.py::test_control_r5_a_path_at_the_limit_is_not_refused_for_length
+PASSED tests/test_pathguard_batch3.py::test_pin_r10_a_runtime_error_from_resolve_is_refused_as_r10
+PASSED tests/test_pathguard_batch3.py::test_pin_r11_an_existing_file_is_refused_as_a_folder_even_when_it_need_not_exist
+PASSED tests/test_pathguard_batch3.py::test_control_r11_a_missing_path_is_accepted_when_it_need_not_exist
+PASSED tests/test_pathguard_batch3.py::test_mapped_turns_only_the_listed_rules_into_one_plain_message
+PASSED tests/test_pathguard_batch3.py::test_r5_the_whole_path_limit_counts_bytes_not_characters
+PASSED tests/test_pathguard_batch3.py::test_atomic_write_onto_a_folder_is_a_refusal_with_no_path_in_the_text
+PASSED tests/test_pathguard_batch3.py::test_atomic_write_with_a_taken_temp_name_leaves_the_existing_file_untouched
+PASSED tests/test_pathguard_batch3.py::test_atomic_write_checks_the_temp_path_length_not_only_the_final_one
+PASSED tests/test_pathguard_batch3.py::test_the_longest_writable_name_can_really_be_written
+PASSED tests/test_pathguard_batch3.py::test_atomic_write_removes_its_temp_file_when_fdopen_is_interrupted
+PASSED tests/test_pathguard_batch3.py::test_atomic_write_removes_its_temp_file_when_the_rename_is_interrupted
+PASSED tests/test_pathguard_batch3.py::test_atomic_write_flushes_the_file_to_disk_before_the_rename
+PASSED tests/test_pathguard_batch3.py::test_pin_atomic_write_still_leaves_its_temp_file_after_a_crash_it_cannot_catch
+PASSED tests/test_pathguard_batch3.py::test_site_score_read_json_refuses_a_file_name_with_a_control_character
+PASSED tests/test_pathguard_batch3.py::test_site_score_recorded_digest_does_not_read_a_file_behind_a_link
+PASSED tests/test_pathguard_batch3.py::test_site_score_recorded_digest_reads_a_plain_file_and_none_when_absent
+PASSED tests/test_pathguard_batch3.py::test_site_score_answers_file_with_a_control_character_in_its_name_is_refused
+PASSED tests/test_pathguard_batch3.py::test_site_score_run_folder_join_refuses_a_link_out_when_the_layout_check_is_skipped
+PASSED tests/test_pathguard_batch3.py::test_site_outputs_files_refuses_a_missing_folder_a_control_character_and_a_link
+PASSED tests/test_pathguard_batch3.py::test_site_bundle_load_json_and_text_refuse_a_file_name_with_a_control_character
+PASSED tests/test_pathguard_batch3.py::test_pin_site_bundle_manifest_and_part_files_that_are_links_out_are_refused
+PASSED tests/test_pathguard_batch3.py::test_pin_site_causelist_file_that_is_a_link_out_is_refused
+PASSED tests/test_pathguard_batch3.py::test_score_uses_only_the_folder_that_the_check_returned
+PASSED tests/test_pathguard_batch3.py::test_the_hash_folder_is_checked_and_a_missing_one_has_one_plain_message
+PASSED tests/test_pathguard_batch3.py::test_pin_hash_files_refuses_a_file_that_is_a_link_out_of_the_folder
+PASSED tests/test_pathguard_batch3.py::test_control_hash_files_still_hashes_a_plain_file
+PASSED tests/test_pathguard_batch3.py::test_secrets_folder_is_checked_when_the_provider_is_built
+PASSED tests/test_pathguard_batch3.py::test_pin_secrets_file_refuses_a_name_that_leaves_the_folder
+PASSED tests/test_pathguard_batch3.py::test_fake_llm_recording_folder_and_names_go_through_pathguard
+PASSED tests/test_pathguard_batch3.py::test_judge_qualify_checks_the_golden_file_path
+PASSED tests/test_pathguard_batch3.py::test_pin_tool_module_names_are_checked_before_any_path_is_built
+PASSED tests/test_pathguard_batch3.py::test_local_dir_refuses_an_event_id_that_is_not_one_plain_file_name[a:b]
+PASSED tests/test_pathguard_batch3.py::test_local_dir_refuses_an_event_id_that_is_not_one_plain_file_name[a?b]
+PASSED tests/test_pathguard_batch3.py::test_local_dir_counts_a_refused_outcome_warns_once_and_keeps_nothing
+PASSED tests/test_pathguard_batch3.py::test_local_dir_a_good_outcome_is_still_written
+PASSED tests/test_pathguard_batch3.py::test_local_dir_reconcile_leaves_a_corrupt_file_when_the_corrupt_folder_is_a_link_out
+PASSED tests/test_pathguard_batch3.py::test_control_local_dir_reconcile_moves_a_corrupt_file_into_the_corrupt_folder
+PASSED tests/test_pathguard_batch3.py::test_signer_key_path_checks_the_shape_before_it_makes_any_folder
+PASSED tests/test_pathguard_batch3.py::test_signer_key_path_refusal_text_holds_no_path
+PASSED tests/test_pathguard_batch3.py::test_control_signer_key_path_still_makes_a_missing_key_folder_and_returns_the_path
+PASSED tests/test_pathguard_batch3.py::test_site_config_folder_setting_with_a_control_character_is_refused[golden_dir]
+PASSED tests/test_pathguard_batch3.py::test_site_config_folder_setting_with_a_control_character_is_refused[inputs_dir]
+PASSED tests/test_pathguard_batch3.py::test_site_config_folder_setting_that_is_not_text_says_so_plainly[golden_dir]
+PASSED tests/test_pathguard_batch3.py::test_site_config_folder_setting_that_is_not_text_says_so_plainly[inputs_dir]
+PASSED tests/test_pathguard_batch3.py::test_site_config_confined_delegates_to_pathguard_and_keeps_its_wording
+PASSED tests/test_pathguard_batch3.py::test_causelist_errors_carry_no_chain_for_bad_json_and_bad_characters
+PASSED tests/test_pathguard_batch3.py::test_bundle_errors_carry_no_chain_for_a_bad_log_line_and_a_bad_character
+PASSED tests/test_pathguard_batch3.py::test_pin_a_traceback_of_a_refusal_never_holds_the_value
+PASSED tests/test_pathguard_batch3.py::test_pin_the_suppression_check_finds_every_spelling_in_a_seeded_line
+PASSED tests/test_pathguard_batch3.py::test_there_is_no_sonar_exemption_comment_in_the_package_or_the_tests_in_any_letter_case
+PASSED tests/test_pathguard_batch3.py::test_the_files_of_this_change_hold_no_suppression_comment_of_any_kind
+PASSED tests/test_pathguard_batch3.py::test_pin_the_docstring_states_what_the_guard_does_not_cover
+PASSED tests/test_pathguard_batch3.py::test_score_refuses_a_report_folder_that_is_a_link_out_of_the_outputs_folder
+PASSED tests/test_pathguard_batch3.py::test_replay_with_a_control_character_in_the_output_folder_is_refused_and_writes_nothing
+PASSED tests/test_pathguard_batch3.py::test_pin_replay_into_an_existing_file_says_the_folder_is_not_usable_in_one_wording
+PASSED tests/test_pathguard_batch3.py::test_a_failed_replay_writes_the_marker_even_into_an_empty_folder
+PASSED tests/test_pathguard_batch3.py::test_a_marker_that_cannot_be_written_never_replaces_the_original_error
+PASSED tests/test_pathguard_batch3.py::test_a_run_folder_swapped_for_a_link_mid_run_stops_the_next_write
+PASSED tests/test_pathguard_batch3.py::test_local_dir_outbox_fallback_refuses_a_device_name_as_the_event_id
+PASSED tests/test_pathguard_batch3.py::test_every_equivalent_mutant_still_names_text_that_exists_and_gives_its_argument
+PASSED tests/test_pathguard_batch3.py::test_pin_the_mutant_file_has_no_duplicate_names_and_every_killer_exists
+PASSED tests/test_pathguard_batch3.py::test_pin_hash_files_says_not_a_file_for_a_missing_file_and_for_a_folder
+PASSED tests/test_pathguard_batch3.py::test_secrets_file_keeps_its_not_found_and_not_a_regular_file_wording
+PASSED tests/test_pathguard_batch3.py::test_score_digest_and_answers_reads_keep_their_results
+PASSED tests/test_pathguard_batch4.py::test_pin_hash_files_reads_a_name_the_caller_chose_even_with_a_colon_or_device_name
+PASSED tests/test_pathguard_batch4.py::test_pin_secrets_file_reads_a_secret_name_the_operator_chose
+PASSED tests/test_pathguard_batch4.py::test_pin_answers_file_name_with_a_colon_or_device_name_is_read[a?b]
+PASSED tests/test_pathguard_batch4.py::test_pin_answers_file_name_with_a_colon_or_device_name_is_read[con]
+PASSED tests/test_pathguard_batch4.py::test_pin_answers_file_name_with_a_colon_or_device_name_is_read[x.]
+PASSED tests/test_pathguard_batch4.py::test_pin_answers_file_name_with_a_colon_or_device_name_is_read[vault:token]
+PASSED tests/test_pathguard_batch4.py::test_pin_answers_file_name_with_a_colon_or_device_name_is_read[aux.txt]
+PASSED tests/test_pathguard_batch4.py::test_pin_hash_files_keeps_the_escape_wording_for_a_missing_file_outside_the_folder
+PASSED tests/test_pathguard_batch4.py::test_pin_hash_files_says_not_a_file_for_a_missing_name_and_a_folder
+PASSED tests/test_pathguard_batch4.py::test_pin_secrets_file_keeps_the_escape_wording_for_a_missing_name_outside_the_folder
+PASSED tests/test_pathguard_batch4.py::test_secrets_file_says_not_found_and_not_a_regular_file
+PASSED tests/test_pathguard_batch4.py::test_local_dir_reconcile_leaves_a_corrupt_file_when_its_name_in_corrupt_is_a_link
+PASSED tests/test_pathguard_batch4.py::test_local_dir_reconcile_leaves_a_link_to_a_file_outside_the_outbox
+PASSED tests/test_pathguard_batch4.py::test_control_local_dir_reconcile_does_not_follow_a_link_to_another_file_in_the_outbox
+PASSED tests/test_pathguard_batch4.py::test_signer_key_path_refuses_a_parent_link_that_resolves_to_a_folder_with_a_control_character
+PASSED tests/test_pathguard_batch4.py::test_bundle_manifest_that_is_a_link_out_is_refused_with_the_pathguard_wording
+PASSED tests/test_pathguard_batch4.py::test_bundle_folder_under_a_parent_with_a_control_character_is_refused
+PASSED tests/test_pathguard_batch4.py::test_bundles_folder_entry_with_a_reserved_name_is_refused_as_a_path_refusal
+PASSED tests/test_pathguard_batch4.py::test_score_check_layout_refuses_a_run_folder_that_is_a_link_out
+PASSED tests/test_pathguard_batch4.py::test_replay_mark_failed_writes_nothing_into_a_folder_with_a_control_character
+PASSED tests/test_pathguard_batch4.py::test_replay_keeps_the_first_error_and_names_it_when_marking_is_interrupted
+PASSED tests/test_pathguard_batch4.py::test_replay_marking_failure_leaves_the_first_error_with_a_note
+PASSED tests/test_pathguard_batch4.py::test_fake_llm_refuses_a_recording_name_that_is_a_link_out
+PASSED tests/test_pathguard_batch4.py::test_atomic_write_creates_its_file_for_the_owner_only
+PASSED tests/test_pathguard_batch4.py::test_atomic_write_errors_carry_no_path
+PASSED tests/test_pathguard_batch4.py::test_atomic_write_rename_error_carries_no_path
+PASSED tests/test_pathguard_batch4.py::test_hash_files_read_error_is_raised_without_a_chain
+PASSED tests/test_pathguard_batch4.py::test_pin_build_local_signer_error_prints_the_key_path_as_typed
+PASSED tests/test_pathguard_batch4.py::test_atomic_write_refuses_a_data_name_with_a_colon_or_a_device_name
+PASSED tests/test_pathguard_batch4.py::test_build_local_refuses_a_key_path_with_a_control_character_as_a_path_refusal
+PASSED tests/test_pathguard_batch4.py::test_local_dir_object_names_are_joined_through_pathguard
+PASSED tests/test_pathguard_batch4.py::test_every_converted_call_site_has_a_mutant_row_or_an_equivalent_entry
+PASSED tests/test_pathguard_callers.py::test_control_a_clean_outputs_folder_still_scores
+PASSED tests/test_pathguard_callers.py::test_pin_a_run_folder_that_is_a_link_out_of_the_outputs_folder_is_refused
+PASSED tests/test_pathguard_callers.py::test_pin_a_case_file_that_is_a_link_out_of_the_outputs_folder_is_refused
+PASSED tests/test_pathguard_callers.py::test_a_replay_digest_file_that_is_a_link_out_counts_as_unreadable_not_as_missing
+PASSED tests/test_pathguard_callers.py::test_a_nul_in_the_outputs_folder_is_a_refusal_not_a_crash
+PASSED tests/test_pathguard_sites.py::test_every_public_function_refuses_a_control_character_explicitly
+PASSED tests/test_pathguard_sites.py::test_a_control_character_in_the_base_is_refused_not_only_in_the_names
+PASSED tests/test_pathguard_sites.py::test_the_nul_is_refused_even_when_resolve_would_not_raise
+PASSED tests/test_pathguard_sites.py::test_windows_invalid_characters_are_refused_in_a_name_r12
+PASSED tests/test_pathguard_sites.py::test_a_symlink_loop_is_refused_or_fails_at_open_never_escapes
+PASSED tests/test_pathguard_sites.py::test_pathrefused_keeps_its_rule_through_copy_and_pickle
+PASSED tests/test_pathguard_sites.py::test_the_refusal_text_never_holds_the_value
+PASSED tests/test_pathguard_sites.py::test_operator_file_without_must_exist_checks_shape_only
+PASSED tests/test_pathguard_sites.py::test_operator_text_returns_nothing_and_refuses_a_long_path
+PASSED tests/test_pathguard_sites.py::test_the_temp_name_is_the_write_name_plus_the_shared_extra
+PASSED tests/test_pathguard_sites.py::test_r10_a_nul_is_r4_and_a_missing_path_is_r10
+PASSED tests/test_pathguard_sites.py::test_atomic_write_refuses_an_existing_symlink_as_the_final_name
+PASSED tests/test_pathguard_sites.py::test_atomic_write_refuses_a_symlink_name_even_when_its_target_is_inside_the_folder
+PASSED tests/test_pathguard_sites.py::test_atomic_write_replaces_a_hard_link_and_leaves_the_other_name_alone
+PASSED tests/test_pathguard_sites.py::test_atomic_write_refuses_the_longest_name_plus_one
+PASSED tests/test_pathguard_sites.py::test_site_bundle_load_bundles_refuses_a_nul_folder_and_maps_missing
+PASSED tests/test_pathguard_sites.py::test_site_bundle_load_bundle_refuses_a_long_case_id_at_load
+PASSED tests/test_pathguard_sites.py::test_site_score_outputs_folder_nul_and_missing
+PASSED tests/test_pathguard_sites.py::test_pin_site_score_answers_file_nul_is_a_config_error
+PASSED tests/test_pathguard_sites.py::test_site_score_check_layout_rechecks_its_own_folder
+PASSED tests/test_pathguard_sites.py::test_site_causelist_folder_nul_gives_the_one_wording
+PASSED tests/test_pathguard_sites.py::test_site_replay_output_folder_nul_is_refused
+PASSED tests/test_pathguard_sites.py::test_site_signer_key_file_nul_and_missing
+PASSED tests/test_pathguard_sites.py::test_site_signer_key_path_nul_is_refused_before_resolve
+PASSED tests/test_pathguard_sites.py::test_site_local_dir_root_nul_and_event_id
+PASSED tests/test_pathguard_sites.py::test_site_config_root_nul
+PASSED tests/test_pathguard_sites.py::test_site_cli_config_flag_nul_is_refused
+PASSED tests/test_pathguard_sites.py::test_every_site_message_names_the_argument_not_the_value
+PASSED tests/test_pathguard_sites.py::test_inside_checks_the_base_text_too
+PASSED tests/test_pathguard_sites.py::test_operator_text_refuses_a_control_character
+PASSED tests/test_pathguard_sites.py::test_a_path_refusal_after_output_exists_still_leaves_failed_txt
+PASSED tests/test_pathguard_sites.py::test_control_a_refusal_before_output_exists_writes_no_marker
+PASSED tests/test_pathguard_sites.py::test_score_with_a_nul_in_the_outputs_path_is_refused_with_exit_2
+PASSED tests/test_pathguard_sites.py::test_vault_kubernetes_token_path_with_a_nul_is_a_config_error
+PASSED tests/test_pathguard_sites.py::test_pin_site_local_dir_outbox_refuses_a_device_name_as_the_event_id
+PASSED tests/test_pathguard_tripwire.py::test_no_file_operation_in_the_package_works_on_an_unchecked_path_unless_listed_with_a_reason
+PASSED tests/test_pathguard_tripwire.py::test_the_comparator_refuses_one_more_hit_in_a_listed_function
+PASSED tests/test_pathguard_tripwire.py::test_every_listed_row_names_a_validator_that_exists_and_is_called
+PASSED tests/test_pathguard_tripwire.py::test_the_validator_check_refuses_a_missing_or_uncalled_validator
+PASSED tests/test_pathguard_tripwire.py::test_nothing_in_the_listed_exceptions_names_a_file_that_is_gone
+PASSED tests/test_pathguard_tripwire.py::test_the_seeded_bad_fixture_is_reported_function_by_function
+PASSED tests/test_pathguard_tripwire.py::test_the_seeded_good_fixture_passes
+PASSED tests/test_pathguard_tripwire.py::test_one_line_plants_are_caught[def f(p):\n    p.read_text()\n]
+PASSED tests/test_pathguard_tripwire.py::test_one_line_plants_are_caught[def f():\n    open('x')\n]
+PASSED tests/test_pathguard_tripwire.py::test_one_line_plants_are_caught[def f(a):\n    (a / 'b').mkdir()\n]
+PASSED tests/test_pathguard_tripwire.py::test_one_line_plants_are_caught[def f(a):\n    import shutil\n    shutil.rmtree(a)\n]
+PASSED tests/test_pathguard_tripwire.py::test_one_line_plants_are_caught[def f(a, b):\n    a.replace(b)\n]
+PASSED tests/test_pathguard_tripwire.py::test_one_line_plants_are_caught[def f(a, b):\n    a.rename(b)\n]
+PASSED tests/test_pathguard_tripwire.py::test_one_line_plants_are_caught[def f(a):\n    a.rmdir()\n]
+PASSED tests/test_pathguard_tripwire.py::test_one_line_plants_are_caught[def f(a):\n    a.touch()\n]
+PASSED tests/test_pathguard_tripwire.py::test_one_line_plants_are_caught[def f(a, b):\n    a.symlink_to(b)\n]
+PASSED tests/test_pathguard_tripwire.py::test_one_line_plants_are_caught[def f(a):\n    a.chmod(0o600)\n]
+PASSED tests/test_pathguard_tripwire.py::test_one_line_plants_are_caught[def f(a):\n    a.write_bytes(b'x')\n]
+PASSED tests/test_pathguard_tripwire.py::test_one_line_plants_are_caught[def f(a):\n    a.write_text('x')\n]
+PASSED tests/test_pathguard_tripwire.py::test_one_line_plants_are_caught[def f(a):\n    a.open()\n]
+PASSED tests/test_pathguard_tripwire.py::test_one_line_plants_are_caught[def f(a, n):\n    p = pathguard.component(n, what='x')\n    p.read_text()\n]
+PASSED tests/test_pathguard_tripwire.py::test_one_line_plants_are_caught[def f(a, n):\n    pathguard.operator_text(n, what='x')\n    a.read_text()\n]
+PASSED tests/test_pathguard_tripwire.py::test_one_line_plants_are_caught[import os\n\n\ndef f(a):\n    os.access(a, 0)\n]
+PASSED tests/test_pathguard_tripwire.py::test_one_line_plants_are_caught[import os\n\n\ndef f(a):\n    os.chdir(a)\n]
+PASSED tests/test_pathguard_tripwire.py::test_one_line_plants_are_caught[import os\n\n\ndef f(a):\n    os.statvfs(a)\n]
+PASSED tests/test_pathguard_tripwire.py::test_one_line_plants_are_caught[import zipfile\n\n\ndef f(a):\n    zipfile.ZipFile(a)\n]
+PASSED tests/test_pathguard_tripwire.py::test_one_line_plants_are_caught[import importlib.util\n\n\ndef f(a):\n    importlib.util.spec_from_file_location('m', a)\n]
+PASSED tests/test_pathguard_tripwire.py::test_one_line_plants_are_caught[import logging\n\n\ndef f(a):\n    logging.FileHandler(a)\n]
+PASSED tests/test_pathguard_tripwire.py::test_one_line_good_code_passes[def f(a):\n    return a.replace('x', 'y')\n]
+PASSED tests/test_pathguard_tripwire.py::test_one_line_good_code_passes[def f(a):\n    return a.replace('x', 'y', 1)\n]
+PASSED tests/test_pathguard_tripwire.py::test_one_line_good_code_passes[def f(a, n):\n    p = pathguard.join(a, n, what='x')\n    p.read_text()\n]
+PASSED tests/test_pathguard_tripwire.py::test_one_line_good_code_passes[def f(a, n):\n    p = pathguard.inside(a, n, what='x')\n    p.read_text()\n]
+PASSED tests/test_pathguard_tripwire.py::test_one_line_good_code_passes[def f(a):\n    p = pathguard.operator_dir(a, what='x')\n    p.rmdir()\n]
+PASSED tests/test_pathguard_tripwire.py::test_one_line_good_code_passes[def f(a):\n    p = pathguard.operator_file(a, what='x')\n    p.chmod(0o600)\n]
+PASSED tests/test_pathguard_tripwire.py::test_one_line_good_code_passes[def f(a, n):\n    p = confined(a, n)\n    p.read_text()\n]
+PASSED tests/test_pathguard_tripwire.py::test_each_gap_in_the_first_scan_is_now_reported[import os\n\n\ndef f(p):\n    os.stat(p)\n]
+PASSED tests/test_pathguard_tripwire.py::test_each_gap_in_the_first_scan_is_now_reported[import os\n\n\ndef f(p):\n    os.path.exists(p)\n]
+PASSED tests/test_pathguard_tripwire.py::test_each_gap_in_the_first_scan_is_now_reported[import os\n\n\ndef f(p):\n    os.path.islink(p)\n]
+PASSED tests/test_pathguard_tripwire.py::test_each_gap_in_the_first_scan_is_now_reported[import os\n\n\ndef f(p, q):\n    os.link(p, q)\n]
+PASSED tests/test_pathguard_tripwire.py::test_each_gap_in_the_first_scan_is_now_reported[import os\n\n\ndef f(p, q):\n    os.symlink(p, q)\n]
+PASSED tests/test_pathguard_tripwire.py::test_each_gap_in_the_first_scan_is_now_reported[import tempfile\n\n\ndef f(p):\n    tempfile.mkstemp(dir=p)\n]
+PASSED tests/test_pathguard_tripwire.py::test_each_gap_in_the_first_scan_is_now_reported[import sqlite3\n\n\ndef f(p):\n    sqlite3.connect(p)\n]
+PASSED tests/test_pathguard_tripwire.py::test_each_gap_in_the_first_scan_is_now_reported[def f(p):\n    p.exists()\n]
+PASSED tests/test_pathguard_tripwire.py::test_each_gap_in_the_first_scan_is_now_reported[def f(p):\n    p.is_file()\n]
+PASSED tests/test_pathguard_tripwire.py::test_each_gap_in_the_first_scan_is_now_reported[def f(p):\n    p.is_dir()\n]
+PASSED tests/test_pathguard_tripwire.py::test_each_gap_in_the_first_scan_is_now_reported[def f(p):\n    p.is_symlink()\n]
+PASSED tests/test_pathguard_tripwire.py::test_each_gap_in_the_first_scan_is_now_reported[def f(p):\n    p.stat()\n]
+PASSED tests/test_pathguard_tripwire.py::test_each_gap_in_the_first_scan_is_now_reported[def f(p):\n    p.lstat()\n]
+PASSED tests/test_pathguard_tripwire.py::test_each_gap_in_the_first_scan_is_now_reported[def f(p):\n    p.resolve()\n]
+PASSED tests/test_pathguard_tripwire.py::test_each_gap_in_the_first_scan_is_now_reported[def f(p):\n    p.readlink()\n]
+PASSED tests/test_pathguard_tripwire.py::test_each_gap_in_the_first_scan_is_now_reported[def f(p):\n    p.samefile(p)\n]
+PASSED tests/test_pathguard_tripwire.py::test_each_gap_in_the_first_scan_is_now_reported[import os as o\n\n\ndef f(p):\n    o.remove(p)\n]
+PASSED tests/test_pathguard_tripwire.py::test_each_gap_in_the_first_scan_is_now_reported[from os import remove as rm\n\n\ndef f(p):\n    rm(p)\n]
+PASSED tests/test_pathguard_tripwire.py::test_each_gap_in_the_first_scan_is_now_reported[from os.path import exists as ex\n\n\ndef f(p):\n    ex(p)\n]
+PASSED tests/test_pathguard_tripwire.py::test_each_gap_in_the_first_scan_is_now_reported[import shutil as sh\n\n\ndef f(p):\n    sh.rmtree(p)\n]
+PASSED tests/test_pathguard_tripwire.py::test_each_gap_in_the_first_scan_is_now_reported[def f(p):\n    g = lambda: p.read_text()\n    return g()\n]
+PASSED tests/test_pathguard_tripwire.py::test_each_gap_in_the_first_scan_is_now_reported[def f(p):\n    __import__('os').remove(p)\n]
+PASSED tests/test_pathguard_tripwire.py::test_each_gap_in_the_first_scan_is_now_reported[def f(p, n):\n    q = pathguard.join(p, n, what='x')\n    return (lambda q: q.read_text())(p)\n]
+PASSED tests/test_pathguard_tripwire.py::test_pin_the_first_scan_already_reported_these_and_still_does[import os\n\n\ndef f(p):\n    os.listdir(p)\n]
+PASSED tests/test_pathguard_tripwire.py::test_pin_the_first_scan_already_reported_these_and_still_does[import os\n\n\ndef f(p):\n    os.scandir(p)\n]
+PASSED tests/test_pathguard_tripwire.py::test_pin_the_first_scan_already_reported_these_and_still_does[import os\n\n\ndef f(p):\n    os.walk(p)\n]
+PASSED tests/test_pathguard_tripwire.py::test_pin_the_first_scan_already_reported_these_and_still_does[import shutil\n\n\ndef f(p, q):\n    shutil.copy(p, q)\n]
+PASSED tests/test_pathguard_tripwire.py::test_pin_the_first_scan_already_reported_these_and_still_does[import glob\n\n\ndef f(p):\n    glob.glob(p)\n]
+PASSED tests/test_pathguard_tripwire.py::test_pin_the_first_scan_already_reported_these_and_still_does[import io\n\n\ndef f(p):\n    io.open(p)\n]
+PASSED tests/test_pathguard_tripwire.py::test_pin_the_first_scan_already_reported_these_and_still_does[def f(p):\n    p.glob('*')\n]
+PASSED tests/test_pathguard_tripwire.py::test_pin_the_first_scan_already_reported_these_and_still_does[def f(p):\n    p.rglob('*')\n]
+PASSED tests/test_pathguard_tripwire.py::test_pin_the_first_scan_already_reported_these_and_still_does[def f(p):\n    p.iterdir()\n]
+PASSED tests/test_pathguard_tripwire.py::test_pin_the_first_scan_already_reported_these_and_still_does[from pathlib import Path as P\n\n\ndef f(p):\n    P(p).read_text()\n]
+PASSED tests/test_pathguard_tripwire.py::test_pin_the_first_scan_already_reported_these_and_still_does[def f(p):\n    return [q.read_text() for q in p]\n]
+PASSED tests/test_pathguard_tripwire.py::test_pin_the_first_scan_already_reported_these_and_still_does[def f(p, n):\n    q = pathguard.join(p, n, what='x')\n    p.read_text()\n]
+PASSED tests/test_pathguard_tripwire.py::test_pin_the_guarded_twin_of_each_gap_passes[import os as o\n\n\ndef f(a, n):\n    p = pathguard.join(a, n, what='x')\n    o.remove(p)\n]
+PASSED tests/test_pathguard_tripwire.py::test_pin_the_guarded_twin_of_each_gap_passes[from os import remove as rm\n\n\ndef f(a, n):\n    p = pathguard.join(a, n, what='x')\n    rm(p)\n]
+PASSED tests/test_pathguard_tripwire.py::test_pin_the_guarded_twin_of_each_gap_passes[import os\n\n\ndef f(a, n):\n    p = pathguard.join(a, n, what='x')\n    os.stat(p)\n]
+PASSED tests/test_pathguard_tripwire.py::test_pin_the_guarded_twin_of_each_gap_passes[import os\n\n\ndef f(a, n):\n    p = pathguard.join(a, n, what='x')\n    os.link(p, p)\n]
+PASSED tests/test_pathguard_tripwire.py::test_pin_the_guarded_twin_of_each_gap_passes[def f(a, n):\n    p = pathguard.join(a, n, what='x')\n    return [q for q in p.iterdir()]\n]
+PASSED tests/test_pathguard_tripwire.py::test_pin_the_guarded_twin_of_each_gap_passes[def f(a, n):\n    p = pathguard.join(a, n, what='x')\n    return (lambda: p.read_text())()\n]
+PASSED tests/test_pathguard_tripwire.py::test_pin_the_guarded_twin_of_each_gap_passes[def f(m):\n    return m.group(1)\n]
+PASSED tests/test_pathguard_tripwire.py::test_pin_the_guarded_twin_of_each_gap_passes[import ast\n\n\ndef f(t):\n    return ast.walk(t)\n]
+PASSED tests/test_pathguard_tripwire.py::test_pin_the_guarded_twin_of_each_gap_passes[def f(d, name):\n    return d.resolve(name)\n]
+PASSED tests/test_pathguard_tripwire.py::test_a_method_named_touch_on_a_non_path_name_is_not_a_hit[def f(s, i):\n    s.touch(i)\n]
+PASSED tests/test_pathguard_tripwire.py::test_a_validator_in_another_file_must_exist_there_and_be_called
+PASSED tests/test_changelog_claims.py::test_the_heading_is_narrow_and_names_the_scan_it_depends_on
+PASSED tests/test_changelog_claims.py::test_the_module_docstring_makes_the_same_narrow_claim
+PASSED tests/test_changelog_claims.py::test_every_rule_from_r1_to_r13_is_named_as_a_whole_word[1]
+PASSED tests/test_changelog_claims.py::test_every_rule_from_r1_to_r13_is_named_as_a_whole_word[2]
+PASSED tests/test_changelog_claims.py::test_every_rule_from_r1_to_r13_is_named_as_a_whole_word[3]
+PASSED tests/test_changelog_claims.py::test_every_rule_from_r1_to_r13_is_named_as_a_whole_word[4]
+PASSED tests/test_changelog_claims.py::test_every_rule_from_r1_to_r13_is_named_as_a_whole_word[5]
+PASSED tests/test_changelog_claims.py::test_every_rule_from_r1_to_r13_is_named_as_a_whole_word[6]
+PASSED tests/test_changelog_claims.py::test_every_rule_from_r1_to_r13_is_named_as_a_whole_word[7]
+PASSED tests/test_changelog_claims.py::test_every_rule_from_r1_to_r13_is_named_as_a_whole_word[8]
+PASSED tests/test_changelog_claims.py::test_every_rule_from_r1_to_r13_is_named_as_a_whole_word[9]
+PASSED tests/test_changelog_claims.py::test_every_rule_from_r1_to_r13_is_named_as_a_whole_word[10]
+PASSED tests/test_changelog_claims.py::test_every_rule_from_r1_to_r13_is_named_as_a_whole_word[11]
+PASSED tests/test_changelog_claims.py::test_every_rule_from_r1_to_r13_is_named_as_a_whole_word[12]
+PASSED tests/test_changelog_claims.py::test_every_rule_from_r1_to_r13_is_named_as_a_whole_word[13]
+PASSED tests/test_changelog_claims.py::test_the_rule_list_does_not_name_a_rule_that_does_not_exist
+PASSED tests/test_changelog_claims.py::test_the_numbers_in_the_entry_are_the_numbers_in_the_code
+PASSED tests/test_changelog_claims.py::test_device_names_named_in_the_entry_are_refused[con]
+PASSED tests/test_changelog_claims.py::test_device_names_named_in_the_entry_are_refused[aux]
+PASSED tests/test_changelog_claims.py::test_device_names_named_in_the_entry_are_refused[com1]
+PASSED tests/test_changelog_claims.py::test_r3_r6_r7_and_r12_each_refuse_a_data_name_in_component_and_join[R3-a:b]
+PASSED tests/test_changelog_claims.py::test_r3_r6_r7_and_r12_each_refuse_a_data_name_in_component_and_join[R6-x.]
+PASSED tests/test_changelog_claims.py::test_r3_r6_r7_and_r12_each_refuse_a_data_name_in_component_and_join[R6-x ]
+PASSED tests/test_changelog_claims.py::test_r3_r6_r7_and_r12_each_refuse_a_data_name_in_component_and_join[R7-con]
+PASSED tests/test_changelog_claims.py::test_r3_r6_r7_and_r12_each_refuse_a_data_name_in_component_and_join[R12-a?b]
+PASSED tests/test_changelog_claims.py::test_an_operator_typed_name_is_held_to_containment_only[vault:token]
+PASSED tests/test_changelog_claims.py::test_an_operator_typed_name_is_held_to_containment_only[con]
+PASSED tests/test_changelog_claims.py::test_an_operator_typed_name_is_held_to_containment_only[x.]
+PASSED tests/test_changelog_claims.py::test_an_operator_typed_name_is_held_to_containment_only[a?b]
+PASSED tests/test_changelog_claims.py::test_each_message_the_entry_quotes_is_the_message_the_code_gives
+PASSED tests/test_changelog_claims.py::test_the_signer_says_where_the_key_was_as_typed_and_never_the_resolved_path
+PASSED tests/test_changelog_claims.py::test_the_atomic_write_signature_temp_name_mode_and_untouched_taken_name
+PASSED tests/test_changelog_claims.py::test_atomic_write_refuses_what_it_cannot_replace_without_a_path
+PASSED tests/test_changelog_claims.py::test_atomic_write_os_errors_carry_no_path_and_no_chain
+PASSED tests/test_changelog_claims.py::test_a_digest_file_that_is_a_link_out_is_unreadable_and_a_nul_gives_exit_2
+PASSED tests/test_changelog_claims.py::test_outputs_files_raises_for_a_missing_folder
+PASSED tests/test_changelog_claims.py::test_paths_are_resolved_and_absolute_whatever_the_current_folder
+PASSED tests/test_changelog_claims.py::test_confined_keeps_its_escape_text_and_refuses_the_wide_set_and_a_long_path
+PASSED tests/test_changelog_claims.py::test_golden_and_inputs_dir_may_point_outside_the_config_folder
+PASSED tests/test_changelog_claims.py::test_a_bundles_entry_with_a_reserved_name_is_a_path_refusal_and_a_plain_wrong_name_is_not
+PASSED tests/test_changelog_claims.py::test_key_path_checks_before_it_makes_a_folder_and_its_messages_hold_no_path
+PASSED tests/test_changelog_claims.py::test_the_failure_audit_code_of_score_is_the_refusal_name
+PASSED tests/test_changelog_claims.py::test_local_dir_refuses_an_id_drops_the_outcome_and_skips_a_link
+PASSED tests/test_changelog_claims.py::test_a_replay_that_stops_writes_failed_txt_and_never_hides_the_first_error
+PASSED tests/test_changelog_claims.py::test_hash_files_fake_llm_judge_and_secrets_folder_go_through_pathguard
+PASSED tests/test_changelog_claims.py::test_the_last_check_sits_on_the_lines_right_before_the_read_and_only_its_path_is_read[k1b/score.py-load_answers-operator_file]
+PASSED tests/test_changelog_claims.py::test_the_last_check_sits_on_the_lines_right_before_the_read_and_only_its_path_is_read[k1b/score.py-_recorded_digest-join]
+PASSED tests/test_changelog_claims.py::test_the_last_check_sits_on_the_lines_right_before_the_read_and_only_its_path_is_read[hashing.py-hash_files-inside]
+PASSED tests/test_changelog_claims.py::test_the_last_check_sits_on_the_lines_right_before_the_read_and_only_its_path_is_read[actions/secrets_file.py-MountedFileProvider._fetch-inside]
+PASSED tests/test_changelog_claims.py::test_errors_in_the_cause_list_bundle_and_hashing_checks_have_no_chain
+PASSED tests/test_changelog_claims.py::test_the_sonar_claim_says_nothing_is_cleared
+PASSED tests/test_changelog_claims.py::test_the_entry_states_the_limits_it_knows
+PASSED tests/test_changelog_claims.py::test_the_entry_does_not_say_for_any_reason_or_everywhere
+PASSED tests/test_changelog_claims.py::test_the_exception_list_the_entry_names_has_seven_columns_and_a_reason_each
+PASSED tests/test_changelog_claims.py::test_the_backslash_is_written_once_in_the_rules
+PASSED tests/test_changelog_claims.py::test_the_suppression_bullet_matches_the_files_and_the_counts
+PASSED tests/test_changelog_claims.py::test_every_bullet_of_the_entry_is_named_by_a_claim_test
+PASSED tests/test_k1b_cli.py::test_end_to_end_replay_then_score
+PASSED tests/test_k1b_cli.py::test_score_again_is_refused_because_the_report_folder_is_not_empty
+PASSED tests/test_k1b_cli.py::test_poisoned_bundle_is_refused_with_nothing_written
+PASSED tests/test_k1b_cli.py::test_replay_into_a_non_empty_folder_is_refused
+PASSED tests/test_k1b_cli.py::test_usd_cap_exits_1_and_report_shows_capped_cases
+PASSED tests/test_k1b_cli.py::test_k2_runs
+PASSED tests/test_k1b_cli.py::test_bad_numbers_are_usage_errors
+PASSED tests/test_k1b_cli.py::test_audit_failure_exits_3_and_score_prints_nothing
+PASSED tests/test_k1b_cli.py::test_chain_over_memory_store_warns_and_continues
+PASSED tests/test_k1b_cli.py::test_main_maps_config_error_to_2_and_anything_else_to_3
+PASSED tests/test_k1b_cli.py::test_main_missing_config_is_exit_2
+PASSED tests/test_k1b_cli.py::test_report_and_runbook_line_exist
+PASSED tests/test_k1b_cli.py::test_exempt_keys_still_check_values_and_outcome_keys_still_refuse
+PASSED tests/test_k1b_cli.py::test_debug_env_prints_the_traceback
+PASSED tests/test_k1b_cli.py::test_report_write_failure_leaves_started_then_failed_and_no_score_run
+PASSED tests/test_k1b_cli.py::test_score_run_events_come_after_the_report_exists
+PASSED tests/test_k1b_cli.py::test_version_is_real_and_matches_pyproject
+PASSED tests/test_k1b_cli.py::test_uv_lock_version_matches_the_package
+PASSED tests/test_k1b_cli.py::test_score_and_replay_reports_name_the_cases_to_inspect
+PASSED tests/test_k1b_cli.py::test_score_refuses_a_run_json_whose_issue_cases_disagree_with_the_files
+PASSED tests/test_k1b_cli.py::test_cli_refuses_redact_false_without_the_flag_and_records_it_with

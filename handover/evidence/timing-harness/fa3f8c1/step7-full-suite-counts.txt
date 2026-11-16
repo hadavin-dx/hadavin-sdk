@@ -1,0 +1,37 @@
+total 10584 {'passed': 10583, 'skipped': 1}
+skipped | tests.contracts.test_llm::test_a_malformed_answer_is_a_provider_error[bedrock] | Stubber refuses a malformed Converse shape before the kind sees it | 
+{'tests': '10584', 'failures': '0', 'errors': '0', 'skipped': '1', 'time': '684.079'}
+9.000 tests.test_k5_perf::test_the_harness_flags_a_quadratic_pattern_and_passes_a_linear_one
+75.614 tests.test_k5_perf::test_no_redaction_pattern_is_super_linear_on_its_own_keywords_repeated
+2.644 tests.test_k5_perf::test_redact_untrusted_end_to_end_is_not_super_linear_with_views[curl-u]
+0.544 tests.test_k5_perf::test_redact_untrusted_end_to_end_is_not_super_linear_with_views[password]
+1.351 tests.test_k5_perf::test_redact_untrusted_end_to_end_is_not_super_linear_with_views[fullwidth]
+0.811 tests.test_k5_perf::test_redact_untrusted_end_to_end_is_not_super_linear_with_views[json-escape]
+1.834 tests.test_k5_perf::test_redact_untrusted_end_to_end_is_not_super_linear_with_views[zero-width]
+6.249 tests.test_k5_perf::test_the_slowest_measured_shape_at_the_cap_stays_under_a_ceiling
+7.522 tests.test_migration_numbers::test_lexer_is_linear
+1.458 tests.test_migration_numbers::test_the_timing_harness_flags_a_quadratic_stand_in
+0.378 tests.test_migration_numbers::test_the_timing_harness_passes_a_linear_and_an_n_log_n_stand_in[linear]
+0.328 tests.test_migration_numbers::test_the_timing_harness_passes_a_linear_and_an_n_log_n_stand_in[n-log-n]
+0.238 tests.test_migration_numbers::test_the_timing_harness_flags_a_quadratic_stand_in_that_is_fast_on_the_small_input
+============================= slowest 15 durations =============================
+75.61s call     tests/test_k5_perf.py::test_no_redaction_pattern_is_super_linear_on_its_own_keywords_repeated
+37.21s call     tests/test_k5_layers.py::test_fuzz_small_window_19700_cases
+35.31s call     tests/test_peel_run_id.py::test_t5_accepts_exactly_the_pattern
+34.37s call     tests/test_k5_round12_fuzz.py::test_no_fragment_of_an_encoded_secret_value_survives_any_producer
+26.99s call     tests/demo_askdata/test_validate_fuzz.py::test_fuzz_2000_cases_hold_the_invariant
+11.61s call     tests/test_k5_round7.py::test_a_leaf_cap_and_a_total_cap_on_a_bundle
+10.28s teardown tests/demo_askdata/test_gold_exec.py::test_the_standin_is_reproducible_for_one_seed
+9.00s call     tests/test_k5_perf.py::test_the_harness_flags_a_quadratic_pattern_and_passes_a_linear_one
+7.52s call     tests/test_migration_numbers.py::test_lexer_is_linear
+6.45s call     tests/test_mutation_runner.py::test_a_mutant_that_loops_forever_times_out_instead_of_hanging_the_run
+6.25s call     tests/test_k5_perf.py::test_the_slowest_measured_shape_at_the_cap_stays_under_a_ceiling
+(one line of the slowest-15 list left out here: its test id holds a made-up password-shaped fixture value that the secret scanner flags; the full list is in the raw log full.log)
+4.02s call     tests/test_k5_round9.py::test_a_rsa_8192_key_straddling_the_cut_leaves_no_fragment
+3.66s call     tests/demo_askdata/test_seed.py::test_generation_is_repeatable_and_free_of_the_stdlib_random_module
+3.55s call     tests/test_k5_round8.py::test_the_same_for_a_large_result_cut_at_the_cap[pem]
+=========================== short test summary info ============================
+waited 900s; pytest procs: 16
+ 14:51:51 up  1:24,  0 user,  load average: 5.27, 5.80, 5.88
+start 2026-11-11T14:51:54Z  14:51:54 up  1:24,  0 user,  load average: 5.27, 5.80, 5.88 wait: waited 900s; pytest procs: 16
+end 2026-11-11T15:03:27Z  15:03:27 up  1:35,  0 user,  load average: 14.18, 13.04, 9.93 rc=0 secs=693

@@ -1,0 +1,44 @@
+........................................................................ [ 50%]
+....................................................................F
+=================================== FAILURES ===================================
+_ test_an_unexpected_error_before_the_question_keeps_the_form_and_leaks_no_path[os-error-no-path] _
+
+tmp_path = PosixPath('/home/user/build/rr6/tmp-B2/pytest-of-unknown/pytest-104/test_an_unexpected_error_befor0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff9dcccfb0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff9e67f290>
+error = OSError('/secret/place/file')
+line = 'refused: the settings: a file or folder cannot be used (OSError)\n'
+
+    @pytest.mark.parametrize(
+        ("error", "line"),
+        [
+            (OSError("/secret/place/file"), "refused: the settings: a file or folder cannot be used (OSError)\n"),
+            (ValueError("a text without a setting name"), "refused: the settings: a text without a setting name\n"),
+            (ValueError("REAL_X_Y is wrong"), "refused: REAL_X_Y: is wrong\n"),
+        ],
+        ids=["os-error-no-path", "no-name", "name-split"],
+    )
+    def test_an_unexpected_error_before_the_question_keeps_the_form_and_leaks_no_path(
+        tmp_path: Path,
+        capsys: pytest.CaptureFixture[str],
+        monkeypatch: pytest.MonkeyPatch,
+        error: Exception,
+        line: str,
+    ) -> None:
+        def boom(_env: dict[str, str]) -> list[object]:
+            raise error
+    
+        monkeypatch.setattr("builtins.input", _no_question)
+        monkeypatch.setattr(rrc, "imap_settings", boom)
+        assert rrc.main(["--config", str(_valid_config(tmp_path))]) == rrc.EXIT_REFUSED
+>       assert capsys.readouterr().out == line
+E       AssertionError: assert 'refused: OSError: x\n' == 'refused: the...d (OSError)\n'
+E         
+E         - refused: the settings: a file or folder cannot be used (OSError)
+E         + refused: OSError: x
+
+tests/test_take_script_refusals.py:745: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_take_script_refusals.py::test_an_unexpected_error_before_the_question_keeps_the_form_and_leaks_no_path[os-error-no-path]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 140 passed in 151.30s (0:02:31)

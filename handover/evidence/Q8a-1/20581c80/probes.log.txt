@@ -1,0 +1,40 @@
+check-config model_id=<M> | rc=0 stdout+stderr | no marker | the configuration files are accepted. Not checked: tool module code is not run, so the operations bound inside a tool module, and the start-up of the backends, 
+check-config model_id=../<M> | rc=2 stdout+stderr | no marker | refused: 1 validation error for Config | routes.default.model_id |   String should match pattern '^[A-Za-z0-9][A-Za-z0-9._:@/-]{0,127}$' [type=string_pattern_mismat
+check-config model_id=<M>/..\x | rc=2 stdout+stderr | no marker | refused: not valid YAML (line 5, column 38) | 
+check-config model_id=<M>:stream | rc=0 stdout+stderr | no marker | the configuration files are accepted. Not checked: tool module code is not run, so the operations bound inside a tool module, and the start-up of the backends, 
+check-config model_id=<M> <M> | rc=2 stdout+stderr | no marker | refused: 1 validation error for Config | routes.default.model_id |   String should match pattern '^[A-Za-z0-9][A-Za-z0-9._:@/-]{0,127}$' [type=string_pattern_mismat
+check-config model_id=<M>‮ | rc=2 stdout+stderr | no marker | refused: 1 validation error for Config | routes.default.model_id |   String should match pattern '^[A-Za-z0-9][A-Za-z0-9._:@/-]{0,127}$' [type=string_pattern_mismat
+check-config yaml library error text | rc=0 | no marker | the configuration files are accepted. Not checked: tool module code is not run, so the operations bound inside a tool module, and the start-up of the backends, 
+check-config OSError text from read_text | rc=2 | no marker | refused: config.yaml: cannot be read (PermissionError) | 
+AuditEvent event_id=<M> | validation | LEAK | ValidationError str=1 validation error for AuditEvent | event_id |   Value error, event_id must be a plain file name: lower-case letters, digits, dash and underscor
+AuditEvent event_id=../<M> | validation | LEAK | ValidationError str=1 validation error for AuditEvent | event_id |   Value error, event_id must be a plain file name: lower-case letters, digits, dash and underscor
+AuditEvent event_id=..\\<M> | validation | LEAK | ValidationError str=1 validation error for AuditEvent | event_id |   Value error, event_id must be a plain file name: lower-case letters, digits, dash and underscor
+AuditEvent event_id=/etc/<M> | validation | LEAK | ValidationError str=1 validation error for AuditEvent | event_id |   Value error, event_id must be a plain file name: lower-case letters, digits, dash and underscor
+AuditEvent event_id=<M>:ads | validation | LEAK | ValidationError str=1 validation error for AuditEvent | event_id |   Value error, event_id must be a plain file name: lower-case letters, digits, dash and underscor
+AuditEvent event_id=<M> x | validation | LEAK | ValidationError str=1 validation error for AuditEvent | event_id |   Value error, event_id must be a plain file name: lower-case letters, digits, dash and underscor
+AuditEvent event_id=<M-upper> | validation | LEAK | ValidationError str=1 validation error for AuditEvent | event_id |   Value error, event_id must be a plain file name: lower-case letters, digits, dash and underscor
+AuditEvent event_id=con | validation | no marker | ValidationError str=1 validation error for AuditEvent | event_id |   Value error, event_id must be a plain file name: lower-case letters, digits, dash and underscor
+AuditEvent event_id=nul | validation | no marker | ValidationError str=1 validation error for AuditEvent | event_id |   Value error, event_id must be a plain file name: lower-case letters, digits, dash and underscor
+AuditEvent event_id=com1 | validation | no marker | ValidationError str=1 validation error for AuditEvent | event_id |   Value error, event_id must be a plain file name: lower-case letters, digits, dash and underscor
+AuditEvent event_id=<M>\n | validation | LEAK | ValidationError str=1 validation error for AuditEvent | event_id |   Value error, event_id must be a plain file name: lower-case letters, digits, dash and underscor
+AuditEvent event_id=<M>\x00 | validation | LEAK | ValidationError str=1 validation error for AuditEvent | event_id |   Value error, event_id must be a plain file name: lower-case letters, digits, dash and underscor
+AuditEvent event_id=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa | validation | no marker | ValidationError str=1 validation error for AuditEvent | event_id |   Value error, event_id must be a plain file name: lower-case letters, digits, dash and underscor
+AuditEvent event_id=.<M> | validation | LEAK | ValidationError str=1 validation error for AuditEvent | event_id |   Value error, event_id must be a plain file name: lower-case letters, digits, dash and underscor
+AuditEvent event_id=<M>.json | validation | LEAK | ValidationError str=1 validation error for AuditEvent | event_id |   Value error, event_id must be a plain file name: lower-case letters, digits, dash and underscor
+shown_id('<M>') | returns '?' | no marker | ?
+shown_id('evt-<M>') | returns '?' | no marker | ?
+shown_id('evt-00000000000000000000000000000000') | returns 'evt-00000000000000000000000000000000' | no marker | evt-00000000000000000000000000000000
+shown_id('run-00000000000000000000000000000000') | returns 'run-00000000000000000000000000000000' | no marker | run-00000000000000000000000000000000
+shown_id('<M>\n') | returns '?' | no marker | ?
+shown_id('evt-00000000000000000000000000000000\n') | returns '?' | no marker | ?
+shown_id('../<M>') | returns '?' | no marker | ?
+shown_id('evt-<M>') | returns '?' | no marker | ?
+shown_id(non-str 12345) | returns '?' | no marker | ?
+shown_id(str subclass overriding __str__) |  | no marker | evt-00000000000000000000000000000000
+local_dir write_intent event_id=../<M> | files with marker made: 0; outside root escape: False; escaped files in parent: 0 | no marker | ValueError: event_id is not a plain file nameValueError('event_id is not a plain file name')
+local_dir write_intent event_id=<M>/x | files with marker made: 0; outside root escape: False; escaped files in parent: 0 | no marker | ValueError: event_id is not a plain file nameValueError('event_id is not a plain file name')
+local_dir write_intent event_id=<M> | files with marker made: 0; outside root escape: False; escaped files in parent: 0 | no marker | ValueError: event_id is not a plain file nameValueError('event_id is not a plain file name')
+local_dir write_intent event_id=<M-upper> | files with marker made: 0; outside root escape: False; escaped files in parent: 0 | no marker | ValueError: event_id is not a plain file nameValueError('event_id is not a plain file name')
+local_dir write_intent event_id=con | files with marker made: 0; outside root escape: False; escaped files in parent: 0 | no marker | ValueError: event_id is not a plain file nameValueError('event_id is not a plain file name')
+local_dir write_intent OSError text |  | no marker | AuditUnavailable: intent evt-b82eb8684d2742f6914fb204e75dc143: OSErrorAuditUnavailable('intent evt-b82eb8684d2742f6914fb204e75dc143: OSError')
+TOTAL 39 LEAK rows: 11

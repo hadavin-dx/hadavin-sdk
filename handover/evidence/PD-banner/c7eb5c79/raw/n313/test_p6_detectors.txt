@@ -1,0 +1,4 @@
+sdk: /home/user/build/ER-pdbanner12-new/src/hadavin_sdk/__init__.py
+................................                                         [100%]
+32 passed in 2.13s
+rc=0

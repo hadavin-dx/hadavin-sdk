@@ -1,0 +1,7 @@
+# WP-A pass-5 delta, security and correctness review, round 6 (egm-design, read-only, snapshot portal-A-r6, patch sha 2bedcfd651ec)
+Saved by the cloud session from the reviewer's inline report. Reviewer ran nothing; did not read db.py, constants.py, schema/review_items view, other rounds' surface.
+
+Verdict: no Blocker, no Major, 3 Nit. Both person-card texts are true for every state reachable through Desk.resolve and the desk's own failure paths (only resolve writes 'person: not sent', only on state unknown; crm_unconfirmed rows always crm_done 2, email-unknown rows always crm_done 1; no stale person note can reach a failed card; rows that failed on their own with crm_done 0/2 have only internal:* or crash_while_sending). _review statement count is 6 in the worst case (BEGIN, SELECT 1, review_rows, _NAMES, _MARKS, COMMIT), no headroom: any further per-request query fails test_big_book_is_fast_and_cheap. contract.md matches the code.
+- Nit A portal_api.py:520,605: the CRM-vs-email choice is inferred from crm_done == 0, not from a recorded decision; wrong only if a future/hand-edited book has crm_unconfirmed with crm_done 1. Fix suggestion: resolve writes a distinct last_error. (Desk is lead-owned: left for the lead.)
+- Nit B portal_api.py:479,519: the synthetic key "person: not sent (crm)" sits in _PERSON_TEXT. Fix: separate dict.
+- Nit C tests: no raw-seed case for 'person: not sent' with crm_done=0, and no `not in` assertion that the CRM card omits "Retry sends it now".

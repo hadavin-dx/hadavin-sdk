@@ -1,0 +1,21 @@
+........................................................................ [ 83%]
+..F
+=================================== FAILURES ===================================
+_ test_hubspot_accept_and_refuse_are_identical_to_the_old_rule_on_1512_key_files _
+
+tmp_path = PosixPath('/home/user/build/rr6/tmp-B2/pytest-of-unknown/pytest-31/test_hubspot_accept_and_refuse0')
+
+    def test_hubspot_accept_and_refuse_are_identical_to_the_old_rule_on_1512_key_files(tmp_path: Path) -> None:
+        accepted = 0
+        for raw in CASES:
+            got, _ = outcome("hubspot", raw, tmp_path)
+>           assert got == old_hubspot(raw), raw
+E           AssertionError: b'ZQ7# ZQ7# '
+E           assert 'ZQ7# ZQ7#' == None
+E            +  where None = old_hubspot(b'ZQ7# ZQ7# ')
+
+tests/test_core_key_readers.py:186: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_core_key_readers.py::test_hubspot_accept_and_refuse_are_identical_to_the_old_rule_on_1512_key_files
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 74 passed in 0.57s

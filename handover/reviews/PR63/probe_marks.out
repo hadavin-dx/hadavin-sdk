@@ -1,0 +1,9 @@
+FOLD_VERSION alg=fold4|tbl=aaf6e0e4355c:852|ucd=15.1.0|ud=15.1.0
+len(__all__) 23
+'aliःce' ['U+0903 Mc'] could_be_same_person: False | a in squeeze_views: True | a in fold_views: True
+'alʰice' ['U+02B0 Lm'] could_be_same_person: False | a in squeeze_views: True | a in fold_views: True
+'ali^ce' ['U+005E Sk'] could_be_same_person: False | a in squeeze_views: True | a in fold_views: True
+'bʼob' ['U+02BC Lm'] could_be_same_person: False | a in squeeze_views: True | a in fold_views: True
+hindi: 94 names, 4371 pairs; could_be_same_person now 0; with marks-dropped keys 2
+thai: 64 names, 2016 pairs; could_be_same_person now 1; with marks-dropped keys 1
+thai_chosen_pairs: 15 names, 105 pairs; could_be_same_person now 8; with marks-dropped keys 8

@@ -1,0 +1,21 @@
+........................................................................ [ 83%]
+...F
+=================================== FAILURES ===================================
+_ test_smtp_accept_and_refuse_are_identical_to_the_old_rule_on_1512_key_files __
+
+tmp_path = PosixPath('/home/user/build/rr6/tmp-B2/pytest-of-unknown/pytest-33/test_smtp_accept_and_refuse_ar0')
+
+    def test_smtp_accept_and_refuse_are_identical_to_the_old_rule_on_1512_key_files(tmp_path: Path) -> None:
+        accepted = 0
+        for raw in CASES:
+            got, _ = outcome("smtp", raw, tmp_path)
+>           assert got == old_smtp(raw), raw
+E           AssertionError: b'\xc3\xa9-77ZZ#%7%Z%#'
+E           assert 'é-77ZZ#%7%Z%#' == None
+E            +  where None = old_smtp(b'\xc3\xa9-77ZZ#%7%Z%#')
+
+tests/test_core_key_readers.py:195: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_core_key_readers.py::test_smtp_accept_and_refuse_are_identical_to_the_old_rule_on_1512_key_files
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 75 passed in 0.70s

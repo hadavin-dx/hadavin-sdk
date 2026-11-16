@@ -1,0 +1,11 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.18, pytest-9.2.0, pluggy-1.7.0 -- /home/user/build/prh-author/venv/bin/python
+rootdir: /home/user/build/prh-author/main
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 1 item
+
+tests/test_k5_fixes9.py::test_m3_a_fit_cut_then_a_decoded_swap_leaves_no_front_of_the_cut_secret[json-18] PASSED [100%]
+
+============================== 1 passed in 0.21s ===============================
+rc=0

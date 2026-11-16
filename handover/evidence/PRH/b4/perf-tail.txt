@@ -1,0 +1,3 @@
+5.38s call     tests/test_prh_perf.py::test_seconds[H2 colour inside a word]
+4.98s call     tests/test_prh_perf.py::test_seconds[H4 colourised log with sgr0]
+34 passed in 74.21s (0:01:14)

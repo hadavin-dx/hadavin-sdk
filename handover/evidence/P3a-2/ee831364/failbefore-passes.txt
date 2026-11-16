@@ -1,0 +1,319 @@
+tests/test_k5_fixes2.py::test_a_document_whose_views_are_over_the_cap_is_document_too_large
+tests/test_k5_fixes2.py::test_a_golden_input_over_the_cap_is_a_config_error_naming_it
+tests/test_k5_fixes2.py::test_a_nested_identifier_flag_is_refused_at_load
+tests/test_k5_fixes2.py::test_a_top_level_flag_and_a_property_named_identifier_are_fine
+tests/test_k5_fixes2.py::test_a_view_over_the_cap_is_refused_whatever_the_cap_is
+tests/test_k5_fixes2.py::test_a_view_that_neutralising_expands_is_refused
+tests/test_k5_fixes2.py::test_adjacent_variable_repeats_are_refused
+tests/test_k5_fixes2.py::test_an_escape_that_decodes_to_an_expanding_character_is_refused_before_the_work
+tests/test_k5_fixes2.py::test_input_too_large_is_a_redaction_error_with_its_own_name
+tests/test_k5_fixes2.py::test_max_document_bytes_cannot_exceed_what_the_redactor_takes
+tests/test_k5_fixes2.py::test_nat64_is_refused_whole[64:ff9b::5db8:d822]
+tests/test_k5_fixes2.py::test_nat64_is_refused_whole[64:ff9b::7f00:1]
+tests/test_k5_fixes2.py::test_nat64_is_refused_whole[64:ff9b::a00:1]
+tests/test_k5_fixes2.py::test_nat64_is_refused_whole[64:ff9b::a9fe:a9fe]
+tests/test_k5_fixes2.py::test_neutralising_cannot_push_the_text_over_the_cap
+tests/test_k5_fixes2.py::test_nothing_is_normalised_or_neutralised_before_the_size_check
+tests/test_k5_fixes2.py::test_the_local_use_nat64_prefix_is_refused_by_our_rule_not_the_stdlibs
+tests/test_k5_fixes2.py::test_the_permit_is_returned_if_the_thread_cannot_start
+tests/test_k5_fixes2.py::test_the_renamed_tree_is_a_valid_ledger_and_two_files_with_one_number_are_not
+tests/test_k5_fixes2.py::test_the_reviewers_input_is_refused_before_the_work
+tests/test_k5_round10_postgres.py::test_a_public_grant_on_a_relation_outside_the_map_is_refused
+tests/test_k5_round10_postgres.py::test_the_grant_map_alone_passes_the_assertion
+tests/test_k5_round10_postgres.py::test_the_purge_role_can_read_only_the_columns_its_delete_needs
+tests/test_k5_round10_postgres.py::test_the_purge_role_cannot_write_or_truncate_anything_but_delete_two_tables
+tests/test_k5_round10_postgres.py::test_the_runtime_role_cannot_delete_or_truncate_evidence
+tests/test_migration_matrix.py::test_a_clean_case_shows_no_right_for_a_fresh_role
+tests/test_migration_matrix.py::test_a_write_to_a_view_that_is_not_updatable_is_inconclusive_for_the_oracle
+tests/test_migration_matrix.py::test_an_update_right_on_a_large_object_alone_is_not_visible_by_behaviour
+tests/test_migration_matrix.py::test_the_forbidden_words_check_catches_each_word
+tests/test_migration_matrix.py::test_the_hand_map_check_fails_when_the_hand_table_is_wrong
+tests/test_migration_matrix.py::test_the_hand_written_map_equals_grants
+tests/test_migration_matrix.py::test_the_oracle_sees_a_default_right_by_making_a_fresh_object[E34-named-one-schema]
+tests/test_migration_matrix.py::test_the_oracle_sees_a_default_right_by_making_a_fresh_object[E35-everyone-sequences-all-schemas]
+tests/test_migration_matrix.py::test_the_oracle_sees_a_default_right_by_making_a_fresh_object[E36-set-by-another-role]
+tests/test_migration_matrix.py::test_the_oracle_sees_a_server_wide_right_and_the_case_cleans_up[parameter]
+tests/test_migration_matrix.py::test_the_oracle_sees_a_server_wide_right_and_the_case_cleans_up[tablespace]
+tests/test_migration_matrix.py::test_the_oracle_sees_every_effect_applied_raw[E01-everyone]
+tests/test_migration_matrix.py::test_the_oracle_sees_every_effect_applied_raw[E01-named]
+tests/test_migration_matrix.py::test_the_oracle_sees_every_effect_applied_raw[E01-third]
+tests/test_migration_matrix.py::test_the_oracle_sees_every_effect_applied_raw[E02-delete-everyone]
+tests/test_migration_matrix.py::test_the_oracle_sees_every_effect_applied_raw[E02-delete]
+tests/test_migration_matrix.py::test_the_oracle_sees_every_effect_applied_raw[E02-insert]
+tests/test_migration_matrix.py::test_the_oracle_sees_every_effect_applied_raw[E02-through-group]
+tests/test_migration_matrix.py::test_the_oracle_sees_every_effect_applied_raw[E02-update]
+tests/test_migration_matrix.py::test_the_oracle_sees_every_effect_applied_raw[E03-references]
+tests/test_migration_matrix.py::test_the_oracle_sees_every_effect_applied_raw[E03-trigger]
+tests/test_migration_matrix.py::test_the_oracle_sees_every_effect_applied_raw[E03-truncate]
+tests/test_migration_matrix.py::test_the_oracle_sees_every_effect_applied_raw[E04-column-select]
+tests/test_migration_matrix.py::test_the_oracle_sees_every_effect_applied_raw[E05-column-update]
+tests/test_migration_matrix.py::test_the_oracle_sees_every_effect_applied_raw[E06-sequence-usage]
+tests/test_migration_matrix.py::test_the_oracle_sees_every_effect_applied_raw[E07-sequence-select]
+tests/test_migration_matrix.py::test_the_oracle_sees_every_effect_applied_raw[E07-sequence-update]
+tests/test_migration_matrix.py::test_the_oracle_sees_every_effect_applied_raw[E08-matview]
+tests/test_migration_matrix.py::test_the_oracle_sees_every_effect_applied_raw[E08-view]
+tests/test_migration_matrix.py::test_the_oracle_sees_every_effect_applied_raw[E09-foreign-table]
+tests/test_migration_matrix.py::test_the_oracle_sees_every_effect_applied_raw[E10-function-named]
+tests/test_migration_matrix.py::test_the_oracle_sees_every_effect_applied_raw[E11-function-everyone]
+tests/test_migration_matrix.py::test_the_oracle_sees_every_effect_applied_raw[E14-procedure]
+tests/test_migration_matrix.py::test_the_oracle_sees_every_effect_applied_raw[E15-create-everyone]
+tests/test_migration_matrix.py::test_the_oracle_sees_every_effect_applied_raw[E15-create-named]
+tests/test_migration_matrix.py::test_the_oracle_sees_every_effect_applied_raw[E16-schema-grant-option]
+tests/test_migration_matrix.py::test_the_oracle_sees_every_effect_applied_raw[E17-create-other-schema]
+tests/test_migration_matrix.py::test_the_oracle_sees_every_effect_applied_raw[E18-create-database-everyone]
+tests/test_migration_matrix.py::test_the_oracle_sees_every_effect_applied_raw[E18-create-database]
+tests/test_migration_matrix.py::test_the_oracle_sees_every_effect_applied_raw[E19-temporary]
+tests/test_migration_matrix.py::test_the_oracle_sees_every_effect_applied_raw[E20-type]
+tests/test_migration_matrix.py::test_the_oracle_sees_every_effect_applied_raw[E21-language]
+tests/test_migration_matrix.py::test_the_oracle_sees_every_effect_applied_raw[E22-large-object-select]
+tests/test_migration_matrix.py::test_the_oracle_sees_every_effect_applied_raw[E22-large-object-update]
+tests/test_migration_matrix.py::test_the_oracle_sees_every_effect_applied_raw[E23-foreign-server]
+tests/test_migration_matrix.py::test_the_oracle_sees_every_effect_applied_raw[E23-wrapper]
+tests/test_migration_matrix.py::test_the_oracle_sees_every_effect_applied_raw[E26-map-grant-option]
+tests/test_migration_matrix.py::test_the_oracle_sees_every_effect_applied_raw[E28-owner-table]
+tests/test_migration_matrix.py::test_the_oracle_sees_every_effect_applied_raw[E29-group-inherit]
+tests/test_migration_matrix.py::test_the_oracle_sees_every_effect_applied_raw[E30-group-set-only]
+tests/test_migration_matrix.py::test_the_oracle_sees_every_effect_applied_raw[E31-pg-read-all-data]
+tests/test_migration_matrix.py::test_the_oracle_sees_every_effect_applied_raw[E32-flag-via-group]
+tests/test_migration_matrix.py::test_the_oracle_sees_every_effect_applied_raw[E33-flag-on-named]
+tests/test_migration_matrix.py::test_the_oracle_sees_every_effect_applied_raw[E38-grant-option-holder]
+tests/test_migration_matrix.py::test_the_oracle_sees_every_effect_applied_raw[E39-membership-by-admin]
+tests/test_migration_matrix.py::test_the_oracle_shares_nothing_with_the_code_under_test
+tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[/* on */ GRANT r TO {n} -- on-\xe9on]
+tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[/* on */ GRANT r TO {n} -- on-_on$]
+tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[/* on */ GRANT r TO {n} -- on-on\xe9]
+tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT pg_write_all_data TO {n}-\xe9on]
+tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT pg_write_all_data TO {n}-_on$]
+tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT pg_write_all_data TO {n}-on\xe9]
+tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r TO {n}, "on"-\xe9on]
+tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r TO {n}, "on"-_on$]
+tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r TO {n}, "on"-on\xe9]
+tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r TO {n}-\xe9on]
+tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r TO {n}-_on$]
+tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r TO {n}-on\xe9]
+tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r\nTO {n}-\xe9on]
+tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r\nTO {n}-_on$]
+tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r\nTO {n}-on\xe9]
+tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT {n} TO s-\xe9on]
+tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT {n} TO s-_on$]
+tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT {n} TO s-on\xe9]
+tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[REVOKE r FROM {n}-\xe9on]
+tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[REVOKE r FROM {n}-_on$]
+tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[REVOKE r FROM {n}-on\xe9]
+tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[REVOKE {n} FROM s-\xe9on]
+tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[REVOKE {n} FROM s-_on$]
+tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[REVOKE {n} FROM s-on\xe9]
+tests/test_migration_names.py::test_a_standalone_on_still_lets_a_grant_on_an_object_through_even_to_a_dollar_name
+tests/test_migration_names.py::test_copy_program_is_refused_across_blanks_and_lines
+tests/test_migration_names.py::test_the_name_corpus_holds_the_bypass_shapes
+tests/test_migration_numbers.py::test_a_file_that_is_not_utf8_raises_the_original_error
+tests/test_migration_numbers.py::test_a_hostile_name_never_reaches_the_order_message
+tests/test_migration_numbers.py::test_a_huge_number_gives_a_capped_message
+tests/test_migration_numbers.py::test_a_million_characters_finish
+tests/test_migration_numbers.py::test_apostrophe_in_a_comment_does_not_hide_a_statement
+tests/test_migration_numbers.py::test_bak_is_ignored_at_runtime
+tests/test_migration_numbers.py::test_cap_boundary
+tests/test_migration_numbers.py::test_comment_ends_at_cr
+tests/test_migration_numbers.py::test_crlf_counts_as_one_line
+tests/test_migration_numbers.py::test_dangling_link_is_refused
+tests/test_migration_numbers.py::test_directory_named_like_a_migration_is_refused
+tests/test_migration_numbers.py::test_dollar_after_identifier_is_not_a_tag
+tests/test_migration_numbers.py::test_duplicate_number
+tests/test_migration_numbers.py::test_e_after_identifier_is_not_a_prefix
+tests/test_migration_numbers.py::test_e_string_and_dollar_cases
+tests/test_migration_numbers.py::test_e_string_continuation_is_refused
+tests/test_migration_numbers.py::test_each_blind_statement_is_refused[ALTER DATABASE d SET y TO 1]
+tests/test_migration_numbers.py::test_each_blind_statement_is_refused[ALTER ROLE x SET y = 1]
+tests/test_migration_numbers.py::test_each_blind_statement_is_refused[ALTER USER x]
+tests/test_migration_numbers.py::test_each_blind_statement_is_refused[DO $$ BEGIN NULL; END $$]
+tests/test_migration_numbers.py::test_each_blind_statement_is_refused[DROP OWNED BY r]
+tests/test_migration_numbers.py::test_each_blind_statement_is_refused[EXECUTE p]
+tests/test_migration_numbers.py::test_each_blind_statement_is_refused[REASSIGN OWNED BY a TO b]
+tests/test_migration_numbers.py::test_each_set_form_is_refused[RESET ALL]
+tests/test_migration_numbers.py::test_each_set_form_is_refused[RESET ROLE]
+tests/test_migration_numbers.py::test_each_set_form_is_refused[SET LOCAL ROLE r]
+tests/test_migration_numbers.py::test_each_set_form_is_refused[SET LOCAL search_path TO x]
+tests/test_migration_numbers.py::test_each_set_form_is_refused[SET ROLE r]
+tests/test_migration_numbers.py::test_each_set_form_is_refused[SET SESSION AUTHORIZATION r]
+tests/test_migration_numbers.py::test_each_set_form_is_refused[SET TRANSACTION READ ONLY]
+tests/test_migration_numbers.py::test_each_set_form_is_refused[SET session_replication_role = replica]
+tests/test_migration_numbers.py::test_each_set_form_is_refused[set x to 1]
+tests/test_migration_numbers.py::test_each_transaction_word_is_refused[ABORT]
+tests/test_migration_numbers.py::test_each_transaction_word_is_refused[BEGIN]
+tests/test_migration_numbers.py::test_each_transaction_word_is_refused[COMMIT]
+tests/test_migration_numbers.py::test_each_transaction_word_is_refused[END]
+tests/test_migration_numbers.py::test_each_transaction_word_is_refused[PREPARE TRANSACTION 'x']
+tests/test_migration_numbers.py::test_each_transaction_word_is_refused[RELEASE a]
+tests/test_migration_numbers.py::test_each_transaction_word_is_refused[ROLLBACK]
+tests/test_migration_numbers.py::test_each_transaction_word_is_refused[SAVEPOINT a]
+tests/test_migration_numbers.py::test_each_transaction_word_is_refused[START TRANSACTION]
+tests/test_migration_numbers.py::test_each_transaction_word_is_refused[Start\n  Transaction]
+tests/test_migration_numbers.py::test_each_transaction_word_is_refused[commit]
+tests/test_migration_numbers.py::test_false_positives_stay_clean
+tests/test_migration_numbers.py::test_gap
+tests/test_migration_numbers.py::test_gone_hotfix_collision_is_a_person_must_look
+tests/test_migration_numbers.py::test_gone_message_empty_when_all_have_files
+tests/test_migration_numbers.py::test_gone_message_names_escaped
+tests/test_migration_numbers.py::test_gone_message_prefix_in_every_case
+tests/test_migration_numbers.py::test_gone_mixed_ledger_prints_one_line_per_case
+tests/test_migration_numbers.py::test_gone_name_that_is_not_a_stem_needs_a_person
+tests/test_migration_numbers.py::test_gone_newer_case
+tests/test_migration_numbers.py::test_gone_rename_case
+tests/test_migration_numbers.py::test_gone_same_text_file_that_is_itself_applied_is_not_a_rename
+tests/test_migration_numbers.py::test_gone_two_orphans_with_one_same_text_file_are_not_a_rename
+tests/test_migration_numbers.py::test_hostile_names_are_refused_or_ignored[00001_a.sql]
+tests/test_migration_numbers.py::test_hostile_names_are_refused_or_ignored[0001-a.sql]
+tests/test_migration_numbers.py::test_hostile_names_are_refused_or_ignored[0001_A.sql]
+tests/test_migration_numbers.py::test_hostile_names_are_refused_or_ignored[0001_a.sql.bak]
+tests/test_migration_numbers.py::test_hostile_names_are_refused_or_ignored[1_a.sql]
+tests/test_migration_numbers.py::test_hostile_names_are_refused_or_ignored[99999999999_a.sql]
+tests/test_migration_numbers.py::test_late_files_are_sorted_by_number
+tests/test_migration_numbers.py::test_late_files_basics
+tests/test_migration_numbers.py::test_late_files_equal_number
+tests/test_migration_numbers.py::test_late_files_ignores_non_ascii_digit_applied_stems
+tests/test_migration_numbers.py::test_late_files_uses_highest
+tests/test_migration_numbers.py::test_ledger_property_only_the_named_error_and_agreement
+tests/test_migration_numbers.py::test_lexer_problem_in_a_late_file_is_a_message
+tests/test_migration_numbers.py::test_lexer_property_never_raises_and_cr_equals_lf
+tests/test_migration_numbers.py::test_lock_key_value
+tests/test_migration_numbers.py::test_message_class_and_prefix
+tests/test_migration_numbers.py::test_names_in_messages_are_escaped
+tests/test_migration_numbers.py::test_non_ascii_dollar_tag
+tests/test_migration_numbers.py::test_number_zero_is_refused
+tests/test_migration_numbers.py::test_order_problems_empty_when_nothing_is_late
+tests/test_migration_numbers.py::test_order_problems_turns_a_refused_file_into_a_message
+tests/test_migration_numbers.py::test_parameters_are_left_alone
+tests/test_migration_numbers.py::test_plant_badly_named_file_is_caught
+tests/test_migration_numbers.py::test_planted_duplicate_in_a_copy_of_the_real_folder_is_caught
+tests/test_migration_numbers.py::test_problem_list_is_capped
+tests/test_migration_numbers.py::test_read_files_reads_each_file_once
+tests/test_migration_numbers.py::test_recipe_accepts_tab_lf_cr_ff
+tests/test_migration_numbers.py::test_recipe_accepts_what_psql_leaves_alone[cast]
+tests/test_migration_numbers.py::test_recipe_accepts_what_psql_leaves_alone[colon-comment]
+tests/test_migration_numbers.py::test_recipe_accepts_what_psql_leaves_alone[colon-dollar]
+tests/test_migration_numbers.py::test_recipe_accepts_what_psql_leaves_alone[colon-string]
+tests/test_migration_numbers.py::test_recipe_accepts_what_psql_leaves_alone[double-cast]
+tests/test_migration_numbers.py::test_recipe_accepts_what_psql_leaves_alone[slice-digits]
+tests/test_migration_numbers.py::test_recipe_first_line
+tests/test_migration_numbers.py::test_recipe_has_no_include_command
+tests/test_migration_numbers.py::test_recipe_refuses_a_stem_that_would_break_the_quotes
+tests/test_migration_numbers.py::test_recipe_refuses_markers_and_control_characters[bel]
+tests/test_migration_numbers.py::test_recipe_refuses_markers_and_control_characters[esc]
+tests/test_migration_numbers.py::test_recipe_refuses_markers_and_control_characters[marker-comment]
+tests/test_migration_numbers.py::test_recipe_refuses_markers_and_control_characters[marker-plain]
+tests/test_migration_numbers.py::test_recipe_refuses_markers_and_control_characters[marker-string]
+tests/test_migration_numbers.py::test_recipe_refuses_markers_and_control_characters[nul]
+tests/test_migration_numbers.py::test_recipe_refuses_psql_syntax[bare]
+tests/test_migration_numbers.py::test_recipe_refuses_psql_syntax[dquoted]
+tests/test_migration_numbers.py::test_recipe_refuses_psql_syntax[e-string]
+tests/test_migration_numbers.py::test_recipe_refuses_psql_syntax[exists]
+tests/test_migration_numbers.py::test_recipe_refuses_psql_syntax[in-comment]
+tests/test_migration_numbers.py::test_recipe_refuses_psql_syntax[in-string]
+tests/test_migration_numbers.py::test_recipe_refuses_psql_syntax[line-start]
+tests/test_migration_numbers.py::test_recipe_refuses_psql_syntax[mid-line]
+tests/test_migration_numbers.py::test_recipe_refuses_psql_syntax[non-ascii]
+tests/test_migration_numbers.py::test_recipe_refuses_psql_syntax[quoted]
+tests/test_migration_numbers.py::test_recipe_schema_quoted
+tests/test_migration_numbers.py::test_recipe_trailing_comment
+tests/test_migration_numbers.py::test_recipe_unterminated_last_statement
+tests/test_migration_numbers.py::test_runtime_accepts_symlink_to_file
+tests/test_migration_numbers.py::test_scan_sees_create_inside_bodies_and_strings
+tests/test_migration_numbers.py::test_schema_name_plain
+tests/test_migration_numbers.py::test_statement_start_anchor
+tests/test_migration_numbers.py::test_statement_text_exact_output
+tests/test_migration_numbers.py::test_stray_entries_refused_by_ci
+tests/test_migration_numbers.py::test_symlink_in_and_out_are_refused_by_ci
+tests/test_migration_numbers.py::test_text_rules_leave_set_config_and_trigger_state_to_the_readback
+tests/test_migration_numbers.py::test_the_real_files_read_clean
+tests/test_migration_numbers.py::test_the_real_folder_is_consistent
+tests/test_migration_numbers.py::test_unicode_digit_names_are_refused[arabic-indic]
+tests/test_migration_numbers.py::test_unicode_digit_names_are_refused[full-width]
+tests/test_migration_numbers.py::test_unrecognised_dollar_refuses
+tests/test_migration_numbers.py::test_unterminated_parts_refuse_with_the_line[SELECT "x;-quoted identifier not closed at line 1]
+tests/test_migration_numbers.py::test_unterminated_parts_refuse_with_the_line[SELECT 'x;-string not closed at line 1]
+tests/test_migration_numbers.py::test_unterminated_parts_refuse_with_the_line[SELECT 1; /* x /* y */-comment not closed at line 1]
+tests/test_migration_numbers.py::test_unterminated_parts_refuse_with_the_line[SELECT 1;\n$a$ x-dollar body not closed at line 2]
+tests/test_migration_numbers.py::test_unterminated_parts_refuse_with_the_line[SELECT E'x\\';-string not closed at line 1]
+tests/test_migration_numbers.py::test_uppercase_extension_is_refused
+tests/test_p2_postgres.py::test_audit_checkpoints_columns_after_every_migration
+tests/test_p2_postgres.py::test_audit_checkpoints_migration_adds_alg_and_label_and_old_rows_get_defaults
+tests/test_p2_postgres.py::test_cas_race_across_two_connections_has_one_winner
+tests/test_p2_postgres.py::test_cli_kill_switch_reaches_every_process
+tests/test_p2_postgres.py::test_cli_limits_with_an_unreachable_store_exits_4[reset]
+tests/test_p2_postgres.py::test_cli_limits_with_an_unreachable_store_exits_4[stop]
+tests/test_p2_postgres.py::test_cli_limits_without_a_readable_dsn_is_a_config_error
+tests/test_p2_postgres.py::test_iam_auth_needs_region
+tests/test_p2_postgres.py::test_migrate_does_not_need_a_valid_registry
+tests/test_p2_postgres.py::test_migrate_needs_the_migration_dsn
+tests/test_p2_postgres.py::test_migrate_refused_for_memory_store
+tests/test_p2_postgres.py::test_plan_hash_survives_a_non_utc_timestamp
+tests/test_p2_postgres.py::test_runtime_role_can_write_but_not_delete
+tests/test_p2_postgres.py::test_runtime_role_must_be_a_plain_name
+tests/test_p2_postgres.py::test_schema_has_one_column_per_model_field
+tests/test_p2_postgres.py::test_two_concurrent_migrate_runs_apply_once
+tests/test_p7_store.py::test_a_verified_mode_needs_a_ca_bundle
+tests/test_p7_store.py::test_append_only_tables_get_no_update
+tests/test_p7_store.py::test_ca_bundle_from_the_secrets_backend
+tests/test_p7_store.py::test_iam_refuses_an_unverified_server[allow]
+tests/test_p7_store.py::test_iam_refuses_an_unverified_server[disable]
+tests/test_p7_store.py::test_iam_refuses_an_unverified_server[prefer]
+tests/test_p7_store.py::test_iam_refuses_an_unverified_server[require]
+tests/test_p7_store.py::test_iam_runtime_dsn_with_a_password_is_refused
+tests/test_p7_store.py::test_iam_verifies_the_server_by_default
+tests/test_p7_store.py::test_migrate_seeds_the_kill_switch_off
+tests/test_p7_store.py::test_missing_kill_switch_row_fails_closed
+tests/test_p7_store.py::test_month_spend_is_exact_under_concurrent_writers
+tests/test_p7_store.py::test_pghost_counts_as_the_host
+tests/test_p7_store.py::test_tls_mode[host=/var/run/postgresql dbname=core-None-None-None]
+tests/test_p7_store.py::test_tls_mode[hostaddr=10.0.0.5 dbname=core-None-/etc/ssl/db-ca.pem-verify-full]
+tests/test_p7_store.py::test_tls_mode[postgresql://app@127.0.0.2/core-None-None-None]
+tests/test_p7_store.py::test_tls_mode[postgresql://app@db.example.internal:5432/core-None-/etc/ssl/db-ca.pem-verify-full]
+tests/test_p7_store.py::test_tls_mode[postgresql://app@db.example.internal:5432/core-disable-None-disable]
+tests/test_p7_store.py::test_tls_mode[postgresql://app@db.example.internal:5432/core-require-None-require]
+tests/test_p7_store.py::test_tls_mode[postgresql://app@db.example.internal:5432/core?sslmode=verify-ca-None-/etc/ssl/db-ca.pem-verify-ca]
+tests/test_p7_store.py::test_tls_mode[postgresql://app@localhost/core-None-None-None]
+tests/warden_port/test_audit_chain.py::test_a_body_whose_transaction_is_already_gone_raises_its_own_error
+tests/warden_port/test_audit_chain.py::test_a_checkpoint_is_written_automatically_every_n_rows
+tests/warden_port/test_audit_chain.py::test_a_checkpoint_signed_with_another_key_is_rejected
+tests/warden_port/test_audit_chain.py::test_a_checkpoint_that_cannot_be_signed_or_anchored_fails_open_and_is_retried
+tests/warden_port/test_audit_chain.py::test_a_checkpoint_that_was_never_anchored_or_an_anchor_with_no_checkpoint_is_reported
+tests/warden_port/test_audit_chain.py::test_a_clean_body_is_committed
+tests/warden_port/test_audit_chain.py::test_a_damaged_database_is_a_finding_not_a_crash
+tests/warden_port/test_audit_chain.py::test_a_deleted_row_is_found
+tests/warden_port/test_audit_chain.py::test_a_deleted_tail_is_detected_against_the_anchor
+tests/warden_port/test_audit_chain.py::test_a_history_rewritten_and_re_signed_with_the_key_is_caught_by_its_anchors
+tests/warden_port/test_audit_chain.py::test_an_anchor_needs_the_chain_audit
+tests/warden_port/test_audit_chain.py::test_an_edited_row_is_found
+tests/warden_port/test_audit_chain.py::test_an_error_in_the_body_keeps_nothing_and_is_the_error_raised
+tests/warden_port/test_audit_chain.py::test_an_outcome_that_cannot_be_appended_waits_in_the_outbox
+tests/warden_port/test_audit_chain.py::test_an_s3_compatible_store_is_reached_through_endpoint_url
+tests/warden_port/test_audit_chain.py::test_an_unknown_anchor_kind_or_mode_or_two_key_sources_is_a_config_error
+tests/warden_port/test_audit_chain.py::test_an_unsigned_chain_still_verifies_its_links
+tests/warden_port/test_audit_chain.py::test_an_untouched_log_verifies_and_is_fully_signed
+tests/warden_port/test_audit_chain.py::test_appends_and_reads_from_many_threads_keep_one_whole_chain
+tests/warden_port/test_audit_chain.py::test_audit_verify_exits_0_when_intact_and_1_when_tampered
+tests/warden_port/test_audit_chain.py::test_audit_verify_refuses_a_memory_store
+tests/warden_port/test_audit_chain.py::test_audit_verify_that_cannot_build_its_store_could_not_verify
+tests/warden_port/test_audit_chain.py::test_checkpoints_are_signed_by_kms_and_verify_with_its_public_key
+tests/warden_port/test_audit_chain.py::test_cutting_the_tail_but_keeping_its_checkpoint_is_found
+tests/warden_port/test_audit_chain.py::test_each_anchor_is_locked_dated_and_never_overwritten
+tests/warden_port/test_audit_chain.py::test_keys_round_trip_and_a_passphrase_is_required_when_set
+tests/warden_port/test_audit_chain.py::test_postgres_appends_from_many_threads_keep_one_whole_chain
+tests/warden_port/test_audit_chain.py::test_postgres_chain_appends_verifies_and_refuses_update_delete_truncate
+tests/warden_port/test_audit_chain.py::test_rewriting_a_row_and_recomputing_every_later_hash_is_caught_by_the_signature
+tests/warden_port/test_audit_chain.py::test_rows_after_the_last_checkpoint_are_reported_as_unsigned
+tests/warden_port/test_audit_chain.py::test_rows_cannot_be_updated_or_deleted_through_sql
+tests/warden_port/test_audit_chain.py::test_the_app_builds_the_chain_audit_from_config
+tests/warden_port/test_audit_chain.py::test_the_backend_table_builds_the_kms_signer_and_the_anchor_from_config
+tests/warden_port/test_audit_chain.py::test_the_environment_table_rules_for_signers_and_anchors[pilot-anchor7-signer7-refused7]
+tests/warden_port/test_audit_chain.py::test_the_environment_table_rules_for_signers_and_anchors[pilot-anchor9-signer9-refused9]
+tests/warden_port/test_audit_chain.py::test_the_environment_table_rules_for_signers_and_anchors[pilot-none-signer8-refused8]
+tests/warden_port/test_audit_chain.py::test_the_environment_table_rules_for_signers_and_anchors[prod-anchor0-signer0-refused0]
+tests/warden_port/test_audit_chain.py::test_the_environment_table_rules_for_signers_and_anchors[prod-anchor1-signer1-refused1]
+tests/warden_port/test_audit_chain.py::test_the_environment_table_rules_for_signers_and_anchors[prod-anchor10-signer10-refused10]
+tests/warden_port/test_audit_chain.py::test_the_environment_table_rules_for_signers_and_anchors[prod-anchor3-none-refused3]
+tests/warden_port/test_audit_chain.py::test_the_environment_table_rules_for_signers_and_anchors[prod-anchor4-signer4-refused4]
+tests/warden_port/test_audit_chain.py::test_the_environment_table_rules_for_signers_and_anchors[prod-anchor5-signer5-refused5]
+tests/warden_port/test_audit_chain.py::test_the_environment_table_rules_for_signers_and_anchors[prod-none-signer2-refused2]
+tests/warden_port/test_audit_chain.py::test_the_environment_table_rules_for_signers_and_anchors[prod-none-signer6-refused6]
+tests/warden_port/test_audit_chain.py::test_the_runtime_role_writes_and_reads_the_chain_but_cannot_rewrite_it

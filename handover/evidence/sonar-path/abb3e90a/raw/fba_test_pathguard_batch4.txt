@@ -1,0 +1,89 @@
+..........FFF.FFFFFFFFFFFFF.FFF.                                         [100%]
+=================================== FAILURES ===================================
+E   AssertionError: wrong wording: IsADirectoryError: [Errno 21] Is a directory: 11
+    assert 'IsADirectory...directory: 11' == 'ConfigError:... regular file'
+      
+      - ConfigError: secret 'd' is not a regular file
+      + IsADirectoryError: [Errno 21] Is a directory: 11
+/home/user/build/ER-sonarpath4-a/tests/test_pathguard_batch4.py:117: AssertionError: wrong wording: IsADirectoryError: [Errno 21] Is a directory: 11
+E   AssertionError: the file moved over a link a person planted
+    assert False
+     +  where False = is_file()
+     +    where is_file = (PosixPath('/tmp/pytest-of-root/pytest-29751/test_local_dir_reconcile_leave0/aud/outbox') / 'bad.json').is_file
+     +      where PosixPath('/tmp/pytest-of-root/pytest-29751/test_local_dir_reconcile_leave0/aud/outbox') = <hadavin_sdk.audit.local_dir.LocalDirSink object at 0x7f9b382f81a0>.outbox
+/home/user/build/ER-sonarpath4-a/tests/test_pathguard_batch4.py:132: AssertionError: the file moved over a link a person planted
+E   AssertionError: assert False
+     +  where False = is_symlink()
+     +    where is_symlink = (PosixPath('/tmp/pytest-of-root/pytest-29751/test_local_dir_reconcile_leave1/aud/outbox') / 'linked.json').is_symlink
+     +      where PosixPath('/tmp/pytest-of-root/pytest-29751/test_local_dir_reconcile_leave1/aud/outbox') = <hadavin_sdk.audit.local_dir.LocalDirSink object at 0x7f9b382e51d0>.outbox
+/home/user/build/ER-sonarpath4-a/tests/test_pathguard_batch4.py:147: AssertionError: assert False
+E   Failed: DID NOT RAISE PathRefused
+/home/user/build/ER-sonarpath4-a/tests/test_pathguard_batch4.py:175: Failed: DID NOT RAISE PathRefused
+E   AssertionError: Regex pattern did not match.
+      Expected regex: 'bundle file: path escapes its folder'
+      Actual message: 'bundle case-001: symbolic links are refused'
+/home/user/build/ER-sonarpath4-a/tests/test_pathguard_batch4.py:191: AssertionError: Regex pattern did not match.
+E   AssertionError: wrong wording: 
+    assert 'bundle folder: contains a control character' in ''
+/home/user/build/ER-sonarpath4-a/tests/test_pathguard_batch4.py:202: AssertionError: wrong wording:
+E   AssertionError: wrong wording: BundleError: bundle con: folder name must look like case-001
+    assert False
+     +  where False = <built-in method startswith of str object at 0x7f9b38019840>('PathRefused: bundle folder: ')
+     +    where <built-in method startswith of str object at 0x7f9b38019840> = 'BundleError: bundle con: folder name must look like case-001'.startswith
+/home/user/build/ER-sonarpath4-a/tests/test_pathguard_batch4.py:211: AssertionError: wrong wording: BundleError: bundle con: folder name must look like case-001
+E   Failed: DID NOT RAISE PathRefused
+/home/user/build/ER-sonarpath4-a/tests/test_pathguard_batch4.py:226: Failed: DID NOT RAISE PathRefused
+E   ImportError: cannot import name '_mark_failed' from 'hadavin_sdk.k1b.replay' (/home/user/build/ER-sonarpath4-a/src/hadavin_sdk/k1b/replay.py)
+/home/user/build/ER-sonarpath4-a/tests/test_pathguard_batch4.py:233: ImportError: cannot import name '_mark_failed' from 'hadavin_sdk.k1b.replay' (/home/user/build/ER-sonarpath4-a/src/hadavin_sdk/k1b/replay.py)
+E   AttributeError: <module 'hadavin_sdk.k1b.replay' from '/home/user/build/ER-sonarpath4-a/src/hadavin_sdk/k1b/replay.py'> has no attribute '_mark_failed'
+/home/user/build/ER-sonarpath4-a/tests/test_pathguard_batch4.py:260: AttributeError: <module 'hadavin_sdk.k1b.replay' from '/home/user/build/ER-sonarpath4-a/src/hadavin_sdk/k1b/replay.py'> has no attribute '_mark_failed'
+E   AttributeError: <module 'hadavin_sdk.k1b.replay' from '/home/user/build/ER-sonarpath4-a/src/hadavin_sdk/k1b/replay.py'> has no attribute '_mark_failed'
+/home/user/build/ER-sonarpath4-a/tests/test_pathguard_batch4.py:278: AttributeError: <module 'hadavin_sdk.k1b.replay' from '/home/user/build/ER-sonarpath4-a/src/hadavin_sdk/k1b/replay.py'> has no attribute '_mark_failed'
+E   AssertionError: wrong wording: KeyError: 'r'
+    assert False
+     +  where False = <built-in method startswith of str object at 0x7f9b3804cff0>('PathRefused: recording: ')
+     +    where <built-in method startswith of str object at 0x7f9b3804cff0> = "KeyError: 'r'".startswith
+/home/user/build/ER-sonarpath4-a/tests/test_pathguard_batch4.py:301: AssertionError: wrong wording: KeyError: 'r'
+E   TypeError: atomic_write() takes 2 positional arguments but 3 were given
+/home/user/build/ER-sonarpath4-a/tests/test_pathguard_batch4.py:307: TypeError: atomic_write() takes 2 positional arguments but 3 were given
+E   TypeError: atomic_write() takes 2 positional arguments but 3 were given
+/home/user/build/ER-sonarpath4-a/tests/test_pathguard_batch4.py:319: TypeError: atomic_write() takes 2 positional arguments but 3 were given
+E   TypeError: atomic_write() takes 2 positional arguments but 3 were given
+/home/user/build/ER-sonarpath4-a/tests/test_pathguard_batch4.py:331: TypeError: atomic_write() takes 2 positional arguments but 3 were given
+E   AssertionError: assert (PermissionError(13, 'denied') is None)
+     +  where PermissionError(13, 'denied') = ConfigError('cannot read: a.txt').__cause__
+     +    where ConfigError('cannot read: a.txt') = <ExceptionInfo ConfigError('cannot read: a.txt') tblen=2>.value
+/home/user/build/ER-sonarpath4-a/tests/test_pathguard_batch4.py:347: AssertionError: assert (PermissionError(13, 'denied') is None)
+E   AssertionError: wrong wording for 'a:b': TypeError: atomic_write() takes 2 positional arguments but 3 were given
+    assert False
+     +  where False = <built-in method startswith of str object at 0x7f9b3801a090>('PathRefused: output file: ')
+     +    where <built-in method startswith of str object at 0x7f9b3801a090> = 'TypeError: atomic_write() takes 2 positional arguments but 3 were given'.startswith
+/home/user/build/ER-sonarpath4-a/tests/test_pathguard_batch4.py:371: AssertionError: wrong wording for 'a:b': TypeError: atomic_write() takes 2 positional arguments but 3 were given
+E   AssertionError: wrong wording: ConfigError: signer ed25519_local: no key file at /tmp/pytest-of-root/pytest-29751/test_build_local_refuses_a_key0/k‮
+    assert False
+     +  where False = <built-in method startswith of str object at 0x7f9b380456c0>('PathRefused: signer key file: contains a control character')
+     +    where <built-in method startswith of str object at 0x7f9b380456c0> = 'ConfigError: signer ed25519_local: no key file at /tmp/pytest-of-root/pytest-29751/test_build_local_refuses_a_key0/k\u202e'.startswith
+/home/user/build/ER-sonarpath4-a/tests/test_pathguard_batch4.py:387: AssertionError: wrong wording: ConfigError: signer ed25519_local: no key file at /tmp/pytest-of-root/pytest-29751/test_build_local_refuses_a_key0/k‮
+E   AttributeError: 'LocalDirSink' object has no attribute '_object'. Did you mean: 'objects'?
+/home/user/build/ER-sonarpath4-a/tests/test_pathguard_batch4.py:398: AttributeError: 'LocalDirSink' object has no attribute '_object'. Did you mean: 'objects'?
+=========================== short test summary info ============================
+FAILED tests/test_pathguard_batch4.py::test_secrets_file_says_not_found_and_not_a_regular_file
+FAILED tests/test_pathguard_batch4.py::test_local_dir_reconcile_leaves_a_corrupt_file_when_its_name_in_corrupt_is_a_link
+FAILED tests/test_pathguard_batch4.py::test_local_dir_reconcile_leaves_a_link_to_a_file_outside_the_outbox
+FAILED tests/test_pathguard_batch4.py::test_signer_key_path_refuses_a_parent_link_that_resolves_to_a_folder_with_a_control_character
+FAILED tests/test_pathguard_batch4.py::test_bundle_manifest_that_is_a_link_out_is_refused_with_the_pathguard_wording
+FAILED tests/test_pathguard_batch4.py::test_bundle_folder_under_a_parent_with_a_control_character_is_refused
+FAILED tests/test_pathguard_batch4.py::test_bundles_folder_entry_with_a_reserved_name_is_refused_as_a_path_refusal
+FAILED tests/test_pathguard_batch4.py::test_score_check_layout_refuses_a_run_folder_that_is_a_link_out
+FAILED tests/test_pathguard_batch4.py::test_replay_mark_failed_writes_nothing_into_a_folder_with_a_control_character
+FAILED tests/test_pathguard_batch4.py::test_replay_keeps_the_first_error_and_names_it_when_marking_is_interrupted
+FAILED tests/test_pathguard_batch4.py::test_replay_marking_failure_leaves_the_first_error_with_a_note
+FAILED tests/test_pathguard_batch4.py::test_fake_llm_refuses_a_recording_name_that_is_a_link_out
+FAILED tests/test_pathguard_batch4.py::test_atomic_write_creates_its_file_for_the_owner_only
+FAILED tests/test_pathguard_batch4.py::test_atomic_write_errors_carry_no_path
+FAILED tests/test_pathguard_batch4.py::test_atomic_write_rename_error_carries_no_path
+FAILED tests/test_pathguard_batch4.py::test_hash_files_read_error_is_raised_without_a_chain
+FAILED tests/test_pathguard_batch4.py::test_atomic_write_refuses_a_data_name_with_a_colon_or_a_device_name
+FAILED tests/test_pathguard_batch4.py::test_build_local_refuses_a_key_path_with_a_control_character_as_a_path_refusal
+FAILED tests/test_pathguard_batch4.py::test_local_dir_object_names_are_joined_through_pathguard
+19 failed, 13 passed in 0.60s

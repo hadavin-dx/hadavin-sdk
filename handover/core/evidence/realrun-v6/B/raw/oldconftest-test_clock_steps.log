@@ -1,0 +1,55 @@
+EE...........................                                            [100%]
+==================================== ERRORS ====================================
+______ ERROR at setup of test_dry_run_survives_a_wall_clock_step[-120.0] _______
+file /home/user/build/rr6/tree-B/tests/test_clock_steps.py, line 58
+  @pytest.mark.usefixtures("own_tempdir")
+  @pytest.mark.parametrize("delta", [-120.0, 3600.0])
+  def test_dry_run_survives_a_wall_clock_step(
+E       fixture 'own_tempdir' not found
+>       available fixtures: _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_clock_steps.py:58
+______ ERROR at setup of test_dry_run_survives_a_wall_clock_step[3600.0] _______
+file /home/user/build/rr6/tree-B/tests/test_clock_steps.py, line 58
+  @pytest.mark.usefixtures("own_tempdir")
+  @pytest.mark.parametrize("delta", [-120.0, 3600.0])
+  def test_dry_run_survives_a_wall_clock_step(
+E       fixture 'own_tempdir' not found
+>       available fixtures: _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_clock_steps.py:58
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_clock_steps.py::test_retry_deadline_and_latency_ignore_a_wall_clock_step[-120.0]
+PASSED tests/test_clock_steps.py::test_retry_deadline_and_latency_ignore_a_wall_clock_step[3600.0]
+PASSED tests/test_clock_steps.py::test_wall_clock_is_only_used_for_calendar_stamps
+PASSED tests/test_clock_steps.py::test_the_wall_guard_sees_every_way_to_read_the_calendar[x = time.time()]
+PASSED tests/test_clock_steps.py::test_the_wall_guard_sees_every_way_to_read_the_calendar[f = time.time]
+PASSED tests/test_clock_steps.py::test_the_wall_guard_sees_every_way_to_read_the_calendar[from time import sleep, time]
+PASSED tests/test_clock_steps.py::test_the_wall_guard_sees_every_way_to_read_the_calendar[d = datetime.now()]
+PASSED tests/test_clock_steps.py::test_the_wall_guard_sees_every_way_to_read_the_calendar[d = datetime.datetime.utcnow()]
+PASSED tests/test_clock_steps.py::test_the_wall_guard_sees_every_way_to_read_the_calendar[d = date.today()]
+PASSED tests/test_clock_steps.py::test_the_wall_guard_sees_every_way_to_read_the_calendar[n = os.stat(p).st_mtime]
+PASSED tests/test_clock_steps.py::test_the_wall_guard_sees_every_way_to_read_the_calendar[n = os.path.getmtime(p)]
+PASSED tests/test_clock_steps.py::test_the_wall_guard_sees_every_way_to_read_the_calendar[s = time.gmtime()]
+PASSED tests/test_clock_steps.py::test_the_wall_guard_sees_every_way_to_read_the_calendar[m['Date'] = formatdate()]
+PASSED tests/test_clock_steps.py::test_the_wall_guard_sees_every_way_to_read_the_calendar[import time as wall]
+PASSED tests/test_clock_steps.py::test_the_wall_guard_sees_every_way_to_read_the_calendar[import datetime as dt]
+PASSED tests/test_clock_steps.py::test_the_wall_guard_sees_every_way_to_read_the_calendar[from datetime import date, datetime as D]
+PASSED tests/test_clock_steps.py::test_the_wall_guard_leaves_the_monotonic_clock_alone[t = time.monotonic()]
+PASSED tests/test_clock_steps.py::test_the_wall_guard_leaves_the_monotonic_clock_alone[time.sleep(1)]
+PASSED tests/test_clock_steps.py::test_the_wall_guard_leaves_the_monotonic_clock_alone[from time import sleep]
+PASSED tests/test_clock_steps.py::test_the_wall_guard_leaves_the_monotonic_clock_alone[x = runtime]
+PASSED tests/test_clock_steps.py::test_the_wall_guard_leaves_the_monotonic_clock_alone[from datetime import timedelta]
+PASSED tests/test_clock_steps.py::test_a_wall_clock_step_does_not_move_the_load_schedule
+PASSED tests/test_clock_steps.py::test_a_desk_clock_step_under_the_reaper_is_safe[forward-keyed]
+PASSED tests/test_clock_steps.py::test_a_desk_clock_step_under_the_reaper_is_safe[forward-blind]
+PASSED tests/test_clock_steps.py::test_a_desk_clock_step_under_the_reaper_is_safe[backward-keyed]
+PASSED tests/test_clock_steps.py::test_a_desk_clock_step_under_the_reaper_is_safe[backward-blind]
+PASSED tests/test_clock_steps.py::test_the_logged_lag_ignores_a_wall_clock_step
+ERROR tests/test_clock_steps.py::test_dry_run_survives_a_wall_clock_step[-120.0]
+ERROR tests/test_clock_steps.py::test_dry_run_survives_a_wall_clock_step[3600.0]
+27 passed, 2 errors in 0.63s
+rc=1 wall=1s

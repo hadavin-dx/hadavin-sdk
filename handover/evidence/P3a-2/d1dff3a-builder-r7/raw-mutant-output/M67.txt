@@ -1,0 +1,12 @@
+### tests/test_migration_wiring.py::test_clean_run_reads_before_each_file_insert rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________ test_clean_run_reads_before_each_file_insert _________________
+tests/test_migration_wiring.py:392: in test_clean_run_reads_before_each_file_insert
+    assert reads and trig, "both read queries run after the file and before its ledger row"
+E   AssertionError: both read queries run after the file and before its ledger row
+E   assert ([])
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_clean_run_reads_before_each_file_insert
+1 failed in 0.40s
+

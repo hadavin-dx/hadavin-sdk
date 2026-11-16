@@ -1,0 +1,44 @@
+# A19 fix2 B1 leak proof on OLD code (head 85e0801, extracted with git archive; NOT the worktree)
+hadavin_sdk loaded from: /tmp/claude-0/-home-user/39edf7c7-26f2-5129-9a6e-500351b26399/scratchpad/old/src/hadavin_sdk/__init__.py
+
+sharp s U+00DF: id='acme\xdfcorp7'
+  check_id accepted: True
+  redact_text -> 'customer_id=<TENANT_1>\xdfcorp7 then <TENANT_1>\xdfcorp7 later'
+  redact (bare, no canonical step) -> 'customer_id=<TENANT_1>\xdfcorp7 then <TENANT_1>\xdfcorp7 later'
+
+sharp s first: id='\xdfcorp-tenant9'
+  check_id accepted: True
+  redact_text -> 'customer_id=\xdfcorp-tenant9 then \xdfcorp-tenant9 later'
+  redact (bare, no canonical step) -> 'customer_id=\xdfcorp-tenant9 then \xdfcorp-tenant9 later'
+
+capital sharp s U+1E9E: id='acme\u1e9ecorp7'
+  check_id accepted: True
+  redact_text -> 'customer_id=<TENANT_1>\u1e9ecorp7 then <TENANT_1>\u1e9ecorp7 later'
+  redact (bare, no canonical step) -> 'customer_id=<TENANT_1>\u1e9ecorp7 then <TENANT_1>\u1e9ecorp7 later'
+
+long id with ZWSP U+200B: id='tenant-abcdefgh\u200bijklmnop99'
+  check_id accepted: True
+  redact_text -> 'customer_id=<TENANT_2> then <TENANT_2> later'
+  redact (bare, no canonical step) -> 'customer_id=<TENANT_1>\u200bijklmnop99 then <TENANT_1>\u200bijklmnop99 later'
+
+long id with soft hyphen U+00AD: id='tenant-abcd\xadefgh99'
+  check_id accepted: True
+  redact_text -> 'customer_id=<TENANT_2> then <TENANT_2> later'
+  redact (bare, no canonical step) -> 'customer_id=<TENANT_1>\xadefgh99 then <TENANT_1>\xadefgh99 later'
+
+trailing newline: id='acme\n'
+  check_id accepted: True
+  redact_text -> 'customer_id=<TENANT_1>\n then <TENANT_1>\n later'
+  redact (bare, no canonical step) -> 'customer_id=<TENANT_1>\n then <TENANT_1>\n later'
+
+# new tests run against OLD src (9 failed, 71 passed expected)
+FAILED tests/test_tenant_ids.py::test_all_digit_ids_are_refused_below_the_redactors_digit_minimum
+FAILED tests/test_tenant_ids.py::test_a_control_character_or_look_alike_id_is_refused_or_swept[acme\xdfcorp7]
+FAILED tests/test_tenant_ids.py::test_a_control_character_or_look_alike_id_is_refused_or_swept[\xdfcorp-tenant9]
+FAILED tests/test_tenant_ids.py::test_a_control_character_or_look_alike_id_is_refused_or_swept[acme\u1e9ecorp7]
+FAILED tests/test_tenant_ids.py::test_a_control_character_or_look_alike_id_is_refused_or_swept[acme\n]
+FAILED tests/test_tenant_ids.py::test_the_odd_ids_are_in_fact_refused - Asser...
+FAILED tests/test_tenant_ids.py::test_the_label_rule_class_is_the_one_the_check_allows
+FAILED tests/test_tenant_ids.py::test_no_accepted_id_leaks_over_a_sweep_of_every_code_point_the_fold_could_read_as_ascii
+FAILED tests/test_tenant_ids.py::test_stages_py_imports_only_the_leaf_modules
+9 failed, 71 passed in 2.35s

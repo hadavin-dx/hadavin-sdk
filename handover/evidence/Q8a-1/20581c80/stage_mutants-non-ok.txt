@@ -1,0 +1,3 @@
+BAD WRONG_REASON Z150 round 16: an attribute or item set from the text of an error is not a site (guard)  [test_the_guard_finds_each_planted_fault_alone[R15c an attrib]
+      first line: E       AssertionError: ('R15c an attribute set to the text of an error', [])
+362 of 363 good; problems: ['Z150 round 16: an attribute or item set from the text of an error is not a site (guard)']

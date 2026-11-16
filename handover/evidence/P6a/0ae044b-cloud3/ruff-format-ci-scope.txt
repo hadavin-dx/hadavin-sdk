@@ -1,0 +1,4 @@
+HEAD 0ae044b25a3113244777cd078fc9a784647af924
+$ ruff format --check src tests demos   (ci.yml scope)
+315 files already formatted
+exit=0

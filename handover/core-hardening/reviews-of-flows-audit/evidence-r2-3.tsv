@@ -1,0 +1,50 @@
+finding_id	cited_path	line	exists	line_in_range	line_text_120
+F-001	handover/demo/n8n-flows/mf_leads.sql		yes (handover/demo/n8n-flows/mf_leads.sql)	n/a (no line cited)	
+F-001	n8n-flows-real-v5/mf-recovery.json		yes (handover/demo/n8n-flows-real-v5/mf-recovery.json)	n/a (no line cited)	
+F-001	n8n-mainframe/mf.py	44-47	yes (handover/demo/n8n-mainframe/mf.py)	yes	    psql("DROP TABLE IF EXISTS mf_leads;")
+F-001	mf.py	45	yes (handover/demo/n8n-mainframe/mf.py)	yes	    psql("CREATE TABLE mf_leads(lead_key text PRIMARY KEY, email text, name text, state text NOT NULL DEFAULT 'new' CHEC
+F-002	n8n-flows-real-v5/mf-form.json		yes (handover/demo/n8n-flows-real-v5/mf-form.json)	n/a (no line cited)	
+F-002	n8n-flows-real-v5/mf-hook.json		yes (handover/demo/n8n-flows-real-v5/mf-hook.json)	n/a (no line cited)	
+F-002	build_mainframe.py	82-84	yes (handover/demo/n8n-mainframe/build_mainframe.py)	yes	         pg("Claim", "INSERT INTO mf_leads(lead_key,email,name,state,claimed_until,claim_token,attempts) VALUES ($1,$2,$
+F-002	PLAN-4-NLITE-FROM-LEAD.md	77	ABSENT-IN-TREE		
+F-002	PLAN-4-NLITE-FROM-LEAD.md	47	ABSENT-IN-TREE		
+F-002	build_mainframe.py	114	yes (handover/demo/n8n-mainframe/build_mainframe.py)	yes	    # the Postgres node returns ONE item {success: true} when a non-SELECT statement matches no row (n8n source, Postgre
+F-002	dn1_common.py	124-132	ABSENT-IN-TREE		
+F-002	PLAN-4-NLITE-FROM-LEAD.md	94	ABSENT-IN-TREE		
+F-003	handover/demo/VIDEO-RUNSHEET.md	33	ABSENT-IN-TREE		
+F-003	VIDEO-RUNSHEET.md	85	ABSENT-IN-TREE		
+F-004	handover/demo/n8n-flows/PAGE-STATEMENTS-V4.md	120	yes (handover/demo/n8n-flows/PAGE-STATEMENTS-V4.md)	yes	17. "Recovery within 60 s was measured only at the 20 s test lease (max 59.6 s, margin 0.4 s, n=20 per kill point, one m
+F-005	handover/demo/VIDEO-RUNSHEET.md	35	ABSENT-IN-TREE		
+F-005	n8n-flows-film-v5/mf-form.json		yes (handover/demo/n8n-flows-film-v5/mf-form.json)	n/a (no line cited)	
+F-005	n8n-tests/smtp_catcher.py	40	ABSENT-IN-TREE		
+F-006	handover/demo/VIDEO-RUNSHEET.md	4	ABSENT-IN-TREE		
+F-006	n8n-flows-real-v5/mf-sub-crm-mail.json		yes (handover/demo/n8n-flows-real-v5/mf-sub-crm-mail.json)	n/a (no line cited)	
+F-006	n8n-flows-film-v5/mf-sub-crm-mail.json		yes (handover/demo/n8n-flows-film-v5/mf-sub-crm-mail.json)	n/a (no line cited)	
+F-007	n8n-flows/PAGE-STATEMENTS-V4.md	150	yes (handover/demo/n8n-flows/PAGE-STATEMENTS-V4.md)	yes	NAMING (lead, final): lane3 K3 = this page's K3B (killed after the mail left: unknown + 1 alert); lane3 K6 = this page's
+F-007	handover/demo/VIDEO-RUNSHEET.md	24	ABSENT-IN-TREE		
+F-007	n8n-mainframe/mf.py	153	yes (handover/demo/n8n-mainframe/mf.py)	yes	def k3b():
+F-008	n8n-flows-real-v5/mf-recovery.json		yes (handover/demo/n8n-flows-real-v5/mf-recovery.json)	n/a (no line cited)	
+F-008	build_mainframe.py	44	yes (handover/demo/n8n-mainframe/build_mainframe.py)	yes	ST = {"executionOrder": "v1", "saveDataSuccessExecution": "none", "saveDataErrorExecution": "none", "saveManualExecution
+F-011	handover/demo/n8n-flows/N8N-START.md		yes (handover/demo/n8n-flows/N8N-START.md)	n/a (no line cited)	
+F-011	N8N-START.md	4	yes (handover/demo/n8n-flows/N8N-START.md)	yes	- n8n 2.46.6, pinned (npm install n8n@2.46.6 into an empty folder; check `npm ls n8n`), regular mode (no queue), SQLite 
+F-023	n8n-table-screen/README.md	3	ABSENT-IN-TREE		
+F-023	n8n-table-screen-v2/README.md	3	ABSENT-IN-TREE		
+F-023	DOUBTFUL-SCENE.md	13	ABSENT-IN-TREE		
+F-023	VIDEO-RUNSHEET.md	39	ABSENT-IN-TREE		
+F-029	n8n-flows-real-v5/mf-sub-crm-mail.json		yes (handover/demo/n8n-flows-real-v5/mf-sub-crm-mail.json)	n/a (no line cited)	
+F-029	mf-recovery.json		yes (handover/demo/n8n-flows-film-v5/mf-recovery.json (first of 4 matches))	n/a (no line cited)	
+F-029	mf-sub-crm-mail.json		yes (handover/demo/n8n-flows-film-v5/mf-sub-crm-mail.json (first of 3 matches))	n/a (no line cited)	
+F-029	mf-form.json		yes (handover/demo/n8n-flows-film-v5/mf-form.json (first of 4 matches))	n/a (no line cited)	
+F-029	mf-hook.json		yes (handover/demo/n8n-flows-film-v5/mf-hook.json (first of 4 matches))	n/a (no line cited)	
+F-031	n8n-flows-real-v5/mf-recovery.json		yes (handover/demo/n8n-flows-real-v5/mf-recovery.json)	n/a (no line cited)	
+F-037	mf-sub-crm-mail.json		yes (handover/demo/n8n-flows-film-v5/mf-sub-crm-mail.json (first of 3 matches))	n/a (no line cited)	
+F-037	mf-recovery.json		yes (handover/demo/n8n-flows-film-v5/mf-recovery.json (first of 4 matches))	n/a (no line cited)	
+F-037	REPORT.md	695	yes (handover/flows-audit/REPORT.md)	no (file has 114 lines)	
+F-037	dn1_common.py	16	ABSENT-IN-TREE		
+F-041	EXCEPTIONS.md		yes (handover/flows-audit/EXCEPTIONS.md)	n/a (no line cited)	
+F-041	N8N-START.md	4	yes (handover/demo/n8n-flows/N8N-START.md)	yes	- n8n 2.46.6, pinned (npm install n8n@2.46.6 into an empty folder; check `npm ls n8n`), regular mode (no queue), SQLite 
+F-041	REPORT.md	622	yes (handover/flows-audit/REPORT.md)	no (file has 114 lines)	
+F-041	PLAN-4-NLITE-FROM-LEAD.md	106	ABSENT-IN-TREE		
+F-042	build_mainframe.py	109	yes (handover/demo/n8n-mainframe/build_mainframe.py)	yes	              "={{ $json.state === 'unknown' ? 'Lead id ' + $json.lead_key + ': the mail may or may not have been sent. 
+F-042	VIDEO-RUNSHEET.md	38	ABSENT-IN-TREE		
+F-042	RUN-ON-LAPTOP.md	58	ABSENT-IN-TREE		

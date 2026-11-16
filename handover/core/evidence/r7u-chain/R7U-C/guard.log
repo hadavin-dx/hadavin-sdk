@@ -1,0 +1,20 @@
+........................................................................ [ 15%]
+........................................................................ [ 31%]
+........................................................................ [ 47%]
+.......
+REPLANT: 145 of 145 shapes found; missed: []
+................................................................. [ 62%]
+........................................................................ [ 78%]
+........................................................................ [ 94%]
+..........................                                               [100%]
+=============================== warnings summary ===============================
+tests/test_r7_mail_context.py::test_f4_the_default_context_passes_and_an_old_minimum_version_is_refused
+  /home/user/build/rr6/tree-R7U-C/tests/test_r7_mail_context.py:401: DeprecationWarning: ssl.TLSVersion.TLSv1 is deprecated
+    ctx.minimum_version = ssl.TLSVersion.TLSv1
+
+tests/test_r7_mail_context.py::test_f4_the_outbox_refuses_such_a_context_at_construction
+  /home/user/build/rr6/tree-R7U-C/tests/test_r7_mail_context.py:421: DeprecationWarning: ssl.TLSVersion.TLSv1 is deprecated
+    ctx.minimum_version = ssl.TLSVersion.TLSv1
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+458 passed, 2 warnings in 170.15s (0:02:50)

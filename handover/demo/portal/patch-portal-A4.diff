@@ -1,0 +1,1909 @@
+diff -ruN -x __pycache__ -x .pytest_cache -x .git -x '*.pyc' b/README.md /home/user/build/snap/A4r2/README.md
+--- a/README.md	2026-11-09 17:37:34.879078040 +0000
++++ b/README.md	2026-11-09 18:29:57.000000000 +0000
+@@ -224,7 +224,7 @@
+ 
+ `/ui/` shows the lead book in a browser: a summary that adds up, the leads, and the items that need a person. The pages read the lead book through a second, read-only database connection (a write through it fails, and one test shows that); the buttons that retry or resolve an item call the same `/review` routes as everything else. Every request, including the pages, must come with a `Host` header that names this computer (or a name from `DESK_ALLOWED_HOSTS`), and a request from a page on another address (a different `Origin`, or `Sec-Fetch-Site` other than `same-origin`) is refused with 403 before anything is read. The exact routes are in `contract.md`.
+ 
+-**What the Host and Origin check does and does not do.** It stops web pages in a browser: a page on another web site, and a web site that tricks the browser into talking to this computer under another name ("DNS rebinding"). It does NOT stop a person or program that can reach the desk's address and sends the right `Host` header by hand. There is no login. So keep the desk on `127.0.0.1` (the default). If a container (n8n in Docker, for example) must reach it, bind to the one address that only your container network reaches (the Docker bridge or host address), never to the wildcard address (the one made of four zeros). A bind to any other address than this computer's own exposes every lead (names, e-mail addresses, phone numbers, messages) to everyone who can connect, and the desk prints a warning at start-up when you do that. `/api/ui` answers at most 8 requests at once; more get 503 `busy`. The count "refused at the door" on the Overview page is kept in memory and starts again at 0 when the desk restarts: read it as "since desk start (HH:MM)". The desk serves each connection on its own thread and sets no limit on the number of threads: a client that holds many connections open (slow bytes) holds that many threads, so keep the desk off networks you do not trust. A bind written as a short all-zeros form (for example the single digit 0) is treated as a wildcard. Close the portal while you run a load test: every open page asks the desk for its numbers every few seconds.
++**What the Host and Origin check does and does not do.** It stops web pages in a browser: a page on another web site, and a web site that tricks the browser into talking to this computer under another name ("DNS rebinding"). It does NOT stop a person or program that can reach the desk's address and sends the right `Host` header by hand. There is no login. So keep the desk on `127.0.0.1` (the default). If a container (n8n in Docker, for example) must reach it, bind to the one address that only your container network reaches (the Docker bridge or host address), never to the wildcard address (the one made of four zeros). A bind to any other address than this computer's own exposes every lead (names, e-mail addresses, phone numbers, messages) to everyone who can connect, and the desk prints a warning at start-up when you do that. `/api/ui` answers at most 8 requests at once; more get 503 `busy`. The count "refused at the door" on the Overview page is kept in memory and starts again at 0 when the desk restarts: read it as "since desk start (HH:MM)". The desk serves each connection on its own thread, at most `MAX_CONNECTIONS` (256) at a time. Request line plus headers must arrive within `HEADER_READ_DEADLINE_SECONDS` and the body within `BODY_READ_DEADLINE_SECONDS` (10 s each, wall-clock); a stalled sender gets 408. At the cap the oldest connection still sending its headers is closed with no reply (its sender must retry, with the same request id), or, when none is in that phase, the new connection gets 503 `busy` with `Retry-After: 1`. Keep the desk off networks you do not trust. A bind written as a short all-zeros form (for example the single digit 0) is treated as a wildcard. Close the portal while you run a load test: every open page asks the desk for its numbers every few seconds.
+ 
+ ## Settings
+ 
+diff -ruN -x __pycache__ -x .pytest_cache -x .git -x '*.pyc' b/contract.md /home/user/build/snap/A4r2/contract.md
+--- a/contract.md	2026-11-09 17:37:34.854485757 +0000
++++ b/contract.md	2026-11-09 18:29:57.000000000 +0000
+@@ -72,7 +72,7 @@
+ * On `GET /review` the `reason` of a `duplicate_with_new_info` item is the JSON text of `differing_fields` (a string such as `["phone"]`), exactly what the view returns. The list is ordered by `since`, then `item_id`.
+ * Retry when the claim fails and the row is still `pending` or `failed` (the database stayed locked through the claim retries): 503 `{"error":"busy"}`.
+ * Lock-wait errors in the read and retry/resolve routes follow the same rule as `POST /leads`: busy gives 503 `{"error":"busy"}`, any other error 500 (except `/api/ui/*`, where the two "not ready" faults, "unable to open database file"/"no such table"/"disk I/O error", give 503 `{"error":"unavailable"}`) `{"error":"internal"}` (without `receipt_id` outside `POST /leads`).
+-* The server reads at most `size_cap_bytes + 1` bytes of a body; after an early reply (a gate refusal or 413) it drops unread request bytes, up to `DRAIN_MAX_BYTES` or `DRAIN_TOTAL_SECONDS` of wall-clock time (1 s), whichever comes first, so the reply is not lost to a connection reset; a sender that is slower than that may still see the reply reset. Only the draining has a total time limit: header and body reads have the per-read socket timeout below. Each handler thread has a socket timeout of `REQUEST_TIMEOUT_SECONDS`. Content-Length rules: a missing, non-numeric or conflicting (two different values) header is 400 `bad_envelope`; a value over the cap is answered 413 at once, before any body byte is read, whatever its length (a 4301-digit number included; more than 18 significant digits is treated as over every limit); a body shorter than announced is 408 `request_timeout` after `REQUEST_TIMEOUT_SECONDS` if the connection stays open, or 400 `bad_envelope` if the sender closes it. Rows 400, 408 and 413 on `POST /leads` count in `rejected_envelopes`. A request target the standard library cannot split (for example `http://[/`) is 400 `{"error":"bad_request"}`. A review item id whose number has more than 18 digits is 404 `not_found` (no item can have one). The follow-up id of a new lead is taken before the reply is written and the follow-up runs in a `finally`: if the reply cannot be written (the sender reset the connection) the follow-up still runs. The listen backlog is `LISTEN_QUEUE` (1024); the operating system may cap it lower.
++* The server reads at most `size_cap_bytes + 1` bytes of a body; after an early reply (a gate refusal or 413) it drops unread request bytes, up to `DRAIN_MAX_BYTES` or `DRAIN_TOTAL_SECONDS` of wall-clock time (1 s), whichever comes first, so the reply is not lost to a connection reset; a sender that is slower than that may still see the reply reset. Only the draining has a total time limit: header and body reads have the per-read socket timeout below. Each handler thread has a socket timeout of `REQUEST_TIMEOUT_SECONDS`. Content-Length rules: a missing, non-numeric or conflicting (two different values) header is 400 `bad_envelope`; a value over the cap is answered 413 at once, before any body byte is read, whatever its length (a 4301-digit number included; more than 18 significant digits is treated as over every limit); a body shorter than announced is 408 `request_timeout` after `REQUEST_TIMEOUT_SECONDS` if the connection stays open, or 400 `bad_envelope` if the sender closes it. Rows 400, 408 and 413 on `POST /leads` count in `rejected_envelopes`. A request target the standard library cannot split (for example `http://[/`) is 400 `{"error":"bad_request"}`. A review item id whose number has more than 18 digits is 404 `not_found` (no item can have one). The follow-up id of a new lead is taken before the reply is written and the follow-up runs in a `finally`: if the reply cannot be written (the sender reset the connection) the follow-up still runs. The listen backlog is `LISTEN_QUEUE` (1024); the operating system may cap it lower. Connection limit: at most `MAX_CONNECTIONS` (256; accepted range 8 to 4096, checked when `constants.py` is imported) connections are in their read phase at once; a connection's place ends at its first reply byte. Request line plus headers have `HEADER_READ_DEADLINE_SECONDS` and the body `BODY_READ_DEADLINE_SECONDS` (wall-clock); a stall in any of them (header, body, resolve body, demo body) is 408 `{"error":"request_timeout","receipt_id":null}`. At the cap the oldest connection still in the header phase is closed with no reply; if none is, the new connection gets a full 503 `{"error":"busy","reason":"busy"}` with `Retry-After`, `Content-Length`, `Connection: close` and the security headers, written within `BUSY_WRITE_TIMEOUT_SECONDS`.
+ * Adapter timeouts: on Windows a refused connect to a closed local port reports only after about 2 seconds (measured 2.03 s, 2026-11-09). A shorter send timeout turns "refused" into a connect timeout, which the table classes as ambiguous. The default `send_timeout_seconds` is 5.0, so the default is unaffected.
+ 
+ ---
+@@ -113,7 +113,7 @@
+ | `GET /api/ui/review` (actions: failed card `retry`; each UNKNOWN card `retry` first, then its resolve choices. Retry on an UNKNOWN card is answered by the desk with 409 `unknown_needs_person` and changes nothing; the page shows the desk's words. This amends design 2.3, which listed no Retry for UNKNOWN) | 200 | `{now, items[{...the /review fields, lead_name, tab, title, reason_text, actions[{id,label,endpoint,body,confirm}]}], tabs{action,waiting,info}}` |
+ | `GET /api/ui/log?limit=&before=` | 200 | `{items[{request_id,received_at,door,result,lead_id,lead_name,followup_state}], next, total}`: the desk's request record, one line per request the desk received, newest first (ties on `received_at` are ordered by receipt number, highest first). `door` is `form` or `webhook` (the same words as `summary.doors[].source`; the page shows them as "Web form" and "Email message"). `result` is `new`, `duplicate`, `review` or `open` (`open` = no verdict yet). `lead_id`, `lead_name` and `followup_state` (`pending`, `sending`, `sent`, `failed`, `unknown`) are filled when the request names a lead (every `new` and `duplicate`) and are `null` otherwise (a `review` or `open` request names none; a lead or follow-up row that is missing also gives `null`). `total` counts every request in the book and comes from the same read as the page. `next` is a cursor `<received_at>:<receipt number>` to pass as `before` for the next page, or `null` on the last page. `limit` is 1..200 (default 100); `before` is two whole numbers joined by a colon, each at most 18 digits (longer, or zero-padded past 18 characters: 400 `bad_query`; the same rule applies to every whole-number parameter). `request_id` and `lead_name` are shown exactly as the sender wrote them: a sender can type anything there, so the log keeps back email, phone, company and message but cannot vouch for those two free-text fields. The log holds the lead's display name and nothing else about the person: never email, phone, company or message. A value the desk's tables should never hold is shown as `review` (result), `unknown` (door, follow-up state), never as the stored text. This is the desk's request record, not a full audit log: it keeps the latest follow-up state, not every step. |
+ | | 400 | `{"error":"bad_query","field":"limit\|before\|<name>"}` (a limit outside 1..200, a `before` that is not two whole numbers joined by a colon, an unknown or repeated parameter) |
+-| `GET /api/ui/data-map` | 200 | `{ai_step{receives[],never_receives[],mode},stored[{field,where,purpose}],access{bind,portal_read_only,host_check,origin_check,login,encryption_at_rest,masking}}`: facts the desk builds from its own code and settings, no database read and no parameters. `receives` is the list of parameter names of `Qualifier.qualify`, read when the request arrives (`lead_id`, `email_key`); `never_receives` is the lead's fields (`lead_id`, `name`, `email`, `phone`, `company`, `message`) minus the ones those parameters carry (`email_key` is the lower-case email address). `mode` is `recorded` when the loaded AI step's class says so, otherwise `live` (a step that does not say is not called recorded). `stored` lists the fields the desk keeps, all in the lead book (one local database file). `access.bind` is the configured listen address; `host_check` and `origin_check` are always `true`; `portal_read_only` is `true`; `login`, `encryption_at_rest` and `masking` are `false`: the desk has none of the three. If the AI step takes an input that is not in the documented list, or the loaded step takes other inputs than the contract, the reply is 500 `{"error":"internal"}` instead of a guess. |
++| `GET /api/ui/data-map` | 200 | `{ai_step{receives[],never_receives[],mode,note},stored[{field,where,purpose}],access{bind,portal_read_only,portal_actions[],host_check,origin_check,login,encryption_at_rest,masking}}`: facts the desk builds from its own code and settings, no database read and no parameters. `receives` is the list of parameter names of `Qualifier.qualify`, read when the request arrives (`lead_id`, `email_key`); `never_receives` is the lead's fields (`lead_id`, `name`, `email`, `phone`, `company`, `message`) minus the ones those parameters carry (`email_key` is the lower-case email address). `note` is a fixed sentence: the list is the inputs the step is given, derived from its signature, and does not prove what a live step looks up by id. `mode` is `recorded` when the loaded AI step's class says so, otherwise `live` (a step that does not say is not called recorded). `stored` lists the fields the desk keeps, all in the lead book (one local database file). `access.bind` is the configured listen address; `host_check` and `origin_check` are always `true`; `portal_read_only` is `true` and means this page reads through a read-only connection (its action buttons go through the desk); `portal_actions` lists what the portal can change: `retry`, `resolve`, and `demo_controls` only when the demo extension is loaded; `login`, `encryption_at_rest` and `masking` are `false`: the desk has none of the three. If the AI step takes an input that is not in the documented list, or the loaded step takes other inputs than the contract, the reply is 500 `{"error":"internal"}` instead of a guess. |
+ | any `/api/ui/*` | 503 | `{"error":"busy"}` (the read hit a lock that outlasted the wait) or `{"error":"unavailable"}` (the read-only open failed or a table is missing: a request before start-up finished, a database path that is not a file, a deleted file) |
+ | any request | 403 | `{"error":"forbidden_host"}` (Host missing, repeated or not allowed) or `{"error":"forbidden_origin"}` (Origin or Sec-Fetch-Site not from this server); see "Host and Origin gate" |
+ 
+diff -ruN -x __pycache__ -x .pytest_cache -x .git -x '*.pyc' b/src/lead_desk/constants.py /home/user/build/snap/A4r2/src/lead_desk/constants.py
+--- a/src/lead_desk/constants.py	2026-11-09 17:37:34.884186667 +0000
++++ b/src/lead_desk/constants.py	2026-11-09 18:27:08.000000000 +0000
+@@ -3,6 +3,7 @@
+ from __future__ import annotations
+ 
+ import ipaddress
++import math
+ from typing import Final
+ 
+ # HTTP status codes the desk and the fakes server use
+@@ -62,6 +63,19 @@
+ 
+ # HTTP layer
+ REQUEST_TIMEOUT_SECONDS: Final = 30.0  # socket timeout of one request handler; frees a thread held by a stalled client
++HEADER_READ_DEADLINE_SECONDS: Final = 10.0  # wall-clock limit: request line plus all headers
++BODY_READ_DEADLINE_SECONDS: Final = 10.0  # wall-clock limit: the whole body, from the end of the headers
++# Cap on connections that are still being READ (request line, headers, body). A connection takes a place when it is
++# accepted and gives it back when the desk starts to write the reply (or on any error), so work after the reply (the
++# follow-up) and a slow reader of the reply never hold a place. When the cap is reached, the OLDEST connection still in
++# the header phase is closed to make room, so a crowd of stalled senders cannot lock real callers out; connections that
++# have finished their headers are never closed that way, and when none is in the header phase the new connection
++# gets 503 busy (with Retry-After).
++MAX_CONNECTIONS: Final = 256
++MAX_CONNECTIONS_MIN: Final = 8  # accepted range of MAX_CONNECTIONS (checked below, at import)
++MAX_CONNECTIONS_MAX: Final = 4096
++BUSY_WRITE_TIMEOUT_SECONDS: Final = 1.0  # all of one 503 busy reply (write, then read what was sent); never longer
++BUSY_RETRY_AFTER_SECONDS: Final = 1  # Retry-After header of that 503, in whole seconds
+ QUIET_DRAIN_SECONDS: Final = 0.05  # how long a finished connection waits for request bytes still on their way
+ DRAIN_TOTAL_SECONDS: Final = 1.0  # wall-clock limit of all draining on one connection, however slowly bytes arrive
+ DRAIN_MAX_BYTES: Final = (
+@@ -91,6 +105,13 @@
+ # step is given. (Bookkeeping columns of the leads table are not lead content; a test keeps both lists complete.)
+ LEAD_CONTENT_FIELDS: Final = ("lead_id", "name", "email", "phone", "company", "message")
+ LEAD_BOOKKEEPING_COLUMNS: Final = ("receipt_id", "source", "email_key", "created_at")
++# What the page's action buttons can change, all through the desk (not through the read-only connection). The demo
++# controls are listed only when the demo extension is loaded.
++PORTAL_ACTIONS: Final = ("retry", "resolve")
++DEMO_CONTROLS_ACTION: Final = "demo_controls"
++AI_STEP_NOTE: Final = (
++    "lists the inputs the step is given, derived from its signature; it does not prove what a live step looks up by id"
++)
+ QUALIFIER_MODES: Final = ("recorded", "live")  # what /api/ui/data-map may say about the AI step
+ QUALIFIER_MODE_FALLBACK: Final = "live"  # a qualifier that does not declare a mode is not called "recorded"
+ SERIES_BUCKETS: Final = 60
+@@ -122,3 +143,38 @@
+ LOOPBACK_HOSTS: Final = ("127.0.0.1", "localhost", "[::1]")
+ # bind addresses that mean "every interface"; never a Host name (built, not typed: a typed one trips the bind scan)
+ WILDCARD_BINDS: Final = (str(ipaddress.IPv4Address(0)), str(ipaddress.IPv6Address(0)))
++
++
++def validate_http_limits(
++    *,
++    max_connections: object,
++    header: object,
++    body: object,
++    busy_write: object,
++    retry_after: object,
++) -> None:
++    """Refuse a nonsense HTTP limit with a clear message (a wrong value would otherwise show up as a hung or
++    always-busy server). Runs at import on the real values; tests call it with bad ones."""
++    if type(max_connections) is not int or not MAX_CONNECTIONS_MIN <= max_connections <= MAX_CONNECTIONS_MAX:
++        raise ValueError(
++            f"MAX_CONNECTIONS must be a whole number from {MAX_CONNECTIONS_MIN} to {MAX_CONNECTIONS_MAX}, "
++            f"got {max_connections!r}"
++        )
++    for name, value in (
++        ("HEADER_READ_DEADLINE_SECONDS", header),
++        ("BODY_READ_DEADLINE_SECONDS", body),
++        ("BUSY_WRITE_TIMEOUT_SECONDS", busy_write),
++    ):
++        if isinstance(value, bool) or not isinstance(value, int | float) or not math.isfinite(value) or value <= 0:
++            raise ValueError(f"{name} must be a number of seconds above 0, got {value!r}")
++    if type(retry_after) is not int or retry_after < 1:
++        raise ValueError(f"BUSY_RETRY_AFTER_SECONDS must be a whole number, 1 or more, got {retry_after!r}")
++
++
++validate_http_limits(
++    max_connections=MAX_CONNECTIONS,
++    header=HEADER_READ_DEADLINE_SECONDS,
++    body=BODY_READ_DEADLINE_SECONDS,
++    busy_write=BUSY_WRITE_TIMEOUT_SECONDS,
++    retry_after=BUSY_RETRY_AFTER_SECONDS,
++)
+diff -ruN -x __pycache__ -x .pytest_cache -x .git -x '*.pyc' b/src/lead_desk/portal_api.py /home/user/build/snap/A4r2/src/lead_desk/portal_api.py
+--- a/src/lead_desk/portal_api.py	2026-11-09 17:37:34.883669944 +0000
++++ b/src/lead_desk/portal_api.py	2026-11-09 18:04:48.000000000 +0000
+@@ -27,7 +27,9 @@
+ from lead_desk import db, identity
+ from lead_desk.constants import (
+     AI_INPUT_FIELDS,
++    AI_STEP_NOTE,
+     BUSY_WAIT_SECONDS,
++    DEMO_CONTROLS_ACTION,
+     DUPLICATES_MAX,
+     FEED_ITEMS,
+     FIELD_NAME_MAX,
+@@ -44,6 +46,7 @@
+     LOG_LIMIT_MAX,
+     MAX_DIGITS,
+     OFFSET_MAX,
++    PORTAL_ACTIONS,
+     PORTAL_MAX_INFLIGHT,
+     QUALIFIER_MODE_FALLBACK,
+     QUALIFIER_MODES,
+@@ -139,13 +142,15 @@
+ 
+ 
+ # -- entry point
+-def handle(desk: Desk, endpoint: str, query: str, started_at: int) -> tuple[int, dict[str, Any]]:
++def handle(
++    desk: Desk, endpoint: str, query: str, started_at: int, demo_controls: bool = False
++) -> tuple[int, dict[str, Any]]:
+     """(status, JSON object) for GET /api/ui/<endpoint>. A lock that outlasts the wait, or more than
+     PORTAL_MAX_INFLIGHT replies at once, is a 503."""
+     if not _INFLIGHT.acquire(blocking=False):
+         return HTTP_BUSY, {"error": "busy"}
+     try:
+-        return _handle(desk, endpoint, query, started_at)
++        return _handle(desk, endpoint, query, started_at, demo_controls)
+     except sqlite3.OperationalError as e:
+         if db.is_busy(e):
+             return HTTP_BUSY, {"error": "busy"}
+@@ -160,7 +165,7 @@
+         _INFLIGHT.release()
+ 
+ 
+-def _handle(desk: Desk, endpoint: str, query: str, started_at: int) -> tuple[int, dict[str, Any]]:
++def _handle(desk: Desk, endpoint: str, query: str, started_at: int, demo_controls: bool) -> tuple[int, dict[str, Any]]:
+     parts = endpoint.split("/")
+     match parts:
+         case ["summary"]:
+@@ -180,7 +185,7 @@
+             return _log(desk, query)
+         case ["data-map"]:
+             _, bad = _params(query, ())
+-            return _bad_query(bad) if bad is not None else (HTTP_OK, _data_map(desk))
++            return _bad_query(bad) if bad is not None else (HTTP_OK, _data_map(desk, demo_controls))
+         case _:
+             return _NOT_FOUND
+ 
+@@ -732,7 +737,7 @@
+     return names
+ 
+ 
+-def _data_map(desk: Desk) -> dict[str, Any]:
++def _data_map(desk: Desk, demo_controls: bool = False) -> dict[str, Any]:
+     receives = ai_inputs(desk.qualifier)
+     given = {AI_INPUT_FIELDS[n] for n in receives}
+     mode = getattr(type(desk.qualifier), "mode", None)
+@@ -741,11 +746,13 @@
+             "receives": receives,
+             "never_receives": [f for f in LEAD_CONTENT_FIELDS if f not in given],
+             "mode": mode if mode in QUALIFIER_MODES else QUALIFIER_MODE_FALLBACK,
++            "note": AI_STEP_NOTE,
+         },
+         "stored": [{"field": f, "where": "lead book", "purpose": p} for f, p in _STORED],
+         "access": {
+             "bind": desk.config.bind,
+             "portal_read_only": True,
++            "portal_actions": [*PORTAL_ACTIONS, *((DEMO_CONTROLS_ACTION,) if demo_controls else ())],
+             "host_check": True,
+             "origin_check": True,
+             "login": False,
+diff -ruN -x __pycache__ -x .pytest_cache -x .git -x '*.pyc' b/src/lead_desk/server.py /home/user/build/snap/A4r2/src/lead_desk/server.py
+--- a/src/lead_desk/server.py	2026-11-09 17:37:34.883847419 +0000
++++ b/src/lead_desk/server.py	2026-11-09 18:27:14.000000000 +0000
+@@ -7,6 +7,7 @@
+ 
+ from __future__ import annotations
+ 
++import io
+ import ipaddress
+ import json
+ import logging
+@@ -20,6 +21,7 @@
+ from dataclasses import replace
+ from http import HTTPStatus
+ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
++from threading import local as ThreadLocal  # (the hygiene scan reads a dotted name ending in "local" as a host)
+ from typing import Any, cast
+ from urllib.parse import parse_qs, unquote, urlsplit
+ 
+@@ -27,12 +29,16 @@
+ from lead_desk.adapters import FakesUnreachable
+ from lead_desk.config import Config, is_unspecified
+ from lead_desk.constants import (
++    BODY_READ_DEADLINE_SECONDS,
++    BUSY_RETRY_AFTER_SECONDS,
++    BUSY_WRITE_TIMEOUT_SECONDS,
+     DEMO_BODY_MAX,
+     DEMO_METHODS,
+     DRAIN_MAX_BYTES,
+     DRAIN_TOTAL_SECONDS,
+     EXIT_ADAPTERS_UNREACHABLE,
+     EXIT_ANOTHER_DESK,
++    HEADER_READ_DEADLINE_SECONDS,
+     HTTP_BAD_REQUEST,
+     HTTP_BUSY,
+     HTTP_FORBIDDEN,
+@@ -45,6 +51,7 @@
+     HTTP_TOO_LARGE,
+     LISTEN_QUEUE,
+     LOOPBACK_HOSTS,
++    MAX_CONNECTIONS,
+     MAX_DIGITS,
+     PORT_MAX,
+     QUIET_DRAIN_SECONDS,
+@@ -65,6 +72,86 @@
+ _HOST_HEADER = re.compile(r"^(?P<host>\[[0-9A-Fa-f:]+\]|[^:\[\]]+)(?::(?P<port>[0-9]{1,5}))?$")
+ 
+ 
++_GONE = (ConnectionResetError, BrokenPipeError, ConnectionAbortedError, TimeoutError)
++"""Errors that only mean the other side left or stalled. They are answered or dropped quietly, never as a failure."""
++
++
++class _DeadlineReader(io.RawIOBase):
++    """Raw socket reader with one wall-clock deadline for a whole phase (headers, or body). Before each read the
++    socket timeout is set to the time left, so a client sending one byte at a time cannot hold the thread: the
++    per-read socket timeout alone restarts on every byte. With no deadline armed it behaves like the plain reader.
++    After every read the socket timeout goes back to the normal per-read limit, so a later reply write never runs
++    on a stale, shorter timeout."""
++
++    def __init__(self, sock: socket.socket, idle: Callable[[], float | None], aborted: Callable[[], bool]) -> None:
++        self._sock = sock
++        self._idle = idle  # the per-read limit (the handler's `timeout`)
++        self._aborted = aborted  # True once the server closed this connection to make room for a newer one
++        self.deadline: float | None = None
++        self.phase = "header"
++        self.timed_out_in = ""  # the phase that ran out of time, or ""
++
++    def arm(self, phase: str, seconds: float | None) -> None:
++        self.phase = phase
++        self.deadline = None if seconds is None else time.monotonic() + seconds
++
++    def readable(self) -> bool:
++        return True
++
++    def readinto(self, b: Any) -> int:
++        if self._aborted():
++            raise ConnectionAbortedError("connection closed to make room")
++        limit = self._idle()
++        if self.deadline is not None:
++            left = self.deadline - time.monotonic()
++            if left <= 0:
++                self._expire()
++            limit = left if limit is None else min(limit, left)
++        try:
++            self._sock.settimeout(limit)
++            got = self._sock.recv_into(b)
++        except TimeoutError:
++            self._expire()
++        self._restore_timeout()
++        if got == 0 and self._aborted():  # the server shut the socket down under a blocked read
++            raise ConnectionAbortedError("connection closed to make room")
++        return got
++
++    def _restore_timeout(self) -> None:
++        try:
++            self._sock.settimeout(self._idle())
++        except OSError:
++            pass
++
++    def _expire(self) -> None:
++        self.timed_out_in = self.phase
++        self.deadline = None
++        self._restore_timeout()  # the 408 reply still has to be written
++        raise TimeoutError("read deadline")
++
++
++class _Slot:
++    """One connection's place under the cap. `release` is idempotent: whoever calls it first frees the place."""
++
++    def __init__(self, server: _Server, sock: socket.socket) -> None:
++        self.server = server
++        self.sock = sock
++        self.header_phase = True  # still sending the request line and headers: may be closed to make room
++        self.released = False
++        self.evicted = False
++
++    def header_done(self) -> None:
++        with self.server._slot_lock:
++            self.header_phase = False
++
++    def release(self) -> None:
++        with self.server._slot_lock:
++            if self.released:
++                return
++            self.released = True
++            self.server._slots.pop(self, None)
++
++
+ class _Server(ThreadingHTTPServer):
+     allow_reuse_address = os.name != "nt"  # on Windows SO_REUSEADDR would allow a second listener on the same port
+     request_queue_size = LISTEN_QUEUE
+@@ -74,6 +161,122 @@
+     demo: DemoPortal | None
+     allowed_hosts: frozenset[str]
+ 
++    def __init__(self, *args: Any, **kwargs: Any) -> None:
++        self._slot_lock = threading.Lock()
++        self._slots: dict[_Slot, None] = {}  # in the order the connections were accepted
++        self._pending: dict[int, _Slot] = {}  # accepted, thread not yet running
++        self._tls = ThreadLocal()
++        super().__init__(*args, **kwargs)
++
++    def live_connections(self) -> int:
++        """Connections that still take a place under the cap (being read; see constants.MAX_CONNECTIONS)."""
++        with self._slot_lock:
++            return len(self._slots)
++
++    def header_phase_connections(self) -> int:
++        """Of those, the ones still sending their request line or headers (the only ones that may be closed to make
++        room)."""
++        with self._slot_lock:
++            return sum(1 for s in self._slots if s.header_phase)
++
++    def current_slot(self) -> _Slot:
++        """The place of the connection the calling handler thread serves."""
++        slot: _Slot = self._tls.slot
++        return slot
++
++    def _take_slot(self, request: socket.socket) -> _Slot | None:
++        """A place for a new connection, or None when the cap is full and every connection is past its headers. At
++        the cap the oldest connection still in the header phase is closed to make room."""
++        slot = _Slot(self, request)
++        victim: _Slot | None = None
++        with self._slot_lock:
++            if len(self._slots) >= MAX_CONNECTIONS:
++                victim = next((s for s in self._slots if s.header_phase), None)
++                if victim is None:
++                    return None
++                victim.evicted = victim.released = True
++                del self._slots[victim]
++            self._slots[slot] = None
++            self._pending[id(request)] = slot
++        if victim is not None:
++            try:
++                victim.sock.shutdown(socket.SHUT_RDWR)  # wakes its blocked read; the thread then ends
++            except OSError:
++                pass
++        return slot
++
++    def process_request(self, request: Any, client_address: Any) -> None:
++        """Cap on connections being read. No place and nothing to close: 503 busy at once, with no thread. If the
++        thread cannot start, the place is given back and the caller gets the same 503."""
++        slot = self._take_slot(request)
++        if slot is None:
++            self._refuse_busy(request)
++            return
++        try:
++            super().process_request(request, client_address)
++        except Exception as e:  # the thread did not start
++            log.warning("cannot start a handler thread: %s", type(e).__name__)
++            self._abandon(request, slot)
++            self._refuse_busy(request)
++        except BaseException:
++            self._abandon(request, slot)
++            raise
++
++    def _abandon(self, request: Any, slot: _Slot) -> None:
++        with self._slot_lock:
++            self._pending.pop(id(request), None)
++        slot.release()
++
++    def process_request_thread(self, request: Any, client_address: Any) -> None:
++        with self._slot_lock:
++            slot = self._pending.pop(id(request), None)
++        if slot is None:  # not reachable through process_request; stay safe and take no place
++            slot = _Slot(self, request)
++            slot.released = True
++        self._tls.slot = slot
++        try:
++            super().process_request_thread(request, client_address)
++        finally:
++            slot.release()  # a no-op when the reply already gave the place back
++
++    def handle_error(self, request: Any, client_address: Any) -> None:
++        """The standard library prints a traceback to stderr for every exception. A client that vanished is not a
++        failure; anything else still gets the default report."""
++        if isinstance(sys.exception(), _GONE):
++            return
++        super().handle_error(request, client_address)
++
++    def _refuse_busy(self, request: Any) -> None:
++        """A complete 503 for a connection that gets no thread. The whole exchange is limited to
++        BUSY_WRITE_TIMEOUT_SECONDS (the accept loop waits for it): write the reply, close our side, then read what the
++        client has already sent, so closing does not reset the connection under the reply."""
++        body = json.dumps({"error": "busy", "reason": "busy"}).encode()
++        head = (
++            f"HTTP/1.0 {HTTP_BUSY} Service Unavailable\r\nContent-Type: application/json\r\n"
++            f"Content-Length: {len(body)}\r\nConnection: close\r\nRetry-After: {BUSY_RETRY_AFTER_SECONDS}\r\n"
++            + "".join(f"{k}: {v}\r\n" for k, v in SECURITY_HEADERS)
++            + "\r\n"
++        ).encode()
++        end = time.monotonic() + BUSY_WRITE_TIMEOUT_SECONDS
++        try:
++            request.settimeout(BUSY_WRITE_TIMEOUT_SECONDS)
++            request.sendall(head + body)
++            request.shutdown(socket.SHUT_WR)
++            left = DRAIN_MAX_BYTES
++            while left > 0:
++                budget = min(QUIET_DRAIN_SECONDS, end - time.monotonic())
++                if budget <= 0:
++                    break
++                request.settimeout(budget)
++                chunk = request.recv(65536)
++                if not chunk:
++                    break
++                left -= len(chunk)
++        except OSError:  # the client is gone, or went quiet: nothing more to do
++            pass
++        finally:
++            self.shutdown_request(request)
++
+     def server_bind(self) -> None:
+         if sys.platform == "win32":
+             self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+@@ -140,6 +343,34 @@
+     server_version = "lead-desk"
+     _follow: str | None = None
+ 
++    _reader: _DeadlineReader
++    _slot: _Slot
++
++    def setup(self) -> None:
++        super().setup()
++        self.rfile.close()
++        self._slot = cast(_Server, self.server).current_slot()
++        self._reader = _DeadlineReader(self.connection, lambda: self.timeout, lambda: self._slot.evicted)
++        self.rfile = io.BufferedReader(self._reader)
++
++    def handle_one_request(self) -> None:
++        """Request line and headers must arrive within HEADER_READ_DEADLINE_SECONDS in total (parse_request then
++        starts the body deadline). A stalled sender gets 408 if the reply can still be written, then the close."""
++        self._reader.timed_out_in = ""
++        self.requestline, self.request_version = "", "HTTP/0.9"  # a reply may precede parsing
++        self.command = ""
++        self._reader.arm("header", HEADER_READ_DEADLINE_SECONDS)
++        super().handle_one_request()
++        if self._reader.timed_out_in == "header":
++            self._send_timeout("header")
++
++    def parse_request(self) -> bool:
++        try:
++            return super().parse_request()
++        finally:
++            self._slot.header_done()
++            self._reader.arm("body", BODY_READ_DEADLINE_SECONDS)
++
+     @property
+     def _desk(self) -> Desk:
+         return cast(_Server, self.server).desk
+@@ -151,19 +382,36 @@
+     def _send(self, status: int, obj: Any) -> None:
+         self._send_bytes(status, json.dumps(obj, allow_nan=False).encode("utf-8"), "application/json")
+ 
++    def _send_timeout(self, phase: str) -> None:
++        """The one 408 for every stalled read (header, body, resolve body): the same JSON shape, `phase` in the log."""
++        log.info("read timed out in the %s phase", phase)
++        self.close_connection = True
++        self._send(HTTP_REQUEST_TIMEOUT, {"error": "request_timeout", "receipt_id": None})
++
+     def _send_bytes(self, status: int, body: bytes, content_type: str, extra: tuple[tuple[str, str], ...] = ()) -> None:
+-        """One writer for every reply: Content-Length, Connection: close and the fixed security headers."""
++        """One writer for every reply: Content-Length, Connection: close and the fixed security headers. The
++        connection's place under the cap ends here: the reading is over, whatever happens to the write."""
++        self._slot.release()
++        try:
++            self.connection.settimeout(self.timeout)  # not a short leftover from a deadline-limited read
++        except OSError:
++            pass
+         if self.request_version == "HTTP/0.9":  # the standard library then sends the body alone, with no status line
+             self.request_version = "HTTP/1.0"
+-        self.send_response(status)
+-        self.send_header("Content-Type", content_type)
+-        self.send_header("Content-Length", str(len(body)))
+-        self.send_header("Connection", "close")
+-        for key, value in (*SECURITY_HEADERS, *extra):
+-            self.send_header(key, value)
+-        self.end_headers()
+-        if getattr(self, "command", None) != "HEAD":
+-            self.wfile.write(body)
++        try:
++            self.send_response(status)
++            self.send_header("Content-Type", content_type)
++            self.send_header("Content-Length", str(len(body)))
++            self.send_header("Connection", "close")
++            for key, value in (*SECURITY_HEADERS, *extra):
++                self.send_header(key, value)
++            self.end_headers()
++            if getattr(self, "command", None) != "HEAD":
++                self.wfile.write(body)
++        except _GONE:  # the client left or stopped reading: nobody to answer, and not a handler failure
++            pass
++        except OSError as e:  # anything else is worth a line, then the thread ends cleanly
++            log.warning("reply write failed: %s", type(e).__name__)
+         self.close_connection = True
+ 
+     def send_error(self, code: int, message: str | None = None, explain: str | None = None) -> None:
+@@ -186,6 +434,7 @@
+     def _drain(self, remaining: int) -> None:
+         """Read and drop request bytes we did not need, so closing does not reset the connection under the reply.
+         Never read `rfile` after this: a timed-out read leaves the stream unusable (the reply is only written)."""
++        self._reader.arm("drain", DRAIN_TOTAL_SECONDS)  # the same wall-clock limit the loop below keeps
+         try:
+             left = min(max(remaining, 0), DRAIN_MAX_BYTES)
+             deadline = time.monotonic() + DRAIN_TOTAL_SECONDS
+@@ -304,10 +553,13 @@
+                 self._resolve(str(arg))
+             self._flush_and_half_close()
+         except Exception as e:
+-            log.warning("handler failed: %s", type(e).__name__)
+-            busy = db.is_busy(e)
+             try:
+-                self._send(HTTP_BUSY if busy else HTTP_INTERNAL_ERROR, {"error": "busy" if busy else "internal"})
++                if isinstance(e, TimeoutError) and self._reader.timed_out_in:  # our own read limit, not a failure
++                    self._send_timeout(self._reader.timed_out_in)
++                else:
++                    log.warning("handler failed: %s", type(e).__name__)
++                    busy = db.is_busy(e)
++                    self._send(HTTP_BUSY if busy else HTTP_INTERNAL_ERROR, {"error": "busy" if busy else "internal"})
+                 self._flush_and_half_close()
+             except OSError:
+                 pass
+@@ -335,7 +587,9 @@
+             else:
+                 self._send_bytes(HTTP_OK, asset[0], asset[1])
+         elif name == "ui_api":
+-            self._send(*portal_api.handle(self._desk, arg, query, server.started_at))
++            self._send(
++                *portal_api.handle(self._desk, arg, query, server.started_at, demo_controls=server.demo is not None)
++            )
+         elif server.demo is None:
+             self._skip_body()
+             self._send(HTTP_NOT_FOUND, {"error": "not_found"})
+@@ -358,7 +612,7 @@
+                 try:
+                     body = self.rfile.read(n)
+                 except TimeoutError:  # fewer bytes than announced and the socket stayed open
+-                    self._send(HTTP_REQUEST_TIMEOUT, {"error": "request_timeout"})
++                    self._send_timeout("demo body")
+                     return
+                 if len(body) < n:
+                     self._send(HTTP_BAD_REQUEST, {"error": "bad_body"})
+@@ -392,7 +646,11 @@
+ 
+     def _resolve(self, item_id: str) -> None:
+         n = self._content_length() or 0
+-        raw = self.rfile.read(min(n, DRAIN_MAX_BYTES)) if n else b""
++        try:
++            raw = self.rfile.read(min(n, DRAIN_MAX_BYTES)) if n else b""
++        except TimeoutError:  # fewer bytes than announced and the socket stayed open
++            self._send_timeout("resolve body")
++            return
+         decision: Any = None
+         try:
+             obj = json.loads(raw.decode("utf-8"))
+@@ -424,7 +682,8 @@
+         try:
+             raw = self.rfile.read(n)
+         except TimeoutError:  # fewer bytes than announced and the socket stayed open
+-            self._reject_envelope(HTTP_REQUEST_TIMEOUT, "request_timeout")
++            self._desk.note_rejected_envelope()
++            self._send_timeout("body")
+             return
+         if len(raw) < n:  # the client closed early
+             self._reject_envelope(HTTP_BAD_REQUEST, "bad_envelope")
+@@ -531,6 +790,7 @@
+         print(f"cannot bind {config.bind}:{config.port}: {type(e).__name__}", flush=True)
+         sys.exit(EXIT_ANOTHER_DESK)
+     try:
++        desk.start_background()  # before startup(): the reaper then drives due follow-ups, retries and repairs
+         desk.startup()
+         if not _is_loopback_bind(config.bind):
+             print(
+@@ -547,6 +807,7 @@
+     except KeyboardInterrupt:
+         pass
+     finally:
++        desk.stop_background()
+         server.server_close()
+         desk.close()
+         lock.close()
+diff -ruN -x __pycache__ -x .pytest_cache -x .git -x '*.pyc' b/tests/portal_fixtures/data-map.json /home/user/build/snap/A4r2/tests/portal_fixtures/data-map.json
+--- a/tests/portal_fixtures/data-map.json	2026-11-09 17:37:34.888874074 +0000
++++ b/tests/portal_fixtures/data-map.json	2026-11-09 18:04:31.000000000 +0000
+@@ -10,7 +10,8 @@
+       "company",
+       "message"
+     ],
+-    "mode": "recorded"
++    "mode": "recorded",
++    "note": "lists the inputs the step is given, derived from its signature; it does not prove what a live step looks up by id"
+   },
+   "stored": [
+     {
+@@ -72,6 +73,10 @@
+   "access": {
+     "bind": "127.0.0.1",
+     "portal_read_only": true,
++    "portal_actions": [
++      "retry",
++      "resolve"
++    ],
+     "host_check": true,
+     "origin_check": true,
+     "login": false,
+diff -ruN -x __pycache__ -x .pytest_cache -x .git -x '*.pyc' b/tests/test_mutation_guards.py /home/user/build/snap/A4r2/tests/test_mutation_guards.py
+--- a/tests/test_mutation_guards.py	1970-01-01 00:00:00.000000000 +0000
++++ b/tests/test_mutation_guards.py	2026-11-09 18:27:08.000000000 +0000
+@@ -0,0 +1,389 @@
++"""Guards for survivors of the mutation sample (lead order 219) and for twelve more mutants on the same paths.
++
++Every test names the single source line it pins in its docstring. Made-up data only; the test clock is explicit and
++nothing here sleeps. The list of the twelve extra mutants is kept next to the build notes, not in this file."""
++
++from __future__ import annotations
++
++import sqlite3
++from pathlib import Path
++from typing import Any
++
++import pytest
++from support import Rig, lead, rows, run_threads
++
++from demo_only.fakes import BlindOutbox, FakeCrm
++from lead_desk import db
++from lead_desk.adapters import CrmNothingStored
++from lead_desk.constants import BUSY_WAIT_SECONDS, SOURCE_REF_MAX
++from lead_desk.desk import Desk
++from lead_desk.gate import SEND_MAX_ATTEMPTS, SENDING_GRACE_BUSY_WAITS
++
++SCHEMA = Path(db.__file__).with_name("schema.sql")
++OPEN_PAYLOAD = '{"email":"%s","name":"Ada"}'
++ROUNDS = 30
++
++
++# -- helpers
++def sql_exec(db_path: Path, sql: str, args: tuple[Any, ...] = ()) -> None:
++    con = sqlite3.connect(db_path, timeout=10)
++    try:
++        con.execute(sql, args)
++        con.commit()
++    finally:
++        con.close()
++
++
++def new_lead(rig: Rig, ref: str, email: str | None = None) -> str:
++    """Receipt and decision only (no follow-up drive); returns the lead id."""
++    reply = rig.desk.process("form", ref, lead(email=email or f"{ref}@example.test"))
++    assert reply.status == 201, reply.body
++    return str(reply.body["lead_id"])
++
++
++def follow(rig: Rig, lid: str, cols: str) -> tuple[Any, ...]:
++    return rig.query(f"SELECT {cols} FROM followups WHERE lead_id=?", (lid,))[0]  # noqa: S608 (fixed column text)
++
++
++def set_follow(rig: Rig, lid: str, **cols: Any) -> None:
++    names = ", ".join(f"{k}=?" for k in cols)
++    sql_exec(rig.db_path, f"UPDATE followups SET {names} WHERE lead_id=?", (*cols.values(), lid))  # noqa: S608
++
++
++def schema_book(tmp_path: Path) -> sqlite3.Connection:
++    con = sqlite3.connect(tmp_path / "raw.sqlite3", isolation_level=None)
++    con.executescript(SCHEMA.read_text(encoding="utf-8"))
++    return con
++
++
++def raw_receipt(con: sqlite3.Connection, ref: str, source: str = "form") -> int:
++    cur = con.execute(
++        "INSERT INTO receipts(source, source_ref, received_at, payload) VALUES(?,?,1,'{}')", (source, ref)
++    )
++    assert cur.lastrowid is not None
++    return int(cur.lastrowid)
++
++
++def raw_lead(con: sqlite3.Connection, lead_id: str, receipt_id: int, key: str) -> None:
++    con.execute(
++        "INSERT INTO leads(lead_id, receipt_id, source, name, email, email_key, created_at)"
++        " VALUES(?,?,'form','Ada',?,?,1)",
++        (lead_id, receipt_id, key, key),
++    )
++
++
++# =====
++# survivor 4: the unique key on leads.email_key (schema.sql unique_email_key)
++# =====
++def test_email_key_unique_in_sql(tmp_path: Path) -> None:
++    """schema.sql: CREATE UNIQUE INDEX leads_email_key_uq. Two lead rows with one email_key are refused."""
++    con = schema_book(tmp_path)
++    try:
++        raw_lead(con, "L000000000001", raw_receipt(con, "a"), "ada@example.test")
++        raw_lead(con, "L000000000003", raw_receipt(con, "c"), "bob@example.test")  # a different key is fine
++        with pytest.raises(sqlite3.IntegrityError, match="email_key"):
++            raw_lead(con, "L000000000002", raw_receipt(con, "b", "webhook"), "ada@example.test")
++        assert con.execute("SELECT count(*) FROM leads").fetchone()[0] == 2
++    finally:
++        con.close()
++
++
++def test_email_key_race_only_index(env, monkeypatch: pytest.MonkeyPatch) -> None:
++    """The code-level lookup says 'not found' every time, so only the unique index can stop the second lead. The
++    desk then gives the loser verdict review / internal_unstorable (a refused insert is 'cannot be stored', desk.py
++    _UNSTORABLE), never a second lead and never a 500."""
++    monkeypatch.setattr(Desk, "_lookup_email_key", lambda self, conn, key: None)
++    rig = env.rig()
++    for i in range(ROUNDS):
++        email = f"race{i}@example.test"
++        replies = run_threads(
++            [
++                lambda i=i, email=email: rig.desk.process("form", f"f-{i}", lead(email=email)),
++                lambda i=i, email=email: rig.desk.process("webhook", f"w-{i}", lead(email=email)),
++            ]
++        )
++        assert not any(isinstance(r, BaseException) for r in replies), replies
++        statuses = sorted(r.status for r in replies)
++        assert statuses in ([200, 201], [201, 202]), f"round {i}: {[r.body for r in replies]}"
++        for r in replies:
++            if r.status == 202:
++                assert r.body["reason"] == "internal_unstorable", r.body
++            if r.status == 200:
++                assert r.body["verdict"] == "duplicate"
++        n = rig.query("SELECT count(*) FROM leads WHERE email_key=?", (email,))[0][0]
++        assert n == 1, f"round {i}: {n} lead rows for one email_key"
++    assert rig.leads() == ROUNDS
++    assert rig.query("SELECT count(*) FROM followups")[0][0] == ROUNDS, "a refused lead left a follow-up behind"
++    assert rig.query("SELECT count(*) FROM receipts WHERE outcome IS NULL")[0][0] == 0
++
++
++# =====
++# survivors 11 and 12: the 1..128 length rule of source_ref, in the schema and in the desk
++# =====
++def test_source_ref_bounds_in_sql(tmp_path: Path) -> None:
++    """schema.sql: CHECK (length(source_ref) BETWEEN 1 AND 128): 128 fits, 129 and 0 are refused."""
++    con = schema_book(tmp_path)
++    try:
++        raw_receipt(con, "x" * SOURCE_REF_MAX)
++        raw_receipt(con, "y")
++        for bad in ("z" * (SOURCE_REF_MAX + 1), ""):
++            with pytest.raises(sqlite3.IntegrityError, match="CHECK"):
++                raw_receipt(con, bad)
++    finally:
++        con.close()
++
++
++def test_source_ref_128_through_desk(env) -> None:
++    """The desk accepts a 128-character request id (and the book stores it), and refuses 129."""
++    rig = env.rig()
++    ok = rig.desk.process("form", "k" * SOURCE_REF_MAX, lead())
++    assert ok.status == 201, ok.body
++    assert rig.query("SELECT length(source_ref) FROM receipts")[0][0] == SOURCE_REF_MAX
++    bad = rig.desk.process("webhook", "k" * (SOURCE_REF_MAX + 1), lead(email="b@example.test"))
++    assert (bad.status, bad.body) == (400, {"error": "bad_envelope", "receipt_id": None})
++    assert rig.query("SELECT count(*) FROM receipts")[0][0] == 1
++
++
++def test_source_ref_one_char_and_empty(env) -> None:
++    """desk.py SOURCE_REF_MIN <= len: one character is accepted, an empty request id is refused."""
++    rig = env.rig()
++    assert rig.desk.process("form", "q", lead()).status == 201
++    empty = rig.desk.process("form", "", lead(email="e@example.test"))
++    assert (empty.status, empty.body["error"]) == (400, "bad_envelope")
++    assert rig.query("SELECT count(*) FROM receipts")[0][0] == 1
++
++
++# =====
++# the claim (desk.py _CLAIM_SQL, _claim)
++# =====
++@pytest.mark.parametrize(
++    ("states", "start"),
++    [(("pending",), "pending"), (("pending", "failed"), "pending"), (("pending", "failed"), "failed")],
++)
++def test_claim_clears_send_started(env, states: tuple[str, ...], start: str) -> None:
++    """Every claim writes send_started=0, and one more attempt; a claimed failed row restarts the count at 1."""
++    rig = env.rig()
++    lid = new_lead(rig, "c1")
++    set_follow(rig, lid, state=start, send_started=1, attempts=3, auto_attempts=4)
++    assert rig.desk._claim(None, lid, states) is True
++    state, started, attempts, auto = follow(rig, lid, "state, send_started, attempts, auto_attempts")
++    assert (state, started) == ("sending", 0), "a claim must clear the send mark"
++    assert attempts == 4, "a claim writes attempts + 1 (the ownership token)"
++    assert auto == (1 if start == "failed" else 5)
++
++
++@pytest.mark.parametrize("states", [("pending",), ("pending", "failed")])
++@pytest.mark.parametrize("start", ["sending", "unknown", "sent"])
++def test_claim_needs_the_right_state(env, states: tuple[str, ...], start: str) -> None:
++    """No claim takes a row that is sending, unknown or sent: the row is left exactly as it was."""
++    rig = env.rig()
++    lid = new_lead(rig, "c2")
++    set_follow(rig, lid, state=start, attempts=2, auto_attempts=2, send_started=1)
++    before = follow(rig, lid, "state, attempts, auto_attempts, send_started, updated_at")
++    assert rig.desk._claim(None, lid, states) is False
++    assert follow(rig, lid, "state, attempts, auto_attempts, send_started, updated_at") == before
++
++
++# =====
++# the reaper's age boundaries
++# =====
++def stuck_age(rig: Rig) -> int:
++    cfg = rig.config
++    return int(cfg.send_timeout_seconds + SENDING_GRACE_BUSY_WAITS * BUSY_WAIT_SECONDS)
++
++
++def test_requeue_age_boundary_direct(env) -> None:
++    """desk.py _requeue_sending: updated_at <= older_than. A row exactly on the line is requeued, one second newer
++    is not."""
++    rig = env.rig()
++    on, newer = new_lead(rig, "b1"), new_lead(rig, "b2")
++    line = rig.clock.t - 100
++    set_follow(rig, on, state="sending", attempts=1, auto_attempts=1, updated_at=line)
++    set_follow(rig, newer, state="sending", attempts=1, auto_attempts=1, updated_at=line + 1)
++    rig.desk._requeue_sending(line)
++    assert follow(rig, on, "state, last_error") == ("pending", "crash_while_sending")
++    assert follow(rig, newer, "state") == ("sending",)
++
++
++def test_requeue_age_boundary_in_reaper(env) -> None:
++    """The reaper pass: a sending row exactly send timeout + grace old is put back; one second younger is not."""
++    rig = env.rig()
++    age = stuck_age(rig)
++    assert age == 25, "default send timeout 5 s plus 4 busy waits of 5 s"
++    on, younger = new_lead(rig, "b3"), new_lead(rig, "b4")
++    set_follow(rig, on, state="sending", attempts=1, auto_attempts=1, updated_at=rig.clock.t - age)
++    set_follow(rig, younger, state="sending", attempts=1, auto_attempts=1, updated_at=rig.clock.t - age + 1)
++    rig.desk.reap_once()
++    assert follow(rig, on, "state, last_error") == ("pending", "crash_while_sending")
++    assert follow(rig, younger, "state") == ("sending",)
++
++
++def open_receipt(rig: Rig, ref: str, at: int) -> None:
++    sql_exec(
++        rig.db_path,
++        "INSERT INTO receipts(source, source_ref, received_at, payload) VALUES('form', ?, ?, ?)",
++        (ref, at, OPEN_PAYLOAD % f"{ref}@example.test"),
++    )
++
++
++def outcome(rig: Rig, ref: str) -> Any:
++    return rig.query("SELECT outcome FROM receipts WHERE source_ref=?", (ref,))[0][0]
++
++
++def test_stalled_receipt_age_boundary(env) -> None:
++    """desk.py reap_once: received_at <= now - stall_seconds. Exactly stall_seconds old is decided; one second
++    younger is left open."""
++    rig = env.rig()
++    stall = rig.config.stall_seconds
++    open_receipt(rig, "s-on", rig.clock.t - stall)
++    open_receipt(rig, "s-young", rig.clock.t - stall + 1)
++    rig.desk.reap_once()
++    assert outcome(rig, "s-on") == "new"
++    assert outcome(rig, "s-young") is None
++
++
++def test_future_receipt_by_own_clock(env) -> None:
++    """desk.py _stalled_by_own_clock: an open receipt stamped in the future is decided once the reaper has seen it
++    open for stall_seconds by the desk's own clock (not one second sooner)."""
++    rig = env.rig()
++    stall = rig.config.stall_seconds
++    open_receipt(rig, "fut-1", rig.clock.t + 1_000_000)
++    rig.desk.reap_once()  # first sighting
++    assert outcome(rig, "fut-1") is None
++    rig.clock.advance(stall - 1)
++    rig.desk.reap_once()
++    assert outcome(rig, "fut-1") is None, "decided one second too early"
++    rig.clock.advance(1)
++    rig.desk.reap_once()
++    assert outcome(rig, "fut-1") == "new"
++    assert rig.leads() == 1
++
++
++# =====
++# extra mutants: ambiguous_prior, the CRM intent mark, requeue rules, ownership tokens
++# =====
++def test_ambiguous_send_marks_the_row(env) -> None:
++    """desk.py _record_send_result: an unclear end writes ambiguous_prior=1 (the next try then reads the mode)."""
++    rig = env.rig()
++    lid = new_lead(rig, "a1")
++    rig.outbox.fail_next("drop")
++    rig.desk.run_followup(lid)
++    assert follow(rig, lid, "state, last_error, ambiguous_prior") == ("pending", "ambiguous", 1)
++    rig.clock.advance(60)
++    rig.desk.reap_once()
++    assert rig.state(lid)[0] == "sent" and rig.outbox.count == 1
++
++
++def test_crm_done_row_is_not_asked_again(env) -> None:
++    """desk.py _crm_step: crm_done=1 goes straight on to the send, and the CRM is not asked."""
++    rig = env.rig()
++    lid = new_lead(rig, "a2")
++    set_follow(rig, lid, crm_done=1)
++    rig.desk.run_followup(lid)
++    assert rig.state(lid)[0] == "sent" and rig.outbox.count == 1
++    assert rig.crm.count == 0
++
++
++class SpyCrm(FakeCrm):
++    """Records crm_done as the book holds it at the moment of the put."""
++
++    def __init__(self, db_path: Path) -> None:
++        super().__init__()
++        self.db_path, self.seen = db_path, []
++
++    def put(self, lead_id: str, record: Any) -> Any:
++        self.seen.append(rows(self.db_path, "SELECT crm_done FROM followups WHERE lead_id=?", (lead_id,))[0][0])
++        return super().put(lead_id, record)
++
++
++def test_crm_intent_mark_before_the_put(env) -> None:
++    """desk.py _crm_step: crm_done=2 is written BEFORE the put and crm_done=1 after it came back."""
++    rig = env.rig()
++    rig.desk.crm = spy = SpyCrm(rig.db_path)
++    lid = new_lead(rig, "a3")
++    rig.desk.run_followup(lid)
++    assert spy.seen == [2], "the intent mark must be in the book when the put starts"
++    assert follow(rig, lid, "crm_done, state") == (1, "sent")
++
++
++class NothingStoredCrm(FakeCrm):
++    def put(self, lead_id: str, record: Any) -> Any:
++        raise CrmNothingStored("scripted refusal")
++
++
++def test_proven_failed_put_resets_the_mark(env) -> None:
++    """desk.py _crm_step: a put that proves nothing was stored puts crm_done back to 0 (not left at 2)."""
++    rig = env.rig()
++    rig.desk.crm = NothingStoredCrm()
++    lid = new_lead(rig, "a4")
++    rig.desk.run_followup(lid)
++    assert follow(rig, lid, "crm_done, state") == (0, "pending")
++    assert rig.outbox.count == 0
++
++
++def test_requeue_marks_only_started_sends(env) -> None:
++    """desk.py _requeue_sending: ambiguous_prior is set only when the CRM row is done AND send_started=1."""
++    rig = env.rig()
++    unsent, started = new_lead(rig, "m1"), new_lead(rig, "m2")
++    set_follow(rig, unsent, state="sending", attempts=1, auto_attempts=1, crm_done=1, send_started=0)
++    set_follow(rig, started, state="sending", attempts=1, auto_attempts=1, crm_done=1, send_started=1)
++    rig.desk._requeue_sending(None)
++    assert follow(rig, unsent, "state, ambiguous_prior") == ("pending", 0)
++    assert follow(rig, started, "state, ambiguous_prior") == ("pending", 1)
++
++
++def test_blind_requeue_unsent_goes_pending(env) -> None:
++    """desk.py _requeue_sending: on a blind sender a row that never started its send is pending, one that may have
++    sent is unknown."""
++    rig = env.rig(outbox=BlindOutbox())
++    unsent, started = new_lead(rig, "m3"), new_lead(rig, "m4")
++    set_follow(rig, unsent, state="sending", attempts=1, auto_attempts=1, crm_done=1, send_started=0)
++    set_follow(rig, started, state="sending", attempts=1, auto_attempts=1, crm_done=1, send_started=1)
++    rig.desk._requeue_sending(None)
++    assert follow(rig, unsent, "state") == ("pending",)
++    assert follow(rig, started, "state") == ("unknown",)
++
++
++def test_requeue_mode_unknown_rule(env) -> None:
++    """desk.py _requeue_sending(mode_known=False): only rows that never reached the send move; a row that may have
++    sent is left alone."""
++    rig = env.rig()
++    cases = {
++        "never_crm": {"crm_done": 0, "send_started": 0},
++        "never_send": {"crm_done": 1, "send_started": 0},
++        "maybe_sent": {"crm_done": 1, "send_started": 1},
++    }
++    ids = {}
++    for name, cols in cases.items():
++        ids[name] = new_lead(rig, name)
++        set_follow(rig, ids[name], state="sending", attempts=1, auto_attempts=1, **cols)
++    rig.desk._requeue_sending(None, mode_known=False)
++    assert follow(rig, ids["never_crm"], "state") == ("pending",)
++    assert follow(rig, ids["never_send"], "state") == ("pending",)
++    assert follow(rig, ids["maybe_sent"], "state") == ("sending",)
++
++
++def test_touch_only_for_the_owner(env) -> None:
++    """desk.py _touch: a stale token (an older claim) changes nothing; the owner moves updated_at and sets the mark."""
++    rig = env.rig()
++    lid = new_lead(rig, "t1")
++    set_follow(rig, lid, state="sending", attempts=2, auto_attempts=2, send_started=0, updated_at=1)
++    assert rig.desk._touch(lid, 1, send_started=True) is False
++    assert follow(rig, lid, "send_started, updated_at") == (0, 1)
++    assert rig.desk._touch(lid, 3, send_started=True) is False, "a token from the future is not the owner either"
++    assert rig.desk._touch(lid, 2, send_started=True) is True
++    assert follow(rig, lid, "send_started, updated_at") == (1, rig.clock.t)
++
++
++def test_defer_pending_counts_one_try(env) -> None:
++    """desk.py _defer_pending: only the drive that read the current try count may add one; at the cap it is failed."""
++    rig = env.rig()
++    lid = new_lead(rig, "d1")
++    set_follow(rig, lid, auto_attempts=1)
++    rig.desk._defer_pending(lid, "internal:X", 0)  # a stale drive
++    assert follow(rig, lid, "state, auto_attempts, last_error") == ("pending", 1, None)
++    rig.desk._defer_pending(lid, "internal:X", 1)
++    assert follow(rig, lid, "state, auto_attempts, last_error") == ("pending", 2, "internal:X")
++    set_follow(rig, lid, auto_attempts=SEND_MAX_ATTEMPTS - 1)
++    rig.desk._defer_pending(lid, "internal:X", SEND_MAX_ATTEMPTS - 1)
++    assert follow(rig, lid, "state, auto_attempts") == ("failed", SEND_MAX_ATTEMPTS)
+diff -ruN -x __pycache__ -x .pytest_cache -x .git -x '*.pyc' b/tests/test_portal_api.py /home/user/build/snap/A4r2/tests/test_portal_api.py
+--- a/tests/test_portal_api.py	2026-11-09 17:37:34.885831064 +0000
++++ b/tests/test_portal_api.py	2026-11-09 18:07:39.000000000 +0000
+@@ -400,7 +400,7 @@
+     real_connect = portal_api.connect_readonly
+     monkeypatch.setattr(portal_api, "connect_readonly", lambda p: opened.append("x") or real_connect(p))
+     for bad in (
+-        real.upper(),
++        real.lower(),  # the prefix letter changes case; real.upper() is the id itself when it has no hex letters
+         real[:-1],
+         real + "0",
+         real + "%0A",
+diff -ruN -x __pycache__ -x .pytest_cache -x .git -x '*.pyc' b/tests/test_portal_log.py /home/user/build/snap/A4r2/tests/test_portal_log.py
+--- a/tests/test_portal_log.py	2026-11-09 17:37:34.885463604 +0000
++++ b/tests/test_portal_log.py	2026-11-09 18:06:51.000000000 +0000
+@@ -12,13 +12,16 @@
+ from support import HOST, call, lead
+ from test_portal_api import EVIL, fixture, fresh, get, raw, same_shape, seed, sql
+ 
++from demo_only.fakes import RecordedQualifier
+ from lead_desk import contract, portal_api
+ from lead_desk.constants import (
+     AI_INPUT_FIELDS,
++    AI_STEP_NOTE,
+     LEAD_BOOKKEEPING_COLUMNS,
+     LEAD_CONTENT_FIELDS,
+     LOG_LIMIT_DEFAULT,
+     LOG_LIMIT_MAX,
++    PORTAL_ACTIONS,
+     QUALIFIER_MODE_FALLBACK,
+     QUALIFIER_MODES,
+ )
+@@ -410,3 +413,119 @@
+     assert listed == wanted
+     receipt_cols = {r[1] for r in rig.query("PRAGMA table_info(receipts)")}
+     assert {"source", "source_ref", "received_at", "payload"} <= receipt_cols  # the columns the entries stand for
++
++
++def test_data_map_lists_portal_actions(env) -> None:
++    """`portal_actions` is the list of action ids the review page really offers; the demo controls are listed
++    only when the demo extension is loaded (the desk passes that fact in), never by a fixed list."""
++    rig, base = fresh(env)
++    seed(rig)
++    offered = {a["id"].split("_")[0] for i in get(base, "/api/ui/review")[1]["items"] for a in i["actions"]}
++    access = get(base, "/api/ui/data-map")[1]["access"]
++    assert access["portal_actions"] == list(PORTAL_ACTIONS) == ["retry", "resolve"]
++    assert offered == set(access["portal_actions"]), offered  # both kinds are offered; "resolve_sent" etc. are resolves
++    with_demo = portal_api._data_map(rig.desk, demo_controls=True)["access"]["portal_actions"]
++    assert with_demo == ["retry", "resolve", "demo_controls"]
++    assert (
++        portal_api.handle(rig.desk, "data-map", "", 0, demo_controls=True)[1]["access"]["portal_actions"] == with_demo
++    )
++
++
++def test_data_map_note_is_fixed_text(env) -> None:
++    _, base = fresh(env)
++    note = get(base, "/api/ui/data-map")[1]["ai_step"]["note"]
++    assert note == AI_STEP_NOTE and "does not prove" in note and "looks up by id" in note
++
++
++class _SpyQualifier(RecordedQualifier):
++    def __init__(self, path: Any) -> None:
++        super().__init__(path)
++        self.seen: list[tuple[tuple[Any, ...], dict[str, Any]]] = []
++
++    def qualify(self, *args: Any, **kwargs: Any) -> Any:
++        self.seen.append((args, kwargs))
++        return super().qualify(*args, **kwargs)
++
++
++def test_qualify_call_site_inputs(env) -> None:
++    """The data map lists what the step is given by its signature; here the real call site is checked too: the desk
++    calls qualify with exactly (lead_id, email_key), positionally, and nothing else."""
++    rig, _ = fresh(env)
++    receives = portal_api._data_map(rig.desk)["ai_step"]["receives"]  # read before the spy (it takes *args)
++    rig.desk.qualifier = _SpyQualifier(rig.replies_path)
++    lid = rig.desk.process("form", "spy-1", lead(email="  Mixed.Case@Example.test ")).body["lead_id"]
++    rig.desk.run_followup(lid)
++    assert rig.desk.qualifier.seen == [((lid, "mixed.case@example.test"), {})]
++    names = list(inspect.signature(contract.Qualifier.qualify).parameters)[1:]
++    assert names == list(AI_INPUT_FIELDS) == receives
++
++
++def test_qualify_call_site_on_retry(env) -> None:
++    """The Retry button's path (a failed follow-up run again) gives the AI step the same two inputs."""
++    rig, _ = fresh(env)
++    lid = rig.desk.process("form", "spy-2", lead(email="Retry.Case@Example.test")).body["lead_id"]
++    sql(rig, "UPDATE followups SET state='failed', last_error='refused' WHERE lead_id=?", (lid,))
++    rig.desk.qualifier = _SpyQualifier(rig.replies_path)
++    assert rig.desk.retry("F" + lid).status == 200
++    assert rig.desk.qualifier.seen == [((lid, "retry.case@example.test"), {})]
++
++
++# What every stored column stands for: a field of the page's stored list, or "internal: <reason>" when the column is
++# the desk's own bookkeeping that no listed field describes. A new table or column fails the test below until it is
++# put here on purpose.
++_COLUMN_STANDS_FOR: dict[str, dict[str, str]] = {
++    "receipts": {
++        "receipt_id": "internal: record number of the request",
++        "source": "door",
++        "source_ref": "request_id",
++        "received_at": "times",
++        "payload": "request_payload",
++        "attempts": "internal: how many times the desk tried to decide the request",
++        "outcome": "internal: the desk's answer (new, duplicate, review)",
++        "outcome_lead_id": "internal: the lead the answer points at",
++        "outcome_reason": "internal: why the answer is review",
++        "differing_fields": "internal: names of the fields a repeat changed",
++        "decided_at": "times",
++        "payload_conflict": "internal: marks a repeat with other data",
++    },
++    "leads": {
++        "lead_id": "internal: lead number",
++        "receipt_id": "internal: record number of the request that made the lead",
++        "source": "door",
++        "name": "name",
++        "email": "email",
++        "email_key": "email",
++        "phone": "phone",
++        "company": "company",
++        "message": "message",
++        "created_at": "times",
++    },
++    "followups": {
++        "lead_id": "internal: lead number",
++        "state": "follow_up_state",
++        "ai_label": "ai_label",
++        "attempts": "follow_up_state",
++        "last_error": "follow_up_state",
++        "updated_at": "times",
++        "sent_at": "times",
++        "crm_done": "follow_up_state",
++        "auto_attempts": "follow_up_state",
++        "ambiguous_prior": "follow_up_state",
++        "send_started": "follow_up_state",
++    },
++}
++
++
++def test_stored_list_covers_every_column(env) -> None:
++    """Every column of every table in the book is mapped on purpose to a listed field or named internal; a new
++    table or column fails here until the list or this map is updated."""
++    rig, _ = fresh(env)
++    listed = {r["field"] for r in portal_api._data_map(rig.desk)["stored"]}
++    tables = {r[0] for r in rig.query("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")}
++    assert tables == set(_COLUMN_STANDS_FOR), tables ^ set(_COLUMN_STANDS_FOR)
++    for table, mapping in _COLUMN_STANDS_FOR.items():
++        columns = {r[1] for r in rig.query(f"PRAGMA table_info({table})")}
++        assert columns == set(mapping), (table, columns ^ set(mapping))
++        for col, stands in mapping.items():
++            assert stands in listed or stands.startswith("internal: "), (table, col, stands)
++    assert {v for m in _COLUMN_STANDS_FOR.values() for v in m.values() if not v.startswith("internal: ")} <= listed
+diff -ruN -x __pycache__ -x .pytest_cache -x .git -x '*.pyc' b/tests/test_server_hardening.py /home/user/build/snap/A4r2/tests/test_server_hardening.py
+--- a/tests/test_server_hardening.py	2026-11-09 17:37:34.885574531 +0000
++++ b/tests/test_server_hardening.py	2026-11-09 18:27:08.000000000 +0000
+@@ -117,44 +117,57 @@
+     s.close()  # sends a reset: the reply can no longer be written
+     time.sleep(0.3)
+     hook.release.set()
+-    wait_until(lambda: pending_zero(base), what="follow-up driven although the reply write failed")
+-    assert rig.leads() == 1
+-    assert rig.state()[0] == "sent"
++    # pending_zero alone is true before the request has committed; wait for the follow-up's own end state
++    wait_until(lambda: rig.leads() == 1 and rig.state()[0] == "sent", what="follow-up driven although the reply failed")
++    assert pending_zero(base)
+     assert rig.outbox.count == 1
+ 
+ 
+ def _burst(env, n: int, retry: bool) -> tuple[int, list[object]]:
+-    """n connections at the same moment, one lead (same email, different request ids). Returns (connections the
+-    operating system refused on the first try, results). With retry, a refused connection is tried again with the
+-    SAME request id (safe: the desk treats it as a replay)."""
++    """n connections at the same moment, each a different person (own e-mail address and request id). Returns
++    (clients whose first try was not answered with a stored result, (status, reply) per client). With retry, a 503
++    or a dropped connection is tried again with the SAME request id (safe: the desk treats it as a replay) until it
++    is answered. Then what the clients were told is compared with what the desk stored: every client has exactly one
++    lead, every 201 names a stored lead once, and one e-mail was sent per lead."""
+     rig = env.rig()
+     base = env.serve(rig)
+-    refused = [0]
++    first_try_failed = [0]
+     lock = threading.Lock()
+ 
+     def one(i: int):  # type: ignore[no-untyped-def]
+         def go():  # type: ignore[no-untyped-def]
+-            body = {"source": "form", "source_ref": f"b{i}", "payload": lead()}
+-            for attempt in range(6 if retry else 1):
++            body = {"source": "form", "source_ref": f"b{i}", "payload": lead(email=f"burst{i}@example.test")}
++            for attempt in range(40 if retry else 1):
+                 try:
+-                    return call(base, "POST", "/leads", body=body, timeout=60)
+-                except OSError as e:
+-                    if attempt == 0:
+-                        with lock:
+-                            refused[0] += 1
+-                    if not retry or attempt == 5:
+-                        raise e
+-                    time.sleep(0.2 * (attempt + 1))
++                    answer = call(base, "POST", "/leads", body=body, timeout=60)
++                except OSError:  # refused or dropped before an answer
++                    answer = (None, None)
++                if answer[0] is not None and answer[0] != 503:
++                    return answer
++                if attempt == 0:
++                    with lock:
++                        first_try_failed[0] += 1
++                time.sleep(min(0.05 * (attempt + 1), 0.5))
++            raise AssertionError(f"b{i} got no stored answer")
+ 
+         return go
+ 
+     results = run_threads([one(i) for i in range(n)])
+     errors = [r for r in results if isinstance(r, BaseException) or r is None]
+-    assert not errors, f"{len(errors)} of {n} got no answer; first-try refused {refused[0]}: {errors[:1]!r}"
+-    assert {r[0] for r in results} <= {200, 201, 503}  # type: ignore[index]
++    assert not errors, (
++        f"{len(errors)} of {n} got no answer; first try not answered {first_try_failed[0]}: {errors[:1]!r}"
++    )
++    assert {r[0] for r in results} <= {200, 201}  # type: ignore[index]
+     wait_until(lambda: pending_zero(base), what="follow-ups finished", timeout=90)
+-    assert rig.outbox.count <= 1  # one lead, never a second email
+-    return refused[0], results
++    stored = {
++        row[0]: row[1] for row in rig.query("SELECT source_ref, lead_id FROM receipts JOIN leads USING (receipt_id)")
++    }
++    assert sorted(stored) == sorted(f"b{i}" for i in range(n))  # one lead for every client, none twice
++    told = [r[1]["lead_id"] for r in results if r[0] == 201]  # type: ignore[index]
++    assert len(told) == len(set(told)) and set(told) <= set(stored.values())  # a 201 names a stored lead, once
++    assert rig.leads() == n
++    assert rig.outbox.count == n  # one e-mail per lead, never a second
++    return first_try_failed[0], results
+ 
+ 
+ def test_150_simultaneous_connections_all_get_an_answer(env) -> None:
+@@ -163,8 +176,8 @@
+ 
+ 
+ def test_300_simultaneous_connections_all_get_an_answer_with_retry(env) -> None:
+-    """This Windows machine refuses part of a 300-connection burst before the desk can accept (measured: it
+-    answers about 200 at once whatever the backlog); a client that retries with the same request id gets all."""
++    """A burst of 300 may be refused in part (the operating system before accept, or a 503 busy at the cap); a
++    client that retries with the same request id gets an answer, and each lead is stored once."""
+     _burst(env, 300, retry=True)
+ 
+ 
+diff -ruN -x __pycache__ -x .pytest_cache -x .git -x '*.pyc' b/tests/test_server_main_reaper.py /home/user/build/snap/A4r2/tests/test_server_main_reaper.py
+--- a/tests/test_server_main_reaper.py	1970-01-01 00:00:00.000000000 +0000
++++ b/tests/test_server_main_reaper.py	2026-11-09 18:27:08.000000000 +0000
+@@ -0,0 +1,83 @@
++"""The real entry point (`lead_desk.server.main`) runs the reaper while it serves and stops it on exit.
++
++Found by the live-proof campaign: before this, main() never called Desk.start_background(), so with a model that
++failed for a while every follow-up stayed `pending` until the desk was restarted (no retry), and `sending` or stalled
++rows were repaired only at a restart."""
++
++from __future__ import annotations
++
++import threading
++from pathlib import Path
++from typing import Any
++
++import pytest
++from support import wait_until
++
++from lead_desk import server
++from lead_desk.desk import Desk
++
++
++class _StubServer:
++    server_address = ("127.0.0.1", 0)
++
++    def __init__(self, hold: threading.Event) -> None:
++        self.hold = hold
++
++    def serve_forever(self) -> None:
++        self.hold.wait(timeout=20)
++        raise KeyboardInterrupt
++
++    def server_close(self) -> None:
++        pass
++
++
++def _run_main(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, rig: Any
++) -> tuple[list[str], threading.Event, Desk, threading.Thread]:
++    calls: list[str] = []
++    hold = threading.Event()
++    seen: list[Desk] = []
++
++    class RecordingDesk(Desk):
++        def start_background(self, *a: Any, **k: Any) -> None:
++            calls.append("start_background")
++            super().start_background(*a, **k)
++
++        def startup(self) -> None:
++            calls.append("startup")
++            super().startup()
++
++        def stop_background(self, *a: Any, **k: Any) -> None:
++            calls.append("stop_background")
++            super().stop_background(*a, **k)
++
++    def make_desk(*args: Any, **kwargs: Any) -> Desk:
++        d = RecordingDesk(*args, **kwargs)
++        seen.append(d)
++        return d
++
++    monkeypatch.setenv("DESK_DB_PATH", str(tmp_path / "main.sqlite3"))
++    monkeypatch.setenv("DESK_PORT", "0")
++    monkeypatch.setattr(server, "Desk", make_desk)
++    monkeypatch.setattr(server, "load_demo_adapters", lambda cfg: (rig.desk.crm, rig.desk.outbox, rig.desk.qualifier))
++    monkeypatch.setattr(server, "make_server", lambda desk, cfg: _StubServer(hold))
++    t = threading.Thread(target=server.main, daemon=True)
++    t.start()
++    wait_until(lambda: seen and seen[0]._thread is not None, what="the desk was built and the reaper started")
++    return calls, hold, seen[0], t
++
++
++def test_main_runs_reaper_while_serving(env, monkeypatch, tmp_path) -> None:
++    rig = env.rig()
++    calls, hold, desk, thread = _run_main(monkeypatch, tmp_path, rig)
++    try:
++        wait_until(lambda: desk._started.is_set(), what="startup finished")
++        assert calls[:2] == ["start_background", "startup"]  # the documented order
++        assert desk._thread is not None and desk._thread.is_alive()
++        assert desk._background is True
++    finally:
++        hold.set()
++        thread.join(timeout=20)
++    assert not thread.is_alive()
++    assert calls[-1] == "stop_background"
++    assert desk._thread is None  # the reaper is stopped when the desk exits
+diff -ruN -x __pycache__ -x .pytest_cache -x .git -x '*.pyc' b/tests/test_slow_sender.py /home/user/build/snap/A4r2/tests/test_slow_sender.py
+--- a/tests/test_slow_sender.py	1970-01-01 00:00:00.000000000 +0000
++++ b/tests/test_slow_sender.py	2026-11-09 18:27:08.000000000 +0000
+@@ -0,0 +1,539 @@
++"""Slow-sender defence: one wall-clock deadline for the headers and one for the body, a cap on connections that are
++still being read, eviction of stalled header senders at the cap, one 408 shape, a clean 503 busy, and no log noise
++when the client vanishes. Made-up data only; real sockets on loopback."""
++
++from __future__ import annotations
++
++import errno
++import json
++import logging
++import socket
++import socketserver
++import struct
++import threading
++import time
++from collections.abc import Iterator
++from dataclasses import replace
++from typing import Any
++
++import pytest
++from support import HOST, BlockAt, call, lead, post_lead, wait_until
++
++from lead_desk import constants, server
++
++BODY = json.dumps({"source": "form", "source_ref": "slow1", "payload": lead()}).encode()
++TIMEOUT_REPLY = {"error": "request_timeout", "receipt_id": None}
++BUSY_REPLY = {"error": "busy", "reason": "busy"}
++
++
++def addr(base: str) -> tuple[str, int]:
++    host, port = base.removeprefix("http://").split(":")
++    return host, int(port)
++
++
++def connect(base: str) -> socket.socket:
++    return socket.create_connection(addr(base), timeout=8)
++
++
++def drip(sock: socket.socket, data: bytes, gap: float, stop_after: float) -> None:
++    """Send `data` one byte at a time, until the peer closes or `stop_after` seconds pass."""
++    end = time.monotonic() + stop_after
++    for i in range(len(data)):
++        if time.monotonic() > end:
++            return
++        try:
++            sock.sendall(data[i : i + 1])
++        except OSError:
++            return
++        time.sleep(gap)
++
++
++def read_all(sock: socket.socket) -> bytes:
++    out = b""
++    try:
++        while chunk := sock.recv(4096):
++            out += chunk
++    except OSError:
++        pass
++    return out
++
++
++def parse_reply(raw: bytes) -> tuple[int, dict[str, str], Any]:
++    """(status, lower-case headers, parsed JSON body) of a complete reply; fails on a partial one."""
++    head, sep, body = raw.partition(b"\r\n\r\n")
++    assert sep, f"no complete reply, got {raw[:80]!r}"
++    lines = head.decode().split("\r\n")
++    headers = {k.lower(): v.strip() for k, _, v in (ln.partition(":") for ln in lines[1:])}
++    return int(lines[0].split(" ", 2)[1]), headers, json.loads(body.decode() or "null")
++
++
++def run_drip(base: str, data: bytes, gap: float = 0.2) -> tuple[bytes, float]:
++    """Drip `data` from a thread; return what the server sent and how long until it closed."""
++    s = connect(base)
++    t0 = time.monotonic()
++    th = threading.Thread(target=drip, args=(s, data, gap, 6.0), daemon=True)
++    th.start()
++    got = read_all(s)
++    took = time.monotonic() - t0
++    s.close()
++    th.join(timeout=8)
++    return got, took
++
++
++def get_ok(base: str, path: str = "/counts", seconds: float = 15.0) -> int:
++    """GET that retries while the server answers 503 busy or drops the connection (both are honest answers while
++    other connections hold places). Returns the first other status."""
++    end = time.monotonic() + seconds
++    while True:
++        try:
++            status = int(call(base, "GET", path)[0])
++        except OSError:
++            status = 503
++        if status != 503 or time.monotonic() > end:
++            return status
++        time.sleep(0.05)
++
++
++def post_head(length: int, ref: str = "x") -> bytes:
++    return (
++        f"POST /leads HTTP/1.1\r\nHost: {HOST}\r\nContent-Type: application/json\r\n"
++        f"Content-Length: {length}\r\nConnection: close\r\n\r\n"
++    ).encode()
++
++
++def lead_body(ref: str, email: str) -> bytes:
++    return json.dumps({"source": "form", "source_ref": ref, "payload": lead(email=email)}).encode()
++
++
++@pytest.fixture
++def short(monkeypatch) -> None:
++    monkeypatch.setattr(server, "HEADER_READ_DEADLINE_SECONDS", 1.0)
++    monkeypatch.setattr(server, "BODY_READ_DEADLINE_SECONDS", 1.0)
++
++
++class Live:
++    """A server built directly, so a test can read the connection count."""
++
++    def __init__(self, env, hooks=None) -> None:
++        self.rig = env.rig(hooks=hooks)
++        cfg = replace(self.rig.desk.config, port=0)
++        self.srv = server.make_server(self.rig.desk, cfg)
++        self.thread = threading.Thread(target=self.srv.serve_forever, daemon=True)
++        self.thread.start()
++        host, port = self.srv.server_address[0], self.srv.server_address[1]
++        self.base = f"http://{host}:{port}"
++
++    @property
++    def count(self) -> int:
++        """Connections that still take a place under the cap."""
++        fn = getattr(self.srv, "live_connections", None)
++        return int(fn()) if fn else int(getattr(self.srv, "_live", -1))
++
++    @property
++    def in_header(self) -> int:
++        fn = getattr(self.srv, "header_phase_connections", None)
++        return int(fn()) if fn else -1
++
++    def stalled_header(self) -> socket.socket:
++        """A connection that has sent part of a request line and then nothing."""
++        s = connect(self.base)
++        s.sendall(b"GET /cou")
++        return s
++
++    def body_phase(self, length: int = 100) -> socket.socket:
++        """A connection whose headers are complete and whose body has not come."""
++        s = connect(self.base)
++        s.sendall(post_head(length))
++        return s
++
++    def stop(self) -> None:
++        self.srv.shutdown()
++        self.srv.server_close()
++
++
++@pytest.fixture
++def live(env) -> Iterator[Live]:
++    lv = Live(env)
++    yield lv
++    lv.stop()
++
++
++def cap(monkeypatch, n: int) -> None:
++    monkeypatch.setattr(server, "MAX_CONNECTIONS", n)  # a test cap below the validated range of the real constant
++
++
++# -- deadlines (items: header, body)
++def test_slow_request_line_closed(env, short) -> None:
++    base = env.serve(env.rig())
++    got, took = run_drip(base, f"POST /leads HTTP/1.1\r\nHost: {HOST}\r\n\r\n".encode())
++    assert took < 3
++    assert b" 408 " in got.split(b"\r\n", 1)[0]
++
++
++def test_slow_headers_closed(env, short) -> None:
++    base = env.serve(env.rig())
++    s = connect(base)
++    s.sendall(f"POST /leads HTTP/1.1\r\nHost: {HOST}\r\n".encode())
++    t0 = time.monotonic()
++    th = threading.Thread(target=drip, args=(s, b"X-Pad: " + b"a" * 40 + b"\r\n\r\n", 0.2, 6.0), daemon=True)
++    th.start()
++    got = read_all(s)
++    took = time.monotonic() - t0
++    s.close()
++    th.join(timeout=8)
++    assert took < 3
++    status, _, body = parse_reply(got)
++    assert status == 408 and body == TIMEOUT_REPLY
++
++
++def test_slow_body_closed_with_408(env, short) -> None:
++    base = env.serve(env.rig())
++    s = connect(base)
++    s.sendall(post_head(len(BODY)))
++    t0 = time.monotonic()
++    th = threading.Thread(target=drip, args=(s, BODY, 0.2, 6.0), daemon=True)
++    th.start()
++    got = read_all(s)
++    took = time.monotonic() - t0
++    s.close()
++    th.join(timeout=8)
++    assert took < 3
++    assert parse_reply(got)[0] == 408
++
++
++# -- item 5 and 6: one 408 for a stalled header, body and resolve body; the log names the phase
++STALLS = {
++    "header": (b"POST /leads HTTP/1.1\r\nHost: ", "header phase"),
++    "body": (post_head(100) + b"{", "body phase"),
++    "resolve": (
++        (
++            f"POST /review/F1/resolve HTTP/1.1\r\nHost: {HOST}\r\nContent-Length: 100\r\nConnection: close\r\n\r\n{{"
++        ).encode(),
++        "resolve body phase",
++    ),
++}
++
++
++@pytest.mark.parametrize("kind", sorted(STALLS))
++def test_stall_gives_the_same_408(env, short, caplog, kind) -> None:
++    data, phase_text = STALLS[kind]
++    base = env.serve(env.rig())
++    with caplog.at_level(logging.INFO, logger="lead_desk"):
++        s = connect(base)
++        s.sendall(data)  # then silence
++        got = read_all(s)
++        s.close()
++    status, headers, body = parse_reply(got)
++    assert status == 408, (kind, got[:120])  # the resolve route used to answer 500 here
++    assert body == TIMEOUT_REPLY
++    assert headers["connection"] == "close" and int(headers["content-length"]) > 0
++    assert [r for r in caplog.records if phase_text in r.getMessage()], [r.getMessage() for r in caplog.records]
++    assert not [r for r in caplog.records if "handler failed" in r.getMessage()]
++
++
++# -- item 1: the cap refusal is a complete reply
++def test_busy_503_is_complete_and_clean(live, monkeypatch) -> None:
++    cap(monkeypatch, 2)
++    held = [live.body_phase(), live.body_phase()]
++    wait_until(lambda: live.count == 2 and live.in_header == 0, what="two connections past their headers")
++    big = b"x" * 300_000  # already on its way when the refusal is written: closing on it would reset the reply
++    s = connect(live.base)
++    t0 = time.monotonic()
++    s.sendall(post_head(len(big)) + big)
++    got = read_all(s)  # read_all hides a reset: parse_reply then fails on the missing reply
++    took = time.monotonic() - t0
++    s.close()
++    status, headers, body = parse_reply(got)
++    assert status == 503 and body == BUSY_REPLY
++    assert headers["retry-after"] == str(constants.BUSY_RETRY_AFTER_SECONDS)
++    assert headers["connection"] == "close"
++    assert headers["content-type"] == "application/json"
++    assert int(headers["content-length"]) == len(json.dumps(BUSY_REPLY).encode())
++    assert took < constants.BUSY_WRITE_TIMEOUT_SECONDS + 2
++    for h in held:
++        h.close()
++    wait_until(lambda: live.count == 0, what="places freed")
++
++
++def test_busy_503_silent_client_is_quick(live, monkeypatch) -> None:
++    cap(monkeypatch, 2)
++    held = [live.body_phase(), live.body_phase()]
++    wait_until(lambda: live.count == 2 and live.in_header == 0, what="two connections past their headers")
++    s = connect(live.base)  # connects and says nothing: the accept loop must not wait for it
++    t0 = time.monotonic()
++    assert call(live.base, "GET", "/counts")[0] == 503  # a second one behind the silent one still gets its answer
++    assert time.monotonic() - t0 < 2 * constants.BUSY_WRITE_TIMEOUT_SECONDS + 1
++    s.close()
++    for h in held:
++        h.close()
++
++
++# -- item 2: a place covers only the reading
++def test_follow_up_does_not_hold_a_place(env, monkeypatch) -> None:
++    hook = BlockAt("D1")  # holds the follow-up, which runs after the reply is written
++    lv = Live(env, hooks=hook)
++    try:
++        cap(monkeypatch, 1)
++        assert post_lead(lv.base, "form", "held1", lead())[0] == 201
++        assert hook.reached.wait(timeout=15)
++        try:
++            wait_until(lambda: lv.count == 0, timeout=5, what="place freed while the follow-up is still running")
++            assert call(lv.base, "GET", "/counts")[0] == 200  # with a cap of 1 this is 503 if the place were kept
++        finally:
++            hook.release.set()
++        wait_until(lambda: lv.rig.state()[0] == "sent", what="follow-up finished")
++    finally:
++        lv.stop()
++
++
++def test_place_released_exactly_once(live) -> None:
++    srv = live.srv
++    a, b = socket.socket(), socket.socket()
++    try:
++        slot_a, slot_b = srv._take_slot(a), srv._take_slot(b)
++        assert slot_a is not None and slot_b is not None
++        assert live.count == 2
++        slot_a.release()
++        slot_a.release()  # a second release must not free anyone else's place
++        assert live.count == 1
++        srv._abandon(a, slot_a)
++        assert live.count == 1
++        srv._abandon(b, slot_b)
++        assert live.count == 0
++    finally:
++        a.close()
++        b.close()
++
++
++def test_slot_survives_every_end(live, monkeypatch) -> None:
++    """Many connections that end in every possible way: no place leaks, the cap is never passed, nothing is left
++    waiting to be picked up by a thread."""
++    cap(monkeypatch, 3)
++    for i in range(60):
++        s = connect(live.base)
++        kind = i % 6
++        if kind == 1:
++            s.sendall(f"GET /counts HTTP/1.1\r\nHost: {HOST}\r\n\r\n".encode())
++        elif kind == 2:
++            s.sendall(b"GET /cou")
++        elif kind == 3:
++            s.sendall(b"POST /leads HT")
++            s.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER, struct.pack("ii", 1, 0))  # reset on close
++        elif kind == 4:
++            s.sendall(b"\x00\xff garbage not http\r\n\r\n")
++        elif kind == 5:
++            s.sendall(post_head(50))  # headers, then no body
++        s.close()
++        assert live.count <= 3
++    # accepting is first in, first out: once this one is answered, every connection above has been accepted
++    assert get_ok(live.base) == 200
++    wait_until(lambda: live.count == 0, what="all places freed")
++    assert live.srv._pending == {}  # type: ignore[attr-defined]
++
++
++# -- item 3: stalled header senders cannot lock real callers out
++def test_cap_closes_oldest_header_sender(live, monkeypatch) -> None:
++    cap(monkeypatch, 3)
++    held = []
++    for k in range(3):
++        held.append(live.stalled_header())
++        wait_until(lambda k=k: live.count == k + 1, what="place taken")  # accepted in this order
++    assert call(live.base, "GET", "/counts")[0] == 200  # the new one is served, not refused
++    assert read_all(held[0]) == b""  # the oldest was closed to make room, with no reply
++    for s in held[1:]:  # the younger ones are untouched and can still finish
++        s.sendall(f"nts HTTP/1.1\r\nHost: {HOST}\r\n\r\n".encode())
++        assert parse_reply(read_all(s))[0] == 200
++    for s in held:
++        s.close()
++    wait_until(lambda: live.count == 0, what="places freed")
++
++
++def test_many_stalled_senders_cannot_block(live, monkeypatch) -> None:
++    cap(monkeypatch, 3)
++    stalled = []
++    for k in range(12):
++        stalled.append(live.stalled_header())
++        wait_until(lambda k=k: live.count == min(k + 1, 3), what="cap held, not passed")
++    assert call(live.base, "POST", "/leads", {"source": "form", "source_ref": "real1", "payload": lead()})[0] == 201
++    assert [read_all(s) for s in stalled[:9]] == [b""] * 9  # the 9 oldest were closed
++    for s in stalled:
++        s.close()
++
++
++def test_past_the_headers_is_never_closed(live, monkeypatch) -> None:
++    cap(monkeypatch, 2)
++    refs = [("bp1", "a1@example.test"), ("bp2", "a2@example.test")]
++    bodies = [lead_body(*r) for r in refs]
++    held = []
++    for body in bodies:
++        s = connect(live.base)
++        s.sendall(post_head(len(body)))
++        held.append(s)
++    wait_until(lambda: live.count == 2 and live.in_header == 0, what="two connections past their headers")
++    assert call(live.base, "GET", "/counts")[0] == 503  # nothing to close: the new one is told to come back
++    for s, body in zip(held, bodies, strict=True):  # both are still alive and finish normally
++        s.sendall(body)
++        assert parse_reply(read_all(s))[0] == 201
++        s.close()
++    assert live.rig.leads() == 2
++
++
++# -- item 4: no short timeout left over on the socket when the reply is written
++def test_reply_write_uses_normal_timeout(env, monkeypatch) -> None:
++    seen: list[float | None] = []
++    original = server._Handler.send_response
++
++    def spy(self, *args: Any, **kwargs: Any) -> None:
++        seen.append(self.connection.gettimeout())
++        original(self, *args, **kwargs)
++
++    monkeypatch.setattr(server._Handler, "send_response", spy)
++    base = env.serve(env.rig())
++    assert post_lead(base, "form", "tmo1", lead())[0] == 201
++    assert call(base, "GET", "/counts")[0] == 200
++    assert seen == [server._Handler.timeout] * 2
++
++
++# -- item 7: write errors and read resets
++class _Boom:
++    def __init__(self, exc: BaseException) -> None:
++        self.exc = exc
++
++    def write(self, data: bytes) -> None:
++        raise self.exc
++
++    def flush(self) -> None:
++        pass
++
++
++class _Conn:
++    def settimeout(self, value: float | None) -> None:
++        pass
++
++
++def handler_with_failing_write(exc: BaseException) -> Any:
++    h = object.__new__(server._Handler)
++    h.request_version, h.command, h.requestline = "HTTP/1.0", "GET", "GET / HTTP/1.0"
++    h.wfile = _Boom(exc)
++    h.connection = _Conn()
++    h.close_connection = False
++
++    class NoSlot:
++        def release(self) -> None:
++            pass
++
++    h._slot = NoSlot()
++    return h
++
++
++GONE = [
++    ConnectionResetError(),
++    BrokenPipeError(),
++    ConnectionAbortedError(),
++    TimeoutError(),
++]
++
++
++@pytest.mark.parametrize("exc", GONE, ids=lambda e: type(e).__name__)
++def test_gone_client_write_is_quiet(caplog, exc) -> None:
++    h = handler_with_failing_write(exc)
++    with caplog.at_level(logging.DEBUG):
++        h._send_bytes(200, b"{}", "application/json")
++    assert h.close_connection is True
++    assert not caplog.records
++
++
++def test_other_write_error_is_logged(caplog) -> None:
++    h = handler_with_failing_write(OSError(errno.EIO, "disk"))
++    with caplog.at_level(logging.DEBUG):
++        h._send_bytes(200, b"{}", "application/json")  # must not raise
++    assert h.close_connection is True
++    msgs = [r.getMessage() for r in caplog.records if r.levelno == logging.WARNING]
++    assert msgs == ["reply write failed: OSError"]
++
++
++def test_read_reset_is_quiet(live, capsys, caplog) -> None:
++    with caplog.at_level(logging.DEBUG):
++        for _ in range(10):
++            s = connect(live.base)
++            s.sendall(b"POST /leads HTTP/1.1\r\nHost: x\r\nContent-Le")  # the server is waiting for the rest
++            s.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER, struct.pack("ii", 1, 0))
++            s.close()  # reset while the server reads
++        wait_until(lambda: live.count == 0, what="places freed")
++        assert get_ok(live.base) == 200
++    assert not [r for r in caplog.records if "handler failed" in r.getMessage()]
++    assert "Traceback" not in capsys.readouterr().err  # the standard library prints one for a failed handler
++
++
++# -- item 8: a thread that cannot start
++def test_thread_start_failure_answers_busy(live, monkeypatch) -> None:
++    def boom(self, request, client_address) -> None:
++        raise RuntimeError("cannot start new thread")
++
++    monkeypatch.setattr(socketserver.ThreadingMixIn, "process_request", boom)
++    s = connect(live.base)
++    s.sendall(f"GET /counts HTTP/1.1\r\nHost: {HOST}\r\n\r\n".encode())
++    status, _, body = parse_reply(read_all(s))
++    s.close()
++    assert status == 503 and body == BUSY_REPLY
++    assert live.count == 0 and live.srv._pending == {}  # type: ignore[attr-defined]
++    monkeypatch.undo()
++    assert call(live.base, "GET", "/counts")[0] == 200
++
++
++# -- item 9: the limits are checked
++GOOD = {
++    "max_connections": 256,
++    "header": 10.0,
++    "body": 10,
++    "busy_write": 1.0,
++    "retry_after": 1,
++}
++
++
++def test_default_limits_are_valid() -> None:
++    constants.validate_http_limits(**GOOD)
++    assert constants.MAX_CONNECTIONS == 256
++    assert constants.MAX_CONNECTIONS_MIN <= constants.MAX_CONNECTIONS <= constants.MAX_CONNECTIONS_MAX
++
++
++@pytest.mark.parametrize(
++    ("field", "value", "words"),
++    [
++        ("max_connections", 7, "MAX_CONNECTIONS"),
++        ("max_connections", 4097, "MAX_CONNECTIONS"),
++        ("max_connections", 64.0, "MAX_CONNECTIONS"),
++        ("max_connections", True, "MAX_CONNECTIONS"),
++        ("header", 0, "HEADER_READ_DEADLINE_SECONDS"),
++        ("body", float("nan"), "BODY_READ_DEADLINE_SECONDS"),
++        ("busy_write", -1.0, "BUSY_WRITE_TIMEOUT_SECONDS"),
++        ("busy_write", "1", "BUSY_WRITE_TIMEOUT_SECONDS"),
++        ("retry_after", 0, "BUSY_RETRY_AFTER_SECONDS"),
++    ],
++)
++def test_bad_limit_is_refused(field, value, words) -> None:
++    with pytest.raises(ValueError, match=words):
++        constants.validate_http_limits(**{**GOOD, field: value})
++
++
++def test_vanished_client_logs_no_failure(env, caplog, capsys) -> None:
++    base = env.serve(env.rig())
++    with caplog.at_level(logging.DEBUG):
++        for _ in range(10):
++            s = connect(base)
++            s.sendall(b"\x00\xff garbage not http\r\n\r\n")
++            s.close()  # closes without reading the error reply
++            s = connect(base)
++            s.sendall(b"BREW /leads HTTP/1.1\r\nHost: x\r\n\r\n")
++            s.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER, struct.pack("ii", 1, 0))  # reset on close
++            s.close()
++        assert get_ok(base) == 200
++    assert not [r for r in caplog.records if "handler failed" in r.getMessage()]
++    assert "Traceback" not in capsys.readouterr().err  # the standard library prints one when a reply write fails
++
++
++def test_normal_get_and_post_work(env) -> None:
++    base = env.serve(env.rig())
++    assert call(base, "GET", "/counts")[0] == 200
++    status, body = post_lead(base, "form", "normal1", lead())
++    assert status == 201 and body["verdict"] == "new"

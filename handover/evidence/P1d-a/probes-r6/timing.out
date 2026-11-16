@@ -1,0 +1,60 @@
+== orig Python 3.13.18
+pwd*N                        64K=0.17 128K=0.47 256K=0.96 ratio256/128=2.04
+password=*N                  64K=0.19 128K=0.43 256K=0.89 ratio256/128=2.07
+zwsplit pass<zw>word=*N      64K=0.35 128K=0.68 256K=1.59 ratio256/128=2.34
+fullwidth                    64K=0.31 128K=0.66 256K=1.5 ratio256/128=2.27
+pwd*85+sp                    64K=0.11 128K=0.19 256K=0.41 ratio256/128=2.16
+dots a.a.-                   64K=0.13 128K=0.28 256K=0.51 ratio256/128=1.82
+amp                          64K=0.12 128K=0.24 256K=0.45 ratio256/128=1.88
+?password*N                  64K=0.18 128K=0.43 256K=0.76 ratio256/128=1.77
+mix a.password-              64K=0.14 128K=0.27 256K=0.52 ratio256/128=1.93
+== orig Python 3.12.3
+pwd*N                        64K=0.19 128K=0.41 256K=0.9 ratio256/128=2.20
+password=*N                  64K=0.2 128K=0.41 256K=1.05 ratio256/128=2.56
+zwsplit pass<zw>word=*N      64K=0.29 128K=0.69 256K=1.45 ratio256/128=2.10
+fullwidth                    64K=0.31 128K=0.7 256K=1.48 ratio256/128=2.11
+pwd*85+sp                    64K=0.12 128K=0.26 256K=0.4 ratio256/128=1.54
+dots a.a.-                   64K=0.15 128K=0.28 256K=0.57 ratio256/128=2.04
+amp                          64K=0.12 128K=0.37 256K=0.51 ratio256/128=1.38
+?password*N                  64K=0.2 128K=0.41 256K=0.96 ratio256/128=2.34
+mix a.password-              64K=0.14 128K=0.3 256K=0.6 ratio256/128=2.00
+== base Python 3.13.18
+pwd*N                        64K=0.81 128K=1.57 256K=3.22 ratio256/128=2.05
+password=*N                  64K=0.19 128K=0.38 256K=0.8 ratio256/128=2.11
+zwsplit pass<zw>word=*N      64K=0.31 128K=0.6 256K=1.51 ratio256/128=2.52
+fullwidth                    64K=0.3 128K=0.67 256K=1.42 ratio256/128=2.12
+pwd*85+sp                    64K=0.4 128K=0.77 256K=1.63 ratio256/128=2.12
+dots a.a.-                   64K=0.14 128K=0.28 256K=0.54 ratio256/128=1.93
+amp                          64K=0.11 128K=0.25 256K=0.49 ratio256/128=1.96
+?password*N                  64K=0.54 128K=1.19 256K=2.21 ratio256/128=1.86
+mix a.password-              64K=0.46 128K=0.86 256K=1.76 ratio256/128=2.05
+== base Python 3.12.3
+pwd*N                        64K=0.85 128K=1.67 256K=3.25 ratio256/128=1.95
+password=*N                  64K=0.22 128K=0.43 256K=1.11 ratio256/128=2.58
+zwsplit pass<zw>word=*N      64K=0.29 128K=0.63 256K=1.41 ratio256/128=2.24
+fullwidth                    64K=0.31 128K=0.67 256K=1.43 ratio256/128=2.13
+pwd*85+sp                    64K=0.41 128K=0.82 256K=1.64 ratio256/128=2.00
+dots a.a.-                   64K=0.16 128K=0.34 256K=0.64 ratio256/128=1.88
+amp                          64K=0.15 128K=0.28 256K=0.56 ratio256/128=2.00
+?password*N                  64K=0.6 128K=1.29 256K=2.64 ratio256/128=2.05
+mix a.password-              64K=0.46 128K=0.9 256K=1.86 ratio256/128=2.07
+== atomq Python 3.13.18
+pwd*N                        64K=0.14 128K=0.31 256K=0.65 ratio256/128=2.10
+password=*N                  64K=0.21 128K=0.33 256K=0.82 ratio256/128=2.48
+zwsplit pass<zw>word=*N      64K=0.34 128K=0.55 256K=1.17 ratio256/128=2.13
+fullwidth                    64K=0.27 128K=0.6 256K=1.37 ratio256/128=2.28
+pwd*85+sp                    64K=0.06 128K=0.11 256K=0.23 ratio256/128=2.09
+dots a.a.-                   64K=0.15 128K=0.27 256K=0.6 ratio256/128=2.22
+amp                          64K=0.12 128K=0.26 256K=0.5 ratio256/128=1.92
+?password*N                  64K=0.13 128K=0.3 256K=0.67 ratio256/128=2.23
+mix a.password-              64K=0.11 128K=0.25 256K=0.44 ratio256/128=1.76
+== atomq Python 3.12.3
+pwd*N                        64K=0.18 128K=0.37 256K=0.77 ratio256/128=2.08
+password=*N                  64K=0.19 128K=0.41 256K=0.96 ratio256/128=2.34
+zwsplit pass<zw>word=*N      64K=0.25 128K=0.6 256K=1.4 ratio256/128=2.33
+fullwidth                    64K=0.32 128K=0.67 256K=1.45 ratio256/128=2.16
+pwd*85+sp                    64K=0.06 128K=0.11 256K=0.23 ratio256/128=2.09
+dots a.a.-                   64K=0.16 128K=0.32 256K=0.64 ratio256/128=2.00
+amp                          64K=0.14 128K=0.28 256K=0.61 ratio256/128=2.18
+?password*N                  64K=0.18 128K=0.42 256K=0.84 ratio256/128=2.00
+mix a.password-              64K=0.11 128K=0.23 256K=0.48 ratio256/128=2.09

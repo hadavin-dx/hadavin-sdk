@@ -1,0 +1,963 @@
+....FF...FFFF.....FFF.F...........F......................F.............. [ 27%]
+.......F..F..............................F...............FFFFF........F. [ 54%]
+.......................................................................F [ 81%]
+.........F..F...FFFFFF........F...ssssssssssss....                       [100%]
+=================================== FAILURES ===================================
+_ test_the_calls_written_in_the_module_equal_the_declared_list[src/hadavin_sdk/actions/secrets_vault.py] _
+
+rel = 'src/hadavin_sdk/actions/secrets_vault.py'
+
+    @pytest.mark.parametrize("rel", sorted(SHAPES))
+    def test_the_calls_written_in_the_module_equal_the_declared_list(rel):
+>       assert call_problems(rel, _text(rel), SHAPES[rel]) == []
+E       assert ["src/hadavin...no such call'] == []
+E         
+E         Left contains 3 more items, first extra item: "src/hadavin_sdk/actions/secrets_vault.py R17: resource '{mount}/data/{path_prefix}*' is not the path of the request it serves ('+/data/++')"
+E         Use -v to get more diff
+
+tests/test_policy_guard.py:757: AssertionError
+_ test_the_calls_written_in_the_module_equal_the_declared_list[src/hadavin_sdk/audit/signer_vault.py] _
+
+rel = 'src/hadavin_sdk/audit/signer_vault.py'
+
+    @pytest.mark.parametrize("rel", sorted(SHAPES))
+    def test_the_calls_written_in_the_module_equal_the_declared_list(rel):
+>       assert call_problems(rel, _text(rel), SHAPES[rel]) == []
+E       assert ["src/hadavin...no such call'] == []
+E         
+E         Left contains 6 more items, first extra item: "src/hadavin_sdk/audit/signer_vault.py R18: resource '{transit_mount}/sign/{key_name}' is not the path of the request it serves ('+/sign/+')"
+E         Use -v to get more diff
+
+tests/test_policy_guard.py:757: AssertionError
+_______________ test_plant_a_new_request_with_no_grant_is_caught _______________
+
+    def test_plant_a_new_request_with_no_grant_is_caught():
+        text = _text(VAULT) + _NEW_METHOD
+        line = text.count("\n")
+>       same(
+            call_problems(VAULT, text, SHAPES[VAULT]),
+            [
+                (
+                    f"{VAULT}:{line}: request ('LIST', '{{provider.mount}}/metadata/{{provider.path_prefix}}') "
+                    "has no grant and no free entry in POLICY"
+                )
+            ],
+        )
+
+tests/test_policy_guard.py:808: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+found = ["src/hadavin_sdk/actions/secrets_vault.py R17: resource '{mount}/data/{path_prefix}*' is not the path of the request ...crets_vault.py: POLICY declares request ('GET', '{mount}/data/{path_prefix}{name}') but the module makes no such call"]
+expected = ["src/hadavin_sdk/actions/secrets_vault.py:289: request ('LIST', '{provider.mount}/metadata/{provider.path_prefix}') has no grant and no free entry in POLICY"]
+
+    def same(found: object, expected: object) -> None:
+        """`found == expected`, with both written out in full in the failure message (pytest shortens a long
+        list in the first line, and the mutant runner reads that line)."""
+>       assert found == expected, f"reported {found!r}, expected {expected!r}"
+E       AssertionError: reported ["src/hadavin_sdk/actions/secrets_vault.py R17: resource '{mount}/data/{path_prefix}*' is not the path of the request it serves ('+/data/++')", "src/hadavin_sdk/actions/secrets_vault.py:115: request ('GET', '{self.mount}/data/{self.path_prefix}{name}') has no grant and no free entry in POLICY", "src/hadavin_sdk/actions/secrets_vault.py:289: request ('LIST', '{provider.mount}/metadata/{provider.path_prefix}') has no grant and no free entry in POLICY", "src/hadavin_sdk/actions/secrets_vault.py: POLICY declares request ('GET', '{mount}/data/{path_prefix}{name}') but the module makes no such call"], expected ["src/hadavin_sdk/actions/secrets_vault.py:289: request ('LIST', '{provider.mount}/metadata/{provider.path_prefix}') has no grant and no free entry in POLICY"]
+E       assert ["src/hadavin...no such call'] == ['src/hadavin...ry in POLICY']
+E         
+E         At index 0 diff: "src/hadavin_sdk/actions/secrets_vault.py R17: resource '{mount}/data/{path_prefix}*' is not the path of the request it serves ('+/data/++')" != "src/hadavin_sdk/actions/secrets_vault.py:289: request ('LIST', '{provider.mount}/metadata/{provider.path_prefix}') has no grant and no free entry in POLICY"
+E         Left contains 3 more items, first extra item: "src/hadavin_sdk/actions/secrets_vault.py:115: request ('GET', '{self.mount}/data/{self.path_prefix}{name}') has no grant and no free entry in POLICY"
+E         Use -v to get more diff
+
+tests/test_policy_guard.py:154: AssertionError
+____________ test_plant_a_grant_whose_request_was_deleted_is_caught ____________
+
+    def test_plant_a_grant_whose_request_was_deleted_is_caught():
+        problems = _planted(TRANSIT, 'self._call("GET", f"keys/{self.key_name}")', "dict(self.cached)")
+>       same(
+            problems,
+            [
+                (
+                    f"{TRANSIT}: POLICY declares request ('GET', '{{self.mount}}/keys/{{self.key_name}}') but "
+                    "the module makes no such call"
+                )
+            ],
+        )
+
+tests/test_policy_guard.py:821: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+found = ["src/hadavin_sdk/audit/signer_vault.py R18: resource '{transit_mount}/sign/{key_name}' is not the path of the request.../audit/signer_vault.py: POLICY declares request ('POST', '{mount}/sign/{key_name}') but the module makes no such call"]
+expected = ["src/hadavin_sdk/audit/signer_vault.py: POLICY declares request ('GET', '{self.mount}/keys/{self.key_name}') but the module makes no such call"]
+
+    def same(found: object, expected: object) -> None:
+        """`found == expected`, with both written out in full in the failure message (pytest shortens a long
+        list in the first line, and the mutant runner reads that line)."""
+>       assert found == expected, f"reported {found!r}, expected {expected!r}"
+E       AssertionError: reported ["src/hadavin_sdk/audit/signer_vault.py R18: resource '{transit_mount}/sign/{key_name}' is not the path of the request it serves ('+/sign/+')", "src/hadavin_sdk/audit/signer_vault.py R19: resource '{transit_mount}/keys/{key_name}' is not the path of the request it serves ('+/keys/+')", "src/hadavin_sdk/audit/signer_vault.py:52: request ('POST', '{self.mount}/sign/{self.key_name}') has no grant and no free entry in POLICY", "src/hadavin_sdk/audit/signer_vault.py: POLICY declares request ('GET', '{mount}/keys/{key_name}') but the module makes no such call", "src/hadavin_sdk/audit/signer_vault.py: POLICY declares request ('POST', '{mount}/sign/{key_name}') but the module makes no such call"], expected ["src/hadavin_sdk/audit/signer_vault.py: POLICY declares request ('GET', '{self.mount}/keys/{self.key_name}') but the module makes no such call"]
+E       assert ["src/hadavin...no such call'] == ['src/hadavin...no such call']
+E         
+E         At index 0 diff: "src/hadavin_sdk/audit/signer_vault.py R18: resource '{transit_mount}/sign/{key_name}' is not the path of the request it serves ('+/sign/+')" != "src/hadavin_sdk/audit/signer_vault.py: POLICY declares request ('GET', '{self.mount}/keys/{self.key_name}') but the module makes no such call"
+E         Left contains 4 more items, first extra item: "src/hadavin_sdk/audit/signer_vault.py R19: resource '{transit_mount}/keys/{key_name}' is not the path of the request it serves ('+/keys/+')"
+E         Use -v to get more diff
+
+tests/test_policy_guard.py:154: AssertionError
+_____________ test_plant_a_request_that_is_not_a_literal_is_caught _____________
+
+    def test_plant_a_request_that_is_not_a_literal_is_caught():
+        text = (
+            _text(VAULT)
+            + "\n\ndef _planted(provider, verb, path):\n    return provider.authed(verb, path)\n"
+        )
+        line = text.count("\n")
+>       same(
+            call_problems(VAULT, text, SHAPES[VAULT]),
+            [
+                (
+                    f"{VAULT}:{line}: call to `.authed` whose request is not a literal, outside the allowlisted "
+                    "lines: it cannot be compared with the declared list"
+                )
+            ],
+        )
+
+tests/test_policy_guard.py:838: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+found = ['src/hadavin_sdk/actions/secrets_vault.py:289: call to `.authed` whose request is not a literal, outside the allowlis...crets_vault.py: POLICY declares request ('GET', '{mount}/data/{path_prefix}{name}') but the module makes no such call"]
+expected = ['src/hadavin_sdk/actions/secrets_vault.py:289: call to `.authed` whose request is not a literal, outside the allowlisted lines: it cannot be compared with the declared list']
+
+    def same(found: object, expected: object) -> None:
+        """`found == expected`, with both written out in full in the failure message (pytest shortens a long
+        list in the first line, and the mutant runner reads that line)."""
+>       assert found == expected, f"reported {found!r}, expected {expected!r}"
+E       AssertionError: reported ['src/hadavin_sdk/actions/secrets_vault.py:289: call to `.authed` whose request is not a literal, outside the allowlisted lines: it cannot be compared with the declared list', "src/hadavin_sdk/actions/secrets_vault.py R17: resource '{mount}/data/{path_prefix}*' is not the path of the request it serves ('+/data/++')", "src/hadavin_sdk/actions/secrets_vault.py:115: request ('GET', '{self.mount}/data/{self.path_prefix}{name}') has no grant and no free entry in POLICY", "src/hadavin_sdk/actions/secrets_vault.py: POLICY declares request ('GET', '{mount}/data/{path_prefix}{name}') but the module makes no such call"], expected ['src/hadavin_sdk/actions/secrets_vault.py:289: call to `.authed` whose request is not a literal, outside the allowlisted lines: it cannot be compared with the declared list']
+E       assert ['src/hadavin...no such call'] == ['src/hadavin...eclared list']
+E         
+E         Left contains 3 more items, first extra item: "src/hadavin_sdk/actions/secrets_vault.py R17: resource '{mount}/data/{path_prefix}*' is not the path of the request it serves ('+/data/++')"
+E         Use -v to get more diff
+
+tests/test_policy_guard.py:154: AssertionError
+_______ test_plant_a_path_built_by_a_call_is_not_foldable_and_is_caught ________
+
+    def test_plant_a_path_built_by_a_call_is_not_foldable_and_is_caught():
+        text = (
+            _text(VAULT)
+            + '\n\ndef _planted(p):\n    return p.authed("GET", "/".join([p.mount, "x"]))\n'
+        )
+        problems = call_problems(VAULT, text, SHAPES[VAULT])
+>       assert len(problems) == 1 and "whose request is not a literal" in problems[0]
+E       assert (4 == 1)
+E        +  where 4 = len(['src/hadavin_sdk/actions/secrets_vault.py:289: call to `.authed` whose request is not a literal, outside the allowlis...crets_vault.py: POLICY declares request ('GET', '{mount}/data/{path_prefix}{name}') but the module makes no such call"])
+
+tests/test_policy_guard.py:855: AssertionError
+_________________ test_plant_a_sink_taken_as_a_value_is_caught _________________
+
+    def test_plant_a_sink_taken_as_a_value_is_caught():
+        text = _text(VAULT) + "\n\ndef _planted(p):\n    send = p.authed\n    return send\n"
+        line = text.count("\n") - 1
+>       same(
+            call_problems(VAULT, text, SHAPES[VAULT]),
+            [
+                f"{VAULT}:{line}: `.authed` is taken as a value, not called: the request it would send cannot be read"
+            ],
+        )
+
+tests/test_policy_guard.py:883: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+found = ['src/hadavin_sdk/actions/secrets_vault.py:289: `.authed` is taken as a value, not called: the request it would send c...crets_vault.py: POLICY declares request ('GET', '{mount}/data/{path_prefix}{name}') but the module makes no such call"]
+expected = ['src/hadavin_sdk/actions/secrets_vault.py:289: `.authed` is taken as a value, not called: the request it would send cannot be read']
+
+    def same(found: object, expected: object) -> None:
+        """`found == expected`, with both written out in full in the failure message (pytest shortens a long
+        list in the first line, and the mutant runner reads that line)."""
+>       assert found == expected, f"reported {found!r}, expected {expected!r}"
+E       AssertionError: reported ['src/hadavin_sdk/actions/secrets_vault.py:289: `.authed` is taken as a value, not called: the request it would send cannot be read', "src/hadavin_sdk/actions/secrets_vault.py R17: resource '{mount}/data/{path_prefix}*' is not the path of the request it serves ('+/data/++')", "src/hadavin_sdk/actions/secrets_vault.py:115: request ('GET', '{self.mount}/data/{self.path_prefix}{name}') has no grant and no free entry in POLICY", "src/hadavin_sdk/actions/secrets_vault.py: POLICY declares request ('GET', '{mount}/data/{path_prefix}{name}') but the module makes no such call"], expected ['src/hadavin_sdk/actions/secrets_vault.py:289: `.authed` is taken as a value, not called: the request it would send cannot be read']
+E       assert ['src/hadavin...no such call'] == ['src/hadavin...nnot be read']
+E         
+E         Left contains 3 more items, first extra item: "src/hadavin_sdk/actions/secrets_vault.py R17: resource '{mount}/data/{path_prefix}*' is not the path of the request it serves ('+/data/++')"
+E         Use -v to get more diff
+
+tests/test_policy_guard.py:154: AssertionError
+________ test_plant_a_raw_http_request_outside_the_one_sender_is_caught ________
+
+    def test_plant_a_raw_http_request_outside_the_one_sender_is_caught():
+        text = _text(TRANSIT) + "\n\ndef _planted(url):\n    return urllib.request.Request(url)\n"
+        line = text.count("\n")
+>       same(
+            call_problems(TRANSIT, text, SHAPES[TRANSIT]),
+            [f"{TRANSIT}:{line}: raw HTTP call `Request` outside any allowed function"],
+        )
+
+tests/test_policy_guard.py:894: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+found = ['src/hadavin_sdk/audit/signer_vault.py:192: raw HTTP call `Request` outside any allowed function', "src/hadavin_sdk/a...it/signer_vault.py: POLICY declares request ('GET', '{mount}/keys/{key_name}') but the module makes no such call", ...]
+expected = ['src/hadavin_sdk/audit/signer_vault.py:192: raw HTTP call `Request` outside any allowed function']
+
+    def same(found: object, expected: object) -> None:
+        """`found == expected`, with both written out in full in the failure message (pytest shortens a long
+        list in the first line, and the mutant runner reads that line)."""
+>       assert found == expected, f"reported {found!r}, expected {expected!r}"
+E       AssertionError: reported ['src/hadavin_sdk/audit/signer_vault.py:192: raw HTTP call `Request` outside any allowed function', "src/hadavin_sdk/audit/signer_vault.py R18: resource '{transit_mount}/sign/{key_name}' is not the path of the request it serves ('+/sign/+')", "src/hadavin_sdk/audit/signer_vault.py R19: resource '{transit_mount}/keys/{key_name}' is not the path of the request it serves ('+/keys/+')", "src/hadavin_sdk/audit/signer_vault.py:62: request ('GET', '{self.mount}/keys/{self.key_name}') has no grant and no free entry in POLICY", "src/hadavin_sdk/audit/signer_vault.py:52: request ('POST', '{self.mount}/sign/{self.key_name}') has no grant and no free entry in POLICY", "src/hadavin_sdk/audit/signer_vault.py: POLICY declares request ('GET', '{mount}/keys/{key_name}') but the module makes no such call", "src/hadavin_sdk/audit/signer_vault.py: POLICY declares request ('POST', '{mount}/sign/{key_name}') but the module makes no such call"], expected ['src/hadavin_sdk/audit/signer_vault.py:192: raw HTTP call `Request` outside any allowed function']
+E       assert ['src/hadavin...ch call', ...] == ['src/hadavin...wed function']
+E         
+E         Left contains 6 more items, first extra item: "src/hadavin_sdk/audit/signer_vault.py R18: resource '{transit_mount}/sign/{key_name}' is not the path of the request it serves ('+/sign/+')"
+E         Use -v to get more diff
+
+tests/test_policy_guard.py:154: AssertionError
+_________________ test_plant_a_stale_allowlist_line_is_caught __________________
+
+    def test_plant_a_stale_allowlist_line_is_caught():
+        """One line added above the wrapper moves it: the entry no longer points at a call that passes its
+        parameter on, and the moved call is read as a request that is not a literal."""
+        problems = _planted(TRANSIT, "import base64\n", "import base64\n\n")
+        same(
+            problems[:2],
+            [
+                (
+                    f"{TRANSIT}: stale allowlist entry (_call, line 40, .authed): no call to `.authed` that passes on "
+                    "a parameter of `_call` is at that line"
+                ),
+                (
+                    f"{TRANSIT}:41: call to `.authed` whose request is not a literal, outside the allowlisted lines: "
+                    "it cannot be compared with the declared list"
+                ),
+            ],
+        )
+        # with the wrapper no longer recognised, its `{mount}/` is not added, so no request matches either
+>       assert len(problems) == 6 and all(
+            "('POST', 'sign/{self.key_name}')" not in p for p in problems[:2]
+        )
+E       assert (8 == 6)
+E        +  where 8 = len(['src/hadavin_sdk/audit/signer_vault.py: stale allowlist entry (_call, line 40, .authed): no call to `.authed` that pa..._sdk/audit/signer_vault.py:53: request ('POST', 'sign/{self.key_name}') has no grant and no free entry in POLICY", ...])
+
+tests/test_policy_guard.py:918: AssertionError
+___________ test_a_request_named_only_in_a_docstring_changes_nothing ___________
+
+    def test_a_request_named_only_in_a_docstring_changes_nothing():
+        text = _text(VAULT) + '\n\ndef _planted():\n    """self.authed("DELETE", "sys/mounts/x")"""\n'
+>       assert call_problems(VAULT, text, SHAPES[VAULT]) == []
+E       assert ["src/hadavin...no such call'] == []
+E         
+E         Left contains 3 more items, first extra item: "src/hadavin_sdk/actions/secrets_vault.py R17: resource '{mount}/data/{path_prefix}*' is not the path of the request it serves ('+/data/++')"
+E         Use -v to get more diff
+
+tests/test_policy_guard.py:937: AssertionError
+__________ test_plant_d1_a_wildcard_resource_with_no_bound_is_caught ___________
+
+    def test_plant_d1_a_wildcard_resource_with_no_bound_is_caught():
+>       same(
+            _grant_changed("secrets/vault", bound=" "),
+            [
+                (
+                    "grant R17: resource '{mount}/data/{path_prefix}+' holds a wildcard, so `bound` must say what "
+                    "limits it"
+                )
+            ],
+        )
+
+tests/test_policy_guard.py:1109: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+found = ["grant R17: resource '{mount}/data/{path_prefix}*' holds a wildcard, so `bound` must say what limits it"]
+expected = ["grant R17: resource '{mount}/data/{path_prefix}+' holds a wildcard, so `bound` must say what limits it"]
+
+    def same(found: object, expected: object) -> None:
+        """`found == expected`, with both written out in full in the failure message (pytest shortens a long
+        list in the first line, and the mutant runner reads that line)."""
+>       assert found == expected, f"reported {found!r}, expected {expected!r}"
+E       AssertionError: reported ["grant R17: resource '{mount}/data/{path_prefix}*' holds a wildcard, so `bound` must say what limits it"], expected ["grant R17: resource '{mount}/data/{path_prefix}+' holds a wildcard, so `bound` must say what limits it"]
+E       assert ['grant R17: ...at limits it'] == ['grant R17: ...at limits it']
+E         
+E         At index 0 diff: "grant R17: resource '{mount}/data/{path_prefix}*' holds a wildcard, so `bound` must say what limits it" != "grant R17: resource '{mount}/data/{path_prefix}+' holds a wildcard, so `bound` must say what limits it"
+E         Use -v to get more diff
+
+tests/test_policy_guard.py:154: AssertionError
+_________________ test_vault_text_in_page_mode_and_with_values _________________
+
+    def test_vault_text_in_page_mode_and_with_values():
+        policies = _policies()
+>       assert pp.render_vault(policies["secrets/vault"]) == (
+            "# R17: reads one named secret\n"
+            'path "{mount}/data/{path_prefix}+" {\n  capabilities = ["read"]\n}\n'
+        )
+E       assert '# R17: reads...["read"]\n}\n' == '# R17: reads...["read"]\n}\n'
+E         
+E         Skipping 52 identical leading characters in diff, use -v to show
+E         - th_prefix}+" {
+E         ?           ^
+E         + th_prefix}*" {
+E         ?           ^
+E             capabilities = ["read"]
+E           }
+
+tests/test_policy_guard.py:1378: AssertionError
+______________ test_the_committed_page_equals_what_the_data_gives ______________
+
+    def test_the_committed_page_equals_what_the_data_gives():
+        page = ROOT / pp.PAGE
+        assert page.is_file(), f"{pp.PAGE} is missing: run `python tools/policy_page.py --write`"
+>       assert page.read_text(encoding="utf-8") == pp.page(ROOT), (
+            f"{pp.PAGE} differs from the data: run `python tools/policy_page.py --write` and commit"
+        )
+E       AssertionError: docs/declared-permissions.md differs from the data: run `python tools/policy_page.py --write` and commit
+E       assert '# Declared p...` (channel)\n' == '# Declared p...` (channel)\n'
+E         
+E         Skipping 4388 identical leading characters in diff, use -v to show
+E           es role).
+E         + - In the call column, `{self.mount}` and `{self.path_prefix}` are the settings `mount` and `path_prefix` as the object holds them, and `{name}` is the secret's name: one path part, checked by the code before the request is sent.
+E           
+E           | id | permission | on what | what limits a wildcard | the call it serves | why | when | name and form found in a vendor source | accepted by a real account | claims not checked |
+E           |---|---|---|---|---|---|---|---|---|---|...
+E         
+E         ...Full output truncated, use '-vv' to show
+
+tests/test_policy_guard.py:1457: AssertionError
+_ test_plant_p04b_an_added_request_through_getattr_with_a_literal_name_is_caught _
+
+    def test_plant_p04b_an_added_request_through_getattr_with_a_literal_name_is_caught():
+        """The independent plant P04b, exactly: an ADDED Vault LIST request sent through `getattr(self, "authed")`."""
+        planted = (
+            '        getattr(self, "authed")("LIST", f"{self.mount}/metadata/{self.path_prefix}")\n'
+            + _FETCH_LINE
+        )
+        problems = _planted(VAULT, _FETCH_LINE, planted)
+>       same(
+            problems,
+            [
+                f"{VAULT}:115: banned `getattr` of `authed`: only no name may be read this way in this module"
+            ],
+        )
+
+tests/test_policy_guard.py:1510: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+found = ['src/hadavin_sdk/actions/secrets_vault.py:115: banned `getattr` of `authed`: only no name may be read this way in thi...crets_vault.py: POLICY declares request ('GET', '{mount}/data/{path_prefix}{name}') but the module makes no such call"]
+expected = ['src/hadavin_sdk/actions/secrets_vault.py:115: banned `getattr` of `authed`: only no name may be read this way in this module']
+
+    def same(found: object, expected: object) -> None:
+        """`found == expected`, with both written out in full in the failure message (pytest shortens a long
+        list in the first line, and the mutant runner reads that line)."""
+>       assert found == expected, f"reported {found!r}, expected {expected!r}"
+E       AssertionError: reported ['src/hadavin_sdk/actions/secrets_vault.py:115: banned `getattr` of `authed`: only no name may be read this way in this module', "src/hadavin_sdk/actions/secrets_vault.py R17: resource '{mount}/data/{path_prefix}*' is not the path of the request it serves ('+/data/++')", "src/hadavin_sdk/actions/secrets_vault.py:116: request ('GET', '{self.mount}/data/{self.path_prefix}{name}') has no grant and no free entry in POLICY", "src/hadavin_sdk/actions/secrets_vault.py: POLICY declares request ('GET', '{mount}/data/{path_prefix}{name}') but the module makes no such call"], expected ['src/hadavin_sdk/actions/secrets_vault.py:115: banned `getattr` of `authed`: only no name may be read this way in this module']
+E       assert ['src/hadavin...no such call'] == ['src/hadavin... this module']
+E         
+E         Left contains 3 more items, first extra item: "src/hadavin_sdk/actions/secrets_vault.py R17: resource '{mount}/data/{path_prefix}*' is not the path of the request it serves ('+/data/++')"
+E         Use -v to get more diff
+
+tests/test_policy_guard.py:154: AssertionError
+_ test_plant_a_local_variable_named_like_a_setting_is_not_taken_for_the_setting _
+
+    def test_plant_a_local_variable_named_like_a_setting_is_not_taken_for_the_setting():
+        """`self.` is kept when a path is folded: a path built from local names does not equal the declared one."""
+        code = (
+            "\n\ndef _planted(p, name):\n    mount, path_prefix = 'sys', ''\n"
+            "    return p.authed('GET', f'{mount}/data/{path_prefix}{name}')\n"
+        )
+        text = _text(VAULT) + code
+        line = text.count("\n")
+>       same(
+            call_problems(VAULT, text, SHAPES[VAULT]),
+            [
+                (
+                    f"{VAULT}:{line}: request ('GET', '{{mount}}/data/{{path_prefix}}{{name}}') has no grant and "
+                    "no free entry in POLICY"
+                )
+            ],
+        )
+
+tests/test_policy_guard.py:1610: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+found = ["src/hadavin_sdk/actions/secrets_vault.py R17: resource '{mount}/data/{path_prefix}*' is not the path of the request ..._vault.py:115: request ('GET', '{self.mount}/data/{self.path_prefix}{name}') has no grant and no free entry in POLICY"]
+expected = ["src/hadavin_sdk/actions/secrets_vault.py:290: request ('GET', '{mount}/data/{path_prefix}{name}') has no grant and no free entry in POLICY"]
+
+    def same(found: object, expected: object) -> None:
+        """`found == expected`, with both written out in full in the failure message (pytest shortens a long
+        list in the first line, and the mutant runner reads that line)."""
+>       assert found == expected, f"reported {found!r}, expected {expected!r}"
+E       AssertionError: reported ["src/hadavin_sdk/actions/secrets_vault.py R17: resource '{mount}/data/{path_prefix}*' is not the path of the request it serves ('+/data/++')", "src/hadavin_sdk/actions/secrets_vault.py:115: request ('GET', '{self.mount}/data/{self.path_prefix}{name}') has no grant and no free entry in POLICY"], expected ["src/hadavin_sdk/actions/secrets_vault.py:290: request ('GET', '{mount}/data/{path_prefix}{name}') has no grant and no free entry in POLICY"]
+E       assert ["src/hadavin...ry in POLICY'] == ['src/hadavin...ry in POLICY']
+E         
+E         At index 0 diff: "src/hadavin_sdk/actions/secrets_vault.py R17: resource '{mount}/data/{path_prefix}*' is not the path of the request it serves ('+/data/++')" != "src/hadavin_sdk/actions/secrets_vault.py:290: request ('GET', '{mount}/data/{path_prefix}{name}') has no grant and no free entry in POLICY"
+E         Left contains one more item: "src/hadavin_sdk/actions/secrets_vault.py:115: request ('GET', '{self.mount}/data/{self.path_prefix}{name}') has no grant and no free entry in POLICY"
+E         Use -v to get more diff
+
+tests/test_policy_guard.py:154: AssertionError
+_____ test_each_vault_grant_is_the_path_and_capability_of_its_one_request ______
+
+    def test_each_vault_grant_is_the_path_and_capability_of_its_one_request():
+        for rel in (VAULT, TRANSIT):
+            policy = pp.parse(_text(rel), rel)
+>           assert binding_problems(rel, SHAPES[rel], policy) == []
+E           assert ["src/hadavin...'+/data/++')"] == []
+E             
+E             Left contains one more item: "src/hadavin_sdk/actions/secrets_vault.py R17: resource '{mount}/data/{path_prefix}*' is not the path of the request it serves ('+/data/++')"
+E             Use -v to get more diff
+
+tests/test_policy_guard.py:1800: AssertionError
+_ test_plant_a_vault_grant_wider_than_or_other_than_its_request_is_caught[src/hadavin_sdk/actions/secrets_vault.py-secrets/vault-changes0-message0] _
+
+rel = 'src/hadavin_sdk/actions/secrets_vault.py', kind = 'secrets/vault'
+changes = {'resource': '{mount}/data/{path_prefix}*'}
+message = "R17: resource '{mount}/data/{path_prefix}*' is not the path of the request it serves ('{mount}/data/{path_prefix}+')"
+
+    @pytest.mark.parametrize(
+        ("rel", "kind", "changes", "message"),
+        [
+            (
+                VAULT,
+                "secrets/vault",
+                {"resource": "{mount}/data/{path_prefix}*"},
+                (
+                    "R17: resource '{mount}/data/{path_prefix}*' is not the path of the request it serves "
+                    "('{mount}/data/{path_prefix}+')"
+                ),
+            ),
+            (
+                TRANSIT,
+                "signer/vault_transit",
+                {"resource": "{transit_mount}/sign/*", "bound": "every key of the mount"},
+                (
+                    "R18: resource '{transit_mount}/sign/*' is not the path of the request it serves "
+                    "('{transit_mount}/sign/{key_name}')"
+                ),
+            ),
+            (
+                TRANSIT,
+                "signer/vault_transit",
+                {"name": "read"},
+                "R18: capability 'read' is not the one a POST request needs ('update')",
+            ),
+            (
+                TRANSIT,
+                "signer/vault_transit",
+                {"operations": (("POST", "{self.mount}/sign/{self.other}"),)},
+                "R18: `self.other` in the request path is not a known setting",
+            ),
+        ],
+    )
+    def test_plant_a_vault_grant_wider_than_or_other_than_its_request_is_caught(
+        rel, kind, changes, message
+    ):
+        raw = _raw(kind)
+        raw["grants"] = ({**raw["grants"][0], **changes}, *raw["grants"][1:])
+        policy = pp.parse(f"POLICY = {raw!r}")
+>       same(binding_problems(rel, SHAPES[rel], policy), [f"{rel} {message}"])
+
+tests/test_policy_guard.py:1847: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+found = ["src/hadavin_sdk/actions/secrets_vault.py R17: resource '{mount}/data/{path_prefix}*' is not the path of the request it serves ('+/data/++')"]
+expected = ["src/hadavin_sdk/actions/secrets_vault.py R17: resource '{mount}/data/{path_prefix}*' is not the path of the request it serves ('{mount}/data/{path_prefix}+')"]
+
+    def same(found: object, expected: object) -> None:
+        """`found == expected`, with both written out in full in the failure message (pytest shortens a long
+        list in the first line, and the mutant runner reads that line)."""
+>       assert found == expected, f"reported {found!r}, expected {expected!r}"
+E       AssertionError: reported ["src/hadavin_sdk/actions/secrets_vault.py R17: resource '{mount}/data/{path_prefix}*' is not the path of the request it serves ('+/data/++')"], expected ["src/hadavin_sdk/actions/secrets_vault.py R17: resource '{mount}/data/{path_prefix}*' is not the path of the request it serves ('{mount}/data/{path_prefix}+')"]
+E       assert ["src/hadavin...'+/data/++')"] == ["src/hadavin...h_prefix}+')"]
+E         
+E         At index 0 diff: "src/hadavin_sdk/actions/secrets_vault.py R17: resource '{mount}/data/{path_prefix}*' is not the path of the request it serves ('+/data/++')" != "src/hadavin_sdk/actions/secrets_vault.py R17: resource '{mount}/data/{path_prefix}*' is not the path of the request it serves ('{mount}/data/{path_prefix}+')"
+E         Use -v to get more diff
+
+tests/test_policy_guard.py:154: AssertionError
+_ test_plant_a_vault_grant_wider_than_or_other_than_its_request_is_caught[src/hadavin_sdk/audit/signer_vault.py-signer/vault_transit-changes1-message1] _
+
+rel = 'src/hadavin_sdk/audit/signer_vault.py', kind = 'signer/vault_transit'
+changes = {'resource': '{transit_mount}/sign/*', 'bound': 'every key of the mount'}
+message = "R18: resource '{transit_mount}/sign/*' is not the path of the request it serves ('{transit_mount}/sign/{key_name}')"
+
+    @pytest.mark.parametrize(
+        ("rel", "kind", "changes", "message"),
+        [
+            (
+                VAULT,
+                "secrets/vault",
+                {"resource": "{mount}/data/{path_prefix}*"},
+                (
+                    "R17: resource '{mount}/data/{path_prefix}*' is not the path of the request it serves "
+                    "('{mount}/data/{path_prefix}+')"
+                ),
+            ),
+            (
+                TRANSIT,
+                "signer/vault_transit",
+                {"resource": "{transit_mount}/sign/*", "bound": "every key of the mount"},
+                (
+                    "R18: resource '{transit_mount}/sign/*' is not the path of the request it serves "
+                    "('{transit_mount}/sign/{key_name}')"
+                ),
+            ),
+            (
+                TRANSIT,
+                "signer/vault_transit",
+                {"name": "read"},
+                "R18: capability 'read' is not the one a POST request needs ('update')",
+            ),
+            (
+                TRANSIT,
+                "signer/vault_transit",
+                {"operations": (("POST", "{self.mount}/sign/{self.other}"),)},
+                "R18: `self.other` in the request path is not a known setting",
+            ),
+        ],
+    )
+    def test_plant_a_vault_grant_wider_than_or_other_than_its_request_is_caught(
+        rel, kind, changes, message
+    ):
+        raw = _raw(kind)
+        raw["grants"] = ({**raw["grants"][0], **changes}, *raw["grants"][1:])
+        policy = pp.parse(f"POLICY = {raw!r}")
+>       same(binding_problems(rel, SHAPES[rel], policy), [f"{rel} {message}"])
+
+tests/test_policy_guard.py:1847: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+found = ["src/hadavin_sdk/audit/signer_vault.py R18: resource '{transit_mount}/sign/*' is not the path of the request it serve...signer_vault.py R19: resource '{transit_mount}/keys/{key_name}' is not the path of the request it serves ('+/keys/+')"]
+expected = ["src/hadavin_sdk/audit/signer_vault.py R18: resource '{transit_mount}/sign/*' is not the path of the request it serves ('{transit_mount}/sign/{key_name}')"]
+
+    def same(found: object, expected: object) -> None:
+        """`found == expected`, with both written out in full in the failure message (pytest shortens a long
+        list in the first line, and the mutant runner reads that line)."""
+>       assert found == expected, f"reported {found!r}, expected {expected!r}"
+E       AssertionError: reported ["src/hadavin_sdk/audit/signer_vault.py R18: resource '{transit_mount}/sign/*' is not the path of the request it serves ('+/sign/+')", "src/hadavin_sdk/audit/signer_vault.py R19: resource '{transit_mount}/keys/{key_name}' is not the path of the request it serves ('+/keys/+')"], expected ["src/hadavin_sdk/audit/signer_vault.py R18: resource '{transit_mount}/sign/*' is not the path of the request it serves ('{transit_mount}/sign/{key_name}')"]
+E       assert ["src/hadavin...('+/keys/+')"] == ["src/hadavin...{key_name}')"]
+E         
+E         At index 0 diff: "src/hadavin_sdk/audit/signer_vault.py R18: resource '{transit_mount}/sign/*' is not the path of the request it serves ('+/sign/+')" != "src/hadavin_sdk/audit/signer_vault.py R18: resource '{transit_mount}/sign/*' is not the path of the request it serves ('{transit_mount}/sign/{key_name}')"
+E         Left contains one more item: "src/hadavin_sdk/audit/signer_vault.py R19: resource '{transit_mount}/keys/{key_name}' is not the path of the request it serves ('+/keys/+')"
+E         Use -v to get more diff
+
+tests/test_policy_guard.py:154: AssertionError
+_ test_plant_a_vault_grant_wider_than_or_other_than_its_request_is_caught[src/hadavin_sdk/audit/signer_vault.py-signer/vault_transit-changes2-R18: capability 'read' is not the one a POST request needs ('update')] _
+
+rel = 'src/hadavin_sdk/audit/signer_vault.py', kind = 'signer/vault_transit'
+changes = {'name': 'read'}
+message = "R18: capability 'read' is not the one a POST request needs ('update')"
+
+    @pytest.mark.parametrize(
+        ("rel", "kind", "changes", "message"),
+        [
+            (
+                VAULT,
+                "secrets/vault",
+                {"resource": "{mount}/data/{path_prefix}*"},
+                (
+                    "R17: resource '{mount}/data/{path_prefix}*' is not the path of the request it serves "
+                    "('{mount}/data/{path_prefix}+')"
+                ),
+            ),
+            (
+                TRANSIT,
+                "signer/vault_transit",
+                {"resource": "{transit_mount}/sign/*", "bound": "every key of the mount"},
+                (
+                    "R18: resource '{transit_mount}/sign/*' is not the path of the request it serves "
+                    "('{transit_mount}/sign/{key_name}')"
+                ),
+            ),
+            (
+                TRANSIT,
+                "signer/vault_transit",
+                {"name": "read"},
+                "R18: capability 'read' is not the one a POST request needs ('update')",
+            ),
+            (
+                TRANSIT,
+                "signer/vault_transit",
+                {"operations": (("POST", "{self.mount}/sign/{self.other}"),)},
+                "R18: `self.other` in the request path is not a known setting",
+            ),
+        ],
+    )
+    def test_plant_a_vault_grant_wider_than_or_other_than_its_request_is_caught(
+        rel, kind, changes, message
+    ):
+        raw = _raw(kind)
+        raw["grants"] = ({**raw["grants"][0], **changes}, *raw["grants"][1:])
+        policy = pp.parse(f"POLICY = {raw!r}")
+>       same(binding_problems(rel, SHAPES[rel], policy), [f"{rel} {message}"])
+
+tests/test_policy_guard.py:1847: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+found = ["src/hadavin_sdk/audit/signer_vault.py R18: resource '{transit_mount}/sign/{key_name}' is not the path of the request...signer_vault.py R19: resource '{transit_mount}/keys/{key_name}' is not the path of the request it serves ('+/keys/+')"]
+expected = ["src/hadavin_sdk/audit/signer_vault.py R18: capability 'read' is not the one a POST request needs ('update')"]
+
+    def same(found: object, expected: object) -> None:
+        """`found == expected`, with both written out in full in the failure message (pytest shortens a long
+        list in the first line, and the mutant runner reads that line)."""
+>       assert found == expected, f"reported {found!r}, expected {expected!r}"
+E       AssertionError: reported ["src/hadavin_sdk/audit/signer_vault.py R18: resource '{transit_mount}/sign/{key_name}' is not the path of the request it serves ('+/sign/+')", "src/hadavin_sdk/audit/signer_vault.py R18: capability 'read' is not the one a POST request needs ('update')", "src/hadavin_sdk/audit/signer_vault.py R19: resource '{transit_mount}/keys/{key_name}' is not the path of the request it serves ('+/keys/+')"], expected ["src/hadavin_sdk/audit/signer_vault.py R18: capability 'read' is not the one a POST request needs ('update')"]
+E       assert ["src/hadavin...('+/keys/+')"] == ["src/hadavin...s ('update')"]
+E         
+E         At index 0 diff: "src/hadavin_sdk/audit/signer_vault.py R18: resource '{transit_mount}/sign/{key_name}' is not the path of the request it serves ('+/sign/+')" != "src/hadavin_sdk/audit/signer_vault.py R18: capability 'read' is not the one a POST request needs ('update')"
+E         Left contains 2 more items, first extra item: "src/hadavin_sdk/audit/signer_vault.py R18: capability 'read' is not the one a POST request needs ('update')"
+E         Use -v to get more diff
+
+tests/test_policy_guard.py:154: AssertionError
+_ test_plant_a_vault_grant_wider_than_or_other_than_its_request_is_caught[src/hadavin_sdk/audit/signer_vault.py-signer/vault_transit-changes3-R18: `self.other` in the request path is not a known setting] _
+
+rel = 'src/hadavin_sdk/audit/signer_vault.py', kind = 'signer/vault_transit'
+changes = {'operations': (('POST', '{self.mount}/sign/{self.other}'),)}
+message = 'R18: `self.other` in the request path is not a known setting'
+
+    @pytest.mark.parametrize(
+        ("rel", "kind", "changes", "message"),
+        [
+            (
+                VAULT,
+                "secrets/vault",
+                {"resource": "{mount}/data/{path_prefix}*"},
+                (
+                    "R17: resource '{mount}/data/{path_prefix}*' is not the path of the request it serves "
+                    "('{mount}/data/{path_prefix}+')"
+                ),
+            ),
+            (
+                TRANSIT,
+                "signer/vault_transit",
+                {"resource": "{transit_mount}/sign/*", "bound": "every key of the mount"},
+                (
+                    "R18: resource '{transit_mount}/sign/*' is not the path of the request it serves "
+                    "('{transit_mount}/sign/{key_name}')"
+                ),
+            ),
+            (
+                TRANSIT,
+                "signer/vault_transit",
+                {"name": "read"},
+                "R18: capability 'read' is not the one a POST request needs ('update')",
+            ),
+            (
+                TRANSIT,
+                "signer/vault_transit",
+                {"operations": (("POST", "{self.mount}/sign/{self.other}"),)},
+                "R18: `self.other` in the request path is not a known setting",
+            ),
+        ],
+    )
+    def test_plant_a_vault_grant_wider_than_or_other_than_its_request_is_caught(
+        rel, kind, changes, message
+    ):
+        raw = _raw(kind)
+        raw["grants"] = ({**raw["grants"][0], **changes}, *raw["grants"][1:])
+        policy = pp.parse(f"POLICY = {raw!r}")
+>       same(binding_problems(rel, SHAPES[rel], policy), [f"{rel} {message}"])
+
+tests/test_policy_guard.py:1847: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+found = ['src/hadavin_sdk/audit/signer_vault.py R18: `self.other` in the request path is not a known setting', "src/hadavin_sd...signer_vault.py R19: resource '{transit_mount}/keys/{key_name}' is not the path of the request it serves ('+/keys/+')"]
+expected = ['src/hadavin_sdk/audit/signer_vault.py R18: `self.other` in the request path is not a known setting']
+
+    def same(found: object, expected: object) -> None:
+        """`found == expected`, with both written out in full in the failure message (pytest shortens a long
+        list in the first line, and the mutant runner reads that line)."""
+>       assert found == expected, f"reported {found!r}, expected {expected!r}"
+E       AssertionError: reported ['src/hadavin_sdk/audit/signer_vault.py R18: `self.other` in the request path is not a known setting', "src/hadavin_sdk/audit/signer_vault.py R19: resource '{transit_mount}/keys/{key_name}' is not the path of the request it serves ('+/keys/+')"], expected ['src/hadavin_sdk/audit/signer_vault.py R18: `self.other` in the request path is not a known setting']
+E       assert ['src/hadavin...('+/keys/+')"] == ['src/hadavin...nown setting']
+E         
+E         Left contains one more item: "src/hadavin_sdk/audit/signer_vault.py R19: resource '{transit_mount}/keys/{key_name}' is not the path of the request it serves ('+/keys/+')"
+E         Use -v to get more diff
+
+tests/test_policy_guard.py:154: AssertionError
+______ test_plant_m6_a_key_written_twice_in_the_policy_literal_is_refused ______
+
+    def test_plant_m6_a_key_written_twice_in_the_policy_literal_is_refused():
+        text = _text(VAULT).replace(
+            '            "resource": "{mount}/data/{path_prefix}+",\n',
+            '            "resource": "{mount}/data/{path_prefix}+",\n            "resource": "{mount}/data/*",\n',
+        )
+>       with pytest.raises(
+            pp.PolicyError, match="key 'resource' is written twice in one dict of POLICY"
+        ):
+E       Failed: DID NOT RAISE PolicyError
+
+tests/test_policy_guard.py:1908: Failed
+_ test_a_nested_mount_is_accepted_and_a_role_name_with_a_colon_never_passes_the_grammar _
+
+    def test_a_nested_mount_is_accepted_and_a_role_name_with_a_colon_never_passes_the_grammar():
+        policies = _policies()
+        text = pp.render_vault(policies["secrets/vault"], {**VAULT_VALUES, "mount": "team/kv"})
+>       assert 'path "team/kv/data/hadavin/acme/+"' in text
+E       assert 'path "team/kv/data/hadavin/acme/+"' in '# R17: reads one named secret\npath "team/kv/data/hadavin/acme/*" {\n  capabilities = ["read"]\n}\n'
+
+tests/test_policy_guard.py:2040: AssertionError
+_ test_plant_m10_check_reports_each_data_problem_in_one_line_with_exit_code_1 __
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-2551/test_plant_m10_check_reports_e0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fcfb8582d70>
+capsys = <_pytest.capture.CaptureFixture object at 0x7fcfb8506990>
+
+    def test_plant_m10_check_reports_each_data_problem_in_one_line_with_exit_code_1(
+        tmp_path, monkeypatch, capsys
+    ):
+        root = _tree(tmp_path)
+        assert pp.data_problems(root) == []
+        transit = root / TRANSIT
+        transit.write_text(_text(TRANSIT).replace('"id": "R18"', '"id": "R17"'), encoding="utf-8")
+        code, lines = _check(monkeypatch, capsys, root)
+        same(
+            (code, lines),
+            (1, ["policy page: grant id R17 is used by secrets/vault and by signer/vault_transit"]),
+        )
+        transit.write_text("def broken(:\n", encoding="utf-8")
+        same(
+            _check(monkeypatch, capsys, root),
+            (1, ["policy page: signer_vault.py: is not valid Python (line 1)"]),
+        )
+        transit.write_text("POLICY = None\n", encoding="utf-8")
+        same(
+            _check(monkeypatch, capsys, root),
+            (1, ["policy page: signer_vault.py: POLICY must be a dict (found NoneType)"]),
+        )
+        transit.unlink()
+        same(
+            _check(monkeypatch, capsys, root),
+            (1, ["policy page: signer_vault.py: cannot be read (FileNotFoundError)"]),
+        )
+        transit.write_text(_text(TRANSIT), encoding="utf-8")
+        stray = root / "src/hadavin_sdk/actions/secrets_new.py"
+        stray.write_text('POLICY = {"platform": "vault"}\n', encoding="utf-8")
+        same(
+            _check(monkeypatch, capsys, root),
+            (
+                1,
+                [
+                    (
+                        "policy page: src/hadavin_sdk/actions/secrets_new.py: holds a POLICY but is not in "
+                        "KIND_MODULES, so no check reads it"
+                    )
+                ],
+            ),
+        )
+        stray.unlink()
+        (root / VAULT).write_text(_text(VAULT).replace('"V-PARSE"', '"V-NOPE"'), encoding="utf-8")
+        code, lines = _check(monkeypatch, capsys, root)
+>       same(
+            (code, lines),
+            (1, ["policy page: secrets/vault grant R17: source id V-NOPE is not in the sources file"]),
+        )
+
+tests/test_policy_guard.py:2139: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+found = (1, ['policy page: docs/declared-permissions.md differs from the data; run --write and commit'])
+expected = (1, ['policy page: secrets/vault grant R17: source id V-NOPE is not in the sources file'])
+
+    def same(found: object, expected: object) -> None:
+        """`found == expected`, with both written out in full in the failure message (pytest shortens a long
+        list in the first line, and the mutant runner reads that line)."""
+>       assert found == expected, f"reported {found!r}, expected {expected!r}"
+E       AssertionError: reported (1, ['policy page: docs/declared-permissions.md differs from the data; run --write and commit']), expected (1, ['policy page: secrets/vault grant R17: source id V-NOPE is not in the sources file'])
+E       assert (1, ['policy ... and commit']) == (1, ['policy ...ources file'])
+E         
+E         At index 1 diff: ['policy page: docs/declared-permissions.md differs from the data; run --write and commit'] != ['policy page: secrets/vault grant R17: source id V-NOPE is not in the sources file']
+E         Use -v to get more diff
+
+tests/test_policy_guard.py:154: AssertionError
+_________________ test_every_source_row_is_pinned_and_is_used __________________
+
+    def test_every_source_row_is_pinned_and_is_used():
+        rows = source_ids()
+        assert len(rows) == 19
+        for key, (url, commit, _digest, _note) in rows.items():
+            assert f"/blob/{commit}/" in url, key
+        used = {
+            s
+            for p in _policies().values()
+            for _w, v in (
+                [(g.id, g.verified) for g in p.grants]
+                + [("free", f.verified) for f in p.free]
+                + [(n.name, n.verified) for n in p.never]
+            )
+            for s in (v or ())[1:]
+        }
+        engine_text = (ROOT / "tests/test_policy_engine.py").read_text(encoding="utf-8")
+        unused = sorted(k for k in rows if k not in used and f"source id {k} " not in engine_text)
+>       same(unused, [])
+
+tests/test_policy_guard.py:2186: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+found = ['B-ACL', 'V-ACL', 'V-PARSE'], expected = []
+
+    def same(found: object, expected: object) -> None:
+        """`found == expected`, with both written out in full in the failure message (pytest shortens a long
+        list in the first line, and the mutant runner reads that line)."""
+>       assert found == expected, f"reported {found!r}, expected {expected!r}"
+E       AssertionError: reported ['B-ACL', 'V-ACL', 'V-PARSE'], expected []
+E       assert ['B-ACL', 'V-ACL', 'V-PARSE'] == []
+E         
+E         Left contains 3 more items, first extra item: 'B-ACL'
+E         Use -v to get more diff
+
+tests/test_policy_guard.py:154: AssertionError
+____________ test_plant_an_import_of_another_http_library_is_caught ____________
+
+    def test_plant_an_import_of_another_http_library_is_caught():
+        problems, line = _appended(TRANSIT, "import httpx")
+>       same(
+            problems,
+            [
+                (
+                    f"{TRANSIT}:{line}: import `httpx` is not on this module's import list: a new way to send a "
+                    "request must be looked at by a person first"
+                )
+            ],
+        )
+
+tests/test_policy_guard.py:2254: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+found = ["src/hadavin_sdk/audit/signer_vault.py:192: import `httpx` is not on this module's import list: a new way to send a r...it/signer_vault.py: POLICY declares request ('GET', '{mount}/keys/{key_name}') but the module makes no such call", ...]
+expected = ["src/hadavin_sdk/audit/signer_vault.py:192: import `httpx` is not on this module's import list: a new way to send a request must be looked at by a person first"]
+
+    def same(found: object, expected: object) -> None:
+        """`found == expected`, with both written out in full in the failure message (pytest shortens a long
+        list in the first line, and the mutant runner reads that line)."""
+>       assert found == expected, f"reported {found!r}, expected {expected!r}"
+E       AssertionError: reported ["src/hadavin_sdk/audit/signer_vault.py:192: import `httpx` is not on this module's import list: a new way to send a request must be looked at by a person first", "src/hadavin_sdk/audit/signer_vault.py R18: resource '{transit_mount}/sign/{key_name}' is not the path of the request it serves ('+/sign/+')", "src/hadavin_sdk/audit/signer_vault.py R19: resource '{transit_mount}/keys/{key_name}' is not the path of the request it serves ('+/keys/+')", "src/hadavin_sdk/audit/signer_vault.py:62: request ('GET', '{self.mount}/keys/{self.key_name}') has no grant and no free entry in POLICY", "src/hadavin_sdk/audit/signer_vault.py:52: request ('POST', '{self.mount}/sign/{self.key_name}') has no grant and no free entry in POLICY", "src/hadavin_sdk/audit/signer_vault.py: POLICY declares request ('GET', '{mount}/keys/{key_name}') but the module makes no such call", "src/hadavin_sdk/audit/signer_vault.py: POLICY declares request ('POST', '{mount}/sign/{key_name}') but the module makes no such call"], expected ["src/hadavin_sdk/audit/signer_vault.py:192: import `httpx` is not on this module's import list: a new way to send a request must be looked at by a person first"]
+E       assert ['src/hadavin...ch call', ...] == ['src/hadavin...person first']
+E         
+E         Left contains 6 more items, first extra item: "src/hadavin_sdk/audit/signer_vault.py R18: resource '{transit_mount}/sign/{key_name}' is not the path of the request it serves ('+/sign/+')"
+E         Use -v to get more diff
+
+tests/test_policy_guard.py:154: AssertionError
+___ test_plant_a_banned_name_that_arrives_through_an_import_alias_is_caught ____
+
+    def test_plant_a_banned_name_that_arrives_through_an_import_alias_is_caught():
+        problems, line = _appended(VAULT, "from operator import methodcaller as mc")
+>       same(
+            problems,
+            [
+                f"{VAULT}:{line}: banned indirect call `methodcaller` (imported)",
+                (
+                    f"{VAULT}:{line}: import `operator:methodcaller` is not on this module's import list: a new "
+                    "way to send a request must be looked at by a person first"
+                ),
+            ],
+        )
+
+tests/test_policy_guard.py:2267: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+found = ['src/hadavin_sdk/actions/secrets_vault.py:289: banned indirect call `methodcaller` (imported)', "src/hadavin_sdk/acti...crets_vault.py: POLICY declares request ('GET', '{mount}/data/{path_prefix}{name}') but the module makes no such call"]
+expected = ['src/hadavin_sdk/actions/secrets_vault.py:289: banned indirect call `methodcaller` (imported)', "src/hadavin_sdk/acti...or:methodcaller` is not on this module's import list: a new way to send a request must be looked at by a person first"]
+
+    def same(found: object, expected: object) -> None:
+        """`found == expected`, with both written out in full in the failure message (pytest shortens a long
+        list in the first line, and the mutant runner reads that line)."""
+>       assert found == expected, f"reported {found!r}, expected {expected!r}"
+E       AssertionError: reported ['src/hadavin_sdk/actions/secrets_vault.py:289: banned indirect call `methodcaller` (imported)', "src/hadavin_sdk/actions/secrets_vault.py:289: import `operator:methodcaller` is not on this module's import list: a new way to send a request must be looked at by a person first", "src/hadavin_sdk/actions/secrets_vault.py R17: resource '{mount}/data/{path_prefix}*' is not the path of the request it serves ('+/data/++')", "src/hadavin_sdk/actions/secrets_vault.py:115: request ('GET', '{self.mount}/data/{self.path_prefix}{name}') has no grant and no free entry in POLICY", "src/hadavin_sdk/actions/secrets_vault.py: POLICY declares request ('GET', '{mount}/data/{path_prefix}{name}') but the module makes no such call"], expected ['src/hadavin_sdk/actions/secrets_vault.py:289: banned indirect call `methodcaller` (imported)', "src/hadavin_sdk/actions/secrets_vault.py:289: import `operator:methodcaller` is not on this module's import list: a new way to send a request must be looked at by a person first"]
+E       assert ['src/hadavin...no such call'] == ['src/hadavin...person first']
+E         
+E         Left contains 3 more items, first extra item: "src/hadavin_sdk/actions/secrets_vault.py R17: resource '{mount}/data/{path_prefix}*' is not the path of the request it serves ('+/data/++')"
+E         Use -v to get more diff
+
+tests/test_policy_guard.py:154: AssertionError
+__________________ test_plant_attrgetter_on_a_sink_is_caught ___________________
+
+    def test_plant_attrgetter_on_a_sink_is_caught():
+        problems, line = _appended(VAULT, "return json.attrgetter('authed')(p)('GET', 'sys/mounts')")
+>       same(problems, [f"{VAULT}:{line}: banned indirect call `attrgetter`"])
+
+tests/test_policy_guard.py:2281: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+found = ['src/hadavin_sdk/actions/secrets_vault.py:289: banned indirect call `attrgetter`', "src/hadavin_sdk/actions/secrets_v...crets_vault.py: POLICY declares request ('GET', '{mount}/data/{path_prefix}{name}') but the module makes no such call"]
+expected = ['src/hadavin_sdk/actions/secrets_vault.py:289: banned indirect call `attrgetter`']
+
+    def same(found: object, expected: object) -> None:
+        """`found == expected`, with both written out in full in the failure message (pytest shortens a long
+        list in the first line, and the mutant runner reads that line)."""
+>       assert found == expected, f"reported {found!r}, expected {expected!r}"
+E       AssertionError: reported ['src/hadavin_sdk/actions/secrets_vault.py:289: banned indirect call `attrgetter`', "src/hadavin_sdk/actions/secrets_vault.py R17: resource '{mount}/data/{path_prefix}*' is not the path of the request it serves ('+/data/++')", "src/hadavin_sdk/actions/secrets_vault.py:115: request ('GET', '{self.mount}/data/{self.path_prefix}{name}') has no grant and no free entry in POLICY", "src/hadavin_sdk/actions/secrets_vault.py: POLICY declares request ('GET', '{mount}/data/{path_prefix}{name}') but the module makes no such call"], expected ['src/hadavin_sdk/actions/secrets_vault.py:289: banned indirect call `attrgetter`']
+E       assert ['src/hadavin...no such call'] == ['src/hadavin...`attrgetter`']
+E         
+E         Left contains 3 more items, first extra item: "src/hadavin_sdk/actions/secrets_vault.py R17: resource '{mount}/data/{path_prefix}*' is not the path of the request it serves ('+/data/++')"
+E         Use -v to get more diff
+
+tests/test_policy_guard.py:154: AssertionError
+_______ test_plant_the_http_opener_used_outside_the_one_sender_is_caught _______
+
+    def test_plant_the_http_opener_used_outside_the_one_sender_is_caught():
+        problems, line = _appended(VAULT, "return p._opener")
+>       same(
+            problems,
+            [f"{VAULT}:{line}: the HTTP opener `._opener` is used outside ['__init__', 'call']"],
+        )
+
+tests/test_policy_guard.py:2286: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+found = ["src/hadavin_sdk/actions/secrets_vault.py:289: the HTTP opener `._opener` is used outside ['__init__', 'call']", "src...crets_vault.py: POLICY declares request ('GET', '{mount}/data/{path_prefix}{name}') but the module makes no such call"]
+expected = ["src/hadavin_sdk/actions/secrets_vault.py:289: the HTTP opener `._opener` is used outside ['__init__', 'call']"]
+
+    def same(found: object, expected: object) -> None:
+        """`found == expected`, with both written out in full in the failure message (pytest shortens a long
+        list in the first line, and the mutant runner reads that line)."""
+>       assert found == expected, f"reported {found!r}, expected {expected!r}"
+E       AssertionError: reported ["src/hadavin_sdk/actions/secrets_vault.py:289: the HTTP opener `._opener` is used outside ['__init__', 'call']", "src/hadavin_sdk/actions/secrets_vault.py R17: resource '{mount}/data/{path_prefix}*' is not the path of the request it serves ('+/data/++')", "src/hadavin_sdk/actions/secrets_vault.py:115: request ('GET', '{self.mount}/data/{self.path_prefix}{name}') has no grant and no free entry in POLICY", "src/hadavin_sdk/actions/secrets_vault.py: POLICY declares request ('GET', '{mount}/data/{path_prefix}{name}') but the module makes no such call"], expected ["src/hadavin_sdk/actions/secrets_vault.py:289: the HTTP opener `._opener` is used outside ['__init__', 'call']"]
+E       assert ["src/hadavin...no such call'] == ["src/hadavin...__', 'call']"]
+E         
+E         Left contains 3 more items, first extra item: "src/hadavin_sdk/actions/secrets_vault.py R17: resource '{mount}/data/{path_prefix}*' is not the path of the request it serves ('+/data/++')"
+E         Use -v to get more diff
+
+tests/test_policy_guard.py:154: AssertionError
+______ test_plant_the_old_star_form_of_the_vault_secrets_grant_is_caught _______
+
+    def test_plant_the_old_star_form_of_the_vault_secrets_grant_is_caught():
+        """Result review Major 2 on head 7af13809: `<prefix>*` covers more than the one path part the code reads."""
+        text = _text(VAULT).replace(
+            '"resource": "{mount}/data/{path_prefix}+"', '"resource": "{mount}/data/{path_prefix}*"'
+        )
+>       assert text != _text(VAULT)
+E       assert '"""`vault` secrets: HashiCorp Vault or OpenBao, KV version 2 (standard library HTTP, no extra).\n\n`<address>/v1/<mou...oves versions of a secret for good",\n            "verified": ("2026-11-11", "V-KV", "B-KV"),\n        },\n    ),\n}\n' != '"""`vault` secrets: HashiCorp Vault or OpenBao, KV version 2 (standard library HTTP, no extra).\n\n`<address>/v1/<mou...oves versions of a secret for good",\n            "verified": ("2026-11-11", "V-KV", "B-KV"),\n        },\n    ),\n}\n'
+E        +  where '"""`vault` secrets: HashiCorp Vault or OpenBao, KV version 2 (standard library HTTP, no extra).\n\n`<address>/v1/<mou...oves versions of a secret for good",\n            "verified": ("2026-11-11", "V-KV", "B-KV"),\n        },\n    ),\n}\n' = _text('src/hadavin_sdk/actions/secrets_vault.py')
+
+tests/test_policy_guard.py:2297: AssertionError
+______ test_plant_a_vault_capability_that_is_not_the_verbs_own_is_caught _______
+
+    def test_plant_a_vault_capability_that_is_not_the_verbs_own_is_caught():
+        text = _text(TRANSIT).replace('"name": "update"', '"name": "read"')
+        assert text != _text(TRANSIT)
+>       same(
+            call_problems(TRANSIT, text, SHAPES[TRANSIT]),
+            [f"{TRANSIT} R18: capability 'read' is not the one a POST request needs ('update')"],
+        )
+
+tests/test_policy_guard.py:2312: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+found = ["src/hadavin_sdk/audit/signer_vault.py R18: resource '{transit_mount}/sign/{key_name}' is not the path of the request...it/signer_vault.py: POLICY declares request ('GET', '{mount}/keys/{key_name}') but the module makes no such call", ...]
+expected = ["src/hadavin_sdk/audit/signer_vault.py R18: capability 'read' is not the one a POST request needs ('update')"]
+
+    def same(found: object, expected: object) -> None:
+        """`found == expected`, with both written out in full in the failure message (pytest shortens a long
+        list in the first line, and the mutant runner reads that line)."""
+>       assert found == expected, f"reported {found!r}, expected {expected!r}"
+E       AssertionError: reported ["src/hadavin_sdk/audit/signer_vault.py R18: resource '{transit_mount}/sign/{key_name}' is not the path of the request it serves ('+/sign/+')", "src/hadavin_sdk/audit/signer_vault.py R18: capability 'read' is not the one a POST request needs ('update')", "src/hadavin_sdk/audit/signer_vault.py R19: resource '{transit_mount}/keys/{key_name}' is not the path of the request it serves ('+/keys/+')", "src/hadavin_sdk/audit/signer_vault.py:62: request ('GET', '{self.mount}/keys/{self.key_name}') has no grant and no free entry in POLICY", "src/hadavin_sdk/audit/signer_vault.py:52: request ('POST', '{self.mount}/sign/{self.key_name}') has no grant and no free entry in POLICY", "src/hadavin_sdk/audit/signer_vault.py: POLICY declares request ('GET', '{mount}/keys/{key_name}') but the module makes no such call", "src/hadavin_sdk/audit/signer_vault.py: POLICY declares request ('POST', '{mount}/sign/{key_name}') but the module makes no such call"], expected ["src/hadavin_sdk/audit/signer_vault.py R18: capability 'read' is not the one a POST request needs ('update')"]
+E       assert ["src/hadavin...ch call', ...] == ["src/hadavin...s ('update')"]
+E         
+E         At index 0 diff: "src/hadavin_sdk/audit/signer_vault.py R18: resource '{transit_mount}/sign/{key_name}' is not the path of the request it serves ('+/sign/+')" != "src/hadavin_sdk/audit/signer_vault.py R18: capability 'read' is not the one a POST request needs ('update')"
+E         Left contains 6 more items, first extra item: "src/hadavin_sdk/audit/signer_vault.py R18: capability 'read' is not the one a POST request needs ('update')"
+E         Use -v to get more diff
+
+tests/test_policy_guard.py:154: AssertionError
+_____________ test_the_page_title_notes_and_engine_image_are_true ______________
+
+    def test_the_page_title_notes_and_engine_image_are_true():
+        text = pp.page(ROOT)
+        assert text.startswith("# Declared permissions per backend kind\n")
+        assert pp.PAGE == "docs/declared-permissions.md"
+        for path in ("README.md", "CHANGELOG.md", "docs/declared-permissions.md"):
+            body = (ROOT / path).read_text(encoding="utf-8").lower()
+            assert "least-privilege polic" not in body, path
+>       assert "builder's memory" not in text and "No ticket removes this yet" not in text
+E       assert ("builder's memory" not in '# Declared ... (channel)\n'
+E         
+E         "builder's memory" is contained here:
+E            From the builder's memory, not checked against the Kubernetes pages: a token projected into the pod expires and is renewed, a token stored in a Secret does not expire. Use a projected token. No ticket removes this yet.
+E         ?           ++++++++++++++++
+E           
+E           Tested: declared calls equal the calls written in the module: yes. Engine: no cluster in any test. The generated Role is given to the kind's own read-only rule (the function that judges a real cluster's answer at every start-up), which finds no problem in it and does find one when a write verb, ...
+E         
+E         ...Full output truncated, use '-vv' to show)
+
+tests/test_policy_docs.py:33: AssertionError
+31 failed, 223 passed, 12 skipped in 11.79s

@@ -1,0 +1,913 @@
+EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE  [100%]
+==================================== ERRORS ====================================
+___ ERROR at setup of test_refuses_without_config_and_without_required_names ___
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 23
+  def test_refuses_without_config_and_without_required_names(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_______________ ERROR at setup of test_dry_fakes_run_end_to_end ________________
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 31
+  @pytest.mark.usefixtures("own_tempdir")
+  def test_dry_fakes_run_end_to_end(capsys: pytest.CaptureFixture[str]) -> None:
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_a_run_where_every_follow_up_ended_unknown_fails_the_floor _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 77
+  def test_a_run_where_every_follow_up_ended_unknown_fails_the_floor() -> None:
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_the_crash_window_excuses_only_the_rows_the_desk_marked_as_in_flight _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 84
+  def test_the_crash_window_excuses_only_the_rows_the_desk_marked_as_in_flight() -> None:
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_the_window_cannot_be_larger_than_the_desks_send_workers _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 94
+  def test_the_window_cannot_be_larger_than_the_desks_send_workers() -> None:
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_the_floor_needs_mails_crm_contacts_and_a_counter_file _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 103
+  def test_the_floor_needs_mails_crm_contacts_and_a_counter_file() -> None:
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_the_desk_may_not_send_more_than_leads_plus_unknown_leads _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 111
+  def test_the_desk_may_not_send_more_than_leads_plus_unknown_leads() -> None:
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+________ ERROR at setup of test_addresses_are_masked_in_a_failure_table ________
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 117
+  def test_addresses_are_masked_in_a_failure_table() -> None:
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_cleanup_goes_on_after_one_error_and_names_what_is_left _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 137
+  def test_cleanup_goes_on_after_one_error_and_names_what_is_left() -> None:
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+________ ERROR at setup of test_mailbox_order_must_match_the_recipients ________
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 152
+  def test_mailbox_order_must_match_the_recipients() -> None:
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_________ ERROR at setup of test_assume_yes_is_refused_for_a_real_run __________
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 208
+  def test_assume_yes_is_refused_for_a_real_run(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_a_refusal_never_echoes_the_value_of_a_setting[DESK_HUBSPOT_MAX_CALLS] _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 213
+  @pytest.mark.parametrize("name", ["DESK_HUBSPOT_MAX_CALLS", "REAL_PERSONS", "DESK_SMTPP_MAX_SENDS", "REAL_IMAP_1_PORT"])
+  def test_a_refusal_never_echoes_the_value_of_a_setting(
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_a_refusal_never_echoes_the_value_of_a_setting[REAL_PERSONS] _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 213
+  @pytest.mark.parametrize("name", ["DESK_HUBSPOT_MAX_CALLS", "REAL_PERSONS", "DESK_SMTPP_MAX_SENDS", "REAL_IMAP_1_PORT"])
+  def test_a_refusal_never_echoes_the_value_of_a_setting(
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_a_refusal_never_echoes_the_value_of_a_setting[DESK_SMTPP_MAX_SENDS] _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 213
+  @pytest.mark.parametrize("name", ["DESK_HUBSPOT_MAX_CALLS", "REAL_PERSONS", "DESK_SMTPP_MAX_SENDS", "REAL_IMAP_1_PORT"])
+  def test_a_refusal_never_echoes_the_value_of_a_setting(
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_a_refusal_never_echoes_the_value_of_a_setting[REAL_IMAP_1_PORT] _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 213
+  @pytest.mark.parametrize("name", ["DESK_HUBSPOT_MAX_CALLS", "REAL_PERSONS", "DESK_SMTPP_MAX_SENDS", "REAL_IMAP_1_PORT"])
+  def test_a_refusal_never_echoes_the_value_of_a_setting(
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+______ ERROR at setup of test_a_refusal_for_a_missing_file_shows_no_path _______
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 224
+  def test_a_refusal_for_a_missing_file_shows_no_path(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+__ ERROR at setup of test_dry_fakes_leave_no_certificate_or_key_folder_behind __
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 230
+  @pytest.mark.usefixtures("own_tempdir")
+  def test_dry_fakes_leave_no_certificate_or_key_folder_behind(capsys: pytest.CaptureFixture[str]) -> None:
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+____ ERROR at setup of test_a_dry_run_where_every_send_ends_in_doubt_fails _____
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 237
+  @pytest.mark.usefixtures("own_tempdir")
+  def test_a_dry_run_where_every_send_ends_in_doubt_fails(capsys: pytest.CaptureFixture[str]) -> None:
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+______ ERROR at setup of test_a_crash_that_did_not_happen_fails_floor_f5 _______
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 250
+  def test_a_crash_that_did_not_happen_fails_floor_f5() -> None:
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_a_bad_readback_cap_is_refused_before_anything_real_is_called[0] _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 258
+  @pytest.mark.parametrize("value", ["0", "-3", "4", "abc"])
+  def test_a_bad_readback_cap_is_refused_before_anything_real_is_called(
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_a_bad_readback_cap_is_refused_before_anything_real_is_called[-3] _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 258
+  @pytest.mark.parametrize("value", ["0", "-3", "4", "abc"])
+  def test_a_bad_readback_cap_is_refused_before_anything_real_is_called(
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_a_bad_readback_cap_is_refused_before_anything_real_is_called[4] _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 258
+  @pytest.mark.parametrize("value", ["0", "-3", "4", "abc"])
+  def test_a_bad_readback_cap_is_refused_before_anything_real_is_called(
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_a_bad_readback_cap_is_refused_before_anything_real_is_called[abc] _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 258
+  @pytest.mark.parametrize("value", ["0", "-3", "4", "abc"])
+  def test_a_bad_readback_cap_is_refused_before_anything_real_is_called(
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_a_bad_time_setting_is_refused_before_anything_real_is_called[0-REAL_DRAIN_SECONDS] _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 269
+  @pytest.mark.parametrize("name", ["REAL_DRAIN_SECONDS", "REAL_MAIL_WAIT_SECONDS"])
+  @pytest.mark.parametrize("value", ["0", "-1", "nan", "inf", "soon"])
+  def test_a_bad_time_setting_is_refused_before_anything_real_is_called(
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_a_bad_time_setting_is_refused_before_anything_real_is_called[0-REAL_MAIL_WAIT_SECONDS] _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 269
+  @pytest.mark.parametrize("name", ["REAL_DRAIN_SECONDS", "REAL_MAIL_WAIT_SECONDS"])
+  @pytest.mark.parametrize("value", ["0", "-1", "nan", "inf", "soon"])
+  def test_a_bad_time_setting_is_refused_before_anything_real_is_called(
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_a_bad_time_setting_is_refused_before_anything_real_is_called[-1-REAL_DRAIN_SECONDS] _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 269
+  @pytest.mark.parametrize("name", ["REAL_DRAIN_SECONDS", "REAL_MAIL_WAIT_SECONDS"])
+  @pytest.mark.parametrize("value", ["0", "-1", "nan", "inf", "soon"])
+  def test_a_bad_time_setting_is_refused_before_anything_real_is_called(
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_a_bad_time_setting_is_refused_before_anything_real_is_called[-1-REAL_MAIL_WAIT_SECONDS] _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 269
+  @pytest.mark.parametrize("name", ["REAL_DRAIN_SECONDS", "REAL_MAIL_WAIT_SECONDS"])
+  @pytest.mark.parametrize("value", ["0", "-1", "nan", "inf", "soon"])
+  def test_a_bad_time_setting_is_refused_before_anything_real_is_called(
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_a_bad_time_setting_is_refused_before_anything_real_is_called[nan-REAL_DRAIN_SECONDS] _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 269
+  @pytest.mark.parametrize("name", ["REAL_DRAIN_SECONDS", "REAL_MAIL_WAIT_SECONDS"])
+  @pytest.mark.parametrize("value", ["0", "-1", "nan", "inf", "soon"])
+  def test_a_bad_time_setting_is_refused_before_anything_real_is_called(
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_a_bad_time_setting_is_refused_before_anything_real_is_called[nan-REAL_MAIL_WAIT_SECONDS] _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 269
+  @pytest.mark.parametrize("name", ["REAL_DRAIN_SECONDS", "REAL_MAIL_WAIT_SECONDS"])
+  @pytest.mark.parametrize("value", ["0", "-1", "nan", "inf", "soon"])
+  def test_a_bad_time_setting_is_refused_before_anything_real_is_called(
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_a_bad_time_setting_is_refused_before_anything_real_is_called[inf-REAL_DRAIN_SECONDS] _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 269
+  @pytest.mark.parametrize("name", ["REAL_DRAIN_SECONDS", "REAL_MAIL_WAIT_SECONDS"])
+  @pytest.mark.parametrize("value", ["0", "-1", "nan", "inf", "soon"])
+  def test_a_bad_time_setting_is_refused_before_anything_real_is_called(
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_a_bad_time_setting_is_refused_before_anything_real_is_called[inf-REAL_MAIL_WAIT_SECONDS] _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 269
+  @pytest.mark.parametrize("name", ["REAL_DRAIN_SECONDS", "REAL_MAIL_WAIT_SECONDS"])
+  @pytest.mark.parametrize("value", ["0", "-1", "nan", "inf", "soon"])
+  def test_a_bad_time_setting_is_refused_before_anything_real_is_called(
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_a_bad_time_setting_is_refused_before_anything_real_is_called[soon-REAL_DRAIN_SECONDS] _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 269
+  @pytest.mark.parametrize("name", ["REAL_DRAIN_SECONDS", "REAL_MAIL_WAIT_SECONDS"])
+  @pytest.mark.parametrize("value", ["0", "-1", "nan", "inf", "soon"])
+  def test_a_bad_time_setting_is_refused_before_anything_real_is_called(
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_a_bad_time_setting_is_refused_before_anything_real_is_called[soon-REAL_MAIL_WAIT_SECONDS] _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 269
+  @pytest.mark.parametrize("name", ["REAL_DRAIN_SECONDS", "REAL_MAIL_WAIT_SECONDS"])
+  @pytest.mark.parametrize("value", ["0", "-1", "nan", "inf", "soon"])
+  def test_a_bad_time_setting_is_refused_before_anything_real_is_called(
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+__ ERROR at setup of test_no_terminal_to_answer_on_is_a_stop_not_a_traceback ___
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 280
+  def test_no_terminal_to_answer_on_is_a_stop_not_a_traceback(
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_the_desk_child_gets_desk_and_real_names_from_the_config_only _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 291
+  def test_the_desk_child_gets_desk_and_real_names_from_the_config_only(monkeypatch: pytest.MonkeyPatch) -> None:
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_stale_shell_values_do_not_reach_the_child_and_the_banner_tells_the_truth _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 307
+  def test_stale_shell_values_do_not_reach_the_child_and_the_banner_tells_the_truth(
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_folders_the_server_did_not_have_are_named_as_not_checked _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 329
+  def test_folders_the_server_did_not_have_are_named_as_not_checked() -> None:
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_the_imap_host_is_named_and_the_folder_default_comes_from_constants _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 336
+  def test_the_imap_host_is_named_and_the_folder_default_comes_from_constants() -> None:
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_one_more_poll_after_everything_was_seen_counts_a_late_second_delivery _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 375
+  def test_one_more_poll_after_everything_was_seen_counts_a_late_second_delivery() -> None:
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_a_total_time_limit_after_a_full_poll_keeps_the_earlier_counts _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 383
+  def test_a_total_time_limit_after_a_full_poll_keeps_the_earlier_counts(capsys: pytest.CaptureFixture[str]) -> None:
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_the_expected_keys_of_a_mailbox_follow_the_senders_recipient_hash _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 393
+  def test_the_expected_keys_of_a_mailbox_follow_the_senders_recipient_hash() -> None:
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_an_unknown_that_is_not_an_in_flight_row_at_the_kill_fails_the_floor _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 405
+  def test_an_unknown_that_is_not_an_in_flight_row_at_the_kill_fails_the_floor() -> None:
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+________ ERROR at setup of test_the_sending_rows_are_read_from_the_book ________
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 417
+  def test_the_sending_rows_are_read_from_the_book(tmp_path: Path) -> None:
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_f4_uses_the_larger_of_the_desk_counter_and_the_mails_counted _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 433
+  def test_f4_uses_the_larger_of_the_desk_counter_and_the_mails_counted() -> None:
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_f3_says_in_its_output_that_it_relies_on_list_after_create _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 440
+  def test_f3_says_in_its_output_that_it_relies_on_list_after_create() -> None:
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_a_lower_case_setting_name_is_refused_and_never_reaches_a_live_call _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 448
+  def test_a_lower_case_setting_name_is_refused_and_never_reaches_a_live_call(
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_________ ERROR at setup of test_an_existing_database_file_is_refused __________
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 463
+  def test_an_existing_database_file_is_refused(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+______ ERROR at setup of test_the_banner_shows_the_mailbox_reading_bound _______
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 471
+  def test_the_banner_shows_the_mailbox_reading_bound(
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_the_banner_shows_the_live_run_cap_and_the_live_host_is_checked _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 480
+  def test_the_banner_shows_the_live_run_cap_and_the_live_host_is_checked(
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_a_mailbox_user_without_a_password_file_and_a_bad_folder_are_clear_refusals _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 510
+  def test_a_mailbox_user_without_a_password_file_and_a_bad_folder_are_clear_refusals(
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+__ ERROR at setup of test_dry_fakes_with_a_config_says_the_config_is_ignored ___
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 526
+  def test_dry_fakes_with_a_config_says_the_config_is_ignored(
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_a_failed_late_poll_sets_the_flag_and_fails_the_floor __
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 537
+  def test_a_failed_late_poll_sets_the_flag_and_fails_the_floor(capsys: pytest.CaptureFixture[str]) -> None:
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_the_slow_scan_runs_on_the_first_and_the_last_poll_only _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 550
+  def test_the_slow_scan_runs_on_the_first_and_the_last_poll_only() -> None:
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+____ ERROR at setup of test_a_poll_never_lowers_a_count_an_earlier_poll_saw ____
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 562
+  def test_a_poll_never_lowers_a_count_an_earlier_poll_saw() -> None:
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_only_sent_follow_ups_end_the_wait_and_a_failed_leads_mail_does_not _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 571
+  def test_only_sent_follow_ups_end_the_wait_and_a_failed_leads_mail_does_not() -> None:
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_a_first_poll_that_runs_out_of_time_is_tried_once_more_with_more_time _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 581
+  def test_a_first_poll_that_runs_out_of_time_is_tried_once_more_with_more_time(
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_a_failed_crm_read_back_ends_with_counts_a_result_file_and_a_clean_up_note _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 604
+  @pytest.mark.usefixtures("own_tempdir")
+  def test_a_failed_crm_read_back_ends_with_counts_a_result_file_and_a_clean_up_note(
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_made_up_lead_addresses_use_the_reserved_example_domain_and_are_never_recipients _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 627
+  def test_made_up_lead_addresses_use_the_reserved_example_domain_and_are_never_recipients() -> None:
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_____ ERROR at setup of test_the_banner_names_the_domain_from_the_constant _____
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 639
+  def test_the_banner_names_the_domain_from_the_constant(
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_one_dropped_connection_on_the_last_poll_does_not_fail_the_last_read _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 653
+  def test_one_dropped_connection_on_the_last_poll_does_not_fail_the_last_read(
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+____ ERROR at setup of test_a_dropped_first_poll_connection_is_repeated_too ____
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 682
+  def test_a_dropped_first_poll_connection_is_repeated_too() -> None:
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_______ ERROR at setup of test_a_login_or_folder_error_is_never_repeated _______
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 690
+  def test_a_login_or_folder_error_is_never_repeated() -> None:
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_the_imap_module_marks_only_connection_errors_as_repeatable _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 706
+  def test_the_imap_module_marks_only_connection_errors_as_repeatable(
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_________ ERROR at setup of test_the_repeat_count_is_in_the_f6_details _________
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 729
+  def test_the_repeat_count_is_in_the_f6_details() -> None:
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_only_a_reset_after_a_good_login_is_repeated[<lambda>-False0] _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 758
+  @pytest.mark.parametrize(
+      ("make", "repeatable"),
+      [
+          (lambda: _StubImap(login=__import__("imaplib").IMAP4.abort("EOF")), False),  # a hang-up in the login
+          (lambda: _StubImap(select=OSError("reset")), True),  # a reset after a good login
+          (lambda: _StubImap(select=TimeoutError()), False),  # a step that timed out
+      ],
+  )
+  def test_only_a_reset_after_a_good_login_is_repeated(
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_only_a_reset_after_a_good_login_is_repeated[<lambda>-True] _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 758
+  @pytest.mark.parametrize(
+      ("make", "repeatable"),
+      [
+          (lambda: _StubImap(login=__import__("imaplib").IMAP4.abort("EOF")), False),  # a hang-up in the login
+          (lambda: _StubImap(select=OSError("reset")), True),  # a reset after a good login
+          (lambda: _StubImap(select=TimeoutError()), False),  # a step that timed out
+      ],
+  )
+  def test_only_a_reset_after_a_good_login_is_repeated(
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_only_a_reset_after_a_good_login_is_repeated[<lambda>-False1] _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 758
+  @pytest.mark.parametrize(
+      ("make", "repeatable"),
+      [
+          (lambda: _StubImap(login=__import__("imaplib").IMAP4.abort("EOF")), False),  # a hang-up in the login
+          (lambda: _StubImap(select=OSError("reset")), True),  # a reset after a good login
+          (lambda: _StubImap(select=TimeoutError()), False),  # a step that timed out
+      ],
+  )
+  def test_only_a_reset_after_a_good_login_is_repeated(
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_a_failure_after_the_total_time_limit_is_not_repeated __
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 782
+  def test_a_failure_after_the_total_time_limit_is_not_repeated(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_drain_is_measured_from_the_real_send_not_from_plan_creation _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 804
+  def test_drain_is_measured_from_the_real_send_not_from_plan_creation(monkeypatch: pytest.MonkeyPatch) -> None:
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_made_up_addresses_that_may_reach_a_real_crm_do_not_use_the_test_domain _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 830
+  def test_made_up_addresses_that_may_reach_a_real_crm_do_not_use_the_test_domain() -> None:
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+_ ERROR at setup of test_the_dry_run_waits_up_to_240_seconds_for_the_recovery_drain_and_the_real_default_stays_150 _
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 845
+  def test_the_dry_run_waits_up_to_240_seconds_for_the_recovery_drain_and_the_real_default_stays_150(
+file /home/user/build/rr6/tree-B/tests/test_real_check_dry.py, line 162
+  @pytest.fixture(autouse=True)
+  def _a_person_at_a_terminal(a_terminal: None) -> None:
+E       fixture 'a_terminal' not found
+>       available fixtures: _a_person_at_a_terminal, _no_desk_settings_from_the_shell, _stuck_servers_fail_the_test, capfd, capfdbinary, caplog, capsys, capsysbinary, capteesys, doctest_namespace, env, monkeypatch, pytestconfig, record_property, record_testsuite_property, record_xml_attribute, recwarn, subtests, tmp_path, tmp_path_factory, tmpdir, tmpdir_factory
+>       use 'pytest --fixtures [testpath]' for help on them.
+
+/home/user/build/rr6/tree-B/tests/test_real_check_dry.py:162
+=========================== short test summary info ============================
+ERROR tests/test_real_check_dry.py::test_refuses_without_config_and_without_required_names
+ERROR tests/test_real_check_dry.py::test_dry_fakes_run_end_to_end
+ERROR tests/test_real_check_dry.py::test_a_run_where_every_follow_up_ended_unknown_fails_the_floor
+ERROR tests/test_real_check_dry.py::test_the_crash_window_excuses_only_the_rows_the_desk_marked_as_in_flight
+ERROR tests/test_real_check_dry.py::test_the_window_cannot_be_larger_than_the_desks_send_workers
+ERROR tests/test_real_check_dry.py::test_the_floor_needs_mails_crm_contacts_and_a_counter_file
+ERROR tests/test_real_check_dry.py::test_the_desk_may_not_send_more_than_leads_plus_unknown_leads
+ERROR tests/test_real_check_dry.py::test_addresses_are_masked_in_a_failure_table
+ERROR tests/test_real_check_dry.py::test_cleanup_goes_on_after_one_error_and_names_what_is_left
+ERROR tests/test_real_check_dry.py::test_mailbox_order_must_match_the_recipients
+ERROR tests/test_real_check_dry.py::test_assume_yes_is_refused_for_a_real_run
+ERROR tests/test_real_check_dry.py::test_a_refusal_never_echoes_the_value_of_a_setting[DESK_HUBSPOT_MAX_CALLS]
+ERROR tests/test_real_check_dry.py::test_a_refusal_never_echoes_the_value_of_a_setting[REAL_PERSONS]
+ERROR tests/test_real_check_dry.py::test_a_refusal_never_echoes_the_value_of_a_setting[DESK_SMTPP_MAX_SENDS]
+ERROR tests/test_real_check_dry.py::test_a_refusal_never_echoes_the_value_of_a_setting[REAL_IMAP_1_PORT]
+ERROR tests/test_real_check_dry.py::test_a_refusal_for_a_missing_file_shows_no_path
+ERROR tests/test_real_check_dry.py::test_dry_fakes_leave_no_certificate_or_key_folder_behind
+ERROR tests/test_real_check_dry.py::test_a_dry_run_where_every_send_ends_in_doubt_fails
+ERROR tests/test_real_check_dry.py::test_a_crash_that_did_not_happen_fails_floor_f5
+ERROR tests/test_real_check_dry.py::test_a_bad_readback_cap_is_refused_before_anything_real_is_called[0]
+ERROR tests/test_real_check_dry.py::test_a_bad_readback_cap_is_refused_before_anything_real_is_called[-3]
+ERROR tests/test_real_check_dry.py::test_a_bad_readback_cap_is_refused_before_anything_real_is_called[4]
+ERROR tests/test_real_check_dry.py::test_a_bad_readback_cap_is_refused_before_anything_real_is_called[abc]
+ERROR tests/test_real_check_dry.py::test_a_bad_time_setting_is_refused_before_anything_real_is_called[0-REAL_DRAIN_SECONDS]
+ERROR tests/test_real_check_dry.py::test_a_bad_time_setting_is_refused_before_anything_real_is_called[0-REAL_MAIL_WAIT_SECONDS]
+ERROR tests/test_real_check_dry.py::test_a_bad_time_setting_is_refused_before_anything_real_is_called[-1-REAL_DRAIN_SECONDS]
+ERROR tests/test_real_check_dry.py::test_a_bad_time_setting_is_refused_before_anything_real_is_called[-1-REAL_MAIL_WAIT_SECONDS]
+ERROR tests/test_real_check_dry.py::test_a_bad_time_setting_is_refused_before_anything_real_is_called[nan-REAL_DRAIN_SECONDS]
+ERROR tests/test_real_check_dry.py::test_a_bad_time_setting_is_refused_before_anything_real_is_called[nan-REAL_MAIL_WAIT_SECONDS]
+ERROR tests/test_real_check_dry.py::test_a_bad_time_setting_is_refused_before_anything_real_is_called[inf-REAL_DRAIN_SECONDS]
+ERROR tests/test_real_check_dry.py::test_a_bad_time_setting_is_refused_before_anything_real_is_called[inf-REAL_MAIL_WAIT_SECONDS]
+ERROR tests/test_real_check_dry.py::test_a_bad_time_setting_is_refused_before_anything_real_is_called[soon-REAL_DRAIN_SECONDS]
+ERROR tests/test_real_check_dry.py::test_a_bad_time_setting_is_refused_before_anything_real_is_called[soon-REAL_MAIL_WAIT_SECONDS]
+ERROR tests/test_real_check_dry.py::test_no_terminal_to_answer_on_is_a_stop_not_a_traceback
+ERROR tests/test_real_check_dry.py::test_the_desk_child_gets_desk_and_real_names_from_the_config_only
+ERROR tests/test_real_check_dry.py::test_stale_shell_values_do_not_reach_the_child_and_the_banner_tells_the_truth
+ERROR tests/test_real_check_dry.py::test_folders_the_server_did_not_have_are_named_as_not_checked
+ERROR tests/test_real_check_dry.py::test_the_imap_host_is_named_and_the_folder_default_comes_from_constants
+ERROR tests/test_real_check_dry.py::test_one_more_poll_after_everything_was_seen_counts_a_late_second_delivery
+ERROR tests/test_real_check_dry.py::test_a_total_time_limit_after_a_full_poll_keeps_the_earlier_counts
+ERROR tests/test_real_check_dry.py::test_the_expected_keys_of_a_mailbox_follow_the_senders_recipient_hash
+ERROR tests/test_real_check_dry.py::test_an_unknown_that_is_not_an_in_flight_row_at_the_kill_fails_the_floor
+ERROR tests/test_real_check_dry.py::test_the_sending_rows_are_read_from_the_book
+ERROR tests/test_real_check_dry.py::test_f4_uses_the_larger_of_the_desk_counter_and_the_mails_counted
+ERROR tests/test_real_check_dry.py::test_f3_says_in_its_output_that_it_relies_on_list_after_create
+ERROR tests/test_real_check_dry.py::test_a_lower_case_setting_name_is_refused_and_never_reaches_a_live_call
+ERROR tests/test_real_check_dry.py::test_an_existing_database_file_is_refused
+ERROR tests/test_real_check_dry.py::test_the_banner_shows_the_mailbox_reading_bound
+ERROR tests/test_real_check_dry.py::test_the_banner_shows_the_live_run_cap_and_the_live_host_is_checked
+ERROR tests/test_real_check_dry.py::test_a_mailbox_user_without_a_password_file_and_a_bad_folder_are_clear_refusals
+ERROR tests/test_real_check_dry.py::test_dry_fakes_with_a_config_says_the_config_is_ignored
+ERROR tests/test_real_check_dry.py::test_a_failed_late_poll_sets_the_flag_and_fails_the_floor
+ERROR tests/test_real_check_dry.py::test_the_slow_scan_runs_on_the_first_and_the_last_poll_only
+ERROR tests/test_real_check_dry.py::test_a_poll_never_lowers_a_count_an_earlier_poll_saw
+ERROR tests/test_real_check_dry.py::test_only_sent_follow_ups_end_the_wait_and_a_failed_leads_mail_does_not
+ERROR tests/test_real_check_dry.py::test_a_first_poll_that_runs_out_of_time_is_tried_once_more_with_more_time
+ERROR tests/test_real_check_dry.py::test_a_failed_crm_read_back_ends_with_counts_a_result_file_and_a_clean_up_note
+ERROR tests/test_real_check_dry.py::test_made_up_lead_addresses_use_the_reserved_example_domain_and_are_never_recipients
+ERROR tests/test_real_check_dry.py::test_the_banner_names_the_domain_from_the_constant
+ERROR tests/test_real_check_dry.py::test_one_dropped_connection_on_the_last_poll_does_not_fail_the_last_read
+ERROR tests/test_real_check_dry.py::test_a_dropped_first_poll_connection_is_repeated_too
+ERROR tests/test_real_check_dry.py::test_a_login_or_folder_error_is_never_repeated
+ERROR tests/test_real_check_dry.py::test_the_imap_module_marks_only_connection_errors_as_repeatable
+ERROR tests/test_real_check_dry.py::test_the_repeat_count_is_in_the_f6_details
+ERROR tests/test_real_check_dry.py::test_only_a_reset_after_a_good_login_is_repeated[<lambda>-False0]
+ERROR tests/test_real_check_dry.py::test_only_a_reset_after_a_good_login_is_repeated[<lambda>-True]
+ERROR tests/test_real_check_dry.py::test_only_a_reset_after_a_good_login_is_repeated[<lambda>-False1]
+ERROR tests/test_real_check_dry.py::test_a_failure_after_the_total_time_limit_is_not_repeated
+ERROR tests/test_real_check_dry.py::test_drain_is_measured_from_the_real_send_not_from_plan_creation
+ERROR tests/test_real_check_dry.py::test_made_up_addresses_that_may_reach_a_real_crm_do_not_use_the_test_domain
+ERROR tests/test_real_check_dry.py::test_the_dry_run_waits_up_to_240_seconds_for_the_recovery_drain_and_the_real_default_stays_150
+71 errors in 0.17s
+rc=1 wall=0s

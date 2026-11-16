@@ -1,0 +1,6 @@
+head: 7442c0f4eb7b3df9504e23065314720892cc35a3
+command: ruff check src tests demos tools
+start: 2026-11-06T03:53:26Z
+-----
+All checks passed!
+exit: 0

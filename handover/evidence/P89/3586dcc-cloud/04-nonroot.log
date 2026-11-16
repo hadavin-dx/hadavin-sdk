@@ -1,0 +1,15 @@
+uid=65534 HEAD 3586dcc34647fa66dded9a4250be6b52e845c5ba tree 6fa785565bc526c20021db7cf61a74540b76f6ab
+=== A: all mutants as uid 65534
+mutants_rc=0
+ok  KILLED       runner: the JUnit size ceiling is not checked  [test_an_over_sized_junit_file_is_refused_before_it_is_read]
+ok  KILLED       runner: only one layer of printing is built  [test_a_value_printed_in_two_layers_is_masked_whatever_quotes]
+162 of 162 good; problems: []
+git status after:
+(end)
+=== B: step-3 files as uid 65534 (DSN set)
+........................................................................ [ 43%]
+........................................................................ [ 87%]
+....................                                                     [100%]
+164 passed in 55.39s
+pytest_rc=0
+exit=0

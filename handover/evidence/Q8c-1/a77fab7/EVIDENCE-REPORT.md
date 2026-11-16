@@ -1,0 +1,25 @@
+<!-- full hand-back report of sub-agent a1120e73, saved verbatim by the lead's script; model output, unverified unless the summary file beside it says otherwise -->
+
+EVIDENCE RUNNER report, Q8c PR1, head a77fab727f8435177a9c4789ba63c9c4218c5c57. I ran and recorded; no judging, no src/test edits, nothing pushed. All files in /home/user/hadavin-sdk/handover/evidence/Q8c-1/a77fab7/ (RESULTS.md has the full table). Raw logs in /home/user/build/evidence-raw/Q8c1-a77fab7/.
+
+WHAT FAILED / NOT RUN (first)
+1. Full suite exit 1: 1 failed, 10777 passed, 13 skipped, 28 deselected (354 s). Failure: tests/demo_askdata/test_validate_harm.py::...[dblink-connect]. dblink inside my Postgres tried the default socket /var/run/postgresql/.s.PGSQL.5432, which my cluster (port 56291, socket in /tmp) does not provide. The same test alone also fails (exit 1) on clean origin/main. I state no cause beyond the observation. The earlier quadratic-timing failure did not recur.
+2. Vault server tests NOT RUN: no vault/bao/openbao binary anywhere (searched PATH and file system); downloaded nothing. The 12 engine cases skipped, plus 1 llm Stubber skip = 13. Nothing here shows a real server refusing or allowing anything.
+3. Not run: CodeQL/Sonar/CodeRabbit/CI, any Kubernetes cluster, re-fetch of the new source rows (V-ACL, V-PARSE, B-ACL) and of the `+` quotations (not in my brief).
+
+RESULTS
+- Head sha recorded (2 commits over origin/main).
+- Gates, all exit 0: ruff check passed; ruff format 328 files already formatted; bandit -ll no issues (Low 12, Med 0, High 0); scan_repo no output; policy_page --check no output; gitleaks origin/main..HEAD no output.
+- policy_mutants: 41 of 41 good, exit 0. stage_mutants: 37 of 37 good, exit 0 (both via heavy.sh, in a separate worktree).
+- Fail-before (guard, docs, engine test files at head over old trees; 266 cases; 54 test functions / 171 cases are new vs 7af13809):
+  - 7af13809 tree: 133 failed, 121 passed, 12 skipped; new cases 116 failed, 54 passed, 1 skipped.
+  - origin/main (+head tests +head tools/policy_page.py): 185 failed, 69 passed, 12 skipped; new cases 119 failed, 51 passed, 1 skipped.
+  - head with only the 3 src files reverted to 7af13809: 31 failed, 223 passed, 12 skipped; new cases 18 failed, 152 passed.
+  - New test functions that still pass on old trees are listed in 05-fail-before-new-tests-that-pass-on-old.txt (for example, on 7af13809: the import-list, other-module-uses-client, indirect-ways, p09a and old-star-form plants).
+- Renderer probes (225 values; page mode and with values; script probes/probe_render.py, output 07-renderer-probes.txt): 21 accepted, 204 refused. Refused: mounts sys/auth/identity/cubbyhole (also with a subpath), namespaces starting with kube-, role names cluster-admin/admin/edit/view/system*, ServiceAccount default, a duplicate namespace, 300 characters, control characters, glob/+/* in any field, shell metacharacters, and path_prefix with ../, ./, //. ACCEPTED (printed output): mounts `kv/sys`, `system`, `sysx` and nested `kv/nested/mount`; namespace `kube` and `default` (as namespace and as ServiceAccount namespace); 63-character namespace; role/ServiceAccount names of 253 characters; `reader` as role name; two different namespaces. Page mode printed placeholders unfilled.
+- Plants (32 against tests/test_policy_guard.py; baseline 245 passed): 32 of 32 caught, each pytest exit 1, tree restored clean each time. This includes the earlier-unreported P09a (`?watch=true`, 12 tests failed) and P04b (getattr literal LIST, 12 failed). Also caught: extra path, query string, deeper path, import httpx, methodcaller, attrgetter, computed getattr, vars(), `+*`, `*` capability, old star form, DELETE verb, urlopen, opener, transit rotate/decrypt/suffix/sign/*/sign/+, k8s follow/secrets path/DELETE/import requests/unquoted name/verb `*`/resource `*`/getattr, never-list change (1 failed, the smallest). `policy_page.py --check` exited 0 on every plant (it checks the data literal, not code).
+- Not planted by me: run-time module load by name from unrecognised text; the `self.mount`-to-setting map through `build` (the builder's own stated limits).
+
+CLEANUP: my Postgres cluster stopped; no stray plant changes (plants and mut worktrees clean, plants process gone). Left in place: worktrees /home/user/build/EV-Q8c1-a77fab7, -plants, -mut and the fb-prev/fb-main/fb-srcrev export dirs. One process still matches "pg-evq8c1" in ps right after the stop; I did not check it further (it may be the ps/grep itself or a worker exiting). Checkpoint note: /home/user/build/checkpoints/EV-Q8c1-a77fab7.md. Evidence files are untracked in the main checkout (lead commits/pushes).
+
+FILES: RESULTS.md, 01-head-sha.txt, 02-full-suite-failures-and-skips.txt, 02-full.xml, 03-gates-output.txt, 04-policy-mutants.txt, 04-stage-mutants.txt, 05-fail-before.txt, 05-fail-before-new-tests-that-pass-on-old.txt, fb-{prev,main,srcrev}.log, rerun-dblink-*.log, 07-renderer-probes.txt, 08-plants.txt, probes/ (probe_render.py, plants.py, failbefore.py).

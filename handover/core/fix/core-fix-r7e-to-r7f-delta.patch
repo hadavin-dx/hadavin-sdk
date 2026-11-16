@@ -1,0 +1,1507 @@
+diff --git a/docs/hubspot-probe.md b/docs/hubspot-probe.md
+index 7a05c65..31058b0 100644
+--- a/docs/hubspot-probe.md
++++ b/docs/hubspot-probe.md
+@@ -10,7 +10,7 @@ account with no workflows and a throw-away owner is the safe place.
+ What it does, in order (7 calls on the normal path, never more than 8 including retries):
+ 
+ 1. Checks whether the contact property `dpld_tag` exists (`dpld` is short for duplicate-proof lead desk, the project name; it is a test tag; the script fills it in on the new contact only when the account already has it; the desk's own contact property is a different one, `hadavin_lead_id`, see `docs/real-services.md`).
+-2. Reads up to 10 owners; prints the count and the last 4 characters of each id.
++2. Reads up to 10 owners; prints only the count (no part of an id is printed, because ids come from the server's answer).
+ 3. Creates ONE contact with a made-up address `probe-<random>@example.com`.
+ 4. Sets the first owner on it (by email), in its own call.
+ 5. Sets the lead status `OPEN` on it, in its own call (two calls, so the table says which of the two a free plan refuses).
+diff --git a/docs/limits.md b/docs/limits.md
+index c67309e..d334d93 100644
+--- a/docs/limits.md
++++ b/docs/limits.md
+@@ -98,7 +98,7 @@ Rules of the desk's records (the database refuses these, for a database created
+   time was measured here).
+ * Larger bursts: one measurement test is shipped, `LEAD_DESK_LOAD_N=300 python -m pytest tests/test_server_hardening.py -k measure_burst -s -p no:cacheprovider` (add `LEAD_DESK_LOAD_RETRY=1` to let the sender retry a refused connection). It prints how many connections the operating system refused and the status counts. The waiting line is 1024 connections (`LISTEN_QUEUE` in `src/lead_desk/constants.py`) and the operating system can allow fewer. No result of this test is stored here, and no figure from it is claimed for any computer.
+   * A connection that the operating system refuses is never seen by the desk, so the desk records nothing about it.
+-* **Retry rule of the senders in this repository.** The burst script, the portal demo's burst and the load driver (`load_tools/load_driver.py`) retry a refused connection or a 503 by TIME, not by count: the first wait is 0.1 s, each wait doubles up to 1 s, the desk's `Retry-After` is honoured up to that 1 s, and no new try starts more than 30 s after the first (`BURST_BACKOFF_SECONDS`, `BURST_BACKOFF_MAX_SECONDS`, `BURST_RETRY_DEADLINE_SECONDS` in `constants.py`; tests in `tests/test_burst_retry.py`). `max_retries=0` in the burst script means no retry at all.
++* **Retry rule of the senders in this repository.** The burst script, the portal demo's burst and the load driver (`load_tools/load_driver.py`) retry a refused connection or a 503 by TIME, not by count: the first wait is 0.1 s, each wait doubles up to 1 s, the desk's `Retry-After` is honoured up to that 1 s, and no new try starts more than 30 s after the first (`BURST_BACKOFF_SECONDS`, `BURST_BACKOFF_MAX_SECONDS`, `BURST_RETRY_DEADLINE_SECONDS` in `constants.py`; tests in `tests/test_burst_retry.py`). `max_retries=0` in the burst script means no retry at all. **No total time limit for a whole run (decided to keep, stated here because a reviewer measured it):** the 30 s limit is per request, so a desk that answers first and then dies makes the load driver spend up to 30 s on each request that is still left, divided over its threads (measured: 62.7 s for `burst:8` with 2 threads; `burst:100000` could take hours). Stop such a run by hand (Ctrl+C); a run that is stopped early because the first tries got no answer ends with exit code 3 and a line that names how many requests were never sent (`STOPPED_EARLY_TEXT`; tested in `tests/test_r7f_findings.py`).
+ * A connection the desk received can be answered 503 `busy` (database lock wait over). A 503 from a lock wait may have left an open receipt; a 503 from the connection limit does not (it is written at accept time in `src/lead_desk/server.py`, before the request is read, without calling the desk). In both cases send the same request number again. `tests/test_http.py::test_ten_parallel` checks that only one email is sent for the lead (the burst command itself only counts the answers it got: it prints how many answers of each status came back and whether the number of 200, 201 and 202 answers equals the number expected; it does not read the mail count).
+ * The demo HubSpot server (`demo_only/fake_hubspot.py`, made-up data) reads a request body before it answers, so a late body is not reset on Windows. The exception is a Content-Length that is negative, not a plain number, longer than 7 digits or above 1 MiB: it answers 400 at once WITHOUT reading the body (reading would mean reading until the client stops); a client that really sends more than 1 MiB may therefore see a connection reset instead of the 400. A 5000-digit Content-Length is such a 400 (a digit string that long cannot be turned into a number by Python). Tests: `tests/test_codeant_fakes.py`.
+ * A request body shorter than the Content-Length it announced: the desk answers 408 `request_timeout` when the body has not fully arrived 10 seconds after the headers ended (`BODY_READ_DEADLINE_SECONDS`) if the sender keeps the connection open, or 400 if the sender closes it; the 408 and the 400 are both counted in `rejected_envelopes` when the stall or close happens in the body of `POST /leads`; a stall while the headers are still arriving gets 408 but is not counted. A Content-Length over the size cap, however long the number, is answered 413 straight away; this holds for the decision body of `POST /review/<id>/resolve` too (after the Host and Origin check). Two different Content-Length values in one request are answered 400. A request target that cannot be parsed is answered 400.
+@@ -187,3 +187,5 @@ The three "Not written by the desk" rows rest on two facts in the repository. Fi
+ Not checked here: whether HubSpot's own contact creation or the automations on an account set other fields. Also not checked: the default lead status options of a HubSpot account. This repository does not contain them, and an account can rename or add options, so the file must use values that exist on the account.
+ 
+ The probe script described in `docs/hubspot-probe.md` makes the owner write and the lead status write (`OPEN`) as two separate calls. It imports no desk module, so it does not use the desk's HubSpot adapter, and it does not make the desk's own combined call.
++
++**Name look-up of a mail host.** The mailbox read (`src/lead_desk/imap_count.py`) and the mail sender (`src/lead_desk/smtp_provider.py`) look up the host name and connect inside one time limit (`src/lead_desk/netconnect.py`): a name server that does not answer ends the call with the same time-out error as a silent mail server, at the limit and not later. A look-up that is still running when that happens is left to finish by itself in a helper thread; it holds no connection and no secret. Tests: the `test_f6_*` tests of `tests/test_r7f_findings.py`.
+diff --git a/docs/real-services.md b/docs/real-services.md
+index 4973039..811e491 100644
+--- a/docs/real-services.md
++++ b/docs/real-services.md
+@@ -7,7 +7,7 @@ This section is for someone who wants to try the desk against their own free Hub
+ `scripts/run_real_check.py` runs the same desk against a real CRM (a free HubSpot account) and real e-mail (a mail account reached over an encrypted connection), then COUNTS what really happened. Only the INPUT is made up: about 12 invented people whose addresses end in `example.com` (a domain name reserved for examples); the mail kind used here picks the receiving address only from your configured inbox list, never from a lead's address (`tests/test_smtp_provider.py`, test of the recipient choice). You run it from your own terminal; it asks "y/N" after printing the worst-case number of calls and mails (and dollars, only with `--live-model`), and it refuses to start when a required cap or setting is missing (`tests/test_real_check_dry.py`, test of a missing required name).
+ 
+ 1. Copy `scripts/real-run.env.example` to a folder outside the repository and fill it in. Each name is explained inside the file. Secrets are never in that file, only the paths of one-line key files (a HubSpot private-app token with contacts read and write only, called the service key in the config file; the desk does not use HubSpot's owners list, only the probe does; and a mail app password).
+-   A key file is checked by `scripts/run_real_check.py` before the question (a bad one stops the run before any cost line, any reservation and any connection), and then read AGAIN by each program that uses it (the desk, the probe, the model stand-in). It is not read once and handed over: a file that you change, replace or damage between the check and that later read is refused by the program that reads it, with the same one-line message that names the setting only and never the value. Nothing is cached between the two reads.
++   A key file is checked by `scripts/run_real_check.py` before the question (a bad one stops the run before any cost line, any reservation and any connection), and then read AGAIN by each program that uses it (the desk, the probe, the model stand-in). It is not read once and handed over: a file that you damage between the check and that later read (you empty it, make it too big, or turn it into something that is not a plain file) is refused by the program that reads it, with the same one-line message that names the setting only and never the value; a file that you replace with another valid key is used as it then is (the later read does not compare it with the first one). Nothing is cached between the two reads.
+ 1a. **Before turning lead stages on in any real HubSpot account (required; the desk then writes HubSpot's lead status field):** the CRM admin lists every automation that reacts to lead status changes and confirms each one is safe or switched off; test on one made-up contact first. The desk writes the lead status field and cannot see those automations (`docs/limits.md`, section "Which CRM stage things the desk touches").
+ 2. In HubSpot create the contact property `hadavin_lead_id` (single-line text) by hand; the program's HubSpot code uses only the contacts endpoints and creates no property (`src/lead_desk/crm_hubspot.py`, top comment; no test checks what the real HubSpot does when the property is missing: the tests run the code against a demo server that accepts the field anyway and answers every address except the contact addresses with 404, and the create test in `tests/test_crm_hubspot.py` counts one call for one create).
+ 3. Self-test first, no real service: `python scripts/run_real_check.py --dry-fakes`. Then the real run: `python scripts/run_real_check.py --config PATH`. Options: `--live-model` (a real AI model; its dollar limit is set in the settings whose names start with `DESK_LIVE_`), `--cleanup` (archives only the contacts this run made, found by their lead ids).
+diff --git a/load_tools/load_driver.py b/load_tools/load_driver.py
+index 229512b..bbcab4b 100644
+--- a/load_tools/load_driver.py
++++ b/load_tools/load_driver.py
+@@ -125,6 +125,10 @@ ID_PREFIX_MAX = 40
+ ID_PREFIX_TEXT = f"must be 1 to {ID_PREFIX_MAX} letters, digits, dots, underscores or hyphens"
+ UNREACHABLE_TEXT = "the desk cannot be reached: every request ended in a connection error (is it running?)"
+ NOT_LISTENING_TEXT = "the desk cannot be reached: nothing answers at that address (is it running?); no request was sent"
++STOPPED_EARLY_TEXT = (
++    "the run was stopped early: {n} of {total} requests were never sent, because the first tries got no answer; "
++    "the desk answered only later, so this run does not show how the desk handles those requests (run it again)"
++)
+ CONNECT_PROBE_SECONDS = 1.0  # one look for a listener before any worker starts (nothing is sent on it)
+ STOP_LOOK_SECONDS = 0.5  # a worker that waits for its schedule looks at the stop flag this often
+ STOP_AFTER_ERRORS_PER_THREAD = 2  # stop all workers after this many connection errors per thread with no success yet
+@@ -599,6 +603,7 @@ def run(
+         "intended": len(schedule),
+         "logged": len(lines),
+         "final_status": dict(finals),
++        "stopped": finals.get("driver:stopped", 0),  # requests that were never sent because the run was stopped early
+         "max_lag_s": lag,
+         "last_intended_ts": max((d["intended_ts"] for d in lines), default=None),
+     }
+@@ -642,6 +647,9 @@ def main(argv: list[str] | None = None) -> int:
+         print(f"ERROR: {NOT_LISTENING_TEXT if summary.get('not_listening') else UNREACHABLE_TEXT}", file=sys.stderr)
+         return EXIT_UNREACHABLE
+     print(json.dumps(summary, sort_keys=True))
++    if summary["stopped"]:  # r7f: a run that was stopped early is never a success, even if the desk answered later
++        print(f"ERROR: {STOPPED_EARLY_TEXT.format(n=summary['stopped'], total=summary['intended'])}", file=sys.stderr)
++        return EXIT_UNREACHABLE
+     return 0
+ 
+ 
+diff --git a/scripts/hubspot_probe.py b/scripts/hubspot_probe.py
+index 09e46ea..d5534ee 100644
+--- a/scripts/hubspot_probe.py
++++ b/scripts/hubspot_probe.py
+@@ -100,7 +100,8 @@ def _klass(status: int) -> str:
+ 
+ 
+ def _mask(value: object) -> str:
+-    return "..." + str(value)[-4:]
++    """A fixed word, never a part of the value: ids can come from the server's answer."""
++    return "(id hidden)"
+ 
+ 
+ class Probe:
+@@ -209,7 +210,7 @@ def run(p: Probe, tag: str) -> dict[str, str]:
+             res["owners readable"] = "PASS"
+             ids = [str(x.get("id")) for x in results if isinstance(x, dict) and x.get("id")]
+             owner = ids[0] if ids else None
+-            p.say(f"owners: {len(ids)} found, ids {[_mask(i) for i in ids]}")
++            p.say(f"owners: {len(ids)} found, ids hidden")
+         else:
+             res["owners readable"] = "FAIL"
+         props: dict[str, str] = {"email": email}
+diff --git a/src/lead_desk/imap_count.py b/src/lead_desk/imap_count.py
+index d5d9cc3..663e690 100644
+--- a/src/lead_desk/imap_count.py
++++ b/src/lead_desk/imap_count.py
+@@ -38,6 +38,7 @@ from typing import IO, Any, cast
+ from lead_desk.constants import IMAP_LITERAL_MAX_BYTES, IMAP_SECONDS_MAX, MAIL_SPAM_FOLDER, is_positive_seconds
+ from lead_desk.contract import SendRefused
+ from lead_desk.envnum import SettingRefused
++from lead_desk.netconnect import connect_bounded
+ from lead_desk.smtp_provider import read_secret_file
+ from lead_desk.tls_trust import CaFileRefused, new_verifying_context, require_modern_protocol, require_verifying
+ 
+@@ -187,16 +188,15 @@ class _BoundedImap(imaplib.IMAP4_SSL):
+         the same value just before the wrap; Python's TLS handshake counts that time-out for the handshake AS A WHOLE
+         (it does not start again with every received byte, unlike a plain read), so a server that drips one handshake
+         byte at a time cannot keep it past that value (tests: a silent and a dripping server). The look-up of the host
+-        name is the one step the standard library cannot bound. None of the time left: ImapTotalTimeout before
++        name is bounded the same way (lead_desk.netconnect). None of the time left: ImapTotalTimeout before
+         anything is opened. A time-out when the total deadline was the limit is reported as ImapTotalTimeout, a
+         time-out of one step as TimeoutError."""
+         left = self.deadline - time.monotonic()
+         if left <= 0:
+             raise ImapTotalTimeout(_TOTAL_TEXT)
+         limited_by_total = left <= self.step_seconds
+-        base: Any = imaplib.IMAP4  # the plain TCP connect of imaplib; the TLS wrap is done below
+-        try:
+-            sock = base._create_socket(self, min(self.step_seconds, left))
++        try:  # the look-up of the host name and the connect, together, in at most min(one step, the time left)
++            sock = connect_bounded(self.host, self.port, min(self.step_seconds, left))
+         except TimeoutError:
+             if limited_by_total:
+                 raise ImapTotalTimeout(_TOTAL_TEXT) from None
+diff --git a/src/lead_desk/netconnect.py b/src/lead_desk/netconnect.py
+new file mode 100644
+index 0000000..d673196
+--- /dev/null
++++ b/src/lead_desk/netconnect.py
+@@ -0,0 +1,58 @@
++"""One TCP connect whose WHOLE time, including the look-up of the host name, is bounded.
++
++`socket.create_connection` bounds only the connect itself: the name look-up (getaddrinfo) before it has no time limit
++and a name server that does not answer can hold a caller for minutes, past any total time limit. Here the look-up
++runs in a helper thread that the caller waits for at most the time given; a look-up that is still running then is left
++to finish on its own (it holds no connection and no secret) and the caller gets a TimeoutError."""
++
++from __future__ import annotations
++
++import socket
++import threading
++import time
++from typing import Any
++
++LOOKUP_TEXT = "the look-up of the host name took longer than the time limit"
++
++
++def resolve_bounded(host: str, port: int, seconds: float) -> list[Any]:
++    """The addresses of `host` for a stream connection; TimeoutError when the look-up needs more than `seconds`."""
++    box: list[Any] = []
++    done = threading.Event()
++
++    def work() -> None:
++        try:
++            box.append(socket.getaddrinfo(host, port, type=socket.SOCK_STREAM))
++        except OSError as e:
++            box.append(e)
++        finally:
++            done.set()
++
++    threading.Thread(target=work, name="name-lookup", daemon=True).start()
++    if not done.wait(max(seconds, 0.0)):
++        raise TimeoutError(LOOKUP_TEXT)
++    result = box[0]
++    if isinstance(result, OSError):
++        raise result
++    found: list[Any] = result
++    return found
++
++
++def connect_bounded(host: str, port: int, seconds: float) -> socket.socket:
++    """A connected socket to host:port; look-up and connect together take at most `seconds` (TimeoutError otherwise).
++    Each address is tried in order with the time that is left; the error of the last one is raised when none works."""
++    deadline = time.monotonic() + seconds
++    last: OSError | None = None
++    for family, kind, proto, _name, address in resolve_bounded(host, port, seconds):
++        left = deadline - time.monotonic()
++        if left <= 0:
++            raise TimeoutError(LOOKUP_TEXT)
++        sock = socket.socket(family, kind, proto)
++        try:
++            sock.settimeout(left)
++            sock.connect(address)
++            return sock
++        except OSError as e:
++            sock.close()
++            last = e
++    raise last or OSError("no address for the host name")
+diff --git a/src/lead_desk/smtp_provider.py b/src/lead_desk/smtp_provider.py
+index e0a7ab5..bf87691 100644
+--- a/src/lead_desk/smtp_provider.py
++++ b/src/lead_desk/smtp_provider.py
+@@ -55,6 +55,7 @@ from lead_desk.contract import (
+     is_fd_exhaustion,
+ )
+ from lead_desk.envnum import SettingRefused, env_number
++from lead_desk.netconnect import connect_bounded
+ from lead_desk.regfile import FileRefused, read_secret_line
+ from lead_desk.run_stats import write_stats
+ from lead_desk.smtp_outbox import (
+@@ -274,7 +275,7 @@ class SmtpProviderOutbox:
+ 
+     def _connect(self, budget: _Budget) -> socket.socket:
+         try:
+-            sock = socket.create_connection((self._s.host, self._s.port), timeout=budget.left())
++            sock = connect_bounded(self._s.host, self._s.port, budget.left())  # look-up and connect
+         except MemoryError:
+             raise
+         except Exception as e:  # noqa: BLE001 (refused, name lookup, timeout: nothing was sent, a retry is safe)
+diff --git a/src/lead_desk/tls_trust.py b/src/lead_desk/tls_trust.py
+index 140abba..2c75d2f 100644
+--- a/src/lead_desk/tls_trust.py
++++ b/src/lead_desk/tls_trust.py
+@@ -27,7 +27,7 @@ _BOM = b"\xef\xbb\xbf"  # a UTF-8 byte-order mark in front of the text is harmle
+ # words in a cipher name that no mail login may use (they appear only when the context was made with a lowered
+ # security level such as "@SECLEVEL=0"; a normal context lists none). This is a check of the offered cipher list: the
+ # security level itself cannot be read from a context.
+-WEAK_CIPHER_WORDS = ("NULL", "RC4", "EXPORT", "MD5", "anon", "DES-CBC-")
++WEAK_CIPHER_WORDS = ("NULL", "RC4", "EXPORT", "MD5", "ADH-", "AECDH-", "DES-CBC-")  # ADH-, AECDH-: no server login
+ 
+ 
+ class CaFileRefused(ValueError):
+diff --git a/tests/support.py b/tests/support.py
+index e48494c..ff80e97 100644
+--- a/tests/support.py
++++ b/tests/support.py
+@@ -29,6 +29,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+ from pathlib import Path
+ from typing import Any, Final, cast
+ 
++import pytest
++
+ from demo_only.fakes import BlindOutbox, FakeCrm, KeyedOutbox, RecordedQualifier
+ from lead_desk.adapters import CrmNothingStored
+ from lead_desk.config import Config, read_leadflow
+@@ -808,7 +810,9 @@ def book_folder_in_repo(prefix: str) -> Iterator[Path]:
+     fresh folder is removed at the end; the data/ folder is removed too when THIS call made it and it is empty again,
+     so a test run leaves the repository folder as it found it (the clean-tree guard reports a data/ that appeared)."""
+     data = REPO / "data"
+-    made = not data.exists()
++    if data.is_symlink():  # never create or remove anything inside the target of a link
++        pytest.fail("data in the repository folder is a link: this test refuses to write through it")
++    made = not os.path.lexists(data)
+     data.mkdir(exist_ok=True)
+     folder = Path(tempfile.mkdtemp(prefix=prefix, dir=data))  # a fresh folder: only it is removed
+     try:
+diff --git a/tests/test_file_call_guard.py b/tests/test_file_call_guard.py
+index 359aa87..dc69479 100644
+--- a/tests/test_file_call_guard.py
++++ b/tests/test_file_call_guard.py
+@@ -377,10 +377,6 @@ ALLOWED_CALLS = {
+         "src/lead_desk/imap_count.py",
+         "super().open",
+     ): "the imaplib base class opens the socket to the IMAP host in the setting; the file is then a deadline reader",
+-    (
+-        "src/lead_desk/imap_count.py",
+-        "imaplib.IMAP4",
+-    ): "the imaplib base class opens the TCP connection to the IMAP host in the setting, bounded by the total deadline",
+     (
+         "src/lead_desk/imap_count.py",
+         "self.ssl_context.wrap_socket",
+@@ -461,9 +457,13 @@ ALLOWED_CALLS = {
+     ): "swaps the desk's own statistics file in; the temp file was made by open_output",
+     ("src/lead_desk/server.py", "self._slot.touch"): "the desk's own slot file name, not a typed path",
+     (
+-        "src/lead_desk/smtp_provider.py",
+-        "socket.create_connection",
+-    ): "connects to the mail host named in the setting, with a timeout",
++        "src/lead_desk/netconnect.py",
++        "socket.getaddrinfo",
++    ): "looks up the host name of a mail host in the setting, in a helper thread that is waited for with a time limit",
++    (
++        "src/lead_desk/netconnect.py",
++        "socket.socket",
++    ): "makes the one socket that connects to an address of that host, with the time that is left as its time-out",
+     (
+         "load_tools/check_invariants.py",
+         "sqlite3.connect",
+diff --git a/tests/test_hubspot_probe.py b/tests/test_hubspot_probe.py
+index e6d8713..9c2fec0 100644
+--- a/tests/test_hubspot_probe.py
++++ b/tests/test_hubspot_probe.py
+@@ -121,6 +121,52 @@ def test_happy_path_count_matches_plan(make: Callable[..., Stub], capsys: pytest
+     assert "permanent" in out and f"calls used: {hp.PLANNED_CALLS}" in out
+     assert s.auth == {"Bearer " + TOKEN}  # the token did reach the (local) server
+     assert TOKEN not in out and OWNER not in out  # masked ids only
++    assert "owners: 1 found, ids hidden" in out and "..." + OWNER[-4:] not in out  # r7f: no last 4 characters
++
++
++def test_no_part_of_a_server_supplied_id_is_printed_even_when_the_delete_fails(
++    make: Callable[..., Stub], capsys: pytest.CaptureFixture[str]
++) -> None:
++    # r7f: the old mask printed "..." plus the last 4 characters of a server-supplied id. Mutant run on the
++    # r7e function (return "..." + str(value)[-4:]): this test FAILS; with the fixed word it passes.
++    odd_owner, odd_contact = "ownerZQ7X-hostile", "contactWK3P-hostile"
++    s = make(
++        owners=[(200, {"results": [{"id": odd_owner}]})],
++        create=[(201, {"id": odd_contact})],
++        gdpr=[(403, {})],
++        delete=[(500, {})],
++    )
++    rc, out = go(s, capsys)
++    assert rc == hp.EXIT_FAIL and "may still exist" in out  # the warning is printed, so _mask ran on the id
++    for frag in ("ZQ7X", "WK3P", "hostile", "tile", odd_owner, odd_contact):
++        assert frag not in out
++    assert "(id hidden)" in out and TOKEN not in out
++
++
++def test_the_mask_is_a_fixed_word_for_any_value() -> None:
++    assert {hp._mask(v) for v in ("a", "12345678", "x" * 500, 7, None, TOKEN)} == {"(id hidden)"}
++
++
++@pytest.mark.parametrize(
++    "bad",
++    [
++        "two words aaaaaaaaaaaaaa",
++        "tab\tinside-aaaaaaaaaaaa",
++        "short",
++        "caf\u00e9-aaaaaaaaaaaaaaaa",
++        "ctl\x01-aaaaaaaaaaaaaaaa",
++    ],
++)
++def test_a_token_that_is_not_one_plain_word_is_refused_before_any_call(
++    make: Callable[..., Stub], capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, bad: str
++) -> None:
++    """Kills mutant H03 (`if not token` instead of the shared secret check): a non-empty but unusable token went on to
++    the first call. Fails on H03, passes on r7e."""
++    s = make()
++    monkeypatch.setenv(ENV, bad)
++    rc, out = go(s, capsys)
++    assert rc == hp.EXIT_REFUSED and s.log == [], (rc, s.log)
++    assert bad not in out and "inside" not in out
+ 
+ 
+ def test_plan_prints_count_and_calls_nothing(capsys: pytest.CaptureFixture[str]) -> None:
+diff --git a/tests/test_portal_demo.py b/tests/test_portal_demo.py
+index 6c4ca15..a1ebc25 100644
+--- a/tests/test_portal_demo.py
++++ b/tests/test_portal_demo.py
+@@ -812,7 +812,9 @@ def cut_error_body(h: BaseHTTPRequestHandler, key: str, data: bytes, n: int) ->
+     h.close_connection = True
+ 
+ 
+-# CONTROL (r7e, old, body unchanged): passes on the frozen tree, pins behaviour that must stay; no mutant run.
++# Case hang_up-error: FAILS on the frozen tree (the expected status there was "RemoteDisconnected", now
++# "error"; the decorator changed, r7e review m1): a fix test.
++# The cut_body and cut_error_body cases pass on the frozen tree (CONTROL). No mutant run.
+ @pytest.mark.parametrize(
+     ("script", "status"),
+     [(hang_up, "error"), (cut_body, HTTP_CREATED), (cut_error_body, HTTP_CONFLICT)],
+diff --git a/tests/test_r7f_findings.py b/tests/test_r7f_findings.py
+new file mode 100644
+index 0000000..5e3cfdb
+--- /dev/null
++++ b/tests/test_r7f_findings.py
+@@ -0,0 +1,1113 @@
++"""Round 7F: the pass-8 mail-path review (minors and survivors). Real loopback sockets, made-up data only.
++
++Every test says in its docstring which mutant it kills (a mutant really run, with the result in R7F-RESULTS.md) or
++that it is a CONTROL (it passes on r7e and on the older trees as well, and names the mutant that was run)."""
++
++from __future__ import annotations
++
++import json
++import socket
++import ssl
++import threading
++import time
++import warnings
++from pathlib import Path
++from typing import Any
++
++import pytest
++import support
++from test_r7d_findings import _run_driver
++from test_r7e_findings import _DropsSomeRequests
++
++from demo_only.fake_imap import FakeImap
++from demo_only.fake_smtp_tls import FAKE_PASSWORD, FakeSmtp, make_cert
++from lead_desk.constants import HUBSPOT_HOST_SUFFIXES
++from lead_desk.contract import SendRefused
++from lead_desk.crm_hubspot import HubspotSettings
++from lead_desk.envnum import SettingRefused
++from lead_desk.imap_count import (
++    ImapConnectionError,
++    ImapCountError,
++    ImapSettings,
++    ImapTotalTimeout,
++    _BoundedImap,
++    _DeadlineReader,
++    _session,
++    counts_by_key,
++)
++from lead_desk.jsonread import JsonTooDeep, loads_bounded
++from lead_desk.live_claude import LiveSettings, LiveTransport
++from lead_desk.regfile import FileRefused, read_secret_line
++from lead_desk.smtp_outbox import _REPLY_MAX_BYTES, _Budget, _Closed, _dot_stuff, _read_reply
++from lead_desk.smtp_provider import ProviderSettings, SmtpProviderOutbox
++from lead_desk.tls_trust import CaFileRefused, require_verifying
++from load_tools import load_driver
++
++
++def _imap_settings(tmp_path: Path, port: int, total: float, step: float) -> tuple[ImapSettings, Path, Path]:
++    made = make_cert(tmp_path, "localhost")
++    assert made is not None
++    cert, key = made
++    pw = tmp_path / "pw.txt"
++    pw.write_text(FAKE_PASSWORD + "\n")
++    s = ImapSettings(
++        "localhost",
++        "reader-user",
++        pw,
++        port=port,
++        folders=("INBOX",),
++        timeout_seconds=step,
++        total_seconds=total,
++        ssl_context=ssl.create_default_context(cafile=str(cert)),
++    )
++    return s, cert, key
++
++
++def test_f1_a_connect_that_never_completes_ends_at_the_total_not_at_the_step(tmp_path: Path) -> None:
++    """Kills mutant I03 (imap_count._create_socket: the connect waits one plain step, not min(step, time left)):
++    with a total of 1 s and a step of 10 s the mutant ends after about 10 s. Fails on the I03 mutant, passes on r7e.
++    The server is a listener with backlog 0 and filler connections, so the next SYN is dropped and a connect hangs."""
++    ls = socket.socket()
++    ls.bind(("127.0.0.1", 0))
++    ls.listen(0)
++    port = ls.getsockname()[1]
++    fillers = []
++    try:
++        for _ in range(3):
++            c = socket.socket()
++            c.setblocking(False)
++            try:
++                c.connect(("127.0.0.1", port))
++            except BlockingIOError:
++                pass
++            fillers.append(c)
++        probe = socket.socket()
++        probe.settimeout(0.5)
++        try:
++            probe.connect(("127.0.0.1", port))
++            pytest.skip("this system completes a connect to a full queue")
++        except OSError:
++            pass
++        finally:
++            probe.close()
++        s, _, _ = _imap_settings(tmp_path, port, total=1.0, step=10.0)
++        t0 = time.monotonic()
++        with pytest.raises(ImapTotalTimeout):
++            counts_by_key(s, "RUN1-")
++        assert time.monotonic() - t0 < 3.0
++    finally:
++        for c in fillers:
++            c.close()
++        ls.close()
++
++
++def test_f1_a_server_that_is_silent_after_tls_ends_with_the_total_time_error(tmp_path: Path) -> None:
++    """Kills mutant I09 (imap_count._DeadlineReader._fill: a timeout past the deadline stays a plain timeout, so the
++    caller sees ImapCountError instead of ImapTotalTimeout). Fails on the I09 mutant, passes on r7e. The fake server
++    completes TLS and then says nothing; it keeps a reference to its TLS socket (a dropped one is closed)."""
++    ss = socket.socket()
++    ss.bind(("127.0.0.1", 0))
++    ss.listen(2)
++    port = ss.getsockname()[1]
++    s, cert, key = _imap_settings(tmp_path, port, total=1.0, step=10.0)
++
++    def serve() -> None:
++        ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
++        ctx.load_cert_chain(str(cert), str(key))
++        c, _ = ss.accept()
++        try:
++            kept = ctx.wrap_socket(c, server_side=True)
++            time.sleep(4)
++            kept.close()
++        except OSError:
++            pass
++
++    threading.Thread(target=serve, daemon=True).start()
++    try:
++        with pytest.raises(ImapTotalTimeout):
++            counts_by_key(s, "RUN1-")
++    finally:
++        ss.close()
++
++
++# ---- tls_trust.require_verifying: the three checks that guard a context handed in by other code ----
++
++
++def test_f2_a_context_without_the_host_name_check_is_refused() -> None:
++    """Kills mutant T03 (tls_trust.require_verifying: the host name check not required). Fails on T03, passes on r7e."""
++    ctx = ssl.create_default_context()
++    ctx.check_hostname = False  # the chain is still checked (CERT_REQUIRED), only the name is not
++    assert ctx.verify_mode == ssl.CERT_REQUIRED
++    with pytest.raises(CaFileRefused):
++        require_verifying(ctx, "ctx")
++
++
++@pytest.mark.parametrize("floor", ["TLSv1", "TLSv1_1"])
++def test_f2_a_context_that_allows_tls_below_1_2_is_refused(floor: str) -> None:
++    """Kills mutant T04 (the floor test lowered to `< TLSv1`, so TLS 1.0 and 1.1 pass). Fails on T04 for both floors
++    (TLS 1.1 passes the mutant, and TLS 1.0 is not below TLS 1.0), passes on r7e."""
++    ctx = ssl.create_default_context()
++    with warnings.catch_warnings():
++        warnings.simplefilter("ignore", DeprecationWarning)
++        ctx.minimum_version = getattr(ssl.TLSVersion, floor)
++    with pytest.raises(CaFileRefused):
++        require_verifying(ctx, "ctx")
++
++
++@pytest.mark.parametrize("ciphers", ["NULL:@SECLEVEL=0", "aNULL:@SECLEVEL=0", "MD5:@SECLEVEL=0"])
++def test_f2_a_context_that_offers_a_null_or_md5_cipher_is_refused(ciphers: str) -> None:
++    """Kills mutant T08 (the weak-cipher test removed). Fails on T08, passes on r7e."""
++    ctx = ssl.create_default_context()
++    ctx.set_ciphers(ciphers)
++    with pytest.raises(CaFileRefused):
++        require_verifying(ctx, "ctx")
++
++
++@pytest.mark.parametrize("ciphers", ["ADH-AES256-GCM-SHA384:@SECLEVEL=0", "AECDH-AES256-SHA:@SECLEVEL=0"])
++def test_f5_a_context_that_offers_an_anonymous_cipher_is_refused(ciphers: str) -> None:
++    """FIX TEST (found while classifying mutant T03, MAIL7): the word list had "anon", which no OpenSSL cipher name
++    contains, so ciphers without any server login (names starting ADH- or AECDH-) were accepted. FAILS on r7e (the
++    context is accepted), passes on r7f; the mutant that drops the two new words fails it."""
++    ctx = ssl.create_default_context()
++    ctx.set_ciphers(ciphers)
++    with pytest.raises(CaFileRefused):
++        require_verifying(ctx, "ctx")
++
++
++# ---- smtp_provider: a context weakened after the object was built; STARTTLS must be a plain 220 ----
++
++
++class _Certs:
++    def __init__(self, tmp: Path) -> None:
++        made = make_cert(tmp, "localhost")
++        if made is None:
++            pytest.skip("the openssl program is not installed, so no test certificate can be made")
++        self.cert, self.key = made
++
++    def context(self) -> ssl.SSLContext:
++        return ssl.create_default_context(cafile=str(self.cert))
++
++
++def _provider(tmp_path: Path, port: int, ctx: ssl.SSLContext, **over: Any) -> SmtpProviderOutbox:
++    pw = tmp_path / "smtp-pw.txt"
++    pw.write_text(FAKE_PASSWORD + "\n", encoding="utf-8")
++    kw: dict[str, Any] = {
++        "host": "localhost",
++        "port": port,
++        "user": "sender-user",
++        "password_file": pw,
++        "mail_from": "sender@example.test",
++        "recipients": ("inbox-a@example.test",),
++        "max_sends": 5,
++        "security": "starttls",
++        "timeout_seconds": 2.0,
++    }
++    return SmtpProviderOutbox(ProviderSettings(**(kw | over)), ssl_context=ctx)
++
++
++def test_f2_a_context_weakened_after_the_object_was_built_is_refused_before_any_connection(tmp_path: Path) -> None:
++    """Kills mutants P03 (the re-check at the start of send removed: the connection is opened and the dialogue starts
++    before _wrap refuses) and P07 (the re-check removed everywhere: the mail is sent). Fails on both, passes on r7e."""
++    certs = _Certs(tmp_path)
++    srv = FakeSmtp(certs.cert, certs.key, "localhost")
++    try:
++        ctx = certs.context()
++        box = _provider(tmp_path, srv.port, ctx)
++        ctx.check_hostname = False  # weakened AFTER the constructor checked it
++        ctx.verify_mode = ssl.CERT_NONE
++        with pytest.raises(SendRefused):
++            box.send("RUN1-L-001", "ada@example.test", "Thanks", "Hi", 2.0)
++        assert srv.commands == []  # nothing, not even EHLO, went to the server
++        assert srv.messages == [] and box.sent == 0
++    finally:
++        srv.close()
++
++
++def test_f2_a_blank_ca_file_setting_is_refused_not_read_as_unset() -> None:
++    """Kills mutant P09 (a present but blank DESK_SMTPP_CA_FILE is treated as unset, so the system authorities would
++    be trusted without a word). Fails on P09, passes on r7e."""
++    env = {
++        "DESK_SMTPP_HOST": "localhost",
++        "DESK_SMTPP_USER": "sender-user",
++        "DESK_SMTPP_PASSWORD_FILE": "pw.txt",
++        "DESK_SMTPP_FROM": "sender@example.test",
++        "DESK_SMTPP_RECIPIENTS": "inbox-a@example.test",
++        "DESK_SMTPP_MAX_SENDS": "3",
++    }
++    assert ProviderSettings.from_env(env).ca_file is None
++    for blank in ("", "   "):
++        with pytest.raises(SettingRefused):
++            ProviderSettings.from_env({**env, "DESK_SMTPP_CA_FILE": blank})
++
++
++def test_f2_a_ca_file_and_a_context_together_are_refused(tmp_path: Path) -> None:
++    """Kills mutant P08 (both a CA file and a context argument allowed: the file would be ignored without a word).
++    Fails on P08, passes on r7e."""
++    certs = _Certs(tmp_path)
++    with pytest.raises(SettingRefused):
++        _provider(tmp_path, 1, certs.context(), ca_file=certs.cert)
++
++
++class _ScriptedStarttls:
++    """A server written for this test: `after_starttls_reply` is what it answers to STARTTLS. With b"220..." it
++    appends the bytes of an injected reply in the same send (a classic attack: text put in front of the handshake),
++    then does the TLS handshake; with anything else it stays plain. `early` = what the client sent after the
++    post-TLS EHLO before the server answered it (must stay empty), `plain_after_refusal` = bytes seen after a
++    refusal."""
++
++    def __init__(self, certs: _Certs, reply: bytes) -> None:
++        self.reply, self.early, self.plain_after_refusal, self.lines = reply, b"", b"", []
++        self.ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
++        self.ctx.load_cert_chain(str(certs.cert), str(certs.key))
++        self.srv = socket.socket()
++        self.srv.bind(("127.0.0.1", 0))
++        self.srv.listen(2)
++        self.port = self.srv.getsockname()[1]
++        threading.Thread(target=self._run, daemon=True).start()
++
++    def _line(self, f: Any) -> bytes:
++        return f.readline(4096)
++
++    def _run(self) -> None:
++        try:
++            c, _ = self.srv.accept()
++            f = c.makefile("rwb", buffering=0)
++            f.write(b"220 ready\r\n")
++            self.lines.append(self._line(f))  # EHLO
++            f.write(b"250-x\r\n250-STARTTLS\r\n250 AUTH PLAIN\r\n")
++            self.lines.append(self._line(f))  # STARTTLS
++            f.write(self.reply)
++            if not self.reply.startswith(b"220"):
++                c.settimeout(1.0)
++                try:
++                    self.plain_after_refusal = c.recv(64)
++                except OSError:
++                    pass
++                return
++            tls = self.ctx.wrap_socket(c, server_side=True)
++            g = tls.makefile("rwb", buffering=0)
++            self.lines.append(self._line(g))  # EHLO after TLS
++            tls.settimeout(0.8)
++            try:
++                self.early = tls.recv(256)  # the client must wait for our answer
++            except OSError:
++                pass
++            tls.settimeout(3.0)
++            g.write(b"250 ok\r\n")
++            self.lines.append(self._line(g))  # AUTH
++            g.write(b"535 no\r\n")
++        except OSError:
++            pass
++
++    def close(self) -> None:
++        self.srv.close()
++
++
++def test_f2_bytes_that_arrive_with_the_starttls_reply_are_not_read_as_a_reply_after_tls(tmp_path: Path) -> None:
++    """Kills mutant P01 (the plaintext buffer kept after STARTTLS). The server adds `250 INJECTED` to the same send as
++    `220`; the client must throw it away and wait for the real answer to its second EHLO. On the P01 mutant the
++    injected line is taken as that answer and AUTH is sent at once (`early` is not empty). Fails on P01, passes on
++    r7e."""
++    certs = _Certs(tmp_path)
++    srv = _ScriptedStarttls(certs, b"220 go\r\n250 INJECTED\r\n")
++    try:
++        box = _provider(tmp_path, srv.port, certs.context())
++        with pytest.raises(SendRefused, match="login refused"):  # the scripted server refuses the login on purpose
++            box.send("RUN1-L-001", "ada@example.test", "Thanks", "Hi", 2.0)
++        assert srv.early == b""
++        assert srv.lines[2].startswith(b"EHLO") and srv.lines[3].startswith(b"AUTH PLAIN")
++    finally:
++        srv.close()
++
++
++@pytest.mark.parametrize("reply", [b"250 ok\r\n", b"200 ok\r\n", b"299 ok\r\n"])
++def test_f2_only_a_220_answer_to_starttls_starts_the_handshake(tmp_path: Path, reply: bytes) -> None:
++    """Kills mutant P04 (any 2xx accepted for STARTTLS: the client would start a TLS handshake on a server that did
++    not agree, so the password could follow in the wrong mode). Fails on P04 (the client sends a handshake, the call
++    ends later as SendUnreachable), passes on r7e (SendRefused, and no handshake byte arrives)."""
++    certs = _Certs(tmp_path)
++    srv = _ScriptedStarttls(certs, reply)
++    try:
++        box = _provider(tmp_path, srv.port, certs.context(), timeout_seconds=1.5)
++        with pytest.raises(SendRefused, match="starttls refused"):
++            box.send("RUN1-L-001", "ada@example.test", "Thanks", "Hi", 1.5)
++        assert srv.plain_after_refusal == b""
++    finally:
++        srv.close()
++
++
++# ---- imap_count: no context given means the verifying one ----
++
++
++def test_f2_no_ssl_context_means_a_verified_connection_and_no_login_to_an_untrusted_server(tmp_path: Path) -> None:
++    """Kills mutant I18 (imaplib's unverified default used when no context is given). The fake server's certificate is
++    not trusted by the system store, so the call must end before any LOGIN. Fails on I18 (the login goes out and the
++    call returns counts), passes on r7e."""
++    certs = _Certs(tmp_path)
++    srv = FakeImap(certs.cert, certs.key, "localhost", {"INBOX": ["RUN1-L-001"]})
++    pw = tmp_path / "imap-pw.txt"
++    pw.write_text(FAKE_PASSWORD + "\n", encoding="utf-8")
++    try:
++        s = ImapSettings(
++            "localhost", "reader-user", pw, port=srv.port, folders=("INBOX",), timeout_seconds=2.0, total_seconds=5.0
++        )
++        assert s.ssl_context is None
++        with pytest.raises(ImapCountError):
++            counts_by_key(s, "RUN1-")
++        assert srv.logins == [] and srv.login_lines == []
++    finally:
++        srv.close()
++
++
++# ---- crm_hubspot: the vendor domain test is a whole-label test ----
++
++
++@pytest.mark.parametrize("prefix", ["evil", "not", "x-"])
++def test_f2_a_host_that_only_ends_with_a_vendor_name_is_not_a_vendor_host(prefix: str) -> None:
++    """Kills mutant V03 (endswith(suffix) without the dot: a host that only ends with a vendor name would count as the
++    vendor's and get the key). Fails on V03, passes on r7e."""
++    for suffix in HUBSPOT_HOST_SUFFIXES:
++        with pytest.raises(ValueError, match="vendor's own domains"):
++            HubspotSettings(Path("k"), 1, base_url=f"https://{prefix}{suffix}")
++        ok = f"https://{'a' + 'pi'}.{suffix}"  # a real label in front of the vendor domain stays allowed (CONTROL)
++        assert HubspotSettings(Path("k"), 1, base_url=ok).base_url == ok
++
++
++# ---- live_claude: the key-read refusal is a fixed text, not the class of the error ----
++
++
++@pytest.mark.parametrize("shape", ["missing", "two lines", "empty"])
++def test_f2_the_key_read_refusal_is_the_fixed_text_and_names_no_class(tmp_path: Path, shape: str) -> None:
++    """Kills mutant V01 (LiveTransport(repr(e)): the text would start with the class name FileRefused and hold quotes
++    and brackets). Fails on V01, passes on r7e."""
++    key = tmp_path / "key.txt"
++    if shape != "missing":
++        key.write_bytes(b"made-up-key-aaaa\nsecond\n" if shape == "two lines" else b"")
++    from decimal import Decimal
++
++    from lead_desk.live_claude import LiveQualifier  # local import: the settings need a full set of money values
++
++    s = LiveSettings(
++        model="fake-model-1",
++        key_file=key,
++        price_in_per_mtok=Decimal("1"),
++        price_out_per_mtok=Decimal("1"),
++        price_date="2026-01-01",
++        cap_run_usd=Decimal("1"),
++        cap_total_usd=Decimal("3"),
++        ledger_path=tmp_path / "ledger.jsonl",
++        run_id="run-a",
++        base_url="http://127.0.0.1:9",
++        timeout_seconds=2.0,
++    )
++    with pytest.raises(LiveTransport) as info:
++        LiveQualifier(s)._read_key()
++    text = str(info.value)
++    assert text.startswith("the key file ") and "Refused" not in text and "(" not in text and "'" not in text, text
++
++
++# ---- load_driver: the look for a listener sends nothing ----
++
++
++def test_f2_the_listener_probe_sends_no_byte_and_closes() -> None:
++    """Kills mutant L03 (the probe sends an HTTP request on its connection). The listener records everything that
++    arrives; the probe must give True and the connection must end with no byte at all. Fails on L03, passes on r7e."""
++    ls = socket.socket()
++    ls.bind(("127.0.0.1", 0))
++    ls.listen(2)
++    port = ls.getsockname()[1]
++    got: list[bytes] = []
++
++    def serve() -> None:
++        c, _ = ls.accept()
++        c.settimeout(2.0)
++        try:
++            got.append(c.recv(256))  # b"" means the client closed without sending anything
++        except OSError:
++            got.append(b"timeout")
++        finally:
++            c.close()
++
++    th = threading.Thread(target=serve, daemon=True)
++    th.start()
++    try:
++        assert load_driver.desk_listening(f"http://127.0.0.1:{port}") is True
++        th.join(5)
++        assert got == [b""]
++    finally:
++        ls.close()
++
++
++# ---- load_driver (r7e review M1): a run that was stopped early is never a success ----
++
++
++class _SlowConn:
++    """Wraps a connection: the answer (sendall) leaves only `delay` seconds after the connection was made."""
++
++    def __init__(self, conn: socket.socket, delay: float) -> None:
++        self._c, self._due = conn, time.monotonic() + delay
++
++    def __enter__(self) -> _SlowConn:
++        return self
++
++    def __exit__(self, *a: object) -> None:
++        self._c.close()
++
++    def settimeout(self, t: float) -> None:
++        self._c.settimeout(t)
++
++    def recv(self, n: int) -> bytes:
++        return self._c.recv(n)
++
++    def sendall(self, data: bytes) -> None:
++        time.sleep(max(0.0, self._due - time.monotonic()))
++        self._c.sendall(data)
++
++
++class _AnswersOnlyAfter(_DropsSomeRequests):
++    """The pattern of the r7e review: the FIRST request is answered 202 only after QUIET seconds, every other request
++    that arrives is closed without an answer."""
++
++    QUIET = 3.0
++    DROP_FROM, DROP_TO = 1, 10**9
++
++    def _one(self, conn: Any) -> None:
++        super()._one(_SlowConn(conn, self.QUIET))
++
++
++def test_m1_r7e_a_stopped_run_that_the_desk_answers_later_is_not_a_success(tmp_path: Path) -> None:
++    """FAILS on r7e: rc 0, final_status {error 1, 202 1, driver:stopped 6}, empty stderr (six of eight requests never
++    sent, exit code says success). On r7f: rc 3 and one true line that names how many were never sent."""
++    srv = _AnswersOnlyAfter()
++    try:
++        log = tmp_path / "req.jsonl"
++        done = _run_driver(
++            f"http://127.0.0.1:{srv.port}", "burst:8", log, "--workers", "1", "--threads", "2", timeout=120
++        )
++    finally:
++        srv.close()
++    err = done.stderr.decode()
++    lines = [json.loads(x) for x in log.read_text(encoding="utf-8").splitlines()]
++    stopped = [d for d in lines if d["final_status"] == "driver:stopped"]
++    answered = [d for d in lines if d["accepted"]]
++    assert stopped and answered, [d["final_status"] for d in lines]  # the pattern of the review: stop, then an answer
++    assert done.returncode == 3, (done.returncode, err[-300:])
++    assert f"{len(stopped)} of 8 requests were never sent" in err, err[-300:]
++    assert "cannot be reached" not in err  # an answer did arrive, so that line would be false
++    assert json.loads(done.stdout.decode())["stopped"] == len(stopped)  # the summary still says so
++
++
++# ---- tests/support.py::book_folder_in_repo (r7e review m3): never write through a data link ----
++
++
++def test_m3_book_folder_in_repo_refuses_a_data_link_and_writes_nothing_through_it(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
++) -> None:
++    """FAILS on r7e: the helper followed the link, made its fresh folder inside the link target and removed it again
++    (no failure). On r7f it fails the test at once and the target stays empty. Also a link that points nowhere."""
++    repo = tmp_path / "repo"
++    repo.mkdir()
++    target = tmp_path / "target"
++    target.mkdir()
++    (repo / "data").symlink_to(target, target_is_directory=True)
++    monkeypatch.setattr(support, "REPO", repo)
++    with pytest.raises(pytest.fail.Exception), support.book_folder_in_repo("x-"):
++        pytest.fail("the helper must not get this far")
++    assert list(target.iterdir()) == []
++    (repo / "data").unlink()
++    (repo / "data").symlink_to(tmp_path / "nowhere")
++    with pytest.raises(pytest.fail.Exception), support.book_folder_in_repo("x-"):
++        pytest.fail("the helper must not get this far")
++    assert not (tmp_path / "nowhere").exists()
++
++
++def test_m3_book_folder_in_repo_leaves_the_repository_folder_as_it_found_it(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
++) -> None:
++    """CONTROL (the r7e behaviour kept; passes on r7e; no mutant run): a plain data folder that did not exist is made
++    and removed again, a data folder that held something is kept."""
++    monkeypatch.setattr(support, "REPO", tmp_path)
++    with support.book_folder_in_repo("x-") as f:
++        assert f.parent == tmp_path / "data" and f.is_dir()
++    assert not (tmp_path / "data").exists()
++    (tmp_path / "data").mkdir()
++    (tmp_path / "data" / "keep.txt").write_text("x", encoding="utf-8")
++    with support.book_folder_in_repo("x-"):
++        pass
++    assert (tmp_path / "data" / "keep.txt").exists()
++
++
++# ---- regfile.read_secret_line: what is trimmed, what is one line, what is text ----
++
++KEY = "made-up-key-0123456789"  # 22 printable ASCII characters
++
++
++def _secret(tmp_path: Path, raw: bytes, **kw: Any) -> str:
++    f = tmp_path / "secret.txt"
++    f.write_bytes(raw)
++    return read_secret_line(f, "key", "key", **kw)
++
++
++@pytest.mark.parametrize("tail", ["\u00a0", "\u2003", "\x0b", "\x0c", "\u3000"])
++def test_f2_only_ascii_space_is_trimmed_round_a_secret(tmp_path: Path, tail: str) -> None:
++    """Kills mutant R02 (`.strip()` for every kind of space): a no-break space (or another non-ASCII or control space)
++    after the key would be cut off and the key accepted; it must be refused. Fails on R02, passes on r7e. CONTROL part:
++    ASCII space, tab and line ends round the key are trimmed (passes on both)."""
++    assert _secret(tmp_path, (" \t" + KEY + " \r\n").encode()) == KEY
++    with pytest.raises(FileRefused):
++        _secret(tmp_path, (KEY + tail + "\n").encode("utf-8"))
++
++
++@pytest.mark.parametrize("mid", [b"\r", b"\n", b"\r\n"])
++def test_f2_a_line_end_inside_the_key_says_more_than_one_line(tmp_path: Path, mid: bytes) -> None:
++    """Kills mutant R04 (a lone CR no longer counts as a line end: the file is still refused, but with the text 'holds
++    no key', which sends the user to the wrong fix). Fails on R04 for the lone CR, passes on r7e."""
++    with pytest.raises(FileRefused, match="more than one line"):
++        _secret(tmp_path, KEY.encode() + mid + b"second-part-aaaaaaaa")
++
++
++@pytest.mark.parametrize("bom", [b"\xff\xfe", b"\xfe\xff"])
++def test_f2_utf16_text_of_either_byte_order_is_named_as_utf16(tmp_path: Path, bom: bytes) -> None:
++    """Kills mutant R05 (the big-endian mark not recognised: refused as 'not UTF-8' instead of the helpful UTF-16
++    text). Fails on R05 for the big-endian mark, passes on r7e."""
++    with pytest.raises(FileRefused, match="UTF-16"):
++        _secret(tmp_path, bom + KEY.encode("utf-16-le"))
++
++
++def test_f2_spaced_drops_spaces_and_tabs_and_only_with_the_flag(tmp_path: Path) -> None:
++    """Kills mutant R08 (spaced drops only spaces: a tab in a grouped app password stays and the file is refused).
++    Fails on R08, passes on r7e. CONTROL part: without `spaced` a space or tab inside is refused (passes on both)."""
++    grouped = b"abcd efgh\tijkl mnop"
++    assert _secret(tmp_path, grouped, spaced=True) == "abcdefghijklmnop"
++    with pytest.raises(FileRefused):
++        _secret(tmp_path, grouped)
++
++
++# ---- smtp_outbox: dot stuffing and the reply cap, without a network ----
++
++
++def test_f2_a_message_that_starts_with_a_dot_is_dot_stuffed_on_its_first_line() -> None:
++    """Kills mutant S06 (the first line is not doubled: a text that starts with a lone dot line could end the DATA part
++    early). Fails on S06, passes on r7e."""
++    assert _dot_stuff(b".\r\nrest\r\n") == b"..\r\nrest\r\n.\r\n"
++    assert _dot_stuff(b".hidden\r\n.second\r\n") == b"..hidden\r\n..second\r\n.\r\n"
++    assert _dot_stuff(b"plain\r\n") == b"plain\r\n.\r\n"  # CONTROL: passes on both
++
++
++class _Chunks:
++    """A socket stand-in that hands out `total` bytes of one endless line in chunks of 4096 and then ends."""
++
++    def __init__(self, total: int) -> None:
++        self.left, self.taken = total, 0
++
++    def settimeout(self, t: float) -> None:
++        pass
++
++    def recv(self, n: int) -> bytes:
++        piece = min(n, self.left)
++        self.left -= piece
++        self.taken += piece
++        return b"x" * piece
++
++
++def test_f2_a_reply_line_without_an_end_is_cut_off_at_the_cap_not_at_twice_the_cap() -> None:
++    """Kills mutant S02 (the cap for an unfinished line doubled): the reader stops after about one cap of bytes and says
++    'reply too long'; on S02 it keeps reading up to twice the cap and then ends as 'connection closed'. Fails on S02."""
++    sock: Any = _Chunks(3 * _REPLY_MAX_BYTES)
++    with pytest.raises(_Closed, match="reply too long"):
++        _read_reply(sock, _Budget(5.0), bytearray())
++    assert sock.taken <= _REPLY_MAX_BYTES + 4096
++
++
++# ---- imap_count internals ----
++
++
++class _Owner:
++    def __init__(self, sock: socket.socket, deadline: float, step: float = 5.0) -> None:
++        self.sock, self.deadline, self.step_seconds = sock, deadline, step
++
++
++def test_f2_readline_never_returns_more_than_its_limit() -> None:
++    """Kills mutant I16 (the limit of readline not applied: a reader that asks for at most 4 bytes gets the whole
++    buffer). Fails on I16, passes on r7e."""
++    a, b = socket.socketpair()
++    try:
++        b.sendall(b"abcdefghij")
++        b.close()
++        owner: Any = _Owner(a, time.monotonic() + 5)
++        r = _DeadlineReader(owner)
++        assert r.readline(4) == b"abcd"
++        assert r.readline(4) == b"efgh"
++        assert r.readline(-1) == b"ij"  # CONTROL: no limit means everything up to the end of the data
++    finally:
++        a.close()
++
++
++def test_f2_nothing_is_sent_after_the_total_deadline() -> None:
++    """Kills mutant I10 (send without the deadline check): a command written after the total time ran out would still
++    leave. Fails on I10 (the bytes arrive and no error is raised), passes on r7e."""
++    a, b = socket.socketpair()
++    try:
++        conn = object.__new__(_BoundedImap)
++        conn.sock, conn.deadline, conn.step_seconds = a, time.monotonic() - 1.0, 5.0
++        with pytest.raises(ImapTotalTimeout):
++            conn.send(b"A1 NOOP\r\n")
++        b.setblocking(False)
++        with pytest.raises(BlockingIOError):
++            b.recv(16)  # nothing arrived
++    finally:
++        a.close()
++        b.close()
++
++
++@pytest.mark.parametrize(("pause", "expected"), [(1.3, ImapCountError), (0.0, ImapConnectionError)])
++def test_f2_a_connection_error_after_the_total_deadline_is_not_repeatable(
++    tmp_path: Path, pause: float, expected: type[Exception]
++) -> None:
++    """Kills mutant I12 (the past-deadline error is the repeatable ImapConnectionError, so a caller would start a second
++    whole call after the total time was used up). Fails on I12 for pause 1.3 (total 1 s). The pause 0.0 case is the
++    CONTROL (a reset inside the time is repeatable: ImapConnectionError); it passes on both."""
++    certs = _Certs(tmp_path)
++    srv = FakeImap(certs.cert, certs.key, "localhost", {"INBOX": []})
++    pw = tmp_path / "imap-pw.txt"
++    pw.write_text(FAKE_PASSWORD + "\n", encoding="utf-8")
++    ctx = ssl.create_default_context(cafile=str(certs.cert))
++    try:
++        s = ImapSettings(
++            "localhost",
++            "reader-user",
++            pw,
++            port=srv.port,
++            folders=("INBOX",),
++            timeout_seconds=5.0,
++            total_seconds=1.0,
++            ssl_context=ctx,
++        )
++
++        def work(m: Any) -> dict[str, dict[str, int]]:
++            time.sleep(pause)
++            raise ConnectionResetError
++
++        with pytest.raises(expected) as info:
++            _session(s, work)
++        assert type(info.value) is expected  # ImapConnectionError is a subclass of ImapCountError: exact class
++    finally:
++        srv.close()
++
++
++# ---- jsonread ----
++
++
++def test_f2_a_json_text_nested_too_deeply_is_a_value_error_not_a_recursion_error() -> None:
++    """Kills mutant V02 (RecursionError not mapped). Fails on V02, passes on r7e."""
++    with pytest.raises(JsonTooDeep):
++        loads_bounded("[" * 200_000)
++    assert loads_bounded("[1, 2]") == [1, 2]  # CONTROL
++
++
++# ---- load_driver: an answer protects the run from the stop (r7e L05) ----
++
++
++def test_f2_connection_errors_after_an_answer_never_set_the_stop(monkeypatch: pytest.MonkeyPatch) -> None:
++    """Kills mutant L05 (`if reached:` without the answered check): after one answer, 2 x threads connection errors
++    would stop the run. Fails on L05, passes on r7e. CONTROL part: with no answer the same errors do stop it."""
++    import multiprocessing
++
++    errors = multiprocessing.get_context("spawn").Value("i", 0)
++    stop, answered = threading.Event(), threading.Event()
++    monkeypatch.setattr(load_driver, "_STOP", stop)
++    monkeypatch.setattr(load_driver, "_ANSWERED", answered)
++    monkeypatch.setattr(load_driver, "_ERRORS", errors)
++    monkeypatch.setattr(load_driver, "_STOP_LIMIT", 3)
++    for _ in range(2):
++        assert load_driver._note_attempt(None) is False
++    answered.set()
++    for _ in range(5):
++        assert load_driver._note_attempt(None) is False
++    assert not stop.is_set()
++    answered.clear()
++    errors.value = 0
++    assert [load_driver._note_attempt(None) for _ in range(3)] == [False, False, True]
++    assert stop.is_set()
++
++
++# ---- run_real_check: every secret file is read before the Start question ----
++# CONTROL for every test below: each passes on r7e (no code changed); the mutants named were really run and fail them.
++
++
++def _secret_files(tmp_path: Path, **bad: str) -> Any:
++    from types import SimpleNamespace
++
++    def one(name: str, text: str) -> Path:
++        p = tmp_path / name
++        if name in bad:
++            if bad[name] != "missing":
++                p.write_text(bad[name], encoding="utf-8")
++        else:
++            p.write_text(text, encoding="utf-8")
++        return p
++
++    hs = SimpleNamespace(key_file=one("hs", "key-abcdefghij\n"))
++    pr = SimpleNamespace(password_file=one("pw", "a made up pass word\n"))
++    boxes = [
++        SimpleNamespace(password_file=one("m1", "box one pass\n")),
++        SimpleNamespace(password_file=one("m2", "box two pass\n")),
++    ]
++    return hs, pr, boxes
++
++
++def test_f3_good_secret_files_pass_and_a_spaced_password_is_allowed(tmp_path: Path) -> None:
++    """CONTROL: passes on r7e; mutant C03 (spaced ignored in the pre-check) fails it."""
++    import run_real_check as rrc
++
++    hs, pr, boxes = _secret_files(tmp_path)
++    rrc.check_secret_files(hs, pr, boxes)
++
++
++@pytest.mark.parametrize(
++    ("which", "setting"),
++    [
++        ("hs", "DESK_HUBSPOT_KEY_FILE"),
++        ("pw", "DESK_SMTPP_PASSWORD_FILE"),
++        ("m1", "REAL_IMAP_1_PASSWORD_FILE"),
++        ("m2", "REAL_IMAP_2_PASSWORD_FILE"),
++    ],
++)
++@pytest.mark.parametrize("problem", ["missing", "", "two\nlines\n"])
++def test_f3_a_bad_secret_file_is_refused_by_the_name_of_its_setting(
++    tmp_path: Path, which: str, setting: str, problem: str
++) -> None:
++    """CONTROL: passes on r7e; mutants C02 (mailbox passwords), C06 (hubspot key), C07 (smtp password) fail it."""
++    import run_real_check as rrc
++
++    hs, pr, boxes = _secret_files(tmp_path, **{which: problem})
++    with pytest.raises(ValueError, match=setting) as e:
++        rrc.check_secret_files(hs, pr, boxes)
++    assert str(tmp_path) not in str(e.value)
++
++
++def test_f3_a_spaced_hubspot_key_is_refused(tmp_path: Path) -> None:
++    """CONTROL: passes on r7e (a key is one plain word; a password may have spaces)."""
++    import run_real_check as rrc
++
++    hs, pr, boxes = _secret_files(tmp_path, hs="key abcdefghij\n")
++    with pytest.raises(ValueError, match="DESK_HUBSPOT_KEY_FILE"):
++        rrc.check_secret_files(hs, pr, boxes)
++
++
++def test_f3_an_os_error_from_the_reader_is_a_refusal_naming_the_setting(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
++) -> None:
++    """CONTROL: passes on r7e; mutant C04 (OSError not mapped) fails it. The reader maps its own OSErrors, so this
++    stands in for one it did not."""
++    import run_real_check as rrc
++
++    def boom(*_a: object, **_k: object) -> str:
++        raise OSError("disk detail that must not be shown")
++
++    monkeypatch.setattr(rrc, "read_secret_line", boom)
++    with pytest.raises(ValueError, match="DESK_X_FILE") as e:
++        rrc.check_one_secret("DESK_X_FILE", tmp_path / "x", "key", "key")
++    assert "disk detail" not in str(e.value)
++
++
++def test_f3_a_setting_value_inside_a_refusal_line_is_replaced_by_the_backstop(
++    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
++) -> None:
++    """CONTROL: passes on r7e; mutant C05 (scrub removed in main's refusal line) fails it."""
++    import run_real_check as rrc
++
++    seen: list[str] = []
++
++    def leaky(hs: Any, _pr: Any, _boxes: Any) -> None:
++        seen.append(str(hs.key_file))
++        raise ValueError("odd failure " + str(hs.key_file))
++
++    monkeypatch.setattr(rrc, "check_secret_files", leaky)
++    rc = rrc.main(["--dry-fakes", "--assume-yes"])
++    out = capsys.readouterr().out
++    assert rc == rrc.EXIT_REFUSED and seen
++    assert seen[0] not in out and "<value>" in out
++
++
++# ---- imap_count and smtp_outbox: the rows of the pass 7 table (MAIL7-MUTANTS-r7c.md) that survived on r7c ----
++
++
++def test_f4_a_read_after_the_total_deadline_ends_even_when_bytes_are_waiting() -> None:
++    """Kills mutant A01 (an expired deadline still gets a 1 ms read: bytes already waiting would be taken). Fails on
++    A01, passes on r7e."""
++    a, b = socket.socketpair()
++    try:
++        b.sendall(b"* OK late\r\n")
++        owner: Any = _Owner(a, time.monotonic() - 1.0)
++        with pytest.raises(ImapTotalTimeout):
++            _DeadlineReader(owner).readline()
++    finally:
++        a.close()
++        b.close()
++
++
++def test_f4_readline_with_a_limit_returns_at_the_limit_while_the_server_is_still_sending() -> None:
++    """Kills mutant A04 (no stop at the limit: it keeps reading until a line end or the end of the data, so a line
++    without an end grows without bound). The peer stays open and sends no line end: the right answer is the first 4
++    bytes at once. Fails on A04 (it waits for the step time-out), passes on r7e."""
++    a, b = socket.socketpair()
++    try:
++        b.sendall(b"abcdefghij")
++        owner: Any = _Owner(a, time.monotonic() + 5, step=0.5)
++        start = time.monotonic()
++        assert _DeadlineReader(owner).readline(4) == b"abcd"
++        assert time.monotonic() - start < 0.4
++    finally:
++        a.close()
++        b.close()
++
++
++def test_f4_read_waits_for_all_the_bytes_it_was_asked_for() -> None:
++    """Kills mutant A14 (a read of N bytes returns after the first piece). The bytes arrive in two pieces. Fails on
++    A14, passes on r7e."""
++    a, b = socket.socketpair()
++
++    def later() -> None:
++        time.sleep(0.3)
++        b.sendall(b"def")
++
++    t = threading.Thread(target=later)
++    try:
++        b.sendall(b"abc")
++        t.start()
++        owner: Any = _Owner(a, time.monotonic() + 5)
++        assert _DeadlineReader(owner).read(6) == b"abcdef"
++    finally:
++        t.join()
++        a.close()
++        b.close()
++
++
++def test_f4_a_send_that_blocks_ends_at_the_total_deadline_not_at_the_step() -> None:
++    """Kills mutant A07 (send uses the plain step as its time-out). The peer never reads, so a big write blocks; the
++    total is 0.6 s and the step 6 s. Fails on A07 (it lasts about 6 s), passes on r7e."""
++    a, b = socket.socketpair()
++    try:
++        conn = object.__new__(_BoundedImap)
++        conn.sock, conn.deadline, conn.step_seconds = a, time.monotonic() + 0.6, 6.0
++        start = time.monotonic()
++        with pytest.raises(TimeoutError):
++            conn.send(b"x" * 50_000_000)
++        assert time.monotonic() - start < 3.0
++    finally:
++        a.close()
++        b.close()
++
++
++def test_f4_the_literal_cap_is_exact(monkeypatch: pytest.MonkeyPatch) -> None:
++    """Kills mutant A12 (the cap itself is refused: >= instead of >). A part of exactly the cap is read, one byte more
++    is refused. Fails on A12, passes on r7e."""
++    import lead_desk.imap_count as ic
++
++    monkeypatch.setattr(ic, "IMAP_LITERAL_MAX_BYTES", 10)
++    a, b = socket.socketpair()
++    try:
++        b.sendall(b"0123456789")
++        conn = object.__new__(_BoundedImap)
++        conn.sock, conn.deadline, conn.step_seconds = a, time.monotonic() + 5, 5.0
++        conn.file = _DeadlineReader(conn)
++        assert conn.read(10) == b"0123456789"
++        with pytest.raises(ImapCountError, match="too long"):
++            conn.read(11)
++    finally:
++        a.close()
++        b.close()
++
++
++def test_f4_a_reply_whose_earlier_lines_plus_the_waiting_bytes_pass_the_cap_is_cut_off() -> None:
++    """Kills mutant B02 (the cap for waiting bytes ignores the lines already taken). The first line of a multi-line
++    reply uses nearly the whole cap; then bytes without a line end arrive. Fails on B02 (it reads up to a whole cap
++    more), passes on r7e."""
++    sock: Any = _Chunks(3 * _REPLY_MAX_BYTES)
++    buf = bytearray(b"250-" + b"y" * (_REPLY_MAX_BYTES - 300) + b"\r\n")
++    with pytest.raises(_Closed, match="reply too long"):
++        _read_reply(sock, _Budget(5.0), buf)
++    assert sock.taken <= 2 * 4096
++
++
++def test_f4_a_login_is_not_sent_when_the_total_time_ran_out_during_the_protocol_check(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
++) -> None:
++    """CONTROL for mutant A10 (the check before the login removed). A10 is EQUIVALENT: the send step has the same
++    check, so with or without the first one nothing is sent and the error is the same. This test passes on r7e AND on
++    A10 (run); it pins the observable behaviour."""
++    import lead_desk.imap_count as ic
++
++    certs = _Certs(tmp_path)
++    srv = FakeImap(certs.cert, certs.key, "localhost", {"INBOX": []})
++    pw = tmp_path / "imap-pw.txt"
++    pw.write_text(FAKE_PASSWORD + "\n", encoding="utf-8")
++    ctx = ssl.create_default_context(cafile=str(certs.cert))
++    real = ic.require_modern_protocol
++
++    def slow(sock: Any, name: str) -> None:
++        real(sock, name)
++        time.sleep(1.3)
++
++    monkeypatch.setattr(ic, "require_modern_protocol", slow)
++    try:
++        s = ImapSettings(
++            "localhost",
++            "reader-user",
++            pw,
++            port=srv.port,
++            folders=("INBOX",),
++            timeout_seconds=5.0,
++            total_seconds=1.0,
++            ssl_context=ctx,
++        )
++        with pytest.raises(ImapTotalTimeout):
++            _session(s, lambda m: {})
++    finally:
++        srv.close()
++
++
++def test_f5_the_live_model_client_never_follows_a_redirect() -> None:
++    """Kills mutant F02 (the redirect handler of live_claude hands back a new request: the key header would go to
++    another host). Fails on F02, passes on r7e."""
++    import urllib.request
++
++    from lead_desk.live_claude import _NoRedirect
++
++    req = urllib.request.Request("https://example.test/v1/x", headers={"x-api-key": "made-up-key-1234"})
++    assert _NoRedirect().redirect_request(req, None, 302, "Found", {}, "https://example.test/other") is None
++
++
++def test_f5_a_send_timeout_that_is_not_finite_is_refused_before_anything_else() -> None:
++    """Kills mutant C05 (the finite check of the send timeout removed). The refusal is the first line of send, so an
++    object that was never set up still gives the right error; on C05 the next line fails with another error.
++    Fails on C05, passes on r7e."""
++    box = object.__new__(SmtpProviderOutbox)
++    for bad in (float("inf"), float("-inf"), float("nan")):
++        with pytest.raises(ValueError, match="finite"):
++            box.send("lead-key", "a@example.test", "subject", "body", bad)
++
++
++def test_f5_every_hubspot_read_gets_only_the_time_that_is_left() -> None:
++    """Kills mutant G03 (the per-read time-out is not set from the time left). Each read1 call must see a socket
++    time-out no larger than the time left of the total. Fails on G03 (no time-out is set), passes on r7e."""
++    from types import SimpleNamespace
++
++    from lead_desk.crm_hubspot import HubspotCrm
++
++    seen: list[float] = []
++    chunks = [b'{"a":', b"1}", b""]
++
++    sock = SimpleNamespace(settimeout=seen.append)
++    response = SimpleNamespace(fp=SimpleNamespace(raw=SimpleNamespace(_sock=sock)), read1=lambda _n: chunks.pop(0))
++    assert HubspotCrm._read(response, time.monotonic() + 7.0) == {"a": 1}
++    assert len(seen) == 3 and all(0 < t <= 7.0 for t in seen)
++
++
++def test_f5_a_certificate_file_with_a_byte_order_mark_is_read() -> None:
++    """Kills mutant T01 (the byte-order mark is not removed: the BEGIN line then looks non-ASCII and the file is
++    refused). Fails on T01, passes on r7e."""
++    from lead_desk.tls_trust import _ascii_outside_blocks
++
++    text = b"\xef\xbb\xbf-----BEGIN CERTIFICATE-----\nAAAA\n-----END CERTIFICATE-----\n"
++    assert _ascii_outside_blocks(text) is not None
++
++
++def test_f5_an_end_line_with_a_non_ascii_byte_is_refused_even_when_it_is_indented() -> None:
++    """Kills mutant T02 (an END line is found only at the start of the line). Fails on T02, passes on r7e."""
++    from lead_desk.tls_trust import _ascii_outside_blocks
++
++    assert _ascii_outside_blocks(b"  -----END CERTIFICATE-----\xff\n") is None
++    assert _ascii_outside_blocks(b"# note \xff\n") == "# note \n"  # CONTROL: outside a block a stray byte is dropped
++
++
++# ---- the look-up of a host name is inside the total time limit (lead_desk.netconnect) ----
++
++
++class _HangingLookup:
++    """Replaces socket.getaddrinfo with a look-up that does not return until released: a name server that is silent."""
++
++    def __init__(self, monkeypatch: pytest.MonkeyPatch) -> None:
++        self.release = threading.Event()
++        monkeypatch.setattr(socket, "getaddrinfo", self._wait)
++
++    def _wait(self, *_a: object, **_k: object) -> list[Any]:
++        self.release.wait(30)
++        return []
++
++
++def test_f6_a_name_look_up_that_never_answers_ends_at_the_time_limit(monkeypatch: pytest.MonkeyPatch) -> None:
++    """FIX TEST (coordinator item 2a): before r7f the look-up of the host name had no time limit (create_connection
++    bounds only the connect). FAILS on r7e (the call waits for the look-up)."""
++    from lead_desk.netconnect import connect_bounded
++
++    hang = _HangingLookup(monkeypatch)
++    try:
++        start = time.monotonic()
++        with pytest.raises(TimeoutError):
++            connect_bounded("name.example.test", 25, 0.5)
++        assert time.monotonic() - start < 2.5
++    finally:
++        hang.release.set()
++
++
++def test_f6_a_bounded_connect_reaches_a_listener_and_passes_a_lookup_error_on() -> None:
++    """CONTROL: passes on r7e and r7f in effect (a plain connect works; a failed look-up is an OSError)."""
++    from lead_desk.netconnect import connect_bounded
++
++    srv = socket.socket()
++    srv.bind(("127.0.0.1", 0))
++    srv.listen(1)
++    try:
++        conn = connect_bounded("127.0.0.1", srv.getsockname()[1], 2.0)
++        conn.close()
++    finally:
++        srv.close()
++    with pytest.raises(OSError):
++        connect_bounded("no-such-name." + "inva" + "lid", 9, 2.0)
++
++
++def test_f6_the_mailbox_read_ends_at_the_total_time_when_the_name_look_up_hangs(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
++) -> None:
++    """FIX TEST: the total is 1 s, the step 5 s; the look-up never answers. FAILS on r7e (waits for the look-up)."""
++    pw = tmp_path / "imap-pw.txt"
++    pw.write_text(FAKE_PASSWORD + "\n", encoding="utf-8")
++    hang = _HangingLookup(monkeypatch)
++    try:
++        s = ImapSettings(
++            "name.example.test",
++            "reader-user",
++            pw,
++            port=993,
++            folders=("INBOX",),
++            timeout_seconds=5.0,
++            total_seconds=1.0,
++        )
++        start = time.monotonic()
++        with pytest.raises(ImapTotalTimeout):
++            _session(s, lambda m: {})
++        assert time.monotonic() - start < 3.5
++    finally:
++        hang.release.set()
++
++
++def test_f6_a_mail_send_ends_at_its_time_limit_when_the_name_look_up_hangs(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
++) -> None:
++    """FIX TEST: send time limit 1 s, look-up silent: the send is refused as unreachable in time, nothing was sent.
++    FAILS on r7e (waits for the look-up)."""
++    from lead_desk.contract import SendUnreachable
++
++    certs = _Certs(tmp_path)
++    ctx = ssl.create_default_context(cafile=str(certs.cert))
++    box = _provider(tmp_path, 587, ctx, host="name.example.test")
++    hang = _HangingLookup(monkeypatch)
++    try:
++        start = time.monotonic()
++        with pytest.raises(SendUnreachable):
++            box.send("K-1", "ada@example.test", "Hi", "Body", 1.0)
++        assert time.monotonic() - start < 3.5
++    finally:
++        hang.release.set()
+diff --git a/tests/test_r7m_new.py b/tests/test_r7m_new.py
+index 16e2b8d..fa68849 100644
+--- a/tests/test_r7m_new.py
++++ b/tests/test_r7m_new.py
+@@ -54,7 +54,7 @@ def _no_floor_client(cafile: Path) -> ssl.SSLContext:
+     c.load_verify_locations(cafile=str(cafile))
+     c.minimum_version = ssl.TLSVersion.MINIMUM_SUPPORTED
+     try:
+-        c.set_ciphers("ALL:@SECLEVEL=0")
++        c.set_ciphers("ALL:!aNULL:@SECLEVEL=0")
+     except ssl.SSLError:
+         pytest.skip("this OpenSSL does not accept the security level 0 cipher list")
+     return c
+diff --git a/tests/test_special_output_files.py b/tests/test_special_output_files.py
+index 687e0fd..17ea2f6 100644
+--- a/tests/test_special_output_files.py
++++ b/tests/test_special_output_files.py
+@@ -151,7 +151,10 @@ SITES: dict[str, tuple[Callable[[str], str], str, str]] = {
+ }
+ 
+ 
+-# CONTROL (r7e, new since frozen): passes on the frozen tree, pins behaviour that must stay; no mutant run.
++# FIX TEST for 10 of its 23 cases (r7e review m1, run on the frozen tree): FAILS on the frozen tree for lock-pipe,
++# lock-link-to-pipe, lock-folder, model-log-pipe, model-log-link-to-pipe, model-log-folder, stats-pipe,
++# stats-link-to-pipe, trace-pipe, trace-link-to-pipe (frozen says 'cannot open the lock file: UnsupportedOperation',
++# the test wants 'not a regular file'); the other 13 cases pass on the frozen tree (CONTROL). No mutant run.
+ @FIFO_SKIP
+ @pytest.mark.parametrize("kind", KINDS)
+ @pytest.mark.parametrize("site", sorted(SITES))

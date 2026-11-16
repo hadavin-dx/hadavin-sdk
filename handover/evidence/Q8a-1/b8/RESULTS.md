@@ -1,0 +1,7 @@
+# Q8a-1 b8 evidence (builder run, head 18741c8cfdfc67e073139ad4e5df0f744d96b495, base a18696556beacbf13664da0299cabf56d48d1ddf)
+- Full pytest once at this head (via heavy.sh, exit code gated): rc=0, "11024 passed, 1 skipped, 28 deselected in 266.97s (0:04:26)". (An earlier run at the previous head had 1 failure, tests/test_p7_store.py::test_ca_bundle_from_the_secrets_backend: a CA path that does not exist is now refused at start-up; test updated on purpose, plus a refusal assertion.)
+- stage_mutants alone at this head: "160 of 160 good; problems: []" (first run had 13 BAD: 11 wrong expected-text fragments, 1 equivalent mutant replaced, 1 wrong parameter; fixed in the mutant file only, no source change).
+- ruff check (excluding the untracked handover folder): All checks passed; ruff format --check: 325 files already formatted; bandit -ll: rc=0; tools/scan_repo.py rc=0.
+- Fail-before (old src a1869655 via PYTHONPATH, 7 affected test files): 50 failed, 550 passed (failbefore-oldsrc.log). The guard test scans current src, so on the old tree it reported 31 violations (guard-on-old-src.txt); its predicate unit test passes by construction.
+- Probes as user nobody: probes-head.txt TOTAL probes=260 error-results=242 readable-marker-results=6 validator-leaks=2 tool/k8s-leaks=0; probes-b8.txt rows=61 readable=0; probe-decimal: fixed sentence, marker absent.
+- Marker table: the 6 readable rows are the marker typed as the id of a loaded object (by design, D-2322); the 2 validator leaks are the deliberate author-slip contrast rows.

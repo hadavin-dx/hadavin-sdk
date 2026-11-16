@@ -1,0 +1,48 @@
+tests/test_q8b_batch2.py::test_the_plan_line_survives_a_masked_value_at_the_end_of_the_text
+tests/test_q8b_batch2.py::test_a_link_alone_is_still_removed_whole
+tests/test_q8b_batch2.py::test_a_plain_bearer_token_is_masked_and_text_after_it_is_kept
+tests/test_q8b_batch3.py::test_i1_an_unrelated_not_set_line_stays_readable
+tests/test_q8b_batch3.py::test_i3_corpus_is_not_empty_and_disjoint
+tests/test_q8b_batch3.py::test_i3_the_card_masks_exactly_the_named_cost_among_benign_keys
+tests/test_q8b_batch3.py::test_i7_a_flag_or_a_key_ends_the_value
+tests/test_q8b_batch3.py::test_i8_a_link_label_before_a_key_keeps_the_next_parameter
+tests/test_q8b_batch3.py::test_i5_the_mutation_copy_list_covers_every_root_file_the_q8b_tests_open
+tests/test_q8b_card_text.py::test_n6_f6b_a_domain_outside_code_is_bracketed
+tests/test_q8b_card_text.py::test_n8_the_check_itself_catches_each_way_round
+tests/test_q8b_card_text.py::test_g8_an_ip_shaped_target_is_a_placeholder
+tests/test_q8b_credential_keys.py::test_s4_two_placeholders_are_accepted
+tests/test_q8b_credential_keys.py::test_s7_a_quoted_attempt_without_quotes_is_refused
+tests/test_q8b_credential_keys.py::test_t1_every_key_the_older_rule_accepted_is_still_accepted
+tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[B1r authorization]
+tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[B1r bearer]
+tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[B1r passphrase]
+tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[B1r long-suffix key]
+tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[B1r long-suffix key, one word]
+tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[1d near miss +00:00]
+tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[B1 key_used one word]
+tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[B1 env API_KEY_TYPE]
+tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[B1 client_secret_max]
+tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[B1 gate refuses a word]
+tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[B1 gate refuses a list]
+tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[B1 gate refuses 11 digits]
+tests/test_q8b_credential_keys.py::test_n1_a_value_under_a_credential_key[look-alike value]
+tests/test_q8b_credential_keys.py::test_n1_an_entry_of_a_secret[M3 Secret username]
+tests/test_q8b_credential_keys.py::test_n1_an_entry_of_a_secret[M5 Secret DB_NAME b64]
+tests/test_q8b_credential_keys.py::test_n1_an_entry_of_a_secret[F5b Secret cfg]
+tests/test_q8b_credential_keys.py::test_n1_an_entry_of_a_secret[F5b Secret b64]
+tests/test_q8b_credential_keys.py::test_n1_an_entry_of_a_secret[M1 Secret LOG_LEVEL]
+tests/test_q8b_credential_keys.py::test_n1_an_entry_of_a_secret[M1 Secret credential key short]
+tests/test_q8b_credential_keys.py::test_n1_a_list_under_a_setting_key
+tests/test_q8b_credential_keys.py::test_n2_a_value_is_masked_where_repeated[M3 Secret username + log]
+tests/test_q8b_credential_keys.py::test_n2_a_value_is_masked_where_repeated[M4 percent in value + copy]
+tests/test_q8b_credential_keys.py::test_n2_a_value_is_masked_where_repeated[M4 backslash-u in value + copy]
+tests/test_q8b_credential_keys.py::test_n3_no_fragment_of_a_one_letter_value
+tests/test_q8b_credential_keys.py::test_g1_a_one_word_value_is_one_placeholder
+tests/test_q8b_credential_keys.py::test_g2_a_message_is_not_a_credential
+tests/test_q8b_credential_keys.py::test_g4_a_value_nested_under_a_credential_key_registers_nothing
+tests/test_q8b_credential_keys.py::test_g6_a_setting_about_a_credential_is_shown[{"password_policy_enabled": true}]
+tests/test_q8b_credential_keys.py::test_g6_a_setting_about_a_credential_is_shown[{"token_expires": "2026-11-25T00:00:00Z"}]
+tests/test_q8b_glued_and_whole_values.py::test_r3_every_spelling_of_value_is_masked
+tests/test_q8b_glued_and_whole_values.py::test_r4_a_number_or_one_word_in_a_secret_is_not_registered
+tests/test_q8b_glued_and_whole_values.py::test_r10_refused_credential_values_do_not_multiply_the_work
+tests/test_q8b_random.py::test_x9_has_cases_to_check

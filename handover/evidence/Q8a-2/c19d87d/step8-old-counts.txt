@@ -1,0 +1,9 @@
+old run 1:   after the 10.0s bound (+2s): 50 of 50 connections closed by the server; outcomes {"closed(b'')": 50}; again at +6s: {"closed(b'')": 50}; threads alive now 3
+old run 1:   after the 10.0s bound (+2s): 50 of 50 connections closed by the server; outcomes {"closed(b'')": 50}; again at +6s: {"closed(b'')": 50}; threads alive now 3
+old run 1:   after the 10.0s bound (+2s): 50 of 50 connections closed by the server; outcomes {"closed(b'')": 50}; again at +6s: {"closed(b'')": 50}; threads alive now 3
+old run 2:   after the 10.0s bound (+2s): 50 of 50 connections closed by the server; outcomes {"closed(b'')": 50}; again at +6s: {"closed(b'')": 50}; threads alive now 3
+old run 2:   after the 10.0s bound (+2s): 50 of 50 connections closed by the server; outcomes {"closed(b'')": 50}; again at +6s: {"closed(b'')": 50}; threads alive now 3
+old run 2:   after the 10.0s bound (+2s): 50 of 50 connections closed by the server; outcomes {"closed(b'')": 50}; again at +6s: {"closed(b'')": 50}; threads alive now 3
+old run 3:   after the 10.0s bound (+2s): 50 of 50 connections closed by the server; outcomes {"closed(b'')": 50}; again at +6s: {"closed(b'')": 50}; threads alive now 3
+old run 3:   after the 10.0s bound (+2s): 50 of 50 connections closed by the server; outcomes {"closed(b'')": 50}; again at +6s: {"closed(b'')": 50}; threads alive now 3
+old run 3:   after the 10.0s bound (+2s): 50 of 50 connections closed by the server; outcomes {"closed(b'')": 50}; again at +6s: {"closed(b'')": 50}; threads alive now 3

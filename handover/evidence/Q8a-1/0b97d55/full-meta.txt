@@ -1,0 +1,4 @@
+queued 2026-11-11T16:13:56Z load 10.21 6.83 8.07
+slot-got 2026-11-11T16:17:06Z load: 9.67 9.07 8.78
+end-nonperf 2026-11-11T16:21:57Z rc=0 dur=291s
+end-perf 2026-11-11T16:22:57Z rc=0 dur=60s

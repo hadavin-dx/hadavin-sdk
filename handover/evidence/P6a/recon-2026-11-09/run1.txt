@@ -1,0 +1,132 @@
+head d15e53a8352079c8a7915f6a520198e9099db933  copy /home/user/build/recon/p6a1/wt  python /home/user/build/venv-p6a-313/bin/python
+baseline (unmutated) PASS: 92 passed in 2.10s
+  1 | yes | KILLED-NAMED | cp::test_t1e_a_demo_anchor_only_failure_does_not_advise_the_field (+named cp::te | DEMO_ONLY loses llm/fake
+  2 | yes | KILLED-NAMED | cp::test_t1e_a_demo_anchor_only_failure_does_not_advise_the_field (+named cp::te | DEMO_ONLY loses channel/fake
+  3 | yes | KILLED-NAMED | cp::test_t2a_demo_only_is_exactly_the_six_pairs | DEMO_ONLY loses secrets/fake
+  4 | yes | KILLED-NAMED | cp::test_t1a_secrets_env_is_refused_in_a_client_profile[pilot] | DEMO_ONLY loses secrets/env
+  5 | yes | KILLED-NAMED | cp::test_t1d_a_pilot_config_that_omits_store_is_refused | DEMO_ONLY loses store/memory
+  6 | yes | KILLED-NAMED | cp::test_t2a_demo_only_is_exactly_the_six_pairs | DEMO_ONLY loses audit/local_dir
+  7 | yes | KILLED-NAMED | cp::test_t1a_secrets_env_is_refused_in_a_client_profile[pilot] | refusal only in prod (live -> == "prod")
+  8 | yes | KILLED-NAMED | cp::test_t7d_three_refusals_come_in_one_error | message keeps only the first refusal
+  9 | yes | KILLED-NAMED | cp::test_t5b_each_test_double_is_refused_alone[secrets-pilot] (+named cp::test_t | S2 check deleted
+ 10 | yes | KILLED-NAMED | cp::test_t5b_each_test_double_is_refused_alone[secrets-pilot] | S2 looks only at llm
+ 11 | yes | KILLED-NAMED | cp::test_t5b_each_test_double_is_refused_alone[secrets-pilot] | allow_test_doubles default True
+ 12 | yes | KILLED-NAMED | cp::test_t5b_each_test_double_is_refused_alone[secrets-pilot] | S2 only for prod
+ 13 | yes | KILLED-NAMED | cp::test_t5f_sources_keeps_its_own_refusal | sources not excluded from the rule
+ 14 | yes | KILLED-NAMED | cp::test_t5h_tools_keeps_its_own_refusal | tools not excluded from the rule
+ 15 | yes | KILLED-NAMED | cp::test_t5b_each_test_double_is_refused_alone[clock-pilot] (+named cp::test_t5i | compare by truth value, not identity
+ 16 | yes | KILLED-NAMED | cp::test_t5j_a_refusal_builds_nothing_first | check placed after secrets = secrets or make()
+ 17 | yes | KILLED-NAMED | cp::test_t5j_a_refusal_builds_nothing_first | check placed after platform_secrets.check
+ 18 | yes | KILLED-NAMED | cp::test_t5b_each_test_double_is_refused_alone[clock-pilot] | names from a fixed list of four
+ 19 | yes | KILLED-NAMED | cp::test_t5c_all_at_once_names_all_in_signature_order | message names only the first keyword
+ 20 | yes | KILLED-NAMED | cp::test_t5n_the_switch_lets_a_test_double_through | switch ignored
+ 21 | yes | KILLED-NAMED | cp::test_t5b_each_test_double_is_refused_alone[llm-pilot] | _LIVE_HOOKS gains llm
+ 22 | yes | KILLED-NAMED | cp::test_t5o_the_live_hooks_need_no_switch[hold_run_ids] | _LIVE_HOOKS ignored
+ 23 | yes | KILLED-NAMED | cp::test_t5g_planted_doors_are_reported[direct] | T5g checker: keyword branch deleted
+ 24 | yes | KILLED-NAMED | cp::test_t5g_planted_doors_are_reported[partial] | T5g checker: keyword only in calls named build
+ 25 | yes | KILLED-NAMED | cp::test_t5g_planted_doors_are_reported[double_star] | T5g checker: ** branch deleted
+ 26 | yes | KILLED-NAMED | cp::test_t2c_planted_pair_in_both_sets_is_reported | T2 check: both-sets not reported
+ 27 | yes | KILLED-NAMED | cp::test_t2c_planted_empty_reason_is_reported | T2 check: empty reason not reported
+ 28 | yes | KILLED-NAMED | cp::test_t2c_planted_kind_in_neither_set_is_reported | T2 check: neither-set not reported
+ 29 | yes | KILLED-NAMED | cp::test_t7a_a_real_llm_kind_in_demo_needs_the_field[anthropic] | S6 items deleted
+ 30 | yes | KILLED-NAMED | cp::test_t0_the_prod_fixture_loads | S6 runs in every stage
+ 31 | yes | KILLED-NAMED | cp::test_t0_the_prod_fixture_loads (+named cp::test_t7a_a_real_llm_kind_in_demo_ | made_up_data_only default True
+ 32 | yes | KILLED-NAMED | cp::test_t7a_a_real_llm_kind_in_demo_needs_the_field[bedrock] | S6 llm item checks one fixed kind
+ 33 | yes | KILLED-NAMED | cp::test_t7a2_the_vendor_detector_in_demo_needs_the_field | S6 guardrail item dropped
+ 34 | yes | KILLED-NAMED | cp::test_t7b_with_the_field_a_real_llm_kind_loads_in_demo | field ignored (refused even with it)
+ 35 | yes | KILLED-NAMED | cp::test_t7a_a_real_llm_kind_in_demo_needs_the_field[anthropic] (+named cp::test | S6 raised as its own error
+ 46 | yes | KILLED-NAMED | cp::test_t7a3_a_real_channel_kind_in_demo_needs_the_field | S6 channel item dropped
+ 47 | yes | KILLED-NAMED | cp::test_t5q_any_environment_that_is_not_demo_is_live[Demo] | S2 live replaced by environment in (pilot, prod)
+ 48 | yes | KILLED-NAMED | cp::test_t5r_only_the_value_true_is_the_switch[no] | switch read by truthiness, not is True
+ 49 | yes | KILLED-NAMED | cp::test_t7e_the_field_is_refused_in_pilot_and_prod | made_up_data_only not refused when live
+ 50 | yes | KILLED-NAMED | cp::test_t7f_the_field_is_refused_in_any_environment_that_is_not_demo[Demo] | made_up_data_only refused only in pilot and prod
+ 51 | yes | KILLED-NAMED | cp::test_t7b_with_the_field_a_real_llm_kind_loads_in_demo | made_up_data_only refused in every stage
+ 52 | yes | KILLED-NAMED | cp::test_t1a_secrets_env_is_refused_in_a_client_profile[pilot] | advice tail appended for any refusal (R2-01)
+ 53 | yes | KILLED-NAMED | cp::test_t5b_each_test_double_is_refused_alone[extra_double-pilot] (+named cp::t | extra keyword on build() with no sample
+ 54 | yes | KILLED-NAMED | cp::test_t7h_a_loose_yes_does_not_switch_the_field_on[yes] | made_up_data_only: strict bool -> loose bool
+ 55 | yes | KILLED-NAMED | cp::test_t7i_a_value_that_is_not_a_bool_is_refused_at_load[null] | made_up_data_only: accepts None
+ 56 | yes | KILLED       | p1b::test_demo_only_kinds_refused_outside_demo[pilot] | [invented] allow_insecure_loopback refusal dropped in live
+ 57 | yes | KILLED       | cp::test_t7a2_the_vendor_detector_in_demo_needs_the_field | [invented] vendor detector check looks for llm_judge
+ 58 | yes | KILLED       | cp::test_t1e_a_demo_anchor_only_failure_does_not_advise_the_field | [invented] anchor refusals dropped
+ 59 | yes | KILLED       | cp::test_t5f_sources_keeps_its_own_refusal | [invented] positional parameters counted as doubles
+ 60 | yes | KILLED       | cp::test_t5l_a_keyword_added_later_is_refused_by_default | [invented] a name missing from given is not skipped
+ 61 | yes | KILLED       | test_k5_tools.py::test_k5_scope_probe_refuses_write | [invented] sources refused outside live too
+ 62 | yes | KILLED       | test_k3_review_fixes.py::test_k3_build_passes_tools_to_hooks | [invented] tools refused outside live too
+ 63 | yes | KILLED       | cp::test_t5o_the_live_hooks_need_no_switch[hold_run_ids] | [invented] hold_run_ids no longer a live hook
+ 64 | yes | KILLED       | cp::test_t5o_the_live_hooks_need_no_switch[timeout_s] | [invented] timeout_s no longer a live hook
+ 65 | yes | KILLED       | cp::test_t0_the_prod_fixture_loads | [invented] DEMO_ONLY gains llm/openai_compat
+ 66 | yes | KILLED       | cp::test_t0_the_prod_fixture_loads | [invented] DEMO_ONLY gains channel/slack
+ 67 | yes | KILLED       | cp::test_t7e_the_field_is_refused_in_pilot_and_prod | [invented] S6 flag text loses its words
+ 68 | yes | KILLED       | cp::test_t5b_each_test_double_is_refused_alone[secrets-pilot] | [invented] S2 message no longer names the switch
+ 69 | yes | KILLED       | cp::test_t5b_each_test_double_is_refused_alone[secrets-pilot] | [invented] build keywords hidden from the check (secrets blanked)
+ 70 | yes | KILLED       | cp::test_t5b_each_test_double_is_refused_alone[secrets-pilot] | [invented] app live is prod only
+ 71 | yes | KILLED       | cp::test_t7d_three_refusals_come_in_one_error | [invented] only the first S6 item reported
+ 72 | yes | KILLED       | cp::test_t5r_only_the_value_true_is_the_switch[no] | [invented] switch counted only when it is False
+
+mutant | planted | killed-by | status
+1 | yes | cp::test_t1e_a_demo_anchor_only_failure_does_not_advise_the_field (+named cp::test_t2a_demo_only_is_exactly_the_six_pairs) | KILLED-NAMED
+2 | yes | cp::test_t1e_a_demo_anchor_only_failure_does_not_advise_the_field (+named cp::test_t2a_demo_only_is_exactly_the_six_pairs) | KILLED-NAMED
+3 | yes | cp::test_t2a_demo_only_is_exactly_the_six_pairs | KILLED-NAMED
+4 | yes | cp::test_t1a_secrets_env_is_refused_in_a_client_profile[pilot] | KILLED-NAMED
+5 | yes | cp::test_t1d_a_pilot_config_that_omits_store_is_refused | KILLED-NAMED
+6 | yes | cp::test_t2a_demo_only_is_exactly_the_six_pairs | KILLED-NAMED
+7 | yes | cp::test_t1a_secrets_env_is_refused_in_a_client_profile[pilot] | KILLED-NAMED
+8 | yes | cp::test_t7d_three_refusals_come_in_one_error | KILLED-NAMED
+9 | yes | cp::test_t5b_each_test_double_is_refused_alone[secrets-pilot] (+named cp::test_t5b_each_test_double_is_refused_alone[llm-pilot]) | KILLED-NAMED
+10 | yes | cp::test_t5b_each_test_double_is_refused_alone[secrets-pilot] | KILLED-NAMED
+11 | yes | cp::test_t5b_each_test_double_is_refused_alone[secrets-pilot] | KILLED-NAMED
+12 | yes | cp::test_t5b_each_test_double_is_refused_alone[secrets-pilot] | KILLED-NAMED
+13 | yes | cp::test_t5f_sources_keeps_its_own_refusal | KILLED-NAMED
+14 | yes | cp::test_t5h_tools_keeps_its_own_refusal | KILLED-NAMED
+15 | yes | cp::test_t5b_each_test_double_is_refused_alone[clock-pilot] (+named cp::test_t5i_a_falsy_double_is_refused) | KILLED-NAMED
+16 | yes | cp::test_t5j_a_refusal_builds_nothing_first | KILLED-NAMED
+17 | yes | cp::test_t5j_a_refusal_builds_nothing_first | KILLED-NAMED
+18 | yes | cp::test_t5b_each_test_double_is_refused_alone[clock-pilot] | KILLED-NAMED
+19 | yes | cp::test_t5c_all_at_once_names_all_in_signature_order | KILLED-NAMED
+20 | yes | cp::test_t5n_the_switch_lets_a_test_double_through | KILLED-NAMED
+21 | yes | cp::test_t5b_each_test_double_is_refused_alone[llm-pilot] | KILLED-NAMED
+22 | yes | cp::test_t5o_the_live_hooks_need_no_switch[hold_run_ids] | KILLED-NAMED
+23 | yes | cp::test_t5g_planted_doors_are_reported[direct] | KILLED-NAMED
+24 | yes | cp::test_t5g_planted_doors_are_reported[partial] | KILLED-NAMED
+25 | yes | cp::test_t5g_planted_doors_are_reported[double_star] | KILLED-NAMED
+26 | yes | cp::test_t2c_planted_pair_in_both_sets_is_reported | KILLED-NAMED
+27 | yes | cp::test_t2c_planted_empty_reason_is_reported | KILLED-NAMED
+28 | yes | cp::test_t2c_planted_kind_in_neither_set_is_reported | KILLED-NAMED
+29 | yes | cp::test_t7a_a_real_llm_kind_in_demo_needs_the_field[anthropic] | KILLED-NAMED
+30 | yes | cp::test_t0_the_prod_fixture_loads | KILLED-NAMED
+31 | yes | cp::test_t0_the_prod_fixture_loads (+named cp::test_t7a_a_real_llm_kind_in_demo_needs_the_field[anthropic]) | KILLED-NAMED
+32 | yes | cp::test_t7a_a_real_llm_kind_in_demo_needs_the_field[bedrock] | KILLED-NAMED
+33 | yes | cp::test_t7a2_the_vendor_detector_in_demo_needs_the_field | KILLED-NAMED
+34 | yes | cp::test_t7b_with_the_field_a_real_llm_kind_loads_in_demo | KILLED-NAMED
+35 | yes | cp::test_t7a_a_real_llm_kind_in_demo_needs_the_field[anthropic] (+named cp::test_t7d_three_refusals_come_in_one_error) | KILLED-NAMED
+46 | yes | cp::test_t7a3_a_real_channel_kind_in_demo_needs_the_field | KILLED-NAMED
+47 | yes | cp::test_t5q_any_environment_that_is_not_demo_is_live[Demo] | KILLED-NAMED
+48 | yes | cp::test_t5r_only_the_value_true_is_the_switch[no] | KILLED-NAMED
+49 | yes | cp::test_t7e_the_field_is_refused_in_pilot_and_prod | KILLED-NAMED
+50 | yes | cp::test_t7f_the_field_is_refused_in_any_environment_that_is_not_demo[Demo] | KILLED-NAMED
+51 | yes | cp::test_t7b_with_the_field_a_real_llm_kind_loads_in_demo | KILLED-NAMED
+52 | yes | cp::test_t1a_secrets_env_is_refused_in_a_client_profile[pilot] | KILLED-NAMED
+53 | yes | cp::test_t5b_each_test_double_is_refused_alone[extra_double-pilot] (+named cp::test_t5s_every_refused_keyword_has_a_sample) | KILLED-NAMED
+54 | yes | cp::test_t7h_a_loose_yes_does_not_switch_the_field_on[yes] | KILLED-NAMED
+55 | yes | cp::test_t7i_a_value_that_is_not_a_bool_is_refused_at_load[null] | KILLED-NAMED
+56 | yes | p1b::test_demo_only_kinds_refused_outside_demo[pilot] | KILLED
+57 | yes | cp::test_t7a2_the_vendor_detector_in_demo_needs_the_field | KILLED
+58 | yes | cp::test_t1e_a_demo_anchor_only_failure_does_not_advise_the_field | KILLED
+59 | yes | cp::test_t5f_sources_keeps_its_own_refusal | KILLED
+60 | yes | cp::test_t5l_a_keyword_added_later_is_refused_by_default | KILLED
+61 | yes | test_k5_tools.py::test_k5_scope_probe_refuses_write | KILLED
+62 | yes | test_k3_review_fixes.py::test_k3_build_passes_tools_to_hooks | KILLED
+63 | yes | cp::test_t5o_the_live_hooks_need_no_switch[hold_run_ids] | KILLED
+64 | yes | cp::test_t5o_the_live_hooks_need_no_switch[timeout_s] | KILLED
+65 | yes | cp::test_t0_the_prod_fixture_loads | KILLED
+66 | yes | cp::test_t0_the_prod_fixture_loads | KILLED
+67 | yes | cp::test_t7e_the_field_is_refused_in_pilot_and_prod | KILLED
+68 | yes | cp::test_t5b_each_test_double_is_refused_alone[secrets-pilot] | KILLED
+69 | yes | cp::test_t5b_each_test_double_is_refused_alone[secrets-pilot] | KILLED
+70 | yes | cp::test_t5b_each_test_double_is_refused_alone[secrets-pilot] | KILLED
+71 | yes | cp::test_t7d_three_refusals_come_in_one_error | KILLED
+72 | yes | cp::test_t5r_only_the_value_true_is_the_switch[no] | KILLED
+
+TOTAL mutants 62  planted 62  KILLED 62 (named 45, no named killer 17, killed by another test 0)  SURVIVED 0  other problems 0  (92s)
+final git status: ''
+rc=0

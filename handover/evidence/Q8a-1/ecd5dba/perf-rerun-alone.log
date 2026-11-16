@@ -1,0 +1,23 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+F                                                                        [100%]
+=================================== FAILURES ===================================
+______________ test_the_timing_harness_flags_a_quadratic_stand_in ______________
+
+    @pytest.mark.perf
+    def test_the_timing_harness_flags_a_quadratic_stand_in():
+        def quadratic(t: str) -> float:
+            return _median_time(lambda s: sum(s.count("a", 0, i) for i in range(0, len(s), 64)), t)
+    
+>       assert timing.is_superlinear(quadratic, "a", 16 * 1024, 256 * 1024), (
+            "a quadratic function must be flagged"
+        )
+E       AssertionError: a quadratic function must be flagged
+E       assert False
+E        +  where False = <function is_superlinear at 0x7f3bafa25bc0>(<function test_the_timing_harness_flags_a_quadratic_stand_in.<locals>.quadratic at 0x7f3bafaaa7a0>, 'a', (16 * 1024), (256 * 1024))
+E        +    where <function is_superlinear at 0x7f3bafa25bc0> = timing.is_superlinear
+
+tests/test_migration_numbers.py:836: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_migration_numbers.py::test_the_timing_harness_flags_a_quadratic_stand_in
+1 failed in 0.64s
+rc=1 load-at-end: 2.93 3.95 4.49

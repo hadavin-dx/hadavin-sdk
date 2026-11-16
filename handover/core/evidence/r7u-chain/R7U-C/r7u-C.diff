@@ -1,0 +1,519 @@
+diff -ruN a/demo_only/bad_request.py b/demo_only/bad_request.py
+--- a/demo_only/bad_request.py	2026-11-14 14:27:25.745698772 +0000
++++ b/demo_only/bad_request.py	2026-11-14 16:21:18.477994390 +0000
+@@ -18,9 +18,8 @@
+ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+ from typing import Any
+ 
+-from lead_desk.config import is_loopback_host
++from lead_desk.loopback import require_loopback_host  # the one refusal lives in a light file; handed on from here
+ from scripts.http_guard import HeadDeadline
+-from tools.refusing_args import LOOPBACK_HOST_TEXT
+ 
+ BAD_REQUEST_ERRORS = (KeyError, TypeError, ValueError, AttributeError, IndexError, RecursionError)
+ METHOD_NAMES = ("do_GET", "do_POST", "do_PATCH", "do_DELETE", "do_PUT")
+@@ -29,16 +28,6 @@
+ """Errors that only mean the other side left or stalled (the same class src/lead_desk/server.py `_GONE` names)."""
+ 
+ 
+-def require_loopback_host(host: object) -> str:
+-    """The one refusal of a fake's listening host: only this computer (localhost or a loopback address). An empty or
+-    blank host is refused too (to a socket an empty host means "every interface"); fails closed on anything that is not
+-    text. Every fake (the three web fakes through QuietServer, the two mail fakes directly) calls this before it makes
+-    a socket."""
+-    if not isinstance(host, str) or not is_loopback_host(host):
+-        raise ValueError(LOOPBACK_HOST_TEXT)
+-    return host
+-
+-
+ class QuietServer(ThreadingHTTPServer):
+     """The server class of every fake. The standard library prints a traceback to the error output for ANY exception in
+     a handler thread; a test client that hangs up on purpose (a request with no body, a bad one, a late body) made the
+diff -ruN a/demo_only/fake_imap.py b/demo_only/fake_imap.py
+--- a/demo_only/fake_imap.py	2026-11-14 14:27:39.588954752 +0000
++++ b/demo_only/fake_imap.py	2026-11-14 16:21:22.208387014 +0000
+@@ -12,8 +12,8 @@
+ import time
+ from pathlib import Path
+ 
+-from demo_only.bad_request import require_loopback_host
+ from demo_only.fake_smtp_tls import FAKE_PASSWORD, close_listener
++from lead_desk.loopback import require_loopback_host
+ 
+ FAKE_LINE_MAX = 65536  # the longest line a fake reads (no unbounded readline)
+ 
+diff -ruN a/demo_only/fake_smtp_tls.py b/demo_only/fake_smtp_tls.py
+--- a/demo_only/fake_smtp_tls.py	2026-11-14 14:27:39.590021364 +0000
++++ b/demo_only/fake_smtp_tls.py	2026-11-14 16:21:21.402124669 +0000
+@@ -16,7 +16,7 @@
+ import threading
+ from pathlib import Path
+ 
+-from demo_only.bad_request import require_loopback_host
++from lead_desk.loopback import require_loopback_host
+ 
+ SCRIPTS = (
+     "ok",
+diff -ruN a/src/lead_desk/config.py b/src/lead_desk/config.py
+--- a/src/lead_desk/config.py	2026-11-14 10:47:58.627205155 +0000
++++ b/src/lead_desk/config.py	2026-11-14 16:21:19.140151344 +0000
+@@ -56,6 +56,7 @@
+ from lead_desk.envnum import SettingRefused, check_url_port, env_number, split_url
+ from lead_desk.identity import PLAIN_ADDRESS, encodable, has_control_char
+ from lead_desk.jsonread import loads_bounded
++from lead_desk.loopback import is_loopback_host
+ from lead_desk.regfile import open_regular
+ from lead_desk.urls import desk_origin
+ 
+@@ -70,23 +71,6 @@
+     return text.isascii() and text.isprintable() and not any(c.isspace() for c in text)
+ 
+ 
+-def is_loopback_host(name: str) -> bool:
+-    """True for localhost and for a loopback address (brackets allowed); a wildcard, a name or any other address is
+-    reachable from, or reaches, other computers. Fails closed: anything it cannot read is not loopback."""
+-    if name.lower() == "localhost":
+-        return True
+-    bare = name[1:-1] if name.startswith("[") and name.endswith("]") else name
+-    if "[" in bare or "]" in bare or "%" in bare:  # one bracket, or a scope id (::1%eth0): not a plain address
+-        return False
+-    try:
+-        ip = ipaddress.ip_address(bare)
+-    except ValueError:
+-        return False
+-    if isinstance(ip, ipaddress.IPv6Address) and ip.ipv4_mapped is not None:
+-        ip = ip.ipv4_mapped  # the same answer on every Python version (3.13 changed is_loopback for mapped forms)
+-    return ip.is_loopback
+-
+-
+ def is_unspecified(name: str) -> bool:
+     """True for a bind name that means "every interface", in any spelling: the all-zeros IPv4 address, ::, [::], and
+     the short forms the system resolver reads as all zeros (a lone digit string such as the single character 0)."""
+diff -ruN a/src/lead_desk/crm_hubspot.py b/src/lead_desk/crm_hubspot.py
+--- a/src/lead_desk/crm_hubspot.py	2026-11-14 15:21:18.766551463 +0000
++++ b/src/lead_desk/crm_hubspot.py	2026-11-14 16:21:32.096598545 +0000
+@@ -41,7 +41,17 @@
+ per-read timeout), so under a hang the number of live workers can exceed the number of callers; it is not counted or
+ capped here. The desk's descriptor budget (constants.py FD_RESERVE) must leave room for about three times its CRM
+ callers' worth of sockets; the per-run call cap bounds the total number of workers ever started.
+-Counters (`stats()`): what this adapter made, counted on the desk's side of the wire.
++Counters (`stats()`): what this adapter made, counted on the desk's side of the wire. The create has four of them:
++  create_open     +1 BEFORE the create request leaves (written to the counters file first and strictly: if that file
++                  cannot be written the create is not sent and CrmCounterUnwritable, a CrmNothingStored, is raised);
++  created         a 201 with a contact id; conflicts: a 409;
++  create_unknown  the request left and no clear answer came (timeout, hang-up, 5xx, 408, a 2xx with no contact id):
++                  the contact may exist;
++  none            a clear refusal (4xx other than 408/409, or 429 after the waits): nothing was stored.
++The settle rule: every create ends in ONE write that adds its outcome (created, conflicts, create_unknown or none) and
++takes the open one off (`_settle_create`). A desk stopped hard between the two writes leaves create_open at 1, which
++tells a run script that a contact may exist that no outcome counter shows. A settle that itself fails (an exception
++after the answer) also leaves it at 1: that is the safe side, a possible contact is reported and never hidden.
+ Copy of lead owner and lead stage (`set_fields`): PATCH on contacts by email is new; `/crm/v3/owners` is not used by
+ the desk (the probe lists owners once). The copy may use at most floor(max_calls * MIRROR_CALL_SHARE) calls of the run
+ (every PATCH attempt counts, 429 retries included), so the creates keep the rest; a PATCH past that share raises
+diff -ruN a/src/lead_desk/loopback.py b/src/lead_desk/loopback.py
+--- a/src/lead_desk/loopback.py	1970-01-01 00:00:00.000000000 +0000
++++ b/src/lead_desk/loopback.py	2026-11-14 16:21:48.007506078 +0000
+@@ -0,0 +1,46 @@
++"""The one rule for "this computer", in a module that imports only the standard library.
++
++Why it is its own file: the two raw-socket stand-ins (demo_only/fake_imap.py, demo_only/fake_smtp_tls.py) refuse a
++listening host that is not this computer BEFORE they open a socket. They used to get that refusal through
++demo_only/bad_request.py, which pulls in the desk's settings, the HTTP guard and the command-line parser. Now the rule
++sits here and nothing else is loaded with it. `lead_desk.config.is_loopback_host` and `demo_only.bad_request` hand out
++these same objects (one source of truth, there is no second copy).
++
++What the rule says, by design: a host is "this computer" when it is `localhost` (any letter case) or a loopback
++address (127.x, ::1, ::ffff:127.x; brackets allowed). So `LOCALHOST` is accepted. The rule only judges the spelling of
++a name. It does not open a socket and does not promise that anything will listen there; a name such as `localhost`
++is later resolved by the system. It fails closed: anything that is not text, a blank, a wildcard such as 0.0.0.0 or ::,
++a scope id (::1%eth0) and every other address or name is not this computer."""
++
++from __future__ import annotations
++
++import ipaddress
++
++LOOPBACK_HOST_TEXT = "must be this computer: localhost or 127.0.0.1"
++
++
++def is_loopback_host(name: str) -> bool:
++    """True for localhost and for a loopback address (brackets allowed); a wildcard, a name or any other address is
++    reachable from, or reaches, other computers. Fails closed: anything it cannot read is not loopback."""
++    if name.lower() == "localhost":
++        return True
++    bare = name[1:-1] if name.startswith("[") and name.endswith("]") else name
++    if "[" in bare or "]" in bare or "%" in bare:  # one bracket, or a scope id (::1%eth0): not a plain address
++        return False
++    try:
++        ip = ipaddress.ip_address(bare)
++    except ValueError:
++        return False
++    if isinstance(ip, ipaddress.IPv6Address) and ip.ipv4_mapped is not None:
++        ip = ip.ipv4_mapped  # the same answer on every Python version (3.13 changed is_loopback for mapped forms)
++    return ip.is_loopback
++
++
++def require_loopback_host(host: object) -> str:
++    """The one refusal of a fake's listening host: only this computer (localhost or a loopback address). An empty or
++    blank host is refused too (to a socket an empty host means "every interface"); fails closed on anything that is not
++    text. Every fake (the three web fakes through QuietServer, the two mail fakes directly) calls this before it makes
++    a socket."""
++    if not isinstance(host, str) or not is_loopback_host(host):
++        raise ValueError(LOOPBACK_HOST_TEXT)
++    return host
+diff -ruN a/src/lead_desk/run_stats.py b/src/lead_desk/run_stats.py
+--- a/src/lead_desk/run_stats.py	2026-11-14 15:21:18.768989578 +0000
++++ b/src/lead_desk/run_stats.py	2026-11-14 16:07:58.134360602 +0000
+@@ -1,6 +1,12 @@
+ """Optional counters file: an adapter that is given a path writes its counters there after every change (a temporary
+-file, then os.replace; no test checks atomicity), so a run script can read what the adapter really did even when the
+-desk process was stopped hard.
++file, then os.replace), so a run script can read what the adapter really did even when the desk process was stopped
++hard. `write_stats` swallows a failed write on purpose (a counter file must never break a send); `write_stats_strict`
++raises it, and the one write that must be known to have worked uses it: the open create (`create_open`, see
++crm_hubspot.py) is on disk BEFORE its request leaves.
++What a test checks (tests/test_r7t_findings.py, t10): with the JSON dump or the os.replace made to fail, the previous
++whole file stays in place and the target name is only ever changed by os.replace. What no test does: stop a real
++process in the middle of a write or fill a real disk; the guarantee for those cases is os.replace itself (an atomic
++rename on the same folder), which is relied on and not re-tested here.
+ Counts only: no address, no key, no text."""
+ 
+ from __future__ import annotations
+diff -ruN a/tests/test_r7t_findings.py b/tests/test_r7t_findings.py
+--- a/tests/test_r7t_findings.py	2026-11-14 15:36:40.306735629 +0000
++++ b/tests/test_r7t_findings.py	2026-11-14 16:09:19.720316037 +0000
+@@ -268,7 +268,6 @@
+ # a def with a host parameter that binds nothing: the reason it is not an entry point
+ NOT_A_BIND: dict[tuple[str, str], str] = {
+     ("demo_only/fake_smtp_tls.py", "make_cert"): "makes a certificate for a name; opens no socket",
+-    ("demo_only/bad_request.py", "require_loopback_host"): "the refusal itself (tested directly in t6c)",
+     ("demo_only/portal_demo.py", "PortalDemo.set_bound_address"): "records the address the desk already bound",
+     ("demo_only/portal_demo.py", "PortalDemo._url_for"): "builds text from an address; opens no socket",
+ }
+diff -ruN a/tests/test_r7u_c_findings.py b/tests/test_r7u_c_findings.py
+--- a/tests/test_r7u_c_findings.py	1970-01-01 00:00:00.000000000 +0000
++++ b/tests/test_r7u_c_findings.py	2026-11-14 16:25:07.989255548 +0000
+@@ -0,0 +1,299 @@
++"""Round 7U, builder C: the loopback rule in one light module (review m6), the two docstrings (n1, n2) and three tests
++the r7t review named as missing (a settle that raises, two puts at the same time, a 201 without an id). Made-up data
++only, loopback only; no sleep, no real kill, no spend.
++
++Before/after on the r7t sources: see out/R7U-C/RESULTS-C.md. FAILS = fails on r7t. PIN = r7t was already right; the
++test passes on both and says so.
++
++  c1  the loopback rule lives in src/lead_desk/loopback.py (stdlib only); one object everywhere (m6): FAILS
++  c2  a fresh interpreter with only that folder on the path imports it, it refuses, nothing heavy loads (m6): FAILS
++  c3  the two raw-socket fakes import nothing heavy (m6): FAILS
++  c4  the module text says this computer by design, no promise of a listener (m8, doc check): FAILS
++  c5  a put whose settle raises leaves the create open, the safe side: PIN
++  c6  two puts at the same time: create_open == 2 on disk before either request leaves: PIN
++  c7  a 201 without an id is counted create_unknown: PIN
++  n1  run_stats text says what t10 really checks (doc check): FAILS
++  n2  crm_hubspot text names the create counters, the refusal and the settle rule (doc check): FAILS
++"""
++
++from __future__ import annotations
++
++import ast
++import json
++import os
++import threading
++from pathlib import Path
++from typing import Any
++
++import pytest
++from support import REPO, run_python
++
++LIGHT = REPO / "src" / "lead_desk" / "loopback.py"
++HEAVY_PREFIXES = ("lead_desk", "scripts", "tools", "demo_only")
++
++
++def _stats(path: Path) -> dict[str, int]:
++    return json.loads(path.read_text(encoding="utf-8"))
++
++
++ALL_INTERFACES = ".".join(["0"] * 4)
++
++
++def _fresh(tmp_path: Path, code: str) -> Any:
++    """A fresh interpreter in isolated mode (-I): no environment path, no current folder on the path. The text runs
++    from a file in the test's own folder (the repository's helper refuses a `-c` text)."""
++    script = tmp_path / "fresh.py"
++    script.write_text(code, encoding="utf-8")
++    return run_python(["-I", str(script)], env=dict(os.environ), timeout=60)
++
++
++# -- c1: one light module, one source of truth ------------------------------------------------------------------------
++
++
++def test_c1_the_light_module_imports_only_the_standard_library() -> None:
++    tree = ast.parse(LIGHT.read_text(encoding="utf-8"))
++    names: set[str] = set()
++    for node in ast.walk(tree):
++        if isinstance(node, ast.Import):
++            names |= {a.name.split(".")[0] for a in node.names}
++        elif isinstance(node, ast.ImportFrom):
++            names.add((node.module or "").split(".")[0])
++    assert names <= {"__future__", "ipaddress"}, names
++
++
++def test_c1_there_is_one_rule_one_refusal_and_one_text() -> None:
++    from demo_only import bad_request
++    from lead_desk import config, loopback
++    from tools import refusing_args
++
++    assert config.is_loopback_host is loopback.is_loopback_host
++    assert bad_request.require_loopback_host is loopback.require_loopback_host
++    assert refusing_args.LOOPBACK_HOST_TEXT is loopback.LOOPBACK_HOST_TEXT
++    assert loopback.require_loopback_host("localhost") == "localhost"
++
++
++@pytest.mark.parametrize(
++    "bad",
++    [
++        None,
++        5,
++        b"127.0.0.1",
++        "",
++        " ",
++        ALL_INTERFACES,
++        "::",
++        "[::]",
++        "example." + "com",
++        "[::",
++        "::1%eth0",
++        "[[::1]]",
++        "[::1",
++        "::1]",
++    ],
++)
++def test_c1_the_light_refusal_refuses_what_is_not_this_computer(bad: Any) -> None:
++    from lead_desk import loopback
++
++    with pytest.raises(ValueError, match=loopback.LOOPBACK_HOST_TEXT):
++        loopback.require_loopback_host(bad)
++
++
++@pytest.mark.parametrize("host", ["LOCALHOST", "localhost", "127.0.0.1", "[::1]", "::1", "::ffff:127.0.0.1"])
++def test_c1_the_light_refusal_accepts_each_loopback_spelling(host: str) -> None:
++    from lead_desk import loopback
++
++    assert loopback.require_loopback_host(host) == host
++    assert loopback.is_loopback_host(host) is True
++
++
++def test_c1_pin_the_refusal_text_is_the_fixed_line_the_scripts_show() -> None:
++    """PIN of a literal: every other test reads the text from the constant, so a changed wording would pass them."""
++    from lead_desk import loopback
++
++    assert loopback.LOOPBACK_HOST_TEXT == "must be this computer: localhost or 127.0.0.1"
++
++
++# -- c2: the module alone, in a fresh interpreter ---------------------------------------------------------------------
++
++
++def test_c2_the_module_alone_on_the_path_imports_and_refuses_and_loads_nothing_heavy(tmp_path: Path) -> None:
++    """`-I` drops the environment path and the current folder; only the folder of the module is put on the path."""
++    code = (
++        "import sys\n"
++        f"sys.path[:0] = [{str(LIGHT.parent)!r}]\n"
++        "import loopback\n"
++        "assert loopback.require_loopback_host('127.0.0.1') == '127.0.0.1'\n"
++        f"for bad in ({ALL_INTERFACES!r}, '', None, 7):\n"
++        "    try:\n"
++        "        loopback.require_loopback_host(bad)\n"
++        "    except ValueError:\n"
++        "        continue\n"
++        "    raise SystemExit('accepted ' + repr(bad))\n"
++        f"heavy = sorted(m for m in sys.modules if m.split('.')[0] in {HEAVY_PREFIXES!r})\n"
++        "print('HEAVY=' + ','.join(heavy))\n"
++        "print('OK')\n"
++    )
++    done = _fresh(tmp_path, code)
++    assert done.returncode == 0, done.stderr[-1500:] + done.stdout[-500:]
++    assert "HEAVY=\n" in done.stdout and "OK" in done.stdout, done.stdout
++
++
++def test_c3_the_two_raw_socket_fakes_import_no_heavy_module(tmp_path: Path) -> None:
++    heavy = ("lead_desk.config", "scripts.http_guard", "tools.refusing_args", "lead_desk.constants", "lead_desk.envnum")
++    code = (
++        "import sys\n"
++        f"sys.path[:0] = [{str(REPO / 'src')!r}, {str(REPO)!r}]\n"
++        "import demo_only.fake_imap, demo_only.fake_smtp_tls\n"
++        f"print('HEAVY=' + ','.join(m for m in {list(heavy)!r} if m in sys.modules))\n"
++        "print('LIGHT=' + str('lead_desk.loopback' in sys.modules))\n"
++    )
++    done = _fresh(tmp_path, code)
++    assert done.returncode == 0, done.stderr[-1500:]
++    assert "HEAVY=\n" in done.stdout and "LIGHT=True" in done.stdout, done.stdout
++
++
++def test_c3_the_fakes_still_refuse_a_host_that_is_not_this_computer(tmp_path: Path) -> None:
++    from demo_only.fake_imap import FakeImap
++    from demo_only.fake_smtp_tls import FakeSmtp
++    from lead_desk.loopback import LOOPBACK_HOST_TEXT
++
++    for make in (
++        lambda h: FakeImap(tmp_path / "c", tmp_path / "k", h, {}),
++        lambda h: FakeSmtp(tmp_path / "c", tmp_path / "k", h),
++    ):
++        with pytest.raises(ValueError, match=LOOPBACK_HOST_TEXT):
++            make(ALL_INTERFACES)
++
++
++# -- c4: the text says what the rule is (a doc check; it fails on r7t because the module does not exist) ------------
++
++
++def test_c4_the_module_text_says_this_computer_by_design_and_promises_no_listener() -> None:
++    text = LIGHT.read_text(encoding="utf-8")
++    doc = ast.get_docstring(ast.parse(text)) or ""
++    assert "by design" in doc and "LOCALHOST" in doc and "does not" in doc and "listen" in doc, doc
++
++
++# -- c5-c7: gaps the review named in the r7t tests --------------------------------------------------------------------
++
++
++def _rig(tmp_path: Path) -> Any:
++    from test_crm_hubspot import Rig
++
++    return Rig(tmp_path)
++
++
++def test_c5_pin_a_put_whose_settle_raises_leaves_the_create_open_which_is_the_safe_side(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
++) -> None:
++    from test_crm_hubspot import REC
++
++    from lead_desk.crm_hubspot import HubspotCrm
++
++    rig = _rig(tmp_path)
++    try:
++        stats = tmp_path / "desk-rabcdef-1.hubspot.json"
++        crm = rig.crm(stats_file=stats)
++
++        def boom(self: Any, outcome: str | None) -> None:
++            raise RuntimeError("settle failed")
++
++        monkeypatch.setattr(HubspotCrm, "_settle_create", boom)
++        with pytest.raises(RuntimeError, match="settle failed"):
++            crm.put("L-1", REC)
++        written = _stats(stats)
++        assert (written["created"], written["create_open"]) == (0, 1), written  # reported as possible, not hidden
++        assert len(rig.state.contacts) == 1  # and the contact is really there: the open create is not an over-count
++    finally:
++        rig.stop()
++
++
++def test_c6_pin_two_puts_at_the_same_time_are_two_open_creates_before_either_request_leaves(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
++) -> None:
++    from test_crm_hubspot import REC
++
++    from lead_desk.crm_hubspot import HubspotCrm
++
++    rig = _rig(tmp_path)
++    try:
++        stats = tmp_path / "desk-rabcdef-2.hubspot.json"
++        crm = rig.crm(stats_file=stats)
++        entered = threading.Barrier(3, timeout=20)  # the two requests and this test
++        go = threading.Event()
++        real = HubspotCrm._once
++
++        def once(self: Any, method: str, path: str, obj: Any, deadline: float, key: str) -> Any:
++            entered.wait()  # both creates were written as open before either request leaves
++            assert go.wait(20)
++            return real(self, method, path, obj, deadline, key)
++
++        monkeypatch.setattr(HubspotCrm, "_once", once)
++        errors: list[BaseException] = []
++
++        def put(n: int) -> None:
++            try:
++                crm.put(f"L-{n}", {**REC, "email": f"p{n}@example.test"})
++            except Exception as e:  # handed to the test thread
++                errors.append(e)
++
++        threads = [threading.Thread(target=put, args=(n,)) for n in (1, 2)]
++        for t in threads:
++            t.start()
++        try:
++            entered.wait()
++            assert _stats(stats)["create_open"] == 2, _stats(stats)
++        finally:
++            go.set()
++            for t in threads:
++                t.join(20)
++        assert not errors, errors
++        done = _stats(stats)
++        assert (done["created"], done["create_open"]) == (2, 0), done
++    finally:
++        rig.stop()
++
++
++def test_c7_pin_a_201_without_an_id_is_an_unknown_create(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
++    from test_crm_hubspot import REC
++
++    from lead_desk.crm_hubspot import CrmError, HubspotCrm, _Reply
++
++    rig = _rig(tmp_path)
++    try:
++        stats = tmp_path / "desk-rabcdef-3.hubspot.json"
++        crm = rig.crm(stats_file=stats)
++        real = HubspotCrm._once
++
++        def once(self: Any, method: str, path: str, obj: Any, deadline: float, key: str) -> Any:
++            real(self, method, path, obj, deadline, key)  # the stand-in made the contact
++            return _Reply(201, {}, None)  # and answered 201 with no id
++
++        monkeypatch.setattr(HubspotCrm, "_once", once)
++        with pytest.raises(CrmError):
++            crm.put("L-1", REC)
++        written = _stats(stats)
++        assert (written["created"], written["create_open"], written["create_unknown"]) == (0, 0, 1), written
++        assert len(rig.state.contacts) == 1
++    finally:
++        rig.stop()
++
++
++# -- n1, n2: the two texts (doc checks) -------------------------------------------------------------------------------
++
++
++def test_n1_the_counters_file_text_does_not_say_no_test_checks_atomicity() -> None:
++    from lead_desk import run_stats
++
++    doc = " ".join((run_stats.__doc__ or "").split())
++    assert "no test checks atomicity" not in doc, doc
++    for word in ("write_stats_strict", "create_open", "t10", "What no test does"):
++        assert word in doc, word
++
++
++def test_n2_the_hubspot_text_names_the_create_counters_the_refusal_and_the_settle_rule() -> None:
++    from lead_desk import crm_hubspot
++
++    doc = " ".join((crm_hubspot.__doc__ or "").split())
++    for word in ("create_open", "create_unknown", "CrmCounterUnwritable", "settle"):
++        assert word in doc, word
+diff -ruN a/tools/refusing_args.py b/tools/refusing_args.py
+--- a/tools/refusing_args.py	2026-11-14 10:47:58.636549785 +0000
++++ b/tools/refusing_args.py	2026-11-14 16:21:19.847271285 +0000
+@@ -36,10 +36,12 @@
+ try:  # started as a script without the src folder on the path: it is added (the exit codes live in constants.py)
+     from lead_desk.constants import EXIT_REFUSED, EXIT_UNREACHABLE, LOOPBACK_HOSTS
+     from lead_desk.envnum import read_number
++    from lead_desk.loopback import LOOPBACK_HOST_TEXT  # the one text: the rule's own file
+ except ImportError:
+     sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+     from lead_desk.constants import EXIT_REFUSED, EXIT_UNREACHABLE, LOOPBACK_HOSTS
+     from lead_desk.envnum import read_number
++    from lead_desk.loopback import LOOPBACK_HOST_TEXT  # the one text: the rule's own file
+ 
+ __all__ = [
+     "EXIT_REFUSED",
+@@ -64,7 +66,6 @@
+ # the fixed texts of `http_address`
+ ADDRESS_TEXT = "must be an http or https address (for example http://127.0.0.1:8765)"
+ LOOPBACK_ADDRESS_TEXT = "must be an http address on this computer (127.0.0.1 or localhost)"
+-LOOPBACK_HOST_TEXT = "must be this computer: localhost or 127.0.0.1"
+ 
+ 
+ # the fixed texts a script passes to `parser.error()` itself (no typed word in them): shown under their own option names

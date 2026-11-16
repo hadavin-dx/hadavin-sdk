@@ -1,0 +1,16 @@
+### tests/test_migration_wiring.py::test_the_released_check_looks_at_the_files_migrate_runs_not_at_the_folder rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+__ test_the_released_check_looks_at_the_files_migrate_runs_not_at_the_folder ___
+tests/test_migration_wiring.py:1274: in test_the_released_check_looks_at_the_files_migrate_runs_not_at_the_folder
+    mig.migrate("postgresql://unused")
+src/hadavin_sdk/store/migrate.py:1018: in migrate
+    connect(
+tests/test_migration_wiring.py:1270: in <lambda>
+    monkeypatch.setattr(mig, "connect", lambda *a, **k: pytest.fail("connected"))
+                                                        ^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: connected
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_the_released_check_looks_at_the_files_migrate_runs_not_at_the_folder
+1 failed in 0.39s
+

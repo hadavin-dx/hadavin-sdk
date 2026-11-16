@@ -1,0 +1,3 @@
+tests/test_stage_names.py::test_a_secret_shaped_text_typed_as_an_id_is_not_shown_by_any_loaded_id_message[hex64]
+tests/test_stage_names.py::test_a_secret_shaped_text_typed_as_an_id_is_not_shown_by_any_loaded_id_message[upper]
+tests/test_stage_names.py::test_the_guard_sees_a_name_printed_outside_the_filter

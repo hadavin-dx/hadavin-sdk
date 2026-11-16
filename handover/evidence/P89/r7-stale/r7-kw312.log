@@ -1,0 +1,28 @@
+........................................................................ [ 68%]
+....................F............                                        [100%]
+=================================== FAILURES ===================================
+____ test_a_value_printed_in_two_layers_is_masked_whatever_quotes_it_holds _____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f3d9684a1e0>
+
+    def test_a_value_printed_in_two_layers_is_masked_whatever_quotes_it_holds(monkeypatch):
+        rng = _Det(7)
+        leaked: list[str] = []
+        for _ in range(120):
+            body = "".join(rng.choice(TWO_LAYER_ALPHABET) for _ in range(rng.randint(1, 5)))
+            tail = "".join(rng.choice(TWO_LAYER_ALPHABET) for _ in range(rng.randint(1, 5)))
+            value = "host=db.invalid user=svc password=" + body + MARKER + tail
+            monkeypatch.setenv(DSN_NAME, value)
+            secrets = mr._secret_values((DSN_NAME,))
+            for text in _two_layers(value):
+                if MARKER in mr._masked("E   " + text, secrets):
+                    leaked.append(text)
+>       assert not leaked, f"{len(leaked)} two-layer forms survived the masking, first: {leaked[0]}"
+E       AssertionError: 790 two-layer forms survived the masking, first: 'host=db.invalid user=svc password=\\'\\'"\\\\\xe9Xy9Zq1\\\\a\xe9'
+E       assert not ['\'host=db.invalid user=svc password=\\\\\'\\\\\'"\\\\\\\\\\xe9Xy9Zq1\\\\\\\\a\\xe9\'', '\'host=db.invalid user=svc p...\\\\\\\\a\\\\u00e9"', '"host=db.invalid user=svc password=\'\'\\\\"\\\\\\\\\\\\u00e9Xy9Zq1\\\\\\\\a\\\\u00e9"\'"', ...]
+
+tests/test_mutation_runner_keywords.py:1746: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_mutation_runner_keywords.py::test_a_value_printed_in_two_layers_is_masked_whatever_quotes_it_holds
+1 failed, 104 passed in 35.76s
+exit=1

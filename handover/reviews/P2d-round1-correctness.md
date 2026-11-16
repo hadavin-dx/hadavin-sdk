@@ -1,0 +1,27 @@
+# P2d ticket, round 1, CORRECTNESS review
+
+- Reviewer: `egm:egm-codebase-details` (fresh, read-only, Sonnet 5.5 set by the lead). Ticket `tickets/P2d.md` rev 1 (c34fe24). No git available to it: ce70eb5 = the working tree, PR #50 748849c = the snapshot in the scratchpad. All git diff/numstat/hunk figures, all timings, probes p1-p15 and the c1a branch facts are UNVERIFIED by the reviewer.
+- Result: BLOCKER 0; MAJOR 4 (C1-C4); MINOR 8 (C5-C12); NIT 3 (C13-C15). Stop rule NOT met.
+- Saved by the lead 2026-11-05, CONDENSED (verified-OK list summarised: 17 template fields, redact.py line counts 1254/1537, 7 WARDEN lines, warden_port counts, 32 moved test names, 21 mutant rows and killers, five `runmap.redact_text` edit sites, defect D1 (U+2044) confirmed by code reading). Ledger rows `BL-core-p2d-r1-cor-*`.
+
+| id | sev | section | problem | fix |
+|---|---|---|---|---|
+| C1 | MAJOR | N2, "Three constants move" | N2 unkillable: `MAX_FOLD_ROUNDS = defaults.REDACT_FOLD_ROUNDS` is an import-time constant so patching `defaults` changes nothing; literal 65_536 / 4096 variants equivalent (values equal; SEAM-4 and test 29 compare the same numbers). | Read constants at call time (`defaults.REDACT_FOLD_ROUNDS` inside `_folded_line`, `i % defaults.REDACT_BUDGET_CHECK_CHARS`) and kill with non-default values; for `lru_cache` size use reload or drop N2 for that constant and say so. |
+| C2 | MAJOR | N6; "tests pin it" | No exact-string pin in test 9: it uses the imported `FOLD_NOTE`; no literal "line withheld" in the 748849c tests; N6 survives; "the exact text is part of the contract" is false. | New row with the literal `"[line withheld: look-alike text hid a protected value]"`; N6 names it. |
+| C3 | MAJOR | SEAM-2, ERR-1, SEAM-4 | `redact.py` does `from hadavin_sdk.guard.textnorm import fold` (line 33): a patch on `textnorm.fold` sees nothing; SEAM-2 passes vacuously on an empty list; `_char_class` caches; `lru_cache` does not expose keys (`cache_parameters()` has only maxsize/typed): SEAM-4 not implementable. | Patch `redact_mod.fold`; `_char_class.cache_clear()` first; assert the spy saw >= N calls; SEAM-4 records arguments reaching `redact_mod.fold` on misses (length 1). |
+| C4 | MAJOR | Depends on; Q1; merge order | Departs from P1.md lines 16, 26 (second scan waits for P1b), plan-v3 (P2d depends on P1; order "P2a and P4d, then P4a, P2d, P5a"); open decision per A14(6) with no answer in questions-for-lead.md; ships two known redaction holes as strict xfails (GAP-1 tags, P1B-1 unassigned) and MAP-1 pins the folded-spelling restore. Against fix-dont-defer unless the lead records an exception. | Mark the dependency an open lead decision in Depends-on; state P2a/P4d order; make P2d wait for P1b and close GAP-1/P1B-1/MAP-1 here, or get the lead's exception with owner/date for P2d-2. |
+| C5 | MINOR | "21 existing rows" | Rows 5, 7, 12, 20 are stale snippets at 748849c (thread_time at line 989; `.replace("⁄","/")` at 1107; `if not i & 4095:` after the constant moves). | Name them "rewrite snippet". |
+| C6 | MINOR | test 29 | `_aligned_fold("é"*5000, 0.0)` raises at i == 0: does not prove "every 4,096 characters". | Test where the deadline passes mid-line (patch `thread_time` after 4,096 chars) + mutant. |
+| C7 | MINOR | Mutation plan | No mutants for `started = time.thread_time()` revert or the two `thread_time() - started > budget` checks. | Two `runmap.py` mutants with killers. |
+| C8 | MINOR | row 32, FOLD_NOTE import | Test 32 imports `FOLD_NOTE` inside the test (ImportError on ce70eb5, not an assertion); batch files import it at module level (batch3 line 21): collection breaks. | Replace every import with `getattr(redact_mod, "FOLD_NOTE", ...)` incl. test 32. |
+| C9 | MINOR | labels | Test 22 is A (old passes no `_deadline`); test 30's second half is A; test 27's explanation wrong (forbidden `monotonic` raises AssertionError inside `redact_text`, turned into `RedactionError`; label A holds for another reason); test 22 imports `redact_mod`, `redact_text`. | Fix labels, explanation and import list. |
+| C10 | MINOR | Header "no suite run", probes | 15 probes executed `redact()` on both trees; order 7(2) allows only Postgres runs; figures (614/677, 67/67, 437/614, 4.08 s, U+2044 uniqueness over 1.11M) UNVERIFIED. | Lead states whether probes count; mark figures "drafter probe, UNVERIFIED" until the evidence runner repeats them. |
+| C11 | MINOR | Depends on; SEAM-1; Q3 | P1.md internally inconsistent on the size rule; SEAM-1 and HOSTILE-1 (262,144 U+0430) fail on P1a as written; dependency only in Q3. | Add "P1a revision 5 must make the size rule the plain NFKD sum" to Depends-on. |
+| C12 | MINOR | `defaults.py` | P2a also edits `defaults.py` and CHANGELOG; plan puts P2a before P2d. | Add P2a to the ordering sentence. |
+| C13 | NIT | Interface | `redact(text, mapping=None, ...)` is keyword-only after `text`. | Write `redact(text, *, mapping=None, ...)`. |
+| C14 | NIT | Files | "45 lines" of test_k5_round12_fuzz is 43 (lines 213-255). | Say 43. |
+| C15 | NIT | guarantee sentence | `_folded_line` returns the line unchanged in three cases; sentence omits the third (unmasked line meets the ordinary patterns). | Reword. |
+
+Sibling consistency: P1 (fold signature, TextnormError family, NotText, `line_view`, LOOKALIKES, P1a/P1b split) consistent apart from C4, C11; P2a only the C12 ordering; P3a none.
+
+Model used: Sonnet 5.5 (set by the lead).

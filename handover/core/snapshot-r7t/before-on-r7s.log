@@ -1,0 +1,2333 @@
+F.FFFFFFFFFFF............................F.......FFFFFFFFFF.....FFFF.... [ 52%]
+.F..FFFFFFFFFFFFF....FFFFFFFFFFFFFFFFFFFFF.......FFFFFFF.FFFFFFFFF       [100%]
+=================================== FAILURES ===================================
+_______________ test_t1_the_counting_rule_and_an_unknown_counter _______________
+
+    def test_t1_the_counting_rule_and_an_unknown_counter() -> None:
+        assert rrc.contacts_not_accounted_for(0, 0) == 0  # a counter that says 0 and nothing shown: nothing is missing
+        assert rrc.contacts_not_accounted_for(0, 3) == 0
+        assert rrc.contacts_not_accounted_for(1, 0) == 1
+        assert rrc.contacts_not_accounted_for(2, 1) == 1
+>       with pytest.raises(rrc.CounterUnreadable):  # r7s said 0 here (fail open)
+                           ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'run_real_check' has no attribute 'CounterUnreadable'
+
+tests/test_r7t_findings.py:61: AttributeError
+_________ test_t2_the_checked_reader_counts_files_and_unreadable_files _________
+
+tmp_path = PosixPath('/home/user/build/rr6/out/R7T/tmp/pytest-of-unknown/pytest-16/test_t2_the_checked_reader_cou0')
+
+    def test_t2_the_checked_reader_counts_files_and_unreadable_files(tmp_path: Path) -> None:
+>       read = rrc.read_counter_files_checked(tmp_path, ".hubspot.json", "raaaaaa")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'run_real_check' has no attribute 'read_counter_files_checked'
+
+tests/test_r7t_findings.py:83: AttributeError
+_ test_t2_a_file_that_is_not_a_set_of_whole_numbers_is_unreadable_and_never_a_crash['{"created": '] _
+
+tmp_path = PosixPath('/home/user/build/rr6/out/R7T/tmp/pytest-of-unknown/pytest-16/test_t2_a_file_that_is_not_a_s0')
+content = '{"created": '
+
+    @pytest.mark.parametrize(
+        "content", ['{"created": ', "[]", '{"created": [1]}', '{"created": "x"}', "", "null"], ids=repr
+    )
+    def test_t2_a_file_that_is_not_a_set_of_whole_numbers_is_unreadable_and_never_a_crash(
+        tmp_path: Path, content: str
+    ) -> None:
+        (tmp_path / "desk-raaaaaa-1.hubspot.json").write_text(content, encoding="utf-8")
+>       read = rrc.read_counter_files_checked(tmp_path, ".hubspot.json", "raaaaaa")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'run_real_check' has no attribute 'read_counter_files_checked'
+
+tests/test_r7t_findings.py:102: AttributeError
+_ test_t2_a_file_that_is_not_a_set_of_whole_numbers_is_unreadable_and_never_a_crash['[]'] _
+
+tmp_path = PosixPath('/home/user/build/rr6/out/R7T/tmp/pytest-of-unknown/pytest-16/test_t2_a_file_that_is_not_a_s1')
+content = '[]'
+
+    @pytest.mark.parametrize(
+        "content", ['{"created": ', "[]", '{"created": [1]}', '{"created": "x"}', "", "null"], ids=repr
+    )
+    def test_t2_a_file_that_is_not_a_set_of_whole_numbers_is_unreadable_and_never_a_crash(
+        tmp_path: Path, content: str
+    ) -> None:
+        (tmp_path / "desk-raaaaaa-1.hubspot.json").write_text(content, encoding="utf-8")
+>       read = rrc.read_counter_files_checked(tmp_path, ".hubspot.json", "raaaaaa")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'run_real_check' has no attribute 'read_counter_files_checked'
+
+tests/test_r7t_findings.py:102: AttributeError
+_ test_t2_a_file_that_is_not_a_set_of_whole_numbers_is_unreadable_and_never_a_crash['{"created": [1]}'] _
+
+tmp_path = PosixPath('/home/user/build/rr6/out/R7T/tmp/pytest-of-unknown/pytest-16/test_t2_a_file_that_is_not_a_s2')
+content = '{"created": [1]}'
+
+    @pytest.mark.parametrize(
+        "content", ['{"created": ', "[]", '{"created": [1]}', '{"created": "x"}', "", "null"], ids=repr
+    )
+    def test_t2_a_file_that_is_not_a_set_of_whole_numbers_is_unreadable_and_never_a_crash(
+        tmp_path: Path, content: str
+    ) -> None:
+        (tmp_path / "desk-raaaaaa-1.hubspot.json").write_text(content, encoding="utf-8")
+>       read = rrc.read_counter_files_checked(tmp_path, ".hubspot.json", "raaaaaa")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'run_real_check' has no attribute 'read_counter_files_checked'
+
+tests/test_r7t_findings.py:102: AttributeError
+_ test_t2_a_file_that_is_not_a_set_of_whole_numbers_is_unreadable_and_never_a_crash['{"created": "x"}'] _
+
+tmp_path = PosixPath('/home/user/build/rr6/out/R7T/tmp/pytest-of-unknown/pytest-16/test_t2_a_file_that_is_not_a_s3')
+content = '{"created": "x"}'
+
+    @pytest.mark.parametrize(
+        "content", ['{"created": ', "[]", '{"created": [1]}', '{"created": "x"}', "", "null"], ids=repr
+    )
+    def test_t2_a_file_that_is_not_a_set_of_whole_numbers_is_unreadable_and_never_a_crash(
+        tmp_path: Path, content: str
+    ) -> None:
+        (tmp_path / "desk-raaaaaa-1.hubspot.json").write_text(content, encoding="utf-8")
+>       read = rrc.read_counter_files_checked(tmp_path, ".hubspot.json", "raaaaaa")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'run_real_check' has no attribute 'read_counter_files_checked'
+
+tests/test_r7t_findings.py:102: AttributeError
+_ test_t2_a_file_that_is_not_a_set_of_whole_numbers_is_unreadable_and_never_a_crash[''] _
+
+tmp_path = PosixPath('/home/user/build/rr6/out/R7T/tmp/pytest-of-unknown/pytest-16/test_t2_a_file_that_is_not_a_s4')
+content = ''
+
+    @pytest.mark.parametrize(
+        "content", ['{"created": ', "[]", '{"created": [1]}', '{"created": "x"}', "", "null"], ids=repr
+    )
+    def test_t2_a_file_that_is_not_a_set_of_whole_numbers_is_unreadable_and_never_a_crash(
+        tmp_path: Path, content: str
+    ) -> None:
+        (tmp_path / "desk-raaaaaa-1.hubspot.json").write_text(content, encoding="utf-8")
+>       read = rrc.read_counter_files_checked(tmp_path, ".hubspot.json", "raaaaaa")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'run_real_check' has no attribute 'read_counter_files_checked'
+
+tests/test_r7t_findings.py:102: AttributeError
+_ test_t2_a_file_that_is_not_a_set_of_whole_numbers_is_unreadable_and_never_a_crash['null'] _
+
+tmp_path = PosixPath('/home/user/build/rr6/out/R7T/tmp/pytest-of-unknown/pytest-16/test_t2_a_file_that_is_not_a_s5')
+content = 'null'
+
+    @pytest.mark.parametrize(
+        "content", ['{"created": ', "[]", '{"created": [1]}', '{"created": "x"}', "", "null"], ids=repr
+    )
+    def test_t2_a_file_that_is_not_a_set_of_whole_numbers_is_unreadable_and_never_a_crash(
+        tmp_path: Path, content: str
+    ) -> None:
+        (tmp_path / "desk-raaaaaa-1.hubspot.json").write_text(content, encoding="utf-8")
+>       read = rrc.read_counter_files_checked(tmp_path, ".hubspot.json", "raaaaaa")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'run_real_check' has no attribute 'read_counter_files_checked'
+
+tests/test_r7t_findings.py:102: AttributeError
+________ test_t2_a_folder_with_the_name_of_a_counter_file_is_unreadable ________
+
+tmp_path = PosixPath('/home/user/build/rr6/out/R7T/tmp/pytest-of-unknown/pytest-16/test_t2_a_folder_with_the_name0')
+
+    def test_t2_a_folder_with_the_name_of_a_counter_file_is_unreadable(tmp_path: Path) -> None:
+        (tmp_path / "desk-raaaaaa-1.hubspot.json").mkdir()
+>       read = rrc.read_counter_files_checked(tmp_path, ".hubspot.json", "raaaaaa")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'run_real_check' has no attribute 'read_counter_files_checked'
+
+tests/test_r7t_findings.py:108: AttributeError
+____ test_t2_a_counter_without_the_number_of_created_contacts_is_not_known _____
+
+tmp_path = PosixPath('/home/user/build/rr6/out/R7T/tmp/pytest-of-unknown/pytest-16/test_t2_a_counter_without_the_0')
+
+    def test_t2_a_counter_without_the_number_of_created_contacts_is_not_known(tmp_path: Path) -> None:
+        (tmp_path / "desk-raaaaaa-1.hubspot.json").write_text('{"calls": 4}', encoding="utf-8")
+>       assert not rrc.counter_is_known(rrc.read_counter_files_checked(tmp_path, ".hubspot.json", "raaaaaa"))
+                   ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'run_real_check' has no attribute 'counter_is_known'
+
+tests/test_r7t_findings.py:114: AttributeError
+_ test_t2_a_counter_is_known_only_when_a_file_was_found_read_whole_and_holds_the_created_number _
+
+    def test_t2_a_counter_is_known_only_when_a_file_was_found_read_whole_and_holds_the_created_number() -> None:
+        """Each of the three conditions alone (kills the mutants that drop one): no file found, one unreadable, no
+        number of created contacts."""
+>       assert rrc.counter_is_known(rrc.CounterRead({"created": 3}, 2, 0))
+               ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'run_real_check' has no attribute 'counter_is_known'
+
+tests/test_r7t_findings.py:120: AttributeError
+__ test_t2_the_same_tag_other_kinds_of_file_are_not_read_into_the_hubspot_sum __
+
+tmp_path = PosixPath('/home/user/build/rr6/out/R7T/tmp/pytest-of-unknown/pytest-16/test_t2_the_same_tag_other_kin0')
+
+    def test_t2_the_same_tag_other_kinds_of_file_are_not_read_into_the_hubspot_sum(tmp_path: Path) -> None:
+        """R20 (suffix dropped) was a real gap: the desk log and the mail counter of the SAME run sit in the same folder.
+        R19 (the dash left out of the glob) is NOT equivalent either: a tag that only starts with this tag, or a file with
+        no label, would be read (the reader takes any tag text; TAG_HEX_CHARS only fixes what the run itself makes)."""
+        (tmp_path / "desk-raaaaaa-1.hubspot.json").write_text('{"created": 1}', encoding="utf-8")
+        (tmp_path / "desk-raaaaaa-1.smtp.json").write_text('{"created": 10, "sent": 9}', encoding="utf-8")
+        (tmp_path / "desk-raaaaaa-1.log").write_text('{"created": 100}', encoding="utf-8")
+>       read = rrc.read_counter_files_checked(tmp_path, ".hubspot.json", "raaaaaa")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'run_real_check' has no attribute 'read_counter_files_checked'
+
+tests/test_r7t_findings.py:134: AttributeError
+_ test_t6_every_entry_point_refuses_the_host_before_any_socket[fakes_factory-] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c50804a70>
+call = <function _fakes_factory at 0x7f9c508ad620>, host = ''
+
+    @pytest.mark.parametrize("host", NOT_LOOPBACK)
+    @pytest.mark.parametrize(
+        "call",
+        [*ENTRY_POINTS.values(), _fakes_class],
+        ids=lambda f: f.__name__.strip("_"),
+    )
+    def test_t6_every_entry_point_refuses_the_host_before_any_socket(
+        monkeypatch: pytest.MonkeyPatch, call: Any, host: str
+    ) -> None:
+        sockets = _Sockets(monkeypatch)
+>       with pytest.raises(ValueError, match=LOOPBACK_HOST_TEXT):
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_r7t_findings.py:303: Failed
+__ test_t6_every_entry_point_refuses_the_host_before_any_socket[imap-0.0.0.0] __
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c508076e0>
+call = <function _imap at 0x7f9c508ad760>, host = '0.0.0.0'
+
+    @pytest.mark.parametrize("host", NOT_LOOPBACK)
+    @pytest.mark.parametrize(
+        "call",
+        [*ENTRY_POINTS.values(), _fakes_class],
+        ids=lambda f: f.__name__.strip("_"),
+    )
+    def test_t6_every_entry_point_refuses_the_host_before_any_socket(
+        monkeypatch: pytest.MonkeyPatch, call: Any, host: str
+    ) -> None:
+        sockets = _Sockets(monkeypatch)
+        with pytest.raises(ValueError, match=LOOPBACK_HOST_TEXT):
+>           call(host)
+
+tests/test_r7t_findings.py:304: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_r7t_findings.py:249: in _imap
+    FakeImap(Path("no-such.crt"), Path("no-such.key"), host, {})
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <demo_only.fake_imap.FakeImap object at 0x7f9c50933ce0>
+cert = PosixPath('no-such.crt'), key = PosixPath('no-such.key')
+host = '0.0.0.0', folders = {}, port = 0, header_search_blind = False
+
+    def __init__(
+        self,
+        cert: Path,
+        key: Path,
+        host: str,
+        folders: dict[str, list[str]],
+        port: int = 0,
+        header_search_blind: bool = False,
+    ) -> None:
+        self.folders = folders
+        self.header_search_blind = header_search_blind
+        self.delay = 0.0  # seconds waited before every SEARCH answer (a slow server)
+        self.greeting_delay = 0.0  # seconds waited before the server greeting (a slow connect)
+        self.blind_keys: set[str] = set()  # the search never finds messages with these keys (the scan still sees them)
+        self.user, self.password = "reader-user", FAKE_PASSWORD
+        self.logins: list[tuple[str, str]] = []
+        self.login_lines: list[str] = []  # the raw text after the tag of every LOGIN line (what the client really sent)
+        self.literal_announce = 0  # >0: a FETCH answer announces a literal of this many bytes and sends a few
+        self.commands: list[str] = []
+        ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+>       ctx.load_cert_chain(str(cert), str(key))
+E       FileNotFoundError: [Errno 2] No such file or directory
+
+demo_only/fake_imap.py:48: FileNotFoundError
+_ test_t6_every_entry_point_refuses_the_host_before_any_socket[imap-192.0.2.1] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c50933aa0>
+call = <function _imap at 0x7f9c508ad760>, host = '192.0.2.1'
+
+    @pytest.mark.parametrize("host", NOT_LOOPBACK)
+    @pytest.mark.parametrize(
+        "call",
+        [*ENTRY_POINTS.values(), _fakes_class],
+        ids=lambda f: f.__name__.strip("_"),
+    )
+    def test_t6_every_entry_point_refuses_the_host_before_any_socket(
+        monkeypatch: pytest.MonkeyPatch, call: Any, host: str
+    ) -> None:
+        sockets = _Sockets(monkeypatch)
+        with pytest.raises(ValueError, match=LOOPBACK_HOST_TEXT):
+>           call(host)
+
+tests/test_r7t_findings.py:304: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_r7t_findings.py:249: in _imap
+    FakeImap(Path("no-such.crt"), Path("no-such.key"), host, {})
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <demo_only.fake_imap.FakeImap object at 0x7f9c50930f50>
+cert = PosixPath('no-such.crt'), key = PosixPath('no-such.key')
+host = '192.0.2.1', folders = {}, port = 0, header_search_blind = False
+
+    def __init__(
+        self,
+        cert: Path,
+        key: Path,
+        host: str,
+        folders: dict[str, list[str]],
+        port: int = 0,
+        header_search_blind: bool = False,
+    ) -> None:
+        self.folders = folders
+        self.header_search_blind = header_search_blind
+        self.delay = 0.0  # seconds waited before every SEARCH answer (a slow server)
+        self.greeting_delay = 0.0  # seconds waited before the server greeting (a slow connect)
+        self.blind_keys: set[str] = set()  # the search never finds messages with these keys (the scan still sees them)
+        self.user, self.password = "reader-user", FAKE_PASSWORD
+        self.logins: list[tuple[str, str]] = []
+        self.login_lines: list[str] = []  # the raw text after the tag of every LOGIN line (what the client really sent)
+        self.literal_announce = 0  # >0: a FETCH answer announces a literal of this many bytes and sends a few
+        self.commands: list[str] = []
+        ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+>       ctx.load_cert_chain(str(cert), str(key))
+E       FileNotFoundError: [Errno 2] No such file or directory
+
+demo_only/fake_imap.py:48: FileNotFoundError
+_____ test_t6_every_entry_point_refuses_the_host_before_any_socket[imap-] ______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c50837b60>
+call = <function _imap at 0x7f9c508ad760>, host = ''
+
+    @pytest.mark.parametrize("host", NOT_LOOPBACK)
+    @pytest.mark.parametrize(
+        "call",
+        [*ENTRY_POINTS.values(), _fakes_class],
+        ids=lambda f: f.__name__.strip("_"),
+    )
+    def test_t6_every_entry_point_refuses_the_host_before_any_socket(
+        monkeypatch: pytest.MonkeyPatch, call: Any, host: str
+    ) -> None:
+        sockets = _Sockets(monkeypatch)
+        with pytest.raises(ValueError, match=LOOPBACK_HOST_TEXT):
+>           call(host)
+
+tests/test_r7t_findings.py:304: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_r7t_findings.py:249: in _imap
+    FakeImap(Path("no-such.crt"), Path("no-such.key"), host, {})
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <demo_only.fake_imap.FakeImap object at 0x7f9c508366f0>
+cert = PosixPath('no-such.crt'), key = PosixPath('no-such.key'), host = ''
+folders = {}, port = 0, header_search_blind = False
+
+    def __init__(
+        self,
+        cert: Path,
+        key: Path,
+        host: str,
+        folders: dict[str, list[str]],
+        port: int = 0,
+        header_search_blind: bool = False,
+    ) -> None:
+        self.folders = folders
+        self.header_search_blind = header_search_blind
+        self.delay = 0.0  # seconds waited before every SEARCH answer (a slow server)
+        self.greeting_delay = 0.0  # seconds waited before the server greeting (a slow connect)
+        self.blind_keys: set[str] = set()  # the search never finds messages with these keys (the scan still sees them)
+        self.user, self.password = "reader-user", FAKE_PASSWORD
+        self.logins: list[tuple[str, str]] = []
+        self.login_lines: list[str] = []  # the raw text after the tag of every LOGIN line (what the client really sent)
+        self.literal_announce = 0  # >0: a FETCH answer announces a literal of this many bytes and sends a few
+        self.commands: list[str] = []
+        ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+>       ctx.load_cert_chain(str(cert), str(key))
+E       FileNotFoundError: [Errno 2] No such file or directory
+
+demo_only/fake_imap.py:48: FileNotFoundError
+____ test_t6_every_entry_point_refuses_the_host_before_any_socket[imap-::] _____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c50807200>
+call = <function _imap at 0x7f9c508ad760>, host = '::'
+
+    @pytest.mark.parametrize("host", NOT_LOOPBACK)
+    @pytest.mark.parametrize(
+        "call",
+        [*ENTRY_POINTS.values(), _fakes_class],
+        ids=lambda f: f.__name__.strip("_"),
+    )
+    def test_t6_every_entry_point_refuses_the_host_before_any_socket(
+        monkeypatch: pytest.MonkeyPatch, call: Any, host: str
+    ) -> None:
+        sockets = _Sockets(monkeypatch)
+        with pytest.raises(ValueError, match=LOOPBACK_HOST_TEXT):
+>           call(host)
+
+tests/test_r7t_findings.py:304: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_r7t_findings.py:249: in _imap
+    FakeImap(Path("no-such.crt"), Path("no-such.key"), host, {})
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <demo_only.fake_imap.FakeImap object at 0x7f9c50804290>
+cert = PosixPath('no-such.crt'), key = PosixPath('no-such.key'), host = '::'
+folders = {}, port = 0, header_search_blind = False
+
+    def __init__(
+        self,
+        cert: Path,
+        key: Path,
+        host: str,
+        folders: dict[str, list[str]],
+        port: int = 0,
+        header_search_blind: bool = False,
+    ) -> None:
+        self.folders = folders
+        self.header_search_blind = header_search_blind
+        self.delay = 0.0  # seconds waited before every SEARCH answer (a slow server)
+        self.greeting_delay = 0.0  # seconds waited before the server greeting (a slow connect)
+        self.blind_keys: set[str] = set()  # the search never finds messages with these keys (the scan still sees them)
+        self.user, self.password = "reader-user", FAKE_PASSWORD
+        self.logins: list[tuple[str, str]] = []
+        self.login_lines: list[str] = []  # the raw text after the tag of every LOGIN line (what the client really sent)
+        self.literal_announce = 0  # >0: a FETCH answer announces a literal of this many bytes and sends a few
+        self.commands: list[str] = []
+        ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+>       ctx.load_cert_chain(str(cert), str(key))
+E       FileNotFoundError: [Errno 2] No such file or directory
+
+demo_only/fake_imap.py:48: FileNotFoundError
+_ test_t6_every_entry_point_refuses_the_host_before_any_socket[imap-example.com] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c50930ec0>
+call = <function _imap at 0x7f9c508ad760>, host = 'example.com'
+
+    @pytest.mark.parametrize("host", NOT_LOOPBACK)
+    @pytest.mark.parametrize(
+        "call",
+        [*ENTRY_POINTS.values(), _fakes_class],
+        ids=lambda f: f.__name__.strip("_"),
+    )
+    def test_t6_every_entry_point_refuses_the_host_before_any_socket(
+        monkeypatch: pytest.MonkeyPatch, call: Any, host: str
+    ) -> None:
+        sockets = _Sockets(monkeypatch)
+        with pytest.raises(ValueError, match=LOOPBACK_HOST_TEXT):
+>           call(host)
+
+tests/test_r7t_findings.py:304: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_r7t_findings.py:249: in _imap
+    FakeImap(Path("no-such.crt"), Path("no-such.key"), host, {})
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <demo_only.fake_imap.FakeImap object at 0x7f9c50933e90>
+cert = PosixPath('no-such.crt'), key = PosixPath('no-such.key')
+host = 'example.com', folders = {}, port = 0, header_search_blind = False
+
+    def __init__(
+        self,
+        cert: Path,
+        key: Path,
+        host: str,
+        folders: dict[str, list[str]],
+        port: int = 0,
+        header_search_blind: bool = False,
+    ) -> None:
+        self.folders = folders
+        self.header_search_blind = header_search_blind
+        self.delay = 0.0  # seconds waited before every SEARCH answer (a slow server)
+        self.greeting_delay = 0.0  # seconds waited before the server greeting (a slow connect)
+        self.blind_keys: set[str] = set()  # the search never finds messages with these keys (the scan still sees them)
+        self.user, self.password = "reader-user", FAKE_PASSWORD
+        self.logins: list[tuple[str, str]] = []
+        self.login_lines: list[str] = []  # the raw text after the tag of every LOGIN line (what the client really sent)
+        self.literal_announce = 0  # >0: a FETCH answer announces a literal of this many bytes and sends a few
+        self.commands: list[str] = []
+        ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+>       ctx.load_cert_chain(str(cert), str(key))
+E       FileNotFoundError: [Errno 2] No such file or directory
+
+demo_only/fake_imap.py:48: FileNotFoundError
+__ test_t6_every_entry_point_refuses_the_host_before_any_socket[smtp-0.0.0.0] __
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c509302c0>
+call = <function _smtp at 0x7f9c508ad800>, host = '0.0.0.0'
+
+    @pytest.mark.parametrize("host", NOT_LOOPBACK)
+    @pytest.mark.parametrize(
+        "call",
+        [*ENTRY_POINTS.values(), _fakes_class],
+        ids=lambda f: f.__name__.strip("_"),
+    )
+    def test_t6_every_entry_point_refuses_the_host_before_any_socket(
+        monkeypatch: pytest.MonkeyPatch, call: Any, host: str
+    ) -> None:
+        sockets = _Sockets(monkeypatch)
+        with pytest.raises(ValueError, match=LOOPBACK_HOST_TEXT):
+>           call(host)
+
+tests/test_r7t_findings.py:304: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_r7t_findings.py:255: in _smtp
+    FakeSmtp(Path("no-such.crt"), Path("no-such.key"), host)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <demo_only.fake_smtp_tls.FakeSmtp object at 0x7f9c50834e00>
+cert = PosixPath('no-such.crt'), key = PosixPath('no-such.key')
+host = '0.0.0.0', script = 'ok', implicit_tls = False, port = 0
+
+    def __init__(
+        self, cert: Path, key: Path, host: str, script: str = "ok", implicit_tls: bool = False, port: int = 0
+    ) -> None:
+        self.script = script
+        self.implicit_tls = implicit_tls
+        self.messages: list[tuple[str, str, str, str, bytes]] = []
+        self.commands: list[str] = []
+        self.password = FAKE_PASSWORD
+        self.user = "sender-user"
+        self._ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+>       self._ctx.load_cert_chain(str(cert), str(key))
+E       FileNotFoundError: [Errno 2] No such file or directory
+
+demo_only/fake_smtp_tls.py:77: FileNotFoundError
+_ test_t6_every_entry_point_refuses_the_host_before_any_socket[smtp-192.0.2.1] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c508343b0>
+call = <function _smtp at 0x7f9c508ad800>, host = '192.0.2.1'
+
+    @pytest.mark.parametrize("host", NOT_LOOPBACK)
+    @pytest.mark.parametrize(
+        "call",
+        [*ENTRY_POINTS.values(), _fakes_class],
+        ids=lambda f: f.__name__.strip("_"),
+    )
+    def test_t6_every_entry_point_refuses_the_host_before_any_socket(
+        monkeypatch: pytest.MonkeyPatch, call: Any, host: str
+    ) -> None:
+        sockets = _Sockets(monkeypatch)
+        with pytest.raises(ValueError, match=LOOPBACK_HOST_TEXT):
+>           call(host)
+
+tests/test_r7t_findings.py:304: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_r7t_findings.py:255: in _smtp
+    FakeSmtp(Path("no-such.crt"), Path("no-such.key"), host)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <demo_only.fake_smtp_tls.FakeSmtp object at 0x7f9c50835070>
+cert = PosixPath('no-such.crt'), key = PosixPath('no-such.key')
+host = '192.0.2.1', script = 'ok', implicit_tls = False, port = 0
+
+    def __init__(
+        self, cert: Path, key: Path, host: str, script: str = "ok", implicit_tls: bool = False, port: int = 0
+    ) -> None:
+        self.script = script
+        self.implicit_tls = implicit_tls
+        self.messages: list[tuple[str, str, str, str, bytes]] = []
+        self.commands: list[str] = []
+        self.password = FAKE_PASSWORD
+        self.user = "sender-user"
+        self._ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+>       self._ctx.load_cert_chain(str(cert), str(key))
+E       FileNotFoundError: [Errno 2] No such file or directory
+
+demo_only/fake_smtp_tls.py:77: FileNotFoundError
+_____ test_t6_every_entry_point_refuses_the_host_before_any_socket[smtp-] ______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c50837e90>
+call = <function _smtp at 0x7f9c508ad800>, host = ''
+
+    @pytest.mark.parametrize("host", NOT_LOOPBACK)
+    @pytest.mark.parametrize(
+        "call",
+        [*ENTRY_POINTS.values(), _fakes_class],
+        ids=lambda f: f.__name__.strip("_"),
+    )
+    def test_t6_every_entry_point_refuses_the_host_before_any_socket(
+        monkeypatch: pytest.MonkeyPatch, call: Any, host: str
+    ) -> None:
+        sockets = _Sockets(monkeypatch)
+        with pytest.raises(ValueError, match=LOOPBACK_HOST_TEXT):
+>           call(host)
+
+tests/test_r7t_findings.py:304: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_r7t_findings.py:255: in _smtp
+    FakeSmtp(Path("no-such.crt"), Path("no-such.key"), host)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <demo_only.fake_smtp_tls.FakeSmtp object at 0x7f9c509dc8f0>
+cert = PosixPath('no-such.crt'), key = PosixPath('no-such.key'), host = ''
+script = 'ok', implicit_tls = False, port = 0
+
+    def __init__(
+        self, cert: Path, key: Path, host: str, script: str = "ok", implicit_tls: bool = False, port: int = 0
+    ) -> None:
+        self.script = script
+        self.implicit_tls = implicit_tls
+        self.messages: list[tuple[str, str, str, str, bytes]] = []
+        self.commands: list[str] = []
+        self.password = FAKE_PASSWORD
+        self.user = "sender-user"
+        self._ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+>       self._ctx.load_cert_chain(str(cert), str(key))
+E       FileNotFoundError: [Errno 2] No such file or directory
+
+demo_only/fake_smtp_tls.py:77: FileNotFoundError
+____ test_t6_every_entry_point_refuses_the_host_before_any_socket[smtp-::] _____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c509ddd00>
+call = <function _smtp at 0x7f9c508ad800>, host = '::'
+
+    @pytest.mark.parametrize("host", NOT_LOOPBACK)
+    @pytest.mark.parametrize(
+        "call",
+        [*ENTRY_POINTS.values(), _fakes_class],
+        ids=lambda f: f.__name__.strip("_"),
+    )
+    def test_t6_every_entry_point_refuses_the_host_before_any_socket(
+        monkeypatch: pytest.MonkeyPatch, call: Any, host: str
+    ) -> None:
+        sockets = _Sockets(monkeypatch)
+        with pytest.raises(ValueError, match=LOOPBACK_HOST_TEXT):
+>           call(host)
+
+tests/test_r7t_findings.py:304: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_r7t_findings.py:255: in _smtp
+    FakeSmtp(Path("no-such.crt"), Path("no-such.key"), host)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <demo_only.fake_smtp_tls.FakeSmtp object at 0x7f9c509de1b0>
+cert = PosixPath('no-such.crt'), key = PosixPath('no-such.key'), host = '::'
+script = 'ok', implicit_tls = False, port = 0
+
+    def __init__(
+        self, cert: Path, key: Path, host: str, script: str = "ok", implicit_tls: bool = False, port: int = 0
+    ) -> None:
+        self.script = script
+        self.implicit_tls = implicit_tls
+        self.messages: list[tuple[str, str, str, str, bytes]] = []
+        self.commands: list[str] = []
+        self.password = FAKE_PASSWORD
+        self.user = "sender-user"
+        self._ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+>       self._ctx.load_cert_chain(str(cert), str(key))
+E       FileNotFoundError: [Errno 2] No such file or directory
+
+demo_only/fake_smtp_tls.py:77: FileNotFoundError
+_ test_t6_every_entry_point_refuses_the_host_before_any_socket[smtp-example.com] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c50835ac0>
+call = <function _smtp at 0x7f9c508ad800>, host = 'example.com'
+
+    @pytest.mark.parametrize("host", NOT_LOOPBACK)
+    @pytest.mark.parametrize(
+        "call",
+        [*ENTRY_POINTS.values(), _fakes_class],
+        ids=lambda f: f.__name__.strip("_"),
+    )
+    def test_t6_every_entry_point_refuses_the_host_before_any_socket(
+        monkeypatch: pytest.MonkeyPatch, call: Any, host: str
+    ) -> None:
+        sockets = _Sockets(monkeypatch)
+        with pytest.raises(ValueError, match=LOOPBACK_HOST_TEXT):
+>           call(host)
+
+tests/test_r7t_findings.py:304: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_r7t_findings.py:255: in _smtp
+    FakeSmtp(Path("no-such.crt"), Path("no-such.key"), host)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <demo_only.fake_smtp_tls.FakeSmtp object at 0x7f9c50d3a750>
+cert = PosixPath('no-such.crt'), key = PosixPath('no-such.key')
+host = 'example.com', script = 'ok', implicit_tls = False, port = 0
+
+    def __init__(
+        self, cert: Path, key: Path, host: str, script: str = "ok", implicit_tls: bool = False, port: int = 0
+    ) -> None:
+        self.script = script
+        self.implicit_tls = implicit_tls
+        self.messages: list[tuple[str, str, str, str, bytes]] = []
+        self.commands: list[str] = []
+        self.password = FAKE_PASSWORD
+        self.user = "sender-user"
+        self._ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+>       self._ctx.load_cert_chain(str(cert), str(key))
+E       FileNotFoundError: [Errno 2] No such file or directory
+
+demo_only/fake_smtp_tls.py:77: FileNotFoundError
+____________ test_t6_a_blank_host_is_refused_by_every_entry_point[] ____________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c50931490>
+host = ''
+
+    @pytest.mark.parametrize("host", BLANK_OR_BAD)
+    def test_t6_a_blank_host_is_refused_by_every_entry_point(monkeypatch: pytest.MonkeyPatch, host: str) -> None:
+        sockets = _Sockets(monkeypatch)
+        for call in ENTRY_POINTS.values():
+>           with pytest.raises(ValueError, match=LOOPBACK_HOST_TEXT):
+E           Failed: DID NOT RAISE ValueError
+
+tests/test_r7t_findings.py:312: Failed
+___________ test_t6_a_blank_host_is_refused_by_every_entry_point[ ] ____________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c50804500>
+host = ' '
+
+    @pytest.mark.parametrize("host", BLANK_OR_BAD)
+    def test_t6_a_blank_host_is_refused_by_every_entry_point(monkeypatch: pytest.MonkeyPatch, host: str) -> None:
+        sockets = _Sockets(monkeypatch)
+        for call in ENTRY_POINTS.values():
+            with pytest.raises(ValueError, match=LOOPBACK_HOST_TEXT):
+>               call(host)
+
+tests/test_r7t_findings.py:313: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_r7t_findings.py:249: in _imap
+    FakeImap(Path("no-such.crt"), Path("no-such.key"), host, {})
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <demo_only.fake_imap.FakeImap object at 0x7f9c509deb40>
+cert = PosixPath('no-such.crt'), key = PosixPath('no-such.key'), host = ' '
+folders = {}, port = 0, header_search_blind = False
+
+    def __init__(
+        self,
+        cert: Path,
+        key: Path,
+        host: str,
+        folders: dict[str, list[str]],
+        port: int = 0,
+        header_search_blind: bool = False,
+    ) -> None:
+        self.folders = folders
+        self.header_search_blind = header_search_blind
+        self.delay = 0.0  # seconds waited before every SEARCH answer (a slow server)
+        self.greeting_delay = 0.0  # seconds waited before the server greeting (a slow connect)
+        self.blind_keys: set[str] = set()  # the search never finds messages with these keys (the scan still sees them)
+        self.user, self.password = "reader-user", FAKE_PASSWORD
+        self.logins: list[tuple[str, str]] = []
+        self.login_lines: list[str] = []  # the raw text after the tag of every LOGIN line (what the client really sent)
+        self.literal_announce = 0  # >0: a FETCH answer announces a literal of this many bytes and sends a few
+        self.commands: list[str] = []
+        ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+>       ctx.load_cert_chain(str(cert), str(key))
+E       FileNotFoundError: [Errno 2] No such file or directory
+
+demo_only/fake_imap.py:48: FileNotFoundError
+___________ test_t6_a_blank_host_is_refused_by_every_entry_point[\t] ___________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c509de930>
+host = '\t'
+
+    @pytest.mark.parametrize("host", BLANK_OR_BAD)
+    def test_t6_a_blank_host_is_refused_by_every_entry_point(monkeypatch: pytest.MonkeyPatch, host: str) -> None:
+        sockets = _Sockets(monkeypatch)
+        for call in ENTRY_POINTS.values():
+            with pytest.raises(ValueError, match=LOOPBACK_HOST_TEXT):
+>               call(host)
+
+tests/test_r7t_findings.py:313: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_r7t_findings.py:249: in _imap
+    FakeImap(Path("no-such.crt"), Path("no-such.key"), host, {})
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <demo_only.fake_imap.FakeImap object at 0x7f9c509dfce0>
+cert = PosixPath('no-such.crt'), key = PosixPath('no-such.key'), host = '\t'
+folders = {}, port = 0, header_search_blind = False
+
+    def __init__(
+        self,
+        cert: Path,
+        key: Path,
+        host: str,
+        folders: dict[str, list[str]],
+        port: int = 0,
+        header_search_blind: bool = False,
+    ) -> None:
+        self.folders = folders
+        self.header_search_blind = header_search_blind
+        self.delay = 0.0  # seconds waited before every SEARCH answer (a slow server)
+        self.greeting_delay = 0.0  # seconds waited before the server greeting (a slow connect)
+        self.blind_keys: set[str] = set()  # the search never finds messages with these keys (the scan still sees them)
+        self.user, self.password = "reader-user", FAKE_PASSWORD
+        self.logins: list[tuple[str, str]] = []
+        self.login_lines: list[str] = []  # the raw text after the tag of every LOGIN line (what the client really sent)
+        self.literal_announce = 0  # >0: a FETCH answer announces a literal of this many bytes and sends a few
+        self.commands: list[str] = []
+        ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+>       ctx.load_cert_chain(str(cert), str(key))
+E       FileNotFoundError: [Errno 2] No such file or directory
+
+demo_only/fake_imap.py:48: FileNotFoundError
+___________ test_t6_a_blank_host_is_refused_by_every_entry_point[\n] ___________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c509de000>
+host = '\n'
+
+    @pytest.mark.parametrize("host", BLANK_OR_BAD)
+    def test_t6_a_blank_host_is_refused_by_every_entry_point(monkeypatch: pytest.MonkeyPatch, host: str) -> None:
+        sockets = _Sockets(monkeypatch)
+        for call in ENTRY_POINTS.values():
+            with pytest.raises(ValueError, match=LOOPBACK_HOST_TEXT):
+>               call(host)
+
+tests/test_r7t_findings.py:313: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_r7t_findings.py:249: in _imap
+    FakeImap(Path("no-such.crt"), Path("no-such.key"), host, {})
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <demo_only.fake_imap.FakeImap object at 0x7f9c509dfdd0>
+cert = PosixPath('no-such.crt'), key = PosixPath('no-such.key'), host = '\n'
+folders = {}, port = 0, header_search_blind = False
+
+    def __init__(
+        self,
+        cert: Path,
+        key: Path,
+        host: str,
+        folders: dict[str, list[str]],
+        port: int = 0,
+        header_search_blind: bool = False,
+    ) -> None:
+        self.folders = folders
+        self.header_search_blind = header_search_blind
+        self.delay = 0.0  # seconds waited before every SEARCH answer (a slow server)
+        self.greeting_delay = 0.0  # seconds waited before the server greeting (a slow connect)
+        self.blind_keys: set[str] = set()  # the search never finds messages with these keys (the scan still sees them)
+        self.user, self.password = "reader-user", FAKE_PASSWORD
+        self.logins: list[tuple[str, str]] = []
+        self.login_lines: list[str] = []  # the raw text after the tag of every LOGIN line (what the client really sent)
+        self.literal_announce = 0  # >0: a FETCH answer announces a literal of this many bytes and sends a few
+        self.commands: list[str] = []
+        ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+>       ctx.load_cert_chain(str(cert), str(key))
+E       FileNotFoundError: [Errno 2] No such file or directory
+
+demo_only/fake_imap.py:48: FileNotFoundError
+___________ test_t6b_every_def_with_a_host_parameter_is_in_the_table ___________
+
+    def test_t6b_every_def_with_a_host_parameter_is_in_the_table() -> None:
+        """How a new one is caught: a def in demo_only with a parameter named host, bind, address and the like that is in
+        neither ENTRY_POINTS (called with every bad host above) nor NOT_A_BIND (with a reason) fails this test and is
+        named."""
+        found = set(_demo_only_defs())
+        known = set(ENTRY_POINTS) | set(NOT_A_BIND)
+        new = found - known
+        assert new == set(), f"new def with a host parameter, add it to ENTRY_POINTS or NOT_A_BIND: {new}"
+>       assert known - found == set(), f"table entry that no longer exists: {known - found}"
+E       AssertionError: table entry that no longer exists: {('demo_only/bad_request.py', 'require_loopback_host')}
+E       assert {('demo_only/...opback_host')} == set()
+E         
+E         Extra items in the left set:
+E         ('demo_only/bad_request.py', 'require_loopback_host')
+E         Use -v to get more diff
+
+tests/test_r7t_findings.py:381: AssertionError
+______ test_t6c_the_refusal_fails_closed_on_a_host_that_is_not_text[None] ______
+
+host = None
+
+    @pytest.mark.parametrize("host", [None, b"127.0.0.1", 0, ("127.0.0.1",)], ids=repr)
+    def test_t6c_the_refusal_fails_closed_on_a_host_that_is_not_text(host: Any) -> None:
+>       from demo_only.bad_request import require_loopback_host
+E       ImportError: cannot import name 'require_loopback_host' from 'demo_only.bad_request' (/home/user/build/rr6/out/R7T/old2x/tree/demo_only/bad_request.py)
+
+tests/test_r7t_findings.py:415: ImportError
+__ test_t6c_the_refusal_fails_closed_on_a_host_that_is_not_text[b'127.0.0.1'] __
+
+host = b'127.0.0.1'
+
+    @pytest.mark.parametrize("host", [None, b"127.0.0.1", 0, ("127.0.0.1",)], ids=repr)
+    def test_t6c_the_refusal_fails_closed_on_a_host_that_is_not_text(host: Any) -> None:
+>       from demo_only.bad_request import require_loopback_host
+E       ImportError: cannot import name 'require_loopback_host' from 'demo_only.bad_request' (/home/user/build/rr6/out/R7T/old2x/tree/demo_only/bad_request.py)
+
+tests/test_r7t_findings.py:415: ImportError
+_______ test_t6c_the_refusal_fails_closed_on_a_host_that_is_not_text[0] ________
+
+host = 0
+
+    @pytest.mark.parametrize("host", [None, b"127.0.0.1", 0, ("127.0.0.1",)], ids=repr)
+    def test_t6c_the_refusal_fails_closed_on_a_host_that_is_not_text(host: Any) -> None:
+>       from demo_only.bad_request import require_loopback_host
+E       ImportError: cannot import name 'require_loopback_host' from 'demo_only.bad_request' (/home/user/build/rr6/out/R7T/old2x/tree/demo_only/bad_request.py)
+
+tests/test_r7t_findings.py:415: ImportError
+_ test_t6c_the_refusal_fails_closed_on_a_host_that_is_not_text[('127.0.0.1',)] _
+
+host = ('127.0.0.1',)
+
+    @pytest.mark.parametrize("host", [None, b"127.0.0.1", 0, ("127.0.0.1",)], ids=repr)
+    def test_t6c_the_refusal_fails_closed_on_a_host_that_is_not_text(host: Any) -> None:
+>       from demo_only.bad_request import require_loopback_host
+E       ImportError: cannot import name 'require_loopback_host' from 'demo_only.bad_request' (/home/user/build/rr6/out/R7T/old2x/tree/demo_only/bad_request.py)
+
+tests/test_r7t_findings.py:415: ImportError
+_ test_t7_an_empty_or_missing_tag_is_refused_not_turned_into_untagged_files[''] _
+
+tmp_path = PosixPath('/home/user/build/rr6/out/R7T/tmp/pytest-of-unknown/pytest-16/test_t7_an_empty_or_missing_ta0')
+tag = ''
+
+    @pytest.mark.parametrize("tag", ["", None], ids=repr)
+    def test_t7_an_empty_or_missing_tag_is_refused_not_turned_into_untagged_files(tmp_path: Path, tag: Any) -> None:
+>       with pytest.raises(ValueError):
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_r7t_findings.py:427: Failed
+_ test_t7_an_empty_or_missing_tag_is_refused_not_turned_into_untagged_files[None] _
+
+tmp_path = PosixPath('/home/user/build/rr6/out/R7T/tmp/pytest-of-unknown/pytest-16/test_t7_an_empty_or_missing_ta1')
+tag = None
+
+    @pytest.mark.parametrize("tag", ["", None], ids=repr)
+    def test_t7_an_empty_or_missing_tag_is_refused_not_turned_into_untagged_files(tmp_path: Path, tag: Any) -> None:
+>       with pytest.raises(ValueError):
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_r7t_findings.py:427: Failed
+_____________________ test_t7_the_desk_has_no_default_tag ______________________
+
+tmp_path = PosixPath('/home/user/build/rr6/out/R7T/tmp/pytest-of-unknown/pytest-16/test_t7_the_desk_has_no_defaul0')
+
+    def test_t7_the_desk_has_no_default_tag(tmp_path: Path) -> None:
+        desk_class: Any = rrc.Desk  # called the wrong way on purpose
+>       with pytest.raises(TypeError):
+E       Failed: DID NOT RAISE TypeError
+
+tests/test_r7t_findings.py:435: Failed
+_____ test_t8_a_port_of_zero_is_refused_and_an_absent_port_is_the_default ______
+
+    def test_t8_a_port_of_zero_is_refused_and_an_absent_port_is_the_default() -> None:
+>       assert rrc.desk_port({}) == rrc.DESK_PORT_DEFAULT == 8765
+               ^^^^^^^^^^^^^
+E       AttributeError: module 'run_real_check' has no attribute 'desk_port'
+
+tests/test_r7t_findings.py:444: AttributeError
+____________________ test_t8_the_run_uses_that_one_function ____________________
+
+tmp_path = PosixPath('/home/user/build/rr6/out/R7T/tmp/pytest-of-unknown/pytest-16/test_t8_the_run_uses_that_one_0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9c5081a4e0>
+
+    def test_t8_the_run_uses_that_one_function(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+        from test_real_check_dry import _valid_config
+    
+        code = rrc.main(["--config", str(_valid_config(tmp_path, DESK_PORT="0"))])
+        out = capsys.readouterr().out
+>       assert code == rrc.EXIT_REFUSED and "DESK_PORT" in out and "Start?" not in out, out[-400:]
+E       AssertionError: : 10, all to your own inboxes (2 configured)
+E         worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+E         model: the recorded replies (no live call)
+E         made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+E         Start? [y/N] stopped, nothing was called: there is no terminal to answer the question on
+E         
+E       assert (6 == 2)
+E        +  where 2 = rrc.EXIT_REFUSED
+
+tests/test_r7t_findings.py:455: AssertionError
+_____ test_t8b_the_dry_smtp_script_default_is_chosen_by_none_not_by_truth ______
+
+    def test_t8b_the_dry_smtp_script_default_is_chosen_by_none_not_by_truth() -> None:
+        src = (REPO / "scripts" / "run_real_check.py").read_text(encoding="utf-8")
+>       assert 'a.dry_smtp_script or "ok"' not in src
+E       assert 'a.dry_smtp_script or "ok"' not in '"""Real ser...it(main())\n'
+E         
+E         'a.dry_smtp_script or "ok"' is contained here:
+E           ort_base, a.dry_smtp_script or "ok")
+E                       stack.callback(fakes.close)
+E                       env = fakes.env
+E                   elif a.config is None:
+E                       print("refused: give --config PATH (see scripts/real-run.env.example) or --dry-fakes")...
+E         
+E         ...Full output truncated, use '-vv' to show
+
+tests/test_r7t_findings.py:460: AssertionError
+________ test_t9_a_missing_counter_with_a_hidden_contact_ends_as_failed ________
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9c50930ec0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c50931d00>
+
+    def test_t9_a_missing_counter_with_a_hidden_contact_ends_as_failed(
+        capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """The scenario of the review: counter missing + one created contact hidden by list lag + the lead not CRM-done
+        (floor F3 silent). On r7s: nothing said, exit 0, a contact left in HubSpot."""
+        monkeypatch.setattr(rrc, "HubspotCrm", _hiding_crm(1))
+        monkeypatch.setattr(rrc, "floor_checks", lambda *_a, **_k: [])
+>       _hide_hubspot_counter(monkeypatch)
+
+tests/test_r7t_findings.py:509: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c50931d00>
+
+    def _hide_hubspot_counter(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Only the HubSpot counter reads as missing (no file); every other read (the mail counter) is the real one, so
+        the exit code can differ from 0 only because of the missing HubSpot counter."""
+>       real = rrc.read_counter_files_checked
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'run_real_check' has no attribute 'read_counter_files_checked'
+
+tests/test_r7t_findings.py:492: AttributeError
+____ test_t9_a_counter_the_desk_could_not_write_ends_the_real_run_as_failed ____
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9c50836870>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c50d3ef60>
+
+    def test_t9_a_counter_the_desk_could_not_write_ends_the_real_run_as_failed(
+        capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """The same, with the real desk processes and the real reader (no patch of the reader)."""
+        monkeypatch.setattr(rrc, "HubspotCrm", _hiding_crm(1))
+        monkeypatch.setattr(rrc, "floor_checks", lambda *_a, **_k: [])
+        monkeypatch.setattr(rrc, "Desk", _unreadable_counters())
+        code = rrc.main(["--dry-fakes", "--assume-yes", "--cleanup"])
+        out = capsys.readouterr().out
+>       assert "counter cannot be trusted" in out, out[-2000:]
+E       AssertionError: most for one lead 0; bound 3
+E         6  PASS    503 rate reported (fails only above a set ceiling)
+E                     0 of 13 attempts got 503 (rate 0.0000); 0 of 13 requests saw one; 0 ended on 503; ceiling none (report only)
+E         7  PASS    drain time within the ceiling
+E                     0.05 s from the last intended send to drained (ceiling 240.0 s; marker (later than the book))
+E         AT LEAST ONE CHECK FAILED
+E         
+E         lead id          state    CRM rows  mails
+E         L387fe377ca2d    sent            1      1
+E         L4f06e9d7d366    unknown         0      0
+E         L571cc51613c8    sent            1      1
+E         L656adc333d98    unknown         1      0
+E         L72f4a26701c3    sent            1      1
+E         Lb989f56ad0bd    unknown         1      1
+E         Ld5322f3f6bfa    unknown         1      0
+E         Lf1343ab7dd1e    sent            1      1
+E         Lf1e9a9552aff    sent            1      1
+E         
+E         {
+E           "crm_contacts_per_lead_max": 1,
+E           "crm_contacts_with_our_ids": 8,
+E           "desk_crash_exit_code": 137,
+E           "desk_idle_at_end": true,
+E           "followup_states": {
+E             "sent": 5,
+E             "unknown": 4
+E           },
+E           "hubspot_calls_by_readback": {
+E             "archives": 0,
+E             "calls": 1,
+E             "conflicts": 0,
+E             "created": 0,
+E             "creates": 0,
+E             "gets": 1,
+E             "patch": 0,
+E             "rate_limited": 0,
+E             "searches": 0
+E           },
+E           "hubspot_calls_by_the_desk": {},
+E           "imap_logins": 2,
+E           "leads_in_book": 9,
+E           "leads_with_more_than_one_mail": 0,
+E           "mail_last_poll_failed": false,
+E           "mail_poll_repeats": 0,
+E           "mailbox_folders_could_not_check": 0,
+E           "mails_allowed_by_the_desk_max": 13,
+E           "mails_in_mailbox": 6,
+E           "mails_in_spam_folder": 0,
+E           "mails_per_mailbox_in_config_order": [
+E             5,
+E             1
+E           ],
+E           "mails_sent_by_the_desk_total": 6,
+E           "people_sent": 8,
+E           "requests_intended": 13,
+E           "seconds_total": 4.2,
+E           "smtp_by_the_desk": {
+E             "attempts": 9,
+E             "sent": 6
+E           },
+E           "twin_expectation": "the twin (same person, other address) is a second lead and contact: a known blind spot"
+E         }
+E         
+E         result file: /home/user/build/rr6/out/R7T/tmp/real-dry-q7e5b0zm/run/result.json
+E         clean-up: 8 contacts archived (only those carrying this run's lead ids)
+E         
+E       assert 'counter cannot be trusted' in "people: 8 + a twin (same person, second address); desk processes: 2 (one crash)\nworst case HubSpot calls: 1200 by th...t/R7T/tmp/real-dry-q7e5b0zm/run/result.json\nclean-up: 8 contacts archived (only those carrying this run's lead ids)\n"
+
+tests/test_r7t_findings.py:525: AssertionError
+__ test_t9_a_missing_counter_alone_ends_as_failed_even_when_nothing_is_hidden __
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9c509dd520>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c509ddf40>
+
+    def test_t9_a_missing_counter_alone_ends_as_failed_even_when_nothing_is_hidden(
+        capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(rrc, "floor_checks", lambda *_a, **_k: [])
+>       _hide_hubspot_counter(monkeypatch)
+
+tests/test_r7t_findings.py:533: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c509ddf40>
+
+    def _hide_hubspot_counter(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Only the HubSpot counter reads as missing (no file); every other read (the mail counter) is the real one, so
+        the exit code can differ from 0 only because of the missing HubSpot counter."""
+>       real = rrc.read_counter_files_checked
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'run_real_check' has no attribute 'read_counter_files_checked'
+
+tests/test_r7t_findings.py:492: AttributeError
+______ test_t12_every_hostile_spelling_is_refused_before_any_socket[None] ______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c50b00440>
+host = None
+
+    @pytest.mark.parametrize("host", HOSTILE_HOSTS, ids=repr)
+    def test_t12_every_hostile_spelling_is_refused_before_any_socket(monkeypatch: pytest.MonkeyPatch, host: Any) -> None:
+        sockets = _Sockets(monkeypatch)
+        calls = list(ENTRY_POINTS.values())
+        if host is not None:  # None means "unset" for make_fakes_server only; the others must refuse it
+            calls.append(_fakes_class)
+        for call in calls:
+            if host is None and call is _fakes_factory:
+                continue
+            with pytest.raises(ValueError, match=LOOPBACK_HOST_TEXT):
+>               call(host)
+
+tests/test_r7t_findings.py:636: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_r7t_findings.py:243: in _model
+    make_model_server(host, 0, "ok", "k")
+demo_only/fake_model_server.py:277: in make_model_server
+    if not is_loopback_host(host):  # a stand-in with no sign-in listens on this computer only
+           ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+name = None
+
+    def is_loopback_host(name: str) -> bool:
+        """True for localhost and for a loopback address (brackets allowed); a wildcard, a name or any other address is
+        reachable from, or reaches, other computers. Fails closed: anything it cannot read is not loopback."""
+>       if name.lower() == "localhost":
+           ^^^^^^^^^^
+E       AttributeError: 'NoneType' object has no attribute 'lower'
+
+src/lead_desk/config.py:76: AttributeError
+______ test_t12_every_hostile_spelling_is_refused_before_any_socket[' '] _______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c50b01e20>
+host = ' '
+
+    @pytest.mark.parametrize("host", HOSTILE_HOSTS, ids=repr)
+    def test_t12_every_hostile_spelling_is_refused_before_any_socket(monkeypatch: pytest.MonkeyPatch, host: Any) -> None:
+        sockets = _Sockets(monkeypatch)
+        calls = list(ENTRY_POINTS.values())
+        if host is not None:  # None means "unset" for make_fakes_server only; the others must refuse it
+            calls.append(_fakes_class)
+        for call in calls:
+            if host is None and call is _fakes_factory:
+                continue
+            with pytest.raises(ValueError, match=LOOPBACK_HOST_TEXT):
+>               call(host)
+
+tests/test_r7t_findings.py:636: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_r7t_findings.py:249: in _imap
+    FakeImap(Path("no-such.crt"), Path("no-such.key"), host, {})
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <demo_only.fake_imap.FakeImap object at 0x7f9c50b029c0>
+cert = PosixPath('no-such.crt'), key = PosixPath('no-such.key'), host = ' '
+folders = {}, port = 0, header_search_blind = False
+
+    def __init__(
+        self,
+        cert: Path,
+        key: Path,
+        host: str,
+        folders: dict[str, list[str]],
+        port: int = 0,
+        header_search_blind: bool = False,
+    ) -> None:
+        self.folders = folders
+        self.header_search_blind = header_search_blind
+        self.delay = 0.0  # seconds waited before every SEARCH answer (a slow server)
+        self.greeting_delay = 0.0  # seconds waited before the server greeting (a slow connect)
+        self.blind_keys: set[str] = set()  # the search never finds messages with these keys (the scan still sees them)
+        self.user, self.password = "reader-user", FAKE_PASSWORD
+        self.logins: list[tuple[str, str]] = []
+        self.login_lines: list[str] = []  # the raw text after the tag of every LOGIN line (what the client really sent)
+        self.literal_announce = 0  # >0: a FETCH answer announces a literal of this many bytes and sends a few
+        self.commands: list[str] = []
+        ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+>       ctx.load_cert_chain(str(cert), str(key))
+E       FileNotFoundError: [Errno 2] No such file or directory
+
+demo_only/fake_imap.py:48: FileNotFoundError
+_____ test_t12_every_hostile_spelling_is_refused_before_any_socket['\\t'] ______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c50b018e0>
+host = '\t'
+
+    @pytest.mark.parametrize("host", HOSTILE_HOSTS, ids=repr)
+    def test_t12_every_hostile_spelling_is_refused_before_any_socket(monkeypatch: pytest.MonkeyPatch, host: Any) -> None:
+        sockets = _Sockets(monkeypatch)
+        calls = list(ENTRY_POINTS.values())
+        if host is not None:  # None means "unset" for make_fakes_server only; the others must refuse it
+            calls.append(_fakes_class)
+        for call in calls:
+            if host is None and call is _fakes_factory:
+                continue
+            with pytest.raises(ValueError, match=LOOPBACK_HOST_TEXT):
+>               call(host)
+
+tests/test_r7t_findings.py:636: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_r7t_findings.py:249: in _imap
+    FakeImap(Path("no-such.crt"), Path("no-such.key"), host, {})
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <demo_only.fake_imap.FakeImap object at 0x7f9c50b01c70>
+cert = PosixPath('no-such.crt'), key = PosixPath('no-such.key'), host = '\t'
+folders = {}, port = 0, header_search_blind = False
+
+    def __init__(
+        self,
+        cert: Path,
+        key: Path,
+        host: str,
+        folders: dict[str, list[str]],
+        port: int = 0,
+        header_search_blind: bool = False,
+    ) -> None:
+        self.folders = folders
+        self.header_search_blind = header_search_blind
+        self.delay = 0.0  # seconds waited before every SEARCH answer (a slow server)
+        self.greeting_delay = 0.0  # seconds waited before the server greeting (a slow connect)
+        self.blind_keys: set[str] = set()  # the search never finds messages with these keys (the scan still sees them)
+        self.user, self.password = "reader-user", FAKE_PASSWORD
+        self.logins: list[tuple[str, str]] = []
+        self.login_lines: list[str] = []  # the raw text after the tag of every LOGIN line (what the client really sent)
+        self.literal_announce = 0  # >0: a FETCH answer announces a literal of this many bytes and sends a few
+        self.commands: list[str] = []
+        ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+>       ctx.load_cert_chain(str(cert), str(key))
+E       FileNotFoundError: [Errno 2] No such file or directory
+
+demo_only/fake_imap.py:48: FileNotFoundError
+_____ test_t12_every_hostile_spelling_is_refused_before_any_socket['\\n'] ______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c50b03530>
+host = '\n'
+
+    @pytest.mark.parametrize("host", HOSTILE_HOSTS, ids=repr)
+    def test_t12_every_hostile_spelling_is_refused_before_any_socket(monkeypatch: pytest.MonkeyPatch, host: Any) -> None:
+        sockets = _Sockets(monkeypatch)
+        calls = list(ENTRY_POINTS.values())
+        if host is not None:  # None means "unset" for make_fakes_server only; the others must refuse it
+            calls.append(_fakes_class)
+        for call in calls:
+            if host is None and call is _fakes_factory:
+                continue
+            with pytest.raises(ValueError, match=LOOPBACK_HOST_TEXT):
+>               call(host)
+
+tests/test_r7t_findings.py:636: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_r7t_findings.py:249: in _imap
+    FakeImap(Path("no-such.crt"), Path("no-such.key"), host, {})
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <demo_only.fake_imap.FakeImap object at 0x7f9c50b03050>
+cert = PosixPath('no-such.crt'), key = PosixPath('no-such.key'), host = '\n'
+folders = {}, port = 0, header_search_blind = False
+
+    def __init__(
+        self,
+        cert: Path,
+        key: Path,
+        host: str,
+        folders: dict[str, list[str]],
+        port: int = 0,
+        header_search_blind: bool = False,
+    ) -> None:
+        self.folders = folders
+        self.header_search_blind = header_search_blind
+        self.delay = 0.0  # seconds waited before every SEARCH answer (a slow server)
+        self.greeting_delay = 0.0  # seconds waited before the server greeting (a slow connect)
+        self.blind_keys: set[str] = set()  # the search never finds messages with these keys (the scan still sees them)
+        self.user, self.password = "reader-user", FAKE_PASSWORD
+        self.logins: list[tuple[str, str]] = []
+        self.login_lines: list[str] = []  # the raw text after the tag of every LOGIN line (what the client really sent)
+        self.literal_announce = 0  # >0: a FETCH answer announces a literal of this many bytes and sends a few
+        self.commands: list[str] = []
+        ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+>       ctx.load_cert_chain(str(cert), str(key))
+E       FileNotFoundError: [Errno 2] No such file or directory
+
+demo_only/fake_imap.py:48: FileNotFoundError
+______ test_t12_every_hostile_spelling_is_refused_before_any_socket['0'] _______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c50b02cc0>
+host = '0'
+
+    @pytest.mark.parametrize("host", HOSTILE_HOSTS, ids=repr)
+    def test_t12_every_hostile_spelling_is_refused_before_any_socket(monkeypatch: pytest.MonkeyPatch, host: Any) -> None:
+        sockets = _Sockets(monkeypatch)
+        calls = list(ENTRY_POINTS.values())
+        if host is not None:  # None means "unset" for make_fakes_server only; the others must refuse it
+            calls.append(_fakes_class)
+        for call in calls:
+            if host is None and call is _fakes_factory:
+                continue
+            with pytest.raises(ValueError, match=LOOPBACK_HOST_TEXT):
+>               call(host)
+
+tests/test_r7t_findings.py:636: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_r7t_findings.py:249: in _imap
+    FakeImap(Path("no-such.crt"), Path("no-such.key"), host, {})
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <demo_only.fake_imap.FakeImap object at 0x7f9c50b03440>
+cert = PosixPath('no-such.crt'), key = PosixPath('no-such.key'), host = '0'
+folders = {}, port = 0, header_search_blind = False
+
+    def __init__(
+        self,
+        cert: Path,
+        key: Path,
+        host: str,
+        folders: dict[str, list[str]],
+        port: int = 0,
+        header_search_blind: bool = False,
+    ) -> None:
+        self.folders = folders
+        self.header_search_blind = header_search_blind
+        self.delay = 0.0  # seconds waited before every SEARCH answer (a slow server)
+        self.greeting_delay = 0.0  # seconds waited before the server greeting (a slow connect)
+        self.blind_keys: set[str] = set()  # the search never finds messages with these keys (the scan still sees them)
+        self.user, self.password = "reader-user", FAKE_PASSWORD
+        self.logins: list[tuple[str, str]] = []
+        self.login_lines: list[str] = []  # the raw text after the tag of every LOGIN line (what the client really sent)
+        self.literal_announce = 0  # >0: a FETCH answer announces a literal of this many bytes and sends a few
+        self.commands: list[str] = []
+        ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+>       ctx.load_cert_chain(str(cert), str(key))
+E       FileNotFoundError: [Errno 2] No such file or directory
+
+demo_only/fake_imap.py:48: FileNotFoundError
+____ test_t12_every_hostile_spelling_is_refused_before_any_socket['127.1'] _____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c50b021b0>
+host = '127.1'
+
+    @pytest.mark.parametrize("host", HOSTILE_HOSTS, ids=repr)
+    def test_t12_every_hostile_spelling_is_refused_before_any_socket(monkeypatch: pytest.MonkeyPatch, host: Any) -> None:
+        sockets = _Sockets(monkeypatch)
+        calls = list(ENTRY_POINTS.values())
+        if host is not None:  # None means "unset" for make_fakes_server only; the others must refuse it
+            calls.append(_fakes_class)
+        for call in calls:
+            if host is None and call is _fakes_factory:
+                continue
+            with pytest.raises(ValueError, match=LOOPBACK_HOST_TEXT):
+>               call(host)
+
+tests/test_r7t_findings.py:636: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_r7t_findings.py:249: in _imap
+    FakeImap(Path("no-such.crt"), Path("no-such.key"), host, {})
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <demo_only.fake_imap.FakeImap object at 0x7f9c50ce19a0>
+cert = PosixPath('no-such.crt'), key = PosixPath('no-such.key'), host = '127.1'
+folders = {}, port = 0, header_search_blind = False
+
+    def __init__(
+        self,
+        cert: Path,
+        key: Path,
+        host: str,
+        folders: dict[str, list[str]],
+        port: int = 0,
+        header_search_blind: bool = False,
+    ) -> None:
+        self.folders = folders
+        self.header_search_blind = header_search_blind
+        self.delay = 0.0  # seconds waited before every SEARCH answer (a slow server)
+        self.greeting_delay = 0.0  # seconds waited before the server greeting (a slow connect)
+        self.blind_keys: set[str] = set()  # the search never finds messages with these keys (the scan still sees them)
+        self.user, self.password = "reader-user", FAKE_PASSWORD
+        self.logins: list[tuple[str, str]] = []
+        self.login_lines: list[str] = []  # the raw text after the tag of every LOGIN line (what the client really sent)
+        self.literal_announce = 0  # >0: a FETCH answer announces a literal of this many bytes and sends a few
+        self.commands: list[str] = []
+        ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+>       ctx.load_cert_chain(str(cert), str(key))
+E       FileNotFoundError: [Errno 2] No such file or directory
+
+demo_only/fake_imap.py:48: FileNotFoundError
+__ test_t12_every_hostile_spelling_is_refused_before_any_socket['localhost.'] __
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c50ce2840>
+host = 'localhost.'
+
+    @pytest.mark.parametrize("host", HOSTILE_HOSTS, ids=repr)
+    def test_t12_every_hostile_spelling_is_refused_before_any_socket(monkeypatch: pytest.MonkeyPatch, host: Any) -> None:
+        sockets = _Sockets(monkeypatch)
+        calls = list(ENTRY_POINTS.values())
+        if host is not None:  # None means "unset" for make_fakes_server only; the others must refuse it
+            calls.append(_fakes_class)
+        for call in calls:
+            if host is None and call is _fakes_factory:
+                continue
+            with pytest.raises(ValueError, match=LOOPBACK_HOST_TEXT):
+>               call(host)
+
+tests/test_r7t_findings.py:636: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_r7t_findings.py:249: in _imap
+    FakeImap(Path("no-such.crt"), Path("no-such.key"), host, {})
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <demo_only.fake_imap.FakeImap object at 0x7f9c50ce2d20>
+cert = PosixPath('no-such.crt'), key = PosixPath('no-such.key')
+host = 'localhost.', folders = {}, port = 0, header_search_blind = False
+
+    def __init__(
+        self,
+        cert: Path,
+        key: Path,
+        host: str,
+        folders: dict[str, list[str]],
+        port: int = 0,
+        header_search_blind: bool = False,
+    ) -> None:
+        self.folders = folders
+        self.header_search_blind = header_search_blind
+        self.delay = 0.0  # seconds waited before every SEARCH answer (a slow server)
+        self.greeting_delay = 0.0  # seconds waited before the server greeting (a slow connect)
+        self.blind_keys: set[str] = set()  # the search never finds messages with these keys (the scan still sees them)
+        self.user, self.password = "reader-user", FAKE_PASSWORD
+        self.logins: list[tuple[str, str]] = []
+        self.login_lines: list[str] = []  # the raw text after the tag of every LOGIN line (what the client really sent)
+        self.literal_announce = 0  # >0: a FETCH answer announces a literal of this many bytes and sends a few
+        self.commands: list[str] = []
+        ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+>       ctx.load_cert_chain(str(cert), str(key))
+E       FileNotFoundError: [Errno 2] No such file or directory
+
+demo_only/fake_imap.py:48: FileNotFoundError
+_____ test_t12_every_hostile_spelling_is_refused_before_any_socket['[::]'] _____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c50ce2ea0>
+host = '[::]'
+
+    @pytest.mark.parametrize("host", HOSTILE_HOSTS, ids=repr)
+    def test_t12_every_hostile_spelling_is_refused_before_any_socket(monkeypatch: pytest.MonkeyPatch, host: Any) -> None:
+        sockets = _Sockets(monkeypatch)
+        calls = list(ENTRY_POINTS.values())
+        if host is not None:  # None means "unset" for make_fakes_server only; the others must refuse it
+            calls.append(_fakes_class)
+        for call in calls:
+            if host is None and call is _fakes_factory:
+                continue
+            with pytest.raises(ValueError, match=LOOPBACK_HOST_TEXT):
+>               call(host)
+
+tests/test_r7t_findings.py:636: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_r7t_findings.py:249: in _imap
+    FakeImap(Path("no-such.crt"), Path("no-such.key"), host, {})
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <demo_only.fake_imap.FakeImap object at 0x7f9c50ce11c0>
+cert = PosixPath('no-such.crt'), key = PosixPath('no-such.key'), host = '[::]'
+folders = {}, port = 0, header_search_blind = False
+
+    def __init__(
+        self,
+        cert: Path,
+        key: Path,
+        host: str,
+        folders: dict[str, list[str]],
+        port: int = 0,
+        header_search_blind: bool = False,
+    ) -> None:
+        self.folders = folders
+        self.header_search_blind = header_search_blind
+        self.delay = 0.0  # seconds waited before every SEARCH answer (a slow server)
+        self.greeting_delay = 0.0  # seconds waited before the server greeting (a slow connect)
+        self.blind_keys: set[str] = set()  # the search never finds messages with these keys (the scan still sees them)
+        self.user, self.password = "reader-user", FAKE_PASSWORD
+        self.logins: list[tuple[str, str]] = []
+        self.login_lines: list[str] = []  # the raw text after the tag of every LOGIN line (what the client really sent)
+        self.literal_announce = 0  # >0: a FETCH answer announces a literal of this many bytes and sends a few
+        self.commands: list[str] = []
+        ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+>       ctx.load_cert_chain(str(cert), str(key))
+E       FileNotFoundError: [Errno 2] No such file or directory
+
+demo_only/fake_imap.py:48: FileNotFoundError
+______ test_t12_every_hostile_spelling_is_refused_before_any_socket['::'] ______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c50b009b0>
+host = '::'
+
+    @pytest.mark.parametrize("host", HOSTILE_HOSTS, ids=repr)
+    def test_t12_every_hostile_spelling_is_refused_before_any_socket(monkeypatch: pytest.MonkeyPatch, host: Any) -> None:
+        sockets = _Sockets(monkeypatch)
+        calls = list(ENTRY_POINTS.values())
+        if host is not None:  # None means "unset" for make_fakes_server only; the others must refuse it
+            calls.append(_fakes_class)
+        for call in calls:
+            if host is None and call is _fakes_factory:
+                continue
+            with pytest.raises(ValueError, match=LOOPBACK_HOST_TEXT):
+>               call(host)
+
+tests/test_r7t_findings.py:636: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_r7t_findings.py:249: in _imap
+    FakeImap(Path("no-such.crt"), Path("no-such.key"), host, {})
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <demo_only.fake_imap.FakeImap object at 0x7f9c50b03590>
+cert = PosixPath('no-such.crt'), key = PosixPath('no-such.key'), host = '::'
+folders = {}, port = 0, header_search_blind = False
+
+    def __init__(
+        self,
+        cert: Path,
+        key: Path,
+        host: str,
+        folders: dict[str, list[str]],
+        port: int = 0,
+        header_search_blind: bool = False,
+    ) -> None:
+        self.folders = folders
+        self.header_search_blind = header_search_blind
+        self.delay = 0.0  # seconds waited before every SEARCH answer (a slow server)
+        self.greeting_delay = 0.0  # seconds waited before the server greeting (a slow connect)
+        self.blind_keys: set[str] = set()  # the search never finds messages with these keys (the scan still sees them)
+        self.user, self.password = "reader-user", FAKE_PASSWORD
+        self.logins: list[tuple[str, str]] = []
+        self.login_lines: list[str] = []  # the raw text after the tag of every LOGIN line (what the client really sent)
+        self.literal_announce = 0  # >0: a FETCH answer announces a literal of this many bytes and sends a few
+        self.commands: list[str] = []
+        ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+>       ctx.load_cert_chain(str(cert), str(key))
+E       FileNotFoundError: [Errno 2] No such file or directory
+
+demo_only/fake_imap.py:48: FileNotFoundError
+__ test_t12_every_hostile_spelling_is_refused_before_any_socket['0x7f.0.0.1'] __
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c50b034a0>
+host = '0x7f.0.0.1'
+
+    @pytest.mark.parametrize("host", HOSTILE_HOSTS, ids=repr)
+    def test_t12_every_hostile_spelling_is_refused_before_any_socket(monkeypatch: pytest.MonkeyPatch, host: Any) -> None:
+        sockets = _Sockets(monkeypatch)
+        calls = list(ENTRY_POINTS.values())
+        if host is not None:  # None means "unset" for make_fakes_server only; the others must refuse it
+            calls.append(_fakes_class)
+        for call in calls:
+            if host is None and call is _fakes_factory:
+                continue
+            with pytest.raises(ValueError, match=LOOPBACK_HOST_TEXT):
+>               call(host)
+
+tests/test_r7t_findings.py:636: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_r7t_findings.py:249: in _imap
+    FakeImap(Path("no-such.crt"), Path("no-such.key"), host, {})
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <demo_only.fake_imap.FakeImap object at 0x7f9c50b007d0>
+cert = PosixPath('no-such.crt'), key = PosixPath('no-such.key')
+host = '0x7f.0.0.1', folders = {}, port = 0, header_search_blind = False
+
+    def __init__(
+        self,
+        cert: Path,
+        key: Path,
+        host: str,
+        folders: dict[str, list[str]],
+        port: int = 0,
+        header_search_blind: bool = False,
+    ) -> None:
+        self.folders = folders
+        self.header_search_blind = header_search_blind
+        self.delay = 0.0  # seconds waited before every SEARCH answer (a slow server)
+        self.greeting_delay = 0.0  # seconds waited before the server greeting (a slow connect)
+        self.blind_keys: set[str] = set()  # the search never finds messages with these keys (the scan still sees them)
+        self.user, self.password = "reader-user", FAKE_PASSWORD
+        self.logins: list[tuple[str, str]] = []
+        self.login_lines: list[str] = []  # the raw text after the tag of every LOGIN line (what the client really sent)
+        self.literal_announce = 0  # >0: a FETCH answer announces a literal of this many bytes and sends a few
+        self.commands: list[str] = []
+        ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+>       ctx.load_cert_chain(str(cert), str(key))
+E       FileNotFoundError: [Errno 2] No such file or directory
+
+demo_only/fake_imap.py:48: FileNotFoundError
+__ test_t12_every_hostile_spelling_is_refused_before_any_socket['127.0.0.1 '] __
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c50ce2e70>
+host = '127.0.0.1 '
+
+    @pytest.mark.parametrize("host", HOSTILE_HOSTS, ids=repr)
+    def test_t12_every_hostile_spelling_is_refused_before_any_socket(monkeypatch: pytest.MonkeyPatch, host: Any) -> None:
+        sockets = _Sockets(monkeypatch)
+        calls = list(ENTRY_POINTS.values())
+        if host is not None:  # None means "unset" for make_fakes_server only; the others must refuse it
+            calls.append(_fakes_class)
+        for call in calls:
+            if host is None and call is _fakes_factory:
+                continue
+            with pytest.raises(ValueError, match=LOOPBACK_HOST_TEXT):
+>               call(host)
+
+tests/test_r7t_findings.py:636: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_r7t_findings.py:249: in _imap
+    FakeImap(Path("no-such.crt"), Path("no-such.key"), host, {})
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <demo_only.fake_imap.FakeImap object at 0x7f9c50ce2780>
+cert = PosixPath('no-such.crt'), key = PosixPath('no-such.key')
+host = '127.0.0.1 ', folders = {}, port = 0, header_search_blind = False
+
+    def __init__(
+        self,
+        cert: Path,
+        key: Path,
+        host: str,
+        folders: dict[str, list[str]],
+        port: int = 0,
+        header_search_blind: bool = False,
+    ) -> None:
+        self.folders = folders
+        self.header_search_blind = header_search_blind
+        self.delay = 0.0  # seconds waited before every SEARCH answer (a slow server)
+        self.greeting_delay = 0.0  # seconds waited before the server greeting (a slow connect)
+        self.blind_keys: set[str] = set()  # the search never finds messages with these keys (the scan still sees them)
+        self.user, self.password = "reader-user", FAKE_PASSWORD
+        self.logins: list[tuple[str, str]] = []
+        self.login_lines: list[str] = []  # the raw text after the tag of every LOGIN line (what the client really sent)
+        self.literal_announce = 0  # >0: a FETCH answer announces a literal of this many bytes and sends a few
+        self.commands: list[str] = []
+        ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+>       ctx.load_cert_chain(str(cert), str(key))
+E       FileNotFoundError: [Errno 2] No such file or directory
+
+demo_only/fake_imap.py:48: FileNotFoundError
+__ test_t12_every_hostile_spelling_is_refused_before_any_socket[' localhost'] __
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c50ce12b0>
+host = ' localhost'
+
+    @pytest.mark.parametrize("host", HOSTILE_HOSTS, ids=repr)
+    def test_t12_every_hostile_spelling_is_refused_before_any_socket(monkeypatch: pytest.MonkeyPatch, host: Any) -> None:
+        sockets = _Sockets(monkeypatch)
+        calls = list(ENTRY_POINTS.values())
+        if host is not None:  # None means "unset" for make_fakes_server only; the others must refuse it
+            calls.append(_fakes_class)
+        for call in calls:
+            if host is None and call is _fakes_factory:
+                continue
+            with pytest.raises(ValueError, match=LOOPBACK_HOST_TEXT):
+>               call(host)
+
+tests/test_r7t_findings.py:636: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_r7t_findings.py:249: in _imap
+    FakeImap(Path("no-such.crt"), Path("no-such.key"), host, {})
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <demo_only.fake_imap.FakeImap object at 0x7f9c50ce0e30>
+cert = PosixPath('no-such.crt'), key = PosixPath('no-such.key')
+host = ' localhost', folders = {}, port = 0, header_search_blind = False
+
+    def __init__(
+        self,
+        cert: Path,
+        key: Path,
+        host: str,
+        folders: dict[str, list[str]],
+        port: int = 0,
+        header_search_blind: bool = False,
+    ) -> None:
+        self.folders = folders
+        self.header_search_blind = header_search_blind
+        self.delay = 0.0  # seconds waited before every SEARCH answer (a slow server)
+        self.greeting_delay = 0.0  # seconds waited before the server greeting (a slow connect)
+        self.blind_keys: set[str] = set()  # the search never finds messages with these keys (the scan still sees them)
+        self.user, self.password = "reader-user", FAKE_PASSWORD
+        self.logins: list[tuple[str, str]] = []
+        self.login_lines: list[str] = []  # the raw text after the tag of every LOGIN line (what the client really sent)
+        self.literal_announce = 0  # >0: a FETCH answer announces a literal of this many bytes and sends a few
+        self.commands: list[str] = []
+        ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+>       ctx.load_cert_chain(str(cert), str(key))
+E       FileNotFoundError: [Errno 2] No such file or directory
+
+demo_only/fake_imap.py:48: FileNotFoundError
+__ test_t12_every_hostile_spelling_is_refused_before_any_socket[b'127.0.0.1'] __
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c50ce0980>
+host = b'127.0.0.1'
+
+    @pytest.mark.parametrize("host", HOSTILE_HOSTS, ids=repr)
+    def test_t12_every_hostile_spelling_is_refused_before_any_socket(monkeypatch: pytest.MonkeyPatch, host: Any) -> None:
+        sockets = _Sockets(monkeypatch)
+        calls = list(ENTRY_POINTS.values())
+        if host is not None:  # None means "unset" for make_fakes_server only; the others must refuse it
+            calls.append(_fakes_class)
+        for call in calls:
+            if host is None and call is _fakes_factory:
+                continue
+            with pytest.raises(ValueError, match=LOOPBACK_HOST_TEXT):
+>               call(host)
+
+tests/test_r7t_findings.py:636: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_r7t_findings.py:237: in _fakes_factory
+    make_fakes_server(host=host)
+demo_only/fakes_server.py:247: in make_fakes_server
+    if not is_loopback_host(where):  # a stand-in with no sign-in listens on this computer only
+           ^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+name = b'127.0.0.1'
+
+    def is_loopback_host(name: str) -> bool:
+        """True for localhost and for a loopback address (brackets allowed); a wildcard, a name or any other address is
+        reachable from, or reaches, other computers. Fails closed: anything it cannot read is not loopback."""
+        if name.lower() == "localhost":
+            return True
+>       bare = name[1:-1] if name.startswith("[") and name.endswith("]") else name
+                             ^^^^^^^^^^^^^^^^^^^^
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+src/lead_desk/config.py:78: TypeError
+__ test_t12_every_hostile_spelling_is_refused_before_any_socket[b'localhost'] __
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c50ce2390>
+host = b'localhost'
+
+    @pytest.mark.parametrize("host", HOSTILE_HOSTS, ids=repr)
+    def test_t12_every_hostile_spelling_is_refused_before_any_socket(monkeypatch: pytest.MonkeyPatch, host: Any) -> None:
+        sockets = _Sockets(monkeypatch)
+        calls = list(ENTRY_POINTS.values())
+        if host is not None:  # None means "unset" for make_fakes_server only; the others must refuse it
+            calls.append(_fakes_class)
+        for call in calls:
+            if host is None and call is _fakes_factory:
+                continue
+            with pytest.raises(ValueError, match=LOOPBACK_HOST_TEXT):
+>               call(host)
+
+tests/test_r7t_findings.py:636: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_r7t_findings.py:237: in _fakes_factory
+    make_fakes_server(host=host)
+demo_only/fakes_server.py:247: in make_fakes_server
+    if not is_loopback_host(where):  # a stand-in with no sign-in listens on this computer only
+           ^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+name = b'localhost'
+
+    def is_loopback_host(name: str) -> bool:
+        """True for localhost and for a loopback address (brackets allowed); a wildcard, a name or any other address is
+        reachable from, or reaches, other computers. Fails closed: anything it cannot read is not loopback."""
+        if name.lower() == "localhost":
+            return True
+>       bare = name[1:-1] if name.startswith("[") and name.endswith("]") else name
+                             ^^^^^^^^^^^^^^^^^^^^
+E       TypeError: startswith first arg must be bytes or a tuple of bytes, not str
+
+src/lead_desk/config.py:78: TypeError
+_______ test_t12_every_hostile_spelling_is_refused_before_any_socket[0] ________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c50ce3b90>
+host = 0
+
+    @pytest.mark.parametrize("host", HOSTILE_HOSTS, ids=repr)
+    def test_t12_every_hostile_spelling_is_refused_before_any_socket(monkeypatch: pytest.MonkeyPatch, host: Any) -> None:
+        sockets = _Sockets(monkeypatch)
+        calls = list(ENTRY_POINTS.values())
+        if host is not None:  # None means "unset" for make_fakes_server only; the others must refuse it
+            calls.append(_fakes_class)
+        for call in calls:
+            if host is None and call is _fakes_factory:
+                continue
+>           with pytest.raises(ValueError, match=LOOPBACK_HOST_TEXT):
+E           Failed: DID NOT RAISE ValueError
+
+tests/test_r7t_findings.py:635: Failed
+_ test_t12_every_hostile_spelling_is_refused_before_any_socket[('127.0.0.1',)] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c50b03200>
+host = ('127.0.0.1',)
+
+    @pytest.mark.parametrize("host", HOSTILE_HOSTS, ids=repr)
+    def test_t12_every_hostile_spelling_is_refused_before_any_socket(monkeypatch: pytest.MonkeyPatch, host: Any) -> None:
+        sockets = _Sockets(monkeypatch)
+        calls = list(ENTRY_POINTS.values())
+        if host is not None:  # None means "unset" for make_fakes_server only; the others must refuse it
+            calls.append(_fakes_class)
+        for call in calls:
+            if host is None and call is _fakes_factory:
+                continue
+            with pytest.raises(ValueError, match=LOOPBACK_HOST_TEXT):
+>               call(host)
+
+tests/test_r7t_findings.py:636: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_r7t_findings.py:237: in _fakes_factory
+    make_fakes_server(host=host)
+demo_only/fakes_server.py:247: in make_fakes_server
+    if not is_loopback_host(where):  # a stand-in with no sign-in listens on this computer only
+           ^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+name = ('127.0.0.1',)
+
+    def is_loopback_host(name: str) -> bool:
+        """True for localhost and for a loopback address (brackets allowed); a wildcard, a name or any other address is
+        reachable from, or reaches, other computers. Fails closed: anything it cannot read is not loopback."""
+>       if name.lower() == "localhost":
+           ^^^^^^^^^^
+E       AttributeError: 'tuple' object has no attribute 'lower'
+
+src/lead_desk/config.py:76: AttributeError
+____ test_t12_a_loopback_spelling_is_accepted_by_the_shared_rule[LOCALHOST] ____
+
+host = 'LOCALHOST'
+
+    @pytest.mark.parametrize("host", LOOPBACK_SPELLINGS)
+    def test_t12_a_loopback_spelling_is_accepted_by_the_shared_rule(host: str) -> None:
+>       from demo_only.bad_request import require_loopback_host
+E       ImportError: cannot import name 'require_loopback_host' from 'demo_only.bad_request' (/home/user/build/rr6/out/R7T/old2x/tree/demo_only/bad_request.py)
+
+tests/test_r7t_findings.py:642: ImportError
+____ test_t12_a_loopback_spelling_is_accepted_by_the_shared_rule[LocalHost] ____
+
+host = 'LocalHost'
+
+    @pytest.mark.parametrize("host", LOOPBACK_SPELLINGS)
+    def test_t12_a_loopback_spelling_is_accepted_by_the_shared_rule(host: str) -> None:
+>       from demo_only.bad_request import require_loopback_host
+E       ImportError: cannot import name 'require_loopback_host' from 'demo_only.bad_request' (/home/user/build/rr6/out/R7T/old2x/tree/demo_only/bad_request.py)
+
+tests/test_r7t_findings.py:642: ImportError
+_ test_t12_a_loopback_spelling_is_accepted_by_the_shared_rule[::ffff:127.0.0.1] _
+
+host = '::ffff:127.0.0.1'
+
+    @pytest.mark.parametrize("host", LOOPBACK_SPELLINGS)
+    def test_t12_a_loopback_spelling_is_accepted_by_the_shared_rule(host: str) -> None:
+>       from demo_only.bad_request import require_loopback_host
+E       ImportError: cannot import name 'require_loopback_host' from 'demo_only.bad_request' (/home/user/build/rr6/out/R7T/old2x/tree/demo_only/bad_request.py)
+
+tests/test_r7t_findings.py:642: ImportError
+______ test_t12_a_loopback_spelling_is_accepted_by_the_shared_rule[[::1]] ______
+
+host = '[::1]'
+
+    @pytest.mark.parametrize("host", LOOPBACK_SPELLINGS)
+    def test_t12_a_loopback_spelling_is_accepted_by_the_shared_rule(host: str) -> None:
+>       from demo_only.bad_request import require_loopback_host
+E       ImportError: cannot import name 'require_loopback_host' from 'demo_only.bad_request' (/home/user/build/rr6/out/R7T/old2x/tree/demo_only/bad_request.py)
+
+tests/test_r7t_findings.py:642: ImportError
+____ test_t12_a_loopback_spelling_is_accepted_by_the_shared_rule[127.0.0.2] ____
+
+host = '127.0.0.2'
+
+    @pytest.mark.parametrize("host", LOOPBACK_SPELLINGS)
+    def test_t12_a_loopback_spelling_is_accepted_by_the_shared_rule(host: str) -> None:
+>       from demo_only.bad_request import require_loopback_host
+E       ImportError: cannot import name 'require_loopback_host' from 'demo_only.bad_request' (/home/user/build/rr6/out/R7T/old2x/tree/demo_only/bad_request.py)
+
+tests/test_r7t_findings.py:642: ImportError
+_ test_t15_the_counting_rule_takes_open_creates_as_possible_contacts_and_never_more_than_the_leads _
+
+    def test_t15_the_counting_rule_takes_open_creates_as_possible_contacts_and_never_more_than_the_leads() -> None:
+        f = rrc.contacts_not_accounted_for
+>       assert f(8, 8, 1, 9) == 1  # the window: 8 counted, 1 open, the list showed 8 of 9
+               ^^^^^^^^^^^^^
+E       TypeError: contacts_not_accounted_for() takes 2 positional arguments but 4 were given
+
+tests/test_r7t_findings.py:763: TypeError
+_ test_t15_the_window_after_the_request_and_before_the_count_leaves_the_create_open _
+
+tmp_path = PosixPath('/home/user/build/rr6/out/R7T/tmp/pytest-of-unknown/pytest-16/test_t15_the_window_after_the_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c50ae0d40>
+
+    def test_t15_the_window_after_the_request_and_before_the_count_leaves_the_create_open(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from test_crm_hubspot import REC, Rig
+    
+        from lead_desk.crm_hubspot import HubspotCrm
+    
+        rig = Rig(tmp_path)
+        try:
+            crm, stats = _crm_with_stats(rig, tmp_path)
+    
+            def stop_before_the_count(self: Any, outcome: str | None) -> None:
+                raise _Killed
+    
+>           monkeypatch.setattr(HubspotCrm, "_settle_create", stop_before_the_count)
+E           AttributeError: <class 'lead_desk.crm_hubspot.HubspotCrm'> has no attribute '_settle_create'
+
+tests/test_r7t_findings.py:788: AttributeError
+_______ test_t15_the_window_before_the_reply_also_leaves_the_create_open _______
+
+tmp_path = PosixPath('/home/user/build/rr6/out/R7T/tmp/pytest-of-unknown/pytest-16/test_t15_the_window_before_the0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c50804110>
+
+    def test_t15_the_window_before_the_reply_also_leaves_the_create_open(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        from test_crm_hubspot import REC, Rig
+    
+        from lead_desk.crm_hubspot import HubspotCrm
+    
+        rig = Rig(tmp_path)
+        try:
+            crm, stats = _crm_with_stats(rig, tmp_path)
+    
+            def stop_in_the_request(self: Any, *a: Any, **k: Any) -> None:
+                raise _Killed
+    
+            monkeypatch.setattr(HubspotCrm, "_once", stop_in_the_request)
+            with pytest.raises(_Killed):
+                crm.put("L-1", REC)
+>           assert _stats(stats)["create_open"] == 1
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           KeyError: 'create_open'
+
+tests/test_r7t_findings.py:820: KeyError
+_______________ test_t15_every_normal_end_of_a_create_closes_it ________________
+
+tmp_path = PosixPath('/home/user/build/rr6/out/R7T/tmp/pytest-of-unknown/pytest-16/test_t15_every_normal_end_of_a0')
+
+    def test_t15_every_normal_end_of_a_create_closes_it(tmp_path: Path) -> None:
+        """Created, conflict, refusal and a used-up call cap all end with create_open 0 (never negative); only the
+        first two count a contact."""
+        from test_crm_hubspot import REC, Rig
+    
+        from lead_desk.crm_hubspot import CrmCapReached, CrmError
+    
+        rig = Rig(tmp_path)
+        try:
+            crm, stats = _crm_with_stats(rig, tmp_path)
+            crm.put("L-1", REC)
+>           assert (_stats(stats)["created"], _stats(stats)["create_open"]) == (1, 0)
+                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           KeyError: 'create_open'
+
+tests/test_r7t_findings.py:836: KeyError
+_ test_t15_a_run_with_a_window_in_the_counter_and_a_hidden_contact_ends_as_failed _
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9c5081a600>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c50819160>
+
+    def test_t15_a_run_with_a_window_in_the_counter_and_a_hidden_contact_ends_as_failed(
+        capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """The scenario of the failing r7s test with the window forced instead of timed: the sum of `created` is one too
+        low, one create is open and one contact is hidden by list lag (floor F3 silent). Must be failed and say so."""
+        monkeypatch.setattr(rrc, "HubspotCrm", _hiding_crm(1))
+        monkeypatch.setattr(rrc, "floor_checks", lambda *_a, **_k: [])
+>       _window_in_the_counter(monkeypatch, created_less=1, open_more=1)
+
+tests/test_r7t_findings.py:883: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c50819160>
+created_less = 1, open_more = 1, unknown_instead = False
+
+    def _window_in_the_counter(
+        monkeypatch: pytest.MonkeyPatch, created_less: int, open_more: int, unknown_instead: bool = False
+    ) -> None:
+        """Make the HubSpot counter of the real dry run read as if a desk had been stopped in the window: `created_less`
+        created contacts not counted and `open_more` creates open. Only the totals change; the run itself is real."""
+>       real = rrc.read_counter_files_checked
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'run_real_check' has no attribute 'read_counter_files_checked'
+
+tests/test_r7t_findings.py:861: AttributeError
+_ test_t15_a_window_in_the_counter_with_nothing_hidden_is_no_false_alarm[made-and-listed] _
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9c50b7d160>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c50ce2f60>
+created_less = 1, open_more = 1
+
+    @pytest.mark.parametrize(("created_less", "open_more"), [(1, 1), (0, 1)], ids=["made-and-listed", "retried"])
+    def test_t15_a_window_in_the_counter_with_nothing_hidden_is_no_false_alarm(
+        capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, created_less: int, open_more: int
+    ) -> None:
+        """The window alone, when the list shows every contact, must not fail the run (the crash drill hits it on
+        purpose): the open create made the contact and it is listed, or it was retried (more possible than leads)."""
+        monkeypatch.setattr(rrc, "HubspotCrm", _hiding_crm(0))
+>       _window_in_the_counter(monkeypatch, created_less, open_more)
+
+tests/test_r7t_findings.py:896: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c50ce2f60>
+created_less = 1, open_more = 1, unknown_instead = False
+
+    def _window_in_the_counter(
+        monkeypatch: pytest.MonkeyPatch, created_less: int, open_more: int, unknown_instead: bool = False
+    ) -> None:
+        """Make the HubSpot counter of the real dry run read as if a desk had been stopped in the window: `created_less`
+        created contacts not counted and `open_more` creates open. Only the totals change; the run itself is real."""
+>       real = rrc.read_counter_files_checked
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'run_real_check' has no attribute 'read_counter_files_checked'
+
+tests/test_r7t_findings.py:861: AttributeError
+_ test_t15_a_window_in_the_counter_with_nothing_hidden_is_no_false_alarm[retried] _
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9c50b7ffb0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c50b7dc70>
+created_less = 0, open_more = 1
+
+    @pytest.mark.parametrize(("created_less", "open_more"), [(1, 1), (0, 1)], ids=["made-and-listed", "retried"])
+    def test_t15_a_window_in_the_counter_with_nothing_hidden_is_no_false_alarm(
+        capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, created_less: int, open_more: int
+    ) -> None:
+        """The window alone, when the list shows every contact, must not fail the run (the crash drill hits it on
+        purpose): the open create made the contact and it is listed, or it was retried (more possible than leads)."""
+        monkeypatch.setattr(rrc, "HubspotCrm", _hiding_crm(0))
+>       _window_in_the_counter(monkeypatch, created_less, open_more)
+
+tests/test_r7t_findings.py:896: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c50b7dc70>
+created_less = 0, open_more = 1, unknown_instead = False
+
+    def _window_in_the_counter(
+        monkeypatch: pytest.MonkeyPatch, created_less: int, open_more: int, unknown_instead: bool = False
+    ) -> None:
+        """Make the HubSpot counter of the real dry run read as if a desk had been stopped in the window: `created_less`
+        created contacts not counted and `open_more` creates open. Only the totals change; the run itself is real."""
+>       real = rrc.read_counter_files_checked
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'run_real_check' has no attribute 'read_counter_files_checked'
+
+tests/test_r7t_findings.py:861: AttributeError
+_ test_t15_a_create_that_waits_on_a_429_and_then_succeeds_opens_and_closes_exactly_once _
+
+tmp_path = PosixPath('/home/user/build/rr6/out/R7T/tmp/pytest-of-unknown/pytest-16/test_t15_a_create_that_waits_o0')
+
+    def test_t15_a_create_that_waits_on_a_429_and_then_succeeds_opens_and_closes_exactly_once(tmp_path: Path) -> None:
+        """One put is one open create however many request attempts the 429 waits cause (kills a count per attempt)."""
+        from test_crm_hubspot import REC, Rig
+    
+        rig = Rig(tmp_path)
+        try:
+            crm, stats = _crm_with_stats(rig, tmp_path)
+            rig.state.mode, rig.state.times, rig.state.retry_after = "r429", 2, "0.01"
+            crm.put("L-1", REC)
+            written = _stats(stats)
+>           assert (written["creates"], written["created"], written["create_open"]) == (3, 1, 0), written
+                                                            ^^^^^^^^^^^^^^^^^^^^^^
+E           KeyError: 'create_open'
+
+tests/test_r7t_findings.py:934: KeyError
+_ test_t17_a_create_that_may_have_made_the_contact_is_counted_as_unknown[drop] _
+
+tmp_path = PosixPath('/home/user/build/rr6/out/R7T/tmp/pytest-of-unknown/pytest-16/test_t17_a_create_that_may_hav0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c50b7db50>
+how = 'drop'
+
+    @pytest.mark.parametrize("how", ["drop", "500", "408"])
+    def test_t17_a_create_that_may_have_made_the_contact_is_counted_as_unknown(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, how: str
+    ) -> None:
+        from test_crm_hubspot import REC, Rig
+    
+        from lead_desk.crm_hubspot import CrmError
+    
+        rig = Rig(tmp_path)
+        try:
+            crm, stats = _crm_with_stats(rig, tmp_path)
+            _create_then(monkeypatch, how)
+            with pytest.raises(CrmError):
+                crm.put("L-1", REC)
+            assert len(rig.state.contacts) == 1
+            written = _stats(stats)
+>           assert (written["created"], written["create_open"], written["create_unknown"]) == (0, 0, 1), written
+                                        ^^^^^^^^^^^^^^^^^^^^^^
+E           KeyError: 'create_open'
+
+tests/test_r7t_findings.py:976: KeyError
+_ test_t17_a_create_that_may_have_made_the_contact_is_counted_as_unknown[500] __
+
+tmp_path = PosixPath('/home/user/build/rr6/out/R7T/tmp/pytest-of-unknown/pytest-16/test_t17_a_create_that_may_hav1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c50ae2000>
+how = '500'
+
+    @pytest.mark.parametrize("how", ["drop", "500", "408"])
+    def test_t17_a_create_that_may_have_made_the_contact_is_counted_as_unknown(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, how: str
+    ) -> None:
+        from test_crm_hubspot import REC, Rig
+    
+        from lead_desk.crm_hubspot import CrmError
+    
+        rig = Rig(tmp_path)
+        try:
+            crm, stats = _crm_with_stats(rig, tmp_path)
+            _create_then(monkeypatch, how)
+            with pytest.raises(CrmError):
+                crm.put("L-1", REC)
+            assert len(rig.state.contacts) == 1
+            written = _stats(stats)
+>           assert (written["created"], written["create_open"], written["create_unknown"]) == (0, 0, 1), written
+                                        ^^^^^^^^^^^^^^^^^^^^^^
+E           KeyError: 'create_open'
+
+tests/test_r7t_findings.py:976: KeyError
+_ test_t17_a_create_that_may_have_made_the_contact_is_counted_as_unknown[408] __
+
+tmp_path = PosixPath('/home/user/build/rr6/out/R7T/tmp/pytest-of-unknown/pytest-16/test_t17_a_create_that_may_hav2')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c50ae06e0>
+how = '408'
+
+    @pytest.mark.parametrize("how", ["drop", "500", "408"])
+    def test_t17_a_create_that_may_have_made_the_contact_is_counted_as_unknown(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, how: str
+    ) -> None:
+        from test_crm_hubspot import REC, Rig
+    
+        from lead_desk.crm_hubspot import CrmError
+    
+        rig = Rig(tmp_path)
+        try:
+            crm, stats = _crm_with_stats(rig, tmp_path)
+            _create_then(monkeypatch, how)
+            with pytest.raises(CrmError):
+                crm.put("L-1", REC)
+            assert len(rig.state.contacts) == 1
+            written = _stats(stats)
+>           assert (written["created"], written["create_open"], written["create_unknown"]) == (0, 0, 1), written
+                                        ^^^^^^^^^^^^^^^^^^^^^^
+E           KeyError: 'create_open'
+
+tests/test_r7t_findings.py:976: KeyError
+___________ test_t17_a_429_after_the_waits_proves_nothing_was_stored ___________
+
+tmp_path = PosixPath('/home/user/build/rr6/out/R7T/tmp/pytest-of-unknown/pytest-16/test_t17_a_429_after_the_waits0')
+
+    def test_t17_a_429_after_the_waits_proves_nothing_was_stored(tmp_path: Path) -> None:
+        from test_crm_hubspot import REC, Rig
+    
+        from lead_desk.crm_hubspot import CrmBusy
+    
+        rig = Rig(tmp_path)
+        try:
+            crm, stats = _crm_with_stats(rig, tmp_path)
+            rig.state.mode, rig.state.times, rig.state.retry_after = "r429", 99, "0.01"
+            with pytest.raises(CrmBusy):
+                crm.put("L-1", REC)
+            written = _stats(stats)
+>           assert (written["create_open"], written["create_unknown"], len(rig.state.contacts)) == (0, 0, 0), written
+                    ^^^^^^^^^^^^^^^^^^^^^^
+E           KeyError: 'create_open'
+
+tests/test_r7t_findings.py:995: KeyError
+_ test_t17_an_unknown_create_with_nothing_hidden_is_no_false_alarm[made-and-listed] _
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9c50b35e80>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c50b039e0>
+window = (1, 1)
+
+    @pytest.mark.parametrize("window", [(1, 1), (0, 1)], ids=["made-and-listed", "retried"])
+    def test_t17_an_unknown_create_with_nothing_hidden_is_no_false_alarm(
+        capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, window: tuple[int, int]
+    ) -> None:
+        monkeypatch.setattr(rrc, "HubspotCrm", _hiding_crm(0))
+>       _window_in_the_counter(monkeypatch, window[0], window[1], unknown_instead=True)
+
+tests/test_r7t_findings.py:1005: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c50b039e0>
+created_less = 1, open_more = 1, unknown_instead = True
+
+    def _window_in_the_counter(
+        monkeypatch: pytest.MonkeyPatch, created_less: int, open_more: int, unknown_instead: bool = False
+    ) -> None:
+        """Make the HubSpot counter of the real dry run read as if a desk had been stopped in the window: `created_less`
+        created contacts not counted and `open_more` creates open. Only the totals change; the run itself is real."""
+>       real = rrc.read_counter_files_checked
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'run_real_check' has no attribute 'read_counter_files_checked'
+
+tests/test_r7t_findings.py:861: AttributeError
+__ test_t17_an_unknown_create_with_nothing_hidden_is_no_false_alarm[retried] ___
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9c509dcbc0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c509dcd40>
+window = (0, 1)
+
+    @pytest.mark.parametrize("window", [(1, 1), (0, 1)], ids=["made-and-listed", "retried"])
+    def test_t17_an_unknown_create_with_nothing_hidden_is_no_false_alarm(
+        capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, window: tuple[int, int]
+    ) -> None:
+        monkeypatch.setattr(rrc, "HubspotCrm", _hiding_crm(0))
+>       _window_in_the_counter(monkeypatch, window[0], window[1], unknown_instead=True)
+
+tests/test_r7t_findings.py:1005: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c509dcd40>
+created_less = 0, open_more = 1, unknown_instead = True
+
+    def _window_in_the_counter(
+        monkeypatch: pytest.MonkeyPatch, created_less: int, open_more: int, unknown_instead: bool = False
+    ) -> None:
+        """Make the HubSpot counter of the real dry run read as if a desk had been stopped in the window: `created_less`
+        created contacts not counted and `open_more` creates open. Only the totals change; the run itself is real."""
+>       real = rrc.read_counter_files_checked
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'run_real_check' has no attribute 'read_counter_files_checked'
+
+tests/test_r7t_findings.py:861: AttributeError
+_ test_t17_an_unknown_create_and_a_contact_the_list_does_not_show_ends_as_failed _
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7f9c50ade7e0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c50ade690>
+
+    def test_t17_an_unknown_create_and_a_contact_the_list_does_not_show_ends_as_failed(
+        capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(rrc, "HubspotCrm", _hiding_crm(1))
+        monkeypatch.setattr(rrc, "floor_checks", lambda *_a, **_k: [])
+>       _window_in_the_counter(monkeypatch, 1, 1, unknown_instead=True)
+
+tests/test_r7t_findings.py:1016: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f9c50ade690>
+created_less = 1, open_more = 1, unknown_instead = True
+
+    def _window_in_the_counter(
+        monkeypatch: pytest.MonkeyPatch, created_less: int, open_more: int, unknown_instead: bool = False
+    ) -> None:
+        """Make the HubSpot counter of the real dry run read as if a desk had been stopped in the window: `created_less`
+        created contacts not counted and `open_more` creates open. Only the totals change; the run itself is real."""
+>       real = rrc.read_counter_files_checked
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'run_real_check' has no attribute 'read_counter_files_checked'
+
+tests/test_r7t_findings.py:861: AttributeError
+_ test_t18_a_counters_file_that_cannot_be_written_stops_the_create_before_it_is_sent _
+
+tmp_path = PosixPath('/home/user/build/rr6/out/R7T/tmp/pytest-of-unknown/pytest-16/test_t18_a_counters_file_that_0')
+
+    def test_t18_a_counters_file_that_cannot_be_written_stops_the_create_before_it_is_sent(tmp_path: Path) -> None:
+        from test_crm_hubspot import REC, Rig
+    
+>       from lead_desk.crm_hubspot import CrmCounterUnwritable
+E       ImportError: cannot import name 'CrmCounterUnwritable' from 'lead_desk.crm_hubspot' (/home/user/build/rr6/out/R7T/old2x/tree/src/lead_desk/crm_hubspot.py)
+
+tests/test_r7t_findings.py:1028: ImportError
+=========================== short test summary info ============================
+FAILED tests/test_r7t_findings.py::test_t1_the_counting_rule_and_an_unknown_counter
+FAILED tests/test_r7t_findings.py::test_t2_the_checked_reader_counts_files_and_unreadable_files
+FAILED tests/test_r7t_findings.py::test_t2_a_file_that_is_not_a_set_of_whole_numbers_is_unreadable_and_never_a_crash['{"created": ']
+FAILED tests/test_r7t_findings.py::test_t2_a_file_that_is_not_a_set_of_whole_numbers_is_unreadable_and_never_a_crash['[]']
+FAILED tests/test_r7t_findings.py::test_t2_a_file_that_is_not_a_set_of_whole_numbers_is_unreadable_and_never_a_crash['{"created": [1]}']
+FAILED tests/test_r7t_findings.py::test_t2_a_file_that_is_not_a_set_of_whole_numbers_is_unreadable_and_never_a_crash['{"created": "x"}']
+FAILED tests/test_r7t_findings.py::test_t2_a_file_that_is_not_a_set_of_whole_numbers_is_unreadable_and_never_a_crash['']
+FAILED tests/test_r7t_findings.py::test_t2_a_file_that_is_not_a_set_of_whole_numbers_is_unreadable_and_never_a_crash['null']
+FAILED tests/test_r7t_findings.py::test_t2_a_folder_with_the_name_of_a_counter_file_is_unreadable
+FAILED tests/test_r7t_findings.py::test_t2_a_counter_without_the_number_of_created_contacts_is_not_known
+FAILED tests/test_r7t_findings.py::test_t2_a_counter_is_known_only_when_a_file_was_found_read_whole_and_holds_the_created_number
+FAILED tests/test_r7t_findings.py::test_t2_the_same_tag_other_kinds_of_file_are_not_read_into_the_hubspot_sum
+FAILED tests/test_r7t_findings.py::test_t6_every_entry_point_refuses_the_host_before_any_socket[fakes_factory-]
+FAILED tests/test_r7t_findings.py::test_t6_every_entry_point_refuses_the_host_before_any_socket[imap-0.0.0.0]
+FAILED tests/test_r7t_findings.py::test_t6_every_entry_point_refuses_the_host_before_any_socket[imap-192.0.2.1]
+FAILED tests/test_r7t_findings.py::test_t6_every_entry_point_refuses_the_host_before_any_socket[imap-]
+FAILED tests/test_r7t_findings.py::test_t6_every_entry_point_refuses_the_host_before_any_socket[imap-::]
+FAILED tests/test_r7t_findings.py::test_t6_every_entry_point_refuses_the_host_before_any_socket[imap-example.com]
+FAILED tests/test_r7t_findings.py::test_t6_every_entry_point_refuses_the_host_before_any_socket[smtp-0.0.0.0]
+FAILED tests/test_r7t_findings.py::test_t6_every_entry_point_refuses_the_host_before_any_socket[smtp-192.0.2.1]
+FAILED tests/test_r7t_findings.py::test_t6_every_entry_point_refuses_the_host_before_any_socket[smtp-]
+FAILED tests/test_r7t_findings.py::test_t6_every_entry_point_refuses_the_host_before_any_socket[smtp-::]
+FAILED tests/test_r7t_findings.py::test_t6_every_entry_point_refuses_the_host_before_any_socket[smtp-example.com]
+FAILED tests/test_r7t_findings.py::test_t6_a_blank_host_is_refused_by_every_entry_point[]
+FAILED tests/test_r7t_findings.py::test_t6_a_blank_host_is_refused_by_every_entry_point[ ]
+FAILED tests/test_r7t_findings.py::test_t6_a_blank_host_is_refused_by_every_entry_point[\t]
+FAILED tests/test_r7t_findings.py::test_t6_a_blank_host_is_refused_by_every_entry_point[\n]
+FAILED tests/test_r7t_findings.py::test_t6b_every_def_with_a_host_parameter_is_in_the_table
+FAILED tests/test_r7t_findings.py::test_t6c_the_refusal_fails_closed_on_a_host_that_is_not_text[None]
+FAILED tests/test_r7t_findings.py::test_t6c_the_refusal_fails_closed_on_a_host_that_is_not_text[b'127.0.0.1']
+FAILED tests/test_r7t_findings.py::test_t6c_the_refusal_fails_closed_on_a_host_that_is_not_text[0]
+FAILED tests/test_r7t_findings.py::test_t6c_the_refusal_fails_closed_on_a_host_that_is_not_text[('127.0.0.1',)]
+FAILED tests/test_r7t_findings.py::test_t7_an_empty_or_missing_tag_is_refused_not_turned_into_untagged_files['']
+FAILED tests/test_r7t_findings.py::test_t7_an_empty_or_missing_tag_is_refused_not_turned_into_untagged_files[None]
+FAILED tests/test_r7t_findings.py::test_t7_the_desk_has_no_default_tag - Fail...
+FAILED tests/test_r7t_findings.py::test_t8_a_port_of_zero_is_refused_and_an_absent_port_is_the_default
+FAILED tests/test_r7t_findings.py::test_t8_the_run_uses_that_one_function - A...
+FAILED tests/test_r7t_findings.py::test_t8b_the_dry_smtp_script_default_is_chosen_by_none_not_by_truth
+FAILED tests/test_r7t_findings.py::test_t9_a_missing_counter_with_a_hidden_contact_ends_as_failed
+FAILED tests/test_r7t_findings.py::test_t9_a_counter_the_desk_could_not_write_ends_the_real_run_as_failed
+FAILED tests/test_r7t_findings.py::test_t9_a_missing_counter_alone_ends_as_failed_even_when_nothing_is_hidden
+FAILED tests/test_r7t_findings.py::test_t12_every_hostile_spelling_is_refused_before_any_socket[None]
+FAILED tests/test_r7t_findings.py::test_t12_every_hostile_spelling_is_refused_before_any_socket[' ']
+FAILED tests/test_r7t_findings.py::test_t12_every_hostile_spelling_is_refused_before_any_socket['\\t']
+FAILED tests/test_r7t_findings.py::test_t12_every_hostile_spelling_is_refused_before_any_socket['\\n']
+FAILED tests/test_r7t_findings.py::test_t12_every_hostile_spelling_is_refused_before_any_socket['0']
+FAILED tests/test_r7t_findings.py::test_t12_every_hostile_spelling_is_refused_before_any_socket['127.1']
+FAILED tests/test_r7t_findings.py::test_t12_every_hostile_spelling_is_refused_before_any_socket['localhost.']
+FAILED tests/test_r7t_findings.py::test_t12_every_hostile_spelling_is_refused_before_any_socket['[::]']
+FAILED tests/test_r7t_findings.py::test_t12_every_hostile_spelling_is_refused_before_any_socket['::']
+FAILED tests/test_r7t_findings.py::test_t12_every_hostile_spelling_is_refused_before_any_socket['0x7f.0.0.1']
+FAILED tests/test_r7t_findings.py::test_t12_every_hostile_spelling_is_refused_before_any_socket['127.0.0.1 ']
+FAILED tests/test_r7t_findings.py::test_t12_every_hostile_spelling_is_refused_before_any_socket[' localhost']
+FAILED tests/test_r7t_findings.py::test_t12_every_hostile_spelling_is_refused_before_any_socket[b'127.0.0.1']
+FAILED tests/test_r7t_findings.py::test_t12_every_hostile_spelling_is_refused_before_any_socket[b'localhost']
+FAILED tests/test_r7t_findings.py::test_t12_every_hostile_spelling_is_refused_before_any_socket[0]
+FAILED tests/test_r7t_findings.py::test_t12_every_hostile_spelling_is_refused_before_any_socket[('127.0.0.1',)]
+FAILED tests/test_r7t_findings.py::test_t12_a_loopback_spelling_is_accepted_by_the_shared_rule[LOCALHOST]
+FAILED tests/test_r7t_findings.py::test_t12_a_loopback_spelling_is_accepted_by_the_shared_rule[LocalHost]
+FAILED tests/test_r7t_findings.py::test_t12_a_loopback_spelling_is_accepted_by_the_shared_rule[::ffff:127.0.0.1]
+FAILED tests/test_r7t_findings.py::test_t12_a_loopback_spelling_is_accepted_by_the_shared_rule[[::1]]
+FAILED tests/test_r7t_findings.py::test_t12_a_loopback_spelling_is_accepted_by_the_shared_rule[127.0.0.2]
+FAILED tests/test_r7t_findings.py::test_t15_the_counting_rule_takes_open_creates_as_possible_contacts_and_never_more_than_the_leads
+FAILED tests/test_r7t_findings.py::test_t15_the_window_after_the_request_and_before_the_count_leaves_the_create_open
+FAILED tests/test_r7t_findings.py::test_t15_the_window_before_the_reply_also_leaves_the_create_open
+FAILED tests/test_r7t_findings.py::test_t15_every_normal_end_of_a_create_closes_it
+FAILED tests/test_r7t_findings.py::test_t15_a_run_with_a_window_in_the_counter_and_a_hidden_contact_ends_as_failed
+FAILED tests/test_r7t_findings.py::test_t15_a_window_in_the_counter_with_nothing_hidden_is_no_false_alarm[made-and-listed]
+FAILED tests/test_r7t_findings.py::test_t15_a_window_in_the_counter_with_nothing_hidden_is_no_false_alarm[retried]
+FAILED tests/test_r7t_findings.py::test_t15_a_create_that_waits_on_a_429_and_then_succeeds_opens_and_closes_exactly_once
+FAILED tests/test_r7t_findings.py::test_t17_a_create_that_may_have_made_the_contact_is_counted_as_unknown[drop]
+FAILED tests/test_r7t_findings.py::test_t17_a_create_that_may_have_made_the_contact_is_counted_as_unknown[500]
+FAILED tests/test_r7t_findings.py::test_t17_a_create_that_may_have_made_the_contact_is_counted_as_unknown[408]
+FAILED tests/test_r7t_findings.py::test_t17_a_429_after_the_waits_proves_nothing_was_stored
+FAILED tests/test_r7t_findings.py::test_t17_an_unknown_create_with_nothing_hidden_is_no_false_alarm[made-and-listed]
+FAILED tests/test_r7t_findings.py::test_t17_an_unknown_create_with_nothing_hidden_is_no_false_alarm[retried]
+FAILED tests/test_r7t_findings.py::test_t17_an_unknown_create_and_a_contact_the_list_does_not_show_ends_as_failed
+FAILED tests/test_r7t_findings.py::test_t18_a_counters_file_that_cannot_be_written_stops_the_create_before_it_is_sent
+78 failed, 60 passed in 85.72s (0:01:25)

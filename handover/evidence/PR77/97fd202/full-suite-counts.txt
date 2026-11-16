@@ -1,0 +1,60 @@
+Full suite on head 97fd202 with HADAVIN_TEST_PG_DSN set (JUnit XML: /home/user/build/evidence-raw/P77-97fd202/full-head.xml)
+XML attributes: tests=11173 failures=0 errors=0 skipped=15 time=1019.874s
+by outcome (counted from the testcase elements): {'passed': 11158, 'skipped': 1, 'xfailed': 14}
+
+not passed (the XML counts xfailed under skipped):
+  skipped | tests.contracts.test_llm::test_a_malformed_answer_is_a_provider_error | Stubber refuses a malformed Converse shape before the kind sees it
+  xfailed | tests.test_redact_fold::test_gap_1_tag_characters_hide_a_key_open_hole | open hole GAP-1: closed by P2d-2 (a pass here means it is closed: remove this mark)
+  xfailed | tests.test_redact_fold::test_variant_1_a_bare_redact_zwsp_copy_open_hole | open hole VARIANT-1(a): closed by P2d-2 (a pass here means it is closed: remove this mark)
+  xfailed | tests.test_redact_fold::test_variant_1_c_redact_text_lookalike_copy_open_hole | open hole VARIANT-1(c): closed by P2d-2 (a pass here means it is closed: remove this mark)
+  xfailed | tests.test_redact_fold::test_restore_2_a_withheld_line_does_not_restore_a_value_the_input_did_not_hold | open hole L5: closed by the P5c marker (a pass here means it is closed: remove this mark)
+  xfailed | tests.test_textnorm_differential::test_the_identity_key_agrees_with_the_stated_principle | DENY view: a code point unassigned in Unicode 15.1 that a newer table maps to l (gap 2: the table entry wins before the drop)
+  xfailed | tests.test_textnorm_differential::test_the_identity_key_agrees_with_the_stated_principle | DENY view: a Unicode hyphen reads as the hyphen-minus (gap 4)
+  xfailed | tests.test_textnorm_differential::test_the_identity_key_agrees_with_the_stated_principle | DENY view: the minus sign reads as the hyphen-minus (gap 4)
+  xfailed | tests.test_textnorm_differential::test_the_identity_key_agrees_with_the_stated_principle | DENY view: the division slash reads as the slash (gap 4)
+  xfailed | tests.test_textnorm_differential::test_the_identity_key_agrees_with_the_stated_principle | DENY view: a curly apostrophe reads as the apostrophe (gap 4)
+  xfailed | tests.test_textnorm_differential::test_could_be_same_person_agrees_with_the_stated_principle_for_every_equal_row | DENY view: a code point unassigned in Unicode 15.1 that a newer table maps to l (gap 2: the table entry wins before the drop)
+  xfailed | tests.test_textnorm_differential::test_could_be_same_person_agrees_with_the_stated_principle_for_every_equal_row | DENY view: a Unicode hyphen reads as the hyphen-minus (gap 4)
+  xfailed | tests.test_textnorm_differential::test_could_be_same_person_agrees_with_the_stated_principle_for_every_equal_row | DENY view: the minus sign reads as the hyphen-minus (gap 4)
+  xfailed | tests.test_textnorm_differential::test_could_be_same_person_agrees_with_the_stated_principle_for_every_equal_row | DENY view: the division slash reads as the slash (gap 4)
+  xfailed | tests.test_textnorm_differential::test_could_be_same_person_agrees_with_the_stated_principle_for_every_equal_row | DENY view: a curly apostrophe reads as the apostrophe (gap 4)
+
+Postgres-backed and the three head test files, per file:
+   tests.demo_askdata.test_allowlist {'passed': 119}
+   tests.demo_askdata.test_audit {'passed': 17}
+   tests.demo_askdata.test_cli {'passed': 14}
+   tests.demo_askdata.test_corpus_on_server {'passed': 66}
+   tests.demo_askdata.test_eval_compare {'passed': 20}
+   tests.demo_askdata.test_eval_harness {'passed': 30}
+   tests.demo_askdata.test_gold_data {'passed': 28}
+   tests.demo_askdata.test_gold_exec {'passed': 4}
+   tests.demo_askdata.test_htmlexport {'passed': 9}
+   tests.demo_askdata.test_imports {'passed': 3}
+   tests.demo_askdata.test_ledger {'passed': 15}
+   tests.demo_askdata.test_llm_io {'passed': 44}
+   tests.demo_askdata.test_meter {'passed': 17}
+   tests.demo_askdata.test_pgsource_layers {'passed': 22}
+   tests.demo_askdata.test_pipeline {'passed': 35}
+   tests.demo_askdata.test_roles {'passed': 23}
+   tests.demo_askdata.test_safe_text {'passed': 4}
+   tests.demo_askdata.test_seed {'passed': 35}
+   tests.demo_askdata.test_spike_seed {'passed': 3}
+   tests.demo_askdata.test_validate {'passed': 338}
+   tests.demo_askdata.test_validate_fuzz {'passed': 1}
+   tests.demo_askdata.test_validate_harm {'passed': 253}
+   tests.demo_askdata.test_validate_mutation {'passed': 26}
+   tests.demo_askdata.test_validate_oracle {'passed': 69}
+   tests.demo_askdata.test_verify_readonly {'passed': 18}
+   tests.demo_askdata.test_wire {'passed': 1}
+   tests.test_k5_perf {'passed': 8}
+   tests.test_k5_postgres {'passed': 1}
+   tests.test_k5_round10_postgres {'passed': 8}
+   tests.test_k5_round8_postgres {'passed': 1}
+   tests.test_p2_postgres {'passed': 16}
+   tests.test_redact_fold {'passed': 56, 'xfailed': 4}
+   tests.test_redact_fold_budget {'passed': 28}
+   tests.test_redact_fold_property {'passed': 4}
+   tests.test_redact_fold_seams {'passed': 4}
+   tests.test_redact_hidden_forms {'passed': 179}
+   tests.test_redact_marks {'passed': 40}
+   tests.test_textnorm_perf {'passed': 8}

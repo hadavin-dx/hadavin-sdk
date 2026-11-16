@@ -1,0 +1,3 @@
+path_sha256: tests/test_file_call_guard.py  06a74fdca43398a0eff77fdf605cfdf85f526b968245413fa85a96178c6aa6ba
+path_sha256: tests/test_r7q_findings.py  208469942872c5dd76c6a7f482b27f321c029a471324d803e185b7da29fa8fb4
+base: r7q (tree-R7Q); r7r = r7q + delta-r7q-to-r7r.diff (only these 2 test files; src and scripts unchanged vs r7q). Full r7r source tree = snapshot-r7q/files overlaid on r7p, plus these two files. lf patch sha 87bff76e58c3adde6104a168e858cadc7419d760725ade6c0b149668c304e043; crlf 90e3b978...; delta a6714e48...

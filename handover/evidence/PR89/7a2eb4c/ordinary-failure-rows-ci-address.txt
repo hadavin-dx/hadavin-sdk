@@ -1,0 +1,38 @@
+MODE assert_msg | raised: None
+    rows => probe mutant / KILLED / tests/test_probe::test_probe_one / True / ('probe mutant', <Verdict.KILLED: 'KILLED'>, 'tests/test_probe::test_probe_one', True)
+    first_lines => probe mutant / AssertionError [expect found] value must be one
+MODE assert_first | raised: None
+    rows => probe mutant / KILLED / tests/test_probe::test_probe_one / True / ('probe mutant', <Verdict.KILLED: 'KILLED'>, 'tests/test_probe::test_probe_one', True)
+    first_lines => probe mutant / AssertionError [expect found] value must be one
+MODE exc_msg | raised: None
+    rows => probe mutant / WRONG_REASON / tests/test_probe::test_probe_one / False / ('probe mutant', <Verdict.WRONG_REASON: 'WRONG_REASON'>, 'tests/test_probe::test_probe_one', False)
+    first_lines => probe mutant / RuntimeError [expect not found] value must be one
+MODE exc_class_dynamic | raised: None
+    rows => probe mutant / CRASH / tests/test_probe::test_probe_one / False / ('probe mutant', <Verdict.CRASH: 'CRASH'>, 'tests/test_probe::test_probe_one', False)
+    first_lines => probe mutant / [class not shown] [expect found] value must be one
+MODE param_id | raised: None
+    rows => probe mutant / KILLED / tests/test_probe::test_probe_one[parameters hidden] / True / ('probe mutant', <Verdict.KILLED: 'KILLED'>, 'tests/test_probe::test_probe_one[parameters hidden]', True)
+    first_lines => probe mutant / AssertionError [expect found] value must be one
+MODE fixture_raises | raised: None
+    rows => probe mutant / ERROR / FIXTURE ERROR / False / ('probe mutant', <Verdict.ERROR: 'ERROR'>, 'FIXTURE ERROR', False)
+    first_lines => probe mutant / RuntimeError
+MODE fixture_missing | raised: None
+    rows => probe mutant / ERROR / FIXTURE ERROR / False / ('probe mutant', <Verdict.ERROR: 'ERROR'>, 'FIXTURE ERROR', False)
+    first_lines => probe mutant / [class not shown]
+MODE skip_reason | raised: None
+    rows => probe mutant / ERROR / SKIPPED TESTS / False / ('probe mutant', <Verdict.ERROR: 'ERROR'>, 'SKIPPED TESTS', False)
+    first_lines => probe mutant / skipped: tests/test_probe::test_probe_one
+MODE collect_error | raised: None
+    rows => probe mutant / ERROR / COLLECTION ERROR / False / ('probe mutant', <Verdict.ERROR: 'ERROR'>, 'COLLECTION ERROR', False)
+    first_lines => probe mutant / RuntimeError
+MODE func_dynamic | raised: None
+    rows => probe mutant / KILLED / [test id not shown] / True / ('probe mutant', <Verdict.KILLED: 'KILLED'>, '[test id not shown]', True)
+    first_lines => probe mutant / AssertionError [expect found] value must be one
+MODE baseline_fail | raised: RuntimeError
+    exception.str => the unmutated copy does not pass its tests (exit code 1): AssertionError
+MODE baseline_skip | raised: RuntimeError
+    exception.str => the unmutated copy skipped 1 selected test(s): ['tests/test_probe::test_probe_one[parameters hidden]']
+MODE canary_fail | raised: CanaryFailed
+    first_lines => probe mutant / AssertionError [expect found] value must be one
+    exception.str => the unmutated copy no longer passes its tests after mutant 'probe mutant' (exit code 1): the shared test database holds what the mutant left behind, so the verdicts of the later mutants would not be reliable
+    exception.rows => probe mutant / KILLED / tests/test_probe::test_probe_one / True / ('probe mutant', <Verdict.KILLED: 'KILLED'>, 'tests/test_probe::test_probe_one', True)

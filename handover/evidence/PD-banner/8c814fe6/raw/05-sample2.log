@@ -1,0 +1,42 @@
+ok  KILLED    J13 the page mode list differs from the stages | killer=test_the_page_lists_are_the_python_lists | expect_in_first=True
+    first: E       AssertionError: the_page_lists_are_the_python_lists: check 1
+ok  KILLED    G5 a folder deeper than the product root is not a hit | killer=test_pin_the_folder_inside_a_product_root_is_a_hit_at_any_depth_and_in | expect_in_first=True
+    first: E           AssertionError: a deep folder spelled 'Demo_Only' was not the one hit
+ok  KILLED    G7 a required folder that is missing does not stop the run | killer=test_exit_codes_clean_dirty_and_required_folder_missing | expect_in_first=True
+    first: E       AssertionError: a required folder that is missing did not stop the run
+ok  KILLED    G8 the copy keeps the folder | killer=test_the_copy_has_no_folder_and_nothing_else_is_lost | expect_in_first=True
+    first: E       AssertionError: the copy still holds the demo-only folder
+ok  KILLED    G24 a submodule under a product root is not a hit | killer=test_a_submodule_under_a_product_root_is_a_hit_and_one_outside_is_not | expect_in_first=True
+    first: E       AssertionError: a_submodule_under_a_product_root_is_a_hit_and_one_outside_is: check 1
+ok  KILLED    B31 a tool manifest host is not counted as real | killer=test_a_tool_manifest_host_that_is_not_this_machine_is_a_real_service | expect_in_first=True
+    first: E       AssertionError: the outside-endpoint search missed a tool manifest host that leaves this machine
+ok  CRASH     B43 a source that does not build is read as this machine | killer=test_a_demo_config_that_can_reach_beyond_this_machine_is_not_called_ma | expect_in_first=True
+    first: E       pydantic_core._pydantic_core.ValidationError: 2 validation errors for KubernetesSettings
+ok  KILLED    B63 banner_or_unconfirmed logs the error text | killer=test_banner_or_unconfirmed_gives_the_banner_or_the_not_confirmed_one | expect_in_first=True
+    first: E           AssertionError: the log line holds a name from the config: "mode banner could not be built (tool 'internal-host-xxxxx' of agent 'a' has no `hosts` list of tex
+ok  KILLED    J24 the repair does not empty the element before it writes t | killer=test_a_failed_last_resort_write_never_leaves_the_banner_hidden | expect_in_first=True
+    first: E       AssertionError: the old words stayed on screen after the text write failed: 'previous banner text'
+ok  KILLED    J21 a failing repair step stops the steps after it | killer=test_a_failing_attribute_write_never_leaves_the_old_words_on_screen | expect_in_first=True
+    first: E       AssertionError: element left hidden or the painter threw
+ok  KILLED    J23a the page does not check the tag is plain text | killer=test_pin_a_tag_that_is_not_plain_text_is_not_painted_as_given | expect_in_first=True
+    first: E       AssertionError: tag check: tag = None
+ok  KILLED    G92 a PE file is not recognised | killer=test_every_first_byte_kind_is_a_hit_by_kind_under_an_unmarked_and_a_ma | expect_in_first=True
+    first: E               AssertionError: PE named .dat: expected 'src/pkg/blob.dat: binary-in-product-root', got ''
+ok  KILLED    R7B2 the timeout parameter is dropped from the not-connectiv | killer=test_the_not_connectivity_list_is_exactly_the_parameters_that_hand_in_ | expect_in_first=True
+    first: E       AssertionError: the not-connectivity list is ['agents', 'config_dir']
+ok  KILLED    R9A5 the seal method is public again | killer=test_pin_the_recorded_names_cannot_be_laundered | expect_in_first=True
+    first: E       AssertionError: the public `seal` is back
+ok  KILLED    R9A6 the clock handed to build is not recorded as an overrid | killer=test_the_clock_is_an_override_when_given_and_not_when_it_is_the_defaul | expect_in_first=True
+    first: E       AssertionError: build did not record a clock that was handed in
+ok  KILLED    R9B5 the not-known answer of banner_or_unconfirmed is logged | killer=test_banner_or_unconfirmed_with_none_logs_no_warning | expect_in_first=True
+    first: E       AssertionError: the not-known answer logged a warning: ['mode banner: overridden is not known: showing the not-confirmed banner']
+ok  KILLED    R9D6 the Authorization header is read as one word without a  | killer=test_after_an_authorization_header_name_everything_to_the_end_of_the_l | expect_in_first=True
+    first: E           AssertionError: header scheme 'Digest': 'Authorization: Digest u1=aaaa, r2=bbbb, n3=cccc'
+ok  KILLED    R10F2 the copy sets the file mode to nothing (chmod) | killer=test_pin_a_copy_keeps_the_file_mode_where_os_has_no_fchmod | expect_in_first=True
+    first: E       AssertionError: the mode was not copied without fchmod
+ok  KILLED    R10F7 a chain of links that is too long is called only a loo | killer=test_a_chain_of_45_links_is_a_hit_and_the_rule_text_names_both_causes | expect_in_first=True
+    first: E       AssertionError: a chain of 45 links was not named as a chain: ['docs/link40: symlink-loop (a loop of links cannot be followed)', 'docs/link41: symlink-loop (a loo
+ok  KILLED    R13A6 the words of the banner may fail with any error | killer=test_a_bug_in_the_words_of_the_banner_is_not_turned_into_a_banner | expect_in_first=True
+    first: E       AssertionError: _not_confirmed_that_cannot_fail (the words): a bug of an unnamed type was turned into a banner
+n 20 bad 0
+rc=0

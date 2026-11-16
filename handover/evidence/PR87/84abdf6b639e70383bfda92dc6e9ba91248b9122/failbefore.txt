@@ -1,0 +1,137 @@
+$ PYTHONPATH=src pytest tests/test_peel_run_id.py (head test file vs base 0dabf1f source, worktree /home/user/build/FB87)
+FFFFFFFFFFFFFFFFFFFFFFFFF.                                               [100%]
+=================================== FAILURES ===================================
+________________________ test_t1_given_id_is_the_run_id ________________________
+tests/test_peel_run_id.py:34: in test_t1_given_id_is_the_run_id
+    run = rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), run_id=GOOD)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+__________ test_t2_same_id_twice_is_refused_and_nothing_else_happens ___________
+tests/test_peel_run_id.py:42: in test_t2_same_id_twice_is_refused_and_nothing_else_happens
+    rt.handle(AGENT, PRINCIPAL, doc, trigger_ref="m-1", run_id=GOOD)
+E   TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+_____________ test_t3_without_run_id_ids_are_fresh_and_well_formed _____________
+tests/test_peel_run_id.py:56: in test_t3_without_run_id_ids_are_fresh_and_well_formed
+    b = rt.handle(AGENT, PRINCIPAL, doc, run_id=None)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+_____________ test_t4_hostile_ids_are_refused_before_any_write[''] _____________
+tests/test_peel_run_id.py:88: in test_t4_hostile_ids_are_refused_before_any_write
+    rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), run_id=bad)
+E   TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+___________ test_t4_hostile_ids_are_refused_before_any_write['run-'] ___________
+tests/test_peel_run_id.py:88: in test_t4_hostile_ids_are_refused_before_any_write
+    rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), run_id=bad)
+E   TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+_ test_t4_hostile_ids_are_refused_before_any_write['run-aaaaaaaaaaaaaaaaaaaaaaaaa0] _
+tests/test_peel_run_id.py:88: in test_t4_hostile_ids_are_refused_before_any_write
+    rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), run_id=bad)
+E   TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+_ test_t4_hostile_ids_are_refused_before_any_write['run-aaaaaaaaaaaaaaaaaaaaaaaaa1] _
+tests/test_peel_run_id.py:88: in test_t4_hostile_ids_are_refused_before_any_write
+    rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), run_id=bad)
+E   TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+_ test_t4_hostile_ids_are_refused_before_any_write['run-AAAAAAAAAAAAAAAAAAAAAAAAA] _
+tests/test_peel_run_id.py:88: in test_t4_hostile_ids_are_refused_before_any_write
+    rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), run_id=bad)
+E   TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+_ test_t4_hostile_ids_are_refused_before_any_write['run-ggggggggggggggggggggggggg] _
+tests/test_peel_run_id.py:88: in test_t4_hostile_ids_are_refused_before_any_write
+    rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), run_id=bad)
+E   TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+_ test_t4_hostile_ids_are_refused_before_any_write['../aaaaaaaaaaaaaaaaaaaaaaaaaa] _
+tests/test_peel_run_id.py:88: in test_t4_hostile_ids_are_refused_before_any_write
+    rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), run_id=bad)
+E   TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+_ test_t4_hostile_ids_are_refused_before_any_write['run-0123456789abcdef012345678_0] _
+tests/test_peel_run_id.py:88: in test_t4_hostile_ids_are_refused_before_any_write
+    rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), run_id=bad)
+E   TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+_ test_t4_hostile_ids_are_refused_before_any_write['\\nrun-0123456789abcdef0123456] _
+tests/test_peel_run_id.py:88: in test_t4_hostile_ids_are_refused_before_any_write
+    rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), run_id=bad)
+E   TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+_ test_t4_hostile_ids_are_refused_before_any_write['run-0123456789abcdef012345678_1] _
+tests/test_peel_run_id.py:88: in test_t4_hostile_ids_are_refused_before_any_write
+    rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), run_id=bad)
+E   TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+_ test_t4_hostile_ids_are_refused_before_any_write['run-aaaaaaaaaaaaaaaaaaaaaaaaa2] _
+tests/test_peel_run_id.py:88: in test_t4_hostile_ids_are_refused_before_any_write
+    rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), run_id=bad)
+E   TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+_ test_t4_hostile_ids_are_refused_before_any_write['run-aaaaaaaaaaaaaaaaaaaaaaaaa3] _
+tests/test_peel_run_id.py:88: in test_t4_hostile_ids_are_refused_before_any_write
+    rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), run_id=bad)
+E   TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+_ test_t4_hostile_ids_are_refused_before_any_write['run-0123456789abcdef012345678_2] _
+tests/test_peel_run_id.py:88: in test_t4_hostile_ids_are_refused_before_any_write
+    rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), run_id=bad)
+E   TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+_ test_t4_hostile_ids_are_refused_before_any_write['aaaaaaaaaaaaaaaaaaaaaaaaaaaaa] _
+tests/test_peel_run_id.py:88: in test_t4_hostile_ids_are_refused_before_any_write
+    rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), run_id=bad)
+E   TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+_ test_t4_hostile_ids_are_refused_before_any_write['ru-aaaaaaaaaaaaaaaaaaaaaaaaaa] _
+tests/test_peel_run_id.py:88: in test_t4_hostile_ids_are_refused_before_any_write
+    rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), run_id=bad)
+E   TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+_ test_t4_hostile_ids_are_refused_before_any_write['run_aaaaaaaaaaaaaaaaaaaaaaaaa] _
+tests/test_peel_run_id.py:88: in test_t4_hostile_ids_are_refused_before_any_write
+    rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), run_id=bad)
+E   TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+____________ test_t4_hostile_ids_are_refused_before_any_write[123] _____________
+tests/test_peel_run_id.py:88: in test_t4_hostile_ids_are_refused_before_any_write
+    rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), run_id=bad)
+E   TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+_ test_t4_hostile_ids_are_refused_before_any_write[b'run-0123456789abcdef01234567] _
+tests/test_peel_run_id.py:88: in test_t4_hostile_ids_are_refused_before_any_write
+    rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), run_id=bad)
+E   TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+___________ test_t4_hostile_ids_are_refused_before_any_write[['x']] ____________
+tests/test_peel_run_id.py:88: in test_t4_hostile_ids_are_refused_before_any_write
+    rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), run_id=bad)
+E   TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+_____________________ test_t5_accepts_exactly_the_pattern ______________________
+tests/test_peel_run_id.py:114: in test_t5_accepts_exactly_the_pattern
+    rt.handle(AGENT, PRINCIPAL, doc, run_id=text)
+E   TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+____________________ test_t6_the_ak_g2_id_shape_is_accepted ____________________
+tests/test_peel_run_id.py:123: in test_t6_the_ak_g2_id_shape_is_accepted
+    rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), run_id=AK_G2_SHAPE).run_id == AK_G2_SHAPE
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+_______________ test_t7_run_id_is_keyword_only_with_default_none _______________
+tests/test_peel_run_id.py:128: in test_t7_run_id_is_keyword_only_with_default_none
+    p = inspect.signature(Runtime.handle).parameters["run_id"]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'run_id'
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_peel_run_id.py::test_t8_model_pattern_is_the_written_out_oracle
+FAILED tests/test_peel_run_id.py::test_t1_given_id_is_the_run_id - TypeError:...
+FAILED tests/test_peel_run_id.py::test_t2_same_id_twice_is_refused_and_nothing_else_happens
+FAILED tests/test_peel_run_id.py::test_t3_without_run_id_ids_are_fresh_and_well_formed
+FAILED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['']
+FAILED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['run-']
+FAILED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['run-aaaaaaaaaaaaaaaaaaaaaaaaa0]
+FAILED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['run-aaaaaaaaaaaaaaaaaaaaaaaaa1]
+FAILED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['run-AAAAAAAAAAAAAAAAAAAAAAAAA]
+FAILED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['run-ggggggggggggggggggggggggg]
+FAILED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['../aaaaaaaaaaaaaaaaaaaaaaaaaa]
+FAILED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['run-0123456789abcdef012345678_0]
+FAILED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['\\nrun-0123456789abcdef0123456]
+FAILED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['run-0123456789abcdef012345678_1]
+FAILED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['run-aaaaaaaaaaaaaaaaaaaaaaaaa2]
+FAILED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['run-aaaaaaaaaaaaaaaaaaaaaaaaa3]
+FAILED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['run-0123456789abcdef012345678_2]
+FAILED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['aaaaaaaaaaaaaaaaaaaaaaaaaaaaa]
+FAILED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['ru-aaaaaaaaaaaaaaaaaaaaaaaaaa]
+FAILED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['run_aaaaaaaaaaaaaaaaaaaaaaaaa]
+FAILED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write[123]
+FAILED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write[b'run-0123456789abcdef01234567]
+FAILED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write[['x']]
+FAILED tests/test_peel_run_id.py::test_t5_accepts_exactly_the_pattern - TypeE...
+FAILED tests/test_peel_run_id.py::test_t6_the_ak_g2_id_shape_is_accepted - Ty...
+FAILED tests/test_peel_run_id.py::test_t7_run_id_is_keyword_only_with_default_none
+25 failed, 1 passed in 19.72s
+exit=1

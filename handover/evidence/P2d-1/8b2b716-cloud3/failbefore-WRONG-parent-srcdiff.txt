@@ -1,0 +1,3 @@
+ src/hadavin_sdk/defaults.py     | 4 ++--
+ src/hadavin_sdk/guard/redact.py | 2 --
+ 2 files changed, 2 insertions(+), 4 deletions(-)

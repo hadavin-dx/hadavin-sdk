@@ -1,0 +1,12 @@
+sdk /home/user/build/E-work/mut-tree/src/hadavin_sdk/__init__.py
+ok  KILLED         R4-08 the range is dropped: zero-width and direction marks  [test_pin_r4_range_08] t=24s
+ok  KILLED         R4-08 the range ends one early: zero-width and direction marks  [test_pin_r4_range_08] t=26s
+ok  KILLED         R4-08 the range starts one late: zero-width and direction marks  [test_pin_r4_range_08] t=28s
+ok  KILLED         R4-09 the range is dropped: line and paragraph separators and bidirectional embeddings  [test_pin_r4_range_09] t=30s
+ok  KILLED         R4-09 the range ends one early: line and paragraph separators and bidirectional embeddings  [test_pin_r4_range_09] t=32s
+ok  KILLED         R4-09 the range starts one late: line and paragraph separators and bidirectional embeddings  [test_pin_r4_range_09] t=33s
+ok  KILLED         R4-10 the range is dropped: word joiner, invisible operators, isolates and deprecated format characters  [test_pin_r4_range_10] t=35s
+ok  KILLED         R4-10 the range ends one early: word joiner, invisible operators, isolates and deprecated format characters  [test_pin_r4_range_10] t=36s
+ok  KILLED         R4-10 the range starts one late: word joiner, invisible operators, isolates and deprecated format characters  [test_pin_r4_range_10] t=37s
+ok  KILLED         R4-11 the range is dropped: braille blank  [test_pin_r4_range_11] t=38s
+SLICE 60:70 10 of 10 good; problems: []; elapsed 39s

@@ -1,0 +1,836 @@
+HEAD(base)=0dabf1fa7a2ed58e14b8bca13be1141ac59f9c71
+python=Python 3.13.18
+cmd=pytest -q -rA -p no:cacheprovider tests/test_strict_flags.py
+FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF                        [100%]
+=================================== FAILURES ===================================
+______ test_a_safety_flag_loads_only_from_a_real_bool[made_up_data_only] _______
+
+config_dir = PosixPath('/tmp/pytest-of-root/pytest-4937/test_a_safety_flag_loads_only_0/config')
+
+    def load_config(config_dir: Path | None = None) -> Config:
+        """Every start-up problem (missing HADAVIN_CONFIG_DIR, bad YAML, bad values) is a ConfigError."""
+        try:
+            root = Path(config_dir) if config_dir else Settings().config_dir  # type: ignore[call-arg]
+            raw = _read_yaml(root / "config.yaml")
+            egress = _read_yaml(root / "egress.yaml").get("hosts") or []
+            if early := deferred.key_problems("config.yaml", raw):
+                raise ConfigError("; ".join(early))
+            if moved := [k for k in MOVED if k in raw]:
+                raise ConfigError("; ".join(f"{k} moved to {MOVED[k]}" for k in moved))
+            for key in ("golden_dir", "inputs_dir"):
+                if key in raw:
+                    raw[key] = root / raw[key]
+            raw["backends"] = parse_backends(raw.get("backends"), root)
+>           return Config(**raw, egress_hosts=frozenset(egress), root=root)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           pydantic_core._pydantic_core.ValidationError: 1 validation error for Config
+E           made_up_data_only
+E             Extra inputs are not permitted [type=extra_forbidden]
+E               For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden
+
+src/hadavin_sdk/config.py:496: ValidationError
+
+The above exception was the direct cause of the following exception:
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-4937/test_a_safety_flag_loads_only_0/config')
+flag = 'made_up_data_only', loose = ['yes', 1, 'true', 'on'], real = True
+load = <function <lambda> at 0x7f5ca45ecae0>
+
+    @pytest.mark.parametrize(("flag", "loose", "real", "load"), FLAGS, ids=[f[0] for f in FLAGS])
+    def test_a_safety_flag_loads_only_from_a_real_bool(cfg_dir, flag, loose, real, load):
+>       load(cfg_dir, real)  # control: the real bool loads, so a refusal below is about the loose value
+        ^^^^^^^^^^^^^^^^^^^
+
+tests/test_strict_flags.py:121: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_strict_flags.py:63: in <lambda>
+    ("made_up_data_only", ON_VALUES, True, lambda c, v: _config(c, ("made_up_data_only",), v)),
+                                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_strict_flags.py:52: in _config
+    load_config(cfg_dir)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+config_dir = PosixPath('/tmp/pytest-of-root/pytest-4937/test_a_safety_flag_loads_only_0/config')
+
+    def load_config(config_dir: Path | None = None) -> Config:
+        """Every start-up problem (missing HADAVIN_CONFIG_DIR, bad YAML, bad values) is a ConfigError."""
+        try:
+            root = Path(config_dir) if config_dir else Settings().config_dir  # type: ignore[call-arg]
+            raw = _read_yaml(root / "config.yaml")
+            egress = _read_yaml(root / "egress.yaml").get("hosts") or []
+            if early := deferred.key_problems("config.yaml", raw):
+                raise ConfigError("; ".join(early))
+            if moved := [k for k in MOVED if k in raw]:
+                raise ConfigError("; ".join(f"{k} moved to {MOVED[k]}" for k in moved))
+            for key in ("golden_dir", "inputs_dir"):
+                if key in raw:
+                    raw[key] = root / raw[key]
+            raw["backends"] = parse_backends(raw.get("backends"), root)
+            return Config(**raw, egress_hosts=frozenset(egress), root=root)
+        except ConfigError:
+            raise
+        except ValidationError as exc:
+>           raise ConfigError(_validation_text(exc)) from exc
+E           hadavin_sdk.errors.ConfigError: 1 validation error for Config
+E           made_up_data_only
+E             Extra inputs are not permitted [type=extra_forbidden]
+E               For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden
+
+src/hadavin_sdk/config.py:500: ConfigError
+___ test_a_safety_flag_loads_only_from_a_real_bool[allow_insecure_loopback] ____
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-4937/test_a_safety_flag_loads_only_1/config')
+flag = 'allow_insecure_loopback', loose = ['yes', 1, 'true', 'on'], real = True
+load = <function <lambda> at 0x7f5ca45ecb80>
+
+    @pytest.mark.parametrize(("flag", "loose", "real", "load"), FLAGS, ids=[f[0] for f in FLAGS])
+    def test_a_safety_flag_loads_only_from_a_real_bool(cfg_dir, flag, loose, real, load):
+        load(cfg_dir, real)  # control: the real bool loads, so a refusal below is about the loose value
+        for value in loose:
+>           with pytest.raises((ConfigError, ValidationError)) as err:
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE any of (ConfigError, ValidationError)
+
+tests/test_strict_flags.py:123: Failed
+__________ test_a_safety_flag_loads_only_from_a_real_bool[k1b.redact] __________
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-4937/test_a_safety_flag_loads_only_2/config')
+flag = 'k1b.redact', loose = ['no', 0, 'false', 'off'], real = False
+load = <function <lambda> at 0x7f5ca45ecc20>
+
+    @pytest.mark.parametrize(("flag", "loose", "real", "load"), FLAGS, ids=[f[0] for f in FLAGS])
+    def test_a_safety_flag_loads_only_from_a_real_bool(cfg_dir, flag, loose, real, load):
+        load(cfg_dir, real)  # control: the real bool loads, so a refusal below is about the loose value
+        for value in loose:
+>           with pytest.raises((ConfigError, ValidationError)) as err:
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE any of (ConfigError, ValidationError)
+
+tests/test_strict_flags.py:123: Failed
+___ test_a_safety_flag_loads_only_from_a_real_bool[retention.hold_labelled] ____
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-4937/test_a_safety_flag_loads_only_3/config')
+flag = 'retention.hold_labelled', loose = ['no', 0, 'false', 'off']
+real = False, load = <function <lambda> at 0x7f5ca45eccc0>
+
+    @pytest.mark.parametrize(("flag", "loose", "real", "load"), FLAGS, ids=[f[0] for f in FLAGS])
+    def test_a_safety_flag_loads_only_from_a_real_bool(cfg_dir, flag, loose, real, load):
+        load(cfg_dir, real)  # control: the real bool loads, so a refusal below is about the loose value
+        for value in loose:
+>           with pytest.raises((ConfigError, ValidationError)) as err:
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE any of (ConfigError, ValidationError)
+
+tests/test_strict_flags.py:123: Failed
+_____ test_a_safety_flag_loads_only_from_a_real_bool[anchor.retention_ack] _____
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-4937/test_a_safety_flag_loads_only_4/config')
+flag = 'anchor.retention_ack', loose = ['yes', 1, 'true', 'on'], real = True
+load = <function <lambda> at 0x7f5ca45ecd60>
+
+    @pytest.mark.parametrize(("flag", "loose", "real", "load"), FLAGS, ids=[f[0] for f in FLAGS])
+    def test_a_safety_flag_loads_only_from_a_real_bool(cfg_dir, flag, loose, real, load):
+        load(cfg_dir, real)  # control: the real bool loads, so a refusal below is about the loose value
+        for value in loose:
+>           with pytest.raises((ConfigError, ValidationError)) as err:
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE any of (ConfigError, ValidationError)
+
+tests/test_strict_flags.py:123: Failed
+________ test_a_safety_flag_loads_only_from_a_real_bool[store.iam_auth] ________
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-4937/test_a_safety_flag_loads_only_5/config')
+flag = 'store.iam_auth', loose = ['yes', 1, 'true', 'on'], real = True
+load = <function <lambda> at 0x7f5ca45ece00>
+
+    @pytest.mark.parametrize(("flag", "loose", "real", "load"), FLAGS, ids=[f[0] for f in FLAGS])
+    def test_a_safety_flag_loads_only_from_a_real_bool(cfg_dir, flag, loose, real, load):
+        load(cfg_dir, real)  # control: the real bool loads, so a refusal below is about the loose value
+        for value in loose:
+>           with pytest.raises((ConfigError, ValidationError)) as err:
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE any of (ConfigError, ValidationError)
+
+tests/test_strict_flags.py:123: Failed
+_ test_a_safety_flag_loads_only_from_a_real_bool[openai_compat.max_completion_tokens] _
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-4937/test_a_safety_flag_loads_only_6/config')
+flag = 'openai_compat.max_completion_tokens', loose = ['yes', 1, 'true', 'on']
+real = True, load = <function <lambda> at 0x7f5ca45ecea0>
+
+    @pytest.mark.parametrize(("flag", "loose", "real", "load"), FLAGS, ids=[f[0] for f in FLAGS])
+    def test_a_safety_flag_loads_only_from_a_real_bool(cfg_dir, flag, loose, real, load):
+        load(cfg_dir, real)  # control: the real bool loads, so a refusal below is about the loose value
+        for value in loose:
+>           with pytest.raises((ConfigError, ValidationError)) as err:
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE any of (ConfigError, ValidationError)
+
+tests/test_strict_flags.py:123: Failed
+______ test_a_safety_flag_loads_only_from_a_real_bool[tool.cluster_http] _______
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-4937/test_a_safety_flag_loads_only_7/config')
+flag = 'tool.cluster_http', loose = ['yes', 1, 'true', 'on'], real = True
+load = <function <lambda> at 0x7f5ca45ecf40>
+
+    @pytest.mark.parametrize(("flag", "loose", "real", "load"), FLAGS, ids=[f[0] for f in FLAGS])
+    def test_a_safety_flag_loads_only_from_a_real_bool(cfg_dir, flag, loose, real, load):
+        load(cfg_dir, real)  # control: the real bool loads, so a refusal below is about the loose value
+        for value in loose:
+>           with pytest.raises((ConfigError, ValidationError)) as err:
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE any of (ConfigError, ValidationError)
+
+tests/test_strict_flags.py:123: Failed
+_ test_a_safety_flag_loads_only_from_a_real_bool[contract.targets_production] __
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-4937/test_a_safety_flag_loads_only_8/config')
+flag = 'contract.targets_production', loose = ['no', 0, 'false', 'off']
+real = False, load = <function <lambda> at 0x7f5ca45ecfe0>
+
+    @pytest.mark.parametrize(("flag", "loose", "real", "load"), FLAGS, ids=[f[0] for f in FLAGS])
+    def test_a_safety_flag_loads_only_from_a_real_bool(cfg_dir, flag, loose, real, load):
+        load(cfg_dir, real)  # control: the real bool loads, so a refusal below is about the loose value
+        for value in loose:
+>           with pytest.raises((ConfigError, ValidationError)) as err:
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE any of (ConfigError, ValidationError)
+
+tests/test_strict_flags.py:123: Failed
+____ test_a_safety_flag_loads_only_from_a_real_bool[contract.changes_spend] ____
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-4937/test_a_safety_flag_loads_only_9/config')
+flag = 'contract.changes_spend', loose = ['no', 0, 'false', 'off'], real = False
+load = <function <lambda> at 0x7f5ca45ed080>
+
+    @pytest.mark.parametrize(("flag", "loose", "real", "load"), FLAGS, ids=[f[0] for f in FLAGS])
+    def test_a_safety_flag_loads_only_from_a_real_bool(cfg_dir, flag, loose, real, load):
+        load(cfg_dir, real)  # control: the real bool loads, so a refusal below is about the loose value
+        for value in loose:
+>           with pytest.raises((ConfigError, ValidationError)) as err:
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE any of (ConfigError, ValidationError)
+
+tests/test_strict_flags.py:123: Failed
+________ test_a_record_loads_a_bool_only_from_a_real_bool[yes-GateRun] _________
+
+model = <class 'hadavin_sdk.models.GateRun'>
+fields = {'agent_id': 'madeup-agent', 'model_id': 'madeup-model', 'prompt_sha256': '0000000000000000000000000000000000000000000000000000000000000000', 'config_hash': '1111111111111111111111111111111111111111111111111111111111111111', ...}
+name = 'green', value = 'yes'
+
+    @pytest.mark.parametrize(("model", "fields", "name"), RECORDS, ids=[r[0].__name__ for r in RECORDS])
+    @pytest.mark.parametrize("value", ["yes", 1, "true", "on", "no", 0])
+    def test_a_record_loads_a_bool_only_from_a_real_bool(model, fields, name, value):
+        model.model_validate({**fields, name: True})  # control
+>       with pytest.raises(ValidationError) as err:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValidationError
+
+tests/test_strict_flags.py:177: Failed
+______ test_a_record_loads_a_bool_only_from_a_real_bool[yes-ReplayRecord] ______
+
+model = <class 'hadavin_sdk.replay_records.ReplayRecord'>
+fields = {'agent_id': 'madeup-agent', 'config_hash': '1111111111111111111111111111111111111111111111111111111111111111', 'model_id': 'madeup-model', 'prompt_sha256': '0000000000000000000000000000000000000000000000000000000000000000', ...}
+name = 'green', value = 'yes'
+
+    @pytest.mark.parametrize(("model", "fields", "name"), RECORDS, ids=[r[0].__name__ for r in RECORDS])
+    @pytest.mark.parametrize("value", ["yes", 1, "true", "on", "no", 0])
+    def test_a_record_loads_a_bool_only_from_a_real_bool(model, fields, name, value):
+        model.model_validate({**fields, name: True})  # control
+>       with pytest.raises(ValidationError) as err:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValidationError
+
+tests/test_strict_flags.py:177: Failed
+_______ test_a_record_loads_a_bool_only_from_a_real_bool[yes-KillSwitch] _______
+
+model = <class 'hadavin_sdk.models.KillSwitch'>, fields = {}, name = 'on'
+value = 'yes'
+
+    @pytest.mark.parametrize(("model", "fields", "name"), RECORDS, ids=[r[0].__name__ for r in RECORDS])
+    @pytest.mark.parametrize("value", ["yes", 1, "true", "on", "no", 0])
+    def test_a_record_loads_a_bool_only_from_a_real_bool(model, fields, name, value):
+        model.model_validate({**fields, name: True})  # control
+>       with pytest.raises(ValidationError) as err:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValidationError
+
+tests/test_strict_flags.py:177: Failed
+________ test_a_record_loads_a_bool_only_from_a_real_bool[yes-Verdict] _________
+
+model = <class 'hadavin_sdk.models.Verdict'>
+fields = {'flagged': False, 'score': 0.0, 'backend': 'madeup'}, name = 'flagged'
+value = 'yes'
+
+    @pytest.mark.parametrize(("model", "fields", "name"), RECORDS, ids=[r[0].__name__ for r in RECORDS])
+    @pytest.mark.parametrize("value", ["yes", 1, "true", "on", "no", 0])
+    def test_a_record_loads_a_bool_only_from_a_real_bool(model, fields, name, value):
+        model.model_validate({**fields, name: True})  # control
+>       with pytest.raises(ValidationError) as err:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValidationError
+
+tests/test_strict_flags.py:177: Failed
+_______ test_a_record_loads_a_bool_only_from_a_real_bool[yes-RunResult] ________
+
+model = <class 'hadavin_sdk.models.RunResult'>, fields = {'outcome': 'failed'}
+name = 'retryable', value = 'yes'
+
+    @pytest.mark.parametrize(("model", "fields", "name"), RECORDS, ids=[r[0].__name__ for r in RECORDS])
+    @pytest.mark.parametrize("value", ["yes", 1, "true", "on", "no", 0])
+    def test_a_record_loads_a_bool_only_from_a_real_bool(model, fields, name, value):
+        model.model_validate({**fields, name: True})  # control
+>       with pytest.raises(ValidationError) as err:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValidationError
+
+tests/test_strict_flags.py:177: Failed
+_____ test_a_record_loads_a_bool_only_from_a_real_bool[yes-ToolCallRecord] _____
+
+model = <class 'hadavin_sdk.models.ToolCallRecord'>
+fields = {'call_id': 'r1:1', 'run_id': 'r1', 'tool': 'madeup_tool', 'inputs': {}, ...}
+name = 'error', value = 'yes'
+
+    @pytest.mark.parametrize(("model", "fields", "name"), RECORDS, ids=[r[0].__name__ for r in RECORDS])
+    @pytest.mark.parametrize("value", ["yes", 1, "true", "on", "no", 0])
+    def test_a_record_loads_a_bool_only_from_a_real_bool(model, fields, name, value):
+        model.model_validate({**fields, name: True})  # control
+>       with pytest.raises(ValidationError) as err:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValidationError
+
+tests/test_strict_flags.py:177: Failed
+_________ test_a_record_loads_a_bool_only_from_a_real_bool[1-GateRun] __________
+
+model = <class 'hadavin_sdk.models.GateRun'>
+fields = {'agent_id': 'madeup-agent', 'model_id': 'madeup-model', 'prompt_sha256': '0000000000000000000000000000000000000000000000000000000000000000', 'config_hash': '1111111111111111111111111111111111111111111111111111111111111111', ...}
+name = 'green', value = 1
+
+    @pytest.mark.parametrize(("model", "fields", "name"), RECORDS, ids=[r[0].__name__ for r in RECORDS])
+    @pytest.mark.parametrize("value", ["yes", 1, "true", "on", "no", 0])
+    def test_a_record_loads_a_bool_only_from_a_real_bool(model, fields, name, value):
+        model.model_validate({**fields, name: True})  # control
+>       with pytest.raises(ValidationError) as err:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValidationError
+
+tests/test_strict_flags.py:177: Failed
+_______ test_a_record_loads_a_bool_only_from_a_real_bool[1-ReplayRecord] _______
+
+model = <class 'hadavin_sdk.replay_records.ReplayRecord'>
+fields = {'agent_id': 'madeup-agent', 'config_hash': '1111111111111111111111111111111111111111111111111111111111111111', 'model_id': 'madeup-model', 'prompt_sha256': '0000000000000000000000000000000000000000000000000000000000000000', ...}
+name = 'green', value = 1
+
+    @pytest.mark.parametrize(("model", "fields", "name"), RECORDS, ids=[r[0].__name__ for r in RECORDS])
+    @pytest.mark.parametrize("value", ["yes", 1, "true", "on", "no", 0])
+    def test_a_record_loads_a_bool_only_from_a_real_bool(model, fields, name, value):
+        model.model_validate({**fields, name: True})  # control
+>       with pytest.raises(ValidationError) as err:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValidationError
+
+tests/test_strict_flags.py:177: Failed
+________ test_a_record_loads_a_bool_only_from_a_real_bool[1-KillSwitch] ________
+
+model = <class 'hadavin_sdk.models.KillSwitch'>, fields = {}, name = 'on'
+value = 1
+
+    @pytest.mark.parametrize(("model", "fields", "name"), RECORDS, ids=[r[0].__name__ for r in RECORDS])
+    @pytest.mark.parametrize("value", ["yes", 1, "true", "on", "no", 0])
+    def test_a_record_loads_a_bool_only_from_a_real_bool(model, fields, name, value):
+        model.model_validate({**fields, name: True})  # control
+>       with pytest.raises(ValidationError) as err:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValidationError
+
+tests/test_strict_flags.py:177: Failed
+_________ test_a_record_loads_a_bool_only_from_a_real_bool[1-Verdict] __________
+
+model = <class 'hadavin_sdk.models.Verdict'>
+fields = {'flagged': False, 'score': 0.0, 'backend': 'madeup'}, name = 'flagged'
+value = 1
+
+    @pytest.mark.parametrize(("model", "fields", "name"), RECORDS, ids=[r[0].__name__ for r in RECORDS])
+    @pytest.mark.parametrize("value", ["yes", 1, "true", "on", "no", 0])
+    def test_a_record_loads_a_bool_only_from_a_real_bool(model, fields, name, value):
+        model.model_validate({**fields, name: True})  # control
+>       with pytest.raises(ValidationError) as err:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValidationError
+
+tests/test_strict_flags.py:177: Failed
+________ test_a_record_loads_a_bool_only_from_a_real_bool[1-RunResult] _________
+
+model = <class 'hadavin_sdk.models.RunResult'>, fields = {'outcome': 'failed'}
+name = 'retryable', value = 1
+
+    @pytest.mark.parametrize(("model", "fields", "name"), RECORDS, ids=[r[0].__name__ for r in RECORDS])
+    @pytest.mark.parametrize("value", ["yes", 1, "true", "on", "no", 0])
+    def test_a_record_loads_a_bool_only_from_a_real_bool(model, fields, name, value):
+        model.model_validate({**fields, name: True})  # control
+>       with pytest.raises(ValidationError) as err:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValidationError
+
+tests/test_strict_flags.py:177: Failed
+______ test_a_record_loads_a_bool_only_from_a_real_bool[1-ToolCallRecord] ______
+
+model = <class 'hadavin_sdk.models.ToolCallRecord'>
+fields = {'call_id': 'r1:1', 'run_id': 'r1', 'tool': 'madeup_tool', 'inputs': {}, ...}
+name = 'error', value = 1
+
+    @pytest.mark.parametrize(("model", "fields", "name"), RECORDS, ids=[r[0].__name__ for r in RECORDS])
+    @pytest.mark.parametrize("value", ["yes", 1, "true", "on", "no", 0])
+    def test_a_record_loads_a_bool_only_from_a_real_bool(model, fields, name, value):
+        model.model_validate({**fields, name: True})  # control
+>       with pytest.raises(ValidationError) as err:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValidationError
+
+tests/test_strict_flags.py:177: Failed
+________ test_a_record_loads_a_bool_only_from_a_real_bool[true-GateRun] ________
+
+model = <class 'hadavin_sdk.models.GateRun'>
+fields = {'agent_id': 'madeup-agent', 'model_id': 'madeup-model', 'prompt_sha256': '0000000000000000000000000000000000000000000000000000000000000000', 'config_hash': '1111111111111111111111111111111111111111111111111111111111111111', ...}
+name = 'green', value = 'true'
+
+    @pytest.mark.parametrize(("model", "fields", "name"), RECORDS, ids=[r[0].__name__ for r in RECORDS])
+    @pytest.mark.parametrize("value", ["yes", 1, "true", "on", "no", 0])
+    def test_a_record_loads_a_bool_only_from_a_real_bool(model, fields, name, value):
+        model.model_validate({**fields, name: True})  # control
+>       with pytest.raises(ValidationError) as err:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValidationError
+
+tests/test_strict_flags.py:177: Failed
+_____ test_a_record_loads_a_bool_only_from_a_real_bool[true-ReplayRecord] ______
+
+model = <class 'hadavin_sdk.replay_records.ReplayRecord'>
+fields = {'agent_id': 'madeup-agent', 'config_hash': '1111111111111111111111111111111111111111111111111111111111111111', 'model_id': 'madeup-model', 'prompt_sha256': '0000000000000000000000000000000000000000000000000000000000000000', ...}
+name = 'green', value = 'true'
+
+    @pytest.mark.parametrize(("model", "fields", "name"), RECORDS, ids=[r[0].__name__ for r in RECORDS])
+    @pytest.mark.parametrize("value", ["yes", 1, "true", "on", "no", 0])
+    def test_a_record_loads_a_bool_only_from_a_real_bool(model, fields, name, value):
+        model.model_validate({**fields, name: True})  # control
+>       with pytest.raises(ValidationError) as err:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValidationError
+
+tests/test_strict_flags.py:177: Failed
+______ test_a_record_loads_a_bool_only_from_a_real_bool[true-KillSwitch] _______
+
+model = <class 'hadavin_sdk.models.KillSwitch'>, fields = {}, name = 'on'
+value = 'true'
+
+    @pytest.mark.parametrize(("model", "fields", "name"), RECORDS, ids=[r[0].__name__ for r in RECORDS])
+    @pytest.mark.parametrize("value", ["yes", 1, "true", "on", "no", 0])
+    def test_a_record_loads_a_bool_only_from_a_real_bool(model, fields, name, value):
+        model.model_validate({**fields, name: True})  # control
+>       with pytest.raises(ValidationError) as err:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValidationError
+
+tests/test_strict_flags.py:177: Failed
+________ test_a_record_loads_a_bool_only_from_a_real_bool[true-Verdict] ________
+
+model = <class 'hadavin_sdk.models.Verdict'>
+fields = {'flagged': False, 'score': 0.0, 'backend': 'madeup'}, name = 'flagged'
+value = 'true'
+
+    @pytest.mark.parametrize(("model", "fields", "name"), RECORDS, ids=[r[0].__name__ for r in RECORDS])
+    @pytest.mark.parametrize("value", ["yes", 1, "true", "on", "no", 0])
+    def test_a_record_loads_a_bool_only_from_a_real_bool(model, fields, name, value):
+        model.model_validate({**fields, name: True})  # control
+>       with pytest.raises(ValidationError) as err:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValidationError
+
+tests/test_strict_flags.py:177: Failed
+_______ test_a_record_loads_a_bool_only_from_a_real_bool[true-RunResult] _______
+
+model = <class 'hadavin_sdk.models.RunResult'>, fields = {'outcome': 'failed'}
+name = 'retryable', value = 'true'
+
+    @pytest.mark.parametrize(("model", "fields", "name"), RECORDS, ids=[r[0].__name__ for r in RECORDS])
+    @pytest.mark.parametrize("value", ["yes", 1, "true", "on", "no", 0])
+    def test_a_record_loads_a_bool_only_from_a_real_bool(model, fields, name, value):
+        model.model_validate({**fields, name: True})  # control
+>       with pytest.raises(ValidationError) as err:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValidationError
+
+tests/test_strict_flags.py:177: Failed
+____ test_a_record_loads_a_bool_only_from_a_real_bool[true-ToolCallRecord] _____
+
+model = <class 'hadavin_sdk.models.ToolCallRecord'>
+fields = {'call_id': 'r1:1', 'run_id': 'r1', 'tool': 'madeup_tool', 'inputs': {}, ...}
+name = 'error', value = 'true'
+
+    @pytest.mark.parametrize(("model", "fields", "name"), RECORDS, ids=[r[0].__name__ for r in RECORDS])
+    @pytest.mark.parametrize("value", ["yes", 1, "true", "on", "no", 0])
+    def test_a_record_loads_a_bool_only_from_a_real_bool(model, fields, name, value):
+        model.model_validate({**fields, name: True})  # control
+>       with pytest.raises(ValidationError) as err:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValidationError
+
+tests/test_strict_flags.py:177: Failed
+_________ test_a_record_loads_a_bool_only_from_a_real_bool[on-GateRun] _________
+
+model = <class 'hadavin_sdk.models.GateRun'>
+fields = {'agent_id': 'madeup-agent', 'model_id': 'madeup-model', 'prompt_sha256': '0000000000000000000000000000000000000000000000000000000000000000', 'config_hash': '1111111111111111111111111111111111111111111111111111111111111111', ...}
+name = 'green', value = 'on'
+
+    @pytest.mark.parametrize(("model", "fields", "name"), RECORDS, ids=[r[0].__name__ for r in RECORDS])
+    @pytest.mark.parametrize("value", ["yes", 1, "true", "on", "no", 0])
+    def test_a_record_loads_a_bool_only_from_a_real_bool(model, fields, name, value):
+        model.model_validate({**fields, name: True})  # control
+>       with pytest.raises(ValidationError) as err:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValidationError
+
+tests/test_strict_flags.py:177: Failed
+______ test_a_record_loads_a_bool_only_from_a_real_bool[on-ReplayRecord] _______
+
+model = <class 'hadavin_sdk.replay_records.ReplayRecord'>
+fields = {'agent_id': 'madeup-agent', 'config_hash': '1111111111111111111111111111111111111111111111111111111111111111', 'model_id': 'madeup-model', 'prompt_sha256': '0000000000000000000000000000000000000000000000000000000000000000', ...}
+name = 'green', value = 'on'
+
+    @pytest.mark.parametrize(("model", "fields", "name"), RECORDS, ids=[r[0].__name__ for r in RECORDS])
+    @pytest.mark.parametrize("value", ["yes", 1, "true", "on", "no", 0])
+    def test_a_record_loads_a_bool_only_from_a_real_bool(model, fields, name, value):
+        model.model_validate({**fields, name: True})  # control
+>       with pytest.raises(ValidationError) as err:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValidationError
+
+tests/test_strict_flags.py:177: Failed
+_______ test_a_record_loads_a_bool_only_from_a_real_bool[on-KillSwitch] ________
+
+model = <class 'hadavin_sdk.models.KillSwitch'>, fields = {}, name = 'on'
+value = 'on'
+
+    @pytest.mark.parametrize(("model", "fields", "name"), RECORDS, ids=[r[0].__name__ for r in RECORDS])
+    @pytest.mark.parametrize("value", ["yes", 1, "true", "on", "no", 0])
+    def test_a_record_loads_a_bool_only_from_a_real_bool(model, fields, name, value):
+        model.model_validate({**fields, name: True})  # control
+>       with pytest.raises(ValidationError) as err:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValidationError
+
+tests/test_strict_flags.py:177: Failed
+_________ test_a_record_loads_a_bool_only_from_a_real_bool[on-Verdict] _________
+
+model = <class 'hadavin_sdk.models.Verdict'>
+fields = {'flagged': False, 'score': 0.0, 'backend': 'madeup'}, name = 'flagged'
+value = 'on'
+
+    @pytest.mark.parametrize(("model", "fields", "name"), RECORDS, ids=[r[0].__name__ for r in RECORDS])
+    @pytest.mark.parametrize("value", ["yes", 1, "true", "on", "no", 0])
+    def test_a_record_loads_a_bool_only_from_a_real_bool(model, fields, name, value):
+        model.model_validate({**fields, name: True})  # control
+>       with pytest.raises(ValidationError) as err:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValidationError
+
+tests/test_strict_flags.py:177: Failed
+________ test_a_record_loads_a_bool_only_from_a_real_bool[on-RunResult] ________
+
+model = <class 'hadavin_sdk.models.RunResult'>, fields = {'outcome': 'failed'}
+name = 'retryable', value = 'on'
+
+    @pytest.mark.parametrize(("model", "fields", "name"), RECORDS, ids=[r[0].__name__ for r in RECORDS])
+    @pytest.mark.parametrize("value", ["yes", 1, "true", "on", "no", 0])
+    def test_a_record_loads_a_bool_only_from_a_real_bool(model, fields, name, value):
+        model.model_validate({**fields, name: True})  # control
+>       with pytest.raises(ValidationError) as err:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValidationError
+
+tests/test_strict_flags.py:177: Failed
+_____ test_a_record_loads_a_bool_only_from_a_real_bool[on-ToolCallRecord] ______
+
+model = <class 'hadavin_sdk.models.ToolCallRecord'>
+fields = {'call_id': 'r1:1', 'run_id': 'r1', 'tool': 'madeup_tool', 'inputs': {}, ...}
+name = 'error', value = 'on'
+
+    @pytest.mark.parametrize(("model", "fields", "name"), RECORDS, ids=[r[0].__name__ for r in RECORDS])
+    @pytest.mark.parametrize("value", ["yes", 1, "true", "on", "no", 0])
+    def test_a_record_loads_a_bool_only_from_a_real_bool(model, fields, name, value):
+        model.model_validate({**fields, name: True})  # control
+>       with pytest.raises(ValidationError) as err:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValidationError
+
+tests/test_strict_flags.py:177: Failed
+_________ test_a_record_loads_a_bool_only_from_a_real_bool[no-GateRun] _________
+
+model = <class 'hadavin_sdk.models.GateRun'>
+fields = {'agent_id': 'madeup-agent', 'model_id': 'madeup-model', 'prompt_sha256': '0000000000000000000000000000000000000000000000000000000000000000', 'config_hash': '1111111111111111111111111111111111111111111111111111111111111111', ...}
+name = 'green', value = 'no'
+
+    @pytest.mark.parametrize(("model", "fields", "name"), RECORDS, ids=[r[0].__name__ for r in RECORDS])
+    @pytest.mark.parametrize("value", ["yes", 1, "true", "on", "no", 0])
+    def test_a_record_loads_a_bool_only_from_a_real_bool(model, fields, name, value):
+        model.model_validate({**fields, name: True})  # control
+>       with pytest.raises(ValidationError) as err:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValidationError
+
+tests/test_strict_flags.py:177: Failed
+______ test_a_record_loads_a_bool_only_from_a_real_bool[no-ReplayRecord] _______
+
+model = <class 'hadavin_sdk.replay_records.ReplayRecord'>
+fields = {'agent_id': 'madeup-agent', 'config_hash': '1111111111111111111111111111111111111111111111111111111111111111', 'model_id': 'madeup-model', 'prompt_sha256': '0000000000000000000000000000000000000000000000000000000000000000', ...}
+name = 'green', value = 'no'
+
+    @pytest.mark.parametrize(("model", "fields", "name"), RECORDS, ids=[r[0].__name__ for r in RECORDS])
+    @pytest.mark.parametrize("value", ["yes", 1, "true", "on", "no", 0])
+    def test_a_record_loads_a_bool_only_from_a_real_bool(model, fields, name, value):
+        model.model_validate({**fields, name: True})  # control
+>       with pytest.raises(ValidationError) as err:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValidationError
+
+tests/test_strict_flags.py:177: Failed
+_______ test_a_record_loads_a_bool_only_from_a_real_bool[no-KillSwitch] ________
+
+model = <class 'hadavin_sdk.models.KillSwitch'>, fields = {}, name = 'on'
+value = 'no'
+
+    @pytest.mark.parametrize(("model", "fields", "name"), RECORDS, ids=[r[0].__name__ for r in RECORDS])
+    @pytest.mark.parametrize("value", ["yes", 1, "true", "on", "no", 0])
+    def test_a_record_loads_a_bool_only_from_a_real_bool(model, fields, name, value):
+        model.model_validate({**fields, name: True})  # control
+>       with pytest.raises(ValidationError) as err:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValidationError
+
+tests/test_strict_flags.py:177: Failed
+_________ test_a_record_loads_a_bool_only_from_a_real_bool[no-Verdict] _________
+
+model = <class 'hadavin_sdk.models.Verdict'>
+fields = {'flagged': False, 'score': 0.0, 'backend': 'madeup'}, name = 'flagged'
+value = 'no'
+
+    @pytest.mark.parametrize(("model", "fields", "name"), RECORDS, ids=[r[0].__name__ for r in RECORDS])
+    @pytest.mark.parametrize("value", ["yes", 1, "true", "on", "no", 0])
+    def test_a_record_loads_a_bool_only_from_a_real_bool(model, fields, name, value):
+        model.model_validate({**fields, name: True})  # control
+>       with pytest.raises(ValidationError) as err:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValidationError
+
+tests/test_strict_flags.py:177: Failed
+________ test_a_record_loads_a_bool_only_from_a_real_bool[no-RunResult] ________
+
+model = <class 'hadavin_sdk.models.RunResult'>, fields = {'outcome': 'failed'}
+name = 'retryable', value = 'no'
+
+    @pytest.mark.parametrize(("model", "fields", "name"), RECORDS, ids=[r[0].__name__ for r in RECORDS])
+    @pytest.mark.parametrize("value", ["yes", 1, "true", "on", "no", 0])
+    def test_a_record_loads_a_bool_only_from_a_real_bool(model, fields, name, value):
+        model.model_validate({**fields, name: True})  # control
+>       with pytest.raises(ValidationError) as err:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValidationError
+
+tests/test_strict_flags.py:177: Failed
+_____ test_a_record_loads_a_bool_only_from_a_real_bool[no-ToolCallRecord] ______
+
+model = <class 'hadavin_sdk.models.ToolCallRecord'>
+fields = {'call_id': 'r1:1', 'run_id': 'r1', 'tool': 'madeup_tool', 'inputs': {}, ...}
+name = 'error', value = 'no'
+
+    @pytest.mark.parametrize(("model", "fields", "name"), RECORDS, ids=[r[0].__name__ for r in RECORDS])
+    @pytest.mark.parametrize("value", ["yes", 1, "true", "on", "no", 0])
+    def test_a_record_loads_a_bool_only_from_a_real_bool(model, fields, name, value):
+        model.model_validate({**fields, name: True})  # control
+>       with pytest.raises(ValidationError) as err:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValidationError
+
+tests/test_strict_flags.py:177: Failed
+_________ test_a_record_loads_a_bool_only_from_a_real_bool[0-GateRun] __________
+
+model = <class 'hadavin_sdk.models.GateRun'>
+fields = {'agent_id': 'madeup-agent', 'model_id': 'madeup-model', 'prompt_sha256': '0000000000000000000000000000000000000000000000000000000000000000', 'config_hash': '1111111111111111111111111111111111111111111111111111111111111111', ...}
+name = 'green', value = 0
+
+    @pytest.mark.parametrize(("model", "fields", "name"), RECORDS, ids=[r[0].__name__ for r in RECORDS])
+    @pytest.mark.parametrize("value", ["yes", 1, "true", "on", "no", 0])
+    def test_a_record_loads_a_bool_only_from_a_real_bool(model, fields, name, value):
+        model.model_validate({**fields, name: True})  # control
+>       with pytest.raises(ValidationError) as err:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValidationError
+
+tests/test_strict_flags.py:177: Failed
+_______ test_a_record_loads_a_bool_only_from_a_real_bool[0-ReplayRecord] _______
+
+model = <class 'hadavin_sdk.replay_records.ReplayRecord'>
+fields = {'agent_id': 'madeup-agent', 'config_hash': '1111111111111111111111111111111111111111111111111111111111111111', 'model_id': 'madeup-model', 'prompt_sha256': '0000000000000000000000000000000000000000000000000000000000000000', ...}
+name = 'green', value = 0
+
+    @pytest.mark.parametrize(("model", "fields", "name"), RECORDS, ids=[r[0].__name__ for r in RECORDS])
+    @pytest.mark.parametrize("value", ["yes", 1, "true", "on", "no", 0])
+    def test_a_record_loads_a_bool_only_from_a_real_bool(model, fields, name, value):
+        model.model_validate({**fields, name: True})  # control
+>       with pytest.raises(ValidationError) as err:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValidationError
+
+tests/test_strict_flags.py:177: Failed
+________ test_a_record_loads_a_bool_only_from_a_real_bool[0-KillSwitch] ________
+
+model = <class 'hadavin_sdk.models.KillSwitch'>, fields = {}, name = 'on'
+value = 0
+
+    @pytest.mark.parametrize(("model", "fields", "name"), RECORDS, ids=[r[0].__name__ for r in RECORDS])
+    @pytest.mark.parametrize("value", ["yes", 1, "true", "on", "no", 0])
+    def test_a_record_loads_a_bool_only_from_a_real_bool(model, fields, name, value):
+        model.model_validate({**fields, name: True})  # control
+>       with pytest.raises(ValidationError) as err:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValidationError
+
+tests/test_strict_flags.py:177: Failed
+_________ test_a_record_loads_a_bool_only_from_a_real_bool[0-Verdict] __________
+
+model = <class 'hadavin_sdk.models.Verdict'>
+fields = {'flagged': False, 'score': 0.0, 'backend': 'madeup'}, name = 'flagged'
+value = 0
+
+    @pytest.mark.parametrize(("model", "fields", "name"), RECORDS, ids=[r[0].__name__ for r in RECORDS])
+    @pytest.mark.parametrize("value", ["yes", 1, "true", "on", "no", 0])
+    def test_a_record_loads_a_bool_only_from_a_real_bool(model, fields, name, value):
+        model.model_validate({**fields, name: True})  # control
+>       with pytest.raises(ValidationError) as err:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValidationError
+
+tests/test_strict_flags.py:177: Failed
+________ test_a_record_loads_a_bool_only_from_a_real_bool[0-RunResult] _________
+
+model = <class 'hadavin_sdk.models.RunResult'>, fields = {'outcome': 'failed'}
+name = 'retryable', value = 0
+
+    @pytest.mark.parametrize(("model", "fields", "name"), RECORDS, ids=[r[0].__name__ for r in RECORDS])
+    @pytest.mark.parametrize("value", ["yes", 1, "true", "on", "no", 0])
+    def test_a_record_loads_a_bool_only_from_a_real_bool(model, fields, name, value):
+        model.model_validate({**fields, name: True})  # control
+>       with pytest.raises(ValidationError) as err:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValidationError
+
+tests/test_strict_flags.py:177: Failed
+______ test_a_record_loads_a_bool_only_from_a_real_bool[0-ToolCallRecord] ______
+
+model = <class 'hadavin_sdk.models.ToolCallRecord'>
+fields = {'call_id': 'r1:1', 'run_id': 'r1', 'tool': 'madeup_tool', 'inputs': {}, ...}
+name = 'error', value = 0
+
+    @pytest.mark.parametrize(("model", "fields", "name"), RECORDS, ids=[r[0].__name__ for r in RECORDS])
+    @pytest.mark.parametrize("value", ["yes", 1, "true", "on", "no", 0])
+    def test_a_record_loads_a_bool_only_from_a_real_bool(model, fields, name, value):
+        model.model_validate({**fields, name: True})  # control
+>       with pytest.raises(ValidationError) as err:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValidationError
+
+tests/test_strict_flags.py:177: Failed
+_____________ test_a_hand_edited_gate_line_cannot_qualify_an_agent _____________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-4937/test_a_hand_edited_gate_line_c0')
+
+    def test_a_hand_edited_gate_line_cannot_qualify_an_agent(tmp_path):
+        """The choke point of qualification: a `qualified.jsonl` line with `"green": "yes"` is refused, not read as green."""
+        line = json.dumps({**GATE_RUN, "green": "yes"})
+        (tmp_path / "qualified.jsonl").write_text(line + "\n", encoding="utf-8")
+        registry = types.SimpleNamespace(config=types.SimpleNamespace(root=tmp_path))
+>       with pytest.raises(ConfigError, match="not a gate run"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigError
+
+tests/test_strict_flags.py:187: Failed
+____________ test_a_hand_edited_replay_line_cannot_qualify_an_agent ____________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-4937/test_a_hand_edited_replay_line0')
+
+    def test_a_hand_edited_replay_line_cannot_qualify_an_agent(tmp_path):
+        (tmp_path / REPLAY_FILE).write_text(
+            json.dumps({**REPLAY, "green": "yes"}) + "\n", encoding="utf-8"
+        )
+>       with pytest.raises(ConfigError, match="not a replay record"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigError
+
+tests/test_strict_flags.py:195: Failed
+___________ test_every_bool_field_is_strict_and_every_module_imports ___________
+
+    def test_every_bool_field_is_strict_and_every_module_imports():
+        loose, unimportable = _loose_bool_fields()
+        assert unimportable == [], (
+            f"modules that cannot be imported (install with --all-extras): {unimportable}"
+        )
+>       assert loose == [], f"loose bool fields (make them StrictBool): {loose}"
+E       AssertionError: loose bool fields (make them StrictBool): ['hadavin_sdk.actions.contract.ActionContract.changes_spend', 'hadavin_sdk.actions.contract.ActionContract.targets_production', 'hadavin_sdk.backends.table.AzureImmutableBlobSettings.retention_ack', 'hadavin_sdk.backends.table.GcsRetentionLockSettings.retention_ack', 'hadavin_sdk.backends.table.OpenAICompatSettings.max_completion_tokens', 'hadavin_sdk.backends.table.PostgresSettings.iam_auth', 'hadavin_sdk.backends.table.S3ObjectLockSettings.retention_ack', 'hadavin_sdk.backends.table._AnchorSettings.retention_ack', 'hadavin_sdk.config.Config.allow_insecure_loopback', 'hadavin_sdk.config.K1bSettings.redact', 'hadavin_sdk.config.Retention.hold_labelled', 'hadavin_sdk.models.GateRun.green', 'hadavin_sdk.models.KillSwitch.on', 'hadavin_sdk.models.RunResult.retryable', 'hadavin_sdk.models.ToolCallRecord.error', 'hadavin_sdk.models.Verdict.flagged', 'hadavin_sdk.replay_records.ReplayRecord.green', 'hadavin_sdk.tools.ToolSpec.cluster_http']
+E       assert ['hadavin_sdk...am_auth', ...] == []
+E         
+E         Left contains 18 more items, first extra item: 'hadavin_sdk.actions.contract.ActionContract.changes_spend'
+E         Use -v to get more diff
+
+tests/test_strict_flags.py:232: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_strict_flags.py::test_a_safety_flag_loads_only_from_a_real_bool[made_up_data_only]
+FAILED tests/test_strict_flags.py::test_a_safety_flag_loads_only_from_a_real_bool[allow_insecure_loopback]
+FAILED tests/test_strict_flags.py::test_a_safety_flag_loads_only_from_a_real_bool[k1b.redact]
+FAILED tests/test_strict_flags.py::test_a_safety_flag_loads_only_from_a_real_bool[retention.hold_labelled]
+FAILED tests/test_strict_flags.py::test_a_safety_flag_loads_only_from_a_real_bool[anchor.retention_ack]
+FAILED tests/test_strict_flags.py::test_a_safety_flag_loads_only_from_a_real_bool[store.iam_auth]
+FAILED tests/test_strict_flags.py::test_a_safety_flag_loads_only_from_a_real_bool[openai_compat.max_completion_tokens]
+FAILED tests/test_strict_flags.py::test_a_safety_flag_loads_only_from_a_real_bool[tool.cluster_http]
+FAILED tests/test_strict_flags.py::test_a_safety_flag_loads_only_from_a_real_bool[contract.targets_production]
+FAILED tests/test_strict_flags.py::test_a_safety_flag_loads_only_from_a_real_bool[contract.changes_spend]
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[yes-GateRun]
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[yes-ReplayRecord]
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[yes-KillSwitch]
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[yes-Verdict]
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[yes-RunResult]
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[yes-ToolCallRecord]
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[1-GateRun]
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[1-ReplayRecord]
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[1-KillSwitch]
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[1-Verdict]
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[1-RunResult]
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[1-ToolCallRecord]
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[true-GateRun]
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[true-ReplayRecord]
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[true-KillSwitch]
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[true-Verdict]
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[true-RunResult]
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[true-ToolCallRecord]
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[on-GateRun]
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[on-ReplayRecord]
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[on-KillSwitch]
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[on-Verdict]
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[on-RunResult]
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[on-ToolCallRecord]
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[no-GateRun]
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[no-ReplayRecord]
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[no-KillSwitch]
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[no-Verdict]
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[no-RunResult]
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[no-ToolCallRecord]
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[0-GateRun]
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[0-ReplayRecord]
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[0-KillSwitch]
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[0-Verdict]
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[0-RunResult]
+FAILED tests/test_strict_flags.py::test_a_record_loads_a_bool_only_from_a_real_bool[0-ToolCallRecord]
+FAILED tests/test_strict_flags.py::test_a_hand_edited_gate_line_cannot_qualify_an_agent
+FAILED tests/test_strict_flags.py::test_a_hand_edited_replay_line_cannot_qualify_an_agent
+FAILED tests/test_strict_flags.py::test_every_bool_field_is_strict_and_every_module_imports
+49 failed in 5.55s
+exit=1

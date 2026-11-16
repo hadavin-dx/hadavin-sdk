@@ -1,0 +1,23 @@
+.F.........................                                              [100%]
+=================================== FAILURES ===================================
+____ test_no_redaction_pattern_is_super_linear_on_its_own_keywords_repeated ____
+
+    @pytest.mark.perf
+    def test_no_redaction_pattern_is_super_linear_on_its_own_keywords_repeated():
+        cases = [
+            (name, lambda t, p=pat: _scan(p, t), unit)
+            for name, pat in _redact_module().PATTERNS
+            for unit in _units(pat)
+        ]
+        assert len(cases) >= 150, "the sweep would look at too little"
+        # every slow pattern AND every pattern that could not be timed, each by name (a refusal does not stop the sweep)
+>       assert timing.problems(cases, SMALL, BIG) == []
+E       assert ["IPV4 on 'a....es not count"] == []
+E         
+E         Left contains 3 more items, first extra item: "IPV4 on 'a.': could not be timed: 1 calls took 0.000178 s of processor time but 0.0101 s of real time: the work mostly waits (sleep, input and output, a lock) or runs in a child process, which processor time does not count"
+E         Use -v to get more diff
+
+tests/test_k5_perf.py:83: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_k5_perf.py::test_no_redaction_pattern_is_super_linear_on_its_own_keywords_repeated
+1 failed, 26 passed, 600 deselected in 284.58s (0:04:44)

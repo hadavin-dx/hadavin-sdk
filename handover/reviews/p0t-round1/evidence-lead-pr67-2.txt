@@ -1,0 +1,49 @@
+PR67 head ccb2443f37298a9341b0385593bd32d320d16842 ; base main 1e4752f2211fb09a4d2487e568f73d113e371042
+== bandit -ll (uvx, src)
+[manager]	WARNING	Test in comment: subclass is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: the is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: pinned is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: bytes is not a test name or id, ignoring
+[tester]	WARNING	nosec encountered (B102), but no failed test on file src\hadavin_sdk\tools.py:389
+[tester]	WARNING	nosec encountered (B102), but no failed test on file src\hadavin_sdk\tools.py:389
+bandit exit 0
+== stage_mutants.py
+ok  KILLED       M1 the old word is accepted (mapped to demo)  [test_dev_is_refused_with_the_rename]
+ok  KILLED       M2 the refusal does not name the rename  [test_dev_is_refused_with_the_rename]
+ok  KILLED       M3 llm/fake dropped from DEMO_ONLY  [test_demo_only_is_exactly_the_six_pairs]
+ok  KILLED       M3 channel/fake dropped from DEMO_ONLY  [test_demo_only_is_exactly_the_six_pairs]
+ok  KILLED       M3 secrets/fake dropped from DEMO_ONLY  [test_demo_only_is_exactly_the_six_pairs]
+ok  KILLED       M3 secrets/env dropped from DEMO_ONLY  [test_demo_only_is_exactly_the_six_pairs]
+ok  KILLED       M3 store/memory dropped from DEMO_ONLY  [test_demo_only_is_exactly_the_six_pairs]
+ok  KILLED       M3 audit/local_dir dropped from DEMO_ONLY  [test_demo_only_is_exactly_the_six_pairs]
+ok  KILLED       M4a the demo-only check still tests the old word  [test_demo_accepts_every_demo_only_kind]
+ok  KILLED       M4b demo joins the live stages  [test_the_stages_are_exactly_demo_pilot_prod]
+ok  KILLED       M4c pilot leaves the live stages  [test_the_stages_are_exactly_demo_pilot_prod]
+ok  KILLED       M4d the demo-only refusal is switched off  [test_pilot_and_prod_refuse_every_relaxed_kind]
+ok  KILLED       M4e the loopback switch is allowed in pilot and prod  [test_pilot_and_prod_refuse_every_relaxed_kind]
+ok  KILLED       M5 the stage is compared by label (case and spaces tidied)  [test_values_are_compared_exactly_never_normalised]
+ok  KILLED       M6 the old word comes back in src  [test_the_old_stage_word_is_gone]
+ok  KILLED       M7 a stored old value is not mapped to demo  [test_a_stored_old_value_reads_as_demo_and_the_input_is_not_c]
+ok  KILLED       M7b a stored unknown value is accepted  [test_a_stored_unknown_value_is_refused_not_guessed]
+ok  KILLED       M8 a half-renamed flag: the old name stays beside the new  [test_no_old_spelling_of_the_demo_only_flag_is_left]
+18 of 18 good; problems: []
+== FAIL-BEFORE: PR67 tests/test_stage_names.py against main src (base worktree)
+=================================== ERRORS ====================================
+_________________ ERROR collecting tests/test_stage_names.py __________________
+ImportError while importing test module 'C:\Users\rakes\Downloads\Hadavin\_local\scratch\wt\pr67-base\tests\test_stage_names.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+C:\Python313\Lib\importlib\__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\test_stage_names.py:21: in <module>
+    from hadavin_sdk.config import STAGES, Config, ConfigError, load_config, stage_from_stored
+E   ImportError: cannot import name 'STAGES' from 'hadavin_sdk.config' (C:\Users\rakes\Downloads\Hadavin\_local\scratch\wt\pr67-base\src\hadavin_sdk\config.py)
+=========================== short test summary info ===========================
+ERROR tests/test_stage_names.py
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+== stored-stage grep in PR head src (environment persisted anywhere?)
+src/hadavin_sdk/audit/signer.py:64:    """An Ed25519 key in a PEM file (demo and pilot; refused in prod by the environment table)."""
+src/hadavin_sdk/backends/builtin.py:27:    # The default: checkpoints stay only in the store (refused in prod by the environment table).
+== done 10:12Z

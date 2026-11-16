@@ -1,0 +1,17 @@
+mutant 3: 'return s.strip().lower()' -> 'return s.lower()' in src/lead_desk/identity.py
+F.....................                                                   [100%]
+=================================== FAILURES ===================================
+_________________________ test_email_key_strips_blanks _________________________
+
+    def test_email_key_strips_blanks() -> None:
+>       assert identity.normalise_email("  Ada@Example.TEST \t") == "ada@example.test"
+E       AssertionError: assert '  ada@example.test \t' == 'ada@example.test'
+E         
+E         - ada@example.test
+E         +   ada@example.test 	
+E         ? ++                ++
+
+tests/test_mutants_round2.py:31: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_mutants_round2.py::test_email_key_strips_blanks - Assertion...
+1 failed, 21 passed in 0.20s

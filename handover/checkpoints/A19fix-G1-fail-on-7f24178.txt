@@ -1,0 +1,13 @@
+FAILED tests/test_tenant_ids.py::test_an_id_shorter_than_the_redactors_minimum_is_refused
+FAILED tests/test_tenant_ids.py::test_the_length_limit_is_the_redactors_own_number[2]
+FAILED tests/test_tenant_ids.py::test_all_digit_ids_are_refused_below_the_redactors_digit_minimum
+FAILED tests/test_tenant_ids.py::test_a_control_character_or_look_alike_id_is_refused_or_swept[ac\x07me]
+FAILED tests/test_tenant_ids.py::test_a_control_character_or_look_alike_id_is_refused_or_swept[ac\tme]
+FAILED tests/test_tenant_ids.py::test_a_control_character_or_look_alike_id_is_refused_or_swept[ac me]
+FAILED tests/test_tenant_ids.py::test_a_control_character_or_look_alike_id_is_refused_or_swept[ac\xa0me]
+FAILED tests/test_tenant_ids.py::test_a_control_character_or_look_alike_id_is_refused_or_swept[ac.me]
+FAILED tests/test_tenant_ids.py::test_a_control_character_or_look_alike_id_is_refused_or_swept[\u0430cme]
+FAILED tests/test_tenant_ids.py::test_a_control_character_or_look_alike_id_is_refused_or_swept[\xdcn\xefcode-Tenant]
+FAILED tests/test_tenant_ids.py::test_the_odd_ids_are_in_fact_refused - Asser...
+FAILED tests/test_tenant_ids.py::test_the_redactor_sweep_uses_the_shared_limits
+12 failed, 23 passed, 25 deselected in 0.37s

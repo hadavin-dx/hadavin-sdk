@@ -1,0 +1,6 @@
+HEAD 151d3e1de43c217f5eca7485cd4695c4c3188351
+$ uv sync
+ + urllib3==2.8.0
+ + werkzeug==3.1.9
+ + xmltodict==1.0.4
+exit=0

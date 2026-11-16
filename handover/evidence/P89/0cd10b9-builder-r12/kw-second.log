@@ -1,0 +1,53 @@
+.......................F..FF............................................ [ 82%]
+.......FF......                                                          [100%]
+=================================== FAILURES ===================================
+______________ test_a_shortened_value_is_masked_by_its_fragments _______________
+tests/test_mutation_runner_keywords.py:477: in test_a_shortened_value_is_masked_by_its_fragments
+    assert (
+E   AssertionError: a two-character head or tail next to the dots was not masked
+E   assert "E   x == '[R.....[REDACTED]'" == 'E   x == [RE......[REDACTED]'
+E     
+E     - E   x == [REDACTED]...[REDACTED]
+E     + E   x == '[REDACTED]...[REDACTED]'
+E     ?          +                       +
+_________ test_passwd_and_pwd_words_and_a_quoted_password_are_secrets __________
+tests/test_mutation_runner_keywords.py:547: in test_passwd_and_pwd_words_and_a_quoted_password_are_secrets
+    assert "Hk4 Lm8 Pq2" in _secrets_of(base + "password='Hk4 Lm8 Pq2'", monkeypatch), (
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_mutation_runner_keywords.py:533: in _secrets_of
+    return mr._secret_values((DSN_NAME,))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/mutation_runner.py:382: in _secret_values
+    _refuse_odd(name, "its value", value)
+tools/mutation_runner.py:347: in _refuse_odd
+    raise ValueError(
+E   ValueError: HADAVIN_TEST_PG_DSN is refused: its value holds a quote mark. The runner hides a secret by looking for its plain text, and a print of a text with such a character no longer shows the plain text, so it could not be hidden. Use a throwaway database whose address and password hold only plain printable ASCII letters, digits and punctuation without quote marks and backslashes (a percent-encoded password is read decoded).
+_ test_a_piece_of_exactly_the_edge_minimum_is_masked_and_a_shorter_one_is_not __
+tests/test_mutation_runner_keywords.py:564: in test_a_piece_of_exactly_the_edge_minimum_is_masked_and_a_shorter_one_is_not
+    only_raw.setattr(mr, "_stripped_spans", lambda text, bases, dots: [])
+E   AttributeError: <module 'tools.mutation_runner' from '/home/user/build/RB89/tools/mutation_runner.py'> has no attribute '_stripped_spans'
+______ test_a_piece_next_to_dots_hides_only_that_piece_of_a_short_secret _______
+tests/test_mutation_runner_keywords.py:1497: in test_a_piece_next_to_dots_hides_only_that_piece_of_a_short_secret
+    assert (
+E   AssertionError: a piece that is not a start or an end of the secret, or one not next to dots, was changed: E   'ab...cd' '[REDACTED]...yz' 'zz...K2' 'to be...or not' Qw7 K2m 'x...[REDACTED]'
+E   assert "E   'ab...cd.....[REDACTED]'" == "E   'ab...cd......[REDACTED]"
+E     
+E     - E   'ab...cd' [REDACTED]...yz' 'zz...K2' 'to be...or not' Qw7 K2m 'x...[REDACTED]
+E     + E   'ab...cd' '[REDACTED]...yz' 'zz...K2' 'to be...or not' Qw7 K2m 'x...[REDACTED]'
+E     ?               +                                                                   +
+___________________ test_dots_that_share_a_dot_are_all_found ___________________
+tests/test_mutation_runner_keywords.py:1514: in test_dots_that_share_a_dot_are_all_found
+    assert out == "E   x == [REDACTED]...bb'", (
+E   AssertionError: a head that ends in a dot, before the cut, was not all hidden: E   x == '[REDACTED]...bb'
+E   assert "E   x == '[REDACTED]...bb'" == "E   x == [REDACTED]...bb'"
+E     
+E     - E   x == [REDACTED]...bb'
+E     + E   x == '[REDACTED]...bb'
+E     ?          +
+=========================== short test summary info ============================
+FAILED tests/test_mutation_runner_keywords.py::test_a_shortened_value_is_masked_by_its_fragments
+FAILED tests/test_mutation_runner_keywords.py::test_passwd_and_pwd_words_and_a_quoted_password_are_secrets
+FAILED tests/test_mutation_runner_keywords.py::test_a_piece_of_exactly_the_edge_minimum_is_masked_and_a_shorter_one_is_not
+FAILED tests/test_mutation_runner_keywords.py::test_a_piece_next_to_dots_hides_only_that_piece_of_a_short_secret
+FAILED tests/test_mutation_runner_keywords.py::test_dots_that_share_a_dot_are_all_found
+5 failed, 82 passed in 34.22s

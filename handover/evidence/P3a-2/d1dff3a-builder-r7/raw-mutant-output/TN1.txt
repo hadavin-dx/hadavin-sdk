@@ -1,0 +1,18 @@
+### tests/test_migration_wiring.py::test_a_trigger_name_that_is_not_plain_is_refused_in_the_list rc=1
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+___ test_a_trigger_name_that_is_not_plain_is_refused_in_the_list[bad\nname] ____
+tests/test_migration_wiring.py:931: in test_a_trigger_name_that_is_not_plain_is_refused_in_the_list
+    with pytest.raises(ConfigError, match="trigger name with a control or unusual character"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+___ test_a_trigger_name_that_is_not_plain_is_refused_in_the_list[tab\there] ____
+tests/test_migration_wiring.py:931: in test_a_trigger_name_that_is_not_plain_is_refused_in_the_list
+    with pytest.raises(ConfigError, match="trigger name with a control or unusual character"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_a_trigger_name_that_is_not_plain_is_refused_in_the_list[bad\nname]
+FAILED tests/test_migration_wiring.py::test_a_trigger_name_that_is_not_plain_is_refused_in_the_list[tab\there]
+2 failed in 0.42s
+

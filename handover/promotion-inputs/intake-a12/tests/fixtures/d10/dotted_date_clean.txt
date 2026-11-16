@@ -1,0 +1,6 @@
+INVOICE INV-1001
+Supplier: Acme Widgets Ltd
+Your PO PO-77 USD
+SWIFT:
+01.11.2026
+Bicycle 01.11.2026

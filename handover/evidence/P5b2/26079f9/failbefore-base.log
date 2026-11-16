@@ -1,0 +1,8 @@
+head=a3fe8fa1c1e7c748408d449e4c67cdc403772e59 (builder commit; this log's subject is named inside)
+base=74ee54fde880fbe248a69c3fd2f4baf3aa90fcde (stacked base 74ee54f, no generator, no table); test file copied from the P5b2 worktree; head under test=74ee54fde880fbe248a69c3fd2f4baf3aa90fcde+uncommitted
+FAILED tests/test_config_error_sites.py::test_hostile_csv_blank_class_loads
+FAILED tests/test_config_error_sites.py::test_hostile_csv_with_crlf_line_endings_is_accepted
+FAILED tests/test_config_error_sites.py::test_csv_module_is_used_with_the_stated_columns
+XFAIL tests/test_config_error_sites.py::test_raiser_called_with_document_text_is_not_detected - a raiser called with document text (not an exception) is not detected
+162 failed, 1 xfailed in 2.70s
+0

@@ -1,0 +1,29 @@
+baseline rc=0 :: 98 passed, 98 deselected in 14.12s
+ok  P1 day counter replaced instead of added
+      [test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-03-10T12:00:00+00:00]] /tmp/pgmut_ur9iy7pv/tests/contracts/test_store_time_rules.py:91: AssertionError: the day total of two charges on one day did not add up: 0.70
+ok  P2 month counter replaced instead of added
+      [test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-03-10T12:00:00+00:00]] /tmp/pgmut_6kq0xlst/tests/contracts/test_store_time_rules.py:92: AssertionError: the month total of two charges did not add up: 0.70
+ok  P3 add_spend books the month one month early (a valid first-of-month date, so the CHECK passes)
+      [test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-03-10T12:00:00+00:00]] /tmp/pgmut_2w9p6vw5/tests/contracts/test_store_time_rules.py:60: AssertionError: 6min: read at 2026-03-10 12:00:00+00:00
+ok  P3b add_spend keys the month counter by the day (killed by the schema CHECK, an error, not an assertion)
+      [test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-03-10T12:00:00+00:00]] n3.12/site-packages/psycopg/cursor.py:117: psycopg.errors.CheckViolation: new row for relation "spend_month" violates check constraint "spend_month_month_check"
+ok  P4 spend_totals reads the month counter by the day
+      [test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-03-10T12:00:00+00:00]] /tmp/pgmut_6_fps6at/tests/contracts/test_store_time_rules.py:60: AssertionError: 6min: read at 2026-03-10 12:00:00+00:00
+ok  P5 spend_totals reads the day counter of any agent
+      [test_one_agent_never_sees_another_agents_spend[postgres]] /tmp/pgmut_ob4ee9tq/tests/contracts/test_store_time_rules.py:313: AssertionError: spend_totals showed this agent's spend to another agent
+ok  P6 spend_totals reads the month counter of any agent
+      [test_one_agent_never_sees_another_agents_spend[postgres]] /tmp/pgmut_kpag9a6z/tests/contracts/test_store_time_rules.py:313: AssertionError: spend_totals showed this agent's spend to another agent
+ok  P7 the day counter ignores every charge after the first
+      [test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-03-10T12:00:00+00:00]] /tmp/pgmut_27a32lx3/tests/contracts/test_store_time_rules.py:91: AssertionError: the day total of two charges on one day did not add up: 0.30
+ok  P8 the month counter ignores every charge after the first
+      [test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-03-10T12:00:00+00:00]] /tmp/pgmut_cqp22g9h/tests/contracts/test_store_time_rules.py:92: AssertionError: the month total of two charges did not add up: 0.30
+ok  P9 the year is dropped from the month key (add_spend and spend_totals)
+      [test_the_same_month_of_another_year_is_a_different_month[postgres]] xfdyrbi/tests/contracts/test_store_time_rules.py:158: AssertionError: a March of another year was added to the March of 2026: (Decimal('0.10'), Decimal('0.20'))
+ok  P10 the day is taken from the database server's clock, not from the caller
+      [test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-03-10T12:00:00+00:00]] /tmp/pgmut_u5g7tbzo/tests/contracts/test_store_time_rules.py:173: AssertionError: a charge on a past date is not on that date
+ok  P11 the day counter rounds a charge to cents
+      [test_a_charge_smaller_than_a_cent_is_neither_rounded_nor_lost[postgres]] /tmp/pgmut_e3k5k4j0/tests/contracts/test_store_time_rules.py:183: AssertionError: the first tiny charge was rounded
+ok  P12 the month counter is never written (every charge adds 0 to it)
+      [test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-03-10T12:00:00+00:00]] /tmp/pgmut_5fhsoxwk/tests/contracts/test_store_time_rules.py:56: AssertionError: 6min: charge 0 at 2026-03-10 12:00:00+00:00
+13 of 13 mutants killed as described; no problems
+exit=0

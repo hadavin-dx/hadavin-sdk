@@ -1,0 +1,98 @@
+ not run for backend memory
+  store test /home/user/build/WT-75/tests/contracts/test_store_reserve.py::test_validation_comes_first_and_changes_nothing did not run for backend postgres
+  no test body called Store.add_cost on backend memory
+  no test body called Store.add_dead_letter on backend memory
+  no test body called Store.add_spend on backend memory
+  no test body called Store.add_tool_call on backend memory
+  no test body called Store.create_run on backend memory
+  no test body called Store.get_approval_decision on backend memory
+  no test body called Store.get_approval_request on backend memory
+  no test body called Store.get_gate_decision on backend memory
+  no test body called Store.get_kill_switch on backend memory
+  no test body called Store.get_plan on backend memory
+  no test body called Store.get_redaction_map on backend memory
+  no test body called Store.get_run on backend memory
+  no test body called Store.get_spend_reservation on backend memory
+  no test body called Store.get_tick_state on backend memory
+  no test body called Store.list_approvals on backend memory
+  no test body called Store.list_dead_letters on backend memory
+  no test body called Store.list_due_approvals on backend memory
+  no test body called Store.list_open_reservations on backend memory
+  no test body called Store.list_runs on backend memory
+  no test body called Store.list_tool_calls on backend memory
+  no test body called Store.purge_redaction_maps on backend memory
+  no test body called Store.purge_tool_calls on backend memory
+  no test body called Store.put_redaction_map on backend memory
+  no test body called Store.record_decision on backend memory
+  no test body called Store.release_spend on backend memory
+  no test body called Store.save_approval_decision on backend memory
+  no test body called Store.save_approval_request on backend memory
+  no test body called Store.save_gate_decision on backend memory
+  no test body called Store.save_plan on backend memory
+  no test body called Store.save_tick_state on backend memory
+  no test body called Store.set_kill_switch on backend memory
+  no test body called Store.settle_spend on backend memory
+  no test body called Store.spend_totals on backend memory
+  no test body called Store.sweep_spend_reservations on backend memory
+  no test body called Store.touch on backend memory
+  no test body called Store.transition on backend memory
+  no test body called Store.update_approval_request on backend memory
+  no test body called Store.add_cost on backend postgres
+  no test body called Store.add_dead_letter on backend postgres
+  no test body called Store.add_spend on backend postgres
+  no test body called Store.add_tool_call on backend postgres
+  no test body called Store.create_run on backend postgres
+  no test body called Store.get_approval_decision on backend postgres
+  no test body called Store.get_approval_request on backend postgres
+  no test body called Store.get_gate_decision on backend postgres
+  no test body called Store.get_kill_switch on backend postgres
+  no test body called Store.get_plan on backend postgres
+  no test body called Store.get_redaction_map on backend postgres
+  no test body called Store.get_run on backend postgres
+  no test body called Store.get_spend_reservation on backend postgres
+  no test body called Store.get_tick_state on backend postgres
+  no test body called Store.list_approvals on backend postgres
+  no test body called Store.list_dead_letters on backend postgres
+  no test body called Store.list_due_approvals on backend postgres
+  no test body called Store.list_open_reservations on backend postgres
+  no test body called Store.list_runs on backend postgres
+  no test body called Store.list_tool_calls on backend postgres
+  no test body called Store.purge_redaction_maps on backend postgres
+  no test body called Store.purge_tool_calls on backend postgres
+  no test body called Store.put_redaction_map on backend postgres
+  no test body called Store.record_decision on backend postgres
+  no test body called Store.release_spend on backend postgres
+  no test body called Store.reserve_spend on backend postgres
+  no test body called Store.save_approval_decision on backend postgres
+  no test body called Store.save_approval_request on backend postgres
+  no test body called Store.save_gate_decision on backend postgres
+  no test body called Store.save_plan on backend postgres
+  no test body called Store.save_tick_state on backend postgres
+  no test body called Store.set_kill_switch on backend postgres
+  no test body called Store.settle_spend on backend postgres
+  no test body called Store.spend_totals on backend postgres
+  no test body called Store.sweep_spend_reservations on backend postgres
+  no test body called Store.touch on backend postgres
+  no test body called Store.transition on backend postgres
+  no test body called Store.update_approval_request on backend postgres
+
+=================================== FAILURES ===================================
+______ test_meta_text_is_refused_the_same_way_on_both_stores[memory-nul] _______
+
+store = <tests.contracts.store_support.RecordingStore object at 0x7fdd91c2fcb0>
+bad = 'a\x00b'
+
+    @pytest.mark.parametrize("bad", ["a\x00b", "a\ud800b"], ids=["nul", "lone_surrogate"])
+    def test_meta_text_is_refused_the_same_way_on_both_stores(store, bad):
+        """Postgres cannot store NUL or a lone surrogate in text; memory must refuse them as well (parity), and a
+        refused call books nothing."""
+        agent = "rs-meta-text"
+>       with pytest.raises(ValueError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/contracts/test_store_reserve.py:162: Failed
+=========================== short test summary info ============================
+FAILED tests/contracts/test_store_reserve.py::test_meta_text_is_refused_the_same_way_on_both_stores[memory-nul]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 97 deselected in 0.13s

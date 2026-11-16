@@ -1,0 +1,92 @@
+New tests (HEAD 8382bdd tests/ overlaid) run against OLD source (HEAD~4 = 42fc2597 src/ and CHANGELOG.md).
+Columns: result on old source | result at HEAD (from the full-suite JUnit XML; 'absent' = not in that XML) | test id | first line of the failure message
+
+## tests/test_k2_migrations.py  (XML: tests=55 failures=0 errors=0 skipped=0)
+passed on old source: 55; not passed: 0
+
+## tests/test_k5_round10_postgres.py  (XML: tests=8 failures=1 errors=0 skipped=0)
+passed on old source: 7; not passed: 1
+failure | passed | test_a_privilege_inherited_from_another_role_is_refused | AssertionError: Regex pattern did not match.
+
+## tests/test_migration_names.py  (XML: tests=62 failures=0 errors=0 skipped=0)
+passed on old source: 62; not passed: 0
+
+## tests/test_migration_postgres.py  (XML: tests=199 failures=47 errors=0 skipped=0)
+passed on old source: 152; not passed: 47
+failure | passed | test_a_migration_role_with_a_privilege_flag_is_refused_by_a_real_server[REPLICATION] | Failed: DID NOT RAISE ConfigError
+failure | passed | test_a_plain_role_that_is_a_member_of_a_privileged_role_is_refused_by_a_real_server[TRUE-REPLICATION] | Failed: DID NOT RAISE ConfigError
+failure | passed | test_a_plain_role_that_is_a_member_of_a_privileged_role_is_refused_by_a_real_server[FALSE-REPLICATION] | Failed: DID NOT RAISE ConfigError
+failure | passed | test_the_portal_role_is_refused_what_the_other_roles_are_refused[column_update_via_group-can UPDATE runs.state] | AssertionError: the portal role holds privileges outside the portal grant map: hadavin_test_pt_f1ce7e82: can UPDATE runs.state (the grant map is the l
+failure | passed | test_the_portal_role_is_refused_what_the_other_roles_are_refused[select_on_the_ledger-can SELECT schema_migrations] | AssertionError: the portal role holds privileges outside the portal grant map: hadavin_test_pt_bd984f4e: can SELECT schema_migrations (not in the gran
+failure | passed | test_the_portal_role_is_refused_what_the_other_roles_are_refused[create_in_the_schema-can CREATE in schema] | AssertionError: the portal role holds privileges outside the portal grant map: hadavin_test_pt_d11f5e6b: can CREATE in schema hadavin_test_a233fcb90f7
+failure | passed | test_a_right_for_a_role_the_run_does_not_name_is_refused[False-GRANT SELECT ON audit_entries TO {other};] | AssertionError: assert ('hadavin_test_ac_56af1be6 has' in 'after the migration files ran, rights that this package does not give are in place, in sche
+failure | passed | test_a_right_for_a_role_the_run_does_not_name_is_refused[False-GRANT SELECT ON audit_entries TO PUBLIC;] | AssertionError: assert ('PUBLIC has' in 'after the migration files ran, rights that this package does not give are in place, in schema hadavin_test_a0
+failure | passed | test_a_right_for_a_role_the_run_does_not_name_is_refused[False-GRANT SELECT (seq) ON audit_entries TO {other};] | AssertionError: assert ('hadavin_test_ac_0c94546a has' in 'after the migration files ran, rights that this package does not give are in place, in sche
+failure | passed | test_a_right_for_a_role_the_run_does_not_name_is_refused[False-GRANT USAGE ON SEQUENCE approval_decisions_seq_seq TO {other};] | AssertionError: assert ('hadavin_test_ac_d92998c0 has' in 'after the migration files ran, rights that this package does not give are in place, in sche
+failure | passed | test_a_right_for_a_role_the_run_does_not_name_is_refused[False-GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};] | AssertionError: assert ('PUBLIC has' in 'after the migration files ran, rights that this package does not give are in place, in schema hadavin_test_62
+failure | passed | test_a_right_for_a_role_the_run_does_not_name_is_refused[False-GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO PUBLIC;] | AssertionError: assert ('PUBLIC has' in 'after the migration files ran, rights that this package does not give are in place, in schema hadavin_test_14
+failure | passed | test_a_right_for_a_role_the_run_does_not_name_is_refused[True-GRANT SELECT ON audit_entries TO {other};] | AssertionError: assert ('hadavin_test_ac_8f9aee11 has' in 'after the migration files ran, rights that this package does not give are in place, in sche
+failure | passed | test_a_right_for_a_role_the_run_does_not_name_is_refused[True-GRANT SELECT ON audit_entries TO PUBLIC;] | AssertionError: assert ('PUBLIC has' in 'after the migration files ran, rights that this package does not give are in place, in schema hadavin_test_f1
+failure | passed | test_a_right_for_a_role_the_run_does_not_name_is_refused[True-GRANT SELECT (seq) ON audit_entries TO {other};] | AssertionError: assert ('hadavin_test_ac_e303195a has' in 'after the migration files ran, rights that this package does not give are in place, in sche
+failure | passed | test_a_right_for_a_role_the_run_does_not_name_is_refused[True-GRANT USAGE ON SEQUENCE approval_decisions_seq_seq TO {other};] | AssertionError: assert ('hadavin_test_ac_35888548 has' in 'after the migration files ran, rights that this package does not give are in place, in sche
+failure | passed | test_a_right_for_a_role_the_run_does_not_name_is_refused[True-GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO {other};] | AssertionError: assert ('PUBLIC has' in 'after the migration files ran, rights that this package does not give are in place, in schema hadavin_test_82
+failure | passed | test_a_right_for_a_role_the_run_does_not_name_is_refused[True-GRANT EXECUTE ON FUNCTION hadavin_audit_append_only() TO PUBLIC;] | AssertionError: assert ('PUBLIC has' in 'after the migration files ran, rights that this package does not give are in place, in schema hadavin_test_09
+failure | passed | test_a_table_made_by_dynamic_sql_and_opened_to_everyone_is_refused | AssertionError: Regex pattern did not match.
+failure | passed | test_a_default_right_that_an_administrator_set_is_refused_and_the_message_says_so[schema] | AssertionError: assert 'PUBLIC gets SELECT on every new table that' in 'after the migration files ran, rights that this package does not give are in p
+failure | passed | test_a_default_right_that_an_administrator_set_is_refused_and_the_message_says_so[database] | AssertionError: assert 'PUBLIC gets SELECT on every new table that' in 'after the migration files ran, rights that this package does not give are in p
+failure | passed | test_a_role_that_may_create_in_the_schema_is_refused_but_one_that_may_only_look_is_not[CREATE] | AssertionError: Regex pattern did not match.
+failure | passed | test_a_role_that_may_create_in_the_schema_is_refused_but_one_that_may_only_look_is_not[USAGE] | AssertionError: Regex pattern did not match.
+failure | passed | test_a_right_that_an_earlier_run_gave_is_named_as_such_in_the_refusal | assert ('hadavin_test_er_5387fef3 has' in 'after the migration files ran, rights that this package does not give are in place, in schema hadavin_test_
+failure | passed | test_a_right_given_on_a_table_that_existed_before_the_run_is_refused[table] | Failed: DID NOT RAISE ConfigError
+failure | passed | test_a_right_given_on_a_table_that_existed_before_the_run_is_refused[column] | Failed: DID NOT RAISE ConfigError
+failure | passed | test_a_second_right_on_a_column_that_already_had_one_is_refused | Failed: DID NOT RAISE ConfigError
+failure | passed | test_a_right_given_on_a_table_of_another_schema_is_refused | Failed: DID NOT RAISE ConfigError
+failure | passed | test_an_owner_handed_over_by_dynamic_sql_is_refused_for_every_kind[table-table or sequence] | Failed: DID NOT RAISE ConfigError
+failure | passed | test_an_owner_handed_over_by_dynamic_sql_is_refused_for_every_kind[sequence-table or sequence] | Failed: DID NOT RAISE ConfigError
+failure | passed | test_an_owner_handed_over_by_dynamic_sql_is_refused_for_every_kind[view-table or sequence] | Failed: DID NOT RAISE ConfigError
+failure | passed | test_an_owner_handed_over_in_the_run_schema_is_refused | AssertionError: Regex pattern did not match.
+failure | passed | test_a_schema_that_a_file_changed_is_read_back_whatever_schema_it_is[acl] | Failed: DID NOT RAISE ConfigError
+failure | passed | test_a_schema_that_a_file_changed_is_read_back_whatever_schema_it_is[owner] | Failed: DID NOT RAISE ConfigError
+failure | passed | test_a_foreign_table_that_a_file_opens_to_everyone_is_refused | Failed: DID NOT RAISE ConfigError
+failure | passed | test_a_right_that_may_be_passed_on_is_refused_on_a_table_outside_the_grant_map[table] | Failed: DID NOT RAISE ConfigError
+failure | passed | test_a_right_that_may_be_passed_on_is_refused_on_a_table_outside_the_grant_map[column] | Failed: DID NOT RAISE ConfigError
+failure | passed | test_a_named_role_that_may_pass_the_schema_right_on_is_refused | Failed: DID NOT RAISE ConfigError
+failure | passed | test_a_named_role_may_only_read_what_is_not_in_the_grant_map[insert] | Failed: DID NOT RAISE ConfigError
+failure | passed | test_a_named_role_may_only_read_what_is_not_in_the_grant_map[delete] | Failed: DID NOT RAISE ConfigError
+failure | passed | test_a_named_role_may_only_read_what_is_not_in_the_grant_map[sequence_update] | Failed: DID NOT RAISE ConfigError
+failure | passed | test_a_function_of_another_application_owned_by_the_migration_role_is_left_alone[None] | AssertionError: the default right of everyone to call it was taken away
+failure | passed | test_a_function_of_another_application_owned_by_the_migration_role_is_left_alone[other] | hadavin_sdk.errors.ConfigError: after the migration files ran, rights that this package does not give are in place, in schema hadavin_test_d6ad9e1d57c
+failure | passed | test_default_rights_are_read_for_every_schema_and_for_the_roles_the_migration_role_belongs_to[other_schema] | Failed: DID NOT RAISE ConfigError
+failure | passed | test_default_rights_are_read_for_every_schema_and_for_the_roles_the_migration_role_belongs_to[member_role] | Failed: DID NOT RAISE ConfigError
+failure | passed | test_default_rights_are_read_for_every_schema_and_for_the_roles_the_migration_role_belongs_to[named_delete] | Failed: DID NOT RAISE ConfigError
+failure | passed | test_a_named_role_with_the_replication_flag_is_refused | Failed: DID NOT RAISE ConfigError
+
+## tests/test_migration_rules.py  (XML: tests=142 failures=18 errors=0 skipped=0)
+passed on old source: 124; not passed: 18
+failure | passed | test_handing_an_object_to_another_role_is_refused_by_the_text_rule[ALTER TABLE t OWNER TO r] | AssertionError: ('ALTER TABLE t OWNER TO r', [])
+failure | passed | test_handing_an_object_to_another_role_is_refused_by_the_text_rule[ALTER SEQUENCE s OWNER TO r] | AssertionError: ('ALTER SEQUENCE s OWNER TO r', [])
+failure | passed | test_handing_an_object_to_another_role_is_refused_by_the_text_rule[ALTER VIEW v OWNER TO r] | AssertionError: ('ALTER VIEW v OWNER TO r', [])
+failure | passed | test_handing_an_object_to_another_role_is_refused_by_the_text_rule[ALTER MATERIALIZED VIEW v OWNER TO r] | AssertionError: ('ALTER MATERIALIZED VIEW v OWNER TO r', [])
+failure | passed | test_handing_an_object_to_another_role_is_refused_by_the_text_rule[ALTER FUNCTION f(int) OWNER TO r] | AssertionError: ('ALTER FUNCTION f(int) OWNER TO r', [])
+failure | passed | test_handing_an_object_to_another_role_is_refused_by_the_text_rule[ALTER SCHEMA s OWNER TO r] | AssertionError: ('ALTER SCHEMA s OWNER TO r', [])
+failure | passed | test_handing_an_object_to_another_role_is_refused_by_the_text_rule[ALTER TYPE t OWNER TO r] | AssertionError: ('ALTER TYPE t OWNER TO r', [])
+failure | passed | test_handing_an_object_to_another_role_is_refused_by_the_text_rule[alter   table\tonly t\nowner\n  to  r] | AssertionError: ('alter   table\tonly t
+failure | passed | test_handing_an_object_to_another_role_is_refused_by_the_text_rule[ALTER TABLE "t" OWNER TO "r"] | AssertionError: ('ALTER TABLE "t" OWNER TO "r"', [])
+failure | passed | test_handing_an_object_to_another_role_is_refused_by_the_text_rule[ALTER TABLE t OWNER TO CURRENT_USER] | AssertionError: ('ALTER TABLE t OWNER TO CURRENT_USER', [])
+failure | passed | test_the_owner_refusal_holds_under_noise[-] | AssertionError: ['ALTER TABLE t OWNER TO r', 'ALTER SEQUENCE s OWNER TO r', 'ALTER VIEW v OWNER TO r', 'ALTER MATERIALIZED VIEW v OWNER TO r', 'ALTER 
+failure | passed | test_the_owner_refusal_holds_under_noise[-- on\n-] | AssertionError: ['ALTER TABLE t OWNER TO r', 'ALTER SEQUENCE s OWNER TO r', 'ALTER VIEW v OWNER TO r', 'ALTER MATERIALIZED VIEW v OWNER TO r', 'ALTER 
+failure | passed | test_the_owner_refusal_holds_under_noise[/* on */ -] | AssertionError: ['ALTER TABLE t OWNER TO r', 'ALTER SEQUENCE s OWNER TO r', 'ALTER VIEW v OWNER TO r', 'ALTER MATERIALIZED VIEW v OWNER TO r', 'ALTER 
+failure | passed | test_the_owner_refusal_holds_under_noise[- -- on] | AssertionError: ['ALTER TABLE t OWNER TO r', 'ALTER SEQUENCE s OWNER TO r', 'ALTER VIEW v OWNER TO r', 'ALTER MATERIALIZED VIEW v OWNER TO r', 'ALTER 
+failure | passed | test_the_owner_refusal_holds_under_noise[- /* on */] | AssertionError: ['ALTER TABLE t OWNER TO r', 'ALTER SEQUENCE s OWNER TO r', 'ALTER VIEW v OWNER TO r', 'ALTER MATERIALIZED VIEW v OWNER TO r', 'ALTER 
+failure | passed | test_the_owner_refusal_holds_under_noise[/* on */ - -- on\n] | AssertionError: ['ALTER TABLE t OWNER TO r', 'ALTER SEQUENCE s OWNER TO r', 'ALTER VIEW v OWNER TO r', 'ALTER MATERIALIZED VIEW v OWNER TO r', 'ALTER 
+failure | passed | test_the_upgrade_bullet_says_what_migrate_checks_and_does_not_overclaim | AssertionError: assert 'A role that holds `REPLICATION`, or is a member of a role that holds it, is refused' in '- **Migrations: stricter checks, and 
+failure | passed | test_every_migrate_mutant_still_applies_to_the_source | AssertionError: assert ['SC1: the ol...ctly 1)', ...] == []
+
+## tests/test_migration_wiring.py  (XML: tests=118 failures=4 errors=0 skipped=0)
+passed on old source: 114; not passed: 4
+failure | passed | test_a_privileged_migration_role_is_refused_before_any_file_runs[rolreplication] | Failed: DID NOT RAISE ConfigError
+failure | passed | test_the_membership_check_reads_both_user_names_all_five_flags_and_the_built_in_roles | assert 'rolreplication' in "SELECT r.rolname FROM pg_roles r WHERE (r.rolsuper OR r.rolcreaterole OR r.rolcreatedb OR r.rolbypassrls OR (left(r.r...se
+failure | passed | test_the_role_flags_are_read_for_the_current_user_and_the_session_user | AssertionError: assert 'rolreplication' in 'SELECT rolsuper, rolcreaterole, rolcreatedb, rolbypassrls FROM pg_roles WHERE rolname IN (current_user, se
+failure | passed | test_the_replication_flag_is_read_again_after_every_file | Failed: DID NOT RAISE ConfigError
+
+TOTAL on old source: {'passed': 514, 'failure': 70}

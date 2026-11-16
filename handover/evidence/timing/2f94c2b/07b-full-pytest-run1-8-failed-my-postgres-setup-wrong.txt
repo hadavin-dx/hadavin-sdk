@@ -1,0 +1,593 @@
+sha=2f94c2b28df25bca9bb28d6a50d13f8c292c19c9
+cmd=pytest -q -m 'not live and not perf' -rs (DSN to own PG16 port 56217)
+........................................................................ [  0%]
+..............s......................................................... [  1%]
+........................................................................ [  2%]
+........................................................................ [  2%]
+........................................................................ [  3%]
+........................................................................ [  4%]
+........................................................................ [  4%]
+........................................................................ [  5%]
+........................................................................ [  6%]
+........................................................................ [  6%]
+........................................................................ [  7%]
+........................................................................ [  8%]
+........................................................................ [  8%]
+........................................................................ [  9%]
+........................................................................ [ 10%]
+..............................FF..............FF.F.....F...........F.... [ 10%]
+.........................................F.............................. [ 11%]
+........................................................................ [ 12%]
+........................................................................ [ 12%]
+........................................................................ [ 13%]
+........................................................................ [ 14%]
+........................................................................ [ 14%]
+........................................................................ [ 15%]
+........................................................................ [ 16%]
+........................................................................ [ 16%]
+........................................................................ [ 17%]
+........................................................................ [ 18%]
+........................................................................ [ 18%]
+........................................................................ [ 19%]
+........................................................................ [ 20%]
+........................................................................ [ 21%]
+........................................................................ [ 21%]
+........................................................................ [ 22%]
+........................................................................ [ 23%]
+........................................................................ [ 23%]
+........................................................................ [ 24%]
+........................................................................ [ 25%]
+........................................................................ [ 25%]
+........................................................................ [ 26%]
+........................................................................ [ 27%]
+........................................................................ [ 27%]
+........................................................................ [ 28%]
+........................................................................ [ 29%]
+........................................................................ [ 29%]
+........................................................................ [ 30%]
+........................................................................ [ 31%]
+........................................................................ [ 31%]
+........................................................................ [ 32%]
+........................................................................ [ 33%]
+........................................................................ [ 33%]
+........................................................................ [ 34%]
+........................................................................ [ 35%]
+........................................................................ [ 35%]
+........................................................................ [ 36%]
+........................................................................ [ 37%]
+........................................................................ [ 37%]
+........................................................................ [ 38%]
+........................................................................ [ 39%]
+........................................................................ [ 40%]
+........................................................................ [ 40%]
+........................................................................ [ 41%]
+........................................................................ [ 42%]
+........................................................................ [ 42%]
+........................................................................ [ 43%]
+........................................................................ [ 44%]
+........................................................................ [ 44%]
+........................................................................ [ 45%]
+........................................................................ [ 46%]
+........................................................................ [ 46%]
+........................................................................ [ 47%]
+........................................................................ [ 48%]
+........................................................................ [ 48%]
+........................................................................ [ 49%]
+........................................................................ [ 50%]
+........................................................................ [ 50%]
+........................................................................ [ 51%]
+........................................................................ [ 52%]
+........................................................................ [ 52%]
+........................................................................ [ 53%]
+........................................................................ [ 54%]
+........................................................................ [ 54%]
+........................................................................ [ 55%]
+........................................................................ [ 56%]
+........................................................................ [ 56%]
+........................................................................ [ 57%]
+........................................................................ [ 58%]
+........................................................................ [ 59%]
+........................................................................ [ 59%]
+........................................................................ [ 60%]
+........................................................................ [ 61%]
+........................................................................ [ 61%]
+........................................................................ [ 62%]
+........................................................................ [ 63%]
+........................................................................ [ 63%]
+........................................................................ [ 64%]
+........................................................................ [ 65%]
+........................................................................ [ 65%]
+........................................................................ [ 66%]
+........................................................................ [ 67%]
+........................................................................ [ 67%]
+........................................................................ [ 68%]
+........................................................................ [ 69%]
+........................................................................ [ 69%]
+........................................................................ [ 70%]
+........................................................................ [ 71%]
+........................................................................ [ 71%]
+........................................................................ [ 72%]
+........................................................................ [ 73%]
+........................................................................ [ 73%]
+........................................................................ [ 74%]
+........................................................................ [ 75%]
+........................................................................ [ 75%]
+........................................................................ [ 76%]
+........................................................................ [ 77%]
+........................................................................ [ 78%]
+........................................................................ [ 78%]
+........................................................................ [ 79%]
+........................................................................ [ 80%]
+........................................................................ [ 80%]
+........................................................................ [ 81%]
+........................................................................ [ 82%]
+........................................................................ [ 82%]
+........................................................................ [ 83%]
+........................................................................ [ 84%]
+........................................................................ [ 84%]
+........................................................................ [ 85%]
+........................................................................ [ 86%]
+........................................................................ [ 86%]
+........................................................................ [ 87%]
+........................................................................ [ 88%]
+........................................................................ [ 88%]
+........................................................................ [ 89%]
+........................................................................ [ 90%]
+........................................................................ [ 90%]
+........................................................................ [ 91%]
+........................................................................ [ 92%]
+........................................................................ [ 92%]
+........................................................................ [ 93%]
+........................................................................ [ 94%]
+........................................................................ [ 94%]
+........................................................................ [ 95%]
+........................................................................ [ 96%]
+........................................................................ [ 96%]
+........................................................................ [ 97%]
+........................................................................ [ 98%]
+........................................................................ [ 99%]
+........................................................................ [ 99%]
+...............................                                          [100%]
+=================================== FAILURES ===================================
+_ test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[copy-to-file] _
+
+attack = Attack(name='copy-to-file', sql="COPY shop.customers TO '/tmp/askdata_p2_copy.csv'", rule='V03', category='writes', harm='exec')
+shared = 'user=pgev dbname=askdata_h_3e5463ce host=127.0.0.1 port=56217'
+
+    @pytest.mark.parametrize("attack", READERS, ids=[a.name for a in READERS])
+    def test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated(attack, shared):
+>       assert prove_harm(attack, shared)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/demo_askdata/test_validate_harm.py:179: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/demo_askdata/test_validate_harm.py:133: in prove_harm
+    cur = c.execute(attack.sql)
+          ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <psycopg.Connection [BAD] at 0x7f8e9b2bf890>
+query = "COPY shop.customers TO '/tmp/askdata_p2_copy.csv'", params = None
+prepare = None, binary = False
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.InsufficientPrivilege: could not open file "/tmp/askdata_p2_copy.csv" for writing: Permission denied
+E           HINT:  COPY TO instructs the PostgreSQL server process to write a file. You may want a client-side facility such as psql's \copy.
+
+.venv/lib/python3.13/site-packages/psycopg/connection.py:304: InsufficientPrivilege
+_ test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[set-role] _
+
+attack = Attack(name='set-role', sql='SET ROLE postgres', rule='V03', category='session-state', harm='exec')
+shared = 'user=pgev dbname=askdata_h_3e5463ce host=127.0.0.1 port=56217'
+
+    @pytest.mark.parametrize("attack", READERS, ids=[a.name for a in READERS])
+    def test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated(attack, shared):
+>       assert prove_harm(attack, shared)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/demo_askdata/test_validate_harm.py:179: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/demo_askdata/test_validate_harm.py:133: in prove_harm
+    cur = c.execute(attack.sql)
+          ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <psycopg.Connection [BAD] at 0x7f8e9b2bf3e0>, query = 'SET ROLE postgres'
+params = None, prepare = None, binary = False
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.InvalidParameterValue: role "postgres" does not exist
+
+.venv/lib/python3.13/site-packages/psycopg/connection.py:304: InvalidParameterValue
+_ test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[catalog-table] _
+
+attack = Attack(name='catalog-table', sql='SELECT * FROM pg_shadow', rule='V04', category='relations', harm='leak:postgres')
+shared = 'user=pgev dbname=askdata_h_3e5463ce host=127.0.0.1 port=56217'
+
+    @pytest.mark.parametrize("attack", READERS, ids=[a.name for a in READERS])
+    def test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated(attack, shared):
+>       assert prove_harm(attack, shared)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/demo_askdata/test_validate_harm.py:179: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+attack = Attack(name='catalog-table', sql='SELECT * FROM pg_shadow', rule='V04', category='relations', harm='leak:postgres')
+dsn = 'user=pgev dbname=askdata_h_3e5463ce host=127.0.0.1 port=56217'
+
+    def prove_harm(attack: Attack, dsn: str) -> str:
+        """Run the attack unvalidated on a privileged session; return a short note of the harm observed, or raise."""
+        kind, _, needle = attack.harm.partition(":")
+        if kind == "write":
+            before = fingerprint(dsn)
+            with psycopg.connect(dsn, autocommit=True) as c:
+                c.execute(attack.sql)  # simple protocol: a stacked string runs whole
+            after = fingerprint(dsn)
+            assert before != after, "the statement ran but changed nothing"
+            return "committed state changed"
+        if kind == "lock":
+            with psycopg.connect(dsn) as c:
+                c.execute(attack.sql)
+                modes = {
+                    r[0]
+                    for r in c.execute(
+                        "SELECT mode FROM pg_locks WHERE pid = pg_backend_pid() AND locktype = 'relation'"
+                        " AND relation = 'shop.orders'::regclass"
+                    )
+                }
+                c.rollback()
+            assert modes & {"RowShareLock", "RowExclusiveLock"}, modes
+            return f"row lock on the base table ({sorted(modes)})"
+        if kind == "abuse":
+            with psycopg.connect(dsn, autocommit=True) as c:
+                c.execute(f"SET statement_timeout = {TIMEOUT_MS}")
+                with pytest.raises(psycopg.errors.QueryCanceled):
+                    c.execute(attack.sql)
+            return f"still running when the {TIMEOUT_MS} ms statement_timeout cancelled it"
+        if kind in ("leak", "exec"):
+            with psycopg.connect(dsn, autocommit=True) as c:
+                cur = c.execute(attack.sql)
+                cells = _cells(cur) if kind == "leak" else []
+            if kind == "leak":
+>               assert any(needle in cell for cell in cells), f"no cell contains {needle!r}"
+E               AssertionError: no cell contains 'postgres'
+E               assert False
+E                +  where False = any(<generator object prove_harm.<locals>.<genexpr> at 0x7f8e925efb90>)
+
+tests/demo_askdata/test_validate_harm.py:136: AssertionError
+_ test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[catalog-qualified] _
+
+attack = Attack(name='catalog-qualified', sql='SELECT * FROM pg_catalog.pg_authid', rule='V04', category='relations', harm='leak:postgres')
+shared = 'user=pgev dbname=askdata_h_3e5463ce host=127.0.0.1 port=56217'
+
+    @pytest.mark.parametrize("attack", READERS, ids=[a.name for a in READERS])
+    def test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated(attack, shared):
+>       assert prove_harm(attack, shared)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/demo_askdata/test_validate_harm.py:179: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+attack = Attack(name='catalog-qualified', sql='SELECT * FROM pg_catalog.pg_authid', rule='V04', category='relations', harm='leak:postgres')
+dsn = 'user=pgev dbname=askdata_h_3e5463ce host=127.0.0.1 port=56217'
+
+    def prove_harm(attack: Attack, dsn: str) -> str:
+        """Run the attack unvalidated on a privileged session; return a short note of the harm observed, or raise."""
+        kind, _, needle = attack.harm.partition(":")
+        if kind == "write":
+            before = fingerprint(dsn)
+            with psycopg.connect(dsn, autocommit=True) as c:
+                c.execute(attack.sql)  # simple protocol: a stacked string runs whole
+            after = fingerprint(dsn)
+            assert before != after, "the statement ran but changed nothing"
+            return "committed state changed"
+        if kind == "lock":
+            with psycopg.connect(dsn) as c:
+                c.execute(attack.sql)
+                modes = {
+                    r[0]
+                    for r in c.execute(
+                        "SELECT mode FROM pg_locks WHERE pid = pg_backend_pid() AND locktype = 'relation'"
+                        " AND relation = 'shop.orders'::regclass"
+                    )
+                }
+                c.rollback()
+            assert modes & {"RowShareLock", "RowExclusiveLock"}, modes
+            return f"row lock on the base table ({sorted(modes)})"
+        if kind == "abuse":
+            with psycopg.connect(dsn, autocommit=True) as c:
+                c.execute(f"SET statement_timeout = {TIMEOUT_MS}")
+                with pytest.raises(psycopg.errors.QueryCanceled):
+                    c.execute(attack.sql)
+            return f"still running when the {TIMEOUT_MS} ms statement_timeout cancelled it"
+        if kind in ("leak", "exec"):
+            with psycopg.connect(dsn, autocommit=True) as c:
+                cur = c.execute(attack.sql)
+                cells = _cells(cur) if kind == "leak" else []
+            if kind == "leak":
+>               assert any(needle in cell for cell in cells), f"no cell contains {needle!r}"
+E               AssertionError: no cell contains 'postgres'
+E               assert False
+E                +  where False = any(<generator object prove_harm.<locals>.<genexpr> at 0x7f8e919260c0>)
+
+tests/demo_askdata/test_validate_harm.py:136: AssertionError
+_ test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[quoted-catalog-table] _
+
+attack = Attack(name='quoted-catalog-table', sql='SELECT * FROM "pg_shadow"', rule='V04', category='relations', harm='leak:postgres')
+shared = 'user=pgev dbname=askdata_h_3e5463ce host=127.0.0.1 port=56217'
+
+    @pytest.mark.parametrize("attack", READERS, ids=[a.name for a in READERS])
+    def test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated(attack, shared):
+>       assert prove_harm(attack, shared)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/demo_askdata/test_validate_harm.py:179: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+attack = Attack(name='quoted-catalog-table', sql='SELECT * FROM "pg_shadow"', rule='V04', category='relations', harm='leak:postgres')
+dsn = 'user=pgev dbname=askdata_h_3e5463ce host=127.0.0.1 port=56217'
+
+    def prove_harm(attack: Attack, dsn: str) -> str:
+        """Run the attack unvalidated on a privileged session; return a short note of the harm observed, or raise."""
+        kind, _, needle = attack.harm.partition(":")
+        if kind == "write":
+            before = fingerprint(dsn)
+            with psycopg.connect(dsn, autocommit=True) as c:
+                c.execute(attack.sql)  # simple protocol: a stacked string runs whole
+            after = fingerprint(dsn)
+            assert before != after, "the statement ran but changed nothing"
+            return "committed state changed"
+        if kind == "lock":
+            with psycopg.connect(dsn) as c:
+                c.execute(attack.sql)
+                modes = {
+                    r[0]
+                    for r in c.execute(
+                        "SELECT mode FROM pg_locks WHERE pid = pg_backend_pid() AND locktype = 'relation'"
+                        " AND relation = 'shop.orders'::regclass"
+                    )
+                }
+                c.rollback()
+            assert modes & {"RowShareLock", "RowExclusiveLock"}, modes
+            return f"row lock on the base table ({sorted(modes)})"
+        if kind == "abuse":
+            with psycopg.connect(dsn, autocommit=True) as c:
+                c.execute(f"SET statement_timeout = {TIMEOUT_MS}")
+                with pytest.raises(psycopg.errors.QueryCanceled):
+                    c.execute(attack.sql)
+            return f"still running when the {TIMEOUT_MS} ms statement_timeout cancelled it"
+        if kind in ("leak", "exec"):
+            with psycopg.connect(dsn, autocommit=True) as c:
+                cur = c.execute(attack.sql)
+                cells = _cells(cur) if kind == "leak" else []
+            if kind == "leak":
+>               assert any(needle in cell for cell in cells), f"no cell contains {needle!r}"
+E               AssertionError: no cell contains 'postgres'
+E               assert False
+E                +  where False = any(<generator object prove_harm.<locals>.<genexpr> at 0x7f8e91924450>)
+
+tests/demo_askdata/test_validate_harm.py:136: AssertionError
+_ test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[union-catalog] _
+
+attack = Attack(name='union-catalog', sql='SELECT customer_id::text FROM analytics.customers_v UNION SELECT rolname::text FROM pg_roles', rule='V04', category='relations', harm='leak:postgres')
+shared = 'user=pgev dbname=askdata_h_3e5463ce host=127.0.0.1 port=56217'
+
+    @pytest.mark.parametrize("attack", READERS, ids=[a.name for a in READERS])
+    def test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated(attack, shared):
+>       assert prove_harm(attack, shared)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/demo_askdata/test_validate_harm.py:179: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+attack = Attack(name='union-catalog', sql='SELECT customer_id::text FROM analytics.customers_v UNION SELECT rolname::text FROM pg_roles', rule='V04', category='relations', harm='leak:postgres')
+dsn = 'user=pgev dbname=askdata_h_3e5463ce host=127.0.0.1 port=56217'
+
+    def prove_harm(attack: Attack, dsn: str) -> str:
+        """Run the attack unvalidated on a privileged session; return a short note of the harm observed, or raise."""
+        kind, _, needle = attack.harm.partition(":")
+        if kind == "write":
+            before = fingerprint(dsn)
+            with psycopg.connect(dsn, autocommit=True) as c:
+                c.execute(attack.sql)  # simple protocol: a stacked string runs whole
+            after = fingerprint(dsn)
+            assert before != after, "the statement ran but changed nothing"
+            return "committed state changed"
+        if kind == "lock":
+            with psycopg.connect(dsn) as c:
+                c.execute(attack.sql)
+                modes = {
+                    r[0]
+                    for r in c.execute(
+                        "SELECT mode FROM pg_locks WHERE pid = pg_backend_pid() AND locktype = 'relation'"
+                        " AND relation = 'shop.orders'::regclass"
+                    )
+                }
+                c.rollback()
+            assert modes & {"RowShareLock", "RowExclusiveLock"}, modes
+            return f"row lock on the base table ({sorted(modes)})"
+        if kind == "abuse":
+            with psycopg.connect(dsn, autocommit=True) as c:
+                c.execute(f"SET statement_timeout = {TIMEOUT_MS}")
+                with pytest.raises(psycopg.errors.QueryCanceled):
+                    c.execute(attack.sql)
+            return f"still running when the {TIMEOUT_MS} ms statement_timeout cancelled it"
+        if kind in ("leak", "exec"):
+            with psycopg.connect(dsn, autocommit=True) as c:
+                cur = c.execute(attack.sql)
+                cells = _cells(cur) if kind == "leak" else []
+            if kind == "leak":
+>               assert any(needle in cell for cell in cells), f"no cell contains {needle!r}"
+E               AssertionError: no cell contains 'postgres'
+E               assert False
+E                +  where False = any(<generator object prove_harm.<locals>.<genexpr> at 0x7f8e9191b5e0>)
+
+tests/demo_askdata/test_validate_harm.py:136: AssertionError
+_ test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[cte-shadows-catalog] _
+
+attack = Attack(name='cte-shadows-catalog', sql='WITH pg_roles AS (SELECT * FROM pg_roles) SELECT * FROM pg_roles', rule='V04', category='cte-scoping', harm='leak:postgres')
+shared = 'user=pgev dbname=askdata_h_3e5463ce host=127.0.0.1 port=56217'
+
+    @pytest.mark.parametrize("attack", READERS, ids=[a.name for a in READERS])
+    def test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated(attack, shared):
+>       assert prove_harm(attack, shared)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/demo_askdata/test_validate_harm.py:179: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+attack = Attack(name='cte-shadows-catalog', sql='WITH pg_roles AS (SELECT * FROM pg_roles) SELECT * FROM pg_roles', rule='V04', category='cte-scoping', harm='leak:postgres')
+dsn = 'user=pgev dbname=askdata_h_3e5463ce host=127.0.0.1 port=56217'
+
+    def prove_harm(attack: Attack, dsn: str) -> str:
+        """Run the attack unvalidated on a privileged session; return a short note of the harm observed, or raise."""
+        kind, _, needle = attack.harm.partition(":")
+        if kind == "write":
+            before = fingerprint(dsn)
+            with psycopg.connect(dsn, autocommit=True) as c:
+                c.execute(attack.sql)  # simple protocol: a stacked string runs whole
+            after = fingerprint(dsn)
+            assert before != after, "the statement ran but changed nothing"
+            return "committed state changed"
+        if kind == "lock":
+            with psycopg.connect(dsn) as c:
+                c.execute(attack.sql)
+                modes = {
+                    r[0]
+                    for r in c.execute(
+                        "SELECT mode FROM pg_locks WHERE pid = pg_backend_pid() AND locktype = 'relation'"
+                        " AND relation = 'shop.orders'::regclass"
+                    )
+                }
+                c.rollback()
+            assert modes & {"RowShareLock", "RowExclusiveLock"}, modes
+            return f"row lock on the base table ({sorted(modes)})"
+        if kind == "abuse":
+            with psycopg.connect(dsn, autocommit=True) as c:
+                c.execute(f"SET statement_timeout = {TIMEOUT_MS}")
+                with pytest.raises(psycopg.errors.QueryCanceled):
+                    c.execute(attack.sql)
+            return f"still running when the {TIMEOUT_MS} ms statement_timeout cancelled it"
+        if kind in ("leak", "exec"):
+            with psycopg.connect(dsn, autocommit=True) as c:
+                cur = c.execute(attack.sql)
+                cells = _cells(cur) if kind == "leak" else []
+            if kind == "leak":
+>               assert any(needle in cell for cell in cells), f"no cell contains {needle!r}"
+E               AssertionError: no cell contains 'postgres'
+E               assert False
+E                +  where False = any(<generator object prove_harm.<locals>.<genexpr> at 0x7f8e925ef780>)
+
+tests/demo_askdata/test_validate_harm.py:136: AssertionError
+_ test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[star-over-unknown-relation] _
+
+attack = Attack(name='star-over-unknown-relation', sql='SELECT t.* FROM (SELECT * FROM pg_shadow) t', rule='V04', category='star-whole-row', harm='leak:postgres')
+shared = 'user=pgev dbname=askdata_h_3e5463ce host=127.0.0.1 port=56217'
+
+    @pytest.mark.parametrize("attack", READERS, ids=[a.name for a in READERS])
+    def test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated(attack, shared):
+>       assert prove_harm(attack, shared)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/demo_askdata/test_validate_harm.py:179: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+attack = Attack(name='star-over-unknown-relation', sql='SELECT t.* FROM (SELECT * FROM pg_shadow) t', rule='V04', category='star-whole-row', harm='leak:postgres')
+dsn = 'user=pgev dbname=askdata_h_3e5463ce host=127.0.0.1 port=56217'
+
+    def prove_harm(attack: Attack, dsn: str) -> str:
+        """Run the attack unvalidated on a privileged session; return a short note of the harm observed, or raise."""
+        kind, _, needle = attack.harm.partition(":")
+        if kind == "write":
+            before = fingerprint(dsn)
+            with psycopg.connect(dsn, autocommit=True) as c:
+                c.execute(attack.sql)  # simple protocol: a stacked string runs whole
+            after = fingerprint(dsn)
+            assert before != after, "the statement ran but changed nothing"
+            return "committed state changed"
+        if kind == "lock":
+            with psycopg.connect(dsn) as c:
+                c.execute(attack.sql)
+                modes = {
+                    r[0]
+                    for r in c.execute(
+                        "SELECT mode FROM pg_locks WHERE pid = pg_backend_pid() AND locktype = 'relation'"
+                        " AND relation = 'shop.orders'::regclass"
+                    )
+                }
+                c.rollback()
+            assert modes & {"RowShareLock", "RowExclusiveLock"}, modes
+            return f"row lock on the base table ({sorted(modes)})"
+        if kind == "abuse":
+            with psycopg.connect(dsn, autocommit=True) as c:
+                c.execute(f"SET statement_timeout = {TIMEOUT_MS}")
+                with pytest.raises(psycopg.errors.QueryCanceled):
+                    c.execute(attack.sql)
+            return f"still running when the {TIMEOUT_MS} ms statement_timeout cancelled it"
+        if kind in ("leak", "exec"):
+            with psycopg.connect(dsn, autocommit=True) as c:
+                cur = c.execute(attack.sql)
+                cells = _cells(cur) if kind == "leak" else []
+            if kind == "leak":
+>               assert any(needle in cell for cell in cells), f"no cell contains {needle!r}"
+E               AssertionError: no cell contains 'postgres'
+E               assert False
+E                +  where False = any(<generator object prove_harm.<locals>.<genexpr> at 0x7f8e9251f780>)
+
+tests/demo_askdata/test_validate_harm.py:136: AssertionError
+=============================== warnings summary ===============================
+tests/test_timing_fixture.py::test_work_done_in_a_child_process_is_refused_because_processor_time_does_not_count_it
+  /usr/local/lib/python3.13/multiprocessing/popen_fork.py:73: DeprecationWarning: This process (pid=23065) is multi-threaded, use of fork() may lead to deadlocks in the child.
+    self.pid = os.fork()
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+SKIPPED [1] tests/contracts/test_llm.py:95: Stubber refuses a malformed Converse shape before the kind sees it
+8 failed, 10606 passed, 1 skipped, 38 deselected, 1 warning in 257.65s (0:04:17)
+exit=1

@@ -1,0 +1,26 @@
+# QUEUE for core-hardening (lead, 2026-11-16). Ordered backlog that runs WITHOUT waiting for the lead.
+RULES OF THE QUEUE (owner HARD rule 2026-11-16: complete the video work by Wed 18 Nov morning; no idle session):
+1. Always keep at least 3 agents running (use the container: 4 cores, about 15 GB, 3 heavy test slots; light reading and review agents are not core-limited). Start the next queue item the moment a lane frees; never wait for the lead between items.
+2. Take items in order; independent items run in parallel (several at once). EGM sequence per item: your own egm reviewers (two independent) on the result; evidence runner for anything that runs.
+3. Report each finished item in REPORT.md and the board (item state table); only the questions that only the lead or owner can answer go to QUESTIONS.md, and you continue with the next item meanwhile.
+4. Write STATE FINAL only when EVERY item below is done or marked BLOCKED with the exact missing input; the lead refills this file every tick, so re-read it on every board beat (git pull) and append new items to your own list when it grows.
+5. If the queue is empty and nothing waits on the lead: take the next unreviewed area from your own 'not checked' list (architecture audit rule R460) and say so in the board.
+6. Inputs copied for you (read-only, made-up data): handover/core-hardening/inputs/. Decisions in force: one Postgres server with two databases for the take (n8n's own and the run's: n8n state and claim rows), stage.journal file the one stated exception (decision 10, 2026-11-16); executions saved ON on made-up data and deleted at clean-up; no portal, approval or audit-trail claims in the video; narrow claim 'the same lead id sent twice is processed once'; n8n egress switched off by env names and observed (not enforced); loopback re-smoke US$0 before any real take; take branches are local only (never in your branch).
+7. MUST-NOT: no real keys, mailboxes or client data; no pushes outside cloud/core-hardening; no edits outside handover/core-hardening/; no secrets; do not touch other sessions' folders (read via git show).
+ITEMS (mark each DONE / RUNNING / BLOCKED with date in this file; the lead reads it):
+C1 [ORDER 013 in progress] Cross-review of flows-audit patches and fix plan.
+C2 [ORDER 013 in progress] Static hygiene patches for the three files failing test_no_vendor_brand_string_is_tracked.
+C3 PASTE CHECK of the re-smoke plan: extract EVERY fenced paste block from inputs/plan-wp6-resmoke-v5.md (bash, python, powershell); run `bash -n` and `dash -n` on the shell ones, compile every python one (`python -c compile`), shellcheck if installable, and flag PowerShell pitfalls by reading (quoting, Start-Process, wsl.exe -e). Output handover/core-hardening/paste-check/REPORT.md (block id, line in plan, command, exit, error text) and a patch file of exact fixes for the plan. This is on the critical path (the plan's own UNVERIFIED 2 says the python inside pastes was never parsed). Two egm reviewers on the result.
+C4 STEPS-VS-DECISIONS: compare inputs/OWNER-STEPS-realrun-v3.md and inputs/AGENT-SCOPE-DO-AND-DONT.md against the decisions in force (header rule 6) and against plan v5: every contradiction or stale claim (portal, SQLite, executions off, approval wording, steps that the new Postgres/egress/executions-ON decisions change), as an exact edit list. Output handover/core-hardening/steps-edits/EDITS.md.
+C5 READY-TO-APPLY core patches (C-01, A-01, G5 wording, dead-man note) already in patches-ready: polish after the cross-reviews of the other sessions arrive.
+C6 Idle fallback: architecture audit rule R460 on the next unreviewed area of your own audit.
+
+C4b [UPDATE 2026-11-16] The owner says accounts, keys and mailboxes are ALL DONE (inputs/FACTS-ALREADY-DONE.md). C4 therefore becomes: rewrite OWNER-STEPS-realrun-v3.md as v4 containing ONLY what is still owner-only (typing y/challenge/end at the take, written yes with numbers, take-day laptop settings, watch, post, clean-up revokes); strip every Phase 0 step the facts file says is done; keep the lead's steps out of the owner file. Output handover/core-hardening/steps-edits/OWNER-STEPS-realrun-v4.md plus a diff list.
+
+C7 [ORDER 016] HEAVY LANE: in a scratch copy of hadavin-sdk at b4cce5b run the full test suite baseline (record pass/fail/skip, time, memory peak), then apply each ready patch from patches-ready on its own scratch copy and run its tests plus the full suite; a failing-before / passing-after table per patch. Output handover/core-hardening/patch-test-runs/REPORT.md.
+C8 [ORDER 016] Mutation lane on the money and redaction paths touched by C-01 and A-01 (small set, one batch), recorded raw.
+
+## REFILL 09:36Z (lead)
+C9 Apply system-map's S9-1..S9-5 decisions (see system-map APPLIED-S9.md when pushed: git show origin/cloud/system-map:handover/system-map/drift/APPLIED-S9.md) into OWNER-STEPS v6; two reviewers (naive + security).
+C10 Table 'who types what' for the take day (step | who | typed or clicked | where | expected screen) with a fresh naive reader.
+C11 HubSpot probe step: exact owner steps text, owner runs it himself, pastes back only the PASS/FAIL table.

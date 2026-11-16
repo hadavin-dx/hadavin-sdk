@@ -1,0 +1,10 @@
+tree /home/user/build/EV-PRHb8-ea6dbdaf/wt/src/hadavin_sdk/guard/redact.py
+files=434 lines=83184 lines_with_a_spaced_run_at_all=2 lines_changed=0
+positive control (example key spaced out) runs found: 1
+ordinary spaced texts changed: [False, False, False, False, False, False, False]
+rc=0
+tree /home/user/build/EV-PRHb8-ea6dbdaf/wt/src/hadavin_sdk/guard/redact.py
+files=4695 lines=1933591 lines_with_a_spaced_run_at_all=64 lines_changed=0
+positive control (example key spaced out) runs found: 1
+ordinary spaced texts changed: [False, False, False, False, False, False, False]
+rc=0

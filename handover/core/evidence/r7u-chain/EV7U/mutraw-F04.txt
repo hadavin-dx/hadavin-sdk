@@ -1,0 +1,31 @@
+.F
+=================================== FAILURES ===================================
+_ test_a3_contacts_not_accounted_for_are_in_the_result_and_the_result_is_not_ok _
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7f6baf5b8cb0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6baf8808c0>
+
+    def test_a3_contacts_not_accounted_for_are_in_the_result_and_the_result_is_not_ok(
+        capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        seen = _capture_results(monkeypatch)
+        monkeypatch.setattr(rrc, "HubspotCrm", _hiding_crm(1))
+        _quiet_floors(monkeypatch)
+        code = rrc.main(["--dry-fakes", "--assume-yes", "--cleanup"])
+        out = capsys.readouterr().out
+        (payload,) = seen
+        assert code == rrc.EXIT_FAILED, out[-1500:]
+        assert payload["summary"]["counter_known"] is True and payload["summary"]["unseen_contacts"] == 1, payload[
+            "summary"
+        ]
+        assert payload["checks"]["ok"] is False and "ALL CHECKS HOLD" not in out, out[-2500:]
+        f7 = next(c for c in payload["checks"]["checks"] if c["id"] == "F7")
+>       assert f7["ok"] is False and "1" in f7["detail"], f7
+E       AssertionError: {'id': 'F7', 'name': "the desk's contact count is known and every contact it made is accounted for", 'ok': True, 'detail': "1 contacts may be left in HubSpot (the desk's count: 9 created)", ...}
+E       assert (True is False)
+
+tests/test_r7u_a_findings.py:347: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r7u_a_findings.py::test_a3_contacts_not_accounted_for_are_in_the_result_and_the_result_is_not_ok
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 1 passed, 37 deselected in 69.98s (0:01:09)

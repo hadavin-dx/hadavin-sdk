@@ -1,0 +1,17 @@
+# PR 83 (P0t-followup, head 72389db) — independent code review 1 (egm-codebase-details, fresh context)
+Saved by the cloud worker from the reviewer's inline report. Read-only reviewer; it ran nothing.
+
+Verdict: no Blocker, no Major. Findings are scanner precision and wording.
+
+CHECKED TRUE (reviewer): redact.py `_COMMON` holds "demo", "pilot", "production" (matches the CHANGELOG); line 1217 skips `_COMMON` words with `.lower()` in the identifier sweep, secret kinds swept in every copy; `tests/stage_exemptions.tsv` row 44 matches the exact stripped redact.py line; the CHANGELOG sentence tested matches character for character; true-positive shapes hand-traced against the regexes; evidence shows 3 tests fail on base and pass after, mutants M1-M11 killed, full suite 10031 passed / 455 skipped on 3.12 and 3.13.
+
+FINDINGS
+- Minor 1: tests/test_stage_names.py:133 (`"x = test, pilot_count"`) passes for the wrong reason (`pilot\b` fails before `_`). "x = test, pilot count" or "unit test, demo run" still hits the "new word beside another stage" regex (lines 461-470); prose like "a test, demo or prod run" in a scanned file would fail `test_the_old_stage_word_is_gone` and need an exact-line exemption. Require quoted/list context for bare `test`, or replace the ignore case with one that exercises the boundary.
+- Minor 2: line 457 ("new word after a stage name") is prose-sensitive: `_NAME + [^A-Za-z0-9\n]{1,4} + (test|development|production)` also matches a sentence boundary ("...the next stage. Test the...", "environment. Production runs..."); IGNORECASE on; `_NAME` includes mode, profile, tier ("mode: test" hits). The ignore list has only "mode: testing" and "stage: developmental". Add a prose-boundary ignore case or forbid `.` as separator for the prose-word names.
+- Minor 3: pairs of the new words are not caught: `test|development|production`, `development, production`, `test, production`, a bare `- test` list item pass unflagged (`prod\b` does not match "production"). Coverage gap, no spec in the ticket. Mutant M4 drops only the whole alternative; no mutant removes the second sub-alternative or the `^\s*-\s+` item.
+- Nit 4: stage_exemptions.tsv:44 is appended after the Kubernetes row instead of beside the "dev"/"stage"/"staging" redactor rows (40-42).
+- Nit 5: docstring at test_stage_names.py:174-178 says the value after a label is masked "whatever its spelling" but only `Pilot` and `Demo` are tested; lowercase `tenant_id=pilot`, `customer_id=demo` not pinned.
+- Nit 6: CHANGELOG line 18 "demo-stage database" and, in the same bullet, "a demo database is taken from the merge commit" (the second is the demo project database): one word, one meaning.
+- Nit 7 (disclosure): once a tenant named Pilot is masked by a label, later bare "Pilot" copies stay in clear (follows from `_COMMON`, pinned by the test, stated in the CHANGELOG). A stated leak window on a no-round-cap redaction path: lead/owner to confirm it is accepted (ticket BN-2 expected the common-word addition).
+
+NOT CHECKED (reviewer): ran no pytest/ruff/bandit/mutants; scan_repo evidence file holds only the sha and an empty line (cannot tell "zero hits" from "not run"); 455 skipped Postgres tests not examined; DSN evidence files were listed but not read (they were still running); base-vs-snapshot not diffed beyond the files above; rest of test_stage_names.py (lines 1-380, 640+) not read; `MASKED_PD` expected strings not run; CI/CodeQL/Sonar/CodeRabbit and the PR description not checked.

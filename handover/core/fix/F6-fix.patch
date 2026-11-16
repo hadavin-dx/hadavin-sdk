@@ -1,0 +1,1025 @@
+diff --git a/README.md b/README.md
+index b907165..0ff74e8 100644
+--- a/README.md
++++ b/README.md
+@@ -87,7 +87,7 @@ If PowerShell refuses to run the scripts at all (a policy set by your organisati
+ 
+ You have the demo working when the counts and the outbox match the comments above: 2 requests received, 1 new, 1 duplicate, and exactly one email. If `/counts` does not answer within a few seconds, read `data/desk.log` (on Windows also `data/desk.err.log`), run the reset script and start again. The desk answers 404 for `/` and `/health` on purpose: it has no such pages. On Windows, starting again on the same port right after a stop can fail for about two minutes (the operating system keeps the port closed for a while). The `/fake/...` paths are the demo servers' own addresses and keep that word in the URL.
+ 
+-The reset script refuses, with one line of reason and nothing deleted, in these cases (exit code): 2 the database is not inside `./data` (or `RESET_STOP_WAIT_SECONDS`, which both `scripts/reset.sh` and `scripts/reset.ps1` check before they stop or delete anything, is not a whole number from 0 to 999 without a leading zero; an empty value counts as not set and means 10), 3 a process still holds the desk's database, its lock file or data folder cannot be looked at, or (Linux) `ps` is not installed, 4 something still answers on the desk's or the demo server's port, 5 a process did not stop in time, 6 a pid file names another program.
++The reset script refuses, with one line of reason and nothing deleted, in these cases (exit code): 2 the database is not inside `./data` (or `RESET_STOP_WAIT_SECONDS`, which both `scripts/reset.sh` and `scripts/reset.ps1` check before they stop or delete anything, is not a whole number from 0 to 999 without a leading zero; an empty value counts as not set and means 10), 3 a process still holds the desk's database, its lock file or data folder cannot be looked at, or (Linux) `ps` is not installed, 4 something still answers on the desk's or the demo server's port, or a `DESK_` setting is wrong (the same one line the desk prints, for example `the desk refuses a setting: ...`; `scripts/start_all.sh` and `scripts/start_all.ps1` end the same way with the same code), 5 a process did not stop in time, 6 a pid file names another program.
+ 
+ ## What is claimed, and what is not
+ 
+diff --git a/demo_only/fake_model_server.py b/demo_only/fake_model_server.py
+index 1adc3bb..f46531c 100644
+--- a/demo_only/fake_model_server.py
++++ b/demo_only/fake_model_server.py
+@@ -22,12 +22,15 @@ from __future__ import annotations
+ import argparse
+ import json
+ import re
++import sys
+ import threading
+ import time
+ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+ from pathlib import Path
+ from typing import Any
+ 
++from lead_desk.regfile import open_output, open_regular
++
+ MODES = ("ok", "mixed", "slow", "timeout", "r429", "malformed", "refusal", "r5xx", "badlabel", "drip")
+ ALIASES = {"rate_limit": "r429", "malformed_json": "malformed", "malformed_label": "badlabel", "server_error": "r5xx"}
+ CYCLE = ("hot", "warm", "cold")
+@@ -93,7 +96,7 @@ class ModelState:
+         lead_id = found.group(1) if found else ""
+         stamp = time.time()  # wall-clock: calendar stamp
+         line = json.dumps({"ts": stamp, "lead_id": lead_id, "mode": mode, "status": status})
+-        with self.lock, self.call_log.open("a", encoding="utf-8") as f:
++        with self.lock, open_output(self.call_log, "a", encoding="utf-8") as f:
+             f.write(line + "\n")
+ 
+ 
+@@ -246,7 +249,17 @@ def main() -> None:
+     ap.add_argument("--call-log", type=Path, default=None, help="one JSON line per call, for the invariant checker")
+     ap.add_argument("--control-file", type=Path, default=None, help="file with one mode word, read on every call")
+     a = ap.parse_args()
+-    key = Path(a.key_file).read_text(encoding="utf-8").strip() if a.key_file else None
++    try:  # a pipe or a folder named here would block or break the first logged call: refuse now, with one line
++        if a.call_log is not None:
++            open_output(a.call_log, "a", encoding="utf-8").close()
++        if a.key_file:
++            with open_regular(a.key_file) as kf:
++                key: str | None = kf.read().decode("utf-8").strip()
++        else:
++            key = None
++    except (OSError, ValueError):  # ValueError: not UTF-8 text
++        print("refused: --call-log or --key-file cannot be used: give a regular file", flush=True)
++        sys.exit(2)
+     srv, state = make_model_server(port=a.port, mode=a.mode, key=key, call_log=a.call_log, control_file=a.control_file)
+     print(f"fake model listening on port {srv.server_address[1]}", flush=True)
+     try:
+diff --git a/load_tools/load_driver.py b/load_tools/load_driver.py
+index b6273e9..7dde5b6 100644
+--- a/load_tools/load_driver.py
++++ b/load_tools/load_driver.py
+@@ -359,7 +359,8 @@ def run(
+     schedule = build_schedule(scenario, t0, prefix, seed)
+     url = base_url.rstrip("/") + "/leads"
+     workers = max(1, min(workers, len(schedule) or 1))
+-    parts = [log.with_name(f"{log.name}.part{k}") for k in range(workers)]
++    # each part file is checked like the log: a pipe left under that name would block the worker that opens it
++    parts = [confine(log.with_name(f"{log.name}.part{k}"), what="--log") for k in range(workers)]
+     jobs = [(k, url, schedule[k::workers], threads, parts[k]) for k in range(workers)]
+     facts.update(
+         scenario=scenario,
+diff --git a/scripts/desk_setting.py b/scripts/desk_setting.py
+new file mode 100644
+index 0000000..79ab335
+--- /dev/null
++++ b/scripts/desk_setting.py
+@@ -0,0 +1,44 @@
++"""Print one desk setting for the start and reset scripts (scripts/reset.sh, start_all.sh, reset.ps1, start_all.ps1).
++
++Run from the repository root with PYTHONPATH set to the source folder:
++    python scripts/desk_setting.py db-path | data-dir | fakes-port | port
++It prints the value the desk would use (the database file, its folder, the demo server's port, the desk's port), read
++from the DESK_* environment variables by Config.from_env, the same code the desk itself runs. When a DESK_* value is
++refused it prints the ONE line the desk prints, `the desk refuses a setting: <what is wrong>`, and ends with exit code 4
++(the desk's own code for a refused setting): no Python traceback, and the text never repeats the value that was typed
++(the refusal texts name the setting, not its value). A wrong command line ends with a usage line and exit code 2."""
++
++from __future__ import annotations
++
++import sys
++from collections.abc import Callable
++
++from lead_desk.config import Config
++from lead_desk.constants import EXIT_DESK_SETTING_REFUSED
++from lead_desk.envnum import SettingRefused
++
++EXIT_USAGE = 2
++ARGS = 2  # the script name and one word
++WHAT: dict[str, Callable[[Config], object]] = {
++    "db-path": lambda c: c.db_path,
++    "data-dir": lambda c: c.db_path.parent,
++    "fakes-port": lambda c: c.fakes_port,
++    "port": lambda c: c.port,
++}
++
++
++def main(argv: list[str]) -> int:
++    if len(argv) != ARGS or argv[1] not in WHAT:
++        print("usage: python scripts/desk_setting.py " + " | ".join(WHAT))  # never echoes what was typed
++        return EXIT_USAGE
++    try:
++        config = Config.from_env()
++    except SettingRefused as e:  # the same line and exit code as the desk itself (server.main)
++        print(f"the desk refuses a setting: {e}")
++        return EXIT_DESK_SETTING_REFUSED
++    print(WHAT[argv[1]](config))
++    return 0
++
++
++if __name__ == "__main__":
++    sys.exit(main(sys.argv))
+diff --git a/scripts/reset.ps1 b/scripts/reset.ps1
+index 42bdfc0..89f767a 100644
+--- a/scripts/reset.ps1
++++ b/scripts/reset.ps1
+@@ -12,7 +12,13 @@ if ($env:RESET_STOP_WAIT_SECONDS) {
+     }
+     $stopWait = [int]$env:RESET_STOP_WAIT_SECONDS
+ }
+-$db = (python -c "from lead_desk.config import Config; print(Config.from_env().db_path)").Trim()
++# a bad DESK_* value ends with the desk's one refusal line and exit code 4, not a Python traceback (scripts\desk_setting.py)
++function Get-DeskSetting([string]$Name) {
++    $text = python scripts\desk_setting.py $Name
++    if ($LASTEXITCODE -ne 0) { Write-Host $text; exit $LASTEXITCODE }
++    return "$text".Trim()
++}
++$db = Get-DeskSetting 'db-path'
+ $dataDir = Split-Path -Parent $db
+ # real paths: a junction or symlink inside data\ that points elsewhere is followed (same check as reset.sh)
+ $inside = python -c "import os, sys; d = os.path.normcase(os.path.realpath(sys.argv[1])); r = os.path.normcase(os.path.realpath('data')); print(d == r or d.startswith(r + os.sep))" $dataDir
+diff --git a/scripts/reset.sh b/scripts/reset.sh
+index c8e07bd..319d96a 100644
+--- a/scripts/reset.sh
++++ b/scripts/reset.sh
+@@ -11,7 +11,14 @@ case "${RESET_STOP_WAIT_SECONDS:-10}" in
+   *) echo "refused: RESET_STOP_WAIT_SECONDS must be a whole number of seconds from 0 to 999 with no leading zero; nothing was stopped or deleted" >&2; exit 2 ;;
+ esac
+ export PYTHONPATH="src:."
+-db="$(python -c 'from lead_desk.config import Config; print(Config.from_env().db_path)')"
++# a bad DESK_* value ends with the desk's one refusal line and exit code 4, not a Python traceback (scripts/desk_setting.py)
++desk_setting() {
++  local out rc=0
++  out="$(python scripts/desk_setting.py "$1")" || rc=$?
++  if [[ "$rc" -ne 0 ]]; then printf '%s\n' "$out" >&2; exit "$rc"; fi
++  printf '%s\n' "$out"
++}
++db="$(desk_setting db-path)"
+ data_dir="$(dirname "$db")"
+ inside="$(python -c 'import os, sys; d = os.path.realpath(sys.argv[1]); r = os.path.realpath("data"); print(d == r or d.startswith(r + os.sep))' "$data_dir")"
+ if [[ "$inside" != "True" ]]; then
+diff --git a/scripts/start_all.ps1 b/scripts/start_all.ps1
+index b3e1fec..2b9de8c 100644
+--- a/scripts/start_all.ps1
++++ b/scripts/start_all.ps1
+@@ -7,8 +7,14 @@ $ErrorActionPreference = 'Stop'
+ $env:PYTHONPATH = 'src;.'
+ if ($null -eq $env:DESK_LEADFLOW_FILE) { $env:DESK_LEADFLOW_FILE = 'demo_only/leadflow.json' }
+ if ($env:DESK_LEADFLOW_FILE -cne 'off' -and $null -eq $env:DESK_NUDGE_TO) { $env:DESK_NUDGE_TO = 'reminder@example.test' }
+-$dataDir = (python -c "from lead_desk.config import Config; print(Config.from_env().db_path.parent)").Trim()
+-$fakesPort = (python -c "from lead_desk.config import Config; print(Config.from_env().fakes_port)").Trim()
++# a bad DESK_* value ends with the desk's one refusal line and exit code 4, not a Python traceback (scripts\desk_setting.py)
++function Get-DeskSetting([string]$Name) {
++    $text = python scripts\desk_setting.py $Name
++    if ($LASTEXITCODE -ne 0) { Write-Host $text; exit $LASTEXITCODE }
++    return "$text".Trim()
++}
++$dataDir = Get-DeskSetting 'data-dir'
++$fakesPort = Get-DeskSetting 'fakes-port'
+ New-Item -ItemType Directory -Force -Path $dataDir | Out-Null
+ if ((Test-Path "$dataDir\fakes.pid") -or (Test-Path "$dataDir\desk.pid")) {
+     throw 'pid files exist: run scripts\reset.ps1 first'
+@@ -20,6 +26,6 @@ $desk = Start-Process python -ArgumentList '-m', 'lead_desk.server' `
+     -PassThru -WindowStyle Hidden -RedirectStandardOutput "$dataDir\desk.log" -RedirectStandardError "$dataDir\desk.err.log"
+ $desk.Id | Set-Content "$dataDir\desk.pid"
+ Write-Host "started: demo servers ($Mode outbox) pid $($fakes.Id), desk pid $($desk.Id)"
+-$deskPort = (python -c "from lead_desk.config import Config; print(Config.from_env().port)").Trim()
++$deskPort = Get-DeskSetting 'port'
+ Write-Host "ports: desk $deskPort, demo CRM and outbox $fakesPort (check with: Invoke-WebRequest http://127.0.0.1:$deskPort/counts)"
+ Write-Host "logs: $dataDir\fakes.log and $dataDir\desk.log (and .err.log)"
+diff --git a/scripts/start_all.sh b/scripts/start_all.sh
+index a609768..feda9cb 100644
+--- a/scripts/start_all.sh
++++ b/scripts/start_all.sh
+@@ -13,8 +13,15 @@ case "$mode" in keyed|blind) ;; *) echo "mode must be keyed or blind" >&2; exit
+ export PYTHONPATH="src:."
+ export DESK_LEADFLOW_FILE="${DESK_LEADFLOW_FILE-demo_only/leadflow.json}"
+ if [[ "$DESK_LEADFLOW_FILE" != off ]] && [[ -n "$DESK_LEADFLOW_FILE" ]]; then export DESK_NUDGE_TO="${DESK_NUDGE_TO-reminder@example.test}"; fi
+-data_dir="$(python -c 'from lead_desk.config import Config; print(Config.from_env().db_path.parent)')"
+-fakes_port="$(python -c 'from lead_desk.config import Config; print(Config.from_env().fakes_port)')"
++# a bad DESK_* value ends with the desk's one refusal line and exit code 4, not a Python traceback (scripts/desk_setting.py)
++desk_setting() {
++  local out rc=0
++  out="$(python scripts/desk_setting.py "$1")" || rc=$?
++  if [[ "$rc" -ne 0 ]]; then printf '%s\n' "$out" >&2; exit "$rc"; fi
++  printf '%s\n' "$out"
++}
++data_dir="$(desk_setting data-dir)"
++fakes_port="$(desk_setting fakes-port)"
+ mkdir -p "$data_dir"
+ if [[ -e "$data_dir/fakes.pid" ]] || [[ -e "$data_dir/desk.pid" ]]; then
+   echo "pid files exist: run scripts/reset.sh first" >&2
+@@ -25,6 +32,6 @@ echo $! >"$data_dir/fakes.pid"
+ python -m lead_desk.server >"$data_dir/desk.log" 2>&1 &
+ echo $! >"$data_dir/desk.pid"
+ echo "started: demo servers ($mode outbox) pid $(cat "$data_dir/fakes.pid"), desk pid $(cat "$data_dir/desk.pid")"
+-desk_port="$(python -c 'from lead_desk.config import Config; print(Config.from_env().port)')"
++desk_port="$(desk_setting port)"
+ echo "ports: desk $desk_port, demo CRM and outbox $fakes_port (check with: curl http://127.0.0.1:$desk_port/counts)"
+ echo "logs: $data_dir/fakes.log and $data_dir/desk.log"
+diff --git a/src/lead_desk/desk.py b/src/lead_desk/desk.py
+index bbb2ca8..fefc818 100644
+--- a/src/lead_desk/desk.py
++++ b/src/lead_desk/desk.py
+@@ -8,9 +8,11 @@ from __future__ import annotations
+ import functools
+ import json
+ import logging
++import os
+ import re
+ import secrets
+ import sqlite3
++import stat
+ import threading
+ import time
+ from collections.abc import Callable, Iterator
+@@ -307,6 +309,9 @@ class Reply:
+ 
+ 
+ MEMORY_BOOK_PROBLEM = "the lead book must be a file: ':memory:' is empty for every thread but the first"
++NOT_A_FILE_BOOK_PROBLEM = (
++    "the lead book path names a pipe, a device or a folder: it must be a regular file or a new name"
++)
+ 
+ 
+ def book_problem(db_path: Path | str) -> str | None:
+@@ -315,10 +320,16 @@ def book_problem(db_path: Path | str) -> str | None:
+     `main` runs it BEFORE the lock step (the lock file is named after the book, so a refusal after it would leave
+     `<name>.lock` behind) and the desk repeats it when it is built. `Path("")` is "." so only this spelling can name
+     a private memory book. (A `file:` name is NOT refused: the desk resolves every other name to an absolute path
+-    before SQLite sees it, so `file::memory:` is a plain file called that, never a memory book.)"""
++    before SQLite sees it, so `file::memory:` is a plain file called that, never a memory book.) An existing path
++    that is a pipe, a device or a folder is refused too (SQLite ends a pipe with a "disk I/O error" traceback); a name
++    that does not exist yet is fine, the book is made there."""
+     if str(db_path) == ":memory:":
+         return MEMORY_BOOK_PROBLEM
+-    return None
++    try:
++        mode = os.stat(db_path).st_mode  # follows a link: a link to a pipe is a pipe
++    except (OSError, ValueError):  # not there yet (a new book is made), or not something to look at
++        return None
++    return None if stat.S_ISREG(mode) else NOT_A_FILE_BOOK_PROBLEM
+ 
+ 
+ class Desk:
+diff --git a/src/lead_desk/live_claude.py b/src/lead_desk/live_claude.py
+index 0544cad..a1d300f 100644
+--- a/src/lead_desk/live_claude.py
++++ b/src/lead_desk/live_claude.py
+@@ -56,7 +56,7 @@ from lead_desk.constants import (
+     LIVE_REPLY_MAX_BYTES,
+     LIVE_REPORTED_TOKENS_MAX,
+ )
+-from lead_desk.regfile import open_regular
++from lead_desk.regfile import open_output, open_regular
+ 
+ SYSTEM_TEXT = (
+     "You sort sales leads. Answer with exactly one word: hot, warm or cold. No other text, no punctuation. "
+@@ -160,7 +160,7 @@ class _FileLock:
+     def __enter__(self) -> None:
+         try:
+             self.path.parent.mkdir(parents=True, exist_ok=True)
+-            f = open(self.path, "a+b")  # noqa: SIM115
++            f = open_output(self.path, "a+b")
+         except OSError as e:
+             raise LiveCapReached("the spend ledger lock file cannot be opened: check the ledger folder") from e
+         for _ in range(LIVE_LEDGER_LOCK_TRIES):
+@@ -289,7 +289,7 @@ class SpendLedger:
+     def _append(self, row: dict[str, str]) -> None:
+         line = (json.dumps(row, sort_keys=True) + "\n").encode("utf-8")
+         try:
+-            with open(self.path, "a+b") as f:
++            with open_output(self.path, "a+b") as f:
+                 size = f.seek(0, 2)
+                 if size > LIVE_LEDGER_FILE_MAX_BYTES:
+                     raise LiveCapReached(_TOO_BIG_FILE)  # reserve and settle both stop at the same size
+diff --git a/src/lead_desk/lockfile.py b/src/lead_desk/lockfile.py
+index 424a102..15ab752 100644
+--- a/src/lead_desk/lockfile.py
++++ b/src/lead_desk/lockfile.py
+@@ -8,6 +8,8 @@ import sys
+ from pathlib import Path
+ from typing import IO
+ 
++from lead_desk.regfile import open_output
++
+ 
+ class LockHeldError(BlockingIOError):
+     """Another desk holds the lock for this lead book."""
+@@ -48,7 +50,7 @@ def acquire(db_path: Path | str) -> IO[bytes]:
+     path = lock_path(db_path)
+     for _ in range(_LOCK_TRIES):
+         try:
+-            f = open(path, "a+b")  # noqa: SIM115 (the handle is the lock; the caller keeps it)
++            f = open_output(path, "a+b")  # the handle is the lock; the caller keeps it
+         except OSError as e:
+             raise LockUnavailableError(f"cannot open the lock file: {type(e).__name__}") from e
+         try:
+diff --git a/src/lead_desk/regfile.py b/src/lead_desk/regfile.py
+index 4672a94..5f6a97d 100644
+--- a/src/lead_desk/regfile.py
++++ b/src/lead_desk/regfile.py
+@@ -1,16 +1,27 @@
+-"""The one way the library opens a file it only reads (settings, key and flag files): a REGULAR file or a refusal.
++"""The one way the library opens a file: a REGULAR file or a refusal. `open_regular` is for a file it only reads
++(settings, key and flag files); `open_output` is for a file it writes or appends to (the lock file, the spend ledger,
++the trace file, the counters file).
+ 
+ A pipe (FIFO), a device or a socket has no end, so a plain read of one can wait for ever. The file is opened without
+ waiting (O_NONBLOCK, so opening a pipe returns at once), its kind is checked on the open handle (not on the name, so
+ a swap between the check and the read changes nothing) and anything but a regular file is refused with an OSError,
+-which every reader already turns into its own fixed "cannot be read" text (never the path)."""
++which every reader already turns into its own fixed "cannot be read" text (never the path).
++
++A file that is written has the same trap (opening a pipe for writing waits until somebody reads it) and one more: a
++path the operator names that does not exist yet must be created. `open_output` opens it without waiting, creates it
++only when it is absent, checks the kind on the open handle and refuses anything but a regular file BEFORE any byte is
++cut off or written (a file is shortened only after the check). A link that points to a regular file keeps working (an
++operator may link a log file); a link that points to a pipe is refused like the pipe, because the kind is read from
++the open handle, not from the name."""
+ 
+ from __future__ import annotations
+ 
++import errno
+ import os
+ import stat
+-from typing import IO
++from typing import IO, Any
+ 
++_COMMON = getattr(os, "O_NONBLOCK", 0) | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_BINARY", 0)
+ _FLAGS = os.O_RDONLY | getattr(os, "O_NONBLOCK", 0) | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_BINARY", 0)
+ 
+ 
+@@ -33,3 +44,37 @@ def open_regular(path: str | os.PathLike[str]) -> IO[bytes]:
+     except BaseException:
+         os.close(fd)
+         raise
++
++
++_OUTPUT_MODES = ("a", "a+b", "w")
++_NEW_FILE_MODE = 0o666  # the same as open(): the umask of the process then removes what it must
++
++
++def open_output(path: str | os.PathLike[str], mode: str = "a+b", encoding: str | None = None) -> IO[Any]:
++    """Open `path` for writing and return the file object, or raise NotRegularFile (an OSError) for a pipe, a device,
++    a socket, a folder or a NUL character in the name. `mode` is "a" (text append; give `encoding`), "a+b" (binary
++    append and read) or "w" (text write; give `encoding`; the file is emptied only once it is known to be a regular
++    file). A missing file is created (the folder must exist). Any other OSError (no permission, a missing folder, a
++    full disk) is raised as it is."""
++    if mode not in _OUTPUT_MODES:
++        raise ValueError("mode must be one of " + ", ".join(_OUTPUT_MODES))
++    flags = _COMMON | os.O_CREAT | (os.O_RDWR if "+" in mode else os.O_WRONLY) | (os.O_APPEND if "a" in mode else 0)
++    try:
++        fd = os.open(path, flags, _NEW_FILE_MODE)
++    except ValueError:  # an embedded NUL character
++        raise NotRegularFile("not a regular file") from None
++    except IsADirectoryError:
++        raise NotRegularFile("not a regular file") from None
++    except OSError as e:
++        if e.errno == errno.ENXIO:  # a pipe that nobody reads: opening it for writing without waiting says so
++            raise NotRegularFile("not a regular file") from None
++        raise
++    try:
++        if not stat.S_ISREG(os.fstat(fd).st_mode):
++            raise NotRegularFile("not a regular file")
++        if mode == "w":
++            os.ftruncate(fd, 0)
++        return os.fdopen(fd, mode, encoding=encoding)
++    except BaseException:
++        os.close(fd)
++        raise
+diff --git a/src/lead_desk/run_stats.py b/src/lead_desk/run_stats.py
+index a7526e3..05559c2 100644
+--- a/src/lead_desk/run_stats.py
++++ b/src/lead_desk/run_stats.py
+@@ -9,13 +9,16 @@ import os
+ from collections.abc import Mapping
+ from pathlib import Path
+ 
++from lead_desk.regfile import open_output
++
+ 
+ def write_stats(path: Path | None, data: Mapping[str, int]) -> None:
+     if path is None:
+         return
+     tmp = Path(f"{path}.tmp")
+     try:
+-        tmp.write_text(json.dumps(dict(data), sort_keys=True), encoding="utf-8")
++        with open_output(tmp, "w", encoding="utf-8") as f:
++            f.write(json.dumps(dict(data), sort_keys=True))
+         os.replace(tmp, path)
+     except OSError:
+         pass  # a counters file must never break a send or a put
+diff --git a/src/lead_desk/trace.py b/src/lead_desk/trace.py
+index de9a2ce..57414ef 100644
+--- a/src/lead_desk/trace.py
++++ b/src/lead_desk/trace.py
+@@ -31,7 +31,7 @@ from typing import Any, Literal
+ 
+ from lead_desk.constants import EXIT_SIMULATED_KILL
+ from lead_desk.hooks import Hooks
+-from lead_desk.regfile import open_regular
++from lead_desk.regfile import open_output, open_regular
+ 
+ WINDOWS = ("ai_after", "crm_before_put", "crm_after_put", "send_before", "send_after")
+ 
+@@ -55,7 +55,7 @@ class Tracer:
+             "thread": threading.current_thread().name,
+         }
+         try:
+-            with self._lock, open(self.path, "a", encoding="utf-8") as f:
++            with self._lock, open_output(self.path, "a", encoding="utf-8") as f:
+                 f.write(json.dumps(row, sort_keys=True) + "\n")
+         except Exception:  # noqa: BLE001 (a full disk or a locked file must not turn a good call into a failed one)
+             with self._lock:
+diff --git a/tests/test_reset_scripts.py b/tests/test_reset_scripts.py
+index 22baabc..7f017c5 100644
+--- a/tests/test_reset_scripts.py
++++ b/tests/test_reset_scripts.py
+@@ -282,17 +282,17 @@ def test_reset_refuses_when_the_lock_file_cannot_be_tested_and_creates_none_on_a
+     assert again.returncode == 4 and not lock.exists(), (again.stdout, again.stderr)
+ 
+ 
+-# A stand-in `python` for scripts/start_all.sh: it answers the three `python -c` helper calls (data folder, demo-server
+-# port, desk port) with fixed values, writes one line per `python -m <module>` launch with the DESK_LEADFLOW_FILE and
+-# DESK_NUDGE_TO it saw, and records every call, so the test sees what the shell [[ ]] tests decided without
+-# starting a server.
++# A stand-in `python` for scripts/start_all.sh: it answers the three helper calls `python scripts/desk_setting.py
++# data-dir | fakes-port | port` (data folder, demo-server port, desk port) with fixed values, writes one line per
++# `python -m <module>` launch with the DESK_LEADFLOW_FILE and DESK_NUDGE_TO it saw, and records every call, so the test
++# sees what the shell [[ ]] tests decided without starting a server.
+ _STUB_PYTHON = """#!/usr/bin/env bash
+ echo "$*" >> "${STUB_DATA}/calls.log"
+-if [[ "$1" == "-c" ]]; then
++if [[ "$1" == "scripts/desk_setting.py" ]]; then
+   case "$2" in
+-    *parent*) echo "${STUB_DATA}";;
+-    *fakes_port*) echo 1234;;
+-    *.port*) echo 4321;;
++    data-dir) echo "${STUB_DATA}";;
++    fakes-port) echo 1234;;
++    port) echo 4321;;
+   esac
+ elif [[ "$1" == "-m" ]]; then
+   echo "LEADFLOW=[${DESK_LEADFLOW_FILE-<unset>}] NUDGE=[${DESK_NUDGE_TO-<unset>}]" > "${STUB_DATA}/launch-$2.rec"
+diff --git a/tests/test_special_output_files.py b/tests/test_special_output_files.py
+new file mode 100644
+index 0000000..fa2f00b
+--- /dev/null
++++ b/tests/test_special_output_files.py
+@@ -0,0 +1,391 @@
++"""Class F6a: a file the desk or a script WRITES to (a lock file, the spend ledger, the trace file, the counters file, a
++result file, a log) must be a regular file or be refused at once. A named pipe (FIFO), a link to one, or a folder under
++that name used to make the writer wait for ever or end with a traceback. A name that does not exist yet must still be
++created. Made-up data only, no network.
++
++Every site runs in a child process with a 5 second limit: a writer that waits on the pipe is a failure (the child is
++killed and the test fails). The library sites are called directly, the command line tools run through runpy in the
++child (no new process of their own, so no subprocess call)."""
++
++from __future__ import annotations
++
++import io
++import multiprocessing
++import os
++import runpy
++import stat
++import sys
++from collections.abc import Callable
++from contextlib import redirect_stderr, redirect_stdout
++from pathlib import Path
++from queue import Empty
++from typing import Any
++
++import pytest
++
++from lead_desk.desk import book_problem
++
++REPO = Path(__file__).resolve().parents[1]
++LIMIT_SECONDS = 5
++FIFO_SKIP = pytest.mark.skipif(not hasattr(os, "mkfifo"), reason="no named pipes on this platform")
++KINDS = ("pipe", "link-to-pipe", "folder")
++NOT_A_FILE_BOOK_PROBLEM = (
++    "the lead book path names a pipe, a device or a folder: it must be a regular file or a new name"
++)
++
++
++def make_special(kind: str, path: Path) -> None:
++    """Create a pipe, a link to a pipe, or a folder at `path`."""
++    if kind == "pipe":
++        os.mkfifo(path)
++    elif kind == "link-to-pipe":
++        real = path.with_name(path.name + ".real-pipe")
++        os.mkfifo(real)
++        path.symlink_to(real)
++    else:
++        path.mkdir()
++
++
++# ---------------------------------------------------------------- the child-process runner
++def _child(fn: Callable[[str], str], arg: str, queue: Any) -> None:
++    try:
++        queue.put(fn(arg))
++    except BaseException as e:  # the child reports whatever happened, it never raises
++        queue.put(f"{type(e).__name__}|{e}")
++
++
++def in_child(fn: Callable[[str], str], arg: str) -> str:
++    """Run fn(arg) in a child process; the answer is the string it returns, or "KindName|text" when it raised. A child
++    that has not answered after LIMIT_SECONDS is killed and the test fails."""
++    ctx = multiprocessing.get_context("fork")
++    queue = ctx.Queue()
++    child = ctx.Process(target=_child, args=(fn, arg, queue), daemon=True)
++    child.start()
++    try:
++        return str(queue.get(timeout=LIMIT_SECONDS))
++    except Empty:
++        pytest.fail(f"{fn.__name__} waited for ever (more than {LIMIT_SECONDS} s) on a pipe or a folder")
++    finally:
++        child.terminate()
++        child.join(10)
++
++
++def run_script(script: Path, *args: str) -> Callable[[str], str]:
++    """A function for in_child that runs a command line tool in the child and answers 'CODE|all text it printed'."""
++
++    def go(_: str) -> str:
++        sys.argv = [str(script), *args]
++        sys.path.insert(0, str(REPO))
++        sys.path.insert(0, str(REPO / "src"))
++        out = io.StringIO()
++        code: object = 0
++        with redirect_stdout(out), redirect_stderr(out):
++            try:
++                runpy.run_path(str(script), run_name="__main__")
++            except SystemExit as e:
++                code = e.code
++        return f"{code}|{out.getvalue()}"
++
++    go.__name__ = "run_" + script.stem
++    return go
++
++
++# ---------------------------------------------------------------- library sites
++def _lock(path: str) -> str:
++    from lead_desk import lockfile
++
++    lockfile.acquire(Path(path))  # the lock file is "<path>.lock"
++    return "ACCEPTED"
++
++
++def _ledger_lock(path: str) -> str:
++    from lead_desk.live_claude import _FileLock
++
++    with _FileLock(Path(path)):
++        return "ACCEPTED"
++
++
++def _ledger_append(path: str) -> str:
++    from lead_desk.live_claude import SpendLedger
++
++    SpendLedger(Path(path))._append({"op": "reserve", "id": "x", "usd": "0.01"})
++    return "ACCEPTED"
++
++
++def _trace(path: str) -> str:
++    from lead_desk.trace import Tracer
++
++    t = Tracer(Path(path))
++    t.event("e1", "stage", 1, 2)
++    return f"RETURNED|failures={t.write_failures}"
++
++
++def _stats(path: str) -> str:
++    from lead_desk.run_stats import write_stats
++
++    write_stats(Path(path), {"a": 1})
++    return f"RETURNED|created={os.path.lexists(path)}"
++
++
++def _model_log(path: str) -> str:
++    import importlib
++
++    state = importlib.import_module("demo_only.fake_model_server").ModelState(call_log=Path(path))
++    state.log_call({"messages": [{"content": "x"}]}, "ok", 200)
++    return "ACCEPTED"
++
++
++LEDGER_LOCK_TEXT = "LiveCapReached|the spend ledger lock file cannot be opened: check the ledger folder"
++LEDGER_WRITE_TEXT = "LiveCapReached|the spend ledger cannot be written: check the disk and the ledger file"
++SITES: dict[str, tuple[Callable[[str], str], str, str]] = {
++    # name: (function, what is added to the name for the place of the special file, the answer that is wanted)
++    "lock": (_lock, ".lock", "LockUnavailableError|cannot open the lock file: NotRegularFile"),
++    "ledger-lock": (_ledger_lock, "", LEDGER_LOCK_TEXT),
++    "ledger-append": (_ledger_append, "", LEDGER_WRITE_TEXT),
++    "trace": (_trace, "", "RETURNED|failures=1"),
++    "stats": (_stats, ".tmp", "RETURNED|created=False"),
++    "model-log": (_model_log, "", "NotRegularFile|not a regular file"),
++}
++
++
++@FIFO_SKIP
++@pytest.mark.parametrize("kind", KINDS)
++@pytest.mark.parametrize("site", sorted(SITES))
++def test_a_writer_refuses_a_pipe_a_link_to_a_pipe_and_a_folder_at_once(tmp_path: Path, site: str, kind: str) -> None:
++    fn, suffix, want = SITES[site]
++    make_special(kind, tmp_path / ("name" + suffix))
++    answer = in_child(fn, str(tmp_path / "name"))
++    assert answer == want, answer
++    assert str(tmp_path) not in answer
++
++
++@FIFO_SKIP
++def test_the_special_file_is_left_as_it_was(tmp_path: Path) -> None:
++    os.mkfifo(tmp_path / "p")
++    assert in_child(_trace, str(tmp_path / "p")) == "RETURNED|failures=1"
++    assert stat.S_ISFIFO(os.lstat(tmp_path / "p").st_mode)
++
++
++# ---------------------------------------------------------------- the helper itself
++def test_open_output_creates_a_missing_file_and_appends_to_it(tmp_path: Path) -> None:
++    from lead_desk.regfile import open_output
++
++    path = tmp_path / "new.log"
++    with open_output(path, "a", encoding="utf-8") as f:
++        f.write("one\n")
++    with open_output(path, "a", encoding="utf-8") as f:
++        f.write("two\n")
++    assert path.read_text(encoding="utf-8") == "one\ntwo\n"
++    assert stat.S_IMODE(os.stat(path).st_mode) == 0o666 & ~_umask()
++
++
++def _umask() -> int:
++    old = os.umask(0)
++    os.umask(old)
++    return old
++
++
++def test_open_output_binary_append_reads_and_writes_at_the_end(tmp_path: Path) -> None:
++    from lead_desk.regfile import open_output
++
++    path = tmp_path / "ledger"
++    path.write_bytes(b"abc\n")
++    with open_output(path, "a+b") as f:
++        assert f.seek(0, 2) == 4
++        f.seek(0)
++        assert f.read() == b"abc\n"
++        f.write(b"def\n")
++    assert path.read_bytes() == b"abc\ndef\n"
++
++
++def test_open_output_w_empties_a_regular_file_only(tmp_path: Path) -> None:
++    from lead_desk.regfile import open_output
++
++    path = tmp_path / "out.json"
++    path.write_text("old old old", encoding="utf-8")
++    with open_output(path, "w", encoding="utf-8") as f:
++        f.write("new")
++    assert path.read_text(encoding="utf-8") == "new"
++
++
++def test_open_output_follows_a_link_to_a_regular_file(tmp_path: Path) -> None:
++    from lead_desk.regfile import open_output
++
++    real = tmp_path / "real"
++    real.write_text("x", encoding="utf-8")
++    (tmp_path / "link").symlink_to(real)
++    with open_output(tmp_path / "link", "a", encoding="utf-8") as f:
++        f.write("y")
++    assert real.read_text(encoding="utf-8") == "xy"
++
++
++@FIFO_SKIP
++@pytest.mark.parametrize("kind", KINDS)
++@pytest.mark.parametrize("mode", ["a", "a+b", "w"])
++def test_open_output_refuses_every_special_kind_in_every_mode(tmp_path: Path, kind: str, mode: str) -> None:
++    def go(path: str) -> str:
++        from lead_desk.regfile import NotRegularFile, open_output
++
++        try:
++            open_output(path, mode, encoding="utf-8" if "b" not in mode else None)
++        except NotRegularFile as e:
++            return f"NotRegularFile|{e}"
++        return "ACCEPTED"
++
++    make_special(kind, tmp_path / "x")
++    assert in_child(go, str(tmp_path / "x")) == "NotRegularFile|not a regular file"
++
++
++def test_open_output_refuses_a_nul_character_and_a_wrong_mode(tmp_path: Path) -> None:
++    from lead_desk.regfile import NotRegularFile, open_output
++
++    with pytest.raises(NotRegularFile):
++        open_output(str(tmp_path / "a\x00b"))
++    with pytest.raises(ValueError, match="mode must be"):
++        open_output(tmp_path / "f", "r")
++    assert not (tmp_path / "f").exists()
++
++
++def test_open_output_a_missing_folder_is_still_an_ordinary_oserror(tmp_path: Path) -> None:
++    from lead_desk.regfile import NotRegularFile, open_output
++
++    with pytest.raises(FileNotFoundError) as caught:
++        open_output(tmp_path / "no-such-folder" / "f")
++    assert not isinstance(caught.value, NotRegularFile)
++
++
++@FIFO_SKIP
++def test_a_regular_file_is_not_cut_when_the_name_was_a_pipe_check_fails(tmp_path: Path) -> None:
++    """The file is emptied only after the kind is known: a link to a pipe leaves the pipe alone, a regular file named
++    in "w" mode loses its old text (the old behaviour)."""
++    from lead_desk.regfile import NotRegularFile, open_output
++
++    os.mkfifo(tmp_path / "p")
++    (tmp_path / "l").symlink_to(tmp_path / "p")
++    with pytest.raises(NotRegularFile):
++        open_output(tmp_path / "l", "w", encoding="utf-8")
++    assert stat.S_ISFIFO(os.stat(tmp_path / "p").st_mode)
++
++
++# ---------------------------------------------------------------- command line tools and the path check
++@FIFO_SKIP
++@pytest.mark.parametrize("kind", ["pipe", "link-to-pipe"])
++def test_confine_refuses_an_existing_pipe_for_a_written_file_and_keeps_new_names(tmp_path: Path, kind: str) -> None:
++    from tools.pathconfine import PathRefused, confine, confine_existing
++
++    make_special(kind, tmp_path / "out")
++    with pytest.raises(PathRefused, match="--out: is not a regular file"):
++        confine(tmp_path / "out", what="--out", roots=[tmp_path])
++    assert confine(tmp_path / "fresh.log", what="--out", roots=[tmp_path]) == tmp_path.resolve() / "fresh.log"
++    (tmp_path / "plain").write_text("x", encoding="utf-8")
++    assert confine(tmp_path / "plain", what="--out", roots=[tmp_path]) == tmp_path.resolve() / "plain"
++    assert confine_existing(tmp_path / "plain", what="--in", roots=[tmp_path]) == tmp_path.resolve() / "plain"
++
++
++def _answer_is_one_refusal(answer: str, code: str, starts: str) -> None:
++    got, _, text = answer.partition("|")
++    assert got == code, answer
++    assert "Traceback" not in text, text
++    assert text.strip().splitlines()[0].startswith(starts), text
++
++
++@FIFO_SKIP
++@pytest.mark.parametrize("kind", ["pipe", "link-to-pipe"])
++def test_scrub_catcher_and_burst_driver_refuse_a_pipe_as_their_output(tmp_path: Path, kind: str) -> None:
++    (tmp_path / "in.json").write_text('{"name": "w", "nodes": []}', encoding="utf-8")
++    make_special(kind, tmp_path / "out")
++    scrub = run_script(REPO / "tools" / "scrub_n8n_export.py", str(tmp_path / "in.json"), str(tmp_path / "out"))
++    _answer_is_one_refusal(in_child(scrub, ""), "2", "refused: out.json: is not a regular file")
++    catcher = run_script(REPO / "load_tools" / "catcher.py", "--out", str(tmp_path / "out"), "--port", "0")
++    _answer_is_one_refusal(in_child(catcher, ""), "2", "refused: --out: is not a regular file")
++    driver = run_script(
++        REPO / "load_tools" / "load_driver.py",
++        *("--base-url", "http://127.0.0.1:9", "--scenario", "burst:1", "--log", str(tmp_path / "out")),
++    )
++    _answer_is_one_refusal(in_child(driver, ""), "2", "ERROR: --log: is not a regular file")
++
++
++@FIFO_SKIP
++def test_burst_driver_refuses_a_pipe_left_under_a_part_file_name(tmp_path: Path) -> None:
++    os.mkfifo(tmp_path / "burst.log.part0")
++    driver = run_script(
++        REPO / "load_tools" / "load_driver.py",
++        *(
++            "--base-url",
++            "http://127.0.0.1:9",
++            "--scenario",
++            "burst:1",
++            "--log",
++            str(tmp_path / "burst.log"),
++            "--workers",
++            "1",
++        ),
++    )
++    _answer_is_one_refusal(in_child(driver, ""), "2", "ERROR: --log: is not a regular file")
++    assert not (tmp_path / "burst.log").exists() and not (tmp_path / "burst.log.facts.json").exists()
++
++
++@FIFO_SKIP
++def test_invariant_checker_refuses_a_pipe_as_its_json_output(tmp_path: Path) -> None:
++    def go(path: str) -> str:
++        sys.path.insert(0, str(REPO))
++        sys.path.insert(0, str(REPO / "load_tools"))
++        import check_invariants as c
++
++        try:
++            c._confined(path, "--json", output=True)
++        except c.InputError as e:
++            return f"InputError|{e}"
++        return "ACCEPTED"
++
++    os.mkfifo(tmp_path / "j")
++    assert (
++        in_child(go, str(tmp_path / "j"))
++        == "InputError|--json: is not a regular file (a pipe, a device or a socket would block): give a file"
++    )
++
++
++@FIFO_SKIP
++@pytest.mark.parametrize("flag", ["--call-log", "--key-file"])
++def test_fake_model_server_refuses_a_pipe_for_its_files_before_it_starts(tmp_path: Path, flag: str) -> None:
++    pytest.importorskip("demo_only.fake_model_server")
++    os.mkfifo(tmp_path / "p")
++    script = REPO / "demo_only" / "fake_model_server.py"
++    answer = in_child(run_script(script, flag, str(tmp_path / "p"), "--port", "0"), "")
++    _answer_is_one_refusal(answer, "2", "refused: --call-log or --key-file cannot be used")
++
++
++# ---------------------------------------------------------------- the lead book itself
++@FIFO_SKIP
++@pytest.mark.parametrize("kind", KINDS)
++def test_the_desk_refuses_a_pipe_or_a_folder_as_its_lead_book_before_it_takes_the_lock(
++    tmp_path: Path, kind: str
++) -> None:
++    def go(path: str) -> str:
++        from lead_desk.server import main
++
++        os.environ["DESK_DB_PATH"] = path
++        out = io.StringIO()
++        code: object = 0
++        with redirect_stdout(out), redirect_stderr(out):
++            try:
++                main()
++            except SystemExit as e:
++                code = e.code
++        return f"{code}|{out.getvalue().strip()}"
++
++    make_special(kind, tmp_path / "book")
++    answer = in_child(go, str(tmp_path / "book"))
++    code, _, text = answer.partition("|")
++    assert code == "4" and "Traceback" not in text, answer
++    assert text == "the desk refuses to start: " + NOT_A_FILE_BOOK_PROBLEM, answer
++    assert not (tmp_path / "book.lock").exists(), "the refusal came after the lock step"
++
++
++def test_book_problem_judges_the_kind_of_an_existing_path_only(tmp_path: Path) -> None:
++    (tmp_path / "plain").write_text("", encoding="utf-8")
++    assert book_problem(tmp_path / "plain") is None
++    assert book_problem(tmp_path / "new-name") is None
++    assert book_problem(str(tmp_path / "a\x00b")) is None
++    assert book_problem(tmp_path) == NOT_A_FILE_BOOK_PROBLEM
++    assert book_problem(":memory:") is not None and book_problem(":memory:") != NOT_A_FILE_BOOK_PROBLEM
+diff --git a/tests/test_wrapper_setting_refusals.py b/tests/test_wrapper_setting_refusals.py
+new file mode 100644
+index 0000000..888a7b3
+--- /dev/null
++++ b/tests/test_wrapper_setting_refusals.py
+@@ -0,0 +1,113 @@
++"""Class F6b: the start and reset scripts (reset.sh, start_all.sh, reset.ps1, start_all.ps1) read the desk's settings
++through ONE helper, scripts/desk_setting.py. A bad DESK_* value ends with the one refusal line the desk itself prints
++and exit code 4: no Python traceback, and never the value that was typed. Made-up values only, built from parts.
++
++Run here: the two shell scripts (bash) and the helper. NOT run here: the two .ps1 scripts (no PowerShell on this
++machine); they are pinned by a text check only, and on a Windows machine the same tests run them for real."""
++
++from __future__ import annotations
++
++import os
++import sys
++from pathlib import Path
++from typing import Any
++
++import pytest
++from test_reset_scripts import WINDOWS, _run
++
++REPO = Path(__file__).resolve().parents[1]
++SCRIPTS = REPO / "scripts"
++WRAPPERS = ("reset.sh", "start_all.sh", "reset.ps1", "start_all.ps1")
++FAKE_SECRET = "sk-" + "test-" + "not-a-real-key-" + "0123456789"  # made up, built from parts
++REFUSED_LINE = "the desk refuses a setting: "
++
++
++def _helper() -> Any:
++    sys.path.insert(0, str(SCRIPTS))
++    try:
++        import desk_setting
++
++        return desk_setting
++    finally:
++        sys.path.remove(str(SCRIPTS))
++
++
++@pytest.mark.parametrize(
++    "wrapper", ["reset.ps1" if WINDOWS else "reset.sh", "start_all.ps1" if WINDOWS else "start_all.sh"]
++)
++@pytest.mark.parametrize(
++    "bad",
++    [
++        {"DESK_BIND": "a b"},
++        {"DESK_PORT": FAKE_SECRET},
++        {"DESK_BIND": "a b", "DESK_PORT": FAKE_SECRET, "DESK_NOTE": FAKE_SECRET},
++    ],
++)
++def test_a_wrapper_shows_the_refusal_line_and_exits_4_for_a_bad_setting(
++    tmp_path: Path, wrapper: str, bad: dict[str, str]
++) -> None:
++    book = tmp_path / "data" / "desk.sqlite3"
++    book.parent.mkdir()
++    book.write_text("keep me", encoding="utf-8")
++    pid = book.parent / "desk.pid"
++    pid.write_text("1\n", encoding="utf-8")  # a wrapper that went on would stop or delete things around here
++    done = _run(wrapper, book, **bad)
++    text = done.stdout + done.stderr
++    assert done.returncode == 4, (done.returncode, text)
++    assert "Traceback" not in text and 'File "' not in text, text
++    assert FAKE_SECRET not in text and "a b" not in text, text
++    assert text.strip().splitlines()[0].startswith(REFUSED_LINE), text
++    assert len(text.strip().splitlines()) == 1, text
++    assert book.read_text(encoding="utf-8") == "keep me" and pid.exists()
++    assert sorted(p.name for p in book.parent.iterdir()) == [
++        "desk.pid",
++        "desk.sqlite3",
++    ]  # nothing made, nothing deleted
++
++
++@pytest.mark.parametrize("wrapper", WRAPPERS)
++def test_no_wrapper_builds_a_config_inside_python_dash_c_any_more(wrapper: str) -> None:
++    """All four wrappers go through scripts/desk_setting.py; the .ps1 pair (not run here) is pinned by its text: the
++    helper is called, its exit code is checked, and the script ends with that code."""
++    text = (SCRIPTS / wrapper).read_text(encoding="utf-8")
++    assert "Config.from_env" not in text and "lead_desk.config" not in text
++    assert "desk_setting.py" in text
++    if wrapper.endswith(".ps1"):
++        assert "$LASTEXITCODE -ne 0" in text and "exit $LASTEXITCODE" in text and "Write-Host $text" in text
++    else:
++        assert "|| rc=$?" in text and 'exit "$rc"' in text
++
++
++def test_the_helper_prints_each_value_and_refuses_a_bad_one_in_one_line(
++    capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, tmp_path: Path
++) -> None:
++    helper = _helper()
++    book = tmp_path / "d" / "x.sqlite3"
++    for k in [k for k in os.environ if k.startswith("DESK_")]:
++        monkeypatch.delenv(k)
++    monkeypatch.setenv("DESK_DB_PATH", str(book))
++    monkeypatch.setenv("DESK_PORT", "8123")
++    monkeypatch.setenv("DESK_FAKES_PORT", "8124")
++    for name, want in (
++        ("db-path", str(book)),
++        ("data-dir", str(book.parent)),
++        ("fakes-port", "8124"),
++        ("port", "8123"),
++    ):
++        assert helper.main(["desk_setting.py", name]) == 0
++        assert capsys.readouterr().out.strip() == want
++    monkeypatch.setenv("DESK_BIND", "a b")
++    monkeypatch.setenv("DESK_NOTE", FAKE_SECRET)
++    assert helper.main(["desk_setting.py", "port"]) == 4
++    out = capsys.readouterr()
++    assert out.out.startswith(REFUSED_LINE) and len(out.out.strip().splitlines()) == 1 and out.err == ""
++    assert "a b" not in out.out
++
++
++@pytest.mark.parametrize("argv", [[], ["port", "extra"], ["nope"], [FAKE_SECRET]])
++def test_the_helper_answers_a_wrong_command_line_with_usage_and_exit_2(
++    capsys: pytest.CaptureFixture[str], argv: list[str]
++) -> None:
++    assert _helper().main(["desk_setting.py", *argv]) == 2
++    out = capsys.readouterr().out
++    assert out.startswith("usage: ") and FAKE_SECRET not in out
+diff --git a/tools/pathconfine.py b/tools/pathconfine.py
+index 5029f51..37a6ed1 100644
+--- a/tools/pathconfine.py
++++ b/tools/pathconfine.py
+@@ -41,7 +41,8 @@ from a process substitution ``<(...)``), is refused; copy the file to a folder y
+ What is refused, each with a message that names the argument and never prints the value: not text or a path; empty;
+ a NUL or another control character; longer than ``MAX_PATH_CHARS``; a path that cannot be resolved; a link loop (a
+ link that still is a link after resolution); a folder on the path that does not exist or cannot be listed; a path
+-that names a folder (an allowed folder itself, any other folder, or the top of the file system); a path whose real
++that names a folder (an allowed folder itself, any other folder, or the top of the file system); an existing file that
++is written (``confine``) and is a pipe, a device or a socket (a write to a pipe waits for ever); a path whose real
+ location is outside every allowed folder (``..``, absolute path, link that leaves the folder, other drive).
+ 
+ What this is NOT: a defence against a person or an agent that controls the shell (it can start the tool in another
+@@ -146,7 +147,7 @@ def _entry(current: str, part: str, what: str) -> os.DirEntry[str] | None:
+         raise PathRefused(f"{what}: a folder on the path cannot be listed") from None
+ 
+ 
+-def _step(entry: os.DirEntry[str], last: bool, what: str) -> str:
++def _step(entry: os.DirEntry[str], last: bool, what: str, *, written: bool = False) -> str:
+     if entry.is_symlink():  # resolution removed every link that works: what is left is a loop
+         raise PathRefused(f"{what}: a link on the path does not resolve (a loop)")
+     is_folder = entry.is_dir(follow_symlinks=False)
+@@ -154,6 +155,8 @@ def _step(entry: os.DirEntry[str], last: bool, what: str) -> str:
+         raise PathRefused(f"{what}: a folder on the path is not a folder")
+     if last and is_folder:
+         raise PathRefused(f"{what}: names a folder, not a file")
++    if last and written and not entry.is_file(follow_symlinks=False):  # a pipe, a device, a socket: a write would wait
++        raise PathRefused(f"{what}: is not a regular file (a pipe, a device or a socket would block): give a file")
+     return entry.path
+ 
+ 
+@@ -168,7 +171,7 @@ def _locate(root: str, parts: list[str], what: str) -> str:
+             if not last:
+                 raise PathRefused(f"{what}: a folder on the path does not exist")
+             return os.path.join(current, _new_name(part, what))
+-        current = _step(entry, last, what)
++        current = _step(entry, last, what, written=True)
+     return current
+ 
+ 

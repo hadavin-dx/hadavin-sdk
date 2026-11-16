@@ -1,0 +1,6 @@
+head 21ca680
+ok  KILLED       more than 5 types are printed  [test_more_than_5_errors_gives_plus_n_more]
+ok  KILLED       the +N more tail is wrong  [test_more_than_5_errors_gives_plus_n_more]
+ok  KILLED       a type outside the closed list is printed  [test_a_type_outside_the_closed_list_prints_other]
+33 of 33 good; problems: []
+rc=0

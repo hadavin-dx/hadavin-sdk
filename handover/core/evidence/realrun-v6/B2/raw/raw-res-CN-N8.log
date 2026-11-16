@@ -1,0 +1,32 @@
+........................F
+=================================== FAILURES ===================================
+__ test_the_live_script_refuses_a_pipe_as_key_file_or_ledger_without_hanging ___
+
+tmp_path = PosixPath('/home/user/build/rr6/tmp-B2/pytest-of-unknown/pytest-45/test_the_live_script_refuses_a0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f53e2ae35f0>
+
+    @FIFO_SKIP
+    def test_the_live_script_refuses_a_pipe_as_key_file_or_ledger_without_hanging(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        fifo = tmp_path / "the.pipe"
+        os.mkfifo(fifo)
+        key = tmp_path / "k"
+        key.write_text(KEY, encoding="utf-8")
+        for option, args in (("--key-file", [str(fifo), str(tmp_path / "l")]), ("--ledger", [str(key), str(fifo)])):
+            argv = _live_argv(args[0], args[1])
+            result: list[int] = []
+>           assert _within(15, lambda: result.append(rlc.main(argv)), unblock=fifo), f"{option}: it hung on a pipe"
+E           AssertionError: --ledger: it hung on a pipe
+E           assert False
+E            +  where False = _within(15, <function test_the_live_script_refuses_a_pipe_as_key_file_or_ledger_without_hanging.<locals>.<lambda> at 0x7f53e34ae660>, unblock=PosixPath('/home/user/build/rr6/tmp-B2/pytest-of-unknown/pytest-45/test_the_live_script_refuses_a0/the.pipe'))
+
+tests/test_real_run_v6.py:305: AssertionError
+----------------------------- Captured stdout call -----------------------------
+models: 1, calls per model: 1, prices dated 2026-01-01
+expected MAXIMUM cost of this whole run: US$0.0020 (caps: run 1, total 3)
+the key goes to: 127.0.0.1 (--base-url); the leads' e-mail addresses are made up
+=========================== short test summary info ============================
+FAILED tests/test_real_run_v6.py::test_the_live_script_refuses_a_pipe_as_key_file_or_ledger_without_hanging
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 24 passed in 20.24s

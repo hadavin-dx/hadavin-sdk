@@ -1,0 +1,551 @@
+head: b95b0ca762dd74574e44e7fb546f82ef04f55295
+value length: 54 | value is a URL with user svc_user, a 9-character made-up password, host localhost, port 5432, database scratch
+forms: {'whole': 54, 'slice6': 6, 'b64': 72, 'rev': 54} (lengths)
+
+##### PART 1: mutant rows (one mutant per test, only_test pins the test; expect='assert')
+mutant -> test: {'m00': 'test_msg_whole', 'm01': 'test_msg_slice6', 'm02': 'test_msg_b64', 'm03': 'test_msg_rev', 'm04': 'test_id_whole', 'm05': 'test_id_slice6', 'm06': 'test_id_b64', 'm07': 'test_id_rev', 'm08': 'test_both_whole', 'm09': 'test_both_slice6', 'm10': 'test_both_b64', 'm11': 'test_both_rev'}
+  ROW m00:
+    FIELD row[0]: 'm00'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[1]: 'WRONG_REASON'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[2]: 'tests/test_core::test_msg_whole'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[3]: 'False'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines[name]: 'AssertionError [expect not found] assert'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  ROW m01:
+    FIELD row[0]: 'm01'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[1]: 'WRONG_REASON'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[2]: 'tests/test_core::test_msg_slice6'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[3]: 'False'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines[name]: 'AssertionError [expect not found] assert'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  ROW m02:
+    FIELD row[0]: 'm02'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[1]: 'WRONG_REASON'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[2]: 'tests/test_core::test_msg_b64'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[3]: 'False'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines[name]: 'AssertionError [expect not found] assert'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  ROW m03:
+    FIELD row[0]: 'm03'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[1]: 'WRONG_REASON'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[2]: 'tests/test_core::test_msg_rev'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[3]: 'False'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines[name]: 'AssertionError [expect not found] assert'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  ROW m04:
+    FIELD row[0]: 'm04'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[1]: 'WRONG_REASON'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[2]: 'tests/test_core::test_id_whole[parameters hidden]'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[3]: 'False'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines[name]: 'AssertionError [expect not found] assert'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  ROW m05:
+    FIELD row[0]: 'm05'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[1]: 'WRONG_REASON'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[2]: 'tests/test_core::test_id_slice6[parameters hidden]'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[3]: 'False'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines[name]: 'AssertionError [expect not found] assert'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  ROW m06:
+    FIELD row[0]: 'm06'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[1]: 'WRONG_REASON'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[2]: 'tests/test_core::test_id_b64[parameters hidden]'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[3]: 'False'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines[name]: 'AssertionError [expect not found] assert'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  ROW m07:
+    FIELD row[0]: 'm07'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[1]: 'WRONG_REASON'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[2]: 'tests/test_core::test_id_rev[parameters hidden]'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[3]: 'False'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines[name]: 'AssertionError [expect not found] assert'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  ROW m08:
+    FIELD row[0]: 'm08'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[1]: 'WRONG_REASON'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[2]: 'tests/test_core::test_both_whole[parameters hidden]'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[3]: 'False'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines[name]: 'AssertionError [expect not found] assert'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  ROW m09:
+    FIELD row[0]: 'm09'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[1]: 'WRONG_REASON'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[2]: 'tests/test_core::test_both_slice6[parameters hidden]'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[3]: 'False'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines[name]: 'AssertionError [expect not found] assert'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  ROW m10:
+    FIELD row[0]: 'm10'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[1]: 'WRONG_REASON'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[2]: 'tests/test_core::test_both_b64[parameters hidden]'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[3]: 'False'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines[name]: 'AssertionError [expect not found] assert'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  ROW m11:
+    FIELD row[0]: 'm11'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[1]: 'WRONG_REASON'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[2]: 'tests/test_core::test_both_rev[parameters hidden]'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[3]: 'False'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines[name]: 'AssertionError [expect not found] assert'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  on_result rows equal returned rows: True
+    FIELD repr(all rows)+repr(first_lines): "[('m00', <Verdict.WRONG_REASON: 'WRONG_REASON'>, 'tests/test_core::test_msg_whole', False), ('m01', <Verdict.WRONG_REASON: 'WRONG_REASON'>, 'tests/test_core::test_msg_slice6', False), ('m02', <Verdict.WRONG_REASON: 'WRONG_REASON'>, 'tests/test_core::test_msg_b64', False), ('m03', <Verdict.WRONG_REASON: 'WRONG_REASON'>, 'tests/test_core::test_msg_rev', False), ('m04', <Verdict.WRONG_REASON: 'WRONG_REASON'>, 'tests/test_core::test_id_whole[parameters hidden]', False), ('m05', <Verdict.WRONG_REASON: 'WRONG_REASON'>, 'tests/test_core::test_id_slice6[parameters hidden]', False), ('m06', <Verdict.WRONG_REASON: 'WRONG_REASON'>, 'tests/test_core::test_id_b64[parameters hidden]', False), ('m07', <Verdict.WRONG_REASON: 'WRONG_REASON'>, 'tests/test_core::test_id_rev[parameters hidden]', False), ('m08', <Verdict.WRONG_REASON: 'WRONG_REASON'>, 'tests/test_core::test_both_whole[parameters hidden]', False), ('m09', <Verdict.WRONG_REASON: 'WRONG_REASON'>, 'tests/test_core::test_both_slice6[parameters hidden]', False), ('m10', <Verdict.WRONG_REASON: 'WRONG_REASON'>, 'tests/test_core::test_both_b64[parameters hidden]', False), ('m11', <Verdict.WRONG_REASON: 'WRONG_REASON'>, 'tests/test_core::test_both_rev[parameters hidden]', False)]{'m00': 'AssertionError [expect not found] assert', 'm01': 'AssertionError [expect not found] assert', 'm02': 'AssertionError [expect not found] assert', 'm03': 'AssertionError [expect not found] assert', 'm04': 'AssertionError [expect not found] assert', 'm05': 'AssertionError [expect not found] assert', 'm06': 'AssertionError [expect not found] assert', 'm07': 'AssertionError [expect not found] assert', 'm08': 'AssertionError [expect not found] assert', 'm09': 'AssertionError [expect not found] assert', 'm10': 'AssertionError [expect not found] assert', 'm11': 'AssertionError [expect not found] assert'}"
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+
+##### PART 1b: the same with expect set to a 4-character piece of the password (expect=VALUE[i:i+4] of the password)
+    FIELD row[0]: 'mexp'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[1]: 'KILLED'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[2]: 'tests/test_core::test_msg_whole'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[3]: 'True'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines[name]: 'AssertionError [expect found] Zq9x'
+      4-char slices of the VALUE present: YES ['Zq9x']
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+
+##### PART 2: the unmutated copy fails (baseline failure): exception message, one run per test
+  baseline run of test_msg_whole:
+    RAISED RuntimeError
+    FIELD exception message: 'the unmutated copy does not pass its tests (exit code 1): AssertionError'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines: '{}'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  baseline run of test_msg_slice6:
+    RAISED RuntimeError
+    FIELD exception message: 'the unmutated copy does not pass its tests (exit code 1): AssertionError'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines: '{}'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  baseline run of test_msg_b64:
+    RAISED RuntimeError
+    FIELD exception message: 'the unmutated copy does not pass its tests (exit code 1): AssertionError'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines: '{}'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  baseline run of test_msg_rev:
+    RAISED RuntimeError
+    FIELD exception message: 'the unmutated copy does not pass its tests (exit code 1): AssertionError'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines: '{}'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  baseline run of test_id_whole:
+    RAISED RuntimeError
+    FIELD exception message: 'the unmutated copy does not pass its tests (exit code 1): AssertionError'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines: '{}'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  baseline run of test_id_slice6:
+    RAISED RuntimeError
+    FIELD exception message: 'the unmutated copy does not pass its tests (exit code 1): AssertionError'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines: '{}'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  baseline run of test_id_b64:
+    RAISED RuntimeError
+    FIELD exception message: 'the unmutated copy does not pass its tests (exit code 1): AssertionError'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines: '{}'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  baseline run of test_id_rev:
+    RAISED RuntimeError
+    FIELD exception message: 'the unmutated copy does not pass its tests (exit code 1): AssertionError'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines: '{}'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  baseline run of test_both_whole:
+    RAISED RuntimeError
+    FIELD exception message: 'the unmutated copy does not pass its tests (exit code 1): AssertionError'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines: '{}'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  baseline run of test_both_slice6:
+    RAISED RuntimeError
+    FIELD exception message: 'the unmutated copy does not pass its tests (exit code 1): AssertionError'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines: '{}'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  baseline run of test_both_b64:
+    RAISED RuntimeError
+    FIELD exception message: 'the unmutated copy does not pass its tests (exit code 1): AssertionError'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines: '{}'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  baseline run of test_both_rev:
+    RAISED RuntimeError
+    FIELD exception message: 'the unmutated copy does not pass its tests (exit code 1): AssertionError'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines: '{}'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+
+##### PART 3: collection error and fixture error holding the value
+  collection:
+    FIELD row[0]: 'mx'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[1]: 'ERROR'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[2]: 'COLLECTION ERROR'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[3]: 'False'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines: "{'mx': 'AssertionError'}"
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+  fixture:
+    FIELD row[0]: 'mx'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[1]: 'ERROR'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[2]: 'FIXTURE ERROR'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD row[3]: 'False'
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO
+    FIELD first_lines: "{'mx': 'AssertionError'}"
+      4-char slices of the VALUE present: NO
+      4-char slices of the slice6 form present: NO
+      4-char slices of the b64 form present: NO
+      4-char slices of the rev form present: NO

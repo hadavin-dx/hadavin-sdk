@@ -1,0 +1,343 @@
+.......................F................................................ [ 70%]
+.......FFFFFFF.FF..F.F.F......                                           [100%]
+=================================== FAILURES ===================================
+______________ test_a_shortened_value_is_masked_by_its_fragments _______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f06e28942f0>
+
+    def test_a_shortened_value_is_masked_by_its_fragments(monkeypatch):
+        for value in (_key_value_value()[0], _long_value()):
+            monkeypatch.setenv(DSN_NAME, value)
+            secrets = mr._secret_values((DSN_NAME,))
+            shown = f"E   AssertionError: assert '{value[:12]}...{value[-12:]}' == 'other'"
+            out = mr._masked(shown, secrets)
+            assert not any(w in out for w in _windows(value)), (
+                f"a fragment of the shortened value survived the masking: {out}"
+            )
+            assert "AssertionError: assert" in out and "== 'other'" in out, (
+                f"the line was not kept around the markers: {out}"
+            )
+        assert mr._masked("E   x == 'a...l'", ("abcdefghijkl",)) == "E   x == 'a...l'", (
+            "a one-character piece next to the dots was masked"
+        )
+>       assert (
+            mr._masked("E   x == 'ab...kl'", ("abcdefghijkl",)) == "E   x == '[REDACTED]...[REDACTED]'"
+        ), "a two-character head or tail next to the dots was not masked"
+E       AssertionError: a two-character head or tail next to the dots was not masked
+E       assert 'E   x == [RE......[REDACTED]' == "E   x == '[R.....[REDACTED]'"
+E         
+E         - E   x == '[REDACTED]...[REDACTED]'
+E         ?          -                       -
+E         + E   x == [REDACTED]...[REDACTED]
+
+tests/test_mutation_runner_keywords.py:478: AssertionError
+______ test_a_piece_next_to_dots_hides_only_that_piece_of_a_short_secret _______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f06e1d135b0>
+
+    def test_a_piece_next_to_dots_hides_only_that_piece_of_a_short_secret(monkeypatch):
+        """The cost of masking from EDGE_MIN characters on is bounded: only a start of the secret right before ``...`` and an end of it right after one."""
+        monkeypatch.setenv(DSN_NAME, "Qw7xK2m")
+        secrets = mr._secret_values((DSN_NAME,))
+        line = "E   'ab...cd' 'Qw...yz' 'zz...K2' 'to be...or not' Qw7 K2m 'x...2m'"
+        out = mr._masked(line, secrets)
+>       assert (
+            out == "E   'ab...cd' '[REDACTED]...yz' 'zz...K2' 'to be...or not' Qw7 K2m 'x...[REDACTED]'"
+        ), (
+            f"a piece that is not a start or an end of the secret, or one not next to dots, was changed: {out}"
+        )
+E       AssertionError: a piece that is not a start or an end of the secret, or one not next to dots, was changed: E   'ab...cd' [REDACTED]...yz' 'zz...K2' 'to be...or not' Qw7 K2m 'x...[REDACTED]
+E       assert "E   'ab...cd......[REDACTED]" == "E   'ab...cd.....[REDACTED]'"
+E         
+E         - E   'ab...cd' '[REDACTED]...yz' 'zz...K2' 'to be...or not' Qw7 K2m 'x...[REDACTED]'
+E         ?               -                                                                   -
+E         + E   'ab...cd' [REDACTED]...yz' 'zz...K2' 'to be...or not' Qw7 K2m 'x...[REDACTED]
+
+tests/test_mutation_runner_keywords.py:1486: AssertionError
+___________________ test_dots_that_share_a_dot_are_all_found ___________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f06e1d12c10>
+
+    def test_dots_that_share_a_dot_are_all_found(monkeypatch):
+        """``....`` holds two ``...`` (a head that ends in a dot, then the cut): both are looked at."""
+        monkeypatch.setenv(DSN_NAME, "Zq1Xy9" + "." + "Pw3Tk5")
+        secrets = mr._secret_values((DSN_NAME,))
+        out = mr._masked("E   x == 'Zq1Xy9....bb'", secrets)
+>       assert out == "E   x == '[REDACTED]...bb'", (
+            f"a head that ends in a dot, before the cut, was not all hidden: {out}"
+        )
+E       AssertionError: a head that ends in a dot, before the cut, was not all hidden: E   x == [REDACTED]...bb'
+E       assert "E   x == [REDACTED]...bb'" == "E   x == '[REDACTED]...bb'"
+E         
+E         - E   x == '[REDACTED]...bb'
+E         ?          -
+E         + E   x == [REDACTED]...bb'
+
+tests/test_mutation_runner_keywords.py:1503: AssertionError
+__ test_a_value_with_a_quote_mark_is_refused_and_the_message_names_no_secret ___
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f06e1d12dd0>
+
+    def test_a_value_with_a_quote_mark_is_refused_and_the_message_names_no_secret(monkeypatch):
+        for value in (
+            *_in_value("'"),
+            *_in_value('"'),
+            "'" + '"' + "'" + '"' + "'",
+        ):  # the last: only quote marks
+            monkeypatch.setenv(DSN_NAME, value)
+>           text = _refusal_text("a value with a quote mark was not refused")
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:1542: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'a value with a quote mark was not refused'
+
+    def _refusal_text(label: str) -> str:
+        """The text of the ``ValueError`` of ``_secret_values`` for the passed name; the assertion line is ``label`` when nothing was refused."""
+        try:
+            mr._secret_values((DSN_NAME,))
+        except ValueError as exc:
+            return str(exc)
+>       raise AssertionError(label)
+E       AssertionError: a value with a quote mark was not refused
+
+tests/test_mutation_runner_keywords.py:1524: AssertionError
+___ test_a_value_with_a_backslash_is_refused_and_the_message_names_no_secret ___
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f06e1d12a50>
+
+    def test_a_value_with_a_backslash_is_refused_and_the_message_names_no_secret(monkeypatch):
+        for value in _in_value(chr(92)):
+            monkeypatch.setenv(DSN_NAME, value)
+>           text = _refusal_text("a value with a backslash was not refused")
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:1554: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'a value with a backslash was not refused'
+
+    def _refusal_text(label: str) -> str:
+        """The text of the ``ValueError`` of ``_secret_values`` for the passed name; the assertion line is ``label`` when nothing was refused."""
+        try:
+            mr._secret_values((DSN_NAME,))
+        except ValueError as exc:
+            return str(exc)
+>       raise AssertionError(label)
+E       AssertionError: a value with a backslash was not refused
+
+tests/test_mutation_runner_keywords.py:1524: AssertionError
+_ test_a_value_with_a_control_character_is_refused_and_the_message_names_no_secret _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f06e1d12970>
+
+    def test_a_value_with_a_control_character_is_refused_and_the_message_names_no_secret(monkeypatch):
+        for code in (1, 9, 10, 13, 31):  # an environment cannot hold chr(0)
+            for value in _in_value(chr(code)):
+                monkeypatch.setenv(DSN_NAME, value)
+>               text = _refusal_text("a value with a control character below the space was not refused")
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:1567: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'a value with a control character below the space was not refused'
+
+    def _refusal_text(label: str) -> str:
+        """The text of the ``ValueError`` of ``_secret_values`` for the passed name; the assertion line is ``label`` when nothing was refused."""
+        try:
+            mr._secret_values((DSN_NAME,))
+        except ValueError as exc:
+            return str(exc)
+>       raise AssertionError(label)
+E       AssertionError: a value with a control character below the space was not refused
+
+tests/test_mutation_runner_keywords.py:1524: AssertionError
+_ test_a_value_with_a_non_ascii_character_is_refused_and_the_message_names_no_secret _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f06e1d11cc0>
+
+    def test_a_value_with_a_non_ascii_character_is_refused_and_the_message_names_no_secret(
+        monkeypatch,
+    ):
+        for odd in (chr(233), chr(0x1F600)):
+            for value in _in_value(odd):
+                monkeypatch.setenv(DSN_NAME, value)
+>               text = _refusal_text("a value with a non-ASCII character was not refused")
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:1585: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'a value with a non-ASCII character was not refused'
+
+    def _refusal_text(label: str) -> str:
+        """The text of the ``ValueError`` of ``_secret_values`` for the passed name; the assertion line is ``label`` when nothing was refused."""
+        try:
+            mr._secret_values((DSN_NAME,))
+        except ValueError as exc:
+            return str(exc)
+>       raise AssertionError(label)
+E       AssertionError: a value with a non-ASCII character was not refused
+
+tests/test_mutation_runner_keywords.py:1524: AssertionError
+_ test_a_password_that_decodes_to_an_odd_character_is_refused_and_the_message_names_no_secret _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f06e1d12eb0>
+
+    def test_a_password_that_decodes_to_an_odd_character_is_refused_and_the_message_names_no_secret(
+        monkeypatch,
+    ):
+        for code, kind, label in (
+            ("%27", "a quote mark", "a password that decodes to a quote mark was not refused"),
+            ("%22", "a quote mark", "a password that decodes to a double quote mark was not refused"),
+            ("%5C", "a backslash", "a password that decodes to a backslash was not refused"),
+            ("%09", "a control character", "a password that decodes to a tab was not refused"),
+            ("%7F", "a control character", "a password that decodes to DEL was not refused"),
+            (
+                "%C3%A9",
+                "a non-ASCII character",
+                "a password that decodes to a letter with an accent was not refused",
+            ),
+            (
+                "%C3",
+                "a non-ASCII character",
+                "a password that decodes to a replacement character was not refused",
+            ),
+        ):
+            for value in _decoded_values(code):
+                monkeypatch.setenv(DSN_NAME, value)
+>               text = _refusal_text(label)
+                       ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:1630: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'a password that decodes to a quote mark was not refused'
+
+    def _refusal_text(label: str) -> str:
+        """The text of the ``ValueError`` of ``_secret_values`` for the passed name; the assertion line is ``label`` when nothing was refused."""
+        try:
+            mr._secret_values((DSN_NAME,))
+        except ValueError as exc:
+            return str(exc)
+>       raise AssertionError(label)
+E       AssertionError: a password that decodes to a quote mark was not refused
+
+tests/test_mutation_runner_keywords.py:1524: AssertionError
+_ test_run_mutants_refuses_an_odd_value_before_any_temp_folder_and_names_no_secret _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-12934/test_run_mutants_refuses_an_od0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f06e1d11860>
+
+    def test_run_mutants_refuses_an_odd_value_before_any_temp_folder_and_names_no_secret(
+        tmp_path, monkeypatch
+    ):
+        root = _tree(tmp_path, {CORE_TEST: PASSES})
+        made = []
+        real = mr.tempfile.mkdtemp
+        monkeypatch.setattr(mr.tempfile, "mkdtemp", lambda *a, **k: made.append(1) or real(*a, **k))
+        for value in (
+            "host=db.invalid password=Ab3'Xy9Zq1",
+            "postgresql://svc:Ab3%C3%A9Xy9Zq1@db.invalid/scratch",
+        ):
+            monkeypatch.setenv(DSN_NAME, value)
+>           with pytest.raises(ValueError) as caught:
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE ValueError
+
+tests/test_mutation_runner_keywords.py:1675: Failed
+_ test_a_long_value_that_pytest_prints_as_head_and_tail_is_masked_in_what_it_shows _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f06e1d116a0>
+
+    def test_a_long_value_that_pytest_prints_as_head_and_tail_is_masked_in_what_it_shows(monkeypatch):
+        value, _word = _review_value()
+        monkeypatch.setenv(DSN_NAME, value)
+        secrets = mr._secret_values((DSN_NAME,))
+        for line, expected in REAL_PYTEST_LINES:
+>           assert mr._masked(line, secrets) == expected, (
+                f"a shortened value was masked wrongly: {line}"
+            )
+E           AssertionError: a shortened value was masked wrongly: AssertionError: assert 'host=db.inte...7wRt4vNb8LcY3' == 'other'
+E           assert "AssertionErr...D] == 'other'" == "AssertionErr...]' == 'other'"
+E             
+E             - AssertionError: assert '[REDACTED]...[REDACTED]' == 'other'
+E             ?                        -                       -
+E             + AssertionError: assert [REDACTED]...[REDACTED] == 'other'
+
+tests/test_mutation_runner_keywords.py:1721: AssertionError
+___ test_every_head_and_tail_of_a_short_plain_secret_next_to_dots_is_hidden ____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f06e1d111d0>
+
+    def test_every_head_and_tail_of_a_short_plain_secret_next_to_dots_is_hidden(monkeypatch):
+        """pytest's cut can fall anywhere in a 7-character secret: every start and end of 2 or more characters is masked (from EDGE_MIN on)."""
+        cases = 0
+        for secret in ("Qw7xK2m", "Qw7.K2m", "Q w7xK2"):
+            monkeypatch.setenv(DSN_NAME, secret)
+            secrets = mr._secret_values((DSN_NAME,))
+            for k in range(mr.EDGE_MIN, len(secret)):
+                cases += 2
+>               assert mr._masked("E>'" + secret[:k] + "...zz'", secrets) == "E>'[REDACTED]...zz'", (
+                    f"a head of {k} characters next to the dots was not masked"
+                )
+E               AssertionError: a head of 2 characters next to the dots was not masked
+E               assert "E>[REDACTED]...zz'" == "E>'[REDACTED]...zz'"
+E                 
+E                 - E>'[REDACTED]...zz'
+E                 ?   -
+E                 + E>[REDACTED]...zz'
+
+tests/test_mutation_runner_keywords.py:1798: AssertionError
+_ test_a_one_character_secret_on_a_huge_line_is_masked_fast_and_a_normal_line_is_kept _
+
+    def test_a_one_character_secret_on_a_huge_line_is_masked_fast_and_a_normal_line_is_kept():
+        start = time.monotonic()
+        out = mr._masked("E   " + "a" * 3_000_000 + "b", ("a", "ta"))
+        took = time.monotonic() - start
+>       assert out == "E   [REDACTED]b", f"a huge line of one secret was masked wrongly: {out[:60]!r}"
+E       AssertionError: a huge line of one secret was masked wrongly: '[REDACTED] (line with more than 100000 matches of a secret r'
+E       assert '[REDACTED] (...s of a value)' == 'E   [REDACTED]b'
+E         
+E         - E   [REDACTED]b
+E         + [REDACTED] (line with more than 100000 matches of a secret replaced: it cannot be checked for pieces of a value)
+
+tests/test_mutation_runner_keywords.py:1824: AssertionError
+_ test_an_unquoted_password_with_a_semicolon_or_an_ampersand_is_masked_in_full_when_printed_alone _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f06e1dc03d0>
+
+    def test_an_unquoted_password_with_a_semicolon_or_an_ampersand_is_masked_in_full_when_printed_alone(
+        monkeypatch,
+    ):
+        for odd in (";", "&"):
+            monkeypatch.setenv(DSN_NAME, f"host=db.invalid password=Ab3{odd}Xy9Zq1 user=svc")
+            out = mr._masked(f"E   assert 'Ab3{odd}Xy9Zq1' == 1", mr._secret_values((DSN_NAME,)))
+>           assert out == "E   assert '[REDACTED]' == 1", (
+                f"an unquoted password with {odd!r} printed alone was not masked in one mark: {out}"
+            )
+E           AssertionError: an unquoted password with ';' printed alone was not masked in one mark: E   assert [REDACTED] == 1
+E           assert 'E   assert [REDACTED] == 1' == "E   assert '[REDACTED]' == 1"
+E             
+E             - E   assert '[REDACTED]' == 1
+E             ?            -          -
+E             + E   assert [REDACTED] == 1
+
+tests/test_mutation_runner_keywords.py:1868: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_mutation_runner_keywords.py::test_a_shortened_value_is_masked_by_its_fragments
+FAILED tests/test_mutation_runner_keywords.py::test_a_piece_next_to_dots_hides_only_that_piece_of_a_short_secret
+FAILED tests/test_mutation_runner_keywords.py::test_dots_that_share_a_dot_are_all_found
+FAILED tests/test_mutation_runner_keywords.py::test_a_value_with_a_quote_mark_is_refused_and_the_message_names_no_secret
+FAILED tests/test_mutation_runner_keywords.py::test_a_value_with_a_backslash_is_refused_and_the_message_names_no_secret
+FAILED tests/test_mutation_runner_keywords.py::test_a_value_with_a_control_character_is_refused_and_the_message_names_no_secret
+FAILED tests/test_mutation_runner_keywords.py::test_a_value_with_a_non_ascii_character_is_refused_and_the_message_names_no_secret
+FAILED tests/test_mutation_runner_keywords.py::test_a_password_that_decodes_to_an_odd_character_is_refused_and_the_message_names_no_secret
+FAILED tests/test_mutation_runner_keywords.py::test_run_mutants_refuses_an_odd_value_before_any_temp_folder_and_names_no_secret
+FAILED tests/test_mutation_runner_keywords.py::test_a_long_value_that_pytest_prints_as_head_and_tail_is_masked_in_what_it_shows
+FAILED tests/test_mutation_runner_keywords.py::test_every_head_and_tail_of_a_short_plain_secret_next_to_dots_is_hidden
+FAILED tests/test_mutation_runner_keywords.py::test_a_one_character_secret_on_a_huge_line_is_masked_fast_and_a_normal_line_is_kept
+FAILED tests/test_mutation_runner_keywords.py::test_an_unquoted_password_with_a_semicolon_or_an_ampersand_is_masked_in_full_when_printed_alone
+13 failed, 89 passed in 38.00s

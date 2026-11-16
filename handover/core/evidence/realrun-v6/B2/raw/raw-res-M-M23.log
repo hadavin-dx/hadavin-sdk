@@ -1,0 +1,33 @@
+........................................................................ [ 55%]
+......................................................F
+=================================== FAILURES ===================================
+_____ test_only_the_terminal_guard_reads_a_person_in_the_whole_repository ______
+
+    def test_only_the_terminal_guard_reads_a_person_in_the_whole_repository() -> None:
+        """Every Python file outside tests/ (scripts, load_tools, tools, src, demo_only and anything else, root files
+        included): the only one that may read a person is scripts/terminal_guard.py, whose question refuses a stdin that
+        is not a terminal. A new question anywhere else fails here: route it through ask_to_start. A module or code
+        chosen at run time cannot be checked: only src/lead_desk/loader.py does that (its names are fixed in the code:
+        the kind modules and demo_only.*, never a setting)."""
+        asking: dict[str, list[str]] = {}
+        dynamic: set[str] = set()
+        for path in _repo_files(".py"):
+            found = reads_a_person(path.read_text(encoding="utf-8"))
+            name = path.relative_to(REPO).as_posix()
+            if any("chosen at run time" in why for why in found):
+                dynamic.add(name)
+            if any("chosen at run time" not in why for why in found):
+                asking[name] = found
+>       assert set(asking) == {"scripts/terminal_guard.py"}, asking
+E       AssertionError: {}
+E       assert set() == {'scripts/terminal_guard.py'}
+E         
+E         Extra items in the right set:
+E         'scripts/terminal_guard.py'
+E         Use -v to get more diff
+
+tests/test_start_prompt_hardening.py:705: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_start_prompt_hardening.py::test_only_the_terminal_guard_reads_a_person_in_the_whole_repository
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 126 passed in 1.20s

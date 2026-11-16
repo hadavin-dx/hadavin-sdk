@@ -1,0 +1,94 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+
+=== P1a baseline claim_mark_problems
+[baseline] []
+
+=== P1b claim with no mark (nobody list replaced by ('zzz',))
+[no-mark] ['secrets/vault: claim "a `read` on a secret\'s path also serves a request for an old" has 0 marks in the head of tests/fixtures/policy_sources_2026-11-11.txt, needs exactly one', 'signer/vault_transit: claim "the exact path R18 does not also allow Vault\'s longer sign p" has 0 marks in the head of tests/fixtures/policy_sources_2026-11-11.txt, needs exactly one', "source/kubernetes: claim 'the query parameters `limit` and `continue` do not change th' has 0 marks in the head of tests/fixtures/policy_sources_2026-11-11.txt, needs exactly one", "source/kubernetes: claim 'the query parameters `limit` and `continue` do not change th' has 0 marks in the head of tests/fixtures/policy_sources_2026-11-11.txt, needs exactly one", "source/kubernetes: claim 'the query parameters `timestamps`, `sinceTime` and `limitByt' has 0 marks in the head of tests/fixtures/policy_sources_2026-11-11.txt, needs exactly one", "source/kubernetes: claim 'a `create` on `selfsubjectrulesreviews` changes nothing in t' has 0 marks in the head of tests/fixtures/policy_sources_2026-11-11.txt, needs exactly one", "source/kubernetes: claim '`create` on `selfsubjectrulesreviews`, `selfsubjectaccessrev' has 0 marks in the head of tests/fixtures/policy_sources_2026-11-11.txt, needs exactly one", "tests/fixtures/policy_sources_2026-11-11.txt: the claim start 'zzz' matches no claim: delete it"]
+
+=== P1c claim with two marks (R18 start also under builder)
+[two-marks] ['signer/vault_transit: claim "the exact path R18 does not also allow Vault\'s longer sign p" has 2 marks in the head of tests/fixtures/policy_sources_2026-11-11.txt, needs exactly one']
+
+=== P1d mark swapped between R17 and R18 (+ claim -> nobody; R18 claim -> builder)
+[swap problems] []
+  PAGE ROW: | R17 | `read` | `{mount}/data/{path_prefix}+` | the `+` sta ... builder-mark False nobody-mark True
+  PAGE ROW: | R18 | `update` | `{transit_mount}/sign/{key_name}` | no wi ... builder-mark True nobody-mark False
+
+=== P2 reason with no class
+  secrets/vault Grant reason removed -> 1 problem(s): secrets/vault: note 'reason:reads one named secret; the right also cove' has 0 classes in NOTE_CLASSES, needs 
+  secrets/vault Free reason removed -> 1 problem(s): secrets/vault: note 'reason:the sign-in request of auth `approle` and `' has 0 classes in NOTE_CLASSES, needs 
+  secrets/vault Never reason removed -> 1 problem(s): secrets/vault: note 'reason:the built-in policy that may do everything' has 0 classes in NOTE_CLASSES, needs o
+  secrets/vault Never reason removed -> 1 problem(s): secrets/vault: note "reason:the server's own settings: mounts, policies" has 0 classes in NOTE_CLASSES, needs 
+  secrets/vault Never reason removed -> 1 problem(s): secrets/vault: note 'reason:the reader could replace, change or remove ' has 0 classes in NOTE_CLASSES, needs 
+  secrets/vault Never reason removed -> 1 problem(s): secrets/vault: note 'reason:marks versions of a secret as deleted' has 0 classes in NOTE_CLASSES, needs one
+  secrets/vault Never reason removed -> 1 problem(s): secrets/vault: note 'reason:brings deleted versions of a secret back' has 0 classes in NOTE_CLASSES, needs one
+  secrets/vault Never reason removed -> 1 problem(s): secrets/vault: note 'reason:shows the field names inside secrets this k' has 0 classes in NOTE_CLASSES, needs 
+  secrets/vault Never reason removed -> 1 problem(s): secrets/vault: note 'reason:lists every secret name and can delete ever' has 0 classes in NOTE_CLASSES, needs 
+  secrets/vault Never reason removed -> 1 problem(s): secrets/vault: note 'reason:removes versions of a secret for good' has 0 classes in NOTE_CLASSES, needs one
+  signer/vault_transit Grant reason removed -> 1 problem(s): signer/vault_transit: note 'reason:signs each audit checkpoint and the start-u' has 0 classes in NOTE_CLASSES,
+  signer/vault_transit Grant reason removed -> 1 problem(s): signer/vault_transit: note "reason:reads the pinned version's public key and t" has 0 classes in NOTE_CLASSES,
+  signer/vault_transit Never reason removed -> 1 problem(s): signer/vault_transit: note 'reason:the built-in policy that may do everything' has 0 classes in NOTE_CLASSES, 
+  signer/vault_transit Never reason removed -> 1 problem(s): signer/vault_transit: note "reason:the server's own settings: mounts, policies" has 0 classes in NOTE_CLASSES,
+  signer/vault_transit Never reason removed -> 1 problem(s): signer/vault_transit: note 'reason:deletes the key that signs the audit trail' has 0 classes in NOTE_CLASSES, 
+  signer/vault_transit Never reason removed -> 1 problem(s): signer/vault_transit: note 'reason:can allow the key to be deleted or exported' has 0 classes in NOTE_CLASSES,
+  signer/vault_transit Never reason removed -> 1 problem(s): signer/vault_transit: note 'reason:copies the private key out' has 0 classes in NOTE_CLASSES, needs one
+  signer/vault_transit Never reason removed -> 1 problem(s): signer/vault_transit: note 'reason:copies the private key out, wrapped for ano' has 0 classes in NOTE_CLASSES,
+  signer/vault_transit Never reason removed -> 1 problem(s): signer/vault_transit: note 'reason:makes a new key version, so new signatures ' has 0 classes in NOTE_CLASSES,
+  signer/vault_transit Never reason removed -> 1 problem(s): signer/vault_transit: note 'reason:removes old key versions for good' has 0 classes in NOTE_CLASSES, needs one
+  signer/vault_transit Never reason removed -> 1 problem(s): signer/vault_transit: note 'reason:replaces a key with one from a backup' has 0 classes in NOTE_CLASSES, needs
+  signer/vault_transit Never reason removed -> 1 problem(s): signer/vault_transit: note 'reason:replaces the named key with one from a back' has 0 classes in NOTE_CLASSES,
+  signer/vault_transit Never reason removed -> 1 problem(s): signer/vault_transit: note 'reason:copies the private key out as a backup' has 0 classes in NOTE_CLASSES, need
+  source/kubernetes Grant reason removed -> 1 problem(s): source/kubernetes: note 'reason:reads deployments, their rollout revision a' has 0 classes in NOTE_CLASSES, ne
+  source/kubernetes Grant reason removed -> 1 problem(s): source/kubernetes: note 'reason:reads events in the time window' has 0 classes in NOTE_CLASSES, needs one
+  source/kubernetes Grant reason removed -> 1 problem(s): source/kubernetes: note "reason:reads one pod's log lines" has 0 classes in NOTE_CLASSES, needs one
+  source/kubernetes Free reason removed -> 1 problem(s): source/kubernetes: note 'reason:asks the cluster what this identity may do;' has 0 classes in NOTE_CLASSES, ne
+  source/kubernetes Never reason removed -> 3 problem(s): source/kubernetes: note 'reason:a built-in role that may write' has 0 classes in NOTE_CLASSES, needs one
+  source/kubernetes Never reason removed -> 3 problem(s): source/kubernetes: note 'reason:a built-in role that may write' has 0 classes in NOTE_CLASSES, needs one
+  source/kubernetes Never reason removed -> 3 problem(s): source/kubernetes: note 'reason:a built-in role that may write' has 0 classes in NOTE_CLASSES, needs one
+  source/kubernetes Never reason removed -> 1 problem(s): source/kubernetes: note 'reason:a write verb: this source only reads. One e' has 0 classes in NOTE_CLASSES, ne
+  source/kubernetes Never reason removed -> 4 problem(s): source/kubernetes: note 'reason:a write verb: this source only reads' has 0 classes in NOTE_CLASSES, needs one
+  source/kubernetes Never reason removed -> 4 problem(s): source/kubernetes: note 'reason:a write verb: this source only reads' has 0 classes in NOTE_CLASSES, needs one
+  source/kubernetes Never reason removed -> 4 problem(s): source/kubernetes: note 'reason:a write verb: this source only reads' has 0 classes in NOTE_CLASSES, needs one
+  source/kubernetes Never reason removed -> 4 problem(s): source/kubernetes: note 'reason:a write verb: this source only reads' has 0 classes in NOTE_CLASSES, needs one
+  source/kubernetes Never reason removed -> 2 problem(s): source/kubernetes: note 'reason:lets the identity widen its own rights' has 0 classes in NOTE_CLASSES, needs o
+  source/kubernetes Never reason removed -> 2 problem(s): source/kubernetes: note 'reason:lets the identity widen its own rights' has 0 classes in NOTE_CLASSES, needs o
+  source/kubernetes Never reason removed -> 1 problem(s): source/kubernetes: note 'reason:lets the identity act as another one' has 0 classes in NOTE_CLASSES, needs one
+  source/kubernetes Never reason removed -> 6 problem(s): source/kubernetes: note 'reason:opens a shell or a tunnel into a workload' has 0 classes in NOTE_CLASSES, need
+  source/kubernetes Never reason removed -> 6 problem(s): source/kubernetes: note 'reason:opens a shell or a tunnel into a workload' has 0 classes in NOTE_CLASSES, need
+  source/kubernetes Never reason removed -> 6 problem(s): source/kubernetes: note 'reason:opens a shell or a tunnel into a workload' has 0 classes in NOTE_CLASSES, need
+  source/kubernetes Never reason removed -> 6 problem(s): source/kubernetes: note 'reason:opens a shell or a tunnel into a workload' has 0 classes in NOTE_CLASSES, need
+  source/kubernetes Never reason removed -> 6 problem(s): source/kubernetes: note 'reason:opens a shell or a tunnel into a workload' has 0 classes in NOTE_CLASSES, need
+  source/kubernetes Never reason removed -> 6 problem(s): source/kubernetes: note 'reason:opens a shell or a tunnel into a workload' has 0 classes in NOTE_CLASSES, need
+  source/kubernetes Never reason removed -> 1 problem(s): source/kubernetes: note 'reason:reading a secret reveals its value' has 0 classes in NOTE_CLASSES, needs one
+
+=== P3 K-NOPE
+key present: True
+[note_problems] ["source/kubernetes: note 'free:a default cluster gives every signed-in ident' names source K-NOPE, which is not in the sources file", "source/kubernetes: note 'free:a default cluster gives every signed-in ident' names source K-NOPE, which is not in `verified` of the same entry"]
+[data_problems K-NOPE] ["source/kubernetes: note 'free:a default cluster gives every signed-in ident' names source K-NOPE, which is not in the sources file", "source/kubernetes: note 'free:a default cluster gives every signed-in ident' names source K-NOPE, which is not in `verified` of the same entry"]
+[page] exception type: PolicyError | the page names source K-NOPE, which is not in the sources file
+
+=== P4 never path vs R17
+R17 resource: {mount}/data/{path_prefix}+
+[overlap(never, R17)] False
+[overlap(R17, never)] False
+[control overlap({mount}/data/{path_prefix}+/*, R17) (expect True for the first three, False last)] False
+[control overlap({mount}/data/{path_prefix}*, R17) (expect True for the first three, False last)] True
+[control overlap({mount}/data/*, R17) (expect True for the first three, False last)] True
+[control overlap({mount}/data/{path_prefix}+/deeper/+/x, R17) (expect True for the first three, False last)] False
+[never_covers_grant_problems with the never line (no caps)] []
+
+=== P5 hostile sources file
+  [baseline] claim_readers: ok || builder_marks: ok || source_ids: ok
+  [duplicated CLAIM-READ-BY-BUILDER] claim_readers: PolicyError: tests/fixtures/policy_sources_2026-11-11.txt: needs exactly one line starting `# CLAIM-REA || builder_marks: ok || source_ids: ok
+  [duplicated CLAIM-READ-BY-NOBODY] claim_readers: PolicyError: tests/fixtures/policy_sources_2026-11-11.txt: needs exactly one line starting `# CLAIM-REA || builder_marks: ok || source_ids: ok
+  [empty lines + blank-only lines] claim_readers: ok || builder_marks: ok || source_ids: ok
+  [unicode in claim line (NBSP separator, accents, RTL, zero-width)] claim_readers: ok || builder_marks: ok || source_ids: ok
+  [fullwidth colon tag] claim_readers: PolicyError: tests/fixtures/policy_sources_2026-11-11.txt: needs exactly one line starting `# CLAIM-REA || builder_marks: ok || source_ids: ok
+  [CRLF line ends] claim_readers: ok || builder_marks: ok || source_ids: ok
+  [UTF-8 BOM] claim_readers: ok || builder_marks: PolicyError: tests/fixtures/policy_sources_2026-11-11.txt:1: a row has five columns: id | url | commit  || source_ids: PolicyError: tests/fixtures/policy_sources_2026-11-11.txt:1: a row has five columns: id | url | commit 
+  [invalid utf-8 byte] claim_readers: PolicyError: tests/fixtures/policy_sources_2026-11-11.txt: cannot be read (UnicodeDecodeError) || builder_marks: PolicyError: tests/fixtures/policy_sources_2026-11-11.txt: cannot be read (UnicodeDecodeError) || source_ids: PolicyError: tests/fixtures/policy_sources_2026-11-11.txt: cannot be read (UnicodeDecodeError)
+  [empty file] claim_readers: PolicyError: tests/fixtures/policy_sources_2026-11-11.txt: needs exactly one line starting `# CLAIM-REA || builder_marks: PolicyError: tests/fixtures/policy_sources_2026-11-11.txt: needs exactly one line starting `# BUILDER-O || source_ids: ok
+  [trailing ' ;; ' empty start] claim_readers: ok || builder_marks: ok || source_ids: ok
+  [row with 4 cols] claim_readers: ok || builder_marks: PolicyError: tests/fixtures/policy_sources_2026-11-11.txt:84: a row has five columns: id | url | commit || source_ids: PolicyError: tests/fixtures/policy_sources_2026-11-11.txt:84: a row has five columns: id | url | commit
+  [duplicate source id row] claim_readers: ok || builder_marks: PolicyError: tests/fixtures/policy_sources_2026-11-11.txt:84: id 'V-POL' is not a source id or is used  || source_ids: PolicyError: tests/fixtures/policy_sources_2026-11-11.txt:84: id 'V-POL' is not a source id or is used 
+  [tag line with leading space (not matched)] claim_readers: PolicyError: tests/fixtures/policy_sources_2026-11-11.txt: needs exactly one line starting `# CLAIM-REA || builder_marks: PolicyError: tests/fixtures/policy_sources_2026-11-11.txt:62: a row has five columns: id | url | commit || source_ids: PolicyError: tests/fixtures/policy_sources_2026-11-11.txt:62: a row has five columns: id | url | commit

@@ -1,0 +1,21 @@
+R1 result check off	KILLED	FAILED tests/test_take_script_refusals.py::test_a_result_path_that_cannot_hold_a_file_is_refused_before_the_question[a-folder-the result path is a folder: give a file path]	1 failed, 125 passed in 114.27s (0:01:54)	115
+R2 folder test off	KILLED	FAILED tests/test_take_script_refusals.py::test_a_result_path_that_cannot_hold_a_file_is_refused_before_the_question[a-folder-the result path is a folder: give a file path]	1 failed, 125 passed in 88.01s (0:01:28)	88
+R3 parent test off	KILLED	FAILED tests/test_take_script_refusals.py::test_a_result_path_that_cannot_hold_a_file_is_refused_before_the_question[no-folder-the folder for the result file does not exist]	1 failed, 126 passed in 117.16s (0:01:57)	118
+R4 parent exists() not is_dir()	KILLED	FAILED tests/test_take_script_refusals.py::test_a_result_path_that_cannot_hold_a_file_is_refused_before_the_question[folder-is-a-file-the folder for the result file does not exist]	1 failed, 127 passed in 85.12s (0:01:25)	86
+R5 check writes the file	KILLED	FAILED tests/test_take_script_refusals.py::test_a_result_path_that_cannot_hold_a_file_is_refused_before_the_question[no-folder-the folder for the result file does not exist]	1 failed, 126 passed in 87.25s (0:01:27)	88
+R6 write_result raises	KILLED	FAILED tests/test_take_script_refusals.py::test_a_result_file_that_cannot_be_written_after_the_run_does_not_end_in_a_traceback	1 failed, 129 passed in 85.08s (0:01:25)	85
+R7 write_result prints the path	KILLED	FAILED tests/test_take_script_refusals.py::test_a_result_file_that_cannot_be_written_after_the_run_does_not_end_in_a_traceback	1 failed, 129 passed in 120.45s (0:02:00)	121
+R8 real script takes the lock	KILLED	FAILED tests/test_take_script_refusals.py::test_a_new_live_ledger_in_the_real_script_makes_no_folder_before_the_question	1 failed, 132 passed in 82.64s (0:01:22)	83
+R9 live script takes the lock	KILLED	FAILED tests/test_take_script_refusals.py::test_a_new_live_ledger_is_fine_and_the_check_writes_nothing	1 failed, 124 passed in 114.25s (0:01:54)	115
+R10 core read_totals takes the lock	KILLED	FAILED tests/test_take_script_refusals.py::test_a_new_live_ledger_is_fine_and_the_check_writes_nothing	1 failed, 124 passed in 114.07s (0:01:54)	114
+R11 core read_totals makes the folder	KILLED	FAILED tests/test_take_script_refusals.py::test_a_new_live_ledger_is_fine_and_the_check_writes_nothing	1 failed, 124 passed in 118.25s (0:01:58)	119
+R12 core check_readable back	KILLED	FAILED tests/test_take_script_refusals.py::test_the_ledger_read_takes_no_lock_and_makes_nothing	1 failed, 131 passed in 124.54s (0:02:04)	125
+R13 certificate wording changed	KILLED	FAILED tests/test_take_script_refusals.py::test_the_certificate_refusal_has_this_exact_wording[DESK_SMTPP_CA_FILE]	1 failed, 135 passed in 89.32s (0:01:29)	90
+R14 bind name repeated	KILLED	FAILED tests/test_take_script_refusals.py::test_the_bind_refusal_names_the_setting_once	1 failed, 134 passed in 89.09s (0:01:29)	90
+R15 old db-path wording	KILLED	FAILED tests/test_take_script_refusals.py::test_every_refusal_before_the_question_has_the_same_form	1 failed, 133 passed in 87.55s (0:01:27)	88
+R16 generic handler prints type	KILLED	FAILED tests/test_take_script_refusals.py::test_an_unexpected_error_before_the_question_keeps_the_form_and_leaks_no_path[os-error-no-path]	1 failed, 140 passed in 151.30s (0:02:31)	152
+R17 missing names old wording	KILLED	FAILED tests/test_take_script_refusals.py::test_every_refusal_before_the_question_has_the_same_form	1 failed, 133 passed in 119.48s (0:01:59)	120
+R18 persons old wording	KILLED	FAILED tests/test_take_script_refusals.py::test_every_refusal_before_the_question_has_the_same_form	1 failed, 133 passed in 123.04s (0:02:03)	123
+R19 mailbox order old	KILLED	FAILED tests/test_take_script_refusals.py::test_every_refusal_before_the_question_has_the_same_form	1 failed, 133 passed in 127.32s (0:02:07)	128
+R20 config unreadable old	SURVIVED		143 passed in 128.84s (0:02:08)	129
+DONE

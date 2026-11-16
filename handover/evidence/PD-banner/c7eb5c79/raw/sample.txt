@@ -1,0 +1,60 @@
+R7E8 a loop of links in the copy is not refused
+B58 text after a bracketed address is allowed
+G73 a product root is compared without the shared folding
+G18 the copy run keeps the inherited import path
+G87 the three modes can be given together
+B3c the length bound is gone (the 41-character name)
+G83 the marker may hold content
+R9A4 mode_banner has no catch-all for a tampered app
+B61 a name anywhere in the text counts as shown
+R7E1 the fat Mach-O and Java class mark is recognised in one byte order only
+J16 the fallback writes empty text
+B1 an unknown stage is accepted (the code keeps running)
+G63 a line separator in a hit is printed as it is
+G53 a .tar ending is not refused
+J8 tone demo is accepted with another mode
+R9A7 a plain-data attribute counts as a part (a counter reads as a new part)
+B44 a config field that is missing reads as empty
+G26 a NUL byte anywhere in the file makes it binary
+J8e tone real is accepted with nothing real listed
+B27 a real or quiet banner may hold the made-up sentence
+R7B2 the timeout parameter is dropped from the not-connectivity list
+G5b a file name that holds the folder name is not a hit
+B9 the names from the caller are ignored
+G41 a pipe that git lists is skipped
+G91 only the feedface magic is recognised, the other three Mach-O magic values are not
+G4 a loader that does not name the folder is not stale
+B10c an unlisted kind that connects to something is listed as connecting to nothing
+B52 a config field of the wrong type is used as it is
+G69 the git variables of the caller reach every git call
+R9E7 a folder swapped for a link on the way to a listed file is read through
+R7F2 every name=value pair in git's message is hidden, a bare bypass=true too
+G68 the copy takes files git does not track
+B35 the services of a config ignore the tool specs
+N6 a demo or quiet banner with an override stays demo or quiet
+G97 an exempt file may be a binary
+B10d an entry without a kind is guessed into the real list
+B3b the name class allows a sentence break and edge spaces again
+R7E10 the repository path is not masked in git's message
+R7E3 bzip2 is recognised without a block or end-of-stream mark
+R9B3 the page accepts the override list in any order
+B51 a padded bare host is read as this machine
+G7 a required folder that is missing does not stop the run
+B10e the stage of the config is taken from nowhere (always demo)
+B40 a non-ASCII url is read by its host only
+B45 an empty made-up sentence switches the check off
+B16 the old public name banner_for is back
+R7A3 overridden has a default again in banner_from_config
+J26 the page counts the length in UTF-16 units, not code points
+J5 a very long text is painted
+B59 a url is not checked for text after the host
+B21 an egress host that is not this machine is not counted as real
+R9B2 the page accepts a duplicate in the override list
+B63 banner_or_unconfirmed logs the error text
+R9A5 the seal method is public again
+G72 an exempt entry that is a missing git link is not stale
+B7b a pilot or live screen hides its stand-ins
+G96 a webp file has no mark
+J9 the lists are not checked to be lists of text
+B50 a bare host that is not ASCII is read as this machine
+B10f the real list is derived from the prod gate table again

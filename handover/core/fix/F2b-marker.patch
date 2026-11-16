@@ -1,0 +1,11 @@
+--- tree-V2/scripts/run_live_check.py	2026-11-13 13:11:18.806846360 +0000
++++ tree-F2b/scripts/run_live_check.py	2026-11-13 13:40:48.070225518 +0000
+@@ -189,7 +189,7 @@
+         return "is not a real calendar day (written YYYY-MM-DD)"
+     if day < PRICE_DATE_FLOOR:
+         return f"is too old (not before {PRICE_DATE_FLOOR.isoformat()})"
+-    if day > datetime.now(UTC).date() + timedelta(days=1):  # one day of slack: a local day may be ahead of UTC
++    if day > datetime.now(UTC).date() + timedelta(days=1):  # wall-clock: a calendar day, with one day of slack for a local day ahead of UTC
+         return "is in the future: give the day the prices were read from the provider's page"
+     return None
+ 

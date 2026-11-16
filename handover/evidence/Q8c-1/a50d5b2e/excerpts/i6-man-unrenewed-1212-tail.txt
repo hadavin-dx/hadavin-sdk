@@ -1,0 +1,4 @@
+FAILED tests/test_policy_guard.py::test_every_kind_is_declared_pending_or_holds_no_identity
+FAILED tests/test_policy_guard.py::test_every_grant_name_is_verified_or_pending_and_every_source_id_resolves
+FAILED tests/test_policy_guard.py::test_every_unchecked_claim_has_a_dated_entry_and_the_suite_goes_red_when_it_is_overdue
+3 failed, 444 passed, 4 deselected in 10.48s

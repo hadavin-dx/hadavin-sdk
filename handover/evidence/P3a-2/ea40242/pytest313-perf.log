@@ -1,0 +1,8 @@
+HEAD ea402429072e3f1396eb9e7e9258f605d1002930
+py 3.13; perf; DSN port 55473; PostgreSQL 16.15 (own cluster)
+
+T-E8 watchdog: pg_sleep(30) cancelled after 2.01s (watchdog 2.0s; the assertion allows 3.0s: the timer, the cancel round trip to the server and the connection close)
+............................                                             [100%]
+28 passed, 10580 deselected in 58.43s
+exit=0
+exit=0

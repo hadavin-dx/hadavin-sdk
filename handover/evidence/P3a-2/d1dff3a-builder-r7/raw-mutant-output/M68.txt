@@ -1,0 +1,13 @@
+### tests/test_migration_numbers.py::test_scan_double_dash_in_string rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_______________________ test_scan_double_dash_in_string ________________________
+tests/test_migration_numbers.py:928: in test_scan_double_dash_in_string
+    assert any("evil_str" in p for p in got), got
+E   AssertionError: ['GRANTS names approval_decisions, which no migration creates', 'GRANTS names approval_decisions_seq_seq, which no mig...'GRANTS names audit_entries, which no migration creates', 'GRANTS names audit_outbox, which no migration creates', ...]
+E   assert False
+E    +  where False = any(<generator object test_scan_double_dash_in_string.<locals>.<genexpr> at 0x7fd5319a2810>)
+=========================== short test summary info ============================
+FAILED tests/test_migration_numbers.py::test_scan_double_dash_in_string - Ass...
+1 failed in 0.36s
+

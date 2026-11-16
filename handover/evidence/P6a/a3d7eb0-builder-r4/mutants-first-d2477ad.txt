@@ -1,0 +1,174 @@
+$ python tools/client_profile_mutants.py
+head d2477ad44d4861572ef8ae3e61a326d3f127f1b0  copy /tmp/client-profile-mutants-cfmxlmmx/wt  python /home/user/build/B-P6a/.venv/bin/python
+baseline (unmutated) PASS: 298 passed in 11.14s
+  1 | yes | KILLED-NAMED | cp::test_a_demo_anchor_only_failure_does_not_advise_the_field (+named cp::test_d | DEMO_ONLY loses llm/fake
+  2 | yes | KILLED-NAMED | cp::test_a_demo_anchor_only_failure_does_not_advise_the_field (+named cp::test_d | DEMO_ONLY loses channel/fake
+  3 | yes | KILLED-NAMED | cp::test_demo_only_is_exactly_the_six_pairs | DEMO_ONLY loses secrets/fake
+  4 | yes | KILLED-NAMED | cp::test_secrets_env_is_refused_in_a_client_profile[pilot] | DEMO_ONLY loses secrets/env
+  5 | yes | KILLED-NAMED | cp::test_a_pilot_config_that_omits_store_is_refused | DEMO_ONLY loses store/memory
+  6 | yes | KILLED-NAMED | cp::test_demo_only_is_exactly_the_six_pairs | DEMO_ONLY loses audit/local_dir
+  7 | yes | KILLED-NAMED | cp::test_secrets_env_is_refused_in_a_client_profile[pilot] | refusal only in prod (live -> == "prod")
+  8 | yes | KILLED-NAMED | cp::test_three_refusals_come_in_one_error | message keeps only the first refusal
+  9 | yes | KILLED-NAMED | cp::test_each_test_double_is_refused_alone[secrets-pilot] | test-double rule check deleted
+ 10 | yes | KILLED-NAMED | cp::test_each_test_double_is_refused_alone[secrets-pilot] | test-double rule looks only at llm
+ 11 | yes | KILLED-NAMED | cp::test_each_test_double_is_refused_alone[secrets-pilot] | allow_test_doubles default True
+ 12 | yes | KILLED-NAMED | cp::test_each_test_double_is_refused_alone[secrets-pilot] | test-double rule only for prod
+ 13 | yes | KILLED-NAMED | cp::test_sources_keeps_its_own_refusal | sources not excluded from the rule
+ 14 | yes | KILLED-NAMED | cp::test_tools_keeps_its_own_refusal | tools not excluded from the rule
+ 15 | yes | KILLED-NAMED | cp::test_each_test_double_is_refused_alone[clock-pilot] (+named cp::test_a_falsy | compare by truth value, not identity
+ 16 | yes | KILLED-NAMED | cp::test_a_refusal_builds_nothing_first | check placed after secrets = secrets or make()
+ 17 | yes | KILLED-NAMED | cp::test_a_refusal_builds_nothing_first | check placed after platform_secrets.check
+ 18 | yes | KILLED-NAMED | cp::test_each_test_double_is_refused_alone[clock-pilot] (+named cp::test_a_keywo | names from a fixed list of four
+ 19 | yes | KILLED-NAMED | cp::test_all_at_once_names_all_in_signature_order | message names only the first keyword
+ 20 | yes | KILLED-NAMED | cp::test_the_switch_lets_a_test_double_through | switch ignored
+ 21 | yes | KILLED-NAMED | cp::test_each_test_double_is_refused_alone[llm-pilot] | _LIVE_HOOKS gains llm
+ 22 | yes | KILLED-NAMED | cp::test_the_live_hooks_need_no_switch[hold_run_ids] | _LIVE_HOOKS ignored
+ 23 | yes | KILLED-NAMED | cp::test_planted_doors_are_reported[direct] | door scan: keyword branch deleted
+ 24 | yes | KILLED-NAMED | cp::test_planted_doors_are_reported[partial] | door scan: keyword only in calls named build
+ 25 | yes | KILLED-NAMED | cp::test_planted_doors_are_reported[double_star] | door scan: ** branch deleted
+ 26 | yes | KILLED-NAMED | cp::test_planted_pair_in_both_sets_is_reported | decided-pairs check: both-sets not reported
+ 27 | yes | KILLED-NAMED | cp::test_planted_empty_reason_is_reported | decided-pairs check: empty reason not reported
+ 28 | yes | KILLED-NAMED | cp::test_planted_kind_in_neither_set_is_reported | decided-pairs check: neither-set not reported
+ 29 | yes | KILLED-NAMED | cp::test_a_real_llm_kind_in_demo_needs_the_field[anthropic] | made-up-data rule items deleted
+ 30 | yes | KILLED-NAMED | cp::test_the_prod_fixture_loads | made-up-data rule runs in every stage
+ 31 | yes | KILLED-NAMED | cp::test_the_prod_fixture_loads (+named cp::test_a_real_llm_kind_in_demo_needs_t | made_up_data_only default True
+ 32 | yes | KILLED-NAMED | cp::test_the_facts_stated_in_the_reasons_are_true (+named cp::test_a_real_llm_ki | made-up-data rule llm item checks one fixed kind
+ 33 | yes | KILLED-NAMED | cp::test_the_facts_stated_in_the_reasons_are_true (+named cp::test_the_vendor_de | made-up-data rule guardrail item dropped
+ 34 | yes | KILLED-NAMED | cp::test_with_the_field_a_real_llm_kind_loads_in_demo | field ignored (refused even with it)
+ 35 | yes | KILLED-NAMED | cp::test_a_real_llm_kind_in_demo_needs_the_field[anthropic] (+named cp::test_thr | made-up-data rule raised as its own error
+ 36 | yes | KILLED-NAMED | cp::test_the_facts_stated_in_the_reasons_are_true (+named cp::test_a_real_channe | made-up-data rule channel item dropped
+ 37 | yes | KILLED-NAMED | cp::test_any_environment_that_is_not_demo_is_live[Demo] | test-double rule live replaced by environment in (pilot, prod)
+ 38 | yes | KILLED-NAMED | cp::test_the_switch_leaves_a_log_line_naming_the_keywords | the switch leaves no log line
+ 39 | yes | KILLED-NAMED | cp::test_the_keyword_snapshot_is_the_first_statement_of_build | keyword snapshot taken after another statement
+ 40 | yes | KILLED-NAMED | cp::test_only_the_value_true_is_the_switch[no] | switch read by truthiness, not is True
+ 41 | yes | KILLED-NAMED | cp::test_the_field_is_refused_in_pilot_and_prod | made_up_data_only not refused when live
+ 42 | yes | KILLED-NAMED | cp::test_the_field_is_refused_in_any_environment_that_is_not_demo[Demo] | made_up_data_only refused only in pilot and prod
+ 43 | yes | KILLED-NAMED | cp::test_with_the_field_a_real_llm_kind_loads_in_demo | made_up_data_only refused in every stage
+ 44 | yes | KILLED-NAMED | cp::test_secrets_env_is_refused_in_a_client_profile[pilot] (+named cp::test_a_de | advice tail appended for any refusal
+ 45 | yes | KILLED-NAMED | cp::test_each_test_double_is_refused_alone[extra_double-pilot] (+named cp::test_ | extra keyword on build() with no sample
+ 46 | yes | KILLED-NAMED | cp::test_a_loose_yes_does_not_switch_the_field_on[yes] | made_up_data_only: strict bool -> loose bool
+ 47 | yes | KILLED-NAMED | cp::test_a_value_that_is_not_a_bool_is_refused_at_load[null] | made_up_data_only: accepts None
+ 48 | yes | KILLED-NAMED | p1b::test_demo_only_kinds_refused_outside_demo[pilot] | allow_insecure_loopback refusal dropped in live
+ 49 | yes | KILLED-NAMED | cp::test_a_demo_anchor_only_failure_does_not_advise_the_field (+named cp::test_t | local detector list loses regex (a local check counted as sending text out)
+ 50 | yes | KILLED-NAMED | cp::test_a_demo_anchor_only_failure_does_not_advise_the_field | anchor refusals dropped
+ 51 | yes | KILLED-NAMED | cp::test_sources_keeps_its_own_refusal (+named cp::test_no_override_passes_the_c | positional parameters counted as doubles
+ 52 | yes | KILLED-NAMED | cp::test_a_keyword_added_later_is_refused_by_default | a name missing from given is not skipped
+ 53 | yes | KILLED-NAMED | test_k5_tools.py::test_k5_scope_probe_refuses_write | sources refused outside live too
+ 54 | yes | KILLED-NAMED | test_k3_review_fixes.py::test_k3_build_passes_tools_to_hooks | tools refused outside live too
+ 55 | yes | KILLED-NAMED | cp::test_the_live_hooks_need_no_switch[hold_run_ids] | hold_run_ids no longer a live hook
+ 56 | yes | KILLED-NAMED | cp::test_the_live_hooks_need_no_switch[timeout_s] | timeout_s no longer a live hook
+ 57 | yes | KILLED-NAMED | cp::test_the_prod_fixture_loads (+named cp::test_demo_only_is_exactly_the_six_pa | DEMO_ONLY gains llm/openai_compat
+ 58 | yes | KILLED-NAMED | cp::test_the_prod_fixture_loads (+named cp::test_demo_only_is_exactly_the_six_pa | DEMO_ONLY gains channel/slack
+ 59 | yes | KILLED-NAMED | cp::test_the_field_is_refused_in_pilot_and_prod | made-up-data rule flag text loses its words
+ 60 | yes | KILLED-NAMED | cp::test_each_test_double_is_refused_alone[secrets-pilot] | test-double rule message no longer names the switch
+ 61 | yes | KILLED-NAMED | cp::test_each_test_double_is_refused_alone[secrets-pilot] | build keywords hidden from the check (secrets blanked)
+ 62 | yes | KILLED-NAMED | cp::test_each_test_double_is_refused_alone[secrets-pilot] | app live is prod only
+ 63 | yes | KILLED-NAMED | cp::test_three_refusals_come_in_one_error | only the first made-up-data rule item reported
+ 64 | yes | KILLED-NAMED | cp::test_only_the_value_true_is_the_switch[no] | switch counted only when it is False
+ 65 | yes | KILLED-NAMED | cp::test_the_facts_stated_in_the_reasons_are_true (+named cp::test_the_vendor_de | a vendor detector joins the local list
+ 66 | yes | KILLED-NAMED | cp::test_two_same_size_mutants_in_one_second_do_not_run_each_others_code | runner: compiled files are written again
+ 67 | yes | KILLED-NAMED | cp::test_the_mutant_runner_gives_the_tests_only_plain_variables | runner: the tests get the whole environment
+ 68 | yes | KILLED-NAMED | cp::test_the_mutant_runner_refuses_to_start_with_a_cloud_setting[AWS_ACCESS_KEY_ | runner: AWS_ is not a cloud prefix
+ 69 | yes | KILLED-NAMED | cp::test_the_mutant_numbers_are_one_to_n_without_gaps_or_repeats | runner: numbers leave a gap
+ 70 | no  | NOT-LOCATED  | - | runner: a kill by another test counts as a kill  [original text occurs 2 times (need exactly 1): 'r[4] not in ("KILLED", "KILLED-NAMED")]']
+ 71 | yes | KILLED-NAMED | cp::test_a_killer_must_be_anchored_at_the_end | runner: an unanchored killer passes the check
+ 72 | yes | KILLED-NAMED | cp::test_the_mutant_runner_refuses_to_start_with_an_unanchored_killer | runner: an unanchored killer does not stop the start
+ 73 | yes | KILLED-NAMED | cp::test_the_mutant_runner_gives_the_tests_an_empty_home | runner: the tests get the real HOME
+ 74 | yes | KILLED-NAMED | cp::test_the_mutant_runner_refuses_to_start_with_a_cloud_setting[ARM_CLIENT_ID] | runner: ARM_ is not a cloud prefix
+ 75 | yes | KILLED-NAMED | cp::test_the_mutant_runner_refuses_to_start_with_a_cloud_setting[MSI_ENDPOINT] | runner: MSI_ is not a cloud prefix
+ 76 | yes | KILLED-NAMED | cp::test_the_mutant_runner_refuses_to_start_with_a_cloud_setting[IDENTITY_ENDPOI | runner: IDENTITY_ is not a cloud prefix
+ 77 | yes | KILLED-NAMED | cp::test_the_mutant_runner_refuses_to_start_with_a_cloud_setting[BOTO_CONFIG] | runner: BOTO_ is not a cloud prefix
+ 78 | yes | KILLED-NAMED | cp::test_the_mutant_runner_refuses_to_start_with_a_cloud_setting[GCLOUD_PROJECT] | runner: GCLOUD_ is not a cloud prefix
+ 79 | yes | KILLED-NAMED | cp::test_the_mutant_runner_refuses_to_start_with_a_cloud_setting[OCI_CLI_PROFILE | runner: OCI_ is not a cloud prefix
+ 80 | yes | KILLED-NAMED | cp::test_the_command_line_refuses_a_demo_config_that_sends_text_out[gate] | command line: gate skips the config check
+ 81 | yes | KILLED-NAMED | cp::test_the_command_line_refuses_a_demo_config_that_sends_text_out[replay] | command line: replay skips the config check
+ 82 | yes | KILLED-NAMED | cp::test_the_command_line_refuses_a_demo_config_that_sends_text_out[score] | command line: score skips the config check
+
+mutant | planted | killed-by | status
+1 | yes | cp::test_a_demo_anchor_only_failure_does_not_advise_the_field (+named cp::test_demo_only_is_exactly_the_six_pairs) | KILLED-NAMED
+2 | yes | cp::test_a_demo_anchor_only_failure_does_not_advise_the_field (+named cp::test_demo_only_is_exactly_the_six_pairs) | KILLED-NAMED
+3 | yes | cp::test_demo_only_is_exactly_the_six_pairs | KILLED-NAMED
+4 | yes | cp::test_secrets_env_is_refused_in_a_client_profile[pilot] | KILLED-NAMED
+5 | yes | cp::test_a_pilot_config_that_omits_store_is_refused | KILLED-NAMED
+6 | yes | cp::test_demo_only_is_exactly_the_six_pairs | KILLED-NAMED
+7 | yes | cp::test_secrets_env_is_refused_in_a_client_profile[pilot] | KILLED-NAMED
+8 | yes | cp::test_three_refusals_come_in_one_error | KILLED-NAMED
+9 | yes | cp::test_each_test_double_is_refused_alone[secrets-pilot] | KILLED-NAMED
+10 | yes | cp::test_each_test_double_is_refused_alone[secrets-pilot] | KILLED-NAMED
+11 | yes | cp::test_each_test_double_is_refused_alone[secrets-pilot] | KILLED-NAMED
+12 | yes | cp::test_each_test_double_is_refused_alone[secrets-pilot] | KILLED-NAMED
+13 | yes | cp::test_sources_keeps_its_own_refusal | KILLED-NAMED
+14 | yes | cp::test_tools_keeps_its_own_refusal | KILLED-NAMED
+15 | yes | cp::test_each_test_double_is_refused_alone[clock-pilot] (+named cp::test_a_falsy_double_is_refused) | KILLED-NAMED
+16 | yes | cp::test_a_refusal_builds_nothing_first | KILLED-NAMED
+17 | yes | cp::test_a_refusal_builds_nothing_first | KILLED-NAMED
+18 | yes | cp::test_each_test_double_is_refused_alone[clock-pilot] (+named cp::test_a_keyword_added_later_is_refused_by_default) | KILLED-NAMED
+19 | yes | cp::test_all_at_once_names_all_in_signature_order | KILLED-NAMED
+20 | yes | cp::test_the_switch_lets_a_test_double_through | KILLED-NAMED
+21 | yes | cp::test_each_test_double_is_refused_alone[llm-pilot] | KILLED-NAMED
+22 | yes | cp::test_the_live_hooks_need_no_switch[hold_run_ids] | KILLED-NAMED
+23 | yes | cp::test_planted_doors_are_reported[direct] | KILLED-NAMED
+24 | yes | cp::test_planted_doors_are_reported[partial] | KILLED-NAMED
+25 | yes | cp::test_planted_doors_are_reported[double_star] | KILLED-NAMED
+26 | yes | cp::test_planted_pair_in_both_sets_is_reported | KILLED-NAMED
+27 | yes | cp::test_planted_empty_reason_is_reported | KILLED-NAMED
+28 | yes | cp::test_planted_kind_in_neither_set_is_reported | KILLED-NAMED
+29 | yes | cp::test_a_real_llm_kind_in_demo_needs_the_field[anthropic] | KILLED-NAMED
+30 | yes | cp::test_the_prod_fixture_loads | KILLED-NAMED
+31 | yes | cp::test_the_prod_fixture_loads (+named cp::test_a_real_llm_kind_in_demo_needs_the_field[anthropic]) | KILLED-NAMED
+32 | yes | cp::test_the_facts_stated_in_the_reasons_are_true (+named cp::test_a_real_llm_kind_in_demo_needs_the_field[bedrock]) | KILLED-NAMED
+33 | yes | cp::test_the_facts_stated_in_the_reasons_are_true (+named cp::test_the_vendor_detector_in_demo_needs_the_field) | KILLED-NAMED
+34 | yes | cp::test_with_the_field_a_real_llm_kind_loads_in_demo | KILLED-NAMED
+35 | yes | cp::test_a_real_llm_kind_in_demo_needs_the_field[anthropic] (+named cp::test_three_refusals_come_in_one_error) | KILLED-NAMED
+36 | yes | cp::test_the_facts_stated_in_the_reasons_are_true (+named cp::test_a_real_channel_kind_in_demo_needs_the_field) | KILLED-NAMED
+37 | yes | cp::test_any_environment_that_is_not_demo_is_live[Demo] | KILLED-NAMED
+38 | yes | cp::test_the_switch_leaves_a_log_line_naming_the_keywords | KILLED-NAMED
+39 | yes | cp::test_the_keyword_snapshot_is_the_first_statement_of_build | KILLED-NAMED
+40 | yes | cp::test_only_the_value_true_is_the_switch[no] | KILLED-NAMED
+41 | yes | cp::test_the_field_is_refused_in_pilot_and_prod | KILLED-NAMED
+42 | yes | cp::test_the_field_is_refused_in_any_environment_that_is_not_demo[Demo] | KILLED-NAMED
+43 | yes | cp::test_with_the_field_a_real_llm_kind_loads_in_demo | KILLED-NAMED
+44 | yes | cp::test_secrets_env_is_refused_in_a_client_profile[pilot] (+named cp::test_a_demo_anchor_only_failure_does_not_advise_the_field) | KILLED-NAMED
+45 | yes | cp::test_each_test_double_is_refused_alone[extra_double-pilot] (+named cp::test_every_refused_keyword_has_a_sample) | KILLED-NAMED
+46 | yes | cp::test_a_loose_yes_does_not_switch_the_field_on[yes] | KILLED-NAMED
+47 | yes | cp::test_a_value_that_is_not_a_bool_is_refused_at_load[null] | KILLED-NAMED
+48 | yes | p1b::test_demo_only_kinds_refused_outside_demo[pilot] | KILLED-NAMED
+49 | yes | cp::test_a_demo_anchor_only_failure_does_not_advise_the_field (+named cp::test_the_local_detector_list_is_exactly_regex_and_llm_judge) | KILLED-NAMED
+50 | yes | cp::test_a_demo_anchor_only_failure_does_not_advise_the_field | KILLED-NAMED
+51 | yes | cp::test_sources_keeps_its_own_refusal (+named cp::test_no_override_passes_the_check[pilot]) | KILLED-NAMED
+52 | yes | cp::test_a_keyword_added_later_is_refused_by_default | KILLED-NAMED
+53 | yes | test_k5_tools.py::test_k5_scope_probe_refuses_write | KILLED-NAMED
+54 | yes | test_k3_review_fixes.py::test_k3_build_passes_tools_to_hooks | KILLED-NAMED
+55 | yes | cp::test_the_live_hooks_need_no_switch[hold_run_ids] | KILLED-NAMED
+56 | yes | cp::test_the_live_hooks_need_no_switch[timeout_s] | KILLED-NAMED
+57 | yes | cp::test_the_prod_fixture_loads (+named cp::test_demo_only_is_exactly_the_six_pairs) | KILLED-NAMED
+58 | yes | cp::test_the_prod_fixture_loads (+named cp::test_demo_only_is_exactly_the_six_pairs) | KILLED-NAMED
+59 | yes | cp::test_the_field_is_refused_in_pilot_and_prod | KILLED-NAMED
+60 | yes | cp::test_each_test_double_is_refused_alone[secrets-pilot] | KILLED-NAMED
+61 | yes | cp::test_each_test_double_is_refused_alone[secrets-pilot] | KILLED-NAMED
+62 | yes | cp::test_each_test_double_is_refused_alone[secrets-pilot] | KILLED-NAMED
+63 | yes | cp::test_three_refusals_come_in_one_error | KILLED-NAMED
+64 | yes | cp::test_only_the_value_true_is_the_switch[no] | KILLED-NAMED
+65 | yes | cp::test_the_facts_stated_in_the_reasons_are_true (+named cp::test_the_vendor_detector_in_demo_needs_the_field) | KILLED-NAMED
+66 | yes | cp::test_two_same_size_mutants_in_one_second_do_not_run_each_others_code | KILLED-NAMED
+67 | yes | cp::test_the_mutant_runner_gives_the_tests_only_plain_variables | KILLED-NAMED
+68 | yes | cp::test_the_mutant_runner_refuses_to_start_with_a_cloud_setting[AWS_ACCESS_KEY_ID] | KILLED-NAMED
+69 | yes | cp::test_the_mutant_numbers_are_one_to_n_without_gaps_or_repeats | KILLED-NAMED
+70 | no | - | NOT-LOCATED | original text occurs 2 times (need exactly 1): 'r[4] not in ("KILLED", "KILLED-NAMED")]'
+71 | yes | cp::test_a_killer_must_be_anchored_at_the_end | KILLED-NAMED
+72 | yes | cp::test_the_mutant_runner_refuses_to_start_with_an_unanchored_killer | KILLED-NAMED
+73 | yes | cp::test_the_mutant_runner_gives_the_tests_an_empty_home | KILLED-NAMED
+74 | yes | cp::test_the_mutant_runner_refuses_to_start_with_a_cloud_setting[ARM_CLIENT_ID] | KILLED-NAMED
+75 | yes | cp::test_the_mutant_runner_refuses_to_start_with_a_cloud_setting[MSI_ENDPOINT] | KILLED-NAMED
+76 | yes | cp::test_the_mutant_runner_refuses_to_start_with_a_cloud_setting[IDENTITY_ENDPOINT] | KILLED-NAMED
+77 | yes | cp::test_the_mutant_runner_refuses_to_start_with_a_cloud_setting[BOTO_CONFIG] | KILLED-NAMED
+78 | yes | cp::test_the_mutant_runner_refuses_to_start_with_a_cloud_setting[GCLOUD_PROJECT] | KILLED-NAMED
+79 | yes | cp::test_the_mutant_runner_refuses_to_start_with_a_cloud_setting[OCI_CLI_PROFILE] | KILLED-NAMED
+80 | yes | cp::test_the_command_line_refuses_a_demo_config_that_sends_text_out[gate] | KILLED-NAMED
+81 | yes | cp::test_the_command_line_refuses_a_demo_config_that_sends_text_out[replay] | KILLED-NAMED
+82 | yes | cp::test_the_command_line_refuses_a_demo_config_that_sends_text_out[score] | KILLED-NAMED
+
+TOTAL mutants 82  planted 81  KILLED by the named test 81 (named 81, no named killer 0)  killed only by another test 0  SURVIVED 0  other problems 1  (165s)
+  not clean: 70 NOT-LOCATED runner: a kill by another test counts as a kill original text occurs 2 times (need exactly 1): 'r[4] not in ("KILLED", "KILLED-NAMED")]'
+final git status: ''
+exit=1

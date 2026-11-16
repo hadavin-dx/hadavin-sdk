@@ -1,0 +1,373 @@
+FAIL	test_policy_changelog::test_the_changelog_gives_the_days_the_kinds_list_starts_to_fail	AssertionError: the changelog does not give the days the kinds list starts to fail
+pass	test_policy_changelog::test_the_sixteen_pending_kinds_each_stand_on_the_day_they_were_decided	
+FAIL	test_policy_docs::test_m1_no_text_states_the_vault_refusals_as_fact_while_no_run_is_on_record	tools.policy_page.PolicyError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_docs::test_the_page_title_notes_and_engine_image_are_true	tools.policy_page.PolicyError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_docs::test_m14_ci_runs_the_policy_mutants_next_to_the_stage_mutants	AssertionError: assert ('python tests/stage_mutants.py' in ['', '', 'uv sync --locked --no-build --all-extras --group test', 'ruff check src tests demos tools', 'ruff format --check src tests demos to
+FAIL	test_policy_docs::test_ci_runs_the_policy_page_check_right_after_the_policy_mutants	AssertionError: ci.yml has no step `python tools/policy_page.py --check`
+FAIL	test_policy_docs::test_the_changelog_names_the_start_of_the_date_guard_by_rule_and_calls_it_a_reminder	ValueError: substring not found
+FAIL	test_policy_docs::test_the_changelog_says_seven_rows_are_abbreviated_and_the_openbao_release_is_not_pinned	ValueError: substring not found
+pass	test_policy_engine::test_the_engine_tests_run_skip_or_fail_by_the_environment	
+FAIL	test_policy_engine::test_ci_requires_the_engine_tests_in_both_jobs_that_have_a_vault_service	AssertionError: job check: HADAVIN_REQUIRE_VAULT_ENGINE is not set beside HADAVIN_TEST_VAULT_ADDR
+skip	test_policy_engine::test_vault_secrets_the_allowed_read_works_with_only_the_generated_policy	needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, s
+skip	test_policy_engine::test_vault_secrets_the_read_is_refused_when_its_grant_is_removed	needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, s
+skip	test_policy_engine::test_vault_secrets_the_never_list_requests_are_refused_and_the_admin_control_is_not	needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, s
+skip	test_policy_engine::test_plant_a_vault_policy_widened_to_the_whole_mount_fails_the_refusal_check	needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, s
+skip	test_policy_engine::test_plant_the_old_everything_below_the_prefix_form_fails_the_refusal_check	needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, s
+skip	test_policy_engine::test_plant_the_admin_token_in_place_of_the_runtime_token_fails_the_refusal_check	needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, s
+skip	test_policy_engine::test_vault_transit_signing_and_the_public_key_work_with_only_the_generated_policy	needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, s
+skip	test_policy_engine::test_vault_transit_a_request_is_refused_when_its_grant_is_removed[R18]	needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, s
+skip	test_policy_engine::test_vault_transit_a_request_is_refused_when_its_grant_is_removed[R19]	needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, s
+skip	test_policy_engine::test_vault_transit_the_never_list_requests_are_refused_and_the_admin_control_is_not	needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, s
+skip	test_policy_engine::test_plant_a_transit_policy_widened_to_every_key_fails_the_refusal_check	needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, s
+skip	test_policy_engine::test_plant_the_admin_token_in_place_of_the_transit_runtime_token_fails_the_refusal_check	needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, s
+FAIL	test_policy_engine::test_the_refused_requests_are_the_ones_the_page_names	AttributeError: 'NoneType' object has no attribute 'platform'
+pass	test_policy_engine::test_a_failing_assertion_cannot_print_a_token	
+pass	test_policy_engine::test_the_admin_control_fails_on_an_answer_that_is_not_200_or_204	
+pass	test_policy_engine::test_the_hash_path_control_also_accepts_400_but_never_403_or_404_and_no_other_request_accepts_400	
+pass	test_policy_engine::test_the_longer_sign_path_is_sent_for_the_signing_key_and_listed_on_the_page	
+pass	test_policy_engine::test_clean_up_sends_every_undo_request_and_survives_a_failure	
+FAIL	test_policy_guard::test_every_kind_is_declared_pending_or_holds_no_identity	AssertionError: assert ['kind secret... dated entry'] == []
+pass	test_policy_guard::test_plant_a_new_kind_on_no_list_is_caught	
+pass	test_policy_guard::test_plant_a_declared_kind_left_on_the_pending_list_is_caught	
+pass	test_policy_guard::test_plant_an_overdue_pending_kind_is_caught	
+FAIL	test_policy_guard::test_the_calls_written_in_the_module_equal_the_declared_list[src/hadavin_sdk/actions/secrets_vault.py]	AssertionError: assert ['no POLICY i...ets_vault.py'] == []
+FAIL	test_policy_guard::test_the_calls_written_in_the_module_equal_the_declared_list[src/hadavin_sdk/audit/signer_vault.py]	AssertionError: assert ['no POLICY i...ner_vault.py'] == []
+FAIL	test_policy_guard::test_the_calls_written_in_the_module_equal_the_declared_list[src/hadavin_sdk/sources/kubernetes.py]	AssertionError: assert ['no POLICY i...ubernetes.py'] == []
+pass	test_policy_guard::test_every_declared_kind_module_has_a_call_shape	
+pass	test_policy_guard::test_the_extracted_requests_are_the_ones_the_ticket_lists	
+FAIL	test_policy_guard::test_plant_a_new_request_with_no_grant_is_caught	AssertionError: reported ['no POLICY in src/hadavin_sdk/actions/secrets_vault.py'], expected ["src/hadavin_sdk/actions/secrets_vault.py:199: request ('LIST', '{provider.mount}/metadata/{provider.path_
+FAIL	test_policy_guard::test_plant_a_grant_whose_request_was_deleted_is_caught	AssertionError: reported ['no POLICY in src/hadavin_sdk/audit/signer_vault.py'], expected ["src/hadavin_sdk/audit/signer_vault.py: POLICY declares request ('GET', '{self.mount}/keys/{self.key_name}') 
+FAIL	test_policy_guard::test_plant_a_request_that_is_not_a_literal_is_caught	AssertionError: reported ['src/hadavin_sdk/actions/secrets_vault.py:199: call to `.authed` whose request is not a literal, outside the allowlisted lines: it cannot be compared with the declared list',
+FAIL	test_policy_guard::test_plant_a_path_built_by_a_call_is_not_foldable_and_is_caught	AssertionError: assert (2 == 1)
+pass	test_policy_guard::test_plant_a_banned_indirect_call_is_caught[getattr(p, name)('GET', 'sys/mounts')-banned `getattr` with a name that is not a literal]	
+pass	test_policy_guard::test_plant_a_banned_indirect_call_is_caught[operator.methodcaller('authed', 'GET', 'sys/mounts')(p)-banned indirect call `methodcaller`]	
+pass	test_policy_guard::test_plant_a_banned_indirect_call_is_caught[p.__getattribute__('authed')-banned indirect call `__getattribute__`]	
+pass	test_policy_guard::test_plant_a_banned_indirect_call_is_caught[p.meta.client.get_waiter('x')-banned indirect call `.meta.client`]	
+pass	test_policy_guard::test_plant_a_banned_indirect_call_is_caught[p._make_api_call('GetSecretValue', {})-banned indirect call `_make_api_call`]	
+FAIL	test_policy_guard::test_plant_a_sink_taken_as_a_value_is_caught	AssertionError: reported ['src/hadavin_sdk/actions/secrets_vault.py:199: `.authed` is taken as a value, not called: the request it would send cannot be read', 'no POLICY in src/hadavin_sdk/actions/sec
+FAIL	test_policy_guard::test_plant_a_raw_http_request_outside_the_one_sender_is_caught	AssertionError: reported ['src/hadavin_sdk/audit/signer_vault.py:85: raw HTTP call `Request` outside any allowed function', 'no POLICY in src/hadavin_sdk/audit/signer_vault.py'], expected ['src/hadavi
+FAIL	test_policy_guard::test_plant_a_stale_allowlist_line_is_caught	AssertionError: assert (3 == 6)
+pass	test_policy_guard::test_plant_an_allowlisted_line_that_stops_passing_its_parameter_is_caught	
+FAIL	test_policy_guard::test_a_request_named_only_in_a_docstring_changes_nothing	AssertionError: assert ['no POLICY i...ets_vault.py'] == []
+FAIL	test_policy_guard::test_plant_a_new_kubernetes_operation_is_caught	AssertionError: reported ['no POLICY in src/hadavin_sdk/sources/kubernetes.py'], expected ["src/hadavin_sdk/sources/kubernetes.py:355: request ('k8s.list_secrets',) has no grant and no free entry in P
+pass	test_policy_guard::test_template_folds_only_names_and_attributes	
+FAIL	test_policy_guard::test_kubernetes_declared_operations_equal_the_bound_operation_ids	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_each_kubernetes_grant_is_the_verb_and_resource_of_its_path	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_the_kubernetes_never_list_equals_what_the_code_refuses_at_start_up	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_the_generated_role_passes_the_kinds_own_read_only_rule	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_plant_a_widened_role_fails_the_kinds_own_read_only_rule[extra0-write verb patch]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_plant_a_widened_role_fails_the_kinds_own_read_only_rule[extra1-access to pods/exec]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_plant_a_widened_role_fails_the_kinds_own_read_only_rule[extra2-read access to secrets]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_the_three_literals_break_no_data_rule	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_d1_a_wildcard_in_a_permission_name_is_caught	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_d1_a_wildcard_resource_with_no_bound_is_caught	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_d2_every_field_of_a_resource_is_a_setting_of_the_kind	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_plant_d2_a_field_that_is_no_setting_is_caught	AssertionError: no POLICY in src/hadavin_sdk/audit/signer_vault.py
+FAIL	test_policy_guard::test_plant_d3_an_empty_reason_is_caught	AssertionError: no POLICY in src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_plant_d4_a_grant_that_names_no_call_is_caught	AssertionError: no POLICY in src/hadavin_sdk/audit/signer_vault.py
+FAIL	test_policy_guard::test_plant_d5_a_never_action_that_another_kind_needs_is_caught	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_plant_a_grant_id_used_by_two_kinds_is_caught	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_plant_d6_a_long_lived_credential_with_no_exception_is_caught	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+pass	test_policy_guard::test_plant_d7_a_policy_that_is_not_a_pure_literal_is_refused_and_never_run[POLICY = dict(platform='vault')]	
+pass	test_policy_guard::test_plant_d7_a_policy_that_is_not_a_pure_literal_is_refused_and_never_run[POLICY = {'platform': PLATFORM}]	
+pass	test_policy_guard::test_plant_d7_a_policy_that_is_not_a_pure_literal_is_refused_and_never_run[POLICY = {**BASE}]	
+FAIL	test_policy_guard::test_plant_d7_unknown_keys_platform_and_never_type_are_refused	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+pass	test_policy_guard::test_a_module_with_no_policy_loads_as_none	
+FAIL	test_policy_guard::test_every_grant_name_is_verified_or_pending_and_every_source_id_resolves	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_every_unchecked_claim_has_a_dated_entry_and_the_suite_goes_red_when_it_is_overdue	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_plant_an_unchecked_claim_with_no_pending_entry_is_caught	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_pr1_grants_are_all_named_in_a_source_and_the_grants_with_an_unchecked_claim_are_listed	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_the_builder_only_claims_are_not_shown_as_checked_and_no_kind_has_copy_ready_text	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_a_builder_only_source_is_marked_wherever_the_page_lists_it	tools.policy_page.PolicyError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_an_unverified_grant_with_no_pending_entry_is_caught	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_plant_a_source_id_that_does_not_resolve_is_caught	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_plant_a_url_or_host_in_verified_is_refused[https://developer.hashicorp.com/vault]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_a_url_or_host_in_verified_is_refused[developer.hashicorp.com]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_a_url_or_host_in_verified_is_refused[v-kv]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_a_url_or_host_in_verified_is_refused[]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_no_copy_ready_text_for_a_kind_with_an_unverified_grant_or_claim	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+pass	test_policy_guard::test_each_grammar_is_the_settings_own_pattern	
+FAIL	test_policy_guard::test_vault_text_in_page_mode_and_with_values	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_an_empty_vault_prefix_is_refused_and_the_page_says_so_first	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_each_vault_grammar_refuses_what_is_not_a_plain_name[*]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_each_vault_grammar_refuses_what_is_not_a_plain_name[a*]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_each_vault_grammar_refuses_what_is_not_a_plain_name[{mount}]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_each_vault_grammar_refuses_what_is_not_a_plain_name[a b]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_each_vault_grammar_refuses_what_is_not_a_plain_name[ a]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_each_vault_grammar_refuses_what_is_not_a_plain_name[a\n]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_each_vault_grammar_refuses_what_is_not_a_plain_name[]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_each_vault_grammar_refuses_what_is_not_a_plain_name[..]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_each_vault_grammar_refuses_what_is_not_a_plain_name[a/../b]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_each_vault_grammar_refuses_what_is_not_a_plain_name[a/]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_the_kubernetes_grammar_refuses_what_is_not_a_plain_name[*]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_the_kubernetes_grammar_refuses_what_is_not_a_plain_name[Shop]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_the_kubernetes_grammar_refuses_what_is_not_a_plain_name[a b]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_the_kubernetes_grammar_refuses_what_is_not_a_plain_name[{namespaces}]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_the_kubernetes_grammar_refuses_what_is_not_a_plain_name[shop,]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_the_kubernetes_grammar_refuses_what_is_not_a_plain_name[-a]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_the_kubernetes_grammar_refuses_what_is_not_a_plain_name[a_b]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_the_kubernetes_grammar_refuses_what_is_not_a_plain_name[]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_a_missing_an_unused_and_a_non_text_value_are_refused	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_kubernetes_page_mode_keeps_the_placeholders	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_the_committed_page_equals_what_the_data_gives	AssertionError: docs/declared-permissions.md is missing: run `python tools/policy_page.py --write`
+FAIL	test_policy_guard::test_the_page_states_its_limits_and_offers_text_for_the_three_kinds	tools.policy_page.PolicyError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_a_page_that_differs_from_the_data_fails_the_check	tools.policy_page.PolicyError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_p04b_an_added_request_through_getattr_with_a_literal_name_is_caught	AssertionError: reported ['src/hadavin_sdk/actions/secrets_vault.py:115: banned `getattr` of `authed`: only no name may be read this way in this module', 'no POLICY in src/hadavin_sdk/actions/secrets_
+FAIL	test_policy_guard::test_plant_p09a_a_kubernetes_request_with_watch_in_its_query_is_caught	AssertionError: reported ['src/hadavin_sdk/sources/kubernetes.py:247: query parameter `watch` is not one that `k8s.list_events` may carry (none): it could change the verb the request needs', "src/hada
+pass	test_policy_guard::test_plant_each_indirect_way_to_a_request_is_caught[getattr(p, 'authed')('GET', 'sys/mounts')-banned `getattr` of `authed`]	
+pass	test_policy_guard::test_plant_each_indirect_way_to_a_request_is_caught[getattr(p, '_opener').open('https://x')-banned `getattr` of `_opener`]	
+pass	test_policy_guard::test_plant_each_indirect_way_to_a_request_is_caught[__import__('operator').methodcaller('authed', 'GET', 'sys/mounts')(p)-banned indirect call `__import__`]	
+pass	test_policy_guard::test_plant_each_indirect_way_to_a_request_is_caught[operator.attrgetter('authed')(p)('GET', 'sys/mounts')-banned indirect call `attrgetter`]	
+pass	test_policy_guard::test_plant_each_indirect_way_to_a_request_is_caught[functools.partial(p.authed, 'GET')('sys/mounts')-banned indirect call `partial`]	
+pass	test_policy_guard::test_plant_each_indirect_way_to_a_request_is_caught[vars(p)['authed']('GET', 'sys/mounts')-banned indirect call `vars`]	
+pass	test_policy_guard::test_plant_each_indirect_way_to_a_request_is_caught[p.__dict__['_opener']-banned indirect call `__dict__`]	
+pass	test_policy_guard::test_plant_each_indirect_way_to_a_request_is_caught[p._opener.open('https://x/v1/sys/mounts')-raw HTTP call `open` outside]	
+pass	test_policy_guard::test_plant_each_indirect_way_to_a_request_is_caught[p._opener-the HTTP opener `._opener` is used outside]	
+pass	test_policy_guard::test_plant_each_indirect_way_to_a_request_is_caught[urllib.request.urlretrieve('https://x')-raw HTTP call `urlretrieve` outside]	
+pass	test_policy_guard::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/actions/secrets_vault.py-from operator import methodcaller as mc-banned indirect call `methodcaller` (imported)]	
+pass	test_policy_guard::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/actions/secrets_vault.py-from operator import attrgetter-banned indirect call `attrgetter` (imported)]	
+pass	test_policy_guard::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/actions/secrets_vault.py-import httpx-import `httpx` is not on this module's import list]	
+pass	test_policy_guard::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/actions/secrets_vault.py-import socket-import `socket` is not on this module's import list]	
+pass	test_policy_guard::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/actions/secrets_vault.py-from http import client-import `http:client` is not on this module's import list]	
+pass	test_policy_guard::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/actions/secrets_vault.py-from typing import Any as A-import `typing:Any` is renamed to `A`]	
+pass	test_policy_guard::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/audit/signer_vault.py-from operator import methodcaller as mc-banned indirect call `methodcaller` (imported)]	
+pass	test_policy_guard::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/audit/signer_vault.py-from operator import attrgetter-banned indirect call `attrgetter` (imported)]	
+pass	test_policy_guard::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/audit/signer_vault.py-import httpx-import `httpx` is not on this module's import list]	
+pass	test_policy_guard::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/audit/signer_vault.py-import socket-import `socket` is not on this module's import list]	
+pass	test_policy_guard::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/audit/signer_vault.py-from http import client-import `http:client` is not on this module's import list]	
+pass	test_policy_guard::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/audit/signer_vault.py-from typing import Any as A-import `typing:Any` is renamed to `A`]	
+pass	test_policy_guard::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/sources/kubernetes.py-from operator import methodcaller as mc-banned indirect call `methodcaller` (imported)]	
+pass	test_policy_guard::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/sources/kubernetes.py-from operator import attrgetter-banned indirect call `attrgetter` (imported)]	
+pass	test_policy_guard::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/sources/kubernetes.py-import httpx-import `httpx` is not on this module's import list]	
+pass	test_policy_guard::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/sources/kubernetes.py-import socket-import `socket` is not on this module's import list]	
+pass	test_policy_guard::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/sources/kubernetes.py-from http import client-import `http:client` is not on this module's import list]	
+pass	test_policy_guard::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/sources/kubernetes.py-from typing import Any as A-import `typing:Any` is renamed to `A`]	
+pass	test_policy_guard::test_every_import_of_a_declared_module_is_on_its_list_and_no_entry_is_stale	
+FAIL	test_policy_guard::test_plant_a_local_variable_named_like_a_setting_is_not_taken_for_the_setting	AssertionError: reported ['no POLICY in src/hadavin_sdk/actions/secrets_vault.py'], expected ["src/hadavin_sdk/actions/secrets_vault.py:200: request ('GET', '{mount}/data/{path_prefix}{name}') has no 
+pass	test_policy_guard::test_only_the_declared_modules_use_the_vault_client	
+pass	test_policy_guard::test_plant_another_module_or_a_subclass_using_the_vault_client_is_caught[from hadavin_sdk.actions.secrets_vault import connect\n-imports ['connect'] from the Vault client module]	
+pass	test_policy_guard::test_plant_another_module_or_a_subclass_using_the_vault_client_is_caught[from hadavin_sdk.actions import secrets_vault\n-imports ['<the module>'] from the Vault client module]	
+pass	test_policy_guard::test_plant_another_module_or_a_subclass_using_the_vault_client_is_caught[import hadavin_sdk.actions.secrets_vault\n-imports ['<the module>'] from the Vault client module]	
+pass	test_policy_guard::test_plant_another_module_or_a_subclass_using_the_vault_client_is_caught[import importlib\nm = importlib.import_module('hadavin_sdk.actions.secrets_vault')\n-names the Vault client module in a text]	
+pass	test_policy_guard::test_plant_another_module_or_a_subclass_using_the_vault_client_is_caught[class Wide(VaultProvider):\n    pass\n-class Wide extends a Vault client class]	
+pass	test_policy_guard::test_plant_another_module_or_a_subclass_using_the_vault_client_is_caught[def f(c):\n    return c.authed('LIST', 'sys/mounts')\n-uses `.authed` of the Vault client outside a declared module]	
+pass	test_policy_guard::test_plant_another_module_or_a_subclass_using_the_vault_client_is_caught[def f(c):\n    return c.call('GET', 'sys/mounts')\n-uses `.call` of the Vault client outside a declared module]	
+pass	test_policy_guard::test_plant_a_kubernetes_path_or_query_that_changes_the_request_is_caught[self._call(f"/api/v1/namespaces/{ns}/pods/{ns}/log?follow=true", "k8s.pod_log")-query parameter `follow` is not one that `k8s.pod_log` may carry]	
+pass	test_policy_guard::test_plant_a_kubernetes_path_or_query_that_changes_the_request_is_caught[self._get(f"/api/v1/namespaces/{ns}/events?limit=5", "k8s.list_events")-query parameter `limit` is not one that `k8s.list_events` may carry]	
+pass	test_policy_guard::test_plant_a_kubernetes_path_or_query_that_changes_the_request_is_caught[self._get(f"/api/v1/namespaces/{ns}/events?", "k8s.list_events")-query parameter `` is not one that `k8s.list_events` may carry]	
+pass	test_policy_guard::test_plant_a_kubernetes_path_or_query_that_changes_the_request_is_caught[self._get(f"/api/v1/namespaces/{ns}/events" + "?watch=1", "k8s.list_events")-the path of `k8s.list_events` is not a literal]	
+pass	test_policy_guard::test_plant_a_kubernetes_path_or_query_that_changes_the_request_is_caught[self._get(f"/api/v1/namespaces/{scope}/events", "k8s.list_events")-holds a value that is neither `quote(name, safe='')` nor a setting]	
+pass	test_policy_guard::test_plant_a_kubernetes_path_or_query_that_changes_the_request_is_caught[self._get(f"/api/v1/namespaces/{ns}/secrets", "k8s.list_events")-the path does not fit the one bound to `k8s.list_events`]	
+pass	test_policy_guard::test_plant_a_kubernetes_path_or_query_that_changes_the_request_is_caught[self._get(f"/api/v1/namespaces/{ns}x/events", "k8s.list_events")-the path does not fit the one bound to `k8s.list_events`]	
+pass	test_policy_guard::test_the_query_parameters_the_kubernetes_module_writes_are_exactly_the_listed_ones	
+pass	test_policy_guard::test_plant_a_query_the_paging_wrapper_could_send_beyond_paging_is_caught[query = f"?limit={limit}" + (f"&continue={quote(token, safe='')}" if token else "")-query = f"?limit={limit}&watch" + (f"&continue={quote(token, safe='')}" if token else "")-holds the text '&watch']	
+pass	test_policy_guard::test_plant_a_query_the_paging_wrapper_could_send_beyond_paging_is_caught[query = f"?limit={limit}" + (f"&continue={quote(token, safe='')}" if token else "")-query = f"?limit={limit}" + (f"&continue={quote(token, safe='')}" if token else "") + "&watch=true"-holds the text '&watch=true']	
+pass	test_policy_guard::test_plant_a_query_the_paging_wrapper_could_send_beyond_paging_is_caught[query = f"?limit={limit}" + (f"&continue={quote(token, safe='')}" if token else "")-query = f"?limit={limit}" + (f"&{token}=1" if token else "")-holds the text '&']	
+pass	test_policy_guard::test_plant_a_query_the_paging_wrapper_could_send_beyond_paging_is_caught[page = self._get(path + query, operation)-page = self._get(path + query + "&watch=true", operation)-calls `_get` with something other than `path + query`]	
+pass	test_policy_guard::test_plant_a_continue_token_quoted_in_another_way_is_caught	
+pass	test_policy_guard::test_the_bare_query_name_regex_sees_a_name_with_no_equals_sign	
+pass	test_policy_guard::test_plant_a_change_inside_the_one_sending_function_is_caught[f"{self.address}/v1/{path}"-f"{self.address}/v1/{path}?list=true"-is not sent to `<address>/v1/<path>`]	
+pass	test_policy_guard::test_plant_a_change_inside_the_one_sending_function_is_caught[headers=headers, method=method-headers=headers, method="LIST"-does not use the method it was given]	
+pass	test_policy_guard::test_plant_a_change_inside_the_one_sending_function_is_caught[            with self._opener.open(req, timeout=self.timeout_s) as r:-new2-must hold exactly one `Request` and one `open` (found 1 and 2)]	
+pass	test_policy_guard::test_plant_a_change_inside_the_one_sending_function_is_caught[with self._opener.open(req, timeout=self.timeout_s) as r:-with self._opener.open(urllib.request.Request(self.address), timeout=self.timeout_s) as r:-must hold exactly one `Request` and one `open` (found 2 and 1)]	
+pass	test_policy_guard::test_plant_a_setting_that_reaches_the_request_through_another_attribute_is_caught[src/hadavin_sdk/actions/secrets_vault.py-path_prefix=settings.path_prefix,-path_prefix=settings.field,-`build` does not hand the setting `path_prefix` to the parameter `path_prefix`]	
+pass	test_policy_guard::test_plant_a_setting_that_reaches_the_request_through_another_attribute_is_caught[src/hadavin_sdk/actions/secrets_vault.py-mount=settings.mount,-mount=settings.field,-`build` does not hand the setting `mount`]	
+pass	test_policy_guard::test_plant_a_setting_that_reaches_the_request_through_another_attribute_is_caught[src/hadavin_sdk/audit/signer_vault.py-VaultTransitSigner(client, settings.transit_mount, settings.key_name, version)-VaultTransitSigner(client, settings.key_name, settings.key_name, version)-`build` does not hand the setting `transit_mount`]	
+pass	test_policy_guard::test_plant_a_setting_that_reaches_the_request_through_another_attribute_is_caught[src/hadavin_sdk/actions/secrets_vault.py-self.mount, self.path_prefix, self.field = mount, path_prefix, field-self.mount, self.path_prefix, self.field = mount, field, path_prefix-`build` does not hand the setting `path_prefix`]	
+pass	test_policy_guard::test_each_mapped_setting_reaches_its_attribute_through_build[src/hadavin_sdk/actions/secrets_vault.py]	
+pass	test_policy_guard::test_each_mapped_setting_reaches_its_attribute_through_build[src/hadavin_sdk/audit/signer_vault.py]	
+pass	test_policy_guard::test_plant_a_second_send_in_the_sending_function_is_the_class_caught	
+pass	test_policy_guard::test_plant_a_bare_watch_in_the_paging_query_is_the_class_caught	
+pass	test_policy_guard::test_plant_a_setting_handed_to_the_wrong_parameter_is_the_class_caught	
+pass	test_policy_guard::test_plant_a_call_of_the_vault_client_in_another_module_is_the_class_caught	
+pass	test_policy_guard::test_the_kubernetes_namespace_check_is_present_in_both_readers	
+pass	test_policy_guard::test_plant_removing_the_namespace_check_is_caught[_recent_changes]	
+pass	test_policy_guard::test_plant_removing_the_namespace_check_is_caught[query_logs]	
+FAIL	test_policy_guard::test_page_with_no_argument_reads_the_data_root_set_at_call_time	tools.policy_page.PolicyError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_each_vault_grant_is_the_path_and_capability_of_its_one_request	AttributeError: 'NoneType' object has no attribute 'grants'
+FAIL	test_policy_guard::test_plant_a_vault_grant_wider_than_or_other_than_its_request_is_caught[src/hadavin_sdk/actions/secrets_vault.py-secrets/vault-changes0-message0]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_a_vault_grant_wider_than_or_other_than_its_request_is_caught[src/hadavin_sdk/audit/signer_vault.py-signer/vault_transit-changes1-message1]	AssertionError: no POLICY in src/hadavin_sdk/audit/signer_vault.py
+FAIL	test_policy_guard::test_plant_a_vault_grant_wider_than_or_other_than_its_request_is_caught[src/hadavin_sdk/audit/signer_vault.py-signer/vault_transit-changes2-R18: capability 'read' is not the one a POST request needs ('update')]	AssertionError: no POLICY in src/hadavin_sdk/audit/signer_vault.py
+FAIL	test_policy_guard::test_plant_a_vault_grant_wider_than_or_other_than_its_request_is_caught[src/hadavin_sdk/audit/signer_vault.py-signer/vault_transit-changes3-R18: `self.other` in the request path is not a known setting]	AssertionError: no POLICY in src/hadavin_sdk/audit/signer_vault.py
+pass	test_policy_guard::test_the_secret_name_is_one_path_part_checked_before_any_request	
+pass	test_policy_guard::test_a_secret_name_with_a_character_that_could_leave_the_one_path_part_is_refused[a%b]	
+pass	test_policy_guard::test_a_secret_name_with_a_character_that_could_leave_the_one_path_part_is_refused[a?b]	
+pass	test_policy_guard::test_a_secret_name_with_a_character_that_could_leave_the_one_path_part_is_refused[a#b]	
+pass	test_policy_guard::test_a_secret_name_with_a_character_that_could_leave_the_one_path_part_is_refused[a+b]	
+pass	test_policy_guard::test_a_secret_name_with_a_character_that_could_leave_the_one_path_part_is_refused[a*b]	
+pass	test_policy_guard::test_a_secret_name_with_a_character_that_could_leave_the_one_path_part_is_refused[a b]	
+pass	test_policy_guard::test_a_secret_name_with_a_character_that_could_leave_the_one_path_part_is_refused[a\nb]	
+pass	test_policy_guard::test_a_secret_name_with_a_character_that_could_leave_the_one_path_part_is_refused[a%2Fb]	
+pass	test_policy_guard::test_a_secret_name_with_a_character_that_could_leave_the_one_path_part_is_refused[a%2fb]	
+pass	test_policy_guard::test_a_secret_name_with_a_character_that_could_leave_the_one_path_part_is_refused[%]	
+pass	test_policy_guard::test_a_secret_name_with_a_character_that_could_leave_the_one_path_part_is_refused[+]	
+pass	test_policy_guard::test_a_secret_name_with_a_character_that_could_leave_the_one_path_part_is_refused[*]	
+pass	test_policy_guard::test_a_secret_name_with_a_character_that_could_leave_the_one_path_part_is_refused[?]	
+FAIL	test_policy_guard::test_plant_a_vault_wildcard_in_a_form_the_server_does_not_read_is_caught[{mount}/data/x+-`+` must be one whole path segment]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_a_vault_wildcard_in_a_form_the_server_does_not_read_is_caught[{mount}/data/+x/y-`+` must be one whole path segment]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_a_vault_wildcard_in_a_form_the_server_does_not_read_is_caught[{mount}/{key_name}+-`+` must be one whole path segment]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_a_vault_wildcard_in_a_form_the_server_does_not_read_is_caught[{mount}/da*ta/x-`*` is a Vault wildcard only as the last character]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_a_vault_wildcard_in_a_form_the_server_does_not_read_is_caught[{mount}/data/+*-Vault refuses `+*`]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_d1_a_plus_wildcard_with_no_bound_is_caught	AssertionError: no POLICY in src/hadavin_sdk/audit/signer_vault.py
+FAIL	test_policy_guard::test_a_filled_vault_path_with_a_misplaced_wildcard_is_refused	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_plant_m6_a_key_written_twice_in_the_policy_literal_is_refused	Failed: DID NOT RAISE PolicyError
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\n-id]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\n-name]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\n-resource]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\n-reason]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\n-bound]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\n-applies_when]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\r-id]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\r-name]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\r-resource]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\r-reason]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\r-bound]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\r-applies_when]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\t-id]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\t-name]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\t-resource]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\t-reason]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\t-bound]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\t-applies_when]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x00-id]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x00-name]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x00-resource]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x00-reason]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x00-bound]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x00-applies_when]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x1b-id]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x1b-name]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x1b-resource]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x1b-reason]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x1b-bound]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x1b-applies_when]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x7f-id]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x7f-name]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x7f-resource]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x7f-reason]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x7f-bound]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x7f-applies_when]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\u2028-id]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\u2028-name]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\u2028-resource]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\u2028-reason]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\u2028-bound]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\u2028-applies_when]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x85-id]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x85-name]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x85-resource]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x85-reason]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x85-bound]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x85-applies_when]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m7_a_control_character_anywhere_else_in_the_literal_is_refused	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_m9_a_brace_that_is_no_placeholder_is_refused_in_the_literal[{mount}/data/{prefix2}x]	AssertionError: no POLICY in src/hadavin_sdk/audit/signer_vault.py
+FAIL	test_policy_guard::test_plant_m9_a_brace_that_is_no_placeholder_is_refused_in_the_literal[{mount}/data/<name>]	AssertionError: no POLICY in src/hadavin_sdk/audit/signer_vault.py
+FAIL	test_policy_guard::test_plant_m9_a_brace_that_is_no_placeholder_is_refused_in_the_literal[{mount}/}]	AssertionError: no POLICY in src/hadavin_sdk/audit/signer_vault.py
+FAIL	test_policy_guard::test_plant_m9_a_placeholder_left_after_filling_is_refused	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_plant_m15_small_validation_gaps_are_closed	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_a_well_formed_value_that_names_a_reserved_thing_is_refused[secrets/vault-mount-sys-starts with Vault's own path 'sys']	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_a_well_formed_value_that_names_a_reserved_thing_is_refused[secrets/vault-mount-auth-starts with Vault's own path 'auth']	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_a_well_formed_value_that_names_a_reserved_thing_is_refused[secrets/vault-mount-identity-starts with Vault's own path 'identity']	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_a_well_formed_value_that_names_a_reserved_thing_is_refused[secrets/vault-mount-cubbyhole-starts with Vault's own path 'cubbyhole']	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_a_well_formed_value_that_names_a_reserved_thing_is_refused[secrets/vault-mount-sys/kv-starts with Vault's own path 'sys']	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_a_well_formed_value_that_names_a_reserved_thing_is_refused[signer/vault_transit-transit_mount-sys-starts with Vault's own path 'sys']	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_a_well_formed_value_that_names_a_reserved_thing_is_refused[signer/vault_transit-transit_mount-auth/t-starts with Vault's own path 'auth']	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_a_well_formed_value_that_names_a_reserved_thing_is_refused[source/kubernetes-namespaces-kube-system-one of the cluster's own namespaces]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_a_well_formed_value_that_names_a_reserved_thing_is_refused[source/kubernetes-namespaces-shop,kube-public-one of the cluster's own namespaces]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_a_well_formed_value_that_names_a_reserved_thing_is_refused[source/kubernetes-namespaces-kube-node-lease-one of the cluster's own namespaces]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_a_well_formed_value_that_names_a_reserved_thing_is_refused[source/kubernetes-SERVICE_ACCOUNT_NAMESPACE-kube-system-the cluster's own namespaces]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_a_well_formed_value_that_names_a_reserved_thing_is_refused[source/kubernetes-ROLE_NAME-cluster-admin-a built-in role name]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_a_well_formed_value_that_names_a_reserved_thing_is_refused[source/kubernetes-ROLE_NAME-admin-a built-in role name]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_a_well_formed_value_that_names_a_reserved_thing_is_refused[source/kubernetes-ROLE_NAME-edit-a built-in role name]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_a_well_formed_value_that_names_a_reserved_thing_is_refused[source/kubernetes-ROLE_NAME-view-a built-in role name]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_a_well_formed_value_that_names_a_reserved_thing_is_refused[source/kubernetes-ROLE_NAME-system-node-a built-in role name]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_a_well_formed_value_that_names_a_reserved_thing_is_refused[source/kubernetes-ROLE_NAME-system.basic-user-a built-in role name]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_a_well_formed_value_that_names_a_reserved_thing_is_refused[source/kubernetes-SERVICE_ACCOUNT-default-every pod gets by default]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_a_nested_mount_is_accepted_and_a_role_name_with_a_colon_never_passes_the_grammar	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_a_value_longer_than_its_limit_is_refused_and_one_at_the_limit_is_not[secrets/vault-mount]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_a_value_longer_than_its_limit_is_refused_and_one_at_the_limit_is_not[secrets/vault-path_prefix]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_a_value_longer_than_its_limit_is_refused_and_one_at_the_limit_is_not[signer/vault_transit-transit_mount]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_a_value_longer_than_its_limit_is_refused_and_one_at_the_limit_is_not[signer/vault_transit-key_name]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_a_value_longer_than_its_limit_is_refused_and_one_at_the_limit_is_not[source/kubernetes-namespaces]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_a_value_longer_than_its_limit_is_refused_and_one_at_the_limit_is_not[source/kubernetes-ROLE_NAME]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_a_value_longer_than_its_limit_is_refused_and_one_at_the_limit_is_not[source/kubernetes-SERVICE_ACCOUNT]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_a_value_longer_than_its_limit_is_refused_and_one_at_the_limit_is_not[source/kubernetes-SERVICE_ACCOUNT_NAMESPACE]	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_the_data_of_this_repository_breaks_no_rule_the_command_line_checks	AssertionError: assert ['no POLICY i...ubernetes.py'] == []
+FAIL	test_policy_guard::test_plant_m10_check_reports_each_data_problem_in_one_line_with_exit_code_1	AssertionError: assert ['no POLICY i...ubernetes.py'] == []
+FAIL	test_policy_guard::test_m10_write_makes_a_missing_docs_folder_and_check_then_passes	AssertionError: assert (1 == 0)
+pass	test_policy_guard::test_plant_a_source_row_that_names_a_branch_is_refused	
+FAIL	test_policy_guard::test_every_source_row_is_pinned_and_is_used	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+pass	test_policy_guard::test_the_page_and_the_fixture_agree_on_which_rows_are_abbreviated_and_what_is_unpinned	
+pass	test_policy_guard::test_plant_an_overdue_entry_says_what_to_do_and_a_date_cannot_be_moved_far	
+FAIL	test_policy_guard::test_plant_m16_an_unverified_never_list_name_needs_a_dated_entry	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_no_never_list_line_of_the_three_kinds_covers_a_grant	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_plant_a_vault_never_path_over_a_grant_is_caught_and_a_capability_that_differs_is_not	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_a_never_path_over_a_grant_is_also_refused_by_the_check_command	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_plant_a_kubernetes_never_resource_that_a_grant_names_is_caught	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_plant_the_check_across_kinds_calls_the_cover_rule	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_every_note_of_a_kind_is_classed_and_every_claim_has_a_source_or_an_unchecked_entry	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_plant_a_new_note_with_no_class_a_claim_that_is_not_listed_and_an_unknown_source_are_caught	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_a_free_or_never_reason_that_says_it_is_unchecked_must_list_the_claim	AssertionError: no POLICY in src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_the_self_review_create_is_an_unchecked_claim_on_the_page_not_a_checked_fact	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_the_pending_claims_of_a_free_and_a_never_entry_are_watched_like_a_grant_claim	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_a_never_path_of_two_or_more_parts_over_the_one_prefix_grant_is_caught	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+pass	test_policy_guard::test_the_path_overlap_automaton_agrees_with_a_brute_force_search_on_every_small_pattern_pair	
+pass	test_policy_guard::test_the_path_prefix_setting_is_read_as_one_or_more_parts_each_ending_in_a_slash	
+FAIL	test_policy_guard::test_a_never_type_that_does_not_fit_the_platform_is_refused	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_every_note_with_a_sources_class_shows_its_source_ids_after_the_note_and_in_the_source_list	tools.policy_page.PolicyError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_a_sources_note_whose_free_entry_does_not_list_the_id_is_caught	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+pass	test_policy_guard::test_the_builder_only_marks_are_read_from_the_head_of_the_sources_file_and_match_its_list	
+pass	test_policy_guard::test_the_builder_marks_refuse_a_missing_line_an_unknown_id_and_a_second_line	
+FAIL	test_policy_guard::test_a_source_of_which_only_a_passage_was_read_is_marked_on_a_row_with_a_claim_only	tools.policy_page.PolicyError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_the_grants_broader_than_their_reason_say_so_in_the_cell_a_reader_checks	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+pass	test_policy_guard::test_the_limit_of_a_dated_entry_is_one_number_in_the_tool	
+FAIL	test_policy_guard::test_m1_the_page_names_the_run_once_one_is_on_record	tools.policy_page.PolicyError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_an_import_of_another_http_library_is_caught	AssertionError: reported ["src/hadavin_sdk/audit/signer_vault.py:85: import `httpx` is not on this module's import list: a new way to send a request must be looked at by a person first", 'no POLICY in
+FAIL	test_policy_guard::test_plant_a_banned_name_that_arrives_through_an_import_alias_is_caught	AssertionError: reported ['src/hadavin_sdk/actions/secrets_vault.py:199: banned indirect call `methodcaller` (imported)', "src/hadavin_sdk/actions/secrets_vault.py:199: import `operator:methodcaller` 
+FAIL	test_policy_guard::test_plant_attrgetter_on_a_sink_is_caught	AssertionError: reported ['src/hadavin_sdk/actions/secrets_vault.py:199: banned indirect call `attrgetter`', 'no POLICY in src/hadavin_sdk/actions/secrets_vault.py'], expected ['src/hadavin_sdk/action
+FAIL	test_policy_guard::test_plant_the_http_opener_used_outside_the_one_sender_is_caught	AssertionError: reported ["src/hadavin_sdk/actions/secrets_vault.py:199: the HTTP opener `._opener` is used outside ['__init__', 'call']", 'no POLICY in src/hadavin_sdk/actions/secrets_vault.py'], exp
+FAIL	test_policy_guard::test_plant_the_old_star_form_of_the_vault_secrets_grant_is_caught	assert '"""`vault` secrets: HashiCorp Vault or OpenBao, KV version 2 (standard library HTTP, no extra).\n\n`<address>/v1/<mou...t=context,\n        timeout_s=settings.timeout_s,\n        renewable=set
+FAIL	test_policy_guard::test_plant_a_vault_capability_that_is_not_the_verbs_own_is_caught	assert '"""`vault_transit` signer: an `ed25519` key in the Transit engine of HashiCorp Vault or OpenBao.\n\nWorks on any clou...Signer(client, settings.transit_mount, settings.key_name, version)\n    
+FAIL	test_policy_guard::test_plant_a_kubernetes_path_that_is_not_the_bound_one_is_caught	AssertionError: reported ['src/hadavin_sdk/sources/kubernetes.py:247: the path does not fit the one bound to `k8s.list_events`', 'no POLICY in src/hadavin_sdk/sources/kubernetes.py'], expected ['src/h
+FAIL	test_policy_guard::test_plant_a_newline_in_a_reason_is_caught	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_a_grant_that_names_no_call_is_caught_with_its_message	AssertionError: no POLICY in src/hadavin_sdk/audit/signer_vault.py
+FAIL	test_policy_guard::test_plant_a_url_in_verified_is_caught_with_its_message	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_plant_the_mount_sys_is_refused	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_plant_a_300_character_value_is_refused	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+pass	test_policy_guard::test_plant_another_module_importing_the_vault_client_is_caught	
+FAIL	test_policy_guard::test_every_claim_has_one_of_two_marks_taken_from_the_head_of_the_sources_file	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_the_page_shows_the_builder_mark_on_the_plus_claim_of_r17_and_the_nobody_mark_on_every_other_claim	tools.policy_page.PolicyError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_a_claim_with_no_mark_two_marks_or_a_stale_text_is_a_problem_and_a_bad_line_is_refused	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_a_free_or_never_row_with_a_claim_marks_its_partly_read_sources	tools.policy_page.PolicyError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_a_free_reason_that_says_it_creates_nothing_or_changes_nothing_has_no_class_and_is_refused	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_a_reason_is_matched_by_its_exact_text_even_when_a_class_key_is_its_unique_prefix	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_a_grant_or_never_reason_with_no_class_is_refused_and_a_wrong_class_is_caught	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+FAIL	test_policy_guard::test_a_note_class_with_an_unknown_source_id_is_a_problem_of_the_check_and_the_page_raises_policy_error	AssertionError: the check command does not report an unknown source id of a note class: ['no POLICY in src/hadavin_sdk/actions/secrets_vault.py', 'no POLICY in src/hadavin_sdk/audit/signer_vault.py', 
+FAIL	test_policy_guard::test_a_free_note_class_that_lists_a_source_its_entry_does_not_name_is_a_problem_of_the_check	AssertionError: the check command does not report a class source that is not in `verified`: ['no POLICY in src/hadavin_sdk/actions/secrets_vault.py', 'no POLICY in src/hadavin_sdk/audit/signer_vault.p
+FAIL	test_policy_guard::test_the_check_command_reports_a_claim_with_no_mark_in_the_sources_file	AssertionError: the check command does not report a claim with no mark: ['no POLICY in src/hadavin_sdk/actions/secrets_vault.py', 'no POLICY in src/hadavin_sdk/audit/signer_vault.py', 'no POLICY in sr
+FAIL	test_policy_guard::test_the_page_head_and_the_r17_cell_and_reason_state_the_same_hedged_scope	tools.policy_page.PolicyError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_a_never_path_deeper_than_the_prefix_grant_is_not_reported_as_covering_it	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+pass	test_policy_guard::test_the_path_overlap_with_a_prefix_setting_agrees_with_a_brute_force_search_over_its_values	
+FAIL	test_policy_guard::test_a_clause_appended_to_a_claim_is_no_longer_the_listed_claim	AssertionError: ('src/hadavin_sdk/actions/secrets_vault.py', 'the + matches exactly one whole path part, nothing deeper')
+FAIL	test_policy_guard::test_the_marks_of_r17_and_r18_swapped_in_the_sources_file_are_reported_by_the_check	AssertionError: a builder-read mark on R18 is not reported: ['no POLICY in src/hadavin_sdk/actions/secrets_vault.py', 'no POLICY in src/hadavin_sdk/audit/signer_vault.py', 'no POLICY in src/hadavin_sd
+pass	test_policy_guard::test_a_claim_text_under_both_marks_is_refused	
+pass	test_policy_guard::test_a_claim_text_that_ends_in_two_semicolons_or_repeats_is_refused	
+FAIL	test_policy_guard::test_a_byte_order_mark_is_read_the_same_by_the_row_the_id_and_the_claim_parsers	AssertionError: a file with a byte-order mark before `# BUILDER-ONLY:` is refused somewhere
+FAIL	test_policy_guard::test_the_check_command_reports_a_name_or_claim_with_no_dated_entry_and_a_stale_or_overdue_entry	AssertionError: ['policy page: no POLICY in src/hadavin_sdk/actions/secrets_vault.py', 'policy page: no POLICY in src/hadavin_sdk/audit/signer_vault.py', 'policy page: no POLICY in src/hadavin_sdk/sou
+FAIL	test_policy_guard::test_from_the_review_date_the_write_command_stops_and_writes_nothing	AssertionError: the write command did not write the page the day before the review date
+FAIL	test_policy_guard::test_from_the_review_date_the_check_command_stops	AssertionError: assert 1 == 0
+FAIL	test_policy_guard::test_a_grant_whose_name_is_unchecked_with_no_pending_row_is_reported_by_the_check	assert 0 == 1
+FAIL	test_policy_guard::test_a_new_unchecked_claim_with_no_pending_row_is_reported_by_the_check	ValueError: not enough values to unpack (expected 2, got 1)
+FAIL	test_policy_guard::test_a_missing_marks_line_in_the_head_is_one_problem_of_the_check_not_a_traceback[# BUILDER-ONLY:]	AssertionError: ['policy page: no POLICY in src/hadavin_sdk/actions/secrets_vault.py', 'policy page: no POLICY in src/hadavin_sdk/audi...es.py', 'policy page: tests/fixtures/policy_sources_2026-11-11.
+FAIL	test_policy_guard::test_a_missing_marks_line_in_the_head_is_one_problem_of_the_check_not_a_traceback[# PARTLY-BUILDER-ONLY:]	AssertionError: ['policy page: no POLICY in src/hadavin_sdk/actions/secrets_vault.py', 'policy page: no POLICY in src/hadavin_sdk/audi... 'policy page: tests/fixtures/policy_sources_2026-11-11.txt: ne
+FAIL	test_policy_guard::test_a_missing_marks_line_in_the_head_is_one_problem_of_the_check_not_a_traceback[# CLAIM-READ-BY-BUILDER:]	AssertionError: ['policy page: no POLICY in src/hadavin_sdk/actions/secrets_vault.py', 'policy page: no POLICY in src/hadavin_sdk/audi...policy page: tests/fixtures/policy_sources_2026-11-11.txt: need
+FAIL	test_policy_guard::test_a_missing_marks_line_in_the_head_is_one_problem_of_the_check_not_a_traceback[# CLAIM-READ-BY-NOBODY:]	AssertionError: ['policy page: no POLICY in src/hadavin_sdk/actions/secrets_vault.py', 'policy page: no POLICY in src/hadavin_sdk/audi...'policy page: tests/fixtures/policy_sources_2026-11-11.txt: nee
+FAIL	test_policy_guard::test_the_page_takes_its_marks_from_the_root_it_is_given	tools.policy_page.PolicyError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py
+FAIL	test_policy_guard::test_a_malformed_note_class_is_one_problem_line_of_the_check_and_no_traceback	AssertionError: a malformed class is not one problem line (a bare text): ['policy page: no POLICY in src/hadavin_sdk/actions/secrets_vault.py', 'policy page: no POLICY in src/hadavin_sdk/audit/signer_
+FAIL	test_policy_guard::test_a_malformed_note_class_key_is_one_problem_line_of_the_check_and_no_traceback	AssertionError: a malformed key is not one problem line: ['policy page: no POLICY in src/hadavin_sdk/actions/secrets_vault.py', 'policy page: no POLICY in src/hadavin_sdk/audit/signer_vault.py', 'poli
+pass	test_policy_guard::test_the_page_head_lists_the_claims_of_each_mark_from_the_sources_file_not_from_prose	
+pass	test_policy_guard::test_the_fixture_head_names_the_builder_read_claims_as_they_are	
+FAIL	test_policy_guard::test_a_kind_whose_module_could_not_be_read_adds_no_stale_class_line	AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_vault.py, src/hadavin_sdk/audit/signer_vault.py, src/hadavin_sdk/sources/kubernetes.py
+pass	test_policy_guard::test_the_sixteen_kinds_keep_a_decision_day_of_their_own_not_the_tools_date	
+pass	test_policy_guard::test_the_tool_docstring_holds_no_date_that_is_not_in_the_dated_lists	
+FAIL	test_policy_guard::test_the_check_command_uses_the_tools_own_clock_when_no_day_is_given	AssertionError: assert 1 == 0

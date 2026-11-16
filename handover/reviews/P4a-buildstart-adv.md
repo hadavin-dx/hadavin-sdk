@@ -1,0 +1,17 @@
+# P4a build-start review (rev 12), combined adversarial/correctness hand-back (agent a62753c69d2f546dd)
+Status: REPORTED (saved by the lead session from the reviewer hand-back, condensed to the findings table; model output, not user authority). Reviewer read-only, nothing run, did not read reviews/ or evidence/. All traces UNVERIFIED.
+Verdict: no Blocker; 2 Major, 2 Minor, 5 Nit.
+| id | sev | ticket line | problem | fix |
+|---|---|---|---|---|
+| BS-P4a-COR-1 | Major | 96-97,213,308,480-481 | Builder cannot start P4a-1: round_cost_up and MAX_USD absent from src (P4d-a2-i unmerged); also waits P4d-b, P1m, P3a, P2a-1; P4b1.md on disk is rev 1. No plan for the meantime. | Build note: start only after P4d-a2-i merges and rebase; re-locate every ce70eb5 cite; P4a-1/P4a-2 stay draft until P4b1 rev 2 gate holds. |
+| BS-P4a-ADV-1 | Major | 316 (NIT-10),96 | Replay guard is a label check only (llm_kind or cfg.backends.llm.kind); a Python caller can pass llm_kind="fake" with a real kind object. Stated reason for rejecting a type check is wrong (all four real kinds subclass NetworkLLM). | Keep label check, add isinstance(llm, NetworkLLM) refusal in _replay (ConfigError count +3), add mutant and C18 row; or lead accepts exposure in writing with a trigger. |
+| BS-P4a-COR-2 | Major | 326,329,331,342,a2-16@381 | Route price clause contradicts itself (PL65 says none; 331 bool clause "only if E0"; 342 "only True clause"; 329 says Price in config.py but no Price class). Mutant a2-16 has no plant site in P4a's diff. | Delete stale bool/Price wording; move a2-16 to P4d or name plant site as P4d-a2-i Route validator with C10 killer (affects 83). |
+| BS-P4a-COR-3 | Minor | 359,98 | C13p cites line 68 for "rounded up once"; rule is at 327. Answer first 3 "no second rounding place" but worst_case_usd also calls round_cost_up. | Fix cite; say "no second rounding function". |
+| BS-P4a-COR-4 | Minor | 347,350,318 | C13(c1) copies test_k1b_replay.py:502 where Hung records no messages at timeout. | Say how row (c) obtains the messages (rebuild from bundle and _dumps, or local recording stub). |
+| BS-P4a-COR-5 | Nit | 26 vs 514 | PL counts disagree (53/45/65 vs 51/43). | Update 514. |
+| BS-P4a-ADV-2 | Nit | 157,163 | Raw ValueError from round_cost_up after a paid call leaves chat() unwrapped; nothing booked, case crashes. Unreachable on v1 (fake only). | State P4b1-b's finally-settle covers it; add line in 8.2. |
+| BS-P4a-ADV-3 | Nit | 121,465,322 | "Billed at most" assumes >=1 byte per billed token, ignores provider-added tokens; Gemini thinking tokens bounded by max_tokens UNVERIFIED. | Add to V36 trigger: check against a recorded reply before guard is lifted. |
+| BS-P4a-ADV-4 | Nit | 359 | Round-to-nearest/no-rounding/round-each-then-multiply are not mutant ids. | Optional planted check; count unchanged. |
+| BS-P4a-ADV-5 | Nit | 316 | cli.py:221 builds llm (secret lookup) before _replay refuses a real kind; no call. | Optionally check kind before make. |
+Verified by hand/read: mutant total 83 (36+47; one row at line 416 not displayed, assumed a2-27b); C13p/C13q arithmetic; code cites in k1b/loop.py, replay.py, cli.py, config.py, openai_compat.py, fake.py; surrogate fix site replay.py:189; merge order matches order 20.
+Not checked: anything dynamic; P4d lines 75-76,288 partly; whether P2a-1/P4d shift cited lines; pydantic le metadata for C13(h); bedrock_guardrail in dev for C18(b); line 416 row; P4b1/P4b2/P4c text; provider billing; 2,568-byte tool-spec figure; orders 6-15, amendments, template not read.

@@ -1,0 +1,9 @@
+# PR 71 (P0a) review 1, head d4cde30 (egm-codebase-details, read-only, saved by lead 2026-11-06)
+Verdict: no BLOCKER; 2 MAJOR (guard gaps), 1 MAJOR on the self-test, 3 MINOR, NITs. Ran nothing; mutant output not provided.
+- MAJOR 1 (:26): only src/ scanned; demos/ and tools/ (ruff/bandit scope; demos/ask-your-data is the client-facing demo) also ship: scan them too; tests/ oracle stays exempt. Today pglast appears only in demos/ask-your-data/README.md (prose): no current leak.
+- MAJOR 2 (:30-35): checks declared names only: (a) a runtime package could depend on pglast (uv.lock not fully read); (b) {include-group="test"} dict in a non-test group passes (str(dict)); (c) [tool.uv] dev-dependencies/constraint/override/sources not read. Fix: assert pglast appears in uv.lock only under the root's test group plus its own [[package]]; reject include-group dicts resolving to test outside test.
+- MAJOR 3 (:42-61, self-test weak): survivors: deleting the group line; removing .lower(); changing source match to m == "pglast" (no pglast.x case). Add cases: pglast in a non-test group, uppercase PGLAST, import pglast.x / from pglast.x import y.
+- MINOR: rglob on missing src passes silently (assert at least one file scanned; also .pyi and vendored pglast/ dir or .so); startswith misses leading space/@ forms (use PEP 503 split); any string constant "pglast. ..." is a false positive (use fullmatch r"pglast(\.\w+)*").
+- Exemption right: test group only installed by `uv sync --group test`; pglast .py hits only under tests/demo_askdata; security job uses --only-group scan.
+- NIT: 61 vs under 50 lines (admitted); licence-scan-1.md citation not in public tree; KeyError if dependencies become dynamic (fails loud).
+- NOT CHECKED: nothing run; Dockerfiles/requirements not in snapshot; uv.lock only partly read.

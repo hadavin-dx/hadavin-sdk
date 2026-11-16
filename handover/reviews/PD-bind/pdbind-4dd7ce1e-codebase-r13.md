@@ -1,0 +1,12 @@
+# Part 2 round 13 codebase review (egm-codebase-details ad1dc299), head 4dd7ce1e
+Condensed by the lead. Read-only, ran nothing. Verdict: 1 Blocker, 6 Major, nits. (Blocker and M1 are documentation/test scope; M5 is the same outage risk as design M1.)
+Clean by reading: 13 READ_ERRORS + 3 ValueError sites match CHANGELOG; each of 16 sites has a surprise test; 300 mutant rows, B287-B289 renamed, old texts occur once, killers/expect texts match; no suppressions added; walk cap per walk (2 walks, 10,000 each).
+B1 "Never raises / any error reads as a refusal" now false: receiver.py:50-51,:146; standins.py:53,:302,:344,:703,:709; bindguard.py:80; requests.py:542,:558. r12 decision 5 fixed only _refused.
+M1 CHANGELOG item 9 "set/frozenset/deque compared by only the class" is stale: code compares (id, class) (requests.py:231-232, 213, 218-225); same stale wording in docstrings requests.py:316-320, 266-267, 153, 160-161, header 82-86. Only test mutates the set in place; rebinding untested.
+M2 CHANGELOG item 11 "scrub ... its containers by their contents" false for the _evidence route (deep=False, requests.py:386,335-340); only a number field is tested.
+M3 object counts contradict (item 10 "about 15 per tool" vs 8 per function and 43 per spec; 117+100x(8+43) is not 4,511); figures cite d29790a2 not the head.
+M4 tests/bind_mutants.py header lines 1-4 still say B279 dropped; B279's killer not renamed test_pin_* though r12 listed it among tests that pass on 82dd69c1.
+M5 outage guard gap: _MOVES_IN_USE names only ToolBox._active/_abandoned; no test runs a real ToolBox/Executor call between two seal checks.
+M6 added lines over 100 columns: DELTA 479, 492, 635, 637 (bind_mutants.py literals), 1088, 1090, 1091, 1100, 1102 (test docstrings).
+Nits: reflowed comments mid-sentence (requests.py 106-110, 206-209, 219-225, 240-242; bind_mutants docstrings); formatter-mangled comment test_bindguard.py ~5949-5951; reuse standins._is_one_of instead of requests.py:231,339; kind in _ENTER_KINDS runs a metaclass __eq__ (297); item 11 says toolbox/hold_run_ids "by value" but they are weak identity then entered; receiver socket test reached == [] weak; _batch13_claim_problems builds fake classes and checks names anywhere; _walk fresh depth 1 for ToolSpec/ScrubSettings could hit RecursionError (not caught by _seal_runtime).
+Could not verify: all fail-before counts and timings; tools.py/scrub_settings.py field names; LocalDirSink._pending and Registry "five dicts".
