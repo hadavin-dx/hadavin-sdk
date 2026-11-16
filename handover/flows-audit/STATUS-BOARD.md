@@ -1,17 +1,17 @@
-UPDATED_UTC: 2026-11-16T13:35:49Z
+UPDATED_UTC: 2026-11-16T13:39:30Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
 ITEMS_OPEN: 30
-PERCENT: 80
-AGENTS_RUNNING: 6
-CAPACITY: 0.36 load of 4 cores, mem 0/15 GB, RAM 940/16087 MB, disk 24G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 3.5G /tmp/claude-0 , agents 6 (light+heavy per list)
+PERCENT: 82
+AGENTS_RUNNING: 5
+CAPACITY: 0.35 load of 4 cores, mem 0/15 GB, RAM 927/16087 MB, disk 24G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 3.5G /tmp/claude-0 , agents 5 (light+heavy per list)
 INTERRUPTED: none
 FAILED: - F8 reviewer_ok accepted Pat O.L.L.M. (fix running a2b5712); shellcheck not installed
-NEXT: claims fixer, drift refresh, r12 reviews, F8 r8, REVIEW r15
-PUSHED_UTC: 2026-11-16T13:35:49Z
+NEXT: TC/FP fixer, REVIEW r16, claims fixer, F8 r8
+PUSHED_UTC: 2026-11-16T13:39:30Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -30,20 +30,19 @@ PUSHED_UTC: 2026-11-16T13:35:49Z
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | state | produced so far |
 |---|---|---|---|---|---|---|---|
-| a83d02c | fixer | sonnet | F8 take_check.sh reviewer_ok round 8 (uncapped) | 13:31Z | 14:15Z | running | edits flow-check files, log fix-f8-r8.md |
-| ac31c40 | fixer | sonnet | REVIEW.md round 15 (core patches, uncapped) | 13:32Z | 14:15Z | running | edits REVIEW.md, log fix-review12.md |
-| ac58611 | reviewer | sonnet | r12 consistency review RUNBOOK/TAKE-CHECKLIST/FIX-PLAN | 13:34Z | 13:55Z | running | findings inline |
-| a57e58c | reviewer | sonnet | r12 stranger read FIX-PLAN/TAKE-CHECKLIST | 13:34Z | 13:55Z | running | findings inline |
-| a7b9b54 | fixer | sonnet | CLAIMS-TABLE r5 Majors | 13:35Z | 14:10Z | running | edits CLAIMS-TABLE.md, log fix-claims5.md |
-| a05ea97 | drift | sonnet | refresh drift-007 | 13:36Z | 13:55Z | running | writes reviews/drift-007.md |
+| a83d02c | fixer | sonnet | F8 take_check.sh reviewer_ok round 8 (uncapped) | 13:31Z | 14:15Z | running | edits flow-check files |
+| a7b9b54 | fixer | sonnet | CLAIMS-TABLE r5 Majors | 13:35Z | 14:10Z | running | CLAIMS-TABLE.md edited (33 lines so far) |
+| a494960 | fixer | sonnet | RUNBOOK/TC/FP round 12 Majors | 13:45Z | 14:25Z | running | log fix-tcfp8.md |
+| a044860 | reviewer | sonnet | REVIEW.md round 16 design (uncapped) | 13:50Z | 14:10Z | running | findings inline |
+| a57a3a0 | reviewer | sonnet | REVIEW.md round 16 facts (uncapped) | 13:50Z | 14:10Z | running | findings inline |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
-1. Facts + second-angle review of CLAIMS-TABLE after fixer a7b9b54 (needs its report)
-2. Citation-fix pass for 41 MISMATCH rows (waits for QUESTIONS/RUNBOOK/TC to settle)
-3. Evidence runner + fresh F8 review after a83d02c (needs its report)
-4. Round 16 REVIEW.md review after ac31c40 (needs its report)
-5. Post-twice script / run_real_check_n8n.py review (needs lead to place files on a branch, Q29-4)
-Missing lanes (2 of 8): rows 1-5 above each wait on a running agent or a lead answer.
+1. Fix REPORT.md old counts (lines 82, 100) and board ITEMS counts (drift-007)
+2. Evidence runner + fresh F8 review after a83d02c reports
+3. Facts + second-angle review of CLAIMS-TABLE after a7b9b54
+4. Citation-fix pass (41 MISMATCH) after TC/FP/RUNBOOK fixer a494960 settles
+5. Post-twice script review (waits on lead, Q29-4)
+Missing lanes (3 of 8): each waits on a running agent's report (rows 2-4) or a lead answer (row 5); row 1 can start now.
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |

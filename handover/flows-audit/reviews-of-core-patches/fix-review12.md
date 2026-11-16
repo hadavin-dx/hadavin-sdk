@@ -71,3 +71,37 @@ Backup: scratchpad bak-rev14b.md. Not committed. Nothing was run against Postgre
 
 ## Changes
 REVIEW.md only: header status, round log sentence, Short answer (X-6 round 14), X-2, X-5, X-6 (status, B1 wording, fix (1) and (3), test (f), point (4) wording, AUDIT WRITES choice (1), new ROUND 14 block), C-3, C-4, G-2, Not checked, Open for the studio head (sub-choices (d) to (g)). Severity of X-6 kept Major: no defect in today's source or the three patches beyond what the row records. Counts unchanged: 26 rows; 0 Blocker, 12 Major, 4 Minor, 10 Nit; 23 PROPOSE FIX, 3 DECLINE.
+
+# Round 15 (review-design-r15.md F1-F13 and review-codebase-r15.md facts 1-5; log appended here)
+
+Backup: scratchpad `REVIEW.md.bak` (taken before the first edit). Not committed. Scratch copies of the source trees were made under the session scratchpad; no source tree or patch file was edited. Nothing was run against Postgres, n8n, HubSpot or the network.
+
+## Unverified or not done (first)
+- I ran `git apply --check` and `py_compile` only. I did NOT run pytest, ruff or bandit on any patched tree, so "the rebased C-01 and G5 work" means "they apply and compile", not "their tests pass".
+- Postgres behaviour in the X-5 (h) correction (user-settable timeouts, `REVOKE EXECUTE` on advisory-lock functions) is my own knowledge, marked UNVERIFIED in the text. The psycopg placeholder syntax in D-3 (4) is also from memory.
+- The design reviewer wrote "two live Majors" in F13. I count three (X-4, X-5, X-6); the text says so plainly. Not changed to two.
+- Reviewer F1 offered "drop C-3 to Minor"; I did not (reason in the C-3 row). F6 asked for no silent change; I changed no table severity for X-5 and X-6.
+
+## Evidence I ran (commands in REVIEW.md, section "Inputs read", bullet "PATCH BASES AND git apply --check")
+- b4cce5b copy: `git apply --check` C-01 0, A-01 0, G5-wording 0; applying all three in order 0, 0, 0.
+- This checkout (commit 176a0cbe0): C-01 exit 1 (`config.py:362`, hunk 2 context `refused = []` and `!= "dev"`), A-01 exit 0, G5-wording exit 1 (`tests/warden_port/test_gate.py:1`, docstring text differs). With `-C1`: C-01 0, G5-wording 0; in-order apply with `-C1` 0, 0, 0; `py_compile` of the seven touched `src` files 0.
+
+## Per finding
+- Facts 1 and 3, design F10: fixed. "NOT on disk" wording removed or corrected everywhere it occurred (Inputs read, convention line, C-3, C-5, G-1, Effective Major paragraph, three Not checked sentences, Update section); three line bases stated; apply exit codes written; README claim "b4cce5b or later" marked untrue for C-01 and G5; Update section says the 9404-pass run was on b4cce5b, not on the current head. The pydantic pin at b4cce5b (2.14.1) was also checked.
+- F1: CONFIRMED (`backends/table.py:545` comment, `guard/judge.py:40` `JudgeDetector(deps.llm, ...)`); C-3 rationale replaced; the remaining argument (Route built outside Config) kept; rating kept Major with a written reason.
+- F2: CONFIRMED (evidence-13.md:99: two list tests failed when the step was removed; A-01.patch lines 190-205 assert `last_ok_at`); A-5 rewritten; rating Major to Minor.
+- F3: CONFIRMED (`channel.py:29,36`, `slack_channel.py:81`); G-1 now says "understates", scoped to the approval channel; Short answer and Inputs wording fixed; G-1 Major to Minor.
+- F4: C-2 Major to Nit, C-7 Major to Minor (threat model stated: hostile or compromised openai_compat endpoint or tampered recording), A-1 Major to Minor (README half of the claim is wrong, docstring right); each with a written reason in its row. A-5 and G-1 followed from F2 and F3. Counts re-run: 27 rows, 0 Blocker, 7 Major, 9 Minor, 11 Nit; 24 PROPOSE FIX, 3 DECLINE.
+- F5: CONFIRMED (`llm/common.py:59-62`, `:164-165`); C-7 fix now charges the worst case, not the estimate.
+- F6: kept the table as is; added a separate by-hand line "Blocker for the proposal and for pilot and production: 2 (X-5, X-6)" with the reasoning, in the Short answer counts paragraph, the Counts section, the Effective Major paragraph and the choices list ((6)). `count_review.py` does not count that line (it reads table rows only); not edited, reported.
+- F7: C-01 verdict is now "DO NOT APPLY THE FILE AS WRITTEN", with the four parts and which hunks and tests to remove (ceiling hunk in `config.py`, `defaults.py` hunk, two ceiling tests and the `defaults` import).
+- F8: CONFIRMED all four points (`migrate.py:56` no `portal=True`; `tick.py:287-292`; permanent alert from the missing A-01 row); new row D-3 (Minor). The note file itself was not edited (outside my edit scope); the corrections are recorded in REVIEW.md.
+- F9: CONFIRMED as reasoning, UNVERIFIED against Postgres; X-5 (h) now says the timeouts are accident controls only and names the real control.
+- F11: A-6 now states the per-row guard is a precondition of A-01.
+- F12: added to A-4 (neutralise control characters, cap length, test with newline and ANSI escape); `models.py:196` confirmed free string.
+- F13: plain first paragraph added at the top of the Short answer.
+- "Missed in patches": folded into A-4 (no ERROR on the local-directory last resort, no local-directory test, the WARNING is untested) and noted that drained rows go in under the tick's own identity (X-2, X-5).
+- Facts 2, 4, 5: C-5 cite explained (`config.py:373` patched b4cce5b; `:401` = this checkout with C-01 rebased; `:401` unpatched = environment raise); G-2 rewritten with a tree per number and `:203` addressed, `redact.py:947/:948` now read; C-4 `config.py:61` vs `:64` fixed; X-6 `migration_numbers.py` header `:3-5` to `:5-7`; A-1 README claim corrected; A-4 patch contents stated. Fact 2/4/5 cites were each opened and were right.
+
+## Changes
+REVIEW.md only (header, round log, Inputs read, new bases and commands bullets, Short answer and counts paragraph, evidence bullets, three patch headings, rows C-2, C-3, C-4, C-5, C-7, A-1, A-4, A-5, A-6, G-1, G-2, new D-3, X-2, X-5 (h), X-6 cite, Counts section and pasted output, Effective Major paragraph, README claims, Not checked, Open for the studio head, Update section).
