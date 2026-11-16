@@ -1,0 +1,205 @@
+lead-repin-verify.sh v4  (reads only; prints, never judges; the lead reads this output before sharing it)
+masking self-test (canary) before any file was opened: SELF-TEST: passed=288 failed=0 (the made-up input and output files were deleted)
+take folder: /tmp/nb-r4/tree
+private work folder (made by mktemp; after this run it keeps ONLY the masked output copy and the three masking rule files; delete it yourself): /tmp/nb-r4/tmp/lead-repin.vjKiF6
+copy of this output (masked): /tmp/nb-r4/tmp/lead-repin.vjKiF6/lead-repin-verify-out.txt
+Nothing below was checked against a real take program by the builder of this script.
+Q27 a, b and c stay UNVERIFIED until the lead shows them at the final head; this script only finds text.
+Files used:
+TAKE_PY = /tmp/nb-r4/tree/scripts/run_real_check_n8n.py  (found by name; 1 file(s) with that name)
+CRM_PY = /tmp/nb-r4/tree/scripts/crm_hubspot.py  (found by name; 1 file(s) with that name)
+DRIVE_PY = /tmp/nb-r4/tree/scripts/n8n_drive.py  (found by name; 1 file(s) with that name)
+N8N_PY = /tmp/nb-r4/tree/scripts/n8n.py  (found by name; 1 file(s) with that name)
+FLOWS_DIR = /tmp/nb-r4/tree
+MODEL_DIR = <not set: the model program folder is NOT SEARCHED>
+Left out on purpose (counts are printed in block Q23-1): folders .git node_modules _local secrets .venv venv __pycache__ tests test; files test_*, *_test.py, conftest.py (only below the take folder, so a take folder under a test_ parent is still searched); files whose path has 5 or more parts (a/b/c/d/file; at most 3 sub-folders below the folder are searched); symbolic links; every file that is not python, shell or json.
+files searched for "python and shell files of the take (the four named files are searched first and left out of this list)": 0   <<< 0 FILES SEARCHED: the searches below looked at nothing; check TAKE_DIR / FLOWS_DIR / MODEL_DIR
+files searched for "flow json files": 1
+files searched for "model program python files (tests left out)": 0   <<< 0 FILES SEARCHED: the searches below looked at nothing; check TAKE_DIR / FLOWS_DIR / MODEL_DIR
+*** MODEL_DIR is not set (or not a folder): the MODEL PROGRAM IS NOT SEARCHED. This is "not looked at", not "absent". Q27 a (model side), Q27 b (model side and qs_37 on the model side) and Q27 c (half B) cannot be answered by this run: set MODEL_DIR and run again.
+
+===== BLOCK R00: Final head identity (G1, G26) =====
+QUESTION: Which commit id and which file checksums are these answers about?
+not a git work tree (or git missing): cannot print a commit id here
+8bfd66a3e2f1ebf4e09451ddc0744c38cd00c50c8a86e6f1f95d58ce4ad6d35e  /tmp/nb-r4/tree/scripts/run_real_check_n8n.py
+sha256sum: /tmp/nb-r4/tree/scripts/crm_hubspot.py: Permission denied
+f33e22e97d0504aa99d942cf71d6c430885b60282f60a25aa35aed1b0e5506f0  /tmp/nb-r4/tree/scripts/n8n_drive.py
+e3cd2b150c7922be84de594303cf4471750e3b0961b38fb66fd1e7de8b0636c4  /tmp/nb-r4/tree/scripts/n8n.py
+[block R00] information block (not a search with hits): files_read=4 missing=0 unreadable=0
+
+===== BLOCK Q23-1: Any delete or archive path to the CRM (Q23, G1) =====
+QUESTION: Does any python or shell file of the take (not tests), the CRM module or any flow json contain a delete, archive, purge, remove or cleanup path to the CRM? Decision 2 (the take never deletes) stays; the r17 review found only a rows_with_prefix GET; two earlier reviews DISAGREE (see the document); this block is the final-head grep the lead shows.
+NOTE: the flow json files in the folder can differ from what n8n actually holds after import (G3); compare with the G2 checksum step.
+NOTE: AGENT-SCOPE line 20 (citing review-codebase-1.md F-01) says the take archives its contacts with a DELETE call at run_real_check_n8n.py:1051 and crm_hubspot.py:504-509; the r17 review (ORDERS Q23) says there is no delete path. This script does not decide between them: block Q23-2 prints what stands at those lines today.
+left out of "take folder, python and shell" (/tmp/nb-r4/tree) and NOT searched, file counts by reason:
+  path of 5 or more parts (a/b/c/d/file; the search goes at most 3 sub-folders down): 0
+  symbolic links of any kind (find does not follow them): 0
+  folders or files the find command could not open (permission denied): 1
+  names with a line break (cannot be listed safely): 0
+  files inside folders called node_modules, count 0
+  files inside folders called _local, count 0
+  files inside folders called secrets, count 0
+  files inside folders called .venv, count 0
+  files inside folders called venv, count 0
+  files inside folders called __pycache__, count 0
+  files inside folders called tests, count 1
+  files inside folders called test, count 0
+  files of other types (not searched at all, whatever their content or name; this one number is every file that is not a python or shell file): 4
+  test files outside tests folders (test_*, *_test.py, conftest.py): 0
+left out of "flows folder, json" (/tmp/nb-r4/tree) and NOT searched, file counts by reason:
+  path of 5 or more parts (a/b/c/d/file; the search goes at most 3 sub-folders down): 0
+  symbolic links of any kind (find does not follow them): 0
+  folders or files the find command could not open (permission denied): 1
+  names with a line break (cannot be listed safely): 0
+  files inside folders called node_modules, count 0
+  files inside folders called _local, count 1
+  files inside folders called secrets, count 0
+  files inside folders called .venv, count 0
+  files inside folders called venv, count 0
+  files inside folders called __pycache__, count 0
+  files of other types (not searched at all, whatever their content or name; this one number is every file that is not a json file): 7
+_local flow json files: 1. Only the matched WORD of each delete-word hit is printed (file:line:word), never the line, because a local copy may hold real values; open the lines yourself.
+  _local delete-word hits: 0 (first 50 shown above)
+--- search: delete words in the four named files (take program, CRM module, n8n_drive.py, n8n.py): always searched
+/tmp/nb-r4/tree/scripts/run_real_check_n8n.py: 1 match line(s)
+6:    delete_row()
+7-    end_date = 3
+UNREADABLE (not searched, NOT zero matches): /tmp/nb-r4/tree/scripts/crm_hubspot.py
+    [search "delete words in the four named files (take program, CRM module, n8n_drive.py, n8n.py): always searched": matching lines=1 in 1 file(s) with a match, files_read=3 missing=0 unreadable=1] (1 file(s) UNREADABLE: this count is NOT complete)
+--- search: delete words in the other python and shell files of the take
+    [search "delete words in the other python and shell files of the take": matching lines=0 in 0 file(s) with a match, files_read=0 missing=0 unreadable=0] ZERO FILES SEARCHED: nothing was looked at
+--- search: delete words in flow json files
+UNREADABLE (not searched, NOT zero matches): /tmp/nb-r4/tree/flows/a.json
+    [search "delete words in flow json files": matching lines=0 in 0 file(s) with a match, files_read=0 missing=0 unreadable=1] ZERO FILES SEARCHED: nothing was looked at (1 file(s) UNREADABLE: this count is NOT complete)
+READ THE ZERO LINES: "0 matching lines" means "none in the files listed above"; the counts of left-out files above say what was never looked at.
+[block Q23-1] total over all searches in this block: matching lines=1 files_read=3 missing=0 unreadable=2 (a total hides a zero: read the per-search lines above)
+
+===== BLOCK Q23-2: The old line numbers (Q23) =====
+QUESTION: What stands today at run_real_check_n8n.py lines 1045-1056 and crm_hubspot.py lines 500-512? (AGENT-SCOPE line 20 cites a DELETE call at line 1051 and at 504-509; the lead's answer calls that UNVERIFIED stale text.)
+/tmp/nb-r4/tree/scripts/run_real_check_n8n.py has 8 line(s); lines 1045-1056:
+(file is shorter than line 1045: that line number is stale or wrong)
+UNREADABLE (not read): /tmp/nb-r4/tree/scripts/crm_hubspot.py
+[block Q23-2] information block (not a search with hits): files_read=1 missing=0 unreadable=1
+
+===== BLOCK Q23-3: HTTP methods the CRM module uses (Q23, G21) =====
+QUESTION: Which HTTP methods does the CRM module send? (r17 saw only a rows_with_prefix GET)
+--- search: HTTP method names, request helpers, rows_with_prefix (case-sensitive)
+UNREADABLE (not searched, NOT zero matches): /tmp/nb-r4/tree/scripts/crm_hubspot.py
+    [search "HTTP method names, request helpers, rows_with_prefix (case-sensitive)": matching lines=0 in 0 file(s) with a match, files_read=0 missing=0 unreadable=1] ZERO FILES SEARCHED: nothing was looked at (1 file(s) UNREADABLE: this count is NOT complete)
+[block Q23-3] total over all searches in this block: matching lines=0 files_read=0 missing=0 unreadable=1 (a total hides a zero: read the per-search lines above)
+
+===== BLOCK Q23-4: Delete wording printed to the owner (G1, G17) =====
+QUESTION: Do the notice or the printed result of any of the four named files still say deleted or archived, or print a delete count?
+--- search: delete, archive or purge wording in the four named files
+/tmp/nb-r4/tree/scripts/run_real_check_n8n.py: 1 match line(s)
+6:    delete_row()
+UNREADABLE (not searched, NOT zero matches): /tmp/nb-r4/tree/scripts/crm_hubspot.py
+    [search "delete, archive or purge wording in the four named files": matching lines=1 in 1 file(s) with a match, files_read=3 missing=0 unreadable=1] (1 file(s) UNREADABLE: this count is NOT complete)
+[block Q23-4] total over all searches in this block: matching lines=1 files_read=3 missing=0 unreadable=1 (a total hides a zero: read the per-search lines above)
+
+===== BLOCK Q27a: Model call after the word end (Q27 a, G34): UNVERIFIED until the lead shows it =====
+QUESTION: After the take program reads the word end, can it still call the model? Part 1: lines with the end handling (and 20 lines after). Part 2: every model-call line.
+*** MODEL_DIR is not set (or not a folder): the MODEL PROGRAM IS NOT SEARCHED. This is "not looked at", not "absent". Q27 a (model side) cannot be answered by this run: set MODEL_DIR and run again.
+--- search: end handling in the take program (case-sensitive; includes constants; a hit may be help or usage text: read the line)
+    [search "end handling in the take program (case-sensitive; includes constants; a hit may be help or usage text: read the line)": matching lines=0 in 0 file(s) with a match, files_read=1 missing=0 unreadable=0] ZERO HITS: either not there or the search words are wrong; this is not proof of absence
+--- search: model-call words in the take program, n8n_drive.py and n8n.py
+    [search "model-call words in the take program, n8n_drive.py and n8n.py": matching lines=0 in 0 file(s) with a match, files_read=3 missing=0 unreadable=0] ZERO HITS: either not there or the search words are wrong; this is not proof of absence
+--- search: model-call words in the model program folder (only if MODEL_DIR is set)
+    [search "model-call words in the model program folder (only if MODEL_DIR is set)": matching lines=0 in 0 file(s) with a match, files_read=0 missing=0 unreadable=0] ZERO FILES SEARCHED: nothing was looked at
+Q27a reading: end-handling lines=0, model-call lines=0. Zero in either means the words are probably wrong, NOT "no model call".
+Reading a program cannot show (1) a call already sent before end or (2) an n8n retry or lease that fires a call after end: those need a run or a test shown at the final head. Line order is not always run order.
+[block Q27a] total over all searches in this block: matching lines=0 files_read=4 missing=0 unreadable=0 (a total hides a zero: read the per-search lines above)
+
+===== BLOCK Q27b: End-date refusal (Q27 b, G16, G10): UNVERIFIED until the lead shows it =====
+QUESTION: Does a setting that refuses a call after the window end exist, and is a refusal SHOWN at the final head (a test run or a startup refusal)?
+*** MODEL_DIR is not set (or not a folder): the MODEL PROGRAM IS NOT SEARCHED. This is "not looked at", not "absent". Q27 b (model side) cannot be answered by this run: set MODEL_DIR and run again.
+SPEND WARNING: to SEE the refusal run ONLY the named qs_37 test, against the FAKE model. Never start the real model program or the real stage with a real key to "see" a refusal: that can make a paid call. This script starts nothing.
+--- search: window end, need_seconds, refusal words in the take program
+/tmp/nb-r4/tree/scripts/run_real_check_n8n.py: 1 match line(s)
+7:    end_date = 3
+    [search "window end, need_seconds, refusal words in the take program": matching lines=1 in 1 file(s) with a match, files_read=1 missing=0 unreadable=0]
+--- search: same words in the model program folder (only if MODEL_DIR is set)
+    [search "same words in the model program folder (only if MODEL_DIR is set)": matching lines=0 in 0 file(s) with a match, files_read=0 missing=0 unreadable=0] ZERO FILES SEARCHED: nothing was looked at
+files searched for "python files of the take, tests INCLUDED (for qs_37)": 5
+files searched for "python files of the model program folder, tests INCLUDED (for qs_37)": 0   <<< 0 FILES SEARCHED: the searches below looked at nothing; check TAKE_DIR / FLOWS_DIR / MODEL_DIR
+--- search: test name qs_37 in the take folder (tests included)
+UNREADABLE (not searched, NOT zero matches): /tmp/nb-r4/tree/scripts/crm_hubspot.py
+/tmp/nb-r4/tree/tests/t.py: 1 match line(s)
+1:def test_qs_37():
+    [search "test name qs_37 in the take folder (tests included)": matching lines=1 in 1 file(s) with a match, files_read=4 missing=0 unreadable=1] (1 file(s) UNREADABLE: this count is NOT complete)
+--- search: test name qs_37 in the model program folder (tests included; only if MODEL_DIR is set)
+    [search "test name qs_37 in the model program folder (tests included; only if MODEL_DIR is set)": matching lines=0 in 0 file(s) with a match, files_read=0 missing=0 unreadable=0] ZERO FILES SEARCHED: nothing was looked at
+MODEL_SETTINGS not set, missing or unreadable: settings NOT SEARCHED (adjust)
+NOTE: to SEE the refusal, run the named test (fake model only) or read the startup refusal at the final head; this script only finds text.
+[block Q27b] total over all searches in this block: matching lines=2 files_read=5 missing=0 unreadable=1 (a total hides a zero: read the per-search lines above)
+
+===== BLOCK Q27c: Go marker before any model call (Q27 c, G33): UNVERIFIED until the lead shows it =====
+QUESTION: Does the model program refuse to make a paid call until the take program has written a marker after the accepted challenge? BOTH halves are needed.
+*** MODEL_DIR is not set (or not a folder): the MODEL PROGRAM IS NOT SEARCHED. This is "not looked at", not "absent". Q27 c (half B) cannot be answered by this run: set MODEL_DIR and run again.
+--- search: half A: marker words in the take program
+    [search "half A: marker words in the take program": matching lines=0 in 0 file(s) with a match, files_read=1 missing=0 unreadable=0] ZERO HITS: either not there or the search words are wrong; this is not proof of absence
+--- search: half B: marker words in the model program folder (only if MODEL_DIR is set)
+    [search "half B: marker words in the model program folder (only if MODEL_DIR is set)": matching lines=0 in 0 file(s) with a match, files_read=0 missing=0 unreadable=0] ZERO FILES SEARCHED: nothing was looked at
+Q27c reading: take-program half hits=0, model-program half hits=0. Both halves must be shown; a zero in either half means NOT SHOWN by this search. The .used tag marker is not shown to be the go marker.
+[block Q27c] total over all searches in this block: matching lines=0 files_read=1 missing=0 unreadable=0 (a total hides a zero: read the per-search lines above)
+
+===== BLOCK G35: Prompts to the owner (G35) =====
+QUESTION: Does the take program ask the owner to type anything besides y, the challenge line and end?
+--- search: input and prompt words in the take program
+    [search "input and prompt words in the take program": matching lines=0 in 0 file(s) with a match, files_read=1 missing=0 unreadable=0] ZERO HITS: either not there or the search words are wrong; this is not proof of absence
+[block G35] total over all searches in this block: matching lines=0 files_read=1 missing=0 unreadable=0 (a total hides a zero: read the per-search lines above)
+
+===== BLOCK G06: Exit codes (G6, Q20.4) =====
+QUESTION: Which exit codes can the take program leave, and which one for person C unknown?
+--- search: exit words in the take program
+/tmp/nb-r4/tree/scripts/run_real_check_n8n.py: 1 match line(s)
+8:    return 0
+    [search "exit words in the take program": matching lines=1 in 1 file(s) with a match, files_read=1 missing=0 unreadable=0]
+[block G06] total over all searches in this block: matching lines=1 files_read=1 missing=0 unreadable=0 (a total hides a zero: read the per-search lines above)
+
+===== BLOCK G04: Call ceiling, price and ledger (G4, G14) =====
+QUESTION: Where are the call ceiling, retries, ledger total and program limit set?
+--- search: ceiling words in the take program
+    [search "ceiling words in the take program": matching lines=0 in 0 file(s) with a match, files_read=1 missing=0 unreadable=0] ZERO HITS: either not there or the search words are wrong; this is not proof of absence
+--- search: ceiling words in the model program folder (only if MODEL_DIR is set)
+    [search "ceiling words in the model program folder (only if MODEL_DIR is set)": matching lines=0 in 0 file(s) with a match, files_read=0 missing=0 unreadable=0] ZERO FILES SEARCHED: nothing was looked at
+[block G04] total over all searches in this block: matching lines=0 files_read=1 missing=0 unreadable=0 (a total hides a zero: read the per-search lines above)
+
+===== BLOCK G18: Stop, signal and lock behaviour (G18) =====
+QUESTION: What happens on a wrong line after end, Ctrl-C, a pause that ends without end, a cancelled key; which lock file is left?
+--- search: signal and lock words in the take program
+    [search "signal and lock words in the take program": matching lines=0 in 0 file(s) with a match, files_read=1 missing=0 unreadable=0] ZERO HITS: either not there or the search words are wrong; this is not proof of absence
+[block G18] total over all searches in this block: matching lines=0 files_read=1 missing=0 unreadable=0 (a total hides a zero: read the per-search lines above)
+
+===== BLOCK G36: Think time, silence and film cue (G36) =====
+QUESTION: Which printed line could start the film pause, and what are the minimum think time, silence and give-up values?
+--- search: pause words in the take program
+    [search "pause words in the take program": matching lines=0 in 0 file(s) with a match, files_read=1 missing=0 unreadable=0] ZERO HITS: either not there or the search words are wrong; this is not proof of absence
+[block G36] total over all searches in this block: matching lines=0 files_read=1 missing=0 unreadable=0 (a total hides a zero: read the per-search lines above)
+
+===== BLOCK G37-38: Per-run key file, demo mail subject, prep contact (G37, G38) =====
+QUESTION: How is the per-run key file made (does it refuse an existing file), what starts the take mail subjects, and does the prep contact address match the film search?
+--- search: file-creation and subject words in the take program
+    [search "file-creation and subject words in the take program": matching lines=0 in 0 file(s) with a match, files_read=1 missing=0 unreadable=0] ZERO HITS: either not there or the search words are wrong; this is not proof of absence
+[block G37-38] total over all searches in this block: matching lines=0 files_read=1 missing=0 unreadable=0 (a total hides a zero: read the per-search lines above)
+
+===== BLOCK G07: Ports (G7) =====
+QUESTION: Which of the ports 5678, 5679, 5690-5693, 5701, 5702 are listening now, and does the take program name its own port?
+none of those ports is listening now (from /proc/net/tcp (ports only, address not shown))
+--- search: port numbers in the take program
+    [search "port numbers in the take program": matching lines=0 in 0 file(s) with a match, files_read=1 missing=0 unreadable=0] ZERO HITS: either not there or the search words are wrong; this is not proof of absence
+[block G07] total over all searches in this block: matching lines=0 files_read=2 missing=0 unreadable=0 (a total hides a zero: read the per-search lines above)
+
+===== BLOCK G20: DECISION-one-store line 14 (G20) =====
+QUESTION: Does line 14 still say ONE database?
+/tmp/nb-r4/tree/DECISION-one-store.md has 21 line(s); lines 14-14:
+14:line 13
+[block G20] information block (not a search with hits): files_read=1 missing=0 unreadable=0
+
+CANNOT BE ANSWERED WITHOUT MODEL_DIR: Q27 a model side, Q27 b model side and qs_37 model side, Q27 c half B (so Q27 c cannot be answered at all by this run).
+SUMMARY: blocks=16 search_blocks=13 with_hits=4 zero_hits=9 information_blocks=3 files_missing=0 files_unreadable=6 (counts only; nothing judged; the lead reads each block and the per-search ZERO lines)
+Hidden by the masking filter in search results: 0 line(s) had a value hidden, 0 of them were hidden whole (next-line rule).
+Search lines that were NOT printed in full: 0 search(es) had a PRINT MISMATCH; 0 matching line(s) had the match word hidden (read the lines marked above).
+Masking is a safety net: read this output yourself before you share it.
+Final pass over the whole output above: 0 additional value(s) hidden (0 means the search-time filter had already hidden everything the belt knows).
+The work folder /tmp/nb-r4/tmp/lead-repin.vjKiF6 now holds only: the masked output copy and the three masking rule files (lists of file names were deleted).
