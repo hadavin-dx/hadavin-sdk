@@ -200,8 +200,8 @@ check("row 14 (and the card rows 13, 14) carry no '(within 45 seconds)'", all("w
 check("'one alert' is not stated as a fact about the take's flows in any new text (rows 13, 14, 74 and the box card text)", all(("sends one alert" not in bylead[k]["new"]) for k in bylead) and "it sends one alert" not in box, "")
 # M-A: the approval gate and the mandatory repeat
 i12 = bylead[8]["new"]
-check("M-A: row 8 item 12 gates card line 1 and the caption on 'lease wording approved' with UTC and IST, and makes the repeat sent more than 45 seconds after the first mandatory", "lease wording approved" in i12 and "UTC and IST" in i12 and "more than 45 seconds after the first send" in i12 and "mandatory" in bylead[8]["why"], "")
-check("M-A: the stop rules table has the lease wording approval entry", "| Lease wording approval (risks list item 12) |" in raw)
+check("M-A: row 8 item 12 gates card line 1 and the caption on 'lease wording approved' with UTC and IST, and makes the repeat sent more than 45 seconds after the first mandatory", "G12 line" in i12 and "UTC and IST" in i12 and "more than 45 seconds after the first send" in i12 and "mandatory" in bylead[8]["why"], "")
+check("M-A: the stop rules table has the lease wording approval entry", "| G12 approval (risks list item 12) |" in raw)
 # M-C: Q27 reading is labelled the report's assumption; L-DEL does not say the open part is answered
 check("M-C: Q27 reading labelled as the report's own assumption and OWNER-OPEN (ORD:232) in the box, row 8 and section 9", "MY ASSUMPTION" in box and "ORD:232" in box and "strictest reading" in bylead[8]["new"] and "OWNER-OPEN" in raw.split("## 9.")[1], "")
 ldel = [l for l in txt if l.startswith("| L-DEL")]
@@ -243,7 +243,7 @@ check("the real v%d files on disk are %s and the report names every one of them"
 for f in sorted(sw):
     t_ = datetime.datetime.fromtimestamp(os.path.getmtime(f), datetime.timezone.utc)
     print("INFO %s last written %s UTC; check time of the report %s" % (os.path.basename(f), t_.strftime("%H:%M:%S"), ct))
-check("source-copy statement: the report says the rows were checked against the scratchpad copy, that equality with the real files is unverified, and that 99 of the 104 rows cannot be read in the repository", "scratchpad/c6/tree/handover" in raw.split("## 1.")[0] and "UNVERIFIED" in raw.split("## 1.")[0] and "99 of 104 rows" in raw.split("## 1.")[0], "")
+check("source-copy statement: the report says the rows were checked against the scratchpad copy, that equality with the real files is unverified, and that 99 of the 104 rows cannot be read in the repository", "evidence-c6w/tree/" in boxs and "UNVERIFIED" in boxs and "99 of 104 rows" in raw.split("## 1.")[0], "")
 nrepo = sum(1 for r in rows if os.path.exists(H + "/" + r["f"]))
 check("99 rows of 104 name a file that is not in the repository (recounted: %d rows readable in the repo)" % nrepo, nrepo == 5 and N - nrepo == 99, nrepo)
 # no pipe-in-cell: no row text holds a raw table border
@@ -296,21 +296,21 @@ check("F3 row 6 reason says items 11 to 16", "items 11 to 16" in bylead[6]["why"
 check("m1 the approval of row 8 must cite the crash-then-repeat-during-recovery case with 1 row and 1 mail", "a crash is" not in "" and "while the recovery flow is still working on it" in bylead[8]["new"] and "1 row and 1 mail" in bylead[8]["new"], "")
 check("m2 row 13 says 'expected to be true until C-9 part 2'", "expected to be true for a second send until C-9 part 2" in bylead[13]["why"] and "so the plain statement is true for a second send" not in bylead[13]["why"], "")
 cut_ = re.findall(r"125 s", raw)
-check("m3 the cut-case totals (125 s, 79 words, 31.6 s, 35 s, about 160 s) are given once, in the box CUT CASE; elsewhere only a pointer", raw.count("25 s + 40 s + 60 s = 125 s") == 1 and "25 s + 40 s + 60 s = 125 s" in box and "about 125 s of scenes" not in raw and "CUT CASE" in box and "30 s EST" in box and "New cell text: 35 s EST" in box and "35 s EST" in box, len(cut_))
+check("m3 the cut-case totals (125 s, 79 words, 31.6 s, 35 s, about 160 s) are given once, in the box CUT CASE; elsewhere only a pointer", raw.count("25 s + 40 s + 60 s = 125 s") == 1 and "about 125 s of scenes" not in raw and "CUT CASE (the one place that gives it)" in raw and "30 s EST" in raw and "New cell text: 40 s EST" in raw, len(cut_))
 exs = re.findall(r"## ANSWER \([^)]*, (\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ) = ", box)
 check("m4 every example answer time in the box is later than the check time %s (and has its IST)" % ct, bool(exs) and all(e > ct for e in exs) and "EXAMPLE" in box, exs)
 # naive items
-check("naive: the order of the reviewer names is explained", "ORDER of the two reviewer names matters" in box, "")
-check("naive: the 'does not do' list comes before the answer line", box.index("does NOT do") < box.index("## ANSWER ("), "")
+check("naive: the order of the reviewer names is explained", "reviewer-B checks facts and risk, reviewer-C reads as a stranger" in box, "")
+check("naive: the 'does not do' list comes before the answer line", box.index("WHAT THE LINE OF STEP 2 DOES") < box.index("## ANSWER (") and "DOES NOT DO" in box, "")
 check("naive: ONE OWNER-ONLY rule: the section 3 rule line, the box and the L-SHEET and L-SAVEERR rows say only the owner answers", "never answers for him" in raw and all(any(l.startswith(k) and "OWNER ONLY" in l for l in txt) for k in ("| L-SAVEERR |", "| L-SHEET (was Q10)")) and "studio lead may answer for him" not in raw, "")
 check("naive: the answer form puts L-SHEET and L-SAVEERR on separate OWNER lines", ("L-SHEET v%dA" % NEWV) in box and "L-SAVEERR yes" in box and "Neither can be put on the line of step 2" in box, "")
 check("naive: Q27 (a), (b), (c) and G12 are explained in the box and the reader is addressed as 'you'", "Q27 (a), (b), (c) = your plan's three questions" in box and "G12 = YOUR gate" in box and "STUDIO LEAD = you" in box, "")
 steps = sec1c[sec1c.index("1c-F"):]
-check("naive: numbered steps exist for rows 23, 58, 59, the G12 approval and the 45-second sentence (named who)", all(x in steps for x in ["applies row 23", "applies rows 58 and 59", "TASK (9) A QUESTION TO YOU", "TASK (10) approve the lease wording (G12)"]), "")
+check("naive: numbered steps exist for rows 23, 58, 59, the G12 approval and the 45-second sentence (named who)", all(x in steps for x in ["applies row 23", "rows 58 and 59", "TASK (9), A QUESTION TO YOU", "TASK (10) you write the ONE G12 line"]), "")
 check("naive: the C-9 part 2 circle is explained", "THE CIRCLE IN C-9 PART 2" in box and "the approval rests on that look" in box, "")
 check("naive: 'take' is not used for 'claim' and 'claim' is not used for a spoken statement of the video except in quotation", "may take it again" not in raw and not [l for l in txt if "reserved for the run that took it first" in l and "the plain sense of 'take'" not in l] and "THE TWO CLAIMS" not in raw and "unlimited claim" not in raw and "takes the 45-second limit out" not in raw, "")
 check("naive: 'alert' is defined as a warning mail the system is built to send, not as a tested fact", "a warning mail the system is built to send" in box and "a warning mail the system is built to send" in raw.split("| alert |")[1][:300], "")
-check("naive: stale names fixed (c6s supersedes c6r; L-SAVEERR in the glossary label row; 'items 11 to 16')", raw.startswith("# REPORT-c6w:") and "supersedes REPORT-c6u.md" in raw.split("\n")[0] and "L-SAVE, L-SAVEERR, L-PAGE" in raw, "")
+check("naive: stale names fixed (c6s supersedes c6r; L-SAVEERR in the glossary label row; 'items 11 to 16')", raw.startswith("# REPORT-c6w:") and "supersedes REPORT-c6v.md" in raw.split("\n")[0] and "L-SAVE, L-SAVEERR, L-PAGE" in raw, "")
 check("naive: table 5a lists row 11 and says the 37 rows are a different group from the 36", any(l.startswith("| 11 | run sheet") for l in a5.split("\n")) and "37 rows of the run sheet" in a5 and "different group from the 38 rows" in a5, "")
 check("naive: the section 0 history is moved after the how-to (section 1b exists after section 1 and before section 2)", raw.index("## 1b.") > raw.index("## 1. ") and raw.index("## 1b.") < raw.index("## 2. ") and "HISTORY, c6q" in sec1b and "HISTORY, c6q" not in sec0 and "HISTORY, c6r" in sec1b, "")
 check("naive: EGM, KEY, FINAL, RUN, CHECK, ROW are defined in the box", all(x in box for x in ["EGM = ", "KEY = ", "FINAL = ", "RUN = ", "CHECK = ", "ROW = "]), "")

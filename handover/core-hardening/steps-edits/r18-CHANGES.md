@@ -13,8 +13,8 @@ Builder evidence only. An independent evidence runner and fresh egm reviewers fo
 - Rows 60 (Apply now 48, Hold 12), unchanged. EDITS.md 1087 lines.
 - `verify18.py` (built by `mk-verify18.py` from `verify17.py`): old checks re-anchored by 50 anchored patches (each asserted once); new section `r18-section.py` (102 count, pair and forbidden-wording checks over three texts) and `r18-plants.py`.
 - In-memory plants over the applied text (planted, caught): occurrence 167 of 167 (one plant per copy of each of 32 safety phrases and time pairs), UTC/IST pairs 71 of 71, reversals of a safe default 10 of 10, day sheet 10 of 10, appendix 9 of 9. Baseline failures were subtracted, so a plant counts only when it adds a new failure.
-- Proof on the r17 output: `EDITS_PATH=EDITS.round17.md NO_NEG=1 python3 verify18.py` gives FAILURES 113 (86 labelled `FAIL r18`, 18 `FAIL r17` that point at the old order and the old sentences, 9 older); see `v18-on-r17-output.txt`. On r18: FAILURES 0 (`v18-check-output.txt`).
-- File-level negative controls: NEGCAUGHT caught, NEGMISS missed (`v18-check-output.txt`).
+- Proof on the r17 output: `EDITS_PATH=EDITS.round17.md NO_NEG=1 python3 verify18.py` gives FAILURES 113 (86 labelled `FAIL r18`, 18 `FAIL r17` that point at the old order and the old sentences, 9 older); see `v18-on-r17-output.txt`. On r18: FAILURES 0 with all negative controls (`v18-check-output.txt`, run through heavy-slot.sh, slot 1, no wait).
+- File-level negative controls: 198 caught, 0 missed (`v18-check-output.txt`).
 - Word counts, one method (`wc -w`): applied sheet 20,436 -> 21,492; day sheet 2,020; appendix 1,272.
 
 ## 3. Findings fixed (item, class, check, plant)

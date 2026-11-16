@@ -1,17 +1,22 @@
-changes| decision for the lead (see |section 6
-changes| is inside the sentence "no |section 4
-changes| plus the Take folder only; |R6
-changes|2, the delete criterion and |Q27
-changes|48: a failed key save skips |6.7
-changes|DB-2, the delete criterion, |Q27
-changes|N reading load | NOT fixed (|section 1
-changes|NER-OPEN; Open 71 (A or B); |Open 102, 103, 107, 110, 111
-changes|W and L are explained once (|section 1
-changes|er than the checked shape | |7.2
-changes|es or sections that exist ("|section 4
-changes|iled key save skips 6.7 and |7.11
-changes|ive minor 3 (6.3b, 6.3c and |6.4
-changes|on and Q27 stay OWNER-OPEN; |Open 71
+changes| and rules that exist (5.1, |5.6
+changes| exist (5.1, 5.6, 5.9, 7.6, |7.9
+changes| on the near-deadline line; |7.11
+changes| that exist (5.1, 5.6, 5.9, |7.6
+changes|, 5.6, 5.9, 7.6, 7.9, 7.11, |R8
+changes|B13, AB14 | | Stranger M7 | |5.3
+changes|eading load | no net words (|section 2
+changes|eats, five sentences of the |5.1
+changes|er completed by phone after |5.9
+changes|ey changed (re-pointed, see |section 3
+changes|ges are lower than v33 (see |section 2
+changes|ntence (lead answer Q22c)", |G12
+changes|rt step (or none); card and |7.11
+changes|rules that exist (5.1, 5.6, |5.9
+changes|son while the key is alive, |7.6
+changes|steps and rules that exist (|5.1
+changes|t (5.1, 5.6, 5.9, 7.6, 7.9, |7.11
+changes|ted after reading the diff (|section 1
+changes|that the owner phones after |5.9
 note| (Open 71), the word count (|Open 75
 note| (c), in force (lead answer |Q22
 note| (within 2 minutes) at 6.3; |6.5

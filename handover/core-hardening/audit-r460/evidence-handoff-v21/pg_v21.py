@@ -189,8 +189,9 @@ check("G4 the total is still 0.4 after the refusal", rt.execute("SELECT usd FROM
 rt.execute("SELECT * FROM spend_reserve('a', %s, %s)", (D, Decimal("2")))
 check("G5 settle of a worst case larger than what is open (3 > 2) refused 23514", st(lambda: rt.execute("SELECT * FROM spend_settle('a', %s, %s, %s)", (D, Decimal("3"), Decimal("0")))) == "23514")
 r = rt.execute("SELECT * FROM spend_settle('a', %s, %s, %s)", (D, Decimal("-1"), Decimal("0"))).fetchone()
-check("G6 a negative worst case changes nothing (total stays 2.4)", r == (Decimal("2.4"), Decimal("2.4")), str(r))
-check("G6 a negative actual cost changes nothing", rt.execute("SELECT * FROM spend_settle('a', %s, %s, %s)", (D, Decimal("1"), Decimal("-5"))).fetchone() == (Decimal("2.4"), Decimal("2.4")))
+check("G6 a negative worst case returns no row (v21: a rejected settle must not look like a success)", r is None, str(r))
+check("G6 a negative actual cost returns no row", rt.execute("SELECT * FROM spend_settle('a', %s, %s, %s)", (D, Decimal("1"), Decimal("-5"))).fetchone() is None)
+check("G6 after both rejections the totals are still 2.4 and 2.4", rt.execute("SELECT usd, open_usd FROM spend WHERE agent_id='a'").fetchone() == (Decimal("2.4"), Decimal("2.4")))
 for v in ("NaN", "Infinity"):
     check(f"G7 reserve of {v} refused 23514", st(lambda: rt.execute("SELECT * FROM spend_reserve('a', %s, %s)", (D, Decimal(v)))) == "23514")
 _ua = mg.execute("SELECT usd, open_usd FROM spend WHERE agent_id='a'").fetchone()
@@ -657,7 +658,7 @@ try:
     hdr = 'LANGUAGE plpgsql SECURITY DEFINER SET search_path = "PG_CATALOG", pg_temp'
     TR = f"CREATE OR REPLACE FUNCTION spend_log_decrease() RETURNS trigger {hdr} AS $f$ BEGIN RETURN NULL; END $f$;\nREVOKE ALL ON FUNCTION spend_log_decrease() FROM PUBLIC;\n"
     f21 = bool(g20.check_sql_text("x.sql", TR, {"spend_log_decrease()": "definer"})); fP = bool(gP.check_sql_text("x.sql", TR, {"spend_log_decrease()": "definer"}))
-    check(f"m6 the server keeps the quoted name as typed (SHOW says {shown}); v21 guard flags it = {f21}; v20 guard flags it = {fP}", shown == '"PG_CATALOG", pg_temp' and f21 and not fP)
+    check(f"m6 the server keeps the quoted name as typed (SHOW says {shown}) and the v21 guard flags the function = {f21} (the v20 guard also flags this sample = {fP}, for another reason, so this is NOT a control)", shown == '"PG_CATALOG", pg_temp' and f21)
 
     section("v21 m7 a -- comment ends at a carriage return")
     ncol = len(admin.execute("SELECT 1 -- c\r, 2").description)

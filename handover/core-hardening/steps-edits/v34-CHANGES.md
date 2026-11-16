@@ -47,4 +47,11 @@ Pins and ledgers changed: C190, C230, C246, C249 (new wording), plants X06, Z15,
 The cancel-only role and whether it can do the last-resort step; how the lead starts or stops the model program; every vendor page path; the time a real cancel takes; that a missing Recall page means no Recall.
 
 ## 5. Evidence (builder, this session)
-@@EVIDENCE@@
+Run 19:0x to 19:18 UTC, all heavy runs through heavy-slot.sh (slot wait: mut34 run 1 and 2 at once, gap-proof 11 minutes; my first mut34 started before the lead order and was stopped, then rerun in a slot).
+- check-v34.py: 0 failures after the ledgers were accepted.
+- mut34.py: 300 plants (17 new, AB01 to AB17), 299 caught by the meant check, 0 missed, 0 anchor-not-found, negative control ok (1 of the 300 is the control); baseline failures 0.
+- v34-fail-proof.py: 43 Part 9 checks (C228 to C273), 13 fail on built v33, none fail on v34; C263 to C266 cannot fail on v33 because the sentences were there (they are proven by plants AB01 to AB04 and by gap-proof-v34.py).
+- gap-proof-v34.py: the four evidence plants X03, X07, X08, X10 plus eleven earlier ones: the v33 checker misses 4 of 15 (X03, X07, X08, X10), the v34 checker misses 0 of 15.
+- Banned-string and secret-shape scans: part of check C06 and C05 (the list is read at run time): 0 hits.
+- A final mut34 re-run on the final head follows in the lead report if it finished before hand-back.
+Commands: build-v34.py, check-v34.py, v34-fail-proof.py, mut34.py, gap-proof-v34.py (all in this folder).
