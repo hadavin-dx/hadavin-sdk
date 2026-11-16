@@ -10,7 +10,7 @@ Made-up data only. Purpose: after the last recorded run of the demo, this card l
 - model key = the password for the AI service the demo called (the lead names the service).
 - `demo-take` Chrome profile = the separate Chrome profile you use for the demo logins. You create it in run-day card step 1; its exact name and place are written by you at run-day card step 7 ([OWNER FILLS at the profile and filming check]).
 - retire check = the program in step 4 that tries the old logins and must be refused.
-- take = one recorded run of the demo (the run-day card calls it "run"). `<tag>` = the run name you invented for that run (the program's screens call it the "take id").
+- take = one recorded run of the demo (the run-day card calls it "run"). `<tag>` = the take id the program's screens show (that it equals a run name you invented is UNVERIFIED; ask the lead).
 - release word = the exact words the lead writes in chat that allow one step; without them you do not do the step. UNVERIFIED = not yet confirmed by the lead's own test; if what you see differs, stop and tell the lead. Loopback re-smoke = the lead's own test run of the final program on the lead's own machine, with no real accounts; it has not happened yet.
 - filtered list = a search in HubSpot by the text the program printed (not a saved report).
 
