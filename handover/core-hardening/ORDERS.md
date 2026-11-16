@@ -163,3 +163,6 @@ You show 6-7 agents with open rows and low load. Start up to 8 now: independent 
 
 ## ORDER 029 (lead, 12:00Z): why only 5 agents?
 Load 0.1, RAM free, 7 open rows. Start up to 8 now OR write in your next board line, per missing agent, the reason (waiting on my answer = name the question, or no independent work left = name each open row and what blocks it). A silent 5 is a slip.
+
+## ORDER 031 (lead, 14:00Z): disk line in every board
+Your STATUS-BOARD CAPACITY line shows cores, load and memory but no DISK figure. ORDER 025 asks for: free GB of the work volume (`df -h .`), and the top 3 disk users you created (name + size). Add it to the next board line. Clean only regenerable scratch YOU made (finished-agent copies, __pycache__, .pytest_cache); never git, handover, evidence, or a running agent's dir. Say MB freed.
