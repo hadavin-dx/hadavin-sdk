@@ -1,3 +1,4 @@
+SUPERSEDED 2026-11-16 10:02Z by lead decision 1 (inputs/DECISIONS-2026-11-16.md): the ONE video is real-v5 only, scenes 5 to 11 (film-v5) are out, no flow-set switch. M16 is closed. History only; do not act on A to D, the NO-GO rule or the mail-credential risk. The one substituted copy now is the PATCHED real-v5 copy (lead answer 10:20Z).
 # M16 flow-set question (round 2, plain words): which n8n flow set does each scene of the one video need? (16 Nov 2026, about 10:55 UTC / 16:25 IST)
 Made-up data only. Read-only research from the files this session holds. Two independent readers reviewed round 1; this is round 2.
 

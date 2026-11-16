@@ -1,3 +1,4 @@
+UPDATE 16 Nov 10:35Z: item 2 (patched or unpatched) is DECIDED by the lead's answer 10:20Z: the PATCHED real-v5 copy (F-002 and F-008 applied, then the fill values). The licence test failure is a branch artefact (decision 11); the vendor-word failure is gone at 60338533. S9-1 and S9-4 are deferred, describe-only (decision 5): do not claim a closed gate. T19 is still not run.
 # Not checked, real-v5-only take (zoom-out read, 16 Nov 2026; unverified reviewer report, files read: REPORT.md, flowcheck/REPORT.md, flowset/REPORT.md, DECISIONS)
 Ranked. Items 1 and 2 can end the take; the rest can be fixed in a day.
 1. Real-v5 flows never ran in n8n with real settings (the `$env` fill is not built, BL-wp6-G1). Check on the laptop: import filled copy, post one made-up lead, reach MarkDone. Laptop only; tonight IST.
