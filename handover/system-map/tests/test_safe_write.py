@@ -43,7 +43,32 @@ class SafeWriteHardening(unittest.TestCase):
         d = tempfile.mkdtemp()
         open(os.path.join(d, "a.md"), "w").write("hand edit")
         self.assertTrue(safe_write(d, "a.md", "new", force=True))
-        self.assertEqual(open(os.path.join(d, "a.md.bak")).read(), "hand edit")
+        baks = [f for f in os.listdir(d) if f.startswith("a.md.") and f.endswith(".bak")]
+        self.assertEqual(len(baks), 1)
+        self.assertEqual(open(os.path.join(d, baks[0])).read(), "hand edit")
+
+
+    def test_two_forces_keep_both_hand_edits(self):
+        import tempfile, os
+        d = tempfile.mkdtemp()
+        safe_write(d, "a.md", "gen1")
+        open(os.path.join(d, "a.md"), "w").write("edit one")
+        safe_write(d, "a.md", "gen2", force=True)
+        open(os.path.join(d, "a.md"), "w").write("edit two")
+        safe_write(d, "a.md", "gen3", force=True)
+        texts = sorted(open(os.path.join(d, f)).read() for f in os.listdir(d) if f.endswith(".bak"))
+        self.assertEqual(texts, ["edit one", "edit two"])
+
+    def test_adopt_makes_hand_edit_the_baseline(self):
+        import tempfile, os
+        from safe_write import adopt, refused
+        d = tempfile.mkdtemp()
+        safe_write(d, "a.md", "gen")
+        open(os.path.join(d, "a.md"), "w").write("edit")
+        self.assertTrue(refused(d, "a.md"))
+        adopt(d, "a.md")
+        self.assertFalse(refused(d, "a.md"))
+        self.assertEqual(open(os.path.join(d, "a.md")).read(), "edit")
 
 
 if __name__ == "__main__":

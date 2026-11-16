@@ -39,7 +39,7 @@ def refused(base, name, force=False):
 
 
 def safe_write(base, name, text, force=False):
-    """Return True if written, False if refused. With force the old text is kept as <name>.bak."""
+    """Return True if written, False if refused. With force the old text is kept as <name>.<sha8>.bak (an existing backup is never replaced)."""
     hashes = _load(base)  # a damaged registry fails here, before anything is written
     if refused(base, name, force):
         return False
@@ -47,11 +47,27 @@ def safe_write(base, name, text, force=False):
     if force and os.path.exists(path):
         with open(path, encoding="utf-8", errors="replace") as fh:
             old = fh.read()
-        with open(path + ".bak", "w", encoding="utf-8") as fh:
-            fh.write(old)
+        bak = "%s.%s.bak" % (path, _sha(old)[:8])  # one backup per distinct old text; never replaced
+        if not os.path.exists(bak):
+            with open(bak, "w", encoding="utf-8") as fh:
+                fh.write(old)
     with open(path, "w", encoding="utf-8") as fh:
         fh.write(text)
     hashes[name] = _sha(text)
+    reg = os.path.join(base, REG)
+    os.makedirs(os.path.dirname(reg), exist_ok=True)
+    with open(reg + ".tmp", "w", encoding="utf-8") as fh:
+        json.dump(hashes, fh, indent=1, sort_keys=True)
+    os.replace(reg + ".tmp", reg)
+    return True
+
+
+def adopt(base, name):
+    """Record the sha of the file as it is now (a hand edit becomes the new baseline); nothing else is written."""
+    path = _path(base, name)
+    hashes = _load(base)
+    with open(path, encoding="utf-8", errors="replace") as fh:
+        hashes[name] = _sha(fh.read())
     reg = os.path.join(base, REG)
     os.makedirs(os.path.dirname(reg), exist_ok=True)
     with open(reg + ".tmp", "w", encoding="utf-8") as fh:

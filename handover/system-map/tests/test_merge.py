@@ -61,3 +61,19 @@ class MergeDrops(unittest.TestCase):
     def test_clean_run_returns_zero(self):
         d = self._lane("## Stores\n| id | name |\n|---|---|\n| L1-S-001 | x |\n")
         self.assertEqual(merge.main(d), 0)
+
+
+class MergeGuard(unittest.TestCase):
+    def test_hand_edited_master_map_is_refused(self):
+        d = tempfile.mkdtemp(); os.makedirs(os.path.join(d, "work"))
+        open(os.path.join(d, "work", "L1.md"), "w").write("## Stores\n| id | name |\n|---|---|\n| L1-S-001 | x |\n")
+        self.assertEqual(merge.main(d), 0)
+        open(os.path.join(d, "MASTER-MAP.md"), "a").write("HAND EDIT\n")
+        self.assertEqual(merge.main(d), 1)
+        self.assertIn("HAND EDIT", open(os.path.join(d, "MASTER-MAP.md")).read())
+
+    def test_finding_row_with_wrong_cell_count_fails(self):
+        d = tempfile.mkdtemp(); os.makedirs(os.path.join(d, "work"))
+        open(os.path.join(d, "work", "L1.md"), "w").write(
+            "## Findings\n| id | claim type | severity | evidence | conflicts with | job key |\n|---|---|---|---|---|---|\n| L1-FD-001 | dead | Nit | e | none |\n")
+        self.assertEqual(merge.main(d), 1)

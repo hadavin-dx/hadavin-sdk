@@ -3,10 +3,15 @@
 Usage: python3 tools/write_outputs.py <dir>"""
 import re, sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__))))
-from safe_write import safe_write, refused
+from safe_write import safe_write, refused, adopt
 OVERWRITE_OK = "--force" in sys.argv
 from collections import Counter
-base = sys.argv[1]
+_args = [a for a in sys.argv[1:] if not a.startswith("--")]
+base = _args[0]
+if "--adopt" in sys.argv:  # make the hand-edited files the new baseline; nothing is overwritten
+    for _n in ("SWEEP.md", "ONE-PLACE-TABLE.md"):
+        adopt(base, _n); print("ADOPTED:", _n)
+    sys.exit(0)
 for _n in ("SWEEP.md", "ONE-PLACE-TABLE.md"):
     if refused(base, _n, OVERWRITE_OK):
         print("REFUSED: %s was edited by hand or has no record of being generated; nothing written; use --force to overwrite" % _n); sys.exit(1)
