@@ -1066,3 +1066,12 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 
 - 772 ARCHIVE-CUT-LIST r11: silent on rows D-M, row A/B/H, laptop lead. FIXED by VERDICT r12.
 - 773 M17 r9: replacement text, supersession range, terms. FIXED by HOLD r9; page edits TO DO.
+
+- 774 end-delete r12: step 13-16, terms, VERIFIED gate. FIXED by CURRENT r12.
+- 775 FINAL-CROSSCHECK r14: decisions restated, archive v3, C-01, lines list. FIXED by STATUS r14.
+- 776 row1-builder-brief r9: call form, paths, proposals. FIXED by CURRENT ONLY r9; call form NOT BUILT.
+- 777 decision-list r12: run (b), deadline order, A3/A9/E9 letters, unknown ids. FIXED by CURRENT r12.
+- 778 merged-findings r10: terms, nit rows, id typo. FIXED by LEGEND r10; cells TO DO.
+- 779 BRIEF-LANE r13: line 48 status, labels, LANE line. FIXED by BINDING r14.
+
+- 780 L5ac r8: glossary stack, FD-001 unresolved, terms. FIXED by GLOSSARY r8; FD-001 table TO DO.
