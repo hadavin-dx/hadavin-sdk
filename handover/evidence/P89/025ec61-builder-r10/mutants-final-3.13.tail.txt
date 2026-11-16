@@ -1,0 +1,12 @@
+ok  KILLED       runner: a secret of only quote marks gets no run limit  [test_a_short_value_that_is_only_quote_marks_and_backslashes_]
+ok  KILLED       runner: the run limit is one too long  [test_a_short_value_that_is_only_quote_marks_and_backslashes_]
+ok  KILLED       runner: the run limit is one too short  [test_a_short_value_that_is_only_quote_marks_and_backslashes_]
+ok  KILLED       runner: a secret of only quote marks hides every quote mark  [test_a_short_value_that_is_only_quote_marks_and_backslashes_]
+ok  KILLED       runner: the head and the tail next to dots are not looked for  [test_the_head_and_the_tail_next_to_dots_are_hidden_at_any_pr]
+ok  KILLED       runner: the tail is looked for in the wrong direction  [test_the_head_and_the_tail_next_to_dots_are_hidden_at_any_pr]
+ok  KILLED       runner: a cut inside the escape of a character is not followed  [test_the_head_and_the_tail_next_to_dots_are_hidden_at_any_pr]
+ok  KILLED       runner: a head is hidden wherever it stands  [test_the_head_and_the_tail_next_to_dots_are_hidden_at_any_pr]
+ok  KILLED       runner: only the shortest head is hidden  [test_the_head_and_the_tail_next_to_dots_are_hidden_at_any_pr]
+ok  KILLED       conftest: a changed database address is not noticed  [test_the_fixture_that_guards_the_database_address_fails_a_te]
+192 of 192 good; problems: []
+exit=0

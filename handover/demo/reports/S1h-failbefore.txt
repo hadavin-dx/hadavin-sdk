@@ -1,0 +1,133 @@
+# S1h fail-before: tests/test_loss_path_s1h.py run against the OLD tree /tmp/dpld-a4r5 (copy), Mon Nov  9 21:07:45 UTC 2026
+FFF..F.F.FFFFFFFFF                                                       [100%]
+=================================== FAILURES ===================================
+______________________ test_model_answer_is_stamped_again ______________________
+tests/test_loss_path_s1h.py:75: in test_model_answer_is_stamped_again
+    assert rig.state(lid)[0] == "sent" and rig.crm.count == 1 and rig.outbox.count == 1
+E   AssertionError: assert ('pending' == 'sent'
+E     
+E     - sent
+E     + pending)
+------------------------------ Captured log call -------------------------------
+WARNING  lead_desk:desk.py:915 the AI step took longer than its budget: the reaper may have taken the row meanwhile
+WARNING  lead_desk:desk.py:964 crm step: the follow-up is no longer ours, nothing was asked
+_____________________ test_claim_lost_in_model_stores_none _____________________
+tests/test_loss_path_s1h.py:90: in test_claim_lost_in_model_stores_none
+    assert follow(rig, lid, "ai_label, state, crm_done, send_started") == (None, "sending", 0, 0)
+E   AssertionError: assert ('warm', 'sending', 0, 0) == (None, 'sending', 0, 0)
+E     
+E     At index 0 diff: 'warm' != None
+E     Use -v to get more diff
+------------------------------ Captured log call -------------------------------
+WARNING  lead_desk:desk.py:964 crm step: the follow-up is no longer ours, nothing was asked
+_____________________ test_model_stamp_lock_gives_try_back _____________________
+tests/test_loss_path_s1h.py:110: in test_model_stamp_lock_gives_try_back
+    assert follow(rig, lid, "state, auto_attempts, ai_label, crm_done") == ("pending", 0, None, 0)
+E   AssertionError: assert ('pending', 0, 'warm', 1) == ('pending', 0, None, 0)
+E     
+E     At index 2 diff: 'warm' != None
+E     Use -v to get more diff
+------------------------------ Captured log call -------------------------------
+WARNING  lead_desk:desk.py:1042 sending row not refreshed: database stayed locked
+WARNING  lead_desk:desk.py:1234 follow-up failed before the send: OperationalError
+_____________________ test_ambiguous_no_handle_gives_back ______________________
+tests/test_loss_path_s1h.py:166: in test_ambiguous_no_handle_gives_back
+    assert follow(rig, lid, "state, auto_attempts, last_error, send_started") == ("pending", 0, "no_descriptors", 0)
+E   AssertionError: assert ('pending', 1...reachable', 0) == ('pending', 0...scriptors', 0)
+E     
+E     At index 1 diff: 1 != 0
+E     Use -v to get more diff
+------------------------------ Captured log call -------------------------------
+WARNING  lead_desk:desk.py:361 outbox capability not re-read: FakesUnreachable
+WARNING  lead_desk:desk.py:444 start-up: sending rows left for the reaper (sender capability not read)
+WARNING  lead_desk:desk.py:361 outbox capability not re-read: FakesUnreachable
+______________________ test_crm_read_no_handle_gives_back ______________________
+tests/test_loss_path_s1h.py:211: in test_crm_read_no_handle_gives_back
+    assert follow(rig, lid, "state, auto_attempts, crm_done, last_error") == ("pending", 0, 2, "no_descriptors")
+E   AssertionError: assert ('unknown', 1..._unconfirmed') == ('pending', 0..._descriptors')
+E     
+E     At index 0 diff: 'unknown' != 'pending'
+E     Use -v to get more diff
+------------------------------ Captured log call -------------------------------
+WARNING  lead_desk:desk.py:374 crm capability not re-read: FakesUnreachable
+________________________ test_reserve_covers_its_items _________________________
+tests/test_loss_path_s1h.py:229: in test_reserve_covers_its_items
+    assert constants.FDS_PER_HANDLER_THREAD >= constants.FDS_PER_THREAD_MINIMUM
+                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'lead_desk.constants' has no attribute 'FDS_PER_THREAD_MINIMUM'
+___________________ test_descriptor_arithmetic_is_validated ____________________
+tests/test_loss_path_s1h.py:235: in test_descriptor_arithmetic_is_validated
+    items = constants.FD_RESERVE_ITEMS
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'lead_desk.constants' has no attribute 'FD_RESERVE_ITEMS'
+_____________________ test_start_up_checks_the_arithmetic ______________________
+tests/test_loss_path_s1h.py:251: in test_start_up_checks_the_arithmetic
+    server.ensure_descriptor_budget(8, object())
+src/lead_desk/server.py:912: in ensure_descriptor_budget
+    soft, hard = res.getrlimit(res.RLIMIT_NOFILE)
+                 ^^^^^^^^^^^^^
+E   AttributeError: 'object' object has no attribute 'getrlimit'
+_____________________ test_connection_holds_counted_files ______________________
+tests/test_loss_path_s1h.py:269: in test_connection_holds_counted_files
+    assert constants.FDS_PER_HANDLER_THREAD == held + 1 + 1
+E   assert 3 == ((2 + 1) + 1)
+E    +  where 3 = constants.FDS_PER_HANDLER_THREAD
+___________________ test_main_exits_4_when_the_desk_refuses ____________________
+tests/test_loss_path_s1h.py:287: in test_main_exits_4_when_the_desk_refuses
+    server.main()
+src/lead_desk/server.py:985: in main
+    desk = Desk(config, crm, outbox, qualifier, hooks=hooks)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/lead_desk/desk.py:231: in __init__
+    raise ValueError(
+E   ValueError: the AI adapter's timeout_seconds is longer than the stuck grace minus its margin: a slow call would be overtaken by the reaper and the model asked twice
+_________________________ test_wait_before_drive_rules _________________________
+tests/test_loss_path_s1h.py:297: in test_wait_before_drive_rules
+    assert gate.wait_before_drive(0, None) == gate.PENDING_GRACE_SECONDS
+           ^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: module 'lead_desk.gate' has no attribute 'wait_before_drive'
+________________________ test_no_handle_give_back_waits ________________________
+tests/test_loss_path_s1h.py:309: in test_no_handle_give_back_waits
+    assert rig.desk.reap_once()["driven"] == 0  # not driven again at once: the shortage may last
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   assert 1 == 0
+__________________ test_shipped_fake_answers_crm_mode[keyed] ___________________
+src/lead_desk/adapters.py:83: in refresh
+    cap = info["crm_capability"]
+          ^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'crm_capability'
+
+The above exception was the direct cause of the following exception:
+tests/test_loss_path_s1h.py:324: in test_shipped_fake_answers_crm_mode
+    crm.refresh()
+src/lead_desk/adapters.py:86: in refresh
+    raise CrmError(type(e).__name__) from e
+E   lead_desk.adapters.CrmError: KeyError
+__________________ test_shipped_fake_answers_crm_mode[blind] ___________________
+src/lead_desk/adapters.py:83: in refresh
+    cap = info["crm_capability"]
+          ^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'crm_capability'
+
+The above exception was the direct cause of the following exception:
+tests/test_loss_path_s1h.py:324: in test_shipped_fake_answers_crm_mode
+    crm.refresh()
+src/lead_desk/adapters.py:86: in refresh
+    raise CrmError(type(e).__name__) from e
+E   lead_desk.adapters.CrmError: KeyError
+=========================== short test summary info ============================
+FAILED tests/test_loss_path_s1h.py::test_model_answer_is_stamped_again - Asse...
+FAILED tests/test_loss_path_s1h.py::test_claim_lost_in_model_stores_none - As...
+FAILED tests/test_loss_path_s1h.py::test_model_stamp_lock_gives_try_back - As...
+FAILED tests/test_loss_path_s1h.py::test_ambiguous_no_handle_gives_back - Ass...
+FAILED tests/test_loss_path_s1h.py::test_crm_read_no_handle_gives_back - Asse...
+FAILED tests/test_loss_path_s1h.py::test_reserve_covers_its_items - Attribute...
+FAILED tests/test_loss_path_s1h.py::test_descriptor_arithmetic_is_validated
+FAILED tests/test_loss_path_s1h.py::test_start_up_checks_the_arithmetic - Att...
+FAILED tests/test_loss_path_s1h.py::test_connection_holds_counted_files - ass...
+FAILED tests/test_loss_path_s1h.py::test_main_exits_4_when_the_desk_refuses
+FAILED tests/test_loss_path_s1h.py::test_wait_before_drive_rules - AttributeE...
+FAILED tests/test_loss_path_s1h.py::test_no_handle_give_back_waits - assert 1...
+FAILED tests/test_loss_path_s1h.py::test_shipped_fake_answers_crm_mode[keyed]
+FAILED tests/test_loss_path_s1h.py::test_shipped_fake_answers_crm_mode[blind]
+14 failed, 4 passed in 1.31s

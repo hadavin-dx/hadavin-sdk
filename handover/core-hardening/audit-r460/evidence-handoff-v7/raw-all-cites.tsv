@@ -1,0 +1,341 @@
+doc_line	file	start	end	file_lines	in_file	first_source_line(<=110ch)
+14	src/hadavin_sdk/llm/openai_compat.py	117	129	145	yes	started, used = time.monotonic(), [0, 0]
+23	src/hadavin_sdk/k1b/replay.py	80	92	278	yes	return sorted(
+23	src/hadavin_sdk/k1b/replay.py	175	175	278	yes	stop = o.halt
+28	src/hadavin_sdk/llm/common.py	59	62	266	yes	def estimate_tokens(text: str) -> int:
+28	tests/fixtures/config/config.yaml	6	8	26	yes	input_usd_per_mtok: "3.00"
+28	tests/test_s4_llm_guard.py	39	39	232	yes	assert reply.cost_usd == Decimal("0.00225")
+28	tests/test_s5_runtime.py	76	76	141	yes	assert rt.store.get_run(run.run_id).cost_usd == Decimal("0.00225")
+38	src/hadavin_sdk/approvals/gate.py	681	698	699	yes	def withhold_commands(text: str) -> str:
+39	src/hadavin_sdk/approvals/gate.py	647	678	699	yes	_WRITE_SHAPES = re.compile(
+40	src/hadavin_sdk/runtime/agent_loop.py	440	441	870	yes	self.limits.charge(agent_id, reply.cost_usd)
+40	src/hadavin_sdk/runtime/agent_loop.py	314	315	870	yes	self.limits.charge(run.agent_id, verdict.cost_usd)
+41	src/hadavin_sdk/store/memory.py	196	204	283	yes	def add_spend(self, agent_id: str, day: date, usd: Decimal) -> tuple[Decimal, Decimal]:
+41	src/hadavin_sdk/store/postgres.py	416	431	534	yes	def add_spend(self, agent_id: str, day: date, usd: Decimal) -> tuple[Decimal, Decimal]:
+41	src/hadavin_sdk/store/migrations/0001_core.sql	87	92	101	yes	CREATE TABLE spend (
+41	src/hadavin_sdk/store/migrations/0003_approvals_tick.sql	15	20	36	yes	CREATE TABLE spend_month (
+41	src/hadavin_sdk/store/protocol.py	107	111	161	yes	def add_spend(self, agent_id: str, day: date, usd: Decimal) -> tuple[Decimal, Decimal]: ...
+42	src/hadavin_sdk/models.py	19	20	315	yes	def now() -> datetime:
+42	src/hadavin_sdk/app.py	73	73	472	yes	clock: Callable[[], datetime] = now,
+42	src/hadavin_sdk/app.py	176	184	472	yes	approvals = Approvals(
+42	src/hadavin_sdk/limits.py	13	30	52	yes	class Limits:
+43	src/hadavin_sdk/llm/retry.py	83	108	109	yes	def with_retry[T](
+43	src/hadavin_sdk/llm/retry.py	95	96	109	yes	except ProviderError:
+43	src/hadavin_sdk/llm/retry.py	97	99	109	yes	except Exception as exc:  # every failure is classified below, never swallowed
+43	src/hadavin_sdk/llm/retry.py	100	103	109	yes	if attempt == max_attempts:
+43	src/hadavin_sdk/llm/anthropic.py	122	122	145	yes	got = self._retry(lambda: self._parse(self._current().messages.create(**request)))
+43	src/hadavin_sdk/llm/bedrock.py	156	156	179	yes	got = self._retry(lambda: self._parse(self._client.converse(**request), in_text))
+43	src/hadavin_sdk/llm/retry.py	55	63	109	yes	def transient(exc: BaseException, retryable: Retryable | None = None) -> bool:
+43	src/hadavin_sdk/llm/retry.py	97	99	109	yes	except Exception as exc:  # every failure is classified below, never swallowed
+43	src/hadavin_sdk/llm/common.py	193	196	266	yes	class NetworkLLM:
+43	src/hadavin_sdk/llm/anthropic.py	122	122	145	yes	got = self._retry(lambda: self._parse(self._current().messages.create(**request)))
+43	src/hadavin_sdk/llm/bedrock.py	156	156	179	yes	got = self._retry(lambda: self._parse(self._client.converse(**request), in_text))
+43	src/hadavin_sdk/llm/gemini.py	86	86	124	yes	got = self._retry(
+43	src/hadavin_sdk/llm/openai_compat.py	119	119	145	yes	got = self._retry(
+43	src/hadavin_sdk/llm/common.py	233	241	266	yes	def _retry(self, call: Callable[[], Answer]) -> Answer:
+43	src/hadavin_sdk/llm/openai_compat.py	117	129	145	yes	started, used = time.monotonic(), [0, 0]
+43	src/hadavin_sdk/llm/retry.py	31	36	109	yes	def status(exc: BaseException) -> int | None:
+43	src/hadavin_sdk/llm/bedrock.py	93	101	179	yes	def detail(exc: BaseException) -> str:
+43	src/hadavin_sdk/llm/bedrock.py	104	110	179	yes	def retryable(exc: BaseException) -> bool | None:
+43	src/hadavin_sdk/llm/bedrock.py	108	108	179	yes	code = exc.response.get("ResponseMetadata", {}).get("HTTPStatusCode")
+44	src/hadavin_sdk/extract.py	47	47	65	yes	reply = llm.chat(
+44	src/hadavin_sdk/evals.py	73	73	142	yes	reply = llm.chat(
+44	src/hadavin_sdk/guard/judge.py	72	72	110	yes	reply = self.llm.chat(
+44	src/hadavin_sdk/runtime/agent_loop.py	425	425	870	yes	reply = self.llm.chat(
+44	src/hadavin_sdk/k1b/loop.py	94	94	217	yes	box["reply"] = llm.chat(*args, **kwargs)  # type: ignore[arg-type]
+44	src/hadavin_sdk/k1b/loop.py	104	104	217	yes	t = threading.Thread(target=work, daemon=True, name="k1b-llm-call")
+44	demos/ask-your-data/askdata/pipeline.py	155	155	412	yes	reply = self.llm.chat(
+44	src/hadavin_sdk/guard/bedrock_guardrail.py	101	101	115	yes	resp = self._client.apply_guardrail(
+45	src/hadavin_sdk/runtime/agent_loop.py	184	194	870	yes	def __init__(
+45	tests/k5_support.py	160	211	233	yes	def build_runtime(
+45	tests/k5_support.py	200	209	233	yes	rt = Runtime(
+45	src/hadavin_sdk/app.py	162	162	472	yes	llm = llm or make("llm", b.llm, secrets, routes=cfg.routes)
+45	src/hadavin_sdk/app.py	165	165	472	yes	members = [make("detector", d, secrets, llm=llm) for d in b.detector]
+45	src/hadavin_sdk/app.py	171	171	472	yes	limits = Limits(store, audit, reg)
+45	src/hadavin_sdk/app.py	90	98	472	yes	if sources and live:
+46	src/hadavin_sdk/cli.py	146	153	415	yes	if args.cmd == "gate":
+46	src/hadavin_sdk/cli.py	150	150	415	yes	make("llm", b.llm, make("secrets", b.secrets), routes=cfg.routes),
+46	src/hadavin_sdk/cli.py	221	222	415	yes	llm = make("llm", cfg.backends.llm, secrets, routes=cfg.routes)
+46	src/hadavin_sdk/cli.py	183	190	415	yes	try:
+46	src/hadavin_sdk/cli.py	173	182	415	yes	if b.store.kind == "memory":
+46	src/hadavin_sdk/evals.py	101	110	142	yes	# An llm_judge is qualified by its own golden set on the same model client, at its own rate (design 4.3):
+47	src/hadavin_sdk/llm/fake.py	39	40	55	yes	doc = documents[0] if documents else json.dumps(messages, sort_keys=True).encode("utf-8")
+47	tests/k5_support.py	124	124	233	yes	class ScriptLLM:
+47	tests/k5_support.py	156	156	233	yes	def everything_sent(self) -> str:
+47	src/hadavin_sdk/llm/fake.py	21	21	55	yes	class FakeLLM:
+47	src/hadavin_sdk/llm/fake.py	29	29	55	yes	def chat(
+48	src/hadavin_sdk/audit/chain.py	134	149	548	yes	@dataclass
+48	src/hadavin_sdk/audit/chain.py	363	383	548	yes	def verify_rows(
+48	src/hadavin_sdk/audit/chain.py	171	171	548	yes	self.checkpoint_every = checkpoint_every
+48	src/hadavin_sdk/audit/anchor_s3.py	70	70	98	yes	def all(self) -> dict[int, tuple[str, str]]:
+48	src/hadavin_sdk/cli.py	349	363	415	yes	def audit_verify(audit) -> int:
+49	src/hadavin_sdk/audit/signer.py	104	108	213	yes	else:
+49	src/hadavin_sdk/actions/secrets_file.py	34	64	73	yes	# ConfigError on `..`, absolute names or links out of the folder. The result is the real path, so
+50	src/hadavin_sdk/runtime/agent_loop.py	83	83	870	yes	GUARD_STOP_REASONS = frozenset(
+50	src/hadavin_sdk/runtime/agent_loop.py	79	82	870	yes	# What K6 counts as a caught mistake (it counts every non-null caught_by): only a control that STOPPED a
+50	src/hadavin_sdk/runtime/agent_loop.py	569	575	870	yes	def _abstain(self, run: Run, new: RunState, reason: str | None, cited: list[str]) -> Run:
+50	src/hadavin_sdk/runtime/agent_loop.py	244	244	870	yes	return self._to(run, S.NEEDS_PERSON, f"limits.{blocked[0]}")
+50	src/hadavin_sdk/runtime/agent_loop.py	672	672	870	yes	return self._to(run, S.NEEDS_PERSON, "limits_unavailable")
+50	src/hadavin_sdk/runtime/agent_loop.py	703	703	870	yes	return self._to(run, S.DENIED, decision.rule_id)
+51	src/hadavin_sdk/config.py	317	317	455	yes	environment: Literal["dev", "pilot", "prod"]
+51	src/hadavin_sdk/deferred.py	33	33	102	yes	LIVE = ("pilot", "prod")
+51	src/hadavin_sdk/backends/table.py	593	602	605	yes	DEV_ONLY: frozenset[tuple[str, str]] = frozenset(
+51	src/hadavin_sdk/config.py	366	370	455	yes	if self.environment != "dev":
+51	src/hadavin_sdk/config.py	451	454	455	yes	except ConfigError:
+51	src/hadavin_sdk/config.py	400	415	455	yes	class _UniqueKeyLoader(yaml.SafeLoader):
+52	src/hadavin_sdk/config.py	41	47	455	yes	if isinstance(v, float):
+52	src/hadavin_sdk/config.py	57	58	455	yes	input_usd_per_mtok: Money
+52	src/hadavin_sdk/registry.py	33	37	382	yes	class Budget(BaseModel):
+52	src/hadavin_sdk/registry.py	53	53	382	yes	max_run_usd: Money | None = (
+52	src/hadavin_sdk/models.py	294	294	315	yes	cost_usd: Decimal = Decimal(0)
+52	src/hadavin_sdk/models.py	305	305	315	yes	cost_usd: Decimal = Decimal(
+52	src/hadavin_sdk/models.py	98	98	315	yes	cost_usd: Decimal = Decimal(0)
+53	src/hadavin_sdk/models.py	218	222	315	yes	class DeadLetter(Shape):
+53	src/hadavin_sdk/extract.py	18	25	65	yes	@dataclass
+53	src/hadavin_sdk/guard/runmap.py	218	227	579	yes	def storable(mapping: dict[str, str], kinds: frozenset[str] | None = None) -> dict[str, str]:
+53	src/hadavin_sdk/guard/runmap.py	560	568	579	yes	def restore_value(value: Any, mapping: dict[str, str], kinds: frozenset[str] | None = None) -> Any:
+53	src/hadavin_sdk/defaults.py	108	122	132	yes	STORED_KINDS = (
+53	src/hadavin_sdk/guard/runmap.py	275	304	579	yes	def escape_placeholders(text: str) -> str:
+53	src/hadavin_sdk/evals.py	63	63	142	yes	doc = runmap.redact_untrusted(doc.decode("utf-8", "replace"), {}).encode("utf-8")
+54	src/hadavin_sdk/guard/injection.py	85	101	102	yes	def injection_check(detector: Detector, text: str, source: str) -> Verdict:
+54	src/hadavin_sdk/guard/judge.py	100	109	110	yes	def qualify(judge: JudgeDetector, golden: Path) -> tuple[int, int]:
+54	src/hadavin_sdk/llm/retry.py	97	99	109	yes	except Exception as exc:  # every failure is classified below, never swallowed
+55	src/hadavin_sdk/backends/factory.py	17	54	70	yes	@dataclass(frozen=True)
+55	src/hadavin_sdk/backends/table.py	570	579	605	yes	ALLOWED: dict[str, frozenset[str]] = {
+55	src/hadavin_sdk/llm/anthropic.py	80	88	145	yes	def make(settings: Any, deps: Any) -> AnthropicLLM:
+55	src/hadavin_sdk/llm/common.py	200	206	266	yes	def __init__(
+57	src/hadavin_sdk/store/protocol.py	151	160	161	yes	def missing_methods(store: object) -> list[str]:
+57	src/hadavin_sdk/app.py	147	150	472	yes	if lacking := missing_methods(store):
+57	tests/test_k5_round6_contracts.py	14	16	51	yes	class OldStore:
+57	tests/contracts/kinds/store_postgres.py	59	71	85	yes	class _SplitStore:
+58	src/hadavin_sdk/store/migrate.py	46	67	361	yes	GRANTS: dict[str, Grant] = {
+58	src/hadavin_sdk/store/migrate.py	150	166	361	yes	def check_grants(paths: list[Path]) -> list[str]:
+58	src/hadavin_sdk/store/migrate.py	169	181	361	yes	def _apply_grants(db, role_name: str, privileges, columns=None) -> None:
+59	src/hadavin_sdk/k1b/loop.py	40	52	217	yes	class Budget:
+59	src/hadavin_sdk/k1b/loop.py	179	179	217	yes	budget.charge(reply.cost_usd)
+59	src/hadavin_sdk/k1b/loop.py	206	206	217	yes	budget.charge(verdict.cost_usd)
+59	src/hadavin_sdk/k1b/loop.py	115	122	217	yes	def worst_case_usd(route: Route, system: str, messages: list[dict[str, str]]) -> Decimal:
+59	src/hadavin_sdk/k1b/loop.py	170	170	217	yes	budget.charge(worst_case_usd(route_prices, system, messages))
+59	src/hadavin_sdk/cli.py	115	117	415	yes	rep.add_argument(
+60	src/hadavin_sdk/llm/openai_compat.py	122	122	145	yes	used = [used[0] + (got.tokens[0] or 0), used[1] + (got.tokens[1] or 0)]
+60	src/hadavin_sdk/llm/common.py	59	62	266	yes	def estimate_tokens(text: str) -> int:
+60	src/hadavin_sdk/llm/common.py	164	165	266	yes	tokens_in = tokens[0] or estimate_tokens(sent)
+60	tests/k5_support.py	156	156	233	yes	def everything_sent(self) -> str:
+60	tests/k5_support.py	124	124	233	yes	class ScriptLLM:
+60	src/hadavin_sdk/store/postgres.py	146	146	534	yes	conn = psycopg.connect(dsn, autocommit=True, connect_timeout=10, **extra)
+60	src/hadavin_sdk/store/postgres.py	419	419	534	yes	with self._lock, self._db.transaction():
+88	tests/test_s5_runtime.py	107	111	141	yes	def test_budget_crossed_by_this_call_is_denied_at_the_gate(cfg_dir):
+88	tests/test_k5_tools.py	723	731	1302	yes	def test_k5_run_budget_stops_run(tmp_path):
+88	src/hadavin_sdk/runtime/agent_loop.py	245	249	870	yes	cap = self.registry.agents[run.agent_id].max_run_usd
+90	src/hadavin_sdk/k1b/replay.py	85	91	278	yes	def _refuse_zero_price(registry: Registry, agent_id: str, llm_kind: str) -> None:
+97	src/hadavin_sdk/audit/anchor_s3.py	1	12	98	yes	"""Checkpoint anchors in an S3 bucket under Object Lock (`pip install hadavin-sdk[aws]`).
+97	src/hadavin_sdk/audit/anchor_s3.py	5	7	98	yes	never overwritten even before Object Lock applies (a 412 with the same bytes is an earlier put whose answer wa
+118	src/hadavin_sdk/llm/retry.py	92	107	109	yes	for attempt in range(1, max_attempts + 1):
+118	src/hadavin_sdk/backends/table.py	40	40	605	yes	max_attempts: int = Field(default=3, ge=1, le=10)
+118	src/hadavin_sdk/llm/openai_compat.py	117	129	145	yes	started, used = time.monotonic(), [0, 0]
+118	src/hadavin_sdk/llm/openai_compat.py	1	1	145	yes	"""Any OpenAI-shaped chat API (OpenAI, Groq, OpenRouter, a local Ollama) over stdlib HTTP, no SDK.
+118	src/hadavin_sdk/llm/openai_compat.py	2	2	145	yes	
+118	src/hadavin_sdk/models.py	23	23	315	yes	def new_id(prefix: str) -> str:
+122	src/hadavin_sdk/store/migrate.py	71	71	361	yes	_FILE = re.compile(r"(\d{4})_[a-z0-9_]+\.sql")
+225	src/hadavin_sdk/store/migrate.py	46	67	361	yes	GRANTS: dict[str, Grant] = {
+225	src/hadavin_sdk/store/migrate.py	32	34	361	yes	purge: str = (
+225	src/hadavin_sdk/store/migrate.py	287	303	361	yes	portal_role: str | None = None,
+225	src/hadavin_sdk/cli.py	99	103	415	yes	mig.add_argument(
+225	src/hadavin_sdk/app.py	131	139	472	yes	for name in cfg.scope_inventory:
+225	src/hadavin_sdk/store/migrate.py	304	360	361	yes	files = _migration_files()
+225	src/hadavin_sdk/store/migrate.py	71	86	361	yes	_FILE = re.compile(r"(\d{4})_[a-z0-9_]+\.sql")
+229	src/hadavin_sdk/store/postgres.py	146	146	534	yes	conn = psycopg.connect(dsn, autocommit=True, connect_timeout=10, **extra)
+229	src/hadavin_sdk/store/postgres.py	419	419	534	yes	with self._lock, self._db.transaction():
+229	src/hadavin_sdk/store/postgres.py	419	419	534	yes	with self._lock, self._db.transaction():
+231	src/hadavin_sdk/store/protocol.py	45	45	161	yes	class NotFound(KeyError):
+247	src/hadavin_sdk/store/migrate.py	47	47	361	yes	"runs": Grant("table", _RW, portal=True, purge_cols=("run_id", "state", "updated_at")),
+272	src/hadavin_sdk/llm/openai_compat.py	122	122	145	yes	used = [used[0] + (got.tokens[0] or 0), used[1] + (got.tokens[1] or 0)]
+274	src/hadavin_sdk/llm/common.py	244	244	266	yes	retryable: Callable[[BaseException], bool | None] | None = None
+274	src/hadavin_sdk/llm/bedrock.py	93	101	179	yes	def detail(exc: BaseException) -> str:
+274	src/hadavin_sdk/llm/bedrock.py	104	110	179	yes	def retryable(exc: BaseException) -> bool | None:
+276	src/hadavin_sdk/llm/common.py	164	165	266	yes	tokens_in = tokens[0] or estimate_tokens(sent)
+276	tests/test_k5_tools.py	723	731	1302	yes	def test_k5_run_budget_stops_run(tmp_path):
+276	src/hadavin_sdk/llm/anthropic.py	107	120	145	yes	request: dict[str, Any] = {
+276	src/hadavin_sdk/llm/bedrock.py	132	154	179	yes	request: dict[str, Any] = {
+276	src/hadavin_sdk/llm/gemini.py	54	83	124	yes	def _chat(self, route, system, turns, specs, forced, output_schema) -> Reply:
+276	src/hadavin_sdk/llm/gemini.py	97	100	124	yes	usage = resp.get("usageMetadata") or {}
+276	src/hadavin_sdk/llm/openai_compat.py	94	116	145	yes	def _chat(self, route, system, turns, specs, forced, output_schema) -> Reply:
+280	src/hadavin_sdk/k1b/loop.py	115	115	217	yes	def worst_case_usd(route: Route, system: str, messages: list[dict[str, str]]) -> Decimal:
+280	src/hadavin_sdk/llm/common.py	86	100	266	yes	def turns(
+280	src/hadavin_sdk/llm/common.py	65	83	266	yes	def tools_for(
+283	src/hadavin_sdk/backends/table.py	34	40	605	yes	
+284	src/hadavin_sdk/limits.py	48	51	52	yes	def reset(self, by: str) -> None:
+355	src/hadavin_sdk/llm/openai_compat.py	117	129	145	yes	started, used = time.monotonic(), [0, 0]
+355	src/hadavin_sdk/llm/retry.py	95	96	109	yes	except ProviderError:
+360	src/hadavin_sdk/backends/factory.py	17	26	70	yes	@dataclass(frozen=True)
+360	src/hadavin_sdk/backends/table.py	570	579	605	yes	ALLOWED: dict[str, frozenset[str]] = {
+360	src/hadavin_sdk/backends/builtin.py	39	40	50	yes	def fake_llm(settings, deps) -> FakeLLM:
+362	src/hadavin_sdk/llm/fake.py	21	21	55	yes	class FakeLLM:
+363	src/hadavin_sdk/app.py	90	98	472	yes	if sources and live:
+366	tests/test_k5_tools.py	723	731	1302	yes	def test_k5_run_budget_stops_run(tmp_path):
+366	src/hadavin_sdk/runtime/agent_loop.py	245	249	870	yes	cap = self.registry.agents[run.agent_id].max_run_usd
+371	src/hadavin_sdk/app.py	171	171	472	yes	limits = Limits(store, audit, reg)
+371	src/hadavin_sdk/app.py	162	162	472	yes	llm = llm or make("llm", b.llm, secrets, routes=cfg.routes)
+371	src/hadavin_sdk/app.py	73	73	472	yes	clock: Callable[[], datetime] = now,
+372	src/hadavin_sdk/app.py	162	162	472	yes	llm = llm or make("llm", b.llm, secrets, routes=cfg.routes)
+373	src/hadavin_sdk/app.py	165	165	472	yes	members = [make("detector", d, secrets, llm=llm) for d in b.detector]
+374	src/hadavin_sdk/app.py	90	98	472	yes	if sources and live:
+375	src/hadavin_sdk/cli.py	221	222	415	yes	llm = make("llm", cfg.backends.llm, secrets, routes=cfg.routes)
+376	src/hadavin_sdk/cli.py	146	153	415	yes	if args.cmd == "gate":
+376	src/hadavin_sdk/cli.py	150	150	415	yes	make("llm", b.llm, make("secrets", b.secrets), routes=cfg.routes),
+378	src/hadavin_sdk/guard/injection.py	85	101	102	yes	def injection_check(detector: Detector, text: str, source: str) -> Verdict:
+379	src/hadavin_sdk/llm/retry.py	95	96	109	yes	except ProviderError:
+382	src/hadavin_sdk/k1b/loop.py	104	104	217	yes	t = threading.Thread(target=work, daemon=True, name="k1b-llm-call")
+382	src/hadavin_sdk/k1b/loop.py	92	104	217	yes	def work() -> None:
+387	src/hadavin_sdk/runtime/agent_loop.py	387	387	870	yes	verdict = self._screen(run, safe_text, "document")
+387	src/hadavin_sdk/runtime/agent_loop.py	425	425	870	yes	reply = self.llm.chat(
+387	src/hadavin_sdk/runtime/agent_loop.py	520	520	870	yes	verdict = self._screen(run, out.text, f"tool:{call.name}")
+388	src/hadavin_sdk/guard/judge.py	72	72	110	yes	reply = self.llm.chat(
+388	src/hadavin_sdk/guard/injection.py	85	101	102	yes	def injection_check(detector: Detector, text: str, source: str) -> Verdict:
+389	src/hadavin_sdk/k1b/loop.py	94	94	217	yes	box["reply"] = llm.chat(*args, **kwargs)  # type: ignore[arg-type]
+389	src/hadavin_sdk/k1b/replay.py	175	175	278	yes	stop = o.halt
+390	src/hadavin_sdk/extract.py	47	47	65	yes	reply = llm.chat(
+391	src/hadavin_sdk/evals.py	73	73	142	yes	reply = llm.chat(
+392	tests/test_p6_detectors.py	351	351	367	yes	from hadavin_sdk.guard import bedrock_guardrail
+397	src/hadavin_sdk/runtime/agent_loop.py	425	425	870	yes	reply = self.llm.chat(
+397	src/hadavin_sdk/guard/judge.py	72	72	110	yes	reply = self.llm.chat(
+398	src/hadavin_sdk/evals.py	73	73	142	yes	reply = llm.chat(
+398	src/hadavin_sdk/evals.py	109	109	142	yes	ok, total = judge.qualify(judge.JudgeDetector(llm, d.route, d.threshold), path)
+399	src/hadavin_sdk/extract.py	47	47	65	yes	reply = llm.chat(
+400	src/hadavin_sdk/k1b/loop.py	94	94	217	yes	box["reply"] = llm.chat(*args, **kwargs)  # type: ignore[arg-type]
+400	src/hadavin_sdk/k1b/loop.py	179	179	217	yes	budget.charge(reply.cost_usd)
+400	src/hadavin_sdk/k1b/loop.py	206	206	217	yes	budget.charge(verdict.cost_usd)
+400	src/hadavin_sdk/k1b/loop.py	170	170	217	yes	budget.charge(worst_case_usd(route_prices, system, messages))
+401	src/hadavin_sdk/guard/bedrock_guardrail.py	101	101	115	yes	resp = self._client.apply_guardrail(
+402	demos/ask-your-data/askdata/pipeline.py	155	155	412	yes	reply = self.llm.chat(
+406	src/hadavin_sdk/runtime/agent_loop.py	440	441	870	yes	self.limits.charge(agent_id, reply.cost_usd)
+406	src/hadavin_sdk/runtime/agent_loop.py	313	315	870	yes	if verdict.cost_usd:
+408	src/hadavin_sdk/guard/producers.py	5	5	71	yes	that calls a model (`.chat(` or `.apply_guardrail(`) is not listed, or when a message is cut with `[:N]` befor
+410	tests/contracts/kinds/llm_wire.py	66	66	220	yes	return AnthropicLLM(client, routes, 3, sleep=lambda s: None)
+410	tests/test_p5_llm.py	248	248	302	yes	llm = GeminiLLM(lambda: keys[-1], ROUTES, 5.0, 1)
+410	tests/warden_port/test_providers.py	65	65	199	yes	llm = make("llm", settings, routes=ROUTES)
+410	tests/warden_port/test_bedrock_provider_r16.py	74	74	126	yes	make("llm", BedrockSettings(kind="bedrock", region="contract-region-1"), routes=routes)
+410	tests/test_p5p6_followups.py	300	300	517	yes	make("llm", settings, provider, routes=_route(moving))
+410	tests/test_p5_llm.py	230	230	302	yes	llm = make("llm", settings, routes=ROUTES)
+410	tests/contracts/kinds/builtin.py	53	53	66	yes	llm = make("llm", FakeLLMSettings(kind="fake", recorded_dir=tmp_path), routes=ROUTES)
+410	tests/test_k1b_replay.py	391	391	598	yes	env.run(ScriptedLLM([]), reg=reg, llm_kind="anthropic")
+410	tests/test_p1a_fixes.py	117	117	138	yes	update={"llm": reg.config.backends.llm.model_copy(update={"kind": "bedrock"})}
+410	tests/test_p6_detectors.py	351	351	367	yes	from hadavin_sdk.guard import bedrock_guardrail
+410	tests/test_s5_runtime.py	107	111	141	yes	def test_budget_crossed_by_this_call_is_denied_at_the_gate(cfg_dir):
+410	tests/k5_support.py	160	211	233	yes	def build_runtime(
+410	tests/k5_support.py	200	209	233	yes	rt = Runtime(
+427	src/hadavin_sdk/registry.py	20	20	382	yes	from hadavin_sdk.config import Config, ConfigError, Money, confined, load_yaml
+437	src/hadavin_sdk/config.py	41	47	455	yes	if isinstance(v, float):
+438	src/hadavin_sdk/cli.py	146	153	415	yes	if args.cmd == "gate":
+438	src/hadavin_sdk/cli.py	150	150	415	yes	make("llm", b.llm, make("secrets", b.secrets), routes=cfg.routes),
+438	src/hadavin_sdk/cli.py	183	190	415	yes	try:
+438	src/hadavin_sdk/evals.py	109	109	142	yes	ok, total = judge.qualify(judge.JudgeDetector(llm, d.route, d.threshold), path)
+439	src/hadavin_sdk/cli.py	221	222	415	yes	llm = make("llm", cfg.backends.llm, secrets, routes=cfg.routes)
+440	src/hadavin_sdk/cli.py	93	95	415	yes	lim = sub.add_parser("limits", help="kill switch")
+440	src/hadavin_sdk/cli.py	99	103	415	yes	mig.add_argument(
+440	src/hadavin_sdk/cli.py	173	182	415	yes	if b.store.kind == "memory":
+445	src/hadavin_sdk/runtime/agent_loop.py	325	541	870	yes	def handle(
+445	src/hadavin_sdk/runtime/agent_loop.py	387	387	870	yes	verdict = self._screen(run, safe_text, "document")
+445	src/hadavin_sdk/runtime/agent_loop.py	425	425	870	yes	reply = self.llm.chat(
+445	src/hadavin_sdk/runtime/agent_loop.py	520	520	870	yes	verdict = self._screen(run, out.text, f"tool:{call.name}")
+445	src/hadavin_sdk/runtime/agent_loop.py	432	434	870	yes	except (
+447	src/hadavin_sdk/runtime/agent_loop.py	318	322	870	yes	def _to(self, run: Run, new: RunState, reason: str | None = None) -> Run:
+458	src/hadavin_sdk/runtime/agent_loop.py	239	250	870	yes	def _limits_stop(self, run: Run, cited: list[str] | None = None) -> Run | None:
+458	src/hadavin_sdk/runtime/agent_loop.py	244	244	870	yes	return self._to(run, S.NEEDS_PERSON, f"limits.{blocked[0]}")
+460	src/hadavin_sdk/runtime/agent_loop.py	569	597	870	yes	def _abstain(self, run: Run, new: RunState, reason: str | None, cited: list[str]) -> Run:
+460	src/hadavin_sdk/runtime/agent_loop.py	560	567	870	yes	def _deliver(self, card: Card | None) -> Delivery:
+460	src/hadavin_sdk/runtime/agent_loop.py	87	87	870	yes	_REASON_TEXT = {"ungrounded": "ungrounded (inputs not found in cited evidence)"}
+460	src/hadavin_sdk/runtime/agent_loop.py	669	672	870	yes	try:  # limits unreadable: stop means stop, so no card is posted
+460	src/hadavin_sdk/runtime/agent_loop.py	702	703	870	yes	if decision.rule_id.startswith("limits."):  # stop means stop: no card, at any level
+460	src/hadavin_sdk/runtime/agent_loop.py	83	83	870	yes	GUARD_STOP_REASONS = frozenset(
+464	src/hadavin_sdk/app.py	161	161	472	yes	audit = make("audit", b.audit, secrets, store=store, signer=signer, anchor=anchor)
+464	src/hadavin_sdk/config.py	349	375	455	yes	@model_validator(mode="after")
+464	src/hadavin_sdk/config.py	451	454	455	yes	except ConfigError:
+466	src/hadavin_sdk/app.py	171	171	472	yes	limits = Limits(store, audit, reg)
+466	src/hadavin_sdk/cli.py	209	209	415	yes	return kill_switch(Limits(store, audit, reg), args.action, args.by)
+466	tests/test_s5_runtime.py	28	28	141	yes	limits = Limits(store, audit, reg)
+466	tests/k5_support.py	206	206	233	yes	Limits(store, audit, reg),
+466	tests/test_k3_pilot.py	104	104	673	yes	Limits(store, audit, reg),
+466	tests/test_k5_postgres.py	58	58	69	yes	Limits(pg_store, audit, reg),
+466	tests/test_k5_round5.py	241	241	917	yes	reg, store, audit, ScriptLLM([]), RegexDetector(0.5), Limits(store, audit, reg),
+466	tests/test_k5_tools.py	1133	1133	1302	yes	reg, store, audit, ScriptLLM([]), RegexDetector(0.5), Limits(store, audit, reg),
+466	tests/test_k5_tools.py	1269	1269	1302	yes	Limits(store, audit, reg),
+466	src/hadavin_sdk/limits.py	18	18	52	yes	return self.store.add_spend(agent_id, now().date(), usd)
+466	src/hadavin_sdk/limits.py	24	24	52	yes	day, month = self.store.spend_totals(agent_id, now().date())  # a read, no write
+466	src/hadavin_sdk/app.py	73	73	472	yes	clock: Callable[[], datetime] = now,
+468	tests/test_k3_pilot_env.py	61	61	210	yes	"llm": {"kind": "openai_compat", "base_url": "https://llm.example/v1"},
+470	src/hadavin_sdk/registry.py	338	338	382	yes	def _cross_check(config, agents, chains, contracts) -> list[str]:
+470	src/hadavin_sdk/k1b/replay.py	85	91	278	yes	def _refuse_zero_price(registry: Registry, agent_id: str, llm_kind: str) -> None:
+470	src/hadavin_sdk/guard/judge.py	3	4	110	yes	The only cloud-agnostic model detector: it runs on any configured llm route and kind (Claude, Bedrock, Gemini,
+476	src/hadavin_sdk/audit/chain.py	161	161	548	yes	checkpoint_every: int = 100,
+476	src/hadavin_sdk/backends/table.py	193	193	605	yes	checkpoint_every: int = Field(default=100, ge=1)
+476	src/hadavin_sdk/backends/table.py	192	193	605	yes	class ChainSettings(KindSettings):
+478	src/hadavin_sdk/audit/anchor_gcs.py	69	85	86	yes	def probed(bucket: Any, settings) -> GcsAnchor:
+478	src/hadavin_sdk/audit/anchor_azure.py	83	96	97	yes	def probed(container: Any, settings) -> AzureBlobAnchor:
+480	src/hadavin_sdk/cli.py	349	363	415	yes	def audit_verify(audit) -> int:
+480	src/hadavin_sdk/audit/chain.py	171	171	548	yes	self.checkpoint_every = checkpoint_every
+480	src/hadavin_sdk/audit/chain.py	203	203	548	yes	if self.signer is not None and seq % self.checkpoint_every == 0:
+484	src/hadavin_sdk/evals.py	63	63	142	yes	doc = runmap.redact_untrusted(doc.decode("utf-8", "replace"), {}).encode("utf-8")
+484	src/hadavin_sdk/models.py	221	221	315	yes	errors: list[str]
+484	src/hadavin_sdk/evals.py	63	63	142	yes	doc = runmap.redact_untrusted(doc.decode("utf-8", "replace"), {}).encode("utf-8")
+484	src/hadavin_sdk/extract.py	58	58	65	yes	errors.append(f"{exc.__class__.__name__}: {safe_head(str(exc), 300)}")
+492	src/hadavin_sdk/llm/fake.py	39	40	55	yes	doc = documents[0] if documents else json.dumps(messages, sort_keys=True).encode("utf-8")
+496	src/hadavin_sdk/actions/secrets_file.py	49	64	73	yes	with os.fdopen(fd, "rb") as f:
+498	src/hadavin_sdk/audit/signer.py	104	108	213	yes	else:
+498	src/hadavin_sdk/actions/secrets_file.py	54	54	73	yes	if os.name != "nt" and mode & (stat.S_IROTH | stat.S_IWGRP | stat.S_IWOTH):
+499	src/hadavin_sdk/actions/secrets_file.py	54	54	73	yes	if os.name != "nt" and mode & (stat.S_IROTH | stat.S_IWGRP | stat.S_IWOTH):
+499	src/hadavin_sdk/config.py	395	396	455	yes	if b.signer.kind == "ed25519_local" and b.signer.private_key_path is not None:
+499	src/hadavin_sdk/audit/signer.py	182	182	213	yes	_create(private_real, pem, 0o600)
+500	tests/test_lockin_guard.py	68	75	796	yes	LIBRARY_IMPORTS: dict[str, set[str]] = {  # open-source libraries kept in their layer
+506	tests/test_g4_parity.py	98	98	301	yes	"update its set of rules",
+529	src/hadavin_sdk/approvals/gate.py	4	4	699	yes	(`sanitise_text` and its helpers) and G4 (`withhold_commands`, rewritten platform-neutral and fail closed).
+529	src/hadavin_sdk/approvals/gate.py	366	377	699	yes	
+529	src/hadavin_sdk/approvals/channel.py	19	21	127	yes	"""WARDEN's G3 cleaning (`gate.sanitise_text`): no link, image, HTML, mention, control character or forged
+530	src/hadavin_sdk/approvals/gate.py	546	546	699	yes	_TOKEN = re.compile(r"[^\S\n]+([^\s]+)")
+530	src/hadavin_sdk/approvals/gate.py	695	695	699	yes	end = text.find("\n", m.end())
+531	src/hadavin_sdk/approvals/gate.py	608	615	699	yes	def _story(text: str, prog: str, s: int, e: int, toks: list[str]) -> bool:
+533	src/hadavin_sdk/approvals/gate.py	674	674	699	yes	r"|\brm\s+(?:-[a-zA-Z]*[rRf][a-zA-Z]*|--recursive|--force)(?=\s+\S)"
+533	src/hadavin_sdk/approvals/gate.py	540	540	699	yes	_NAMES = ["aws", *_VERB_FIRST, *_WORD_RUN]
+534	src/hadavin_sdk/approvals/gate.py	404	404	699	yes	_AWS_READ_PREFIXES = ("describe-", "get-", "list-", "head-", "batch-get-", "lookup-", "search-")
+534	src/hadavin_sdk/approvals/gate.py	597	597	699	yes	words[1].startswith(_AWS_READ_PREFIXES) or (words[0] == "s3" and words[1] == "ls")
+539	src/hadavin_sdk/approvals/gate.py	573	589	699	yes	def _subcommands(toks: list[str]) -> list[str]:
+544	src/hadavin_sdk/guard/redact.py	472	472	1255	yes	"PHONE",
+546	tests/warden_port/privacy_corpus.py	42	42	81	yes	"card 4111 1111 1111 1111",
+546	tests/warden_port/test_redaction.py	309	309	457	yes	for pan in ("4111 1111 1111 1111", "4111-1111-1111-1111"):
+548	src/hadavin_sdk/guard/redact.py	513	513	1255	yes	# A HAR entry (`{"name": "Cookie", "value": "..."}`), curl's `--cookie`/`-b`, and a cookie jar's repr.
+548	src/hadavin_sdk/k1b/redaction.py	103	103	196	yes	def _pair(key: str, value: str, f: Callable[[str], str]) -> str:
+554	src/hadavin_sdk/config.py	451	454	455	yes	except ConfigError:
+554	src/hadavin_sdk/config.py	317	317	455	yes	environment: Literal["dev", "pilot", "prod"]
+554	src/hadavin_sdk/config.py	366	367	455	yes	if self.environment != "dev":
+554	src/hadavin_sdk/config.py	19	19	455	yes	from hadavin_sdk.backends.table import DEFAULTS, DEV_ONLY, NOT_PROD, TABLE, KindSettings
+554	src/hadavin_sdk/backends/table.py	593	593	605	yes	DEV_ONLY: frozenset[tuple[str, str]] = frozenset(
+554	tests/test_lockin_guard.py	18	18	796	yes	from hadavin_sdk.backends.table import DEV_ONLY, NOT_PROD, TABLE
+554	tests/fixtures/config/config.yaml	2	2	26	yes	environment: dev
+554	tests/test_p4_secrets.py	106	106	132	yes	def _config(tmp_path, secrets, environment="dev"):
+554	tests/warden_port/test_audit_chain.py	568	568	692	yes	found = _anchor_refusals("dev", _backends(ANCHOR, KMS, local))
+554	tests/test_p1b_backends.py	89	91	261	yes	@pytest.mark.parametrize("env", ["pilot", "prod"])
+554	src/hadavin_sdk/actions/secrets_env.py	1	1	34	yes	"""`env` secrets: read from environment variables (`dev` only, by the environment table).
+554	src/hadavin_sdk/audit/signer.py	64	64	213	yes	"""An Ed25519 key in a PEM file (dev and pilot; refused in prod by the environment table)."""
+554	src/hadavin_sdk/backends/table.py	126	126	605	yes	# (`require`, `disable`) is an explicit opt-down for dev, refused with iam_auth.
+554	src/hadavin_sdk/config.py	346	346	455	yes	)  # dev executor only
+554	src/hadavin_sdk/defaults.py	100	100	132	yes	EXECUTOR_TIMEOUT_S = 10.0  # the dev executor's per-call timeout (Config.executor_timeout_s)
+554	src/hadavin_sdk/registry.py	50	50	382	yes	# Per-action autonomy. None only in dev (the slice-1 gate path). Not part of config_hash: promotion changes
+554	src/hadavin_sdk/tools.py	361	361	1207	yes	Without a pin (dev only; pilot and prod require one) it is an ordinary import."""
+554	src/hadavin_sdk/runtime/agent_loop.py	179	179	870	yes	# Keys the HMAC of the restored inputs on the gate's audit event (None: a plain hash, dev only).
+554	src/hadavin_sdk/actions/contract.py	34	34	186	yes	"""Hadavin-run execution (Phase 2): refused in pilot and prod, kept in dev for the slice-1 tests."""
+554	src/hadavin_sdk/store/postgres.py	75	75	534	yes	captured by an impostor); an explicit weaker `sslmode` is an opt-down for dev. With iam_auth (a bearer
+554	src/hadavin_sdk/guard/redact.py	1162	1162	1255	yes	"dev",
+555	src/hadavin_sdk/backends/table.py	155	155	605	yes	retain_days: int = Field(default=1, ge=1)
+555	src/hadavin_sdk/config.py	377	398	455	yes	def _anchor_refusals(environment: str, b: Backends) -> list[str]:
+555	src/hadavin_sdk/backends/table.py	150	157	605	yes	class _AnchorSettings(KindSettings):
+555	src/hadavin_sdk/audit/anchor_gcs.py	69	85	86	yes	def probed(bucket: Any, settings) -> GcsAnchor:
+555	src/hadavin_sdk/audit/anchor_azure.py	83	96	97	yes	def probed(container: Any, settings) -> AzureBlobAnchor:
+555	src/hadavin_sdk/audit/anchor_s3.py	5	7	98	yes	never overwritten even before Object Lock applies (a 412 with the same bytes is an earlier put whose answer wa
+565	src/hadavin_sdk/cli.py	183	190	415	yes	try:
+586	tests/test_s5_runtime.py	107	111	141	yes	def test_budget_crossed_by_this_call_is_denied_at_the_gate(cfg_dir):
+603	tests/k5_support.py	160	211	233	yes	def build_runtime(
+610	tests/test_k3_pilot_env.py	61	61	210	yes	"llm": {"kind": "openai_compat", "base_url": "https://llm.example/v1"},
+633	src/hadavin_sdk/store/migrate.py	304	360	361	yes	files = _migration_files()
+633	tests/test_s5_runtime.py	107	111	141	yes	def test_budget_crossed_by_this_call_is_denied_at_the_gate(cfg_dir):
+633	src/hadavin_sdk/k1b/replay.py	80	92	278	yes	return sorted(
+633	src/hadavin_sdk/k1b/replay.py	175	175	278	yes	stop = o.halt

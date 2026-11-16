@@ -1,0 +1,193 @@
+....................................................F................... [ 69%]
+F...............................                                         [100%]
+=================================== FAILURES ===================================
+__________________ test_check_script_bad_cap_is_a_clean_error __________________
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-15/test_check_script_bad_cap_is_a0')
+
+    def test_check_script_bad_cap_is_a_clean_error(tmp_path: Path) -> None:
+        import subprocess
+        import sys
+    
+        script = Path(__file__).resolve().parent.parent / "scripts" / "run_live_check.py"
+        args = ["--key-file", "k", "--ledger", "l", "--price-date", "2026-01-01", "--model", "m=1,2", "--cap-total", "3"]
+        r = subprocess.run(  # noqa: S603  # nosec B603 - our own script, fixed arguments
+            [sys.executable, str(script), "--cap-run", "abc", *args],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            cwd=tmp_path,
+        )
+>       assert r.returncode == 2 and "Traceback" not in r.stderr and r.stderr == ""
+E       assert (2 == 2 and 'Traceback' not in "usage: run_...ber: 'abc'\n"
+E        +  where 2 = CompletedProcess(args=['/home/user/build/rr6/venv312/bin/python', '/home/user/build/rr6/tree-B2/scripts/run_live_check...--timeout TIMEOUT] [--leads LEADS] [--runs RUNS]\nrun_live_check.py: error: argument --cap-run: not a number: 'abc'\n").returncode
+E         
+E         'Traceback' is contained here:
+E           ber: 'abc' and "usage: run_l...mber: 'abc'\n" == ''
+E         
+E         + usage: run_live_check.py [-h] --key-file KEY_FILE [--base-url BASE_URL]
+E         +                          --ledger LEDGER --cap-run CAP_RUN --cap-total
+E         +                          CAP_TOTAL --price-date PRICE_DATE --model MODEL
+E         +                          [--max-tokens MAX_TOKENS] [--effort EFFORT]
+E         +                          [--timeout TIMEOUT] [--leads LEADS] [--runs RUNS]
+E         + run_live_check.py: error: argument --cap-run: not a number: 'abc')
+
+tests/test_ledger_amounts.py:307: AssertionError
+___ test_check_script_refuses_zero_leads_or_runs_and_a_broken_ledger_cleanly ___
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B2/.tmp-run/pytest-of-unknown/pytest-15/test_check_script_refuses_zero0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7faadd711400>
+capsys = <_pytest.capture.CaptureFixture object at 0x7faadd711760>
+
+    def test_check_script_refuses_zero_leads_or_runs_and_a_broken_ledger_cleanly(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        import sys
+    
+        sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
+        import run_live_check as rlc
+    
+        key = tmp_path / "k.txt"
+        key.write_text("sk-" + "fake-" + "key-" + "0123456789abcdef\n", encoding="utf-8")
+        ledger = tmp_path / "l.jsonl"
+        ledger.write_bytes(b"garbage\n")
+        base = ["--key-file", str(key), "--ledger", str(ledger), "--price-date", "2026-01-01", "--model", "m=1,2"]
+        base += ["--cap-run", "1", "--cap-total", "3", "--base-url", "http://127.0.0.1:9"]
+        for bad in (["--leads", "0"], ["--runs", "0"]):
+>           assert rlc.main(base + bad) == rlc.EXIT_REFUSED
+                   ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_ledger_amounts.py:452: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_live_check.py:120: in main
+    ap.error("--leads and --runs must each be at least 1")
+/usr/lib/python3.12/argparse.py:2677: in error
+    self.exit(2, _('%(prog)s: error: %(message)s\n') % args)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = ArgumentParser(prog='__main__.py', usage=None, description="Check runner: asks a live model for a label on ~12 made-up...xample.com).", formatter_class=<class 'argparse.RawDescriptionHelpFormatter'>, conflict_handler='error', add_help=True)
+status = 2
+message = '__main__.py: error: --leads and --runs must each be at least 1\n'
+
+    def exit(self, status=0, message=None):
+        if message:
+            self._print_message(message, _sys.stderr)
+>       _sys.exit(status)
+E       SystemExit: 2
+
+/usr/lib/python3.12/argparse.py:2664: SystemExit
+----------------------------- Captured stderr call -----------------------------
+usage: __main__.py [-h] --key-file KEY_FILE [--base-url BASE_URL] --ledger
+                   LEDGER --cap-run CAP_RUN --cap-total CAP_TOTAL --price-date
+                   PRICE_DATE --model MODEL [--max-tokens MAX_TOKENS]
+                   [--effort EFFORT] [--timeout TIMEOUT] [--leads LEADS]
+                   [--runs RUNS]
+__main__.py: error: --leads and --runs must each be at least 1
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_ledger_amounts.py::test_good_ledger_totals_unchanged
+PASSED tests/test_ledger_amounts.py::test_bad_amount_refuses_and_never_lifts_cap[neg_reserve]
+PASSED tests/test_ledger_amounts.py::test_bad_amount_refuses_and_never_lifts_cap[neg_settle]
+PASSED tests/test_ledger_amounts.py::test_bad_amount_refuses_and_never_lifts_cap[neg_infinity]
+PASSED tests/test_ledger_amounts.py::test_bad_amount_refuses_and_never_lifts_cap[infinity]
+PASSED tests/test_ledger_amounts.py::test_bad_amount_refuses_and_never_lifts_cap[nan]
+PASSED tests/test_ledger_amounts.py::test_bad_amount_refuses_and_never_lifts_cap[snan]
+PASSED tests/test_ledger_amounts.py::test_bad_amount_refuses_and_never_lifts_cap[nan_settle]
+PASSED tests/test_ledger_amounts.py::test_bad_amount_refuses_and_never_lifts_cap[overflow_exp]
+PASSED tests/test_ledger_amounts.py::test_bad_amount_refuses_and_never_lifts_cap[big_1e27]
+PASSED tests/test_ledger_amounts.py::test_bad_amount_refuses_and_never_lifts_cap[json_float]
+PASSED tests/test_ledger_amounts.py::test_bad_amount_refuses_and_never_lifts_cap[json_int]
+PASSED tests/test_ledger_amounts.py::test_bad_amount_refuses_and_never_lifts_cap[bool]
+PASSED tests/test_ledger_amounts.py::test_bad_amount_refuses_and_never_lifts_cap[bare_nan]
+PASSED tests/test_ledger_amounts.py::test_bad_amount_refuses_and_never_lifts_cap[bare_neg_inf]
+PASSED tests/test_ledger_amounts.py::test_bad_amount_refuses_and_never_lifts_cap[null]
+PASSED tests/test_ledger_amounts.py::test_bad_amount_refuses_and_never_lifts_cap[empty]
+PASSED tests/test_ledger_amounts.py::test_bad_amount_refuses_and_never_lifts_cap[list]
+PASSED tests/test_ledger_amounts.py::test_bad_amount_refuses_and_never_lifts_cap[junk]
+PASSED tests/test_ledger_amounts.py::test_writer_refuses_bad_amounts[bad0]
+PASSED tests/test_ledger_amounts.py::test_writer_refuses_bad_amounts[bad1]
+PASSED tests/test_ledger_amounts.py::test_writer_refuses_bad_amounts[bad2]
+PASSED tests/test_ledger_amounts.py::test_writer_refuses_bad_amounts[bad3]
+PASSED tests/test_ledger_amounts.py::test_writer_refuses_bad_amounts[bad4]
+PASSED tests/test_ledger_amounts.py::test_writer_refuses_bad_amounts[bad5]
+PASSED tests/test_ledger_amounts.py::test_read_path_creates_no_lock_file_or_folder
+PASSED tests/test_ledger_amounts.py::test_invalid_utf8_is_classed
+PASSED tests/test_ledger_amounts.py::test_directory_as_ledger_path_is_classed
+PASSED tests/test_ledger_amounts.py::test_oversize_file_refused_with_its_own_message
+PASSED tests/test_ledger_amounts.py::test_unreadable_message_says_what_to_do
+PASSED tests/test_ledger_amounts.py::test_memory_error_is_classed
+PASSED tests/test_ledger_amounts.py::test_lock_open_failure_is_classed
+PASSED tests/test_ledger_amounts.py::test_write_failure_is_classed
+PASSED tests/test_ledger_amounts.py::test_torn_line_in_the_middle_fails_closed_last_line_is_skipped
+PASSED tests/test_ledger_amounts.py::test_torn_tail_is_dropped_on_the_next_append
+PASSED tests/test_ledger_amounts.py::test_duplicate_reserve_id_fails_closed
+PASSED tests/test_ledger_amounts.py::test_settle_rules
+PASSED tests/test_ledger_amounts.py::test_reserve_exactly_at_the_cap_is_allowed_and_one_more_is_not
+PASSED tests/test_ledger_amounts.py::test_writer_refuses_non_decimal[0.5_0]
+PASSED tests/test_ledger_amounts.py::test_writer_refuses_non_decimal[1]
+PASSED tests/test_ledger_amounts.py::test_writer_refuses_non_decimal[0.5_1]
+PASSED tests/test_ledger_amounts.py::test_writer_refuses_non_decimal[None]
+PASSED tests/test_ledger_amounts.py::test_writer_refuses_non_decimal[True]
+PASSED tests/test_ledger_amounts.py::test_zero_reserve_refused_zero_settle_allowed
+PASSED tests/test_ledger_amounts.py::test_too_large_writer_message_is_separate
+PASSED tests/test_ledger_amounts.py::test_missing_key_rows_fail_closed
+PASSED tests/test_ledger_amounts.py::test_crlf_and_many_lines_total_the_same
+PASSED tests/test_ledger_amounts.py::test_huge_single_line_is_refused_not_slow
+PASSED tests/test_ledger_amounts.py::test_settings_bounds_keep_worst_case_finite_and_nonzero[over0]
+PASSED tests/test_ledger_amounts.py::test_settings_bounds_keep_worst_case_finite_and_nonzero[over1]
+PASSED tests/test_ledger_amounts.py::test_settings_bounds_keep_worst_case_finite_and_nonzero[over2]
+PASSED tests/test_ledger_amounts.py::test_settings_bounds_keep_worst_case_finite_and_nonzero[over3]
+PASSED tests/test_ledger_amounts.py::test_two_instances_in_one_clock_tick_never_make_the_same_id
+PASSED tests/test_ledger_amounts.py::test_nul_or_blank_tail_is_a_cut_write_not_a_broken_ledger[\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00]
+PASSED tests/test_ledger_amounts.py::test_nul_or_blank_tail_is_a_cut_write_not_a_broken_ledger[   ]
+PASSED tests/test_ledger_amounts.py::test_nul_or_blank_tail_is_a_cut_write_not_a_broken_ledger[\x00\x00 \x00]
+PASSED tests/test_ledger_amounts.py::test_nul_or_blank_tail_is_a_cut_write_not_a_broken_ledger[{"op":"reserve","id":"x","ru\x00\x00\x00]
+PASSED tests/test_ledger_amounts.py::test_nul_or_blank_tail_is_a_cut_write_not_a_broken_ledger[{"op":"reserve","id":"x","run":"run-a","usd":"0.1"}\x00]
+PASSED tests/test_ledger_amounts.py::test_exactly_the_size_cap_is_allowed_and_the_message_names_the_carry_row
+PASSED tests/test_ledger_amounts.py::test_unknown_op_and_non_object_rows_fail_closed
+PASSED tests/test_ledger_amounts.py::test_a_newline_terminated_corrupt_last_line_fails_closed
+PASSED tests/test_ledger_amounts.py::test_prepend_newline_branch_for_a_whole_last_line_without_its_newline
+PASSED tests/test_ledger_amounts.py::test_decimal_context_of_the_caller_cannot_round_the_totals
+PASSED tests/test_ledger_amounts.py::test_unlock_failure_does_not_escape_the_reserve
+PASSED tests/test_ledger_amounts.py::test_settings_types_are_checked[over0]
+PASSED tests/test_ledger_amounts.py::test_settings_types_are_checked[over1]
+PASSED tests/test_ledger_amounts.py::test_settings_types_are_checked[over2]
+PASSED tests/test_ledger_amounts.py::test_settings_types_are_checked[over3]
+PASSED tests/test_ledger_amounts.py::test_settings_types_are_checked[over4]
+PASSED tests/test_ledger_amounts.py::test_settings_types_are_checked[over5]
+PASSED tests/test_ledger_amounts.py::test_settings_types_are_checked[over6]
+PASSED tests/test_ledger_amounts.py::test_a_huge_unterminated_torn_tail_is_dropped_without_reading_the_whole_file_blindly
+PASSED tests/test_ledger_amounts.py::test_settle_has_the_same_size_gate_as_reserve
+PASSED tests/test_ledger_amounts.py::test_memory_error_while_writing_is_classed
+PASSED tests/test_ledger_amounts.py::test_reader_and_writer_agree_on_where_the_last_line_starts
+PASSED tests/test_ledger_amounts.py::test_no_random_source_is_a_classed_refusal
+PASSED tests/test_ledger_amounts.py::test_rows_with_a_non_text_run_or_id_fail_closed
+PASSED tests/test_ledger_amounts.py::test_check_script_worst_case_figure_never_reads_too_low
+PASSED tests/test_ledger_amounts.py::test_a_cut_that_ends_in_a_closing_brace_inside_text_is_still_a_cut_write
+PASSED tests/test_ledger_amounts.py::test_a_cut_inside_a_multibyte_character_is_judged_the_same_by_reader_and_writer
+PASSED tests/test_ledger_amounts.py::test_timeout_seconds_must_be_an_int_or_a_float[8]
+PASSED tests/test_ledger_amounts.py::test_timeout_seconds_must_be_an_int_or_a_float[bad1]
+PASSED tests/test_ledger_amounts.py::test_timeout_seconds_must_be_an_int_or_a_float[True]
+PASSED tests/test_ledger_amounts.py::test_timeout_seconds_must_be_an_int_or_a_float[None]
+PASSED tests/test_ledger_amounts.py::test_a_deeply_nested_last_line_without_newline_fails_closed_not_ignored
+PASSED tests/test_ledger_amounts.py::test_vertical_tab_and_form_feed_tails_are_blank_for_reader_and_writer_alike[\x0c]
+PASSED tests/test_ledger_amounts.py::test_vertical_tab_and_form_feed_tails_are_blank_for_reader_and_writer_alike[\x0b]
+PASSED tests/test_ledger_amounts.py::test_vertical_tab_and_form_feed_tails_are_blank_for_reader_and_writer_alike[ \x0b\x0c ]
+PASSED tests/test_ledger_amounts.py::test_junk_number_settings_are_a_clean_refusal_that_names_the_setting[abc-DESK_LIVE_TIMEOUT_SECONDS]
+PASSED tests/test_ledger_amounts.py::test_junk_number_settings_are_a_clean_refusal_that_names_the_setting[abc-DESK_LIVE_MAX_TOKENS]
+PASSED tests/test_ledger_amounts.py::test_junk_number_settings_are_a_clean_refusal_that_names_the_setting[-DESK_LIVE_TIMEOUT_SECONDS]
+PASSED tests/test_ledger_amounts.py::test_junk_number_settings_are_a_clean_refusal_that_names_the_setting[-DESK_LIVE_MAX_TOKENS]
+PASSED tests/test_ledger_amounts.py::test_junk_number_settings_are_a_clean_refusal_that_names_the_setting[1e-DESK_LIVE_TIMEOUT_SECONDS]
+PASSED tests/test_ledger_amounts.py::test_junk_number_settings_are_a_clean_refusal_that_names_the_setting[1e-DESK_LIVE_MAX_TOKENS]
+PASSED tests/test_ledger_amounts.py::test_junk_number_settings_are_a_clean_refusal_that_names_the_setting[1,5-DESK_LIVE_TIMEOUT_SECONDS]
+PASSED tests/test_ledger_amounts.py::test_junk_number_settings_are_a_clean_refusal_that_names_the_setting[1,5-DESK_LIVE_MAX_TOKENS]
+PASSED tests/test_ledger_amounts.py::test_non_finite_or_out_of_range_timeouts_are_refused[nan]
+PASSED tests/test_ledger_amounts.py::test_non_finite_or_out_of_range_timeouts_are_refused[inf]
+PASSED tests/test_ledger_amounts.py::test_non_finite_or_out_of_range_timeouts_are_refused[1e999]
+PASSED tests/test_ledger_amounts.py::test_non_finite_or_out_of_range_timeouts_are_refused[-5]
+PASSED tests/test_ledger_amounts.py::test_non_finite_or_out_of_range_timeouts_are_refused[0]
+PASSED tests/test_ledger_amounts.py::test_a_bad_setting_value_stops_the_desk_with_a_plain_message_not_a_traceback
+FAILED tests/test_ledger_amounts.py::test_check_script_bad_cap_is_a_clean_error
+FAILED tests/test_ledger_amounts.py::test_check_script_refuses_zero_leads_or_runs_and_a_broken_ledger_cleanly
+2 failed, 102 passed in 0.93s
+rc=1 wall=2s

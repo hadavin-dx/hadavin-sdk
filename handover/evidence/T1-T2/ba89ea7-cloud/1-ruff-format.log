@@ -1,0 +1,4 @@
+HEAD ba89ea751e0197ff64bd20143cd606eaa6529d01
+CMD /home/user/build/venv-t1t2-313/bin/python -m ruff format --check
+326 files already formatted
+exit=0

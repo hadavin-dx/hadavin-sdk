@@ -1,0 +1,89 @@
+## .chat( sites in src
+src/hadavin_sdk/k1b/loop.py:94:            box["reply"] = llm.chat(*args, **kwargs)  # type: ignore[arg-type]
+src/hadavin_sdk/runtime/agent_loop.py:425:                reply = self.llm.chat(
+src/hadavin_sdk/extract.py:47:        reply = llm.chat(
+src/hadavin_sdk/evals.py:73:            reply = llm.chat(
+src/hadavin_sdk/guard/producers.py:5:that calls a model (`.chat(` or `.apply_guardrail(`) is not listed, or when a message is cut with `[:N]` before it is
+src/hadavin_sdk/guard/judge.py:72:        reply = self.llm.chat(
+## apply_guardrail in src
+src/hadavin_sdk/guard/producers.py:5:that calls a model (`.chat(` or `.apply_guardrail(`) is not listed, or when a message is cut with `[:N]` before it is
+src/hadavin_sdk/guard/bedrock_guardrail.py:101:        resp = self._client.apply_guardrail(
+## make("llm" / make("detector" in src
+src/hadavin_sdk/cli.py:150:            make("llm", b.llm, make("secrets", b.secrets), routes=cfg.routes),
+src/hadavin_sdk/cli.py:221:    llm = make("llm", cfg.backends.llm, secrets, routes=cfg.routes)
+src/hadavin_sdk/cli.py:222:    detector = combine([make("detector", d, secrets, llm=llm) for d in cfg.backends.detector])
+src/hadavin_sdk/app.py:162:    llm = llm or make("llm", b.llm, secrets, routes=cfg.routes)
+src/hadavin_sdk/app.py:165:        members = [make("detector", d, secrets, llm=llm) for d in b.detector]
+## Limits( in src and tests
+src/hadavin_sdk/cli.py:209:    return kill_switch(Limits(store, audit, reg), args.action, args.by)
+src/hadavin_sdk/app.py:171:    limits = Limits(store, audit, reg)
+tests/demo_askdata/test_pgsource_layers.py:136:        PgSource(db.ro_dsn, limits=Limits(statement_timeout_s=timeout)).run("SELECT pg_sleep(30)")
+tests/demo_askdata/test_pgsource_layers.py:152:        "SELECT g FROM generate_series(1, 1000000) AS g", limits=Limits(max_rows=500)
+tests/demo_askdata/test_pgsource_layers.py:156:        "SELECT g FROM generate_series(1, 500) AS g", limits=Limits(max_rows=500)
+tests/demo_askdata/test_pgsource_layers.py:167:        limits=Limits(max_bytes=450_000, batch=5, statement_timeout_s=120.0),
+tests/demo_askdata/test_pgsource_layers.py:225:        PgSource(db.ro_dsn, limits=Limits(statement_timeout_s=20.0)).run(
+tests/test_k5_round5.py:241:            reg, store, audit, ScriptLLM([]), RegexDetector(0.5), Limits(store, audit, reg),
+tests/k5_support.py:206:        Limits(store, audit, reg),
+tests/test_k5_postgres.py:58:        Limits(pg_store, audit, reg),
+tests/test_k5_tools.py:1133:        reg, store, audit, ScriptLLM([]), RegexDetector(0.5), Limits(store, audit, reg),
+tests/test_k5_tools.py:1269:        Limits(store, audit, reg),
+tests/test_k3_pilot.py:104:        Limits(store, audit, reg),
+tests/test_s5_runtime.py:28:    limits = Limits(store, audit, reg)
+demos/ask-your-data/askdata/config.py:56:    limits: Limits = Limits()
+demos/ask-your-data/askdata/pgsource.py:103:        self.limits = limits or Limits()
+## count Limits( in tests only
+12
+## classes defining def chat in tests
+9
+28
+15
+## window_end in src
+## cache markers in llm
+src/hadavin_sdk/llm/anthropic.py:136:        # Thinking blocks are the model's working, never its answer: only text and tool calls are read.
+src/hadavin_sdk/llm/gemini.py:98:        # Thinking is billed as output; candidatesTokenCount leaves it out.
+## extract( callers in src
+src/hadavin_sdk/extract.py:34:def extract(
+## ALLOWED llm/detector
+ALLOWED: dict[str, frozenset[str]] = {
+    "secrets": frozenset(),
+    "signer": frozenset(),
+    "anchor": frozenset(),
+    "store": frozenset(),
+    "audit": frozenset({"store", "signer", "anchor"}),
+    "llm": frozenset({"routes"}),
+    "detector": frozenset({"llm"}),
+    "channel": frozenset({"store"}),
+}
+## Deps
+@dataclass(frozen=True)
+class Deps:
+    """What a factory receives besides its settings. Fields its capability may not use stay None."""
+
+    resolve: Callable[[str], str]
+    routes: Mapping[str, Any] | None = None
+    store: Any = None
+    signer: Any = None
+    anchor: Any = None
+    llm: Any = None
+
+
+def make(
+    capability: str,
+## migrations
+0001_core.sql
+0002_audit_chain.sql
+0003_approvals_tick.sql
+0004_audit_checkpoint_meta.sql
+0005_evidence.sql
+## non-fake network kind configs in tests
+tests/test_p1a_fixes.py:117:                update={"llm": reg.config.backends.llm.model_copy(update={"kind": "bedrock"})}
+tests/test_p5p6_followups.py:82:    llm = {"kind": "openai_compat", "base_url": "https://llm.example/v1"}
+tests/test_p5p6_followups.py:392:        "kind": "anthropic",
+tests/test_k3_pilot_env.py:61:            "llm": {"kind": "openai_compat", "base_url": "https://llm.example/v1"},
+tests/test_p5_llm.py:38:    api = _llm(cfg_dir, {"kind": "anthropic", "api_key_secret_name": "a", "platform": "api"})
+tests/test_p5_llm.py:40:        cfg_dir, {"kind": "anthropic", "platform": "vertex", "project_id": "p", "region": "global"}
+tests/test_p5_llm.py:42:    local = _llm(cfg_dir, {"kind": "openai_compat", "base_url": "http://localhost:11434/v1"})
+tests/test_p5_llm.py:43:    other = _llm(cfg_dir, {"kind": "openai_compat", "base_url": "https://llm.example/v1"})
+tests/test_p5_llm.py:46:    tuned = {"kind": "anthropic", "api_key_secret_name": "a", "platform": "api", "max_attempts": 5}
+classes defining chat in tests/**: 26 files: 14
+['test_k1b_replay.py:Hung', 'test_k1b_replay.py:Boom', 'test_k5_fixes2.py:Never', 'test_k5_round8.py:LLM', 'test_k1a_pass_k.py:ScriptedLLM', 'test_k5_round5.py:Spy', 'test_k5_round5.py:Spy', 'k5_support.py:ScriptLLM', 'test_k5_round7.py:LLM', 'test_k5_round9.py:LLM', 'test_k5_round9.py:LLM', 'test_k5_round9.py:Echo', 'k1b_support.py:ScriptedLLM', 'k1b_support.py:RecordingLLM', 'test_k5_tools.py:CostLLM', 'test_k5_tools.py:_Swap', 'test_k5_tools.py:Echo', 'test_k5_tools.py:FloatLLM', 'test_k3_pilot.py:ScriptedLLM', 'test_p6_detectors.py:_Routed', 'test_p6_detectors.py:Odd', 'test_p6_detectors.py:Steered', 'test_p6_detectors.py:Clean', 'demo_askdata/test_pipeline.py:Boom', 'demo_askdata/test_pipeline.py:Refuse', 'contracts/kinds/detectors.py:JudgeModel']

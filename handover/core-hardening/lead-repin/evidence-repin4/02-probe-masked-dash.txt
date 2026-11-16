@@ -1,0 +1,19 @@
+data = "<masked-blob>"
+x = "<masked-blob>"
+payload: <masked-blob>
+note: value <masked-token> in a sentence
+creds = {"user": "u", "pass": <masked>}
+dsn = "host=h user=u password=<masked>
+export DB_PASS=<masked>
+token_file = <masked>
+my_secret_thing = <masked>
+SECRET_KEY_BASE=<masked>
+mail: <email-masked>, "Jo <<email-masked>>"
+url=https://example.invalid/?api_key=<masked>
+url=https://example.invalid/?token=<masked>
+curl -H "X-Auth-Token: <masked>" 
+curl -H 'Authorization: <masked> <masked>'
+ENV TOKEN <masked>
+password:<masked>
+f(password=<masked>
+passwd <masked>

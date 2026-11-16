@@ -1,0 +1,8 @@
+C07 info: OWNER-SHEET-v28-A.md 6054, OWNER-CARD-v28-A.md 1372, OWNER-NUMBERS-v28-A.md 844, OWNER-FILM-v28.md 285 total 8555
+C07 info: OWNER-SHEET-v28-B.md 6033, OWNER-CARD-v28-B.md 1353, OWNER-NUMBERS-v28-B.md 859, OWNER-FILM-v28.md 285 total 8530
+check-v28: 0 failure(s)
+
+real	0m0.356s
+user	0m0.348s
+sys	0m0.008s
+rc=0

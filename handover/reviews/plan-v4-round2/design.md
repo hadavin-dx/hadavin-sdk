@@ -1,0 +1,21 @@
+# Plan v4.1 round 2: design critic (condensed, saved by the cloud worker)
+Reviewer: egm:egm-design (fresh), read-only. Target: studio-notes/plan-v4-1.md. Verdict: NOT CLEAN, 0 Blocker, 9 Major, 6 Nit.
+The reviewer read plan-v4-1, the round-1 design report, the resolve file, bible-extract R447-R450, AK-G2 ticket (parts), market-scan-2 by grep. It did NOT read plan-v3/v4 or other round-1 reports.
+
+Real fixes confirmed: F1 P2d, F2 redactor default, F8 pg-boss/Graphile, F11 DEFERRED, F17 T1 not an owner gate, F19 estimates, F25, F13 licence line.
+
+## Majors
+- M-A (F3/F6): no operating mechanism for reconciliation (compare_ids has no caller, AK-G15 DEFERRED, "who runs it: OPEN"). Name a runner or say plainly reconciliation is NOT delivered (also in quote wording).
+- M-B (F18): seven unbacked claims; scan figures (40-60, 85-90, 55-70) marked UNVERIFIED though in reviews/market-scan-2.md lines 19, 26, 31, 44 (P1 verdict there is WRAP, not KEEP-CODE; say why override).
+- M-C (door runtime): "Cloudflare Workers Paid" priced as the door floor but the door is Python + Postgres; USD 60/yr in every 7.3 row prices a component that is not the door. Delete or mark as possible front proxy; print "door stack: NOT PRICED".
+- M-D (Postgres): ledger/claim/tenant isolation Postgres-only; refusal of non-Postgres store in pilot/prod is open item 9 but answerable now (fail closed). State RLS FORCE + SKIP LOCKED as contract.
+- M-E (Presidio as alternative): any redactor backend must pass the hostile set (T3-style + order 64 corpus) or be refused in pilot/prod; Presidio only as an extra layer after our pattern backend.
+- M-F (rung table vs R448): most rows lack the named failing property + reproduction (door, claim/lease, billing classes, stop state, CI checks, tenant isolation two verdicts in one cell); ledger argument should be "table + claim/lease + run row share one transaction", not "every tool forgets"; no 80% count, licence/SPDX/date, 90-day date; rung 0/2 not shown; portal DROP (s5) vs CUT-TO-CONFIG+GLUE (s6); two verdict vocabularies; template packs need the <50 lines glue rule.
+- M-G (T1): pass rule "at most floor(C/W)" passes a meter that admits nothing, make first case exact; missing: settle above W, settle below W releasing budget, failed call releasing reservation, crash between reserve and settle, true cross-process (50 processes on Postgres), mutant for non-atomic check-then-reserve; reword "no outside cap gives zero overshoot" to "the two tools examined overshoot by up to one call" (dated, versioned).
+- M-H (T2): crash point (d) "after the 202" cannot exist (door not in the test); "forever" breaks if the restored-hash key is rotated/lost or a backup is restored from before receipts: add cases; same-key concurrent race; hard schema criterion on Postgres (no TTL column, no age-based DELETE, runtime role cannot delete receipts); state which stores; T3 detector returns nothing/times out/put-back fails; T4 denial audited, direct store write and config path tried.
+- M-I (NEW, forwarder re-sign): the contract needs a fresh signature/timestamp per retry, byte-identical body, Retry-After honoured. Whether n8n/Make/Activepieces can do that is not listed; add a per-tool retry case to T5 (local n8n container first) or change the scheme/refuse the pack.
+- M-J (cost model s7): totals look quotable while the stack is unpriced; do not print totals or add "lower bound, not a quote"; add "does a small client pay for this at all".
+- M-K (OUT contract, open item 8): half of "signed webhook in, governed action API out" has no contract; gate the packs row on it.
+Also: key custody (HMAC secret lives in the client's n8n/Make store; add per-flow key rule + rotation/revocation test in T5); items 9, 11, 13 answerable by the author; rename R1-R12 rulings to "ruling N" (clash with bible R-numbers); retitle "Tests that decide open points"; LiteLLM price map: pinned dated snapshot, never fetched at run time; receipts "UNVERIFIED deleted" is answered by AK-G2.md:177 ("Nobody deletes receipts in v1"); no retention/erasure rule for hash rows (storage cost, G18).
+Nits: P5b2 = R3a stated as fact then UNVERIFIED (line 64 vs 185); "marked UNVERIFIED" counted as FIXED in the change table; s11 has 14 open items vs "9".
+Full text: see the reviewer hand-back in the cloud transcript.

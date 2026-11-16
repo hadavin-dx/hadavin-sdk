@@ -1,0 +1,8 @@
+cc88be4243ed68c512c3b2cd6e4dde94414f14398ad21c103c9ef43ac17d2896  handover/core-hardening/c6-skip-audit/REPORT-c6n.md
+1795427baed2ad8ebe56a1be70a2097f5d5e96367eecf12aa4b3d0e1088eb614  handover/core-hardening/c6-skip-audit/REPORT-c6m.md
+d3b0428a9025b7390cfbb01006b3a5e8d816095b90dd7fc72f1da7dee96daed3  handover/core-hardening/c6-skip-audit/evidence-c6n/build_c6n.py
+c1d703669f2278683be9fb6d5978ef934720410cf4bc0122f46cc607df4933d5  handover/core-hardening/c6-skip-audit/evidence-c6n/sections_c6n.py
+cfc8cc5599a0f63349d749b4bc633798a43489b39c53f2487d7e549b732b8564  handover/core-hardening/c6-skip-audit/evidence-c6n/verify-c6n.py
+64802b2a55509185682002d1fef0afc813d92bf74cb7ace42d15c9bc79ff0577  handover/core-hardening/c6-skip-audit/evidence-c6n/void-check.py
+1264cedcae83893c17fd6bc94a3c4b043f612d068c8ee45fe57ebf985eaa2d06  handover/core-hardening/c6-skip-audit/evidence-c6n/static-checks.sh
+69294a0b028de07384aab592f9d2a00220e05a96acf454e98277bef849600fd4  handover/core-hardening/c6-skip-audit/evidence-c6n/box_c6n.md

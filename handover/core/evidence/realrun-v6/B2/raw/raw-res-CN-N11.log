@@ -1,0 +1,55 @@
+...............................................................F
+=================================== FAILURES ===================================
+_ test_an_argparse_error_of_the_live_script_is_the_same_one_line_without_the_words_typed[unknown] _
+
+tmp_path = PosixPath('/home/user/build/rr6/tmp-B2/pytest-of-unknown/pytest-48/test_an_argparse_error_of_the_0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f1620498cb0>
+stray = ['--bogusZQcanary7']
+
+    @pytest.mark.parametrize(
+        "stray",
+        [
+            [f"--bogus{CANARY}"],
+            [CANARY],
+            ["--c", "1"],  # an abbreviation that matches --cap-run and --cap-total
+            [f"--assume-yes={CANARY}"],
+            [f"--key-file={CANARY}", "--key-file"],
+            ["--", CANARY],
+        ],
+        ids=["unknown", "stray-word", "ambiguous", "flag-with-value", "key-file-twice", "double-dash"],
+    )
+    def test_an_argparse_error_of_the_live_script_is_the_same_one_line_without_the_words_typed(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], stray: list[str]
+    ) -> None:
+        key = tmp_path / "k"
+        key.write_text(KEY, encoding="utf-8")
+>       out = _live_refusal([*_live_argv(str(key), str(tmp_path / "ledger")), *stray], capsys)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_real_run_v6.py:427: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+argv = ['--key-file', '/home/user/build/rr6/tmp-B2/pytest-of-unknown/pytest-48/test_an_argparse_error_of_the_0/k', '--ledger'...r6/tmp-B2/pytest-of-unknown/pytest-48/test_an_argparse_error_of_the_0/ledger', '--base-url', 'http://127.0.0.1:1', ...]
+capsys = <_pytest.capture.CaptureFixture object at 0x7f1620498cb0>
+
+    def _live_refusal(argv: list[str], capsys: pytest.CaptureFixture[str]) -> str:
+        try:
+            code = rlc.main(argv)
+        except SystemExit as e:  # an argparse error: still the one line, exit 2
+            code = e.code if isinstance(e.code, int) else -1
+        captured = capsys.readouterr()
+        assert code == rlc.EXIT_REFUSED == 2, (argv, captured.out, captured.err)
+        assert LIVE_LINE.fullmatch(captured.out), (argv, captured.out)  # exactly one line: refused: <OPTION>: <text>
+        assert captured.err == "" and "Traceback" not in captured.out
+>       assert CANARY not in captured.out  # the value that was typed is never repeated
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: assert 'ZQcanary7' not in 'refused: th...sZQcanary7\n'
+E         
+E         'ZQcanary7' is contained here:
+E           s: --bogusZQcanary7
+
+tests/test_real_run_v6.py:345: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_real_run_v6.py::test_an_argparse_error_of_the_live_script_is_the_same_one_line_without_the_words_typed[unknown]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 63 passed in 0.58s

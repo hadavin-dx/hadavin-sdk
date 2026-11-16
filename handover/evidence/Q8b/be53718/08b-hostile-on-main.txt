@@ -1,0 +1,2 @@
+/home/user/build/venv-evq8b/bin/python: can't open file '/home/user/build/EV-Q8b-be53718/hostile.py': [Errno 2] No such file or directory
+exit 2

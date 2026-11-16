@@ -1,0 +1,13 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+........................................................................ [ 20%]
+........................................................................ [ 40%]
+........................................................................ [ 61%]
+........................................................................ [ 81%]
+...............................................................F.        [100%]
+=================================== FAILURES ===================================
+E   AssertionError: the tool docstring holds a date that is in no dated list: ['2026-12-12']
+    assert not {'2026-12-12'}
+/home/user/build/EV-Q8c1b8-208a47d5/wtold/tests/test_policy_guard.py:4145: AssertionError: the tool docstring holds a date that is in no dated list: ['2026-12-12']
+=========================== short test summary info ============================
+FAILED tests/test_policy_guard.py::test_the_tool_docstring_holds_no_date_that_is_not_in_the_dated_lists
+1 failed, 352 passed in 6.00s

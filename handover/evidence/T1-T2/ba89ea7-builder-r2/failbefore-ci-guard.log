@@ -1,0 +1,13 @@
+NEW code:
+..                                                                       [100%]
+2 passed in 0.04s
+exit=0
+OLD store_postgres.py (guard absent):
+        except pytest.skip.Exception:
+>           pytest.fail("a missing DSN in CI was skipped; it must fail")
+E           Failed: a missing DSN in CI was skipped; it must fail
+
+tests/test_pg_dsn_guard.py:22: Failed
+=========================== short test summary info ============================
+FAILED tests/test_pg_dsn_guard.py::test_a_missing_dsn_fails_in_ci - Failed: a...
+1 failed, 1 passed in 0.05s

@@ -1,0 +1,17 @@
+NEGATIVE N8-WSL3-no-hit-STOP-then-later  setup: rm $PS/P-4b.control.txt $PS/standin-gone.txt  VARX: HBW=/z/hbroot
+##### b24
+exit=0
+STOP C2b: the exit code is not 0, or there is no hit line (the stand-in was not seen), or an output line has the wrong shape. Next: tell the builder; paste the lines printed here:
+##### b24 exit=1
+##### b26
+STOP C2b: P-4b.control.txt is missing or empty. Next: run WSL-3 first (a stand-in you started ends by itself after 10 minutes, or end it with kill "" if SPID is set in this window).
+##### b26 exit=1
+##### b27
+STOP C2c: missing or empty: /z/hbroot/_local/scratch/wp6-smoke/pastes/P-4b.control.txt. Next: make it (C2b).
+##### b27 exit=1
+##### b36
+STOP C2c: missing or empty: /z/hbroot/_local/scratch/wp6-smoke/pastes/P-4b.control.txt. Next: make it (C2b).
+##### b36 exit=1
+##### b37
+STOP C9: the P-4b files do not pass C2c. Next: run C2c and fix.
+##### b37 exit=1

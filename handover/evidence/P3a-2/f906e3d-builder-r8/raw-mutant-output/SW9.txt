@@ -1,0 +1,13 @@
+### tests/test_migration_wiring.py::test_the_hold_connection_is_closed_when_the_lock_cannot_be_taken rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_______ test_the_hold_connection_is_closed_when_the_lock_cannot_be_taken _______
+tests/test_migration_wiring.py:1458: in test_the_hold_connection_is_closed_when_the_lock_cannot_be_taken
+    assert len(holds) == 1 and holds[0].closed and mr._HOLDS == {}
+E   assert (1 == 1 and False)
+E    +  where 1 = len([<tests.test_migration_wiring._Hold object at 0x7fc01fde5e80>])
+E    +  and   False = <tests.test_migration_wiring._Hold object at 0x7fc01fde5e80>.closed
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_the_hold_connection_is_closed_when_the_lock_cannot_be_taken
+1 failed in 0.40s
+

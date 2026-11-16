@@ -1,0 +1,1135 @@
+====================================================================================================
+P00 control: the branch tree, nothing changed
+  [1] pytest tests/test_policy_guard.py in the plant copy: exit code 0, 1.4s
+      last line: 82 passed in 0.86s
+      assertion lines (lines starting with 'E ' in the pytest output, each cut at 1500 characters):
+  [2] direct call of the guard's own functions on the plant copy:
+      (imports hadavin_sdk from /tmp/claude-0/-home-user-hadavin-sdk/3c7954a2-a1b2-5867-97dd-d4d94c9e06fd/scratchpad/plants/P00/src/hadavin_sdk/__init__.py)
+      call_problems(src/hadavin_sdk/actions/secrets_vault.py): 0 problem(s)
+      call_problems(src/hadavin_sdk/audit/signer_vault.py): 0 problem(s)
+      call_problems(src/hadavin_sdk/sources/kubernetes.py): 0 problem(s)
+      kind_problems: 0 problem(s)
+      data problems (pp.problems per kind): 0 problem(s)
+      cross_problems: 0 problem(s)
+      name_problems: 0 problem(s)
+  [3] python tools/policy_page.py --check in the plant copy: exit code 0; output: ''
+====================================================================================================
+P01 Vault secrets: a new request the POLICY does not declare (a POST to the data path, inside _fetch)
+  edit in src/hadavin_sdk/actions/secrets_vault.py:
+    -         status, body = self.authed("GET", f"{self.mount}/data/{self.path_prefix}{name}")
+    +         self.authed("POST", f"{self.mount}/data/{self.path_prefix}{name}", {"data": {}})
+    +         status, body = self.authed("GET", f"{self.mount}/data/{self.path_prefix}{name}")
+  [1] pytest tests/test_policy_guard.py in the plant copy: exit code 1, 7.3s
+      last line: 7 failed, 75 passed in 6.69s
+      FAILED tests/test_policy_guard.py::test_the_calls_written_in_the_module_equal_the_declared_list[src/hadavin_sdk/actions/secrets_vault.py]
+      FAILED tests/test_policy_guard.py::test_the_extracted_requests_are_the_ones_the_ticket_lists
+      FAILED tests/test_policy_guard.py::test_plant_a_new_request_with_no_grant_is_caught
+      FAILED tests/test_policy_guard.py::test_plant_a_request_that_is_not_a_literal_is_caught
+      FAILED tests/test_policy_guard.py::test_plant_a_path_built_by_a_call_is_not_foldable_and_is_caught
+      FAILED tests/test_policy_guard.py::test_plant_a_sink_taken_as_a_value_is_caught
+      FAILED tests/test_policy_guard.py::test_a_request_named_only_in_a_docstring_changes_nothing
+      assertion lines (lines starting with 'E ' in the pytest output, each cut at 1500 characters):
+        E   assert ['src/hadavin...ry in POLICY'] == []
+        E     
+        E     Left contains one more item: "src/hadavin_sdk/actions/secrets_vault.py:115: request ('POST', '{mount}/data/{path_prefix}{name}') has no grant and no free entry in POLICY"
+        E     Use -v to get more diff
+        E   AssertionError: assert {'src/hadavin...es_review',)}} == {'src/hadavin...es_review',)}}
+        E     
+        E     Omitting 2 identical items, use -vv to show
+        E     Differing items:
+        E     {'src/hadavin_sdk/actions/secrets_vault.py': {('GET', '{mount}/data/{path_prefix}{name}'), ('POST', 'auth/{auth_mount}/login'), ('POST', '{mount}/data/{path_prefix}{name}')}} != {'src/hadavin_sdk/actions/secrets_vault.py': {('GET', '{mount}/data/{path_prefix}{name}'), ('POST', 'auth/{auth_mount}/login')}}
+        E     Use -v to get more diff
+        E   AssertionError: reported ["src/hadavin_sdk/actions/secrets_vault.py:290: request ('LIST', '{mount}/metadata/{path_prefix}') has no grant and no free entry in POLICY", "src/hadavin_sdk/actions/secrets_vault.py:115: request ('POST', '{mount}/data/{path_prefix}{name}') has no grant and no free entry in POLICY"], expected ["src/hadavin_sdk/actions/secrets_vault.py:290: request ('LIST', '{mount}/metadata/{path_prefix}') has no grant and no free entry in POLICY"]
+        E   assert ['src/hadavin...ry in POLICY'] == ['src/hadavin...ry in POLICY']
+        E     
+        E     Left contains one more item: "src/hadavin_sdk/actions/secrets_vault.py:115: request ('POST', '{mount}/data/{path_prefix}{name}') has no grant and no free entry in POLICY"
+        E     Use -v to get more diff
+        E   AssertionError: reported ['src/hadavin_sdk/actions/secrets_vault.py:290: call to `.authed` whose request is not a literal, outside the allowlisted lines: it cannot be compared with the declared list', "src/hadavin_sdk/actions/secrets_vault.py:115: request ('POST', '{mount}/data/{path_prefix}{name}') has no grant and no free entry in POLICY"], expected ['src/hadavin_sdk/actions/secrets_vault.py:290: call to `.authed` whose request is not a literal, outside the allowlisted lines: it cannot be compared with the declared list']
+        E   assert ['src/hadavin...ry in POLICY'] == ['src/hadavin...eclared list']
+        E     
+        E     Left contains one more item: "src/hadavin_sdk/actions/secrets_vault.py:115: request ('POST', '{mount}/data/{path_prefix}{name}') has no grant and no free entry in POLICY"
+        E     Use -v to get more diff
+        E   assert (2 == 1)
+        E    +  where 2 = len(['src/hadavin_sdk/actions/secrets_vault.py:290: call to `.authed` whose request is not a literal, outside the allowlis...s/secrets_vault.py:115: request ('POST', '{mount}/data/{path_prefix}{name}') has no grant and no free entry in POLICY"])
+        E   AssertionError: reported ['src/hadavin_sdk/actions/secrets_vault.py:290: `.authed` is taken as a value, not called: the request it would send cannot be read', "src/hadavin_sdk/actions/secrets_vault.py:115: request ('POST', '{mount}/data/{path_prefix}{name}') has no grant and no free entry in POLICY"], expected ['src/hadavin_sdk/actions/secrets_vault.py:290: `.authed` is taken as a value, not called: the request it would send cannot be read']
+        E   assert ['src/hadavin...ry in POLICY'] == ['src/hadavin...nnot be read']
+        E     
+        E     Left contains one more item: "src/hadavin_sdk/actions/secrets_vault.py:115: request ('POST', '{mount}/data/{path_prefix}{name}') has no grant and no free entry in POLICY"
+        E     Use -v to get more diff
+        E   assert ['src/hadavin...ry in POLICY'] == []
+        E     
+        E     Left contains one more item: "src/hadavin_sdk/actions/secrets_vault.py:115: request ('POST', '{mount}/data/{path_prefix}{name}') has no grant and no free entry in POLICY"
+        E     Use -v to get more diff
+  [2] direct call of the guard's own functions on the plant copy:
+      (imports hadavin_sdk from /tmp/claude-0/-home-user-hadavin-sdk/3c7954a2-a1b2-5867-97dd-d4d94c9e06fd/scratchpad/plants/P01/src/hadavin_sdk/__init__.py)
+      call_problems(src/hadavin_sdk/actions/secrets_vault.py): 1 problem(s)
+        - src/hadavin_sdk/actions/secrets_vault.py:115: request ('POST', '{mount}/data/{path_prefix}{name}') has no grant and no free entry in POLICY
+      call_problems(src/hadavin_sdk/audit/signer_vault.py): 0 problem(s)
+      call_problems(src/hadavin_sdk/sources/kubernetes.py): 0 problem(s)
+      kind_problems: 0 problem(s)
+      data problems (pp.problems per kind): 0 problem(s)
+      cross_problems: 0 problem(s)
+      name_problems: 0 problem(s)
+  [3] python tools/policy_page.py --check in the plant copy: exit code 0; output: ''
+====================================================================================================
+P02 Vault secrets: the declared request's call deleted
+  edit in src/hadavin_sdk/actions/secrets_vault.py:
+    -         status, body = self.authed("GET", f"{self.mount}/data/{self.path_prefix}{name}")
+    +         status, body = 200, {}
+  [1] pytest tests/test_policy_guard.py in the plant copy: exit code 1, 6.0s
+      last line: 7 failed, 75 passed in 5.59s
+      FAILED tests/test_policy_guard.py::test_the_calls_written_in_the_module_equal_the_declared_list[src/hadavin_sdk/actions/secrets_vault.py]
+      FAILED tests/test_policy_guard.py::test_the_extracted_requests_are_the_ones_the_ticket_lists
+      FAILED tests/test_policy_guard.py::test_plant_a_new_request_with_no_grant_is_caught
+      FAILED tests/test_policy_guard.py::test_plant_a_request_that_is_not_a_literal_is_caught
+      FAILED tests/test_policy_guard.py::test_plant_a_path_built_by_a_call_is_not_foldable_and_is_caught
+      FAILED tests/test_policy_guard.py::test_plant_a_sink_taken_as_a_value_is_caught
+      FAILED tests/test_policy_guard.py::test_a_request_named_only_in_a_docstring_changes_nothing
+      assertion lines (lines starting with 'E ' in the pytest output, each cut at 1500 characters):
+        E   assert ['src/hadavin...no such call'] == []
+        E     
+        E     Left contains one more item: "src/hadavin_sdk/actions/secrets_vault.py: POLICY declares request ('GET', '{mount}/data/{path_prefix}{name}') but the module makes no such call"
+        E     Use -v to get more diff
+        E   AssertionError: assert {'src/hadavin...es_review',)}} == {'src/hadavin...es_review',)}}
+        E     
+        E     Omitting 2 identical items, use -vv to show
+        E     Differing items:
+        E     {'src/hadavin_sdk/actions/secrets_vault.py': {('POST', 'auth/{auth_mount}/login')}} != {'src/hadavin_sdk/actions/secrets_vault.py': {('GET', '{mount}/data/{path_prefix}{name}'), ('POST', 'auth/{auth_mount}/login')}}
+        E     Use -v to get more diff
+        E   AssertionError: reported ["src/hadavin_sdk/actions/secrets_vault.py:289: request ('LIST', '{mount}/metadata/{path_prefix}') has no grant and no free entry in POLICY", "src/hadavin_sdk/actions/secrets_vault.py: POLICY declares request ('GET', '{mount}/data/{path_prefix}{name}') but the module makes no such call"], expected ["src/hadavin_sdk/actions/secrets_vault.py:289: request ('LIST', '{mount}/metadata/{path_prefix}') has no grant and no free entry in POLICY"]
+        E   assert ['src/hadavin...no such call'] == ['src/hadavin...ry in POLICY']
+        E     
+        E     Left contains one more item: "src/hadavin_sdk/actions/secrets_vault.py: POLICY declares request ('GET', '{mount}/data/{path_prefix}{name}') but the module makes no such call"
+        E     Use -v to get more diff
+        E   AssertionError: reported ['src/hadavin_sdk/actions/secrets_vault.py:289: call to `.authed` whose request is not a literal, outside the allowlisted lines: it cannot be compared with the declared list', "src/hadavin_sdk/actions/secrets_vault.py: POLICY declares request ('GET', '{mount}/data/{path_prefix}{name}') but the module makes no such call"], expected ['src/hadavin_sdk/actions/secrets_vault.py:289: call to `.authed` whose request is not a literal, outside the allowlisted lines: it cannot be compared with the declared list']
+        E   assert ['src/hadavin...no such call'] == ['src/hadavin...eclared list']
+        E     
+        E     Left contains one more item: "src/hadavin_sdk/actions/secrets_vault.py: POLICY declares request ('GET', '{mount}/data/{path_prefix}{name}') but the module makes no such call"
+        E     Use -v to get more diff
+        E   assert (2 == 1)
+        E    +  where 2 = len(['src/hadavin_sdk/actions/secrets_vault.py:289: call to `.authed` whose request is not a literal, outside the allowlis...crets_vault.py: POLICY declares request ('GET', '{mount}/data/{path_prefix}{name}') but the module makes no such call"])
+        E   AssertionError: reported ['src/hadavin_sdk/actions/secrets_vault.py:289: `.authed` is taken as a value, not called: the request it would send cannot be read', "src/hadavin_sdk/actions/secrets_vault.py: POLICY declares request ('GET', '{mount}/data/{path_prefix}{name}') but the module makes no such call"], expected ['src/hadavin_sdk/actions/secrets_vault.py:289: `.authed` is taken as a value, not called: the request it would send cannot be read']
+        E   assert ['src/hadavin...no such call'] == ['src/hadavin...nnot be read']
+        E     
+        E     Left contains one more item: "src/hadavin_sdk/actions/secrets_vault.py: POLICY declares request ('GET', '{mount}/data/{path_prefix}{name}') but the module makes no such call"
+        E     Use -v to get more diff
+        E   assert ['src/hadavin...no such call'] == []
+        E     
+        E     Left contains one more item: "src/hadavin_sdk/actions/secrets_vault.py: POLICY declares request ('GET', '{mount}/data/{path_prefix}{name}') but the module makes no such call"
+        E     Use -v to get more diff
+  [2] direct call of the guard's own functions on the plant copy:
+      (imports hadavin_sdk from /tmp/claude-0/-home-user-hadavin-sdk/3c7954a2-a1b2-5867-97dd-d4d94c9e06fd/scratchpad/plants/P02/src/hadavin_sdk/__init__.py)
+      call_problems(src/hadavin_sdk/actions/secrets_vault.py): 1 problem(s)
+        - src/hadavin_sdk/actions/secrets_vault.py: POLICY declares request ('GET', '{mount}/data/{path_prefix}{name}') but the module makes no such call
+      call_problems(src/hadavin_sdk/audit/signer_vault.py): 0 problem(s)
+      call_problems(src/hadavin_sdk/sources/kubernetes.py): 0 problem(s)
+      kind_problems: 0 problem(s)
+      data problems (pp.problems per kind): 0 problem(s)
+      cross_problems: 0 problem(s)
+      name_problems: 0 problem(s)
+  [3] python tools/policy_page.py --check in the plant copy: exit code 0; output: ''
+====================================================================================================
+P03 Vault secrets: the request path made a variable
+  edit in src/hadavin_sdk/actions/secrets_vault.py:
+    -         status, body = self.authed("GET", f"{self.mount}/data/{self.path_prefix}{name}")
+    +         where = f"{self.mount}/data/{self.path_prefix}{name}"
+    +         status, body = self.authed("GET", where)
+  [1] pytest tests/test_policy_guard.py in the plant copy: exit code 1, 1.3s
+      last line: 7 failed, 75 passed in 0.87s
+      FAILED tests/test_policy_guard.py::test_the_calls_written_in_the_module_equal_the_declared_list[src/hadavin_sdk/actions/secrets_vault.py]
+      FAILED tests/test_policy_guard.py::test_the_extracted_requests_are_the_ones_the_ticket_lists
+      FAILED tests/test_policy_guard.py::test_plant_a_new_request_with_no_grant_is_caught
+      FAILED tests/test_policy_guard.py::test_plant_a_request_that_is_not_a_literal_is_caught
+      FAILED tests/test_policy_guard.py::test_plant_a_path_built_by_a_call_is_not_foldable_and_is_caught
+      FAILED tests/test_policy_guard.py::test_plant_a_sink_taken_as_a_value_is_caught
+      FAILED tests/test_policy_guard.py::test_a_request_named_only_in_a_docstring_changes_nothing
+      assertion lines (lines starting with 'E ' in the pytest output, each cut at 1500 characters):
+        E   AssertionError: assert ['src/hadavin...no such call'] == []
+        E     
+        E     Left contains 2 more items, first extra item: 'src/hadavin_sdk/actions/secrets_vault.py:116: call to `.authed` whose request is not a literal, outside the allowlisted lines: it cannot be compared with the declared list'
+        E     Use -v to get more diff
+        E   AssertionError: assert {'src/hadavin...es_review',)}} == {'src/hadavin...es_review',)}}
+        E     
+        E     Omitting 2 identical items, use -vv to show
+        E     Differing items:
+        E     {'src/hadavin_sdk/actions/secrets_vault.py': {('POST', 'auth/{auth_mount}/login')}} != {'src/hadavin_sdk/actions/secrets_vault.py': {('GET', '{mount}/data/{path_prefix}{name}'), ('POST', 'auth/{auth_mount}/login')}}
+        E     Use -v to get more diff
+        E   AssertionError: reported ['src/hadavin_sdk/actions/secrets_vault.py:116: call to `.authed` whose request is not a literal, outside the allowlisted lines: it cannot be compared with the declared list', "src/hadavin_sdk/actions/secrets_vault.py:290: request ('LIST', '{mount}/metadata/{path_prefix}') has no grant and no free entry in POLICY", "src/hadavin_sdk/actions/secrets_vault.py: POLICY declares request ('GET', '{mount}/data/{path_prefix}{name}') but the module makes no such call"], expected ["src/hadavin_sdk/actions/secrets_vault.py:290: request ('LIST', '{mount}/metadata/{path_prefix}') has no grant and no free entry in POLICY"]
+        E   assert ['src/hadavin...no such call'] == ['src/hadavin...ry in POLICY']
+        E     
+        E     At index 0 diff: 'src/hadavin_sdk/actions/secrets_vault.py:116: call to `.authed` whose request is not a literal, outside the allowlisted lines: it cannot be compared with the declared list' != "src/hadavin_sdk/actions/secrets_vault.py:290: request ('LIST', '{mount}/metadata/{path_prefix}') has no grant and no free entry in POLICY"
+        E     Left contains 2 more items, first extra item: "src/hadavin_sdk/actions/secrets_vault.py:290: request ('LIST', '{mount}/metadata/{path_prefix}') has no grant and no free entry in POLICY"
+        E     Use -v to get more diff
+        E   AssertionError: reported ['src/hadavin_sdk/actions/secrets_vault.py:116: call to `.authed` whose request is not a literal, outside the allowlisted lines: it cannot be compared with the declared list', 'src/hadavin_sdk/actions/secrets_vault.py:290: call to `.authed` whose request is not a literal, outside the allowlisted lines: it cannot be compared with the declared list', "src/hadavin_sdk/actions/secrets_vault.py: POLICY declares request ('GET', '{mount}/data/{path_prefix}{name}') but the module makes no such call"], expected ['src/hadavin_sdk/actions/secrets_vault.py:290: call to `.authed` whose request is not a literal, outside the allowlisted lines: it cannot be compared with the declared list']
+        E   assert ['src/hadavin...no such call'] == ['src/hadavin...eclared list']
+        E     
+        E     At index 0 diff: 'src/hadavin_sdk/actions/secrets_vault.py:116: call to `.authed` whose request is not a literal, outside the allowlisted lines: it cannot be compared with the declared list' != 'src/hadavin_sdk/actions/secrets_vault.py:290: call to `.authed` whose request is not a literal, outside the allowlisted lines: it cannot be compared with the declared list'
+        E     Left contains 2 more items, first extra item: 'src/hadavin_sdk/actions/secrets_vault.py:290: call to `.authed` whose request is not a literal, outside the allowlisted lines: it cannot be compared with the declared list'
+        E     Use -v to get more diff
+        E   assert (3 == 1)
+        E    +  where 3 = len(['src/hadavin_sdk/actions/secrets_vault.py:116: call to `.authed` whose request is not a literal, outside the allowlis...crets_vault.py: POLICY declares request ('GET', '{mount}/data/{path_prefix}{name}') but the module makes no such call"])
+        E   AssertionError: reported ['src/hadavin_sdk/actions/secrets_vault.py:116: call to `.authed` whose request is not a literal, outside the allowlisted lines: it cannot be compared with the declared list', 'src/hadavin_sdk/actions/secrets_vault.py:290: `.authed` is taken as a value, not called: the request it would send cannot be read', "src/hadavin_sdk/actions/secrets_vault.py: POLICY declares request ('GET', '{mount}/data/{path_prefix}{name}') but the module makes no such call"], expected ['src/hadavin_sdk/actions/secrets_vault.py:290: `.authed` is taken as a value, not called: the request it would send cannot be read']
+        E   assert ['src/hadavin...no such call'] == ['src/hadavin...nnot be read']
+        E     
+        E     At index 0 diff: 'src/hadavin_sdk/actions/secrets_vault.py:116: call to `.authed` whose request is not a literal, outside the allowlisted lines: it cannot be compared with the declared list' != 'src/hadavin_sdk/actions/secrets_vault.py:290: `.authed` is taken as a value, not called: the request it would send cannot be read'
+        E     Left contains 2 more items, first extra item: 'src/hadavin_sdk/actions/secrets_vault.py:290: `.authed` is taken as a value, not called: the request it would send cannot be read'
+        E     Use -v to get more diff
+        E   AssertionError: assert ['src/hadavin...no such call'] == []
+        E     
+        E     Left contains 2 more items, first extra item: 'src/hadavin_sdk/actions/secrets_vault.py:116: call to `.authed` whose request is not a literal, outside the allowlisted lines: it cannot be compared with the declared list'
+        E     Use -v to get more diff
+  [2] direct call of the guard's own functions on the plant copy:
+      (imports hadavin_sdk from /tmp/claude-0/-home-user-hadavin-sdk/3c7954a2-a1b2-5867-97dd-d4d94c9e06fd/scratchpad/plants/P03/src/hadavin_sdk/__init__.py)
+      call_problems(src/hadavin_sdk/actions/secrets_vault.py): 2 problem(s)
+        - src/hadavin_sdk/actions/secrets_vault.py:116: call to `.authed` whose request is not a literal, outside the allowlisted lines: it cannot be compared with the declared list
+        - src/hadavin_sdk/actions/secrets_vault.py: POLICY declares request ('GET', '{mount}/data/{path_prefix}{name}') but the module makes no such call
+      call_problems(src/hadavin_sdk/audit/signer_vault.py): 0 problem(s)
+      call_problems(src/hadavin_sdk/sources/kubernetes.py): 0 problem(s)
+      kind_problems: 0 problem(s)
+      data problems (pp.problems per kind): 0 problem(s)
+      cross_problems: 0 problem(s)
+      name_problems: 0 problem(s)
+  [3] python tools/policy_page.py --check in the plant copy: exit code 0; output: ''
+====================================================================================================
+P04 Vault secrets: the sink called through getattr with a variable name
+  edit in src/hadavin_sdk/actions/secrets_vault.py:
+    -         status, body = self.authed("GET", f"{self.mount}/data/{self.path_prefix}{name}")
+    +         sink = "authed"
+    +         status, body = getattr(self, sink)("GET", f"{self.mount}/data/{self.path_prefix}{name}")
+  [1] pytest tests/test_policy_guard.py in the plant copy: exit code 1, 1.5s
+      last line: 7 failed, 75 passed in 0.96s
+      FAILED tests/test_policy_guard.py::test_the_calls_written_in_the_module_equal_the_declared_list[src/hadavin_sdk/actions/secrets_vault.py]
+      FAILED tests/test_policy_guard.py::test_the_extracted_requests_are_the_ones_the_ticket_lists
+      FAILED tests/test_policy_guard.py::test_plant_a_new_request_with_no_grant_is_caught
+      FAILED tests/test_policy_guard.py::test_plant_a_request_that_is_not_a_literal_is_caught
+      FAILED tests/test_policy_guard.py::test_plant_a_path_built_by_a_call_is_not_foldable_and_is_caught
+      FAILED tests/test_policy_guard.py::test_plant_a_sink_taken_as_a_value_is_caught
+      FAILED tests/test_policy_guard.py::test_a_request_named_only_in_a_docstring_changes_nothing
+      assertion lines (lines starting with 'E ' in the pytest output, each cut at 1500 characters):
+        E   AssertionError: assert ['src/hadavin...no such call'] == []
+        E     
+        E     Left contains 2 more items, first extra item: 'src/hadavin_sdk/actions/secrets_vault.py:116: banned `getattr` with a name that is not a literal'
+        E     Use -v to get more diff
+        E   AssertionError: assert {'src/hadavin...es_review',)}} == {'src/hadavin...es_review',)}}
+        E     
+        E     Omitting 2 identical items, use -vv to show
+        E     Differing items:
+        E     {'src/hadavin_sdk/actions/secrets_vault.py': {('POST', 'auth/{auth_mount}/login')}} != {'src/hadavin_sdk/actions/secrets_vault.py': {('GET', '{mount}/data/{path_prefix}{name}'), ('POST', 'auth/{auth_mount}/login')}}
+        E     Use -v to get more diff
+        E   AssertionError: reported ['src/hadavin_sdk/actions/secrets_vault.py:116: banned `getattr` with a name that is not a literal', "src/hadavin_sdk/actions/secrets_vault.py:290: request ('LIST', '{mount}/metadata/{path_prefix}') has no grant and no free entry in POLICY", "src/hadavin_sdk/actions/secrets_vault.py: POLICY declares request ('GET', '{mount}/data/{path_prefix}{name}') but the module makes no such call"], expected ["src/hadavin_sdk/actions/secrets_vault.py:290: request ('LIST', '{mount}/metadata/{path_prefix}') has no grant and no free entry in POLICY"]
+        E   assert ['src/hadavin...no such call'] == ['src/hadavin...ry in POLICY']
+        E     
+        E     At index 0 diff: 'src/hadavin_sdk/actions/secrets_vault.py:116: banned `getattr` with a name that is not a literal' != "src/hadavin_sdk/actions/secrets_vault.py:290: request ('LIST', '{mount}/metadata/{path_prefix}') has no grant and no free entry in POLICY"
+        E     Left contains 2 more items, first extra item: "src/hadavin_sdk/actions/secrets_vault.py:290: request ('LIST', '{mount}/metadata/{path_prefix}') has no grant and no free entry in POLICY"
+        E     Use -v to get more diff
+        E   AssertionError: reported ['src/hadavin_sdk/actions/secrets_vault.py:116: banned `getattr` with a name that is not a literal', 'src/hadavin_sdk/actions/secrets_vault.py:290: call to `.authed` whose request is not a literal, outside the allowlisted lines: it cannot be compared with the declared list', "src/hadavin_sdk/actions/secrets_vault.py: POLICY declares request ('GET', '{mount}/data/{path_prefix}{name}') but the module makes no such call"], expected ['src/hadavin_sdk/actions/secrets_vault.py:290: call to `.authed` whose request is not a literal, outside the allowlisted lines: it cannot be compared with the declared list']
+        E   assert ['src/hadavin...no such call'] == ['src/hadavin...eclared list']
+        E     
+        E     At index 0 diff: 'src/hadavin_sdk/actions/secrets_vault.py:116: banned `getattr` with a name that is not a literal' != 'src/hadavin_sdk/actions/secrets_vault.py:290: call to `.authed` whose request is not a literal, outside the allowlisted lines: it cannot be compared with the declared list'
+        E     Left contains 2 more items, first extra item: 'src/hadavin_sdk/actions/secrets_vault.py:290: call to `.authed` whose request is not a literal, outside the allowlisted lines: it cannot be compared with the declared list'
+        E     Use -v to get more diff
+        E   assert (3 == 1)
+        E    +  where 3 = len(['src/hadavin_sdk/actions/secrets_vault.py:116: banned `getattr` with a name that is not a literal', 'src/hadavin_sdk/...crets_vault.py: POLICY declares request ('GET', '{mount}/data/{path_prefix}{name}') but the module makes no such call"])
+        E   AssertionError: reported ['src/hadavin_sdk/actions/secrets_vault.py:116: banned `getattr` with a name that is not a literal', 'src/hadavin_sdk/actions/secrets_vault.py:290: `.authed` is taken as a value, not called: the request it would send cannot be read', "src/hadavin_sdk/actions/secrets_vault.py: POLICY declares request ('GET', '{mount}/data/{path_prefix}{name}') but the module makes no such call"], expected ['src/hadavin_sdk/actions/secrets_vault.py:290: `.authed` is taken as a value, not called: the request it would send cannot be read']
+        E   assert ['src/hadavin...no such call'] == ['src/hadavin...nnot be read']
+        E     
+        E     At index 0 diff: 'src/hadavin_sdk/actions/secrets_vault.py:116: banned `getattr` with a name that is not a literal' != 'src/hadavin_sdk/actions/secrets_vault.py:290: `.authed` is taken as a value, not called: the request it would send cannot be read'
+        E     Left contains 2 more items, first extra item: 'src/hadavin_sdk/actions/secrets_vault.py:290: `.authed` is taken as a value, not called: the request it would send cannot be read'
+        E     Use -v to get more diff
+        E   AssertionError: assert ['src/hadavin...no such call'] == []
+        E     
+        E     Left contains 2 more items, first extra item: 'src/hadavin_sdk/actions/secrets_vault.py:116: banned `getattr` with a name that is not a literal'
+        E     Use -v to get more diff
+  [2] direct call of the guard's own functions on the plant copy:
+      (imports hadavin_sdk from /tmp/claude-0/-home-user-hadavin-sdk/3c7954a2-a1b2-5867-97dd-d4d94c9e06fd/scratchpad/plants/P04/src/hadavin_sdk/__init__.py)
+      call_problems(src/hadavin_sdk/actions/secrets_vault.py): 2 problem(s)
+        - src/hadavin_sdk/actions/secrets_vault.py:116: banned `getattr` with a name that is not a literal
+        - src/hadavin_sdk/actions/secrets_vault.py: POLICY declares request ('GET', '{mount}/data/{path_prefix}{name}') but the module makes no such call
+      call_problems(src/hadavin_sdk/audit/signer_vault.py): 0 problem(s)
+      call_problems(src/hadavin_sdk/sources/kubernetes.py): 0 problem(s)
+      kind_problems: 0 problem(s)
+      data problems (pp.problems per kind): 0 problem(s)
+      cross_problems: 0 problem(s)
+      name_problems: 0 problem(s)
+  [3] python tools/policy_page.py --check in the plant copy: exit code 0; output: ''
+====================================================================================================
+P04b (extra, not in the brief) Vault secrets: an ADDED request sent through getattr with a LITERAL name
+  edit in src/hadavin_sdk/actions/secrets_vault.py:
+    -         status, body = self.authed("GET", f"{self.mount}/data/{self.path_prefix}{name}")
+    +         getattr(self, "authed")("LIST", f"{self.mount}/metadata/{self.path_prefix}")
+    +         status, body = self.authed("GET", f"{self.mount}/data/{self.path_prefix}{name}")
+  [1] pytest tests/test_policy_guard.py in the plant copy: exit code 0, 1.4s
+      last line: 82 passed in 0.91s
+      assertion lines (lines starting with 'E ' in the pytest output, each cut at 1500 characters):
+  [2] direct call of the guard's own functions on the plant copy:
+      (imports hadavin_sdk from /tmp/claude-0/-home-user-hadavin-sdk/3c7954a2-a1b2-5867-97dd-d4d94c9e06fd/scratchpad/plants/P04b/src/hadavin_sdk/__init__.py)
+      call_problems(src/hadavin_sdk/actions/secrets_vault.py): 0 problem(s)
+      call_problems(src/hadavin_sdk/audit/signer_vault.py): 0 problem(s)
+      call_problems(src/hadavin_sdk/sources/kubernetes.py): 0 problem(s)
+      kind_problems: 0 problem(s)
+      data problems (pp.problems per kind): 0 problem(s)
+      cross_problems: 0 problem(s)
+      name_problems: 0 problem(s)
+  [3] python tools/policy_page.py --check in the plant copy: exit code 0; output: ''
+====================================================================================================
+P05 Vault secrets: a DELETE call added to the path that is declared for read
+  edit in src/hadavin_sdk/actions/secrets_vault.py:
+    -         status, body = self.authed("GET", f"{self.mount}/data/{self.path_prefix}{name}")
+    +         status, body = self.authed("GET", f"{self.mount}/data/{self.path_prefix}{name}")
+    +         self.authed("DELETE", f"{self.mount}/data/{self.path_prefix}{name}")
+  [1] pytest tests/test_policy_guard.py in the plant copy: exit code 1, 1.6s
+      last line: 7 failed, 75 passed in 1.06s
+      FAILED tests/test_policy_guard.py::test_the_calls_written_in_the_module_equal_the_declared_list[src/hadavin_sdk/actions/secrets_vault.py]
+      FAILED tests/test_policy_guard.py::test_the_extracted_requests_are_the_ones_the_ticket_lists
+      FAILED tests/test_policy_guard.py::test_plant_a_new_request_with_no_grant_is_caught
+      FAILED tests/test_policy_guard.py::test_plant_a_request_that_is_not_a_literal_is_caught
+      FAILED tests/test_policy_guard.py::test_plant_a_path_built_by_a_call_is_not_foldable_and_is_caught
+      FAILED tests/test_policy_guard.py::test_plant_a_sink_taken_as_a_value_is_caught
+      FAILED tests/test_policy_guard.py::test_a_request_named_only_in_a_docstring_changes_nothing
+      assertion lines (lines starting with 'E ' in the pytest output, each cut at 1500 characters):
+        E   assert ['src/hadavin...ry in POLICY'] == []
+        E     
+        E     Left contains one more item: "src/hadavin_sdk/actions/secrets_vault.py:116: request ('DELETE', '{mount}/data/{path_prefix}{name}') has no grant and no free entry in POLICY"
+        E     Use -v to get more diff
+        E   AssertionError: assert {'src/hadavin...es_review',)}} == {'src/hadavin...es_review',)}}
+        E     
+        E     Omitting 2 identical items, use -vv to show
+        E     Differing items:
+        E     {'src/hadavin_sdk/actions/secrets_vault.py': {('DELETE', '{mount}/data/{path_prefix}{name}'), ('GET', '{mount}/data/{path_prefix}{name}'), ('POST', 'auth/{auth_mount}/login')}} != {'src/hadavin_sdk/actions/secrets_vault.py': {('GET', '{mount}/data/{path_prefix}{name}'), ('POST', 'auth/{auth_mount}/login')}}
+        E     Use -v to get more diff
+        E   AssertionError: reported ["src/hadavin_sdk/actions/secrets_vault.py:116: request ('DELETE', '{mount}/data/{path_prefix}{name}') has no grant and no free entry in POLICY", "src/hadavin_sdk/actions/secrets_vault.py:290: request ('LIST', '{mount}/metadata/{path_prefix}') has no grant and no free entry in POLICY"], expected ["src/hadavin_sdk/actions/secrets_vault.py:290: request ('LIST', '{mount}/metadata/{path_prefix}') has no grant and no free entry in POLICY"]
+        E   assert ['src/hadavin...ry in POLICY'] == ['src/hadavin...ry in POLICY']
+        E     
+        E     At index 0 diff: "src/hadavin_sdk/actions/secrets_vault.py:116: request ('DELETE', '{mount}/data/{path_prefix}{name}') has no grant and no free entry in POLICY" != "src/hadavin_sdk/actions/secrets_vault.py:290: request ('LIST', '{mount}/metadata/{path_prefix}') has no grant and no free entry in POLICY"
+        E     Left contains one more item: "src/hadavin_sdk/actions/secrets_vault.py:290: request ('LIST', '{mount}/metadata/{path_prefix}') has no grant and no free entry in POLICY"
+        E     Use -v to get more diff
+        E   AssertionError: reported ['src/hadavin_sdk/actions/secrets_vault.py:290: call to `.authed` whose request is not a literal, outside the allowlisted lines: it cannot be compared with the declared list', "src/hadavin_sdk/actions/secrets_vault.py:116: request ('DELETE', '{mount}/data/{path_prefix}{name}') has no grant and no free entry in POLICY"], expected ['src/hadavin_sdk/actions/secrets_vault.py:290: call to `.authed` whose request is not a literal, outside the allowlisted lines: it cannot be compared with the declared list']
+        E   assert ['src/hadavin...ry in POLICY'] == ['src/hadavin...eclared list']
+        E     
+        E     Left contains one more item: "src/hadavin_sdk/actions/secrets_vault.py:116: request ('DELETE', '{mount}/data/{path_prefix}{name}') has no grant and no free entry in POLICY"
+        E     Use -v to get more diff
+        E   assert (2 == 1)
+        E    +  where 2 = len(['src/hadavin_sdk/actions/secrets_vault.py:290: call to `.authed` whose request is not a literal, outside the allowlis...secrets_vault.py:116: request ('DELETE', '{mount}/data/{path_prefix}{name}') has no grant and no free entry in POLICY"])
+        E   AssertionError: reported ['src/hadavin_sdk/actions/secrets_vault.py:290: `.authed` is taken as a value, not called: the request it would send cannot be read', "src/hadavin_sdk/actions/secrets_vault.py:116: request ('DELETE', '{mount}/data/{path_prefix}{name}') has no grant and no free entry in POLICY"], expected ['src/hadavin_sdk/actions/secrets_vault.py:290: `.authed` is taken as a value, not called: the request it would send cannot be read']
+        E   assert ['src/hadavin...ry in POLICY'] == ['src/hadavin...nnot be read']
+        E     
+        E     Left contains one more item: "src/hadavin_sdk/actions/secrets_vault.py:116: request ('DELETE', '{mount}/data/{path_prefix}{name}') has no grant and no free entry in POLICY"
+        E     Use -v to get more diff
+        E   assert ['src/hadavin...ry in POLICY'] == []
+        E     
+        E     Left contains one more item: "src/hadavin_sdk/actions/secrets_vault.py:116: request ('DELETE', '{mount}/data/{path_prefix}{name}') has no grant and no free entry in POLICY"
+        E     Use -v to get more diff
+  [2] direct call of the guard's own functions on the plant copy:
+      (imports hadavin_sdk from /tmp/claude-0/-home-user-hadavin-sdk/3c7954a2-a1b2-5867-97dd-d4d94c9e06fd/scratchpad/plants/P05/src/hadavin_sdk/__init__.py)
+      call_problems(src/hadavin_sdk/actions/secrets_vault.py): 1 problem(s)
+        - src/hadavin_sdk/actions/secrets_vault.py:116: request ('DELETE', '{mount}/data/{path_prefix}{name}') has no grant and no free entry in POLICY
+      call_problems(src/hadavin_sdk/audit/signer_vault.py): 0 problem(s)
+      call_problems(src/hadavin_sdk/sources/kubernetes.py): 0 problem(s)
+      kind_problems: 0 problem(s)
+      data problems (pp.problems per kind): 0 problem(s)
+      cross_problems: 0 problem(s)
+      name_problems: 0 problem(s)
+  [3] python tools/policy_page.py --check in the plant copy: exit code 0; output: ''
+====================================================================================================
+P06 Vault Transit: a call to .../keys/<name>/rotate added
+  edit in src/hadavin_sdk/audit/signer_vault.py:
+    -         signature = self._call("POST", f"sign/{self.key_name}", body).get("signature")
+    +         self._call("POST", f"keys/{self.key_name}/rotate")
+    +         signature = self._call("POST", f"sign/{self.key_name}", body).get("signature")
+  [1] pytest tests/test_policy_guard.py in the plant copy: exit code 1, 1.2s
+      last line: 5 failed, 77 passed in 0.80s
+      FAILED tests/test_policy_guard.py::test_the_calls_written_in_the_module_equal_the_declared_list[src/hadavin_sdk/audit/signer_vault.py]
+      FAILED tests/test_policy_guard.py::test_the_extracted_requests_are_the_ones_the_ticket_lists
+      FAILED tests/test_policy_guard.py::test_plant_a_grant_whose_request_was_deleted_is_caught
+      FAILED tests/test_policy_guard.py::test_plant_a_raw_http_request_outside_the_one_sender_is_caught
+      FAILED tests/test_policy_guard.py::test_plant_a_stale_allowlist_line_is_caught
+      assertion lines (lines starting with 'E ' in the pytest output, each cut at 1500 characters):
+        E   assert ['src/hadavin...ry in POLICY'] == []
+        E     
+        E     Left contains one more item: "src/hadavin_sdk/audit/signer_vault.py:52: request ('POST', '{mount}/keys/{key_name}/rotate') has no grant and no free entry in POLICY"
+        E     Use -v to get more diff
+        E   AssertionError: assert {'src/hadavin...es_review',)}} == {'src/hadavin...es_review',)}}
+        E     
+        E     Omitting 2 identical items, use -vv to show
+        E     Differing items:
+        E     {'src/hadavin_sdk/audit/signer_vault.py': {('GET', '{mount}/keys/{key_name}'), ('POST', '{mount}/keys/{key_name}/rotate'), ('POST', '{mount}/sign/{key_name}')}} != {'src/hadavin_sdk/audit/signer_vault.py': {('GET', '{mount}/keys/{key_name}'), ('POST', '{mount}/sign/{key_name}')}}
+        E     Use -v to get more diff
+        E   AssertionError: reported ["src/hadavin_sdk/audit/signer_vault.py:52: request ('POST', '{mount}/keys/{key_name}/rotate') has no grant and no free entry in POLICY", "src/hadavin_sdk/audit/signer_vault.py: POLICY declares request ('GET', '{mount}/keys/{key_name}') but the module makes no such call"], expected ["src/hadavin_sdk/audit/signer_vault.py: POLICY declares request ('GET', '{mount}/keys/{key_name}') but the module makes no such call"]
+        E   assert ['src/hadavin...no such call'] == ['src/hadavin...no such call']
+        E     
+        E     At index 0 diff: "src/hadavin_sdk/audit/signer_vault.py:52: request ('POST', '{mount}/keys/{key_name}/rotate') has no grant and no free entry in POLICY" != "src/hadavin_sdk/audit/signer_vault.py: POLICY declares request ('GET', '{mount}/keys/{key_name}') but the module makes no such call"
+        E     Left contains one more item: "src/hadavin_sdk/audit/signer_vault.py: POLICY declares request ('GET', '{mount}/keys/{key_name}') but the module makes no such call"
+        E     Use -v to get more diff
+        E   AssertionError: reported ['src/hadavin_sdk/audit/signer_vault.py:193: raw HTTP call `Request` outside any allowed function', "src/hadavin_sdk/audit/signer_vault.py:52: request ('POST', '{mount}/keys/{key_name}/rotate') has no grant and no free entry in POLICY"], expected ['src/hadavin_sdk/audit/signer_vault.py:193: raw HTTP call `Request` outside any allowed function']
+        E   assert ['src/hadavin...ry in POLICY'] == ['src/hadavin...wed function']
+        E     
+        E     Left contains one more item: "src/hadavin_sdk/audit/signer_vault.py:52: request ('POST', '{mount}/keys/{key_name}/rotate') has no grant and no free entry in POLICY"
+        E     Use -v to get more diff
+        E   assert (7 == 6)
+        E    +  where 7 = len(['src/hadavin_sdk/audit/signer_vault.py: stale allowlist entry (_call, line 40, .authed): no call to `.authed` that pa...it/signer_vault.py: POLICY declares request ('GET', '{mount}/keys/{key_name}') but the module makes no such call", ...])
+  [2] direct call of the guard's own functions on the plant copy:
+      (imports hadavin_sdk from /tmp/claude-0/-home-user-hadavin-sdk/3c7954a2-a1b2-5867-97dd-d4d94c9e06fd/scratchpad/plants/P06/src/hadavin_sdk/__init__.py)
+      call_problems(src/hadavin_sdk/actions/secrets_vault.py): 0 problem(s)
+      call_problems(src/hadavin_sdk/audit/signer_vault.py): 1 problem(s)
+        - src/hadavin_sdk/audit/signer_vault.py:52: request ('POST', '{mount}/keys/{key_name}/rotate') has no grant and no free entry in POLICY
+      call_problems(src/hadavin_sdk/sources/kubernetes.py): 0 problem(s)
+      kind_problems: 0 problem(s)
+      data problems (pp.problems per kind): 0 problem(s)
+      cross_problems: 0 problem(s)
+      name_problems: 0 problem(s)
+  [3] python tools/policy_page.py --check in the plant copy: exit code 0; output: ''
+====================================================================================================
+P07 Vault Transit: a call to .../export/... added
+  edit in src/hadavin_sdk/audit/signer_vault.py:
+    -         signature = self._call("POST", f"sign/{self.key_name}", body).get("signature")
+    +         self._call("GET", f"export/signing-key/{self.key_name}")
+    +         signature = self._call("POST", f"sign/{self.key_name}", body).get("signature")
+  [1] pytest tests/test_policy_guard.py in the plant copy: exit code 1, 1.5s
+      last line: 5 failed, 77 passed in 1.04s
+      FAILED tests/test_policy_guard.py::test_the_calls_written_in_the_module_equal_the_declared_list[src/hadavin_sdk/audit/signer_vault.py]
+      FAILED tests/test_policy_guard.py::test_the_extracted_requests_are_the_ones_the_ticket_lists
+      FAILED tests/test_policy_guard.py::test_plant_a_grant_whose_request_was_deleted_is_caught
+      FAILED tests/test_policy_guard.py::test_plant_a_raw_http_request_outside_the_one_sender_is_caught
+      FAILED tests/test_policy_guard.py::test_plant_a_stale_allowlist_line_is_caught
+      assertion lines (lines starting with 'E ' in the pytest output, each cut at 1500 characters):
+        E   assert ['src/hadavin...ry in POLICY'] == []
+        E     
+        E     Left contains one more item: "src/hadavin_sdk/audit/signer_vault.py:52: request ('GET', '{mount}/export/signing-key/{key_name}') has no grant and no free entry in POLICY"
+        E     Use -v to get more diff
+        E   AssertionError: assert {'src/hadavin...es_review',)}} == {'src/hadavin...es_review',)}}
+        E     
+        E     Omitting 2 identical items, use -vv to show
+        E     Differing items:
+        E     {'src/hadavin_sdk/audit/signer_vault.py': {('GET', '{mount}/export/signing-key/{key_name}'), ('GET', '{mount}/keys/{key_name}'), ('POST', '{mount}/sign/{key_name}')}} != {'src/hadavin_sdk/audit/signer_vault.py': {('GET', '{mount}/keys/{key_name}'), ('POST', '{mount}/sign/{key_name}')}}
+        E     Use -v to get more diff
+        E   AssertionError: reported ["src/hadavin_sdk/audit/signer_vault.py:52: request ('GET', '{mount}/export/signing-key/{key_name}') has no grant and no free entry in POLICY", "src/hadavin_sdk/audit/signer_vault.py: POLICY declares request ('GET', '{mount}/keys/{key_name}') but the module makes no such call"], expected ["src/hadavin_sdk/audit/signer_vault.py: POLICY declares request ('GET', '{mount}/keys/{key_name}') but the module makes no such call"]
+        E   assert ['src/hadavin...no such call'] == ['src/hadavin...no such call']
+        E     
+        E     At index 0 diff: "src/hadavin_sdk/audit/signer_vault.py:52: request ('GET', '{mount}/export/signing-key/{key_name}') has no grant and no free entry in POLICY" != "src/hadavin_sdk/audit/signer_vault.py: POLICY declares request ('GET', '{mount}/keys/{key_name}') but the module makes no such call"
+        E     Left contains one more item: "src/hadavin_sdk/audit/signer_vault.py: POLICY declares request ('GET', '{mount}/keys/{key_name}') but the module makes no such call"
+        E     Use -v to get more diff
+        E   AssertionError: reported ['src/hadavin_sdk/audit/signer_vault.py:193: raw HTTP call `Request` outside any allowed function', "src/hadavin_sdk/audit/signer_vault.py:52: request ('GET', '{mount}/export/signing-key/{key_name}') has no grant and no free entry in POLICY"], expected ['src/hadavin_sdk/audit/signer_vault.py:193: raw HTTP call `Request` outside any allowed function']
+        E   assert ['src/hadavin...ry in POLICY'] == ['src/hadavin...wed function']
+        E     
+        E     Left contains one more item: "src/hadavin_sdk/audit/signer_vault.py:52: request ('GET', '{mount}/export/signing-key/{key_name}') has no grant and no free entry in POLICY"
+        E     Use -v to get more diff
+        E   assert (7 == 6)
+        E    +  where 7 = len(['src/hadavin_sdk/audit/signer_vault.py: stale allowlist entry (_call, line 40, .authed): no call to `.authed` that pa...it/signer_vault.py: POLICY declares request ('GET', '{mount}/keys/{key_name}') but the module makes no such call", ...])
+  [2] direct call of the guard's own functions on the plant copy:
+      (imports hadavin_sdk from /tmp/claude-0/-home-user-hadavin-sdk/3c7954a2-a1b2-5867-97dd-d4d94c9e06fd/scratchpad/plants/P07/src/hadavin_sdk/__init__.py)
+      call_problems(src/hadavin_sdk/actions/secrets_vault.py): 0 problem(s)
+      call_problems(src/hadavin_sdk/audit/signer_vault.py): 1 problem(s)
+        - src/hadavin_sdk/audit/signer_vault.py:52: request ('GET', '{mount}/export/signing-key/{key_name}') has no grant and no free entry in POLICY
+      call_problems(src/hadavin_sdk/sources/kubernetes.py): 0 problem(s)
+      kind_problems: 0 problem(s)
+      data problems (pp.problems per kind): 0 problem(s)
+      cross_problems: 0 problem(s)
+      name_problems: 0 problem(s)
+  [3] python tools/policy_page.py --check in the plant copy: exit code 0; output: ''
+====================================================================================================
+P08 Kubernetes: an operation that is not in READ_OPERATIONS added (k8s.list_secrets)
+  edit in src/hadavin_sdk/sources/kubernetes.py:
+    -         events, more_e = self._items(f"/api/v1/namespaces/{ns}/events", "k8s.list_events")
+    +         self._get(f"/api/v1/namespaces/{ns}/secrets", "k8s.list_secrets")
+    +         events, more_e = self._items(f"/api/v1/namespaces/{ns}/events", "k8s.list_events")
+  [1] pytest tests/test_policy_guard.py in the plant copy: exit code 1, 1.4s
+      last line: 4 failed, 78 passed in 0.92s
+      FAILED tests/test_policy_guard.py::test_the_calls_written_in_the_module_equal_the_declared_list[src/hadavin_sdk/sources/kubernetes.py]
+      FAILED tests/test_policy_guard.py::test_the_extracted_requests_are_the_ones_the_ticket_lists
+      FAILED tests/test_policy_guard.py::test_plant_a_new_kubernetes_operation_is_caught
+      FAILED tests/test_policy_guard.py::test_kubernetes_declared_operations_equal_the_bound_operation_ids
+      assertion lines (lines starting with 'E ' in the pytest output, each cut at 1500 characters):
+        E   assert ['src/hadavin...ry in POLICY'] == []
+        E     
+        E     Left contains one more item: "src/hadavin_sdk/sources/kubernetes.py:247: request ('k8s.list_secrets',) has no grant and no free entry in POLICY"
+        E     Use -v to get more diff
+        E   AssertionError: assert {'src/hadavin...es_review',)}} == {'src/hadavin...es_review',)}}
+        E     
+        E     Omitting 2 identical items, use -vv to show
+        E     Differing items:
+        E     {'src/hadavin_sdk/sources/kubernetes.py': {('k8s.list_deployments',), ('k8s.list_events',), ('k8s.list_secrets',), ('k8s.pod_log',), ('k8s.rules_review',)}} != {'src/hadavin_sdk/sources/kubernetes.py': {('k8s.list_deployments',), ('k8s.list_events',), ('k8s.pod_log',), ('k8s.rules_review',)}}
+        E     Use -v to get more diff
+        E   AssertionError: reported ["src/hadavin_sdk/sources/kubernetes.py:247, 548: request ('k8s.list_secrets',) has no grant and no free entry in POLICY"], expected ["src/hadavin_sdk/sources/kubernetes.py:548: request ('k8s.list_secrets',) has no grant and no free entry in POLICY"]
+        E   assert ['src/hadavin...ry in POLICY'] == ['src/hadavin...ry in POLICY']
+        E     
+        E     At index 0 diff: "src/hadavin_sdk/sources/kubernetes.py:247, 548: request ('k8s.list_secrets',) has no grant and no free entry in POLICY" != "src/hadavin_sdk/sources/kubernetes.py:548: request ('k8s.list_secrets',) has no grant and no free entry in POLICY"
+        E     Use -v to get more diff
+        E   AssertionError: assert {('k8s.list_d...les_review',)} == {('k8s.list_d...les_review',)}
+        E     
+        E     Extra items in the left set:
+        E     ('k8s.list_secrets',)
+        E     Use -v to get more diff
+  [2] direct call of the guard's own functions on the plant copy:
+      (imports hadavin_sdk from /tmp/claude-0/-home-user-hadavin-sdk/3c7954a2-a1b2-5867-97dd-d4d94c9e06fd/scratchpad/plants/P08/src/hadavin_sdk/__init__.py)
+      call_problems(src/hadavin_sdk/actions/secrets_vault.py): 0 problem(s)
+      call_problems(src/hadavin_sdk/audit/signer_vault.py): 0 problem(s)
+      call_problems(src/hadavin_sdk/sources/kubernetes.py): 1 problem(s)
+        - src/hadavin_sdk/sources/kubernetes.py:247: request ('k8s.list_secrets',) has no grant and no free entry in POLICY
+      kind_problems: 0 problem(s)
+      data problems (pp.problems per kind): 0 problem(s)
+      cross_problems: 0 problem(s)
+      name_problems: 0 problem(s)
+  [3] python tools/policy_page.py --check in the plant copy: exit code 0; output: ''
+====================================================================================================
+P09a Kubernetes: a `watch` request added under a declared operation id (path with ?watch=true)
+  edit in src/hadavin_sdk/sources/kubernetes.py:
+    -         events, more_e = self._items(f"/api/v1/namespaces/{ns}/events", "k8s.list_events")
+    +         self._get(f"/api/v1/namespaces/{ns}/events?watch=true", "k8s.list_events")
+    +         events, more_e = self._items(f"/api/v1/namespaces/{ns}/events", "k8s.list_events")
+  [1] pytest tests/test_policy_guard.py in the plant copy: exit code 0, 1.1s
+      last line: 82 passed in 0.72s
+      assertion lines (lines starting with 'E ' in the pytest output, each cut at 1500 characters):
+  [2] direct call of the guard's own functions on the plant copy:
+      (imports hadavin_sdk from /tmp/claude-0/-home-user-hadavin-sdk/3c7954a2-a1b2-5867-97dd-d4d94c9e06fd/scratchpad/plants/P09a/src/hadavin_sdk/__init__.py)
+      call_problems(src/hadavin_sdk/actions/secrets_vault.py): 0 problem(s)
+      call_problems(src/hadavin_sdk/audit/signer_vault.py): 0 problem(s)
+      call_problems(src/hadavin_sdk/sources/kubernetes.py): 0 problem(s)
+      kind_problems: 0 problem(s)
+      data problems (pp.problems per kind): 0 problem(s)
+      cross_problems: 0 problem(s)
+      name_problems: 0 problem(s)
+  [3] python tools/policy_page.py --check in the plant copy: exit code 0; output: ''
+====================================================================================================
+P09b Kubernetes: a grant with the verb `watch` added to POLICY (id R23, same operation as R21)
+  edit in src/hadavin_sdk/sources/kubernetes.py:
+    -             "reason": "reads one pod's log lines",
+    -             "verified": ("2026-11-11", "K-RBAC", "K-SRC"),
+    -             "confirmed_live": None,
+    -             "claims_unverified": (),
+    -         },
+    +             "reason": "reads one pod's log lines",
+    +             "verified": ("2026-11-11", "K-RBAC", "K-SRC"),
+    +             "confirmed_live": None,
+    +             "claims_unverified": (),
+    +         },
+    +         {
+    +             "id": "R23",
+    +             "name": "watch",
+    +             "resource": "core/events in {namespaces}",
+    +             "bound": "",
+    +             "operations": (("k8s.list_events",),),
+    +             "applies_when": "",
+    +             "reason": "follows events",
+    +             "verified": ("2026-11-11", "K-AUTHZ"),
+    +             "confirmed_live": None,
+    +             "claims_unverified": (),
+    +         },
+  [1] pytest tests/test_policy_guard.py in the plant copy: exit code 1, 1.1s
+      last line: 3 failed, 79 passed in 0.72s
+      FAILED tests/test_policy_guard.py::test_each_kubernetes_grant_is_the_verb_and_resource_of_its_path
+      FAILED tests/test_policy_guard.py::test_pr1_grants_are_all_verified_with_no_unverified_claim
+      FAILED tests/test_policy_guard.py::test_the_committed_page_equals_what_the_data_gives
+      assertion lines (lines starting with 'E ' in the pytest output, each cut at 1500 characters):
+        E   AssertionError: R23
+        E   assert 'watch' == 'list'
+        E     
+        E     - list
+        E     + watch
+        E   AssertionError: reported ['R17', 'R18', 'R19', 'R20', 'R21', 'R22', 'R23'], expected ['R17', 'R18', 'R19', 'R20', 'R21', 'R22']
+        E   assert ['R17', 'R18'...', 'R22', ...] == ['R17', 'R18'... 'R21', 'R22']
+        E     
+        E     Left contains one more item: 'R23'
+        E     Use -v to get more diff
+        E   AssertionError: docs/least-privilege-policies.md differs from the data: run `python tools/policy_page.py --write` and commit
+        E   assert '# Least-priv...` (channel)\n' == '# Least-priv...` (channel)\n'
+        E     
+        E     Skipping 10080 identical leading characters in diff, use -v to show
+        E        | none |
+        E     - | R23 | `watch` | `core/events in {namespaces}` | no wildcard | `k8s.list_events` | follows events | always | 2026-11-11, sources K-AUTHZ | no | none |
+        E       
+        E       Requests that need no permission:
+        E       ...
+        E     
+        E     ...Full output truncated, use '-vv' to show
+  [2] direct call of the guard's own functions on the plant copy:
+      (imports hadavin_sdk from /tmp/claude-0/-home-user-hadavin-sdk/3c7954a2-a1b2-5867-97dd-d4d94c9e06fd/scratchpad/plants/P09b/src/hadavin_sdk/__init__.py)
+      call_problems(src/hadavin_sdk/actions/secrets_vault.py): 0 problem(s)
+      call_problems(src/hadavin_sdk/audit/signer_vault.py): 0 problem(s)
+      call_problems(src/hadavin_sdk/sources/kubernetes.py): 0 problem(s)
+      kind_problems: 0 problem(s)
+      data problems (pp.problems per kind): 0 problem(s)
+      cross_problems: 0 problem(s)
+      name_problems: 0 problem(s)
+  [3] python tools/policy_page.py --check in the plant copy: exit code 1; output: 'policy page: docs/least-privilege-policies.md differs from the data; run --write and commit'
+====================================================================================================
+P09c Kubernetes: the verb of grant R21 changed from `list` to `watch`
+  edit in src/hadavin_sdk/sources/kubernetes.py:
+    -             "name": "list",
+    -             "resource": "core/events in {namespaces}",
+    +             "name": "watch",
+    +             "resource": "core/events in {namespaces}",
+  [1] pytest tests/test_policy_guard.py in the plant copy: exit code 1, 1.3s
+      last line: 2 failed, 80 passed in 0.85s
+      FAILED tests/test_policy_guard.py::test_each_kubernetes_grant_is_the_verb_and_resource_of_its_path
+      FAILED tests/test_policy_guard.py::test_the_committed_page_equals_what_the_data_gives
+      assertion lines (lines starting with 'E ' in the pytest output, each cut at 1500 characters):
+        E   AssertionError: R21
+        E   assert 'watch' == 'list'
+        E     
+        E     - list
+        E     + watch
+        E   AssertionError: docs/least-privilege-policies.md differs from the data: run `python tools/policy_page.py --write` and commit
+        E   assert '# Least-priv...` (channel)\n' == '# Least-priv...` (channel)\n'
+        E     
+        E     Skipping 9749 identical leading characters in diff, use -v to show
+        E       
+        E     - | R21 | `watch` | `core/events in {namespaces}` | no wildcard | `k8s.list_events` | reads events in the time window | always | 2026-11-11, sources K-AUTHZ, K-SRC | no | none |
+        E     ?          ^^ --
+        E     + | R21 | `list` | `core/events in {namespaces}` | no wildcard | `k8s.list_events` | reads events in the time window | always | 2026-11-11, sources K-AUTHZ, K-SRC | no | none |
+        E     ?          ^^^...
+        E     
+        E     ...Full output truncated, use '-vv' to show
+  [2] direct call of the guard's own functions on the plant copy:
+      (imports hadavin_sdk from /tmp/claude-0/-home-user-hadavin-sdk/3c7954a2-a1b2-5867-97dd-d4d94c9e06fd/scratchpad/plants/P09c/src/hadavin_sdk/__init__.py)
+      call_problems(src/hadavin_sdk/actions/secrets_vault.py): 0 problem(s)
+      call_problems(src/hadavin_sdk/audit/signer_vault.py): 0 problem(s)
+      call_problems(src/hadavin_sdk/sources/kubernetes.py): 0 problem(s)
+      kind_problems: 0 problem(s)
+      data problems (pp.problems per kind): 0 problem(s)
+      cross_problems: 0 problem(s)
+      name_problems: 0 problem(s)
+  [3] python tools/policy_page.py --check in the plant copy: exit code 1; output: 'policy page: docs/least-privilege-policies.md differs from the data; run --write and commit'
+====================================================================================================
+P10a a fourth kind module with no POLICY added to the tool's table KIND_MODULES (secrets/env)
+  edit in tools/policy_page.py:
+    -     "source/kubernetes": "src/hadavin_sdk/sources/kubernetes.py",
+    +     "source/kubernetes": "src/hadavin_sdk/sources/kubernetes.py",
+    +     "secrets/env": "src/hadavin_sdk/actions/secrets_env.py",
+  [1] pytest tests/test_policy_guard.py in the plant copy: exit code 1, 2.9s
+      last line: 45 failed, 37 passed in 2.09s
+      FAILED tests/test_policy_guard.py::test_plant_a_new_kind_on_no_list_is_caught
+      FAILED tests/test_policy_guard.py::test_plant_a_declared_kind_left_on_the_pending_list_is_caught
+      FAILED tests/test_policy_guard.py::test_plant_an_overdue_pending_kind_is_caught
+      FAILED tests/test_policy_guard.py::test_every_declared_kind_module_has_a_call_shape
+      FAILED tests/test_policy_guard.py::test_kubernetes_declared_operations_equal_the_bound_operation_ids
+      FAILED tests/test_policy_guard.py::test_each_kubernetes_grant_is_the_verb_and_resource_of_its_path
+      FAILED tests/test_policy_guard.py::test_the_kubernetes_never_list_equals_what_the_code_refuses_at_start_up
+      FAILED tests/test_policy_guard.py::test_the_generated_role_passes_the_kinds_own_read_only_rule
+      FAILED tests/test_policy_guard.py::test_plant_a_widened_role_fails_the_kinds_own_read_only_rule[extra0-write verb patch]
+      FAILED tests/test_policy_guard.py::test_plant_a_widened_role_fails_the_kinds_own_read_only_rule[extra1-access to pods/exec]
+      FAILED tests/test_policy_guard.py::test_plant_a_widened_role_fails_the_kinds_own_read_only_rule[extra2-read access to secrets]
+      FAILED tests/test_policy_guard.py::test_the_three_literals_break_no_data_rule
+      FAILED tests/test_policy_guard.py::test_d2_every_field_of_a_resource_is_a_setting_of_the_kind
+      FAILED tests/test_policy_guard.py::test_plant_d5_a_never_action_that_another_kind_needs_is_caught
+      FAILED tests/test_policy_guard.py::test_plant_a_grant_id_used_by_two_kinds_is_caught
+      FAILED tests/test_policy_guard.py::test_every_grant_name_is_verified_or_pending_and_every_source_id_resolves
+      FAILED tests/test_policy_guard.py::test_pr1_grants_are_all_verified_with_no_unverified_claim
+      FAILED tests/test_policy_guard.py::test_plant_an_unverified_grant_with_no_pending_entry_is_caught
+      FAILED tests/test_policy_guard.py::test_plant_a_source_id_that_does_not_resolve_is_caught
+      FAILED tests/test_policy_guard.py::test_plant_no_copy_ready_text_for_a_kind_with_an_unverified_grant_or_claim
+      FAILED tests/test_policy_guard.py::test_vault_text_in_page_mode_and_with_values
+      FAILED tests/test_policy_guard.py::test_an_empty_vault_prefix_is_refused_and_the_page_says_so_first
+      FAILED tests/test_policy_guard.py::test_each_vault_grammar_refuses_what_is_not_a_plain_name[*]
+      FAILED tests/test_policy_guard.py::test_each_vault_grammar_refuses_what_is_not_a_plain_name[a*]
+      FAILED tests/test_policy_guard.py::test_each_vault_grammar_refuses_what_is_not_a_plain_name[{mount}]
+      FAILED tests/test_policy_guard.py::test_each_vault_grammar_refuses_what_is_not_a_plain_name[a b]
+      FAILED tests/test_policy_guard.py::test_each_vault_grammar_refuses_what_is_not_a_plain_name[ a]
+      FAILED tests/test_policy_guard.py::test_each_vault_grammar_refuses_what_is_not_a_plain_name[a\n]
+      FAILED tests/test_policy_guard.py::test_each_vault_grammar_refuses_what_is_not_a_plain_name[]
+      FAILED tests/test_policy_guard.py::test_each_vault_grammar_refuses_what_is_not_a_plain_name[..]
+      FAILED tests/test_policy_guard.py::test_each_vault_grammar_refuses_what_is_not_a_plain_name[a/../b]
+      FAILED tests/test_policy_guard.py::test_each_vault_grammar_refuses_what_is_not_a_plain_name[a/]
+      FAILED tests/test_policy_guard.py::test_the_kubernetes_grammar_refuses_what_is_not_a_plain_name[*]
+      FAILED tests/test_policy_guard.py::test_the_kubernetes_grammar_refuses_what_is_not_a_plain_name[Shop]
+      FAILED tests/test_policy_guard.py::test_the_kubernetes_grammar_refuses_what_is_not_a_plain_name[a b]
+      FAILED tests/test_policy_guard.py::test_the_kubernetes_grammar_refuses_what_is_not_a_plain_name[{namespaces}]
+      FAILED tests/test_policy_guard.py::test_the_kubernetes_grammar_refuses_what_is_not_a_plain_name[shop,]
+      FAILED tests/test_policy_guard.py::test_the_kubernetes_grammar_refuses_what_is_not_a_plain_name[-a]
+      FAILED tests/test_policy_guard.py::test_the_kubernetes_grammar_refuses_what_is_not_a_plain_name[a_b]
+      FAILED tests/test_policy_guard.py::test_the_kubernetes_grammar_refuses_what_is_not_a_plain_name[]
+      FAILED tests/test_policy_guard.py::test_a_missing_an_unused_and_a_non_text_value_are_refused
+      FAILED tests/test_policy_guard.py::test_kubernetes_page_mode_keeps_the_placeholders
+      FAILED tests/test_policy_guard.py::test_the_committed_page_equals_what_the_data_gives
+      FAILED tests/test_policy_guard.py::test_the_page_states_its_limits_and_offers_text_for_the_three_kinds
+      FAILED tests/test_policy_guard.py::test_plant_a_page_that_differs_from_the_data_fails_the_check
+      assertion lines (lines starting with 'E ' in the pytest output, each cut at 1500 characters):
+        E   AssertionError: reported ['kind secrets/env is on more than one list', 'kind secrets/new_cloud has no POLICY and is on no list: declare it or add a dated entry'], expected ['kind secrets/new_cloud has no POLICY and is on no list: declare it or add a dated entry']
+        E   assert ['kind secret... dated entry'] == ['kind secret... dated entry']
+        E     
+        E     At index 0 diff: 'kind secrets/env is on more than one list' != 'kind secrets/new_cloud has no POLICY and is on no list: declare it or add a dated entry'
+        E     Left contains one more item: 'kind secrets/new_cloud has no POLICY and is on no list: declare it or add a dated entry'
+        E     Use -v to get more diff
+        E   AssertionError: reported ['kind secrets/env is on more than one list', 'kind secrets/vault is on more than one list', 'PENDING_KINDS secrets/vault is fixed or gone: delete the entry'], expected ['kind secrets/vault is on more than one list', 'PENDING_KINDS secrets/vault is fixed or gone: delete the entry']
+        E   assert ['kind secret...te the entry'] == ['kind secret...te the entry']
+        E     
+        E     At index 0 diff: 'kind secrets/env is on more than one list' != 'kind secrets/vault is on more than one list'
+        E     Left contains one more item: 'PENDING_KINDS secrets/vault is fixed or gone: delete the entry'
+        E     Use -v to get more diff
+        E   AssertionError: assert (8 == 7)
+        E    +  where 8 = len(['kind secrets/env is on more than one list', 'PENDING_KINDS secrets/aws_secrets_manager is overdue (review_by 2026-12...verdue (review_by 2026-12-11): Q8c PR 2', 'PENDING_KINDS llm/bedrock is overdue (review_by 2026-12-11): Q8c PR 2', ...])
+        E   AssertionError: assert {'src/hadavin...ubernetes.py'} == {'src/hadavin...ubernetes.py'}
+        E     
+        E     Extra items in the right set:
+        E     'src/hadavin_sdk/actions/secrets_env.py'
+        E     Use -v to get more diff
+        E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_env.py
+        E   assert not ['src/hadavin_sdk/actions/secrets_env.py']
+        E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_env.py
+        E   assert not ['src/hadavin_sdk/actions/secrets_env.py']
+        E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_env.py
+        E   assert not ['src/hadavin_sdk/actions/secrets_env.py']
+        E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_env.py
+        E   assert not ['src/hadavin_sdk/actions/secrets_env.py']
+        E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_env.py
+        E   assert not ['src/hadavin_sdk/actions/secrets_env.py']
+        E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_env.py
+        E   assert not ['src/hadavin_sdk/actions/secrets_env.py']
+        E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_env.py
+        E   assert not ['src/hadavin_sdk/actions/secrets_env.py']
+        E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_env.py
+        E   assert False
+        E    +  where False = isinstance(None, dict)
+        E   AssertionError: assert {'secrets/vau...e/kubernetes'} == {'secrets/env...e/kubernetes'}
+        E     
+        E     Extra items in the right set:
+        E     'secrets/env'
+        E     Use -v to get more diff
+        E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_env.py
+        E   assert not ['src/hadavin_sdk/actions/secrets_env.py']
+        E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_env.py
+        E   assert not ['src/hadavin_sdk/actions/secrets_env.py']
+        E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_env.py
+        E   assert not ['src/hadavin_sdk/actions/secrets_env.py']
+        E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_env.py
+        E   assert not ['src/hadavin_sdk/actions/secrets_env.py']
+        E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_env.py
+        E   assert not ['src/hadavin_sdk/actions/secrets_env.py']
+        E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_env.py
+        E   assert not ['src/hadavin_sdk/actions/secrets_env.py']
+        E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_env.py
+        E   assert not ['src/hadavin_sdk/actions/secrets_env.py']
+        E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_env.py
+        E   assert not ['src/hadavin_sdk/actions/secrets_env.py']
+        E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_env.py
+        E   assert not ['src/hadavin_sdk/actions/secrets_env.py']
+        E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_env.py
+        E   assert not ['src/hadavin_sdk/actions/secrets_env.py']
+        E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_env.py
+        E   assert not ['src/hadavin_sdk/actions/secrets_env.py']
+        E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_env.py
+        E   assert not ['src/hadavin_sdk/actions/secrets_env.py']
+        E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_env.py
+        E   assert not ['src/hadavin_sdk/actions/secrets_env.py']
+        E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_env.py
+        E   assert not ['src/hadavin_sdk/actions/secrets_env.py']
+        E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_env.py
+        E   assert not ['src/hadavin_sdk/actions/secrets_env.py']
+        E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_env.py
+        E   assert not ['src/hadavin_sdk/actions/secrets_env.py']
+        E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_env.py
+        E   assert not ['src/hadavin_sdk/actions/secrets_env.py']
+        E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_env.py
+        E   assert not ['src/hadavin_sdk/actions/secrets_env.py']
+        E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_env.py
+        E   assert not ['src/hadavin_sdk/actions/secrets_env.py']
+        E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_env.py
+        E   assert not ['src/hadavin_sdk/actions/secrets_env.py']
+        E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_env.py
+        E   assert not ['src/hadavin_sdk/actions/secrets_env.py']
+        E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_env.py
+        E   assert not ['src/hadavin_sdk/actions/secrets_env.py']
+        E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_env.py
+        E   assert not ['src/hadavin_sdk/actions/secrets_env.py']
+        E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_env.py
+        E   assert not ['src/hadavin_sdk/actions/secrets_env.py']
+        E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_env.py
+        E   assert not ['src/hadavin_sdk/actions/secrets_env.py']
+        E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_env.py
+        E   assert not ['src/hadavin_sdk/actions/secrets_env.py']
+        E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_env.py
+        E   assert not ['src/hadavin_sdk/actions/secrets_env.py']
+        E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_env.py
+        E   assert not ['src/hadavin_sdk/actions/secrets_env.py']
+        E   AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_env.py
+        E   assert not ['src/hadavin_sdk/actions/secrets_env.py']
+        E   tools.policy_page.PolicyError: no POLICY in src/hadavin_sdk/actions/secrets_env.py
+        E   tools.policy_page.PolicyError: no POLICY in src/hadavin_sdk/actions/secrets_env.py
+        E   tools.policy_page.PolicyError: no POLICY in src/hadavin_sdk/actions/secrets_env.py
+  [2] direct call of the guard's own functions on the plant copy:
+      (imports hadavin_sdk from /tmp/claude-0/-home-user-hadavin-sdk/3c7954a2-a1b2-5867-97dd-d4d94c9e06fd/scratchpad/plants/P10a/src/hadavin_sdk/__init__.py)
+      call_problems(src/hadavin_sdk/actions/secrets_vault.py): 0 problem(s)
+      call_problems(src/hadavin_sdk/audit/signer_vault.py): 0 problem(s)
+      call_problems(src/hadavin_sdk/sources/kubernetes.py): 0 problem(s)
+      kind_problems: 0 problem(s)
+      data problems (pp.problems per kind): RAISED AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_env.py
+      cross_problems: RAISED AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_env.py
+      name_problems: RAISED AssertionError: no POLICY in src/hadavin_sdk/actions/secrets_env.py
+  [3] python tools/policy_page.py --check in the plant copy: exit code 1; output: 'policy page: no POLICY in src/hadavin_sdk/actions/secrets_env.py'
+====================================================================================================
+P10b a new kind added to the backends table (secrets/new_cloud), on no list and with no POLICY
+  edit in src/hadavin_sdk/backends/table.py:
+    -         "fake": Entry(KindSettings, f"{_BUILTIN}:fake_secrets"),
+    +         "fake": Entry(KindSettings, f"{_BUILTIN}:fake_secrets"),
+    +         "new_cloud": Entry(KindSettings, f"{_BUILTIN}:fake_secrets"),
+  [1] pytest tests/test_policy_guard.py in the plant copy: exit code 1, 2.2s
+      last line: 3 failed, 79 passed in 1.39s
+      FAILED tests/test_policy_guard.py::test_every_kind_is_declared_pending_or_holds_no_identity
+      FAILED tests/test_policy_guard.py::test_plant_a_declared_kind_left_on_the_pending_list_is_caught
+      FAILED tests/test_policy_guard.py::test_plant_an_overdue_pending_kind_is_caught
+      assertion lines (lines starting with 'E ' in the pytest output, each cut at 1500 characters):
+        E   AssertionError: assert ['kind secret... dated entry'] == []
+        E     
+        E     Left contains one more item: 'kind secrets/new_cloud has no POLICY and is on no list: declare it or add a dated entry'
+        E     Use -v to get more diff
+        E   AssertionError: reported ['kind secrets/new_cloud has no POLICY and is on no list: declare it or add a dated entry', 'kind secrets/vault is on more than one list', 'PENDING_KINDS secrets/vault is fixed or gone: delete the entry'], expected ['kind secrets/vault is on more than one list', 'PENDING_KINDS secrets/vault is fixed or gone: delete the entry']
+        E   assert ['kind secret...te the entry'] == ['kind secret...te the entry']
+        E     
+        E     At index 0 diff: 'kind secrets/new_cloud has no POLICY and is on no list: declare it or add a dated entry' != 'kind secrets/vault is on more than one list'
+        E     Left contains one more item: 'PENDING_KINDS secrets/vault is fixed or gone: delete the entry'
+        E     Use -v to get more diff
+        E   AssertionError: assert (8 == 7)
+        E    +  where 8 = len(['kind secrets/new_cloud has no POLICY and is on no list: declare it or add a dated entry', 'PENDING_KINDS secrets/aws...verdue (review_by 2026-12-11): Q8c PR 2', 'PENDING_KINDS llm/bedrock is overdue (review_by 2026-12-11): Q8c PR 2', ...])
+  [2] direct call of the guard's own functions on the plant copy:
+      (imports hadavin_sdk from /tmp/claude-0/-home-user-hadavin-sdk/3c7954a2-a1b2-5867-97dd-d4d94c9e06fd/scratchpad/plants/P10b/src/hadavin_sdk/__init__.py)
+      call_problems(src/hadavin_sdk/actions/secrets_vault.py): 0 problem(s)
+      call_problems(src/hadavin_sdk/audit/signer_vault.py): 0 problem(s)
+      call_problems(src/hadavin_sdk/sources/kubernetes.py): 0 problem(s)
+      kind_problems: 1 problem(s)
+        - kind secrets/new_cloud has no POLICY and is on no list: declare it or add a dated entry
+      data problems (pp.problems per kind): 0 problem(s)
+      cross_problems: 0 problem(s)
+      name_problems: 0 problem(s)
+  [3] python tools/policy_page.py --check in the plant copy: exit code 0; output: ''
+====================================================================================================
+P11 grant R17: `verified` set to a URL
+  edit in src/hadavin_sdk/actions/secrets_vault.py:
+    -             "verified": ("2026-11-11", "V-KV", "V-POL", "B-KV", "B-POL"),
+    +             "verified": ("2026-11-11", "https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2"),
+  [1] pytest tests/test_policy_guard.py in the plant copy: exit code 1, 2.7s
+      last line: 57 failed, 25 passed in 2.16s
+      FAILED tests/test_policy_guard.py::test_every_kind_is_declared_pending_or_holds_no_identity
+      FAILED tests/test_policy_guard.py::test_the_calls_written_in_the_module_equal_the_declared_list[src/hadavin_sdk/actions/secrets_vault.py]
+      FAILED tests/test_policy_guard.py::test_plant_a_new_request_with_no_grant_is_caught
+      FAILED tests/test_policy_guard.py::test_plant_a_request_that_is_not_a_literal_is_caught
+      FAILED tests/test_policy_guard.py::test_plant_a_path_built_by_a_call_is_not_foldable_and_is_caught
+      FAILED tests/test_policy_guard.py::test_plant_a_banned_indirect_call_is_caught[getattr(p, name)('GET', 'sys/mounts')-banned `getattr` with a name that is not a literal]
+      FAILED tests/test_policy_guard.py::test_plant_a_banned_indirect_call_is_caught[operator.methodcaller('authed', 'GET', 'sys/mounts')(p)-banned indirect call `methodcaller`]
+      FAILED tests/test_policy_guard.py::test_plant_a_banned_indirect_call_is_caught[p.__getattribute__('authed')-banned indirect call `__getattribute__`]
+      FAILED tests/test_policy_guard.py::test_plant_a_banned_indirect_call_is_caught[p.meta.client.get_waiter('x')-banned indirect call `.meta.client`]
+      FAILED tests/test_policy_guard.py::test_plant_a_banned_indirect_call_is_caught[p._make_api_call('GetSecretValue', {})-banned indirect call `_make_api_call`]
+      FAILED tests/test_policy_guard.py::test_plant_a_sink_taken_as_a_value_is_caught
+      FAILED tests/test_policy_guard.py::test_a_request_named_only_in_a_docstring_changes_nothing
+      FAILED tests/test_policy_guard.py::test_kubernetes_declared_operations_equal_the_bound_operation_ids
+      FAILED tests/test_policy_guard.py::test_each_kubernetes_grant_is_the_verb_and_resource_of_its_path
+      FAILED tests/test_policy_guard.py::test_the_kubernetes_never_list_equals_what_the_code_refuses_at_start_up
+      FAILED tests/test_policy_guard.py::test_the_generated_role_passes_the_kinds_own_read_only_rule
+      FAILED tests/test_policy_guard.py::test_plant_a_widened_role_fails_the_kinds_own_read_only_rule[extra0-write verb patch]
+      FAILED tests/test_policy_guard.py::test_plant_a_widened_role_fails_the_kinds_own_read_only_rule[extra1-access to pods/exec]
+      FAILED tests/test_policy_guard.py::test_plant_a_widened_role_fails_the_kinds_own_read_only_rule[extra2-read access to secrets]
+      FAILED tests/test_policy_guard.py::test_the_three_literals_break_no_data_rule
+      FAILED tests/test_policy_guard.py::test_plant_d1_a_wildcard_in_a_permission_name_is_caught
+      FAILED tests/test_policy_guard.py::test_plant_d1_a_wildcard_resource_with_no_bound_is_caught
+      FAILED tests/test_policy_guard.py::test_d2_every_field_of_a_resource_is_a_setting_of_the_kind
+      FAILED tests/test_policy_guard.py::test_plant_d3_an_empty_reason_is_caught - ...
+      FAILED tests/test_policy_guard.py::test_plant_d5_a_never_action_that_another_kind_needs_is_caught
+      FAILED tests/test_policy_guard.py::test_plant_a_grant_id_used_by_two_kinds_is_caught
+      FAILED tests/test_policy_guard.py::test_plant_d7_unknown_keys_platform_and_never_type_are_refused
+      FAILED tests/test_policy_guard.py::test_every_grant_name_is_verified_or_pending_and_every_source_id_resolves
+      FAILED tests/test_policy_guard.py::test_pr1_grants_are_all_verified_with_no_unverified_claim
+      FAILED tests/test_policy_guard.py::test_plant_an_unverified_grant_with_no_pending_entry_is_caught
+      FAILED tests/test_policy_guard.py::test_plant_a_source_id_that_does_not_resolve_is_caught
+      FAILED tests/test_policy_guard.py::test_plant_no_copy_ready_text_for_a_kind_with_an_unverified_grant_or_claim
+      FAILED tests/test_policy_guard.py::test_vault_text_in_page_mode_and_with_values
+      FAILED tests/test_policy_guard.py::test_an_empty_vault_prefix_is_refused_and_the_page_says_so_first
+      FAILED tests/test_policy_guard.py::test_each_vault_grammar_refuses_what_is_not_a_plain_name[*]
+      FAILED tests/test_policy_guard.py::test_each_vault_grammar_refuses_what_is_not_a_plain_name[a*]
+      FAILED tests/test_policy_guard.py::test_each_vault_grammar_refuses_what_is_not_a_plain_name[{mount}]
+      FAILED tests/test_policy_guard.py::test_each_vault_grammar_refuses_what_is_not_a_plain_name[a b]
+      FAILED tests/test_policy_guard.py::test_each_vault_grammar_refuses_what_is_not_a_plain_name[ a]
+      FAILED tests/test_policy_guard.py::test_each_vault_grammar_refuses_what_is_not_a_plain_name[a\n]
+      FAILED tests/test_policy_guard.py::test_each_vault_grammar_refuses_what_is_not_a_plain_name[]
+      FAILED tests/test_policy_guard.py::test_each_vault_grammar_refuses_what_is_not_a_plain_name[..]
+      FAILED tests/test_policy_guard.py::test_each_vault_grammar_refuses_what_is_not_a_plain_name[a/../b]
+      FAILED tests/test_policy_guard.py::test_each_vault_grammar_refuses_what_is_not_a_plain_name[a/]
+      FAILED tests/test_policy_guard.py::test_the_kubernetes_grammar_refuses_what_is_not_a_plain_name[*]
+      FAILED tests/test_policy_guard.py::test_the_kubernetes_grammar_refuses_what_is_not_a_plain_name[Shop]
+      FAILED tests/test_policy_guard.py::test_the_kubernetes_grammar_refuses_what_is_not_a_plain_name[a b]
+      FAILED tests/test_policy_guard.py::test_the_kubernetes_grammar_refuses_what_is_not_a_plain_name[{namespaces}]
+      FAILED tests/test_policy_guard.py::test_the_kubernetes_grammar_refuses_what_is_not_a_plain_name[shop,]
+      FAILED tests/test_policy_guard.py::test_the_kubernetes_grammar_refuses_what_is_not_a_plain_name[-a]
+      FAILED tests/test_policy_guard.py::test_the_kubernetes_grammar_refuses_what_is_not_a_plain_name[a_b]
+      FAILED tests/test_policy_guard.py::test_the_kubernetes_grammar_refuses_what_is_not_a_plain_name[]
+      FAILED tests/test_policy_guard.py::test_a_missing_an_unused_and_a_non_text_value_are_refused
+      FAILED tests/test_policy_guard.py::test_kubernetes_page_mode_keeps_the_placeholders
+      FAILED tests/test_policy_guard.py::test_the_committed_page_equals_what_the_data_gives
+      FAILED tests/test_policy_guard.py::test_the_page_states_its_limits_and_offers_text_for_the_three_kinds
+      FAILED tests/test_policy_guard.py::test_plant_a_page_that_differs_from_the_data_fails_the_check
+      assertion lines (lines starting with 'E ' in the pytest output, each cut at 1500 characters):
+        E   tools.policy_page.PolicyError: secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: src/hadavin_sdk/actions/secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: src/hadavin_sdk/actions/secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: src/hadavin_sdk/actions/secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: src/hadavin_sdk/actions/secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: src/hadavin_sdk/actions/secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: src/hadavin_sdk/actions/secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: src/hadavin_sdk/actions/secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: src/hadavin_sdk/actions/secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: src/hadavin_sdk/actions/secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: src/hadavin_sdk/actions/secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: src/hadavin_sdk/actions/secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   AssertionError: secrets/vault
+        E   assert ['grant R17: ...ritten here)'] == []
+        E     
+        E     Left contains one more item: "grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)"
+        E     Use -v to get more diff
+        E   AssertionError: reported ["grant R17: name 're*d' must be one permission name with no * or ?", "grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)", "grant R17: 're*d' is not a Vault capability a grant may hold"], expected ["grant R17: name 're*d' must be one permission name with no * or ?", "grant R17: 're*d' is not a Vault capability a grant may hold"]
+        E   assert ['grant R17: ...ant may hold"] == ['grant R17: ...ant may hold"]
+        E     
+        E     At index 1 diff: "grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)" != "grant R17: 're*d' is not a Vault capability a grant may hold"
+        E     Left contains one more item: "grant R17: 're*d' is not a Vault capability a grant may hold"
+        E     Use -v to get more diff
+        E   AssertionError: reported ["grant R17: resource '{mount}/data/{path_prefix}*' holds a wildcard, so `bound` must say what limits it", "grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)"], expected ["grant R17: resource '{mount}/data/{path_prefix}*' holds a wildcard, so `bound` must say what limits it"]
+        E   assert ['grant R17: ...ritten here)'] == ['grant R17: ...at limits it']
+        E     
+        E     Left contains one more item: "grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)"
+        E     Use -v to get more diff
+        E   tools.policy_page.PolicyError: secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   AssertionError: reported ["grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)", 'never entry 0: reason is empty'], expected ['never entry 0: reason is empty']
+        E   assert ['grant R17: ...son is empty'] == ['never entry...son is empty']
+        E     
+        E     At index 0 diff: "grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)" != 'never entry 0: reason is empty'
+        E     Left contains one more item: 'never entry 0: reason is empty'
+        E     Use -v to get more diff
+        E   tools.policy_page.PolicyError: secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   AssertionError: reported ["grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)", "never entry 0: unknown never type 'deny'"], expected ["never entry 0: unknown never type 'deny'"]
+        E   assert ['grant R17: ... type 'deny'"] == ["never entry... type 'deny'"]
+        E     
+        E     At index 0 diff: "grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)" != "never entry 0: unknown never type 'deny'"
+        E     Left contains one more item: "never entry 0: unknown never type 'deny'"
+        E     Use -v to get more diff
+        E   tools.policy_page.PolicyError: secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+        E   tools.policy_page.PolicyError: secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+  [2] direct call of the guard's own functions on the plant copy:
+      (imports hadavin_sdk from /tmp/claude-0/-home-user-hadavin-sdk/3c7954a2-a1b2-5867-97dd-d4d94c9e06fd/scratchpad/plants/P11/src/hadavin_sdk/__init__.py)
+      call_problems(src/hadavin_sdk/actions/secrets_vault.py): RAISED PolicyError: src/hadavin_sdk/actions/secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+      call_problems(src/hadavin_sdk/audit/signer_vault.py): 0 problem(s)
+      call_problems(src/hadavin_sdk/sources/kubernetes.py): 0 problem(s)
+      kind_problems: RAISED PolicyError: secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+      data problems (pp.problems per kind): 1 problem(s)
+        - secrets/vault: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+      cross_problems: RAISED PolicyError: secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+      name_problems: RAISED PolicyError: secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)
+  [3] python tools/policy_page.py --check in the plant copy: exit code 1; output: "policy page: secrets_vault.py: grant R17: verified source 'https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2' is not a source id (a URL or host is never written here)"
+====================================================================================================
+P12 grant R17: `verified` set to None, no pending entry
+  edit in src/hadavin_sdk/actions/secrets_vault.py:
+    -             "verified": ("2026-11-11", "V-KV", "V-POL", "B-KV", "B-POL"),
+    +             "verified": None,
+  [1] pytest tests/test_policy_guard.py in the plant copy: exit code 1, 1.6s
+      last line: 6 failed, 76 passed in 1.09s
+      FAILED tests/test_policy_guard.py::test_every_grant_name_is_verified_or_pending_and_every_source_id_resolves
+      FAILED tests/test_policy_guard.py::test_pr1_grants_are_all_verified_with_no_unverified_claim
+      FAILED tests/test_policy_guard.py::test_plant_an_unverified_grant_with_no_pending_entry_is_caught
+      FAILED tests/test_policy_guard.py::test_plant_no_copy_ready_text_for_a_kind_with_an_unverified_grant_or_claim
+      FAILED tests/test_policy_guard.py::test_the_committed_page_equals_what_the_data_gives
+      FAILED tests/test_policy_guard.py::test_the_page_states_its_limits_and_offers_text_for_the_three_kinds
+      assertion lines (lines starting with 'E ' in the pytest output, each cut at 1500 characters):
+        E   AssertionError: assert ['secrets/vau..._NAMES entry'] == []
+        E     
+        E     Left contains one more item: 'secrets/vault R17: the name is not found in a vendor source (verified is None) and has no PENDING_NAMES entry'
+        E     Use -v to get more diff
+        E   AssertionError: R17
+        E   assert (None is not None)
+        E    +  where None = Grant(id='R17', name='read', resource='{mount}/data/{path_prefix}*', bound="the prefix is this deployment's `path_pref...{name}'),), applies_when='', reason='reads one named secret', verified=None, confirmed_live=None, claims_unverified=()).verified
+        E   AssertionError: reported [], expected ["PENDING_NAMES ('secrets/vault', 'R17') is fixed or gone: delete the entry"]
+        E   assert [] == ['PENDING_NAM...te the entry']
+        E     
+        E     Right contains one more item: "PENDING_NAMES ('secrets/vault', 'R17') is fixed or gone: delete the entry"
+        E     Use -v to get more diff
+        E   assert False
+        E    +  where False = <function copy_ready at 0x7f275736c4a0>(Policy(platform='vault', how="A Vault token: read from an environment variable (auth `token`), or issued at sign-in th...d not to (`no_default_policy` when a token is created, `token_no_default_policy` on an AppRole or Kubernetes role).',)))
+        E    +    where <function copy_ready at 0x7f275736c4a0> = pp.copy_ready
+        E   AssertionError: docs/least-privilege-policies.md differs from the data: run `python tools/policy_page.py --write` and commit
+        E   assert '# Least-priv...` (channel)\n' == '# Least-priv...` (channel)\n'
+        E     
+        E     Skipping 3123 identical leading characters in diff, use -v to show
+        E     -  always | not yet checked | no | none |
+        E     +  always | 2026-11-11, sources V-KV, V-POL, B-KV, B-POL | no | none |
+        E       
+        E       Requests that need no permission:
+        E       ...
+        E     
+        E     ...Full output truncated, use '-vv' to show
+        E   AssertionError: assert (1 == 2)
+        E    +  where 1 = <built-in method count of str object at 0x11987e70>('```hcl')
+        E    +    where <built-in method count of str object at 0x11987e70> = '# Least-privilege policies per backend kind\n\nGenerated by `python tools/policy_page.py --write` from the `POLICY` l...n- `bedrock` (llm)\n- `openai_compat` (llm)\n- `gemini` (llm)\n- `bedrock_guardrail` (detector)\n- `slack` (channel)\n'.count
+  [2] direct call of the guard's own functions on the plant copy:
+      (imports hadavin_sdk from /tmp/claude-0/-home-user-hadavin-sdk/3c7954a2-a1b2-5867-97dd-d4d94c9e06fd/scratchpad/plants/P12/src/hadavin_sdk/__init__.py)
+      call_problems(src/hadavin_sdk/actions/secrets_vault.py): 0 problem(s)
+      call_problems(src/hadavin_sdk/audit/signer_vault.py): 0 problem(s)
+      call_problems(src/hadavin_sdk/sources/kubernetes.py): 0 problem(s)
+      kind_problems: 0 problem(s)
+      data problems (pp.problems per kind): 0 problem(s)
+      cross_problems: 0 problem(s)
+      name_problems: 1 problem(s)
+        - secrets/vault R17: the name is not found in a vendor source (verified is None) and has no PENDING_NAMES entry
+  [3] python tools/policy_page.py --check in the plant copy: exit code 1; output: 'policy page: docs/least-privilege-policies.md differs from the data; run --write and commit'
+====================================================================================================
+P13a grant R17 `verified` None WITH a PENDING_NAMES entry whose review date is yesterday (2026-11-10)
+  edit in src/hadavin_sdk/actions/secrets_vault.py:
+    -             "verified": ("2026-11-11", "V-KV", "V-POL", "B-KV", "B-POL"),
+    +             "verified": None,
+  edit in tests/test_policy_guard.py:
+    - PENDING_NAMES: dict[tuple[str, str], Pending] = {}
+    + PENDING_NAMES: dict[tuple[str, str], Pending] = {
+    +     ("secrets/vault", "R17"): Pending("plant", "plant", DECIDED, date(2026, 11, 10)),
+    + }
+  [1] pytest tests/test_policy_guard.py in the plant copy: exit code 1, 1.5s
+      last line: 6 failed, 76 passed in 1.00s
+      FAILED tests/test_policy_guard.py::test_every_grant_name_is_verified_or_pending_and_every_source_id_resolves
+      FAILED tests/test_policy_guard.py::test_pr1_grants_are_all_verified_with_no_unverified_claim
+      FAILED tests/test_policy_guard.py::test_plant_an_unverified_grant_with_no_pending_entry_is_caught
+      FAILED tests/test_policy_guard.py::test_plant_no_copy_ready_text_for_a_kind_with_an_unverified_grant_or_claim
+      FAILED tests/test_policy_guard.py::test_the_committed_page_equals_what_the_data_gives
+      FAILED tests/test_policy_guard.py::test_the_page_states_its_limits_and_offers_text_for_the_three_kinds
+      assertion lines (lines starting with 'E ' in the pytest output, each cut at 1500 characters):
+        E   assert ['PENDING_NAM...1-10): plant'] == []
+        E     
+        E     Left contains one more item: "PENDING_NAMES ('secrets/vault', 'R17') is overdue (review_by 2026-11-10): plant"
+        E     Use -v to get more diff
+        E   AssertionError: R17
+        E   assert (None is not None)
+        E    +  where None = Grant(id='R17', name='read', resource='{mount}/data/{path_prefix}*', bound="the prefix is this deployment's `path_pref...{name}'),), applies_when='', reason='reads one named secret', verified=None, confirmed_live=None, claims_unverified=()).verified
+        E   AssertionError: reported [], expected ["PENDING_NAMES ('secrets/vault', 'R17') is fixed or gone: delete the entry"]
+        E   assert [] == ['PENDING_NAM...te the entry']
+        E     
+        E     Right contains one more item: "PENDING_NAMES ('secrets/vault', 'R17') is fixed or gone: delete the entry"
+        E     Use -v to get more diff
+        E   assert False
+        E    +  where False = <function copy_ready at 0x7f783d1faa20>(Policy(platform='vault', how="A Vault token: read from an environment variable (auth `token`), or issued at sign-in th...d not to (`no_default_policy` when a token is created, `token_no_default_policy` on an AppRole or Kubernetes role).',)))
+        E    +    where <function copy_ready at 0x7f783d1faa20> = pp.copy_ready
+        E   AssertionError: docs/least-privilege-policies.md differs from the data: run `python tools/policy_page.py --write` and commit
+        E   assert '# Least-priv...` (channel)\n' == '# Least-priv...` (channel)\n'
+        E     
+        E     Skipping 3123 identical leading characters in diff, use -v to show
+        E     -  always | not yet checked | no | none |
+        E     +  always | 2026-11-11, sources V-KV, V-POL, B-KV, B-POL | no | none |
+        E       
+        E       Requests that need no permission:
+        E       ...
+        E     
+        E     ...Full output truncated, use '-vv' to show
+        E   AssertionError: assert (1 == 2)
+        E    +  where 1 = <built-in method count of str object at 0x2cc45f50>('```hcl')
+        E    +    where <built-in method count of str object at 0x2cc45f50> = '# Least-privilege policies per backend kind\n\nGenerated by `python tools/policy_page.py --write` from the `POLICY` l...n- `bedrock` (llm)\n- `openai_compat` (llm)\n- `gemini` (llm)\n- `bedrock_guardrail` (detector)\n- `slack` (channel)\n'.count
+  [2] direct call of the guard's own functions on the plant copy:
+      (imports hadavin_sdk from /tmp/claude-0/-home-user-hadavin-sdk/3c7954a2-a1b2-5867-97dd-d4d94c9e06fd/scratchpad/plants/P13a/src/hadavin_sdk/__init__.py)
+      call_problems(src/hadavin_sdk/actions/secrets_vault.py): 0 problem(s)
+      call_problems(src/hadavin_sdk/audit/signer_vault.py): 0 problem(s)
+      call_problems(src/hadavin_sdk/sources/kubernetes.py): 0 problem(s)
+      kind_problems: 0 problem(s)
+      data problems (pp.problems per kind): 0 problem(s)
+      cross_problems: 0 problem(s)
+      name_problems: 1 problem(s)
+        - PENDING_NAMES ('secrets/vault', 'R17') is overdue (review_by 2026-11-10): plant
+  [3] python tools/policy_page.py --check in the plant copy: exit code 1; output: 'policy page: docs/least-privilege-policies.md differs from the data; run --write and commit'
+====================================================================================================
+P13b the existing pending-kinds entries for PR 2: review date set to yesterday (2026-11-10)
+  edit in tests/test_policy_guard.py:
+    - _PR2 = ("the permission names of this kind are not all checked yet", "Q8c PR 2", date(2026, 12, 11))
+    + _PR2 = ("the permission names of this kind are not all checked yet", "Q8c PR 2", date(2026, 11, 10))
+  [1] pytest tests/test_policy_guard.py in the plant copy: exit code 1, 48.1s
+      last line: 4 failed, 78 passed in 47.27s
+      FAILED tests/test_policy_guard.py::test_every_kind_is_declared_pending_or_holds_no_identity
+      FAILED tests/test_policy_guard.py::test_plant_a_new_kind_on_no_list_is_caught
+      FAILED tests/test_policy_guard.py::test_plant_a_declared_kind_left_on_the_pending_list_is_caught
+      FAILED tests/test_policy_guard.py::test_plant_an_overdue_pending_kind_is_caught
+      assertion lines (lines starting with 'E ' in the pytest output, each cut at 1500 characters):
+        E   AssertionError: assert ['PENDING_KIN...8c PR 2', ...] == []
+        E     
+        E     Left contains 7 more items, first extra item: 'PENDING_KINDS secrets/aws_secrets_manager is overdue (review_by 2026-11-10): Q8c PR 2'
+        E     Use -v to get more diff
+        E   AssertionError: reported ['kind secrets/new_cloud has no POLICY and is on no list: declare it or add a dated entry', 'PENDING_KINDS secrets/aws_secrets_manager is overdue (review_by 2026-11-10): Q8c PR 2', 'PENDING_KINDS signer/aws_kms is overdue (review_by 2026-11-10): Q8c PR 2', 'PENDING_KINDS anchor/s3_object_lock is overdue (review_by 2026-11-10): Q8c PR 2', 'PENDING_KINDS store/postgres is overdue (review_by 2026-11-10): Q8c PR 2', 'PENDING_KINDS llm/bedrock is overdue (review_by 2026-11-10): Q8c PR 2', 'PENDING_KINDS detector/bedrock_guardrail is overdue (review_by 2026-11-10): Q8c PR 2', 'PENDING_KINDS channel/slack is overdue (review_by 2026-11-10): Q8c PR 2'], expected ['kind secrets/new_cloud has no POLICY and is on no list: declare it or add a dated entry']
+        E   assert ['kind secret...8c PR 2', ...] == ['kind secret... dated entry']
+        E     
+        E     Left contains 7 more items, first extra item: 'PENDING_KINDS secrets/aws_secrets_manager is overdue (review_by 2026-11-10): Q8c PR 2'
+        E     Use -v to get more diff
+        E   AssertionError: reported ['kind secrets/vault is on more than one list', 'PENDING_KINDS secrets/vault is fixed or gone: delete the entry', 'PENDING_KINDS secrets/aws_secrets_manager is overdue (review_by 2026-11-10): Q8c PR 2', 'PENDING_KINDS signer/aws_kms is overdue (review_by 2026-11-10): Q8c PR 2', 'PENDING_KINDS anchor/s3_object_lock is overdue (review_by 2026-11-10): Q8c PR 2', 'PENDING_KINDS store/postgres is overdue (review_by 2026-11-10): Q8c PR 2', 'PENDING_KINDS llm/bedrock is overdue (review_by 2026-11-10): Q8c PR 2', 'PENDING_KINDS detector/bedrock_guardrail is overdue (review_by 2026-11-10): Q8c PR 2', 'PENDING_KINDS channel/slack is overdue (review_by 2026-11-10): Q8c PR 2'], expected ['kind secrets/vault is on more than one list', 'PENDING_KINDS secrets/vault is fixed or gone: delete the entry']
+        E   assert ['kind secret...8c PR 2', ...] == ['kind secret...te the entry']
+        E     
+        E     Left contains 7 more items, first extra item: 'PENDING_KINDS secrets/aws_secrets_manager is overdue (review_by 2026-11-10): Q8c PR 2'
+        E     Use -v to get more diff
+        E   AssertionError: assert (7 == 7 and False)
+        E    +  where 7 = len(['PENDING_KINDS secrets/aws_secrets_manager is overdue (review_by 2026-11-10): Q8c PR 2', 'PENDING_KINDS signer/aws_km...by 2026-11-10): Q8c PR 2', 'PENDING_KINDS detector/bedrock_guardrail is overdue (review_by 2026-11-10): Q8c PR 2', ...])
+        E    +  and   False = all(<generator object test_plant_an_overdue_pending_kind_is_caught.<locals>.<genexpr> at 0x7fa0cd7d1630>)
+  [2] direct call of the guard's own functions on the plant copy:
+      (imports hadavin_sdk from /tmp/claude-0/-home-user-hadavin-sdk/3c7954a2-a1b2-5867-97dd-d4d94c9e06fd/scratchpad/plants/P13b/src/hadavin_sdk/__init__.py)
+      call_problems(src/hadavin_sdk/actions/secrets_vault.py): 0 problem(s)
+      call_problems(src/hadavin_sdk/audit/signer_vault.py): 0 problem(s)
+      call_problems(src/hadavin_sdk/sources/kubernetes.py): 0 problem(s)
+      kind_problems: 7 problem(s)
+        - PENDING_KINDS secrets/aws_secrets_manager is overdue (review_by 2026-11-10): Q8c PR 2
+        - PENDING_KINDS signer/aws_kms is overdue (review_by 2026-11-10): Q8c PR 2
+        - PENDING_KINDS anchor/s3_object_lock is overdue (review_by 2026-11-10): Q8c PR 2
+        - PENDING_KINDS store/postgres is overdue (review_by 2026-11-10): Q8c PR 2
+        - PENDING_KINDS llm/bedrock is overdue (review_by 2026-11-10): Q8c PR 2
+        - PENDING_KINDS detector/bedrock_guardrail is overdue (review_by 2026-11-10): Q8c PR 2
+        - PENDING_KINDS channel/slack is overdue (review_by 2026-11-10): Q8c PR 2
+      data problems (pp.problems per kind): 0 problem(s)
+      cross_problems: 0 problem(s)
+      name_problems: 0 problem(s)
+  [3] python tools/policy_page.py --check in the plant copy: exit code 0; output: ''
+====================================================================================================
+P14 the generated docs page changed by one character (R17 row: `reads one named secret` -> `reads one named secreT`, first occurrence)
+  edit in docs/least-privilege-policies.md:
+    - | reads one named secret |
+    + | reads one named secreT |
+  [1] pytest tests/test_policy_guard.py in the plant copy: exit code 1, 6.5s
+      last line: 1 failed, 81 passed in 5.73s
+      FAILED tests/test_policy_guard.py::test_the_committed_page_equals_what_the_data_gives
+      assertion lines (lines starting with 'E ' in the pytest output, each cut at 1500 characters):
+        E   AssertionError: docs/least-privilege-policies.md differs from the data: run `python tools/policy_page.py --write` and commit
+        E   assert '# Least-priv...` (channel)\n' == '# Least-priv...` (channel)\n'
+        E     
+        E     Skipping 3110 identical leading characters in diff, use -v to show
+        E     Skipping 11601 identical trailing characters in diff, use -v to show
+        E     - amed secret | always
+        E     ?           ^
+        E     + amed secreT | always
+        E     ?           ^
+  [2] direct call of the guard's own functions on the plant copy:
+      (imports hadavin_sdk from /tmp/claude-0/-home-user-hadavin-sdk/3c7954a2-a1b2-5867-97dd-d4d94c9e06fd/scratchpad/plants/P14/src/hadavin_sdk/__init__.py)
+      call_problems(src/hadavin_sdk/actions/secrets_vault.py): 0 problem(s)
+      call_problems(src/hadavin_sdk/audit/signer_vault.py): 0 problem(s)
+      call_problems(src/hadavin_sdk/sources/kubernetes.py): 0 problem(s)
+      kind_problems: 0 problem(s)
+      data problems (pp.problems per kind): 0 problem(s)
+      cross_problems: 0 problem(s)
+      name_problems: 0 problem(s)
+  [3] python tools/policy_page.py --check in the plant copy: exit code 1; output: 'policy page: docs/least-privilege-policies.md differs from the data; run --write and commit'

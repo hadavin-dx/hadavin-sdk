@@ -1,0 +1,77 @@
+# Gap register: what is still missing to build "any non-regulated project, any industry" from the core
+
+Date: 2026-11-05 (UTC). Source: EGM gap hunt (design reviewer: 27 gaps G1-G27; zoom-out reviewer: scope and order, B1-B3 and M1-M6), the Core v1 plan (plan-v3), amendments A1-A12, the Assembly Kit plan (kit-plan-v2), the S0 report.
+Who: CLOUD = bulk coding and tests in the cloud session; LAPTOP = needs the studio's own files (memory, bible, templates, contracts, hooks) so it is done on the laptop; OWNER = needs your decision or action. Severity: BLOCKER = a common project shape cannot be built or sold without it.
+Honesty: these are findings from reviewers who read file names and some code; "none" means no keyword hit, not a full audit. Regulatory remarks (hiring-tool rules, anti-spam laws, privacy laws) are from general knowledge and must be checked before they appear in any client wording.
+
+## A. Gaps in the BUILD (code and tests)
+| # | Gap | Example | Sev | Who | Where planned |
+|---|---|---|---|---|---|
+| G1 | Conversational agent with tools: chat loop, tool-call loop, conversation store with retention and delete-by-user, human handoff, multi-turn test harness | e-commerce support bot | BLOCKER | CLOUD (code); LAPTOP (check bible R94-R98 wording) | new AK package "conversation kind" + recipe (g) |
+| G2 | Inbound triggers and connectors: email inbox, webhook with signature check, scheduler, file drop, queue pull, one input kind feeding the step contract, dedupe with one final state | invoices by email | BLOCKER | CLOUD | new AK package "trigger kind"; P7a moves into the kit |
+| G15 | Queue of "needs a person" items that survives restarts (assignment, age, reopen, content binding) | any approval flow | BLOCKER | CLOUD | P7k queue moves into the kit |
+| G14 | Approvals screen (web) and a second approval channel (Teams or email), portal packaging decision | finance manager without Slack | BLOCKER | CLOUD (UI parts, channel); LAPTOP (premium-UI standard, portal kit); OWNER (portal packaging) | new AK package; D-kit decision |
+| G16 | Deployment into the client's own cloud: container, infrastructure-as-code per cloud, minimal rights per part, runbook, smoke test; security-review pack | "must run in our AWS account" | BLOCKER | CLOUD (IaC, rights); LAPTOP (security pack from bible topic 36); OWNER (accounts, cost) | new package "deploy kit" |
+| G3 | Connector wrapper and a tested catalogue of 5-8 common systems (OAuth refresh, pagination, idempotent writes, the manual executor) | CRM, ERP, ticketing | MAJOR | CLOUD; LAPTOP (which tools the studio sells) | new AK package |
+| G4 | Client's own no-code tools (n8n, Zapier, Make, Power Automate) as trigger and actuator: "agent as an HTTP node" shape | marketing ops client with n8n | MAJOR | LAPTOP (policy memory, guide); CLOUD (endpoint) | new AK package |
+| G5 | Extraction recipe lacks field-level evaluation, line items, master-list validation, correction loop into the golden set | invoice to ERP draft | MAJOR | CLOUD; LAPTOP (golden-set template C10) | recipe (a) extension |
+| G6 | Images, scans and speech as inputs, behind the outbound gate | defect photos, scanned delivery notes, voice mail | MAJOR | CLOUD (code); OWNER (which vendor = sub-processor) | AK0 decides; deferred with trigger |
+| G8 | Summaries and report drafting recipe (was deferred) | weekly status report, lease abstract | MAJOR | CLOUD | promote to recipe (h) |
+| G9 | Agent evaluation: tool-routing and trajectory checks, simulated multi-turn user, judge calibration, regression gate in CI; AK4a needs P7f | any chat or tool agent | MAJOR | CLOUD | P7f moves into AK4a; new eval package |
+| G10 | Prompt store with versions, hash in audit lines, diff and rollback, per-client overrides, change-then-rerun-golden-set command | tone change after a model upgrade | MAJOR | CLOUD (store); LAPTOP (studio prompt templates) | new AK package |
+| G11 | Model fallback chain and routing by task, region pinning, per-model qualification, timeouts | model outage at peak; AU in-region need | MAJOR | CLOUD; LAPTOP (model choices memory) | new AK package; PR #48 breaker pieces |
+| G12 | MCP client adapter (exact tool allowlist, results through the injection choke point, version pinning) and exposing governed actions as an MCP server | recruiting ATS, IT ops Jira | MAJOR | CLOUD; LAPTOP (vetted-vendor list) | new AK package (MCP was out of Core v1 scope) |
+| G13 | Observability and cost dashboards: per-call log sink (P4e), cost per tenant per day, latency, abstain and error rates, alerts, drift monitor after go-live | "what did the bot cost in October" | MAJOR | CLOUD; LAPTOP (dashboard look) | P4e moves into the kit |
+| G17 | Tenant separation beyond retrieval: tenant on store tables, per-tenant keys and budgets, per-tenant stop switch; or the rule "one deployment per client" written in the kit | platform serving many shops | MAJOR | CLOUD; OWNER (decide model) | P4d/AK1 carry tenant; decision needed |
+| G18 | Retention and deletion: policy per data class, scheduled purge, delete-by-subject reaching vector store, caches, logs; coexistence with the hash-chained audit | UK/CA privacy requests | MAJOR | CLOUD (jobs); LAPTOP (contract clause) | new AK package |
+| G21 | Long-running and batch jobs: worker pool, bounded concurrency, rate-limit budgeting, batch pricing, dead-letter replay, progress view | 5,000-document backlog | MAJOR | CLOUD | new AK package |
+| G22 | Outbound messages as governed actions: recipient allowlist, send limits, tone check, consent flags, duplicate-send prevention | emails to candidates or suppliers | MAJOR | CLOUD; LAPTOP (consent rules, verify law) | P3b moves into the kit |
+| G26 | Agent red-team suite in CI: direct and indirect injection, tool poisoning, link and image exfiltration | any agent reading outside text | MAJOR | CLOUD; LAPTOP (trifecta record C13) | new AK package |
+| G7 | Classification quality: confusion matrix, per-class recall, confidence threshold to a person | ticket triage | MINOR | CLOUD | recipe (c) extension |
+| G23 | Test-set production: sheet or tool, sampling protocol, inter-rater check, CSV-to-harness loader, minimum-size rule | every project | MINOR | LAPTOP (template); CLOUD (loader) | with P7f |
+| G24 | Safe database questions beyond read-only: schema docs, column masking, query cost caps; depends on P3d | batch failure questions | MINOR | CLOUD | recipe (f) |
+| G25 | Locale: dates, money, time zones, holidays, bilingual replies | Canadian French/English, AU holidays | MINOR | CLOUD | config in kit |
+| New shapes | document generation with approval (letters, quotes), scheduled enrichment batch, monitoring agent with periodic checks | contracts, nightly product data | MAJOR | CLOUD | recipes (i), (j) |
+
+## B. Gaps outside the code (process, knowledge, commercial)
+| # | Gap | Sev | Who |
+|---|---|---|---|
+| C1 | Contract and statement-of-work template: scope, acceptance criteria, change control, IP of rules and prompts, liability cap, support after handover | BLOCKER | LAPTOP (draft; client-facing wording follows the bible), OWNER (terms) |
+| C2 | Data-handling rule and data-processing terms: whether any real client data may enter laptop sessions, cloud sessions or the public repo; what the studio sees, stores and sends to model vendors; sub-processor list | BLOCKER | OWNER (decision), LAPTOP (write it) |
+| C3 | Core licence and what the client receives (core is public and marked proprietary: undecided); third-party list per build (SBOM) | BLOCKER before any contract | OWNER |
+| C4 | Security-questionnaire answers v0 and a data-flow and threat summary (derived from the kinds table and the client-profile gate) | BLOCKER for first security review | LAPTOP |
+| C5 | Fixed-price build sheet and quote script per shape and per connector count; refuse-list screen (regulated work); capacity rule | MAJOR | OWNER, LAPTOP |
+| C6 | Acceptance period, warranty and support terms (the 3-4 week limit is already your rule) | MAJOR | OWNER, LAPTOP |
+| C7 | Client handover pack generator: runbook (stop switch, key rotation, restore, spend cap), operator guide, evaluation report, change log | MAJOR | LAPTOP (templates), CLOUD (generator) |
+| C8 | Live smoke test: one real model call through the masking wrapper and the meter with a small owner-approved spend on the chosen backend (all four model backends are unverified live) | BLOCKER before any honest quote | OWNER (approve spend with numbers), LAPTOP (run) |
+| C9 | Consumption model: demos hold byte copies of the core; decide pinned dependency or copies; project template that imports a pinned core (the scaffolder AK6 is then needed early) | MAJOR | OWNER (decide), CLOUD (scaffolder) |
+| C10 | Budget line for cloud agent work and review services | MINOR | OWNER |
+| C11 | Studio-file updates after decisions: memory notes (A1-A12, handover, model routing), bible rules to add (fold key carries a version; RAG masking policy), `templates\project\` extended (scoping, cost estimate, golden schema = the studio template's `golden.jsonl` wins), sync tool `core_sync_check.py` must skip `.venv*` folders, hooks kept equal in both repos | MAJOR | LAPTOP |
+
+## C. Recommended order (from the zoom-out reviewer; needs your yes)
+The reviewer judged Core v1 (25 packages, about 30 pull requests, nearly all strict review) plus the kit to be a hardening programme with no first client attached, and says the biggest risk is weeks of review with nothing to sell. It recommends a thin first slice:
+1. Choose the first shape now: document intake with approvals (the Intake demo already exists); RAG second.
+2. Core-slice (about 11 of the 25 packages): P1a, P2a, P3a, P4d, P4a, P4b1, P4b2, P5c, P6b1, P6a and the Intake consumer, plus the first inbound trigger and the approvals queue and screen (G2, G15, G14) which the slice also needs. The long redaction-diagnostics chain (P5a-P5b5), P4c, P6b2, P2d beyond what P5c needs, and re-pinning the other three demos move to run in the background after the slice.
+3. One live smoke call (C8) and the commercial minimum (C1-C6) in parallel, owned by you and me.
+4. Client-ready gate: slice passes, deployment runbook for one cloud, handover pack, commercial documents exist. Then quote a first project.
+5. Extract recipes from the first real project; take the other kit packages when a named client needs them (small generic ones like the step contract and the test harness early; the scaffolder early because it is the real "hours" mechanism).
+Tension to be honest about: your earlier decision was "full core first". This order keeps everything but puts the first sellable slice first and the rest in the background, so the cloud can work on both at once.
+
+## D. Generic extension points ("doors") for later projects (lead orders 51 and 52; rewritten 2026-11-06 by the cloud session; no new scope, no tickets)
+Core stays generic (order 52): pieces that are assembled into flows. Project-specific things (cloud/EKS/ECS/EC2/RDS/S3 readers, Datadog intake, a Slack thread notifier) are NOT core and are removed from this list; a Jagrat-type project gets them later from the client's tools, n8n or MCP servers (tool ladder). Order 47's files stay PAUSED. This list only records whether today's tickets and code leave six generic doors open. "yes / no / unknown" is my reading; "unknown" means I did not read enough to say. Every build-start review and ticket round asks: "does this ticket close any of the six doors?" and reports a door it would close as a finding.
+| # | Generic door | Plugs into | Open? | If not, what would change |
+|---|---|---|---|---|
+| a | Approvals with a separate executor identity | the action/executor path (P6b2: only wiring and the executor hold secrets), AK-G15 approvals (`Principal.approver_of`: `tickets/AK-G15.md:119`) | YES for the separate executor identity (P6b2 rule); UNKNOWN for a step-up factor on the approver (passkeys were cut from core v1: `studio-notes/inventory-C.md:82-83`) | a step-up hook in the approvals path (arrives with sign-in, f) |
+| b | Portal data/API contracts for generic pages: list, detail, approvals queue, permissions-aware chat | AK-G1 (chat), AK-G15 (person queue), G14 (approvals screen) | PARTLY: chat and queue have tickets; the approvals screen contract (G14) has none yet. The UI is the lead's (studio portal kit) | G14 data contract when its turn comes |
+| c | Tenancy and permissions | tenant in every record (order 27 item 56), `Principal.rights` | YES in the kit tickets read so far (AK-G2 binds a source to exactly one tenant: `tickets/AK-G2.md:19`); other tickets UNKNOWN | report any single-tenant assumption as a finding |
+| d | Environment names are labels mapped to tiers; core tests tiers only | `config.py` (tiers `dev`/`pilot`/`prod`: a generic safety classification), `deferred.py`, AK-G16 | **YES (lead order 55):** the three values are TIERS and stay in core; a project's names ("demo", "staging") are labels mapped to one tier in the project's config. The defect was AK-G16 BN-34 testing the literal name `demo`; AK-G16 BN-35 replaces it with tier `dev` + `deploy.render_mode: demo` | any other ticket that tests an environment NAME is a finding |
+| e | The trigger door of AK-G2 (any webhook feeds it; Datadog, Slack or n8n are just senders) | AK-G2 inbound sources (`tickets/AK-G2.md:19`) | YES in design: a source is a configured address bound to one tenant. Per-sender signature schemes are a config/verifier matter; UNVERIFIED which schemes AK-G2 supports | a sender-specific verifier row only when a client's sender needs one |
+| f | Sign-in (the LAST core item, order 52 item 3) | one sign-in kind behind a maintained OIDC/SAML library, the client's own IdP; step-up passkey for approvers; roles mapped to existing permissions | NO ticket yet and no code; nothing closes it today | gap check of order 50 first, after the earlier kit tickets are frozen |
+
+Removed on order 52 (not core): the allowlisted cloud reader, the Datadog intake, the chat thread notifier (the old doors 1, 2 as a module, and 3).
+
+### Sign-in (door f) in the plan
+SSO / sign-in is the LAST core item, after the kit tickets. Inputs: `egm/hadavin-sdk/ak-g17/concepts_brief.md` and `design.md` (saved when order 47 was paused; PAUSED banner; not reviewed). Start only when the earlier kit tickets are frozen. First step is the written half-page gap check of order 50 (the need; which rung covers it; why it is not enough; the smallest piece we must write), answering whether "a maintained OIDC/SAML library behind one sign-in kind, with the client's own IdP (Google, Microsoft, Okta, Keycloak)" is enough. Expected shape: a thin kind + config + tests, not a platform: roles mapped to the permissions we have, step-up passkey for approvers (owner hard rule), tenant isolation, session handling, tests against a local free Keycloak container and recorded fakes. Free tools first: n8n community edition has no SSO, so it does not cover this; a self-hosted Keycloak/Authentik/Zitadel or the client's own Google/Microsoft sign-in does.
+
+## Standing rules kept while tickets are deferred
+- Eval gate size rule (from AK4a-1, deferred by lead order 59): in `pilot` and `prod` a golden set is refused before any model call unless it has at least 50 cases, 5 per bucket (easy, hard, trap) and 15 percent (at least 3) trap cases; a config may only tighten these floors, never lower them.

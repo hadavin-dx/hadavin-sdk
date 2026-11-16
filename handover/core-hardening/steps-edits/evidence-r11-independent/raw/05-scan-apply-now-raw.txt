@@ -1,0 +1,47 @@
+Apply-now NEW blocks scanned: 44
+A1 | E-09 | The secret key for the model is never typed into n8n: the model stage reads it from a key file.
+A1 | E-37 | - DONE, from your own statement of 2026-11-16: the throwaway Gmail mailbox (2-step on, settings done, app passwords saved in files; the assistant asks you where the files are, so that the clean-up deletes them); the HubSpot test account (users created, secret key given); your own n8n account (it hol
+A1 | E-37 | The secret key for the model is never typed into n8n.
+A3 | E-09 | n8n holds three saved credentials for the take: the sender mailbox, HubSpot and the take's database.
+A3 | E-37 | The second part is typing the three credentials into n8n (the sender mailbox, HubSpot and the take's database): it comes only after the assistant tells you that n8n is running, and it tells you then where to type them.
+A4 | E-37 | - DONE, from your own statement of 2026-11-16: the throwaway Gmail mailbox (2-step on, settings done, app passwords saved in files; the assistant asks you where the files are, so that the clean-up deletes them); the HubSpot test account (users created, secret key given); your own n8n account (it hol
+B1 | E-12 | The last step of the take program makes no delete call to HubSpot.
+B1 | E-12 | The assistant names its evidence: either a saved search of the final code that finds no delete call, or the commit (the name of one saved version of the code) that removes it with the saved test output; and the reviewers' report that read it.
+B1 | E-12 | Copy this form, replace every part in angle brackets and keep the rest as written: "Yes, take <take id>; stand-in test <N1> pass, 0 missed, 0 not run; flow rehearsal <N2> pass, 0 missed, 0 not run; crash check <tested or untested>; result in <result file>; reviewers' report <report file>; no delete 
+B1 | E-16 | deletes all saved runs of the take (made-up data only, owner decision 2026-11-16), turns off the setting that saves successful runs (a setting of the take's own n8n, not of each workflow), stops n8n, removes the take folder and the container of the database server.
+B1 | E-16 | It does this because removing the container is planned to delete n8n's database and the take's table of enquiries too.
+B1 | E-16 | If the database files sit in a Docker volume (a storage area that Docker keeps apart from the container), removing the container alone may not delete them, and the assistant then also removes the volume that it created for the take; which of the two applies is UNVERIFIED.
+B1 | E-16 | A question may come before the clean-up: may the saved runs be deleted only by removing the container?
+B1 | E-16 | If you do not reply, the answer is No, and the assistant deletes the saved runs first, as described above
+B1 | E-25 | That the saved runs are kept in Postgres and that deleting them at clean-up works at the real take (the stand-in test is planned to delete them by removing the container).
+B1 | E-30 | the encryption key itself is in n8n's environment, and n8n 2.46.6 is expected to copy it into `<take>/n8n/.n8n/config` (a file readable only by its owner, mode 600; it is planned to be removed together with the take folder by a plain `rm`, an ordinary delete, and whether to use `shred -u` instead is
+B1 | E-37 | - DONE, from your own statement of 2026-11-16: the throwaway Gmail mailbox (2-step on, settings done, app passwords saved in files; the assistant asks you where the files are, so that the clean-up deletes them); the HubSpot test account (users created, secret key given); your own n8n account (it hol
+B1 | E-37 | - NOT SETTLED, BEFORE ANY TAKE: whether the take program deletes the take's contacts in HubSpot at its end.
+B1 | E-37 | If the program does delete contacts, a take with the read-only secret key (step 7, app 1) would fail after the enquiries were sent and money was spent.
+B1 | E-37 | The summary says one of two things: "the take program makes no delete call to HubSpot", or "a delete call existed and has been removed, shown by a test".
+B1 | E-37 | If the summary says that a delete call still exists, or if no summary comes, you do not say yes to a take.
+B1 | E-38 | the lead deletes the executions and turns saving off at clean-up (saving is a setting of the take's own n8n, not of each workflow; in the stand-in test the runs are planned to be deleted by removing the Postgres container and the take folder; the method at the real take is not decided yet)
+B1 | E-48 | You: delete BOTH HubSpot private apps (Settings, Integrations, Private Apps, Delete).
+B1 | E-48 | - If you reply `yes`: revoke that secret key (to revoke is to delete it at the company that issued it, so that it stops working) in the website of the company that provides the AI model (Anthropic).
+B1 | E-48 | Because the key stays alive, the copy of it in the take folder is still a live secret, and item 1 removes that folder with a plain delete (`rm`), which is not a wipe.
+B1 | E-48 | So BEFORE the assistant starts item 1, you delete that copy yourself with `shred -u <path>` (the assistant tells you the path and never opens the file; if shred is not installed, use `rm <path>`).
+B1 | E-48 | Item 1 removes the take folder with a plain delete, which is not a revoke and not a wipe.
+B1 | E-48 | If you revoked the key, delete every file that holds a copy of it with `shred -u <file>` (if shred is not installed, use `rm <file>`), as in item 6.
+B1 | E-48 | If you did not revoke the key, keep the copy that other work uses and delete only a copy made for this take, if there is one; the assistant asks you which is which.
+B1 | E-52 | - **To revoke** a secret key: to delete it at the company that issued it, so that it stops working (the older text may say "cancel").
+B1 | E-56 | DELETE call" and the NOTE (F-01) at the end of the MAY part of this line; the word "archive" in line 23 is the same) say that the end of the take removes the take's HubSpot contacts.
+B1 | E-56 | A later independent review (r17) found no delete or archive path, and decision 2 of 2026-11-16 says the take never deletes contacts.
+B2 | E-37 | Nobody has settled which is right, and steps 17 and 18 below still say "archived" (the earlier reading).
+B2 | E-56 | - UNVERIFIED (Q23): two statements later in this line (the clause "ARCHIVE ...
+B2 | E-56 | DELETE call" and the NOTE (F-01) at the end of the MAY part of this line; the word "archive" in line 23 is the same) say that the end of the take removes the take's HubSpot contacts.
+B2 | E-56 | A later independent review (r17) found no delete or archive path, and decision 2 of 2026-11-16 says the take never deletes contacts.
+B3 | E-48 | Because the key stays alive, the copy of it in the take folder is still a live secret, and item 1 removes that folder with a plain delete (`rm`), which is not a wipe.
+B3 | E-48 | Item 1 removes the take folder with a plain delete, which is not a revoke and not a wipe.
+--- hit counts (sentences):
+3 A1 model key + typed/pasted/entered into n8n (same sentence)
+0 A2 fourth credential / four credentials / 4 credentials
+2 A3 "credentials" with a number word
+1 A4 n8n credential mentions with model key words
+26 B1 delete / deletes / deleted / deletion
+4 B2 archive / archives / archived
+2 B3 erase / purge / remove(s) with take or contact

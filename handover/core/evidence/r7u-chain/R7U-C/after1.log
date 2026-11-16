@@ -1,0 +1,18 @@
+..........................F.                                             [100%]
+=================================== FAILURES ===================================
+_____ test_n1_the_counters_file_text_does_not_say_no_test_checks_atomicity _____
+
+    def test_n1_the_counters_file_text_does_not_say_no_test_checks_atomicity() -> None:
+        from lead_desk import run_stats
+    
+        doc = " ".join((run_stats.__doc__ or "").split())
+        assert "no test checks atomicity" not in doc, doc
+        for word in ("write_stats_strict", "create_open", "t10", "does not"):
+>           assert word in doc, word
+E           AssertionError: does not
+E           assert 'does not' in 'Optional counters file: an adapter that is given a path writes its counters there after every change (a temporary fil...tomic rename on the same folder), which is relied on and not re-tested here. Counts only: no address, no key, no text.'
+
+tests/test_r7u_c_findings.py:258: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r7u_c_findings.py::test_n1_the_counters_file_text_does_not_say_no_test_checks_atomicity
+1 failed, 27 passed in 1.81s

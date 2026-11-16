@@ -1,0 +1,6 @@
+# C7b fix 3, security/evidence review (egm design), condensed copy, 2026-11-16 (security path, uncapped)
+Hash ties hold (patch 12e4be6f; gate.py 0dbf8c4a before/after the 9514 run; old-code 8baee570 -> 11 failed/12 passed; restored = Q; g4 23 passed). Network-claim withdrawal INCOMPLETE.
+Blocker: v3/REPORT-c7b-fix2.md:13 still says "succeeded with no network" with no withdrawal banner (also "venv from nothing untested", reproduced rc 1 in fix3).
+Major: REPORT-c7b-fix3.md:21 "forward re-apply gives 0dbf8c4a" has no raw log (rev/fwd folders deleted): save patch -R and forward output with hashes or drop the sentence. Major: tree-manifest.log hashes only the fix patch; C-01, A-01, G5 hashes and git archive tree id for b4cce5b not recorded (add sha256sum -c of the v3 patches). Major: v6-extra/README.md:14 still points to fix2. Major: no checkpoint-c7b-fix3.md.
+Minor: P==Q is repeatability, not correctness (say so); line 35 "uv did not need the network" is unlogged inference (delete); line 5 cause (UV_NATIVE_TLS/SSL_CERT_FILE) is inference unless cited; add README line that the exemption is display only. Nit: line 6 wording; env dump from a separate env -i call; no gate.py shipped, only the patch.
+Not run: mutation run of the lookahead (main remaining gap), real head de6b574, Postgres tests.

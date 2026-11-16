@@ -1,0 +1,5 @@
+# Contradiction sweep r1, lead-facing summary (full file: contradiction-sweep-r1.md), 2026-11-16
+Failures: F1 full run 9514 passed was on a tree with A-01 and C-01 applied (decision 4: A-01 deferred, C-01 extras cut); no run on the kept scope (G5 + id fix). F2 inputs/DECISION-one-store.md:14 still says "ONE database for everything we own" (decision 10). F3 plan-wp6-resmoke-v5.md:121 "take n8n 5690" is the rehearsal port; no file names the take port (decision 6). F4 "program does not print these figures" absent from v13 (decision 5). F5 no text for "lead reads only masked take outputs" or "rules A,E,F,I not overridable" (decision 5). F6 HubSpot probe contact whose delete fails is on no deletion list (decision 2). F7 no BRANCH ARTEFACT label (decision 11). F8 no first-rehearsal time (decision 12).
+Unbacked numbers: "13 sends (A twice, B ten times, C once)"; real head de6b574 only reported by name.
+Drift-risk duplicates: no-delete statement, 5678/5679 warning, one-server-two-databases wording, stamp rule, money/cancel-key step, who starts n8n, claim wording A/B.
+Not read: OWNER-STEPS-v13-APPENDIX in full, FACTS-ALREADY-DONE. v13 and plan-v10 may still change.

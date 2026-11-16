@@ -1,0 +1,229 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+## import /home/user/build/EV-Q8b-13ea6b75/fb_old/src/hadavin_sdk/__init__.py
+
+### (a) domain length before glued key
+dom1single+email | walk  | -        | in='bob@dpassword=<A>' | out='bob@dpassword=<SECRET_1>'
+dom1single+email | card  | -        | in='bob@dpassword=<A>' | out='bob@dpassword=<SECRET_1>'
+dom1single+email | slack | -        | in='bob@dpassword=<A>' | out='bob@dpassword=<SECRET_1>'
+dom1single+host | walk  | -        | in='dpassword=<A>' | out='dpassword=<SECRET_1>'
+dom1single+host | card  | -        | in='dpassword=<A>' | out='dpassword=<SECRET_1>'
+dom1single+host | slack | -        | in='dpassword=<A>' | out='dpassword=<SECRET_1>'
+dom1single+email,token | walk  | -        | in='bob@dtoken=<A>' | out='bob@dtoken=<SECRET_1>'
+dom1single+email,token | card  | -        | in='bob@dtoken=<A>' | out='bob@dtoken=<SECRET_1>'
+dom1single+email,token | slack | -        | in='bob@dtoken=<A>' | out='bob@dtoken=<SECRET_1>'
+dom1dotted+email | walk  | -        | in='bob@dpassword=<A>' | out='bob@dpassword=<SECRET_1>'
+dom1dotted+email | card  | -        | in='bob@dpassword=<A>' | out='bob@dpassword=<SECRET_1>'
+dom1dotted+email | slack | -        | in='bob@dpassword=<A>' | out='bob@dpassword=<SECRET_1>'
+dom1dotted+host | walk  | -        | in='dpassword=<A>' | out='dpassword=<SECRET_1>'
+dom1dotted+host | card  | -        | in='dpassword=<A>' | out='dpassword=<SECRET_1>'
+dom1dotted+host | slack | -        | in='dpassword=<A>' | out='dpassword=<SECRET_1>'
+dom1dotted+email,token | walk  | -        | in='bob@dtoken=<A>' | out='bob@dtoken=<SECRET_1>'
+dom1dotted+email,token | card  | -        | in='bob@dtoken=<A>' | out='bob@dtoken=<SECRET_1>'
+dom1dotted+email,token | slack | -        | in='bob@dtoken=<A>' | out='bob@dtoken=<SECRET_1>'
+dom41single+email | walk  | READABLE | in='bob@d*37.compassword=<A>' | out='<EMAIL_1>=<A>'
+dom41single+email | card  | READABLE | in='bob@d*37.compassword=<A>' | out='<EMAIL_1>=<A>'
+dom41single+email | slack | READABLE | in='bob@d*37.compassword=<A>' | out='<EMAIL_1>=<A>'
+dom41single+host | walk  | READABLE | in='d*37.compassword=<A>' | out='d*37.compassword=<A>'
+dom41single+host | card  | READABLE | in='d*37.compassword=<A>' | out='d*37[.]compassword=<A>'
+dom41single+host | slack | READABLE | in='d*37.compassword=<A>' | out='d*37[.]compassword=<A>'
+dom41single+email,token | walk  | READABLE | in='bob@d*37.comtoken=<A>' | out='<EMAIL_1>=<A>'
+dom41single+email,token | card  | READABLE | in='bob@d*37.comtoken=<A>' | out='<EMAIL_1>=<A>'
+dom41single+email,token | slack | READABLE | in='bob@d*37.comtoken=<A>' | out='<EMAIL_1>=<A>'
+dom41dotted+email | walk  | READABLE | in='bob@d*30.d*9.password=<A>' | out='<EMAIL_1>=<A>'
+dom41dotted+email | card  | READABLE | in='bob@d*30.d*9.password=<A>' | out='<EMAIL_1>=<A>'
+dom41dotted+email | slack | READABLE | in='bob@d*30.d*9.password=<A>' | out='<EMAIL_1>=<A>'
+dom41dotted+host | walk  | READABLE | in='d*30.d*9.password=<A>' | out='d*30.d*9.password=<A>'
+dom41dotted+host | card  | READABLE | in='d*30.d*9.password=<A>' | out='d*30[.]d*9[.]password=<A>'
+dom41dotted+host | slack | READABLE | in='d*30.d*9.password=<A>' | out='d*30[.]d*9[.]password=<A>'
+dom41dotted+email,token | walk  | READABLE | in='bob@d*30.d*9.token=<A>' | out='<EMAIL_1>=<A>'
+dom41dotted+email,token | card  | READABLE | in='bob@d*30.d*9.token=<A>' | out='<EMAIL_1>=<A>'
+dom41dotted+email,token | slack | READABLE | in='bob@d*30.d*9.token=<A>' | out='<EMAIL_1>=<A>'
+dom100single+email | walk  | READABLE | in='bob@d*96.compassword=<A>' | out='<EMAIL_1>=<A>'
+dom100single+email | card  | READABLE | in='bob@d*96.compassword=<A>' | out='<EMAIL_1>=<A>'
+dom100single+email | slack | READABLE | in='bob@d*96.compassword=<A>' | out='<EMAIL_1>=<A>'
+dom100single+host | walk  | READABLE | in='d*96.compassword=<A>' | out='d*96.compassword=<A>'
+dom100single+host | card  | READABLE | in='d*96.compassword=<A>' | out='d*96[.]compassword=<A>'
+dom100single+host | slack | READABLE | in='d*96.compassword=<A>' | out='d*96[.]compassword=<A>'
+dom100single+email,token | walk  | READABLE | in='bob@d*96.comtoken=<A>' | out='<EMAIL_1>=<A>'
+dom100single+email,token | card  | READABLE | in='bob@d*96.comtoken=<A>' | out='<EMAIL_1>=<A>'
+dom100single+email,token | slack | READABLE | in='bob@d*96.comtoken=<A>' | out='<EMAIL_1>=<A>'
+dom100dotted+email | walk  | READABLE | in='bob@d*30.d*30.d*30.d*6.password=<A>' | out='<EMAIL_1>=<A>'
+dom100dotted+email | card  | READABLE | in='bob@d*30.d*30.d*30.d*6.password=<A>' | out='<EMAIL_1>=<A>'
+dom100dotted+email | slack | READABLE | in='bob@d*30.d*30.d*30.d*6.password=<A>' | out='<EMAIL_1>=<A>'
+dom100dotted+host | walk  | READABLE | in='d*30.d*30.d*30.d*6.password=<A>' | out='d*30.d*30.d*30.d*6.password=<A>'
+dom100dotted+host | card  | READABLE | in='d*30.d*30.d*30.d*6.password=<A>' | out='d*30[.]d*30[.]d*30[.]d*6[.]password=<A>'
+dom100dotted+host | slack | READABLE | in='d*30.d*30.d*30.d*6.password=<A>' | out='d*30[.]d*30[.]d*30[.]d*6[.]password=<A>'
+dom100dotted+email,token | walk  | READABLE | in='bob@d*30.d*30.d*30.d*6.token=<A>' | out='<EMAIL_1>=<A>'
+dom100dotted+email,token | card  | READABLE | in='bob@d*30.d*30.d*30.d*6.token=<A>' | out='<EMAIL_1>=<A>'
+dom100dotted+email,token | slack | READABLE | in='bob@d*30.d*30.d*30.d*6.token=<A>' | out='<EMAIL_1>=<A>'
+dom255single+email | walk  | READABLE | in='bob@d*251.compassword=<A>' | out='bob@<HIGHENTROPY_1>.compassword=<A>'
+dom255single+email | card  | READABLE | in='bob@d*251.compassword=<A>' | out='bob@<HIGHENTROPY_1>[.]compassword=<A>'
+dom255single+email | slack | READABLE | in='bob@d*251.compassword=<A>' | out='bob@<HIGHENTROPY_1>[.]compassword=<A>'
+dom255single+host | walk  | READABLE | in='d*251.compassword=<A>' | out='<HIGHENTROPY_1>.compassword=<A>'
+dom255single+host | card  | READABLE | in='d*251.compassword=<A>' | out='<HIGHENTROPY_1>[.]compassword=<A>'
+dom255single+host | slack | READABLE | in='d*251.compassword=<A>' | out='<HIGHENTROPY_1>[.]compassword=<A>'
+dom255single+email,token | walk  | READABLE | in='bob@d*251.comtoken=<A>' | out='bob@<HIGHENTROPY_1>.comtoken=<A>'
+dom255single+email,token | card  | READABLE | in='bob@d*251.comtoken=<A>' | out='bob@<HIGHENTROPY_1>[.]comtoken=<A>'
+dom255single+email,token | slack | READABLE | in='bob@d*251.comtoken=<A>' | out='bob@<HIGHENTROPY_1>[.]comtoken=<A>'
+dom255dotted+email | walk  | READABLE | in='bob@d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*6.password=<A>' | out='<EMAIL_1>=<A>'
+dom255dotted+email | card  | READABLE | in='bob@d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*6.password=<A>' | out='<EMAIL_1>=<A>'
+dom255dotted+email | slack | READABLE | in='bob@d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*6.password=<A>' | out='<EMAIL_1>=<A>'
+dom255dotted+host | walk  | READABLE | in='d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*6.password=<A>' | out='d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*6.password=<A>'
+dom255dotted+host | card  | READABLE | in='d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*6.password=<A>' | out='d*30[.]d*30[.]d*30[.]d*30[.]d*30[.]d*30[.]d*30[.]d*30[.]d*6[.]password=<A>'
+dom255dotted+host | slack | READABLE | in='d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*6.password=<A>' | out='d*30[.]d*30[.]d*30[.]d*30[.]d*30[.]d*30[.]d*30[.]d*30[.]d*6[.]password=<A>'
+dom255dotted+email,token | walk  | READABLE | in='bob@d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*6.token=<A>' | out='<EMAIL_1>=<A>'
+dom255dotted+email,token | card  | READABLE | in='bob@d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*6.token=<A>' | out='<EMAIL_1>=<A>'
+dom255dotted+email,token | slack | READABLE | in='bob@d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*6.token=<A>' | out='<EMAIL_1>=<A>'
+dom300single+email | walk  | READABLE | in='bob@d*296.compassword=<A>' | out='bob@<HIGHENTROPY_1>.compassword=<A>'
+dom300single+email | card  | READABLE | in='bob@d*296.compassword=<A>' | out='bob@<HIGHENTROPY_1>[.]compassword=<A>'
+dom300single+email | slack | READABLE | in='bob@d*296.compassword=<A>' | out='bob@<HIGHENTROPY_1>[.]compassword=<A>'
+dom300single+host | walk  | READABLE | in='d*296.compassword=<A>' | out='<HIGHENTROPY_1>.compassword=<A>'
+dom300single+host | card  | READABLE | in='d*296.compassword=<A>' | out='<HIGHENTROPY_1>[.]compassword=<A>'
+dom300single+host | slack | READABLE | in='d*296.compassword=<A>' | out='<HIGHENTROPY_1>[.]compassword=<A>'
+dom300single+email,token | walk  | READABLE | in='bob@d*296.comtoken=<A>' | out='bob@<HIGHENTROPY_1>.comtoken=<A>'
+dom300single+email,token | card  | READABLE | in='bob@d*296.comtoken=<A>' | out='bob@<HIGHENTROPY_1>[.]comtoken=<A>'
+dom300single+email,token | slack | READABLE | in='bob@d*296.comtoken=<A>' | out='bob@<HIGHENTROPY_1>[.]comtoken=<A>'
+dom300dotted+email | walk  | -        | in='bob@d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*20.password=<A>' | out='<EMAIL_1>.d*20.password=<SECRET_1>'
+dom300dotted+email | card  | -        | in='bob@d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*20.password=<A>' | out='<EMAIL_1>[.]d*20[.]password=<SECRET_1>'
+dom300dotted+email | slack | -        | in='bob@d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*20.password=<A>' | out='<EMAIL_1>[.]d*20[.]password=<SECRET_1>'
+dom300dotted+host | walk  | READABLE | in='d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*20.password=<A>' | out='d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*20.password=<A>'
+dom300dotted+host | card  | READABLE | in='d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*20.password=<A>' | out='d*30[.]d*30[.]d*30[.]d*30[.]d*30[.]d*30[.]d*30[.]d*30[.]d*30[.]d*20[.]password=<A>'
+dom300dotted+host | slack | READABLE | in='d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*20.password=<A>' | out='d*30[.]d*30[.]d*30[.]d*30[.]d*30[.]d*30[.]d*30[.]d*30[.]d*30[.]d*20[.]password=<A>'
+dom300dotted+email,token | walk  | -        | in='bob@d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*20.token=<A>' | out='<EMAIL_1>.d*20.token=<SECRET_1>'
+dom300dotted+email,token | card  | -        | in='bob@d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*20.token=<A>' | out='<EMAIL_1>[.]d*20[.]token=<SECRET_1>'
+dom300dotted+email,token | slack | -        | in='bob@d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*30.d*20.token=<A>' | out='<EMAIL_1>[.]d*20[.]token=<SECRET_1>'
+
+### (b) card text kept visible except the value
+b1 | walk  | -        | in='--password=<A> --force --target prod' | out='--password=<SECRET_1> --force --target prod'
+b1 | card  | -        | in='--password=<A> --force --target prod' | out='--password=<SECRET_1>'
+b1 | slack | -        | in='--password=<A> --force --target prod' | out='--password=<SECRET_1>'
+   b1 | walk | tokens of the input (other than the value) missing from output: []
+   b1 | card | tokens of the input (other than the value) missing from output: ['--force', '--target', 'prod']
+   b1 | slack | tokens of the input (other than the value) missing from output: ['--force', '--target', 'prod']
+b2 | walk  | -        | in='--password <A> word' | out='--password <SECRET_1> word'
+b2 | card  | -        | in='--password <A> word' | out='--password <SECRET_1> word'
+b2 | slack | -        | in='--password <A> word' | out='--password <SECRET_1> word'
+   b2 | walk | tokens of the input (other than the value) missing from output: []
+   b2 | card | tokens of the input (other than the value) missing from output: []
+   b2 | slack | tokens of the input (other than the value) missing from output: []
+b3 | walk  | -        | in='token=<A> on the primary' | out='token=<SECRET_1> on the primary'
+b3 | card  | -        | in='token=<A> on the primary' | out='token=<SECRET_1>'
+b3 | slack | -        | in='token=<A> on the primary' | out='token=<SECRET_1>'
+   b3 | walk | tokens of the input (other than the value) missing from output: []
+   b3 | card | tokens of the input (other than the value) missing from output: ['on', 'the', 'primary']
+   b3 | slack | tokens of the input (other than the value) missing from output: ['on', 'the', 'primary']
+b4 | walk  | -        | in='password=<A> Plan 0123456789ab.' | out='password=<SECRET_1> Plan 0123456789ab.'
+b4 | card  | -        | in='password=<A> Plan 0123456789ab.' | out='password=<SECRET_1>'
+b4 | slack | -        | in='password=<A> Plan 0123456789ab.' | out='password=<SECRET_1>'
+   b4 | walk | tokens of the input (other than the value) missing from output: []
+   b4 | card | tokens of the input (other than the value) missing from output: ['Plan', '0123456789ab.']
+   b4 | slack | tokens of the input (other than the value) missing from output: ['Plan', '0123456789ab.']
+b5 | walk  | -        | in='deploy --password=<A> --force --target prod Plan 0123456789ab.' | out='deploy --password=<SECRET_1> --force --target prod Plan 0123456789ab.'
+b5 | card  | -        | in='deploy --password=<A> --force --target prod Plan 0123456789ab.' | out='deploy --password=<SECRET_1>'
+b5 | slack | -        | in='deploy --password=<A> --force --target prod Plan 0123456789ab.' | out='deploy --password=<SECRET_1>'
+   b5 | walk | tokens of the input (other than the value) missing from output: []
+   b5 | card | tokens of the input (other than the value) missing from output: ['--force', '--target', 'prod', 'Plan', '0123456789ab.']
+   b5 | slack | tokens of the input (other than the value) missing from output: ['--force', '--target', 'prod', 'Plan', '0123456789ab.']
+b6 | walk  | -        | in='password=<A> on orders-db. Plan 0123456789ab.' | out='password=<SECRET_1> on orders-db. Plan 0123456789ab.'
+b6 | card  | -        | in='password=<A> on orders-db. Plan 0123456789ab.' | out='password=<SECRET_1>'
+b6 | slack | -        | in='password=<A> on orders-db. Plan 0123456789ab.' | out='password=<SECRET_1>'
+   b6 | walk | tokens of the input (other than the value) missing from output: []
+   b6 | card | tokens of the input (other than the value) missing from output: ['on', 'orders-db.', 'Plan', '0123456789ab.']
+   b6 | slack | tokens of the input (other than the value) missing from output: ['on', 'orders-db.', 'Plan', '0123456789ab.']
+
+### (b2) the real approval card (summary) and a multi-line card; Plan line is appended by the card builder
+c1 | summary | -        | expected_outcome='Expected: rotate token=<A> on the primary' | out='agent-ops asks to run restart_service v1 (reversible) on crm. Inputs: {}. Expected: Expected: rotate token=<SECRET_1>'
+c2 | summary | -        | expected_outcome='Expected: --password=<A> --force --target prod' | out='agent-ops asks to run restart_service v1 (reversible) on crm. Inputs: {}. Expected: Expected: --password=<SECRET_1>'
+c3 | summary | -        | expected_outcome='Expected: password=<A> horse battery staple' | out='agent-ops asks to run restart_service v1 (reversible) on crm. Inputs: {}. Expected: Expected: password=<SECRET_1>'
+c4 | summary | -        | expected_outcome='Expected: --password <A> word' | out='agent-ops asks to run restart_service v1 (reversible) on crm. Inputs: {}. Expected: Expected: --password <SECRET_1> word. Plan 8e0b207af585.'
+c5 | walk  | -        | in='Expected: rotate token=<A> on the primary\nPlan 0123456789ab.' | out='Expected: rotate token=<SECRET_1> on the primary\nPlan 0123456789ab.'
+c5 | card  | -        | in='Expected: rotate token=<A> on the primary\nPlan 0123456789ab.' | out='Expected: rotate token=<SECRET_1>\nPlan 0123456789ab.'
+c5 | slack | -        | in='Expected: rotate token=<A> on the primary\nPlan 0123456789ab.' | out='Expected: rotate token=<SECRET_1>\nPlan 0123456789ab.'
+c6 | walk  | -        | in='Expected: x password=<A> on orders-db.\nPlan 0123456789ab.' | out='Expected: x password=<SECRET_1> on orders-db.\nPlan 0123456789ab.'
+c6 | card  | -        | in='Expected: x password=<A> on orders-db.\nPlan 0123456789ab.' | out='Expected: x password=<SECRET_1>\nPlan 0123456789ab.'
+c6 | slack | -        | in='Expected: x password=<A> on orders-db.\nPlan 0123456789ab.' | out='Expected: x password=<SECRET_1>\nPlan 0123456789ab.'
+
+### (d) walk path value with spaces
+d1 | walk  | -        | in='password=<A> horse battery staple' | out='password=<SECRET_1> horse battery staple'
+d1 | card  | -        | in='password=<A> horse battery staple' | out='password=<SECRET_1>'
+d1 | slack | -        | in='password=<A> horse battery staple' | out='password=<SECRET_1>'
+d2 | walk  | -        | in='passphrase=correct horse battery staple' | out='passphrase=correct horse battery staple'
+d2 | card  | -        | in='passphrase=correct horse battery staple' | out='passphrase=correct horse battery staple'
+d2 | slack | -        | in='passphrase=correct horse battery staple' | out='passphrase=correct horse battery staple'
+d3 | walk  | -        | in='password=<A>' | out='password=<SECRET_1>'
+d3 | card  | -        | in='password=<A>' | out='password=<SECRET_1>'
+d3 | slack | -        | in='password=<A>' | out='password=<SECRET_1>'
+
+### (e) keys
+e:dbpass= | walk  | -        | in='dbpass=<A>' | out='dbpass=<SECRET_1>'
+e:dbpass= | card  | -        | in='dbpass=<A>' | out='dbpass=<SECRET_1>'
+e:dbpass= | slack | -        | in='dbpass=<A>' | out='dbpass=<SECRET_1>'
+e:dbpass: | walk  | -        | in='dbpass: <A>' | out='dbpass: <SECRET_1>'
+e:dbpass: | card  | -        | in='dbpass: <A>' | out='dbpass: <SECRET_1>'
+e:dbpass: | slack | -        | in='dbpass: <A>' | out='dbpass: <SECRET_1>'
+e:dbpass | walkdict | READABLE | out={"dbpass": "<A>"}
+e:mycredential= | walk  | -        | in='mycredential=<A>' | out='mycredential=<SECRET_1>'
+e:mycredential= | card  | -        | in='mycredential=<A>' | out='mycredential=<SECRET_1>'
+e:mycredential= | slack | -        | in='mycredential=<A>' | out='mycredential=<SECRET_1>'
+e:mycredential: | walk  | -        | in='mycredential: <A>' | out='mycredential: <SECRET_1>'
+e:mycredential: | card  | -        | in='mycredential: <A>' | out='mycredential: <SECRET_1>'
+e:mycredential: | slack | -        | in='mycredential: <A>' | out='mycredential: <SECRET_1>'
+e:mycredential | walkdict | READABLE | out={"mycredential": "<A>"}
+e:usersession= | walk  | -        | in='usersession=<A>' | out='usersession=<SECRET_1>'
+e:usersession= | card  | -        | in='usersession=<A>' | out='usersession=<SECRET_1>'
+e:usersession= | slack | -        | in='usersession=<A>' | out='usersession=<SECRET_1>'
+e:usersession: | walk  | -        | in='usersession: <A>' | out='usersession: <SECRET_1>'
+e:usersession: | card  | -        | in='usersession: <A>' | out='usersession: <SECRET_1>'
+e:usersession: | slack | -        | in='usersession: <A>' | out='usersession: <SECRET_1>'
+e:usersession | walkdict | READABLE | out={"usersession": "<A>"}
+e:userauth= | walk  | -        | in='userauth=<A>' | out='userauth=<SECRET_1>'
+e:userauth= | card  | -        | in='userauth=<A>' | out='userauth=<SECRET_1>'
+e:userauth= | slack | -        | in='userauth=<A>' | out='userauth=<SECRET_1>'
+e:userauth: | walk  | -        | in='userauth: <A>' | out='userauth: <SECRET_1>'
+e:userauth: | card  | -        | in='userauth: <A>' | out='userauth: <SECRET_1>'
+e:userauth: | slack | -        | in='userauth: <A>' | out='userauth: <SECRET_1>'
+e:userauth | walkdict | READABLE | out={"userauth": "<A>"}
+e:dbaccess_key= | walk  | -        | in='dbaccess_key=<A>' | out='dbaccess_key=<SECRET_1>'
+e:dbaccess_key= | card  | -        | in='dbaccess_key=<A>' | out='dbaccess_key=<SECRET_1>'
+e:dbaccess_key= | slack | -        | in='dbaccess_key=<A>' | out='dbaccess_key=<SECRET_1>'
+e:dbaccess_key: | walk  | -        | in='dbaccess_key: <A>' | out='dbaccess_key: <SECRET_1>'
+e:dbaccess_key: | card  | -        | in='dbaccess_key: <A>' | out='dbaccess_key: <SECRET_1>'
+e:dbaccess_key: | slack | -        | in='dbaccess_key: <A>' | out='dbaccess_key: <SECRET_1>'
+e:dbaccess_key | walkdict | READABLE | out={"dbaccess_key": "<A>"}
+e:bypass= | walk  | -        | in='bypass=<A>' | out='bypass=<SECRET_1>'
+e:bypass= | card  | -        | in='bypass=<A>' | out='bypass=<SECRET_1>'
+e:bypass= | slack | -        | in='bypass=<A>' | out='bypass=<SECRET_1>'
+e:bypass: | walk  | -        | in='bypass: <A>' | out='bypass: <SECRET_1>'
+e:bypass: | card  | -        | in='bypass: <A>' | out='bypass: <SECRET_1>'
+e:bypass: | slack | -        | in='bypass: <A>' | out='bypass: <SECRET_1>'
+e:bypass | walkdict | READABLE | out={"bypass": "<A>"}
+e:compass= | walk  | -        | in='compass=<A>' | out='compass=<SECRET_1>'
+e:compass= | card  | -        | in='compass=<A>' | out='compass=<SECRET_1>'
+e:compass= | slack | -        | in='compass=<A>' | out='compass=<SECRET_1>'
+e:compass: | walk  | -        | in='compass: <A>' | out='compass: <SECRET_1>'
+e:compass: | card  | -        | in='compass: <A>' | out='compass: <SECRET_1>'
+e:compass: | slack | -        | in='compass: <A>' | out='compass: <SECRET_1>'
+e:compass | walkdict | READABLE | out={"compass": "<A>"}
+e:oauth= | walk  | -        | in='oauth=<A>' | out='oauth=<SECRET_1>'
+e:oauth= | card  | -        | in='oauth=<A>' | out='oauth=<SECRET_1>'
+e:oauth= | slack | -        | in='oauth=<A>' | out='oauth=<SECRET_1>'
+e:oauth: | walk  | -        | in='oauth: <A>' | out='oauth: <SECRET_1>'
+e:oauth: | card  | -        | in='oauth: <A>' | out='oauth: <SECRET_1>'
+e:oauth: | slack | -        | in='oauth: <A>' | out='oauth: <SECRET_1>'
+e:oauth | walkdict | READABLE | out={"oauth": "<A>"}
+
+### (f) idempotence over every probe output
+outputs {'walk': 55, 'card': 55, 'slack': 55} differing on second pass (walk: after turning the escaped placeholder marks back) {'walk': 6, 'card': 12, 'slack': 0}
+   NONIDEM ('card', 'ddddddddddddddddddddddddddddddddddddd[.]compassword=<A>', 'ddddddddddddddddddddddddddddddddddddd[.]compassword=<SECRET_1>')
+   NONIDEM ('card', 'dddddddddddddddddddddddddddddd[.]ddddddddd[.]password=<A>', 'dddddddddddddddddddddddddddddd[.]ddddddddd[.]password=<SECRET_1>')
+   NONIDEM ('card', 'dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd[.]c', 'dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd[.]c')
+   NONIDEM ('card', 'dddddddddddddddddddddddddddddd[.]dddddddddddddddddddddddddddddd[.]dddddddddddddddddddddddddddddd[.]d', 'dddddddddddddddddddddddddddddd[.]dddddddddddddddddddddddddddddd[.]dddddddddddddddddddddddddddddd[.]d')
+   NONIDEM ('walk', 'bob@<HIGHENTROPY_1>.compassword=<A>', 'bob@<HIGHENTROPY_1>.compassword=<SECRET_1>')
+   NONIDEM ('card', 'bob@<HIGHENTROPY_1>[.]compassword=<A>', 'bob@<HIGHENTROPY_1>[.]compassword=<SECRET_1>')
+   NONIDEM ('walk', '<HIGHENTROPY_1>.compassword=<A>', '<HIGHENTROPY_1>.compassword=<SECRET_1>')
+   NONIDEM ('card', '<HIGHENTROPY_1>[.]compassword=<A>', '<HIGHENTROPY_1>[.]compassword=<SECRET_1>')
+   NONIDEM ('walk', 'bob@<HIGHENTROPY_1>.comtoken=<A>', 'bob@<HIGHENTROPY_1>.comtoken=<SECRET_1>')
+   NONIDEM ('card', 'bob@<HIGHENTROPY_1>[.]comtoken=<A>', 'bob@<HIGHENTROPY_1>[.]comtoken=<SECRET_1>')
+   NONIDEM ('card', 'dddddddddddddddddddddddddddddd[.]dddddddddddddddddddddddddddddd[.]dddddddddddddddddddddddddddddd[.]d', 'dddddddddddddddddddddddddddddd[.]dddddddddddddddddddddddddddddd[.]dddddddddddddddddddddddddddddd[.]d')
+   NONIDEM ('walk', 'bob@<HIGHENTROPY_1>.compassword=<A>', 'bob@<HIGHENTROPY_1>.compassword=<SECRET_1>')
+(slack outputs: second pass not applicable; the card path is applied to the Slack source text)

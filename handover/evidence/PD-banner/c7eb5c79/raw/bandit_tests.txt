@@ -1,0 +1,1999 @@
+Run started:2026-11-13 04:53:49.592878+00:00
+
+Test results:
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:49:12
+48	def _nested(depth: int) -> str:
+49	    sql = f"SELECT order_id FROM {O}"
+50	    for i in range(depth):
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:51:16
+50	    for i in range(depth):
+51	        sql = f"SELECT order_id FROM ({sql}) t{i}"
+52	    return sql
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:56:13
+55	def _joins(n: int) -> str:
+56	    return f"SELECT 1 FROM {O} o0 " + " ".join(
+57	        f"JOIN {O} o{i} ON o{i}.order_id = o0.order_id" for i in range(1, n + 1)
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:63:8
+62	    return (
+63	        "WITH "
+64	        + ", ".join(f"c{i} AS (SELECT order_id FROM {O})" for i in range(n))
+65	        + " SELECT count(*) FROM c0"
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:64:22
+63	        "WITH "
+64	        + ", ".join(f"c{i} AS (SELECT order_id FROM {O})" for i in range(n))
+65	        + " SELECT count(*) FROM c0"
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:65:10
+64	        + ", ".join(f"c{i} AS (SELECT order_id FROM {O})" for i in range(n))
+65	        + " SELECT count(*) FROM c0"
+66	    )
+67	
+68	
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:82:29
+81	    A("unterminated-comment", "SELECT 1 /* never closed", "V01", "comments", "pg-refuses"),
+82	    A("unterminated-string", "SELECT 'never closed FROM " + O, "V01", "comments", "pg-refuses"),
+83	    A("unterminated-qident", 'SELECT "never closed FROM ' + O, "V01", "comments", "pg-refuses"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:83:29
+82	    A("unterminated-string", "SELECT 'never closed FROM " + O, "V01", "comments", "pg-refuses"),
+83	    A("unterminated-qident", 'SELECT "never closed FROM ' + O, "V01", "comments", "pg-refuses"),
+84	    A("stacked-before-parse-error", "SELECT 1; SELEC", "V01", "multiple-statements", "pg-refuses"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:109:25
+108	    A("explain-analyze-delete", "EXPLAIN ANALYZE DELETE FROM shop.order_items", "V03", "explain", "write"),
+109	    A("explain-plain", f"EXPLAIN SELECT * FROM {O}", "V03", "explain", "exec"),
+110	    A("values-root", "VALUES (1), (2)", "V02", "root-type", "exec"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:113:28
+112	    A("select-into", "SELECT 1 INTO scratch_t", "V03", "select-into", "write"),
+113	    A("select-into-temp", f"SELECT * INTO TEMP t FROM {O}", "V03", "select-into", "exec"),
+114	    A("select-into-from-base", "SELECT * INTO scratch_copy FROM shop.customers", "V03", "select-into", "write"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:115:22
+114	    A("select-into-from-base", "SELECT * INTO scratch_copy FROM shop.customers", "V03", "select-into", "write"),
+115	    A("for-update", f"SELECT * FROM {O} FOR UPDATE", "V03", "locking", "lock"),
+116	    A("for-share", f"SELECT * FROM {O} FOR SHARE", "V03", "locking", "lock"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:116:21
+115	    A("for-update", f"SELECT * FROM {O} FOR UPDATE", "V03", "locking", "lock"),
+116	    A("for-share", f"SELECT * FROM {O} FOR SHARE", "V03", "locking", "lock"),
+117	    A("for-no-key-update-nowait", f"SELECT * FROM {O} FOR NO KEY UPDATE NOWAIT", "V03", "locking", "lock"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:117:36
+116	    A("for-share", f"SELECT * FROM {O} FOR SHARE", "V03", "locking", "lock"),
+117	    A("for-no-key-update-nowait", f"SELECT * FROM {O} FOR NO KEY UPDATE NOWAIT", "V03", "locking", "lock"),
+118	    A("for-update-skip-locked", f"SELECT * FROM {O} o FOR UPDATE OF o SKIP LOCKED", "V03", "locking", "lock"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:118:34
+117	    A("for-no-key-update-nowait", f"SELECT * FROM {O} FOR NO KEY UPDATE NOWAIT", "V03", "locking", "lock"),
+118	    A("for-update-skip-locked", f"SELECT * FROM {O} o FOR UPDATE OF o SKIP LOCKED", "V03", "locking", "lock"),
+119	    A("for-update-in-subquery", f"SELECT * FROM (SELECT * FROM {O} FOR UPDATE) s", "V03", "locking", "lock"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:119:34
+118	    A("for-update-skip-locked", f"SELECT * FROM {O} o FOR UPDATE OF o SKIP LOCKED", "V03", "locking", "lock"),
+119	    A("for-update-in-subquery", f"SELECT * FROM (SELECT * FROM {O} FOR UPDATE) s", "V03", "locking", "lock"),
+120	    A("data-modifying-cte", "WITH d AS (DELETE FROM shop.order_items RETURNING *) SELECT * FROM d", "V03", "data-modifying-cte", "write"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:127:33
+126	    A("base-table", "SELECT * FROM shop.customers", "V04", "relations", "leak:@"),
+127	    A("base-table-email-join", f"SELECT s.email FROM {C} c JOIN shop.customers s ON s.customer_id = c.customer_id", "V04", "relations", "leak:@"),
+128	    A("catalog-table", "SELECT * FROM pg_shadow", "V04", "relations", "leak:postgres"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:136:35
+135	    A("scalar-subquery-catalog", "SELECT (SELECT count(*) FROM pg_class)", "V04", "relations", "exec"),
+136	    A("exists-subquery-catalog", f"SELECT 1 FROM {O} WHERE EXISTS (SELECT 1 FROM pg_roles)", "V04", "relations", "exec"),
+137	    A("union-catalog", f"SELECT customer_id::text FROM {C} UNION SELECT rolname::text FROM pg_roles", "V04", "relations", "leak:postgres"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:137:25
+136	    A("exists-subquery-catalog", f"SELECT 1 FROM {O} WHERE EXISTS (SELECT 1 FROM pg_roles)", "V04", "relations", "exec"),
+137	    A("union-catalog", f"SELECT customer_id::text FROM {C} UNION SELECT rolname::text FROM pg_roles", "V04", "relations", "leak:postgres"),
+138	    A("table-function", "SELECT * FROM generate_series(1, 10)", "V04", "table-functions", "exec"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:142:34
+141	    A("table-function-rows-from", "SELECT * FROM ROWS FROM (generate_series(1, 3))", "V04", "table-functions", "exec"),
+142	    A("table-function-lateral", f"SELECT * FROM {O} o JOIN LATERAL generate_series(1, 3) g ON g = o.order_id", "V04", "table-functions", "exec"),
+143	    A("table-function-query-to-xml", "SELECT * FROM query_to_xml('select email from shop.customers', true, true, '')", "V04", "table-functions", "leak:@"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:146:37
+145	    A("table-function-json-each", "SELECT * FROM json_each('{\"a\": 1}')", "V04", "table-functions", "exec"),
+146	    A("table-function-after-join", f"SELECT 1 FROM {O} o JOIN generate_series(1, 3) g ON g = o.order_id", "V04", "table-functions", "exec"),
+147	    A("tablesample", f"SELECT * FROM {O} TABLESAMPLE SYSTEM (10)", "V04", "table-functions", "pg-refuses"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:147:23
+146	    A("table-function-after-join", f"SELECT 1 FROM {O} o JOIN generate_series(1, 3) g ON g = o.order_id", "V04", "table-functions", "exec"),
+147	    A("tablesample", f"SELECT * FROM {O} TABLESAMPLE SYSTEM (10)", "V04", "table-functions", "pg-refuses"),
+148	    A("lateral-subquery", f"SELECT * FROM {O} o JOIN LATERAL (SELECT o.order_id AS x) s ON s.x = o.order_id", "V04", "table-functions", "exec"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:148:28
+147	    A("tablesample", f"SELECT * FROM {O} TABLESAMPLE SYSTEM (10)", "V04", "table-functions", "pg-refuses"),
+148	    A("lateral-subquery", f"SELECT * FROM {O} o JOIN LATERAL (SELECT o.order_id AS x) s ON s.x = o.order_id", "V04", "table-functions", "exec"),
+149	    # ---- CTE scoping (V04)
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:156:39
+155	    A("cte-self-read", "WITH x AS (SELECT * FROM x) SELECT * FROM x", "V04", "cte-scoping", "pg-refuses"),
+156	    A("cte-named-like-exposed-view", f"WITH orders_v AS (SELECT * FROM {C}) SELECT * FROM orders_v", "V04", "cte-scoping", "exec"),
+157	    A("cte-named-information-schema", "WITH information_schema AS (SELECT 1 AS x) SELECT * FROM information_schema", "V04", "cte-scoping", "exec"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:158:43
+157	    A("cte-named-information-schema", "WITH information_schema AS (SELECT 1 AS x) SELECT * FROM information_schema", "V04", "cte-scoping", "exec"),
+158	    A("cte-reads-later-sibling-in-body", f"SELECT * FROM (SELECT * FROM later) q WHERE EXISTS (SELECT 1 FROM {O})", "V04", "cte-scoping", "pg-refuses"),
+159	    A("cte-name-leaks-out-of-subquery", f"SELECT * FROM {O} o WHERE o.order_id IN (WITH t AS (SELECT order_id FROM {O}) SELECT order_id FROM t) AND EXISTS (SELECT 1 FROM t)", "V04", "cte-scoping", "pg-refuses"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:159:42
+158	    A("cte-reads-later-sibling-in-body", f"SELECT * FROM (SELECT * FROM later) q WHERE EXISTS (SELECT 1 FROM {O})", "V04", "cte-scoping", "pg-refuses"),
+159	    A("cte-name-leaks-out-of-subquery", f"SELECT * FROM {O} o WHERE o.order_id IN (WITH t AS (SELECT order_id FROM {O}) SELECT order_id FROM t) AND EXISTS (SELECT 1 FROM t)", "V04", "cte-scoping", "pg-refuses"),
+160	    A("cte-in-second-union-leg", f"SELECT order_id FROM {O} UNION ALL SELECT order_id FROM later_cte", "V04", "cte-scoping", "pg-refuses"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:160:35
+159	    A("cte-name-leaks-out-of-subquery", f"SELECT * FROM {O} o WHERE o.order_id IN (WITH t AS (SELECT order_id FROM {O}) SELECT order_id FROM t) AND EXISTS (SELECT 1 FROM t)", "V04", "cte-scoping", "pg-refuses"),
+160	    A("cte-in-second-union-leg", f"SELECT order_id FROM {O} UNION ALL SELECT order_id FROM later_cte", "V04", "cte-scoping", "pg-refuses"),
+161	    # ---- columns, star, whole-row (V05)
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:162:29
+161	    # ---- columns, star, whole-row (V05)
+162	    A("restricted-column", f"SELECT email FROM {C}", "V05", "columns", "pg-refuses"),
+163	    A("restricted-column-upper", f"SELECT EMAIL FROM {C}", "V05", "identifier-folding", "pg-refuses"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:163:35
+162	    A("restricted-column", f"SELECT email FROM {C}", "V05", "columns", "pg-refuses"),
+163	    A("restricted-column-upper", f"SELECT EMAIL FROM {C}", "V05", "identifier-folding", "pg-refuses"),
+164	    A("restricted-column-qualified", f"SELECT c.email FROM {C} c", "V05", "columns", "pg-refuses"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:164:39
+163	    A("restricted-column-upper", f"SELECT EMAIL FROM {C}", "V05", "identifier-folding", "pg-refuses"),
+164	    A("restricted-column-qualified", f"SELECT c.email FROM {C} c", "V05", "columns", "pg-refuses"),
+165	    A("restricted-column-schema-qualified", f"SELECT analytics.customers_v.email FROM {C}", "V05", "columns", "pg-refuses"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:165:46
+164	    A("restricted-column-qualified", f"SELECT c.email FROM {C} c", "V05", "columns", "pg-refuses"),
+165	    A("restricted-column-schema-qualified", f"SELECT analytics.customers_v.email FROM {C}", "V05", "columns", "pg-refuses"),
+166	    A("restricted-column-in-where", f"SELECT 1 FROM {C} WHERE email LIKE '%@%'", "V05", "columns", "pg-refuses"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:166:38
+165	    A("restricted-column-schema-qualified", f"SELECT analytics.customers_v.email FROM {C}", "V05", "columns", "pg-refuses"),
+166	    A("restricted-column-in-where", f"SELECT 1 FROM {C} WHERE email LIKE '%@%'", "V05", "columns", "pg-refuses"),
+167	    A("restricted-column-in-order-by", f"SELECT customer_id FROM {C} ORDER BY email", "V05", "columns", "pg-refuses"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:167:41
+166	    A("restricted-column-in-where", f"SELECT 1 FROM {C} WHERE email LIKE '%@%'", "V05", "columns", "pg-refuses"),
+167	    A("restricted-column-in-order-by", f"SELECT customer_id FROM {C} ORDER BY email", "V05", "columns", "pg-refuses"),
+168	    A("restricted-column-in-subquery", f"SELECT (SELECT max(email) FROM {C})", "V05", "columns", "pg-refuses"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:168:41
+167	    A("restricted-column-in-order-by", f"SELECT customer_id FROM {C} ORDER BY email", "V05", "columns", "pg-refuses"),
+168	    A("restricted-column-in-subquery", f"SELECT (SELECT max(email) FROM {C})", "V05", "columns", "pg-refuses"),
+169	    A("restricted-column-in-having", f"SELECT country FROM {C} GROUP BY country HAVING max(email) > 'a'", "V05", "columns", "pg-refuses"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:169:39
+168	    A("restricted-column-in-subquery", f"SELECT (SELECT max(email) FROM {C})", "V05", "columns", "pg-refuses"),
+169	    A("restricted-column-in-having", f"SELECT country FROM {C} GROUP BY country HAVING max(email) > 'a'", "V05", "columns", "pg-refuses"),
+170	    A("restricted-column-bare-in-having", f"SELECT country FROM {C} GROUP BY country HAVING email = 'x'", "V05", "columns", "pg-refuses"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:170:44
+169	    A("restricted-column-in-having", f"SELECT country FROM {C} GROUP BY country HAVING max(email) > 'a'", "V05", "columns", "pg-refuses"),
+170	    A("restricted-column-bare-in-having", f"SELECT country FROM {C} GROUP BY country HAVING email = 'x'", "V05", "columns", "pg-refuses"),
+171	    A("keyword-as-column-in-having", f"SELECT country FROM {C} GROUP BY country HAVING max(country) - INTERVAL > 1", "V05", "columns", "pg-refuses"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:171:39
+170	    A("restricted-column-bare-in-having", f"SELECT country FROM {C} GROUP BY country HAVING email = 'x'", "V05", "columns", "pg-refuses"),
+171	    A("keyword-as-column-in-having", f"SELECT country FROM {C} GROUP BY country HAVING max(country) - INTERVAL > 1", "V05", "columns", "pg-refuses"),
+172	    A("unknown-column-in-subquery-in-order-by", f"SELECT order_id FROM {O} ORDER BY (SELECT 1 FROM {C} HAVING email IS NULL)", "V05", "columns", "pg-refuses"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:172:50
+171	    A("keyword-as-column-in-having", f"SELECT country FROM {C} GROUP BY country HAVING max(country) - INTERVAL > 1", "V05", "columns", "pg-refuses"),
+172	    A("unknown-column-in-subquery-in-order-by", f"SELECT order_id FROM {O} ORDER BY (SELECT 1 FROM {C} HAVING email IS NULL)", "V05", "columns", "pg-refuses"),
+173	    A("join-on-one-column-only", f"SELECT 1 FROM {O} a JOIN {O} b ON a.order_id > 0", "V08", "joins", "exec"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:173:35
+172	    A("unknown-column-in-subquery-in-order-by", f"SELECT order_id FROM {O} ORDER BY (SELECT 1 FROM {C} HAVING email IS NULL)", "V05", "columns", "pg-refuses"),
+173	    A("join-on-one-column-only", f"SELECT 1 FROM {O} a JOIN {O} b ON a.order_id > 0", "V08", "joins", "exec"),
+174	    A("join-on-same-column", f"SELECT 1 FROM {O} a JOIN {O} b ON a.order_id = a.order_id", "V08", "joins", "exec"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:174:31
+173	    A("join-on-one-column-only", f"SELECT 1 FROM {O} a JOIN {O} b ON a.order_id > 0", "V08", "joins", "exec"),
+174	    A("join-on-same-column", f"SELECT 1 FROM {O} a JOIN {O} b ON a.order_id = a.order_id", "V08", "joins", "exec"),
+175	    A("join-on-joined-relation-only", f"SELECT 1 FROM {O} a JOIN {P} b ON b.product_id = b.unit_price", "V08", "joins", "exec"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:175:40
+174	    A("join-on-same-column", f"SELECT 1 FROM {O} a JOIN {O} b ON a.order_id = a.order_id", "V08", "joins", "exec"),
+175	    A("join-on-joined-relation-only", f"SELECT 1 FROM {O} a JOIN {P} b ON b.product_id = b.unit_price", "V08", "joins", "exec"),
+176	    A("join-on-earlier-relation-only", f"SELECT 1 FROM {O} a JOIN {C} b ON a.order_id = a.customer_id", "V08", "joins", "exec"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:176:41
+175	    A("join-on-joined-relation-only", f"SELECT 1 FROM {O} a JOIN {P} b ON b.product_id = b.unit_price", "V08", "joins", "exec"),
+176	    A("join-on-earlier-relation-only", f"SELECT 1 FROM {O} a JOIN {C} b ON a.order_id = a.customer_id", "V08", "joins", "exec"),
+177	    A("join-on-third-relation-skips-the-joined-one", f"SELECT 1 FROM {O} a JOIN {C} b ON a.order_id = b.customer_id JOIN {P} c ON a.order_id = b.customer_id", "V08", "joins", "exec"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:177:55
+176	    A("join-on-earlier-relation-only", f"SELECT 1 FROM {O} a JOIN {C} b ON a.order_id = a.customer_id", "V08", "joins", "exec"),
+177	    A("join-on-third-relation-skips-the-joined-one", f"SELECT 1 FROM {O} a JOIN {C} b ON a.order_id = b.customer_id JOIN {P} c ON a.order_id = b.customer_id", "V08", "joins", "exec"),
+178	    A("arity-count-two-args", f"SELECT count(1, 2) FROM {O}", "V06", "function-arity", "pg-refuses"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:178:32
+177	    A("join-on-third-relation-skips-the-joined-one", f"SELECT 1 FROM {O} a JOIN {C} b ON a.order_id = b.customer_id JOIN {P} c ON a.order_id = b.customer_id", "V08", "joins", "exec"),
+178	    A("arity-count-two-args", f"SELECT count(1, 2) FROM {O}", "V06", "function-arity", "pg-refuses"),
+179	    A("arity-age-no-args", f"SELECT age() FROM {O}", "V06", "function-arity", "pg-refuses"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:179:29
+178	    A("arity-count-two-args", f"SELECT count(1, 2) FROM {O}", "V06", "function-arity", "pg-refuses"),
+179	    A("arity-age-no-args", f"SELECT age() FROM {O}", "V06", "function-arity", "pg-refuses"),
+180	    A("arity-length-two-args", f"SELECT length(status, 3) FROM {O}", "V06", "function-arity", "pg-refuses"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:180:33
+179	    A("arity-age-no-args", f"SELECT age() FROM {O}", "V06", "function-arity", "pg-refuses"),
+180	    A("arity-length-two-args", f"SELECT length(status, 3) FROM {O}", "V06", "function-arity", "pg-refuses"),
+181	    A("arity-ceil-two-args", f"SELECT ceil(1, 2) FROM {O}", "V06", "function-arity", "pg-refuses"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:181:31
+180	    A("arity-length-two-args", f"SELECT length(status, 3) FROM {O}", "V06", "function-arity", "pg-refuses"),
+181	    A("arity-ceil-two-args", f"SELECT ceil(1, 2) FROM {O}", "V06", "function-arity", "pg-refuses"),
+182	    A("arity-row-number-with-arg", f"SELECT row_number(5) OVER () FROM {O}", "V06", "function-arity", "pg-refuses"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:182:37
+181	    A("arity-ceil-two-args", f"SELECT ceil(1, 2) FROM {O}", "V06", "function-arity", "pg-refuses"),
+182	    A("arity-row-number-with-arg", f"SELECT row_number(5) OVER () FROM {O}", "V06", "function-arity", "pg-refuses"),
+183	    A("arity-ntile-no-args", f"SELECT ntile() OVER () FROM {O}", "V06", "function-arity", "pg-refuses"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:183:31
+182	    A("arity-row-number-with-arg", f"SELECT row_number(5) OVER () FROM {O}", "V06", "function-arity", "pg-refuses"),
+183	    A("arity-ntile-no-args", f"SELECT ntile() OVER () FROM {O}", "V06", "function-arity", "pg-refuses"),
+184	    A("arity-make-date-two-args", f"SELECT make_date(1, 2) FROM {O}", "V06", "function-arity", "pg-refuses"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:184:36
+183	    A("arity-ntile-no-args", f"SELECT ntile() OVER () FROM {O}", "V06", "function-arity", "pg-refuses"),
+184	    A("arity-make-date-two-args", f"SELECT make_date(1, 2) FROM {O}", "V06", "function-arity", "pg-refuses"),
+185	    A("arity-replace-two-args", f"SELECT replace(status, 'a') FROM {O}", "V06", "function-arity", "pg-refuses"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:185:34
+184	    A("arity-make-date-two-args", f"SELECT make_date(1, 2) FROM {O}", "V06", "function-arity", "pg-refuses"),
+185	    A("arity-replace-two-args", f"SELECT replace(status, 'a') FROM {O}", "V06", "function-arity", "pg-refuses"),
+186	    A("arity-percentile-two-args", f"SELECT percentile_cont(0.5, 0.6) WITHIN GROUP (ORDER BY total_amount) FROM {O}", "V06", "function-arity", "pg-refuses"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:186:37
+185	    A("arity-replace-two-args", f"SELECT replace(status, 'a') FROM {O}", "V06", "function-arity", "pg-refuses"),
+186	    A("arity-percentile-two-args", f"SELECT percentile_cont(0.5, 0.6) WITHIN GROUP (ORDER BY total_amount) FROM {O}", "V06", "function-arity", "pg-refuses"),
+187	    A("named-window-clause", f"SELECT order_id FROM {O} WINDOW w AS (ORDER BY order_id)", "V10", "window-frames", "exec"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:187:31
+186	    A("arity-percentile-two-args", f"SELECT percentile_cont(0.5, 0.6) WITHIN GROUP (ORDER BY total_amount) FROM {O}", "V06", "function-arity", "pg-refuses"),
+187	    A("named-window-clause", f"SELECT order_id FROM {O} WINDOW w AS (ORDER BY order_id)", "V10", "window-frames", "exec"),
+188	    A("wrong-view-column", f"SELECT o.email FROM {O} o", "V05", "columns", "pg-refuses"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:188:29
+187	    A("named-window-clause", f"SELECT order_id FROM {O} WINDOW w AS (ORDER BY order_id)", "V10", "window-frames", "exec"),
+188	    A("wrong-view-column", f"SELECT o.email FROM {O} o", "V05", "columns", "pg-refuses"),
+189	    A("whole-row-alias", f"SELECT o FROM {O} o", "V05", "star-whole-row", "exec"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:189:27
+188	    A("wrong-view-column", f"SELECT o.email FROM {O} o", "V05", "columns", "pg-refuses"),
+189	    A("whole-row-alias", f"SELECT o FROM {O} o", "V05", "star-whole-row", "exec"),
+190	    A("whole-row-relation-name", f"SELECT customers_v FROM {C}", "V05", "star-whole-row", "exec"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:190:35
+189	    A("whole-row-alias", f"SELECT o FROM {O} o", "V05", "star-whole-row", "exec"),
+190	    A("whole-row-relation-name", f"SELECT customers_v FROM {C}", "V05", "star-whole-row", "exec"),
+191	    A("whole-row-in-function", f"SELECT count(o) FROM {O} o", "V05", "star-whole-row", "exec"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:191:33
+190	    A("whole-row-relation-name", f"SELECT customers_v FROM {C}", "V05", "star-whole-row", "exec"),
+191	    A("whole-row-in-function", f"SELECT count(o) FROM {O} o", "V05", "star-whole-row", "exec"),
+192	    A("whole-row-of-subquery", f"SELECT t FROM (SELECT * FROM {O}) t", "V05", "star-whole-row", "exec"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:192:33
+191	    A("whole-row-in-function", f"SELECT count(o) FROM {O} o", "V05", "star-whole-row", "exec"),
+192	    A("whole-row-of-subquery", f"SELECT t FROM (SELECT * FROM {O}) t", "V05", "star-whole-row", "exec"),
+193	    A("whole-row-to-json", f"SELECT to_json(o) FROM {O} o", "V06", "star-whole-row", "exec"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:193:29
+192	    A("whole-row-of-subquery", f"SELECT t FROM (SELECT * FROM {O}) t", "V05", "star-whole-row", "exec"),
+193	    A("whole-row-to-json", f"SELECT to_json(o) FROM {O} o", "V06", "star-whole-row", "exec"),
+194	    A("whole-row-row-to-json", f"SELECT row_to_json(c) FROM {C} c", "V06", "star-whole-row", "exec"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:194:33
+193	    A("whole-row-to-json", f"SELECT to_json(o) FROM {O} o", "V06", "star-whole-row", "exec"),
+194	    A("whole-row-row-to-json", f"SELECT row_to_json(c) FROM {C} c", "V06", "star-whole-row", "exec"),
+195	    A("whole-row-is-null", f"SELECT o IS NULL FROM {O} o", "V05", "star-whole-row", "exec"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:195:29
+194	    A("whole-row-row-to-json", f"SELECT row_to_json(c) FROM {C} c", "V06", "star-whole-row", "exec"),
+195	    A("whole-row-is-null", f"SELECT o IS NULL FROM {O} o", "V05", "star-whole-row", "exec"),
+196	    A("row-constructor", f"SELECT ROW(o.order_id, o.status) FROM {O} o", "V06", "star-whole-row", "exec"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:196:27
+195	    A("whole-row-is-null", f"SELECT o IS NULL FROM {O} o", "V05", "star-whole-row", "exec"),
+196	    A("row-constructor", f"SELECT ROW(o.order_id, o.status) FROM {O} o", "V06", "star-whole-row", "exec"),
+197	    A("star-over-unknown-relation", "SELECT t.* FROM (SELECT * FROM pg_shadow) t", "V04", "star-whole-row", "leak:postgres"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:204:29
+203	    A("pg-sleep-quoted-upper", 'SELECT "PG_SLEEP"(10)', "V06", "function-case", "pg-refuses"),
+204	    A("pg-sleep-in-where", f"SELECT 1 FROM {O} WHERE pg_sleep(10) IS NOT NULL", "V06", "resource-abuse", "abuse"),
+205	    A("pg-sleep-in-subquery", f"SELECT (SELECT pg_sleep(10)) FROM {O}", "V06", "resource-abuse", "abuse"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:205:32
+204	    A("pg-sleep-in-where", f"SELECT 1 FROM {O} WHERE pg_sleep(10) IS NOT NULL", "V06", "resource-abuse", "abuse"),
+205	    A("pg-sleep-in-subquery", f"SELECT (SELECT pg_sleep(10)) FROM {O}", "V06", "resource-abuse", "abuse"),
+206	    A("pg-sleep-for", "SELECT pg_sleep_for(INTERVAL '10 seconds')", "V06", "resource-abuse", "abuse"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:233:45
+232	    A("session-user", "SELECT session_user", "V06", "public-functions", "exec"),
+233	    A("schema-qualified-allowed-function", f"SELECT pg_catalog.count(*) FROM {O}", "V06", "qualified-functions", "exec"),
+234	    A("schema-qualified-user-function", f"SELECT public.my_func(order_id) FROM {O}", "V06", "qualified-functions", "pg-refuses"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:234:42
+233	    A("schema-qualified-allowed-function", f"SELECT pg_catalog.count(*) FROM {O}", "V06", "qualified-functions", "exec"),
+234	    A("schema-qualified-user-function", f"SELECT public.my_func(order_id) FROM {O}", "V06", "qualified-functions", "pg-refuses"),
+235	    A("function-in-filter-clause", f"SELECT count(*) FILTER (WHERE pg_sleep(10) IS NOT NULL) FROM {O}", "V06", "resource-abuse", "abuse"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:235:37
+234	    A("schema-qualified-user-function", f"SELECT public.my_func(order_id) FROM {O}", "V06", "qualified-functions", "pg-refuses"),
+235	    A("function-in-filter-clause", f"SELECT count(*) FILTER (WHERE pg_sleep(10) IS NOT NULL) FROM {O}", "V06", "resource-abuse", "abuse"),
+236	    A("function-in-order-by", f"SELECT 1 FROM {O} ORDER BY (pg_sleep(10) IS NULL)", "V06", "resource-abuse", "abuse"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:236:32
+235	    A("function-in-filter-clause", f"SELECT count(*) FILTER (WHERE pg_sleep(10) IS NOT NULL) FROM {O}", "V06", "resource-abuse", "abuse"),
+236	    A("function-in-order-by", f"SELECT 1 FROM {O} ORDER BY (pg_sleep(10) IS NULL)", "V06", "resource-abuse", "abuse"),
+237	    A("function-in-join-on", f"SELECT 1 FROM {O} a JOIN {O} b ON a.order_id = b.order_id AND pg_sleep(10) IS NOT NULL", "V06", "resource-abuse", "abuse"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:237:31
+236	    A("function-in-order-by", f"SELECT 1 FROM {O} ORDER BY (pg_sleep(10) IS NULL)", "V06", "resource-abuse", "abuse"),
+237	    A("function-in-join-on", f"SELECT 1 FROM {O} a JOIN {O} b ON a.order_id = b.order_id AND pg_sleep(10) IS NOT NULL", "V06", "resource-abuse", "abuse"),
+238	    A("function-in-case", f"SELECT CASE WHEN true THEN pg_sleep(10) END FROM {O}", "V06", "resource-abuse", "abuse"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:238:28
+237	    A("function-in-join-on", f"SELECT 1 FROM {O} a JOIN {O} b ON a.order_id = b.order_id AND pg_sleep(10) IS NOT NULL", "V06", "resource-abuse", "abuse"),
+238	    A("function-in-case", f"SELECT CASE WHEN true THEN pg_sleep(10) END FROM {O}", "V06", "resource-abuse", "abuse"),
+239	    A("function-in-window-order", f"SELECT row_number() OVER (ORDER BY (pg_sleep(10) IS NULL)) FROM {O}", "V06", "resource-abuse", "abuse"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:239:36
+238	    A("function-in-case", f"SELECT CASE WHEN true THEN pg_sleep(10) END FROM {O}", "V06", "resource-abuse", "abuse"),
+239	    A("function-in-window-order", f"SELECT row_number() OVER (ORDER BY (pg_sleep(10) IS NULL)) FROM {O}", "V06", "resource-abuse", "abuse"),
+240	    # ---- casts (V07)
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:253:43
+252	    A("qualified-type-cast", "SELECT 'x'::information_schema.sql_identifier", "V07", "casts", "exec"),
+253	    A("cast-type-parameter-is-a-column", f"SELECT CAST(customer_id AS DECIMAL(email, 2)) FROM {C}", "V07", "casts", "pg-refuses"),
+254	    A("typed-literal-regclass", "SELECT regclass 'pg_shadow'", "V07", "casts", "exec"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:255:38
+254	    A("typed-literal-regclass", "SELECT regclass 'pg_shadow'", "V07", "casts", "exec"),
+255	    A("cast-of-column-to-regclass", f"SELECT status::regclass FROM {O}", "V07", "casts", "pg-refuses"),
+256	    # ---- joins and recursion (V08)
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:258:22
+257	    A("with-recursive", "WITH RECURSIVE r AS (SELECT 1 AS n UNION ALL SELECT n + 1 FROM r) SELECT count(*) FROM r", "V08", "recursion", "abuse"),
+258	    A("cross-join", f"SELECT 1 FROM {O} CROSS JOIN {C}", "V08", "joins", "exec"),
+259	    A("comma-join", f"SELECT 1 FROM {O}, {C}", "V08", "joins", "exec"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:259:22
+258	    A("cross-join", f"SELECT 1 FROM {O} CROSS JOIN {C}", "V08", "joins", "exec"),
+259	    A("comma-join", f"SELECT 1 FROM {O}, {C}", "V08", "joins", "exec"),
+260	    A("natural-join", f"SELECT 1 FROM {O} NATURAL JOIN {C}", "V08", "joins", "exec"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:260:24
+259	    A("comma-join", f"SELECT 1 FROM {O}, {C}", "V08", "joins", "exec"),
+260	    A("natural-join", f"SELECT 1 FROM {O} NATURAL JOIN {C}", "V08", "joins", "exec"),
+261	    A("join-on-true", f"SELECT 1 FROM {O} a JOIN {O} b ON true", "V08", "joins", "exec"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:261:24
+260	    A("natural-join", f"SELECT 1 FROM {O} NATURAL JOIN {C}", "V08", "joins", "exec"),
+261	    A("join-on-true", f"SELECT 1 FROM {O} a JOIN {O} b ON true", "V08", "joins", "exec"),
+262	    A("join-on-one-equals-one", f"SELECT 1 FROM {O} a JOIN {O} b ON 1 = 1", "V08", "joins", "exec"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:262:34
+261	    A("join-on-true", f"SELECT 1 FROM {O} a JOIN {O} b ON true", "V08", "joins", "exec"),
+262	    A("join-on-one-equals-one", f"SELECT 1 FROM {O} a JOIN {O} b ON 1 = 1", "V08", "joins", "exec"),
+263	    # ---- raw-text hazards (V09)
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:266:25
+265	    A("terminal-escape", "SELECT 1 " + ESC + "[2K", "V09", "control-characters", "pg-refuses"),
+266	    A("carriage-return", "SELECT 1" + CR + "; DELETE FROM shop.order_items", "V09", "control-characters", "write"),
+267	    A("form-feed", "SELECT 1" + FF + "; DELETE FROM shop.order_items", "V09", "control-characters", "write"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:266:43
+265	    A("terminal-escape", "SELECT 1 " + ESC + "[2K", "V09", "control-characters", "pg-refuses"),
+266	    A("carriage-return", "SELECT 1" + CR + "; DELETE FROM shop.order_items", "V09", "control-characters", "write"),
+267	    A("form-feed", "SELECT 1" + FF + "; DELETE FROM shop.order_items", "V09", "control-characters", "write"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:267:19
+266	    A("carriage-return", "SELECT 1" + CR + "; DELETE FROM shop.order_items", "V09", "control-characters", "write"),
+267	    A("form-feed", "SELECT 1" + FF + "; DELETE FROM shop.order_items", "V09", "control-characters", "write"),
+268	    A("c1-control-in-literal", f"SELECT '{NEL}' FROM {O}", "V09", "control-characters", "exec"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:267:37
+266	    A("carriage-return", "SELECT 1" + CR + "; DELETE FROM shop.order_items", "V09", "control-characters", "write"),
+267	    A("form-feed", "SELECT 1" + FF + "; DELETE FROM shop.order_items", "V09", "control-characters", "write"),
+268	    A("c1-control-in-literal", f"SELECT '{NEL}' FROM {O}", "V09", "control-characters", "exec"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:268:33
+267	    A("form-feed", "SELECT 1" + FF + "; DELETE FROM shop.order_items", "V09", "control-characters", "write"),
+268	    A("c1-control-in-literal", f"SELECT '{NEL}' FROM {O}", "V09", "control-characters", "exec"),
+269	    A("backslash-literal", f"SELECT 'a{BACKSLASH}' FROM {O}", "V09", "backslash", "exec"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:269:29
+268	    A("c1-control-in-literal", f"SELECT '{NEL}' FROM {O}", "V09", "control-characters", "exec"),
+269	    A("backslash-literal", f"SELECT 'a{BACKSLASH}' FROM {O}", "V09", "backslash", "exec"),
+270	    A("backslash-quote-differential", f"SELECT 1 FROM {O} WHERE status = 'a{BACKSLASH}'; DELETE FROM shop.order_items; --'", "V09", "parser-differential", "write"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:270:40
+269	    A("backslash-literal", f"SELECT 'a{BACKSLASH}' FROM {O}", "V09", "backslash", "exec"),
+270	    A("backslash-quote-differential", f"SELECT 1 FROM {O} WHERE status = 'a{BACKSLASH}'; DELETE FROM shop.order_items; --'", "V09", "parser-differential", "write"),
+271	    A("backslash-in-comment", f"SELECT 1 -- {BACKSLASH}\n; DELETE FROM shop.order_items", "V09", "backslash", "write"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:271:32
+270	    A("backslash-quote-differential", f"SELECT 1 FROM {O} WHERE status = 'a{BACKSLASH}'; DELETE FROM shop.order_items; --'", "V09", "parser-differential", "write"),
+271	    A("backslash-in-comment", f"SELECT 1 -- {BACKSLASH}\n; DELETE FROM shop.order_items", "V09", "backslash", "write"),
+272	    A("backslash-in-qident", f'SELECT 1 AS "a{BACKSLASH}"; DELETE FROM shop.order_items; --"', "V09", "backslash", "write"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:272:31
+271	    A("backslash-in-comment", f"SELECT 1 -- {BACKSLASH}\n; DELETE FROM shop.order_items", "V09", "backslash", "write"),
+272	    A("backslash-in-qident", f'SELECT 1 AS "a{BACKSLASH}"; DELETE FROM shop.order_items; --"', "V09", "backslash", "write"),
+273	    A("dollar-quote", "SELECT $$x$$", "V09", "dollar-quoting", "exec"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:275:33
+274	    A("dollar-tag-hides-stack", "SELECT $a$ ; DELETE FROM shop.order_items; $a$", "V09", "dollar-quoting", "exec"),
+275	    A("dollar-quote-in-where", f"SELECT 1 FROM {O} WHERE status = $q$x$q$", "V09", "dollar-quoting", "exec"),
+276	    A("dollar-in-identifier-position", "SELECT 1 AS $x", "V09", "dollar-quoting", "pg-refuses"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:279:44
+278	    A("escape-prefix-lower", "SELECT e'abc'", "V09", "escape-strings", "exec"),
+279	    A("escape-string-quote-differential", f"SELECT E'a{BACKSLASH}'; DELETE FROM shop.order_items; --'", "V09", "escape-strings", "exec"),
+280	    A("unicode-escape-string", "SELECT U&'\\0041'", "V09", "escape-strings", "exec"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:285:21
+284	    A("national-prefix", "SELECT N'abc'", "V09", "escape-strings", "exec"),
+285	    A("parameter", f"SELECT * FROM {O} WHERE order_id = $1", "V09", "placeholders", "pg-refuses"),
+286	    A("parameter-cast", f"SELECT * FROM {O} WHERE order_id = $1::int", "V09", "placeholders", "pg-refuses"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:286:26
+285	    A("parameter", f"SELECT * FROM {O} WHERE order_id = $1", "V09", "placeholders", "pg-refuses"),
+286	    A("parameter-cast", f"SELECT * FROM {O} WHERE order_id = $1::int", "V09", "placeholders", "pg-refuses"),
+287	    A("placeholder-percent-s", f"SELECT * FROM {O} WHERE order_id = %s", "V09", "placeholders", "pg-refuses"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:287:33
+286	    A("parameter-cast", f"SELECT * FROM {O} WHERE order_id = $1::int", "V09", "placeholders", "pg-refuses"),
+287	    A("placeholder-percent-s", f"SELECT * FROM {O} WHERE order_id = %s", "V09", "placeholders", "pg-refuses"),
+288	    A("placeholder-percent-named", f"SELECT * FROM {O} WHERE order_id = %(id)s", "V09", "placeholders", "pg-refuses"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:288:37
+287	    A("placeholder-percent-s", f"SELECT * FROM {O} WHERE order_id = %s", "V09", "placeholders", "pg-refuses"),
+288	    A("placeholder-percent-named", f"SELECT * FROM {O} WHERE order_id = %(id)s", "V09", "placeholders", "pg-refuses"),
+289	    A("placeholder-colon-name", f"SELECT * FROM {O} WHERE order_id = :id", "V09", "placeholders", "pg-refuses"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:289:34
+288	    A("placeholder-percent-named", f"SELECT * FROM {O} WHERE order_id = %(id)s", "V09", "placeholders", "pg-refuses"),
+289	    A("placeholder-colon-name", f"SELECT * FROM {O} WHERE order_id = :id", "V09", "placeholders", "pg-refuses"),
+290	    A("placeholder-question-mark", f"SELECT * FROM {O} WHERE order_id = ?", "V09", "placeholders", "pg-refuses"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:290:37
+289	    A("placeholder-colon-name", f"SELECT * FROM {O} WHERE order_id = :id", "V09", "placeholders", "pg-refuses"),
+290	    A("placeholder-question-mark", f"SELECT * FROM {O} WHERE order_id = ?", "V09", "placeholders", "pg-refuses"),
+291	    A("unicode-lookalike-identifier", f"SELECT customer_{CYR_I}d FROM {O}", "V09", "unicode-lookalikes", "pg-refuses"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:291:40
+290	    A("placeholder-question-mark", f"SELECT * FROM {O} WHERE order_id = ?", "V09", "placeholders", "pg-refuses"),
+291	    A("unicode-lookalike-identifier", f"SELECT customer_{CYR_I}d FROM {O}", "V09", "unicode-lookalikes", "pg-refuses"),
+292	    A("unicode-greek-question-mark", f"SELECT 1{GREEK_QUESTION} DELETE FROM shop.order_items", "V09", "unicode-lookalikes", "pg-refuses"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:292:39
+291	    A("unicode-lookalike-identifier", f"SELECT customer_{CYR_I}d FROM {O}", "V09", "unicode-lookalikes", "pg-refuses"),
+292	    A("unicode-greek-question-mark", f"SELECT 1{GREEK_QUESTION} DELETE FROM shop.order_items", "V09", "unicode-lookalikes", "pg-refuses"),
+293	    A("unicode-fullwidth-keyword", f"{FULLWIDTH_S}ELECT 1", "V09", "unicode-lookalikes", "pg-refuses"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:295:44
+294	    A("unicode-nbsp-between-tokens", f"SELECT{NBSP}1", "V09", "unicode-lookalikes", "pg-refuses"),
+295	    A("unicode-zero-width-in-identifier", f"SELECT customer_{ZWSP}id FROM {O}", "V09", "unicode-lookalikes", "pg-refuses"),
+296	    A("unicode-bidi-override", f"SELECT 1 {RLO}", "V09", "unicode-lookalikes", "exec"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:301:22
+300	    # ---- constructs and operators, size limits (V10)
+301	    A("frame-rows", f"SELECT sum(total_amount) OVER (ORDER BY order_date ROWS BETWEEN 1 PRECEDING AND CURRENT ROW) FROM {O}", "V10", "window-frames", "exec"),
+302	    A("frame-range", f"SELECT sum(total_amount) OVER (ORDER BY order_date RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) FROM {O}", "V10", "window-frames", "exec"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:302:23
+301	    A("frame-rows", f"SELECT sum(total_amount) OVER (ORDER BY order_date ROWS BETWEEN 1 PRECEDING AND CURRENT ROW) FROM {O}", "V10", "window-frames", "exec"),
+302	    A("frame-range", f"SELECT sum(total_amount) OVER (ORDER BY order_date RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) FROM {O}", "V10", "window-frames", "exec"),
+303	    A("regex-operator-on-call", f"SELECT 1 FROM {O} WHERE LOWER(status) ~ 'a'", "V10", "operators", "exec"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:303:34
+302	    A("frame-range", f"SELECT sum(total_amount) OVER (ORDER BY order_date RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) FROM {O}", "V10", "window-frames", "exec"),
+303	    A("regex-operator-on-call", f"SELECT 1 FROM {O} WHERE LOWER(status) ~ 'a'", "V10", "operators", "exec"),
+304	    A("regex-operator-redos", f"SELECT 1 FROM {O} WHERE status ~ '(a+)+$'", "V10", "operators", "exec"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:304:32
+303	    A("regex-operator-on-call", f"SELECT 1 FROM {O} WHERE LOWER(status) ~ 'a'", "V10", "operators", "exec"),
+304	    A("regex-operator-redos", f"SELECT 1 FROM {O} WHERE status ~ '(a+)+$'", "V10", "operators", "exec"),
+305	    A("regex-operator-insensitive", f"SELECT 1 FROM {O} WHERE status ~* 'a'", "V10", "operators", "exec"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:305:38
+304	    A("regex-operator-redos", f"SELECT 1 FROM {O} WHERE status ~ '(a+)+$'", "V10", "operators", "exec"),
+305	    A("regex-operator-insensitive", f"SELECT 1 FROM {O} WHERE status ~* 'a'", "V10", "operators", "exec"),
+306	    A("containment-operator-on-call", f"SELECT 1 FROM {O} WHERE LOWER(status) @> 'a'", "V10", "operators", "pg-refuses"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:306:40
+305	    A("regex-operator-insensitive", f"SELECT 1 FROM {O} WHERE status ~* 'a'", "V10", "operators", "exec"),
+306	    A("containment-operator-on-call", f"SELECT 1 FROM {O} WHERE LOWER(status) @> 'a'", "V10", "operators", "pg-refuses"),
+307	    A("json-arrow-operator", f"SELECT status -> 'a' FROM {O}", "V10", "operators", "pg-refuses"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:307:31
+306	    A("containment-operator-on-call", f"SELECT 1 FROM {O} WHERE LOWER(status) @> 'a'", "V10", "operators", "pg-refuses"),
+307	    A("json-arrow-operator", f"SELECT status -> 'a' FROM {O}", "V10", "operators", "pg-refuses"),
+308	    A("json-text-operator", f"SELECT status ->> 'a' FROM {O}", "V10", "operators", "pg-refuses"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:308:30
+307	    A("json-arrow-operator", f"SELECT status -> 'a' FROM {O}", "V10", "operators", "pg-refuses"),
+308	    A("json-text-operator", f"SELECT status ->> 'a' FROM {O}", "V10", "operators", "pg-refuses"),
+309	    A("operator-syntax", f"SELECT 1 OPERATOR(pg_catalog.+) 1 FROM {O}", "V10", "operators", "exec"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:309:27
+308	    A("json-text-operator", f"SELECT status ->> 'a' FROM {O}", "V10", "operators", "pg-refuses"),
+309	    A("operator-syntax", f"SELECT 1 OPERATOR(pg_catalog.+) 1 FROM {O}", "V10", "operators", "exec"),
+310	    A("collate", f"SELECT status COLLATE \"C\" FROM {O}", "V10", "operators", "exec"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:310:19
+309	    A("operator-syntax", f"SELECT 1 OPERATOR(pg_catalog.+) 1 FROM {O}", "V10", "operators", "exec"),
+310	    A("collate", f"SELECT status COLLATE \"C\" FROM {O}", "V10", "operators", "exec"),
+311	    A("subscript", f"SELECT (ARRAY[1, 2])[1] FROM {O}", "V10", "operators", "exec"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:311:21
+310	    A("collate", f"SELECT status COLLATE \"C\" FROM {O}", "V10", "operators", "exec"),
+311	    A("subscript", f"SELECT (ARRAY[1, 2])[1] FROM {O}", "V10", "operators", "exec"),
+312	    A("array-constructor", f"SELECT ARRAY[order_id] FROM {O}", "V06", "operators", "exec"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:312:29
+311	    A("subscript", f"SELECT (ARRAY[1, 2])[1] FROM {O}", "V10", "operators", "exec"),
+312	    A("array-constructor", f"SELECT ARRAY[order_id] FROM {O}", "V06", "operators", "exec"),
+313	    A("similar-to", f"SELECT 1 FROM {O} WHERE status SIMILAR TO '(a|b)+'", "V10", "operators", "exec"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:313:22
+312	    A("array-constructor", f"SELECT ARRAY[order_id] FROM {O}", "V06", "operators", "exec"),
+313	    A("similar-to", f"SELECT 1 FROM {O} WHERE status SIMILAR TO '(a|b)+'", "V10", "operators", "exec"),
+314	    A("at-time-zone-column", f"SELECT order_date AT TIME ZONE status FROM {O}", "V10", "operators", "pg-refuses"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:314:31
+313	    A("similar-to", f"SELECT 1 FROM {O} WHERE status SIMILAR TO '(a|b)+'", "V10", "operators", "exec"),
+314	    A("at-time-zone-column", f"SELECT order_date AT TIME ZONE status FROM {O}", "V10", "operators", "pg-refuses"),
+315	    A("interval-huge", f"SELECT order_date + INTERVAL '99999 days' FROM {O}", "V10", "size-limits", "exec"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:315:25
+314	    A("at-time-zone-column", f"SELECT order_date AT TIME ZONE status FROM {O}", "V10", "operators", "pg-refuses"),
+315	    A("interval-huge", f"SELECT order_date + INTERVAL '99999 days' FROM {O}", "V10", "size-limits", "exec"),
+316	    A("interval-unit-seconds", f"SELECT order_date + INTERVAL '5 seconds' FROM {O}", "V10", "size-limits", "exec"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:316:33
+315	    A("interval-huge", f"SELECT order_date + INTERVAL '99999 days' FROM {O}", "V10", "size-limits", "exec"),
+316	    A("interval-unit-seconds", f"SELECT order_date + INTERVAL '5 seconds' FROM {O}", "V10", "size-limits", "exec"),
+317	    A("filter-on-non-aggregate", f"SELECT lower(status) FILTER (WHERE true) FROM {O}", "V10", "operators", "pg-refuses"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:317:35
+316	    A("interval-unit-seconds", f"SELECT order_date + INTERVAL '5 seconds' FROM {O}", "V10", "size-limits", "exec"),
+317	    A("filter-on-non-aggregate", f"SELECT lower(status) FILTER (WHERE true) FROM {O}", "V10", "operators", "pg-refuses"),
+318	    A("within-group-non-percentile", f"SELECT mode() WITHIN GROUP (ORDER BY status) FROM {O}", "V10", "operators", "exec"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:318:39
+317	    A("filter-on-non-aggregate", f"SELECT lower(status) FILTER (WHERE true) FROM {O}", "V10", "operators", "pg-refuses"),
+318	    A("within-group-non-percentile", f"SELECT mode() WITHIN GROUP (ORDER BY status) FROM {O}", "V10", "operators", "exec"),
+319	    A("deep-nesting", _nested(12), "V10", "size-limits", "exec"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:323:24
+322	    A("too-many-nodes", "SELECT " + "+".join(["1"] * 1400), "V10", "size-limits", "exec"),
+323	    A("long-literal", f"SELECT '{'x' * 300}' FROM {O}", "V10", "size-limits", "exec"),
+324	    A("deep-parentheses", "SELECT " + "(" * 500 + "1" + ")" * 500, "V01", "size-limits", "exec"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:326:34
+325	    # ---- re-parse identity (V11)
+326	    A("generator-disagreement", f"SELECT 1 FROM {O}", "V11", "reparse-identity", "none"),
+327	    # ---- identifiers (V12)
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:330:31
+329	    A("upper-quoted-schema", 'SELECT * FROM "ANALYTICS".orders_v', "V12", "identifier-folding", "pg-refuses"),
+330	    A("upper-quoted-column", f'SELECT "Order_Id" FROM {O}', "V12", "identifier-folding", "pg-refuses"),
+331	    A("quoted-identifier-with-space", f'SELECT 1 AS "my col" FROM {O}', "V12", "identifier-folding", "exec"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:331:40
+330	    A("upper-quoted-column", f'SELECT "Order_Id" FROM {O}', "V12", "identifier-folding", "pg-refuses"),
+331	    A("quoted-identifier-with-space", f'SELECT 1 AS "my col" FROM {O}', "V12", "identifier-folding", "exec"),
+332	    A("quoted-identifier-trailing-space", f'SELECT "order_id " FROM {O}', "V12", "identifier-folding", "pg-refuses"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:332:44
+331	    A("quoted-identifier-with-space", f'SELECT 1 AS "my col" FROM {O}', "V12", "identifier-folding", "exec"),
+332	    A("quoted-identifier-trailing-space", f'SELECT "order_id " FROM {O}', "V12", "identifier-folding", "pg-refuses"),
+333	    A("quoted-identifier-with-semicolon", f'SELECT 1 AS "a;b" FROM {O}', "V12", "identifier-folding", "exec"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:333:44
+332	    A("quoted-identifier-trailing-space", f'SELECT "order_id " FROM {O}', "V12", "identifier-folding", "pg-refuses"),
+333	    A("quoted-identifier-with-semicolon", f'SELECT 1 AS "a;b" FROM {O}', "V12", "identifier-folding", "exec"),
+334	    A("quoted-identifier-doubled-quote", f'SELECT 1 AS "a""b" FROM {O}', "V12", "identifier-folding", "exec"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:334:43
+333	    A("quoted-identifier-with-semicolon", f'SELECT 1 AS "a;b" FROM {O}', "V12", "identifier-folding", "exec"),
+334	    A("quoted-identifier-doubled-quote", f'SELECT 1 AS "a""b" FROM {O}', "V12", "identifier-folding", "exec"),
+335	    A("quoted-upper-alias", f'SELECT order_id AS "Total" FROM {O}', "V12", "identifier-folding", "exec"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:335:30
+334	    A("quoted-identifier-doubled-quote", f'SELECT 1 AS "a""b" FROM {O}', "V12", "identifier-folding", "exec"),
+335	    A("quoted-upper-alias", f'SELECT order_id AS "Total" FROM {O}', "V12", "identifier-folding", "exec"),
+336	]  # fmt: skip
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:340:16
+339	BENIGN: list[tuple[str, str]] = [
+340	    ("count", f"SELECT count(*) FROM {O}"),
+341	    ("join-on-subquery", f"SELECT s.n FROM {C} c JOIN (SELECT customer_id, count(*) AS n FROM {O} GROUP BY customer_id) s ON s.customer_id = c.customer_id"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:341:27
+340	    ("count", f"SELECT count(*) FROM {O}"),
+341	    ("join-on-subquery", f"SELECT s.n FROM {C} c JOIN (SELECT customer_id, count(*) AS n FROM {O} GROUP BY customer_id) s ON s.customer_id = c.customer_id"),
+342	    ("join-on-cte", f"WITH t AS (SELECT customer_id FROM {O}) SELECT count(*) FROM {C} c JOIN t ON t.customer_id = c.customer_id"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:342:22
+341	    ("join-on-subquery", f"SELECT s.n FROM {C} c JOIN (SELECT customer_id, count(*) AS n FROM {O} GROUP BY customer_id) s ON s.customer_id = c.customer_id"),
+342	    ("join-on-cte", f"WITH t AS (SELECT customer_id FROM {O}) SELECT count(*) FROM {C} c JOIN t ON t.customer_id = c.customer_id"),
+343	    ("join-on-compound", f"SELECT count(*) FROM {O} o JOIN {C} c ON c.customer_id = o.customer_id AND o.status = 'paid'"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:343:27
+342	    ("join-on-cte", f"WITH t AS (SELECT customer_id FROM {O}) SELECT count(*) FROM {C} c JOIN t ON t.customer_id = c.customer_id"),
+343	    ("join-on-compound", f"SELECT count(*) FROM {O} o JOIN {C} c ON c.customer_id = o.customer_id AND o.status = 'paid'"),
+344	    ("count-distinct", f"SELECT count(DISTINCT customer_id) FROM {O}"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:344:25
+343	    ("join-on-compound", f"SELECT count(*) FROM {O} o JOIN {C} c ON c.customer_id = o.customer_id AND o.status = 'paid'"),
+344	    ("count-distinct", f"SELECT count(DISTINCT customer_id) FROM {O}"),
+345	    (
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:347:10
+346	        "cte-later-uses-earlier",
+347	        f"WITH a AS (SELECT customer_id FROM {O}), b AS (SELECT customer_id FROM a) SELECT count(*) FROM b",
+348	    ),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:350:26
+349	    ("cte-nested-own-scope", "SELECT * FROM (WITH t AS (SELECT 1 AS x) SELECT x FROM t) s"),
+350	    ("cte-column-list", f"WITH t(a, b) AS (SELECT order_id, status FROM {O}) SELECT a, b FROM t"),
+351	    ("cte-named-like-base-table", f"WITH orders AS (SELECT * FROM {O}) SELECT count(*) FROM orders"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:351:36
+350	    ("cte-column-list", f"WITH t(a, b) AS (SELECT order_id, status FROM {O}) SELECT a, b FROM t"),
+351	    ("cte-named-like-base-table", f"WITH orders AS (SELECT * FROM {O}) SELECT count(*) FROM orders"),
+352	    (
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:354:10
+353	        "cte-used-in-subquery",
+354	        f"WITH t AS (SELECT order_id FROM {O}) SELECT * FROM {O} WHERE order_id IN (SELECT order_id FROM t)",
+355	    ),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:358:10
+357	        "group-by",
+358	        f"SELECT category, count(*) AS n FROM {P} GROUP BY 1 ORDER BY n DESC LIMIT 5",
+359	    ),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:362:10
+361	        "group-by-having",
+362	        f"SELECT customer_id, sum(total_amount) AS s FROM {O} GROUP BY customer_id HAVING sum(total_amount) > 100",
+363	    ),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:366:10
+365	        "limit-offset",
+366	        f"SELECT order_id FROM {O} ORDER BY order_id LIMIT 10 OFFSET 20",
+367	    ),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:370:10
+369	        "join",
+370	        f"SELECT c.country, count(*) AS orders FROM {O} o JOIN {C} c"
+371	        " ON c.customer_id = o.customer_id GROUP BY c.country ORDER BY orders DESC",
+372	    ),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:375:10
+374	        "join-using",
+375	        f"SELECT count(*) FROM {O} JOIN {C} USING (customer_id)",
+376	    ),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:379:10
+378	        "left-join",
+379	        f"SELECT c.full_name, count(o.order_id) FROM {C} c LEFT JOIN {O} o ON o.customer_id = c.customer_id GROUP BY c.full_name",
+380	    ),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:383:10
+382	        "three-way-join",
+383	        f"SELECT p.category, sum(i.line_amount) FROM {I} i JOIN {P} p ON p.product_id = i.product_id"
+384	        f" JOIN {O} o ON o.order_id = i.order_id WHERE o.status = 'paid' GROUP BY p.category",
+385	    ),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:388:10
+387	        "cte",
+388	        f"WITH t AS (SELECT customer_id, sum(total_amount) AS s FROM {O} GROUP BY customer_id)"
+389	        " SELECT avg(s) FROM t",
+390	    ),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:393:10
+392	        "window-rank",
+393	        f"SELECT customer_id, rank() OVER (ORDER BY total_amount DESC) AS r FROM {O}",
+394	    ),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:397:10
+396	        "window-partition",
+397	        f"SELECT order_id, row_number() OVER (PARTITION BY customer_id ORDER BY order_date) AS n FROM {O}",
+398	    ),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:401:10
+400	        "window-lag",
+401	        f"SELECT order_id, lag(total_amount) OVER (PARTITION BY customer_id ORDER BY order_date) FROM {O}",
+402	    ),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:405:10
+404	        "date-trunc",
+405	        f"SELECT date_trunc('month', order_date) AS m, sum(total_amount) FROM {O} GROUP BY 1",
+406	    ),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:407:23
+406	    ),
+407	    ("extract-year", f"SELECT extract(year FROM order_date) AS y, count(*) FROM {O} GROUP BY 1"),
+408	    ("date-part", f"SELECT date_part('month', order_date) FROM {O}"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:408:20
+407	    ("extract-year", f"SELECT extract(year FROM order_date) AS y, count(*) FROM {O} GROUP BY 1"),
+408	    ("date-part", f"SELECT date_part('month', order_date) FROM {O}"),
+409	    (
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:411:10
+410	        "percentile",
+411	        f"SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY total_amount) FROM {O}",
+412	    ),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:413:17
+412	    ),
+413	    ("filter", f"SELECT count(*) FILTER (WHERE status = 'paid') FROM {O}"),
+414	    (
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:416:10
+415	        "case",
+416	        f"SELECT CASE WHEN total_amount > 100 THEN 'big' ELSE 'small' END AS size, count(*)"
+417	        f" FROM {O} GROUP BY 1",
+418	    ),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:419:26
+418	    ),
+419	    ("coalesce-nullif", f"SELECT coalesce(nullif(status, ''), 'none') FROM {O}"),
+420	    ("round-numeric", f"SELECT round(avg(total_amount), 2) FROM {O}"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:420:24
+419	    ("coalesce-nullif", f"SELECT coalesce(nullif(status, ''), 'none') FROM {O}"),
+420	    ("round-numeric", f"SELECT round(avg(total_amount), 2) FROM {O}"),
+421	    ("greatest-least", f"SELECT greatest(total_amount, 0), least(total_amount, 1000) FROM {O}"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:421:25
+420	    ("round-numeric", f"SELECT round(avg(total_amount), 2) FROM {O}"),
+421	    ("greatest-least", f"SELECT greatest(total_amount, 0), least(total_amount, 1000) FROM {O}"),
+422	    ("string-functions", f"SELECT upper(full_name), lower(country), length(full_name) FROM {C}"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:422:27
+421	    ("greatest-least", f"SELECT greatest(total_amount, 0), least(total_amount, 1000) FROM {O}"),
+422	    ("string-functions", f"SELECT upper(full_name), lower(country), length(full_name) FROM {C}"),
+423	    ("concat-operator", f"SELECT full_name || ' (' || country || ')' FROM {C}"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:423:26
+422	    ("string-functions", f"SELECT upper(full_name), lower(country), length(full_name) FROM {C}"),
+423	    ("concat-operator", f"SELECT full_name || ' (' || country || ')' FROM {C}"),
+424	    ("time-zone", f"SELECT order_date AT TIME ZONE 'UTC' FROM {O}"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:424:20
+423	    ("concat-operator", f"SELECT full_name || ' (' || country || ')' FROM {C}"),
+424	    ("time-zone", f"SELECT order_date AT TIME ZONE 'UTC' FROM {O}"),
+425	    (
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:427:10
+426	        "literals-with-comment-markers",
+427	        f"SELECT 'a--b', 'c/*d*/' FROM {O} -- real comment",
+428	    ),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:429:43
+428	    ),
+429	    ("literal-with-semicolon-and-quote", f"SELECT 'x'';DELETE FROM shop.order_items;--' FROM {O}"),
+430	    ("literal-with-percent-and-colon", f"SELECT 'a%s:b?c' FROM {O} LIMIT 1"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:430:41
+429	    ("literal-with-semicolon-and-quote", f"SELECT 'x'';DELETE FROM shop.order_items;--' FROM {O}"),
+430	    ("literal-with-percent-and-colon", f"SELECT 'a%s:b?c' FROM {O} LIMIT 1"),
+431	    ("literal-non-ascii", f"SELECT 1 FROM {C} WHERE full_name = 'Zo{EACUTE}'"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:431:28
+430	    ("literal-with-percent-and-colon", f"SELECT 'a%s:b?c' FROM {O} LIMIT 1"),
+431	    ("literal-non-ascii", f"SELECT 1 FROM {C} WHERE full_name = 'Zo{EACUTE}'"),
+432	    ("line-comment-hides-statement", f"SELECT 1 FROM {O} -- ; DELETE FROM shop.order_items"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:432:39
+431	    ("literal-non-ascii", f"SELECT 1 FROM {C} WHERE full_name = 'Zo{EACUTE}'"),
+432	    ("line-comment-hides-statement", f"SELECT 1 FROM {O} -- ; DELETE FROM shop.order_items"),
+433	    ("nested-comment-hides-statement", f"SELECT 1 /* a /* ; DELETE FROM shop.order_items */ b */ FROM {O}"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:433:41
+432	    ("line-comment-hides-statement", f"SELECT 1 FROM {O} -- ; DELETE FROM shop.order_items"),
+433	    ("nested-comment-hides-statement", f"SELECT 1 /* a /* ; DELETE FROM shop.order_items */ b */ FROM {O}"),
+434	    ("trailing-semicolon", f"SELECT 1 FROM {O};"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:434:29
+433	    ("nested-comment-hides-statement", f"SELECT 1 /* a /* ; DELETE FROM shop.order_items */ b */ FROM {O}"),
+434	    ("trailing-semicolon", f"SELECT 1 FROM {O};"),
+435	    ("quoted-plain-identifiers", 'SELECT "order_id" FROM analytics."orders_v"'),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:437:15
+436	    ("unquoted-upper-folds", "SELECT ORDER_ID FROM ANALYTICS.ORDERS_V"),
+437	    ("star", f"SELECT * FROM {C}"),
+438	    ("star-qualified", f"SELECT o.* FROM {O} o"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:438:25
+437	    ("star", f"SELECT * FROM {C}"),
+438	    ("star-qualified", f"SELECT o.* FROM {O} o"),
+439	    ("star-in-count", f"SELECT count(*) FROM (SELECT * FROM {O}) s"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:439:24
+438	    ("star-qualified", f"SELECT o.* FROM {O} o"),
+439	    ("star-in-count", f"SELECT count(*) FROM (SELECT * FROM {O}) s"),
+440	    ("union", "SELECT 1 AS a UNION ALL SELECT 2"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:441:20
+440	    ("union", "SELECT 1 AS a UNION ALL SELECT 2"),
+441	    ("intersect", f"SELECT customer_id FROM {O} INTERSECT SELECT customer_id FROM {C}"),
+442	    ("except", f"SELECT customer_id FROM {C} EXCEPT SELECT customer_id FROM {O}"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:442:17
+441	    ("intersect", f"SELECT customer_id FROM {O} INTERSECT SELECT customer_id FROM {C}"),
+442	    ("except", f"SELECT customer_id FROM {C} EXCEPT SELECT customer_id FROM {O}"),
+443	    ("interval", f"SELECT order_date + INTERVAL '7 days' FROM {O}"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:443:19
+442	    ("except", f"SELECT customer_id FROM {C} EXCEPT SELECT customer_id FROM {O}"),
+443	    ("interval", f"SELECT order_date + INTERVAL '7 days' FROM {O}"),
+444	    ("interval-months", f"SELECT order_date - INTERVAL '3 months' FROM {O}"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:444:26
+443	    ("interval", f"SELECT order_date + INTERVAL '7 days' FROM {O}"),
+444	    ("interval-months", f"SELECT order_date - INTERVAL '3 months' FROM {O}"),
+445	    ("age", f"SELECT age(order_date, DATE '2026-01-01') FROM {O}"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:445:14
+444	    ("interval-months", f"SELECT order_date - INTERVAL '3 months' FROM {O}"),
+445	    ("age", f"SELECT age(order_date, DATE '2026-01-01') FROM {O}"),
+446	    (
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:448:10
+447	        "exists",
+448	        f"SELECT 1 FROM {O} o WHERE EXISTS"
+449	        f" (SELECT 1 FROM {C} c WHERE c.customer_id = o.customer_id)",
+450	    ),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:451:21
+450	    ),
+451	    ("not-exists", f"SELECT count(*) FROM {C} c WHERE NOT EXISTS (SELECT 1 FROM {O} o WHERE o.customer_id = c.customer_id)"),
+452	    ("in-list", f"SELECT count(*) FROM {O} WHERE status IN ('paid', 'shipped')"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:452:18
+451	    ("not-exists", f"SELECT count(*) FROM {C} c WHERE NOT EXISTS (SELECT 1 FROM {O} o WHERE o.customer_id = c.customer_id)"),
+452	    ("in-list", f"SELECT count(*) FROM {O} WHERE status IN ('paid', 'shipped')"),
+453	    ("between", f"SELECT count(*) FROM {O} WHERE order_date BETWEEN DATE '2026-01-01' AND DATE '2026-03-31'"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:453:18
+452	    ("in-list", f"SELECT count(*) FROM {O} WHERE status IN ('paid', 'shipped')"),
+453	    ("between", f"SELECT count(*) FROM {O} WHERE order_date BETWEEN DATE '2026-01-01' AND DATE '2026-03-31'"),
+454	    ("is-null", f"SELECT count(*) FROM {O} WHERE status IS NOT NULL"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:454:18
+453	    ("between", f"SELECT count(*) FROM {O} WHERE order_date BETWEEN DATE '2026-01-01' AND DATE '2026-03-31'"),
+454	    ("is-null", f"SELECT count(*) FROM {O} WHERE status IS NOT NULL"),
+455	    ("ilike", f"SELECT full_name FROM {C} WHERE full_name ILIKE 'a%'"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:455:16
+454	    ("is-null", f"SELECT count(*) FROM {O} WHERE status IS NOT NULL"),
+455	    ("ilike", f"SELECT full_name FROM {C} WHERE full_name ILIKE 'a%'"),
+456	    ("scalar-subquery", f"SELECT order_id, total_amount - (SELECT avg(total_amount) FROM {O}) FROM {O}"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:456:26
+455	    ("ilike", f"SELECT full_name FROM {C} WHERE full_name ILIKE 'a%'"),
+456	    ("scalar-subquery", f"SELECT order_id, total_amount - (SELECT avg(total_amount) FROM {O}) FROM {O}"),
+457	    (
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:459:10
+458	        "cast",
+459	        f"SELECT CAST(total_amount AS NUMERIC(10, 2)), order_date::text FROM {O}",
+460	    ),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:461:19
+460	    ),
+461	    ("cast-int", f"SELECT order_id::bigint, total_amount::double precision FROM {O}"),
+462	    ("like-percent", f"SELECT full_name FROM {C} WHERE full_name LIKE 'A%'"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:462:23
+461	    ("cast-int", f"SELECT order_id::bigint, total_amount::double precision FROM {O}"),
+462	    ("like-percent", f"SELECT full_name FROM {C} WHERE full_name LIKE 'A%'"),
+463	    ("modulo", f"SELECT order_id % 2 FROM {O}"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:463:17
+462	    ("like-percent", f"SELECT full_name FROM {C} WHERE full_name LIKE 'A%'"),
+463	    ("modulo", f"SELECT order_id % 2 FROM {O}"),
+464	    ("distinct", f"SELECT DISTINCT status FROM {O}"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:464:19
+463	    ("modulo", f"SELECT order_id % 2 FROM {O}"),
+464	    ("distinct", f"SELECT DISTINCT status FROM {O}"),
+465	    ("order-by-expression", f"SELECT status FROM {O} ORDER BY length(status) DESC, status"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:465:30
+464	    ("distinct", f"SELECT DISTINCT status FROM {O}"),
+465	    ("order-by-expression", f"SELECT status FROM {O} ORDER BY length(status) DESC, status"),
+466	    ("boolean-aggregate", f"SELECT bool_and(total_amount > 0) FROM {O}"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:466:28
+465	    ("order-by-expression", f"SELECT status FROM {O} ORDER BY length(status) DESC, status"),
+466	    ("boolean-aggregate", f"SELECT bool_and(total_amount > 0) FROM {O}"),
+467	    ("stddev", f"SELECT stddev(total_amount), variance(total_amount) FROM {O}"),
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/corpus.py:467:17
+466	    ("boolean-aggregate", f"SELECT bool_and(total_amount > 0) FROM {O}"),
+467	    ("stddev", f"SELECT stddev(total_amount), variance(total_amount) FROM {O}"),
+468	]  # fmt: skip
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/fuzzgen.py:228:17
+227	        )
+228	        return f"SELECT {fn}({self.col(scope, kind)}) FROM {v[0]} {v[1]}" + self.where(scope, d + 1)
+229	
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/fuzzgen.py:232:17
+231	        v = self.view()
+232	        return f"SELECT {self.col([v], kind)} FROM {v[0]} {v[1]}" + self.where([v], d + 1)
+233	
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Low
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/fuzzgen.py:306:16
+305	        distinct = "DISTINCT " if mode == "rows" and self.chance(0.12) else ""
+306	        sql = f"SELECT {distinct}{', '.join(items)} FROM {from_sql}"
+307	        if self.chance(0.55):
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Medium
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/gold_runner.py:35:30
+34	        with conn.cursor() as cur:
+35	            cur.executemany(f"INSERT INTO shop.{table} VALUES ({marks})", rows)  # noqa: S608  # fixed table names
+36	
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Medium
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/test_roles.py:48:30
+47	    with _ro(db) as conn:
+48	        assert conn.execute(f"SELECT count(*) FROM analytics.{view}").fetchone()[0] > 0  # noqa: S608
+49	
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Medium
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/test_seed.py:242:37
+241	            for table, rows in builds[name].tables.items():
+242	                got = conn.execute(f"SELECT * FROM shop.{table} ORDER BY 1").fetchall()  # noqa: S608
+243	                assert len(got) == len(rows)
+
+--------------------------------------------------
+>> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+   Severity: Medium   Confidence: Medium
+   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html
+   Location: tests/demo_askdata/test_validate_harm.py:83:26
+82	                    c.execute(
+83	                        f"SELECT md5(coalesce(string_agg(t::text, '|' ORDER BY t::text), '')) FROM shop.{t} t"
+84	                    ).fetchone()[0]
+
+--------------------------------------------------
+>> Issue: [B506:yaml_load] Use of unsafe yaml load. Allows instantiation of arbitrary objects. Consider yaml.safe_load().
+   Severity: Medium   Confidence: High
+   CWE: CWE-20 (https://cwe.mitre.org/data/definitions/20.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b506_yaml_load.html
+   Location: tests/test_ci_gitleaks_scope.py:183:12
+182	            continue
+183	        w = yaml.load(f.read_text(), Loader=_StrictLoader)  # noqa: S506 (SafeLoader subclass)
+184	        trig = w.get(True) or w.get("on") or {}
+
+--------------------------------------------------
+>> Issue: [B506:yaml_load] Use of unsafe yaml load. Allows instantiation of arbitrary objects. Consider yaml.safe_load().
+   Severity: Medium   Confidence: High
+   CWE: CWE-20 (https://cwe.mitre.org/data/definitions/20.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b506_yaml_load.html
+   Location: tests/test_ci_gitleaks_scope.py:322:11
+321	def _load():
+322	    return yaml.load(CI.read_text(), Loader=_StrictLoader)  # noqa: S506 (SafeLoader subclass)
+323	
+
+--------------------------------------------------
+>> Issue: [B104:hardcoded_bind_all_interfaces] Possible binding to all interfaces.
+   Severity: Medium   Confidence: Medium
+   CWE: CWE-605 (https://cwe.mitre.org/data/definitions/605.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/plugins/b104_hardcoded_bind_all_interfaces.html
+   Location: tests/test_http_metadata.py:275:37
+274	
+275	@pytest.mark.parametrize("address", ["0.0.0.0", "0.5.5.5", "0.255.255.255"])  # noqa: S104 - the refused address, not a bind
+276	def test_this_network_is_refused(address):
+
+--------------------------------------------------
+>> Issue: [B310:blacklist] Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected.
+   Severity: Medium   Confidence: High
+   CWE: CWE-22 (https://cwe.mitre.org/data/definitions/22.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b310-urllib-urlopen
+   Location: tests/test_p7_tick.py:293:12
+292	        with pytest.raises(urllib.error.HTTPError) as err:
+293	            urllib.request.urlopen(r, timeout=5)  # noqa: S310 - loopback test server
+294	        assert err.value.code == 401
+
+--------------------------------------------------
+>> Issue: [B310:blacklist] Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected.
+   Severity: Medium   Confidence: High
+   CWE: CWE-22 (https://cwe.mitre.org/data/definitions/22.html)
+   More Info: https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b310-urllib-urlopen
+   Location: tests/test_p7_tick.py:297:12
+296	        with pytest.raises(urllib.error.HTTPError) as err:
+297	            urllib.request.urlopen(r, timeout=5)  # noqa: S310 - loopback test server
+298	        assert err.value.code == 404
+
+--------------------------------------------------
+
+Code scanned:
+	Total lines of code: 39454
+	Total lines skipped (#nosec): 0
+	Total potential issues skipped due to specifically being disabled (e.g., #nosec BXXX): 0
+
+Run metrics:
+	Total issues (by severity):
+		Undefined: 0
+		Low: 4455
+		Medium: 197
+		High: 0
+	Total issues (by confidence):
+		Undefined: 0
+		Low: 188
+		Medium: 74
+		High: 4390
+Files skipped (0):

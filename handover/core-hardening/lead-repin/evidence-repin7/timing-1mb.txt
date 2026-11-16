@@ -1,0 +1,7 @@
+1 MB single line (1001001 bytes) through --mask, real seconds, quiet machine, 16:49 UTC
+big run1 2.053545404
+big run2 2.114831861
+big run3 2.049003099
+tiny run1 2.029133638
+tiny run2 1.991185523
+tiny run3 2.055789167

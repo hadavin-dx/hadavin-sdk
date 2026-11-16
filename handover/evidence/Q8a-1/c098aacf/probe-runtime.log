@@ -1,0 +1,36 @@
+
+=== Route.model_id with a 32-char run
+32-char run: REFUSED; value shown in text: False; text: "1 validation error for Route\nmodel_id\n  Value error, a model id has no run of 32 or more letters and digits (the shape of a pasted key); write the model's short name or version, not an immutable hash pin [type=value_error]\n    For further information visit https://errors.pydantic.dev/2.14/v/value_error"
+@sha256 hash pin: REFUSED; value shown in text: False; text: "1 validation error for Route\nmodel_id\n  Value error, a model id has no run of 32 or more letters and digits (the shape of a pasted key); write the model's short name or version, not an immutable hash pin [type=value_error]\n    For further information visit https://errors.pydantic.dev/2.14/v/value_error"
+normal id: ACCEPTED
+31 run: ACCEPTED
+pieces cut by dash: ACCEPTED
+
+=== NotFound with a caller id
+str: 'no row has this id' repr: NotFound('no row has this id') key kept: True value in str/repr: False
+get_run: 'no row has this id' value shown: False key: True
+
+=== AuditEvent.event_id with a path
+'../x': REFUSED; id shown in text: True
+'..\\x': REFUSED; id shown in text: False
+'/etc/x': REFUSED; id shown in text: True
+'a/b': REFUSED; id shown in text: True
+'.hidden': REFUSED; id shown in text: True
+'a b': REFUSED; id shown in text: True
+'': REFUSED; id shown in text: 
+'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx': REFUSED; id shown in text: False
+'a\x00b': REFUSED; id shown in text: False
+'a.json': REFUSED; id shown in text: True
+'x\n': REFUSED; id shown in text: False
+'evt-ok_1': ACCEPTED
+'evt-c16e7ebecafe49a8bc99c82621c89c35': ACCEPTED
+
+=== ConfigError built outside raise / out-parameter list / raise in except (runtime via config loader)
+config files: ['actions', 'agents.yaml', 'chains.yaml', 'config.yaml', 'egress.yaml', 'principals.yaml', 'prompts']
+key-shaped model id: exit=1; stdout=''; stderr="refused: 1 validation error for Config\nroutes.default.model_id\n  Value error, a model id has no run of 32 or more letters and digits (the shape of a pasted key); write the model's short name or version, not an immutable hash pin [type=value_error]\n"; marker leaked=False
+duplicate key: exit=1; stdout=''; stderr='refused: duplicate key (line 28)\n'; marker leaked=False
+unknown key with marker: exit=1; stdout=''; stderr='refused: 1 validation error for Config\n<unknown key>\n  Extra inputs are not permitted [type=extra_forbidden]\n'; marker leaked=False
+unreadable yaml: exit=1; stdout=''; stderr='refused: not valid YAML (line 27, column 1)\n'; marker leaked=False
+
+=== check-config: exit 0, no connection, no write
+exit=0 stdout='the configuration is accepted\n' stderr='' connects=0 files_changed=False (files before=61, after=61)

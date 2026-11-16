@@ -1,0 +1,22 @@
+F..                                                                      [100%]
+=================================== FAILURES ===================================
+____ test_a_missing_demo_folder_skips_when_allowed_and_stops_the_run_in_ci _____
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-U/.tmp-run/pytest-of-unknown/pytest-0/test_a_missing_demo_folder_ski0')
+
+    def test_a_missing_demo_folder_skips_when_allowed_and_stops_the_run_in_ci(tmp_path: Path) -> None:
+        (tmp_path / "a").mkdir()
+        allowed = _run(tmp_path / "a")
+>       assert allowed.returncode == 0 and "1 passed" in allowed.stdout, allowed.stdout + allowed.stderr
+E       AssertionError: ImportError while loading conftest '/home/user/build/rr6/tree-U/.tmp-run/pytest-of-unknown/pytest-0/test_a_missing_demo_folder_ski0/a/conftest.py'.
+E         conftest.py:33: in <module>
+E             from support import Rig, ServerDidNotStop, build_rig, stop_within
+E         E   ModuleNotFoundError: No module named 'support'
+E         
+E       assert (4 == 0)
+E        +  where 4 = CompletedProcess(args=['/home/user/build/rr6/tree-U/../venv312/bin/python', '-m', 'pytest', '-q', '-p', 'no:cacheprovi...om support import Rig, ServerDidNotStop, build_rig, stop_within\nE   ModuleNotFoundError: No module named 'support'\n").returncode
+
+tests/test_demo_folder_guard.py:40: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_demo_folder_guard.py::test_a_missing_demo_folder_skips_when_allowed_and_stops_the_run_in_ci
+1 failed, 2 passed in 0.49s

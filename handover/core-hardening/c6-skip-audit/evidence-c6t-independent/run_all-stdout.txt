@@ -1,0 +1,9 @@
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/ind-c6t/handover/core-hardening/c6-skip-audit/evidence-c6t/build_c6t.py", line 40, in <module>
+    assert set(TM) == {"OWNER-SHEET-v%d-%s.md" % (NEWV, x) for x in ("A", "B", "SOURCE")}, TM
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: {'OWNER-SHEET-v32-SOURCE.md': '17:52:33'}
+
+real	0m0.354s
+user	0m0.264s
+sys	0m0.066s

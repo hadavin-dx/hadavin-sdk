@@ -1,0 +1,1 @@
+Checkpoint c4r3 (builder, 2026-11-16): done: all Blockers and Majors of the two round-2 reviews applied to EDITS.md (E-10 deleted; E-40 to E-47 added; header, NOT DECIDED list and counts rewritten). Next: write resolve-r3.md and report. Blockers: none. No commit, no run of anything except a text check script.

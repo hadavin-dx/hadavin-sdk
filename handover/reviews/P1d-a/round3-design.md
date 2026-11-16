@@ -1,0 +1,6 @@
+# P1d-a rev3 round 3 design: 0 Blocker, 4 Major, 6 Nit
+M1 defang flag not pinned at 4 call sites in sanitise_text (_clean_prose tail/head, two _all_prose fallbacks): add rows (email after closed fence, before fence, fallback) + one mutant per site.
+M2 false claim: with ';' after a post-& segment, gate's _ENTITY rewrites &cd34ef56; to &amp;cd34ef56; so the plain entry stops at ';' and leaks cd34ef56 on the card path (model path ok). BS-1 S5 SEMI tail will leak. Fix: treat &amp; as unit in both entries or do not rewrite &name; after '=' value; rows both paths + mutant.
+M3 BS-1 leak measure (4 consecutive chars) blind to short post-& segments (1-3 chars): compare whole expected output per sample; enumerate & positions exhaustively for length 8-10.
+M4 legacy-undo round trip under-tested: one-sided lookaround mutants survive (rows 'see a[.] b', 'see a [.]b'); add property _blocks(summary=clean(x)) text == clean(x).
+Nits: N1 _defang_outside_code vs _PLACEHOLDER_DOT unstated; N2 T1 oracle false (== defang_text(spy_out)); N3 differential test windows grow, run on G-TXT, allow only withholds-more; N4 empty password field 'password=&user=bob' now masks &user=bob; N5 typed [.] list item / legacy //evil[.]com second pass, add 1[.]5 row; N6 120 s optimistic, template Source line.

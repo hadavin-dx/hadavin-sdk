@@ -1,0 +1,12 @@
+0d843b4
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.2.0, pluggy-1.7.0
+rootdir: /home/user/build/EV-P1b-0d843b4
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collected 253 items / 252 deselected / 1 selected
+
+tests/demo_askdata/test_validate_harm.py .                               [100%]
+
+====================== 1 passed, 252 deselected in 1.00s =======================
+inner rc=0

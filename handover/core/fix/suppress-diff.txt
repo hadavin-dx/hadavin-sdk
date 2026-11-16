@@ -1,0 +1,33 @@
+27a28
+> ./scripts/hubspot_probe.py:from tools.refusing_args import RefusingParser  # noqa: E402
+31a33
+> ./scripts/n8n_api.py:from lead_desk.regfile import load_json_file, open_regular  # noqa: E402
+32a35
+> ./scripts/refusals.py:from tools.refusing_args import EXIT_REFUSED, EXIT_UNREACHABLE, refusal  # noqa: E402
+35a39
+> ./scripts/run_live_check.py:from tools.refusing_args import RefusingParser, refusal  # noqa: E402
+52a57
+> ./scripts/run_real_check.py:from lead_desk.regfile import FileRefused, load_json_file, read_regular_text  # noqa: E402
+56a62
+> ./scripts/run_real_check.py:from tools.refusing_args import RefusingParser, refusal  # noqa: E402
+74d79
+< ./src/lead_desk/live_claude.py:            f = open(self.path, "a+b")  # noqa: SIM115
+77d81
+< ./src/lead_desk/lockfile.py:            f = open(path, "a+b")  # noqa: SIM115 (the handle is the lock; the caller keeps it)
+111a116,120
+> ./tests/test_cli_refusals.py:            subprocess.run(  # noqa: S603 (a fixed program, no input)
+> ./tests/test_cli_refusals.py:    r = subprocess.run(  # noqa: S603 (this repository's interpreter and files)
+> ./tests/test_cli_refusals.py:from lead_desk.constants import LIVE_EFFORTS, PORT_MAX  # noqa: E402
+> ./tests/test_cli_refusals.py:import run_real_check as rrc  # noqa: E402
+> ./tests/test_cli_refusals.py:import subprocess  # noqa: S404
+138a148,150
+> ./tests/test_file_reader_refusals.py:        done = subprocess.run(  # noqa: S603
+> ./tests/test_file_reader_refusals.py:from feed import FeedRefused, build_envelope  # noqa: E402
+> ./tests/test_file_reader_refusals.py:import subprocess  # noqa: S404
+232a245,247
+> ./tests/test_script_refusals_feed.py:    done = subprocess.run(  # noqa: S603
+> ./tests/test_script_refusals_feed.py:from refusals import EXIT_REFUSED, EXIT_UNREACHABLE  # noqa: E402
+> ./tests/test_script_refusals_feed.py:import subprocess  # noqa: S404
+250a266,267
+> ./tools/scrub_n8n_export.py:from lead_desk.regfile import load_json_file  # noqa: E402
+> ./tools/scrub_n8n_export.py:from tools.pathconfine import PathRefused, confine, confine_existing  # noqa: E402

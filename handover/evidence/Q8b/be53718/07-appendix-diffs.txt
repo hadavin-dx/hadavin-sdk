@@ -1,0 +1,106 @@
+=== keycheck: diff vs builder-saved (46fdcfb2) ===
+=== r2_f5: diff vs builder-saved (46fdcfb2) ===
+=== r2_f6: diff vs builder-saved (46fdcfb2) ===
+=== r2_m7: diff vs builder-saved (46fdcfb2) ===
+1,3c1,3
+< M7 summary target='db01.corp.internal' || 'agent-ops asks to run restart_service v1 (reversible) on <HOSTNAME_1>. Inputs: {"service":"orders"}. Expected: service restarted. Plan c4496abaae77.'
+< M7 summary target='crm' || 'agent-ops asks to run restart_service v1 (reversible) on crm. Inputs: {"host":"<HOSTNAME_1>","owner":"<EMAIL_1>"}. Expected: service restarted. Plan 071e66f22ff4.'
+< M7 summary target='10.20.30.40' || 'agent-ops asks to run restart_service v1 (reversible) on <IPV4_1>. Inputs: {"service":"orders"}. Expected: service restarted. Plan d26592413c4d.'
+---
+> M7 summary target='db01.corp.internal' || 'agent-ops asks to run restart_service v1 (reversible) on <HOSTNAME_1>. Inputs: {"service":"orders"}. Expected: service restarted. Plan 6d76f4548b53.'
+> M7 summary target='crm' || 'agent-ops asks to run restart_service v1 (reversible) on crm. Inputs: {"host":"<HOSTNAME_1>","owner":"<EMAIL_1>"}. Expected: service restarted. Plan 8c43543734c1.'
+> M7 summary target='10.20.30.40' || 'agent-ops asks to run restart_service v1 (reversible) on <IPV4_1>. Inputs: {"service":"orders"}. Expected: service restarted. Plan d26d7e469684.'
+=== r2_xf: diff vs builder-saved (46fdcfb2) ===
+=== r3_big: diff vs builder-saved (46fdcfb2) ===
+1,4c1,4
+< 50 entries, two passes: Secret entries under non-credential keys 0.17s (map 50); one-word values under credential keys 0.05s (map 50)
+< 256 entries, two passes: Secret entries under non-credential keys 1.89s (map 256); one-word values under credential keys 0.84s (map 256)
+< 500 entries, two passes: Secret entries under non-credential keys 3.03s (map 256); one-word values under credential keys 3.91s (map 500)
+< 1000 entries, two passes: Secret entries under non-credential keys 5.26s (map 256); one-word values under credential keys 9.83s (map 1000)
+---
+> 50 entries, two passes: Secret entries under non-credential keys 0.12s (map 50); one-word values under credential keys 0.09s (map 50)
+> 256 entries, two passes: Secret entries under non-credential keys 2.65s (map 256); one-word values under credential keys 0.75s (map 256)
+> 500 entries, two passes: Secret entries under non-credential keys 2.98s (map 256); one-word values under credential keys 2.47s (map 500)
+> 1000 entries, two passes: Secret entries under non-credential keys 3.94s (map 256); one-word values under credential keys 11.15s (map 1000)
+=== r3_card: diff vs builder-saved (46fdcfb2) ===
+18,19c18,19
+< P2 texts=4000 leak=0 bare_domain(token scan)=0 flagged_only_without_the_exemptions=0 not_idempotent=0 seconds=9.9
+< N9 texts=3000 with_a_first_pass_original_readable=0 seconds=5.8
+---
+> P2 texts=4000 leak=0 bare_domain(token scan)=0 flagged_only_without_the_exemptions=0 not_idempotent=0 seconds=8.6
+> N9 texts=3000 with_a_first_pass_original_readable=0 seconds=3.6
+=== r3_f5: diff vs builder-saved (46fdcfb2) ===
+51c51
+< large Secret: 2000 entries x ~203 chars = 406890 value chars; one pass: 4002 redactor calls, 418100 counted chars; cap per pass 2*MAX_BUNDLE_CHARS = 4194304; 3.8s
+---
+> large Secret: 2000 entries x ~203 chars = 406890 value chars; one pass: 4002 redactor calls, 418100 counted chars; cap per pass 2*MAX_BUNDLE_CHARS = 4194304; 3.0s
+=== r3_slack: diff vs builder-saved (46fdcfb2) ===
+=== r3_stubs: diff vs builder-saved (46fdcfb2) ===
+=== r3_fixture spec.data json vs builder
+=== manifest
+=== r3_fixture stdout vs builder
+7a8,14
+> {"changed_chars": 23, "counts": {"SECRET": 9}, "distinct_log_lines_changed": ["login as postgres with Zq7xkW2vy9JtR4m refused"], "levels": ["error", "info"], "services": ["api", "db", "orders", "postgres"], "strings_changed": 1, "strings_outside_secret": 114}
+>    log: ['info', 'orders', 'information: retry in 5s']
+>    log: ['error', 'orders', 'orders-api timeout on port 5432 as postgres in prod']
+>    log: ['info', 'api', 'debug=true orders_count=3 env prod']
+>    log: ['error', 'db', 'login as postgres with <SECRET_9> refused']
+>    log: ['info', 'postgres', 'start']
+>    secret spec: {"kind": "Secret", "data": {"LOG_LEVEL": "<SECRET_1>", "DEBUG": "<SECRET_2>", "ENV": "<SECRET_3>", "PORT": "<SECRET_4>", "DB_USER": "<SECRET_5>", "DB_NAME": "<SECRET_7>", "DB_PASSWORD": "<SECRET_9>"}}
+=== r2_f5 vs author r2_f5_proto.txt
+27c27
+< M5 Secret DB_NAME b64 + log || [{'kind': 'Secret', 'data': {'DB_NAME': '<SECRET_1>'}}, {'message': 'orders-api timeout'}]
+---
+> M5 Secret DB_NAME b64 + log || [{'kind': 'Secret', 'data': {'DB_NAME': '<SECRET_1>'}}, {'message': '<SECRET_2>-api timeout'}]
+35c35
+< F5b Secret b64 + decoded in log || [{'kind': 'Secret', 'data': {'p': '<SECRET_3>'}}, {'message': 'login with <SECRET_3> failed'}]
+---
+> F5b Secret b64 + decoded in log || [{'kind': 'Secret', 'data': {'p': '<SECRET_1>'}}, {'message': 'login with <SECRET_3> failed'}]
+=== r3_f5 vs author r3_f5_proto.txt
+51c51
+< large Secret: 2000 entries x ~203 chars = 406890 value chars; one pass: 4002 redactor calls, 418100 counted chars; cap per pass 2*MAX_BUNDLE_CHARS = 4194304; 3.8s
+---
+> large Secret: 2000 entries x ~203 chars = 406890 value chars; one pass: 4002 redactor calls, 418100 counted chars; cap per pass 2*MAX_BUNDLE_CHARS = 4194304; 3.3s
+=== r3_card vs author r3_card_proto.txt
+18c18
+< P2 texts=4000 leak=0 bare_domain(token scan)=0 flagged_only_without_the_exemptions=0 not_idempotent=0 seconds=9.9
+---
+> P2 texts=4000 leak=0 bare_domain(token scan)=0 flagged_only_without_the_exemptions=0 not_idempotent=0 seconds=9.1
+=== r3_big vs author r3_big_proto.txt
+1,4c1,4
+< 50 entries, two passes: Secret entries under non-credential keys 0.17s (map 50); one-word values under credential keys 0.05s (map 50)
+< 256 entries, two passes: Secret entries under non-credential keys 1.89s (map 256); one-word values under credential keys 0.84s (map 256)
+< 500 entries, two passes: Secret entries under non-credential keys 3.03s (map 256); one-word values under credential keys 3.91s (map 500)
+< 1000 entries, two passes: Secret entries under non-credential keys 5.26s (map 256); one-word values under credential keys 9.83s (map 1000)
+---
+> 50 entries, two passes: Secret entries under non-credential keys 0.16s (map 50); one-word values under credential keys 0.06s (map 50)
+> 256 entries, two passes: Secret entries under non-credential keys 2.14s (map 256); one-word values under credential keys 0.82s (map 256)
+> 500 entries, two passes: Secret entries under non-credential keys 3.64s (map 256); one-word values under credential keys 4.70s (map 500)
+> 1000 entries, two passes: Secret entries under non-credential keys 6.37s (map 256); one-word values under credential keys 13.47s (map 1000)
+=== r3_stubs vs author r3_stubs.txt
+0a1,11
+> == EV-P89-db0d9eb/src
+> S1 partly masked: got '<SECRET_1> rest' want '<SECRET_REDACTED>' -> FAILS
+> S2 text after the placeholder: got '<SECRET_1>x' want '<SECRET_REDACTED>' -> FAILS
+> S2 quoted half: got 'secret="<SECRET_1>x"' want '<SECRET_REDACTED>' -> FAILS
+> S3 result without its key: got 'p<SECRET_1>ssword=<SECRET_1>' want '<SECRET_REDACTED>' -> FAILS
+> S4 positive, two placeholders: got '<SECRET_1><EMAIL_2>' want '<SECRET_1><EMAIL_2>' -> ok
+> S5 look-alike: got '<secret_1>' want '<SECRET_REDACTED>' -> FAILS
+> S7 quote check (ii): got '<SECRET_REDACTED>' want '<SECRET_REDACTED>' -> ok
+> S6 calls for a value with a space: ['PW=qx zj', 'qx zj']
+> S6 calls for 256 characters: 2 call(s), first 'PW=qqq'
+> == q8b-author/protoQ8b
+=== r3_slack vs author r3_slack.txt
+0a1,2
+> N5 Slack block, raw req.summary 'contact bob.smith@example.com at db01.corp.internal' -> 'contact bob.smith@example[.]com at db01[.]corp[.]internal'
+> N5 Slack block, raw req.summary 'ping 10.20.30.40@channel' -> 'ping <IPV4_1>@channel'
+=== author fixture proto json
+=== r2_f6/m7/xf/keycheck vs author
+1,3c1,3
+< M7 summary target='db01.corp.internal' || 'agent-ops asks to run restart_service v1 (reversible) on <HOSTNAME_1>. Inputs: {"service":"orders"}. Expected: service restarted. Plan c4496abaae77.'
+< M7 summary target='crm' || 'agent-ops asks to run restart_service v1 (reversible) on crm. Inputs: {"host":"<HOSTNAME_1>","owner":"<EMAIL_1>"}. Expected: service restarted. Plan 071e66f22ff4.'
+< M7 summary target='10.20.30.40' || 'agent-ops asks to run restart_service v1 (reversible) on <IPV4_1>. Inputs: {"service":"orders"}. Expected: service restarted. Plan d26592413c4d.'
+---
+> M7 summary target='db01.corp.internal' || 'agent-ops asks to run restart_service v1 (reversible) on <HOSTNAME_1>. Inputs: {"service":"orders"}. Expected: service restarted. Plan 5e1d7b417aff.'
+> M7 summary target='crm' || 'agent-ops asks to run restart_service v1 (reversible) on crm. Inputs: {"host":"<HOSTNAME_1>","owner":"<EMAIL_1>"}. Expected: service restarted. Plan bf1c92decfe1.'
+> M7 summary target='10.20.30.40' || 'agent-ops asks to run restart_service v1 (reversible) on <IPV4_1>. Inputs: {"service":"orders"}. Expected: service restarted. Plan 56e9f62702fd.'

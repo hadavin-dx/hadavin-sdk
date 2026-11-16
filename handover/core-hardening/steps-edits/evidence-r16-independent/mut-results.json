@@ -1,0 +1,422 @@
+[
+ [
+  "01 swap IST alarm1 (23:19->23:29)",
+  true,
+  true,
+  "FAIL r13 time arithmetic: 17:49 UTC = 23:29 IST",
+  "B1 UTC/IST pair wrong: 17:49 UTC = 23:29 IST"
+ ],
+ [
+  "02 swap IST alarm3 (23:39->23:49)",
+  true,
+  true,
+  "FAIL r13 time arithmetic: 18:09 UTC = 23:49 IST",
+  "B1 UTC/IST pair wrong: 18:09 UTC = 23:49 IST"
+ ],
+ [
+  "03 seconds pair 18:14:40 -> 23:44:50",
+  true,
+  true,
+  "FAIL r14 18:14:40 pair missing",
+  "B1 UTC/IST pair wrong: 18:14:40 UTC = 23:44:50 IST"
+ ],
+ [
+  "04 E-62 drop exact-address clause",
+  true,
+  true,
+  "FAIL r16 F2 E-62 lacks '`take-<id>-a@example.com`'",
+  "H20 E-62 lacks address `take-<id>-a@example.com`"
+ ],
+ [
+  "05 E-04 drop exact-address clause",
+  true,
+  true,
+  "FAIL r16 F2 E-04 lacks '`take-<id>-a@example.com`'",
+  "H20 E-04 lacks address `take-<id>-a@example.com`"
+ ],
+ [
+  "06 E-42 address b -> x",
+  true,
+  true,
+  "FAIL r16 F2 E-42 lacks '`take-<id>-b@example.com`'",
+  "H20 E-42 lacks address `take-<id>-b@example.com`"
+ ],
+ [
+  "07 step A last time 18:19->18:29 (pair kept)",
+  true,
+  true,
+  "FAIL r14 3a key end",
+  "H3 revoke tied to 18:29 in E-48: The secret key for the model that the take used ends by M"
+ ],
+ [
+  "08 step I deadline 18:19->18:29 (pair kept)",
+  true,
+  true,
+  "FAIL r14 3h key end",
+  "H31 frozen count of '18:19 UTC = 23:49 IST' in E-48/appendix is (8, 3), expected (9, 3)"
+ ],
+ [
+  "09 step A UTC only 18:19->18:29 (pair broken)",
+  true,
+  true,
+  "FAIL r13 time arithmetic: 18:29 UTC = 23:49 IST",
+  "B1 UTC/IST pair wrong: 18:29 UTC = 23:49 IST"
+ ],
+ [
+  "10 move shred step after item 1 (swap card 2 and 7)",
+  true,
+  true,
+  "FAIL r16 F4 the numbered order is missing or out of order: [119, -1, 508, 643, 683, 810, -",
+  "H1 card order wrong/missing [1381, 2242, 1770, 1905, 1945, 2072, 1657]"
+ ],
+ [
+  "11 add key-shaped string sk-ant-... (parts)",
+  true,
+  true,
+  "FAIL r16 secret-shaped text matches \\bsk-[A-Za-z0-9_-]",
+  "F1 secret-shaped text (\\bsk-[A-Za-z0-9_-]): len 43"
+ ],
+ [
+  "12 key-shaped hyphenated sk-proj-... (parts)",
+  true,
+  true,
+  "FAIL r16 secret-shaped text matches \\bsk-[A-Za-z0-9_-]",
+  "F1 secret-shaped text (\\bsk-[A-Za-z0-9_-]): len 32"
+ ],
+ [
+  "13 AKIA key (parts)",
+  true,
+  true,
+  "FAIL r16 secret-shaped text matches AKIA[0-9A-Z]{16}",
+  "F1 secret-shaped text (AKIA[0-9A-Z]{16}): len 20"
+ ],
+ [
+  "14 github-style token (parts)",
+  true,
+  true,
+  "FAIL r16 secret-shaped text matches ghp_[A-Za-z0-9]{20",
+  "F1 secret-shaped text (\\bghp_[A-Za-z0-9]{): len 28"
+ ],
+ [
+  "15 personal e-mail address",
+  true,
+  true,
+  "FAIL secret-like",
+  "F1 secret-shaped text ([\\w.+-]+@(?!exampl): len 18"
+ ],
+ [
+  "16 banned string (first of list, run time)",
+  true,
+  true,
+  "FAIL banned strings",
+  "G1 banned strings present: 1 of 10"
+ ],
+ [
+  "17 break xref key step I -> L",
+  true,
+  true,
+  "FAIL r15 E-48 C lacks 'if no session is open, go straight to key step I'",
+  "D3 ref to undefined key step key step L"
+ ],
+ [
+  "18 break xref appendix K-D -> K-E",
+  false,
+  true,
+  "",
+  "D6 ref to missing appendix part K-E"
+ ],
+ [
+  "19 break E-ref E-55 -> E-99",
+  true,
+  true,
+  "FAIL named ids missing ['99']",
+  "D9 reference to missing row E-99"
+ ],
+ [
+  "20 wrong weekday Mon 23 -> Tue 23",
+  true,
+  true,
+  "FAIL r14 wrong weekday: Tue 23 Nov 2026",
+  "C2 weekday/date wrong: Tue 23 Nov 2026"
+ ],
+ [
+  "21 wrong weekday Wed 18 -> Thu 18",
+  true,
+  true,
+  "FAIL r14 wrong weekday: Thu 18 Nov 2026",
+  "C2 weekday/date wrong: Thu 18 Nov 2026"
+ ],
+ [
+  "22 year Mon 23 Nov 2026 -> 2027",
+  true,
+  true,
+  "FAIL r14 wrong weekday: Mon 23 Nov 2027",
+  "C2 weekday/date wrong: Mon 23 Nov 2027"
+ ],
+ [
+  "23 absolute path in owner text",
+  false,
+  true,
+  "",
+  "E1 absolute path in owner-facing text of E-48: '/home/'"
+ ],
+ [
+  "24 internal code Q25 in owner text",
+  true,
+  true,
+  "FAIL r14 internal code in owner text E-48: Q25",
+  "E1 Q-number in owner-facing text of E-48: 'Q25'"
+ ],
+ [
+  "25 ORD: code in owner text",
+  false,
+  true,
+  "",
+  "E1 ORD/DEC code in owner-facing text of E-48: 'ORD:'"
+ ],
+ [
+  "26 DEC: code in owner text",
+  false,
+  true,
+  "",
+  "E1 ORD/DEC code in owner-facing text of E-48: 'DEC:'"
+ ],
+ [
+  "27 shred check realpath -> pwd",
+  true,
+  true,
+  "FAIL r14 3f lacks realpath",
+  "H16 shred checks missing/out of order [1256, 1337, -1, 1554, 1804, 2125]"
+ ],
+ [
+  "28 take-10 example changed",
+  true,
+  true,
+  "FAIL r16 shred rule lacks '/x/take-10'",
+  "H17 shred rule lacks /x/take-10/key"
+ ],
+ [
+  "29 shred -u -- -> shred -u",
+  true,
+  true,
+  "FAIL r12 E-48 lacks shred -u -- '<path>'",
+  "H16 shred checks missing/out of order [1256, 1337, 1426, 1568, 1818, -1]"
+ ],
+ [
+  "30 link count 1 -> 2",
+  true,
+  true,
+  "FAIL r14 3f lacks the number `1` in its second column",
+  "H17 shred rule lacks number `1` in its second column"
+ ],
+ [
+  "31 alarm 1 consistent shift 17:49->17:59",
+  true,
+  true,
+  "FAIL r13 E-48 lacks 17:49 UTC = 23:19 IST",
+  "H10 alarm 1 wrong"
+ ],
+ [
+  "32 alarm 1 name changed",
+  true,
+  true,
+  "FAIL r13 E-48 lacks `revoke the secret key for the model`",
+  "H10 alarm 1 wrong"
+ ],
+ [
+  "33 margin 3:40 -> 4:40 words",
+  true,
+  true,
+  "FAIL r14 E-12 margin",
+  "H7 margin sentence missing or arithmetic differs (computed 220 s)"
+ ],
+ [
+  "34 drop key gone word from step B list",
+  false,
+  true,
+  "",
+  "H12 typed word missing in key step B: key gone, no more decisions"
+ ],
+ [
+  "35 D.5 time 18:19->18:09 (pair kept)",
+  true,
+  true,
+  "FAIL r16 F1 D5 lacks 'ONLY when you type it AFTER 18:19 UTC = 23:49 IST on Mon 23 Nov 2026",
+  "H15 D.5 time condition missing"
+ ],
+ [
+  "36 drop item-1 guard sentence",
+  true,
+  true,
+  "FAIL r16 F4 card lacks 'never starts while a copy of the key exists and the key is not rev",
+  "H2 item 1 guard sentence missing"
+ ],
+ [
+  "37 spending window end -> 18:19 (pair kept)",
+  false,
+  true,
+  "",
+  "H31 frozen count of '18:19 UTC = 23:49 IST' in E-48/appendix is (10, 3), expected (9, 3)"
+ ],
+ [
+  "38 E-01 status Apply now -> Hold",
+  true,
+  true,
+  "FAIL G1 header rows not named",
+  "A11 index differs from header E-01"
+ ],
+ [
+  "39 index line number of E-02 changed",
+  true,
+  true,
+  "FAIL index mismatch E-02 ('OWNER-STEPS-realrun-v3.md', '4', 'Apply now', 'UNCLEAR WORD') v",
+  "A11 index differs from header E-02"
+ ],
+ [
+  "40 key step F reply options drop not sure",
+  false,
+  true,
+  "",
+  "H23 key step F lacks Reply `same key`, `different key` or `not sure`"
+ ],
+ [
+  "41 F: only yes together with different key -> only yes",
+  false,
+  true,
+  "",
+  "H23 key step F lacks Only `yes` together with `different key`"
+ ],
+ [
+  "42 D.2 case 3 label dropped",
+  true,
+  true,
+  "FAIL r14 3c lacks Route B, before `cut accepted`",
+  "H14 D.2 lacks (3) Route B, before `cut accepted`"
+ ],
+ [
+  "43 typed word please stop looking dropped from B",
+  false,
+  true,
+  "",
+  "H12 typed word missing in key step B: please stop looking"
+ ],
+ [
+  "44 key J 7 days -> 1 day",
+  true,
+  true,
+  "FAIL r12 E-48 lacks the list says it was last used more than 7 days ago",
+  "H27 key step J 7 day rule"
+ ],
+ [
+  "45 H 20 minutes -> 2 minutes (first)",
+  false,
+  true,
+  "",
+  "H28 E-48 mentions of 20 minutes not 4"
+ ],
+ [
+  "46 undefined gate G7",
+  true,
+  true,
+  "FAIL gate rows differ G3",
+  "A4 E-13 hold without gate"
+ ],
+ [
+  "47 loose heading pair 23:59 IST -> 23:49 IST (Phase 0 heading)",
+  true,
+  true,
+  "FAIL E-37 apply: old not once in scratch",
+  "B2 loose UTC/IST pair wrong: 18:29 UTC (23:49 IST"
+ ],
+ [
+  "48 drop do-not-shred-while-take-runs (G)",
+  false,
+  true,
+  "",
+  "H17 shred rule lacks Do not shred part (a) while a take is running"
+ ],
+ [
+  "49 drop never shred a recording",
+  true,
+  true,
+  "FAIL r15 E-48 G lacks 'Never shred a recording, a video file'",
+  "H17 shred rule lacks Never shred a recording"
+ ],
+ [
+  "50 duplicate row id E-30 -> E-31",
+  true,
+  true,
+  "FAIL apply-now id list",
+  "A11 index differs from header E-31"
+ ],
+ [
+  "51 remove Why line of E-62",
+  false,
+  true,
+  "",
+  "A7 E-62 no Why line"
+ ],
+ [
+  "52 seconds in K 23:45:20 -> 23:45:30",
+  true,
+  true,
+  "FAIL r15 E-12 margin lacks '18:15:20 UTC = 23:45:20 IST'",
+  "B1 UTC/IST pair wrong: 18:15:20 UTC = 23:45:30 IST"
+ ],
+ [
+  "53 UNVERIFIED removed from key step K",
+  false,
+  true,
+  "",
+  "H31 frozen count of 'UNVERIFIED' in E-48/appendix is (0, 1), expected (1, 1)"
+ ],
+ [
+  "54 drop only-your-own-typed-messages (key step B ref)",
+  false,
+  true,
+  "",
+  "H31 frozen count of 'Only your own typed messages count (key step B)' in E-48/appendix is "
+ ],
+ [
+  "55 E-48 OLD text altered (not in input)",
+  true,
+  true,
+  "FAIL E-48 apply: old not once in scratch",
+  "I2 E-48 OLD occurs 0 times in input"
+ ],
+ [
+  "56 card item 4 line deleted",
+  true,
+  true,
+  "FAIL r16 F4 the numbered order is missing or out of order: [119, 395, 554, -1, 689, 816, 9",
+  "D12 card numbering 123567"
+ ],
+ [
+  "57 delete ALL then-wrong: drop shred G.2 EVERY",
+  true,
+  true,
+  "FAIL r15 E-48 G done lacks '`shred done 1` means that EVERY file of (a) and (b) is shred'",
+  "H19 G.2 shred done meaning missing"
+ ],
+ [
+  "58 E-42 drop more-than-3 stop rule",
+  true,
+  true,
+  "FAIL r16 F2 E-42 lacks 'more than 3'",
+  "H21 E-42 lacks the stop rule"
+ ],
+ [
+  "59 time 18:29 UTC=23:59 IST -> 18:29 UTC=23:58 IST once",
+  true,
+  true,
+  "FAIL r13 time arithmetic: 18:29 UTC = 23:58 IST",
+  "B1 UTC/IST pair wrong: 18:29 UTC = 23:58 IST"
+ ],
+ [
+  "60 revoke key tied to window: item1 revoke \"at 18:19\" -> \"at 18:29\"",
+  false,
+  true,
+  "",
+  "H31 frozen count of '18:19 UTC = 23:49 IST' in E-48/appendix is (8, 3), expected (9, 3)"
+ ]
+]

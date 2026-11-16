@@ -1,0 +1,66 @@
+## check time (UTC): 2026-11-16T16:15:47Z
+## files (OWNER-SHEET v19..v28, all variants), with mtime
+2026-11-16T12:32:43Z OWNER-SHEET-v19.md
+2026-11-16T12:55:05Z OWNER-SHEET-v20.md
+2026-11-16T13:11:29Z OWNER-SHEET-v21.md
+2026-11-16T13:28:05Z OWNER-SHEET-v22.md
+2026-11-16T13:46:45Z OWNER-SHEET-v23.md
+2026-11-16T14:30:03Z OWNER-SHEET-v24-A.md
+2026-11-16T14:30:03Z OWNER-SHEET-v24-B.md
+2026-11-16T14:20:06Z OWNER-SHEET-v24-SOURCE.md
+2026-11-16T14:51:29Z OWNER-SHEET-v25-A.md
+2026-11-16T14:51:29Z OWNER-SHEET-v25-B.md
+2026-11-16T14:45:23Z OWNER-SHEET-v25-SOURCE.md
+2026-11-16T15:21:08Z OWNER-SHEET-v26-A.md
+2026-11-16T15:21:08Z OWNER-SHEET-v26-B.md
+2026-11-16T15:15:31Z OWNER-SHEET-v26-SOURCE.md
+2026-11-16T15:41:09Z OWNER-SHEET-v27-A.md
+2026-11-16T15:41:09Z OWNER-SHEET-v27-B.md
+2026-11-16T15:35:32Z OWNER-SHEET-v27-SOURCE.md
+2026-11-16T16:09:58Z OWNER-SHEET-v28-A.md
+2026-11-16T16:09:58Z OWNER-SHEET-v28-B.md
+2026-11-16T16:07:37Z OWNER-SHEET-v28-SOURCE.md
+
+## hits of 'never deletes' (case-insensitive), file:line:text
+../../steps-edits/OWNER-SHEET-v19.md:30:| R7 | you | You delete only made-up contacts of this run and demo mails, by hand, one by one: the contacts from the clean-up message (exact addresses ending `@example.com`, the take-prep contact included, each with its contact id if the lead has it), and the earlier demo mails of 5.4 (subject start in the numbers message; never "Select all", never empty a T
+(end; exit of grep shown next)
+## hits per file for each phrase: never deletes / never delete (any) / read, create and change only / does not delete / read-only|read only
+OWNER-SHEET-v19.md: 1 / 1 / 0 / 0 / 1
+OWNER-SHEET-v20.md: 0 / 0 / 0 / 0 / 0
+OWNER-SHEET-v21.md: 0 / 0 / 0 / 0 / 0
+OWNER-SHEET-v22.md: 0 / 0 / 0 / 0 / 1
+OWNER-SHEET-v23.md: 0 / 0 / 0 / 0 / 1
+OWNER-SHEET-v24-A.md: 0 / 0 / 0 / 0 / 1
+OWNER-SHEET-v24-B.md: 0 / 0 / 0 / 0 / 1
+OWNER-SHEET-v24-SOURCE.md: 0 / 0 / 0 / 0 / 1
+OWNER-SHEET-v25-A.md: 0 / 0 / 0 / 0 / 1
+OWNER-SHEET-v25-B.md: 0 / 0 / 0 / 0 / 1
+OWNER-SHEET-v25-SOURCE.md: 0 / 0 / 0 / 0 / 1
+OWNER-SHEET-v26-A.md: 0 / 0 / 0 / 0 / 1
+OWNER-SHEET-v26-B.md: 0 / 0 / 0 / 0 / 1
+OWNER-SHEET-v26-SOURCE.md: 0 / 0 / 0 / 0 / 1
+OWNER-SHEET-v27-A.md: 0 / 0 / 0 / 0 / 1
+OWNER-SHEET-v27-B.md: 0 / 0 / 0 / 0 / 1
+OWNER-SHEET-v27-SOURCE.md: 0 / 0 / 0 / 0 / 1
+OWNER-SHEET-v28-A.md: 0 / 0 / 0 / 0 / 1
+OWNER-SHEET-v28-B.md: 0 / 0 / 0 / 0 / 1
+OWNER-SHEET-v28-SOURCE.md: 0 / 0 / 0 / 0 / 1
+## the read-only hits, text
+../../steps-edits/OWNER-SHEET-v19.md:24:| R1 | you | You make and save the model key alone: nobody in the room or on a call; screen sharing, screen recording, Windows Recall, clipboard history and "Sync across your devices" are OFF (turned off in 6.1, put back in 8.4); your normal browser profile, n
+../../steps-edits/OWNER-SHEET-v22.md:58:| R10 | you | FREEZE = in the take terminal type and close nothing more (except `n` at "Type y to start"; the exit code is read only at 7.9, after the card); in the read terminal run only `date -u` and `ls -l "<path from the message>"`; in the browser do only 
+../../steps-edits/OWNER-SHEET-v23.md:55:| R10 | FREEZE = in the test terminal type and close nothing more (except `n` at "Type y to start"; the exit code is read only at 7.9, after the card); in the read terminal run only `date -u` and `ls -l "<path from the message>"`; in the browser do only the ca
+../../steps-edits/OWNER-SHEET-v24-A.md:51:| R10 | A FREEZE starts when: a screen, command or number differs from this sheet or the message (UNVERIFIED text included, except tolerated items); an exit code the message does not accept; laptop sleep; no new line in the test terminal for the silence minu
+../../steps-edits/OWNER-SHEET-v24-B.md:51:| R10 | A FREEZE starts when: a screen, command or number differs from this sheet or the message (UNVERIFIED text included, except tolerated items); an exit code the message does not accept; laptop sleep; no new line in the test terminal for the silence minu
+../../steps-edits/OWNER-SHEET-v24-SOURCE.md:51:| R10 | A FREEZE starts when: a screen, command or number differs from this sheet or the message (UNVERIFIED text included, except tolerated items); an exit code the message does not accept; laptop sleep; no new line in the test terminal for the silence
+../../steps-edits/OWNER-SHEET-v25-A.md:51:| R10 | A FREEZE starts when: a screen, command or number differs from this sheet or the message (UNVERIFIED text included, except tolerated items); an exit code (7.9) the message does not accept; laptop sleep; no new line in the test terminal for the silenc
+../../steps-edits/OWNER-SHEET-v25-B.md:51:| R10 | A FREEZE starts when: a screen, command or number differs from this sheet or the message (UNVERIFIED text included, except tolerated items); an exit code (7.9) the message does not accept; laptop sleep; no new line in the test terminal for the silenc
+../../steps-edits/OWNER-SHEET-v25-SOURCE.md:51:| R10 | A FREEZE starts when: a screen, command or number differs from this sheet or the message (UNVERIFIED text included, except tolerated items); an exit code (7.9) the message does not accept; laptop sleep; no new line in the test terminal for the s
+../../steps-edits/OWNER-SHEET-v26-A.md:51:| R10 | A FREEZE starts when: a screen, command or number differs from this sheet or the message (UNVERIFIED text included, except tolerated items); an exit code (7.9) the message does not accept; laptop sleep; no new line in the test terminal for the silenc
+../../steps-edits/OWNER-SHEET-v26-B.md:51:| R10 | A FREEZE starts when: a screen, command or number differs from this sheet or the message (UNVERIFIED text included, except tolerated items); an exit code (7.9) the message does not accept; laptop sleep; no new line in the test terminal for the silenc
+../../steps-edits/OWNER-SHEET-v26-SOURCE.md:51:| R10 | A FREEZE starts when: a screen, command or number differs from this sheet or the message (UNVERIFIED text included, except tolerated items); an exit code (7.9) the message does not accept; laptop sleep; no new line in the test terminal for the s
+../../steps-edits/OWNER-SHEET-v27-A.md:51:| R10 | A FREEZE starts when: a screen, command or number differs from this sheet or the message (UNVERIFIED text included, except tolerated items); an exit code (7.9) the message does not accept; laptop sleep; no new line in the test terminal for the silenc
+../../steps-edits/OWNER-SHEET-v27-B.md:51:| R10 | A FREEZE starts when: a screen, command or number differs from this sheet or the message (UNVERIFIED text included, except tolerated items); an exit code (7.9) the message does not accept; laptop sleep; no new line in the test terminal for the silenc
+../../steps-edits/OWNER-SHEET-v27-SOURCE.md:51:| R10 | A FREEZE starts when: a screen, command or number differs from this sheet or the message (UNVERIFIED text included, except tolerated items); an exit code (7.9) the message does not accept; laptop sleep; no new line in the test terminal for the s
+../../steps-edits/OWNER-SHEET-v28-A.md:37:| R10 | A FREEZE starts when: a screen, command or number differs from this sheet or the message (UNVERIFIED text included, except tolerated items); an exit code (7.9) the message does not accept; laptop sleep (the screen goes dark, or `date -u` later jumps 
+../../steps-edits/OWNER-SHEET-v28-B.md:37:| R10 | A FREEZE starts when: a screen, command or number differs from this sheet or the message (UNVERIFIED text included, except tolerated items); an exit code (7.9) the message does not accept; laptop sleep (the screen goes dark, or `date -u` later jumps 
+../../steps-edits/OWNER-SHEET-v28-SOURCE.md:57:| R10 | A FREEZE starts when: a screen, command or number differs from this sheet or the message (UNVERIFIED text included, except tolerated items); an exit code (7.9) the message does not accept; laptop sleep (the screen goes dark, or `date -u` later j

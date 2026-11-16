@@ -1,0 +1,73 @@
+modules: 102
+A  tt=False fn=True: sizes=[3]
+    group(3): approvals.cards, approvals.channel, approvals.requests
+B  tt=False fn=True: sizes=[4, 3, 2, 2]
+    group(4): approvals, approvals.cards, approvals.channel, approvals.requests
+    group(3): guard, guard.injection, guard.runmap
+    group(2): audit, audit.local_dir
+BG(group by parent package) tt=False fn=True: sizes=[11]
+    group(11): <root>, actions, approvals, audit, backends, guard, k1b, llm, runtime, sources, store
+A  tt=False fn=False: sizes=[]
+B  tt=False fn=False: sizes=[3, 3, 2, 2]
+    group(3): approvals, approvals.channel, approvals.requests
+    group(3): guard, guard.injection, guard.runmap
+    group(2): audit, audit.local_dir
+BG(group by parent package) tt=False fn=False: sizes=[10]
+    group(10): <root>, actions, approvals, audit, backends, guard, llm, runtime, sources, store
+A  tt=True fn=True: sizes=[4, 3, 3]
+    group(4): config, deferred, registry, replay_records
+    group(3): approvals.cards, approvals.channel, approvals.requests
+    group(3): k1b.replay, k1b.report, k1b.score
+B  tt=True fn=True: sizes=[9, 4, 3, 3, 2, 2]
+    group(9): config, deferred, guard.judge, llm, llm.common, llm.fake, llm.retry, registry, replay_records
+    group(4): approvals, approvals.cards, approvals.channel, approvals.requests
+    group(3): guard, guard.injection, guard.runmap
+BG(group by parent package) tt=True fn=True: sizes=[11]
+    group(11): <root>, actions, approvals, audit, backends, guard, k1b, llm, runtime, sources, store
+A  tt=True fn=False: sizes=[4, 3, 3]
+    group(4): config, deferred, registry, replay_records
+    group(3): approvals.cards, approvals.channel, approvals.requests
+    group(3): k1b.replay, k1b.report, k1b.score
+B  tt=True fn=False: sizes=[9, 4, 3, 3, 2, 2]
+    group(9): config, deferred, guard.judge, llm, llm.common, llm.fake, llm.retry, registry, replay_records
+    group(4): approvals, approvals.cards, approvals.channel, approvals.requests
+    group(3): guard, guard.injection, guard.runmap
+BG(group by parent package) tt=True fn=False: sizes=[10]
+    group(10): <root>, actions, approvals, audit, backends, guard, llm, runtime, sources, store
+planned modules not in today's tree: ['llm.callgate', 'llm.spend']
+PLANNED today+table tt=False A: sizes=[3]
+    group(3): approvals.cards, approvals.channel, approvals.requests
+PLANNED today+table tt=False BG: sizes=[11]
+    group(11): <root>, actions, approvals, audit, backends, guard, k1b, llm, runtime, sources, store
+PLANNED today+table tt=False B: sizes=[4, 3, 2, 2]
+    group(4): approvals, approvals.cards, approvals.channel, approvals.requests
+    group(3): guard, guard.injection, guard.runmap
+    group(2): audit, audit.local_dir
+PLANNED today+table tt=True A: sizes=[4, 3, 3]
+    group(4): config, deferred, registry, replay_records
+    group(3): approvals.cards, approvals.channel, approvals.requests
+    group(3): k1b.replay, k1b.report, k1b.score
+PLANNED today+table tt=True BG: sizes=[11]
+    group(11): <root>, actions, approvals, audit, backends, guard, k1b, llm, runtime, sources, store
+PLANNED today+table tt=True B: sizes=[10, 4, 3, 3, 2, 2]
+    group(10): config, deferred, guard.judge, llm, llm.callgate, llm.common, llm.fake, llm.retry, registry, replay_records
+    group(4): approvals, approvals.cards, approvals.channel, approvals.requests
+    group(3): guard, guard.injection, guard.runmap
+PLANNED replace-listed-modules tt=False A: sizes=[3]
+    group(3): approvals.cards, approvals.channel, approvals.requests
+PLANNED replace-listed-modules tt=False BG: sizes=[10]
+    group(10): <root>, actions, approvals, audit, backends, guard, llm, runtime, sources, store
+PLANNED replace-listed-modules tt=False B: sizes=[4, 2, 2]
+    group(4): approvals, approvals.cards, approvals.channel, approvals.requests
+    group(2): audit, audit.local_dir
+    group(2): store, store.memory
+PLANNED replace-listed-modules tt=True A: sizes=[4, 3, 3]
+    group(4): config, deferred, registry, replay_records
+    group(3): approvals.cards, approvals.channel, approvals.requests
+    group(3): k1b.replay, k1b.report, k1b.score
+PLANNED replace-listed-modules tt=True BG: sizes=[10]
+    group(10): <root>, actions, approvals, audit, backends, guard, llm, runtime, sources, store
+PLANNED replace-listed-modules tt=True B: sizes=[9, 4, 3, 2, 2]
+    group(9): config, deferred, guard.judge, llm, llm.callgate, llm.common, llm.fake, registry, replay_records
+    group(4): approvals, approvals.cards, approvals.channel, approvals.requests
+    group(3): k1b.replay, k1b.report, k1b.score

@@ -1,0 +1,3 @@
+banned list size: 10
+banned-word count in REPORT-c6c.md: 0
+bytes: 13648

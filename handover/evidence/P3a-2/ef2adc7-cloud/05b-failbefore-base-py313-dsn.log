@@ -1,0 +1,3460 @@
+BASE HEAD 0dabf1fa7a2ed58e14b8bca13be1141ac59f9c71 (merge-base of origin/main and ef2adc7)
+python Python 3.13.18
+hadavin_sdk from /home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/__init__.py
+............F..........................F.........................F.FFFF. [ 20%]
+..FFFF...FFFF...FFFF...FFFF...FFFF...FFFF...FFFF...F..FF................ [ 40%]
+..................F..................................................... [ 61%]
+............................FFFF.............FF.FFFFFFFFFFFFFFFFFFFFFFFF [ 81%]
+FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF.FFFFFFFFFFFFF................       [100%]
+==================================== ERRORS ====================================
+___________ ERROR collecting tests/test_migration_numbers_guards.py ____________
+tests/test_migration_numbers_guards.py:27: in <module>
+    mn_module.RELEASED_MANIFEST
+E   AttributeError: module 'hadavin_sdk.store.migration_numbers' has no attribute 'RELEASED_MANIFEST'
+______________ ERROR collecting tests/test_migration_postgres.py _______________
+ImportError while importing test module '/home/user/build/EV-P73-ef2adc7/base/tests/test_migration_postgres.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_migration_postgres.py:20: in <module>
+    from tests.fixtures import runbook as rb
+tests/fixtures/runbook.py:12: in <module>
+    from hadavin_sdk.store.migration_numbers import RECIPE_TIMEOUTS
+E   ImportError: cannot import name 'RECIPE_TIMEOUTS' from 'hadavin_sdk.store.migration_numbers' (/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migration_numbers.py)
+________________ ERROR collecting tests/test_migration_rules.py ________________
+ImportError while importing test module '/home/user/build/EV-P73-ef2adc7/base/tests/test_migration_rules.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_migration_rules.py:375: in <module>
+    from tests.fixtures import runbook as rb
+tests/fixtures/runbook.py:12: in <module>
+    from hadavin_sdk.store.migration_numbers import RECIPE_TIMEOUTS
+E   ImportError: cannot import name 'RECIPE_TIMEOUTS' from 'hadavin_sdk.store.migration_numbers' (/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migration_numbers.py)
+=================================== FAILURES ===================================
+________ test_migrate_refuses_an_inconsistent_ledger_before_connecting _________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6db0968590>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_migrate_refuses_an_incons0')
+
+    def test_migrate_refuses_an_inconsistent_ledger_before_connecting(monkeypatch, tmp_path):
+        files = _dir(tmp_path, {"0001_a.sql": "CREATE TABLE brand_new (\n    id TEXT\n);\n"})
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # made-up or missing files: only the grant or ledger refusal is under test
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_k2_migrations.py:109: AttributeError
+__________ test_migrate_refuses_when_an_applied_migration_has_no_file __________
+
+roles = ("user=postgres dbname=postgres host=127.0.0.1 port=<port> options='-c search_path=t_ce0b9e86c635'", 'rt_5fcf874bfb', 'pt_657a4c553d')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6db3781710>
+
+    def test_migrate_refuses_when_an_applied_migration_has_no_file(roles, monkeypatch):
+        dsn, _, _ = roles
+        files = mig._migration_files()
+        monkeypatch.setattr(mig, "_migration_files", lambda: files[:-1])
+        # The grant map still names the removed file's tables; only the applied-without-file refusal is under test.
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # made-up or missing files: only the grant or ledger refusal is under test
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_k2_migrations.py:396: AttributeError
+_ test_a_database_that_applied_the_old_name_is_refused_and_nothing_is_applied __
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_a_database_that_applied_t0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6db095b930>
+
+    def test_a_database_that_applied_the_old_name_is_refused_and_nothing_is_applied(
+        tmp_path, monkeypatch
+    ):
+        pytest.importorskip("psycopg")
+        from tests.contracts.kinds.store_postgres import pg_schema
+    
+        files = _folder(tmp_path, RENAMED)
+        gen = pg_schema(migrated=False)
+        dsn = next(gen)
+        try:
+            import psycopg
+    
+            with mig.connect(dsn) as db:  # as the plain role migrate() runs as
+                db.execute(
+                    "CREATE TABLE schema_migrations "
+                    "(version TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())"
+                )
+                db.execute("INSERT INTO schema_migrations (version) VALUES ('0005_evidence')")
+            monkeypatch.setattr(mig, "_migration_files", lambda: files)
+            # this test is about the ledger row with no file, not about the released-files list (it would refuse the
+            # renamed folder first, before the connection)
+>           monkeypatch.setattr(mig, "released_problems", lambda *a, **k: [])
+E           AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_k5_fixes2.py:303: AttributeError
+_ test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT pg_write_all_data TO {n}-app$on] _
+
+template = 'GRANT pg_write_all_data TO {n}', name = 'app$on'
+
+    @pytest.mark.parametrize(
+        "name", ["app$on", "on$x", "a$on$b", "x$on$", "\u00e9on", "on\u00e9", "_on$"]
+    )
+    @pytest.mark.parametrize(
+        "template",
+        [
+            "GRANT pg_write_all_data TO {n}",
+            "GRANT r TO {n}",
+            "GRANT {n} TO s",
+            "REVOKE r FROM {n}",
+            "REVOKE {n} FROM s",
+            "GRANT r\nTO {n}",
+            "/* on */ GRANT r TO {n} -- on",
+            'GRANT r TO {n}, "on"',
+        ],
+    )
+    def test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant(template, name):
+        sql = template.format(n=name)
+        assert _kind(sql) == "GrantRoleStmt", sql
+>       assert any(REFUSED in r for r in _reasons(sql)), sql
+E       AssertionError: GRANT pg_write_all_data TO app$on
+E       assert False
+E        +  where False = any(<generator object test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant.<locals>.<genexpr> at 0x7f6db0d2eb50>)
+
+tests/test_migration_names.py:71: AssertionError
+_ test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT pg_write_all_data TO {n}-on$x] _
+
+template = 'GRANT pg_write_all_data TO {n}', name = 'on$x'
+
+    @pytest.mark.parametrize(
+        "name", ["app$on", "on$x", "a$on$b", "x$on$", "\u00e9on", "on\u00e9", "_on$"]
+    )
+    @pytest.mark.parametrize(
+        "template",
+        [
+            "GRANT pg_write_all_data TO {n}",
+            "GRANT r TO {n}",
+            "GRANT {n} TO s",
+            "REVOKE r FROM {n}",
+            "REVOKE {n} FROM s",
+            "GRANT r\nTO {n}",
+            "/* on */ GRANT r TO {n} -- on",
+            'GRANT r TO {n}, "on"',
+        ],
+    )
+    def test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant(template, name):
+        sql = template.format(n=name)
+        assert _kind(sql) == "GrantRoleStmt", sql
+>       assert any(REFUSED in r for r in _reasons(sql)), sql
+E       AssertionError: GRANT pg_write_all_data TO on$x
+E       assert False
+E        +  where False = any(<generator object test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant.<locals>.<genexpr> at 0x7f6db110f370>)
+
+tests/test_migration_names.py:71: AssertionError
+_ test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT pg_write_all_data TO {n}-a$on$b] _
+
+template = 'GRANT pg_write_all_data TO {n}', name = 'a$on$b'
+
+    @pytest.mark.parametrize(
+        "name", ["app$on", "on$x", "a$on$b", "x$on$", "\u00e9on", "on\u00e9", "_on$"]
+    )
+    @pytest.mark.parametrize(
+        "template",
+        [
+            "GRANT pg_write_all_data TO {n}",
+            "GRANT r TO {n}",
+            "GRANT {n} TO s",
+            "REVOKE r FROM {n}",
+            "REVOKE {n} FROM s",
+            "GRANT r\nTO {n}",
+            "/* on */ GRANT r TO {n} -- on",
+            'GRANT r TO {n}, "on"',
+        ],
+    )
+    def test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant(template, name):
+        sql = template.format(n=name)
+        assert _kind(sql) == "GrantRoleStmt", sql
+>       assert any(REFUSED in r for r in _reasons(sql)), sql
+E       AssertionError: GRANT pg_write_all_data TO a$on$b
+E       assert False
+E        +  where False = any(<generator object test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant.<locals>.<genexpr> at 0x7f6db00ef5e0>)
+
+tests/test_migration_names.py:71: AssertionError
+_ test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT pg_write_all_data TO {n}-x$on$] _
+
+template = 'GRANT pg_write_all_data TO {n}', name = 'x$on$'
+
+    @pytest.mark.parametrize(
+        "name", ["app$on", "on$x", "a$on$b", "x$on$", "\u00e9on", "on\u00e9", "_on$"]
+    )
+    @pytest.mark.parametrize(
+        "template",
+        [
+            "GRANT pg_write_all_data TO {n}",
+            "GRANT r TO {n}",
+            "GRANT {n} TO s",
+            "REVOKE r FROM {n}",
+            "REVOKE {n} FROM s",
+            "GRANT r\nTO {n}",
+            "/* on */ GRANT r TO {n} -- on",
+            'GRANT r TO {n}, "on"',
+        ],
+    )
+    def test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant(template, name):
+        sql = template.format(n=name)
+        assert _kind(sql) == "GrantRoleStmt", sql
+>       assert any(REFUSED in r for r in _reasons(sql)), sql
+E       AssertionError: GRANT pg_write_all_data TO x$on$
+E       assert False
+E        +  where False = any(<generator object test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant.<locals>.<genexpr> at 0x7f6db00eeb50>)
+
+tests/test_migration_names.py:71: AssertionError
+_ test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r TO {n}-app$on] _
+
+template = 'GRANT r TO {n}', name = 'app$on'
+
+    @pytest.mark.parametrize(
+        "name", ["app$on", "on$x", "a$on$b", "x$on$", "\u00e9on", "on\u00e9", "_on$"]
+    )
+    @pytest.mark.parametrize(
+        "template",
+        [
+            "GRANT pg_write_all_data TO {n}",
+            "GRANT r TO {n}",
+            "GRANT {n} TO s",
+            "REVOKE r FROM {n}",
+            "REVOKE {n} FROM s",
+            "GRANT r\nTO {n}",
+            "/* on */ GRANT r TO {n} -- on",
+            'GRANT r TO {n}, "on"',
+        ],
+    )
+    def test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant(template, name):
+        sql = template.format(n=name)
+        assert _kind(sql) == "GrantRoleStmt", sql
+>       assert any(REFUSED in r for r in _reasons(sql)), sql
+E       AssertionError: GRANT r TO app$on
+E       assert False
+E        +  where False = any(<generator object test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant.<locals>.<genexpr> at 0x7f6db098b440>)
+
+tests/test_migration_names.py:71: AssertionError
+_ test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r TO {n}-on$x] _
+
+template = 'GRANT r TO {n}', name = 'on$x'
+
+    @pytest.mark.parametrize(
+        "name", ["app$on", "on$x", "a$on$b", "x$on$", "\u00e9on", "on\u00e9", "_on$"]
+    )
+    @pytest.mark.parametrize(
+        "template",
+        [
+            "GRANT pg_write_all_data TO {n}",
+            "GRANT r TO {n}",
+            "GRANT {n} TO s",
+            "REVOKE r FROM {n}",
+            "REVOKE {n} FROM s",
+            "GRANT r\nTO {n}",
+            "/* on */ GRANT r TO {n} -- on",
+            'GRANT r TO {n}, "on"',
+        ],
+    )
+    def test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant(template, name):
+        sql = template.format(n=name)
+        assert _kind(sql) == "GrantRoleStmt", sql
+>       assert any(REFUSED in r for r in _reasons(sql)), sql
+E       AssertionError: GRANT r TO on$x
+E       assert False
+E        +  where False = any(<generator object test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant.<locals>.<genexpr> at 0x7f6db0988450>)
+
+tests/test_migration_names.py:71: AssertionError
+_ test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r TO {n}-a$on$b] _
+
+template = 'GRANT r TO {n}', name = 'a$on$b'
+
+    @pytest.mark.parametrize(
+        "name", ["app$on", "on$x", "a$on$b", "x$on$", "\u00e9on", "on\u00e9", "_on$"]
+    )
+    @pytest.mark.parametrize(
+        "template",
+        [
+            "GRANT pg_write_all_data TO {n}",
+            "GRANT r TO {n}",
+            "GRANT {n} TO s",
+            "REVOKE r FROM {n}",
+            "REVOKE {n} FROM s",
+            "GRANT r\nTO {n}",
+            "/* on */ GRANT r TO {n} -- on",
+            'GRANT r TO {n}, "on"',
+        ],
+    )
+    def test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant(template, name):
+        sql = template.format(n=name)
+        assert _kind(sql) == "GrantRoleStmt", sql
+>       assert any(REFUSED in r for r in _reasons(sql)), sql
+E       AssertionError: GRANT r TO a$on$b
+E       assert False
+E        +  where False = any(<generator object test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant.<locals>.<genexpr> at 0x7f6db009c110>)
+
+tests/test_migration_names.py:71: AssertionError
+_ test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r TO {n}-x$on$] _
+
+template = 'GRANT r TO {n}', name = 'x$on$'
+
+    @pytest.mark.parametrize(
+        "name", ["app$on", "on$x", "a$on$b", "x$on$", "\u00e9on", "on\u00e9", "_on$"]
+    )
+    @pytest.mark.parametrize(
+        "template",
+        [
+            "GRANT pg_write_all_data TO {n}",
+            "GRANT r TO {n}",
+            "GRANT {n} TO s",
+            "REVOKE r FROM {n}",
+            "REVOKE {n} FROM s",
+            "GRANT r\nTO {n}",
+            "/* on */ GRANT r TO {n} -- on",
+            'GRANT r TO {n}, "on"',
+        ],
+    )
+    def test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant(template, name):
+        sql = template.format(n=name)
+        assert _kind(sql) == "GrantRoleStmt", sql
+>       assert any(REFUSED in r for r in _reasons(sql)), sql
+E       AssertionError: GRANT r TO x$on$
+E       assert False
+E        +  where False = any(<generator object test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant.<locals>.<genexpr> at 0x7f6db009e260>)
+
+tests/test_migration_names.py:71: AssertionError
+_ test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT {n} TO s-app$on] _
+
+template = 'GRANT {n} TO s', name = 'app$on'
+
+    @pytest.mark.parametrize(
+        "name", ["app$on", "on$x", "a$on$b", "x$on$", "\u00e9on", "on\u00e9", "_on$"]
+    )
+    @pytest.mark.parametrize(
+        "template",
+        [
+            "GRANT pg_write_all_data TO {n}",
+            "GRANT r TO {n}",
+            "GRANT {n} TO s",
+            "REVOKE r FROM {n}",
+            "REVOKE {n} FROM s",
+            "GRANT r\nTO {n}",
+            "/* on */ GRANT r TO {n} -- on",
+            'GRANT r TO {n}, "on"',
+        ],
+    )
+    def test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant(template, name):
+        sql = template.format(n=name)
+        assert _kind(sql) == "GrantRoleStmt", sql
+>       assert any(REFUSED in r for r in _reasons(sql)), sql
+E       AssertionError: GRANT app$on TO s
+E       assert False
+E        +  where False = any(<generator object test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant.<locals>.<genexpr> at 0x7f6db0d2e810>)
+
+tests/test_migration_names.py:71: AssertionError
+_ test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT {n} TO s-on$x] _
+
+template = 'GRANT {n} TO s', name = 'on$x'
+
+    @pytest.mark.parametrize(
+        "name", ["app$on", "on$x", "a$on$b", "x$on$", "\u00e9on", "on\u00e9", "_on$"]
+    )
+    @pytest.mark.parametrize(
+        "template",
+        [
+            "GRANT pg_write_all_data TO {n}",
+            "GRANT r TO {n}",
+            "GRANT {n} TO s",
+            "REVOKE r FROM {n}",
+            "REVOKE {n} FROM s",
+            "GRANT r\nTO {n}",
+            "/* on */ GRANT r TO {n} -- on",
+            'GRANT r TO {n}, "on"',
+        ],
+    )
+    def test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant(template, name):
+        sql = template.format(n=name)
+        assert _kind(sql) == "GrantRoleStmt", sql
+>       assert any(REFUSED in r for r in _reasons(sql)), sql
+E       AssertionError: GRANT on$x TO s
+E       assert False
+E        +  where False = any(<generator object test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant.<locals>.<genexpr> at 0x7f6db0d2eb50>)
+
+tests/test_migration_names.py:71: AssertionError
+_ test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT {n} TO s-a$on$b] _
+
+template = 'GRANT {n} TO s', name = 'a$on$b'
+
+    @pytest.mark.parametrize(
+        "name", ["app$on", "on$x", "a$on$b", "x$on$", "\u00e9on", "on\u00e9", "_on$"]
+    )
+    @pytest.mark.parametrize(
+        "template",
+        [
+            "GRANT pg_write_all_data TO {n}",
+            "GRANT r TO {n}",
+            "GRANT {n} TO s",
+            "REVOKE r FROM {n}",
+            "REVOKE {n} FROM s",
+            "GRANT r\nTO {n}",
+            "/* on */ GRANT r TO {n} -- on",
+            'GRANT r TO {n}, "on"',
+        ],
+    )
+    def test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant(template, name):
+        sql = template.format(n=name)
+        assert _kind(sql) == "GrantRoleStmt", sql
+>       assert any(REFUSED in r for r in _reasons(sql)), sql
+E       AssertionError: GRANT a$on$b TO s
+E       assert False
+E        +  where False = any(<generator object test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant.<locals>.<genexpr> at 0x7f6db00125a0>)
+
+tests/test_migration_names.py:71: AssertionError
+_ test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT {n} TO s-x$on$] _
+
+template = 'GRANT {n} TO s', name = 'x$on$'
+
+    @pytest.mark.parametrize(
+        "name", ["app$on", "on$x", "a$on$b", "x$on$", "\u00e9on", "on\u00e9", "_on$"]
+    )
+    @pytest.mark.parametrize(
+        "template",
+        [
+            "GRANT pg_write_all_data TO {n}",
+            "GRANT r TO {n}",
+            "GRANT {n} TO s",
+            "REVOKE r FROM {n}",
+            "REVOKE {n} FROM s",
+            "GRANT r\nTO {n}",
+            "/* on */ GRANT r TO {n} -- on",
+            'GRANT r TO {n}, "on"',
+        ],
+    )
+    def test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant(template, name):
+        sql = template.format(n=name)
+        assert _kind(sql) == "GrantRoleStmt", sql
+>       assert any(REFUSED in r for r in _reasons(sql)), sql
+E       AssertionError: GRANT x$on$ TO s
+E       assert False
+E        +  where False = any(<generator object test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant.<locals>.<genexpr> at 0x7f6db0013100>)
+
+tests/test_migration_names.py:71: AssertionError
+_ test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[REVOKE r FROM {n}-app$on] _
+
+template = 'REVOKE r FROM {n}', name = 'app$on'
+
+    @pytest.mark.parametrize(
+        "name", ["app$on", "on$x", "a$on$b", "x$on$", "\u00e9on", "on\u00e9", "_on$"]
+    )
+    @pytest.mark.parametrize(
+        "template",
+        [
+            "GRANT pg_write_all_data TO {n}",
+            "GRANT r TO {n}",
+            "GRANT {n} TO s",
+            "REVOKE r FROM {n}",
+            "REVOKE {n} FROM s",
+            "GRANT r\nTO {n}",
+            "/* on */ GRANT r TO {n} -- on",
+            'GRANT r TO {n}, "on"',
+        ],
+    )
+    def test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant(template, name):
+        sql = template.format(n=name)
+        assert _kind(sql) == "GrantRoleStmt", sql
+>       assert any(REFUSED in r for r in _reasons(sql)), sql
+E       AssertionError: REVOKE r FROM app$on
+E       assert False
+E        +  where False = any(<generator object test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant.<locals>.<genexpr> at 0x7f6db002b850>)
+
+tests/test_migration_names.py:71: AssertionError
+_ test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[REVOKE r FROM {n}-on$x] _
+
+template = 'REVOKE r FROM {n}', name = 'on$x'
+
+    @pytest.mark.parametrize(
+        "name", ["app$on", "on$x", "a$on$b", "x$on$", "\u00e9on", "on\u00e9", "_on$"]
+    )
+    @pytest.mark.parametrize(
+        "template",
+        [
+            "GRANT pg_write_all_data TO {n}",
+            "GRANT r TO {n}",
+            "GRANT {n} TO s",
+            "REVOKE r FROM {n}",
+            "REVOKE {n} FROM s",
+            "GRANT r\nTO {n}",
+            "/* on */ GRANT r TO {n} -- on",
+            'GRANT r TO {n}, "on"',
+        ],
+    )
+    def test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant(template, name):
+        sql = template.format(n=name)
+        assert _kind(sql) == "GrantRoleStmt", sql
+>       assert any(REFUSED in r for r in _reasons(sql)), sql
+E       AssertionError: REVOKE r FROM on$x
+E       assert False
+E        +  where False = any(<generator object test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant.<locals>.<genexpr> at 0x7f6db002bb90>)
+
+tests/test_migration_names.py:71: AssertionError
+_ test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[REVOKE r FROM {n}-a$on$b] _
+
+template = 'REVOKE r FROM {n}', name = 'a$on$b'
+
+    @pytest.mark.parametrize(
+        "name", ["app$on", "on$x", "a$on$b", "x$on$", "\u00e9on", "on\u00e9", "_on$"]
+    )
+    @pytest.mark.parametrize(
+        "template",
+        [
+            "GRANT pg_write_all_data TO {n}",
+            "GRANT r TO {n}",
+            "GRANT {n} TO s",
+            "REVOKE r FROM {n}",
+            "REVOKE {n} FROM s",
+            "GRANT r\nTO {n}",
+            "/* on */ GRANT r TO {n} -- on",
+            'GRANT r TO {n}, "on"',
+        ],
+    )
+    def test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant(template, name):
+        sql = template.format(n=name)
+        assert _kind(sql) == "GrantRoleStmt", sql
+>       assert any(REFUSED in r for r in _reasons(sql)), sql
+E       AssertionError: REVOKE r FROM a$on$b
+E       assert False
+E        +  where False = any(<generator object test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant.<locals>.<genexpr> at 0x7f6db002a0c0>)
+
+tests/test_migration_names.py:71: AssertionError
+_ test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[REVOKE r FROM {n}-x$on$] _
+
+template = 'REVOKE r FROM {n}', name = 'x$on$'
+
+    @pytest.mark.parametrize(
+        "name", ["app$on", "on$x", "a$on$b", "x$on$", "\u00e9on", "on\u00e9", "_on$"]
+    )
+    @pytest.mark.parametrize(
+        "template",
+        [
+            "GRANT pg_write_all_data TO {n}",
+            "GRANT r TO {n}",
+            "GRANT {n} TO s",
+            "REVOKE r FROM {n}",
+            "REVOKE {n} FROM s",
+            "GRANT r\nTO {n}",
+            "/* on */ GRANT r TO {n} -- on",
+            'GRANT r TO {n}, "on"',
+        ],
+    )
+    def test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant(template, name):
+        sql = template.format(n=name)
+        assert _kind(sql) == "GrantRoleStmt", sql
+>       assert any(REFUSED in r for r in _reasons(sql)), sql
+E       AssertionError: REVOKE r FROM x$on$
+E       assert False
+E        +  where False = any(<generator object test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant.<locals>.<genexpr> at 0x7f6db0029f20>)
+
+tests/test_migration_names.py:71: AssertionError
+_ test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[REVOKE {n} FROM s-app$on] _
+
+template = 'REVOKE {n} FROM s', name = 'app$on'
+
+    @pytest.mark.parametrize(
+        "name", ["app$on", "on$x", "a$on$b", "x$on$", "\u00e9on", "on\u00e9", "_on$"]
+    )
+    @pytest.mark.parametrize(
+        "template",
+        [
+            "GRANT pg_write_all_data TO {n}",
+            "GRANT r TO {n}",
+            "GRANT {n} TO s",
+            "REVOKE r FROM {n}",
+            "REVOKE {n} FROM s",
+            "GRANT r\nTO {n}",
+            "/* on */ GRANT r TO {n} -- on",
+            'GRANT r TO {n}, "on"',
+        ],
+    )
+    def test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant(template, name):
+        sql = template.format(n=name)
+        assert _kind(sql) == "GrantRoleStmt", sql
+>       assert any(REFUSED in r for r in _reasons(sql)), sql
+E       AssertionError: REVOKE app$on FROM s
+E       assert False
+E        +  where False = any(<generator object test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant.<locals>.<genexpr> at 0x7f6db0d2e810>)
+
+tests/test_migration_names.py:71: AssertionError
+_ test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[REVOKE {n} FROM s-on$x] _
+
+template = 'REVOKE {n} FROM s', name = 'on$x'
+
+    @pytest.mark.parametrize(
+        "name", ["app$on", "on$x", "a$on$b", "x$on$", "\u00e9on", "on\u00e9", "_on$"]
+    )
+    @pytest.mark.parametrize(
+        "template",
+        [
+            "GRANT pg_write_all_data TO {n}",
+            "GRANT r TO {n}",
+            "GRANT {n} TO s",
+            "REVOKE r FROM {n}",
+            "REVOKE {n} FROM s",
+            "GRANT r\nTO {n}",
+            "/* on */ GRANT r TO {n} -- on",
+            'GRANT r TO {n}, "on"',
+        ],
+    )
+    def test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant(template, name):
+        sql = template.format(n=name)
+        assert _kind(sql) == "GrantRoleStmt", sql
+>       assert any(REFUSED in r for r in _reasons(sql)), sql
+E       AssertionError: REVOKE on$x FROM s
+E       assert False
+E        +  where False = any(<generator object test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant.<locals>.<genexpr> at 0x7f6db110f370>)
+
+tests/test_migration_names.py:71: AssertionError
+_ test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[REVOKE {n} FROM s-a$on$b] _
+
+template = 'REVOKE {n} FROM s', name = 'a$on$b'
+
+    @pytest.mark.parametrize(
+        "name", ["app$on", "on$x", "a$on$b", "x$on$", "\u00e9on", "on\u00e9", "_on$"]
+    )
+    @pytest.mark.parametrize(
+        "template",
+        [
+            "GRANT pg_write_all_data TO {n}",
+            "GRANT r TO {n}",
+            "GRANT {n} TO s",
+            "REVOKE r FROM {n}",
+            "REVOKE {n} FROM s",
+            "GRANT r\nTO {n}",
+            "/* on */ GRANT r TO {n} -- on",
+            'GRANT r TO {n}, "on"',
+        ],
+    )
+    def test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant(template, name):
+        sql = template.format(n=name)
+        assert _kind(sql) == "GrantRoleStmt", sql
+>       assert any(REFUSED in r for r in _reasons(sql)), sql
+E       AssertionError: REVOKE a$on$b FROM s
+E       assert False
+E        +  where False = any(<generator object test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant.<locals>.<genexpr> at 0x7f6db00f6c20>)
+
+tests/test_migration_names.py:71: AssertionError
+_ test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[REVOKE {n} FROM s-x$on$] _
+
+template = 'REVOKE {n} FROM s', name = 'x$on$'
+
+    @pytest.mark.parametrize(
+        "name", ["app$on", "on$x", "a$on$b", "x$on$", "\u00e9on", "on\u00e9", "_on$"]
+    )
+    @pytest.mark.parametrize(
+        "template",
+        [
+            "GRANT pg_write_all_data TO {n}",
+            "GRANT r TO {n}",
+            "GRANT {n} TO s",
+            "REVOKE r FROM {n}",
+            "REVOKE {n} FROM s",
+            "GRANT r\nTO {n}",
+            "/* on */ GRANT r TO {n} -- on",
+            'GRANT r TO {n}, "on"',
+        ],
+    )
+    def test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant(template, name):
+        sql = template.format(n=name)
+        assert _kind(sql) == "GrantRoleStmt", sql
+>       assert any(REFUSED in r for r in _reasons(sql)), sql
+E       AssertionError: REVOKE x$on$ FROM s
+E       assert False
+E        +  where False = any(<generator object test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant.<locals>.<genexpr> at 0x7f6db00f6cf0>)
+
+tests/test_migration_names.py:71: AssertionError
+_ test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r\nTO {n}-app$on] _
+
+template = 'GRANT r\nTO {n}', name = 'app$on'
+
+    @pytest.mark.parametrize(
+        "name", ["app$on", "on$x", "a$on$b", "x$on$", "\u00e9on", "on\u00e9", "_on$"]
+    )
+    @pytest.mark.parametrize(
+        "template",
+        [
+            "GRANT pg_write_all_data TO {n}",
+            "GRANT r TO {n}",
+            "GRANT {n} TO s",
+            "REVOKE r FROM {n}",
+            "REVOKE {n} FROM s",
+            "GRANT r\nTO {n}",
+            "/* on */ GRANT r TO {n} -- on",
+            'GRANT r TO {n}, "on"',
+        ],
+    )
+    def test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant(template, name):
+        sql = template.format(n=name)
+        assert _kind(sql) == "GrantRoleStmt", sql
+>       assert any(REFUSED in r for r in _reasons(sql)), sql
+E       AssertionError: GRANT r
+E         TO app$on
+E       assert False
+E        +  where False = any(<generator object test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant.<locals>.<genexpr> at 0x7f6db0019f20>)
+
+tests/test_migration_names.py:71: AssertionError
+_ test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r\nTO {n}-on$x] _
+
+template = 'GRANT r\nTO {n}', name = 'on$x'
+
+    @pytest.mark.parametrize(
+        "name", ["app$on", "on$x", "a$on$b", "x$on$", "\u00e9on", "on\u00e9", "_on$"]
+    )
+    @pytest.mark.parametrize(
+        "template",
+        [
+            "GRANT pg_write_all_data TO {n}",
+            "GRANT r TO {n}",
+            "GRANT {n} TO s",
+            "REVOKE r FROM {n}",
+            "REVOKE {n} FROM s",
+            "GRANT r\nTO {n}",
+            "/* on */ GRANT r TO {n} -- on",
+            'GRANT r TO {n}, "on"',
+        ],
+    )
+    def test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant(template, name):
+        sql = template.format(n=name)
+        assert _kind(sql) == "GrantRoleStmt", sql
+>       assert any(REFUSED in r for r in _reasons(sql)), sql
+E       AssertionError: GRANT r
+E         TO on$x
+E       assert False
+E        +  where False = any(<generator object test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant.<locals>.<genexpr> at 0x7f6db0018ba0>)
+
+tests/test_migration_names.py:71: AssertionError
+_ test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r\nTO {n}-a$on$b] _
+
+template = 'GRANT r\nTO {n}', name = 'a$on$b'
+
+    @pytest.mark.parametrize(
+        "name", ["app$on", "on$x", "a$on$b", "x$on$", "\u00e9on", "on\u00e9", "_on$"]
+    )
+    @pytest.mark.parametrize(
+        "template",
+        [
+            "GRANT pg_write_all_data TO {n}",
+            "GRANT r TO {n}",
+            "GRANT {n} TO s",
+            "REVOKE r FROM {n}",
+            "REVOKE {n} FROM s",
+            "GRANT r\nTO {n}",
+            "/* on */ GRANT r TO {n} -- on",
+            'GRANT r TO {n}, "on"',
+        ],
+    )
+    def test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant(template, name):
+        sql = template.format(n=name)
+        assert _kind(sql) == "GrantRoleStmt", sql
+>       assert any(REFUSED in r for r in _reasons(sql)), sql
+E       AssertionError: GRANT r
+E         TO a$on$b
+E       assert False
+E        +  where False = any(<generator object test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant.<locals>.<genexpr> at 0x7f6db001b100>)
+
+tests/test_migration_names.py:71: AssertionError
+_ test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r\nTO {n}-x$on$] _
+
+template = 'GRANT r\nTO {n}', name = 'x$on$'
+
+    @pytest.mark.parametrize(
+        "name", ["app$on", "on$x", "a$on$b", "x$on$", "\u00e9on", "on\u00e9", "_on$"]
+    )
+    @pytest.mark.parametrize(
+        "template",
+        [
+            "GRANT pg_write_all_data TO {n}",
+            "GRANT r TO {n}",
+            "GRANT {n} TO s",
+            "REVOKE r FROM {n}",
+            "REVOKE {n} FROM s",
+            "GRANT r\nTO {n}",
+            "/* on */ GRANT r TO {n} -- on",
+            'GRANT r TO {n}, "on"',
+        ],
+    )
+    def test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant(template, name):
+        sql = template.format(n=name)
+        assert _kind(sql) == "GrantRoleStmt", sql
+>       assert any(REFUSED in r for r in _reasons(sql)), sql
+E       AssertionError: GRANT r
+E         TO x$on$
+E       assert False
+E        +  where False = any(<generator object test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant.<locals>.<genexpr> at 0x7f6db001a4d0>)
+
+tests/test_migration_names.py:71: AssertionError
+_ test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[/* on */ GRANT r TO {n} -- on-app$on] _
+
+template = '/* on */ GRANT r TO {n} -- on', name = 'app$on'
+
+    @pytest.mark.parametrize(
+        "name", ["app$on", "on$x", "a$on$b", "x$on$", "\u00e9on", "on\u00e9", "_on$"]
+    )
+    @pytest.mark.parametrize(
+        "template",
+        [
+            "GRANT pg_write_all_data TO {n}",
+            "GRANT r TO {n}",
+            "GRANT {n} TO s",
+            "REVOKE r FROM {n}",
+            "REVOKE {n} FROM s",
+            "GRANT r\nTO {n}",
+            "/* on */ GRANT r TO {n} -- on",
+            'GRANT r TO {n}, "on"',
+        ],
+    )
+    def test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant(template, name):
+        sql = template.format(n=name)
+        assert _kind(sql) == "GrantRoleStmt", sql
+>       assert any(REFUSED in r for r in _reasons(sql)), sql
+E       AssertionError: /* on */ GRANT r TO app$on -- on
+E       assert False
+E        +  where False = any(<generator object test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant.<locals>.<genexpr> at 0x7f6db0008860>)
+
+tests/test_migration_names.py:71: AssertionError
+_ test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[/* on */ GRANT r TO {n} -- on-on$x] _
+
+template = '/* on */ GRANT r TO {n} -- on', name = 'on$x'
+
+    @pytest.mark.parametrize(
+        "name", ["app$on", "on$x", "a$on$b", "x$on$", "\u00e9on", "on\u00e9", "_on$"]
+    )
+    @pytest.mark.parametrize(
+        "template",
+        [
+            "GRANT pg_write_all_data TO {n}",
+            "GRANT r TO {n}",
+            "GRANT {n} TO s",
+            "REVOKE r FROM {n}",
+            "REVOKE {n} FROM s",
+            "GRANT r\nTO {n}",
+            "/* on */ GRANT r TO {n} -- on",
+            'GRANT r TO {n}, "on"',
+        ],
+    )
+    def test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant(template, name):
+        sql = template.format(n=name)
+        assert _kind(sql) == "GrantRoleStmt", sql
+>       assert any(REFUSED in r for r in _reasons(sql)), sql
+E       AssertionError: /* on */ GRANT r TO on$x -- on
+E       assert False
+E        +  where False = any(<generator object test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant.<locals>.<genexpr> at 0x7f6db0009080>)
+
+tests/test_migration_names.py:71: AssertionError
+_ test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[/* on */ GRANT r TO {n} -- on-a$on$b] _
+
+template = '/* on */ GRANT r TO {n} -- on', name = 'a$on$b'
+
+    @pytest.mark.parametrize(
+        "name", ["app$on", "on$x", "a$on$b", "x$on$", "\u00e9on", "on\u00e9", "_on$"]
+    )
+    @pytest.mark.parametrize(
+        "template",
+        [
+            "GRANT pg_write_all_data TO {n}",
+            "GRANT r TO {n}",
+            "GRANT {n} TO s",
+            "REVOKE r FROM {n}",
+            "REVOKE {n} FROM s",
+            "GRANT r\nTO {n}",
+            "/* on */ GRANT r TO {n} -- on",
+            'GRANT r TO {n}, "on"',
+        ],
+    )
+    def test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant(template, name):
+        sql = template.format(n=name)
+        assert _kind(sql) == "GrantRoleStmt", sql
+>       assert any(REFUSED in r for r in _reasons(sql)), sql
+E       AssertionError: /* on */ GRANT r TO a$on$b -- on
+E       assert False
+E        +  where False = any(<generator object test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant.<locals>.<genexpr> at 0x7f6db110f370>)
+
+tests/test_migration_names.py:71: AssertionError
+_ test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[/* on */ GRANT r TO {n} -- on-x$on$] _
+
+template = '/* on */ GRANT r TO {n} -- on', name = 'x$on$'
+
+    @pytest.mark.parametrize(
+        "name", ["app$on", "on$x", "a$on$b", "x$on$", "\u00e9on", "on\u00e9", "_on$"]
+    )
+    @pytest.mark.parametrize(
+        "template",
+        [
+            "GRANT pg_write_all_data TO {n}",
+            "GRANT r TO {n}",
+            "GRANT {n} TO s",
+            "REVOKE r FROM {n}",
+            "REVOKE {n} FROM s",
+            "GRANT r\nTO {n}",
+            "/* on */ GRANT r TO {n} -- on",
+            'GRANT r TO {n}, "on"',
+        ],
+    )
+    def test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant(template, name):
+        sql = template.format(n=name)
+        assert _kind(sql) == "GrantRoleStmt", sql
+>       assert any(REFUSED in r for r in _reasons(sql)), sql
+E       AssertionError: /* on */ GRANT r TO x$on$ -- on
+E       assert False
+E        +  where False = any(<generator object test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant.<locals>.<genexpr> at 0x7f6db000a330>)
+
+tests/test_migration_names.py:71: AssertionError
+_ test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r TO {n}, "on"-app$on] _
+
+template = 'GRANT r TO {n}, "on"', name = 'app$on'
+
+    @pytest.mark.parametrize(
+        "name", ["app$on", "on$x", "a$on$b", "x$on$", "\u00e9on", "on\u00e9", "_on$"]
+    )
+    @pytest.mark.parametrize(
+        "template",
+        [
+            "GRANT pg_write_all_data TO {n}",
+            "GRANT r TO {n}",
+            "GRANT {n} TO s",
+            "REVOKE r FROM {n}",
+            "REVOKE {n} FROM s",
+            "GRANT r\nTO {n}",
+            "/* on */ GRANT r TO {n} -- on",
+            'GRANT r TO {n}, "on"',
+        ],
+    )
+    def test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant(template, name):
+        sql = template.format(n=name)
+        assert _kind(sql) == "GrantRoleStmt", sql
+>       assert any(REFUSED in r for r in _reasons(sql)), sql
+E       AssertionError: GRANT r TO app$on, "on"
+E       assert False
+E        +  where False = any(<generator object test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant.<locals>.<genexpr> at 0x7f6db009cad0>)
+
+tests/test_migration_names.py:71: AssertionError
+_ test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r TO {n}, "on"-on$x] _
+
+template = 'GRANT r TO {n}, "on"', name = 'on$x'
+
+    @pytest.mark.parametrize(
+        "name", ["app$on", "on$x", "a$on$b", "x$on$", "\u00e9on", "on\u00e9", "_on$"]
+    )
+    @pytest.mark.parametrize(
+        "template",
+        [
+            "GRANT pg_write_all_data TO {n}",
+            "GRANT r TO {n}",
+            "GRANT {n} TO s",
+            "REVOKE r FROM {n}",
+            "REVOKE {n} FROM s",
+            "GRANT r\nTO {n}",
+            "/* on */ GRANT r TO {n} -- on",
+            'GRANT r TO {n}, "on"',
+        ],
+    )
+    def test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant(template, name):
+        sql = template.format(n=name)
+        assert _kind(sql) == "GrantRoleStmt", sql
+>       assert any(REFUSED in r for r in _reasons(sql)), sql
+E       AssertionError: GRANT r TO on$x, "on"
+E       assert False
+E        +  where False = any(<generator object test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant.<locals>.<genexpr> at 0x7f6db009f6b0>)
+
+tests/test_migration_names.py:71: AssertionError
+_ test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r TO {n}, "on"-a$on$b] _
+
+template = 'GRANT r TO {n}, "on"', name = 'a$on$b'
+
+    @pytest.mark.parametrize(
+        "name", ["app$on", "on$x", "a$on$b", "x$on$", "\u00e9on", "on\u00e9", "_on$"]
+    )
+    @pytest.mark.parametrize(
+        "template",
+        [
+            "GRANT pg_write_all_data TO {n}",
+            "GRANT r TO {n}",
+            "GRANT {n} TO s",
+            "REVOKE r FROM {n}",
+            "REVOKE {n} FROM s",
+            "GRANT r\nTO {n}",
+            "/* on */ GRANT r TO {n} -- on",
+            'GRANT r TO {n}, "on"',
+        ],
+    )
+    def test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant(template, name):
+        sql = template.format(n=name)
+        assert _kind(sql) == "GrantRoleStmt", sql
+>       assert any(REFUSED in r for r in _reasons(sql)), sql
+E       AssertionError: GRANT r TO a$on$b, "on"
+E       assert False
+E        +  where False = any(<generator object test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant.<locals>.<genexpr> at 0x7f6db009ecf0>)
+
+tests/test_migration_names.py:71: AssertionError
+_ test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r TO {n}, "on"-x$on$] _
+
+template = 'GRANT r TO {n}, "on"', name = 'x$on$'
+
+    @pytest.mark.parametrize(
+        "name", ["app$on", "on$x", "a$on$b", "x$on$", "\u00e9on", "on\u00e9", "_on$"]
+    )
+    @pytest.mark.parametrize(
+        "template",
+        [
+            "GRANT pg_write_all_data TO {n}",
+            "GRANT r TO {n}",
+            "GRANT {n} TO s",
+            "REVOKE r FROM {n}",
+            "REVOKE {n} FROM s",
+            "GRANT r\nTO {n}",
+            "/* on */ GRANT r TO {n} -- on",
+            'GRANT r TO {n}, "on"',
+        ],
+    )
+    def test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant(template, name):
+        sql = template.format(n=name)
+        assert _kind(sql) == "GrantRoleStmt", sql
+>       assert any(REFUSED in r for r in _reasons(sql)), sql
+E       AssertionError: GRANT r TO x$on$, "on"
+E       assert False
+E        +  where False = any(<generator object test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant.<locals>.<genexpr> at 0x7f6db009ea80>)
+
+tests/test_migration_names.py:71: AssertionError
+__ test_every_short_name_over_the_dollar_alphabet_is_refused_in_a_role_grant ___
+
+    def test_every_short_name_over_the_dollar_alphabet_is_refused_in_a_role_grant():
+        wrong = []
+        for name in DOLLAR_NAMES:
+            for sql in (f"GRANT r TO {name}", f"REVOKE r FROM {name}"):
+                try:
+                    kind = _kind(sql)
+                except pglast.parser.ParseError:
+                    continue  # not a statement the server reads either
+                if kind == "GrantRoleStmt" and not any(REFUSED in r for r in _reasons(sql)):
+                    wrong.append(sql)
+>       assert not wrong, wrong[:5]
+E       AssertionError: ['GRANT r TO on$', 'REVOKE r FROM on$', 'GRANT r TO on$on', 'REVOKE r FROM on$on', 'GRANT r TO on$$']
+E       assert not ['GRANT r TO on$', 'REVOKE r FROM on$', 'GRANT r TO on$on', 'REVOKE r FROM on$on', 'GRANT r TO on$$', 'REVOKE r FROM on$$', ...]
+
+tests/test_migration_names.py:84: AssertionError
+__________ test_the_word_boundary_is_used_only_where_a_match_refuses ___________
+
+    def test_the_word_boundary_is_used_only_where_a_match_refuses():
+        """Class check over every regex of `migration_numbers.py`: `\\w`, `\\W`, `\\B` nowhere; `\\b` only in the patterns
+        above; `\\b` never next to `on` (the look-ahead of the role rule) and never in a pattern whose match lets a statement
+        through (the role-membership look-ahead, the name and stem patterns)."""
+        tree = ast.parse(Path(mn.__file__).read_text(encoding="utf-8"))
+        pattern_functions = {
+            "compile",
+            "search",
+            "match",
+            "fullmatch",
+            "sub",
+            "findall",
+            "finditer",
+            "split",
+        }
+        bad = []
+        for (
+            statement
+        ) in tree.body:  # every top-level statement, so a pattern inside a function is read too
+            target = ""
+            if isinstance(statement, ast.Assign) and isinstance(statement.targets[0], ast.Name):
+                target = statement.targets[0].id
+            for node in ast.walk(statement):
+                if not (
+                    isinstance(node, ast.Call)
+                    and isinstance(node.func, ast.Attribute)
+                    and node.func.attr in pattern_functions
+                    and isinstance(node.func.value, ast.Name)
+                    and node.func.value.id == "re"
+                ):
+                    continue
+                for part in ast.walk(node):
+                    if not (isinstance(part, ast.Constant) and isinstance(part.value, str)):
+                        continue
+                    text = part.value
+                    if re.search(r"\\[wWB]", text) or re.search(r"\\bon|on\\b", text):
+                        bad.append((target, text))
+                    if re.search(r"\\b", text) and target not in BOUNDARY_ALLOWED_IN:
+                        bad.append((target, text))
+>       assert not bad, bad
+E       AssertionError: [('_SET_ALLOWED', '(?:lock_timeout|statement_timeout)\\b'), ('_ROLE_MEMBERSHIP', '(grant|revoke)\\b(?!.*?\\bon\\b)')]
+E       assert not [('_SET_ALLOWED', '(?:lock_timeout|statement_timeout)\\b'), ('_ROLE_MEMBERSHIP', '(grant|revoke)\\b(?!.*?\\bon\\b)')]
+
+tests/test_migration_names.py:147: AssertionError
+__________ test_the_name_boundary_agrees_with_the_lexer_character_set __________
+
+    def test_the_name_boundary_agrees_with_the_lexer_character_set():
+        for ch in ("a", "Z", "0", "_", "$", "\u00e9", "\u4e2d"):
+>           assert mn._ident_char(ch) and re.fullmatch(mn._NAME_CHAR, ch), ch
+                                                       ^^^^^^^^^^^^^
+E           AttributeError: module 'hadavin_sdk.store.migration_numbers' has no attribute '_NAME_CHAR'
+
+tests/test_migration_names.py:152: AttributeError
+________________________ test_recipe_order_and_command _________________________
+
+mn = <module 'hadavin_sdk.store.migration_numbers' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migration_numbers.py'>
+
+    def test_recipe_order_and_command(mn):
+        entries = [("0004_a", "SELECT 1;"), ("0005_b", "SELECT 2;"), ("0006_c", "SELECT 3;")]
+        got = mn.order_problems(
+            {"0009_z"},
+            _paths("0004_a.sql", "0005_b.sql", "0006_c.sql"),
+            {Path(f"{s}.sql"): t for s, t in entries},
+            "p3a_s",
+        )
+        assert len(got) == 1, "one problem, one recipe, however many files are late"
+        msg = got[0]
+        assert "psql -X -v ON_ERROR_STOP=1 -f recipe.sql" in msg, "the exact printed command"
+        recipe = msg[msg.index("-- RECIPE begins") :]
+        lines = recipe.split("\n")
+        assert lines[0] == "-- RECIPE begins" and lines[-1] == "-- RECIPE ends"
+        order = [
+            lines.index('SET search_path TO "p3a_s";'),
+            lines.index("BEGIN;"),
+>           *[lines.index(limit) for limit in mn.RECIPE_TIMEOUTS],
+                                              ^^^^^^^^^^^^^^^^^^
+            lines.index(f"SELECT pg_advisory_xact_lock({mn.MIGRATE_LOCK});"),
+            lines.index("SELECT 1;"),
+            lines.index("INSERT INTO schema_migrations (version) VALUES ('0004_a');"),
+            lines.index("SELECT 2;"),
+            lines.index("INSERT INTO schema_migrations (version) VALUES ('0005_b');"),
+            lines.index("SELECT 3;"),
+            lines.index("INSERT INTO schema_migrations (version) VALUES ('0006_c');"),
+            lines.index("COMMIT;"),
+        ]
+E       AttributeError: module 'hadavin_sdk.store.migration_numbers' has no attribute 'RECIPE_TIMEOUTS'
+
+tests/test_migration_numbers.py:303: AttributeError
+________ test_each_set_form_is_refused[SET LOCAL lock_timeout = '10s'] _________
+
+mn = <module 'hadavin_sdk.store.migration_numbers' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migration_numbers.py'>
+stmt = "SET LOCAL lock_timeout = '10s'"
+
+    @pytest.mark.parametrize(
+        "stmt",
+        [
+            "SET ROLE r",
+            "SET LOCAL ROLE r",
+            "SET SESSION AUTHORIZATION r",
+            "RESET ROLE",
+            "SET TRANSACTION READ ONLY",
+            "SET LOCAL search_path TO x",
+            "SET session_replication_role = replica",
+            "RESET ALL",
+            "set x to 1",
+            "SET LOCAL lock_timeout = '10s'",
+            "set  local  statement_timeout TO 0",
+            "SET LOCAL statement_timeout = '1h'",
+        ],
+    )
+    def test_each_set_form_is_refused(mn, stmt):
+        got = mn.refused_statements(f"SELECT 1; {stmt};")
+>       assert len(got) == 1 and "may not be changed" in got[0], stmt
+E       AssertionError: SET LOCAL lock_timeout = '10s'
+E       assert (0 == 1)
+E        +  where 0 = len([])
+
+tests/test_migration_numbers.py:747: AssertionError
+______ test_each_set_form_is_refused[set  local  statement_timeout TO 0] _______
+
+mn = <module 'hadavin_sdk.store.migration_numbers' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migration_numbers.py'>
+stmt = 'set  local  statement_timeout TO 0'
+
+    @pytest.mark.parametrize(
+        "stmt",
+        [
+            "SET ROLE r",
+            "SET LOCAL ROLE r",
+            "SET SESSION AUTHORIZATION r",
+            "RESET ROLE",
+            "SET TRANSACTION READ ONLY",
+            "SET LOCAL search_path TO x",
+            "SET session_replication_role = replica",
+            "RESET ALL",
+            "set x to 1",
+            "SET LOCAL lock_timeout = '10s'",
+            "set  local  statement_timeout TO 0",
+            "SET LOCAL statement_timeout = '1h'",
+        ],
+    )
+    def test_each_set_form_is_refused(mn, stmt):
+        got = mn.refused_statements(f"SELECT 1; {stmt};")
+>       assert len(got) == 1 and "may not be changed" in got[0], stmt
+E       AssertionError: set  local  statement_timeout TO 0
+E       assert (0 == 1)
+E        +  where 0 = len([])
+
+tests/test_migration_numbers.py:747: AssertionError
+______ test_each_set_form_is_refused[SET LOCAL statement_timeout = '1h'] _______
+
+mn = <module 'hadavin_sdk.store.migration_numbers' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migration_numbers.py'>
+stmt = "SET LOCAL statement_timeout = '1h'"
+
+    @pytest.mark.parametrize(
+        "stmt",
+        [
+            "SET ROLE r",
+            "SET LOCAL ROLE r",
+            "SET SESSION AUTHORIZATION r",
+            "RESET ROLE",
+            "SET TRANSACTION READ ONLY",
+            "SET LOCAL search_path TO x",
+            "SET session_replication_role = replica",
+            "RESET ALL",
+            "set x to 1",
+            "SET LOCAL lock_timeout = '10s'",
+            "set  local  statement_timeout TO 0",
+            "SET LOCAL statement_timeout = '1h'",
+        ],
+    )
+    def test_each_set_form_is_refused(mn, stmt):
+        got = mn.refused_statements(f"SELECT 1; {stmt};")
+>       assert len(got) == 1 and "may not be changed" in got[0], stmt
+E       AssertionError: SET LOCAL statement_timeout = '1h'
+E       assert (0 == 1)
+E        +  where 0 = len([])
+
+tests/test_migration_numbers.py:747: AssertionError
+_ test_the_two_time_limits_are_refused_in_the_text_scan_not_only_by_the_read_back _
+
+mn = <module 'hadavin_sdk.store.migration_numbers' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migration_numbers.py'>
+
+    def test_the_two_time_limits_are_refused_in_the_text_scan_not_only_by_the_read_back(mn):
+        """the scan and the read-back must agree. The read-back refuses a file that changes either limit, so
+        the scan refuses the `SET LOCAL` text too, with a message that names the limits. Killed by: the mutant "SET LOCAL
+        lock_timeout/statement_timeout is allowed in the text scan again" of tests/migration_numbers_mutants.py."""
+        for name in ("lock_timeout", "statement_timeout"):
+            got = mn.refused_statements(f"SET LOCAL {name} = '1s';")
+>           assert len(got) == 1 and "time limits" in got[0], got
+E           AssertionError: []
+E           assert (0 == 1)
+E            +  where 0 = len([])
+
+tests/test_migration_numbers.py:756: AssertionError
+_________________________ test_scan_comment_ends_at_cr _________________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_scan_comment_ends_at_cr0')
+
+    def test_scan_comment_ends_at_cr(tmp_path):
+        """FAIL-BEFORE 8: a `--` comment ends at a carriage return as well, so the CREATE after it is seen."""
+        got = _scan_file(tmp_path, "SELECT 1; -- x\rCREATE TABLE evil_cr (x INT);")
+        assert any("evil_cr" in p for p in got), got
+        # M69: an unterminated quote must give the lexer's own text and the file name, not only the GRANTS lines
+        bad = _scan_file(tmp_path, "SELECT 'never closed;")
+>       assert any("not closed at line" in p and "0001_x.sql" in p for p in bad), bad
+E       AssertionError: ['GRANTS names approval_decisions, which no migration creates', 'GRANTS names approval_decisions_seq_seq, which no mig...'GRANTS names audit_entries, which no migration creates', 'GRANTS names audit_outbox, which no migration creates', ...]
+E       assert False
+E        +  where False = any(<generator object test_scan_comment_ends_at_cr.<locals>.<genexpr> at 0x7f6daffe8380>)
+
+tests/test_migration_numbers.py:922: AssertionError
+_______________________ test_scan_double_dash_in_string ________________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_scan_double_dash_in_strin0')
+
+    def test_scan_double_dash_in_string(tmp_path):
+        """FAIL-BEFORE 9: a `--` inside a string is not a comment, so the CREATE after the string is seen."""
+        got = _scan_file(tmp_path, "SELECT '--'; CREATE TABLE evil_str (x INT);")
+>       assert any("evil_str" in p for p in got), got
+E       AssertionError: ['GRANTS names approval_decisions, which no migration creates', 'GRANTS names approval_decisions_seq_seq, which no mig...'GRANTS names audit_entries, which no migration creates', 'GRANTS names audit_outbox, which no migration creates', ...]
+E       assert False
+E        +  where False = any(<generator object test_scan_double_dash_in_string.<locals>.<genexpr> at 0x7f6daffeac20>)
+
+tests/test_migration_numbers.py:928: AssertionError
+_________________ test_scan_reads_the_given_text_not_the_file __________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_scan_reads_the_given_text0')
+
+    def test_scan_reads_the_given_text_not_the_file(tmp_path):
+        """`check_grants(files, texts=...)` scans the text it is given (the text `migrate` executes)."""
+        from hadavin_sdk.store import migrate as mig
+    
+        path = tmp_path / "0001_x.sql"
+        path.write_text("SELECT 1;", encoding="utf-8")
+>       got = mig.check_grants([path], texts={path: "CREATE TABLE from_given_text (x INT);"})
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: check_grants() got an unexpected keyword argument 'texts'
+
+tests/test_migration_numbers.py:950: TypeError
+____________ test_migrate_uses_the_one_implementation_of_each_rule _____________
+
+    def test_migrate_uses_the_one_implementation_of_each_rule():
+>       assert mig.check_ledger is mn.check_ledger
+E       assert <function check_ledger at 0x7f6db2105e40> is <function check_ledger at 0x7f6db1155f80>
+E        +  where <function check_ledger at 0x7f6db2105e40> = mig.check_ledger
+E        +  and   <function check_ledger at 0x7f6db1155f80> = mn.check_ledger
+
+tests/test_migration_wiring.py:189: AssertionError
+_____________________ test_unicode_digit_names_are_refused _____________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_unicode_digit_names_are_r2')
+
+    def test_unicode_digit_names_are_refused(tmp_path):
+        """FAIL-BEFORE 2 (also full-width digits)."""
+        for digits in ("٠٠٠٢", "０００２"):
+            folder = tmp_path / digits.encode("ascii", "backslashreplace").hex()
+            folder.mkdir()
+            (folder / "0001_a.sql").write_text("SELECT 1;")
+            (folder / f"{digits}_b.sql").write_text("SELECT 1;")
+>           assert mig.check_ledger(mig._migration_files(folder)) != []
+E           AssertionError: assert [] != []
+E            +  where [] = <function check_ledger at 0x7f6db2105e40>([PosixPath('/tmp/pytest-of-root/pytest-6213/test_unicode_digit_names_are_r2/5c75303636305c75303636305c75303636305c7530...test-of-root/pytest-6213/test_unicode_digit_names_are_r2/5c75303636305c75303636305c75303636305c7530363632/٠٠٠٢_b.sql')])
+E            +    where <function check_ledger at 0x7f6db2105e40> = mig.check_ledger
+E            +    and   [PosixPath('/tmp/pytest-of-root/pytest-6213/test_unicode_digit_names_are_r2/5c75303636305c75303636305c75303636305c7530...test-of-root/pytest-6213/test_unicode_digit_names_are_r2/5c75303636305c75303636305c75303636305c7530363632/٠٠٠٢_b.sql')] = <function _migration_files at 0x7f6db3384f40>(PosixPath('/tmp/pytest-of-root/pytest-6213/test_unicode_digit_names_are_r2/5c75303636305c75303636305c75303636305c7530363632'))
+E            +      where <function _migration_files at 0x7f6db3384f40> = mig._migration_files
+
+tests/test_migration_wiring.py:205: AssertionError
+_____________________ test_uppercase_extension_is_refused ______________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_uppercase_extension_is_re1')
+
+    def test_uppercase_extension_is_refused(tmp_path):
+        """FAIL-BEFORE 3 (Linux: `glob` is case-sensitive there)."""
+        import os
+    
+        (tmp_path / "0001_a.sql").write_text("SELECT 1;")
+        (tmp_path / "0002_b.SQL").write_text("SELECT 1;")
+        assert "0002_b.SQL" in {e.name for e in os.scandir(tmp_path)}
+>       assert mig.check_ledger(mig._migration_files(tmp_path)) != []
+E       AssertionError: assert [] != []
+E        +  where [] = <function check_ledger at 0x7f6db2105e40>([PosixPath('/tmp/pytest-of-root/pytest-6213/test_uppercase_extension_is_re1/0001_a.sql')])
+E        +    where <function check_ledger at 0x7f6db2105e40> = mig.check_ledger
+E        +    and   [PosixPath('/tmp/pytest-of-root/pytest-6213/test_uppercase_extension_is_re1/0001_a.sql')] = <function _migration_files at 0x7f6db3384f40>(PosixPath('/tmp/pytest-of-root/pytest-6213/test_uppercase_extension_is_re1'))
+E        +      where <function _migration_files at 0x7f6db3384f40> = mig._migration_files
+
+tests/test_migration_wiring.py:215: AssertionError
+_________________________ test_number_zero_is_refused __________________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_number_zero_is_refused1')
+
+    def test_number_zero_is_refused(tmp_path):
+        """FAIL-BEFORE 7."""
+        (tmp_path / "0000_a.sql").write_text("SELECT 1;")
+        (tmp_path / "0001_b.sql").write_text("SELECT 1;")
+>       assert mig.check_ledger(mig._migration_files(tmp_path)) != []
+E       AssertionError: assert [] != []
+E        +  where [] = <function check_ledger at 0x7f6db2105e40>([PosixPath('/tmp/pytest-of-root/pytest-6213/test_number_zero_is_refused1/0000_a.sql'), PosixPath('/tmp/pytest-of-root/pytest-6213/test_number_zero_is_refused1/0001_b.sql')])
+E        +    where <function check_ledger at 0x7f6db2105e40> = mig.check_ledger
+E        +    and   [PosixPath('/tmp/pytest-of-root/pytest-6213/test_number_zero_is_refused1/0000_a.sql'), PosixPath('/tmp/pytest-of-root/pytest-6213/test_number_zero_is_refused1/0001_b.sql')] = <function _migration_files at 0x7f6db3384f40>(PosixPath('/tmp/pytest-of-root/pytest-6213/test_number_zero_is_refused1'))
+E        +      where <function _migration_files at 0x7f6db3384f40> = mig._migration_files
+
+tests/test_migration_wiring.py:222: AssertionError
+________________________ test_dangling_link_is_refused _________________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_dangling_link_is_refused1')
+
+    def test_dangling_link_is_refused(tmp_path):
+        """FAIL-BEFORE 4b (Linux)."""
+        (tmp_path / "0001_a.sql").write_text("SELECT 1;")
+        (tmp_path / "0002_b.sql").symlink_to(tmp_path / "missing-target")
+        got = mig.check_ledger(mig._migration_files(tmp_path))
+>       assert any("0002_b.sql: not a regular file" in p for p in got), got
+E       AssertionError: []
+E       assert False
+E        +  where False = any(<generator object test_dangling_link_is_refused.<locals>.<genexpr> at 0x7f6db00f4860>)
+
+tests/test_migration_wiring.py:230: AssertionError
+_______________ test_directory_named_like_a_migration_is_refused _______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daffbb850>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_directory_named_like_a_mi1')
+
+    def test_directory_named_like_a_migration_is_refused(monkeypatch, tmp_path):
+        """FAIL-BEFORE 4a: a clear refusal before connecting, not a raw IsADirectoryError."""
+        files = mig._migration_files() + [tmp_path / "0006_x.sql"]
+        (tmp_path / "0006_x.sql").mkdir()
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+    
+        def no_db(*a, **k):
+            raise AssertionError("connected")
+    
+        monkeypatch.setattr(mig, "connect", no_db)
+        with pytest.raises(Exception) as e:
+            mig.migrate("postgresql://unused")
+>       assert type(e.value) is mn.MigrationNumberError, repr(e.value)
+E       AssertionError: IsADirectoryError(21, 'Is a directory')
+E       assert <class 'IsADirectoryError'> is <class 'hadavin_sdk.store.migration_numbers.MigrationNumberError'>
+E        +  where <class 'IsADirectoryError'> = type(IsADirectoryError(21, 'Is a directory'))
+E        +    where IsADirectoryError(21, 'Is a directory') = <ExceptionInfo IsADirectoryError(21, 'Is a directory') tblen=7>.value
+E        +  and   <class 'hadavin_sdk.store.migration_numbers.MigrationNumberError'> = mn.MigrationNumberError
+
+tests/test_migration_wiring.py:245: AssertionError
+______________ test_commit_in_a_file_is_refused_before_connecting ______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daffbbd20>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_commit_in_a_file_is_refus0')
+
+    def test_commit_in_a_file_is_refused_before_connecting(monkeypatch, tmp_path):
+        """FAIL-BEFORE 5: the real files plus one that ends the transaction."""
+        planted = tmp_path / "0006_commit.sql"
+        planted.write_text("ALTER TABLE runs ADD COLUMN IF NOT EXISTS p3a_c TEXT;\nCOMMIT;\n")
+        files = mig._migration_files() + [planted]
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+    
+        def no_db(*a, **k):
+            raise AssertionError("connected")
+    
+        monkeypatch.setattr(mig, "connect", no_db)
+        with pytest.raises(Exception) as e:
+            mig.migrate("postgresql://unused")
+>       assert isinstance(e.value, ConfigError), repr(e.value)
+E       AssertionError: AssertionError('connected')
+E       assert False
+E        +  where False = isinstance(AssertionError('connected'), ConfigError)
+E        +    where AssertionError('connected') = <ExceptionInfo AssertionError('connected') tblen=3>.value
+
+tests/test_migration_wiring.py:262: AssertionError
+__________________ test_migrate_executes_the_text_it_scanned ___________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6db0d18f30>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_migrate_executes_the_text0')
+
+    def test_migrate_executes_the_text_it_scanned(monkeypatch, tmp_path):
+        """One read per file. A file changed after the read is not run in its new form."""
+        files = _files(tmp_path, 2)
+        reads = []
+        real = Path.read_text
+    
+        def counting(self, *a, **k):
+            reads.append(self.name)
+            return real(self, *a, **k)
+    
+        db = _Db([START, START, START], [[], [], []])
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+>       monkeypatch.setattr(mig, "released_problems", lambda *a, **k: [])  # made-up file names
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:278: AttributeError
+__________________ test_late_file_is_refused_and_nothing_runs __________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daffbba80>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_late_file_is_refused_and_0')
+
+    def test_late_file_is_refused_and_nothing_runs(monkeypatch, tmp_path):
+>       err, db, _ = _run(monkeypatch, tmp_path, [START], [[]], n=3, applied=["0001_f1", "0003_f3"])
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_migration_wiring.py:300: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daffbba80>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_late_file_is_refused_and_0')
+values = [('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...)]
+triggers = [[]], n = 3, applied = ['0001_f1', '0003_f3'], members = None
+settings = None, kw = {}
+
+    def _run(
+        monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+    ):
+        files = _files(tmp_path, n)
+        db = _Db(values, triggers, applied, members, settings=settings)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # these made-up file names are not the released ones
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:137: AttributeError
+________________ test_gone_name_is_refused_with_the_old_phrase _________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6db11f08a0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_gone_name_is_refused_with0')
+
+    def test_gone_name_is_refused_with_the_old_phrase(monkeypatch, tmp_path):
+>       err, db, _ = _run(monkeypatch, tmp_path, [START], [[]], n=2, applied=["0001_f1", "0007_z"])
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_migration_wiring.py:306: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6db11f08a0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_gone_name_is_refused_with0')
+values = [('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...)]
+triggers = [[]], n = 2, applied = ['0001_f1', '0007_z'], members = None
+settings = None, kw = {}
+
+    def _run(
+        monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+    ):
+        files = _files(tmp_path, n)
+        db = _Db(values, triggers, applied, members, settings=settings)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # these made-up file names are not the released ones
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:137: AttributeError
+______________ test_migrate_takes_the_one_advisory_lock_key_first ______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6db11f3a10>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_migrate_takes_the_one_adv0')
+
+    def test_migrate_takes_the_one_advisory_lock_key_first(monkeypatch, tmp_path):
+        """The lock `migrate` takes is the key of `migration_numbers` (the key a hand recipe takes too), before anything else."""
+>       err, db, _ = _run(monkeypatch, tmp_path, [START] * 3, [[], [], []])
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_migration_wiring.py:318: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6db11f3a10>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_migrate_takes_the_one_adv0')
+values = [('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...)]
+triggers = [[], [], []], n = 2, applied = (), members = None, settings = None
+kw = {}
+
+    def _run(
+        monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+    ):
+        files = _files(tmp_path, n)
+        db = _Db(values, triggers, applied, members, settings=settings)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # these made-up file names are not the released ones
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:137: AttributeError
+_ test_migrate_sets_the_recipe_limits_right_after_its_lock_and_before_any_file _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daff57850>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_migrate_sets_the_recipe_l0')
+
+    def test_migrate_sets_the_recipe_limits_right_after_its_lock_and_before_any_file(
+        monkeypatch, tmp_path
+    ):
+        """`migrate` runs the two `SET LOCAL` lines of `RECIPE_TIMEOUTS`, in order, right after the advisory
+        lock and before the first file; they are the constant's, not copies (a patched constant is what runs)."""
+>       err, db, _ = _run(monkeypatch, tmp_path, [START] * 3, [[], [], []])
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_migration_wiring.py:328: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daff57850>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_migrate_sets_the_recipe_l0')
+values = [('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...)]
+triggers = [[], [], []], n = 2, applied = (), members = None, settings = None
+kw = {}
+
+    def _run(
+        monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+    ):
+        files = _files(tmp_path, n)
+        db = _Db(values, triggers, applied, members, settings=settings)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # these made-up file names are not the released ones
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:137: AttributeError
+_________________ test_clean_run_reads_before_each_file_insert _________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daff57bd0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_clean_run_reads_before_ea0')
+
+    def test_clean_run_reads_before_each_file_insert(monkeypatch, tmp_path):
+        """Cases (i) and (xii): saved values are read BEFORE the first file; each file is followed by both read queries
+        and only then by its ledger INSERT (M64, M95)."""
+>       err, db, applied = _run(monkeypatch, tmp_path, [START] * 3, [[], [], []])
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_migration_wiring.py:342: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daff57bd0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_clean_run_reads_before_ea0')
+values = [('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...)]
+triggers = [[], [], []], n = 2, applied = (), members = None, settings = None
+kw = {}
+
+    def _run(
+        monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+    ):
+        files = _files(tmp_path, n)
+        db = _Db(values, triggers, applied, members, settings=settings)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # these made-up file names are not the released ones
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:137: AttributeError
+_____________________ test_nothing_to_apply_reads_nothing ______________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daff544b0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_nothing_to_apply_reads_no0')
+
+    def test_nothing_to_apply_reads_nothing(monkeypatch, tmp_path):
+>       err, db, applied = _run(monkeypatch, tmp_path, [], [], n=2, applied=["0001_f1", "0002_f2"])
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_migration_wiring.py:366: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daff544b0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_nothing_to_apply_reads_no0')
+values = [], triggers = [], n = 2, applied = ['0001_f1', '0002_f2']
+members = None, settings = None, kw = {}
+
+    def _run(
+        monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+    ):
+        files = _files(tmp_path, n)
+        db = _Db(values, triggers, applied, members, settings=settings)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # these made-up file names are not the released ones
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:137: AttributeError
+______ test_each_value_is_compared_with_its_own_saved_value[current_user] ______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daff54980>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_each_value_is_compared_wi0')
+item = 'current_user'
+
+    @pytest.mark.parametrize("item", ITEMS[:-2] + ITEMS[-2:])
+    def test_each_value_is_compared_with_its_own_saved_value(monkeypatch, tmp_path, item):
+        """Cases (ii), (x), (xiv), (xv): one value differs after file 1: refused naming file 1 and exactly that item
+        (M62, M65 to M71, M91 to M94; M67 reads only after the last file: the second file never runs)."""
+        new = {
+            "current_user": "other",
+            "session_user": "other",
+            "session_replication_role": "replica",
+            "search_path": "public",
+            "standard_conforming_strings": "off",
+            "backslash_quote": "on",
+            "client_encoding": "LATIN1",
+            "lock_timeout": "0",
+            "statement_timeout": "0",
+            "transaction_timestamp": T1,
+            "txid_current": 701,
+        }[item]
+>       err, db, _ = _run(monkeypatch, tmp_path, [START, _values(**{item: new})], [[], []])
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_migration_wiring.py:388: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daff54980>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_each_value_is_compared_wi0')
+values = [('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('other', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...)]
+triggers = [[], []], n = 2, applied = (), members = None, settings = None
+kw = {}
+
+    def _run(
+        monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+    ):
+        files = _files(tmp_path, n)
+        db = _Db(values, triggers, applied, members, settings=settings)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # these made-up file names are not the released ones
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:137: AttributeError
+______ test_each_value_is_compared_with_its_own_saved_value[session_user] ______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daff54d70>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_each_value_is_compared_wi1')
+item = 'session_user'
+
+    @pytest.mark.parametrize("item", ITEMS[:-2] + ITEMS[-2:])
+    def test_each_value_is_compared_with_its_own_saved_value(monkeypatch, tmp_path, item):
+        """Cases (ii), (x), (xiv), (xv): one value differs after file 1: refused naming file 1 and exactly that item
+        (M62, M65 to M71, M91 to M94; M67 reads only after the last file: the second file never runs)."""
+        new = {
+            "current_user": "other",
+            "session_user": "other",
+            "session_replication_role": "replica",
+            "search_path": "public",
+            "standard_conforming_strings": "off",
+            "backslash_quote": "on",
+            "client_encoding": "LATIN1",
+            "lock_timeout": "0",
+            "statement_timeout": "0",
+            "transaction_timestamp": T1,
+            "txid_current": 701,
+        }[item]
+>       err, db, _ = _run(monkeypatch, tmp_path, [START, _values(**{item: new})], [[], []])
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_migration_wiring.py:388: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daff54d70>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_each_value_is_compared_wi1')
+values = [('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'other', 'origin', '"$user", public', 'on', 'safe_encoding', ...)]
+triggers = [[], []], n = 2, applied = (), members = None, settings = None
+kw = {}
+
+    def _run(
+        monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+    ):
+        files = _files(tmp_path, n)
+        db = _Db(values, triggers, applied, members, settings=settings)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # these made-up file names are not the released ones
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:137: AttributeError
+_ test_each_value_is_compared_with_its_own_saved_value[session_replication_role] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daff552b0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_each_value_is_compared_wi2')
+item = 'session_replication_role'
+
+    @pytest.mark.parametrize("item", ITEMS[:-2] + ITEMS[-2:])
+    def test_each_value_is_compared_with_its_own_saved_value(monkeypatch, tmp_path, item):
+        """Cases (ii), (x), (xiv), (xv): one value differs after file 1: refused naming file 1 and exactly that item
+        (M62, M65 to M71, M91 to M94; M67 reads only after the last file: the second file never runs)."""
+        new = {
+            "current_user": "other",
+            "session_user": "other",
+            "session_replication_role": "replica",
+            "search_path": "public",
+            "standard_conforming_strings": "off",
+            "backslash_quote": "on",
+            "client_encoding": "LATIN1",
+            "lock_timeout": "0",
+            "statement_timeout": "0",
+            "transaction_timestamp": T1,
+            "txid_current": 701,
+        }[item]
+>       err, db, _ = _run(monkeypatch, tmp_path, [START, _values(**{item: new})], [[], []])
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_migration_wiring.py:388: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daff552b0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_each_value_is_compared_wi2')
+values = [('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'replica', '"$user", public', 'on', 'safe_encoding', ...)]
+triggers = [[], []], n = 2, applied = (), members = None, settings = None
+kw = {}
+
+    def _run(
+        monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+    ):
+        files = _files(tmp_path, n)
+        db = _Db(values, triggers, applied, members, settings=settings)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # these made-up file names are not the released ones
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:137: AttributeError
+______ test_each_value_is_compared_with_its_own_saved_value[search_path] _______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daff55fd0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_each_value_is_compared_wi3')
+item = 'search_path'
+
+    @pytest.mark.parametrize("item", ITEMS[:-2] + ITEMS[-2:])
+    def test_each_value_is_compared_with_its_own_saved_value(monkeypatch, tmp_path, item):
+        """Cases (ii), (x), (xiv), (xv): one value differs after file 1: refused naming file 1 and exactly that item
+        (M62, M65 to M71, M91 to M94; M67 reads only after the last file: the second file never runs)."""
+        new = {
+            "current_user": "other",
+            "session_user": "other",
+            "session_replication_role": "replica",
+            "search_path": "public",
+            "standard_conforming_strings": "off",
+            "backslash_quote": "on",
+            "client_encoding": "LATIN1",
+            "lock_timeout": "0",
+            "statement_timeout": "0",
+            "transaction_timestamp": T1,
+            "txid_current": 701,
+        }[item]
+>       err, db, _ = _run(monkeypatch, tmp_path, [START, _values(**{item: new})], [[], []])
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_migration_wiring.py:388: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daff55fd0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_each_value_is_compared_wi3')
+values = [('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', 'public', 'on', 'safe_encoding', ...)]
+triggers = [[], []], n = 2, applied = (), members = None, settings = None
+kw = {}
+
+    def _run(
+        monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+    ):
+        files = _files(tmp_path, n)
+        db = _Db(values, triggers, applied, members, settings=settings)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # these made-up file names are not the released ones
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:137: AttributeError
+_ test_each_value_is_compared_with_its_own_saved_value[standard_conforming_strings] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daff56200>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_each_value_is_compared_wi4')
+item = 'standard_conforming_strings'
+
+    @pytest.mark.parametrize("item", ITEMS[:-2] + ITEMS[-2:])
+    def test_each_value_is_compared_with_its_own_saved_value(monkeypatch, tmp_path, item):
+        """Cases (ii), (x), (xiv), (xv): one value differs after file 1: refused naming file 1 and exactly that item
+        (M62, M65 to M71, M91 to M94; M67 reads only after the last file: the second file never runs)."""
+        new = {
+            "current_user": "other",
+            "session_user": "other",
+            "session_replication_role": "replica",
+            "search_path": "public",
+            "standard_conforming_strings": "off",
+            "backslash_quote": "on",
+            "client_encoding": "LATIN1",
+            "lock_timeout": "0",
+            "statement_timeout": "0",
+            "transaction_timestamp": T1,
+            "txid_current": 701,
+        }[item]
+>       err, db, _ = _run(monkeypatch, tmp_path, [START, _values(**{item: new})], [[], []])
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_migration_wiring.py:388: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daff56200>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_each_value_is_compared_wi4')
+values = [('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'off', 'safe_encoding', ...)]
+triggers = [[], []], n = 2, applied = (), members = None, settings = None
+kw = {}
+
+    def _run(
+        monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+    ):
+        files = _files(tmp_path, n)
+        db = _Db(values, triggers, applied, members, settings=settings)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # these made-up file names are not the released ones
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:137: AttributeError
+____ test_each_value_is_compared_with_its_own_saved_value[backslash_quote] _____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daff570e0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_each_value_is_compared_wi5')
+item = 'backslash_quote'
+
+    @pytest.mark.parametrize("item", ITEMS[:-2] + ITEMS[-2:])
+    def test_each_value_is_compared_with_its_own_saved_value(monkeypatch, tmp_path, item):
+        """Cases (ii), (x), (xiv), (xv): one value differs after file 1: refused naming file 1 and exactly that item
+        (M62, M65 to M71, M91 to M94; M67 reads only after the last file: the second file never runs)."""
+        new = {
+            "current_user": "other",
+            "session_user": "other",
+            "session_replication_role": "replica",
+            "search_path": "public",
+            "standard_conforming_strings": "off",
+            "backslash_quote": "on",
+            "client_encoding": "LATIN1",
+            "lock_timeout": "0",
+            "statement_timeout": "0",
+            "transaction_timestamp": T1,
+            "txid_current": 701,
+        }[item]
+>       err, db, _ = _run(monkeypatch, tmp_path, [START, _values(**{item: new})], [[], []])
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_migration_wiring.py:388: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daff570e0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_each_value_is_compared_wi5')
+values = [('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'on', ...)]
+triggers = [[], []], n = 2, applied = (), members = None, settings = None
+kw = {}
+
+    def _run(
+        monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+    ):
+        files = _files(tmp_path, n)
+        db = _Db(values, triggers, applied, members, settings=settings)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # these made-up file names are not the released ones
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:137: AttributeError
+____ test_each_value_is_compared_with_its_own_saved_value[client_encoding] _____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daff544b0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_each_value_is_compared_wi6')
+item = 'client_encoding'
+
+    @pytest.mark.parametrize("item", ITEMS[:-2] + ITEMS[-2:])
+    def test_each_value_is_compared_with_its_own_saved_value(monkeypatch, tmp_path, item):
+        """Cases (ii), (x), (xiv), (xv): one value differs after file 1: refused naming file 1 and exactly that item
+        (M62, M65 to M71, M91 to M94; M67 reads only after the last file: the second file never runs)."""
+        new = {
+            "current_user": "other",
+            "session_user": "other",
+            "session_replication_role": "replica",
+            "search_path": "public",
+            "standard_conforming_strings": "off",
+            "backslash_quote": "on",
+            "client_encoding": "LATIN1",
+            "lock_timeout": "0",
+            "statement_timeout": "0",
+            "transaction_timestamp": T1,
+            "txid_current": 701,
+        }[item]
+>       err, db, _ = _run(monkeypatch, tmp_path, [START, _values(**{item: new})], [[], []])
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_migration_wiring.py:388: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daff544b0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_each_value_is_compared_wi6')
+values = [('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...)]
+triggers = [[], []], n = 2, applied = (), members = None, settings = None
+kw = {}
+
+    def _run(
+        monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+    ):
+        files = _files(tmp_path, n)
+        db = _Db(values, triggers, applied, members, settings=settings)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # these made-up file names are not the released ones
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:137: AttributeError
+______ test_each_value_is_compared_with_its_own_saved_value[lock_timeout] ______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6db11f3a10>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_each_value_is_compared_wi7')
+item = 'lock_timeout'
+
+    @pytest.mark.parametrize("item", ITEMS[:-2] + ITEMS[-2:])
+    def test_each_value_is_compared_with_its_own_saved_value(monkeypatch, tmp_path, item):
+        """Cases (ii), (x), (xiv), (xv): one value differs after file 1: refused naming file 1 and exactly that item
+        (M62, M65 to M71, M91 to M94; M67 reads only after the last file: the second file never runs)."""
+        new = {
+            "current_user": "other",
+            "session_user": "other",
+            "session_replication_role": "replica",
+            "search_path": "public",
+            "standard_conforming_strings": "off",
+            "backslash_quote": "on",
+            "client_encoding": "LATIN1",
+            "lock_timeout": "0",
+            "statement_timeout": "0",
+            "transaction_timestamp": T1,
+            "txid_current": 701,
+        }[item]
+>       err, db, _ = _run(monkeypatch, tmp_path, [START, _values(**{item: new})], [[], []])
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_migration_wiring.py:388: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6db11f3a10>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_each_value_is_compared_wi7')
+values = [('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...)]
+triggers = [[], []], n = 2, applied = (), members = None, settings = None
+kw = {}
+
+    def _run(
+        monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+    ):
+        files = _files(tmp_path, n)
+        db = _Db(values, triggers, applied, members, settings=settings)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # these made-up file names are not the released ones
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:137: AttributeError
+___ test_each_value_is_compared_with_its_own_saved_value[statement_timeout] ____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daffbbd20>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_each_value_is_compared_wi8')
+item = 'statement_timeout'
+
+    @pytest.mark.parametrize("item", ITEMS[:-2] + ITEMS[-2:])
+    def test_each_value_is_compared_with_its_own_saved_value(monkeypatch, tmp_path, item):
+        """Cases (ii), (x), (xiv), (xv): one value differs after file 1: refused naming file 1 and exactly that item
+        (M62, M65 to M71, M91 to M94; M67 reads only after the last file: the second file never runs)."""
+        new = {
+            "current_user": "other",
+            "session_user": "other",
+            "session_replication_role": "replica",
+            "search_path": "public",
+            "standard_conforming_strings": "off",
+            "backslash_quote": "on",
+            "client_encoding": "LATIN1",
+            "lock_timeout": "0",
+            "statement_timeout": "0",
+            "transaction_timestamp": T1,
+            "txid_current": 701,
+        }[item]
+>       err, db, _ = _run(monkeypatch, tmp_path, [START, _values(**{item: new})], [[], []])
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_migration_wiring.py:388: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daffbbd20>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_each_value_is_compared_wi8')
+values = [('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...)]
+triggers = [[], []], n = 2, applied = (), members = None, settings = None
+kw = {}
+
+    def _run(
+        monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+    ):
+        files = _files(tmp_path, n)
+        db = _Db(values, triggers, applied, members, settings=settings)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # these made-up file names are not the released ones
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:137: AttributeError
+_ test_each_value_is_compared_with_its_own_saved_value[transaction_timestamp] __
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daffbb230>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_each_value_is_compared_wi9')
+item = 'transaction_timestamp'
+
+    @pytest.mark.parametrize("item", ITEMS[:-2] + ITEMS[-2:])
+    def test_each_value_is_compared_with_its_own_saved_value(monkeypatch, tmp_path, item):
+        """Cases (ii), (x), (xiv), (xv): one value differs after file 1: refused naming file 1 and exactly that item
+        (M62, M65 to M71, M91 to M94; M67 reads only after the last file: the second file never runs)."""
+        new = {
+            "current_user": "other",
+            "session_user": "other",
+            "session_replication_role": "replica",
+            "search_path": "public",
+            "standard_conforming_strings": "off",
+            "backslash_quote": "on",
+            "client_encoding": "LATIN1",
+            "lock_timeout": "0",
+            "statement_timeout": "0",
+            "transaction_timestamp": T1,
+            "txid_current": 701,
+        }[item]
+>       err, db, _ = _run(monkeypatch, tmp_path, [START, _values(**{item: new})], [[], []])
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_migration_wiring.py:388: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daffbb230>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_each_value_is_compared_wi9')
+values = [('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...)]
+triggers = [[], []], n = 2, applied = (), members = None, settings = None
+kw = {}
+
+    def _run(
+        monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+    ):
+        files = _files(tmp_path, n)
+        db = _Db(values, triggers, applied, members, settings=settings)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # these made-up file names are not the released ones
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:137: AttributeError
+______ test_each_value_is_compared_with_its_own_saved_value[txid_current] ______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daf6efcb0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_each_value_is_compared_wi10')
+item = 'txid_current'
+
+    @pytest.mark.parametrize("item", ITEMS[:-2] + ITEMS[-2:])
+    def test_each_value_is_compared_with_its_own_saved_value(monkeypatch, tmp_path, item):
+        """Cases (ii), (x), (xiv), (xv): one value differs after file 1: refused naming file 1 and exactly that item
+        (M62, M65 to M71, M91 to M94; M67 reads only after the last file: the second file never runs)."""
+        new = {
+            "current_user": "other",
+            "session_user": "other",
+            "session_replication_role": "replica",
+            "search_path": "public",
+            "standard_conforming_strings": "off",
+            "backslash_quote": "on",
+            "client_encoding": "LATIN1",
+            "lock_timeout": "0",
+            "statement_timeout": "0",
+            "transaction_timestamp": T1,
+            "txid_current": 701,
+        }[item]
+>       err, db, _ = _run(monkeypatch, tmp_path, [START, _values(**{item: new})], [[], []])
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_migration_wiring.py:388: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daf6efcb0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_each_value_is_compared_wi10')
+values = [('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...)]
+triggers = [[], []], n = 2, applied = (), members = None, settings = None
+kw = {}
+
+    def _run(
+        monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+    ):
+        files = _files(tmp_path, n)
+        db = _Db(values, triggers, applied, members, settings=settings)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # these made-up file names are not the released ones
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:137: AttributeError
+_________________ test_session_authorization_names_both_users __________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daf6ec1a0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_session_authorization_nam0')
+
+    def test_session_authorization_names_both_users(monkeypatch, tmp_path):
+        """Case (iii): `set_config('session_authorization', ..)` moves both users: both are named (M65)."""
+>       err, _, _ = _run(
+            monkeypatch, tmp_path, [START, _values(current_user="x", session_user="x")], [[], []]
+        )
+
+tests/test_migration_wiring.py:399: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daf6ec1a0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_session_authorization_nam0')
+values = [('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('x', 'x', 'origin', '"$user", public', 'on', 'safe_encoding', ...)]
+triggers = [[], []], n = 2, applied = (), members = None, settings = None
+kw = {}
+
+    def _run(
+        monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+    ):
+        files = _files(tmp_path, n)
+        db = _Db(values, triggers, applied, members, settings=settings)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # these made-up file names are not the released ones
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:137: AttributeError
+________________ test_saved_users_that_differ_are_not_a_refusal ________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daf6ec980>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_saved_users_that_differ_a0')
+
+    def test_saved_users_that_differ_are_not_a_refusal(monkeypatch, tmp_path):
+        """Case (xiii): `mig` is the current user and `admin` the session user at the start and nothing moves."""
+        start = _values(session_user="admin")
+>       err, _, applied = _run(monkeypatch, tmp_path, [start, start, start], [[], [], []])
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_migration_wiring.py:408: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daf6ec980>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_saved_users_that_differ_a0')
+values = [('mig', 'admin', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'admin', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'admin', 'origin', '"$user", public', 'on', 'safe_encoding', ...)]
+triggers = [[], [], []], n = 2, applied = (), members = None, settings = None
+kw = {}
+
+    def _run(
+        monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+    ):
+        files = _files(tmp_path, n)
+        db = _Db(values, triggers, applied, members, settings=settings)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # these made-up file names are not the released ones
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:137: AttributeError
+__________ test_start_value_of_standard_conforming_strings_must_be_on __________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daf6ecd70>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_start_value_of_standard_c0')
+
+    def test_start_value_of_standard_conforming_strings_must_be_on(monkeypatch, tmp_path):
+        """Case (ix), M90: refused before any file runs."""
+>       err, db, _ = _run(monkeypatch, tmp_path, [_values(standard_conforming_strings="off")], [[]])
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_migration_wiring.py:414: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daf6ecd70>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_start_value_of_standard_c0')
+values = [('mig', 'mig', 'origin', '"$user", public', 'off', 'safe_encoding', ...)]
+triggers = [[]], n = 2, applied = (), members = None, settings = None, kw = {}
+
+    def _run(
+        monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+    ):
+        files = _files(tmp_path, n)
+        db = _Db(values, triggers, applied, members, settings=settings)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # these made-up file names are not the released ones
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:137: AttributeError
+______________________ test_a_disabled_trigger_is_refused ______________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daf6ed5c0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_a_disabled_trigger_is_ref0')
+
+    def test_a_disabled_trigger_is_refused(monkeypatch, tmp_path):
+        """Any change of the enabled state of a trigger that existed BEFORE the file is refused (`O` to `A` too: a list
+        of only `D` and `R` let it pass). Killed by: mutant T1 (back to a D/R-only check). A trigger that the file itself
+        creates disabled is another branch of the code; it is tested by the next test (mutant M88)."""
+        for state in ("D", "R", "A"):
+>           err, _, _ = _run(
+                monkeypatch, tmp_path, [START, START], [[_trigger()], [_trigger(enabled=state)]]
+            )
+
+tests/test_migration_wiring.py:424: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daf6ed5c0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_a_disabled_trigger_is_ref0')
+values = [('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...)]
+triggers = [[('trg', 'O', 't', 's', 4120490770, 'CREATE TRIGGER trg BEFORE UPDATE ON s.t EXECUTE FUNCTION s.f()', ...)], [('trg', 'D', 't', 's', 4120490770, 'CREATE TRIGGER trg BEFORE UPDATE ON s.t EXECUTE FUNCTION s.f()', ...)]]
+n = 2, applied = (), members = None, settings = None, kw = {}
+
+    def _run(
+        monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+    ):
+        files = _files(tmp_path, n)
+        db = _Db(values, triggers, applied, members, settings=settings)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # these made-up file names are not the released ones
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:137: AttributeError
+__ test_a_trigger_created_disabled_is_refused_and_one_created_enabled_is_not ___
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6db11f0a60>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_a_trigger_created_disable0')
+
+    def test_a_trigger_created_disabled_is_refused_and_one_created_enabled_is_not(
+        monkeypatch, tmp_path
+    ):
+        """A trigger the file creates disabled (`D`) or replica-only (`R`) is refused; one created enabled is not.
+        Killed by: mutant M88 (the check of a new trigger's state removed)."""
+        for state in ("D", "R"):
+>           err, _, _ = _run(monkeypatch, tmp_path, [START, START], [[], [_trigger(enabled=state)]])
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_migration_wiring.py:445: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6db11f0a60>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_a_trigger_created_disable0')
+values = [('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...)]
+triggers = [[], [('trg', 'D', 't', 's', 4120490770, 'CREATE TRIGGER trg BEFORE UPDATE ON s.t EXECUTE FUNCTION s.f()', ...)]]
+n = 2, applied = (), members = None, settings = None, kw = {}
+
+    def _run(
+        monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+    ):
+        files = _files(tmp_path, n)
+        db = _Db(values, triggers, applied, members, settings=settings)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # these made-up file names are not the released ones
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:137: AttributeError
+___ test_a_trigger_recreated_with_another_definition_or_function_is_refused ____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daf6efc40>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_a_trigger_recreated_with_0')
+
+    def test_a_trigger_recreated_with_another_definition_or_function_is_refused(monkeypatch, tmp_path):
+        """the trigger keeps its name, enabled state and table but not what it does.
+        Killed by: mutants T1..T5 and T7 of tests/migrate_mutants.py (one part of the saved trigger not compared)."""
+        changes = {
+            "definition": {
+                "definition": "CREATE TRIGGER trg AFTER INSERT ON s.t EXECUTE FUNCTION s.g()"
+            },
+            "function text": {"src": "BEGIN RETURN NULL; END"},
+            "function security mode": {"secdef": True},
+            "function owner": {"owner": "owner_b"},
+        }
+        for part, change in changes.items():
+>           err, _, _ = _run(
+                monkeypatch, tmp_path, [START, START], [[_trigger()], [_trigger(**change)]]
+            )
+
+tests/test_migration_wiring.py:469: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daf6efc40>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_a_trigger_recreated_with_0')
+values = [('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...)]
+triggers = [[('trg', 'O', 't', 's', 4120490770, 'CREATE TRIGGER trg BEFORE UPDATE ON s.t EXECUTE FUNCTION s.f()', ...)], [('trg', 'O', 't', 's', 4120490770, 'CREATE TRIGGER trg AFTER INSERT ON s.t EXECUTE FUNCTION s.g()', ...)]]
+n = 2, applied = (), members = None, settings = None, kw = {}
+
+    def _run(
+        monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+    ):
+        files = _files(tmp_path, n)
+        db = _Db(values, triggers, applied, members, settings=settings)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # these made-up file names are not the released ones
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:137: AttributeError
+___ test_the_trigger_query_reads_definition_function_text_and_security_mode ____
+
+    def test_the_trigger_query_reads_definition_function_text_and_security_mode():
+>       q = mig._READBACK_TRIGGERS_SQL
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.store.migrate' has no attribute '_READBACK_TRIGGERS_SQL'
+
+tests/test_migration_wiring.py:479: AttributeError
+________ test_a_trigger_that_was_disabled_at_the_start_is_not_a_refusal ________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daf6ee7b0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_a_trigger_that_was_disabl0')
+
+    def test_a_trigger_that_was_disabled_at_the_start_is_not_a_refusal(monkeypatch, tmp_path):
+        same = [_trigger(enabled="D")]
+>       err, _, _ = _run(monkeypatch, tmp_path, [START] * 3, [same, same, same])
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_migration_wiring.py:487: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daf6ee7b0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_a_trigger_that_was_disabl0')
+values = [('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...)]
+triggers = [[('trg', 'D', 't', 's', 4120490770, 'CREATE TRIGGER trg BEFORE UPDATE ON s.t EXECUTE FUNCTION s.f()', ...)], [('trg',...)', ...)], [('trg', 'D', 't', 's', 4120490770, 'CREATE TRIGGER trg BEFORE UPDATE ON s.t EXECUTE FUNCTION s.f()', ...)]]
+n = 2, applied = (), members = None, settings = None, kw = {}
+
+    def _run(
+        monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+    ):
+        files = _files(tmp_path, n)
+        db = _Db(values, triggers, applied, members, settings=settings)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # these made-up file names are not the released ones
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:137: AttributeError
+______________________ test_a_dropped_trigger_is_refused _______________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daf6eea50>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_a_dropped_trigger_is_refu0')
+
+    def test_a_dropped_trigger_is_refused(monkeypatch, tmp_path):
+        """Case (viii), M89."""
+>       err, _, _ = _run(monkeypatch, tmp_path, [START, START], [[_trigger()], []])
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_migration_wiring.py:493: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daf6eea50>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_a_dropped_trigger_is_refu0')
+values = [('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...)]
+triggers = [[('trg', 'O', 't', 's', 4120490770, 'CREATE TRIGGER trg BEFORE UPDATE ON s.t EXECUTE FUNCTION s.f()', ...)], []]
+n = 2, applied = (), members = None, settings = None, kw = {}
+
+    def _run(
+        monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+    ):
+        files = _files(tmp_path, n)
+        db = _Db(values, triggers, applied, members, settings=settings)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # these made-up file names are not the released ones
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:137: AttributeError
+_______ test_a_new_trigger_is_not_a_refusal_and_is_watched_from_then_on ________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daf6ef1c0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_a_new_trigger_is_not_a_re0')
+
+    def test_a_new_trigger_is_not_a_refusal_and_is_watched_from_then_on(monkeypatch, tmp_path):
+        """Case (xvii), M101: file 1 adds trigger O (fine); file 2 makes it vanish: refused naming file 2."""
+>       err, _, _ = _run(monkeypatch, tmp_path, [START] * 3, [[], [_trigger(name="new")], []])
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_migration_wiring.py:499: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daf6ef1c0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_a_new_trigger_is_not_a_re0')
+values = [('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...)]
+triggers = [[], [('new', 'O', 't', 's', 4120490770, 'CREATE TRIGGER new BEFORE UPDATE ON s.t EXECUTE FUNCTION s.f()', ...)], []]
+n = 2, applied = (), members = None, settings = None, kw = {}
+
+    def _run(
+        monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+    ):
+        files = _files(tmp_path, n)
+        db = _Db(values, triggers, applied, members, settings=settings)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # these made-up file names are not the released ones
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:137: AttributeError
+__________ test_a_trigger_change_is_not_reported_as_a_changed_session __________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daf6ec1a0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_a_trigger_change_is_not_r0')
+
+    def test_a_trigger_change_is_not_reported_as_a_changed_session(monkeypatch, tmp_path):
+        """the message names the trigger, what changed and the way to allow it; it does not say the database
+        session changed. Killed by: mutant T8 (a trigger change goes into the session list again)."""
+>       err, _, _ = _run(
+            monkeypatch,
+            tmp_path,
+            [START, START],
+            [[_trigger()], [_trigger(src="BEGIN RETURN NULL; END")]],
+        )
+
+tests/test_migration_wiring.py:507: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daf6ec1a0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_a_trigger_change_is_not_r0')
+values = [('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...)]
+triggers = [[('trg', 'O', 't', 's', 4120490770, 'CREATE TRIGGER trg BEFORE UPDATE ON s.t EXECUTE FUNCTION s.f()', ...)], [('trg', 'O', 't', 's', 4120490770, 'CREATE TRIGGER trg BEFORE UPDATE ON s.t EXECUTE FUNCTION s.f()', ...)]]
+n = 2, applied = (), members = None, settings = None, kw = {}
+
+    def _run(
+        monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+    ):
+        files = _files(tmp_path, n)
+        db = _Db(values, triggers, applied, members, settings=settings)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # these made-up file names are not the released ones
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:137: AttributeError
+______ test_a_renamed_table_with_a_trigger_is_reported_as_a_renamed_table ______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daff54280>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_a_renamed_table_with_a_tr0')
+
+    def test_a_renamed_table_with_a_trigger_is_reported_as_a_renamed_table(monkeypatch, tmp_path):
+        """The audit trigger stays on the same table id when the table is renamed, but code that
+        names the table and a new table made under the old name would not have the trigger, so a rename is refused, and the
+        message says "renamed", not "no longer exists". Killed by: mutant T9 (a renamed table reads as a vanished trigger)."""
+        old = _trigger(table="t", relid=77)
+        new = _trigger(table="t2", relid=77)
+>       err, _, _ = _run(monkeypatch, tmp_path, [START, START], [[old], [new]])
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_migration_wiring.py:534: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daff54280>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_a_renamed_table_with_a_tr0')
+values = [('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...)]
+triggers = [[('trg', 'O', 't', 's', 77, 'CREATE TRIGGER trg BEFORE UPDATE ON s.t EXECUTE FUNCTION s.f()', ...)], [('trg', 'O', 't2', 's', 77, 'CREATE TRIGGER trg BEFORE UPDATE ON s.t2 EXECUTE FUNCTION s.f()', ...)]]
+n = 2, applied = (), members = None, settings = None, kw = {}
+
+    def _run(
+        monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+    ):
+        files = _files(tmp_path, n)
+        db = _Db(values, triggers, applied, members, settings=settings)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # these made-up file names are not the released ones
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:137: AttributeError
+__ test_an_allowed_trigger_change_passes_only_for_that_file_table_and_trigger __
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daff56eb0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_an_allowed_trigger_change0')
+
+    def test_an_allowed_trigger_change_passes_only_for_that_file_table_and_trigger(
+        monkeypatch, tmp_path
+    ):
+        """The reviewed list names (migration, table, trigger); it allows a change, never a disappearance, and no other
+        trigger, table or file. Killed by: mutant T10 (any trigger is allowed once any entry exists) and T11 (a disappearance
+        is allowed)."""
+        changed = [_trigger(src="BEGIN RETURN NULL; END")]
+>       monkeypatch.setattr(mig, "_trigger_changes", lambda: _listed(("0001_f1", None, "t", "trg")))
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute '_trigger_changes'
+
+tests/test_migration_wiring.py:557: AttributeError
+______ test_an_entry_that_names_another_schema_does_not_allow_the_change _______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daff54b40>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_an_entry_that_names_anoth0')
+
+    def test_an_entry_that_names_another_schema_does_not_allow_the_change(monkeypatch, tmp_path):
+        """An entry written `schema.table` allows only that schema; one with no schema means the schema `migrate` uses."""
+        changed = [_trigger(src="BEGIN RETURN NULL; END")]
+>       monkeypatch.setattr(
+            mig, "_trigger_changes", lambda: _listed(("0001_f1", "elsewhere", "t", "trg"))
+        )
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute '_trigger_changes'
+
+tests/test_migration_wiring.py:589: AttributeError
+_ test_a_listed_trigger_may_not_be_left_disabled_or_replica_only_unless_the_entry_says_so _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daffba740>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_a_listed_trigger_may_not_0')
+
+    def test_a_listed_trigger_may_not_be_left_disabled_or_replica_only_unless_the_entry_says_so(
+        monkeypatch, tmp_path
+    ):
+        """The list allows a change of what a trigger does; it does not allow switching it off. `D` and `R` are refused for a
+        listed trigger unless the entry names that exact state. Killed by: mutant T14 (a listed trigger may be left in any
+        state)."""
+        for state in ("D", "R"):
+>           monkeypatch.setattr(mig, "_trigger_changes", lambda: _listed(("0001_f1", None, "t", "trg")))
+E           AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute '_trigger_changes'
+
+tests/test_migration_wiring.py:608: AttributeError
+__ test_the_list_of_allowed_trigger_changes_is_empty_today_and_strictly_read ___
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daffbaeb0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_the_list_of_allowed_trigg0')
+
+    def test_the_list_of_allowed_trigger_changes_is_empty_today_and_strictly_read(
+        monkeypatch, tmp_path
+    ):
+        """The shipped list is empty. A bad list is a ConfigError (never "allow"). Killed by: mutant T12 (the loader ignores
+        a bad shape)."""
+>       assert mig._trigger_changes() == frozenset()
+               ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.store.migrate' has no attribute '_trigger_changes'
+
+tests/test_migration_wiring.py:656: AttributeError
+______________ test_trigger_query_reads_only_the_migration_schema ______________
+
+    def test_trigger_query_reads_only_the_migration_schema():
+        """Case (xvi), M102: the schema filter is in the query text (a stub cannot answer for another schema)."""
+>       assert "current_schema()" in mig._READBACK_TRIGGERS_SQL
+                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.store.migrate' has no attribute '_READBACK_TRIGGERS_SQL'
+
+tests/test_migration_wiring.py:703: AttributeError
+_________ test_the_message_has_no_connection_string_and_escapes_names __________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6db3632a50>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_the_message_has_no_connec0')
+
+    def test_the_message_has_no_connection_string_and_escapes_names(monkeypatch, tmp_path):
+>       err, _, _ = _run(monkeypatch, tmp_path, [START, _values(search_path="a\x1b[31mred")], [[], []])
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_migration_wiring.py:708: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6db3632a50>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_the_message_has_no_connec0')
+values = [('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', 'a\x1b[31mred', 'on', 'safe_encoding', ...)]
+triggers = [[], []], n = 2, applied = (), members = None, settings = None
+kw = {}
+
+    def _run(
+        monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+    ):
+        files = _files(tmp_path, n)
+        db = _Db(values, triggers, applied, members, settings=settings)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # these made-up file names are not the released ones
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:137: AttributeError
+______________ test_a_new_role_membership_after_a_file_is_refused ______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6db37ff8c0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_a_new_role_membership_aft0')
+
+    def test_a_new_role_membership_after_a_file_is_refused(monkeypatch, tmp_path):
+        """Killed by: mutant R1 (membership not compared) and mutant R2 (membership not read after the file)."""
+>       err, db, _ = _run(monkeypatch, tmp_path, [START, START], [[], []], members=[[], [EDGE]])
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_migration_wiring.py:719: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6db37ff8c0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_a_new_role_membership_aft0')
+values = [('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...)]
+triggers = [[], []], n = 2, applied = ()
+members = [[], [('app_rw', 'app_admin', '{"admin_option": false, "grantor": 10}')]]
+settings = None, kw = {}
+
+    def _run(
+        monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+    ):
+        files = _files(tmp_path, n)
+        db = _Db(values, triggers, applied, members, settings=settings)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # these made-up file names are not the released ones
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:137: AttributeError
+__________________ test_a_removed_role_membership_is_refused ___________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6db37ffe00>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_a_removed_role_membership0')
+
+    def test_a_removed_role_membership_is_refused(monkeypatch, tmp_path):
+        """Killed by: mutant R3 (a removed membership is not reported)."""
+>       err, _, _ = _run(monkeypatch, tmp_path, [START, START], [[], []], members=[[EDGE], []])
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_migration_wiring.py:727: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6db37ffe00>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_a_removed_role_membership0')
+values = [('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...)]
+triggers = [[], []], n = 2, applied = ()
+members = [[('app_rw', 'app_admin', '{"admin_option": false, "grantor": 10}')], []]
+settings = None, kw = {}
+
+    def _run(
+        monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+    ):
+        files = _files(tmp_path, n)
+        db = _Db(values, triggers, applied, members, settings=settings)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # these made-up file names are not the released ones
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:137: AttributeError
+____________ test_a_changed_grant_option_of_a_membership_is_refused ____________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6db37ff460>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_a_changed_grant_option_of0')
+
+    def test_a_changed_grant_option_of_a_membership_is_refused(monkeypatch, tmp_path):
+        """Killed by: mutant R4 (only role and member compared, not the other columns)."""
+        other = (*EDGE[:2], '{"admin_option": true, "grantor": 10}')
+>       err, _, _ = _run(monkeypatch, tmp_path, [START, START], [[], []], members=[[EDGE], [other]])
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_migration_wiring.py:734: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6db37ff460>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_a_changed_grant_option_of0')
+values = [('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...)]
+triggers = [[], []], n = 2, applied = ()
+members = [[('app_rw', 'app_admin', '{"admin_option": false, "grantor": 10}')], [('app_rw', 'app_admin', '{"admin_option": true, "grantor": 10}')]]
+settings = None, kw = {}
+
+    def _run(
+        monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+    ):
+        files = _files(tmp_path, n)
+        db = _Db(values, triggers, applied, members, settings=settings)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # these made-up file names are not the released ones
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:137: AttributeError
+_______ test_memberships_that_were_there_at_the_start_are_not_a_refusal ________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daff56f90>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_memberships_that_were_the0')
+
+    def test_memberships_that_were_there_at_the_start_are_not_a_refusal(monkeypatch, tmp_path):
+>       err, _, applied = _run(monkeypatch, tmp_path, [START] * 3, [[], [], []], members=[[EDGE]] * 3)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_migration_wiring.py:739: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daff56f90>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_memberships_that_were_the0')
+values = [('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...)]
+triggers = [[], [], []], n = 2, applied = ()
+members = [[('app_rw', 'app_admin', '{"admin_option": false, "grantor": 10}')], [('app_rw', 'app_admin', '{"admin_option": false, "grantor": 10}')], [('app_rw', 'app_admin', '{"admin_option": false, "grantor": 10}')]]
+settings = None, kw = {}
+
+    def _run(
+        monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+    ):
+        files = _files(tmp_path, n)
+        db = _Db(values, triggers, applied, members, settings=settings)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # these made-up file names are not the released ones
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:137: AttributeError
+__________________ test_the_membership_message_escapes_names ___________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daf6efb60>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_the_membership_message_es0')
+
+    def test_the_membership_message_escapes_names(monkeypatch, tmp_path):
+        bad = ("r\x1b[31m", "s", "{}")
+>       err, _, _ = _run(monkeypatch, tmp_path, [START, START], [[], []], members=[[], [bad]])
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_migration_wiring.py:745: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daf6efb60>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_the_membership_message_es0')
+values = [('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...)]
+triggers = [[], []], n = 2, applied = ()
+members = [[], [('r\x1b[31m', 's', '{}')]], settings = None, kw = {}
+
+    def _run(
+        monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+    ):
+        files = _files(tmp_path, n)
+        db = _Db(values, triggers, applied, members, settings=settings)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # these made-up file names are not the released ones
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:137: AttributeError
+____ test_the_membership_is_read_after_every_file_and_before_its_ledger_row ____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daf6ef0e0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_the_membership_is_read_af0')
+
+    def test_the_membership_is_read_after_every_file_and_before_its_ledger_row(monkeypatch, tmp_path):
+        """Killed by: mutant R2 (the members query is never sent by the read-back)."""
+>       err, db, _ = _run(monkeypatch, tmp_path, [START] * 3, [[], [], []])
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_migration_wiring.py:751: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daf6ef0e0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_the_membership_is_read_af0')
+values = [('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...)]
+triggers = [[], [], []], n = 2, applied = (), members = None, settings = None
+kw = {}
+
+    def _run(
+        monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+    ):
+        files = _files(tmp_path, n)
+        db = _Db(values, triggers, applied, members, settings=settings)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # these made-up file names are not the released ones
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:137: AttributeError
+_________ test_the_membership_query_reads_names_and_every_other_column _________
+
+    def test_the_membership_query_reads_names_and_every_other_column():
+>       assert "pg_auth_members" in mig._READBACK_MEMBERS_SQL
+                                    ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.store.migrate' has no attribute '_READBACK_MEMBERS_SQL'
+
+tests/test_migration_wiring.py:761: AttributeError
+_______ test_a_table_made_again_with_its_trigger_is_not_a_false_refusal ________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6db3674ec0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_a_table_made_again_with_i0')
+
+    def test_a_table_made_again_with_its_trigger_is_not_a_false_refusal(monkeypatch, tmp_path):
+        """The table has a new OID after DROP + CREATE; the trigger has the same schema, table and name."""
+>       err, _, applied = _run(
+            monkeypatch,
+            tmp_path,
+            [START] * 3,
+            [[_trigger()], [_trigger()], [_trigger()]],
+        )
+
+tests/test_migration_wiring.py:771: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6db3674ec0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_a_table_made_again_with_i0')
+values = [('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...)]
+triggers = [[('trg', 'O', 't', 's', 4120490770, 'CREATE TRIGGER trg BEFORE UPDATE ON s.t EXECUTE FUNCTION s.f()', ...)], [('trg',...)', ...)], [('trg', 'O', 't', 's', 4120490770, 'CREATE TRIGGER trg BEFORE UPDATE ON s.t EXECUTE FUNCTION s.f()', ...)]]
+n = 2, applied = (), members = None, settings = None, kw = {}
+
+    def _run(
+        monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+    ):
+        files = _files(tmp_path, n)
+        db = _Db(values, triggers, applied, members, settings=settings)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # these made-up file names are not the released ones
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:137: AttributeError
+____ test_a_trigger_on_another_table_with_the_same_name_is_another_trigger _____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6db3674130>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_a_trigger_on_another_tabl0')
+
+    def test_a_trigger_on_another_table_with_the_same_name_is_another_trigger(monkeypatch, tmp_path):
+>       err, _, _ = _run(
+            monkeypatch,
+            tmp_path,
+            [START] * 2,
+            [[_trigger(table="a")], [_trigger(table="b")]],
+        )
+
+tests/test_migration_wiring.py:781: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6db3674130>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_a_trigger_on_another_tabl0')
+values = [('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...)]
+triggers = [[('trg', 'O', 'a', 's', 2554615801, 'CREATE TRIGGER trg BEFORE UPDATE ON s.a EXECUTE FUNCTION s.f()', ...)], [('trg', 'O', 'b', 's', 21825091, 'CREATE TRIGGER trg BEFORE UPDATE ON s.b EXECUTE FUNCTION s.f()', ...)]]
+n = 2, applied = (), members = None, settings = None, kw = {}
+
+    def _run(
+        monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+    ):
+        files = _files(tmp_path, n)
+        db = _Db(values, triggers, applied, members, settings=settings)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # these made-up file names are not the released ones
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:137: AttributeError
+__ test_a_privileged_migration_role_is_refused_before_any_file_runs[rolsuper] __
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6db3677bd0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_a_privileged_migration_ro0')
+flag = 'rolsuper'
+
+    @pytest.mark.parametrize("flag", FLAGS)
+    def test_a_privileged_migration_role_is_refused_before_any_file_runs(monkeypatch, tmp_path, flag):
+        """Killed by: mutants S1 (no check), S2..S5 (one flag not read)."""
+        files = _files(tmp_path, 2)
+        flags = tuple(f == flag for f in FLAGS)
+        db = _Db([START] * 3, [[], [], []], flags=flags)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # these made-up file names are not the released ones
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:804: AttributeError
+_ test_a_privileged_migration_role_is_refused_before_any_file_runs[rolcreaterole] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6db37d7460>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_a_privileged_migration_ro1')
+flag = 'rolcreaterole'
+
+    @pytest.mark.parametrize("flag", FLAGS)
+    def test_a_privileged_migration_role_is_refused_before_any_file_runs(monkeypatch, tmp_path, flag):
+        """Killed by: mutants S1 (no check), S2..S5 (one flag not read)."""
+        files = _files(tmp_path, 2)
+        flags = tuple(f == flag for f in FLAGS)
+        db = _Db([START] * 3, [[], [], []], flags=flags)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # these made-up file names are not the released ones
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:804: AttributeError
+_ test_a_privileged_migration_role_is_refused_before_any_file_runs[rolcreatedb] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6db368c1a0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_a_privileged_migration_ro2')
+flag = 'rolcreatedb'
+
+    @pytest.mark.parametrize("flag", FLAGS)
+    def test_a_privileged_migration_role_is_refused_before_any_file_runs(monkeypatch, tmp_path, flag):
+        """Killed by: mutants S1 (no check), S2..S5 (one flag not read)."""
+        files = _files(tmp_path, 2)
+        flags = tuple(f == flag for f in FLAGS)
+        db = _Db([START] * 3, [[], [], []], flags=flags)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # these made-up file names are not the released ones
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:804: AttributeError
+_ test_a_privileged_migration_role_is_refused_before_any_file_runs[rolbypassrls] _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6db3632a50>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_a_privileged_migration_ro3')
+flag = 'rolbypassrls'
+
+    @pytest.mark.parametrize("flag", FLAGS)
+    def test_a_privileged_migration_role_is_refused_before_any_file_runs(monkeypatch, tmp_path, flag):
+        """Killed by: mutants S1 (no check), S2..S5 (one flag not read)."""
+        files = _files(tmp_path, 2)
+        flags = tuple(f == flag for f in FLAGS)
+        db = _Db([START] * 3, [[], [], []], flags=flags)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # these made-up file names are not the released ones
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:804: AttributeError
+_ test_a_role_that_is_a_member_of_a_privileged_role_is_refused_before_any_file_runs _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6db3676510>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_a_role_that_is_a_member_o0')
+
+    def test_a_role_that_is_a_member_of_a_privileged_role_is_refused_before_any_file_runs(
+        monkeypatch, tmp_path
+    ):
+        files = _files(tmp_path, 1)
+        db = _Db([START], [[]], borrowed=("boss_role", "other_boss"))
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(mig, "released_problems", lambda *a, **k: [])
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:821: AttributeError
+_____ test_the_membership_check_reads_the_current_user_and_all_four_flags ______
+
+    def test_the_membership_check_reads_the_current_user_and_all_four_flags():
+>       q = mig._BORROWED_ROLES_SQL
+            ^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.store.migrate' has no attribute '_BORROWED_ROLES_SQL'
+
+tests/test_migration_wiring.py:831: AttributeError
+______________ test_the_role_flags_are_read_from_the_current_user ______________
+
+    def test_the_role_flags_are_read_from_the_current_user():
+>       assert "current_user" in mig._ROLE_FLAGS_SQL and "pg_roles" in mig._ROLE_FLAGS_SQL
+                                 ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.store.migrate' has no attribute '_ROLE_FLAGS_SQL'
+
+tests/test_migration_wiring.py:838: AttributeError
+___________ test_the_refusal_says_how_to_make_a_plain_migration_role ___________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6db3674670>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_the_refusal_says_how_to_m0')
+
+    def test_the_refusal_says_how_to_make_a_plain_migration_role(monkeypatch, tmp_path):
+        """The message names the flags held and gives one SQL example with no password or other secret."""
+        files = _files(tmp_path, 1)
+        db = _Db([START], [[]], flags=(True, False, False, False))
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # these made-up file names are not the released ones
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:858: AttributeError
+________________ test_a_new_saved_setting_for_a_role_is_refused ________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6db36755c0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_a_new_saved_setting_for_a0')
+
+    def test_a_new_saved_setting_for_a_role_is_refused(monkeypatch, tmp_path):
+        """`ALTER ROLE x SET search_path = ...` changes the NEXT session, not this one: only pg_db_role_setting shows it.
+        Killed by: mutants PS1 (settings not read), PS2 (not compared)."""
+        saved = ("mydb", "app_rw", "{search_path=evil}")
+>       err, _db, _ = _run(monkeypatch, tmp_path, [START, START], [[], []], settings=[[], [saved]])
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_migration_wiring.py:877: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6db36755c0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_a_new_saved_setting_for_a0')
+values = [('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...)]
+triggers = [[], []], n = 2, applied = (), members = None
+settings = [[], [('mydb', 'app_rw', '{search_path=evil}')]], kw = {}
+
+    def _run(
+        monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+    ):
+        files = _files(tmp_path, n)
+        db = _Db(values, triggers, applied, members, settings=settings)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # these made-up file names are not the released ones
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:137: AttributeError
+________ test_a_file_that_changes_a_time_limit_is_refused[lock_timeout] ________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6db3676900>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_a_file_that_changes_a_tim0')
+item = 'lock_timeout'
+
+    @pytest.mark.parametrize("item", ["lock_timeout", "statement_timeout"])
+    def test_a_file_that_changes_a_time_limit_is_refused(monkeypatch, tmp_path, item):
+        """Killed by: mutant L1 (the limits are not in the read-back)."""
+>       err, _, _ = _run(monkeypatch, tmp_path, [START, _values(**{item: "0"})], [[], []])
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_migration_wiring.py:889: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6db3676900>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_a_file_that_changes_a_tim0')
+values = [('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...)]
+triggers = [[], []], n = 2, applied = (), members = None, settings = None
+kw = {}
+
+    def _run(
+        monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+    ):
+        files = _files(tmp_path, n)
+        db = _Db(values, triggers, applied, members, settings=settings)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # these made-up file names are not the released ones
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:137: AttributeError
+_____ test_a_file_that_changes_a_time_limit_is_refused[statement_timeout] ______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daf6ee120>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_a_file_that_changes_a_tim1')
+item = 'statement_timeout'
+
+    @pytest.mark.parametrize("item", ["lock_timeout", "statement_timeout"])
+    def test_a_file_that_changes_a_time_limit_is_refused(monkeypatch, tmp_path, item):
+        """Killed by: mutant L1 (the limits are not in the read-back)."""
+>       err, _, _ = _run(monkeypatch, tmp_path, [START, _values(**{item: "0"})], [[], []])
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_migration_wiring.py:889: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daf6ee120>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_a_file_that_changes_a_tim1')
+values = [('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...), ('mig', 'mig', 'origin', '"$user", public', 'on', 'safe_encoding', ...)]
+triggers = [[], []], n = 2, applied = (), members = None, settings = None
+kw = {}
+
+    def _run(
+        monkeypatch, tmp_path, values, triggers, n=2, applied=(), members=None, settings=None, **kw
+    ):
+        files = _files(tmp_path, n)
+        db = _Db(values, triggers, applied, members, settings=settings)
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # these made-up file names are not the released ones
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:137: AttributeError
+__________ test_the_membership_message_says_it_reads_the_whole_server __________
+
+    def test_the_membership_message_says_it_reads_the_whole_server():
+        import inspect
+    
+>       assert "whole database server" in inspect.getsource(mig._check_read_back)
+                                                            ^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.store.migrate' has no attribute '_check_read_back'
+
+tests/test_migration_wiring.py:896: AttributeError
+_______ test_migrate_refuses_a_changed_released_file_before_it_connects ________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6db373e900>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_migrate_refuses_a_changed0')
+
+    def test_migrate_refuses_a_changed_released_file_before_it_connects(monkeypatch, tmp_path):
+        """Killed by: mutant R6 (the call to released_problems removed from migrate())."""
+        import json
+    
+>       manifest = dict(mig._released_manifest())
+                        ^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.store.migrate' has no attribute '_released_manifest'
+
+tests/test_migration_wiring.py:906: AttributeError
+______ test_migrate_refuses_when_the_released_list_is_unreadable_or_wrong ______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6daff544b0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_migrate_refuses_when_the_0')
+
+    def test_migrate_refuses_when_the_released_list_is_unreadable_or_wrong(monkeypatch, tmp_path):
+        """An unreadable or wrongly shaped list of released files is a ConfigError before any connection."""
+        monkeypatch.setattr(mig, "connect", lambda *a, **k: pytest.fail("connected"))
+        missing = tmp_path / "none.json"
+>       monkeypatch.setattr(mig, "RELEASED_MANIFEST", missing)
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'RELEASED_MANIFEST'
+
+tests/test_migration_wiring.py:925: AttributeError
+__ test_the_released_list_ships_inside_the_package_and_covers_every_real_file __
+
+    def test_the_released_list_ships_inside_the_package_and_covers_every_real_file():
+>       assert mig.RELEASED_MANIFEST.parent == mn.MIGRATIONS.parent
+               ^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.store.migrate' has no attribute 'RELEASED_MANIFEST'
+
+tests/test_migration_wiring.py:936: AttributeError
+__ test_the_released_check_looks_at_the_files_migrate_runs_not_at_the_folder ___
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6db095b380>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_the_released_check_looks_0')
+
+    def test_the_released_check_looks_at_the_files_migrate_runs_not_at_the_folder(
+        monkeypatch, tmp_path
+    ):
+        """`migrate` runs the list `_migration_files()` gives it; the released check must read that same list. Here the files
+        are copies in another folder with one released file edited: the folder itself is untouched, so a check that listed
+        the folder would pass. Killed by: mutant R7 (the check lists the folder again)."""
+        import shutil
+    
+        for p in mn.MIGRATIONS.glob("*.sql"):
+            shutil.copy(p, tmp_path / p.name)
+        edited = tmp_path / "0002_audit_chain.sql"
+        edited.write_text(edited.read_text(encoding="utf-8") + "\nSELECT 1;\n", encoding="utf-8")
+        monkeypatch.setattr(mig, "_migration_files", lambda: sorted(tmp_path.glob("*.sql")))
+        monkeypatch.setattr(mig, "connect", lambda *a, **k: pytest.fail("connected"))
+        with pytest.raises(
+            mn.MigrationNumberError, match="0002_audit_chain: a released file was changed"
+        ):
+>           mig.migrate("postgresql://unused")
+
+tests/test_migration_wiring.py:958: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/store/migrate.py:309: in migrate
+    connect(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = ('postgresql://unused',)
+k = {'iam_auth': False, 'region': None, 'sslmode': None, 'sslrootcert': None}
+
+>   monkeypatch.setattr(mig, "connect", lambda *a, **k: pytest.fail("connected"))
+                                                        ^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: connected
+
+tests/test_migration_wiring.py:954: Failed
+__ test_a_bad_hash_in_the_released_list_is_a_config_error_not_a_changed_file ___
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6db3675ef0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_a_bad_hash_in_the_release0')
+
+    def test_a_bad_hash_in_the_released_list_is_a_config_error_not_a_changed_file(
+        monkeypatch, tmp_path
+    ):
+        """a value that is not 64 lower-case hex digits is a broken list (ConfigError, before any connection),
+        not "a released file was changed"."""
+        import json
+    
+        monkeypatch.setattr(mig, "connect", lambda *a, **k: pytest.fail("connected"))
+>       good = dict(mig._released_manifest())
+                    ^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.store.migrate' has no attribute '_released_manifest'
+
+tests/test_migration_wiring.py:969: AttributeError
+________ test_a_json_name_written_twice_in_the_released_list_is_refused ________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6db36777e0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_a_json_name_written_twice0')
+
+    def test_a_json_name_written_twice_in_the_released_list_is_refused(monkeypatch, tmp_path):
+        """`json` would keep the last of two equal names, so an edited second hash would hide the first."""
+>       good = mig._released_manifest()
+               ^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.store.migrate' has no attribute '_released_manifest'
+
+tests/test_migration_wiring.py:981: AttributeError
+_ test_a_lock_wait_or_a_slow_statement_is_a_plain_config_error_naming_step_and_setting _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6db368c2f0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_a_lock_wait_or_a_slow_sta0')
+
+    def test_a_lock_wait_or_a_slow_statement_is_a_plain_config_error_naming_step_and_setting(
+        monkeypatch, tmp_path
+    ):
+        """A lock wait that runs out is reported with the file being applied and the setting `lock_timeout`."""
+        from psycopg import errors as pge
+    
+        with pytest.raises(ConfigError, match=r"applying 0002_f2\.sql.*lock_timeout") as got:
+>           _run_raising(
+                monkeypatch, tmp_path, pge.LockNotAvailable("canceling statement due to lock timeout")
+            )
+
+tests/test_migration_wiring.py:1028: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6db368c2f0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_a_lock_wait_or_a_slow_sta0')
+error = LockNotAvailable('canceling statement due to lock timeout')
+
+    def _run_raising(monkeypatch, tmp_path, error):
+        files = _files(tmp_path, 2)
+        db = _Raises(error, "SELECT 2;\n", [START] * 3, [[], [], []])
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # these made-up file names are not the released ones
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:1011: AttributeError
+_____ test_the_statement_limit_is_found_by_the_error_code_not_by_the_words _____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6db366a2e0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_the_statement_limit_is_fo0')
+
+    def test_the_statement_limit_is_found_by_the_error_code_not_by_the_words(monkeypatch, tmp_path):
+        """the server words follow `lc_messages` (a German server says "wegen Zeitüberschreitung"); the code
+        57014 does not."""
+        from psycopg import errors as pge
+    
+        with pytest.raises(ConfigError, match=r"applying 0002_f2\.sql.*statement_timeout"):
+>           _run_raising(
+                monkeypatch,
+                tmp_path,
+                pge.QueryCanceled("Anweisung wurde wegen Zeitüberschreitung abgebrochen"),
+            )
+
+tests/test_migration_wiring.py:1047: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f6db366a2e0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-6213/test_the_statement_limit_is_fo0')
+error = QueryCanceled('Anweisung wurde wegen Zeitüberschreitung abgebrochen')
+
+    def _run_raising(monkeypatch, tmp_path, error):
+        files = _files(tmp_path, 2)
+        db = _Raises(error, "SELECT 2;\n", [START] * 3, [[], [], []])
+        monkeypatch.setattr(mig, "_migration_files", lambda: files)
+        monkeypatch.setattr(mig, "check_grants", lambda paths, texts=None: [])
+>       monkeypatch.setattr(
+            mig, "released_problems", lambda *a, **k: []
+        )  # these made-up file names are not the released ones
+E       AttributeError: <module 'hadavin_sdk.store.migrate' from '/home/user/build/EV-P73-ef2adc7/base/src/hadavin_sdk/store/migrate.py'> has no attribute 'released_problems'
+
+tests/test_migration_wiring.py:1011: AttributeError
+=========================== short test summary info ============================
+FAILED tests/test_k2_migrations.py::test_migrate_refuses_an_inconsistent_ledger_before_connecting
+FAILED tests/test_k2_migrations.py::test_migrate_refuses_when_an_applied_migration_has_no_file
+FAILED tests/test_k5_fixes2.py::test_a_database_that_applied_the_old_name_is_refused_and_nothing_is_applied
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT pg_write_all_data TO {n}-app$on]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT pg_write_all_data TO {n}-on$x]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT pg_write_all_data TO {n}-a$on$b]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT pg_write_all_data TO {n}-x$on$]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r TO {n}-app$on]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r TO {n}-on$x]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r TO {n}-a$on$b]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r TO {n}-x$on$]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT {n} TO s-app$on]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT {n} TO s-on$x]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT {n} TO s-a$on$b]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT {n} TO s-x$on$]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[REVOKE r FROM {n}-app$on]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[REVOKE r FROM {n}-on$x]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[REVOKE r FROM {n}-a$on$b]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[REVOKE r FROM {n}-x$on$]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[REVOKE {n} FROM s-app$on]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[REVOKE {n} FROM s-on$x]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[REVOKE {n} FROM s-a$on$b]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[REVOKE {n} FROM s-x$on$]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r\nTO {n}-app$on]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r\nTO {n}-on$x]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r\nTO {n}-a$on$b]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r\nTO {n}-x$on$]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[/* on */ GRANT r TO {n} -- on-app$on]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[/* on */ GRANT r TO {n} -- on-on$x]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[/* on */ GRANT r TO {n} -- on-a$on$b]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[/* on */ GRANT r TO {n} -- on-x$on$]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r TO {n}, "on"-app$on]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r TO {n}, "on"-on$x]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r TO {n}, "on"-a$on$b]
+FAILED tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT r TO {n}, "on"-x$on$]
+FAILED tests/test_migration_names.py::test_every_short_name_over_the_dollar_alphabet_is_refused_in_a_role_grant
+FAILED tests/test_migration_names.py::test_the_word_boundary_is_used_only_where_a_match_refuses
+FAILED tests/test_migration_names.py::test_the_name_boundary_agrees_with_the_lexer_character_set
+FAILED tests/test_migration_numbers.py::test_recipe_order_and_command - Attri...
+FAILED tests/test_migration_numbers.py::test_each_set_form_is_refused[SET LOCAL lock_timeout = '10s']
+FAILED tests/test_migration_numbers.py::test_each_set_form_is_refused[set  local  statement_timeout TO 0]
+FAILED tests/test_migration_numbers.py::test_each_set_form_is_refused[SET LOCAL statement_timeout = '1h']
+FAILED tests/test_migration_numbers.py::test_the_two_time_limits_are_refused_in_the_text_scan_not_only_by_the_read_back
+FAILED tests/test_migration_numbers.py::test_scan_comment_ends_at_cr - Assert...
+FAILED tests/test_migration_numbers.py::test_scan_double_dash_in_string - Ass...
+FAILED tests/test_migration_numbers.py::test_scan_reads_the_given_text_not_the_file
+FAILED tests/test_migration_wiring.py::test_migrate_uses_the_one_implementation_of_each_rule
+FAILED tests/test_migration_wiring.py::test_unicode_digit_names_are_refused
+FAILED tests/test_migration_wiring.py::test_uppercase_extension_is_refused - ...
+FAILED tests/test_migration_wiring.py::test_number_zero_is_refused - Assertio...
+FAILED tests/test_migration_wiring.py::test_dangling_link_is_refused - Assert...
+FAILED tests/test_migration_wiring.py::test_directory_named_like_a_migration_is_refused
+FAILED tests/test_migration_wiring.py::test_commit_in_a_file_is_refused_before_connecting
+FAILED tests/test_migration_wiring.py::test_migrate_executes_the_text_it_scanned
+FAILED tests/test_migration_wiring.py::test_late_file_is_refused_and_nothing_runs
+FAILED tests/test_migration_wiring.py::test_gone_name_is_refused_with_the_old_phrase
+FAILED tests/test_migration_wiring.py::test_migrate_takes_the_one_advisory_lock_key_first
+FAILED tests/test_migration_wiring.py::test_migrate_sets_the_recipe_limits_right_after_its_lock_and_before_any_file
+FAILED tests/test_migration_wiring.py::test_clean_run_reads_before_each_file_insert
+FAILED tests/test_migration_wiring.py::test_nothing_to_apply_reads_nothing - ...
+FAILED tests/test_migration_wiring.py::test_each_value_is_compared_with_its_own_saved_value[current_user]
+FAILED tests/test_migration_wiring.py::test_each_value_is_compared_with_its_own_saved_value[session_user]
+FAILED tests/test_migration_wiring.py::test_each_value_is_compared_with_its_own_saved_value[session_replication_role]
+FAILED tests/test_migration_wiring.py::test_each_value_is_compared_with_its_own_saved_value[search_path]
+FAILED tests/test_migration_wiring.py::test_each_value_is_compared_with_its_own_saved_value[standard_conforming_strings]
+FAILED tests/test_migration_wiring.py::test_each_value_is_compared_with_its_own_saved_value[backslash_quote]
+FAILED tests/test_migration_wiring.py::test_each_value_is_compared_with_its_own_saved_value[client_encoding]
+FAILED tests/test_migration_wiring.py::test_each_value_is_compared_with_its_own_saved_value[lock_timeout]
+FAILED tests/test_migration_wiring.py::test_each_value_is_compared_with_its_own_saved_value[statement_timeout]
+FAILED tests/test_migration_wiring.py::test_each_value_is_compared_with_its_own_saved_value[transaction_timestamp]
+FAILED tests/test_migration_wiring.py::test_each_value_is_compared_with_its_own_saved_value[txid_current]
+FAILED tests/test_migration_wiring.py::test_session_authorization_names_both_users
+FAILED tests/test_migration_wiring.py::test_saved_users_that_differ_are_not_a_refusal
+FAILED tests/test_migration_wiring.py::test_start_value_of_standard_conforming_strings_must_be_on
+FAILED tests/test_migration_wiring.py::test_a_disabled_trigger_is_refused - A...
+FAILED tests/test_migration_wiring.py::test_a_trigger_created_disabled_is_refused_and_one_created_enabled_is_not
+FAILED tests/test_migration_wiring.py::test_a_trigger_recreated_with_another_definition_or_function_is_refused
+FAILED tests/test_migration_wiring.py::test_the_trigger_query_reads_definition_function_text_and_security_mode
+FAILED tests/test_migration_wiring.py::test_a_trigger_that_was_disabled_at_the_start_is_not_a_refusal
+FAILED tests/test_migration_wiring.py::test_a_dropped_trigger_is_refused - At...
+FAILED tests/test_migration_wiring.py::test_a_new_trigger_is_not_a_refusal_and_is_watched_from_then_on
+FAILED tests/test_migration_wiring.py::test_a_trigger_change_is_not_reported_as_a_changed_session
+FAILED tests/test_migration_wiring.py::test_a_renamed_table_with_a_trigger_is_reported_as_a_renamed_table
+FAILED tests/test_migration_wiring.py::test_an_allowed_trigger_change_passes_only_for_that_file_table_and_trigger
+FAILED tests/test_migration_wiring.py::test_an_entry_that_names_another_schema_does_not_allow_the_change
+FAILED tests/test_migration_wiring.py::test_a_listed_trigger_may_not_be_left_disabled_or_replica_only_unless_the_entry_says_so
+FAILED tests/test_migration_wiring.py::test_the_list_of_allowed_trigger_changes_is_empty_today_and_strictly_read
+FAILED tests/test_migration_wiring.py::test_trigger_query_reads_only_the_migration_schema
+FAILED tests/test_migration_wiring.py::test_the_message_has_no_connection_string_and_escapes_names
+FAILED tests/test_migration_wiring.py::test_a_new_role_membership_after_a_file_is_refused
+FAILED tests/test_migration_wiring.py::test_a_removed_role_membership_is_refused
+FAILED tests/test_migration_wiring.py::test_a_changed_grant_option_of_a_membership_is_refused
+FAILED tests/test_migration_wiring.py::test_memberships_that_were_there_at_the_start_are_not_a_refusal
+FAILED tests/test_migration_wiring.py::test_the_membership_message_escapes_names
+FAILED tests/test_migration_wiring.py::test_the_membership_is_read_after_every_file_and_before_its_ledger_row
+FAILED tests/test_migration_wiring.py::test_the_membership_query_reads_names_and_every_other_column
+FAILED tests/test_migration_wiring.py::test_a_table_made_again_with_its_trigger_is_not_a_false_refusal
+FAILED tests/test_migration_wiring.py::test_a_trigger_on_another_table_with_the_same_name_is_another_trigger
+FAILED tests/test_migration_wiring.py::test_a_privileged_migration_role_is_refused_before_any_file_runs[rolsuper]
+FAILED tests/test_migration_wiring.py::test_a_privileged_migration_role_is_refused_before_any_file_runs[rolcreaterole]
+FAILED tests/test_migration_wiring.py::test_a_privileged_migration_role_is_refused_before_any_file_runs[rolcreatedb]
+FAILED tests/test_migration_wiring.py::test_a_privileged_migration_role_is_refused_before_any_file_runs[rolbypassrls]
+FAILED tests/test_migration_wiring.py::test_a_role_that_is_a_member_of_a_privileged_role_is_refused_before_any_file_runs
+FAILED tests/test_migration_wiring.py::test_the_membership_check_reads_the_current_user_and_all_four_flags
+FAILED tests/test_migration_wiring.py::test_the_role_flags_are_read_from_the_current_user
+FAILED tests/test_migration_wiring.py::test_the_refusal_says_how_to_make_a_plain_migration_role
+FAILED tests/test_migration_wiring.py::test_a_new_saved_setting_for_a_role_is_refused
+FAILED tests/test_migration_wiring.py::test_a_file_that_changes_a_time_limit_is_refused[lock_timeout]
+FAILED tests/test_migration_wiring.py::test_a_file_that_changes_a_time_limit_is_refused[statement_timeout]
+FAILED tests/test_migration_wiring.py::test_the_membership_message_says_it_reads_the_whole_server
+FAILED tests/test_migration_wiring.py::test_migrate_refuses_a_changed_released_file_before_it_connects
+FAILED tests/test_migration_wiring.py::test_migrate_refuses_when_the_released_list_is_unreadable_or_wrong
+FAILED tests/test_migration_wiring.py::test_the_released_list_ships_inside_the_package_and_covers_every_real_file
+FAILED tests/test_migration_wiring.py::test_the_released_check_looks_at_the_files_migrate_runs_not_at_the_folder
+FAILED tests/test_migration_wiring.py::test_a_bad_hash_in_the_released_list_is_a_config_error_not_a_changed_file
+FAILED tests/test_migration_wiring.py::test_a_json_name_written_twice_in_the_released_list_is_refused
+FAILED tests/test_migration_wiring.py::test_a_lock_wait_or_a_slow_statement_is_a_plain_config_error_naming_step_and_setting
+FAILED tests/test_migration_wiring.py::test_the_statement_limit_is_found_by_the_error_code_not_by_the_words
+ERROR tests/test_migration_numbers_guards.py - AttributeError: module 'hadavi...
+ERROR tests/test_migration_postgres.py
+ERROR tests/test_migration_rules.py
+118 failed, 236 passed, 3 deselected, 3 errors in 4.42s
+exit=1

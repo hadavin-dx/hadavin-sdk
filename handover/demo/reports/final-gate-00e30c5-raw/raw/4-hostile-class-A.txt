@@ -1,0 +1,18 @@
+A size/framing body exactly 65536 bytes (cap 65536), valid envelope but mes HTTP/1.0 202 Accepted []
+A size/framing body 65537 bytes (cap+1) HTTP/1.0 413 Request Entity Too Large []
+A size/framing body 10 MB of 'x'  ['conn err:BrokenPipeError']
+A size/framing chunked, no Content-Length HTTP/1.0 400 Bad Request []
+A size/framing Content-Length larger than body (+50), client keeps socket o HTTP/1.0 408 Request Timeout ['slow 30.0s']
+A size/framing Content-Length smaller than body (-10) HTTP/1.0 400 Bad Request []
+A size/framing Content-Length: -5 HTTP/1.0 400 Bad Request []
+A size/framing Content-Length: abc HTTP/1.0 400 Bad Request []
+A size/framing Content-Length: 99999999999999999999 HTTP/1.0 413 Request Entity Too Large []
+A size/framing two Content-Length headers (len, len+5) HTTP/1.0 400 Bad Request []
+A size/framing no Content-Length on POST /leads HTTP/1.0 400 Bad Request []
+A size/framing Content-Length: 0 HTTP/1.0 400 Bad Request []
+A size/framing Content-Length with unicode digit (arabic-indic 5) HTTP/1.0 400 Bad Request []
+A size/framing header block 100 KB HTTP/1.0 431 Request Header Fields Too Large []
+A size/framing 200 headers HTTP/1.0 431 Request Header Fields Too Large []
+A size/framing request line 70 KB HTTP/1.0 414 Request-URI Too Long []
+A size/framing liveness True True
+class A done, stopping

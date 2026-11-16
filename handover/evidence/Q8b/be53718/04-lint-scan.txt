@@ -1,0 +1,21 @@
+## ruff check
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+All checks passed!
+exit 0
+## ruff format --check
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+326 files already formatted
+exit 0
+## bandit -ll -r src tools
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+error: Failed to spawn: `bandit`
+  Caused by: No such file or directory (os error 2)
+exit 2
+## scan_repo
+
+exit 0
+## gitleaks origin/main..HEAD
+[90m4:25PM[0m [32mINF[0m [1m1 commits scanned.[0m
+[90m4:25PM[0m [32mINF[0m [1mscanned ~92456 bytes (92.46 KB) in 359ms[0m
+[90m4:25PM[0m [32mINF[0m [1mno leaks found[0m
+exit 0

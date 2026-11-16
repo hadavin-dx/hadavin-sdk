@@ -1,0 +1,1 @@
+e419fdeb606e465f5689af65b3084204647910eccd3b0d1d06435bded6da2617  /home/user/hadavin-sdk/handover/core-hardening/lead-repin/lead-repin-verify.sh

@@ -1,0 +1,16 @@
+## EV-Q8b-be53718
+space        readable=False out='<EMAIL_1> password=<SECRET_1>'
+newline      readable=False out='<EMAIL_1>\npassword=<SECRET_1>'
+comma        readable=False out='<EMAIL_1>,password=<SECRET_1>'
+zero-width   readable=True  out='<EMAIL_1>=zqhunter2secretXYZ'
+glued        readable=True  out='<EMAIL_1>=zqhunter2secretXYZ'
+glued token  readable=True  out='<EMAIL_1>=zqhunter2secretXYZ'
+semicolon    readable=False out='<EMAIL_1>;password=<SECRET_1>'
+## evq8b-main
+space        readable=False out='bob.smith@example[.]com password=<SECRET_1>'
+newline      readable=False out='bob.smith@example[.]com\npassword=<SECRET_1>'
+comma        readable=False out='bob.smith@example[.]com,password=<SECRET_1>'
+zero-width   readable=False out='bob.smith@example[.]compassword=<SECRET_1>'
+glued        readable=False out='bob.smith@example[.]compassword=<SECRET_1>'
+glued token  readable=False out='bob.smith@example[.]comtoken=<SECRET_1>'
+semicolon    readable=False out='bob.smith@example[.]com;password=<SECRET_1>'

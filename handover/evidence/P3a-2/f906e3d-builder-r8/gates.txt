@@ -1,0 +1,14 @@
+head=f906e3d python=3.13/3.12 postgres=16.15
+All checks passed!
+330 files already formatted
+[manager]	WARNING	Test in comment: SafeLoader is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: subclass is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: the is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: pinned is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: bytes is not a test name or id, ignoring
+[tester]	WARNING	nosec encountered (B102), but no failed test on file src/hadavin_sdk/tools.py:389
+[tester]	WARNING	nosec encountered (B102), but no failed test on file src/hadavin_sdk/tools.py:389
+12:22AM INF 85 commits scanned.
+12:22AM INF scanned ~4168478 bytes (4.17 MB) in 867ms
+12:22AM INF no leaks found
+ruff=0 fmt=0 bandit=0 gitleaks=0 (run on adef142; ruff/fmt/gitleaks re-run on f906e3d: all 0)

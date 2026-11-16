@@ -1,0 +1,177 @@
+hadavin_sdk imported from: /home/user/build/EV-Q8a2-r4/src/hadavin_sdk/__init__.py
+
+==== fake kind: channel FakeChannel, path '/channel/actions', read_timeout_s=2.0, 127.0.0.1:46249
+ -- Content-Length forms (bad signature, 9-byte body sent; first at the right path)
+  CL empty value -> HTTP/1.0 400 Bad Request (client waited 0.01s) | server stderr lines: 0
+  CL header twice (9 and 9) -> HTTP/1.0 400 Bad Request (client waited 0.00s) | server stderr lines: 0
+  CL header twice (9 and 5) -> HTTP/1.0 400 Bad Request (client waited 0.00s) | server stderr lines: 0
+  CL 12 digits (999999999999) -> HTTP/1.0 413 Content Too Large (client waited 0.00s) | server stderr lines: 0
+  CL 13 digits -> HTTP/1.0 413 Content Too Large (client waited 0.00s) | server stderr lines: 0
+  CL 4000 digits -> HTTP/1.0 413 Content Too Large (client waited 0.00s) | server stderr lines: 0
+  CL 4301 digits -> HTTP/1.0 413 Content Too Large (client waited 0.00s) | server stderr lines: 0
+  CL 10000 digits -> HTTP/1.0 413 Content Too Large (client waited 0.00s) | server stderr lines: 0
+  CL minus 5 -> HTTP/1.0 400 Bad Request (client waited 0.00s) | server stderr lines: 0
+  CL plus 5 -> HTTP/1.0 400 Bad Request (client waited 0.00s) | server stderr lines: 0
+  CL plus 9 -> HTTP/1.0 400 Bad Request (client waited 0.00s) | server stderr lines: 0
+  CL Arabic-Indic digit U+0665 as UTF-8 bytes -> HTTP/1.0 400 Bad Request (client waited 0.00s) | server stderr lines: 0
+  CL fullwidth digit U+FF15 as UTF-8 bytes -> HTTP/1.0 400 Bad Request (client waited 0.00s) | server stderr lines: 0
+  CL superscript two U+00B2 latin-1 byte -> HTTP/1.0 400 Bad Request (client waited 0.00s) | server stderr lines: 0
+  CL hex 0x10 -> HTTP/1.0 400 Bad Request (client waited 0.00s) | server stderr lines: 0
+  CL hex 0x9 -> HTTP/1.0 400 Bad Request (client waited 0.00s) | server stderr lines: 0
+  CL underscore 1_0 -> HTTP/1.0 400 Bad Request (client waited 0.00s) | server stderr lines: 0
+  CL float 9.0 -> HTTP/1.0 400 Bad Request (client waited 0.00s) | server stderr lines: 0
+  CL 1e1 -> HTTP/1.0 400 Bad Request (client waited 0.00s) | server stderr lines: 0
+  CL trailing space (9 ) -> HTTP/1.0 400 Bad Request (client waited 0.00s) | server stderr lines: 0
+  CL leading space ( 9) -> HTTP/1.0 401 Unauthorized (client waited 0.00s) | server stderr lines: 0
+  CL zero -> HTTP/1.0 401 Unauthorized (client waited 0.00s) | server stderr lines: 0
+  CL leading zeros 0009 -> HTTP/1.0 401 Unauthorized (client waited 0.00s) | server stderr lines: 0
+  CL 65536 (limit) but 9 bytes sent -> no status (0 bytes; connection closed) (client waited 2.01s) | server stderr lines: 0
+  CL 65537 -> HTTP/1.0 413 Content Too Large (client waited 0.00s) | server stderr lines: 0
+  CL no Content-Length header -> HTTP/1.0 401 Unauthorized (client waited 0.00s) | server stderr lines: 0
+ -- same Content-Length forms at a WRONG path (expect 404 whatever the header)
+  wrong path, CL empty value -> HTTP/1.0 404 Not Found (client waited 0.00s) | server stderr lines: 0
+  wrong path, CL header twice (9 and 9) -> HTTP/1.0 404 Not Found (client waited 0.00s) | server stderr lines: 0
+  wrong path, CL header twice (9 and 5) -> HTTP/1.0 404 Not Found (client waited 0.00s) | server stderr lines: 0
+  wrong path, CL 12 digits (999999999999) -> HTTP/1.0 404 Not Found (client waited 0.00s) | server stderr lines: 0
+  wrong path, CL 13 digits -> HTTP/1.0 404 Not Found (client waited 0.00s) | server stderr lines: 0
+  wrong path, CL 4000 digits -> HTTP/1.0 404 Not Found (client waited 0.00s) | server stderr lines: 0
+  wrong path, CL 4301 digits -> HTTP/1.0 404 Not Found (client waited 0.00s) | server stderr lines: 0
+  wrong path, CL 10000 digits -> HTTP/1.0 404 Not Found (client waited 0.00s) | server stderr lines: 0
+  wrong path, CL minus 5 -> HTTP/1.0 404 Not Found (client waited 0.00s) | server stderr lines: 0
+  wrong path, CL plus 5 -> HTTP/1.0 404 Not Found (client waited 0.00s) | server stderr lines: 0
+  wrong path, CL plus 9 -> HTTP/1.0 404 Not Found (client waited 0.00s) | server stderr lines: 0
+  wrong path, CL Arabic-Indic digit U+0665 as UTF-8 bytes -> HTTP/1.0 404 Not Found (client waited 0.00s) | server stderr lines: 0
+  wrong path, CL fullwidth digit U+FF15 as UTF-8 bytes -> HTTP/1.0 404 Not Found (client waited 0.00s) | server stderr lines: 0
+ -- slow and short requests
+  slow first line (1 byte / 0.5 s, never ends) -> no status (0 bytes; connection closed) [send stopped: BrokenPipeError] (client waited 3.00s) | server stderr lines: 0
+  slow headers (1 byte / 0.5 s) -> no status (0 bytes; connection closed) [send stopped: BrokenPipeError] (client waited 3.00s) | server stderr lines: 0
+  slow body (CL 30, 1 byte / 0.5 s, 30 bytes) -> no status (0 bytes; connection closed) [send stopped: BrokenPipeError] (client waited 3.00s) | server stderr lines: 0
+  short body (CL 100, 9 sent, connection kept open) -> no status (0 bytes; connection closed) (client waited 2.01s) | server stderr lines: 0
+  connect and send nothing -> no status (0 bytes; connection closed) (waited 2.40s) | server stderr lines: 0
+ -- connection reset
+  RST mid-headers -> client sent RST mid-headers | server stderr lines: 0
+  RST mid-body (CL 30, 3 sent) -> client sent RST mid-body | server stderr lines: 0
+  RST right after the whole bad-signature request -> client sent RST right after the whole request | server stderr lines: 0
+  RST right after a correctly signed request (handler fails: store is None) -> client sent RST right after the whole request | server stderr lines: 1
+ -- header count and size
+  99 extra headers (+ 6 normal) -> HTTP/1.0 431 Too many headers (client waited 0.00s) | server stderr lines: 0
+  100 extra headers (+ 6 normal) -> HTTP/1.0 431 Too many headers (client waited 0.00s) | server stderr lines: 0
+  101 extra headers (+ 6 normal) -> HTTP/1.0 431 Too many headers (client waited 0.01s) | server stderr lines: 0
+  200 extra headers (+ 6 normal) -> HTTP/1.0 431 Too many headers (client waited 0.00s) | server stderr lines: 0
+  5000 extra headers (+ 6 normal) -> HTTP/1.0 431 Too many headers (client waited 0.01s) | server stderr lines: 0
+  one header value of 70000 bytes -> HTTP/1.0 431 Line too long (client waited 0.00s) | server stderr lines: 0
+  request line of 70000 bytes -> HTTP/1.0 414 URI Too Long (client waited 0.00s) | server stderr lines: 0
+ -- request line forms (bad signature; right path unless said)
+  tab between words -> HTTP/1.0 401 Unauthorized (client waited 0.00s) | server stderr lines: 0
+  vertical tab -> HTTP/1.0 401 Unauthorized (client waited 0.00s) | server stderr lines: 0
+  0x1C -> HTTP/1.0 401 Unauthorized (client waited 0.00s) | server stderr lines: 0
+  two spaces -> HTTP/1.0 401 Unauthorized (client waited 0.00s) | server stderr lines: 0
+  doubled slash path -> HTTP/1.0 404 Not Found (client waited 0.00s) | server stderr lines: 0
+  tripled slash path -> HTTP/1.0 404 Not Found (client waited 0.00s) | server stderr lines: 0
+  percent-encoded first letter -> HTTP/1.0 404 Not Found (client waited 0.00s) | server stderr lines: 0
+  percent-encoded slash -> HTTP/1.0 404 Not Found (client waited 0.00s) | server stderr lines: 0
+  query on right path -> HTTP/1.0 404 Not Found (client waited 0.00s) | server stderr lines: 0
+  trailing slash -> HTTP/1.0 404 Not Found (client waited 0.00s) | server stderr lines: 0
+  no version (HTTP/0.9 style) -> HTTP/1.0 400 Bad HTTP/0.9 request type ('POST') (client waited 0.00s) | server stderr lines: 0
+  lowercase method -> HTTP/1.0 501 Unsupported method ('post') (client waited 0.00s) | server stderr lines: 0
+  absolute form -> HTTP/1.0 404 Not Found (client waited 0.00s) | server stderr lines: 0
+  path then extra word -> HTTP/1.0 400 Bad request syntax ('POST /channel/actions x HT (client waited 0.00s) | server stderr lines: 0
+  no-break space (latin-1 0xA0) between words -> HTTP/1.0 401 Unauthorized (client waited 0.00s) | server stderr lines: 0
+ -- failure inside the handler
+  correctly signed click, store None (handler raises AttributeError) -> HTTP/1.0 500 Internal Server Error (client waited 0.00s) | server stderr lines: 1
+  correctly signed click, store None, second time -> HTTP/1.0 500 Internal Server Error (client waited 0.00s) | server stderr lines: 1
+  right path, correct signature, 70000-byte body -> HTTP/1.0 413 Content Too Large (client waited 0.00s) | server stderr lines: 0
+  GET on the right path -> HTTP/1.0 501 Unsupported method ('GET') (client waited 0.00s) | server stderr lines: 0
+  PUT on the right path -> HTTP/1.0 501 Unsupported method ('PUT') (client waited 0.00s) | server stderr lines: 0
+  server closed; thread alive: False
+
+==== slack kind: channel SlackChannel, path '/slack/actions', read_timeout_s=2.0, 127.0.0.1:34799
+ -- Content-Length forms (bad signature, 9-byte body sent; first at the right path)
+  CL empty value -> HTTP/1.0 400 Bad Request (client waited 0.00s) | server stderr lines: 0
+  CL header twice (9 and 9) -> HTTP/1.0 400 Bad Request (client waited 0.00s) | server stderr lines: 0
+  CL header twice (9 and 5) -> HTTP/1.0 400 Bad Request (client waited 0.00s) | server stderr lines: 0
+  CL 12 digits (999999999999) -> HTTP/1.0 413 Content Too Large (client waited 0.00s) | server stderr lines: 0
+  CL 13 digits -> HTTP/1.0 413 Content Too Large (client waited 0.00s) | server stderr lines: 0
+  CL 4000 digits -> HTTP/1.0 413 Content Too Large (client waited 0.00s) | server stderr lines: 0
+  CL 4301 digits -> HTTP/1.0 413 Content Too Large (client waited 0.00s) | server stderr lines: 0
+  CL 10000 digits -> HTTP/1.0 413 Content Too Large (client waited 0.00s) | server stderr lines: 0
+  CL minus 5 -> HTTP/1.0 400 Bad Request (client waited 0.00s) | server stderr lines: 0
+  CL plus 5 -> HTTP/1.0 400 Bad Request (client waited 0.00s) | server stderr lines: 0
+  CL plus 9 -> HTTP/1.0 400 Bad Request (client waited 0.00s) | server stderr lines: 0
+  CL Arabic-Indic digit U+0665 as UTF-8 bytes -> HTTP/1.0 400 Bad Request (client waited 0.00s) | server stderr lines: 0
+  CL fullwidth digit U+FF15 as UTF-8 bytes -> HTTP/1.0 400 Bad Request (client waited 0.00s) | server stderr lines: 0
+  CL superscript two U+00B2 latin-1 byte -> HTTP/1.0 400 Bad Request (client waited 0.00s) | server stderr lines: 0
+  CL hex 0x10 -> HTTP/1.0 400 Bad Request (client waited 0.00s) | server stderr lines: 0
+  CL hex 0x9 -> HTTP/1.0 400 Bad Request (client waited 0.00s) | server stderr lines: 0
+  CL underscore 1_0 -> HTTP/1.0 400 Bad Request (client waited 0.00s) | server stderr lines: 0
+  CL float 9.0 -> HTTP/1.0 400 Bad Request (client waited 0.00s) | server stderr lines: 0
+  CL 1e1 -> HTTP/1.0 400 Bad Request (client waited 0.00s) | server stderr lines: 0
+  CL trailing space (9 ) -> HTTP/1.0 400 Bad Request (client waited 0.00s) | server stderr lines: 0
+  CL leading space ( 9) -> HTTP/1.0 401 Unauthorized (client waited 0.00s) | server stderr lines: 0
+  CL zero -> HTTP/1.0 401 Unauthorized (client waited 0.00s) | server stderr lines: 0
+  CL leading zeros 0009 -> HTTP/1.0 401 Unauthorized (client waited 0.00s) | server stderr lines: 0
+  CL 65536 (limit) but 9 bytes sent -> no status (0 bytes; connection closed) (client waited 2.01s) | server stderr lines: 0
+  CL 65537 -> HTTP/1.0 413 Content Too Large (client waited 0.01s) | server stderr lines: 0
+  CL no Content-Length header -> HTTP/1.0 401 Unauthorized (client waited 0.00s) | server stderr lines: 0
+ -- same Content-Length forms at a WRONG path (expect 404 whatever the header)
+  wrong path, CL empty value -> HTTP/1.0 404 Not Found (client waited 0.00s) | server stderr lines: 0
+  wrong path, CL header twice (9 and 9) -> HTTP/1.0 404 Not Found (client waited 0.00s) | server stderr lines: 0
+  wrong path, CL header twice (9 and 5) -> HTTP/1.0 404 Not Found (client waited 0.00s) | server stderr lines: 0
+  wrong path, CL 12 digits (999999999999) -> HTTP/1.0 404 Not Found (client waited 0.00s) | server stderr lines: 0
+  wrong path, CL 13 digits -> HTTP/1.0 404 Not Found (client waited 0.00s) | server stderr lines: 0
+  wrong path, CL 4000 digits -> HTTP/1.0 404 Not Found (client waited 0.00s) | server stderr lines: 0
+  wrong path, CL 4301 digits -> HTTP/1.0 404 Not Found (client waited 0.00s) | server stderr lines: 0
+  wrong path, CL 10000 digits -> HTTP/1.0 404 Not Found (client waited 0.00s) | server stderr lines: 0
+  wrong path, CL minus 5 -> HTTP/1.0 404 Not Found (client waited 0.00s) | server stderr lines: 0
+  wrong path, CL plus 5 -> HTTP/1.0 404 Not Found (client waited 0.00s) | server stderr lines: 0
+  wrong path, CL plus 9 -> HTTP/1.0 404 Not Found (client waited 0.00s) | server stderr lines: 0
+  wrong path, CL Arabic-Indic digit U+0665 as UTF-8 bytes -> HTTP/1.0 404 Not Found (client waited 0.00s) | server stderr lines: 0
+  wrong path, CL fullwidth digit U+FF15 as UTF-8 bytes -> HTTP/1.0 404 Not Found (client waited 0.00s) | server stderr lines: 0
+ -- slow and short requests
+  slow first line (1 byte / 0.5 s, never ends) -> no status (0 bytes; connection closed) [send stopped: BrokenPipeError] (client waited 3.00s) | server stderr lines: 0
+  slow headers (1 byte / 0.5 s) -> no status (0 bytes; connection closed) [send stopped: BrokenPipeError] (client waited 3.00s) | server stderr lines: 0
+  slow body (CL 30, 1 byte / 0.5 s, 30 bytes) -> no status (0 bytes; connection closed) [send stopped: BrokenPipeError] (client waited 3.00s) | server stderr lines: 0
+  short body (CL 100, 9 sent, connection kept open) -> no status (0 bytes; connection closed) (client waited 2.00s) | server stderr lines: 0
+  connect and send nothing -> no status (0 bytes; connection closed) (waited 2.40s) | server stderr lines: 0
+ -- connection reset
+  RST mid-headers -> client sent RST mid-headers | server stderr lines: 0
+  RST mid-body (CL 30, 3 sent) -> client sent RST mid-body | server stderr lines: 0
+  RST right after the whole bad-signature request -> client sent RST right after the whole request | server stderr lines: 0
+  RST right after a correctly signed request (handler fails: store is None) -> client sent RST right after the whole request | server stderr lines: 1
+ -- header count and size
+  99 extra headers (+ 6 normal) -> HTTP/1.0 431 Too many headers (client waited 0.00s) | server stderr lines: 0
+  100 extra headers (+ 6 normal) -> HTTP/1.0 431 Too many headers (client waited 0.00s) | server stderr lines: 0
+  101 extra headers (+ 6 normal) -> HTTP/1.0 431 Too many headers (client waited 0.00s) | server stderr lines: 0
+  200 extra headers (+ 6 normal) -> HTTP/1.0 431 Too many headers (client waited 0.00s) | server stderr lines: 0
+  5000 extra headers (+ 6 normal) -> HTTP/1.0 431 Too many headers (client waited 0.01s) | server stderr lines: 0
+  one header value of 70000 bytes -> HTTP/1.0 431 Line too long (client waited 0.00s) | server stderr lines: 0
+  request line of 70000 bytes -> HTTP/1.0 414 URI Too Long (client waited 0.00s) | server stderr lines: 0
+ -- request line forms (bad signature; right path unless said)
+  tab between words -> HTTP/1.0 401 Unauthorized (client waited 0.00s) | server stderr lines: 0
+  vertical tab -> HTTP/1.0 401 Unauthorized (client waited 0.00s) | server stderr lines: 0
+  0x1C -> HTTP/1.0 401 Unauthorized (client waited 0.00s) | server stderr lines: 0
+  two spaces -> HTTP/1.0 401 Unauthorized (client waited 0.00s) | server stderr lines: 0
+  doubled slash path -> HTTP/1.0 404 Not Found (client waited 0.00s) | server stderr lines: 0
+  tripled slash path -> HTTP/1.0 404 Not Found (client waited 0.00s) | server stderr lines: 0
+  percent-encoded first letter -> HTTP/1.0 404 Not Found (client waited 0.01s) | server stderr lines: 0
+  percent-encoded slash -> HTTP/1.0 404 Not Found (client waited 0.00s) | server stderr lines: 0
+  query on right path -> HTTP/1.0 404 Not Found (client waited 0.00s) | server stderr lines: 0
+  trailing slash -> HTTP/1.0 404 Not Found (client waited 0.00s) | server stderr lines: 0
+  no version (HTTP/0.9 style) -> HTTP/1.0 400 Bad HTTP/0.9 request type ('POST') (client waited 0.00s) | server stderr lines: 0
+  lowercase method -> HTTP/1.0 501 Unsupported method ('post') (client waited 0.00s) | server stderr lines: 0
+  absolute form -> HTTP/1.0 404 Not Found (client waited 0.00s) | server stderr lines: 0
+  path then extra word -> HTTP/1.0 400 Bad request syntax ('POST /slack/actions x HTTP (client waited 0.00s) | server stderr lines: 0
+  no-break space (latin-1 0xA0) between words -> HTTP/1.0 401 Unauthorized (client waited 0.00s) | server stderr lines: 0
+ -- failure inside the handler
+  correctly signed click, store None (handler raises AttributeError) -> HTTP/1.0 500 Internal Server Error (client waited 0.00s) | server stderr lines: 1
+  correctly signed click, store None, second time -> HTTP/1.0 500 Internal Server Error (client waited 0.00s) | server stderr lines: 1
+  right path, correct signature, 70000-byte body -> HTTP/1.0 413 Content Too Large (client waited 0.01s) | server stderr lines: 0
+  GET on the right path -> HTTP/1.0 501 Unsupported method ('GET') (client waited 0.00s) | server stderr lines: 0
+  PUT on the right path -> HTTP/1.0 501 Unsupported method ('PUT') (client waited 0.00s) | server stderr lines: 0
+  server closed; thread alive: False
+
+==== str-subclass path
+  serve() with a str-subclass path (__eq__ always True) raised ConfigError: channel fake: callback_path must be a path such as /channel/actions (a `/`, then lower-case letters and digits in parts joined by `/` or `-`, at most 64 characters)
+  serve() with a plain str subclass raised ConfigError: channel fake: callback_path must be a path such as /channel/actions (a `/`, then lower-case letters and digits in parts joined by `/` or `-`, at most 64 characters)
+
+non-loopback connections attempted: 0; threads alive: ['MainThread']

@@ -1,0 +1,6 @@
+wt 1 rc=1 1 failed in 0.59s
+wt 2 rc=0 1 passed in 0.62s
+wt 3 rc=1 1 failed in 0.62s
+wt-main 1 rc=1 1 failed in 0.64s
+wt-main 2 rc=1 1 failed in 0.59s
+wt-main 3 rc=1 1 failed in 0.59s

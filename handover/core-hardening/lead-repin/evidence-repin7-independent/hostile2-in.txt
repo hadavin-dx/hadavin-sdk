@@ -1,0 +1,85 @@
+{\"password\": \"qzvxmrtkab\"}
+{\"api_key\":\"qzvxmrtkac\", "x":1}
+"{\"token\": \"qzvxmrtkad\"}"
+{"pass\u0077ord": "qzvxmrtkae"}
+{"\u0070assword":"qzvxmrtkaf"}
+{"\u0061pi_key": "qzvxmrtkag"}
+mysql -u root -pqzvxmrtkah -h localhost
+mysql -h db -u root -p qzvxmrtkai mydb
+mysql --password=qzvxmrtkaj -u r
+mysql --password qzvxmrtkak -u r
+sshpass -p qzvxmrtkal ssh host
+cd /x && mysql -u a -pqzvxmrtkam
+ls; mysql -u a -pqzvxmrtkan
+cat f | mysql -u a -pqzvxmrtkao
+(mysql -u a -pqzvxmrtkap)
+X=1 mysql -u a -pqzvxmrtkaq
+/usr/bin/mysql -u a -pqzvxmrtkar db
+echo $(mysql -u a -pqzvxmrtkas)
+mysql -u a -p'qzvxmrtkat with space' db
+mysql -u a -p"qzvxmrtkau two words" db
+  mysql \
+    -p qzvxmrtkav \
+    db
+DBPASS=qzvxmrtkaw
+ROOTPW=qzvxmrtkax
+requirepass qzvxmrtkay
+requirepass=qzvxmrtkaz
+masterauth qzvxmrtkba
+jsessionid=qzvxmrtkbb
+<password>qzvxmrtkbc</password>
+<apiKey>qzvxmrtkbd</apiKey>
+<secret> qzvxmrtkbe </secret>
+password := qzvxmrtkbf
+db_password:=qzvxmrtkbg
+token := 'qzvxmrtkbh'
+api_key:= "qzvxmrtkbi"
+CREATE USER x IDENTIFIED BY 'qzvxmrtkbj';
+ALTER USER x IDENTIFIED BY qzvxmrtkbk;
+identified   by  "qzvxmrtkbl"
+GRANT ALL TO u IDENTIFIED WITH mysql_native_password BY 'qzvxmrtkbm'
+https://alice:qzvxmrtkbn@example.test/path
+postgres://bobby:qzvxmrtkbo@db.internal:5432/x
+//carol:qzvxmrtkbp@host/path
+ftp://dave:qzvxmrtkbq@h
+dave:qzvxmrtkbr@host.example.test
+user:qzvxmrtkbs@host:22
+git clone https://tok:qzvxmrtkbt@git.example.test/r.git
+https://ghuser:qzvxmrtkbu%40x@host/
+Authorization: Bearer qzvxmrtkbv
+authorization: bearer qzvxmrtkbw$!#x
+Authorization: Basic qzvxmrtkbx
+curl -H 'Authorization: Bearer qzvxmrtkby' u
+git config http.extraheader 'AUTHORIZATION: bearer qzvxmrtkbz'
+git config --global url.https://u:qzvxmrtkca@h/.insteadOf x
+git -c credential.helper='store --file=qzvxmrtkcb' x
+[credential]
+  helper = !f() { echo password=qzvxmrtkcc; }; f
+[http]
+	extraHeader = Authorization: Bearer qzvxmrtkcd
+[url "https://u:qzvxmrtkce@h/"]
+	insteadOf = x
+echo qzvxmrtkcf | sudo -S ls
+echo qzvxmrtkcg | kinit user
+echo qzvxmrtkch | ssh-add
+secret_key: qzvxmrtkci
+client_secret = "qzvxmrtkcj"
+AWS_SECRET_ACCESS_KEY=qzvxmrtkck
+export PASSWORD='qzvxmrtkcl'
+password == "qzvxmrtkcm"
+{'password': 'qzvxmrtkcn'}
+password: [qzvxmrtkco, other]
+password="qzvxmrtkcp" next=1
+passwd=qzvxmrtkcq;other=1
+pwd=qzvxmrtkcr
+PRIVATE_KEY=qzvxmrtkcs
+x-api-key: qzvxmrtkct
+apikey=qzvxmrtkcu&b=1
+?token=qzvxmrtkcv&x=1
+key = qzvxmrtkcw
+password	qzvxmrtkcx
+password : qzvxmrtkcy # comment
+set password for u = 'qzvxmrtkcz'
+--password 'qzvxmrtkda'
+--token=qzvxmrtkdb
+-H "X-Auth-Token: qzvxmrtkdc"

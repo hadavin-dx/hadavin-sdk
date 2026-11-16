@@ -1,0 +1,24 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+Using CPython 3.13.18 interpreter at: /usr/local/bin/python3
+Creating virtual environment at: .venv
+   Building hadavin-sdk @ file:///home/user/build/B-cilint-b3
+      Built hadavin-sdk @ file:///home/user/build/B-cilint-b3
+Installed 93 packages in 237ms
+F
+=================================== FAILURES ===================================
+___________________ test_relative_imports_are_banned_by_ruff ___________________
+
+    def test_relative_imports_are_banned_by_ruff():
+        cfg = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["tool"]["ruff"][
+            "lint"
+        ]
+>       assert "TID" in cfg["extend-select"]
+                        ^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'extend-select'
+
+tests/test_k5_classes.py:522: KeyError
+=========================== short test summary info ============================
+FAILED tests/test_k5_classes.py::test_relative_imports_are_banned_by_ruff - K...
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed in 0.51s
+rc=1

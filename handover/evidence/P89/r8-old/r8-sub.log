@@ -1,0 +1,17 @@
+ok  KILLED       runner: the unicode_escape form of a value is not a secret  [test_a_value_printed_in_two_layers_is_masked_whatever_quotes]
+ok  KILLED       runner: the UTF-8 JSON form of a value is not a secret  [test_a_value_is_masked_as_json_writes_it]
+ok  KILLED       runner: the bytes form of a value is not a secret  [test_a_value_is_masked_as_the_repr_of_its_bytes_prints_it]
+ok  KILLED       runner: a quote mark written with a backslash is not a form  [test_a_value_with_one_quote_kind_is_masked_inside_a_text_tha]
+ok  KILLED       runner: the double-quote-escaped forms are not built  [test_a_value_with_one_quote_kind_is_masked_inside_a_text_tha]
+ok  KILLED       runner: the repr form of a value is not a form  [test_a_value_with_a_control_character_and_a_non_ascii_letter]
+ok  KILLED       runner: the plain form of a value is not a form  [test_a_value_with_a_backslash_is_masked_as_repr_prints_it]
+ok  KILLED       runner: the printed layers are not kept  [test_a_value_with_both_quote_kinds_is_masked_as_repr_of_repr]
+ok  KILLED       runner: the ASCII JSON whole-text encoder is not built  [test_a_value_printed_in_two_layers_is_masked_whatever_quotes]
+ok  KILLED       runner: only one layer of printing is built  [test_a_value_printed_in_two_layers_is_masked_whatever_quotes]
+ok  KILLED       runner: the both-quote-kinds print is not built  [test_a_value_printed_in_two_layers_is_masked_whatever_quotes]
+ok  KILLED       runner: the ascii whole-text encoder is not built  [test_a_value_printed_in_two_layers_is_masked_whatever_quotes]
+BAD SURVIVED     runner: a single quote is never escaped in a layer-0 form  []
+      first line: 
+ok  KILLED       runner: a bare password is not masked in two layers  [test_a_bare_password_printed_in_two_layers_is_masked_whateve]
+13 of 14 good; problems: ['runner: a single quote is never escaped in a layer-0 form']
+exit=1

@@ -1,0 +1,7 @@
+price per call cents 27
+x3 81
+limit cents 1321
+860/60 14.33
+last start 2026-11-23 18:14:40 +5:30 2026-11-23 23:44:40
+latest start 23 Nov 2026-11-23 17:39:00
+pointer and pair checks: see 01-check-both.txt (C04, C11)

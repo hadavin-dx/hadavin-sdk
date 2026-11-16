@@ -1,0 +1,8 @@
+E         
+E         Right contains one more item: 'detector: madeup_vendor'
+E         Use -v to get more diff
+
+tests/test_client_profile.py:470: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_client_profile.py::test_t7a5_a_detector_kind_nobody_reviewed_is_treated_as_sending_text_out
+1 failed, 66 passed in 0.85s

@@ -1,0 +1,16 @@
+N01 | facts: call ceiling 3 -> 4 (0.27 x 3 = 0.81 / 13.21 arithmetic) | build rc=0 check rc=1 (1 occ) | FAIL C03 facts money differs
+N02 | facts: ledger 1240 -> 1250 (limit 13.21 -> 13.31) | build rc=0 check rc=1 (1 occ) | FAIL C03 facts money differs
+N03 | facts: price tokens out 10000 -> 11000 (0.27 -> 0.29) | build rc=1 check rc=1 (1 occ) | AssertionError
+N04 | facts: one IST time wrong (postby 20:30 -> 20:00) | build rc=0 check rc=1 (1 occ) | FAIL C03 post-by
+N05 | source: hard-coded wrong UTC/IST pair inserted in sheet | build rc=0 check rc=1 (1 occ) | FAIL C04 OWNER-SHEET-v27-A.md bad pair 09:00 UTC = 15:00 IST
+N06 | source: B fourth alarm removed | build rc=0 check rc=1 (1 occ) | FAIL C138 B lacks 'alarm 4 at 16:00 UTC = 21:30 IST (do 7.11 now, whatever else is open)'
+N07 | source: B 7.11 removed from the decline route | build rc=0 check rc=1 (1 occ) | FAIL C137 B lacks '(after your yes, 7.11 is still due by 16:00 UTC = 21:30 IST)'
+N08 | source: minimum think-time slot removed from the numbers-message slots | build rc=0 check rc=1 (1 occ) | FAIL C129 A lacks 'Minimum think time: 20 seconds'
+N09 | source: typed-figure line removed | build rc=0 check rc=1 (1 occ) | FAIL C141 A lacks 'Test program asks you to type a figure: no'
+N10 | source: look key step 5.9 cancel word removed | build rc=0 check rc=1 (1 occ) | FAIL C106 A lacks 'write on the card the three words you see: cancel button, confirmation'
+N11 | source: key-shaped string (built from parts) inserted in sheet | build rc=0 check rc=1 (1 occ) | FAIL C55 A holds secret-shaped text (pattern \bsk-[A-Za-z0-9_-]{8,})
+N12 | lead note source: "never deletes" replaced by a delete instruction | build rc=0 check rc=1 (2 occ) | FAIL C19 pointer not in the verified list: note|he account now (lead answer |Q23
+N13 | source: think time wait hard-coded to 10 seconds | build rc=0 check rc=1 (1 occ) | FAIL C140 A lacks 'Wait at least 20 seconds (the minimum think time of the message; the p'
+N14 | facts: think 20 -> 10 | build rc=0 check rc=1 (1 occ) | FAIL C129 A lacks 'Minimum think time: 20 seconds'
+N15 | source: second key-shaped string (AWS-style, built from parts) inserted | build rc=0 check rc=1 (1 occ) | FAIL C49 A holds number 5678 (allowed: ['1,000,000', '10,000', '10000', '1500', '2026', '40,000', '40000'])
+N16 | source: deadline weekday wrong in sheet text | build rc=0 check rc=1 (1 occ) | FAIL C04 OWNER-SHEET-v27-A.md wrong weekday Tue 16 Nov 2026

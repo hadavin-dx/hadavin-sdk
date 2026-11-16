@@ -1,0 +1,9 @@
+ruffcheck rc=0
+ruffformat rc=0
+bandit rc=0
+scan rc=0
+stage rc=1
+numbers rc=0
+pytest rc=1
+gitleaks rc=0
+DONE

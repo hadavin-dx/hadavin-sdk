@@ -1,0 +1,35 @@
+diff --git a/src/hadavin_sdk/config.py b/src/hadavin_sdk/config.py
+index dfa135b..48207fe 100644
+--- a/src/hadavin_sdk/config.py
++++ b/src/hadavin_sdk/config.py
+@@ -362,6 +362,15 @@ class Config(_Strict):
+                     f"system {name}: base_url must be https "
+                     f"(http only for loopback with allow_insecure_loopback): {system.base_url}"
+                 )
++        if self.backends.llm.kind != "fake":
++            # A zero or negative price makes every reply cost 0: no spend limit could fire (audit C-01).
++            free = sorted(
++                n
++                for n, r in self.routes.items()
++                if min(r.input_usd_per_mtok, r.output_usd_per_mtok) <= 0
++            )
++            if free:
++                raise ValueError(f"routes with a zero or negative price: {free}")
+         refused = []  # environment table, design 4.6: every refusal at once, so one fix round is enough
+         if self.environment != "dev":
+             refused = [
+diff --git a/src/hadavin_sdk/guard/redact.py b/src/hadavin_sdk/guard/redact.py
+index e615f92..de4ca53 100644
+--- a/src/hadavin_sdk/guard/redact.py
++++ b/src/hadavin_sdk/guard/redact.py
+@@ -13,8 +13,8 @@ the other copies of each found value - every copy of a SECRET, every standalone
+ text: a value found in any of them is masked in all of them (redact_many, second review 2026-09-30).
+ 
+ ⚠ What this is not (audit A-C-23): nothing here can see a secret NO pattern matches. The patterns are
+-the control; HIGHENTROPY is their backstop; the outbound gate's G5 re-runs them, independently, on
+-everything that leaves. (A re-scan inside redact() used the sweep's own rule and could never fire, so
++the control; HIGHENTROPY is their backstop. An independent second check at the outbound gate (G5) is
++NOT built yet (approvals/gate.py says so). (A re-scan inside redact() used the sweep's own rule and could never fire, so
+ it was removed - second review, 2026-09-30.)
+ """
+ 

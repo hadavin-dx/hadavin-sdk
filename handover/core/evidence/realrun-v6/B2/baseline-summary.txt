@@ -1,0 +1,9 @@
+M rc=0 wall=2s
+CN rc=0 wall=4s
+P rc=0 wall=1s
+SK rc=1 wall=54s
+SK rc=0 wall=52s
+R rc=0 wall=147s
+DONE
+R rc=0 wall=178s
+DONE

@@ -1,0 +1,42 @@
+B01	default-rev	MISSED	0 f=0	SUMMARY: 221 checks, 0 FAILED
+B02	default-rev	MISSED	0 f=0	SUMMARY: 221 checks, 0 FAILED
+B03	default-rev	CAUGHT	1 f=3	SUMMARY: 221 checks, 3 FAILED: c6u N5: the start box is under 2,500 words (c6s: 3,488; 2379 words now) and states its own real count; E-count: the sta
+B04	count	CAUGHT	1 f=11	SUMMARY: 221 checks, 11 FAILED: box prints all four card lines exactly as the rows have them and the total (97 words, about 39 s, budget 40 s); row 11
+B05	count	CAUGHT	1 f=8	SUMMARY: 221 checks, 8 FAILED: box prints all four card lines exactly as the rows have them and the total (94 words, about 38 s, budget 40 s); row 11 
+B06	default-rev	MISSED	0 f=0	SUMMARY: 221 checks, 0 FAILED
+B07	default-rev	MISSED	0 f=0	SUMMARY: 221 checks, 0 FAILED
+B08	default-rev	MISSED	0 f=0	SUMMARY: 221 checks, 0 FAILED
+B09	default-rev	CAUGHT	1 f=1	SUMMARY: 221 checks, 1 FAILED: E-defaults: the default of each question in the start box starts with the same word as the default in section 3 (15 lab
+B10	default-rev	CAUGHT	1 f=1	SUMMARY: 221 checks, 1 FAILED: E-defaults: the default of each question in the start box starts with the same word as the default in section 3 (15 lab
+B11	default-rev	CAUGHT	1 f=1	SUMMARY: 221 checks, 1 FAILED: E-defaults: the default of each question in the start box starts with the same word as the default in section 3 (15 lab
+B12	default-rev	CAUGHT	1 f=1	SUMMARY: 221 checks, 1 FAILED: E-defaults: the default of each question in the start box starts with the same word as the default in section 3 (15 lab
+B13	default-rev	CAUGHT	1 f=1	SUMMARY: 221 checks, 1 FAILED: E-defaults: the default of each question in the start box starts with the same word as the default in section 3 (15 lab
+B14	default-rev	CAUGHT	1 f=1	SUMMARY: 221 checks, 1 FAILED: departure from ORD:147 stated in section 0, in the L-DEL row and in row 8
+B15	default-rev	CAUGHT	1 f=2	SUMMARY: 221 checks, 2 FAILED: E-defaults: the default of each question in the start box starts with the same word as the default in section 3 (15 lab
+B16	default-rev	CAUGHT	1 f=1	SUMMARY: 221 checks, 1 FAILED: E-defaults: the default of each question in the start box starts with the same word as the default in section 3 (15 lab
+B17	default-rev	CAUGHT	1 f=1	SUMMARY: 221 checks, 1 FAILED: E-defaults: the default of each question in the start box starts with the same word as the default in section 3 (15 lab
+B18	default-rev	CAUGHT	1 f=1	SUMMARY: 221 checks, 1 FAILED: E-defaults: the default of each question in the start box starts with the same word as the default in section 3 (15 lab
+B19	default-rev	CAUGHT	1 f=1	SUMMARY: 221 checks, 1 FAILED: E-defaults: the default of each question in the start box starts with the same word as the default in section 3 (15 lab
+B20	default-rev	MISSED	0 f=0	SUMMARY: 221 checks, 0 FAILED
+B21	status	CAUGHT	1 f=13	SUMMARY: 221 checks, 13 FAILED: ids are exactly 1..N, no duplicate; F1 C-4a after L-SAVEERR yes (all rows applied) the four flow files give all/all/ma
+B22	count	MISSED	0 f=0	SUMMARY: 221 checks, 0 FAILED
+B23	time	CAUGHT	1 f=1	SUMMARY: 221 checks, 1 FAILED: E-title: the title line says IST = UTC + 5:30
+B24	time	CAUGHT	1 f=2	SUMMARY: 221 checks, 2 FAILED: box has one answer line with seconds, three free names, the exception form and L-SHEET apart; every '00:10:00' example 
+B25	time	CAUGHT	1 f=2	SUMMARY: 221 checks, 2 FAILED: every weekday written with a date is the true weekday (22 pairs; year 2026 unless written; no pair outside old-text quo
+B26	time	CAUGHT	1 f=2	SUMMARY: 221 checks, 2 FAILED: every 'UTC = IST' pair is exactly UTC + 5:30 (91 pairs); the 'no take on Mon 23 Nov unless (a), (b) and (c)' line is in
+B27	time	CAUGHT	1 f=1	SUMMARY: 221 checks, 1 FAILED: every 'UTC = IST' pair is exactly UTC + 5:30 (91 pairs)
+B28	status	MISSED	0 f=0	SUMMARY: 221 checks, 0 FAILED
+B29	status	MISSED	0 f=0	SUMMARY: 221 checks, 0 FAILED
+B31	count	NOT-APPLIED		
+B32	count	CAUGHT	1 f=3	SUMMARY: 221 checks, 3 FAILED: c6u N5: the start box is under 2,500 words (c6s: 3,488; 2371 words now) and states its own real count; E-count: the sta
+B33	count	MISSED	0 f=0	SUMMARY: 221 checks, 0 FAILED
+B34	default-rev	CAUGHT	1 f=3	SUMMARY: 221 checks, 3 FAILED: c6u N5: the start box is under 2,500 words (c6s: 3,488; 2380 words now) and states its own real count; E-count: the sta
+B35	delete	CAUGHT	1 f=3	SUMMARY: 221 checks, 3 FAILED: c6u N5: the start box is under 2,500 words (c6s: 3,488; 2375 words now) and states its own real count; E-count: the sta
+B36	count	CAUGHT	1 f=1	SUMMARY: 221 checks, 1 FAILED: E-numbers: every row count in the start box (all 96, ready 49, default 38, check 3, owner 6, wave 1 87) equals the reco
+B37	count	CAUGHT	1 f=1	SUMMARY: 221 checks, 1 FAILED: E-numbers: every row count in the start box (all 96, ready 49, default 38, check 3, owner 6, wave 1 87) equals the reco
+B38	default-rev	CAUGHT	1 f=3	SUMMARY: 221 checks, 3 FAILED: c6u N5: the start box is under 2,500 words (c6s: 3,488; 2383 words now) and states its own real count; E-count: the sta
+B39	default-rev	NOT-APPLIED		
+B40	time	CAUGHT	1 f=1	SUMMARY: 221 checks, 1 FAILED: M3: every row of Table B (6 cut cases) equals the recomputation from the quoted card lines (words, seconds at 150 words
+B41	shape	CAUGHT	1 f=4	SUMMARY: 221 checks, 4 FAILED: no secret-like or e-mail string in report; c6u N5: the start box is under 2,500 words (c6s: 3,488; 2385 words now) and 
+B42	shape	CAUGHT	1 f=5	SUMMARY: 221 checks, 5 FAILED: no secret-like or e-mail string in report; c6u N5: the start box is under 2,500 words (c6s: 3,488; 2383 words now) and 
+B43	shape	CAUGHT	1 f=4	SUMMARY: 221 checks, 4 FAILED: no secret-like or e-mail string in report; c6u N5: the start box is under 2,500 words (c6s: 3,488; 2382 words now) and 

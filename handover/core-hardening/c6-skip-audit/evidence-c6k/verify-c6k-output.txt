@@ -1,0 +1,15 @@
+short names 25
+rows parsed 71
+C-1 old text once on its line: 71 of 71 ok, 0 bad
+ids consecutive from 1: True
+C-1b applied bottom-up in table order: 71 rows, 0 mismatches, 9 files written to /tmp/tmpl0aderbu
+cites checked 208, beyond end of file 0
+internal labels in new texts: 0
+stale phrase '52.9' in new texts of rows: none
+stale phrase '0 rows' in new texts of rows: none
+stale phrase 'shows 0' in new texts of rows: none
+stale phrase 'never deletes' in new texts of rows: [6, 8]
+stale phrase '70 to 75' in new texts of rows: none
+stale phrase '80 kills' in new texts of rows: none
+banned strings in report: none
+secret-like or e-mail strings in report: none

@@ -1,0 +1,13 @@
+.github/workflows/ci.yml
+CHANGELOG.md
+README.md
+docs/declared-permissions.md
+src/hadavin_sdk/actions/secrets_vault.py
+src/hadavin_sdk/audit/signer_vault.py
+src/hadavin_sdk/sources/kubernetes.py
+tests/fixtures/policy_sources_2026-11-11.txt
+tests/policy_mutants.py
+tests/test_policy_docs.py
+tests/test_policy_engine.py
+tests/test_policy_guard.py
+tools/policy_page.py

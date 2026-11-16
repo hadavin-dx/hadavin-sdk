@@ -1,0 +1,37 @@
+INVOICE
+
+Supplier: Dunmore Trading Co
+Invoice No: INV-4004
+Invoice Date: 2026-10-12
+Currency: USD
+
+Description       Qty  Unit price      Amount
+Part 01 bracket      2       $1.37       $2.74
+Part 02 bracket      3       $1.74       $5.22
+Part 03 bracket      4       $2.11       $8.44
+Part 04 bracket      1       $2.48       $2.48
+Part 05 bracket      2       $2.85       $5.70
+Part 06 bracket      3       $3.22       $9.66
+Part 07 bracket      4       $3.59      $14.36
+Part 08 bracket      1       $3.96       $3.96
+Part 09 bracket      2       $4.33       $8.66
+Part 10 bracket      3       $4.70      $14.10
+Part 11 bracket      4       $5.07      $20.28
+Part 12 bracket      1       $5.44       $5.44
+Part 13 bracket      2       $5.81      $11.62
+Part 14 bracket      3       $6.18      $18.54
+Part 15 bracket      4       $6.55      $26.20
+Part 16 bracket      1       $6.92       $6.92
+Part 17 bracket      2       $7.29      $14.58
+Part 18 bracket      3       $7.66      $22.98
+Part 19 bracket      4       $8.03      $32.12
+Part 20 bracket      1       $8.40       $8.40
+Part 21 bracket      2       $8.77      $17.54
+Part 22 bracket      3       $9.14      $27.42
+Part 23 bracket      4       $9.51      $38.04
+Part 24 bracket      1       $9.88       $9.88
+Part 25 bracket      2      $10.25      $20.50
+
+Total due $355.78
+
+Bank: IBAN DE89 3704 0044 0532 0130 00

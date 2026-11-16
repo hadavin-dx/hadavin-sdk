@@ -1,0 +1,90 @@
+......................................................F
+=================================== FAILURES ===================================
+_ test_every_refusal_of_the_live_script_is_one_line_with_the_option_and_never_echoes_the_value[over29---leads] _
+
+tmp_path = PosixPath('/home/user/build/rr6/tmp-B2/pytest-of-unknown/pytest-46/test_every_refusal_of_the_live29')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f3506063ef0>
+over = {'leads': '1001'}, option = '--leads'
+
+    @pytest.mark.parametrize(
+        ("over", "option"),
+        [
+            ({"cap_run": CANARY}, "--cap-run"),
+            ({"cap_run": "NaN"}, "--cap-run"),
+            ({"cap_run": "-1"}, "--cap-run"),
+            ({"cap_run": "1e999999"}, "--cap-run"),
+            ({"cap_run": "5"}, "--cap-run"),  # above the total of 3
+            ({"cap_total": CANARY}, "--cap-total"),
+            ({"cap_total": "0"}, "--cap-total"),
+            ({"price_date": ""}, "--price-date"),
+            ({"price_date": "   "}, "--price-date"),
+            ({"model": CANARY}, "--model"),
+            ({"model": "=1,1"}, "--model"),
+            ({"model": f"{CANARY}=x,2"}, "--model"),
+            ({"model": f"{CANARY}=0,1"}, "--model"),
+            ({"model": f"{CANARY}=1,NaN"}, "--model"),
+            ({"effort": ""}, "--effort"),
+            ({"max_tokens": CANARY}, "--max-tokens"),
+            ({"max_tokens": "0"}, "--max-tokens"),
+            ({"max_tokens": "99999999999"}, "--max-tokens"),
+            ({"timeout": CANARY}, "--timeout"),
+            ({"timeout": "nan"}, "--timeout"),
+            ({"timeout": "0"}, "--timeout"),
+            ({"timeout": "99999"}, "--timeout"),
+            ({"base_url": f"ftp://{CANARY}", "assume_yes": None}, "--base-url"),
+            ({"base_url": "http://" + f"{CANARY}@127.0.0.1:1", "assume_yes": None}, "--base-url"),
+            ({"base_url": "https://" + f"evil.example/{CANARY}", "assume_yes": None}, "--base-url"),
+            (
+                {"base_url": "https://" + f"evil.example/{CANARY}"},
+                "--assume-yes",
+            ),  # a script run without a person: this computer only
+            ({"base_url": f"http://[{CANARY}", "assume_yes": None}, "--base-url"),
+            ({"leads": CANARY}, "--leads"),
+            ({"leads": "0"}, "--leads"),
+            ({"leads": "1001"}, "--leads"),
+            ({"leads": "99999999999"}, "--leads"),
+            ({"leads": None, "runs": None}, "--leads"),
+            ({"runs": "0"}, "--runs"),
+            ({"runs": "101"}, "--runs"),
+            ({"runs": CANARY}, "--runs"),
+            ({"cap_run": None}, "--cap-run"),
+            ({"base_url": None}, "--base-url"),
+            ({"key_file": None, "ledger": None}, "--key-file, --ledger"),
+        ],
+        ids=lambda v: str(v)[:40] if isinstance(v, str) else None,
+    )
+    def test_every_refusal_of_the_live_script_is_one_line_with_the_option_and_never_echoes_the_value(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], over: dict[str, str | None], option: str
+    ) -> None:
+        key = tmp_path / "k"
+        key.write_text(KEY, encoding="utf-8")
+        argv = _live_argv(str(key), str(tmp_path / "ledger"), **over)
+        if over == {"leads": None, "runs": None}:
+            argv += ["--leads"]  # an option that wants a value, given none
+>       out = _live_refusal(argv, capsys)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_real_run_v6.py:405: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+argv = ['--key-file', '/home/user/build/rr6/tmp-B2/pytest-of-unknown/pytest-46/test_every_refusal_of_the_live29/k', '--ledger...6/tmp-B2/pytest-of-unknown/pytest-46/test_every_refusal_of_the_live29/ledger', '--base-url', 'http://127.0.0.1:1', ...]
+capsys = <_pytest.capture.CaptureFixture object at 0x7f3506063ef0>
+
+    def _live_refusal(argv: list[str], capsys: pytest.CaptureFixture[str]) -> str:
+        try:
+            code = rlc.main(argv)
+        except SystemExit as e:  # an argparse error: still the one line, exit 2
+            code = e.code if isinstance(e.code, int) else -1
+        captured = capsys.readouterr()
+>       assert code == rlc.EXIT_REFUSED == 2, (argv, captured.out, captured.err)
+E       AssertionError: (['--key-file', '/home/user/build/rr6/tmp-B2/pytest-of-unknown/pytest-46/test_every_refusal_of_the_live29/k', '--ledge...: 723, 'LiveCapReached': 278}
+E         at least one call failed: the check did not work (see the errors by class above)
+E         ", '')
+E       assert 3 == 2
+E        +  where 2 = rlc.EXIT_REFUSED
+
+tests/test_real_run_v6.py:342: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_real_run_v6.py::test_every_refusal_of_the_live_script_is_one_line_with_the_option_and_never_echoes_the_value[over29---leads]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 54 passed in 3.15s

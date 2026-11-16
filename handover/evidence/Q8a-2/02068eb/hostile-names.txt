@@ -1,0 +1,35 @@
+guard file: /home/user/build/EV-Q8a2-02068eb/tests/test_lockin_guard.py
+copied: /home/user/build/EV-Q8a2-02068eb/src/hadavin_sdk/approvals/receiver.py -> /tmp/claude-0/-home-user-hadavin-sdk/3c7954a2-a1b2-5867-97dd-d4d94c9e06fd/scratchpad/hostile-tree/hadavin_sdk/approvals/receiver.py (80 lines; an appended line is line 81)
+call: identifier_problems(tmp, VENDOR_MODULES, {}, frozenset())  [empty allow list so no 'is gone' lines]; second column: literal_problems(tmp, VENDOR_MODULES, {})
+baseline (no line added): identifier -> [] | literal -> []
+ 1. added 'def handle_SLACK(): pass'
+      identifier_problems -> ["hadavin_sdk.approvals.receiver:81: vendor word 'slack' in the name 'handle_SLACK'"]
+      literal_problems    -> []
+ 2. added 'import boto3 as awsclient'
+      identifier_problems -> []
+      literal_problems    -> []
+ 3. added 'from x import slack'
+      identifier_problems -> ["hadavin_sdk.approvals.receiver:81: vendor word 'slack' in the name 'slack'"]
+      literal_problems    -> []
+ 4. added 'class AWSclient: pass'
+      identifier_problems -> []
+      literal_problems    -> []
+ 5. added 'gcs_bucket = 1'
+      identifier_problems -> ["hadavin_sdk.approvals.receiver:81: vendor word 'gcs' in the name 'gcs_bucket'"]
+      literal_problems    -> []
+ 6. added 'def f(aws_region=None): pass'
+      identifier_problems -> ["hadavin_sdk.approvals.receiver:81: vendor word 'aws' in the name 'aws_region'"]
+      literal_problems    -> []
+ 7. added 'Sl\\u0430ck = 1' (the third character is Cyrillic U+0430)
+      identifier_problems -> []
+      literal_problems    -> []
+ 8. added 'S3Uploader = 1'
+      identifier_problems -> ["hadavin_sdk.approvals.receiver:81: vendor word 's3' in the name 'S3Uploader'"]
+      literal_problems    -> []
+ 9. added 'slack2_url = 1'
+      identifier_problems -> ["hadavin_sdk.approvals.receiver:81: vendor word 'slack' in the name 'slack2_url'"]
+      literal_problems    -> []
+10. added 'x = dict(aws_key=1)'
+      identifier_problems -> ["hadavin_sdk.approvals.receiver:81: vendor word 'aws' in the name 'aws_key'"]
+      literal_problems    -> []
+real receiver unchanged: True

@@ -1,0 +1,656 @@
+FFFFFFFFFFFFFFFFFFFFFFFFFFF...FF                                         [100%]
+=================================== FAILURES ===================================
+__________ test_c1_the_light_module_imports_only_the_standard_library __________
+
+    def test_c1_the_light_module_imports_only_the_standard_library() -> None:
+>       tree = ast.parse(LIGHT.read_text(encoding="utf-8"))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_r7u_c_findings.py:54: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/lib/python3.12/pathlib.py:1029: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/home/user/build/rr6/out/EV7U/before/src/lead_desk/loopback.py')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/home/user/build/rr6/out/EV7U/before/src/lead_desk/loopback.py'
+
+/usr/lib/python3.12/pathlib.py:1015: FileNotFoundError
+______________ test_c1_there_is_one_rule_one_refusal_and_one_text ______________
+
+    def test_c1_there_is_one_rule_one_refusal_and_one_text() -> None:
+        from demo_only import bad_request
+>       from lead_desk import config, loopback
+E       ImportError: cannot import name 'loopback' from 'lead_desk' (/home/user/build/rr6/out/EV7U/before/src/lead_desk/__init__.py)
+
+tests/test_r7u_c_findings.py:66: ImportError
+______ test_c1_the_light_refusal_refuses_what_is_not_this_computer[None] _______
+
+bad = None
+
+    @pytest.mark.parametrize(
+        "bad",
+        [
+            None,
+            5,
+            b"127.0.0.1",
+            "",
+            " ",
+            ALL_INTERFACES,
+            "::",
+            "[::]",
+            "example." + "com",
+            "[::",
+            "::1%eth0",
+            "[[::1]]",
+            "[::1",
+            "::1]",
+        ],
+    )
+    def test_c1_the_light_refusal_refuses_what_is_not_this_computer(bad: Any) -> None:
+>       from lead_desk import loopback
+E       ImportError: cannot import name 'loopback' from 'lead_desk' (/home/user/build/rr6/out/EV7U/before/src/lead_desk/__init__.py)
+
+tests/test_r7u_c_findings.py:95: ImportError
+________ test_c1_the_light_refusal_refuses_what_is_not_this_computer[5] ________
+
+bad = 5
+
+    @pytest.mark.parametrize(
+        "bad",
+        [
+            None,
+            5,
+            b"127.0.0.1",
+            "",
+            " ",
+            ALL_INTERFACES,
+            "::",
+            "[::]",
+            "example." + "com",
+            "[::",
+            "::1%eth0",
+            "[[::1]]",
+            "[::1",
+            "::1]",
+        ],
+    )
+    def test_c1_the_light_refusal_refuses_what_is_not_this_computer(bad: Any) -> None:
+>       from lead_desk import loopback
+E       ImportError: cannot import name 'loopback' from 'lead_desk' (/home/user/build/rr6/out/EV7U/before/src/lead_desk/__init__.py)
+
+tests/test_r7u_c_findings.py:95: ImportError
+____ test_c1_the_light_refusal_refuses_what_is_not_this_computer[127.0.0.1] ____
+
+bad = b'127.0.0.1'
+
+    @pytest.mark.parametrize(
+        "bad",
+        [
+            None,
+            5,
+            b"127.0.0.1",
+            "",
+            " ",
+            ALL_INTERFACES,
+            "::",
+            "[::]",
+            "example." + "com",
+            "[::",
+            "::1%eth0",
+            "[[::1]]",
+            "[::1",
+            "::1]",
+        ],
+    )
+    def test_c1_the_light_refusal_refuses_what_is_not_this_computer(bad: Any) -> None:
+>       from lead_desk import loopback
+E       ImportError: cannot import name 'loopback' from 'lead_desk' (/home/user/build/rr6/out/EV7U/before/src/lead_desk/__init__.py)
+
+tests/test_r7u_c_findings.py:95: ImportError
+________ test_c1_the_light_refusal_refuses_what_is_not_this_computer[] _________
+
+bad = ''
+
+    @pytest.mark.parametrize(
+        "bad",
+        [
+            None,
+            5,
+            b"127.0.0.1",
+            "",
+            " ",
+            ALL_INTERFACES,
+            "::",
+            "[::]",
+            "example." + "com",
+            "[::",
+            "::1%eth0",
+            "[[::1]]",
+            "[::1",
+            "::1]",
+        ],
+    )
+    def test_c1_the_light_refusal_refuses_what_is_not_this_computer(bad: Any) -> None:
+>       from lead_desk import loopback
+E       ImportError: cannot import name 'loopback' from 'lead_desk' (/home/user/build/rr6/out/EV7U/before/src/lead_desk/__init__.py)
+
+tests/test_r7u_c_findings.py:95: ImportError
+________ test_c1_the_light_refusal_refuses_what_is_not_this_computer[ ] ________
+
+bad = ' '
+
+    @pytest.mark.parametrize(
+        "bad",
+        [
+            None,
+            5,
+            b"127.0.0.1",
+            "",
+            " ",
+            ALL_INTERFACES,
+            "::",
+            "[::]",
+            "example." + "com",
+            "[::",
+            "::1%eth0",
+            "[[::1]]",
+            "[::1",
+            "::1]",
+        ],
+    )
+    def test_c1_the_light_refusal_refuses_what_is_not_this_computer(bad: Any) -> None:
+>       from lead_desk import loopback
+E       ImportError: cannot import name 'loopback' from 'lead_desk' (/home/user/build/rr6/out/EV7U/before/src/lead_desk/__init__.py)
+
+tests/test_r7u_c_findings.py:95: ImportError
+_____ test_c1_the_light_refusal_refuses_what_is_not_this_computer[0.0.0.0] _____
+
+bad = '0.0.0.0'
+
+    @pytest.mark.parametrize(
+        "bad",
+        [
+            None,
+            5,
+            b"127.0.0.1",
+            "",
+            " ",
+            ALL_INTERFACES,
+            "::",
+            "[::]",
+            "example." + "com",
+            "[::",
+            "::1%eth0",
+            "[[::1]]",
+            "[::1",
+            "::1]",
+        ],
+    )
+    def test_c1_the_light_refusal_refuses_what_is_not_this_computer(bad: Any) -> None:
+>       from lead_desk import loopback
+E       ImportError: cannot import name 'loopback' from 'lead_desk' (/home/user/build/rr6/out/EV7U/before/src/lead_desk/__init__.py)
+
+tests/test_r7u_c_findings.py:95: ImportError
+_______ test_c1_the_light_refusal_refuses_what_is_not_this_computer[::] ________
+
+bad = '::'
+
+    @pytest.mark.parametrize(
+        "bad",
+        [
+            None,
+            5,
+            b"127.0.0.1",
+            "",
+            " ",
+            ALL_INTERFACES,
+            "::",
+            "[::]",
+            "example." + "com",
+            "[::",
+            "::1%eth0",
+            "[[::1]]",
+            "[::1",
+            "::1]",
+        ],
+    )
+    def test_c1_the_light_refusal_refuses_what_is_not_this_computer(bad: Any) -> None:
+>       from lead_desk import loopback
+E       ImportError: cannot import name 'loopback' from 'lead_desk' (/home/user/build/rr6/out/EV7U/before/src/lead_desk/__init__.py)
+
+tests/test_r7u_c_findings.py:95: ImportError
+______ test_c1_the_light_refusal_refuses_what_is_not_this_computer[[::]] _______
+
+bad = '[::]'
+
+    @pytest.mark.parametrize(
+        "bad",
+        [
+            None,
+            5,
+            b"127.0.0.1",
+            "",
+            " ",
+            ALL_INTERFACES,
+            "::",
+            "[::]",
+            "example." + "com",
+            "[::",
+            "::1%eth0",
+            "[[::1]]",
+            "[::1",
+            "::1]",
+        ],
+    )
+    def test_c1_the_light_refusal_refuses_what_is_not_this_computer(bad: Any) -> None:
+>       from lead_desk import loopback
+E       ImportError: cannot import name 'loopback' from 'lead_desk' (/home/user/build/rr6/out/EV7U/before/src/lead_desk/__init__.py)
+
+tests/test_r7u_c_findings.py:95: ImportError
+___ test_c1_the_light_refusal_refuses_what_is_not_this_computer[example.com] ___
+
+bad = 'example.com'
+
+    @pytest.mark.parametrize(
+        "bad",
+        [
+            None,
+            5,
+            b"127.0.0.1",
+            "",
+            " ",
+            ALL_INTERFACES,
+            "::",
+            "[::]",
+            "example." + "com",
+            "[::",
+            "::1%eth0",
+            "[[::1]]",
+            "[::1",
+            "::1]",
+        ],
+    )
+    def test_c1_the_light_refusal_refuses_what_is_not_this_computer(bad: Any) -> None:
+>       from lead_desk import loopback
+E       ImportError: cannot import name 'loopback' from 'lead_desk' (/home/user/build/rr6/out/EV7U/before/src/lead_desk/__init__.py)
+
+tests/test_r7u_c_findings.py:95: ImportError
+_______ test_c1_the_light_refusal_refuses_what_is_not_this_computer[[::] _______
+
+bad = '[::'
+
+    @pytest.mark.parametrize(
+        "bad",
+        [
+            None,
+            5,
+            b"127.0.0.1",
+            "",
+            " ",
+            ALL_INTERFACES,
+            "::",
+            "[::]",
+            "example." + "com",
+            "[::",
+            "::1%eth0",
+            "[[::1]]",
+            "[::1",
+            "::1]",
+        ],
+    )
+    def test_c1_the_light_refusal_refuses_what_is_not_this_computer(bad: Any) -> None:
+>       from lead_desk import loopback
+E       ImportError: cannot import name 'loopback' from 'lead_desk' (/home/user/build/rr6/out/EV7U/before/src/lead_desk/__init__.py)
+
+tests/test_r7u_c_findings.py:95: ImportError
+____ test_c1_the_light_refusal_refuses_what_is_not_this_computer[::1%eth0] _____
+
+bad = '::1%eth0'
+
+    @pytest.mark.parametrize(
+        "bad",
+        [
+            None,
+            5,
+            b"127.0.0.1",
+            "",
+            " ",
+            ALL_INTERFACES,
+            "::",
+            "[::]",
+            "example." + "com",
+            "[::",
+            "::1%eth0",
+            "[[::1]]",
+            "[::1",
+            "::1]",
+        ],
+    )
+    def test_c1_the_light_refusal_refuses_what_is_not_this_computer(bad: Any) -> None:
+>       from lead_desk import loopback
+E       ImportError: cannot import name 'loopback' from 'lead_desk' (/home/user/build/rr6/out/EV7U/before/src/lead_desk/__init__.py)
+
+tests/test_r7u_c_findings.py:95: ImportError
+_____ test_c1_the_light_refusal_refuses_what_is_not_this_computer[[[::1]]] _____
+
+bad = '[[::1]]'
+
+    @pytest.mark.parametrize(
+        "bad",
+        [
+            None,
+            5,
+            b"127.0.0.1",
+            "",
+            " ",
+            ALL_INTERFACES,
+            "::",
+            "[::]",
+            "example." + "com",
+            "[::",
+            "::1%eth0",
+            "[[::1]]",
+            "[::1",
+            "::1]",
+        ],
+    )
+    def test_c1_the_light_refusal_refuses_what_is_not_this_computer(bad: Any) -> None:
+>       from lead_desk import loopback
+E       ImportError: cannot import name 'loopback' from 'lead_desk' (/home/user/build/rr6/out/EV7U/before/src/lead_desk/__init__.py)
+
+tests/test_r7u_c_findings.py:95: ImportError
+______ test_c1_the_light_refusal_refuses_what_is_not_this_computer[[::1] _______
+
+bad = '[::1'
+
+    @pytest.mark.parametrize(
+        "bad",
+        [
+            None,
+            5,
+            b"127.0.0.1",
+            "",
+            " ",
+            ALL_INTERFACES,
+            "::",
+            "[::]",
+            "example." + "com",
+            "[::",
+            "::1%eth0",
+            "[[::1]]",
+            "[::1",
+            "::1]",
+        ],
+    )
+    def test_c1_the_light_refusal_refuses_what_is_not_this_computer(bad: Any) -> None:
+>       from lead_desk import loopback
+E       ImportError: cannot import name 'loopback' from 'lead_desk' (/home/user/build/rr6/out/EV7U/before/src/lead_desk/__init__.py)
+
+tests/test_r7u_c_findings.py:95: ImportError
+______ test_c1_the_light_refusal_refuses_what_is_not_this_computer[::1]] _______
+
+bad = '::1]'
+
+    @pytest.mark.parametrize(
+        "bad",
+        [
+            None,
+            5,
+            b"127.0.0.1",
+            "",
+            " ",
+            ALL_INTERFACES,
+            "::",
+            "[::]",
+            "example." + "com",
+            "[::",
+            "::1%eth0",
+            "[[::1]]",
+            "[::1",
+            "::1]",
+        ],
+    )
+    def test_c1_the_light_refusal_refuses_what_is_not_this_computer(bad: Any) -> None:
+>       from lead_desk import loopback
+E       ImportError: cannot import name 'loopback' from 'lead_desk' (/home/user/build/rr6/out/EV7U/before/src/lead_desk/__init__.py)
+
+tests/test_r7u_c_findings.py:95: ImportError
+_____ test_c1_the_light_refusal_accepts_each_loopback_spelling[LOCALHOST] ______
+
+host = 'LOCALHOST'
+
+    @pytest.mark.parametrize("host", ["LOCALHOST", "localhost", "127.0.0.1", "[::1]", "::1", "::ffff:127.0.0.1"])
+    def test_c1_the_light_refusal_accepts_each_loopback_spelling(host: str) -> None:
+>       from lead_desk import loopback
+E       ImportError: cannot import name 'loopback' from 'lead_desk' (/home/user/build/rr6/out/EV7U/before/src/lead_desk/__init__.py)
+
+tests/test_r7u_c_findings.py:103: ImportError
+_____ test_c1_the_light_refusal_accepts_each_loopback_spelling[localhost] ______
+
+host = 'localhost'
+
+    @pytest.mark.parametrize("host", ["LOCALHOST", "localhost", "127.0.0.1", "[::1]", "::1", "::ffff:127.0.0.1"])
+    def test_c1_the_light_refusal_accepts_each_loopback_spelling(host: str) -> None:
+>       from lead_desk import loopback
+E       ImportError: cannot import name 'loopback' from 'lead_desk' (/home/user/build/rr6/out/EV7U/before/src/lead_desk/__init__.py)
+
+tests/test_r7u_c_findings.py:103: ImportError
+_____ test_c1_the_light_refusal_accepts_each_loopback_spelling[127.0.0.1] ______
+
+host = '127.0.0.1'
+
+    @pytest.mark.parametrize("host", ["LOCALHOST", "localhost", "127.0.0.1", "[::1]", "::1", "::ffff:127.0.0.1"])
+    def test_c1_the_light_refusal_accepts_each_loopback_spelling(host: str) -> None:
+>       from lead_desk import loopback
+E       ImportError: cannot import name 'loopback' from 'lead_desk' (/home/user/build/rr6/out/EV7U/before/src/lead_desk/__init__.py)
+
+tests/test_r7u_c_findings.py:103: ImportError
+_______ test_c1_the_light_refusal_accepts_each_loopback_spelling[[::1]] ________
+
+host = '[::1]'
+
+    @pytest.mark.parametrize("host", ["LOCALHOST", "localhost", "127.0.0.1", "[::1]", "::1", "::ffff:127.0.0.1"])
+    def test_c1_the_light_refusal_accepts_each_loopback_spelling(host: str) -> None:
+>       from lead_desk import loopback
+E       ImportError: cannot import name 'loopback' from 'lead_desk' (/home/user/build/rr6/out/EV7U/before/src/lead_desk/__init__.py)
+
+tests/test_r7u_c_findings.py:103: ImportError
+________ test_c1_the_light_refusal_accepts_each_loopback_spelling[::1] _________
+
+host = '::1'
+
+    @pytest.mark.parametrize("host", ["LOCALHOST", "localhost", "127.0.0.1", "[::1]", "::1", "::ffff:127.0.0.1"])
+    def test_c1_the_light_refusal_accepts_each_loopback_spelling(host: str) -> None:
+>       from lead_desk import loopback
+E       ImportError: cannot import name 'loopback' from 'lead_desk' (/home/user/build/rr6/out/EV7U/before/src/lead_desk/__init__.py)
+
+tests/test_r7u_c_findings.py:103: ImportError
+__ test_c1_the_light_refusal_accepts_each_loopback_spelling[::ffff:127.0.0.1] __
+
+host = '::ffff:127.0.0.1'
+
+    @pytest.mark.parametrize("host", ["LOCALHOST", "localhost", "127.0.0.1", "[::1]", "::1", "::ffff:127.0.0.1"])
+    def test_c1_the_light_refusal_accepts_each_loopback_spelling(host: str) -> None:
+>       from lead_desk import loopback
+E       ImportError: cannot import name 'loopback' from 'lead_desk' (/home/user/build/rr6/out/EV7U/before/src/lead_desk/__init__.py)
+
+tests/test_r7u_c_findings.py:103: ImportError
+_______ test_c1_pin_the_refusal_text_is_the_fixed_line_the_scripts_show ________
+
+    def test_c1_pin_the_refusal_text_is_the_fixed_line_the_scripts_show() -> None:
+        """PIN of a literal: every other test reads the text from the constant, so a changed wording would pass them."""
+>       from lead_desk import loopback
+E       ImportError: cannot import name 'loopback' from 'lead_desk' (/home/user/build/rr6/out/EV7U/before/src/lead_desk/__init__.py)
+
+tests/test_r7u_c_findings.py:111: ImportError
+_ test_c2_the_module_alone_on_the_path_imports_and_refuses_and_loads_nothing_heavy _
+
+tmp_path = PosixPath('/home/user/build/rr6/out/EV7U/tmp-before/pytest-of-unknown/pytest-1/test_c2_the_module_alone_on_th0')
+
+    def test_c2_the_module_alone_on_the_path_imports_and_refuses_and_loads_nothing_heavy(tmp_path: Path) -> None:
+        """`-I` drops the environment path and the current folder; only the folder of the module is put on the path."""
+        code = (
+            "import sys\n"
+            f"sys.path[:0] = [{str(LIGHT.parent)!r}]\n"
+            "import loopback\n"
+            "assert loopback.require_loopback_host('127.0.0.1') == '127.0.0.1'\n"
+            f"for bad in ({ALL_INTERFACES!r}, '', None, 7):\n"
+            "    try:\n"
+            "        loopback.require_loopback_host(bad)\n"
+            "    except ValueError:\n"
+            "        continue\n"
+            "    raise SystemExit('accepted ' + repr(bad))\n"
+            f"heavy = sorted(m for m in sys.modules if m.split('.')[0] in {HEAVY_PREFIXES!r})\n"
+            "print('HEAVY=' + ','.join(heavy))\n"
+            "print('OK')\n"
+        )
+        done = _fresh(tmp_path, code)
+>       assert done.returncode == 0, done.stderr[-1500:] + done.stdout[-500:]
+E       AssertionError: Traceback (most recent call last):
+E           File "/home/user/build/rr6/out/EV7U/tmp-before/pytest-of-unknown/pytest-1/test_c2_the_module_alone_on_th0/fresh.py", line 3, in <module>
+E             import loopback
+E         ModuleNotFoundError: No module named 'loopback'
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['/home/user/build/rr6/venv-br/bin/python', '-I', '/home/user/build/rr6/out/EV7U/tmp-before/pyte...alone_on_th0/fresh.py", line 3, in <module>\n    import loopback\nModuleNotFoundError: No module named \'loopback\'\n').returncode
+
+tests/test_r7u_c_findings.py:137: AssertionError
+___________ test_c3_the_two_raw_socket_fakes_import_no_heavy_module ____________
+
+tmp_path = PosixPath('/home/user/build/rr6/out/EV7U/tmp-before/pytest-of-unknown/pytest-1/test_c3_the_two_raw_socket_fak0')
+
+    def test_c3_the_two_raw_socket_fakes_import_no_heavy_module(tmp_path: Path) -> None:
+        heavy = ("lead_desk.config", "scripts.http_guard", "tools.refusing_args", "lead_desk.constants", "lead_desk.envnum")
+        code = (
+            "import sys\n"
+            f"sys.path[:0] = [{str(REPO / 'src')!r}, {str(REPO)!r}]\n"
+            "import demo_only.fake_imap, demo_only.fake_smtp_tls\n"
+            f"print('HEAVY=' + ','.join(m for m in {list(heavy)!r} if m in sys.modules))\n"
+            "print('LIGHT=' + str('lead_desk.loopback' in sys.modules))\n"
+        )
+        done = _fresh(tmp_path, code)
+        assert done.returncode == 0, done.stderr[-1500:]
+>       assert "HEAVY=\n" in done.stdout and "LIGHT=True" in done.stdout, done.stdout
+E       AssertionError: HEAVY=lead_desk.config,scripts.http_guard,tools.refusing_args,lead_desk.constants,lead_desk.envnum
+E         LIGHT=False
+E         
+E       assert ('HEAVY=\n' in 'HEAVY=lead_desk.config,scripts.http_guard,tools.refusing_args,lead_desk.constants,lead_desk.envnum\nLIGHT=False\n')
+E        +  where 'HEAVY=lead_desk.config,scripts.http_guard,tools.refusing_args,lead_desk.constants,lead_desk.envnum\nLIGHT=False\n' = CompletedProcess(args=['/home/user/build/rr6/venv-br/bin/python', '-I', '/home/user/build/rr6/out/EV7U/tmp-before/pyte...ead_desk.config,scripts.http_guard,tools.refusing_args,lead_desk.constants,lead_desk.envnum\nLIGHT=False\n', stderr='').stdout
+
+tests/test_r7u_c_findings.py:152: AssertionError
+_______ test_c3_the_fakes_still_refuse_a_host_that_is_not_this_computer ________
+
+tmp_path = PosixPath('/home/user/build/rr6/out/EV7U/tmp-before/pytest-of-unknown/pytest-1/test_c3_the_fakes_still_refuse0')
+
+    def test_c3_the_fakes_still_refuse_a_host_that_is_not_this_computer(tmp_path: Path) -> None:
+        from demo_only.fake_imap import FakeImap
+        from demo_only.fake_smtp_tls import FakeSmtp
+>       from lead_desk.loopback import LOOPBACK_HOST_TEXT
+E       ModuleNotFoundError: No module named 'lead_desk.loopback'
+
+tests/test_r7u_c_findings.py:158: ModuleNotFoundError
+_ test_c4_the_module_text_says_this_computer_by_design_and_promises_no_listener _
+
+    def test_c4_the_module_text_says_this_computer_by_design_and_promises_no_listener() -> None:
+>       text = LIGHT.read_text(encoding="utf-8")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_r7u_c_findings.py:172: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+/usr/lib/python3.12/pathlib.py:1029: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/home/user/build/rr6/out/EV7U/before/src/lead_desk/loopback.py')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/home/user/build/rr6/out/EV7U/before/src/lead_desk/loopback.py'
+
+/usr/lib/python3.12/pathlib.py:1015: FileNotFoundError
+_____ test_n1_the_counters_file_text_does_not_say_no_test_checks_atomicity _____
+
+    def test_n1_the_counters_file_text_does_not_say_no_test_checks_atomicity() -> None:
+        from lead_desk import run_stats
+    
+        doc = " ".join((run_stats.__doc__ or "").split())
+>       assert "no test checks atomicity" not in doc, doc
+E       AssertionError: Optional counters file: an adapter that is given a path writes its counters there after every change (a temporary file, then os.replace; no test checks atomicity), so a run script can read what the adapter really did even when the desk process was stopped hard. Counts only: no address, no key, no text.
+E       assert 'no test checks atomicity' not in 'Optional co...ey, no text.'
+E         
+E         'no test checks atomicity' is contained here:
+E           .replace; no test checks atomicity), so a run script can read what the adapter really did even when the desk process was stopped hard. Counts only: no address, no key, no text.
+E         ?           ++++++++++++++++++++++++
+
+tests/test_r7u_c_findings.py:289: AssertionError
+_ test_n2_the_hubspot_text_names_the_create_counters_the_refusal_and_the_settle_rule _
+
+    def test_n2_the_hubspot_text_names_the_create_counters_the_refusal_and_the_settle_rule() -> None:
+        from lead_desk import crm_hubspot
+    
+        doc = " ".join((crm_hubspot.__doc__ or "").split())
+        for word in ("create_open", "create_unknown", "CrmCounterUnwritable", "settle"):
+>           assert word in doc, word
+E           AssertionError: create_open
+E           assert 'create_open' in 'The CRM kind over a real HubSpot account (free plan), standard library only. Made-up leads only. Everything this file...so the creates keep the rest; a PATCH past that share raises CrmCapReached before anything is sent and is not counted.'
+
+tests/test_r7u_c_findings.py:299: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r7u_c_findings.py::test_c1_the_light_module_imports_only_the_standard_library
+FAILED tests/test_r7u_c_findings.py::test_c1_there_is_one_rule_one_refusal_and_one_text
+FAILED tests/test_r7u_c_findings.py::test_c1_the_light_refusal_refuses_what_is_not_this_computer[None]
+FAILED tests/test_r7u_c_findings.py::test_c1_the_light_refusal_refuses_what_is_not_this_computer[5]
+FAILED tests/test_r7u_c_findings.py::test_c1_the_light_refusal_refuses_what_is_not_this_computer[127.0.0.1]
+FAILED tests/test_r7u_c_findings.py::test_c1_the_light_refusal_refuses_what_is_not_this_computer[]
+FAILED tests/test_r7u_c_findings.py::test_c1_the_light_refusal_refuses_what_is_not_this_computer[ ]
+FAILED tests/test_r7u_c_findings.py::test_c1_the_light_refusal_refuses_what_is_not_this_computer[0.0.0.0]
+FAILED tests/test_r7u_c_findings.py::test_c1_the_light_refusal_refuses_what_is_not_this_computer[::]
+FAILED tests/test_r7u_c_findings.py::test_c1_the_light_refusal_refuses_what_is_not_this_computer[[::]]
+FAILED tests/test_r7u_c_findings.py::test_c1_the_light_refusal_refuses_what_is_not_this_computer[example.com]
+FAILED tests/test_r7u_c_findings.py::test_c1_the_light_refusal_refuses_what_is_not_this_computer[[::]
+FAILED tests/test_r7u_c_findings.py::test_c1_the_light_refusal_refuses_what_is_not_this_computer[::1%eth0]
+FAILED tests/test_r7u_c_findings.py::test_c1_the_light_refusal_refuses_what_is_not_this_computer[[[::1]]]
+FAILED tests/test_r7u_c_findings.py::test_c1_the_light_refusal_refuses_what_is_not_this_computer[[::1]
+FAILED tests/test_r7u_c_findings.py::test_c1_the_light_refusal_refuses_what_is_not_this_computer[::1]]
+FAILED tests/test_r7u_c_findings.py::test_c1_the_light_refusal_accepts_each_loopback_spelling[LOCALHOST]
+FAILED tests/test_r7u_c_findings.py::test_c1_the_light_refusal_accepts_each_loopback_spelling[localhost]
+FAILED tests/test_r7u_c_findings.py::test_c1_the_light_refusal_accepts_each_loopback_spelling[127.0.0.1]
+FAILED tests/test_r7u_c_findings.py::test_c1_the_light_refusal_accepts_each_loopback_spelling[[::1]]
+FAILED tests/test_r7u_c_findings.py::test_c1_the_light_refusal_accepts_each_loopback_spelling[::1]
+FAILED tests/test_r7u_c_findings.py::test_c1_the_light_refusal_accepts_each_loopback_spelling[::ffff:127.0.0.1]
+FAILED tests/test_r7u_c_findings.py::test_c1_pin_the_refusal_text_is_the_fixed_line_the_scripts_show
+FAILED tests/test_r7u_c_findings.py::test_c2_the_module_alone_on_the_path_imports_and_refuses_and_loads_nothing_heavy
+FAILED tests/test_r7u_c_findings.py::test_c3_the_two_raw_socket_fakes_import_no_heavy_module
+FAILED tests/test_r7u_c_findings.py::test_c3_the_fakes_still_refuse_a_host_that_is_not_this_computer
+FAILED tests/test_r7u_c_findings.py::test_c4_the_module_text_says_this_computer_by_design_and_promises_no_listener
+FAILED tests/test_r7u_c_findings.py::test_n1_the_counters_file_text_does_not_say_no_test_checks_atomicity
+FAILED tests/test_r7u_c_findings.py::test_n2_the_hubspot_text_names_the_create_counters_the_refusal_and_the_settle_rule
+PASSED tests/test_r7u_c_findings.py::test_c5_pin_a_put_whose_settle_raises_leaves_the_create_open_which_is_the_safe_side
+PASSED tests/test_r7u_c_findings.py::test_c6_pin_two_puts_at_the_same_time_are_two_open_creates_before_either_request_leaves
+PASSED tests/test_r7u_c_findings.py::test_c7_pin_a_201_without_an_id_is_an_unknown_create
+29 failed, 3 passed in 2.11s
+rc=1

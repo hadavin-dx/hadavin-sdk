@@ -1,0 +1,64 @@
+hadavin_sdk imported from: /home/user/build/EV-P3a2-4d328e3/src/hadavin_sdk/__init__.py
+function called: hadavin_sdk.store.migration_numbers.refused_statements(sql)  (tests/test_migration_rules.py `_reasons`)
+the tests' own criterion for 'refused as an owner change': any('OWNER TO' in r for r in result)
+
+ 1. input  'ALTER TABLE t OWNER TO r'
+    return ['ALTER ... OWNER TO: an object may not be handed to another role by a migration file']
+    owner-change criterion: True
+
+ 2. input  'ALTER TABLE t RENAME owner TO x'
+    return []
+    owner-change criterion: False
+
+ 3. input  'ALTER TABLE t RENAME COLUMN owner TO x'
+    return []
+    owner-change criterion: False
+
+ 4. input  'ALTER TYPE rename OWNER TO r'
+    return ['ALTER ... OWNER TO: an object may not be handed to another role by a migration file']
+    owner-change criterion: True
+
+ 5. input  'ALTER TABLE "RENAME" OWNER TO r'
+    return ['ALTER ... OWNER TO: an object may not be handed to another role by a migration file']
+    owner-change criterion: True
+
+ 6. input  'ALTER TABLE t RENAME TO owner'
+    return []
+    owner-change criterion: False
+
+ 7. input  'alter table t owner/**/to r'
+    return ['ALTER ... OWNER TO: an object may not be handed to another role by a migration file']
+    owner-change criterion: True
+
+ 8. input  'ALTER TABLE t OWNER TO CURRENT_USER'
+    return ['ALTER ... OWNER TO: an object may not be handed to another role by a migration file']
+    owner-change criterion: True
+
+ 9. input  'REASSIGN OWNED BY a TO b'
+    return ['REASSIGN OWNED: the guard cannot read what this statement does or changes']
+    owner-change criterion: False
+
+10. input  'ALTER TABLE t RENAME owner TO x; ALTER TABLE t OWNER TO r'
+    return ['ALTER ... OWNER TO: an object may not be handed to another role by a migration file']
+    owner-change criterion: True
+
+11. input  "DO $$ BEGIN EXECUTE 'ALTER TABLE t OWNER TO r'; END $$"
+    return ['DO: the guard cannot read what this statement does or changes']
+    owner-change criterion: False
+
+12. input  'ALTER TABLE t\nOWNER\nTO r'
+    return ['ALTER ... OWNER TO: an object may not be handed to another role by a migration file']
+    owner-change criterion: True
+
+13. input  "COMMENT ON TABLE t IS 'owner to r'"
+    return []
+    owner-change criterion: False
+
+14. input  'ALTER SCHEMA s OWNER TO r'
+    return ['ALTER ... OWNER TO: an object may not be handed to another role by a migration file']
+    owner-change criterion: True
+
+15. input  'ALTER FUNCTION f() OWNER TO r'
+    return ['ALTER ... OWNER TO: an object may not be handed to another role by a migration file']
+    owner-change criterion: True
+

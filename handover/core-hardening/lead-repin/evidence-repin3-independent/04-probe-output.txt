@@ -1,0 +1,19 @@
+data = "VnE3TG0yWHA5UnQ0VnE3TG0yWHA5UnQ0VnE3TG0yWHA5UnQ0VnE3TG0yWHA5UnQ0VnE3TG0yWHA5UnQ0"
+x = "VnE3TG0yWHA5UnQ0VnE3TG0yWHA5UnQ0VnE3TG0yWHA5UnQ0VnE3TG0yWHA5UnQ0VnE3TG0yWHA5UnQ0"
+payload: VnE3TG0yWHA5UnQ0VnE3TG0yWHA5UnQ0VnE3TG0yWHA5UnQ0VnE3TG0yWHA5UnQ0VnE3TG0yWHA5UnQ0
+note: value Vq7Lm2Xp9Rt4Z1 in a sentence
+creds = {"user": "u", "pass": "<masked>"}
+dsn = "host=h user=u password=<masked>
+export DB_PASS=<masked>
+token_file = <masked>
+my_secret_thing = <masked>
+SECRET_KEY_BASE=<masked>
+mail: <email-masked>, "Jo <<email-masked>>"
+url=https://example.invalid/?api_key=<masked>
+url=https://example.invalid/?token=<masked>
+curl -H "X-Auth-Token: Vq7Lm2Xp9Rt4Z10" 
+curl -H 'Authorization: token Vq7Lm2Xp9Rt4Z11'
+ENV TOKEN Vq7Lm2Xp9Rt4Z12
+password:<masked>
+f(password=<masked>
+passwd "Vq7Lm2Xp9Rt4Z15"

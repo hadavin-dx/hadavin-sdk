@@ -1,0 +1,883 @@
+FFFFFFFF.F....FFFFFF.....FFFF.FFFFFF.FFFF                                [100%]
+=================================== FAILURES ===================================
+_______ test_a1_one_more_created_than_leads_is_not_hidden_by_the_cap[1] ________
+
+n = 1
+
+    @pytest.mark.parametrize("n", [1, 2, 5, 9])
+    def test_a1_one_more_created_than_leads_is_not_hidden_by_the_cap(n: int) -> None:
+        f = rrc.contacts_not_accounted_for
+>       assert f(n + 1, n, 0, n) == 1  # r7t: min(n+1, n) - n = 0, a contact left and exit 0
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       assert 0 == 1
+E        +  where 0 = <function contacts_not_accounted_for at 0x7eff05f77060>((1 + 1), 1, 0, 1)
+
+tests/test_r7u_a_findings.py:49: AssertionError
+_______ test_a1_one_more_created_than_leads_is_not_hidden_by_the_cap[2] ________
+
+n = 2
+
+    @pytest.mark.parametrize("n", [1, 2, 5, 9])
+    def test_a1_one_more_created_than_leads_is_not_hidden_by_the_cap(n: int) -> None:
+        f = rrc.contacts_not_accounted_for
+>       assert f(n + 1, n, 0, n) == 1  # r7t: min(n+1, n) - n = 0, a contact left and exit 0
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       assert 0 == 1
+E        +  where 0 = <function contacts_not_accounted_for at 0x7eff05f77060>((2 + 1), 2, 0, 2)
+
+tests/test_r7u_a_findings.py:49: AssertionError
+_______ test_a1_one_more_created_than_leads_is_not_hidden_by_the_cap[5] ________
+
+n = 5
+
+    @pytest.mark.parametrize("n", [1, 2, 5, 9])
+    def test_a1_one_more_created_than_leads_is_not_hidden_by_the_cap(n: int) -> None:
+        f = rrc.contacts_not_accounted_for
+>       assert f(n + 1, n, 0, n) == 1  # r7t: min(n+1, n) - n = 0, a contact left and exit 0
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       assert 0 == 1
+E        +  where 0 = <function contacts_not_accounted_for at 0x7eff05f77060>((5 + 1), 5, 0, 5)
+
+tests/test_r7u_a_findings.py:49: AssertionError
+_______ test_a1_one_more_created_than_leads_is_not_hidden_by_the_cap[9] ________
+
+n = 9
+
+    @pytest.mark.parametrize("n", [1, 2, 5, 9])
+    def test_a1_one_more_created_than_leads_is_not_hidden_by_the_cap(n: int) -> None:
+        f = rrc.contacts_not_accounted_for
+>       assert f(n + 1, n, 0, n) == 1  # r7t: min(n+1, n) - n = 0, a contact left and exit 0
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       assert 0 == 1
+E        +  where 0 = <function contacts_not_accounted_for at 0x7eff05f77060>((9 + 1), 9, 0, 9)
+
+tests/test_r7u_a_findings.py:49: AssertionError
+_____ test_a1_the_rule_equals_the_brute_force_oracle_on_every_small_input ______
+
+    def test_a1_the_rule_equals_the_brute_force_oracle_on_every_small_input() -> None:
+        f = rrc.contacts_not_accounted_for
+        for created in range(0, 8):
+            for accounted in range(0, 9):
+                for open_creates in range(-1, 8):
+                    for leads in range(0, 9):
+>                       assert f(created, accounted, open_creates, leads) == _oracle(
+                            created, accounted, open_creates, leads
+                        ), (created, accounted, open_creates, leads)
+E                       AssertionError: (1, 0, -1, 0)
+E                       assert 0 == 1
+E                        +  where 0 = <function contacts_not_accounted_for at 0x7eff05f77060>(1, 0, -1, 0)
+E                        +  and   1 = _oracle(1, 0, -1, 0)
+
+tests/test_r7u_a_findings.py:62: AssertionError
+_______________________ test_a1_named_values_of_the_rule _______________________
+
+    def test_a1_named_values_of_the_rule() -> None:
+        f = rrc.contacts_not_accounted_for
+        assert f(9, 9, 5, 9) == 0  # open creates retried by the next desk: only 9 leads
+        assert f(5, 5, 5, 9) == 4  # the open part is capped by the leads still without a created contact (9 - 5)
+        assert f(3, 3, 100, 5) == 2
+        assert f(3, 0, 100, 5) == 5
+>       assert f(10, 0, 0, 9) == 10  # created is not capped
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       assert 9 == 10
+E        +  where 9 = <function contacts_not_accounted_for at 0x7eff05f77060>(10, 0, 0, 9)
+
+tests/test_r7u_a_findings.py:73: AssertionError
+____________ test_a1_an_out_of_book_contact_ends_the_run_as_failed _____________
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff05cc9ca0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff05cc9100>
+
+    def test_a1_an_out_of_book_contact_ends_the_run_as_failed(
+        capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """One more contact was created than the book has leads: it carries an L id the book does not know, so the read-back
+        filter drops it and nothing archives it. r7s said 1; r7t said 0 (exit 0 with a contact left)."""
+        monkeypatch.setattr(rrc, "HubspotCrm", _hiding_crm(0, [("L-not-in-the-book", "999")]))
+        _quiet_floors(monkeypatch)
+        _more_created(monkeypatch, created=1)
+        code = rrc.main(["--dry-fakes", "--assume-yes", "--cleanup"])
+        out = capsys.readouterr().out
+>       assert code == rrc.EXIT_FAILED and "1 contacts may be left" in out, out[-2000:]
+E       AssertionError:      0.04 s from the last intended send to drained (ceiling 240.0 s; marker (later than the book))
+E         ALL CHECKS HOLD
+E         
+E         lead id          state    CRM rows  mails
+E         L146a988dce51    sent            1      1
+E         L2ac3f7bdefbb    unknown         1      0
+E         L387262d5d636    sent            1      1
+E         L639536dcc589    sent            1      1
+E         L6fe0c768d106    unknown         1      1
+E         L90eea76c880a    unknown         1      0
+E         L9605635de780    sent            1      1
+E         Lc51f8a0db726    sent            1      1
+E         Ldacaba7519c8    sent            1      1
+E         
+E         {
+E           "crm_contacts_per_lead_max": 1,
+E           "crm_contacts_with_our_ids": 9,
+E           "desk_crash_exit_code": 137,
+E           "desk_idle_at_end": true,
+E           "followup_states": {
+E             "sent": 6,
+E             "unknown": 3
+E           },
+E           "hubspot_calls_by_readback": {
+E             "archives": 0,
+E             "calls": 1,
+E             "conflicts": 0,
+E             "create_open": 0,
+E             "create_unknown": 0,
+E             "created": 0,
+E             "creates": 0,
+E             "gets": 1,
+E             "patch": 0,
+E             "rate_limited": 0,
+E             "searches": 0
+E           },
+E           "hubspot_calls_by_the_desk": {
+E             "archives": 0,
+E             "calls": 9,
+E             "conflicts": 0,
+E             "create_open": 0,
+E             "create_unknown": 0,
+E             "created": 10,
+E             "creates": 9,
+E             "gets": 0,
+E             "patch": 0,
+E             "rate_limited": 0,
+E             "searches": 0
+E           },
+E           "imap_logins": 2,
+E           "leads_in_book": 9,
+E           "leads_with_more_than_one_mail": 0,
+E           "mail_last_poll_failed": false,
+E           "mail_poll_repeats": 0,
+E           "mailbox_folders_could_not_check": 0,
+E           "mails_allowed_by_the_desk_max": 12,
+E           "mails_in_mailbox": 7,
+E           "mails_in_spam_folder": 0,
+E           "mails_per_mailbox_in_config_order": [
+E             6,
+E             1
+E           ],
+E           "mails_sent_by_the_desk_total": 7,
+E           "people_sent": 8,
+E           "requests_intended": 13,
+E           "seconds_total": 34.2,
+E           "smtp_by_the_desk": {
+E             "attempts": 9,
+E             "sent": 7
+E           },
+E           "twin_expectation": "the twin (same person, other address) is a second lead and contact: a known blind spot"
+E         }
+E         
+E         result file: /home/user/build/rr6/out/EV7U/tmp-before/real-dry-mil8xd64/run/result.json
+E         clean-up: 9 contacts archived (only those carrying this run's lead ids)
+E         
+E       assert (0 == 1)
+E        +  where 1 = rrc.EXIT_FAILED
+
+tests/test_r7u_a_findings.py:126: AssertionError
+__________ test_a1_a_duplicate_create_under_list_lag_is_counted_whole __________
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff05cd3e30>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff05cd2510>
+
+    def test_a1_a_duplicate_create_under_list_lag_is_counted_whole(
+        capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """A lead got a second contact (one create too many) and the list hid one contact: two are not accounted for. r7t
+        said 1 (the cap cut the created number)."""
+        monkeypatch.setattr(rrc, "HubspotCrm", _hiding_crm(1))
+        _quiet_floors(monkeypatch)
+        _more_created(monkeypatch, created=1)
+        code = rrc.main(["--dry-fakes", "--assume-yes", "--cleanup"])
+        out = capsys.readouterr().out
+>       assert code == rrc.EXIT_FAILED and "2 contacts may be left" in out, out[-2000:]
+E       AssertionError:  sent            0      1
+E         L55a2736c8998    sent            1      1
+E         Lac9f1116a9da    sent            1      1
+E         Lb4ebc4962eaf    sent            1      1
+E         Lc1cce3b0f0e0    sent            1      1
+E         Le831f192624d    unknown         1      1
+E         Lf81301ca1d79    sent            1      1
+E         Lffa4c19aba9b    unknown         1      0
+E         
+E         {
+E           "crm_contacts_per_lead_max": 1,
+E           "crm_contacts_with_our_ids": 8,
+E           "desk_crash_exit_code": 137,
+E           "desk_idle_at_end": true,
+E           "followup_states": {
+E             "sent": 6,
+E             "unknown": 3
+E           },
+E           "hubspot_calls_by_readback": {
+E             "archives": 0,
+E             "calls": 1,
+E             "conflicts": 0,
+E             "create_open": 0,
+E             "create_unknown": 0,
+E             "created": 0,
+E             "creates": 0,
+E             "gets": 1,
+E             "patch": 0,
+E             "rate_limited": 0,
+E             "searches": 0
+E           },
+E           "hubspot_calls_by_the_desk": {
+E             "archives": 0,
+E             "calls": 9,
+E             "conflicts": 0,
+E             "create_open": 0,
+E             "create_unknown": 0,
+E             "created": 10,
+E             "creates": 9,
+E             "gets": 0,
+E             "patch": 0,
+E             "rate_limited": 0,
+E             "searches": 0
+E           },
+E           "imap_logins": 2,
+E           "leads_in_book": 9,
+E           "leads_with_more_than_one_mail": 0,
+E           "mail_last_poll_failed": false,
+E           "mail_poll_repeats": 0,
+E           "mailbox_folders_could_not_check": 0,
+E           "mails_allowed_by_the_desk_max": 12,
+E           "mails_in_mailbox": 7,
+E           "mails_in_spam_folder": 0,
+E           "mails_per_mailbox_in_config_order": [
+E             2,
+E             5
+E           ],
+E           "mails_sent_by_the_desk_total": 7,
+E           "people_sent": 8,
+E           "requests_intended": 13,
+E           "seconds_total": 34.2,
+E           "smtp_by_the_desk": {
+E             "attempts": 8,
+E             "sent": 7
+E           },
+E           "twin_expectation": "the twin (same person, other address) is a second lead and contact: a known blind spot"
+E         }
+E         
+E         result file: /home/user/build/rr6/out/EV7U/tmp-before/real-dry-tok6wj14/run/result.json
+E         clean-up: 8 contacts archived (only those carrying this run's lead ids)
+E         1 contacts may be left in HubSpot: the desk created 10 (and had 0 create requests with no known outcome), the list showed 8. Their lead ids start with L and are in the desk's book; check HubSpot and archive by hand.
+E         
+E       assert (1 == 1 and '2 contacts may be left' in "people: 8 + a twin (same person, second address); desk processes: 2 (one crash)\nworst case HubSpot calls: 1200 by th...come), the list showed 8. Their lead ids start with L and are in the desk's book; check HubSpot and archive by hand.\n")
+E        +  where 1 = rrc.EXIT_FAILED
+
+tests/test_r7u_a_findings.py:139: AssertionError
+_ test_a1b_the_over_count_is_never_a_false_alarm_when_the_list_shows_every_contact _
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff05c89fd0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff05c8ad50>
+
+    def test_a1b_the_over_count_is_never_a_false_alarm_when_the_list_shows_every_contact(
+        capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Main-level: the counter says one create ended unknown and was retried (created N + unknown 1), every contact is
+        in the list: exit 0 and no message about contacts left."""
+        seen = _capture_results(monkeypatch)
+        _more_created(monkeypatch, create_unknown=1)
+        code = rrc.main(["--dry-fakes", "--assume-yes", "--cleanup"])
+        out = capsys.readouterr().out
+        assert code == 0 and "may be left in HubSpot" not in out, out[-2000:]
+>       assert seen[-1]["summary"]["unseen_contacts"] == 0
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'unseen_contacts'
+
+tests/test_r7u_a_findings.py:169: KeyError
+_ test_a2_a_counter_value_that_is_not_a_whole_number_from_zero_is_unreadable[-1] _
+
+tmp_path = PosixPath('/home/user/build/rr6/out/EV7U/tmp-before/pytest-of-unknown/pytest-0/test_a2_a_counter_value_that_i1')
+value = '-1'
+
+    @pytest.mark.parametrize(
+        "value",
+        ["1e999", "-1", "0.9", "1.0", "true", "false", '"5"', "null", "[1]", "{}", "-1e999"],
+        ids=lambda v: v[:12],
+    )
+    def test_a2_a_counter_value_that_is_not_a_whole_number_from_zero_is_unreadable(tmp_path: Path, value: str) -> None:
+        (tmp_path / "desk-raaaaaa-1.hubspot.json").write_text('{"created": ' + value + "}", encoding="utf-8")
+        read = rrc.read_counter_files_checked(tmp_path, ".hubspot.json", "raaaaaa")
+>       assert (read.files, read.unreadable) == (1, 1) and not rrc.counter_is_known(read)
+E       assert ((1, 0) == (1, 1)
+E         
+E         At index 1 diff: 0 != 1
+E         Use -v to get more diff)
+
+tests/test_r7u_a_findings.py:233: AssertionError
+_ test_a2_a_counter_value_that_is_not_a_whole_number_from_zero_is_unreadable[0.9] _
+
+tmp_path = PosixPath('/home/user/build/rr6/out/EV7U/tmp-before/pytest-of-unknown/pytest-0/test_a2_a_counter_value_that_i2')
+value = '0.9'
+
+    @pytest.mark.parametrize(
+        "value",
+        ["1e999", "-1", "0.9", "1.0", "true", "false", '"5"', "null", "[1]", "{}", "-1e999"],
+        ids=lambda v: v[:12],
+    )
+    def test_a2_a_counter_value_that_is_not_a_whole_number_from_zero_is_unreadable(tmp_path: Path, value: str) -> None:
+        (tmp_path / "desk-raaaaaa-1.hubspot.json").write_text('{"created": ' + value + "}", encoding="utf-8")
+        read = rrc.read_counter_files_checked(tmp_path, ".hubspot.json", "raaaaaa")
+>       assert (read.files, read.unreadable) == (1, 1) and not rrc.counter_is_known(read)
+E       assert ((1, 0) == (1, 1)
+E         
+E         At index 1 diff: 0 != 1
+E         Use -v to get more diff)
+
+tests/test_r7u_a_findings.py:233: AssertionError
+_ test_a2_a_counter_value_that_is_not_a_whole_number_from_zero_is_unreadable[1.0] _
+
+tmp_path = PosixPath('/home/user/build/rr6/out/EV7U/tmp-before/pytest-of-unknown/pytest-0/test_a2_a_counter_value_that_i3')
+value = '1.0'
+
+    @pytest.mark.parametrize(
+        "value",
+        ["1e999", "-1", "0.9", "1.0", "true", "false", '"5"', "null", "[1]", "{}", "-1e999"],
+        ids=lambda v: v[:12],
+    )
+    def test_a2_a_counter_value_that_is_not_a_whole_number_from_zero_is_unreadable(tmp_path: Path, value: str) -> None:
+        (tmp_path / "desk-raaaaaa-1.hubspot.json").write_text('{"created": ' + value + "}", encoding="utf-8")
+        read = rrc.read_counter_files_checked(tmp_path, ".hubspot.json", "raaaaaa")
+>       assert (read.files, read.unreadable) == (1, 1) and not rrc.counter_is_known(read)
+E       assert ((1, 0) == (1, 1)
+E         
+E         At index 1 diff: 0 != 1
+E         Use -v to get more diff)
+
+tests/test_r7u_a_findings.py:233: AssertionError
+_ test_a2_a_counter_value_that_is_not_a_whole_number_from_zero_is_unreadable[true] _
+
+tmp_path = PosixPath('/home/user/build/rr6/out/EV7U/tmp-before/pytest-of-unknown/pytest-0/test_a2_a_counter_value_that_i4')
+value = 'true'
+
+    @pytest.mark.parametrize(
+        "value",
+        ["1e999", "-1", "0.9", "1.0", "true", "false", '"5"', "null", "[1]", "{}", "-1e999"],
+        ids=lambda v: v[:12],
+    )
+    def test_a2_a_counter_value_that_is_not_a_whole_number_from_zero_is_unreadable(tmp_path: Path, value: str) -> None:
+        (tmp_path / "desk-raaaaaa-1.hubspot.json").write_text('{"created": ' + value + "}", encoding="utf-8")
+        read = rrc.read_counter_files_checked(tmp_path, ".hubspot.json", "raaaaaa")
+>       assert (read.files, read.unreadable) == (1, 1) and not rrc.counter_is_known(read)
+E       assert ((1, 0) == (1, 1)
+E         
+E         At index 1 diff: 0 != 1
+E         Use -v to get more diff)
+
+tests/test_r7u_a_findings.py:233: AssertionError
+_ test_a2_a_counter_value_that_is_not_a_whole_number_from_zero_is_unreadable[false] _
+
+tmp_path = PosixPath('/home/user/build/rr6/out/EV7U/tmp-before/pytest-of-unknown/pytest-0/test_a2_a_counter_value_that_i5')
+value = 'false'
+
+    @pytest.mark.parametrize(
+        "value",
+        ["1e999", "-1", "0.9", "1.0", "true", "false", '"5"', "null", "[1]", "{}", "-1e999"],
+        ids=lambda v: v[:12],
+    )
+    def test_a2_a_counter_value_that_is_not_a_whole_number_from_zero_is_unreadable(tmp_path: Path, value: str) -> None:
+        (tmp_path / "desk-raaaaaa-1.hubspot.json").write_text('{"created": ' + value + "}", encoding="utf-8")
+        read = rrc.read_counter_files_checked(tmp_path, ".hubspot.json", "raaaaaa")
+>       assert (read.files, read.unreadable) == (1, 1) and not rrc.counter_is_known(read)
+E       assert ((1, 0) == (1, 1)
+E         
+E         At index 1 diff: 0 != 1
+E         Use -v to get more diff)
+
+tests/test_r7u_a_findings.py:233: AssertionError
+_ test_a2_a_counter_value_that_is_not_a_whole_number_from_zero_is_unreadable["5"] _
+
+tmp_path = PosixPath('/home/user/build/rr6/out/EV7U/tmp-before/pytest-of-unknown/pytest-0/test_a2_a_counter_value_that_i6')
+value = '"5"'
+
+    @pytest.mark.parametrize(
+        "value",
+        ["1e999", "-1", "0.9", "1.0", "true", "false", '"5"', "null", "[1]", "{}", "-1e999"],
+        ids=lambda v: v[:12],
+    )
+    def test_a2_a_counter_value_that_is_not_a_whole_number_from_zero_is_unreadable(tmp_path: Path, value: str) -> None:
+        (tmp_path / "desk-raaaaaa-1.hubspot.json").write_text('{"created": ' + value + "}", encoding="utf-8")
+        read = rrc.read_counter_files_checked(tmp_path, ".hubspot.json", "raaaaaa")
+>       assert (read.files, read.unreadable) == (1, 1) and not rrc.counter_is_known(read)
+E       assert ((1, 0) == (1, 1)
+E         
+E         At index 1 diff: 0 != 1
+E         Use -v to get more diff)
+
+tests/test_r7u_a_findings.py:233: AssertionError
+____ test_a2_one_bad_value_makes_the_whole_file_unreadable_and_adds_nothing ____
+
+tmp_path = PosixPath('/home/user/build/rr6/out/EV7U/tmp-before/pytest-of-unknown/pytest-0/test_a2_one_bad_value_makes_th0')
+
+    def test_a2_one_bad_value_makes_the_whole_file_unreadable_and_adds_nothing(tmp_path: Path) -> None:
+        (tmp_path / "desk-raaaaaa-1.hubspot.json").write_text('{"calls": 3, "created": -2}', encoding="utf-8")
+        (tmp_path / "desk-raaaaaa-2.hubspot.json").write_text('{"calls": 4, "created": 2}', encoding="utf-8")
+        read = rrc.read_counter_files_checked(tmp_path, ".hubspot.json", "raaaaaa")
+>       assert (read.totals, read.files, read.unreadable) == ({"calls": 4, "created": 2}, 2, 1)
+E       AssertionError: assert ({'calls': 7,...ed': 0}, 2, 0) == ({'calls': 4,...ed': 2}, 2, 1)
+E         
+E         At index 0 diff: {'calls': 7, 'created': 0} != {'calls': 4, 'created': 2}
+E         Use -v to get more diff
+
+tests/test_r7u_a_findings.py:248: AssertionError
+_ test_a2_an_arithmetic_error_while_reading_is_an_unreadable_file_never_a_crash[OverflowError('x')] _
+
+tmp_path = PosixPath('/home/user/build/rr6/out/EV7U/tmp-before/pytest-of-unknown/pytest-0/test_a2_an_arithmetic_error_wh0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff060fac00>
+error = OverflowError('x')
+
+    @pytest.mark.parametrize("error", [OverflowError("x"), ZeroDivisionError("x"), ArithmeticError("x")], ids=repr)
+    def test_a2_an_arithmetic_error_while_reading_is_an_unreadable_file_never_a_crash(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, error: ArithmeticError
+    ) -> None:
+        (tmp_path / "desk-raaaaaa-1.hubspot.json").write_text('{"created": 1}', encoding="utf-8")
+    
+        def raising(*_a: Any, **_k: Any) -> Any:
+            raise error
+    
+        monkeypatch.setattr(rrc, "load_json_file", raising)
+>       read = rrc.read_counter_files_checked(tmp_path, ".hubspot.json", "raaaaaa")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_r7u_a_findings.py:262: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:953: in read_counter_files_checked
+    total.update({k: int(v) for k, v in load_json_file(p).items()})
+                                        ^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+_a = (PosixPath('/home/user/build/rr6/out/EV7U/tmp-before/pytest-of-unknown/pytest-0/test_a2_an_arithmetic_error_wh0/desk-raaaaaa-1.hubspot.json'),)
+_k = {}
+
+    def raising(*_a: Any, **_k: Any) -> Any:
+>       raise error
+E       OverflowError: x
+
+tests/test_r7u_a_findings.py:259: OverflowError
+_ test_a2_an_arithmetic_error_while_reading_is_an_unreadable_file_never_a_crash[ZeroDivisionError('x')] _
+
+tmp_path = PosixPath('/home/user/build/rr6/out/EV7U/tmp-before/pytest-of-unknown/pytest-0/test_a2_an_arithmetic_error_wh1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff05fe0470>
+error = ZeroDivisionError('x')
+
+    @pytest.mark.parametrize("error", [OverflowError("x"), ZeroDivisionError("x"), ArithmeticError("x")], ids=repr)
+    def test_a2_an_arithmetic_error_while_reading_is_an_unreadable_file_never_a_crash(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, error: ArithmeticError
+    ) -> None:
+        (tmp_path / "desk-raaaaaa-1.hubspot.json").write_text('{"created": 1}', encoding="utf-8")
+    
+        def raising(*_a: Any, **_k: Any) -> Any:
+            raise error
+    
+        monkeypatch.setattr(rrc, "load_json_file", raising)
+>       read = rrc.read_counter_files_checked(tmp_path, ".hubspot.json", "raaaaaa")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_r7u_a_findings.py:262: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:953: in read_counter_files_checked
+    total.update({k: int(v) for k, v in load_json_file(p).items()})
+                                        ^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+_a = (PosixPath('/home/user/build/rr6/out/EV7U/tmp-before/pytest-of-unknown/pytest-0/test_a2_an_arithmetic_error_wh1/desk-raaaaaa-1.hubspot.json'),)
+_k = {}
+
+    def raising(*_a: Any, **_k: Any) -> Any:
+>       raise error
+E       ZeroDivisionError: x
+
+tests/test_r7u_a_findings.py:259: ZeroDivisionError
+_ test_a2_an_arithmetic_error_while_reading_is_an_unreadable_file_never_a_crash[ArithmeticError('x')] _
+
+tmp_path = PosixPath('/home/user/build/rr6/out/EV7U/tmp-before/pytest-of-unknown/pytest-0/test_a2_an_arithmetic_error_wh2')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff05fe38f0>
+error = ArithmeticError('x')
+
+    @pytest.mark.parametrize("error", [OverflowError("x"), ZeroDivisionError("x"), ArithmeticError("x")], ids=repr)
+    def test_a2_an_arithmetic_error_while_reading_is_an_unreadable_file_never_a_crash(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, error: ArithmeticError
+    ) -> None:
+        (tmp_path / "desk-raaaaaa-1.hubspot.json").write_text('{"created": 1}', encoding="utf-8")
+    
+        def raising(*_a: Any, **_k: Any) -> Any:
+            raise error
+    
+        monkeypatch.setattr(rrc, "load_json_file", raising)
+>       read = rrc.read_counter_files_checked(tmp_path, ".hubspot.json", "raaaaaa")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_r7u_a_findings.py:262: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:953: in read_counter_files_checked
+    total.update({k: int(v) for k, v in load_json_file(p).items()})
+                                        ^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+_a = (PosixPath('/home/user/build/rr6/out/EV7U/tmp-before/pytest-of-unknown/pytest-0/test_a2_an_arithmetic_error_wh2/desk-raaaaaa-1.hubspot.json'),)
+_k = {}
+
+    def raising(*_a: Any, **_k: Any) -> Any:
+>       raise error
+E       ArithmeticError: x
+
+tests/test_r7u_a_findings.py:259: ArithmeticError
+________ test_a2_a_counter_with_a_bad_value_ends_the_real_run_as_failed ________
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff05fe1490>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff05fe0560>
+
+    def test_a2_a_counter_with_a_bad_value_ends_the_real_run_as_failed(
+        capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Main-level, real desk processes: after they stopped, one counter file holds created = -1. r7t read it as a known
+        number (the sum drops by one); r7u: not known, the run fails and says the counter cannot be trusted."""
+        real = rrc.read_counter_files_checked
+    
+        def reader(run_dir: Path, suffix: str, tag: str) -> Any:
+            if suffix == ".hubspot.json":
+                for p in sorted(run_dir.glob(f"desk-{tag}-*{suffix}")):
+                    p.write_text('{"created": -1}', encoding="utf-8")
+            return real(run_dir, suffix, tag)
+    
+        monkeypatch.setattr(rrc, "read_counter_files_checked", reader)
+        code = rrc.main(["--dry-fakes", "--assume-yes", "--cleanup"])
+        out = capsys.readouterr().out
+>       assert code == rrc.EXIT_FAILED and "counter cannot be trusted" in out, out[-2000:]
+E       AssertionError:  used; allowed at most 9 leads + 3 unknown = 12
+E         F5  PASS    the first desk process really stopped at the crash point
+E                     the first desk process ended with exit code 137 (expected 137: a stop on purpose)
+E         F6  PASS    the last mailbox read worked
+E                     the last mailbox read worked
+E         ALL CHECKS HOLD
+E         
+E         lead id          state    CRM rows  mails
+E         L4e03695f4678    sent            1      1
+E         L628befffc815    sent            1      1
+E         L78964f054cf8    sent            1      1
+E         L868ccd3f8b55    unknown         1      0
+E         L9d98fd7286c8    sent            1      1
+E         Laf746f9a5c5e    unknown         1      1
+E         Ld64813975f24    unknown         1      0
+E         Ldb19dfe66fa6    sent            1      1
+E         Leaac0f5ad453    sent            1      1
+E         
+E         {
+E           "crm_contacts_per_lead_max": 1,
+E           "crm_contacts_with_our_ids": 9,
+E           "desk_crash_exit_code": 137,
+E           "desk_idle_at_end": true,
+E           "followup_states": {
+E             "sent": 6,
+E             "unknown": 3
+E           },
+E           "hubspot_calls_by_readback": {
+E             "archives": 0,
+E             "calls": 1,
+E             "conflicts": 0,
+E             "create_open": 0,
+E             "create_unknown": 0,
+E             "created": 0,
+E             "creates": 0,
+E             "gets": 1,
+E             "patch": 0,
+E             "rate_limited": 0,
+E             "searches": 0
+E           },
+E           "hubspot_calls_by_the_desk": {
+E             "created": -2
+E           },
+E           "imap_logins": 2,
+E           "leads_in_book": 9,
+E           "leads_with_more_than_one_mail": 0,
+E           "mail_last_poll_failed": false,
+E           "mail_poll_repeats": 0,
+E           "mailbox_folders_could_not_check": 0,
+E           "mails_allowed_by_the_desk_max": 12,
+E           "mails_in_mailbox": 7,
+E           "mails_in_spam_folder": 0,
+E           "mails_per_mailbox_in_config_order": [
+E             4,
+E             3
+E           ],
+E           "mails_sent_by_the_desk_total": 7,
+E           "people_sent": 8,
+E           "requests_intended": 13,
+E           "seconds_total": 5.1,
+E           "smtp_by_the_desk": {
+E             "attempts": 9,
+E             "sent": 7
+E           },
+E           "twin_expectation": "the twin (same person, other address) is a second lead and contact: a known blind spot"
+E         }
+E         
+E         result file: /home/user/build/rr6/out/EV7U/tmp-before/real-dry-1dffe63q/run/result.json
+E         clean-up: 9 contacts archived (only those carrying this run's lead ids)
+E         
+E       assert (0 == 1)
+E        +  where 1 = rrc.EXIT_FAILED
+
+tests/test_r7u_a_findings.py:289: AssertionError
+_ test_a3_a_counter_that_is_not_known_is_in_the_result_and_the_result_is_not_ok _
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff05fe2660>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff05fe0920>
+
+    def test_a3_a_counter_that_is_not_known_is_in_the_result_and_the_result_is_not_ok(
+        capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        seen = _capture_results(monkeypatch)
+        _hide_hubspot_counter(monkeypatch)
+        code = rrc.main(["--dry-fakes", "--assume-yes", "--cleanup"])
+        out = capsys.readouterr().out
+        assert code == rrc.EXIT_FAILED, out[-1500:]
+        (payload,) = seen
+>       assert payload["summary"]["counter_known"] is False and payload["summary"]["unseen_contacts"] == 0
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'counter_known'
+
+tests/test_r7u_a_findings.py:326: KeyError
+_ test_a3_contacts_not_accounted_for_are_in_the_result_and_the_result_is_not_ok _
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff05c279e0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff05cedf40>
+
+    def test_a3_contacts_not_accounted_for_are_in_the_result_and_the_result_is_not_ok(
+        capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        seen = _capture_results(monkeypatch)
+        monkeypatch.setattr(rrc, "HubspotCrm", _hiding_crm(1))
+        _quiet_floors(monkeypatch)
+        code = rrc.main(["--dry-fakes", "--assume-yes", "--cleanup"])
+        out = capsys.readouterr().out
+        (payload,) = seen
+        assert code == rrc.EXIT_FAILED, out[-1500:]
+>       assert payload["summary"]["counter_known"] is True and payload["summary"]["unseen_contacts"] == 1, payload[
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            "summary"
+        ]
+E       KeyError: 'counter_known'
+
+tests/test_r7u_a_findings.py:342: KeyError
+___________ test_a3_a_clean_run_says_so_in_the_result_and_the_table ____________
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff05c89fd0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff05c8bfe0>
+
+    def test_a3_a_clean_run_says_so_in_the_result_and_the_table(
+        capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        seen = _capture_results(monkeypatch)
+        code = rrc.main(["--dry-fakes", "--assume-yes", "--cleanup"])
+        out = capsys.readouterr().out
+        assert code == 0, out[-1500:]
+        (payload,) = seen
+>       assert payload["summary"]["counter_known"] is True and payload["summary"]["unseen_contacts"] == 0
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'counter_known'
+
+tests/test_r7u_a_findings.py:358: KeyError
+_ test_a3_the_counter_check_is_ok_only_for_a_known_counter_and_no_unseen_contact _
+
+    def test_a3_the_counter_check_is_ok_only_for_a_known_counter_and_no_unseen_contact() -> None:
+>       ok = rrc.counter_check(True, 0, {"created": 3})
+             ^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'run_real_check' has no attribute 'counter_check'
+
+tests/test_r7u_a_findings.py:364: AttributeError
+_________ test_a4_the_readback_note_shows_the_open_and_unknown_creates _________
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff05c8a6c0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff05c89310>
+
+    def test_a4_the_readback_note_shows_the_open_and_unknown_creates(
+        capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        seen = _capture_results(monkeypatch)
+        _readback_stops(monkeypatch)
+        _more_created(monkeypatch, create_open=1, create_unknown=2)
+        code = rrc.main(["--dry-fakes", "--assume-yes", "--cleanup"])
+        out = capsys.readouterr().out
+        assert code == rrc.EXIT_FAILED
+        note = seen[-1]["note"]
+>       assert "1 create requests were still open and 2 ended with an unknown outcome" in note, note
+E       AssertionError: the CRM read-back failed: the contacts of this run were NOT counted and NOT archived. The desk created 8 contacts in total (its own counter); up to that many may still be in HubSpot, their lead ids start with L and are listed in the desk's book. Archive them by hand.
+E       assert '1 create requests were still open and 2 ended with an unknown outcome' in "the CRM read-back failed: the contacts of this run were NOT counted and NOT archived. The desk created 8 contacts in ...hat many may still be in HubSpot, their lead ids start with L and are listed in the desk's book. Archive them by hand."
+
+tests/test_r7u_a_findings.py:394: AssertionError
+_ test_a4_the_readback_note_does_not_name_a_number_when_the_counter_is_not_known _
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff05c27980>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff05cc29c0>
+
+    def test_a4_the_readback_note_does_not_name_a_number_when_the_counter_is_not_known(
+        capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """One counter file cannot be read: r7t used the swallowing reader and named the partial sum as the number of
+        contacts; r7u uses the checked reader and says the number is not known."""
+        seen = _capture_results(monkeypatch)
+        _readback_stops(monkeypatch)
+        real = rrc.read_counter_files_checked
+    
+        def reader(run_dir: Path, suffix: str, tag: str) -> Any:
+            read = real(run_dir, suffix, tag)
+            if suffix != ".hubspot.json":
+                return read
+            return rrc.CounterRead({**read.totals, "created": 5}, read.files, read.unreadable + 1)
+    
+        monkeypatch.setattr(rrc, "read_counter_files_checked", reader)
+        code = rrc.main(["--dry-fakes", "--assume-yes", "--cleanup"])
+        capsys.readouterr()
+        assert code == rrc.EXIT_FAILED
+        note = seen[-1]["note"]
+>       assert "an unknown number of" in note and " 5 contacts" not in note and "create requests" not in note, note
+E       AssertionError: the CRM read-back failed: the contacts of this run were NOT counted and NOT archived. The desk created 5 contacts in total (its own counter); up to that many may still be in HubSpot, their lead ids start with L and are listed in the desk's book. Archive them by hand.
+E       assert ('an unknown number of' in "the CRM read-back failed: the contacts of this run were NOT counted and NOT archived. The desk created 5 contacts in ...hat many may still be in HubSpot, their lead ids start with L and are listed in the desk's book. Archive them by hand.")
+
+tests/test_r7u_a_findings.py:430: AssertionError
+__ test_a4_the_readback_note_gives_the_most_contacts_that_may_be_left[100-0] ___
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff05fe39e0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff05fe1a30>
+open_ = 100, unknown = 0
+
+    @pytest.mark.parametrize("open_, unknown", [(100, 0), (0, 100), (60, 40)])
+    def test_a4_the_readback_note_gives_the_most_contacts_that_may_be_left(
+        capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, open_: int, unknown: int
+    ) -> None:
+        """The number in the note follows the counting rule: created + the open part, the open part capped by the leads
+        that have no created contact (so the note never claims more contacts than leads)."""
+        seen = _capture_results(monkeypatch)
+        _readback_stops(monkeypatch)
+        real = rrc.read_counter_files_checked
+    
+        def reader(run_dir: Path, suffix: str, tag: str) -> Any:
+            read = real(run_dir, suffix, tag)
+            if suffix != ".hubspot.json":
+                return read
+            return rrc.CounterRead({"created": 2, "create_open": open_, "create_unknown": unknown}, read.files, 0)
+    
+        monkeypatch.setattr(rrc, "read_counter_files_checked", reader)
+        rrc.main(["--dry-fakes", "--assume-yes", "--cleanup"])
+        capsys.readouterr()
+        leads = seen[-1]["leads_in_book"]
+        note = seen[-1]["note"]
+>       assert f"up to {leads} contacts may still be in HubSpot" in note, (leads, note)
+E       AssertionError: (9, "the CRM read-back failed: the contacts of this run were NOT counted and NOT archived. The desk created 2 contacts...at many may still be in HubSpot, their lead ids start with L and are listed in the desk's book. Archive them by hand.")
+E       assert 'up to 9 contacts may still be in HubSpot' in "the CRM read-back failed: the contacts of this run were NOT counted and NOT archived. The desk created 2 contacts in ...hat many may still be in HubSpot, their lead ids start with L and are listed in the desk's book. Archive them by hand."
+
+tests/test_r7u_a_findings.py:454: AssertionError
+__ test_a4_the_readback_note_gives_the_most_contacts_that_may_be_left[0-100] ___
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff05c908f0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff05c92ab0>
+open_ = 0, unknown = 100
+
+    @pytest.mark.parametrize("open_, unknown", [(100, 0), (0, 100), (60, 40)])
+    def test_a4_the_readback_note_gives_the_most_contacts_that_may_be_left(
+        capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, open_: int, unknown: int
+    ) -> None:
+        """The number in the note follows the counting rule: created + the open part, the open part capped by the leads
+        that have no created contact (so the note never claims more contacts than leads)."""
+        seen = _capture_results(monkeypatch)
+        _readback_stops(monkeypatch)
+        real = rrc.read_counter_files_checked
+    
+        def reader(run_dir: Path, suffix: str, tag: str) -> Any:
+            read = real(run_dir, suffix, tag)
+            if suffix != ".hubspot.json":
+                return read
+            return rrc.CounterRead({"created": 2, "create_open": open_, "create_unknown": unknown}, read.files, 0)
+    
+        monkeypatch.setattr(rrc, "read_counter_files_checked", reader)
+        rrc.main(["--dry-fakes", "--assume-yes", "--cleanup"])
+        capsys.readouterr()
+        leads = seen[-1]["leads_in_book"]
+        note = seen[-1]["note"]
+>       assert f"up to {leads} contacts may still be in HubSpot" in note, (leads, note)
+E       AssertionError: (9, "the CRM read-back failed: the contacts of this run were NOT counted and NOT archived. The desk created 2 contacts...at many may still be in HubSpot, their lead ids start with L and are listed in the desk's book. Archive them by hand.")
+E       assert 'up to 9 contacts may still be in HubSpot' in "the CRM read-back failed: the contacts of this run were NOT counted and NOT archived. The desk created 2 contacts in ...hat many may still be in HubSpot, their lead ids start with L and are listed in the desk's book. Archive them by hand."
+
+tests/test_r7u_a_findings.py:454: AssertionError
+__ test_a4_the_readback_note_gives_the_most_contacts_that_may_be_left[60-40] ___
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7eff05c91a60>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7eff05c90080>
+open_ = 60, unknown = 40
+
+    @pytest.mark.parametrize("open_, unknown", [(100, 0), (0, 100), (60, 40)])
+    def test_a4_the_readback_note_gives_the_most_contacts_that_may_be_left(
+        capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, open_: int, unknown: int
+    ) -> None:
+        """The number in the note follows the counting rule: created + the open part, the open part capped by the leads
+        that have no created contact (so the note never claims more contacts than leads)."""
+        seen = _capture_results(monkeypatch)
+        _readback_stops(monkeypatch)
+        real = rrc.read_counter_files_checked
+    
+        def reader(run_dir: Path, suffix: str, tag: str) -> Any:
+            read = real(run_dir, suffix, tag)
+            if suffix != ".hubspot.json":
+                return read
+            return rrc.CounterRead({"created": 2, "create_open": open_, "create_unknown": unknown}, read.files, 0)
+    
+        monkeypatch.setattr(rrc, "read_counter_files_checked", reader)
+        rrc.main(["--dry-fakes", "--assume-yes", "--cleanup"])
+        capsys.readouterr()
+        leads = seen[-1]["leads_in_book"]
+        note = seen[-1]["note"]
+>       assert f"up to {leads} contacts may still be in HubSpot" in note, (leads, note)
+E       AssertionError: (9, "the CRM read-back failed: the contacts of this run were NOT counted and NOT archived. The desk created 2 contacts...at many may still be in HubSpot, their lead ids start with L and are listed in the desk's book. Archive them by hand.")
+E       assert 'up to 9 contacts may still be in HubSpot' in "the CRM read-back failed: the contacts of this run were NOT counted and NOT archived. The desk created 2 contacts in ...hat many may still be in HubSpot, their lead ids start with L and are listed in the desk's book. Archive them by hand."
+
+tests/test_r7u_a_findings.py:454: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r7u_a_findings.py::test_a1_one_more_created_than_leads_is_not_hidden_by_the_cap[1]
+FAILED tests/test_r7u_a_findings.py::test_a1_one_more_created_than_leads_is_not_hidden_by_the_cap[2]
+FAILED tests/test_r7u_a_findings.py::test_a1_one_more_created_than_leads_is_not_hidden_by_the_cap[5]
+FAILED tests/test_r7u_a_findings.py::test_a1_one_more_created_than_leads_is_not_hidden_by_the_cap[9]
+FAILED tests/test_r7u_a_findings.py::test_a1_the_rule_equals_the_brute_force_oracle_on_every_small_input
+FAILED tests/test_r7u_a_findings.py::test_a1_named_values_of_the_rule - asser...
+FAILED tests/test_r7u_a_findings.py::test_a1_an_out_of_book_contact_ends_the_run_as_failed
+FAILED tests/test_r7u_a_findings.py::test_a1_a_duplicate_create_under_list_lag_is_counted_whole
+FAILED tests/test_r7u_a_findings.py::test_a1b_the_over_count_is_never_a_false_alarm_when_the_list_shows_every_contact
+FAILED tests/test_r7u_a_findings.py::test_a2_a_counter_value_that_is_not_a_whole_number_from_zero_is_unreadable[-1]
+FAILED tests/test_r7u_a_findings.py::test_a2_a_counter_value_that_is_not_a_whole_number_from_zero_is_unreadable[0.9]
+FAILED tests/test_r7u_a_findings.py::test_a2_a_counter_value_that_is_not_a_whole_number_from_zero_is_unreadable[1.0]
+FAILED tests/test_r7u_a_findings.py::test_a2_a_counter_value_that_is_not_a_whole_number_from_zero_is_unreadable[true]
+FAILED tests/test_r7u_a_findings.py::test_a2_a_counter_value_that_is_not_a_whole_number_from_zero_is_unreadable[false]
+FAILED tests/test_r7u_a_findings.py::test_a2_a_counter_value_that_is_not_a_whole_number_from_zero_is_unreadable["5"]
+FAILED tests/test_r7u_a_findings.py::test_a2_one_bad_value_makes_the_whole_file_unreadable_and_adds_nothing
+FAILED tests/test_r7u_a_findings.py::test_a2_an_arithmetic_error_while_reading_is_an_unreadable_file_never_a_crash[OverflowError('x')]
+FAILED tests/test_r7u_a_findings.py::test_a2_an_arithmetic_error_while_reading_is_an_unreadable_file_never_a_crash[ZeroDivisionError('x')]
+FAILED tests/test_r7u_a_findings.py::test_a2_an_arithmetic_error_while_reading_is_an_unreadable_file_never_a_crash[ArithmeticError('x')]
+FAILED tests/test_r7u_a_findings.py::test_a2_a_counter_with_a_bad_value_ends_the_real_run_as_failed
+FAILED tests/test_r7u_a_findings.py::test_a3_a_counter_that_is_not_known_is_in_the_result_and_the_result_is_not_ok
+FAILED tests/test_r7u_a_findings.py::test_a3_contacts_not_accounted_for_are_in_the_result_and_the_result_is_not_ok
+FAILED tests/test_r7u_a_findings.py::test_a3_a_clean_run_says_so_in_the_result_and_the_table
+FAILED tests/test_r7u_a_findings.py::test_a3_the_counter_check_is_ok_only_for_a_known_counter_and_no_unseen_contact
+FAILED tests/test_r7u_a_findings.py::test_a4_the_readback_note_shows_the_open_and_unknown_creates
+FAILED tests/test_r7u_a_findings.py::test_a4_the_readback_note_does_not_name_a_number_when_the_counter_is_not_known
+FAILED tests/test_r7u_a_findings.py::test_a4_the_readback_note_gives_the_most_contacts_that_may_be_left[100-0]
+FAILED tests/test_r7u_a_findings.py::test_a4_the_readback_note_gives_the_most_contacts_that_may_be_left[0-100]
+FAILED tests/test_r7u_a_findings.py::test_a4_the_readback_note_gives_the_most_contacts_that_may_be_left[60-40]
+PASSED tests/test_r7u_a_findings.py::test_a1b_a_retried_unknown_create_is_absorbed_when_every_lead_has_its_contact
+PASSED tests/test_r7u_a_findings.py::test_a1b_a_retry_in_another_desk_process_counts_twice_in_the_safe_direction
+PASSED tests/test_r7u_a_findings.py::test_a1c_a_create_with_no_known_outcome_counts_as_a_possible_contact_at_main_level[create_open]
+PASSED tests/test_r7u_a_findings.py::test_a1c_a_create_with_no_known_outcome_counts_as_a_possible_contact_at_main_level[create_unknown]
+PASSED tests/test_r7u_a_findings.py::test_a2_a_counter_value_that_is_not_a_whole_number_from_zero_is_unreadable[1e999]
+PASSED tests/test_r7u_a_findings.py::test_a2_a_counter_value_that_is_not_a_whole_number_from_zero_is_unreadable[null]
+PASSED tests/test_r7u_a_findings.py::test_a2_a_counter_value_that_is_not_a_whole_number_from_zero_is_unreadable[[1]]
+PASSED tests/test_r7u_a_findings.py::test_a2_a_counter_value_that_is_not_a_whole_number_from_zero_is_unreadable[{}]
+PASSED tests/test_r7u_a_findings.py::test_a2_a_counter_value_that_is_not_a_whole_number_from_zero_is_unreadable[-1e999]
+PASSED tests/test_r7u_a_findings.py::test_a2_whole_numbers_from_zero_are_read
+PASSED tests/test_r7u_a_findings.py::test_a2_a_counter_that_is_not_an_object_is_unreadable
+PASSED tests/test_r7u_a_findings.py::test_a4_the_readback_note_with_no_open_create_does_not_mention_one
+29 failed, 12 passed in 527.72s (0:08:47)
+rc=1

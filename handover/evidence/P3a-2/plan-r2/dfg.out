@@ -1,0 +1,22 @@
+== setup
+
+== (d1) make_conninfo: DSN with options=-c role=drole, plus keyword options=-c search_path=pg_catalog,pg_temp
+merged conninfo: user=dlogin dbname=pd host=/home/user/build/pg-p3a2r13b port=56231 options='-c search_path=pg_catalog,pg_temp'
+options in merged dict: -c search_path=pg_catalog,pg_temp
+== (d2) a real connection with the DSN alone
+current_user, session_user, search_path: ('drole', 'dlogin', '"$user", public')
+== (d3) a real connection with the DSN plus the keyword
+current_user, session_user, search_path: ('dlogin', 'dlogin', 'pg_catalog,pg_temp')
+
+== (f1) COMMIT that the server refuses: deferred foreign key violated at COMMIT
+class: ForeignKeyViolation | sqlstate: 23503 | transaction_status after: IDLE | closed: False
+
+== (f2) connection cut AFTER the COMMIT message reached the server (TCP proxy forwards COMMIT, then drops the reply)
+commit returned normally
+row visible on a NEW connection (the commit happened): 1
+
+== (g1) ALTER ROLE gmig SET statement_timeout = 1 (as the role itself), then fresh connections
+statement_timeout seen by a fresh session: 1ms
+(g2) no limit set by the step (100 fresh connections): ok, cancelled 57014, other = (0, 100, 0)
+(g3) step sets SET LOCAL statement_timeout = '60s' first (100 fresh connections): ok, cancelled, other = (100, 0, 0)
+done

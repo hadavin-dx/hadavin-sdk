@@ -1,0 +1,44 @@
+== root
+5x INT d=0 exit=-2 marker=kept file=return2
+1x INT d=0.01 exit=-2 marker=kept file=return2
+4x INT d=0.01 exit=1 marker=kept file=return2
+5x INT d=0.02 exit=1 marker=kept file=return2
+1x INT d=0.05 exit=-2 marker=kept file=return2
+1x INT d=0.05 exit=0 marker=gone file=return1
+3x INT d=0.05 exit=130 marker=kept file=return2
+4x INT d=0.08 exit=0 marker=gone file=return1
+1x INT d=0.08 exit=130 marker=kept file=return2
+5x INT d=0.2 exit=0 marker=gone file=return1
+5x TERM d=0 exit=-15 marker=kept file=return2
+5x TERM d=0.01 exit=-15 marker=kept file=return2
+5x TERM d=0.02 exit=-15 marker=kept file=return2
+1x TERM d=0.05 exit=0 marker=gone file=return1
+4x TERM d=0.05 exit=143 marker=kept file=return2
+1x TERM d=0.08 exit=-15 marker=gone file=return1
+3x TERM d=0.08 exit=0 marker=gone file=return1
+1x TERM d=0.08 exit=143 marker=kept file=return2
+5x TERM d=0.2 exit=0 marker=gone file=return1
+followup nonzero or not return1: 0
+max traceback lines: 17
+0
+== nobody
+5x INT d=0 exit=-2 marker=kept file=return2
+5x INT d=0.01 exit=1 marker=kept file=return2
+5x INT d=0.02 exit=1 marker=kept file=return2
+1x INT d=0.05 exit=0 marker=gone file=return1
+2x INT d=0.05 exit=1 marker=kept file=return2
+2x INT d=0.05 exit=130 marker=kept file=return2
+4x INT d=0.08 exit=0 marker=gone file=return1
+1x INT d=0.08 exit=130 marker=kept file=return2
+5x INT d=0.2 exit=0 marker=gone file=return1
+5x TERM d=0 exit=-15 marker=kept file=return2
+5x TERM d=0.01 exit=-15 marker=kept file=return2
+5x TERM d=0.02 exit=-15 marker=kept file=return2
+1x TERM d=0.05 exit=-15 marker=kept file=return2
+4x TERM d=0.05 exit=143 marker=kept file=return2
+1x TERM d=0.08 exit=-15 marker=kept file=return2
+4x TERM d=0.08 exit=0 marker=gone file=return1
+5x TERM d=0.2 exit=0 marker=gone file=return1
+followup nonzero or not return1: 0
+max traceback lines: 20
+0

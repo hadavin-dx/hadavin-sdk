@@ -1,0 +1,25 @@
+hown
+        than possible is not an error (a 409 answer is no create).
+        One residual, in the SAFE direction: the counters carry no lead ids, so a create that ended unknown in one desk
+        process and was retried with a 201 by another counts twice (created 1 + unknown 1). It shows as one contact too many
+        only when some other lead has no contact; when every lead holds its contact the cap absorbs it and nothing is
+        reported. It is a false alarm a person checks in HubSpot in a minute, never a missed contact.
+        `created` None means the counter is not known: that raises CounterUnreadable (fail closed). The check that
+        compares the CRM list with the leads marked CRM-done (F3) never reads the counter, so it cannot cover this."""
+        if created is None:
+>           raise CounterUnreadable("the number of contacts the desk created is not known")
+E           run_real_check.CounterUnreadable: the number of contacts the desk created is not known
+
+scripts/run_real_check.py:640: CounterUnreadable
+----------------------------- Captured stdout call -----------------------------
+people: 8 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 1200 by the desk + 300 read-back = 1500
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 400, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+=========================== short test summary info ============================
+FAILED tests/test_r7u_a_findings.py::test_a3_a_counter_that_is_not_known_is_in_the_result_and_the_result_is_not_ok
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 40 deselected in 35.90s

@@ -1,0 +1,19 @@
+lines: {'S': 118, 'N': 147, 'M': 122, 'O': 56}  sheet words: 7943
+ok: 9 headings
+ok: R1..R10 each defined once
+ok: G1..G38 each defined once
+ok: gate groups a (31), b (4), c (3) checked
+ok: sheet cites no gate id
+open rows: 50
+numbered items per sheet section: {5: 8, 6: 6, 7: 8, 8: 5}
+ok: item pointers checked
+ok: phrases and fixed times checked
+ok: glossary order checked (68 terms)
+banned words: 10 listed, occurrences case-sensitive 0, case-insensitive 0 (files read: 6)
+ok: word checks run
+UTC = IST pairs checked: 18
+weekday mentions checked: 12
+ok: arithmetic, weekdays, UTC/IST pairs and buffer examples checked
+ok: yes sentence and step words checked
+map table rows: 101
+TOTAL PROBLEMS 0

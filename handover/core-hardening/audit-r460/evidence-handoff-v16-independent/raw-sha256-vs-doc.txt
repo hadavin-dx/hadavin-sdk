@@ -1,0 +1,4 @@
+../evidence-handoff-v16/held-sql/spend_decrease_log.sql 4c37aea8c0b3f8a235def5346c7941ef85671e509561fbb86bd2c4d9a5bb0647 IN-DOC
+../evidence-handoff-v16/held-sql/spend_nonneg.sql 5d765255bd1c7477d0bab11c281171b2bb331f0ac4dd08c2151403ba47cc1093 IN-DOC
+../evidence-handoff-v16/held-sql/spend_nonneg_finite.sql bd0409c9bde0ef91dc71f1b28eb960caad4818e01312a669b12e260949d9fe84 IN-DOC
+../evidence-handoff-v16/held-sql/spend_nonneg_upgrade.sql fafa71faa08df60423276e4235714e9772f47256d64321f7e7f189691bbf041f NOT-IN-DOC-TEXT (only in sha256-v16.txt)

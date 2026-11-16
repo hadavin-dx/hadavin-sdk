@@ -1,0 +1,7 @@
+frozen/OWNER-SHEET-v25-A.md fenced blocks: 1 langs: ['']
+  OWNER-SHEET-v25-A-00.none.sh lines 13 bash -n exit 2 shellspans/OWNER-SHEET-v25-A-00.none.sh: line 1: syntax error near unexpected token `('
+shellspans/OWNER-SHEET-v25-A-00.none.sh: line 1: `Run name: demo7   Run day: Wed 18 Nov 2026   REAL run (paid mo
+frozen/OWNER-SHEET-v25-B.md fenced blocks: 1 langs: ['']
+  OWNER-SHEET-v25-B-00.none.sh lines 13 bash -n exit 2 shellspans/OWNER-SHEET-v25-B-00.none.sh: line 1: syntax error near unexpected token `('
+shellspans/OWNER-SHEET-v25-B-00.none.sh: line 1: `Run name: demo7   Run day: Wed 18 Nov 2026   REAL run (paid mo
+total spans 2

@@ -1,0 +1,27 @@
+== A-inl00.sh: ls -l
+bash -n rc=0
+== A-inl01.sh: ls -l "<path from the message>"
+bash -n rc=0
+== A-inl02.sh: grep "^<setting name>=" "<model settings file>"
+bash -n rc=0
+== A-inl03.sh: (set -C; umask 077; read -rs -p 'paste key, Enter: ' K && [ -n "$K" ] && printf '%s\n' "$K" > "<key file>" ); echo "exit $?"
+bash -n rc=0
+== A-inl04.sh: ls -l "<key file>"
+bash -n rc=0
+== B-inl00.sh: ls -l
+bash -n rc=0
+== B-inl01.sh: ls -l "<path from the message>"
+bash -n rc=0
+== B-inl02.sh: grep "^<setting name>=" "<model settings file>"
+bash -n rc=0
+== B-inl03.sh: (set -C; umask 077; read -rs -p 'paste key, Enter: ' K && [ -n "$K" ] && printf '%s\n' "$K" > "<key file>" ); echo "exit $?"
+bash -n rc=0
+== B-inl04.sh: ls -l "<key file>"
+bash -n rc=0
+== fenced (sample message, not shell) bash -n for the record
+A-00.txt: line 1: syntax error near unexpected token `('
+A-00.txt: line 1: `Run name: demo7   Run day: Wed 18 Nov 2026   REAL run (paid model calls happen)   Earliest key time: 11:00 UTC = 16:30 IST'
+A-00.txt rc=2
+B-00.txt: line 1: syntax error near unexpected token `('
+B-00.txt: line 1: `Run name: demo7   Run day: Wed 18 Nov 2026   REAL run (paid model calls happen)   Earliest key time: 11:00 UTC = 16:30 IST'
+B-00.txt rc=2

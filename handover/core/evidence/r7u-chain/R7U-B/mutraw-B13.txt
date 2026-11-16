@@ -1,0 +1,33 @@
+in server did (measured here, on this computer: see the expected column)."""
+        from demo_only.bad_request import require_loopback_host
+    
+        # (spelling, rule accepts, a real bind works, the address it got when it works)
+        expected: list[tuple[str, bool, bool, str | None]] = [
+            ("LOCALHOST", True, True, "127.0.0.1"),  # accepted ON PURPOSE; resolves to the IPv4 loopback address
+            ("[::1]", True, False, None),  # accepted, but an IPv4 socket cannot be bound to it: not a listener
+            ("::ffff:127.0.0.1", True, True, "127.0.0.1"),  # accepted; the system reads it as the IPv4 address
+        ]
+        table = []
+        for host, rule_yes, bind_ok, address in expected:
+>           assert require_loopback_host(host) == host, host  # the rule says yes (returns the host unchanged)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_r7u_b_findings.py:213: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+host = 'LOCALHOST'
+
+    def require_loopback_host(host: object) -> str:
+        """The one refusal of a fake's listening host: only this computer (localhost or a loopback address). An empty or
+        blank host is refused too (to a socket an empty host means "every interface"); fails closed on anything that is not
+        text. Every fake (the three web fakes through QuietServer, the two mail fakes directly) calls this before it makes
+        a socket."""
+        if not isinstance(host, str) or not is_loopback_host(host):
+>           raise ValueError(LOOPBACK_HOST_TEXT)
+E           ValueError: must be this computer: localhost or 127.0.0.1
+
+demo_only/bad_request.py:38: ValueError
+=========================== short test summary info ============================
+FAILED tests/test_r7u_b_findings.py::test_b8_the_rule_accepts_these_spellings_by_design_and_a_bind_is_a_separate_fact
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 13 deselected in 0.15s

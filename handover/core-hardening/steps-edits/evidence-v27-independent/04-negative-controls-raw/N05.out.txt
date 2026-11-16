@@ -1,0 +1,9 @@
+desc: source: hard-coded wrong UTC/IST pair inserted in sheet
+file: OWNER-SHEET-v27-SOURCE.md occurrences replaced: 1
+build rc=0
+check rc=1
+C07 info: OWNER-SHEET-v27-A.md 7479 words (target 6300: NOT met)
+C07 info: OWNER-SHEET-v27-B.md 7522 words (target 6300: NOT met)
+check-v27: 2 failure(s)
+FAIL C04 OWNER-SHEET-v27-A.md bad pair 09:00 UTC = 15:00 IST
+FAIL C04 OWNER-SHEET-v27-B.md bad pair 09:00 UTC = 15:00 IST

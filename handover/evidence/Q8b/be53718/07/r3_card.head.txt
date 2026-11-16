@@ -1,0 +1,21 @@
+M5 host then slash domain || 'see <HOSTNAME_1>/evil[.]com/p?d=1 now' || bare-domain tokens: [] || idempotent: True
+M5 double dot || '<IPV4_1>..evil[.]com' || bare-domain tokens: [] || idempotent: True
+M5 ip then domain || '<IPV4_1>[.]evil[.]com' || bare-domain tokens: [] || idempotent: True
+M5 sentence end after a placeholder || 'restart <HOSTNAME_1>. Then wait.' || bare-domain tokens: [] || idempotent: True
+M5 slash domain, no placeholder (main's rule) || 'see a/evil[.]com and /var/log/app[.]log now' || bare-domain tokens: [] || idempotent: True
+M6 heading || '# APPROVED by <EMAIL_1>' || bare-domain tokens: [] || idempotent: True
+M6 heading, no identifier || '# APPROVED' || bare-domain tokens: [] || idempotent: True
+M6 quote || '> ask <EMAIL_1>' || bare-domain tokens: [] || idempotent: True
+m1 backtick eaten + wide dot || 'password=<SECRET_1> bob[.]smith@example[.]com `x` y' || bare-domain tokens: [] || idempotent: True
+m1 wide dot inside inline code || '`bob.smith@example。com`' || bare-domain tokens: [] || idempotent: True
+F6b backtick eaten || 'password=<SECRET_1> evil[.]com `evil.com` x' || bare-domain tokens: [] || idempotent: True
+N4 sweep || 'contact <EMAIL_1>' || bare-domain tokens: [] || idempotent: True
+N4 percent || '<EMAIL_1>' || bare-domain tokens: [] || idempotent: True
+N4 entity || '<EMAIL_1>' || bare-domain tokens: [] || idempotent: True
+m3 uuid file || 'see <UUID_1>[.]json' || bare-domain tokens: [] || idempotent: True
+guard fence domain || 'x\n```\nevil.com\n```\ny evil[.]com' || bare-domain tokens: [] || idempotent: True
+N9 fixed case || '<SECRET_3>3D\n<SECRET_1><SECRET_2>' || bare-domain tokens: [] || idempotent: True
+P2 texts=4000 leak=0 bare_domain(token scan)=0 flagged_only_without_the_exemptions=0 not_idempotent=0 seconds=9.9
+N9 texts=3000 with_a_first_pass_original_readable=0 seconds=5.8
+N9 fixed case readable originals: []
+exit 0

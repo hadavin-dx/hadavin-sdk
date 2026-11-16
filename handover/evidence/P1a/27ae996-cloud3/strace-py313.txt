@@ -1,0 +1,48 @@
+4889  exit_group(0)                     = ?
+4881  --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=4889, si_uid=0, si_status=0, si_utime=0, si_stime=0} ---
+5606  exit_group(0)                     = ?
+4881  --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=5606, si_uid=0, si_status=0, si_utime=2 /* 0.02 s */, si_stime=0} ---
+5898  exit_group(0)                     = ?
+4881  --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=5898, si_uid=0, si_status=0, si_utime=29 /* 0.29 s */, si_stime=13 /* 0.13 s */} ---
+5896  exit_group(0)                     = ?
+4881  --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=5896, si_uid=0, si_status=0, si_utime=33 /* 0.33 s */, si_stime=10 /* 0.10 s */} ---
+5895  exit_group(0)                     = ?
+4881  --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=5895, si_uid=0, si_status=0, si_utime=31 /* 0.31 s */, si_stime=11 /* 0.11 s */} ---
+5897  exit_group(0)                     = ?
+4881  --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=5897, si_uid=0, si_status=0, si_utime=33 /* 0.33 s */, si_stime=8 /* 0.08 s */} ---
+6008  exit_group(3)                     = ?
+4881  --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=6008, si_uid=0, si_status=3, si_utime=2 /* 0.02 s */, si_stime=1 /* 0.01 s */} ---
+6017  exit_group(3)                     = ?
+4881  --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=6017, si_uid=0, si_status=3, si_utime=1 /* 0.01 s */, si_stime=0} ---
+6019  exit_group(0)                     = ?
+4881  --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=6019, si_uid=0, si_status=0, si_utime=1 /* 0.01 s */, si_stime=1 /* 0.01 s */} ---
+6985  exit_group(0)                     = ?
+4881  --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=6985, si_uid=0, si_status=0, si_utime=3 /* 0.03 s */, si_stime=3 /* 0.03 s */} ---
+6987  exit_group(0)                     = ?
+4881  --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=6987, si_uid=0, si_status=0, si_utime=4 /* 0.04 s */, si_stime=1 /* 0.01 s */} ---
+6996  exit_group(3)                     = ?
+4881  --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=6996, si_uid=0, si_status=3, si_utime=1 /* 0.01 s */, si_stime=3 /* 0.03 s */} ---
+7007  exit_group(3)                     = ?
+4881  --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=7007, si_uid=0, si_status=3, si_utime=1 /* 0.01 s */, si_stime=2 /* 0.02 s */} ---
+7017  exit_group(3)                     = ?
+4881  --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=7017, si_uid=0, si_status=3, si_utime=1 /* 0.01 s */, si_stime=1 /* 0.01 s */} ---
+7032  exit_group(3)                     = ?
+4881  --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=7032, si_uid=0, si_status=3, si_utime=3 /* 0.03 s */, si_stime=1 /* 0.01 s */} ---
+7038  exit_group(3)                     = ?
+4881  --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=7038, si_uid=0, si_status=3, si_utime=0, si_stime=3 /* 0.03 s */} ---
+7045  exit_group(3)                     = ?
+4881  --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=7045, si_uid=0, si_status=3, si_utime=3 /* 0.03 s */, si_stime=1 /* 0.01 s */} ---
+7052  exit_group(3)                     = ?
+4881  --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=7052, si_uid=0, si_status=3, si_utime=1 /* 0.01 s */, si_stime=2 /* 0.02 s */} ---
+7060  exit_group(3)                     = ?
+4881  --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=7060, si_uid=0, si_status=3, si_utime=2 /* 0.02 s */, si_stime=2 /* 0.02 s */} ---
+7070  exit_group(3)                     = ?
+4881  --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=7070, si_uid=0, si_status=3, si_utime=1 /* 0.01 s */, si_stime=1 /* 0.01 s */} ---
+7081  exit_group(3)                     = ?
+4881  --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=7081, si_uid=0, si_status=3, si_utime=1 /* 0.01 s */, si_stime=2 /* 0.02 s */} ---
+7085  exit_group(0)                     = ?
+4881  --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=7085, si_uid=0, si_status=0, si_utime=1 /* 0.01 s */, si_stime=1 /* 0.01 s */} ---
+7146  --- SIGPIPE {si_signo=SIGPIPE, si_code=SI_USER, si_pid=4881, si_uid=0} ---
+7159  --- SIGPIPE {si_signo=SIGPIPE, si_code=SI_USER, si_pid=4881, si_uid=0} ---
+7345  --- SIGPIPE {si_signo=SIGPIPE, si_code=SI_USER, si_pid=4881, si_uid=0} ---
+7351  --- SIGPIPE {si_signo=SIGPIPE, si_code=SI_USER, si_pid=4881, si_uid=0} ---

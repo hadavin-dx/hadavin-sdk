@@ -1,0 +1,42 @@
+ok  KILLED    J8 tone demo is accepted with another mode | killer=test_pin_a_banner_that_contradicts_itself_is_not_painted_as_given | expect_in_first=True
+    first: E       AssertionError: contradiction #0
+ok  KILLED    G5c the name is matched in lower case only | killer=test_pin_a_line_that_names_the_folder_in_another_spelling_is_a_hit | expect_in_first=True
+    first: E           AssertionError: a line that names the folder as 'Demo_Only' was not the one hit
+ok  KILLED    G9b files that git ignores are scanned | killer=test_ignored_files_and_binary_endings_are_skipped | expect_in_first=True
+    first: E       AssertionError: scan hits: ['src/pkg/__pycache__/x.py:1: names-demo-only-folder']
+ok  KILLED    B46 a name next to a word character is matched | killer=test_pin_names_in_follows_the_table | expect_in_first=True
+    first: E           AssertionError: names_in('connected: xCRM.', 'CRM') was not False
+ok  KILLED    G37 UTF-16 text in a text file is not searched | killer=test_text_written_as_utf16_without_a_mark_is_found_in_a_text_ending | expect_in_first=True
+    first: E       AssertionError: text_written_as_utf16_without_a_mark_is_found_in_a_text_endi: check 1
+ok  KILLED    B51 a padded bare host is read as this machine | killer=test_a_bare_host_that_is_padded_or_not_plain_ascii_is_not_this_machine | expect_in_first=True
+    first: E           AssertionError: bare host 'localhost\n' read as this machine
+ok  CRASH     B54 an agent entry that is not a mapping is not refused | killer=test_a_tool_spec_without_hosts_or_with_odd_hosts_raises_naming_the_too | expect_in_first=True
+    first: E           AttributeError: 'list' object has no attribute 'items'
+ok  KILLED    B55 tool modules with an empty manifest count as nothing | killer=test_tool_modules_with_no_spec_at_all_count_as_one_real_service_like_n | expect_in_first=True
+    first: E           AssertionError: modules with no spec {}
+ok  KILLED    B59 a url is not checked for text after the host | killer=test_an_odd_url_is_shown_as_leaving_this_machine | expect_in_first=True
+    first: E           AssertionError: url 'http://[::1]:80x/'
+ok  KILLED    G43 an empty or spanned zip is not recognised | killer=test_a_compiled_or_packed_file_is_refused_by_its_first_bytes_whatever_ | expect_in_first=True
+    first: E               AssertionError: first bytes of zip (504b0506) in a file ending '.png' were not refused as that kind
+ok  KILLED    G49 compiled Python from version 3000 is not recognised | killer=test_a_compiled_or_packed_file_is_refused_by_its_first_bytes_whatever_ | expect_in_first=True
+    first: E               AssertionError: first bytes of compiled Python (b80b0d0a) in a file ending '.png' were not refused as that kind
+ok  KILLED    G55 an .xz ending is not refused | killer=test_every_archive_ending_is_refused_like_a_zip | expect_in_first=True
+    first: E           AssertionError: .xz
+ok  KILLED    B83 a tag longer than the page shows is returned | killer=test_a_tag_longer_than_the_page_script_shows_is_refused_in_python | expect_in_first=True
+    first: E       AssertionError: a tag one character too long was not refused
+ok  KILLED    B84 the not-confirmed words are not checked for length and e | killer=test_a_screen_always_gets_a_banner_even_when_the_words_are_malformed | expect_in_first=True
+    first: E           AssertionError: malformed words namespace(not_confirmed_tag='T', not_confirmed='') did not give the default not-confirmed banner
+ok  KILLED    N3 the hosts of a tool spec are read without the collection  | killer=test_a_generator_for_the_hosts_of_a_tool_spec_or_for_a_tool_specs_valu | expect_in_first=True
+    first: E               AssertionError: the hosts of a tool spec as a generator were read
+ok  KILLED    N5 the overrides are ignored by the banner | killer=test_each_override_alone_gives_unconfirmed_with_its_name_and_no_made_u | expect_in_first=True
+    first: E           AssertionError: override tools: tone 'demo', not unconfirmed
+ok  KILLED    R7B1 hold_run_ids is not an override | killer=test_the_overrides_are_exactly_the_objects_and_callables_handed_to_bui | expect_in_first=True
+    first: E       AssertionError: the override list is ('tools', 'sources', 'channel', 'llm', 'detector', 'secrets', 'clock')
+ok  KILLED    R7E4 a file of only the MZ mark and NUL bytes is not a progr | killer=test_pin_a_file_that_is_only_the_mz_mark_and_nul_bytes_is_a_hit | expect_in_first=True
+    first: E       AssertionError: mz: a file of only the mark and NUL bytes was not refused as DOS or Windows program
+ok  KILLED    R9D14 the name check reads the whole line for every equals s | killer=test_pin_the_masker_costs_time_in_proportion_to_the_line_and_never_rai | expect_in_first=True
+    first: E       AssertionError: the name check read 100000000 characters for a 20000 character line
+ok  KILLED    R13A1 a stage that is not text is not an error | killer=test_pin_a_stage_that_is_not_text_is_an_error_that_names_it | expect_in_first=True
+    first: E       AssertionError: a stage of None was not refused
+n 20 bad 0
+rc=0

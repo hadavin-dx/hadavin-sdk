@@ -1,0 +1,4 @@
+rc=1
+FAIL E-02 OLD occurs 413 times in OWNER-STEPS-realrun-v3.md
+FAIL apply (non-hold) ('E-02', 'FAILED old count 427 at apply time (NEW (exact):)')
+RESULT FAIL 2

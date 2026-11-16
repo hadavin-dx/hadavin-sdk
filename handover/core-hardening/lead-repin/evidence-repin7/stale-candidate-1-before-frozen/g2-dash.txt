@@ -1,0 +1,7 @@
+v06-url-userinfo-off dash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1122 failed=45 (the made-up input and output files w | first: FAIL (secret still visible): at6 (first 6 characters)
+v07-canary-count-off-by-one dash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1167 failed=0 (the made-up input and output files we | first: 
+v08-selftest-count-off-by-one dash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1191 failed=0 (the made-up input and output files we | first: 
+v10-bearer-rule-off dash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1164 failed=3 (the made-up input and output files we | first: FAIL (secret still visible): bare Bearer value
+v11-jwt-rule-off dash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1164 failed=3 (the made-up input and output files we | first: FAIL (secret still visible): JWT-shaped value
+v15-dotted-camel-rule-reverted dash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1166 failed=1 (the made-up input and output files we | first: FAIL (evidence was hidden): dotted CamelCase name stays
+v16-ml-continue-off dash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1155 failed=12 (the made-up input and output files w | first: FAIL (secret still visible): wrapped assignment, bracket opened and closed (first 6 characters)

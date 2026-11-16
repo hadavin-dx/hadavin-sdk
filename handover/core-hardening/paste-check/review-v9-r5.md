@@ -1,0 +1,7 @@
+# Real-v5 edit list v9, round 5 (blockers and majors only), readiness, condensed copy, 2026-11-16
+No Blockers. All five round-4 majors closed in text and test output (prep send/PREP_KEY, prep-id collision, unknown verdict, recipe pass text, deletion list union of OUT and OUT.attemptN). Plan text equals tested scripts (step 4 line for line vs 10b-clean-start.sh; recipe.sh; 2.1b.sh; dl()). No contradiction with ORDERS Q15-Q21 except below.
+Not checked: plan-wp6-resmoke-v5.md, plan sections 1b.2, 2, 11.5, P-2 ($S mapping, 285 s bound); apply-v9.py; dryrun-v9.txt has no hash of the plan file; PowerShell half unrun; flow citations; ORDERS Q16, Q20.3-Q21.4.
+## Major (new)
+Text B departs from Q21.2 without saying so: Q21.2 (later, explicit) says "THE ONE WORDING is DECISIONS 1" plus one lease sentence stating a gap longer than the lease is not claimed; the earlier reading was "no takeover after expiry". Text B's sentence says recovery re-claims after expiry, up to three tries; "longest gap not claimed" appears only in the facts paragraph. Fix: add one line stating the departure, append "a gap longer than the lease is not claimed" to the Text B sentence or say why dropped; note Text B is the order-compliant text.
+## Nits
+(a) saved output does not show plan snippets 2a, 2c, step 6 running verbatim (before() re-implementation in section l). (b) recipe-check-v9.sh line 2 says 6 failing cases, output has 7. (c) UNVERIFIED 14 says the recipe uses git show, now git archive. (d) step 4b copies only OUT, not .attemptN files. Also: dryrun file lacks plan sha256.

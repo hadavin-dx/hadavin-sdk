@@ -1,0 +1,102 @@
+== T63 (review r5 M3) a decoy folder that holds the ORIGINAL bytes: the restore must not report success on the decoy
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r6build/newonly.sh: line 50: 16957 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+(True, 'test group already gone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r6build/sc3/tmpstate/hadavin-mutation-lane-0/253d20f571892ba9.backup (it already held the
+  FAIL: T63a --restore through a swapped folder: NOT reported as restored; marker and backup kept; the planted file behind the swap is still planted (r5 cleared the marker and left it planted); decoy untouched
+  FAIL: T63a the kept marker still allows a genuine restore afterwards
+STOPPED after mutant m1: its test run changed the scratch tree: ['src.moved/mod.py', 'src.moved/sideeffect.py', 'src/', 'src/mod.py', 'src/sideeffect.py']
+tree diff: 5 difference(s)
+TREE NOT CLEAN after the loop: ['src.moved/mod.py', 'src.moved/sideeffect.py', 'src/', 'src/mod.py', 'src/sideeffect.py']
+  FAIL: T63b the run's own restore through a swapped folder: exit 3 (got 4), marker and backup kept, the planted file is still planted behind the swap (r5: exit 0 or 4, marker cleared)
+  FAIL: T63b genuine restore afterwards
+== T63c restore_target itself: one descriptor, a swap during the write does not matter, read-only, two names, FIFO, re-creation
+restore_target missing
+  FAIL: T63c restore_target: plain, already-original (no write), swap during the write, link refused, read-only, two names, FIFO, re-creation (rc 1)
+== T64 (review r5 nit 1) a REAL memory fault is not recovered by the signal handler: the process hangs (measured), as the text now says
+  PASS: T64a the process with run.py's handlers is still alive 4 s after a real memory fault (hung, handler never ran): 'acts like SIGKILL' would be wrong (alive=0, 0 = alive)
+  FAIL: T64b the text in run.py no longer says a real fault 'acts like SIGKILL' and says it spins
+== T65 (review r5 nit 2) a failure that is no signal, then a signal in the first moment of the cleanup: the test group is still stopped
+KeyboardInterrupt came out instead of the failure: (<Signals.SIGTERM: 15>,)
+line hit: True SIG.allow: False first: 15 critical: True
+  FAIL: T65 planted: the group is stopped although a signal came in the first moment of the cleanup (no orphan pytest left, the failure itself came out)
+KeyboardInterrupt came out instead of the failure: (<Signals.SIGTERM: 15>,)
+line hit: True SIG.allow: False first: 15 critical: False
+  FAIL: T65 control: the group is stopped although a signal came in the first moment of the cleanup (no orphan pytest left, the failure itself came out)
+== T66 (review r5 M1) the baseline: a failing or empty baseline refuses the mutants; a result without a passed test is no survivor; a kill that equals the baseline is flagged
+m1 KILLED tests/test_fail.py::test_f
+tree diff: 0 difference(s)
+  FAIL: T66a baseline FAILS: mutants refused, exit 2 (got 0), baseline file says 'baseline usable: NO', no raw file for the mutant, file unchanged, state empty
+  FAIL: T66b baseline with every test skipped (pytest exit 0, nothing passed): refused, exit 2 (got 0), 'no test passed' in the baseline file, no mutant file
+  FAIL: T66c no control, every test skipped: verdict NO-TEST-PASSED (not SURVIVED), exit 5 (got 0)
+  FAIL: T66d a KILLED whose failing tests equal the baseline's (none named) is FLAGGED: exit 5 (got 0), 'flags:' line in the raw file, '1 flagged' in the summary
+  FAIL: T66e guard: a normal kill with --control (a named failing test) is not flagged: exit 0 (got 0), 'flags: none', baseline recorded
+  FAIL: T66f no --control: every raw file says 'baseline: NOT RUN'
+== T67 (review r5 M2) exit 0 means every mutant ran: COULD-NOT-PLANT, TIMEOUT and ERROR give exit 5 and a SUMMARY line
+  FAIL: T67a COULD-NOT-PLANT (old text absent): exit 5 (got 0), SUMMARY counts it, raw says so
+  FAIL: T67b TIMEOUT: exit 5 (got 0), SUMMARY counts it
+  FAIL: T67c ERROR (pytest exit 5, no test selected): exit 5 (got 0), SUMMARY counts it
+  FAIL: T67d two mutants, one killed and one that could not be planted: exit 5 (got 0), both raw files, counts '1 KILLED, 0 SURVIVED, 0 TIMEOUT, 1 COULD-NOT-PLANT', summary file written
+  FAIL: T67e guard: every mutant killed: exit 0 (got 0), summary says COMPLETE
+  PASS: T67f guard: a clean verdict with a declared --extra file keeps exit 0 (got 0)
+  PASS: T67g exit 4 (tree not clean) still wins over exit 5 (got 4)
+== T68 (review r5 nit 3) --restore with no marker anywhere says it CANNOT TELL, not 'nothing to restore'
+no marker in /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r6build/sc3/tmpstate/hadavin-mutation-lane-0 or in ['/dev/shm', '/tmp', '/var/tmp']: nothing to restore
+  FAIL: T68 text says 'CANNOT TELL' and no longer 'nothing to restore' (exit 0, still 0)
+== T69 (review r5 nit 4) a control marker: invalid JSON is a refusal; a group that cannot be settled keeps the marker
+Traceback (most recent call last):
+  File "/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/raw/.codecopies/run-r5.py", line 1592, in <module>
+    main()
+    ~~~~^^
+  File "/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/raw/.codecopies/run-r5.py", line 1469, in main
+    ok, text = restore_from_marker(root)
+               ~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/raw/.codecopies/run-r5.py", line 816, in restore_from_marker
+    control = restore_control(root, key) if os.path.lexists(control_marker_path(key)) else None
+              ~~~~~~~~~~~~~~~^^^^^^^^^^^
+  File "/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/raw/.codecopies/run-r5.py", line 804, in restore_control
+    m = json.loads(read_state(path)) if os.path.lexists(path) else None
+        ~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/json/__init__.py", line 352, in loads
+    return _default_decoder.decode(s)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "/usr/local/lib/python3.13/json/decoder.py", line 345, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/json/decoder.py", line 363, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+  FAIL: T69a invalid JSON in the control marker: exit 2 (got 1), 'REFUSED', no traceback
+control run: no test group recorded; no marker in /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r6build/sc3/tmpstate/hadavin-mutation-lane-0 or in ['/dev/shm', '/tmp', '/var/tmp']: nothing to restore
+  FAIL: T69b control marker with no test group recorded (cannot be verified): marker KEPT, exit 3 (got 0), text says KEPT
+control run: test group already gone; no marker in /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r6build/sc3/tmpstate/hadavin-mutation-lane-0 or in ['/dev/shm', '/tmp', '/var/tmp']: nothing to restore
+  PASS: T69c guard: a control marker whose group is provably gone is removed, exit 0 (got 0)
+== T70 (review r5 nit 5) the import check is repeated before EACH mutant
+m1 KILLED tests/test_flip.py::test_f
+m2 KILLED tests/test_flip.py::test_f
+tree diff: 0 difference(s)
+  FAIL: T70 after the first mutant's tests changed what the tests import, the second mutant is NOT planted: COULD-NOT-PLANT (import check), exit 5 (got 0)
+  FAIL: T70 the first mutant ran normally and records the repeated check
+== T71 (review r5 nit 6) a change to the tree made BEFORE the first mutant (control tests, the import check) stops the run before it is planted
+tree diff: 1 difference(s)
+TREE NOT CLEAN after the loop: ['junk.txt']
+  FAIL: T71a the control run's tests wrote a file: exit 4 (got 4) BEFORE mutant m1 (no X-m1.txt), 'STOPPED before the first mutant'
+tree diff: 1 difference(s)
+TREE NOT CLEAN after the loop: ['sidefx.txt']
+  FAIL: T71b importing the target module wrote a file (import check): exit 4 (got 4) before the mutant is planted (no X-m1.txt)
+== T72 (review r5 nit 7) mutant ids that name other raw files are refused
+  FAIL: T72 id 'baseline' refused, exit 2 (got 0), nothing planted, no raw file named after it
+  FAIL: T72 id 'tree-diff' refused, exit 2 (got 0), nothing planted, no raw file named after it
+  FAIL: T72 id 'summary' refused, exit 2 (got 0), nothing planted, no raw file named after it
+== T73 (review r5 nit 8) an old Python (version and tomllib simulated) is refused at the start with a message, also for --restore
+    import tomllib
+ModuleNotFoundError: import of tomllib halted; None in sys.modules
+  FAIL: T73 exit 2 (got 1) with a message naming Python 3.11.4, no traceback
+== T74 (review r5 nit 9) --sha is pinned: the full id of a COMMIT is recorded; an id that is no commit is refused
+  FAIL: T74a a short id works (rc 0) and the raw file records the FULL id (and how it was given)
+m1 KILLED tests/test_fast.py::test_f
+tree diff: 0 difference(s)
+  FAIL: T74b the id of a TREE (git archive would accept it) is refused, exit 2 (got 0), nothing planted
+  PASS: T74c guard: an unknown id is refused, exit 2 (got 2)
+== T75 (review r5 smaller point) git and patch run with a clean environment: GIT_DIR and GIT_WORK_TREE of the caller do not reach them
+REFUSED: git rev-parse failed for --repo /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r6build/sc3/toy/repo (rc 128): fatal: not a git repository: '/nonexistent/gitdir'
+  FAIL: T75 with a bogus GIT_DIR and GIT_WORK_TREE in the caller's environment the run still works (exit 0, got 2)
+FAILED CHECKS: 33 (of 38)

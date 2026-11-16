@@ -1,0 +1,55 @@
+postgres://:<email-masked>/app
+redis://:<email-masked>:6379/0
+https://<email-masked>/path
+amqp://guest:<masked>@broker.example.invalid//
+ftp://user:<masked>@ftp.example.invalid/f
+mongodb+srv://u:<masked>@m.example.invalid/db
+git clone https://tok:<masked>@git.example.invalid/r.git
+jdbc:mysql://h.example.invalid/db?user=u&password=<masked>
+url = "http://x:<masked>@h.example.invalid"
+docker login -u svc -p wvbnhdmq10x registry.example.invalid
+redis-cli -a wvbnhdmq11x ping
+ldapsearch -x -D cn=a -w wvbnhdmq12x -b dc=x
+zip -P wvbnhdmq13x out.zip in.txt
+7z a -pwvbnhdmq14x out.7z in.txt
+htpasswd -b users.txt bob wvbnhdmq15x
+smbclient //h/share -U bob%wvbnhdmq16x
+mysql -u root -p<masked> db
+sshpass -p <masked> ssh h
+mytool run -p wvbnhdmq19x now
+newcmd --login -w wvbnhdmq20x x
+API_KEY = <masked>
+    "wvbnhdmq22x",
+    "tail_kept_a",
+)
+password = <masked>
+  "wvbnhdmq26x" \
+]
+SECRET_TOKEN=<masked>
+wvbnhdmq29x
+db_pass: {<masked>
+<masked>
+<masked>}
+cfg = dict(password=<masked>
+  "wvbnhdmq34x"
+))
+auth_token = <masked>
+  echo wvbnhdmq37x
+)
+pass​word = wvbnhdmq39x
+apié_key = <masked>
+na me_secret: <masked>
+token = <masked>
+export OPENAI_API_KEY=<masked>
+Authorization: <masked>
+curl -u <masked> https://h.example.invalid/
+password: <masked>
+{"client_secret": <masked>}
+- name: DB_PASSWORD
+  value: <masked>
+echo "the password is <masked>"
+sess <masked>
+key <masked> here
+passwd = <masked>
+secret=<masked>
+webhook_url = <masked>

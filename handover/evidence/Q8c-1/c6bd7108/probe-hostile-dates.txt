@@ -1,0 +1,13 @@
+== review_by 2027-03-01 (more than 92 days after decided 2026-11-11): --check
+policy page: PENDING_NAMES ('secrets/vault', 'never:{mount}/undelete/*'): review_by 2027-03-01 is more than 92 days after the decision of 2026-11-11: a date may not be moved further than that
+policy page: PENDING_NAMES ('secrets/vault', 'never:{mount}/subkeys/*'): review_by 2027-03-01 is more than 92 days after the decision of 2026-11-11: a date may not be moved further than that
+policy page: PENDING_NAMES ('signer/vault_transit', 'never:{transit_mount}/byok-export/*'): review_by 2027-03-01 is more than 92 days after the decision of 2026-11-11: a date may not be moved further than that
+rc=1
+== --write
+policy page: PENDING_NAMES ('secrets/vault', 'never:{mount}/undelete/*'): review_by 2027-03-01 is more than 92 days after the decision of 2026-11-11: a date may not be moved further than that
+policy page: PENDING_NAMES ('secrets/vault', 'never:{mount}/subkeys/*'): review_by 2027-03-01 is more than 92 days after the decision of 2026-11-11: a date may not be moved further than that
+rc=1
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+== head tool, clock 2026-12-12 (day after earliest review_by): main --check ->
+rc 1 policy page: PENDING_NAMES ('secrets/vault', 'never:{mount}/undelete/*') is overdue (review_by 2026-12-11): an evidence run that finds the path in the listed sources, then set `verified` and delete th
+--write rc 1 policy page: PENDING_NAMES ('secrets/vault', 'never:{mount}/undelete/*') is overdue (review_by 2026-12-11): an evidence 

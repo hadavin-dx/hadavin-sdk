@@ -1,0 +1,20 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+============================= test session starts ==============================
+platform linux -- Python 3.13.18, pytest-9.2.0, pluggy-1.7.0 -- /home/user/build/WT-A24/.venv/bin/python
+rootdir: /home/user/build/WT-A24
+configfile: pyproject.toml
+plugins: platformdirs-4.13.5, anyio-4.15.1
+collecting ... collected 9 items
+
+tests/test_scan_repo_mutations.py::test_control_the_unchanged_copy_passes PASSED [ 11%]
+tests/test_scan_repo_mutations.py::test_each_planted_weakening_makes_the_scan_tests_fail[NUL skip moved before the checks] PASSED [ 22%]
+tests/test_scan_repo_mutations.py::test_each_planted_weakening_makes_the_scan_tests_fail[hash check dropped] PASSED [ 33%]
+tests/test_scan_repo_mutations.py::test_each_planted_weakening_makes_the_scan_tests_fail[glob check dropped] PASSED [ 44%]
+tests/test_scan_repo_mutations.py::test_each_planted_weakening_makes_the_scan_tests_fail[re.IGNORECASE removed] PASSED [ 55%]
+tests/test_scan_repo_mutations.py::test_each_planted_weakening_makes_the_scan_tests_fail[placeholder and short reason accepted] PASSED [ 66%]
+tests/test_scan_repo_mutations.py::test_each_planted_weakening_makes_the_scan_tests_fail[nested pyproject table check dropped] PASSED [ 77%]
+tests/test_scan_repo_mutations.py::test_each_planted_weakening_makes_the_scan_tests_fail[file-level noqa without codes accepted] PASSED [ 88%]
+tests/test_scan_repo_mutations.py::test_each_planted_weakening_makes_the_scan_tests_fail[NUL allowed for any extension] PASSED [100%]
+
+======================== 9 passed in 214.12s (0:03:34) =========================
+rc=0

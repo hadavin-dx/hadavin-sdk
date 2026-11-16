@@ -1,0 +1,61 @@
+...............................F....F...........................F.       [100%]
+==================================== ERRORS ====================================
+___________ ERROR collecting tests/test_mutation_runner_keywords.py ____________
+ImportError while importing test module '/home/user/build/EV-pr89r23-4cc427b5/fbwt/tests/test_mutation_runner_keywords.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_mutation_runner_keywords.py:32: in <module>
+    from tools.mutation_runner import PASS_ENV_ALLOWED, Mutant, run_mutants
+E   ImportError: cannot import name 'PASS_ENV_ALLOWED' from 'tools.mutation_runner' (/home/user/build/EV-pr89r23-4cc427b5/fbwt/tools/mutation_runner.py)
+=================================== FAILURES ===================================
+_______ test_a_refused_junit_marks_that_mutant_error_and_the_run_goes_on _______
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5345/test_a_refused_junit_marks_tha0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f72dace20b0>
+
+    def test_a_refused_junit_marks_that_mutant_error_and_the_run_goes_on(tmp_path, monkeypatch):
+        from tools import mutation_runner
+    
+        body = "from pk.core import go\n\ndef test_a():\n    assert go(True) is True\n"
+        root = _pk_tree(tmp_path, body)
+>       real = mutation_runner.read_junit
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'tools.mutation_runner' has no attribute 'read_junit'
+
+tests/test_mutation_runner.py:911: AttributeError
+______ test_a_truncated_junit_marks_the_mutant_error_and_the_run_goes_on _______
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-5345/test_a_truncated_junit_marks_t0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f72daccba10>
+
+    def test_a_truncated_junit_marks_the_mutant_error_and_the_run_goes_on(tmp_path, monkeypatch):
+        root = _raising_tree(tmp_path)
+    
+        def truncated(text):
+            raise ET.ParseError("no element found")
+    
+>       monkeypatch.setattr(mr, "read_junit", truncated)
+E       AttributeError: <module 'tools.mutation_runner' from '/home/user/build/EV-pr89r23-4cc427b5/fbwt/tools/mutation_runner.py'> has no attribute 'read_junit'
+
+tests/test_mutation_runner.py:1012: AttributeError
+____ test_g_every_search_string_occurs_exactly_once_in_the_file_it_targets _____
+
+    def test_g_every_search_string_occurs_exactly_once_in_the_file_it_targets():
+        lines = []
+        for m in mm.M:
+            text = (ROOT / m.file).read_text(encoding="utf-8")
+            count = text.count(m.old)
+>           assert count == 1, f"{m.name}: the search string occurs {count} times in {m.file}"
+E           AssertionError: b2: a refused junit stops the run: the search string occurs 0 times in tools/mutation_runner.py
+E           assert 0 == 1
+
+tests/test_mutation_runner_meta.py:187: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_mutation_runner.py::test_a_refused_junit_marks_that_mutant_error_and_the_run_goes_on
+FAILED tests/test_mutation_runner.py::test_a_truncated_junit_marks_the_mutant_error_and_the_run_goes_on
+FAILED tests/test_mutation_runner_meta.py::test_g_every_search_string_occurs_exactly_once_in_the_file_it_targets
+ERROR tests/test_mutation_runner_keywords.py
+3 failed, 63 passed, 1 error in 36.90s

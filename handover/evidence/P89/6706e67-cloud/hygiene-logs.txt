@@ -1,0 +1,4 @@
+6706e6728483b67e549101b1680111a4c2b89471
+$ PATTERNS of tools/scan_repo.py over out/*.txt
+
+exit=0

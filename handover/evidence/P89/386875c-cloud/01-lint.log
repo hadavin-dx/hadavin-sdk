@@ -1,0 +1,11 @@
+HEAD=386875c4a0346fd36924cc7636277eb9e92197a0
+unset: AWS_ ANTHROPIC_ AZURE_ GOOGLE_ GCP_ VAULT_ OPENAI_ GEMINI_ CLOUDSDK_ vars
+paths: src tests demos tools
+All checks passed!
+ruff_check exit=0
+318 files already formatted
+ruff_format exit=0
+../clean.sh: line 4: /home/user/build/EV-P89-386875c/venv3.13/bin/bandit: No such file or directory
+bandit exit=127
+
+scan_repo exit=0

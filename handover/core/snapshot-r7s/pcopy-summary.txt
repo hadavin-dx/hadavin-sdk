@@ -1,0 +1,6 @@
+r7q test file (r7r version, 65 tests) run IN FULL on a plain copy of r7p (tree-R7P + that file): 44 failed, 21 passed.
+By first error line of each failed test: AttributeError 11 (run_real_check.longest_request_bytes x7, new_tag x2,
+test_r7n_findings.guarded_sites x2); ImportError 9 (cannot import QuietServer); _Refusal (a raised fixed-text error) 1;
+AssertionError 23 (wrong value/behaviour: q7 guard plants 17, banner cost text 5, a set difference 1).
+So 20 fail only because a name is missing, 24 fail on a real behaviour difference.
+log: pcopy-r7q.log, pcopy-r7q-line.log

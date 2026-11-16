@@ -1,0 +1,2 @@
+banned list size 10
+hits 0

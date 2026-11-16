@@ -1,0 +1,180 @@
+Pager usage is off.
+== setup: database owned by postgres; migration role mig owns schema app and table app.t; boss holds SELECT WITH GRANT OPTION
+CREATE ROLE
+CREATE ROLE
+CREATE ROLE
+CREATE ROLE
+CREATE SCHEMA
+SET
+CREATE TABLE
+GRANT
+GRANT
+GRANT
+RESET
+SET
+GRANT
+GRANT
+RESET
+== (a1) access list before
+                      relacl                       
+---------------------------------------------------
+ {mig=arwdDxt/mig,boss=r*/mig,rt=ar/mig,rt=r/boss}
+(1 row)
+
+ attname |   attacl    
+---------+-------------
+ secret  | {rt=r/boss}
+(1 row)
+
+== (a2) step 4 as the owner mig: REVOKE ALL ON TABLE app.t FROM rt
+SET
+REVOKE
+RESET
+                 relacl                  
+-----------------------------------------
+ {mig=arwdDxt/mig,boss=r*/mig,rt=r/boss}
+(1 row)
+
+ attname |   attacl    
+---------+-------------
+ secret  | {rt=r/boss}
+(1 row)
+
+SET
+ rt_can_still_read 
+-------------------
+                 0
+(1 row)
+
+RESET
+== (a3) as superuser: REVOKE SELECT ON TABLE app.t FROM rt (superuser acts as the owner)
+REVOKE
+                 relacl                  
+-----------------------------------------
+ {mig=arwdDxt/mig,boss=r*/mig,rt=r/boss}
+(1 row)
+
+== (a4) as superuser: REVOKE SELECT ON TABLE app.t FROM rt GRANTED BY boss
+psql:a-revoke-grantors.sql:28: ERROR:  grantor must be current user
+                 relacl                  
+-----------------------------------------
+ {mig=arwdDxt/mig,boss=r*/mig,rt=r/boss}
+(1 row)
+
+== (a5) as superuser: REVOKE GRANT OPTION FOR SELECT ON app.t FROM boss CASCADE (the dependent entries go)
+REVOKE
+            relacl            
+------------------------------
+ {mig=arwdDxt/mig,boss=r/mig}
+(1 row)
+
+ attname |   attacl    
+---------+-------------
+ secret  | {rt=r/boss}
+(1 row)
+
+== (a6) as boss itself: SET ROLE boss; REVOKE ... FROM rt (works where boss still holds the option)
+SET
+GRANT
+RESET
+SET
+GRANT
+RESET
+                 relacl                  
+-----------------------------------------
+ {mig=arwdDxt/mig,boss=r*/mig,rt=r/boss}
+(1 row)
+
+SET
+REVOKE
+RESET
+     after_revoke_as_boss      
+-------------------------------
+ {mig=arwdDxt/mig,boss=r*/mig}
+(1 row)
+
+== (a7) plain REVOKE SELECT ... FROM boss without CASCADE when a dependent entry exists
+SET
+GRANT
+RESET
+psql:a-revoke-grantors.sql:42: ERROR:  dependent privileges exist
+HINT:  Use CASCADE to revoke them too.
+                 relacl                  
+-----------------------------------------
+ {mig=arwdDxt/mig,boss=r*/mig,rt=r/boss}
+(1 row)
+
+REVOKE
+   after_cascade   
+-------------------
+ {mig=arwdDxt/mig}
+(1 row)
+
+== (a8) memberships: cr (CREATEROLE) creates grp and grants it to rt; superuser revokes
+SET
+CREATE ROLE
+GRANT ROLE
+RESET
+ role | member | grantor  | admin_option | inherit_option | set_option 
+------+--------+----------+--------------+----------------+------------
+ grp  | cr     | postgres | t            | f              | f
+ grp  | rt     | cr       | f            | t              | t
+(2 rows)
+
+psql:a-revoke-grantors.sql:49: WARNING:  role "rt" has not been granted membership in role "grp" by role "postgres"
+REVOKE ROLE
+ rt_still_member 
+-----------------
+               1
+(1 row)
+
+REVOKE ROLE
+ after_granted_by_cr 
+---------------------
+                   0
+(1 row)
+
+== (a9) membership granted by the bootstrap superuser: plain REVOKE works
+GRANT ROLE
+ grantor  
+----------
+ postgres
+(1 row)
+
+REVOKE ROLE
+ after_plain_revoke 
+--------------------
+                  0
+(1 row)
+
+== (a10) two grants of the same membership by two grantors: one REVOKE leaves the other
+GRANT ROLE
+SET
+GRANT ROLE
+RESET
+ grantor  
+----------
+ cr
+ postgres
+(2 rows)
+
+REVOKE ROLE
+ left_grantor 
+--------------
+ cr
+(1 row)
+
+== (a11) object right granted by a superuser that is not the owner: grantor recorded as the owner
+GRANT
+           relacl           
+----------------------------
+ {mig=arwdDxt/mig,rt=w/mig}
+(1 row)
+
+== (a12) GRANTED BY for an object right naming a role that is not the current user
+psql:a-revoke-grantors.sql:67: ERROR:  grantor must be current user
+           relacl           
+----------------------------
+ {mig=arwdDxt/mig,rt=w/mig}
+(1 row)
+

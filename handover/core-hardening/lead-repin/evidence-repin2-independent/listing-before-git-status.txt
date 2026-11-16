@@ -1,0 +1,6 @@
+?? handover/core-hardening/steps-edits/v21-MAP.md
+?? iniconfig-2.3.1-py3-none-any.whl
+?? packaging-26.3-py3-none-any.whl
+?? pluggy-1.7.0-py3-none-any.whl
+?? pygments-2.21.0-py3-none-any.whl
+?? pytest-9.2.0-py3-none-any.whl

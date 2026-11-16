@@ -1,0 +1,56 @@
+PART A: states made by the administrator after a first successful run; second run result
+id | variant | first run | second run | tables before/after second run
+X17 | no-roles | returned (5 applied) | returned (0 applied) | 16/16
+X17 | with-roles | returned (5 applied) | ConfigError (exit 2: before any migration file ran, this database already holds rights that the grant map does not give: - NOT THIS PACKAGE'S OBJECT: schema public: <test-name> has CREATE. To remove: REVOKE CREATE ON SCHEMA "public" FROM) | 16/16
+X18 | no-roles | returned (5 applied) | returned (0 applied) | 16/16
+X18 | with-roles | returned (5 applied) | ConfigError (exit 2: before any migration file ran, this database already holds rights that the grant map does not give: - NOT THIS PACKAGE'S OBJECT: database postgres: <test-name> has CREATE. To remove: REVOKE CREATE ON DATABASE "postgr) | 16/16
+X19 | no-roles | returned (5 applied) | returned (0 applied) | 16/16
+X19 | with-roles | returned (5 applied) | ConfigError (exit 2: before any migration file ran, this database already holds rights that the grant map does not give: - NOT THIS PACKAGE'S OBJECT: database postgres: <test-name> has TEMPORARY. To remove: REVOKE TEMPORARY ON DATABASE ") | 16/16
+X28 | no-roles | returned (5 applied) | ConfigError (exit 2: the migration role <test-name> cannot change 1 object(s) of this package in schema hadavin_test_1cb15772b268 that another role owns: runs (owner <test-name>). A later migration that alters one of t) | 16/16
+X28 | with-roles | returned (5 applied) | ConfigError (exit 2: the migration role <test-name> cannot change 1 object(s) of this package in schema hadavin_test_0a1123c03083 that another role owns: runs (owner <test-name>). A later migration that alters one of t) | 16/16
+X31 | no-roles | returned (5 applied) | returned (0 applied) | 16/16
+X31 | with-roles | returned (5 applied) | ConfigError (exit 2: before any migration file ran, this database already holds rights that the grant map does not give: - role <test-name>: is a member of the built-in server role pg_read_all_data (through <test-name> -> p) | 16/16
+X32 | no-roles | returned (5 applied) | returned (0 applied) | 16/16
+X32 | with-roles | returned (5 applied) | ConfigError (exit 2: before any migration file ran, this database already holds rights that the grant map does not give: - role <test-name>: has the flag CREATEROLE (through <test-name>). To remove: ALTER ROLE "hadavin_test) | 16/16
+X33 | no-roles | returned (5 applied) | returned (0 applied) | 16/16
+X33 | with-roles | returned (5 applied) | ConfigError (exit 2: before any migration file ran, this database already holds rights that the grant map does not give: - role <test-name>: has the flag CREATEDB (directly). To remove: ALTER ROLE "<test-name>" NOCREATEDB; ) | 16/16
+X36 | no-roles | returned (5 applied) | returned (0 applied) | 16/16
+X36 | with-roles | returned (5 applied) | ConfigError (exit 2: before any migration file ran, this database already holds rights that the grant map does not give: - table: <test-name> gets SELECT on every new table that <test-name> makes in the schema hadavin_test_b) | 16/16
+X01t | no-roles | returned (5 applied) | returned (0 applied) | 17/17
+X01t | with-roles | returned (5 applied) | returned (0 applied) | 17/17
+X11 | no-roles | returned (5 applied) | returned (0 applied) | 16/16
+X11 | with-roles | returned (5 applied) | returned (0 applied) | 16/16
+X12 | no-roles | returned (5 applied) | returned (0 applied) | 16/16
+X12 | with-roles | returned (5 applied) | returned (0 applied) | 16/16
+O24 | no-roles | returned (5 applied) | ConfigError (exit 2: the migration role <test-name> cannot change 1 object(s) of this package in schema hadavin_test_062187e5d5c8 that another role owns: hadavin_audit_append_only (owner <test-name>). A later migration ) | 16/16
+O24 | with-roles | returned (5 applied) | ConfigError (exit 2: the migration role <test-name> cannot change 1 object(s) of this package in schema hadavin_test_89f7d7082866 that another role owns: hadavin_audit_append_only (owner <test-name>). A later migration ) | 16/16
+
+PART B: O24 (function of the family in ANOTHER schema owned by the migration role, callable by everyone by default)
+O24 | no-roles | first returned | second returned (0 applied)
+O24 | with-roles | first returned | second returned (0 applied)
+
+PART C: driver error injected (psycopg.OperationalError, no SQLSTATE) at the first statement containing the marker; fresh schema, first run (pending files)
+marker | result | tables in schema afterwards | rows in schema_migrations
+'pg_try_advisory' | fired=0 | returned (5 applied) | 16 | 5
+'pg_advisory' | fired=1 | OperationalError (exit 3: injected: connection lost) | 0 | no table
+'lock_timeout' | fired=1 | ConfigError (exit 2: migrate stopped and kept nothing: while taking the migration lock, the database returned an error (OperationalError). The whole run is rolled ) | 0 | no table
+'server_version' | fired=1 | ConfigError (exit 2: migrate stopped and kept nothing: while checking the migration role, the database returned an error (OperationalError). The whole run is rolle) | 0 | no table
+'pg_roles' | fired=1 | OperationalError (exit 3: injected: connection lost) | 0 | no table
+'CREATE TABLE IF NOT EXISTS schema_migrations' | fired=1 | ConfigError (exit 2: migrate stopped and kept nothing: while checking the migration role, the database returned an error (OperationalError). The whole run is rolle) | 0 | no table
+'SELECT version FROM schema_migrations' | fired=1 | ConfigError (exit 2: migrate stopped and kept nothing: while reading the ledger, the database returned an error (OperationalError). The whole run is rolled back (a) | 0 | no table
+'CREATE TABLE' | fired=1 | ConfigError (exit 2: migrate stopped and kept nothing: while checking the migration role, the database returned an error (OperationalError). The whole run is rolle) | 0 | no table
+'INSERT INTO schema_migrations' | fired=1 | ConfigError (exit 2: migrate stopped and kept nothing: while applying 0001_core.sql, the database returned an error (OperationalError). The whole run is rolled bac) | 0 | no table
+'GRANT ' | fired=0 | returned (5 applied) | 16 | 5
+'SET CONSTRAINTS ALL IMMEDIATE' | fired=1 | ConfigError (exit 2: a deferred check or trigger failed when migrate ran it before the commit: injected: connection lost. Nothing was kept.) | 0 | no table
+'GRANT '+runtime_role | fired=1 | ConfigError (exit 2: migrate stopped and kept nothing: while granting the roles, the database returned an error (OperationalError). The whole run is rolled back (a) | 0 | no table
+'REVOKE '+runtime_role | fired=1 | ConfigError (exit 2: migrate stopped and kept nothing: while granting the roles, the database returned an error (OperationalError). The whole run is rolled back (a) | 0 | no table
+COMMIT error before commit ran | OperationalError (exit 3: injected: connection lost at COMMIT (before it reached the server)) | 16 | 5
+COMMIT reply lost after commit ran | OperationalError (exit 3: injected: connection lost after COMMIT ran (reply lost)) | 16 | 5
+step 8 connect fails | AppliedNotVerifiedError (exit 5: The files are applied and committed, but the check after the commit could not run (OperationalError), so nobody has confirmed that the roles hold only what the grant map gives; run migrate aga) | 16 | 5
+
+PART D: K8 (a file hands a map table to a group the migration role belongs to), three forms, in a scratch schema
+first run: ('returned', '5 applied')
+(1) in the open ('ConfigError', 'exit 2: migrations are inconsistent: 0006_hand_over.sql: ALTER ... OWNER TO: an object may not be handed to another role by a migration file')
+(2) dynamic SQL ('InsufficientPrivilege', 'exit 3: permission denied for schema hadavin_test_fc0858bb02ea CONTEXT: SQL statement "ALTER TABLE spend OWNER TO "<test-name>"" PL/pgSQL function hadavin_test_dyn_runner() line 1 at EXECUTE')
+(3) dynamic SQL after CREATE on schema given to the group ('ConfigError', 'exit 2: before any migration file ran, this database already holds rights that the grant map does not give: - schema hadavin_test_fc0858bb02ea: <test-name> has CREATE on the schema of the run; only USAGE is allowed. To remov')
+owner of spend now: ('<test-name>',)

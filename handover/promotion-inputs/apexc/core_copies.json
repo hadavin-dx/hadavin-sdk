@@ -1,0 +1,95 @@
+{
+ "core_pr": 50,
+ "core_repo": "hadavin-dx/hadavin-sdk",
+ "core_branch": "core/promote-apexc-review8",
+ "core_commit": "660814674ece8ad578293e5412633d796eddb96f",
+ "note": "Temporary copies of promoted core modules (open core PR #50). core_commit is the demo's own pin (pyproject.toml / uv.lock, merged core main); each file's pr_snapshot is the unmerged PR commit its bytes were copied from. A copy is the core file with only the listed import rewritten; tests/test_v9.py::test_the_core_copies_match_the_pinned_core_files pins the hash. Switch-over: when PR 50 is merged and the demo pin moves, delete the copy and import hadavin_sdk instead.",
+ "files": {
+  "src/apexc/textnorm.py": {
+   "core_path": "src/hadavin_sdk/guard/textnorm.py",
+   "core_sha256": "576b4cba43c70666db9020f6d3cc3d309ca7fda34e52ff3fd687d42a9d9d1200",
+   "import_rewrite": [
+    [
+     "hadavin_sdk.guard._confusables",
+     "apexc._confusables"
+    ]
+   ],
+   "core_pr": 50,
+   "pr_snapshot": "153d2178b81c7f623a2e029930001da2e079df97"
+  },
+  "src/apexc/egress_text.py": {
+   "core_path": "src/hadavin_sdk/guard/egress_text.py",
+   "core_sha256": "632fac9949424b7fbb1421fb40f9f8d725e79b85fdc99d49e95ff650a278ed32",
+   "import_rewrite": [
+    [
+     "hadavin_sdk.guard.textnorm",
+     "apexc.textnorm"
+    ]
+   ],
+   "core_pr": 50,
+   "pr_snapshot": "153d2178b81c7f623a2e029930001da2e079df97"
+  },
+  "src/apexc/config_view.py": {
+   "core_path": "src/hadavin_sdk/runtime/config_view.py",
+   "core_sha256": "c129597cba76af12586352bb79a142e98044213cc32d813fdbb697c88bccd133",
+   "import_rewrite": [],
+   "core_pr": 50,
+   "pr_snapshot": "153d2178b81c7f623a2e029930001da2e079df97"
+  },
+  "src/apexc/stop_gate.py": {
+   "core_path": "src/hadavin_sdk/runtime/stop_gate.py",
+   "core_sha256": "4cac30f1fa22cf7158d87b6376fb865026c5d181e1cb399d9947a978cccb1f6d",
+   "import_rewrite": [
+    [
+     "hadavin_sdk.models",
+     "apexc.audit_event"
+    ]
+   ],
+   "core_pr": 50,
+   "pr_snapshot": "153d2178b81c7f623a2e029930001da2e079df97"
+  },
+  "src/apexc/rowstore.py": {
+   "core_path": "src/hadavin_sdk/runtime/rowstore.py",
+   "core_sha256": "9c868e73178df37df283a5332368ac0b25defa7240de25dbbf514e9cfd6bdfd3",
+   "import_rewrite": [],
+   "core_pr": 50,
+   "pr_snapshot": "153d2178b81c7f623a2e029930001da2e079df97"
+  },
+  "mutation_judge.py": {
+   "core_path": "src/hadavin_sdk/testing/mutation.py",
+   "core_sha256": "a98e115c59882cd4f10ec237f821fb5adb5c52f5e5801ea437c184feb093b697",
+   "import_rewrite": [],
+   "core_pr": 50,
+   "pr_snapshot": "153d2178b81c7f623a2e029930001da2e079df97"
+  },
+  "src/apexc/_confusables.py": {
+   "core_path": "src/hadavin_sdk/guard/_confusables.py",
+   "import_rewrite": [],
+   "core_pr": 50,
+   "core_sha256": "41740c11734e2ec1e5a63f9325dffa04226c84f3b81b43c1b5c7e766f8a0ccfd",
+   "pr_snapshot": "153d2178b81c7f623a2e029930001da2e079df97"
+  }
+ },
+ "allowed_local": {
+  "src/apexc/executor.py": {
+   "reason": "the write executor with its two-person lift and per-kind denial ceiling; core PR #50 stop_gate.py is copied here and this module is the consumer, the workflow around it is domain-specific",
+   "expires": "2026-12-31"
+  },
+  "src/apexc/intake.py": {
+   "reason": "inbound ledger (tenant-scoped keys, rejected:<reason> states); core has no inbox kind yet (promotion candidate runtime/inbox.py); id reuse ends rejected:<reason> here, rejected in dealdesk, dead_lettered in intake",
+   "expires": "2026-12-31"
+  },
+  "src/apexc/fakes.py": {
+   "reason": "in-memory ERP, payments and per-tenant hash-chained Audit fakes; the audit chain duplicates core audit/chain.py in memory form (promotion candidate: a MemoryChain kind), the ports are domain fakes",
+   "expires": "2026-12-31"
+  },
+  "src/apexc/normalise.py": {
+   "reason": "money parsing and text cleaning for supplier-bank-change requests: domain rules (negatives allowed, half-even tax); the look-alike table in it is superseded by the copied core fold at the pin move",
+   "expires": "2026-12-31"
+  },
+  "src/apexc/audit_event.py": {
+   "reason": "stand-in for hadavin_sdk.models.AuditEvent so the copied stop gate imports without the core (the gate has no Limits object in this demo)",
+   "expires": "2026-12-31"
+  }
+ }
+}

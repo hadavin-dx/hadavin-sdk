@@ -1,0 +1,44 @@
+PASS 94 rows parsed :: 94
+PASS row ids are exactly 1..94 in table, no dup
+PASS each old text occurs exactly once on its stated line (source: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/c6/tree/handover) :: {'bad': [], 'unreadable': [], 'nbad': 0, 'nunread': 0}
+PASS counts ready/default/check = 49/42/3 :: (49, 42, 3, [23, 58, 59])
+PASS rows that wait for a check are 23,58,59 :: [23, 58, 59]
+PASS wave 1 = 91 (ready + default)
+PASS box says 49 ready, 42 default, 3 check and 91 wave-1 rows
+PASS four spoken card lines found, words 11/35/22/22 :: [11, 35, 22, 22]
+PASS card total 90 words and 36.0 s :: (90, 36.0)
+PASS budget 40 s, video total 190 s
+PASS box prints card line verbatim: A lead sent twice with th...
+PASS box prints card line verbatim: When the system cannot te...
+PASS box prints card line verbatim: The made-up name and e-ma...
+PASS box prints card line verbatim: Not tested: other mailbox...
+PASS lease sentence 1 is 25 words, sentence 2 is 40 words :: (25, 40)
+PASS lease x card-length table (6 rows) equals own recomputation :: ([('none', 'a', 90, '36.0', 40, 190), ('none', 'b', 74, '29.6', 30, 180), ('1', 'a', 115, '46.0', 50, 200), ('1', 'b', 87, '34.8', 35, 185), ('2', 'a', 130, '52.0', 55, 205), ('2', 'b', 114, '45.6', 50, 200)], [('none', 'a', 90, '36.0', 40.0, 190.0), ('none', 
+PASS table documents option (b) none = 74 words :: ([11, 30, 18, 15], 74)
+PASS no stale '58 s' card length outside history lines :: []
+PASS no '58 s' in any new text :: []
+PASS every UTC = IST pair is +5:30 (40 pairs) :: []
+FAIL every UTC/Z clock time outside old-text quotes has IST within 40 chars :: [(50, ' 2026-11-16T16:40:00Z), and add 5 hours 30 min')]
+PASS weekday+date pairs correct for 2026 (11 found) :: []
+PASS weekday+date pairs without year correct for 2026 (3) :: []
+PASS no report labels in ANY new text (all 94 rows) :: []
+PASS no report labels in viewer cells :: []
+PASS lease sentence absent from card/caption new texts (rows 11,13,14,21) :: []
+PASS lease sentences appear in no row's new text :: []
+PASS spoken card lines contain no 'within 45'
+PASS row 90 new text ends with the database `n8n` :: nd, for n8n's own state, a SEPARATE database `n8n`
+PASS row 90 old text ends with SEPARATE database `n8n`
+PASS found defined labels in WORDS list (>=20) :: ['CONTACT', 'SEND', 'SAME ID', 'N8N', 'STAND-IN', 'LOOPBACK RE-SMOKE', 'STUDIO LEAD', 'OWNER', 'TAKE', 'REHEARSAL', 'RUN SHEET', 'RISKS LIST', 'REHEARSAL LIST', 'LEASE', 'ALERT', 'GATE', 'RE-PIN', 'PUBLIC POST', 'TABLE RULE ON THE CONTACT ID', 'CHECK C-9 PART 
+PASS each uppercase label is first used where defined (labels as written) :: []
+PASS intro before the word list uses no defined jargon :: []
+PASS no uppercase label used inside an earlier definition before it is defined :: []
+PASS every statement of the wave 1 size says 91 (2 found) :: [91, 91]
+PASS every 'Of the N rows' / 'holds N proposed' says 94
+PASS every '(\d+) are ready' / 'apply on the default' / 'wait for a check' count equals 49/42/3
+PASS range 60.1 to 61.9 exact in every occurrence outside old-text cells (20) :: []
+PASS every stated card total (1 found) equals recomputed 90 words / 36 s / 40 s :: [('90', '36', '40')]
+PASS box has no '58 s' :: []
+PASS check-time line in report
+PASS banned strings in report: count 0 of 10 (names not printed)
+PASS secret/e-mail-shaped strings in report: 0
+SUMMARY: 1 FAILED: every UTC/Z clock time outside old-text quotes has IST within 40 chars

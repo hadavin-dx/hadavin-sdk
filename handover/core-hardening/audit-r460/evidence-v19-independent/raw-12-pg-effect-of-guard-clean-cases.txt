@@ -1,0 +1,6 @@
+PG-REFUSED H42 CHECK pg_read_file on EMPTY table 42501 permission denied for function pg_read_file
+PG-REFUSED H42b same after one row exists 42501 permission denied for function pg_read_file
+PG-ACCEPTED H43 DEFAULT current_setting
+PG-ACCEPTED H90 index on lower()
+PG-REFUSED H90b index on pg_read_file (needs IMMUTABLE) 42P17 functions in index expression must be marked IMMUTABLE
+rc=0

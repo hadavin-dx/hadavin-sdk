@@ -1,0 +1,7 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+## import /home/user/build/EV-Q8b-13ea6b75/wt/src/hadavin_sdk/__init__.py
+cases 640 readable walk/card/slack: 0 0 0
+NAMED glued password= walk= {"message": "<EMAIL_1>password=<SECRET_1>"} card= '<EMAIL_1>password=<SECRET_1>'
+NAMED glued token= walk= {"message": "<EMAIL_1>token=<SECRET_1>"} card= '<EMAIL_1>token=<SECRET_1>'
+NAMED zwsp U+200B password= walk= {"message": "<EMAIL_1>\u200bpassword=<SECRET_1>"} card= '<EMAIL_1>password=<SECRET_1>'
+NAMED zwsp U+200B token= walk= {"message": "<EMAIL_1>\u200btoken=<SECRET_1>"} card= '<EMAIL_1>token=<SECRET_1>'

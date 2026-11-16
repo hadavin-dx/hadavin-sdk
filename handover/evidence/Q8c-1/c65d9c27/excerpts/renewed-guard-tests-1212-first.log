@@ -1,0 +1,14 @@
+........................................................................ [ 16%]
+........................................................................ [ 33%]
+........................................................................ [ 49%]
+........................................................................ [ 66%]
+........................................................................ [ 82%]
+.................................F...................................... [ 99%]
+....                                                                     [100%]
+=================================== FAILURES ===================================
+E   AssertionError: the renewal step does not apply: '7 kinds that fail from 2027-01-12 and 9' is not in tests/test_policy_changelog.py
+    assert '7 kinds that fail from 2027-01-12 and 9' in '"""The changelog gives the days the lists of kinds start to fail as the list has them, and writes no review day of\nt...heir days from the live lists are not killed after the renewal: "\n            f"{sample.stdout[-1500:]}"\n        )\n'
+/home/user/build/EV-Q8c1-b13-c65d9c27/plant/tests/test_policy_changelog.py:213: AssertionError: the renewal step does not apply: '7 kinds that fail from 2027-01-12 and 9' is not in tests/test_policy_changelog.py
+=========================== short test summary info ============================
+FAILED tests/test_policy_changelog.py::test_plant_a_full_renewal_done_as_the_overdue_messages_list_it_keeps_the_tests_the_page_and_the_mutants_green
+1 failed, 435 passed in 11.43s

@@ -1,0 +1,10 @@
+INFO old texts checked 57 failures 0
+INFO UTC/IST pairs 97
+INFO weekday/date pairs 58
+INFO label+time same-phrase pairs 7 5
+INFO rows with key revoke text ['E-12', 'E-48', 'E-52', 'E-55', 'E-57', 'E-58']
+INFO REPLY GROUPS {'not looking': ['E-09', 'E-52'], 'Yes, remove the container only | No': ['E-16'], 'Yes, remove the container only': ['E-16'], 'No': ['E-16'], 'yes | no, other things use it | not sure': ['E-37', 'E-48'], 'same key | different key | not sure': ['E-37', 'E-48'], 'no more takes | more takes': ['E-48', 'E-52'], 'cut accepted': ['E-52', 'E-57'], 'password file created; <password file name>; <folder>; you may look again': ['E-52']}
+INFO PHRASES {'please stop looking': ['E-09', 'E-48', 'E-52'], 'not looking': ['E-09', 'E-48', 'E-52'], 'you may look again': ['E-09', 'E-48', 'E-52'], 'Ubuntu': ['E-09'], 'umask 077': ['E-09'], 'revoke the model key': ['E-12', 'E-48'], 'tested': ['E-12'], 'untested': ['E-12'], 'no': ['E-12', 'E-52'], 'no more takes': ['E-16', 'E-48', 'E-52', 'E-55', 'E-57'], 'cut accepted': ['E-16', 'E-48', 'E-52', 'E-55', 'E-57'], 'Yes, remove the container only': ['E-16'], 'No': ['E-16'], 'demo': ['E-25', 'E-49', 'E-52'], 'hadavin_label': ['E-37'], 'yes': ['E-37', 'E-48'], 'no, other things use it': ['E-37', 'E-48'], 'not sure': ['E-37', 'E-48', 'E-52'], 'same key': ['E-37', 'E-48'], 'different key': ['E-37', 'E-48'], 'end': ['E-37', 'E-41'], 'more takes': ['E-48', 'E-52'], '..': ['E-48'], 'rm': ['E-48'], 'key revoked': ['E-48', 'E-58'], 'key not revoked': ['E-48', 'E-58'], 'Wed 18 Nov 2026': ['E-49'], 'ok': ['E-52']}
+INFO banned strings found (count only) 0 of 10
+FAILS 0
+{}

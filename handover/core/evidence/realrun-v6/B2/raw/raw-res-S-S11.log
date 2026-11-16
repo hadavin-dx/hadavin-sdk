@@ -1,0 +1,21 @@
+...................F
+=================================== FAILURES ===================================
+_ test_the_scan_judges_every_sample_source[helper that returns only the keep flag] _
+
+name = 'helper that returns only the keep flag', leaks = ['_flag'], found = 1
+source = 'def _flag():\n    return "--keep"\ndef test_a():\n    main(["--dry-fakes", _flag()])'
+
+    @pytest.mark.parametrize(("name", "leaks", "found", "source"), _scan_cases(), ids=[c[0] for c in _scan_cases()])
+    def test_the_scan_judges_every_sample_source(name: str, leaks: list[str], found: int, source: str) -> None:
+>       assert keep_self_tests_that_leak(source) == (leaks, found), name
+E       AssertionError: helper that returns only the keep flag
+E       assert ([], 0) == (['_flag'], 1)
+E         
+E         At index 0 diff: [] != ['_flag']
+E         Use -v to get more diff
+
+tests/test_take_script_refusals.py:300: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[helper that returns only the keep flag]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 19 passed, 70 deselected in 45.31s

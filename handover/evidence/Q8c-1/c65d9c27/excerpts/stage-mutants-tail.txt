@@ -1,0 +1,4 @@
+ok  KILLED       M10a pilot dropped from the redactor's common words  [test_the_redactor_does_not_sweep_the_stage_words_but_still_s]
+ok  KILLED       M10b demo dropped from the redactor's common words  [test_the_redactor_does_not_sweep_the_stage_words_but_still_s]
+ok  KILLED       M10c prod dropped from the redactor's common words  [test_the_redactor_does_not_sweep_the_stage_words_but_still_s]
+37 of 37 good; problems: []

@@ -1,0 +1,92 @@
+Route probes (lead step 9): findings F1,F2,F3,F4,F5,F7 of handover/reviews/P3a-2/r12-design-full.md, run through hadavin_sdk.store.migrate.migrate on PostgreSQL 16.15.
+Each SQL is the finding's own SQL block; a run is 'ACCEPTED' when migrate returned applied versions, 'REFUSED' when it raised ConfigError. 'AFTER' lines are superuser catalog reads after the run. Full raw in /home/user/build/evidence-raw/P3a2-4d328e3/step9-*.txt.
+
+############################## step9-f1f4.txt
+hadavin_sdk imported from: /home/user/build/EV-P3a2-4d328e3/src/hadavin_sdk/__init__.py
+STATE: F1 deferred constraint trigger on schema_migrations grants ALL on audit_entries to PUBLIC at COMMIT (F1 SQL verbatim)
+  [step 1] planted file 0006_f1.sql: CREATE OR REPLACE FUNCTION late() RETURNS trigger LANGUAGE plpgsql AS $f$
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: ACCEPTED, returned ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence', '0006_f1']
+  ledger after step 1: ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence', '0006_f1']
+  AFTER (superuser) SELECT relname, relacl::text FROM pg_class WHERE relname='audit_entries' AND relnamespace='hadavin_test_c73d672cb1c5'::regnamespace
+    -> [('audit_entries', '{hadavin_test_migrator_173a63f2=arwdDxt/hadavin_test_migrator_173a63f2,hadavin_test_pn_a8318953=ar/hadavin_test_migrator_173a63f2,=arwdDxt/hadavin_test_migrator_173a63f2}')]
+  AFTER (superuser) SELECT tgname, tgenabled FROM pg_trigger t JOIN pg_class c ON c.oid=t.tgrelid WHERE c.relname IN ('audit_entries','schema_migrations') AND c.relnamespace='hadavin_test_c73d672cb1c5'::regnamespace AND NOT t.tgisinternal ORDER BY 1
+    -> [('audit_entries_append_only', 'O'), ('audit_entries_no_truncate', 'O'), ('late_t', 'O')]
+STATE: F2 plain statement trigger on schema_migrations disables audit_entries triggers (F2 SQL verbatim)
+  [step 1] planted file 0006_f2.sql: CREATE OR REPLACE FUNCTION after_ledger() RETURNS trigger LANGUAGE plpgsql AS $f$
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: ACCEPTED, returned ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence', '0006_f2']
+  ledger after step 1: ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence', '0006_f2']
+  AFTER (superuser) SELECT relname, relacl::text FROM pg_class WHERE relname='audit_entries' AND relnamespace='hadavin_test_933df52edf41'::regnamespace
+    -> [('audit_entries', '{hadavin_test_migrator_173a63f2=arwdDxt/hadavin_test_migrator_173a63f2,hadavin_test_pn_082e1fb0=ar/hadavin_test_migrator_173a63f2}')]
+  AFTER (superuser) SELECT tgname, tgenabled FROM pg_trigger t JOIN pg_class c ON c.oid=t.tgrelid WHERE c.relname IN ('audit_entries','schema_migrations') AND c.relnamespace='hadavin_test_933df52edf41'::regnamespace AND NOT t.tgisinternal ORDER BY 1
+    -> [('after_ledger', 'O'), ('audit_entries_append_only', 'D'), ('audit_entries_no_truncate', 'D')]
+STATE: F2d same as F2 but CREATE TRIGGER is issued from inside a function body (split word)
+  [step 1] planted file 0006_f2.sql: CREATE OR REPLACE FUNCTION after_ledger() RETURNS trigger LANGUAGE plpgsql AS $f$
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: ACCEPTED, returned ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence', '0006_f2']
+  ledger after step 1: ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence', '0006_f2']
+  AFTER (superuser) SELECT relname, relacl::text FROM pg_class WHERE relname='audit_entries' AND relnamespace='hadavin_test_c1e1a1d038b7'::regnamespace
+    -> [('audit_entries', '{hadavin_test_migrator_173a63f2=arwdDxt/hadavin_test_migrator_173a63f2,hadavin_test_pn_1d890268=ar/hadavin_test_migrator_173a63f2}')]
+  AFTER (superuser) SELECT tgname, tgenabled FROM pg_trigger t JOIN pg_class c ON c.oid=t.tgrelid WHERE c.relname IN ('audit_entries','schema_migrations') AND c.relnamespace='hadavin_test_c1e1a1d038b7'::regnamespace AND NOT t.tgisinternal ORDER BY 1
+    -> [('after_ledger', 'O'), ('audit_entries_append_only', 'D'), ('audit_entries_no_truncate', 'D')]
+STATE: F3 SECURITY DEFINER door() added to extension citext (F3 SQL verbatim; precondition: migration role owns citext)
+  [step 1] planted file 0006_f3.sql: CREATE EXTENSION IF NOT EXISTS citext;
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: REFUSED/RAISED hadavin_sdk.errors.ConfigError
+  MESSAGE: migrations are inconsistent: 0006_f3.sql: CREATE EXTENSION: the guard cannot read what this statement does or changes; 0006_f3.sql: statement the guard does not read: 'CREATE EXTENSION IF NOT EXISTS citext; C'
+  ledger after step 1: None
+  AFTER (superuser) SELECT extname, extowner::regrole::text FROM pg_extension WHERE extname='citext'
+    -> []
+  AFTER (superuser) SELECT proname, prosecdef, proowner::regrole::text FROM pg_proc WHERE proname='door'
+    -> []
+STATE: F4 large object granted to PUBLIC via dynamic SQL (F4 SQL verbatim)
+  [step 1] planted file 0006_f4.sql: CREATE OR REPLACE FUNCTION g() RETURNS void LANGUAGE plpgsql AS $f$
+  [step 1] call: mig.migrate(dsn, runtime_role=<named>)
+  RESULT step 1: ACCEPTED, returned ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence', '0006_f4']
+  ledger after step 1: ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence', '0006_f4']
+  AFTER (superuser) SELECT oid, lomowner::regrole::text, lomacl::text FROM pg_largeobject_metadata WHERE lomowner=(SELECT oid FROM pg_roles WHERE rolname='hadavin_test_migrator_173a63f2')
+    -> [(106171, 'hadavin_test_migrator_173a63f2', '{hadavin_test_migrator_173a63f2=rw/hadavin_test_migrator_173a63f2,=rw/hadavin_test_migrator_173a63f2}')]
+############################## step9-f5f7-v2.txt
+STATE: F5 named role is a MEMBER of a SUPERUSER role (boss SUPERUSER; GRANT boss TO named WITH INHERIT FALSE)
+  setup: CREATE ROLE boss_hadavin_test_nm_4bafd551 SUPERUSER
+  setup: GRANT boss_hadavin_test_nm_4bafd551 TO "hadavin_test_nm_4bafd551" WITH INHERIT FALSE
+  call: migrate(dsn, runtime_role='hadavin_test_nm_4bafd551') as plain login mig_7fe7849b (owns schema)
+  RESULT: ACCEPTED ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence']
+STATE: F5 named role granted pg_execute_server_program
+  setup: GRANT pg_execute_server_program TO "hadavin_test_nm_538577bf"
+  call: migrate(dsn, runtime_role='hadavin_test_nm_538577bf') as plain login mig_562eb68f (owns schema)
+  RESULT: ACCEPTED ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence']
+STATE: F5 named role granted pg_read_server_files
+  setup: GRANT pg_read_server_files TO "hadavin_test_nm_02891edc"
+  call: migrate(dsn, runtime_role='hadavin_test_nm_02891edc') as plain login mig_c49f1e22 (owns schema)
+  RESULT: ACCEPTED ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence']
+STATE: F5 control: named role is a plain role with no memberships
+  call: migrate(dsn, runtime_role='hadavin_test_nm_5a37b70b') as plain login mig_fe3a775f (owns schema)
+  RESULT: ACCEPTED ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence']
+STATE: F7 L member of M; schema owned by M; session role switched to M (options -c role=M); run migrate
+  current_user, session_user -> ('m_148a3726', 'l_97dfb33c')
+  RESULT: ACCEPTED ['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence']
+############################## step9-f5f7.txt
+hadavin_sdk from: /home/user/build/EV-P3a2-4d328e3/src/hadavin_sdk/__init__.py
+STATE: F5 named role is a member of a SUPERUSER role boss WITH INHERIT FALSE
+  setup: CREATE ROLE boss_hadavin_test_nm_dc3d048f SUPERUSER
+  setup: GRANT boss_hadavin_test_nm_dc3d048f TO "hadavin_test_nm_dc3d048f" WITH INHERIT FALSE
+  call: mig.migrate(dsn, runtime_role='hadavin_test_nm_dc3d048f') as plain login mig_8001ee64
+  RESULT: REFUSED ConfigError
+  MESSAGE: the role hadavin_test_nm_dc3d048f cannot use the schema hadavin_test_ac3fbfa91d3f after the grants: the migration role may not pass USAGE on the schema on. Give it the grant option (GRANT USAGE ON SCHEMA <schema> TO <the migration role> WITH GRANT OPTION; CREATE needs no grant option), or make it the owner of the schema.
+STATE: F5 named role is granted pg_execute_server_program
+  setup: GRANT pg_execute_server_program TO "hadavin_test_nm_5e161c94"
+  call: mig.migrate(dsn, runtime_role='hadavin_test_nm_5e161c94') as plain login mig_735fd7f1
+  RESULT: REFUSED ConfigError
+  MESSAGE: the role hadavin_test_nm_5e161c94 cannot use the schema hadavin_test_a765f5789295 after the grants: the migration role may not pass USAGE on the schema on. Give it the grant option (GRANT USAGE ON SCHEMA <schema> TO <the migration role> WITH GRANT OPTION; CREATE needs no grant option), or make it the owner of the schema.
+STATE: F5 named role is granted pg_read_server_files
+  setup: GRANT pg_read_server_files TO "hadavin_test_nm_613ee005"
+  call: mig.migrate(dsn, runtime_role='hadavin_test_nm_613ee005') as plain login mig_2a2f947f
+  RESULT: REFUSED ConfigError
+  MESSAGE: the role hadavin_test_nm_613ee005 cannot use the schema hadavin_test_f03c0cc2ca6c after the grants: the migration role may not pass USAGE on the schema on. Give it the grant option (GRANT USAGE ON SCHEMA <schema> TO <the migration role> WITH GRANT OPTION; CREATE needs no grant option), or make it the owner of the schema.
+STATE: F7 login L member of M, session role switched to M via options=-c role=M
+  current_user, session_user -> ('m_f6ea8e11', 'l_557d516e')
+  RESULT: REFUSED ConfigError
+  MESSAGE: after the migration files ran, rights that this package does not give are in place, in schema hadavin_test_8d1315004212 or elsewhere in this database: l_557d516e has CREATE on the schema hadavin_test_8d1315004212 itself. Nothing was changed. The whole run is undone. Only the migration role itself and the runtime, portal and purge roles named in this run may have rights on this package's tables, views, sequences, functions and schema; a named role gets the rights of the grant map and nothing on any other table, view, sequence or function; and a function that runs with the rights of its owner (SECURITY DEFINER) is not allowed unless a reviewer put it on the list in the code. What to
+STATE: F3 precondition: whether a non-superuser migration role can own extension citext

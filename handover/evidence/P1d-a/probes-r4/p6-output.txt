@@ -1,0 +1,39 @@
+# P6 probe output (base 0dabf1f src via git archive; redactor SECRET entry replaced by the rev-5 D2 entries; card = base gate, no D1). Run: python -I probe.py <base>/src fix
+pkg /tmp/claude-0/-home-user/39edf7c7-26f2-5129-9a6e-500351b26399/scratchpad/base/src/hadavin_sdk/__init__.py
+'?password=ab&cd34"x=1 y' 	model '?password=<SECRET_1>"x=1 y' 	card '?password=<SECRET_1>"x=1 y'
+'?password=ab&amp;cd34"x=1 y' 	model '?password=<SECRET_1>"x=1 y' 	card '?password=<SECRET_1>"x=1 y'
+'password=ab&amp; x' 	model 'password=<SECRET_2> x' 	card 'password=<SECRET_2> x'
+'?user=bob&password=ab12cd&next=/home x' 	model '?user=bob&password=<SECRET_1>&next=/home x' 	card '?user=bob&password=<SECRET_1>&next=/home x'
+'password=ab12&cd34ef56gh78ij' 	model 'password=<SECRET_1>' 	card 'password=<SECRET_1>'
+'password=Tq7mZ&amp;4xKp2Vb9Lr3NcW8dYh6uJs' 	model 'password=<SECRET_1>' 	card 'password=<SECRET_1>'
+'password=Tq7mZ&4xKp2Vb9Lr3NcW8dYh6uJs end' 	model 'password=<SECRET_1> end' 	card 'password=<SECRET_1> end'
+'password=ab12&cd34ef56; next' 	model 'password=<SECRET_1>; next' 	card 'password=<SECRET_1>; next'
+'?password=ab&cd34ef56&user=bob x' 	model '?password=<SECRET_1>&user=bob x' 	card '?password=<SECRET_1>&user=bob x'
+'?password=ab&cd34ef56' 	model '?password=<SECRET_1>' 	card '?password=<SECRET_1>'
+'?password=ab&amp;cd34ef56&amp;user=bob x' 	model '?password=<SECRET_1>&amp;user=bob x' 	card '?password=<SECRET_1>&amp;user=bob x'
+'?password=ab&cd34#x=1 y' 	model '?password=<SECRET_1> y' 	card '?password=<SECRET_1> y'
+'?password=ab&cd34 x=1' 	model '?password=<SECRET_1> x=1' 	card '?password=<SECRET_1> x=1'
+'?password=ab&cd34; x' 	model '?password=<SECRET_1>; x' 	card '?password=<SECRET_1>; x'
+'password=ab12&cd34ef56gh78ij and later ab12&cd34ef56gh78ij' 	model 'password=<SECRET_1> and later <SECRET_1>' 	card 'password=<SECRET_1> and later <SECRET_1>'
+'?password=ab12cd&user=bob x' 	model '?password=<SECRET_1>&user=bob x' 	card '?password=<SECRET_1>&user=bob x'
+'?password=ab12cd&amp;user=bob x' 	model '?password=<SECRET_1>&amp;user=bob x' 	card '?password=<SECRET_1>&amp;user=bob x'
+'password=hunter22&user=bob' 	model 'password=<SECRET_1>' 	card 'password=<SECRET_1>'
+'password=&user=bob' 	model 'password=<SECRET_1>' 	card 'password=<SECRET_1>'
+'?password=ab12cd&debug x' 	model '?password=<SECRET_1> x' 	card '?password=<SECRET_1> x'
+'?user=bob&password=ab12cd&next=/home x' 	model '?user=bob&password=<SECRET_1>&next=/home x' 	card '?user=bob&password=<SECRET_1>&next=/home x'
+'?user=bob&password=ab&cd34ef56 x' 	model '?user=bob&password=<SECRET_1> x' 	card '?user=bob&password=<SECRET_1> x'
+'?a=1&amp;password=ab12cd&amp;next=/home x' 	model '?a=1&amp;password=<SECRET_1>&amp;next=/home x' 	card '?a=1&amp;password=<SECRET_1>&amp;next=/home x'
+'password=ab&cd34;ef56' 	model 'password=<SECRET_1>;ef56' 	card 'password=<SECRET_1>;ef56'
+'password=ab&copy;cd x' 	model 'password=<SECRET_2> x' 	card 'password=<SECRET_2> x'
+'?password=SuperSecretPw99&next=/home' 	model '?password=<SECRET_1>&next=/home' 	card '?password=<SECRET_1>&next=/home'
+'password=Tq7mZ&#59;4xKp2Vb9Lr3NcW8dYh6uJs' 	model 'password=<SECRET_1>' 	card 'password=<SECRET_1>'
+# REAL corpus, rev-5 grammar
+pkg /tmp/claude-0/-home-user/39edf7c7-26f2-5129-9a6e-500351b26399/scratchpad/base/src/hadavin_sdk/__init__.py
+lines 30 mismatches 0
+# REAL corpus, rev-4 grammar
+pkg /tmp/claude-0/-home-user/39edf7c7-26f2-5129-9a6e-500351b26399/scratchpad/base/src/hadavin_sdk/__init__.py
+MISMATCH model 'link=/login?user=bob&amp;password=Yy7&amp;Zz8Aa9&amp;next=/home' -> 'link=/login?user=bob&amp;password=<P>' exp 'link=/login?user=bob&amp;password=<P>&amp;next=/home'
+MISMATCH card 'link=/login?user=bob&amp;password=Yy7&amp;Zz8Aa9&amp;next=/home' -> 'link=/login?user=bob&amp;password=<P>' exp 'link=/login?user=bob&amp;password=<P>&amp;next=/home'
+lines 30 mismatches 2
+# REAL corpus, base unpatched
+base model mismatches 20 of 30

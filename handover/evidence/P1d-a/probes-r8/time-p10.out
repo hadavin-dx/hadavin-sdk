@@ -1,0 +1,27 @@
+MAX_REDACT_CHARS 262144 REDACT_BUDGET_S 6.0
+H1 16000 clean 0.04 blocks 0.04
+H1 65536 clean 0.16 blocks 0.17
+H6 16000 clean 0.05 blocks 0.05
+H6 65536 clean 0.26 blocks 0.26
+H10 16000 clean 0.04 blocks 0.05
+H10 65536 clean 0.18 blocks 0.22
+[ 16000 clean 0.11 blocks 0.12
+[ 65536 clean 0.47 blocks 0.54
+> 16000 clean 0.03 blocks 0.04
+> 65536 clean 0.13 blocks 0.14
+bt1 16000 clean 0.15 blocks 0.15
+bt1 65536 clean 0.60 blocks 0.56
+bt3 16000 clean 0.12 blocks 0.13
+bt3 65536 clean 0.48 blocks 0.50
+bt2 16000 clean 0.04 blocks 0.06
+bt2 65536 clean 0.15 blocks 0.17
+ph. 16000 clean 0.06 blocks 0.06
+ph. 65536 clean 0.23 blocks 0.24
+[.] 16000 clean 0.03 blocks 0.04
+[.] 65536 clean 0.14 blocks 0.14
+&amp; 16000 clean 0.05 blocks 0.05
+&amp; 65536 clean 0.21 blocks 0.22
+dom 16000 clean 0.04 blocks 0.05
+dom 65536 clean 0.18 blocks 0.19
+nl 16000 clean 0.19 blocks 0.26
+nl 65536 clean 0.63 blocks 0.75

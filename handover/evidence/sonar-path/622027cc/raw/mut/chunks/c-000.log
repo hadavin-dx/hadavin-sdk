@@ -1,0 +1,12 @@
+sdk /home/user/build/E-work/mut-tree/src/hadavin_sdk/__init__.py
+ok  KILLED         R1 empty and dot names accepted  [test_pin_r1_empty_and_dot_names_are_refused] t=7s
+ok  KILLED         R2 a separator is accepted  [test_pin_r2_a_separator_is_refused_on_every_os] t=8s
+ok  KILLED         R3 a colon is accepted  [test_pin_r3_a_colon_is_refused_on_every_os] t=9s
+ok  KILLED         R4a a control character in a name is accepted  [test_pin_r4_a_control_character_is_refused_in_a_name] t=10s
+ok  KILLED         R4b a control character in an operator path is accepted  [test_pin_r4_a_control_character_is_refused_in_an_operator_pa] t=11s
+ok  KILLED         R5a a name over 255 bytes is accepted  [test_pin_r5_a_name_over_255_utf8_bytes_is_refused] t=12s
+ok  KILLED         R5b a path over 4096 characters is accepted  [test_pin_r5_a_path_over_4096_characters_is_refused] t=13s
+ok  KILLED         R6 a trailing dot or space is accepted  [test_pin_r6_a_trailing_dot_or_space_is_refused] t=14s
+ok  KILLED         R7a a device name is accepted  [test_pin_r7_a_reserved_device_name_is_refused] t=15s
+ok  KILLED         R7b the superscript COM and LPT forms are accepted  [test_pin_r7_a_reserved_device_name_is_refused] t=16s
+SLICE 0:10 10 of 10 good; problems: []; elapsed 17s

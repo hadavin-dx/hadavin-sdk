@@ -1,0 +1,69 @@
+exit=1
+start Wed Nov 11 16:21:47 UTC 2026 end Wed Nov 11 16:27:45 UTC 2026
+........................................................................ [ 99%]
+...............................................................          [100%]
+=================================== FAILURES ===================================
+_ test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[dblink-connect] _
+
+attack = Attack(name='dblink-connect', sql="SELECT dblink_connect('dbname=postgres')", rule='V06', category='public-functions', harm='exec')
+shared = 'user=postgres dbname=askdata_h_1c7e64a6 host=127.0.0.1 port=56291'
+
+    @pytest.mark.parametrize("attack", READERS, ids=[a.name for a in READERS])
+    def test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated(attack, shared):
+>       assert prove_harm(attack, shared)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/demo_askdata/test_validate_harm.py:179: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/demo_askdata/test_validate_harm.py:133: in prove_harm
+    cur = c.execute(attack.sql)
+          ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <psycopg.Connection [BAD] at 0x7f121f852c60>
+query = "SELECT dblink_connect('dbname=postgres')", params = None
+prepare = None, binary = False
+
+    def execute(
+        self,
+        query: Query,
+        params: Params | None = None,
+        *,
+        prepare: bool | None = None,
+        binary: bool = False,
+    ) -> Cursor[Row]:
+        """Execute a query and return a cursor to read its results."""
+        try:
+            cur = self.cursor()
+            if binary:
+                cur.format = BINARY
+    
+            if isinstance(query, Template):
+                if params is not None:
+                    raise TypeError(
+                        "'execute()' with string template query doesn't support parameters"
+                    )
+                return cur.execute(query, prepare=prepare)
+            else:
+                return cur.execute(query, params, prepare=prepare)
+        except e._NO_TRACEBACK as ex:
+>           raise ex.with_traceback(None)
+E           psycopg.errors.SqlclientUnableToEstablishSqlconnection: could not establish connection
+E           DETAIL:  connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: No such file or directory
+E           	Is the server running locally and accepting connections on that socket?
+
+../venv-evq8c1/lib/python3.13/site-packages/psycopg/connection.py:304: SqlclientUnableToEstablishSqlconnection
+=========================== short test summary info ============================
+SKIPPED [1] tests/contracts/test_llm.py:95: Stubber refuses a malformed Converse shape before the kind sees it
+SKIPPED [1] tests/test_policy_engine.py:244: needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, so a refusal there would show nothing. CI runs these against its Vault service and requires them.
+SKIPPED [1] tests/test_policy_engine.py:252: needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, so a refusal there would show nothing. CI runs these against its Vault service and requires them.
+SKIPPED [1] tests/test_policy_engine.py:260: needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, so a refusal there would show nothing. CI runs these against its Vault service and requires them.
+SKIPPED [1] tests/test_policy_engine.py:274: needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, so a refusal there would show nothing. CI runs these against its Vault service and requires them.
+SKIPPED [1] tests/test_policy_engine.py:286: needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, so a refusal there would show nothing. CI runs these against its Vault service and requires them.
+SKIPPED [1] tests/test_policy_engine.py:299: needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, so a refusal there would show nothing. CI runs these against its Vault service and requires them.
+SKIPPED [1] tests/test_policy_engine.py:358: needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, so a refusal there would show nothing. CI runs these against its Vault service and requires them.
+SKIPPED [2] tests/test_policy_engine.py:371: needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, so a refusal there would show nothing. CI runs these against its Vault service and requires them.
+SKIPPED [1] tests/test_policy_engine.py:386: needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, so a refusal there would show nothing. CI runs these against its Vault service and requires them.
+SKIPPED [1] tests/test_policy_engine.py:398: needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, so a refusal there would show nothing. CI runs these against its Vault service and requires them.
+SKIPPED [1] tests/test_policy_engine.py:410: needs a real Vault server (HADAVIN_TEST_VAULT_ADDR is not set): the local fake enforces no policy, so a refusal there would show nothing. CI runs these against its Vault service and requires them.
+1 failed, 10777 passed, 13 skipped, 28 deselected in 354.46s (0:05:54)

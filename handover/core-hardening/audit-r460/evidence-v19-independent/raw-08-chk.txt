@@ -1,0 +1,11 @@
+spend_decrease_log.sql []
+spend_guarded_writes.sql []
+spend_nonneg.sql []
+spend_nonneg_finite.sql []
+spend_nonneg_upgrade.sql []
+0001_core.sql []
+0002_audit_chain.sql []
+0003_approvals_tick.sql []
+0004_audit_checkpoint_meta.sql []
+0005_evidence.sql []
+rc=0

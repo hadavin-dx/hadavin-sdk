@@ -1,0 +1,8 @@
+# c6s independent evidence (EVIDENCE RUNNER, condensed copy), 2026-11-16T17:18:54Z
+Raw: c6-skip-audit/evidence-c6s-independent/00-SUMMARY.md. Recorded, not judged.
+Failures first:
+1. Stale time: OWNER-SHEET-v30-A/B rewritten 17:13:55Z (23:43:55 IST), after the report's check time 17:13:05Z; report says 17:12:09Z (L-SHEET row, section 0, OS28 row). Builder verifier on live files: 165 checks, 3 FAILED (check-time/newest version, L-SHEET times, F4).
+2. run_all.sh has absolute paths; cannot run on a copy as written (paths rewritten in copy only). Rebuilt report differs in 7 lines (check time and v30 file times).
+3. Mutations (45 planted + 1 control): own checker caught 23, builder verifier 32. Missed by both: first box number, L-CARD default Yes->No, key end tied to 18:29, key-shaped string, 3 check rows->4, title UTC+5:00, release note v14->v15, 18 kept runs->17, OWNER ONLY removed, wrong file name in box. Builder-only misses: all box numbers changed, card word count 11->12, R-number in box. Builder secret pattern sk-[A-Za-z0-9]{10,} stops at hyphen so sk-ant-api03-... not caught; builder never compares stated box word count with real count; 2 mutations caught only by the word limit.
+Passes: sha256 identical before/after; run_all.sh on copy: verify 165 checks 0 FAILED, neg 137 copies 0 wrong (after path/time fixes); own checker 20 PASS: 94 rows ids 1..94, 49+36+3+6, 61 UTC/IST pairs, 19 weekday pairs, card 11+35+22+22 = 90 words, 6 length rows recompute, box 3,488 words (report says 3,490), 0 codes, banned 0; verifier on c6r: 56 FAIL lines confirmed.
+Not run: n8n/flows; scratchpad tree copy not compared with repo; per-question counts, cites, 18-run split; no combined mutations.

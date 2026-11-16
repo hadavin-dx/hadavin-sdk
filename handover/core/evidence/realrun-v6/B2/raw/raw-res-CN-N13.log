@@ -1,0 +1,34 @@
+......................................................................F
+=================================== FAILURES ===================================
+_______ test_the_live_script_refuses_without_a_terminal_in_the_same_form _______
+
+tmp_path = PosixPath('/home/user/build/rr6/tmp-B2/pytest-of-unknown/pytest-50/test_the_live_script_refuses_w0')
+
+    def test_the_live_script_refuses_without_a_terminal_in_the_same_form(tmp_path: Path) -> None:
+        import subprocess
+    
+        key = tmp_path / "k"
+        key.write_text(KEY, encoding="utf-8")
+        argv = _live_argv(str(key), str(tmp_path / "ledger"), assume_yes=None)
+        r = subprocess.run(  # noqa: S603
+            [sys.executable, str(REPO / "scripts" / "run_live_check.py"), *argv],
+            stdin=subprocess.DEVNULL,
+            capture_output=True,
+            text=True,
+            timeout=60,
+            check=False,
+        )
+>       assert r.returncode == 2 and LIVE_LINE.fullmatch(r.stdout), r.stdout
+E       AssertionError: refused: it is not a terminal (a pipe, a file, the NUL device or a scheduled job), but this script asks a question and needs a person at a terminal, so nothing was called. Run it from your own terminal
+E         
+E       assert (2 == 2 and None)
+E        +  where 2 = CompletedProcess(args=['/home/user/build/rr6/venv312/bin/python', '/home/user/build/rr6/tree-M/scripts/run_live_check....t asks a question and needs a person at a terminal, so nothing was called. Run it from your own terminal\n', stderr='').returncode
+E        +  and   None = <built-in method fullmatch of re.Pattern object at 0x950b7b0>('refused: it is not a terminal (a pipe, a file, the NUL device or a scheduled job), but this script asks a question and needs a person at a terminal, so nothing was called. Run it from your own terminal\n')
+E        +    where <built-in method fullmatch of re.Pattern object at 0x950b7b0> = re.compile('refused: (--[a-z][a-z-]*(, --[a-z][a-z-]*)*|the arguments|standard input): [^\\n]+\\n').fullmatch
+E        +    and   'refused: it is not a terminal (a pipe, a file, the NUL device or a scheduled job), but this script asks a question and needs a person at a terminal, so nothing was called. Run it from your own terminal\n' = CompletedProcess(args=['/home/user/build/rr6/venv312/bin/python', '/home/user/build/rr6/tree-M/scripts/run_live_check....t asks a question and needs a person at a terminal, so nothing was called. Run it from your own terminal\n', stderr='').stdout
+
+tests/test_real_run_v6.py:458: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_real_run_v6.py::test_the_live_script_refuses_without_a_terminal_in_the_same_form
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 70 passed in 0.73s

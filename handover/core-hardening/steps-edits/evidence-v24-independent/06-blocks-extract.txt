@@ -1,0 +1,4 @@
+A fenced blocks: [('none', 13)]
+A inline command spans: 5
+B fenced blocks: [('none', 13)]
+B inline command spans: 5

@@ -1,0 +1,62 @@
+# Review: core fix r7i (delta r7h to r7i), codebase-details goldfish, fresh context (fallback mode)
+
+Reviewer: codebase-details goldfish (egm agent types not registered here, so the persona file was read and followed).
+Round: no cap (mail, secret path). Reviewed copy: `/home/user/build/rr6/tree-REV7I` (copy of tree-R7I, no data/). Scratch: `/home/user/build/rr6/out/REV7I` (runner `mr.py`, specs `claimed.json`, `own.json`, `ownXY.json`, raw output `raw-*.txt`, results `res-*.tsv`, `checkpoint.md`).
+
+## Verdict: NOT CLEAN
+
+0 blockers, 4 majors, 6 minors, 4 nits. No hardcoded secret found. The 9 mutants the builder named are really killed (checked by planting them). But I planted 33 mutants of my own next to the new tests and 10 of them survive (8 of those on the 18-file mail test set only, not yet on the full 22-file set; 2 on the full set), and the HTTP server sweep the builder skipped has 4 survivors out of 5.
+
+## What I did and saw (commands, then results)
+
+1. Baseline: new file on the copy, run under `unshare -n` with the lo_up driver: `37 passed in 4.68s`.
+2. Claimed mutants (specs from `out/M9/work/specs9.json` and `out/R7I/sibling-specs.json`), each planted alone against `tests/test_r7i_findings.py` only, restored by file content and checked afterwards (`restored` printed for every run):
+   - KILLED: M9-22 (i1 outbox), M9-12 (5 tests, codes 200/234/236/250/299), M9-02 (only by `test_i2_a_call_refused_for_a_bad_password_file...`, 1 test), M9-30 (7 tests), M9-03 (2 tests), M9-18 (2 tests), M9-08 (`test_i6_the_tls_handshake...`), M9-19 (i7), M9-23 (i8), S-IMAP-HS (i11), S-SMTP-DATA (i10 outbox), S-PROV-DATA (i10 provider). That is 12 of 12 killed, all 5 mail-safety ones asked for included.
+   - S-PROV-CONN survives the new file alone (by design) and is killed on the wider set by `test_r7c_head_deadline_errors.py::test_a_real_header_drip_prints_no_trace` (13 s). The builder said `test_f6`; I saw a different test as the first failure (the run stops at the first failure, so `test_f6` may also fail).
+3. Own mutants (question 3). 28 mail-side plus 5 server, one-line changes, on `smtp_outbox.py`, `smtp_provider.py`, `tls_trust.py`, `imap_count.py`, `server.py`. Run on the 18-file "mail" set (the r7c, r7d to r7i, r7m, smtp_outbox, smtp_provider, ca_file, r5/r6 refusals, class-name, except-clause, env-number test files) with stop-at-first-failure; survivors re-run on the 22-file set plus the r7d to r7i files ("wide") where time allowed.
+4. Read the whole new file for literals, sleeps and file writes (question 4).
+
+## Findings
+
+| # | file:line | severity | evidence | fix suggestion (killing test in words) |
+|---|---|---|---|---|
+| F1 | `src/lead_desk/smtp_outbox.py:292` (sibling `smtp_provider.py:351` not planted, same shape) | Major (mail) | Mutant X05: the final reply after the text may also be a 3xx (`code // 100 not in (2, 3)`) and the send is reported SENT. SURVIVED on the wide set (`res-F.tsv`, 427 s, clean tree). A 354 or 334 as the answer to the text must not count as queued. | Test: a scripted server answers the text with `354 go` (and `334`, `421`, `550`); `send()` must raise SendAmbiguous("final reply NNN") and never return SENT. Same for the provider. |
+| F2 | `src/lead_desk/smtp_provider.py:268-269` | Major (mail, send cap) | Mutant X17: the `write_stats` call right after `self.attempts += 1` removed. SURVIVED the mail set (124 s). The count that survives a crash is then not on disk while the mail is in flight (the later write after success hides it). | Test: a fake server reads the stats file while the desk is connected (at the greeting or at DATA); it must already say attempts 1. |
+| F3 | `smtp_provider.py:306` (Y1), `smtp_outbox.py:254` (Y2), `smtp_provider.py:286` (X14) | Major | Mutants that give the step the provider's or outbox's OWN full limit instead of the time LEFT survive: Y1 survived the wide set (391 s); Y2 and X14 survived the mail set (wide not finished). Tests i6, i7 and i8 start from a fresh `_Budget(2.0)` equal to the limit, so "time left" and "full limit" look the same (the checks are `0 < t <= 2.0`). i10 and i11 do consume time, but only for the text write and the mailbox handshake. The new header claims "the step gets the time LEFT" for handshake, connect and command; it only pins "at most the limit". | Test: call `send(..., timeout=0.5)` against a provider/outbox with limit 2.0 and a recording socket; handshake, connect and every command must carry a limit <= 0.5. For handshake and connect also burn 0.6 s of a 2 s budget first (as i10 does) and require < 1.5. |
+| F4 | `src/lead_desk/server.py:499, 667, 708, 732` | Major (class sweep incomplete) | The builder did not sweep `server.py` (stated). I planted 5 one-line "step loses its time limit" mutants and ran 10 server test files (409 tests): V01 (busy 503 write on the accept loop with no timeout, line 499), V02 (reply body write loses the time left, 667), V03 (drain read loses its wall-clock limit, 708) and V05 (finish drain loses the 0.05 s cap, 732) all SURVIVED (`409 passed, 1 skipped`, raw-V0N-srv.txt); only V04 (line 650) was killed (`test_slow_sender.py`). V01 is the one that matters: a blocked write stalls the accept loop. | Same pin style as i8: a recording fake socket asserting the limit before each write/read in `_refuse_busy`, `_send_bytes`, the drain loop and `finish`. Fix per class: one helper that sets "time left" and use it everywhere. |
+| F5 | `smtp_outbox.py:273` | minor | X03: HELO fallback on any non-250 (not only 5xx). SURVIVED (mail set). A 4xx EHLO reply would then be answered with HELO. | Test: EHLO answered `421` / `451` / `354`: no HELO is sent, SendRefused("ehlo reply 421"). |
+| F6 | `smtp_outbox.py:295`, `smtp_provider.py:354` | minor | X02 / X13: the 0.2 s cap on the QUIT write removed. SURVIVED. | Test: after a successful send the QUIT write gets <= 0.2 s (recording socket). |
+| F7 | `smtp_provider.py:326` | minor | X20: the `_expect(ehlo, "ehlo")` check before STARTTLS removed. SURVIVED. | Test: EHLO answered 554 in starttls mode: SendRefused("ehlo reply 554"), no STARTTLS command seen. |
+| F8 | `tls_trust.py:30` | minor | X21: "RC4" removed from `WEAK_CIPHER_WORDS`. SURVIVED. (ADH- is killed by `test_f5_a_context_that_offers_an_anonymous_cipher...`.) | Parametrised test: one fake cipher list per weak word (NULL, RC4, EXPORT, MD5, ADH-, AECDH-, DES-CBC-). |
+| F9 | `imap_count.py:213` | minor | X27: the handshake limit ignores the one-step limit (uses only the total time left). SURVIVED (mail set only). | Test like i11 with step 1 s, total 20 s: the handshake limit must be <= 1 s. |
+| F10 | `tests/test_r7i_findings.py:141-166` (i3) | minor | Wrong implementations that also accept a 3xx login reply (334, 335) pass i3: it only tries 2xx codes 200/234/236/250/299 (my Y3 `//100 in (2,3)` was killed only because it also accepts 2xx). | Add 334, 335, 421, 535 to the parametrisation. |
+| F11 | `tests/test_r7i_findings.py:368-420` (i10, i11) | minor (flake risk) | They sleep 0.6 s inside a 2 s budget and then need `0 < t`. If the machine stalls for more than 1.4 s (load went to 5.9 while I ran; the brief says 1 to 3) `budget.left()` raises and the test fails for no code reason. | Use a 5 s budget, sleep 0.6, assert `t < 5.0` (a mutant leaves 10 s). Same kill power, 4 s margin. |
+| F12 | `tests/test_r7i_findings.py:239-271` (i6 end to end) | nit | Passes on its own mutant by design (builder says so). It kills nothing; keep only if wanted as a pin. Also the unit i6 header text says "time left" but see F3. | Keep, mark in the docstring "no kill power". |
+| F13 | `tests/test_r7i_findings.py:103-116` (i1 provider) | nit | Asserts a refusal but not its text; any other refusal would pass. I did not plant a provider mutant for it. | Assert the key-pattern text. |
+| F14 | `smtp_outbox.py:149` | nit | X07 (bare code without the digit check) survives, but it is equivalent in outcome: a non-digit 3-character line gives ValueError at `int()`, mapped to the same error class as `_Closed`; only the class name in the text differs. No test needed. | none |
+| F15 | `tests/test_r7i_findings.py:41,397,421` | nit | Literals `inbox-a@example.test`, `mail.example.test`, `sender@example.test`: reserved test names, not secrets, not personal addresses. `FAKE_PASSWORD` is built from parts in `demo_only`. No AKIA or other credential literal in the file. Accepted. | none |
+
+Counts: Blocker 0, Major 4 (F1-F4), minor 7 (F5-F11), nit 4 (F12-F15, F14 equivalent).
+
+## Answers to the questions
+
+1. Non-vacuous: yes for all 12 listed (see step 2). The mail-safety ones (M9-22, M9-12, M9-02, M9-30, M9-03) fail on their mutant with the new file alone.
+2. Too narrow: yes in three places. (a) i6/i7/i8 cannot tell "time left" from "own full limit" (F3). (b) i3 only tries 2xx codes (F10). (c) i1 provider does not pin the text (F13). i9 is broad (None, "", 1.4, 9, 1.1, 1, SSLv3, DTLS, lower-case all refused; 1.2 and 1.3 pass). i4 and i5 are broad (30, 1, 2, 0, -5).
+3. 33 own mutants concluded (28 mail-side, 5 server). Killed: Y3, X04, X06, X08-X12, X15, X16, X18, X19, X22-X26, V04. Survived: Y1, Y2, X02, X03, X05, X13, X14, X17, X20, X21, X27 (mail side, F1-F9; X07 equivalent) and V01-V03, V05 (F4). Wide-set status: X05 and Y1 confirmed on the wide set; the others survived the 18-file mail set only (wide run not finished within the time box), so each is a "survivor of the mail set" and could still be killed by a file only in the wide set.
+4. No fake secret or IP literal (loopback is `"127.0.0." + "1"`). Sleeps: two, 0.6 s each (F11). All files are under `tmp_path`; the two listeners bind loopback. I did not read `Script` in `test_smtp_outbox.py` for temp-dir use.
+5. Secret read order: I agree NOT-NEEDED. Evidence: four adapters call the one shared reader (`live_claude.py:429` before `ledger.reserve` at 509, `crm_hubspot.py:256` via `_key()` at the start of `_call` before the counter, `smtp_provider.py:259` before `attempts += 1`, `imap_count.py:256` before connect), each order is pinned by `test_order_*` in `test_r7h_findings.py` (lines 523, 549, 577, 599), and the counters differ per adapter so a wrapper would not be shared code. M9-02 is killed by i2 in the new file as well. Weak spot: nothing forces a FIFTH adapter to have an order test; a guard test listing the modules that import `read_secret_line` and requiring a `test_order_*` per module would close that (suggestion, not a defect today).
+6. Server sweep: yes, one-line sibling mutants in `server.py` survive (F4, 4 of 5).
+
+## What I did not run or check (plainly)
+
+- No full suite run on the tree; no run of the new file under real load (load was 2 to 6 while I worked).
+- Own mutants X28-X34 (imap login repeat, imap send step, netconnect even-share, hung cap, per-address timeout, non-OSError retry) and X01/Y4 (reply read without time limit; that run hung and I stopped it, so no result) were not concluded. No netconnect mutant was concluded.
+- Server mutants ran on 10 server test files, not on the whole suite.
+- Survivors other than X05 and Y1 were not re-run on the 22-file wide set.
+- The provider sibling of F1 (`smtp_provider.py:351`) and the provider empty-key test (F13) were not planted.
+- My own slip: I first ran two mutant runners at once on the same tree; they overwrote each other's files and contaminated one lane (the X05 "kill" by the drop-after-data test was caused by another runner's mutant and was discarded; X05 was redone alone). I then stopped both runners by pid, restored `smtp_outbox.py` and `smtp_provider.py` by copying from tree-R7I and checked `diff -rq` on src and tests (identical). Kills from the overlap window (X06 to X12) name tests that match their own mutant, so I keep them, but they were not repeated alone. I also tried a `pkill` once; the permission check refused it and nothing ran.
+- tree-R7H, tree-R7I and the frozen tree were not edited. The copy `/home/user/build/rr6/tree-REV7I-B` was made for a second lane; both copies were restored (see end of `checkpoint.md`).
+
+## Next step for the builder (fix, do not defer)
+
+Add tests for F1, F2, F3 (with F10) and F4 first; then F5 to F9 and F11; re-run the 22-file set plus r7d to r7i with each new test against its mutant (X05, X17, Y1, Y2, X14, V01 to V03, V05, X03, X02, X13, X20, X21, X27), and give me the raw output. A fresh independent round is needed after the fix (mail path, no cap).

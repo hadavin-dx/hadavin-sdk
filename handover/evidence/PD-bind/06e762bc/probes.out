@@ -1,0 +1,40 @@
+a1 real-subclass channel, config stand-ins only, host 0.0.0.0: BindRefused: bind '0.0.0.0' can be reached from other computers while a real service is configured (held channel: RealChan): a stranger who reaches the port could act on it. Bind to a loopback address (127.0.0.1 or ::1) and put your own sign-i
+a1b same, config.real_services(): no exception; result=('held channel: RealChan',)
+a0 control real_services (stand-ins)= ()
+a0 control public bind with stand-ins only (expect accepted; via public_bind_problem): no exception; result=None
+b1 hand-built no config, public host: BindRefused: serve needs approvals built with a config (Approvals(..., config=config), or build()); these were built by hand with no config
+b2 hand-built no config, loopback host: BindRefused: serve needs approvals built with a config (Approvals(..., config=config), or build()); these were built by hand with no config
+c1 approvals.config = other: AttributeError: property 'config' of 'Approvals' object has no setter
+c2 approvals.overrides = {}: AttributeError: property 'overrides' of 'Approvals' object has no setter
+c3 approvals.overrides['x']=1: TypeError: 'mappingproxy' object does not support item assignment
+d1 replaced channel attr (LooksReal), public host: BindRefused: bind '0.0.0.0' can be reached from other computers while a real service is configured (held channel: LooksReal): a stranger who reaches the port could act on it. Bind to a loopback address (127.0.0.1 or ::1) and put your own sign-
+d2 replaced channel attr (real subclass), public host: BindRefused: bind '0.0.0.0' can be reached from other computers while a real service is configured (held channel: RealChan): a stranger who reaches the port could act on it. Bind to a loopback address (127.0.0.1 or ::1) and put your own sign-i
+e1 detector [stand-in only] is_stand_in: True
+e1 public bind, held detector AnyOf[stand-in]: no exception; result=None
+e2 detector [stand-in, real] is_stand_in: False
+e2 public bind, held detector AnyOf[stand-in, real]: BindRefused: bind '0.0.0.0' can be reached from other computers while a real service is configured (held detector: AnyOf): a stranger who reaches the port could act on it. Bind to a loopback address (127.0.0.1 or ::1) and put your own sign-in 
+f1 public bind, held tools={}: no exception; result=None
+f2 public bind, held tools={'x': object()}: BindRefused: bind '0.0.0.0' can be reached from other computers while a real service is configured (held tools): a stranger who reaches the port could act on it. Bind to a loopback address (127.0.0.1 or ::1) and put your own sign-in in front, 
+f3 build(tools={}) real build: no exception; result=dict_keys(['secrets', 'channel', 'tools', 'detector', 'store'])
+f4 build(tools={'x': fn}) then serve public: BindRefused: serve needs the config the approvals were built with (Approvals(..., config=config)); the config given is not that one
+f5 build(tools={'x': fn}) serve public same config: BindRefused: bind '0.0.0.0' can be reached from other computers while a real service is configured (held tools): a stranger who reaches the port could act on it. Bind to a loopback address (127.0.0.1 or ::1) and put your own sign-in in front, 
+g9 reason of 9 printable chars: no exception; result='allow_public_bind_reason must say why, in at least 10 characters'
+g9s with spaces padded to 12 but 9 real chars: no exception; result='allow_public_bind_reason must say why, in at least 10 characters'
+g10 reason of 10 printable chars: no exception; result=None
+g10s with spaces padded to 12 but 10 real chars: no exception; result=None
+public bind 0.0.0.0 allowed with a real service configured (held channel: RealChan); reason: rrrrrrrrrr
+g public bind real channel + 10-char reason: no exception; result='SERVER CREATED (not refused)'
+g public bind real channel + 9-char reason: BindRefused: allow_public_bind_reason must say why, in at least 10 characters
+h is_loopback_host('::ffff:127.0.0.1') = True
+h is_loopback_host('::ffff:7f00:1') = True
+h is_loopback_host('::ffff:8.8.8.8') = False
+h is_loopback_host('::ffff:0808:0808') = False
+h is_loopback_host('::1') = True
+h is_loopback_host('[::1]') = True
+h is_loopback_host('0.0.0.0') = False
+h is_loopback_host('::') = False
+h is_loopback_host('127.0.0.2') = True
+h is_loopback_host('LOCALHOST') = True
+h is_loopback_host('0177.0.0.1') = False
+h serve real channel host '::ffff:127.0.0.1': OSError: [Errno 97] Address family not supported by protocol
+h serve real channel host '::ffff:8.8.8.8': BindRefused: bind '::ffff:8.8.8.8' can be reached from other computers while a real service is configured (held channel: RealChan): a stranger who reaches the port could act on it. Bind to a loopback address (127.0.0.1 or ::1) and put your own

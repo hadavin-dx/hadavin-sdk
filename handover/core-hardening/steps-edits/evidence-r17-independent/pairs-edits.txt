@@ -1,0 +1,4 @@
+UTC/IST pairs checked 151 bad 0
+weekday-date pairs 45 bad 0
+UTC without IST within 40 chars: line 926 ## Step 21. Mon 23 Nov before 18:29 UTC: you watch the cut
+UTC without IST 1

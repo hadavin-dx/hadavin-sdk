@@ -1,0 +1,23 @@
+module file: /home/user/build/rr6/out/EV7U/hcopy/src/lead_desk/loopback.py
+modules loaded by import: ['__future__', 'ipaddress', 'loopback']
+lead_desk in sys.modules: False
+'localhost' True
+'LOCALHOST' True
+'127.0.0.1' True
+'::1' True
+'[::1]' True
+'::ffff:127.0.0.1' True
+'0.0.0.0' False
+'::' False
+'[::]' False
+'' False
+'  ' False
+'example.com' False
+'127.1' False
+'::1%eth0' False
+'localhost.' False
+None RAISED ValueError
+b'127.0.0.1' RAISED ValueError
+5 RAISED ValueError
+' ' RAISED ValueError
+rc=0

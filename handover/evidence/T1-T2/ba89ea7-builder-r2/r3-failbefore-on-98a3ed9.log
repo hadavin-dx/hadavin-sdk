@@ -1,0 +1,8 @@
+>       from tests.pg_dsn import need_dsn_or_skip
+E       ModuleNotFoundError: No module named 'tests.pg_dsn'
+
+tests/test_pg_dsn_guard.py:42: ModuleNotFoundError
+=========================== short test summary info ============================
+FAILED tests/test_meter_harness.py::test_a_schedule_that_never_fills_fails_loudly_instead_of_passing_unseen
+FAILED tests/test_pg_dsn_guard.py::test_the_shared_helper_fails_in_ci_and_skips_elsewhere
+2 failed, 39 passed in 3.26s

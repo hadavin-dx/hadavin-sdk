@@ -1,0 +1,30 @@
+NEAR-MISS list: cites whose rare anchor (4 or fewer occurrences in the file, taken from the same doc line) sits 1-5 lines OUTSIDE the cited window and no rare anchor sits inside it. Mechanical; a human decides.
+CORE-PR-HANDOFF-v14.md doc-line 31 | src/hadavin_sdk/config.py:57-58 | near: [('Route', 55)] | text at cite: input_usd_per_mtok: Money || output_usd_per_mtok: Money
+CORE-PR-HANDOFF-v14.md doc-line 43 | limits.py:18 | near: [('charge', 17), ('registry', 14)] | text at cite: return self.store.add_spend(agent_id, now().date(), usd)
+CORE-PR-HANDOFF-v14.md doc-line 43 | limits.py:24 | near: [('agents', 25), ('registry', 25)] | text at cite: day, month = self.store.spend_totals(agent_id, now().date())  # a read, no write
+CORE-PR-HANDOFF-v14.md doc-line 45 | agent_loop.py:425 | near: [('system', 427)] | text at cite: reply = self.llm.chat(
+CORE-PR-HANDOFF-v14.md doc-line 45 | agent_loop.py:432 | near: [('system', 427)] | text at cite: except (
+CORE-PR-HANDOFF-v14.md doc-line 53 | gemini.py:98 | near: [('thoughtsTokenCount', 99)] | text at cite: # Thinking is billed as output; candidatesTokenCount leaves it out.
+CORE-PR-HANDOFF-v14.md doc-line 54 | tests/test_p5p6_followups.py:101 | near: [('chat', 102)] | text at cite: rt.detector = AnyOf([RegexDetector(0.5), judge(model)])
+CORE-PR-HANDOFF-v14.md doc-line 103 | registry.py:41 | near: [('AgentRecord', 39)] | text at cite: id: str
+CORE-PR-HANDOFF-v14.md doc-line 122 | runtime/agent_loop.py:432 | near: [('ProviderError', 433), ('code', 435)] | text at cite: except (
+CORE-PR-HANDOFF-v14.md doc-line 123 | runtime/agent_loop.py:310 | near: [('injection_check', 312)] | text at cite: def _screen(self, run: Run, text: str, source: str):
+CORE-PR-HANDOFF-v14.md doc-line 123 | guard/judge.py:72 | near: [('injection_check', 70)] | text at cite: reply = self.llm.chat(
+CORE-PR-HANDOFF-v14.md doc-line 169 | app.py:161 | near: [('routes', 162)] | text at cite: audit = make("audit", b.audit, secrets, store=store, signer=signer, anchor=ancho
+CORE-PR-HANDOFF-v14.md doc-line 169 | app.py:165 | near: [('routes', 162)] | text at cite: members = [make("detector", d, secrets, llm=llm) for d in b.detector]
+CORE-PR-HANDOFF-v14.md doc-line 210 | limits.py:26 | near: [('daily_budget', 27)] | text at cite: if day >= budget.daily:
+CORE-PR-HANDOFF-v14.md doc-line 240 | guard/http.py:93 | near: [('finally', 90)] | text at cite: worker = threading.Thread(target=lookup, daemon=True, name="hadavin-resolve")
+CORE-PR-HANDOFF-v14.md doc-line 245 | approvals/requests.py:37 | near: [('WARNING', 40)] | text at cite: flagged = detector is not None and injection_check(detector, inputs, "approval_s
+CORE-PR-HANDOFF-v14.md doc-line 245 | approvals/cards.py:79 | near: [('WARNING', 83)] | text at cite: and injection_check(detector, diagnosis, "shadow_card").flagged
+CORE-PR-HANDOFF-v14.md doc-line 273 | .github/workflows/ci.yml:40 | near: [('store', 36)] | text at cite: image: postgres:17.10@sha256:7958605b474b3d264a969cb3a123d6aa00ad1e1fe9da8a69984
+CORE-PR-HANDOFF-v14.md doc-line 278 | store/migrate.py:55 | near: [('spend', 53), ('spend_month', 54)] | text at cite: "kill_switch": Grant("table", _RW),
+CORE-PR-HANDOFF-v14.md doc-line 282 | guard/bedrock_guardrail.py:28 | near: [('client', 29)] | text at cite: def _client(service: str, region: str) -> Any:
+CORE-PR-HANDOFF-v14.md doc-line 367 | app.py:162 | near: [('unmetered', 167)] | text at cite: llm = llm or make("llm", b.llm, secrets, routes=cfg.routes)
+CORE-PR-HANDOFF-v14-other-tracks.md doc-line 38 | actions/secrets_file.py:34-64 | near: [('_fetch', 33)] | text at cite: # ConfigError on `..`, absolute names or links out of the folder. The result is 
+CORE-PR-HANDOFF-v14-other-tracks.md doc-line 131 | tests/warden_port/privacy_corpus.py:42 | near: [('CREDITCARD', 41)] | text at cite: "card 4111 1111 1111 1111",
+CORE-PR-HANDOFF-v14-other-tracks.md doc-line 141 | src/hadavin_sdk/config.py:366-367 | near: [('DEV_ONLY', 368)] | text at cite: if self.environment != "dev": || refused = [
+CORE-PR-HANDOFF-v14-other-tracks.md doc-line 141 | tests/warden_port/test_audit_chain.py:568 | near: [('mode', 573)] | text at cite: found = _anchor_refusals("dev", _backends(ANCHOR, KMS, local))
+CORE-PR-HANDOFF-v14-other-tracks.md doc-line 141 | agent_loop.py:179 | near: [('before', 174)] | text at cite: # Keys the HMAC of the restored inputs on the gate's audit event (None: a plain 
+CORE-PR-HANDOFF-v14-other-tracks.md doc-line 142 | anchor_s3.py:5-7 | near: [('default', 4)] | text at cite: never overwritten even before Object Lock applies (a 412 with the same bytes is 
+CORE-PR-HANDOFF-v14-other-tracks.md doc-line 178 | ci.yml:83 | near: [('pytest', 88)] | text at cite: run: psql --version
+count 28

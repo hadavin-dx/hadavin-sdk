@@ -1,0 +1,21 @@
+desc: facts: call ceiling 3 -> 4
+build rc=0
+check rc=1
+C07 info: OWNER-SHEET-v28-A.md 6054, OWNER-CARD-v28-A.md 1372, OWNER-NUMBERS-v28-A.md 844, OWNER-FILM-v28.md 285 total 8555
+C07 info: OWNER-SHEET-v28-B.md 6033, OWNER-CARD-v28-B.md 1353, OWNER-NUMBERS-v28-B.md 859, OWNER-FILM-v28.md 285 total 8530
+check-v28: 15 failure(s)
+FAIL C03 facts money differs
+FAIL C04 OWNER-SHEET-v28-A.md unexpected amount USD 1.08
+FAIL C04 OWNER-SHEET-v28-B.md unexpected amount USD 1.08
+FAIL C17 sheetA: 'Expected total: USD 1.08' says 1.08, expected 0.81
+FAIL C17 sheetA: 'CALL_CEILING = 4' says 4, expected 3
+FAIL C17 sheetB: 'Expected total: USD 1.08' says 1.08, expected 0.81
+FAIL C17 sheetB: 'CALL_CEILING = 4' says 4, expected 3
+FAIL C17 note: 'Expected total: USD 1.08' says 1.08, expected 0.81
+FAIL C17 note: 'CALL_CEILING = 4' says 4, expected 3
+FAIL C48 A holds amount 1.08 (allowed: ['0.27', '0.81', '15.00', '189.00', '3.00', '7.11'])
+FAIL C48 A holds amount 1.08 (allowed: ['0.27', '0.81', '15.00', '189.00', '3.00', '7.11'])
+FAIL C48 A price or total stated less than twice
+FAIL C48 B holds amount 1.08 (allowed: ['0.27', '0.81', '15.00', '189.00', '3.00', '7.11'])
+FAIL C48 B holds amount 1.08 (allowed: ['0.27', '0.81', '15.00', '189.00', '3.00', '7.11'])
+FAIL C48 B price or total stated less than twice

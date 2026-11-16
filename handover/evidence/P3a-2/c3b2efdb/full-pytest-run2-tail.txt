@@ -1,0 +1,4 @@
+=========================== short test summary info ============================
+SKIPPED [1] tests/contracts/test_llm.py:95: Stubber refuses a malformed Converse shape before the kind sees it
+SKIPPED [1] tests/test_migration_verify_pg.py:922: UNRUN: PostgreSQL 17 only (`transaction_timeout` does not exist below 17); the PostgreSQL 16 form of the same class is the idle-in-transaction test above
+12347 passed, 2 skipped, 29 deselected in 641.02s (0:10:41)

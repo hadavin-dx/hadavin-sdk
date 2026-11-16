@@ -1,0 +1,3 @@
+p1 {"seed": 20261111, "cases": 3000, "refused": 0, "a_not_placeholder": 0, "b_runs_readable": 0, "c_checked": 680, "c_readable": 0, "seconds": 27.2}
+p2 {"seed": 8, "cases": 4000, "a_identifier_readable": 0, "b_bare_domain_token": 0, "c_not_idempotent": 0, "seconds": 6.8, "b_examples": []}
+n9 {"seed": 9, "cases": 3000, "readable": 0, "seconds": 1.9}

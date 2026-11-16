@@ -1,0 +1,2 @@
+ok  KILLED       S-replay the output folder is not guarded  [test_replay_with_a_control_character_in_the_output_folder_is]
+SLICE 114-115: 1 of 1 good; problems: []

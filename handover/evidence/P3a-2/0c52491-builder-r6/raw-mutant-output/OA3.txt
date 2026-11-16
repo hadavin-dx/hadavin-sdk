@@ -1,0 +1,28 @@
+### tests/test_migration_wiring.py::test_the_managed_names_are_the_grant_map_the_ledger_and_the_functions_the_files_create rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_the_managed_names_are_the_grant_map_the_ledger_and_the_functions_the_files_create _
+tests/test_migration_wiring.py:1037: in test_the_managed_names_are_the_grant_map_the_ledger_and_the_functions_the_files_create
+    assert {"audit_guard", "Quoted_Fn", "qualified_fn"} <= set(names)
+E   AssertionError: assert {'Quoted_Fn',...qualified_fn'} <= {'approval_de..._outbox', ...}
+E     
+E     Extra items in the left set:
+E     'audit_guard'
+E     'Quoted_Fn'
+E     'qualified_fn'
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_the_managed_names_are_the_grant_map_the_ledger_and_the_functions_the_files_create
+1 failed in 0.38s
+
+### tests/test_migration_postgres.py::test_a_function_a_migration_file_creates_counts_as_managed rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+__________ test_a_function_a_migration_file_creates_counts_as_managed __________
+tests/test_migration_postgres.py:1937: in test_a_function_a_migration_file_creates_counts_as_managed
+    with pytest.raises(ConfigError, match=r"cannot change \d+ object"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_a_function_a_migration_file_creates_counts_as_managed
+1 failed in 0.57s
+

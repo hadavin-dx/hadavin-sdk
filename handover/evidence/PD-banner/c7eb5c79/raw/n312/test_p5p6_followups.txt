@@ -1,0 +1,36 @@
+sdk: /home/user/build/ER-pdbanner12-new/src/hadavin_sdk/__init__.py
+........F......s........s.....................                           [100%]
+=================================== FAILURES ===================================
+____________________ test_each_network_kind_names_its_hosts ____________________
+
+    def test_each_network_kind_names_its_hosts():
+>       from hadavin_sdk.llm.anthropic import _vertex_base_url
+
+tests/test_p5p6_followups.py:139: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+    """Claude through the ``anthropic`` SDK, on the Claude API, Google Vertex AI or Azure AI Foundry (``platform``).
+    
+    Ports WARDEN ``AnthropicProvider`` (design 4.3): SDK retries off (``llm/retry.py`` decides), a socket timeout
+    (``call_timeout_s``, per socket operation, not a wall clock), an explicit base URL on every platform, the key read
+    on every call (a rotated key is picked up), and ``output_schema`` forced through one tool.
+    Needs ``hadavin-sdk[anthropic]``.
+    """
+    
+    from __future__ import annotations
+    
+    import json
+    import re
+    import time
+    from collections.abc import Callable
+    from typing import Any
+    
+>   import anthropic  # the extra: a missing install fails at start-up with the hint (backends.make)
+    ^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named 'anthropic'
+
+src/hadavin_sdk/llm/anthropic.py:17: ModuleNotFoundError
+=========================== short test summary info ============================
+FAILED tests/test_p5p6_followups.py::test_each_network_kind_names_its_hosts
+1 failed, 43 passed, 2 skipped in 1.28s
+rc=1

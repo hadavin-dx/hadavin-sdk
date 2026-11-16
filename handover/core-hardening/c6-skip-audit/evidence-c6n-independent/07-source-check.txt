@@ -1,0 +1,15 @@
+rows parsed 72
+source resolved from tree copy (T): 69  from live handover folder (H): 3
+source file absent: none
+old text occurs exactly once on stated line(s): 72 of 72 | bad: none
+old text occurs more or less than once in the WHOLE file (informational): none
+distinct source files: 9
+   handover/core-hardening/inputs/DECISION-one-store.md H
+   handover/demo/VIDEO-RUNSHEET.md T
+   handover/demo/n8n-flows-real-v5/mf-form.json T
+   handover/demo/n8n-flows-real-v5/mf-hook.json T
+   handover/demo/n8n-flows-real-v5/mf-recovery.json T
+   handover/demo/n8n-flows-real-v5/mf-sub-crm-mail.json T
+   handover/demo/n8n-flows/N8N-START.md T
+   handover/demo/n8n-flows/PAGE-STATEMENTS-V4.md T
+   handover/demo/n8n-mainframe/mf.py T

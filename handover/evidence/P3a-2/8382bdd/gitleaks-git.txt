@@ -1,0 +1,6 @@
+command: gitleaks git --redact --no-banner --exit-code 0 -c .gitleaks.toml --report-format json --report-path <raw>/gitleaks-git.json --log-opts="origin/main..8382bdd5b0e3" /home/user/build/EV-P3a2-8382bdd
+rc=0; findings in JSON report: 0; rule/file pairs: none
+2:01PM INF 44 commits scanned.
+2:01PM INF scanned ~915299 bytes (915.30 KB) in 449ms
+2:01PM INF no leaks found
+git rev-list --count origin/main..8382bdd5b0e3 = 48 (origin/main = 2a8c2aac)

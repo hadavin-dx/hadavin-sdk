@@ -1,0 +1,19 @@
+#  result  check
+-  ------  -----
+1  PASS    every request id has a receipt; the request log is complete; the book holds only this run's requests
+            200 log lines (intended 200), 200 distinct request ids, 200 receipts in book, 0 without a receipt, 0 with a wrong receipt number, 0 receipts the log does not know, 0 outside the id prefix, 0 without this run's marker
+2  FAIL    follow-up states add up to the leads submitted (one per request id); every verdict has its lead; nothing open
+            pending 199 + sending 0 + sent 0 + failed 1 + unknown 0 = 200; leads 200; distinct request ids 200; 0 receipts without a verdict; 0 new verdicts without a lead; 0 review verdicts; 0 leads missing or not from this run
+            first 10 of 199: L0022086bb327, L008fb5f6e7be, L01107122e93a, L02646e1c4281, L03389887be1c, L047497602ec9, L0477f1aa5a72, L05375b11a43f, L05455d2792f5, L05a376a98212
+3  PASS    one message at most per key and recipient; unknown and failed only with a reason, within the ceiling
+            0 messages; 0 keys more than once, 0 recipients more than once, 0 sent without a message, 0 failed with a message and no fitting reason, 0 failed with a message and a reason that fits, 0 keys of no lead; unknown 0 (0 with a message, 0 without; ceiling 0; 0 without a fitting reason); failed 1 (ceiling none)
+4  PASS    CRM rows match the leads marked done, plus the listed unknowns
+            0 CRM rows; allowed 0 to 0 (done 0 + up to 0 unknown); 0 missing, 0 not allowed, 0 twice
+5  PASS    model calls per lead are within the bound
+            646 calls for 200 leads; most for one lead 5; bound 6
+6  PASS    503 rate reported (fails only above a set ceiling)
+            0 of 200 attempts got 503 (rate 0.0000); 0 of 200 requests saw one; 0 ended on 503; ceiling none (report only)
+7  FAIL    drain time within the ceiling
+            the runner never saw the desk drain (marker is null); 199 items still open
+            first 1 of 1: never-drained
+AT LEAST ONE CHECK FAILED

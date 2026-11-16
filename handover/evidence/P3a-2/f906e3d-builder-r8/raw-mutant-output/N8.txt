@@ -1,0 +1,14 @@
+### tests/test_migration_rules.py::test_no_migration_test_skips_silently[tests/test_migration_postgres.py] rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+___ test_no_migration_test_skips_silently[tests/test_migration_postgres.py] ____
+tests/test_migration_rules.py:158: in test_no_migration_test_skips_silently
+    assert skip_violations((ROOT / name).read_text(encoding="utf-8")) == []
+E   AssertionError: assert ['line 41: sk..._TEST_PG_DSN'] == []
+E     
+E     Left contains one more item: 'line 41: skipif that is not `not DSN` with a reason naming HADAVIN_TEST_PG_DSN'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_migration_rules.py::test_no_migration_test_skips_silently[tests/test_migration_postgres.py]
+1 failed in 0.46s
+

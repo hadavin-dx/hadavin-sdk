@@ -1,0 +1,1 @@
+PATCHED hooks 1 and 2 in /tmp/linux-ev/wB/src/dpld-final5b-a5cf0b3d0eec/src/lead_desk/server.py | hook 3: constants.LISTEN_QUEUE = 1024

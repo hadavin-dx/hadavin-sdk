@@ -1,0 +1,20 @@
+path order: untrusted tool error head ; value yes=readable secret piece stands in output, no=none, R=call raised/refused
+L1             untrusted=no tool=no error=no head=no
+L2             untrusted=no tool=no error=no head=no
+L3             untrusted=no tool=no error=no head=no
+L4             untrusted=no tool=no error=no head=no
+L5             untrusted=no tool=no error=no head=no
+L6             untrusted=yes tool=no error=no head=yes
+L7             untrusted=no tool=no error=no head=no
+L8             untrusted=no tool=no error=no head=no
+L9             untrusted=no tool=no error=no head=no
+L10            untrusted=no tool=no error=no head=no
+L11            untrusted=no tool=no error=no head=no
+L12            untrusted=yes tool=no error=no head=yes
+M2a            untrusted=no tool=no error=no head=no
+M2b            untrusted=no tool=no error=no head=no
+G1             untrusted=no tool=no error=no head=no
+G2             untrusted=no tool=no error=no head=no
+G3             untrusted=no tool=no error=no head=no
+ctl-plain-key  untrusted=no tool=no error=no head=no
+ctl-tab-cut    untrusted=yes tool=yes error=yes head=yes

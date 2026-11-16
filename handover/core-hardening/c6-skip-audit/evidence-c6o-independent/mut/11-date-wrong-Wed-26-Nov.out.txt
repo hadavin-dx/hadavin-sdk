@@ -1,0 +1,31 @@
+PASS A0 every table row parsed by my own splitter :: (94, [])
+PASS A old text occurs exactly once on its stated line (94 rows) :: []
+PASS B ids are exactly 1..N, no duplicate (table order is by file, so sorted before comparing) :: (94, [])
+PASS C all rows apply in table order on copies, no mismatch :: []
+PASS C2 within a file lines never increase down the table :: []
+PASS D1 row counts total/ready/default/check/NOT FILMABLE = 94/49/40/3/2 :: (94, {'ready': 49, 'default': 40, 'nf': 2, 'check': 3})
+PASS D2 NOT FILMABLE rows are 13,21 and check rows are 23,58,59 :: ([13, 21], [23, 58, 59])
+PASS D3 section 0 ready list equals the rows whose status is ready :: [1, 2, 5, 6, 7, 8, 9, 10, 16, 17, 18, 19, 22, 25, 26, 27, 28, 30, 32, 34, 35, 36, 37, 38, 40, 42, 45, 46, 47, 48, 60, 61, 70, 71, 72, 75, 76, 77, 78, 79, 80, 82, 83, 84, 85, 88, 89, 93, 94]
+PASS D4 prose 'table \(section 5\) holds (\d+' always 94 :: [94]
+PASS D4 prose 'Of the (\d+) rows' always 94 :: [94]
+PASS D4 prose '(\d+) are 'ready'' always 49 :: [49, 49]
+PASS D4 prose '(\d+) apply on the default' always 40 :: [40, 40]
+PASS D4 prose '(\d+) wait for a check' always 3 :: [3, 3]
+PASS D4 prose '(\d+) more rows are NOT FILMAB' always 2 :: [2, 2]
+PASS D5 3b TOTAL line :: | TOTAL | all rows | 94 | ready 49, on defaults only 40, with a check 3, NOT FILMABLE until an answer 2 |
+PASS D6 wave 1 is 89 = 49 + 40
+PASS D7 rows per file sum to 94 over 10 files :: {'handover/demo/VIDEO-RUNSHEET.md': 44, 'handover/demo/n8n-flows/PAGE-STATEMENTS-V4.md': 23, 'handover/demo/n8n-flows/N8N-START.md': 11, 'handover/demo/n8n-mainframe/mf.py': 2, 'handover/demo/n8n-flows-real-v5/mf-form.json': 2, 'handover/demo/n8n-flows-real-v5/mf-hook.json': 2, 'handover/demo/n8n-flows-real-v5/mf-recovery.json': 2, 'handover/demo/n8n-flows-real-v5/mf-sub-crm-mail.json': 2, 'handov
+PASS E1 every explicit 'UTC = IST' pair is exactly +5:30 (21 pairs) :: []
+PASS E2 every UTC/Z clock time (22, outside old-text quotes) has its +5:30 IST on the same line :: []
+PASS E3 every UTC time inside a NEW text has its IST inside the same new text :: []
+FAIL F1 weekday/date strings correct for 2026 (15 found) :: [(6, 'Wed 26 Nov 2026', 'Thu')]
+PASS F2 every ISO date is in 2026 :: {'2026': 23}
+PASS G1 every '60.1 to X' has X = 61.9 (23) :: Counter({'60.1 to 61.9': 23})
+PASS G2 every '52.8 to X' has X = 54.9 (5) :: Counter({'52.8 to 54.9': 5})
+PASS G3 no stray 61.1 :: 0
+PASS G4 '<n> runs done' always 10, 'runs unknown' always 8 :: (Counter({'10': 2}), Counter({'8': 2}))
+PASS G5 non-table lines with '18 runs' name both voided runs :: []
+PASS H secret-shaped strings or e-mail addresses (counts only) :: {}
+SUMMARY: 1 FAILED: ['F1 weekday/date strings correct for 2026 (15 found)']
+
+EXIT 1

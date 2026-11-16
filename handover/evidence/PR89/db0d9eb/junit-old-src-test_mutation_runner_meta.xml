@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="6" time="7.716" timestamp="2026-11-11T13:57:42.697272+00:00" hostname="vm"><testcase classname="tests.test_mutation_runner_meta" name="test_a_the_test_file_holds_the_moved_tests_and_the_manifest_test_once_each" time="0.013" /><testcase classname="tests.test_mutation_runner_meta" name="test_a_there_are_the_listed_number_of_mutants_with_unique_names" time="0.000" /><testcase classname="tests.test_mutation_runner_meta" name="test_a_every_mutant_names_its_test_file_and_its_killer_and_the_killer_exists" time="7.600" /><testcase classname="tests.test_mutation_runner_meta" name="test_a_the_three_crash_mutants_declare_their_exception_class_and_the_others_do_not" time="0.000" /><testcase classname="tests.test_mutation_runner_meta" name="test_g_every_search_string_occurs_exactly_once_in_the_file_it_targets" time="0.001"><failure message="AssertionError: runner: the child inherits the whole environment: the search string occurs 0 times in tools/mutation_runner.py&#10;assert 0 == 1">def test_g_every_search_string_occurs_exactly_once_in_the_file_it_targets():
+        lines = []
+        for m in mm.M:
+            text = (ROOT / m.file).read_text(encoding="utf-8")
+            count = text.count(m.old)
+&gt;           assert count == 1, f"{m.name}: the search string occurs {count} times in {m.file}"
+E           AssertionError: runner: the child inherits the whole environment: the search string occurs 0 times in tools/mutation_runner.py
+E           assert 0 == 1
+
+tests/test_mutation_runner_meta.py:177: AssertionError</failure></testcase><testcase classname="tests.test_mutation_runner_meta" name="test_the_mutants_script_exits_2_when_the_filter_selects_no_mutant" time="0.059" /></testsuite></testsuites>

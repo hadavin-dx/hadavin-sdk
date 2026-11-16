@@ -1,0 +1,167 @@
+step names: ['sweep', 'reconcile', 'stuck', 'checkpoint', 'purge_evidence', 'reprobe_sources']
+== (f1) stand-ins handed to the six step functions, time today+500d, purge spy, rows planted
+(f1) demo sweep(Mock(spec=TickContext)); isinstance(ctx, TickContext)=True; type is TickContext=False -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f1) demo reconcile(Mock(spec=TickContext)); isinstance(ctx, TickContext)=True; type is TickContext=False -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f1) demo stuck(Mock(spec=TickContext)); isinstance(ctx, TickContext)=True; type is TickContext=False -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f1) demo checkpoint(Mock(spec=TickContext)); isinstance(ctx, TickContext)=True; type is TickContext=False -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f1) demo purge_evidence(Mock(spec=TickContext)); isinstance(ctx, TickContext)=True; type is TickContext=False -> no exception; returned None
+    purge calls that reached the store: ['purge_redaction_maps', 'purge_tool_calls', 'purge_tool_calls', 'purge_redaction_maps']; tool calls left: []; maps left: []
+(f1) demo reprobe_sources(Mock(spec=TickContext)); isinstance(ctx, TickContext)=True; type is TickContext=False -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f1) demo sweep(lying __class__); isinstance(ctx, TickContext)=True; type is TickContext=False -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f1) demo reconcile(lying __class__); isinstance(ctx, TickContext)=True; type is TickContext=False -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f1) demo stuck(lying __class__); isinstance(ctx, TickContext)=True; type is TickContext=False -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f1) demo checkpoint(lying __class__); isinstance(ctx, TickContext)=True; type is TickContext=False -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f1) demo purge_evidence(lying __class__); isinstance(ctx, TickContext)=True; type is TickContext=False -> no exception; returned None
+    purge calls that reached the store: ['purge_redaction_maps', 'purge_tool_calls', 'purge_tool_calls', 'purge_redaction_maps']; tool calls left: []; maps left: []
+(f1) demo reprobe_sources(lying __class__); isinstance(ctx, TickContext)=True; type is TickContext=False -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f1) pilot sweep(Mock(spec=TickContext)); isinstance(ctx, TickContext)=True; type is TickContext=False -> ConfigError: now= is for tests; it is refused in pilot and prod
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f1) pilot reconcile(Mock(spec=TickContext)); isinstance(ctx, TickContext)=True; type is TickContext=False -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f1) pilot stuck(Mock(spec=TickContext)); isinstance(ctx, TickContext)=True; type is TickContext=False -> ConfigError: now= is for tests; it is refused in pilot and prod
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f1) pilot checkpoint(Mock(spec=TickContext)); isinstance(ctx, TickContext)=True; type is TickContext=False -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f1) pilot purge_evidence(Mock(spec=TickContext)); isinstance(ctx, TickContext)=True; type is TickContext=False -> ConfigError: now= is for tests; it is refused in pilot and prod
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f1) pilot reprobe_sources(Mock(spec=TickContext)); isinstance(ctx, TickContext)=True; type is TickContext=False -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f1) pilot sweep(lying __class__); isinstance(ctx, TickContext)=True; type is TickContext=False -> ConfigError: now= is for tests; it is refused in pilot and prod
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f1) pilot reconcile(lying __class__); isinstance(ctx, TickContext)=True; type is TickContext=False -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f1) pilot stuck(lying __class__); isinstance(ctx, TickContext)=True; type is TickContext=False -> ConfigError: now= is for tests; it is refused in pilot and prod
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f1) pilot checkpoint(lying __class__); isinstance(ctx, TickContext)=True; type is TickContext=False -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f1) pilot purge_evidence(lying __class__); isinstance(ctx, TickContext)=True; type is TickContext=False -> ConfigError: now= is for tests; it is refused in pilot and prod
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f1) pilot reprobe_sources(lying __class__); isinstance(ctx, TickContext)=True; type is TickContext=False -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f1) prod sweep(Mock(spec=TickContext)); isinstance(ctx, TickContext)=True; type is TickContext=False -> ConfigError: now= is for tests; it is refused in pilot and prod
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f1) prod reconcile(Mock(spec=TickContext)); isinstance(ctx, TickContext)=True; type is TickContext=False -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f1) prod stuck(Mock(spec=TickContext)); isinstance(ctx, TickContext)=True; type is TickContext=False -> ConfigError: now= is for tests; it is refused in pilot and prod
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f1) prod checkpoint(Mock(spec=TickContext)); isinstance(ctx, TickContext)=True; type is TickContext=False -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f1) prod purge_evidence(Mock(spec=TickContext)); isinstance(ctx, TickContext)=True; type is TickContext=False -> ConfigError: now= is for tests; it is refused in pilot and prod
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f1) prod reprobe_sources(Mock(spec=TickContext)); isinstance(ctx, TickContext)=True; type is TickContext=False -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f1) prod sweep(lying __class__); isinstance(ctx, TickContext)=True; type is TickContext=False -> ConfigError: now= is for tests; it is refused in pilot and prod
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f1) prod reconcile(lying __class__); isinstance(ctx, TickContext)=True; type is TickContext=False -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f1) prod stuck(lying __class__); isinstance(ctx, TickContext)=True; type is TickContext=False -> ConfigError: now= is for tests; it is refused in pilot and prod
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f1) prod checkpoint(lying __class__); isinstance(ctx, TickContext)=True; type is TickContext=False -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f1) prod purge_evidence(lying __class__); isinstance(ctx, TickContext)=True; type is TickContext=False -> ConfigError: now= is for tests; it is refused in pilot and prod
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f1) prod reprobe_sources(lying __class__); isinstance(ctx, TickContext)=True; type is TickContext=False -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+== (f2) subclass attempt
+(f2) class X(TickContext): pass -> TypeError: TickContext cannot be subclassed: a subclass could hand a made-up time to a tick step
+(f2) @dataclass(frozen=True) class Y(TickContext) -> TypeError: TickContext cannot be subclassed: a subclass could hand a made-up time to a tick step
+(f2) types.new_class('Z',(TickContext,)) -> TypeError: TickContext cannot be subclassed: a subclass could hand a made-up time to a tick step
+== (f3) object.__setattr__ on a real context, then each step on pilot/prod
+(f3) pilot sweep(real ctx with now set by object.__setattr__ to today+500d) -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f3) pilot reconcile(real ctx with now set by object.__setattr__ to today+500d) -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f3) pilot stuck(real ctx with now set by object.__setattr__ to today+500d) -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f3) pilot checkpoint(real ctx with now set by object.__setattr__ to today+500d) -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f3) pilot purge_evidence(real ctx with now set by object.__setattr__ to today+500d) -> no exception; returned None
+    purge calls that reached the store: ['purge_redaction_maps', 'purge_tool_calls', 'purge_tool_calls', 'purge_redaction_maps']; tool calls left: []; maps left: []
+(f3) pilot reprobe_sources(real ctx with now set by object.__setattr__ to today+500d) -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f3b) pilot purge_evidence(ctx built with __new__ and object.__setattr__) -> no exception; returned None
+    purge calls that reached the store: ['purge_redaction_maps', 'purge_tool_calls', 'purge_tool_calls', 'purge_redaction_maps']; tool calls left: []; maps left: []
+(f3) prod sweep(real ctx with now set by object.__setattr__ to today+500d) -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f3) prod reconcile(real ctx with now set by object.__setattr__ to today+500d) -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f3) prod stuck(real ctx with now set by object.__setattr__ to today+500d) -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f3) prod checkpoint(real ctx with now set by object.__setattr__ to today+500d) -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f3) prod purge_evidence(real ctx with now set by object.__setattr__ to today+500d) -> no exception; returned None
+    purge calls that reached the store: ['purge_redaction_maps', 'purge_tool_calls', 'purge_tool_calls', 'purge_redaction_maps']; tool calls left: []; maps left: []
+(f3) prod reprobe_sources(real ctx with now set by object.__setattr__ to today+500d) -> no exception; returned None
+    purge calls that reached the store: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f3b) prod purge_evidence(ctx built with __new__ and object.__setattr__) -> no exception; returned None
+    purge calls that reached the store: ['purge_redaction_maps', 'purge_tool_calls', 'purge_tool_calls', 'purge_redaction_maps']; tool calls left: []; maps left: []
+== (f4) STEPS with duplicate names; reordered; same-name no-op purge_evidence
+(f4) demo run_tick(app) STEPS: a second step named 'sweep' appended (no-op) -> no exception; returned 0
+    steps with a tick state after: ['sweep', 'reconcile', 'stuck', 'checkpoint', 'purge_evidence', 'reprobe_sources']; tool calls left: ['ev-run-today', 'ev-run-10d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f4) demo run_tick(app) STEPS: a second step named 'purge_evidence' appended (no-op) -> no exception; returned 0
+    steps with a tick state after: ['sweep', 'reconcile', 'stuck', 'checkpoint', 'purge_evidence', 'reprobe_sources']; tool calls left: ['ev-run-today', 'ev-run-10d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f4) demo run_tick(app) STEPS: first sweep replaced by failing step, second no-op sweep appended -> no exception; returned 0
+    stderr: step=sweep error_kind=RuntimeError message=made-up failure
+    steps with a tick state after: ['sweep', 'reconcile', 'stuck', 'checkpoint', 'purge_evidence', 'reprobe_sources']; tool calls left: ['ev-run-today', 'ev-run-10d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f4) demo run_tick(app) STEPS: two custom steps both named 'dup' -> no exception; returned 0
+    steps with a tick state after: ['sweep', 'reconcile', 'stuck', 'checkpoint', 'purge_evidence', 'reprobe_sources', 'dup']; tool calls left: ['ev-run-today', 'ev-run-10d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f4) demo run_tick(app) STEPS: three of 'sweep' -> no exception; returned 0
+    steps with a tick state after: ['sweep', 'reconcile', 'stuck', 'checkpoint', 'purge_evidence', 'reprobe_sources']; tool calls left: ['ev-run-today', 'ev-run-10d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f4) demo run_tick(app) STEPS: reordered (reversed) -> no exception; returned 0
+    steps with a tick state after: ['sweep', 'reconcile', 'stuck', 'checkpoint', 'purge_evidence', 'reprobe_sources']; tool calls left: ['ev-run-today', 'ev-run-10d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f4) demo run_tick(app) STEPS: purge_evidence replaced by no-op, same name -> no exception; returned 0
+    steps with a tick state after: ['sweep', 'reconcile', 'stuck', 'checkpoint', 'purge_evidence', 'reprobe_sources']; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f4) demo run_tick(app, steps=[dup, dup]) -> no exception; returned 0
+(f4) pilot run_tick(app) STEPS: a second step named 'sweep' appended (no-op) -> ConfigError: a tick step name is used twice: sweep
+    steps with a tick state after: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f4) pilot run_tick(app) STEPS: a second step named 'purge_evidence' appended (no-op) -> ConfigError: a tick step name is used twice: purge_evidence
+    steps with a tick state after: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f4) pilot run_tick(app) STEPS: first sweep replaced by failing step, second no-op sweep appended -> ConfigError: a tick step name is used twice: sweep
+    steps with a tick state after: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f4) pilot run_tick(app) STEPS: two custom steps both named 'dup' -> ConfigError: a tick step name is used twice: dup
+    steps with a tick state after: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f4) pilot run_tick(app) STEPS: three of 'sweep' -> ConfigError: a tick step name is used twice: sweep
+    steps with a tick state after: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f4) pilot run_tick(app) STEPS: reordered (reversed) -> no exception; returned 0
+    steps with a tick state after: ['sweep', 'reconcile', 'stuck', 'checkpoint', 'purge_evidence', 'reprobe_sources']; tool calls left: ['ev-run-today', 'ev-run-10d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f4) pilot run_tick(app) STEPS: purge_evidence replaced by no-op, same name -> no exception; returned 0
+    steps with a tick state after: ['sweep', 'reconcile', 'stuck', 'checkpoint', 'purge_evidence', 'reprobe_sources']; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f4) pilot run_tick(app, steps=[dup, dup]) -> ConfigError: steps= is for tests; it is refused in pilot and prod
+(f4) prod run_tick(app) STEPS: a second step named 'sweep' appended (no-op) -> ConfigError: a tick step name is used twice: sweep
+    steps with a tick state after: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f4) prod run_tick(app) STEPS: a second step named 'purge_evidence' appended (no-op) -> ConfigError: a tick step name is used twice: purge_evidence
+    steps with a tick state after: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f4) prod run_tick(app) STEPS: first sweep replaced by failing step, second no-op sweep appended -> ConfigError: a tick step name is used twice: sweep
+    steps with a tick state after: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f4) prod run_tick(app) STEPS: two custom steps both named 'dup' -> ConfigError: a tick step name is used twice: dup
+    steps with a tick state after: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f4) prod run_tick(app) STEPS: three of 'sweep' -> ConfigError: a tick step name is used twice: sweep
+    steps with a tick state after: []; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f4) prod run_tick(app) STEPS: reordered (reversed) -> no exception; returned 0
+    steps with a tick state after: ['sweep', 'reconcile', 'stuck', 'checkpoint', 'purge_evidence', 'reprobe_sources']; tool calls left: ['ev-run-today', 'ev-run-10d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f4) prod run_tick(app) STEPS: purge_evidence replaced by no-op, same name -> no exception; returned 0
+    steps with a tick state after: ['sweep', 'reconcile', 'stuck', 'checkpoint', 'purge_evidence', 'reprobe_sources']; tool calls left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']; maps left: ['ev-run-today', 'ev-run-10d', 'ev-run-100d']
+(f4) prod run_tick(app, steps=[dup, dup]) -> ConfigError: steps= is for tests; it is refused in pilot and prod
+== (f5) config error text with a secret-shaped value (built from parts)
+(f5) executor_timeout_s: <secret> (wrong type) -> ConfigError: 1 validation error for Config\nexecutor_timeout_s\n  Value error, must be an int or float between 0.001 and 3600 [type=value_error]
+    secret value echoed: False
+(f5) executor_timeout_s: <secret> quoted -> ConfigError: 1 validation error for Config\nexecutor_timeout_s\n  Value error, must be an int or float between 0.001 and 3600 [type=value_error]
+    secret value echoed: False
+(f5) executor_timeout_s: 0 plus a second bad field, secret-shaped -> ConfigError: 2 validation errors for Config\nretention\n  Input should be a valid dictionary or instance of Retention [type=model_type]\nexecutor_timeout_s\n  Value error, must be an int or float between 0.001 and 3600 [type=value_error]
+    secret value echoed: False
+(f5) unknown top-level key with secret-shaped value -> ConfigError: 1 validation error for Config\nmade_up_unknown_key\n  Extra inputs are not permitted [type=extra_forbidden]
+    secret value echoed: False
+(f5) environment: <secret> -> ConfigError: duplicate key 'environment' (line 26)
+    secret value echoed: False
+   reference: first lines of the demo config keys: ['environment', 'routes', 'backends', 'golden_dir', 'inputs_dir', 'eval_threshold', 'check_modules', 'systems', '# Test fixture only', 'allow_insecure_loopback']
+== end

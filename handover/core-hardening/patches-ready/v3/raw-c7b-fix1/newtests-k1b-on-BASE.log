@@ -1,0 +1,96 @@
+CMD: same python, tests/test_k1b_replay.py only on base src
+..............................FFFFF...................                   [100%]
+=================================== FAILURES ===================================
+____________ test_a_flagged_keyless_local_zero_price_route_replays _____________
+
+env = <tests.test_k1b_replay.Env object at 0x7fb9844f9f50>
+
+    def test_a_flagged_keyless_local_zero_price_route_replays(env):
+        reg = _local_zero(env.reg, flag=True)
+>       res = env.run(ScriptedLLM([submit_not_sure()] * 2), reg=reg, llm_kind="openai_compat")
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_k1b_replay.py:414: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_k1b_replay.py:48: in run
+    return replay(
+src/hadavin_sdk/k1b/replay.py:270: in replay
+    return _replay(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+src/hadavin_sdk/k1b/replay.py:118: in _replay
+    _refuse_zero_price(registry, agent_id, llm_kind or cfg.backends.llm.kind)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+registry = Registry(config=Config(environment='dev', routes={'default': Route(model_id='fake-model', input_usd_per_mtok=Decimal('...est_rollback_delete_draft_record', undo_test=None, chain_id='chain-abc', expected_outcome='never executed')}, tools={})
+agent_id = 'test-agent', llm_kind = 'openai_compat'
+
+    def _refuse_zero_price(registry: Registry, agent_id: str, llm_kind: str) -> None:
+        route = registry.config.routes[registry.agents[agent_id].model_route]
+        zero = route.input_usd_per_mtok == 0 or route.output_usd_per_mtok == 0
+        if zero and llm_kind != "fake":
+            # A zero price makes every reply cost 0 and the --max-usd cap could never fire.
+>           raise ConfigError("replay refuses a route with a zero input or output price")
+E           hadavin_sdk.errors.ConfigError: replay refuses a route with a zero input or output price
+
+src/hadavin_sdk/k1b/replay.py:90: ConfigError
+_____ test_an_unflagged_zero_price_route_on_a_local_model_is_still_refused _____
+
+env = <tests.test_k1b_replay.Env object at 0x7fb9844e7f50>
+
+    def test_an_unflagged_zero_price_route_on_a_local_model_is_still_refused(env):
+        reg = _local_zero(env.reg, flag=False)
+>       with pytest.raises(ConfigError, match="price_is_zero_by_design: true"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'price_is_zero_by_design: true'
+E         Actual message: 'replay refuses a route with a zero input or output price'
+
+tests/test_k1b_replay.py:420: AssertionError
+_ test_a_flagged_zero_price_is_refused_when_the_model_is_not_keyless_loopback __
+
+env = <tests.test_k1b_replay.Env object at 0x7fb9844cf3d0>
+
+    def test_a_flagged_zero_price_is_refused_when_the_model_is_not_keyless_loopback(env):
+        remote = {"kind": "openai_compat", "base_url": "https://models.example.com/v1"}
+        reg = _local_zero(env.reg, flag=True, llm=remote)
+>       with pytest.raises(ConfigError, match="needs a keyless loopback model"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'needs a keyless loopback model'
+E         Actual message: 'replay refuses a route with a zero input or output price'
+
+tests/test_k1b_replay.py:428: AssertionError
+_ test_a_flagged_route_is_not_local_when_the_replay_kind_differs_from_the_configured_one _
+
+env = <tests.test_k1b_replay.Env object at 0x7fb98452aed0>
+
+    def test_a_flagged_route_is_not_local_when_the_replay_kind_differs_from_the_configured_one(env):
+        reg = _local_zero(env.reg, flag=True)
+>       with pytest.raises(ConfigError, match="needs a keyless loopback model"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'needs a keyless loopback model'
+E         Actual message: 'replay refuses a route with a zero input or output price'
+
+tests/test_k1b_replay.py:434: AssertionError
+_______ test_a_non_finite_price_on_a_copied_route_is_refused_not_a_crash _______
+
+env = <tests.test_k1b_replay.Env object at 0x7fb9845409d0>
+
+    def test_a_non_finite_price_on_a_copied_route_is_refused_not_a_crash(env):
+        reg = _local_zero(env.reg, flag=True, input_usd_per_mtok=Decimal("NaN"))
+>       with pytest.raises(ConfigError, match="price above 0"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'price above 0'
+E         Actual message: 'replay refuses a route with a zero input or output price'
+
+tests/test_k1b_replay.py:440: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_k1b_replay.py::test_a_flagged_keyless_local_zero_price_route_replays
+FAILED tests/test_k1b_replay.py::test_an_unflagged_zero_price_route_on_a_local_model_is_still_refused
+FAILED tests/test_k1b_replay.py::test_a_flagged_zero_price_is_refused_when_the_model_is_not_keyless_loopback
+FAILED tests/test_k1b_replay.py::test_a_flagged_route_is_not_local_when_the_replay_kind_differs_from_the_configured_one
+FAILED tests/test_k1b_replay.py::test_a_non_finite_price_on_a_copied_route_is_refused_not_a_crash
+5 failed, 49 passed in 1.48s
+rc=1

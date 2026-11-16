@@ -1,0 +1,120 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+   Building hadavin-sdk @ file:///tmp/c7/old
+      Built hadavin-sdk @ file:///tmp/c7/old
+Uninstalled 1 package in 0.40ms
+Installed 1 package in 1ms
+FFFFFF..FF                                                               [100%]
+=================================== FAILURES ===================================
+_ test_a_zero_or_negative_price_is_refused_for_a_live_model[0-input_usd_per_mtok] _
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-29/test_a_zero_or_negative_price_0/config')
+field = 'input_usd_per_mtok', price = '0'
+
+    @pytest.mark.parametrize("field", ["input_usd_per_mtok", "output_usd_per_mtok"])
+    @pytest.mark.parametrize("price", ["0", "0.00", "-1"])
+    def test_a_zero_or_negative_price_is_refused_for_a_live_model(cfg_dir, field, price):
+>       with pytest.raises(ConfigError, match="zero or negative price"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigError
+
+tests/test_c01_route_limits.py:28: Failed
+_ test_a_zero_or_negative_price_is_refused_for_a_live_model[0-output_usd_per_mtok] _
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-29/test_a_zero_or_negative_price_1/config')
+field = 'output_usd_per_mtok', price = '0'
+
+    @pytest.mark.parametrize("field", ["input_usd_per_mtok", "output_usd_per_mtok"])
+    @pytest.mark.parametrize("price", ["0", "0.00", "-1"])
+    def test_a_zero_or_negative_price_is_refused_for_a_live_model(cfg_dir, field, price):
+>       with pytest.raises(ConfigError, match="zero or negative price"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigError
+
+tests/test_c01_route_limits.py:28: Failed
+_ test_a_zero_or_negative_price_is_refused_for_a_live_model[0.00-input_usd_per_mtok] _
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-29/test_a_zero_or_negative_price_2/config')
+field = 'input_usd_per_mtok', price = '0.00'
+
+    @pytest.mark.parametrize("field", ["input_usd_per_mtok", "output_usd_per_mtok"])
+    @pytest.mark.parametrize("price", ["0", "0.00", "-1"])
+    def test_a_zero_or_negative_price_is_refused_for_a_live_model(cfg_dir, field, price):
+>       with pytest.raises(ConfigError, match="zero or negative price"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigError
+
+tests/test_c01_route_limits.py:28: Failed
+_ test_a_zero_or_negative_price_is_refused_for_a_live_model[0.00-output_usd_per_mtok] _
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-29/test_a_zero_or_negative_price_3/config')
+field = 'output_usd_per_mtok', price = '0.00'
+
+    @pytest.mark.parametrize("field", ["input_usd_per_mtok", "output_usd_per_mtok"])
+    @pytest.mark.parametrize("price", ["0", "0.00", "-1"])
+    def test_a_zero_or_negative_price_is_refused_for_a_live_model(cfg_dir, field, price):
+>       with pytest.raises(ConfigError, match="zero or negative price"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigError
+
+tests/test_c01_route_limits.py:28: Failed
+_ test_a_zero_or_negative_price_is_refused_for_a_live_model[-1-input_usd_per_mtok] _
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-29/test_a_zero_or_negative_price_4/config')
+field = 'input_usd_per_mtok', price = '-1'
+
+    @pytest.mark.parametrize("field", ["input_usd_per_mtok", "output_usd_per_mtok"])
+    @pytest.mark.parametrize("price", ["0", "0.00", "-1"])
+    def test_a_zero_or_negative_price_is_refused_for_a_live_model(cfg_dir, field, price):
+>       with pytest.raises(ConfigError, match="zero or negative price"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigError
+
+tests/test_c01_route_limits.py:28: Failed
+_ test_a_zero_or_negative_price_is_refused_for_a_live_model[-1-output_usd_per_mtok] _
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-29/test_a_zero_or_negative_price_5/config')
+field = 'output_usd_per_mtok', price = '-1'
+
+    @pytest.mark.parametrize("field", ["input_usd_per_mtok", "output_usd_per_mtok"])
+    @pytest.mark.parametrize("price", ["0", "0.00", "-1"])
+    def test_a_zero_or_negative_price_is_refused_for_a_live_model(cfg_dir, field, price):
+>       with pytest.raises(ConfigError, match="zero or negative price"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigError
+
+tests/test_c01_route_limits.py:28: Failed
+_________________ test_max_tokens_above_the_ceiling_is_refused _________________
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-29/test_max_tokens_above_the_ceil0/config')
+
+    def test_max_tokens_above_the_ceiling_is_refused(cfg_dir):
+        with pytest.raises(ConfigError):
+>           _load(cfg_dir, max_tokens=defaults.MAX_ROUTE_TOKENS + 1)
+                                      ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AttributeError: module 'hadavin_sdk.defaults' has no attribute 'MAX_ROUTE_TOKENS'
+
+tests/test_c01_route_limits.py:45: AttributeError
+________ test_max_tokens_at_the_ceiling_loads_and_zero_is_still_refused ________
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-29/test_max_tokens_at_the_ceiling0/config')
+
+    def test_max_tokens_at_the_ceiling_loads_and_zero_is_still_refused(cfg_dir):
+>       assert _load(cfg_dir, max_tokens=defaults.MAX_ROUTE_TOKENS).routes["default"].max_tokens == (
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^
+            defaults.MAX_ROUTE_TOKENS
+        )
+E       AttributeError: module 'hadavin_sdk.defaults' has no attribute 'MAX_ROUTE_TOKENS'
+
+tests/test_c01_route_limits.py:49: AttributeError
+=========================== short test summary info ============================
+FAILED tests/test_c01_route_limits.py::test_a_zero_or_negative_price_is_refused_for_a_live_model[0-input_usd_per_mtok]
+FAILED tests/test_c01_route_limits.py::test_a_zero_or_negative_price_is_refused_for_a_live_model[0-output_usd_per_mtok]
+FAILED tests/test_c01_route_limits.py::test_a_zero_or_negative_price_is_refused_for_a_live_model[0.00-input_usd_per_mtok]
+FAILED tests/test_c01_route_limits.py::test_a_zero_or_negative_price_is_refused_for_a_live_model[0.00-output_usd_per_mtok]
+FAILED tests/test_c01_route_limits.py::test_a_zero_or_negative_price_is_refused_for_a_live_model[-1-input_usd_per_mtok]
+FAILED tests/test_c01_route_limits.py::test_a_zero_or_negative_price_is_refused_for_a_live_model[-1-output_usd_per_mtok]
+FAILED tests/test_c01_route_limits.py::test_max_tokens_above_the_ceiling_is_refused
+FAILED tests/test_c01_route_limits.py::test_max_tokens_at_the_ceiling_loads_and_zero_is_still_refused
+8 failed, 2 passed in 0.41s
+
+[wall 1.3s maxrss_kb 50196 exit 1]

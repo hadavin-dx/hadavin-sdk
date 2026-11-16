@@ -1,0 +1,3 @@
+BANNED entries read: 10
+files scanned: 29 total matches: 0
+files with matches: 0

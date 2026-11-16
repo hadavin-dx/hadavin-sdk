@@ -1,0 +1,3657 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 48b4e4a..53d22a2 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -6,7 +6,8 @@ The list of every change, with the test that proves each one and its result befo
+ `handover/core/review/` of the studio notes and in `out/R7/RESULTS.md` of the build (not part of this repository).
+ 
+ * Script exit codes: one number per meaning (`EXIT_*` in `constants.py`); a script never ends with a bare number.
+-* Fake servers: a bad body or query is one fixed 400; the whole request body has one time limit (`FAKE_BODY_DEADLINE_SECONDS`).
++* Fake servers: a bad body or query is one fixed 400; the whole request body has one time limit
++  (`FAKE_BODY_DEADLINE_SECONDS`).
+ * `demo_only/burst.py --url` is refused unless it is on this computer, before any name lookup.
+ * A stored error code never holds a Python or library class name (`lead_desk/errcode.py`); an ast test lists every use.
+ * Mail path: user, TLS floor, secret reading, size caps (see `tests/test_r7_mail_context.py`).
+diff --git a/contract.md b/contract.md
+index ee25ba7..bf76467 100644
+--- a/contract.md
++++ b/contract.md
+@@ -148,7 +148,21 @@ Pages for a person (the pages only read; the buttons write: Retry, the answers,
+ * If another desk already holds the lock file, `lockfile.acquire` raises `LockHeldError` (a kind of `OSError`) and start-up stops with exit code 2. Another failure to take the lock raises `LockUnavailableError`, also an `OSError`, also with exit code 2. A `RecordedQualifier` label that is not `hot`, `warm` or `cold` raises a `KeyError` that names the label, from `qualify` (a follow-up then ends `failed` with `internal:KeyError`).
+ * Fakes server flag `--crm keyed|blind` (default `keyed`) selects the CRM's mode; `--outbox` is unchanged.
+ * `python -m lead_desk.server` prints one line `desk listening on http://<host>:<port>` when it accepts requests. The port in it is the real one, so `DESK_PORT=0` (ephemeral) works; the subprocess tests still pick a free port themselves.
+-  * Exit codes: 1 the demo servers cannot be reached at start-up, or a Python traceback (a constant that is out of range); 2 another desk holds the lock file, or the lock file cannot be taken for another reason (a folder, no permission); 3 the open-file limit is too low; 4 the desk refuses a setting, in any of these places: `Config.from_env` (a number that is not plain digits or is outside its range, any other bad `DESK_*` value), an adapter's `from_env` (a bad `DESK_SMTP*`, `DESK_HUBSPOT*` or `DESK_LIVE*` value), the bind check (an address that is not this computer's while a real service is set), a `db_path` of `:memory:`, an approvers file or a lead flow file that is refused, or when the `Desk` is built (an AI adapter whose `timeout_seconds` is not a number above 0 or is above the AI call budget of 9 s); also at start-up, a lead flow file whose steps do not fit the steps already stored with the leads; the message names the setting; an error that is not a refused setting never gets code 4; 5 the port could not be bound within `BIND_RETRY_SECONDS` (any `OSError` is retried first, because on Windows a restart can meet the old port in TIME_WAIT). `EXIT_SIMULATED_KILL` 137 is only the crash scripts.
++  * Exit codes: 1 a Python traceback (a constant that is out of range); 7 the demo servers cannot be reached at
++      start-up (EXIT_ADAPTERS_UNREACHABLE); 2 another desk holds the lock file, or the lock file cannot be taken for
++      another reason (a folder, no permission); 3 the open-file limit is too low; 4 the desk refuses a setting, in any
++      of
++      these places: `Config.from_env` (a number that is not plain digits or is outside its range, any other bad `DESK_*`
++      value), an adapter's `from_env` (a bad `DESK_SMTP*`, `DESK_HUBSPOT*` or `DESK_LIVE*` value), the bind check (an
++      address that is not this computer's while a real service is set), a `db_path` of `:memory:`, an approvers file
++      or a
++      lead flow file that is refused, or when the `Desk` is built (an AI adapter whose `timeout_seconds` is not a number
++      above 0 or is above the AI call budget of 9 s); also at start-up, a lead flow file whose steps do not fit the
++      steps
++      already stored with the leads; the message names the setting; an error that is not a refused setting never gets
++      code
++      4; 5 the port could not be bound within `BIND_RETRY_SECONDS` (any `OSError` is retried first, because on Windows a
++      restart can meet the old port in TIME_WAIT). `EXIT_SIMULATED_KILL` 137 is only the crash scripts.
+   * Refused connections (503 busy without a handler thread): after the reply the socket goes to one lingerer thread (`_Lingerer`, at most `LINGER_MAX_SOCKETS` = 16 at once, at most `DRAIN_TOTAL_SECONDS` each, ends at once when the client closes) which reads and drops request bytes still on their way, so the close does not send a reset (on Windows a reset destroys a reply the client has not read yet). A silent client costs the accept loop nothing. When the lingerer is full, bytes already there are read and the socket is closed. The 16 are counted in `FD_RESERVE_ITEMS`.
+   * Start-up order:
+ * (1) the open-file check: exit 3 if `MAX_HANDLER_THREADS` needs more open files than this computer allows.
+diff --git a/demo_only/bad_request.py b/demo_only/bad_request.py
+index 4570aab..9ae9bab 100644
+--- a/demo_only/bad_request.py
++++ b/demo_only/bad_request.py
+@@ -17,7 +17,9 @@ from collections.abc import Callable
+ from http.server import BaseHTTPRequestHandler
+ from typing import Any
+ 
+-BAD_REQUEST_ERRORS = (KeyError, TypeError, ValueError, AttributeError, IndexError)
++from scripts.http_guard import HeadDeadline
++
++BAD_REQUEST_ERRORS = (KeyError, TypeError, ValueError, AttributeError, IndexError, RecursionError)
+ METHOD_NAMES = ("do_GET", "do_POST", "do_PATCH", "do_DELETE", "do_PUT")
+ BAD_REQUEST_TEXT = "bad request"  # the one fixed line every fake answers with
+ 
+@@ -35,7 +37,7 @@ def _shield(method: Callable[[Any], None]) -> Callable[[Any], None]:
+     return run
+ 
+ 
+-class AnswersBadRequests(BaseHTTPRequestHandler):
++class AnswersBadRequests(HeadDeadline, BaseHTTPRequestHandler):
+     """Mix-in for a fake server's handler (list it BEFORE BaseHTTPRequestHandler, or just subclass it)."""
+ 
+     _answer_started = False
+diff --git a/demo_only/burst.py b/demo_only/burst.py
+index f200e31..46e5384 100644
+--- a/demo_only/burst.py
++++ b/demo_only/burst.py
+@@ -8,10 +8,12 @@ from __future__ import annotations
+ 
+ import http.client
+ import json
++import socket
+ import sys
+ import threading
+ import time
+ import urllib.error
++import urllib.parse
+ import urllib.request
+ from collections import Counter
+ from collections.abc import Callable
+@@ -36,7 +38,9 @@ from lead_desk.constants import (
+     BURST_BACKOFF_SECONDS,
+     BURST_N_MAX,
+     BURST_RETRY_DEADLINE_SECONDS,
++    BURST_START_LOOK_SECONDS,
+     EXIT_CHECK_FAILED,
++    EXIT_UNREACHABLE,
+     HTTP_ACCEPTED,
+     HTTP_BUSY,
+     HTTP_CREATED,
+@@ -153,6 +157,22 @@ def fire(
+     return {"n": n, "final": final, **stats}
+ 
+ 
++def listener_answers(url: str, seconds: float) -> bool:
++    """True when something accepts a connection at the address of `url` within `seconds` (looked for about every
++    0.2 s: a desk that is only starting is waited for). Nothing is sent."""
++    parts = urllib.parse.urlsplit(url)
++    host, port = parts.hostname or "", parts.port or (443 if parts.scheme == "https" else 80)
++    end = time.monotonic() + seconds
++    while True:
++        try:
++            with socket.create_connection((host, port), timeout=max(0.2, min(1.0, end - time.monotonic()))):
++                return True
++        except OSError:
++            if time.monotonic() >= end:
++                return False
++            time.sleep(0.2)
++
++
+ def main(argv: list[str] | None = None) -> int:
+     """Post n requests, print SENT / STATUS / RETRIES / RESULT lines, return the exit code."""
+     ap = RefusingParser(prog="demo_only.burst")
+@@ -164,6 +184,9 @@ def main(argv: list[str] | None = None) -> int:
+     ap.add_argument("--expect", type=bounded_int(0, BURST_N_MAX))
+     ap.add_argument("--wrap-n8n", action="store_true")
+     a = ap.parse_args(argv)
++    if not listener_answers(a.url, BURST_START_LOOK_SECONDS):
++        print("ERROR: nothing answers at that address: no request was sent", file=sys.stderr)
++        return EXIT_UNREACHABLE
+     res = fire(a.url, a.n, a.email, a.ref_prefix, a.source, a.wrap_n8n)
+     final: list[int | str] = list(res["final"])  # type: ignore[call-overload]
+     counts = Counter(final)
+diff --git a/demo_only/fake_hubspot.py b/demo_only/fake_hubspot.py
+index af47ac7..954c218 100644
+--- a/demo_only/fake_hubspot.py
++++ b/demo_only/fake_hubspot.py
+@@ -41,7 +41,7 @@ from urllib.parse import parse_qs, unquote, urlsplit
+ 
+ from demo_only.bad_request import BAD_REQUEST_TEXT, AnswersBadRequests
+ from lead_desk.constants import FAKE_BODY_MAX_BYTES, FAKE_SOCKET_TIMEOUT_SECONDS
+-from scripts.http_guard import announced_length, read_request_body
++from scripts.http_guard import announced_length, loads_bounded, read_request_body
+ 
+ MODES = (
+     "ok",
+@@ -230,7 +230,7 @@ class _Handler(AnswersBadRequests):
+         body, refused = read_request_body(self, MAX_BODY_BYTES)  # _gate has already refused a length not usable
+         if refused:  # the sender is too slow or stopped early: the same one fixed answer as a bad body
+             raise ValueError("body not received")
+-        return json.loads(body or b"null")
++        return loads_bounded(body or b"null")
+ 
+     def _gate(self) -> bool:
+         st = self.state
+diff --git a/demo_only/fake_model_server.py b/demo_only/fake_model_server.py
+index 83a55b0..130196c 100644
+--- a/demo_only/fake_model_server.py
++++ b/demo_only/fake_model_server.py
+@@ -37,6 +37,7 @@ from typing import Any
+ try:  # started (python -m demo_only.fake_model_server) without the src folder on the path: it is added
+     from lead_desk.config import is_loopback_host
+     from lead_desk.constants import (
++        EXIT_BAD_SETTING_OR_PATH,
+         EXIT_REFUSED,
+         FAKE_MODEL_DEFAULT_PORT,
+         FAKE_SOCKET_TIMEOUT_SECONDS,
+@@ -48,6 +49,7 @@ except ImportError:
+     sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+     from lead_desk.config import is_loopback_host
+     from lead_desk.constants import (
++        EXIT_BAD_SETTING_OR_PATH,
+         EXIT_REFUSED,
+         FAKE_MODEL_DEFAULT_PORT,
+         FAKE_SOCKET_TIMEOUT_SECONDS,
+@@ -57,7 +59,7 @@ except ImportError:
+     from lead_desk.regfile import open_output, read_regular_bytes, read_regular_text
+ 
+ from demo_only.bad_request import AnswersBadRequests
+-from scripts.http_guard import read_request_body
++from scripts.http_guard import loads_bounded, read_request_body
+ from tools.pathconfine import PathRefused, confine, confine_existing
+ from tools.refusing_args import LOOPBACK_HOST_TEXT, RefusingParser, bounded_int, listen_refusal
+ 
+@@ -172,7 +174,7 @@ def _handler(state: ModelState) -> type[BaseHTTPRequestHandler]:
+                 return
+             if self.path == "/control":
+                 try:
+-                    obj = json.loads(raw or b"{}")
++                    obj = loads_bounded(raw or b"{}")
+                 except ValueError:
+                     obj = None
+                 if not isinstance(obj, dict):  # a list, a string, a number or no JSON at all
+@@ -208,7 +210,7 @@ def _handler(state: ModelState) -> type[BaseHTTPRequestHandler]:
+                 if bad_key:
+                     state.auth_failures += 1
+             try:
+-                request = json.loads(raw)
++                request = loads_bounded(raw)
+             except ValueError:
+                 request = {}
+             if not isinstance(request, dict):
+@@ -294,7 +296,7 @@ def main() -> None:
+         control_file = confine(a.control_file, what="--control-file") if a.control_file else None
+     except PathRefused as e:
+         print(f"refused: {e}", file=sys.stderr)
+-        raise SystemExit(EXIT_REFUSED) from None
++        raise SystemExit(EXIT_BAD_SETTING_OR_PATH) from None
+     try:  # a pipe or a folder named here would block or break the first logged call: refuse now, with one line
+         if call_log is not None:
+             open_output(call_log, "a", encoding="utf-8").close()
+@@ -305,7 +307,7 @@ def main() -> None:
+             key = None
+     except (OSError, ValueError):  # ValueError: not UTF-8 text
+         print("refused: --call-log or --key-file cannot be used: give a regular file", flush=True)
+-        sys.exit(EXIT_REFUSED)
++        sys.exit(EXIT_BAD_SETTING_OR_PATH)
+     try:
+         srv, state = make_model_server(port=a.port, mode=a.mode, key=key, call_log=call_log, control_file=control_file)
+     except OSError as e:  # the port is in use or not allowed
+diff --git a/demo_only/fakes_server.py b/demo_only/fakes_server.py
+index 11648c5..1938ba7 100644
+--- a/demo_only/fakes_server.py
++++ b/demo_only/fakes_server.py
+@@ -23,7 +23,7 @@ from lead_desk.constants import (
+     NUDGE_KEY_PREFIX,
+     PORT_MAX,
+ )
+-from scripts.http_guard import read_request_body
++from scripts.http_guard import loads_bounded, read_request_body
+ from tools.refusing_args import LOOPBACK_HOST_TEXT, RefusingParser, bounded_int, listen_refusal, refusal
+ 
+ FAIL_MODES = ("none", "refuse", "drop", "record_then_drop", "store_then_delay")
+@@ -77,7 +77,7 @@ class _Handler(AnswersBadRequests):
+     @staticmethod
+     def _parse(raw: bytes) -> Any:
+         try:
+-            return json.loads(raw.decode("utf-8"))
++            return loads_bounded(raw.decode("utf-8"))
+         except ValueError:
+             return None
+ 
+diff --git a/demo_only/portal_demo.py b/demo_only/portal_demo.py
+index 0f47d35..4e1d228 100644
+--- a/demo_only/portal_demo.py
++++ b/demo_only/portal_demo.py
+@@ -42,6 +42,7 @@ from lead_desk.constants import (
+     HTTP_OK,
+     HTTP_TOO_MANY_REQUESTS,
+     MAX_JSON_BYTES,
++    PORTAL_VIEW_REPLY_MAX_BYTES,
+     REQUEST_TIMEOUT_SECONDS,
+     SCRIPT_REPLY_MAX_BYTES,
+     SOURCES,
+@@ -180,11 +181,11 @@ class ReplyTooBig(OSError):
+     """A reply was longer than SCRIPT_REPLY_MAX_BYTES. It is refused whole: a cut-off copy is never used."""
+ 
+ 
+-def _read_capped(r: Any) -> bytes:
++def _read_capped(r: Any, cap: int = SCRIPT_REPLY_MAX_BYTES) -> bytes:
+     """The whole reply, or ReplyTooBig. Reads one byte more than the cap to tell 'exactly the cap' from 'more'."""
+-    raw: bytes = r.read(SCRIPT_REPLY_MAX_BYTES + 1)
+-    if len(raw) > SCRIPT_REPLY_MAX_BYTES:
+-        raise ReplyTooBig("reply longer than the script reply cap")
++    raw: bytes = r.read(cap + 1)
++    if len(raw) > cap:
++        raise ReplyTooBig("reply longer than the reply cap")
+     return raw
+ 
+ 
+@@ -192,7 +193,7 @@ def _fetch_json(url: str, timeout: float) -> dict[str, Any] | None:
+     """GET one JSON object from the made-up sender. None on any failure (refused, timeout, redirect, odd answer)."""
+     try:
+         with _OPENER.open(url, timeout=timeout) as r:  # noqa: S310 (url built from Config host and port, http only)
+-            raw = _read_capped(r)
++            raw = _read_capped(r, PORTAL_VIEW_REPLY_MAX_BYTES)  # a view of the biggest run (constants.py)
+     except (OSError, ValueError, http.client.HTTPException):  # URLError, HTTPError and ReplyTooBig are OSError
+         return None
+     try:
+diff --git a/docs/limits.md b/docs/limits.md
+index 89f9b6b..23bb90a 100644
+--- a/docs/limits.md
++++ b/docs/limits.md
+@@ -81,7 +81,18 @@ Rules of the desk's records (the database refuses these, for a database created
+ 
+ ## Load and limits
+ 
+-* Burst test: many connections open at the same moment, all for the same lead (the same email under different request numbers). To repeat a small one, start the demo (README, "Try it") and run `python -m demo_only.burst --url http://127.0.0.1:8765/leads --n 100 --email ada@example.com --ref-prefix run1 --source form` (with `PYTHONPATH=src:.`). The address must be on this computer (`127.0.0.1`, `localhost`, `::1`) and use `http`: any other address ends at once with exit code 2 and one line, before any name lookup or connection. The script prints `SENT`, `STATUS` (for one lead sent many times expect `201=1` and `200=` all the others), `RETRIES` and then one last line: `RESULT sent=<n> expected=<n>` and exit code 0 when the two numbers are equal, or `MISMATCH sent=<n> expected=<n>` and exit code 1 when they differ; it does not print the lead count. Read the counts from `http://127.0.0.1:8765/counts` (or the portal Overview): for one lead sent many times, the lead count and the follow-up count should each be 1 (`tests/test_http.py::test_ten_parallel` checks this for 10). Right after a burst a follow-up can show as pending for a short time before the count of pending follow-ups returns to 0 (no length of time was measured here).
++* Burst test: many connections open at the same moment, all for the same lead (the same email under different request
++  numbers). To repeat a small one, start the demo (README, "Try it") and run `python -m demo_only.burst --url
++  http://127.0.0.1:8765/leads --n 100 --email ada@example.com --ref-prefix run1 --source form` (with
++  `PYTHONPATH=src:.`). The address must be on this computer (`127.0.0.1`, `localhost`, `::1`) and use `http`: any
++  other address ends at once with exit code 2 and one line, before any name lookup or connection. The script prints
++  `SENT`, `STATUS` (for one lead sent many times expect `201=1` and `200=` all the others), `RETRIES` and then one
++  last line: `RESULT sent=<n> expected=<n>` and exit code 0 when the two numbers are equal, or `MISMATCH sent=<n>
++  expected=<n>` and exit code 1 when they differ; it does not print the lead count. Read the counts from
++  `http://127.0.0.1:8765/counts` (or the portal Overview): for one lead sent many times, the lead count and the
++  follow-up count should each be 1 (`tests/test_http.py::test_ten_parallel` checks this for 10). Right after a burst a
++  follow-up can show as pending for a short time before the count of pending follow-ups returns to 0 (no length of
++  time was measured here).
+ * Larger bursts: one measurement test is shipped, `LEAD_DESK_LOAD_N=300 python -m pytest tests/test_server_hardening.py -k measure_burst -s -p no:cacheprovider` (add `LEAD_DESK_LOAD_RETRY=1` to let the sender retry a refused connection). It prints how many connections the operating system refused and the status counts. The waiting line is 1024 connections (`LISTEN_QUEUE` in `src/lead_desk/constants.py`) and the operating system can allow fewer. No result of this test is stored here, and no figure from it is claimed for any computer.
+   * A connection that the operating system refuses is never seen by the desk, so the desk records nothing about it.
+ * **Retry rule of the senders in this repository.** The burst script, the portal demo's burst and the load driver (`load_tools/load_driver.py`) retry a refused connection or a 503 by TIME, not by count: the first wait is 0.1 s, each wait doubles up to 1 s, the desk's `Retry-After` is honoured up to that 1 s, and no new try starts more than 30 s after the first (`BURST_BACKOFF_SECONDS`, `BURST_BACKOFF_MAX_SECONDS`, `BURST_RETRY_DEADLINE_SECONDS` in `constants.py`; tests in `tests/test_burst_retry.py`). `max_retries=0` in the burst script means no retry at all.
+@@ -109,7 +120,15 @@ Rules of the desk's records (the database refuses these, for a database created
+ * Threads: the desk serves each connection on its own thread. Writing a reply has a total limit of `REPLY_WRITE_TIMEOUT_SECONDS` (5 s): the desk stops serving a client that does not read its reply after that time.
+ * Open files: at start-up the desk checks that the open-file limit of this computer covers `MAX_HANDLER_THREADS` (4 files per thread plus 96 for everything else; contract.md lists what the 4 and the 96 are made of). With the default 1024 threads that is 4192 open files. A computer whose hard limit is lower than that makes the desk exit with code 3; 4096 is a common default inside containers, so there raise the open-file limit of the operating system (for example `ulimit -n 8192`, or the container's own open-file setting).
+   * The count is arithmetic (contract.md lists what the 4 and the 96 are made of; `test_connection_holds_counted_files` and `test_reserve_covers_its_items` check the database connection and the portal's connections); DNS lookups and the temporary files SQLite makes are not itemised in the 96. It raises the soft limit to exactly what is needed when the hard limit is unlimited or at least that, and otherwise refuses to start (exit code 3). The message names the open-file limit in force and what the desk needs.
+-* Exit codes (read from `main` in `src/lead_desk/server.py`): 1 the demo servers cannot be reached at start-up, or a Python traceback (a constant that is out of range); 2 another desk holds the lock file, or the lock file cannot be taken for another reason (a folder, no permission); 3 the open-file limit is too low; 4 the desk refuses a setting (a number that is not plain digits or is outside its range, any other bad `DESK_*` value, a bind address that is not on this computer while a real service is set, a `db_path` of `:memory:`, a bad approvers file or steps file, a steps file that does not fit the steps already stored with the leads, or an AI adapter whose `timeout_seconds` is not a number above 0 or is above the AI call budget of 9 s; the message names the setting; an error that is not a refused setting never gets code 4); 5 the port could not be bound within `BIND_RETRY_SECONDS` (see above).
++* Exit codes (read from `main` in `src/lead_desk/server.py`): 1 a Python traceback (a constant that is out of range);
++  7 the demo servers cannot be reached at start-up (EXIT_ADAPTERS_UNREACHABLE); 2 another desk holds the lock file, or
++  the lock file cannot be taken for another reason (a folder, no permission); 3 the open-file limit is too low; 4 the
++  desk refuses a setting (a number that is not plain digits or is outside its range, any other bad `DESK_*` value, a
++  bind address that is not on this computer while a real service is set, a `db_path` of `:memory:`, a bad approvers file
++  or steps file, a steps file that does not fit the steps already stored with the leads, or an AI adapter whose
++  `timeout_seconds` is not a number above 0 or is above the AI call budget of 9 s; the message names the setting; an
++  error that is not a refused setting never gets code 4); 5 the port could not be bound within `BIND_RETRY_SECONDS` (see
++  above).
+ * Exit codes of the helper scripts (`scripts/`, `load_tools/`, `demo_only/`) are separate from the desk's, and no
+   number has two meanings among them: 1 a check ran and did not hold (or n8n answered with an error); 2 a bad command
+   line, a bad input or a name that is not exactly one thing; 3 the thing the script talks to cannot be reached or
+diff --git a/docs/settings.md b/docs/settings.md
+index 666a5b6..e0c70ee 100644
+--- a/docs/settings.md
++++ b/docs/settings.md
+@@ -161,7 +161,8 @@ Fixed in code, not settings (`src/lead_desk/constants.py`): the SQLite busy wait
+   * A workflow name that the terminal cannot show is printed with `?` in place of the characters it cannot encode.
+   * Three cases are the exception and can still print a Python error trace: Ctrl-C, running out of memory and a closed output pipe.
+   * A key file that is empty, longer than 4096 characters, has more than one line, or holds a space, a control character or a character outside printable ASCII is refused at start with a fixed message (the key text is never printed).
+-  * Network and protocol faults (a bad address, a cut-off answer, a reset) print only the name of the error type, never the address or a header.
++  * Network and protocol faults (a bad address, a cut-off answer, a reset) print only a short fixed error text (never
++    the name of the error type, the address or a header).
+   * The address is also refused when it holds a user name part (`@`) or a space, tab or line break, and unless the text between `//` and the first `/` is exactly a host name (letters, digits, dots, hyphens) or a bracketed IPv6 address, optionally followed by one `:port` with a port from 1 to 65535 (so a backslash, a second port, text after a bracket, an empty port and `:0` are refused, and a non-ASCII host name must be given in its ASCII form). n8n's own names such as `N8N_PORT` are n8n's, not this repository's; they appear in `docs/n8n-recipe.md`.
+ * `scripts/run_live_check.py` takes command-line flags, not settings names: `--key-file`, `--base-url`, `--ledger`, `--cap-run`, `--cap-total`, `--price-date` and one `--model ID=IN_PRICE,OUT_PRICE` per model, and optionally `--max-tokens`, `--effort`, `--timeout`, `--leads` and `--runs` (the text at the top of that script lists the required flags; `--help` lists all).
+ * `tools/scrub_n8n_export.py` (removes the common kinds of address from an n8n export before it is published, so read the result by eye; no settings) replaces these: every address with a scheme (`://`, also with JSON-escaped slashes `:\/\/`), every `data:` link that has a media type, every `javascript:` or `vbscript:` link and every e-mail address that is not `example.test`, `example.com` or `example.invalid`.
+diff --git a/load_tools/README.md b/load_tools/README.md
+index d4d336a..23ee5db 100644
+--- a/load_tools/README.md
++++ b/load_tools/README.md
+@@ -97,8 +97,9 @@ claims an early drain cannot make check 7 pass. Nothing in this folder writes a
+ 7. **Drain time** = drain moment (computed from the book, see above) minus the last `intended_ts`; fails above `--max-drain-seconds` (default 120).
+ 
+ Each check lists its first 10 offending ids (check 1: `door:request_id`; others: lead ids). Output: a plain-text
+-table, then the JSON result (or `--json PATH`). Exit code: 0 all hold, 1 a check failed, 2 an input file is not in the formats above, 4 a path cannot be used
+-(missing, outside the allowed folders, not a plain file) or a log has more rows than a run can make.
++table, then the JSON result (or `--json PATH`). Exit code: 0 all hold, 1 a check failed, 2 an input file is not in the
++formats above, 4 a path cannot be used (missing, outside the allowed folders, not a plain file) or a log has more rows
++than a run can make.
+ 
+ ## Scenarios (`load_driver.py --scenario ...`)
+ 
+diff --git a/load_tools/catcher.py b/load_tools/catcher.py
+index 0375b50..0dc8cbc 100644
+--- a/load_tools/catcher.py
++++ b/load_tools/catcher.py
+@@ -47,11 +47,11 @@ except ImportError:  # a foreign `tools` package WITHOUT these names is dropped
+     from tools.pathconfine import PathRefused, confine
+ 
+ try:  # started as a script without the src folder on the path: it is added (the desk's own file reader is imported)
+-    from lead_desk.constants import EXIT_REFUSED, LOOPBACK_HOSTS, MAX_TEXT_BYTES, PORT_MAX
++    from lead_desk.constants import EXIT_BAD_SETTING_OR_PATH, EXIT_REFUSED, LOOPBACK_HOSTS, MAX_TEXT_BYTES, PORT_MAX
+     from lead_desk.regfile import open_output, plain_reason, read_regular_text
+ except ImportError:
+     sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+-    from lead_desk.constants import EXIT_REFUSED, LOOPBACK_HOSTS, MAX_TEXT_BYTES, PORT_MAX
++    from lead_desk.constants import EXIT_BAD_SETTING_OR_PATH, EXIT_REFUSED, LOOPBACK_HOSTS, MAX_TEXT_BYTES, PORT_MAX
+     from lead_desk.regfile import open_output, plain_reason, read_regular_text
+ 
+ from tools.refusing_args import RefusingParser, bounded_int, listen_refusal, loopback_host, refusal
+@@ -231,12 +231,12 @@ def main(argv: list[str] | None = None) -> None:
+         control = confine(args.control or out.with_name(default_control_name(out.name)), what="--control")
+     except PathRefused as e:
+         print(f"refused: {e}", file=sys.stderr)
+-        sys.exit(EXIT_REFUSED)
++        sys.exit(EXIT_BAD_SETTING_OR_PATH)
+     try:  # make the file now (a regular file or a refusal; never a wait on a pipe)
+         open_output(out, "a", encoding="utf-8").close()
+     except OSError as e:
+         print(refusal("--out", f"cannot be written: {plain_reason(e)}"))
+-        sys.exit(EXIT_REFUSED)
++        sys.exit(EXIT_BAD_SETTING_OR_PATH)
+     try:
+         asyncio.run(serve(args.host, args.port, out, control))
+     except KeyboardInterrupt:
+diff --git a/load_tools/load_driver.py b/load_tools/load_driver.py
+index cd2f982..c12ab7f 100644
+--- a/load_tools/load_driver.py
++++ b/load_tools/load_driver.py
+@@ -41,6 +41,7 @@ except ImportError:  # a foreign `tools` package WITHOUT these names is dropped
+ 
+ try:  # started as a script without the src folder on the path: it is added (the desk's own file reader is imported)
+     from lead_desk.constants import (
++        EXIT_BAD_SETTING_OR_PATH,
+         EXIT_REFUSED,
+         EXIT_UNREACHABLE,
+         LOAD_FILE_MAX_BYTES,
+@@ -59,6 +60,7 @@ try:  # started as a script without the src folder on the path: it is added (the
+ except ImportError:
+     sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+     from lead_desk.constants import (
++        EXIT_BAD_SETTING_OR_PATH,
+         EXIT_REFUSED,
+         EXIT_UNREACHABLE,
+         LOAD_FILE_MAX_BYTES,
+@@ -551,9 +553,9 @@ def main(argv: list[str] | None = None) -> int:
+     facts = a.facts or a.log.with_name(a.log.name + ".facts.json")
+     try:
+         summary = run(a.base_url, a.scenario, a.log, facts, a.workers, a.threads, a.seed, a.id_prefix)
+-    except PathRefused as e:  # the same wording and exit code as a bad scenario: nothing was sent or written
++    except PathRefused as e:  # a log or facts path that cannot be used (exit 4, a bad path): nothing sent or written
+         print(f"ERROR: {e}", file=sys.stderr)
+-        return EXIT_REFUSED
++        return EXIT_BAD_SETTING_OR_PATH
+     if summary["unreachable"]:  # the log and the facts are written; the summary of a run that reached nothing is not
+         print(f"ERROR: {UNREACHABLE_TEXT}", file=sys.stderr)
+         return EXIT_UNREACHABLE
+diff --git a/scripts/http_guard.py b/scripts/http_guard.py
+index 3c7baf3..89c360d 100644
+--- a/scripts/http_guard.py
++++ b/scripts/http_guard.py
+@@ -8,7 +8,10 @@ a named pipe for ever, and an ftp: handler)."""
+ 
+ from __future__ import annotations
+ 
++import json
++import socket
+ import sys
++import threading
+ import time
+ import urllib.request
+ from pathlib import Path
+@@ -19,6 +22,7 @@ try:  # started as a script from another folder: the src folder is added (the on
+     from lead_desk.constants import (
+         FAKE_BODY_DEADLINE_SECONDS,
+         FAKE_BODY_MAX_BYTES,
++        FAKE_HEAD_DEADLINE_SECONDS,
+         FAKE_SOCKET_TIMEOUT_SECONDS,
+         SCRIPT_REPLY_MAX_BYTES,
+     )
+@@ -27,6 +31,7 @@ except ImportError:
+     from lead_desk.constants import (
+         FAKE_BODY_DEADLINE_SECONDS,
+         FAKE_BODY_MAX_BYTES,
++        FAKE_HEAD_DEADLINE_SECONDS,
+         FAKE_SOCKET_TIMEOUT_SECONDS,
+         SCRIPT_REPLY_MAX_BYTES,
+     )
+@@ -165,3 +170,56 @@ def read_request_body(handler: Any, cap: int = FAKE_BODY_MAX_BYTES) -> tuple[byt
+     except OSError:  # TimeoutError is an OSError; a reset too
+         return b"", BODY_TOO_SLOW
+     return b"".join(parts), 0
++
++
++def loads_bounded(raw: bytes | str) -> Any:
++    """json.loads for a request body: text that nests too deeply (a list of lists of ... 100,000 deep) raises ValueError
++    like any other text that is not JSON, never RecursionError (which the handlers did not expect: a traceback and no
++    answer). The ONE parse call of the fake servers."""
++    try:
++        return json.loads(raw)
++    except RecursionError:
++        raise ValueError("nested too deeply") from None
++
++
++class HeadDeadline:
++    """Mix-in for a BaseHTTPRequestHandler: the request line and the header lines have ONE total time limit
++    (FAKE_HEAD_DEADLINE_SECONDS). The socket timeout of the handler restarts with every received byte, so a sender
++    of one byte every few seconds held a handler thread for about 80 seconds. A timer started when the request begins
++    shuts the connection down at the deadline (the blocked read then ends); it is cancelled as soon as the headers are
++    read, so the body has its own deadline (read_request_body) and a slow answer is never cut. An error answer to a
++    sender that has already gone (or was cut off here) is dropped quietly: there is nobody to read it."""
++
++    _head_timer: threading.Timer | None = None
++
++    def _head_too_slow(self) -> None:
++        try:
++            self.connection.shutdown(socket.SHUT_RDWR)
++        except OSError:
++            pass
++
++    def send_error(self, *args: Any, **kwargs: Any) -> None:
++        try:
++            parent: Any = super()
++            parent.send_error(*args, **kwargs)
++        except OSError:  # BrokenPipeError, ConnectionResetError: the sender is gone
++            self.close_connection = True
++
++    def handle_one_request(self) -> None:
++        timer = threading.Timer(FAKE_HEAD_DEADLINE_SECONDS, self._head_too_slow)
++        timer.daemon = True
++        self._head_timer = timer
++        timer.start()
++        try:
++            parent: Any = super()
++            parent.handle_one_request()
++        finally:
++            timer.cancel()
++
++    def parse_request(self) -> bool:
++        try:
++            parent: Any = super()
++            return bool(parent.parse_request())
++        finally:
++            if self._head_timer is not None:
++                self._head_timer.cancel()
+diff --git a/scripts/n8n_api.py b/scripts/n8n_api.py
+index 738e33b..4abdc0c 100644
+--- a/scripts/n8n_api.py
++++ b/scripts/n8n_api.py
+@@ -151,6 +151,20 @@ def say(*parts: object) -> None:
+     sys.stdout.write(text.encode(encoding, errors="replace").decode(encoding, errors="replace") + "\n")
+ 
+ 
++NAME_SHOWN_MAX = 120  # the most characters of a workflow name that `list` prints
++
++
++def shown(value: object, limit: int = NAME_SHOWN_MAX) -> str:
++    """A name from n8n as ONE safe line: every character that is not printable (a line break, ESC, a bidi control, a
++    lone surrogate ...) becomes its backslash form (`\\n`, `\\x1b`), and a long name is cut with "..." (never a terminal
++    command or a fake extra line from a name n8n holds)."""
++    text = "".join(
++        c if c.isprintable() else c.encode("unicode_escape", errors="backslashreplace").decode("ascii")
++        for c in str(value)
++    )
++    return text if len(text) <= limit else text[: limit - 3] + "..."
++
++
+ def call(method: str, path: str, body: object = None) -> tuple[int, object]:
+     try:
+         data = None if body is None else json.dumps(body).encode()
+@@ -219,7 +233,7 @@ def main(a: list[str]) -> int:
+         return EXIT_REFUSED
+     if cmd == "list":
+         for w in workflows():
+-            say(w["name"], "active" if w["active"] else "inactive")
++            say(shown(w["name"]), "active" if w["active"] else "inactive")
+     elif cmd == "import":
+         try:
+             wf = load_json_file(confine_existing(a[2], what="FILE"))
+diff --git a/scripts/run_real_check.py b/scripts/run_real_check.py
+index f8a3766..4b084f9 100644
+--- a/scripts/run_real_check.py
++++ b/scripts/run_real_check.py
+@@ -665,16 +665,16 @@ def load_env(path: Path) -> dict[str, str]:
+     except FileRefused:  # not UTF-8 or over 1 MiB; a byte value and its place in the file are never named
+         raise ValueError("the config file is not UTF-8 text (or is over 1 MiB): save it as plain UTF-8 text") from None
+     for n, raw in enumerate(text.splitlines(), 1):
+-        line = raw.strip()
++        line = raw.strip(" \t")
+         if not line or line.startswith("#"):
+             continue
+         name, sep, value = line.partition("=")
+-        if not sep or not CONFIG_NAME.fullmatch(name.strip()):
++        if not sep or not CONFIG_NAME.fullmatch(name.strip(" \t")):
+             raise ValueError(f"config line {n} is not NAME=VALUE with an upper-case name")  # the line, never its text
+-        value = value.strip()
++        value = value.strip(" \t")
+         if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":  # noqa: PLR2004
+             value = value[1:-1]
+-        out[name.strip()] = value
++        out[name.strip(" \t")] = value
+     return out
+ 
+ 
+diff --git a/scripts/start_all.ps1 b/scripts/start_all.ps1
+index 6655dad..d53b3e0 100644
+--- a/scripts/start_all.ps1
++++ b/scripts/start_all.ps1
+@@ -22,7 +22,14 @@ catch {
+     exit 4
+ }
+ if ((Test-Path "$dataDir\fakes.pid") -or (Test-Path "$dataDir\desk.pid")) {
+-    throw 'pid files exist: run scripts\reset.ps1 first'
++    Write-Host 'pid files exist: run scripts\reset.ps1 first'
++    exit 2
++}
++foreach ($name in 'fakes.log', 'fakes.err.log', 'desk.log', 'desk.err.log') {
++    if (Test-Path -LiteralPath "$dataDir\$name" -PathType Container) {
++        Write-Host "the desk refuses to start: a log file in the data folder is a folder ($name)"
++        exit 4
++    }
+ }
+ $fakes = Start-Process python -ArgumentList '-m', 'demo_only.fakes_server', '--outbox', $Mode, '--port', $fakesPort `
+     -PassThru -WindowStyle Hidden -RedirectStandardOutput "$dataDir\fakes.log" -RedirectStandardError "$dataDir\fakes.err.log"
+diff --git a/scripts/start_all.sh b/scripts/start_all.sh
+index f40c932..424734b 100644
+--- a/scripts/start_all.sh
++++ b/scripts/start_all.sh
+@@ -32,8 +32,16 @@ mkdir -p "$data_dir" 2>/dev/null || {
+ }
+ if [[ -e "$data_dir/fakes.pid" ]] || [[ -e "$data_dir/desk.pid" ]]; then
+   echo "pid files exist: run scripts/reset.sh first" >&2
+-  exit 1
++  exit 2  # refused (the exit codes of this repository: 2 = refused; 1 is only a failed check)
+ fi
++# a log file that is a pipe, a device or a folder would block the start or write where nobody reads: only a missing path
++# or a regular file is used (the same test as src/lead_desk/regfile.py: a regular file); one fixed line, exit code 4
++for f in fakes.log desk.log fakes.pid desk.pid; do
++  if [[ -L "$data_dir/$f" ]] || { [[ -e "$data_dir/$f" ]] && [[ ! -f "$data_dir/$f" ]]; }; then
++    echo "the desk refuses to start: a log or process-number file in the data folder is not a regular file ($f)" >&2
++    exit 4
++  fi
++done
+ python -m demo_only.fakes_server --outbox "$mode" --port "$fakes_port" >"$data_dir/fakes.log" 2>&1 &
+ fakes_pid=$!
+ echo "$fakes_pid" >"$data_dir/fakes.pid"
+diff --git a/src/lead_desk/config.py b/src/lead_desk/config.py
+index 5d64cca..105a288 100644
+--- a/src/lead_desk/config.py
++++ b/src/lead_desk/config.py
+@@ -132,7 +132,7 @@ class LiveSettings:
+     price_date: str  # when the prices were read from the vendor's page (any non-empty text, for the cost log)
+     cap_run_usd: Decimal
+     cap_total_usd: Decimal
+-    ledger_path: Path
++    ledger_path: Path = field(repr=False)
+     run_id: str
+     base_url: str = LIVE_DEFAULT_BASE_URL
+     api_version: str = LIVE_API_VERSION
+diff --git a/src/lead_desk/constants.py b/src/lead_desk/constants.py
+index a92e3c7..550cede 100644
+--- a/src/lead_desk/constants.py
++++ b/src/lead_desk/constants.py
+@@ -103,6 +103,9 @@ ADAPTER_WORKERS_TOTAL: Final = sum(n for _, n in ADAPTER_WORKER_CAPS)
+ BURST_BACKOFF_SECONDS: Final = 0.1
+ BURST_BACKOFF_MAX_SECONDS: Final = 1.0
+ BURST_RETRY_DEADLINE_SECONDS: Final = 30.0
++# Before the first request the burst looks for a listener at the address for at most this many seconds (a desk that is
++# only starting is waited for); when nothing answers it ends with one line and exit code 3, not after 30 s of retries.
++BURST_START_LOOK_SECONDS: Final = 3.0
+ 
+ # Names used in more than one module
+ SOURCES: Final = ("form", "webhook")
+@@ -525,6 +528,10 @@ EXIT_LOG_TOO_LONG: Final = (
+ # n8n's workflow list (up to 250 workflows, each with all its nodes) is the one real reply that can be larger than 1
+ # MiB.
+ SCRIPT_REPLY_MAX_BYTES: Final = 4 * 1024 * 1024
++# The portal reads the made-up CRM and outbox views of the fake servers: one row is at most about 400 bytes as the fake
++# prints it, and the largest run has LOAD_TOTAL_MAX leads (100,000), so a view of that run is below this many bytes
++# (about 38 MiB) and is read whole; a bigger reply is still refused whole, never cut. The page shows ROWS_MAX rows.
++PORTAL_VIEW_ROW_BYTES: Final = 400
+ # The made-up servers (the three fake servers of the demo folder) read a request body only up to
+ # this many bytes (a larger announced length is refused with 413 without reading) and wait at most
+ # FAKE_SOCKET_TIMEOUT_SECONDS for the bytes of one request (a sender that stops sending is cut off).
+@@ -533,6 +540,10 @@ FAKE_SOCKET_TIMEOUT_SECONDS: Final = 10.0
+ # The whole body must arrive within this many seconds, however slowly it trickles in (the socket timeout above restarts
+ # with every byte, so a sender of one byte per second would hold a handler for ever): then 408.
+ FAKE_BODY_DEADLINE_SECONDS: Final = 20.0
++# The request line and all header lines must arrive within this many seconds in total (a timer per request, not per
++# byte: a sender of one byte every few seconds would otherwise hold a handler thread for minutes): then the
++# connection is closed with no answer.
++FAKE_HEAD_DEADLINE_SECONDS: Final = 20.0
+ FLAG_FILE_MAX_BYTES: Final = 4096  # a crash-flag file holds a few words
+ # no price page the check script can read is older than the vendor's paid service
+ LIVE_PRICE_DATE_FLOOR: Final = (2023, 1, 1)  # year, month, day
+@@ -545,6 +556,7 @@ BOOK_NAME_MAX_BYTES: Final = 250  # longest lead-book file name: 255 (the usual
+ BOOK_PROBE_BYTES: Final = 16  # bytes read from an existing lead book to see that it can be read at all
+ MAX_PATH_CHARS: Final = 4096  # a whole path typed on a command line, in characters (the usual Linux limit)
+ LOAD_TOTAL_MAX: Final = 100_000  # most requests one load scenario (or one burst) may plan
++PORTAL_VIEW_REPLY_MAX_BYTES: Final = LOAD_TOTAL_MAX * PORTAL_VIEW_ROW_BYTES  # the most the portal reads of a view
+ MODEL_CALLS_PER_LEAD_MAX: Final = 3  # most model calls one lead may make (the default bound of check 5)
+ MODEL_LOG_ROWS_MAX: Final = MODEL_CALLS_PER_LEAD_MAX * LOAD_TOTAL_MAX  # rows of a model call log: 3 per lead
+ LOAD_RATE_MAX: Final = 100_000.0  # most requests per second a rate or dupmix scenario may ask for
+diff --git a/src/lead_desk/crm_hubspot.py b/src/lead_desk/crm_hubspot.py
+index 892afbb..2fb3907 100644
+--- a/src/lead_desk/crm_hubspot.py
++++ b/src/lead_desk/crm_hubspot.py
+@@ -144,7 +144,9 @@ class HubspotSettings:
+     base_url: str = HUBSPOT_BASE_URL
+     timeout_seconds: float = DEFAULT_TIMEOUT_SECONDS  # total budget of one put
+     max_429_retries: int = DEFAULT_429_RETRIES
+-    stats_file: Path | None = None  # counters are written here after every change (run scripts read it)
++    stats_file: Path | None = field(
++        default=None, repr=False
++    )  # counters are written here after every change (run scripts read it)
+     allow_any_base_url: bool = False  # on purpose only: lets the key go to a host outside the vendor's own domains
+ 
+     def __post_init__(self) -> None:
+diff --git a/src/lead_desk/imap_count.py b/src/lead_desk/imap_count.py
+index c0bfcf6..b85c567 100644
+--- a/src/lead_desk/imap_count.py
++++ b/src/lead_desk/imap_count.py
+@@ -33,7 +33,7 @@ from lead_desk.constants import IMAP_LITERAL_MAX_BYTES, MAIL_SPAM_FOLDER
+ from lead_desk.contract import SendRefused
+ from lead_desk.envnum import SettingRefused
+ from lead_desk.smtp_provider import read_secret_file
+-from lead_desk.tls_trust import CaFileRefused, new_verifying_context, require_verifying
++from lead_desk.tls_trust import CaFileRefused, new_verifying_context, require_modern_protocol, require_verifying
+ 
+ _PREFIX = re.compile(r"[A-Za-z0-9._:-]{1,64}")
+ _HEADER = re.compile(rb"X-Send-Key:[\s]*([^\s]+)", re.IGNORECASE)
+@@ -108,6 +108,13 @@ class _BoundedImap(imaplib.IMAP4_SSL):
+             raise ImapTotalTimeout("the mailbox read took longer than its total time limit")
+         return super().read(size)
+ 
++    def readline(self) -> bytes:
++        """imaplib reads every reply line here (also an endless run of untagged lines that announce no literal, which
++        `read` never sees): past the total deadline the call ends."""
++        if time.monotonic() > self.deadline:
++            raise ImapTotalTimeout("the mailbox read took longer than its total time limit")
++        return super().readline()
++
+ 
+ def bad_folder_name(folder: str) -> bool:
+     """True for a folder name this module cannot send: not plain ASCII, a quote, a backslash or a control character
+@@ -140,8 +147,13 @@ def _session(
+     logging_in = False
+     try:
+         m = _BoundedImap(s.host, s.port, ssl_context=ctx, timeout=s.timeout_seconds)
+-        m.deadline = deadline  # read by _tick and by read
++        m.deadline = deadline  # read by _tick, read and readline
+         try:
++            try:
++                require_modern_protocol(m.sock, "ssl_context")  # before the login line goes out
++            except CaFileRefused as e:
++                m.deadline = float("-inf")  # no LOGOUT on a connection that is refused
++                raise ImapCountError(str(e)) from None
+             _tick(m)
+             logging_in = True
+             m.login(quote_user(s.user), password)
+diff --git a/src/lead_desk/smtp_provider.py b/src/lead_desk/smtp_provider.py
+index 4aca25f..e0a7ab5 100644
+--- a/src/lead_desk/smtp_provider.py
++++ b/src/lead_desk/smtp_provider.py
+@@ -70,7 +70,13 @@ from lead_desk.smtp_outbox import (
+     _dot_stuff,
+     _read_reply,
+ )
+-from lead_desk.tls_trust import CaFileRefused, context_from_ca_file, new_verifying_context, require_verifying
++from lead_desk.tls_trust import (
++    CaFileRefused,
++    context_from_ca_file,
++    new_verifying_context,
++    require_modern_protocol,
++    require_verifying,
++)
+ 
+ _AUTH_OK: Final = 235
+ _STARTTLS_READY: Final = 220
+@@ -105,7 +111,7 @@ class ProviderSettings:
+             raise SettingRefused(f"DESK_SMTPP_PORT must be between 1 and {PORT_MAX}")
+         if self.security not in ("starttls", "ssl"):
+             raise SettingRefused("DESK_SMTPP_SECURITY must be starttls or ssl")
+-        if not self.user or _breaks_a_header(self.user) or not self.user.isascii():
++        if not self.user or _breaks_a_header(self.user) or not self.user.isascii() or self.user != self.user.strip(" "):
+             raise SettingRefused("DESK_SMTPP_USER must be plain ASCII text")
+         for a in (self.mail_from, *self.recipients):
+             if not _ADDRESS.fullmatch(a) or not a.isascii():
+@@ -289,7 +295,13 @@ class SmtpProviderOutbox:
+     def _wrap(self, sock: socket.socket, budget: _Budget) -> ssl.SSLSocket:
+         ctx = self._verifying_context()
+         sock.settimeout(budget.left())
+-        return ctx.wrap_socket(sock, server_hostname=self._s.host)  # verifies name + chain
++        conn = ctx.wrap_socket(sock, server_hostname=self._s.host)  # verifies name + chain
++        try:
++            require_modern_protocol(conn, "the TLS connection")  # before the password goes out
++        except CaFileRefused as e:
++            conn.close()
++            raise SendRefused(str(e)) from None
++        return conn
+ 
+     def _dialogue(self, sock: socket.socket, budget: _Budget, password: str, rcpt: str, wire: bytes) -> None:
+         s = self._s
+diff --git a/src/lead_desk/tls_trust.py b/src/lead_desk/tls_trust.py
+index 8a4d142..140abba 100644
+--- a/src/lead_desk/tls_trust.py
++++ b/src/lead_desk/tls_trust.py
+@@ -100,6 +100,17 @@ def new_verifying_context(cadata: str | bytes | None = None) -> ssl.SSLContext:
+     return ctx
+ 
+ 
++TLS_OK_VERSIONS = ("TLSv1.2", "TLSv1.3")
++
++
++def require_modern_protocol(conn: ssl.SSLSocket, setting_name: str) -> None:
++    """Refuse a connection that negotiated a TLS version below 1.2. `require_verifying` cannot read the floor of a
++    context whose minimum_version is MINIMUM_SUPPORTED (the library's own floor, which a lowered security level or an
++    old system setting can put at TLS 1.0), so the RESULT of the handshake is checked, before any login is sent."""
++    if conn.version() not in TLS_OK_VERSIONS:
++        raise CaFileRefused(f"{setting_name}: the server connection uses a TLS version below 1.2")
++
++
+ def require_verifying(ctx: ssl.SSLContext, setting_name: str) -> ssl.SSLContext:
+     """`ctx` itself when it checks the server's certificate chain AND its name (verify_mode CERT_REQUIRED and
+     check_hostname on, a minimum TLS version of 1.2 or higher, no weak cipher offered); a CaFileRefused
+diff --git a/tests/conftest.py b/tests/conftest.py
+index 81b0e27..26aa5b2 100644
+--- a/tests/conftest.py
++++ b/tests/conftest.py
+@@ -22,7 +22,30 @@ DEMO_PRESENT = importlib.util.find_spec("demo_only") is not None
+ REQUIRE_DEMO_ENV = "DPLD_REQUIRE_DEMO"
+ 
+ 
++_REPO_ROOT = Path(__file__).resolve().parents[1]
++_SKIP_FOLDERS = frozenset({".git", "__pycache__", ".pytest_cache", ".ruff_cache", ".mypy_cache", "node_modules"})
++_TREE_BEFORE: dict[str, tuple[int, int]] = {}
++
++
++def _tree_snapshot() -> dict[str, tuple[int, int]]:
++    """Every file of the repository folder (not the caches): relative name -> (size, modification time in ns)."""
++    found: dict[str, tuple[int, int]] = {}
++    for folder, names, files in os.walk(_REPO_ROOT):
++        names[:] = [n for n in names if n not in _SKIP_FOLDERS]
++        for name in files:
++            full = Path(folder, name)
++            try:
++                st = full.lstat()
++            except OSError:
++                continue
++            # wall-clock: the file change time, not a duration
++            found[str(full.relative_to(_REPO_ROOT))] = (st.st_size, st.st_mtime_ns)  # wall-clock: file time
++    return found
++
++
+ def pytest_sessionstart(session: pytest.Session) -> None:
++    if not hasattr(session.config, "workerinput"):
++        _TREE_BEFORE.update(_tree_snapshot())
+     if not DEMO_PRESENT and os.environ.get(REQUIRE_DEMO_ENV) == "1":
+         pytest.exit(
+             f"the demo_only folder is missing but {REQUIRE_DEMO_ENV}=1: refusing to skip most tests", returncode=2
+@@ -159,3 +182,17 @@ def env(tmp_path: Path) -> Iterator[Env]:
+         yield e
+     finally:
+         e.close()
++
++
++def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
++    """A test run must leave the repository folder as it found it: a file that appeared, vanished or changed (a test
++    that wrote to a relative path with the repository as its working folder) fails the run and is named."""
++    if hasattr(session.config, "workerinput") or not _TREE_BEFORE:
++        return
++    after = _tree_snapshot()
++    changed = sorted(k for k in set(_TREE_BEFORE) | set(after) if _TREE_BEFORE.get(k) != after.get(k))
++    if changed and session.config.getoption("collectonly", False) is False:
++        names = ", ".join(repr(c) for c in changed[:10])
++        print(f"\nREPOSITORY FOLDER CHANGED BY THE TEST RUN ({len(changed)} files): {names}")
++        if session.exitstatus == 0:
++            session.exitstatus = 1
+diff --git a/tests/support.py b/tests/support.py
+index 027c180..480f5f7 100644
+--- a/tests/support.py
++++ b/tests/support.py
+@@ -2,16 +2,21 @@
+ 
+ from __future__ import annotations
+ 
++import atexit
+ import faulthandler
++import hashlib
+ import itertools
+ import json
+ import os
++import re
+ import secrets
++import shutil
+ import socket
+ import sqlite3
+ import struct
+ import subprocess
+ import sys
++import tempfile
+ import threading
+ import time
+ import urllib.error
+@@ -76,14 +81,141 @@ def child_env(**extra: str) -> dict[str, str]:
+     return env
+ 
+ 
++# -- the one place that starts a program from a test (one inline marker, on the line in `popen_program`)
++class RefusedProgram(ValueError):
++    """`checked_argv` refused a command line: it is not one of the shapes a test may start."""
++
++
++OUR_PACKAGES: Final = ("lead_desk", "demo_only", "load_tools", "tools", "scripts", "pytest")
++_SHELLS: Final = frozenset({"sh", "bash", "dash", "zsh", "ksh", "fish", "csh", "tcsh", "cmd", "powershell", "pwsh"})
++_TOOLS: Final = frozenset({"git", "ps", "openssl", "gitleaks", "true", "unshare"})
++_INTERPRETERS: Final = ("python", "node", "perl", "ruby", "php", "deno", "bun", "lua", "tclsh", "osascript")
++_SAFE_PYTHON_FLAGS: Final = frozenset({"-I", "-u", "-B", "-s", "-S", "-P", "-q"})
++_UNSHARE_FLAGS: Final = frozenset({"-n", "--net", "-r", "--map-root-user"})
++_MODULE_NAME: Final = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*$")
++
++
++def _program_name(program: str) -> str:
++    name = os.path.basename(program).lower()
++    return name[:-4] if name.endswith(".exe") else name
++
++
++def checked_argv(argv: Any) -> list[str]:
++    """Return `argv` as a list of str only when it is one of the shapes a test may start; raise RefusedProgram.
++
++    Refused: anything that is not a list or tuple of plain `str` (no Path, bytes, None, str subclass, NUL);
++    an interpreter (python, node, perl, ...) given text to run (-c, -e, -p, --eval, ...) or given a module outside
++    this repository's own packages (-m); a shell name unless it is given an existing script file and no option;
++    python other than this interpreter; git with a `-c` setting other than `user.*`; any program not in the short
++    list of tools the tests use."""
++    if not isinstance(argv, (list, tuple)) or not argv:
++        raise RefusedProgram("the command line must be a non-empty list")
++    for element in argv:
++        if type(element) is not str or "\0" in element:
++            raise RefusedProgram("every element of the command line must be a plain str without NUL")
++    items = list(argv)
++    name = _program_name(items[0])
++    rest = items[1:]
++    if name in ("powershell", "pwsh"):
++        if rest[:4] != ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File"] or not (
++            len(rest) > 4 and os.path.isfile(rest[4])
++        ):
++            raise RefusedProgram(
++                "powershell may only be given -NoProfile -ExecutionPolicy Bypass -File <existing file>"
++            )
++    elif name in _SHELLS:
++        if not rest or rest[0].startswith("-") or not os.path.isfile(rest[0]):
++            raise RefusedProgram("a shell may only be given the path of an existing script file (no -c, no option)")
++    elif name.startswith(_INTERPRETERS):
++        if name.startswith("python") and os.path.realpath(items[0]) != os.path.realpath(sys.executable):
++            raise RefusedProgram("only this test run's own python may be started")
++        _check_interpreter_arguments(rest)
++    elif name == "git":
++        for i, word in enumerate(rest):
++            if word == "-c" and not (i + 1 < len(rest) and rest[i + 1].startswith("user.")):
++                raise RefusedProgram("git -c may set user.* only")
++    elif name == "unshare":
++        i = 0
++        while i < len(rest) and rest[i].startswith("-"):
++            if rest[i] not in _UNSHARE_FLAGS:
++                raise RefusedProgram("unshare: only the network and user options are allowed")
++            i += 1
++        checked_argv(rest[i:])
++    elif name not in _TOOLS:
++        raise RefusedProgram(f"program not allowed: {name}")
++    return items
++
++
++def _check_interpreter_arguments(rest: list[str]) -> None:
++    i = 0
++    while i < len(rest) and rest[i].startswith("-"):
++        flag = rest[i]
++        if flag == "-m":
++            module = rest[i + 1] if i + 1 < len(rest) else ""
++            if not _MODULE_NAME.match(module) or module.split(".")[0] not in OUR_PACKAGES:
++                raise RefusedProgram("-m may name only a module of this repository (or pytest)")
++            return
++        if flag not in _SAFE_PYTHON_FLAGS:
++            raise RefusedProgram(f"interpreter option not allowed (text to run or a loader option): {flag[:12]}")
++        i += 1
++    if i >= len(rest) or not os.path.isfile(rest[i]):
++        raise RefusedProgram("an interpreter must be given the path of an existing script file")
++
++
++_TEXT_DIR: list[str] = []
++
++
++def text_file(text: str, suffix: str = ".py") -> str:
++    """Write `text` to a file of its own in one temporary folder (removed at exit) and return its path: tests run
++    program text as a script file, never as `-c` text. The name comes from the text, so equal text is one file."""
++    if not _TEXT_DIR:
++        folder = tempfile.mkdtemp(prefix="r7b-text-")
++        _TEXT_DIR.append(folder)
++        atexit.register(shutil.rmtree, folder, ignore_errors=True)
++    name = hashlib.sha256(text.encode("utf-8")).hexdigest()[:20] + suffix
++    path = Path(_TEXT_DIR[0]) / name
++    if not path.exists():
++        path.write_text(text, encoding="utf-8", newline="\n")
++    return str(path)
++
++
++def popen_program(argv: Any, **kwargs: Any) -> subprocess.Popen[Any]:
++    """Start a program of the tests. The only subprocess start in tests/ (a test asserts it); `checked_argv` first."""
++    return subprocess.Popen(checked_argv(argv), **kwargs)  # noqa: S603 (argv is checked by checked_argv above)
++
++
++def run_program(
++    argv: Any,
++    *,
++    timeout: float | None = None,
++    input: Any = None,
++    capture_output: bool = False,
++    check: bool = False,
++    **kwargs: Any,
++) -> subprocess.CompletedProcess[Any]:
++    """Like subprocess.run (the same keywords), through `popen_program`."""
++    if capture_output:
++        kwargs["stdout"] = kwargs["stderr"] = subprocess.PIPE
++    if input is not None:
++        kwargs["stdin"] = subprocess.PIPE
++    with popen_program(argv, **kwargs) as proc:
++        try:
++            out, err = proc.communicate(input, timeout=timeout)
++        except subprocess.TimeoutExpired:
++            proc.kill()
++            proc.communicate()
++            raise
++    done: subprocess.CompletedProcess[Any] = subprocess.CompletedProcess(proc.args, proc.returncode, out, err)
++    if check:
++        done.check_returncode()
++    return done
++
++
+ def run_python(
+     args: list[str], env: dict[str, str], cwd: Path | None = None, timeout: float = 60
+ ) -> subprocess.CompletedProcess[str]:
+-    """Run THIS interpreter on a script of this repository (or on `-c` text written in a test); text out, never raises
+-    on a non-zero code. The one place of the S603 ruling for these test runs: the arguments are made by the test."""
+-    return subprocess.run(  # noqa: S603 (our own interpreter; the arguments are made by the test)
+-        [sys.executable, *args], env=env, capture_output=True, text=True, timeout=timeout, check=False, cwd=cwd
+-    )
++    """Run THIS interpreter on a script of this repository, text out, never raises on a non-zero code."""
++    return run_program([sys.executable, *args], env=env, capture_output=True, text=True, timeout=timeout, cwd=cwd)
+ 
+ 
+ def free_port() -> int:
+@@ -552,9 +684,7 @@ def stop_all(servers: Iterable[Any], what: str = "server", *, seconds: float = S
+ 
+ # -- subprocess helpers
+ def start_proc(args: list[str], env: dict[str, str]) -> subprocess.Popen[bytes]:
+-    return subprocess.Popen(  # noqa: S603 (this repository's interpreter and modules)
+-        [sys.executable, *args], cwd=REPO, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
+-    )
++    return popen_program([sys.executable, *args], cwd=REPO, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+ 
+ 
+ def stop_proc(p: subprocess.Popen[bytes]) -> bytes:
+diff --git a/tests/test_book_folder_refusals.py b/tests/test_book_folder_refusals.py
+index e0c5ee8..6e0f19b 100644
+--- a/tests/test_book_folder_refusals.py
++++ b/tests/test_book_folder_refusals.py
+@@ -15,6 +15,7 @@ from contextlib import redirect_stderr, redirect_stdout
+ from pathlib import Path
+ 
+ import pytest
++from support import run_program
+ from test_reset_scripts import WINDOWS, _run
+ from test_special_output_files import FIFO_SKIP, in_child
+ 
+@@ -174,7 +175,7 @@ def _helper(path: str) -> tuple[int, str]:
+ 
+     env = {k: v for k, v in os.environ.items() if not k.startswith("DESK_")}
+     env.update(PYTHONPATH=str(REPO / "src"), PYTHONDONTWRITEBYTECODE="1", DESK_DB_PATH=path)
+-    done = subprocess.run(  # noqa: S603
++    done = run_program(
+         [sys.executable, str(REPO / "scripts" / "desk_setting.py"), "db-path"],
+         env=env,
+         capture_output=True,
+diff --git a/tests/test_ca_file_reads.py b/tests/test_ca_file_reads.py
+index 3ad62f6..bb076fd 100644
+--- a/tests/test_ca_file_reads.py
++++ b/tests/test_ca_file_reads.py
+@@ -14,6 +14,7 @@ from queue import Empty
+ from typing import Any
+ 
+ import pytest
++from support import run_program
+ 
+ from demo_only.fake_smtp_tls import make_cert
+ from lead_desk.constants import CA_FILE_MAX_BYTES
+@@ -192,13 +193,12 @@ def test_a_pem_file_without_a_usable_certificate_is_still_refused(tmp_path: Path
+ def _leaf_cert(tmp_path: Path, host: str) -> tuple[Path, Path]:
+     """A self-signed certificate that says it is NOT a certification authority (basicConstraints CA:FALSE)."""
+     import shutil
+-    import subprocess  # noqa: S404
+ 
+     exe = shutil.which("openssl")
+     if exe is None:
+         pytest.skip("the openssl program is not installed, so no test certificate can be made")
+     cert, key = tmp_path / "leaf.pem", tmp_path / "leaf-key.pem"
+-    subprocess.run(  # noqa: S603
++    run_program(
+         [exe, "req", "-x509", "-newkey", "rsa:2048", "-nodes", "-keyout", str(key), "-out", str(cert), "-days", "2"]
+         + ["-subj", f"/CN={host}", "-addext", f"subjectAltName=DNS:{host}"]
+         + ["-addext", "basicConstraints=critical,CA:FALSE"],
+diff --git a/tests/test_cli_refusals.py b/tests/test_cli_refusals.py
+index d7d50d9..45c2f27 100644
+--- a/tests/test_cli_refusals.py
++++ b/tests/test_cli_refusals.py
+@@ -23,6 +23,7 @@ import pytest
+ 
+ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+ import run_real_check as rrc
++from support import run_program
+ 
+ from lead_desk.constants import LIVE_EFFORTS, PORT_MAX
+ 
+@@ -35,12 +36,7 @@ NO_NETWORK = ["unshare", "-n"]
+ 
+ def _prefix() -> list[str]:
+     try:
+-        ok = (
+-            subprocess.run(  # noqa: S603 (a fixed program, no input)
+-                [*NO_NETWORK, "true"], capture_output=True, timeout=30, check=False
+-            ).returncode
+-            == 0
+-        )
++        ok = run_program([*NO_NETWORK, "true"], capture_output=True, timeout=30, check=False).returncode == 0
+     except (OSError, subprocess.TimeoutExpired):
+         ok = False
+     return NO_NETWORK if ok else []  # the refusals come before any network use either way
+@@ -51,12 +47,12 @@ PREFIX = _prefix()
+ 
+ def run_script(name: str, *args: str) -> tuple[int, str, str]:
+     """Run scripts/<name> as its own program with no standard input (not a terminal): (exit code, stdout, stderr)."""
+-    return run_program([f"scripts/{name}"], *args)
++    return _run_command([f"scripts/{name}"], *args)
+ 
+ 
+-def run_program(command: list[str], *args: str) -> tuple[int, str, str]:
++def _run_command(command: list[str], *args: str) -> tuple[int, str, str]:
+     """Run a program of this repository (a file path or `-m module`), the same way."""
+-    r = subprocess.run(  # noqa: S603 (this repository's interpreter and files)
++    r = run_program(
+         [*PREFIX, sys.executable, *command, *args],
+         stdin=subprocess.DEVNULL,
+         capture_output=True,
+@@ -162,7 +158,7 @@ ALL_CASES = [(name, case) for name in PROGRAMS for case in _typed_wrong(name)]
+ @pytest.mark.parametrize(("name", "case"), ALL_CASES, ids=[f"{n}: {c}" for n, c in ALL_CASES])
+ def test_what_was_typed_is_never_printed_back(name: str, case: str) -> None:
+     command = PROGRAMS[name][0]
+-    code, out, err = run_program(command, *_typed_wrong(name)[case])
++    code, out, err = _run_command(command, *_typed_wrong(name)[case])
+     assert code == 2, (out, err)
+     assert FAKE_KEY not in out + err and "FAKE0123" not in out + err and "ant-" not in out + err, (out, err)
+     assert ONE_LINE.fullmatch(out) and err == "" and "Traceback" not in out, (out, err)
+@@ -285,7 +281,7 @@ def test_a_bad_scenario_names_the_form_without_the_words_typed(scenario: str) ->
+     with pytest.raises(ValueError) as stop:
+         load_driver.parse_scenario(scenario)
+     assert str(stop.value) == load_driver.SCENARIO_FORM and FAKE_KEY not in str(stop.value)
+-    code, out, err = run_program(
++    code, out, err = _run_command(
+         ["load_tools/load_driver.py"], *PROGRAMS["driver"][1][:2], "--scenario", scenario, "--log", "l"
+     )
+     assert code == 2 and out == "" and err == f"ERROR: {load_driver.SCENARIO_FORM}\n", (out, err)
+diff --git a/tests/test_codeant_demo_only.py b/tests/test_codeant_demo_only.py
+index 25f7546..a0add0c 100644
+--- a/tests/test_codeant_demo_only.py
++++ b/tests/test_codeant_demo_only.py
+@@ -7,6 +7,7 @@ from dataclasses import replace
+ from typing import Any
+ 
+ import pytest
++from support import run_program, text_file
+ from test_portal_demo import wired
+ 
+ from lead_desk import server
+@@ -43,7 +44,6 @@ def test_the_burst_summary_counts_slots_that_got_no_http_answer() -> None:
+     import json
+     import re
+     import shutil
+-    import subprocess
+     from pathlib import Path
+ 
+     if shutil.which("node") is None:
+@@ -65,11 +65,11 @@ def test_the_burst_summary_counts_slots_that_got_no_http_answer() -> None:
+         "const P = { icon: () => '', shownRef: (r) => r };\n"
+         + src[start:end]
+         + "\nconst text = (n) => typeof n === 'string' ? n : (n && n.k ? n.k.map(text).join(' ') : '');\n"
+-        "const out = describe({ data: { answers: JSON.parse(process.argv[1]) } }, 'x');\n"
++        "const out = describe({ data: { answers: JSON.parse(process.argv[2]) } }, 'x');\n"
+         "console.log(JSON.stringify(text(out.k[1])));\n"
+     )
+-    done = subprocess.run(  # noqa: S603
+-        ["node", "-e", js, json.dumps(answers)],  # noqa: S607
++    done = run_program(
++        ["node", text_file(js, ".js"), json.dumps(answers)],
+         capture_output=True,
+         text=True,
+         check=True,
+diff --git a/tests/test_codeant_hygiene.py b/tests/test_codeant_hygiene.py
+index e7d8be4..10da67d 100644
+--- a/tests/test_codeant_hygiene.py
++++ b/tests/test_codeant_hygiene.py
+@@ -4,11 +4,11 @@ from __future__ import annotations
+ 
+ import importlib
+ import os
+-import subprocess
+ import sys
+ from pathlib import Path
+ 
+ import pytest
++from support import run_program
+ from test_hygiene import _workflow_problems
+ 
+ NL = chr(
+@@ -53,7 +53,7 @@ def test_a_desk_setting_in_the_shell_does_not_reach_a_test() -> None:
+     `Config.from_env()` without a dict is not changed by the settings of whoever runs the suite."""
+     probe = Path(__file__).with_name("desk_env_probe_check.py")
+     shell = {**os.environ, "DESK_PORT": "1", "DESK_DB_PATH": "/nowhere", "DESK_CRM": "hubspot"}
+-    done = subprocess.run(  # noqa: S603 (our own interpreter, a file of this repository)
++    done = run_program(
+         [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", str(probe)],
+         env=shell,
+         capture_output=True,
+diff --git a/tests/test_crash_points.py b/tests/test_crash_points.py
+index b3753b2..e34297d 100644
+--- a/tests/test_crash_points.py
++++ b/tests/test_crash_points.py
+@@ -5,12 +5,11 @@ from __future__ import annotations
+ 
+ import ast
+ import re
+-import subprocess
+ import sys
+ from pathlib import Path
+ 
+ import pytest
+-from support import CountingCrm, CrashAt, child_env, lead
++from support import CountingCrm, CrashAt, child_env, lead, run_program, text_file
+ 
+ from lead_desk.contract import SimulatedCrash
+ from lead_desk.hooks import ALL_HOOK_POINTS, HOOK_POINTS, MORE_HOOK_POINTS, Hooks
+@@ -33,12 +32,20 @@ def test_flag_file_hooks_kill_at_every_named_point(tmp_path: Path, point: str) -
+     flag = tmp_path / "crash.flag"
+     flag.write_text(point, encoding="utf-8")
+     other = next(p for p in ALL_HOOK_POINTS if p != point)
+-    calm = subprocess.run(  # noqa: S603
+-        [sys.executable, "-c", _CHILD, str(flag), other], env=child_env(), capture_output=True, text=True, timeout=60
++    calm = run_program(
++        [sys.executable, text_file(_CHILD), str(flag), other],
++        env=child_env(),
++        capture_output=True,
++        text=True,
++        timeout=60,
+     )
+     assert calm.returncode == 0 and "survived" in calm.stdout and flag.exists()
+-    hit = subprocess.run(  # noqa: S603
+-        [sys.executable, "-c", _CHILD, str(flag), point], env=child_env(), capture_output=True, text=True, timeout=60
++    hit = run_program(
++        [sys.executable, text_file(_CHILD), str(flag), point],
++        env=child_env(),
++        capture_output=True,
++        text=True,
++        timeout=60,
+     )
+     assert hit.returncode == 137, hit.stderr
+     assert "simulate crash" in hit.stdout and "survived" not in hit.stdout
+diff --git a/tests/test_demo_folder_guard.py b/tests/test_demo_folder_guard.py
+index cdf1c85..df93a78 100644
+--- a/tests/test_demo_folder_guard.py
++++ b/tests/test_demo_folder_guard.py
+@@ -10,6 +10,8 @@ import subprocess
+ import sys
+ from pathlib import Path
+ 
++from support import run_program
++
+ # not imported from support: that module needs demo_only, and this test must also run in a copy without it
+ REPO = Path(__file__).resolve().parent.parent
+ 
+@@ -22,7 +24,7 @@ def _run(tmp_path: Path, **extra: str) -> subprocess.CompletedProcess[str]:
+     (tmp_path / "test_plain.py").write_text(NEEDS_NOTHING, encoding="utf-8")
+     env = {k: v for k, v in os.environ.items() if not k.startswith("DPLD_")}
+     env.update(PYTHONPATH=str(REPO / "src"), **extra)
+-    return subprocess.run(  # noqa: S603 (our own interpreter, our own throw-away folder)
++    return run_program(
+         [sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider"],
+         cwd=tmp_path,
+         env=env,
+diff --git a/tests/test_env_numbers.py b/tests/test_env_numbers.py
+index a17426f..a69606b 100644
+--- a/tests/test_env_numbers.py
++++ b/tests/test_env_numbers.py
+@@ -33,6 +33,7 @@ import pytest
+ 
+ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+ import run_real_check as rrc  # noqa: E402
++from support import run_program
+ 
+ from lead_desk.config import Config  # noqa: E402
+ from lead_desk.constants import CAP_COUNT_MAX, SIZE_CAP_BYTES_MAX, STALL_SECONDS_MAX  # noqa: E402
+@@ -130,7 +131,7 @@ def test_a_bad_port_in_the_fakes_url_is_a_named_refusal() -> None:
+ def _run_desk(tmp_path: Path, extra: dict[str, str]) -> subprocess.CompletedProcess[str]:
+     env = {**os.environ, "PYTHONPATH": str(REPO / "src"), "DESK_DB_PATH": str(tmp_path / "d.sqlite3"), "DESK_PORT": "0"}
+     env.update(extra)
+-    return subprocess.run(  # noqa: S603  # nosec B603 - our own module, fixed arguments
++    return run_program(
+         [sys.executable, "-m", "lead_desk.server"], capture_output=True, text=True, timeout=60, cwd=tmp_path, env=env
+     )
+ 
+diff --git a/tests/test_file_call_guard.py b/tests/test_file_call_guard.py
+index 1966aa3..e418e02 100644
+--- a/tests/test_file_call_guard.py
++++ b/tests/test_file_call_guard.py
+@@ -211,7 +211,24 @@ HIT_QUALIFIED |= {
+     "httpx.Client",
+     "select.select",
+     "select.poll",
++    # round 7B (review part 2, M3): name lookups that wait on a resolver, sockets made by name, a TLS context by name
++    "socket.getaddrinfo",
++    "socket.gethostbyname",
++    "socket.gethostbyname_ex",
++    "socket.gethostbyaddr",
++    "socket.getnameinfo",
++    "socket.getfqdn",
++    "socket.create_connection",
++    "socket.create_server",
++    "socket.fromfd",
++    "socket.socketpair",
++    "ssl.wrap_socket",
++    "multiprocessing.pool.Pool",
++    "multiprocessing.pool.ThreadPool",
++    "multiprocessing.dummy.Pool",
+ }
++# names that are hits except as a TYPE in a signature or a declaration (ssl.SSLContext as a type is no use of it)
++CALL_ONLY_QUALIFIED = {"ssl.SSLContext"}
+ # any name of these modules is a hit
+ HIT_MODULES = {"subprocess", "shutil", "fileinput", "zipfile", "tarfile", "glob", "sqlite3", "mmap", "pty", "runpy"}
+ HIT_PREFIXES = {
+@@ -271,8 +288,38 @@ METHOD_NAMES = {
+     "subprocess_exec",
+     "subprocess_shell",
+     "__getattribute__",
++    # round 7B (M3): a pool of processes or threads made from a context, and the event loop's own socket calls
++    "Pool",
++    "ThreadPool",
++    "sock_connect",
++    "sock_recv",
++    "sock_recv_into",
++    "sock_sendall",
++    "sock_accept",
++    "getaddrinfo",
++    "getnameinfo",
++    "gethostbyname",
++    "gethostbyname_ex",
++    "gethostbyaddr",
++    "create_connection",
++    "create_server",
++    "create_datagram_endpoint",
++    "create_unix_connection",
++    "create_unix_server",
++    "connect_read_pipe",
++    "connect_write_pipe",
++    "add_reader",
++    "add_writer",
++    "wrap_socket",
+ }
+-CALL_ONLY_METHODS = {"bind", "listen", "connect_ex", "serve_forever", "start_server"}  # `config.bind` is a setting
++CALL_ONLY_METHODS = {
++    "bind",
++    "listen",
++    "connect_ex",
++    "serve_forever",
++    "start_server",
++    "SSLContext",
++}  # `config.bind` is a setting
+ ZERO_ARGUMENT_METHODS = {"read", "readlines"}  # a read with no size: `r.read()` waits for the end of the stream
+ ONE_ARGUMENT_METHODS = {"replace", "rename"}  # Path.replace(target); str.replace(old, new) has two
+ BARE_NAMES = {
+@@ -343,6 +390,10 @@ ALLOWED_CALLS = {
+     ("scripts/run_real_check.py", "os.path.isdir"): "type of the result file path (a folder is refused); opens nothing",
+     ("scripts/run_real_check.py", "input"): "the one yes/no question; closed input counts as no, never as yes",
+     ("src/lead_desk/regfile.py", "os.open"): "the one place that opens a file (both functions)",
++    (
++        "src/lead_desk/regfile.py",
++        "os.stat",
++    ): "type of an output path before a replace (a pipe, device or folder is refused); opens nothing",
+     ("src/lead_desk/regfile.py", "os.fdopen"): "wraps the descriptor the line above checked",
+     ("src/lead_desk/adapters.py", "_OPENER.open"): OPENER,
+     ("src/lead_desk/crm_hubspot.py", "_OPENER.open"): OPENER,
+@@ -411,6 +462,18 @@ ALLOWED_CALLS = {
+         "subprocess.run",
+     ): "runs openssl with a fixed command line to make a made-up certificate",
+     ("demo_only/fake_smtp_tls.py", "socket.create_connection"): "the fake server's own port on this computer",
++    (
++        "src/lead_desk/smtp_provider.py",
++        "ctx.wrap_socket",
++    ): "starts TLS on the connection the sender already opened itself",
++    (
++        "load_tools/load_driver.py",
++        "ctx.Pool",
++    ): "the driver's own pool of worker processes (a fixed count, made-up requests)",
++    ("demo_only/fake_imap.py", "ssl.SSLContext"): "the made-up mail server's own TLS context on this computer",
++    ("demo_only/fake_imap.py", "self._ctx.wrap_socket"): "starts TLS on a connection the made-up server accepted",
++    ("demo_only/fake_smtp_tls.py", "ssl.SSLContext"): "the made-up mail server's own TLS context on this computer",
++    ("demo_only/fake_smtp_tls.py", "self._ctx.wrap_socket"): "starts TLS on a connection the made-up server accepted",
+     ("demo_only/portal_demo.py", "os.replace"): "swaps the demo's own data file in",
+     ("demo_only/portal_demo.py", "folder.glob"): "lists the demo's own temp folder",
+     ("demo_only/portal_demo.py", "hooks.flag_path.unlink"): "removes the demo desk's own crash flag file",
+@@ -418,6 +481,10 @@ ALLOWED_CALLS = {
+     ("demo_only/portal_demo.py", "f.unlink"): "removes the demo's own temp file",
+     ("scripts/check_schema.py", "sqlite3.connect"): "a throw-away database in a temp folder",
+     ("scripts/reset_check.py", "socket.create_connection"): "tests whether the desk port on this computer answers",
++    (
++        "demo_only/burst.py",
++        "socket.create_connection",
++    ): "tests whether the address given with --url answers, before the burst starts",
+     ("scripts/run_real_check.py", "shutil.rmtree"): "removes the self-test's own private temp folder",
+     ("scripts/run_real_check.py", "self._private.mkdir"): "makes that private temp folder",
+     ("scripts/run_real_check.py", "run_dir.glob"): "lists the self-test's own run folder",
+@@ -514,12 +581,13 @@ def _qualified(node: ast.AST, names: dict[str, str]) -> str | None:
+     return ".".join([names[chain[0]], *chain[1:]])
+ 
+ 
+-def _is_hit_name(qual: str, called: bool) -> bool:
++def _is_hit_name(qual: str, called: bool, in_annotation: bool = False) -> bool:
+     """A listed name is a hit; any name of a HIT_MODULES module is a hit when it is called or is a function (lower-case
+     last part, `run=subprocess.run`), so that `except sqlite3.Error` or `subprocess.PIPE` is not."""
+     top, last = qual.split(".")[0], qual.rsplit(".", 1)[-1]
+     return (
+         qual in HIT_QUALIFIED
++        or (qual in CALL_ONLY_QUALIFIED and (called or not in_annotation))
+         or (top in HIT_MODULES and "." in qual and (called or last[:1].islower()))
+         or any(qual.startswith(f"{mod}.{p}") for mod, prefixes in HIT_PREFIXES.items() for p in prefixes)
+     )
+@@ -533,6 +601,11 @@ def _file_hits(source: str) -> tuple[list[tuple[int, str]], list[tuple[int, str,
+     inner = {id(n.value) for n in ast.walk(tree) if isinstance(n, ast.Attribute)}  # a.b in a.b.c: judged inside a.b.c
+     calls = {id(n.func): n for n in ast.walk(tree) if isinstance(n, ast.Call)}
+     hits: list[tuple[int, str, str]] = []
++    annotated: set[int] = set()  # names that are only a TYPE in a signature or a declaration are no use of the name
++    for a in ast.walk(tree):
++        roots = [a.annotation] if isinstance(a, (ast.arg, ast.AnnAssign)) else []
++        roots += [a.returns] if isinstance(a, (ast.FunctionDef, ast.AsyncFunctionDef)) else []
++        annotated |= {id(n) for r in roots if r is not None for n in ast.walk(r)}
+     for node in ast.walk(tree):
+         text = None
+         if isinstance(node, ast.ImportFrom) and any(a.name == "*" for a in node.names):
+@@ -548,12 +621,16 @@ def _file_hits(source: str) -> tuple[list[tuple[int, str]], list[tuple[int, str,
+             qual = names.get(node.id)
+             if node.id in BARE_NAMES and node.id not in names:
+                 text, why = node.id, "a built-in that opens a file or runs code"
+-            elif qual is not None and _is_hit_name(qual, id(node) in calls):
++            elif qual is not None and _is_hit_name(qual, id(node) in calls, id(node) in annotated):
+                 text, why = node.id, f"stands for {qual}"
+         elif isinstance(node, ast.Attribute) and isinstance(node.ctx, ast.Load):
+             qual = _qualified(node, names)
+             call = calls.get(id(node))
+-            if id(node) not in inner and qual is not None and _is_hit_name(qual, call is not None):
++            if (
++                id(node) not in inner
++                and qual is not None
++                and _is_hit_name(qual, call is not None, id(node) in annotated)
++            ):
+                 text, why = ast.unparse(node), f"is {qual}"
+             elif node.attr in METHOD_NAMES:
+                 text, why = ast.unparse(node), f"a `.{node.attr}` call on an object that may be a path or a file"
+@@ -590,6 +667,16 @@ def _file_hits(source: str) -> tuple[list[tuple[int, str]], list[tuple[int, str,
+                 and node.args[0].id == "__builtins__"
+             ):
+                 text, why = f"{node.func.id}({ast.unparse(node.args[0])}, ...)", "reaches a name of a module by text"
++        if (
++            isinstance(node, ast.Call)
++            and isinstance(node.func, ast.Name)
++            and node.func.id in {"getattr", "setattr", "delattr", "hasattr"}
++            and len(node.args) >= 2
++            and isinstance(node.args[1], ast.Constant)
++            and isinstance(node.args[1].value, str)
++            and (node.args[1].value in METHOD_NAMES or node.args[1].value in BARE_NAMES)
++        ):
++            text, why = ast.unparse(node), f"reaches `{node.args[1].value}` by a literal name (the same call, hidden)"
+         if isinstance(node, ast.Subscript) and isinstance(node.value, ast.Name) and node.value.id == "__builtins__":
+             text, why = ast.unparse(node), "reaches a built-in by text"
+         if text is not None:
+@@ -978,6 +1065,9 @@ def test_a_listed_reason_that_matches_nothing_is_a_failure(tmp_path: Path) -> No
+ 
+ 
+ def test_a_planted_call_in_every_guarded_folder_is_found(tmp_path: Path) -> None:
++    # the loop below walks GUARDED_FOLDERS itself, so a folder taken out of that tuple would be skipped by the loop: the
++    # list of guarded folders is therefore written out here once more and must stay equal to it
++    assert GUARDED_FOLDERS == ("src/lead_desk", "load_tools", "demo_only", "scripts", "tools")
+     for folder in GUARDED_FOLDERS:
+         root = _plant(tmp_path / folder.replace("/", "_"), "import os\nos.listdir('x')", folder)
+         assert any(p.startswith(f"{folder}/planted.py") for p in _problems(root, {}, {})), folder
+@@ -989,4 +1079,25 @@ def test_a_tls_loader_is_refused_outside_the_two_demo_fakes(tmp_path: Path) -> N
+ 
+ 
+ def test_the_listed_exceptions_are_each_used_once_and_have_a_reason() -> None:
+-    assert all(reason.strip() for reason in {**ALLOWED_IMPORTS, **ALLOWED_CALLS}.values())
++    """Each table on its own (merging them could let one hide a gap in the other). A dict literal silently keeps only
++    the LAST of two equal keys, so the table text is read and a repeated key is a failure. Whether each entry is still
++    used is checked by the sweep test above (`_problems`)."""
++    for name, table in (("ALLOWED_IMPORTS", ALLOWED_IMPORTS), ("ALLOWED_CALLS", ALLOWED_CALLS)):
++        assert table, name
++        for (rel, what), reason in table.items():
++            assert reason.strip(), f"{name}: {rel} {what} has no reason"
++            assert what.strip(), f"{name}: {rel} names nothing"
++            assert (REPO / rel).is_file(), f"{name}: {rel} is not a file of this repository"
++    found = set()
++    for node in ast.parse(Path(__file__).read_text(encoding="utf-8")).body:
++        if (
++            isinstance(node, ast.Assign)
++            and isinstance(node.targets[0], ast.Name)
++            and node.targets[0].id in {"ALLOWED_IMPORTS", "ALLOWED_CALLS"}
++            and isinstance(node.value, ast.Dict)
++        ):
++            keys = [ast.literal_eval(k) for k in node.value.keys if k is not None]
++            repeated = sorted({k for k in keys if keys.count(k) > 1})
++            assert not repeated, f"{node.targets[0].id} names a key twice (the later one hides the first): {repeated}"
++            found.add(node.targets[0].id)
++    assert found == {"ALLOWED_IMPORTS", "ALLOWED_CALLS"}, "the two tables were not found as plain dict literals"
+diff --git a/tests/test_file_reader_refusals.py b/tests/test_file_reader_refusals.py
+index 12a8706..338fd46 100644
+--- a/tests/test_file_reader_refusals.py
++++ b/tests/test_file_reader_refusals.py
+@@ -24,6 +24,9 @@ import pytest
+ 
+ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+ from feed import FeedRefused, build_envelope
++from support import run_program, text_file
++
++from lead_desk.constants import EXIT_BAD_SETTING_OR_PATH
+ 
+ REPO = Path(__file__).resolve().parents[1]
+ SCRIPTS = REPO / "scripts"
+@@ -38,7 +41,7 @@ def _child(args: list[str], cwd: Path = REPO, limit: float = 5, **env: str) -> t
+     base = {k: v for k, v in os.environ.items() if not k.startswith(("DESK_", "N8N_"))}
+     base.update(PYTHONPATH=str(REPO / "src"), PYTHONDONTWRITEBYTECODE="1", **env)
+     try:
+-        done = subprocess.run(  # noqa: S603
++        done = run_program(
+             [sys.executable, *args],
+             cwd=cwd,
+             env=base,
+@@ -105,7 +108,7 @@ def test_n8n_api_key_file_and_workflow_file_that_are_pipes_are_refused_not_waite
+     pipe = tmp_path / "pipe"
+     os.mkfifo(pipe)
+     code, out = _child([str(SCRIPTS / "n8n_api.py"), "list"], N8N_API_KEY_FILE=str(pipe), N8N_URL="http://127.0.0.1:1")
+-    assert (code, out) == (1, "the n8n API key file cannot be read\n")
++    assert (code, out) == (EXIT_BAD_SETTING_OR_PATH, "the n8n API key file cannot be read\n")  # was 1 before round 7
+     key = tmp_path / "key"
+     key.write_text("abc12345\n", encoding="utf-8")
+     code, out = _child(
+@@ -144,11 +147,11 @@ def test_run_real_check_config_that_is_a_pipe_is_refused_not_waited_for(tmp_path
+         + "\n    r.load_env(pathlib.Path(sys.argv[2]))\nexcept (OSError, ValueError)"
+         + ":\n    print('REFUSED')\n"
+     )
+-    code, out = _child(["-c", prog, str(SCRIPTS), str(pipe)])  # the path check refuses it (a ValueError) at once
++    code, out = _child([text_file(prog), str(SCRIPTS), str(pipe)])  # the path check refuses it (a ValueError) at once
+     assert code == 0 and out.strip() == "REFUSED", (code, out)
+     deep = tmp_path / "deep.env"
+     deep.write_bytes(b"\xff\xfe")
+-    code, out = _child(["-c", prog, str(SCRIPTS), str(deep)])
++    code, out = _child([text_file(prog), str(SCRIPTS), str(deep)])
+     assert code == 0 and out.strip() == "REFUSED", (code, out)
+ 
+ 
+@@ -239,3 +242,23 @@ def test_a_script_meets_a_number_that_is_not_finite_with_one_refusal_line(tmp_pa
+     code, out = _child(["-m", "tools.scrub_n8n_export", str(src), str(tmp_path / "out.json")])
+     assert "Traceback" not in out and code == 2 and out.strip().startswith("refused: in.json: "), (code, out)
+     assert len(out.strip().splitlines()) == 1 and not (tmp_path / "out.json").exists()
++
++
++@pytest.mark.parametrize("odd", ["\u00a0", "\u2003", "\u3000", "\u200b"])
++def test_run_real_check_config_value_with_an_odd_space_is_not_silently_trimmed(tmp_path: Path, odd: str) -> None:
++    """Only a plain space and a tab around a name or a value are dropped; a no-break or wide space stays in the value,
++    so the setting's own check refuses it (before round 7 str.strip() hid it)."""
++    sys.path.insert(0, str(SCRIPTS))
++    try:
++        import run_real_check as rrc
++    finally:
++        sys.path.remove(str(SCRIPTS))
++    cfg = tmp_path / "c.env"
++    cfg.write_text(
++        f"DESK_SMTPP_USER=bob@example.test{odd}\nREAL_IMAP_1_USER={odd}carol@example.test\n", encoding="utf-8"
++    )
++    got = rrc.load_env(cfg)
++    assert got["DESK_SMTPP_USER"] == f"bob@example.test{odd}"
++    assert got["REAL_IMAP_1_USER"] == f"{odd}carol@example.test"
++    cfg.write_text(" \tDESK_SMTPP_USER \t=\t bob@example.test \t\n", encoding="utf-8")
++    assert rrc.load_env(cfg) == {"DESK_SMTPP_USER": "bob@example.test"}  # plain space and tab are still dropped
+diff --git a/tests/test_followup_b.py b/tests/test_followup_b.py
+index 4d6afd4..cb017d4 100644
+--- a/tests/test_followup_b.py
++++ b/tests/test_followup_b.py
+@@ -6,7 +6,7 @@ import json
+ import os
+ from pathlib import Path
+ 
+-from support import start_proc, stop_proc
++from support import start_proc, stop_proc, text_file
+ 
+ REPO = Path(__file__).resolve().parents[1]
+ 
+@@ -26,7 +26,7 @@ def test_n8n_api_puts_src_ahead_of_the_repository_folder(tmp_path: Path) -> None
+     (tmp_path / "key.txt").write_text("made-up-key-for-the-test\n", encoding="utf-8")
+     env = {k: v for k, v in os.environ.items() if k != "PYTHONPATH"}
+     env.update(N8N_API_KEY_FILE=str(tmp_path / "key.txt"), N8N_URL="http://127.0.0.1:5679")
+-    proc = start_proc(["-I", "-c", PROBE, str(REPO / "scripts"), str(REPO / "scripts" / "n8n_api.py")], env)
++    proc = start_proc(["-I", text_file(PROBE), str(REPO / "scripts"), str(REPO / "scripts" / "n8n_api.py")], env)
+     proc.wait(timeout=60)
+     out = stop_proc(proc)
+     assert proc.returncode == 0, out[-500:]
+diff --git a/tests/test_gitleaks_exceptions.py b/tests/test_gitleaks_exceptions.py
+index b11f2af..c1af3e9 100644
+--- a/tests/test_gitleaks_exceptions.py
++++ b/tests/test_gitleaks_exceptions.py
+@@ -17,11 +17,10 @@ import json
+ import os
+ import random
+ import shutil
+-import subprocess
+ from pathlib import Path
+ 
+ import pytest
+-from support import REPO
++from support import REPO, run_program
+ from test_hygiene import GITLEAKS_ENV, REQUIRE_SCAN_ENV, _gitleaks_exe
+ 
+ from tools import hygiene
+@@ -123,8 +122,8 @@ def _plant(root: Path, files: dict[str, bytes]) -> Path:
+     for rel, data in files.items():
+         (root / rel).parent.mkdir(parents=True, exist_ok=True)
+         (root / rel).write_bytes(data)
+-    subprocess.run(["git", "init", "-q"], cwd=root, check=True)  # noqa: S603, S607
+-    subprocess.run(["git", "add", "."], cwd=root, check=True)  # noqa: S603, S607
++    run_program(["git", "init", "-q"], cwd=root, check=True)
++    run_program(["git", "add", "."], cwd=root, check=True)
+     return root
+ 
+ 
+@@ -146,7 +145,7 @@ def _gitleaks_hits(root: Path) -> set[str]:
+     report = root.parent / (root.name + ".json")  # the report goes outside the planted folder
+     cmd = [_gitleaks_program(), "dir", "--no-banner", "--redact", "--ignore-gitleaks-allow"]
+     cmd += ["--config", str(REPO / ".gitleaks.toml"), "--report-format", "json", "--report-path", str(report), "."]
+-    subprocess.run(cmd, cwd=root, capture_output=True, check=False)  # noqa: S603
++    run_program(cmd, cwd=root, capture_output=True, check=False)
+     rows = json.loads(report.read_text(encoding="utf-8") or "[]")
+     return {x["File"].replace(chr(92), "/") for x in rows}
+ 
+diff --git a/tests/test_hygiene.py b/tests/test_hygiene.py
+index 6522d9e..3da7660 100644
+--- a/tests/test_hygiene.py
++++ b/tests/test_hygiene.py
+@@ -17,7 +17,7 @@ import warnings
+ from pathlib import Path
+ 
+ import pytest
+-from support import REPO
++from support import REPO, run_program, text_file
+ 
+ from tools import hygiene
+ 
+@@ -45,7 +45,7 @@ def _gitleaks_exe() -> str | None:
+ 
+ def _run(cwd: Path, *argv: str, check: bool = True) -> subprocess.CompletedProcess[str]:
+     """Runs a program with an argument list (no shell) in cwd; the one place of this file that starts one."""
+-    return subprocess.run(  # noqa: S603
++    return run_program(
+         argv,
+         cwd=cwd,
+         capture_output=True,
+@@ -155,14 +155,14 @@ def test_hygiene_scan_public(tmp_path: Path) -> None:
+     report = tmp_path / "canary-report.json"  # reports go outside the repo
+     common = ["--no-banner", "--redact", "--ignore-gitleaks-allow", "--config", str(toml)]
+     fmt = ["--report-format", "json", "--report-path", str(report)]
+-    subprocess.run([exe, "dir", *common, *fmt, str(canary)], check=False)  # noqa: S603
++    run_program([exe, "dir", *common, *fmt, str(canary)], check=False)
+     found = {x["RuleID"] for x in json.loads(report.read_text(encoding="utf-8") or "[]")}
+     assert set(ids) <= found, f"gitleaks custom rules that did not fire on their canary: {sorted(set(ids) - found)}"
+     for rule, key in hygiene.RULE_CANARY.items():  # one canary per rule, alone in its own file
+         single = tmp_path / f"single-{rule}"
+         single.mkdir()
+         (single / "one.txt").write_text(f"x {hygiene.CANARIES[key]} y" + chr(10), encoding="utf-8")
+-        subprocess.run([exe, "dir", *common, *fmt, str(single)], check=False)  # noqa: S603
++        run_program([exe, "dir", *common, *fmt, str(single)], check=False)
+         got = {x["RuleID"] for x in json.loads(report.read_text(encoding="utf-8") or "[]")}
+         assert rule in got, f"rule {rule} did not find its own canary"
+     assert set(hygiene.RULE_CANARY) == set(ids), "every custom rule needs an entry in RULE_CANARY"
+@@ -175,7 +175,7 @@ def test_hygiene_scan_public(tmp_path: Path) -> None:
+         f'U = "https://{host}"' + chr(10) + f'M = "{mail}"' + chr(10), encoding="utf-8"
+     )
+     (home / "other.py").write_text(f'U = "https://{host}"' + chr(10), encoding="utf-8")
+-    subprocess.run([exe, "dir", *common, *fmt, str(home)], check=False)  # noqa: S603
++    run_program([exe, "dir", *common, *fmt, str(home)], check=False)
+     hits = {
+         (x["File"].replace(chr(92), "/").rsplit("/", 1)[-1], x["RuleID"])
+         for x in json.loads(report.read_text(encoding="utf-8"))
+@@ -197,7 +197,7 @@ def test_hygiene_scan_public(tmp_path: Path) -> None:
+         warnings.warn(f"gitleaks history scan skipped: set {REQUIRE_SCAN_ENV}=1 to scan the history", stacklevel=1)
+     for sub, target in scans:  # from the root of the scanned folder with ".", exactly like lint.yml: the path rules in
+         # .gitleaks.toml start with ^ and need paths relative to the root (an absolute temp path would never match them)
+-        p = subprocess.run([exe, sub, *common, "--exit-code", "1", "."], cwd=target, capture_output=True, check=False)  # noqa: S603
++        p = run_program([exe, sub, *common, "--exit-code", "1", "."], cwd=target, capture_output=True, check=False)
+         assert p.returncode == 0, f"gitleaks {sub} reported findings (values are redacted)"
+ 
+ 
+@@ -206,7 +206,7 @@ def test_sh_blobs_no_cr() -> None:
+     names = [n for n in _git(REPO, "ls-files", "*.sh").splitlines() if n]
+     assert names, "no shell scripts found: the test would prove nothing"
+     for n in names:
+-        blob = subprocess.run(["git", "show", ":" + n], cwd=REPO, capture_output=True, check=True).stdout  # noqa: S603, S607
++        blob = run_program(["git", "show", ":" + n], cwd=REPO, capture_output=True, check=True).stdout
+         assert 13 not in blob, f"{n} contains a carriage return in the index"
+ 
+ 
+@@ -318,6 +318,8 @@ def test_every_cure_in_the_message_works(
+         tree = _planted_tree(tmp_path / f"cure{i}", name, line_end, staged)
+         assert _scan_files_with_cr(tree) == [name], "the plant must hold a CR before the cure"
+         argv = shlex.split(cure.replace("<file>", name))
++        if argv[:2] == ["python", "-c"]:  # the message gives the cure as text; it runs as a script file of its own
++            argv = ["python", text_file(argv[2]), *argv[3:]]
+         _run(tree, sys.executable if argv[0] == "python" else argv[0], *argv[1:])
+         if staged and argv[0] == "git":  # if a newer git cures this, reword the hint (cure 1 then works everywhere)
+             assert _scan_files_with_cr(tree) == [name], "git checkout -- <file> cured a staged file: " + cure
+@@ -351,7 +353,7 @@ def test_gitleaks_reports_a_carriage_return_in_the_key_file_but_not_the_lf_copy(
+ def test_a_gitleaks_that_crashes_on_either_copy_fails_the_premise(
+     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, crash_on_cr: bool
+ ) -> None:
+-    real = subprocess.run
++    real = run_program
+ 
+     def fake(cmd, **kw):  # git runs for real; the "gitleaks" answers like the real one on one copy, exit 2 on the other
+         if cmd[0] == "git":
+@@ -359,7 +361,7 @@ def test_a_gitleaks_that_crashes_on_either_copy_fails_the_premise(
+         has_cr = b"\r" in (kw["cwd"] / "sonar-project.properties").read_bytes()
+         return subprocess.CompletedProcess(cmd, 2 if has_cr == crash_on_cr else int(has_cr))
+ 
+-    monkeypatch.setattr(subprocess, "run", fake)
++    monkeypatch.setattr(sys.modules[__name__], "run_program", fake)  # the one start of a program in this file
+     with pytest.raises(AssertionError, match="exit code 2"):
+         _check_gitleaks_premise("fake-gitleaks", tmp_path)
+ 
+@@ -556,7 +558,7 @@ def test_lock_file_hashes_are_allowed_only_at_the_root(tmp_path: Path) -> None:
+             (tree / rel).write_text(f"x=={value} --hash={value}" + chr(10), encoding="utf-8")
+         report = tmp_path / f"{name}.json"
+         cmd = [exe, "dir", "--no-banner", "--redact", "--ignore-gitleaks-allow", "--config", str(toml)]
+-        subprocess.run([*cmd, "--report-format", "json", "--report-path", str(report), "."], cwd=tree, check=False)  # noqa: S603
++        run_program([*cmd, "--report-format", "json", "--report-path", str(report), "."], cwd=tree, check=False)
+         rows = json.loads(report.read_text(encoding="utf-8") or "[]")
+         found = {x["File"].replace(chr(92), "/") for x in rows}
+         if name == "ok":
+diff --git a/tests/test_ledger_amounts.py b/tests/test_ledger_amounts.py
+index 754578b..3900b3a 100644
+--- a/tests/test_ledger_amounts.py
++++ b/tests/test_ledger_amounts.py
+@@ -10,6 +10,7 @@ from pathlib import Path
+ from typing import Any
+ 
+ import pytest
++from support import run_program
+ 
+ from lead_desk.config import LiveSettings
+ from lead_desk.constants import LIVE_LEDGER_FILE_MAX_BYTES
+@@ -292,12 +293,11 @@ def test_settings_bounds_keep_worst_case_finite_and_nonzero(tmp_path: Path, over
+ 
+ 
+ def test_check_script_bad_cap_is_a_clean_error(tmp_path: Path) -> None:
+-    import subprocess
+     import sys
+ 
+     script = Path(__file__).resolve().parent.parent / "scripts" / "run_live_check.py"
+     args = ["--key-file", "k", "--ledger", "l", "--price-date", "2026-01-01", "--model", "m=1,2", "--cap-total", "3"]
+-    r = subprocess.run(  # noqa: S603  # nosec B603 - our own script, fixed arguments
++    r = run_program(
+         [sys.executable, str(script), "--cap-run", "abc", *args],
+         capture_output=True,
+         text=True,
+@@ -529,7 +529,7 @@ def test_check_script_worst_case_figure_never_reads_too_low(
+     argv = ["--key-file", str(key), "--ledger", str(tmp_path / "l.jsonl"), "--price-date", "2026-01-01"]
+     argv += ["--model", "m=0.01,0.01", "--cap-run", "1", "--cap-total", "3", "--leads", "1", "--runs", "1"]
+     monkeypatch.setattr("builtins.input", lambda prompt="": "n")
+-    assert rlc.main(argv) == 1
++    assert rlc.main(argv) == rlc.EXIT_STOPPED  # the person answered n
+     assert "US$0.0001 (caps" in capsys.readouterr().out  # a tiny cost is rounded UP, not down to 0.0000
+ 
+ 
+@@ -626,7 +626,6 @@ def test_non_finite_or_out_of_range_timeouts_are_refused(junk: str) -> None:
+ 
+ 
+ def test_a_bad_setting_value_stops_the_desk_with_a_plain_message_not_a_traceback(tmp_path: Path) -> None:
+-    import subprocess
+     import sys
+ 
+     repo = Path(__file__).resolve().parent.parent
+@@ -636,7 +635,7 @@ def test_a_bad_setting_value_stops_the_desk_with_a_plain_message_not_a_traceback
+         "DESK_PORT": "abc",
+         "DESK_DB_PATH": str(tmp_path / "d.sqlite3"),
+     }
+-    r = subprocess.run(  # noqa: S603  # nosec B603 - our own module, fixed arguments
++    r = run_program(
+         [sys.executable, "-m", "lead_desk.server"], capture_output=True, text=True, timeout=60, cwd=tmp_path, env=env
+     )
+     assert r.returncode == 4 and "refuses a setting" in r.stdout and "Traceback" not in r.stdout + r.stderr
+diff --git a/tests/test_live_claude.py b/tests/test_live_claude.py
+index f54acca..0f6a824 100644
+--- a/tests/test_live_claude.py
++++ b/tests/test_live_claude.py
+@@ -17,7 +17,7 @@ from pathlib import Path
+ from typing import Any
+ 
+ import pytest
+-from support import REPO, lead, start_serving, stop_serving
++from support import REPO, lead, run_program, start_serving, stop_serving
+ 
+ from demo_only.fake_model_server import ModelState, make_model_server
+ from lead_desk import live_claude as lc
+@@ -524,7 +524,7 @@ def test_crash_window_kills_process_and_a_restart_loses_nothing(tmp_path: Path,
+ 
+     env_vars = child_env()
+     (tmp_path / "flag").write_text(window, encoding="utf-8")
+-    first = subprocess.run(  # noqa: S603
++    first = run_program(
+         [sys.executable, str(script), str(tmp_path), "first"],
+         capture_output=True,
+         text=True,
+@@ -534,7 +534,7 @@ def test_crash_window_kills_process_and_a_restart_loses_nothing(tmp_path: Path,
+     )
+     assert first.returncode == 137 and "simulate crash" in first.stdout, first.stderr[-500:]
+     assert not (tmp_path / "flag").exists()  # one-shot
+-    second = subprocess.run(  # noqa: S603
++    second = run_program(
+         [sys.executable, str(script), str(tmp_path), "second"],
+         capture_output=True,
+         text=True,
+@@ -575,7 +575,7 @@ def _run_runner(tmp_path: Path, model: Model, extra: list[str], stdin: str = "")
+         "2026-01-01",
+         *extra,
+     ]
+-    return subprocess.run(cmd, input=stdin, capture_output=True, text=True, timeout=120, check=False)  # noqa: S603
++    return run_program(cmd, input=stdin, capture_output=True, text=True, timeout=120, check=False)
+ 
+ 
+ def test_runner_prints_counts_only_and_asks_first(tmp_path: Path, model: Model) -> None:
+@@ -715,10 +715,10 @@ BAD_KEY_FILES = {
+     "a tab inside": b"made-up\tkey-with-tab\n",
+     "a control character": b"made-up-key\x01-with-control\n",
+     "empty": b"",
+-    "only a newline": b"\n",
+-    "too short": b"short\n",
++    "only a newline": b"\n",  # CONTROL: also passes on the old code
++    "too short": b"short\n",  # CONTROL: also passes on the old code
+     "UTF-16": "made-up-key-in-utf16\n".encode("utf-16"),
+-    "not UTF-8": b"made-up-key-\xff\xfe\xfd\n",
++    "not UTF-8": b"made-up-key-\xff\xfe\xfd\n",  # CONTROL: also passes on the old code
+ }
+ 
+ 
+diff --git a/tests/test_mode_safety.py b/tests/test_mode_safety.py
+index d53f9c8..02d9df1 100644
+--- a/tests/test_mode_safety.py
++++ b/tests/test_mode_safety.py
+@@ -8,7 +8,6 @@ import copy
+ import json
+ import os
+ import shutil
+-import subprocess
+ import sys
+ import tempfile
+ from decimal import Decimal
+@@ -16,7 +15,7 @@ from pathlib import Path
+ from typing import Any
+ 
+ import pytest
+-from support import DEMO_LEADFLOW, REPO, KeyedOutbox, build_rig, call, lead, stop_within
++from support import DEMO_LEADFLOW, REPO, KeyedOutbox, build_rig, call, lead, run_program, stop_within
+ from test_portal_api import fresh, get
+ 
+ from demo_only import fake_hubspot as fh
+@@ -162,8 +161,8 @@ def test_a_live_ai_step_counts_as_a_real_service(tmp_path: Path) -> None:
+ 
+ 
+ def _banner(mode: dict[str, Any]) -> dict[str, Any]:
+-    out = subprocess.run(  # noqa: S603 (fixed argument list, no shell)
+-        ["node", str(PROBE), str(PORTAL_JS), json.dumps(mode)],  # noqa: S607
++    out = run_program(
++        ["node", str(PROBE), str(PORTAL_JS), json.dumps(mode)],
+         capture_output=True,
+         text=True,
+         timeout=60,
+@@ -346,7 +345,7 @@ def test_reset_sh_refuses_when_ps_is_missing(tmp_path: Path) -> None:
+     (bin_dir / "python").symlink_to(sys.executable)
+     env = {**os.environ, "DESK_DB_PATH": str(db), "PATH": str(bin_dir)}
+     try:
+-        done = subprocess.run(  # noqa: S603 (our own script, a path made by the test)
++        done = run_program(
+             [str(bin_dir / "bash"), str(REPO / "scripts" / "reset.sh")],
+             cwd=REPO,
+             env=env,
+diff --git a/tests/test_n8n_api_url.py b/tests/test_n8n_api_url.py
+index d4c6ef0..0cda065 100644
+--- a/tests/test_n8n_api_url.py
++++ b/tests/test_n8n_api_url.py
+@@ -15,7 +15,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+ from pathlib import Path
+ 
+ import pytest
+-from support import start_serving, stop_all, stop_serving
++from support import run_program, start_serving, stop_all, stop_serving
+ 
+ from lead_desk.constants import EXIT_UNREACHABLE
+ 
+@@ -294,8 +294,17 @@ def _list_body(*items: object) -> bytes:
+ 
+ 
+ def _message(e: pytest.ExceptionInfo[SystemExit]) -> str:
+-    assert isinstance(e.value.code, int) and str(e.value), "a traceback instead of a message with an exit code"
+-    return str(e.value)
++    """The exact text of a refusal. Before round 7 the exit value WAS the text (a str); now it is the exit status
++    (an int) and the text is the Refusal's own `text`. Both are pinned, so a refusal cannot become a bare exit number,
++    an empty text, a text with a line break or a traceback."""
++    value = e.value
++    assert type(value).__name__ == "Refusal", "a traceback (or a bare SystemExit) instead of a refusal"
++    assert isinstance(value.code, int) and not isinstance(value.code, bool) and value.code in (2, 3, 4), value.code
++    text = value.text  # type: ignore[attr-defined]
++    assert isinstance(text, str) and text and text == text.strip() and "\n" not in text, repr(text)
++    assert str(value) == text and value.args == (value.code,), "the printed text and the exit status disagree"
++    assert "Traceback" not in text
++    return text
+ 
+ 
+ def test_a_200_answer_that_is_not_json_is_a_clean_message_without_the_body(
+@@ -688,7 +697,7 @@ def _run_script(tmp_path: Path, server_port: int, *argv: str) -> subprocess.Comp
+         N8N_API_KEY_FILE=str(key),
+         PYTHONIOENCODING="cp1252:strict",  # strict, so an unencodable name raises, as on a cp1252 pipe
+     )
+-    return subprocess.run(  # noqa: S603 - our own interpreter and script
++    return run_program(
+         [sys.executable, str(REPO / "scripts" / "n8n_api.py"), *argv],
+         cwd=REPO,
+         env=env,
+@@ -712,7 +721,10 @@ def test_a_workflow_name_that_a_strict_cp1252_pipe_cannot_encode_is_listed_with_
+         stop_serving(srv)
+     assert done.returncode == 0, done.stderr
+     assert "Traceback" not in done.stderr and done.stdout.startswith("w-") and "-end active" in done.stdout
+-    assert "?" in done.stdout and KEY_TEXT not in done.stdout + done.stderr
++    # r7B (N5): a character that is not printable (a lone surrogate) is shown in its backslash form, exactly; one that
++    # is printable but that the pipe cannot encode (an emoji on cp1252) is still shown as "?"
++    shown_as = {"lone surrogate": "w-\\ud800-end active\n", "emoji": "w-?-end active\n"}[which]
++    assert done.stdout == shown_as and KEY_TEXT not in done.stdout + done.stderr
+ 
+ 
+ def test_importing_a_workflow_with_such_a_name_also_ends_cleanly(tmp_path: Path) -> None:
+@@ -727,3 +739,22 @@ def test_importing_a_workflow_with_such_a_name_also_ends_cleanly(tmp_path: Path)
+         stop_serving(srv)
+     assert done.returncode == 0, done.stderr
+     assert done.stderr == "" and done.stdout == "import: n8n answered 200 \n"  # the name typed in the file is not shown
++
++
++def test_list_prints_a_workflow_name_with_control_characters_escaped_and_bounded(
++    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
++) -> None:
++    """Round 7B (review N5): a name from n8n with ESC, a line break or a bidi control is printed as ONE line in its
++    backslash form; a very long name is cut. Before, the raw characters went to the terminal."""
++    names = ["red\x1b[31mtext", "two\nlines", "tab\there", "bidi" + chr(0x202E) + "evil", "lone\udc80", "x" * 500]
++    body = json.dumps(
++        {"data": [{"id": str(i), "name": n, "active": bool(i % 2)} for i, n in enumerate(names)]}
++    ).encode()
++    assert _run_against(_fixed(200, body), monkeypatch, tmp_path, ["list"]) in (0, None)
++    out = capsys.readouterr().out
++    lines = out.splitlines()
++    assert len(lines) == len(names), lines  # a line break inside a name did not make a second line
++    assert "\x1b" not in out and chr(0x202E) not in out and "\t" not in out
++    assert lines[0].startswith("red\\x1b[31mtext ") and lines[1].startswith("two\\nlines ")
++    assert lines[3].startswith("bidi\\u202eevil ") and lines[4].startswith("lone\\udc80 ")
++    assert lines[5] == "x" * 117 + "... active"
+diff --git a/tests/test_n8n_proof_result.py b/tests/test_n8n_proof_result.py
+index 0767b67..5be5b73 100644
+--- a/tests/test_n8n_proof_result.py
++++ b/tests/test_n8n_proof_result.py
+@@ -9,10 +9,10 @@ from __future__ import annotations
+ import json
+ import re
+ import shutil
+-import subprocess
+ from pathlib import Path
+ 
+ import pytest
++from support import run_program, text_file
+ 
+ PROOF = Path(__file__).resolve().parents[1] / "n8n" / "proof.json"
+ needs_node = pytest.mark.skipif(shutil.which("node") is None, reason="node is not installed")
+@@ -37,11 +37,11 @@ def _result(statuses: str, emails: int, crm: int) -> str:
+         "Read the demo CRM": {"count": crm},
+     }
+     js = (
+-        "const data = JSON.parse(process.argv[1]);"
++        "const data = JSON.parse(process.argv[2]);"
+         " const $ = (n) => ({ item: { json: data[n] }, first: () => ({ json: data[n] }) });"
+         " console.log(" + _expression() + ");"
+     )
+-    done = subprocess.run(["node", "-e", js, json.dumps(data)], capture_output=True, text=True, check=True)  # noqa: S603, S607
++    done = run_program(["node", text_file(js, ".js"), json.dumps(data)], capture_output=True, text=True, check=True)
+     return done.stdout.strip()
+ 
+ 
+diff --git a/tests/test_no_placeholders.py b/tests/test_no_placeholders.py
+index 459c521..cd6e6ca 100644
+--- a/tests/test_no_placeholders.py
++++ b/tests/test_no_placeholders.py
+@@ -8,7 +8,7 @@ import subprocess
+ from pathlib import Path
+ 
+ import pytest
+-from support import REPO
++from support import REPO, run_program
+ 
+ MARKERS = ("DATE-TO-" + "FILL", "TO" + "DO", "FIX" + "ME", "X" * 3)
+ FOUND = re.compile(r"\b(" + "|".join(MARKERS) + r")\b")
+@@ -17,8 +17,8 @@ BINARY_SUFFIXES = {".png"}  # the only file that is not text; any other unreadab
+ 
+ def _files() -> list[Path]:
+     try:
+-        out = subprocess.run(  # noqa: S603 (git, fixed arguments)
+-            ["git", "ls-files", "--cached", "--others", "--exclude-standard", "-z"],  # noqa: S607
++        out = run_program(
++            ["git", "ls-files", "--cached", "--others", "--exclude-standard", "-z"],
+             cwd=REPO,
+             capture_output=True,
+             check=True,
+diff --git a/tests/test_no_terminal_questions.py b/tests/test_no_terminal_questions.py
+index c6b5e12..0fe36eb 100644
+--- a/tests/test_no_terminal_questions.py
++++ b/tests/test_no_terminal_questions.py
+@@ -14,6 +14,8 @@ from contextlib import redirect_stderr, redirect_stdout
+ from pathlib import Path
+ from typing import Any
+ 
++from support import run_program, text_file
++
+ REPO = Path(__file__).resolve().parents[1]
+ ROOTS = ("scripts", "load_tools", "demo_only", "tools", "src")
+ 
+@@ -104,7 +106,7 @@ def test_the_live_check_refuses_a_huge_lead_count_in_one_line_and_builds_nothing
+     base = [sys.executable, str(REPO / "scripts" / "run_live_check.py"), *_live_args(tmp_path)]
+     for flag in ("--leads", "--runs"):
+         for huge in ("99999999999999999999", "1001", "0", "-1"):
+-            r = subprocess.run(  # noqa: S603
++            r = run_program(
+                 [*base, flag, huge], capture_output=True, text=True, timeout=20, stdin=subprocess.DEVNULL, check=False
+             )
+             assert r.returncode == 2, (flag, huge, r.returncode, r.stderr[-200:])
+@@ -117,13 +119,12 @@ def test_the_live_check_refuses_a_huge_lead_count_in_one_line_and_builds_nothing
+ 
+ 
+ def test_the_live_check_with_a_closed_descriptor_prints_one_line(tmp_path: Path) -> None:
+-    import subprocess
+ 
+     code = (
+         "import os, sys, runpy; os.close(0); sys.argv = sys.argv[1:]; runpy.run_path(sys.argv[0], run_name='__main__')"
+     )
+-    r = subprocess.run(  # noqa: S603
+-        [sys.executable, "-c", code, str(REPO / "scripts" / "run_live_check.py"), *_live_args(tmp_path)],
++    r = run_program(
++        [sys.executable, text_file(code), str(REPO / "scripts" / "run_live_check.py"), *_live_args(tmp_path)],
+         capture_output=True,
+         text=True,
+         timeout=30,
+diff --git a/tests/test_nosemgrep_form.py b/tests/test_nosemgrep_form.py
+index 4e3ebcf..6415828 100644
+--- a/tests/test_nosemgrep_form.py
++++ b/tests/test_nosemgrep_form.py
+@@ -19,7 +19,7 @@ from typing import Any
+ 
+ import pytest
+ import yaml
+-from support import REPO
++from support import REPO, text_file
+ from test_hygiene import _run
+ 
+ NL = chr(10)
+@@ -496,7 +496,12 @@ def test_scan_step_retries_only_exit_2(tmp_path: Path, name: str, monkeypatch: p
+     monkeypatch.setenv("CODES_FILE", str(tmp_path / "codes"))
+     monkeypatch.setenv("RETRY_PAUSE_SECONDS", "0")
+     # bash runs the text of the workflow's own `run:` block, read from the file in this repository (not from input)
+-    result = _run(tmp_path, "bash", "-e", "-c", _scan_run_block(WORKFLOW.read_text(encoding="utf-8")), check=False)
++    result = _run(
++        tmp_path,
++        "bash",
++        text_file("set -e\n" + _scan_run_block(WORKFLOW.read_text(encoding="utf-8")), ".sh"),
++        check=False,
++    )
+     count = (tmp_path / "count").read_text(encoding="utf-8").strip()
+     assert (result.returncode, count) == (status, str(tries)), (result.stdout, result.stderr)
+     assert ("NOT findings" in result.stdout) == (status not in (0, 1)), result.stdout
+diff --git a/tests/test_path_confinement.py b/tests/test_path_confinement.py
+index db031e3..7f1d67b 100644
+--- a/tests/test_path_confinement.py
++++ b/tests/test_path_confinement.py
+@@ -21,9 +21,10 @@ from pathlib import Path
+ from typing import Any
+ 
+ import pytest
+-from support import start_proc, stop_proc
++from support import start_proc, stop_proc, text_file
+ 
+ import tools.pathconfine as pc
++from lead_desk.constants import EXIT_BAD_SETTING_OR_PATH
+ from load_tools import check_invariants as ci
+ from load_tools import load_driver
+ from tools import scrub_n8n_export
+@@ -207,7 +208,7 @@ def test_v1_a_config_below_a_traverse_only_folder_is_refused_with_a_message_as_a
+                 pytest.skip("a folder above the temporary folder cannot be entered by other users")
+         outs = []
+         for target in (cfg, listable):
+-            proc = start_proc(["-I", "-c", _AS_NOBODY, str(REPO), str(target)], dict(os.environ))
++            proc = start_proc(["-I", text_file(_AS_NOBODY), str(REPO), str(target)], dict(os.environ))
+             try:
+                 code = proc.wait(timeout=60)
+             finally:
+@@ -510,8 +511,8 @@ def test_load_driver_main_writes_nothing_outside_and_prints_a_refusal(
+ ) -> None:
+     _, outside = jail
+     args = ["--base-url", "http://127.0.0.1:1", "--scenario", "burst:1"]
+-    assert load_driver.main([*args, "--log", str(outside / "l.jsonl")]) == 2  # no traceback
+-    assert load_driver.main([*args, "--log", "l.jsonl", "--facts", str(outside / "f.json")]) == 2
++    assert load_driver.main([*args, "--log", str(outside / "l.jsonl")]) == EXIT_BAD_SETTING_OR_PATH  # no traceback
++    assert load_driver.main([*args, "--log", "l.jsonl", "--facts", str(outside / "f.json")]) == EXIT_BAD_SETTING_OR_PATH
+     err = capsys.readouterr().err
+     assert "ERROR: --log: path is outside" in err and "ERROR: --facts: path is outside" in err
+     assert not list(outside.iterdir())
+@@ -679,7 +680,10 @@ def test_a_link_loop_is_refused_and_not_a_traceback(
+     args = _ci_args(inside) | {"--requests": "ln1"}
+     assert ci.main([w for pair in args.items() for w in pair]) == ci.EXIT_BAD_SETTING_OR_PATH
+     assert "a link on the path does not resolve" in capsys.readouterr().err
+-    assert load_driver.main(["--base-url", "http://127.0.0.1:1", "--scenario", "burst:1", "--log", "ln1"]) == 2
++    assert (
++        load_driver.main(["--base-url", "http://127.0.0.1:1", "--scenario", "burst:1", "--log", "ln1"])
++        == EXIT_BAD_SETTING_OR_PATH
++    )
+ 
+ 
+ def test_anywhere_accepts_a_folder_outside_but_not_odd_text_or_a_missing_folder(jail: tuple[Path, Path]) -> None:
+@@ -712,7 +716,7 @@ def test_catcher_refuses_out_and_control_outside_and_creates_nothing(
+         catcher.main(["--out", str(outside / "mail.jsonl"), "--port", "0"])
+     with pytest.raises(SystemExit) as e2:
+         catcher.main(["--out", "mail.jsonl", "--control", str(outside / "mode"), "--port", "0"])
+-    assert (e1.value.code, e2.value.code) == (2, 2) and served == []
++    assert (e1.value.code, e2.value.code) == (EXIT_BAD_SETTING_OR_PATH, EXIT_BAD_SETTING_OR_PATH) and served == []
+     assert not list(outside.iterdir()) and not Path("mail.jsonl").exists()
+     err = capsys.readouterr().err
+     assert "--out: path is outside" in err and "--control: path is outside" in err
+@@ -1195,7 +1199,7 @@ def test_the_fallback_drops_only_foreign_tools_modules(tmp_path: Path, script: s
+     env = {k: v for k, v in os.environ.items() if k != "PYTHONPATH"}
+     env["PYTHONPATH"] = str(REPO / "src")
+     proc = start_proc(
+-        ["-I", "-c", _KEEP_OURS, str(tmp_path / "foreign"), str(REPO), str(REPO / "load_tools" / script)], env
++        ["-I", text_file(_KEEP_OURS), str(tmp_path / "foreign"), str(REPO), str(REPO / "load_tools" / script)], env
+     )
+     proc.wait(timeout=60)
+     out = stop_proc(proc).decode("utf-8", "replace")
+@@ -1610,7 +1614,7 @@ def test_fake_model_server_refuses_each_path_option_outside_the_allowed_folders(
+     (outside / "x.txt").write_text("fake-key-for-the-test\n", encoding="utf-8")
+     with pytest.raises(SystemExit) as e:
+         _fake_model_main(monkeypatch, [option, str(outside / "x.txt")])
+-    assert e.value.code == 2
++    assert e.value.code == EXIT_BAD_SETTING_OR_PATH
+     err = capsys.readouterr().err
+     assert f"refused: {option}: path is outside" in err and pc.ROOTS_ENV in err
+     assert sorted(p.name for p in outside.iterdir()) == ["x.txt"]
+diff --git a/tests/test_portal_lead_pages.py b/tests/test_portal_lead_pages.py
+index 6beb731..d931dfc 100644
+--- a/tests/test_portal_lead_pages.py
++++ b/tests/test_portal_lead_pages.py
+@@ -11,7 +11,7 @@ from collections.abc import Callable
+ from typing import Any
+ 
+ import pytest
+-from support import DEMO_LEADFLOW, call, lead
++from support import DEMO_LEADFLOW, call, lead, run_program
+ from test_later_approval import APPROVERS, make_later
+ from test_portal_api import fresh, get, sql
+ 
+@@ -480,14 +480,13 @@ def test_the_sidebar_column_is_one_colour_to_the_page_bottom_at_1100(env: Any, s
+ def _proof(arg: dict[str, int]) -> dict[str, Any]:
+     import json
+     import shutil
+-    import subprocess
+     from pathlib import Path
+ 
+     node = shutil.which("node")
+     if node is None:
+         pytest.skip("no node")
+     here = Path(__file__).resolve().parent
+-    run = subprocess.run(  # noqa: S603
++    run = run_program(
+         [node, str(here / "portal_proof_probe.js"), str(here.parent / "demo_only" / "portal_demo.js"), json.dumps(arg)],
+         capture_output=True,
+         text=True,
+diff --git a/tests/test_portal_log_poll.py b/tests/test_portal_log_poll.py
+index e947cd7..c1f0d49 100644
+--- a/tests/test_portal_log_poll.py
++++ b/tests/test_portal_log_poll.py
+@@ -5,18 +5,18 @@ from __future__ import annotations
+ 
+ import json
+ import shutil
+-import subprocess
+ from pathlib import Path
+ 
+ import pytest
++from support import run_program
+ 
+ HERE = Path(__file__).resolve().parent
+ PORTAL_DIR = HERE.parent / "src" / "lead_desk" / "portal"
+ 
+ 
+ def _probe(scenario: str) -> dict[str, list[str]]:
+-    done = subprocess.run(  # noqa: S603
+-        ["node", str(HERE / "portal_log_poll_probe.js"), str(PORTAL_DIR), scenario],  # noqa: S607
++    done = run_program(
++        ["node", str(HERE / "portal_log_poll_probe.js"), str(PORTAL_DIR), scenario],
+         capture_output=True,
+         text=True,
+         timeout=60,
+diff --git a/tests/test_portal_mode.py b/tests/test_portal_mode.py
+index 2089861..6a6a618 100644
+--- a/tests/test_portal_mode.py
++++ b/tests/test_portal_mode.py
+@@ -6,10 +6,10 @@ from __future__ import annotations
+ import json
+ import re
+ import shutil
+-import subprocess
+ from pathlib import Path
+ 
+ import pytest
++from support import run_program
+ from test_portal_api import FakeDemo, fresh, get
+ 
+ from lead_desk import server
+@@ -29,8 +29,8 @@ needs_node = pytest.mark.skipif(shutil.which("node") is None, reason="node is no
+ 
+ 
+ def _run_portal(tmp_path: Path, mode: dict[str, bool]) -> dict:
+-    out = subprocess.run(  # noqa: S603 (fixed argument list, no shell)
+-        ["node", str(PROBE), str(PORTAL_JS), json.dumps(mode)],  # noqa: S607
++    out = run_program(
++        ["node", str(PROBE), str(PORTAL_JS), json.dumps(mode)],
+         capture_output=True,
+         text=True,
+         timeout=60,
+@@ -222,8 +222,8 @@ def test_words_and_chips_are_in_the_source() -> None:
+ def _demo_strip(arg: dict[str, object]) -> dict:
+     probe = Path(__file__).resolve().parent / "portal_demo_probe.js"
+     demo_js = Path(__file__).resolve().parents[1] / "demo_only" / "portal_demo.js"
+-    out = subprocess.run(  # noqa: S603 (fixed argument list, no shell)
+-        ["node", str(probe), str(demo_js), json.dumps(arg)],  # noqa: S607
++    out = run_program(
++        ["node", str(probe), str(demo_js), json.dumps(arg)],
+         capture_output=True,
+         text=True,
+         timeout=60,
+@@ -293,8 +293,8 @@ STATE_PROBE = Path(__file__).resolve().parent / "portal_state_probe.js"
+ 
+ 
+ def _state_probe(scenario: str) -> object:
+-    out = subprocess.run(  # noqa: S603 (fixed argument list, no shell)
+-        ["node", str(STATE_PROBE), str(PORTAL_DIR), scenario],  # noqa: S607
++    out = run_program(
++        ["node", str(STATE_PROBE), str(PORTAL_DIR), scenario],
+         capture_output=True,
+         text=True,
+         encoding="utf-8",
+@@ -419,8 +419,8 @@ def test_the_show_all_button_opens_a_grouped_run_of_repeats_and_it_stays_open()
+     """Four repeats in a row from one lead are one line with "Show all 4".
+ 
+     A click shows all four, and a later poll keeps them shown (log.js openRun, the only user path to it)."""
+-    out = subprocess.run(  # noqa: S603 (fixed argument list, no shell)
+-        ["node", str(LOG_PROBE), str(PORTAL_DIR)],  # noqa: S607
++    out = run_program(
++        ["node", str(LOG_PROBE), str(PORTAL_DIR)],
+         capture_output=True,
+         text=True,
+         encoding="utf-8",
+@@ -518,8 +518,8 @@ def test_pause_flag_sources_and_new_layout_rules() -> None:
+ 
+ # -- later messages and masking (claims P8 and P10); the probe modes of tests/portal_probe.js
+ def _probe_mode(mode: str) -> dict:
+-    out = subprocess.run(  # noqa: S603 (fixed argument list, no shell)
+-        ["node", str(PROBE), str(PORTAL_JS), json.dumps("demo"), mode],  # noqa: S607
++    out = run_program(
++        ["node", str(PROBE), str(PORTAL_JS), json.dumps("demo"), mode],
+         capture_output=True,
+         text=True,
+         encoding="utf-8",
+@@ -613,8 +613,8 @@ def test_later_panel_rules_in_the_source() -> None:
+ 
+ # -- one value shown with its eye button (memory only; the switch ON clears it)
+ def _reveal_probe(portal_js: Path) -> dict:
+-    out = subprocess.run(  # noqa: S603 (fixed argument list, no shell)
+-        ["node", str(PROBE), str(portal_js), json.dumps("demo"), "reveal"],  # noqa: S607
++    out = run_program(
++        ["node", str(PROBE), str(portal_js), json.dumps("demo"), "reveal"],
+         capture_output=True,
+         text=True,
+         encoding="utf-8",
+diff --git a/tests/test_r4_refusals.py b/tests/test_r4_refusals.py
+index 62f1332..69b1172 100644
+--- a/tests/test_r4_refusals.py
++++ b/tests/test_r4_refusals.py
+@@ -14,6 +14,7 @@ import sys
+ from pathlib import Path
+ 
+ import pytest
++from support import run_program
+ 
+ REPO = Path(__file__).resolve().parents[1]
+ sys.path.insert(0, str(REPO / "scripts"))
+@@ -31,7 +32,7 @@ def _run(args: list[str], tmp: Path, limit: float = 8, cwd: Path | None = None,
+     base = {k: v for k, v in os.environ.items() if not k.startswith(("DESK_", "N8N_", "PYTHON"))}
+     base.update(PYTHONDONTWRITEBYTECODE="1", LEAD_DESK_PATH_ROOTS=str(tmp), TMPDIR=str(tmp), **env)
+     try:
+-        done = subprocess.run(  # noqa: S603
++        done = run_program(
+             [sys.executable, *args],
+             cwd=cwd or tmp,
+             env=base,
+diff --git a/tests/test_r5_refusals.py b/tests/test_r5_refusals.py
+index 6eb861f..a94975a 100644
+--- a/tests/test_r5_refusals.py
++++ b/tests/test_r5_refusals.py
+@@ -21,6 +21,8 @@ import pytest
+ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
++from support import popen_program, run_program
++
+ from lead_desk.constants import LOAD_FILE_MAX_BYTES, LOOPBACK_HOSTS
+ from lead_desk.envnum import SettingRefused
+ 
+@@ -35,7 +37,7 @@ def _run(args: list[str], tmp: Path, limit: float = 20, **env: str) -> tuple[int
+     base = {k: v for k, v in os.environ.items() if not k.startswith(("DESK_", "N8N_", "PYTHON"))}
+     base.update(PYTHONDONTWRITEBYTECODE="1", LEAD_DESK_PATH_ROOTS=str(tmp), TMPDIR=str(tmp), **env)
+     try:
+-        done = subprocess.run(  # noqa: S603
++        done = run_program(
+             [sys.executable, *args],
+             cwd=tmp,
+             env=base,
+@@ -238,7 +240,7 @@ def test_the_catcher_refuses_a_host_that_is_not_this_computer_in_one_line(tmp_pa
+ 
+ 
+ def test_the_catcher_says_its_port_only_when_it_listens(tmp_path: Path) -> None:
+-    proc = subprocess.Popen(  # noqa: S603  (our own script; stopped below)
++    proc = popen_program(
+         [sys.executable, str(REPO / "load_tools" / "catcher.py"), "--out", str(tmp_path / "o.jsonl"), "--port", "0"],
+         cwd=tmp_path,
+         env={**os.environ, "LEAD_DESK_PATH_ROOTS": str(tmp_path), "PYTHONDONTWRITEBYTECODE": "1"},
+diff --git a/tests/test_r7_exit_codes.py b/tests/test_r7_exit_codes.py
+index 8e132d0..80f92de 100644
+--- a/tests/test_r7_exit_codes.py
++++ b/tests/test_r7_exit_codes.py
+@@ -13,7 +13,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+ from pathlib import Path
+ 
+ import pytest
+-from support import run_python
++from support import run_python, text_file
+ 
+ from lead_desk import constants
+ from lead_desk.constants import SCRIPT_REPLY_MAX_BYTES
+@@ -156,7 +156,7 @@ def test_a_body_that_cannot_be_encoded_is_exit_4(tmp_path: Path) -> None:
+         "LEAD_DESK_PATH_ROOTS": str(tmp_path),
+         "N8N_URL": "http://127.0.0.1:1",
+     }
+-    done = run_python(["-c", code], environ, tmp_path)
++    done = run_python([text_file(code)], environ, tmp_path)
+     assert done.returncode == 4 and "cannot encode the workflow as JSON" in done.stderr
+     assert "Traceback" not in done.stderr and CANARY not in done.stderr
+ 
+diff --git a/tests/test_r7_inputs_and_replies.py b/tests/test_r7_inputs_and_replies.py
+index e1900a8..707d88d 100644
+--- a/tests/test_r7_inputs_and_replies.py
++++ b/tests/test_r7_inputs_and_replies.py
+@@ -144,7 +144,7 @@ def test_a_reply_of_6200_rows_is_read_whole(reply_server: ThreadingHTTPServer) -
+ 
+ 
+ def test_a_reply_over_the_cap_is_refused_whole_not_cut(reply_server: ThreadingHTTPServer) -> None:
+-    pad = "x" * (constants.SCRIPT_REPLY_MAX_BYTES + 10)
++    pad = "x" * (constants.PORTAL_VIEW_REPLY_MAX_BYTES + 10)  # the portal's view cap (round 7B), not the script cap
+     reply_server.body = json.dumps({"pad": pad}).encode()
+     assert portal_demo._fetch_json(_url(reply_server), 10.0) is None
+ 
+diff --git a/tests/test_r7b_burst_closed_port.py b/tests/test_r7b_burst_closed_port.py
+new file mode 100644
+index 0000000..ffccf1c
+--- /dev/null
++++ b/tests/test_r7b_burst_closed_port.py
+@@ -0,0 +1,64 @@
++"""Round 7B (hostile-driver result 3): `burst --url http://127.0.0.1:<closed port>` ran 30 s with 32 connect attempts
++and no output. Now it looks for a listener for at most BURST_START_LOOK_SECONDS, then ends with ONE line on the error
++output and exit code 3 (the thing it talks to cannot be reached); a listener that appears within that time is used."""
++
++from __future__ import annotations
++
++import socket
++import threading
++import time
++
++import pytest
++from support import HOST, free_port
++
++from lead_desk.constants import BURST_START_LOOK_SECONDS, EXIT_UNREACHABLE
++
++burst = pytest.importorskip("demo_only.burst")
++
++
++def test_a_closed_port_ends_fast_with_one_line_and_exit_3(capsys: pytest.CaptureFixture[str]) -> None:
++    port = free_port()  # nothing listens on it
++    t0 = time.monotonic()
++    code = burst.main(
++        [
++            "--url",
++            f"http://{HOST}:{port}/x",
++            "--n",
++            "5",
++            "--email",
++            "a@example.com",
++            "--ref-prefix",
++            "p",
++            "--source",
++            "form",
++        ]
++    )
++    took = time.monotonic() - t0
++    out = capsys.readouterr()
++    assert code == EXIT_UNREACHABLE, (code, out)
++    assert took < BURST_START_LOOK_SECONDS + 3, f"took {took:.1f} s"
++    assert out.out == "" and out.err.strip().splitlines() == [
++        "ERROR: nothing answers at that address: no request was sent"
++    ]
++
++
++def test_a_listener_that_starts_late_is_waited_for() -> None:
++    port = free_port()
++    srv = socket.socket()
++
++    def later() -> None:
++        time.sleep(1.0)
++        srv.bind((HOST, port))
++        srv.listen(1)
++
++    th = threading.Thread(target=later, daemon=True)
++    th.start()
++    try:
++        assert burst.listener_answers(f"http://{HOST}:{port}/", BURST_START_LOOK_SECONDS)
++    finally:
++        th.join(5)
++        srv.close()
++
++
++def test_the_look_gives_up_when_nothing_ever_listens() -> None:
++    assert burst.listener_answers(f"http://{HOST}:{free_port()}/", 0.5) is False
+diff --git a/tests/test_r7b_fake_deep_and_head.py b/tests/test_r7b_fake_deep_and_head.py
+new file mode 100644
+index 0000000..bc03180
+--- /dev/null
++++ b/tests/test_r7b_fake_deep_and_head.py
+@@ -0,0 +1,119 @@
++"""Round 7B (lead N1, N2), at the one place every fake server's handler passes through.
++
++N1: a request body that nests about 100,000 levels deep made json.loads raise RecursionError in the fakes: a
++traceback on the error output and NO answer. Now `scripts.http_guard.loads_bounded` turns it into the same ValueError
++as any text that is not JSON, and `AnswersBadRequests` also shields RecursionError: one fixed 400 and no traceback,
++per fake.
++N2: the request line and the headers had no total time limit (the socket timeout restarts with every byte): a sender of
++one byte every few seconds held a handler thread for about 80 seconds. Now ONE timer per request
++(FAKE_HEAD_DEADLINE_SECONDS, shortened here) ends the connection. Each case is a raw request over a loopback socket."""
++
++from __future__ import annotations
++
++import socket
++import sys
++import threading
++import time
++from pathlib import Path
++
++import pytest
++import test_r7_fake_slow_senders as slow
++from test_r7_fake_bad_requests import KEY
++from test_r7_fake_slow_senders import _head, _status
++
++sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
++import http_guard
++
++import scripts.http_guard as scripts_http_guard
++
++DEPTH = 100_000
++target = slow.target  # the same fixture (one fake per case), reused here
++
++
++def _post(port: int, line: str, auth: bool, body: bytes, extra: str = "") -> bytes:
++    head = _head(line, auth, f"Content-Length: {len(body)}\r\n{extra}")
++    with socket.create_connection(("127.0.0.1", port), timeout=20) as s:
++        s.sendall(head + body)
++        out = b""
++        while chunk := s.recv(4096):
++            out += chunk
++    return out
++
++
++@pytest.mark.parametrize("body", [b"[" * DEPTH, b'{"a":' * DEPTH, b"[" * DEPTH + b"]" * DEPTH])
++def test_a_body_nested_100000_deep_is_one_400_and_no_traceback(
++    target: tuple[int, str, bool], capfd: pytest.CaptureFixture[str], body: bytes
++) -> None:
++    port, line, auth = target
++    out = _post(port, line, auth, body)
++    assert _status(out) == 400, out[:80]
++    assert "Traceback" not in capfd.readouterr().err
++
++
++def test_the_model_fake_answers_a_deep_message_body_too(
++    target: tuple[int, str, bool], capfd: pytest.CaptureFixture[str]
++) -> None:
++    port, line, _ = target
++    if line != "POST /control":
++        pytest.skip("only the model fake has /v1/messages")
++    out = _post(port, "POST /v1/messages", False, b"[" * DEPTH, extra=f"x-api-key: {KEY}\r\n")
++    assert 200 <= _status(out) < 500, out[:80]
++    assert "Traceback" not in capfd.readouterr().err
++
++
++def test_loads_bounded_refuses_deep_text_like_any_other_bad_json() -> None:
++    for module in (http_guard, scripts_http_guard):
++        with pytest.raises(ValueError):
++            module.loads_bounded(b"[" * DEPTH)
++        assert module.loads_bounded(b'{"a": [1, 2]}') == {"a": [1, 2]}
++
++
++@pytest.mark.parametrize("pause", [1.0, 0.3])  # one byte per second (the lead's case), and a faster drip
++def test_a_header_drip_is_cut_off_at_the_head_deadline(
++    target: tuple[int, str, bool], monkeypatch: pytest.MonkeyPatch, pause: float
++) -> None:
++    for module in (http_guard, scripts_http_guard):
++        monkeypatch.setattr(module, "FAKE_HEAD_DEADLINE_SECONDS", 2.0)
++    port, line, auth = target
++    head = _head(line, auth, "Content-Length: 2\r\n")[:-2] + b"X-Slow: "  # an unfinished header line, then a drip
++    t0 = time.monotonic()
++    closed_after: list[float] = []
++
++    def drip(s: socket.socket) -> None:
++        try:
++            for ch in head + b"a" * 200:  # one byte per `pause` seconds, each well inside the socket timeout
++                s.sendall(bytes([ch]))
++                time.sleep(pause)
++        except OSError:
++            pass
++
++    with socket.create_connection(("127.0.0.1", port), timeout=15) as s:
++        th = threading.Thread(target=drip, args=(s,), daemon=True)
++        th.start()
++        try:
++            while True:
++                data = s.recv(4096)
++                if not data:
++                    break
++        except OSError:
++            pass
++        closed_after.append(time.monotonic() - t0)
++    assert closed_after[0] < 5.0, f"the server held the connection for {closed_after[0]:.1f} s"
++
++
++def test_a_normal_request_after_the_head_is_read_is_not_cut(
++    target: tuple[int, str, bool], monkeypatch: pytest.MonkeyPatch
++) -> None:
++    """The timer ends when the headers are read: a slow ANSWER or a body inside its own deadline is not cut."""
++    for module in (http_guard, scripts_http_guard):
++        monkeypatch.setattr(module, "FAKE_HEAD_DEADLINE_SECONDS", 1.0)
++    port, line, auth = target
++    head = _head(line, auth, "Content-Length: 2\r\n")
++    with socket.create_connection(("127.0.0.1", port), timeout=15) as s:
++        s.sendall(head)
++        time.sleep(1.8)  # longer than the head deadline: the head is complete, the body is on its own deadline
++        s.sendall(b"{}")
++        out = b""
++        while chunk := s.recv(4096):
++            out += chunk
++    assert 200 <= _status(out) < 500, out[:80]
+diff --git a/tests/test_r7b_guard_replant.py b/tests/test_r7b_guard_replant.py
+new file mode 100644
+index 0000000..5ca2ce2
+--- /dev/null
++++ b/tests/test_r7b_guard_replant.py
+@@ -0,0 +1,129 @@
++"""Round 7B (review part 2, M3): the file-and-socket call guard misses names it did not list: name lookups
++(getaddrinfo, gethostbyname), the event loop's own socket calls (sock_connect), a pool made from a context (ctx.Pool),
++a name given to getattr as a text, and a TLS context made by name (ssl.SSLContext). The shapes are planted again
++here, in a lot of spellings (module name, alias, `from` import, a method of any object, a `getattr` with the name as
++text), and EVERY one must be found. The count is printed with -s (and pinned: a shape taken out is a failure)."""
++
++from __future__ import annotations
++
++import pytest
++from test_file_call_guard import _plant, _problems
++
++MODULE_FUNCTIONS = {
++    "socket": [
++        "getaddrinfo",
++        "gethostbyname",
++        "gethostbyname_ex",
++        "gethostbyaddr",
++        "getnameinfo",
++        "getfqdn",
++        "create_connection",
++        "create_server",
++        "fromfd",
++        "socketpair",
++    ],
++    "ssl": ["wrap_socket", "get_server_certificate"],
++    "multiprocessing.pool": ["ThreadPool", "Pool"],
++    "multiprocessing.dummy": ["Pool"],
++}
++OBJECT_METHODS = [
++    "Pool",
++    "ThreadPool",
++    "sock_connect",
++    "sock_recv",
++    "sock_recv_into",
++    "sock_sendall",
++    "sock_accept",
++    "getaddrinfo",
++    "getnameinfo",
++    "gethostbyname",
++    "create_connection",
++    "create_server",
++    "create_datagram_endpoint",
++    "create_unix_connection",
++    "create_unix_server",
++    "connect_read_pipe",
++    "connect_write_pipe",
++    "add_reader",
++    "add_writer",
++    "wrap_socket",
++]
++LITERAL_NAMES = [
++    "open",
++    "read_text",
++    "read_bytes",
++    "write_text",
++    "write_bytes",
++    "system",
++    "popen",
++    "Popen",
++    "listdir",
++    "scandir",
++    "walk",
++    "unlink",
++    "mkdir",
++    "chmod",
++    "glob",
++    "rglob",
++    "iterdir",
++    "touch",
++    "eval",
++    "exec",
++    "compile",
++    "__import__",
++    "input",
++    "breakpoint",
++]
++
++
++def shapes() -> dict[str, str]:
++    out: dict[str, str] = {}
++    for mod, names in MODULE_FUNCTIONS.items():
++        for n in names:
++            out[f"{mod}.{n} by module name"] = f"import {mod}\n{mod}.{n}()"
++            out[f"{mod}.{n} by from-import alias"] = f"from {mod} import {n} as _f\n_f()"
++    for n in OBJECT_METHODS:
++        out[f"x.{n}(...) on any object"] = f"def f(x):\n    return x.{n}(1)"
++        out[f"loop.{n}(...) on the running loop"] = f"import asyncio\nasyncio.get_running_loop().{n}(1)"
++        out[f"await loop.{n}(...)"] = f"async def f(loop):\n    await loop.{n}(1)"
++    for n in LITERAL_NAMES:
++        out[f"getattr(o, {n!r})"] = f"def f(o):\n    return getattr(o, {n!r})"
++        out[f"getattr(os, {n!r}) called"] = f"import os\ngetattr(os, {n!r})('x')"
++    out["ssl.SSLContext(...)"] = "import ssl\nssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)"
++    out["SSLContext from-import alias"] = "from ssl import SSLContext as C\nC(1)"
++    out["ssl alias SSLContext"] = "import ssl as s\ns.SSLContext()"
++    out["ssl.SSLContext handed on as a value"] = "import ssl\nmake = ssl.SSLContext\nmake(1)"
++    out["setattr with a literal name"] = "def f(o, v):\n    setattr(o, 'open', v)"
++    out["hasattr with a literal name"] = "def f(o):\n    return hasattr(o, 'open')"
++    out["delattr with a literal name"] = "def f(o):\n    delattr(o, 'open')"
++    return out
++
++
++ALL = shapes()
++
++
++def test_the_count_of_replanted_shapes_is_pinned() -> None:
++    assert len(ALL) >= 140, len(ALL)
++    assert len(ALL) == 145, len(ALL)  # a shape taken out of the list shows here
++
++
++def test_every_replanted_shape_is_found(
++    tmp_path_factory: pytest.TempPathFactory, capsys: pytest.CaptureFixture[str]
++) -> None:
++    missed = []
++    for shape, source in ALL.items():
++        root = _plant(tmp_path_factory.mktemp("r7b"), source)
++        if not [p for p in _problems(root, {}, {}) if p.startswith("scripts/planted.py")]:
++            missed.append(shape)
++    with capsys.disabled():
++        print(f"\nREPLANT: {len(ALL) - len(missed)} of {len(ALL)} shapes found; missed: {missed}")
++    assert not missed, f"the guard did not find: {missed}"
++
++
++def test_a_type_name_in_a_signature_is_no_call(tmp_path_factory: pytest.TempPathFactory) -> None:
++    for source in (
++        "import ssl\ndef f(c: ssl.SSLContext | None = None) -> ssl.SSLContext:\n    return c",
++        "from ssl import SSLContext\nx: SSLContext | None = None",
++    ):
++        root = _plant(tmp_path_factory.mktemp("r7bn"), source)
++        assert [p for p in _problems(root, {}, {}) if p.startswith("scripts/planted.py")] == [], source
+diff --git a/tests/test_r7b_portal_view_cap.py b/tests/test_r7b_portal_view_cap.py
+new file mode 100644
+index 0000000..3c44090
+--- /dev/null
++++ b/tests/test_r7b_portal_view_cap.py
+@@ -0,0 +1,69 @@
++"""Round 7B (review part 2, M2): the portal reads the made-up CRM view of a big run whole. The old cap (4 MiB, about
++20,000 rows) refused the view of a run of 100,000 leads; the cap now comes from constants.py (a row of at most
++PORTAL_VIEW_ROW_BYTES bytes times LOAD_TOTAL_MAX leads). A reply over the cap is still refused whole, never cut."""
++
++from __future__ import annotations
++
++import json
++import threading
++from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
++
++import pytest
++from support import HOST
++
++from lead_desk.constants import (
++    LOAD_TOTAL_MAX,
++    PORTAL_VIEW_REPLY_MAX_BYTES,
++    PORTAL_VIEW_ROW_BYTES,
++    SCRIPT_REPLY_MAX_BYTES,
++)
++
++portal_demo = pytest.importorskip("demo_only.portal_demo")
++
++
++def _serve(body: bytes) -> tuple[ThreadingHTTPServer, str]:
++    class H(BaseHTTPRequestHandler):
++        def do_GET(self) -> None:  # noqa: N802 (the name the server looks for)
++            self.send_response(200)
++            self.send_header("Content-Length", str(len(body)))
++            self.end_headers()
++            self.wfile.write(body)
++
++        def log_message(self, *a: object) -> None:
++            return
++
++    srv = ThreadingHTTPServer((HOST, 0), H)
++    threading.Thread(target=srv.serve_forever, daemon=True).start()
++    return srv, f"http://{HOST}:{srv.server_address[1]}/v"
++
++
++def _view(rows: int) -> bytes:
++    row = {"id": "r-000000", "email": "a@example.com", "name": "Made Up", "stage": "new", "note": "x" * 150}
++    return json.dumps({"count": rows, "rows": [row] * rows}).encode()
++
++
++def test_the_cap_covers_the_biggest_run_and_is_larger_than_the_script_cap() -> None:
++    assert PORTAL_VIEW_REPLY_MAX_BYTES == LOAD_TOTAL_MAX * PORTAL_VIEW_ROW_BYTES > SCRIPT_REPLY_MAX_BYTES
++    assert len(_view(1)) < PORTAL_VIEW_ROW_BYTES + 100  # the sample row is inside the size the cap assumes
++
++
++def test_a_view_of_30000_rows_over_the_old_4_mib_cap_is_read_whole() -> None:
++    body = _view(30_000)
++    assert len(body) > SCRIPT_REPLY_MAX_BYTES  # it would have been refused by the old cap
++    srv, url = _serve(body)
++    try:
++        got = portal_demo._fetch_json(url, 20.0)
++    finally:
++        srv.shutdown()
++        srv.server_close()
++    assert got is not None and got["count"] == 30_000 and len(got["rows"]) == 30_000
++
++
++def test_a_reply_over_the_view_cap_is_refused_whole(monkeypatch: pytest.MonkeyPatch) -> None:
++    monkeypatch.setattr(portal_demo, "PORTAL_VIEW_REPLY_MAX_BYTES", 1000)
++    srv, url = _serve(_view(20))
++    try:
++        assert portal_demo._fetch_json(url, 10.0) is None  # not a cut-off copy
++    finally:
++        srv.shutdown()
++        srv.server_close()
+diff --git a/tests/test_r7b_program_helper.py b/tests/test_r7b_program_helper.py
+new file mode 100644
+index 0000000..60c904a
+--- /dev/null
++++ b/tests/test_r7b_program_helper.py
+@@ -0,0 +1,213 @@
++"""The one place that starts a program from a test (`support.popen_program`, `run_program`, `checked_argv`).
++
++The S603 ruling: ONE inline marker, on the single start in `popen_program`, and a test that proves the helper refuses a
++command line that is tainted or not a literal list of strings. Here: what is refused (an interpreter given text to run
++with -c, -e, -p or --eval, a module outside this repository with -m, a shell name, an element that is not a plain str,
++a program that is not on the short list), what is allowed, that a refused line starts nothing, and that no other file
++of tests/ starts a program by itself. Made-up data only; nothing here touches a /dev path."""
++
++from __future__ import annotations
++
++import re
++import subprocess
++import sys
++from pathlib import Path
++
++import pytest
++from support import REPO, RefusedProgram, checked_argv, popen_program, run_program, text_file
++
++PY = sys.executable
++HERE = Path(__file__).resolve().parent
++
++
++def _script(tmp_path: Path) -> str:
++    path = tmp_path / "ok.py"
++    path.write_text("print('hi')\n", encoding="utf-8")
++    return str(path)
++
++
++@pytest.mark.parametrize(
++    "tail",
++    [
++        ["-c", "print(1)"],
++        ["-I", "-c", "print(1)"],
++        ["-Ic", "print(1)"],
++        ["-m", "http.server"],
++        ["-m", "pip"],
++        ["-m", "lead_desk.server; id"],
++        ["-m", ""],
++        ["-m"],
++        ["-X", "dev", "x.py"],
++        ["-W", "ignore", "x.py"],
++        ["--command", "print(1)"],
++        [],
++        ["no_such_script.py"],
++    ],
++    ids=lambda t: " ".join(t) or "nothing",
++)
++def test_python_is_refused_with_text_to_run_a_foreign_module_or_no_script(tail: list[str]) -> None:
++    with pytest.raises(RefusedProgram):
++        checked_argv([PY, *tail])
++
++
++@pytest.mark.parametrize("flag", ["-e", "--eval", "-p", "--print", "-r", "-c"])
++def test_node_and_other_interpreters_are_refused_with_text_to_run(flag: str, tmp_path: Path) -> None:
++    for program in ("node", "perl", "ruby", "php"):
++        with pytest.raises(RefusedProgram):
++            checked_argv([program, flag, "1"])
++    with pytest.raises(RefusedProgram):
++        checked_argv(["node", flag, _script(tmp_path)])
++
++
++@pytest.mark.parametrize("program", ["sh", "bash", "dash", "zsh", "ksh", "cmd", "powershell", "pwsh", "/bin/sh"])
++def test_a_shell_name_is_refused_without_a_script_file(program: str) -> None:
++    for tail in ([], ["-c", "id"], ["-e", "-c", "id"], ["no_such_file.sh"], ["-x"]):
++        with pytest.raises(RefusedProgram):
++            checked_argv([program, *tail])
++
++
++def test_a_shell_is_refused_with_an_option_before_a_real_script(tmp_path: Path) -> None:
++    script = tmp_path / "s.sh"
++    script.write_text("echo hi\n", encoding="utf-8")
++    with pytest.raises(RefusedProgram):
++        checked_argv(["bash", "-x", str(script)])
++    assert checked_argv(["bash", str(script)]) == ["bash", str(script)]
++
++
++@pytest.mark.parametrize(
++    "bad",
++    [
++        "a string, not a list",
++        b"bytes",
++        None,
++        [],
++        (),
++        [PY, 5],
++        [PY, None],
++        [PY, b"x.py"],
++        [PY, Path("x.py")],
++        [Path(PY)],
++        [PY, "a\0b"],
++        ["git", ["nested"]],
++        [object()],
++    ],
++    ids=repr,
++)
++def test_a_command_line_that_is_not_a_literal_list_of_plain_strings_is_refused(bad: object) -> None:
++    with pytest.raises(RefusedProgram):
++        checked_argv(bad)
++
++
++def test_an_element_that_is_a_str_subclass_is_refused() -> None:
++    class Tainted(str):
++        pass
++
++    with pytest.raises(RefusedProgram):
++        checked_argv([PY, Tainted(str(HERE / "support.py"))])
++    with pytest.raises(RefusedProgram):
++        checked_argv([Tainted("git"), "status"])
++
++
++@pytest.mark.parametrize(
++    "line",
++    [
++        ["curl", "http://127.0.0.1/"],
++        ["rm", "-rf", "x"],
++        ["sudo", "id"],
++        ["env", "id"],
++        ["xargs", "id"],
++        ["/usr/bin/python3-not-ours", "x.py"],
++        ["python3", "x.py"],
++        ["git", "-c", "core.sshCommand=id", "status"],
++        ["git", "-c", "alias.x=!id", "x"],
++        ["unshare", "-n", "-c", "id"],
++        ["unshare", "--mount", "true"],
++        ["unshare", "-n", "sh", "-c", "id"],
++        ["unshare", "-n", "curl", "x"],
++        ["unshare", "-n"],
++    ],
++    ids=lambda x: " ".join(x),
++)
++def test_a_program_that_is_not_on_the_short_list_or_is_given_a_loader_option_is_refused(line: list[str]) -> None:
++    with pytest.raises(RefusedProgram):
++        checked_argv(line)
++
++
++def test_the_shapes_the_tests_use_are_accepted(tmp_path: Path) -> None:
++    script = _script(tmp_path)
++    assert checked_argv([PY, script, "arg"]) == [PY, script, "arg"]
++    assert checked_argv((PY, "-I", script))
++    assert checked_argv([PY, "-m", "lead_desk.server"])
++    assert checked_argv([PY, "-m", "demo_only.fakes_server", "--outbox", "keyed"])
++    assert checked_argv([PY, "-m", "pytest", "-q"])
++    assert checked_argv([PY, text_file("print(1)")])
++    assert checked_argv(["node", text_file("1", ".js"), "x"])
++    assert checked_argv(["git", "-c", "user.name=a", "-c", "user.email=a@example.test", "init"])
++    assert checked_argv(["unshare", "-n", "true"])
++    assert checked_argv(["unshare", "-n", PY, script])
++    assert checked_argv(["ps", "-p", "1", "-o", "stat="])
++
++
++def test_a_refused_line_starts_nothing(tmp_path: Path) -> None:
++    mark = tmp_path / "started"
++    code = f"open({str(mark)!r}, 'w').close()"
++    with pytest.raises(RefusedProgram):
++        popen_program([PY, "-c", code])
++    with pytest.raises(RefusedProgram):
++        run_program([PY, "-c", code], capture_output=True)
++    with pytest.raises(RefusedProgram):
++        run_program(["sh", "-c", f"touch {mark}"], capture_output=True)
++    assert not mark.exists()
++
++
++def test_run_program_runs_a_script_file_and_text_goes_through_a_file(tmp_path: Path) -> None:
++    done = run_program(
++        [PY, text_file("import sys; print('x' + sys.argv[1]); sys.exit(3)"), "q"], capture_output=True, text=True
++    )
++    assert (done.returncode, done.stdout.strip()) == (3, "xq")
++    with pytest.raises(subprocess.CalledProcessError):
++        run_program([PY, text_file("import sys; sys.exit(2)")], capture_output=True, check=True)
++    with pytest.raises(subprocess.TimeoutExpired):
++        run_program([PY, text_file("import time; time.sleep(30)")], timeout=0.5)
++    fed = run_program(
++        [PY, text_file("import sys; print(sys.stdin.read().upper())")], input="abc", capture_output=True, text=True
++    )
++    assert fed.stdout.strip() == "ABC"
++
++
++def test_text_file_is_content_addressed_and_read_back_exactly() -> None:
++    a, b = text_file("print(1)\n"), text_file("print(1)\n")
++    assert a == b and Path(a).read_text(encoding="utf-8") == "print(1)\n"
++    assert text_file("1", ".js").endswith(".js") and text_file("1") != text_file("1", ".js")
++
++
++_START = re.compile(
++    r"\b(?:subprocess\s*\.\s*(?:run|Popen|call|check_output|check_call|getoutput|getstatusoutput)"
++    r"|os\s*\.\s*(?:system|popen|exec\w*|spawn\w*|posix_spawn\w*|fork)"
++    r"|create_subprocess_\w+|pty\s*\.\s*spawn)\b"
++)
++
++
++def test_no_other_file_of_tests_starts_a_program_by_itself() -> None:
++    """Every start goes through the helper; test_file_call_guard.py and this file only name the calls inside text."""
++    found = []
++    for path in sorted(HERE.glob("*.py")):
++        if path.name in {"support.py", "test_file_call_guard.py", "test_r7b_program_helper.py"}:
++            continue
++        for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
++            if _START.search(line.split("#", 1)[0]):
++                found.append(f"{path.name}:{number}")
++    assert found == [], found
++
++
++def test_the_helper_line_is_the_only_s603_marker_in_tests() -> None:
++    marker = "noqa: " + "S603"
++    hits = [
++        p.name for p in HERE.glob("*.py") if marker in p.read_text(encoding="utf-8") and p.name != Path(__file__).name
++    ]
++    assert hits == ["support.py"], hits
++    assert (HERE / "support.py").read_text(encoding="utf-8").count(marker) == 1
++
++
++def test_this_repository_paths_exist_for_the_accepted_shapes() -> None:
++    assert (REPO / "src" / "lead_desk").is_dir() and (REPO / "demo_only").is_dir()
+diff --git a/tests/test_r7m_new.py b/tests/test_r7m_new.py
+new file mode 100644
+index 0000000..16e2b8d
+--- /dev/null
++++ b/tests/test_r7m_new.py
+@@ -0,0 +1,232 @@
++"""REV7M: tests for what the round 7 review found (TLS floor on the real handshake, IMAP deadline against an endless
++run of untagged lines). Real classes, real loopback sockets; look at what the SERVER saw. Made-up data only."""
++
++from __future__ import annotations
++
++import socket
++import ssl
++import threading
++import time
++from collections.abc import Iterator
++from pathlib import Path
++from typing import Any
++
++import pytest
++
++from demo_only.fake_imap import FakeImap
++from demo_only.fake_smtp_tls import FAKE_PASSWORD, FakeSmtp, make_cert
++from lead_desk.imap_count import ImapCountError, ImapSettings, ImapTotalTimeout, counts_by_key
++from lead_desk.smtp_provider import ProviderSettings, SmtpProviderOutbox
++
++HOST = "localhost"
++INBOXES = ("inbox-a@example.test",)
++
++
++@pytest.fixture
++def cert(tmp_path: Path) -> tuple[Path, Path]:
++    made = make_cert(tmp_path, HOST)
++    if made is None:
++        pytest.skip("the openssl program is not installed, so no test certificate can be made")
++    return made
++
++
++@pytest.fixture
++def pwfile(tmp_path: Path) -> Path:
++    p = tmp_path / "pw.txt"
++    p.write_text(FAKE_PASSWORD + "\n", encoding="utf-8")
++    return p
++
++
++def _old_only(server_ctx: ssl.SSLContext) -> None:
++    """Make a server context that speaks nothing newer than TLS 1.1 (skip when this OpenSSL cannot)."""
++    try:
++        server_ctx.minimum_version = ssl.TLSVersion.TLSv1
++        server_ctx.maximum_version = ssl.TLSVersion.TLSv1_1
++        server_ctx.set_ciphers("ALL:@SECLEVEL=0")
++    except (ValueError, ssl.SSLError):
++        pytest.skip("this OpenSSL cannot make a TLS 1.1 only test server")
++
++
++def _no_floor_client(cafile: Path) -> ssl.SSLContext:
++    """A caller context that checks chain and name, names NO minimum version and lowers the security level: the
++    library's own floor decides, and the security level cannot be read from a context."""
++    c = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
++    c.load_verify_locations(cafile=str(cafile))
++    c.minimum_version = ssl.TLSVersion.MINIMUM_SUPPORTED
++    try:
++        c.set_ciphers("ALL:@SECLEVEL=0")
++    except ssl.SSLError:
++        pytest.skip("this OpenSSL does not accept the security level 0 cipher list")
++    return c
++
++
++@pytest.mark.parametrize("security", ["ssl", "starttls"])
++def test_f1_smtp_login_never_goes_out_over_a_tls_version_below_1_2(
++    cert: tuple[Path, Path], pwfile: Path, security: str
++) -> None:
++    srv = FakeSmtp(cert[0], cert[1], HOST, implicit_tls=security == "ssl")
++    try:
++        _old_only(srv._ctx)
++        s = ProviderSettings(
++            HOST,
++            srv.port,
++            "sender-user",
++            pwfile,
++            "sender@example.test",
++            INBOXES,
++            5,
++            security=security,
++            timeout_seconds=3.0,
++        )
++        box = SmtpProviderOutbox(s, _no_floor_client(cert[0]))
++        with pytest.raises(Exception):  # noqa: B017, PT011  (any refusal; the server log below is the proof)
++            box.send("K-1", "ada@example.test", "Hi", "Body", 3.0)
++        assert "AUTH" not in srv.commands and srv.messages == []
++    finally:
++        srv.close()
++
++
++def test_f1_imap_login_never_goes_out_over_a_tls_version_below_1_2(cert: tuple[Path, Path], pwfile: Path) -> None:
++    srv = FakeImap(cert[0], cert[1], HOST, {"INBOX": ["RUN1-L1"]})
++    try:
++        _old_only(srv._ctx)
++        s = ImapSettings(
++            HOST,
++            srv.user,
++            pwfile,
++            port=srv.port,
++            folders=("INBOX",),
++            timeout_seconds=3.0,
++            ssl_context=_no_floor_client(cert[0]),
++        )
++        with pytest.raises(ImapCountError):
++            counts_by_key(s, "RUN1-")
++        assert srv.login_lines == [] and "LOGIN" not in srv.commands
++    finally:
++        srv.close()
++
++
++class Endless:
++    """A TLS server that logs in and then answers EXAMINE with an endless run of short untagged lines (no literal)."""
++
++    def __init__(self, cert: Path, key: Path) -> None:
++        self.ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
++        self.ctx.load_cert_chain(str(cert), str(key))
++        self.srv = socket.socket()
++        self.srv.bind(("127.0.0.1", 0))
++        self.srv.listen(4)
++        self.port = int(self.srv.getsockname()[1])
++        self.stop = threading.Event()
++        threading.Thread(target=self._loop, daemon=True).start()
++
++    def _loop(self) -> None:
++        while not self.stop.is_set():
++            try:
++                c, _ = self.srv.accept()
++            except OSError:
++                return
++            threading.Thread(target=self._serve, args=(c,), daemon=True).start()
++
++    def _serve(self, c: socket.socket) -> None:
++        try:
++            f = self.ctx.wrap_socket(c, server_side=True).makefile("rwb", buffering=0)
++            f.write(b"* OK ready\r\n")
++            while not self.stop.is_set():
++                tag, _, rest = f.readline(65536).decode().rstrip("\r\n").partition(" ")
++                word = rest.split(" ", 1)[0].upper()
++                if word == "CAPABILITY":
++                    f.write(f"* CAPABILITY IMAP4rev1\r\n{tag} OK done\r\n".encode())
++                elif word == "LOGIN":
++                    f.write(f"{tag} OK login\r\n".encode())
++                elif word in ("EXAMINE", "SELECT"):
++                    end = time.monotonic() + 8
++                    while not self.stop.is_set() and time.monotonic() < end:
++                        f.write(b"* 1 EXISTS\r\n" * 2000)
++                    return
++                elif not word:
++                    return
++        except (OSError, ssl.SSLError, ValueError):
++            return
++
++    def close(self) -> None:
++        self.stop.set()
++        self.srv.close()
++
++
++@pytest.fixture
++def endless(cert: tuple[Path, Path]) -> Iterator[Endless]:
++    e = Endless(cert[0], cert[1])
++    yield e
++    e.close()
++
++
++def test_f2_an_endless_run_of_untagged_lines_ends_at_the_total_time_limit(
++    cert: tuple[Path, Path], pwfile: Path, endless: Endless
++) -> None:
++    ctx = ssl.create_default_context(cafile=str(cert[0]))
++    s = ImapSettings(
++        HOST,
++        "reader-user",
++        pwfile,
++        port=endless.port,
++        folders=("INBOX",),
++        timeout_seconds=3.0,
++        total_seconds=1.0,
++        ssl_context=ctx,
++    )
++    t0 = time.monotonic()
++    with pytest.raises((ImapTotalTimeout, ImapCountError)):
++        counts_by_key(s, "RUN1-")
++    assert time.monotonic() - t0 < 4.0, "the call ran far past total_seconds"
++
++
++def test_sibling_repr_of_settings_shows_no_path() -> None:
++    from decimal import Decimal
++
++    from lead_desk.config import LiveSettings
++    from lead_desk.crm_hubspot import HubspotSettings
++
++    h = repr(HubspotSettings(Path("/made/up/key"), 5, stats_file=Path("/made/up/stats")))
++    ls = repr(
++        LiveSettings(
++            model="m",
++            key_file=Path("/made/up/key"),
++            price_in_per_mtok=Decimal(1),
++            price_out_per_mtok=Decimal(1),
++            price_date="2026-11-01",
++            cap_run_usd=Decimal("0.1"),
++            cap_total_usd=Decimal("0.1"),
++            ledger_path=Path("/made/up/ledger"),
++            run_id="r",
++        )
++    )
++    assert "/made/up" not in h
++    assert "/made/up" not in ls
++
++
++def test_f3_a_blank_or_space_padded_smtp_user_is_refused_where_the_settings_are_made(pwfile: Path) -> None:
++    from lead_desk.smtp_provider import SettingRefused
++
++    for user in ("  ", " bob", "bob "):
++        with pytest.raises(SettingRefused):
++            ProviderSettings(HOST, 25, user, pwfile, "sender@example.test", INBOXES, 5)
++
++
++def test_n8_the_one_context_maker_names_tls_1_2_itself_even_if_the_library_default_is_lower(
++    monkeypatch: pytest.MonkeyPatch,
++) -> None:
++    """Kills the mutant that drops `ctx.minimum_version = TLSv1_2` from new_verifying_context. On this Python the
++    library default is already TLS 1.2, so only a library whose default is lower (simulated here) shows the line."""
++    from lead_desk import tls_trust
++
++    real = ssl.create_default_context
++
++    def low_default(*a: Any, **k: Any) -> ssl.SSLContext:
++        ctx = real(*a, **k)
++        ctx.minimum_version = ssl.TLSVersion.MINIMUM_SUPPORTED
++        return ctx
++
++    monkeypatch.setattr(tls_trust.ssl, "create_default_context", low_default)
++    ctx = tls_trust.new_verifying_context()
++    assert ctx.minimum_version == ssl.TLSVersion.TLSv1_2
++    assert ctx.verify_mode == ssl.CERT_REQUIRED and ctx.check_hostname
+diff --git a/tests/test_real_check_dry.py b/tests/test_real_check_dry.py
+index 822f1ec..9c4f169 100644
+--- a/tests/test_real_check_dry.py
++++ b/tests/test_real_check_dry.py
+@@ -697,7 +697,7 @@ def test_the_imap_module_marks_only_connection_errors_as_repeatable(
+         def boom(*_a: Any, _e: BaseException = raised, **_k: Any) -> Any:
+             raise _e
+ 
+-        monkeypatch.setattr(imaplib, "IMAP4_SSL", boom)
++        monkeypatch.setattr(imap_count, "_BoundedImap", boom)  # r7: the module connects with its own subclass
+         with pytest.raises(ImapCountError) as e:
+             imap_count.counts_by_key(box, "L")
+         assert isinstance(e.value, ImapConnectionError) is want_connection
+@@ -713,10 +713,14 @@ def test_the_repeat_count_is_in_the_f6_details() -> None:
+ 
+ 
+ class _StubImap:
+-    """A stand-in for imaplib.IMAP4_SSL: login and select can be made to fail."""
++    """A stand-in for imap_count._BoundedImap (the class the module connects with): login and select can fail."""
+ 
+     def __init__(self, login: BaseException | None = None, select: Any = None) -> None:
+         self._login, self._select = login, select
++        self.sock = type(
++            "S", (), {"version": staticmethod(lambda: "TLSv1.3")}
++        )()  # the handshake check reads the negotiated version
++        self.deadline = 0.0
+ 
+     def login(self, *_a: Any) -> None:
+         if self._login:
+@@ -743,21 +747,19 @@ class _StubImap:
+ def test_only_a_reset_after_a_good_login_is_repeated(
+     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, make: Any, repeatable: bool
+ ) -> None:
+-    import imaplib
+ 
+     from lead_desk import imap_count
+     from lead_desk.imap_count import ImapConnectionError, ImapCountError
+ 
+     pw = tmp_path / "pw.txt"
+     pw.write_text("pw-" + "for-" + "tests-" + "only\n", encoding="utf-8")
+-    monkeypatch.setattr(imaplib, "IMAP4_SSL", lambda *_a, **_k: make())
++    monkeypatch.setattr(imap_count, "_BoundedImap", lambda *_a, **_k: make())
+     with pytest.raises(ImapCountError) as e:
+         imap_count.counts_by_key(ImapSettings("h", "u", pw), "L")
+     assert isinstance(e.value, ImapConnectionError) is repeatable
+ 
+ 
+ def test_a_failure_after_the_total_time_limit_is_not_repeated(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+-    import imaplib
+     from types import SimpleNamespace
+ 
+     from lead_desk import imap_count
+@@ -771,7 +773,7 @@ def test_a_failure_after_the_total_time_limit_is_not_repeated(tmp_path: Path, mo
+ 
+     pw = tmp_path / "pw.txt"
+     pw.write_text("pw-" + "for-" + "tests-" + "only\n", encoding="utf-8")
+-    monkeypatch.setattr(imaplib, "IMAP4_SSL", lambda *_a, **_k: _StubImap(select=late_reset))
++    monkeypatch.setattr(imap_count, "_BoundedImap", lambda *_a, **_k: _StubImap(select=late_reset))
+     monkeypatch.setattr(imap_count, "time", SimpleNamespace(monotonic=lambda: now[0]))
+     with pytest.raises(ImapCountError) as e:
+         imap_count.counts_by_key(ImapSettings("h", "u", pw, total_seconds=10.0), "L")
+diff --git a/tests/test_reset_ps1_links.py b/tests/test_reset_ps1_links.py
+index 82821f4..0d109c8 100644
+--- a/tests/test_reset_ps1_links.py
++++ b/tests/test_reset_ps1_links.py
+@@ -7,11 +7,11 @@ from __future__ import annotations
+ 
+ import os
+ import re
+-import subprocess
+ import sys
+ from pathlib import Path
+ 
+ import pytest
++from support import run_program, text_file
+ 
+ REPO = Path(__file__).resolve().parents[1]
+ 
+@@ -62,8 +62,8 @@ def _check_code(text: str | None = None) -> str:
+ 
+ 
+ def _inside(folder: Path, cwd: Path) -> str:
+-    done = subprocess.run(  # noqa: S603 (our own snippet and a path made by the test)
+-        [sys.executable, "-c", _check_code(), str(folder)], cwd=cwd, capture_output=True, text=True, check=True
++    done = run_program(
++        [sys.executable, text_file(_check_code()), str(folder)], cwd=cwd, capture_output=True, text=True, check=True
+     )
+     return done.stdout.strip()
+ 
+diff --git a/tests/test_reset_scripts.py b/tests/test_reset_scripts.py
+index 875167e..79f3b6b 100644
+--- a/tests/test_reset_scripts.py
++++ b/tests/test_reset_scripts.py
+@@ -14,7 +14,7 @@ from pathlib import Path
+ from typing import Any
+ 
+ import pytest
+-from support import REPO, run_python, wait_until
++from support import REPO, popen_program, run_program, run_python, text_file, wait_until
+ 
+ WINDOWS = sys.platform == "win32"
+ 
+@@ -30,7 +30,7 @@ def _run(
+ ) -> subprocess.CompletedProcess[str]:
+     """first_on_path: a folder (holding a stand-in `python`) searched before this interpreter's folder; the
+     desk's own DESK_LEADFLOW_FILE and DESK_NUDGE_TO of the calling shell are then left out of the environment.
+-    code: shell text run with `shell -c` instead of the script file (not on Windows)."""
++    code: shell text run as a script file of its own instead of the script file (not on Windows)."""
+     env = {**os.environ, "DESK_DB_PATH": str(db), **extra}
+     env["PATH"] = str(Path(sys.executable).parent) + os.pathsep + env.get("PATH", "")
+     if first_on_path is not None:
+@@ -44,10 +44,8 @@ def _run(
+             pytest.skip("Windows PowerShell is not installed")
+         cmd = [powershell, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(REPO / "scripts" / script)]
+     else:
+-        cmd = [shell, "-c", code] if code is not None else [shell, str(REPO / "scripts" / script), *args]
+-    return subprocess.run(  # noqa: S603 (our own script and a path made by the test)
+-        cmd, cwd=REPO, env=env, capture_output=True, text=True, timeout=120, check=False
+-    )
++        cmd = [shell, text_file(code, ".sh")] if code is not None else [shell, str(REPO / "scripts" / script), *args]
++    return run_program(cmd, cwd=REPO, env=env, capture_output=True, text=True, timeout=120, check=False)
+ 
+ 
+ SCRIPT = "reset.ps1" if WINDOWS else "reset.sh"
+@@ -138,7 +136,7 @@ def test_reset_sh_refuses_when_the_desk_does_not_stop(book: Path) -> None:
+         "import signal, sys, time; signal.signal(signal.SIGTERM, signal.SIG_IGN)\n"
+         "open(sys.argv[2], 'w').close(); time.sleep(60)"
+     )
+-    slow = subprocess.Popen([sys.executable, "-c", code, "lead_desk.server", str(ready)])  # noqa: S603 (our own interpreter)
++    slow = popen_program([sys.executable, text_file(code), "lead_desk.server", str(ready)])
+     try:
+         wait_until(ready.exists, what="the child has installed its signal handler")
+         (book.parent / "desk.pid").write_text(str(slow.pid), encoding="utf-8")
+@@ -166,7 +164,7 @@ def test_reset_sh_waits_for_a_desk_that_needs_a_few_seconds_to_stop(book: Path)
+         "time.sleep(60)\n"
+     )
+     ready = book.parent / "ready"
+-    slow = subprocess.Popen([sys.executable, "-c", code, "lead_desk.server", str(ready)])  # noqa: S603 (our own interpreter)
++    slow = popen_program([sys.executable, text_file(code), "lead_desk.server", str(ready)])
+     try:
+         wait_until(ready.exists, what="the child has installed its signal handler")
+         (book.parent / "desk.pid").write_text(str(slow.pid), encoding="utf-8")
+@@ -192,11 +190,11 @@ def test_reset_sh_deletes_an_empty_pid_file(book: Path, name: str) -> None:
+ 
+ @pytest.mark.skipif(WINDOWS, reason="a process that ended but is not collected yet is a POSIX state")
+ def test_reset_sh_treats_a_pid_file_of_an_ended_but_uncollected_process_as_gone(book: Path) -> None:
+-    ended = subprocess.Popen([sys.executable, "-c", "pass"])  # noqa: S603 (our own interpreter)
++    ended = popen_program([sys.executable, text_file("pass")])
+ 
+     def uncollected() -> bool:  # not waited for: the process stays a zombie of this test until it is collected
+-        out = subprocess.run(  # noqa: S603 (ps with a number made here)
+-            ["ps", "-p", str(ended.pid), "-o", "stat="],  # noqa: S607
++        out = run_program(
++            ["ps", "-p", str(ended.pid), "-o", "stat="],
+             capture_output=True,
+             text=True,
+             check=False,
+@@ -221,7 +219,7 @@ def test_reset_refuses_a_stop_wait_that_is_not_a_plain_whole_number(book: Path,
+     is exit 2 before a process is stopped or a file is deleted."""
+     ready = book.parent / "ready"
+     code = "import sys, time; open(sys.argv[2], 'w').close(); time.sleep(60)"
+-    desk = subprocess.Popen([sys.executable, "-c", code, "lead_desk.server", str(ready)])  # noqa: S603 (our own interpreter)
++    desk = popen_program([sys.executable, text_file(code), "lead_desk.server", str(ready)])
+     try:
+         wait_until(ready.exists, what="the child is running")
+         (book.parent / "desk.pid").write_text(str(desk.pid), encoding="utf-8")
+@@ -342,7 +340,7 @@ while time.monotonic() < end:
+ 
+ 
+ def _start_all(
+-    tmp_path: Path, *args: str, pid_file: str = "", **env: str
++    tmp_path: Path, *args: str, pid_file: str = "", fifo: str = "", **env: str
+ ) -> tuple[subprocess.CompletedProcess[str], Path]:
+     """Run scripts/start_all.sh with the stub python first on PATH; returns the result and the stub's data folder."""
+     data = tmp_path / "data"
+@@ -352,6 +350,8 @@ def _start_all(
+     env.setdefault("STUB_DESK_PORT", str(_free_port()))
+     if pid_file:
+         (data / pid_file).write_text("1\n", encoding="utf-8")
++    if fifo:
++        os.mkfifo(data / fifo)  # a pipe where a log file should be
+     bin_dir = tmp_path / "bin"
+     bin_dir.mkdir()
+     stub = bin_dir / "python"
+@@ -524,13 +524,24 @@ def test_start_poll_constants_cover_the_bind_retry_and_the_script_reads_them() -
+         assert done.returncode == 0 and float(done.stdout) == want, (word, done.stdout, done.stderr)
+ 
+ 
++@pytest.mark.skipif(WINDOWS, reason="start_all.sh is the non-Windows script")
++@pytest.mark.parametrize("name", ["fakes.log", "desk.log"])  # a pid-file name that exists is refused earlier, with 2
++def test_start_all_sh_refuses_a_pipe_in_place_of_a_log_or_process_number_file(tmp_path: Path, name: str) -> None:
++    """Round 7B (review M6): a pipe named fakes.log used to let the script go on and end with exit code 0."""
++    done, data = _start_all(tmp_path, fifo=name)
++    assert done.returncode == 4, (done.returncode, done.stdout, done.stderr)
++    assert done.stdout == "" and len(done.stderr.strip().splitlines()) == 1, (done.stdout, done.stderr)
++    assert f"({name})" in done.stderr and "not a regular file" in done.stderr
++    assert not list(data.glob("launch-*.rec")), "a server was launched although a log path was a pipe"
++
++
+ @pytest.mark.skipif(WINDOWS, reason="start_all.sh is the non-Windows script")
+ @pytest.mark.parametrize("pid_file", ["fakes.pid", "desk.pid"])
+ def test_start_all_sh_refuses_when_either_pid_file_exists_and_starts_nothing(tmp_path: Path, pid_file: str) -> None:
+     """The pid-file check is the other rewritten [[ ]] test (two tests joined by ||): either file alone refuses."""
+     done, data = _start_all(tmp_path, pid_file=pid_file)
+-    assert done.returncode == 1, (done.stdout, done.stderr)
+-    assert "pid files exist" in done.stderr
++    assert done.returncode == 2, (done.stdout, done.stderr)  # 2 = refused (7B; was 1, a failed check)
++    assert done.stderr.strip() == "pid files exist: run scripts/reset.sh first", done.stderr
+     assert not list(data.glob("launch-*.rec")), "a server was launched although a pid file existed"
+     assert sorted(p.name for p in data.glob("*.pid")) == [pid_file]  # and the script wrote no pid file of its own
+ 
+@@ -634,8 +645,8 @@ def _run_limited(db: Path, **extra: str) -> subprocess.CompletedProcess[str] | N
+     env = {**os.environ, "DESK_DB_PATH": str(db), **extra}
+     env["PATH"] = str(Path(sys.executable).parent) + os.pathsep + env.get("PATH", "")
+     try:
+-        return subprocess.run(  # noqa: S603
+-            ["bash", str(REPO / "scripts" / "reset.sh")],  # noqa: S607
++        return run_program(
++            ["bash", str(REPO / "scripts" / "reset.sh")],
+             cwd=REPO,
+             env=env,
+             capture_output=True,
+diff --git a/tests/test_script_number_limits.py b/tests/test_script_number_limits.py
+index a6478aa..f537cf9 100644
+--- a/tests/test_script_number_limits.py
++++ b/tests/test_script_number_limits.py
+@@ -12,6 +12,7 @@ import sys
+ from pathlib import Path
+ 
+ import pytest
++from support import run_program
+ 
+ from lead_desk import constants
+ from load_tools import load_driver
+@@ -28,7 +29,7 @@ def _run(args: list[str], *, cwd: Path = REPO, with_pythonpath: bool = True) ->
+     if with_pythonpath:
+         env["PYTHONPATH"] = str(REPO / "src") + os.pathsep + str(REPO)
+     try:
+-        done = subprocess.run(  # noqa: S603
++        done = run_program(
+             [sys.executable, *args],
+             cwd=cwd,
+             env=env,
+@@ -237,16 +238,15 @@ def test_the_model_stand_in_reads_at_most_the_key_file_cap(
+     monkeypatch.setattr(sys, "argv", ["fake_model_server", "--port", "0", "--key-file", str(big)])
+     with pytest.raises(SystemExit) as seen:
+         fms.main()
+-    assert seen.value.code == constants.EXIT_REFUSED and reads == [cap]
++    assert seen.value.code == constants.EXIT_BAD_SETTING_OR_PATH and reads == [cap]
+     assert capsys.readouterr().out.strip() == "refused: --call-log or --key-file cannot be used: give a regular file"
+ 
+ 
+ def _desk_setting(word: str, env: dict[str, str]) -> tuple[int, str]:
+-    import subprocess
+     import sys
+ 
+     base = {k: v for k, v in os.environ.items() if not k.startswith("DESK_")}
+-    r = subprocess.run(  # noqa: S603
++    r = run_program(
+         [sys.executable, str(REPO / "scripts" / "desk_setting.py"), word],
+         capture_output=True,
+         text=True,
+diff --git a/tests/test_script_refusals_feed.py b/tests/test_script_refusals_feed.py
+index c8e5522..27ea486 100644
+--- a/tests/test_script_refusals_feed.py
++++ b/tests/test_script_refusals_feed.py
+@@ -20,6 +20,7 @@ import pytest
+ 
+ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+ from refusals import EXIT_REFUSED, EXIT_UNREACHABLE
++from support import run_program
+ 
+ REPO = Path(__file__).resolve().parents[1]
+ SCRIPTS = REPO / "scripts"
+@@ -32,7 +33,7 @@ def _run(args: list[str], cwd: Path = REPO, **env: str) -> tuple[int, str]:
+     """Run a script in its own process; returns (exit code, standard output + standard error)."""
+     base = {k: v for k, v in os.environ.items() if not k.startswith("DESK_")}
+     base.update(PYTHONPATH=str(REPO / "src"), PYTHONDONTWRITEBYTECODE="1", **env)
+-    done = subprocess.run(  # noqa: S603
++    done = run_program(
+         [sys.executable, *args], cwd=cwd, env=base, capture_output=True, text=True, timeout=60, stdin=subprocess.DEVNULL
+     )
+     return done.returncode, done.stdout + done.stderr
+diff --git a/tests/test_scrub_n8n_export.py b/tests/test_scrub_n8n_export.py
+index 20ab0f5..0218e90 100644
+--- a/tests/test_scrub_n8n_export.py
++++ b/tests/test_scrub_n8n_export.py
+@@ -10,6 +10,7 @@ import sys
+ from pathlib import Path
+ 
+ import pytest
++from support import run_program, text_file
+ 
+ from tools.scrub_n8n_export import _clean, scrub
+ 
+@@ -461,8 +462,8 @@ print(json.dumps(slow))
+ def test_each_pattern_scans_one_megabyte_of_its_worst_shapes_in_linear_time(name: str) -> None:
+     hard_stop = LIMIT_SECONDS * len(_worst_shapes(0)) + 30  # the sum of all limits and the start of Python
+     try:
+-        done = subprocess.run(  # noqa: S603 (our own interpreter and our own probe text)
+-            [sys.executable, "-c", _PROBE, str(REPO), name, str(LIMIT_SECONDS)],
++        done = run_program(
++            [sys.executable, text_file(_PROBE), str(REPO), name, str(LIMIT_SECONDS)],
+             input=json.dumps(_worst_shapes(BIG)),
+             capture_output=True,
+             text=True,
+diff --git a/tests/test_smtp_outbox.py b/tests/test_smtp_outbox.py
+index a9721bf..1557de3 100644
+--- a/tests/test_smtp_outbox.py
++++ b/tests/test_smtp_outbox.py
+@@ -15,7 +15,7 @@ from concurrent.futures import ThreadPoolExecutor
+ from pathlib import Path
+ 
+ import pytest
+-from support import HOST, REPO, free_port, wait_until
++from support import HOST, REPO, free_port, popen_program, wait_until
+ 
+ from lead_desk.config import Config
+ from lead_desk.contract import SendAmbiguous, SendNoDescriptors, SendRefused, SendUnreachable
+@@ -56,7 +56,7 @@ def catch(tmp_path: Path) -> Iterator[Catch]:
+         "--control",
+         str(control),
+     ]
+-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, text=True)  # noqa: S603
++    proc = popen_program(cmd, stdout=subprocess.PIPE, text=True)
+     try:
+         assert proc.stdout is not None
+         parts = proc.stdout.readline().split()
+diff --git a/tests/test_smtp_provider.py b/tests/test_smtp_provider.py
+index 5cded3d..ec72515 100644
+--- a/tests/test_smtp_provider.py
++++ b/tests/test_smtp_provider.py
+@@ -555,9 +555,9 @@ def test_one_call_is_bounded_in_total_not_only_per_step(certs: Certs, pwfile: Pa
+ def test_a_non_ascii_user_is_a_clear_fixed_error_not_a_crash(certs: Certs, pwfile: Path, servers: list[Any]) -> None:
+     srv = FakeImap(certs.cert, certs.key, HOST, {"INBOX": []})
+     servers.append(srv)
+-    s = ImapSettings(HOST, "usér", pwfile, port=srv.port, timeout_seconds=3.0, ssl_context=certs.ctx)
+-    with pytest.raises(ImapCountError, match="characters the mailbox login cannot carry"):
+-        counts_by_key(s, "L-")
++    with pytest.raises(ImapCountError, match="plain printable ASCII"):  # round 7: refused where the settings are made
++        ImapSettings(HOST, "usér", pwfile, port=srv.port, timeout_seconds=3.0, ssl_context=certs.ctx)
++    assert srv.commands == []  # no connection was made
+ 
+ 
+ def test_settings_do_not_print_addresses_or_paths() -> None:
+diff --git a/tests/test_special_output_files.py b/tests/test_special_output_files.py
+index d75d5ca..d4cf02c 100644
+--- a/tests/test_special_output_files.py
++++ b/tests/test_special_output_files.py
+@@ -300,12 +300,12 @@ def test_scrub_catcher_and_burst_driver_refuse_a_pipe_as_their_output(tmp_path:
+     scrub = run_script(REPO / "tools" / "scrub_n8n_export.py", str(tmp_path / "in.json"), str(tmp_path / "out"))
+     _answer_is_one_refusal(in_child(scrub, ""), "2", "refused: out.json: is not a regular file")
+     catcher = run_script(REPO / "load_tools" / "catcher.py", "--out", str(tmp_path / "out"), "--port", "0")
+-    _answer_is_one_refusal(in_child(catcher, ""), "2", "refused: --out: is not a regular file")
++    _answer_is_one_refusal(in_child(catcher, ""), "4", "refused: --out: is not a regular file")
+     driver = run_script(
+         REPO / "load_tools" / "load_driver.py",
+         *("--base-url", "http://127.0.0.1:9", "--scenario", "burst:1", "--log", str(tmp_path / "out")),
+     )
+-    _answer_is_one_refusal(in_child(driver, ""), "2", "ERROR: --log: is not a regular file")
++    _answer_is_one_refusal(in_child(driver, ""), "4", "ERROR: --log: is not a regular file")
+ 
+ 
+ @FIFO_SKIP
+@@ -324,7 +324,7 @@ def test_burst_driver_refuses_a_pipe_left_under_a_part_file_name(tmp_path: Path)
+             "1",
+         ),
+     )
+-    _answer_is_one_refusal(in_child(driver, ""), "2", "ERROR: --log: is not a regular file")
++    _answer_is_one_refusal(in_child(driver, ""), "4", "ERROR: --log: is not a regular file")
+     assert not (tmp_path / "burst.log").exists() and not (tmp_path / "burst.log.facts.json").exists()
+ 
+ 
+@@ -359,7 +359,7 @@ def test_fake_model_server_refuses_a_pipe_for_its_files_before_it_starts(tmp_pat
+     answer = in_child(run_script(script, flag, str(tmp_path / "p"), "--port", "0"), "")
+     # a pipe named for either option is refused by the path check (tools/pathconfine.py: its read path refuses a pipe,
+     # a device or a socket as the last part, like its write path) with its own line, before any open
+-    _answer_is_one_refusal(answer, "2", f"refused: {flag}: is not a regular file")
++    _answer_is_one_refusal(answer, "4", f"refused: {flag}: is not a regular file")
+ 
+ 
+ # ---------------------------------------------------------------- the lead book itself
+diff --git a/tests/test_tools_and_fakes_pipes.py b/tests/test_tools_and_fakes_pipes.py
+index d5c4ae1..07e4ef6 100644
+--- a/tests/test_tools_and_fakes_pipes.py
++++ b/tests/test_tools_and_fakes_pipes.py
+@@ -123,7 +123,9 @@ def test_the_read_path_of_pathconfine_refuses_a_pipe_as_the_last_part(pipe: Path
+ @pytest.mark.parametrize("case", ["invariants_jsonl", "invariants_crm", "invariants_facts", "invariants_drain"])
+ def test_the_invariants_checker_refuses_a_pipe_at_once(pipe: Path, case: str) -> None:
+     kind, _, text = _in_child(case, pipe).partition("|")
+-    assert kind == "InputError", (kind, text)
++    # r7 split the bad-path refusal into PathInputError (a subclass of InputError, exit 4); pin the exact class
++    assert kind == "PathInputError", (kind, text)
++    assert "is not a regular file" in text
+     assert "pipe-name" not in text
+ 
+ 
+diff --git a/tests/test_vendor_hosts.py b/tests/test_vendor_hosts.py
+index eed683e..49634ef 100644
+--- a/tests/test_vendor_hosts.py
++++ b/tests/test_vendor_hosts.py
+@@ -7,6 +7,8 @@ import subprocess
+ from pathlib import Path
+ from urllib.parse import urlsplit
+ 
++from support import run_program
++
+ from lead_desk import constants
+ 
+ REPO = Path(__file__).resolve().parents[1]
+@@ -35,8 +37,8 @@ def root_files(repo: Path) -> tuple[str, ...]:
+     """Every file at the top of the repository, dotfiles too: the ones git tracks (an untracked scratch note of whoever
+     runs the tests is not part of the repository); every file of the folder when git is not there or says nothing."""
+     try:
+-        done = subprocess.run(  # noqa: S603
+-            ["git", "ls-files", "-z"],  # noqa: S607
++        done = run_program(
++            ["git", "ls-files", "-z"],
+             cwd=repo,
+             capture_output=True,
+             text=True,
+@@ -86,12 +88,12 @@ def test_no_vendor_host_name_outside_constants_py() -> None:
+ 
+ def test_root_files_are_the_tracked_ones_not_an_untracked_scratch_file(tmp_path: Path) -> None:
+     git = ["git", "-c", "user.email=a@example.test", "-c", "user.name=a"]
+-    subprocess.run([*git, "init", "-q"], cwd=tmp_path, check=True)  # noqa: S603
++    run_program([*git, "init", "-q"], cwd=tmp_path, check=True)
+     (tmp_path / "README.md").write_text("x", encoding="utf-8")
+     (tmp_path / ".codeant.yaml").write_text("x", encoding="utf-8")
+     (tmp_path / "sub").mkdir()
+     (tmp_path / "sub" / "deep.md").write_text("x", encoding="utf-8")
+-    subprocess.run([*git, "add", "."], cwd=tmp_path, check=True)  # noqa: S603
++    run_program([*git, "add", "."], cwd=tmp_path, check=True)
+     (tmp_path / "scratch-notes.md").write_text("untracked", encoding="utf-8")
+     assert root_files(tmp_path) == (".codeant.yaml", "README.md")
+ 
+@@ -110,7 +112,7 @@ def test_root_files_fall_back_to_every_file_when_git_is_there_but_the_folder_is_
+     (tmp_path / "README.md").write_text("x", encoding="utf-8")
+     (tmp_path / "scratch-notes.md").write_text("x", encoding="utf-8")
+     monkeypatch.setenv("GIT_CEILING_DIRECTORIES", str(tmp_path.parent))  # never find a repository above the folder
+-    assert subprocess.run(["git", "rev-parse"], cwd=tmp_path, capture_output=True, check=False).returncode != 0  # noqa: S603, S607
++    assert run_program(["git", "rev-parse"], cwd=tmp_path, capture_output=True, check=False).returncode != 0
+     assert root_files(tmp_path) == ("README.md", "scratch-notes.md")
+ 
+ 

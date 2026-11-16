@@ -1,0 +1,18 @@
+== /tmp/p9
+'see //evil。com/p now' | card 'see //evil.com/p now' | gate(defang=False) 'see //evil.com/p now' | default 'see //evil.com/p now'
+'see //evil．com/p now' | card 'see //evil.com/p now' | gate(defang=False) 'see //evil.com/p now' | default 'see //evil.com/p now'
+'see //evil｡com/p now' | card 'see //evil.com/p now' | gate(defang=False) 'see //evil.com/p now' | default 'see //evil.com/p now'
+'visit www。evil。digital now' | card 'visit www[.]evil[.]digital now' | gate(defang=False) 'visit www.evil.digital now' | default 'visit www[.]evil[.]digital now'
+'mail anna。m@example。org now' | card 'mail <EMAIL_1> now' | gate(defang=False) 'mail anna.m@example.org now' | default 'mail anna.m@example[.]org now'
+'x `//evil。com/p` y' | card 'x `//evil。com/p` y' | gate(defang=False) 'x `//evil。com/p` y' | default 'x `//evil。com/p` y'
+'see //evil。com now' | card 'see //evil.com now' | gate(defang=False) 'see //evil.com now' | default 'see //evil.com now'
+'a http://evil。com/p b' | card 'a [link removed] b' | gate(defang=False) 'a [link removed] b' | default 'a [link removed] b'
+== /tmp/p10
+'see //evil。com/p now' | card 'see [link removed] now' | gate(defang=False) 'see [link removed] now' | default 'see //evil.com/p now'
+'see //evil．com/p now' | card 'see [link removed] now' | gate(defang=False) 'see [link removed] now' | default 'see //evil.com/p now'
+'see //evil｡com/p now' | card 'see [link removed] now' | gate(defang=False) 'see [link removed] now' | default 'see //evil.com/p now'
+'visit www。evil。digital now' | card 'visit www[.]evil[.]digital now' | gate(defang=False) 'visit www.evil.digital now' | default 'visit www[.]evil[.]digital now'
+'mail anna。m@example。org now' | card 'mail <EMAIL_1> now' | gate(defang=False) 'mail anna.m@example.org now' | default 'mail anna.m@example[.]org now'
+'x `//evil。com/p` y' | card 'x `//evil。com/p` y' | gate(defang=False) 'x `//evil。com/p` y' | default 'x `//evil。com/p` y'
+'see //evil。com now' | card 'see [link removed] now' | gate(defang=False) 'see [link removed] now' | default 'see //evil.com now'
+'a http://evil。com/p b' | card 'a [link removed] b' | gate(defang=False) 'a [link removed] b' | default 'a [link removed] b'

@@ -1,0 +1,2 @@
+warning: Failed to lint tests/fixtures/tid251_forms: No such file or directory (os error 2)
+count=0

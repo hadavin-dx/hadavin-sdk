@@ -1,0 +1,6 @@
+# PR90 round 2 security review (head 8d7b092): 0 Blocker, 4 Major, nits
+Workflow edit sound; --retry-all-errors does not weaken the checksum (sha256sum runs after curl exit 0).
+F1 Major: --log-opts=HEAD leaves non-ancestor history (unmerged branches, dangling commits, tags) unscanned, weekly cron too. Merge gating intact. Lead decision q400: accept, GitHub secret scanning + push protection ON; weekly report-only --all job later (low priority).
+F3 Major: failure handler (exit 1) outside pinned span (exit 0 passes). F4 Major: many bypasses (|| true variants, | cat, --exit-code=0, --config .toml.bak, continue-on-error, if:false). F5 Major: sha256 check unpinned; --retry 0 / --retry-max-time pass.
+Nits: F2 file named HEAD ambiguous (fails closed); F6 no --connect-timeout; F7 retries 404s; F8 other non-curl fetches (semgrep rules, trivy DB, pip-audit) have no retries; F9 comments should state narrowing; F10 fail-before evidence weak (rerun against head test file).
+Fixed in next push: pins now parse YAML, compare exact word lists, pin handler, step plainness (no continue-on-error/if/shell/env), fetch-depth 0, checksum line directly after each curl; 48 tests, 45 pass-by-mutation fixtures, 3 real-workflow tests fail on old ci.yml.

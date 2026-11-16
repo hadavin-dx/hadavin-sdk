@@ -1,0 +1,10 @@
+desc: source: AWS-style string with digits (from parts)
+build rc=0
+check rc=1
+C07 info: OWNER-SHEET-v28-A.md 6056, OWNER-CARD-v28-A.md 1372, OWNER-NUMBERS-v28-A.md 844, OWNER-FILM-v28.md 285 total 8557
+C07 info: OWNER-SHEET-v28-B.md 6035, OWNER-CARD-v28-B.md 1353, OWNER-NUMBERS-v28-B.md 859, OWNER-FILM-v28.md 285 total 8532
+check-v28: 4 failure(s)
+FAIL C49 A holds number 5678 (allowed: ['1,000,000', '10,000', '10000', '1500', '2026', '40,000', '40000'])
+FAIL C49 B holds number 5678 (allowed: ['1,000,000', '10,000', '10000', '1500', '2026', '40,000', '40000'])
+FAIL C55 A holds secret-shaped text (pattern \bAKIA(?!IOSFODNN7EXAM)
+FAIL C55 B holds secret-shaped text (pattern \bAKIA(?!IOSFODNN7EXAM)

@@ -1,0 +1,38 @@
+== T98 (r10, independent r9 run: over-long paths; a signal in the start-up window; the S603 lint; the exact limit (d) of plain --restore)
+Traceback (most recent call last):
+  File "/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/run.r9.py", line 2605, in <module>
+    main()
+  BAD root: exit 1
+Traceback (most recent call last):
+  File "/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/run.r9.py", line 2605, in <module>
+    main()
+  BAD name: exit 1
+REFUSED: --sha is not a commit id: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+Traceback (most recent call last):
+  File "/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/run.r9.py", line 2432, in main
+    safe_rel(root, m["file"], f"mutant {m['id']} file"), f"mutant {m['id']} target"
+  BAD file: exit 2
+Traceback (most recent call last):
+  File "/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/run.r9.py", line 2399, in main
+    check_pytest_config(root, tests)
+  BAD test: exit 2
+  FAIL: T98a a path over 4096 bytes (--root, a 300-byte name, --sha, --file, a test path) ends in a refusal, exit 2, no traceback: 4 of 5 wrong (r9: exit 1 or a traceback)
+usage: run.r9.py [-h] --root ROOT [--sha SHA] [--prefix PREFIX] [--raw RAW]
+                 [--list LIST] [--id ID] [--file FILE] [--old OLD] [--new NEW]
+                 [--desc DESC] [--control] [--no-control]
+  FAIL: T98b SIGINT during the module's start-up lines: the run ends with exit 130 and no traceback (got 0; r9: KeyboardInterrupt traceback, exit 1)
+noqa: [] direct Popen calls: 1
+  FAIL: T98c TEXT CHECK (greps the source; the real protection is T99a) no 'noqa' comment and no direct subprocess.Popen call (every program is started by the one class Child) (exit 1; r9: fails)
+/tmp/safety-only.s3Iocv.sh: line 70:   715 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: the saved backup differs from src/mod.py in the git archive given with --sha: the state folder may be forged or --sha is the wrong commit; nothing written. By hand: git show <sha>:src/
+/tmp/safety-only.s3Iocv.sh: line 70:  1705 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+test group already gone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r11/p1/tmpstate/hadavin-mutation-lane-0/1d7131bb507c0c4e.backup; hash matches
+  PASS: T98d GUARD (passes on r9 and r10 by design: it pins behaviour that did not change) limit (d): with --sha a forged marker+backup with a matching hash is NOT trusted: exit 3 (got 3), nothing written (last 'return2' = return2), swapped text written 0 times, marker kept; plain --restore trusts it (pinned limit): swapped text written 1 time(s), exit 0
+/tmp/safety-only.s3Iocv.sh: line 70:  1864 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: the mode in the marker (0o777) has other execute bits than src/mod.py in the git archive given with --sha (0o644): the marker may be forged; nothing written; the mutant may still be pl
+  PASS: T98e GUARD (same behaviour on r9 and r10) forged marker with mode 0777: --sha refuses it, exit 3 (got 3), nothing written (last 'return2' = return2)
+test group already gone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r11/p1/tmpstate/hadavin-mutation-lane-0/1d7131bb507c0c4e.backup; hash matches
+  PASS: T98e2 GUARD plain --restore with the same marker (pinned limit (d)): the file is restored to the recorded original, written with mode 0777 (got exit 0, mode 777; the special-bit case is T99b)
+missing ['plain --restore', 'forged'] no (d): True
+  FAIL: T98f TEXT CHECK the docstring states limit (d): plain --restore trusts a forged marker with a matching backup, only --sha closes it (exit 1; r9: fails)
+FAILED CHECKS: 4 (of 7 checks run; skipped: none)

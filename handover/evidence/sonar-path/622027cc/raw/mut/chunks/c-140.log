@@ -1,0 +1,12 @@
+sdk /home/user/build/E-work/mut-tree/src/hadavin_sdk/__init__.py
+ok  KILLED         S-hashing the last check does not require a file  [test_control_hash_files_says_not_a_file_for_a_missing_name_a] t=10s
+ok  KILLED         S-secrets_file a name is not folded and contained before the join (confined removed)  [test_control_secrets_file_refuses_a_name_that_leaves_the_fol] t=13s
+ok  KILLED         S-secrets_file the last check is removed (no join before the open)  [test_secrets_file_says_not_found_and_not_a_regular_file] t=15s
+ok  CRASH          S-secrets_file the folder of the secrets is not checked  [test_a_mounted_secret_folder_with_a_nul_in_its_name_is_a_con] t=16s
+ok  KILLED         S-local_dir the second join into corrupt is removed  [test_local_dir_reconcile_leaves_a_corrupt_file_when_its_name] t=17s
+ok  KILLED         S-local_dir a link in the outbox is unlinked through its target  [test_control_local_dir_reconcile_does_not_follow_a_link_to_a] t=18s
+ok  KILLED         S-signer the containment call is removed  [test_signer_key_path_refuses_a_parent_link_that_resolves_to_] t=20s
+ok  KILLED         S-bundle the manifest join is removed  [test_bundle_manifest_that_is_a_link_out_is_refused_with_the_] t=22s
+ok  KILLED         S-bundle the bundle folder is not checked  [test_bundle_folder_under_a_parent_with_a_control_character_i] t=23s
+ok  KILLED         S-bundle the listed name is not checked  [test_bundles_folder_entry_with_a_reserved_name_is_refused_as] t=25s
+SLICE 140:150 10 of 10 good; problems: []; elapsed 25s

@@ -1,0 +1,85 @@
+{\"password\": \"<masked>}
+{\"api_key\":\"<masked>, "x":1}
+"{\"token\": \"<masked>}"
+{"pass\u0077ord": "<masked>"}
+{"\u0070assword":"<masked>"}
+{"\u0061pi_key": <masked>}
+mysql -u root -p<masked> -h localhost
+mysql -h db -u root -p <masked> mydb
+mysql --password=<masked>
+mysql --password <masked> -u r
+sshpass -p <masked> ssh host
+cd /x && mysql -u a -p<masked>
+ls; mysql -u a -p<masked>
+cat f | mysql -u a -p<masked>
+(mysql -u a -p<masked>
+X=1 mysql -u a -p<masked>
+/usr/bin/mysql -u a -p<masked> db
+echo $(mysql -u a -p<masked>
+mysql -u a -p<masked> db
+mysql -u a -p<masked> db
+  mysql \
+    -p <masked> \
+    db
+DBPASS=<masked>
+ROOTPW=<masked>
+requirepass <masked>
+requirepass=<masked>
+masterauth <masked>
+jsessionid=<masked>
+<password><masked></password>
+<apiKey><masked></apiKey>
+<secret><masked></secret>
+password :<masked>
+db_password:<masked>
+token :<masked>
+api_key:<masked>
+CREATE USER x IDENTIFIED BY <masked>;
+ALTER USER x IDENTIFIED BY <masked>;
+identified   by  <masked>
+GRANT ALL TO u IDENTIFIED WITH mysql_native_password BY <masked>
+https://alice:<masked>@example.test/path
+postgres://bobby:<masked>@db.internal:5432/x
+//carol:<masked>@host/path
+ftp://dave:<masked>@h
+dave:<masked>@host.example.test
+user:<masked>@host:22
+git clone https://tok:<masked>@git.example.test/r.git
+https://ghuser:<masked>@host/
+Authorization: <masked>
+authorization: <masked>
+Authorization: <masked>
+curl -H 'Authorization: <masked>' u
+git config http.extraheader 'AUTHORIZATION: <masked>'
+git config --global url.https://u:<masked>@h/.insteadOf x
+git -c credential.helper=<masked> x
+[credential]
+  helper = !f() { echo password=<masked>
+[http]
+	extraHeader = Authorization: <masked>
+[url "https://u:<masked>@h/"]
+	insteadOf = x
+echo <masked> | sudo -S ls
+echo <masked> | kinit user
+echo <masked> | ssh-add
+secret_key: <masked>
+client_secret = <masked>
+AWS_SECRET_ACCESS_KEY=<masked>
+export PASSWORD=<masked>
+password == <masked>
+{'password': <masked>}
+password: [<masked>]
+password=<masked> next=1
+passwd=<masked>
+pwd=<masked>
+PRIVATE_KEY=<masked>
+x-api-key: <masked>
+apikey=<masked>
+?token=<masked>
+key = <masked>
+password	qzvxmrtkcx
+password : <masked>
+set password <masked>
+--password <masked>
+--token=<masked>
+-H "X-Auth-Token: <masked>"

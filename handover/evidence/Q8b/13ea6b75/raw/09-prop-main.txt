@@ -1,0 +1,56 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+## import /home/user/build/EV-Q8b-13ea6b75/fb_main/src/hadavin_sdk/__init__.py
+## walk: {'texts': 3000, 'not_idempotent': 1622, 'assignment_readable': 432, 'repeat_only_readable': 1}
+   assignment-readable by prefix: {'uppercase email': 101, 'percent': 94, 'email': 84, 'bearer': 38, 'email dot': 106, 'zwsp+email': 9}
+    NONIDEM 'bob.smith@example.com\u200bPASSWORD="<A> ok' -> '{"message": "<EMAIL_1>\\u200bPASSWORD=\\"<SECRET_1> ok"}'
+    NONIDEM "db01.corp.internalToken='<A> and more words" -> '{"message": "<HOSTNAME_1>.internalToken=\'<SECRET_1> and more words"}'
+    ASSIGN 'BOB@EXAMPLE.COMapikey\t=\t<A>\nmore' -> '{"message": "<EMAIL_1>\\t=\\t<A>\\nmore"}'
+    NONIDEM 'BOB@EXAMPLE.COMapikey\t=\t<A>\nmore' -> '{"message": "<EMAIL_1>\\t=\\t<A>\\nmore"}'
+    ASSIGN "user%40example.comToken='<A> ok" -> '{"message": "<EMAIL_1>=\'<A> ok"}'
+    NONIDEM "user%40example.comToken='<A> ok" -> '{"message": "<EMAIL_1>=\'<A> ok"}'
+    NONIDEM 'bob.smith@example.com\u200bpasswd = <A> and more words' -> '{"message": "<EMAIL_1>\\u200bpasswd = <SECRET_1> and more words"}'
+    NONIDEM "bob.smith@example.com\u200bapi_key='<A> ok" -> '{"message": "<EMAIL_1>\\u200bapi_key=\'<SECRET_1> ok"}'
+    NONIDEM 'bob@example.com.private_key":"<A> ok' -> '{"message": "<EMAIL_1>.private_key\\":\\"<SECRET_1> ok"}'
+    NONIDEM 'Authorization: Bearer bob.smith@example.com Token\t=\t<A>, next' -> '{"message": "Authorization: Bearer <EMAIL_1> Token\\t=\\t<SECRET_1> next"}'
+    NONIDEM 'bob.smith@example.com\u200btoken:<A>' -> '{"message": "<EMAIL_1>\\u200btoken:<SECRET_1>"}'
+    ASSIGN "BOB@EXAMPLE.COMpwd='<A>'" -> '{"message": "<EMAIL_1>=\'<A>\'"}'
+    NONIDEM "BOB@EXAMPLE.COMpwd='<A>'" -> '{"message": "<EMAIL_1>=\'<A>\'"}'
+    ASSIGN "BOB@EXAMPLE.COMpwd='<A> and more words" -> '{"message": "<EMAIL_1>=\'<A> and more words"}'
+    NONIDEM "BOB@EXAMPLE.COMpwd='<A> and more words" -> '{"message": "<EMAIL_1>=\'<A> and more words"}'
+    ASSIGN 'bob.smith@example.comsecret = <A> and more words' -> '{"message": "<EMAIL_1> = <A> and more words"}'
+    NONIDEM 'bob.smith@example.comsecret = <A> and more words' -> '{"message": "<EMAIL_1> = <A> and more words"}'
+    NONIDEM 'db01.corp.internalToken\t=\t<A>' -> '{"message": "<HOSTNAME_1>.internalToken\\t=\\t<SECRET_1>"}'
+    ASSIGN 'BOB@EXAMPLE.COMtoken\t=\t<A>"' -> '{"message": "<EMAIL_1>\\t=\\t<A>\\""}'
+    NONIDEM 'BOB@EXAMPLE.COMtoken\t=\t<A>"' -> '{"message": "<EMAIL_1>\\t=\\t<A>\\""}'
+    ASSIGN 'Authorization: Bearer db_password\t=\t<A>\nmore' -> '{"message": "Authorization: Bearer <SECRET_1>\\t=\\t<A>\\nmore"}'
+    NONIDEM 'bob.smith@example.com\u200bPASSWORD="<A>\nmore' -> '{"message": "<EMAIL_1>\\u200bPASSWORD=\\"<SECRET_1>\\nmore"}'
+    ASSIGN 'BOB@EXAMPLE.COMapikey=<A> and more words' -> '{"message": "<EMAIL_1>=<A> and more words"}'
+    NONIDEM 'BOB@EXAMPLE.COMapikey=<A> and more words' -> '{"message": "<EMAIL_1>=<A> and more words"}'
+    NONIDEM 'bob.smith@example.com\u200bToken=<A> and more words' -> '{"message": "<EMAIL_1>\\u200bToken=<SECRET_1> and more words"}'
+## card: {'texts': 3000, 'repeat_only_readable': 1524, 'assignment_readable': 38}
+   assignment-readable by prefix: {'bearer': 38}
+    ASSIGN 'Authorization: Bearer db_password\t=\t<A>\nmore' -> 'Authorization: Bearer <SECRET_1>\t=\t<A>\nmore'
+    ASSIGN 'Authorization: Bearer db_password: <A>, next' -> 'Authorization: Bearer <SECRET_1> <A>, next'
+    ASSIGN 'Authorization: Bearer client_secret":"<A>"' -> 'Authorization: Bearer <BEARER_1>":"<A>"'
+    ASSIGN "Authorization: Bearer client_secret='<A>'" -> "Authorization: Bearer <BEARER_1>'<A>'"
+    ASSIGN 'Authorization: Bearer client_secret: <A>.' -> 'Authorization: Bearer <BEARER_1>: <A>.'
+    ASSIGN 'Authorization: Bearer client_secret\t=\t<A>, next' -> 'Authorization: Bearer <BEARER_1>\t=\t<A>, next'
+    ASSIGN 'Authorization: Bearer client_secret":"<A>.' -> 'Authorization: Bearer <BEARER_1>":"<A>.'
+    ASSIGN "Authorization: Bearer private_key='<A>, next" -> "Authorization: Bearer <SECRET_1>'<A>, next"
+    ASSIGN "Authorization: Bearer access_token = <A>'" -> "Authorization: Bearer <BEARER_1> = <A>'"
+    ASSIGN 'Authorization: Bearer client_secret: <A> and more words' -> 'Authorization: Bearer <BEARER_1>: <A> and more words'
+    ASSIGN "Authorization: Bearer api_key='<A> and more words" -> "Authorization: Bearer <SECRET_1>'<A> and more words"
+    ASSIGN 'Authorization: Bearer access_token="<A>, next' -> 'Authorization: Bearer <BEARER_1>"<A>, next'
+    ASSIGN 'Authorization: Bearer access_token\t=\t<A>' -> 'Authorization: Bearer <BEARER_1>\t=\t<A>'
+    ASSIGN 'Authorization: Bearer db_password = <A>, next' -> 'Authorization: Bearer <SECRET_1> = <A>, next'
+    ASSIGN 'Authorization: Bearer private_key: <A>' -> 'Authorization: Bearer <SECRET_1> <A>'
+    ASSIGN 'Authorization: Bearer db_password\t=\t<A>.' -> 'Authorization: Bearer <SECRET_1>\t=\t<A>.'
+    ASSIGN 'Authorization: Bearer auth_token":"<A> ok' -> 'Authorization: Bearer <SECRET_1>":"<A> ok'
+    ASSIGN 'Authorization: Bearer client_secret\t=\t<A>, next' -> 'Authorization: Bearer <BEARER_1>\t=\t<A>, next'
+    ASSIGN "Authorization: Bearer PASSWORD='<A> and more words" -> "Authorization: Bearer <SECRET_1>'<A> and more words"
+    ASSIGN 'Authorization: Bearer access_token="<A> ok' -> 'Authorization: Bearer <BEARER_1>"<A> ok'
+    ASSIGN "Authorization: Bearer db_password='<A>, next" -> "Authorization: Bearer <SECRET_1>'<A>, next"
+    ASSIGN 'Authorization: Bearer private_key: <A>, next' -> 'Authorization: Bearer <SECRET_1> <A>, next'
+    ASSIGN "Authorization: Bearer PASSWORD='<A>, next" -> "Authorization: Bearer <SECRET_1>'<A>, next"
+    ASSIGN "Authorization: Bearer auth_token='<A>, next" -> "Authorization: Bearer <SECRET_1>'<A>, next"
+    ASSIGN "Authorization: Bearer auth_token = <A>'" -> "Authorization: Bearer <SECRET_1> = <A>'"

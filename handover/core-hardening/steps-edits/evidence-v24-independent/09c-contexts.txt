@@ -1,0 +1,12 @@
+78:. Ledger total 12.40: program limit = 12.40 + 0.81 = 13.21 (13.00 is ok, 13.50 is not). Money used 3.10 before and 
+---sheets: any 13/14 minute or limit text
+45: the balance running out; the program limit, the deadline setting, the ac
+---other-amounts-in-A
+      1 USD 0.27
+      2 USD 0.81
+      2 USD 15.00
+      3 USD 189.00
+      2 USD 3.00
+---OPEN other money
+      2 14.33 min
+78:is ok, 13.50 is not). Money used 3.10 before and 3.90 after: increase 0.80, not over 0.81 (4.00 would be).

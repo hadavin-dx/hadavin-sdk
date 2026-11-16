@@ -1,0 +1,12 @@
+tests/test_book_folder_refusals.py
+tests/test_cli_refusals.py
+tests/test_file_reader_refusals.py
+tests/test_lead_step_route.py
+tests/test_ledger_amounts.py
+tests/test_n8n_api_url.py
+tests/test_reset_scripts.py
+tests/test_script_refusals_feed.py
+tests/test_sonar_p2_feed_optional.py
+tests/test_special_files_and_plain_text.py
+tests/test_special_output_files.py
+tests/test_wrapper_setting_refusals.py

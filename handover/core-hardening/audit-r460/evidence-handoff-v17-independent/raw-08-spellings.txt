@@ -1,0 +1,28 @@
+FLAGGED 01 quoted mixed-case name "Evil"  -> x.sql: SECURITY DEFINER function Evil is not on the declared list
+FLAGGED 02 schema-qualified public.evil  -> x.sql: SECURITY DEFINER function evil is not on the declared list
+FLAGGED 03 CREATE FUNCTION (no OR REPLACE)  -> x.sql: SECURITY DEFINER outside a declared CREATE OR REPLACE FUNCTION: 'CREATE FUNCTION evil() RETURNS int LAN
+FLAGGED 04 ALTER FUNCTION evil() SECURITY DEFINER  -> x.sql: SECURITY DEFINER outside a declared CREATE OR REPLACE FUNCTION: 'ALTER FUNCTION evil() SECURITY DEFINER
+FLAGGED 05 mixed case SeCuRiTy dEfInEr  -> x.sql: SECURITY DEFINER function evil is not on the declared list
+FLAGGED 06 block comment between words  -> x.sql: SECURITY DEFINER function evil is not on the declared list
+FLAGGED 07 line comment between words  -> x.sql: SECURITY DEFINER function evil is not on the declared list
+FLAGGED 08 nested block comment between words  -> x.sql: SECURITY DEFINER function evil is not on the declared list
+FLAGGED 09 unicode-escaped identifier U&"ev\0069l"  -> x.sql: SECURITY DEFINER outside a declared CREATE OR REPLACE FUNCTION: 'CREATE OR REPLACE FUNCTION U&"ev\\0069
+FLAGGED 10 odd dollar tag $a_1$ body  -> x.sql: SECURITY DEFINER function evil is not on the declared list
+FLAGGED 11 token only in a DO block string (CREATE FUNCTION via EXECUTE)  -> x.sql: SECURITY DEFINER outside a declared CREATE OR REPLACE FUNCTION: "DO $$ BEGIN EXECUTE 'CREATE FUNCTION e
+MISSED  12 token built by concatenation in a DO block
+MISSED  13 token built with format('%s') in a DO block
+MISSED  14 token via E'' unicode escape in a DO block
+MISSED  15 token via chr(32) in a DO block
+FLAGGED 16 CREATE PROCEDURE  -> x.sql: SECURITY DEFINER outside a declared CREATE OR REPLACE FUNCTION: 'CREATE PROCEDURE evil() LANGUAGE sql S
+FLAGGED 17 ALTER ROUTINE evil() SECURITY DEFINER  -> x.sql: SECURITY DEFINER outside a declared CREATE OR REPLACE FUNCTION: 'ALTER ROUTINE evil() SECURITY DEFINER'
+FLAGGED 18 tab and newlines inside the token  -> x.sql: SECURITY DEFINER function evil is not on the declared list
+MISSED  19 double-quoted name containing '--' (guard comment-strip is not quote-aware?)
+MISSED  20 double-quoted name containing '/*' (opens guard block comment)
+MISSED  21 double-quoted name with -- , token AFTER it on the same line
+FLAGGED 22 unquoted name with $tag$ shape: evil$q$  -> x.sql: SECURITY DEFINER outside a declared CREATE OR REPLACE FUNCTION: 'CREATE OR REPLACE FUNCTION evil$q$() R
+FLAGGED 23 E'' string with \' hiding a statement boundary  -> x.sql: SECURITY DEFINER outside a declared CREATE OR REPLACE FUNCTION: "SELECT E'\\''; CREATE FUNCTION evil() 
+FLAGGED 24 token in statement preceded by a legit declared function (same statement via BEGIN ATOMIC mimic)  -> x.sql: SECURITY DEFINER outside a declared CREATE OR REPLACE FUNCTION: 'CREATE FUNCTION evil() RETURNS void LA
+MISSED  25 SECURITY DEFINER declared-name function but a 2nd same-named overload with other args
+CONTROL-OK C1 SECURITY INVOKER function[]
+CONTROL-OK C2 token only in a comment[]
+SUMMARY spellings=25 flagged=17 missed=8

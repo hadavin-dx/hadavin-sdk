@@ -1,0 +1,10 @@
+tests/contracts/test_secrets.py
+tests/stage_mutants.py
+tests/test_k5_tools.py
+tests/test_p2_postgres.py
+tests/test_p3b_neutral_audit.py
+tests/test_p4b_secrets.py
+tests/test_p7_store.py
+tests/test_s3_gate.py
+tests/test_stage_names.py
+tests/warden_port/test_audit_chain.py

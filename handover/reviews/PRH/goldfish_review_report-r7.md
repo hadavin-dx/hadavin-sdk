@@ -1,0 +1,78 @@
+Status: resolved
+
+# Goldfish Annotated Review Report (PR H batch 7, round 7)
+
+**Target:** branch `wip/cloud-prh-b7`, head `5f9df48e507f9128df40ad0b89c210f8067741d6` (hidden control characters). SECURITY and REDACTION path, no round cap. No person was available: recommended option for every item. Reviews (read only, nothing run): `prhb7-codebase-r7.md` (0 Blocker, 4 Major F1-F4, 2 Nit) and `prhb7-design-r7.md` (0 Blocker, 3 Major D1-D3, 6 Minor D4-D9, 1 Nit D10). Previous round: `goldfish_review_report-r6.md`. Independent evidence: `handover/evidence/PRH/5f9df48e/RESULTS.md`.
+
+**Evidence status (first).** ruff, format, bandit, `scan_repo`, gitleaks exit 0; `stage_mutants` 37 of 37; `prh_mutants` 100 of 100 as root and as user nobody; full pytest exit 0 (13058 passed, 1 skipped); module list after importing `hidden` is the ticket's list. NOT clean: (a) a hole remains. The runner's own fuzz (3096 texts: 24 hidden kinds at every cut position of 3 secrets plus 1500 random multi-cut texts) leaves 9 texts with an 8-character readable stretch of a made-up secret; all 9 are in the random multi-cut group; the same 9 on c802cc0f; main 1607. Of the 8 listed, 7 are windows of the example key and 1 is a window of the handed-out value (when ESC + OSC + ESC-backslash + ESC cut the value). This is a real defect of the class "several cuts in one value", assigned to batch 8 (Issue 4). (b) `pytest -m perf` alone: 1 failed, 61 passed; the failure is the known timing flake (also fails on main 3 of 3, 0.6 s; fix on `core/fix-timing-harness-flake`; not touched). (c) The perf compare printed only the 262,144-character rows (S1-S5 ratios 0.98, 0.86, 1.02, 0.90, 1.04; H1-H4 2.83, 3.43, 4.62, 3.30); no W row and no 65,536-character rows; the builder wrote H1-H4 2.65-4.57, so the notes disagree with the runner. (d) 16 files in the diff are outside the ticket's allowed list (`1-outside-allowed.txt`: `defaults.py`, `scrub_settings.py`, `test_k5_fixes3.py`, `prh_main_passes.json`, `test_prh_b7.py`, handover evidence files); ticket section 8.7 not checked by the runner. (e) fail-before: 62 failed, 2188 passed on c802cc0f; 46 of 95 new tests pass on old code, 49 fail (matches the builder). (f) Builder fuzz 3000 texts matches: head 143 withheld, 0 readable; main 0 withheld, 1408 readable; c802cc0f 102 withheld, 548 readable, 7 InputTooLarge. `equivalence_100.py` 7000 texts, 0 outputs differ. Ticket probes L1-L12, M2, G, F, B: head all masked except L6 and L12 on the untrusted path (no handed-out list); tool path masked; main leaked most. (g) The CI install `uv sync --locked --no-build` fails here; installed without `--no-build`. Not run: Python 3.12, CodeQL, SonarCloud, CodeRabbit, Vault tests, semgrep, pip-audit, zizmor, trivy.
+
+## Prioritized Findings & AI Suggestions
+
+### [Issue 1] [`codebase-details` F1 + `design` D1] - Severity: Major
+*   **Affected Scope:** `redact.py:836-847` (`gap_pattern`), `tools.py:1116-1119` (`_scrub`), `NOTES.md:10`, `SECURITY.md:15`, `CHANGELOG.md:6`, `tests/test_prh_b7.py:263-267`, `handover/questions-for-lead.md` (q-prh-spaced-secrets).
+*   **Discrepancy Description:** Issue 9 (a secret written with a space between its characters) is called "owner-only". For values the run already holds (map and sweep in `redact()`) or handed to a tool, no product choice exists: a space-tolerant match cannot match ordinary text unless it is that secret, and the machinery exists (`gap_pattern` between word characters, applied in `_scrub`). Only the unknown-secret half is a choice. The "three rows pinned" claim is false: one row exists, plain key, direct `redact()` only; nothing on the tool path, a handed-out value or a zero-width gap. "Not masked on any path" is imprecise: in `_scrub` a spaced copy of an all-word form can be masked. A value with a hyphen is not matched by the gap pattern either.
+*   ***AI Suggestion:*** PROPOSE FIX
+*   ***Justification:*** The known-value half is a defect; asking the owner about it wastes the owner's time. The unknown half stays a question with a measured number.
+*   ***Proposed Edit:*** (a) known values (12+ characters): optional space (and zero-width gap) between every pair of characters, linear-time pattern, in the map and sweep of `redact()` and in `_scrub`; rows on the direct path, the tool path, a handed-out value, a hyphenated value, zero-width; mutants. (b) unknown secrets: a check-only reading that collapses runs of 10+ single-character tokens separated by one space and acts only if the collapsed text matches a secret pattern that needs a letter-and-digit mix; measure on the clean corpus how many ordinary texts it changes and put the number in `q-prh-spaced-secrets`; ship it only if that rate is 0 on the clean corpus, otherwise leave it off behind a named constant and ask. Rewrite SECURITY.md and NOTES to say exactly which paths and values.
+
+### [Issue 2] [`codebase-details` F2 + `design` D2] - Severity: Major
+*   **Affected Scope:** `runmap.py:611-636, :1016-1022` (`_consuming_wins`); `redact.py:901-921, :1031-1033` (`compare_readings`); CHANGELOG item 4.
+*   **Discrepancy Description:** `compare_readings` is shared in name only. `new_map` is built from `work = dict(current)` and nothing removes entries, so it always holds every known value; `covers_first` is always true; only "same"/"second" is returned; "conflict" and `raise RedactionLimit` at `runmap.py:629-633` are dead; the real refusal is the `_PIECE` window check at `:634-635` (no new leak). `tests/test_prh_steps.py:161-169` passes non-superset maps. Mutants 92 and 97 hit only `redact.py`; none covers lines 629-633.
+*   ***AI Suggestion:*** PROPOSE FIX
+*   ***Justification:*** A claimed shared rule that cannot fire is a false safety claim.
+*   ***Proposed Edit:*** Pass the values each reading actually masks in its shown output (placeholders standing in `again` and `out`, resolved through the maps), so "conflict" is reachable; add a runmap-level test that fails when the call is removed and a mutant on 629-633; or drop the call and the claim. Choose by evidence: whichever the builder can show with a failing test on the old code.
+
+### [Issue 3] [`design` D3] - Severity: Major
+*   **Affected Scope:** `redact.py:993-1051`; `hidden.py:209-213, :328-344` (`leaves_text`, unused here).
+*   **Discrepancy Description:** The public `redact()` still shows 17+ characters of a key when an escape or opener eats its first capital letter and the map is fresh (same as main, not a regression): `redact(KEY + " AK" + ESC + "I" + KEY[2:])`, `redact(ESC + KEY)`, `redact("\x9b" + KEY)`. The character reading runs only for an open string (`:1020`); the `others` count check covers only `known` (empty on a fresh call). The tool and untrusted paths refuse via `_refuse_remnant` (`runmap.py:642-654`); the public function does not; r6 Issue 8 asked that it mask or withhold.
+*   ***AI Suggestion:*** PROPOSE FIX
+*   ***Justification:*** Same defect class as the evidence fuzz hole (Issue 4): a cut reading is not consulted.
+*   ***Proposed Edit:*** When `not hidden.leaves_text(text)`, run the character reading as a check only (as for an open string); a row per input above, each with the key not visible and a mutant; check identifier kinds (EMAIL, IPV4) cut copies, which `_refuse_remnant` skips (`runmap.py:651`), in the same change.
+
+### [Issue 4] [evidence: runner's fuzz] - Severity: Major
+*   **Affected Scope:** `guard/hidden.py`, `guard/runmap.py`, `guard/redact.py`; `handover/evidence/PRH/5f9df48e/ownfuzz-wt.log`, `8-ownfuzz-examples.log`.
+*   **Discrepancy Description:** 9 of 3096 texts (1500 random multi-cut) leave an 8-character readable stretch of a made-up secret on the head and on c802cc0f (main 1607); 7 are windows of the example key, 1 of the handed-out value (ESC + OSC + ESC-backslash + ESC cut the value). The builder's 3000-text fuzz measured 0 readable, so the builder's fuzz and the runner's differ in cut grammar.
+*   ***AI Suggestion:*** PROPOSE FIX
+*   ***Justification:*** A readable made-up-secret stretch after the fix is a defect, not a limitation; class "several cuts in one value" (combination of escape, string opener, terminator and ignorable).
+*   ***Proposed Edit:*** Reproduce the 9 (`8-ownfuzz-examples.log`, `rows.py` and the fuzz script are in the evidence folder), name the grammar of each, fix at the shared reading choke point (the combined reading of an escape string and its terminator), then re-run both fuzz sets (builder 3000, runner 3096) and report readable and withheld counts for the head and main; add the 9 as fixed rows and a property test over random multi-cut texts with a seeded generator.
+
+### [Issue 5] [`codebase-details` F3 + `design` D4] - Severity: Major
+*   **Affected Scope:** `tests/prh_mutants.py` (mutant 100, old 90); `equivalence_100.py`; `NOTES.md:73`.
+*   **Discrepancy Description:** Mutant 100 is called equivalent; the argument is sound by reading (every ignorable character is non-ASCII; `nfkc()` runs `canonical()` every round of `undo`, so `decodes()` never returns a view with one) but the evidence re-creates the removed code from memory (`with_extra_view`), covers only `prepare_output` and `error_reason` with HAND as the secret, and the 4000-text set encodes only A, K, I of the key; the 9000-text script for old mutant 90 is "in the scratchpad, not committed". The runner's `equivalence_100.py` 7000 texts, 0 differ, reproduces the builder's number but not the argument.
+*   ***AI Suggestion:*** PROPOSE FIX
+*   ***Justification:*** An equivalence claim needs an artifact a reviewer can run.
+*   ***Proposed Edit:*** A property test that no element of `runmap.decodes(t, characters=True)` or `tools._decoded_readings(t)` matches `IGNORABLE_RE` for generated texts including decoder-produced ones (`%e2%80%8b`, `&#x200b;`); commit the 9000-text script for old mutant 90 or drop its claim.
+
+### [Issue 6] [`codebase-details` F4 + `design` D6, D7, D8] - Severity: Major
+*   **Affected Scope:** `tests/test_prh_b7.py:66-69, 163-172, 235-240, 365-377, 399-417`; NOTES.md:41-58, :29-37; CHANGELOG line 6; `tests/prh_mutants.py` docstrings.
+*   **Discrepancy Description:** Tests that cannot fail: `test_b7_i5_a_string_opener_ended_by_a_bell` with an end of "\n" (5 of 10 params) splits the key in the input so `KEY not in out` cannot fail; `test_b7_i2_tools_catch_a_limit_and_withhold` asserts only `assert out`; `..._known_value_cut_by_any_opener_is_withheld` asserts `WITHHELD or not stands` and passes on c802cc0f; direct-path rows accept `out == WITHHELD_NOTE or ...` so a redactor withholding every text with a hidden item passes; the clean-corpus assertion at `:411` is vacuous for `with_copy=False`; over-withholding on the direct path is unmeasured (the 4.8% is tool path only); mutant numbers in docstrings off by one (guard "any opener" cites 91, 91 is "readings merged"; compare rule 93 vs 92; ignorable 94 vs 93); of 46 new tests that pass on old code the notes say "reason not traced" for about 30 rows (Issue 14 of r6 not met); the withheld-share causes bucket "readings or other" (92 of 143, 64%) is too coarse and the 7 "work limit" texts are not stated to be the Issue 2 texts; the CHANGELOG says "cause found" but the code converts the error to a note and does not remove the limit hit.
+*   ***AI Suggestion:*** PROPOSE FIX
+*   ***Justification:*** Cheap, at the same choke point, and the owner standard is evidence per test.
+*   ***Proposed Edit:*** Assert the placeholder in every row that must mask; a bound test on the withheld share (tool path and direct path, numbers on the clean corpus and the fuzz); fix the row with end "\n" (key whole in the input) or drop it; one line per each of the 46 (control and reason, killing mutant, or a fail-before proof); split "readings or other" by the branch that returned the note, say whether the 7 are the Issue 2 texts; fix mutant numbering; reword "cause found".
+
+### [Issue 7] [`design` D9] - Severity: Minor
+*   **Affected Scope:** `hidden.py:50-56, :164-177`.
+*   **Discrepancy Description:** U+0090, U+0098, U+009E, U+009F unterminated openers remove the rest of the line from the shown text; mojibake (`Ã` + U+0090, `Ã` + U+009F) triggers it; main kept the text. Evidence loss, not a leak; unmeasured.
+*   ***AI Suggestion:*** PROPOSE FIX
+*   ***Justification:*** Measure first; fix only if the loss matters.
+*   ***Proposed Edit:*** Measure on a mojibake sample (made-up text); if the loss is real treat these as removed characters unless a string terminator or BEL ends them within a short window (check-only reading stays); pin the outcome either way.
+
+### [Issue 8] [`codebase-details` F5 + `design` D5 + evidence (d)] - Severity: Nit
+*   **Affected Scope:** `tests/test_prh_b7.py:139`; `handover/evidence/PRH/b7/fuzz_classify.py:47`; `equivalence_100.py:24`; the 16 files outside the ticket's allowed list.
+*   **Discrepancy Description:** Three `noqa: S311` (the notes say two); the lint gate covers `src tests demos tools` only, so evidence-folder suppressions may be unneeded; 16 files outside the allowed list unchecked against ticket 8.7.
+*   ***AI Suggestion:*** PROPOSE FIX
+*   ***Justification:*** One-word rule: say what each suppression is for; no unexplained files.
+*   ***Proposed Edit:*** Remove the two evidence-folder suppressions if not linted, or use a seeded hand-written LCG in the test (re-record the 143-of-3000 and fuzz numbers); for each of the 16 files, check ticket 8.7 and write a reason in the notes, or revert it.
+
+### [Issue 9] [`codebase-details` F6 + `design` D10] - Severity: Nit
+*   **Affected Scope:** `hidden.py:40, :379-383`; `NOTES.md:37`; `redact.py:1002, :1018, :1048`; `tests/test_prh_b7.py:252`.
+*   **Discrepancy Description:** `hidden.py:40` says four space-like C0 characters (there are six: 0x0B, 0x0C, 0x1C-0x1F); NOTES.md:37 "583 texts made only of secrets" vs 527 in the final-tree column; `redact.py:1002` re-annotates `readings: bool` as a list; `characters_readings(text)` computed twice; `check_only` withholds the whole text when the character reading finds a value only inside a swallowed unterminated string body (stricter than needed, part of the 4.8%); literal U+0301 inside a string at `test_prh_b7.py:252` (ticket M8: escapes only); stale docstring at `hidden.py:379-383` (`Redactor.find` now also uses strip, strip_consuming, characters_readings).
+*   ***AI Suggestion:*** PROPOSE FIX
+*   ***Justification:*** Cheap, same files.
+*   ***Proposed Edit:*** Fix the count and docstrings; one annotation; compute once; replace the literal by an escape; measure whether the stricter-than-needed case can be narrowed without a new leak, and pin the choice.
+
+## Handoff counts
+Accepted (PROPOSE FIX): 9 (Issues 1-9; Issue 4 and parts of Issues 6, 8 come from the independent evidence). Contested: 0. Escalated: 1 part (Issue 1, unknown spaced-out secrets, goes to the lead with the measured number in `q-prh-spaced-secrets`; the known-value part is built). Declined: 0. Remaining unaddressed: none. Severity unchanged from the reviews (Issue 4 is an evidence item labelled Major because a made-up secret stretch of 8 characters stays readable, as in earlier rounds' evidence items; the lead may relabel).
+
+## Who fixes it
+One batch-8 builder on a new branch `core/prh-b8` from `5f9df48e`, plain push to `wip/cloud-prh-b8`. Files: `src/hadavin_sdk/guard/hidden.py`, `guard/runmap.py`, `guard/redact.py`, `tools.py`, `tests/prh_mutants.py`, `tests/test_prh_*.py`, `CHANGELOG.md`, `SECURITY.md`, builder notes, evidence scripts under `handover/evidence/PRH/b8/`. Gates once on the final head; fuzz re-run reported for head and main.

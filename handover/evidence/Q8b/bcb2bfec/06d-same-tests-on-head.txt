@@ -1,0 +1,23 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+........................................................................ [ 28%]
+........................................................................ [ 56%]
+................................................xxxxxxxxxxxxxxx......... [ 84%]
+...................................x.....                                [100%]
+=========================== short test summary info ============================
+XFAIL tests/test_q8b_credential_keys.py::test_x1_a_composite_value_is_masked_where_repeated - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x2_a_value_over_255_characters_is_masked_where_repeated - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x3_a_value_with_both_quote_marks_is_masked_where_repeated - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x4_a_value_nested_under_a_credential_key_is_masked_where_repeated - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x5_a_number_is_masked_where_repeated[under a credential key] - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x5_a_number_is_masked_where_repeated[env entry value] - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x6_a_respelled_copy_is_masked[base64] - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x6_a_respelled_copy_is_masked[capitals] - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x6_a_respelled_copy_is_masked[wrapped over two lines] - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x6_a_respelled_copy_is_masked[double space] - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x6_a_respelled_copy_is_masked[hex] - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x7_a_very_short_value_is_masked_where_repeated[1 character] - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x7_a_very_short_value_is_masked_where_repeated[2 characters] - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x7_a_very_short_value_is_masked_where_repeated[3 characters glued to a letter] - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_credential_keys.py::test_x8_the_copy_without_the_escape_sequence_is_masked - Q8d: sweep of registered secrets before the patterns
+XFAIL tests/test_q8b_random.py::test_x9_a_value_with_special_characters_is_masked_where_it_is_repeated - Q8d: sweep of registered secrets before the patterns
+241 passed, 16 xfailed in 37.92s

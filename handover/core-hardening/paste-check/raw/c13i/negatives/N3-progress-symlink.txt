@@ -1,0 +1,9 @@
+NEGATIVE N3-progress-symlink  setup: mv $EVD/PROGRESS.md $EVD/real.md; ln -s real.md $EVD/PROGRESS.md  VARX: 
+##### b37
+STOP LINK: PROGRESS.md is a symbolic link or not a plain file: nothing is written through it. Next: tell the builder.
+##### b37 exit=1
+##### b29
+runner lines in PROGRESS.md: 1 (must be 1 or more)
+P-3a done 2026-11-16T13:00Z
+strings.txt exists
+##### b29 exit=0

@@ -1,0 +1,5 @@
+tests/test_no_hardcoded_values.py rc=0 15 passed in 3.71s
+tests/test_no_reference_material.py rc=0 3 passed in 0.19s
+tests/test_scan_repo.py rc=0 31 passed in 10.39s
+tests/test_migration_numbers_guards.py rc=0 76 passed in 5.77s
+DONE

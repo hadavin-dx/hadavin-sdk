@@ -1,0 +1,13 @@
+........................................................................ [ 40%]
+........................................................................ [ 81%]
+...........................F....                                         [100%]
+=================================== FAILURES ===================================
+E   AssertionError: a stage changed after build (demo to pilot) was read as 'quiet'
+    assert 'quiet' == 'unconfirmed'
+      
+      - unconfirmed
+      + quiet
+/home/user/build/ER-pdbanner12-06ed/tests/test_mode_banner.py:3600: AssertionError: a stage changed after build (demo to pilot) was read as 'quiet'
+=========================== short test summary info ============================
+FAILED tests/test_mode_banner.py::test_a_stage_changed_after_build_reads_unconfirmed
+1 failed, 175 passed in 11.68s

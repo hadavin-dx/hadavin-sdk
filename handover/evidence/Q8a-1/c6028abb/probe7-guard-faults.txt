@@ -1,0 +1,38 @@
+baseline on real sources: violations 0 stale 0
+NOT SEEN F1 renamed variable (val = self.namespaces[0]; f-string of val)
+FOUND    F2 + with a variable prefix (prefix + self.namespaces[0])
+          -> prefix + self.namespaces[0]
+FOUND    F3 "%s" % name
+          -> 'bad %s' % name
+FOUND    F4 .format with a variable template
+          -> SourceError(tmpl.format(name))
+FOUND    F5 ", ".join(names)
+          -> SourceError(', '.join(names))
+FOUND    F6 msg += name
+          -> msg += name
+FOUND    F7 a logger not named log (audit.warning)
+          -> audit.warning('x %s', host)
+FOUND    F8 a comprehension variable
+          -> SourceError('; '.join((f'{t} bad' for t in self._cfg.namespaces)))
+NOT SEEN F9 attribute of an object not named settings (self._cfg.api_url)
+NOT SEEN F10 pass-through f'{exc}'
+NOT SEEN X1 rename through an unlisted loop-free assignment of a listed name (label = name; f'{label}')
+NOT SEEN X2 value through a helper function (def fmt(v): return f'bad {v}'; raise E(fmt(name)))
+NOT SEEN X3 percent with a dict (%(a)s % {'a': name})
+NOT SEEN X4 string.Template substitute
+NOT SEEN X5 print(name)
+FOUND    X6 warnings.warn(name)
+          -> warnings.warn(name)
+NOT SEEN X7 sys.stderr.write(name)
+NOT SEEN X8 logging with extra={'n': name}
+FOUND    X9 raise with the value as a non-first argument (raise E('x', name))
+          -> SourceError('x', name)
+NOT SEEN X10 exception notes (exc.add_note(name))
+NOT SEEN X11 str(exc) into a variable then a message (m = str(exc); raise E(m))
+NOT SEEN X12 format_map
+NOT SEEN X13 f-string with an unlisted variable (f'bad {thing}')
+NOT SEEN X14 dict/JSON body printed (json.dumps({'ns': name}))
+FOUND    X15 f-string of a listed name inside a nested call (f'{len(name)} {name!r}' via repr)
+          -> SourceError(repr(name))
+
+found 10 of 25 ; not seen: ['F1', 'F9', 'F10', 'X1', 'X2', 'X3', 'X4', 'X5', 'X7', 'X8', 'X10', 'X11', 'X12', 'X13', 'X14']

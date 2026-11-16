@@ -1,0 +1,14 @@
+uid=65534 HEAD 6ed7fa3b846c8563d07d7492e18eb769abddac5b tree 9841a42294a43df2f795eb7414eea4ef024ac4ff
+=== A: all mutants as uid 65534
+bash: line 1: /home/user/hadavin-sdk/handover/evidence/P89/3586dcc-cloud/04-nonroot.log.mut: Permission denied
+mutants_rc=1
+tail: cannot open '/home/user/hadavin-sdk/handover/evidence/P89/3586dcc-cloud/04-nonroot.log.mut' for reading: No such file or directory
+git status after:
+(end)
+=== B: step-3 files as uid 65534 (DSN set)
+ERROR: file or directory not found: tests/test_mutation_runner_keywords.py
+
+
+no tests ran in 0.00s
+pytest_rc=4
+exit=0

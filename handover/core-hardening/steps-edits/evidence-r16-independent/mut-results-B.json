@@ -1,0 +1,100 @@
+[
+ [
+  "B01 alarm 3 name drops now",
+  true,
+  true,
+  "FAIL r16 alarm names lacks 'named `10 minutes left: revoke the secret key for the model no",
+  "H9 alarm name missing `10 minutes left: revoke the secret key for the model now`"
+ ],
+ [
+  "B02 route B recommended -> A",
+  true,
+  false,
+  "FAIL r13 E-48 lacks the assistant recommends route B",
+  ""
+ ],
+ [
+  "B03 shred check (2) drop no space rule",
+  false,
+  false,
+  "",
+  ""
+ ],
+ [
+  "B04 K-A window 10 min -> 20 min words",
+  false,
+  false,
+  "",
+  ""
+ ],
+ [
+  "B05 step 21 heading time 18:19->18:21 consistent pair",
+  false,
+  false,
+  "",
+  ""
+ ],
+ [
+  "B06 step 22 heading deadline weekday Mon->Sun",
+  true,
+  true,
+  "FAIL E-55 apply: old not once in scratch",
+  "C2 weekday/date wrong: Sun 23 Nov"
+ ],
+ [
+  "B07 E-48 shred part (b) own list dropped",
+  true,
+  true,
+  "FAIL r15 E-48 G lacks 'YOUR OWN LIST'",
+  "H18 shred parts lack (b) the files on YOUR OWN LIST"
+ ],
+ [
+  "B08 key step E: the assistant never opens key file removed",
+  false,
+  false,
+  "",
+  ""
+ ],
+ [
+  "B09 D.3 no reply counts as more takes -> counts as no more takes",
+  false,
+  false,
+  "",
+  ""
+ ],
+ [
+  "B10 K step: revoke anyway wording",
+  false,
+  false,
+  "",
+  ""
+ ],
+ [
+  "B11 E-62 any other contact -> delete them",
+  true,
+  true,
+  "FAIL r16 F2 E-62 lacks 'you delete nothing and tell the assistant'",
+  "H21 E-62 lacks the stop rule"
+ ],
+ [
+  "B12 Hold row label HOLD removed (E-04)",
+  true,
+  true,
+  "FAIL HOLD blocks != 13 12",
+  "A8 E-04 hold row NEW label lacks [HOLD"
+ ],
+ [
+  "B13 key list screenshot crop dropped",
+  true,
+  false,
+  "FAIL r12 E-48 lacks no key characters",
+  ""
+ ],
+ [
+  "B14 take folder prefix rule weakened",
+  true,
+  false,
+  "FAIL r14 3f lacks followed by `/`",
+  ""
+ ]
+]

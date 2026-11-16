@@ -1,0 +1,19 @@
+## A: the head's test files as they are, over main's src
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+.....................................................................    [100%]
+==================================== ERRORS ====================================
+_________________ ERROR collecting tests/test_q8b_card_text.py _________________
+E   AttributeError: module 'hadavin_sdk.k1b.redaction' has no attribute '_ONLY_PLACEHOLDERS'
+______________ ERROR collecting tests/test_q8b_credential_keys.py ______________
+E   AttributeError: module 'hadavin_sdk.k1b.redaction' has no attribute '_ONLY_PLACEHOLDERS'
+__________ ERROR collecting tests/test_q8b_glued_and_whole_values.py ___________
+E   AttributeError: module 'hadavin_sdk.k1b.redaction' has no attribute '_ONLY_PLACEHOLDERS'
+__________________ ERROR collecting tests/test_q8b_random.py ___________________
+E   AttributeError: module 'hadavin_sdk.k1b.redaction' has no attribute '_ONLY_PLACEHOLDERS'
+=========================== short test summary info ============================
+ERROR tests/test_q8b_card_text.py - AttributeError: module 'hadavin_sdk.k1b.r...
+ERROR tests/test_q8b_credential_keys.py - AttributeError: module 'hadavin_sdk...
+ERROR tests/test_q8b_glued_and_whole_values.py - AttributeError: module 'hada...
+ERROR tests/test_q8b_random.py - AttributeError: module 'hadavin_sdk.k1b.reda...
+69 passed, 4 errors in 2.88s
+rc=1

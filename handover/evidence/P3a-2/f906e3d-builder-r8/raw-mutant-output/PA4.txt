@@ -1,0 +1,18 @@
+### tests/test_migration_postgres.py::test_a_parameter_grant_is_refused_however_the_migration_user_holds_it rc=1
+......FF                                                                 [100%]
+=================================== FAILURES ===================================
+_ test_a_parameter_grant_is_refused_however_the_migration_user_holds_it[member_noinherit-SET] _
+tests/test_migration_postgres.py:2512: in test_a_parameter_grant_is_refused_however_the_migration_user_holds_it
+    with pytest.raises(ConfigError, match="server settings it must not change") as e:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+_ test_a_parameter_grant_is_refused_however_the_migration_user_holds_it[member_noinherit-ALTER SYSTEM] _
+tests/test_migration_postgres.py:2512: in test_a_parameter_grant_is_refused_however_the_migration_user_holds_it
+    with pytest.raises(ConfigError, match="server settings it must not change") as e:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_a_parameter_grant_is_refused_however_the_migration_user_holds_it[member_noinherit-SET]
+FAILED tests/test_migration_postgres.py::test_a_parameter_grant_is_refused_however_the_migration_user_holds_it[member_noinherit-ALTER SYSTEM]
+2 failed, 6 passed in 1.01s
+

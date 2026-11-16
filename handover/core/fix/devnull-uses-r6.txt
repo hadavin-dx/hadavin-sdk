@@ -1,0 +1,31 @@
+tests/test_r4_refusals.py:41:            stdin=subprocess.DEVNULL,
+tests/test_r4_refusals.py:337:        "a part that is a file": "/dev/null/x.db",
+tests/test_reset_scripts.py:491:            stdin=subprocess.DEVNULL,
+tests/test_book_folder_refusals.py:56:    if Path("/dev/null").exists():
+tests/test_book_folder_refusals.py:57:        found["a device in the way"] = "/dev/null/" + TYPED + "/book.db"
+tests/test_book_folder_refusals.py:149:    assert 'mkdir -p "$data_dir" 2>/dev/null || { echo "' + line + '" >&2; exit 4; }' in sh
+tests/test_book_folder_refusals.py:179:        stdin=subprocess.DEVNULL,
+tests/test_script_refusals_feed.py:36:        [sys.executable, *args], cwd=cwd, env=base, capture_output=True, text=True, timeout=60, stdin=
+tests/test_shell_single_bracket.py:209:if ! command -v ps >/dev/null 2>&1 && { [ -e "$data_dir/desk.pid" ] || [ -e "$data_dir/fakes.pid" ]; 
+tests/test_shell_single_bracket.py:210:alive() { kill -0 "$1" 2>/dev/null && [ "$(ps -p "$1" -o stat= 2>/dev/null | cut -c1)" != "Z" ]; }
+tests/test_shell_single_bracket.py:212:    if [ "$(ps -p "$pid" -o stat= 2>/dev/null | cut -c1)" = "Z" ]; then what=""; fi
+tests/test_cli_refusals.py:61:        stdin=subprocess.DEVNULL,
+tests/test_script_number_limits.py:38:            stdin=subprocess.DEVNULL,
+tests/test_r5_refusals.py:45:            stdin=subprocess.DEVNULL,
+tests/test_file_reader_refusals.py:48:            stdin=subprocess.DEVNULL,
+tests/test_nosemgrep_form.py:466:n=$(cat "$COUNT_FILE" 2>/dev/null || echo 0); n=$((n + 1)); echo "$n" > "$COUNT_FILE"
+tests/test_no_terminal_questions.py:39:    sys.stdin = open(os.devnull, encoding="utf-8")  # no terminal: input() meets the end of the input
+tests/test_no_terminal_questions.py:108:                [*base, flag, huge], capture_output=True, text=True, timeout=20, stdin=subprocess.DE
+scripts/start_all.sh:12:case "$( (eval '[[ a == a ]]') 2>/dev/null && echo bash)" in bash) ;; *) echo "refused: run this script with bash (b
+scripts/start_all.sh:28:mkdir -p "$data_dir" 2>/dev/null || { echo "the desk refuses to start: the lead book folder cannot be made here (no 
+scripts/start_all.sh:47:  if ! kill -0 "$desk_pid" 2>/dev/null; then
+scripts/start_all.sh:51:  if (exec 3<>"/dev/tcp/127.0.0.1/$desk_port") 2>/dev/null; then break; fi
+scripts/run_live_check.py:90:        return os.path.samestat(os.fstat(fd), os.stat(os.devnull))
+scripts/reset.sh:7:case "$( (eval '[[ a == a ]]') 2>/dev/null && echo bash)" in bash) ;; *) echo "refused: run this script with bash (bash s
+scripts/reset.sh:29:if ! command -v ps >/dev/null 2>&1 && { [[ -e "$data_dir/desk.pid" ]] || [[ -e "$data_dir/fakes.pid" ]]; }; then
+scripts/reset.sh:34:alive() { kill -0 "$1" 2>/dev/null && [[ "$(ps -p "$1" -o stat= 2>/dev/null | cut -c1)" != "Z" ]]; }
+scripts/reset.sh:45:    pid="$(head -c 16 "$pidfile" 2>/dev/null | tr -d ' \t\r\n' || true)"
+scripts/reset.sh:52:    what="$(ps -p "$pid" -o args= 2>/dev/null || true)"
+scripts/reset.sh:53:    if [[ "$(ps -p "$pid" -o stat= 2>/dev/null | cut -c1)" == "Z" ]]; then what=""; fi
+scripts/reset.sh:56:        kill "$pid" 2>/dev/null || true
+src/lead_desk/desk.py:367:    the path is a file (`/dev/null/x.db`) is refused too (`make_book_folder` answers the rest: a read-only place).

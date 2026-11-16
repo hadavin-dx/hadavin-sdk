@@ -1,0 +1,5 @@
+NEGATIVE N3d-b25-control-normal  setup: :  VARX: 
+##### blocks/x-b25-sp.sh
+P-3a done 2026-11-16T13:00Z
+NOTE lead stand-in pid=4242 2026-11-16T12:49Z
+##### blocks/x-b25-sp.sh exit=0

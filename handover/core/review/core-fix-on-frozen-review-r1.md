@@ -1,0 +1,13 @@
+# Review round 1 of cap 2 (guarantee-class paths uncapped) of core-fix-on-frozen.patch. FALLBACK reviewer (general-purpose reading codebase_details persona), saved by the lead as a faithful condensed copy.
+Result: no secret or typed-value leak found on the key, SMTP password, HubSpot, n8n key, config or desk_setting paths; every reader read has a cap and fixed text; open_regular/open_output open first (O_NONBLOCK) then fstat on the handle, so no check-then-open gap there. 0 Blockers, 4 Majors, 2 Minors, 2 Nits.
+| id | sev | where | finding | fix |
+|---|---|---|---|---|
+| F1 | Major (mail, guarantee-class) | smtp_provider.py:193-207 _context_from_file; run_real_check.py:641 | FIFO as CA file hangs (OpenSSL opens the path itself; not tested for pipe) | read_regular_bytes with cap, ssl.create_default_context(cadata=...), refuse when no certificate loaded; FIFO/over-cap/empty tests |
+| F2 | Major | run_live_check.py:197 | EOFError traceback at the start question with closed stdin (terminal guard of run_real_check not ported; its control test was dropped) | copy the EOFError handling from run_real_check.py:969-973; test with stdin=DEVNULL |
+| F5 | Major (class sweep incomplete) | load_tools/check_invariants.py, catcher.py (control file, out.open("a")), load_driver.py, demo_only/fake_model_server.py:84, fakes.py:123, portal_demo.py:203 | readers/writers outside regfile still hang on a pipe (found by reading, not run); test docstring claim "every script reads through regfile" is false | make pathconfine _locate_existing refuse non-regular for reads; switch these to read_regular_text/open_output; FIFO test per tool; fix docstring |
+| F6 | Minor-to-Major | regfile.py:50-51,90; run_live_check.py:48; constants.py:175 | limits and vendor facts not all in constants; LIVE_EFFORTS unverified vs vendor page (F8 builder says it checked: list low, medium, high, xhigh, max) | move to constants, derive from one place |
+| F3 | Minor | hooks.py:41, trace.py:131 | crash-flag read uncapped, non-UTF-8 raises | read_regular_text + except (OSError, ValueError) |
+| F4 | Minor | regfile.py _FLAGS | no O_NOCTTY | add it |
+| F7/F8 | Nit | refusal text shows class names; tests use fork (no Windows) | plain phrase; skip without fork |
+Dropped tests: the control test "a good date reaches the no-terminal refusal" hid F2; two others need the real-run patches (ontop-3files.patch). Loosened assertions listed: 5 edits, none a deletion; test_n8n_api_url pins class names (F7).
+Not checked by the reviewer: Windows, F5 by an actual FIFO run, 22 old-code-pass tests individually. Round 1 of 2; F1 is mail-path (uncapped) so a second independent pass is needed after a fix.

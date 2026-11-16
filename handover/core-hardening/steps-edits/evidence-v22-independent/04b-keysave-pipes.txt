@@ -1,0 +1,13 @@
+1 normal paste + Enter             stdout='exit 0' stderr='' exists=True file mode=0o600 size=26 key_text_printed=False
+2 empty input (just Enter)         stdout='exit 1' stderr='' exists=False key_text_printed=False
+2b empty stdin (EOF / Ctrl-D)      stdout='exit 1' stderr='' exists=False key_text_printed=False
+2c spaces only                     stdout='exit 1' stderr='' exists=False key_text_printed=False
+3 no trailing newline              stdout='exit 1' stderr='' exists=False key_text_printed=False
+4 existing file (must not overwrite) stdout='exit 1' stderr='bash: line 1: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/ks/' exists=True file mode=0o644 size=4 key_text_printed=False
+   existing file content after = 'OLD\n'
+5 missing folder                   stdout='exit 1' stderr='bash: line 1: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/ks/' exists=False key_text_printed=False
+6 key with leading/trailing spaces stdout='exit 0' stderr='' exists=True file mode=0o600 size=26 key_text_printed=False
+   k6 content equals fake?  True
+7 two lines pasted (2nd line leftover) stdout='exit 0' stderr='' exists=True file mode=0o600 size=26 key_text_printed=False
+   k7 content has only first line: True
+   k1 content equals fake+newline: True

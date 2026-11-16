@@ -1,0 +1,6 @@
+# PR #73 head 6f2493a: result review round 1, design (a125a8c1). Saved by cloud session.
+No Blocker. 2 Major, 6 Nit. ruff/bandit exit 0; full 10656 tests 3.12/3.13, 0 failed, 1 skipped (bedrock). Not run: nothing run by reviewer; LEAD-ORDERS not read.
+M1: trigger comparison stricter than ticket (ticket: only D/R refused; O/A pass; replaced function body accepted limit V-g). Code refuses any change; no allow route; message "left the database session changed" wrong for triggers. Lead decides: amend ticket + named allow list, or restore D/R-only.
+M2: evidence has no FAIL-BEFORE run, no mutant run for the 36 mutants, perf deselected (28), no PG version recorded (CHANGELOG says 16 only, CI 17).
+N1 wheel-content test for migrations_released.json. N2 role check reads 4 flags only (no REPLICATION, no pg_execute_server_program membership); say so in CHANGELOG; refusal message should say how to make a plain role. N3 membership read is server-wide: false refusals on busy clusters. N4 conftest flips default via __kwdefaults__; add CLI-level test with real default. N5 Done criterion "grep 0006_evidence CHANGELOG prints a line" still fails (lines 14, 423, 428). N6 first CHANGELOG bullet too long, unexplained terms.
+Fine: single choke point, no new dependency, least-privilege negative tests exist, honest limits stated.

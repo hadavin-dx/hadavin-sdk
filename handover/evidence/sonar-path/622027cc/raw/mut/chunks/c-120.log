@@ -1,0 +1,12 @@
+sdk /home/user/build/E-work/mut-tree/src/hadavin_sdk/__init__.py
+ok  CRASH          S-causelist errors keep their chain (bad JSON)  [test_causelist_errors_carry_no_chain_for_bad_json_and_bad_ch] t=8s
+ok  KILLED         S-bundle errors keep their chain (bad log line)  [test_bundle_errors_carry_no_chain_for_a_bad_log_line_and_a_b] t=12s
+ok  KILLED         S-cli the report folder join is not guarded  [test_score_refuses_a_report_folder_that_is_a_link_out_of_the] t=16s
+ok  KILLED         S-config golden_dir and inputs_dir are not guarded  [test_site_config_folder_setting_with_a_control_character_is_] t=17s
+ok  KILLED         S-config confined does not delegate to pathguard  [test_site_config_confined_delegates_to_pathguard_and_keeps_i] t=19s
+ok  KILLED         S-signer key_path message holds the resolved key folder  [test_signer_key_path_refusal_text_holds_no_path] t=21s
+ok  KILLED         S-signer key_path symlink message holds the path  [test_signer_key_path_refusal_text_holds_no_path] t=22s
+ok  CRASH          S-signer key_path makes the folder before it checks the shape  [test_signer_key_path_checks_the_shape_before_it_makes_any_fo] t=24s
+ok  KILLED         S-local_dir a refused outcome is kept in memory  [test_local_dir_counts_a_refused_outcome_warns_once_and_keeps] t=25s
+ok  KILLED         S-local_dir the refused event id is printed  [test_local_dir_refuses_an_event_id_that_is_not_one_plain_fil] t=26s
+SLICE 120:130 10 of 10 good; problems: []; elapsed 27s

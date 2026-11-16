@@ -1,0 +1,31 @@
+PASS S01 attributes after the body: v17 flags=2 ; v16 flags=0  (v16 MISSES it)
+PASS S02 single-quoted body: v17 flags=2 ; v16 flags=0  (v16 MISSES it)
+PASS S03 BEGIN ATOMIC body, function not on the list: v17 flags=1 ; v16 flags=0  (v16 MISSES it)
+PASS S04 schema-qualified name not on the list: v17 flags=1 ; v16 flags=0  (v16 MISSES it)
+PASS S05 ALTER FUNCTION ... SECURITY DEFINER: v17 flags=1 ; v16 flags=0  (v16 MISSES it)
+PASS S06 CREATE PROCEDURE ... SECURITY DEFINER: v17 flags=1 ; v16 flags=0  (v16 MISSES it)
+PASS S07 one %I. hides a bare table statement: v17 flags=1 ; v16 flags=0  (v16 MISSES it)
+PASS S08 a comment inside the token: v17 flags=1 ; v16 flags=0  (v16 MISSES it)
+PASS S09 newline and tab inside the token: v17 flags=1 ; v16 flags=1
+PASS S10 DO block that creates one: v17 flags=1 ; v16 flags=0  (v16 MISSES it)
+PASS S11 search_path without pg_temp last: v17 flags=1 ; v16 flags=1
+PASS S12 search_path names public: v17 flags=1 ; v16 flags=1
+PASS S13 no search_path at all: v17 flags=1 ; v16 flags=1
+PASS S14 no REVOKE from PUBLIC: v17 flags=1 ; v16 flags=1
+PASS S15 GRANT EXECUTE to PUBLIC after the REVOKE: v17 flags=1 ; v16 flags=0  (v16 MISSES it)
+PASS S16 lower-case token and name in a quoted identifier: v17 flags=1 ; v16 flags=0  (v16 MISSES it)
+PASS S17 token in a function that is not OR REPLACE: v17 flags=1 ; v16 flags=1
+PASS S18 EXECUTE of a concatenated string: v17 flags=2 ; v16 flags=1
+PASS S19 bare UPDATE ONLY in a dollar body: v17 flags=1 ; v16 flags=1
+PASS S20 DB-3 style body without search_path: v17 flags=1 ; v16 flags=0  (v16 MISSES it)
+PASS real file 0001_core.sql: []
+PASS real file 0002_audit_chain.sql: []
+PASS real file 0003_approvals_tick.sql: []
+PASS real file 0004_audit_checkpoint_meta.sql: []
+PASS real file 0005_evidence.sql: []
+PASS real file spend_decrease_log.sql: []
+PASS real file spend_guarded_writes.sql: []
+PASS real file spend_nonneg.sql: []
+PASS real file spend_nonneg_finite.sql: []
+PASS real file spend_nonneg_upgrade.sql: []
+30 checks passed, 0 failed

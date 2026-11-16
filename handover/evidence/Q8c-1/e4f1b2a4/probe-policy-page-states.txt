@@ -1,0 +1,30 @@
+both-empty edited
+  --check rc=1 lines=13  first: policy page: secrets/vault never:{mount}/subkeys/*: the name is not found in a vendor source (verified is None) and has no PENDING_NAMES entry
+  --write rc=1 lines=13  first: policy page: secrets/vault never:{mount}/subkeys/*: the name is not found in a vendor source (verified is None) and has no PENDING_NAMES entry
+  --check rc=1 lines=13  first: policy page: secrets/vault never:{mount}/subkeys/*: the name is not found in a vendor source (verified is None) and has no PENDING_NAMES entry
+  page mentions: ['2026-11-11', '2026-12-11'] | no-review-date wording: False | nothing-waiting wording: False
+names-empty edited
+  --check rc=1 lines=6  first: policy page: secrets/vault never:{mount}/subkeys/*: the name is not found in a vendor source (verified is None) and has no PENDING_NAMES entry
+  --write rc=1 lines=6  first: policy page: secrets/vault never:{mount}/subkeys/*: the name is not found in a vendor source (verified is None) and has no PENDING_NAMES entry
+  --check rc=1 lines=6  first: policy page: secrets/vault never:{mount}/subkeys/*: the name is not found in a vendor source (verified is None) and has no PENDING_NAMES entry
+  page mentions: ['2026-11-11', '2026-12-11'] | no-review-date wording: False | nothing-waiting wording: False
+claims-empty edited
+  --check rc=1 lines=7  first: policy page: secrets/vault R17: has an unchecked claim (claims_unverified) and no PENDING_CLAIMS entry
+  --write rc=1 lines=7  first: policy page: secrets/vault R17: has an unchecked claim (claims_unverified) and no PENDING_CLAIMS entry
+  --check rc=1 lines=7  first: policy page: secrets/vault R17: has an unchecked claim (claims_unverified) and no PENDING_CLAIMS entry
+  page mentions: ['2026-11-11', '2026-12-11'] | no-review-date wording: False | nothing-waiting wording: False
+names-renewed edited
+  --check rc=0 lines=0  first: 
+  --write rc=0 lines=0  first: 
+  --check rc=0 lines=0  first: 
+  page mentions: ['2026-11-11', '2026-12-11'] | no-review-date wording: False | nothing-waiting wording: False
+claims-renewed edited
+  --check rc=0 lines=0  first: 
+  --write rc=0 lines=0  first: 
+  --check rc=0 lines=0  first: 
+  page mentions: ['2026-11-11', '2026-12-11'] | no-review-date wording: False | nothing-waiting wording: False
+one-name-renewed edited
+  --check rc=0 lines=0  first: 
+  --write rc=0 lines=0  first: 
+  --check rc=0 lines=0  first: 
+  page mentions: ['2026-11-11', '2026-12-11'] | no-review-date wording: False | nothing-waiting wording: False

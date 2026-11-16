@@ -1,0 +1,8 @@
+0dabf1fa7a2ed58e14b8bca13be1141ac59f9c71
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+<build-dir>/src/hadavin_sdk/__init__.py
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+tests/test_client_profile.py::test_t7d_three_refusals_come_in_one_error
+
+43 tests collected in 0.47s
+rc=0

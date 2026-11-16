@@ -1,0 +1,574 @@
+py_compile rc=0
+bash -n rc=0
+All checks passed!
+ruff check rc=0
+unformatted: File would be reformatted
+    --> run.py:194:25
+     |
+193  | )
+     - HANDLED_SIGNALS = tuple(sorted(int(x) for x in signal.valid_signals() if x not in _NOT_HANDLED))
+194  + HANDLED_SIGNALS = tuple(
+195  +     sorted(int(x) for x in signal.valid_signals() if x not in _NOT_HANDLED)
+196  + )
+197  | # `-p no:NAME` may only switch off one of these (review r3 safety Major A: `-p no:runner` runs NO test and every
+--------------------------------------------------------------------------------
+202  | PYTEST_INI_NAMES = ("pytest.ini", ".pytest.ini", "pytest.toml", ".pytest.toml")
+     - PYTEST_INI_SECTIONS = (("tox.ini", "pytest"), ("setup.cfg", "tool:pytest"))  # (file, section name)
+203  + PYTEST_INI_SECTIONS = (
+204  +     ("tox.ini", "pytest"),
+205  +     ("setup.cfg", "tool:pytest"),
+206  + )  # (file, section name)
+207  | # files that must not exist in any folder ABOVE --root (review r4 M2)
+--------------------------------------------------------------------------------
+252  |         SIG.allow = False
+     -         raise KeyboardInterrupt(SIG.first)  # unwinds through the `finally` that restores the file
+253  +         raise KeyboardInterrupt(
+254  +             SIG.first
+255  +         )  # unwinds through the `finally` that restores the file
+256  |
+--------------------------------------------------------------------------------
+305  |         )  # a FIFO must not block the open
+     -     except OSError as e:  # a link (ELOOP), missing, no permission: a refusal, not a traceback
+     -         raise Refused(f"state file {path} cannot be opened safely ({e.strerror}): refused") from e
+306  +     except (
+307  +         OSError
+308  +     ) as e:  # a link (ELOOP), missing, no permission: a refusal, not a traceback
+309  +         raise Refused(
+310  +             f"state file {path} cannot be opened safely ({e.strerror}): refused"
+311  +         ) from e
+312  |     with os.fdopen(fd, "rb") as fh:
+313  |         st = os.fstat(fh.fileno())
+314  |         if not stat.S_ISREG(st.st_mode) or st.st_uid != os.geteuid():
+     -             raise Refused(f"state file {path} is not a regular file owned by this user: refused")
+315  +             raise Refused(
+316  +                 f"state file {path} is not a regular file owned by this user: refused"
+317  +             )
+318  |         return fh.read()
+--------------------------------------------------------------------------------
+415  |             if e.errno == errno.ENXIO:  # a FIFO with no reader
+     -                 raise Refused(f"{path} is not a regular file (a FIFO): not written") from e
+416  +                 raise Refused(
+417  +                     f"{path} is not a regular file (a FIFO): not written"
+418  +                 ) from e
+419  |             if e.errno == errno.ELOOP:
+--------------------------------------------------------------------------------
+465  |                 raise
+     -             fd = os.open(name, base | os.O_RDWR | os.O_CREAT | os.O_EXCL, mode or 0o644, dir_fd=pfd)
+466  +             fd = os.open(
+467  +                 name,
+468  +                 base | os.O_RDWR | os.O_CREAT | os.O_EXCL,
+469  +                 mode or 0o644,
+470  +                 dir_fd=pfd,
+471  +             )
+472  |             created = writable = True
+--------------------------------------------------------------------------------
+491  |         elif mode is not None and writable and stat.S_IMODE(st.st_mode) != mode:
+     -             os.fchmod(fh.fileno(), mode)  # a test changed the mode of the file under test
+492  +             os.fchmod(
+493  +                 fh.fileno(), mode
+494  +             )  # a test changed the mode of the file under test
+495  |         already = fh.read() == saved
+--------------------------------------------------------------------------------
+529  |     try:
+     -         fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_NOFOLLOW | os.O_NONBLOCK, 0o644)
+530  +         fd = os.open(
+531  +             path, os.O_WRONLY | os.O_CREAT | os.O_NOFOLLOW | os.O_NONBLOCK, 0o644
+532  +         )
+533  |     except OSError as e:
+     -         raise Refused(f"output file {path} cannot be written safely ({e.strerror}): refused") from e
+534  +         raise Refused(
+535  +             f"output file {path} cannot be written safely ({e.strerror}): refused"
+536  +         ) from e
+537  |     with os.fdopen(fd, "w", encoding="utf-8") as fh:
+--------------------------------------------------------------------------------
+551  |     if path.is_symlink() or (path.exists() and not path.is_file()):
+     -         raise Refused(f"output path {path} is a symbolic link or not a regular file: refused")
+552  +         raise Refused(
+553  +             f"output path {path} is a symbolic link or not a regular file: refused"
+554  +         )
+555  |     if not path.parent.is_dir():
+--------------------------------------------------------------------------------
+560  |         raise Refused(f"output path {path} has more than one name (hard link): refused")
+     -     if root is not None and (path.parent.resolve() / path.name).is_relative_to(root.resolve()):
+561  +     if root is not None and (path.parent.resolve() / path.name).is_relative_to(
+562  +         root.resolve()
+563  +     ):
+564  |         raise Refused(
+--------------------------------------------------------------------------------
+572  |     except UnicodeDecodeError as e:
+     -         raise Refused(f"{rel} is not UTF-8 text: cannot plant a text mutant in it") from e
+573  +         raise Refused(
+574  +             f"{rel} is not UTF-8 text: cannot plant a text mutant in it"
+575  +         ) from e
+576  |
+--------------------------------------------------------------------------------
+588  |     variable in the caller's shell cannot point `git archive` or `git rev-parse` at another repository (review r5)."""
+     -     return {"PATH": os.environ.get("PATH", ""), "HOME": os.environ.get("HOME", ""), "LC_ALL": "C"}
+589  +     return {
+590  +         "PATH": os.environ.get("PATH", ""),
+591  +         "HOME": os.environ.get("HOME", ""),
+592  +         "LC_ALL": "C",
+593  +     }
+594  |
+--------------------------------------------------------------------------------
+622  |
+     - def safe_rel(base: pathlib.Path, rel, what: str, must_exist: bool = True) -> pathlib.Path:
+623  + def safe_rel(
+624  +     base: pathlib.Path, rel, what: str, must_exist: bool = True
+625  + ) -> pathlib.Path:
+626  |     """A relative path inside `base`: no absolute path, no `..`, no symbolic link on the way."""
+--------------------------------------------------------------------------------
+630  |     if pp.is_absolute() or ".." in pp.parts:
+     -         raise Refused(f"{what}: must be relative to the root and contain no '..': {rel!r}")
+631  +         raise Refused(
+632  +             f"{what}: must be relative to the root and contain no '..': {rel!r}"
+633  +         )
+634  |     real_base = base.resolve()
+--------------------------------------------------------------------------------
+638  |         if cur.is_symlink():
+     -             raise Refused(f"{what}: {rel!r} passes through a symbolic link ({part}): refused")
+639  +             raise Refused(
+640  +                 f"{what}: {rel!r} passes through a symbolic link ({part}): refused"
+641  +             )
+642  |     if not cur.resolve().is_relative_to(real_base):
+--------------------------------------------------------------------------------
+658  |             if dpath.is_symlink():  # os.walk lists but never enters it: record it (M-B)
+     -                 out[str(dpath.relative_to(root)) + "/"] = "symlinked folder:" + os.readlink(dpath)
+659  +                 out[str(dpath.relative_to(root)) + "/"] = (
+660  +                     "symlinked folder:" + os.readlink(dpath)
+661  +                 )
+662  |         for f in fns:
+--------------------------------------------------------------------------------
+684  |             out.append(
+     -                 pathlib.Path(re.sub(r"\\([0-7]{3})", lambda m: chr(int(m.group(1), 8)), parts[4]))
+685  +                 pathlib.Path(
+686  +                     re.sub(r"\\([0-7]{3})", lambda m: chr(int(m.group(1), 8)), parts[4])
+687  +                 )
+688  |             )
+--------------------------------------------------------------------------------
+696  |     for mp in mount_points():
+     -         if mp != root and mp.is_relative_to(root) and mp.relative_to(root).parts[0] not in SKIP_TOP:
+697  +         if (
+698  +             mp != root
+699  +             and mp.is_relative_to(root)
+700  +             and mp.relative_to(root).parts[0] not in SKIP_TOP
+701  +         ):
+702  |             raise Refused(
+--------------------------------------------------------------------------------
+750  |     cp = run_cmd(
+     -         [tool("git"), "-C", str(top), "rev-parse", "--verify", "--quiet", f"{sha}^{{commit}}"]
+751  +         [
+752  +             tool("git"),
+753  +             "-C",
+754  +             str(top),
+755  +             "rev-parse",
+756  +             "--verify",
+757  +             "--quiet",
+758  +             f"{sha}^{{commit}}",
+759  +         ]
+760  |     )
+761  |     full = cp.stdout.decode(errors="replace").strip()
+762  |     # review r6 nit 7: a short hex that is also the name of a branch or tag resolves to the REF; the id must start with
+763  |     # exactly the hex that was typed, or the commit is not the one the user named
+     -     if cp.returncode != 0 or not FULL_SHA_RE.fullmatch(full) or not full.startswith(sha.lower()):
+764  +     if (
+765  +         cp.returncode != 0
+766  +         or not FULL_SHA_RE.fullmatch(full)
+767  +         or not full.startswith(sha.lower())
+768  +     ):
+769  |         raise Refused(
+--------------------------------------------------------------------------------
+775  |
+     - def build_reference(repo: str, sha: str, patches: list[str], dest: pathlib.Path) -> None:
+776  + def build_reference(
+777  +     repo: str, sha: str, patches: list[str], dest: pathlib.Path
+778  + ) -> None:
+779  |     """Fresh `git archive <sha>` extract (+ patches) into dest: the one source of truth for original bytes."""
+780  |     if not SHA_RE.fullmatch(sha):
+781  |         raise Refused(f"--sha is not a commit id: {sha!r}")
+     -     top = repo_toplevel(repo)  # archive from the top: a subfolder would archive only itself
+782  +     top = repo_toplevel(
+783  +         repo
+784  +     )  # archive from the top: a subfolder would archive only itself
+785  |     arc = run_cmd([tool("git"), "-C", str(top), "archive", sha])
+--------------------------------------------------------------------------------
+824  |
+     - def refuse_real_repo(root: pathlib.Path, repo: str | None, extra_real: list[str]) -> None:
+825  + def refuse_real_repo(
+826  +     root: pathlib.Path, repo: str | None, extra_real: list[str]
+827  + ) -> None:
+828  |     """`repo` None (only for --restore with no --repo given): the repository of --repo is not looked up, so a
+--------------------------------------------------------------------------------
+849  |             )
+     -     inside = run_cmd([tool("git"), "-C", str(root), "rev-parse", "--is-inside-work-tree"])
+850  +     inside = run_cmd(
+851  +         [tool("git"), "-C", str(root), "rev-parse", "--is-inside-work-tree"]
+852  +     )
+853  |     said = text_of(inside)
+854  |     if inside.returncode == 0 and said.endswith("true"):
+     -         raise Refused(f"--root {root} is inside a git work tree: use a plain scratch copy")
+855  +         raise Refused(
+856  +             f"--root {root} is inside a git work tree: use a plain scratch copy"
+857  +         )
+858  |     if inside.returncode != 0 and "not a git repository" not in said.lower():
+--------------------------------------------------------------------------------
+966  |     # Never a guess: without the command and the start time of the run nothing is stopped.
+     -     head, full, run_start = m.get("cmd_head"), m.get("cmd_argv"), m.get("run_start_ticks")
+967  +     head, full, run_start = (
+968  +         m.get("cmd_head"),
+969  +         m.get("cmd_argv"),
+970  +         m.get("run_start_ticks"),
+971  +     )
+972  |     want = full if isinstance(full, list) else head
+--------------------------------------------------------------------------------
+1012 |         )
+     -         want = m.get("cmd_argv") if isinstance(m.get("cmd_argv"), list) else m.get("cmd_head")
+1013 +         want = (
+1014 +             m.get("cmd_argv")
+1015 +             if isinstance(m.get("cmd_argv"), list)
+1016 +             else m.get("cmd_head")
+1017 +         )
+1018 |         has_command = (
+     -             isinstance(want, list) and bool(want) and isinstance(m.get("run_start_ticks"), int)
+1019 +             isinstance(want, list)
+1020 +             and bool(want)
+1021 +             and isinstance(m.get("run_start_ticks"), int)
+1022 |         )
+--------------------------------------------------------------------------------
+1043 |         except OSError as e:
+     -             notes.append(f"could NOT stop test group {g} ({e.strerror or e}): file restored anyway")
+1044 +             notes.append(
+1045 +                 f"could NOT stop test group {g} ({e.strerror or e}): file restored anyway"
+1046 +             )
+1047 |             settled = False
+--------------------------------------------------------------------------------
+1064 |     spots = {p.resolve() for p in STATE_PARENTS}
+     -     spots |= {pathlib.Path(v).resolve() for v in map(os.environ.get, ("TMP", "TEMP")) if v}
+1065 +     spots |= {
+1066 +         pathlib.Path(v).resolve() for v in map(os.environ.get, ("TMP", "TEMP")) if v
+1067 +     }
+1068 |     notes = []
+--------------------------------------------------------------------------------
+1074 |             st = os.lstat(folder)
+     -             if not stat.S_ISDIR(st.st_mode) or st.st_uid != os.geteuid() or st.st_mode & 0o077:
+1075 +             if (
+1076 +                 not stat.S_ISDIR(st.st_mode)
+1077 +                 or st.st_uid != os.geteuid()
+1078 +                 or st.st_mode & 0o077
+1079 +             ):
+1080 |                 raise Refused(
+1081 |                     f"state folder {folder} is not a plain folder owned by this user with mode 700"
+1082 |                 )
+1083 |             m = load_marker(folder / f"{key}.planted.json")
+     -             if m.get("root") != str(root) or m.get("backup") != str(folder / f"{key}.backup"):
+1084 +             if m.get("root") != str(root) or m.get("backup") != str(
+1085 +                 folder / f"{key}.backup"
+1086 +             ):
+1087 |                 raise Refused("its marker does not belong to this root")
+--------------------------------------------------------------------------------
+1143 |     control_ok, control = (
+     -         restore_control(root, key) if os.path.lexists(control_marker_path(key)) else (True, None)
+1144 +         restore_control(root, key)
+1145 +         if os.path.lexists(control_marker_path(key))
+1146 +         else (True, None)
+1147 |     )
+--------------------------------------------------------------------------------
+1158 |     if sha256(saved) != m["orig_sha256"]:
+     -         raise Refused("the saved backup does not match the hash recorded in the marker: refused")
+1159 +         raise Refused(
+1160 +             "the saved backup does not match the hash recorded in the marker: refused"
+1161 +         )
+1162 |     # From here the marker, the backup and its hash are VALID: whatever fails now is a failed restore (exit 3, the mutant
+--------------------------------------------------------------------------------
+1169 |         mode = (
+     -             m.get("mode") if isinstance(m.get("mode"), int) and 0 <= m["mode"] <= 0o777 else 0o644
+1170 +             m.get("mode")
+1171 +             if isinstance(m.get("mode"), int) and 0 <= m["mode"] <= 0o777
+1172 +             else 0o644
+1173 |         )
+--------------------------------------------------------------------------------
+1337 |
+     - def import_check(root: pathlib.Path, pythonpath: str | None, files: list[str]) -> dict[str, str]:
+1338 + def import_check(
+1339 +     root: pathlib.Path, pythonpath: str | None, files: list[str]
+1340 + ) -> dict[str, str]:
+1341 |     """For each target file: import its module in the SAME environment and folder the tests use and
+--------------------------------------------------------------------------------
+1359 |             cp = run_cmd(
+     -                 [str(py), "-c", code, mod], cwd=root, env=test_env(pythonpath), timeout=300
+1360 +                 [str(py), "-c", code, mod],
+1361 +                 cwd=root,
+1362 +                 env=test_env(pythonpath),
+1363 +                 timeout=300,
+1364 |             )
+1365 |         except subprocess.TimeoutExpired as e:
+1366 |             raise Refused(f"import check of {mod} timed out after 300 s") from e
+     -         except OSError as e:  # the interpreter cannot be started, the folder is gone ...
+     -             raise Refused(f"import check of {mod} cannot start: {e.strerror or e}") from e
+1367 +         except (
+1368 +             OSError
+1369 +         ) as e:  # the interpreter cannot be started, the folder is gone ...
+1370 +             raise Refused(
+1371 +                 f"import check of {mod} cannot start: {e.strerror or e}"
+1372 +             ) from e
+1373 |         if cp.returncode != 0:
+--------------------------------------------------------------------------------
+1377 |         got = (
+     -             cp.stdout.decode(errors="replace").strip().splitlines()[-1] if cp.stdout.strip() else ""
+1378 +             cp.stdout.decode(errors="replace").strip().splitlines()[-1]
+1379 +             if cp.stdout.strip()
+1380 +             else ""
+1381 |         )
+--------------------------------------------------------------------------------
+1420 |
+     - def sweep_group(pgid: int, started_ticks: int | None = None, ended_ticks: int | None = None) -> str:
+1421 + def sweep_group(
+1422 +     pgid: int, started_ticks: int | None = None, ended_ticks: int | None = None
+1423 + ) -> str:
+1424 |     """After the leader has ended: stop what is still alive in its process group (a test may have started a
+--------------------------------------------------------------------------------
+1431 |         ours = [
+     -             q for q in left if (qs := proc_stat(q)) and started_ticks <= qs["start"] <= ended_ticks
+1432 +             q
+1433 +             for q in left
+1434 +             if (qs := proc_stat(q)) and started_ticks <= qs["start"] <= ended_ticks
+1435 |         ]
+--------------------------------------------------------------------------------
+1513 |             deliver_pending()  # a signal remembered during the start (control run: nothing is planted)
+     -             if on_start:  # inside the try: a failure here must still stop the group (review 4 M2)
+1514 +             if (
+1515 +                 on_start
+1516 +             ):  # inside the try: a failure here must still stop the group (review 4 M2)
+1517 |                 on_start(proc.pid)
+     -             SIG.allow = True  # only now may a signal unwind us while a mutant is planted
+1518 +             SIG.allow = (
+1519 +                 True  # only now may a signal unwind us while a mutant is planted
+1520 +             )
+1521 |             deliver_pending()  # a signal that came earlier (during the planting) is delivered here
+--------------------------------------------------------------------------------
+1525 |             except subprocess.TimeoutExpired:
+     -                 SIG.allow = (
+     -                     False  # first: nothing in the cleanup below may be cut short by a signal
+     -                 )
+1526 +                 SIG.allow = False  # first: nothing in the cleanup below may be cut short by a signal
+1527 |                 stop_or_kill(
+1528 |                     proc
+1529 |                 )  # a failure to stop the group is no reason to lose the result (review r4 T46)
+     -                 rest = reap(proc)  # a second communicate() returns everything printed so far
+     -                 out = (
+     -                     f"TIMEOUT after {timeout} s\n--- output printed before the timeout ---\n{rest}"
+     -                 )
+1530 +                 rest = reap(
+1531 +                     proc
+1532 +                 )  # a second communicate() returns everything printed so far
+1533 +                 out = f"TIMEOUT after {timeout} s\n--- output printed before the timeout ---\n{rest}"
+1534 |                 rc = None
+--------------------------------------------------------------------------------
+1553 |         return result
+     -     except (
+     -         BaseException
+     -     ):  # a signal while the tests run, or a failure: stop the group, let the caller restore
+1554 +     except BaseException:  # a signal while the tests run, or a failure: stop the group, let the caller restore
+1555 |         SIG.allow = False  # first statement: nothing below can raise a second time
+--------------------------------------------------------------------------------
+1559 |             if proc.returncode is None and unreaped_child(proc.pid):
+     -                 stop_group(proc.pid)  # a group that is already gone must not hide the signal
+1560 +                 stop_group(
+1561 +                     proc.pid
+1562 +                 )  # a group that is already gone must not hide the signal
+1563 |             elif proc.returncode is not None:
+1564 |                 # leader ended already: stop members that outlived it (only those that started before now)
+1565 |                 sweep_group(proc.pid, leader_start, boot_ticks())
+     -         except (
+     -             OSError
+     -         ):  # the group could not be stopped (e.g. no permission): at least stop the leader
+1566 +         except OSError:  # the group could not be stopped (e.g. no permission): at least stop the leader
+1567 |             try:
+--------------------------------------------------------------------------------
+1582 |     last = lines[-1] if lines else ""
+     -     failed = [x.split(" ", 1)[1].split(" - ")[0] for x in lines if x.startswith("FAILED ")]
+1583 +     failed = [
+1584 +         x.split(" ", 1)[1].split(" - ")[0] for x in lines if x.startswith("FAILED ")
+1585 +     ]
+1586 |     return last, failed
+--------------------------------------------------------------------------------
+1602 |
+     - VERDICT_KINDS = ("KILLED", "SURVIVED", "TIMEOUT", "COULD-NOT-PLANT", "NO-TEST-PASSED", "ERROR")
+1603 + VERDICT_KINDS = (
+1604 +     "KILLED",
+1605 +     "SURVIVED",
+1606 +     "TIMEOUT",
+1607 +     "COULD-NOT-PLANT",
+1608 +     "NO-TEST-PASSED",
+1609 +     "ERROR",
+1610 + )
+1611 |
+--------------------------------------------------------------------------------
+1616 |
+     - def file_diffs(ref_files: dict[str, str], now: dict[str, str], extra: set[str]) -> list[str]:
+1617 + def file_diffs(
+1618 +     ref_files: dict[str, str], now: dict[str, str], extra: set[str]
+1619 + ) -> list[str]:
+1620 |     """Files whose hash differs between the reference and the tree now; declared --extra files may exist beyond it."""
+--------------------------------------------------------------------------------
+1640 |     if (sp.st_dev, sp.st_ino) == (sr.st_dev, sr.st_ino):
+     -         raise Refused(f"mutant {m['id']}: {m['file']} and its reference are the same file")
+1641 +         raise Refused(
+1642 +             f"mutant {m['id']}: {m['file']} and its reference are the same file"
+1643 +         )
+1644 |     orig = read_regular(p)
+--------------------------------------------------------------------------------
+1668 |     if n != 1:
+     -         verdict, out, cmd, rc = f"COULD-NOT-PLANT (old text occurs {n} times)", "", [], None
+1669 +         verdict, out, cmd, rc = (
+1670 +             f"COULD-NOT-PLANT (old text occurs {n} times)",
+1671 +             "",
+1672 +             [],
+1673 +             None,
+1674 +         )
+1675 |         restore = "no change made"
+--------------------------------------------------------------------------------
+1702 |             # second marker: the group and its identity (start time, full argument list), see stop_orphan
+     -             write_state(marker, json.dumps({**info, "pgid": pgid, **proc_identity(pgid)}).encode())
+1703 +             write_state(
+1704 +                 marker,
+1705 +                 json.dumps({**info, "pgid": pgid, **proc_identity(pgid)}).encode(),
+1706 +             )
+1707 |
+--------------------------------------------------------------------------------
+1714 |                 write_state(marker, json.dumps(info).encode())
+     -                 planted = decode_text(orig, m["file"]).replace(m["old"], m["new"], 1).encode()
+1715 +                 planted = (
+1716 +                     decode_text(orig, m["file"]).replace(m["old"], m["new"], 1).encode()
+1717 +                 )
+1718 |                 try:
+1719 |                     write_target(p, planted, root=root)
+     -                 except (
+     -                     OSError
+     -                 ) as e:  # e.g. a read-only file: a refusal, the restore below checks the bytes
+     -                     raise Refused(f"cannot plant into {m['file']}: {e.strerror or e}") from e
+     -                 cmd, rc, out, sweep = run_tests(root, tests, a.pythonpath, a.timeout, note_group)
+1720 +                 except OSError as e:  # e.g. a read-only file: a refusal, the restore below checks the bytes
+1721 +                     raise Refused(
+1722 +                         f"cannot plant into {m['file']}: {e.strerror or e}"
+1723 +                     ) from e
+1724 +                 cmd, rc, out, sweep = run_tests(
+1725 +                     root, tests, a.pythonpath, a.timeout, note_group
+1726 +                 )
+1727 |             finally:
+1728 |                 try:
+     -                     p2 = safe_rel(root, m["file"], f"mutant {m['id']} file (before restore)")
+1729 +                     p2 = safe_rel(
+1730 +                         root, m["file"], f"mutant {m['id']} file (before restore)"
+1731 +                     )
+1732 |                     # compare, write (only if the bytes differ: review r4 nit 1, a file that was never touched is not
+1733 |                     # written again) and verify on ONE open file (review r5 M3), never by path
+     -                     _, back = restore_target(p2, orig, root, mode=stat.S_IMODE(sp.st_mode))
+1734 +                     _, back = restore_target(
+1735 +                         p2, orig, root, mode=stat.S_IMODE(sp.st_mode)
+1736 +                     )
+1737 |                     same_hash = back == orig and back == ref_bytes
+--------------------------------------------------------------------------------
+1845 |         ):
+     -             raise Refused(f"mutant needs string fields id, file, old, new: {str(m)[:120]}")
+1846 +             raise Refused(
+1847 +                 f"mutant needs string fields id, file, old, new: {str(m)[:120]}"
+1848 +             )
+1849 |         if not NAME_RE.fullmatch(m["id"]) or m["id"] in seen or m["id"] in RESERVED_IDS:
+--------------------------------------------------------------------------------
+1871 |         if m["old"] == m["new"] or not m["old"]:
+     -             raise Refused(f"mutant {m['id']}: old text is empty or equal to new text (a no-op)")
+1872 +             raise Refused(
+1873 +                 f"mutant {m['id']}: old text is empty or equal to new text (a no-op)"
+1874 +             )
+1875 |     return ms
+--------------------------------------------------------------------------------
+1903 |
+     - def summarize(results: list[dict], planned: int, baseline_ran: bool = True) -> tuple[str, bool]:
+1904 + def summarize(
+1905 +     results: list[dict], planned: int, baseline_ran: bool = True
+1906 + ) -> tuple[str, bool]:
+1907 |     """The SUMMARY line (review r5 M2, r6 M2): one count per verdict kind, flagged and not run. `complete` is True only
+--------------------------------------------------------------------------------
+1977 |     ap.add_argument(
+     -         "--pythonpath", help="only for the proof copies, whose venv .pth points at another tree"
+1978 +         "--pythonpath",
+1979 +         help="only for the proof copies, whose venv .pth points at another tree",
+1980 |     )
+--------------------------------------------------------------------------------
+2015 |     a = ap.parse_args(argv[: argv.index("--")] if "--" in argv else argv)
+     -     if not sys.platform.startswith("linux") or not pathlib.Path("/proc/self/stat").is_file():
+2016 +     if (
+2017 +         not sys.platform.startswith("linux")
+2018 +         or not pathlib.Path("/proc/self/stat").is_file()
+2019 +     ):
+2020 |         print(
+--------------------------------------------------------------------------------
+2047 |             signal.signal(signum, _term)
+     -         except (OSError, ValueError):  # a signal the C library keeps for itself (32, 33 on Linux)
+2048 +         except (
+2049 +             OSError,
+2050 +             ValueError,
+2051 +         ):  # a signal the C library keeps for itself (32, 33 on Linux)
+2052 |             pass
+--------------------------------------------------------------------------------
+2057 |         lock_fd = os.open(
+     -             STATE / f"{key_for(root)}.lock", os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600
+2058 +             STATE / f"{key_for(root)}.lock",
+2059 +             os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW,
+2060 +             0o600,
+2061 |         )
+--------------------------------------------------------------------------------
+2102 |                 )
+     -             a.sha_full = resolve_commit(a.repo, a.sha)  # the full id of a COMMIT (review r5 nit 9)
+2103 +             a.sha_full = resolve_commit(
+2104 +                 a.repo, a.sha
+2105 +             )  # the full id of a COMMIT (review r5 nit 9)
+2106 |             a.baseline_failed = None
+--------------------------------------------------------------------------------
+2118 |                 check_single_link(
+     -                     safe_rel(root, m["file"], f"mutant {m['id']} file"), f"mutant {m['id']} target"
+2119 +                     safe_rel(root, m["file"], f"mutant {m['id']} file"),
+2120 +                     f"mutant {m['id']} target",
+2121 |                 )
+--------------------------------------------------------------------------------
+2159 |                     write_state(
+     -                         control, json.dumps({**cinfo, "pgid": pgid, **proc_identity(pgid)}).encode()
+2160 +                         control,
+2161 +                         json.dumps(
+2162 +                             {**cinfo, "pgid": pgid, **proc_identity(pgid)}
+2163 +                         ).encode(),
+2164 |                     )
+--------------------------------------------------------------------------------
+2188 |                 print("baseline", rc, last)
+     -                 if (
+     -                     bad_reason
+     -                 ):  # review r5 M1: a failing baseline would make every mutant look KILLED
+2189 +                 if bad_reason:  # review r5 M1: a failing baseline would make every mutant look KILLED
+2190 |                     raise Refused(
+--------------------------------------------------------------------------------
+2194 |                 a.baseline_failed = bfailed
+     -                 a.baseline_note = f"rc 0, {passed_total(out)} passed (see {a.prefix}-baseline.txt)"
+2195 +                 a.baseline_note = (
+2196 +                     f"rc 0, {passed_total(out)} passed (see {a.prefix}-baseline.txt)"
+2197 +                 )
+2198 |                 stop_if_dirty(a, root, "the control run")
+--------------------------------------------------------------------------------
+2234 |         SIG.exiting = True
+     -         signum = e.args[0] if e.args and isinstance(e.args[0], int) else int(signal.SIGINT)
+2235 +         signum = (
+2236 +             e.args[0] if e.args and isinstance(e.args[0], int) else int(signal.SIGINT)
+2237 +         )
+2238 |         # a run restores and removes its own marker before the signal leaves one(); a marker found here
+--------------------------------------------------------------------------------
+2246 |         sys.exit(128 + signum)
+     -     except (
+     -         Exception
+     -     ) as e:  # review r6 nit 5: a bug here must not end in Python's own exit 1 with a bare traceback
+2247 +     except Exception as e:  # review r6 nit 5: a bug here must not end in Python's own exit 1 with a bare traceback
+2248 |         SIG.exiting = True
+     |
+
+1 file would be reformatted
+ruff format --check rc=1
+ruff 0.16.9

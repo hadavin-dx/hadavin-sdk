@@ -1,0 +1,24 @@
+#  result  check
+-  ------  -----
+1  PASS    every request id has a receipt; the request log is complete; the book holds only this run's requests
+            300 log lines (intended 300), 300 distinct request ids, 300 receipts in book, 0 without a receipt, 0 with a wrong receipt number, 0 receipts the log does not know, 0 outside the id prefix, 0 without this run's marker; no intended list in the facts file: compared by count and distinct ids only; distinct ids 300 (facts 300)
+2  FAIL    follow-up states add up to the leads submitted (one per request id); every verdict has its lead; nothing open
+            pending 132 + sending 0 + sent 168 + failed 0 + unknown 0 = 300; leads 300; distinct request ids 300; 0 receipts without a verdict; 0 new verdicts without a lead; 0 review verdicts; 0 leads missing or not from this run
+            first 10 of 132: L02de70e49281, L03b91d80106c, L04fbd5770338, L057a067d1626, L07b8622c183c, L08de81b1a4d5, L0dbb9afc90d4, L13163d1520e6, L131beabf9fbb, L169f40a318d7
+3  FAIL    one message at most per key and recipient; unknown and failed only with a reason, within the ceiling
+            168 messages; 0 keys more than once, 0 recipients more than once, 0 to the wrong recipient, 0 sent without a message, 0 failed with a message and no fitting reason, 0 failed with a message and a reason that fits, 0 keys of no lead; unknown 0 (0 with a message, 0 without; ceiling 0; 0 without a fitting reason); failed 0 (ceiling 0; 0 without a reason); 132 leads from a healthy window not sent; 0 evidence faults
+            first 10 of 132: not-sent-in-healthy-window:L02de70e49281, not-sent-in-healthy-window:L03b91d80106c, not-sent-in-healthy-window:L04fbd5770338, not-sent-in-healthy-window:L057a067d1626, not-sent-in-healthy-window:L07b8622c183c, not-sent-in-healthy-window:L08de81b1a4d5, not-sent-in-healthy-window:L0dbb9afc90d4, not-sent-in-healthy-window:L13163d1520e6, not-sent-in-healthy-window:L131beabf9fbb, not-sent-in-healthy-window:L169f40a318d7
+4  FAIL    CRM rows match the leads marked done, plus the listed unknowns
+            167 CRM rows; allowed 168 to 168 (done 168 + up to 0 unknown); 1 missing, 0 not allowed, 0 twice, 0 for no lead, 0 sent without a finished CRM step
+            first 1 of 1: L96160012c970
+5  FAIL    model calls per lead are within the bound; the model was asked as the scenario says
+            168 calls for 168 leads; most for one lead 1; bound 1; 0 leads called more than once; 0 asked again after an answer; 0 calls in a down mode; 0 results other than 200; 132 evidence faults
+            first 10 of 132: never-asked:L02de70e49281, never-asked:L03b91d80106c, never-asked:L04fbd5770338, never-asked:L057a067d1626, never-asked:L07b8622c183c, never-asked:L08de81b1a4d5, never-asked:L0dbb9afc90d4, never-asked:L13163d1520e6, never-asked:L131beabf9fbb, never-asked:L169f40a318d7
+6  PASS    503 rate within the scenario's ceiling (report only when no ceiling is given)
+            0 of 300 attempts got 503 (rate 0.0000); 0 of 300 requests saw one; 0 ended on 503; ceiling 0.0
+7  FAIL    drain time within the ceiling
+            the runner never saw the desk drain (marker is null); 132 items still open
+            first 1 of 1: never-drained
+AT LEAST ONE CHECK FAILED
+BOUNDS: from today's catalogue (the saved run stored no bounds)
+RUN FAULTS: the desk never drained

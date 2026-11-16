@@ -1,0 +1,20 @@
+rc=0  date -u   [filled: -]
+rc=0  ls -l "<path from the message>"   [filled: ls -l "x"]
+rc=0  cd "<folder>"   [filled: cd "x"]
+rc=0  clear   [filled: -]
+rc=0  sha256sum scripts/run_real_check_n8n.py   [filled: -]
+rc=0  echo $?   [filled: -]
+rc=0  ls -l "<path>"   [filled: ls -l "x"]
+rc=0  ls ~/.hadavin-take-tags   [filled: -]
+rc=0  grep "^<setting name>=" "<model settings file>"   [filled: grep "^x=" "x"]
+rc=0  TZ=UTC ps -o pid=,lstart=,comm= -p <number>   [filled: TZ=UTC ps -o pid=,lstart=,comm= -p x]
+rc=0  pgrep -f <word>   [filled: pgrep -f x]
+rc=0  TZ=UTC ls -l --time-style=full-iso <file> <file>   [filled: TZ=UTC ls -l --time-style=full-iso x x]
+rc=0  ls -l "<key file>"   [filled: ls -l "x"]
+rc=0  ( set -C; umask 077; read -rs -p 'paste key, Enter: ' K && [ -n "$K" ] && printf '%s\n' "$K" > "<key file>" ); echo "exit $?"   [filled: ( set -C; umask 077; read -rs -p 'paste key, Enter: ' K && [ -n "$K" ] && printf '%s\n' "$K" > "x" ); echo "exit $?"]
+rc=0  TZ=UTC ls -l --time-style=full-iso <model settings file> <key file>   [filled: TZ=UTC ls -l --time-style=full-iso x x]
+rc=0  cd   [filled: -]
+command spans checked 16 syntax errors 0
+non-command spans (not checked): ['-', '-b@', '-c@', '-rw-------', '. _ / -', '. _ / - : = @ + ,', '.used', '/', '/home/', '/mnt/', '2026-11-18 11:06:55.123456789 +0000', '4242 Wed Nov 18 11:08:07 2026 python3', '<...>', '@example.com', 'HubSpot login: still works', 'Model calls made: 3', 'Person A: submitted 2 times, same person id: 1 contact, 1 mail', 'Person B: submitted 10 times: 1 contact, 1 mail', 'Person C: unknown', 'Price per call: 0.27 (USD)   Expected total: 0.81   Deadline: 2026-11-23 18:29 UTC', 'Run name: demo7   People: 3   Model calls: 3   Mails: 3', 'Sender: de…1@gmail.com   Receiver: de…2@gmail.com', 'Type y to start', '_', 'demo', 'demo-take', 'demo7', 'demo72', 'end', 'exit 0', 'mailbox login: still works', 'n', 'name@computer:~$', 'record/0-1/', 'run-<run name>', 'take-<run name>', 'take-<run name>-a@example.com', 'y', '~/.hadavin-take-tags']
+fenced block bash -n rc=2 (a message sample, not a command)
+start line from the numbers-message sample: rc=0  python3 -I scripts/run_real_check_n8n.py --take <test settings file name>

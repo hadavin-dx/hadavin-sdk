@@ -1,0 +1,11 @@
+### tests/test_migration_wiring.py::test_saved_users_that_differ_are_not_a_refusal rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+________________ test_saved_users_that_differ_are_not_a_refusal ________________
+tests/test_migration_wiring.py:439: in test_saved_users_that_differ_are_not_a_refusal
+    assert err is None and applied == ["0001_f1", "0002_f2"]
+E   assert (ConfigError("migration 0001_f1.sql left the database session changed: current_user was 'mig' and is now 'admin'") is None)
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_saved_users_that_differ_are_not_a_refusal
+1 failed in 0.43s
+

@@ -1,0 +1,15 @@
+BANNED list length: 10
+evidence-r11-independent/00-SUMMARY.md: distinct banned strings 0, occurrences 0
+evidence-r11-independent/01-sha-before.txt: distinct banned strings 0, occurrences 0
+evidence-r11-independent/07-sha-after.txt: distinct banned strings 0, occurrences 0
+evidence-r11-independent/08-banned-scan-evidence-folder.txt: distinct banned strings 0, occurrences 0
+evidence-r11-independent/banned_scan_r11.py: distinct banned strings 0, occurrences 0
+evidence-r11-independent/check_r11_own.py: distinct banned strings 0, occurrences 0
+evidence-r11-independent/mutate_r11.py: distinct banned strings 0, occurrences 0
+evidence-r11-independent/raw/02-own-checker-raw.txt: distinct banned strings 0, occurrences 0
+evidence-r11-independent/raw/03-verify11-raw.txt: distinct banned strings 0, occurrences 0
+evidence-r11-independent/raw/04-mutations-raw.txt: distinct banned strings 0, occurrences 0
+evidence-r11-independent/raw/05-scan-apply-now-raw.txt: distinct banned strings 0, occurrences 0
+evidence-r11-independent/raw/06-banned-scan-counts.txt: distinct banned strings 0, occurrences 0
+evidence-r11-independent/scan5_r11.py: distinct banned strings 0, occurrences 0
+TOTAL distinct-string hits over scanned files: 0

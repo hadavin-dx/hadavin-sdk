@@ -1,0 +1,5 @@
+baseline rc=0 :: 98 passed, 98 deselected in 16.65s
+ok  P12 the month counter is never written (every charge adds 0 to it)
+      [test_replay_over_6_minutes_25_hours_and_31_days_matches_the_oracle[postgres-6min-window0-2026-03-10T12:00:00+00:00]] /tmp/pgmut_1tuyydll/tests/contracts/test_store_time_rules.py:56: AssertionError: 6min: charge 0 at 2026-03-10 12:00:00+00:00
+1 of 1 mutants killed as described; no problems
+exit=0

@@ -1,0 +1,68 @@
+F.F..................................................................... [ 88%]
+.........                                                                [100%]
+=================================== FAILURES ===================================
+E   AssertionError: unchecked paths:
+      src/hadavin_sdk/actions/secrets_file.py | build | .is_dir: 1 hit(s), not listed
+      src/hadavin_sdk/actions/secrets_vault.py | connect.login | .read_text: 1 hit(s), not listed
+      src/hadavin_sdk/audit/local_dir.py | LocalDirSink.reconcile | .mkdir: 1 hit(s), not listed
+      src/hadavin_sdk/audit/local_dir.py | LocalDirSink.reconcile | .read_text: 1 hit(s), not listed
+      src/hadavin_sdk/audit/local_dir.py | LocalDirSink.reconcile | .unlink: 1 hit(s), not listed
+      src/hadavin_sdk/audit/local_dir.py | LocalDirSink.write_outcome | .write_text: 1 hit(s), not listed
+      src/hadavin_sdk/audit/local_dir.py | LocalDirSink.write_outcome | os.replace: 1 hit(s), not listed
+      src/hadavin_sdk/audit/signer.py | build_local | .is_file: 1 hit(s), not listed
+      src/hadavin_sdk/audit/signer.py | build_local | .read_bytes: 1 hit(s), not listed
+      src/hadavin_sdk/audit/signer.py | load_private_key | .read_bytes: 1 hit(s), not listed
+      src/hadavin_sdk/audit/signer.py | load_public_key | .read_bytes: 1 hit(s), not listed
+      src/hadavin_sdk/cli.py | score_cmd | .exists: 1 hit(s), not listed
+      src/hadavin_sdk/cli.py | score_cmd | .is_dir: 1 hit(s), not listed
+      src/hadavin_sdk/cli.py | score_cmd | .iterdir: 1 hit(s), not listed
+      src/hadavin_sdk/cli.py | score_cmd | .mkdir: 1 hit(s), not listed
+      src/hadavin_sdk/config.py | confined | .resolve: 2 hit(s), not listed
+      src/hadavin_sdk/guard/judge.py | qualify | .read_text: 1 hit(s), not listed
+      src/hadavin_sdk/hashing.py | hash_files | .resolve: 1 hit(s), not listed
+      src/hadavin_sdk/k1b/atomic.py | atomic_write | open: 1 hit(s), not listed
+      src/hadavin_sdk/k1b/atomic.py | atomic_write | os.replace: 1 hit(s), not listed
+      src/hadavin_sdk/k1b/bundle.py | _load_json | .read_bytes: 1 hit(s), not listed
+      src/hadavin_sdk/k1b/bundle.py | _text | .read_bytes: 1 hit(s), not listed
+      src/hadavin_sdk/k1b/bundle.py | load_bundle | .is_file: 2 hit(s), the list says 1
+      src/hadavin_sdk/k1b/bundle.py | load_bundle | .read_bytes: 2 hit(s), not listed
+      src/hadavin_sdk/k1b/bundle.py | load_bundle | .rglob: 1 hit(s), not listed
+      src/hadavin_sdk/k1b/bundle.py | load_bundles | .is_dir: 1 hit(s), not listed
+      src/hadavin_sdk/k1b/bundle.py | load_bundles | .iterdir: 1 hit(s), not listed
+      src/hadavin_sdk/k1b/causelist.py | _inside | .is_file: 1 hit(s), not listed
+      src/hadavin_sdk/k1b/causelist.py | _inside | .resolve: 1 hit(s), not listed
+      src/hadavin_sdk/k1b/causelist.py | _load | .read_bytes: 1 hit(s), not listed
+      src/hadavin_sdk/k1b/causelist.py | load_cause_list | .is_dir: 1 hit(s), not listed
+      src/hadavin_sdk/k1b/causelist.py | load_cause_list | .resolve: 1 hit(s), not listed
+      src/hadavin_sdk/k1b/replay.py | _replay | .exists: 1 hit(s), not listed
+      src/hadavin_sdk/k1b/replay.py | _replay | .is_dir: 1 hit(s), not listed
+      src/hadavin_sdk/k1b/replay.py | _replay | .iterdir: 1 hit(s), not listed
+      src/hadavin_sdk/k1b/replay.py | _replay | .mkdir: 2 hit(s), not listed
+      src/hadavin_sdk/k1b/replay.py | outputs_files | .glob: 1 hit(s), not listed
+      src/hadavin_sdk/k1b/replay.py | outputs_files | .rglob: 1 hit(s), not listed
+      src/hadavin_sdk/k1b/replay.py | replay | .is_dir: 1 hit(s), not listed
+      src/hadavin_sdk/k1b/replay.py | replay | .iterdir: 1 hit(s), not listed
+      src/hadavin_sdk/k1b/score.py | _check_layout | .is_dir: 1 hit(s), not listed
+      src/hadavin_sdk/k1b/score.py | _check_layout | .iterdir: 2 hit(s), not listed
+      src/hadavin_sdk/k1b/score.py | _check_layout | .rglob: 1 hit(s), not listed
+      src/hadavin_sdk/k1b/score.py | _read_json | .read_bytes: 1 hit(s), not listed
+      src/hadavin_sdk/k1b/score.py | _recorded_digest | .is_file: 1 hit(s), not listed
+      src/hadavin_sdk/k1b/score.py | _recorded_digest | .read_text: 1 hit(s), not listed
+      src/hadavin_sdk/k1b/score.py | load_answers | .read_bytes: 1 hit(s), not listed
+      src/hadavin_sdk/llm/fake.py | FakeLLM.chat | .is_file: 1 hit(s), not listed
+      src/hadavin_sdk/llm/fake.py | FakeLLM.chat | .read_text: 1 hit(s), not listed
+      src/hadavin_sdk/k1b/atomic.py | atomic_write | os.path.islink: listed (1) but no hit is left
+    assert ['src/hadavin... listed', ...] == []
+      
+      Left contains 50 more items, first extra item: 'src/hadavin_sdk/actions/secrets_file.py | build | .is_dir: 1 hit(s), not listed'
+      Use -v to get more diff
+/home/user/build/ER-sonarpath4-a/tests/test_pathguard_tripwire.py:458: AssertionError: unchecked paths:
+E   AssertionError: assert ['src/hadavin..._dir.py', ...] == []
+      
+      Left contains 39 more items, first extra item: 'src/hadavin_sdk/audit/local_dir.py | LocalDirSink._append_index | .exists: operator_dir is never called in src/hadavin_sdk/audit/local_dir.py'
+      Use -v to get more diff
+/home/user/build/ER-sonarpath4-a/tests/test_pathguard_tripwire.py:526: AssertionError: assert ['src/hadavin..._dir.py', ...] == []
+=========================== short test summary info ============================
+FAILED tests/test_pathguard_tripwire.py::test_no_file_operation_in_the_package_works_on_an_unchecked_path_unless_listed_with_a_reason
+FAILED tests/test_pathguard_tripwire.py::test_every_listed_row_names_a_validator_that_exists_and_is_called
+2 failed, 79 passed in 1.15s

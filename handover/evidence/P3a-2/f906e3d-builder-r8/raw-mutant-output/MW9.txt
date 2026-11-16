@@ -1,0 +1,14 @@
+### tests/test_migration_wiring.py::test_each_value_is_compared_with_its_own_saved_value[current_user] rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+______ test_each_value_is_compared_with_its_own_saved_value[current_user] ______
+tests/test_migration_wiring.py:420: in test_each_value_is_compared_with_its_own_saved_value
+    assert item in str(err) and ascii(new) in str(err)
+E   assert ('current_user' in 'migration 0001_f1.sql left the database session changed: current_user was mig and is now other' and "'other'" in 'migration 0001_f1.sql left the database session changed: current_user was mig and is now other')
+E    +  where 'migration 0001_f1.sql left the database session changed: current_user was mig and is now other' = str(ConfigError('migration 0001_f1.sql left the database session changed: current_user was mig and is now other'))
+E    +  and   "'other'" = ascii('other')
+E    +  and   'migration 0001_f1.sql left the database session changed: current_user was mig and is now other' = str(ConfigError('migration 0001_f1.sql left the database session changed: current_user was mig and is now other'))
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_each_value_is_compared_with_its_own_saved_value[current_user]
+1 failed in 0.37s
+

@@ -1,0 +1,7 @@
+wt run1 rc=1 wait+run=738s 1 failed in 0.65s
+wt-main run2 rc=1 wait+run=2s 1 failed in 0.65s
+wt run3 rc=1 wait+run=1s 1 failed in 0.62s
+wt-main run4 rc=1 wait+run=2s 1 failed in 0.65s
+wt run5 rc=1 wait+run=1s 1 failed in 0.66s
+wt-main run6 rc=1 wait+run=1s 1 failed in 0.68s
+done

@@ -1,0 +1,29 @@
+$ grep -rn "add_spend(" src tests demos --include=*.py
+src/hadavin_sdk/limits.py:18:        return self.store.add_spend(agent_id, now().date(), usd)
+src/hadavin_sdk/store/protocol.py:107:    def add_spend(self, agent_id: str, day: date, usd: Decimal) -> tuple[Decimal, Decimal]: ...
+src/hadavin_sdk/store/postgres.py:416:    def add_spend(self, agent_id: str, day: date, usd: Decimal) -> tuple[Decimal, Decimal]:
+src/hadavin_sdk/store/memory.py:196:    def add_spend(self, agent_id: str, day: date, usd: Decimal) -> tuple[Decimal, Decimal]:
+tests/test_p7_store.py:184:            s.add_spend("a", day, Decimal("0.01"))
+tests/test_s1_foundation.py:161:    store.add_spend("a", today, Decimal("0.40"))
+tests/test_s1_foundation.py:162:    day, month = store.add_spend("a", today, Decimal("0.10"))
+tests/test_s1_foundation.py:164:    _, month2 = store.add_spend("a", today - timedelta(days=40), Decimal(5))
+tests/contracts/test_store.py:179:    store.add_spend("a", today, Decimal("0.40"))
+tests/contracts/test_store.py:180:    assert store.add_spend("a", today, Decimal("0.10")) == (Decimal("0.50"), Decimal("0.50"))
+tests/contracts/test_store.py:181:    _, month = store.add_spend("a", today - timedelta(days=40), Decimal(5))
+tests/contracts/test_store.py:188:    store.add_spend("m", d1, Decimal("0.00108225"))
+tests/contracts/test_store.py:189:    day, month = store.add_spend("m", d2, Decimal("0.5"))
+
+$ grep -rnE "kind: *(anthropic|bedrock|gemini|openai_compat)|\"kind\": *\"(anthropic|bedrock|gemini|openai_compat)\"" tests demos docs README.md
+tests/test_p1a_fixes.py:117:                update={"llm": reg.config.backends.llm.model_copy(update={"kind": "bedrock"})}
+tests/test_p5p6_followups.py:82:    llm = {"kind": "openai_compat", "base_url": "https://llm.example/v1"}
+tests/test_p5p6_followups.py:392:        "kind": "anthropic",
+tests/test_k3_pilot_env.py:61:            "llm": {"kind": "openai_compat", "base_url": "https://llm.example/v1"},
+tests/test_p5_llm.py:38:    api = _llm(cfg_dir, {"kind": "anthropic", "api_key_secret_name": "a", "platform": "api"})
+tests/test_p5_llm.py:40:        cfg_dir, {"kind": "anthropic", "platform": "vertex", "project_id": "p", "region": "global"}
+tests/test_p5_llm.py:42:    local = _llm(cfg_dir, {"kind": "openai_compat", "base_url": "http://localhost:11434/v1"})
+tests/test_p5_llm.py:43:    other = _llm(cfg_dir, {"kind": "openai_compat", "base_url": "https://llm.example/v1"})
+tests/test_p5_llm.py:46:    tuned = {"kind": "anthropic", "api_key_secret_name": "a", "platform": "api", "max_attempts": 5}
+
+$ grep -rn "environment: dev\|environment=\"dev\"" tests demos docs
+tests/test_p4_secrets.py:106:def _config(tmp_path, secrets, environment="dev"):
+tests/fixtures/config/config.yaml:2:environment: dev

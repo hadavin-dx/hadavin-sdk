@@ -1,0 +1,17 @@
+uid=65534
+Traceback (most recent call last):
+  File "/home/user/build/RB89/tests/mutation_runner_mutants.py", line 443, in <module>
+    res = run_mutants(
+        ROOT,
+    ...<5 lines>...
+        first_lines=first_lines,
+    )
+  File "/home/user/build/RB89/tools/mutation_runner.py", line 778, in run_mutants
+    return _run_mutants(
+        root, mutants, tests, extra_dirs, only, timeout, baseline_timeout, on_result,
+        {} if first_lines is None else first_lines, conftest, pass_env, forbid_skips,
+    )  # fmt: skip
+  File "/home/user/build/RB89/tools/mutation_runner.py", line 1021, in _run_mutants
+    raise RuntimeError("the unmutated copy does not pass its tests")
+RuntimeError: the unmutated copy does not pass its tests
+exit=1

@@ -1,0 +1,80 @@
+R01	demo_only/bad_request.py	s1	KILLED	['1 failed, 17 deselected in 0.18s']
+R01	restored-byte-equal=True
+R02	demo_only/bad_request.py	s1	KILLED	['1 failed, 26 passed, 17 deselected in 0.21s']
+R02	restored-byte-equal=True
+R03	demo_only/bad_request.py	s1	KILLED	['1 failed, 28 passed, 17 deselected in 0.19s']
+R03	restored-byte-equal=True
+R04	demo_only/bad_request.py	s1 or quiet	KILLED	['1 failed, 30 passed, 17 deselected in 0.21s']
+R04	restored-byte-equal=True
+R05	demo_only/bad_request.py	s1	KILLED	['1 failed, 17 deselected in 0.17s']
+R05	restored-byte-equal=True
+R06	demo_only/bad_request.py	s1	KILLED	['1 failed, 30 passed, 17 deselected in 0.20s']
+R06	restored-byte-equal=True
+R07	demo_only/bad_request.py	quiet or gone or hang	SURVIVED	['6 passed, 45 deselected in 0.24s']
+R07	restored-byte-equal=True
+R08	demo_only/bad_request.py	s1	KILLED	['1 failed, 17 deselected in 0.16s']
+R08	restored-byte-equal=True
+R09	scripts/run_real_check.py	s3	KILLED	['1 failed, 37 deselected in 0.15s']
+R09	restored-byte-equal=True
+R10	scripts/run_real_check.py	s3	SURVIVED	['14 passed, 37 deselected in 212.08s (0:03:32)']
+R10	restored-byte-equal=True
+R11	scripts/run_real_check.py	s3	KILLED	['1 failed, 37 deselected in 0.16s']
+R11	restored-byte-equal=True
+R12	scripts/run_real_check.py	s3	KILLED	['1 failed, 37 deselected in 0.18s']
+R12	restored-byte-equal=True
+R13	scripts/run_real_check.py	s3	KILLED	['1 failed, 6 passed, 37 deselected in 35.17s']
+R13	restored-byte-equal=True
+R14	scripts/run_real_check.py	s3	KILLED	['1 failed, 2 passed, 37 deselected in 0.21s']
+R14	restored-byte-equal=True
+R15	scripts/run_real_check.py	s3	KILLED	['1 failed, 3 passed, 37 deselected in 0.23s']
+R15	restored-byte-equal=True
+R16	scripts/run_real_check.py	s3	KILLED	['1 failed, 4 passed, 37 deselected in 0.21s']
+R16	restored-byte-equal=True
+R17	scripts/run_real_check.py	s3	KILLED	['1 failed, 2 passed, 37 deselected in 0.18s']
+R17	restored-byte-equal=True
+R18	scripts/run_real_check.py	s3	KILLED	['1 failed, 6 passed, 37 deselected in 65.46s (0:01:05)']
+R18	restored-byte-equal=True
+R19	scripts/run_real_check.py	s3	SURVIVED	['14 passed, 37 deselected in 182.18s (0:03:02)']
+R19	restored-byte-equal=True
+R20	scripts/run_real_check.py	s3	SURVIVED	['14 passed, 37 deselected in 281.72s (0:04:41)']
+R20	restored-byte-equal=True
+R21	scripts/run_real_check.py	s3	KILLED	['1 failed, 6 passed, 37 deselected in 35.11s']
+R21	restored-byte-equal=True
+R22	scripts/run_real_check.py	s3	KILLED	['1 failed, 6 passed, 37 deselected in 65.03s (0:01:05)']
+R22	restored-byte-equal=True
+R23	scripts/run_real_check.py	s3	KILLED	['1 failed, 10 passed, 37 deselected in 175.72s (0:02:55)']
+R23	restored-byte-equal=True
+R24	scripts/run_real_check.py	s3	KILLED	['1 failed, 6 passed, 37 deselected in 35.09s']
+R24	restored-byte-equal=True
+R25	scripts/run_real_check.py	s3	KILLED	['1 failed, 6 passed, 37 deselected in 35.16s']
+R25	restored-byte-equal=True
+R26	scripts/run_real_check.py	s3	KILLED	['1 failed, 6 passed, 37 deselected in 36.13s']
+R26	restored-byte-equal=True
+R27	scripts/run_real_check.py	s3	SURVIVED	['14 passed, 37 deselected in 209.13s (0:03:29)']
+R27	restored-byte-equal=True
+R28	scripts/run_real_check.py	s3	KILLED	['1 failed, 9 passed, 37 deselected in 141.73s (0:02:21)']
+R28	restored-byte-equal=True
+R29	scripts/run_real_check.py	s3	KILLED	['1 failed, 6 passed, 37 deselected in 35.01s']
+R29	restored-byte-equal=True
+R30	scripts/run_real_check.py	s3	KILLED	['1 failed, 7 passed, 37 deselected in 70.79s (0:01:10)']
+R30	restored-byte-equal=True
+R31	scripts/run_real_check.py	s3	KILLED	['1 failed, 6 passed, 37 deselected in 34.95s']
+R31	restored-byte-equal=True
+R32	scripts/run_real_check.py	s3	KILLED	['1 failed, 6 passed, 37 deselected in 35.07s']
+R32	restored-byte-equal=True
+R33	scripts/run_real_check.py	s3	KILLED	['1 failed, 6 passed, 37 deselected in 36.24s']
+R33	restored-byte-equal=True
+R34	tests/support.py	s6	KILLED	['1 failed, 48 deselected in 0.16s']
+R34	restored-byte-equal=True
+R35	tests/support.py	s6	KILLED	['1 failed, 48 deselected in 0.25s']
+R35	restored-byte-equal=True
+R36	tests/support.py	s6	KILLED	['1 failed, 1 passed, 48 deselected in 0.15s']
+R36	restored-byte-equal=True
+R37	tests/support.py	s6	KILLED	['1 failed, 1 passed, 48 deselected in 0.16s']
+R37	restored-byte-equal=True
+R38	tests/support.py	s6	KILLED	['1 failed, 1 passed, 48 deselected in 0.18s']
+R38	restored-byte-equal=True
+R39	tests/support.py	s6	SURVIVED	['3 passed, 48 deselected in 0.93s']
+R39	restored-byte-equal=True
+R40	tests/support.py	s6	KILLED	['1 failed, 48 deselected in 0.16s']
+R40	restored-byte-equal=True

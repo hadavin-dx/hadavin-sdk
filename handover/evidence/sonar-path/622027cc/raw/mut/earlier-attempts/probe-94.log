@@ -1,0 +1,3 @@
+sdk /home/user/build/E-work/mut-tree/src/hadavin_sdk/__init__.py
+ok  KILLED         R5e inside does not check the base text  [test_pin_r5_inside_refuses_a_long_base_text] t=5s
+SLICE 94:95 1 of 1 good; problems: []; elapsed 5s

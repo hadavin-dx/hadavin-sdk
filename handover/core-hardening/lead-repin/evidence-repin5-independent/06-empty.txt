@@ -1,0 +1,2 @@
+empty dash rc=0 out=0
+empty bash rc=0 out=0

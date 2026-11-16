@@ -1,0 +1,5 @@
+[keyed] same n=100: n=100 status={201: 1, 200: 99} 5xx=0 client_errors={} max_latency_s=0.32
+   desk_counts={'received': 100, 'new': 1, 'duplicate': 99, 'review': 0, 'open': 0, 'rejected_envelopes': 0, 'pending_followups': 0, 'failed_followups': 0, 'unknown_followups': 0, 'sending_followups': 0, 'expected_match': None, 'ok': None}
+   followup_states= {'sent': 1} open_receipts= 0
+   received=100 vs new+dup+review+rejected=100 (failed/unknown shown in open/pending) lost_receipt=0
+   crm_rows=1 distinct_leads_in_crm=1 max_rows_per_lead=1; emails=1 distinct_recipients=1 max_emails_per_lead=1; expected_leads=1

@@ -1,0 +1,5 @@
+U="uv run --all-extras --group test"
+$U ruff check src tests demos tools; echo "ruff_check_exit=$?"
+$U ruff format --check src tests demos tools; echo "ruff_format_exit=$?"
+$U bandit -q -r src demos tools -ll; echo "bandit_exit=$?"
+$U python tools/scan_repo.py; echo "scan_repo_exit=$?"

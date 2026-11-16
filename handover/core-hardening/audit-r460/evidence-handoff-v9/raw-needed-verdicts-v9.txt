@@ -1,0 +1,10 @@
+$ grep -c NOT-NEEDED ORDERS.md MASTER-MAP.md (handover/core-hardening)
+handover/core-hardening/ORDERS.md:3
+handover/core-hardening/MASTER-MAP.md:3
+$ module verdict rows (path => verdict cell)
+ src/hadavin_sdk/approvals/gate.py  =>  NEEDED 
+ src/hadavin_sdk/audit/anchor_s3.py  =>  NEEDED 
+ src/hadavin_sdk/audit/chain.py  =>  NEEDED 
+ src/hadavin_sdk/audit/signer.py  =>  NEEDED 
+ src/hadavin_sdk/guard/redact.py  =>  NEEDED 
+ validate-retry-deadletter extraction  =>  tests only 

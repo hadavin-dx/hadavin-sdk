@@ -1,0 +1,13 @@
+# pdbanner-17d7ec3c-design-r2: part 6 (demo-mode banner), head 17d7ec3c, round 2 (confirming), persona design
+
+Source: hand-back of the design reviewer (agent a0326030bce4de3be), saved by the lead session (condensed). SECURITY / mode-safety path. Static read only; nothing run. Snapshot `/home/user/build/snap/pdbanner-17d7ec3c`. Verdict: banner and guard code sound, round-1 findings fixed (design B1, M1, M2, M4, codebase M3, evidence items 1-3); M3 mostly fixed (CI test not read). 0 Blocker, 2 Major (below), minors m1-m7.
+
+## Major
+- **M1 (REFUTED by the lead, snapshot error).** The reviewer saw FULL-vs-main.patch removing client-profile safeguards (app.py `_LIVE_HOOKS`, config.py `made_up_data_only`, table.py `LOCAL_DETECTORS`, tests/test_client_profile.py 850 lines, tools/client_profile_mutants.py). Cause: the lead made that patch with a two-dot diff against the NEWER origin/main (a8b4d8e8); the branch base is 2a8c2aac, so main's later client-profile commits showed as deletions. Lead check: `git diff --name-only origin/main...17d7ec3c` (three-dot) lists 13 files, none of them client-profile files, app.py, config.py or table.py beyond the banner change (branch is 5 ahead, 1 behind main). Real action: rebase the branch onto current main before the PR opens (the lead's step); the snapshot patch will be regenerated three-dot.
+- **M2 (valid).** The demo sentence "Nothing here is sent to real customers or real systems" (mode_banner.py:343, demo branch :439) rests on `config.backends.entries()` only; system, source, tool and `egress_hosts` fields may name a real endpoint in a demo config. Reword to what is checked ("No real backend service is configured") or count any non-loopback system base_url, egress host, HTTP tool or source as real, plus a test.
+
+## Minor
+m1 submodule (gitlink) under a product root skipped by the guard; m2 skip by file ending lets a renamed text file through (sniff NUL bytes), packaging files at the root and gitignored files unchecked; m3 allowed phrase `DEMO_ONLY` case-sensitive and loosely bounded; m4 `BannerWords` public: add a post-condition that every real name is in the text and real/quiet text hold none of the made-up wording; m5 JS exports mutable (freeze), stale banner if the fallback write throws; m6 marker file `demo_only_guard.copy_run` is only a file check (CI test not read); m7 `exempt_files` skips the guard's own files wholesale, `fake_id_patterns` empty in core.
+
+## Not checked
+Nothing run; test_demo_only_guard*.py, banner_mutants.py bodies, config.py `entries()`/system/source/tool fields, evidence at 17d7ec3c (RESULTS.md is for 2cf0f742), browser, Windows.

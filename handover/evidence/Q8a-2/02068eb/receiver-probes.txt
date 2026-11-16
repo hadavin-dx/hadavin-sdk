@@ -1,0 +1,37 @@
+hadavin_sdk: /home/user/build/EV-Q8a2-02068eb/src/hadavin_sdk/__init__.py
+
+== kind fake: class FakeChannel, name 'fake', callback_path '/channel/actions', header prefix 'X-Hadavin', listening 127.0.0.1:34707 (port 0 asked)
+   bad-signature header names sent: ['x-hadavin-request-timestamp', 'x-hadavin-signature']
+   POST '/channel/actions' (len 16) bad signature, 9-byte body -> HTTP/1.0 401 Unauthorized
+   POST '/slack/actions' (len 14) bad signature, 9-byte body -> HTTP/1.0 404 Not Found
+   POST '/channel/actions/' (len 17) bad signature, 9-byte body -> HTTP/1.0 404 Not Found
+   POST '/CHANNEL/ACTIONS' (len 16) bad signature, 9-byte body -> HTTP/1.0 404 Not Found
+   POST '/channel/actions?x=1' (len 20) bad signature, 9-byte body -> HTTP/1.0 404 Not Found
+   POST '//channel/actions' (len 17) bad signature, 9-byte body -> HTTP/1.0 401 Unauthorized
+   POST '/channel/../channel/actions' (len 27) bad signature, 9-byte body -> HTTP/1.0 404 Not Found
+   POST '/channel/actions%2f' (len 19) bad signature, 9-byte body -> HTTP/1.0 404 Not Found
+   POST '' (len 0) bad signature, 9-byte body -> HTTP/1.0 400 Bad HTTP/0.9 request type ('POST')
+   POST '/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' (len 70) bad signature, 9-byte body -> HTTP/1.0 404 Not Found
+   POST '/channel/actions' NO signature headers, 9-byte body -> HTTP/1.0 401 Unauthorized
+   POST '/slack/actions' NO signature headers, 9-byte body -> HTTP/1.0 404 Not Found
+   POST '/channel/actions' body of 2097152 bytes (2 MB), bad signature -> HTTP/1.0 413 Content Too Large
+   GET '/channel/actions' -> HTTP/1.0 501 Unsupported method ('GET')
+   server closed; thread alive after join: False
+
+== kind slack: class SlackChannel, name 'slack', callback_path '/slack/actions', header prefix 'X-Slack', listening 127.0.0.1:46839 (port 0 asked)
+   bad-signature header names sent: ['x-slack-request-timestamp', 'x-slack-signature']
+   POST '/channel/actions' (len 16) bad signature, 9-byte body -> HTTP/1.0 404 Not Found
+   POST '/slack/actions' (len 14) bad signature, 9-byte body -> HTTP/1.0 401 Unauthorized
+   POST '/channel/actions/' (len 17) bad signature, 9-byte body -> HTTP/1.0 404 Not Found
+   POST '/CHANNEL/ACTIONS' (len 16) bad signature, 9-byte body -> HTTP/1.0 404 Not Found
+   POST '/channel/actions?x=1' (len 20) bad signature, 9-byte body -> HTTP/1.0 404 Not Found
+   POST '//channel/actions' (len 17) bad signature, 9-byte body -> HTTP/1.0 404 Not Found
+   POST '/channel/../channel/actions' (len 27) bad signature, 9-byte body -> HTTP/1.0 404 Not Found
+   POST '/channel/actions%2f' (len 19) bad signature, 9-byte body -> HTTP/1.0 404 Not Found
+   POST '' (len 0) bad signature, 9-byte body -> HTTP/1.0 400 Bad HTTP/0.9 request type ('POST')
+   POST '/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' (len 70) bad signature, 9-byte body -> HTTP/1.0 404 Not Found
+   POST '/channel/actions' NO signature headers, 9-byte body -> HTTP/1.0 404 Not Found
+   POST '/slack/actions' NO signature headers, 9-byte body -> HTTP/1.0 401 Unauthorized
+   POST '/slack/actions' body of 2097152 bytes (2 MB), bad signature -> HTTP/1.0 413 Content Too Large
+   GET '/slack/actions' -> HTTP/1.0 501 Unsupported method ('GET')
+   server closed; thread alive after join: False

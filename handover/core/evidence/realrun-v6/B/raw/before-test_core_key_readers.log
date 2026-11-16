@@ -1,0 +1,180 @@
+..FFFFFF...F                                                             [100%]
+=================================== FAILURES ===================================
+_ test_live_accept_and_refuse_equal_the_old_rule_except_a_key_of_more_than_one_line _
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B/.tmp-run/pytest-of-unknown/pytest-0/test_live_accept_and_refuse_eq0')
+
+    def test_live_accept_and_refuse_equal_the_old_rule_except_a_key_of_more_than_one_line(tmp_path: Path) -> None:
+        accepted = changed = 0
+        for raw in CASES:
+            got, _ = outcome("live", raw, tmp_path)
+            old = old_live(raw)
+            multi = old is not None and "\n" in old
+>           assert got == (None if multi else old), raw  # the ONE behaviour change: a multi-line key is now refused
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AssertionError: b'ZQ7#ZQ7#
+E             ZQ7#ZQ7#'
+E           assert 'ZQ7#ZQ7#\nZQ7#ZQ7#' == None
+
+tests/test_core_key_readers.py:206: AssertionError
+_ test_the_reason_text_of_every_refused_key_file_is_the_new_fixed_text[hubspot-texts0] _
+
+reader = 'hubspot'
+texts = {'empty': 'the hubspot key file holds no key', 'short': 'the hubspot key file holds a key that is too short (at least ...h spaces or unprintable characters', 'multi': 'the hubspot key file has more than one line: it must hold only the key'}
+tmp_path = PosixPath('/home/user/build/rr6/tree-B/.tmp-run/pytest-of-unknown/pytest-0/test_the_reason_text_of_every_0')
+
+    @pytest.mark.parametrize(("reader", "texts"), [("hubspot", HUBSPOT_TEXTS), ("smtp", SMTP_TEXTS), ("live", LIVE_TEXTS)])
+    def test_the_reason_text_of_every_refused_key_file_is_the_new_fixed_text(
+        reader: str, texts: dict[str, str], tmp_path: Path
+    ) -> None:
+        seen: dict[str, int] = {}
+        for raw in CASES:
+            got, msg = outcome(reader, raw, tmp_path)
+            why = _reason(reader, raw)
+            if why == "accepted":
+                assert got is not None
+                continue
+            assert got is None
+            if why == "other":
+                assert any(part in msg for part in OTHER), (reader, raw, msg)
+            else:
+>               assert msg == texts[why], (reader, raw, msg)
+E               AssertionError: ('hubspot', b'ZQ7# ZQ7# ', 'the hubspot key file holds no key')
+E               assert 'the hubspot ... holds no key' == 'the hubspot ...le characters'
+E                 
+E                 - the hubspot key file holds a key with spaces or unprintable characters
+E                 + the hubspot key file holds no key
+
+tests/test_core_key_readers.py:284: AssertionError
+_ test_the_reason_text_of_every_refused_key_file_is_the_new_fixed_text[smtp-texts1] _
+
+reader = 'smtp'
+texts = {'empty': 'the smtp password file holds no password', 'short': 'the smtp password file holds a password that is too sh... than plain printable ASCII', 'multi': 'the smtp password file has more than one line: it must hold only the password'}
+tmp_path = PosixPath('/home/user/build/rr6/tree-B/.tmp-run/pytest-of-unknown/pytest-0/test_the_reason_text_of_every_1')
+
+    @pytest.mark.parametrize(("reader", "texts"), [("hubspot", HUBSPOT_TEXTS), ("smtp", SMTP_TEXTS), ("live", LIVE_TEXTS)])
+    def test_the_reason_text_of_every_refused_key_file_is_the_new_fixed_text(
+        reader: str, texts: dict[str, str], tmp_path: Path
+    ) -> None:
+        seen: dict[str, int] = {}
+        for raw in CASES:
+            got, msg = outcome(reader, raw, tmp_path)
+            why = _reason(reader, raw)
+            if why == "accepted":
+                assert got is not None
+                continue
+            assert got is None
+            if why == "other":
+                assert any(part in msg for part in OTHER), (reader, raw, msg)
+            else:
+>               assert msg == texts[why], (reader, raw, msg)
+E               AssertionError: ('smtp', b'%', 'the smtp password file holds no password')
+E               assert 'the smtp pas...s no password' == 'the smtp pas...8 characters)'
+E                 
+E                 - the smtp password file holds a password that is too short (at least 8 characters)
+E                 + the smtp password file holds no password
+
+tests/test_core_key_readers.py:284: AssertionError
+_ test_the_reason_text_of_every_refused_key_file_is_the_new_fixed_text[live-texts2] _
+
+reader = 'live'
+texts = {'empty': 'the key file holds no key', 'short': 'the key file holds a key that is too short (at least 8 characters)', 'multi': 'the key file has more than one line: it must hold only the key'}
+tmp_path = PosixPath('/home/user/build/rr6/tree-B/.tmp-run/pytest-of-unknown/pytest-0/test_the_reason_text_of_every_2')
+
+    @pytest.mark.parametrize(("reader", "texts"), [("hubspot", HUBSPOT_TEXTS), ("smtp", SMTP_TEXTS), ("live", LIVE_TEXTS)])
+    def test_the_reason_text_of_every_refused_key_file_is_the_new_fixed_text(
+        reader: str, texts: dict[str, str], tmp_path: Path
+    ) -> None:
+        seen: dict[str, int] = {}
+        for raw in CASES:
+            got, msg = outcome(reader, raw, tmp_path)
+            why = _reason(reader, raw)
+            if why == "accepted":
+                assert got is not None
+                continue
+            assert got is None
+            if why == "other":
+                assert any(part in msg for part in OTHER), (reader, raw, msg)
+            else:
+>               assert msg == texts[why], (reader, raw, msg)
+E               AssertionError: ('live', b'\xef\xbb\xbf', 'the key file holds no key')
+E               assert 'the key file holds no key' == 'the key file...8 characters)'
+E                 
+E                 - the key file holds a key that is too short (at least 8 characters)
+E                 + the key file holds no key
+
+tests/test_core_key_readers.py:284: AssertionError
+_ test_the_live_reader_refuses_a_key_of_more_than_one_line_that_is_long_enough _
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B/.tmp-run/pytest-of-unknown/pytest-0/test_the_live_reader_refuses_a0')
+
+    def test_the_live_reader_refuses_a_key_of_more_than_one_line_that_is_long_enough(tmp_path: Path) -> None:
+        """The behaviour change, in plain words: two lines of 8 characters each were accepted before (the second line was
+        sent in the key header); now refused with the multi-line text. Fails on the old code."""
+        for raw in (b"ZQ7#ZQ7#\nZQ7#ZQ7#", b"ZQ7#ZQ7#\r\nZQ7#ZQ7#\r\n", b"ZQ7#ZQ7#\rZQ7#ZQ7#", b"ZQ7#ZQ7#ZQ7#\n\nZQ7#"):
+            got, msg = outcome("live", raw, tmp_path)
+>           assert got is None and msg == LIVE_TEXTS["multi"], (raw, msg)
+E           AssertionError: (b'ZQ7#ZQ7#
+E             ZQ7#ZQ7#', '')
+E           assert ('ZQ7#ZQ7#\nZQ7#ZQ7#' is None)
+
+tests/test_core_key_readers.py:294: AssertionError
+_ test_each_reader_has_three_different_texts_for_empty_short_and_odd_characters _
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B/.tmp-run/pytest-of-unknown/pytest-0/test_each_reader_has_three_dif0')
+
+    def test_each_reader_has_three_different_texts_for_empty_short_and_odd_characters(tmp_path: Path) -> None:
+        """Fails on the old code: there the three cases shared one text."""
+        for reader, raws in (
+            ("hubspot", (b"", b"ZQ7#", b"ZQ7# ZQ7#ZQ7#")),
+            ("smtp", (b"", b"ZQ7#", "ZQ7#ZQ7é".encode())),
+        ):
+            msgs = [outcome(reader, raw, tmp_path)[1] for raw in raws]
+>           assert all(msgs) and len(set(msgs)) == 3, (reader, msgs)
+E           AssertionError: ('hubspot', ['the hubspot key file holds no key', 'the hubspot key file holds no key', 'the hubspot key file holds no key'])
+E           assert (True and 1 == 3)
+E            +  where True = all(['the hubspot key file holds no key', 'the hubspot key file holds no key', 'the hubspot key file holds no key'])
+E            +  and   1 = len({'the hubspot key file holds no key'})
+E            +    where {'the hubspot key file holds no key'} = set(['the hubspot key file holds no key', 'the hubspot key file holds no key', 'the hubspot key file holds no key'])
+
+tests/test_core_key_readers.py:307: AssertionError
+__ test_the_set_of_texts_is_closed_every_message_is_one_of_a_few_fixed_texts ___
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B/.tmp-run/pytest-of-unknown/pytest-0/test_the_set_of_texts_is_close0')
+
+    def test_the_set_of_texts_is_closed_every_message_is_one_of_a_few_fixed_texts(tmp_path: Path) -> None:
+        """No text is built from the file: over all 1512 key files each reader says one of at most 8 different things."""
+        for reader, texts in (("hubspot", HUBSPOT_TEXTS), ("smtp", SMTP_TEXTS), ("live", LIVE_TEXTS)):
+            msgs = {outcome(reader, raw, tmp_path)[1] for raw in CASES} - {""}
+            fixed = set(texts.values())
+            extra = {m for m in msgs if m not in fixed}
+            assert len(extra) <= 4 and all(any(p in m for p in OTHER) for m in extra), (reader, extra)
+            assert len(msgs) <= 8, (reader, len(msgs))
+>           assert fixed <= msgs, (
+                reader,
+                fixed - msgs,
+            )  # every fixed text is produced by some file (fails on the old code)
+E           AssertionError: ('hubspot', {'the hubspot key file holds a key that is too short (at least 8 characters)', 'the hubspot key file holds a key with spaces or unprintable characters'})
+E           assert {'the hubspot...holds no key'} <= {'the hubspot...only the key'}
+E             
+E             Extra items in the left set:
+E             'the hubspot key file holds a key that is too short (at least 8 characters)'
+E             'the hubspot key file holds a key with spaces or unprintable characters'
+
+tests/test_core_key_readers.py:346: AssertionError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_core_key_readers.py::test_hubspot_accept_and_refuse_are_identical_to_the_old_rule_on_1512_key_files
+PASSED tests/test_core_key_readers.py::test_smtp_accept_and_refuse_are_identical_to_the_old_rule_on_1512_key_files
+PASSED tests/test_core_key_readers.py::test_no_message_holds_the_key_text_the_file_name_or_the_folder[hubspot]
+PASSED tests/test_core_key_readers.py::test_no_message_holds_the_key_text_the_file_name_or_the_folder[smtp]
+PASSED tests/test_core_key_readers.py::test_no_message_holds_the_key_text_the_file_name_or_the_folder[live]
+FAILED tests/test_core_key_readers.py::test_live_accept_and_refuse_equal_the_old_rule_except_a_key_of_more_than_one_line
+FAILED tests/test_core_key_readers.py::test_the_reason_text_of_every_refused_key_file_is_the_new_fixed_text[hubspot-texts0]
+FAILED tests/test_core_key_readers.py::test_the_reason_text_of_every_refused_key_file_is_the_new_fixed_text[smtp-texts1]
+FAILED tests/test_core_key_readers.py::test_the_reason_text_of_every_refused_key_file_is_the_new_fixed_text[live-texts2]
+FAILED tests/test_core_key_readers.py::test_the_live_reader_refuses_a_key_of_more_than_one_line_that_is_long_enough
+FAILED tests/test_core_key_readers.py::test_each_reader_has_three_different_texts_for_empty_short_and_odd_characters
+FAILED tests/test_core_key_readers.py::test_the_set_of_texts_is_closed_every_message_is_one_of_a_few_fixed_texts
+7 failed, 5 passed in 1.89s
+rc=1 wall=3s

@@ -1,0 +1,5 @@
+HEAD ec76c73900fafcec7fc2715fbc29cf565aaa95ee
+CMD: uv run --all-extras --group test ruff format --check src tests demos tools
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+318 files already formatted
+exit=0

@@ -1,0 +1,4 @@
+texts 2000 | first-pass fixed-point failures 0 | b != a 1 | b shows a secret a did not 0
+DIFF a: 'uf:d8>/08::<HOSTNAME_2>[.]example[.]comi‹www[.]evil[.]digital=tmkbphw_n&password=<SECRET_3>'
+     b: 'uf:d8>/<IPV6_1><HOSTNAME_2>[.]example[.]comi‹www[.]evil[.]digital=tmkbphw_n&password=<SECRET_3>'
+     x: 'uf:d8>/08::duglq4bscexpidb01.corp.example.comi<www.evil.digital=tmkbphw_n&password=6.password=énbu例anna.m@example.orgx6q_muntiraaaxlé~~~q4xKp2Vb9Lr3NcW8dYh6uJsb5-----BEGIN PRIVATE KEY-----sanna.m@exa

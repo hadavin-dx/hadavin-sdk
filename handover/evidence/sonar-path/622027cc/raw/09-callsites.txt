@@ -1,0 +1,103 @@
+== pathguard call sites in src
+src/hadavin_sdk/cli.py:36:from hadavin_sdk import evals, pathguard
+src/hadavin_sdk/cli.py:135:            pathguard.operator_dir(args.config, what="config folder", must_exist=False)
+src/hadavin_sdk/cli.py:262:    report_dir = pathguard.join(outputs, REPORT_DIR, what="score report folder")
+src/hadavin_sdk/k1b/causelist.py:16:from hadavin_sdk import pathguard
+src/hadavin_sdk/k1b/causelist.py:39:    """Read ``DIR/name`` (``name`` is a constant of ours). Containment is ``pathguard.join``; the file is then read by
+src/hadavin_sdk/k1b/causelist.py:42:        path = pathguard.join(directory, name, what="cause list file", must_exist=True, kind="file")
+src/hadavin_sdk/k1b/causelist.py:45:        raise pathguard.mapped(
+src/hadavin_sdk/k1b/causelist.py:80:        directory = pathguard.operator_dir(directory, what="cause list folder")
+src/hadavin_sdk/k1b/replay.py:21:from hadavin_sdk import __version__, pathguard
+src/hadavin_sdk/k1b/replay.py:78:    return pathguard.join(out, f"run{run_index}", what="run folder", must_exist=True, kind="dir")
+src/hadavin_sdk/k1b/replay.py:89:    out = pathguard.operator_dir(out, what="outputs folder")
+src/hadavin_sdk/k1b/replay.py:94:        rdir = pathguard.join(out, run.name, what="run folder", must_exist=True)
+src/hadavin_sdk/k1b/replay.py:148:        out = pathguard.operator_dir(out, what="replay output folder", must_exist=False)
+src/hadavin_sdk/k1b/replay.py:150:        raise pathguard.mapped(exc, R11="replay output folder exists and is not empty") from None
+src/hadavin_sdk/k1b/replay.py:172:        rdir = pathguard.join(out, f"run{run_index}", what="run folder")
+src/hadavin_sdk/k1b/replay.py:298:        out = pathguard.operator_dir(out_arg, what="replay output folder", must_exist=False)
+src/hadavin_sdk/k1b/score.py:23:from hadavin_sdk import pathguard
+src/hadavin_sdk/k1b/score.py:102:        # the operator's own --answers file: folder and name go through ``pathguard.join`` (one guard) and the
+src/hadavin_sdk/k1b/score.py:105:        real = pathguard.join(
+src/hadavin_sdk/k1b/score.py:166:        target = pathguard.join(
+src/hadavin_sdk/k1b/score.py:181:        path = pathguard.join(base, *names, what="output file", must_exist=True, kind="file")
+src/hadavin_sdk/k1b/score.py:210:        return pathguard.operator_dir(out, what="outputs folder")
+src/hadavin_sdk/k1b/score.py:212:        raise pathguard.mapped(
+src/hadavin_sdk/k1b/score.py:230:        rdir = pathguard.join(out, f"run{i}", what="run folder", must_exist=True, kind="dir")
+src/hadavin_sdk/k1b/score.py:269:        rdir = pathguard.join(out, f"run{i}", what="run folder", must_exist=True, kind="dir")
+src/hadavin_sdk/k1b/atomic.py:4:folder goes through ``pathguard.operator_dir``); the name goes through ``pathguard.join`` (rules R1 to R8 of ``pathguard``),
+src/hadavin_sdk/k1b/atomic.py:21:from hadavin_sdk import pathguard
+src/hadavin_sdk/k1b/atomic.py:27:    final = pathguard.join(base, name, what="output file")
+src/hadavin_sdk/k1b/atomic.py:35:    tmp = pathguard.join(final.parent, f".{name}.{secrets.token_hex(8)}.tmp", what="temp file")
+src/hadavin_sdk/k1b/bundle.py:20:from hadavin_sdk import pathguard
+src/hadavin_sdk/k1b/bundle.py:112:        target = pathguard.join(
+src/hadavin_sdk/k1b/bundle.py:144:        target = pathguard.join(
+src/hadavin_sdk/k1b/bundle.py:206:        path = pathguard.operator_dir(path, what="bundle folder")
+src/hadavin_sdk/k1b/bundle.py:210:        man_path = pathguard.join(path, "manifest.json", what="bundle file")
+src/hadavin_sdk/k1b/bundle.py:232:        target = pathguard.join(
+src/hadavin_sdk/k1b/bundle.py:365:        root = pathguard.operator_dir(root, what="bundles folder")
+src/hadavin_sdk/k1b/bundle.py:367:        raise pathguard.mapped(
+src/hadavin_sdk/k1b/bundle.py:370:    # each name from the listing goes through pathguard.component; load_bundle then checks the case-NNN shape
+src/hadavin_sdk/k1b/bundle.py:372:        pathguard.component(p.name, what="bundle folder")
+src/hadavin_sdk/actions/secrets_vault.py:30:from hadavin_sdk import pathguard
+src/hadavin_sdk/actions/secrets_vault.py:182:                jwt_file = pathguard.join(
+src/hadavin_sdk/actions/secrets_file.py:21:from hadavin_sdk import pathguard
+src/hadavin_sdk/actions/secrets_file.py:39:        # sends every name that is left through ``pathguard.join`` (refuses ``vault:token``, ``con`` or ``key.``). The
+src/hadavin_sdk/actions/secrets_file.py:42:            base = pathguard.join(self.root, what="mounted secret folder")
+src/hadavin_sdk/actions/secrets_file.py:44:            path = pathguard.join(
+src/hadavin_sdk/actions/secrets_file.py:52:            raise pathguard.mapped(
+src/hadavin_sdk/actions/secrets_file.py:88:        root = pathguard.operator_dir(settings.dir, what="secrets folder")
+src/hadavin_sdk/actions/secrets_file.py:91:        raise pathguard.mapped(exc, R10=text, R11=text) from None
+src/hadavin_sdk/config.py:27:from hadavin_sdk import defaults, deferred, pathguard
+src/hadavin_sdk/config.py:499:        return pathguard.inside(base, Path(base) / relative, what="path")
+src/hadavin_sdk/config.py:530:        root = pathguard.operator_dir(root, what="config folder", must_exist=False)
+src/hadavin_sdk/config.py:544:                raw[key] = pathguard.operator_dir(root / raw[key], what=key, must_exist=False)
+src/hadavin_sdk/hashing.py:8:from hadavin_sdk import pathguard
+src/hadavin_sdk/hashing.py:21:        base = pathguard.operator_dir(root, what="hash folder")
+src/hadavin_sdk/hashing.py:23:        raise pathguard.mapped(
+src/hadavin_sdk/hashing.py:32:        try:  # one guard before the read: every name that is left goes through ``pathguard.join``
+src/hadavin_sdk/hashing.py:33:            path = pathguard.join(
+src/hadavin_sdk/hashing.py:37:            raise pathguard.mapped(
+src/hadavin_sdk/llm/fake.py:13:from hadavin_sdk import pathguard
+src/hadavin_sdk/llm/fake.py:25:        self.recorded_dir = pathguard.operator_dir(
+src/hadavin_sdk/llm/fake.py:49:        path = pathguard.join(self.recorded_dir, f"{digest}-{attempt}.json", what="recording")
+src/hadavin_sdk/audit/signer.py:24:from hadavin_sdk import pathguard
+src/hadavin_sdk/audit/signer.py:110:            path = pathguard.join(
+src/hadavin_sdk/audit/signer.py:117:            raise pathguard.mapped(exc, R10=text, R11=text) from None
+src/hadavin_sdk/audit/signer.py:155:    pathguard.operator_dir(folder, what="key folder", must_exist=False)
+src/hadavin_sdk/audit/signer.py:166:        parent = pathguard.inside(folder, target.parent, what="key file", must_exist=True)
+src/hadavin_sdk/audit/signer.py:167:        real = pathguard.inside(folder, parent / target.name, what="key file")
+src/hadavin_sdk/audit/signer.py:231:    real = pathguard.join(
+src/hadavin_sdk/audit/signer.py:248:    real = pathguard.join(
+src/hadavin_sdk/audit/local_dir.py:21:from hadavin_sdk import pathguard
+src/hadavin_sdk/audit/local_dir.py:32:        self.root = pathguard.operator_dir(root, what="audit folder", must_exist=False)
+src/hadavin_sdk/audit/local_dir.py:44:        return pathguard.join(self.objects, key, what="audit object")
+src/hadavin_sdk/audit/local_dir.py:128:            pathguard.component(f"{event.event_id}.json", what="audit event id")
+src/hadavin_sdk/audit/local_dir.py:149:                tmp = pathguard.join(
+src/hadavin_sdk/audit/local_dir.py:152:                final = pathguard.join(
+src/hadavin_sdk/audit/local_dir.py:177:            outbox_real = pathguard.join(self.outbox, what="audit outbox folder")
+src/hadavin_sdk/audit/local_dir.py:182:                path = pathguard.join(self.outbox, listed, what="audit outbox file")
+src/hadavin_sdk/audit/local_dir.py:191:                    corrupt = pathguard.join(self.outbox, "corrupt", what="audit outbox folder")
+src/hadavin_sdk/audit/local_dir.py:193:                    os.replace(path, pathguard.join(corrupt, listed, what="audit outbox file"))
+src/hadavin_sdk/registry.py:18:from hadavin_sdk import deferred, pathguard
+src/hadavin_sdk/registry.py:252:        path = pathguard.join(
+src/hadavin_sdk/tools.py:42:from hadavin_sdk import defaults, pathguard
+src/hadavin_sdk/guard/judge.py:21:from hadavin_sdk import pathguard
+src/hadavin_sdk/guard/judge.py:104:    golden = pathguard.join(
+
+== per-file count
+src/hadavin_sdk/actions/secrets_file.py
+src/hadavin_sdk/actions/secrets_vault.py
+src/hadavin_sdk/audit/local_dir.py
+src/hadavin_sdk/audit/signer.py
+src/hadavin_sdk/cli.py
+src/hadavin_sdk/config.py
+src/hadavin_sdk/guard/judge.py
+src/hadavin_sdk/hashing.py
+src/hadavin_sdk/k1b/atomic.py
+src/hadavin_sdk/k1b/bundle.py
+src/hadavin_sdk/k1b/causelist.py
+src/hadavin_sdk/k1b/replay.py
+src/hadavin_sdk/k1b/score.py
+src/hadavin_sdk/llm/fake.py
+src/hadavin_sdk/registry.py
+src/hadavin_sdk/tools.py

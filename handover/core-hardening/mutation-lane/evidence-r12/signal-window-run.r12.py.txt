@@ -1,0 +1,14 @@
+('SIGINT', 0) {(-2, False): 5}
+('SIGINT', 0.01) {(1, False): 5}
+('SIGINT', 0.02) {(1, False): 5}
+('SIGINT', 0.05) {(-2, False): 1, (130, False): 4}
+('SIGINT', 0.08) {(-2, False): 1, (2, False): 4}
+('SIGINT', 0.12) {(2, False): 5}
+('SIGINT', 0.2) {(2, False): 5}
+('SIGTERM', 0) {(-15, False): 5}
+('SIGTERM', 0.01) {(-15, False): 5}
+('SIGTERM', 0.02) {(-15, False): 5}
+('SIGTERM', 0.05) {(143, False): 4, (2, False): 1}
+('SIGTERM', 0.08) {(2, False): 5}
+('SIGTERM', 0.12) {(2, False): 5}
+('SIGTERM', 0.2) {(2, False): 5}

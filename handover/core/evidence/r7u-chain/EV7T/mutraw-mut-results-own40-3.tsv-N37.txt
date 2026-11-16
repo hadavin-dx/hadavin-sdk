@@ -1,0 +1,19 @@
+..............F
+=================================== FAILURES ===================================
+_ test_t7_an_empty_or_missing_tag_is_refused_not_turned_into_untagged_files[''] _
+
+tmp_path = PosixPath('/home/user/build/rr6/out/EV7T/tmp-mut-mutY3/pytest-of-unknown/pytest-8/test_t7_an_empty_or_missing_ta0')
+tag = ''
+
+    @pytest.mark.parametrize("tag", ["", None], ids=repr)
+    def test_t7_an_empty_or_missing_tag_is_refused_not_turned_into_untagged_files(tmp_path: Path, tag: Any) -> None:
+        with pytest.raises(ValueError):
+            rrc.Desk({}, tmp_path, 1, "7", tag=tag)
+>       with pytest.raises(ValueError):
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_r7t_findings.py:430: Failed
+=========================== short test summary info ============================
+FAILED tests/test_r7t_findings.py::test_t7_an_empty_or_missing_tag_is_refused_not_turned_into_untagged_files['']
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 14 passed, 118 deselected in 35.27s

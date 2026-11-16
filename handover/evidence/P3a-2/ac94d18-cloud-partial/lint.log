@@ -1,0 +1,18 @@
+HEAD ac94d18fb1cf3e89378d399b544f7d672d729a59 tree d668687b5c42efeaf42997079da4a86984c8b346 job=lint py=3.13 dsn=0
+ruff 0.17.1
+All checks passed!
+rc_check=0
+326 files already formatted
+rc_format=0
+bandit 1.9.4
+[tester]	WARNING	nosec encountered (B608), but no failed test on file demos/ask-your-data/db/lumen.py:723
+[tester]	WARNING	nosec encountered (B608), but no failed test on file demos/ask-your-data/db/lumen.py:723
+[manager]	WARNING	Test in comment: SafeLoader is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: subclass is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: the is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: pinned is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: bytes is not a test name or id, ignoring
+[tester]	WARNING	nosec encountered (B102), but no failed test on file src/hadavin_sdk/tools.py:389
+[tester]	WARNING	nosec encountered (B102), but no failed test on file src/hadavin_sdk/tools.py:389
+rc_bandit=0
+exit=0

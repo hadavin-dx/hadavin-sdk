@@ -1,0 +1,8 @@
+4f01c6d0bad8172ee0481cae679b4eeb079baa18
+tests/test_k3_pilot_env.py::test_k3_pilot_app_has_no_executor PASSED     [  0%]
+tests/test_k5_round8_postgres.py::test_the_app_deletes_evidence_only_through_the_purge_identity PASSED [  0%]
+tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[dblink-connect] PASSED [ 58%]
+PASSED tests/test_k3_pilot_env.py::test_k3_pilot_app_has_no_executor
+PASSED tests/test_k5_round8_postgres.py::test_the_app_deletes_evidence_only_through_the_purge_identity
+PASSED tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[dblink-connect]
+============================= 255 passed in 27.89s =============================

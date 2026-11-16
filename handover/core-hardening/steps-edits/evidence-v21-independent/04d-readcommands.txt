@@ -1,0 +1,15 @@
+$ TZ=UTC ps -o pid=,lstart=,comm= -p $$
+27044 Mon Nov 16 13:16:36 2026 bash
+$ TZ=UTC ls -l --time-style=full-iso key-fakekey ptykey-paste_enter
+-rw------- 1 root root 30 2026-11-16 13:16:14.532217754 +0000 key-fakekey
+-rw------- 1 root root 30 2026-11-16 13:16:23.751386974 +0000 ptykey-paste_enter
+$ date -u
+Mon Nov 16 13:16:37 UTC 2026
+$ ls ~/.hadavin-take-tags
+ls: cannot access '/root/.hadavin-take-tags': No such file or directory
+$ sha256sum on a scratch file
+f2ca1bb6c7e907d0
+$ grep "^MODEL_NAME=" scratch
+MODEL_NAME=model-x
+$ pgrep -f nomatchword
+rc=1

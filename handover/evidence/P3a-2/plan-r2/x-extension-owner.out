@@ -1,0 +1,26 @@
+Pager usage is off.
+== setup: plain role xmig with CREATE on the database (no superuser)
+CREATE ROLE
+GRANT
+ rolsuper 
+----------
+ f
+(1 row)
+
+SET
+ current_user | session_user 
+--------------+--------------
+ xmig         | xmig
+(1 row)
+
+CREATE EXTENSION
+ extname | extension_owner 
+---------+-----------------
+ citext  | xmig
+(1 row)
+
+ member_function_owner | count 
+-----------------------+-------
+ postgres              |    47
+(1 row)
+

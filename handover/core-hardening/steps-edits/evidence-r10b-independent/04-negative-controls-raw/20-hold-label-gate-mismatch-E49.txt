@@ -1,0 +1,3 @@
+rc=1
+FAIL E-49 HOLD label gate differs from header: G4
+RESULT FAIL 1

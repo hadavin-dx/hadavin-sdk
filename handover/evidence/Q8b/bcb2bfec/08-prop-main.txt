@@ -1,0 +1,55 @@
+## import /home/user/build/EV-Q8b-bcb2bfec/main/src/hadavin_sdk/__init__.py
+## walk: {'texts': 3000, 'not_idempotent': 1622, 'assignment_readable': 432, 'repeat_only_readable': 1}
+   assignment-readable by prefix: {'uppercase email': 101, 'percent': 94, 'email': 84, 'bearer': 38, 'email dot': 106, 'zwsp+email': 9}
+    NONIDEM 'bob.smith@example.com\u200bPASSWORD="<made-up-value> ok' -> '{"message": "<EMAIL_1>\\u200bPASSWORD=\\"<SECRET_1> ok"}'
+    NONIDEM "db01.corp.internalToken='<made-up-value> and more words" -> '{"message": "<HOSTNAME_1>.internalToken=\'<SECRET_1> and more words"}'
+    ASSIGN 'BOB@EXAMPLE.COMapikey\t=\t<made-up-value>\nmore' -> '{"message": "<EMAIL_1>\\t=\\t<made-up-value>\\nmore"}'
+    NONIDEM 'BOB@EXAMPLE.COMapikey\t=\t<made-up-value>\nmore' -> '{"message": "<EMAIL_1>\\t=\\t<made-up-value>\\nmore"}'
+    ASSIGN "user%40example.comToken='<made-up-value> ok" -> '{"message": "<EMAIL_1>=\'<made-up-value> ok"}'
+    NONIDEM "user%40example.comToken='<made-up-value> ok" -> '{"message": "<EMAIL_1>=\'<made-up-value> ok"}'
+    NONIDEM 'bob.smith@example.com\u200bpasswd = <made-up-value> and more words' -> '{"message": "<EMAIL_1>\\u200bpasswd = <SECRET_1> and more words"}'
+    NONIDEM "bob.smith@example.com\u200bapi_key='<made-up-value> ok" -> '{"message": "<EMAIL_1>\\u200bapi_key=\'<SECRET_1> ok"}'
+    NONIDEM 'bob@example.com.private_key":"<made-up-value> ok' -> '{"message": "<EMAIL_1>.private_key\\":\\"<SECRET_1> ok"}'
+    NONIDEM 'Authorization: Bearer bob.smith@example.com Token\t=\t<made-up-value>, next' -> '{"message": "Authorization: Bearer <EMAIL_1> Token\\t=\\t<SECRET_1> next"}'
+    NONIDEM 'bob.smith@example.com\u200btoken:<made-up-value>' -> '{"message": "<EMAIL_1>\\u200btoken:<SECRET_1>"}'
+    ASSIGN "BOB@EXAMPLE.COMpwd='<made-up-value>'" -> '{"message": "<EMAIL_1>=\'<made-up-value>\'"}'
+    NONIDEM "BOB@EXAMPLE.COMpwd='<made-up-value>'" -> '{"message": "<EMAIL_1>=\'<made-up-value>\'"}'
+    ASSIGN "BOB@EXAMPLE.COMpwd='<made-up-value> and more words" -> '{"message": "<EMAIL_1>=\'<made-up-value> and more words"}'
+    NONIDEM "BOB@EXAMPLE.COMpwd='<made-up-value> and more words" -> '{"message": "<EMAIL_1>=\'<made-up-value> and more words"}'
+    ASSIGN 'bob.smith@example.comsecret = <made-up-value> and more words' -> '{"message": "<EMAIL_1> = <made-up-value> and more words"}'
+    NONIDEM 'bob.smith@example.comsecret = <made-up-value> and more words' -> '{"message": "<EMAIL_1> = <made-up-value> and more words"}'
+    NONIDEM 'db01.corp.internalToken\t=\t<made-up-value>' -> '{"message": "<HOSTNAME_1>.internalToken\\t=\\t<SECRET_1>"}'
+    ASSIGN 'BOB@EXAMPLE.COMtoken\t=\t<made-up-value>"' -> '{"message": "<EMAIL_1>\\t=\\t<made-up-value>\\""}'
+    NONIDEM 'BOB@EXAMPLE.COMtoken\t=\t<made-up-value>"' -> '{"message": "<EMAIL_1>\\t=\\t<made-up-value>\\""}'
+    ASSIGN 'Authorization: Bearer db_password\t=\t<made-up-value>\nmore' -> '{"message": "Authorization: Bearer <SECRET_1>\\t=\\t<made-up-value>\\nmore"}'
+    NONIDEM 'bob.smith@example.com\u200bPASSWORD="<made-up-value>\nmore' -> '{"message": "<EMAIL_1>\\u200bPASSWORD=\\"<SECRET_1>\\nmore"}'
+    ASSIGN 'BOB@EXAMPLE.COMapikey=<made-up-value> and more words' -> '{"message": "<EMAIL_1>=<made-up-value> and more words"}'
+    NONIDEM 'BOB@EXAMPLE.COMapikey=<made-up-value> and more words' -> '{"message": "<EMAIL_1>=<made-up-value> and more words"}'
+    NONIDEM 'bob.smith@example.com\u200bToken=<made-up-value> and more words' -> '{"message": "<EMAIL_1>\\u200bToken=<SECRET_1> and more words"}'
+## card: {'texts': 3000, 'repeat_only_readable': 1524, 'assignment_readable': 38}
+   assignment-readable by prefix: {'bearer': 38}
+    ASSIGN 'Authorization: Bearer db_password\t=\t<made-up-value>\nmore' -> 'Authorization: Bearer <SECRET_1>\t=\t<made-up-value>\nmore'
+    ASSIGN 'Authorization: Bearer db_password: <made-up-value>, next' -> 'Authorization: Bearer <SECRET_1> <made-up-value>, next'
+    ASSIGN 'Authorization: Bearer client_secret":"<made-up-value>"' -> 'Authorization: Bearer <BEARER_1>":"<made-up-value>"'
+    ASSIGN "Authorization: Bearer client_secret='<made-up-value>'" -> "Authorization: Bearer <BEARER_1>'<made-up-value>'"
+    ASSIGN 'Authorization: Bearer client_secret: <made-up-value>.' -> 'Authorization: Bearer <BEARER_1>: <made-up-value>.'
+    ASSIGN 'Authorization: Bearer client_secret\t=\t<made-up-value>, next' -> 'Authorization: Bearer <BEARER_1>\t=\t<made-up-value>, next'
+    ASSIGN 'Authorization: Bearer client_secret":"<made-up-value>.' -> 'Authorization: Bearer <BEARER_1>":"<made-up-value>.'
+    ASSIGN "Authorization: Bearer private_key='<made-up-value>, next" -> "Authorization: Bearer <SECRET_1>'<made-up-value>, next"
+    ASSIGN "Authorization: Bearer access_token = <made-up-value>'" -> "Authorization: Bearer <BEARER_1> = <made-up-value>'"
+    ASSIGN 'Authorization: Bearer client_secret: <made-up-value> and more words' -> 'Authorization: Bearer <BEARER_1>: <made-up-value> and more words'
+    ASSIGN "Authorization: Bearer api_key='<made-up-value> and more words" -> "Authorization: Bearer <SECRET_1>'<made-up-value> and more words"
+    ASSIGN 'Authorization: Bearer access_token="<made-up-value>, next' -> 'Authorization: Bearer <BEARER_1>"<made-up-value>, next'
+    ASSIGN 'Authorization: Bearer access_token\t=\tzqHmcPqQ8XWS6' -> 'Authorization: Bearer <BEARER_1>\t=\tzqHmcPqQ8XWS6'
+    ASSIGN 'Authorization: Bearer db_password = zqx7eIHxAtKf6, next' -> 'Authorization: Bearer <SECRET_1> = zqx7eIHxAtKf6, next'
+    ASSIGN 'Authorization: Bearer private_key: <made-up-value>' -> 'Authorization: Bearer <SECRET_1> <made-up-value>'
+    ASSIGN 'Authorization: Bearer db_password\t=\t<made-up-value>.' -> 'Authorization: Bearer <SECRET_1>\t=\t<made-up-value>.'
+    ASSIGN 'Authorization: Bearer auth_token":"<made-up-value> ok' -> 'Authorization: Bearer <SECRET_1>":"<made-up-value> ok'
+    ASSIGN 'Authorization: Bearer client_secret\t=\t<made-up-value>, next' -> 'Authorization: Bearer <BEARER_1>\t=\t<made-up-value>, next'
+    ASSIGN "Authorization: Bearer PASSWORD='zqczP0Desmer4 and more words" -> "Authorization: Bearer <SECRET_1>'zqczP0Desmer4 and more words"
+    ASSIGN 'Authorization: Bearer access_token="<made-up-value> ok' -> 'Authorization: Bearer <BEARER_1>"<made-up-value> ok'
+    ASSIGN "Authorization: Bearer db_password='<made-up-value>, next" -> "Authorization: Bearer <SECRET_1>'<made-up-value>, next"
+    ASSIGN 'Authorization: Bearer private_key: <made-up-value>, next' -> 'Authorization: Bearer <SECRET_1> <made-up-value>, next'
+    ASSIGN "Authorization: Bearer PASSWORD='<made-up-value>, next" -> "Authorization: Bearer <SECRET_1>'<made-up-value>, next"
+    ASSIGN "Authorization: Bearer auth_token='zqCnUXlptmi25, next" -> "Authorization: Bearer <SECRET_1>'zqCnUXlptmi25, next"
+    ASSIGN "Authorization: Bearer auth_token = <made-up-value>'" -> "Authorization: Bearer <SECRET_1> = <made-up-value>'"

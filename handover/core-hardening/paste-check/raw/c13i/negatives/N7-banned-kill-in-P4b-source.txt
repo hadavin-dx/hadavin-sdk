@@ -1,0 +1,26 @@
+NEGATIVE N7-banned-kill-in-P4b-source  setup: rm $PS/P-4b.sh; sed -i "/^#!\/bin\/bash/a # kill the thing" $WK/../../../../ch/paste-check/LEAD-FILL-list-v5.md 2>/dev/null || sed -i "/^#!\/bin\/bash/a # kill the thing" hb/ch/paste-check/LEAD-FILL-list-v5.md  VARX: 
+##### b20
+syntax ok
+CR count: 0 (must be 0)
+non-ASCII bytes: 0 (must be 0)
+word scan:
+2:# kill the thing
+(end: nothing above is right)
+STOP C2b: the word kill or env.sh is in P-4b.sh (lines above). Next: aside "/z/hbroot/_local/scratch/wp6-smoke/pastes/P-4b.sh" and run this block again; tell the builder.
+##### b20 exit=1
+##### b20
+STOP C2b: /z/hbroot/_local/scratch/wp6-smoke/pastes/P-4b.sh already exists (a file you may have changed). Next: keep it and go to step (3); or, to start from the proposal again: aside "/z/hbroot/_local/scratch/wp6-smoke/pastes/P-4b.sh" and run this block again.
+##### b20 exit=1
+##### b27
+STOP C2c: the word kill or env.sh is in P-4b.sh. Next: remove it, make the control file again (C2b).
+dash syntax ok
+STOP C2c: the first line of the control file does not hold the checksum of P-4b.sh. Next: make the control file again (C2b step 4).
+##### b27 exit=1
+##### b36
+STOP C2c: the word kill or env.sh is in P-4b.sh. Next: remove it, make the control file again (C2b).
+dash syntax ok
+STOP C2c: the first line of the control file does not hold the checksum of P-4b.sh. Next: make the control file again (C2b step 4).
+##### b36 exit=1
+##### b37
+STOP C9: the P-4b files do not pass C2c. Next: run C2c and fix.
+##### b37 exit=1

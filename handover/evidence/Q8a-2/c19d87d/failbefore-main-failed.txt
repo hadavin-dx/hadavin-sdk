@@ -1,0 +1,33 @@
+FAILED tests/test_lockin_guard.py::test_core_logic_names_no_vendor - assert [...
+FAILED tests/test_lockin_guard.py::test_core_names_no_vendor_in_identifiers
+FAILED tests/test_lockin_guard.py::test_the_receiver_file_names_no_vendor_anywhere
+FAILED tests/test_lockin_guard.py::test_each_literal_allowance_covers_exactly_its_own_hits[hadavin_sdk.approvals.gate:aws]
+FAILED tests/test_lockin_guard.py::test_each_literal_allowance_covers_exactly_its_own_hits[hadavin_sdk.approvals.gate:gcloud]
+FAILED tests/test_lockin_guard.py::test_each_literal_allowance_covers_exactly_its_own_hits[hadavin_sdk.approvals.gate:s3]
+FAILED tests/test_lockin_guard.py::test_each_literal_allowance_covers_exactly_its_own_hits[hadavin_sdk.backends.table:gcs_retention_lock]
+FAILED tests/test_lockin_guard.py::test_each_literal_allowance_covers_exactly_its_own_hits[hadavin_sdk.backends.table:iam_auth needs region (and pip]
+FAILED tests/test_lockin_guard.py::test_each_literal_allowance_covers_exactly_its_own_hits[hadavin_sdk.config:backends.<capability>.region o]
+FAILED tests/test_lockin_guard.py::test_each_literal_allowance_covers_exactly_its_own_hits[hadavin_sdk.config:backends.channel: {kind: slack]
+FAILED tests/test_lockin_guard.py::test_each_literal_allowance_covers_exactly_its_own_hits[hadavin_sdk.config:slack]
+FAILED tests/test_lockin_guard.py::test_each_literal_allowance_covers_exactly_its_own_hits[hadavin_sdk.guard.producers:guard/bedrock_guardrail.py]
+FAILED tests/test_lockin_guard.py::test_each_literal_allowance_covers_exactly_its_own_hits[hadavin_sdk.llm.openai_compat:^(?:gpt-[\\w.-]+|o\\d[\\w.-]*|cha]
+FAILED tests/test_lockin_guard.py::test_each_literal_allowance_covers_exactly_its_own_hits[hadavin_sdk.llm.openai_compat:openai_compat]
+FAILED tests/test_lockin_guard.py::test_each_literal_allowance_covers_exactly_its_own_hits[hadavin_sdk.store.postgres:store postgres with iam_auth n]
+FAILED tests/test_lockin_guard.py::test_each_literal_allowance_covers_exactly_its_own_hits[hadavin_sdk.tools:.metadata.google.internal]
+FAILED tests/test_lockin_guard.py::test_each_literal_allowance_covers_exactly_its_own_hits[hadavin_sdk.tools:metadata.google.internal]
+FAILED tests/test_lockin_guard.py::test_each_word_allowance_covers_exactly_its_own_hits[hadavin_sdk.approvals.gate:_URL:slack]
+FAILED tests/test_lockin_guard.py::test_each_word_allowance_covers_exactly_its_own_hits[hadavin_sdk.approvals.gate:_URL:teams]
+FAILED tests/test_lockin_guard.py::test_each_word_allowance_covers_exactly_its_own_hits[hadavin_sdk.approvals.gate:_WRITE_SHAPES:s3]
+FAILED tests/test_lockin_guard.py::test_each_word_allowance_covers_exactly_its_own_hits[hadavin_sdk.guard.runmap:_GRAMMAR:aws]
+FAILED tests/test_lockin_guard.py::test_each_name_allowance_covers_exactly_its_own_hit[key0]
+FAILED tests/test_lockin_guard.py::test_each_name_allowance_covers_exactly_its_own_hit[key1]
+FAILED tests/test_lockin_guard.py::test_each_name_allowance_covers_exactly_its_own_hit[key2]
+FAILED tests/test_lockin_guard.py::test_each_name_allowance_covers_exactly_its_own_hit[key3]
+FAILED tests/test_lockin_guard.py::test_each_name_allowance_covers_exactly_its_own_hit[key4]
+FAILED tests/test_lockin_guard.py::test_each_name_allowance_covers_exactly_its_own_hit[key5]
+FAILED tests/test_lockin_guard.py::test_removing_one_name_from_the_pinned_table_set_reports_that_name_and_what_is_inside_it
+FAILED tests/test_lockin_guard.py::test_a_vendor_path_or_name_planted_in_the_real_receiver_is_caught
+FAILED tests/contracts/test_capabilities.py::test_channel_names_its_callback_path[fake]
+FAILED tests/contracts/test_capabilities.py::test_channel_names_its_callback_path[slack]
+ERROR tests/test_q8a2_callback.py - AttributeError: module 'hadavin_sdk.defau...
+ERROR tests/test_p7_tick.py

@@ -1,0 +1,29 @@
+head: 657b20b413db1fa66d974c59e62c796c1fef84a4
+command: python -I -c "import sys; sys.path.insert(0,'.'); import tests.mutation_runner_mutants as m; [print(i,x.name,x.file,'allow_crash=',x.allow_crash,'crash_type=',x.crash_type or '-','test_file=',x.test_file,'only_test=',x.only_test) for i,x in enumerate(m.M,1)]; print(len(m.M),'mutants;',sum(x.allow_crash for x in m.M),'allow_crash')"
+start: 2026-11-06T03:24:26Z
+-----
+1 judge: an exception line counts as a kill src/hadavin_sdk/testing/mutation.py allow_crash= False crash_type= - test_file= tests/test_mutation_runner.py only_test= test_mutation_judge_verdicts
+2 judge: crash markers ignored src/hadavin_sdk/testing/mutation.py allow_crash= False crash_type= - test_file= tests/test_mutation_runner.py only_test= test_mutation_judge_verdicts
+3 judge: short expect accepted src/hadavin_sdk/testing/mutation.py allow_crash= False crash_type= - test_file= tests/test_mutation_runner.py only_test= test_mutation_judge_verdicts
+4 runner: crash counts as good tools/mutation_runner.py allow_crash= False crash_type= - test_file= tests/test_mutation_runner.py only_test= test_a_crash_row_is_good_only_when_the_exception_class_is_the_declared_one
+5 runner: an absolute path is accepted tools/mutation_runner.py allow_crash= False crash_type= - test_file= tests/test_mutation_runner.py only_test= test_the_runner_refuses_paths_that_leave_its_tree
+6 runner: a dotdot part is accepted tools/mutation_runner.py allow_crash= False crash_type= - test_file= tests/test_mutation_runner.py only_test= test_the_runner_refuses_paths_that_leave_its_tree
+7 runner: a link out of the tree is accepted tools/mutation_runner.py allow_crash= False crash_type= - test_file= tests/test_mutation_runner.py only_test= test_the_runner_refuses_paths_that_leave_its_tree
+8 runner: the mutant file is not checked again tools/mutation_runner.py allow_crash= False crash_type= - test_file= tests/test_mutation_runner.py only_test= test_the_runner_refuses_paths_that_leave_its_tree
+9 runner: a short expect is accepted tools/mutation_runner.py allow_crash= False crash_type= - test_file= tests/test_mutation_runner.py only_test= test_the_runner_refuses_paths_that_leave_its_tree
+10 runner: a timeout is reported as an exit code tools/mutation_runner.py allow_crash= False crash_type= - test_file= tests/test_mutation_runner.py only_test= test_a_mutant_that_loops_forever_times_out_instead_of_hanging_the_run
+11 runner: a dash path is an option tools/mutation_runner.py allow_crash= False crash_type= - test_file= tests/test_mutation_runner.py only_test= test_a_test_path_that_starts_with_a_dash_is_a_path_not_a_pytest_option
+12 runner: the mutant file is joined as a path tools/mutation_runner.py allow_crash= False crash_type= - test_file= tests/test_mutation_runner.py only_test= test_the_runner_refuses_paths_that_leave_its_tree
+13 runner: a link out of the tree is listed tools/mutation_runner.py allow_crash= False crash_type= - test_file= tests/test_mutation_runner.py only_test= test_the_runner_refuses_paths_that_leave_its_tree
+14 runner: a timeout leaves the grandchildren running tools/mutation_runner.py allow_crash= False crash_type= - test_file= tests/test_mutation_runner.py only_test= test_a_timeout_kills_the_whole_process_tree_not_only_pytest
+15 runner: a failing tree kill is not caught tools/mutation_runner.py allow_crash= True crash_type= PermissionError test_file= tests/test_mutation_runner.py only_test= test_a_failing_tree_kill_still_kills_the_child
+16 runner: the baseline timeout is ignored tools/mutation_runner.py allow_crash= False crash_type= - test_file= tests/test_mutation_runner.py only_test= test_the_baseline_run_gets_its_own_timeout
+17 fix: junit with a DOCTYPE is parsed src/hadavin_sdk/testing/mutation.py allow_crash= False crash_type= - test_file= tests/test_mutation_runner.py only_test= test_junit_with_a_doctype_or_entity_is_refused_not_parsed
+18 fix: the runner drops pinned tools/mutation_runner.py allow_crash= False crash_type= - test_file= tests/test_mutation_runner.py only_test= test_the_runner_wires_pinned_so_another_failing_test_is_other_test
+19 b2: a refused junit stops the run tools/mutation_runner.py allow_crash= True crash_type= ValueError test_file= tests/test_mutation_runner.py only_test= test_a_refused_junit_marks_that_mutant_error_and_the_run_goes_on
+20 b2: the junit has no size ceiling src/hadavin_sdk/testing/mutation.py allow_crash= False crash_type= - test_file= tests/test_mutation_runner.py only_test= test_a_junit_text_over_the_ceiling_is_refused
+21 b3: a crash row is good whatever the exception tools/mutation_runner.py allow_crash= False crash_type= - test_file= tests/test_mutation_runner.py only_test= test_a_crash_row_is_good_only_when_the_exception_class_is_the_declared_one
+21 mutants; 2 allow_crash
+-----
+exit code: 0
+end: 2026-11-06T03:24:26Z

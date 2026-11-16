@@ -1,0 +1,12 @@
+### tests/test_migration_rules.py::test_no_test_logs_in_as_a_role_without_passing_its_password rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________ test_no_test_logs_in_as_a_role_without_passing_its_password __________
+tests/test_migration_rules.py:803: in test_no_test_logs_in_as_a_role_without_passing_its_password
+    assert not bad, "a login without its password: " + ", ".join(bad)
+E   AssertionError: a login without its password: test_migration_postgres.py:2020
+E   assert not ['test_migration_postgres.py:2020']
+=========================== short test summary info ============================
+FAILED tests/test_migration_rules.py::test_no_test_logs_in_as_a_role_without_passing_its_password
+1 failed in 0.95s
+

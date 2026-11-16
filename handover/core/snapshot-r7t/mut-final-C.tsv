@@ -1,0 +1,6 @@
+C2	src/lead_desk/crm_hubspot.py	t15	KILLED	['1 failed, 3 passed, 130 deselected in 1.80s']
+C2	restored-byte-equal=True
+C3	src/lead_desk/crm_hubspot.py	t15	KILLED	['1 failed, 3 passed, 130 deselected in 1.82s']
+C3	restored-byte-equal=True
+C7	src/lead_desk/crm_hubspot.py	t15	KILLED	['1 failed, 3 passed, 130 deselected in 1.94s']
+C7	restored-byte-equal=True

@@ -1,0 +1,13 @@
+Traceback (most recent call last):
+  File "/home/user/build/q8a2-fb3/mut.py", line 20, in <module>
+    open(R,"w").write(src.replace(a,b))
+    ~~~~^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/user/build/q8a2-fb3/wt-old/src/hadavin_sdk/approvals/receiver.py'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/user/build/q8a2-fb3/mut.py", line 24, in <module>
+    open(R,"w").write(src)
+    ~~~~^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/home/user/build/q8a2-fb3/wt-old/src/hadavin_sdk/approvals/receiver.py'

@@ -1,0 +1,456 @@
+diff --git a/README.md b/README.md
+index 5b995e1..a26b3be 100644
+--- a/README.md
++++ b/README.md
+@@ -17,7 +17,7 @@
+ 
+ After the steps in "Try it" below, three things confirm that it works. Every number below comes from the demo programs (the demo server and the file of pre-written answers), not from a real CRM or mail system.
+ 
+-* The first lead gets `"verdict": "new"`. The same request sent again gets `"replayed": true`, the same lead and the same receipt number; the desk creates no second lead and no second email. The replay is still counted in `attempts` in the receipt, and it can use up a receipt number, so the numbers can skip (no test pins this). If the lead's follow-up email is due and not yet sent, the replay starts it. The same person through the other door (web form or webhook) gets `"verdict": "duplicate"`.
++* The first lead gets `"verdict": "new"`. The same request sent again gets `"replayed": true`, the same lead and the same receipt number; the desk creates no second lead and no second email. The replay is still counted in `attempts` in the receipt, and it uses up a receipt number: in the steps below the repeat takes number 2, so the same person through the other door gets `"receipt_id": 3` (the numbers can skip; they are never reused). If the lead's follow-up email is due and not yet sent, the replay starts it. The same person through the other door (web form or webhook) gets `"verdict": "duplicate"`.
+ * The counts page shows 2 requests received, 1 new, 1 duplicate.
+ * The demo mail system holds exactly one email until the reminder email is due. The demo start scripts also switch on the reminder email (see "Optional features") with a waiting time of 90 seconds (`nudge_after_seconds` in `demo_only/leadflow.json`): once a lead is 90 seconds old and has not reached the stage that the same file names as `reminder_until` (`replied`), the desk's background pass sends a second email, so a later look can show 2.
+ 
+@@ -35,7 +35,7 @@ In a browser, http://127.0.0.1:8765/ui/ shows the portal: overview, leads, items
+ * **Receipt**: the desk's first note about a request, written before anything else happens.
+ * **Verdict**: the desk's answer: `new` (first time this email is seen), `duplicate` (seen before under another request number) or `review` (the request is incomplete or holds a value the desk will not store; a person must look).
+ * **Repeat (portal word)**: the portal shows a `duplicate` verdict as "Repeat". A replay (next entry) is a different thing.
+-* **Replayed**: the same request number came again, so the desk gave back its stored answer and created no second lead and no second email. The replay is counted in `attempts` and can use up a receipt number (no test pins this).
++* **Replayed**: the same request number came again, so the desk gave back its stored answer and created no second lead and no second email. The replay is counted in `attempts` and uses up a receipt number (the next new receipt skips one; `tests/test_docs_match_tools.py` runs it).
+ * **Door**: the way a request arrived: `form` or `webhook`. The portal calls it "Source".
+ * **Keyed and blind**: the desk gives every email one fixed label, the send key; a keyed mail system sends only once for a send key it has seen, and a blind one does not. The same two words apply to a CRM: a keyed CRM keeps one row however often it is asked with the same key; a blind CRM stores a row every time.
+ * **UNKNOWN**: the desk cannot tell whether a follow-up email left, or whether the CRM row was written. It does not guess and does not resend; a person must check.
+@@ -60,8 +60,8 @@ You need Linux or Windows (macOS was not tried), Python 3.12 or newer (`pyprojec
+     bash scripts/start_all.sh keyed            # starts the demo server and the desk in the background
+     for i in 1 2 3 4 5 6 7 8 9 10; do curl -sf http://127.0.0.1:8765/counts >/dev/null && break; sleep 1; done; curl -i http://127.0.0.1:8765/counts # waits up to 10 seconds; it works when the first line starts with "HTTP/1" and has 200, and the numbers are all 0
+     python scripts/feed.py --source form --index 1       # sends one lead; prints 201 ... "verdict": "new"
+-    python scripts/feed.py --source form --index 1       # the same request again: 201 and "replayed": true, no second lead, no second email (the replay can use up a receipt number)
+-    python scripts/feed.py --source webhook --index 1    # same person through the other door: "verdict": "duplicate"
++    python scripts/feed.py --source form --index 1       # the same request again: 201 and "replayed": true, no second lead, no second email (the replay uses up a receipt number)
++    python scripts/feed.py --source webhook --index 1    # same person through the other door: "verdict": "duplicate", "receipt_id": 3 (the repeat above took number 2)
+     curl http://127.0.0.1:8765/counts              # received 2, new 1, duplicate 1 (the replayed request is not added to these counts; it only raises attempts in its receipt, and it can start a due follow-up)
+     curl http://127.0.0.1:8766/fake/outbox         # "count": 1  (one email, not two, if you look within 90 seconds; the reminder email comes later)
+     bash scripts/reset.sh                          # stops what start_all started and DELETES the desk's records and the logs (only inside ./data)
+@@ -77,8 +77,8 @@ Run both scripts with `bash`, as above. They need features that only bash is sur
+     .\scripts\start_all.ps1 keyed    # prints "started: ..." with two process ids
+     Start-Sleep 3; Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8765/counts | Select-Object -ExpandProperty Content    # should answer with numbers (all 0)
+     python scripts\feed.py --source form --index 1       # prints 201 ... "verdict": "new"
+-    python scripts\feed.py --source form --index 1       # the same request again: 201 and "replayed": true, no second lead, no second email (the replay can use up a receipt number)
+-    python scripts\feed.py --source webhook --index 1    # same person, other door: "verdict": "duplicate"
++    python scripts\feed.py --source form --index 1       # the same request again: 201 and "replayed": true, no second lead, no second email (the replay uses up a receipt number)
++    python scripts\feed.py --source webhook --index 1    # same person, other door: "verdict": "duplicate", "receipt_id": 3 (the repeat above took number 2)
+     Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8765/counts | Select-Object -ExpandProperty Content    # received 2, new 1, duplicate 1 (the replayed request is not added to these counts; it only raises attempts in its receipt, and it can start a due follow-up)
+     Invoke-WebRequest -UseBasicParsing http://127.0.0.1:8766/fake/outbox | Select-Object -ExpandProperty Content    # "count": 1 (within 90 seconds; the reminder email comes later)
+     .\scripts\reset.ps1        # stops what start_all started and DELETES the desk's records and the logs
+@@ -102,7 +102,7 @@ Optional: `RESET_STOP_WAIT_SECONDS` (0 to 999, default 10) is how long the scrip
+ 
+ Claimed, for this demo setup only:
+ 
+-* The same request number sent again gets the stored answer; no second lead and no second email is made. The replay is counted in `attempts` and can use up a receipt number (no test pins this).
++* The same request number sent again gets the stored answer; no second lead and no second email is made. The replay is counted in `attempts` and uses up a receipt number (the next new receipt skips one; `tests/test_docs_match_tools.py` runs it).
+ * The same email under a different request number is a duplicate: no second CRM row, no second email, and the AI step is not asked.
+ * An incomplete request goes to a review list with a reason and gets no follow-up.
+ * The desk was stopped at ten named crash points (and an eleventh, N1, for the reminder email) and restarted. All ten were simulated by an exception inside the program, and D2 was also tried with a real process kill (`docs/limits.md`). At the crash points the tests cover, they assert at most one lead, one CRM row and one email; `contract.md` says that not every path is covered. Where it cannot tell whether an email left, the follow-up is listed as UNKNOWN for a person.
+diff --git a/contract.md b/contract.md
+index ee25ba7..4fd50c3 100644
+--- a/contract.md
++++ b/contract.md
+@@ -320,7 +320,7 @@ These rules are part of this contract. Where one differs from a table row above,
+ - Hints: a 409 `wrong_decision` and a review item of kind `unknown` carry a `hint` (a plain sentence). For a `crm_unconfirmed` item: "The CRM may or may not hold this lead. Look in the CRM, then answer crm_present (the row is there: Retry goes straight to the email) or not_sent (the row is not there: Retry asks the CRM again). sent is refused here: no email was ever tried." For an unknown row whose CRM step is finished: "The CRM row is already done; what is unclear is the email. Look at the mail step, then answer sent (it left) or not_sent (it did not). crm_present is refused here. If a call for this lead is still running, not_sent is refused until it has ended."
+ - A failure before the send (reading the row, the mode read, the intent mark) is not taken for an unclear send: it counts as one automatic try (`internal:<class>`, row `pending`). Only `outbox.send` itself decides `ambiguous`, and a send that the desk stopped waiting for (`SendAmbiguous` from the total deadline) counts as ambiguous too.
+ - A lock inside the steps after the claim (the first stage stamp, the AI step, the stamp after the AI step, the CRM mark, the stamp that writes the send mark) is not an error of the follow-up: the claimed try is given back (`auto_attempts` minus 1, row `pending`, `send_started` 0, no `last_error`), only if this claim's token still matches. The one exception is a lock on the stamp or label write after the model answered (`ModelAnswerLost`): the try stays used up. The give-back write is retried like any other write (`_locked_retry`). If even that stays locked, the row stays `sending` and the reaper puts it back (a row whose send mark was written then counts as a send that may have started: `unknown` on a blind sender, the safe side).
+-- A client replay of a `new` request drives the follow-up only if it is due: no automatic try yet, or its backoff is over. Replays are not meant to use up the 5 tries: `test_replay_same_source_ref` in `tests/test_flow.py` shows a replay drives a pending follow-up once (the outbox count is 1 after the drive) and a sent one not at all (no drive id, and a second drive changes nothing); `test_replays_cannot_burn_the_cap` in `tests/test_desk_http_edge_cases.py` sends 8 requests (one original and 7 replays), inside the wait, of a request whose sender keeps refusing and checks the sender was tried once and the try count is 1; no test replays with the wait passing between the replays until the 5th try (the loop of 20 replays in `test_replay_same_source_ref` is on a lead whose follow-up was already sent).
++- A client replay of a `new` request drives the follow-up only if it is due: no automatic try yet, or its backoff is over (a follow-up given back for lack of resources waits 5 seconds even with no try used). Replays are not meant to use up the 5 tries: `test_replay_same_source_ref` in `tests/test_flow.py` shows a replay drives a pending follow-up once (the outbox count is 1 after the drive) and a sent one not at all (no drive id, and a second drive changes nothing); `test_replays_cannot_burn_the_cap` in `tests/test_desk_http_edge_cases.py` sends 8 requests (one original and 7 replays), inside the wait, of a request whose sender keeps refusing and checks the sender was tried once and the try count is 1; no test replays with the wait passing between the replays until the 5th try (the loop of 20 replays in `test_replay_same_source_ref` is on a lead whose follow-up was already sent).
+ - A `pending` or `sending` row stamped later than now (the clock was set back) is set to now by the reaper, then ages normally. An open receipt stamped in the future counts its age from the first reaper pass that saw it open.
+ 
+ ### Reaper, gates and load
+diff --git a/docs/hubspot-probe.md b/docs/hubspot-probe.md
+index 1cf9203..2f0a4b0 100644
+--- a/docs/hubspot-probe.md
++++ b/docs/hubspot-probe.md
+@@ -42,8 +42,10 @@ Private-app scopes used (the list is what the script calls; this repository hold
+ - the permanent delete (HubSpot calls it the GDPR delete, the call for erasing a person's data on request) may need a further scope; if it is refused the script falls back to the normal delete,
+   which only archives the contact.
+ 
+-`--token-env NAME` changes the variable name (default `HUBSPOT_PROBE_TOKEN`); it must be a plain variable name, anything
+-else is refused without being printed. `--dry-run http://127.0.0.1:PORT` runs the flow against a local stub (loopback
++`--token-env NAME` changes the variable name (default `HUBSPOT_PROBE_TOKEN`); it must be a plain variable name. A name
++that is not one is refused (and not printed) when you give `--yes-spend-calls 7` (the planned count;
++with any other count it is refused for the count first, before the name is looked at); `--plan` does not look at the name,
++it only prints the planned call count. `--dry-run http://127.0.0.1:PORT` runs the flow against a local stub (loopback
+ only); the tests do this. If the delete step prints a WARNING, delete the named probe contact by hand.
+ 
+ ## What the script sends (read from `scripts/hubspot_probe.py`)
+diff --git a/docs/limits.md b/docs/limits.md
+index 5b4daee..d9b1529 100644
+--- a/docs/limits.md
++++ b/docs/limits.md
+@@ -59,7 +59,7 @@ This page holds the detail behind the section "What is claimed, and what is not"
+ * Do not let another program send mail under the same send key (the lead's id): the desk assumes it is the only sender for that key.
+ * A crash is simulated inside the program (the test raises an exception at the point) for all ten crash points and for the eleventh, N1 (the reminder email, `tests/test_reminder_email.py`). A real process kill (the desk process ends at once, no clean-up) at a NAMED crash point was done only at D2: twice with the demo mail system over HTTP (keyed and blind), and once with a real mail catcher process that receives mail over SMTP (blind sender); the tests are `tests/test_http.py::test_crash_d2_subprocess` (keyed and blind) and the test next to it in the same file whose name starts with `test_crash_d2_subprocess_with_` (blind SMTP sender).
+ * Loads of 10,000 requests were not run. The desk is for one computer and one process. There is no login: it listens on this computer only unless you change `DESK_BIND`, and then anyone who can reach that address can read the desk's records (see "The portal and the desk process" below).
+-* No run result is stored in this repository: no count of passed or skipped tests and no result of the checks in `.github/workflows/lint.yml`. `versions.md` gives only the number of test files (92); no count of collected tests is stored. A test run skips the tests that need another operating system, a tool that is not installed, or the load measurement; the reasons are listed in `docs/tests.md` and `python -m pytest -q -rs` prints them.
++* No run result is stored in this repository: no count of passed or skipped tests and no result of the checks in `.github/workflows/lint.yml`. `versions.md` gives only the number of test files (93); no count of collected tests is stored. A test run skips the tests that need another operating system, a tool that is not installed, or the load measurement; the reasons are listed in `docs/tests.md` and `python -m pytest -q -rs` prints them.
+ * This repository does not claim anything about what happens if n8n crashes before the request reaches the desk, or about other n8n versions or set-ups.
+ * Reminders (when the lead owner feature is on): a lead is reminded once after the wait if its step is still before `reminder_until`, even if its follow-up email has not been sent yet, because the reminder asks whether the lead moved on, not whether the email was sent. A lead created while the feature was off has no owner, step or reminder, and the step route answers `no_state` for it; only leads created after the switch are covered. A reminder is not sent a second time: one that failed or could not be confirmed is listed for a person (`tests/test_reminder_email.py` checks one reminder over many passes, and that ten racing claims give one winner).
+ * If a person wrongly answers "not sent" for an UNKNOWN follow-up on a mail system that cannot recognise repeats, a second email can go.
+diff --git a/docs/real-services.md b/docs/real-services.md
+index 2250455..cf2c833 100644
+--- a/docs/real-services.md
++++ b/docs/real-services.md
+@@ -6,10 +6,10 @@ This section is for someone who wants to try the desk against their own free Hub
+ 
+ `scripts/run_real_check.py` runs the same desk against a real CRM (a free HubSpot account) and real e-mail (a mail account reached over an encrypted connection), then COUNTS what really happened. Only the INPUT is made up: about 12 invented people whose addresses end in `example.com` (a domain name reserved for examples); the mail kind used here picks the receiving address only from your configured inbox list, never from a lead's address (`tests/test_smtp_provider.py`, test of the recipient choice). You run it from your own terminal; it asks "y/N" after printing the worst-case number of calls and mails (and dollars, only with `--live-model`), and it refuses to start when a required cap or setting is missing (`tests/test_real_check_dry.py`, test of a missing required name).
+ 
+-1. Copy `scripts/real-run.env.example` to a folder outside the repository and fill it in. Each name is explained inside the file. Secrets are never in that file, only the paths of one-line key files (a HubSpot private-app token with contacts read and write only, called the service key in the config file; the desk does not use HubSpot's owners list, only the probe does; and a mail app password).
++1. Copy `scripts/real-run.env.example` to a folder outside the repository and fill it in: replace every `<...>` value. Each name is explained inside the file. Save it as plain UTF-8 text without a byte-order mark (the invisible first character that some Windows editors, Notepad among them, can add): with one, the script refuses line 1 with `config line 1 is not NAME=VALUE with an upper-case name` (run on a file with a byte-order mark: `tests/test_docs_match_tools.py`). Write every path in the file (key files, database, result file) as a full path: a short path is looked up from the folder you start the script in, but the desk process the script starts runs in the repository folder (`cwd=REPO` in `scripts/run_real_check.py`), so the two would look in different places (read from the code, not run). Secrets are never in that file, only the paths of one-line key files (a HubSpot private-app token with contacts read and write only, called the service key in the config file; the desk does not use HubSpot's owners list, only the probe does; and a mail app password).
+ 1a. **Before turning lead stages on in any real HubSpot account (required; the desk then writes HubSpot's lead status field):** the CRM admin lists every automation that reacts to lead status changes and confirms each one is safe or switched off; test on one made-up contact first. The desk writes the lead status field and cannot see those automations (`docs/limits.md`, section "Which CRM stage things the desk touches").
+ 2. In HubSpot create the contact property `hadavin_lead_id` (single-line text) by hand; the program's HubSpot code uses only the contacts endpoints and creates no property (`src/lead_desk/crm_hubspot.py`, top comment; no test checks what the real HubSpot does when the property is missing: the tests run the code against a demo server that accepts the field anyway and answers every address except the contact addresses with 404, and the create test in `tests/test_crm_hubspot.py` counts one call for one create).
+-3. Self-test first, no real service: `python scripts/run_real_check.py --dry-fakes`. Then the real run: `python scripts/run_real_check.py --config PATH`. Options: `--live-model` (a real AI model; its dollar limit is set in the settings whose names start with `DESK_LIVE_`), `--cleanup` (archives only the contacts this run made, found by their lead ids).
++3. Self-test first, no real service: `python scripts/run_real_check.py --dry-fakes`. It also asks the start question (`Start? [y/N]`); to run it without a person, add `--assume-yes`, which the script accepts only together with `--dry-fakes` (a real run always asks). Then the real run: `python scripts/run_real_check.py --config PATH`. Options: `--live-model` (a real AI model; its dollar limit is set in the settings whose names start with `DESK_LIVE_`), `--cleanup` (archives only the contacts this run made, found by their lead ids).
+ 
+ It sends new people. It then repeats requests through the same door and through the other door (the web form and the e-mail intake). It also sends one person with two different addresses (a CRM that only compares email addresses sees two different people, so it cannot catch that; the desk also treats them as two leads, and the check list names them as "two-leads": `tests/test_load_tools.py` tests that name), stops the desk process abruptly once, after requests have started, restarts it, and sends again. It then reads back the CRM contacts by `hadavin_lead_id`, counts the mails in your two receiving mailboxes at different providers (one block per mailbox in the config) by the header `X-Send-Key` (a header the desk adds to each mail so that a repeated send can be recognised; the code in `src/lead_desk/imap_count.py` fetches only that one header; no test shows that nothing else is read) and prints counts, a pass/fail table of the checks and a per-lead table (failure tables mask e-mail addresses). The same goes into a JSON file.
+ 
+diff --git a/docs/settings.md b/docs/settings.md
+index ee128aa..2a304eb 100644
+--- a/docs/settings.md
++++ b/docs/settings.md
+@@ -74,14 +74,14 @@ The default addresses below end in `example.test`, a name reserved for examples.
+ `DESK_OUTBOX=smtp_provider`:
+ 
+ * Required: `DESK_SMTPP_HOST` (lower-cased by the desk), `DESK_SMTPP_USER`, `DESK_SMTPP_PASSWORD_FILE`, `DESK_SMTPP_FROM`, `DESK_SMTPP_RECIPIENTS`, `DESK_SMTPP_MAX_SENDS`. Optional: `DESK_SMTPP_SECURITY` (`starttls`, the default: start plain, then switch to encryption; or `ssl`: encrypted from the start) and `DESK_SMTPP_PORT` (default 587 for `starttls`, 465 for `ssl`).
+-* `DESK_SMTPP_PASSWORD_FILE`: the path of a one-line file of at most 4096 bytes; never the password itself.
++* `DESK_SMTPP_PASSWORD_FILE`: the path of a one-line file of at most 4096 bytes; never the password itself. The file is opened again for every send (`read_secret_file` in `src/lead_desk/smtp_provider.py`), not at start (read from the code; no test changes the file while the desk runs).
+ * `DESK_SMTPP_FROM`, `DESK_SMTPP_RECIPIENTS` (your own inboxes, comma separated), `DESK_SMTPP_MESSAGE_ID_DOMAIN` (default `example.invalid`), `DESK_SMTPP_TIMEOUT_SECONDS` (default `5.0`, built into the mail sender; the mail sender waits for the smaller of this value and the desk's call time limit, which is `DESK_SEND_TIMEOUT_SECONDS` cut at 9 seconds; `src/lead_desk/smtp_provider.py` takes the minimum of the two).
+ * `DESK_SMTPP_MAX_SENDS`: required hard cap, counted in memory, so restarting the desk resets the count to 0: the cap does not protect against a restart loop.
+ * `DESK_SMTPP_STATS_FILE` (optional): a file where the desk writes its send counts for run scripts; the desk never reads it back. `DESK_SMTPP_CA_FILE` (optional, no default): a file of extra trusted certificate authorities (the organisations whose certificates are accepted); checking the mail server's certificate stays on.
+ 
+ ### CRM settings (`DESK_CRM=hubspot`)
+ 
+-* `DESK_HUBSPOT_KEY_FILE` (required): the path of a one-line key file of at most 4096 bytes, UTF-8, holding a key of at least 8 characters with no spaces or unprintable characters.
++* `DESK_HUBSPOT_KEY_FILE` (required): the path of a one-line key file of at most 4096 bytes, UTF-8, holding a key of at least 8 characters with no spaces or unprintable characters. The desk opens the file again at every CRM call (`_key` in `src/lead_desk/crm_hubspot.py`), not at start: a missing or bad file shows as a CRM configuration error at the next call, and a key file you change or remove while the desk runs takes effect then (read from the code; no test changes the file while the desk runs).
+ * `DESK_HUBSPOT_MAX_CALLS`: required hard cap, counted per process in memory: a restarted desk starts again at 0, so a restart loop is not limited by it. Only the live-model spend ledger is read back after a restart. The `DESK_HUBSPOT_STATS_FILE` file is only written, for run scripts, and the desk never reads it.
+ * `DESK_HUBSPOT_BASE_URL` (default: the vendor's own address, `HUBSPOT_BASE_URL` in `constants.py`), `DESK_HUBSPOT_TIMEOUT_SECONDS` (default 4.5), `DESK_HUBSPOT_MAX_429_RETRIES` (default 2: how many times to retry after HubSpot answers "too many requests", code 429), `DESK_HUBSPOT_STATS_FILE`.
+ * `DESK_HUBSPOT_ALLOW_ANY_BASE_URL`: the word `yes` lifts the check that the key goes only to the vendor's own host names.
+diff --git a/docs/tests.md b/docs/tests.md
+index 9cbdd44..483e8e0 100644
+--- a/docs/tests.md
++++ b/docs/tests.md
+@@ -113,7 +113,7 @@ The table below says which tests show each promise. "Tests named" means the test
+ 
+ | # | Promise, in plain words | Tests that show it |
+ |---|---|---|
+-| P1 | (a) A second submission with a different request number and the same email is recorded as a duplicate with the NAMES of the fields that differ; no second CRM row, no second email. (b) The same request number sent again gets the original answer marked `replayed`; no second lead and no second email. The repeat is counted in the receipt (`attempts`, asserted as 22 after 21 repeats in `test_replay_same_source_ref`) and can use up a receipt number (no test pins this); a repeat of a `new` request starts the lead's follow-up when it is `pending` and due (`_pending_and_due` in `src/lead_desk/desk.py`). | (a) `test_cross_source_dupe`, `test_dupe_diff_first_untouched`, `test_write_once_triggers`; (b) `test_replay_same_source_ref`, `test_concurrent_same_source_ref` |
++| P1 | (a) A second submission with a different request number and the same email is recorded as a duplicate with the NAMES of the fields that differ; no second CRM row, no second email. (b) The same request number sent again gets the original answer marked `replayed`; no second lead and no second email. The repeat is counted in the receipt (`attempts`, asserted as 22 after 21 repeats in `test_replay_same_source_ref`) and uses up a receipt number (`test_a_repeat_uses_up_a_receipt_number` in `tests/test_docs_match_tools.py` runs it: a repeat, then the other door gets number 3); a repeat of a `new` request starts the lead's follow-up when it is `pending` and due (`_pending_and_due` in `src/lead_desk/desk.py`). | (a) `test_cross_source_dupe`, `test_dupe_diff_first_untouched`, `test_write_once_triggers`; (b) `test_replay_same_source_ref`, `test_concurrent_same_source_ref` |
+ | P2 | A duplicate never reaches the AI step: the demo AI's call counter does not go up for it. | `test_dedupe_before_ai` |
+ | P3 | A submission with no name, no email, an invalid email or a wrongly typed field goes to the review list with a reason and gets no follow-up. | `test_incomplete_to_review` |
+ | P4 | Stopped at each crash point and restarted: in these tests no run produced more than one lead, more than one CRM row or more than one email (see the crash-point table for what a blind CRM or mail system does). A wrong "not sent" answer by a person can cause a second email on a blind mail system. | `test_crash_resume_each_point` and `test_crash_resume_after_*` in `tests/test_flow.py`: together they stop the desk at each of the ten crash points, with keyed and with blind mail systems (C0 and C1 also with keyed and blind CRMs); real kills: `tests/test_http.py::test_crash_d2_subprocess` (keyed and blind, demo mail over HTTP), `test_crash_d2_subprocess_with_*` in `tests/test_http.py` (real mail catcher) |
+diff --git a/load_tools/README.md b/load_tools/README.md
+index 4b3ee09..1c3fb2a 100644
+--- a/load_tools/README.md
++++ b/load_tools/README.md
+@@ -12,6 +12,30 @@ Not covered, on purpose: `scripts/run_real_check.py` reads its config from any f
+ | `load_driver.py` | Sends requests to the desk's `POST /leads` on a fixed schedule and writes the **request log**. |
+ | `check_invariants.py` | The seven checks, run after a scenario has drained. Exit code 0 only if all seven hold. |
+ 
++## A whole run, start to finish (Linux, bash, from the repository root)
++
++This is the run the checks were written for: the desk sends its mail to the catcher, the load driver sends made-up leads, and the checks read what the desk, the catcher and the demo CRM hold afterwards. It was run once as written, on a copy of this tree, on one Linux computer with no network except loopback: the driver sent 30 requests (24 different request numbers, because 6 were repeats), the desk made 21 leads and sent 21 emails to the catcher, and all seven checks held (exit code 0). The log of that run is not shipped, and no test repeats it, so a later change to a tool can make this recipe out of date without a red test.
++
++The recipe is safe to start next to the "Try it" demo of the main README: it uses its own ports (desk 18765, demo CRM 18766, catcher 12525) and its own desk book `data/load/desk.sqlite3`, and its first line deletes the folder `data/load` (git-ignored, inside the repository, which is where the tools accept paths) so that no earlier book or log is mixed in. Each server is waited for (up to 20 seconds) before the next step; if a line prints `no answer from <address>`, stop the programs with `kill $(jobs -p)` and read the logs in `data/load`. The run takes a few seconds.
++
++    export PYTHONPATH=src:.
++    rm -rf data/load && mkdir -p data/load                    # a fresh folder, so no earlier book or log is mixed in
++    wait_for() { for i in $(seq 1 20); do curl -sf "$1" >/dev/null 2>&1 && return 0; sleep 1; done; echo "no answer from $1" >&2; return 1; }
++    python load_tools/catcher.py --out data/load/mail.jsonl --port 12525 > data/load/catcher.log 2>&1 &
++    python -m demo_only.fakes_server --outbox keyed --port 18766 > data/load/fakes.log 2>&1 &
++    wait_for http://127.0.0.1:18766/fake/crm
++    DESK_DB_PATH=data/load/desk.sqlite3 DESK_PORT=18765 DESK_FAKES_URL=http://127.0.0.1:18766 DESK_OUTBOX=smtp DESK_SMTP_HOST=127.0.0.1 DESK_SMTP_PORT=12525 python -m lead_desk.server > data/load/desk.log 2>&1 &
++    wait_for http://127.0.0.1:18765/counts
++    python -m load_tools.load_driver --base-url http://127.0.0.1:18765 --scenario dupmix:30:0.3 --log data/load/req.jsonl
++    for i in $(seq 1 60); do curl -s http://127.0.0.1:18765/counts | grep -q '"pending_followups": 0' && break; sleep 1; done; curl -s http://127.0.0.1:18765/counts
++    curl -s http://127.0.0.1:18766/fake/crm > data/load/crm.json
++    : > data/load/model.jsonl
++    python -m load_tools.check_invariants --requests data/load/req.jsonl --book data/load/desk.sqlite3 --catcher data/load/mail.jsonl --crm data/load/crm.json --model-log data/load/model.jsonl
++    echo "check_invariants exit code: $?"
++    kill $(jobs -p)
++
++Why each part is there: `DESK_OUTBOX=smtp` makes the desk send real mail messages (to the catcher on this computer) instead of calling the demo mail stand-in, so the catcher log can show what arrived; the demo CRM stand-in (started by `demo_only.fakes_server`) still receives the CRM calls, and `/fake/crm` is its dump for check 4. The empty `model.jsonl` is right for this run: the desk uses the pre-written model answers, so there is no model call to record and check 5 reports 0 calls for 0 leads (to see real call counts, start the fake model server described below with `--call-log` and point the desk at it). The checks print a table and then a JSON result; the exit code is 0 only when all seven hold. The last line stops the three background programs. To run again against the same desk book, give the driver a new `--id-prefix` (see Scenarios below); the recipe above starts from a fresh folder each time.
++
+ ## Input and output formats (the contract between the tools)
+ 
+ All times are epoch seconds as floating point numbers (`time.time()` on the same machine). One JSON object per line
+diff --git a/scripts/crash_desk.py b/scripts/crash_desk.py
+index 3b04223..9bb0e89 100644
+--- a/scripts/crash_desk.py
++++ b/scripts/crash_desk.py
+@@ -1,7 +1,7 @@
+ """Run the desk so that it can be stopped on purpose at one named moment (used to try the crash recovery by hand).
+ 
+ Run from the repository root:  PYTHONPATH=src:. python scripts/crash_desk.py
+-(in PowerShell, first: $env:PYTHONPATH = "src;.")
++(in PowerShell, first: $env:PYTHONPATH = "src;."; only the Linux form was run, this Windows form was not)
+ It starts the normal desk with the shared crash hook. Nothing happens until you create the flag file; its content is
+ one point name from lead_desk.hooks.ALL_HOOK_POINTS. The next time the desk reaches that point it prints
+ "simulate crash" and ends the process at once with exit code 137 (like a power cut), and the flag file is removed.
+diff --git a/tests/test_docs_match_tools.py b/tests/test_docs_match_tools.py
+new file mode 100644
+index 0000000..b8f0ea0
+--- /dev/null
++++ b/tests/test_docs_match_tools.py
+@@ -0,0 +1,242 @@
++"""Places where a page says what a command prints or needs, checked against the command itself.
++
++Class of bug: a sentence in the documentation that nobody checked against the tool (a start line that leaves out a
++needed folder, a receipt number that a repeated request uses up, a file that a script refuses). Each test below
++reads the sentence from the page and runs the real command or the real code, so the page and the tool cannot drift
++apart without a red test. Made-up data only."""
++
++from __future__ import annotations
++
++import inspect
++import ntpath
++import os
++import re
++import sys
++from pathlib import Path
++
++import pytest
++from support import HOST, REPO, call, child_env, free_port, lead, post_lead, stop_proc
++from test_http import launch
++
++from lead_desk.constants import EXIT_SIMULATED_KILL
++
++sys.path.insert(0, str(REPO / "scripts"))
++import hubspot_probe as hp  # noqa: E402
++import run_real_check as rrc  # noqa: E402
++
++README = (REPO / "README.md").read_text(encoding="utf-8")
++PROBE_PAGE = (REPO / "docs" / "hubspot-probe.md").read_text(encoding="utf-8")
++TESTS_PAGE = (REPO / "docs" / "tests.md").read_text(encoding="utf-8")
++SETTINGS_PAGE = (REPO / "docs" / "settings.md").read_text(encoding="utf-8")
++REAL_PAGE = (REPO / "docs" / "real-services.md").read_text(encoding="utf-8")
++CONTRACT = (REPO / "contract.md").read_text(encoding="utf-8")
++CRASH_SCRIPT = (REPO / "scripts" / "crash_desk.py").read_text(encoding="utf-8")
++
++
++def _documented_python_path(text: str) -> str:
++    found = {m.group(1) for m in re.finditer(r"PYTHONPATH=(\S+?)`? python scripts/crash_desk\.py", text)}
++    assert len(found) == 1, f"the text must name one PYTHONPATH for scripts/crash_desk.py, found {found}"
++    return found.pop()
++
++
++def test_the_two_texts_that_start_the_crash_script_name_the_same_path() -> None:
++    assert _documented_python_path(TESTS_PAGE) == _documented_python_path(CRASH_SCRIPT)
++
++
++def test_the_windows_form_is_the_linux_form_with_semicolons_and_is_said_to_be_unrun() -> None:
++    """The Windows form is not run here: the test pins only that its text is the Linux entries joined by `;` (the
++    separator of ntpath, which is what Windows uses) and that both texts say only the Linux form was run."""
++    entries = _documented_python_path(TESTS_PAGE).split(":")
++    windows = ";".join(entries)
++    assert ntpath.pathsep == ";" and windows == "src;."
++    assert f"(`{windows}`)" in TESTS_PAGE and f'$env:PYTHONPATH = "{windows}"' in CRASH_SCRIPT
++    assert "the Linux form was run, the Windows form was not run" in TESTS_PAGE
++    assert "only the Linux form was run" in CRASH_SCRIPT
++
++
++def test_the_crash_script_starts_with_the_path_the_page_gives(env, tmp_path: Path) -> None:
++    """Start it as the page says (relative path entries, the repository as the working folder), arm the flag file and
++    see the real stop at point D2. The old text said `PYTHONPATH=src`; then the desk stops with `the folder demo_only
++    is missing`, because a script started by its path does not see the repository folder."""
++    entries = _documented_python_path(TESTS_PAGE).split(":")
++    _, fakes_url = env.fakes("keyed")
++    replies = tmp_path / "replies.json"
++    replies.write_text("{}", encoding="utf-8")
++    port = free_port()
++    base = f"http://{HOST}:{port}"
++    env_vars = child_env(
++        DESK_DB_PATH=str(tmp_path / "desk.sqlite3"),
++        DESK_BIND=HOST,
++        DESK_PORT=str(port),
++        DESK_FAKES_URL=fakes_url,
++        DESK_REPLIES_PATH=str(replies),
++    )
++    env_vars["PYTHONPATH"] = os.pathsep.join(entries)  # exactly the entries the page names, nothing added
++    (tmp_path / "crash.flag").write_text("D2", encoding="utf-8")
++    p = launch([str(REPO / "scripts" / "crash_desk.py")], env_vars, base)
++    try:
++        status, _ = post_lead(base, "form", "sub-1", lead())
++        assert status == 201
++        p.wait(timeout=20)
++        out = stop_proc(p)
++        assert p.returncode == EXIT_SIMULATED_KILL, out.decode(errors="replace")[-400:]
++        assert b"simulate crash" in out
++        assert call(fakes_url, "GET", "/fake/outbox")[1]["count"] == 1
++    finally:
++        stop_proc(p)
++
++
++def test_a_repeat_uses_up_a_receipt_number(env) -> None:
++    """README, "Try it": the repeated request makes no lead and no mail, but the next new receipt is number 3."""
++    base = env.serve(env.rig())
++    first = post_lead(base, "form", "sub-1", lead())[1]
++    again = post_lead(base, "form", "sub-1", lead())[1]
++    other_door = post_lead(base, "webhook", "sub-1", lead())[1]
++    assert (first["receipt_id"], first["verdict"]) == (1, "new")
++    assert again["replayed"] is True and again["receipt_id"] == 1
++    assert (other_door["receipt_id"], other_door["verdict"]) == (3, "duplicate")  # number 2 was used up
++    assert call(base, "GET", "/counts")[1]["received"] == 2  # the count of receipts does not show the skip
++    # the README says it in the steps (both shells) and in the lists; the tests page names this test
++    assert README.count('"receipt_id": 3 (the repeat above took number 2)') == 2
++    assert "uses up a receipt number" in README and "they are never reused" in README
++    assert "uses up a receipt number" in TESTS_PAGE and "test_a_repeat_uses_up_a_receipt_number" in TESTS_PAGE
++    schema = (REPO / "src" / "lead_desk" / "schema.sql").read_text(encoding="utf-8")
++    assert "receipt_id INTEGER PRIMARY KEY AUTOINCREMENT" in schema  # why a number is never reused
++
++
++def test_the_probe_checks_the_token_variable_name_only_when_calls_are_confirmed(
++    capsys: pytest.CaptureFixture[str],
++) -> None:
++    """docs/hubspot-probe.md: `--plan` does not look at the name; with `--yes-spend-calls` a bad name is refused and
++    never printed. No call is made in any of the three runs."""
++    bad = "qzx9 not-a-name 7kv"
++    assert hp.main(["--plan", "--token-env", bad]) == hp.EXIT_OK
++    assert hp.main(["--token-env", bad]) == hp.EXIT_REFUSED  # refused earlier, for the missing confirmation
++    assert hp.main(["--yes-spend-calls", str(hp.PLANNED_CALLS), "--token-env", bad]) == hp.EXIT_REFUSED
++    out = capsys.readouterr().out
++    assert "must be the NAME of an environment variable" in out and bad not in out
++    assert "`--plan` does not look at the name" in PROBE_PAGE
++    # the refusal for the name comes only after the count is right (hubspot_probe.py checks the count first)
++    assert "when you give `--yes-spend-calls 7` (the planned count" in PROBE_PAGE
++    assert hp.PLANNED_CALLS == 7
++    assert "with any other count it is refused for the count first" in PROBE_PAGE
++
++
++def test_a_config_file_with_a_byte_order_mark_is_refused_on_line_1_as_the_page_says(tmp_path: Path) -> None:
++    """docs/real-services.md step 1: a UTF-8 file with a byte-order mark (what Notepad can write) is refused on line 1,
++    even when line 1 is only a comment, and the message is the one the page quotes. The same file without the mark
++    loads."""
++    body = "# a comment\nDESK_DB_PATH=x\n"
++    marked = tmp_path / "marked.env"
++    marked.write_bytes(b"\xef\xbb\xbf" + body.encode())
++    plain = tmp_path / "plain.env"
++    plain.write_bytes(body.encode())
++    with pytest.raises(ValueError, match=r"^config line 1 is not NAME=VALUE with an upper-case name$"):
++        rrc.load_env(marked)
++    assert rrc.load_env(plain) == {"DESK_DB_PATH": "x"}
++    assert "`config line 1 is not NAME=VALUE with an upper-case name`" in REAL_PAGE
++    assert "without a byte-order mark" in REAL_PAGE
++
++
++def test_assume_yes_is_refused_without_the_self_test_as_the_real_services_page_says(
++    capsys: pytest.CaptureFixture[str],
++) -> None:
++    """docs/real-services.md step 3: `--assume-yes` is accepted only together with `--dry-fakes`; a real run always
++    asks. The refusal comes before any file, network or process is touched."""
++    assert rrc.main(["--assume-yes"]) == rrc.EXIT_REFUSED
++    assert "a real run always asks" in capsys.readouterr().out
++    assert (
++        "`--assume-yes`, which the script accepts only together with `--dry-fakes` (a real run always asks)"
++        in REAL_PAGE
++    )
++    assert "`Start? [y/N]`" in REAL_PAGE
++    assert 'input("Start? [y/N] ")' in inspect.getsource(rrc)
++
++
++def test_the_script_starts_the_desk_in_the_repository_folder_as_the_page_says_for_paths() -> None:
++    """docs/real-services.md step 1 tells the reader to write every path in the config as a full path, because the desk
++    process the script starts runs in the repository folder. Pinned: the start call names that folder (the page says
++    this was read from the code; no test starts the real run)."""
++    assert "cwd=REPO" in inspect.getsource(rrc)
++    assert "`cwd=REPO` in `scripts/run_real_check.py`" in REAL_PAGE
++
++
++def _page_lines() -> list[tuple[str, str]]:
++    names = ["README.md", "versions.md", "load_tools/README.md"]
++    pages = [REPO / n for n in names] + sorted((REPO / "docs").glob("*.md"))
++    return [(p.name, line) for p in pages for line in p.read_text(encoding="utf-8").splitlines()]
++
++
++def test_no_page_says_that_sending_a_request_again_changes_nothing() -> None:
++    """The desk gives the stored answer, but it also uses up one receipt number and adds one to that request's count
++    of arrivals (`receipts.attempts`), so "changes nothing" on a line about a repeated request is wrong."""
++    about_repeat = re.compile(r"replay|sent again|same request|comes again|came again|again gets", re.IGNORECASE)
++    claim = re.compile(r"changes? nothing|nothing changes", re.IGNORECASE)
++    bad = [(n, line[:80]) for n, line in _page_lines() if about_repeat.search(line) and claim.search(line)]
++    assert not bad, bad
++
++
++def test_the_pages_about_a_repeated_request_say_it_can_start_a_follow_up_that_is_due() -> None:
++    """desk.py `_verdict_reply` / `_pending_and_due`: a repeat of a request whose verdict is `new` starts the lead's
++    follow-up only when that is due (no automatic try yet, or the waiting time after the last try is over; a follow-up
++    just given back for lack of resources also waits 5 seconds), so repeats cannot use up the tries. contract.md says
++    so, with the 5 seconds, and names the tests that run the behaviour."""
++    from lead_desk import desk, gate
++
++    assert "elif self._pending_and_due(rec" in inspect.getsource(desk.Desk._verdict_reply)
++    assert gate.SEND_MAX_ATTEMPTS == 5  # the number the pages give
++    # `_pending_and_due` checks `wait_before_drive` first for these errors, so even with no automatic try used the row
++    # waits 5 seconds: "no automatic try yet" alone would be wrong for them
++    assert gate.wait_before_drive(0, gate.NO_DESCRIPTORS_ERROR) == 5
++    assert gate.wait_before_drive(0, gate.MODEL_BUSY_ERROR) == 5
++    assert "if row[3] in (NO_DESCRIPTORS_ERROR, *BUSY_ERRORS)" in inspect.getsource(desk.Desk._pending_and_due)
++    edge = (REPO / "tests" / "test_desk_http_edge_cases.py").read_text(encoding="utf-8")
++    assert "def test_replays_cannot_burn_the_cap(" in edge and "def test_replay_drives_once_due(" in edge
++    assert (
++        "drives the follow-up only if it is due: no automatic try yet, or its backoff is over (a follow-up given back "
++        "for lack of resources waits 5 seconds even with no try used)"
++    ) in CONTRACT
++    assert "If the lead's follow-up email is due and not yet sent, the replay starts it" in README
++
++
++def test_the_number_of_test_files_that_two_pages_give_is_the_number_of_test_files() -> None:
++    """versions.md and docs/limits.md both say how many test files the folder holds (no page stores a test count)."""
++    files = len(sorted((REPO / "tests").glob("test_*.py")))
++    versions = re.search(
++        r"The `tests/` folder holds (\d+) test files", (REPO / "versions.md").read_text(encoding="utf-8")
++    )
++    limits = re.search(r"the number of test files \((\d+)\)", (REPO / "docs" / "limits.md").read_text(encoding="utf-8"))
++    assert versions and limits, "the sentence in versions.md or docs/limits.md was reworded"
++    assert (int(versions.group(1)), int(limits.group(1))) == (files, files)
++
++
++def test_the_settings_page_says_what_both_workflows_set_for_the_demo_folder_switch() -> None:
++    """docs/settings.md, `DPLD_REQUIRE_DEMO`: "the workflows `lint.yml` and `sonar.yml` both set it to 1 for their test
++    step". Read from the two workflow files."""
++    assert "the workflows `lint.yml` and `sonar.yml` both set it to 1 for their test step" in SETTINGS_PAGE
++    for workflow in ("lint.yml", "sonar.yml"):
++        text = (REPO / ".github" / "workflows" / workflow).read_text(encoding="utf-8")
++        assert 'DPLD_REQUIRE_DEMO: "1"' in text, workflow
++
++
++def test_the_load_tools_recipe_has_its_own_book_and_ports_and_waits_for_each_server() -> None:
++    """load_tools/README.md "A whole run": it must not touch the desk book or the ports of the README's "Try it"
++    run (a book with other leads fails the checks), and it must wait for each server before the next step."""
++    text = (REPO / "load_tools" / "README.md").read_text(encoding="utf-8")
++    assert "rm -rf data/load && mkdir -p data/load" in text
++    assert "DESK_DB_PATH=data/load/desk.sqlite3" in text and "--book data/load/desk.sqlite3" in text
++    assert "DESK_PORT=18765" in text and "wait_for http://127.0.0.1:18765/counts" in text
++    assert "wait_for http://127.0.0.1:18766/fake/crm" in text
++    assert "data/desk.sqlite3" not in text and "8765/" not in text.replace("18765/", "")
++    assert "It was run once as written, on a copy of this tree" in text and "no test repeats it" in text
++
++
++def test_the_load_tools_recipe_prose_wait_equals_the_wait_loop_of_the_recipe() -> None:
++    """load_tools/README.md: "Each server is waited for (up to N seconds)" must equal the loop in the recipe's
++    `wait_for` (a count of tries times the pause between them), and the recipe must call it for each server."""
++    text = (REPO / "load_tools" / "README.md").read_text(encoding="utf-8")
++    prose = re.search(r"Each server is waited for \(up to (\d+) seconds\) before the next step", text)
++    loop = re.search(r"wait_for\(\) \{ for i in \$\(seq 1 (\d+)\); do .*?; sleep (\d+); done;", text)
++    assert prose and loop, "the sentence or the wait loop is missing or was reworded"
++    assert int(prose.group(1)) == int(loop.group(1)) * int(loop.group(2))
++    assert len(re.findall(r"^\s*wait_for http://", text, re.MULTILINE)) == 2  # the demo CRM and the desk
+diff --git a/versions.md b/versions.md
+index c656330..82f7f44 100644
+--- a/versions.md
++++ b/versions.md
+@@ -6,7 +6,7 @@ The versions that the files of this repository pin or require. No run result is
+ | Item | Value | How read |
+ |---|---|---|
+ | Python the Windows lock file is made for | 3.13 | `--python-version 3.13` in the header of `requirements-dev-win.txt` |
+-| Python required | 3.12 or newer (`requires-python`); 3.12 is the lowest version the package allows. The `tests/` folder holds 92 test files. | pyproject.toml |
++| Python required | 3.12 or newer (`requires-python`); 3.12 is the lowest version the package allows. The `tests/` folder holds 93 test files. | pyproject.toml |
+ | SQLite library | the one that comes with the Python in use; no version is recorded. The desk's SQL uses `ON CONFLICT ... DO UPDATE` (in `src/lead_desk/desk.py`); the code does not check the SQLite version | `sqlite3.sqlite_version` prints it |
+ | Runtime dependencies | none (Python standard library only) | pyproject.toml |
+ 

@@ -1,0 +1,10 @@
+# raw-planned-names-v14.txt 2026-11-16T15:57:10Z: files under src/ that contain each planned name
+restore_kinds: 0 files
+hash_chain_ok: 0 files
+anchored_checkpoints: 0 files
+anchor_supplied: 0 files
+signing_key_location: 0 files
+masking_damage: 0 files
+max_requests: 0 files
+allow_group_read: 0 files
+fileguard: 0 files

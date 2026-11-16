@@ -1,0 +1,12 @@
+..FFFFFFFFF                                                              [100%]
+=========================== short test summary info ============================
+FAILED tests/test_v3_pilot_only.py::test_a_zero_price_is_refused_in_pilot_and_prod[input_usd_per_mtok-pilot]
+FAILED tests/test_v3_pilot_only.py::test_a_zero_price_is_refused_in_pilot_and_prod[input_usd_per_mtok-prod]
+FAILED tests/test_v3_pilot_only.py::test_a_zero_price_is_refused_in_pilot_and_prod[output_usd_per_mtok-pilot]
+FAILED tests/test_v3_pilot_only.py::test_a_zero_price_is_refused_in_pilot_and_prod[output_usd_per_mtok-prod]
+FAILED tests/test_v3_pilot_only.py::test_max_tokens_over_the_ceiling_is_refused_in_pilot_and_prod[200001-pilot]
+FAILED tests/test_v3_pilot_only.py::test_max_tokens_over_the_ceiling_is_refused_in_pilot_and_prod[200001-prod]
+FAILED tests/test_v3_pilot_only.py::test_max_tokens_over_the_ceiling_is_refused_in_pilot_and_prod[2000000-pilot]
+FAILED tests/test_v3_pilot_only.py::test_max_tokens_over_the_ceiling_is_refused_in_pilot_and_prod[2000000-prod]
+FAILED tests/test_v3_pilot_only.py::test_route_and_environment_refusals_are_all_reported_in_one_error
+9 failed, 2 passed in 0.51s

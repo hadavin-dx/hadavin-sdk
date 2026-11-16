@@ -1,0 +1,16 @@
+
+==================================== ERRORS ====================================
+_______________ ERROR collecting tests/test_changelog_claims.py ________________
+ImportError while importing test module '/home/user/build/ER-sonarpath4-b/tests/test_changelog_claims.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_changelog_claims.py:14: in <module>
+    from hadavin_sdk import pathguard
+E   ImportError: cannot import name 'pathguard' from 'hadavin_sdk' (/home/user/build/ER-sonarpath4-b/src/hadavin_sdk/__init__.py)
+=========================== short test summary info ============================
+ERROR tests/test_changelog_claims.py
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 error in 0.14s

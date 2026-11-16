@@ -1,0 +1,16 @@
+sync-312 rc=0 18:50:02
+pyver-312 rc=0 18:50:02
+pglast-test-312 rc=0 18:50:03
+ruff-check-312 rc=0 18:50:04
+ruff-format-312 rc=0 18:50:04
+bandit-312 rc=0 18:50:06
+sync-313 rc=0 18:50:06
+pyver-313 rc=0 18:50:06
+pglast-test-313 rc=0 18:50:08
+ruff-check-313 rc=0 18:50:08
+ruff-format-313 rc=0 18:50:08
+bandit-313 rc=0 18:50:09
+oldimpl-312 rc=1 18:50:10
+oldimpl-313 rc=1 18:50:11
+PREDONE
+ALLDONE

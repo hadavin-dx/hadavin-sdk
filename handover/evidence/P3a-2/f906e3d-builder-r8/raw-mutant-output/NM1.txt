@@ -1,0 +1,12 @@
+### tests/test_migration_postgres.py::test_a_new_member_of_a_named_role_stops_the_run rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_______________ test_a_new_member_of_a_named_role_stops_the_run ________________
+tests/test_migration_postgres.py:2386: in test_a_new_member_of_a_named_role_stops_the_run
+    with pytest.raises(ConfigError) as e:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_a_new_member_of_a_named_role_stops_the_run
+1 failed in 0.74s
+

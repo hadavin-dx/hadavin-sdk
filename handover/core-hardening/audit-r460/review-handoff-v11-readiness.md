@@ -1,0 +1,17 @@
+# Hand-off v11 readiness review (egm-implementation-readiness), condensed copy, 2026-11-16
+Static read, ran nothing. Verdict: NOT buildable without guessing. 0 blockers, 7 majors, 9 minors. v10 majors 1,2,3,6 fixed; 4 (seven vs nine) and 5 (NEEDED-CHECK gate) partly fixed. gate4.sh = the five ci.yml commands byte for byte.
+## Major
+M1 S-1 head has no handler for SpendRefused (S:108,120,196,291): window-end raises out of Runtime.handle at agent_loop.py:425 (except ProviderError at :432), also _screen/judge and k1b loop; handler is in S-2a. Fix: minimal except SpendRefused in S-1 with test, or move window-in-chat to S-2a.
+M2 E0-S1-3 needs a gated NetworkLLM stub that only S-2a writes (spend_support.py, S:128,291); session 1 has no callgate/NetworkLLM/_retry. Move E0-S1-3 to session 2 or build a stub in S-1.
+M3 CallGate interface inconsistent: settle(ticket, ctx, tokens) in _retry (S:154) vs settle(ticket, route, tokens)->Decimal (S:164); CallGate(window, reserver, clock) has no settings (max_plausible_tokens) or audit handle; ProcessCap/Reserver cannot write audit rows (CLI/replay path). Write exact signatures and audit owner.
+M4 No combined order of 13 PR ids: spend order S-1,S-2a,S-2b,DB-1 vs other tracks "free"; both edit config.py validator/_anchor_refusals, backends/table.py ALLOWED :570-577 and DEV_ONLY :593, five config test sites; "four small PRs, no migration" (S:81) vs DB-1.
+M5 gate4.sh cannot run as written: path, writes outputs to cwd (repo root), bare ruff/pytest/bandit with no uv venv (rc=127).
+M6 DB-1: migrate() has no folder parameter (migrate.py:283-304) so held-file test needs an invented seam; check_ledger (:97-107) refuses gaps, so another migration landing first breaks the hold; OWNER_YES constant format unspecified; three CHECK variants, L7 unanswered (state default: two-clause unless lead says otherwise); migrations_held/ packaging unaddressed.
+M7 R, G, H-2 under-specified: R has no regex/canary/grammar; R depends on E0-O4 which R itself writes (self-dependency), same G/E0-O6; G5a "default yes" (O:116) vs "Default no, withheld" (O:19); H-2 names no docs file and is conditional.
+## Other
+Constants: retry.py except (ProviderError, SpendRefused) not listed in S-1 content; defaults.PAID_DETECTOR_KINDS/KNOWN_TIERED_MODEL_PREFIXES (S-1) and NO_BILL_STATUSES/GUARDRAIL_MAX_REQUESTS (S-2a) not in 7.1 rows; k1b/loop.py worst_case_usd needed in S-1 but no k1b edit in S-1 row; PLANNED_EDGES test may assert edges that do not exist yet.
+gate4: CI perf step sets HADAVIN_TEST_PG_DSN (ci.yml:93) undisclosed; other CI steps (uv sync, pip-audit, Semgrep, zizmor, gitleaks, CodeQL, SonarCloud, CodeRabbit) not in script; O:176 says "four" for five.
+NEEDED-CHECK: egm agents are read-only so the lead must save the file; evidence "commands and output" impossible for read-only agent; no rule for DUPLICATE/NOT-NEEDED handling or deadline; PR-2 UNVERIFIED in wave 1 blocks all nine until lead acts; L6 not a start gate; gate row has no id; H-2 conditional.
+Counts: "nine" consistent; S:16/S:359 quote lead's "seven" (ORDERS.md:217 itself says "all 7"); text still calls design "v10" in many sentences.
+Minor m1-m9: 60-minute estimates unverifiable; E0-S2-7 fixture format; start gates only name S-1; E0-S2-4 conditional assertion; _client() has no attempts parameter; gate --max-usd place in cli.py; read_private_file max_bytes number; S3 probe call; "four" vs five.
+Not judged: Postgres NaN/'Infinity', vendor error shapes, prices, CI rc today, migrations_held packaging, unopened code cites, 38 NetworkLLM test sites.

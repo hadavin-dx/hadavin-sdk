@@ -1,0 +1,30 @@
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f1/bt/src/hadavin_sdk/__init__.py
+CMD: env -i PATH HOME PYTHONPATH=bt/src fix/.venv/bin/python -m pytest -q -p no:cacheprovider tests/test_a01_audit_reconcile.py tests/test_c01_route_limits.py tests/test_k1b_replay.py (bt = base src + the three patched test files)
+
+==================================== ERRORS ====================================
+______________ ERROR collecting tests/test_a01_audit_reconcile.py ______________
+ImportError while importing test module '/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f1/bt/tests/test_a01_audit_reconcile.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_a01_audit_reconcile.py:19: in <module>
+    from hadavin_sdk.audit.spill import Spill
+E   ModuleNotFoundError: No module named 'hadavin_sdk.audit.spill'
+_______________ ERROR collecting tests/test_c01_route_limits.py ________________
+ImportError while importing test module '/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f1/bt/tests/test_c01_route_limits.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_c01_route_limits.py:13: in <module>
+    from hadavin_sdk.config import ConfigError, Route, _price_ok, load_config, price_problems
+E   ImportError: cannot import name '_price_ok' from 'hadavin_sdk.config' (/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f1/bt/src/hadavin_sdk/config.py)
+=========================== short test summary info ============================
+ERROR tests/test_a01_audit_reconcile.py
+ERROR tests/test_c01_route_limits.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 2 errors during collection !!!!!!!!!!!!!!!!!!!!
+2 errors in 0.33s
+rc=2

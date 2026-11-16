@@ -1,0 +1,12 @@
+desc: facts: one IST time wrong (postby 20:30 -> 20:00)
+file: facts-v27.py occurrences replaced: 1
+build rc=0
+check rc=1
+C07 info: OWNER-SHEET-v27-A.md 7473 words (target 6300: NOT met)
+C07 info: OWNER-SHEET-v27-B.md 7516 words (target 6300: NOT met)
+check-v27: 5 failure(s)
+FAIL C03 post-by
+FAIL C04 OWNER-SHEET-v27-A.md bad pair 15:00 UTC = 20:00 IST
+FAIL C04 OWNER-SHEET-v27-B.md bad pair 15:00 UTC = 20:00 IST
+FAIL C73 A lacks 'Posting (by Wed 25 Nov 2026 15:00 UTC = 20:30 IST'
+FAIL C73 B lacks 'Posting (by Wed 25 Nov 2026 15:00 UTC = 20:30 IST'

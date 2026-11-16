@@ -1,0 +1,8 @@
+      8 tests/test_k5_fixes3.py
+     61 tests/test_prh_clean_corpus.py
+     18 tests/test_prh_contract.py
+     13 tests/test_prh_grounding.py
+     95 tests/test_prh_regressions.py
+     13 tests/test_prh_spans.py
+      1 tests/test_prh_steps.py
+      3 tests/test_prh_wiring.py

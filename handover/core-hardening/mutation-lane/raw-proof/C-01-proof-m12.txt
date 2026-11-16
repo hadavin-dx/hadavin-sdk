@@ -1,0 +1,22 @@
+MUTANT C-01-proof-m12  VERDICT: KILLED
+description: ceiling constant +1
+base commit: b4cce5b6ae80b45125604b8295ebb35bd2ea1c2c   root: /tmp/c8b/kC   file: src/hadavin_sdk/defaults.py
+command: env -i PATH=/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin HOME=/root PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=/tmp/c8b/kC/src /tmp/c8b/kC/.venv/bin/python -m pytest -q -p no:cacheprovider --tb=line -rf tests/test_c01_extra_proof.py tests/test_c01_route_limits.py   (cwd=/tmp/c8b/kC)
+rc: 1
+restore check: diff <saved original> <file after restore>: rc=0 (0 = identical)
+pytest summary line: 1 failed, 12 passed in 0.33s
+first failing test: tests/test_c01_extra_proof.py::test_the_ceiling_is_exactly_200_000
+all failing tests (1): tests/test_c01_extra_proof.py::test_the_ceiling_is_exactly_200_000
+--- OLD TEXT (full) ---
+MAX_ROUTE_TOKENS = 200_000
+--- NEW TEXT (full) ---
+MAX_ROUTE_TOKENS = 200_001
+--- PYTEST OUTPUT (full) ---
+.F...........                                                            [100%]
+=================================== FAILURES ===================================
+E   Failed: DID NOT RAISE ConfigError
+/tmp/c8b/kC/tests/test_c01_extra_proof.py:28: Failed: DID NOT RAISE ConfigError
+=========================== short test summary info ============================
+FAILED tests/test_c01_extra_proof.py::test_the_ceiling_is_exactly_200_000 - F...
+1 failed, 12 passed in 0.33s
+

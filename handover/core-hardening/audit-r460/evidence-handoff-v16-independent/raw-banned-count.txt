@@ -1,0 +1,2 @@
+INFO number of banned strings: 10
+INFO files scanned 50 (non-UTF8 0); total case-sensitive 0; case-insensitive 0

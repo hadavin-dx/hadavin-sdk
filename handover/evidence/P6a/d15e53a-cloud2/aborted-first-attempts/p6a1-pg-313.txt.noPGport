@@ -1,0 +1,164 @@
+HEAD d15e53a8352079c8a7915f6a520198e9099db933
+$ /home/user/build/venv-p6a-313/bin/python -m pytest tests/test_k3_pilot_env.py tests/test_k5_round8_postgres.py -q -rA -p no:cacheprovider
+.........FF                                                              [100%]
+=================================== FAILURES ===================================
+______________________ test_k3_pilot_app_has_no_executor _______________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-11/test_k3_pilot_app_has_no_execu0')
+
+    def test_k3_pilot_app_has_no_executor(tmp_path):
+        """A pilot App has no Executor and resolves no client-system secret; shadow and abstain cards are posted."""
+        from tests.contracts.kinds.store_postgres import pg_schema
+    
+>       for dsn in pg_schema():
+                   ^^^^^^^^^^^
+
+tests/test_k3_pilot_env.py:178: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/contracts/kinds/store_postgres.py:32: in pg_schema
+    with psycopg.connect(dsn, autocommit=True) as db:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+cls = <class 'psycopg.Connection'>
+conninfo = 'user=postgres dbname=postgres host=127.0.0.1 hostaddr=127.0.0.1'
+autocommit = True, prepare_threshold = 5, context = None, row_factory = None
+cursor_factory = None, kwargs = {}
+
+    @classmethod
+    def connect(
+        cls,
+        conninfo: str = "",
+        *,
+        autocommit: bool = False,
+        prepare_threshold: int | None = 5,
+        context: AdaptContext | None = None,
+        row_factory: RowFactory[Row] | None = None,
+        cursor_factory: type[Cursor[Row]] | None = None,
+        **kwargs: ConnParam,
+    ) -> Self:
+        """
+        Connect to a database server and return a new `Connection` instance.
+        """
+    
+        params = cls._get_connection_params(conninfo, **kwargs)
+        timeout = timeout_from_conninfo(params)
+        rv = None
+        attempts = conninfo_attempts(params)
+        conn_errors: list[tuple[e.Error, str]] = []
+        for attempt in attempts:
+            tdescr = (attempt.get("host"), attempt.get("port"), attempt.get("hostaddr"))
+            descr = "host: %r, port: %r, hostaddr: %r" % tdescr
+            logger.debug("connection attempt: %s", descr)
+            try:
+                conninfo = make_conninfo("", **attempt)
+                gen = cls._connect_gen(conninfo)
+                rv = waiting.wait_conn(gen, interval=_WAIT_INTERVAL, timeout=timeout)
+            except e._WaitTimeout:
+                tex = e.ConnectionTimeout("connection timeout expired")
+                logger.debug("connection failed: %s: %s", descr, str(tex))
+                conn_errors.append((tex, descr))
+            except e.Error as ex:
+                logger.debug("connection failed: %s: %s", descr, str(ex))
+                conn_errors.append((ex, descr))
+            except e._NO_TRACEBACK as ex:
+                raise ex.with_traceback(None)
+            else:
+                logger.debug("connection succeeded: %s", descr)
+                break
+    
+        if not rv:
+            last_ex = conn_errors[-1][0]
+            if len(conn_errors) == 1:
+>               raise last_ex.with_traceback(None)
+E               psycopg.OperationalError: connection failed: connection to server at "127.0.0.1", port 5432 failed: Connection refused
+E               	Is the server running on that host and accepting TCP/IP connections?
+
+../venv-p6a-313/lib/python3.13/site-packages/psycopg/connection.py:126: OperationalError
+________ test_the_app_deletes_evidence_only_through_the_purge_identity _________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-11/test_the_app_deletes_evidence_0')
+
+    def test_the_app_deletes_evidence_only_through_the_purge_identity(tmp_path):
+        if not os.environ.get("HADAVIN_TEST_PG_DSN"):
+            pytest.skip("HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)")
+>       for dsn in pg_schema(runtime=True):
+                   ^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_k5_round8_postgres.py:24: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/contracts/kinds/store_postgres.py:32: in pg_schema
+    with psycopg.connect(dsn, autocommit=True) as db:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+cls = <class 'psycopg.Connection'>
+conninfo = 'user=postgres dbname=postgres host=127.0.0.1 hostaddr=127.0.0.1'
+autocommit = True, prepare_threshold = 5, context = None, row_factory = None
+cursor_factory = None, kwargs = {}
+
+    @classmethod
+    def connect(
+        cls,
+        conninfo: str = "",
+        *,
+        autocommit: bool = False,
+        prepare_threshold: int | None = 5,
+        context: AdaptContext | None = None,
+        row_factory: RowFactory[Row] | None = None,
+        cursor_factory: type[Cursor[Row]] | None = None,
+        **kwargs: ConnParam,
+    ) -> Self:
+        """
+        Connect to a database server and return a new `Connection` instance.
+        """
+    
+        params = cls._get_connection_params(conninfo, **kwargs)
+        timeout = timeout_from_conninfo(params)
+        rv = None
+        attempts = conninfo_attempts(params)
+        conn_errors: list[tuple[e.Error, str]] = []
+        for attempt in attempts:
+            tdescr = (attempt.get("host"), attempt.get("port"), attempt.get("hostaddr"))
+            descr = "host: %r, port: %r, hostaddr: %r" % tdescr
+            logger.debug("connection attempt: %s", descr)
+            try:
+                conninfo = make_conninfo("", **attempt)
+                gen = cls._connect_gen(conninfo)
+                rv = waiting.wait_conn(gen, interval=_WAIT_INTERVAL, timeout=timeout)
+            except e._WaitTimeout:
+                tex = e.ConnectionTimeout("connection timeout expired")
+                logger.debug("connection failed: %s: %s", descr, str(tex))
+                conn_errors.append((tex, descr))
+            except e.Error as ex:
+                logger.debug("connection failed: %s: %s", descr, str(ex))
+                conn_errors.append((ex, descr))
+            except e._NO_TRACEBACK as ex:
+                raise ex.with_traceback(None)
+            else:
+                logger.debug("connection succeeded: %s", descr)
+                break
+    
+        if not rv:
+            last_ex = conn_errors[-1][0]
+            if len(conn_errors) == 1:
+>               raise last_ex.with_traceback(None)
+E               psycopg.OperationalError: connection failed: connection to server at "127.0.0.1", port 5432 failed: Connection refused
+E               	Is the server running on that host and accepting TCP/IP connections?
+
+../venv-p6a-313/lib/python3.13/site-packages/psycopg/connection.py:126: OperationalError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_k3_pilot_env.py::test_k3_pilot_config_loads
+PASSED tests/test_k3_pilot_env.py::test_k3_http_refused_in_pilot
+PASSED tests/test_k3_pilot_env.py::test_k3_missing_level_refused
+PASSED tests/test_k3_pilot_env.py::test_k3_levels_must_cover_every_action_in_pilot
+PASSED tests/test_k3_pilot_env.py::test_k3_suggest_refused_without_evidence
+PASSED tests/test_k3_pilot_env.py::test_k3_missing_run_budget_refused_in_pilot
+PASSED tests/test_k3_pilot_env.py::test_k3_confidential_agent_refused_in_pilot
+PASSED tests/test_k3_pilot_env.py::test_k3_read_only_contract_refused_in_pilot
+PASSED tests/test_k3_pilot_env.py::test_k3_request_tracker_key_refused_in_pilot
+FAILED tests/test_k3_pilot_env.py::test_k3_pilot_app_has_no_executor - psycop...
+FAILED tests/test_k5_round8_postgres.py::test_the_app_deletes_evidence_only_through_the_purge_identity
+2 failed, 9 passed in 0.53s
+exit=1

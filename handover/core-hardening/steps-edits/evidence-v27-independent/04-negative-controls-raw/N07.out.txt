@@ -1,0 +1,8 @@
+desc: source: B 7.11 removed from the decline route
+file: OWNER-SHEET-v27-SOURCE.md occurrences replaced: 1
+build rc=0
+check rc=1
+C07 info: OWNER-SHEET-v27-A.md 7473 words (target 6300: NOT met)
+C07 info: OWNER-SHEET-v27-B.md 7504 words (target 6300: NOT met)
+check-v27: 1 failure(s)
+FAIL C137 B lacks '(after your yes, 7.11 is still due by 16:00 UTC = 21:30 IST)'

@@ -1,0 +1,2 @@
+tests/test_p4_secrets.py:106:def _config(tmp_path, secrets, environment="dev"):
+tests/fixtures/config/config.yaml:2:environment: dev

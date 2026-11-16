@@ -1,0 +1,51 @@
+S1k fail-before: new/changed tests run on a copy of /tmp/dpld-s10 (scratch tree under the session scratchpad, tests copied from /tmp/dpld-s11).
+== Part 1: each test of tests/test_loss_path_s1k.py on the OLD src (only shim: contract.AdapterBusy so the file imports); rc=1 means failed/error, rc=0 passed
+test_reaper_survives_hung_crm_put rc=1 1 error in 0.24s
+test_reaper_survives_hung_send rc=1 1 error in 0.11s
+test_reaper_survives_hung_refresh rc=1 1 error in 0.10s
+test_hung_read_means_unreadable rc=1 1 error in 0.10s
+test_blind_send_timeout_is_unknown rc=1 1 error in 0.10s
+test_blind_retry_waits_for_old_send rc=1 1 error in 0.08s
+test_keyed_send_timeout_same_key rc=1 1 error in 0.09s
+test_late_send_writes_nothing rc=1 1 error in 0.10s
+test_blind_crm_timeout_is_unknown rc=1 1 error in 0.09s
+test_keyed_crm_timeout_same_key rc=1 1 error in 0.10s
+test_late_crm_put_writes_nothing rc=1 1 error in 0.09s
+test_workers_stay_within_the_cap rc=1 1 failed in 0.31s
+test_busy_give_back_keeps_the_age rc=1 1 failed in 0.10s
+test_full_model_cap_shows_the_row rc=1 1 failed in 0.33s
+test_busy_give_back_race_keeps_age rc=1 1 failed in 0.12s
+test_full_send_cap_gives_back rc=1 1 error in 0.10s
+test_full_cap_logs_once rc=1 1 failed in 0.53s
+test_thread_start_failure_is_busy rc=1 1 failed in 0.11s
+test_hung_workers_are_counted rc=1 1 error in 0.10s
+test_stop_waits_only_its_timeout rc=1 1 failed in 0.10s
+test_declared_above_budget_is_refused rc=1 1 failed in 0.10s
+test_huge_number_is_a_refusal rc=1 1 failed in 0.10s
+test_call_deadline_follows_the_config rc=1 1 failed in 0.11s
+test_deadline_fits_the_grace rc=1 1 failed in 0.09s
+test_fd_reserve_counts_abandoned rc=1 1 failed in 0.08s
+test_worker_caps_are_checked rc=1 1 failed in 0.09s
+test_answer_lost_real_lock_keeps_try rc=0 1 passed in 0.40s
+test_answer_lost_card_not_email_left rc=1 1 failed in 0.43s
+test_may_have_left_card_stays rc=0 1 passed in 0.09s
+test_main_exit_text_names_both_cases rc=1 1 failed in 0.08s
+
+== Part 2: the 13 tests that error in part 1 on a missing name, rerun with two more shims (desk.CALL_DEADLINE_MAX_SECONDS unused by old code); the first assertion line of each failure shows old BEHAVIOUR or a missing API
+test_reaper_survives_hung_crm_put rc=1 | E           assert False
+test_reaper_survives_hung_send rc=1 | E           assert False
+test_reaper_survives_hung_refresh rc=1 | E       AttributeError: 'Desk' object has no attribute 'hung_workers'
+test_hung_read_means_unreadable rc=1 | E           AssertionError: assert True is False
+test_blind_send_timeout_is_unknown rc=1 | E       AssertionError: assert ('sent', None, 0) == ('unknown', 'ambiguous', 1)
+test_blind_retry_waits_for_old_send rc=1 | E       AssertionError: assert 'sent' == 'unknown'
+test_keyed_send_timeout_same_key rc=1 | E       AssertionError: assert ('sent', None) == ('pending', 'ambiguous')
+test_late_send_writes_nothing rc=1 | E       AttributeError: 'Desk' object has no attribute 'hung_workers'
+test_blind_crm_timeout_is_unknown rc=1 | E       AssertionError: assert ('sent', None, 1) == ('unknown', '...confirmed', 2)
+test_keyed_crm_timeout_same_key rc=1 | E       AssertionError: assert ('sent', None, 1) == ('pending', '...rmTimeout', 2)
+test_late_crm_put_writes_nothing rc=1 | E       AttributeError: 'Desk' object has no attribute 'hung_workers'
+test_full_send_cap_gives_back rc=1 | E       AttributeError: <module 'lead_desk.desk' from '/tmp/claude-0/-home-user/39edf7c7-26f2-5129-9a6e-500351
+test_hung_workers_are_counted rc=1 | E           KeyError: 'hung_workers'
+
+== Part 3: changed old tests on old src
+FAILED: s1g test_declared_model_timeout_is_checked, s1i test_declared_timeout_above_budget_refused, s1j test_bad_declared_timeout_refused[huge_int], s1j test_declared_just_over_budget_refused, test_portal_api test_failed_card_honest_about_sending[crash_while_sending-0-True], test_portal_api test_summary_shape_and_numbers
+PASSED on old code (coverage tests, not fail-before): s1h/s1j store+_touch lock variants, test_answer_lost_real_lock_keeps_try, test_may_have_left_card_stays (the second is the unchanged-behaviour guard)

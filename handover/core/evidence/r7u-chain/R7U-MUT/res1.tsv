@@ -1,0 +1,35 @@
+X01	scripts/run_real_check.py:997	SURVIVED	102s	[]	restored=True	wide=
+X02	scripts/run_real_check.py:1382	KILLED	6s	['FAILED tests/test_r7u_a_findings.py::test_a3_a_counter_that_is_not_known_is_in_the_result_and_the_result_is_not_ok']	restored=True	wide=
+X03	scripts/run_real_check.py:1392	KILLED	65s	['FAILED tests/test_r7u_a_findings.py::test_a3_a_counter_that_is_not_known_is_in_the_result_and_the_result_is_not_ok']	restored=True	wide=
+X04	scripts/run_real_check.py:1389	KILLED	65s	['FAILED tests/test_r7u_a_findings.py::test_a1c_a_create_with_no_known_outcome_counts_as_a_possible_contact_at_main_level[create_open]']	restored=True	wide=
+X05	scripts/run_real_check.py:1389	SURVIVED	72s	[]	restored=True	wide=
+X06	scripts/run_real_check.py:1389	KILLED	132s	['FAILED tests/test_r7u_a_findings.py::test_a1c_a_create_with_no_known_outcome_counts_as_a_possible_contact_at_main_level[create_unknown]']	restored=True	wide=
+X07	scripts/run_real_check.py:599	KILLED	33s	['FAILED tests/test_r7u_a_findings.py::test_a4_the_readback_note_shows_the_open_and_unknown_creates']	restored=True	wide=
+X08	scripts/run_real_check.py:1392	KILLED	6s	['FAILED tests/test_r7u_a_findings.py::test_a3_a_counter_that_is_not_known_is_in_the_result_and_the_result_is_not_ok']	restored=True	wide=
+X09	scripts/run_real_check.py:1424	KILLED	6s	['FAILED tests/test_r7u_a_findings.py::test_a3_contacts_not_accounted_for_are_in_the_result_and_the_result_is_not_ok']	restored=True	wide=
+X10	scripts/run_real_check.py:671	SURVIVED	70s	[]	restored=True	wide=
+X11	scripts/run_real_check.py:1369	SURVIVED	36s	[]	restored=True	wide=
+X12	scripts/run_real_check.py:1363	SURVIVED	71s	[]	restored=True	wide=
+X13	scripts/run_real_check.py:1364	KILLED	7s	['FAILED tests/test_r7u_b_findings.py::test_b7_the_run_says_in_words_that_the_mail_count_is_not_known']	restored=True	wide=
+X14	scripts/run_real_check.py:1382	SURVIVED	100s	[]	restored=True	wide=
+X16	scripts/run_real_check.py:586	KILLED	4s	['FAILED tests/test_r7u_a_findings.py::test_a4_the_readback_note_does_not_name_a_number_when_the_counter_is_not_known']	restored=True	wide=
+X17	scripts/run_real_check.py:1317	KILLED	33s	['FAILED tests/test_r7u_a_findings.py::test_a4_the_readback_note_shows_the_open_and_unknown_creates']	restored=True	wide=
+X18	scripts/run_real_check.py:603	KILLED	34s	['FAILED tests/test_r7u_a_findings.py::test_a4_the_readback_note_gives_the_most_contacts_that_may_be_left[100-0]']	restored=True	wide=
+X19	scripts/run_real_check.py:611	SURVIVED	34s	[]	restored=True	wide=
+X20	scripts/run_real_check.py:664	KILLED	0s	['FAILED tests/test_r7u_a_findings.py::test_a3_the_counter_check_is_ok_only_for_a_known_counter_and_no_unseen_contact']	restored=True	wide=
+X21	scripts/run_real_check.py:1008	KILLED	6s	['FAILED tests/test_r7u_b_findings.py::test_b7_the_mail_counter_rule_needs_a_file_no_unreadable_file_and_the_sent_number']	restored=True	wide=
+X22	scripts/run_real_check.py:1008	KILLED	5s	['FAILED tests/test_r7u_b_findings.py::test_b7_a_run_with_a_readable_mail_counter_ends_with_zero']	restored=True	wide=
+X23	scripts/run_real_check.py:1362	KILLED	6s	['FAILED tests/test_r7u_b_findings.py::test_b7_one_unreadable_mail_counter_file_is_not_a_smaller_number_it_fails_closed']	restored=True	wide=
+X24	scripts/run_real_check.py:1360	KILLED	100s	['FAILED tests/test_r7u_b_findings.py::test_b5_a_hidden_contact_and_a_counter_file_that_cannot_be_read_ends_as_failed']	restored=True	wide=
+Y01	scripts/run_real_check.py:643	KILLED	0s	['FAILED tests/test_r7u_a_findings.py::test_a1_the_rule_equals_the_brute_force_oracle_on_every_small_input']	restored=True	wide=
+Y02	scripts/run_real_check.py:644	KILLED	0s	['FAILED tests/test_r7u_a_findings.py::test_a1_one_more_created_than_leads_is_not_hidden_by_the_cap[1]']	restored=True	wide=
+Y03	scripts/run_real_check.py:639	KILLED	0s	['FAILED tests/test_r7u_a_findings.py::test_a1_the_rule_equals_the_brute_force_oracle_on_every_small_input']	restored=True	wide=
+Y04	scripts/run_real_check.py:639	KILLED	0s	['FAILED tests/test_r7u_a_findings.py::test_a1_one_more_created_than_leads_is_not_hidden_by_the_cap[1]']	restored=True	wide=
+Y05	scripts/run_real_check.py:999	KILLED	0s	['FAILED tests/test_r7u_a_findings.py::test_a2_whole_numbers_from_zero_are_read']	restored=True	wide=
+Y06	scripts/run_real_check.py:1000	KILLED	0s	['FAILED tests/test_r7u_a_findings.py::test_a2_a_counter_value_that_is_not_a_whole_number_from_zero_is_unreadable[1e999]']	restored=True	wide=
+Y07	scripts/run_real_check.py:1000	KILLED	0s	['FAILED tests/test_r7u_a_findings.py::test_a2_a_counter_that_is_not_an_object_is_unreadable']	restored=True	wide=
+Y08	scripts/run_real_check.py:1000	KILLED	0s	['FAILED tests/test_r7u_a_findings.py::test_a2_a_counter_value_that_is_not_a_whole_number_from_zero_is_unreadable[1e999]']	restored=True	wide=
+Y09	scripts/run_real_check.py:1000	SURVIVED	0s	[]	restored=True	wide=
+Y10	scripts/run_real_check.py:1000	SURVIVED	0s	[]	restored=True	wide=
+Y11	scripts/run_real_check.py:996	KILLED	0s	['FAILED tests/test_r7u_a_findings.py::test_a2_whole_numbers_from_zero_are_read']	restored=True	wide=
+Y12	scripts/run_real_check.py:1384	KILLED	35s	['FAILED tests/test_r7u_a_findings.py::test_a3_a_counter_that_is_not_known_is_in_the_result_and_the_result_is_not_ok']	restored=True	wide=

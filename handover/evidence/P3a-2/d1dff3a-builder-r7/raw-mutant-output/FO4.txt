@@ -1,0 +1,13 @@
+### tests/test_migration_postgres.py::test_every_statement_is_printed_when_more_than_the_shown_names_are_foreign rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+__ test_every_statement_is_printed_when_more_than_the_shown_names_are_foreign __
+tests/test_migration_postgres.py:1812: in test_every_statement_is_printed_when_more_than_the_shown_names_are_foreign
+    assert len(statements) == 25, len(statements)
+E   AssertionError: 20
+E   assert 20 == 25
+E    +  where 20 = len(['ALTER TABLE "hadavin_test_30660d7e59cb"."hadavin_test_many_00" OWNER TO "mig_b81931574e";', 'ALTER TABLE "hadavin_te...O "mig_b81931574e";', 'ALTER TABLE "hadavin_test_30660d7e59cb"."hadavin_test_many_05" OWNER TO "mig_b81931574e";', ...])
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_every_statement_is_printed_when_more_than_the_shown_names_are_foreign
+1 failed in 0.67s
+

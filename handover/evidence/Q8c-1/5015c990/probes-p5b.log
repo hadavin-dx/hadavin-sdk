@@ -1,0 +1,5 @@
+trailing ' ;;' (empty last start) -> ok {'builder read the passage': 1, 'nobody has read the passage': 6}
+trailing ' ;; ' with space -> PolicyError licy_sources_2026-11-11.txt: the `# CLAIM-READ-BY-NOBODY:` line holds an empty claim start
+tag with empty value -> PolicyError icy_sources_2026-11-11.txt: the `# CLAIM-READ-BY-BUILDER:` line holds an empty claim start
+tag with duplicate start text across marks -> ok {'builder read the passage': 1, 'nobody has read the passage': 7}
+zero-width inside a start -> ['signer/vault_transit: claim "the exact path R18 does not also allow Vault\'s longer sign p" has 0 marks in the head of tests/fixtures/policy_sources_2026-11-11.txt, needs exactly one', "tests/fixtures/policy_sources_2026-11-11.txt: the claim start 'the exact path R18\\u200b does not also allow' matches no claim: delete it"]

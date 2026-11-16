@@ -1,0 +1,2 @@
+N15	scripts/run_real_check.py	s3 or t9	KILLED	['1 failed, 11 passed, 171 deselected in 230.16s (0:03:50)']
+N15	restored-byte-equal=True

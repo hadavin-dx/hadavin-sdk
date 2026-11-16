@@ -1,0 +1,25 @@
+CR="src/lead_desk/crm_hubspot.py"
+A=["tests/test_r7t_findings.py","-k","t15 or t17 or t18","tests/test_crm_hubspot.py"]
+muts=[
+("T01",CR,'reply.status == _HTTP_CREATED and isinstance(reply.body, dict) and reply.body.get("id")','reply.status == _HTTP_CREATED and isinstance(reply.body, dict)',A),
+("T02",CR,'if reply.status == _HTTP_CREATED and','if reply.status == _HTTP_OK_MIN and',A),
+("T03",CR,'self._settle_create("created")\n            return "PUT"','self._settle_create(None)\n            return "PUT"',A),
+("T04",CR,'self._settle_create("conflicts")','self._settle_create("created")',A),
+("T05",CR,'self._settle_create("conflicts")','self._settle_create(None)',A),
+("T06",CR,'            if opened:  # a timeout or a transport error after the request left: the contact MAY exist\n                self._settle_create("create_unknown")','            if opened:  # a timeout or a transport error after the request left: the contact MAY exist\n                self._settle_create(None)',A),
+("T07",CR,'        except Exception:  # 5xx, 408 or an unclear 2xx: the contact MAY exist\n            self._settle_create("create_unknown")','        except Exception:  # 5xx, 408 or an unclear 2xx: the contact MAY exist\n            self._settle_create(None)',A),
+("T08",CR,'        except CrmNothingStored:  # a clear 4xx refusal: nothing was stored\n            self._settle_create(None)','        except CrmNothingStored:  # a clear 4xx refusal: nothing was stored\n            self._settle_create("create_unknown")',A),
+("T09",CR,'            if opened:  # a reply that proves nothing was stored (429 after the waits): the create is over\n                self._settle_create(None)','            if opened:  # a reply that proves nothing was stored (429 after the waits): the create is over\n                self._settle_create("create_unknown")',A),
+("T10",CR,'reply.status < HTTP_INTERNAL_ERROR and reply.status != HTTP_REQUEST_TIMEOUT:','reply.status < HTTP_INTERNAL_ERROR:',A),
+("T11",CR,'HTTP_BAD_REQUEST <= reply.status < HTTP_INTERNAL_ERROR and','HTTP_BAD_REQUEST <= reply.status <= HTTP_INTERNAL_ERROR and',A),
+("T12",CR,'HTTP_BAD_REQUEST <= reply.status < HTTP_INTERNAL_ERROR and','HTTP_BAD_REQUEST < reply.status < HTTP_INTERNAL_ERROR and',A),
+("T13",CR,'HTTP_BAD_REQUEST <= reply.status < HTTP_INTERNAL_ERROR and','HTTP_BAD_REQUEST <= reply.status < HTTP_INTERNAL_ERROR - 1 and',A),
+("T14",CR,'raise CrmNothingStored(type(e.reason).__name__) from None  # no request reached HubSpot','raise CrmError(type(e.reason).__name__) from None  # no request reached HubSpot',A),
+("T15",CR,'isinstance(e.reason, (ConnectionRefusedError, socket.gaierror, ssl.SSLCertVerificationError))','isinstance(e.reason, (socket.gaierror, ssl.SSLCertVerificationError))',A),
+("T16",CR,'class CrmBusy(CrmNothingStored):','class CrmBusy(CrmError):',A),
+("T17",CR,'class CrmRefused(CrmNothingStored):','class CrmRefused(CrmError):',A),
+("T18",CR,'            raise CrmError("TimeoutError")  # abandoned; its late answer goes nowhere','            raise CrmNothingStored("TimeoutError")  # abandoned; its late answer goes nowhere',A),
+("T19",CR,'            if outcome is not None:\n                self._n[outcome] += 1','            if outcome is None:\n                self._n[outcome] += 1',A),
+("T20",CR,'        raise CrmError("unexpected reply")  # a 2xx that is not a created contact: unclear','        raise CrmRefused("unexpected reply")  # a 2xx that is not a created contact: unclear',A),
+("T21",CR,'"http {reply.status}" if reply.status >= HTTP_INTERNAL_ERROR else "unexpected reply"','"unexpected reply"',A),
+]

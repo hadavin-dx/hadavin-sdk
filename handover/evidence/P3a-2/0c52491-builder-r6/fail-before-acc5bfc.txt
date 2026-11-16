@@ -1,0 +1,89 @@
+# head 0c52491 (tree equal to the commit); postgres 16.15 scratch port 56073; python 3.13.18; acc5bfc source + this round's tests (before the SU2/PA2/PA3 fix, tests only)
+# fail-before: acc5bfc source + this round's tests; python Python 3.13.18; postgres 16.15 scratch port 56073
+/tmp/r6/old/src/hadavin_sdk/__init__.py
+F.................F.FFFFFFF.F.F                                          [100%]
+=================================== FAILURES ===================================
+_ test_a_name_is_folded_as_the_server_folds_it_and_is_read_only_at_the_start_of_a_statement _
+tests/test_migration_wiring.py:1067: in test_a_name_is_folded_as_the_server_folds_it_and_is_read_only_at_the_start_of_a_statement
+    assert {"cost$fn", "\u00c4rger_\u00dc"} <= names, names
+E   AssertionError: {'approval_decisions', 'approval_decisions_seq_seq', 'approval_requests', 'audit_checkpoints', 'audit_entries', 'audit_outbox', ...}
+E   assert {'cost$fn', 'Ärger_Ü'} <= {'approval_de..._outbox', ...}
+E     
+E     Extra items in the left set:
+E     'Ärger_Ü'
+E     'cost$fn'
+________________ test_a_new_saved_setting_for_a_role_is_refused ________________
+tests/test_migration_wiring.py:971: in test_a_new_saved_setting_for_a_role_is_refused
+    assert "saved setting in database mydb for role app_rw is new" in str(err)
+E   AssertionError: assert 'saved setting in database mydb for role app_rw is new' in 'migration 0001_f1.sql left the database session changed: saved setting for database mydb role app_rw is new ({search_path=evil})'
+E    +  where 'migration 0001_f1.sql left the database session changed: saved setting for database mydb role app_rw is new ({search_path=evil})' = str(ConfigError('migration 0001_f1.sql left the database session changed: saved setting for database mydb role app_rw is new ({search_path=evil})'))
+_ test_a_superuser_among_the_named_roles_does_not_widen_the_read_back[members] _
+tests/test_migration_postgres.py:2256: in test_a_superuser_among_the_named_roles_does_not_widen_the_read_back
+    assert x not in text and y not in text, rows
+E   AssertionError: [('pg_read_all_settings', 'pg_monitor', '{"grantor": "10", "set_option": true, "admin_option": false, "inherit_option"...5fef', 'hadavin_test_migrator', '{"grantor": "10", "set_option": true, "admin_option": true, "inherit_option": true}')]
+E   assert ('hadavin_test_ux_c58595a8' not in 'pg_read_all...tion": true}'
+E     
+E     'hadavin_test_ux_c58595a8' is contained here:
+E       n": true} hadavin_test_ux_c58595a8 hadavin_test_uy_103b3fc4 {"grantor": "10", "set_option": true, "admin_option": false, "inherit_option": true} hadavin_test_fo_39cf5fef hadavin_test_migrator {"grantor": "10", "set_option": true, "admin_option": true, "inherit_option": true}
+E     ?           ++++++++++++++++++++++++)
+_ test_a_superuser_among_the_named_roles_does_not_widen_the_read_back[settings] _
+tests/test_migration_postgres.py:2256: in test_a_superuser_among_the_named_roles_does_not_widen_the_read_back
+    assert x not in text and y not in text, rows
+E   AssertionError: [('', 'hadavin_test_ux_91f99413', '{work_mem=5MB}')]
+E   assert ('hadavin_test_ux_91f99413' not in ' hadavin_te...ork_mem=5MB}'
+E     
+E     'hadavin_test_ux_91f99413' is contained here:
+E        hadavin_test_ux_91f99413 {work_mem=5MB})
+_ test_the_portal_role_is_refused_what_the_other_roles_are_refused[column_update_via_group-can UPDATE runs.state] _
+tests/test_migration_postgres.py:2293: in test_the_portal_role_is_refused_what_the_other_roles_are_refused
+    with pytest.raises(ConfigError) as e:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+_ test_the_portal_role_is_refused_what_the_other_roles_are_refused[select_on_the_ledger-can SELECT schema_migrations] _
+tests/test_migration_postgres.py:2293: in test_the_portal_role_is_refused_what_the_other_roles_are_refused
+    with pytest.raises(ConfigError) as e:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+_ test_the_portal_role_is_refused_what_the_other_roles_are_refused[create_in_the_schema-can CREATE in schema] _
+tests/test_migration_postgres.py:2293: in test_the_portal_role_is_refused_what_the_other_roles_are_refused
+    with pytest.raises(ConfigError) as e:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+_ test_h11_a_changed_grant_option_of_an_existing_membership_is_refused[the_plain_role] _
+tests/test_migration_postgres.py:466: in test_h11_a_changed_grant_option_of_an_existing_membership_is_refused
+    assert "with grant option" in msg, msg  # the changed column, in words
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AssertionError: migration 0006_option.sql a role membership changed while the file ran (it may be another session; run migrate again): role hadavin_test_oa_4d8717c3 has a new member hadavin_test_ob_108eac67 ({"grantor": "713336", "set_option": true, "admin_option": true, "inherit_option": true}); role hadavin_test_oa_4d8717c3 lost the member hadavin_test_ob_108eac67 ({"grantor": "713336", "set_option": true, "admin_option": false, "inherit_option": true})
+E   assert 'with grant option' in 'migration 0006_option.sql a role membership changed while the file ran (it may be another session; run migrate again)...er hadavin_test_ob_108eac67 ({"grantor": "713336", "set_option": true, "admin_option": false, "inherit_option": true})'
+_ test_h11_a_changed_grant_option_of_an_existing_membership_is_refused[the_login_superuser] _
+tests/test_migration_postgres.py:466: in test_h11_a_changed_grant_option_of_an_existing_membership_is_refused
+    assert "with grant option" in msg, msg  # the changed column, in words
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AssertionError: migration 0006_option.sql a role membership changed while the file ran (it may be another session; run migrate again): role hadavin_test_oa_a1b8322b has a new member hadavin_test_ob_6932e9c2 ({"grantor": "713336", "set_option": true, "admin_option": true, "inherit_option": true})
+E   assert 'with grant option' in 'migration 0006_option.sql a role membership changed while the file ran (it may be another session; run migrate again)...ber hadavin_test_ob_6932e9c2 ({"grantor": "713336", "set_option": true, "admin_option": true, "inherit_option": true})'
+_ test_another_session_changing_the_migration_users_own_roles_stops_the_run[saved_setting] _
+tests/test_migration_postgres.py:2161: in test_another_session_changing_the_migration_users_own_roles_stops_the_run
+    assert f"saved setting in every database for role {PLAIN_ROLE} is new" in msg, msg
+E   AssertionError: migration 0006_slow.sql left the database session changed: saved setting for database  role hadavin_test_migrator_841fd7c0 is new ({work_mem=5MB})
+E   assert 'saved setting in every database for role hadavin_test_migrator_841fd7c0 is new' in 'migration 0006_slow.sql left the database session changed: saved setting for database  role hadavin_test_migrator_841fd7c0 is new ({work_mem=5MB})'
+________ test_migrate_refuses_a_portal_role_that_inherits_write_rights _________
+tests/test_k2_migrations.py:448: in test_migrate_refuses_a_portal_role_that_inherits_write_rights
+    with pytest.raises(ConfigError, match="can UPDATE runs"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AssertionError: Regex pattern did not match.
+E     Expected regex: 'can UPDATE runs'
+E     Actual message: 'the portal role holds privileges outside the portal grant map: runs:UPDATE, runs:DELETE'
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_a_name_is_folded_as_the_server_folds_it_and_is_read_only_at_the_start_of_a_statement
+FAILED tests/test_migration_wiring.py::test_a_new_saved_setting_for_a_role_is_refused
+FAILED tests/test_migration_postgres.py::test_a_superuser_among_the_named_roles_does_not_widen_the_read_back[members]
+FAILED tests/test_migration_postgres.py::test_a_superuser_among_the_named_roles_does_not_widen_the_read_back[settings]
+FAILED tests/test_migration_postgres.py::test_the_portal_role_is_refused_what_the_other_roles_are_refused[column_update_via_group-can UPDATE runs.state]
+FAILED tests/test_migration_postgres.py::test_the_portal_role_is_refused_what_the_other_roles_are_refused[select_on_the_ledger-can SELECT schema_migrations]
+FAILED tests/test_migration_postgres.py::test_the_portal_role_is_refused_what_the_other_roles_are_refused[create_in_the_schema-can CREATE in schema]
+FAILED tests/test_migration_postgres.py::test_h11_a_changed_grant_option_of_an_existing_membership_is_refused[the_plain_role]
+FAILED tests/test_migration_postgres.py::test_h11_a_changed_grant_option_of_an_existing_membership_is_refused[the_login_superuser]
+FAILED tests/test_migration_postgres.py::test_another_session_changing_the_migration_users_own_roles_stops_the_run[saved_setting]
+FAILED tests/test_k2_migrations.py::test_migrate_refuses_a_portal_role_that_inherits_write_rights
+11 failed, 20 passed in 2.23s
+exit=1

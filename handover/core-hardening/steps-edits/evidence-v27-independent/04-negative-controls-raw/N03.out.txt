@@ -1,0 +1,16 @@
+desc: facts: price tokens out 10000 -> 11000 (0.27 -> 0.29)
+file: facts-v27.py occurrences replaced: 1
+build rc=1
+check rc=1
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/ev27/neg/N03/build-v27.py", line 10, in <module>
+    exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'facts-v27.py'), encoding='utf-8').read(), ns)
+    ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<string>", line 14, in <module>
+AssertionError
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/ev27/neg/N03/check-v27.py", line 12, in <module>
+    ns = {}; exec(open(D + 'facts-v27.py', encoding='utf-8').read(), ns); F = ns['F']
+             ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<string>", line 14, in <module>
+AssertionError

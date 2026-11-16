@@ -1,0 +1,67 @@
+.........F
+=================================== FAILURES ===================================
+_ test_a_result_file_that_names_a_key_a_password_the_book_or_the_config_is_refused _
+
+tmp_path = PosixPath('/home/user/build/rr6/tmp-B2/pytest-of-unknown/pytest-42/test_a_result_file_that_names_0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7ff58a96b8f0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7ff58a94f3e0>
+
+    def test_a_result_file_that_names_a_key_a_password_the_book_or_the_config_is_refused(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr("builtins.input", _no_question)
+        keyfile = tmp_path / "hub.key"  # written by _valid_config
+        _valid_config(tmp_path)
+        book = str(tmp_path / "run" / "desk.db")
+        targets = {
+            "DESK_HUBSPOT_KEY_FILE": str(keyfile),
+            "DESK_SMTPP_PASSWORD_FILE": str(tmp_path / "mail.pw"),
+            "REAL_IMAP_1_PASSWORD_FILE": str(tmp_path / "." / "mail.pw"),  # the same file, another spelling
+            "DESK_DB_PATH": book,  # does not exist yet: the same path
+            "--config": str(tmp_path / "c.env"),
+        }
+        for name, target in targets.items():
+            before = keyfile.read_text(encoding="utf-8"), (tmp_path / "mail.pw").read_text(encoding="utf-8")
+>           out = _result_refusal(tmp_path, capsys, target)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_real_run_v6.py:197: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_real_run_v6.py:165: in _result_refusal
+    assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+scripts/run_real_check.py:1098: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:1248: in _run
+    started = ask_to_start(
+scripts/terminal_guard.py:76: in ask_to_start
+    return input(prompt).strip().lower() == expected
+           ^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+prompt = 'To start, type the HubSpot host (api.hubapi.com) and press Enter; anything else stops: '
+
+    def _no_question(prompt: str = "") -> str:
+>       raise AssertionError("the start question was asked")
+E       AssertionError: the start question was asked
+
+tests/test_take_script_refusals.py:34: AssertionError
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+where the keys and passwords go (check each name before you start):
+  HubSpot key         -> api.hubapi.com
+  mail sending login  -> localhost
+  mailbox 1 login    -> localhost
+  mailbox 2 login    -> localhost
+  model key           -> none (recorded replies)
+=========================== short test summary info ============================
+FAILED tests/test_real_run_v6.py::test_a_result_file_that_names_a_key_a_password_the_book_or_the_config_is_refused
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 9 passed in 0.21s

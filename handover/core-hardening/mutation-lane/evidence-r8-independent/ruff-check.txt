@@ -1,0 +1,24 @@
+S603 `subprocess` call: check for execution of untrusted input
+   --> run.py:696:12
+    |
+694 |     """The one place that starts a helper program (git, patch, the import probe): fixed argument list, no shell.
+695 |     With no `env` the helper environment above is used (never the caller's whole environment)."""
+696 |     return subprocess.run(
+    |            ^^^^^^^^^^^^^^
+697 |         argv,
+698 |         input=input_bytes,
+    |
+
+S603 `subprocess` call: check for execution of untrusted input
+    --> run.py:1577:16
+     |
+1575 |     try:
+1576 |         # one process group, so a timeout or a signal can stop all of it
+1577 |         proc = subprocess.Popen(
+     |                ^^^^^^^^^^^^^^^^
+1578 |             cmd,
+1579 |             cwd=root,
+     |
+
+Found 2 errors.
+rc=1

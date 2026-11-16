@@ -1,0 +1,53 @@
+listed set phrases: ['I decline', 'I cancel the older key <its name>', 'model key cancelled', 'time passed', 'cancel failed', 'key save failed, cancelled, new run name <name>', 'run started', 'contacts deleted <number>', 'app passwords revoked', 'accepted', 'posted', 'got a message that says <in words>; is it yours?', 'stop']
+
+Choose what closing the lid does                             x1 lines [85] 
+Clipboard history                                            x2 lines [19, 93] 
+Continue without an account                                  x1 lines [87] 
+I cancel the older key <its name>                            x2 lines [34, 94] LISTED
+I cancel the older key <name>                                x1 lines [75] LISTED
+I decline                                                    x1 lines [33] LISTED
+No such file                                                 x1 lines [83] 
+No such file or directory                                    x1 lines [95] 
+Select all                                                   x1 lines [39] 
+Sent 2 times, same person id                                 x1 lines [63] 
+Spend lock: shown                                            x2 lines [36, 111] 
+Sync across your devices                                     x2 lines [19, 93] 
+Type y to start                                              x6 lines [18, 23, 42, 57, 65, 103] 
+UNVERIFIED, tolerated                                        x1 lines [11] 
+Yes, run <run name>: <call ceiling> expected paid model call x1 lines [90] 
+a long text was on the screen                                x1 lines [33] 
+accepted                                                     x1 lines [115] LISTED
+app passwords revoked                                        x1 lines [113] LISTED
+archived                                                     x1 lines [39] 
+cancel failed                                                x1 lines [35] LISTED
+contacts deleted                                             x1 lines [112] LISTED
+continue                                                     x1 lines [40] 
+deleted                                                      x1 lines [39] 
+do nothing                                                   x1 lines [2] 
+filmed                                                       x2 lines [19, 106] 
+first 16 differ                                              x2 lines [10, 102] 
+first 16 match                                               x2 lines [10, 102] 
+go                                                           x7 lines [40, 65, 74, 74, 90, 90] 
+got a message that says <in words>; is it yours?             x1 lines [40] LISTED
+key                                                          x1 lines [16] 
+key save failed, cancelled, new run name <name>              x1 lines [97] LISTED
+lead verifies at re-pin                                      x1 lines [36] 
+long text in setting <name>                                  x1 lines [89] 
+model key cancelled                                          x4 lines [35, 40, 78, 107] LISTED
+n8n is off                                                   x3 lines [40, 79, 112] 
+name | last used time | zone                                 x1 lines [111] 
+no Recall page                                               x1 lines [93] 
+none                                                         x2 lines [50, 83] 
+person A                                                     x1 lines [13] 
+person B                                                     x1 lines [13] 
+person C                                                     x1 lines [13] 
+plugged in                                                   x1 lines [85] 
+post                                                         x3 lines [40, 80, 118] 
+posted                                                       x1 lines [118] LISTED
+recording                                                    x2 lines [19, 106] 
+run started                                                  x4 lines [18, 58, 104, 106] LISTED
+stop                                                         x3 lines [19, 33, 35] LISTED
+studio-key-1                                                 x1 lines [50] 
+take                                                         x1 lines [14] 
+time passed                                                  x1 lines [35] LISTED
+unknown                                                      x2 lines [59, 63] 

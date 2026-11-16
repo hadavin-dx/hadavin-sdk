@@ -1,0 +1,126 @@
+== A. E03 REFERENCES (rt as probed role)
+A1 temp table, rt HAS REFERENCES on app.t                      | 42P16 constraints on temporary tables may reference only temporary tables
+A2 temp table, rt has NO REFERENCES                            | 42P16 constraints on temporary tables may reference only temporary tables
+A3 permanent table owned by rt, HAS REFERENCES                 | allowed (no error)
+A4 permanent table owned by rt, NO REFERENCES                  | 42501 permission denied for table t
+A5 permanent, column-level REFERENCES (id) only                | allowed (no error)
+== B. E19/E20/E21 and TEMPORARY (PUBLIC has no TEMPORARY, no USAGE on app.typ, no USAGE on plpgsql)
+B0 E19 temp table, no TEMPORARY                                | 42501 permission denied to create temporary tables in database "r3"
+B1 temp table of app.typ, HAS type USAGE, no TEMPORARY         | 42501 permission denied to create temporary tables in database "r3"
+B2 SELECT NULL::app.typ, NO type USAGE                         | allowed (no error)
+B3 SELECT NULL::app.typ, HAS type USAGE                        | allowed (no error)
+B4 scratch-schema table of app.typ, HAS type USAGE             | allowed (no error)
+B5 scratch-schema table of app.typ, NO type USAGE              | 42501 permission denied for type app.typ
+B6 DO block plpgsql, NO language USAGE                         | 42501 permission denied for language plpgsql
+B7 DO block plpgsql, HAS language USAGE                        | allowed (no error)
+B8 scratch function plpgsql, NO language USAGE                 | 42501 permission denied for language plpgsql
+B9 scratch function plpgsql, HAS language USAGE                | allowed (no error)
+B10 temp function plpgsql, HAS language USAGE, no TEMPORARY    | 42501 permission denied to create temporary tables in database "r3"
+== C. DML and upkeep per relation kind (WITH all rights granted / with none)
+C table app.t INSERT [granted]                                 | allowed (no error)
+C table app.t UPDATE [granted]                                 | allowed (no error)
+C table app.t DELETE [granted]                                 | allowed (no error)
+C table app.t TRUNCATE [granted]                               | allowed (no error)
+C table app.t REINDEX [granted]                                | 42501 must be owner of table t
+C table app.t SELECT [granted]                                 | allowed (no error)
+C table app.t INSERT [none]                                    | 42501 permission denied for table t
+C table app.t UPDATE [none]                                    | 42501 permission denied for table t
+C table app.t DELETE [none]                                    | 42501 permission denied for table t
+C table app.t TRUNCATE [none]                                  | 42501 permission denied for table t
+C table app.t REINDEX [none]                                   | 42501 must be owner of table t
+C table app.t SELECT [none]                                    | 42501 permission denied for table t
+C simple view app.sv INSERT [granted]                          | allowed (no error)
+C simple view app.sv UPDATE [granted]                          | allowed (no error)
+C simple view app.sv DELETE [granted]                          | allowed (no error)
+C simple view app.sv TRUNCATE [granted]                        | 42809 "sv" is not a table
+C simple view app.sv REINDEX [granted]                         | 42809 "sv" is not a table or materialized view
+C simple view app.sv SELECT [granted]                          | allowed (no error)
+C simple view app.sv INSERT [none]                             | 42501 permission denied for view sv
+C simple view app.sv UPDATE [none]                             | 42501 permission denied for view sv
+C simple view app.sv DELETE [none]                             | 42501 permission denied for view sv
+C simple view app.sv TRUNCATE [none]                           | 42809 "sv" is not a table
+C simple view app.sv REINDEX [none]                            | 42809 "sv" is not a table or materialized view
+C simple view app.sv SELECT [none]                             | 42501 permission denied for view sv
+C aggregate view app.v INSERT [granted]                        | 55000 cannot insert into view "v"
+C aggregate view app.v UPDATE [granted]                        | 55000 cannot update view "v"
+C aggregate view app.v DELETE [granted]                        | 55000 cannot delete from view "v"
+C aggregate view app.v TRUNCATE [granted]                      | 42809 "v" is not a table
+C aggregate view app.v REINDEX [granted]                       | 42809 "v" is not a table or materialized view
+C aggregate view app.v SELECT [granted]                        | allowed (no error)
+C aggregate view app.v INSERT [none]                           | 55000 cannot insert into view "v"
+C aggregate view app.v UPDATE [none]                           | 55000 cannot update view "v"
+C aggregate view app.v DELETE [none]                           | 55000 cannot delete from view "v"
+C aggregate view app.v TRUNCATE [none]                         | 42809 "v" is not a table
+C aggregate view app.v REINDEX [none]                          | 42809 "v" is not a table or materialized view
+C aggregate view app.v SELECT [none]                           | 42501 permission denied for view v
+C matview app.m INSERT [granted]                               | 42809 cannot change materialized view "m"
+C matview app.m UPDATE [granted]                               | 42809 cannot change materialized view "m"
+C matview app.m DELETE [granted]                               | 42809 cannot change materialized view "m"
+C matview app.m TRUNCATE [granted]                             | 42809 "m" is not a table
+C matview app.m REINDEX [granted]                              | 42501 must be owner of materialized view m
+C matview app.m SELECT [granted]                               | allowed (no error)
+C matview app.m INSERT [none]                                  | 42501 permission denied for materialized view m
+C matview app.m UPDATE [none]                                  | 42501 permission denied for materialized view m
+C matview app.m DELETE [none]                                  | 42501 permission denied for materialized view m
+C matview app.m TRUNCATE [none]                                | 42809 "m" is not a table
+C matview app.m REINDEX [none]                                 | 42501 must be owner of materialized view m
+C matview app.m SELECT [none]                                  | 42501 permission denied for materialized view m
+C sequence app.q INSERT [granted]                              | 42501 permission denied for sequence q
+C sequence app.q UPDATE [granted]                              | 42809 cannot change sequence "q"
+C sequence app.q DELETE [granted]                              | 42501 permission denied for sequence q
+C sequence app.q TRUNCATE [granted]                            | 42809 "q" is not a table
+C sequence app.q REINDEX [granted]                             | 42809 "q" is not a table or materialized view
+C sequence app.q SELECT [granted]                              | allowed (no error)
+C sequence app.q INSERT [none]                                 | 42501 permission denied for sequence q
+C sequence app.q UPDATE [none]                                 | 42501 permission denied for sequence q
+C sequence app.q DELETE [none]                                 | 42501 permission denied for sequence q
+C sequence app.q TRUNCATE [none]                               | 42809 "q" is not a table
+C sequence app.q REINDEX [none]                                | 42809 "q" is not a table or materialized view
+C sequence app.q SELECT [none]                                 | 42501 permission denied for sequence q
+C UPDATE app.t with only UPDATE (no SELECT)                    | allowed (no error)
+C REFRESH matview, granted ALL                                 | 42501 must be owner of materialized view m
+== D. schema USAGE confounder (other.ot, SELECT granted)
+D1 SELECT other.ot, HAS SELECT, NO USAGE on schema other       | 42501 permission denied for schema other
+D2 SELECT other.ot, NO SELECT, NO USAGE                        | 42501 permission denied for schema other
+D3 SELECT other.ot, HAS SELECT, HAS USAGE                      | allowed (no error)
+D4 SELECT other.ot, NO SELECT, HAS USAGE                       | 42501 permission denied for table ot
+== E. psycopg 3.3.6: isolation_level/read_only on an autocommit connection, then transaction()
+E1 outer: ('repeatable read', 'on')
+E2 inside savepoint: ('repeatable read', 'on', 'pg_catalog, pg_temp')
+E3 after savepoint rollback, path: ('"$user", public',)
+E4 with both reset to None: ('read committed', 'off')
+== F. COMMIT failures on an autocommit connection, transaction() block (as store/postgres.connect makes it)
+F1 pg_terminate_backend during a commit-time trigger: psycopg.errors.AdminShutdown sqlstate=57P01 closed=True status=UNKNOWN msg='terminating connection due to administrator command'
+F1 pg_terminate_backend during a commit-time trigger: row present afterwards = 0
+F2 pg_cancel_backend during a commit-time trigger (cancel): psycopg.errors.QueryCanceled sqlstate=57014 closed=False status=IDLE msg='canceling statement due to user request'
+F2 pg_cancel_backend during a commit-time trigger (cancel): row present afterwards = 0
+== G. Q0 and the version read, as the plain login r3_mig, path pinned
+G1 version: 160015
+G2 Q0: 14 rows
+    pg_attribute.attacl
+    pg_class.relacl
+    pg_database.datacl
+    pg_default_acl.defaclacl
+    pg_foreign_data_wrapper.fdwacl
+    pg_foreign_server.srvacl
+    pg_init_privs.initprivs
+    pg_language.lanacl
+    pg_largeobject_metadata.lomacl
+    pg_namespace.nspacl
+    pg_parameter_acl.paracl
+    pg_proc.proacl
+    pg_tablespace.spcacl
+    pg_type.typacl
+== H. Q1/Q1b/Q2/Q3/Q4/STEP4 with EMPTY named and roles arrays and a TWO-entry family, as r3_login (member of r3_mig)
+H [empty named, family of 2] Q1: 0 rows; first 3: []
+H [empty named, family of 2] Q1B: 0 rows; first 3: []
+H [empty named, family of 2] Q2: 69 rows; first 3: [('database', '', '', False, 'r3', '', 'postgres', False, False, False, None, None, None, None, False, False, False, 'CONNECT', False, 'postgres', True), ('function', '', 'app', False, 'slow', '', 'r3_mig', True, False, False, None, None, None, 'r3_mig', False, False, True, 'EXECUTE', False, 'r3_mig', True), ('function', '', 'app', False, 'slow', '', 'r3_mig', True, False, False, None, None, None, None, False, False, False, 'EXECUTE', False, 'r3_mig', True)]
+H [empty named, family of 2] Q3: 0 rows; first 3: []
+H [empty named, family of 2] Q4: 0 rows; first 3: []
+H [empty named, family of 2] STEP4: 1 rows; first 3: [('app.slow()', 'app', 'slow', '', 'f')]
+H [3 named, family of 2, roles = family] Q1: 3 rows; first 3: [('r3_login', 'r3_login', True, False, False, False, False, False), ('r3_login', 'r3_mig', True, False, False, False, False, False), ('r3_mig', 'r3_mig', True, False, False, False, False, False)]
+H [3 named, family of 2, roles = family] Q1B: 1 rows; first 3: [('r3_login', 'r3_mig', 'postgres', False, True, True)]
+H [3 named, family of 2, roles = family] Q2: 69 rows; first 3: [('database', '', '', False, 'r3', '', 'postgres', False, False, False, None, None, None, None, False, False, False, 'CONNECT', False, 'postgres', True), ('function', '', 'app', False, 'slow', '', 'r3_mig', True, False, False, None, None, None, 'r3_mig', False, False, True, 'EXECUTE', False, 'r3_mig', True), ('function', '', 'app', False, 'slow', '', 'r3_mig', True, False, False, None, None, None, None, False, False, False, 'EXECUTE', False, 'r3_mig', True)]
+H [3 named, family of 2, roles = family] Q3: 1 rows; first 3: [('a', 'pg_namespace', 16402, 0, 'r3_rt', 'schema app', False)]
+H [3 named, family of 2, roles = family] Q4: 0 rows; first 3: []
+H [3 named, family of 2, roles = family] STEP4: 1 rows; first 3: [('app.slow()', 'app', 'slow', '', 'f')]

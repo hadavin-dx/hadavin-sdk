@@ -1,0 +1,44 @@
+ox once, with 18:04 UTC = 23:34 IST once as a plan fact
+PASS no 'Tuesday evening' or 'Tue evening' inference
+FAIL every line that names plan line 1051 says it is UNVERIFIED :: [643]
+FAIL departure from ORD:147 stated in section 0, in the L-DEL row and in row 8
+FAIL fresh container wording (ORD:146) in row 8, C-9 and the box
+FAIL L-SCENES appears only in coverage lines (section 8), never in a live table or row
+FAIL row 6 item 11 has no 'needs n8n and is not run yet'
+FAIL row 6 item 15 says what the second scan searches for (real key values read from the key file, not printed, counts only)
+PASS no stale card word count (103, 75, 71) outside history lines :: []
+FAIL row 6 item 13: the 30 s rule applies only if the card or caption carries the 45-second limit
+PASS row 6 keeps items 11 to 16, no blank, no builder note
+PASS row 6 item 16 does not claim that deleting erases the data
+FAIL row 90 new text ends with the database n8n (so 'owned by' attaches to it) and has no 'third place' ::  that holds the claim database and a SEPARATE database `n8n` for n8n's own state
+PASS row 91 says the stage journal and some bookkeeping files stay files
+FAIL row 8 has 18:04 UTC = 23:34 IST, a plan fact that moves, (a)(b)(c), UNVERIFIED, STOP
+PASS row 76 is tagged design intent, rows 25, 37, 38 say 'stored' not 'delivered'
+PASS every new text with 144.3 labels it as from n8n coming back up :: []
+PASS no 'row N' reference in any new text :: []
+PASS no 'accepted' exit slip in any new text :: []
+PASS no bare 'lead' in new texts (the one decision sentence excepted) :: []
+PASS 5a lists exactly the 36 viewer-visible run-sheet and page rows :: (36, 36)
+PASS 5a text equals each row's own 'what the viewer sees' cell
+FAIL report names the check time 2026-11-16T16:32:07Z and the newest sheet version on disk (v29) :: [28, 28, 29]
+PASS no owner sheet changed after the stated check time (C-10c is current) :: []
+FAIL no claim that v25 or v26 is the newest
+FAIL L-SHEET reads 'confirm the one final sheet' and says v29 is coming
+PASS section 9 has no duplicate bullet (17 bullets) :: []
+FAIL G12 named as open with the studio lead in section 9
+FAIL every word the box defines is first used where it is defined (case-insensitive, 23 terms) :: [('send', False, 'send comes within 45 seconds o'), ('same id', False, 'same id is processed once. We '), ('n8n', True, 'n8n running (rows 23, 58, 59).'), ('stand-in', False, 'stand-in test. | (a). |\n| L-AP'), ('loopback re-smoke', True, 'loopback re-smoke) has shown w'), ('risks list', False, 'ris
+FAIL the lines before the first word list use none of the defined words :: ['n8n', 'ready']
+PASS question labels are first used in the table of questions :: ['L-CARD']
+FAIL whole box is at most 3,000 words and shorter than the c6p box (3027 words; c6p 3027) :: 3027
+PASS box names no n8n setting :: []
+FAIL box has one answer line with seconds, three free names, the exception form and L-SHEET apart
+PASS box wave 1 count equals ready + defaults (91) :: 91
+FAIL box says it edits the flow files and changes no running n8n; box says the lease sentence is not put in owner sheet or release note by the rows
+FAIL box says steps 4 to 6 have no duration
+PASS L-SCENES question is gone
+PASS rows 25, 37, 38 and 76 exist as rows
+PASS generator rule on rows 62 to 69 and row 92 edits the generator
+FAIL section 8 has the coverage of the c6p, c6o and c6n reviews
+SUMMARY: 92 checks, 31 FAILED: no report label, check label, source cite or report word in any new text or viewer cell (all 94 rows, no file excluded); box says the ready count; box prints all four card lines exactly as the rows have them and the total (115 words, about 46 s, budget 50 s); table of lengths in the box (6 rows) equals the recomputation from the quoted card lines and lease sentences; answer 2 replaces answer 1: net +15 words and no 'add 16' wording; L-POST exists in the box table and in section 3, with a default; rows 11, 13, 14(not), 21 tie to L-POST and L-LEASE (13, 21) and the tied column lists them; section 3 L-LEASE: newest word, honest claim of 'none', G12 open, reading-2 facts not to be spoken, replacement, recommendation; rows 13 and 21 carry the plain statement and no 45-second sentence by default; C-10b: pass and fail cells agree (all of (a), (b) and (c) shown / any not shown); the 'no take on Mon 23 Nov unless (a), (b) and (c)' line is in the box once, with 18:04 UTC = 23:34 IST once as a plan fact; every line that names plan line 1051 says it is UNVERIFIED; departure from ORD:147 stated in section 0, in the L-DEL row and in row 8; fresh container wording (ORD:146) in row 8, C-9 and the box; L-SCENES appears only in coverage lines (section 8), never in a live table or row; row 6 item 11 has no 'needs n8n and is not run yet'; row 6 item 15 says what the second scan searches for (real key values read from the key file, not printed, counts only); row 6 item 13: the 30 s rule applies only if the card or caption carries the 45-second limit; row 90 new text ends with the database n8n (so 'owned by' attaches to it) and has no 'third place'; row 8 has 18:04 UTC = 23:34 IST, a plan fact that moves, (a)(b)(c), UNVERIFIED, STOP; report names the check time 2026-11-16T16:32:07Z and the newest sheet version on disk (v29); no claim that v25 or v26 is the newest; L-SHEET reads 'confirm the one final sheet' and says v29 is coming; G12 named as open with the studio lead in section 9; every word the box defines is first used where it is defined (case-insensitive, 23 terms); the lines before the first word list use none of the defined words; whole box is at most 3,000 words and shorter than the c6p box (3027 words; c6p 3027); box has one answer line with seconds, three free names, the exception form and L-SHEET apart; box says it edits the flow files and changes no running n8n; box says the lease sentence is not put in owner sheet or release note by the rows; box says steps 4 to 6 have no duration; section 8 has the coverage of the c6p, c6o and c6n reviews
+
+EXIT CODE 1

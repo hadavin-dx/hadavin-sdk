@@ -1,0 +1,15 @@
+### K2 long -k/-m WITH --pythonpath (so the import check passes); uid 65534
+ROW|K2--k-99999|uid=65534|exit=5|traceback_lines=0|file_last=return1|state=f3e337e7cc06d2ca.lock |INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+ROW|K2--m-99999|uid=65534|exit=5|traceback_lines=0|file_last=return1|state=f3e337e7cc06d2ca.lock |INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+ROW|K2--k-100000|uid=65534|exit=5|traceback_lines=0|file_last=return1|state=f3e337e7cc06d2ca.lock |INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+ROW|K2--m-100000|uid=65534|exit=5|traceback_lines=0|file_last=return1|state=f3e337e7cc06d2ca.lock |INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+ls: cannot access '/tmp/r11indep-nobody.k5jqEu/neg/tmpstate/hadavin-mutation-lane-65534': No such file or directory
+ROW|K2--k-100001|uid=65534|exit=2|traceback_lines=0|file_last=return1|state=|run.r11.py: error: a test argument is not usable as a path or word: it is 100001 bytes long (the limit for one argument is 100000)
+ls: cannot access '/tmp/r11indep-nobody.k5jqEu/neg/tmpstate/hadavin-mutation-lane-65534': No such file or directory
+ROW|K2--m-100001|uid=65534|exit=2|traceback_lines=0|file_last=return1|state=|run.r11.py: error: a test argument is not usable as a path or word: it is 100001 bytes long (the limit for one argument is 100000)
+### M2 marker mode 1755 (octal) = 1005 decimal, plain and --sha
+/tmp/r11indep-nobody.k5jqEu/neg/lib.sh: line 9:  4516 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|M2-mode1755-plain|uid=65534|exit=0|traceback_lines=0|file_last=return1|file_mode=755|marker=0|test group already gone; restored "src/mod.py" from /tmp/r11indep-nobody.k5jqEu/neg/tmpstate/hadavin-mutation-lane-65534/f3e337e7cc06d2ca.backup; hash matches saved origi
+/tmp/r11indep-nobody.k5jqEu/neg/lib.sh: line 9:  6725 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|M2-mode1755-sha|uid=65534|exit=3|traceback_lines=0|file_last=return2|file_mode=644|marker=1|RESTORE FAILED: the mode in the marker (0o1755) has a special bit (setuid, setgid, sticky) or is writable by group or others: git has neither, so the marker may be forged
+DONE

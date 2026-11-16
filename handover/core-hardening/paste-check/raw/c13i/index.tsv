@@ -1,0 +1,45 @@
+b00	bash	Git for Windows may turn line ends into CRLF while it copies a file (the setting `core.aut
+b01	bash	- `PF_CONFIRMED` stays `no` until A9; `L1_RULED` stays `no` until open ruling L1 is given 
+b02	bash	Tools check (run it once; it only reads): `patch` is needed for every CHAIN, Python 3.6 or
+b03	bash	A1. Make the work folder (the same folder every time, so a new window finds it again). If 
+b04	bash	A2. Check the original plan, the patches, the apply script, the edit lists, `acc5.sh` and 
+b05	bash	A3. Chain step 1 (patch 1, `plan-v5-fixes.patch`). One call; it compares the checksum befo
+b06	bash	A4. Chain step 2 (patch 2, `plan-v5-repin-v6.patch`), result `39af84aec78b650f287d20013cdf
+b07	bash	A5b. Chain step 3 (patch 3, `plan-v5-gate-rows-v3.patch`, the gate rows), only if `CHAIN` 
+b08	bash	A5b4. Chain step 4, only if `CHAIN` is 4: the edit list `plan-v10-real-v5-edits.md` (29 ed
+b09	bash	A5c. Check that no stray file is left in `$W/inputs` (only `plan-wp6-resmoke-v5.md` and, a
+b10	bash	A6. The four counts, the checksum of your CHAIN and the chain marks (the gate rows `S10-G1
+b11	bash	A7. List every marker left. There are 17 markers on 10 lines; the expected lines are in th
+b12	bash	A8. Copy the patched plan to `PF`, the path where the runner will read it. From now on `PF
+b13	bash	A9. Make the plan name the real path (question 9). The plan names its own file in THREE st
+b14	bash	**Close question 9 only when YOU have decided that the printed `windows form` is the path 
+b15	bash	B1.
+b16	bash	`accept 2` refuses while `L1_RULED` is `no` or while the words `the lead names the pid to 
+b17	bash	C1. Run it with `PIN` empty:
+b18	bash	C2. Answer questions 5 and 7, then fill places (1), (2), (3) of the RE-PIN line in `PF` (t
+b19	bash	(1) Read the final `n8n_kill.py` at the pin (writes one file in the work folder; refuses a
+b20	bash	Save the proposal script as `P-4b.sh` (extracts the one script block from the list; LF lin
+b21	bash	(3) The WSL Ubuntu steps (blocks WSL-1 to WSL-4). Open the WSL Ubuntu shell (Start menu, "
+b22	bash	WSL-1 (in WSL; folder, user, `dash -n` here because dash exists in Ubuntu; the block stops
+b23	bash	WSL-2 (every later WSL block runs in this folder; it starts the stand-in, a throwaway pyth
+b24	bash	WSL-3 (in WSL, same window; runs `P-4b.sh`, needs at least one hit line and exit 0, then w
+b25	bash	Write the stand-in pid down in ONE note line per stand-in you start (D2 reads the last). I
+b26	bash	(4) When the control file is made, **end the stand-in** and prove it is gone. WSL-4 (WSL, 
+b27	bash	C2c. Pre-check of the two P-4b files BEFORE the runner starts (the runner's own check P-3b
+b28	bash	C3. Start the runner. **How:** you start the runner the way you start any agent session in
+b29	bash	C3b. Check that the runner writes where you will write (this proves `EV` is right; the fol
+b30	bash	C4. Run the ROWS helper a second time with `PIN` set (the 40-character value; it refuses a
+b31	bash	Then fill the rows in `PF`. The block first refuses stale rows (line 1 of `rows.txt` must 
+b32	bash	C5. Read what the new script versions changed in their messages and exit numbers (C6 runs 
+b33	bash	C6. Apply the acceptance rule (plan: "Acceptance rule", three kinds of `+` line with `exit
+b34	bash	C7. Last check on `PF` (the helper `c7check`; it ends with `ok C7` or a STOP that names ea
+b35	bash	C8. Names check on `PF`. The plan holds its own guesses of the two names: the folder `nlit
+b36	bash	C8b. Last gate before the release: the stand-in must be gone (`standin-gone.txt`, written 
+b37	bash	C9. RELEASE. Only when C1 to C8b are clean and the runner brief held the sentence of C3, a
+b38	bash	D1. R2 (clean-up kill). If the runner needs to end an n8n of this run it writes `NEED-LEAD
+b39	bash	Then in Git Bash. The block refuses: a pid that is not digits, a pid below 2, a pid that d
+b40	bash	(1) The hit lines: the last block that starts with `== P-4b` in `p.log` (a clean run has o
+b41	bash	(2) For each `P-4b-HIT pid=<digits>`, read the command line (this only reads). EDIT POINT:
+b42	bash	(2b) The stand-in pids you noted in C2b (only reads; the last such line counts; no line pr
+b43	bash	D2-check (it only reads; it also lists an n8n that is not part of the run, because it matc
+b44	bash	D2-delete (EDIT POINT: `DEL=yes` only after the check printed `nothing alive` and you want

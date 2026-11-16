@@ -1,0 +1,8 @@
+desc: source: typed-figure line removed
+build rc=0
+check rc=1
+C07 info: OWNER-SHEET-v28-A.md 6054, OWNER-CARD-v28-A.md 1372, OWNER-NUMBERS-v28-A.md 835, OWNER-FILM-v28.md 285 total 8546
+C07 info: OWNER-SHEET-v28-B.md 6033, OWNER-CARD-v28-B.md 1353, OWNER-NUMBERS-v28-B.md 850, OWNER-FILM-v28.md 285 total 8521
+check-v28: 2 failure(s)
+FAIL C141 A lacks 'Test program asks you to type a figure: no'
+FAIL C141 B lacks 'Test program asks you to type a figure: no'

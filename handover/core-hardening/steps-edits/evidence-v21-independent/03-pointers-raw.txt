@@ -1,0 +1,123 @@
+items {1: 0, 2: 0, 3: 0, 4: 0, 5: 8, 6: 6, 7: 8, 8: 5, 9: 0}
+OK   SHEET 6.3 | moment you press the page's create button in 6.3): do
+OK   SHEET 7.2 | o screenshots. When you compare short codes (7.2) you
+OK   SHEET 5.1 | u choose and that is not in the used list of 5.1; a f
+OK   SHEET 7.2 | changed letter changes it. You get it with  (7.2). - 
+OK   SHEET 6.2 | e the older key right after cancelling it in 6.2 (non
+OK   SHEET 6.3 | e moment you press the page's create button (6.3) unt
+OK   SHEET 5.6 | ; you write the word the prepaid page shows, 5.6); **
+OK   SHEET 7.3 | oment you may press Enter on the start line (7.3); th
+OK   SHEET 6.2 | t for the alarm time and the cancel-by time (6.2). **
+OK   SHEET 8.4 | one. After the run: no answer means R3, then 8.4 (lap
+OK   SHEET 7.3 | ur Enter on the start line to the exit code (7.3 to 7
+OK   SHEET 7.8 | r on the start line to the exit code (7.3 to 7.8); **
+OK   SHEET 6.1 | ing OFF; Privacy switches OFF (turned off in 6.1, put
+OK   SHEET 8.4 | switches OFF (turned off in 6.1, put back in 8.4); yo
+OK   SHEET 6.3 | g secret-looking text on your screen outside 6.3 and 
+OK   SHEET 6.4 |  on your screen outside 6.3 and the paste of 6.4 (als
+OK   SHEET 6.2 | r key named in the numbers message, once, in 6.2 (or 
+OK   SHEET 6.3 | known: it differs from the word you wrote at 6.3) and
+OK   SHEET 5.7 |  file's figures, so you compare them by eye (5.7). Th
+OK   SHEET 5.6 | least the expected total. **Key checks:** at 5.6 no v
+OK   SHEET 6.2 | y except the older key the message names; in 6.2 afte
+OK   SHEET 6.6 | after cancelling it, no valid key at all; at 6.6 and 
+OK   SHEET 7.1 | ncelling it, no valid key at all; at 6.6 and 7.1 exac
+OK   SHEET 5.4 | Gmail, label  view only; the earlier ones of 5.4 (cou
+OK   SHEET 8.3 | es of 5.4 (count them first) and this run's (8.3, the
+OK   SHEET 5.8 | a step, because this sheet names them: "go" (5.8), "n
+OK   SHEET 8.2 |  sheet names them: "go" (5.8), "n8n is off" (8.2; it 
+OK   SHEET 6.4 | u do: the key's copy button and one paste at 6.4, the
+OK   SHEET 8.5 | ilm: do not post; report the times in words (8.5). | 
+OK   SHEET 6.2 | 1); "I cancel the older key <its name>" (R2, 6.2); "m
+OK   SHEET 6.5 | ave failed, cancelled, new run name <name>" (6.5); "r
+OK   SHEET 7.4 | , new run name <name>" (6.5); "run started" (7.4); "c
+OK   SHEET 8.2 | started" (7.4); "contacts deleted <number>" (8.2); "a
+OK   SHEET 8.3 | ed <number>" (8.2); "app passwords revoked" (8.3); "a
+OK   SHEET 8.5 | ; "app passwords revoked" (8.3); "accepted" (8.5); "p
+OK   SHEET 5.8 | yours?" (R8, by the other channel); the yes (5.8). Sp
+OK   SHEET 7.3 | run).** Take terminal: , , , the start line (7.3),  o
+OK   SHEET 6.4 | he take program starts: the key-save line of 6.4 (its
+OK   SHEET 5.1 | --|---|---| | 1 | you | Choose the run name (5.1), se
+OK   SHEET 5.2 | file, model pages, people, settings figures (5.2 to 5
+OK   SHEET 5.7 | odel pages, people, settings figures (5.2 to 5.7) | n
+OK   SHEET 5.8 | ) | no yes | | 5 | you, lead | Type the yes (5.8); th
+OK   SHEET 6.6 | ad restarts the model program; you check it (6.6) | n
+OK   SHEET 8.4 | te each value on paper before you change it; 8.4 puts
+OK   SHEET 6.5 | ve you only start again with a new run name (6.5). Ke
+OK   SHEET 6.6 | pty paste is caught only by the file size in 6.6. Rig
+OK   SHEET 6.6 | s), or the page closed before you copied, or 6.6 find
+OK   SHEET 6.5 | UNVERIFIED: key length + 1); any other size: 6.5. Key
+OK   SHEET 5.6 | our cancel. No other key's time changed from 5.6; oth
+OK   SHEET 5.3 | y switches back to the values on your paper (5.3, 6.1
+OK   SHEET 6.1 | tches back to the values on your paper (5.3, 6.1), an
+OK   NOTE 6.2 | er run and cancel the older key (R2 b, sheet 6.2) bec
+OK   NOTE 5.3 |  saw and goes on): Windows menu paths (sheet 5.3, 6.1
+OK   NOTE 6.1 | and goes on): Windows menu paths (sheet 5.3, 6.1), th
+OK   NOTE 6.4 | .3, 6.1), the Recall page, the paste method (6.4), th
+OK   NOTE 8.3 | te method (6.4), the app-password page path (8.3), wh
+OK   NOTE 5.6 | read it (the owner writes his own reading at 5.6); st
+OK   NOTE 7.7 | yping , before the prompt returns (v20 sheet 7.7 and 
+OK   NOTE 8.1 | before the prompt returns (v20 sheet 7.7 and 8.1; UNV
+OK   NOTE 8.1 | " | the line missing (the owner sheet R4 and 8.1 carr
+OK   NOTE 7.7 | ey during the run or right after ; the sheet 7.7 erro
+OK   NOTE 5.6 | owner's key-list readings (key checks of R4: 5.6 only
+OK   NOTE 6.2 | s (key checks of R4: 5.6 only the older key, 6.2 no v
+OK   NOTE 6.6 | 4: 5.6 only the older key, 6.2 no valid key, 6.6 and 
+OK   NOTE 7.1 | nly the older key, 6.2 no valid key, 6.6 and 7.1 exac
+OK   NOTE 5.1 | the key list page, sent with the run name at 5.1) | t
+OK   NOTE 5.1 | s the visible words with the run name (sheet 5.1; UNV
+OK   NOTE 6.2 | ". 4 owner: two alarms, older key cancelled (6.2), mo
+OK   NOTE 6.2 | lier | owner cancels it once (R2 b) at sheet 6.2, bef
+OK   OPEN 6.2 | y left alive means no run (R4, checked after 6.2 and 
+OK   OPEN 7.1 | e means no run (R4, checked after 6.2 and at 7.1). v2
+OK   OPEN 5.2 | ter 40 min (sample) | | 12 | Helpers | Sheet 5.2, G11
+OK   OPEN 7.7 | r cancels the key right after typing  (sheet 7.7 now 
+OK   OPEN 8.1 | y" fallback and makes the last-used check in 8.1 exac
+OK   OPEN 7.7 | " = any other code is a FREEZE); the sheet's 7.7 erro
+OK   OPEN 6.5 | mpty paste is caught only by the size (sheet 6.5, 6.6
+OK   OPEN 6.6 | paste is caught only by the size (sheet 6.5, 6.6) | D
+OK   OPEN 6.6 | e stated means no run (the owner cannot tick 6.6) | |
+OK   OPEN 5.7 | curity N7) | an older key shown on screen at 5.7 must
+OK   OPEN 6.2 |  be cancelled at once but R2(b) allowed only 6.2 | Ch
+OK   SHEET section 1
+OK   SHEET section 4
+OK   SHEET section 1
+OK   SHEET section 2
+OK   SHEET section 3
+OK   SHEET section 6
+OK   SHEET section 3
+OK   SHEET section 6
+OK   SHEET section 3
+OK   SHEET section 3
+OK   SHEET section 3
+OK   SHEET section 6
+OK   SHEET section 7
+OK   SHEET section 8
+OK   SHEET section 1
+OK   SHEET section 1
+OK   NOTE section 2
+OK   NOTE section 3
+OK   NOTE section 5
+OK   NOTE section 2
+BAD  NOTE section 0
+OK   NOTE section 4
+OK   NOTE section 2
+OK   NOTE section 7
+OK   NOTE section 5
+OK   NOTE section 2
+OK   NOTE section 9
+OK   NOTE section 1
+OK   NOTE section 4
+OK   NOTE section 5
+OK   NOTE section 1
+OK   NOTE section 9
+OK   NOTE section 2
+OK   NOTE section 6
+OK   NOTE section 7
+OK   NOTE section 8
+OK   NOTE section 5
+OK   NOTE section 9
+OK   NOTE section 5
+OK   OPEN section 2
+OK   OPEN section 1
+BAD  OPEN section 0

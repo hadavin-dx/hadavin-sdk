@@ -1,0 +1,39 @@
+.......................................F
+=================================== FAILURES ===================================
+_ test_live_check_assume_yes_refuses_a_loopback_lookalike[http://127.0.0.1.evil.test] _
+
+tmp_path = PosixPath('/home/user/build/rr6/tmp-B2/pytest-of-unknown/pytest-22/test_live_check_assume_yes_ref0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7fcade0da090>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fcade0da240>
+lookalike = 'http://127.0.0.1.evil.test'
+
+    @pytest.mark.parametrize(
+        "lookalike",
+        [
+            SCHEME + "127.0.0.1.evil.test",
+            SCHEME + "localhost.evil.test",
+            SCHEME + "127.0.0.1@evil.test",
+            SCHEME + "[::1]@evil.test",
+            SCHEME + "0.0." + "0.0",
+            SCHEME + "127.1",
+            SCHEME + "2130706433",
+            SCHEME + "localhost.",
+            SCHEME + "127.0.0.1%2eevil.test",
+        ],
+    )
+    def test_live_check_assume_yes_refuses_a_loopback_lookalike(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, lookalike: str
+    ) -> None:
+        """The reviewer's mutant M10 (a substring test for loopback) survived: pin the table. A lookalike must never let
+        --assume-yes skip the question; LiveSettings is the second layer, this is the first."""
+        monkeypatch.setattr(sys, "stdin", _Pipe(""))
+>       assert rlc._loopback_url(lookalike) is False
+E       AssertionError: assert True is False
+E        +  where True = <function _loopback_url at 0x7fcade20fc40>('http://127.0.0.1.evil.test')
+E        +    where <function _loopback_url at 0x7fcade20fc40> = rlc._loopback_url
+
+tests/test_start_prompt_hardening.py:386: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_start_prompt_hardening.py::test_live_check_assume_yes_refuses_a_loopback_lookalike[http://127.0.0.1.evil.test]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 39 passed in 0.19s

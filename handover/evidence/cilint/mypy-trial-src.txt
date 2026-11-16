@@ -1,0 +1,5 @@
+mypy 2.4.1 on main 0dabf1f (src), default (basic) mode, --follow-imports=silent, no stub packages? (venv has the lint group, stubs installed). 2026-11-09T06:49Z
+$ mypy --follow-imports=silent src
+85
+src/hadavin_sdk/k1b/report.py:112: error: Argument 1 to "usd" has incompatible type "Decimal | Literal[0]"; expected "Decimal"  [arg-type]
+Found 85 errors in 30 files (checked 106 source files)

@@ -1,0 +1,11 @@
+# fix7 checkpoint
+- 04:25 UTC: setup done (merged origin/core/P1a and origin/main; venvs P1a-fix7-venv313/312). Read both reviews. Designing: per-script script view (scripts param, default none), per-kind minimums, value_scripts.
+- next: implement textnorm.py + defaults, tests, mutants, docs
+- blockers: none
+- SHA: 56f4ca0252c682cc95aab00aafed4fe9a392de35
+- 04:31 UTC: textnorm.py, defaults.py, gen_confusables.py, 4 test files edited and ruff-clean (not yet run). next: mutants file, run tests, CHANGELOG, manifest, golden. blockers: none. SHA: 56f4ca0252c682cc95aab00aafed4fe9a392de35 (nothing committed)
+- 04:40 UTC: RESTART recovered: 10 files intact, no stray processes/Postgres. Mutants file has 128 mutants, CHANGELOG fix7 entry written. next: run new mutants, fix, golden check, commit, evidence. SHA base 56f4ca0 (uncommitted)
+- 05:09 UTC: committed locally bf955e9: 4 textnorm files green on 3.13 and 3.12, 40 new/changed mutants killed. next: perf, full mutant run, full evidence, push, PR body
+- 05:25 UTC: static, fail-before done; full pytest rerun (first pass had 1 env failure: dblink needs PGPORT in server env). next: not-live-not-perf, perf, mutants, stage_mutants, push, PR body
+- 06:00 UTC: full pytest 3.12 clean (11095 passed), 3.13 not-live-not-perf clean (11058 passed), perf 37 passed; 3.13 full had 1 timing flake (test_lexer_is_linear, passes alone). Running mutants 3.13
+- 06:16 UTC: pushed bf955e9, PR 63 body updated, Postgres stopped. DONE; report next.

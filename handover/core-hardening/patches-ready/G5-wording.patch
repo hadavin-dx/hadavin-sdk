@@ -1,0 +1,46 @@
+diff --git a/src/hadavin_sdk/approvals/gate.py b/src/hadavin_sdk/approvals/gate.py
+index 3ab558e..cb73390 100644
+--- a/src/hadavin_sdk/approvals/gate.py
++++ b/src/hadavin_sdk/approvals/gate.py
+@@ -4,7 +4,10 @@ Copied then edited from WARDEN `src/warden/gate.py` @ a1e76cbf (veerarakesh56/wa
+ (`sanitise_text` and its helpers) and G4 (`withhold_commands`, rewritten platform-neutral and fail closed).
+ Not ported (WARDEN outbound policy): enforce, hedge,
+ leaked_kinds/data_leaks/assembled_kinds/where_withheld, for_terminal,
+-outbound_data, sanitise_data, GateResult. The original module notes follow.
++outbound_data, sanitise_data, GateResult. So rule G5 (the leak check that blocks a message) and rule G2
++(unverifiable claims) are NOT built here, and nothing in this repository re-scans text before it leaves.
++The original module notes follow; read the G5 and G2 parts, and the list of ways out, as the original
++design only.
+ 
+ The outbound gate: the last check on what WARDEN says before it leaves the process.
+ 
+diff --git a/src/hadavin_sdk/guard/redact.py b/src/hadavin_sdk/guard/redact.py
+index e615f92..98fbab5 100644
+--- a/src/hadavin_sdk/guard/redact.py
++++ b/src/hadavin_sdk/guard/redact.py
+@@ -13,9 +13,10 @@ the other copies of each found value - every copy of a SECRET, every standalone
+ text: a value found in any of them is masked in all of them (redact_many, second review 2026-09-30).
+ 
+ ⚠ What this is not (audit A-C-23): nothing here can see a secret NO pattern matches. The patterns are
+-the control; HIGHENTROPY is their backstop; the outbound gate's G5 re-runs them, independently, on
+-everything that leaves. (A re-scan inside redact() used the sweep's own rule and could never fire, so
+-it was removed - second review, 2026-09-30.)
++the control; HIGHENTROPY is their backstop. There is NO independent second check on what leaves: the
++outbound gate's G5 (a re-scan of the final text) is not built in this repository (approvals/gate.py
++says so). (A re-scan inside redact() used the sweep's own rule and could never fire, so it was
++removed - second review, 2026-09-30.)
+ """
+ 
+ from __future__ import annotations
+diff --git a/tests/warden_port/test_gate.py b/tests/warden_port/test_gate.py
+index cf91009..fde917a 100644
+--- a/tests/warden_port/test_gate.py
++++ b/tests/warden_port/test_gate.py
+@@ -1,6 +1,6 @@
+ """Ported from WARDEN tests/test_gate.py (main a1e76cbf, veerarakesh56/warden). Kept 4 tests; dropped 13 that need WARDEN-only modules or unported gate policy (listed in the PR).
+ 
+-The outbound gate v0 (Phase 0): G3 untrusted-text hygiene, G5 leak block, and the Slack wiring.
++The outbound gate v0 (Phase 0): G3 untrusted-text hygiene and the Slack wiring (the G5 leak block is not ported here).
+ 
+ The attack these pin: a log line (anyone who can make the application log can write one) carries a
+ markdown image or link whose URL holds data; the model repeats it in its hypothesis; the report goes

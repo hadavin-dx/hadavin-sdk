@@ -1,0 +1,10 @@
+box words: stated 2495, counted 2495
+wrote REPORT-c6t.md (839 lines)
+verify exit 1
+FileNotFoundError: [Errno 2] No such file or directory: '/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/ind-c6t/handover/core-hardening/REPORT.md'
+neg exit 1
+SUMMARY: 170 copies, 1 wrong
+
+real	0m9.153s
+user	0m7.390s
+sys	0m1.528s

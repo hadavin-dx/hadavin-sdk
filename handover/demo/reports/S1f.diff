@@ -1,0 +1,32 @@
+diff -ruN -x __pycache__ -x .pytest_cache -x .ruff_cache a/tests/test_mutants.py b/tests/test_mutants.py
+--- a/tests/test_mutants.py	2026-11-09 20:45:29.738852759 +0000
++++ b/tests/test_mutants.py	2026-11-09 20:45:29.749292687 +0000
+@@ -44,14 +44,16 @@
+ def test_mutant_no_claim(env, monkeypatch: pytest.MonkeyPatch) -> None:
+     applied: list[bool] = []
+     lock = threading.Lock()
++    both_updated = threading.Barrier(2, timeout=20)  # neither caller leaves the claim before both rows were updated
+     original_claim = Desk._claim
+ 
+     def always_claimed(
+         self: Desk, conn_or_none: Any, lead_id: str, from_states: tuple[str, ...] = ("pending",)
+     ) -> bool:
+         """The weakened claim of a person's Retry (from_states with `failed`): moves the row to `sending` WITHOUT the
+-        state precondition and always says yes. The automatic drivers (reaper, start-up) keep the real claim, so the
+-        scenario can first bring the follow-up to `failed` through the real retries."""
++        state precondition and always says yes, once both callers have updated. The automatic drivers (reaper,
++        start-up) keep the real claim, so the scenario can first bring the follow-up to `failed` through the real
++        retries."""
+         if from_states == ("pending",):
+             return original_claim(self, conn_or_none, lead_id, from_states)
+         with lock:
+@@ -61,6 +63,9 @@
+             con.execute("UPDATE followups SET state='sending', attempts=attempts+1 WHERE lead_id=?", (lead_id,))
+         finally:
+             con.close()
++        # Without this wait the stand-in is racy: a caller that reads its ownership token after the other one's update
++        # holds a stale token, loses it at the first touch and sends nothing, so the doubled send would not show.
++        both_updated.wait()
+         return True
+ 
+     monkeypatch.setattr(Desk, "_claim", always_claimed)

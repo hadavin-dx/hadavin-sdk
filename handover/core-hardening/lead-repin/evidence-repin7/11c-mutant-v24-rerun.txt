@@ -1,0 +1,2 @@
+v24-userinfo-no-scheme-rule-off dash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1366 failed=6 (the made-up input and output files we | first: FAIL (secret still visible): user:password@host without a scheme (first 6 characters)
+v24-userinfo-no-scheme-rule-off bash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1366 failed=6 (the made-up input and output files we | first: FAIL (secret still visible): user:password@host without a scheme (first 6 characters)

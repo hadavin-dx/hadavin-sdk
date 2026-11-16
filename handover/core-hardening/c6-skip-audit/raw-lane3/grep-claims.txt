@@ -1,0 +1,11 @@
+origin/demo/lane3:handover/demo3/kill/COMPARE-demo.md:1
+origin/demo/lane3:handover/demo3/kill/PLAN-V3-ALERT.md:1
+origin/demo/lane3:handover/demo3/kill/RESULTS.md:1
+80 kills: 0 files
+0 doubled: 2 files
+origin/demo/lane3:handover/demo3/kill/COMPARE-demo.md:5:| K1, K2 end state | done, 0 lost, 0 doubled, n = 20 | done, 1 CRM row, 1 intake mail, n = 5 each at lease 45 s (and 1 to 2 at lease 120 s) | yes |
+origin/demo/lane3:handover/demo3/kill/RESULTS.md:100:| K1, K2 end state | done, 0 lost, 0 doubled, n = 20 | done, 1 CRM row, 1 intake mail, n = 5 each at lease 45 s (and 1 to 2 at lease 120 s) | yes |
+0 lost: 3 files
+origin/demo/lane3:handover/demo3/kill/COMPARE-demo.md:5:| K1, K2 end state | done, 0 lost, 0 doubled, n = 20 | done, 1 CRM row, 1 intake mail, n = 5 each at lease 45 s (and 1 to 2 at lease 120 s) | yes |
+origin/demo/lane3:handover/demo3/kill/PLAN-V3-ALERT.md:24:- B780: the fake SMTP holds the alert answer 780 s (longer than the 12 min claim, and longer than the 10 min socket silence limit read from the mail library). My reading before the run: the li
+origin/demo/lane3:handover/demo3/kill/RESULTS.md:100:| K1, K2 end state | done, 0 lost, 0 doubled, n = 20 | done, 1 CRM row, 1 intake mail, n = 5 each at lease 45 s (and 1 to 2 at lease 120 s) | yes |

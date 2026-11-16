@@ -1,0 +1,57 @@
+M00 baseline (copies, no change): rc=0 problems=0
+M01 | CAUGHT   | problems= 2 | price line (sheet message) 0.27->0.28 | first: PROBLEM: [A] price line Price per call at full size: U is 0.28, expected 0.27
+M02 | CAUGHT   | problems= 2 | expected total line 0.81->0.82 | first: PROBLEM: [A] price line Expected total: USD ([\d.]+) \ is 0.82, expected 0.81
+M03 | CAUGHT   | problems= 2 | sample notice price line | first: PROBLEM: [A] price line Price per call: ([\d.]+) \(USD is 0.28, expected 0.27
+M04 | CAUGHT   | problems= 2 | filled yes example total | first: PROBLEM: [A] filled yes example does not match the sample figures
+M05 | CAUGHT   | problems= 1 | sheet pointer wrong target: card step 6 "Go on at 7.9" -> 7.5 | first: PROBLEM: sheet: pointer 7.5 has no topic word of its target nearby: ...n is over, however far it got. go on at 7.5 if you typed ; otherwise at 8.1.  *
+M06 | CAUGHT   | problems= 1 | sheet pointer: "back on in 8.7" -> 8.5 | first: PROBLEM: sheet: pointer 8.5 has no topic word of its target nearby: ...cy switches off (off in 6.1, back on in 8.5); your normal profile, never the fi
+M07 | CAUGHT   | problems= 1 | note pointer sheet 8.4 -> 8.3 (HubSpot secret revoke) | first: PROBLEM: note: pointer 8.3 has no topic word of its target nearby: ...e hubspot app secret revoke (g42, sheet 8.3), the cancel card as single source, 
+M08 | CAUGHT   | problems= 1 | note pointer sheet 7.8 -> 7.6 (order end then cancel) | first: PROBLEM: note: pointer 7.6 has no topic word of its target nearby: ...1). 10. **the order  then cancel (sheet 7.6) is the builder's choice, with a rea
+M09 | MISSED   | problems= 0 | note R8 -> R7 (characters of owner sheet) | first: 
+M10 | MISSED   | problems= 0 | note R7 -> R9 (delete method) | first: 
+M11 | MISSED   | problems= 0 | weekday sheet Wed 18 -> Tue 18 | first: 
+M12 | MISSED   | problems= 0 | weekday note Mon 23 -> Tue 23 | first: 
+M13 | CAUGHT   | problems= 2 | IST pair sheet 12:10 UTC = 17:40 -> 17:50 | first: PROBLEM: [A] 12:10 UTC is not 17:50 IST
+M14 | MISSED   | problems= 0 | IST pair note 12:00 = 17:30 -> 17:00 | first: 
+M15 | MISSED   | problems= 0 | IST pair open list 12:00 = 17:30 -> 17:20 | first: 
+M16 | CAUGHT   | problems= 2 | placeholder renamed <run name> -> <runname> (one place) | first: PROBLEM: [A] placeholder spelled differently or unknown: 'runname'
+M17 | CAUGHT   | problems= 4 | placeholder renamed <its name or none> -> <its name or nome> | first: PROBLEM: [A] yes clauses
+M18 | CAUGHT   | problems= 1 | list-form pointer "Open 2 and 31" -> "Open 2 and 91" | first: PROBLEM: note: Open 91 does not exist (70 rows)
+M19 | MISSED   | problems= 0 | paraphrased cancel rule added outside the card (sheet 7.6) | first: 
+M20 | MISSED   | problems= 0 | 8.4 -> 8.3 on set phrase "HubSpot apps revoked" | first: 
+M21 | CAUGHT   | problems= 1 | R7 -> R9 in sheet 5.4 | first: PROBLEM: sheet: pointer R9 has no topic word of its target nearby: ...expected count: delete exactly those as r9 says; any other count: freeze (r10, k
+M22 | CAUGHT   | problems= 2 | wrong sum check 3 (11:30 + 30 = 12:10) | first: PROBLEM: [A] check 3 worked example sum wrong
+M23 | CAUGHT   | problems= 8 | wrong sum in sums line 5+15+10 = 35 | first: PROBLEM: [A] sum of minutes
+M24 | CAUGHT   | problems= 2 | A/B bracket text left inside the other variant ([[B:..]] inside [[A:..]]) | first: PROBLEM: [B] markers left in the variant
+M25 | CAUGHT   | problems= 3 | stray [[ marker left after variants removed | first: PROBLEM: unbalanced alternative markers
+M26 | CAUGHT   | problems= 1 | banned word inserted (note) | first: PROBLEM: banned words found or list unread
+M27 | CAUGHT   | problems= 1 | open list numbering gap (row 40 -> 41) | first: PROBLEM: open numbers not 1..n
+M28 | MISSED   | problems= 0 | note G pointer wrong (lease wording G12 -> G32) | first: 
+M29 | MISSED   | problems= 0 | note Open 51 -> Open 15 (order 034) | first: 
+M30 | MISSED   | problems= 0 | note "Shutdown order as in section 4" -> section 3 | first: 
+M31 | CAUGHT   | problems= 2 | run length 15 -> 14 (below 860 s) | first: PROBLEM: [A] time lines disagree with the sums line
+M32 | CAUGHT   | problems= 3 | 860 s = 14.33 -> 14.4 in sheet | first: PROBLEM: [A] need seconds / 60 is not 14.4
+M33 | CAUGHT   | problems= 2 | weekday glossary deadline Mon 23 -> Tue 23 | first: PROBLEM: [A] weekday Tue 23
+M34 | CAUGHT   | problems= 2 | R10 sentence without "key alive: card first" (6.6) | first: PROBLEM: [A] R10 without "key alive: card first": y that one number; two or none: FREEZE, R10) and `TZ=UTC ls -l --time-
+M35 | CAUGHT   | problems= 2 | tolerated item dropped from note (HubSpot private-app page path) | first: PROBLEM: [A] tolerated item 'HubSpot private-app' missing in note
+M36 | MISSED   | problems= 0 | paraphrased cancel rule added to the note | first: 
+M37 | CAUGHT   | problems= 2 | program limit 13.21 -> 13.22 (sheet message) | first: PROBLEM: [A] settings in cents disagree with money lines
+M38 | CAUGHT   | problems= 2 | settings TOKENS_OUT 10000 -> 12000 | first: PROBLEM: [A] settings do not give the price per call
+M39 | CAUGHT   | problems= 2 | set phrase spelled differently (cancelled -> canceled) in card step 5 | first: PROBLEM: [A] card step 5 phrase
+M40 | MISSED   | problems= 0 | B submitted 10 -> 12 times (sheet 3 expected line) | first: 
+M41 | MISSED   | problems= 0 | note IST definition UTC + 5:30 -> 5:00 | first: 
+M42 | MISSED   | problems= 0 | open row 56 14.4 -> 14.5 minutes | first: 
+M43 | MISSED   | problems= 0 | note G33 -> G38 (spend lock) | first: 
+M44 | MISSED   | problems= 0 | sheet table "Type the yes (5.8)" -> 5.7 | first: 
+M45 | CAUGHT   | problems= 1 | glossary key-list check 6.6 -> 6.5 | first: PROBLEM: sheet: pointer 6.5 has no topic word of its target nearby: ... = you count valid keys at 5.6, 6.2 and 6.5 (again at 7.1). **key file** = the 
+M46 | MISSED   | problems= 0 | 8.1 "card step 3" -> "card step 5" | first: 
+M47 | CAUGHT   | problems= 4 | post-by IST wrong 20:30 -> 20:00 | first: PROBLEM: [A] post-by phrase count
+M48 | MISSED   | problems= 0 | changes file pointer 7.8 -> 7.7 | first: 
+M49 | MISSED   | problems= 0 | open row 34 pointer: sheet 7.8 error sentence -> 7.7 (the v22 failure P1) | first: 
+M50 | MISSED   | problems= 0 | price in note 0.27 -> 0.28 (note worked price) | first: 
+M51 | CAUGHT   | problems= 4 | unlisted set phrase told ("tell \"all done\"") in 8.5 | first: PROBLEM: [A] quoted phrase 'all done' told but not listed
+M52 | CAUGHT   | problems= 1 | "Open 2 and 91" in open list style: "Open 2, 31 and 91" in note | first: PROBLEM: note: Open 91 does not exist (70 rows)
+M53 | MISSED   | problems= 0 | number message Expected total in Open (0.81 -> 0.80 in note) | first: 
+M54 | CAUGHT   | problems= 4 | sheet 5.8 deadline pair: 23:59 -> 23:29 | first: PROBLEM: [A] deadline phrase count 1
+TOTAL planted 54: caught 32, missed 22, anchor not found 0
+MISSED list: ['M09', 'M10', 'M11', 'M12', 'M14', 'M15', 'M19', 'M20', 'M28', 'M29', 'M30', 'M36', 'M40', 'M41', 'M42', 'M43', 'M44', 'M46', 'M48', 'M49', 'M50', 'M53']

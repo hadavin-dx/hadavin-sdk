@@ -1,0 +1,61 @@
+### tests/test_migration_wiring.py::test_a_new_role_membership_after_a_file_is_refused rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+______________ test_a_new_role_membership_after_a_file_is_refused ______________
+tests/test_migration_wiring.py:754: in test_a_new_role_membership_after_a_file_is_refused
+    err, db, _ = _run(monkeypatch, tmp_path, [START, START], [[], []], members=[[], [EDGE]])
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_migration_wiring.py:175: in _run
+    applied_now = mig.migrate("postgresql://unused", **kw)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src/hadavin_sdk/store/migrate.py:1050: in migrate
+    saved = _check_read_back(
+src/hadavin_sdk/store/migrate.py:833: in _check_read_back
+    now = _read_back(db, named)
+          ^^^^^^^^^^^^^^^^^^^^^
+src/hadavin_sdk/store/migrate.py:542: in _read_back
+    values = tuple(db.execute(_READBACK_VALUES_SQL).fetchone())
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_migration_wiring.py:126: in execute
+    return _Result([self._next(self.values, "settings")])
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_migration_wiring.py:118: in _next
+    raise AssertionError(f"the run read the {what} more often than this test scripted")
+E   AssertionError: the run read the settings more often than this test scripted
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_a_new_role_membership_after_a_file_is_refused
+1 failed in 0.39s
+
+### tests/test_migration_wiring.py::test_the_membership_is_read_after_every_file_and_before_its_ledger_row rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+____ test_the_membership_is_read_after_every_file_and_before_its_ledger_row ____
+tests/test_migration_wiring.py:789: in test_the_membership_is_read_after_every_file_and_before_its_ledger_row
+    assert log.count(mig._READBACK_MEMBERS_SQL) == 3  # the start and one per file
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   assert 0 == 3
+E    +  where 0 = <built-in method count of list object at 0x7fb304d30180>('WITH named AS (SELECT oid FROM pg_roles WHERE rolname = ANY(%s::text[]) AND NOT rolsuper), scope AS (SELECT r.oid, (r...bers m WHERE m.member IN (SELECT oid FROM scope WHERE own OR closure) OR m.roleid IN (SELECT oid FROM scope WHERE own)')
+E    +    where <built-in method count of list object at 0x7fb304d30180> = ['SELECT pg_advisory_xact_lock(%s)', "SET LOCAL lock_timeout = '5s';", "SET LOCAL statement_timeout = '60s';", 'SELECT...as_role(session_user, r.oid, 'MEMBER')) ORDER BY r.rolname", "SELECT to_regclass('pg_parameter_acl') IS NOT NULL", ...].count
+E    +    and   'WITH named AS (SELECT oid FROM pg_roles WHERE rolname = ANY(%s::text[]) AND NOT rolsuper), scope AS (SELECT r.oid, (r...bers m WHERE m.member IN (SELECT oid FROM scope WHERE own OR closure) OR m.roleid IN (SELECT oid FROM scope WHERE own)' = mig._READBACK_MEMBERS_SQL
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_the_membership_is_read_after_every_file_and_before_its_ledger_row
+1 failed in 0.37s
+
+### tests/test_migration_postgres.py::test_h11_a_role_grant_hidden_in_a_function_body_is_refused rc=1
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+__ test_h11_a_role_grant_hidden_in_a_function_body_is_refused[function_body] ___
+tests/test_migration_postgres.py:429: in test_h11_a_role_grant_hidden_in_a_function_body_is_refused
+    with pytest.raises(ConfigError) as e:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+_ test_h11_a_role_grant_hidden_in_a_function_body_is_refused[function_body_with_admin_option] _
+tests/test_migration_postgres.py:429: in test_h11_a_role_grant_hidden_in_a_function_body_is_refused
+    with pytest.raises(ConfigError) as e:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_h11_a_role_grant_hidden_in_a_function_body_is_refused[function_body]
+FAILED tests/test_migration_postgres.py::test_h11_a_role_grant_hidden_in_a_function_body_is_refused[function_body_with_admin_option]
+2 failed in 0.69s
+

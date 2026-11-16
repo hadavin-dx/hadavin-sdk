@@ -1,0 +1,376 @@
+.F.FFFFFFFFFFFF....FFFFFFFFFFFFF..F.                                     [100%]
+=================================== FAILURES ===================================
+E   AssertionError: assert (408 == 408 and {'error': 'request_timeout'} == {'error': 're...ipt_id': None}
+      
+      Omitting 1 identical items, use -vv to show
+      Right contains 1 more item:
+      {'receipt_id': None}
+      Use -v to get more diff)
+/tmp/dpld-s2/tests/test_slow_sender.py:186: AssertionError: assert (408 == 408 and {'error': 'request_timeout'} == {'error': 're...ipt_id': None}
+E   AssertionError: []
+    assert []
+/tmp/dpld-s2/tests/test_slow_sender.py:230: AssertionError: []
+E   AssertionError: assert {'error': 'request_timeout'} == {'error': 're...ipt_id': None}
+      
+      Omitting 1 identical items, use -vv to show
+      Right contains 1 more item:
+      {'receipt_id': None}
+      Use -v to get more diff
+/tmp/dpld-s2/tests/test_slow_sender.py:228: AssertionError: assert {'error': 'request_timeout'} == {'error': 're...ipt_id': None}
+E   AssertionError: ('resolve', b'HTTP/1.0 500 Internal Server Error\r
+      Server: lead-desk Python/3.13.18\r
+      Date: Mon, 09 Nov 2026 18:18:10 GMT\r
+      Content-Type:')
+    assert 500 == 408
+------------------------------ Captured log call -------------------------------
+WARNING  lead_desk:server.py:426 handler failed: TimeoutError
+/tmp/dpld-s2/tests/test_slow_sender.py:227: AssertionError: ('resolve', b'HTTP/1.0 500 Internal Server Error\r
+E   AssertionError: timed out waiting for two connections past their headers
+/tmp/dpld-s2/tests/support.py:71: AssertionError: timed out waiting for two connections past their headers
+E   AssertionError: timed out waiting for two connections past their headers
+/tmp/dpld-s2/tests/support.py:71: AssertionError: timed out waiting for two connections past their headers
+E   AssertionError: timed out waiting for place freed while the follow-up is still running
+/tmp/dpld-s2/tests/support.py:71: AssertionError: timed out waiting for place freed while the follow-up is still running
+E   AttributeError: '_Server' object has no attribute '_take_slot'
+/tmp/dpld-s2/tests/test_slow_sender.py:293: AttributeError: '_Server' object has no attribute '_take_slot'
+E   AttributeError: '_Server' object has no attribute '_pending'
+----------------------------- Captured stderr call -----------------------------
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 37934)
+Traceback (most recent call last):
+  File "/usr/lib/python3.13/socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "/usr/lib/python3.13/http/server.py", line 451, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/tmp/dpld-s2/src/lead_desk/server.py", line 247, in handle_one_request
+    super().handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/lib/python3.13/http/server.py", line 419, in handle_one_request
+    self.raw_requestline = self.rfile.readline(65537)
+                           ~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "/tmp/dpld-s2/src/lead_desk/server.py", line 101, in readinto
+    return self._sock.recv_into(b)
+           ~~~~~~~~~~~~~~~~~~~~^^^
+ConnectionResetError: [Errno 104] Connection reset by peer
+----------------------------------------
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 38058)
+Traceback (most recent call last):
+  File "/usr/lib/python3.13/socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "/usr/lib/python3.13/http/server.py", line 451, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/tmp/dpld-s2/src/lead_desk/server.py", line 247, in handle_one_request
+    super().handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/lib/python3.13/http/server.py", line 419, in handle_one_request
+    self.raw_requestline = self.rfile.readline(65537)
+                           ~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "/tmp/dpld-s2/src/lead_desk/server.py", line 101, in readinto
+    return self._sock.recv_into(b)
+           ~~~~~~~~~~~~~~~~~~~~^^^
+ConnectionResetError: [Errno 104] Connection reset by peer
+----------------------------------------
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 38106)
+Traceback (most recent call last):
+  File "/usr/lib/python3.13/socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "/usr/lib/python3.13/http/server.py", line 451, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/tmp/dpld-s2/src/lead_desk/server.py", line 247, in handle_one_request
+    super().handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/lib/python3.13/http/server.py", line 419, in handle_one_request
+    self.raw_requestline = self.rfile.readline(65537)
+                           ~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "/tmp/dpld-s2/src/lead_desk/server.py", line 101, in readinto
+    return self._sock.recv_into(b)
+           ~~~~~~~~~~~~~~~~~~~~^^^
+ConnectionResetError: [Errno 104] Connection reset by peer
+----------------------------------------
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 38156)
+Traceback (most recent call last):
+  File "/usr/lib/python3.13/socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "/usr/lib/python3.13/http/server.py", line 451, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/tmp/dpld-s2/src/lead_desk/server.py", line 247, in handle_one_request
+    super().handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/lib/python3.13/http/server.py", line 419, in handle_one_request
+    self.raw_requestline = self.rfile.readline(65537)
+                           ~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "/tmp/dpld-s2/src/lead_desk/server.py", line 101, in readinto
+    return self._sock.recv_into(b)
+           ~~~~~~~~~~~~~~~~~~~~^^^
+ConnectionResetError: [Errno 104] Connection reset by peer
+----------------------------------------
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 38240)
+Traceback (most recent call last):
+  File "/usr/lib/python3.13/socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "/usr/lib/python3.13/http/server.py", line 451, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/tmp/dpld-s2/src/lead_desk/server.py", line 247, in handle_one_request
+    super().handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/lib/python3.13/http/server.py", line 419, in handle_one_request
+    self.raw_requestline = self.rfile.readline(65537)
+                           ~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "/tmp/dpld-s2/src/lead_desk/server.py", line 101, in readinto
+    return self._sock.recv_into(b)
+           ~~~~~~~~~~~~~~~~~~~~^^^
+ConnectionResetError: [Errno 104] Connection reset by peer
+----------------------------------------
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 38296)
+Traceback (most recent call last):
+  File "/usr/lib/python3.13/socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "/usr/lib/python3.13/http/server.py", line 451, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/tmp/dpld-s2/src/lead_desk/server.py", line 247, in handle_one_request
+    super().handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/lib/python3.13/http/server.py", line 419, in handle_one_request
+    self.raw_requestline = self.rfile.readline(65537)
+                           ~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "/tmp/dpld-s2/src/lead_desk/server.py", line 101, in readinto
+    return self._sock.recv_into(b)
+           ~~~~~~~~~~~~~~~~~~~~^^^
+ConnectionResetError: [Errno 104] Connection reset by peer
+----------------------------------------
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 38346)
+Traceback (most recent call last):
+  File "/usr/lib/python3.13/socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "/usr/lib/python3.13/http/server.py", line 451, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/tmp/dpld-s2/src/lead_desk/server.py", line 247, in handle_one_request
+    super().handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/lib/python3.13/http/server.py", line 419, in handle_one_request
+    self.raw_requestline = self.rfile.readline(65537)
+                           ~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "/tmp/dpld-s2/src/lead_desk/server.py", line 101, in readinto
+    return self._sock.recv_into(b)
+           ~~~~~~~~~~~~~~~~~~~~^^^
+ConnectionResetError: [Errno 104] Connection reset by peer
+----------------------------------------
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 38408)
+Traceback (most recent call last):
+  File "/usr/lib/python3.13/socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "/usr/lib/python3.13/http/server.py", line 451, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/tmp/dpld-s2/src/lead_desk/server.py", line 247, in handle_one_request
+    super().handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/lib/python3.13/http/server.py", line 419, in handle_one_request
+    self.raw_requestline = self.rfile.readline(65537)
+                           ~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "/tmp/dpld-s2/src/lead_desk/server.py", line 101, in readinto
+    return self._sock.recv_into(b)
+           ~~~~~~~~~~~~~~~~~~~~^^^
+ConnectionResetError: [Errno 104] Connection reset by peer
+----------------------------------------
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 38466)
+Traceback (most recent call last):
+  File "/usr/lib/python3.13/socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "/usr/lib/python3.13/http/server.py", line 451, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/tmp/dpld-s2/src/lead_desk/server.py", line 247, in handle_one_request
+    super().handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/lib/python3.13/http/server.py", line 419, in handle_one_request
+    self.raw_requestline = self.rfile.readline(65537)
+                           ~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "/tmp/dpld-s2/src/lead_desk/server.py", line 101, in readinto
+    return self._sock.recv_into(b)
+           ~~~~~~~~~~~~~~~~~~~~^^^
+ConnectionResetError: [Errno 104] Connection reset by peer
+----------------------------------------
+------------------------------ Captured log call -------------------------------
+WARNING  lead_desk:server.py:426 handler failed: AttributeError
+WARNING  lead_desk:server.py:426 handler failed: AttributeError
+WARNING  lead_desk:server.py:426 handler failed: AttributeError
+WARNING  lead_desk:server.py:426 handler failed: AttributeError
+WARNING  lead_desk:server.py:426 handler failed: AttributeError
+WARNING  lead_desk:server.py:426 handler failed: AttributeError
+WARNING  lead_desk:server.py:426 handler failed: AttributeError
+/tmp/dpld-s2/tests/test_slow_sender.py:331: AttributeError: '_Server' object has no attribute '_pending'
+E   assert 503 == 200
+/tmp/dpld-s2/tests/test_slow_sender.py:341: assert 503 == 200
+E   assert 503 == 201
+/tmp/dpld-s2/tests/test_slow_sender.py:357: assert 503 == 201
+E   AssertionError: timed out waiting for two connections past their headers
+/tmp/dpld-s2/tests/support.py:71: AssertionError: timed out waiting for two connections past their headers
+E   assert [9.999994191, 9.999995089] == [30.0, 30.0]
+      
+      At index 0 diff: 9.999994191 != 30.0
+      Use -v to get more diff
+/tmp/dpld-s2/tests/test_slow_sender.py:394: assert [9.999994191, 9.999995089] == [30.0, 30.0]
+E   AssertionError: assert [] == ['reply write...led: OSError']
+      
+      Right contains one more item: 'reply write failed: OSError'
+      Use -v to get more diff
+/tmp/dpld-s2/tests/test_slow_sender.py:452: AssertionError: assert [] == ['reply write...led: OSError']
+E   assert 'Traceback' not in '-----------...----------\n'
+      
+      'Traceback' is contained here:
+        ', 42572)
+        Traceback (most recent call last):
+      ? +++++++++
+          File "/usr/lib/python3.13/socketserver.py", line 697, in process_request_thread
+            self.finish_request(request, client_address)...
+      
+      ...Full output truncated (375 lines hidden), use '-vv' to show
+/tmp/dpld-s2/tests/test_slow_sender.py:465: assert 'Traceback' not in '-----------...----------\n'
+E   AssertionError: no complete reply, got b''
+    assert b''
+----------------------------- Captured stderr call -----------------------------
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 39558)
+Traceback (most recent call last):
+  File "/usr/lib/python3.13/socketserver.py", line 318, in _handle_request_noblock
+    self.process_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/dpld-s2/src/lead_desk/server.py", line 137, in process_request
+    super().process_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/dpld-s2/tests/test_slow_sender.py", line 471, in boom
+    raise RuntimeError("cannot start new thread")
+RuntimeError: cannot start new thread
+----------------------------------------
+/tmp/dpld-s2/tests/test_slow_sender.py:64: AssertionError: no complete reply, got b''
+E   AttributeError: module 'lead_desk.constants' has no attribute 'validate_http_limits'
+/tmp/dpld-s2/tests/test_slow_sender.py:495: AttributeError: module 'lead_desk.constants' has no attribute 'validate_http_limits'
+E   AttributeError: module 'lead_desk.constants' has no attribute 'validate_http_limits'
+/tmp/dpld-s2/tests/test_slow_sender.py:516: AttributeError: module 'lead_desk.constants' has no attribute 'validate_http_limits'
+E   AttributeError: module 'lead_desk.constants' has no attribute 'validate_http_limits'
+/tmp/dpld-s2/tests/test_slow_sender.py:516: AttributeError: module 'lead_desk.constants' has no attribute 'validate_http_limits'
+E   AttributeError: module 'lead_desk.constants' has no attribute 'validate_http_limits'
+/tmp/dpld-s2/tests/test_slow_sender.py:516: AttributeError: module 'lead_desk.constants' has no attribute 'validate_http_limits'
+E   AttributeError: module 'lead_desk.constants' has no attribute 'validate_http_limits'
+/tmp/dpld-s2/tests/test_slow_sender.py:516: AttributeError: module 'lead_desk.constants' has no attribute 'validate_http_limits'
+E   AttributeError: module 'lead_desk.constants' has no attribute 'validate_http_limits'
+/tmp/dpld-s2/tests/test_slow_sender.py:516: AttributeError: module 'lead_desk.constants' has no attribute 'validate_http_limits'
+E   AttributeError: module 'lead_desk.constants' has no attribute 'validate_http_limits'
+/tmp/dpld-s2/tests/test_slow_sender.py:516: AttributeError: module 'lead_desk.constants' has no attribute 'validate_http_limits'
+E   AttributeError: module 'lead_desk.constants' has no attribute 'validate_http_limits'
+/tmp/dpld-s2/tests/test_slow_sender.py:516: AttributeError: module 'lead_desk.constants' has no attribute 'validate_http_limits'
+E   AttributeError: module 'lead_desk.constants' has no attribute 'validate_http_limits'
+/tmp/dpld-s2/tests/test_slow_sender.py:516: AttributeError: module 'lead_desk.constants' has no attribute 'validate_http_limits'
+E   AttributeError: module 'lead_desk.constants' has no attribute 'validate_http_limits'
+/tmp/dpld-s2/tests/test_slow_sender.py:516: AttributeError: module 'lead_desk.constants' has no attribute 'validate_http_limits'
+E   AssertionError: 86 of 150 got no answer; first try not answered 86: [AssertionError('b1 got no stored answer')]
+    assert not [AssertionError('b1 got no stored answer'), AssertionError('b3 got no stored answer'), AssertionError('b4 got no store...11 got no stored answer'), AssertionError('b13 got no stored answer'), AssertionError('b15 got no stored answer'), ...]
+/tmp/dpld-s2/tests/test_server_hardening.py:157: AssertionError: 86 of 150 got no answer; first try not answered 86: [AssertionError('b1 got no stored answer')]
+=========================== short test summary info ============================
+FAILED tests/test_slow_sender.py::test_slow_headers_closed - AssertionError: ...
+FAILED tests/test_slow_sender.py::test_stall_gives_the_same_408[body] - Asser...
+FAILED tests/test_slow_sender.py::test_stall_gives_the_same_408[header] - Ass...
+FAILED tests/test_slow_sender.py::test_stall_gives_the_same_408[resolve] - As...
+FAILED tests/test_slow_sender.py::test_busy_503_is_complete_and_clean - Asser...
+FAILED tests/test_slow_sender.py::test_busy_503_silent_client_is_quick - Asse...
+FAILED tests/test_slow_sender.py::test_follow_up_does_not_hold_a_place - Asse...
+FAILED tests/test_slow_sender.py::test_place_released_exactly_once - Attribut...
+FAILED tests/test_slow_sender.py::test_slot_survives_every_end - AttributeErr...
+FAILED tests/test_slow_sender.py::test_cap_closes_oldest_header_sender - asse...
+FAILED tests/test_slow_sender.py::test_many_stalled_senders_cannot_block - as...
+FAILED tests/test_slow_sender.py::test_past_the_headers_is_never_closed - Ass...
+FAILED tests/test_slow_sender.py::test_reply_write_uses_normal_timeout - asse...
+FAILED tests/test_slow_sender.py::test_other_write_error_is_logged - Assertio...
+FAILED tests/test_slow_sender.py::test_read_reset_is_quiet - assert 'Tracebac...
+FAILED tests/test_slow_sender.py::test_thread_start_failure_answers_busy - As...
+FAILED tests/test_slow_sender.py::test_default_limits_are_valid - AttributeEr...
+FAILED tests/test_slow_sender.py::test_bad_limit_is_refused[max_connections-7-MAX_CONNECTIONS]
+FAILED tests/test_slow_sender.py::test_bad_limit_is_refused[max_connections-4097-MAX_CONNECTIONS]
+FAILED tests/test_slow_sender.py::test_bad_limit_is_refused[max_connections-64.0-MAX_CONNECTIONS]
+FAILED tests/test_slow_sender.py::test_bad_limit_is_refused[max_connections-True-MAX_CONNECTIONS]
+FAILED tests/test_slow_sender.py::test_bad_limit_is_refused[header_deadline-0-HEADER_READ_DEADLINE_SECONDS]
+FAILED tests/test_slow_sender.py::test_bad_limit_is_refused[body_deadline-nan-BODY_READ_DEADLINE_SECONDS]
+FAILED tests/test_slow_sender.py::test_bad_limit_is_refused[busy_write_timeout--1.0-BUSY_WRITE_TIMEOUT_SECONDS]
+FAILED tests/test_slow_sender.py::test_bad_limit_is_refused[busy_write_timeout-1-BUSY_WRITE_TIMEOUT_SECONDS]
+FAILED tests/test_slow_sender.py::test_bad_limit_is_refused[busy_retry_after-0-BUSY_RETRY_AFTER_SECONDS]
+FAILED tests/test_server_hardening.py::test_150_simultaneous_connections_all_get_an_answer
+27 failed, 9 passed in 68.53s (0:01:08)

@@ -1,0 +1,54 @@
+.........F
+=================================== FAILURES ===================================
+______ test_only_the_destination_host_starts_the_real_check_never_a_y[y] _______
+
+tmp_path = PosixPath('/home/user/build/rr6/tmp-B2/pytest-of-unknown/pytest-9/test_only_the_destination_host0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f97ef2a72f0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f97ef2a4080>
+typed = 'y'
+
+    @pytest.mark.parametrize("typed", ["y", "Y", "yes", "", " ", "n", "yes\ty", CRM_HOST + ".evil.test", "x." + CRM_HOST])
+    def test_only_the_destination_host_starts_the_real_check_never_a_y(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, typed: str
+    ) -> None:
+        monkeypatch.setattr(sys, "stdin", _Terminal())
+        _answer(monkeypatch, typed)
+>       assert rrc.main(["--config", str(_config(tmp_path))]) == rrc.EXIT_STOPPED  # Desk raises if a run were started
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_start_prompt_hardening.py:163: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_real_check.py:1098: in main
+    return _run(a, stack)
+           ^^^^^^^^^^^^^^
+scripts/run_real_check.py:1280: in _run
+    d1 = Desk(child_env, run_dir, port, "1")
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+_a = ({'HOME': '/', 'PATH': '/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/nod....}, PosixPath('/home/user/build/rr6/tmp-B2/pytest-of-unknown/pytest-9/test_only_the_destination_host0/run'), 8765, '1')
+_k = {}
+
+    def _boom(*_a: Any, **_k: Any) -> NoReturn:
+>       raise Reached
+E       test_start_prompt_hardening.Reached
+
+tests/test_start_prompt_hardening.py:60: Reached
+----------------------------- Captured stdout call -----------------------------
+people: 12 + a twin (same person, second address); desk processes: 2 (one crash)
+worst case HubSpot calls: 10 by the desk + 5 read-back = 15
+(each desk process counts its own cap in memory: a restarted process starts with a fresh cap)
+worst case mails: 10, all to your own inboxes (2 configured)
+worst case mailbox reading: 15 logins x 2 mailboxes, each at most 120 s (the first read may be tried again with twice the time)
+model: the recorded replies (no live call)
+made-up people use addresses at example.com; nobody outside your own inboxes receives anything
+where the keys and passwords go (check each name before you start):
+  HubSpot key         -> api.hubapi.com
+  mail sending login  -> localhost
+  mailbox 1 login    -> localhost
+  mailbox 2 login    -> localhost
+  model key           -> none (recorded replies)
+=========================== short test summary info ============================
+FAILED tests/test_start_prompt_hardening.py::test_only_the_destination_host_starts_the_real_check_never_a_y[y]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 9 passed in 0.13s

@@ -1,0 +1,31 @@
+N0-positive-control                             exit=0 exit=0 exit=0 
+N1-old-OLD=ABCDEF1                              exit=1 exit=1 exit=1 
+N1-old-OLD=HEAD                                 exit=1 exit=1 exit=1 
+N1-old-OLD=_0e7b0fd_touch__z_hbroot_P           exit=1 exit=1 exit=1 
+N1-old-OLD=__                                   exit=1 exit=1 exit=1 
+N1-old-OLD=_p                                   exit=1 exit=1 exit=1 
+N1-old-OLD=abc12                                exit=1 exit=1 exit=1 
+N2-old-equals-pin7                              exit=1 exit=1 exit=1 
+N2b-old-equals-pin40                            exit=1 exit=1 exit=1 
+N3-progress-symlink                             exit=1 exit=0 
+N3c-b25-progress-symlink-victim                 exit=1 
+N3d-b25-control-normal                          exit=0 
+N4-PF-symlink                                   exit=1 exit=1 exit=1 exit=1 exit=1 
+N4b-control-symlink                             exit=1 exit=1 exit=1 
+N4c-standin-gone-symlink                        exit=1 exit=1 
+N4d-P4bsh-symlink                               exit=1 exit=1 exit=1 
+N5-PF-missing                                   exit=1 exit=1 exit=1 exit=1 
+N6-C4-S7-keeps-backslashes                      exit=0 exit=1 exit=1 exit=1 
+N6b-C4-control-S7-plain                         exit=0 exit=0 exit=0 
+N6c-C4-string-not-in-plan-row                   exit=0 exit=1 exit=1 
+N7-banned-kill-in-P4b-source                    exit=1 exit=1 exit=1 exit=1 exit=1 
+N7b-banned-envsh-in-P4b-source                  exit=1 exit=1 exit=1 
+N8-WSL3-no-hit-STOP-then-later                  exit=0 exit=1 exit=1 exit=1 exit=1 exit=1 
+N8b-WSL1-as-root                                exit=1 
+N8c-P4b-changed-after-control                   exit=1 exit=1 exit=1 
+N8d-control-without-hit                         exit=1 exit=1 exit=1 
+N8e-standin-gone-stale                          exit=1 exit=1 
+N9b-PF-has-CR                                   exit=1 exit=1 
+N9c-PF-edited-after-C8                          exit=1 
+N9d-second-sha-in-PF                            exit=1 exit=1 
+N9e-PF-missing-C9-but-C6-not-run                exit=1 

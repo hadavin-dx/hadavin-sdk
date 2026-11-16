@@ -1,0 +1,18 @@
+N01 | facts: call ceiling 3 -> 4 | check rc=1 | FAIL C03 facts money differs
+N02 | facts: ledger 1240 -> 1250 | check rc=1 | FAIL C03 facts money differs
+N03 | facts: tokens out 10000 -> 11000 (the old AssertionError crash; must now be a FAIL line) | check rc=1 | FAIL C00 facts or build stopped: AssertionError: 
+N04 | facts: post-by IST 20:30 -> 20:00 | check rc=1 | FAIL C03 post-by
+N05 | source: wrong UTC/IST pair in the sheet | check rc=1 | FAIL C04 OWNER-SHEET-v28-A.md bad pair 09:00 UTC = 15:00 IST
+N06 | source: B fourth alarm removed | check rc=1 | FAIL C138 B lacks 'alarm 4 at the older-key time (do 7.11 now, whatever else is open)'
+N07 | source: B 7.11 no longer passed by every exit | check rc=1 | FAIL C137 A lacks 'passes 7.11 before 8.1'
+N08 | source: minimum think time slot removed from the sample | check rc=1 | FAIL C129 A lacks 'Minimum think time: 20 seconds'
+N09 | source: typed-figure line removed | check rc=1 | FAIL C141 A lacks 'Test program asks you to type a figure: no'
+N10 | source: 5.9 must differ from the before-cancel word removed | check rc=1 | FAIL C164 A lacks "must differ from the look key's word before the cancel and from every "
+N11 | source: key-shaped string (from parts) | check rc=1 | FAIL C55 A holds secret-shaped text (pattern \bsk-[A-Za-z0-9_-]{8,})
+N12 | note source: "never deletes" turned into a delete instruction | check rc=1 | FAIL C19 pointer not in the verified list: note|he account now (lead answer |Q23
+N13 | source: wait hard-coded to 10 seconds | check rc=1 | FAIL C140 A lacks 'Wait at least the "Minimum think time" of the message (the program ref'
+N14 | facts: think 20 -> 10 | check rc=1 | FAIL C129 A lacks 'Minimum think time: 20 seconds'
+N15 | source: AWS-style string with digits (from parts) | check rc=1 | FAIL C49 A holds number 5678 (allowed: ['1,000,000', '10,000', '10000', '1500', '2026', '40,000', '4
+N16 | source: wrong weekday | check rc=1 | FAIL C04 OWNER-SHEET-v28-A.md wrong weekday Tue 16 Nov 2026
+N17 | source: AWS-style string, 16 capitals (from parts) | check rc=1 | FAIL C55 A holds secret-shaped text (pattern \bAKIA(?!IOSFODNN7EXAM)
+controls not exiting 1: 0

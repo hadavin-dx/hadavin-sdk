@@ -1,0 +1,20 @@
+desc: facts: call ceiling 3 -> 4 (0.27 x 3 = 0.81 / 13.21 arithmetic)
+file: facts-v27.py occurrences replaced: 1
+build rc=0
+check rc=1
+C07 info: OWNER-SHEET-v27-A.md 7473 words (target 6300: NOT met)
+C07 info: OWNER-SHEET-v27-B.md 7516 words (target 6300: NOT met)
+check-v27: 13 failure(s)
+FAIL C03 facts money differs
+FAIL C04 OWNER-SHEET-v27-A.md unexpected amount USD 1.08
+FAIL C04 OWNER-SHEET-v27-B.md unexpected amount USD 1.08
+FAIL C17 sheetA: 'Expected total: USD 1.08' says 1.08, expected 0.81
+FAIL C17 sheetA: 'CALL_CEILING = 4' says 4, expected 3
+FAIL C17 sheetB: 'Expected total: USD 1.08' says 1.08, expected 0.81
+FAIL C17 sheetB: 'CALL_CEILING = 4' says 4, expected 3
+FAIL C48 A holds amount 1.08 (allowed: ['0.27', '0.81', '15.00', '189.00', '3.00', '7.11'])
+FAIL C48 A holds amount 1.08 (allowed: ['0.27', '0.81', '15.00', '189.00', '3.00', '7.11'])
+FAIL C48 A price or total stated less than twice
+FAIL C48 B holds amount 1.08 (allowed: ['0.27', '0.81', '15.00', '189.00', '3.00', '7.11'])
+FAIL C48 B holds amount 1.08 (allowed: ['0.27', '0.81', '15.00', '189.00', '3.00', '7.11'])
+FAIL C48 B price or total stated less than twice

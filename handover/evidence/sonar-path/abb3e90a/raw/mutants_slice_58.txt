@@ -1,0 +1,2 @@
+ok  KILLED       R4-06 the range is dropped: Khmer inherent vowels  [test_pin_r4_range_06]
+SLICE 58-59: 1 of 1 good; problems: []

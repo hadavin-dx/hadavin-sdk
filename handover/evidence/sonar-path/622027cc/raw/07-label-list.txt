@@ -1,0 +1,10 @@
+tests/test_pathguard.py
+tests/test_pathguard_batch3.py
+tests/test_pathguard_batch4.py
+tests/test_pathguard_batch5.py
+tests/test_pathguard_callers.py
+tests/test_pathguard_sites.py
+tests/test_pathguard_tripwire.py
+tests/test_changelog_claims.py
+tests/test_k1b_cli.py
+tests/test_k1b_replay.py

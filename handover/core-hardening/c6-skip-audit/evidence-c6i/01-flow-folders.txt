@@ -1,0 +1,27 @@
+# evidence-c6i 1: flow folders (static; nothing run), 2026-11-16
+== n8n-flows: 4 mf json files; webhook paths: "path": "mf-form" "path": "mf-hook" 
+== n8n-flows-v3: 4 mf json files; webhook paths: "path": "mf-form" "path": "mf-hook" 
+== n8n-flows-v4: 4 mf json files; webhook paths: "path": "mf-form" "path": "mf-hook" 
+== n8n-flows-real: 4 mf json files; webhook paths: "path": "mf-form" "path": "mf-hook" 
+== n8n-flows-real-v3: 4 mf json files; webhook paths: "path": "mf-form" "path": "mf-hook" 
+== n8n-flows-real-v4: 4 mf json files; webhook paths: "path": "mf-form" "path": "mf-hook" 
+== n8n-flows-real-v5: 4 mf json files; webhook paths: "path": "mf-form" "path": "mf-hook" 
+== n8n-flows-film: 4 mf json files; webhook paths: "path": "mf-form" "path": "mf-hook" 
+== n8n-flows-film-v3: 4 mf json files; webhook paths: "path": "mf-form" "path": "mf-hook" 
+== n8n-flows-film-v4: 4 mf json files; webhook paths: "path": "mf-form" "path": "mf-hook" 
+== n8n-flows-film-v5: 4 mf json files; webhook paths: "path": "mf-form" "path": "mf-hook" 
+== diff -rq real-v5 film-v5
+Only in n8n-flows-real-v5: V5-NODE-DIFF.txt
+Files n8n-flows-real-v5/mf-recovery.json and n8n-flows-film-v5/mf-recovery.json differ
+Files n8n-flows-real-v5/mf-sub-crm-mail.json and n8n-flows-film-v5/mf-sub-crm-mail.json differ
+diff exit=1
+== sha256 of the 4 files per set
+74a823d4bc99d4be  n8n-flows-real-v5/mf-form.json
+305fbbf51279fae3  n8n-flows-real-v5/mf-hook.json
+03c566bba549524b  n8n-flows-real-v5/mf-recovery.json
+b3277363ae04b365  n8n-flows-real-v5/mf-sub-crm-mail.json
+74a823d4bc99d4be  n8n-flows-film-v5/mf-form.json
+305fbbf51279fae3  n8n-flows-film-v5/mf-hook.json
+42d853ac8528c269  n8n-flows-film-v5/mf-recovery.json
+a0215012962e2e22  n8n-flows-film-v5/mf-sub-crm-mail.json
+== diff real-v5 mf-form vs film-v5 mf-form (changed lines only, first 40)

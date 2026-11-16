@@ -1,0 +1,9 @@
+desc: source: deadline weekday wrong in sheet text
+file: OWNER-SHEET-v27-SOURCE.md occurrences replaced: 1
+build rc=0
+check rc=1
+C07 info: OWNER-SHEET-v27-A.md 7473 words (target 6300: NOT met)
+C07 info: OWNER-SHEET-v27-B.md 7516 words (target 6300: NOT met)
+check-v27: 2 failure(s)
+FAIL C04 OWNER-SHEET-v27-A.md wrong weekday Tue 16 Nov 2026
+FAIL C04 OWNER-SHEET-v27-B.md wrong weekday Tue 16 Nov 2026

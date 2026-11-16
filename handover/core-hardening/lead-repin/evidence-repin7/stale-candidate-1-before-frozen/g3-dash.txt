@@ -1,0 +1,4 @@
+v09-signal-kids-not-killed dash: rc=0 folders_left_in_private_tmp=0 SELF-TEST: passed=1191 failed=0 (the made-up input and output files we | first: 
+v12-recount-always-ok dash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1189 failed=2 (the made-up input and output files we | first: FAIL (machinery): a judge accepted a result with the wrong number of cases
+v13-watchdog-off dash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1190 failed=1 (the made-up input and output files we | first: FAIL (machinery): the time limit did not end a stuck run cleanly (exit=0, programs left=0, folders left=1)
+v14-premain-not-background dash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1190 failed=1 (the made-up input and output files we | first: FAIL (machinery): signal TERM in the pre-main phase (exit=143, seconds=31, programs left=0)

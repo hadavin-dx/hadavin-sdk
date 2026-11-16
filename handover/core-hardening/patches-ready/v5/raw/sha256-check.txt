@@ -1,0 +1,8 @@
+README.md: OK
+REPORT-v5.md: OK
+checkpoint.md: OK
+G5-wording.patch: OK
+C-01-MINIMAL.patch: OK
+DEAD-MAN-CHECK.md: OK
+DEFERRED-A-01.patch: OK
+CUT-C-01-FULL-NOT-FOR-THE-TAKE.patch: OK

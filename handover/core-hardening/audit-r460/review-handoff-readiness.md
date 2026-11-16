@@ -1,0 +1,20 @@
+# Readiness review of CORE-PR-HANDOFF.md (egm-implementation-readiness, condensed copy of inline report, 2026-11-16)
+Verdict: not yet ready for the lead to open PRs from it alone. PR-C (patch only) and PR-E close; PR-A, PR-B, G4 rows leave design choices to the builder. Nothing run; 11 rows spot-checked. Not opened: llm/retry.py, guard/redact.py, judge.py, evals.py, store/*, anchor backends, channel.py, cli.py, registry.py, ledger, the five audit files; 26 "dev" test hits only counted; slow-test marker unchecked.
+Blockers
+1 RD-1.1 (PR-A): redact_untrusted(text, mapping) needs a mapping (guard/runmap.py:298); extract() takes bytes with no map; replayed assistant text (extract.py:61) is model-written so redact_text vs redact_untrusted matters (runmap.py:299-302). Needed: new extract signature, map source, bytes/str decision, callers to change.
+2 SG-B2 (PR-B): test depends on a worst-case reserve policy not specified (input estimate + max_tokens x price; fake LLM forces cost 0.30, test_k5_tools.py:718-720); worst_case_usd (k1b/loop.py:115-122) needs Route/system/messages not available in _limits_stop (agent_loop.py:239-250); reserve above cap on first call undefined; new expected call count (1 or 2) must be stated.
+Majors
+3 SG-B3/SV-G: atomic reserve+charge store call has no name, signature, refusal signal or release rule; Store protocol + postgres/memory change; two-thread test on both stores; SV-G conflicts in shape: design together.
+4 G4-B1/D2: tests assume "deny by command shape"; if D2 = fix wording, split B1a (wording, gate.py:373, channel.py:20-21) and B1b; put D2 before PR-C; "plain rm x withheld" vs existing pin test_g4_parity.py:224 needs a separating rule.
+5 G4-B2, M5, M10: "write-capable CLI" and "plain English" lists undefined (_NAMES :540, _ENGLISH :480); continuation join must run before tokenising; inverting to "prose only if in _ENGLISH" has false-positive risk with no budget.
+6 SG-M6/M7/M8/M4: M6 retry loop (llm/retry.py:92-107) unopened, worst-case charge on every ProviderError over-bills unbilled 4xx; M7 billing_timezone has no default/validation (test uses an offset); M4 alert kind may not exist (new kind needs neutral default + alternative); M8 zero-price move breaks fixtures.
+7 SA-3.1/3.2: Verification field name/type, CLI wording, exit code per case unspecified; test at ":520" unnamed.
+8 SA-3.3/3.5/3.4/3.6: anchors.collect no signature; start-up retry hook and "freshness" config undefined; Object Lock probe existence UNVERIFIED; identity split has no policy text (least-privilege rule needs policy, reason per action, negative test).
+9 SA-1.2 (PR-E): reader in actions/secrets_file.py:35-58 vs audit/ module layering/import test; is_file() follows symlinks (signer.py:106); refuse-in-every-stage breaks 0644 test keys (config.py:395-396).
+10 D6 "dev" stage: config.py:317 Literal and :366 logic use it; 26 test hits in 6 files incl. tests/fixtures/config/config.yaml; repo-wide migration, not a one-line refusal.
+Minor
+11 SG-M5: pydantic v2 Decimal rejects NaN by default, so "NaN must raise" may already pass; only negative and daily>monthly known failing; cross-field validator location unnamed.
+12 SG-B1/D1: field name, place, global vs per-agent; "fail closed if clock unreadable" has no test; PR-B cannot start on this row until D1.
+13 PR split: patch-first sound; id-walk test 262,144 calls needs a slow marker (unchecked); PR-A/PR-D share models.py, PR-B/PR-F share store/*; PR-A bundles RD-1.2 wrapper with RD-1.1: make two PRs, RD-1.1 first; D7 gate before PR-B not in the order table.
+14 Citations confirmed: limits.py:17-30, agent_loop.py:239-249 and 440-441, extract.py:47-64, config.py:38-44 and 317, gate.py:614-615, anchors.py:35-37, signer.py:108, test_k5_tools.py:723-731, test_s5_runtime.py:107-111 (gate-level DENIED, not the _limits_stop NEEDS_PERSON path), k1b/loop.py:115-122, test_k5_round9.py:91-109.
+Not-checked lists miss: which existing tests call add_spend/charge/blocked; retry.py/adapters (M6 stated as settled); channel.py (D2 calls it confirmed); alert kind location; "fix is minimal" unproven for wrapper, store, shape changes.

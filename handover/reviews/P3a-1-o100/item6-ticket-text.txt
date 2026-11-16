@@ -1,0 +1,3 @@
+Text to append to the Done list of tickets/P3a.md (line 137, "Done = ..."), as a new sentence at its end:
+
+P3a-2 Done ALSO requires (ORDER 100 item 6): the CHANGELOG.md lines that give the false name `0006_evidence` (at core/P3a head f127367: lines 13, 40, 47 and 54; re-run `grep -n 0006_evidence CHANGELOG.md` for the current numbers) are reworded to the real file `0005_evidence` as the ticket's Files section says (line 13, the repair step, loses the advice to drop `tool_calls`, `redaction_maps` and the ledger row), and the "Migration runbook" is appended. P3a is not Done while `grep -n 0006_evidence CHANGELOG.md` prints a line. P3a-1 (PR 68) does not touch CHANGELOG.md.

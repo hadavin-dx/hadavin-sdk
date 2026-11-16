@@ -1,0 +1,23 @@
+== probe
+hdr {'cells': 9072, 'head': 2323, 'old2153': 3207, 'main': 3207, 'head_and_main_masked_not': 0, 'head_masked_main_readable': 884, 'head_readable_old_masked': 0}
+fold {'cells': 90, 'head': 0, 'old2153': 0, 'main': 90, 'head_and_main_masked_not': 0, 'head_masked_main_readable': 90, 'head_readable_old_masked': 0}
+word {'cells': 120, 'head': 32, 'old2153': 32, 'main': 53, 'head_and_main_masked_not': 16, 'head_masked_main_readable': 37, 'head_readable_old_masked': 0}
+wordshort {'cells': 24, 'head': 24, 'old2153': 24, 'main': 24, 'head_and_main_masked_not': 0, 'head_masked_main_readable': 0, 'head_readable_old_masked': 0}
+recordsens {'cells': 24, 'head': 6, 'old2153': 6, 'main': 18, 'head_and_main_masked_not': 0, 'head_masked_main_readable': 12, 'head_readable_old_masked': 0}
+readable on head and masked on main: 16 of 9330
+== probe_extra
+wrap {'cells': 660, 'head': 348, 'old2153': 348, 'main': 660, 'head_and_main_masked_not': 0, 'head_masked_main_readable': 312, 'head_readable_old_masked': 0}
+nameBreak {'cells': 44, 'head': 0, 'old2153': 0, 'main': 0, 'head_and_main_masked_not': 0, 'head_masked_main_readable': 0, 'head_readable_old_masked': 0}
+pair {'cells': 4160, 'head': 1858, 'old2153': 2198, 'main': 2402, 'head_and_main_masked_not': 0, 'head_masked_main_readable': 544, 'head_readable_old_masked': 0}
+pairrec {'cells': 1040, 'head': 478, 'old2153': 478, 'main': 824, 'head_and_main_masked_not': 0, 'head_masked_main_readable': 346, 'head_readable_old_masked': 0}
+cap {'cells': 38, 'head': 18, 'old2153': 18, 'main': 38, 'head_and_main_masked_not': 0, 'head_masked_main_readable': 20, 'head_readable_old_masked': 0}
+caprec {'cells': 19, 'head': 7, 'old2153': 7, 'main': 19, 'head_and_main_masked_not': 0, 'head_masked_main_readable': 12, 'head_readable_old_masked': 0}
+readable on head and masked on main: 0 of 5961
+== probe12
+fold12 {'cells': 9240, 'head': 3945, 'old2153': 8517, 'main': 9240, 'head_and_main_masked_not': 0, 'head_masked_main_readable': 5295, 'head_readable_old_masked': 0}
+shapeA {'cells': 336, 'head': 312, 'old2153': 312, 'main': 336, 'head_and_main_masked_not': 0, 'head_masked_main_readable': 24, 'head_readable_old_masked': 0}
+bare15 {'cells': 90, 'head': 90, 'old2153': 90, 'main': 15, 'head_and_main_masked_not': 75, 'head_masked_main_readable': 0, 'head_readable_old_masked': 0}
+bare15rec {'cells': 15, 'head': 15, 'old2153': 15, 'main': 15, 'head_and_main_masked_not': 0, 'head_masked_main_readable': 0, 'head_readable_old_masked': 0}
+pair12 {'cells': 14700, 'head': 2372, 'old2153': 4156, 'main': 3426, 'head_and_main_masked_not': 0, 'head_masked_main_readable': 1054, 'head_readable_old_masked': 0}
+pair12rec {'cells': 2100, 'head': 416, 'old2153': 416, 'main': 1350, 'head_and_main_masked_not': 0, 'head_masked_main_readable': 934, 'head_readable_old_masked': 0}
+readable on head and masked on main: 75 of 26481

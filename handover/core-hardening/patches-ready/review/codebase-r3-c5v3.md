@@ -1,0 +1,5 @@
+# C5 v3 codebase/facts review (egm-codebase-details, condensed copy), 2026-11-16
+No Blocker, 2 Major, 4 Nits. Every hunk of C-01, A-01, G5 matches real src at the cited line; names used exist; pydantic NaN claim matches raw probes; README numbers match raw except below. Could not check: sha256 values (README prefixes equal SHA256SUMS.txt text only), git apply, Postgres paths, guard tests on real repo.
+1 MAJOR README "54 mutants" vs raw/mutation-v3.txt = 53 distinct ids (C01-10 absent; SP-09 only in re-run).
+2 MAJOR raw/mutation-v3.txt line 33: first run was NOT on the final tree (A01-14 killer test name does not exist in A-01.patch). Only A01-10,14,16,17 and SP-01..09 re-run on final tree; C01-*, other A01-*, K1B-* not re-run on final tree. "killed on final tree" not shown. Re-run or reword.
+3 Nit "applied tree equals work tree" claim has no raw diff (dry-run.txt ends "compared"). 4 Nit "any order works" only C-01,A-01,G5 order run; `git apply` never run (new files use `--- a/` with `@@ -0,0`). 5 Nit test docstring cites "survivors 12 to 14" (old numbering). 6 Nit chain.py `_hold` catches only OSError; "never raises" docstring is narrower than stated.

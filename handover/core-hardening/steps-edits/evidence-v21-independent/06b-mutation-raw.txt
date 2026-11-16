@@ -1,0 +1,26 @@
+M0-baseline                                             n/a rc=0 problems=0
+M1-wrong-IST-pair                                       applied rc=1 problems=1
+      PROBLEM: OWNER-SHEET-v21.md: 12:05 UTC is not 17:45 IST
+M2-wrong-weekday                                        applied rc=1 problems=1
+      PROBLEM: OWNER-SHEET-v21.md: Thu 18 Nov 2026 weekday wrong
+M3-broken-pointer                                       applied rc=1 problems=1
+      PROBLEM: OWNER-SHEET-v21.md: pointer 6.9 does not exist (sheet section 6 has 6 items)
+M4-banned-word                                          applied rc=1 problems=1
+      PROBLEM: banned words found or list unread
+M5-unlisted-set-phrase                                  applied rc=0 problems=0
+M6-dup-rule-phrase                                      applied rc=1 problems=1
+      PROBLEM: phrase 'ONE cancel rule' occurs 2 times (in rule table 1)
+M7-wrong-minute-sum                                     applied rc=1 problems=2
+      PROBLEM: sample: sum of y minutes, run length and film pause
+      PROBLEM: sample: alarm time is not latest start + y minutes + run length + film pause
+M8-wrong-price                                          applied rc=1 problems=2
+      PROBLEM: sample: program limit is not money used + run total
+      PROBLEM: sample settings in cents disagree with the sample money
+M9-set-phrase-with-gate-id-in-sheet                     applied rc=1 problems=1
+      PROBLEM: sheet cites a gate id (the owner need not read the note): ['G30']
+M10-wrong-note-IST                                      applied rc=1 problems=2
+      PROBLEM: LEAD-RELEASE-NOTE-v5.md: 12:05 UTC is not 17:05 IST
+      PROBLEM: note example lacks 'CB = 12:05 UTC = 17:35 IST'
+M11-R-pointer-wrong-target (R10 says R6 for echo -> R5) applied rc=0 problems=0
+M12-unlisted-G-in-note-gate-removed                     applied rc=1 problems=1
+      PROBLEM: LEAD-RELEASE-NOTE-v5.md refers to Open 99 (only 50)

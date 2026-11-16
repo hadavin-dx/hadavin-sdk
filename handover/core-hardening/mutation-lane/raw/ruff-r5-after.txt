@@ -1,0 +1,13 @@
+$ ruff check --no-cache --config <repo pyproject.toml> --output-format concise run.py
+run.py:419:12: S603 `subprocess` call: check for execution of untrusted input
+run.py:1115:16: S603 `subprocess` call: check for execution of untrusted input
+Found 2 errors.
+rc=1
+$ ruff format --check --no-cache --config <repo pyproject.toml> run.py
+1 file already formatted
+rc=0
+$ bash -n safety-tests.sh
+rc=0
+$ python3 -m py_compile run.py
+rc=0
+ruff 0.16.9

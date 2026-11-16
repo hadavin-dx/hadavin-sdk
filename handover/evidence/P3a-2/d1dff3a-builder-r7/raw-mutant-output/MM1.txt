@@ -1,0 +1,14 @@
+### tests/test_migration_numbers_guards.py::test_released_problems_catches_an_edit_a_deletion_and_a_low_new_number rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+____ test_released_problems_catches_an_edit_a_deletion_and_a_low_new_number ____
+tests/test_migration_numbers_guards.py:402: in test_released_problems_catches_an_edit_a_deletion_and_a_low_new_number
+    assert mn.released_problems(tmp_path, manifest) == ["0002_b: a released file was changed"]
+E   AssertionError: assert [] == ['0002_b: a r... was changed']
+E     
+E     Right contains one more item: '0002_b: a released file was changed'
+E     Use -v to get more diff
+=========================== short test summary info ============================
+FAILED tests/test_migration_numbers_guards.py::test_released_problems_catches_an_edit_a_deletion_and_a_low_new_number
+1 failed in 0.37s
+

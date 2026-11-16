@@ -1,0 +1,2 @@
+banned list size (read at run time): 10
+files scanned: 52 exact-case hits: 0 case-insensitive hits: 0 files with any hit: 0

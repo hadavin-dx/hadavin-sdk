@@ -1,0 +1,33 @@
+re.CaptureFixture object at 0x7f986d189100>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f986c0b73e0>
+
+    def test_s3_a_contact_left_by_a_failed_archive_is_said_once_as_left_not_again_as_missing(
+        capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """The contact the list showed but the archive call refused is counted (done + left), not reported twice."""
+    
+        class Flaky(rrc.HubspotCrm):
+            tried = 0
+    
+            def archive(self, cid: str) -> None:
+                type(self).tried += 1
+                if type(self).tried == 1:
+                    raise rrc.CrmError("made-up refusal")
+                super().archive(cid)
+    
+        monkeypatch.setattr(rrc, "HubspotCrm", Flaky)
+        code = rrc.main(["--dry-fakes", "--assume-yes", "--cleanup"])
+        out = capsys.readouterr().out
+>       assert "contacts are LEFT" in out and "may be left" not in out
+E       assert ('contacts are LEFT' in "people: 8 + a twin (same person, second address); desk processes: 2 (one crash)\nworst case HubSpot calls: 1200 by th...come), the list showed 8. Their lead ids start with L and are in the desk's book; check HubSpot and archive by hand.\n" and 'may be left' not in 'people: 8 +...e by hand.\n'
+E         
+E         'may be left' is contained here:
+E         ?           ^^^
+E            contacts may be left in HubSpot: the desk created 9 (and had 0 create requests with no known outcome), the list showed 8. Their lead ids start with L and are in the desk's book; check HubSpot and archive by hand.
+E         ?           ^^^^^^^^^^^^^^)
+
+tests/test_r7s_findings.py:225: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r7s_findings.py::test_s3_a_contact_left_by_a_failed_archive_is_said_once_as_left_not_again_as_missing
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 44 passed in 112.03s (0:01:52)

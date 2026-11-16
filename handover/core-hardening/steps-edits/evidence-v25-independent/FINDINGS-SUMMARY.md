@@ -1,0 +1,1 @@
+Saved by session: independent evidence run on v25 (see 00-TABLE.md). check-v25.py caught 9 of 15 new plants; missed: IST offset 4:30 (N01), R5 'deleted or deleted' (N05), warning removed in 7.3 (N10), post-by date shifted (N11), R7 passive (N12), date -u shortened to date (N14). Rebuild byte-identical; mut25 111/111; word counts A 6495 B 6467 (regex count 6520/6490).

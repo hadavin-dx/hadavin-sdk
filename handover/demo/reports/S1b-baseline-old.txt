@@ -1,0 +1,51 @@
+...............................s........................................ [ 32%]
+........................................................................ [ 64%]
+........................................................................ [ 97%]
+...FF.                                                                   [100%]
+=================================== FAILURES ===================================
+______________________________ test_failed_retry _______________________________
+
+env = <conftest.Env object at 0x7f2711013700>
+
+    def test_failed_retry(env) -> None:
+        rig = env.rig(outbox="keyed")
+        d, ob = rig.desk, rig.outbox
+        sent = 0
+        for i, (mode, err) in enumerate([("refuse", "refused"), ("unreachable", "unreachable"), ("drop", "ambiguous")]):
+            ob.fail_next(mode)
+            lid = d.handle("form", f"s{i}", lead(email=f"f{i}@example.test")).body["lead_id"]
+>           assert rig.state(lid) == ("failed", err)
+E           AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E             
+E             At index 0 diff: 'pending' != 'failed'
+E             Use -v to get more diff
+
+tests/test_flow.py:368: AssertionError
+_________________________ test_retry_twice_concurrent __________________________
+
+env = <conftest.Env object at 0x7f2710283690>
+
+    def test_retry_twice_concurrent(env) -> None:
+>       retry_twice_body(env.rig(outbox="blind"))
+
+tests/test_flow.py:424: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+rig = Rig(desk=<lead_desk.desk.Desk object at 0x7f271176f230>, config=Config(db_path=PosixPath('/tmp/pytest-of-root/pytest-2...t/pytest-2391/test_retry_twice_concurrent0/rig1/replies.json'), desks=[<lead_desk.desk.Desk object at 0x7f271176f230>])
+
+    def retry_twice_body(rig: Rig) -> None:
+        """Blind outbox; a failed follow-up; two Retry calls released together; the send is slow so they overlap."""
+        d, ob = rig.desk, rig.outbox
+        ob.fail_next("refuse")
+        lid = d.handle("form", "s1", lead()).body["lead_id"]
+>       assert rig.state(lid) == ("failed", "refused")
+E       AssertionError: assert ('pending', 'refused') == ('failed', 'refused')
+E         
+E         At index 0 diff: 'pending' != 'failed'
+E         Use -v to get more diff
+
+tests/test_flow.py:409: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_flow.py::test_failed_retry - AssertionError: assert ('pendi...
+FAILED tests/test_flow.py::test_retry_twice_concurrent - AssertionError: asse...
+2 failed, 219 passed, 1 skipped in 128.22s (0:02:08)

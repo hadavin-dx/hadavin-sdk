@@ -1,0 +1,12 @@
+baseline: check-v31 FAIL lines 9 (all C19 in v31-CHANGES.md at this snapshot); indep31 findings 0
+H54 src  check-v31=MISSED [-] | indep31=CAUGHT [I10] | v30 miss H06 variant 1: lead message releases older-key cancel
+H55 src  check-v31=CAUGHT [C213] | indep31=MISSED [-] | v30 miss H06 variant 2
+H56 src  check-v31=CAUGHT [C225] | indep31=MISSED [-] | v30 miss H15: a fact no source uses
+H57 src  check-v31=CAUGHT [C224] | indep31=CAUGHT [I10] | v30 miss H09 exact: one LEAD FILLS spelling
+SUMMARY total 4, anchor-not-found 0
+mode src: 4 mutations; check-v31 caught 3; indep31 caught 2; both missed 0; only check-v31 2; only indep31 1
+mode page: 0 mutations; check-v31 caught 0; indep31 caught 0; both missed 0; only check-v31 0; only indep31 0
+   page mode, check-v31 caught by a code other than C01 (and C19): 0 of 0
+NEITHER catches: none
+check-v31 misses: H54
+indep31 misses: H55, H56

@@ -1,0 +1,9 @@
+# C13 gate rows round 1, readiness review (egm reviewer A, condensed copy), 2026-11-16
+Read-only; nothing run. Verdict: not ready as a gate. 0 Blocker, 3 Major, 5 Nit.
+Sound: pass lines match print formats; a failure cannot print GATE1 ROW: PASS (|| BAD=1, empty RI prints STOP, empty file gives shape FAIL, missing env.sh gives unopenable path, drivers crash leaves empty file); G2 STOP on empty/equal keys or bad character; failed psql gives "GATE2 count: " which is not 2; no row claims lease expiry, recovery, real HubSpot node or real model.
+Major:
+1 G1.sh:6-10, patch 19-23: G1 never checks n8n_error (reply index 4) or status/verdict; a B run of 10 error replies passes if the RI flag is true (count(False) <= 1 allows 0). Add r[4] is False to the shape check, or put the by-eye step in the patch's -> line.
+2 Patch 34 and md:51-52: caption "processed once" is wider than what the rows prove (G1 proves reply flags; G2 is vacuous because of the primary key). Make the caption conditional on 11.8 mails == 1 and model_calls == 1 positively reported, else shrink to "a repeat of the same id was recognised as a repeat and one row was stored". md:32 "answer comes from the flow's own claim step" is unverified: delete or mark UNVERIFIED.
+3 G2.sh and patch 33: no PASS line; print GATE2 PASS / GATE2 FAIL: STOP, compare with [ "$N" = 2 ].
+Nit: md says pastes/G1.sh, real files are gate-rows/G1.sh; B row with repeat_false=0 allowed but G2 counts A and B together; G2 takes the last A and B lines of keys.txt so stale rows from earlier cases can pass (record the count before S10); gate-rows-test-output.txt keeps the first G1 version's rc=0 beside FAIL lines (label or delete); the "lead states lease number after reading the flow" step is not in the patch's decision paragraph.
+Could not check: drive.py reply shape and RI, env.sh, keys.txt shape, patched line numbers, patch re-apply.

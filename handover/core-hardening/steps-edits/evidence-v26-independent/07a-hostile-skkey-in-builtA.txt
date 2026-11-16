@@ -1,0 +1,4 @@
+check-v26: 2 failure(s)
+FAIL C01 OWNER-SHEET-v26-A.md differs from what its source and facts build
+FAIL C55 A holds secret-shaped text (pattern \bsk-[A-Za-z0-9_-]{8,})
+exit=1

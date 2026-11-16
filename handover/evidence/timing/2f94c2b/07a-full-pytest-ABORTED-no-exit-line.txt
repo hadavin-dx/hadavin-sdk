@@ -1,0 +1,3 @@
+sha=2f94c2b28df25bca9bb28d6a50d13f8c292c19c9
+cmd=pytest -q -m 'not live and not perf' -rs (DSN to own PG16 port 56217)
+...............................................NOTE: this run ended after 47 test dots at about 17:27Z with no exit line and no live process; cause unknown (not an exit code of pytest). Re-run is 07-full-pytest.txt

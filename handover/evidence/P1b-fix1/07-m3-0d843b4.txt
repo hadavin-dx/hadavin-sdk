@@ -1,0 +1,5 @@
+0d843b4183becafaca8ddef74e529a93d0e3e398
+/home/user/build/EV-P1b-fix1-0d843b4/src/hadavin_sdk/__init__.py
+ascii: n=200 refused=200 (100.0%) kinds={'CoverageRefused': 200} false_abstain=200 (100.0%)  [false abstain = refused although scan_holds finds the value in a text that holds it]
+script: n=10 refused=2 (20.0%) kinds={'CoverageRefused': 2} false_abstain=2 (20.0%)  [false abstain = refused although scan_holds finds the value in a text that holds it]
+rc=0

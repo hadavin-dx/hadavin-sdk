@@ -1,0 +1,12 @@
+sdk /home/user/build/E-work/mut-tree/src/hadavin_sdk/__init__.py
+ok  KILLED         U1 mapped never turns a rule into the plain message  [test_pin_mapped_turns_only_the_listed_rules_into_one_plain_m] t=6s
+ok  CRASH          X7 a folder is replaced, not refused  [test_atomic_write_onto_a_folder_is_a_refusal_with_no_path_in] t=8s
+ok  CRASH          X8 a taken temp name raises the raw OS error  [test_atomic_write_with_a_taken_temp_name_leaves_the_existing] t=9s
+ok  KILLED         X9 the temp path is not checked  [test_atomic_write_checks_the_temp_path_length_not_only_the_f] t=10s
+ok  KILLED         X10 the temp file stays when fdopen is interrupted  [test_atomic_write_removes_its_temp_file_when_fdopen_is_inter] t=11s
+ok  KILLED         X11 the temp file stays when the rename is interrupted  [test_atomic_write_removes_its_temp_file_when_the_rename_is_i] t=14s
+ok  KILLED         X12 the file is not flushed to disk before the rename  [test_atomic_write_flushes_the_file_to_disk_before_the_rename] t=16s
+ok  KILLED         S-score _read_json reads an unguarded name  [test_site_score_read_json_refuses_a_file_name_with_a_control] t=18s
+ok  KILLED         S-score _recorded_digest reads an unguarded name  [test_site_score_recorded_digest_does_not_read_a_file_behind_] t=20s
+ok  KILLED         S-score load_answers is not guarded  [test_site_score_answers_file_with_a_control_character_in_its] t=22s
+SLICE 100:110 10 of 10 good; problems: []; elapsed 22s

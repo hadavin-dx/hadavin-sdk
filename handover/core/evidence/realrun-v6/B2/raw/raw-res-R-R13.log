@@ -1,0 +1,30 @@
+........................................................................ [ 50%]
+...............................................................F
+=================================== FAILURES ===================================
+___ test_the_certificate_refusal_has_this_exact_wording[DESK_SMTPP_CA_FILE] ____
+
+tmp_path = PosixPath('/home/user/build/rr6/tmp-B2/pytest-of-unknown/pytest-101/test_the_certificate_refusal_h0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7fc52a9a4b90>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fc52a9a0f50>
+setting = 'DESK_SMTPP_CA_FILE'
+
+    @pytest.mark.parametrize("setting", ["DESK_SMTPP_CA_FILE", "REAL_IMAP_1_CA_FILE", "REAL_IMAP_2_CA_FILE"])
+    def test_the_certificate_refusal_has_this_exact_wording(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, setting: str
+    ) -> None:
+        monkeypatch.setattr("builtins.input", _no_question)
+        junk = tmp_path / "junk.pem"
+        junk.write_text("garbage", encoding="utf-8")
+        assert rrc.main(["--config", str(_valid_config(tmp_path, **{setting: str(junk)}))]) == rrc.EXIT_REFUSED
+>       assert capsys.readouterr().out == f"refused: {setting}: {_CERT_TEXT}\n"
+E       AssertionError: assert 'refused: DES...not be used\n' == 'refused: DES...certificate\n'
+E         
+E         Skipping 50 identical leading characters in diff, use -v to show
+E         - cannot be read or holds no certificate
+E         + cannot be used
+
+tests/test_take_script_refusals.py:698: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_take_script_refusals.py::test_the_certificate_refusal_has_this_exact_wording[DESK_SMTPP_CA_FILE]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 135 passed in 89.32s (0:01:29)

@@ -1,0 +1,6 @@
+apply-now identical to builder's: OWNER-STEPS-realrun-v3.md
+apply-now identical to builder's: AGENT-SCOPE-DO-AND-DONT.md
+apply-now identical to builder's: DECISION-one-store.md
+all-blocks DIFFERENT: OWNER-STEPS-realrun-v3.md
+all-blocks identical: AGENT-SCOPE-DO-AND-DONT.md
+all-blocks identical: DECISION-one-store.md

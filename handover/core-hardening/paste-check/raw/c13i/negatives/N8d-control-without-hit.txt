@@ -1,0 +1,12 @@
+NEGATIVE N8d-control-without-hit  setup: sed -i 2d $PS/P-4b.control.txt; printf "gone control=%s\n" "$(sha256sum $PS/P-4b.control.txt | cut -c1-16)" > $PS/standin-gone.txt  VARX: 
+##### b27
+dash syntax ok
+STOP C2c: the control file has no hit line (the stand-in was not seen). Next: do C2b step (3) blocks WSL-2 to WSL-3 again.
+##### b27 exit=1
+##### b36
+dash syntax ok
+STOP C2c: the control file has no hit line (the stand-in was not seen). Next: do C2b step (3) blocks WSL-2 to WSL-3 again.
+##### b36 exit=1
+##### b37
+STOP C9: the P-4b files do not pass C2c. Next: run C2c and fix.
+##### b37 exit=1

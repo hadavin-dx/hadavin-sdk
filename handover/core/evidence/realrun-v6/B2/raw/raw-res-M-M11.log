@@ -1,0 +1,41 @@
+..................................................F
+=================================== FAILURES ===================================
+_________________ test_live_check_a_y_or_a_wrong_host_stops[y] _________________
+
+tmp_path = PosixPath('/home/user/build/rr6/tmp-B2/pytest-of-unknown/pytest-15/test_live_check_a_y_or_a_wrong0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7f3eedb060f0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f3eedb06990>
+typed = 'y'
+
+    @pytest.mark.parametrize("typed", ["y", "yes", "", "n", "localhost.evil.test"])
+    def test_live_check_a_y_or_a_wrong_host_stops(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, typed: str
+    ) -> None:
+        monkeypatch.setattr(sys, "stdin", _Terminal())
+        shown = _answer(monkeypatch, typed)
+>       assert rlc.main(_live_args(tmp_path, "--base-url", "http://localhost:9")) == 1  # run_model raises if reached
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_start_prompt_hardening.py:418: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+scripts/run_live_check.py:323: in main
+    r = run_model(s, leads, a.runs, ledger)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+_a = (LiveSettings(model='m', price_in_per_mtok=Decimal('1'), price_out_per_mtok=Decimal('2'), price_date='2026-01-01', cap...=False), [('L000000000001', 'made.up.1@example.com')], 1, <lead_desk.live_claude.SpendLedger object at 0x7f3eed8ab5c0>)
+_k = {}
+
+    def _boom(*_a: Any, **_k: Any) -> NoReturn:
+>       raise Reached
+E       test_start_prompt_hardening.Reached
+
+tests/test_start_prompt_hardening.py:60: Reached
+----------------------------- Captured stdout call -----------------------------
+models: 1, calls per model: 1, prices dated 2026-01-01
+expected MAXIMUM cost of this whole run: US$0.0009 (caps: run 1, total 3)
+the key goes to: localhost (--base-url); the leads' e-mail addresses are made up
+=========================== short test summary info ============================
+FAILED tests/test_start_prompt_hardening.py::test_live_check_a_y_or_a_wrong_host_stops[y]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 50 passed in 0.24s

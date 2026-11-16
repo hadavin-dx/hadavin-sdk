@@ -1,0 +1,16 @@
+N01 MISSED | wrong time zone offset label (IST = UTC + 4:30) | no FAIL line; exit 0 | nfails 0
+N02 CAUGHT | swapped UTC/IST in post-by line | FAIL C04 OWNER-SHEET-v25-A.md bad pair 20:30 UTC = 15:00 IST | nfails 2
+N03 CAUGHT | key-looking string added (built from parts) | FAIL C55 A holds secret-shaped text (pattern \bsk-[A-Za-z0-9_-]{8,}) | nfails 2
+N04 CAUGHT | step number off by one (7.4 -> 7.5) | FAIL C14j A lacks 'if 7.4 never happened, send "none"' | nfails 4
+N05 MISSED | "archived" turned into "deleted" in R5 | no FAIL line; exit 0 | nfails 0
+N06 CAUGHT | STOP RULE paragraph removed | FAIL C23 A lacks the fixed sentence '**STOP RULE.**' | nfails 6
+N07 CAUGHT | A text left in B (built B file edited) | FAIL C01 OWNER-SHEET-v25-B.md differs from what its source and facts build | nfails 3
+N08 CAUGHT | wrong dollar amount: expected total 0.84 | FAIL C04 OWNER-SHEET-v25-A.md unexpected amount USD 0.84 | nfails 8
+N09 CAUGHT | broken pointer (7.9 -> 7.19) | FAIL C19 pointer not in the verified list: sheetA|rated items); an exit code (|7.19 | nfails 4
+N10 MISSED | warning removed before the cancel step | no FAIL line; exit 0 | nfails 0
+N11 MISSED | changed date Wed 25 -> Thu 26 Nov (weekday consistent) | no FAIL line; exit 0 | nfails 0
+N12 MISSED | second person turned passive in R7 | no FAIL line; exit 0 | nfails 0
+N13 CAUGHT | extra non-example address (example.org lookalike) | FAIL C57 A has 2 @example.com (expected 3) | nfails 4
+N14 MISSED | shortened command: date -u -> date | no FAIL line; exit 0 | nfails 0
+N15 CAUGHT | word count pushed over 6500 (filler words added) | FAIL C07 OWNER-SHEET-v25-A.md has 6555 words (limit 6500) | nfails 2
+TOTAL caught 9 of 15

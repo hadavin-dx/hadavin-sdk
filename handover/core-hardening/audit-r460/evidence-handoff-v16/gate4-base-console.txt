@@ -1,0 +1,14 @@
+==> /home/user/hadavin-sdk/handover/core-hardening/audit-r460/evidence-handoff-v16/raw-gate4-base-ruff.txt <==
+rc=0
+
+==> /home/user/hadavin-sdk/handover/core-hardening/audit-r460/evidence-handoff-v16/raw-gate4-base-format.txt <==
+rc=0
+
+==> /home/user/hadavin-sdk/handover/core-hardening/audit-r460/evidence-handoff-v16/raw-gate4-base-pytest.txt <==
+rc=1
+
+==> /home/user/hadavin-sdk/handover/core-hardening/audit-r460/evidence-handoff-v16/raw-gate4-base-perf.txt <==
+rc=0
+
+==> /home/user/hadavin-sdk/handover/core-hardening/audit-r460/evidence-handoff-v16/raw-gate4-base-bandit.txt <==
+rc=0

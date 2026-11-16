@@ -1,0 +1,8 @@
+# C3b plan-v5-repin-v5.patch, round 2 facts and shell review (egm reviewer, condensed copy), 2026-11-16
+Read-only; nothing run. 0 Blocker, 4 Major, 7 Minor/Nit. Counts hold (15 hunks, 24 FINAL lines, 10 LEAD-FILL lines with 17 texts, names check 10 places, 8 fill cases, 9 acceptance outputs, 7 R2 cases).
+Major 1: acceptance rule is satisfied by text not code (+print("exit 3"), a comment, or exit 3x pass); evidence script acc5.sh is not in the folder. State that it proves only an "exit 3" text exists, or require a code statement / lead reads the hunk.
+Major 2: R2 prints alive=no after checking only the leader pid (/proc/$p); group members may survive; gone() uses pgrep -g but R2 does not; the 7 tests use single-process stand-ins. Fix: also test pgrep -g count.
+Major 3: "only the lead writes LEAD-GO / LEAD-YES" is convention, not control; LEAD-FILL-list-v5.md:3 "no default lets the runner give itself permission" overstates; call it a procedural gate.
+Major 4: positive control proves a plan-shaped file, not a patched one (unpatched v5 plan also gives 0 0 2). Narrow wording or add a count of a string only in the patched plan.
+Minor: 13.1 order contradiction (13.4/13.5 always run; 13.6-13.9 only if 13.5 shows no n8n); patch:120 names superseded LEAD-FILL-list.md; "<n> only value runner fills" is wrong (also <pid> <which> <step> <log> <block> <file>); 2>/dev/null after < redirect leaks error (put it first or group); R2 "not alive" path has no defined expected output; known branch lacks --no-color; 16 lettered P-3b cases (not 17); evidence prints masked P-4b-HIT; R5 sentence about gone() vs v4 N1.
+Not checked: Git Bash/WSL/PowerShell behaviour, acc5.sh, round-5 files, section 3 of the plan beyond context.

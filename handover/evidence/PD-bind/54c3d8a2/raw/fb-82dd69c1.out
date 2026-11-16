@@ -1,0 +1,1276 @@
+============================= test session starts ==============================
+collecting ... collected 371 items
+
+tests/test_bindguard.py::test_the_fixture_config_holds_only_stand_ins PASSED [  0%]
+tests/test_bindguard.py::test_the_fixture_config_as_it_is_counts_its_check_module PASSED [  0%]
+tests/test_bindguard.py::test_every_kind_of_the_table_has_exactly_one_answer[secrets/fake] PASSED [  0%]
+tests/test_bindguard.py::test_every_kind_of_the_table_has_exactly_one_answer[secrets/env] PASSED [  1%]
+tests/test_bindguard.py::test_every_kind_of_the_table_has_exactly_one_answer[secrets/aws_secrets_manager] PASSED [  1%]
+tests/test_bindguard.py::test_every_kind_of_the_table_has_exactly_one_answer[secrets/vault] PASSED [  1%]
+tests/test_bindguard.py::test_every_kind_of_the_table_has_exactly_one_answer[secrets/azure_key_vault] PASSED [  1%]
+tests/test_bindguard.py::test_every_kind_of_the_table_has_exactly_one_answer[secrets/gcp_secret_manager] PASSED [  2%]
+tests/test_bindguard.py::test_every_kind_of_the_table_has_exactly_one_answer[secrets/mounted_file] PASSED [  2%]
+tests/test_bindguard.py::test_every_kind_of_the_table_has_exactly_one_answer[signer/none] PASSED [  2%]
+tests/test_bindguard.py::test_every_kind_of_the_table_has_exactly_one_answer[signer/ed25519_local] PASSED [  2%]
+tests/test_bindguard.py::test_every_kind_of_the_table_has_exactly_one_answer[signer/aws_kms] PASSED [  3%]
+tests/test_bindguard.py::test_every_kind_of_the_table_has_exactly_one_answer[signer/azure_key_vault_key] PASSED [  3%]
+tests/test_bindguard.py::test_every_kind_of_the_table_has_exactly_one_answer[signer/gcp_kms] PASSED [  3%]
+tests/test_bindguard.py::test_every_kind_of_the_table_has_exactly_one_answer[signer/vault_transit] PASSED [  4%]
+tests/test_bindguard.py::test_every_kind_of_the_table_has_exactly_one_answer[anchor/none] PASSED [  4%]
+tests/test_bindguard.py::test_every_kind_of_the_table_has_exactly_one_answer[anchor/s3_object_lock] PASSED [  4%]
+tests/test_bindguard.py::test_every_kind_of_the_table_has_exactly_one_answer[anchor/azure_immutable_blob] PASSED [  4%]
+tests/test_bindguard.py::test_every_kind_of_the_table_has_exactly_one_answer[anchor/gcs_retention_lock] PASSED [  5%]
+tests/test_bindguard.py::test_every_kind_of_the_table_has_exactly_one_answer[store/memory] PASSED [  5%]
+tests/test_bindguard.py::test_every_kind_of_the_table_has_exactly_one_answer[store/postgres] PASSED [  5%]
+tests/test_bindguard.py::test_every_kind_of_the_table_has_exactly_one_answer[audit/local_dir] PASSED [  5%]
+tests/test_bindguard.py::test_every_kind_of_the_table_has_exactly_one_answer[audit/chain] PASSED [  6%]
+tests/test_bindguard.py::test_every_kind_of_the_table_has_exactly_one_answer[llm/fake] PASSED [  6%]
+tests/test_bindguard.py::test_every_kind_of_the_table_has_exactly_one_answer[llm/anthropic] PASSED [  6%]
+tests/test_bindguard.py::test_every_kind_of_the_table_has_exactly_one_answer[llm/bedrock] PASSED [  7%]
+tests/test_bindguard.py::test_every_kind_of_the_table_has_exactly_one_answer[llm/openai_compat] PASSED [  7%]
+tests/test_bindguard.py::test_every_kind_of_the_table_has_exactly_one_answer[llm/gemini] PASSED [  7%]
+tests/test_bindguard.py::test_every_kind_of_the_table_has_exactly_one_answer[detector/regex] PASSED [  7%]
+tests/test_bindguard.py::test_every_kind_of_the_table_has_exactly_one_answer[detector/llm_judge] PASSED [  8%]
+tests/test_bindguard.py::test_every_kind_of_the_table_has_exactly_one_answer[detector/bedrock_guardrail] PASSED [  8%]
+tests/test_bindguard.py::test_every_kind_of_the_table_has_exactly_one_answer[channel/fake] PASSED [  8%]
+tests/test_bindguard.py::test_every_kind_of_the_table_has_exactly_one_answer[channel/slack] PASSED [  8%]
+tests/test_bindguard.py::test_the_pinned_table_is_exactly_the_kinds_of_the_table_and_the_three_lists PASSED [  9%]
+tests/test_bindguard.py::test_the_stand_in_list_is_read_from_the_table_not_written_here PASSED [  9%]
+tests/test_bindguard.py::test_in_process_is_exactly_these_five_pairs_and_each_is_a_kind_of_the_table PASSED [  9%]
+tests/test_bindguard.py::test_a_real_service_refuses_every_public_spelling PASSED [  9%]
+tests/test_bindguard.py::test_a_real_service_accepts_every_loopback_spelling PASSED [ 10%]
+tests/test_bindguard.py::test_stand_ins_only_accept_any_bind PASSED      [ 10%]
+tests/test_bindguard.py::test_a_detector_that_is_real_counts PASSED      [ 10%]
+tests/test_bindguard.py::test_a_system_counts_unless_it_is_plain_http_on_this_computer_and_allowed PASSED [ 11%]
+tests/test_bindguard.py::test_a_configured_source_is_a_real_service PASSED [ 11%]
+tests/test_bindguard.py::test_the_refusal_is_one_plain_sentence_with_no_value_of_the_bind_leaking_control_text PASSED [ 11%]
+tests/test_bindguard.py::test_each_of_tool_modules_check_modules_and_a_live_egress_host_alone_makes_a_public_bind_refused PASSED [ 11%]
+tests/test_bindguard.py::test_loopback_egress_hosts_and_empty_lists_pass PASSED [ 12%]
+tests/test_bindguard.py::test_a_hostile_egress_entry_counts_and_never_shows_raw_text PASSED [ 12%]
+tests/test_bindguard.py::test_systems_and_sources_built_by_the_real_loader_count PASSED [ 12%]
+tests/test_bindguard.py::test_a_judge_detector_cannot_stand_without_an_llm_entry PASSED [ 12%]
+tests/test_bindguard.py::test_the_docstring_of_real_services_says_what_is_counted_and_what_is_not PASSED [ 13%]
+tests/test_bindguard.py::test_a_public_bind_needs_the_named_reason_and_the_reason_is_logged PASSED [ 13%]
+tests/test_bindguard.py::test_an_unusable_reason_is_refused_even_when_it_was_not_needed[] PASSED [ 13%]
+tests/test_bindguard.py::test_an_unusable_reason_is_refused_even_when_it_was_not_needed[   ] PASSED [ 14%]
+tests/test_bindguard.py::test_an_unusable_reason_is_refused_even_when_it_was_not_needed[\t\n] PASSED [ 14%]
+tests/test_bindguard.py::test_an_unusable_reason_is_refused_even_when_it_was_not_needed[bad\x00reason] PASSED [ 14%]
+tests/test_bindguard.py::test_an_unusable_reason_is_refused_even_when_it_was_not_needed[reason4] PASSED [ 14%]
+tests/test_bindguard.py::test_an_unusable_reason_is_refused_even_when_it_was_not_needed[two\nlines] PASSED [ 15%]
+tests/test_bindguard.py::test_an_unusable_reason_is_refused_even_when_it_was_not_needed[7] PASSED [ 15%]
+tests/test_bindguard.py::test_an_unusable_reason_is_refused_even_when_it_was_not_needed[ok] PASSED [ 15%]
+tests/test_bindguard.py::test_an_empty_reason_is_refused_with_a_sentence_that_asks_for_one PASSED [ 15%]
+tests/test_bindguard.py::test_a_reason_shorter_than_ten_characters_is_refused_and_ten_are_accepted PASSED [ 16%]
+tests/test_bindguard.py::test_a_reason_of_exactly_the_longest_size_is_accepted PASSED [ 16%]
+tests/test_bindguard.py::test_a_long_bind_text_is_cut_in_the_refusal PASSED [ 16%]
+tests/test_bindguard.py::test_listen_refuses_before_any_server_exists PASSED [ 16%]
+tests/test_bindguard.py::test_listen_starts_on_loopback_with_a_real_service_and_anywhere_with_stand_ins PASSED [ 17%]
+tests/test_bindguard.py::test_listen_with_the_reason_starts_a_public_server_with_a_real_service PASSED [ 17%]
+tests/test_bindguard.py::test_listen_really_starts_on_an_ipv6_loopback_address SKIPPED [ 17%]
+tests/test_bindguard.py::test_listen_picks_the_ipv6_family_for_an_ipv6_address_even_without_ipv6_on_this_machine PASSED [ 18%]
+tests/test_bindguard.py::test_listen_binds_the_literal_for_localhost_and_never_looks_a_name_up PASSED [ 18%]
+tests/test_bindguard.py::test_listen_refuses_a_name_that_is_not_localhost_even_with_stand_ins PASSED [ 18%]
+tests/test_bindguard.py::test_listen_checks_the_address_the_socket_really_got PASSED [ 18%]
+tests/test_bindguard.py::test_the_receiver_without_a_config_is_a_type_error PASSED [ 19%]
+tests/test_bindguard.py::test_the_receiver_refuses_a_public_bind_with_a_real_service_before_any_socket_exists PASSED [ 19%]
+tests/test_bindguard.py::test_the_receiver_refuses_a_config_that_is_not_the_one_the_approvals_were_built_with PASSED [ 19%]
+tests/test_bindguard.py::test_the_receiver_starts_and_the_reason_passes_through_it PASSED [ 19%]
+tests/test_bindguard.py::test_a_built_app_serves_with_its_own_config_and_not_with_a_copy PASSED [ 20%]
+tests/test_bindguard.py::test_a_built_app_with_stand_ins_only_accepts_any_bind PASSED [ 20%]
+tests/test_bindguard.py::test_an_injected_real_service_beside_a_stand_in_config_refuses_a_public_bind_and_names_it[channel] PASSED [ 20%]
+tests/test_bindguard.py::test_an_injected_real_service_beside_a_stand_in_config_refuses_a_public_bind_and_names_it[llm] PASSED [ 21%]
+tests/test_bindguard.py::test_an_injected_real_service_beside_a_stand_in_config_refuses_a_public_bind_and_names_it[detector] PASSED [ 21%]
+tests/test_bindguard.py::test_an_injected_real_service_beside_a_stand_in_config_refuses_a_public_bind_and_names_it[tools] PASSED [ 21%]
+tests/test_bindguard.py::test_a_real_source_or_tools_dict_handed_in_is_counted_and_an_empty_one_is_not PASSED [ 21%]
+tests/test_bindguard.py::test_approvals_built_by_hand_with_a_real_channel_and_a_stand_in_config_are_refused PASSED [ 22%]
+tests/test_bindguard.py::test_approvals_built_by_hand_without_a_config_are_refused_and_the_text_says_so PASSED [ 22%]
+tests/test_bindguard.py::test_the_config_and_the_overrides_of_the_approvals_cannot_be_assigned_or_edited PASSED [ 22%]
+tests/test_bindguard.py::test_a_channel_replaced_after_the_build_is_seen_when_the_server_starts PASSED [ 22%]
+tests/test_bindguard.py::test_only_the_cores_own_stand_in_classes_are_stand_ins_and_a_subclass_is_not PASSED [ 23%]
+tests/test_bindguard.py::test_real_services_counts_held_objects_in_words_and_ignores_none PASSED [ 23%]
+tests/test_bindguard.py::test_the_post_bind_check_counts_held_objects_too PASSED [ 23%]
+tests/test_bindguard.py::test_the_http_loopback_half_of_url_allowed_and_the_system_rule_agree PASSED [ 23%]
+tests/test_bindguard.py::test_the_listener_reaches_the_approvals_only_through_the_signature_check PASSED [ 24%]
+tests/test_bindguard.py::test_the_receiver_default_host_is_this_computer PASSED [ 24%]
+tests/test_bindguard.py::test_the_receiver_serves_exactly_one_route PASSED [ 24%]
+tests/test_bindguard.py::test_only_listen_creates_a_server_socket PASSED [ 25%]
+tests/test_bindguard.py::test_the_server_scan_flags_each_seeded_bad_fixture[.bind(] PASSED [ 25%]
+tests/test_bindguard.py::test_the_server_scan_flags_each_seeded_bad_fixture[.listen(] PASSED [ 25%]
+tests/test_bindguard.py::test_the_server_scan_flags_each_seeded_bad_fixture[HTTPServer] PASSED [ 25%]
+tests/test_bindguard.py::test_the_server_scan_flags_each_seeded_bad_fixture[ThreadingHTTPServer] PASSED [ 26%]
+tests/test_bindguard.py::test_the_server_scan_flags_each_seeded_bad_fixture[aiohttp TCPSite] PASSED [ 26%]
+tests/test_bindguard.py::test_the_server_scan_flags_each_seeded_bad_fixture[aiohttp run_app] PASSED [ 26%]
+tests/test_bindguard.py::test_the_server_scan_flags_each_seeded_bad_fixture[app.run(host=)] PASSED [ 26%]
+tests/test_bindguard.py::test_the_server_scan_flags_each_seeded_bad_fixture[asyncio.start_server] PASSED [ 27%]
+tests/test_bindguard.py::test_the_server_scan_flags_each_seeded_bad_fixture[create_datagram_endpoint] PASSED [ 27%]
+tests/test_bindguard.py::test_the_server_scan_flags_each_seeded_bad_fixture[from http.server import test] PASSED [ 27%]
+tests/test_bindguard.py::test_the_server_scan_flags_each_seeded_bad_fixture[from waitress] PASSED [ 28%]
+tests/test_bindguard.py::test_the_server_scan_flags_each_seeded_bad_fixture[from-import start_server] PASSED [ 28%]
+tests/test_bindguard.py::test_the_server_scan_flags_each_seeded_bad_fixture[http.server.test] PASSED [ 28%]
+tests/test_bindguard.py::test_the_server_scan_flags_each_seeded_bad_fixture[hypercorn] PASSED [ 28%]
+tests/test_bindguard.py::test_the_server_scan_flags_each_seeded_bad_fixture[loop.create_server] PASSED [ 29%]
+tests/test_bindguard.py::test_the_server_scan_flags_each_seeded_bad_fixture[multiprocessing Listener] PASSED [ 29%]
+tests/test_bindguard.py::test_the_server_scan_flags_each_seeded_bad_fixture[multiprocessing.connection.Listener] PASSED [ 29%]
+tests/test_bindguard.py::test_the_server_scan_flags_each_seeded_bad_fixture[socketserver.TCPServer] PASSED [ 29%]
+tests/test_bindguard.py::test_the_server_scan_flags_each_seeded_bad_fixture[socketserver.ThreadingUDPServer] PASSED [ 30%]
+tests/test_bindguard.py::test_the_server_scan_flags_each_seeded_bad_fixture[uvicorn.run] PASSED [ 30%]
+tests/test_bindguard.py::test_the_server_scan_does_not_flag_a_client_or_a_handler PASSED [ 30%]
+tests/test_bindguard.py::test_no_module_keeps_its_own_loopback_list PASSED [ 30%]
+tests/test_bindguard.py::test_the_copy_scan_sees_each_shape_of_a_loopback_list[concatenation] PASSED [ 31%]
+tests/test_bindguard.py::test_the_copy_scan_sees_each_shape_of_a_loopback_list[dict] PASSED [ 31%]
+tests/test_bindguard.py::test_the_copy_scan_sees_each_shape_of_a_loopback_list[list] PASSED [ 31%]
+tests/test_bindguard.py::test_the_copy_scan_sees_each_shape_of_a_loopback_list[name with the word] PASSED [ 32%]
+tests/test_bindguard.py::test_the_copy_scan_sees_each_shape_of_a_loopback_list[regex] PASSED [ 32%]
+tests/test_bindguard.py::test_the_copy_scan_sees_each_shape_of_a_loopback_list[set] PASSED [ 32%]
+tests/test_bindguard.py::test_the_copy_scan_sees_each_shape_of_a_loopback_list[single literal] PASSED [ 32%]
+tests/test_bindguard.py::test_the_copy_scan_sees_each_shape_of_a_loopback_list[startswith] PASSED [ 33%]
+tests/test_bindguard.py::test_the_copy_scan_sees_each_shape_of_a_loopback_list[tuple] PASSED [ 33%]
+tests/test_bindguard.py::test_the_copy_scan_ignores_ordinary_text PASSED [ 33%]
+tests/test_bindguard.py::test_the_netguard_docstring_states_the_supported_python_range PASSED [ 33%]
+tests/test_bindguard.py::test_the_guarded_attributes_of_the_approvals_are_set_once PASSED [ 34%]
+tests/test_bindguard.py::test_a_real_channel_put_in_after_the_server_started_answers_503_and_one_log_line PASSED [ 34%]
+tests/test_bindguard.py::test_a_loopback_bind_does_not_pay_the_recheck PASSED [ 34%]
+tests/test_bindguard.py::test_a_bind_with_a_reason_does_not_pay_the_recheck PASSED [ 35%]
+tests/test_bindguard.py::test_what_the_config_said_at_construction_is_kept_when_its_lists_are_emptied PASSED [ 35%]
+tests/test_bindguard.py::test_serve_refuses_a_subclass_and_a_look_alike_of_the_approvals PASSED [ 35%]
+tests/test_bindguard.py::test_emptiness_is_read_by_exact_type_and_an_object_that_raises_counts PASSED [ 35%]
+tests/test_bindguard.py::test_held_is_required_everywhere_it_decides PASSED [ 36%]
+tests/test_bindguard.py::test_approvals_made_by_hand_are_refused_on_a_public_bind_unless_the_audit_and_registry_are_stand_ins PASSED [ 36%]
+tests/test_bindguard.py::test_an_approvals_cannot_be_copied_or_pickled PASSED [ 36%]
+tests/test_bindguard.py::test_a_mapping_handed_to_build_is_copied_so_emptying_it_later_changes_nothing PASSED [ 36%]
+tests/test_bindguard.py::test_an_override_and_a_different_object_now_in_its_place_are_both_counted PASSED [ 37%]
+tests/test_bindguard.py::test_the_approvals_that_build_made_go_through_serve_with_a_real_override PASSED [ 37%]
+tests/test_bindguard.py::test_no_registration_door_exists_and_the_five_are_a_literal_of_pairs PASSED [ 37%]
+tests/test_bindguard.py::test_a_forged_class_with_the_same_module_and_name_is_not_a_stand_in PASSED [ 38%]
+tests/test_bindguard.py::test_a_method_replaced_on_a_base_class_or_changed_bases_read_as_real PASSED [ 38%]
+tests/test_bindguard.py::test_changed_bases_of_a_stand_in_read_as_real PASSED [ 38%]
+tests/test_bindguard.py::test_a_base_swapped_for_a_copy_with_the_same_attributes_reads_as_real PASSED [ 38%]
+tests/test_bindguard.py::test_a_module_that_is_not_imported_or_whose_name_was_rebound_gives_real PASSED [ 39%]
+tests/test_bindguard.py::test_the_class_is_looked_up_in_the_module_dictionary_not_with_getattr PASSED [ 39%]
+tests/test_bindguard.py::test_a_cleared_pin_of_a_class_that_was_seen_fails_closed PASSED [ 39%]
+tests/test_bindguard.py::test_a_subclass_of_a_listed_class_is_not_that_class PASSED [ 39%]
+tests/test_bindguard.py::test_a_metaclass_that_fakes_equality_and_hash_is_not_a_stand_in PASSED [ 40%]
+tests/test_bindguard.py::test_a_module_that_is_not_a_plain_module_gives_real PASSED [ 40%]
+tests/test_bindguard.py::test_an_instance_with_more_values_than_the_budget_reads_as_real PASSED [ 40%]
+tests/test_bindguard.py::test_a_stand_in_that_was_changed_is_read_as_real PASSED [ 40%]
+tests/test_bindguard.py::test_every_registered_stand_in_is_still_one_when_made_in_the_usual_way PASSED [ 41%]
+tests/test_bindguard.py::test_a_detector_list_is_a_copy_and_cannot_be_changed_in_place PASSED [ 41%]
+tests/test_bindguard.py::test_the_resolved_scan_flags_each_new_form_and_the_old_scan_did_not PASSED [ 41%]
+tests/test_bindguard.py::test_the_resolved_scan_ignores_what_only_looks_like_a_server PASSED [ 42%]
+tests/test_bindguard.py::test_every_launcher_word_has_a_fixture_of_its_own_and_only_its_own PASSED [ 42%]
+tests/test_bindguard.py::test_the_launcher_scan_flags_each_seeded_launcher_by_its_own_word PASSED [ 42%]
+tests/test_bindguard.py::test_the_launcher_globs_name_the_new_kinds_of_launcher_file PASSED [ 42%]
+tests/test_bindguard.py::test_the_pyproject_scripts_are_read_and_the_dependency_lists_are_not PASSED [ 43%]
+tests/test_bindguard.py::test_an_allowed_launcher_word_allows_only_its_own_count PASSED [ 43%]
+tests/test_bindguard.py::test_no_script_dockerfile_compose_or_workflow_starts_a_server PASSED [ 43%]
+tests/test_bindguard.py::test_the_resolved_scan_finds_nothing_outside_listen_in_src_demos_tools PASSED [ 43%]
+tests/test_bindguard.py::test_importing_the_package_binds_no_socket PASSED [ 44%]
+tests/test_bindguard.py::test_the_only_code_that_reaches_a_socket_bind_is_listen PASSED [ 44%]
+tests/test_bindguard.py::test_a_detector_list_with_a_function_a_patched_method_or_a_foreign_container_reads_as_real PASSED [ 44%]
+tests/test_bindguard.py::test_a_detector_list_nested_or_cyclic_is_read_without_recursion_errors PASSED [ 45%]
+tests/test_bindguard.py::test_a_function_hidden_inside_a_stand_in_reads_as_real_up_to_the_depth_limit PASSED [ 45%]
+tests/test_bindguard.py::test_a_stand_in_with_no_instance_dictionary_or_a_hostile_one_never_raises PASSED [ 45%]
+tests/test_bindguard.py::test_an_approvals_refuses_plain_writes_a_class_swap_and_weak_references PASSED [ 45%]
+tests/test_bindguard.py::test_a_class_swapped_with_the_object_level_write_is_answered_503 PASSED [ 46%]
+tests/test_bindguard.py::test_a_hostile_key_or_mapping_makes_the_answer_real_and_never_raises PASSED [ 46%]
+tests/test_bindguard.py::test_a_class_whose_name_raises_when_read_is_counted_with_a_fixed_label PASSED [ 46%]
+tests/test_bindguard.py::test_a_refused_request_is_logged_once_a_minute_per_set_of_services PASSED [ 46%]
+tests/test_bindguard.py::test_a_star_import_of_a_server_module_is_resolved PASSED [ 47%]
+tests/test_bindguard.py::test_aliases_are_read_in_the_scope_they_are_written_in PASSED [ 47%]
+tests/test_bindguard.py::test_import_module_of_a_serving_module_is_flagged PASSED [ 47%]
+tests/test_bindguard.py::test_the_entry_points_of_the_serving_libraries_are_flagged PASSED [ 47%]
+tests/test_bindguard.py::test_a_run_host_is_read_with_the_rule_of_the_guard_and_hex_words_are_not_hosts PASSED [ 48%]
+tests/test_bindguard.py::test_a_held_value_that_is_not_plain_data_reads_as_real_whatever_it_is PASSED [ 48%]
+tests/test_bindguard.py::test_a_text_or_number_subclass_is_not_a_plain_atom PASSED [ 48%]
+tests/test_bindguard.py::test_a_dict_key_is_judged_like_a_value_and_a_container_is_read_with_the_builtin_iterator PASSED [ 49%]
+tests/test_bindguard.py::test_a_populated_store_and_the_real_models_still_read_as_stand_ins PASSED [ 49%]
+tests/test_bindguard.py::test_the_eight_pinned_plain_classes_hold_no_class_level_mutable_value PASSED [ 49%]
+tests/test_bindguard.py::test_a_container_left_unexplored_at_the_depth_limit_reads_as_real PASSED [ 49%]
+tests/test_bindguard.py::test_a_function_put_in_after_an_earlier_question_is_seen_at_the_next_one PASSED [ 50%]
+tests/test_bindguard.py::test_an_approvals_slot_cannot_be_deleted_or_deleted_and_set_again PASSED [ 50%]
+tests/test_bindguard.py::test_a_patched_approvals_class_is_answered_503 PASSED [ 50%]
+tests/test_bindguard.py::test_a_slot_deleted_with_the_object_level_call_is_answered_503_not_dropped PASSED [ 50%]
+tests/test_bindguard.py::test_the_classes_are_pinned_when_the_receiver_is_imported_not_at_the_first_question PASSED [ 51%]
+tests/test_bindguard.py::test_a_hostile_text_key_gets_a_fixed_label_and_nothing_is_called_on_it_again PASSED [ 51%]
+tests/test_bindguard.py::test_one_hundred_threads_logging_one_hundred_sets_each_raise_nothing PASSED [ 51%]
+tests/test_bindguard.py::test_a_set_of_services_used_again_is_remembered_longer_than_ones_used_once PASSED [ 52%]
+tests/test_bindguard.py::test_the_refusal_log_never_lets_an_error_out PASSED [ 52%]
+tests/test_bindguard.py::test_the_classes_still_read_as_stand_ins_after_their_annotations_are_read PASSED [ 52%]
+tests/test_bindguard.py::test_a_class_attribute_equal_to_the_pinned_one_but_not_the_same_object_reads_as_real PASSED [ 52%]
+tests/test_bindguard.py::test_a_class_dictionary_key_that_is_a_text_subclass_is_not_the_pinned_key PASSED [ 53%]
+tests/test_bindguard.py::test_a_nested_stand_in_is_judged_by_its_pin_and_scanned_in_turn PASSED [ 53%]
+tests/test_bindguard.py::test_a_model_row_holding_a_foreign_object_reads_as_real PASSED [ 53%]
+tests/test_bindguard.py::test_the_guard_reads_the_approvals_through_the_accessors_the_runtime_uses PASSED [ 53%]
+tests/test_bindguard.py::test_the_refusal_memory_is_changed_under_its_lock PASSED [ 54%]
+tests/test_bindguard.py::test_the_lists_of_trusted_classes_are_exactly_these_literals PASSED [ 54%]
+tests/test_bindguard.py::test_a_held_class_that_fakes_equality_and_hash_does_not_pass_as_an_atom PASSED [ 54%]
+tests/test_bindguard.py::test_a_held_class_that_fakes_equality_and_hash_does_not_pass_as_a_container PASSED [ 54%]
+tests/test_bindguard.py::test_a_held_class_that_fakes_equality_and_hash_does_not_pass_as_a_model_row PASSED [ 55%]
+tests/test_bindguard.py::test_a_held_class_that_fakes_equality_and_hash_does_not_pass_as_the_run_state PASSED [ 55%]
+tests/test_bindguard.py::test_a_held_class_that_fakes_equality_is_not_an_atom_at_the_depth_tail PASSED [ 55%]
+tests/test_bindguard.py::test_a_held_class_that_fakes_equality_is_refused_as_a_key_and_in_a_nested_detector_list PASSED [ 56%]
+tests/test_bindguard.py::test_a_store_holding_one_of_each_model_row_it_keeps_reads_as_a_stand_in PASSED [ 56%]
+tests/test_bindguard.py::test_the_depth_limit_for_held_values_is_eight_and_one_level_more_reads_as_real PASSED [ 56%]
+tests/test_bindguard.py::test_a_huge_container_is_not_copied_and_a_shared_one_is_charged_every_time PASSED [ 56%]
+tests/test_bindguard.py::test_a_container_referenced_many_times_is_charged_each_time_it_is_entered PASSED [ 57%]
+tests/test_bindguard.py::test_the_size_check_reads_the_builtin_length_not_the_one_of_a_subclass PASSED [ 57%]
+tests/test_bindguard.py::test_a_run_state_that_is_not_a_real_member_or_has_an_attribute_hung_on_it_reads_as_real PASSED [ 57%]
+tests/test_bindguard.py::test_an_on_decided_that_is_not_the_one_the_core_builds_is_counted_on_a_public_bind PASSED [ 57%]
+tests/test_bindguard.py::test_serve_with_an_unreadable_approvals_object_raises_bind_refused_not_another_error PASSED [ 58%]
+tests/test_bindguard.py::test_the_slot_list_of_the_approvals_is_pinned PASSED [ 58%]
+tests/test_bindguard.py::test_every_slot_deleted_with_the_object_level_call_is_answered_503[_audit_sink] PASSED [ 58%]
+tests/test_bindguard.py::test_every_slot_deleted_with_the_object_level_call_is_answered_503[_channel] PASSED [ 59%]
+tests/test_bindguard.py::test_every_slot_deleted_with_the_object_level_call_is_answered_503[_clock] PASSED [ 59%]
+tests/test_bindguard.py::test_every_slot_deleted_with_the_object_level_call_is_answered_503[_config] PASSED [ 59%]
+tests/test_bindguard.py::test_every_slot_deleted_with_the_object_level_call_is_answered_503[_config_facts] PASSED [ 59%]
+tests/test_bindguard.py::test_every_slot_deleted_with_the_object_level_call_is_answered_503[_detector] PASSED [ 60%]
+tests/test_bindguard.py::test_every_slot_deleted_with_the_object_level_call_is_answered_503[_hand_built] PASSED [ 60%]
+tests/test_bindguard.py::test_every_slot_deleted_with_the_object_level_call_is_answered_503[_on_decided] PASSED [ 60%]
+tests/test_bindguard.py::test_every_slot_deleted_with_the_object_level_call_is_answered_503[_overrides] PASSED [ 60%]
+tests/test_bindguard.py::test_every_slot_deleted_with_the_object_level_call_is_answered_503[_registry] PASSED [ 61%]
+tests/test_bindguard.py::test_every_slot_deleted_with_the_object_level_call_is_answered_503[_store] PASSED [ 61%]
+tests/test_bindguard.py::test_the_fake_secret_provider_is_pinned_when_its_module_is_loaded_whichever_comes_first PASSED [ 61%]
+tests/test_bindguard.py::test_a_long_or_unprintable_key_or_class_name_is_never_written_to_the_refusal_line PASSED [ 61%]
+tests/test_bindguard.py::test_a_make_on_decided_holder_that_holds_anything_but_the_core_runtime_is_counted PASSED [ 62%]
+tests/test_bindguard.py::test_a_core_on_decided_whose_closure_cell_is_replaced_is_judged_by_what_it_now_holds PASSED [ 62%]
+tests/test_bindguard.py::test_approvals_made_by_hand_with_empty_overrides_count_as_hand_built PASSED [ 62%]
+tests/test_bindguard.py::test_a_clock_that_is_not_the_core_clock_is_counted_and_is_judged_at_every_question PASSED [ 63%]
+tests/test_bindguard.py::test_a_counter_with_an_attribute_hung_on_it_reads_as_real PASSED [ 63%]
+tests/test_bindguard.py::test_the_instance_state_helper_refuses_a_counter_with_an_attribute PASSED [ 63%]
+tests/test_bindguard.py::test_the_fake_model_with_its_own_counter_still_reads_as_a_stand_in PASSED [ 63%]
+tests/test_bindguard.py::test_only_the_counter_among_the_allowlisted_types_can_carry_instance_state PASSED [ 64%]
+tests/test_bindguard.py::test_a_model_row_with_state_in_a_pydantic_slot_reads_as_real[__pydantic_extra__] PASSED [ 64%]
+tests/test_bindguard.py::test_a_model_row_with_state_in_a_pydantic_slot_reads_as_real[__pydantic_private__] PASSED [ 64%]
+tests/test_bindguard.py::test_a_model_row_with_a_foreign_fields_set_reads_as_real PASSED [ 64%]
+tests/test_bindguard.py::test_a_patched_method_of_a_model_class_is_seen_because_data_classes_are_pinned PASSED [ 65%]
+tests/test_bindguard.py::test_every_data_class_is_a_forbidding_pydantic_model_or_the_one_plain_dataclass PASSED [ 65%]
+tests/test_bindguard.py::test_a_detector_list_built_to_fan_out_is_cut_off_by_the_budget PASSED [ 65%]
+tests/test_bindguard.py::test_the_walk_of_a_detector_list_is_charged_for_every_visit PASSED [ 66%]
+tests/test_bindguard.py::test_a_million_shared_members_of_a_detector_list_cost_a_bounded_time_and_memory PASSED [ 66%]
+tests/test_bindguard.py::test_fifteen_hundred_references_to_one_stand_in_cost_one_shape_comparison_per_class PASSED [ 66%]
+tests/test_bindguard.py::test_a_stand_in_is_charged_twenty_values_and_a_few_thousand_references_are_fine PASSED [ 66%]
+tests/test_bindguard.py::test_an_over_budget_structure_is_named_apart_from_a_real_service PASSED [ 67%]
+tests/test_bindguard.py::test_serve_refuses_with_bind_refused_when_an_object_raises_while_the_approvals_are_read PASSED [ 67%]
+tests/test_bindguard.py::test_serve_refuses_with_bind_refused_when_any_slot_is_deleted[_audit_sink] PASSED [ 67%]
+tests/test_bindguard.py::test_serve_refuses_with_bind_refused_when_any_slot_is_deleted[_channel] PASSED [ 67%]
+tests/test_bindguard.py::test_serve_refuses_with_bind_refused_when_any_slot_is_deleted[_clock] PASSED [ 68%]
+tests/test_bindguard.py::test_serve_refuses_with_bind_refused_when_any_slot_is_deleted[_config] PASSED [ 68%]
+tests/test_bindguard.py::test_serve_refuses_with_bind_refused_when_any_slot_is_deleted[_config_facts] PASSED [ 68%]
+tests/test_bindguard.py::test_serve_refuses_with_bind_refused_when_any_slot_is_deleted[_detector] PASSED [ 69%]
+tests/test_bindguard.py::test_serve_refuses_with_bind_refused_when_any_slot_is_deleted[_hand_built] PASSED [ 69%]
+tests/test_bindguard.py::test_serve_refuses_with_bind_refused_when_any_slot_is_deleted[_on_decided] PASSED [ 69%]
+tests/test_bindguard.py::test_serve_refuses_with_bind_refused_when_any_slot_is_deleted[_overrides] PASSED [ 69%]
+tests/test_bindguard.py::test_serve_refuses_with_bind_refused_when_any_slot_is_deleted[_registry] PASSED [ 70%]
+tests/test_bindguard.py::test_serve_refuses_with_bind_refused_when_any_slot_is_deleted[_store] PASSED [ 70%]
+tests/test_bindguard.py::test_every_name_in_a_refusal_line_is_a_plain_word PASSED [ 70%]
+tests/test_bindguard.py::test_operator_config_names_are_filtered_in_the_refusal_line PASSED [ 70%]
+tests/test_bindguard.py::test_every_run_state_member_keeps_only_the_keys_of_a_fresh_enum_member PASSED [ 71%]
+tests/test_bindguard.py::test_the_class_level_attributes_of_the_pinned_classes_are_functions_or_builtin_descriptors PASSED [ 71%]
+tests/test_bindguard.py::test_changelog_numbers_and_lists_are_the_ones_in_the_code PASSED [ 71%]
+tests/test_bindguard.py::test_the_changelog_check_notices_a_changed_number_a_changed_list_and_a_handover_path PASSED [ 71%]
+tests/test_bindguard.py::test_a_fixed_clock_with_a_foreign_tzinfo_is_counted_and_never_runs_it PASSED [ 72%]
+tests/test_bindguard.py::test_a_clock_swapped_in_after_the_start_is_answered_503_and_never_runs PASSED [ 72%]
+tests/test_bindguard.py::test_the_clock_of_build_is_judged_like_the_clock_set_later PASSED [ 72%]
+tests/test_bindguard.py::test_models_now_with_its_code_replaced_is_counted PASSED [ 73%]
+tests/test_bindguard.py::test_a_stand_in_holding_a_datetime_with_a_foreign_tzinfo_reads_as_real PASSED [ 73%]
+tests/test_bindguard.py::test_a_path_with_a_real_object_in_a_slot_reads_as_real PASSED [ 73%]
+tests/test_bindguard.py::test_a_class_patched_before_the_first_question_reads_as_real PASSED [ 73%]
+tests/test_bindguard.py::test_a_hand_built_runtime_in_a_holder_is_counted_and_a_hand_built_approvals_gets_no_belief PASSED [ 74%]
+tests/test_bindguard.py::test_a_serve_of_an_approvals_class_with_a_replaced_method_is_refused_before_anything_else PASSED [ 74%]
+tests/test_bindguard.py::test_a_thousand_row_store_is_a_stand_in_and_answers_401_not_503 PASSED [ 74%]
+tests/test_bindguard.py::test_a_store_over_the_budget_is_named_over_budget_and_a_real_object_is_named_real PASSED [ 74%]
+tests/test_bindguard.py::test_a_thousand_rows_use_at_most_half_the_budget PASSED [ 75%]
+tests/test_bindguard.py::test_a_refusal_text_cannot_imitate_a_line_of_its_own PASSED [ 75%]
+tests/test_bindguard.py::test_the_changelog_states_the_pin_moment_the_budget_row_count_and_the_boundary PASSED [ 75%]
+tests/test_bindguard.py::test_every_build_argument_is_either_recorded_as_an_override_or_named_as_not_a_service PASSED [ 76%]
+tests/test_bindguard.py::test_the_depth_is_eight_levels_below_the_own_dictionary_and_the_texts_say_so PASSED [ 76%]
+tests/test_bindguard.py::test_a_core_runtime_whose_class_was_patched_is_counted PASSED [ 76%]
+tests/test_bindguard.py::test_a_card_with_a_slot_reads_as_real PASSED    [ 76%]
+tests/test_bindguard.py::test_a_holder_key_that_is_a_text_subclass_runs_no_code_of_its_own PASSED [ 77%]
+tests/test_bindguard.py::test_the_last_level_judges_an_atom_like_every_other_level PASSED [ 77%]
+tests/test_bindguard.py::test_a_function_or_a_name_put_on_the_core_runtime_instance_is_counted PASSED [ 77%]
+tests/test_bindguard.py::test_a_member_of_the_core_runtime_that_is_not_the_one_build_made_is_counted PASSED [ 77%]
+tests/test_bindguard.py::test_pin_a_service_of_the_core_runtime_that_is_not_a_stand_in_is_counted PASSED [ 78%]
+tests/test_bindguard.py::test_hold_run_ids_put_into_the_hooks_of_a_real_runtime_is_refused_on_a_public_bind PASSED [ 78%]
+tests/test_bindguard.py::test_a_runtime_made_by_hand_with_stand_ins_only_is_not_believed PASSED [ 78%]
+tests/test_bindguard.py::test_a_request_scans_the_store_the_runtime_holds_once_and_stays_within_one_budget PASSED [ 78%]
+tests/test_bindguard.py::test_one_request_is_bounded_by_one_budget_when_every_object_is_big PASSED [ 79%]
+tests/test_bindguard.py::test_models_now_with_a_replaced_module_name_is_counted PASSED [ 79%]
+tests/test_bindguard.py::test_pin_a_class_name_whose_value_pretends_to_be_a_type_is_not_a_class PASSED [ 79%]
+tests/test_bindguard.py::test_pin_all_thirteen_data_classes_stay_as_pinned_after_use_in_a_fresh_interpreter PASSED [ 80%]
+tests/test_bindguard.py::test_the_changelog_pin_counts_and_the_row_figure_are_the_code_s PASSED [ 80%]
+tests/test_bindguard.py::test_the_pin_count_check_notices_a_count_off_by_one PASSED [ 80%]
+tests/test_bindguard.py::test_pin_a_model_row_visited_is_charged_the_stand_in_weight_each_time PASSED [ 80%]
+tests/test_bindguard.py::test_pin_copying_an_object_of_a_pinned_class_does_not_change_the_answer PASSED [ 81%]
+tests/test_bindguard.py::test_a_tool_put_into_the_hooks_of_a_sealed_runtime_is_counted PASSED [ 81%]
+tests/test_bindguard.py::test_the_toolbox_and_the_executor_of_a_sealed_runtime_cannot_be_changed_unseen PASSED [ 81%]
+tests/test_bindguard.py::test_the_code_and_the_closure_cells_of_a_hook_function_cannot_be_rewritten_unseen PASSED [ 81%]
+tests/test_bindguard.py::test_the_judged_names_of_a_runtime_are_all_its_keys PASSED [ 82%]
+tests/test_bindguard.py::test_a_kinds_or_evidence_put_on_the_core_runtime_is_counted PASSED [ 82%]
+tests/test_bindguard.py::test_a_sealed_runtime_that_is_dropped_is_freed PASSED [ 82%]
+tests/test_bindguard.py::test_the_seal_is_private PASSED                 [ 83%]
+tests/test_bindguard.py::test_pin_a_real_run_and_a_real_tick_add_no_name_to_the_runtime PASSED [ 83%]
+tests/test_bindguard.py::test_an_object_read_after_the_budget_ran_out_is_not_blamed_for_it FAILED [ 83%]
+tests/test_bindguard.py::test_the_line_about_the_object_that_used_the_budget_calls_nothing_on_it FAILED [ 83%]
+tests/test_bindguard.py::test_a_field_of_limits_audit_registry_or_evidence_replaced_after_the_seal_is_counted[limits-store] FAILED [ 84%]
+tests/test_bindguard.py::test_a_field_of_limits_audit_registry_or_evidence_replaced_after_the_seal_is_counted[limits-audit] FAILED [ 84%]
+tests/test_bindguard.py::test_a_field_of_limits_audit_registry_or_evidence_replaced_after_the_seal_is_counted[limits-registry] FAILED [ 84%]
+tests/test_bindguard.py::test_a_field_of_limits_audit_registry_or_evidence_replaced_after_the_seal_is_counted[audit-root] FAILED [ 84%]
+tests/test_bindguard.py::test_a_field_of_limits_audit_registry_or_evidence_replaced_after_the_seal_is_counted[audit-_pending] FAILED [ 85%]
+tests/test_bindguard.py::test_a_field_of_limits_audit_registry_or_evidence_replaced_after_the_seal_is_counted[registry-agents] FAILED [ 85%]
+tests/test_bindguard.py::test_a_field_of_limits_audit_registry_or_evidence_replaced_after_the_seal_is_counted[registry-config] FAILED [ 85%]
+tests/test_bindguard.py::test_a_field_of_limits_audit_registry_or_evidence_replaced_after_the_seal_is_counted[_evidence-scrub] FAILED [ 85%]
+tests/test_bindguard.py::test_a_name_added_to_limits_audit_registry_or_evidence_is_counted FAILED [ 86%]
+tests/test_bindguard.py::test_an_object_put_in_a_hook_field_runs_no_code_of_its_own_before_it_is_compared FAILED [ 86%]
+tests/test_bindguard.py::test_an_entered_object_whose_class_is_swapped_runs_no_code_of_its_own FAILED [ 86%]
+tests/test_bindguard.py::test_hooks_tools_replaced_by_a_copy_is_judged_by_contents_not_identity PASSED [ 87%]
+tests/test_bindguard.py::test_a_real_tool_call_and_an_executed_action_leave_the_runtime_believed PASSED [ 87%]
+tests/test_bindguard.py::test_a_decision_through_on_decided_adds_no_name_to_the_runtime PASSED [ 87%]
+tests/test_bindguard.py::test_the_seal_refuses_an_object_that_is_not_a_core_runtime FAILED [ 87%]
+tests/test_bindguard.py::test_a_runtime_with_more_hook_objects_than_the_cap_is_refused_at_build FAILED [ 88%]
+tests/test_bindguard.py::test_a_walk_cap_equal_to_the_need_still_seals FAILED [ 88%]
+tests/test_bindguard.py::test_a_walk_that_grows_past_the_cap_after_the_seal_says_the_seal_is_over_budget FAILED [ 88%]
+tests/test_bindguard.py::test_a_hook_function_with_an_empty_closure_cell_filled_later_is_counted PASSED [ 88%]
+tests/test_bindguard.py::test_the_read_errors_are_exactly_these_named_types FAILED [ 89%]
+tests/test_bindguard.py::test_each_named_read_error_reads_as_not_a_stand_in[AttributeError] PASSED [ 89%]
+tests/test_bindguard.py::test_each_named_read_error_reads_as_not_a_stand_in[TypeError] PASSED [ 89%]
+tests/test_bindguard.py::test_each_named_read_error_reads_as_not_a_stand_in[ValueError] PASSED [ 90%]
+tests/test_bindguard.py::test_each_named_read_error_reads_as_not_a_stand_in[LookupError] PASSED [ 90%]
+tests/test_bindguard.py::test_each_named_read_error_reads_as_not_a_stand_in[ArithmeticError] PASSED [ 90%]
+tests/test_bindguard.py::test_each_named_read_error_reads_as_not_a_stand_in[RuntimeError] PASSED [ 90%]
+tests/test_bindguard.py::test_each_named_read_error_reads_as_not_a_stand_in[OSError] PASSED [ 91%]
+tests/test_bindguard.py::test_an_unnamed_error_type_comes_out_of_the_scan FAILED [ 91%]
+tests/test_bindguard.py::test_an_unnamed_error_type_comes_out_of_the_pinned_class_check FAILED [ 91%]
+tests/test_bindguard.py::test_an_unnamed_error_type_comes_out_of_the_held_mapping_read FAILED [ 91%]
+tests/test_bindguard.py::test_an_unnamed_error_type_comes_out_of_the_held_object_read FAILED [ 92%]
+tests/test_bindguard.py::test_an_unnamed_error_type_comes_out_of_the_runtime_check FAILED [ 92%]
+tests/test_bindguard.py::test_an_unnamed_error_type_comes_out_of_the_over_budget_walk FAILED [ 92%]
+tests/test_bindguard.py::test_an_empty_closure_cell_is_the_one_error_the_cell_read_answers PASSED [ 92%]
+tests/test_bindguard.py::test_an_unnamed_error_type_comes_out_of_the_receiver_recheck FAILED [ 93%]
+tests/test_bindguard.py::test_an_unnamed_error_type_comes_out_of_the_refusal_log FAILED [ 93%]
+tests/test_bindguard.py::test_a_tool_with_its_defaults_replaced_after_the_seal_is_counted PASSED [ 93%]
+tests/test_bindguard.py::test_a_tool_with_a_keyword_default_replaced_after_the_seal_is_counted FAILED [ 94%]
+tests/test_bindguard.py::test_a_tool_with_its_wrapped_function_replaced_after_the_seal_is_counted FAILED [ 94%]
+tests/test_bindguard.py::test_the_code_of_the_function_of_a_bound_method_replaced_after_the_seal_is_counted PASSED [ 94%]
+tests/test_bindguard.py::test_an_item_deeper_than_the_walk_depth_is_not_seen_after_the_seal FAILED [ 94%]
+tests/test_bindguard.py::test_a_field_removed_at_the_very_end_of_the_walk_is_counted FAILED [ 95%]
+tests/test_bindguard.py::test_a_value_that_moves_in_use_on_a_hook_object_is_not_a_change PASSED [ 95%]
+tests/test_bindguard.py::test_a_global_name_a_hook_function_reads_is_not_seen_to_change PASSED [ 95%]
+tests/test_bindguard.py::test_the_own_state_of_an_object_held_in_a_closure_cell_is_not_seen_to_change PASSED [ 95%]
+tests/test_bindguard.py::test_the_seal_holds_no_copy_of_a_secret_text_or_bytes_a_hook_carries FAILED [ 96%]
+tests/test_bindguard.py::test_a_dead_weak_mark_is_not_matched_by_none FAILED [ 96%]
+tests/test_bindguard.py::test_hooks_of_a_class_that_is_a_copy_of_the_pinned_class_are_counted PASSED [ 96%]
+tests/test_bindguard.py::test_a_container_held_by_a_runtime_member_is_not_seen_to_change_inside PASSED [ 97%]
+tests/test_bindguard.py::test_the_contents_of_a_set_a_hook_object_holds_are_not_compared PASSED [ 97%]
+tests/test_netguard.py::test_loopback_spellings PASSED                   [ 97%]
+tests/test_netguard.py::test_everything_else_is_not_loopback PASSED      [ 97%]
+tests/test_netguard.py::test_a_non_string_is_not_loopback PASSED         [ 98%]
+tests/test_netguard.py::test_the_check_never_resolves_a_name PASSED      [ 98%]
+tests/test_netguard.py::test_seeded_fuzz_against_an_independent_reading PASSED [ 98%]
+tests/test_netguard.py::test_the_exact_literals_are_loopback_hosts_too PASSED [ 98%]
+tests/test_netguard.py::test_the_literal_list_stays_exact PASSED         [ 99%]
+tests/test_netguard.py::test_a_leading_zero_is_refused_by_our_own_check_not_by_the_python_version PASSED [ 99%]
+tests/test_netguard.py::test_a_mapped_address_is_judged_by_the_address_inside_on_every_python PASSED [ 99%]
+tests/test_netguard.py::test_parse_ip_literal_and_localhost_name PASSED  [100%]
+
+=================================== FAILURES ===================================
+______ test_an_object_read_after_the_budget_ran_out_is_not_blamed_for_it _______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f33e52729e0>
+
+    def test_an_object_read_after_the_budget_ran_out_is_not_blamed_for_it(
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Class: TEXT (round 10, codebase N12). One ``Scan`` covers a request: when the budget runs out the object that
+        crossed the limit can be a small one asked about last, and the line blamed it. The scan now records the object that
+        used the most of the budget, and the line for another object says so. Fails on 304c3bd3 (both lines said
+        ``over budget (too many values to check)``). The budget is made small (90 values) so the first store (72 values)
+        leaves too little for the channel (32 values)."""
+        from hadavin_sdk import standins
+    
+        monkeypatch.setattr(standins, "SCAN_NODES", 90)
+        store, channel = MemoryStore(), FakeChannel("sig" + "-b11-test")
+        scan = standins.Scan()
+        lines = bindguard.held_services_found({"a_store": store, "b_channel": channel}, scan)
+>       assert lines == (
+            "held b_channel: not read in full, another held object used most of the budget",
+        ), f"the lines were {lines}"
+E       AssertionError: the lines were ('held b_channel: not read in full, another object (MemoryStore) used most of the budget',)
+E       assert ('held b_chan... the budget',) == ('held b_chan... the budget',)
+E         
+E         At index 0 diff: 'held b_channel: not read in full, another object (MemoryStore) used most of the budget' != 'held b_channel: not read in full, another held object used most of the budget'
+E         
+E         Full diff: (-: missing in left side, +: extra in left side)
+E           (
+E         -     'held b_channel: not read in full, another held object used most of the '
+E         ?                                                -----                 -------...
+E         
+E         ...Full output truncated, use '-vv' to show
+
+tests/test_bindguard.py:5375: AssertionError
+___ test_the_line_about_the_object_that_used_the_budget_calls_nothing_on_it ____
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f33e3cab700>
+
+    def test_the_line_about_the_object_that_used_the_budget_calls_nothing_on_it(
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Class: HOSTILE-TEXT (round 11, issue 8): the line is fixed text. The class name of the object that used the
+        budget is never read, so a class whose ``__name__`` runs code or raises changes nothing."""
+        from hadavin_sdk import standins
+    
+        calls: list[str] = []
+    
+        def read_name(cls: object) -> str:
+            calls.append("name read")
+            return "x" * 40 + "\n<script>"
+    
+        Meta = type("Meta", (type,), {"__name__": property(read_name)})
+        heavy = Meta("Heavy", (), {})()
+        monkeypatch.setattr(standins, "SCAN_NODES", 90)
+        store, channel = MemoryStore(), FakeChannel("sig" + "-b12-test")
+        scan = standins.Scan()
+        bindguard.held_services_found({"a_store": store, "b_channel": channel}, scan)
+        scan.heaviest = heavy
+        lines = bindguard.held_services_found({"b_channel": channel}, scan)
+>       assert lines == (
+            "held b_channel: not read in full, another held object used most of the budget",
+        ), lines
+E       AssertionError: ('held b_channel: not read in full, another object ((unreadable)) used most of the budget',)
+E       assert ('held b_chan... the budget',) == ('held b_chan... the budget',)
+E         
+E         At index 0 diff: 'held b_channel: not read in full, another object ((unreadable)) used most of the budget' != 'held b_channel: not read in full, another held object used most of the budget'
+E         
+E         Full diff: (-: missing in left side, +: extra in left side)
+E           (
+E         -     'held b_channel: not read in full, another held object used most of the '
+E         ?                                                -----                 -------...
+E         
+E         ...Full output truncated, use '-vv' to show
+
+tests/test_bindguard.py:5404: AssertionError
+_ test_a_field_of_limits_audit_registry_or_evidence_replaced_after_the_seal_is_counted[limits-store] _
+
+tmp_path = PosixPath('/tmp/pytest-of-unknown/pytest-860/test_a_field_of_limits_audit_r0')
+member = 'limits', field = 'store'
+
+    @pytest.mark.parametrize(
+        ("member", "field"),
+        [
+            ("limits", "store"),
+            ("limits", "audit"),
+            ("limits", "registry"),
+            ("audit", "root"),
+            ("audit", "_pending"),
+            ("registry", "agents"),
+            ("registry", "config"),
+            ("_evidence", "scrub"),
+        ],
+    )
+    def test_a_field_of_limits_audit_registry_or_evidence_replaced_after_the_seal_is_counted(
+        tmp_path: Path, member: str, field: str
+    ) -> None:
+        """Class: SEAL-COMPLETE (round 11, issue 1). Trace (see the CHANGELOG): ``handle``, ``tick`` and ``on_decided`` reach
+        ``limits.store``, ``limits.audit``, ``limits.registry`` (``Limits.blocked`` and ``charge``), the audit sink's own
+        fields, the registry's members and the evidence settings, so each is compared. Fails on 82dd69c1 (those four
+        members were compared by identity only)."""
+        app = _built(tmp_path)
+        rt = _core_runtime(app)
+        owner = _fields(rt)[member]
+        own = _fields(owner)
+        assert not _runtime_counted(app, rt), "control"
+        was = own[field]
+        own[field] = _Opaque()
+        try:
+>           assert _runtime_counted(app, rt), f"{member}.{field} replaced was not counted"
+E           AssertionError: limits.store replaced was not counted
+E           assert False
+E            +  where False = _runtime_counted(<tests.test_bindguard._Built object at 0x7f33e4a34950>, <hadavin_sdk.runtime.agent_loop.Runtime object at 0x7f33e564ab70>)
+
+tests/test_bindguard.py:5448: AssertionError
+_ test_a_field_of_limits_audit_registry_or_evidence_replaced_after_the_seal_is_counted[limits-audit] _
+
+tmp_path = PosixPath('/tmp/pytest-of-unknown/pytest-860/test_a_field_of_limits_audit_r1')
+member = 'limits', field = 'audit'
+
+    @pytest.mark.parametrize(
+        ("member", "field"),
+        [
+            ("limits", "store"),
+            ("limits", "audit"),
+            ("limits", "registry"),
+            ("audit", "root"),
+            ("audit", "_pending"),
+            ("registry", "agents"),
+            ("registry", "config"),
+            ("_evidence", "scrub"),
+        ],
+    )
+    def test_a_field_of_limits_audit_registry_or_evidence_replaced_after_the_seal_is_counted(
+        tmp_path: Path, member: str, field: str
+    ) -> None:
+        """Class: SEAL-COMPLETE (round 11, issue 1). Trace (see the CHANGELOG): ``handle``, ``tick`` and ``on_decided`` reach
+        ``limits.store``, ``limits.audit``, ``limits.registry`` (``Limits.blocked`` and ``charge``), the audit sink's own
+        fields, the registry's members and the evidence settings, so each is compared. Fails on 82dd69c1 (those four
+        members were compared by identity only)."""
+        app = _built(tmp_path)
+        rt = _core_runtime(app)
+        owner = _fields(rt)[member]
+        own = _fields(owner)
+        assert not _runtime_counted(app, rt), "control"
+        was = own[field]
+        own[field] = _Opaque()
+        try:
+>           assert _runtime_counted(app, rt), f"{member}.{field} replaced was not counted"
+E           AssertionError: limits.audit replaced was not counted
+E           assert False
+E            +  where False = _runtime_counted(<tests.test_bindguard._Built object at 0x7f33e4a37f50>, <hadavin_sdk.runtime.agent_loop.Runtime object at 0x7f33e56f0ff0>)
+
+tests/test_bindguard.py:5448: AssertionError
+_ test_a_field_of_limits_audit_registry_or_evidence_replaced_after_the_seal_is_counted[limits-registry] _
+
+tmp_path = PosixPath('/tmp/pytest-of-unknown/pytest-860/test_a_field_of_limits_audit_r2')
+member = 'limits', field = 'registry'
+
+    @pytest.mark.parametrize(
+        ("member", "field"),
+        [
+            ("limits", "store"),
+            ("limits", "audit"),
+            ("limits", "registry"),
+            ("audit", "root"),
+            ("audit", "_pending"),
+            ("registry", "agents"),
+            ("registry", "config"),
+            ("_evidence", "scrub"),
+        ],
+    )
+    def test_a_field_of_limits_audit_registry_or_evidence_replaced_after_the_seal_is_counted(
+        tmp_path: Path, member: str, field: str
+    ) -> None:
+        """Class: SEAL-COMPLETE (round 11, issue 1). Trace (see the CHANGELOG): ``handle``, ``tick`` and ``on_decided`` reach
+        ``limits.store``, ``limits.audit``, ``limits.registry`` (``Limits.blocked`` and ``charge``), the audit sink's own
+        fields, the registry's members and the evidence settings, so each is compared. Fails on 82dd69c1 (those four
+        members were compared by identity only)."""
+        app = _built(tmp_path)
+        rt = _core_runtime(app)
+        owner = _fields(rt)[member]
+        own = _fields(owner)
+        assert not _runtime_counted(app, rt), "control"
+        was = own[field]
+        own[field] = _Opaque()
+        try:
+>           assert _runtime_counted(app, rt), f"{member}.{field} replaced was not counted"
+E           AssertionError: limits.registry replaced was not counted
+E           assert False
+E            +  where False = _runtime_counted(<tests.test_bindguard._Built object at 0x7f33e4aae2d0>, <hadavin_sdk.runtime.agent_loop.Runtime object at 0x7f33e564bcf0>)
+
+tests/test_bindguard.py:5448: AssertionError
+_ test_a_field_of_limits_audit_registry_or_evidence_replaced_after_the_seal_is_counted[audit-root] _
+
+tmp_path = PosixPath('/tmp/pytest-of-unknown/pytest-860/test_a_field_of_limits_audit_r3')
+member = 'audit', field = 'root'
+
+    @pytest.mark.parametrize(
+        ("member", "field"),
+        [
+            ("limits", "store"),
+            ("limits", "audit"),
+            ("limits", "registry"),
+            ("audit", "root"),
+            ("audit", "_pending"),
+            ("registry", "agents"),
+            ("registry", "config"),
+            ("_evidence", "scrub"),
+        ],
+    )
+    def test_a_field_of_limits_audit_registry_or_evidence_replaced_after_the_seal_is_counted(
+        tmp_path: Path, member: str, field: str
+    ) -> None:
+        """Class: SEAL-COMPLETE (round 11, issue 1). Trace (see the CHANGELOG): ``handle``, ``tick`` and ``on_decided`` reach
+        ``limits.store``, ``limits.audit``, ``limits.registry`` (``Limits.blocked`` and ``charge``), the audit sink's own
+        fields, the registry's members and the evidence settings, so each is compared. Fails on 82dd69c1 (those four
+        members were compared by identity only)."""
+        app = _built(tmp_path)
+        rt = _core_runtime(app)
+        owner = _fields(rt)[member]
+        own = _fields(owner)
+        assert not _runtime_counted(app, rt), "control"
+        was = own[field]
+        own[field] = _Opaque()
+        try:
+>           assert _runtime_counted(app, rt), f"{member}.{field} replaced was not counted"
+E           AssertionError: audit.root replaced was not counted
+E           assert False
+E            +  where False = _runtime_counted(<tests.test_bindguard._Built object at 0x7f33e43457d0>, <hadavin_sdk.runtime.agent_loop.Runtime object at 0x7f33e56f14f0>)
+
+tests/test_bindguard.py:5448: AssertionError
+_ test_a_field_of_limits_audit_registry_or_evidence_replaced_after_the_seal_is_counted[audit-_pending] _
+
+tmp_path = PosixPath('/tmp/pytest-of-unknown/pytest-860/test_a_field_of_limits_audit_r4')
+member = 'audit', field = '_pending'
+
+    @pytest.mark.parametrize(
+        ("member", "field"),
+        [
+            ("limits", "store"),
+            ("limits", "audit"),
+            ("limits", "registry"),
+            ("audit", "root"),
+            ("audit", "_pending"),
+            ("registry", "agents"),
+            ("registry", "config"),
+            ("_evidence", "scrub"),
+        ],
+    )
+    def test_a_field_of_limits_audit_registry_or_evidence_replaced_after_the_seal_is_counted(
+        tmp_path: Path, member: str, field: str
+    ) -> None:
+        """Class: SEAL-COMPLETE (round 11, issue 1). Trace (see the CHANGELOG): ``handle``, ``tick`` and ``on_decided`` reach
+        ``limits.store``, ``limits.audit``, ``limits.registry`` (``Limits.blocked`` and ``charge``), the audit sink's own
+        fields, the registry's members and the evidence settings, so each is compared. Fails on 82dd69c1 (those four
+        members were compared by identity only)."""
+        app = _built(tmp_path)
+        rt = _core_runtime(app)
+        owner = _fields(rt)[member]
+        own = _fields(owner)
+        assert not _runtime_counted(app, rt), "control"
+        was = own[field]
+        own[field] = _Opaque()
+        try:
+>           assert _runtime_counted(app, rt), f"{member}.{field} replaced was not counted"
+E           AssertionError: audit._pending replaced was not counted
+E           assert False
+E            +  where False = _runtime_counted(<tests.test_bindguard._Built object at 0x7f33e43477d0>, <hadavin_sdk.runtime.agent_loop.Runtime object at 0x7f33e56f1630>)
+
+tests/test_bindguard.py:5448: AssertionError
+_ test_a_field_of_limits_audit_registry_or_evidence_replaced_after_the_seal_is_counted[registry-agents] _
+
+tmp_path = PosixPath('/tmp/pytest-of-unknown/pytest-860/test_a_field_of_limits_audit_r5')
+member = 'registry', field = 'agents'
+
+    @pytest.mark.parametrize(
+        ("member", "field"),
+        [
+            ("limits", "store"),
+            ("limits", "audit"),
+            ("limits", "registry"),
+            ("audit", "root"),
+            ("audit", "_pending"),
+            ("registry", "agents"),
+            ("registry", "config"),
+            ("_evidence", "scrub"),
+        ],
+    )
+    def test_a_field_of_limits_audit_registry_or_evidence_replaced_after_the_seal_is_counted(
+        tmp_path: Path, member: str, field: str
+    ) -> None:
+        """Class: SEAL-COMPLETE (round 11, issue 1). Trace (see the CHANGELOG): ``handle``, ``tick`` and ``on_decided`` reach
+        ``limits.store``, ``limits.audit``, ``limits.registry`` (``Limits.blocked`` and ``charge``), the audit sink's own
+        fields, the registry's members and the evidence settings, so each is compared. Fails on 82dd69c1 (those four
+        members were compared by identity only)."""
+        app = _built(tmp_path)
+        rt = _core_runtime(app)
+        owner = _fields(rt)[member]
+        own = _fields(owner)
+        assert not _runtime_counted(app, rt), "control"
+        was = own[field]
+        own[field] = _Opaque()
+        try:
+>           assert _runtime_counted(app, rt), f"{member}.{field} replaced was not counted"
+E           AssertionError: registry.agents replaced was not counted
+E           assert False
+E            +  where False = _runtime_counted(<tests.test_bindguard._Built object at 0x7f33e45b9e50>, <hadavin_sdk.runtime.agent_loop.Runtime object at 0x7f33e56f2850>)
+
+tests/test_bindguard.py:5448: AssertionError
+_ test_a_field_of_limits_audit_registry_or_evidence_replaced_after_the_seal_is_counted[registry-config] _
+
+tmp_path = PosixPath('/tmp/pytest-of-unknown/pytest-860/test_a_field_of_limits_audit_r6')
+member = 'registry', field = 'config'
+
+    @pytest.mark.parametrize(
+        ("member", "field"),
+        [
+            ("limits", "store"),
+            ("limits", "audit"),
+            ("limits", "registry"),
+            ("audit", "root"),
+            ("audit", "_pending"),
+            ("registry", "agents"),
+            ("registry", "config"),
+            ("_evidence", "scrub"),
+        ],
+    )
+    def test_a_field_of_limits_audit_registry_or_evidence_replaced_after_the_seal_is_counted(
+        tmp_path: Path, member: str, field: str
+    ) -> None:
+        """Class: SEAL-COMPLETE (round 11, issue 1). Trace (see the CHANGELOG): ``handle``, ``tick`` and ``on_decided`` reach
+        ``limits.store``, ``limits.audit``, ``limits.registry`` (``Limits.blocked`` and ``charge``), the audit sink's own
+        fields, the registry's members and the evidence settings, so each is compared. Fails on 82dd69c1 (those four
+        members were compared by identity only)."""
+        app = _built(tmp_path)
+        rt = _core_runtime(app)
+        owner = _fields(rt)[member]
+        own = _fields(owner)
+        assert not _runtime_counted(app, rt), "control"
+        was = own[field]
+        own[field] = _Opaque()
+        try:
+>           assert _runtime_counted(app, rt), f"{member}.{field} replaced was not counted"
+E           AssertionError: registry.config replaced was not counted
+E           assert False
+E            +  where False = _runtime_counted(<tests.test_bindguard._Built object at 0x7f33e45bb350>, <hadavin_sdk.runtime.agent_loop.Runtime object at 0x7f33e564a670>)
+
+tests/test_bindguard.py:5448: AssertionError
+_ test_a_field_of_limits_audit_registry_or_evidence_replaced_after_the_seal_is_counted[_evidence-scrub] _
+
+tmp_path = PosixPath('/tmp/pytest-of-unknown/pytest-860/test_a_field_of_limits_audit_r7')
+member = '_evidence', field = 'scrub'
+
+    @pytest.mark.parametrize(
+        ("member", "field"),
+        [
+            ("limits", "store"),
+            ("limits", "audit"),
+            ("limits", "registry"),
+            ("audit", "root"),
+            ("audit", "_pending"),
+            ("registry", "agents"),
+            ("registry", "config"),
+            ("_evidence", "scrub"),
+        ],
+    )
+    def test_a_field_of_limits_audit_registry_or_evidence_replaced_after_the_seal_is_counted(
+        tmp_path: Path, member: str, field: str
+    ) -> None:
+        """Class: SEAL-COMPLETE (round 11, issue 1). Trace (see the CHANGELOG): ``handle``, ``tick`` and ``on_decided`` reach
+        ``limits.store``, ``limits.audit``, ``limits.registry`` (``Limits.blocked`` and ``charge``), the audit sink's own
+        fields, the registry's members and the evidence settings, so each is compared. Fails on 82dd69c1 (those four
+        members were compared by identity only)."""
+        app = _built(tmp_path)
+        rt = _core_runtime(app)
+        owner = _fields(rt)[member]
+        own = _fields(owner)
+        assert not _runtime_counted(app, rt), "control"
+        was = own[field]
+        own[field] = _Opaque()
+        try:
+>           assert _runtime_counted(app, rt), f"{member}.{field} replaced was not counted"
+E           AssertionError: _evidence.scrub replaced was not counted
+E           assert False
+E            +  where False = _runtime_counted(<tests.test_bindguard._Built object at 0x7f33e4a0c450>, <hadavin_sdk.runtime.agent_loop.Runtime object at 0x7f33e56f37f0>)
+
+tests/test_bindguard.py:5448: AssertionError
+______ test_a_name_added_to_limits_audit_registry_or_evidence_is_counted _______
+
+tmp_path = PosixPath('/tmp/pytest-of-unknown/pytest-860/test_a_name_added_to_limits_au0')
+
+    def test_a_name_added_to_limits_audit_registry_or_evidence_is_counted(tmp_path: Path) -> None:
+        """Class: SEAL-COMPLETE (round 11, issue 1): a new instance name on one of the four members. Fails on 82dd69c1."""
+        app = _built(tmp_path)
+        rt = _core_runtime(app)
+        for member in ("limits", "audit", "registry"):
+            own = _fields(_fields(rt)[member])
+            own["a_name_the_class_never_had"] = _Opaque()
+            try:
+>               assert _runtime_counted(app, rt), f"a name added to {member} was not counted"
+E               AssertionError: a name added to limits was not counted
+E               assert False
+E                +  where False = _runtime_counted(<tests.test_bindguard._Built object at 0x7f33e4073dd0>, <hadavin_sdk.runtime.agent_loop.Runtime object at 0x7f33e56f2df0>)
+
+tests/test_bindguard.py:5462: AssertionError
+_ test_an_object_put_in_a_hook_field_runs_no_code_of_its_own_before_it_is_compared _
+
+tmp_path = PosixPath('/tmp/pytest-of-unknown/pytest-860/test_an_object_put_in_a_hook_f0')
+
+    def test_an_object_put_in_a_hook_field_runs_no_code_of_its_own_before_it_is_compared(
+        tmp_path: Path,
+    ) -> None:
+        """Class: FOREIGN-CODE-BEFORE-AUTH (round 11, issue 1). A replacement whose class has a ``__dict__`` property: the
+        walk compared fields first and read the instance dictionary of the replacement. Now the object is compared (identity)
+        before anything is read from it. Fails on 82dd69c1 (the call list holds one entry)."""
+        app = _built(tmp_path)
+        rt = _core_runtime(app)
+        calls: list[str] = []
+        hostile = _recording_dict_class(calls)()
+        fields = _fields(rt.hooks)
+        for name in ("execute", "post_card", "toolbox", "validate_proposal"):
+            was = fields[name]
+            fields[name] = hostile
+            try:
+                assert _runtime_counted(app, rt), f"hooks.{name} replaced was not counted"
+            finally:
+                fields[name] = was
+>       assert calls == [], f"the foreign __dict__ property ran: {calls}"
+E       AssertionError: the foreign __dict__ property ran: ['dict', 'dict', 'dict', 'dict']
+E       assert ['dict', 'dic...dict', 'dict'] == []
+E         
+E         Left contains 4 more items, first extra item: 'dict'
+E         
+E         Full diff: (-: missing in left side, +: extra in left side)
+E         - []
+E         + [
+E         +     'dict',...
+E         
+E         ...Full output truncated, use '-vv' to show
+
+tests/test_bindguard.py:5494: AssertionError
+____ test_an_entered_object_whose_class_is_swapped_runs_no_code_of_its_own _____
+
+tmp_path = PosixPath('/tmp/pytest-of-unknown/pytest-860/test_an_entered_object_whose_c0')
+
+    def test_an_entered_object_whose_class_is_swapped_runs_no_code_of_its_own(tmp_path: Path) -> None:
+        """Class: FOREIGN-CODE-BEFORE-AUTH (round 11, issue 1). The recorded object stays the same but its ``__class__`` is
+        assigned a subclass with a ``__dict__`` property: the class is compared before the instance dictionary is read.
+        Fails on 82dd69c1."""
+        app = _built(tmp_path)
+        rt = _core_runtime(app)
+        executor = rt.hooks.execute.__self__
+        calls: list[str] = []
+    
+        def recording(self: object) -> dict:
+            calls.append("dict")
+            return {}
+    
+        Swapped = type("Swapped", (type(executor),), {"__dict__": property(recording)})
+    
+        original = type(executor)
+        executor.__class__ = Swapped
+        try:
+            assert _runtime_counted(app, rt), "an executor of a swapped class was not counted"
+        finally:
+            executor.__class__ = original
+>       assert calls == [], f"the swapped class ran its __dict__ property: {calls}"
+E       AssertionError: the swapped class ran its __dict__ property: ['dict', 'dict', 'dict']
+E       assert ['dict', 'dict', 'dict'] == []
+E         
+E         Left contains 3 more items, first extra item: 'dict'
+E         
+E         Full diff: (-: missing in left side, +: extra in left side)
+E         - []
+E         + [
+E         +     'dict',...
+E         
+E         ...Full output truncated, use '-vv' to show
+
+tests/test_bindguard.py:5527: AssertionError
+__________ test_the_seal_refuses_an_object_that_is_not_a_core_runtime __________
+
+    def test_the_seal_refuses_an_object_that_is_not_a_core_runtime() -> None:
+        """Class: API (round 11, issue 4): ``_seal_runtime`` accepts the exact core ``Runtime`` only. Fails on 82dd69c1."""
+        from hadavin_sdk.approvals import requests as R
+    
+        class Imposter:
+            pass
+    
+>       with pytest.raises(TypeError, match="only a core Runtime"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'only a core Runtime'
+E         Actual message: "descriptor '__iter__' requires a 'set' object but received a 'NoneType'"
+
+tests/test_bindguard.py:5617: AssertionError
+____ test_a_runtime_with_more_hook_objects_than_the_cap_is_refused_at_build ____
+
+tmp_path = PosixPath('/tmp/pytest-of-unknown/pytest-860/test_a_runtime_with_more_hook_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f33e561c210>
+
+    def test_a_runtime_with_more_hook_objects_than_the_cap_is_refused_at_build(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Class: LIMITS (round 11, issue 3). ``_WALK_NODES`` is enforced inside the loops and at seal time: a build over
+        the cap raises, and the text says the seal is over budget. Fails on 82dd69c1 (no error at build)."""
+        from hadavin_sdk.approvals import requests as R
+    
+        app = _built(tmp_path)
+        rt = _core_runtime(app)
+>       need = _seal_cost_walk(rt)
+               ^^^^^^^^^^^^^^^^^^^
+
+tests/test_bindguard.py:5636: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+rt = <hadavin_sdk.runtime.agent_loop.Runtime object at 0x7f33e56f1810>
+
+    def _seal_cost_walk(rt: object) -> int:
+        from hadavin_sdk.approvals import requests as R
+    
+>       return len(R._RUNTIME_SEALS[rt][4]) + len(R._RUNTIME_SEALS[rt][6])
+                                                  ^^^^^^^^^^^^^^^^^^^^^^^
+E       IndexError: tuple index out of range
+
+tests/test_bindguard.py:5624: IndexError
+________________ test_a_walk_cap_equal_to_the_need_still_seals _________________
+
+tmp_path = PosixPath('/tmp/pytest-of-unknown/pytest-860/test_a_walk_cap_equal_to_the_n0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f33e561ca60>
+
+    def test_a_walk_cap_equal_to_the_need_still_seals(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Class: LIMITS (round 11, issue 3), the edge: exactly the number of objects the walk needs is accepted."""
+        from hadavin_sdk.approvals import requests as R
+    
+        app = _built(tmp_path)
+        rt = _core_runtime(app)
+        hooks_need = len(R._RUNTIME_SEALS[rt][4])
+>       members_need = len(R._RUNTIME_SEALS[rt][6])
+                           ^^^^^^^^^^^^^^^^^^^^^^^
+E       IndexError: tuple index out of range
+
+tests/test_bindguard.py:5651: IndexError
+_ test_a_walk_that_grows_past_the_cap_after_the_seal_says_the_seal_is_over_budget _
+
+tmp_path = PosixPath('/tmp/pytest-of-unknown/pytest-860/test_a_walk_that_grows_past_th0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f33e561d1d0>
+
+    def test_a_walk_that_grows_past_the_cap_after_the_seal_says_the_seal_is_over_budget(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Class: LIMITS (round 11, issue 3): the refusal names the cause, not ``on_decided``."""
+        from hadavin_sdk.approvals import requests as R
+    
+        app = _built(tmp_path)
+        rt = _core_runtime(app)
+        monkeypatch.setattr(R, "_WALK_NODES", len(R._RUNTIME_SEALS[rt][4]) - 1)
+        held = _approvals_with(app, make_on_decided({"rt": rt})).held_services()
+>       assert "seal_over_budget" in held and "on_decided" not in held, f"the names were {sorted(held)}"
+E       AssertionError: the names were ['channel', 'detector', 'on_decided', 'secrets', 'store']
+E       assert ('seal_over_budget' in {'secrets': <hadavin_sdk.actions.secrets.FakeSecretProvider object at 0x7f33e3d50780>, 'channel': <hadavin_sdk.approvals.channel.FakeChannel object at 0x7f33e4a42ed0>, 'detector': <hadavin_sdk.guard.injection.RegexDetector object at 0x7f33e3c16c60>, 'store': <hadavin_sdk.store.memory.MemoryStore object at 0x7f33e560c680>, ...})
+
+tests/test_bindguard.py:5667: AssertionError
+______________ test_the_read_errors_are_exactly_these_named_types ______________
+
+    def test_the_read_errors_are_exactly_these_named_types() -> None:
+        """Class: BROAD-EXCEPT (round 11, issue 5): the tuple is a fixed list, never ``Exception`` itself."""
+>       assert standins.READ_ERRORS == (
+               ^^^^^^^^^^^^^^^^^^^^
+            AttributeError,
+            TypeError,
+            ValueError,
+            LookupError,
+            ArithmeticError,
+            RuntimeError,
+            OSError,
+        ), "the read errors are not the named list"
+E       AttributeError: module 'hadavin_sdk.standins' has no attribute 'READ_ERRORS'
+
+tests/test_bindguard.py:5708: AttributeError
+_______________ test_an_unnamed_error_type_comes_out_of_the_scan _______________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f33e38f5fd0>
+
+    def test_an_unnamed_error_type_comes_out_of_the_scan(monkeypatch: pytest.MonkeyPatch) -> None:
+        """Class: BROAD-EXCEPT, site ``standins._answer``: an unnamed type propagates (loud), it is not "real"."""
+        monkeypatch.setattr(standins, "_check", _raiser(_Unnamed))
+>       with pytest.raises(_Unnamed):
+             ^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE _Unnamed
+
+tests/test_bindguard.py:5733: Failed
+________ test_an_unnamed_error_type_comes_out_of_the_pinned_class_check ________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f33e38f5470>
+
+    def test_an_unnamed_error_type_comes_out_of_the_pinned_class_check(
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Class: BROAD-EXCEPT, site ``standins.is_pinned_instance``."""
+        monkeypatch.setattr(standins, "live_class", _raiser(RuntimeError))
+        assert standins.is_pinned_instance(object()) is False
+        monkeypatch.setattr(standins, "live_class", _raiser(_Unnamed))
+>       with pytest.raises(_Unnamed):
+             ^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE _Unnamed
+
+tests/test_bindguard.py:5744: Failed
+________ test_an_unnamed_error_type_comes_out_of_the_held_mapping_read _________
+
+    def test_an_unnamed_error_type_comes_out_of_the_held_mapping_read() -> None:
+        """Class: BROAD-EXCEPT, site ``bindguard.held_services_found`` (the mapping)."""
+    
+        class Mapping(dict):
+            error: type[Exception] = RuntimeError
+    
+            def items(self) -> Any:
+                raise self.error("hostile")
+    
+        named = Mapping(a=1)
+        assert bindguard.held_services_found(named) == ("held (unreadable)",)
+        unnamed = Mapping(a=1)
+        unnamed.error = _Unnamed
+>       with pytest.raises(_Unnamed):
+             ^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE _Unnamed
+
+tests/test_bindguard.py:5761: Failed
+_________ test_an_unnamed_error_type_comes_out_of_the_held_object_read _________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f33e38f4a60>
+
+    def test_an_unnamed_error_type_comes_out_of_the_held_object_read(
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Class: BROAD-EXCEPT, site ``bindguard.held_services_found`` (one object)."""
+        monkeypatch.setattr(bindguard, "verdict", _raiser(RuntimeError))
+        assert bindguard.held_services_found({"x": object()}) == ("held (unreadable)",)
+        monkeypatch.setattr(bindguard, "verdict", _raiser(_Unnamed))
+>       with pytest.raises(_Unnamed):
+             ^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE _Unnamed
+
+tests/test_bindguard.py:5772: Failed
+__________ test_an_unnamed_error_type_comes_out_of_the_runtime_check ___________
+
+tmp_path = PosixPath('/tmp/pytest-of-unknown/pytest-860/test_an_unnamed_error_type_com0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f33e562b4d0>
+
+    def test_an_unnamed_error_type_comes_out_of_the_runtime_check(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Class: BROAD-EXCEPT, site ``requests._runtime_ok``: a named type counts the runtime, an unnamed one is loud."""
+        app = _built(tmp_path)
+        rt = _core_runtime(app)
+        assert not _runtime_counted(app, rt), "control: the runtime is believed"
+        monkeypatch.setattr(standins, "is_stand_in", _raiser(RuntimeError))
+        assert _runtime_counted(app, rt)
+        monkeypatch.setattr(standins, "is_stand_in", _raiser(_Unnamed))
+>       with pytest.raises(_Unnamed):
+             ^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE _Unnamed
+
+tests/test_bindguard.py:5786: Failed
+_________ test_an_unnamed_error_type_comes_out_of_the_over_budget_walk _________
+
+tmp_path = PosixPath('/tmp/pytest-of-unknown/pytest-860/test_an_unnamed_error_type_com1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f33e562bee0>
+
+    def test_an_unnamed_error_type_comes_out_of_the_over_budget_walk(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Class: BROAD-EXCEPT, site ``requests._seal_over_budget``."""
+        from hadavin_sdk.approvals import requests as R
+    
+        app = _built(tmp_path)
+        rt = _core_runtime(app)
+        _fields(rt)["extra_name"] = (
+            1  # a name added after the seal: the seal check fails and the walk is asked
+        )
+>       monkeypatch.setattr(R, "_members_walk", _raiser(RuntimeError))
+E       AttributeError: <module 'hadavin_sdk.approvals.requests' from '/home/user/build/wt/ER-pdbind12-82dd69c1/src/hadavin_sdk/approvals/requests.py'> has no attribute '_members_walk'
+
+tests/test_bindguard.py:5801: AttributeError
+_________ test_an_unnamed_error_type_comes_out_of_the_receiver_recheck _________
+
+stand_in_config = Config(environment='demo', routes={'default': Route(model_id='fake-model', input_usd_per_mtok=Decimal('3.00'), output_...}, executor_timeout_s=10.0, root=PosixPath('/tmp/pytest-of-unknown/pytest-860/test_an_unnamed_error_type_com2/config'))
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f33e5270c90>
+
+    def test_an_unnamed_error_type_comes_out_of_the_receiver_recheck(
+        stand_in_config: Config, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Class: BROAD-EXCEPT, sites ``receiver._recheck`` and ``receiver.serve``."""
+        from hadavin_sdk.approvals import receiver
+    
+        cfg = stand_in_config
+        approvals = _Approvals(cfg)
+        monkeypatch.setattr(standins, "is_pinned_instance", _raiser(RuntimeError))
+        assert receiver._recheck(approvals) == (
+            "the approvals object could not be read (a slot is missing)",
+        )
+        with pytest.raises(BindRefused, match="could not read"):
+            serve(approvals, config=cfg, host=ALL_ZEROS, port=0)
+        monkeypatch.setattr(standins, "is_pinned_instance", _raiser(_Unnamed))
+>       with pytest.raises(_Unnamed):
+             ^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE _Unnamed
+
+tests/test_bindguard.py:5842: Failed
+___________ test_an_unnamed_error_type_comes_out_of_the_refusal_log ____________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f33e52700c0>
+
+    def test_an_unnamed_error_type_comes_out_of_the_refusal_log(
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Class: BROAD-EXCEPT, site ``receiver._refused``: an OSError of the log is hidden, an unnamed type is not."""
+        from hadavin_sdk.approvals import receiver
+    
+        monkeypatch.setattr(receiver, "_LAST_LOGGED", {})
+        monkeypatch.setattr(receiver._LOG, "warning", _raiser(OSError))
+        receiver._refused(("held x: A",))
+        monkeypatch.setattr(receiver._LOG, "warning", _raiser(_Unnamed))
+>       with pytest.raises(_Unnamed):
+             ^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE _Unnamed
+
+tests/test_bindguard.py:5858: Failed
+____ test_a_tool_with_a_keyword_default_replaced_after_the_seal_is_counted _____
+
+tmp_path = PosixPath('/tmp/pytest-of-unknown/pytest-860/test_a_tool_with_a_keyword_def0')
+
+    def test_a_tool_with_a_keyword_default_replaced_after_the_seal_is_counted(tmp_path: Path) -> None:
+        """Class: WALK-REACH, closed item ``__kwdefaults__``."""
+    
+        def tool(*, key: object = None) -> object:
+            return key
+    
+        cast(Any, tool).__kwdefaults__ = {"key": object()}
+        app, rt = _sealed_tool(tmp_path, tool)
+        cast(Any, tool).__kwdefaults__["key"] = object()
+>       assert _runtime_counted(app, rt), "a replaced keyword default was not counted"
+E       AssertionError: a replaced keyword default was not counted
+E       assert False
+E        +  where False = _runtime_counted(<tests.test_bindguard._Built object at 0x7f33e5638cd0>, <hadavin_sdk.runtime.agent_loop.Runtime object at 0x7f33e56f3110>)
+
+tests/test_bindguard.py:5896: AssertionError
+___ test_a_tool_with_its_wrapped_function_replaced_after_the_seal_is_counted ___
+
+tmp_path = PosixPath('/tmp/pytest-of-unknown/pytest-860/test_a_tool_with_its_wrapped_f0')
+
+    def test_a_tool_with_its_wrapped_function_replaced_after_the_seal_is_counted(
+        tmp_path: Path,
+    ) -> None:
+        """Class: WALK-REACH, closed item the function's own dictionary (``__wrapped__`` lives there)."""
+    
+        def inner() -> None:
+            return None
+    
+        def tool() -> None:
+            return None
+    
+        cast(Any, tool).__wrapped__ = inner
+        app, rt = _sealed_tool(tmp_path, tool)
+        cast(Any, tool).__wrapped__ = lambda: None
+>       assert _runtime_counted(app, rt), "a replaced __wrapped__ was not counted"
+E       AssertionError: a replaced __wrapped__ was not counted
+E       assert False
+E        +  where False = _runtime_counted(<tests.test_bindguard._Built object at 0x7f33e4ab9ed0>, <hadavin_sdk.runtime.agent_loop.Runtime object at 0x7f33e56f14f0>)
+
+tests/test_bindguard.py:5913: AssertionError
+______ test_an_item_deeper_than_the_walk_depth_is_not_seen_after_the_seal ______
+
+tmp_path = PosixPath('/tmp/pytest-of-unknown/pytest-860/test_an_item_deeper_than_the_w0')
+
+    def test_an_item_deeper_than_the_walk_depth_is_not_seen_after_the_seal(tmp_path: Path) -> None:
+        """Class: KEPT-LIMIT (CHANGELOG, WALK-DEPTH): the walk enters four levels below a hook field. A default that is a
+        list is held by identity at the fourth level; an item INSIDE that list (the fifth level) that is replaced is not seen.
+        This is a pin of the limit, not a wish: raising the depth would make the cost of a request grow."""
+        deep: list[object] = [object()]
+    
+        def tool(arg: object = deep) -> object:
+            return arg
+    
+        app, rt = _sealed_tool(tmp_path, tool)
+        deep[0] = object()  # the item at the fifth level is replaced
+>       assert not _runtime_counted(app, rt), (
+            "a change below the walk depth was seen: the CHANGELOG limit is out of date"
+        )
+E       AssertionError: a change below the walk depth was seen: the CHANGELOG limit is out of date
+E       assert not True
+E        +  where True = _runtime_counted(<tests.test_bindguard._Built object at 0x7f33e56394d0>, <hadavin_sdk.runtime.agent_loop.Runtime object at 0x7f33e56f84b0>)
+
+tests/test_bindguard.py:5945: AssertionError
+_________ test_a_field_removed_at_the_very_end_of_the_walk_is_counted __________
+
+tmp_path = PosixPath('/tmp/pytest-of-unknown/pytest-860/test_a_field_removed_at_the_ve0')
+
+    def test_a_field_removed_at_the_very_end_of_the_walk_is_counted(tmp_path: Path) -> None:
+        """Class: WALK-REACH, the final length check (``Walk.done``): the walk ends early, so nothing after it mismatches
+        and only the count of what was met tells."""
+        app = _built(tmp_path)
+        rt = _core_runtime(app)
+        fields = _fields(rt._evidence)
+        assert fields, "control: the evidence settings have no field"
+        del fields[next(reversed(fields))]
+>       assert _runtime_counted(app, rt), "a name removed at the end of the walk was not counted"
+E       AssertionError: a name removed at the end of the walk was not counted
+E       assert False
+E        +  where False = _runtime_counted(<tests.test_bindguard._Built object at 0x7f33e4ab8bd0>, <hadavin_sdk.runtime.agent_loop.Runtime object at 0x7f33e56f9450>)
+
+tests/test_bindguard.py:5958: AssertionError
+_____ test_the_seal_holds_no_copy_of_a_secret_text_or_bytes_a_hook_carries _____
+
+tmp_path = PosixPath('/tmp/pytest-of-unknown/pytest-860/test_the_seal_holds_no_copy_of0')
+
+    def test_the_seal_holds_no_copy_of_a_secret_text_or_bytes_a_hook_carries(tmp_path: Path) -> None:
+        """Class: HARDENING (round 11, issue 7): a ``bytes`` or text value a hook carries (a key) is written down as a keyed
+        digest, so the seal table is not a second place that holds the key. Fails on 82dd69c1 (the bytes were stored)."""
+        from hadavin_sdk.approvals import requests as R
+    
+        key = b"restored" + b"-key-" + b"b12"
+        text = "text-" + "secret-" + "b12"
+    
+        def tool(a: object = key, b: object = text) -> object:
+            return a, b
+    
+        app, rt = _sealed_tool(tmp_path, tool)
+        inside = _flatten(R._RUNTIME_SEALS[rt])
+>       assert not any(v == key or v == text for v in inside if isinstance(v, bytes | str)), (
+            "a secret value is in the seal"
+        )
+E       AssertionError: a secret value is in the seal
+E       assert not True
+E        +  where True = any(<generator object test_the_seal_holds_no_copy_of_a_secret_text_or_bytes_a_hook_carries.<locals>.<genexpr> at 0x7f33e56ce980>)
+
+tests/test_bindguard.py:6045: AssertionError
+_________________ test_a_dead_weak_mark_is_not_matched_by_none _________________
+
+tmp_path = PosixPath('/tmp/pytest-of-unknown/pytest-860/test_a_dead_weak_mark_is_not_m0')
+
+    def test_a_dead_weak_mark_is_not_matched_by_none(tmp_path: Path) -> None:
+        """Class: HARDENING (round 11, issue 7): the seal holds a weak reference; when the object it named is gone the
+        reference answers ``None``, and a field now holding ``None`` must not read as "the same object"."""
+        import gc
+    
+        app = _built(tmp_path)
+        rt = _core_runtime(app)
+        tools = _fields(rt.hooks)["tools"]
+    
+        class Plain:
+            pass
+    
+        tools["extra"] = Plain()  # no children, so only the weak mark can tell it from None
+        _seal(rt)
+        assert not _runtime_counted(app, rt), "control: sealed"
+        tools["extra"] = None
+        gc.collect()
+>       assert _runtime_counted(app, rt), "None was taken for the dead object the seal named"
+E       AssertionError: None was taken for the dead object the seal named
+E       assert False
+E        +  where False = _runtime_counted(<tests.test_bindguard._Built object at 0x7f33e4a0c050>, <hadavin_sdk.runtime.agent_loop.Runtime object at 0x7f33e56f8d70>)
+
+tests/test_bindguard.py:6069: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_bindguard.py::test_an_object_read_after_the_budget_ran_out_is_not_blamed_for_it
+FAILED tests/test_bindguard.py::test_the_line_about_the_object_that_used_the_budget_calls_nothing_on_it
+FAILED tests/test_bindguard.py::test_a_field_of_limits_audit_registry_or_evidence_replaced_after_the_seal_is_counted[limits-store]
+FAILED tests/test_bindguard.py::test_a_field_of_limits_audit_registry_or_evidence_replaced_after_the_seal_is_counted[limits-audit]
+FAILED tests/test_bindguard.py::test_a_field_of_limits_audit_registry_or_evidence_replaced_after_the_seal_is_counted[limits-registry]
+FAILED tests/test_bindguard.py::test_a_field_of_limits_audit_registry_or_evidence_replaced_after_the_seal_is_counted[audit-root]
+FAILED tests/test_bindguard.py::test_a_field_of_limits_audit_registry_or_evidence_replaced_after_the_seal_is_counted[audit-_pending]
+FAILED tests/test_bindguard.py::test_a_field_of_limits_audit_registry_or_evidence_replaced_after_the_seal_is_counted[registry-agents]
+FAILED tests/test_bindguard.py::test_a_field_of_limits_audit_registry_or_evidence_replaced_after_the_seal_is_counted[registry-config]
+FAILED tests/test_bindguard.py::test_a_field_of_limits_audit_registry_or_evidence_replaced_after_the_seal_is_counted[_evidence-scrub]
+FAILED tests/test_bindguard.py::test_a_name_added_to_limits_audit_registry_or_evidence_is_counted
+FAILED tests/test_bindguard.py::test_an_object_put_in_a_hook_field_runs_no_code_of_its_own_before_it_is_compared
+FAILED tests/test_bindguard.py::test_an_entered_object_whose_class_is_swapped_runs_no_code_of_its_own
+FAILED tests/test_bindguard.py::test_the_seal_refuses_an_object_that_is_not_a_core_runtime
+FAILED tests/test_bindguard.py::test_a_runtime_with_more_hook_objects_than_the_cap_is_refused_at_build
+FAILED tests/test_bindguard.py::test_a_walk_cap_equal_to_the_need_still_seals
+FAILED tests/test_bindguard.py::test_a_walk_that_grows_past_the_cap_after_the_seal_says_the_seal_is_over_budget
+FAILED tests/test_bindguard.py::test_the_read_errors_are_exactly_these_named_types
+FAILED tests/test_bindguard.py::test_an_unnamed_error_type_comes_out_of_the_scan
+FAILED tests/test_bindguard.py::test_an_unnamed_error_type_comes_out_of_the_pinned_class_check
+FAILED tests/test_bindguard.py::test_an_unnamed_error_type_comes_out_of_the_held_mapping_read
+FAILED tests/test_bindguard.py::test_an_unnamed_error_type_comes_out_of_the_held_object_read
+FAILED tests/test_bindguard.py::test_an_unnamed_error_type_comes_out_of_the_runtime_check
+FAILED tests/test_bindguard.py::test_an_unnamed_error_type_comes_out_of_the_over_budget_walk
+FAILED tests/test_bindguard.py::test_an_unnamed_error_type_comes_out_of_the_receiver_recheck
+FAILED tests/test_bindguard.py::test_an_unnamed_error_type_comes_out_of_the_refusal_log
+FAILED tests/test_bindguard.py::test_a_tool_with_a_keyword_default_replaced_after_the_seal_is_counted
+FAILED tests/test_bindguard.py::test_a_tool_with_its_wrapped_function_replaced_after_the_seal_is_counted
+FAILED tests/test_bindguard.py::test_an_item_deeper_than_the_walk_depth_is_not_seen_after_the_seal
+FAILED tests/test_bindguard.py::test_a_field_removed_at_the_very_end_of_the_walk_is_counted
+FAILED tests/test_bindguard.py::test_the_seal_holds_no_copy_of_a_secret_text_or_bytes_a_hook_carries
+FAILED tests/test_bindguard.py::test_a_dead_weak_mark_is_not_matched_by_none
+================== 32 failed, 338 passed, 1 skipped in 33.48s ==================

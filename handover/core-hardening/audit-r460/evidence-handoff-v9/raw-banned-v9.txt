@@ -1,0 +1,19 @@
+banned strings loaded: 10
+handover/core-hardening/audit-r460/CORE-PR-HANDOFF-v9.md: 0
+handover/core-hardening/audit-r460/CORE-PR-HANDOFF-v9-other-tracks.md: 0
+handover/core-hardening/audit-r460/v9-CHANGES.md: 0
+handover/core-hardening/audit-r460/evidence-handoff-v9/banned_count_v9.py: 0
+handover/core-hardening/audit-r460/evidence-handoff-v9/cite_check_v9.py: 0
+handover/core-hardening/audit-r460/evidence-handoff-v9/import_graph_v9.py: 0
+handover/core-hardening/audit-r460/evidence-handoff-v9/mk_other.py: 0
+handover/core-hardening/audit-r460/evidence-handoff-v9/raw-banned-v9.txt: 0
+handover/core-hardening/audit-r460/evidence-handoff-v9/raw-cite-check-v9-other.txt: 0
+handover/core-hardening/audit-r460/evidence-handoff-v9/raw-cite-check-v9.txt: 0
+handover/core-hardening/audit-r460/evidence-handoff-v9/raw-greps-v9.txt: 0
+handover/core-hardening/audit-r460/evidence-handoff-v9/raw-import-graph-v9-first-run.txt: 0
+handover/core-hardening/audit-r460/evidence-handoff-v9/raw-import-graph-v9.txt: 0
+handover/core-hardening/audit-r460/evidence-handoff-v9/raw-needed-verdicts-v9.txt: 0
+handover/core-hardening/audit-r460/evidence-handoff-v9/raw-nit-greps-v9.txt: 0
+handover/core-hardening/audit-r460/evidence-handoff-v9/raw-snippets-v9.txt: 0
+handover/core-hardening/audit-r460/evidence-handoff-v9/snippet_check_v9.py: 0
+TOTAL banned-string matches: 0

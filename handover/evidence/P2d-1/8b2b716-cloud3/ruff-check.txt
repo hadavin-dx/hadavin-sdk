@@ -1,0 +1,4 @@
+HEAD 8b2b71685c4a83d6e1d4abc8e93b90998dce36d1
+$ /home/user/build/venv-p77-313/bin/ruff check src tests demos tools
+All checks passed!
+exit=0

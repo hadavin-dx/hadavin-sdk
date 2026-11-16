@@ -1,0 +1,7 @@
+cites 327 out_of_range 5
+OUT CORE-PR-HANDOFF-v10.md 17 src/hadavin_sdk/llm/retry.py 20 110 len 108
+OUT CORE-PR-HANDOFF-v10.md 188 src/hadavin_sdk/guard/injection.py 239 250 len 101
+OUT CORE-PR-HANDOFF-v10.md 188 src/hadavin_sdk/guard/injection.py 421 421 len 101
+OUT CORE-PR-HANDOFF-v10.md 189 src/hadavin_sdk/guard/injection.py 318 322 len 101
+OUT CORE-PR-HANDOFF-v10-other-tracks.md 129 tests/warden_port/test_redaction.py 513 513 len 456
+no identifier hit: 80

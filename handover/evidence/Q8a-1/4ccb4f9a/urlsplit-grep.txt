@@ -1,0 +1,43 @@
+src/hadavin_sdk/actions/executor.py:16:from urllib.parse import quote
+src/hadavin_sdk/actions/secrets_vault.py:32:from hadavin_sdk.safe_url import safe_urlsplit
+src/hadavin_sdk/actions/secrets_vault.py:67:        if safe_urlsplit(self.address).hostname in {"127.0.0.1", "localhost", "::1"}:
+src/hadavin_sdk/config.py:28:from hadavin_sdk.safe_url import NOT_A_URL, InvalidUrl, safe_urlsplit
+src/hadavin_sdk/config.py:185:    parts = safe_urlsplit(url)
+src/hadavin_sdk/config.py:194:        parts = safe_urlsplit(url)
+src/hadavin_sdk/config.py:507:    sentence), false if it came out of a library call (`urlsplit`, `int()`, `Decimal`, ...) whose text quotes the
+src/hadavin_sdk/llm/common.py:21:from hadavin_sdk.safe_url import safe_urlsplit
+src/hadavin_sdk/llm/common.py:263:    opener = _LOCAL_OPENER if safe_urlsplit(url).hostname in _LOOPBACK else _OPENER
+src/hadavin_sdk/llm/gemini.py:15:from urllib.parse import quote
+src/hadavin_sdk/llm/openai_compat.py:31:from hadavin_sdk.safe_url import safe_urlsplit
+src/hadavin_sdk/llm/openai_compat.py:49:    return safe_urlsplit(base_url).hostname in _LOOPBACK and ":" not in model_id
+src/hadavin_sdk/approvals/hmac_v0.py:15:from urllib.parse import parse_qs
+src/hadavin_sdk/approvals/hmac_v0.py:68:        payload = json.loads(parse_qs(body.decode("utf-8"))["payload"][0])
+src/hadavin_sdk/sources/kubernetes.py:17:from urllib.parse import quote
+src/hadavin_sdk/safe_url.py:4:Why it exists. `urllib.parse.urlsplit` raises a `ValueError` whose text holds the value it was given (for a host
+src/hadavin_sdk/safe_url.py:7:terminal. `safe_urlsplit` turns every such error into the same fixed sentence and drops the cause. It also reads the
+src/hadavin_sdk/safe_url.py:13:from urllib.parse import SplitResult, urlsplit
+src/hadavin_sdk/safe_url.py:22:def safe_urlsplit(value: str) -> SplitResult:
+src/hadavin_sdk/safe_url.py:23:    """`urlsplit(value)`, or `InvalidUrl` (a `ValueError` with a fixed sentence and no cause) when it cannot be read."""
+src/hadavin_sdk/safe_url.py:25:        parts = urlsplit(value)
+src/hadavin_sdk/backends/table.py:18:from hadavin_sdk.safe_url import safe_urlsplit
+src/hadavin_sdk/backends/table.py:80:        url = safe_urlsplit(self.base_url)
+src/hadavin_sdk/backends/table.py:171:            url = safe_urlsplit(self.endpoint_url)
+src/hadavin_sdk/backends/table.py:274:        url = safe_urlsplit(self.address)
+src/hadavin_sdk/backends/table.py:377:        return [safe_urlsplit(s.endpoint_url).hostname or ""]
+src/hadavin_sdk/backends/table.py:405:            hosts=lambda s: [safe_urlsplit(s.address).hostname or ""],
+src/hadavin_sdk/backends/table.py:414:                safe_urlsplit(s.vault_url).hostname or "",
+src/hadavin_sdk/backends/table.py:453:            hosts=lambda s: [safe_urlsplit(s.key_id).hostname or "", "login.microsoftonline.com"],
+src/hadavin_sdk/backends/table.py:467:            hosts=lambda s: [safe_urlsplit(s.address).hostname or ""],
+src/hadavin_sdk/backends/table.py:488:                safe_urlsplit(s.account_url).hostname or "",
+src/hadavin_sdk/backends/table.py:541:            hosts=lambda s: [safe_urlsplit(s.base_url).hostname or ""],
+src/hadavin_sdk/backends/table.py:572:            hosts=lambda s: [safe_urlsplit(s.api_base).hostname or ""],
+src/hadavin_sdk/app.py:45:from hadavin_sdk.safe_url import safe_urlsplit
+src/hadavin_sdk/app.py:398:    parts = safe_urlsplit(kind.endpoint(settings))
+src/hadavin_sdk/app.py:449:    return (safe_urlsplit(kind.endpoint(kind.settings(**sc.settings))).hostname or "").lower()
+src/hadavin_sdk/tools.py:38:from urllib.parse import quote, quote_plus, urlunsplit
+src/hadavin_sdk/tools.py:47:from hadavin_sdk.safe_url import safe_urlsplit
+src/hadavin_sdk/tools.py:573:        parts = safe_urlsplit(url)
+src/hadavin_sdk/tools.py:605:        url = urlunsplit((parts.scheme, netloc, parts.path, parts.query, ""))
+src/hadavin_sdk/guard/runmap.py:22:from urllib.parse import unquote
+src/hadavin_sdk/guard/egress.py:7:from hadavin_sdk.safe_url import InvalidUrl, safe_urlsplit
+src/hadavin_sdk/guard/egress.py:28:        host = safe_urlsplit(host_or_url).hostname if "://" in host_or_url else host_or_url

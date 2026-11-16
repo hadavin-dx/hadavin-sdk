@@ -1,0 +1,12 @@
+fc77df07 worktree HEAD=fc77df0782607535775ce44a202874dbc8c46ca4 dirty=0
+imported /home/user/build/EV-Q8a2-02068eb-c1/src/hadavin_sdk/__init__.py
+fc77df07 pytest rc=0 dur=162s last: 125 passed in 159.75s (0:02:39)
+fc77df07 ruff check rc=0 last: All checks passed!
+ccb4eb57 worktree HEAD=ccb4eb57f2d1bf80a5d6452020094ab4d87d390b dirty=0
+imported /home/user/build/EV-Q8a2-02068eb-c2/src/hadavin_sdk/__init__.py
+ccb4eb57 pytest rc=0 dur=75s last: 125 passed in 71.97s (0:01:11)
+ccb4eb57 ruff check rc=0 last: All checks passed!
+02068ebe worktree HEAD=02068ebe718afac418f5402e1b4964c617f4ff04 dirty=0
+imported /home/user/build/EV-Q8a2-02068eb/src/hadavin_sdk/__init__.py
+02068ebe pytest rc=0 dur=77s last: 191 passed in 74.47s (0:01:14)
+02068ebe ruff check rc=0 last: All checks passed!

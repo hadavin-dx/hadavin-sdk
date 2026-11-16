@@ -1,0 +1,12 @@
+### tests/test_migration_rules.py::test_every_caller_in_the_package_uses_the_right_form rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_____________ test_every_caller_in_the_package_uses_the_right_form _____________
+tests/test_migration_rules.py:251: in test_every_caller_in_the_package_uses_the_right_form
+    assert not bad, bad
+E   AssertionError: {'src/hadavin_sdk/store/migrate.py': ['line 153: checked_statement_text(...) is a str, not a pair']}
+E   assert not {'src/hadavin_sdk/store/migrate.py': ['line 153: checked_statement_text(...) is a str, not a pair']}
+=========================== short test summary info ============================
+FAILED tests/test_migration_rules.py::test_every_caller_in_the_package_uses_the_right_form
+1 failed in 0.72s
+

@@ -1,0 +1,19 @@
+.F
+=================================== FAILURES ===================================
+_____________________ test_precheck_folder_part_is_a_file ______________________
+
+tmp_path = PosixPath('/home/user/build/rr6/tmp-B2/pytest-of-unknown/pytest-53/test_precheck_folder_part_is_a0')
+
+    def test_precheck_folder_part_is_a_file(tmp_path: Path) -> None:
+        (tmp_path / "f").write_text("x", encoding="utf-8")
+        (tmp_path / "d").mkdir()
+>       assert precheck.folder_part_is_a_file(tmp_path / "f" / "desk.db")
+E       AssertionError: assert False
+E        +  where False = <function folder_part_is_a_file at 0x7fae428e2ac0>(((PosixPath('/home/user/build/rr6/tmp-B2/pytest-of-unknown/pytest-53/test_precheck_folder_part_is_a0') / 'f') / 'desk.db'))
+E        +    where <function folder_part_is_a_file at 0x7fae428e2ac0> = precheck.folder_part_is_a_file
+
+tests/test_real_run_v6.py:91: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_real_run_v6.py::test_precheck_folder_part_is_a_file - Asser...
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 1 passed in 0.12s

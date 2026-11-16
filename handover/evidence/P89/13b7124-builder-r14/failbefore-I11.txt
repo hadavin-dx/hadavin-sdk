@@ -1,0 +1,11 @@
+I11 the lock name hashes the whole value (a password reaches the name)
+replaced: '    return "\\n".join(found.get(key, "") for key in _ADDRESS_VALUE)'
+by: '    return value'
+summary: FAILED tests/test_mutation_runner_keywords.py::test_property_the_lock_name_holds_no_byte_of_a_password_and_calm_passwords_give_one_name
+exit=1
+FAILED kept tests:
+test_one_spelling_in_url_and_key_value_form_gives_one_name
+test_property_the_lock_name_holds_no_byte_of_a_password_and_calm_passwords_give_one_name
+test_the_lock_file_name_does_not_depend_on_the_password
+test_the_lock_name_input_is_exactly_the_allowed_parts_or_unparsed
+test_the_same_database_written_two_ways_gets_two_names_as_the_docstring_says

@@ -1,0 +1,11 @@
+# PR89 round 8 result review (head 3586dcc34647fa66dded9a4250be6b52e845c5ba)
+Reviewer egm-codebase-details (fresh, read-only, ran nothing, recomputed no hash, no Windows/macOS/network-file-system check). Verdict: 0 Blocker, 0 Major, 5 Minor.
+
+Round 7 findings: Major 1 (two-layer output) FIXED: _written_forms (tools/mutation_runner.py:323-341) builds the four layer-0 quote mixes, then _printed_again twice using real repr/ascii/unicode_escape/json.dumps (both ensure_ascii)/bytes repr (:300-320); reviewer hand-traced repr(repr(x)) for a value with ' and ". Tests tests/test_mutation_runner_keywords.py:1734 (120 values, six printers, two layers) and :1749; mutant mutation_runner_mutants.py:422. Major 2 (FIFO) FIXED: O_NONBLOCK at :532, fstat check :499-513, real os.mkfifo test :1776 with timeout, mutant :418. Minors fixed: EACCES/EPERM text names TMPDIR (:488-489, test :1800); unquote_plus (:117, :384; tests :1762; mutants :416-417); st_nlink > 1 (:509); flock refusal documented (:521, CHANGELOG line 9); fail-before against 14879da and 58f7d56 recorded; uid=65534 listed (from the evidence note only, logs not read). Not fixed: sha256 of mutation.py, testing/__init__.py, tools/__init__.py not cross-checked by evidence.
+Masking: exactly two layers covered, docs say a third is not; unquoted password with quote/;/& handled (:294, :373-377). Lock: O_RDONLY|O_CREAT|O_NOFOLLOW|O_NONBLOCK 0600; symlink/FIFO/non-regular/other owner/wide mode/hard link refused. No functional bug found.
+
+Minor 1: evidence must recompute the pinned hashes of all four pinned files (mutation.py, testing/__init__.py, tools/__init__.py, tools/mutation_runner.py).
+Minor 2: no mutant for the both-quotes branch of _printed_again (:317-319), the four-way quote-mix loop at layer 0 (:331-336), or each single entry of _WHOLE_ENCODERS; the 120-case property test may kill them but this is unproven.
+Minor 3: the two-layer property test feeds the whole DSN value only; add a test over the bare password through two layers.
+Minor 4: typo ")." at the end of the sentence at tools/mutation_runner.py:521 docstring.
+Minor 5: the independent evidence folder 3586dcc-cloud was incomplete when read (runner still running): bandit failed to spawn (01-lint.log), no pytest summary lines yet. Not a finding about the code; read again when TABLE.md exists.

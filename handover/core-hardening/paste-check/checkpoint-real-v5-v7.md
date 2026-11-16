@@ -1,0 +1,1 @@
+# checkpoint-real-v5-v7 (builder), 2026-11-16: done plan-v7 (29 edits), dryrun-v7.txt rc 0, swap-test/, clean-start-test/, REPORT v7. Next: lead reviews. Blockers: none. No commits, no processes left.

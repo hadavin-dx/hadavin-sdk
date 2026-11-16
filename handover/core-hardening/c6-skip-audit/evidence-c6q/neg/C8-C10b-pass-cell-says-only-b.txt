@@ -1,0 +1,79 @@
+ 42, with a check 3, NOT FILMABLE until an answer 0 | |']
+PASS section 3 'rows tied to it' column equals the recount
+PASS figure 60.1 to 61.9 exact everywhere (20 occurrences) :: []
+PASS no '61.1' or other upper bound next to 60.1
+PASS figure 52.8 to 54.9 exact everywhere (5 occurrences) :: []
+PASS 61.9 only after 60.1 to
+PASS 18 kept runs split: every '<n> runs done' is 10 and every '<n> runs unknown' is 8 :: (['10', '10'], ['8', '8'])
+PASS K1 5 and K2 5 everywhere :: [('5', '5'), ('5', '5'), ('5', '5')]
+PASS K3B 5 and K3 3 everywhere :: [('5', '3'), ('5', '3'), ('5', '3'), ('5', '3')]
+PASS 18 kept runs = K1 5 + K2 5 + K3B 5 + K3 3
+PASS every 'UTC = IST' pair is exactly UTC + 5:30 (40 pairs) :: []
+PASS every clock time in UTC or Z has its IST nearby (outside old-text quotes) :: []
+PASS every new text with UTC also has IST :: []
+PASS in every new text each UTC has its own IST (UTC count <= IST count) :: []
+PASS IST given with the money stop
+PASS report prose lines with '18 runs' name both voided runs :: []
+PASS new texts with '18 runs' name both voided runs :: []
+PASS reason cells with '18 runs' name both voided runs unless the new text does :: []
+PASS box says the row count of the table :: ('94', 94)
+PASS section 0 says the row count of the table :: ('94', 94)
+PASS box says the ready count :: 49
+PASS action box first (before section 0)
+PASS no row is NOT FILMABLE :: []
+PASS rows 13+14 hold 4 spoken lines of 90 words :: [11, 35, 22, 22]
+PASS box prints all four card lines exactly as the rows have them and the total (90 words, about 36 s, budget 40 s)
+PASS row 11 states the same words, seconds, budget and total (about 190 s) :: - The one video: scenes 1 to 4 and the closing card (scene 12): scene 1 25 s + scene 2 40 s + scene 3 25 s + scene 4 60 
+PASS table of lengths in the box (6 rows) equals the recomputation from the quoted card lines and lease sentences :: ([('none', '(a)', 90, '36.0', 40, 190), ('none', '(b)', 74, '29.6', 30, 180)], [('none', '(a)', 90, '36.0', 40, 190), ('none', '(b)', 74, '29.6', 30, 180)])
+PASS answer 2 replaces answer 1: net +15 words and no 'add 16' wording
+PASS L-POST exists in the box table and in section 3, with a default
+PASS rows 11, 13, 14(not), 21 tie to L-POST and L-LEASE (13, 21) and the tied column lists them
+PASS section 3 L-LEASE: newest word, honest claim of 'none', G12 open, reading-2 facts not to be spoken, replacement, recommendation :: []
+PASS L-LEASE definition is the true one (takeover only; repeat refused while the row exists)
+PASS rows 17 and 81 say 'may' about the 45 s setting
+PASS rows 13 and 21 carry the plain statement and no 45-second sentence by default
+FAIL C-10b: pass and fail cells agree (all of (a), (b) and (c) shown / any not shown)
+PASS the 'no take on Mon 23 Nov unless (a), (b) and (c)' line is in the box once, with 18:04 UTC = 23:34 IST once as a plan fact
+PASS no 'Tuesday evening' or 'Tue evening' inference
+PASS every line that names plan line 1051 says it is UNVERIFIED :: []
+PASS departure from ORD:147 stated in section 0, in the L-DEL row and in row 8
+PASS fresh container wording (ORD:146) in row 8, C-9 and the box
+PASS L-SCENES appears only in coverage lines (section 8), never in a live table or row
+PASS row 6 item 11 has no 'needs n8n and is not run yet'
+PASS row 6 item 15 says what the second scan searches for (real key values read from the key file, not printed, counts only)
+PASS no stale card word count (103, 75, 71) outside history lines :: []
+PASS row 6 item 13: the 30 s rule applies only if the card or caption carries the 45-second limit
+PASS row 6 keeps items 11 to 16, no blank, no builder note
+PASS row 6 item 16 does not claim that deleting erases the data
+PASS row 90 new text ends with the database n8n (so 'owned by' attaches to it) and has no 'third place' :: atabases: the claim database and, for n8n's own state, a SEPARATE database `n8n`
+PASS row 91 says the stage journal and some bookkeeping files stay files
+PASS row 8 has 18:04 UTC = 23:34 IST, a plan fact that moves, (a)(b)(c), UNVERIFIED, STOP
+PASS row 76 is tagged design intent, rows 25, 37, 38 say 'stored' not 'delivered'
+PASS every new text with 144.3 labels it as from n8n coming back up :: []
+PASS no 'row N' reference in any new text :: []
+PASS no 'accepted' exit slip in any new text :: []
+PASS no bare 'lead' in new texts (the one decision sentence excepted) :: []
+PASS 5a lists exactly the 36 viewer-visible run-sheet and page rows :: (36, 36)
+PASS 5a text equals each row's own 'what the viewer sees' cell
+PASS report names the check time 2026-11-16T16:32:07Z and the newest sheet version on disk (v29) :: [28, 28, 29]
+PASS no owner sheet changed after the stated check time (C-10c is current) :: []
+PASS no claim that v25 or v26 is the newest
+PASS L-SHEET reads 'confirm the one final sheet' and says v29 is coming
+PASS section 9 has no duplicate bullet (18 bullets) :: []
+PASS G12 named as open with the studio lead in section 9
+PASS every word the box defines is first used where it is defined (case-insensitive, 23 terms) :: []
+PASS the lines before the first word list use none of the defined words :: []
+PASS question labels are first used in the table of questions :: ['L-CARD']
+PASS whole box is at most 3,000 words and shorter than the c6p box (2768 words; c6p 3027) :: 2768
+PASS box names no n8n setting :: []
+PASS box has one answer line with seconds, three free names, the exception form and L-SHEET apart
+PASS box wave 1 count equals ready + defaults (91) :: 91
+PASS box says it edits the flow files and changes no running n8n; box says the lease sentence is not put in owner sheet or release note by the rows
+PASS box says steps 4 to 6 have no duration
+PASS L-SCENES question is gone
+PASS rows 25, 37, 38 and 76 exist as rows
+PASS generator rule on rows 62 to 69 and row 92 edits the generator
+PASS section 8 has the coverage of the c6p, c6o and c6n reviews
+SUMMARY: 92 checks, 1 FAILED: C-10b: pass and fail cells agree (all of (a), (b) and (c) shown / any not shown)
+
+EXIT CODE 1

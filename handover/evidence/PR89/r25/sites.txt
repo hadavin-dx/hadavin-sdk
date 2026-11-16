@@ -1,0 +1,21 @@
+1178:    check it (``_refuse_unless_private``). ``os.mkdir`` takes the mode and the umask can only take bits away; ``chmod`` then puts them back."""
+1179:    os.mkdir(path, 0o700)
+1186:    """A new folder in the temp folder (``tempfile.mkdtemp``: mode 0700 minus what the umask takes away), checked (``_refuse_unless_private``) like
+1189:    path = Path(tempfile.mkdtemp(prefix=prefix))
+1209:            os.mkdir(here, 0o700)
+1253:    fd = os.open(path, flags, 0o600)
+1303:            os.mkdir(path, 0o700)
+1304:        fd = os.open(path, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+1393:                    fd = os.open(_lock_dir() / name, flags, 0o600)
+1395:                    fd = os.open(name, flags, 0o600, dir_fd=folder)
+1397:                    handle = os.fdopen(fd, "r+b" if _IS_WINDOWS else "rb")
+1477:            proc = subprocess.Popen(  # noqa: S603
+1697:    ``tests/fixtures``) and anything below it. ``shutil.copytree(symlinks=True)`` does not see a junction as a link (Python
+1899:    # both folders are named from ONE mkdtemp, made inside the try below (held against a signal), so no signal can leave ``tmp`` alone behind
+1911:        shutil.copytree(snap / "src", tmp / "src", symlinks=True)
+1915:            shutil.copy(_inside(snap, t), dst)
+1918:                shutil.copytree(
+1963:        shutil.copytree(
+1969:            shutil.copy(_inside(root, t), dst)
+1972:                shutil.copytree(
+2011:            p.write_text(text.replace(m.old, m.new), encoding="utf-8", newline="\n")

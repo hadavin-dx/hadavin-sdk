@@ -1,0 +1,87 @@
+=== 1 POSITIVE: real film file vs swapped copy (must print RECIPE PASS)
+10c10
+<  "url": "={{ $env.MF_CRM_URL }}/upsert"
+---
+>  "url": "http://127.0.0.1:8771/upsert"
+RECIPE PASS: exactly the url line differs
+=== 1b the film file read from the tar is byte-identical to the input copy
+identical
+=== 2 NEGATIVE: tar missing
+=== tar missing (must print RECIPE STOP)
+RECIPE STOP: film-crm.tar is missing or empty
+=== 3 NEGATIVE: tar empty (0 bytes)
+=== tar empty (must print RECIPE STOP)
+RECIPE STOP: film-crm.tar is missing or empty
+=== 4 NEGATIVE: tar holds the wrong path (extraction fails)
+=== wrong path inside the tar (must print RECIPE STOP)
+tar: handover/demo/n8n-flows-film-v5/mf-sub-crm-mail.json: Not found in archive
+tar: Exiting with failure status due to previous errors
+RECIPE STOP: the film file could not be read from the tar
+=== 5 NEGATIVE: film file is not valid JSON (python traceback)
+=== corrupt film file (must print RECIPE STOP)
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+    import json,sys; d=json.load(open(sys.argv[1])); w=d[0] if isinstance(d,list) else d; print(json.dumps([x for x in w["nodes"] if x["name"]=="CrmUpsert"][0]["parameters"],sort_keys=True,indent=1))
+                       ~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/json/__init__.py", line 298, in load
+    return loads(fp.read(),
+        cls=cls, object_hook=object_hook,
+        parse_float=parse_float, parse_int=parse_int,
+        parse_constant=parse_constant, object_pairs_hook=object_pairs_hook, **kw)
+  File "/usr/local/lib/python3.13/json/__init__.py", line 352, in loads
+    return _default_decoder.decode(s)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^
+  File "/usr/local/lib/python3.13/json/decoder.py", line 345, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/json/decoder.py", line 363, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+RECIPE STOP: the CrmUpsert parameters could not be read from one of the two files
+=== 6 NEGATIVE: a second line differs (film timeout changed)
+=== timeout differs too (must print RECIPE STOP)
+6c6
+<   "timeout": 5
+---
+>   "timeout": 10000
+10c10
+<  "url": "={{ $env.MF_CRM_URL }}/upsert"
+---
+>  "url": "http://127.0.0.1:8771/upsert"
+RECIPE STOP: the difference is not exactly the url line (diff rc=1)
+=== 7 NEGATIVE: no swap done (swap file still the HubSpot node: its parameters differ in many lines)
+=== 2.1b not run (must print RECIPE STOP)
+2,6c2,14
+<  "contentType": "json",
+<  "jsonBody": "={{ { hadavin_lead_id: $('SubIn').first().json.lead_key, email: $('SubIn').first().json.email, label: $('Qualify').first().json.label } }}",
+<  "method": "POST",
+<  "options": {
+<   "timeout": 10000
+---
+>  "additionalFields": {
+>   "customPropertiesUi": {
+>    "customPropertiesValues": [
+>     {
+>      "property": "hadavin_lead_id",
+>      "value": "={{ $('SubIn').first().json.lead_key }}"
+>     },
+>     {
+>      "property": "hadavin_label",
+>      "value": "={{ $('Qualify').first().json.label }}"
+>     }
+>    ]
+>   }
+8,10c16,20
+<  "sendBody": true,
+<  "specifyBody": "json",
+<  "url": "={{ $env.MF_CRM_URL }}/upsert"
+---
+>  "authentication": "appToken",
+>  "email": "={{ $('SubIn').first().json.email }}",
+>  "operation": "upsert",
+>  "options": {},
+>  "resource": "contact"
+RECIPE STOP: the difference is not exactly the url line (diff rc=1)
+=== 8 NEGATIVE: film file identical to the swapped copy's parameters except url text is the same too (no url difference at all)
+=== film node already equal to the swapped node (diff rc 0, must print RECIPE STOP)
+RECIPE STOP: the difference is not exactly the url line (diff rc=0)

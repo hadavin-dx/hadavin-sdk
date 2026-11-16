@@ -1,0 +1,75 @@
+HEAD 2b0941b7092e09a209c9808dcc8aab20b109869f
+root /home/user/build/recon/p3a2/wt
+import path: /home/user/build/recon/p3a2/wt/src/hadavin_sdk/__init__.py
+HADAVIN_TEST_PG_DSN set: True
+BASELINE rc=0 46 passed in 1.36s (2.5s, 46 killer ids)
+name | description | result | pytest summary | seconds | killer
+M61 | read-back removed from migrate() | KILLED | 1 failed in 0.35s | 1.5s | killer: tests/test_migration_wiring.py::test_clean_run_reads_before_each_file_insert
+M62 | search_path not compared | KILLED | 1 failed in 0.39s | 1.4s | killer: tests/test_migration_wiring.py::test_each_value_is_compared_with_its_own_saved_value[search_path]
+M64 | read-back after the ledger INSERT | KILLED | 1 failed in 0.32s | 1.5s | killer: tests/test_migration_wiring.py::test_clean_run_reads_before_each_file_insert
+M65 | current_user compared with session_user | KILLED | 1 failed in 0.32s | 1.6s | killer: tests/test_migration_wiring.py::test_saved_users_that_differ_are_not_a_refusal
+M66 | message omits the file name | KILLED | 1 failed in 0.31s | 1.6s | killer: tests/test_migration_wiring.py::test_each_value_is_compared_with_its_own_saved_value[current_user]
+M67 | read-back only after the last file | KILLED | 1 failed in 0.36s | 1.6s | killer: tests/test_migration_wiring.py::test_clean_run_reads_before_each_file_insert
+M70 | session_replication_role not compared | KILLED | 1 failed in 0.26s | 1.3s | killer: tests/test_migration_wiring.py::test_each_value_is_compared_with_its_own_saved_value[session_replication_role]
+M71 | current_user not compared | KILLED | 1 failed in 0.29s | 1.5s | killer: tests/test_migration_wiring.py::test_each_value_is_compared_with_its_own_saved_value[current_user]
+M94 | session_user not compared | KILLED | 1 failed in 0.31s | 1.5s | killer: tests/test_migration_wiring.py::test_each_value_is_compared_with_its_own_saved_value[session_user]
+M91 | standard_conforming_strings not compared | KILLED | 1 failed in 0.28s | 1.4s | killer: tests/test_migration_wiring.py::test_each_value_is_compared_with_its_own_saved_value[standard_conforming_strings]
+M92 | backslash_quote not compared | KILLED | 1 failed in 0.32s | 1.6s | killer: tests/test_migration_wiring.py::test_each_value_is_compared_with_its_own_saved_value[backslash_quote]
+M93 | client_encoding not compared | KILLED | 1 failed in 0.33s | 1.7s | killer: tests/test_migration_wiring.py::test_each_value_is_compared_with_its_own_saved_value[client_encoding]
+MB1 | transaction_timestamp not compared | KILLED | 1 failed in 0.26s | 1.4s | killer: tests/test_migration_wiring.py::test_each_value_is_compared_with_its_own_saved_value[transaction_timestamp]
+MB2 | txid_current not compared | KILLED | 1 failed in 0.35s | 1.4s | killer: tests/test_migration_wiring.py::test_each_value_is_compared_with_its_own_saved_value[txid_current]
+M88 | trigger state D/R check removed | KILLED | 1 failed in 0.34s | 1.5s | killer: tests/test_migration_wiring.py::test_a_disabled_trigger_is_refused
+M88b | trigger state: a trigger already D passes the same check wrongly (before None only) | KILLED | 1 failed in 0.30s | 1.4s | killer: tests/test_migration_wiring.py::test_a_disabled_trigger_is_refused
+M89 | saved trigger still exists: check removed | KILLED | 1 failed in 0.32s | 1.6s | killer: tests/test_migration_wiring.py::test_a_dropped_trigger_is_refused
+M90 | start check of standard_conforming_strings removed | KILLED | 1 failed in 0.32s | 1.6s | killer: tests/test_migration_wiring.py::test_start_value_of_standard_conforming_strings_must_be_on
+M95 | saved values read after the first file | KILLED | 1 failed in 0.26s | 1.5s | killer: tests/test_migration_wiring.py::test_clean_run_reads_before_each_file_insert
+M101 | trigger baseline not refreshed | KILLED | 1 failed in 0.31s | 1.5s | killer: tests/test_migration_wiring.py::test_a_new_trigger_is_not_a_refusal_and_is_watched_from_then_on
+M102 | trigger query has no schema filter | KILLED | 1 failed in 0.30s | 1.6s | killer: tests/test_migration_wiring.py::test_trigger_query_reads_only_the_migration_schema
+M68 | _scan strips with the old regexes | KILLED | 1 failed in 0.33s | 1.5s | killer: tests/test_migration_numbers.py::test_scan_double_dash_in_string
+M69 | _scan ignores the lexer problem | KILLED | 1 failed in 0.34s | 1.4s | killer: tests/test_migration_numbers.py::test_scan_comment_ends_at_cr
+M87 | _scan reads the view with emptied quotes | KILLED | 1 failed in 0.30s | 1.3s | killer: tests/test_migration_numbers.py::test_scan_sees_create_inside_bodies_and_strings
+MW1 | refusal list not applied in _scan | KILLED | 1 failed in 0.30s | 1.7s | killer: tests/test_migration_wiring.py::test_commit_in_a_file_is_refused_before_connecting
+MW2 | migrate() reads the file again instead of the scanned text | KILLED | 1 failed in 0.32s | 1.6s | killer: tests/test_migration_wiring.py::test_migrate_executes_the_text_it_scanned
+MW3 | number problems raised as a plain ConfigError | KILLED | 1 failed in 0.29s | 1.5s | killer: tests/test_migration_wiring.py::test_directory_named_like_a_migration_is_refused
+MW4 | gone-name check removed | KILLED | 1 failed in 0.35s | 1.6s | killer: tests/test_migration_wiring.py::test_gone_name_is_refused_with_the_old_phrase
+MW5 | late-file check removed | KILLED | 1 failed in 0.30s | 1.5s | killer: tests/test_migration_wiring.py::test_late_file_is_refused_and_nothing_runs
+MW6 | check_grants scans without the shared text | KILLED | 1 failed in 0.25s | 1.5s | killer: tests/test_migration_wiring.py::test_migrate_executes_the_text_it_scanned
+MW7 | _migration_files uses the case-sensitive glob again | KILLED | 1 failed in 0.28s | 1.3s | killer: tests/test_migration_wiring.py::test_uppercase_extension_is_refused
+MW8 | lock key differs from the module constant | KILLED | 1 failed in 0.31s | 1.6s | killer: tests/test_migration_wiring.py::test_migrate_takes_the_one_advisory_lock_key_first
+MW9 | no read-back message escapes (ESC survives) | KILLED | 1 failed in 0.33s | 1.5s | killer: tests/test_migration_wiring.py::test_each_value_is_compared_with_its_own_saved_value[current_user]
+MM1 | manifest: edited file not detected | KILLED | 1 failed in 0.14s | 1.4s | killer: tests/test_migration_numbers_guards.py::test_released_problems_catches_an_edit_a_deletion_and_a_low_new_number
+MM2 | manifest: missing file not detected | KILLED | 1 failed in 0.17s | 1.4s | killer: tests/test_migration_numbers_guards.py::test_released_problems_catches_an_edit_a_deletion_and_a_low_new_number
+MM3 | manifest: new file below released not detected | KILLED | 1 failed in 0.17s | 1.4s | killer: tests/test_migration_numbers_guards.py::test_released_problems_catches_an_edit_a_deletion_and_a_low_new_number
+N1 | B: dead helper in migrate.py unpacks the str form into two names | KILLED | 1 failed in 0.51s | 1.7s | killer: tests/test_migration_rules.py::test_every_caller_in_the_package_uses_the_right_form
+N2 | B: _scan takes the pair as the text | KILLED | 1 failed in 0.65s | 1.9s | killer: tests/test_migration_rules.py::test_every_caller_in_the_package_uses_the_right_form
+N3 | B: hand_recipe calls statement_text (the pair) as a str | KILLED | 1 failed in 0.63s | 1.9s | killer: tests/test_migration_rules.py::test_every_caller_in_the_package_uses_the_right_form
+N3b | B: same mutant N3 against the whole old+new migration test set (is the pair type error caught anywhere else?) | KILLED | 1 failed in 0.36s | 1.6s | killer: tests/test_migration_wiring.py::test_late_file_is_refused_and_nothing_runs
+N4 | B: hand_recipe unpacks the str into two names | KILLED | 1 failed in 0.64s | 2.0s | killer: tests/test_migration_rules.py::test_every_caller_in_the_package_uses_the_right_form
+N5 | C2: wiring test file skips with importorskip again | KILLED | 1 failed in 0.38s | 1.7s | killer: tests/test_migration_rules.py::test_no_p3a2_test_skips_silently[tests/test_migration_wiring.py]
+N6 | C2: require_module skips even when the DSN is set | KILLED | 1 failed in 0.30s | 1.4s | killer: tests/test_migration_rules.py::test_a_missing_driver_with_the_dsn_set_is_a_failure
+N7 | C2: require_module skip has no reason | KILLED | 1 failed in 0.30s | 1.4s | killer: tests/test_migration_rules.py::test_a_missing_driver_without_the_dsn_is_a_skip_with_a_reason[environ0]
+N8 | C2: needs_pg skipif reason does not name the variable | KILLED | 1 failed in 0.30s | 1.4s | killer: tests/test_migration_rules.py::test_no_p3a2_test_skips_silently[tests/test_migration_postgres.py]
+N9 | C2: scratch fixture skips whatever the DSN is | KILLED | 1 failed in 0.37s | 1.4s | killer: tests/test_migration_rules.py::test_no_p3a2_test_skips_silently[tests/test_migration_postgres.py]
+N10 | C2: require_module returns nothing | KILLED | 1 failed in 0.35s | 1.6s | killer: tests/test_migration_rules.py::test_a_missing_driver_with_the_dsn_set_is_a_failure
+N11 | C3: role-membership rule looks for `on` as a substring (ADMIN OPTION slips) | KILLED | 1 failed in 0.35s | 1.7s | killer: tests/test_migration_rules.py::test_role_membership_is_refused_whatever_the_comments_and_names_hold[-]
+N12 | C3: refusal list reads the view with quoted parts kept | KILLED | 1 failed in 0.29s | 1.6s | killer: tests/test_migration_rules.py::test_role_membership_is_refused_whatever_the_comments_and_names_hold[-]
+N13 | C3: role-membership rule removed (every GRANT/REVOKE passes) | KILLED | 1 failed in 0.34s | 1.4s | killer: tests/test_migration_rules.py::test_role_membership_is_refused_whatever_the_comments_and_names_hold[-]
+N14 | C3: role-membership rule refuses every GRANT/REVOKE (lookahead removed) | KILLED | 1 failed in 0.28s | 1.4s | killer: tests/test_migration_rules.py::test_privileges_on_objects_are_not_refused_as_role_membership[GRANT SELECT ON t TO r]
+N15 | C3: migrate() docstring loses the role argument sentence | KILLED | 1 failed in 0.38s | 1.5s | killer: tests/test_migration_rules.py::test_the_migrate_docstring_says_where_role_membership_is_changed
+N16 | D: CHANGELOG gives the false name again | KILLED | 1 failed in 0.36s | 1.6s | killer: tests/test_migration_rules.py::test_no_advice_tells_anyone_to_rename_a_row_to_the_false_name
+N17 | D: runbook lock number differs from MIGRATE_LOCK | KILLED | 1 failed in 0.38s | 1.5s | killer: tests/test_migration_rules.py::test_the_runbook_carries_the_real_lock_the_command_and_every_case
+N18 | D: runbook case (a) loses the current_user sentence | KILLED | 1 failed in 0.29s | 1.5s | killer: tests/test_migration_rules.py::test_the_runbook_carries_the_real_lock_the_command_and_every_case
+N19 | D: the drop advice returns in the repair step | KILLED | 1 failed in 0.34s | 1.7s | killer: tests/test_migration_rules.py::test_a_drop_is_advised_in_one_place_only_and_never_for_the_evidence_tables_of_a_live_database
+P1 | G: case (g) block has no ALTER | KILLED | 1 failed in 0.41s | 1.8s | killer: tests/test_migration_postgres.py::test_runbook_case_b_renames_the_old_notes_row_back_and_migrate_accepts_it
+P2 | G: case (b) no longer puts the evidence block into the file | KILLED | 1 failed in 0.40s | 1.6s | killer: tests/test_migration_rules.py::test_the_changelog_keeps_a_repair_path_for_an_early_evidence_table
+P3 | C: case (c) loses the released-file sentence | KILLED | 1 failed in 0.29s | 1.3s | killer: tests/test_migration_rules.py::test_case_c_says_a_released_file_cannot_be_renumbered
+P4 | R: the rename refusal loses the pointer to case (b) | KILLED | 1 failed in 0.39s | 1.6s | killer: tests/test_migration_rules.py::test_the_rename_refusal_points_to_the_runbook_case_b
+P5 | A: case (a) failure wording back to the ledger row | KILLED | 1 failed in 0.34s | 1.6s | killer: tests/test_migration_rules.py::test_case_a_failure_wording_and_the_hand_written_fallback
+P6 | G: the structure check forgets the error column in its expected list | KILLED | 1 failed in 0.43s | 1.7s | killer: tests/test_migration_postgres.py::test_runbook_case_b_renames_the_old_notes_row_back_and_migrate_accepts_it
+P7 | G: the structure check forgets the redaction_maps columns | KILLED | 1 failed in 0.54s | 1.8s | killer: tests/test_migration_postgres.py::test_runbook_case_b_renames_the_old_notes_row_back_and_migrate_accepts_it
+P8 | D: the docstring goes back to three session settings | KILLED | 1 failed in 0.34s | 1.8s | killer: tests/test_migration_rules.py::test_the_migrate_docstring_counts_what_it_reads_back
+P9 | R: _SET_ALLOWED uses the word boundary (order 112) | KILLED | 1 failed in 0.11s | 1.5s | killer: tests/test_migration_names.py::test_the_word_boundary_is_used_only_where_a_match_refuses
+P10 | R: a name character without the dollar sign (order 112) | KILLED | 1 failed in 0.11s | 1.3s | killer: tests/test_migration_names.py::test_a_name_that_holds_on_and_a_dollar_does_not_hide_a_role_grant[GRANT pg_write_all_data TO {n}-app$on]
+planted 66; killed 66; survived 0 []; errors 0 []
+git diff empty after the run: True
+66 of 66 killed

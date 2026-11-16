@@ -1,0 +1,19 @@
+### tests/test_migration_postgres.py::test_another_session_changing_a_role_that_a_named_role_belongs_to_stops_the_run rc=1
+.F                                                                       [100%]
+=================================== FAILURES ===================================
+_ test_another_session_changing_a_role_that_a_named_role_belongs_to_stops_the_run[saved_setting] _
+tests/test_migration_postgres.py:2193: in test_another_session_changing_a_role_that_a_named_role_belongs_to_stops_the_run
+    with pytest.raises(ConfigError) as e:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+=============================== warnings summary ===============================
+../../../home/user/build/B-P73r2/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:123
+  /home/user/build/B-P73r2/.venv/lib/python3.13/site-packages/_pytest/pathlib.py:123: PytestWarning: (rm_rf) error removing /tmp/pytest-of-root/garbage-19a8b4c0-9069-4bcc-be6c-38b9168e300a
+  <class 'OSError'>: [Errno 39] Directory not empty: '/tmp/pytest-of-root/garbage-19a8b4c0-9069-4bcc-be6c-38b9168e300a'
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_another_session_changing_a_role_that_a_named_role_belongs_to_stops_the_run[saved_setting]
+1 failed, 1 passed, 1 warning in 0.88s
+

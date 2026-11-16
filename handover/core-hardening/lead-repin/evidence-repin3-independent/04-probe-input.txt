@@ -1,0 +1,19 @@
+data = "VnE3TG0yWHA5UnQ0VnE3TG0yWHA5UnQ0VnE3TG0yWHA5UnQ0VnE3TG0yWHA5UnQ0VnE3TG0yWHA5UnQ0"
+x = "VnE3TG0yWHA5UnQ0VnE3TG0yWHA5UnQ0VnE3TG0yWHA5UnQ0VnE3TG0yWHA5UnQ0VnE3TG0yWHA5UnQ0"
+payload: VnE3TG0yWHA5UnQ0VnE3TG0yWHA5UnQ0VnE3TG0yWHA5UnQ0VnE3TG0yWHA5UnQ0VnE3TG0yWHA5UnQ0
+note: value Vq7Lm2Xp9Rt4Z1 in a sentence
+creds = {"user": "u", "pass": "Vq7Lm2Xp9Rt4Z2"}
+dsn = "host=h user=u password=Vq7Lm2Xp9Rt4Z3 dbname=d"
+export DB_PASS="Vq7Lm2Xp9Rt4Z4"
+token_file = "/etc/Vq7Lm2Xp9Rt4Z5"
+my_secret_thing = Vq7Lm2Xp9Rt4Z6
+SECRET_KEY_BASE=Vq7Lm2Xp9Rt4Z7
+mail: jo.fake@example.invalid, "Jo <jo2.fake@example.invalid>"
+url=https://example.invalid/?api_key=Vq7Lm2Xp9Rt4Z8&x=1
+url=https://example.invalid/?token=Vq7Lm2Xp9Rt4Z9
+curl -H "X-Auth-Token: Vq7Lm2Xp9Rt4Z10" 
+curl -H 'Authorization: token Vq7Lm2Xp9Rt4Z11'
+ENV TOKEN Vq7Lm2Xp9Rt4Z12
+password:Vq7Lm2Xp9Rt4Z13
+f(password=Vq7Lm2Xp9Rt4Z14, other=1)
+passwd "Vq7Lm2Xp9Rt4Z15"

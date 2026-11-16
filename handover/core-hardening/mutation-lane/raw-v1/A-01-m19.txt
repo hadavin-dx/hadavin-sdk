@@ -1,0 +1,10 @@
+src/hadavin_sdk/audit/local_dir.py
+local_dir WARNING downgraded to DEBUG
+OLD: _LOG.warning(
+                "audit outcome not written
+NEW: _LOG.debug(
+                "audit outcome not written
+
+........................................................................ [ 69%]
+................................                                         [100%]
+104 passed in 17.74s

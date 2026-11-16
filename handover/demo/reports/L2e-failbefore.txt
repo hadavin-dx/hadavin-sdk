@@ -1,0 +1,1764 @@
+F.F.FFFFFFFFFFFFFFFFFFF.....F.FFFFFFFFFFFFFF.FFF.......F.FFFF........... [ 30%]
+........................................................................ [ 61%]
+.......................................................................F [ 92%]
+FFFFFFF.FFFFFFF.F                                                        [100%]
+=================================== FAILURES ===================================
+_____________________ test_sent_with_no_crm_fails_check_4 ______________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3599/test_sent_with_no_crm_fails_ch0')
+
+    def test_sent_with_no_crm_fails_check_4(tmp_path: Path) -> None:
+        w = all_sent_world(crm_done=0, with_crm=False)
+        r = run_world(tmp_path, w)
+>       assert 4 in failed(r)
+E       assert 4 in []
+E        +  where [] = failed({'ok': True, 'checks': [{'id': 1, 'name': "every request id has a receipt; the request log is complete; the book holds... of 8 attempts got 503 (rate 0.1250); 1 of 7 requests saw one; 0 ended on 503; ceiling none (report only)', ...}, ...]})
+
+tests/test_live_l2_e.py:45: AssertionError
+_______________________ test_failed_without_reason_fails _______________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3599/test_failed_without_reason_fai0')
+
+    def test_failed_without_reason_fails(tmp_path: Path) -> None:
+        w = make_world()
+        w["leads"]["L5"] = ("failed", 1, None)
+>       assert 3 in failed(run_world(tmp_path, w, max_failed=5))
+E       assert 3 in []
+E        +  where [] = failed({'ok': True, 'checks': [{'id': 1, 'name': "every request id has a receipt; the request log is complete; the book holds... of 8 attempts got 503 (rate 0.1250); 1 of 7 requests saw one; 0 ended on 503; ceiling none (report only)', ...}, ...]})
+E        +    where {'ok': True, 'checks': [{'id': 1, 'name': "every request id has a receipt; the request log is complete; the book holds... of 8 attempts got 503 (rate 0.1250); 1 of 7 requests saw one; 0 ended on 503; ceiling none (report only)', ...}, ...]} = run_world(PosixPath('/tmp/pytest-of-root/pytest-3599/test_failed_without_reason_fai0'), {'reqs': [{'request_id': 'r-L1', 'door': 'form', 'intended_ts': 1000000.0, 'final_status': 201, ...}, {'request_id': '..., 'lead_id': 'L5', 'mode': 'ok', 'status': 200}, {'ts': 1000000.0, 'lead_id': 'L6', 'mode': 'ok', 'status': 200}], ...}, max_failed=5)
+
+tests/test_live_l2_e.py:57: AssertionError
+______________________ test_unsent_lead_in_healthy_window ______________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3599/test_unsent_lead_in_healthy_wi0')
+
+    def test_unsent_lead_in_healthy_window(tmp_path: Path) -> None:
+        w = make_world()
+        ex = EXP(healthy_windows=((T0 - 1, None),))
+>       r = run_world(tmp_path, w, expect=ex, max_failed=5, max_unknown=5)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_live_l2_e.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3599/test_unsent_lead_in_healthy_wi0')
+w = {'reqs': [{'request_id': 'r-L1', 'door': 'form', 'intended_ts': 1000000.0, 'final_status': 201, ...}, {'request_id': '..., 'lead_id': 'L5', 'mode': 'ok', 'status': 200}, {'ts': 1000000.0, 'lead_id': 'L6', 'mode': 'ok', 'status': 200}], ...}
+kw = {'expect': {'healthy_windows': ((999999.0, None),)}, 'max_failed': 5, 'max_unknown': 5, 'intended': 7}
+
+    def run_world(tmp_path: Path, w: dict[str, Any], **kw: Any) -> dict[str, Any]:
+        db = tmp_path / "desk.sqlite3"
+        if db.exists():
+            db.unlink()
+        sync_receipt_ids(w)
+        make_book(db, w["leads"], open_receipt=w["open_receipt"], ghost_new_receipt=w["ghost_new_receipt"])
+        book = ci.read_book(db)
+        kw.setdefault("intended", w["intended"])
+>       return ci.run_checks(w["reqs"], book, w["mail"], w["crm"], w["model"], w["drained_ts"], **kw)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: run_checks() got an unexpected keyword argument 'expect'
+
+tests/test_live_l2_tools.py:149: TypeError
+___________________ test_derived_ceilings_follow_the_window ____________________
+
+    def test_derived_ceilings_follow_the_window() -> None:
+        for sc in campaign.catalogue():
+            if sc.name in ("catcher-down", "model-flaps"):
+>               assert sc.max_failed is not None
+E               AssertionError: assert None is not None
+E                +  where None = Scenario(name='model-flaps', load='rate:10:30', model_mode='ok', catcher_mode='ok', events=[(5.0, 'model', 'server_err...t=240.0, note='', workers=4, threads=64, model_timeout=2.0, max_unknown=0, max_failed=None, desk_env={}, model_bound=6).max_failed
+
+tests/test_live_l2_e.py:79: AssertionError
+____________________ test_empty_model_log_fails_if_expected ____________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3599/test_empty_model_log_fails_if_0')
+
+    def test_empty_model_log_fails_if_expected(tmp_path: Path) -> None:
+        w = make_world()
+        w["model"] = []
+>       assert 5 in failed(run_world(tmp_path, w, expect=EXP(model_expected=True)))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_live_l2_e.py:88: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3599/test_empty_model_log_fails_if_0')
+w = {'reqs': [{'request_id': 'r-L1', 'door': 'form', 'intended_ts': 1000000.0, 'final_status': 201, ...}, {'request_id': '..., {'lead_id': 'L3', 'record': {}}, {'lead_id': 'L4', 'record': {}}, {'lead_id': 'L5', 'record': {}}], 'model': [], ...}
+kw = {'expect': {'model_expected': True}, 'intended': 7}
+
+    def run_world(tmp_path: Path, w: dict[str, Any], **kw: Any) -> dict[str, Any]:
+        db = tmp_path / "desk.sqlite3"
+        if db.exists():
+            db.unlink()
+        sync_receipt_ids(w)
+        make_book(db, w["leads"], open_receipt=w["open_receipt"], ghost_new_receipt=w["ghost_new_receipt"])
+        book = ci.read_book(db)
+        kw.setdefault("intended", w["intended"])
+>       return ci.run_checks(w["reqs"], book, w["mail"], w["crm"], w["model"], w["drained_ts"], **kw)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: run_checks() got an unexpected keyword argument 'expect'
+
+tests/test_live_l2_tools.py:149: TypeError
+_______________________ test_result_only_model_log_fails _______________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3599/test_result_only_model_log_fai0')
+
+    def test_result_only_model_log_fails(tmp_path: Path) -> None:
+        w = make_world()
+        w["model"] = [{"ts": T0, "lead_id": k, "mode": "ok", "status": 200, "event": "result"} for k in LEADS]
+>       assert 5 in failed(run_world(tmp_path, w, expect=EXP(model_expected=True)))
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_live_l2_e.py:94: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3599/test_result_only_model_log_fai0')
+w = {'reqs': [{'request_id': 'r-L1', 'door': 'form', 'intended_ts': 1000000.0, 'final_status': 201, ...}, {'request_id': '...': 'L5', 'mode': 'ok', 'status': 200, ...}, {'ts': 1000000.0, 'lead_id': 'L6', 'mode': 'ok', 'status': 200, ...}], ...}
+kw = {'expect': {'model_expected': True}, 'intended': 7}
+
+    def run_world(tmp_path: Path, w: dict[str, Any], **kw: Any) -> dict[str, Any]:
+        db = tmp_path / "desk.sqlite3"
+        if db.exists():
+            db.unlink()
+        sync_receipt_ids(w)
+        make_book(db, w["leads"], open_receipt=w["open_receipt"], ghost_new_receipt=w["ghost_new_receipt"])
+        book = ci.read_book(db)
+        kw.setdefault("intended", w["intended"])
+>       return ci.run_checks(w["reqs"], book, w["mail"], w["crm"], w["model"], w["drained_ts"], **kw)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: run_checks() got an unexpected keyword argument 'expect'
+
+tests/test_live_l2_tools.py:149: TypeError
+_________________________ test_lead_never_asked_fails __________________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3599/test_lead_never_asked_fails0')
+
+    def test_lead_never_asked_fails(tmp_path: Path) -> None:
+        w = make_world()
+        w["model"] = [r for r in w["model"] if r["lead_id"] != "L2"]
+>       r = run_world(tmp_path, w, expect=EXP(model_expected=True))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_live_l2_e.py:100: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3599/test_lead_never_asked_fails0')
+w = {'reqs': [{'request_id': 'r-L1', 'door': 'form', 'intended_ts': 1000000.0, 'final_status': 201, ...}, {'request_id': '..., 'lead_id': 'L5', 'mode': 'ok', 'status': 200}, {'ts': 1000000.0, 'lead_id': 'L6', 'mode': 'ok', 'status': 200}], ...}
+kw = {'expect': {'model_expected': True}, 'intended': 7}
+
+    def run_world(tmp_path: Path, w: dict[str, Any], **kw: Any) -> dict[str, Any]:
+        db = tmp_path / "desk.sqlite3"
+        if db.exists():
+            db.unlink()
+        sync_receipt_ids(w)
+        make_book(db, w["leads"], open_receipt=w["open_receipt"], ghost_new_receipt=w["ghost_new_receipt"])
+        book = ci.read_book(db)
+        kw.setdefault("intended", w["intended"])
+>       return ci.run_checks(w["reqs"], book, w["mail"], w["crm"], w["model"], w["drained_ts"], **kw)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: run_checks() got an unexpected keyword argument 'expect'
+
+tests/test_live_l2_tools.py:149: TypeError
+________________________ test_model_fault_must_be_seen _________________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3599/test_model_fault_must_be_seen0')
+
+    def test_model_fault_must_be_seen(tmp_path: Path) -> None:
+        w = make_world()
+>       r = run_world(tmp_path, w, expect=EXP(min_down_calls=1))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_live_l2_e.py:106: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3599/test_model_fault_must_be_seen0')
+w = {'reqs': [{'request_id': 'r-L1', 'door': 'form', 'intended_ts': 1000000.0, 'final_status': 201, ...}, {'request_id': '..., 'lead_id': 'L5', 'mode': 'ok', 'status': 200}, {'ts': 1000000.0, 'lead_id': 'L6', 'mode': 'ok', 'status': 200}], ...}
+kw = {'expect': {'min_down_calls': 1}, 'intended': 7}
+
+    def run_world(tmp_path: Path, w: dict[str, Any], **kw: Any) -> dict[str, Any]:
+        db = tmp_path / "desk.sqlite3"
+        if db.exists():
+            db.unlink()
+        sync_receipt_ids(w)
+        make_book(db, w["leads"], open_receipt=w["open_receipt"], ghost_new_receipt=w["ghost_new_receipt"])
+        book = ci.read_book(db)
+        kw.setdefault("intended", w["intended"])
+>       return ci.run_checks(w["reqs"], book, w["mail"], w["crm"], w["model"], w["drained_ts"], **kw)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: run_checks() got an unexpected keyword argument 'expect'
+
+tests/test_live_l2_tools.py:149: TypeError
+______________________ test_catcher_mode_must_be_recorded ______________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3599/test_catcher_mode_must_be_reco0')
+
+    def test_catcher_mode_must_be_recorded(tmp_path: Path) -> None:
+        w = make_world()
+>       r = run_world(tmp_path, w, expect=EXP(catcher_modes=("slow",), min_catcher_records=1))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_live_l2_e.py:114: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3599/test_catcher_mode_must_be_reco0')
+w = {'reqs': [{'request_id': 'r-L1', 'door': 'form', 'intended_ts': 1000000.0, 'final_status': 201, ...}, {'request_id': '..., 'lead_id': 'L5', 'mode': 'ok', 'status': 200}, {'ts': 1000000.0, 'lead_id': 'L6', 'mode': 'ok', 'status': 200}], ...}
+kw = {'expect': {'catcher_modes': ('slow',), 'min_catcher_records': 1}, 'intended': 7}
+
+    def run_world(tmp_path: Path, w: dict[str, Any], **kw: Any) -> dict[str, Any]:
+        db = tmp_path / "desk.sqlite3"
+        if db.exists():
+            db.unlink()
+        sync_receipt_ids(w)
+        make_book(db, w["leads"], open_receipt=w["open_receipt"], ghost_new_receipt=w["ghost_new_receipt"])
+        book = ci.read_book(db)
+        kw.setdefault("intended", w["intended"])
+>       return ci.run_checks(w["reqs"], book, w["mail"], w["crm"], w["model"], w["drained_ts"], **kw)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: run_checks() got an unexpected keyword argument 'expect'
+
+tests/test_live_l2_tools.py:149: TypeError
+____________________ test_drop_after_data_needs_an_unknown _____________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3599/test_drop_after_data_needs_an_0')
+
+    def test_drop_after_data_needs_an_unknown(tmp_path: Path) -> None:
+        w = all_sent_world()
+>       r = run_world(tmp_path, w, expect=EXP(min_unknown=1))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_live_l2_e.py:123: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3599/test_drop_after_data_needs_an_0')
+w = {'reqs': [{'request_id': 'r-L1', 'door': 'form', 'intended_ts': 1000000.0, 'final_status': 201, ...}, {'request_id': '..., 'lead_id': 'L5', 'mode': 'ok', 'status': 200}, {'ts': 1000000.0, 'lead_id': 'L6', 'mode': 'ok', 'status': 200}], ...}
+kw = {'expect': {'min_unknown': 1}, 'intended': 7}
+
+    def run_world(tmp_path: Path, w: dict[str, Any], **kw: Any) -> dict[str, Any]:
+        db = tmp_path / "desk.sqlite3"
+        if db.exists():
+            db.unlink()
+        sync_receipt_ids(w)
+        make_book(db, w["leads"], open_receipt=w["open_receipt"], ghost_new_receipt=w["ghost_new_receipt"])
+        book = ci.read_book(db)
+        kw.setdefault("intended", w["intended"])
+>       return ci.run_checks(w["reqs"], book, w["mail"], w["crm"], w["model"], w["drained_ts"], **kw)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: run_checks() got an unexpected keyword argument 'expect'
+
+tests/test_live_l2_tools.py:149: TypeError
+______________________ test_mail_inside_down_window_fails ______________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3599/test_mail_inside_down_window_f0')
+
+    def test_mail_inside_down_window_fails(tmp_path: Path) -> None:
+        w = make_world()
+>       r = run_world(tmp_path, w, expect=EXP(quiet_windows=((T0 - 5, T0 + 5),)))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_live_l2_e.py:129: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3599/test_mail_inside_down_window_f0')
+w = {'reqs': [{'request_id': 'r-L1', 'door': 'form', 'intended_ts': 1000000.0, 'final_status': 201, ...}, {'request_id': '..., 'lead_id': 'L5', 'mode': 'ok', 'status': 200}, {'ts': 1000000.0, 'lead_id': 'L6', 'mode': 'ok', 'status': 200}], ...}
+kw = {'expect': {'quiet_windows': ((999995.0, 1000005.0),)}, 'intended': 7}
+
+    def run_world(tmp_path: Path, w: dict[str, Any], **kw: Any) -> dict[str, Any]:
+        db = tmp_path / "desk.sqlite3"
+        if db.exists():
+            db.unlink()
+        sync_receipt_ids(w)
+        make_book(db, w["leads"], open_receipt=w["open_receipt"], ghost_new_receipt=w["ghost_new_receipt"])
+        book = ci.read_book(db)
+        kw.setdefault("intended", w["intended"])
+>       return ci.run_checks(w["reqs"], book, w["mail"], w["crm"], w["model"], w["drained_ts"], **kw)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: run_checks() got an unexpected keyword argument 'expect'
+
+tests/test_live_l2_tools.py:149: TypeError
+_________________ test_missing_event_is_a_harness_fault[model] _________________
+
+kind = 'model'
+
+    @pytest.mark.parametrize("kind", ["model", "catcher"])
+    def test_missing_event_is_a_harness_fault(kind: str) -> None:
+        out = campaign.harness_faults(planned(kind, "ok"), [], [], False, 0, T0)
+>       assert any(f"{kind} event" in f for f in out)
+E       assert False
+E        +  where False = any(<generator object test_missing_event_is_a_harness_fault.<locals>.<genexpr> at 0x7fcdd2153440>)
+
+tests/test_live_l2_e.py:141: AssertionError
+________________ test_missing_event_is_a_harness_fault[catcher] ________________
+
+kind = 'catcher'
+
+    @pytest.mark.parametrize("kind", ["model", "catcher"])
+    def test_missing_event_is_a_harness_fault(kind: str) -> None:
+        out = campaign.harness_faults(planned(kind, "ok"), [], [], False, 0, T0)
+>       assert any(f"{kind} event" in f for f in out)
+E       assert False
+E        +  where False = any(<generator object test_missing_event_is_a_harness_fault.<locals>.<genexpr> at 0x7fcdd25f4c70>)
+
+tests/test_live_l2_e.py:141: AssertionError
+______________________ test_late_event_is_a_harness_fault ______________________
+
+    def test_late_event_is_a_harness_fault() -> None:
+        fired = [{"kind": "model", "at": 1.0, "late_s": 9.0}]
+        out = campaign.harness_faults(planned("model", "ok"), [], fired, False, 0, T0)
+>       assert any("late" in f for f in out)
+E       assert False
+E        +  where False = any(<generator object test_late_event_is_a_harness_fault.<locals>.<genexpr> at 0x7fcdd2568790>)
+
+tests/test_live_l2_e.py:147: AssertionError
+______________________ test_live_event_thread_is_a_fault _______________________
+
+    def test_live_event_thread_is_a_fault() -> None:
+        fired = [{"kind": "model", "at": 1.0, "late_s": 0.1}]
+>       out = campaign.harness_faults(planned("model", "ok"), [], fired, False, 0, T0, None, True)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: harness_faults() takes from 6 to 7 positional arguments but 8 were given
+
+tests/test_live_l2_e.py:154: TypeError
+_______________________ test_multi_call_leads_are_capped _______________________
+
+    def test_multi_call_leads_are_capped() -> None:
+        rows = pairs("A", 2) + pairs("B", 2)
+>       r = ci.check_model_calls(rows, 2, ["A", "B"], EXP(max_multi_call_leads=1, reask_after_answer_allowed=9))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: check_model_calls() takes 2 positional arguments but 4 were given
+
+tests/test_live_l2_e.py:169: TypeError
+_________________________ test_ask_after_answer_fails __________________________
+
+    def test_ask_after_answer_fails() -> None:
+>       r = ci.check_model_calls(pairs("A", 2), 2, ["A"], EXP())
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: check_model_calls() takes 2 positional arguments but 4 were given
+
+tests/test_live_l2_e.py:176: TypeError
+_______________________ test_down_calls_per_lead_capped ________________________
+
+    def test_down_calls_per_lead_capped() -> None:
+        rows = [{"ts": T0, "lead_id": "A", "mode": "refusal", "event": "arrival"}] * 4
+>       r = ci.check_model_calls(rows, 9, ["A"], EXP(max_down_calls_per_lead=3))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: check_model_calls() takes 2 positional arguments but 4 were given
+
+tests/test_live_l2_e.py:182: TypeError
+________________________ test_cli_default_bound_is_one _________________________
+
+    def test_cli_default_bound_is_one() -> None:
+>       assert ci.DEFAULT_MODEL_CALL_BOUND == 1
+E       assert 6 == 1
+E        +  where 6 = ci.DEFAULT_MODEL_CALL_BOUND
+
+tests/test_live_l2_e.py:187: AssertionError
+____________________ test_missing_id_plus_repeat_line_fails ____________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3599/test_missing_id_plus_repeat_li0')
+
+    def test_missing_id_plus_repeat_line_fails(tmp_path: Path) -> None:
+        w = clean_saved_world()
+        plan = [[r["door"], r["request_id"]] for r in w["reqs"]]
+        facts = {"intended_list": plan, "id_prefix": "r"}  # no distinct count: only the list can tell
+        assert 1 not in failed(run_world(tmp_path, deepcopy(w), facts=facts))
+        bad = deepcopy(w)
+        gone = bad["reqs"].pop(0)  # one intended request never sent: no receipt, no log line ...
+        bad["leads"].pop(gone["request_id"].removeprefix("r-"), None)
+        bad["reqs"].append(dict(bad["reqs"][0]))  # ... and another one logged twice: the line count still matches
+        r = run_world(tmp_path, bad, facts=facts)
+        assert 1 in failed(r)
+        offenders = " ".join(r["checks"][0]["offenders"])
+>       assert "missing-from-log:" + gone["door"] + ":" + gone["request_id"] in offenders
+E       AssertionError: assert ((('missing-from-log:' + 'form') + ':') + 'r-L1') in 'form:r-L2 form:r-L3 form:r-L4'
+
+tests/test_live_l2_e.py:204: AssertionError
+___________________ test_distinct_id_count_must_match_facts ____________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3599/test_distinct_id_count_must_ma0')
+
+    def test_distinct_id_count_must_match_facts(tmp_path: Path) -> None:
+        w = clean_saved_world()
+        facts = {"distinct_request_ids": 99, "id_prefix": "r"}
+>       assert 1 in failed(run_world(tmp_path, w, facts=facts))
+E       assert 1 in []
+E        +  where [] = failed({'ok': True, 'checks': [{'id': 1, 'name': "every request id has a receipt; the request log is complete; the book holds... of 5 attempts got 503 (rate 0.0000); 0 of 5 requests saw one; 0 ended on 503; ceiling none (report only)', ...}, ...]})
+E        +    where {'ok': True, 'checks': [{'id': 1, 'name': "every request id has a receipt; the request log is complete; the book holds... of 5 attempts got 503 (rate 0.0000); 0 of 5 requests saw one; 0 ended on 503; ceiling none (report only)', ...}, ...]} = run_world(PosixPath('/tmp/pytest-of-root/pytest-3599/test_distinct_id_count_must_ma0'), {'reqs': [{'request_id': 'r-L1', 'door': 'form', 'intended_ts': 1000000.0, 'final_status': 201, ...}, {'request_id': '..., 'lead_id': 'L3', 'mode': 'ok', 'status': 200}, {'ts': 1000000.0, 'lead_id': 'L4', 'mode': 'ok', 'status': 200}], ...}, facts={'distinct_request_ids': 99, 'id_prefix': 'r'})
+
+tests/test_live_l2_e.py:211: AssertionError
+__________________________ test_wrong_recipient_fails __________________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3599/test_wrong_recipient_fails0')
+
+    def test_wrong_recipient_fails(tmp_path: Path) -> None:
+        w = make_world()
+        w["mail"][0]["to"] = "someone-else@example.test"
+        r = run_world(tmp_path, w)
+>       assert "wrong-recipient:L1" in r["checks"][2]["offenders"]
+E       AssertionError: assert 'wrong-recipient:L1' in []
+
+tests/test_live_l2_e.py:259: AssertionError
+______________________ test_check_6_report_only_is_stated ______________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3599/test_check_6_report_only_is_st0')
+
+    def test_check_6_report_only_is_stated(tmp_path: Path) -> None:
+        r = run_world(tmp_path, make_world())
+>       assert "report only" in ci.CHECK_NAMES[6]
+E       AssertionError: assert 'report only' in '503 rate reported (fails only above a set ceiling)'
+
+tests/test_live_l2_e.py:270: AssertionError
+_____________________ test_catalogue_states_a_503_ceiling ______________________
+
+    def test_catalogue_states_a_503_ceiling() -> None:
+        for sc in campaign.catalogue():
+>           assert sc.max_503_rate is not None
+                   ^^^^^^^^^^^^^^^
+E           AttributeError: 'Scenario' object has no attribute 'max_503_rate'
+
+tests/test_live_l2_e.py:277: AttributeError
+_____________________ test_missing_facts_file_is_an_error ______________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3599/test_missing_facts_file_is_an_0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7fcdd25781a0>
+
+    def test_missing_facts_file_is_an_error(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+        w = clean_saved_world()
+        d = save_dir(tmp_path, w, "s1")
+        (d / "requests.jsonl.facts.json").unlink()
+        code = ci.main(
+            [
+                "--requests",
+                str(d / "requests.jsonl"),
+                "--book",
+                str(d / "book.sqlite3"),
+                "--catcher",
+                str(d / "catcher.jsonl"),
+                "--crm",
+                str(d / "crm.json"),
+                "--model-log",
+                str(d / "model.jsonl"),
+                "--intended",
+                "5",
+            ]
+        )
+>       assert code == ci.EXIT_INPUT
+E       assert 0 == 2
+E        +  where 2 = ci.EXIT_INPUT
+
+tests/test_live_l2_e.py:302: AssertionError
+----------------------------- Captured stdout call -----------------------------
+#  result  check
+-  ------  -----
+1  PASS    every request id has a receipt; the request log is complete; the book holds only this run's requests
+            5 log lines (intended 5), 5 distinct request ids, 5 receipts in book, 0 without a receipt, 0 with a wrong receipt number, 0 receipts the log does not know, 0 outside the id prefix, 0 without this run's marker; id prefix or run marker not in the facts file: stale-book test by marker skipped
+2  PASS    follow-up states add up to the leads submitted (one per request id); every verdict has its lead; nothing open
+            pending 0 + sending 0 + sent 4 + failed 0 + unknown 0 = 4; leads 4; distinct request ids 4; 0 receipts without a verdict; 0 new verdicts without a lead; 0 review verdicts; 0 leads missing or not from this run
+3  PASS    one message at most per key and recipient; unknown and failed only with a reason, within the ceiling
+            4 messages; 0 keys more than once, 0 recipients more than once, 0 sent without a message, 0 failed with a message and no fitting reason, 0 failed with a message and a reason that fits, 0 keys of no lead; unknown 0 (0 with a message, 0 without; ceiling none; 0 without a fitting reason); failed 0 (ceiling none)
+4  PASS    CRM rows match the leads marked done, plus the listed unknowns
+            4 CRM rows; allowed 4 to 4 (done 4 + up to 0 unknown); 0 missing, 0 not allowed, 0 twice
+5  PASS    model calls per lead are within the bound
+            4 calls for 4 leads; most for one lead 1; bound 6
+6  PASS    503 rate reported (fails only above a set ceiling)
+            0 of 5 attempts got 503 (rate 0.0000); 0 of 5 requests saw one; 0 ended on 503; ceiling none (report only)
+7  PASS    drain time within the ceiling
+            2.00 s from the last intended send to drained (ceiling 120.0 s; book updated_at (whole seconds)); 0 pending, 0 sending, 0 receipts without a verdict
+ALL 7 CHECKS HOLD
+{
+  "checks": [
+    {
+      "detail": "5 log lines (intended 5), 5 distinct request ids, 5 receipts in book, 0 without a receipt, 0 with a wrong receipt number, 0 receipts the log does not know, 0 outside the id prefix, 0 without this run's marker; id prefix or run marker not in the facts file: stale-book test by marker skipped",
+      "id": 1,
+      "name": "every request id has a receipt; the request log is complete; the book holds only this run's requests",
+      "offender_count": 0,
+      "offenders": [],
+      "ok": true,
+      "values": {
+        "distinct_requests": 5,
+        "foreign_ids": 0,
+        "intended": 5,
+        "lines": 5,
+        "lost": 0,
+        "marker_checked": false,
+        "receipts_in_book": 5,
+        "receipts_without_run_marker": 0,
+        "stale_receipts": 0,
+        "stored_but_client_unacked": 0
+      }
+    },
+    {
+      "detail": "pending 0 + sending 0 + sent 4 + failed 0 + unknown 0 = 4; leads 4; distinct request ids 4; 0 receipts without a verdict; 0 new verdicts without a lead; 0 review verdicts; 0 leads missing or not from this run",
+      "id": 2,
+      "name": "follow-up states add up to the leads submitted (one per request id); every verdict has its lead; nothing open",
+      "offender_count": 0,
+      "offenders": [],
+      "ok": true,
+      "values": {
+        "distinct_request_ids": 4,
+        "expected_leads_missing_or_foreign": 0,
+        "failed": 0,
+        "followup_rows": 4,
+        "leads": 4,
+        "new_receipts_without_lead": 0,
+        "pending": 0,
+        "receipts_without_verdict": 0,
+        "review_verdicts": 0,
+        "sending": 0,
+        "sent": 4,
+        "sum": 4,
+        "unknown": 0
+      }
+    },
+    {
+      "detail": "4 messages; 0 keys more than once, 0 recipients more than once, 0 sent without a message, 0 failed with a message and no fitting reason, 0 failed with a message and a reason that fits, 0 keys of no lead; unknown 0 (0 with a message, 0 without; ceiling none; 0 without a fitting reason); failed 0 (ceiling none)",
+      "id": 3,
+      "name": "one message at most per key and recipient; unknown and failed only with a reason, within the ceiling",
+      "offender_count": 0,
+      "offenders": [],
+      "ok": true,
+      "values": {
+        "failed": 0,
+        "failed_or_unknown": 0,
+        "failed_with_message_and_reason": 0,
+        "keys": 4,
+        "max_failed": null,
+        "max_per_key": 1,
+        "max_per_recipient": 1,
+        "max_unknown": null,
+        "messages": 4,
+        "silent_followups": 0,
+        "unknown": 0,
+        "unknown_with_message": 0,
+        "unknown_without_fitting_reason": 0,
+        "unknown_without_message": 0
+      }
+    },
+    {
+      "detail": "4 CRM rows; allowed 4 to 4 (done 4 + up to 0 unknown); 0 missing, 0 not allowed, 0 twice",
+      "id": 4,
+      "name": "CRM rows match the leads marked done, plus the listed unknowns",
+      "offender_count": 0,
+      "offenders": [],
+      "ok": true,
+      "values": {
+        "crm_rows": 4,
+        "extra": 0,
+        "leads_crm_done": 4,
+        "listed_unknowns": 0,
+        "missing": 0,
+        "twice": 0,
+        "unknowns_present": 0
+      }
+    },
+    {
+      "detail": "4 calls for 4 leads; most for one lead 1; bound 6",
+      "id": 5,
+      "name": "model calls per lead are within the bound",
+      "offender_count": 0,
+      "offenders": [],
+      "ok": true,
+      "values": {
+        "bound": 6,
+        "calls": 4,
+        "calls_by_status": {
+          "200": 4
+        },
+        "counted_from": "finished calls (no arrival lines in this log)",
+        "leads_called": 4,
+        "max_calls_one_lead": 1
+      }
+    },
+    {
+      "detail": "0 of 5 attempts got 503 (rate 0.0000); 0 of 5 requests saw one; 0 ended on 503; ceiling none (report only)",
+      "id": 6,
+      "name": "503 rate reported (fails only above a set ceiling)",
+      "offender_count": 0,
+      "offenders": [],
+      "ok": true,
+      "values": {
+        "attempts": 5,
+        "ceiling": null,
+        "rate": 0.0,
+        "requests": 5,
+        "requests_ending_on_503": 0,
+        "requests_that_saw_503": 0,
+        "responses_503": 0
+      }
+    },
+    {
+      "detail": "2.00 s from the last intended send to drained (ceiling 120.0 s; book updated_at (whole seconds)); 0 pending, 0 sending, 0 receipts without a verdict",
+      "id": 7,
+      "name": "drain time within the ceiling",
+      "offender_count": 0,
+      "offenders": [],
+      "ok": true,
+      "values": {
+        "ceiling_seconds": 120.0,
+        "drain_seconds": 2.0,
+        "drained_ts": 1000005.0,
+        "last_intended_send_ts": 1000003.0,
+        "open_receipts": 0,
+        "pending": 0,
+        "sending": 0,
+        "source": "book updated_at (whole seconds)"
+      }
+    }
+  ],
+  "ok": true
+}
+______________________ test_model_down_modes_are_complete ______________________
+
+    def test_model_down_modes_are_complete() -> None:
+>       assert "malformed_label" in ci.MODEL_DOWN_MODES
+                                    ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'live_l2.check_invariants' has no attribute 'MODEL_DOWN_MODES'
+
+tests/test_live_l2_e.py:307: AttributeError
+________________________ test_retry_window_is_validated ________________________
+
+    def test_retry_window_is_validated() -> None:
+>       assert load_driver.check_retry_window(None) is None
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'live_l2.load_driver' has no attribute 'check_retry_window'
+
+tests/test_live_l2_e.py:315: AttributeError
+___________________ test_crash_scenarios_use_a_retry_window ____________________
+
+    def test_crash_scenarios_use_a_retry_window() -> None:
+        crashes = [sc for sc in campaign.catalogue() if any(e[1] == "crash" for e in sc.events)]
+        assert crashes
+        for sc in crashes:
+>           assert sc.retry_window is not None
+                   ^^^^^^^^^^^^^^^
+E           AttributeError: 'Scenario' object has no attribute 'retry_window'
+
+tests/test_live_l2_e.py:326: AttributeError
+____________________ test_boot_failure_is_recorded_goes_on _____________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fcdd28323f0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3599/test_boot_failure_is_recorded_0')
+
+    def test_boot_failure_is_recorded_goes_on(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+        class Broken:
+            def __init__(self, sc: Any, out: Path, env: dict[str, str]) -> None:
+                self.sc = sc
+    
+            def run(self) -> dict[str, Any]:
+                raise RuntimeError("desk would not start")
+    
+        monkeypatch.setattr(campaign, "Run", Broken)
+>       code = campaign.main(["--out", str(tmp_path), "--only", "burst-10,burst-200"])
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_live_l2_e.py:339: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+live_l2/campaign.py:677: in main
+    res = Run(sc, a.out, {}).run()
+          ^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <test_live_l2_e.test_boot_failure_is_recorded_goes_on.<locals>.Broken object at 0x7fcdd206fe00>
+
+    def run(self) -> dict[str, Any]:
+>       raise RuntimeError("desk would not start")
+E       RuntimeError: desk would not start
+
+tests/test_live_l2_e.py:336: RuntimeError
+----------------------------- Captured stdout call -----------------------------
+== burst-10 20:37:24Z
+______________________ test_catcher_records_a_bad_charset ______________________
+
+    def test_catcher_records_a_bad_charset() -> None:
+        raw = (
+            b"From: a@example.test\r\nTo: b@example.test\r\nSubject: s\r\nX-Send-Key: K1\r\n"
+            b"Content-Type: text/plain; charset=no-such-charset\r\nContent-Transfer-Encoding: 8bit\r\n\r\nbody\r\n"
+        )
+>       rec = catcher.record_of(raw, ["b@example.test"], "ok")
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_live_l2_e.py:351: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+live_l2/catcher.py:63: in record_of
+    text = part.get_content() if part is not None else ""
+           ^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/email/message.py:1140: in get_content
+    return content_manager.get_content(self, *args, **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.13/email/contentmanager.py:23: in get_content
+    return self.get_handlers[maintype](msg, *args, **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+msg = <email.message.EmailMessage object at 0x7fcdd2579010>, errors = 'replace'
+
+    def get_text_content(msg, errors='replace'):
+        content = msg.get_payload(decode=True)
+        charset = msg.get_param('charset', 'ASCII')
+>       return content.decode(charset, errors=errors)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       LookupError: unknown encoding: no-such-charset
+
+/usr/lib/python3.13/email/contentmanager.py:68: LookupError
+________________________ test_recheck_uses_saved_bounds ________________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3599/test_recheck_uses_saved_bounds0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7fcdd265c690>
+
+    def test_recheck_uses_saved_bounds(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+        w = clean_saved_world()
+        bounds = {"model_bound": 1, "max_unknown": 0, "max_failed": 0, "max_503_rate": 0.0, "expect": None}
+        d = save_dir(tmp_path, w, "burst-10", bounds=bounds)
+        assert recheck.main([str(d)]) == ci.EXIT_OK
+>       assert "BOUNDS: from the saved run" in capsys.readouterr().out
+E       assert 'BOUNDS: from the saved run' in '#  result  check\n-  ------  -----\n1  PASS    every request id has a receipt; the request log is complete; the book ...d (ceiling 120.0 s; marker); 0 pending, 0 sending, 0 receipts without a verdict\nALL 7 CHECKS HOLD\nRUN FAULTS: none\n'
+E        +  where '#  result  check\n-  ------  -----\n1  PASS    every request id has a receipt; the request log is complete; the book ...d (ceiling 120.0 s; marker); 0 pending, 0 sending, 0 receipts without a verdict\nALL 7 CHECKS HOLD\nRUN FAULTS: none\n' = CaptureResult(out="#  result  check\n-  ------  -----\n1  PASS    every request id has a receipt; the request log is c...g 120.0 s; marker); 0 pending, 0 sending, 0 receipts without a verdict\nALL 7 CHECKS HOLD\nRUN FAULTS: none\n", err='').out
+E        +    where CaptureResult(out="#  result  check\n-  ------  -----\n1  PASS    every request id has a receipt; the request log is c...g 120.0 s; marker); 0 pending, 0 sending, 0 receipts without a verdict\nALL 7 CHECKS HOLD\nRUN FAULTS: none\n", err='') = readouterr()
+E        +      where readouterr = <_pytest.capture.CaptureFixture object at 0x7fcdd265c690>.readouterr
+
+tests/test_live_l2_e.py:362: AssertionError
+____________________ test_recheck_saved_ceiling_beats_today ____________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3599/test_recheck_saved_ceiling_bea0')
+
+    def test_recheck_saved_ceiling_beats_today(tmp_path: Path) -> None:
+        w = clean_saved_world()
+        w["model"] += [{"ts": T0, "lead_id": "L1", "mode": "ok", "status": 200}]  # a second call for L1
+        tight = {"model_bound": 1, "max_unknown": 0, "max_failed": 0, "max_503_rate": 0.0, "expect": None}
+        loose = dict(tight, model_bound=2)
+        a = tmp_path / "a"
+        b = tmp_path / "b"
+        a.mkdir()
+        b.mkdir()
+        assert recheck.main([str(save_dir(a, w, "burst-10", bounds=tight))]) == ci.EXIT_FAIL
+>       assert (
+            recheck.main([str(save_dir(b, w, "burst-10", bounds=loose))]) == recheck.EXIT_RERUN
+        )  # holds, but the old log cannot show the order of the two calls
+E       AssertionError: assert 1 == 3
+E        +  where 1 = <function main at 0x7fcdd20e0400>(['/tmp/pytest-of-root/pytest-3599/test_recheck_saved_ceiling_bea0/b/burst-10'])
+E        +    where <function main at 0x7fcdd20e0400> = recheck.main
+E        +  and   3 = recheck.EXIT_RERUN
+
+tests/test_live_l2_e.py:380: AssertionError
+----------------------------- Captured stdout call -----------------------------
+#  result  check
+-  ------  -----
+1  PASS    every request id has a receipt; the request log is complete; the book holds only this run's requests
+            5 log lines (intended 5), 5 distinct request ids, 5 receipts in book, 0 without a receipt, 0 with a wrong receipt number, 0 receipts the log does not know, 0 outside the id prefix, 0 without this run's marker; id prefix or run marker not in the facts file: stale-book test by marker skipped
+2  PASS    follow-up states add up to the leads submitted (one per request id); every verdict has its lead; nothing open
+            pending 0 + sending 0 + sent 4 + failed 0 + unknown 0 = 4; leads 4; distinct request ids 4; 0 receipts without a verdict; 0 new verdicts without a lead; 0 review verdicts; 0 leads missing or not from this run
+3  PASS    one message at most per key and recipient; unknown and failed only with a reason, within the ceiling
+            4 messages; 0 keys more than once, 0 recipients more than once, 0 sent without a message, 0 failed with a message and no fitting reason, 0 failed with a message and a reason that fits, 0 keys of no lead; unknown 0 (0 with a message, 0 without; ceiling 0; 0 without a fitting reason); failed 0 (ceiling 0)
+4  PASS    CRM rows match the leads marked done, plus the listed unknowns
+            4 CRM rows; allowed 4 to 4 (done 4 + up to 0 unknown); 0 missing, 0 not allowed, 0 twice
+5  FAIL    model calls per lead are within the bound
+            5 calls for 4 leads; most for one lead 2; bound 1
+            first 1 of 1: L1
+6  PASS    503 rate reported (fails only above a set ceiling)
+            0 of 5 attempts got 503 (rate 0.0000); 0 of 5 requests saw one; 0 ended on 503; ceiling none (report only)
+7  PASS    drain time within the ceiling
+            5.00 s from the last intended send to drained (ceiling 120.0 s; marker); 0 pending, 0 sending, 0 receipts without a verdict
+AT LEAST ONE CHECK FAILED
+RUN FAULTS: none
+#  result  check
+-  ------  -----
+1  PASS    every request id has a receipt; the request log is complete; the book holds only this run's requests
+            5 log lines (intended 5), 5 distinct request ids, 5 receipts in book, 0 without a receipt, 0 with a wrong receipt number, 0 receipts the log does not know, 0 outside the id prefix, 0 without this run's marker; id prefix or run marker not in the facts file: stale-book test by marker skipped
+2  PASS    follow-up states add up to the leads submitted (one per request id); every verdict has its lead; nothing open
+            pending 0 + sending 0 + sent 4 + failed 0 + unknown 0 = 4; leads 4; distinct request ids 4; 0 receipts without a verdict; 0 new verdicts without a lead; 0 review verdicts; 0 leads missing or not from this run
+3  PASS    one message at most per key and recipient; unknown and failed only with a reason, within the ceiling
+            4 messages; 0 keys more than once, 0 recipients more than once, 0 sent without a message, 0 failed with a message and no fitting reason, 0 failed with a message and a reason that fits, 0 keys of no lead; unknown 0 (0 with a message, 0 without; ceiling 0; 0 without a fitting reason); failed 0 (ceiling 0)
+4  PASS    CRM rows match the leads marked done, plus the listed unknowns
+            4 CRM rows; allowed 4 to 4 (done 4 + up to 0 unknown); 0 missing, 0 not allowed, 0 twice
+5  FAIL    model calls per lead are within the bound
+            5 calls for 4 leads; most for one lead 2; bound 1
+            first 1 of 1: L1
+6  PASS    503 rate reported (fails only above a set ceiling)
+            0 of 5 attempts got 503 (rate 0.0000); 0 of 5 requests saw one; 0 ended on 503; ceiling none (report only)
+7  PASS    drain time within the ceiling
+            5.00 s from the last intended send to drained (ceiling 120.0 s; marker); 0 pending, 0 sending, 0 receipts without a verdict
+AT LEAST ONE CHECK FAILED
+RUN FAULTS: none
+____________________ test_dead_worker_is_reported_not_hung _____________________
+
+    def test_dead_worker_is_reported_not_hung() -> None:
+        ctx = multiprocessing.get_context("spawn")
+        t0 = time.monotonic()
+>       msg = load_driver._run_workers(ctx, [(0,), (1,)], [time.time() + 60] * 2, exit_worker, poll=0.05)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'live_l2.load_driver' has no attribute '_run_workers'
+
+tests/test_live_l2_e.py:401: AttributeError
+____________________ test_stuck_worker_cut_at_its_deadline _____________________
+
+    def test_stuck_worker_cut_at_its_deadline() -> None:
+        ctx = multiprocessing.get_context("spawn")
+        t0 = time.monotonic()
+>       msg = load_driver._run_workers(ctx, [(0,)], [time.time() + 1.0], hang_worker, poll=0.05)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'live_l2.load_driver' has no attribute '_run_workers'
+
+tests/test_live_l2_e.py:409: AttributeError
+_______________________ test_good_workers_report_nothing _______________________
+
+    def test_good_workers_report_nothing() -> None:
+        ctx = multiprocessing.get_context("spawn")
+>       assert load_driver._run_workers(ctx, [(0,)], [time.time() + 60], fine_worker, poll=0.05) is None
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'live_l2.load_driver' has no attribute '_run_workers'
+
+tests/test_live_l2_e.py:416: AttributeError
+______________________ test_orphaned_worker_stops_sending ______________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fcdd2831350>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3599/test_orphaned_worker_stops_sen0')
+
+    def test_orphaned_worker_stops_sending(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+        sent: list[str] = []
+        monkeypatch.setattr(load_driver, "send_with_retries", lambda url, it, *a: sent.append("x") or {})
+        real = os.getppid()
+        seen = iter([real])
+        monkeypatch.setattr(
+            load_driver.os, "getppid", lambda: next(seen, -1)
+        )  # the first call is the start; then "orphaned"
+        item = load_driver._item("form", "r1", time.time(), "burst:1", "first")
+        load_driver._worker((0, "http://127.0.0.1:1/leads", [item], 1, tmp_path / "p0"))
+>       assert sent == []
+E       AssertionError: assert ['x'] == []
+E         
+E         Left contains one more item: 'x'
+E         Use -v to get more diff
+
+tests/test_live_l2_e.py:429: AssertionError
+_____________________ test_run_group_kills_the_whole_group _____________________
+
+    def test_run_group_kills_the_whole_group() -> None:
+>       code, _out, err = campaign.run_group([sys.executable, "-c", "import time; time.sleep(30)"], dict(os.environ), 1.0)
+                          ^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'live_l2.campaign' has no attribute 'run_group'
+
+tests/test_live_l2_e.py:441: AttributeError
+____________________ test_worker_deadline_grows_with_items _____________________
+
+    def test_worker_deadline_grows_with_items() -> None:
+>       a = load_driver._worker_deadline(10, 10, T0)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'live_l2.load_driver' has no attribute '_worker_deadline'
+
+tests/test_live_l2_e.py:447: AttributeError
+_____________________ test_readme_pins_the_scenario_table ______________________
+
+    def test_readme_pins_the_scenario_table() -> None:
+        text = (Path(__file__).resolve().parent.parent / "live_l2" / "README-L2.md").read_text(encoding="utf-8")
+>       assert campaign.scenario_table() in text
+               ^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'live_l2.campaign' has no attribute 'scenario_table'
+
+tests/test_live_l2_e.py:454: AttributeError
+______________________ test_empty_log_with_model_expected ______________________
+
+    def test_empty_log_with_model_expected() -> None:
+>       assert ci.check_model_calls([], 1, [], EXP(model_expected=True))["offenders"] == ["no-model-calls"]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: check_model_calls() takes 2 positional arguments but 4 were given
+
+tests/test_live_l2_e.py:542: TypeError
+__________________ test_old_log_cannot_prove_ask_after_answer __________________
+
+    def test_old_log_cannot_prove_ask_after_answer() -> None:
+        rows = [{"ts": T0, "lead_id": "A", "mode": "ok", "status": 200}] * 2  # old format: one row per finished call
+>       r = ci.check_model_calls(rows, 2, ["A"], EXP())
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: check_model_calls() takes 2 positional arguments but 4 were given
+
+tests/test_live_l2_e.py:555: TypeError
+_________________ test_recheck_asks_for_a_rerun_on_raced_calls _________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3599/test_recheck_asks_for_a_rerun_0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7fcdd2107d90>
+
+    def test_recheck_asks_for_a_rerun_on_raced_calls(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+        w = clean_saved_world()
+        w["model"] = [*w["model"], dict(w["model"][0])]  # old format, one lead called twice
+        bounds = {"model_bound": 2, "max_unknown": 0, "max_failed": 0, "max_503_rate": 0.0, "expect": None}
+        d = save_dir(tmp_path, w, "burst-10", bounds=bounds)
+>       assert recheck.main([str(d)]) == recheck.EXIT_RERUN
+E       AssertionError: assert 1 == 3
+E        +  where 1 = <function main at 0x7fcdd20e0400>(['/tmp/pytest-of-root/pytest-3599/test_recheck_asks_for_a_rerun_0/burst-10'])
+E        +    where <function main at 0x7fcdd20e0400> = recheck.main
+E        +  and   3 = recheck.EXIT_RERUN
+
+tests/test_live_l2_e.py:565: AssertionError
+----------------------------- Captured stdout call -----------------------------
+#  result  check
+-  ------  -----
+1  PASS    every request id has a receipt; the request log is complete; the book holds only this run's requests
+            5 log lines (intended 5), 5 distinct request ids, 5 receipts in book, 0 without a receipt, 0 with a wrong receipt number, 0 receipts the log does not know, 0 outside the id prefix, 0 without this run's marker; id prefix or run marker not in the facts file: stale-book test by marker skipped
+2  PASS    follow-up states add up to the leads submitted (one per request id); every verdict has its lead; nothing open
+            pending 0 + sending 0 + sent 4 + failed 0 + unknown 0 = 4; leads 4; distinct request ids 4; 0 receipts without a verdict; 0 new verdicts without a lead; 0 review verdicts; 0 leads missing or not from this run
+3  PASS    one message at most per key and recipient; unknown and failed only with a reason, within the ceiling
+            4 messages; 0 keys more than once, 0 recipients more than once, 0 sent without a message, 0 failed with a message and no fitting reason, 0 failed with a message and a reason that fits, 0 keys of no lead; unknown 0 (0 with a message, 0 without; ceiling 0; 0 without a fitting reason); failed 0 (ceiling 0)
+4  PASS    CRM rows match the leads marked done, plus the listed unknowns
+            4 CRM rows; allowed 4 to 4 (done 4 + up to 0 unknown); 0 missing, 0 not allowed, 0 twice
+5  FAIL    model calls per lead are within the bound
+            5 calls for 4 leads; most for one lead 2; bound 1
+            first 1 of 1: L1
+6  PASS    503 rate reported (fails only above a set ceiling)
+            0 of 5 attempts got 503 (rate 0.0000); 0 of 5 requests saw one; 0 ended on 503; ceiling none (report only)
+7  PASS    drain time within the ceiling
+            5.00 s from the last intended send to drained (ceiling 120.0 s; marker); 0 pending, 0 sending, 0 receipts without a verdict
+AT LEAST ONE CHECK FAILED
+RUN FAULTS: none
+____________ test_all_failed_book_breaks_scenario_cap[catcher-down] ____________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3599/test_all_failed_book_breaks_sc0')
+name = 'catcher-down'
+
+    @pytest.mark.parametrize("name", ["catcher-down", "model-flaps"])
+    def test_all_failed_book_breaks_scenario_cap(tmp_path: Path, name: str) -> None:
+        sc = next(s for s in campaign.catalogue() if s.name == name)
+>       assert sc.max_failed is not None
+E       AssertionError: assert None is not None
+E        +  where None = Scenario(name='catcher-down', load='rate:10:30', model_mode='ok', catcher_mode='ok', events=[(5.0, 'catcher', 'down'),...t=240.0, note='', workers=4, threads=64, model_timeout=5.0, max_unknown=0, max_failed=None, desk_env={}, model_bound=1).max_failed
+
+tests/test_live_l2_e.py:572: AssertionError
+____________ test_all_failed_book_breaks_scenario_cap[model-flaps] _____________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3599/test_all_failed_book_breaks_sc1')
+name = 'model-flaps'
+
+    @pytest.mark.parametrize("name", ["catcher-down", "model-flaps"])
+    def test_all_failed_book_breaks_scenario_cap(tmp_path: Path, name: str) -> None:
+        sc = next(s for s in campaign.catalogue() if s.name == name)
+>       assert sc.max_failed is not None
+E       AssertionError: assert None is not None
+E        +  where None = Scenario(name='model-flaps', load='rate:10:30', model_mode='ok', catcher_mode='ok', events=[(5.0, 'model', 'server_err...t=240.0, note='', workers=4, threads=64, model_timeout=2.0, max_unknown=0, max_failed=None, desk_env={}, model_bound=6).max_failed
+
+tests/test_live_l2_e.py:572: AssertionError
+_____________ test_list_characters_in_to_refused[a,b@example.test] _____________
+
+bad = 'a,b@example.test'
+
+    @pytest.mark.parametrize(
+        "bad",
+        ["a,b@example.test", "a;b@example.test", 'a"b@example.test', "a(b@example.test", "a)b@example.test", "a@b,c.test"],
+    )
+    def test_list_characters_in_to_refused(bad: str) -> None:
+        with pytest.raises(SendRefused):
+>           box(free_port()).send("K-20", bad, SUBJECT, BODY, BUDGET)
+
+tests/test_smtp_outbox.py:512: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/lead_desk/smtp_outbox.py:214: in send
+    sock = self._connect(budget)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <lead_desk.smtp_outbox.SmtpOutbox object at 0x7fcdd230ada0>
+budget = <lead_desk.smtp_outbox._Budget object at 0x7fcdd230af80>
+
+    def _connect(self, budget: _Budget) -> socket.socket:
+        """Connect inside the send budget, without the resolver. Each address gets an equal share of what is left."""
+        addresses = self._addresses()
+        last: Exception | None = None
+        for index, (family, host) in enumerate(addresses):
+            try:
+                share = budget.left() / (len(addresses) - index)
+                sock = socket.socket(family, socket.SOCK_STREAM)
+            except (OSError, TimeoutError) as e:
+                last = e
+                break
+            try:
+                sock.settimeout(share)
+                sock.connect((host, self._s.port))
+            except (OSError, TimeoutError) as e:  # refused, connect timeout, unreachable network
+                sock.close()
+                last = e
+                continue
+            return sock
+>       raise SendUnreachable(type(last).__name__ if last else "no address")
+E       lead_desk.contract.SendUnreachable: ConnectionRefusedError
+
+src/lead_desk/smtp_outbox.py:248: SendUnreachable
+_____________ test_list_characters_in_to_refused[a;b@example.test] _____________
+
+bad = 'a;b@example.test'
+
+    @pytest.mark.parametrize(
+        "bad",
+        ["a,b@example.test", "a;b@example.test", 'a"b@example.test', "a(b@example.test", "a)b@example.test", "a@b,c.test"],
+    )
+    def test_list_characters_in_to_refused(bad: str) -> None:
+        with pytest.raises(SendRefused):
+>           box(free_port()).send("K-20", bad, SUBJECT, BODY, BUDGET)
+
+tests/test_smtp_outbox.py:512: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/lead_desk/smtp_outbox.py:214: in send
+    sock = self._connect(budget)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <lead_desk.smtp_outbox.SmtpOutbox object at 0x7fcdd263caf0>
+budget = <lead_desk.smtp_outbox._Budget object at 0x7fcdd28223f0>
+
+    def _connect(self, budget: _Budget) -> socket.socket:
+        """Connect inside the send budget, without the resolver. Each address gets an equal share of what is left."""
+        addresses = self._addresses()
+        last: Exception | None = None
+        for index, (family, host) in enumerate(addresses):
+            try:
+                share = budget.left() / (len(addresses) - index)
+                sock = socket.socket(family, socket.SOCK_STREAM)
+            except (OSError, TimeoutError) as e:
+                last = e
+                break
+            try:
+                sock.settimeout(share)
+                sock.connect((host, self._s.port))
+            except (OSError, TimeoutError) as e:  # refused, connect timeout, unreachable network
+                sock.close()
+                last = e
+                continue
+            return sock
+>       raise SendUnreachable(type(last).__name__ if last else "no address")
+E       lead_desk.contract.SendUnreachable: ConnectionRefusedError
+
+src/lead_desk/smtp_outbox.py:248: SendUnreachable
+_____________ test_list_characters_in_to_refused[a"b@example.test] _____________
+
+bad = 'a"b@example.test'
+
+    @pytest.mark.parametrize(
+        "bad",
+        ["a,b@example.test", "a;b@example.test", 'a"b@example.test', "a(b@example.test", "a)b@example.test", "a@b,c.test"],
+    )
+    def test_list_characters_in_to_refused(bad: str) -> None:
+        with pytest.raises(SendRefused):
+>           box(free_port()).send("K-20", bad, SUBJECT, BODY, BUDGET)
+
+tests/test_smtp_outbox.py:512: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/lead_desk/smtp_outbox.py:214: in send
+    sock = self._connect(budget)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <lead_desk.smtp_outbox.SmtpOutbox object at 0x7fcdd230a620>
+budget = <lead_desk.smtp_outbox._Budget object at 0x7fcdd230a4e0>
+
+    def _connect(self, budget: _Budget) -> socket.socket:
+        """Connect inside the send budget, without the resolver. Each address gets an equal share of what is left."""
+        addresses = self._addresses()
+        last: Exception | None = None
+        for index, (family, host) in enumerate(addresses):
+            try:
+                share = budget.left() / (len(addresses) - index)
+                sock = socket.socket(family, socket.SOCK_STREAM)
+            except (OSError, TimeoutError) as e:
+                last = e
+                break
+            try:
+                sock.settimeout(share)
+                sock.connect((host, self._s.port))
+            except (OSError, TimeoutError) as e:  # refused, connect timeout, unreachable network
+                sock.close()
+                last = e
+                continue
+            return sock
+>       raise SendUnreachable(type(last).__name__ if last else "no address")
+E       lead_desk.contract.SendUnreachable: ConnectionRefusedError
+
+src/lead_desk/smtp_outbox.py:248: SendUnreachable
+_____________ test_list_characters_in_to_refused[a(b@example.test] _____________
+
+bad = 'a(b@example.test'
+
+    @pytest.mark.parametrize(
+        "bad",
+        ["a,b@example.test", "a;b@example.test", 'a"b@example.test', "a(b@example.test", "a)b@example.test", "a@b,c.test"],
+    )
+    def test_list_characters_in_to_refused(bad: str) -> None:
+        with pytest.raises(SendRefused):
+>           box(free_port()).send("K-20", bad, SUBJECT, BODY, BUDGET)
+
+tests/test_smtp_outbox.py:512: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/lead_desk/smtp_outbox.py:214: in send
+    sock = self._connect(budget)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <lead_desk.smtp_outbox.SmtpOutbox object at 0x7fcdd231caa0>
+budget = <lead_desk.smtp_outbox._Budget object at 0x7fcdd231ce10>
+
+    def _connect(self, budget: _Budget) -> socket.socket:
+        """Connect inside the send budget, without the resolver. Each address gets an equal share of what is left."""
+        addresses = self._addresses()
+        last: Exception | None = None
+        for index, (family, host) in enumerate(addresses):
+            try:
+                share = budget.left() / (len(addresses) - index)
+                sock = socket.socket(family, socket.SOCK_STREAM)
+            except (OSError, TimeoutError) as e:
+                last = e
+                break
+            try:
+                sock.settimeout(share)
+                sock.connect((host, self._s.port))
+            except (OSError, TimeoutError) as e:  # refused, connect timeout, unreachable network
+                sock.close()
+                last = e
+                continue
+            return sock
+>       raise SendUnreachable(type(last).__name__ if last else "no address")
+E       lead_desk.contract.SendUnreachable: ConnectionRefusedError
+
+src/lead_desk/smtp_outbox.py:248: SendUnreachable
+_____________ test_list_characters_in_to_refused[a)b@example.test] _____________
+
+bad = 'a)b@example.test'
+
+    @pytest.mark.parametrize(
+        "bad",
+        ["a,b@example.test", "a;b@example.test", 'a"b@example.test', "a(b@example.test", "a)b@example.test", "a@b,c.test"],
+    )
+    def test_list_characters_in_to_refused(bad: str) -> None:
+        with pytest.raises(SendRefused):
+>           box(free_port()).send("K-20", bad, SUBJECT, BODY, BUDGET)
+
+tests/test_smtp_outbox.py:512: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/lead_desk/smtp_outbox.py:214: in send
+    sock = self._connect(budget)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <lead_desk.smtp_outbox.SmtpOutbox object at 0x7fcdd2821c20>
+budget = <lead_desk.smtp_outbox._Budget object at 0x7fcdd2820e10>
+
+    def _connect(self, budget: _Budget) -> socket.socket:
+        """Connect inside the send budget, without the resolver. Each address gets an equal share of what is left."""
+        addresses = self._addresses()
+        last: Exception | None = None
+        for index, (family, host) in enumerate(addresses):
+            try:
+                share = budget.left() / (len(addresses) - index)
+                sock = socket.socket(family, socket.SOCK_STREAM)
+            except (OSError, TimeoutError) as e:
+                last = e
+                break
+            try:
+                sock.settimeout(share)
+                sock.connect((host, self._s.port))
+            except (OSError, TimeoutError) as e:  # refused, connect timeout, unreachable network
+                sock.close()
+                last = e
+                continue
+            return sock
+>       raise SendUnreachable(type(last).__name__ if last else "no address")
+E       lead_desk.contract.SendUnreachable: ConnectionRefusedError
+
+src/lead_desk/smtp_outbox.py:248: SendUnreachable
+________________ test_list_characters_in_to_refused[a@b,c.test] ________________
+
+bad = 'a@b,c.test'
+
+    @pytest.mark.parametrize(
+        "bad",
+        ["a,b@example.test", "a;b@example.test", 'a"b@example.test', "a(b@example.test", "a)b@example.test", "a@b,c.test"],
+    )
+    def test_list_characters_in_to_refused(bad: str) -> None:
+        with pytest.raises(SendRefused):
+>           box(free_port()).send("K-20", bad, SUBJECT, BODY, BUDGET)
+
+tests/test_smtp_outbox.py:512: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/lead_desk/smtp_outbox.py:214: in send
+    sock = self._connect(budget)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <lead_desk.smtp_outbox.SmtpOutbox object at 0x7fcdd22e3660>
+budget = <lead_desk.smtp_outbox._Budget object at 0x7fcdd22e1c70>
+
+    def _connect(self, budget: _Budget) -> socket.socket:
+        """Connect inside the send budget, without the resolver. Each address gets an equal share of what is left."""
+        addresses = self._addresses()
+        last: Exception | None = None
+        for index, (family, host) in enumerate(addresses):
+            try:
+                share = budget.left() / (len(addresses) - index)
+                sock = socket.socket(family, socket.SOCK_STREAM)
+            except (OSError, TimeoutError) as e:
+                last = e
+                break
+            try:
+                sock.settimeout(share)
+                sock.connect((host, self._s.port))
+            except (OSError, TimeoutError) as e:  # refused, connect timeout, unreachable network
+                sock.close()
+                last = e
+                continue
+            return sock
+>       raise SendUnreachable(type(last).__name__ if last else "no address")
+E       lead_desk.contract.SendUnreachable: ConnectionRefusedError
+
+src/lead_desk/smtp_outbox.py:248: SendUnreachable
+____________________ test_bare_three_digit_replies_accepted ____________________
+
+self = <lead_desk.smtp_outbox.SmtpOutbox object at 0x7fcdd231dae0>
+sock = <socket.socket [closed] fd=-1, family=2, type=1, proto=0>
+budget = <lead_desk.smtp_outbox._Budget object at 0x7fcdd231d900>
+to = 'ada@example.test'
+wire = b'From: desk@example.test\r\nTo: ada@example.test\r\nSubject: Thanks for getting in touch, Ada\r\nDate: Mon, 09 Nov 20...r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\nHi Ada, we received your message. (FAKE EMAIL)\r\n.\r\n'
+
+    def _dialogue(self, sock: socket.socket, budget: _Budget, to: str, wire: bytes) -> None:
+        buf = bytearray()
+        # Phase 1: before the message text is offered. Nothing of the message can have left.
+        try:
+>           code = _read_reply(sock, budget, buf)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+src/lead_desk/smtp_outbox.py:254: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+sock = <socket.socket [closed] fd=-1, family=2, type=1, proto=0>
+budget = <lead_desk.smtp_outbox._Budget object at 0x7fcdd231d900>
+buf = bytearray(b'220\r\n')
+
+    def _read_reply(sock: socket.socket, budget: _Budget, buf: bytearray) -> int:
+        """Read one (possibly multi-line) reply; return its 3-digit code. Each recv gets only the budget left."""
+        while True:
+            end = buf.find(_CRLF)
+            while end != -1:
+                line = bytes(buf[:end])
+                if len(line) >= 4 and line[:3].isdigit() and line[3:4] in (b" ", b"-"):  # noqa: PLR2004
+                    if line[3:4] == b" ":
+                        del buf[: end + 2]
+                        return int(line[:3])
+                    del buf[: end + 2]
+                    end = buf.find(_CRLF)
+                    continue
+>               raise _Closed("unreadable reply")
+E               lead_desk.smtp_outbox._Closed: unreadable reply
+
+src/lead_desk/smtp_outbox.py:151: _Closed
+
+The above exception was the direct cause of the following exception:
+
+script = <function script.<locals>.make at 0x7fcdd27c9da0>
+
+    def test_bare_three_digit_replies_accepted(script: Callable[[str], Script]) -> None:
+>       assert box(script("bare_codes").port).send("K-21", TO, SUBJECT, BODY, BUDGET) == "SENT"
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_smtp_outbox.py:516: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/lead_desk/smtp_outbox.py:216: in send
+    self._dialogue(sock, budget, to, wire)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <lead_desk.smtp_outbox.SmtpOutbox object at 0x7fcdd231dae0>
+sock = <socket.socket [closed] fd=-1, family=2, type=1, proto=0>
+budget = <lead_desk.smtp_outbox._Budget object at 0x7fcdd231d900>
+to = 'ada@example.test'
+wire = b'From: desk@example.test\r\nTo: ada@example.test\r\nSubject: Thanks for getting in touch, Ada\r\nDate: Mon, 09 Nov 20...r\nContent-Transfer-Encoding: 7bit\r\nMIME-Version: 1.0\r\n\r\nHi Ada, we received your message. (FAKE EMAIL)\r\n.\r\n'
+
+    def _dialogue(self, sock: socket.socket, budget: _Budget, to: str, wire: bytes) -> None:
+        buf = bytearray()
+        # Phase 1: before the message text is offered. Nothing of the message can have left.
+        try:
+            code = _read_reply(sock, budget, buf)
+            self._expect_ok(code, "greeting")
+            self._expect_ok(_command(sock, budget, buf, f"EHLO {self._s.message_id_domain}"), "ehlo")
+            self._expect_ok(_command(sock, budget, buf, f"MAIL FROM:<{self._s.mail_from}>"), "mail")
+            self._expect_ok(_command(sock, budget, buf, f"RCPT TO:<{to}>"), "rcpt")
+            self._expect_ok(_command(sock, budget, buf, "DATA"), "data", intermediate=True)
+        except (SendRefused, SendUnreachable):
+            raise
+        except (OSError, TimeoutError, _Closed) as e:
+>           raise SendUnreachable(type(e).__name__) from e
+E           lead_desk.contract.SendUnreachable: _Closed
+
+src/lead_desk/smtp_outbox.py:263: SendUnreachable
+_______________________ test_ehlo_5xx_falls_back_to_helo _______________________
+
+script = <function script.<locals>.make at 0x7fcdd27c82c0>
+
+    def test_ehlo_5xx_falls_back_to_helo(script: Callable[[str], Script]) -> None:
+>       assert box(script("ehlo_502").port).send("K-22", TO, SUBJECT, BODY, BUDGET) == "SENT"
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_smtp_outbox.py:520: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/lead_desk/smtp_outbox.py:216: in send
+    self._dialogue(sock, budget, to, wire)
+src/lead_desk/smtp_outbox.py:256: in _dialogue
+    self._expect_ok(_command(sock, budget, buf, f"EHLO {self._s.message_id_domain}"), "ehlo")
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+code = 502, step = 'ehlo', intermediate = False
+
+    @staticmethod
+    def _expect_ok(code: int, step: str, intermediate: bool = False) -> None:
+        want = _POSITIVE_INTERMEDIATE if intermediate else _POSITIVE_DONE
+        if code // 100 != want:
+>           raise SendRefused(f"{step} reply {code}")
+E           lead_desk.contract.SendRefused: ehlo reply 502
+
+src/lead_desk/smtp_outbox.py:287: SendRefused
+_________________ test_non_finite_timeout_setting_refused[nan] _________________
+
+bad = nan
+
+    @pytest.mark.parametrize("bad", [float("nan"), float("inf"), float("-inf")])
+    def test_non_finite_timeout_setting_refused(bad: float) -> None:
+>       with pytest.raises(ValueError, match="finite"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_smtp_outbox.py:530: Failed
+_________________ test_non_finite_timeout_setting_refused[inf] _________________
+
+bad = inf
+
+    @pytest.mark.parametrize("bad", [float("nan"), float("inf"), float("-inf")])
+    def test_non_finite_timeout_setting_refused(bad: float) -> None:
+>       with pytest.raises(ValueError, match="finite"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_smtp_outbox.py:530: Failed
+________________ test_non_finite_timeout_setting_refused[-inf] _________________
+
+bad = -inf
+
+    @pytest.mark.parametrize("bad", [float("nan"), float("inf"), float("-inf")])
+    def test_non_finite_timeout_setting_refused(bad: float) -> None:
+>       with pytest.raises(ValueError, match="finite"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'finite'
+E         Actual message: 'smtp timeout must be positive'
+
+tests/test_smtp_outbox.py:530: AssertionError
+__________________ test_non_finite_send_timeout_refused[nan] ___________________
+
+bad = nan
+
+    @pytest.mark.parametrize("bad", [float("nan"), float("inf")])
+    def test_non_finite_send_timeout_refused(bad: float) -> None:
+        with pytest.raises(ValueError, match="finite"):
+>           box(free_port()).send("K-24", TO, SUBJECT, BODY, bad)
+
+tests/test_smtp_outbox.py:539: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/lead_desk/smtp_outbox.py:214: in send
+    sock = self._connect(budget)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <lead_desk.smtp_outbox.SmtpOutbox object at 0x7fcdd231e800>
+budget = <lead_desk.smtp_outbox._Budget object at 0x7fcdd231c870>
+
+    def _connect(self, budget: _Budget) -> socket.socket:
+        """Connect inside the send budget, without the resolver. Each address gets an equal share of what is left."""
+        addresses = self._addresses()
+        last: Exception | None = None
+        for index, (family, host) in enumerate(addresses):
+            try:
+                share = budget.left() / (len(addresses) - index)
+                sock = socket.socket(family, socket.SOCK_STREAM)
+            except (OSError, TimeoutError) as e:
+                last = e
+                break
+            try:
+                sock.settimeout(share)
+                sock.connect((host, self._s.port))
+            except (OSError, TimeoutError) as e:  # refused, connect timeout, unreachable network
+                sock.close()
+                last = e
+                continue
+            return sock
+>       raise SendUnreachable(type(last).__name__ if last else "no address")
+E       lead_desk.contract.SendUnreachable: ConnectionRefusedError
+
+src/lead_desk/smtp_outbox.py:248: SendUnreachable
+__________________ test_non_finite_send_timeout_refused[inf] ___________________
+
+bad = inf
+
+    @pytest.mark.parametrize("bad", [float("nan"), float("inf")])
+    def test_non_finite_send_timeout_refused(bad: float) -> None:
+        with pytest.raises(ValueError, match="finite"):
+>           box(free_port()).send("K-24", TO, SUBJECT, BODY, bad)
+
+tests/test_smtp_outbox.py:539: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/lead_desk/smtp_outbox.py:214: in send
+    sock = self._connect(budget)
+           ^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <lead_desk.smtp_outbox.SmtpOutbox object at 0x7fcdd231d360>
+budget = <lead_desk.smtp_outbox._Budget object at 0x7fcdd231de00>
+
+    def _connect(self, budget: _Budget) -> socket.socket:
+        """Connect inside the send budget, without the resolver. Each address gets an equal share of what is left."""
+        addresses = self._addresses()
+        last: Exception | None = None
+        for index, (family, host) in enumerate(addresses):
+            try:
+                share = budget.left() / (len(addresses) - index)
+                sock = socket.socket(family, socket.SOCK_STREAM)
+            except (OSError, TimeoutError) as e:
+                last = e
+                break
+            try:
+>               sock.settimeout(share)
+E               OverflowError: timestamp out of range for C PyTime_t
+
+src/lead_desk/smtp_outbox.py:241: OverflowError
+____________________ test_odd_error_before_text_unreachable ____________________
+
+script = <function script.<locals>.make at 0x7fcdd27ca660>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fcdd2186c90>
+
+    def test_odd_error_before_text_unreachable(script: Callable[[str], Script], monkeypatch: pytest.MonkeyPatch) -> None:
+        real = smtp_outbox._command
+    
+        def boom(sock: socket.socket, budget: object, buf: bytearray, line: str) -> int:
+            if line.startswith("RCPT"):
+                raise RuntimeError("odd")
+            return real(sock, budget, buf, line)  # type: ignore[arg-type]
+    
+        monkeypatch.setattr(smtp_outbox, "_command", boom)
+        with pytest.raises(SendUnreachable):
+>           box(script("ok").port).send("K-25", TO, SUBJECT, BODY, BUDGET)
+
+tests/test_smtp_outbox.py:552: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/lead_desk/smtp_outbox.py:216: in send
+    self._dialogue(sock, budget, to, wire)
+src/lead_desk/smtp_outbox.py:258: in _dialogue
+    self._expect_ok(_command(sock, budget, buf, f"RCPT TO:<{to}>"), "rcpt")
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+sock = <socket.socket [closed] fd=-1, family=2, type=1, proto=0>
+budget = <lead_desk.smtp_outbox._Budget object at 0x7fcdd231fe30>
+buf = bytearray(b''), line = 'RCPT TO:<ada@example.test>'
+
+    def boom(sock: socket.socket, budget: object, buf: bytearray, line: str) -> int:
+        if line.startswith("RCPT"):
+>           raise RuntimeError("odd")
+E           RuntimeError: odd
+
+tests/test_smtp_outbox.py:547: RuntimeError
+_____________________ test_odd_error_after_text_ambiguous ______________________
+
+catch = <test_smtp_outbox.Catch object at 0x7fcdd2641150>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fcdd21871d0>
+
+    def test_odd_error_after_text_ambiguous(catch: Catch, monkeypatch: pytest.MonkeyPatch) -> None:
+        def boom(*a: object, **k: object) -> int:
+            raise RuntimeError("odd")
+    
+        real = smtp_outbox._read_reply
+        calls = {"n": 0}
+    
+        def late(sock: socket.socket, budget: object, buf: bytearray) -> int:
+            calls["n"] += 1
+            if calls["n"] == 6:  # greeting, EHLO, MAIL, RCPT, DATA, then the final reply
+                return boom()
+            return real(sock, budget, buf)  # type: ignore[arg-type]
+    
+        monkeypatch.setattr(smtp_outbox, "_read_reply", late)
+        with pytest.raises(SendAmbiguous):
+>           catch.outbox().send("K-26", TO, SUBJECT, BODY, BUDGET)
+
+tests/test_smtp_outbox.py:570: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/lead_desk/smtp_outbox.py:216: in send
+    self._dialogue(sock, budget, to, wire)
+src/lead_desk/smtp_outbox.py:272: in _dialogue
+    code = _read_reply(sock, budget, buf)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_smtp_outbox.py:565: in late
+    return boom()
+           ^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+a = (), k = {}
+
+    def boom(*a: object, **k: object) -> int:
+>       raise RuntimeError("odd")
+E       RuntimeError: odd
+
+tests/test_smtp_outbox.py:557: RuntimeError
+____________________ test_odd_error_in_connect_unreachable _____________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fcdd27d2150>
+
+    def test_odd_error_in_connect_unreachable(monkeypatch: pytest.MonkeyPatch) -> None:
+        class Bad:
+            def __init__(self, *a: object) -> None:
+                raise RuntimeError("odd")
+    
+        port = free_port()
+        monkeypatch.setattr(smtp_outbox.socket, "socket", Bad)
+        with pytest.raises(SendUnreachable):
+>           box(port).send("K-28", TO, SUBJECT, BODY, BUDGET)
+
+tests/test_smtp_outbox.py:591: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/lead_desk/smtp_outbox.py:214: in send
+    sock = self._connect(budget)
+           ^^^^^^^^^^^^^^^^^^^^^
+src/lead_desk/smtp_outbox.py:236: in _connect
+    sock = socket.socket(family, socket.SOCK_STREAM)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <test_smtp_outbox.test_odd_error_in_connect_unreachable.<locals>.Bad object at 0x7fcdd2578c20>
+a = (<AddressFamily.AF_INET: 2>, <SocketKind.SOCK_STREAM: 1>)
+
+    def __init__(self, *a: object) -> None:
+>       raise RuntimeError("odd")
+E       RuntimeError: odd
+
+tests/test_smtp_outbox.py:586: RuntimeError
+=========================== short test summary info ============================
+FAILED tests/test_live_l2_e.py::test_sent_with_no_crm_fails_check_4 - assert ...
+FAILED tests/test_live_l2_e.py::test_failed_without_reason_fails - assert 3 i...
+FAILED tests/test_live_l2_e.py::test_unsent_lead_in_healthy_window - TypeErro...
+FAILED tests/test_live_l2_e.py::test_derived_ceilings_follow_the_window - Ass...
+FAILED tests/test_live_l2_e.py::test_empty_model_log_fails_if_expected - Type...
+FAILED tests/test_live_l2_e.py::test_result_only_model_log_fails - TypeError:...
+FAILED tests/test_live_l2_e.py::test_lead_never_asked_fails - TypeError: run_...
+FAILED tests/test_live_l2_e.py::test_model_fault_must_be_seen - TypeError: ru...
+FAILED tests/test_live_l2_e.py::test_catcher_mode_must_be_recorded - TypeErro...
+FAILED tests/test_live_l2_e.py::test_drop_after_data_needs_an_unknown - TypeE...
+FAILED tests/test_live_l2_e.py::test_mail_inside_down_window_fails - TypeErro...
+FAILED tests/test_live_l2_e.py::test_missing_event_is_a_harness_fault[model]
+FAILED tests/test_live_l2_e.py::test_missing_event_is_a_harness_fault[catcher]
+FAILED tests/test_live_l2_e.py::test_late_event_is_a_harness_fault - assert F...
+FAILED tests/test_live_l2_e.py::test_live_event_thread_is_a_fault - TypeError...
+FAILED tests/test_live_l2_e.py::test_multi_call_leads_are_capped - TypeError:...
+FAILED tests/test_live_l2_e.py::test_ask_after_answer_fails - TypeError: chec...
+FAILED tests/test_live_l2_e.py::test_down_calls_per_lead_capped - TypeError: ...
+FAILED tests/test_live_l2_e.py::test_cli_default_bound_is_one - assert 6 == 1
+FAILED tests/test_live_l2_e.py::test_missing_id_plus_repeat_line_fails - Asse...
+FAILED tests/test_live_l2_e.py::test_distinct_id_count_must_match_facts - ass...
+FAILED tests/test_live_l2_e.py::test_wrong_recipient_fails - AssertionError: ...
+FAILED tests/test_live_l2_e.py::test_check_6_report_only_is_stated - Assertio...
+FAILED tests/test_live_l2_e.py::test_catalogue_states_a_503_ceiling - Attribu...
+FAILED tests/test_live_l2_e.py::test_missing_facts_file_is_an_error - assert ...
+FAILED tests/test_live_l2_e.py::test_model_down_modes_are_complete - Attribut...
+FAILED tests/test_live_l2_e.py::test_retry_window_is_validated - AttributeErr...
+FAILED tests/test_live_l2_e.py::test_crash_scenarios_use_a_retry_window - Att...
+FAILED tests/test_live_l2_e.py::test_boot_failure_is_recorded_goes_on - Runti...
+FAILED tests/test_live_l2_e.py::test_catcher_records_a_bad_charset - LookupEr...
+FAILED tests/test_live_l2_e.py::test_recheck_uses_saved_bounds - assert 'BOUN...
+FAILED tests/test_live_l2_e.py::test_recheck_saved_ceiling_beats_today - Asse...
+FAILED tests/test_live_l2_e.py::test_dead_worker_is_reported_not_hung - Attri...
+FAILED tests/test_live_l2_e.py::test_stuck_worker_cut_at_its_deadline - Attri...
+FAILED tests/test_live_l2_e.py::test_good_workers_report_nothing - AttributeE...
+FAILED tests/test_live_l2_e.py::test_orphaned_worker_stops_sending - Assertio...
+FAILED tests/test_live_l2_e.py::test_run_group_kills_the_whole_group - Attrib...
+FAILED tests/test_live_l2_e.py::test_worker_deadline_grows_with_items - Attri...
+FAILED tests/test_live_l2_e.py::test_readme_pins_the_scenario_table - Attribu...
+FAILED tests/test_live_l2_e.py::test_empty_log_with_model_expected - TypeErro...
+FAILED tests/test_live_l2_e.py::test_old_log_cannot_prove_ask_after_answer - ...
+FAILED tests/test_live_l2_e.py::test_recheck_asks_for_a_rerun_on_raced_calls
+FAILED tests/test_live_l2_e.py::test_all_failed_book_breaks_scenario_cap[catcher-down]
+FAILED tests/test_live_l2_e.py::test_all_failed_book_breaks_scenario_cap[model-flaps]
+FAILED tests/test_smtp_outbox.py::test_list_characters_in_to_refused[a,b@example.test]
+FAILED tests/test_smtp_outbox.py::test_list_characters_in_to_refused[a;b@example.test]
+FAILED tests/test_smtp_outbox.py::test_list_characters_in_to_refused[a"b@example.test]
+FAILED tests/test_smtp_outbox.py::test_list_characters_in_to_refused[a(b@example.test]
+FAILED tests/test_smtp_outbox.py::test_list_characters_in_to_refused[a)b@example.test]
+FAILED tests/test_smtp_outbox.py::test_list_characters_in_to_refused[a@b,c.test]
+FAILED tests/test_smtp_outbox.py::test_bare_three_digit_replies_accepted - le...
+FAILED tests/test_smtp_outbox.py::test_ehlo_5xx_falls_back_to_helo - lead_des...
+FAILED tests/test_smtp_outbox.py::test_non_finite_timeout_setting_refused[nan]
+FAILED tests/test_smtp_outbox.py::test_non_finite_timeout_setting_refused[inf]
+FAILED tests/test_smtp_outbox.py::test_non_finite_timeout_setting_refused[-inf]
+FAILED tests/test_smtp_outbox.py::test_non_finite_send_timeout_refused[nan]
+FAILED tests/test_smtp_outbox.py::test_non_finite_send_timeout_refused[inf]
+FAILED tests/test_smtp_outbox.py::test_odd_error_before_text_unreachable - Ru...
+FAILED tests/test_smtp_outbox.py::test_odd_error_after_text_ambiguous - Runti...
+FAILED tests/test_smtp_outbox.py::test_odd_error_in_connect_unreachable - Run...
+PASSED tests/test_live_l2_e.py::test_all_sent_book_with_crm_passes
+PASSED tests/test_live_l2_e.py::test_all_failed_book_over_ceiling
+PASSED tests/test_live_l2_e.py::test_foreign_receipt_fails_check_1
+PASSED tests/test_live_l2_e.py::test_lead_without_followup_row_fails
+PASSED tests/test_live_l2_e.py::test_stray_mail_fails
+PASSED tests/test_live_l2_e.py::test_crm_twice_fails
+PASSED tests/test_live_l2_e.py::test_extra_and_not_leads_are_separate
+PASSED tests/test_live_l2_e.py::test_recipient_compare_ignores_case
+PASSED tests/test_live_l2_e.py::test_parent_alive_worker_does_send
+PASSED tests/test_live_l2_e.py::test_client_receipt_number_must_match
+PASSED tests/test_live_l2_e.py::test_foreign_receipt_is_named
+PASSED tests/test_live_l2_e.py::test_lead_with_no_followup_row_fails_2
+PASSED tests/test_live_l2_e.py::test_receipt_without_verdict_fails_2
+PASSED tests/test_live_l2_e.py::test_review_verdict_alone_fails_2
+PASSED tests/test_live_l2_e.py::test_lead_count_without_emails_fails_2
+PASSED tests/test_live_l2_e.py::test_crm_row_for_lead_not_done_extra
+PASSED tests/test_live_l2_e.py::test_no_send_time_fails_drain
+PASSED tests/test_smtp_outbox.py::test_capability_is_blind
+PASSED tests/test_smtp_outbox.py::test_sent_headers_and_utf8
+PASSED tests/test_smtp_outbox.py::test_blind_two_sends_two_messages
+PASSED tests/test_smtp_outbox.py::test_closed_port_is_unreachable
+PASSED tests/test_smtp_outbox.py::test_rcpt_550_is_refused
+PASSED tests/test_smtp_outbox.py::test_mail_from_450_is_refused
+PASSED tests/test_smtp_outbox.py::test_greeting_554_is_refused
+PASSED tests/test_smtp_outbox.py::test_drop_after_data_is_ambiguous
+PASSED tests/test_smtp_outbox.py::test_slow_final_reply_is_ambiguous
+PASSED tests/test_smtp_outbox.py::test_final_550_and_garbage_ambiguous
+PASSED tests/test_smtp_outbox.py::test_5xx_reply_to_data_is_refused
+PASSED tests/test_smtp_outbox.py::test_hangup_right_after_354_is_ambiguous
+PASSED tests/test_smtp_outbox.py::test_non_ascii_replies_never_crash
+PASSED tests/test_smtp_outbox.py::test_budget_gone_after_354_sends_nothing
+PASSED tests/test_smtp_outbox.py::test_silent_before_text_is_unreachable
+PASSED tests/test_smtp_outbox.py::test_deadline_dribbled_greeting
+PASSED tests/test_smtp_outbox.py::test_deadline_dribbled_final_reply
+PASSED tests/test_smtp_outbox.py::test_line_break_refused_early[\r\nBcc: x@example.test-to]
+PASSED tests/test_smtp_outbox.py::test_line_break_refused_early[\r\nBcc: x@example.test-subject]
+PASSED tests/test_smtp_outbox.py::test_line_break_refused_early[\r\nBcc: x@example.test-key]
+PASSED tests/test_smtp_outbox.py::test_line_break_refused_early[a\nb-to]
+PASSED tests/test_smtp_outbox.py::test_line_break_refused_early[a\nb-subject]
+PASSED tests/test_smtp_outbox.py::test_line_break_refused_early[a\nb-key]
+PASSED tests/test_smtp_outbox.py::test_line_break_refused_early[a\rb-to]
+PASSED tests/test_smtp_outbox.py::test_line_break_refused_early[a\rb-subject]
+PASSED tests/test_smtp_outbox.py::test_line_break_refused_early[a\rb-key]
+PASSED tests/test_smtp_outbox.py::test_line_break_refused_early[a\x00b-to]
+PASSED tests/test_smtp_outbox.py::test_line_break_refused_early[a\x00b-subject]
+PASSED tests/test_smtp_outbox.py::test_line_break_refused_early[a\x00b-key]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u000b-start-to]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u000b-start-subject]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u000b-start-key]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u000b-middle-to]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u000b-middle-subject]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u000b-middle-key]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u000b-end-to]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u000b-end-subject]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u000b-end-key]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u000c-start-to]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u000c-start-subject]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u000c-start-key]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u000c-middle-to]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u000c-middle-subject]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u000c-middle-key]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u000c-end-to]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u000c-end-subject]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u000c-end-key]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u001c-start-to]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u001c-start-subject]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u001c-start-key]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u001c-middle-to]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u001c-middle-subject]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u001c-middle-key]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u001c-end-to]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u001c-end-subject]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u001c-end-key]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u001d-start-to]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u001d-start-subject]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u001d-start-key]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u001d-middle-to]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u001d-middle-subject]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u001d-middle-key]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u001d-end-to]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u001d-end-subject]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u001d-end-key]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u001e-start-to]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u001e-start-subject]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u001e-start-key]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u001e-middle-to]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u001e-middle-subject]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u001e-middle-key]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u001e-end-to]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u001e-end-subject]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u001e-end-key]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u001f-start-to]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u001f-start-subject]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u001f-start-key]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u001f-middle-to]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u001f-middle-subject]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u001f-middle-key]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u001f-end-to]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u001f-end-subject]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u001f-end-key]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u0085-start-to]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u0085-start-subject]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u0085-start-key]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u0085-middle-to]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u0085-middle-subject]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u0085-middle-key]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u0085-end-to]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u0085-end-subject]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u0085-end-key]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u2028-start-to]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u2028-start-subject]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u2028-start-key]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u2028-middle-to]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u2028-middle-subject]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u2028-middle-key]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u2028-end-to]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u2028-end-subject]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u2028-end-key]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u2029-start-to]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u2029-start-subject]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u2029-start-key]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u2029-middle-to]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u2029-middle-subject]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u2029-middle-key]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u2029-end-to]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u2029-end-subject]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u2029-end-key]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u0001-start-to]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u0001-start-subject]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u0001-start-key]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u0001-middle-to]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u0001-middle-subject]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u0001-middle-key]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u0001-end-to]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u0001-end-subject]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u0001-end-key]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u007f-start-to]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u007f-start-subject]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u007f-start-key]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u007f-middle-to]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u007f-middle-subject]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u007f-middle-key]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u007f-end-to]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u007f-end-subject]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u007f-end-key]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u009f-start-to]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u009f-start-subject]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u009f-start-key]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u009f-middle-to]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u009f-middle-subject]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u009f-middle-key]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u009f-end-to]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u009f-end-subject]
+PASSED tests/test_smtp_outbox.py::test_every_line_splitter_refused_early[u009f-end-key]
+PASSED tests/test_smtp_outbox.py::test_header_breaker_helper_leaves_normal_text_alone
+PASSED tests/test_smtp_outbox.py::test_host_must_be_an_address
+PASSED tests/test_smtp_outbox.py::test_from_address_must_be_ascii
+PASSED tests/test_smtp_outbox.py::test_odd_recipients_refused_early
+PASSED tests/test_smtp_outbox.py::test_connect_never_calls_the_resolver
+PASSED tests/test_smtp_outbox.py::test_zone_name_in_host_is_refused
+PASSED tests/test_smtp_outbox.py::test_address_gets_budget_share
+PASSED tests/test_smtp_outbox.py::test_one_address_gets_the_whole_budget
+PASSED tests/test_smtp_outbox.py::test_unencodable_input_is_refused[K-u1-\xe9da@example.test-Thanks for getting in touch, Ada-Hi Ada, we received your message. (FAKE EMAIL)]
+PASSED tests/test_smtp_outbox.py::test_unencodable_input_is_refused[K-u2-ada@example.test-bad \ud800 subject-Hi Ada, we received your message. (FAKE EMAIL)]
+PASSED tests/test_smtp_outbox.py::test_unencodable_input_is_refused[\ud800-ada@example.test-Thanks for getting in touch, Ada-Hi Ada, we received your message. (FAKE EMAIL)]
+PASSED tests/test_smtp_outbox.py::test_unencodable_input_is_refused[K-u4-ada@example.test-Thanks for getting in touch, Ada-bad \ud800 body]
+PASSED tests/test_smtp_outbox.py::test_mail_library_error_is_refused
+PASSED tests/test_smtp_outbox.py::test_50_concurrent_sends_all_land
+PASSED tests/test_smtp_outbox.py::test_catcher_takes_200_connections
+PASSED tests/test_smtp_outbox.py::test_settings_from_env_and_checks
+PASSED tests/test_smtp_outbox.py::test_loader_swaps_in_smtp_outbox
+PASSED tests/test_smtp_outbox.py::test_ehlo_5xx_then_helo_5xx_refused
+PASSED tests/test_smtp_outbox.py::test_memory_error_is_not_swallowed
+60 failed, 173 passed in 6.15s

@@ -1,0 +1,25 @@
+MUTANT A-01-m05  VERDICT: KILLED
+description: missing-reconcile guard removed (kind without reconcile crashes)
+base commit: b4cce5b6ae80b45125604b8295ebb35bd2ea1c2c   root: /tmp/c8/wA   file: src/hadavin_sdk/runtime/tick.py
+command: env -i PATH=/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin HOME=/root PYTHONDONTWRITEBYTECODE=1 /tmp/c8/wA/.venv/bin/python -m pytest -q -p no:cacheprovider --tb=line -rf tests/test_a01_audit_reconcile.py tests/test_p7_tick.py tests/test_s2_audit.py tests/test_p3b_neutral_audit.py   (cwd=/tmp/c8/wA)
+rc: 1
+restore check: diff <saved original> <file after restore>: rc=0 (0 = identical)
+pytest summary line: 1 failed, 103 passed in 17.67s
+first failing test: tests/test_a01_audit_reconcile.py::test_a_kind_without_reconcile_is_skipped
+all failing tests (1): tests/test_a01_audit_reconcile.py::test_a_kind_without_reconcile_is_skipped
+--- OLD TEXT (full) ---
+    if fn is None:
+        return
+    _LOG.info("audit_reconcile drained=%d", fn())
+--- NEW TEXT (full) ---
+    _LOG.info("audit_reconcile drained=%d", fn())
+--- PYTEST OUTPUT (full) ---
+..F..................................................................... [ 69%]
+................................                                         [100%]
+=================================== FAILURES ===================================
+E   TypeError: 'NoneType' object is not callable
+/tmp/c8/wA/src/hadavin_sdk/runtime/tick.py:189: TypeError: 'NoneType' object is not callable
+=========================== short test summary info ============================
+FAILED tests/test_a01_audit_reconcile.py::test_a_kind_without_reconcile_is_skipped
+1 failed, 103 passed in 17.67s
+

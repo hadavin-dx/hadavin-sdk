@@ -1,0 +1,23 @@
+== wt Thu Nov 12 04:47:47 UTC 2026 load 3.17 3.67 3.33
+.                                                                        [100%]
+1 passed in 0.62s
+== main Thu Nov 12 04:49:50 UTC 2026 load 2.58 3.29 3.23
+.                                                                        [100%]
+1 passed in 0.78s
+== wt Thu Nov 12 04:49:52 UTC 2026 load 2.58 3.29 3.23
+=========================== short test summary info ============================
+FAILED tests/test_migration_numbers.py::test_the_timing_harness_flags_a_quadratic_stand_in
+1 failed in 0.57s
+== main Thu Nov 12 04:49:52 UTC 2026 load 2.53 3.26 3.22
+=========================== short test summary info ============================
+FAILED tests/test_migration_numbers.py::test_the_timing_harness_flags_a_quadratic_stand_in
+1 failed in 0.59s
+== wt Thu Nov 12 04:49:54 UTC 2026 load 2.53 3.26 3.22
+=========================== short test summary info ============================
+FAILED tests/test_migration_numbers.py::test_the_timing_harness_flags_a_quadratic_stand_in
+1 failed in 0.56s
+== main Thu Nov 12 04:49:54 UTC 2026 load 2.53 3.26 3.22
+=========================== short test summary info ============================
+FAILED tests/test_migration_numbers.py::test_the_timing_harness_flags_a_quadratic_stand_in
+1 failed in 0.56s
+done

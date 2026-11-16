@@ -1,0 +1,8 @@
+      1 page does not load: retry for 2 minutes, then open it on yo
+      1 ompare the notice (R5) within 5 minutes of the time `date -
+      1 he cancel-by time is at least 10 minutes before the deadline
+      1  made a key. **Last resort:** 10 minutes after "cancel faile
+      1 page does not load: retry for 2 minutes, then open it on yo
+      1 ompare the notice (R5) within 5 minutes of the time `date -
+      1 he cancel-by time is at least 10 minutes before the deadline
+      1  made a key. **Last resort:** 10 minutes after "cancel faile

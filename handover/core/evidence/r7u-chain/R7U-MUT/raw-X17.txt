@@ -1,0 +1,18 @@
+t.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        seen = _capture_results(monkeypatch)
+        _readback_stops(monkeypatch)
+        _more_created(monkeypatch, create_open=1, create_unknown=2)
+        code = rrc.main(["--dry-fakes", "--assume-yes", "--cleanup"])
+        out = capsys.readouterr().out
+        assert code == rrc.EXIT_FAILED
+        note = seen[-1]["note"]
+>       assert "1 create requests were still open and 2 ended with an unknown outcome" in note, note
+E       AssertionError: the CRM read-back failed: the contacts of this run were NOT counted and NOT archived. The desk created an unknown number of contacts in total (its own counter); an unknown number of contacts may still be in HubSpot, their lead ids start with L and are listed in the desk's book. Archive them by hand.
+E       assert '1 create requests were still open and 2 ended with an unknown outcome' in "the CRM read-back failed: the contacts of this run were NOT counted and NOT archived. The desk created an unknown num...contacts may still be in HubSpot, their lead ids start with L and are listed in the desk's book. Archive them by hand."
+
+tests/test_r7u_a_findings.py:394: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r7u_a_findings.py::test_a4_the_readback_note_shows_the_open_and_unknown_creates
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 39 deselected in 32.99s

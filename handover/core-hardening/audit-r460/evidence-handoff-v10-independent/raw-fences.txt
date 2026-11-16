@@ -1,0 +1,3 @@
+fences found: 1
+--- CORE-PR-HANDOFF-v10.md:133 lang='python' lines=17
+   python compile: OK (module level)

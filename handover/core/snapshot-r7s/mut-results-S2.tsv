@@ -1,0 +1,10 @@
+S13	tests/test_r7s_findings.py	s3e	KILLED	['1 failed, 4 passed, 46 deselected in 0.18s']
+S13	restored-byte-equal=True
+S19	tests/test_r7s_findings.py	s3_a_created	KILLED	['1 failed, 48 deselected in 35.19s']
+S19	restored-byte-equal=True
+S20	tests/test_r7s_findings.py	s6	KILLED	['1 failed, 1 passed, 48 deselected in 0.16s']
+S20	restored-byte-equal=True
+S21	tests/test_r7s_findings.py	s6	KILLED	['1 failed, 1 passed, 48 deselected in 0.20s']
+S21	restored-byte-equal=True
+S24	tests/test_r7q_findings.py	q9	KILLED	['1 failed, 62 deselected in 0.52s']
+S24	restored-byte-equal=True

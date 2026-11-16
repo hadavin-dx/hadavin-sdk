@@ -1,0 +1,33 @@
+guard on b8 src: 0
+guard on a1869655 src: 31
+   app.py:215: log argument name
+   app.py:411: {name} in f'read source {name}'
+   app.py:507: {named} in f'source {named} is switched off: its scope probe failed'
+   app.py:357: {name} in f"secret {name!r} is not one of tool {spec.name}'s secrets"
+   app.py:357: {spec.name} in f"secret {name!r} is not one of tool {spec.name}'s secrets"
+   app.py:424: {name} in f'source {name} is switched off: its scope probe failed'
+   app.py:541: log argument agent_id
+   app.py:541: log argument action
+   actions/secrets_vault.py:141: {auth_mount} in f'secrets vault: {auth_mount} sign-in refused ({status})'
+   actions/secrets_vault.py:148: {name} in f'secrets vault: environment variable {name} is not set'
+   actions/secrets_vault.py:113: {name} in f"secret {name!r}: Vault names here are letters, digits, '.', '_', '-'"
+   actions/secrets_vault.py:117: {name} in f'secret {name!r} not found in Vault'
+   actions/secrets_vault.py:119: {name} in f'secret {name!r}: Vault answered {status}'
+   actions/secrets_vault.py:122: {name} in f'secret {name!r} has no field {self.field!r} in Vault'
+   actions/secrets_vault.py:122: {self.field} in f'secret {name!r} has no field {self.field!r} in Vault'
+   actions/secrets_vault.py:125: {name} in f'secret {name!r}: field {self.field!r} is not a string in Vault'
+   actions/secrets_vault.py:125: {self.field} in f'secret {name!r}: field {self.field!r} is not a string in Vault'
+   actions/secrets_vault.py:181: {settings.jwt_path} in f'vault kubernetes sign-in: cannot read {settings.jwt_path} ({type(exc).__name__})'
+   llm/common.py:53: {name} in f'route {name}: model_id {route.model_id!r} is an alias that moves to new models; name an exact model id'
+   llm/common.py:53: {route.model_id} in f'route {name}: model_id {route.model_id!r} is an alias that moves to new models; name an exact model id'
+   audit/signer.py:107: {path} in f'signer ed25519_local: no key file at {path}'
+   tools.py:564: {operation} in f"operation {operation!r} is not on the manifest's read list"
+   tools.py:567: {operation} in f'operation {operation!r} has no bound method and path'
+   tools.py:569: {method} in f'method {method!r} is not the one bound to {operation!r}'
+   tools.py:569: {operation} in f'method {method!r} is not the one bound to {operation!r}'
+   tools.py:583: {operation} in f'path is not the one bound to {operation!r}'
+   tools.py:516: {name} in f'secret {name!r} is not named in the manifest'
+   tools.py:523: {name} in f'secret {name!r} is shorter than {min_secret} characters and could not be scrubbed'
+   tools.py:602: {host} in f"host {host!r} is not in this tool's manifest hosts"
+   config.py:514: {path.name} in f'{path.name}: expected a mapping at the top level'
+   config.py:511: {path.name} in f'{path.name}: cannot be read ({type(exc).__name__})'

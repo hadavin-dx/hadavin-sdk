@@ -1,0 +1,9 @@
+NEGATIVE N8e-standin-gone-stale  setup: echo "gone control=0000000000000000" > $PS/standin-gone.txt  VARX: 
+##### b36
+dash syntax ok
+P-4b files ok
+STOP C8b: standin-gone.txt is missing or belongs to another control file. Next: run WSL-4 again.
+##### b36 exit=1
+##### b37
+STOP C9: the stand-in is not proven gone for the current control file. Next: run WSL-4 (C2b step 4).
+##### b37 exit=1

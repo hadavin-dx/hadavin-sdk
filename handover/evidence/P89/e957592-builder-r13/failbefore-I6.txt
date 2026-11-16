@@ -1,0 +1,8 @@
+I6 the masking is slow (31 s sleep in _masked)
+replaced: '    chosen = tuple(v for v in secrets if v)\n    if not chosen:'
+by: '    chosen = tuple(v for v in secrets if v)\n    import time as _t; _t.sleep(31)\n    if not chosen:'
+summary: FAILED tests/test_mutation_runner_keywords.py::test_a_one_character_secret_on_a_huge_line_is_masked_fast_and_a_normal_line_is_kept
+exit=1
+FAILED kept tests:
+test_a_line_with_a_hostile_number_of_dots_is_replaced_fast
+test_a_one_character_secret_on_a_huge_line_is_masked_fast_and_a_normal_line_is_kept

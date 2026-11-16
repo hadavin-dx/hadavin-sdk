@@ -1,0 +1,32 @@
+unpacked sha256 asserted for core-fix-on-frozen-r7u-crlf.patch.gz: c39c3680c4ab44c48f0d75f8d99ea29ee5b040b9f5e8333ad0b0349dd2b85843
+unpacked sha256 asserted for core-fix-r7t-to-r7u-delta-crlf.patch.gz: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+frozen tree 49d3c85938fe5323a3378a49195d3b8da434b3ca patch-crlf=/home/user/build/rr6/out/R7U-MERGE/dummy/pkgT/core-fix-on-frozen-r7u-crlf.patch.gz patch-lf=/home/user/build/rr6/out/R7U-MERGE/dummy/pkgT/core-fix-on-frozen-r7u-lf.patch target=/home/user/build/rr6/tree-R7T
+checkout a: .ps1 line endings before patching: CRLF CRLF 
+checkout b: .ps1 line endings before patching: CRLF CRLF 
+checkout c: .ps1 line endings before patching: LF LF 
+cell a-crlf: git apply --check rc=0
+cell b-crlf: git apply --check rc=0
+cell c-lf: git apply --check rc=0
+cell a: git apply rc=0
+  scripts/reset.ps1 lines=84 lines-with-CR=84
+  scripts/start_all.ps1 lines=101 lines-with-CR=101
+  tree equals the R7U tree byte for byte
+cell b: git apply rc=0
+  scripts/reset.ps1 lines=84 lines-with-CR=84
+  scripts/start_all.ps1 lines=101 lines-with-CR=101
+  tree equals the R7U tree byte for byte
+cell c: git apply rc=0
+  scripts/reset.ps1 lines=84 lines-with-CR=0
+  scripts/start_all.ps1 lines=101 lines-with-CR=0
+  equals the R7U tree once the .ps1 line endings are ignored (expected for the lf patch)
+error: No valid patches in input (allow with "--allow-empty")
+delta: git apply (r7t tree + delta) rc=128
+  r7t tree + delta equals the R7U tree byte for byte
+manifest: 4 files
+PACKAGE OK: /home/user/build/rr6/out/R7U-MERGE/dummy/pkgT
+d703965ca5f06f8ace1e35dd54d5dc6c7690a336862a03e19cd238ec9c9441ed  core-fix-on-frozen-r7u-crlf.patch.gz
+5a4ad881a8f138768667138eea5af78aea647515a9fe385b0cd03015b0c78299  core-fix-on-frozen-r7u-lf.patch
+f61f27bd17de546264aa58f40f3aafaac7021e0ef69c17f6b1b4cd7664a037ec  core-fix-r7t-to-r7u-delta-crlf.patch.gz
+unpacked:
+c39c3680c4ab44c48f0d75f8d99ea29ee5b040b9f5e8333ad0b0349dd2b85843  core-fix-on-frozen-r7u-crlf.patch (unpacked)
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  core-fix-r7t-to-r7u-delta-crlf.patch (unpacked)

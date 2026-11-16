@@ -1,0 +1,18 @@
+from patch_lib import Doc
+d = Doc("CORE-PR-HANDOFF-v14.md")
+d.rep("`approvals/requests.py` (also G), `approvals/cards.py`, `llm/callgate.py`, `llm/spend.py`, `llm/openai_compat.py` |", "`approvals/requests.py`, `approvals/cards.py`, `llm/callgate.py`, `llm/spend.py`, `llm/openai_compat.py`, `models.py`, `llm/bedrock.py`, `llm/common.py` (also S-1) |")
+d.rep("`cli.py` (status command), `runtime/agent_loop.py` (`_wall_stop`, `_abstain`) |", "`cli.py` (status command), `runtime/agent_loop.py` (`_wall_stop`, `_abstain`), `backends/table.py` (`PostgresSettings`: `statement_timeout_ms`) |")
+d.rep("| `store/migrate.py` (`GRANTS`, at the move; also DB-1), `store/migrations_held/` |", "| `store/migrate.py` (`GRANTS`, at the move; also DB-1), `store/migrations_held/`, `store/owner_gates.py` (its own `HELD` pin; also DB-1) |")
+d.rep("`config.py` (also S-1, H-0, H-1), `defaults.py` (also S-1, A1, H-1) |", "`config.py` (also S-1, H-0, H-1), `defaults.py` (also S-1, A1, H-1), `fileguard.py` (new), `actions/secrets_file.py`, `audit/signer.py` (also H-0) |")
+d.rep("| `audit/chain.py`, `defaults.py` (also S-1, K1, H-1) |", "| `audit/chain.py`, `defaults.py` (also S-1, K1, H-1), `cli.py` (`audit_verify` 349-363; also S-1, S-2a, S-2b), `backends/table.py` (`ChainSettings` 192-193; also S-1, H-0, H-1) |")
+d.rep("`approvals/gate.py`, `approvals/channel.py`, `approvals/requests.py` (also S-2a) |", "`approvals/gate.py`, `approvals/channel.py` |")
+d.rep("`guard/redact.py` (also PR-2, H-0: line 1162) |", "`guard/redact.py` (also PR-2, H-0: line 1162), `k1b/redaction.py` (line 103) |")
+d.rep("`guard/redact.py` (also R, H-0) |", "`guard/redact.py` (also R, H-0), `llm/fake.py`, `guard/runmap.py`, `guard/producers.py` |")
+d.rep("`backends/table.py` (line 155; also S-1, H-0), `defaults.py` |", "`config.py` `_anchor_refusals` (`config.py:377`; H-1 edits `config.py`, not `table.py:155`), `audit/anchor_s3.py`, `defaults.py` |")
+d.rep("`defaults.py` (line 100; also S-1, K1, A1, H-1), `guard/redact.py` (line 1162; also PR-2, R),", "`defaults.py` (line 100; also S-1, K1, A1, H-1), `guard/redact.py` (line 1162; also PR-2, R), `audit/signer.py` (lines 64, 98; also K1), `tools.py` (line 361), `actions/secrets_env.py` (line 1), `actions/contract.py` (line 34),")
+d.rep("The lead merges one at a time, in this order;", "The lead merges one at a time, in this order; the hot-file column was completed in v14 from the readiness review's list (R4);") if False else None
+d.save()
+o = Doc("CORE-PR-HANDOFF-v14-other-tracks.md")
+o.rep("`__repr__` returns `\"<mapping withheld>\"`;", "`__repr__` returns `\"<mapping withheld>\"` (v14, disclosed edit of wording: the holder keeps the original out of reach **through repr, copy, pickle or asdict**; it does not claim more);")
+o.rep("- **v13 edits (nothing else changed;", "- **v14 disclosed edits to carried PRs (lead's answer Q34 asks for no content change; these are content changes, so they are listed here and in `v14-CHANGES.md`; the lead may refuse any of them):** (a) PR-2: the `_Mapping` holder wording below says \"through repr, copy, pickle or asdict\" (security minor 8); (b) the hot-file column of the spend file 7.1 now names the files H-0, H-1, K1, A1, G, R and PR-2 edit (readiness R4); (c) K1's new file `fileguard.py` and its new keyword `allow_group_read` are marked as new; (d) H-2's grep claim is bounded to the files the grep read (citation finding 1); (e) evidence names renamed to v14. Nothing else changed.\n- **v13 edits (nothing else changed;")
+o.save()

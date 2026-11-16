@@ -1,0 +1,2 @@
+## 2026-11-16T16:04:28Z C-10a: grep -il -E 'DELETE|archive' on the four real-v5 flow files (names only)
+grep exit code: 1 (1 = no file matched)

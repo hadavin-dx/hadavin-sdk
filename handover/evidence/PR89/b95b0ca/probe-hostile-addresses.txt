@@ -1,0 +1,185 @@
+head: b95b0ca762dd74574e44e7fb546f82ef04f55295
+mr file: /home/user/build/EV-P89-b95b0ca/tools/mutation_runner.py
+THROWAWAY_HOSTS: ('localhost', '127.0.0.1', '::1')
+
+=== probe (a) value='postgresql://postgres@localhost:5432/postgres'
+  direct _refuse_unsafe_address(DSN_NAME, value, mr.THROWAWAY_HOSTS):
+    RETURNED None
+  run_mutants(root, [FLIP], [CORE_TEST], extra_dirs=(), timeout=120, pass_env=(DSN_NAME,), first_lines=fl):
+    RETURNED [('flip', <Verdict.KILLED: 'KILLED'>, 'tests/test_core::test_a', True)]
+    first_lines: {'flip': '[class not shown] [expect found] assert'}
+
+=== probe (b) value='postgresql://u@LOCALHOST/db'
+  direct _refuse_unsafe_address(DSN_NAME, value, mr.THROWAWAY_HOSTS):
+    RETURNED None
+  run_mutants(root, [FLIP], [CORE_TEST], extra_dirs=(), timeout=120, pass_env=(DSN_NAME,), first_lines=fl):
+    RETURNED [('flip', <Verdict.KILLED: 'KILLED'>, 'tests/test_core::test_a', True)]
+    first_lines: {'flip': '[class not shown] [expect found] assert'}
+
+=== probe (c) value='postgresql://u@localhost./db'
+  direct _refuse_unsafe_address(DSN_NAME, value, mr.THROWAWAY_HOSTS):
+    RAISED builtins.ValueError: HADAVIN_TEST_PG_DSN is refused: its host is not one of throwaway_hosts ('localhost', '127.0.0.1', '::1'). Tests of every mutant write to that database; name the host on purpose with throwaway_hosts=(...) only when it is a throwaway database
+  run_mutants(root, [FLIP], [CORE_TEST], extra_dirs=(), timeout=120, pass_env=(DSN_NAME,), first_lines=fl):
+    RAISED builtins.ValueError: HADAVIN_TEST_PG_DSN is refused: its host is not one of throwaway_hosts ('localhost', '127.0.0.1', '::1'). Tests of every mutant write to that database; name the host on purpose with throwaway_hosts=(...) only when it is a throwaway database
+    first_lines: {}
+
+=== probe (d) value='postgresql://u@127.0.0.1.nip.io/db'
+  direct _refuse_unsafe_address(DSN_NAME, value, mr.THROWAWAY_HOSTS):
+    RAISED builtins.ValueError: HADAVIN_TEST_PG_DSN is refused: its host is not one of throwaway_hosts ('localhost', '127.0.0.1', '::1'). Tests of every mutant write to that database; name the host on purpose with throwaway_hosts=(...) only when it is a throwaway database
+  run_mutants(root, [FLIP], [CORE_TEST], extra_dirs=(), timeout=120, pass_env=(DSN_NAME,), first_lines=fl):
+    RAISED builtins.ValueError: HADAVIN_TEST_PG_DSN is refused: its host is not one of throwaway_hosts ('localhost', '127.0.0.1', '::1'). Tests of every mutant write to that database; name the host on purpose with throwaway_hosts=(...) only when it is a throwaway database
+    first_lines: {}
+
+=== probe (e1) value='postgresql://u@[::1]/db'
+  direct _refuse_unsafe_address(DSN_NAME, value, mr.THROWAWAY_HOSTS):
+    RETURNED None
+  run_mutants(root, [FLIP], [CORE_TEST], extra_dirs=(), timeout=120, pass_env=(DSN_NAME,), first_lines=fl):
+    RETURNED [('flip', <Verdict.KILLED: 'KILLED'>, 'tests/test_core::test_a', True)]
+    first_lines: {'flip': '[class not shown] [expect found] assert'}
+
+=== probe (e2) value='postgresql://u@[::ffff:127.0.0.1]/db'
+  direct _refuse_unsafe_address(DSN_NAME, value, mr.THROWAWAY_HOSTS):
+    RAISED builtins.ValueError: HADAVIN_TEST_PG_DSN is refused: its host is not one of throwaway_hosts ('localhost', '127.0.0.1', '::1'). Tests of every mutant write to that database; name the host on purpose with throwaway_hosts=(...) only when it is a throwaway database
+  run_mutants(root, [FLIP], [CORE_TEST], extra_dirs=(), timeout=120, pass_env=(DSN_NAME,), first_lines=fl):
+    RAISED builtins.ValueError: HADAVIN_TEST_PG_DSN is refused: its host is not one of throwaway_hosts ('localhost', '127.0.0.1', '::1'). Tests of every mutant write to that database; name the host on purpose with throwaway_hosts=(...) only when it is a throwaway database
+    first_lines: {}
+
+=== probe (f1) value='postgresql://u@127.1/db'
+  direct _refuse_unsafe_address(DSN_NAME, value, mr.THROWAWAY_HOSTS):
+    RAISED builtins.ValueError: HADAVIN_TEST_PG_DSN is refused: its host is not one of throwaway_hosts ('localhost', '127.0.0.1', '::1'). Tests of every mutant write to that database; name the host on purpose with throwaway_hosts=(...) only when it is a throwaway database
+  run_mutants(root, [FLIP], [CORE_TEST], extra_dirs=(), timeout=120, pass_env=(DSN_NAME,), first_lines=fl):
+    RAISED builtins.ValueError: HADAVIN_TEST_PG_DSN is refused: its host is not one of throwaway_hosts ('localhost', '127.0.0.1', '::1'). Tests of every mutant write to that database; name the host on purpose with throwaway_hosts=(...) only when it is a throwaway database
+    first_lines: {}
+
+=== probe (f2) value='postgresql://u@2130706433/db'
+  direct _refuse_unsafe_address(DSN_NAME, value, mr.THROWAWAY_HOSTS):
+    RAISED builtins.ValueError: HADAVIN_TEST_PG_DSN is refused: its host is not one of throwaway_hosts ('localhost', '127.0.0.1', '::1'). Tests of every mutant write to that database; name the host on purpose with throwaway_hosts=(...) only when it is a throwaway database
+  run_mutants(root, [FLIP], [CORE_TEST], extra_dirs=(), timeout=120, pass_env=(DSN_NAME,), first_lines=fl):
+    RAISED builtins.ValueError: HADAVIN_TEST_PG_DSN is refused: its host is not one of throwaway_hosts ('localhost', '127.0.0.1', '::1'). Tests of every mutant write to that database; name the host on purpose with throwaway_hosts=(...) only when it is a throwaway database
+    first_lines: {}
+
+=== probe (f3) value='postgresql://u@0x7f.0.0.1/db'
+  direct _refuse_unsafe_address(DSN_NAME, value, mr.THROWAWAY_HOSTS):
+    RAISED builtins.ValueError: HADAVIN_TEST_PG_DSN is refused: its host is not one of throwaway_hosts ('localhost', '127.0.0.1', '::1'). Tests of every mutant write to that database; name the host on purpose with throwaway_hosts=(...) only when it is a throwaway database
+  run_mutants(root, [FLIP], [CORE_TEST], extra_dirs=(), timeout=120, pass_env=(DSN_NAME,), first_lines=fl):
+    RAISED builtins.ValueError: HADAVIN_TEST_PG_DSN is refused: its host is not one of throwaway_hosts ('localhost', '127.0.0.1', '::1'). Tests of every mutant write to that database; name the host on purpose with throwaway_hosts=(...) only when it is a throwaway database
+    first_lines: {}
+
+=== probe (g) value='host=localhost hostaddr=10.0.0.5 dbname=x'
+  direct _refuse_unsafe_address(DSN_NAME, value, mr.THROWAWAY_HOSTS):
+    RAISED builtins.ValueError: HADAVIN_TEST_PG_DSN is refused: its hostaddr is not one of throwaway_hosts ('localhost', '127.0.0.1', '::1'). Tests of every mutant write to that database; name the host on purpose with throwaway_hosts=(...) only when it is a throwaway database
+  run_mutants(root, [FLIP], [CORE_TEST], extra_dirs=(), timeout=120, pass_env=(DSN_NAME,), first_lines=fl):
+    RAISED builtins.ValueError: HADAVIN_TEST_PG_DSN is refused: its hostaddr is not one of throwaway_hosts ('localhost', '127.0.0.1', '::1'). Tests of every mutant write to that database; name the host on purpose with throwaway_hosts=(...) only when it is a throwaway database
+    first_lines: {}
+
+=== probe (h1) value='host=/tmp dbname=x'
+  direct _refuse_unsafe_address(DSN_NAME, value, mr.THROWAWAY_HOSTS):
+    RETURNED None
+  run_mutants(root, [FLIP], [CORE_TEST], extra_dirs=(), timeout=120, pass_env=(DSN_NAME,), first_lines=fl):
+    RETURNED [('flip', <Verdict.KILLED: 'KILLED'>, 'tests/test_core::test_a', True)]
+    first_lines: {'flip': '[class not shown] [expect found] assert'}
+
+=== probe (h2) value='host=/tmp/../etc dbname=x'
+  direct _refuse_unsafe_address(DSN_NAME, value, mr.THROWAWAY_HOSTS):
+    RAISED builtins.ValueError: HADAVIN_TEST_PG_DSN is refused: its address is not in a shape the runner can check (a postgresql:// URL with an optional login, a host, a port and ONE database name and nothing after it, or key=value words from host, hostaddr, port, dbname, user, sslmode, connect_timeout, application_name, sslrootcert; no password word, no repeated key, no service file, no ?host= option)
+  run_mutants(root, [FLIP], [CORE_TEST], extra_dirs=(), timeout=120, pass_env=(DSN_NAME,), first_lines=fl):
+    RAISED builtins.ValueError: HADAVIN_TEST_PG_DSN is refused: its address is not in a shape the runner can check (a postgresql:// URL with an optional login, a host, a port and ONE database name and nothing after it, or key=value words from host, hostaddr, port, dbname, user, sslmode, connect_timeout, application_name, sslrootcert; no password word, no repeated key, no service file, no ?host= option)
+    first_lines: {}
+
+=== probe (i) value='postgresql://u@localhost/db?host=10.0.0.5'
+  direct _refuse_unsafe_address(DSN_NAME, value, mr.THROWAWAY_HOSTS):
+    RAISED builtins.ValueError: HADAVIN_TEST_PG_DSN is refused: its address is not in a shape the runner can check (a postgresql:// URL with an optional login, a host, a port and ONE database name and nothing after it, or key=value words from host, hostaddr, port, dbname, user, sslmode, connect_timeout, application_name, sslrootcert; no password word, no repeated key, no service file, no ?host= option)
+  run_mutants(root, [FLIP], [CORE_TEST], extra_dirs=(), timeout=120, pass_env=(DSN_NAME,), first_lines=fl):
+    RAISED builtins.ValueError: HADAVIN_TEST_PG_DSN is refused: its address is not in a shape the runner can check (a postgresql:// URL with an optional login, a host, a port and ONE database name and nothing after it, or key=value words from host, hostaddr, port, dbname, user, sslmode, connect_timeout, application_name, sslrootcert; no password word, no repeated key, no service file, no ?host= option)
+    first_lines: {}
+
+=== probe (j) value='postgresql://u@localhost,10.0.0.5/db'
+  direct _refuse_unsafe_address(DSN_NAME, value, mr.THROWAWAY_HOSTS):
+    RAISED builtins.ValueError: HADAVIN_TEST_PG_DSN is refused: its address is not in a shape the runner can check (a postgresql:// URL with an optional login, a host, a port and ONE database name and nothing after it, or key=value words from host, hostaddr, port, dbname, user, sslmode, connect_timeout, application_name, sslrootcert; no password word, no repeated key, no service file, no ?host= option)
+  run_mutants(root, [FLIP], [CORE_TEST], extra_dirs=(), timeout=120, pass_env=(DSN_NAME,), first_lines=fl):
+    RAISED builtins.ValueError: HADAVIN_TEST_PG_DSN is refused: its address is not in a shape the runner can check (a postgresql:// URL with an optional login, a host, a port and ONE database name and nothing after it, or key=value words from host, hostaddr, port, dbname, user, sslmode, connect_timeout, application_name, sslrootcert; no password word, no repeated key, no service file, no ?host= option)
+    first_lines: {}
+
+=== probe (k) value='service=prod'
+  direct _refuse_unsafe_address(DSN_NAME, value, mr.THROWAWAY_HOSTS):
+    RAISED builtins.ValueError: HADAVIN_TEST_PG_DSN is refused: its address is not in a shape the runner can check (a postgresql:// URL with an optional login, a host, a port and ONE database name and nothing after it, or key=value words from host, hostaddr, port, dbname, user, sslmode, connect_timeout, application_name, sslrootcert; no password word, no repeated key, no service file, no ?host= option)
+  run_mutants(root, [FLIP], [CORE_TEST], extra_dirs=(), timeout=120, pass_env=(DSN_NAME,), first_lines=fl):
+    RAISED builtins.ValueError: HADAVIN_TEST_PG_DSN is refused: its address is not in a shape the runner can check (a postgresql:// URL with an optional login, a host, a port and ONE database name and nothing after it, or key=value words from host, hostaddr, port, dbname, user, sslmode, connect_timeout, application_name, sslrootcert; no password word, no repeated key, no service file, no ?host= option)
+    first_lines: {}
+
+=== probe (l) value='postgresql://u:p%40ss@localhost/db'
+  direct _refuse_unsafe_address(DSN_NAME, value, mr.THROWAWAY_HOSTS):
+    RETURNED None
+  run_mutants(root, [FLIP], [CORE_TEST], extra_dirs=(), timeout=120, pass_env=(DSN_NAME,), first_lines=fl):
+    RETURNED [('flip', <Verdict.KILLED: 'KILLED'>, 'tests/test_core::test_a', True)]
+    first_lines: {'flip': '[class not shown] [expect found] assert'}
+
+=== probe (m1) value='postgresql://postgres@localhost:5432/postgres\n'
+  direct _refuse_unsafe_address(DSN_NAME, value, mr.THROWAWAY_HOSTS):
+    RAISED builtins.ValueError: HADAVIN_TEST_PG_DSN is refused: its address is not in a shape the runner can check (a postgresql:// URL with an optional login, a host, a port and ONE database name and nothing after it, or key=value words from host, hostaddr, port, dbname, user, sslmode, connect_timeout, application_name, sslrootcert; no password word, no repeated key, no service file, no ?host= option)
+  run_mutants(root, [FLIP], [CORE_TEST], extra_dirs=(), timeout=120, pass_env=(DSN_NAME,), first_lines=fl):
+    RAISED builtins.ValueError: HADAVIN_TEST_PG_DSN is refused: its value holds a control character. The runner hides a secret by looking for its plain text, and a print of a text with such a character no longer shows the plain text, so it could not be hidden. The rule covers the whole address, also its host, database name and options. Use a throwaway database whose address and password hold only plain printable ASCII letters, digits and punctuation without quote marks and backslashes (a percent-encoded password is read decoded).
+    first_lines: {}
+
+=== probe (m2) value='host=localhost dbname=x\n'
+  direct _refuse_unsafe_address(DSN_NAME, value, mr.THROWAWAY_HOSTS):
+    RAISED builtins.ValueError: HADAVIN_TEST_PG_DSN is refused: its address is not in a shape the runner can check (a postgresql:// URL with an optional login, a host, a port and ONE database name and nothing after it, or key=value words from host, hostaddr, port, dbname, user, sslmode, connect_timeout, application_name, sslrootcert; no password word, no repeated key, no service file, no ?host= option)
+  run_mutants(root, [FLIP], [CORE_TEST], extra_dirs=(), timeout=120, pass_env=(DSN_NAME,), first_lines=fl):
+    RAISED builtins.ValueError: HADAVIN_TEST_PG_DSN is refused: its value holds a control character. The runner hides a secret by looking for its plain text, and a print of a text with such a character no longer shows the plain text, so it could not be hidden. The rule covers the whole address, also its host, database name and options. Use a throwaway database whose address and password hold only plain printable ASCII letters, digits and punctuation without quote marks and backslashes (a percent-encoded password is read decoded).
+    first_lines: {}
+
+=== probe (n1) throwaway_hosts=('*',) value='postgresql://u@db.example.org/db'
+  direct _refuse_unsafe_address(DSN_NAME, value, hosts):
+    RAISED builtins.ValueError: throwaway_hosts holds exact host names or addresses only (letters, digits, '.', ':', '-'): no pattern, no path
+  run_mutants(..., pass_env=(DSN_NAME,), throwaway_hosts=hosts, first_lines=fl):
+    RAISED builtins.ValueError: throwaway_hosts holds exact host names or addresses only (letters, digits, '.', ':', '-'): no pattern, no path
+    first_lines: {}
+
+=== probe (n1) throwaway_hosts=('*',) value='postgresql://postgres@localhost:5432/postgres'
+  direct _refuse_unsafe_address(DSN_NAME, value, hosts):
+    RAISED builtins.ValueError: throwaway_hosts holds exact host names or addresses only (letters, digits, '.', ':', '-'): no pattern, no path
+  run_mutants(..., pass_env=(DSN_NAME,), throwaway_hosts=hosts, first_lines=fl):
+    RAISED builtins.ValueError: throwaway_hosts holds exact host names or addresses only (letters, digits, '.', ':', '-'): no pattern, no path
+    first_lines: {}
+
+=== probe (n1) throwaway_hosts=('*',) value='host=/tmp dbname=x'
+  direct _refuse_unsafe_address(DSN_NAME, value, hosts):
+    RAISED builtins.ValueError: throwaway_hosts holds exact host names or addresses only (letters, digits, '.', ':', '-'): no pattern, no path
+  run_mutants(..., pass_env=(DSN_NAME,), throwaway_hosts=hosts, first_lines=fl):
+    RAISED builtins.ValueError: throwaway_hosts holds exact host names or addresses only (letters, digits, '.', ':', '-'): no pattern, no path
+    first_lines: {}
+
+=== probe (n1) throwaway_hosts=('*',) value='dbname=x'
+  direct _refuse_unsafe_address(DSN_NAME, value, hosts):
+    RAISED builtins.ValueError: throwaway_hosts holds exact host names or addresses only (letters, digits, '.', ':', '-'): no pattern, no path
+  run_mutants(..., pass_env=(DSN_NAME,), throwaway_hosts=hosts, first_lines=fl):
+    RAISED builtins.ValueError: throwaway_hosts holds exact host names or addresses only (letters, digits, '.', ':', '-'): no pattern, no path
+    first_lines: {}
+
+=== probe (n2) throwaway_hosts=('',) value='postgresql://u@db.example.org/db'
+  direct _refuse_unsafe_address(DSN_NAME, value, hosts):
+    RAISED builtins.ValueError: throwaway_hosts holds exact host names or addresses only (letters, digits, '.', ':', '-'): no pattern, no path
+  run_mutants(..., pass_env=(DSN_NAME,), throwaway_hosts=hosts, first_lines=fl):
+    RAISED builtins.ValueError: throwaway_hosts holds exact host names or addresses only (letters, digits, '.', ':', '-'): no pattern, no path
+    first_lines: {}
+
+=== probe (n2) throwaway_hosts=('',) value='postgresql://postgres@localhost:5432/postgres'
+  direct _refuse_unsafe_address(DSN_NAME, value, hosts):
+    RAISED builtins.ValueError: throwaway_hosts holds exact host names or addresses only (letters, digits, '.', ':', '-'): no pattern, no path
+  run_mutants(..., pass_env=(DSN_NAME,), throwaway_hosts=hosts, first_lines=fl):
+    RAISED builtins.ValueError: throwaway_hosts holds exact host names or addresses only (letters, digits, '.', ':', '-'): no pattern, no path
+    first_lines: {}
+
+=== probe (n2) throwaway_hosts=('',) value='host=/tmp dbname=x'
+  direct _refuse_unsafe_address(DSN_NAME, value, hosts):
+    RAISED builtins.ValueError: throwaway_hosts holds exact host names or addresses only (letters, digits, '.', ':', '-'): no pattern, no path
+  run_mutants(..., pass_env=(DSN_NAME,), throwaway_hosts=hosts, first_lines=fl):
+    RAISED builtins.ValueError: throwaway_hosts holds exact host names or addresses only (letters, digits, '.', ':', '-'): no pattern, no path
+    first_lines: {}
+
+=== probe (n2) throwaway_hosts=('',) value='dbname=x'
+  direct _refuse_unsafe_address(DSN_NAME, value, hosts):
+    RAISED builtins.ValueError: throwaway_hosts holds exact host names or addresses only (letters, digits, '.', ':', '-'): no pattern, no path
+  run_mutants(..., pass_env=(DSN_NAME,), throwaway_hosts=hosts, first_lines=fl):
+    RAISED builtins.ValueError: throwaway_hosts holds exact host names or addresses only (letters, digits, '.', ':', '-'): no pattern, no path
+    first_lines: {}

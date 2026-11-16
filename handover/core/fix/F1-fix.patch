@@ -1,0 +1,511 @@
+diff --git a/scripts/crash_desk.py b/scripts/crash_desk.py
+index c74595d..d0b895a 100644
+--- a/scripts/crash_desk.py
++++ b/scripts/crash_desk.py
+@@ -9,11 +9,19 @@ The flag file sits next to the database file (git-ignored folder). No hook code
+ 
+ from __future__ import annotations
+ 
++import sys
++
+ from lead_desk.config import Config
++from lead_desk.constants import EXIT_DESK_SETTING_REFUSED
++from lead_desk.envnum import SettingRefused
+ from lead_desk.hooks import FlagFileHooks
+ from lead_desk.server import main
+ 
+ if __name__ == "__main__":
+-    flag = Config.from_env().db_path.parent / "crash.flag"
++    try:
++        flag = Config.from_env().db_path.parent / "crash.flag"
++    except SettingRefused as e:  # the same plain refusal and exit code 4 as the desk itself (server.main)
++        print(f"the desk refuses a setting: {e}", flush=True)
++        sys.exit(EXIT_DESK_SETTING_REFUSED)
+     print(f"crash flag file: {flag}  (write a point name such as D2 into it to arm the crash)")
+     main(hooks=FlagFileHooks(flag))
+diff --git a/scripts/feed.py b/scripts/feed.py
+index d3df787..a61dc11 100644
+--- a/scripts/feed.py
++++ b/scripts/feed.py
+@@ -6,11 +6,15 @@ Each lead in demo_only/canned_leads.json becomes the envelope {"source", "source
+ (a replay).
+ The desk address comes from the desk configuration (DESK_BIND, DESK_PORT), not from this file and not from the command
+ line: there is no option to point the request anywhere else.
++A wrong input or a desk that cannot be reached ends in ONE plain line that starts `refused:` (never a Python traceback,
++never the address): exit code 2 for a wrong input (a bad --index, a bad setting, an unreadable canned file), exit code
++3 when the desk is not running, does not answer or answers something unreadable.
+ """
+ 
+ from __future__ import annotations
+ 
+ import argparse
++import http.client
+ import ipaddress
+ import json
+ import sys
+@@ -19,9 +23,11 @@ import urllib.request
+ from pathlib import Path
+ 
+ from http_guard import open_http
++from refusals import EXIT_REFUSED, EXIT_UNREACHABLE, refusal
+ 
+ from lead_desk.config import Config
+ from lead_desk.constants import SOURCES
++from lead_desk.envnum import SettingRefused
+ from lead_desk.urls import desk_origin
+ 
+ CANNED = Path("demo_only") / "canned_leads.json"
+@@ -39,36 +45,78 @@ def target_host(bind: str) -> str:
+     return f"[{ip}]" if isinstance(ip, ipaddress.IPv6Address) else str(ip)
+ 
+ 
++class FeedRefused(ValueError):
++    """A wrong input: carries the refusal line (fixed text; never the typed value)."""
++
++
+ def build_envelope(source: str, index: int, leads: list[dict[str, object]]) -> dict[str, object]:
+     if source not in SOURCES:
+-        raise ValueError("source must be one of " + ", ".join(SOURCES))
++        raise FeedRefused(refusal("--source", "must be one of " + ", ".join(SOURCES)))
+     if not 1 <= index <= len(leads):
+-        raise ValueError(f"index must be 1..{len(leads)}")
++        raise FeedRefused(refusal("--index", f"must be a whole number from 1 to {len(leads)}"))
+     return {"source": source, "source_ref": f"canned-{index}", "payload": leads[index - 1]}
+ 
+ 
++def load_leads() -> list[dict[str, object]]:
++    """The canned leads; a missing, unreadable or wrong file is a refusal (the path is relative: run from the root)."""
++    try:
++        leads = json.loads(CANNED.read_text(encoding="utf-8"))
++    except (OSError, ValueError):  # no file, a folder, not UTF-8, not JSON (UnicodeError and JSONDecodeError)
++        leads = None
++    if not isinstance(leads, list) or not leads or not all(isinstance(x, dict) for x in leads):
++        raise FeedRefused(
++            refusal(
++                "canned leads",
++                f"{CANNED.as_posix()} cannot be read as a list of leads; run this from the repository root",
++            )
++        )
++    return leads
++
++
+ def post(url: str, envelope: dict[str, object], timeout: float) -> tuple[int, str]:
+     req = urllib.request.Request(  # noqa: S310 - the url is built from the http-only desk config
+         url, data=json.dumps(envelope).encode(), headers={"Content-Type": "application/json"}, method="POST"
+     )
+     try:
+         with open_http(req, timeout) as resp:
+-            return resp.status, resp.read().decode()
++            return resp.status, resp.read().decode(errors="replace")
+     except urllib.error.HTTPError as err:
+-        return err.code, err.read().decode()
++        return err.code, err.read().decode(errors="replace")
+ 
+ 
+-def main(argv: list[str] | None = None) -> int:
+-    cfg = Config.from_env()
++UNREACHABLE = (
++    "the desk cannot be reached (it is not running, or DESK_BIND / DESK_PORT name a different address); "
++    "start it with scripts/start_all.sh, then run this again"
++)
++NO_ANSWER = "the desk did not answer in time (it may be busy or stuck); nothing more was sent"
++BAD_ANSWER = "the desk ended the connection or answered something that is not a web reply; nothing more was sent"
++
++
++def unreachable_line(err: BaseException) -> str:
++    """One refusal line for a failed request; it never shows the address (`err` can hold it). A timeout is told apart
++    from a refused or unreachable connection; a URLError wraps the OSError that explains it."""
++    reason = err.reason if isinstance(err, urllib.error.URLError) else err
++    if isinstance(reason, TimeoutError):
++        return refusal("the desk", NO_ANSWER)
++    if isinstance(reason, ConnectionRefusedError) or (
++        isinstance(reason, OSError) and not isinstance(reason, ConnectionError)
++    ):  # a reset, abort or broken pipe is a desk that hung up, not one that is not running
++        return refusal("the desk", UNREACHABLE)
++    return refusal("the desk", BAD_ANSWER)
++
++
++def run(argv: list[str] | None) -> int:
+     ap = argparse.ArgumentParser(description="Send canned made-up leads to the desk.")
+     ap.add_argument("--source", choices=SOURCES, required=True)
+     ap.add_argument("--index", type=int, help="position in canned_leads.json, starting at 1")
+     ap.add_argument("--all", action="store_true", help="send every canned lead once")
+     args = ap.parse_args(argv)
+     if args.all == (args.index is not None):
+-        ap.error("give exactly one of --index or --all")
++        print(refusal("--index, --all", "give exactly one of them"))
++        return EXIT_REFUSED
++    cfg = Config.from_env()
+     url = f"{desk_origin(target_host(cfg.bind), cfg.port)}/leads"  # from the configuration only
+-    leads = json.loads(CANNED.read_text(encoding="utf-8"))
++    leads = load_leads()
+     indexes = range(1, len(leads) + 1) if args.all else [args.index]
+     for i in indexes:
+         status, body = post(url, build_envelope(args.source, i, leads), cfg.send_timeout_seconds)
+@@ -76,5 +124,20 @@ def main(argv: list[str] | None = None) -> int:
+     return 0
+ 
+ 
++def main(argv: list[str] | None = None) -> int:
++    """The one place where an error becomes a refusal line: nothing above it ends the script with a traceback."""
++    try:
++        return run(argv)
++    except FeedRefused as e:
++        print(e)
++        return EXIT_REFUSED
++    except ValueError as e:  # a setting the desk refuses (its text names the setting, never the value)
++        print(refusal("desk settings", str(e) if isinstance(e, SettingRefused) else "a desk setting is wrong"))
++        return EXIT_REFUSED
++    except (urllib.error.URLError, OSError, http.client.HTTPException) as e:
++        print(unreachable_line(e))
++        return EXIT_UNREACHABLE
++
++
+ if __name__ == "__main__":
+     sys.exit(main())
+diff --git a/scripts/refusals.py b/scripts/refusals.py
+new file mode 100644
+index 0000000..d56999a
+--- /dev/null
++++ b/scripts/refusals.py
+@@ -0,0 +1,14 @@
++"""The one refusal line shared by the helper scripts. A script ends a wrong command line (or a desk that cannot be
++reached) with ONE plain line that starts `refused:`, never with a Python traceback. The line never repeats what was
++typed (it can hold a key or a path). Exit codes: 2 refused (a wrong input), 3 the thing the script talks to cannot be
++reached or did not answer (the codes run_live_check.py and run_real_check.py use)."""
++
++from __future__ import annotations
++
++EXIT_REFUSED = 2
++EXIT_UNREACHABLE = 3
++
++
++def refusal(option: str, text: str) -> str:
++    """The one refusal line."""
++    return f"refused: {option}: {text}"
+diff --git a/scripts/reset_check.py b/scripts/reset_check.py
+index ebc1b45..e0bf241 100644
+--- a/scripts/reset_check.py
++++ b/scripts/reset_check.py
+@@ -1,6 +1,7 @@
+ """Run by reset.sh and reset.ps1 AFTER they stopped the desk and BEFORE they delete anything. Exit 0 = nothing uses the
+ lead book: no process holds its lock file and nothing answers on the desk's or the demo server's port. Exit 3 = a
+-process still holds the database or the lock file cannot be tested, 4 = something still answers on a port.
++process still holds the database or the lock file cannot be tested, 4 = something still answers on a port,
++2 = a desk setting is wrong (the desk's own refusal text; nothing is deleted).
+ Prints one line, no values."""
+ 
+ from __future__ import annotations
+@@ -10,6 +11,7 @@ import sys
+ 
+ from lead_desk import lockfile
+ from lead_desk.config import Config
++from lead_desk.envnum import SettingRefused
+ 
+ LOOPBACK = "127.0.0.1"
+ CONNECT_SECONDS = 1.0
+@@ -24,7 +26,11 @@ def answers(port: int) -> bool:
+ 
+ 
+ def main() -> int:
+-    config = Config.from_env()
++    try:
++        config = Config.from_env()
++    except SettingRefused as e:  # a bad DESK_* value: a plain refusal (exit 2), and reset.sh stops before it deletes
++        print(f"refused: {e}; nothing was deleted")
++        return 2
+     # only "there is no lock file" means that nothing holds the book; a lock file that cannot be tested is a refusal,
+     # and a refused run must not create the file (acquire would)
+     try:
+diff --git a/src/lead_desk/smtp_provider.py b/src/lead_desk/smtp_provider.py
+index 2d6f90b..e883ef3 100644
+--- a/src/lead_desk/smtp_provider.py
++++ b/src/lead_desk/smtp_provider.py
+@@ -190,13 +190,22 @@ class SmtpProviderOutbox:
+         """`ssl_context` is for a server with its own certificate; None = the system's trusted
+         authorities, host name and chain checked."""
+         self._s = settings
+-        self._ctx = ssl_context or (
+-            ssl.create_default_context(cafile=str(settings.ca_file)) if settings.ca_file else None
+-        )
++        self._ctx = ssl_context or self._context_from_file(settings.ca_file)
+         self._lock = threading.Lock()
+         self.attempts = 0
+         self.sent = 0
+ 
++    @staticmethod
++    def _context_from_file(ca_file: Path | None) -> ssl.SSLContext | None:
++        """The trust list from DESK_SMTPP_CA_FILE. A file that is missing, not readable or not certificate text is a
++        refused setting (a fixed text, never the path or the library's words), not a traceback."""
++        if ca_file is None:
++            return None
++        try:
++            return ssl.create_default_context(cafile=str(ca_file))
++        except (OSError, ValueError):  # ssl.SSLError is an OSError; a NUL in the path is a ValueError
++            raise SettingRefused("DESK_SMTPP_CA_FILE cannot be read as a file of trusted certificates") from None
++
+     @property
+     def sender_address(self) -> str:
+         """The configured From address (read by the portal's data map; never stored or logged)."""
+diff --git a/tests/test_script_refusals_feed.py b/tests/test_script_refusals_feed.py
+new file mode 100644
+index 0000000..89863a8
+--- /dev/null
++++ b/tests/test_script_refusals_feed.py
+@@ -0,0 +1,222 @@
++"""Class: a helper script that takes a number or a choice from the person (or talks to the desk) ends with ONE plain
++line `refused: ...` and a fixed exit code, never with a Python traceback. Covers scripts/feed.py (a bad --index, a bad
++setting, an unreadable canned file, a desk that is not running, does not answer, hangs up or answers rubbish),
++scripts/reset_check.py, scripts/crash_desk.py and tools/scrub_n8n_export.py. Every script runs in its own process;
++loopback only, made-up data only."""
++
++from __future__ import annotations
++
++import json
++import os
++import socket
++import subprocess  # noqa: S404
++import sys
++import threading
++from collections.abc import Iterator
++from contextlib import contextmanager
++from pathlib import Path
++
++import pytest
++
++REPO = Path(__file__).resolve().parents[1]
++SCRIPTS = REPO / "scripts"
++sys.path.insert(0, str(SCRIPTS))
++from refusals import EXIT_REFUSED, EXIT_UNREACHABLE  # noqa: E402
++
++CANNED_COUNT = len(json.loads((REPO / "demo_only" / "canned_leads.json").read_text(encoding="utf-8")))
++LOOPBACK = "127.0.0.1"
++
++
++def _run(args: list[str], cwd: Path = REPO, **env: str) -> tuple[int, str]:
++    """Run a script in its own process; returns (exit code, standard output + standard error)."""
++    base = {k: v for k, v in os.environ.items() if not k.startswith("DESK_")}
++    base.update(PYTHONPATH=str(REPO / "src"), PYTHONDONTWRITEBYTECODE="1", **env)
++    done = subprocess.run(  # noqa: S603
++        [sys.executable, *args], cwd=cwd, env=base, capture_output=True, text=True, timeout=60, stdin=subprocess.DEVNULL
++    )
++    return done.returncode, done.stdout + done.stderr
++
++
++def _feed(*args: str, **env: str) -> tuple[int, str]:
++    return _run([str(SCRIPTS / "feed.py"), *args], **env)
++
++
++def _free_port() -> int:
++    with socket.socket() as s:
++        s.bind((LOOPBACK, 0))
++        return int(s.getsockname()[1])
++
++
++def _assert_refusal(code: int, out: str, want_code: int, *, starts: str) -> None:
++    assert "Traceback" not in out, out
++    assert code == want_code, (code, out)
++    lines = out.strip().splitlines()
++    assert len(lines) == 1 and lines[0].startswith("refused: " + starts), out
++
++
++@contextmanager
++def _fake_desk(behaviour: str) -> Iterator[int]:
++    """A loopback listener that misbehaves: 'silent' takes the request and never answers, 'hangup' closes at once,
++    'rubbish' answers bytes that are not a web reply."""
++    server = socket.socket()
++    server.bind((LOOPBACK, 0))
++    server.listen(4)
++    server.settimeout(0.2)
++    stop = threading.Event()
++    held: list[socket.socket] = []
++
++    def serve() -> None:
++        while not stop.is_set():
++            try:
++                conn, _ = server.accept()
++            except OSError:
++                continue
++            if behaviour == "hangup":
++                conn.close()
++            elif behaviour == "rubbish":
++                conn.recv(65536)
++                conn.sendall(b"\x00\xff this is not http\r\n\r\n")
++                conn.close()
++            else:
++                held.append(conn)
++
++    thread = threading.Thread(target=serve, daemon=True)
++    thread.start()
++    try:
++        yield int(server.getsockname()[1])
++    finally:
++        stop.set()
++        thread.join(5)
++        for c in held:
++            c.close()
++        server.close()
++
++
++@pytest.mark.parametrize("index", ["0", "-1", str(CANNED_COUNT + 1), "9999", "99999999999999999999"])
++def test_feed_index_out_of_range_is_one_refusal_line(index: str) -> None:
++    code, out = _feed("--source", "form", "--index", index)
++    _assert_refusal(code, out, EXIT_REFUSED, starts="--index: must be a whole number from 1 to ")
++    assert out.strip().endswith(str(CANNED_COUNT))
++
++
++@pytest.mark.parametrize("args", [["--source", "form"], ["--source", "form", "--index", "1", "--all"]])
++def test_feed_needs_exactly_one_of_index_and_all_as_one_refusal_line(args: list[str]) -> None:
++    # (the other wrong command lines are the shared refusing parser's job: builder F2)
++    code, out = _feed(*args)
++    _assert_refusal(code, out, EXIT_REFUSED, starts="--index, --all: give exactly one of them")
++
++
++@pytest.mark.parametrize("value", ["abc", "70000", "-5"])
++def test_feed_bad_desk_port_setting_is_one_refusal_line(value: str) -> None:
++    code, out = _feed("--source", "form", "--index", "1", DESK_PORT=value)
++    _assert_refusal(code, out, EXIT_REFUSED, starts="desk settings: DESK_PORT")
++    assert value not in out.replace("DESK_PORT", "")
++
++
++def test_feed_desk_not_running_says_so_and_how_to_start_it() -> None:
++    port = str(_free_port())  # nothing listens there
++    for args in (["--index", "1"], ["--all"]):
++        code, out = _feed("--source", "form", *args, DESK_BIND=LOOPBACK, DESK_PORT=port)
++        _assert_refusal(code, out, EXIT_UNREACHABLE, starts="the desk: the desk cannot be reached")
++        assert "not running" in out and "scripts/start_all.sh" in out
++        assert port not in out and LOOPBACK not in out  # the address is never printed
++
++
++@pytest.mark.parametrize(
++    ("behaviour", "words"),
++    [("silent", "did not answer in time"), ("hangup", "not a web reply"), ("rubbish", "not a web reply")],
++)
++def test_feed_desk_that_hangs_hangs_up_or_answers_rubbish_is_one_refusal_line(behaviour: str, words: str) -> None:
++    with _fake_desk(behaviour) as port:
++        code, out = _feed(
++            "--source",
++            "webhook",
++            "--index",
++            "1",
++            DESK_BIND=LOOPBACK,
++            DESK_PORT=str(port),
++            DESK_SEND_TIMEOUT_SECONDS="1",
++        )
++    _assert_refusal(code, out, EXIT_UNREACHABLE, starts="the desk: ")
++    assert words in out and str(port) not in out
++
++
++@pytest.mark.parametrize("canned", ["missing", "not-json", "not-a-list", "not-utf8", "empty-list", "list-of-numbers"])
++def test_feed_unreadable_canned_file_is_one_refusal_line(tmp_path: Path, canned: str) -> None:
++    folder = tmp_path / "demo_only"
++    folder.mkdir()
++    target = folder / "canned_leads.json"
++    content = {
++        "not-json": b"{bad",
++        "not-a-list": b'{"a": 1}',
++        "not-utf8": b"\xff\xfe\x00[]",
++        "empty-list": b"[]",
++        "list-of-numbers": b"[1, 2]",
++    }
++    if canned in content:
++        target.write_bytes(content[canned])
++    code, out = _run(
++        [str(SCRIPTS / "feed.py"), "--source", "form", "--index", "1"], cwd=tmp_path, DESK_PORT=str(_free_port())
++    )
++    _assert_refusal(code, out, EXIT_REFUSED, starts="canned leads: demo_only/canned_leads.json cannot be read")
++    assert "repository root" in out
++
++
++# -- the siblings of the same class -----------------------------------------------------------------------------------
++
++
++@pytest.mark.parametrize("script", ["reset_check.py", "crash_desk.py"])
++def test_scripts_that_read_the_desk_settings_refuse_a_bad_setting_without_a_traceback(script: str) -> None:
++    code, out = _run([str(SCRIPTS / script)], DESK_PORT="abc")
++    assert "Traceback" not in out, out
++    assert code == (EXIT_REFUSED if script == "reset_check.py" else 4), (code, out)
++    assert len(out.strip().splitlines()) <= 2 and "DESK_PORT is not a number" in out
++
++
++@pytest.mark.parametrize("content", [b"{bad", b"[1]", b'"text"', b"\xff\xfe\x00", b'{"nodes": 5}', b'{"nodes": [1]}'])
++def test_scrub_refuses_a_file_that_is_not_a_workflow_without_a_traceback(tmp_path: Path, content: bytes) -> None:
++    src = tmp_path / "in.json"
++    src.write_bytes(content)
++    code, out = _run(["-m", "tools.scrub_n8n_export", str(src), str(tmp_path / "out.json")], cwd=REPO)
++    assert "Traceback" not in out, out
++    assert code == EXIT_REFUSED and out.startswith("refused: in.json: "), (code, out)
++    assert not (tmp_path / "out.json").exists()
++
++
++def test_scrub_refuses_text_it_cannot_write_and_leaves_no_half_file(tmp_path: Path) -> None:
++    src = tmp_path / "in.json"
++    src.write_text('{"name": "\\ud800 lone half of a character", "nodes": []}', encoding="utf-8")
++    code, out = _run(["-m", "tools.scrub_n8n_export", str(src), str(tmp_path / "out.json")], cwd=REPO)
++    assert "Traceback" not in out, out
++    assert code == EXIT_REFUSED and out.startswith("refused: out.json: "), (code, out)
++    assert not (tmp_path / "out.json").exists()
++
++
++@pytest.mark.parametrize("ca_file", ["not-a-certificate", "missing", "folder"])
++def test_server_refuses_an_unusable_smtp_ca_file_without_a_traceback(tmp_path: Path, ca_file: str) -> None:
++    password = tmp_path / "pw"
++    password.write_text("made-up-" + "password", encoding="utf-8")
++    ca = tmp_path / "ca.pem"
++    if ca_file == "not-a-certificate":
++        ca.write_text("this is not certificate text\n", encoding="utf-8")
++    elif ca_file == "folder":
++        ca.mkdir()
++    code, out = _run(
++        ["-m", "lead_desk.server"],
++        DESK_DB_PATH=str(tmp_path / "d" / "desk.sqlite3"),
++        DESK_PORT="0",
++        DESK_OUTBOX="smtp_provider",
++        DESK_SMTPP_HOST="mail.example.test",
++        DESK_SMTPP_USER="u",
++        DESK_SMTPP_PASSWORD_FILE=str(password),
++        DESK_SMTPP_FROM="a@example.test",
++        DESK_SMTPP_RECIPIENTS="b@example.test",
++        DESK_SMTPP_MAX_SENDS="5",
++        DESK_SMTPP_CA_FILE=str(ca),
++    )
++    assert "Traceback" not in out, out
++    assert code == 4, (code, out)
++    assert out.strip() == (
++        "the desk refuses a setting: DESK_SMTPP_CA_FILE cannot be read as a file of trusted certificates"
++    ), out
++    assert "ca.pem" not in out and "SSL" not in out
+diff --git a/tools/scrub_n8n_export.py b/tools/scrub_n8n_export.py
+index 7be4e76..743cc20 100644
+--- a/tools/scrub_n8n_export.py
++++ b/tools/scrub_n8n_export.py
+@@ -193,8 +193,27 @@ def main(argv: list[str]) -> int:
+     except PathRefused as e:
+         print(f"refused: {e}")
+         return 2
+-    wf = json.loads(src_path.read_text(encoding="utf-8"))
+-    dst_path.write_text(json.dumps(scrub(wf), indent=2, ensure_ascii=False) + chr(10), encoding="utf-8")
++    try:
++        wf = json.loads(src_path.read_text(encoding="utf-8"))
++    except (OSError, ValueError, RuntimeError):  # unreadable, not UTF-8, not JSON, nested too deeply (RecursionError)
++        print("refused: in.json: cannot be read as a JSON workflow file")
++        return 2
++    nodes = wf.get("nodes", []) if isinstance(wf, dict) else None
++    if not isinstance(nodes, list) or not all(isinstance(n, dict) for n in nodes):
++        print("refused: in.json: not an n8n workflow (an object whose nodes are a list of objects)")
++        return 2
++    try:
++        data = (json.dumps(scrub(wf), indent=2, ensure_ascii=False) + chr(10)).encode("utf-8")  # before the file opens
++        dst_path.write_bytes(data)
++    except (
++        OSError,
++        ValueError,
++        RuntimeError,
++        TypeError,
++        AttributeError,
++    ):  # a write fault, or an odd shape inside a node
++        print("refused: out.json: the cleaned workflow cannot be written (or the file has an unexpected shape)")
++        return 2
+     return 0
+ 
+ 

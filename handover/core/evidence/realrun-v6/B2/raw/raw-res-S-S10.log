@@ -1,0 +1,22 @@
+.................................F
+=================================== FAILURES ===================================
+_ test_the_scan_judges_every_sample_source[setattr on a local object called tempfile] _
+
+name = 'setattr on a local object called tempfile', leaks = ['test_a']
+found = 1
+source = 'def test_a(monkeypatch, tmp_path):\n    tempfile = Obj()\n    monkeypatch.setattr(tempfile, "tempdir", str(tmp_path))\n    main(["--dry-fakes", "--keep"])'
+
+    @pytest.mark.parametrize(("name", "leaks", "found", "source"), _scan_cases(), ids=[c[0] for c in _scan_cases()])
+    def test_the_scan_judges_every_sample_source(name: str, leaks: list[str], found: int, source: str) -> None:
+>       assert keep_self_tests_that_leak(source) == (leaks, found), name
+E       AssertionError: setattr on a local object called tempfile
+E       assert ([], 1) == (['test_a'], 1)
+E         
+E         At index 0 diff: [] != ['test_a']
+E         Use -v to get more diff
+
+tests/test_take_script_refusals.py:300: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[setattr on a local object called tempfile]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 33 passed, 70 deselected in 48.51s

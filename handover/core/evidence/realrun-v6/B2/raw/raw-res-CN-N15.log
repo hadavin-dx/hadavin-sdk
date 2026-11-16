@@ -1,0 +1,23 @@
+F
+=================================== FAILURES ===================================
+_ test_precheck_knows_pipes_sockets_and_devices_and_leaves_files_and_folders_alone _
+
+tmp_path = PosixPath('/home/user/build/rr6/tmp-B2/pytest-of-unknown/pytest-52/test_precheck_knows_pipes_sock0')
+
+    @FIFO_SKIP
+    def test_precheck_knows_pipes_sockets_and_devices_and_leaves_files_and_folders_alone(tmp_path: Path) -> None:
+        fifo = tmp_path / "p"
+        os.mkfifo(fifo)
+        sock_path = tmp_path / "s"
+        with socket.socket(socket.AF_UNIX) as s:
+            s.bind(str(sock_path))
+>           assert precheck.is_special_file(sock_path)
+E           AssertionError: assert False
+E            +  where False = <function is_special_file at 0x7f74e07dea20>(PosixPath('/home/user/build/rr6/tmp-B2/pytest-of-unknown/pytest-52/test_precheck_knows_pipes_sock0/s'))
+E            +    where <function is_special_file at 0x7f74e07dea20> = precheck.is_special_file
+
+tests/test_real_run_v6.py:78: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_real_run_v6.py::test_precheck_knows_pipes_sockets_and_devices_and_leaves_files_and_folders_alone
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed in 0.20s

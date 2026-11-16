@@ -1,0 +1,204 @@
+fail-before proofs (file 1: the tools of round 1). Run 2026-11-09T06:50Z on head 2905c1d. Each plant on a fresh copy, one at a time, nothing else running on the copy.
+
+==================================================================
+PROOF: ruff: unused import
+tree: throwaway copy of git head 2905c1d
+plant: printf "import os\n" > src/hadavin_sdk/zz_plant.py
+before the plant: exit 0
+$ /home/user/build/B-cilint-b3/.venv/bin/ruff check src
+F401 [*] `os` imported but unused
+ --> src/hadavin_sdk/zz_plant.py:1:8
+  |
+1 | import os
+  |        ^^
+help: Remove unused import: `os`
+  |
+  - import os
+  |
+Found 1 error.
+[*] 1 fixable with `--fix`.
+after the plant: exit 1
+
+==================================================================
+PROOF: mypy: wrong type
+tree: throwaway copy of git head 2905c1d
+plant: printf "x: int = \"a\"\n" > src/hadavin_sdk/zz_plant.py
+before the plant: exit 0
+$ /home/user/build/B-cilint-b3/.venv/bin/mypy
+src/hadavin_sdk/guard/http.py:163: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+src/hadavin_sdk/guard/http.py:171: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+src/hadavin_sdk/zz_plant.py:1: error: Incompatible types in assignment (expression has type "str", variable has type "int")  [assignment]
+Found 1 error in 1 file (checked 107 source files)
+after the plant: exit 1
+
+==================================================================
+PROOF: import-linter contract 2: tools reaches actions
+tree: throwaway copy of git head 2905c1d
+plant: printf "\nimport hadavin_sdk.actions.executor  # planted\n" >> src/hadavin_sdk/tools.py
+before the plant: exit 0
+$ env PYTHONPATH=$PWD/src:$PWD/demos/ask-your-data /home/user/build/B-cilint-b3/.venv/bin/lint-imports
+---------
+Contracts
+---------
+Analyzed 195 files, 1035 dependencies.
+--------------------------------------
+Packages that must stay secret-free never reach a secret holder, even through 
+other modules BROKEN
+tools never reaches the actions package, even through other modules BROKEN
+stages is a leaf module (it imports nothing else of the package) KEPT
+Vendor cloud SDKs are imported only inside their own kind module KEPT (18 ignored imports)
+The core never imports a demo KEPT
+A demo never reaches the executor or any secret holder KEPT
+Contracts: 4 kept, 2 broken.
+----------------
+Broken contracts
+----------------
+Packages that must stay secret-free never reach a secret holder, even through 
+other modules
+--------------------------------------------------------------------------------
+-----------
+hadavin_sdk.approvals is not allowed to import hadavin_sdk.actions.executor:
+-   hadavin_sdk.approvals.requests -> hadavin_sdk.registry (l.22)
+after the plant: exit 1
+
+==================================================================
+PROOF: import-linter contract 4: a vendor SDK outside its kind module
+tree: throwaway copy of git head 2905c1d
+plant: printf "import boto3\n" > src/hadavin_sdk/zz_plant.py
+before the plant: exit 0
+$ env PYTHONPATH=$PWD/src:$PWD/demos/ask-your-data /home/user/build/B-cilint-b3/.venv/bin/lint-imports
+---------
+Contracts
+---------
+Analyzed 196 files, 1035 dependencies.
+--------------------------------------
+Packages that must stay secret-free never reach a secret holder, even through 
+other modules KEPT
+tools never reaches the actions package, even through other modules KEPT
+stages is a leaf module (it imports nothing else of the package) KEPT
+Vendor cloud SDKs are imported only inside their own kind module BROKEN (18 ignored imports)
+The core never imports a demo KEPT
+A demo never reaches the executor or any secret holder KEPT
+Contracts: 5 kept, 1 broken.
+----------------
+Broken contracts
+----------------
+Vendor cloud SDKs are imported only inside their own kind module
+----------------------------------------------------------------
+hadavin_sdk is not allowed to import boto3:
+-   hadavin_sdk.zz_plant -> boto3 (l.1)
+after the plant: exit 1
+
+==================================================================
+PROOF: import-linter contract 5: the core imports a demo
+tree: throwaway copy of git head 2905c1d
+plant: printf "import askdata\n" > src/hadavin_sdk/zz_plant.py
+before the plant: exit 0
+$ env PYTHONPATH=$PWD/src:$PWD/demos/ask-your-data /home/user/build/B-cilint-b3/.venv/bin/lint-imports
+---------
+Contracts
+---------
+Analyzed 196 files, 1035 dependencies.
+--------------------------------------
+Packages that must stay secret-free never reach a secret holder, even through 
+other modules KEPT
+tools never reaches the actions package, even through other modules KEPT
+stages is a leaf module (it imports nothing else of the package) KEPT
+Vendor cloud SDKs are imported only inside their own kind module KEPT (18 ignored imports)
+The core never imports a demo BROKEN
+A demo never reaches the executor or any secret holder KEPT
+Contracts: 5 kept, 1 broken.
+----------------
+Broken contracts
+----------------
+The core never imports a demo
+-----------------------------
+hadavin_sdk is not allowed to import askdata:
+-   hadavin_sdk.zz_plant -> askdata (l.1)
+after the plant: exit 1
+
+==================================================================
+PROOF: import-linter contract 6: a demo reaches the executor
+tree: throwaway copy of git head 2905c1d
+plant: printf "import hadavin_sdk.actions.executor\n" > demos/ask-your-data/askdata/zz_plant.py
+before the plant: exit 0
+$ env PYTHONPATH=$PWD/src:$PWD/demos/ask-your-data /home/user/build/B-cilint-b3/.venv/bin/lint-imports
+---------
+Contracts
+---------
+Analyzed 196 files, 1035 dependencies.
+--------------------------------------
+Packages that must stay secret-free never reach a secret holder, even through 
+other modules KEPT
+tools never reaches the actions package, even through other modules KEPT
+stages is a leaf module (it imports nothing else of the package) KEPT
+Vendor cloud SDKs are imported only inside their own kind module KEPT (18 ignored imports)
+The core never imports a demo KEPT
+A demo never reaches the executor or any secret holder BROKEN
+Contracts: 5 kept, 1 broken.
+----------------
+Broken contracts
+----------------
+A demo never reaches the executor or any secret holder
+------------------------------------------------------
+askdata is not allowed to import hadavin_sdk.actions.executor:
+-   askdata.zz_plant -> hadavin_sdk.actions.executor (l.1)
+askdata is not allowed to import hadavin_sdk.actions.secrets:
+-   askdata.zz_plant -> hadavin_sdk.actions.executor (l.1)
+after the plant: exit 1
+
+==================================================================
+PROOF: deptry: import of an undeclared package
+tree: throwaway copy of git head 2905c1d
+plant: printf "import requests\n" > src/hadavin_sdk/zz_plant.py
+before the plant: exit 0
+$ /home/user/build/B-cilint-b3/.venv/bin/deptry .
+Assuming the corresponding module name of package 'pip-audit' is 'pip_audit'. Install the package or configure a package_module_name_map entry to override this behaviour.
+Assuming the corresponding module name of package 'bandit' is 'bandit'. Install the package or configure a package_module_name_map entry to override this behaviour.
+Assuming the corresponding module name of package 'zizmor' is 'zizmor'. Install the package or configure a package_module_name_map entry to override this behaviour.
+Scanning 142 files...
+[1msrc/hadavin_sdk/zz_plant.py[m[36m:[m1[36m:[m8[36m:[m [1m[31mDEP003[m 'requests' imported but it is a transitive dependency
+[1m[31mFound 1 dependency issue.[m
+For more information, see the documentation: https://deptry.com/
+after the plant: exit 1
+
+==================================================================
+PROOF: vulture: unused function
+tree: throwaway copy of git head 2905c1d
+plant: printf "def zz_unused_function():\n    return 1\n" > src/hadavin_sdk/zz_plant.py
+before the plant: exit 0
+$ /home/user/build/B-cilint-b3/.venv/bin/vulture
+src/hadavin_sdk/zz_plant.py:1: unused function 'zz_unused_function' (60% confidence)
+after the plant: exit 3
+
+==================================================================
+PROOF: actionlint: misspelled context name
+tree: throwaway copy of git head 2905c1d
+plant: sed -i "0,/github.event_name/s//github.evnt_name/" .github/workflows/ci.yml
+before the plant: exit 0
+$ /tmp/claude-0/-home-user/39edf7c7-26f2-5129-9a6e-500351b26399/scratchpad/al/actionlint -color=false -shellcheck=
+.github/workflows/ci.yml:22:17: property "evnt_name" is not defined in object type {action: string; action_path: string; action_ref: string; action_repository: string; action_status: string; actor: st
+   |
+22 |   group: ci-${{ github.evnt_name == 'pull_request' && github.ref || github.sha }}
+   |                 ^~~~~~~~~~~~~~~~
+after the plant: exit 1
+
+==================================================================
+PROOF: vulture whitelist check: a name the file no longer defines
+tree: throwaway copy of git head 2905c1d
+plant: printf "zz_gone_name  # function in config.py\n" >> vulture_whitelist.py
+before the plant: exit 0
+$ /home/user/build/B-cilint-b3/.venv/bin/python tools/vulture_whitelist_check.py
+82 entries, 1 problems
+  line 96: zz_gone_name: config.py no longer defines it (delete or fix the entry)
+after the plant: exit 1
+
+==================================================================
+PROOF: vulture whitelist check: the same name listed twice
+tree: throwaway copy of git head 2905c1d
+plant: l=$(grep -m1 -E "^[A-Za-z_.]+  # " vulture_whitelist.py); echo "$l" >> vulture_whitelist.py
+before the plant: exit 0
+$ /home/user/build/B-cilint-b3/.venv/bin/python tools/vulture_whitelist_check.py
+82 entries, 1 problems
+  line 96: client_wait_s is listed twice (merge the files into one comment)
+after the plant: exit 1

@@ -1,0 +1,60 @@
+1 AKIA+Mc(U+093E)+rest: whole_leak=0 piece_leaks=0 secs=0.002 OK
+2 modifier letter U+02B0 inside: whole_leak=0 piece_leaks=0 secs=0.002 OK
+3 Greek Alpha+U+0345 start: whole_leak=0 piece_leaks=0 secs=0.002 OK
+4 sk- with Mc U+0903: whole_leak=0 piece_leaks=0 secs=0.001 OK
+5.0 password Mc at 0: whole_leak=0 piece_leaks=0 secs=0.002 OK
+5.1 password Mc at 1: whole_leak=0 piece_leaks=0 secs=0.002 OK
+5.2 password Mc at 2: whole_leak=0 piece_leaks=0 secs=0.001 OK
+5.3 password Mc at 3: whole_leak=0 piece_leaks=0 secs=0.001 OK
+5.4 password Mc at 4: whole_leak=0 piece_leaks=0 secs=0.001 OK
+5.5 password Mc at 5: whole_leak=0 piece_leaks=0 secs=0.001 OK
+5.6 password Mc at 6: whole_leak=0 piece_leaks=0 secs=0.001 OK
+5.7 password Mc at 7: whole_leak=0 piece_leaks=0 secs=0.001 OK
+5.8 password Mc at 8: whole_leak=0 piece_leaks=0 secs=0.001 OK
+5.9 password Mc at 9: whole_leak=0 piece_leaks=0 secs=0.001 OK
+5.10 password Mc at 10: whole_leak=0 piece_leaks=0 secs=0.001 OK
+6 PEM+Cyrillic overlapped by PuTTY block: whole_leak=0 piece8_leaks=0 secs=0.006 OK
+7 one line of 5000 spacing marks: secs=0.050 len_out=5006
+8 3000 lines each with spacing marks: secs=0.721 len_out=49889
+9 500 lines each with a made-up key and a mark: secs=0.271 whole_leak=0
+10 control U+0000 at 4: whole_leak=0 piece_leaks=0 secs=0.001 OK
+10 control U+0000 at 10: whole_leak=0 piece_leaks=0 secs=0.001 OK
+10 control U+0000 at 16: whole_leak=0 piece_leaks=0 secs=0.000 OK
+10 control U+0001 at 4: whole_leak=0 piece_leaks=0 secs=0.001 OK
+10 control U+0001 at 10: whole_leak=0 piece_leaks=0 secs=0.000 OK
+10 control U+0001 at 16: whole_leak=0 piece_leaks=0 secs=0.000 OK
+10 control U+0007 at 4: whole_leak=0 piece_leaks=0 secs=0.001 OK
+10 control U+0007 at 10: whole_leak=0 piece_leaks=0 secs=0.000 OK
+10 control U+0007 at 16: whole_leak=0 piece_leaks=0 secs=0.001 OK
+10 control U+0008 at 4: whole_leak=0 piece_leaks=0 secs=0.001 OK
+10 control U+0008 at 10: whole_leak=0 piece_leaks=0 secs=0.001 OK
+10 control U+0008 at 16: whole_leak=0 piece_leaks=0 secs=0.001 OK
+10 control U+000B at 4: whole_leak=1 piece_leaks=190 secs=0.000 NOT-OK
+10 control U+000B at 10: whole_leak=1 piece_leaks=190 secs=0.000 NOT-OK
+10 control U+000B at 16: whole_leak=0 piece_leaks=6 secs=0.000 NOT-OK
+10 control U+000C at 4: whole_leak=1 piece_leaks=190 secs=0.000 NOT-OK
+10 control U+000C at 10: whole_leak=1 piece_leaks=190 secs=0.000 NOT-OK
+10 control U+000C at 16: whole_leak=0 piece_leaks=6 secs=0.000 NOT-OK
+10 control U+001B at 4: whole_leak=0 piece_leaks=94 secs=0.000 NOT-OK
+10 control U+001B at 10: whole_leak=0 piece_leaks=64 secs=0.000 NOT-OK
+10 control U+001B at 16: whole_leak=0 piece_leaks=1 secs=0.000 NOT-OK
+10 control U+007F at 4: whole_leak=0 piece_leaks=0 secs=0.001 OK
+10 control U+007F at 10: whole_leak=0 piece_leaks=0 secs=0.001 OK
+10 control U+007F at 16: whole_leak=0 piece_leaks=0 secs=0.001 OK
+10 control U+0085 at 4: whole_leak=1 piece_leaks=190 secs=0.000 NOT-OK
+10 control U+0085 at 10: whole_leak=1 piece_leaks=190 secs=0.000 NOT-OK
+10 control U+0085 at 16: whole_leak=0 piece_leaks=6 secs=0.000 NOT-OK
+10 control U+200B at 4: whole_leak=0 piece_leaks=0 secs=0.001 OK
+10 control U+200B at 10: whole_leak=0 piece_leaks=0 secs=0.001 OK
+10 control U+200B at 16: whole_leak=0 piece_leaks=0 secs=0.001 OK
+10 control U+200E at 4: whole_leak=0 piece_leaks=0 secs=0.001 OK
+10 control U+200E at 10: whole_leak=0 piece_leaks=0 secs=0.001 OK
+10 control U+200E at 16: whole_leak=0 piece_leaks=0 secs=0.001 OK
+10 control U+202E at 4: whole_leak=0 piece_leaks=0 secs=0.001 OK
+10 control U+202E at 10: whole_leak=0 piece_leaks=0 secs=0.001 OK
+10 control U+202E at 16: whole_leak=0 piece_leaks=0 secs=0.001 OK
+10 control U+FEFF at 4: whole_leak=0 piece_leaks=0 secs=0.001 OK
+10 control U+FEFF at 10: whole_leak=0 piece_leaks=0 secs=0.001 OK
+10 control U+FEFF at 16: whole_leak=0 piece_leaks=0 secs=0.001 OK
+10 summary: 27/39 OK
+SUMMARY groups_ok=6 groups_not_ok=1

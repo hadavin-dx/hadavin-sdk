@@ -1,0 +1,4 @@
+Lead probe on the b18 worktree (head 51f206bc), made-up canary built from parts; True = canary present in that channel.
+str      ValidationError {'str': False, 'repr': False, 'errors': True, 'json': True}
+list     ValidationError {'str': False, 'repr': False, 'errors': True, 'json': True}
+badjson  ValidationError {'str': False, 'repr': False, 'errors': True, 'json': True}

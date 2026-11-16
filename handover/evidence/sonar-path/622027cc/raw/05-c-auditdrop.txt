@@ -1,0 +1,13 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.18, pytest-9.2.0, pluggy-1.7.0 -- /home/user/build/venv-3.13/bin/python
+rootdir: /home/user/build/E-work/c-tree
+configfile: pyproject.toml
+plugins: platformdirs-4.13.5, anyio-4.15.1
+collecting ... collected 27 items / 23 deselected / 4 selected
+
+tests/test_pathguard_batch5.py::test_an_outcome_with_a_bad_event_id_is_dropped_and_counted PASSED [ 25%]
+tests/test_pathguard_batch5.py::test_an_outcome_refused_for_another_reason_takes_the_outbox_path_not_the_drop PASSED [ 50%]
+tests/test_pathguard_batch5.py::test_a_loop_in_the_objects_folder_takes_the_outbox_path_too PASSED [ 75%]
+tests/test_pathguard_batch5.py::test_control_reconcile_replays_a_file_when_the_outbox_folder_itself_is_a_link PASSED [100%]
+
+======================= 4 passed, 23 deselected in 0.07s =======================

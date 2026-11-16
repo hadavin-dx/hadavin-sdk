@@ -1,0 +1,53 @@
+HEAD ec76c73900fafcec7fc2715fbc29cf565aaa95ee
+CMD: uv run --all-extras --group test --python 3.13 pytest -m not live and not perf -p no:cacheprovider
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+============================= test session starts ==============================
+platform linux -- Python 3.13.18, pytest-9.2.0, pluggy-1.7.0
+rootdir: /home/user/build/EV-P6a-ec76c73/wt
+configfile: pyproject.toml
+testpaths: tests
+plugins: anyio-4.15.1
+collected 10529 items / 28 deselected / 10501 selected
+
+tests/contracts/test_anchor.py ......                                    [  0%]
+tests/contracts/test_capabilities.py ................................... [  0%]
+......                                                                   [  0%]
+tests/contracts/test_llm.py .......................................s.... [  0%]
+..........                                                               [  0%]
+tests/contracts/test_secrets.py .............                            [  1%]
+tests/contracts/test_signer.py ...............                           [  1%]
+tests/contracts/test_sources.py ...................................      [  1%]
+tests/contracts/test_store.py .......................................... [  1%]
+..........                                                               [  2%]
+tests/demo_askdata/test_allowlist.py ................................... [  2%]
+........................................................................ [  3%]
+............                                                             [  3%]
+tests/demo_askdata/test_audit.py .................                       [  3%]
+tests/demo_askdata/test_cli.py ..............                            [  3%]
+tests/demo_askdata/test_corpus_on_server.py ............................ [  3%]
+......................................                                   [  4%]
+tests/demo_askdata/test_eval_compare.py ....................             [  4%]
+tests/demo_askdata/test_eval_harness.py ..............................   [  4%]
+tests/demo_askdata/test_gold_data.py ............................        [  4%]
+tests/demo_askdata/test_gold_exec.py ....                                [  4%]
+tests/demo_askdata/test_htmlexport.py .........                          [  4%]
+tests/demo_askdata/test_imports.py ...                                   [  5%]
+tests/demo_askdata/test_ledger.py ...............                        [  5%]
+tests/demo_askdata/test_llm_io.py ...................................... [  5%]
+......                                                                   [  5%]
+tests/demo_askdata/test_meter.py .................                       [  5%]
+tests/demo_askdata/test_pgsource_layers.py .....................         [  5%]
+tests/demo_askdata/test_pipeline.py ...................................  [  6%]
+tests/demo_askdata/test_roles.py .......................                 [  6%]
+tests/demo_askdata/test_safe_text.py ....                                [  6%]
+tests/demo_askdata/test_seed.py ...................................      [  6%]
+tests/demo_askdata/test_spike_seed.py ...                                [  6%]
+tests/demo_askdata/test_validate.py .................................... [  7%]
+........................................................................ [  7%]
+........................................................................ [  8%]
+........................................................................ [  9%]
+........................................................................ [  9%]
+..............                                                           [ 10%]
+tests/demo_askdata/test_validate_harm.py ............................... [ 10%]
+........................................................................ [ 11%]
+.................................exit=0

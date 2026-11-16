@@ -1,0 +1,9 @@
+head=a3fe8fa1c1e7c748408d449e4c67cdc403772e59 (builder commit; this log's subject is named inside)
+head=74ee54fde880fbe248a69c3fd2f4baf3aa90fcde (P5b2 builder base); F0 worktree=ce70eb5d8322d3f7f98923737da3c80cb52ada18; PYTHONPATH=<F0>/src
+ 1 file changed, 7 insertions(+)
+<build-dir>/src/hadavin_sdk/__init__.py
+.......................................................................  [100%]
+71 passed in 1.98s
+pytest-exit=0
+after revert, porcelain:
+(end)

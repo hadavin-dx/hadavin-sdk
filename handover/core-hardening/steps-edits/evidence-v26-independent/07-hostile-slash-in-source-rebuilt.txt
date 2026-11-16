@@ -1,0 +1,4 @@
+check-v26: 2 failure(s)
+FAIL C55 A holds secret-shaped text (pattern \b[A-Za-z0-9+/_-]{40,})
+FAIL C55 B holds secret-shaped text (pattern \b[A-Za-z0-9+/_-]{40,})
+build=0 exit=1

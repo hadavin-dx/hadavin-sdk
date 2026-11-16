@@ -1,0 +1,41 @@
+01 first 'Of the 94 rows' -> 93 | CAUGHT | 2
+02 ready 49 -> 48 (first) | CAUGHT | 1
+03 36 apply on default -> 37 | CAUGHT | 2
+04 rows 23,58,59 -> 23,58,60 | MISSED | 0
+05 wave 1 85 -> 86 (first) | CAUGHT | 2
+06 ORDERS example time: 18:00:00Z = 23:30:00 -> 23:00:00 | CAUGHT | 3
+07 swap IST sign: UTC + 5:30 -> UTC - 5:30 (title) | CAUGHT | 1
+08 check time written time 17:46:03 -> 17:46:30 (first) | CAUGHT | 1
+09 IST hour off by one for 17:50:39 | CAUGHT | 1
+10 stale 58 s in place of 60.1 (first) | CAUGHT | 1
+11 60.1 -> 60.2 everywhere | CAUGHT | 4
+12 card words 90 -> 91 (first) | MISSED | 0
+13 card seconds 36 -> 38 | MISSED | 0
+14 74-word text -> 144-word | MISSED | 0
+15 budget 40 s -> 45 s | MISSED | 0
+16 lease 45-second -> 55-second (first) | MISSED | 0
+17 recovery flow wakes every 30 -> 20 seconds | MISSED | 0
+18 L-CARD default Yes -> No | CAUGHT | 1
+19 L-SAVE default Yes -> No | CAUGHT | 1
+20 drop definition: GATE line removed | CAUGHT | 4
+21 drop definition: TIMES line removed | CAUGHT | 3
+22 drop definition: READY line removed | CAUGHT | 4
+23 drop definition CONTACT line | CAUGHT | 4
+24 cite LRN14:149 -> LRN14:148 (first) | MISSED | 0
+25 cite ORD:150 -> ORD:151 | MISSED | 0
+26 rows 6 -> 7 wait for owner failed runs | CAUGHT | 1
+27 18 stand-in crash runs -> 17 | MISSED | 0
+28 weekday: 23 Nov Monday -> Tuesday (first) | CAUGHT | 2
+29 box 2,495 -> 2,496 (first) | MUTATION-NOT-APPLIED | 2,495
+30 13-minute alert delay -> 12-minute | MISSED | 0
+31 (2 relayed runs) -> (3 relayed runs) | MISSED | 0
+32 rows 90, 91 -> rows 90, 92 | MISSED | 0
+33 swap IST->UTC label in ORDERS line | CAUGHT | 3
+34 stale 'v30' as newest at check time (first) | CAUGHT | 1
+35 NEWEST RELEASE NOTE v15 -> v14 | CAUGHT | 1
+36 key-shaped fake token inserted | CAUGHT | 5
+37 AKIA-shaped inserted | CAUGHT | 5
+38 delete the L-ONEDB table row | CAUGHT | 3
+39 L-KILL default (a) -> (b) | CAUGHT | 1
+40 section 1 row total: 'TOTAL' row count 94 -> 95 (last) | MISSED | 0
+CAUGHT 25 MISSED 14 NOT-APPLIED 1

@@ -1,0 +1,8 @@
+mutant: A1 a second request or send in the Vault sending function is no longer reported | expect: 'a second send inside `call` is not reported' | killer: test_plant_a_second_send_in_the_sending_function_is_the_class_caught
+baseline texts of killer hold expect: True
+comment_only: listed weak = True
+loop_literal_only: listed weak = True
+predicate_only: listed weak = True
+def_line_docstring: listed weak = True
+in_assert_message (control): listed weak = False
+in_raises_match (control): listed weak = False

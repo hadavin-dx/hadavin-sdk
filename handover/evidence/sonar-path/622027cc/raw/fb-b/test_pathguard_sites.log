@@ -1,0 +1,14 @@
+
+==================================== ERRORS ====================================
+________________ ERROR collecting tests/test_pathguard_sites.py ________________
+ImportError while importing test module '/home/user/build/E-work/b-tree/tests/test_pathguard_sites.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_pathguard_sites.py:22: in <module>
+    from hadavin_sdk.pathguard import PathRefused
+E   ImportError: cannot import name 'PathRefused' from 'hadavin_sdk.pathguard' (/home/user/build/E-work/b-tree/src/hadavin_sdk/pathguard.py)
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 error in 0.14s

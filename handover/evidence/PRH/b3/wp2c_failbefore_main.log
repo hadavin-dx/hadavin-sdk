@@ -1,0 +1,40 @@
+....F.                                                                   [100%]
+=================================== FAILURES ===================================
+______________________________ test_no_step_back _______________________________
+
+    def test_no_step_back():
+        """Everything main masks, the branch masks (fixture recorded from main, section 5.1), on every path, with the
+        direct callers (`redact()`) included; except the pairs of `ACCIDENTAL_PAIRS` (see the comment above), which are
+        recomputed here and must equal the fixture exactly."""
+        res = _results()
+        verdicts = _main_verdicts()
+        worse: list[str] = []
+        accidental: dict[str, list[str]] = {"plain_not_masked": [], "no_whole_plain_reading": []}
+        for case in res["cases"]:
+            paths = rec.PATHS_FOR[case.kind] + (("direct",) if case.kind != "handed" else ())
+            bits = verdicts[case.id]
+            assert len(bits) == len(paths), case.id
+            for path, bit in zip(paths, bits, strict=True):
+                if bit != "1" or res["masked"][case.id][path] or case.id in NO_STEP_BACK_EXCEPTIONS:
+                    continue
+                label = f"{case.id} [{path}]"
+                if _plain_masked(case, path):
+                    worse.append(label)
+                elif _plain_readings(case, path):
+                    accidental["plain_not_masked"].append(label)
+                else:
+                    accidental["no_whole_plain_reading"].append(label)
+        assert not worse, f"{len(worse)} masked on main and not on the branch, first: {worse[:8]}"
+>       assert {k: sorted(v) for k, v in accidental.items()} == ACCIDENTAL_PAIRS
+E       AssertionError: assert {'plain_not_m..._reading': []} == {'plain_not_m...[head]', ...]}
+E         
+E         Differing items:
+E         {'plain_not_masked': []} != {'plain_not_masked': ['pair|bearer|q_osc_open+v_lf|name [direct]', 'pair|bearer|q_osc_open+v_lf|name [error]', 'pair|b...en+v_lf|name [tool]', 'pair|bearer|q_osc_open+v_lf|name [untrusted]', 'pair|bearer|q_osc_open+v_lf|name [value]', ...]}
+E         {'no_whole_plain_reading': []} != {'no_whole_plain_reading': ['m2|key|q_osc_c1st [direct]', 'nfkc|key|q_osc_c1st|o10 [direct]', 'nfkc|key|q_osc_c1st|o3 ...st|inside [direct]', 'pair|bearer|s000c+q_osc_c1st|inside [error]', 'pair|bearer|s000c+q_osc_c1st|inside [head]', ...]}
+E         Use -v to get more diff
+
+tests/test_prh_contract.py:463: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_prh_contract.py::test_no_step_back - AssertionError: assert...
+1 failed, 5 passed, 50 deselected in 30.19s
+rc=1

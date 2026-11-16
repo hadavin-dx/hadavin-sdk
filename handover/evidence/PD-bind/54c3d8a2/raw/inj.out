@@ -1,0 +1,33 @@
+============================= test session starts ==============================
+collecting ... collected 27 items
+
+::test_private_propagates[s_bg143] PASSED
+::test_private_propagates[s_bg174] PASSED
+::test_private_propagates[s_rc147] PASSED
+::test_private_propagates[s_rc62] PASSED
+::test_private_propagates[s_rc90] PASSED
+::test_private_propagates[s_rq441] PASSED
+::test_private_propagates[s_rq512] PASSED
+::test_private_propagates[s_si245] PASSED
+::test_private_propagates[s_si250] PASSED
+::test_private_propagates[s_si307] PASSED
+::test_private_propagates[s_si337] PASSED
+::test_private_propagates[s_si349] PASSED
+::test_private_propagates[s_si696] PASSED
+::test_control_named_error_is_caught[s_bg143] PASSED
+::test_control_named_error_is_caught[s_bg174] PASSED
+::test_control_named_error_is_caught[s_rc147] PASSED
+::test_control_named_error_is_caught[s_rc62] PASSED
+::test_control_named_error_is_caught[s_rc90] PASSED
+::test_control_named_error_is_caught[s_rq441] PASSED
+::test_control_named_error_is_caught[s_rq512] PASSED
+::test_control_named_error_is_caught[s_si245] PASSED
+::test_control_named_error_is_caught[s_si250] PASSED
+::test_control_named_error_is_caught[s_si307] PASSED
+::test_control_named_error_is_caught[s_si337] PASSED
+::test_control_named_error_is_caught[s_si349] PASSED
+::test_control_named_error_is_caught[s_si696] PASSED
+::test_receiver_observable_with_private_error_at_refused OBSERVABLE {'RuntimeError(named)': 'status 503', 'Private': 'client saw RemoteDisconnected: no status line'} | server stderr mentions Private: True | traceback printed: True
+PASSED
+
+============================== 27 passed in 5.22s ==============================

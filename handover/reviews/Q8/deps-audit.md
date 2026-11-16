@@ -1,0 +1,9 @@
+# Q8 single-dependency + least-privilege audit of merged core (main), egm:egm-design (Fable 5.2), read-only, PARTIAL (about 20 of 100+ files read in full). No Blocker; 6 Major, 5 Minor.
+F1 Major: app.build() accepts secrets=/channel=/detector=/llm= override objects in pilot/prod (only sources=/tools= refused at app.py:90-98); demo-only refusal lives only in config validator (config.py:394-397). LEAD VERIFIED by reading app.py 84-100: only sources/tools are refused. Fix: refuse the four overrides when live, same message shape; test.
+F2 Major: one process resolves runtime DSN + purge DSN + signer key + channel tokens (app.py:151-160, runtime/tick.py:196). Fix: role parameter on build(); purge DSN only for a separate purge command.
+F3 Major: no cloud kind ships policy text/per-action reason/negative test. Fix: `policy` field on Entry in backends/table.py + guard test.
+F4 Major: approver = verified Slack user, no step-up (passkey) (deferred.py:26-27). Fix: enforce at Approvals.receive or record owner-dated exception.
+F5 Major: Vault auth defaults to static token from VAULT_TOKEN, allowed in pilot/prod (backends/table.py:255-259, actions/secrets_vault.py:165-193). Fix: refuse auth: token when live.
+F6 Major: approvals/receiver.py:18 PATH="/slack/actions", :22 handle_slack_action in neutral module (LEAD VERIFIED by grep); lock-in guard pattern anchored at string start misses it; slack_channel imports post_json from llm.common.
+F7 Minor: passwordless DB sign-in only for AWS RDS (store/auth_aws.py). F8 Minor: sources/kinds.py registry invisible to coverage guard. F9 Minor: pilot allows signer none/anchor none/key file. F10 Minor: google.auth inside llm/anthropic.py. F11 Minor: EXCEPTIONS["audit"].trigger == "none"; markdown_it single parser; secrets env has no neutral flag.
+Not read by reviewer: most files (grep only); tests not run.

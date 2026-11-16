@@ -1,0 +1,29 @@
+x": 9,
+E           "mails_in_spam_folder": 0,
+E           "mails_per_mailbox_in_config_order": [
+E             3,
+E             6
+E           ],
+E           "mails_sent_by_the_desk_total": 9,
+E           "people_sent": 8,
+E           "requests_intended": 13,
+E           "seconds_total": 65.5,
+E           "smtp_by_the_desk": {
+E             "attempts": 9,
+E             "sent": 9
+E           },
+E           "twin_expectation": "the twin (same person, other address) is a second lead and contact: a known blind spot",
+E           "unseen_contacts": 0
+E         }
+E         
+E         result file: /home/user/build/rr6/out/R7U-MUT/tmp1/real-dry-_8ggzpsu/run/result.json
+E         clean-up: 8 contacts archived (only those carrying this run's lead ids)
+E         
+E       assert (1 == 1 and '1 contacts may be left' in "people: 8 + a twin (same person, second address); desk processes: 2 (one crash)\nworst case HubSpot calls: 1200 by th...-MUT/tmp1/real-dry-_8ggzpsu/run/result.json\nclean-up: 8 contacts archived (only those carrying this run's lead ids)\n")
+E        +  where 1 = rrc.EXIT_FAILED
+
+tests/test_r7u_a_findings.py:219: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r7u_a_findings.py::test_a1c_a_create_with_no_known_outcome_counts_as_a_possible_contact_at_main_level[create_unknown]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 1 passed, 39 deselected in 131.64s (0:02:11)

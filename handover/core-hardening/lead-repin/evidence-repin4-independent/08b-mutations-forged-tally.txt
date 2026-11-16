@@ -1,0 +1,5 @@
+x1 forged tally only (printf failed=0), Bearer dropped, FAIL lines kept | self-test rc=1 FAIL-lines=7 tally=SELF-TEST: passed=6 failed=0 (the ma | --mask rc=3 bearer_visible=False | main rc=3
+x2 m3 exact: self_test return value forced 0, Bearer dropped | self-test rc=1 FAIL-lines=7 tally=SELF-TEST: passed=292 failed=6 (the  | --mask rc=3 bearer_visible=False | main rc=3
+x3 m3 exact + canary quiet: return forced 0 AND tally forged failed=0 AND Bearer dropped | self-test rc=1 FAIL-lines=7 tally=SELF-TEST: passed=6 failed=0 (the ma | --mask rc=3 bearer_visible=False | main rc=3
+x4 st_verdict ignores FAIL-line check (grep ^FAIL removed), Bearer dropped, tally forged | self-test rc=1 FAIL-lines=7 tally=SELF-TEST: passed=6 failed=0 (the ma | --mask rc=3 bearer_visible=False | main rc=3
+x5 fail counter never incremented (fail=$((fail+1)) removed), Bearer dropped (0 sites) | self-test rc=1 FAIL-lines=7 tally=SELF-TEST: passed=292 failed=6 (the  | --mask rc=3 bearer_visible=False | main rc=3

@@ -1,0 +1,29 @@
+money used 3.90-3.10 = 0.80 <=0.81: True ; 4.00-3.10 = 0.90 >0.81: True
+13.00 ok (<=13.21): True  13.50 not ok: True
+yes sentence chars outside R8 second set: [] double spaces: False length 654
+  set phrase I decline                                                              bad chars []
+  set phrase I cancel the older key <its name>, nothing else I know uses it         bad chars []
+  set phrase model key cancelled                                                    bad chars []
+  set phrase time passed                                                            bad chars []
+  set phrase cancel failed                                                          bad chars []
+  set phrase key save failed, cancelled, new run name <name>                        bad chars []
+  set phrase run started                                                            bad chars []
+  set phrase contacts deleted <number>                                              bad chars []
+  set phrase app passwords revoked                                                  bad chars []
+  set phrase HubSpot apps revoked                                                   bad chars []
+  set phrase demo mails deleted <number>                                            bad chars []
+  set phrase accepted                                                               bad chars []
+  set phrase posted                                                                 bad chars []
+  set phrase got a message that says <in words>, is it yours                        bad chars []
+  set phrase stop                                                                   bad chars []
+STALE? run length 10 in O : ion 2) | no source in the inputs | Proposals: slack 30 min, run length 10 min, longest film pause 10 min, margin 10 min, cancel buffer 10 min (fixed), minutes at "T
+STALE? run length 10 in O : m needs at least 860 seconds (14.4 minutes); the v21 sample run length was 10 minutes, so the alarm would have rung mid-run | Sample is now 1
+860/60 = 14.33333333333333333333333333
+fingerprint sample len 16 version id sample len 7
+demo7 True
+demo72 True
+"go" in sheet count 7
+"n8n is off" in sheet count 3
+"post" in sheet count 4
+"still works" in sheet count 4
+count 18:29 UTC = 23:59 IST in sheet 2

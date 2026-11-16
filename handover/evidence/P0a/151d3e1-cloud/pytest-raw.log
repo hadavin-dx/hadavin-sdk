@@ -1,0 +1,32 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+============================= test session starts ==============================
+platform linux -- Python 3.13.18, pytest-9.2.0, pluggy-1.7.0 -- /home/user/build/venv-p71-313/bin/python
+rootdir: /home/user/build/EV-P71-151d3e1/wt
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 21 items
+
+tests/test_no_pglast_in_runtime.py::test_repository_ships_no_pglast PASSED [  4%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[clean] PASSED     [  9%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[non-test group] PASSED [ 14%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[uppercase and leading space] PASSED [ 19%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[at-form] PASSED   [ 23%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[include-group] PASSED [ 28%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[runtime dependency] PASSED [ 33%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[optional extra] PASSED [ 38%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[tool.uv sources] PASSED [ 42%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[uv.lock missing] PASSED [ 47%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[tool.uv constraint] PASSED [ 52%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[lock edge from runtime package] PASSED [ 57%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[lock group other than test] PASSED [ 61%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[import in src] PASSED [ 66%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[import submodule] PASSED [ 71%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[from submodule] PASSED [ 76%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[import_module string] PASSED [ 80%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[prose string is fine] PASSED [ 85%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[missing src] PASSED [ 90%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[vendored dir] PASSED [ 95%]
+tests/test_no_pglast_in_runtime.py::test_guard_catches[vendored binary] PASSED [100%]
+
+- generated xml file: /home/user/hadavin-sdk/handover/evidence/P0a/151d3e1-cloud/pytest.xml -
+============================== 21 passed in 0.45s ==============================

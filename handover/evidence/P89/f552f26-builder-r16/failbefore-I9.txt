@@ -1,0 +1,7 @@
+I9 the pieces of an unquoted password are not secrets
+replaced: 'for piece in re.split(r"[;&]", word)'
+by: 'for piece in []'
+summary: FAILED tests/test_mutation_runner_keywords.py::test_the_pieces_of_an_unquoted_password_that_holds_a_semicolon_or_an_ampersand_are_secrets
+exit=1
+FAILED kept tests:
+test_the_pieces_of_an_unquoted_password_that_holds_a_semicolon_or_an_ampersand_are_secrets

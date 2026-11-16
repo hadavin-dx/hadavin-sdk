@@ -1,0 +1,10 @@
+[--day] rc 2 :: --day needs one day written YYYY-MM-DD, for example --day 2026-12-12|
+[--day=] rc 2 :: --day needs one day written YYYY-MM-DD, for example --day 2026-12-12|
+[--day 2020-01-01] rc 2 :: --day 2020-01-01 is before 2026-11-11, the day the dated lists were decided: give that day or a later one|
+[--day=2020-01-01] rc 2 :: --day 2020-01-01 is before 2026-11-11, the day the dated lists were decided: give that day or a later one|
+[--day 2026-13-45] rc 2 :: --day 2026-13-45 is not a real day; write YYYY-MM-DD|
+[--day 20261212] rc 2 :: --day needs one day written YYYY-MM-DD, for example --day 2026-12-12|
+[--day abc] rc 2 :: --day needs one day written YYYY-MM-DD, for example --day 2026-12-12|
+[--day 2026-12-11 --day 2026-12-12] rc 2 :: --day may be given once only|
+[--day=2026-12-11 --day=2026-12-12] rc 2 :: --day may be given once only|
+[--day 2026-11-10] rc 2 :: --day 2026-11-10 is before 2026-11-11, the day the dated lists were decided: give that day or a later one|

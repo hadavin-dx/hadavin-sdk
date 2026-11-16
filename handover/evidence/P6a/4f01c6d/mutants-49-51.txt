@@ -1,0 +1,38 @@
+4f01c6d0bad8172ee0481cae679b4eeb079baa18
+(mutants run at b168168; src and tests of the mutated files identical at 4f01c6d0bad8172ee0481cae679b4eeb079baa18, only tests/stage_mutants.py differs)
+## mutant 49: made_up_data_only not refused when live
+status=KILLED-NAMED rc=1 clean_after=True files=tests/test_client_profile.py
+summary=['4 failed, 51 passed in 1.16s']
+expected-killer-regex=t7e|t7f
+failing (4):
+  FAILED tests/test_client_profile.py::test_t7e_the_field_is_refused_in_pilot_and_prod - Failed: DID NOT RAISE ConfigError
+  FAILED tests/test_client_profile.py::test_t7f_the_field_is_refused_in_any_environment_that_is_not_demo[Demo] - AssertionError: Regex pattern did not match.
+  FAILED tests/test_client_profile.py::test_t7f_the_field_is_refused_in_any_environment_that_is_not_demo[uat] - AssertionError: Regex pattern did not match.
+  FAILED tests/test_client_profile.py::test_t7f_the_field_is_refused_in_any_environment_that_is_not_demo[] - AssertionError: Regex pattern did not match.
+patch:
+  -            ["made_up_data_only (for demo configs only)"] if live and self.made_up_data_only else []
+  +            []
+
+## mutant 50: made_up_data_only refused only in pilot and prod
+status=KILLED-NAMED rc=1 clean_after=True files=tests/test_client_profile.py
+summary=['3 failed, 52 passed in 1.02s']
+expected-killer-regex=t7f
+failing (3):
+  FAILED tests/test_client_profile.py::test_t7f_the_field_is_refused_in_any_environment_that_is_not_demo[Demo] - AssertionError: Regex pattern did not match.
+  FAILED tests/test_client_profile.py::test_t7f_the_field_is_refused_in_any_environment_that_is_not_demo[uat] - AssertionError: Regex pattern did not match.
+  FAILED tests/test_client_profile.py::test_t7f_the_field_is_refused_in_any_environment_that_is_not_demo[] - AssertionError: Regex pattern did not match.
+patch:
+  -            ["made_up_data_only (for demo configs only)"] if live and self.made_up_data_only else []
+  +            ["made_up_data_only (for demo configs only)"] if self.environment in ("pilot", "prod") and self.made_up_data_only else []
+
+## mutant 51: made_up_data_only refused in every stage
+status=KILLED-NAMED rc=1 clean_after=True files=tests/test_client_profile.py
+summary=['2 failed, 53 passed in 1.45s']
+expected-killer-regex=t7b|t7g
+failing (2):
+  FAILED tests/test_client_profile.py::test_t7b_with_the_field_a_real_llm_kind_loads_in_demo - hadavin_sdk.errors.ConfigError: 1 validation error for Config
+  FAILED tests/test_client_profile.py::test_t7g_the_field_still_loads_in_demo - hadavin_sdk.errors.ConfigError: 1 validation error for Config
+patch:
+  -            ["made_up_data_only (for demo configs only)"] if live and self.made_up_data_only else []
+  +            ["made_up_data_only (for demo configs only)"] if self.made_up_data_only else []
+

@@ -1,0 +1,2 @@
+/bin/bash: line 17: /home/user/build/venv-p89i-313/bin/bandit: No such file or directory
+exit=127

@@ -1,0 +1,37 @@
+........................................................................ [ 50%]
+...........................................................F
+=================================== FAILURES ===================================
+_____________ test_the_ledger_read_takes_no_lock_and_makes_nothing _____________
+
+tmp_path = PosixPath('/home/user/build/rr6/tmp-B2/pytest-of-unknown/pytest-100/test_the_ledger_read_takes_no_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fa2e178f800>
+
+    def test_the_ledger_read_takes_no_lock_and_makes_nothing(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Both scripts check the ledger with the existing `read_totals("")`: it must take no lock and make no folder or
+        file (a missing ledger is a new ledger)."""
+        from lead_desk import live_claude
+    
+        class NoLock:
+            def __init__(self, *_a: object) -> None:
+                raise AssertionError("the read took the file lock")
+    
+            def __enter__(self) -> None: ...
+    
+        monkeypatch.setattr(live_claude, "_FileLock", NoLock)
+        ledger = live_claude.SpendLedger(tmp_path / "not-yet" / "ledger")
+        ledger.read_totals("")
+        assert list(tmp_path.iterdir()) == []
+        (tmp_path / "bad").write_text("garbage\n", encoding="utf-8")
+        with pytest.raises(live_claude.LiveError):
+            live_claude.SpendLedger(tmp_path / "bad").read_totals("")
+>       assert not hasattr(live_claude.SpendLedger, "check_readable")  # the core has no extra method for this
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: assert not True
+E        +  where True = hasattr(<class 'lead_desk.live_claude.SpendLedger'>, 'check_readable')
+E        +    where <class 'lead_desk.live_claude.SpendLedger'> = <module 'lead_desk.live_claude' from '/home/user/build/rr6/tree-M/src/lead_desk/live_claude.py'>.SpendLedger
+
+tests/test_take_script_refusals.py:609: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_take_script_refusals.py::test_the_ledger_read_takes_no_lock_and_makes_nothing
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 131 passed in 124.54s (0:02:04)

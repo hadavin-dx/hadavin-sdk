@@ -1,0 +1,9 @@
+case=empty outer_rc=0 printed=[exit 1|] file_size=none mode=none
+case=fakekey outer_rc=0 printed=[exit 0|] file_size=30 mode=-rw-------
+(fake key length 29, expected size 30)
+case=stdin_closed outer_rc=0 printed=[exit 1|] file_size=none mode=none
+case=nonl_fake outer_rc=0 printed=[exit 1|] file_size=none mode=none
+case=spaceonly outer_rc=0 printed=[exit 1|] file_size=none mode=none
+case=existing_file printed=[bash: line 1: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/v21ind/keytest2/key-fakekey: cannot overwrite existing file|exit 1|] size_after=30
+case=missing_folder printed=[bash: line 1: /nonexistent_dir_x/k: No such file or directory|exit 1|]
+-rw------- 1 root root 30 Nov 16 13:16 key-fakekey

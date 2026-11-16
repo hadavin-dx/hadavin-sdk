@@ -1,0 +1,4 @@
+# head 2ff0afef3fc8d44afaacac5415255e09458b5b14 (fix6: repair mutant search strings after rename and reformat); tree clean: 0 changed files; python: py312 pytest; 2026-11-06T16:31:25Z
+.......................................................................  [100%]
+10406 passed, 455 skipped, 10 xfailed in 599.19s (0:09:59)
+pytest exit code: 0

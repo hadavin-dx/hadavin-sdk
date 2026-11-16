@@ -1,0 +1,24 @@
+-    set yet; a dated list in the guard test names them, and that test fails for 7 of them from 2026-12-12 and
++    set yet; a dated list in the guard test names them, and that test fails for 7 of them from 2027-01-12 and
+-KINDS_GROUPS = [(7, "2026-12-12"), (9, "2027-02-01")]
+-KINDS_LITERAL = "7 of them from 2026-12-12 and the other 9 from 2027-02-01"
++KINDS_GROUPS = [(7, "2027-01-12"), (9, "2027-02-01")]
++KINDS_LITERAL = "7 of them from 2027-01-12 and the other 9 from 2027-02-01"
+-KINDS_DECIDED = date(2026, 11, 11)
+-_PR2 = ("the permission names of this kind are not all checked yet", "Q8c PR 2", date(2026, 12, 11))
++KINDS_DECIDED = date(2026, 12, 12)
++_PR2 = ("the permission names of this kind are not all checked yet", "Q8c PR 2", date(2027, 1, 11))
+-    assert {p.decided for p in PENDING_KINDS.values()} == {date(2026, 11, 11)}, (
+-        "the pending kinds do not all stand on the literal day 2026-11-11"
++    assert {p.decided for p in PENDING_KINDS.values()} == {date(2026, 12, 12)}, (
++        "the pending kinds do not all stand on the literal day 2026-12-12"
+-    assert pp.DECIDED == date(2026, 11, 11), "the tool's decision day moved without this test"
++    assert pp.DECIDED == date(2026, 12, 12), "the tool's decision day moved without this test"
+-DECIDED = date(2026, 11, 11)
++DECIDED = date(2026, 12, 12)
+-    date(2026, 12, 11),
++    date(2027, 1, 11),
+-    date(2026, 12, 11),
++    date(2027, 1, 11),
+-    date(2026, 12, 11),
++    date(2027, 1, 11),

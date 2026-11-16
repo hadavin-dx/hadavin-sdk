@@ -1,0 +1,12 @@
+modules on disk: 102
+== today (top-level edges): edges=335
+  cycle: ['hadavin_sdk.config', 'hadavin_sdk.deferred', 'hadavin_sdk.registry', 'hadavin_sdk.replay_records']
+  cycle: ['hadavin_sdk.approvals', 'hadavin_sdk.approvals.cards', 'hadavin_sdk.approvals.channel', 'hadavin_sdk.approvals.requests']
+  cycle: ['hadavin_sdk.k1b.replay', 'hadavin_sdk.k1b.report', 'hadavin_sdk.k1b.score']
+== v8 planned overlay: edges=367
+  cycle: ['hadavin_sdk.config', 'hadavin_sdk.deferred', 'hadavin_sdk.registry', 'hadavin_sdk.replay_records'] | contains a planned or changed module: []
+  cycle: ['hadavin_sdk.approvals', 'hadavin_sdk.approvals.cards', 'hadavin_sdk.approvals.channel', 'hadavin_sdk.approvals.requests'] | contains a planned or changed module: []
+  cycle: ['hadavin_sdk.k1b.replay', 'hadavin_sdk.k1b.report', 'hadavin_sdk.k1b.score'] | contains a planned or changed module: []
+  NEW or CHANGED cycles caused by the v8 shape: 0
+== v6 shape (llm.gate imports llm.common):
+  cycle: ['hadavin_sdk.llm.common', 'hadavin_sdk.llm.gate']

@@ -1,0 +1,50 @@
+S01	tests/test_r7s_findings.py	s1	KILLED	['1 failed, 17 deselected in 0.20s']
+S01	restored-byte-equal=True
+S02	tests/test_r7s_findings.py	s1	KILLED	['1 failed, 17 deselected in 0.17s']
+S02	restored-byte-equal=True
+S03	tests/test_r7s_findings.py	s1	KILLED	['1 failed, 24 passed, 17 deselected in 0.29s']
+S03	restored-byte-equal=True
+S04	tests/test_r7s_findings.py	s1	KILLED	['1 failed, 30 passed, 17 deselected in 0.21s']
+S04	restored-byte-equal=True
+S05	tests/test_r7s_findings.py	s1_the_refusal_comes	KILLED	['1 failed, 50 deselected in 0.17s']
+S05	restored-byte-equal=True
+S06	tests/test_r7s_findings.py	s1	KILLED	['1 failed, 17 deselected in 0.16s']
+S06	restored-byte-equal=True
+S07	tests/test_r7s_findings.py	s1	KILLED	['1 failed, 1 passed, 17 deselected in 0.20s']
+S07	restored-byte-equal=True
+S08	tests/test_r7s_findings.py	s1b	KILLED	['1 failed, 50 deselected in 0.20s']
+S08	restored-byte-equal=True
+S09	tests/test_r7s_findings.py	s3c	KILLED	['1 failed, 50 deselected in 0.17s']
+S09	restored-byte-equal=True
+S10	tests/test_r7s_findings.py	s3c	KILLED	['1 failed, 50 deselected in 0.17s']
+S10	restored-byte-equal=True
+S11	tests/test_r7s_findings.py	s3c	KILLED	['1 failed, 50 deselected in 0.16s']
+S11	restored-byte-equal=True
+S12	tests/test_r7s_findings.py	s3c	KILLED	['1 failed, 50 deselected in 0.16s']
+S12	restored-byte-equal=True
+S13	tests/test_r7s_findings.py	s3e	KILLED	['1 failed, 4 passed, 46 deselected in 0.17s']
+S13	restored-byte-equal=True
+S14	tests/test_r7s_findings.py	s3b	KILLED	['1 failed, 48 deselected in 35.13s']
+S14	restored-byte-equal=True
+S15	tests/test_r7s_findings.py	s3b	KILLED	['1 failed, 48 deselected in 36.37s']
+S15	restored-byte-equal=True
+S16	tests/test_r7s_findings.py	s3_a_contact_left_by	KILLED	['1 failed, 50 deselected in 65.25s (0:01:05)']
+S16	restored-byte-equal=True
+S17	tests/test_r7s_findings.py	s3_a_created or s3_nothing	KILLED	['1 failed, 1 passed, 47 deselected in 100.08s (0:01:40)']
+S17	restored-byte-equal=True
+S18	tests/test_r7s_findings.py	s3_a_created	KILLED	['1 failed, 48 deselected in 65.62s (0:01:05)']
+S18	restored-byte-equal=True
+S19	tests/test_r7s_findings.py	s3_a_created	KILLED	['1 failed, 48 deselected in 35.38s']
+S19	restored-byte-equal=True
+S20	tests/test_r7s_findings.py	s6	KILLED	['1 failed, 1 passed, 48 deselected in 0.17s']
+S20	restored-byte-equal=True
+S21	tests/test_r7s_findings.py	s6	KILLED	['1 failed, 1 passed, 48 deselected in 0.17s']
+S21	restored-byte-equal=True
+S22	tests/test_r7s_findings.py	s6	KILLED	['1 failed, 48 deselected in 0.22s']
+S22	restored-byte-equal=True
+S23	tests/test_r7s_findings.py	s6_no_test_file	KILLED	['1 failed, 50 deselected in 0.92s']
+S23	restored-byte-equal=True
+X1ctx	tests/test_r7q_findings.py	q9	KILLED	['1 failed, 62 deselected in 0.40s']
+X1ctx	restored-byte-equal=True
+S24	tests/test_r7q_findings.py	q9	KILLED	['1 failed, 62 deselected in 0.38s']
+S24	restored-byte-equal=True

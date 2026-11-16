@@ -1,0 +1,19 @@
+[ConfigError built outside raise, raised later] found=1
+     m.py:2: [message] f'bad {name}'
+[ConfigError built outside raise, returned] found=1
+     m.py:2: [message] 'bad ' + name
+[out-parameter list joined into an error] found=1
+     m.py:2: [message] out.append(name)
+[out-parameter list joined, control: only written text] found=0
+[raise inside except without from] found=1
+     m.py:5: [context] raise ConfigError('x')
+[raise inside except with from None (control)] found=0
+[raise inside except with from exc] found=1
+     m.py:5: [cause] raise ConfigError('x') from exc
+[f-string of a parameter (control)] found=1
+     m.py:2: [message] f'bad {name}'
+[written text only (control)] found=0
+---- guard over src (all rows)
+modules: 109 found: 0 stale: 0
+ALL_ALLOWED rows: 547 NEW_ALLOWED: 432 GUARD_ALLOWED: 115
+UNCHECKED: ['CARD', 'REDACTED'] REASONS: 52

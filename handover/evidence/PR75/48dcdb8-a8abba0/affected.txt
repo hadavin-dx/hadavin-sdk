@@ -1,0 +1,43 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+........................................................................ [ 20%]
+........................................................................ [ 40%]
+........................................................................ [ 61%]
+........................................................................ [ 81%]
+................................................................         [100%]contract session-end check FAILED:
+  no test body called Store.add_tool_call on backend memory
+  no test body called Store.get_approval_decision on backend memory
+  no test body called Store.get_approval_request on backend memory
+  no test body called Store.get_gate_decision on backend memory
+  no test body called Store.get_kill_switch on backend memory
+  no test body called Store.get_redaction_map on backend memory
+  no test body called Store.list_due_approvals on backend memory
+  no test body called Store.list_runs on backend memory
+  no test body called Store.list_tool_calls on backend memory
+  no test body called Store.purge_redaction_maps on backend memory
+  no test body called Store.purge_tool_calls on backend memory
+  no test body called Store.put_redaction_map on backend memory
+  no test body called Store.record_decision on backend memory
+  no test body called Store.save_approval_decision on backend memory
+  no test body called Store.save_gate_decision on backend memory
+  no test body called Store.touch on backend memory
+  no test body called Store.update_approval_request on backend memory
+  no test body called Store.add_tool_call on backend postgres
+  no test body called Store.get_approval_decision on backend postgres
+  no test body called Store.get_approval_request on backend postgres
+  no test body called Store.get_gate_decision on backend postgres
+  no test body called Store.get_kill_switch on backend postgres
+  no test body called Store.get_redaction_map on backend postgres
+  no test body called Store.list_due_approvals on backend postgres
+  no test body called Store.list_runs on backend postgres
+  no test body called Store.list_tool_calls on backend postgres
+  no test body called Store.purge_redaction_maps on backend postgres
+  no test body called Store.purge_tool_calls on backend postgres
+  no test body called Store.put_redaction_map on backend postgres
+  no test body called Store.record_decision on backend postgres
+  no test body called Store.save_approval_decision on backend postgres
+  no test body called Store.save_gate_decision on backend postgres
+  no test body called Store.touch on backend postgres
+  no test body called Store.update_approval_request on backend postgres
+
+352 passed in 143.99s (0:02:23)
+rc=1

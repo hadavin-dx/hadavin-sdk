@@ -1,0 +1,12 @@
+### tests/test_migration_wiring.py::test_a_trigger_change_is_not_reported_as_a_changed_session rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+__________ test_a_trigger_change_is_not_reported_as_a_changed_session __________
+tests/test_migration_wiring.py:549: in test_a_trigger_change_is_not_reported_as_a_changed_session
+    assert "0001_f1.sql changed a trigger: trigger s.t.trg changed: function text" in msg, msg
+E   AssertionError: migration 0001_f1.sql left the database session changed: trigger s.t.trg changed: function text
+E   assert '0001_f1.sql changed a trigger: trigger s.t.trg changed: function text' in 'migration 0001_f1.sql left the database session changed: trigger s.t.trg changed: function text'
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_a_trigger_change_is_not_reported_as_a_changed_session
+1 failed in 0.40s
+

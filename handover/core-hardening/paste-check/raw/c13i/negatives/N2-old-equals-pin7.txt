@@ -1,0 +1,11 @@
+NEGATIVE N2-old-equals-pin7  setup: :  VARX: OLD=88c267a
+##### b32
+STOP C5: OLD is the same commit as PIN, so the diff would be empty. Next: check OLD against line 3 of the plan; tell the builder.
+##### b32 exit=1
+##### b33
+STOP C5: OLD is the same commit as PIN, so the diff would be empty. Next: check OLD against line 3 of the plan; tell the builder.
+STOP C6: the diff could not be made (see above). Next: do not write the release line; send /z/hbroot/_local/scratch/lead-plan-work/out-c6.txt to the builder.
+##### b33 exit=1
+##### b37
+STOP C9: C6 has not printed ACCEPT for this PIN. Next: do C6.
+##### b37 exit=1

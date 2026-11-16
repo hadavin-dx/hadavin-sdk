@@ -1,0 +1,22 @@
+..F
+=================================== FAILURES ===================================
+______________ test_precheck_same_file_by_path_link_and_hard_link ______________
+
+tmp_path = PosixPath('/home/user/build/rr6/tmp-B2/pytest-of-unknown/pytest-54/test_precheck_same_file_by_pat0')
+
+    def test_precheck_same_file_by_path_link_and_hard_link(tmp_path: Path) -> None:
+        a = tmp_path / "a"
+        a.write_text("x", encoding="utf-8")
+        (tmp_path / "b").write_text("x", encoding="utf-8")
+        assert precheck.same_file(a, tmp_path / "." / "a") and not precheck.same_file(a, tmp_path / "b")
+>       assert precheck.same_file(tmp_path / "new", tmp_path / "x" / ".." / "new")  # neither exists: same path
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: assert False
+E        +  where False = <function same_file at 0x7f8502942ac0>((PosixPath('/home/user/build/rr6/tmp-B2/pytest-of-unknown/pytest-54/test_precheck_same_file_by_pat0') / 'new'), (((PosixPath('/home/user/build/rr6/tmp-B2/pytest-of-unknown/pytest-54/test_precheck_same_file_by_pat0') / 'x') / '..') / 'new'))
+E        +    where <function same_file at 0x7f8502942ac0> = precheck.same_file
+
+tests/test_real_run_v6.py:109: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_real_run_v6.py::test_precheck_same_file_by_path_link_and_hard_link
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 2 passed in 0.13s

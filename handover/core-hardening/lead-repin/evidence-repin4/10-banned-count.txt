@@ -1,0 +1,2 @@
+lead-repin-verify.sh: AKIA-literals-other-than-example=0 sk-live=0 ghp=0 BEGIN-PRIVATE=1 non-test-emails=9
+LEAD-REPIN-VERIFY.md: AKIA-literals-other-than-example=0 sk-live=0 ghp=0 BEGIN-PRIVATE=0 non-test-emails=0

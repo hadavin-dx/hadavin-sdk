@@ -1,0 +1,295 @@
+test_policy_guard::test_every_kind_is_declared_pending_or_holds_no_identity
+test_policy_guard::test_plant_a_new_kind_on_no_list_is_caught
+test_policy_guard::test_plant_a_declared_kind_left_on_the_pending_list_is_caught
+test_policy_guard::test_plant_an_overdue_pending_kind_is_caught
+test_policy_guard::test_the_calls_written_in_the_module_equal_the_declared_list[src/hadavin_sdk/actions/secrets_vault.py]
+test_policy_guard::test_the_calls_written_in_the_module_equal_the_declared_list[src/hadavin_sdk/audit/signer_vault.py]
+test_policy_guard::test_the_calls_written_in_the_module_equal_the_declared_list[src/hadavin_sdk/sources/kubernetes.py]
+test_policy_guard::test_every_declared_kind_module_has_a_call_shape
+test_policy_guard::test_the_extracted_requests_are_the_ones_the_ticket_lists
+test_policy_guard::test_plant_a_new_request_with_no_grant_is_caught
+test_policy_guard::test_plant_a_grant_whose_request_was_deleted_is_caught
+test_policy_guard::test_plant_a_request_that_is_not_a_literal_is_caught
+test_policy_guard::test_plant_a_path_built_by_a_call_is_not_foldable_and_is_caught
+test_policy_guard::test_plant_a_banned_indirect_call_is_caught[getattr(p, name)('GET', 'sys/mounts')-banned `getattr` with a name that is not a literal]
+test_policy_guard::test_plant_a_banned_indirect_call_is_caught[operator.methodcaller('authed', 'GET', 'sys/mounts')(p)-banned indirect call `methodcaller`]
+test_policy_guard::test_plant_a_banned_indirect_call_is_caught[p.__getattribute__('authed')-banned indirect call `__getattribute__`]
+test_policy_guard::test_plant_a_banned_indirect_call_is_caught[p.meta.client.get_waiter('x')-banned indirect call `.meta.client`]
+test_policy_guard::test_plant_a_banned_indirect_call_is_caught[p._make_api_call('GetSecretValue', {})-banned indirect call `_make_api_call`]
+test_policy_guard::test_plant_a_sink_taken_as_a_value_is_caught
+test_policy_guard::test_plant_a_raw_http_request_outside_the_one_sender_is_caught
+test_policy_guard::test_plant_a_stale_allowlist_line_is_caught
+test_policy_guard::test_plant_an_allowlisted_line_that_stops_passing_its_parameter_is_caught
+test_policy_guard::test_a_request_named_only_in_a_docstring_changes_nothing
+test_policy_guard::test_plant_a_new_kubernetes_operation_is_caught
+test_policy_guard::test_template_folds_only_names_and_attributes
+test_policy_guard::test_kubernetes_declared_operations_equal_the_bound_operation_ids
+test_policy_guard::test_each_kubernetes_grant_is_the_verb_and_resource_of_its_path
+test_policy_guard::test_the_kubernetes_never_list_equals_what_the_code_refuses_at_start_up
+test_policy_guard::test_the_generated_role_passes_the_kinds_own_read_only_rule
+test_policy_guard::test_plant_a_widened_role_fails_the_kinds_own_read_only_rule[extra0-write verb patch]
+test_policy_guard::test_plant_a_widened_role_fails_the_kinds_own_read_only_rule[extra1-access to pods/exec]
+test_policy_guard::test_plant_a_widened_role_fails_the_kinds_own_read_only_rule[extra2-read access to secrets]
+test_policy_guard::test_the_three_literals_break_no_data_rule
+test_policy_guard::test_plant_d1_a_wildcard_in_a_permission_name_is_caught
+test_policy_guard::test_plant_d1_a_wildcard_resource_with_no_bound_is_caught
+test_policy_guard::test_d2_every_field_of_a_resource_is_a_setting_of_the_kind
+test_policy_guard::test_plant_d2_a_field_that_is_no_setting_is_caught
+test_policy_guard::test_plant_d3_an_empty_reason_is_caught
+test_policy_guard::test_plant_d4_a_grant_that_names_no_call_is_caught
+test_policy_guard::test_plant_d5_a_never_action_that_another_kind_needs_is_caught
+test_policy_guard::test_plant_a_grant_id_used_by_two_kinds_is_caught
+test_policy_guard::test_plant_d6_a_long_lived_credential_with_no_exception_is_caught
+test_policy_guard::test_plant_d7_a_policy_that_is_not_a_pure_literal_is_refused_and_never_run[POLICY = dict(platform='vault')]
+test_policy_guard::test_plant_d7_a_policy_that_is_not_a_pure_literal_is_refused_and_never_run[POLICY = {'platform': PLATFORM}]
+test_policy_guard::test_plant_d7_a_policy_that_is_not_a_pure_literal_is_refused_and_never_run[POLICY = {**BASE}]
+test_policy_guard::test_plant_d7_unknown_keys_platform_and_never_type_are_refused
+test_policy_guard::test_a_module_with_no_policy_loads_as_none
+test_policy_guard::test_every_grant_name_is_verified_or_pending_and_every_source_id_resolves
+test_policy_guard::test_a_builder_only_source_is_marked_wherever_the_page_lists_it
+test_policy_guard::test_plant_an_unverified_grant_with_no_pending_entry_is_caught
+test_policy_guard::test_plant_a_source_id_that_does_not_resolve_is_caught
+test_policy_guard::test_plant_a_url_or_host_in_verified_is_refused[https://developer.hashicorp.com/vault]
+test_policy_guard::test_plant_a_url_or_host_in_verified_is_refused[developer.hashicorp.com]
+test_policy_guard::test_plant_a_url_or_host_in_verified_is_refused[v-kv]
+test_policy_guard::test_plant_a_url_or_host_in_verified_is_refused[]
+test_policy_guard::test_each_grammar_is_the_settings_own_pattern
+test_policy_guard::test_vault_text_in_page_mode_and_with_values
+test_policy_guard::test_an_empty_vault_prefix_is_refused_and_the_page_says_so_first
+test_policy_guard::test_each_vault_grammar_refuses_what_is_not_a_plain_name[*]
+test_policy_guard::test_each_vault_grammar_refuses_what_is_not_a_plain_name[a*]
+test_policy_guard::test_each_vault_grammar_refuses_what_is_not_a_plain_name[{mount}]
+test_policy_guard::test_each_vault_grammar_refuses_what_is_not_a_plain_name[a b]
+test_policy_guard::test_each_vault_grammar_refuses_what_is_not_a_plain_name[ a]
+test_policy_guard::test_each_vault_grammar_refuses_what_is_not_a_plain_name[a\n]
+test_policy_guard::test_each_vault_grammar_refuses_what_is_not_a_plain_name[]
+test_policy_guard::test_each_vault_grammar_refuses_what_is_not_a_plain_name[..]
+test_policy_guard::test_each_vault_grammar_refuses_what_is_not_a_plain_name[a/../b]
+test_policy_guard::test_each_vault_grammar_refuses_what_is_not_a_plain_name[a/]
+test_policy_guard::test_the_kubernetes_grammar_refuses_what_is_not_a_plain_name[*]
+test_policy_guard::test_the_kubernetes_grammar_refuses_what_is_not_a_plain_name[Shop]
+test_policy_guard::test_the_kubernetes_grammar_refuses_what_is_not_a_plain_name[a b]
+test_policy_guard::test_the_kubernetes_grammar_refuses_what_is_not_a_plain_name[{namespaces}]
+test_policy_guard::test_the_kubernetes_grammar_refuses_what_is_not_a_plain_name[shop,]
+test_policy_guard::test_the_kubernetes_grammar_refuses_what_is_not_a_plain_name[-a]
+test_policy_guard::test_the_kubernetes_grammar_refuses_what_is_not_a_plain_name[a_b]
+test_policy_guard::test_the_kubernetes_grammar_refuses_what_is_not_a_plain_name[]
+test_policy_guard::test_a_missing_an_unused_and_a_non_text_value_are_refused
+test_policy_guard::test_kubernetes_page_mode_keeps_the_placeholders
+test_policy_guard::test_plant_a_page_that_differs_from_the_data_fails_the_check
+test_policy_guard::test_plant_p04b_an_added_request_through_getattr_with_a_literal_name_is_caught
+test_policy_guard::test_plant_p09a_a_kubernetes_request_with_watch_in_its_query_is_caught
+test_policy_guard::test_plant_each_indirect_way_to_a_request_is_caught[getattr(p, 'authed')('GET', 'sys/mounts')-banned `getattr` of `authed`]
+test_policy_guard::test_plant_each_indirect_way_to_a_request_is_caught[getattr(p, '_opener').open('https://x')-banned `getattr` of `_opener`]
+test_policy_guard::test_plant_each_indirect_way_to_a_request_is_caught[__import__('operator').methodcaller('authed', 'GET', 'sys/mounts')(p)-banned indirect call `__import__`]
+test_policy_guard::test_plant_each_indirect_way_to_a_request_is_caught[operator.attrgetter('authed')(p)('GET', 'sys/mounts')-banned indirect call `attrgetter`]
+test_policy_guard::test_plant_each_indirect_way_to_a_request_is_caught[functools.partial(p.authed, 'GET')('sys/mounts')-banned indirect call `partial`]
+test_policy_guard::test_plant_each_indirect_way_to_a_request_is_caught[vars(p)['authed']('GET', 'sys/mounts')-banned indirect call `vars`]
+test_policy_guard::test_plant_each_indirect_way_to_a_request_is_caught[p.__dict__['_opener']-banned indirect call `__dict__`]
+test_policy_guard::test_plant_each_indirect_way_to_a_request_is_caught[p._opener.open('https://x/v1/sys/mounts')-raw HTTP call `open` outside]
+test_policy_guard::test_plant_each_indirect_way_to_a_request_is_caught[p._opener-the HTTP opener `._opener` is used outside]
+test_policy_guard::test_plant_each_indirect_way_to_a_request_is_caught[urllib.request.urlretrieve('https://x')-raw HTTP call `urlretrieve` outside]
+test_policy_guard::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/actions/secrets_vault.py-from operator import methodcaller as mc-banned indirect call `methodcaller` (imported)]
+test_policy_guard::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/actions/secrets_vault.py-from operator import attrgetter-banned indirect call `attrgetter` (imported)]
+test_policy_guard::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/actions/secrets_vault.py-import httpx-import `httpx` is not on this module's import list]
+test_policy_guard::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/actions/secrets_vault.py-import socket-import `socket` is not on this module's import list]
+test_policy_guard::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/actions/secrets_vault.py-from http import client-import `http:client` is not on this module's import list]
+test_policy_guard::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/actions/secrets_vault.py-from typing import Any as A-import `typing:Any` is renamed to `A`]
+test_policy_guard::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/audit/signer_vault.py-from operator import methodcaller as mc-banned indirect call `methodcaller` (imported)]
+test_policy_guard::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/audit/signer_vault.py-from operator import attrgetter-banned indirect call `attrgetter` (imported)]
+test_policy_guard::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/audit/signer_vault.py-import httpx-import `httpx` is not on this module's import list]
+test_policy_guard::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/audit/signer_vault.py-import socket-import `socket` is not on this module's import list]
+test_policy_guard::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/audit/signer_vault.py-from http import client-import `http:client` is not on this module's import list]
+test_policy_guard::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/audit/signer_vault.py-from typing import Any as A-import `typing:Any` is renamed to `A`]
+test_policy_guard::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/sources/kubernetes.py-from operator import methodcaller as mc-banned indirect call `methodcaller` (imported)]
+test_policy_guard::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/sources/kubernetes.py-from operator import attrgetter-banned indirect call `attrgetter` (imported)]
+test_policy_guard::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/sources/kubernetes.py-import httpx-import `httpx` is not on this module's import list]
+test_policy_guard::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/sources/kubernetes.py-import socket-import `socket` is not on this module's import list]
+test_policy_guard::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/sources/kubernetes.py-from http import client-import `http:client` is not on this module's import list]
+test_policy_guard::test_plant_a_new_or_renamed_import_in_a_declared_module_is_caught[src/hadavin_sdk/sources/kubernetes.py-from typing import Any as A-import `typing:Any` is renamed to `A`]
+test_policy_guard::test_every_import_of_a_declared_module_is_on_its_list_and_no_entry_is_stale
+test_policy_guard::test_plant_a_local_variable_named_like_a_setting_is_not_taken_for_the_setting
+test_policy_guard::test_only_the_declared_modules_use_the_vault_client
+test_policy_guard::test_plant_another_module_or_a_subclass_using_the_vault_client_is_caught[from hadavin_sdk.actions.secrets_vault import connect\n-imports ['connect'] from the Vault client module]
+test_policy_guard::test_plant_another_module_or_a_subclass_using_the_vault_client_is_caught[from hadavin_sdk.actions import secrets_vault\n-imports ['<the module>'] from the Vault client module]
+test_policy_guard::test_plant_another_module_or_a_subclass_using_the_vault_client_is_caught[import hadavin_sdk.actions.secrets_vault\n-imports ['<the module>'] from the Vault client module]
+test_policy_guard::test_plant_another_module_or_a_subclass_using_the_vault_client_is_caught[import importlib\nm = importlib.import_module('hadavin_sdk.actions.secrets_vault')\n-names the Vault client module in a text]
+test_policy_guard::test_plant_another_module_or_a_subclass_using_the_vault_client_is_caught[class Wide(VaultProvider):\n    pass\n-class Wide extends a Vault client class]
+test_policy_guard::test_plant_another_module_or_a_subclass_using_the_vault_client_is_caught[def f(c):\n    return c.authed('LIST', 'sys/mounts')\n-uses `.authed` of the Vault client outside a declared module]
+test_policy_guard::test_plant_another_module_or_a_subclass_using_the_vault_client_is_caught[def f(c):\n    return c.call('GET', 'sys/mounts')\n-uses `.call` of the Vault client outside a declared module]
+test_policy_guard::test_plant_a_kubernetes_path_or_query_that_changes_the_request_is_caught[self._call(f"/api/v1/namespaces/{ns}/pods/{ns}/log?follow=true", "k8s.pod_log")-query parameter `follow` is not one that `k8s.pod_log` may carry]
+test_policy_guard::test_plant_a_kubernetes_path_or_query_that_changes_the_request_is_caught[self._get(f"/api/v1/namespaces/{ns}/events?limit=5", "k8s.list_events")-query parameter `limit` is not one that `k8s.list_events` may carry]
+test_policy_guard::test_plant_a_kubernetes_path_or_query_that_changes_the_request_is_caught[self._get(f"/api/v1/namespaces/{ns}/events?", "k8s.list_events")-query parameter `` is not one that `k8s.list_events` may carry]
+test_policy_guard::test_plant_a_kubernetes_path_or_query_that_changes_the_request_is_caught[self._get(f"/api/v1/namespaces/{ns}/events" + "?watch=1", "k8s.list_events")-the path of `k8s.list_events` is not a literal]
+test_policy_guard::test_plant_a_kubernetes_path_or_query_that_changes_the_request_is_caught[self._get(f"/api/v1/namespaces/{scope}/events", "k8s.list_events")-holds a value that is neither `quote(name, safe='')` nor a setting]
+test_policy_guard::test_plant_a_kubernetes_path_or_query_that_changes_the_request_is_caught[self._get(f"/api/v1/namespaces/{ns}/secrets", "k8s.list_events")-the path does not fit the one bound to `k8s.list_events`]
+test_policy_guard::test_plant_a_kubernetes_path_or_query_that_changes_the_request_is_caught[self._get(f"/api/v1/namespaces/{ns}x/events", "k8s.list_events")-the path does not fit the one bound to `k8s.list_events`]
+test_policy_guard::test_the_query_parameters_the_kubernetes_module_writes_are_exactly_the_listed_ones
+test_policy_guard::test_plant_a_query_the_paging_wrapper_could_send_beyond_paging_is_caught[query = f"?limit={limit}" + (f"&continue={quote(token, safe='')}" if token else "")-query = f"?limit={limit}&watch" + (f"&continue={quote(token, safe='')}" if token else "")-holds the text '&watch']
+test_policy_guard::test_plant_a_query_the_paging_wrapper_could_send_beyond_paging_is_caught[query = f"?limit={limit}" + (f"&continue={quote(token, safe='')}" if token else "")-query = f"?limit={limit}" + (f"&continue={quote(token, safe='')}" if token else "") + "&watch=true"-holds the text '&watch=true']
+test_policy_guard::test_plant_a_query_the_paging_wrapper_could_send_beyond_paging_is_caught[query = f"?limit={limit}" + (f"&continue={quote(token, safe='')}" if token else "")-query = f"?limit={limit}" + (f"&{token}=1" if token else "")-holds the text '&']
+test_policy_guard::test_plant_a_query_the_paging_wrapper_could_send_beyond_paging_is_caught[page = self._get(path + query, operation)-page = self._get(path + query + "&watch=true", operation)-calls `_get` with something other than `path + query`]
+test_policy_guard::test_plant_a_continue_token_quoted_in_another_way_is_caught
+test_policy_guard::test_the_bare_query_name_regex_sees_a_name_with_no_equals_sign
+test_policy_guard::test_plant_a_change_inside_the_one_sending_function_is_caught[f"{self.address}/v1/{path}"-f"{self.address}/v1/{path}?list=true"-is not sent to `<address>/v1/<path>`]
+test_policy_guard::test_plant_a_change_inside_the_one_sending_function_is_caught[headers=headers, method=method-headers=headers, method="LIST"-does not use the method it was given]
+test_policy_guard::test_plant_a_change_inside_the_one_sending_function_is_caught[            with self._opener.open(req, timeout=self.timeout_s) as r:-new2-must hold exactly one `Request` and one `open` (found 1 and 2)]
+test_policy_guard::test_plant_a_change_inside_the_one_sending_function_is_caught[with self._opener.open(req, timeout=self.timeout_s) as r:-with self._opener.open(urllib.request.Request(self.address), timeout=self.timeout_s) as r:-must hold exactly one `Request` and one `open` (found 2 and 1)]
+test_policy_guard::test_plant_a_setting_that_reaches_the_request_through_another_attribute_is_caught[src/hadavin_sdk/actions/secrets_vault.py-path_prefix=settings.path_prefix,-path_prefix=settings.field,-`build` does not hand the setting `path_prefix` to the parameter `path_prefix`]
+test_policy_guard::test_plant_a_setting_that_reaches_the_request_through_another_attribute_is_caught[src/hadavin_sdk/actions/secrets_vault.py-mount=settings.mount,-mount=settings.field,-`build` does not hand the setting `mount`]
+test_policy_guard::test_plant_a_setting_that_reaches_the_request_through_another_attribute_is_caught[src/hadavin_sdk/audit/signer_vault.py-VaultTransitSigner(client, settings.transit_mount, settings.key_name, version)-VaultTransitSigner(client, settings.key_name, settings.key_name, version)-`build` does not hand the setting `transit_mount`]
+test_policy_guard::test_plant_a_setting_that_reaches_the_request_through_another_attribute_is_caught[src/hadavin_sdk/actions/secrets_vault.py-self.mount, self.path_prefix, self.field = mount, path_prefix, field-self.mount, self.path_prefix, self.field = mount, field, path_prefix-`build` does not hand the setting `path_prefix`]
+test_policy_guard::test_each_mapped_setting_reaches_its_attribute_through_build[src/hadavin_sdk/actions/secrets_vault.py]
+test_policy_guard::test_each_mapped_setting_reaches_its_attribute_through_build[src/hadavin_sdk/audit/signer_vault.py]
+test_policy_guard::test_plant_a_second_send_in_the_sending_function_is_the_class_caught
+test_policy_guard::test_plant_a_bare_watch_in_the_paging_query_is_the_class_caught
+test_policy_guard::test_plant_a_setting_handed_to_the_wrong_parameter_is_the_class_caught
+test_policy_guard::test_plant_a_call_of_the_vault_client_in_another_module_is_the_class_caught
+test_policy_guard::test_the_kubernetes_namespace_check_is_present_in_both_readers
+test_policy_guard::test_plant_removing_the_namespace_check_is_caught[_recent_changes]
+test_policy_guard::test_plant_removing_the_namespace_check_is_caught[query_logs]
+test_policy_guard::test_page_with_no_argument_reads_the_data_root_set_at_call_time
+test_policy_guard::test_each_vault_grant_is_the_path_and_capability_of_its_one_request
+test_policy_guard::test_plant_a_vault_grant_wider_than_or_other_than_its_request_is_caught[src/hadavin_sdk/actions/secrets_vault.py-secrets/vault-changes0-message0]
+test_policy_guard::test_plant_a_vault_grant_wider_than_or_other_than_its_request_is_caught[src/hadavin_sdk/audit/signer_vault.py-signer/vault_transit-changes1-message1]
+test_policy_guard::test_plant_a_vault_grant_wider_than_or_other_than_its_request_is_caught[src/hadavin_sdk/audit/signer_vault.py-signer/vault_transit-changes2-R18: capability 'read' is not the one a POST request needs ('update')]
+test_policy_guard::test_plant_a_vault_grant_wider_than_or_other_than_its_request_is_caught[src/hadavin_sdk/audit/signer_vault.py-signer/vault_transit-changes3-R18: `self.other` in the request path is not a known setting]
+test_policy_guard::test_the_secret_name_is_one_path_part_checked_before_any_request
+test_policy_guard::test_a_secret_name_with_a_character_that_could_leave_the_one_path_part_is_refused[a%b]
+test_policy_guard::test_a_secret_name_with_a_character_that_could_leave_the_one_path_part_is_refused[a?b]
+test_policy_guard::test_a_secret_name_with_a_character_that_could_leave_the_one_path_part_is_refused[a#b]
+test_policy_guard::test_a_secret_name_with_a_character_that_could_leave_the_one_path_part_is_refused[a+b]
+test_policy_guard::test_a_secret_name_with_a_character_that_could_leave_the_one_path_part_is_refused[a*b]
+test_policy_guard::test_a_secret_name_with_a_character_that_could_leave_the_one_path_part_is_refused[a b]
+test_policy_guard::test_a_secret_name_with_a_character_that_could_leave_the_one_path_part_is_refused[a\nb]
+test_policy_guard::test_a_secret_name_with_a_character_that_could_leave_the_one_path_part_is_refused[a%2Fb]
+test_policy_guard::test_a_secret_name_with_a_character_that_could_leave_the_one_path_part_is_refused[a%2fb]
+test_policy_guard::test_a_secret_name_with_a_character_that_could_leave_the_one_path_part_is_refused[%]
+test_policy_guard::test_a_secret_name_with_a_character_that_could_leave_the_one_path_part_is_refused[+]
+test_policy_guard::test_a_secret_name_with_a_character_that_could_leave_the_one_path_part_is_refused[*]
+test_policy_guard::test_a_secret_name_with_a_character_that_could_leave_the_one_path_part_is_refused[?]
+test_policy_guard::test_plant_a_vault_wildcard_in_a_form_the_server_does_not_read_is_caught[{mount}/data/x+-`+` must be one whole path segment]
+test_policy_guard::test_plant_a_vault_wildcard_in_a_form_the_server_does_not_read_is_caught[{mount}/data/+x/y-`+` must be one whole path segment]
+test_policy_guard::test_plant_a_vault_wildcard_in_a_form_the_server_does_not_read_is_caught[{mount}/{key_name}+-`+` must be one whole path segment]
+test_policy_guard::test_plant_a_vault_wildcard_in_a_form_the_server_does_not_read_is_caught[{mount}/da*ta/x-`*` is a Vault wildcard only as the last character]
+test_policy_guard::test_plant_a_vault_wildcard_in_a_form_the_server_does_not_read_is_caught[{mount}/data/+*-Vault refuses `+*`]
+test_policy_guard::test_plant_d1_a_plus_wildcard_with_no_bound_is_caught
+test_policy_guard::test_a_filled_vault_path_with_a_misplaced_wildcard_is_refused
+test_policy_guard::test_plant_m6_a_key_written_twice_in_the_policy_literal_is_refused
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\n-id]
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\n-name]
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\n-resource]
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\n-reason]
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\n-bound]
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\n-applies_when]
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\r-id]
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\r-name]
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\r-resource]
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\r-reason]
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\r-bound]
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\r-applies_when]
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\t-id]
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\t-name]
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\t-resource]
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\t-reason]
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\t-bound]
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\t-applies_when]
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x00-id]
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x00-name]
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x00-resource]
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x00-reason]
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x00-bound]
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x00-applies_when]
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x1b-id]
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x1b-name]
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x1b-resource]
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x1b-reason]
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x1b-bound]
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x1b-applies_when]
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x7f-id]
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x7f-name]
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x7f-resource]
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x7f-reason]
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x7f-bound]
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x7f-applies_when]
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\u2028-id]
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\u2028-name]
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\u2028-resource]
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\u2028-reason]
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\u2028-bound]
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\u2028-applies_when]
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x85-id]
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x85-name]
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x85-resource]
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x85-reason]
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x85-bound]
+test_policy_guard::test_plant_m7_a_control_character_in_a_text_of_a_grant_is_refused[\x85-applies_when]
+test_policy_guard::test_plant_m7_a_control_character_anywhere_else_in_the_literal_is_refused
+test_policy_guard::test_plant_m9_a_brace_that_is_no_placeholder_is_refused_in_the_literal[{mount}/data/{prefix2}x]
+test_policy_guard::test_plant_m9_a_brace_that_is_no_placeholder_is_refused_in_the_literal[{mount}/data/<name>]
+test_policy_guard::test_plant_m9_a_brace_that_is_no_placeholder_is_refused_in_the_literal[{mount}/}]
+test_policy_guard::test_plant_m9_a_placeholder_left_after_filling_is_refused
+test_policy_guard::test_plant_m15_small_validation_gaps_are_closed
+test_policy_guard::test_a_well_formed_value_that_names_a_reserved_thing_is_refused[secrets/vault-mount-sys-starts with Vault's own path 'sys']
+test_policy_guard::test_a_well_formed_value_that_names_a_reserved_thing_is_refused[secrets/vault-mount-auth-starts with Vault's own path 'auth']
+test_policy_guard::test_a_well_formed_value_that_names_a_reserved_thing_is_refused[secrets/vault-mount-identity-starts with Vault's own path 'identity']
+test_policy_guard::test_a_well_formed_value_that_names_a_reserved_thing_is_refused[secrets/vault-mount-cubbyhole-starts with Vault's own path 'cubbyhole']
+test_policy_guard::test_a_well_formed_value_that_names_a_reserved_thing_is_refused[secrets/vault-mount-sys/kv-starts with Vault's own path 'sys']
+test_policy_guard::test_a_well_formed_value_that_names_a_reserved_thing_is_refused[signer/vault_transit-transit_mount-sys-starts with Vault's own path 'sys']
+test_policy_guard::test_a_well_formed_value_that_names_a_reserved_thing_is_refused[signer/vault_transit-transit_mount-auth/t-starts with Vault's own path 'auth']
+test_policy_guard::test_a_well_formed_value_that_names_a_reserved_thing_is_refused[source/kubernetes-namespaces-kube-system-one of the cluster's own namespaces]
+test_policy_guard::test_a_well_formed_value_that_names_a_reserved_thing_is_refused[source/kubernetes-namespaces-shop,kube-public-one of the cluster's own namespaces]
+test_policy_guard::test_a_well_formed_value_that_names_a_reserved_thing_is_refused[source/kubernetes-namespaces-kube-node-lease-one of the cluster's own namespaces]
+test_policy_guard::test_a_well_formed_value_that_names_a_reserved_thing_is_refused[source/kubernetes-SERVICE_ACCOUNT_NAMESPACE-kube-system-the cluster's own namespaces]
+test_policy_guard::test_a_well_formed_value_that_names_a_reserved_thing_is_refused[source/kubernetes-ROLE_NAME-cluster-admin-a built-in role name]
+test_policy_guard::test_a_well_formed_value_that_names_a_reserved_thing_is_refused[source/kubernetes-ROLE_NAME-admin-a built-in role name]
+test_policy_guard::test_a_well_formed_value_that_names_a_reserved_thing_is_refused[source/kubernetes-ROLE_NAME-edit-a built-in role name]
+test_policy_guard::test_a_well_formed_value_that_names_a_reserved_thing_is_refused[source/kubernetes-ROLE_NAME-view-a built-in role name]
+test_policy_guard::test_a_well_formed_value_that_names_a_reserved_thing_is_refused[source/kubernetes-ROLE_NAME-system-node-a built-in role name]
+test_policy_guard::test_a_well_formed_value_that_names_a_reserved_thing_is_refused[source/kubernetes-ROLE_NAME-system.basic-user-a built-in role name]
+test_policy_guard::test_a_well_formed_value_that_names_a_reserved_thing_is_refused[source/kubernetes-SERVICE_ACCOUNT-default-every pod gets by default]
+test_policy_guard::test_a_nested_mount_is_accepted_and_a_role_name_with_a_colon_never_passes_the_grammar
+test_policy_guard::test_a_value_longer_than_its_limit_is_refused_and_one_at_the_limit_is_not[secrets/vault-mount]
+test_policy_guard::test_a_value_longer_than_its_limit_is_refused_and_one_at_the_limit_is_not[secrets/vault-path_prefix]
+test_policy_guard::test_a_value_longer_than_its_limit_is_refused_and_one_at_the_limit_is_not[signer/vault_transit-transit_mount]
+test_policy_guard::test_a_value_longer_than_its_limit_is_refused_and_one_at_the_limit_is_not[signer/vault_transit-key_name]
+test_policy_guard::test_a_value_longer_than_its_limit_is_refused_and_one_at_the_limit_is_not[source/kubernetes-namespaces]
+test_policy_guard::test_a_value_longer_than_its_limit_is_refused_and_one_at_the_limit_is_not[source/kubernetes-ROLE_NAME]
+test_policy_guard::test_a_value_longer_than_its_limit_is_refused_and_one_at_the_limit_is_not[source/kubernetes-SERVICE_ACCOUNT]
+test_policy_guard::test_a_value_longer_than_its_limit_is_refused_and_one_at_the_limit_is_not[source/kubernetes-SERVICE_ACCOUNT_NAMESPACE]
+test_policy_guard::test_the_data_of_this_repository_breaks_no_rule_the_command_line_checks
+test_policy_guard::test_plant_m10_check_reports_each_data_problem_in_one_line_with_exit_code_1
+test_policy_guard::test_m10_write_makes_a_missing_docs_folder_and_check_then_passes
+test_policy_guard::test_plant_a_source_row_that_names_a_branch_is_refused
+test_policy_guard::test_every_source_row_is_pinned_and_is_used
+test_policy_guard::test_the_page_and_the_fixture_agree_on_which_rows_are_abbreviated_and_what_is_unpinned
+test_policy_guard::test_plant_an_overdue_entry_says_what_to_do_and_a_date_cannot_be_moved_far
+test_policy_guard::test_plant_m16_an_unverified_never_list_name_needs_a_dated_entry
+test_policy_guard::test_no_never_list_line_of_the_three_kinds_covers_a_grant
+test_policy_guard::test_plant_a_vault_never_path_over_a_grant_is_caught_and_a_capability_that_differs_is_not
+test_policy_guard::test_a_never_path_over_a_grant_is_also_refused_by_the_check_command
+test_policy_guard::test_plant_a_kubernetes_never_resource_that_a_grant_names_is_caught
+test_policy_guard::test_plant_the_check_across_kinds_calls_the_cover_rule
+test_policy_guard::test_plant_a_new_note_with_no_class_a_claim_that_is_not_listed_and_an_unknown_source_are_caught
+test_policy_guard::test_m1_the_page_names_the_run_once_one_is_on_record
+test_policy_guard::test_plant_an_import_of_another_http_library_is_caught
+test_policy_guard::test_plant_a_banned_name_that_arrives_through_an_import_alias_is_caught
+test_policy_guard::test_plant_attrgetter_on_a_sink_is_caught
+test_policy_guard::test_plant_the_http_opener_used_outside_the_one_sender_is_caught
+test_policy_guard::test_plant_the_old_star_form_of_the_vault_secrets_grant_is_caught
+test_policy_guard::test_plant_a_vault_capability_that_is_not_the_verbs_own_is_caught
+test_policy_guard::test_plant_a_kubernetes_path_that_is_not_the_bound_one_is_caught
+test_policy_guard::test_plant_a_newline_in_a_reason_is_caught
+test_policy_guard::test_plant_a_grant_that_names_no_call_is_caught_with_its_message
+test_policy_guard::test_plant_a_url_in_verified_is_caught_with_its_message
+test_policy_guard::test_plant_the_mount_sys_is_refused
+test_policy_guard::test_plant_a_300_character_value_is_refused
+test_policy_guard::test_plant_another_module_importing_the_vault_client_is_caught
+test_policy_docs::test_m1_no_text_states_the_vault_refusals_as_fact_while_no_run_is_on_record
+test_policy_docs::test_m14_ci_runs_the_policy_mutants_next_to_the_stage_mutants
+test_policy_engine::test_the_engine_tests_run_skip_or_fail_by_the_environment
+test_policy_engine::test_ci_requires_the_engine_tests_in_both_jobs_that_have_a_vault_service
+test_policy_engine::test_the_refused_requests_are_the_ones_the_page_names
+test_policy_engine::test_a_failing_assertion_cannot_print_a_token
+test_policy_engine::test_the_admin_control_fails_on_an_answer_that_is_not_200_or_204
+test_policy_engine::test_clean_up_sends_every_undo_request_and_survives_a_failure

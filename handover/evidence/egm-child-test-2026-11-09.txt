@@ -1,0 +1,22 @@
+EGM skipped: read-only question.
+
+**Skills**
+egm:egm-bootstrap
+egm:egm-brainstorm
+egm:egm-draft
+egm:egm-drift-report
+egm:egm-resolve
+egm:egm-review
+egm:egm-review-loop
+
+**Agents**
+egm:egm-bootstrap-orchestrator
+egm:egm-codebase-details
+egm:egm-comprehension
+egm:egm-design
+egm:egm-implementation-readiness
+egm:egm-inventive-catalyst
+egm:egm-structural
+egm:egm-style
+egm:egm-synthesizer
+egm:egm-zoom-out

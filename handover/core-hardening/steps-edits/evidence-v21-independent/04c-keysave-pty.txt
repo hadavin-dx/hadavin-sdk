@@ -1,0 +1,7 @@
+case=paste_enter printed='paste key, Enter: exit 0\r\n' key_text_echoed_on_screen=False file_size=30
+case=ctrl_d_at_prompt printed='paste key, Enter: exit 1\r\n' key_text_echoed_on_screen=False file_size=none
+case=ctrl_d_after_text_then_enter printed='paste key, Enter: exit 0\r\n' key_text_echoed_on_screen=False file_size=30
+case=empty_enter printed='paste key, Enter: exit 1\r\n' key_text_echoed_on_screen=False file_size=none
+case=ctrl_c printed='paste key, Enter: ' key_text_echoed_on_screen=False file_size=none
+-rw------- 1 root root 30 Nov 16 13:16 ptykey-ctrl_d_after_text_then_enter
+-rw------- 1 root root 30 Nov 16 13:16 ptykey-paste_enter

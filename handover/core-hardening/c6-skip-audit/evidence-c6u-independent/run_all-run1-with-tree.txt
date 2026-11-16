@@ -1,0 +1,12 @@
+static-checks exit 0
+box words: stated 2381, counted 2381
+wrote REPORT-c6u.md (850 lines)
+verify exit 0
+SUMMARY: 221 checks, 0 FAILED
+neg exit 0
+SUMMARY: 221 copies, 0 wrong
+
+real	1m1.031s
+user	0m55.266s
+sys	0m4.349s
+rc=0

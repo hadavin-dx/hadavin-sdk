@@ -1,0 +1,135 @@
+diff --git a/src/lead_desk/config.py b/src/lead_desk/config.py
+index 5d64cca..105a288 100644
+--- a/src/lead_desk/config.py
++++ b/src/lead_desk/config.py
+@@ -132,7 +132,7 @@ class LiveSettings:
+     price_date: str  # when the prices were read from the vendor's page (any non-empty text, for the cost log)
+     cap_run_usd: Decimal
+     cap_total_usd: Decimal
+-    ledger_path: Path
++    ledger_path: Path = field(repr=False)
+     run_id: str
+     base_url: str = LIVE_DEFAULT_BASE_URL
+     api_version: str = LIVE_API_VERSION
+diff --git a/src/lead_desk/crm_hubspot.py b/src/lead_desk/crm_hubspot.py
+index 892afbb..2fb3907 100644
+--- a/src/lead_desk/crm_hubspot.py
++++ b/src/lead_desk/crm_hubspot.py
+@@ -144,7 +144,9 @@ class HubspotSettings:
+     base_url: str = HUBSPOT_BASE_URL
+     timeout_seconds: float = DEFAULT_TIMEOUT_SECONDS  # total budget of one put
+     max_429_retries: int = DEFAULT_429_RETRIES
+-    stats_file: Path | None = None  # counters are written here after every change (run scripts read it)
++    stats_file: Path | None = field(
++        default=None, repr=False
++    )  # counters are written here after every change (run scripts read it)
+     allow_any_base_url: bool = False  # on purpose only: lets the key go to a host outside the vendor's own domains
+ 
+     def __post_init__(self) -> None:
+diff --git a/src/lead_desk/imap_count.py b/src/lead_desk/imap_count.py
+index c0bfcf6..b85c567 100644
+--- a/src/lead_desk/imap_count.py
++++ b/src/lead_desk/imap_count.py
+@@ -33,7 +33,7 @@ from lead_desk.constants import IMAP_LITERAL_MAX_BYTES, MAIL_SPAM_FOLDER
+ from lead_desk.contract import SendRefused
+ from lead_desk.envnum import SettingRefused
+ from lead_desk.smtp_provider import read_secret_file
+-from lead_desk.tls_trust import CaFileRefused, new_verifying_context, require_verifying
++from lead_desk.tls_trust import CaFileRefused, new_verifying_context, require_modern_protocol, require_verifying
+ 
+ _PREFIX = re.compile(r"[A-Za-z0-9._:-]{1,64}")
+ _HEADER = re.compile(rb"X-Send-Key:[\s]*([^\s]+)", re.IGNORECASE)
+@@ -108,6 +108,13 @@ class _BoundedImap(imaplib.IMAP4_SSL):
+             raise ImapTotalTimeout("the mailbox read took longer than its total time limit")
+         return super().read(size)
+ 
++    def readline(self) -> bytes:
++        """imaplib reads every reply line here (also an endless run of untagged lines that announce no literal, which
++        `read` never sees): past the total deadline the call ends."""
++        if time.monotonic() > self.deadline:
++            raise ImapTotalTimeout("the mailbox read took longer than its total time limit")
++        return super().readline()
++
+ 
+ def bad_folder_name(folder: str) -> bool:
+     """True for a folder name this module cannot send: not plain ASCII, a quote, a backslash or a control character
+@@ -140,8 +147,13 @@ def _session(
+     logging_in = False
+     try:
+         m = _BoundedImap(s.host, s.port, ssl_context=ctx, timeout=s.timeout_seconds)
+-        m.deadline = deadline  # read by _tick and by read
++        m.deadline = deadline  # read by _tick, read and readline
+         try:
++            try:
++                require_modern_protocol(m.sock, "ssl_context")  # before the login line goes out
++            except CaFileRefused as e:
++                m.deadline = float("-inf")  # no LOGOUT on a connection that is refused
++                raise ImapCountError(str(e)) from None
+             _tick(m)
+             logging_in = True
+             m.login(quote_user(s.user), password)
+diff --git a/src/lead_desk/smtp_provider.py b/src/lead_desk/smtp_provider.py
+index 4aca25f..e0a7ab5 100644
+--- a/src/lead_desk/smtp_provider.py
++++ b/src/lead_desk/smtp_provider.py
+@@ -70,7 +70,13 @@ from lead_desk.smtp_outbox import (
+     _dot_stuff,
+     _read_reply,
+ )
+-from lead_desk.tls_trust import CaFileRefused, context_from_ca_file, new_verifying_context, require_verifying
++from lead_desk.tls_trust import (
++    CaFileRefused,
++    context_from_ca_file,
++    new_verifying_context,
++    require_modern_protocol,
++    require_verifying,
++)
+ 
+ _AUTH_OK: Final = 235
+ _STARTTLS_READY: Final = 220
+@@ -105,7 +111,7 @@ class ProviderSettings:
+             raise SettingRefused(f"DESK_SMTPP_PORT must be between 1 and {PORT_MAX}")
+         if self.security not in ("starttls", "ssl"):
+             raise SettingRefused("DESK_SMTPP_SECURITY must be starttls or ssl")
+-        if not self.user or _breaks_a_header(self.user) or not self.user.isascii():
++        if not self.user or _breaks_a_header(self.user) or not self.user.isascii() or self.user != self.user.strip(" "):
+             raise SettingRefused("DESK_SMTPP_USER must be plain ASCII text")
+         for a in (self.mail_from, *self.recipients):
+             if not _ADDRESS.fullmatch(a) or not a.isascii():
+@@ -289,7 +295,13 @@ class SmtpProviderOutbox:
+     def _wrap(self, sock: socket.socket, budget: _Budget) -> ssl.SSLSocket:
+         ctx = self._verifying_context()
+         sock.settimeout(budget.left())
+-        return ctx.wrap_socket(sock, server_hostname=self._s.host)  # verifies name + chain
++        conn = ctx.wrap_socket(sock, server_hostname=self._s.host)  # verifies name + chain
++        try:
++            require_modern_protocol(conn, "the TLS connection")  # before the password goes out
++        except CaFileRefused as e:
++            conn.close()
++            raise SendRefused(str(e)) from None
++        return conn
+ 
+     def _dialogue(self, sock: socket.socket, budget: _Budget, password: str, rcpt: str, wire: bytes) -> None:
+         s = self._s
+diff --git a/src/lead_desk/tls_trust.py b/src/lead_desk/tls_trust.py
+index 8a4d142..140abba 100644
+--- a/src/lead_desk/tls_trust.py
++++ b/src/lead_desk/tls_trust.py
+@@ -100,6 +100,17 @@ def new_verifying_context(cadata: str | bytes | None = None) -> ssl.SSLContext:
+     return ctx
+ 
+ 
++TLS_OK_VERSIONS = ("TLSv1.2", "TLSv1.3")
++
++
++def require_modern_protocol(conn: ssl.SSLSocket, setting_name: str) -> None:
++    """Refuse a connection that negotiated a TLS version below 1.2. `require_verifying` cannot read the floor of a
++    context whose minimum_version is MINIMUM_SUPPORTED (the library's own floor, which a lowered security level or an
++    old system setting can put at TLS 1.0), so the RESULT of the handshake is checked, before any login is sent."""
++    if conn.version() not in TLS_OK_VERSIONS:
++        raise CaFileRefused(f"{setting_name}: the server connection uses a TLS version below 1.2")
++
++
+ def require_verifying(ctx: ssl.SSLContext, setting_name: str) -> ssl.SSLContext:
+     """`ctx` itself when it checks the server's certificate chain AND its name (verify_mode CERT_REQUIRED and
+     check_hostname on, a minimum TLS version of 1.2 or higher, no weak cipher offered); a CaFileRefused

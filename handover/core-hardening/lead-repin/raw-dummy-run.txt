@@ -1,0 +1,135 @@
+lead-repin-verify.sh  (read-only; prints, never judges)
+take dir: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/repin-dummy
+nothing below was run by the builder against a real take program.
+
+===== BLOCK R00: Final head identity (G1, G26) =====
+QUESTION: Which commit id and which file checksums are these answers about?
+not a git work tree (or git missing): cannot print a commit id here
+3e3c72ee35698ac6af8b1f9ac6d0058fc17505d7676bc5501b673d639b393dcf  /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/repin-dummy/run_real_check_n8n.py
+195e610c222b98779c20cd5d2855034c48ea7e1d4ab14f170ea0b8afad06ee76  /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/repin-dummy/crm_hubspot.py
+FILE MISSING (adjust the path): /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/repin-dummy/n8n_drive.py
+FILE MISSING (adjust the path): /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/repin-dummy/n8n.py
+[block R00] HITS=0 FILES_READ=2 FILES_MISSING=2
+
+===== BLOCK Q23-1: Any delete or archive path to the CRM (Q23, G1) =====
+QUESTION: Does any python file of the take (not tests) or any flow file contain a delete or archive call to the CRM?
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/repin-dummy/model/prog.py: 0 match line(s)
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/repin-dummy/crm_hubspot.py: 0 match line(s)
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/repin-dummy/run_real_check_n8n.py: 1 match line(s)
+50:print("will be deleted or archived")
+51-sys.exit(2)
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/repin-dummy/flow1.json: 0 match line(s)
+[block Q23-1] HITS=1 FILES_READ=4 FILES_MISSING=0
+
+===== BLOCK Q23-2: The old line numbers (Q23) =====
+QUESTION: What stands today at run_real_check_n8n.py lines 1045-1056 and crm_hubspot.py lines 500-512 (the old reading said a DELETE call)?
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/repin-dummy/run_real_check_n8n.py has 52 line(s); lines 1045-1056:
+(file is shorter than line 1045: that line number is stale or wrong)
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/repin-dummy/crm_hubspot.py has 2 line(s); lines 500-512:
+(file is shorter than line 500: that line number is stale or wrong)
+[block Q23-2] HITS=0 FILES_READ=2 FILES_MISSING=0
+
+===== BLOCK Q23-3: HTTP methods the CRM module uses (Q23, G21) =====
+QUESTION: Which HTTP methods does the CRM module send? (r17 saw only a rows_with_prefix GET)
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/repin-dummy/crm_hubspot.py: 2 match line(s)
+1:def get(): return "GET"
+2:def post(): return "POST"
+[block Q23-3] HITS=2 FILES_READ=1 FILES_MISSING=0
+
+===== BLOCK Q23-4: Delete wording printed to the owner (G1, G17) =====
+QUESTION: Do the notice or the printed result still say deleted or archived, or print a delete count?
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/repin-dummy/run_real_check_n8n.py: 1 match line(s)
+50:print("will be deleted or archived")
+[block Q23-4] HITS=1 FILES_READ=1 FILES_MISSING=0
+
+===== BLOCK Q27a: Model call after the word end (Q27 a, G34) =====
+QUESTION: After the take program reads the word end, can it still call the model? Lines with the end handling (and 20 lines after it), then every model-call line.
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/repin-dummy/run_real_check_n8n.py: 1 match line(s)
+44:if answer == "end":
+45-    print("stopping")
+46-    sys.exit(0)
+47-TOKEN = <masked>
+48-ledger = 0
+49-MAX_CALLS = 3
+50-print("will be deleted or archived")
+51-sys.exit(2)
+52-marker = "go.marker"
+--- model-call lines in the take program (read their line numbers against the end handling above) ---
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/repin-dummy/run_real_check_n8n.py: 1 match line(s)
+43:call_model(prompt)
+[block Q27a] HITS=2 FILES_READ=2 FILES_MISSING=0
+
+===== BLOCK Q27b: End-date refusal (Q27 b, G16, G10) =====
+QUESTION: Does a setting that refuses a call after the window end exist, and is a refusal shown at the final head (a test or a startup refusal)?
+--- take program: window end, need_seconds, refusals ---
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/repin-dummy/run_real_check_n8n.py: 0 match line(s)
+--- model program files (only if MODEL_DIR is set) ---
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/repin-dummy/model/prog.py: 2 match line(s)
+1:WINDOW_END="made-up"
+2:if not exists("go.marker"): refuse()
+--- test qs_37 (AGENT-SCOPE says it ends spending) ---
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/repin-dummy/tests/test_x.py:1:def test_qs_37(): pass
+--- settings NAMES only (values hidden) ---
+MODEL_SETTINGS not set or missing (adjust)
+NOTE: to SEE the refusal, run the named test or the startup refusal yourself; this script only finds text.
+[block Q27b] HITS=3 FILES_READ=2 FILES_MISSING=0
+
+===== BLOCK Q27c: Go marker before any model call (Q27 c, G33) =====
+QUESTION: Does the model program refuse to make a paid call until the take program has written a marker after the accepted challenge?
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/repin-dummy/run_real_check_n8n.py: 1 match line(s)
+52:marker = "go.marker"
+--- model program (only if MODEL_DIR is set) ---
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/repin-dummy/model/prog.py: 1 match line(s)
+2:if not exists("go.marker"): refuse()
+[block Q27c] HITS=2 FILES_READ=2 FILES_MISSING=0
+
+===== BLOCK G35: Prompts to the owner (G35) =====
+QUESTION: Does the take program ask the owner to type anything besides y, the challenge line and end?
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/repin-dummy/run_real_check_n8n.py: 1 match line(s)
+42:answer = input("Type y to start: ")
+[block G35] HITS=1 FILES_READ=1 FILES_MISSING=0
+
+===== BLOCK G06: Exit codes (G6, Q20.4) =====
+QUESTION: Which exit codes can the take program leave, and which one for person C unknown?
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/repin-dummy/run_real_check_n8n.py: 2 match line(s)
+46:    sys.exit(0)
+--
+51:sys.exit(2)
+[block G06] HITS=2 FILES_READ=1 FILES_MISSING=0
+
+===== BLOCK G04: Call ceiling, price and ledger (G4, G14) =====
+QUESTION: Where are the call ceiling, retries, ledger total and program limit set?
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/repin-dummy/run_real_check_n8n.py: 2 match line(s)
+48:ledger = 0
+49:MAX_CALLS = 3
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/repin-dummy/model/prog.py: 0 match line(s)
+[block G04] HITS=2 FILES_READ=2 FILES_MISSING=0
+
+===== BLOCK G18: Stop, signal and lock behaviour (G18) =====
+QUESTION: What happens on a wrong line after end, Ctrl-C, a pause that ends without end, a cancelled key; which lock file is left?
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/repin-dummy/run_real_check_n8n.py: 0 match line(s)
+[block G18] HITS=0 FILES_READ=1 FILES_MISSING=0
+
+===== BLOCK G36: Think time, silence and film cue (G36) =====
+QUESTION: Which printed line could start the film pause, and what are the minimum think time, silence and give-up values?
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/repin-dummy/run_real_check_n8n.py: 0 match line(s)
+[block G36] HITS=0 FILES_READ=1 FILES_MISSING=0
+
+===== BLOCK G37-38: Key file, demo mail subject, prep contact (G37, G38) =====
+QUESTION: How is the per-run key file made, what starts the take mail subjects, and does the prep contact address match the film search?
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/repin-dummy/run_real_check_n8n.py: 0 match line(s)
+[block G37-38] HITS=0 FILES_READ=1 FILES_MISSING=0
+
+===== BLOCK G07: Ports (G7) =====
+QUESTION: Which of the ports 5678, 5679, 5690-5693, 5701, 5702 are listening now, and does the take program name its own port?
+ss not found: use netstat -tln by hand
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/repin-dummy/run_real_check_n8n.py: 0 match line(s)
+[block G07] HITS=0 FILES_READ=1 FILES_MISSING=1
+
+===== BLOCK G20: DECISION-one-store line 14 (G20) =====
+QUESTION: Does line 14 still say ONE database?
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/repin-dummy/DECISION-one-store.md has 19 line(s); lines 14-14:
+line 14
+[block G20] HITS=1 FILES_READ=1 FILES_MISSING=0
+
+SUMMARY: blocks=16 with_hits=10 zero_hits=6 files_missing=3 (counts only; nothing judged, the lead reads each block)

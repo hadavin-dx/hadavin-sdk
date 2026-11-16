@@ -1,0 +1,16 @@
+### tests/test_migration_rules.py::test_the_migrate_docstring_counts_what_it_reads_back rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_____________ test_the_migrate_docstring_counts_what_it_reads_back _____________
+tests/test_migration_rules.py:473: in test_the_migrate_docstring_counts_what_it_reads_back
+    assert "three session settings" not in doc
+E   AssertionError: assert 'three session settings' not in 'Forward-onl... the ledger.'
+E     
+E     'three session settings' is contained here:
+E     ?           ^^^^^                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        ...
+E     
+E     ...Full output truncated, use '-vv' to show
+=========================== short test summary info ============================
+FAILED tests/test_migration_rules.py::test_the_migrate_docstring_counts_what_it_reads_back
+1 failed in 0.44s
+

@@ -1,0 +1,13 @@
+S1 scan ignores bytes	KILLED	FAILED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[bytes]	1 failed, 13 passed, 70 deselected in 48.97s	49
+S2 scan no glued join	KILLED	FAILED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[flags in two lists that are added together]	1 failed, 66 passed, 70 deselected in 48.81s	49
+S3 scan skips class attrs	KILLED	FAILED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[class attribute]	1 failed, 14 passed, 70 deselected in 43.93s	44
+S4 scan decorator any constant	KILLED	FAILED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[another marker that names the word as an argument]	1 failed, 24 passed, 70 deselected in 50.00s	50
+S5 scan setattr None ok	KILLED	FAILED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[the patch names the system temp folder as a literal]	1 failed, 54 passed, 70 deselected in 47.92s	48
+S6 scan setattr anywhere	KILLED	FAILED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[setattr under if False]	1 failed, 34 passed, 70 deselected in 52.32s	53
+S7 scan child check off	KILLED	FAILED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[child program with the setattr only]	1 failed, 36 passed, 70 deselected in 48.33s	49
+S8 scan default param ok	KILLED	FAILED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[parameter with a default]	1 failed, 26 passed, 70 deselected in 45.15s	45
+S9 scan async not handled	KILLED	FAILED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[async test without fixture]	1 failed, 20 passed, 70 deselected in 46.39s	47
+S10 scan rebind check off	KILLED	FAILED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[setattr on a local object called tempfile]	1 failed, 33 passed, 70 deselected in 48.51s	49
+S11 scan keep-alone helper off	KILLED	FAILED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[helper that returns only the keep flag]	1 failed, 19 passed, 70 deselected in 45.31s	46
+S12 scan docstrings counted	KILLED	FAILED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[a docstring that talks about the flags]	1 failed, 40 passed, 70 deselected in 44.87s	45
+DONE

@@ -1,0 +1,14 @@
+password	qzvxmrtkaa
+password qzvxmrtkab
+password  qzvxmrtkac
+password: <masked>
+login password	qzvxmrtkae
+  password	qzvxmrtkaf
+db_password	qzvxmrtkag
+secret	qzvxmrtkah
+token	qzvxmrtkai
+Password	qzvxmrtkaj
+user alice
+password qzvxmrtkak
+password	<masked>
+password=	<masked>

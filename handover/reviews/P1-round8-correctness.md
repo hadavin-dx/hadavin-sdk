@@ -1,0 +1,22 @@
+# P1 round 8: correctness review of tickets/P1.md revision 9 (head 74a6e26)
+
+Reviewer: fresh egm codebase-details reviewer (ae483e22fbdadf1e0), read-only. Saved by the lead session; condensed from the hand-back (all 12 rows kept, wording shortened). Result: no blocker, 1 major, 8 minor, 3 nit. UNVERIFIED by the reviewer (no git, no code run): anything at `ce70eb5` not in the worktree, Unicode category counts, timings, P2a/P2d/P5a cites, the `evidence/P1-round8-probes.md` file, whether moved tests pass.
+
+| id | sev | where (line) | problem | fix |
+|---|---|---|---|---|
+| COR-R8-1 | major | 138, 142, 156, 176 | Re-pointed mutant #10 (`fold` loose map short, name line 435; killer `test_a_protected_number_is_found_through_junk_look_alikes_and_exempt_tokens`) has no killer among the moved tests; its killer rows (`squeeze("SBZGQ", loose=True) == "58269"`) sit only under "Other P1b tests"; `squeeze`/`_LOOSE` are P1a code, so the P1a mutation run has a survivor and meta-test (a) cannot pass for #10 in P1a. | Add the `squeeze`/`_LOOSE` rows to the P1a new tests (line 98), or count 27 killable in P1a and say #10 starts in P1b; fix lines 142 and 176. |
+| COR-R8-2 | minor | 37, 39, 40, 67-68 | `VIEWS` (P1a) names `scan_keyset`, which is "provisional in P1a", but the P1a `__all__` (20 names, equality-tested) omits it; SK-1 says it is in `__all__`. | State whether it is in the P1a `__all__` (21/25) or private in P1a; keep VIEWS and `__all__` consistent. |
+| COR-R8-3 | minor | 20, 87, 263, 280 | Ticket says P2d-2 adds two constants; design draft 3 adds three (adds `LOOKALIKE_MIN_SECRET_KEY_CHARS = 8`). | List all three or say "the LOOKALIKE_* constants"; P1 adds none. |
+| COR-R8-4 | minor | 7 vs 180 | Header says "5 mutants added" for ADV-R7-9 and "other 2 already existed"; arithmetic counts 7 (3 P1a + 4 P1b); totals 99/158 use 7. | Header: 7 added, or drop 2 from counts. |
+| COR-R8-5 | minor | 7, 306 | "26 PROPOSE FIX, 1 CONTEST, 1 DECLINE" = 28 but 30 rows stated. | Give status of all 30 (e.g. + RES-1 + 1 named) or drop the counts. |
+| COR-R8-6 | minor | 97 | "13 of the 14 textnorm-only tests of its 116; the 14th under Not moved" is wrong: the 14th is `test_pr50_fix_batch.py:404`, another file. 13 counted at lines 764, 775, 795, 801, 840, 853, 869, 879, 908, 948, 960, 1863, 2068. | Reword: 13 textnorm tests of `test_promoted_controls.py`, plus `test_pr50_fix_batch.py:404`, not moved. |
+| COR-R8-7 | minor | 81, 301 | Manifest cite "lines 2549 and 2551" names no file; they are in `tests/test_promoted_controls.py` (JSON `tests/fixtures/textnorm_manifest.json` has them at 12-14). Breaks the "every cite names file and head" rule. | Name the file and head. |
+| COR-R8-8 | minor | 76, 213, 236, 273 | "Nine constants" cut, only six named (NEEDLES, NEEDLE_CHARS, MIN_NEEDLE_SCAN, MIN_NEEDLE_ID, MIN_NEEDLE_DIGITS, SCAN_BUDGET_S). | List all nine or correct to six. |
+| COR-R8-9 | minor | 75 vs design 5 item 4 | Lint ban (a) (Exception/ValueError around textnorm calls) has no allowlist exemption; allowlist is defined for ban (b) only. `check_lookalike` treats TextnormError or finder exception as a hit. | Say listing exempts (b) only and `check_lookalike` must use a TextnormError-only handler; or extend the exemption to (a) with a fixture row. |
+| COR-R8-10 | minor | 78, 131 vs design | Design says P1a keeps public `fold`/`squeeze` "with today's behaviour"; P1b gap 2 changes `fold` itself; the ticket never says whether public `fold`/`squeeze` drop U+FFFD or map dashes. | One sentence with the exact P1b delta on public `fold` and `squeeze`. |
+| COR-R8-11 | nit | 174 | Row #28: name string at line 1347 (`Mutant(` at 1346); other rows use the name line. | 1346 to 1347. |
+| COR-R8-12 | nit | 224 | v1.1 row refers to "the 2.0 s budget" that is cut (SK-4). | Reword to the S_call figure (SK-4). |
+
+Also noted: design draft 3 section 5 item 3 cites "P1.md 61 and 116" for the U+FFFD drop; in rev 9 the text is at lines 63, 74, 78. Cite by item name ("RES-1", "SK-6").
+
+Verified correct (reviewer's list, abbreviated): line counts and cites of the snapshot files, 21 of 21 runner/judge mutant name lines and the first 27 of 28 table rows, the 14+7 moved P1m tests and 13 P1a test lines, tier and capacity arithmetic, rows R6-A..F percentages, 22 tier rows, 9 lint rows, 99 distinct mutants / 158 runs, `__all__` 20+4=24, merge order and defaults.py order consistent across the ticket and design, order 11/8 reflected, design needs from P1b present.

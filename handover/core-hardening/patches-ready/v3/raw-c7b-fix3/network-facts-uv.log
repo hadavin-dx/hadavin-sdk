@@ -1,0 +1,17 @@
+2026-11-16T10:54:42Z
+== 1: which gate.py does the tests' import use (tree P, env -i)
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/src/hadavin_sdk/approvals/gate.py
+== 2: env -i uv run -v on tree P with --offline (uv forbidden to use network): does it work?
+rc=0
+DEBUG Command exited with code: 0
+lines mentioning http(s) requests that were sent (not cache hits):
+(end)
+== 3: env -i uv run on tree Q, which has no .venv yet, network NOT disabled, stderr saved
+ls: cannot access '.venv': No such file or directory
+rc=1
+hint: Consider enabling use of system TLS certificates with the `--system-certs` command-line flagcache-hit lines: 75
+DEBUG Found stale response for: https://pypi.org/simple/uv-build/
+DEBUG Sending revalidation request for: https://pypi.org/simple/uv-build/
+  ├─▶ Failed to fetch: `https://pypi.org/simple/uv-build/`
+  ├─▶ error sending request for url (https://pypi.org/simple/uv-build/)
+(end of non-cache http lines)

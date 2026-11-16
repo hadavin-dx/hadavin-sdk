@@ -1,0 +1,4 @@
+HEAD 98a3ed95bca4acac88d77b29d4f26846f7f9ce9b
+CMD env -u CI -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY -u AWS_CA_BUNDLE -u ANTHROPIC_BASE_URL -u GH_TOKEN -u GITHUB_TOKEN -u HADAVIN_TEST_PG_DSN /home/user/build/venv-a21a-313/bin/python tests/postgres_mutants.py
+HADAVIN_TEST_PG_DSN is not set: the postgres cases would be skipped and prove nothing
+exit=2

@@ -1,0 +1,600 @@
+{
+ "hostile": [
+  {
+   "cls": "plain email",
+   "text": "bob.smith@example.com",
+   "values": [
+    "bob.smith@example.com"
+   ]
+  },
+  {
+   "cls": "phone intl",
+   "text": "call +1 415 555 0142",
+   "values": [
+    "+1 415 555 0142"
+   ]
+  },
+  {
+   "cls": "card 16 digit spaced",
+   "text": "card 4111 1111 1111 1111",
+   "values": [
+    "4111 1111 1111 1111"
+   ]
+  },
+  {
+   "cls": "card 16 digit bare",
+   "text": "card 4111111111111111",
+   "values": [
+    "4111111111111111"
+   ]
+  },
+  {
+   "cls": "IBAN",
+   "text": "iban GB82WEST12345698765432",
+   "values": [
+    "GB82WEST12345698765432"
+   ]
+  },
+  {
+   "cls": "bank acct with context",
+   "text": "bank account number 55556666",
+   "values": [
+    "55556666"
+   ]
+  },
+  {
+   "cls": "bank acct no context",
+   "text": "ref 55556666 paid",
+   "values": [
+    "55556666"
+   ]
+  },
+  {
+   "cls": "bank acct BSB ctx",
+   "text": "BSB 062-000 account 12345678",
+   "values": [
+    "062-000",
+    "12345678"
+   ]
+  },
+  {
+   "cls": "AWS key plain",
+   "text": "key AKIAIOSFODNN7EXAMPLE",
+   "values": [
+    "AKIAIOSFODNN7EXAMPLE"
+   ]
+  },
+  {
+   "cls": "sk-ant style key",
+   "text": "key sk-ant-api03-abcdefghijklmnop",
+   "values": [
+    "sk-ant-api03-abcdefghijklmnop"
+   ]
+  },
+  {
+   "cls": "password assignment",
+   "text": "password=hunter2",
+   "values": [
+    "hunter2"
+   ]
+  },
+  {
+   "cls": "email fullwidth",
+   "text": "ｂｏｂ.ｓｍｉｔｈ＠ｅｘａｍｐｌｅ.ｃｏｍ",
+   "values": [
+    "ｂｏｂ.ｓｍｉｔｈ＠ｅｘａｍｐｌｅ.ｃｏｍ"
+   ]
+  },
+  {
+   "cls": "AWS key fullwidth",
+   "text": "ＡＫＩＡIOSFODNN7EXAMPLE",
+   "values": [
+    "ＡＫＩＡIOSFODNN7EXAMPLE"
+   ]
+  },
+  {
+   "cls": "card fullwidth digits",
+   "text": "card ４１１１ １１１１ １１１１ １１１１",
+   "values": [
+    "４１１１ １１１１ １１１１ １１１１"
+   ]
+  },
+  {
+   "cls": "email cyrillic o/a/e",
+   "text": "bоb.smith@еxаmple.com",
+   "values": [
+    "bоb.smith@еxаmple.com"
+   ]
+  },
+  {
+   "cls": "AWS key cyrillic A,I",
+   "text": "АKІAIOSFODNN7EXAMPLE",
+   "values": [
+    "АKІAIOSFODNN7EXAMPLE"
+   ]
+  },
+  {
+   "cls": "card digits zero-width",
+   "text": "card 4111​1111​1111​1111",
+   "values": [
+    "4111​1111​1111​1111"
+   ]
+  },
+  {
+   "cls": "email zero-width in local",
+   "text": "bob​.smith@example.com",
+   "values": [
+    "bob​.smith@example.com"
+   ]
+  },
+  {
+   "cls": "AWS key zero-width",
+   "text": "AK​IAIOSFODNN7EXAMPLE",
+   "values": [
+    "AK​IAIOSFODNN7EXAMPLE"
+   ]
+  },
+  {
+   "cls": "phone zero-width",
+   "text": "call +1 415​555​0142",
+   "values": [
+    "+1 415​555​0142"
+   ]
+  },
+  {
+   "cls": "email percent-encoded dot",
+   "text": "mail bob%2Esmith@example.com",
+   "values": [
+    "bob%2Esmith@example.com"
+   ]
+  },
+  {
+   "cls": "email percent-encoded at",
+   "text": "mail bob.smith%40example.com",
+   "values": [
+    "bob.smith%40example.com"
+   ]
+  },
+  {
+   "cls": "AWS key percent",
+   "text": "%41KIAIOSFODNN7EXAMPLE",
+   "values": [
+    "%41KIAIOSFODNN7EXAMPLE"
+   ]
+  },
+  {
+   "cls": "email html entity at",
+   "text": "mail bob.smith&#64;example.com",
+   "values": [
+    "bob.smith&#64;example.com"
+   ]
+  },
+  {
+   "cls": "AWS key html entity",
+   "text": "&#65;KIAIOSFODNN7EXAMPLE",
+   "values": [
+    "&#65;KIAIOSFODNN7EXAMPLE"
+   ]
+  },
+  {
+   "cls": "email base64",
+   "text": "Ym9iLnNtaXRoQGV4YW1wbGUuY29t",
+   "values": [
+    "Ym9iLnNtaXRoQGV4YW1wbGUuY29t"
+   ]
+  },
+  {
+   "cls": "AWS key base64",
+   "text": "QUtJQUlPU0ZPRE5ON0VYQU1QTEU=",
+   "values": [
+    "QUtJQUlPU0ZPRE5ON0VYQU1QTEU="
+   ]
+  },
+  {
+   "cls": "card base64",
+   "text": "NDExMSAxMTExIDExMTEgMTExMQ==",
+   "values": [
+    "NDExMSAxMTExIDExMTEgMTExMQ=="
+   ]
+  },
+  {
+   "cls": "email json unicode escape",
+   "text": "bob.smith@example.com",
+   "values": [
+    "bob.smith@example.com"
+   ]
+  },
+  {
+   "cls": "AWS key json escape",
+   "text": "AKIAIOSFODNN7EXAMPLE",
+   "values": [
+    "AKIAIOSFODNN7EXAMPLE"
+   ]
+  }
+ ],
+ "mustmask": [
+  {
+   "cls": "EMAIL",
+   "text": "user priya@corp.example failed",
+   "values": [
+    "priya@corp.example"
+   ]
+  },
+  {
+   "cls": "EMAIL",
+   "text": "to=ops%40corp.example",
+   "values": [
+    "ops%40corp.example"
+   ]
+  },
+  {
+   "cls": "PHONE",
+   "text": "call +1 415 555 0142",
+   "values": [
+    "+1 415 555 0142"
+   ]
+  },
+  {
+   "cls": "PHONE",
+   "text": "phone=4155550142",
+   "values": [
+    "4155550142"
+   ]
+  },
+  {
+   "cls": "NAME",
+   "text": "full_name=Priya Nair",
+   "values": [
+    "Priya Nair"
+   ]
+  },
+  {
+   "cls": "NAME",
+   "text": "\"customer_name\": \"Raj Mehta\"",
+   "values": [
+    "Raj Mehta"
+   ]
+  },
+  {
+   "cls": "NAME",
+   "text": "first name: Asha",
+   "values": [
+    "Asha"
+   ]
+  },
+  {
+   "cls": "NAME",
+   "text": "username=asha.rao",
+   "values": [
+    "asha.rao"
+   ]
+  },
+  {
+   "cls": "NAME",
+   "text": "assigned to Dr. Meera Iyer",
+   "values": [
+    "Meera Iyer"
+   ]
+  },
+  {
+   "cls": "NAME",
+   "text": "Mrs Kapoor called",
+   "values": [
+    "Kapoor"
+   ]
+  },
+  {
+   "cls": "NAME",
+   "text": "Dear Ravi Kumar,",
+   "values": [
+    "Ravi Kumar"
+   ]
+  },
+  {
+   "cls": "NAME",
+   "text": "cardholder_name=J Doe",
+   "values": [
+    "J Doe"
+   ]
+  },
+  {
+   "cls": "IPV4",
+   "text": "src=10.4.12.9",
+   "values": [
+    "10.4.12.9"
+   ]
+  },
+  {
+   "cls": "IPV4",
+   "text": "node ip-10-0-3-22.ec2.internal",
+   "values": [
+    "10-0-3-22"
+   ]
+  },
+  {
+   "cls": "IPV6",
+   "text": "from 2001:db8::8a2e:370:7334 refused",
+   "values": [
+    "2001:db8::8a2e:370:7334"
+   ]
+  },
+  {
+   "cls": "MAC",
+   "text": "eth0 00:1a:2b:3c:4d:5e up",
+   "values": [
+    "00:1a:2b:3c:4d:5e"
+   ]
+  },
+  {
+   "cls": "MAC",
+   "text": "port 001a.2b3c.4d5e",
+   "values": [
+    "001a.2b3c.4d5e"
+   ]
+  },
+  {
+   "cls": "ACCOUNTID",
+   "text": "account 123456789012",
+   "values": [
+    "123456789012"
+   ]
+  },
+  {
+   "cls": "TENANT",
+   "text": "tenant_id=acme-42",
+   "values": [
+    "acme-42"
+   ]
+  },
+  {
+   "cls": "TENANT",
+   "text": "org_id: globex7",
+   "values": [
+    "globex7"
+   ]
+  },
+  {
+   "cls": "TENANT",
+   "text": "\"user_id\": \"u-99812\"",
+   "values": [
+    "u-99812"
+   ]
+  },
+  {
+   "cls": "HOSTNAME",
+   "text": "db at billing-db.prod.corp:5432",
+   "values": [
+    "billing-db.prod.corp"
+   ]
+  },
+  {
+   "cls": "HOSTNAME",
+   "text": "smb://files.lan/share",
+   "values": [
+    "files.lan"
+   ]
+  },
+  {
+   "cls": "HOSTNAME",
+   "text": "ldap.intranet refused",
+   "values": [
+    "ldap.intranet"
+   ]
+  },
+  {
+   "cls": "HOSTNAME",
+   "text": "printer.local offline",
+   "values": [
+    "printer.local"
+   ]
+  },
+  {
+   "cls": "HOSTNAME",
+   "text": "nas.home.arpa",
+   "values": [
+    "nas.home.arpa"
+   ]
+  },
+  {
+   "cls": "HOSTNAME",
+   "text": "db at billing-db.prod.corp.example:5432",
+   "values": [
+    "billing-db.prod.corp.example"
+   ]
+  },
+  {
+   "cls": "HOSTNAME",
+   "text": "smb://files.lan.example/share",
+   "values": [
+    "files.lan.example"
+   ]
+  },
+  {
+   "cls": "APIKEY",
+   "text": "key sk-ant-api03-abcdefghijklmnop",
+   "values": [
+    "sk-ant-api03-abcdefghijklmnop"
+   ]
+  },
+  {
+   "cls": "APIKEY",
+   "text": "AKIAIOSFODNN7EXAMPLE",
+   "values": [
+    "AKIAIOSFODNN7EXAMPLE"
+   ]
+  },
+  {
+   "cls": "SECRET",
+   "text": "password=hunter2x",
+   "values": [
+    "hunter2x"
+   ]
+  },
+  {
+   "cls": "SECRET",
+   "text": "client_secret: s3cr3tvalue",
+   "values": [
+    "s3cr3tvalue"
+   ]
+  },
+  {
+   "cls": "CREDITCARD",
+   "text": "card 4111 1111 1111 1111",
+   "values": [
+    "4111 1111 1111 1111"
+   ]
+  },
+  {
+   "cls": "CREDITCARD",
+   "text": "card 4242 4242 4242 4242",
+   "values": [
+    "4242 4242 4242 4242"
+   ]
+  },
+  {
+   "cls": "CREDITCARD",
+   "text": "card 5555-5555-5555-4444",
+   "values": [
+    "5555-5555-5555-4444"
+   ]
+  },
+  {
+   "cls": "SSN",
+   "text": "ssn 123-45-6789 on file",
+   "values": [
+    "123-45-6789"
+   ]
+  },
+  {
+   "cls": "AADHAAR",
+   "text": "aadhaar 2345 6789 0123",
+   "values": [
+    "2345 6789 0123"
+   ]
+  },
+  {
+   "cls": "PAN",
+   "text": "pan ABCPD1234E",
+   "values": [
+    "ABCPD1234E"
+   ]
+  },
+  {
+   "cls": "ADDRESS",
+   "text": "ships to 221B Baker Street",
+   "values": [
+    "221B Baker Street"
+   ]
+  },
+  {
+   "cls": "ADDRESS",
+   "text": "office at 12 MG Road",
+   "values": [
+    "12 MG Road"
+   ]
+  },
+  {
+   "cls": "ADDRESS",
+   "text": "lives at 4 Shanti Nagar",
+   "values": [
+    "4 Shanti Nagar"
+   ]
+  },
+  {
+   "cls": "BANKCODE",
+   "text": "BSB 062-000",
+   "values": [
+    "062-000"
+   ]
+  },
+  {
+   "cls": "BANKCODE",
+   "text": "sort code 12-34-56",
+   "values": [
+    "12-34-56"
+   ]
+  },
+  {
+   "cls": "BANKCODE",
+   "text": "ABA 123456789",
+   "values": [
+    "123456789"
+   ]
+  },
+  {
+   "cls": "BANKCODE",
+   "text": "transit 12345 institution 999",
+   "values": [
+    "12345",
+    "999"
+   ]
+  },
+  {
+   "cls": "BANKACCT",
+   "text": "BSB 062-000 account 12345678",
+   "values": [
+    "062-000",
+    "12345678"
+   ]
+  },
+  {
+   "cls": "BANKACCT",
+   "text": "sort code 12-34-56 account 87654321",
+   "values": [
+    "12-34-56",
+    "87654321"
+   ]
+  },
+  {
+   "cls": "BANKACCT",
+   "text": "bank account number 55556666",
+   "values": [
+    "55556666"
+   ]
+  }
+ ],
+ "mustkeep": [
+  {
+   "text": "2026-10-21T10:02:11Z checkout ERROR 500 upstream timeout"
+  },
+  {
+   "text": "name=orders-api replicas=3"
+  },
+  {
+   "text": "orders.shop.svc.cluster.local:8080 refused"
+  },
+  {
+   "text": "node ip-<IPV4_1>.ap-south-1.compute.internal"
+  },
+  {
+   "text": "image registry/shop/checkout:1.4.2-rc1"
+  },
+  {
+   "text": "task 4471 exited with code 137 (OOMKilled)"
+  },
+  {
+   "text": "HTTP 503 from payments in 1200 ms"
+  },
+  {
+   "text": "rule warden-dev-lab-tick-silent"
+  },
+  {
+   "text": "Main St"
+  },
+  {
+   "text": "at jdk.internal.reflect.Method.invoke(Method.java:566)"
+  },
+  {
+   "text": "kotlin.internal.PlatformImplementationsKt.getIMPLEMENTATIONS"
+  },
+  {
+   "text": "File threading.py, in threading.local()"
+  },
+  {
+   "text": "routing table rtb-0abc updated 503 times"
+  },
+  {
+   "text": "Invoice #123456789 total $1,250.00 due 2026-11-30"
+  }
+ ]
+}

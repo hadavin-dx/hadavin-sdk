@@ -1,0 +1,110 @@
+OBS grants before DB-3 hardening for rt17: [('kill_switch', 'INSERT,SELECT,UPDATE'), ('spend', 'INSERT,SELECT,UPDATE'), ('spend_month', 'INSERT,SELECT,UPDATE')]
+OBS rt17 remaining table privileges on spend/spend_month/kill_switch: [('kill_switch', 'SELECT'), ('spend', 'SELECT'), ('spend_month', 'SELECT')]
+PASS A0 baseline: reserve 10, settle with actual 4 -> usd 4 open 0  [(Decimal('4'), Decimal('0'))]
+PASS A1 runtime role: direct UPDATE spend SET usd=0 is refused  [sqlstate=42501]
+PASS A1 runtime role: direct UPDATE spend_month SET usd=0 is refused  [sqlstate=42501]
+PASS A1 runtime role: direct DELETE FROM spend is refused  [sqlstate=42501]
+PASS A1 runtime role: TRUNCATE spend is refused  [sqlstate=42501]
+PASS A1 runtime role: TRUNCATE spend_month, kill_switch is refused  [sqlstate=42501]
+PASS A1 runtime role: direct INSERT of a row is refused  [sqlstate=42501]
+PASS A1 runtime role: SELECT ... FOR UPDATE (row lock needs UPDATE privilege) is refused  [sqlstate=42501]
+PASS A1 runtime role: ALTER TABLE spend DROP CONSTRAINT is refused  [sqlstate=42501]
+PASS A1 runtime role: ALTER TABLE spend DISABLE TRIGGER ALL is refused  [sqlstate=42501]
+PASS A1 runtime role: DROP TRIGGER on spend is refused  [sqlstate=42501]
+PASS A1 runtime role: CREATE OR REPLACE FUNCTION spend_settle (own body) is refused  [sqlstate=42501]
+PASS A1 runtime role: ALTER FUNCTION spend_settle SECURITY INVOKER is refused  [sqlstate=42501]
+PASS A1 runtime role: ALTER FUNCTION spend_settle OWNER TO rt17 is refused  [sqlstate=42501]
+PASS A1 runtime role: SET ROLE migr17 is refused  [sqlstate=42501]
+PASS A1 runtime role: SET SESSION AUTHORIZATION op17 is refused  [sqlstate=42501]
+PASS A1 runtime role: call kill_switch_release is refused  [sqlstate=42501]
+PASS A1 runtime role: CREATE FUNCTION in schema public is refused  [sqlstate=42501]
+PASS A1 runtime role: ALTER TABLE spend DISABLE TRIGGER USER is refused  [sqlstate=42501]
+PASS A1 runtime role: DELETE FROM spend_decrease_log is refused  [sqlstate=42501]
+PASS A1 runtime role: UPDATE kill_switch_log is refused  [sqlstate=42501]
+PASS A1 runtime role: GRANT UPDATE ON spend TO rt17 has no effect (the privilege is still absent)
+PASS A1 after all refused attempts the totals are unchanged  [(Decimal('4'), Decimal('0')) (Decimal('4'), Decimal('0'))]
+PASS A2 settle (worst 1, nothing open) refused 23514  [sqlstate=23514  total=(Decimal('4'), Decimal('0'))]
+PASS A2b settle with a tiny worst 1e-10, nothing open: refused 23514  [sqlstate=23514]
+PASS A3 settle worst 0 actual 0 changes nothing  [(Decimal('4'), Decimal('4'))]
+PASS A3b settle actual negative changes nothing  [(Decimal('4'), Decimal('4'))]
+PASS A3c settle worst negative changes nothing  [(Decimal('4'), Decimal('4'))]
+PASS A3d settle both negative changes nothing  [(Decimal('4'), Decimal('4'))]
+OBS A4 runtime with ONE login can settle ANY agent_id's open reservation (agent id is a plain argument, not bound to a login): settle('b',7,0) -> (Decimal('0'), Decimal('0')); b now (Decimal('0'), Decimal('0'))
+PASS A4 settled money of agent a untouched by settling b
+OBS A5 month row for c after reserve 5 (day1) + reserve 3 (day2) + settle day1 5->0: usd/open = (Decimal('3'), Decimal('3'))
+OBS A5b settle day1 (open 0) worst 3 against month with open 3 -> sqlstate=23514; day1 total=(Decimal('0'), Decimal('0')) month=(Decimal('3'), Decimal('3'))
+PASS A5b a settle that does not fit the DAY row is refused even if the month row could absorb it  [sqlstate=23514]
+PASS A5c no row anywhere has usd<0, open<0, or open>usd  [0]
+PASS B1 runtime: engage with an argument (forged by) refused  [sqlstate=42883]
+PASS B1 runtime: direct UPDATE of by refused  [sqlstate=42501]
+PASS B1 runtime: direct UPDATE on=false refused  [sqlstate=42501]
+PASS B1 runtime: SET session_authorization via set_config refused  [sqlstate=42501]
+PASS B2 engage records by=rt17  [(True, 'rt17')]
+PASS B3 SET ROLE op17 refused  [42501]
+OBS B4 (only if an operator privilege is granted by membership) release after SET ROLE op17 records by=rt17 (session_user, the login, not the SET ROLE role)
+PASS B4 `by` is the login (session_user), not the SET ROLE role  [(False, 'rt17')]
+OBS B5 migration role deleted the kill_switch row; runtime engage silently succeeds, rows now=0 (engage = UPDATE ... WHERE id=1: no row, no error)
+PASS C1 reserve NaN: refused or inert, state unchanged  [sqlstate=23514 before=None after=None]
+PASS C1 reserve Infinity: refused or inert, state unchanged  [sqlstate=23514 before=None after=None]
+PASS C1 reserve -Infinity: refused or inert, state unchanged  [sqlstate=23514 before=None after=None]
+PASS C1 reserve negative: refused or inert, state unchanged  [sqlstate=23514 before=None after=None]
+OBS C1 reserve bigint+1 (2^63): sqlstate=None before=None after=(Decimal('9223372036854775808'), Decimal('9223372036854775808'))
+OBS C1b settle back bigint+1 (2^63): sqlstate=None after=(Decimal('0'), Decimal('0'))
+OBS C1 reserve bigint max 2^63-1: sqlstate=None before=(Decimal('0'), Decimal('0')) after=(Decimal('9223372036854775807'), Decimal('9223372036854775807'))
+OBS C1b settle back bigint max 2^63-1: sqlstate=None after=(Decimal('0'), Decimal('0'))
+OBS C1 reserve 1e131072 numeric overflow: sqlstate=22003 before=(Decimal('0'), Decimal('0')) after=(Decimal('0'), Decimal('0'))
+OBS C1 reserve 1e30: sqlstate=None before=(Decimal('0'), Decimal('0')) after=(Decimal('1000000000000000000000000000000'), Decimal('1000000000000000000000000000000'))
+PASS C1 reserve NULL: refused or inert, state unchanged  [sqlstate=23502 before=(Decimal('0'), Decimal('0')) after=(Decimal('0'), Decimal('0'))]
+PASS C2 settle worst=NaN: refused or inert, settled money (usd-open) not lowered  [sqlstate=23514 before=(Decimal('5'), Decimal('5')) after=(Decimal('5'), Decimal('5'))]
+PASS C2 settle actual=NaN: refused or inert, settled money (usd-open) not lowered  [sqlstate=23514 before=(Decimal('5'), Decimal('5')) after=(Decimal('5'), Decimal('5'))]
+PASS C2 settle worst=Infinity: refused or inert, settled money (usd-open) not lowered  [sqlstate=23514 before=(Decimal('5'), Decimal('5')) after=(Decimal('5'), Decimal('5'))]
+PASS C2 settle actual=Infinity: refused or inert, settled money (usd-open) not lowered  [sqlstate=23514 before=(Decimal('5'), Decimal('5')) after=(Decimal('5'), Decimal('5'))]
+PASS C2 settle worst=-Infinity: refused or inert, settled money (usd-open) not lowered  [sqlstate=None before=(Decimal('5'), Decimal('5')) after=(Decimal('5'), Decimal('5'))]
+PASS C2 settle actual=-Infinity: refused or inert, settled money (usd-open) not lowered  [sqlstate=None before=(Decimal('5'), Decimal('5')) after=(Decimal('5'), Decimal('5'))]
+PASS C2 settle worst=negative: refused or inert, settled money (usd-open) not lowered  [sqlstate=None before=(Decimal('5'), Decimal('5')) after=(Decimal('5'), Decimal('5'))]
+PASS C2 settle actual=negative: refused or inert, settled money (usd-open) not lowered  [sqlstate=None before=(Decimal('5'), Decimal('5')) after=(Decimal('5'), Decimal('5'))]
+OBS C2 settle worst=bigint+1 (2^63): sqlstate=23514 before=(Decimal('5'), Decimal('5')) after=(Decimal('5'), Decimal('5'))
+OBS C2 settle actual=bigint+1 (2^63): sqlstate=None before=(Decimal('5'), Decimal('5')) after=(Decimal('9223372036854775812'), Decimal('4'))
+OBS C2 settle worst=bigint max 2^63-1: sqlstate=23514 before=(Decimal('5'), Decimal('5')) after=(Decimal('5'), Decimal('5'))
+OBS C2 settle actual=bigint max 2^63-1: sqlstate=None before=(Decimal('5'), Decimal('5')) after=(Decimal('9223372036854775811'), Decimal('4'))
+OBS C2 settle worst=1e131072 numeric overflow: sqlstate=22003 before=(Decimal('5'), Decimal('5')) after=(Decimal('5'), Decimal('5'))
+OBS C2 settle actual=1e131072 numeric overflow: sqlstate=22003 before=(Decimal('5'), Decimal('5')) after=(Decimal('5'), Decimal('5'))
+OBS C2 settle worst=1e30: sqlstate=23514 before=(Decimal('5'), Decimal('5')) after=(Decimal('5'), Decimal('5'))
+OBS C2 settle actual=1e30: sqlstate=None before=(Decimal('5'), Decimal('5')) after=(Decimal('1000000000000000000000000000004'), Decimal('4'))
+PASS C2 settle worst=NULL: refused or inert, settled money (usd-open) not lowered  [sqlstate=None before=(Decimal('5'), Decimal('5')) after=(Decimal('5'), Decimal('5'))]
+PASS C2 settle actual=NULL: refused or inert, settled money (usd-open) not lowered  [sqlstate=None before=(Decimal('5'), Decimal('5')) after=(Decimal('5'), Decimal('5'))]
+OBS C3 reserve NULL agent: sqlstate=23502
+OBS C3 reserve NULL day: sqlstate=23502
+OBS C3 reserve NULL month: sqlstate=23502
+OBS C3 settle NULL agent: sqlstate=None
+OBS C3 reserve float8 NaN argument: sqlstate=42883
+OBS C3 reserve text '1' argument: sqlstate=42883
+OBS C3 reserve date 'infinity': sqlstate=None
+OBS C3 reserve empty-string agent: sqlstate=None
+OBS C3 reserve 100KB agent id: sqlstate=None
+OBS C3 rows now in spend with agent 'n': 1, empty agent id: 1
+OBS C4 reserve accepts a month that is not the day's month and not a first-of-month date: spend_month rows for mm = [(datetime.date(1999, 1, 1),)]
+PASS D1 20 connections x 5 reserves of 1 racing on one agent-day: total exactly 100, open 100, no errors  [(Decimal('100'), Decimal('100')) (Decimal('100'), Decimal('100')) errs=[]]
+PASS D2 10 trials: two connections racing to settle the same reservation of 10: exactly one succeeds, the other 23514, total 0
+PASS D3 20 trials: racing settle(10,actual 3) vs settle(10,actual 0): one wins, one 23514, open 0, total is 3 or 0  [violations=0]
+OBS D4 mixed 8x30 calls: day usd=125 open=9; month usd=125 open=9; errors=[]
+PASS D4 mixed race: usd>=open>=0, day and month rows agree (usd and open), settled = usd-open is a non-negative integer count of settles  [settled=116]
+PASS D5 crossing agent order from 4 connections: no deadlock or error (month row is shared by both agents? no, per agent)  [[]]
+PASS E spend_nonneg.sql | hold: LOCK TABLE spend IN ROW EXCLUSIVE MODE  [sqlstate=55P03 after 5.01s, ledger rows for it=0]
+PASS E spend_nonneg.sql | hold: LOCK TABLE spend_month IN ROW EXCLUSIVE MODE  [sqlstate=55P03 after 5.01s, ledger rows for it=0]
+PASS E spend_nonneg.sql | hold: LOCK TABLE spend IN ACCESS SHARE MODE  [sqlstate=55P03 after 5.01s, ledger rows for it=0]
+PASS E spend_nonneg_finite.sql | hold: LOCK TABLE spend IN ROW EXCLUSIVE MODE  [sqlstate=55P03 after 5.01s, ledger rows for it=0]
+PASS E spend_nonneg_finite.sql | hold: LOCK TABLE spend_month IN ROW EXCLUSIVE MODE  [sqlstate=55P03 after 5.01s, ledger rows for it=0]
+PASS E spend_nonneg_finite.sql | hold: LOCK TABLE spend IN ACCESS SHARE MODE  [sqlstate=55P03 after 5.01s, ledger rows for it=0]
+PASS E spend_nonneg_upgrade.sql | hold: LOCK TABLE spend IN ROW EXCLUSIVE MODE  [sqlstate=55P03 after 5.01s, ledger rows for it=0]
+PASS E spend_nonneg_upgrade.sql | hold: LOCK TABLE spend_month IN ROW EXCLUSIVE MODE  [sqlstate=55P03 after 5.01s, ledger rows for it=0]
+PASS E spend_nonneg_upgrade.sql | hold: LOCK TABLE spend IN ACCESS SHARE MODE  [sqlstate=55P03 after 5.01s, ledger rows for it=0]
+PASS E spend_decrease_log.sql | hold: LOCK TABLE spend IN ROW EXCLUSIVE MODE  [sqlstate=55P03 after 5.01s, ledger rows for it=0]
+PASS E spend_decrease_log.sql | hold: LOCK TABLE spend_month IN ROW EXCLUSIVE MODE  [sqlstate=55P03 after 5.01s, ledger rows for it=0]
+PASS E spend_decrease_log.sql | hold: LOCK TABLE kill_switch IN ROW EXCLUSIVE MODE  [sqlstate=55P03 after 5.02s, ledger rows for it=0]
+FAIL E spend_decrease_log.sql | hold: LOCK TABLE spend IN ACCESS SHARE MODE  [sqlstate=None after 0.03s, ledger rows for it=1]
+PASS E spend_guarded_writes.sql | hold: LOCK TABLE spend IN ROW EXCLUSIVE MODE  [sqlstate=55P03 after 5.01s, ledger rows for it=0]
+PASS E spend_guarded_writes.sql | hold: LOCK TABLE spend_month IN ROW EXCLUSIVE MODE  [sqlstate=55P03 after 5.01s, ledger rows for it=0]
+PASS E spend_guarded_writes.sql | hold: LOCK TABLE spend IN ACCESS SHARE MODE  [sqlstate=55P03 after 5.01s, ledger rows for it=0]
+SUMMARY 74 of 75 EXPECT checks passed
+rc=1

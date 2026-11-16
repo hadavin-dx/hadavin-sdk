@@ -1,0 +1,8 @@
+== /tmp/p7/orig 1ecf9f0820bb
+MAX_REDACT_CHARS 262144 REDACT_BUDGET_S 6.0
+H1 65536 clean 0.21 blocks 0.20
+H1 262144 clean 0.95 blocks 0.92
+H6 65536 clean 0.25 blocks 0.23
+H6 262144 clean 1.40 blocks 1.46
+H10 65536 clean 0.28 blocks 0.27
+H10 262144 clean 1.64 blocks 1.66

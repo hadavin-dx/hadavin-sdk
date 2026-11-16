@@ -1,0 +1,47 @@
+PASS reason cells with '18 runs' name both voided runs unless the new text does :: []
+PASS box says the row count of the table :: ('94', 94)
+PASS section 0 says the row count of the table :: ('94', 94)
+PASS box says the ready count :: 49
+PASS action box first (before section 0)
+FAIL no row is NOT FILMABLE (L-LEASE has a default) :: [13, 21]
+PASS rows 13+14 hold 103 spoken words in 4 lines :: [11, 35, 34, 23]
+FAIL box states exactly the counted words and seconds (103 words, about 41 s)
+FAIL row 11 states the same words and seconds :: - The one video: scenes 1 to 4 and the closing card (scene 12): scene 1 25 s + scene 2 40 s + scene 3 25 s + scene 4 60 s = 150 s, plus the closing card: EST NOT MEASURED (the card length is not decid
+PASS section 0 and L-CARDLEN state the same word count :: 3
+FAIL no stale word count (103, 75, 71) outside history lines :: ['| L-CARDLEN | The four spoken card lines hold 103 words (about 41 s at 150 words']
+FAIL rows 13 and 21 carry the reading-1 sentence and apply on the default
+FAIL section 3 L-LEASE: cites Q22 (c) ORD:186 and ORD:230, both readings' sentences, plain 'none', recommendation, a default :: 1
+FAIL box L-LEASE row gives both sentences and 'none' with its meaning and a default of 1
+FAIL L-LEASE definition is the true one (takeover only; repeat refused while the row exists)
+FAIL rows 17 and 81 say 'may' about the 45 s setting
+FAIL no 'row N' reference in any new text :: [(6, 'row 13')]
+PASS no 'accepted' exit slip in any new text :: []
+FAIL 5a lists exactly the 36 viewer-visible run-sheet and page rows, with page rows present :: (0, 36)
+FAIL 5a text equals each row's own 'what the viewer sees' cell
+FAIL report names the newest owner sheet version on disk (v28) :: [28, 28, 28]
+FAIL no claim that v25 or v26 is the newest
+FAIL row 90 ends with the clause about a separate database and has no 'third place' :: 8n`, separate from the claim database) and the claim database; the stage journal file is a third place that stays a file
+FAIL row 91 says the stage journal and some bookkeeping files stay files
+FAIL row 6 item 16 does not claim that deleting erases the data :: . The same day, the studio lead deletes every saved run from n8n (every execution, not only the ones on the list) and turns saving off again (both n8n settings and the flow-file settings back to none)
+PASS row 6 keeps items 11 to 16, no blank, no builder note
+FAIL row 8 has the latest start 18:04 UTC = 23:34 IST and (a)(b)(c) and UNVERIFIED
+FAIL box and C-10b carry 18:04 UTC = 23:34 IST
+FAIL row 76 is tagged design intent, rows 25, 37, 38 say 'stored' not 'delivered'
+FAIL every new text with 144.3 labels it as from n8n coming back up :: [15, 77, 78, 80, 79, 47]
+FAIL every defined label is first used where it is defined (uppercase terms of the box) :: [('CONTACT', 'CONTACT RECORD (or CONTAC'), ('N8N', 'N8N-START.md (rows 55 and'), ('REHEARSAL', 'REHEARSAL is a practice r'), ('RUN SHEET', 'RUN SHEET is the file VID'), ('STUDIO LEAD', 'STUDIO LEAD and the OWNER'), ('OWNER', 'OWNER are two roles with '), ('LEASE', 'LEASE and have no default'), ('ALE
+FAIL question labels are first used in the table of questions :: ['L-LEASE']
+FAIL whole box is shorter than the c6o box (3529 words; c6o 3529, counted with split on 2026-11-16) :: 3529
+FAIL box names no n8n setting :: ['EXECUTIONS_DATA_SAVE', 'EXECUTIONS_DATA_SAVE']
+PASS box has one answer line with seconds and the three free names
+PASS box wave 1 count equals ready + defaults (89) :: 89
+FAIL box says it edits the flow files and changes no running n8n
+FAIL L-SCENES question is gone
+FAIL the 4 card line texts in the box (A1 line) are in row 13
+PASS rows 25, 37, 38 and 76 exist as rows (design M8)
+FAIL row 6 view and row 8 view have no 'accepted' and no 'row N' :: Nothing on screen; the take is blocked until the workflow list, the owner-sheet 
+PASS generator rule on rows 62 to 69 and row 92 edits the generator
+FAIL section 8 has the coverage of the c6o and c6n reviews
+PASS no bare 'lead' in new texts (the one decision sentence excepted) :: []
+SUMMARY: 77 checks, 30 FAILED: no row is NOT FILMABLE (L-LEASE has a default); box states exactly the counted words and seconds (103 words, about 41 s); row 11 states the same words and seconds; no stale word count (103, 75, 71) outside history lines; rows 13 and 21 carry the reading-1 sentence and apply on the default; section 3 L-LEASE: cites Q22 (c) ORD:186 and ORD:230, both readings' sentences, plain 'none', recommendation, a default; box L-LEASE row gives both sentences and 'none' with its meaning and a default of 1; L-LEASE definition is the true one (takeover only; repeat refused while the row exists); rows 17 and 81 say 'may' about the 45 s setting; no 'row N' reference in any new text; 5a lists exactly the 36 viewer-visible run-sheet and page rows, with page rows present; 5a text equals each row's own 'what the viewer sees' cell; report names the newest owner sheet version on disk (v28); no claim that v25 or v26 is the newest; row 90 ends with the clause about a separate database and has no 'third place'; row 91 says the stage journal and some bookkeeping files stay files; row 6 item 16 does not claim that deleting erases the data; row 8 has the latest start 18:04 UTC = 23:34 IST and (a)(b)(c) and UNVERIFIED; box and C-10b carry 18:04 UTC = 23:34 IST; row 76 is tagged design intent, rows 25, 37, 38 say 'stored' not 'delivered'; every new text with 144.3 labels it as from n8n coming back up; every defined label is first used where it is defined (uppercase terms of the box); question labels are first used in the table of questions; whole box is shorter than the c6o box (3529 words; c6o 3529, counted with split on 2026-11-16); box names no n8n setting; box says it edits the flow files and changes no running n8n; L-SCENES question is gone; the 4 card line texts in the box (A1 line) are in row 13; row 6 view and row 8 view have no 'accepted' and no 'row N'; section 8 has the coverage of the c6o and c6n reviews
+
+EXIT CODE 1

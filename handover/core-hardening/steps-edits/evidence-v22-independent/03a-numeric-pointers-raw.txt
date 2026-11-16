@@ -1,0 +1,137 @@
+sheet items per section {2: 6, 5: 8, 6: 6, 7: 10, 8: 8}
+S 5.1 exists=True | letter, that you choose. It must not be in the used list of 5.1, must not be the beginning of any used 
+S 7.2 exists=True | first 16); one changed letter changes it. You get it with  (7.2). **Start line** = the one command that
+S 7.3 exists=True | tart line** = the one command that starts the take program (7.3); the numbers message gives it, and say
+S 6.3 exists=True | rsion. - **Model key** = any paid-model key you create from 6.3 on; it must be named  (a key you made w
+S 6.3 exists=True | del key from the moment you press the page's create button (6.3) until the card proves it cancelled. **
+S 5.6 exists=True | ** = you read the key list and count valid keys: check 1 at 5.6 (no valid key except the older key the 
+S 6.2 exists=True | lid key except the older key the message names), check 2 at 6.2 (none at all), check 3 at 6.6 and again
+S 6.6 exists=True | he message names), check 2 at 6.2 (none at all), check 3 at 6.6 and again at 7.1 (exactly one, ). **Key
+S 7.1 exists=True | , check 2 at 6.2 (none at all), check 3 at 6.6 and again at 7.1 (exactly one, ). **Key file** = the fil
+S 5.1 exists=True | ommands only (the list at the end of section 2); open it at 5.1 and keep it open. **Take settings file*
+S 5.6 exists=True | (it must be off; you write the word the prepaid page shows, 5.6); **per-key limit** = a spending limit 
+S 7.3 exists=True |  = the latest moment you may press Enter on the start line (7.3); **alarm time** = the latest moment th
+S 6.2 exists=True | -by alarm** = the two phone alarms you set for those times (6.2). Why two: the first rings when the run
+S 8.7 exists=True |  do it alone. After the run: no answer means the card, then 8.7 (laptop back), nothing more, and try th
+S 7.3 exists=True | rything from your Enter on the start line to the exit code (7.3 to 7.9); **run day** = its date; **go**
+S 7.9 exists=True |  from your Enter on the start line to the exit code (7.3 to 7.9); **run day** = its date; **go** = the 
+S 7.8 exists=True | live, and at once, if any of these happens: (a) you typed  (7.8); (b) the run is aborted, refused or ca
+S 6.5 exists=True | ecret text of a model key appeared on your screen (R1); (h) 6.5 sends you here. The STOP RULE at the to
+S 6.3 exists=True | oke (the only list).** (a) Every model key you created from 6.3 on, whatever its name (a typo counts: r
+S 6.2 exists=True | d. (b) The older key named in the numbers message, once, in 6.2 (or at once if its text appeared on you
+S 6.2 exists=True | read uses it, and you first wrote to the lead the phrase of 6.2 yourself (the lead never asks for it). 
+S 7.9 exists=True | hing else. 6. The run is over, however far it got. Go on at 7.9 if you typed ; otherwise at 8.1. **Part
+S 8.1 exists=True | owever far it got. Go on at 7.9 if you typed ; otherwise at 8.1. **Part 4, if something fails.** The ke
+S 6.2 exists=True | elled: nothing else matters until it is. For the older key (6.2) steps 2 to 4 apply, you send no "model
+S 6.1 exists=True |  a call; Recording OFF; Privacy switches OFF (turned off in 6.1, put back in 8.7); your normal browser 
+S 8.7 exists=True | g OFF; Privacy switches OFF (turned off in 6.1, put back in 8.7); your normal browser profile, never th
+S 6.3 exists=True | starts. | A long secret-looking text on your screen outside 6.3 and the paste of 6.4 (also in a printed
+S 6.4 exists=True | et-looking text on your screen outside 6.3 and the paste of 6.4 (also in a printed line): if Recording 
+S 5.7 exists=True |  model settings file's figures, so you compare them by eye (5.7). The model account must be prepaid, au
+S 5.4 exists=True |  receiver Gmail, label  list view only; the earlier ones of 5.4 (count them first) and this run's (8.5,
+S 8.5 exists=True |  the earlier ones of 5.4 (count them first) and this run's (8.5, the count is in the clean-up message);
+S 5.8 exists=True | d start or end a step, because this sheet names them: "go" (5.8), "n8n is off" (8.2; it counts only aft
+S 8.2 exists=True | p, because this sheet names them: "go" (5.8), "n8n is off" (8.2; it counts only after you sent "model k
+S 8.6 exists=True | arlier it is a difference: R10), "post" (9), "still works" (8.6) and "continue" (ends a FREEZE that beg
+S 6.4 exists=True | only copying you do: the key's copy button and one paste at 6.4, then one harmless word (any word of th
+S 8.8 exists=True |  the finished film: do not post; report the times in words (8.8). | | R10 | you | FREEZE = in the take 
+S 7.9 exists=True | except  at "Type y to start"; the exit code is read only at 7.9, after the card); in the read terminal 
+S 6.2 exists=True | cel the older key <its name>, nothing else I know uses it" (6.2); "model key cancelled" (card step 5); 
+S 6.5 exists=True | Part 4); "key save failed, cancelled, new run name <name>" (6.5); "run started" (7.4); "contacts delete
+S 7.4 exists=True | iled, cancelled, new run name <name>" (6.5); "run started" (7.4); "contacts deleted <number>" (8.2); "a
+S 8.2 exists=True | >" (6.5); "run started" (7.4); "contacts deleted <number>" (8.2); "app passwords revoked" (8.3); "HubSp
+S 8.3 exists=True | "contacts deleted <number>" (8.2); "app passwords revoked" (8.3); "HubSpot apps revoked" (8.4); "demo m
+S 8.4 exists=True | .2); "app passwords revoked" (8.3); "HubSpot apps revoked" (8.4); "demo mails deleted <number>" (8.5); 
+S 8.5 exists=True | HubSpot apps revoked" (8.4); "demo mails deleted <number>" (8.5); "accepted" (8.8); "posted" (9); "got 
+S 8.8 exists=True | ed" (8.4); "demo mails deleted <number>" (8.5); "accepted" (8.8); "posted" (9); "got a message that say
+S 5.8 exists=True | n words>, is it yours" (R8, by the other channel); the yes (5.8). Spoken only, to the film person: "sto
+S 7.3 exists=True | command is not run).** Take terminal: , , , the start line (7.3),  or , the challenge line, , and once,
+S 7.9 exists=True |  start line (7.3),  or , the challenge line, , and once, at 7.9 after the card is complete and the prom
+S 6.4 exists=True |  Once, before the take program starts: the key-save line of 6.4 (its characters are the one exception t
+S 0.27 exists=False |  / 1,000,000, here (40,000 x 3 + 10,000 x 15) / 1,000,000 = 0.27, and call ceiling x that = expected tot
+S 0.27 exists=False |  = 0.27, and call ceiling x that = expected total, here 3 x 0.27 = 0.81; both equal the message's, the p
+S 0.81 exists=False | , and call ceiling x that = expected total, here 3 x 0.27 = 0.81; both equal the message's, the price pa
+S 5.1 exists=True | othing | |---|---|---|---| | 1 | you | Choose the run name (5.1), send it with the older key's name and
+S 5.2 exists=True | Gmail, film profile, model pages, people, settings figures (5.2 to 5.7) | no yes | | 5 | you, lead | Ty
+S 5.7 exists=True | film profile, model pages, people, settings figures (5.2 to 5.7) | no yes | | 5 | you, lead | Type the 
+S 5.8 exists=True | res (5.2 to 5.7) | no yes | | 5 | you, lead | Type the yes (5.8); the lead answers "go" | no "go": no k
+S 6.2 exists=True | key <its name>, nothing else I know uses it" and cancel it (6.2), make and save the key (6.3 to 6.6) | 
+S 6.3 exists=True | I know uses it" and cancel it (6.2), make and save the key (6.3 to 6.6) | no run; a made key stays aliv
+S 6.6 exists=True | uses it" and cancel it (6.2), make and save the key (6.3 to 6.6) | no run; a made key stays alive: do t
+S 6.6 exists=True |  lead, you | Lead restarts the model program; you check it (6.6) | no run; do the card | | 8 | you | Th
+S 7.9 exists=True | e card: NOT safe | | 9 | you | Read results after the card (7.9, 7.10) | the key stays alive: the alarm
+S 7.10 exists=True | d: NOT safe | | 9 | you | Read results after the card (7.9, 7.10) | the key stays alive: the alarms are 
+S 8.7 exists=True | s version). Write each value on paper before you change it; 8.7 puts back those values. 4. **Receiver G
+S 6.5 exists=True | ter fails to save you only start again with a new run name (6.5). Do key-list check 2: no valid key at 
+S 6.6 exists=True | rong but non-empty paste is caught only by the file size in 6.6 (UNVERIFIED). Right after , copy one ha
+S 6.6 exists=True | ng folder counts), or the page closed before you copied, or 6.6 finds a wrong size: copy a harmless wor
+S 6.5 exists=True | mbers message (UNVERIFIED: key length + 1); any other size: 6.5. Do key-list check 3: the key list show
+S 7.4 exists=True | n  right after you type the challenge line and press Enter (7.4), and again right after you press cance
+S 5.6 exists=True | de and before your cancel. No other key's time changed from 5.6; otherwise report what differs. 2. Cont
+S 8.3 exists=True | as "still works" (the word "still works"): do the revoke of 8.3 or 8.4 again for exactly those names, o
+S 8.4 exists=True | ll works" (the word "still works"): do the revoke of 8.3 or 8.4 again for exactly those names, once, an
+S 5.3 exists=True |  and the Privacy switches back to the values on your paper (5.3, 6.1), and Recording tools back to how 
+S 6.1 exists=True | the Privacy switches back to the values on your paper (5.3, 6.1), and Recording tools back to how they 
+S 7.10 exists=True | needs from you before it writes "post": the printed result (7.10) and the counts you saw filmed (7.6). T
+S 7.6 exists=True | ": the printed result (7.10) and the counts you saw filmed (7.6). The lead writes "post" only if the pr
+N 8.4 exists=True | ven by you (G41), the HubSpot app secret revoke (G42, sheet 8.4), the cancel card as single source, G32
+N 6.2 exists=True |  key per run and cancel the older key (card Part 2 b, sheet 6.2) because the card can only cancel a key
+N 5.3 exists=True |  writes what he saw and goes on): Windows menu paths (sheet 5.3, 6.1), the Recall page, the paste metho
+N 6.1 exists=True | es what he saw and goes on): Windows menu paths (sheet 5.3, 6.1), the Recall page, the paste method (6.
+N 6.4 exists=True |  paths (sheet 5.3, 6.1), the Recall page, the paste method (6.4), the app-password page path (8.3), the
+N 8.3 exists=True | l page, the paste method (6.4), the app-password page path (8.3), the HubSpot app page path (8.4), wher
+N 8.4 exists=True | he app-password page path (8.3), the HubSpot app page path (8.4), where the contact id sits (the mail a
+N 7.8 exists=True | to the owner (Open 51). 10. **The order  then cancel (sheet 7.8) is the builder's choice, with a reason
+N 5.6 exists=True | d state as you read it (the owner writes his own reading at 5.6); studio ceiling (the "180"); ledger to
+N 3.0 exists=False | unit conversion (money settings are whole cents: "300 = USD 3.00") | all in the message | any missing, p
+N 7.8 exists=True | r right after typing , before the prompt returns (v22 sheet 7.8, the card step 3 and 8.1; UNVERIFIED al
+N 8.1 exists=True | fore the prompt returns (v22 sheet 7.8, the card step 3 and 8.1; UNVERIFIED all; the answer goes into t
+N 7.8 exists=True | 4); lock file and refusals (section 9); the sheet now says (7.8) why  comes before the cancel; G34 can 
+N 8.1 exists=True | " or "NOT SHOWN" | the line missing (the owner sheet R4 and 8.1 carry the fallback only when it says "N
+N 7.8 exists=True | r cancels the key during the run or right after ; the sheet 7.8 error sentence stays until this is show
+N 7.8 exists=True |  sentence stays until this is shown; if shown, the order of 7.8 may be reversed (item 10 of section 0) 
+N 8.4 exists=True | an recreate it; the clean-up message carries them for sheet 8.4; the retire check afterwards, and the w
+N 5.6 exists=True | st readings (key-list checks 1, 2 and 3 of sheet section 1: 5.6 only the older key, 6.2 no valid key, 6
+N 6.2 exists=True | ecks 1, 2 and 3 of sheet section 1: 5.6 only the older key, 6.2 no valid key, 6.6 and 7.1 exactly ) are
+N 6.6 exists=True |  sheet section 1: 5.6 only the older key, 6.2 no valid key, 6.6 and 7.1 exactly ) are all as stated | s
+N 7.1 exists=True | ection 1: 5.6 only the older key, 6.2 no valid key, 6.6 and 7.1 exactly ) are all as stated | statement
+N 3.0 exists=False | t x output price) / 1,000,000 per call. Invented: input USD 3.00, output USD 15.00, 40,000 in, 10,000 ou
+N 0.27 exists=False | put USD 3.00, output USD 15.00, 40,000 in, 10,000 out gives 0.27; ceiling 3 gives expected total 0.81. L
+N 0.81 exists=False | 0 in, 10,000 out gives 0.27; ceiling 3 gives expected total 0.81. Ledger total 12.40: program limit = 12
+N 0.81 exists=False | ted total 0.81. Ledger total 12.40: program limit = 12.40 + 0.81 = 13.21 (13.00 is ok, 13.50 is not). Mo
+N 3.10 exists=False | 2.40 + 0.81 = 13.21 (13.00 is ok, 13.50 is not). Money used 3.10 before and 3.90 after: increase 0.80, n
+N 3.90 exists=False | .21 (13.00 is ok, 13.50 is not). Money used 3.10 before and 3.90 after: increase 0.80, not over 0.81 (4.
+N 0.80 exists=False | 50 is not). Money used 3.10 before and 3.90 after: increase 0.80, not over 0.81 (4.00 would be). - **Pro
+N 0.81 exists=False | ey used 3.10 before and 3.90 after: increase 0.80, not over 0.81 (4.00 would be). - **Program limit vers
+N 4.0 exists=False | d 3.10 before and 3.90 after: increase 0.80, not over 0.81 (4.00 would be). - **Program limit versus 180
+N 5.1 exists=True | date read from the key list page, sent with the run name at 5.1) | the owner's message | before the mes
+N 5.1 exists=True |  the owner sends the visible words with the run name (sheet 5.1; UNVERIFIED) | before the message | | r
+N 6.2 exists=True | 3 lead: G25 "go". 4 owner: two alarms, older key cancelled (6.2), model key (sheet section 6); lead res
+N 6.2 exists=True | er earlier | owner cancels it once (card Part 2 b) at sheet 6.2, before he makes the model key and afte
+N 8.4 exists=True |  or revoke (G42); the owner revokes the named apps at sheet 8.4, exact app and permission names in the 
+N 8.6 exists=True | " with the names, the owner revokes those again once (sheet 8.6), rerun; a kept item: record reason and
+O 6.2 exists=True | 2); an older key left alive means no run (R4, checked after 6.2 and at 7.1). v20 keeps one cost: if the
+O 7.1 exists=True | r key left alive means no run (R4, checked after 6.2 and at 7.1). v20 keeps one cost: if the new key th
+O 5.2 exists=True | ram gives up after 40 min (sample) | | 12 | Helpers | Sheet 5.2, G11 | Default: two humans besides the 
+O 7.8 exists=True |  after the owner cancels the key right after typing  (sheet 7.8 now says cancel at once, not after the 
+O 8.1 exists=True | y spend before y" fallback and makes the last-used check in 8.1 exact; needs the lead's code at the fin
+O 7.7 exists=True | y cancel ("none" = any other code is a FREEZE); the sheet's 7.7 error sentence stays | | 35 | Does the 
+O 6.5 exists=True | t a wrong non-empty paste is caught only by the size (sheet 6.5, 6.6) | Default: no range stated means 
+O 6.6 exists=True | rong non-empty paste is caught only by the size (sheet 6.5, 6.6) | Default: no range stated means no ru
+O 6.6 exists=True | efault: no range stated means no run (the owner cannot tick 6.6) | | 44 | Earliest key time (security N
+O 5.7 exists=True | an exposure (security N7) | an older key shown on screen at 5.7 must be cancelled at once but the card 
+O 6.2 exists=True | t be cancelled at once but the card Part 2 (b) allowed only 6.2 | Chosen: the card Part 2 (b) allows ca
+O 7.8 exists=True | | Order at the end of the run:  first, then the card (sheet 7.8) or the card first | cancel before  cos
+O 6.3 exists=True | 41) | the sheet no longer accepts "differs from the word at 6.3"; it needs the exact word from you; it 
+O 8.4 exists=True |  | HubSpot app secrets revoke (security major 5; G42; sheet 8.4) | R8 forbade anything off the sheet, s
+O 8.4 exists=True |  words and who can recreate them; the owner revokes them at 8.4 and sends "HubSpot apps revoked"; "stil
+O 8.6 exists=True | Spot apps revoked"; "still works" from you repeats it once (8.6). Default: no names, no revoke, tokens 
+C 7.7 exists=True | ,324). Cause: the card is a full in-order script, new steps 7.7-7.10 and 8.4-8.5 were added. The strang
+C 8.4 exists=True |  the card is a full in-order script, new steps 7.7-7.10 and 8.4-8.5 were added. The stranger review wan
+C 6.5 exists=True |  steps 1-6) is the single source of the cancel rule. R1-R4, 6.5, 7.7/7.8, 8.1 and the set-phrase list p
+C 7.7 exists=True | s 1-6) is the single source of the cancel rule. R1-R4, 6.5, 7.7/7.8, 8.1 and the set-phrase list point 
+C 8.1 exists=True |  the single source of the cancel rule. R1-R4, 6.5, 7.7/7.8, 8.1 and the set-phrase list point to it. On
+C 7.7 exists=True | trigger list (a)-(h). "Unsure" has one meaning (STOP RULE). 7.7 split into 7.7-7.10. R10  pointer fixed
+C 7.7 exists=True | )-(h). "Unsure" has one meaning (STOP RULE). 7.7 split into 7.7-7.10. R10  pointer fixed. - Stranger ni
+C 8.4 exists=True | llback; G32 aligned with R2(b) with "unknown" defined; step 8.4 revokes HubSpot app secrets (phrase "Hu
+C 7.8 exists=True | ot apps revoked") with a STILL WORKS branch, gate G42; step 7.8 states the end-first decision with the 

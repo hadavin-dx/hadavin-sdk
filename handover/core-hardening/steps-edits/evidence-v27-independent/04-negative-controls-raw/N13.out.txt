@@ -1,0 +1,9 @@
+desc: source: think time wait hard-coded to 10 seconds
+file: OWNER-SHEET-v27-SOURCE.md occurrences replaced: 1
+build rc=0
+check rc=1
+C07 info: OWNER-SHEET-v27-A.md 7473 words (target 6300: NOT met)
+C07 info: OWNER-SHEET-v27-B.md 7516 words (target 6300: NOT met)
+check-v27: 2 failure(s)
+FAIL C140 A lacks 'Wait at least 20 seconds (the minimum think time of the message; the p'
+FAIL C140 B lacks 'Wait at least 20 seconds (the minimum think time of the message; the p'

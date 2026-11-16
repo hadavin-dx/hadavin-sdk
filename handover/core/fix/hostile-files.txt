@@ -1,0 +1,26 @@
+== tree-EVF-old key 100MB NUL
+pkg /home/user/build/rr6/tree-EVF-old/src/lead_desk/__init__.py
+ACCEPTED bytes 104857600 secs 0.21
+maxrss_MB 223
+== tree-EVF-old key FIFO (5s timeout)
+pkg /home/user/build/rr6/tree-EVF-old/src/lead_desk/__init__.py
+rc=0 (124=hung)
+== tree-EVF-old CA FIFO (5s timeout)
+pkg /home/user/build/rr6/tree-EVF-old/src/lead_desk/__init__.py
+rc=0 (124=hung)
+== tree-EVF key 100MB NUL
+pkg /home/user/build/rr6/tree-EVF/src/lead_desk/__init__.py
+REFUSED LiveTransport the key file is too large: it must hold only the key secs 0.00
+maxrss_MB 23
+== tree-EVF key FIFO (5s timeout)
+pkg /home/user/build/rr6/tree-EVF/src/lead_desk/__init__.py
+REFUSED LiveTransport the key file cannot be read secs 0.00
+maxrss_MB 23
+rc=0 (124=hung)
+== tree-EVF CA FIFO (5s timeout)
+pkg /home/user/build/rr6/tree-EVF/src/lead_desk/__init__.py
+rc=0 (124=hung)
+tree-EVF-old key FIFO rc=124 secs=5.00 out=pkg /home/user/build/rr6/tree-EVF-old/src/lead_desk/__init__.py
+tree-EVF-old ca FIFO rc=124 secs=5.00 out=pkg /home/user/build/rr6/tree-EVF-old/src/lead_desk/__init__.py
+tree-EVF key FIFO rc=0 secs=.123 out=maxrss_MB 23
+tree-EVF ca FIFO rc=124 secs=5.01 out=pkg /home/user/build/rr6/tree-EVF/src/lead_desk/__init__.py

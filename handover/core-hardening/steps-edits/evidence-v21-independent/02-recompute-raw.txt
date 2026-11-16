@@ -1,0 +1,78 @@
+PASS pair SHEET: 18:29 UTC = 23:59 IST 
+PASS pair SHEET: 11:00 UTC = 16:30 IST 
+PASS pair SHEET: 11:30 UTC = 17:00 IST 
+PASS pair SHEET: 11:55 UTC = 17:25 IST 
+PASS pair SHEET: 12:05 UTC = 17:35 IST 
+PASS pair SHEET: 18:14:40 UTC = 23:44:40 IST 
+PASS pair SHEET: 18:19 UTC = 23:49 IST 
+PASS pair SHEET: 18:29 UTC = 23:59 IST 
+PASS pair SHEET: 15:00 UTC = 20:30 IST 
+PASS pair NOTE: 18:29 UTC = 23:59 IST 
+PASS pair NOTE: 15:00 UTC = 20:30 IST 
+PASS pair NOTE: 18:14:40 UTC = 23:44:40 IST 
+PASS pair NOTE: 11:30 UTC = 17:00 IST 
+PASS pair NOTE: 11:55 UTC = 17:25 IST 
+PASS pair NOTE: 12:05 UTC = 17:35 IST 
+PASS pair NOTE: 17:44:00 UTC = 23:14 IST 
+PASS pair NOTE: 18:09:00 UTC = 23:39 IST 
+PASS pair NOTE: 18:19:00 UTC = 23:49 IST 
+PASS weekday SHEET: Mon 16 Nov 2026 
+PASS weekday SHEET: Mon 23 Nov 2026 
+PASS weekday SHEET: Wed 18 Nov 2026 
+PASS weekday SHEET: Wed 18 Nov 
+PASS weekday SHEET: Mon 23 Nov 2026 
+PASS weekday SHEET: Mon 23 Nov 
+PASS weekday SHEET: Wed 25 Nov 2026 
+PASS weekday NOTE: Mon 16 Nov 2026 
+PASS weekday NOTE: Mon 23 Nov 2026 
+PASS weekday NOTE: Mon 23 Nov 
+PASS weekday NOTE: Mon 23 Nov 
+PASS weekday NOTE: Mon 23 Nov 
+PASS weekday NOTE: Mon 23 Nov 
+PASS weekday NOTE: Wed 25 Nov 
+PASS weekday NOTE: Wed 18 Nov 2026 
+PASS weekday NOTE: Mon 23 Nov 
+PASS weekday NOTE: Wed 18 Nov 2026 
+PASS weekday NOTE: Mon 23 Nov 
+PASS weekday OPEN: Mon 16 Nov 2026 
+PASS weekday OPEN: Mon 23 Nov 
+PASS weekday OPEN: Wed 25 Nov 2026 
+info ISO date SHEET 2026-11-10 Tue
+info ISO date SHEET 2026-11-16 Mon
+info ISO date SHEET 2026-11-23 Mon
+info ISO date NOTE 2026-11-16 Mon
+info ISO date NOTE 2026-11-15 Sun
+info ISO date NOTE 2026-11-13 Fri
+PASS price per call 0.27 0.27
+PASS expected total 3x0.27=0.81 
+PASS program limit 12.40+0.81=13.21 
+PASS 13.21 in cents 1321 
+PASS 13.21 <= 180 
+PASS PRICE_IN 300 cents = 3.00 
+PASS PRICE_OUT 1500 cents = 15.00 
+PASS settings give 27 cents per call 
+PASS balance 189 >= 0.81 
+PASS 13.00 ok (<=13.21), 13.50 not 
+PASS money used 3.10->3.90 increase 0.80 <= 0.81; 4.00 gives 0.90 > 0.81 
+PASS B = 18:29:00 - 860 s = 18:14:40 18:14:40
+PASS B IST 23:44:40 
+PASS sum Y+RL+FP = 25 
+PASS deadline-45 = 17:44:00 
+PASS LS(Wed) = 11:30 
+PASS LF=11:55, CB=12:05 
+PASS IST: 17:00 17:25 17:35 
+PASS Mon23 example LS 17:44 LF 18:09 CB 18:19 (datetime.timedelta(seconds=63840), datetime.timedelta(seconds=65340), datetime.timedelta(seconds=65940))
+PASS Mon23 IST 23:14 23:39 23:49 
+PASS CB2 is exactly 10 min before deadline 
+PASS sample LS<=deadline-(25+10+10) 
+PASS sample CB <= deadline-10 
+PASS sample LS <= B 
+PASS Post-by 25 Nov 15:00 UTC = 20:30 IST 
+PASS Wed 25 Nov is 7 days after Wed 18 Nov; Mon 23 Nov is after run day Wed 18 
+PASS Mon 16 Nov 2026 weekday 
+PASS ps start 11:42:07 later than file time 11:40:55 
+PASS 13 submissions = A 2 + B 10 + C 1 
+PASS expected contacts/mails 3 
+money tokens sheet: ['0.27', '0.81', '12.40', 'USD 0.27', 'USD 0.81', 'USD 13.21', 'USD 15.00', 'USD 189.00', 'USD 3.00']
+money tokens note: ['0.27', '0.80', '0.81', '12.40', '13.00', '13.21', '13.50', '3.10', '3.90', '4.00', 'USD 15.00', 'USD 3.00']
+TOTAL 69 FAIL 0

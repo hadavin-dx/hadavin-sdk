@@ -1,0 +1,5 @@
+OWNER-SHEET-v24-A.md 7797 words (limit 6500 for the two sheets)
+OWNER-SHEET-v24-B.md 7730 words (limit 6500 for the two sheets)
+LEAD-RELEASE-NOTE-v8.md 9224 words (limit 6500 for the two sheets)
+v24-OPEN-FOR-LEAD.md 4258 words (limit 6500 for the two sheets)
+v24-CHANGES.md 496 words (limit 6500 for the two sheets)

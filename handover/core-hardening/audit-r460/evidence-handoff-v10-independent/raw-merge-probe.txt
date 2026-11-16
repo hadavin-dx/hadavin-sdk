@@ -1,0 +1,3 @@
+today B run+type groups sizes [9, 4, 3, 3, 2, 2]
+with all planned: [16, 4, 3, 2, 2]
+single edge changes groups: guard.injection -> llm.protocol run [14, 4, 3, 2, 2]

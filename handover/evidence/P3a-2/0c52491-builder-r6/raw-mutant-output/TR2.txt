@@ -1,0 +1,14 @@
+### tests/test_migration_wiring.py::test_the_test_role_is_looked_up_first_and_not_made_a_second_time rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_______ test_the_test_role_is_looked_up_first_and_not_made_a_second_time _______
+tests/test_migration_wiring.py:1441: in test_the_test_role_is_looked_up_first_and_not_made_a_second_time
+    assert len(db.log) == 1 and "FROM pg_roles" in db.log[0], db.log
+E   AssertionError: ['SELECT r.rolname FROM pg_roles r WHERE r.rolname LIKE %s AND r.rolname <> %s AND NOT EXISTS (SELECT 1 FROM pg_stat_a...SUPERUSER NOCREATEROLE NOCREATEDB NOBYPASSRLS NOREPLICATION PASSWORD \'SCRAM-SHA-256$4096:made-up-salt$made-up-keys\'']
+E   assert (2 == 1)
+E    +  where 2 = len(['SELECT r.rolname FROM pg_roles r WHERE r.rolname LIKE %s AND r.rolname <> %s AND NOT EXISTS (SELECT 1 FROM pg_stat_a...SUPERUSER NOCREATEROLE NOCREATEDB NOBYPASSRLS NOREPLICATION PASSWORD \'SCRAM-SHA-256$4096:made-up-salt$made-up-keys\''])
+E    +    where ['SELECT r.rolname FROM pg_roles r WHERE r.rolname LIKE %s AND r.rolname <> %s AND NOT EXISTS (SELECT 1 FROM pg_stat_a...SUPERUSER NOCREATEROLE NOCREATEDB NOBYPASSRLS NOREPLICATION PASSWORD \'SCRAM-SHA-256$4096:made-up-salt$made-up-keys\''] = <tests.test_migration_wiring._Roles object at 0x7f4c6d76a7b0>.log
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_the_test_role_is_looked_up_first_and_not_made_a_second_time
+1 failed in 0.39s
+

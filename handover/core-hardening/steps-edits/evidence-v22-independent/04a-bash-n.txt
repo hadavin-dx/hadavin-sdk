@@ -1,0 +1,35 @@
+rc=0  date -u
+rc=0  ls -l "<path from the message>"
+rc=0  cd "<folder>"
+rc=0  clear
+rc=0  sha256sum scripts/run_real_check_n8n.py
+rc=0  echo $?
+rc=0  ls -l "<path>"
+rc=0  ls ~/.hadavin-take-tags
+rc=0  grep "^<setting name>=" "<model settings file>"
+rc=0  TZ=UTC ps -o pid=,lstart=,comm= -p <number>
+rc=0  pgrep -f <word>
+rc=0  TZ=UTC ls -l --time-style=full-iso <file> <file>
+rc=0  ls -l "<key file>"
+rc=0  ( set -C; umask 077; read -rs -p 'paste key, Enter: ' K && [ -n "$K" ] && printf '%s\n' "$K" > "<key file>" );
+rc=0  TZ=UTC ls -l --time-style=full-iso <model settings file> <key file>
+rc=0  python3 -I scripts/run_real_check_n8n.py --take <take settings file name>
+command spans checked 16 syntax errors 0
+placeholders in date -u -> []
+placeholders in ls -l "<path from the message>" -> ['<path from the message>']
+placeholders in cd "<folder>" -> ['<folder>']
+placeholders in clear -> []
+placeholders in sha256sum scripts/run_real_check_n8n.py -> []
+placeholders in echo $? -> []
+placeholders in ls -l "<path>" -> ['<path>']
+placeholders in ls ~/.hadavin-take-tags -> []
+placeholders in grep "^<setting name>=" "<model settings -> ['<model settings file>', '<setting name>']
+placeholders in TZ=UTC ps -o pid=,lstart=,comm= -p <numb -> ['<number>']
+placeholders in pgrep -f <word> -> ['<word>']
+placeholders in TZ=UTC ls -l --time-style=full-iso <file -> ['<file>']
+placeholders in ls -l "<key file>" -> ['<key file>']
+placeholders in ( set -C; umask 077; read -rs -p 'paste  -> ['<key file>']
+placeholders in TZ=UTC ls -l --time-style=full-iso <mode -> ['<key file>', '<model settings file>']
+placeholders in python3 -I scripts/run_real_check_n8n.py -> ['<take settings file name>']
+FENCED numbers-message block bash -n rc=2 (expected non-zero or meaningless: it is a message sample, not a command) bash: -c: line 1: syntax error near unexpected token `('
+bash: -c: line 1: `Run name: demo7   Run day: Wed 18 Nov 2026  

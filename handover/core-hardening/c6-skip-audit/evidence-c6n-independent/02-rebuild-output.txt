@@ -1,0 +1,2 @@
+written REPORT-c6n.md, lines 546 rows 72 ready 35 defaults-only 34 with-check 3
+rc=0

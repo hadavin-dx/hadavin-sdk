@@ -1,0 +1,22 @@
+...............F.................................................        [100%]
+=================================== FAILURES ===================================
+____ test_a_test_path_that_starts_with_a_dash_is_a_path_not_a_pytest_option ____
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-289/test_a_test_path_that_starts_w0')
+
+    def test_a_test_path_that_starts_with_a_dash_is_a_path_not_a_pytest_option(tmp_path):
+        (tmp_path / "test_ok.py").write_text("def test_a():\n    assert True\n", encoding="utf-8")
+        assert mr._pytest(tmp_path, ["test_ok.py"], tmp_path / "r2.xml", 60) == 0
+        # as a bare option "-x" would collect and pass test_ok.py in the cwd; as an operand it is a missing file
+>       assert mr._pytest(tmp_path, ["-x"], tmp_path / "r.xml", 60) != 0, (
+            "a test path with a dash was taken as a pytest option"
+        )
+E       AssertionError: a test path with a dash was taken as a pytest option
+E       assert 0 != 0
+E        +  where 0 = <function _pytest at 0x7ff8b7a74720>(PosixPath('/tmp/pytest-of-root/pytest-289/test_a_test_path_that_starts_w0'), ['-x'], (PosixPath('/tmp/pytest-of-root/pytest-289/test_a_test_path_that_starts_w0') / 'r.xml'), 60)
+E        +    where <function _pytest at 0x7ff8b7a74720> = mr._pytest
+
+tests/test_mutation_runner.py:477: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_mutation_runner.py::test_a_test_path_that_starts_with_a_dash_is_a_path_not_a_pytest_option
+1 failed, 64 passed in 21.28s

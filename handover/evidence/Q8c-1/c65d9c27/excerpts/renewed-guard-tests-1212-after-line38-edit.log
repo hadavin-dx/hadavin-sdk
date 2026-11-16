@@ -1,0 +1,30 @@
+........................................................................ [ 16%]
+........................................................................ [ 33%]
+........................................................................ [ 49%]
+........................................................................ [ 66%]
+........................................................................ [ 82%]
+.................................F...................................... [ 99%]
+....                                                                     [100%]
+=================================== FAILURES ===================================
+E   AssertionError: after the renewal the tests are red: _names_the_start_of_the_date_guard_by_rule_and_calls_it_a_reminder():
+              flat = " ".join(_changelog_entry().split())
+      >       assert not _date_guard_sentence_problem(flat), _date_guard_sentence_problem(flat)
+      E       AssertionError: the changelog entry hard-codes a day (not the kinds list's)
+      E       assert not "the changelog entry hard-codes a day (not the kinds list's)"
+      E        +  where "the changelog entry hard-codes a day (not the kinds list's)" = _date_guard_sentence_problem('- **Declared permissions for three backend kinds** (ticket Q8c, part 1): `vault` (secrets), `vault_transit` (signer) ...whether a reason is true: that stays with the reviewer and the logs the row names. The step has not yet run on GitHub.')
+      
+      tests/test_policy_docs.py:262: AssertionError
+      =========================== short test summary info ============================
+      FAILED tests/test_policy_guard.py::test_the_kinds_pin_refuses_a_moved_kind_another_built_sentence_and_an_entry_without_it
+      FAILED tests/test_policy_changelog.py::test_the_changelog_gives_the_days_the_kinds_list_starts_to_fail
+      FAILED tests/test_policy_changelog.py::test_plant_a_moved_or_regrouped_kinds_list_or_a_changelog_that_follows_it_is_refused
+      FAILED tests/test_policy_changelog.py::test_the_changelog_entry_for_the_page_writes_no_day_but_the_kinds_days_read_from_the_list
+      FAILED tests/test_policy_docs.py::test_the_changelog_names_the_start_of_the_date_guard_by_rule_and_calls_it_a_reminder
+      5 failed, 430 passed, 1 deselected in 13.66s
+      
+    assert 1 == 0
+     +  where 1 = CompletedProcess(args=['/home/user/build/EV-Q8c1-b13-c65d9c27/venv-plant/bin/python', '-m', 'pytest', '-p', 'no:cachep...he_start_of_the_date_guard_by_rule_and_calls_it_a_reminder\n5 failed, 430 passed, 1 deselected in 13.66s\n', stderr='').returncode
+/home/user/build/EV-Q8c1-b13-c65d9c27/plant/tests/test_policy_changelog.py:263: AssertionError: after the renewal the tests are red: _names_the_start_of_the_date_guard_by_rule_and_calls_it_a_reminder():
+=========================== short test summary info ============================
+FAILED tests/test_policy_changelog.py::test_plant_a_full_renewal_done_as_the_overdue_messages_list_it_keeps_the_tests_the_page_and_the_mutants_green
+1 failed, 435 passed in 29.94s

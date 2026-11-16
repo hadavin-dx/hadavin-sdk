@@ -1,0 +1,13 @@
+HARNESS MUTANT (scratch copy): Schedule.decided_and_wait no longer holds callers; the stub-meter control must fail. 3 runs:
+/tmp/claude-0/-home-user/39edf7c7-26f2-5129-9a6e-500351b26399/scratchpad/harnessmut/tests/test_meter_harness.py:42: AssertionError: only 3 of 50 callers were admitted: the schedule did not hold every caller at the check 
+=========================== short test summary info ============================
+FAILED tests/test_meter_harness.py::test_the_schedule_forces_the_worst_interleaving_on_a_check_then_book_meter
+1 failed, 2 passed in 0.29s
+/tmp/claude-0/-home-user/39edf7c7-26f2-5129-9a6e-500351b26399/scratchpad/harnessmut/tests/test_meter_harness.py:42: AssertionError: only 3 of 50 callers were admitted: the schedule did not hold every caller at the check 
+=========================== short test summary info ============================
+FAILED tests/test_meter_harness.py::test_the_schedule_forces_the_worst_interleaving_on_a_check_then_book_meter
+1 failed, 2 passed in 0.37s
+/tmp/claude-0/-home-user/39edf7c7-26f2-5129-9a6e-500351b26399/scratchpad/harnessmut/tests/test_meter_harness.py:42: AssertionError: only 3 of 50 callers were admitted: the schedule did not hold every caller at the check 
+=========================== short test summary info ============================
+FAILED tests/test_meter_harness.py::test_the_schedule_forces_the_worst_interleaving_on_a_check_then_book_meter
+1 failed, 2 passed in 0.23s

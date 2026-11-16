@@ -1,0 +1,26 @@
+N28	scripts/run_real_check.py	tests/test_r7t_findings.py -k t1 or t2 or t3 or t7 or t9 or t15 or t17 tests/test_r7s_findings.py	KILLED	['1 failed, 52 passed, 118 deselected in 193.76s (0:03:13)']
+N28	restored-byte-equal=True
+N29	scripts/run_real_check.py	tests/test_r7t_findings.py -k t1 or t2 or t3 or t7 or t9 or t15 or t17 tests/test_r7s_findings.py	KILLED	['1 failed, 118 deselected in 0.31s']
+N29	restored-byte-equal=True
+N30	scripts/run_real_check.py	tests/test_r7t_findings.py -k t1 or t2 or t3 or t7 or t9 or t15 or t17 tests/test_r7s_findings.py	SURVIVED	['72 passed, 118 deselected in 382.67s (0:06:22)']
+N30	restored-byte-equal=True
+N31	scripts/run_real_check.py	tests/test_r7t_findings.py -k t1 or t2 or t3 or t7 or t9 or t15 or t17 tests/test_r7s_findings.py	KILLED	['1 failed, 13 passed, 118 deselected in 76.02s (0:01:16)']
+N31	restored-byte-equal=True
+N32	scripts/run_real_check.py	tests/test_r7t_findings.py -k t1 or t2 or t3 or t7 or t9 or t15 or t17 tests/test_r7s_findings.py	SURVIVED	['72 passed, 118 deselected in 560.11s (0:09:20)']
+N32	restored-byte-equal=True
+N33	scripts/run_real_check.py	tests/test_r7t_findings.py -k t1 or t2 or t3 or t7 or t9 or t15 or t17 tests/test_r7s_findings.py	KILLED	['1 failed, 67 passed, 118 deselected in 501.15s (0:08:21)']
+N33	restored-byte-equal=True
+N34	scripts/run_real_check.py	tests/test_r7t_findings.py -k t1 or t2 or t3 or t7 or t9 or t15 or t17 tests/test_r7s_findings.py	KILLED	['1 failed, 17 passed, 118 deselected in 42.61s']
+N34	restored-byte-equal=True
+N35	scripts/run_real_check.py	tests/test_r7t_findings.py -k t1 or t2 or t3 or t7 or t9 or t15 or t17 tests/test_r7s_findings.py	KILLED	['1 failed, 2 passed, 118 deselected in 0.47s']
+N35	restored-byte-equal=True
+N36	scripts/run_real_check.py	tests/test_r7t_findings.py -k t1 or t2 or t3 or t7 or t9 or t15 or t17 tests/test_r7s_findings.py	KILLED	['1 failed, 2 passed, 118 deselected in 0.34s']
+N36	restored-byte-equal=True
+N37	scripts/run_real_check.py	tests/test_r7t_findings.py -k t1 or t2 or t3 or t7 or t9 or t15 or t17 tests/test_r7s_findings.py	KILLED	['1 failed, 14 passed, 118 deselected in 35.27s']
+N37	restored-byte-equal=True
+N38	tests/support.py	tests/test_r7t_findings.py -k t4 or t11	KILLED	['1 failed, 5 passed, 129 deselected in 0.22s']
+N38	restored-byte-equal=True
+N39	tests/support.py	tests/test_r7t_findings.py -k t4 or t11	KILLED	['1 failed, 129 deselected in 0.21s']
+N39	restored-byte-equal=True
+N40	scripts/run_real_check.py	tests/test_r7t_findings.py -k t1 or t2 or t3 or t7 or t9 or t15 or t17 tests/test_r7s_findings.py	KILLED	['1 failed, 2 passed, 118 deselected in 0.31s']
+N40	restored-byte-equal=True

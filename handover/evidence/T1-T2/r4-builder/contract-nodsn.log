@@ -1,0 +1,38 @@
+.............................................sssssssssssssssssssssssssss [ 35%]
+ssssssssssssssssss...............sssssssssssssss.s.s.s.s.s.s.s.s.s.s.s.s [ 70%]
+.s.s.s.s.s.s.s.s.s......ssssss.s.s.s.s..ss...sss.s.s........             [100%]
+=========================== short test summary info ============================
+SKIPPED [45] tests/contracts/test_store_time_rules.py:47: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [15] tests/contracts/test_store_time_rules.py:66: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_time_rules.py:83: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_time_rules.py:98: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_time_rules.py:110: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_time_rules.py:120: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_time_rules.py:135: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_time_rules.py:148: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_time_rules.py:167: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_time_rules.py:179: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_time_rules.py:191: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_time_rules.py:207: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_time_rules.py:230: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_time_rules.py:246: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_time_rules.py:260: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_time_rules.py:275: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_time_rules.py:287: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_time_rules.py:297: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_time_rules.py:309: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_time_rules.py:321: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_time_rules.py:332: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_time_rules.py:347: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_store_time_rules.py:376: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [6] tests/contracts/test_t1_meter_cap.py:35: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_t1_meter_cap.py:64: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_t1_meter_cap.py:81: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_t1_meter_cap.py:93: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_t1_meter_cap.py:101: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [2] tests/contracts/test_t1_meter_cap.py:110: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [3] tests/contracts/test_t1_meter_cap.py:126: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_t1_meter_cap.py:149: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+SKIPPED [1] tests/contracts/test_t1_meter_cap.py:160: HADAVIN_TEST_PG_DSN not set (the postgres service runs in CI)
+106 passed, 98 skipped in 6.84s
+exit=0

@@ -1,0 +1,9 @@
+# pdbanner-17d7ec3c-codebase-r2: part 6, head 17d7ec3c, round 2 (confirming), persona codebase details
+
+Source: hand-back of the codebase reviewer (agent ab9727c49e1277451), saved by the lead session (condensed). SECURITY / mode-safety path. Read only. **0 Blocker, 0 Major**, minors 1-5. Verified by reading: ci.yml step name fixed (no other plain scalar with a colon and space); tests/test_workflow_files_parse.py catches the exact 2cf0f742 defect (control test, empty-scan guard); old-stage-word rewrite covers the three hit lines (228, 267, 444); mutant G6 re-pointed to `if not top.is_dir():` (unique; killed by test_a_missing_product_root_is_a_hit_not_a_silent_pass); M4a and M4d in stage_mutants also re-keyed; 79 banner mutants counted; JS painter fail-closed (usable(), try/catch, build before touch, textContent only).
+
+## Minor
+1 mode_banner.js:568-572, 655 `NOT_CONFIRMED` (and `api.MODES`) shared mutable and exported: Object.freeze or return a copy. 2 :645-651 if the last-resort textContent write throws the old banner can stay: try `el.hidden = false` first. 3 :599 tone real checks real names only as substrings (short name "CRM" can match by accident); Python is the real gate. 4 test_workflow_files_parse: detector reads `name:` values only (parse test covers the rest); PyYAML is YAML 1.1, not GitHub's parser; duplicate keys not flagged. 5 test_workflow_files_parse.py:17,51 long lines (lint risk only).
+
+## Not confirmed
+37 stage mutants not verifiable from the snapshot (stage_mutants.py not in files/); 78/79 evidence is for 2cf0f742, none at 17d7ec3c (independent runner a660ebfd now running); nearly every banner mutant uses `expect="assert"` (matches any assertion; not new). Not read: mode_banner.py, the guard beyond scan(), the toml, B-rows and G-rows of banner_mutants.py.

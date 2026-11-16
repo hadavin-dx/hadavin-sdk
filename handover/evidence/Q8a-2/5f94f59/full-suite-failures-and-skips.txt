@@ -1,0 +1,18 @@
+Full suite on 5f94f598 (JUnit XML: tests=10695 failures=1 errors=0 skipped=1)
+SKIPPED tests.contracts.test_llm::test_a_malformed_answer_is_a_provider_error[bedrock] | message: 'Stubber refuses a malformed Converse shape before the kind sees it' | first E line: 
+FAILED tests.test_migration_numbers::test_the_timing_harness_flags_a_quadratic_stand_in | message: "AssertionError: a quadratic function must be flagged\nassert False\n +  where False = <function is_superlinear at 0x7f1abbfe25c0>(<function test_the_timing_harness_flags_a_quadratic_stand_in.<locals>.quadratic at 0x7f1a886f7f60>, 'a', (16 * 1024), (256 * 1024))\n +    where <function is_superlinear at " | first E line: E       AssertionError: a quadratic function must be flagged
+
+pytest -rfEs summary:
+FAILED tests/test_migration_numbers.py::test_the_timing_harness_flags_a_quadratic_stand_in
+SKIPPED [1] tests/contracts/test_llm.py:95: Stubber refuses a malformed Converse shape before the kind sees it
+1 failed, 10693 passed, 1 skipped in 380.79s (0:06:20)
+
+Re-runs of the failing test (raw, no verdict):
+[main] 2a8c2aac tests/test_migration_numbers.py rc=1 dur=9s load=4.53 5.64 8.51 last: 1 failed, 132 passed in 8.73s
+[head] 5f94f598 tests/test_migration_numbers.py rc=0 dur=2s load=4.53 5.64 8.51 last: 133 passed in 2.42s
+[main run 2, the one test alone] rc=1 load=3.91 last: 1 failed in 0.64s
+[head run 2, the one test alone] rc=1 load=3.91 last: 1 failed in 0.64s
+[main run 3, the one test alone] rc=1 load=3.91 last: 1 failed in 0.69s
+[head run 3, the one test alone] rc=0 load=3.91 last: 1 passed in 0.68s
+[main run 4, the one test alone] rc=0 load=3.91 last: 1 passed in 0.68s
+[head run 4, the one test alone] rc=1 load=4.00 last: 1 failed in 0.69s

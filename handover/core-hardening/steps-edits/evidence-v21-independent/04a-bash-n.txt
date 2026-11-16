@@ -1,0 +1,34 @@
+fenced-note-1.sh rc=2 fenced-note-1.sh: line 1: syntax error near unexpected token `(' fenced-note-1.sh: line 1: `Run name :: Run name, run date (UTC and IST), REAL or trial, version id (commit id), rehearsal date, transcript file Earli
+fenced-sheet-1.sh rc=2 fenced-sheet-1.sh: line 1: syntax error near unexpected token `(' fenced-sheet-1.sh: line 1: `Run na :: Run name: demo7   Run day: Wed 18 Nov 2026   REAL run (paid model calls happen)   Version id: 1a2b3c4   Take p
+inline-note-01.sh rc=0  :: pgrep 
+inline-note-02.sh rc=0  :: sha256sum 
+inline-note-03.sh rc=0  :: ls -l 
+inline-note-04.sh rc=0  :: ls ~/.hadavin-take-tags 
+inline-note-05.sh rc=0  :: ps -o pid=,lstart=,comm= 
+inline-note-06.sh rc=0  :: pgrep -f 
+inline-note-07.sh rc=0  :: read -rs 
+inline-note-08.sh rc=0  :: grep -F 
+inline-note-09.sh rc=0  :: python3 -I 
+inline-sheet-01.sh rc=0  :: sha256sum 
+inline-sheet-02.sh rc=0  :: date -u 
+inline-sheet-03.sh rc=0  :: echo $? 
+inline-sheet-04.sh rc=0  :: ls -l "<path from the message>" 
+inline-sheet-05.sh rc=0  :: cd "<folder>" 
+inline-sheet-06.sh rc=0  :: clear 
+inline-sheet-07.sh rc=0  :: sha256sum scripts/run_real_check_n8n.py 
+inline-sheet-08.sh rc=0  :: ls -l "<path>" 
+inline-sheet-09.sh rc=0  :: ls ~/.hadavin-take-tags 
+inline-sheet-10.sh rc=0  :: grep "^<setting name>=" "<model settings file>" 
+inline-sheet-11.sh rc=2 inline-sheet-11.sh: line 1: syntax error near unexpected token `newline' inline-sheet-11.sh: line 1: :: TZ=UTC ps -o pid=,lstart=,comm= -p <number> 
+inline-sheet-12.sh rc=2 inline-sheet-12.sh: line 1: syntax error near unexpected token `newline' inline-sheet-12.sh: line 1: :: pgrep -f <word> 
+inline-sheet-13.sh rc=2 inline-sheet-13.sh: line 1: syntax error near unexpected token `<' inline-sheet-13.sh: line 1: `TZ=U :: TZ=UTC ls -l --time-style=full-iso <file> <file> 
+inline-sheet-14.sh rc=0  :: ls -l "<key file>" 
+inline-sheet-15.sh rc=0  :: ( set -C; umask 077; read -rs -p 'paste key, Enter: ' K && [ -n "$K" ] && printf '%s\n' "$K" > "<key file>" );
+inline-sheet-16.sh rc=2 inline-sheet-16.sh: line 1: syntax error near unexpected token `<' inline-sheet-16.sh: line 1: `TZ=U :: TZ=UTC ls -l --time-style=full-iso <model settings file> <key file> 
+inline-sheet-17.sh rc=2 inline-sheet-17.sh: line 1: syntax error near unexpected token `newline' inline-sheet-17.sh: line 1: :: python3 -I scripts/run_real_check_n8n.py --take <take settings file name> 
+inline-sheet-11 substituted rc=0 :: TZ=UTC ps -o pid=,lstart=,comm= -p 4242
+inline-sheet-12 substituted rc=0 :: pgrep -f demo7
+inline-sheet-13 substituted rc=0 :: TZ=UTC ls -l --time-style=full-iso /tmp/a /tmp/a
+inline-sheet-16 substituted rc=0 :: TZ=UTC ls -l --time-style=full-iso /tmp/m.env /tmp/k
+inline-sheet-17 substituted rc=0 :: python3 -I scripts/run_real_check_n8n.py --take take.env
+( set -C; umask 077; read -rs -p 'paste key, Enter: ' K && [ -n "$K" ] && printf '%s\n' "$K" > "<key file>" ); echo "exit $?"

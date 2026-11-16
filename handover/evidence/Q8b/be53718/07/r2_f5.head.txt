@@ -1,0 +1,50 @@
+M1 PG+key, multi-word || {'PGPASSWORD': '<SECRET_1>'}
+M1 env entry PG+key || {'name': 'PGPASSWORD', 'value': '<SECRET_1>'}
+M1 pwd || {'pwd': '<SECRET_1>'}
+M1 DBPassword || {'DBPassword': '<SECRET_1>'}
+M1 secretkey || {'secretkey': '<SECRET_1>'}
+M1 secrets || {'secrets': '<SECRET_1>'}
+M1 root+key || {'rootpassword': '<SECRET_1>'}
+M1 accessKey || {'accessKey': '<SECRET_1>'}
+1f negative author || {'author': 'Priya Nair'}
+1f negative tokens_used || {'tokens_used': 1234}
+1f negative policy flag || {'password_policy_enabled': 'true'}
+M2 number in env entry || {'name': 'DB_PASSWORD', 'value': '<SECRET_REDACTED>'}
+M2 list in env entry || {'name': 'DB_PASSWORD', 'value': ['<SECRET_1>', '<SECRET_REDACTED>']}
+M2 Name/Value || {'Name': 'DB_PASSWORD', 'Value': '<SECRET_1>'}
+M2 key/value || {'key': 'api_key', 'value': '<SECRET_1>'}
+B1r authorization || {'authorization': '<SECRET_1>'}
+B1r private_key || {'private_key': '<SECRET_1>'}
+B1r privateKey || {'privateKey': '<SECRET_1>'}
+B1r bearer || {'bearer': '<SECRET_1>'}
+B1r passphrase || {'passphrase': '<SECRET_1>'}
+B1r long-suffix key || {'password_for_the_primary_database_replica': '<SECRET_1>'}
+B1r long-suffix key, one word || {'password_for_the_primary_database_replica': '<SECRET_1>'}
+B1r 300-char multi-word || {'password': '<SECRET_REDACTED>'}
+255 chars || {'password': '<SECRET_1>'}
+256 chars || {'password': '<SECRET_REDACTED>'}
+M3 Secret username + log || [{'kind': 'Secret', 'stringData': {'username': '<SECRET_1>'}}, {'message': 'user <SECRET_1> NAME denied'}]
+M5 Secret DB_NAME b64 + log || [{'kind': 'Secret', 'data': {'DB_NAME': '<SECRET_1>'}}, {'message': 'orders-api timeout'}]
+M6 ESC inside value || {'password': '<SECRET_1>'}
+M6 ESC + log || [{'password': '<SECRET_1>'}, {'message': 'the hunter came'}]
+F5 sweep || {'password': '<SECRET_1>'}
+F5 a b || {'password': '<SECRET_1>'}
+F5 both quotes || {'db_password': '<SECRET_REDACTED>'}
+F5b repeat, pattern-free || [{'password': '<SECRET_1>'}, {'message': 'login with <SECRET_1> failed; correct answer'}]
+F5b Secret cfg + log || [{'kind': 'Secret', 'stringData': {'cfg': '<SECRET_1>'}}, {'message': 'login with <SECRET_1> failed'}]
+F5b Secret b64 + decoded in log || [{'kind': 'Secret', 'data': {'p': '<SECRET_3>'}}, {'message': 'login with <SECRET_3> failed'}]
+XF composite (design B1) || [{'token': '<SECRET_1>'}, {'message': 'login with <EMAIL_1> Zx9 tail failed'}]
+XF over 255 + log || [{'password': '<SECRET_REDACTED>'}, {'message': 'saw alpha bravo charlie delta echo foxtrot alpha bravo charlie delta echo foxtrot alpha bravo charlie ... ot alpha bravo charlie delta echo foxtrot alpha bravo charlie delta echo foxtrot alpha bravo charlie delta echo foxtrot alpha bravo charlie delta e'}]
+XF both quotes + log || [{'password': '<SECRET_REDACTED>'}, {'message': 'saw pa55"word \'tail\' part'}]
+XF nested under credentials + log || [{'credentials': {'note': '<SECRET_REDACTED>'}}, {'message': 'saw correct horse battery staple'}]
+XF number + log || [{'pin_token': '<SECRET_REDACTED>'}, {'message': 'pin 12345678 used'}]
+XF respelled (JSON-escaped annotation) || [{'kind': 'Secret', 'stringData': {'cfg': '<SECRET_1>'}}, {'annotations': {'last-applied-configuration': '{"stringData": {"cfg": "<SECRET_1>"}}'}}]
+1d timestamp || {'token': '2026-11-11T10:00:00Z'}
+1d near miss +00:00 || {'token': '<SECRET_1>'}
+1d near miss space || {'token': '<SECRET_1>'}
+1d near miss trailing || {'token': '<SECRET_1>'}
+1d near miss month 13 || {'token': '<SECRET_1>'}
+guard credentials.user || {'credentials': {'user': '<SECRET_REDACTED>'}}
+guard one token || {'password': '<SECRET_1>'}
+guard message || {'message': 'correct horse battery staple'}
+exit 0

@@ -1,0 +1,11 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+shape | chars | head median cpu | main median cpu | ratio
+S1 plain ASCII log | 262144 | 0.428 | 0.391 | 1.10
+S2 tab table | 262144 | 0.407 | 0.408 | 1.00
+S3 JSON lines | 262144 | 0.397 | 0.392 | 1.01
+S4 Hindi | 262144 | 0.771 | 0.794 | 0.97
+S5 Persian ZWNJ emoji | 262144 | 1.472 | 1.371 | 1.07
+H1 coloured output | 262144 | 0.672 | 0.239 | 2.82
+H2 colour inside a word | 262144 | 1.047 | 0.319 | 3.28
+H3 sgr0 inside a word | 262144 | 1.764 | 0.374 | 4.72
+H4 colourised log with sgr0 | 262144 | 0.996 | 0.331 | 3.01

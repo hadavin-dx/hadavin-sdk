@@ -1,0 +1,5 @@
+# PR89 round 16, head f552f26 - slice tools/mutation_runner.py 640-1274 (+395-640 helpers, JunitReport). Read only, nothing run.
+No Blocker/Major; no input sends a secret or piece of one to a log line or result row. Clean: every free-text row value goes through _masked; env read once (only _env_snapshot, fallbacks 503/756, SystemRoot 253); _prefix_table correct ("aabaaab" -> [0,1,0,1,2,2,3]); lock name hashes only _address_parts output.
+- s3-01 Nit :690-694 (and 465) docstring reads as two treatments of a URL with ?host= query; reword to "is 'unparsed'".
+- s3-02 Minor :1159-1164 lock entered into `held` before the `try`/finally; SystemExit in that window leaves lock until GC (caller catching SystemExit and re-running same DB gets "another run"). No secret. Move ExitStack inside try or use _signals_held().
+- s3-03 Nit :942 run_mutants docstring omits RuntimeError cases (CanaryFailed, lock refusal, skipped/reaped baseline). s3-04 Nit flock on read-only descriptor (documented). s3-05 Nit MAX_JUNIT_CHARS compared to st_size bytes.

@@ -1,0 +1,5 @@
+10:27 UTC trees built
+10:24 base_nh full suite started (M3)
+10:30 M1 reconciled (collect 9846 -> 9946; added 34+61+5=100; removed 0)
+10:41 M2 fix+tests written; new tests fail on old (6 fail), pass on new; running 200k loops
+10:29 pf full suite started

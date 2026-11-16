@@ -1,0 +1,4 @@
+sha=2f94c2b28df25bca9bb28d6a50d13f8c292c19c9
+cmd=.venv/bin/ruff format --check src tests demos tools
+318 files already formatted
+exit=0

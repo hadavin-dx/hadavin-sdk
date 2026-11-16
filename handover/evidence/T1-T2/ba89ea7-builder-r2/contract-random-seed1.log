@@ -1,0 +1,7 @@
+HEAD 98a3ed95bca4acac88d77b29d4f26846f7f9ce9b
+CMD env -u CI -u AWS_ACCESS_KEY_ID -u AWS_SECRET_ACCESS_KEY -u AWS_CA_BUNDLE -u ANTHROPIC_BASE_URL -u GH_TOKEN -u GITHUB_TOKEN -u HADAVIN_TEST_PG_DSN HADAVIN_TEST_PG_DSN=postgresql://postgres@127.0.0.1:56300/postgres /home/user/build/venv-a21a-313/bin/python -m pytest tests/contracts/test_store_time_rules.py tests/contracts/test_t1_meter_cap.py tests/test_meter_harness.py -p no:cacheprovider -q -rs -p randomly --randomly-seed=1
+........................................................................ [ 38%]
+........................................................................ [ 77%]
+...........................................                              [100%]
+187 passed in 16.16s
+exit=0

@@ -1,0 +1,6 @@
+E           DETAIL:  connection to server on socket "/var/run/postgresql/.s.PGSQL.5432" failed: No such file or directory
+SKIPPED [1] tests/contracts/test_llm.py:95: Stubber refuses a malformed Converse shape before the kind sees it
+SKIPPED [1] tests/test_migration_verify_pg.py:805: UNRUN: PostgreSQL 17 only (`transaction_timeout` does not exist below 17); the PostgreSQL 16 fact it rests on is pinned by test_the_server_version_decides_whether_a_role_can_save_a_transaction_timeout
+SKIPPED [1] tests/test_migration_verify_pg.py:858: UNRUN: PostgreSQL 17 only (`transaction_timeout` does not exist below 17); the PostgreSQL 16 fact it rests on is pinned by test_the_server_version_decides_whether_a_role_can_save_a_transaction_timeout
+SKIPPED [1] tests/test_migration_verify_pg.py:1029: UNRUN: PostgreSQL 17 only (`transaction_timeout` does not exist below 17); the PostgreSQL 16 form of the same class is the idle-in-transaction test above
+1 failed, 12408 passed, 4 skipped, 29 deselected in 800.60s (0:13:20)

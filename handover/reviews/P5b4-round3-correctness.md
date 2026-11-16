@@ -1,0 +1,56 @@
+# P5b4 round 3, correctness review
+
+Status: REPORTED (saved from the reviewer hand-back, which is model output, not user authority).
+
+ROUND 3 CORRECTNESS REVIEW, P5b4 revision 3 (redaction path, Tier A). Read-only. I did not open handover/reviews/ or handover/evidence/.
+
+VERDICT: no Blocker. 2 Majors, 6 Minors, 3 Nits. The ticket is close to buildable. Under the round-3 rule (round 4 only if no Blocker and at most 2 Majors), it sits exactly at the limit.
+
+| id | severity | ticket line | problem | fix |
+|---|---|---|---|---|
+| R3-COR-1 | Major | 332-333, 550 (R3-AUTH-6), item 6 at 417-427 | The fail-before claim for R14 ("fails on its canary assertion: the old basicConfig handler prints the httpx2 INFO line") is probably false under pytest. The shim's `bootstrap_logging(unattended=True)` runs `logging.basicConfig(level=INFO, stream=sys.stderr, ...)` without `force`. `basicConfig` does nothing when root already has handlers, and pytest's logging plugin keeps its capture handlers on root during every test phase. So the shim installs nothing. The canary assertion then passes (nothing reaches capsys) and R14 fails only on "at least one `logger=other` line". The assertion order (canary first, then at-least-one) hides this. The stated reason for failure is wrong, and the mutation and fail-before evidence would mislabel it. I reasoned this from pytest and logging behaviour. I did not run it. | Have the shim add an explicit `StreamHandler(sys.stderr)` at the root with `setLevel(DEBUG)`, which is the old tick behaviour without `basicConfig`'s root-has-handlers no-op. Or reword the expected failure as "fails on the at-least-one-line assertion". Say which in lines 333 and 550. |
+| R3-COR-2 | Major | 245, 355 (K13 x10), 80 | K13 has one entry per global, but U1 does not say the install is `unattended=True` or that the root level starts at a non-default value. A plain install does not touch `sys.stderr` or `sys.stdout` (they change only with `unattended=True`, line 80). A plain install sets root WARNING, which is already the default. So the K13 entries for `sys.stderr`, `sys.stdout` and root level are equivalent mutants. They cannot be KILLED, which breaks the Done rule "every mutant KILLED" (line 458). The builder has to guess. | In U1, install with `unattended=True` (and the upgrade level). Before the install, set root to a distinctive level such as DEBUG, set a non-default `raiseExceptions`, and set a spy value for each hook. Then each `not restored: <global>` case is a real change. |
+| R3-COR-3 | Minor | 351 (K9), 263 (U11) | K9 `expect` is `warning text printed`. Under pytest, `warnings.warn` is recorded by pytest's `catch_warnings(record=True)`, so nothing reaches capsys even without `captureWarnings`. Without the positive assertion the mutant would survive. The mutant's real failure is "the `logger=py.warnings` line is missing". | Make the positive assertion explicit with a message such as `py.warnings line missing`, and use that as K9's `expect`. |
+| R3-COR-4 | Minor | 37, 462, 478, 512, 515 | Stale claims. The ticket says P5b3 revision 3 and `handover/owner-visible-limits.md` are "not on this tree yet". Both exist now. `tickets/P5b3.md` is revision 3, and `owner-visible-limits.md` holds entry 1, written by P5b3 at about 04:00 UTC. The file's own rule is "append one entry per limit at the end, numbered, do not edit another author's entry". PENDING LEAD 17 also asks the lead to copy one block of six limits. Checked in P5b3 rev 3: it still says `handle.emit` (lines 193, 604), still lists the `run_tick` move (635), and still cites `P5b4.md:414-419` (31, 605, 612). So Couplings (1)-(3) still hold. | Update Depends on, the UNVERIFIED list, Couplings (4) and PENDING LEAD 17. Say the lead appends the six limits as separate numbered entries (entries 2 to 7), not as one block. |
+| R3-COR-5 | Minor | 122 | "grep finds 24 own logger calls in `src/`". I count 25 on this tree: injection 1, app 2, postgres 1, receiver 3 (lines 32, 36, 63), requests 3, replay_records 1, chain 3, agent_loop 2, tick 8 (71, 73, 207, 218, 246, 276, 317, 328), k1b/loop 1. It is 24 only after P5b3 deletes the call at `receiver.py:63`. | Write "25 on this tree, 24 after P5b3 removes `receiver.py:63`". |
+| R3-COR-6 | Minor | 75, 72-73, 303-304 | "Unattended gives INFO, non-unattended WARNING, the same as today" is not true for an embedder in library mode. The first call sets the root level to WARNING (or INFO). `cli.main(...)` called by an embedder whose root is at INFO or DEBUG therefore changes the embedder's level for the whole call. U28 tests only the tick, so no row covers a non-tick `cli.main` with root already at DEBUG or INFO. | Either do not touch the root level when `library_mode` is True (only the `OwnHandler` level), or add a row for a non-tick `cli.main` with root at DEBUG and state the accepted behaviour in limit (a). |
+| R3-COR-7 | Minor | 124, 263 (U11), 90 | The `captureWarnings` machinery logs `logger.warning("%s", s)` to `py.warnings` (from memory of CPython 3.13 `logging._showwarning`; UNVERIFIED here). Under the "N is the template length" rule, `msg_len` is then always 2 for every warning. The line carries no information, and U11's "N" cannot be told apart from a constant. | Say so in the ticket and have U11 assert `msg_len=2`. Or special-case the `py.warnings` logger to use `len(record.args[0])` when `args` is a one-item tuple holding a str. |
+| R3-COR-8 | Minor | 297 (U21), 320 (S2), 322 (S4) | U21's tick rows run `_tick` for real unless the builder neutralises it. The ticket does not say to patch `cli._tick`/`_main` or to supply a config for these rows. S4's "gate with a failing made-up check" gives no recipe either. The builder has to guess the setup. | In U21, say to monkeypatch `cli._tick` to `lambda: 0` and other commands' handlers away, so the row tests only the `unattended` decision. Add one line on the S4 gate setup (which made-up agent and check). |
+| R3-COR-9 | Nit | 330 | Skip on `os.name == "nt"` is allowed. K34, K36, K43, K52 and K61 are marked "POSIX-only?", but K19, K20 and K40 (the S1 `os.write(1, ...)` and `os.write(2, ...)` channels) are not. They have the same Windows uncertainty. | Mark them, or state that they are expected to run on Windows. |
+| R3-COR-10 | Nit | 398-406 (count paragraph) | The mutation count text mixes two bases ("61 + 9 = 70 test functions or cases"). Distinct pytest ids are 70. Distinct test function names are about 58, because K13 collapses to one, S6 has 3 cases and S1 channel has 2. | Say "70 distinct pytest ids (58 distinct function names)". |
+| R3-COR-11 | Nit | 208, 210 | `runtime/tick.py:273-278` is correct. `guard/runmap.py` `safe_head` exists at line 485, and the ticket gives no line for it. | Add the line (optional). |
+
+VERIFIED (read on disk, `<repo>`; the tree has no git metadata, so the cited commits are UNVERIFIED):
+- cli.py cites all hold on disk, so current main matches the cites:
+  - line numbers: 29, 36-46, 70-83 (debug branch at 81-82), 87, 131, 132-133, 134-135, 282-284, 287, 296-307, 299, 309, 413-414;
+  - lazy imports at 213, 228, 252-254, 326-327;
+  - `logging` is used only at line 287, so `import logging` at line 29 can go.
+- pyproject.toml:46-47 holds (`[project.scripts]`, then `hadavin-sdk = "hadavin_sdk.cli:main"`).
+- `hadavin_sdk/__init__.py` holds only `__version__`. `defaults.py` imports only `__future__`. `guard/__init__.py:1-3` imports egress, injection and redact. `src/` has no subprocess, asyncio, faulthandler, `.buffer`, `os.system`, `os.popen`, `os.exec`, `_Stderr`, `_NoTraceback`, `lastResort` or `basicConfig` other than cli.py:287, and no `output_guard`.
+- Thread starts hold: `k1b/loop.py:104`, `tools.py:1122`, `guard/http.py:93`. `approvals/receiver.py` holds at 19, 40, 62-63 and 65. `runtime/tick.py` holds at 246 (heartbeat `"tick ok=%s failed=%s"`), 273-278, 284-292 and 317 (`step=%s error_kind=%s message=%s`). `run_tick` returns 1 for a failed step.
+- Tests: `cli.main(` is 50 lines in 12 files, 32 lines in 9 files without `tests/demo_askdata`. `caplog` is 35 uses in 10 files; the ones near `cli.main` do not combine with `run_tick` in the same test. Cites hold: `test_k1b_cli.py:19-20, 96-100, 188-195, 259-261`; `test_k1a_pass_k.py:116-117`; `test_p7_tick.py:362-374` and `:367-370`; `test_lockin_guard.py:503, 519-521`. `tests/fixtures/` exists.
+- CI: `ci.yml:34` (ubuntu-24.04), `:73` (3.13), `:88`, `:94`, `:119` hold. CI ruff and format check cover `src tests demos` only (lines 79, 81), as item 3 says.
+- Counts, by hand against the text:
+  - Test rows: U1-U19 plus U21-U29 is 28; S1-S4 and S6-S9 is 8; total 36.
+  - Mutant table: K1-K61 plus K17a/b plus K55b gives 63 rows; K7 and K29 are withdrawn, leaving 61 active; K13's 10 entries give 70 runs.
+  - No two mutants share a killer id. All 61 `only_test` names (70 ids) appear in the Tests section; case ids such as `[list]`, `[gate_k]` and `[canary]` are builder-assigned from the U-row lists.
+  - Each `expect` is an assertion-message fragment and none equals a function name.
+- Template: all 17 fields are present in the template's order.
+- Other tickets:
+  - P5a: `STEPS` is at `P5a.md:129`; the `token40` cut is at `:30`; PENDING LEAD 13 is at `:212` and matches the `LITERAL_OK` text; `logging_layer` has 5 rows owned by R2.
+  - P5b1: R14 is a strict expected failure naming P5b4 (`P5b1.md:193`, `:366`).
+  - P5b3: its `failed:` text keeps the `failed:` prefix (`:186`), so S9 and K53 stay valid.
+  - P5b5: the claim that it cites P5b4 revision 2 is consistent with `P5b5.md:5, :26`.
+- The `LEAD-ORDERS.md` line "37. Yes to all four; no light parser module now" holds. Order 21 item 17 holds (line 88).
+- Python and logging facts used in the argparse and logging rules look consistent with my knowledge of Python 3.13: `add_subparsers` `parser_class` inheritance, `handleError` gated on `raiseExceptions`, `threading.excepthook` ignoring `SystemExit`. I did not run them.
+
+NOT CHECKED (UNVERIFIED):
+- The commits `c7e18c6`, `050ad69` and `ce70eb5`, and the statement that `src/` equals `ce70eb5` (no git on disk).
+- P1m, `tools/mutation_runner.py`, and the `only_test`/`expect`/empty-ini field names (`tools/` does not exist on this tree).
+- `tests/test_provider_errors_wire.py`, `tests/test_diagnostics_hostile.py`, `tests/data/c18a_*` and the P5a corpus (none on disk). The count and ids of R2-owned corpus rows are unchecked.
+- Orders 6-27 except items 37 and 21-17. Orders 20 item 6, 24 item 39, 25, 26 and 27 item 52 were not read.
+- `P5b1.md:43` (the log-level claims for the four library loggers; the line is too long to display).
+- All Python behaviour was reasoned, not run. That includes the exit code 120, the `os.dup2` recipe in S7, atexit ordering (evidence item 8), probe results on 3.13.18, the pytest interplay with `sys.unraisablehook`/`threading.excepthook`, and the pydantic 2.14.1 warning.
+- Whether `approval_id`, `run_id`, `step.name` and `action` passed to own logger calls are exactly `str`. If one is an enum or str subclass it is silently withheld.
+- Windows behaviour, whether the shell commands in items 6-8 run as written (bash process substitution, quoting), and that `ruff` and `bandit` stay clean.
+- No real-looking secrets found in the ticket; I did not scan P5b4.md exhaustively for them beyond what I read.

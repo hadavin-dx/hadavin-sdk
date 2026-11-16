@@ -1,0 +1,14 @@
+checking file src/hadavin_sdk/config.py
+checking file src/hadavin_sdk/defaults.py
+checking file src/hadavin_sdk/backends/table.py
+checking file src/hadavin_sdk/k1b/replay.py
+checking file tests/test_c01_route_limits.py
+checking file tests/test_k1b_replay.py
+dry rc=0
+Using CPython 3.13.18 interpreter at: /usr/local/bin/python3
+Creating virtual environment at: .venv
+   Building hadavin-sdk @ file:///tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/ap4
+      Built hadavin-sdk @ file:///tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/ap4
+Installed 76 packages in 66ms
+All checks passed!
+1 file already formatted

@@ -1,0 +1,2 @@
+N01	src/lead_desk/crm_hubspot.py	tests/test_r7t_findings.py -k t15 or t17 or t18 or t10 tests/test_crm_hubspot.py	KILLED	['1 failed, 17 passed, 176 deselected in 258.65s (0:04:18)']
+N01	restored-byte-equal=True

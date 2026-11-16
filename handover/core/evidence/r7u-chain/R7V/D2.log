@@ -1,0 +1,10 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.2.0, pluggy-1.7.0
+rootdir: /home/user/build/rr6/out/R7V/stage2
+configfile: pyproject.toml
+collected 41 items / 31 deselected / 10 selected
+
+tests/test_r7u_a_findings.py ..........                                  [100%]
+
+================ 10 passed, 31 deselected in 366.79s (0:06:06) =================
+rc=0

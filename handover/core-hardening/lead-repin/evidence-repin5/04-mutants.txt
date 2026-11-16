@@ -1,0 +1,35 @@
+MUTATION RUN on the final v5 script (one damage per copy; the self-test must FAIL). 15:03Z
+14 damages x 2 shells (dash, bash) = 28 runs. Result: 28 of 28 ended with a non-zero exit code.
+
+m01 dash: rc=1 SELF-TEST: passed=1011 failed=10 (th first: FAIL (secret still visible): bare Bearer value
+m01 bash: rc=1 SELF-TEST: passed=1011 failed=10 (th first: FAIL (secret still visible): bare Bearer value
+m02 dash: rc=1 SELF-TEST: passed=1011 failed=10 (th first: FAIL (secret still visible): JWT-shaped value
+m02 bash: rc=1 SELF-TEST: passed=1011 failed=10 (th first: FAIL (secret still visible): JWT-shaped value
+m03 dash: rc=1 SELF-TEST: passed=1011 failed=10 (th first: FAIL (secret still visible): AKIA-shaped id
+m03 bash: rc=1 SELF-TEST: passed=1011 failed=10 (th first: FAIL (secret still visible): AKIA-shaped id
+m05 dash: rc=1 SELF-TEST: passed=999 failed=22 (the first: FAIL (secret still visible): at6 (first 6 characters)
+m05 bash: rc=1 SELF-TEST: passed=999 failed=22 (the first: FAIL (secret still visible): at6 (first 6 characters)
+m09 dash: rc=1 SELF-TEST: passed=1013 failed=8 (the first: FAIL (secret still visible): yaml multi-line quoted (first 6 characters)
+m09 bash: rc=1 SELF-TEST: passed=1013 failed=8 (the first: FAIL (secret still visible): yaml multi-line quoted (first 6 characters)
+m09a dash: rc=1 SELF-TEST: passed=1013 failed=8 (the first: FAIL (evidence was hidden): a quoted value at the start of a line hides the string, not the words after it
+m09a bash: rc=1 SELF-TEST: passed=1013 failed=8 (the first: FAIL (evidence was hidden): a quoted value at the start of a line hides the string, not the words after it
+m13 dash: rc=1 SELF-TEST: passed=1010 failed=11 (th first: FAIL (secret still visible): private key block opener with the body on the same line (first 6 characters)
+m13 bash: rc=1 SELF-TEST: passed=1010 failed=11 (th first: FAIL (secret still visible): private key block opener with the body on the same line (first 6 characters)
+m19 dash: rc=1 SELF-TEST: passed=1021 failed=1 (the first: FAIL (machinery): a judge of the self-test result accepted a forged result or rejected a good one
+m19 bash: rc=1 SELF-TEST: passed=1021 failed=1 (the first: FAIL (machinery): a judge of the self-test result accepted a forged result or rejected a good one
+m26 dash: rc=1 SELF-TEST: passed=1021 failed=6 (the first: FAIL (machinery): a weak filter must stop the run (exit 3=3, folders left=1, BLOCK printed or not)
+m26 bash: rc=1 SELF-TEST: passed=1021 failed=6 (the first: FAIL (machinery): a weak filter must stop the run (exit 3=3, folders left=1, BLOCK printed or not)
+m27 dash: rc=1 SELF-TEST: passed=1021 failed=1 (the first: FAIL (machinery): LC_ALL is not C in the filter (it is 'en_US.UTF-8')
+m27 bash: rc=1 SELF-TEST: passed=1021 failed=1 (the first: FAIL (machinery): LC_ALL is not C in the filter (it is 'en_US.UTF-8')
+m28 dash: rc=1 SELF-TEST: passed=1021 failed=1 (the first: FAIL (machinery): the left-out report does not count a name with a line break or a symbolic link correctly
+m28 bash: rc=1 SELF-TEST: passed=1021 failed=1 (the first: FAIL (machinery): the left-out report does not count a name with a line break or a symbolic link correctly
+m3 dash: rc=1 SELF-TEST: passed=1021 failed=1 (the first: FAIL (machinery): the return value of the self-test must be non-zero when a check failed late (got 0)
+m3 bash: rc=1 SELF-TEST: passed=1021 failed=1 (the first: FAIL (machinery): the return value of the self-test must be non-zero when a check failed late (got 0)
+mF dash: rc=1 SELF-TEST: passed=1021 failed=1 (the first: FAIL (machinery): a judge of the self-test result accepted a forged result or rejected a good one
+mF bash: rc=1 SELF-TEST: passed=1021 failed=1 (the first: FAIL (machinery): a judge of the self-test result accepted a forged result or rejected a good one
+mR dash: rc=1 SELF-TEST: passed=1021 failed=1 (the first: FAIL (machinery): a judge of the self-test result accepted a forged result or rejected a good one
+mR bash: rc=1 SELF-TEST: passed=1021 failed=1 (the first: FAIL (machinery): a judge of the self-test result accepted a forged result or rejected a good one
+
+What each damage is: m01 Bearer rule removed; m02 JWT rule removed; m03 AKIA rule removed; m05 URL user:password@ rule removed; m09 line-start YAML rule removed; m09a quoted-string YAML rule removed; m13 private-key block opener rule removed; m19 st_verdict always passes; m26 cleanup does not remove the folder; m27 LC_ALL set to a text locale; m28 the line-break name count broken; m3 the self-test return value forced to success (the coordinator's m3: the earlier "equivalent" reading was wrong, it is caught); mF the FAIL-line check removed from st_recount (forged tally); mR st_recount always passes.
+Earlier survivors in this run before new cases were added: m09 (killed now by a line-start YAML case), m09a (by a kept-text check), m19, mF, mR (by the forged-result checks), m28 (by the left-out report check). m05 is killed by two cases where no secret name stands near the value.
+The v4 file had 7 damages run under 2 shells (14 runs).

@@ -1,0 +1,9 @@
+NON-ROOT RUN (user nobody, uid 65534; one file of the made-up take folder had mode 000)
+exit code: 0 (the run ends; the stop signals are printed in the output)
+'Permission denied' text on stdout: 0; on stderr: 0
+--- lines (made-up paths only):
+      1   STOP-SIGNAL: 14 file(s) MISSING (a wrong path, not a zero count): fix the path and run again.
+      1   STOP-SIGNAL: 16 file(s) UNREADABLE (not searched): fix the permission or tell the lead.
+      1   STOP-SIGNAL: 22 search(es) looked at ZERO FILES: a "0 matching lines" there means nothing.
+      1 SUMMARY: blocks=16 search_blocks=13 with_hits=0 zero_hits=13 information_blocks=3 files_missing=14 files_unreadable=16 (counts only; nothing judged; the lead reads each block and the per-search ZERO l
+      1 UNREADABLE (checksum not made, NOT zero): /tmp/nrtest/take/scripts/run_real_check_n8n.py

@@ -1,0 +1,19 @@
+NOTE: GNU timeout installs its own handlers for INT, QUIT, HUP, so the program it starts gets default dispositions: this run did not reproduce the ignoring parent. Valid repro is file 04b.
+dash  main  INT   exit=130 wanted=130 folders_left=0 stray_programs=0 seconds_to_end=0.1 OK
+dash  main  TERM  exit=143 wanted=143 folders_left=0 stray_programs=0 seconds_to_end=0.1 OK
+dash  main  HUP   exit=129 wanted=129 folders_left=0 stray_programs=0 seconds_to_end=0.1 OK
+dash  main  QUIT  exit=131 wanted=131 folders_left=0 stray_programs=0 seconds_to_end=0.1 OK
+dash  mask  INT   exit=130 wanted=130 folders_left=0 stray_programs=0 seconds_to_end=0.0 OK
+dash  mask  TERM  exit=143 wanted=143 folders_left=0 stray_programs=0 seconds_to_end=0.0 OK
+dash  mask  HUP   exit=129 wanted=129 folders_left=0 stray_programs=0 seconds_to_end=0.0 OK
+dash  mask  QUIT  exit=131 wanted=131 folders_left=0 stray_programs=0 seconds_to_end=0.0 OK
+bash  main  INT   exit=130 wanted=130 folders_left=0 stray_programs=0 seconds_to_end=0.1 OK
+bash  main  TERM  exit=143 wanted=143 folders_left=0 stray_programs=0 seconds_to_end=0.1 OK
+bash  main  HUP   exit=129 wanted=129 folders_left=0 stray_programs=0 seconds_to_end=0.1 OK
+bash  main  QUIT  exit=131 wanted=131 folders_left=0 stray_programs=0 seconds_to_end=0.1 OK
+bash  mask  INT   exit=130 wanted=130 folders_left=0 stray_programs=0 seconds_to_end=0.1 OK
+bash  mask  TERM  exit=143 wanted=143 folders_left=0 stray_programs=0 seconds_to_end=0.1 OK
+bash  mask  HUP   exit=129 wanted=129 folders_left=0 stray_programs=0 seconds_to_end=0.0 OK
+bash  mask  QUIT  exit=131 wanted=131 folders_left=0 stray_programs=0 seconds_to_end=0.0 OK
+BAD rows: 0
+launcher exit 0

@@ -1,0 +1,2 @@
+LK1 'see [x](  ) and ![](   ) now' -> 'see [x](  ) and [image removed] now'
+LBL1 '[HIGHENTROPYTOKEN](http://evil.com/p) tail' -> 'HIGHENTROPYTOKEN [link removed] tail'

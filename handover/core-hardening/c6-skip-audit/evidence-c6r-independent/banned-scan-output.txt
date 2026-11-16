@@ -1,0 +1,7 @@
+banned list size: 10
+REPORT-c6r.md: 0 of 10 banned strings occur (total occurrences 0)
+indep_c6r.py: 0 of 10 banned strings occur (total occurrences 0)
+mutate_c6r.py: 0 of 10 banned strings occur (total occurrences 0)
+banned_scan.py: 0 of 10 banned strings occur (total occurrences 0)
+baseline-output.txt: 0 of 10 banned strings occur (total occurrences 0)
+mutation-summary.txt: 0 of 10 banned strings occur (total occurrences 0)

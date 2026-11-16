@@ -1,0 +1,4 @@
+test functions new in head vs 7af13809: 54
+prev-head-7af13809 (+head tests) | exit 1 | 133 failed, 121 passed, 12 skipped in 21.30s | all collected: {'passed': 121, 'failed': 133, 'skipped': 12} | among new test functions' cases (171): {'passed': 54, 'failed': 116, 'skipped': 1}
+origin/main (+head tests +head tools/policy_page.py) | exit 1 | 185 failed, 69 passed, 12 skipped in 19.18s | all collected: {'passed': 69, 'failed': 185, 'skipped': 12} | among new test functions' cases (171): {'passed': 51, 'failed': 119, 'skipped': 1}
+head with ONLY the 3 src files reverted to 7af13809 | exit 1 | 31 failed, 223 passed, 12 skipped in 11.79s | all collected: {'passed': 223, 'failed': 31, 'skipped': 12} | among new test functions' cases (171): {'passed': 152, 'failed': 18, 'skipped': 1}

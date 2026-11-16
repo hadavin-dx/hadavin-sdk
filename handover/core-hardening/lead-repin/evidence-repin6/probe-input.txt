@@ -1,0 +1,55 @@
+postgres://:wvbnhdmq01x@db.example.invalid/app
+redis://:wvbnhdmq02x@cache.example.invalid:6379/0
+https://wvbnhdmq03x@host.example.invalid/path
+amqp://guest:wvbnhdmq04x@broker.example.invalid//
+ftp://user:wvbnhdmq05x@ftp.example.invalid/f
+mongodb+srv://u:wvbnhdmq06x@m.example.invalid/db
+git clone https://tok:wvbnhdmq07x@@git.example.invalid/r.git
+jdbc:mysql://h.example.invalid/db?user=u&password=wvbnhdmq08x
+url = "http://x:wvbnhdmq09x@h.example.invalid"
+docker login -u svc -p wvbnhdmq10x registry.example.invalid
+redis-cli -a wvbnhdmq11x ping
+ldapsearch -x -D cn=a -w wvbnhdmq12x -b dc=x
+zip -P wvbnhdmq13x out.zip in.txt
+7z a -pwvbnhdmq14x out.7z in.txt
+htpasswd -b users.txt bob wvbnhdmq15x
+smbclient //h/share -U bob%wvbnhdmq16x
+mysql -u root -pwvbnhdmq17x db
+sshpass -p wvbnhdmq18x ssh h
+mytool run -p wvbnhdmq19x now
+newcmd --login -w wvbnhdmq20x x
+API_KEY = (
+    "wvbnhdmq22x",
+    "tail_kept_a",
+)
+password = [ \
+  "wvbnhdmq26x" \
+]
+SECRET_TOKEN=\
+wvbnhdmq29x
+db_pass: {
+  inner: "wvbnhdmq31x"
+}
+cfg = dict(password=(
+  "wvbnhdmq34x"
+))
+auth_token = $(
+  echo wvbnhdmq37x
+)
+pass​word = wvbnhdmq39x
+apié_key = wvbnhdmq40x
+na me_secret: wvbnhdmq41x
+token = wvbnhdmq42x
+export OPENAI_API_KEY=wvbnhdmq43x
+Authorization: Bearer wvbnhdmq44x
+curl -u admin:wvbnhdmq45x https://h.example.invalid/
+password: "wvbnhdmq46x"
+{"client_secret": "wvbnhdmq47x"}
+- name: DB_PASSWORD
+  value: wvbnhdmq49x
+echo "the password is wvbnhdmq50x ok"
+sess eyJwvbnhdmq51x.abcdefghijkl.mnopqrstuvwx
+key sk_live_wvbnhdmq52x here
+passwd = wvbnhdmq53x
+secret=wvbnhdmq54x; other=1
+webhook_url = https://h.example.invalid/hook/wvbnhdmq55x

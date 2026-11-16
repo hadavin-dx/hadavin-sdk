@@ -1,0 +1,608 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="0" skipped="0" tests="101" time="89.780" timestamp="2026-11-10T17:40:44.593261+00:00" hostname="vm"><testcase classname="tests.contracts.test_store_reserve" name="test_reserve_books_the_three_counters_and_returns_the_row[memory]" time="0.003"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_reserve_books_the_three_counters_and_returns_the_row[postgres]" time="0.297"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_the_caps_are_keyword_only_with_no_default[memory]" time="0.001"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_the_caps_are_keyword_only_with_no_default[postgres]" time="0.141"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_a_cap_is_exact_at_the_boundary_and_one_micro_dollar_over_is_refused[memory]" time="0.002"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_a_cap_is_exact_at_the_boundary_and_one_micro_dollar_over_is_refused[postgres]" time="0.150"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_run_and_month_caps_are_exact_at_the_boundary_too[memory]" time="0.001"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_run_and_month_caps_are_exact_at_the_boundary_too[postgres]" time="0.164"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_the_first_failing_cap_is_named_in_the_order_run_day_month[memory]" time="0.001"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_the_first_failing_cap_is_named_in_the_order_run_day_month[postgres]" time="0.158"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_validation_comes_first_and_changes_nothing[memory]" time="0.001"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_validation_comes_first_and_changes_nothing[postgres]" time="0.160"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_meta_text_is_refused_the_same_way_on_both_stores[memory-nul]" time="0.002"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_meta_text_is_refused_the_same_way_on_both_stores[memory-lone_surrogate]" time="0.002"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_meta_text_is_refused_the_same_way_on_both_stores[postgres-nul]" time="0.153"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_meta_text_is_refused_the_same_way_on_both_stores[postgres-lone_surrogate]" time="0.145"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_meta_is_stored_and_its_size_rule_is_the_same_on_both_stores[memory]" time="0.002"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_meta_is_stored_and_its_size_rule_is_the_same_on_both_stores[postgres]" time="0.143"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_the_kill_switch_refuses_a_new_reserve_and_a_replay_but_not_settle_or_release[memory]" time="0.002"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_the_kill_switch_refuses_a_new_reserve_and_a_replay_but_not_settle_or_release[postgres]" time="0.171"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_the_run_must_exist_and_belong_to_the_agent[memory]" time="0.001"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_the_run_must_exist_and_belong_to_the_agent[postgres]" time="0.151"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_replay_conflict_and_closed_replay[memory]" time="0.001"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_replay_conflict_and_closed_replay[postgres]" time="0.130"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_settle_below_equal_above_and_the_replays[memory]" time="0.003"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_settle_below_equal_above_and_the_replays[postgres]" time="0.137"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_settle_validates_first_and_refuses_more_than_six_decimals[memory]" time="0.001"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_settle_validates_first_and_refuses_more_than_six_decimals[postgres]" time="0.129"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_release_gives_back_the_full_amount_and_replays[memory]" time="0.002"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_release_gives_back_the_full_amount_and_replays[postgres]" time="0.138"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_sweep_expires_old_open_rows_without_moving_counters_and_an_expired_row_settles_once[memory]" time="0.001"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_sweep_expires_old_open_rows_without_moving_counters_and_an_expired_row_settles_once[postgres]" time="0.150"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_an_expired_row_can_be_released_and_a_young_row_is_not_swept[memory]" time="0.001"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_an_expired_row_can_be_released_and_a_young_row_is_not_swept[postgres]" time="0.147"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_list_open_orders_by_creation_and_filters[memory]" time="0.002"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_list_open_orders_by_creation_and_filters[postgres]" time="0.147"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_a_damaged_counter_refuses_a_lowering_and_leaves_the_row_as_it_was[memory]" time="0.001"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_a_damaged_counter_refuses_a_lowering_and_leaves_the_row_as_it_was[postgres]" time="0.152"><system-out>--------------------------------- Captured Log ---------------------------------
+ERROR    hadavin_sdk.store:postgres.py:808 spend counter damaged: spend for reservation r-97-postgres
+ERROR    hadavin_sdk.store:postgres.py:808 spend counter damaged: spend for reservation r-97-postgres
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_a_missing_counter_row_is_damage_for_a_raise_too[memory]" time="0.001"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_a_missing_counter_row_is_damage_for_a_raise_too[postgres]" time="0.145"><system-out>--------------------------------- Captured Log ---------------------------------
+ERROR    hadavin_sdk.store:postgres.py:808 spend counter damaged: spend_month for reservation r-99-postgres
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_the_ceiling_refuses_a_reserve_after_every_cap_and_books_nothing[memory]" time="0.002"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_the_ceiling_refuses_a_reserve_after_every_cap_and_books_nothing[postgres]" time="0.139"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_a_concurrent_pair_cannot_pass_the_cap[memory]" time="0.004"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_a_concurrent_pair_cannot_pass_the_cap[postgres]" time="0.131"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_the_day_must_be_within_one_day_of_the_store_date[memory]" time="0.001"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_the_day_must_be_within_one_day_of_the_store_date[postgres]" time="0.144"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_the_ceiling_is_exact_for_each_counter_and_lowering_reopens_room[memory-run]" time="0.002"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_the_ceiling_is_exact_for_each_counter_and_lowering_reopens_room[memory-day]" time="0.002"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_the_ceiling_is_exact_for_each_counter_and_lowering_reopens_room[memory-month]" time="0.002"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_the_ceiling_is_exact_for_each_counter_and_lowering_reopens_room[postgres-run]" time="0.169"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_the_ceiling_is_exact_for_each_counter_and_lowering_reopens_room[postgres-day]" time="0.174"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_the_ceiling_is_exact_for_each_counter_and_lowering_reopens_room[postgres-month]" time="0.166"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_a_settle_above_the_reserved_amount_is_never_refused_by_the_ceiling[memory]" time="0.001"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_a_settle_above_the_reserved_amount_is_never_refused_by_the_ceiling[postgres]" time="0.150"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_e1_e2_a_settle_above_the_reserved_amount_books_the_full_excess_on_all_three_counters[memory-0.5-5.0-open]" time="0.002"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_e1_e2_a_settle_above_the_reserved_amount_books_the_full_excess_on_all_three_counters[memory-0.5-5.0-expired]" time="0.002"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_e1_e2_a_settle_above_the_reserved_amount_books_the_full_excess_on_all_three_counters[memory-10-20-open]" time="0.002"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_e1_e2_a_settle_above_the_reserved_amount_books_the_full_excess_on_all_three_counters[memory-10-20-expired]" time="0.002"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_e1_e2_a_settle_above_the_reserved_amount_books_the_full_excess_on_all_three_counters[memory-10-20.000001-open]" time="0.002"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_e1_e2_a_settle_above_the_reserved_amount_books_the_full_excess_on_all_three_counters[memory-10-20.000001-expired]" time="0.003"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_e1_e2_a_settle_above_the_reserved_amount_books_the_full_excess_on_all_three_counters[memory-0.5-1.5-open]" time="0.002"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_e1_e2_a_settle_above_the_reserved_amount_books_the_full_excess_on_all_three_counters[memory-0.5-1.5-expired]" time="0.003"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_e1_e2_a_settle_above_the_reserved_amount_books_the_full_excess_on_all_three_counters[memory-0.5-1.500001-open]" time="0.002"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_e1_e2_a_settle_above_the_reserved_amount_books_the_full_excess_on_all_three_counters[memory-0.5-1.500001-expired]" time="0.002"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_e1_e2_a_settle_above_the_reserved_amount_books_the_full_excess_on_all_three_counters[postgres-0.5-5.0-open]" time="0.132"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_e1_e2_a_settle_above_the_reserved_amount_books_the_full_excess_on_all_three_counters[postgres-0.5-5.0-expired]" time="0.150"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_e1_e2_a_settle_above_the_reserved_amount_books_the_full_excess_on_all_three_counters[postgres-10-20-open]" time="0.142"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_e1_e2_a_settle_above_the_reserved_amount_books_the_full_excess_on_all_three_counters[postgres-10-20-expired]" time="0.175"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_e1_e2_a_settle_above_the_reserved_amount_books_the_full_excess_on_all_three_counters[postgres-10-20.000001-open]" time="0.151"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_e1_e2_a_settle_above_the_reserved_amount_books_the_full_excess_on_all_three_counters[postgres-10-20.000001-expired]" time="0.153"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_e1_e2_a_settle_above_the_reserved_amount_books_the_full_excess_on_all_three_counters[postgres-0.5-1.5-open]" time="0.145"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_e1_e2_a_settle_above_the_reserved_amount_books_the_full_excess_on_all_three_counters[postgres-0.5-1.5-expired]" time="0.154"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_e1_e2_a_settle_above_the_reserved_amount_books_the_full_excess_on_all_three_counters[postgres-0.5-1.500001-open]" time="0.141"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_e1_e2_a_settle_above_the_reserved_amount_books_the_full_excess_on_all_three_counters[postgres-0.5-1.500001-expired]" time="0.151"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_e3_after_a_settle_past_the_ceiling_only_lowering_writes_still_work[memory-run]" time="0.002"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_e3_after_a_settle_past_the_ceiling_only_lowering_writes_still_work[memory-day]" time="0.003"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_e3_after_a_settle_past_the_ceiling_only_lowering_writes_still_work[memory-month]" time="0.002"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_e3_after_a_settle_past_the_ceiling_only_lowering_writes_still_work[postgres-run]" time="0.219"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_e3_after_a_settle_past_the_ceiling_only_lowering_writes_still_work[postgres-day]" time="0.220"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_e3_after_a_settle_past_the_ceiling_only_lowering_writes_still_work[postgres-month]" time="0.231"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_r1_to_r4_a_release_with_a_damaged_counter_changes_nothing_and_works_after_repair[memory-run-open]" time="0.005"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_r1_to_r4_a_release_with_a_damaged_counter_changes_nothing_and_works_after_repair[memory-run-expired]" time="0.002"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_r1_to_r4_a_release_with_a_damaged_counter_changes_nothing_and_works_after_repair[memory-day-open]" time="0.002"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_r1_to_r4_a_release_with_a_damaged_counter_changes_nothing_and_works_after_repair[memory-day-expired]" time="0.002"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_r1_to_r4_a_release_with_a_damaged_counter_changes_nothing_and_works_after_repair[memory-month-open]" time="0.002"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_r1_to_r4_a_release_with_a_damaged_counter_changes_nothing_and_works_after_repair[memory-month-expired]" time="0.002"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_r1_to_r4_a_release_with_a_damaged_counter_changes_nothing_and_works_after_repair[memory-missing-month-row-open]" time="0.002"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_r1_to_r4_a_release_with_a_damaged_counter_changes_nothing_and_works_after_repair[memory-missing-month-row-expired]" time="0.002"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_r1_to_r4_a_release_with_a_damaged_counter_changes_nothing_and_works_after_repair[postgres-run-open]" time="0.205"><system-out>--------------------------------- Captured Log ---------------------------------
+ERROR    hadavin_sdk.store:postgres.py:808 spend counter damaged: runs for reservation r-196-postgres
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_r1_to_r4_a_release_with_a_damaged_counter_changes_nothing_and_works_after_repair[postgres-run-expired]" time="0.191"><system-out>--------------------------------- Captured Log ---------------------------------
+ERROR    hadavin_sdk.store:postgres.py:808 spend counter damaged: runs for reservation r-197-postgres
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_r1_to_r4_a_release_with_a_damaged_counter_changes_nothing_and_works_after_repair[postgres-day-open]" time="0.184"><system-out>--------------------------------- Captured Log ---------------------------------
+ERROR    hadavin_sdk.store:postgres.py:808 spend counter damaged: spend for reservation r-198-postgres
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_r1_to_r4_a_release_with_a_damaged_counter_changes_nothing_and_works_after_repair[postgres-day-expired]" time="0.197"><system-out>--------------------------------- Captured Log ---------------------------------
+ERROR    hadavin_sdk.store:postgres.py:808 spend counter damaged: spend for reservation r-199-postgres
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_r1_to_r4_a_release_with_a_damaged_counter_changes_nothing_and_works_after_repair[postgres-month-open]" time="0.204"><system-out>--------------------------------- Captured Log ---------------------------------
+ERROR    hadavin_sdk.store:postgres.py:808 spend counter damaged: spend_month for reservation r-200-postgres
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_r1_to_r4_a_release_with_a_damaged_counter_changes_nothing_and_works_after_repair[postgres-month-expired]" time="0.171"><system-out>--------------------------------- Captured Log ---------------------------------
+ERROR    hadavin_sdk.store:postgres.py:808 spend counter damaged: spend_month for reservation r-201-postgres
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_r1_to_r4_a_release_with_a_damaged_counter_changes_nothing_and_works_after_repair[postgres-missing-month-row-open]" time="0.172"><system-out>--------------------------------- Captured Log ---------------------------------
+ERROR    hadavin_sdk.store:postgres.py:808 spend counter damaged: spend_month for reservation r-202-postgres
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_r1_to_r4_a_release_with_a_damaged_counter_changes_nothing_and_works_after_repair[postgres-missing-month-row-expired]" time="0.175"><system-out>--------------------------------- Captured Log ---------------------------------
+ERROR    hadavin_sdk.store:postgres.py:808 spend counter damaged: spend_month for reservation r-203-postgres
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_b5_ten_thousand_reserve_settle_pairs_equal_the_exact_decimal_sum[memory]" time="0.892"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_b5_ten_thousand_reserve_settle_pairs_equal_the_exact_decimal_sum[postgres]" time="61.580"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_b5_model_reserve_settle_release_and_sweep_match_a_plain_python_ledger[memory]" time="1.249"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_b5_model_reserve_settle_release_and_sweep_match_a_plain_python_ledger[postgres]" time="17.700"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase><testcase classname="tests.contracts.test_store_reserve" name="test_b12_memory_the_lock_covers_the_cap_check_and_the_write" time="0.302"><system-out>--------------------------------- Captured Log ---------------------------------
+
+--------------------------------- Captured Out ---------------------------------
+
+</system-out><system-err>--------------------------------- Captured Err ---------------------------------
+
+</system-err></testcase></testsuite></testsuites>

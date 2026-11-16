@@ -1,0 +1,5 @@
+words sheet v22 -> v23: 9267 -> 8455 (variant A 8354, variant B 8152); lines 146 -> 142; note words v6 -> v7: 8349 -> 8780
+ok: variants A and B checked
+banned words: 10 listed, case-sensitive 0, case-insensitive 0 (files read 9)
+TOTAL PROBLEMS 0
+rc=0

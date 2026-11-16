@@ -1,0 +1,8 @@
+     48 Failed: DID NOT RAISE ConfigError
+     28 AssertionError: Skipping 34 identical leading characters in diff, use -v to show / -  between 0 (not included) and 3600 / +  between 0.001 and 3600
+      4 TypeError: TickContext.__init__() missing 1 required positional argument: 'now'
+      2 AssertionError: the clock was asked although a time was given
+      1 ImportError: cannot import name 'executor_timeout_ok' from 'hadavin_sdk.config' (/home/user/build/EV-Q8a1-fcd77a6/src/hadavin_sdk/config.py)
+      1 AssertionError: demo took timeout_s=0: 'timeout_s= must be an int or float between 0 (not included) and 3600' / assert 'timeout_s= m...ded) and 3600' == 'timeout_s= m....001 and 3600' / Skipping 34 identical leading characters in diff, use -v to show / -  between 0.001 and 3600 / +  between 0 (not included) and 3600
+      1 AssertionError: a live tick step took a time handed to its context ('pilot'): '', ['tool calls', 'tool calls'] / assert ('' == 'now= is for ...ilot and prod' / - now= is for tests; it is refused in pilot and prod)
+      1 AssertionError: a live tick ran without a built-in step ('pilot'): (0, ['sweep', 'reconcile', 'stuck', 'checkpoint', 'reprobe_sources']) / assert (0, ['sweep',...obe_sources']) == ('a built-in ...evidence', []) / At index 0 diff: 0 != 'a built-in tick step is missing: purge_evidence' / Use -v to get more diff

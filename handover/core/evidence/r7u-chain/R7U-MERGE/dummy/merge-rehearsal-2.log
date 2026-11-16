@@ -1,0 +1,24 @@
+copied /home/user/build/rr6/tree-R7T -> /home/user/build/rr6/out/R7U-MERGE/dummy/tree-R7U-test2
+diff A: 595 bytes, 2 files
+diff B: 1302 bytes, 2 files
+diff C: 0 bytes, 0 files
+applied A: 2 files
+diff C is empty: nothing to apply
+  note (B): Hunk #1 succeeded at 118 (offset 1 line).
+applied B: 2 files
+== overlapping files (touched by 2 or more diffs) ==
+  CHANGELOG.md  [AB]
+== each builder's changed files vs the merged tree ==
+  A: CHANGELOG.md DIFFERS between builder tree and merged tree
+  A: docs/rehearsal-a.txt DIFFERS between builder tree and merged tree
+  A: 0 files identical in merged tree, 2 differ; changed in builder tree but not in its diff (first 10 names): scripts/run_real_check.py tests/test_r7u_a_findings.py 
+  B: CHANGELOG.md DIFFERS between builder tree and merged tree
+  B: README.md DIFFERS between builder tree and merged tree
+  B: 0 files identical in merged tree, 2 differ; changed in builder tree but not in its diff (first 10 names): scripts/run_real_check.py tests/test_r7t_findings.py tests/test_r7u_b_findings.py 
+  C: 0 files identical in merged tree, 0 differ; changed in builder tree but not in its diff (first 10 names): demo_only/bad_request.py demo_only/fake_imap.py demo_only/fake_smtp_tls.py src/lead_desk/config.py src/lead_desk/crm_hubspot.py src/lead_desk/loopback.py src/lead_desk/run_stats.py tests/test_r7t_findings.py tests/test_r7u_c_findings.py tools/refusing_args.py 
+== diff -rq merged tree vs /home/user/build/rr6/tree-R7T ==
+Files BASE/CHANGELOG.md and NEW/CHANGELOG.md differ
+Files BASE/README.md and NEW/README.md differ
+Only in NEW/docs: rehearsal-a.txt
+total lines: 3  (full: /home/user/build/rr6/out/R7U-MERGE/dummy/tree-R7U-test2-merge-report/summary-vs-base.txt)
+MERGE OK: /home/user/build/rr6/out/R7U-MERGE/dummy/tree-R7U-test2

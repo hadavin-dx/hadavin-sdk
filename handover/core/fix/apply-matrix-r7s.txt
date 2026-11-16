@@ -1,0 +1,24 @@
+frozen tree 49d3c85938fe5323a3378a49195d3b8da434b3ca patch-crlf=/home/user/build/rr6/out/R7S/core-fix-on-frozen-r7s-crlf.patch patch-lf=/home/user/build/rr6/out/R7S/core-fix-on-frozen-r7s-lf.patch
+checkout a: .ps1 line endings before patching: CRLF CRLF 
+checkout b: .ps1 line endings before patching: CRLF CRLF 
+checkout c: .ps1 line endings before patching: LF LF 
+checkout a patch crlf: git apply --check rc=0
+checkout b patch crlf: git apply --check rc=0
+checkout c patch lf: git apply --check rc=0
+checkout a patch core-fix-on-frozen-r7s-crlf.patch: git apply rc=0
+  scripts/reset.ps1 lines=84 lines-with-CR=84
+  scripts/start_all.ps1 lines=101 lines-with-CR=101
+  tree equals tree-R7S byte for byte
+checkout b patch core-fix-on-frozen-r7s-crlf.patch: git apply rc=0
+  scripts/reset.ps1 lines=84 lines-with-CR=84
+  scripts/start_all.ps1 lines=101 lines-with-CR=101
+  tree equals tree-R7S byte for byte
+checkout c patch core-fix-on-frozen-r7s-lf.patch: git apply rc=0
+  scripts/reset.ps1 lines=84 lines-with-CR=0
+  scripts/start_all.ps1 lines=101 lines-with-CR=0
+  differs from tree-R7S:
+diff -r -x .git -x data -x .ruff_cache -x .pytest_cache -x __pycache__ ./scripts/reset.ps1 /home/user/build/rr6/tree-R7S/scripts/reset.ps1
+1,84c1,84
+< # Stop what start_all.ps1 started (only those process ids) and delete the lead book, so the next run starts empty.
+< # Run from the repository root. It deletes the database file, its -wal/-shm/.lock files, the logs and the pid files,
+< # and refuses to run when the database path is not inside the repository's data folder.

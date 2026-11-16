@@ -1,0 +1,5 @@
+C07 info: OWNER-SHEET-v27-A.md 7475 words (target 6300: NOT met)
+C07 info: OWNER-SHEET-v27-B.md 7518 words (target 6300: NOT met)
+check-v27: 2 failure(s)
+FAIL C55 A holds secret-shaped text (pattern \bAKIA(?!IOSFODNN7EXAM)
+FAIL C55 B holds secret-shaped text (pattern \bAKIA(?!IOSFODNN7EXAM)

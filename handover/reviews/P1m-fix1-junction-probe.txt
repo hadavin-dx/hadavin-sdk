@@ -1,0 +1,2 @@
+3.13.3 mklink rc 0
+islink False isjunction True is_dir True

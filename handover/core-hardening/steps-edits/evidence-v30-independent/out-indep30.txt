@@ -1,0 +1,74 @@
+INFO I01 words LEAD-RELEASE-NOTE-v14.md = 12837
+INFO I01 words OWNER-APPENDIX-v30-A.md = 3950
+INFO I01 words OWNER-APPENDIX-v30-B.md = 3881
+INFO I01 words OWNER-CARD-v30-A.md = 1777
+INFO I01 words OWNER-CARD-v30-B.md = 1711
+INFO I01 words OWNER-FILM-PERSON-v30.md = 442
+INFO I01 words OWNER-SHEET-v30-A.md = 6285
+INFO I01 words OWNER-SHEET-v30-B.md = 6097
+INFO I01 words v30-OPEN-FOR-LEAD.md = 7527
+INFO I01 sheet A: sheet+appendix+film = 10677, sheet+card+appendix+film = 12454
+INFO I01 sheet B: sheet+appendix+film = 10420, sheet+card+appendix+film = 12131
+INFO I02 pairs checked 117, problems 0
+PASS I02 sheet A owner pages hold "18:29 UTC = 23:59 IST" x5
+PASS I02 sheet B owner pages hold "18:29 UTC = 23:59 IST" x5
+PASS I02 "18:19 UTC = 23:49 IST": owner pages A/B x0/x0, lead pages x3
+PASS I02 "18:04 UTC = 23:34 IST": owner pages A/B x0/x0, lead pages x5
+DEVIATION I02 "18:00 UTC = 23:30 IST": owner pages A/B x0/x0, lead pages x0 (ABSENT from every v30 page)
+INFO I03 weekday-date mentions checked 65
+PASS I03 sheet A owner pages hold "Mon 16 Nov 2026" x1
+PASS I03 sheet B owner pages hold "Mon 16 Nov 2026" x1
+PASS I03 sheet A owner pages hold "Wed 18 Nov 2026" x4
+PASS I03 sheet B owner pages hold "Wed 18 Nov 2026" x4
+PASS I03 sheet A owner pages hold "Mon 23 Nov 2026" x3
+PASS I03 sheet B owner pages hold "Mon 23 Nov 2026" x2
+PASS I03 sheet A owner pages hold "Wed 25 Nov 2026" x2
+PASS I03 sheet B owner pages hold "Wed 25 Nov 2026" x2
+PASS I04 sheet A owner pages: [OWNER FILLS: ...] x4, [LEAD FILLS at re-pin: ...] x5
+INFO I04 sheet A other bracket text starting FILLS (prose, not a placeholder?): '[LEAD FILLS` row, a missing last-resort step, figure line or'
+PASS I04 sheet B owner pages: [OWNER FILLS: ...] x4, [LEAD FILLS at re-pin: ...] x5
+INFO I04 sheet B other bracket text starting FILLS (prose, not a placeholder?): '[LEAD FILLS` row, a missing last-resort step, figure line or'
+INFO I04 LEAD-RELEASE-NOTE-v14.md: [OWNER FILLS: x4, [LEAD FILLS at re-pin: x5, literal spellings with "..." x2
+INFO I04 v30-OPEN-FOR-LEAD.md: [OWNER FILLS: x1, [LEAD FILLS at re-pin: x1, literal spellings with "..." x2
+INFO I05 LEAD-RELEASE-NOTE-v14.md: "cancel the older key" descriptive mention | ...pt the older key, which is left alone"; B now has the owner [HIT] as its own step, sheet 7.11, by a lates
+INFO I05 LEAD-RELEASE-NOTE-v14.md: variant "Cancelling the older key"
+INFO I05 LEAD-RELEASE-NOTE-v14.md: variant "cancels the older key"
+INFO I05 LEAD-RELEASE-NOTE-v14.md: variant "cancelling the older key"
+INFO I05 LEAD-RELEASE-NOTE-v14.md: variant "cancels the older key"
+INFO I05 v30-OPEN-FOR-LEAD.md: "cancel the older key" descriptive mention | ...han 7 days ago the owner takes B); alternative (not built): [HIT] after the run, which is B | | 96 | A: t
+INFO I05 v30-OPEN-FOR-LEAD.md: "cancel the older key" descriptive mention | ...the last-resort step | the owner names one delegate who may [HIT] if he cannot; the builder cannot name a
+INFO I05 v30-OPEN-FOR-LEAD.md: variant "cancels the older key"
+INFO I05 v30-OPEN-FOR-LEAD.md: variant "cancels the older key"
+INFO I06 sheet A appendix parts present: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+PASS I06 sheet A: 10 distinct (page, part) pointers, 0 unresolved; total pointer mentions 36
+INFO I06 sheet B appendix parts present: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+PASS I06 sheet B: 10 distinct (page, part) pointers, 0 unresolved; total pointer mentions 34
+INFO I07 rebuild rc=0 stderr=''
+PASS I07 LEAD-RELEASE-NOTE-v14.md rebuilt 8b3eaa754678 disk 8b3eaa754678 equal
+PASS I07 OWNER-APPENDIX-v30-A.md rebuilt 67efa870a98f disk 67efa870a98f equal
+PASS I07 OWNER-APPENDIX-v30-B.md rebuilt 5998ad522f20 disk 5998ad522f20 equal
+PASS I07 OWNER-CARD-v30-A.md rebuilt 5f18418f59b0 disk 5f18418f59b0 equal
+PASS I07 OWNER-CARD-v30-B.md rebuilt 803fc04af4fb disk 803fc04af4fb equal
+PASS I07 OWNER-FILM-PERSON-v30.md rebuilt 34231963b546 disk 34231963b546 equal
+PASS I07 OWNER-SHEET-v30-A.md rebuilt 484567420b74 disk 484567420b74 equal
+PASS I07 OWNER-SHEET-v30-B.md rebuilt f1d4e103c2c2 disk f1d4e103c2c2 equal
+PASS I07 v30-OPEN-FOR-LEAD.md rebuilt b7c010d22913 disk b7c010d22913 equal
+INFO I08 email-shaped text OWNER-APPENDIX-v30-A.md:71 is a masked example with a three-dot ellipsis? True
+INFO I08 email-shaped text OWNER-APPENDIX-v30-B.md:69 is a masked example with a three-dot ellipsis? True
+PASS I08 secret pattern anthropic-shape: 0 hit(s) outside the allowed example
+PASS I08 secret pattern anthropic-prefix-any: 0 hit(s) outside the allowed example
+PASS I08 secret pattern sk-generic: 0 hit(s) outside the allowed example
+PASS I08 secret pattern aws-key: 0 hit(s) outside the allowed example
+PASS I08 secret pattern github-token: 0 hit(s) outside the allowed example
+PASS I08 secret pattern slack-token: 0 hit(s) outside the allowed example
+PASS I08 secret pattern private-key: 0 hit(s) outside the allowed example
+PASS I08 secret pattern jwt: 0 hit(s) outside the allowed example
+PASS I08 secret pattern long-hex-or-b64: 0 hit(s) outside the allowed example
+FAIL I08 secret pattern email: 2 hit(s) outside the allowed example
+PASS I08 secret pattern bearer: 0 hit(s) outside the allowed example
+PASS I08 secret pattern hubspot-pat: 0 hit(s) outside the allowed example
+INFO I08 hit OWNER-APPENDIX-v30-A.md:71 [email] 1@gm****...(len 11)
+INFO I08 hit OWNER-APPENDIX-v30-B.md:69 [email] 1@gm****...(len 11)
+INFO I09 BANNED entries read: 10
+PASS I09 banned-string total hits over 9 built + 11 other files: 0 (counts only; strings not printed)
+indep30: 1 FAIL line(s), 1 DEVIATION line(s)

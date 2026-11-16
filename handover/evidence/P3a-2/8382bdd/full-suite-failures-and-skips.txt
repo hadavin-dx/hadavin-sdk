@@ -1,0 +1,49 @@
+Full suite at 8382bdd: failures and skips (from /home/user/build/evidence-raw/P3a2-8382bdd/full-junit.xml)
+FAILED tests/test_migration_numbers.py::test_the_timing_harness_flags_a_quadratic_stand_in
+  message: AssertionError: a quadratic function must be flagged (tests/test_migration_numbers.py:843)
+  same file on clean origin/main 2a8c2aac: rc=1, 1 failed (this same test), 132 passed
+  single test repeated 5 times alone: origin/main 5 of 5 rc=1; HEAD 8382bdd 5 of 5 rc=1
+SKIPPED tests/contracts/test_llm.py::test_a_malformed_answer_is_a_provider_error[bedrock]
+  reason: Stubber refuses a malformed Converse shape before the kind sees it
+
+--- console excerpt (last 25 lines of the full log) ---
+........................................................................ [ 98%]
+........................................................................ [ 99%]
+........................................................................ [ 99%]
+......................                                                   [100%]
+=================================== FAILURES ===================================
+______________ test_the_timing_harness_flags_a_quadratic_stand_in ______________
+
+    @pytest.mark.perf
+    def test_the_timing_harness_flags_a_quadratic_stand_in():
+        def quadratic(t: str) -> float:
+            return _median_time(lambda s: sum(s.count("a", 0, i) for i in range(0, len(s), 64)), t)
+    
+>       assert timing.is_superlinear(quadratic, "a", 16 * 1024, 256 * 1024), (
+            "a quadratic function must be flagged"
+        )
+E       AssertionError: a quadratic function must be flagged
+E       assert False
+E        +  where False = <function is_superlinear at 0x7fe03049c680>(<function test_the_timing_harness_flags_a_quadratic_stand_in.<locals>.quadratic at 0x7fe0106aa660>, 'a', (16 * 1024), (256 * 1024))
+E        +    where <function is_superlinear at 0x7fe03049c680> = timing.is_superlinear
+
+tests/test_migration_numbers.py:843: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_migration_numbers.py::test_the_timing_harness_flags_a_quadratic_stand_in
+SKIPPED [1] tests/contracts/test_llm.py:95: Stubber refuses a malformed Converse shape before the kind sees it
+1 failed, 10964 passed, 1 skipped in 415.22s (0:06:55)
+
+--- rerun codes ---
+pytest processes of others now: 4; load: 4.57 6.78 6.13
+/home/user/build/EV-P3a2-main-2a8c2aa/src/hadavin_sdk/__init__.py
+main file run rc=1
+main single run 1 rc=1
+main single run 2 rc=1
+main single run 3 rc=1
+main single run 4 rc=1
+main single run 5 rc=1
+HEAD single run 1 rc=1
+HEAD single run 2 rc=1
+HEAD single run 3 rc=1
+HEAD single run 4 rc=1
+HEAD single run 5 rc=1

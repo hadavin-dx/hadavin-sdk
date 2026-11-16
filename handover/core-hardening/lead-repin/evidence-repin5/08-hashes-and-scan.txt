@@ -1,0 +1,5 @@
+3dfebbce5c14ac2bd80257efee62091bc09d2086f1ab0855ee5a380544e4d72e  lead-repin-verify.sh
+e76611fb17699888c6704efab878c45bc73dee4c09dd632be77411d7516b3f1c  LEAD-REPIN-VERIFY.md
+e779c774fe8af2cd2a506e26b2c2d8ceeaaec8460c200e872baa44e18246b00d  lead-repin-verify.v4.sh
+syntax ok dash bash sh
+banned-string scan of this folder: 157 files, 0 hits (counts only; checked 15:05Z)

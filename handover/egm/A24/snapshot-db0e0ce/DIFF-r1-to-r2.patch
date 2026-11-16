@@ -1,0 +1,1450 @@
+diff --git a/.github/CODEOWNERS b/.github/CODEOWNERS
+new file mode 100644
+index 0000000..ac8ba1e
+--- /dev/null
++++ b/.github/CODEOWNERS
+@@ -0,0 +1,16 @@
++# Review aid for the scan guard: these files decide what the scans check, so a change to them should be read by the owner.
++# This file only names the reviewers. It protects nothing until the owner turns on "Require review from Code Owners"
++# in a repository ruleset (a repository setting, owner only; not done by this change).
++/tools/scan_repo.py @veerarakesh56
++/tools/scan_suppressions.txt @veerarakesh56
++/tools/scan_allowlist.txt @veerarakesh56
++/tools/scan_banned_extra.txt @veerarakesh56
++/tests/fixtures/*golden* @veerarakesh56
++/.github/ @veerarakesh56
++/.gitleaks* @veerarakesh56
++/tests/test_scan_repo.py @veerarakesh56
++/tests/test_scan_repo_mutations.py @veerarakesh56
++/tests/test_ci_gitleaks_scope.py @veerarakesh56
++/tests/test_ci_toolpath_step.py @veerarakesh56
++/pyproject.toml @veerarakesh56
++/uv.lock @veerarakesh56
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index 186b28c..57e028c 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -174,6 +174,9 @@ jobs:
+         # .venv/bin comes first on PATH (activate-environment), and a locked package can ship a program with a system tool's name.
+         # Pass 1 uses only shell builtins (nothing from PATH runs before it is checked). Pass 2 follows every link with the
+         # now-checked readlink. python3, uv and uvx may sit in .venv/bin by design, but then must be links to a file outside the workspace.
++        # Limit: bash and sh are started by the runner before this step, so the step cannot vouch for them. That is covered by the
++        # locked scan group (uv sync --locked --only-group scan). --no-build only stops a source distribution from being built at install
++        # time; a wheel can still ship a .pth file that runs at Python start, so the lock (exact hashes) is the control, not --no-build.
+         run: |
+           sys_tools="readlink sha256sum tar curl git grep date tr cut sort head mktemp rm touch"
+           venv_tools="python3 uv uvx"
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 358075c..850f022 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -3,7 +3,13 @@
+ ## Unreleased
+ 
+ ### CI
+-- **Scan-config guard.** `tools/scan_repo.py` (the `check` job) now fails on a comment that switches a scanner off (`nosec`, `nosemgrep`, the gitleaks allow marker, `trivy:ignore`, and a `noqa` that is blanket or names a ruff `S` security code) and on any scanner-config file (`.gitleaksignore`, `.gitleaks.toml`, `.semgrepignore`, `.trivyignore`, ...) unless it is on the one reviewed list `tools/scan_suppressions.txt` (exact count per file; sha256 per config file; a stale or wrong line is a hit). The list's first lines are a baseline taken mechanically from main 2742c1b, not reviewed one by one. Upgrade step for a branch: if your change adds or removes one of these comments, or edits `.gitleaks.toml` or `.gitleaksignore`, edit `tools/scan_suppressions.txt` in the same PR. The `check` and `tests-py312` jobs are pinned whole in `tests/fixtures/ci_security_golden.json` like the `security` job, and `pyproject.toml` may not gain a ruff ignore or a bandit section unnoticed. The security job step "System tools resolve outside the workspace" now follows links (`readlink -f`), also checks `python3`, `uv` and `uvx` (allowed in `.venv/bin` only as links to a file outside the workspace) and refuses tracked files under `.venv`.
++- **Scan-config guard.** `tools/scan_repo.py` (the `check` job) now fails on a comment that switches a scanner or linter off and on any scanner or linter config file, unless it is on the one reviewed list `tools/scan_suppressions.txt`. A review aid until the owner's repository ruleset exists: the list and the code owners file name who must read a change, but GitHub only enforces it once the owner turns on "Require review from Code Owners" (an owner-only setting, not done here).
++  - **What counts as a switch-off comment (matched in any letter case):** the nosec, semgrep ignore, gitleaks allow, trivy ignore, sonar ignore, pmd ignore, checkov skip, tfsec ignore, zizmor ignore, detect-secrets allowlist, lgtm and codeql markers; ruff range switches (`ruff: disable`, `ruff: ignore`, `ruff: enable`); and a `noqa` that is blanket or names a ruff `S` (security) code, a file-level `ruff: noqa` included. Style codes such as `BLE001` are not switch-offs. Prose that only names a tool is not a hit.
++  - **What counts as a config file (by name, in any folder, any letter case):** `.gitleaksignore`, `.gitleaks.toml`, `.semgrepignore`, `.semgrep.yml`, `.trivyignore`, `trivy.yml`, `.bandit`, `.zizmor.yml`, `ruff.toml`, `setup.cfg`, `tox.ini`, `.flake8`, `mypy.ini`, `sonar-project.properties`, `.sonarcloud.properties`, `.coderabbit.yaml`, `.pre-commit-config.yaml`, `.secrets.baseline`, `.snyk`, everything under `.github/codeql/` and `.semgrep/`, every `pyproject.toml` below the repository root, and the two scan list files `tools/scan_allowlist.txt` and `tools/scan_banned_extra.txt`. A below-root `pyproject.toml` that holds a ruff, bandit or semgrep table fails and cannot be listed.
++  - **The list.** One line per file and rule: `path:rule:value:reason`. For a marker rule the value is `count@sha256`: how many markers the file holds and the sha256 of their sorted line texts, so a widened or replaced marker is a change. For a config file it is the sha256 of the file. The list is written with `python tools/scan_repo.py --print-list`, never by hand; a new line carries a placeholder reason that the scan refuses until a reviewer writes a real one (at least 15 characters, not starting with `NEW`). A stale, wrong-count, wrong-hash, reasonless, short-reason, duplicate or unknown-rule line is itself a hit. A glob in the allow list path is refused. The first lines of the list are a baseline taken mechanically from main 2742c1b and were not reviewed one by one.
++  - **Binary files fail closed.** A NUL byte in any file whose extension is not on the short known-binary list (images, archives, fonts, `.whl`, `.parquet`, `.db`, ...) is a hit, and such a file is still scanned as text, so a NUL cannot hide a secret in `.env`, `Dockerfile` or `.html`.
++  - **Also in this change:** the `check` and `tests-py312` jobs are pinned whole in `tests/fixtures/ci_security_golden.json` like the `security` job; the root `pyproject.toml` may not gain a ruff ignore or a bandit section unnoticed; the security job step "System tools resolve outside the workspace" follows links (`readlink -f`), also checks `python3`, `uv` and `uvx` (allowed in `.venv/bin` only as links to a file outside the workspace) and refuses tracked files under `.venv`; `tests/test_scan_repo_mutations.py` plants eight weakenings in a copy of the script and requires the scan tests to fail on each. Three file-level `ruff: noqa` lines were narrowed to per-line ones (`tests/demo_askdata/fuzzgen.py`, `tests/demo_askdata/test_validate_harm.py`); `tests/demo_askdata/corpus.py` keeps its file-level one (S608, ISC004: 188 lines of test SQL text) and is on the list with its reason.
++  - **Upgrade step for a branch:** if your change adds, removes or edits one of these comments or config files, regenerate `tools/scan_suppressions.txt` with `--print-list`, write a reason for every `NEW` line, and commit it in the same PR.
+ 
+ ### Upgrade steps
+ - **Breaking: the first stage is now called `demo`; `environment: dev` is refused.** The stages are exactly `demo`, `pilot` and `prod`. A config that says `environment: dev` stops at start with "environment: dev was renamed to demo; write environment: demo (allowed values: demo, pilot, prod)" (shown beside any other problem found in the same file, and also for `Dev`, `DEV` and spellings with spaces, which are refused all the same); any other value (`Demo`, `staging`, `uat`, an empty value) is refused too, and values are never tidied or guessed. To upgrade: (1) change `environment:` in your config to `demo`; (2) if your code imports `backends.table.DEV_ONLY`, import `DEMO_ONLY` instead (same six kind pairs, no old name kept); (3) a project label such as `uat` is not a stage: map it to one stage in your own config. Also: the pilot and prod checks (`deferred.py`, `registry.py`, `app.py`) now ask one function, `hadavin_sdk.stages.is_live(environment)`, which treats anything that is not exactly `demo` as live; the prod-only rules (no local key file, a retention-agreed anchor) ask `hadavin_sdk.stages.is_prod(environment)`, which is true for `prod` and for any value that is not a stage. `STAGES`, `is_live` and `is_prod` live in the new leaf module `hadavin_sdk/stages.py`, not in `config.py`; the list `deferred.LIVE` is removed. The redactor no longer sweeps the words `demo` and `pilot` as a name (it already skipped `prod`), but a secret that reads `demo` is still swept. No stage is stored today; the first change that stores one must map an old `dev` value to `demo` on read, for display only and never for a guard decision, and add a test through that real read site.
+diff --git a/tests/demo_askdata/fuzzgen.py b/tests/demo_askdata/fuzzgen.py
+index c4003b1..b1cca13 100644
+--- a/tests/demo_askdata/fuzzgen.py
++++ b/tests/demo_askdata/fuzzgen.py
+@@ -12,8 +12,6 @@
+ 
+ # test data generator, not security randomness
+ 
+-# ruff: noqa: S608, S311  # the SQL text is the test data; seeded randomness is test data, not security
+-
+ from __future__ import annotations
+ 
+ import random
+@@ -225,11 +223,11 @@ class Gen:
+             if kind != "num"
+             else self.pick(["max", "min", "sum", "avg", "count"])
+         )
+-        return f"SELECT {fn}({self.col(scope, kind)}) FROM {v[0]} {v[1]}" + self.where(scope, d + 1)
++        return f"SELECT {fn}({self.col(scope, kind)}) FROM {v[0]} {v[1]}" + self.where(scope, d + 1)  # noqa: S608
+ 
+     def in_sub(self, kind, d):
+         v = self.view()
+-        return f"SELECT {self.col([v], kind)} FROM {v[0]} {v[1]}" + self.where([v], d + 1)
++        return f"SELECT {self.col([v], kind)} FROM {v[0]} {v[1]}" + self.where([v], d + 1)  # noqa: S608
+ 
+     def where(self, scope, d=0):
+         return f" WHERE {self.boolean(scope, d + 1)}" if self.chance(0.5) else ""
+@@ -303,7 +301,7 @@ class Gen:
+         if mode == "agg" and not group and any(not _is_agg(x) for x in items):
+             mode = "rows"
+         distinct = "DISTINCT " if mode == "rows" and self.chance(0.12) else ""
+-        sql = f"SELECT {distinct}{', '.join(items)} FROM {from_sql}"
++        sql = f"SELECT {distinct}{', '.join(items)} FROM {from_sql}"  # noqa: S608
+         if self.chance(0.55):
+             sql += f" WHERE {self.boolean(scope)}"
+         if mode == "agg" and group:
+@@ -470,6 +468,6 @@ def case(rng: random.Random) -> tuple[str, str, tuple[str, str] | None]:
+             seed = (
+                 rng.random()
+             )  # the same casing and spacing for base and hazard: only the hazard differs
+-            base = render(random.Random(seed), tokens)
+-            return "slot", render(random.Random(seed), placed), (base, rule)
++            base = render(random.Random(seed), tokens)  # noqa: S311
++            return "slot", render(random.Random(seed), placed), (base, rule)  # noqa: S311
+     return "mutated", render(rng, mutate(rng, tokens)), None
+diff --git a/tests/demo_askdata/test_validate_harm.py b/tests/demo_askdata/test_validate_harm.py
+index 50bf437..53ad810 100644
+--- a/tests/demo_askdata/test_validate_harm.py
++++ b/tests/demo_askdata/test_validate_harm.py
+@@ -1,4 +1,3 @@
+-# ruff: noqa: S608
+ """P2 harm check against a REAL PostgreSQL (HADAVIN_TEST_PG_DSN: the CI service, or a local container).
+ 
+ Every ATTACK is run, unvalidated, as the administrator of a scratch database, to prove it would have done harm
+@@ -80,7 +79,7 @@ def fingerprint(dsn: str) -> tuple:
+             else:
+                 rows.append(
+                     c.execute(
+-                        f"SELECT md5(coalesce(string_agg(t::text, '|' ORDER BY t::text), '')) FROM shop.{t} t"
++                        f"SELECT md5(coalesce(string_agg(t::text, '|' ORDER BY t::text), '')) FROM shop.{t} t"  # noqa: S608
+                     ).fetchone()[0]
+                 )
+         roles = c.execute(
+diff --git a/tests/test_ci_gitleaks_scope.py b/tests/test_ci_gitleaks_scope.py
+index 5d659a9..bac03cf 100644
+--- a/tests/test_ci_gitleaks_scope.py
++++ b/tests/test_ci_gitleaks_scope.py
+@@ -727,15 +727,43 @@ def test_the_word_level_list_names_real_cases():
+ PYPROJECT = CI.parents[2] / "pyproject.toml"
+ 
+ 
++# The whole [tool.ruff] table is pinned: every key that exists must be listed here with its exact value. One constant, so a new key
++# (extend-ignore, exclude, extend-exclude, select, ignore, per-file-ignores, ...) cannot slip in unreviewed.
++RUFF_PINNED = {
++    "line-length": 100,
++    "src": ["src", "tests", "demos"],
++}
++RUFF_LINT_PINNED = {
++    "extend-select": ["B", "DTZ", "I", "S", "TID", "UP"],
++    "flake8-tidy-imports": {"ban-relative-imports": "all"},
++    "per-file-ignores": {"tests/**": ["S101"]},
++}
++# Keys that switch rules or files off or change what is checked; each is refused at the top level and under lint unless pinned above.
++RUFF_SWITCH_KEYS = (
++    "per-file-ignores",
++    "extend-per-file-ignores",
++    "extend-ignore",
++    "ignore",
++    "exclude",
++    "extend-exclude",
++    "select",
++    "extend-select",
++)
++
++
++def check_ruff_table(ruff):
++    ruff = dict(ruff)
++    lint = ruff.pop("lint", {})
++    assert ruff == RUFF_PINNED, (
++        f"[tool.ruff] changed: {sorted(set(ruff) ^ set(RUFF_PINNED)) or 'a value'}"
++    )
++    assert lint == RUFF_LINT_PINNED, "[tool.ruff.lint] changed"
++    assert "S" in lint["extend-select"], "ruff security rules (S) must stay selected"
++
++
+ def check_pyproject_suppressions(text):
+     tool = tomllib.loads(text).get("tool", {})
+-    lint = tool.get("ruff", {}).get("lint", {})
+-    assert set(lint) <= {"extend-select", "flake8-tidy-imports", "per-file-ignores"}, (
+-        f"unexpected ruff lint keys: {sorted(lint)}"
+-    )
+-    assert lint.get("per-file-ignores") == {"tests/**": ["S101"]}, "ruff per-file-ignores changed"
+-    assert "ignore" not in tool.get("ruff", {}), "ruff top-level ignore"
+-    assert "S" in lint.get("extend-select", []), "ruff security rules (S) must stay selected"
++    check_ruff_table(tool.get("ruff", {}))
+     assert "bandit" not in tool, "a bandit section can skip tests"
+     assert "semgrep" not in tool
+ 
+@@ -762,5 +790,25 @@ def test_pyproject_pin_rejects_a_new_suppression(edit):
+         check_pyproject_suppressions(edit(PYPROJECT.read_text()))
+ 
+ 
++@pytest.mark.parametrize("key", RUFF_SWITCH_KEYS)
++@pytest.mark.parametrize("where", ["top", "lint"])
++def test_pyproject_pin_rejects_each_switch_key_at_top_level_and_under_lint(key, where):
++    ruff = copy.deepcopy(tomllib.loads(PYPROJECT.read_text())["tool"]["ruff"])
++    check_ruff_table(
++        copy.deepcopy(ruff)
++    )  # the real table passes, so the failure below comes from the change only
++    target = ruff if where == "top" else ruff["lint"]
++    target[key] = ["S"] if key != "per-file-ignores" else {"src/**": ["S"]}
++    with pytest.raises(AssertionError):
++        check_ruff_table(ruff)
++
++
++def test_pyproject_pin_rejects_a_changed_pinned_value():
++    ruff = copy.deepcopy(tomllib.loads(PYPROJECT.read_text())["tool"]["ruff"])
++    ruff["lint"]["per-file-ignores"]["tests/**"].append("S603")
++    with pytest.raises(AssertionError):
++        check_ruff_table(ruff)
++
++
+ if __name__ == "__main__":
+     regenerate_goldens()
+diff --git a/tests/test_ci_toolpath_step.py b/tests/test_ci_toolpath_step.py
+index 65eb055..1135436 100644
+--- a/tests/test_ci_toolpath_step.py
++++ b/tests/test_ci_toolpath_step.py
+@@ -20,6 +20,13 @@ SYSTEM = [
+ ]
+ VENV = ["python3", "uv", "uvx"]
+ BASH = shutil.which("bash")
++GIT = shutil.which("git")  # an absolute path, so the calls below are not partial-path calls
++
++
++def _run(argv, *, check=False, **kw):
++    """The one place this file starts a program; every argument list is fixed by the test (no input from outside)."""
++    return subprocess.run(argv, check=check, **kw)  # noqa: S603
++
+ 
+ pytestmark = pytest.mark.skipif(
+     not sys.platform.startswith("linux") or BASH is None or shutil.which("git") is None,
+@@ -47,7 +54,7 @@ class Tree:
+         self.out.mkdir(parents=True)
+         self.ws = tmp_path / "ws"
+         self.ws.mkdir()
+-        subprocess.run(["git", "init", "-q", str(self.ws)], check=True)  # noqa: S603, S607
++        _run([GIT, "init", "-q", str(self.ws)], check=True)
+         for name in SYSTEM:
+             real = shutil.which(name)
+             assert real, name
+@@ -71,7 +78,7 @@ class Tree:
+             "GITHUB_WORKSPACE": str(workspace or self.ws),
+             "HOME": str(self.tmp),
+         }
+-        r = subprocess.run(  # noqa: S603
++        r = _run(
+             [BASH, "-e", "-c", _step_text()],
+             cwd=self.ws,
+             env=env,
+@@ -179,7 +186,7 @@ def test_a_missing_tool_fails(tree):
+ def test_a_non_absolute_command_fails(tree):
+     step = _step_text().replace("for c in $sys_tools", "alias_ok=1; for c in $sys_tools", 1)
+     # a shell function named like a tool is not a file
+-    r = subprocess.run(  # noqa: S603
++    r = _run(
+         [BASH, "-e", "-c", "curl() { :; }\n" + step],
+         cwd=tree.ws,
+         env={"PATH": str(tree.out), "GITHUB_WORKSPACE": str(tree.ws)},
+@@ -193,13 +200,13 @@ def test_a_non_absolute_command_fails(tree):
+ def test_tracked_files_under_dot_venv_fail(tree):
+     (tree.ws / ".venv").mkdir()
+     (tree.ws / ".venv" / "marker").write_text("x")
+-    subprocess.run(["git", "-C", str(tree.ws), "add", "-f", ".venv/marker"], check=True)  # noqa: S603, S607
++    _run([GIT, "-C", str(tree.ws), "add", "-f", ".venv/marker"], check=True)
+     rc, out = tree.run()
+     assert rc == 1 and "files under .venv are tracked" in out
+ 
+ 
+ def test_an_empty_workspace_variable_fails(tree):
+-    r = subprocess.run(  # noqa: S603
++    r = _run(
+         [BASH, "-e", "-c", _step_text()],
+         cwd=tree.ws,
+         env={"PATH": str(tree.out), "GITHUB_WORKSPACE": ""},
+@@ -210,16 +217,44 @@ def test_an_empty_workspace_variable_fails(tree):
+     assert r.returncode == 1 and "GITHUB_WORKSPACE is empty" in r.stdout + r.stderr
+ 
+ 
+-def test_the_old_step_text_misses_a_link_into_the_workspace(tree):
+-    """Fail-before proof kept as a test: the PR90 step (command -v only) accepts a link whose target is in the workspace."""
+-    old = (
++OLD_STEP_COMMIT = (
++    "2742c1b"  # the PR90 merge: the step text below is frozen from that commit's ci.yml
++)
++
++
++def test_the_frozen_old_step_text_is_the_one_stored_in_git_history():
++    """Guards the frozen text against drift. Skipped only when the commit is not in this clone (a shallow CI checkout)."""
++    show = _run(
++        [GIT, "show", f"{OLD_STEP_COMMIT}:.github/workflows/ci.yml"],
++        capture_output=True,
++        text=True,
++        check=False,
++    )
++    if show.returncode != 0:
++        pytest.skip(f"{OLD_STEP_COMMIT} is not in this clone")
++    old_wf = yaml.safe_load(show.stdout)
++    steps = [
++        s
++        for s in old_wf["jobs"]["security"]["steps"]
++        if s.get("name", "").startswith("System tools")
++    ]
++    assert len(steps) == 1 and steps[0]["run"].strip() == _old_step().strip()
++
++
++def _old_step():
++    return (
+         'for c in sha256sum tar curl git grep date tr cut sort head mktemp rm touch; do p=$(command -v "$c") || exit 1; '
+         'case "$p" in /*) ;; *) echo "$c is not a file: $p"; exit 1;; esac; '
+         'case "$p" in "$GITHUB_WORKSPACE"/*) echo "$c resolves inside the workspace: $p"; exit 1;; esac; done'
+     )
++
++
++def test_the_old_step_text_misses_a_link_into_the_workspace(tree):
++    """Fail-before proof kept as a test: the PR90 step (command -v only) accepts a link whose target is in the workspace."""
++    old = _old_step()
+     (tree.out / "curl").unlink()
+     (tree.out / "curl").symlink_to(tree.evil())
+     env = {"PATH": str(tree.out), "GITHUB_WORKSPACE": str(tree.ws)}
+-    old_run = subprocess.run([BASH, "-e", "-c", old], env=env, cwd=tree.ws, check=False)  # noqa: S603
++    old_run = _run([BASH, "-e", "-c", old], env=env, cwd=tree.ws, check=False)
+     assert old_run.returncode == 0
+     assert tree.run()[0] == 1
+diff --git a/tests/test_scan_repo.py b/tests/test_scan_repo.py
+index d48f1b0..e54deb1 100644
+--- a/tests/test_scan_repo.py
++++ b/tests/test_scan_repo.py
+@@ -3,13 +3,16 @@ Fake secrets are built from parts so this file itself never holds one. The real
+ the script takes --allowlist/--extra/--banned-src."""
+ 
+ import hashlib
++import os
+ import subprocess
+ import sys
+ from pathlib import Path
+ 
+ import pytest
+ 
+-SCRIPT = Path(__file__).resolve().parents[1] / "tools" / "scan_repo.py"
++REPO_ROOT = Path(__file__).resolve().parents[1]
++# tests/test_scan_repo_mutations.py points this at a deliberately broken copy of the script to prove these tests notice
++SCRIPT = Path(os.environ.get("SCAN_REPO_SCRIPT") or REPO_ROOT / "tools" / "scan_repo.py")
+ BANNED_NAME = "Context" + " Lake"  # a BANNED entry, split so this file stays clean
+ EXAMPLE_KEY = "AKIA" + "IOSFODNN7EXAMPLE"
+ 
+@@ -146,6 +149,7 @@ def test_allowlist_skips_only_the_listed_rule_on_the_listed_file(tmp_path):
+ def test_allowlist_entry_without_a_reason_or_for_a_missing_file_fails(tmp_path):
+     repo = _repo(tmp_path, {"a.txt": "x = 1\n"})
+     assert "needs path:rule:reason" in _scan(repo, allow="a.txt:sk-api-key\n")[1]
++    assert _scan(repo, allow="a.txt:llm-id-sk:ok\n")[0] == 0
+     rc, out = _scan(repo, allow="gone.txt:llm-id-sk:was needed once\n")
+     assert rc == 1 and "stale entry, gone.txt is not tracked" in out
+ 
+@@ -155,7 +159,8 @@ def test_extra_banned_list_is_read_and_the_list_file_does_not_flag_itself(tmp_pa
+         tmp_path,
+         {"x.txt": "contains zzfakename here\n", "tools/scan_banned_extra.txt": "zzfakename\n"},
+     )
+-    rc, out = _scan(repo, extra="zzfakename\n")
++    pin = _supp_line("tools/scan_banned_extra.txt", "scanner-config-file", _sha("zzfakename\n"))
++    rc, out = _scan(repo, extra="zzfakename\n", suppress=pin)
+     assert rc == 1 and "x.txt:1: banned-name" in out
+     assert "tools/scan_banned_extra.txt" not in out
+ 
+@@ -192,14 +197,19 @@ def test_long_word_runs_do_not_hang_the_password_rule(tmp_path):
+ H = "#" + " "
+ MARKERS = {
+     "suppress-nosec": "x = f(1)  " + H + "nos" + "ec B310",
+-    "suppress-nosemgrep": "x = f(1)  " + H + "nosem" + "grep: some.rule",
++    "suppress-semgrep-ignore": "x = f(1)  " + H + "nosem" + "grep: some.rule",
+     "suppress-gitleaks-allow": "x = 'abc'  " + H + "gitleaks:" + "allow",
+     "suppress-trivy-ignore": H + "trivy:" + "ignore:AVD-DS-0002",
+     "suppress-noqa-security": "x = f(1)  " + H + "no" + "qa: S603",
+ }
+ MORE_MARKERS = {
+     "suppress-nosec": ["x = f(1)  //nos" + "ec", "x = 1 -- nos" + "ec"],
++    "suppress-semgrep-ignore": ["x = 1  " + H + "nosem", "x = 1  " + H + "nosem: some.rule"],
+     "suppress-noqa-security": [
++        "x = 1  " + H + "ruff: no" + "qa",
++        "x = 1  " + H + "ruff: no" + "qa: S101",
++        "x = 1  " + H + "ruff:no" + "qa: F401",
++        "x = 1  " + H + "flake8: no" + "qa",
+         "x = 1  " + H + "no" + "qa",
+         "x = 1  " + H + "no" + "qa: BLE001, S112",
+         "x = 1  " + H + "no" + "qa:S603 reason",
+@@ -208,14 +218,29 @@ MORE_MARKERS = {
+ }
+ NOT_MARKERS = [
+     "the word nos" + "ec in prose",
+-    "we do not use nosem" + "grep here",
++    "we do not use the semgrep marker here",
+     "x = 1  " + H + "no" + "qa: BLE001",
+     "x = 1  " + H + "no" + "qa: F401, E501",
+     "x = 1  " + H + "noqafoo",
+     "x = 'S603'  " + H + "plain comment",
++    "we mention ruff: no" + "qa and nosem in prose",
++    "x = 1  " + H + "nosemantic note",
+ ]
+ 
+ 
++def _val(*texts):
++    """The list value of a marker rule: count@sha256 of the sorted line texts (written out here, apart from the script)."""
++    digest = hashlib.sha256("\n".join(sorted(texts)).encode()).hexdigest()
++    return f"{len(texts)}@{digest}"
++
++
++ONE = "1@" + "0" * 64  # well-formed value for list-format tests
++
++
++def _sha(text):
++    return hashlib.sha256(text.encode()).hexdigest()
++
++
+ def _supp_line(path, rule, value, reason="reviewed for the test"):
+     return f"{path}:{rule}:{value}:{reason}\n"
+ 
+@@ -240,25 +265,24 @@ def test_prose_and_style_codes_are_not_suppression_hits(tmp_path, line):
+ @pytest.mark.parametrize("rule", MARKERS)
+ def test_a_listed_marker_with_the_exact_count_passes(tmp_path, rule):
+     repo = _repo(tmp_path, {"a.py": MARKERS[rule] + "\nx = 2\n" + MARKERS[rule] + "\n"})
+-    assert _scan(repo, suppress=_supp_line("a.py", rule, 2)) == (0, "\n")
++    assert _scan(repo, suppress=_supp_line("a.py", rule, _val(*[MARKERS[rule]] * 2))) == (0, "\n")
+ 
+ 
+ @pytest.mark.parametrize("rule", MARKERS)
+ @pytest.mark.parametrize("listed", [1, 3])
+ def test_a_count_that_differs_from_the_list_fails_both_ways(tmp_path, rule, listed):
+     repo = _repo(tmp_path, {"a.py": MARKERS[rule] + "\n" + MARKERS[rule] + "\n"})
+-    rc, out = _scan(repo, suppress=_supp_line("a.py", rule, listed))
++    rc, out = _scan(repo, suppress=_supp_line("a.py", rule, _val(*[MARKERS[rule]] * listed)))
+     assert rc == 1 and "suppression-list count is 2" in out
+ 
+ 
+ def test_a_list_entry_covers_only_its_own_file_and_rule(tmp_path):
+     files = {"a.py": MARKERS["suppress-nosec"], "b.py": MARKERS["suppress-nosec"]}
+-    rc, out = _scan(_repo(tmp_path, files), suppress=_supp_line("a.py", "suppress-nosec", 1))
++    one = _supp_line("a.py", "suppress-nosec", _val(MARKERS["suppress-nosec"]))
++    rc, out = _scan(_repo(tmp_path, files), suppress=one)
+     assert rc == 1 and "b.py:1: suppress-nosec" in out and "a.py" not in out
+     both = MARKERS["suppress-nosec"] + "\n" + MARKERS["suppress-noqa-security"]
+-    rc, out = _scan(
+-        _repo(tmp_path / "r2", {"a.py": both}), suppress=_supp_line("a.py", "suppress-nosec", 1)
+-    )
++    rc, out = _scan(_repo(tmp_path / "r2", {"a.py": both}), suppress=one)
+     assert rc == 1 and "a.py:2: suppress-noqa-security" in out
+ 
+ 
+@@ -271,15 +295,22 @@ def test_a_file_the_allowlist_skips_is_still_checked_for_markers(tmp_path):
+ @pytest.mark.parametrize(
+     ("entry", "message"),
+     [
+-        ("gone.py:suppress-nosec:1:reason\n", "stale entry, gone.py suppress-nosec not tracked"),
+-        ("a.py:suppress-nosec:1:reason\n", "stale entry, a.py suppress-nosec has no such marker"),
+-        ("a.py:suppress-nosec:1:\n", "malformed"),
+-        ("a.py:suppress-nosec:1\n", "malformed"),
+-        ("a.py:suppress-everything:1:reason\n", "unknown rule"),
++        (
++            "gone.py:suppress-nosec:" + ONE + ":reason\n",
++            "stale entry, gone.py suppress-nosec not tracked",
++        ),
++        (
++            "a.py:suppress-nosec:" + ONE + ":reason\n",
++            "stale entry, a.py suppress-nosec has no such marker",
++        ),
++        ("a.py:suppress-nosec:" + ONE + ":\n", "malformed"),
++        ("a.py:suppress-nosec:" + ONE + "\n", "malformed"),
++        ("a.py:suppress-everything:" + ONE + ":reason\n", "unknown rule"),
+         ("a.py:suppress-nosec:many:reason\n", "positive count"),
+         ("a.py:suppress-nosec:0:reason\n", "positive count"),
++        ("a.py:suppress-nosec:1:reason\n", "count@sha256"),
+         ("a.py:scanner-config-file:abc:reason\n", "sha256"),
+-        ("a.py:suppress-nosec:1:r\na.py:suppress-nosec:1:again\n", "duplicate"),
++        ("a.py:suppress-nosec:" + ONE + ":r\na.py:suppress-nosec:" + ONE + ":again\n", "duplicate"),
+     ],
+ )
+ def test_a_bad_list_line_is_itself_a_hit(tmp_path, entry, message):
+@@ -297,6 +328,13 @@ def test_a_bad_list_line_is_itself_a_hit(tmp_path, entry, message):
+         ".trivyignore",
+         "sub/dir/.trivyignore",
+         "zizmor.yml",
++        "ruff.toml",
++        ".ruff.toml",
++        "trivy-secret.yaml",
++        "bandit.yaml",
++        "bandit.yml",
++        "setup.cfg",
++        "sub/tox.ini",
+     ],
+ )
+ def test_a_scanner_config_file_hits_unless_listed_with_its_hash(tmp_path, name):
+@@ -321,12 +359,411 @@ def test_changing_a_listed_scanner_config_file_fails_until_the_list_changes(tmp_
+ 
+ 
+ def test_the_real_repo_passes_with_its_own_list():
+-    root = SCRIPT.parents[1]
+-    cmd = [sys.executable, str(SCRIPT), "--root", str(root)]
++    cmd = [sys.executable, str(SCRIPT), "--root", str(REPO_ROOT)]
+     r = subprocess.run(cmd, capture_output=True, text=True, check=False)  # noqa: S603
+     assert r.returncode == 0, r.stdout[-2000:]
+ 
+ 
+ def test_the_real_list_says_the_baseline_was_not_reviewed_line_by_line():
+-    text = (SCRIPT.parent / "scan_suppressions.txt").read_text()
++    text = REAL_LIST.read_text()
+     assert "NOT reviewed one" in text and "CODEOWNERS" in text
++
++
++# ---- round 1 fixes (A24 PR91): marker text pin, NUL files, broader markers, glob allowlist, pinned list files ----
++NOSEC = MARKERS["suppress-nosec"]
++NOQA = MARKERS["suppress-noqa-security"]
++
++
++def test_a_marker_widened_on_the_same_line_fails_even_with_the_same_count(tmp_path):
++    repo = _repo(tmp_path, {"a.py": NOQA + "\n"})
++    supp = _supp_line("a.py", "suppress-noqa-security", _val(NOQA))
++    assert _scan(repo, suppress=supp) == (0, "\n")
++    wide = _repo(tmp_path / "w", {"a.py": NOQA + ", S101\n"})
++    rc, out = _scan(wide, suppress=supp)
++    assert rc == 1 and "text hash differs" in out
++
++
++def test_one_marker_replaced_by_a_different_one_in_the_same_file_fails(tmp_path):
++    other = "y = g(2)  " + H + "no" + "qa: S607"
++    supp = _supp_line("a.py", "suppress-noqa-security", _val(NOQA, NOQA))
++    assert _scan(_repo(tmp_path, {"a.py": NOQA + "\n" + NOQA + "\n"}), suppress=supp)[0] == 0
++    rc, out = _scan(_repo(tmp_path / "r", {"a.py": NOQA + "\n" + other + "\n"}), suppress=supp)
++    assert rc == 1 and "text hash differs" in out
++
++
++def test_a_marker_moved_to_another_line_with_identical_text_still_passes(tmp_path):
++    """Documented: the pin is the set of marker line texts, not their positions; identical text on another line is the same marker."""
++    supp = _supp_line("a.py", "suppress-noqa-security", _val(NOQA))
++    assert _scan(_repo(tmp_path, {"a.py": NOQA + "\nx = 1\n"}), suppress=supp)[0] == 0
++    assert _scan(_repo(tmp_path / "m", {"a.py": "x = 1\n\n" + NOQA + "\n"}), suppress=supp)[0] == 0
++
++
++@pytest.mark.parametrize("name", [".trivyignore", ".semgrepignore", ".gitleaksignore", "a/.bandit"])
++def test_a_scanner_config_with_a_nul_byte_still_hits(tmp_path, name):
++    repo = _repo(tmp_path, {name: b"line\0line\n"})
++    rc, out = _scan(repo)
++    assert rc == 1 and f"{name}:1: scanner-config-file" in out
++    sha = hashlib.sha256(b"line\0line\n").hexdigest()
++    rc, out = _scan(repo, suppress=_supp_line(name, "scanner-config-file", sha))
++    assert (
++        rc == 1 and f"{name}:1: nul-in-text-file" in out
++    )  # pinned, but a NUL in a config is never accepted (fail closed)
++    assert "scanner-config-file" not in out
++    rc, out = _scan(repo, suppress=_supp_line(name, "scanner-config-file", "1" * 64))
++    assert rc == 1 and "hash differs" in out
++
++
++@pytest.mark.parametrize("name", ["a.py", "pyproject.toml", "ci.yml", "x.sh"])
++def test_a_source_file_with_a_nul_byte_is_refused_not_skipped(tmp_path, name):
++    rc, out = _scan(_repo(tmp_path, {name: b"x = 1\0\n"}))
++    assert rc == 1 and f"{name}:1: nul-in-text-file" in out
++
++
++def test_a_marker_in_a_nul_file_is_not_hidden(tmp_path):
++    rc, out = _scan(_repo(tmp_path, {"a.py": b"\0\n" + NOSEC.encode() + b"\n"}))
++    assert rc == 1 and "a.py:2: suppress-nosec" in out
++
++
++def test_an_allowlist_path_that_is_a_glob_is_refused(tmp_path):
++    repo = _repo(tmp_path, {"a.txt": CASES["llm-id-sk"]})
++    for glob in ("*", "*.txt", "a.t?t", "[a].txt"):
++        rc, out = _scan(repo, allow=f"{glob}:*:disable everything\n")
++        assert rc == 1 and "no glob" in out and "a.txt:1: llm-id-sk" in out
++
++
++@pytest.mark.parametrize("path", ["tools/scan_allowlist.txt", "tools/scan_banned_extra.txt"])
++def test_the_scan_list_files_are_pinned_like_a_scanner_config(tmp_path, path):
++    repo = _repo(tmp_path, {path: "one\n"})
++    rc, out = _scan(repo)
++    assert rc == 1 and f"{path}:1: scanner-config-file" in out
++    assert _scan(repo, suppress=_supp_line(path, "scanner-config-file", _sha("one\n")))[0] == 0
++    (repo / path).write_text("one\ntwo\n")
++    subprocess.run(["git", "-C", str(repo), "add", "-A"], check=True)  # noqa: S603, S607
++    rc, out = _scan(repo, suppress=_supp_line(path, "scanner-config-file", _sha("one\n")))
++    assert rc == 1 and "hash differs" in out
++
++
++def test_print_list_writes_a_list_the_scan_accepts_and_keeps_reasons(tmp_path):
++    repo = _repo(tmp_path, {"a.py": NOSEC + "\n" + NOQA + "\n", ".trivyignore": "x\n"})
++    old = _supp_line("a.py", "suppress-nosec", ONE, "a kept reason that is long enough")
++    work = tmp_path.parent / (tmp_path.name + "-lists")
++    work.mkdir(exist_ok=True)
++    (work / "old.txt").write_text("# header\n" + old)
++    cmd = [
++        sys.executable,
++        str(SCRIPT),
++        "--root",
++        str(repo),
++        "--suppressions",
++        str(work / "old.txt"),
++    ]
++    r = subprocess.run([*cmd, "--print-list"], capture_output=True, text=True, check=False)  # noqa: S603
++    assert r.returncode == 0 and r.stdout.startswith("# header\n")
++    assert (
++        ":a kept reason that is long enough" in r.stdout
++        and "NEW, needs a reviewed reason" in r.stdout
++    )
++    # the placeholder is refused by the scan until a reviewer writes a real reason (round 2, M6)
++    rc, out = _scan(repo, suppress=r.stdout)
++    assert rc == 1 and "placeholder" in out
++    reviewed = r.stdout.replace("NEW, needs a reviewed reason", "reviewed by hand for this test")
++    assert _scan(repo, suppress=reviewed) == (0, "\n")
++
++
++REAL_LIST = REPO_ROOT / "tools" / "scan_suppressions.txt"
++
++
++def test_a_weakened_copy_of_the_real_list_fails_the_scan(tmp_path):
++    """The guard is only as strong as the list it reads: remove an entry, or change a count or a hash, and the real repo fails."""
++    root = REPO_ROOT
++    lines = REAL_LIST.read_text().splitlines(keepends=True)
++    entries = [i for i, ln in enumerate(lines) if ln.strip() and not ln.startswith("#")]
++    marker_entry = next(i for i in entries if "@" in lines[i])
++    variants = {
++        "entry removed": [ln for i, ln in enumerate(lines) if i != marker_entry],
++        "hash changed": [_flip(ln) if i == marker_entry else ln for i, ln in enumerate(lines)],
++    }
++    for name, new in variants.items():
++        f = tmp_path / (name.replace(" ", "_") + ".txt")
++        f.write_text("".join(new))
++        cmd = [sys.executable, str(SCRIPT), "--root", str(root), "--suppressions", str(f)]
++        r = subprocess.run(cmd, capture_output=True, text=True, check=False)  # noqa: S603
++        assert r.returncode == 1, name
++
++
++def _flip(line):
++    head, sep, rest = line.partition("@")
++    return head + sep + ("1" if rest[0] != "1" else "2") + rest[1:]
++
++
++# ---- round 2 fixes (A24 PR91): case, more markers, nested configs, NUL fail closed, reasons ----
++def _p(*parts):
++    return "".join(parts)
++
++
++CASE_HITS = {  # upper and mixed case of each original rule
++    "suppress-nosec": [H + "NO" + "SEC", H + "No" + "Sec B310", "x = 1  //NO" + "SEC"],
++    "suppress-semgrep-ignore": [H + "NO" + "SEMGREP", "x  " + H + "No" + "Sem", "NO" + "SEMGREP"],
++    "suppress-gitleaks-allow": ["x = 'a'  " + H + "GITLEAKS:" + "ALLOW", "Gitleaks:" + "Allow"],
++    "suppress-trivy-ignore": [H + "TRIVY:" + "IGNORE:X", H + "Trivy:" + "Ignore"],
++    "suppress-noqa-security": [
++        "x = 1  " + H + "NO" + "QA",
++        "x = 1  " + H + "No" + "Qa: S101",
++        "x = 1  " + H + "no" + "qa: s101",
++        "x = 1  " + H + "NO" + "QA: s603",
++        "x = 1  " + H + "RUFF: NO" + "QA",
++    ],
++}
++NEW_HITS = {  # one rule per tool added in round 2, several shapes each
++    "suppress-nosec": [H + "nos" + "ec:B101", "x  #nos" + "ec-B101", "x  " + H + "nos" + "ecurity"],
++    "suppress-semgrep-ignore": [
++        "we do not use nosem" + "grep here",
++        "x = 1  " + H + "nosem" + "grep:r",
++    ],
++    "suppress-ruff-range": [
++        H + "ruff: dis" + "able[S101]",
++        H + "ruff: ig" + "nore[S101]",
++        H + "ruff: en" + "able[S101]",
++        "x = 1  //ruff:en" + "able",
++        H + "RUFF: DIS" + "ABLE[S101]",
++    ],
++    "suppress-nosonar": [
++        H + "NO" + "SONAR",
++        "x = 1  // NO" + "SONAR S8707: why",
++        "x  " + H + "no" + "sonar",
++    ],
++    "suppress-lgtm": ["x = 1  " + H + "lg" + "tm[py/path-injection]", "// LG" + "TM [js/x]"],
++    "suppress-codeql": ["// code" + "ql[js/x]", "x  " + H + "Code" + "QL[py/y]"],
++    "suppress-zizmor-ignore": [
++        H + "zizmor: ig" + "nore[template-injection]",
++        H + "zizmor:ig" + "nore[x]",
++    ],
++    "suppress-allowlist-secret": [
++        H + "pragma: allow" + "list secret",
++        H + "pragma: allowlist next" + "line secret",
++        H + "pragma: white" + "list secret",
++    ],
++    "suppress-nopmd": ["x = 1  // NO" + "PMD", "x  " + H + "no" + "pmd reason"],
++    "suppress-checkov-skip": [H + "checkov:" + "skip=CKV_AWS_1: why", "x  //checkov:" + "skip=A"],
++    "suppress-tfsec-ignore": [H + "tfsec:" + "ignore:aws-s3-x", "x  #tfsec:" + "ignore:y"],
++}
++NEW_MISSES = [  # prose that names a tool, or its ordinary comments, is not a suppression
++    "the NO" + "SONAR marker in prose",
++    "NO" + "PMD in prose",
++    "x = 1  " + H + "lgtm, thanks",
++    "x = 1  " + H + "codeql runs in CI",
++    "x = 1  " + H + "zizmor runs offline",
++    "x = 1  " + H + "pragma: no cover",
++    "x = 1  " + H + "checkov runs in CI",
++    "x = 1  " + H + "tfsec is used here",
++    "x = 1  " + H + "ruff is the linter",
++    "x = 1  " + H + "ruff format notes",
++    "x = 1  " + H + "no" + "qa: BLE001",
++    "x = 1  " + H + "NO" + "QA: ble001",
++    "x = 1  " + H + "nosemantic note",
++]
++
++
++@pytest.mark.parametrize(
++    ("rule", "line"), [(r, m) for r, ms in {**CASE_HITS, **NEW_HITS}.items() for m in ms]
++)
++def test_case_and_round_two_marker_shapes_hit(tmp_path, rule, line):
++    rc, out = _scan(_repo(tmp_path, {"a.py": line + "\n"}))
++    assert rc == 1 and f"a.py:1: {rule}" in out
++
++
++@pytest.mark.parametrize("line", NEW_MISSES)
++def test_round_two_prose_is_not_a_hit(tmp_path, line):
++    assert _scan(_repo(tmp_path, {"a.py": line + "\n"})) == (0, "\n")
++
++
++@pytest.mark.parametrize("rule", list(NEW_HITS))
++def test_each_round_two_rule_can_be_listed_with_its_text_hash(tmp_path, rule):
++    line = NEW_HITS[rule][0]
++    repo = _repo(tmp_path, {"a.py": line + "\n"})
++    assert _scan(repo, suppress=_supp_line("a.py", rule, _val(line))) == (0, "\n")
++
++
++@pytest.mark.parametrize(
++    "name",
++    [
++        ".flake8",
++        "sub/mypy.ini",
++        "sonar-project.properties",
++        ".sonarcloud.properties",
++        ".github/codeql/codeql-config.yml",
++        ".github/codeql/queries/x.ql",
++        ".coderabbit.yaml",
++        ".semgrep.yml",
++        ".semgrep/rules/a.yml",
++        "trivy.yml",
++        ".pre-commit-config.yaml",
++        ".secrets.baseline",
++        ".snyk",
++        "a/.FLAKE8",
++        "Setup.CFG",
++    ],
++)
++def test_more_scanner_config_names_are_pinned(tmp_path, name):
++    repo = _repo(tmp_path, {name: "anything\n"})
++    rc, out = _scan(repo)
++    assert rc == 1 and f"{name}:1: scanner-config-file" in out
++    assert _scan(repo, suppress=_supp_line(name, "scanner-config-file", _sha("anything\n"))) == (
++        0,
++        "\n",
++    )
++
++
++NESTED = '[project]\nname = "x"\n'
++NESTED_BAD = {
++    "ruff": NESTED + '[tool.ruff.lint]\nignore = ["S"]\n',
++    "ruff top": NESTED + "[tool.ruff]\nline-length = 100\n",
++    "bandit": NESTED + '[tool.bandit]\nskips = ["B101"]\n',
++    "semgrep": NESTED + "[tool.semgrep]\nx = 1\n",
++    "spaced": NESTED + "  [tool.ruff]\n",
++}
++
++
++def test_a_nested_pyproject_is_a_pinned_scanner_config(tmp_path):
++    repo = _repo(tmp_path, {"demos/x/pyproject.toml": NESTED})
++    rc, out = _scan(repo)
++    assert rc == 1 and "demos/x/pyproject.toml:1: scanner-config-file" in out
++    pin = _supp_line("demos/x/pyproject.toml", "scanner-config-file", _sha(NESTED))
++    assert _scan(repo, suppress=pin) == (0, "\n")
++    rc, out = _scan(
++        repo, suppress=_supp_line("demos/x/pyproject.toml", "scanner-config-file", "0" * 64)
++    )
++    assert rc == 1 and "hash differs" in out
++
++
++def test_the_root_pyproject_is_not_a_scanner_config_here(tmp_path):
++    """The root one is pinned key by key in tests/test_ci_gitleaks_scope.py, so this scan leaves it alone."""
++    assert _scan(_repo(tmp_path, {"pyproject.toml": NESTED_BAD["ruff"]})) == (0, "\n")
++
++
++@pytest.mark.parametrize("kind", list(NESTED_BAD))
++def test_a_nested_pyproject_with_a_scanner_table_fails_even_when_pinned(tmp_path, kind):
++    text = NESTED_BAD[kind]
++    repo = _repo(tmp_path, {"demos/x/pyproject.toml": text})
++    pin = _supp_line("demos/x/pyproject.toml", "scanner-config-file", _sha(text))
++    rc, out = _scan(repo, suppress=pin)
++    assert rc == 1 and "demos/x/pyproject.toml:1: nested-pyproject-scanner-table" in out
++    assert "scanner-config-file" not in out  # pinned, so only the table is reported
++
++
++@pytest.mark.parametrize(
++    "name", ["x.env", "Dockerfile", "x.html", "Makefile", "a.conf", "x.pyi", "c.go"]
++)
++def test_a_nul_byte_hides_nothing_from_the_scan_in_any_text_like_file(tmp_path, name):
++    for body in (
++        b"\0\n" + EXAMPLE_KEY.encode() + b"\n",
++        b"ok\n" * 3000 + b"\0\n",
++    ):  # early NUL, NUL past 8000 bytes
++        rc, out = _scan(_repo(tmp_path / str(len(body)), {name: body}))
++        assert rc == 1 and f"{name}:1: nul-in-text-file" in out
++
++
++@pytest.mark.parametrize("name", ["x.env", "Dockerfile", "x.html"])
++def test_a_real_key_behind_a_nul_byte_is_found_too(tmp_path, name):
++    key = ("AKIA" + "ABCDEFGHIJKLMNOP").encode()
++    rc, out = _scan(_repo(tmp_path, {name: b"\0\nx = " + key + b"\n"}))
++    assert rc == 1 and f"{name}:2: cloud-id-prefix" in out and "nul-in-text-file" in out
++
++
++@pytest.mark.parametrize(
++    "name", ["a.png", "b.JPG", "c.pdf", "d.zip", "e.woff2", "f.whl", "g.parquet", "h.db", "i.bin"]
++)
++def test_a_nul_byte_in_a_known_binary_format_is_allowed(tmp_path, name):
++    assert _scan(_repo(tmp_path, {name: b"\x89\0\0" + CASES["llm-id-sk"].encode()})) == (0, "\n")
++
++
++@pytest.mark.parametrize(
++    "reason",
++    [
++        "NEW, needs a reviewed reason",
++        "NEW",
++        "NEW: fill in later please",
++        "too short",
++        "x" * 14,
++        "a b c d e f g",
++    ],
++)
++def test_a_placeholder_or_short_reason_is_refused(tmp_path, reason):
++    repo = _repo(tmp_path, {"a.py": NOSEC + "\n"})
++    rc, out = _scan(repo, suppress=_supp_line("a.py", "suppress-nosec", _val(NOSEC), reason))
++    assert rc == 1 and "suppression-list reason" in out
++
++
++@pytest.mark.parametrize(
++    "reason", ["x" * 15, "NEWS desk fixture, reviewed in PR", "newly added test helper"]
++)
++def test_a_real_reason_is_accepted(tmp_path, reason):
++    repo = _repo(tmp_path, {"a.py": NOSEC + "\n"})
++    assert _scan(repo, suppress=_supp_line("a.py", "suppress-nosec", _val(NOSEC), reason)) == (
++        0,
++        "\n",
++    )
++
++
++def test_print_list_output_is_never_accepted_before_review(tmp_path):
++    repo = _repo(tmp_path, {"a.py": NOSEC + "\n", ".trivyignore": "x\n"})
++    r = subprocess.run(  # noqa: S603
++        [
++            sys.executable,
++            str(SCRIPT),
++            "--root",
++            str(repo),
++            "--print-list",
++            "--suppressions",
++            str(tmp_path / "none.txt"),
++        ],
++        capture_output=True,
++        text=True,
++        check=False,
++    )
++    assert r.returncode == 0 and r.stdout.count("NEW, needs a reviewed reason") == 2
++    rc, out = _scan(repo, suppress=r.stdout)
++    assert rc == 1 and out.count("placeholder") == 2
++
++
++@pytest.mark.parametrize(
++    "line",
++    [
++        H + "ruff: no" + "qa",
++        H + "flake8: no" + "qa",
++        "//ruff:no" + "qa",
++        H + "ruff: no" + "qa  # why",
++        H + "ruff: no" + "qa: " + "why",
++    ],
++)
++def test_a_file_level_noqa_without_codes_cannot_be_listed(tmp_path, line):
++    repo = _repo(tmp_path, {"a.py": line + "\n"})
++    rule = "suppress-noqa-security"
++    rc, out = _scan(repo, suppress=_supp_line("a.py", rule, _val(line)))
++    assert rc == 1 and "a.py:1: file-noqa-without-codes" in out
++
++
++@pytest.mark.parametrize(
++    "line",
++    [
++        H + "ruff: no" + "qa: S608",
++        H + "ruff: no" + "qa: S608, ISC004  # why",
++        H + "flake8: no" + "qa: E501",
++    ],
++)
++def test_a_file_level_noqa_that_names_codes_can_be_listed(tmp_path, line):
++    repo = _repo(tmp_path, {"a.py": line + "\n"})
++    supp = _supp_line(
++        "a.py", "suppress-noqa-security", _val(line), "file-level, codes named, reviewed"
++    )
++    assert _scan(repo, suppress=supp) == (0, "\n")
++
++
++def test_the_real_repo_has_no_file_level_noqa_without_codes():
++    out = subprocess.run(  # noqa: S603
++        [sys.executable, str(SCRIPT), "--root", str(REPO_ROOT)],
++        capture_output=True,
++        text=True,
++        check=False,
++    ).stdout
++    assert "file-noqa-without-codes" not in out
+diff --git a/tests/test_scan_repo_mutations.py b/tests/test_scan_repo_mutations.py
+new file mode 100644
+index 0000000..00046e0
+--- /dev/null
++++ b/tests/test_scan_repo_mutations.py
+@@ -0,0 +1,84 @@
++"""Mutation checks for tools/scan_repo.py: each test plants ONE weakening in a temporary copy of the script and asserts that
++tests/test_scan_repo.py then FAILS (so the tests really pin that check). A control run on the unchanged copy must pass, otherwise a
++"failure" could be an unrelated breakage. The real script and the real list are never modified (the copy lives in tmp_path)."""
++
++import os
++import subprocess
++import sys
++from pathlib import Path
++
++import pytest
++
++ROOT = Path(__file__).resolve().parents[1]
++REAL = ROOT / "tools" / "scan_repo.py"
++# the three tests that read the real repo and its real list are left out: only the planted-input tests judge the copy
++DESELECT = "not real_list_says and not weakened and not the_real_repo_passes and not real_repo_has"
++
++MUTATIONS = {
++    "NUL skip moved before the checks": (
++        "        hits += _check_suppressions(rel, text, data, listed, seen)\n",
++        '        if b"\\0" in data:\n            continue\n        hits += _check_suppressions(rel, text, data, listed, seen)\n',
++    ),
++    "hash check dropped": ("elif listed[key] != hashlib.sha256(data).hexdigest():", "elif False:"),
++    "glob check dropped": ('if any(ch in parts[0] for ch in "*?["):', "if False:"),
++    "re.IGNORECASE removed": ("_I = re.IGNORECASE", "_I = 0"),
++    "placeholder and short reason accepted": (
++        "if len(parts) == 4 and all(parts) and reason_problem(parts[3]):",
++        "if False:",
++    ),
++    "nested pyproject table check dropped": (
++        'if low == "pyproject.toml" and "/" in rel and NESTED_PYPROJECT_TABLE.search(text):',
++        "if False:",
++    ),
++    "file-level noqa without codes accepted": ("if BLANKET_FILE_NOQA.search(line)", "if False"),
++    "NUL allowed for any extension": (
++        "if Path(rel).suffix.lower() in BINARY_EXTENSIONS:",
++        "if True:",
++    ),
++}
++
++
++def _place(tmp_path: Path, source: str) -> Path:
++    """tools/scan_repo.py reads ../tests/test_no_reference_material.py by default, so the copy gets the same neighbour."""
++    (tmp_path / "tools").mkdir()
++    (tmp_path / "tests").mkdir()
++    banned = (ROOT / "tests" / "test_no_reference_material.py").read_text(encoding="utf-8")
++    (tmp_path / "tests" / "test_no_reference_material.py").write_text(banned, encoding="utf-8")
++    script = tmp_path / "tools" / "scan_repo.py"
++    script.write_text(source, encoding="utf-8")
++    return script
++
++
++def _run(script: Path):
++    env = {**os.environ, "SCAN_REPO_SCRIPT": str(script)}
++    cmd = [
++        sys.executable,
++        "-m",
++        "pytest",
++        str(ROOT / "tests" / "test_scan_repo.py"),
++        "-q",
++        "-x",
++        "-p",
++        "no:cacheprovider",
++        "-k",
++        DESELECT,
++    ]
++    return subprocess.run(cmd, capture_output=True, text=True, check=False, env=env, cwd=ROOT)  # noqa: S603
++
++
++def test_control_the_unchanged_copy_passes(tmp_path):
++    r = _run(_place(tmp_path, REAL.read_text(encoding="utf-8")))
++    assert r.returncode == 0, r.stdout[-1500:]
++
++
++@pytest.mark.parametrize("name", list(MUTATIONS))
++def test_each_planted_weakening_makes_the_scan_tests_fail(tmp_path, name):
++    old, new = MUTATIONS[name]
++    src = REAL.read_text(encoding="utf-8")
++    assert src.count(old) == 1, (
++        f"mutation anchor for {name!r} no longer matches the script exactly once"
++    )
++    r = _run(_place(tmp_path, src.replace(old, new)))
++    assert r.returncode == 1, (
++        f"{name}: the scan tests still passed on the weakened script\n{r.stdout[-1500:]}"
++    )
+diff --git a/tools/scan_repo.py b/tools/scan_repo.py
+index d0c61cb..7c2d681 100644
+--- a/tools/scan_repo.py
++++ b/tools/scan_repo.py
+@@ -4,10 +4,18 @@ Usage: python tools/scan_repo.py [--root DIR] [--allowlist FILE] [--extra FILE]
+ Output per hit: path:line: rule (the matched text is never printed, so CI logs hold no secret).
+ False positives: add `path:rule:reason` (one per line, `#` comments ok) to tools/scan_allowlist.txt. The entry skips ONLY that
+ rule on that file (rule `*` skips all rules; avoid it). An entry whose file is no longer tracked, or without a reason, is itself a hit.
+-Suppressions: a comment that switches a scanner off (nosec, nosemgrep, the gitleaks allow marker, trivy ignore, a noqa that is blanket or names a
+-ruff `S` security code) and every scanner-config file (.gitleaksignore, .gitleaks.toml, .semgrepignore, .trivyignore, ...) is a hit unless
+-tools/scan_suppressions.txt lists it: `path:rule:value:reason`, value = the exact number of markers in that file, or the sha256 of the
+-config file. A stale, wrong-count, wrong-hash, reasonless or unknown-rule line is itself a hit. The list is the one place a reviewer reads.
++Suppressions: a comment that switches a scanner or linter off (the nosec, semgrep, gitleaks, trivy, sonar, pmd, checkov, tfsec, zizmor,
++detect-secrets, lgtm and codeql markers, a ruff range switch, a noqa that is blanket or names a ruff `S` security code; all matched
++without regard to case) and every scanner or linter config file (.gitleaksignore, .gitleaks.toml, .semgrepignore, .trivyignore, .flake8,
++sonar and codeql files, .coderabbit.yaml, any pyproject.toml below the root, ...) is a hit unless tools/scan_suppressions.txt lists it:
++`path:rule:value:reason`, value = `count@sha256` (the number of markers in that file and the sha256 of their sorted line texts, so a
++widened, replaced or moved-to-other-code marker is a change), or the sha256 of the config file. The two list files
++tools/scan_allowlist.txt and tools/scan_banned_extra.txt are pinned the same way. `python tools/scan_repo.py --print-list` writes a
++fresh list (reasons of existing lines are kept; a new line gets the placeholder reason that the scan REFUSES until a reviewer replaces it
++with a real reason of at least 15 characters). A stale, wrong-count, wrong-hash, reasonless or unknown-rule line is itself a hit. The list
++is the one place a reviewer reads. Never listable: a file-level `ruff: noqa` without codes, and a ruff, bandit or semgrep table in a
++pyproject.toml below the root. A NUL byte in a file whose extension is not on the short known-binary list is a hit (fail closed); such a
++file is still scanned as text.
+ Banned names: the BANNED tuple in tests/test_no_reference_material.py (read, not copied) plus tools/scan_banned_extra.txt.
+ If BANNED cannot be found or is empty the scan fails (it never silently turns the check off).
+ """
+@@ -38,29 +46,95 @@ PATTERNS = {
+     "credential-literal": re.compile(r"""(?i)password["']?(?:\s*=\s*|:\s*)(['"])[^'"\s]{8,}\1"""),
+ }
+ 
+-# Suppression comments. The comment prefix is required, so prose that only names a marker is not a hit.
++# Suppression comments. Matched without regard to case. The comment prefix is required except for markers that are
++# unambiguous on their own (the semgrep, gitleaks, lgtm and codeql markers), so prose that only names `nosec` is not a hit.
++# Marker words are written in parts so this file does not hold a live marker.
+ _C = r"(?:#|//|--|/\*)\s*"
++_I = re.IGNORECASE
+ SUPPRESSIONS = {
+-    "suppress-nosec": re.compile(_C + r"nosec\b"),
+-    "suppress-nosemgrep": re.compile(_C + r"nosemgrep\b"),
+-    "suppress-gitleaks-allow": re.compile(r"gitleaks:" r"allow\b"),
+-    "suppress-trivy-ignore": re.compile(_C + r"trivy:ignore\b"),
++    "suppress-nosec": re.compile(_C + "nos" + "ec", _I),
++    "suppress-semgrep-ignore": re.compile("nosem" + "grep|" + _C + r"nosem\b", _I),
++    "suppress-gitleaks-allow": re.compile("gitleaks:" + "allow", _I),
++    "suppress-trivy-ignore": re.compile(_C + "trivy:" + "ignore", _I),
+     # blanket noqa, or a noqa naming a ruff security (S) code; style codes (BLE001, F401, ...) are not scanner suppressions
+-    "suppress-noqa-security": re.compile(_C + r"noqa\b(?!\s*:)|" + _C + r"noqa\s*:[^#]*\bS\d{3}\b"),
++    # a file-level `ruff: noqa` / `flake8: noqa` switches rules off for the whole file, so it is always a hit
++    "suppress-noqa-security": re.compile(
++        _C
++        + r"noqa\b(?!\s*:)|"
++        + _C
++        + r"noqa\s*:[^#]*\bS\d{3}\b|"
++        + _C
++        + r"(?:ruff|flake8)\s*:\s*noqa\b",
++        _I,
++    ),
++    # ruff range switches: `ruff: disable[...]`, `ruff: ignore[...]`, `ruff: enable[...]`
++    "suppress-ruff-range": re.compile(_C + r"ruff\s*:\s*(?:disable|ignore|enable)", _I),
++    "suppress-nosonar": re.compile(_C + "NO" + "SONAR", _I),
++    "suppress-lgtm": re.compile(r"lgtm\s*\[", _I),
++    "suppress-codeql": re.compile(r"codeql\s*\[", _I),
++    "suppress-zizmor-ignore": re.compile(_C + r"zizmor\s*:\s*ignore", _I),
++    "suppress-allowlist-secret": re.compile(
++        _C + r"pragma\s*:\s*(?:allow|white)list\s+(?:next\s*line\s+)?secret", _I
++    ),
++    "suppress-nopmd": re.compile(_C + "NO" + "PMD", _I),
++    "suppress-checkov-skip": re.compile(_C + "checkov:" + "skip", _I),
++    "suppress-tfsec-ignore": re.compile(_C + "tfsec:" + "ignore", _I),
+ }
++# A file-level `ruff: noqa` / `flake8: noqa` must name its codes; a bare one is a hit that no list line can cover.
++BLANKET_FILE_NOQA = re.compile(_C + r"(?:ruff|flake8)\s*:\s*noqa\b(?!\s*:\s*[A-Za-z]{1,10}\d)", _I)
++BLANKET_FILE_NOQA_RULE = "file-noqa-without-codes"
++# Scanner and linter configuration files, found by file name (compared in lower case) in any folder.
+ SCANNER_CONFIG_NAMES = {
+     ".gitleaksignore",
+     ".gitleaks.toml",
+     "gitleaks.toml",
+     ".semgrepignore",
++    ".semgrep.yml",
++    ".semgrep.yaml",
+     ".trivyignore",
+     ".trivyignore.yaml",
+     "trivy.yaml",
++    "trivy.yml",
+     ".bandit",
+     ".zizmor.yml",
+     ".zizmor.yaml",
+     "zizmor.yml",
++    "ruff.toml",
++    ".ruff.toml",
++    "trivy-secret.yaml",
++    "bandit.yaml",
++    "bandit.yml",
++    "setup.cfg",
++    "tox.ini",
++    ".flake8",
++    "mypy.ini",
++    "sonar-project.properties",
++    ".sonarcloud.properties",
++    ".coderabbit.yaml",
++    ".coderabbit.yml",
++    ".pre-commit-config.yaml",
++    ".secrets.baseline",
++    ".snyk",
+ }
++# Whole folders of scanner configuration (any file below them).
++SCANNER_CONFIG_DIRS = (".github/codeql/", ".semgrep/")
++# Files that steer this scan itself: pinned by hash like a scanner config, found by exact path.
++SCANNER_CONFIG_PATHS = {"tools/scan_allowlist.txt", "tools/scan_banned_extra.txt"}
++# A non-root pyproject.toml is a scanner config (pinned by hash) and may never hold a ruff or bandit table
++# (the root one is checked by tests/test_ci_gitleaks_scope.py).
++NESTED_PYPROJECT_TABLE = re.compile(
++    r"^\s*\[tool\.(?:ruff|bandit|semgrep)", re.IGNORECASE | re.MULTILINE
++)
++NESTED_PYPROJECT_RULE = "nested-pyproject-scanner-table"
++# A NUL byte in a file whose extension is not on this short list of real binary formats is refused (fail closed: a NUL would
++# otherwise hide the whole file from the secret patterns). A file with no extension (Dockerfile, Makefile) is refused too.
++BINARY_EXTENSIONS = {
++    ".png", ".jpg", ".jpeg", ".gif", ".ico", ".bmp", ".webp", ".avif", ".tif", ".tiff",
++    ".pdf", ".zip", ".gz", ".tgz", ".bz2", ".xz", ".7z", ".tar", ".whl", ".jar",
++    ".woff", ".woff2", ".ttf", ".otf", ".eot",
++    ".parquet", ".db", ".sqlite", ".sqlite3", ".pyc", ".so", ".dll", ".exe", ".wasm",
++    ".mp3", ".mp4", ".mov", ".wav", ".npy", ".bin",
++}  # fmt: skip
+ SCANNER_CONFIG_RULE = "scanner-config-file"
+ LIST_RULES = set(SUPPRESSIONS) | {SCANNER_CONFIG_RULE}
+ 
+@@ -95,10 +169,27 @@ def _allowed(allowlist: Path) -> tuple[dict[str, set[str]], list[str]]:
+         if len(parts) < 3 or not parts[0] or not parts[1] or not parts[2]:
+             problems.append(f"{allowlist.name}:{n}: allowlist-entry needs path:rule:reason")
+             continue
++        if any(ch in parts[0] for ch in "*?["):
++            problems.append(
++                f"{allowlist.name}:{n}: allowlist-entry path must be one exact file, no glob"
++            )
++            continue
+         out.setdefault(parts[0], set()).add(parts[1])
+     return out, problems
+ 
+ 
++MIN_REASON = 15
++
++
++def reason_problem(reason: str) -> str:
++    """Why a reason cannot stand ('' if it can): the generator's placeholder or a reason too short to say anything."""
++    if re.match(r"NEW\b", reason):
++        return "is the placeholder from --print-list, write a reviewed reason"
++    if len(reason) < MIN_REASON:
++        return f"is shorter than {MIN_REASON} characters"
++    return ""
++
++
+ def _suppressions(path: Path | None) -> tuple[dict[tuple[str, str], str], list[str]]:
+     """Return ({(path, rule): value}, problems in the list file itself). Line: path:rule:value:reason."""
+     out: dict[tuple[str, str], str] = {}
+@@ -116,39 +207,114 @@ def _suppressions(path: Path | None) -> tuple[dict[tuple[str, str], str], list[s
+             problems.append(f"{where}: suppression-list duplicate entry")
+         elif parts[1] == SCANNER_CONFIG_RULE and not re.fullmatch(r"[0-9a-f]{64}", parts[2]):
+             problems.append(f"{where}: suppression-list value must be a sha256")
+-        elif parts[1] != SCANNER_CONFIG_RULE and not re.fullmatch(r"[1-9][0-9]*", parts[2]):
+-            problems.append(f"{where}: suppression-list value must be a positive count")
++        elif parts[1] != SCANNER_CONFIG_RULE and not re.fullmatch(
++            r"[1-9][0-9]*@[0-9a-f]{64}", parts[2]
++        ):
++            problems.append(f"{where}: suppression-list value must be a positive count@sha256")
+         else:
+             out[(parts[0], parts[1])] = parts[2]
++        if len(parts) == 4 and all(parts) and reason_problem(parts[3]):
++            problems.append(f"{where}: suppression-list reason {reason_problem(parts[3])}")
+     return out, problems
+ 
+ 
++def marker_value(lines: list[str]) -> str:
++    """`count@sha256` of the sorted marker line texts (the text pins the marker, not only the number)."""
++    digest = hashlib.sha256(
++        "\n".join(sorted(ln.rstrip() for ln in lines)).encode("utf-8")
++    ).hexdigest()
++    return f"{len(lines)}@{digest}"
++
++
++def _marker_lines(text: str) -> dict[str, tuple[list[int], list[str]]]:
++    """{rule: (line numbers, line texts)} for every suppression marker in `text`."""
++    out: dict[str, tuple[list[int], list[str]]] = {}
++    for n, line in enumerate(text.splitlines(), 1):
++        for rule, rx in SUPPRESSIONS.items():
++            if rx.search(line):
++                nums, texts = out.setdefault(rule, ([], []))
++                nums.append(n)
++                texts.append(line)
++    return out
++
++
++def _is_config(rel: str) -> bool:
++    name = rel.rsplit("/", 1)[-1].lower()
++    low = rel.lower()
++    return (
++        rel in SCANNER_CONFIG_PATHS
++        or name in SCANNER_CONFIG_NAMES
++        or low.startswith(SCANNER_CONFIG_DIRS)
++        or (name == "pyproject.toml" and "/" in rel)
++    )
++
++
+ def _check_suppressions(
+     rel: str, text: str, data: bytes, listed: dict[tuple[str, str], str], seen: set[tuple[str, str]]
+ ) -> list[str]:
+     hits = []
+-    if rel.rsplit("/", 1)[-1] in SCANNER_CONFIG_NAMES:
++    low = rel.rsplit("/", 1)[-1].lower()
++    if low == "pyproject.toml" and "/" in rel and NESTED_PYPROJECT_TABLE.search(text):
++        hits.append(
++            f"{rel}:1: {NESTED_PYPROJECT_RULE}"
++        )  # never listable: only the root pyproject may configure these
++    hits += [
++        f"{rel}:{n}: {BLANKET_FILE_NOQA_RULE}"
++        for n, line in enumerate(text.splitlines(), 1)
++        if BLANKET_FILE_NOQA.search(line)
++    ]
++    if _is_config(rel):
+         key = (rel, SCANNER_CONFIG_RULE)
+         seen.add(key)
+         if key not in listed:
+             hits.append(f"{rel}:1: {SCANNER_CONFIG_RULE}")
+         elif listed[key] != hashlib.sha256(data).hexdigest():
+             hits.append(f"{rel}:1: suppression-list hash differs for {SCANNER_CONFIG_RULE}")
+-    for rule, rx in SUPPRESSIONS.items():
+-        found = [n for n, line in enumerate(text.splitlines(), 1) if rx.search(line)]
+-        if not found:
+-            continue
++    for rule, (nums, texts) in _marker_lines(text).items():
+         key = (rel, rule)
+         seen.add(key)
++        value = marker_value(texts)
+         if key not in listed:
+-            hits += [f"{rel}:{n}: {rule}" for n in found]
+-        elif int(listed[key]) != len(found):
+-            hits.append(
+-                f"{rel}:{found[0]}: suppression-list count is {len(found)}, list says {listed[key]} ({rule})"
+-            )
++            hits += [f"{rel}:{n}: {rule}" for n in nums]
++        elif listed[key] != value:
++            if int(listed[key].split("@")[0]) != len(nums):
++                hits.append(
++                    f"{rel}:{nums[0]}: suppression-list count is {len(nums)}, list says "
++                    f"{listed[key].split('@')[0]} ({rule})"
++                )
++            else:
++                hits.append(f"{rel}:{nums[0]}: suppression-list text hash differs ({rule})")
+     return hits
+ 
+ 
++def print_list(repo: Path, suppressions: Path) -> str:
++    """A fresh suppression list for the tracked files; the header and the reasons of lines that still exist are kept."""
++    old = _lines(suppressions)
++    header = [ln for ln in old if ln.startswith("#")]
++    reasons = {}
++    for ln in old:
++        parts = [p.strip() for p in ln.split(":", 3)]
++        if len(parts) == 4 and not ln.startswith("#"):
++            reasons[(parts[0], parts[1])] = parts[3]
++    cmd = ["git", "-C", str(repo), "ls-files", "-z"]
++    listing = subprocess.run(cmd, capture_output=True, check=True).stdout  # noqa: S603
++    rows = []
++    for rel in sorted(r for r in listing.decode("utf-8").split("\0") if r):
++        path = repo / rel
++        if not path.is_file():
++            continue
++        data = path.read_bytes()
++        text = data.decode("utf-8", errors="replace")
++        if _is_config(rel):
++            key = (rel, SCANNER_CONFIG_RULE)
++            reason = reasons.get(key, "NEW, needs a reviewed reason")
++            rows.append(f"{rel}:{SCANNER_CONFIG_RULE}:{hashlib.sha256(data).hexdigest()}:{reason}")
++        for rule, (_, texts) in _marker_lines(text).items():
++            reason = reasons.get((rel, rule), "NEW, needs a reviewed reason")
++            rows.append(f"{rel}:{rule}:{marker_value(texts)}:{reason}")
++    return "\n".join(header + rows) + "\n"
++
++
+ def scan(
+     repo: Path, allowlist: Path, extra: Path, banned_src: Path, suppressions: Path | None = None
+ ) -> list[str]:
+@@ -170,12 +336,15 @@ def scan(
+             continue
+         skip = allowed.get(rel, set())
+         data = path.read_bytes()
+-        if b"\0" in data[:8000]:
+-            continue  # binary
+         text = data.decode("utf-8", errors="replace")
+-        hits += _check_suppressions(
+-            rel, text, data, listed, seen
+-        )  # even for a file the allowlist skips
++        # config-name and marker checks run before the binary skip and even for a file the allowlist skips
++        hits += _check_suppressions(rel, text, data, listed, seen)
++        if b"\0" in data:
++            if Path(rel).suffix.lower() in BINARY_EXTENSIONS:
++                continue  # a known binary format
++            hits.append(
++                f"{rel}:1: nul-in-text-file"
++            )  # fail closed: it is scanned as text below as well
+         if "*" in skip:
+             continue
+         for n, line in enumerate(text.splitlines(), 1):
+@@ -200,10 +369,16 @@ if __name__ == "__main__":
+     ap.add_argument("--allowlist", default=str(HERE / "scan_allowlist.txt"))
+     ap.add_argument("--extra", default=str(HERE / "scan_banned_extra.txt"))
+     ap.add_argument("--suppressions", default=str(HERE / "scan_suppressions.txt"))
++    ap.add_argument(
++        "--print-list", action="store_true", help="print a fresh suppression list and exit"
++    )
+     ap.add_argument(
+         "--banned-src", default=str(HERE.parent / "tests" / "test_no_reference_material.py")
+     )
+     a = ap.parse_args()
++    if a.print_list:
++        sys.stdout.write(print_list(Path(a.root), Path(a.suppressions)))
++        sys.exit(0)
+     found = scan(
+         Path(a.root), Path(a.allowlist), Path(a.extra), Path(a.banned_src), Path(a.suppressions)
+     )
+diff --git a/tools/scan_suppressions.txt b/tools/scan_suppressions.txt
+index e3a8ced..3b3e584 100644
+--- a/tools/scan_suppressions.txt
++++ b/tools/scan_suppressions.txt
+@@ -1,65 +1,82 @@
+ # Reviewed list of scanner suppressions and scanner-config files. One file, one place a reviewer reads. Format: path:rule:value:reason
+-#   value = the exact number of markers of that rule in that file; for scanner-config-file it is the sha256 of the file's bytes.
++#   value = count@sha256: the number of markers of that rule in that file, then the sha256 of the sorted marker line texts (a widened or
++#   replaced marker changes the hash; the same text moved to another line does not). For scanner-config-file it is the sha256 of the file's bytes.
+ #   A marker or config file that is not listed here, or whose count or hash differs, fails tools/scan_repo.py (the `check` job).
+-# BASELINE (main 2742c1b, 2026-11-09): the lines below were taken mechanically from the files as they were; they were NOT reviewed one
+-#   by one (each marker keeps its own inline reason in the code). Every line added or changed after the baseline must be reviewed in its PR.
+-# Real enforcement of who may edit this file needs CODEOWNERS or a ruleset: owner-only GitHub settings, not done here.
++#   Write this file with `python tools/scan_repo.py --print-list > new.txt`, never by hand, then read every line that changed.
++# BASELINE (main 2742c1b, 2026-11-09): the baseline lines were taken mechanically from the files as they were; they were NOT reviewed one
++#   by one (each marker keeps its own inline reason in the code). The baseline stays "review pass planned". Lines added or changed after it
++#   (marked "PR91" in the reason) were read by a reviewer in their PR. Every line added or changed later must be reviewed in its PR.
++#   `--print-list` gives a new line the placeholder reason "NEW, needs a reviewed reason"; the scan REFUSES it (and any reason shorter than 15
++#   characters) until a reviewer writes a real one.
++# Real enforcement of who may edit this file needs CODEOWNERS plus a ruleset: .github/CODEOWNERS names the reviewers, the ruleset that makes
++#   the review mandatory is an owner-only GitHub setting and is NOT done here. Until then this list is a review aid, not a lock.
++.coderabbit.yaml:scanner-config-file:3baa635888693537994c1f91fc8321a9165d4c15412139e016430979e396f04f:CodeRabbit review settings (advisory reviewer, no required check); read in PR91 round 2: path filters skip only uv.lock and minified files; any change is a reviewed edit of this line
+ .gitleaks.toml:scanner-config-file:d031388c39cccffbc6e84a369fc3eb5fb3897b9e55702d043187ad0d0d69f06e:gitleaks configuration; any change is a reviewed edit of this line
+ .gitleaksignore:scanner-config-file:691f447cec6b4070fa36d3dc863b8b6e7c3c610bcb826a58b261501eb08cde52:gitleaks configuration; any change is a reviewed edit of this line
+-demos/ask-your-data/askdata/cli.py:suppress-noqa-security:2:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-demos/ask-your-data/askdata/cli.py:suppress-nosemgrep:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-demos/ask-your-data/askdata/evalset.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-demos/ask-your-data/db/build_verify.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-demos/ask-your-data/db/build_verify.py:suppress-nosec:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-demos/ask-your-data/db/lumen.py:suppress-noqa-security:2:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-demos/ask-your-data/db/lumen.py:suppress-nosec:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-demos/ask-your-data/db/seed.py:suppress-nosec:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-src/hadavin_sdk/actions/executor.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-src/hadavin_sdk/actions/executor.py:suppress-nosec:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-src/hadavin_sdk/actions/secrets_vault.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-src/hadavin_sdk/audit/local_dir.py:suppress-noqa-security:2:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-src/hadavin_sdk/backends/table.py:suppress-noqa-security:2:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-src/hadavin_sdk/config.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-src/hadavin_sdk/config.py:suppress-nosec:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-src/hadavin_sdk/llm/common.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-src/hadavin_sdk/llm/common.py:suppress-nosec:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-src/hadavin_sdk/llm/retry.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-src/hadavin_sdk/runtime/tick.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-src/hadavin_sdk/testing/mutation.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-src/hadavin_sdk/testing/mutation.py:suppress-nosec:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-src/hadavin_sdk/tools.py:suppress-noqa-security:2:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-src/hadavin_sdk/tools.py:suppress-nosec:2:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-tests/contracts/kinds/audit_chain.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-tests/contracts/kinds/builtin.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-tests/contracts/kinds/store_postgres.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-tests/demo_askdata/conftest.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-tests/demo_askdata/gold_runner.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-tests/demo_askdata/lumen_standin.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-tests/demo_askdata/test_meter.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-tests/demo_askdata/test_roles.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-tests/demo_askdata/test_safe_text.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-tests/demo_askdata/test_seed.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-tests/demo_askdata/test_validate_fuzz.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-tests/test_ci_gitleaks_scope.py:suppress-noqa-security:6:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-tests/test_http_metadata.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-tests/test_k1b_score.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-tests/test_k5_classes.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-tests/test_k5_layers.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-tests/test_k5_postgres.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-tests/test_k5_round12_fuzz.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-tests/test_mutation_runner.py:suppress-noqa-security:3:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-tests/test_mutation_runner_meta.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-tests/test_p2_postgres.py:suppress-noqa-security:2:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-tests/test_p3b_neutral_audit.py:suppress-noqa-security:3:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-tests/test_p4_secrets.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-tests/test_p5_llm.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-tests/test_p5p6_followups.py:suppress-noqa-security:7:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-tests/test_p7_store.py:suppress-noqa-security:8:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-tests/test_p7_tick.py:suppress-noqa-security:6:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-tests/test_repo_rules.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-tests/test_runmap_partial_escape.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-tests/test_scan_repo.py:suppress-noqa-security:5:added by the scan-config guard PR: tests that run fixed argument lists (git, bash, this script) without a shell; S603/S607 only
+-tests/warden_port/test_audit_chain.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-tests/warden_port/test_providers.py:suppress-noqa-security:3:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-tools/mutation_runner.py:suppress-noqa-security:2:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
+-tools/scan_repo.py:suppress-noqa-security:1:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++.sonarcloud.properties:scanner-config-file:b8ea167e433ffbe22c83a40087009855a65d7af2006798a535beca578c8327df:SonarCloud automatic-analysis settings (Python version, source and test folders, exclusions of migrations and .venv); read in PR91 round 2; any change is a reviewed edit of this line
++demos/ask-your-data/askdata/cli.py:suppress-noqa-security:2@13640daaaee71da9178006a73eedebfec9e2ecc8e7fe0baf5ddef5e72e9fc7bb:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++demos/ask-your-data/askdata/cli.py:suppress-semgrep-ignore:1@6133fff2149cd9cbf57a1eabd78928301c573e775340ae4c85660b2426aa6680:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++demos/ask-your-data/askdata/evalset.py:suppress-noqa-security:1@27e14d5e45049aa2c2ba7f9dd6d32b78663ea9b8a4a6d6e0e2f4051835c2d2ce:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++demos/ask-your-data/db/build_verify.py:suppress-nosec:1@1e920fac9495544c5287f244b1617155c36749e866cb1e7b5c5a19870b17c0fa:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++demos/ask-your-data/db/build_verify.py:suppress-noqa-security:1@1e920fac9495544c5287f244b1617155c36749e866cb1e7b5c5a19870b17c0fa:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++demos/ask-your-data/db/lumen.py:suppress-noqa-security:2@ddb7bc021583fc5cd49d75dcf47064f6fc5eeecd4d3a240d9572ef4295c15c09:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++demos/ask-your-data/db/lumen.py:suppress-nosec:1@b715f32f1e53922ce6e35602a887dae75483b24529320e96ed98c53c74eebcb8:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++demos/ask-your-data/db/seed.py:suppress-nosec:1@78d2228c66e8ae58327b86fe4891c566d6b118df3501637b2af7c8ab899f42bd:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++src/hadavin_sdk/actions/executor.py:suppress-noqa-security:1@d6cecdd7e1f3ae1162f02b7303114ad5b8fccc3bc31f624a1b0e1f6145c53c36:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++src/hadavin_sdk/actions/executor.py:suppress-nosec:1@0130104aee12ac48221a2fe1ac48dfeda0d3a5026cb7056cba27115c3e5b5ab2:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++src/hadavin_sdk/actions/secrets_vault.py:suppress-noqa-security:1@7451d88a09b1df0e9b5f6a0a7ad3839d566e433b2bb946bc50c2e7bd9717ce16:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++src/hadavin_sdk/audit/local_dir.py:suppress-noqa-security:2@a759f569321b85568d3497e3a4d49dee0266959eb496aa75f8b9bad743f9f84e:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++src/hadavin_sdk/backends/table.py:suppress-noqa-security:2@a255eb9b7feef2ebf04f5126e72029701b18c323e9c07358cae09d7c2fd8496d:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++src/hadavin_sdk/cli.py:suppress-nosonar:2@f71dbedd9b9aabd76e201c6f12cb9bbe3453a6df63c4aab57560e7096437b429:two SonarCloud ignores on a path built from the operator's own --outputs command-line argument (S8707); read in PR91 round 2: the folder is chosen by the person running the command, never by outside input
++src/hadavin_sdk/config.py:suppress-nosec:1@a23ad957cd3a55273a207014bf9f149ee0ba8938e3b46f2f4f83621957a6e109:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++src/hadavin_sdk/config.py:suppress-noqa-security:1@a23ad957cd3a55273a207014bf9f149ee0ba8938e3b46f2f4f83621957a6e109:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++src/hadavin_sdk/k1b/score.py:suppress-nosonar:3@109b6a6e6969dad6d33a660b51b424dd6e4479b9e8edc0ebe427232c34cf010a:three SonarCloud ignores on paths from the operator's own --answers and --outputs arguments (S8707); read in PR91 round 2: chosen by the person running the command, never by outside input
++src/hadavin_sdk/llm/common.py:suppress-noqa-security:1@cf5068dcb7c200f06afe487145c75fda120aa243cb967edd7f893658b3f77d52:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++src/hadavin_sdk/llm/common.py:suppress-nosec:1@e4c914b06bffa37f22357d3acf422ea6f81f3cddd6a2574e8b1cafb8c4a8180d:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++src/hadavin_sdk/llm/retry.py:suppress-noqa-security:1@752bc7b08b1e6a8a74e1e0f86c31fd7147e3f6cbbde16a7e5cb7ef23c680b172:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++src/hadavin_sdk/runtime/tick.py:suppress-noqa-security:1@8037ebdc9b965f940484682d922e56aa32e601bc3ef09dfd3151fe5f60e1a431:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++src/hadavin_sdk/testing/mutation.py:suppress-nosec:1@f42ca26779add387544c7572b2ba629cc325fb3d9f56f3818c5211cd771483fa:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++src/hadavin_sdk/testing/mutation.py:suppress-noqa-security:1@f42ca26779add387544c7572b2ba629cc325fb3d9f56f3818c5211cd771483fa:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++src/hadavin_sdk/tools.py:suppress-nosec:2@8dda4194c65af66f3ce330c0e031a018805061ae65eb2fff9320a793f3423b4c:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++src/hadavin_sdk/tools.py:suppress-noqa-security:2@870dcc659309496e570feeba93c46a658917bc369799b3c605eb6d0a9a58124c:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++tests/contracts/kinds/audit_chain.py:suppress-noqa-security:1@a04a67378a2e5b6f1d70740e86b113ab78b5f1db790baf9c617fcf516dda1584:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++tests/contracts/kinds/builtin.py:suppress-noqa-security:1@9fd49fd2e442b3642584e21bc9d54a873dc6029601f735b92ee797118d59ff52:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++tests/contracts/kinds/store_postgres.py:suppress-noqa-security:1@a04a67378a2e5b6f1d70740e86b113ab78b5f1db790baf9c617fcf516dda1584:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++tests/demo_askdata/conftest.py:suppress-noqa-security:1@fe982da9626dd1bf37d646d363e709cf4de7026522b8cc61ffa4b39be1569779:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++tests/demo_askdata/corpus.py:suppress-noqa-security:1@dc53b54d7baf5d607e0f69f888941d317de8d96668edd8e71b44b72c1588487b:one FILE-LEVEL ruff noqa naming S608 and ISC004 (codes named, not blanket); kept in PR91 round 2: 188 lines of test SQL text would each need a per-line noqa; the file holds attack and benign SQL as data, no query runs from outside input; the scan refuses a file-level noqa without codes
++tests/demo_askdata/fuzzgen.py:suppress-noqa-security:5@809546ac1876f8578196130feb301de9e235f4f984fdd755ce545087991d3ea1:five per-line noqa (round 2, narrowed from one file-level one): three S608 on test SQL text built by the generator, two S311 on seeded random.Random in test data; no query is built from outside input and no security randomness is needed
++tests/demo_askdata/gold_runner.py:suppress-noqa-security:1@6b6377402758894d94da17990315a77b7b2f75cf33227866e7d172c48fce407f:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++tests/demo_askdata/lumen_standin.py:suppress-noqa-security:1@19a9fe7455be3559a476577a95d53b142bd7e57688770b61dfd4509d7e6a2fa4:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++tests/demo_askdata/test_meter.py:suppress-noqa-security:1@ae48e52831f91a2e0678d94767d85094702481ad83760cab12f4f3d1fb5ea179:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++tests/demo_askdata/test_roles.py:suppress-noqa-security:1@aa34038232628d518d3e79090f9a9d07df22a107b6a2fdb7a5a0762f16ff7091:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++tests/demo_askdata/test_safe_text.py:suppress-noqa-security:1@259db3269710f10a9b05f00a5568f859e62a646bee659c89d60b45667691da24:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++tests/demo_askdata/test_seed.py:suppress-noqa-security:1@9ae3d75e5e564c738e0501a786f5a860b36e335668328d870a4571b9658506b8:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++tests/demo_askdata/test_validate_fuzz.py:suppress-noqa-security:1@ddd39f202ae55c3ea05a66b7b49e368f8c96306e0582c042feb28dded3c012a6:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++tests/demo_askdata/test_validate_harm.py:suppress-noqa-security:1@c5b815b04ee408d934c269bdde58a95011c16c30b014f1b47b39255357451892:one per-line noqa S608 (round 2, narrowed from a file-level one) on a fixed md5 check query whose only variable is a table name from the test's own fixed list; no outside input
++tests/test_ci_gitleaks_scope.py:suppress-noqa-security:6@6f0f053782b302f9975a566746d4f33dcca18f8bae562d3bdfc6e5ea14609be0:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++tests/test_ci_toolpath_step.py:suppress-noqa-security:1@b11f47861b78f389032eb723726bc7c7938771373af0c95a10fc73e95fa8c1b7:one noqa S603 in the _run helper: every argument list is fixed by the test, no outside input (PR91 round 1, B1: six markers reduced to one)
++tests/test_http_metadata.py:suppress-noqa-security:1@f5ec16ac5a4bbe164b9b18bdd7a6d22f180fc154fcb919e580c3a0d1f2dbc7ab:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++tests/test_k1b_score.py:suppress-noqa-security:1@5e1b84612da55347bfeff422aa1103ab0e2a259c2bf5de2e716de7d1b9ad6d8f:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++tests/test_k5_classes.py:suppress-noqa-security:1@e783a1d5fe82db3867c13b46a83d38876b190b17aa7d03322cf7954a9de876ae:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++tests/test_k5_layers.py:suppress-noqa-security:1@d418f151a85bb85d58f1f3dc08ab88dc395d892820a91187e9543c47029492ef:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++tests/test_k5_postgres.py:suppress-noqa-security:1@a04a67378a2e5b6f1d70740e86b113ab78b5f1db790baf9c617fcf516dda1584:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++tests/test_k5_round12_fuzz.py:suppress-noqa-security:1@7af22f6fea6c2efa34010f34c7d4490f968d1f08b5da73c1e12845317943c73b:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++tests/test_mutation_runner.py:suppress-noqa-security:3@f612591d41defa51d91044e7da5499ff2616c382d6b016d0fa84e87ea0f60a54:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++tests/test_mutation_runner_meta.py:suppress-noqa-security:1@9baa9efbfbd9e5c8f79524c1501ccae3988d987d1498aa7791777c5c88e6b3fd:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++tests/test_p2_postgres.py:suppress-noqa-security:2@779ca4480401e75971a7fbeaf76bad32ca9c7b1afc33851bd7f312ab75ada193:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++tests/test_p3b_neutral_audit.py:suppress-noqa-security:3@7d7cdf153b667af3a982c961c11ca4e27778a4284ec9e48eb2ce87b7e78f8569:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++tests/test_p4_secrets.py:suppress-noqa-security:1@a9fb323a5aa3405faba691072ba6c7696388bb857c4f9e6c2a10a0bbdc95ab25:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++tests/test_p5_llm.py:suppress-noqa-security:1@c7a17a28e93b5d2bf295a68312c3a159e154da21b71c690ff2f4b7bb5949667c:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++tests/test_p5p6_followups.py:suppress-noqa-security:7@03616995e0e26978dfc4b20b21b10ae725fd01b25ff6a7cd7dfe8ef39af95978:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++tests/test_p7_store.py:suppress-noqa-security:8@bffa9c4ee77760fcc896bafea67d99ecced86e0aaa51eeee6bc1389e7c90d7e3:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++tests/test_p7_tick.py:suppress-noqa-security:6@659f044b674344cc82abfa3406ca66aab7470f5228121200e7922d9bab36b4f5:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++tests/test_repo_rules.py:suppress-noqa-security:1@8b57cc0456d833e1a797f22889cfe389c9964d3f963a1b9dc54799cd1d2a8c16:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++tests/test_runmap_partial_escape.py:suppress-noqa-security:1@be17a6e17d1f1ece0cd5c76a2c266363151ad1075d45f4b048d175d7669b8d34:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++tests/test_scan_repo.py:suppress-noqa-security:10@74e89db1833d46f00a139bbd23ece12678442cb983e1b2ca89db128597d93f55:ten noqa that are S603/S607 only, on tests that run fixed argument lists (git, bash, this script) without a shell; read in PR91 round 2
++tests/test_scan_repo_mutations.py:suppress-noqa-security:1@25f3e4ce3e4af187a0a404319d813989c4d34cb415609baf771742155fa78e6a:one noqa S603 in the run helper of the mutation checks: the argument list is fixed by the test, no outside input (PR91 round 2)
++tests/warden_port/test_audit_chain.py:suppress-noqa-security:1@baa2eeca266f5006946147d410f07b5e2fd345e9e449c6dbab676525d8679563:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++tests/warden_port/test_providers.py:suppress-noqa-security:3@4cbc1ae53013330bec15530c9f6b3e120403d88d9b213ca83d82743bbed2c0a3:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++tools/mutation_runner.py:suppress-noqa-security:2@512f8f5ca795dbad86fa32f6a84ba30c19790ee58dab93eb34ea3000a8000041:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed
++tools/scan_allowlist.txt:scanner-config-file:25948096de3bf8c031fb3ed591f4d849213538fb6cf4e93e84accdfa63411df9:scan allowlist, pinned by hash (PR91 round 1, M6); any change is a reviewed edit of this line
++tools/scan_banned_extra.txt:scanner-config-file:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855:extra banned names, pinned by hash (PR91 round 1, M6); any change is a reviewed edit of this line
++tools/scan_repo.py:suppress-noqa-security:2@c59b34f3b7d0273868cf3ea6b3d9f5a6d42cfe953b994a6098dfc10c9b8928fc:baseline of 2742c1b; the marker carries its own inline reason; not individually reviewed

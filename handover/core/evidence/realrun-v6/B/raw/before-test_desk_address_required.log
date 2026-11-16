@@ -1,0 +1,193 @@
+F.FFF.F.FFFFFFFF                                                         [100%]
+=================================== FAILURES ===================================
+__________ test_hubspot_from_env_refuses_an_address_that_is_not_named __________
+
+    def test_hubspot_from_env_refuses_an_address_that_is_not_named() -> None:
+>       with pytest.raises(ValueError, match="DESK_HUBSPOT_BASE_URL is required for the hubspot CRM") as e:
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_desk_address_required.py:46: Failed
+_________ test_hubspot_settings_have_no_default_address_in_code_either _________
+
+    def test_hubspot_settings_have_no_default_address_in_code_either() -> None:
+        field = next(f for f in dataclasses.fields(HubspotSettings) if f.name == "base_url")
+>       assert field.default is dataclasses.MISSING and field.default_factory is dataclasses.MISSING
+E       AssertionError: assert ('https://api.hubapi.com' is <dataclasses._MISSING_TYPE object at 0x7f845ff50e60>)
+E        +  where 'https://api.hubapi.com' = Field(name='base_url',type='str',default='https://api.hubapi.com',default_factory=<dataclasses._MISSING_TYPE object at 0x7f845ff50e60>,init=True,repr=True,hash=None,compare=True,metadata=mappingproxy({}),kw_only=False,_field_type=_FIELD).default
+E        +  and   <dataclasses._MISSING_TYPE object at 0x7f845ff50e60> = dataclasses.MISSING
+
+tests/test_desk_address_required.py:64: AssertionError
+___ test_make_crm_the_desks_own_entry_point_refuses_before_anything_connects ___
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f845ed958b0>
+
+    def test_make_crm_the_desks_own_entry_point_refuses_before_anything_connects(
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        import socket
+    
+        def boom(*_a: Any, **_k: Any) -> Any:
+            raise AssertionError("a connection or a name lookup was tried")
+    
+        monkeypatch.setattr(socket.socket, "connect", boom)
+        monkeypatch.setattr(socket, "getaddrinfo", boom)
+        for name, value in HUBSPOT.items():
+            monkeypatch.setenv(name, value)
+        monkeypatch.delenv("DESK_HUBSPOT_BASE_URL", raising=False)
+>       with pytest.raises(ValueError, match="DESK_HUBSPOT_BASE_URL is required"):
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_desk_address_required.py:82: Failed
+_______ test_live_settings_from_env_refuse_an_address_that_is_not_named ________
+
+    def test_live_settings_from_env_refuse_an_address_that_is_not_named() -> None:
+>       with pytest.raises(ValueError, match="DESK_LIVE_BASE_URL is required for the live model") as e:
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_desk_address_required.py:88: Failed
+__________ test_live_settings_have_no_default_address_in_code_either ___________
+
+    def test_live_settings_have_no_default_address_in_code_either() -> None:
+        field = next(f for f in dataclasses.fields(LiveSettings) if f.name == "base_url")
+>       assert field.default is dataclasses.MISSING and field.default_factory is dataclasses.MISSING
+E       AssertionError: assert ('https://api.anthropic.com' is <dataclasses._MISSING_TYPE object at 0x7f845ff50e60>)
+E        +  where 'https://api.anthropic.com' = Field(name='base_url',type='str',default='https://api.anthropic.com',default_factory=<dataclasses._MISSING_TYPE object at 0x7f845ff50e60>,init=True,repr=True,hash=None,compare=True,metadata=mappingproxy({}),kw_only=False,_field_type=_FIELD).default
+E        +  and   <dataclasses._MISSING_TYPE object at 0x7f845ff50e60> = dataclasses.MISSING
+
+tests/test_desk_address_required.py:105: AssertionError
+_ test_a_percent_sign_in_the_host_is_refused_so_the_two_readers_cannot_differ[%2f] _
+
+sign = '%2f'
+
+    @pytest.mark.parametrize("sign", ["%2f", "%2e", "%25", "%40"])
+    def test_a_percent_sign_in_the_host_is_refused_so_the_two_readers_cannot_differ(sign: str) -> None:
+        suffix = HUBSPOT_HOST_SUFFIXES[0]
+        hub = "https://" + "evil.test" + sign + "." + suffix
+>       with pytest.raises(ValueError, match="no percent sign"):
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_desk_address_required.py:117: Failed
+_ test_a_percent_sign_in_the_host_is_refused_so_the_two_readers_cannot_differ[%2e] _
+
+sign = '%2e'
+
+    @pytest.mark.parametrize("sign", ["%2f", "%2e", "%25", "%40"])
+    def test_a_percent_sign_in_the_host_is_refused_so_the_two_readers_cannot_differ(sign: str) -> None:
+        suffix = HUBSPOT_HOST_SUFFIXES[0]
+        hub = "https://" + "evil.test" + sign + "." + suffix
+>       with pytest.raises(ValueError, match="no percent sign"):
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_desk_address_required.py:117: Failed
+_ test_a_percent_sign_in_the_host_is_refused_so_the_two_readers_cannot_differ[%25] _
+
+sign = '%25'
+
+    @pytest.mark.parametrize("sign", ["%2f", "%2e", "%25", "%40"])
+    def test_a_percent_sign_in_the_host_is_refused_so_the_two_readers_cannot_differ(sign: str) -> None:
+        suffix = HUBSPOT_HOST_SUFFIXES[0]
+        hub = "https://" + "evil.test" + sign + "." + suffix
+>       with pytest.raises(ValueError, match="no percent sign"):
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_desk_address_required.py:117: Failed
+_ test_a_percent_sign_in_the_host_is_refused_so_the_two_readers_cannot_differ[%40] _
+
+sign = '%40'
+
+    @pytest.mark.parametrize("sign", ["%2f", "%2e", "%25", "%40"])
+    def test_a_percent_sign_in_the_host_is_refused_so_the_two_readers_cannot_differ(sign: str) -> None:
+        suffix = HUBSPOT_HOST_SUFFIXES[0]
+        hub = "https://" + "evil.test" + sign + "." + suffix
+>       with pytest.raises(ValueError, match="no percent sign"):
+E       Failed: DID NOT RAISE ValueError
+
+tests/test_desk_address_required.py:117: Failed
+_ test_the_desk_process_refuses_hubspot_without_an_address_and_connects_nowhere _
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B/.tmp-run/pytest-of-unknown/pytest-1/test_the_desk_process_refuses_0')
+
+    def test_the_desk_process_refuses_hubspot_without_an_address_and_connects_nowhere(tmp_path: Path) -> None:
+        key = tmp_path / "k.txt"
+        done, blocked = _run_desk(
+            tmp_path, {"DESK_CRM": "hubspot", "DESK_HUBSPOT_KEY_FILE": str(key), "DESK_HUBSPOT_MAX_CALLS": "5"}
+        )
+>       assert done.returncode == 4, done.stdout + done.stderr  # EXIT_DESK_SETTING_REFUSED: a plain refusal
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: cannot reach the demo servers (are they running? see scripts/start_all)
+E         
+E       assert 1 == 4
+E        +  where 1 = CompletedProcess(args=['/home/user/build/rr6/venv312/bin/python', '-m', 'lead_desk.server'], returncode=1, stdout='cannot reach the demo servers (are they running? see scripts/start_all)\n', stderr='').returncode
+
+tests/test_desk_address_required.py:210: AssertionError
+_ test_the_desk_process_refuses_the_live_model_without_an_address_and_connects_nowhere _
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-B/.tmp-run/pytest-of-unknown/pytest-1/test_the_desk_process_refuses_1')
+
+    def test_the_desk_process_refuses_the_live_model_without_an_address_and_connects_nowhere(tmp_path: Path) -> None:
+        live = {k: v for k, v in LIVE.items() if k != "DESK_QUALIFIER"} | {
+            "DESK_LIVE_KEY_FILE": str(tmp_path / "k.txt"),
+            "DESK_LIVE_LEDGER_PATH": str(tmp_path / "ledger.jsonl"),
+        }
+        done, blocked = _run_desk(tmp_path, {"DESK_QUALIFIER": "live_claude", **live})
+>       assert done.returncode == 4, done.stdout + done.stderr
+E       AssertionError: cannot reach the demo servers (are they running? see scripts/start_all)
+E         
+E       assert 1 == 4
+E        +  where 1 = CompletedProcess(args=['/home/user/build/rr6/venv312/bin/python', '-m', 'lead_desk.server'], returncode=1, stdout='cannot reach the demo servers (are they running? see scripts/start_all)\n', stderr='').returncode
+
+tests/test_desk_address_required.py:221: AssertionError
+_________ test_no_vendor_address_constant_is_used_as_a_default_in_src __________
+
+    def test_no_vendor_address_constant_is_used_as_a_default_in_src() -> None:
+        """The three vendor addresses live in constants.py. The only use in src/ is the live settings' check that a key goes
+        to the provider's own host (config.py). Any other use (a dataclass default, a `.get(name, VENDOR)`) fails here."""
+        used: dict[str, set[str]] = {}
+        for path in sorted((REPO / "src").rglob("*.py")):
+            if path.name == "constants.py":
+                continue
+            for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+                names = {a.name for a in node.names} if isinstance(node, ast.ImportFrom) else set()
+                if isinstance(node, ast.Name):
+                    names.add(node.id)
+                hit = names & _VENDOR_ADDRESS_NAMES
+                if hit:
+                    used.setdefault(path.name, set()).update(hit)
+>       assert used == {"config.py": {"LIVE_DEFAULT_BASE_URL"}}, used
+E       AssertionError: {'config.py': {'LIVE_DEFAULT_BASE_URL'}, 'crm_hubspot.py': {'HUBSPOT_BASE_URL'}}
+E       assert {'config.py':...OT_BASE_URL'}} == {'config.py':...LT_BASE_URL'}}
+E         
+E         Omitting 1 identical items, use -vv to show
+E         Left contains 1 more item:
+E         {'crm_hubspot.py': {'HUBSPOT_BASE_URL'}}
+E         Use -v to get more diff
+
+tests/test_desk_address_required.py:244: AssertionError
+___________ test_the_settings_reference_says_the_address_is_required ___________
+
+    def test_the_settings_reference_says_the_address_is_required() -> None:
+        text = (REPO / "docs" / "settings.md").read_text(encoding="utf-8")
+>       assert "`DESK_HUBSPOT_BASE_URL` (required" in text and "`DESK_LIVE_BASE_URL` | service address (required" in text
+E       AssertionError: assert ('`DESK_HUBSPOT_BASE_URL` (required' in '# Settings\n\nEvery setting has a default in `Config` (`src/lead_desk/config.py`) and an environment variable. A bad ...he run look green). Without it a missing folder skips each such test file as one item and the other files still run.\n')
+
+tests/test_desk_address_required.py:249: AssertionError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_desk_address_required.py::test_hubspot_from_env_accepts_the_vendors_own_address_named_on_purpose_and_a_loopback_one
+PASSED tests/test_desk_address_required.py::test_live_settings_from_env_accept_the_providers_own_address_named_and_a_loopback_one
+PASSED tests/test_desk_address_required.py::test_the_address_is_only_read_when_the_live_model_is_on
+FAILED tests/test_desk_address_required.py::test_hubspot_from_env_refuses_an_address_that_is_not_named
+FAILED tests/test_desk_address_required.py::test_hubspot_settings_have_no_default_address_in_code_either
+FAILED tests/test_desk_address_required.py::test_make_crm_the_desks_own_entry_point_refuses_before_anything_connects
+FAILED tests/test_desk_address_required.py::test_live_settings_from_env_refuse_an_address_that_is_not_named
+FAILED tests/test_desk_address_required.py::test_live_settings_have_no_default_address_in_code_either
+FAILED tests/test_desk_address_required.py::test_a_percent_sign_in_the_host_is_refused_so_the_two_readers_cannot_differ[%2f]
+FAILED tests/test_desk_address_required.py::test_a_percent_sign_in_the_host_is_refused_so_the_two_readers_cannot_differ[%2e]
+FAILED tests/test_desk_address_required.py::test_a_percent_sign_in_the_host_is_refused_so_the_two_readers_cannot_differ[%25]
+FAILED tests/test_desk_address_required.py::test_a_percent_sign_in_the_host_is_refused_so_the_two_readers_cannot_differ[%40]
+FAILED tests/test_desk_address_required.py::test_the_desk_process_refuses_hubspot_without_an_address_and_connects_nowhere
+FAILED tests/test_desk_address_required.py::test_the_desk_process_refuses_the_live_model_without_an_address_and_connects_nowhere
+FAILED tests/test_desk_address_required.py::test_no_vendor_address_constant_is_used_as_a_default_in_src
+FAILED tests/test_desk_address_required.py::test_the_settings_reference_says_the_address_is_required
+13 failed, 3 passed in 0.73s
+rc=1 wall=2s

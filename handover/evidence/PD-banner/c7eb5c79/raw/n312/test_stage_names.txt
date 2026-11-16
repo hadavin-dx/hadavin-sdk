@@ -1,0 +1,19 @@
+sdk: /home/user/build/ER-pdbanner12-new/src/hadavin_sdk/__init__.py
+...................................F.................................... [ 74%]
+.........................                                                [100%]
+=================================== FAILURES ===================================
+_______________________ test_the_old_stage_word_is_gone ________________________
+
+    def test_the_old_stage_word_is_gone():
+        found, _ = _scan()
+>       assert not found, "the old stage word is still used as a stage:\n" + "\n".join(found)
+E       AssertionError: the old stage word is still used as a stage:
+E         tests/test_mode_banner.py:3597 [value after a stage name] app = _sealed_app(tmp_path, f"stage-{stage}")
+E         tests/test_mode_banner.py:3598 [value after a stage name] object.__setattr__(app.config, "environment", stage)
+E       assert not ['tests/test_mode_banner.py:3597 [value after a stage name] app = _sealed_app(tmp_path, f"stage-{stage}")', 'tests/test_mode_banner.py:3598 [value after a stage name] object.__setattr__(app.config, "environment", stage)']
+
+tests/test_stage_names.py:545: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_stage_names.py::test_the_old_stage_word_is_gone - Assertion...
+1 failed, 96 passed in 4.57s
+rc=1

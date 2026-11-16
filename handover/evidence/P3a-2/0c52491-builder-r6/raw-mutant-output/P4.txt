@@ -1,0 +1,11 @@
+### tests/test_migration_rules.py::test_the_rename_refusal_points_to_the_runbook_case_b rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_____________ test_the_rename_refusal_points_to_the_runbook_case_b _____________
+tests/test_migration_rules.py:467: in test_the_rename_refusal_points_to_the_runbook_case_b
+    assert "Migration repair steps, case (b)" in msg
+E   AssertionError: assert 'Migration repair steps, case (b)' in 'applied migrations have no file in this release: 0003_b.\n0003_b: the folder has a file with the same name after the ...e check that stops an update that matches no record and the lock, are in CHANGELOG.md, section Migration repair steps.'
+=========================== short test summary info ============================
+FAILED tests/test_migration_rules.py::test_the_rename_refusal_points_to_the_runbook_case_b
+1 failed in 0.39s
+

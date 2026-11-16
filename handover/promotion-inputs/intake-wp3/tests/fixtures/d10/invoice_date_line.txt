@@ -1,0 +1,4 @@
+INVOICE INV-1001
+Supplier: Acme Widgets Ltd
+Your PO PO-77 USD
+Invoice INV-1001 date 2026-10-01

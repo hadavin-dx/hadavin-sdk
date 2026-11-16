@@ -1,0 +1,143 @@
+........................................................................ [  1%]
+........................................................................ [  3%]
+........................................................................ [  5%]
+...............................F........................................ [  7%]
+........................................................................ [  9%]
+........................................................................ [ 11%]
+........................................................................ [ 13%]
+........................................................................ [ 15%]
+........................................................................ [ 17%]
+........................................................................ [ 19%]
+....................................................................Exception occurred during processing of request from ('127.0.0.1', 42382)
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/socketserver.py", line 692, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/usr/lib/python3.12/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+  File "/usr/lib/python3.12/socketserver.py", line 761, in __init__
+    self.handle()
+  File "/usr/lib/python3.12/http/server.py", line 436, in handle
+    self.handle_one_request()
+  File "/usr/lib/python3.12/http/server.py", line 424, in handle_one_request
+    method()
+.... [ 21%]
+..----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 46116)
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/socketserver.py", line 692, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/usr/lib/python3.12/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+  File "/usr/lib/python3.12/socketserver.py", line 761, in __init__
+    self.handle()
+  File "/usr/lib/python3.12/http/server.py", line 436, in handle
+    self.handle_one_request()
+  File "/usr/lib/python3.12/http/server.py", line 424, in handle_one_request
+    method()
+  File "/home/user/build/rr6/tree-U/demo_only/fake_hubspot.py", line 290, in do_PATCH
+    self._send(400, {"status": "error", "message": "idProperty=email is required"})
+  File "/home/user/build/rr6/tree-U/demo_only/fake_hubspot.py", line 224, in _send
+    self.wfile.write(data)
+  File "/usr/lib/python3.12/socketserver.py", line 840, in write
+    self._sock.sendall(b)
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+.......----------------------------------------
+.Exception occurred during processing of request from.............................................................. [ 23%]
+...................................................ss................... [ 25%]
+ssssssssssssssssssssss.................................................. [ 27%]
+........................................................................ [ 29%]
+.......s.......s.......ss............................................... [ 31%]
+........................................................................ [ 33%]
+........................................................................ [ 35%]
+........................................................................ [ 37%]
+........................................................................ [ 39%]
+................................................................ss...... [ 41%]
+.........................sssss....s..................................... [ 43%]
+........................................................................ [ 45%]
+........................................................................ [ 47%]
+................................................................s....... [ 49%]
+.................F...................................................... [ 51%]
+........................................................................ [ 53%]
+....s................................................................... [ 55%]
+........................................................................ [ 57%]
+........................................................................ [ 59%]
+...................................................................sssss [ 61%]
+sssssssssss............................................................. [ 63%]
+....................................................................ssss [ 65%]
+ssssssssssssssss..........sssssssssssssssssssssss......sssssss.sssssssss [ 67%]
+ssss..sss........................................................sssssss [ 69%]
+sssssssssssssssssss........................................sssssssssssss [ 71%]
+ssssssssssssssssssss..........ss..s..................................... [ 73%]
+........................................................................ [ 75%]
+........................................................................ [ 77%]
+........................................................................ [ 79%]
+........................................................................ [ 81%]
+........................................................................ [ 83%]
+........................................................................ [ 85%]
+...........s............................................................ [ 87%]
+........................................................................ [ 89%]
+........................................................................ [ 91%]
+........................................................................ [ 93%]
+........................................................................ [ 95%]
+..................................................ssssssssssssss........ [ 97%]
+..........................s............................................. [ 99%]
+.....                                                                    [100%]
+=================================== FAILURES ===================================
+____ test_a_missing_demo_folder_skips_when_allowed_and_stops_the_run_in_ci _____
+
+tmp_path = PosixPath('/home/user/build/rr6/tree-U/.tmp-run/pytest-of-unknown/pytest-0/test_a_missing_demo_folder_ski0')
+
+    def test_a_missing_demo_folder_skips_when_allowed_and_stops_the_run_in_ci(tmp_path: Path) -> None:
+        (tmp_path / "a").mkdir()
+        allowed = _run(tmp_path / "a")
+>       assert allowed.returncode == 0 and "1 passed" in allowed.stdout, allowed.stdout + allowed.stderr
+E       AssertionError: ImportError while loading conftest '/home/user/build/rr6/tree-U/.tmp-run/pytest-of-unknown/pytest-0/test_a_missing_demo_folder_ski0/a/conftest.py'.
+E         conftest.py:33: in <module>
+E             from support import Rig, ServerDidNotStop, build_rig, stop_within
+E         E   ModuleNotFoundError: No module named 'support'
+E         
+E       assert (4 == 0)
+E        +  where 4 = CompletedProcess(args=['/home/user/build/rr6/tree-U/../venv312/bin/python', '-m', 'pytest', '-q', '-p', 'no:cacheprovi...om support import Rig, ServerDidNotStop, build_rig, stop_within\nE   ModuleNotFoundError: No module named 'support'\n").returncode
+
+tests/test_demo_folder_guard.py:40: AssertionError
+________________________ test_no_placeholder_text_ships ________________________
+
+    def test_no_placeholder_text_ships() -> None:
+        hits, unreadable = [], []
+        for path in _files():
+            try:
+                text = path.read_text(encoding="utf-8")
+            except (UnicodeDecodeError, OSError):
+                if path.suffix.lower() not in BINARY_SUFFIXES:
+                    unreadable.append(path.relative_to(REPO).as_posix())  # not a picture: it was not checked
+                continue
+            for n, line in enumerate(text.splitlines(), 1):
+                if FOUND.search(line):
+                    hits.append(f"{path.relative_to(REPO).as_posix()}:{n}")
+        assert not hits, hits
+>       assert not unreadable, f"files that could not be read as text, so not checked: {unreadable}"
+E       AssertionError: files that could not be read as text, so not checked: ['.tmp-run/pytest-of-unknown/pytest-0/test_leadflow_config_refusals0/junk.json', '.tmp-run/pytest-of-unknown/pytest-0/test_reset_sh_refuses_when_ps_0/bin/bash', '.tmp-run/pytest-of-unknown/pytest-0/test_reset_sh_refuses_when_ps_0/bin/cat', '.tmp-run/pytest-of-unknown/pytest-0/test_reset_sh_refuses_when_ps_0/bin/dirname', '.tmp-run/pytest-of-unknown/pytest-0/test_reset_sh_refuses_when_ps_0/bin/kill', '.tmp-run/pytest-of-unknown/pytest-0/test_reset_sh_refuses_when_ps_0/bin/python', '.tmp-run/pytest-of-unknown/pytest-0/test_reset_sh_refuses_when_ps_0/bin/rm', '.tmp-run/pytest-of-unknown/pytest-0/test_reset_sh_refuses_when_ps_0/bin/sleep', '.tmp-run/real-dry-bjnrdgop/run/desk.db-shm', '.tmp-run/real-dry-z6273x9g/run/desk.db-shm']
+E       assert not ['.tmp-run/pytest-of-unknown/pytest-0/test_leadflow_config_refusals0/junk.json', '.tmp-run/pytest-of-unknown/pytest-0/..._sh_refuses_when_ps_0/bin/kill', '.tmp-run/pytest-of-unknown/pytest-0/test_reset_sh_refuses_when_ps_0/bin/python', ...]
+
+tests/test_no_placeholders.py:44: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_demo_folder_guard.py::test_a_missing_demo_folder_skips_when_allowed_and_stops_the_run_in_ci
+FAILED tests/test_no_placeholders.py::test_no_placeholder_text_ships - Assert...
+SKIPPED [24] tests/test_gitleaks_exceptions.py:145: no gitleaks program (set GITLEAKS_BIN); set DPLD_REQUIRE_SCAN=1 to make this a failure
+SKIPPED [1] tests/test_hygiene.py:150: no gitleaks program on PATH (set GITLEAKS_BIN); set DPLD_REQUIRE_SCAN=1 to make this a failure
+SKIPPED [1] tests/test_hygiene.py:344: no gitleaks program on PATH (set GITLEAKS_BIN); set DPLD_REQUIRE_SCAN=1 to make this a failure
+SKIPPED [1] tests/test_hygiene.py:533: no gitleaks program on PATH (set GITLEAKS_BIN); set DPLD_REQUIRE_SCAN=1 to make this a failure
+SKIPPED [1] tests/test_hygiene.py:580: no gitleaks program on PATH (set GITLEAKS_BIN)
+SKIPPED [22] tests/test_mode_safety.py:110: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_n8n_api_url.py:510: root (and Windows) can read a file with no permissions
+SKIPPED [1] tests/test_path_confinement.py:281: ntpath.isreserved needs Python 3.13
+SKIPPED [28] tests/test_portal_browser.py:27: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [113] tests/test_portal_lead_pages.py:113: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_portal_wording_and_masking.py:171: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_portal_wording_and_masking.py:204: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_portal_wording_and_masking.py:257: could not import 'playwright.sync_api': No module named 'playwright'
+SKIPPED [1] tests/test_server_hardening.py:224: measurement run: set LEAD_DESK_LOAD_N
+SKIPPED [1] tests/test_stall_eviction.py:526: the reset that destroys the reply happens on Windows only
+2 failed, 3405 passed, 198 skipped in 1165.27s (0:19:25)
+rc=1 wall=1166s

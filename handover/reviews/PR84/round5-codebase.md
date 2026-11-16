@@ -1,0 +1,8 @@
+# PR84 round 5 (head de18d59), egm-codebase-details (ac36fa89). Snapshot only; nothing run.
+0 Blockers. Round-4 fixes verified technically (add-mask before GITHUB_ENV, docker flags, Vault dev facts, lookup-self probe, artifact name run_attempt, step ordering, mask() in emit+report, no root fallback, REF_RE).
+MAJOR 1 evidence_step.py:14 docstring "3.<minor> >= 12" vs PY_RE 3\.1[2-4]; evidence.yml:25 says "3.12 or newer": fix wording or regex.
+MAJOR 2 guard test 697-700 test_the_glob_covers_yaml_files_too can never fail (asserts own source literal); replace with temp *.yaml file check or delete.
+MAJOR 3 guard does not forbid probing from inside container: probe rule only needs strings curl, X-Vault-Token, 127.0.0.1:8200 anywhere (already in -p); reject `docker exec`, require curl as code line; plant that deletes `exit 1` after the 60 s timeout.
+MAJOR 4 mask() masks full value only; pytest short summary truncated at 80 columns can cut the token; mask prefixes >= 8 chars or set COLUMNS large, or say "full value only" in docstring and evidence.yml:13-14.
+Nits: skip-reason check any reason containing HADAVIN_TEST_; vault_problems gaps (cat <<<, printenv, && echo, shell: bash -x, `docker  run`, sudo, literal unpinned image, docker.sock/--pid=host/--cap-add, never-removed plant); plants "literal token in service" rely on PyYAML duplicate key quirk; runs_tests exemption $TOOL; skip greps miss importorskip; pull/N/head message accuracy; print last curl HTTP status; docker logs prints Unseal Key; vault-token-reader grep weak.
+Not checked: digests/action SHAs, real GitHub run, vault_fake.py, zizmor.

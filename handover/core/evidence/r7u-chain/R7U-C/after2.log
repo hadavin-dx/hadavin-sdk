@@ -1,0 +1,26 @@
+........................................................................ [ 23%]
+.............................F
+=================================== FAILURES ===================================
+___________ test_t6b_every_def_with_a_host_parameter_is_in_the_table ___________
+
+    def test_t6b_every_def_with_a_host_parameter_is_in_the_table() -> None:
+        """How a new one is caught: a def in demo_only with a parameter named host, bind, address and the like that is in
+        neither ENTRY_POINTS (called with every bad host above) nor NOT_A_BIND (with a reason) fails this test and is
+        named."""
+        found = set(_demo_only_defs())
+        known = set(ENTRY_POINTS) | set(NOT_A_BIND)
+        new = found - known
+        assert new == set(), f"new def with a host parameter, add it to ENTRY_POINTS or NOT_A_BIND: {new}"
+>       assert known - found == set(), f"table entry that no longer exists: {known - found}"
+E       AssertionError: table entry that no longer exists: {('demo_only/bad_request.py', 'require_loopback_host')}
+E       assert {('demo_only/...opback_host')} == set()
+E         
+E         Extra items in the left set:
+E         ('demo_only/bad_request.py', 'require_loopback_host')
+E         Use -v to get more diff
+
+tests/test_r7t_findings.py:382: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_r7t_findings.py::test_t6b_every_def_with_a_host_parameter_is_in_the_table
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 101 passed in 68.72s (0:01:08)

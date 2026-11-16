@@ -1,0 +1,77 @@
+=== fbmain: fbmain rc=1 dur=7s; 3 failed, 108 passed, 1 error in 5.57s
+--- failures grouped by first error text (count, text; memory addresses replaced by 0x…)
+      1 collection failure
+      1 AssertionError: a live build took a test object ('pilot'): "secret 'pg-dsn' cannot be read at start-up" / assert "secret 'pg-d...d at start-up" == 'channel= is ...ilot and prod' / - channel= is for tests; configure backends.channel in pilot and prod / + secret 'pg-dsn' cannot be read at start-up
+      1 AssertionError: a static Vault token was accepted for secrets (pilot, {}): "secret 'pg-dsn' cannot be read at start-up" / assert "secret 'pg-d...d at start-up" == 'environment ...uth: approle)' / - environment pilot: refused: secrets: vault auth token (the default; set auth: kubernetes (recommended) or auth: approle) / + secret 'pg-dsn' cannot be read at start-up
+      1 AssertionError: a live tick took a time handed to it ('pilot'): '' / assert '' == 'now= is for ...ilot and prod' / - now= is for tests; it is refused in pilot and prod
+
+=== fbmain-shim: fbmain-shim rc=1 dur=9s; 70 failed, 138 passed in 7.90s
+--- failures grouped by first error text (count, text; memory addresses replaced by 0x…)
+     17 Failed: DID NOT RAISE ConfigError
+      9 AssertionError: / - secret 'pg-dsn' cannot be read at start-up / + channel= is for tests; configure backends.channel in pilot and prod
+      4 AssertionError: / - secret 'pg-dsn' cannot be read at start-up / + timeout_s= is for tests; it is refused in pilot and prod
+      4 AssertionError: / - secret 'pg-dsn' cannot be read at start-up / + environment pilot: refused: secrets: vault auth token (the default; set auth: kubernetes (recommended) or auth: approle)
+      4 AssertionError: / - secret 'audit-key' cannot be read at start-up / + environment prod: refused: secrets: vault auth token (the default; set auth: kubernetes (recommended) or auth: approle)
+      3 psycopg.ProgrammingError: missing "=" after "unused" in connection info string
+      3 AssertionError: / - secret 'pg-dsn' cannot be read at start-up / + detector= is for tests; configure backends.detector in pilot and prod
+      3 AssertionError: / - secret 'pg-dsn' cannot be read at start-up / + llm= is for tests; configure backends.llm in pilot and prod
+      3 AssertionError: / - secret 'pg-dsn' cannot be read at start-up / + clock= is for tests; it is refused in pilot and prod
+      2 AssertionError: Regex pattern did not match. / Expected regex: 'sources=\\ is\\ for\\ tests' / Actual message: "secret 'pg-dsn' cannot be read at start-up"
+      2 AssertionError: / - secret 'pg-dsn' cannot be read at start-up / + environment pilot: refused: signer: vault_transit auth token (the default; set auth: kubernetes (recommended) or auth: approle)
+      2 AssertionError: / - secret 'pg-dsn' cannot be read at start-up / + environment prod: refused: signer: vault_transit auth token (the default; set auth: kubernetes (recommended) or auth: approle)
+      1 AssertionError: Regex pattern did not match. / Expected regex: 'plain callables' / Actual message: "secret 'pg-dsn' cannot be read at start-up"
+      1 hadavin_sdk.errors.ConfigError: secret 'fixture-token' cannot be read at start-up
+      1 AssertionError: a falsy sources= mapping was dropped / assert None is namespace(probe_scope=<class 'list'>) / +  where None = <built-in method get of dict object at 0x…>('s') / +    where <built-in method get of dict object at 0x…> = {}.get / [+1 more line; full report in element text]
+      1 KeyError: 'fixture-token'
+      1 AssertionError: / - secret 'pg-dsn' cannot be read at start-up / + environment staging: refused: secrets: vault auth token (the default; set auth: kubernetes (recommended) or auth: approle)
+      1 AssertionError: / - secret 'pg-dsn' cannot be read at start-up / + environment Demo: refused: secrets: vault auth token (the default; set auth: kubernetes (recommended) or auth: approle)
+      1 AssertionError: / - secret 'pg-dsn' cannot be read at start-up / + environment demo : refused: secrets: vault auth token (the default; set auth: kubernetes (recommended) or auth: approle)
+      1 AssertionError: / - secret 'pg-dsn' cannot be read at start-up / + environment : refused: secrets: vault auth token (the default; set auth: kubernetes (recommended) or auth: approle)
+      1 AssertionError: / - secret 'pg-dsn' cannot be read at start-up / + environment None: refused: secrets: vault auth token (the default; set auth: kubernetes (recommended) or auth: approle)
+      1 assert 'secrets: vault auth token' in "secret 'pg-dsn' cannot be read at start-up" / +  where "secret 'pg-dsn' cannot be read at start-up" = str(ConfigError("secret 'pg-dsn' cannot be read at start-up")) / +    where ConfigError("secret 'pg-dsn' cannot be read at start-up") = <ExceptionInfo ConfigError("secret 'pg-dsn' cannot be read at start-up") tblen=3>.value
+      1 AssertionError: / - secret 'pg-dsn' cannot be read at start-up / + environment pilot: refused: channel: q8a_vault_built auth token (the default; set auth: kubernetes (recommended) or auth: approle)
+      1 AssertionError: a live build took a test object ('pilot'): "secret 'pg-dsn' cannot be read at start-up" / assert "secret 'pg-d...d at start-up" == 'channel= is ...ilot and prod' / - channel= is for tests; configure backends.channel in pilot and prod / + secret 'pg-dsn' cannot be read at start-up
+      1 AssertionError: a static Vault token was accepted for secrets (pilot, {}): "secret 'pg-dsn' cannot be read at start-up" / assert "secret 'pg-d...d at start-up" == 'environment ...uth: approle)' / - environment pilot: refused: secrets: vault auth token (the default; set auth: kubernetes (recommended) or auth: approle) / + secret 'pg-dsn' cannot be read at start-up
+      1 AssertionError: a live tick took a time handed to it ('pilot'): '' / assert '' == 'now= is for ...ilot and prod' / - now= is for tests; it is refused in pilot and prod
+
+=== fb464: fb464 rc=1 dur=7s; 2 failed, 109 passed, 1 error in 5.17s
+--- failures grouped by first error text (count, text; memory addresses replaced by 0x…)
+      1 collection failure
+      1 hadavin_sdk.errors.ConfigError: 1 validation error for Config / Value error, environment pilot: refused: secrets: vault auth token (the default; set auth: kubernetes or auth: approle) [type=value_error] / For further information visit https://errors.pydantic.dev/2.14/v/value_error
+      1 AssertionError: a live tick took a time handed to it ('pilot'): '' / assert '' == 'now= is for ...ilot and prod' / - now= is for tests; it is refused in pilot and prod
+
+=== fb464-shim: fb464-shim rc=1 dur=9s; 41 failed, 167 passed in 7.45s
+--- failures grouped by first error text (count, text; memory addresses replaced by 0x…)
+     17 Failed: DID NOT RAISE ConfigError
+     10 hadavin_sdk.errors.ConfigError: 1 validation error for Config / Value error, environment pilot: refused: secrets: vault auth token (the default; set auth: kubernetes or auth: approle) [type=value_error] / For further information visit https://errors.pydantic.dev/2.14/v/value_error
+      4 hadavin_sdk.errors.ConfigError: 1 validation error for Config / Value error, environment prod: refused: secrets: vault auth token (the default; set auth: kubernetes or auth: approle) [type=value_error] / For further information visit https://errors.pydantic.dev/2.14/v/value_error
+      2 AssertionError: Regex pattern did not match. / Expected regex: 'sources=\\ is\\ for\\ tests' / Actual message: "secret 'pg-dsn' cannot be read at start-up"
+      2 hadavin_sdk.errors.ConfigError: 1 validation error for Config / Value error, environment pilot: refused: signer: vault_transit auth token (the default; set auth: kubernetes or auth: approle) [type=value_error] / For further information visit https://errors.pydantic.dev/2.14/v/value_error
+      2 hadavin_sdk.errors.ConfigError: 1 validation error for Config / Value error, environment prod: refused: signer: vault_transit auth token (the default; set auth: kubernetes or auth: approle) [type=value_error] / For further information visit https://errors.pydantic.dev/2.14/v/value_error
+      1 AssertionError: Regex pattern did not match. / Expected regex: 'plain callables' / Actual message: "secret 'pg-dsn' cannot be read at start-up"
+      1 AssertionError: a falsy sources= mapping was dropped / assert None is namespace(probe_scope=<class 'list'>) / +  where None = <built-in method get of dict object at 0x…>('s') / +    where <built-in method get of dict object at 0x…> = {}.get / [+1 more line; full report in element text]
+      1 AssertionError: / - secret 'pg-dsn' cannot be read at start-up / + environment pilot: refused: channel: q8a_vault_built auth token (the default; set auth: kubernetes (recommended) or auth: approle)
+      1 AssertionError: a live tick took a time handed to it ('pilot'): '' / assert '' == 'now= is for ...ilot and prod' / - now= is for tests; it is refused in pilot and prod
+
+=== collection error text (same in fbmain and fb464)
+==================================== ERRORS ====================================
+______________ ERROR collecting tests/test_q8a_live_overrides.py _______________
+ImportError while importing test module '/home/user/build/EV-Q8a1-f6fad26-fbmain/tests/test_q8a_live_overrides.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_q8a_live_overrides.py:34: in <module>
+    from hadavin_sdk.backends.table import TABLE, Entry, KindSettings, VaultConnection
+
+==================================== ERRORS ====================================
+______________ ERROR collecting tests/test_q8a_live_overrides.py _______________
+ImportError while importing test module '/home/user/build/EV-Q8a1-f6fad26-fb464/tests/test_q8a_live_overrides.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_q8a_live_overrides.py:34: in <module>
+    from hadavin_sdk.backends.table import TABLE, Entry, KindSettings, VaultConnection

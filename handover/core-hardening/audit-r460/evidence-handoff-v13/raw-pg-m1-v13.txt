@@ -1,0 +1,111 @@
+Pager usage is off.
+psql:/var/lib/postgresql/hadavin_v13_exp/pg_m1.sql:4: ERROR:  42710: role "mig_v13" already exists
+LOCATION:  CreateRole, user.c:376
+psql:/var/lib/postgresql/hadavin_v13_exp/pg_m1.sql:4: ERROR:  42710: role "rt_v13" already exists
+LOCATION:  CreateRole, user.c:376
+GRANT
+GRANT
+SET
+CREATE TABLE
+CREATE TABLE
+GRANT
+ALTER TABLE
+CREATE TABLE
+CREATE FUNCTION
+CREATE TRIGGER
+RESET
+SET
+INSERT 0 1
+--- M1a v12 design only (usd-decrease trigger): the key rewrite keeps usd equal, so nothing is logged
+UPDATE 1
+ usd 
+-----
+ 0.5
+(1 row)
+
+INSERT 0 1
+rows of spend for x (the old total now sits on a day nobody reads; today holds 0.5):
+ agent_id |    day     | usd 
+----------+------------+-----
+ x        | 2016-11-18 |   5
+ x        | 2026-11-16 | 0.5
+(2 rows)
+
+RESET
+       ?column?       | count 
+----------------------+-------
+ log rows (expect 0): |     0
+(1 row)
+
+--- M1b the fix: a BEFORE UPDATE key guard on both tables
+SET
+CREATE FUNCTION
+CREATE TRIGGER
+CREATE TRIGGER
+RESET
+SET
+INSERT 0 1
+INSERT 0 1
+expect 42501 for each key rewrite:
+psql:/var/lib/postgresql/hadavin_v13_exp/pg_m1.sql:50: ERROR:  42501: spend key columns may not change
+CONTEXT:  PL/pgSQL function spend_keep_keys() line 5 at RAISE
+LOCATION:  exec_stmt_raise, pl_exec.c:3897
+psql:/var/lib/postgresql/hadavin_v13_exp/pg_m1.sql:51: ERROR:  42501: spend key columns may not change
+CONTEXT:  PL/pgSQL function spend_keep_keys() line 5 at RAISE
+LOCATION:  exec_stmt_raise, pl_exec.c:3897
+psql:/var/lib/postgresql/hadavin_v13_exp/pg_m1.sql:52: ERROR:  42501: spend key columns may not change
+CONTEXT:  PL/pgSQL function spend_keep_keys() line 8 at RAISE
+LOCATION:  exec_stmt_raise, pl_exec.c:3897
+psql:/var/lib/postgresql/hadavin_v13_exp/pg_m1.sql:53: ERROR:  42501: spend key columns may not change
+CONTEXT:  PL/pgSQL function spend_keep_keys() line 8 at RAISE
+LOCATION:  exec_stmt_raise, pl_exec.c:3897
+the legitimate writes still work (upsert +1, update -1):
+ usd 
+-----
+   6
+(1 row)
+
+INSERT 0 1
+ usd 
+-----
+   5
+(1 row)
+
+UPDATE 1
+ usd 
+-----
+   6
+(1 row)
+
+INSERT 0 1
+ usd 
+-----
+   5
+(1 row)
+
+UPDATE 1
+ON CONFLICT DO UPDATE that also sets the key (must be refused too):
+psql:/var/lib/postgresql/hadavin_v13_exp/pg_m1.sql:60: ERROR:  42501: spend key columns may not change
+CONTEXT:  PL/pgSQL function spend_keep_keys() line 5 at RAISE
+LOCATION:  exec_stmt_raise, pl_exec.c:3897
+many small decrements are NOT stopped (each is a legal lowering); each is logged:
+UPDATE 1
+UPDATE 1
+UPDATE 1
+UPDATE 1
+RESET
+ agent_id | scope | old_usd | new_usd 
+----------+-------+---------+---------
+ y        | spend |       6 |       5
+ y        | spend |       6 |     5.9
+ y        | spend |     5.9 |     5.8
+ y        | spend |     5.8 |       0
+(4 rows)
+
+--- M1c can the runtime role switch the guard off? (expect 42501 must be owner)
+SET
+psql:/var/lib/postgresql/hadavin_v13_exp/pg_m1.sql:70: ERROR:  42501: must be owner of table spend
+LOCATION:  aclcheck_error, aclchk.c:2950
+psql:/var/lib/postgresql/hadavin_v13_exp/pg_m1.sql:71: ERROR:  42501: must be owner of relation spend
+LOCATION:  aclcheck_error, aclchk.c:2950
+RESET

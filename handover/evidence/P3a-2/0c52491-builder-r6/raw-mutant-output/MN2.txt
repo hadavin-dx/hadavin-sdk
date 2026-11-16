@@ -1,0 +1,31 @@
+### tests/test_migration_wiring.py::test_a_plain_function_name_is_folded_to_lower_case_and_a_quoted_one_is_read_whole rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_a_plain_function_name_is_folded_to_lower_case_and_a_quoted_one_is_read_whole _
+tests/test_migration_wiring.py:1051: in test_a_plain_function_name_is_folded_to_lower_case_and_a_quoted_one_is_read_whole
+    assert {"mixed_case", "a b", 'Q"x', "folded_too"} <= names
+E   assert {'Q"x', 'a b'... 'mixed_case'} <= {'Q', 'approv...entries', ...}
+E     
+E     Extra items in the left set:
+E     'Q"x'
+E     'a b'
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_a_plain_function_name_is_folded_to_lower_case_and_a_quoted_one_is_read_whole
+1 failed in 0.40s
+
+### tests/test_migration_postgres.py::test_functions_with_capitals_or_a_space_in_the_name_count_as_managed rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_____ test_functions_with_capitals_or_a_space_in_the_name_count_as_managed _____
+tests/test_migration_postgres.py:1961: in test_functions_with_capitals_or_a_space_in_the_name_count_as_managed
+    assert "mixed_case_fn" in str(e.value) and "Odd Name Fn" in str(e.value), str(e.value)
+E   AssertionError: the migration role mig_3c4066577f cannot change 1 object(s) of this package in schema hadavin_test_ed8864c5eb19 that another role owns: mixed_case_fn (owner postgres). A later migration that alters one of them would fail with 'must be owner', and the grants of migrate would do nothing without an error. Nothing was changed. A database administrator hands the objects to the migration role once, connected as a superuser or as a role that is a member of both the old owner and the migration role (objects of other applications in the schema are not listed and need no change; but a table of ANOTHER application that has the same name as one of this package's tables, for example spend or runs, looks the same here: do not hand that one over, point migrate at another schema instead; the same goes for a function: it is matched by name, so read the text of each listed function first and hand it over only when it is this package's own code, because the migration role would then own, and run, it), with a file of SQL run as in CHANGELOG.md, Migration repair steps, case (h): ALTER FUNCTION "hadavin_test_ed8864c5eb19"."mixed_case_fn"() OWNER TO "mig_3c4066577f";
+E   assert ('mixed_case_fn' in 'the migration role mig_3c4066577f cannot change 1 object(s) of this package in schema hadavin_test_ed8864c5eb19 that ...ration repair steps, case (h): ALTER FUNCTION "hadavin_test_ed8864c5eb19"."mixed_case_fn"() OWNER TO "mig_3c4066577f";' and 'Odd Name Fn' in 'the migration role mig_3c4066577f cannot change 1 object(s) of this package in schema hadavin_test_ed8864c5eb19 that ...ration repair steps, case (h): ALTER FUNCTION "hadavin_test_ed8864c5eb19"."mixed_case_fn"() OWNER TO "mig_3c4066577f";')
+E    +  where 'the migration role mig_3c4066577f cannot change 1 object(s) of this package in schema hadavin_test_ed8864c5eb19 that ...ration repair steps, case (h): ALTER FUNCTION "hadavin_test_ed8864c5eb19"."mixed_case_fn"() OWNER TO "mig_3c4066577f";' = str(ConfigError('the migration role mig_3c4066577f cannot change 1 object(s) of this package in schema hadavin_test_ed8864...ation repair steps, case (h): ALTER FUNCTION "hadavin_test_ed8864c5eb19"."mixed_case_fn"() OWNER TO "mig_3c4066577f";'))
+E    +    where ConfigError('the migration role mig_3c4066577f cannot change 1 object(s) of this package in schema hadavin_test_ed8864...ation repair steps, case (h): ALTER FUNCTION "hadavin_test_ed8864c5eb19"."mixed_case_fn"() OWNER TO "mig_3c4066577f";') = <ExceptionInfo ConfigError('the migration role mig_3c4066577f cannot change 1 object(s) of this package in schema hada...air steps, case (h): ALTER FUNCTION "hadavin_test_ed8864c5eb19"."mixed_case_fn"() OWNER TO "mig_3c4066577f";') tblen=3>.value
+E    +  and   'the migration role mig_3c4066577f cannot change 1 object(s) of this package in schema hadavin_test_ed8864c5eb19 that ...ration repair steps, case (h): ALTER FUNCTION "hadavin_test_ed8864c5eb19"."mixed_case_fn"() OWNER TO "mig_3c4066577f";' = str(ConfigError('the migration role mig_3c4066577f cannot change 1 object(s) of this package in schema hadavin_test_ed8864...ation repair steps, case (h): ALTER FUNCTION "hadavin_test_ed8864c5eb19"."mixed_case_fn"() OWNER TO "mig_3c4066577f";'))
+E    +    where ConfigError('the migration role mig_3c4066577f cannot change 1 object(s) of this package in schema hadavin_test_ed8864...ation repair steps, case (h): ALTER FUNCTION "hadavin_test_ed8864c5eb19"."mixed_case_fn"() OWNER TO "mig_3c4066577f";') = <ExceptionInfo ConfigError('the migration role mig_3c4066577f cannot change 1 object(s) of this package in schema hada...air steps, case (h): ALTER FUNCTION "hadavin_test_ed8864c5eb19"."mixed_case_fn"() OWNER TO "mig_3c4066577f";') tblen=3>.value
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_functions_with_capitals_or_a_space_in_the_name_count_as_managed
+1 failed in 0.57s
+

@@ -1,0 +1,44 @@
+v5 self-test cases run against the saved v4 filter (SELFTEST_FILTER=sh lead-repin-verify.v4.sh --mask), 15:04Z
+SELF-TEST: passed=610 failed=388 (the made-up input and output files were deleted)
+exit code: 1
+FAIL lines: 388
+      2 FAIL (secret still visible): yaml header 9
+      2 FAIL (secret still visible): yaml header 8
+      2 FAIL (secret still visible): yaml header 7
+      2 FAIL (secret still visible): yaml header 4
+      2 FAIL (secret still visible): yaml header 3
+      2 FAIL (secret still visible): yaml header 2
+      2 FAIL (secret still visible): yaml header 1
+      2 FAIL (secret still visible): xml attribute pair
+      2 FAIL (secret still visible): sshpass
+      2 FAIL (secret still visible): netrc
+      2 FAIL (secret still visible): name webhookUrl 3
+      2 FAIL (secret still visible): name webhookUrl 2
+      2 FAIL (secret still visible): name webhookUrl 1
+      2 FAIL (secret still visible): name tokenString 3
+      2 FAIL (secret still visible): name tokenString 2
+      2 FAIL (secret still visible): name tokenString 1
+      2 FAIL (secret still visible): name signature 3
+      2 FAIL (secret still visible): name signature 2
+      2 FAIL (secret still visible): name signature 1
+      2 FAIL (secret still visible): name session_id 3
+      2 FAIL (secret still visible): name session_id 2
+      2 FAIL (secret still visible): name session_id 1
+      2 FAIL (secret still visible): name sessionId 3
+      2 FAIL (secret still visible): name sessionId 2
+      2 FAIL (secret still visible): name sessionId 1
+      2 FAIL (secret still visible): name secretdata 3
+      2 FAIL (secret still visible): name secretdata 2
+      2 FAIL (secret still visible): name secretdata 1
+      2 FAIL (secret still visible): name secretValue 3
+      2 FAIL (secret still visible): name secretValue 2
+      2 FAIL (secret still visible): name secretValue 1
+      2 FAIL (secret still visible): name salt 3
+      2 FAIL (secret still visible): name salt 2
+      2 FAIL (secret still visible): name salt 1
+      2 FAIL (secret still visible): name passwordHash 3
+      2 FAIL (secret still visible): name passwordHash 2
+      2 FAIL (secret still visible): name passwordHash 1
+      2 FAIL (secret still visible): name otp 3
+      2 FAIL (secret still visible): name otp 2
+      2 FAIL (secret still visible): name otp 1

@@ -1,0 +1,31 @@
+NEGATIVE N6c-C4-string-not-in-plan-row  setup: sed -i "s/^S3\t\(.*\)\t.*$/S3\t\1\tflock -n 99/" $SM/strings.txt  VARX: 
+##### b30
+head=88c267a8dc07d2f629864396575d35b1cdbff3e7 seven=88c267a branch=main
+S1 n8n_start.sh 2
+S2 n8n_start.sh 3
+S3 n8n_start.sh 
+S4 n8n_start.sh 5
+S5 n8n_start.sh 6
+S6 n8n_start.sh 7
+S7 n8n_start.sh 8
+S8 n8n_start.sh 9
+K1 n8n_kill.py 2
+K2 n8n_kill.py 3
+K3 n8n_kill.py 4
+K4 n8n_kill.py 5
+D1 n8n_drive.py 2
+D2 n8n_drive.py 3
+D3 n8n_drive.py 4
+D4 n8n_drive.py 5
+D5 n8n_drive.py 6
+D6 n8n_drive.py 7
+H1 run_real_check_n8n.py 2
+H2 real-run-n8n.env.example 2
+##### b30 exit=0
+##### b31
+C4 mismatch: the string of row S3 (strings.txt column 3) is not in the plan table row S3
+STOP C4: strings.txt does not match the plan table (rows listed above). Next: tell the builder (paste the lines); fill nothing.
+##### b31 exit=1
+##### blocks/x-accept6.sh
+STOP C4: question 6 is answered only after the C4 fill block printed 'rows filled 20' and 'open 0' without FILE-MISSING for H1 and H2. Next: do C4. Nothing changed.
+##### blocks/x-accept6.sh exit=1

@@ -1,0 +1,8 @@
+desc: note source: "never deletes" turned into a delete instruction
+build rc=0
+check rc=1
+C07 info: OWNER-SHEET-v28-A.md 6054, OWNER-CARD-v28-A.md 1372, OWNER-NUMBERS-v28-A.md 844, OWNER-FILM-v28.md 285 total 8555
+C07 info: OWNER-SHEET-v28-B.md 6033, OWNER-CARD-v28-B.md 1353, OWNER-NUMBERS-v28-B.md 859, OWNER-FILM-v28.md 285 total 8530
+check-v28: 2 failure(s)
+FAIL C19 pointer not in the verified list: note|he account now (lead answer |Q23
+FAIL C167 N: the sentence "Decision 2 stands: the test program never deletes" is missing or turned into a delete instruction

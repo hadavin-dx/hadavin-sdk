@@ -1,0 +1,3 @@
+BANNED entries read: 10 (type tuple)
+REPORT-c6o.md: files scanned 1, total hits 0, files with hits 0
+evidence-c6o-independent: files scanned 63, total hits 0, files with hits 0

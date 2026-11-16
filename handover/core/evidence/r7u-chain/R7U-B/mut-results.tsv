@@ -1,0 +1,34 @@
+B01	scripts/run_real_check.py	rule or no-file	KILLED	['1 failed, 1 passed, 11 deselected in 36.19s']
+B01	restored-byte-equal=True
+B02	scripts/run_real_check.py	rule or one_unreadable or cut_in_half or only-unreadable	KILLED	['1 failed, 9 deselected in 35.37s']
+B02	restored-byte-equal=True
+B03	scripts/run_real_check.py	rule or no_sent	KILLED	['1 failed, 12 deselected in 0.18s']
+B03	restored-byte-equal=True
+B04	scripts/run_real_check.py	rule	KILLED	['1 failed, 12 deselected in 0.19s']
+B04	restored-byte-equal=True
+B05	scripts/run_real_check.py	rule or one_unreadable	KILLED	['1 failed, 11 deselected in 36.32s']
+B05	restored-byte-equal=True
+B06	scripts/run_real_check.py	rule or readable_mail_counter	KILLED	['1 failed, 2 passed, 10 deselected in 100.72s (0:01:40)']
+B06	restored-byte-equal=True
+B07	scripts/run_real_check.py	one_unreadable or only-unreadable	KILLED	['1 failed, 12 deselected in 36.45s']
+B07	restored-byte-equal=True
+B08	scripts/run_real_check.py	one_unreadable or cut_in_half	KILLED	['1 failed, 12 deselected in 36.26s']
+B08	restored-byte-equal=True
+B09	scripts/run_real_check.py	readable_mail_counter	KILLED	['1 failed, 12 deselected in 66.84s (0:01:06)']
+B09	restored-byte-equal=True
+B10	scripts/run_real_check.py	readable_mail_counter	KILLED	['1 failed, 12 deselected in 36.30s']
+B10	restored-byte-equal=True
+B11	scripts/run_real_check.py	in_words	KILLED	['1 failed, 13 deselected in 65.28s (0:01:05)']
+B11	restored-byte-equal=True
+B12	scripts/run_real_check.py	one_unreadable or only-unreadable or no-file	KILLED	['1 failed, 11 deselected in 6.40s']
+B12	restored-byte-equal=True
+B13	src/lead_desk/config.py	b8_the_rule	KILLED	['1 failed, 13 deselected in 0.15s']
+B13	restored-byte-equal=True
+B14	demo_only/fakes_server.py	b8	KILLED	['1 failed, 10 deselected in 0.16s']
+B14	restored-byte-equal=True
+B15	src/lead_desk/config.py	b8_the_rule	KILLED	['1 failed, 13 deselected in 0.21s']
+B15	restored-byte-equal=True
+B16	scripts/run_real_check.py	b5_a_hidden	KILLED	['1 failed, 13 deselected in 36.37s']
+B16	restored-byte-equal=True
+B17	scripts/run_real_check.py	b5_a_hidden	KILLED	['1 failed, 13 deselected in 35.02s']
+B17	restored-byte-equal=True

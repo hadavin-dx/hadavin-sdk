@@ -1,0 +1,183 @@
+INFO server PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-pc-linux-gnu, compiled by gcc (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0, 64-bit
+INFO server_version_num 160015 (CI uses 17.10: NOT run here)
+PASS M3: the migration role is NOT a superuser (rolsuper, createrole, createdb, bypassrls all false)  [(False, False, False, False)]
+PASS A1 real migrate() as the NON-SUPERUSER migration role applies 0001-0005 and the DEFAULT held file (Q34-exact) as 0006  [['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence', '0006_spend_nonneg']]
+PASS A2 the migration ran as a non-superuser (session_user, current_user, rolsuper)  [('migr_v16', 'migr_v16', False)]
+PASS A3 the default file carries exactly CHECK (usd >= 0), no Infinity clause  [CHECK ((usd >= (0)::numeric))]
+PASS A4 DEFAULT file: runtime role INSERT -0.01 into spend -> CheckViolation/23514  [CheckViolation/23514]
+PASS A4 DEFAULT file: runtime role INSERT -Infinity into spend -> CheckViolation/23514  [CheckViolation/23514]
+PASS A4 DEFAULT file: runtime role INSERT NaN into spend -> ACCEPTED (expected: the default lets it in)  [None]
+PASS A4 DEFAULT file: runtime role INSERT Infinity into spend -> ACCEPTED (expected: the default lets it in)  [None]
+PASS A4 DEFAULT file: runtime role INSERT -0.01 into spend_month -> CheckViolation/23514  [CheckViolation/23514]
+PASS A4 DEFAULT file: runtime role INSERT -Infinity into spend_month -> CheckViolation/23514  [CheckViolation/23514]
+PASS A4 DEFAULT file: runtime role INSERT NaN into spend_month -> ACCEPTED (expected: the default lets it in)  [None]
+PASS A4 DEFAULT file: runtime role INSERT Infinity into spend_month -> ACCEPTED (expected: the default lets it in)  [None]
+INFO A4 summary: under the default file NaN and Infinity are NOT refused by the database; only the store code (5.4) refuses them
+PASS A5 B1 with the DEFAULT file: the REAL old add_spend (INSERT ... ON CONFLICT) with delta -3 on a row of 5 fails 23514  [CheckViolation/23514]
+PASS A6 B1 fix with the default file: the UPDATE shape, delta -3 on a row of 5 works
+PASS A7 give-back to exactly 0 works
+PASS A8 WEDGE (security minor 3): a delta larger than the total (-1 on 0.5) is refused as ValueError and nothing changes; the agent-day keeps 0.5 and later positive deltas still work (fails closed, not a crash)  [ValueError (Decimal('0.5'), Decimal('0.5'))]
+PASS A8b the same agent-day still accepts a reserve after the refusal
+PASS A9 a negative change on a missing row raises LookupError  [LookupError]
+PASS A10 code-level finite check, independent of which held file is applied: NaN refused before any statement
+PASS A10 code-level finite check, independent of which held file is applied: Infinity refused before any statement
+PASS A10 code-level finite check, independent of which held file is applied: -Infinity refused before any statement
+PASS A11 rollback: when the month row refuses, the day row is unchanged too  [ValueError (Decimal('1.5'), Decimal('1'))]
+PASS B1 real migrate() applies the VARIANT file (separately pinned) as 0006  [['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence', '0006_spend_nonneg']]
+PASS B2 VARIANT: runtime role INSERT -0.01 into spend -> 23514  [CheckViolation/23514]
+PASS B2 VARIANT: runtime role INSERT NaN into spend -> 23514  [CheckViolation/23514]
+PASS B2 VARIANT: runtime role INSERT Infinity into spend -> 23514  [CheckViolation/23514]
+PASS B2 VARIANT: runtime role INSERT -Infinity into spend -> 23514  [CheckViolation/23514]
+PASS B3 VARIANT: runtime role UPDATE to -0.01 on spend -> 23514  [CheckViolation/23514]
+PASS B3 VARIANT: runtime role UPDATE to NaN on spend -> 23514  [CheckViolation/23514]
+PASS B3 VARIANT: runtime role UPDATE to Infinity on spend -> 23514  [CheckViolation/23514]
+PASS B3 VARIANT: runtime role UPDATE to -Infinity on spend -> 23514  [CheckViolation/23514]
+PASS B2 VARIANT: runtime role INSERT -0.01 into spend_month -> 23514  [CheckViolation/23514]
+PASS B2 VARIANT: runtime role INSERT NaN into spend_month -> 23514  [CheckViolation/23514]
+PASS B2 VARIANT: runtime role INSERT Infinity into spend_month -> 23514  [CheckViolation/23514]
+PASS B2 VARIANT: runtime role INSERT -Infinity into spend_month -> 23514  [CheckViolation/23514]
+PASS B3 VARIANT: runtime role UPDATE to -0.01 on spend_month -> 23514  [CheckViolation/23514]
+PASS B3 VARIANT: runtime role UPDATE to NaN on spend_month -> 23514  [CheckViolation/23514]
+PASS B3 VARIANT: runtime role UPDATE to Infinity on spend_month -> 23514  [CheckViolation/23514]
+PASS B3 VARIANT: runtime role UPDATE to -Infinity on spend_month -> 23514  [CheckViolation/23514]
+PASS C1 negative control: the v14 pre-flight query misses the +Infinity row (p2)  [['p0', 'p1', 'p3']]
+PASS C2 the v15 pre-flight query lists all four bad rows (p0 -1, p1 NaN, p2 Infinity, p3 -Infinity) and not the good one (p4)  [['p0', 'p1', 'p2', 'p3']]
+PASS C3 applying the variant over bad rows fails (23514) before the repair  [CheckViolation/23514]
+PASS C4 after the repair the pre-flight query lists nothing
+PASS D1 with a session holding spend, the default held file fails 55P03 after about its 5 s lock_timeout (non-superuser migration role)  [55P03 after 5.0s]
+PASS D2 the failed migration rolled back (no 0006 row, no constraint)
+PASS E1 DB-2 PR state (file numbered, no GRANTS entry): guard says created but not in GRANTS, for BOTH new tables  [kill_switch_log (table) is created by a migration but is not in GRANTS; spend_decrease_log (table) is created by a migration but is not in G]
+PASS E2 move PR state (numbered file + GRANTS entry with an EMPTY runtime list): check_ledger and check_grants empty  [[]]
+PASS E3 v12 state (GRANTS entry merged, SQL held elsewhere): the guard fails with 'which no migration creates'
+PASS E4 real migrate() as the non-superuser migration role applies DB-2 as 0007  [['0007_spend_decrease_log']]
+PASS E5 the SECURITY DEFINER function is owned by the NON-superuser migration role and has search_path = pg_catalog, pg_temp  [('migr_v16', True, ['search_path=pg_catalog, pg_temp'])]
+PASS E6 the guard refuses a plain CREATE FUNCTION (only CREATE OR REPLACE FUNCTION is read)
+PASS E7 key guard: runtime role key rewrite on spend -> 42501  [InsufficientPrivilege/42501]
+PASS E8 key guard: runtime role key rewrite on spend_month -> 42501  [InsufficientPrivilege/42501]
+PASS E9 one lowering through the store writes two rows (day and month); who is the runtime login role  [[('spend', Decimal('1.5'), Decimal('1.0'), 'rtr_v16'), ('spend_month', Decimal('1.5'), Decimal('1.0'), 'rtr_v16')]]
+PASS E10 a raising write adds no row
+PASS E11 runtime role denied on the log: SELECT -> 42501  [InsufficientPrivilege/42501]
+PASS E11 runtime role denied on the log: INSERT -> 42501  [InsufficientPrivilege/42501]
+PASS E11 runtime role denied on the log: UPDATE -> 42501  [InsufficientPrivilege/42501]
+PASS E11 runtime role denied on the log: DELETE -> 42501  [InsufficientPrivilege/42501]
+PASS E11 runtime role denied on the log: TRUNCATE -> 42501  [InsufficientPrivilege/42501]
+PASS E12 trigger condition: lower logs (1), raise does not (1), becoming NaN logs (2), NaN to NaN does not (2), NaN to 7 logs? see next, Infinity logs  [counts after each step 1,1,2,2,3,4]
+PASS F1 B1 fix: with a temporary table of the log's name present, the REAL log still gets both rows and the temporary table none  [real=2 temp=0]
+PASS F2 negative control: on the v13 function the same test FAILS (real log 0 rows, temporary table 2 rows)  [real=0 temp=2]
+PASS F3 restored: the v15 function is back and the real log gets the rows again
+PASS F4 before the REVOKE the runtime role can create temporary tables
+PASS F5 after REVOKE ... FROM PUBLIC the runtime role has no TEMP and the migration role keeps it
+PASS F6 the runtime role creating the temporary table is refused (42501)  [InsufficientPrivilege/42501]
+PASS G1 effective_problems for the audit-reader role is empty (it can SELECT the log and nothing else, whatever way it got it)
+PASS G2 the audit reader can read both logs  [2]
+PASS G3 the audit reader can read the log's size and the catalogue entry (status line figures)
+PASS G4 NEGATIVE TEST audit reader denied: INSERT INTO spend_decrease_log (agent_id, period -> 42501  [InsufficientPrivilege/42501]
+PASS G4 NEGATIVE TEST audit reader denied: UPDATE spend_decrease_log SET new_usd = 9 -> 42501  [InsufficientPrivilege/42501]
+PASS G4 NEGATIVE TEST audit reader denied: DELETE FROM spend_decrease_log -> 42501  [InsufficientPrivilege/42501]
+PASS G4 NEGATIVE TEST audit reader denied: TRUNCATE spend_decrease_log -> 42501  [InsufficientPrivilege/42501]
+PASS G4 NEGATIVE TEST audit reader denied: SELECT * FROM spend -> 42501  [InsufficientPrivilege/42501]
+PASS G4 NEGATIVE TEST audit reader denied: SELECT * FROM spend_month -> 42501  [InsufficientPrivilege/42501]
+PASS G4 NEGATIVE TEST audit reader denied: UPDATE spend SET usd = 0 -> 42501  [InsufficientPrivilege/42501]
+PASS G4 NEGATIVE TEST audit reader denied: SELECT * FROM kill_switch -> 42501  [InsufficientPrivilege/42501]
+PASS G4 NEGATIVE TEST audit reader denied: SELECT * FROM audit_entries -> 42501  [InsufficientPrivilege/42501]
+PASS G4 NEGATIVE TEST audit reader denied: SELECT * FROM runs -> 42501  [InsufficientPrivilege/42501]
+PASS G4 NEGATIVE TEST audit reader denied: CREATE TEMP TABLE x (a int) -> 42501  [InsufficientPrivilege/42501]
+PASS G4 NEGATIVE TEST audit reader denied: CREATE TABLE public.x (a int) -> 42501  [InsufficientPrivilege/42501]
+PASS G4 NEGATIVE TEST audit reader denied: INSERT INTO kill_switch_log (old_on, new_on) VAL -> 42501  [InsufficientPrivilege/42501]
+PASS G4 NEGATIVE TEST audit reader denied: UPDATE kill_switch_log SET new_on = false -> 42501  [InsufficientPrivilege/42501]
+PASS G4 NEGATIVE TEST audit reader denied: DELETE FROM kill_switch_log -> 42501  [InsufficientPrivilege/42501]
+PASS G4 NEGATIVE TEST audit reader denied: TRUNCATE kill_switch_log -> 42501  [InsufficientPrivilege/42501]
+PASS G5 the audit reader cannot become the runtime role (SET ROLE refused 42501)  [InsufficientPrivilege/42501]
+PASS G6 the portal role cannot read the log (it is NOT portal-readable any more)  [InsufficientPrivilege/42501]
+PASS G7 the runtime role still cannot read the log  [InsufficientPrivilege/42501]
+PASS G8 negative: a would-be audit reader that is also a member of the runtime role is reported by effective_problems (it could UPDATE spend)  [evil_v16: can SELECT runs; evil_v16: can INSERT runs; evil_v16: can UPDATE runs; evil_v16: can SELECT runs.run_id; evil_v16: can INSERT runs]
+PASS H1 the audit reader cannot delete log rows (42501)  [InsufficientPrivilege/42501]
+PASS H1 the runtime role cannot delete log rows (42501)  [InsufficientPrivilege/42501]
+PASS H2 the OWNER (migration role) is also refused by the append-only trigger: DELETE FROM spend_decrease_log -> 42501  [InsufficientPrivilege/42501]
+PASS H2 the OWNER (migration role) is also refused by the append-only trigger: UPDATE spend_decrease_log SET new_usd =  -> 42501  [InsufficientPrivilege/42501]
+PASS H2 the OWNER (migration role) is also refused by the append-only trigger: TRUNCATE spend_decrease_log -> 42501  [InsufficientPrivilege/42501]
+PASS H2 the OWNER (migration role) is also refused by the append-only trigger: DELETE FROM kill_switch_log -> 42501  [InsufficientPrivilege/42501]
+PASS H2 the OWNER (migration role) is also refused by the append-only trigger: UPDATE kill_switch_log SET new_on = fals -> 42501  [InsufficientPrivilege/42501]
+PASS H2 the OWNER (migration role) is also refused by the append-only trigger: TRUNCATE kill_switch_log -> 42501  [InsufficientPrivilege/42501]
+PASS H3 the refused statements changed nothing
+PASS H4 LIMIT STATED, not hidden: the database owner can DISABLE the trigger (tgenabled = D while off) and delete; an append-only trigger shows edits, it does not stop the owner
+PASS H5 the trigger is back on afterwards
+INFO I timing (runtime role, 20000 lowering UPDATEs, migration role = non-superuser, indicative, one run per script run; the script is run twice): without trigger 1389 ms, with trigger 2973 ms, +0.079 ms per lowering
+INFO I size: log 2211840 bytes, 20000 rows, 110.6 bytes per row, who = rtr_v16/rtr_v16
+PASS I1 the timing run's log rows record the RUNTIME login role, not postgres  [rtr_v16,rtr_v16]
+PASS I2 the log has one row per lowering (20000 rows)  [20000]
+PASS J1 S-2b detection: where DB-2 is NOT applied (database exp_c) to_regclass('spend_decrease_log') is NULL for a reader that has no privilege
+PASS J2 S-2b detection: where DB-2 is applied (database exp_a) the audit reader sees it
+PASS J3 the RUNTIME role (no privilege on the log) sees the log through to_regclass in the applied database exp_a
+PASS Q1 every pg_hba rule of the throwaway cluster uses scram-sha-256 (no trust)  [[('scram-sha-256', 6)]]
+PASS Q2 password_encryption is scram-sha-256 and the stored role passwords are SCRAM verifiers
+PASS Q3 a right password logs in
+PASS Q4 a wrong password is refused (server says password authentication failed)  [none/password-auth-failed]
+PASS Q5 no password is refused (libpq reports that a password was requested)  [none/no-password-supplied]
+PASS Q6 the earlier v15 runs used trust (security review m3): this run proves the migration, store and grants code works with password logins
+PASS K0 database with ONLY the real 0001-0005 (no held file, no CHECK on the spend tables)  [['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence']]
+PASS K0b no constraint spend_usd_ok exists here
+PASS K1 NEGATIVE CONTROL (old shape, no held file): the REAL add_spend with delta -3 on a total of 2 is ACCEPTED and leaves -1 (the bug the code-level rule must stop)  [(Decimal('-1'), Decimal('-1'))]
+PASS K2 v16 rule, NO held file: delta -3 on a total of 2 raises ValueError and BOTH rows roll back (still 2 and 2)  [ValueError (Decimal('2'), Decimal('2'))]
+PASS K3 v16 rule: a legal give-back (-1.5 on 2) works
+PASS K4 NO held file, a stored NaN total plus delta 1: refused with ValueError (a NaN stays NaN under addition, so it would be accepted without the result check)  [ValueError]
+PASS K4 NO held file, a stored NaN total plus delta -1: refused with ValueError (a NaN stays NaN under addition, so it would be accepted without the result check)  [ValueError]
+PASS K5 the refused write rolled back: the stored NaN total is unchanged  [NaN]
+PASS K6 v16 spend_totals refuses a stored NaN total (ValueError, mapped to limits_unavailable / bad_amount)  [ValueError]
+PASS K4 NO held file, a stored Infinity total plus delta 1: refused with ValueError (a NaN stays NaN under addition, so it would be accepted without the result check)  [ValueError]
+PASS K4 NO held file, a stored Infinity total plus delta -1: refused with ValueError (a NaN stays NaN under addition, so it would be accepted without the result check)  [ValueError]
+PASS K5 the refused write rolled back: the stored Infinity total is unchanged  [Infinity]
+PASS K6 v16 spend_totals refuses a stored Infinity total (ValueError, mapped to limits_unavailable / bad_amount)  [ValueError]
+PASS K4 NO held file, a stored -Infinity total plus delta 1: refused with ValueError (a NaN stays NaN under addition, so it would be accepted without the result check)  [ValueError]
+PASS K4 NO held file, a stored -Infinity total plus delta -1: refused with ValueError (a NaN stays NaN under addition, so it would be accepted without the result check)  [ValueError]
+PASS K5 the refused write rolled back: the stored -Infinity total is unchanged  [-Infinity]
+PASS K6 v16 spend_totals refuses a stored -Infinity total (ValueError, mapped to limits_unavailable / bad_amount)  [ValueError]
+PASS K8 WEDGE by design: a stored negative total (-5) plus +1 = -4 is still refused; the agent-day fails closed until an operator repairs the row (stated in 5.4)  [ValueError]
+PASS K9 v16 add_spend with delta NaN/Infinity/-Infinity is refused before any statement
+PASS L1 NEGATIVE CONTROL: the REAL Limits.blocked on a NaN total raises InvalidOperation (an unhandled crash, not a stop)  [InvalidOperation]
+PASS L2 v16 blocked: the same NaN row gives ['bad_amount'] (the loop maps it to the existing stop card; no crash)  [['bad_amount']]
+PASS L3 v16 blocked on an Infinity row gives ['bad_amount']
+PASS L4 v16 blocked on a good row gives []
+PASS L5 `limits status` line for a NaN row prints bad_amount (and `--check` would exit non-zero)
+PASS M0 real migrate() applies the v16 DB-2 file as 0007 on top of the default file (non-superuser migration role)  [['0001_core', '0002_audit_chain', '0003_approvals_tick', '0004_audit_checkpoint_meta', '0005_evidence', '0006_spend_nonneg', '0007_spend_decrease_log']]
+PASS M1 kill_switch_log_change is SECURITY DEFINER, owned by the non-superuser migration role, search_path = pg_catalog, pg_temp  [('migr_v16', True, ['search_path=pg_catalog, pg_temp'])]
+PASS M2 REAL store.set_kill_switch: on, on again, off write exactly two rows (the unchanged on->on write is not logged), by the runtime login role  [[(False, True, None, 'op:tester', 'rtr_v16'), (True, False, 'op:tester2', 'op:tester3', 'rtr_v16')]]
+PASS M3 NEGATIVE TEST runtime role denied on the kill-switch log: SELECT -> 42501  [InsufficientPrivilege/42501]
+PASS M3 NEGATIVE TEST runtime role denied on the kill-switch log: INSERT -> 42501  [InsufficientPrivilege/42501]
+PASS M3 NEGATIVE TEST runtime role denied on the kill-switch log: UPDATE -> 42501  [InsufficientPrivilege/42501]
+PASS M3 NEGATIVE TEST runtime role denied on the kill-switch log: DELETE -> 42501  [InsufficientPrivilege/42501]
+PASS M3 NEGATIVE TEST runtime role denied on the kill-switch log: TRUNCATE -> 42501  [InsufficientPrivilege/42501]
+INFO M4 INFO runtime role DELETE FROM kill_switch -> InsufficientPrivilege/42501 (if allowed, a delete-and-reinsert is a state change the update trigger does not see)
+PASS M5 (TEMP still granted in this database) runtime role created a temporary table named like the log  [None]
+PASS M6 temporary-table attack on the kill-switch log: the REAL log gets the 3rd row, the temporary table none  [real=3 temp=0]
+PASS M7 NEGATIVE CONTROL: with the unsafe function shape (public in the path, bare table name) the same attack DIVERTS the row to the temporary table (real log stays 3, temporary table 1)
+PASS M8 the safe function restored: the REAL log gets the 4th row
+PASS M9 audit reader can read the kill-switch log and effective_problems is empty  [[]]
+PASS N1 the upgrade over a stored NaN row fails (23514) and rolls back: the old rule stays  [CheckViolation/23514]
+PASS N2 after the repair, real migrate() applies the upgrade file as 0007  [['0007_spend_nonneg_upgrade']]
+PASS N3 both constraints now carry the Infinity clause, same names, no second constraint  [["CHECK (((usd >= (0)::numeric) AND (usd < 'Infinity'::numeric)))", "CHECK (((usd >= (0)::numeric) AND (usd < 'Infinity'::numeric)))"]]
+PASS N4 the runtime role is now refused NaN (23514)
+PASS O1 the guard finds no problem in the 5 real migrations and the 5 held files
+PASS O2 mutant 'spend_log_decrease: pg_temp not last' differs from the file and the guard reports it  [mutant.sql: spend_log_decrease search_path does not end with pg_temp]
+PASS O2 mutant 'spend_log_decrease: public in path' differs from the file and the guard reports it  [mutant.sql: spend_log_decrease search_path names public]
+PASS O2 mutant 'spend_log_decrease: no pg_temp' differs from the file and the guard reports it  [mutant.sql: spend_log_decrease search_path does not end with pg_temp]
+PASS O2 mutant 'spend_log_decrease: no SET search_path' differs from the file and the guard reports it  [mutant.sql: spend_log_decrease has no SET search_path]
+PASS O2 mutant 'spend_log_decrease: no REVOKE' differs from the file and the guard reports it  [mutant.sql: spend_log_decrease has no REVOKE ALL ON FUNCTION ... FROM PUBLIC]
+PASS O2 mutant 'kill_switch_log_change: pg_temp not last' differs from the file and the guard reports it  [mutant.sql: kill_switch_log_change search_path does not end with pg_temp]
+PASS O2 mutant 'kill_switch_log_change: public in path' differs from the file and the guard reports it  [mutant.sql: kill_switch_log_change search_path names public]
+PASS O2 mutant 'kill_switch_log_change: no pg_temp' differs from the file and the guard reports it  [mutant.sql: kill_switch_log_change search_path does not end with pg_temp]
+PASS O2 mutant 'kill_switch_log_change: no SET search_path' differs from the file and the guard reports it  [mutant.sql: kill_switch_log_change has no SET search_path]
+PASS O2 mutant 'kill_switch_log_change: no REVOKE' differs from the file and the guard reports it  [mutant.sql: kill_switch_log_change has no REVOKE ALL ON FUNCTION ... FROM PUBLIC]
+PASS O2 mutant 'kill_switch_log_change: bare table (no %I)' differs from the file and the guard reports it  [mutant.sql: kill_switch_log_change changes a table without a %I schema]
+PASS O2 mutant 'spend_log_decrease: bare table (no %I)' differs from the file and the guard reports it  [mutant.sql: spend_log_decrease changes a table without a %I schema]
+PASS O2 mutant 'undeclared SECURITY DEFINER' differs from the file and the guard reports it  [mutant.sql: SECURITY DEFINER function sneaky is not on the declared list]
+PASS O3 the held-file head spend_log_decrease search_path text is what the guard read (sanity)
+PASS P1 NEGATIVE TEST BEFORE the REVOKE: on a fresh database the reader CAN create temporary tables (PUBLIC has TEMP) and reader_problems reports exactly that  [['can create temporary tables']]
+PASS P2 after REVOKE TEMPORARY ... FROM PUBLIC (operator step, question L19) reader_problems is empty  [[]]
+PASS P3 the reader is refused CREATE TEMP TABLE (42501)
+PASS P4 NEGATIVE: a reader that is a member of the runtime role is reported
+PASS P5 a role whose VALID UNTIL is in the past cannot log in (password authentication failed)  [none/password-auth-failed]
+PASS P6 NEGATIVE: a reader role created without VALID UNTIL is reported ('has no VALID UNTIL')
+PASS P7 revoking by NOLOGIN stops new logins  [none/other:connection failed: connection to server on socket "/var/lib/]
+INFO 175 of 175 checks passed
+rc=0

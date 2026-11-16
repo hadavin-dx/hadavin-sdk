@@ -1,0 +1,5 @@
+CMD (cwd m4, clean base): patch -p1 --dry-run < /home/user/hadavin-sdk/handover/core-hardening/patches-ready/v3/G5-wording.patch
+checking file src/hadavin_sdk/approvals/gate.py
+checking file src/hadavin_sdk/guard/redact.py
+checking file tests/warden_port/test_gate.py
+rc=0

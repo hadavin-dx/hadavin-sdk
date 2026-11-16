@@ -1,0 +1,5 @@
+head: 92dbb1eee64f20dc0c00aac46c0b58fb1a901f5f  python 3.13 (venv-P4d-o101-313)  postgres: LOCAL 16.15 on :55433 (CI uses 17.10)  cmd: HADAVIN_REQUIRE_PG=1 HADAVIN_REQUIRE_PINNED_UNIDATA=1 pytest -q -m "not live and not perf" -rs -p no:cacheprovider (no file argument)
+=========================== short test summary info ============================
+SKIPPED [1] tests/contracts/test_llm.py:95: Stubber refuses a malformed Converse shape before the kind sees it
+10502 passed, 1 skipped, 28 deselected in 305.95s (0:05:05)
+exit: 0

@@ -1,0 +1,13 @@
+src/hadavin_sdk/audit/local_dir.py
+local_dir outbox WARNING removed
+OLD:             _LOG.warning(
+                "audit outcome not written (%s): event %s goes to the outbox",
+                type(exc).__name__,
+                event.event_id,
+            )
+
+NEW: 
+
+........................................................................ [ 69%]
+................................                                         [100%]
+104 passed in 17.70s

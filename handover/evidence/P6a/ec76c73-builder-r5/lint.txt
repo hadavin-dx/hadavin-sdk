@@ -1,0 +1,7 @@
+$ .venv/bin/ruff check src tests demos tools
+All checks passed!
+$ .venv/bin/ruff format --check src tests demos tools
+318 files already formatted
+$ .venv/bin/bandit -q -r src demos tools -ll   (bandit 1.9.4 from the repo .venv)
+exit=0
+Issue: lines 0

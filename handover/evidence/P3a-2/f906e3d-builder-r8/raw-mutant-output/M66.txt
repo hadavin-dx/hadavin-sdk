@@ -1,0 +1,14 @@
+### tests/test_migration_wiring.py::test_each_value_is_compared_with_its_own_saved_value[current_user] rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+______ test_each_value_is_compared_with_its_own_saved_value[current_user] ______
+tests/test_migration_wiring.py:419: in test_each_value_is_compared_with_its_own_saved_value
+    assert isinstance(err, ConfigError) and "0001_f1.sql" in str(err), err
+E   AssertionError: ConfigError("migration left the database session changed: current_user was 'mig' and is now 'other'")
+E   assert (True and '0001_f1.sql' in "migration left the database session changed: current_user was 'mig' and is now 'other'")
+E    +  where True = isinstance(ConfigError("migration left the database session changed: current_user was 'mig' and is now 'other'"), ConfigError)
+E    +  and   "migration left the database session changed: current_user was 'mig' and is now 'other'" = str(ConfigError("migration left the database session changed: current_user was 'mig' and is now 'other'"))
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_each_value_is_compared_with_its_own_saved_value[current_user]
+1 failed in 0.39s
+

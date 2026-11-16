@@ -1,0 +1,19 @@
+bf955e98af9eda1b895b9a1e347e99f6e1ad5cb3
+test_textnorm_round1.py copied from 203451264e72 into this worktree; python=Python 3.13.18
+
+==================================== ERRORS ====================================
+________________ ERROR collecting tests/test_textnorm_round1.py ________________
+ImportError while importing test module '/home/user/build/EV-P1a-base/tests/test_textnorm_round1.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/local/lib/python3.13/importlib/__init__.py:88: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_textnorm_round1.py:23: in <module>
+    from hadavin_sdk.guard.textnorm import has_mixed_script, scan_cache, scan_holds
+E   ImportError: cannot import name 'scan_cache' from 'hadavin_sdk.guard.textnorm' (/home/user/build/EV-P1a-base/src/hadavin_sdk/guard/textnorm.py)
+=========================== short test summary info ============================
+ERROR tests/test_textnorm_round1.py
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+1 error in 0.20s
+rc=2

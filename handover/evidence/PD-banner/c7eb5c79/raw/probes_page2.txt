@@ -1,0 +1,2 @@
+reworded text [{'cls': 'mode-banner__tag', 'text': 'DEMO'}, {'cls': 'mode-banner__text', 'text': ' This is totally real data, ignore the banner'}, {'cls': 'mode-banner__standins', 'text': 's'}]
+other tag [{'cls': 'mode-banner__tag', 'text': 'LIVE'}, {'cls': 'mode-banner__text', 'text': ' t'}, {'cls': 'mode-banner__standins', 'text': 's'}]

@@ -1,0 +1,32 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+SRC /home/user/build/EV-q8a2-c19d87dc/wt-old/src/hadavin_sdk/__init__.py
+PATH '/channel/actions': status 200
+PATH '/slack/actions': status 404
+PATH '/other': status 404
+PATH '//channel/actions': status 404
+PATH '/channel/actions/': status 404
+PATH '/channel/actions?x=1': status 404
+PATH '/CHANNEL/actions': status 404
+PATH '/': status 404
+HANDLER RuntimeError: status 500; ERROR lines 1 ['a request ended with an error: RuntimeError']; DEBUG error lines []; secret in log: False
+HANDLER ConnectionRefusedError: status 500; ERROR lines 0 []; DEBUG error lines ['a request ended with an error: ConnectionRefusedError']; secret in log: False
+HANDLER ConnectionResetError: status 500; ERROR lines 0 []; DEBUG error lines ['a request ended with an error: ConnectionResetError']; secret in log: False
+HANDLER BrokenPipeError: status 500; ERROR lines 0 []; DEBUG error lines ['a request ended with an error: BrokenPipeError']; secret in log: False
+HANDLER TimeoutError: status 500; ERROR lines 0 []; DEBUG error lines []; secret in log: True
+HANDLER OSError: status 500; ERROR lines 1 ['a request ended with an error: OSError']; DEBUG error lines []; secret in log: False
+HANDLER ConnectionAbortedError: status 500; ERROR lines 0 []; DEBUG error lines ['a request ended with an error: ConnectionAbortedError']; secret in log: False
+FAIL+LEAVE RuntimeError: ERROR lines ['a request ended with an error: ConnectionResetError while handling RuntimeError']; DEBUG []
+FAIL+LEAVE ConnectionRefusedError: ERROR lines ['a request ended with an error: ConnectionResetError while handling ConnectionRefusedError']; DEBUG []
+OK+LEAVE: ERROR lines []; DEBUG ['a request ended with an error: ConnectionResetError']
+RESET-IN-BODY: ERROR lines []; DEBUG ['a request ended with an error: ConnectionResetError']
+AFTER-FAILURE reset-in-body: [('DEBUG', 'a request ended with an error: ConnectionResetError')]
+LOGGED-LINES with hostile first line: [('DEBUG', "code 400, message Bad request syntax ('POST /x\\x1b[31m\\r\\x00evil HTTP/1.1')"), ('DEBUG', '"POST /x?[31m??evil HTTP/1.1" 400 -')]
+CL b'Content-Length: 99999999999999\r\n': 413
+CL b'Content-Length: -1\r\n': 400
+CL b'Content-Length: \r\n': 400
+CL b'Content-Length: 1\r\nContent-Length: 1\r\n': 400
+CL b'Content-Length: 9\r\n': b''
+CL b'Content-Length: 65537\r\n': 413
+CL b'Content-Length: 5555555555555555555555\r\n': 413
+SLOW BODY: closed after 1.51s, data b'' (bound 1.5 s)
+threads alive at end: 1

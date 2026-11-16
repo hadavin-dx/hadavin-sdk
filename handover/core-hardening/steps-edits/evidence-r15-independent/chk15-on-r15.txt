@@ -1,0 +1,6 @@
+INFO OLD blocks 60
+INFO UTC=IST pairs 127
+INFO weekday/date pairs 61
+INFO banned found (count only) 0 of 10
+FAILS 0
+{}

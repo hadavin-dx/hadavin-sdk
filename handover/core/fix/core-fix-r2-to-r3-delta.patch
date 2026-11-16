@@ -1,0 +1,1983 @@
+diff --git a/demo_only/burst.py b/demo_only/burst.py
+index bb17b04..dcd7332 100644
+--- a/demo_only/burst.py
++++ b/demo_only/burst.py
+@@ -18,6 +18,7 @@ from typing import Any
+ from lead_desk.constants import (
+     BURST_BACKOFF_MAX_SECONDS,
+     BURST_BACKOFF_SECONDS,
++    BURST_N_MAX,
+     BURST_RETRY_DEADLINE_SECONDS,
+     HTTP_ACCEPTED,
+     HTTP_BUSY,
+@@ -25,7 +26,7 @@ from lead_desk.constants import (
+     HTTP_OK,
+     SOURCES,
+ )
+-from tools.refusing_args import RefusingParser
++from tools.refusing_args import RefusingParser, bounded_int
+ 
+ REQUEST_TIMEOUT_SECONDS = 60.0
+ NAME = "Ada Example"
+@@ -139,7 +140,7 @@ def main(argv: list[str] | None = None) -> int:
+     """Post n requests, print SENT / STATUS / RETRIES / RESULT lines, return the exit code."""
+     ap = RefusingParser(prog="demo_only.burst")
+     ap.add_argument("--url", required=True)
+-    ap.add_argument("--n", type=int, required=True)
++    ap.add_argument("--n", type=bounded_int(1, BURST_N_MAX), required=True)
+     ap.add_argument("--email", required=True)
+     ap.add_argument("--ref-prefix", required=True)
+     ap.add_argument("--source", choices=SOURCES, required=True)
+diff --git a/demo_only/fake_model_server.py b/demo_only/fake_model_server.py
+index def6a86..b30a97b 100644
+--- a/demo_only/fake_model_server.py
++++ b/demo_only/fake_model_server.py
+@@ -34,9 +34,16 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+ from pathlib import Path
+ from typing import Any
+ 
+-from lead_desk.regfile import open_output, open_regular, read_regular_text
++try:  # started (python -m demo_only.fake_model_server) without the src folder on the path: it is added
++    from lead_desk.constants import EXIT_REFUSED, FAKE_MODEL_DEFAULT_PORT, PORT_MAX, SECRET_FILE_MAX_BYTES
++    from lead_desk.regfile import open_output, read_regular_bytes, read_regular_text
++except ImportError:
++    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
++    from lead_desk.constants import EXIT_REFUSED, FAKE_MODEL_DEFAULT_PORT, PORT_MAX, SECRET_FILE_MAX_BYTES
++    from lead_desk.regfile import open_output, read_regular_bytes, read_regular_text
++
+ from tools.pathconfine import PathRefused, confine, confine_existing
+-from tools.refusing_args import RefusingParser
++from tools.refusing_args import RefusingParser, bounded_int
+ 
+ MODES = ("ok", "mixed", "slow", "timeout", "r429", "malformed", "refusal", "r5xx", "badlabel", "drip")
+ ALIASES = {"rate_limit": "r429", "malformed_json": "malformed", "malformed_label": "badlabel", "server_error": "r5xx"}
+@@ -251,7 +258,7 @@ def make_model_server(
+ def main() -> None:
+     ap = RefusingParser()
+     ap.add_argument("--mode", default="ok", choices=(*MODES, *ALIASES))
+-    ap.add_argument("--port", type=int, default=48767)
++    ap.add_argument("--port", type=bounded_int(0, PORT_MAX), default=FAKE_MODEL_DEFAULT_PORT, help="0 = a free port")
+     ap.add_argument("--key-file", default=None, help="file holding the fake key to require (fake keys only)")
+     ap.add_argument("--call-log", type=Path, default=None, help="one JSON line per call, for the invariant checker")
+     ap.add_argument("--control-file", type=Path, default=None, help="file with one mode word, read on every call")
+@@ -262,18 +269,18 @@ def main() -> None:
+         control_file = confine(a.control_file, what="--control-file") if a.control_file else None
+     except PathRefused as e:
+         print(f"refused: {e}", file=sys.stderr)
+-        raise SystemExit(2) from None
++        raise SystemExit(EXIT_REFUSED) from None
+     try:  # a pipe or a folder named here would block or break the first logged call: refuse now, with one line
+         if call_log is not None:
+             open_output(call_log, "a", encoding="utf-8").close()
+         if key_path:
+-            with open_regular(key_path) as kf:
+-                key: str | None = kf.read().decode("utf-8").strip()
++            # at most SECRET_FILE_MAX_BYTES are read (a bigger file is refused, FileRefused is a ValueError)
++            key: str | None = read_regular_bytes(key_path, SECRET_FILE_MAX_BYTES).decode("utf-8").strip()
+         else:
+             key = None
+     except (OSError, ValueError):  # ValueError: not UTF-8 text
+         print("refused: --call-log or --key-file cannot be used: give a regular file", flush=True)
+-        sys.exit(2)
++        sys.exit(EXIT_REFUSED)
+     srv, state = make_model_server(port=a.port, mode=a.mode, key=key, call_log=call_log, control_file=control_file)
+     print(f"fake model listening on port {srv.server_address[1]}", flush=True)
+     try:
+diff --git a/demo_only/fakes_server.py b/demo_only/fakes_server.py
+index 267eacb..17f228c 100644
+--- a/demo_only/fakes_server.py
++++ b/demo_only/fakes_server.py
+@@ -12,8 +12,15 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+ from typing import Any
+ 
+ from lead_desk.config import Config
+-from lead_desk.constants import HTTP_BAD_REQUEST, HTTP_NOT_FOUND, HTTP_OK, HTTP_UNPROCESSABLE, NUDGE_KEY_PREFIX
+-from tools.refusing_args import RefusingParser
++from lead_desk.constants import (
++    HTTP_BAD_REQUEST,
++    HTTP_NOT_FOUND,
++    HTTP_OK,
++    HTTP_UNPROCESSABLE,
++    NUDGE_KEY_PREFIX,
++    PORT_MAX,
++)
++from tools.refusing_args import RefusingParser, bounded_int
+ 
+ FAIL_MODES = ("none", "refuse", "drop", "record_then_drop", "store_then_delay")
+ MODES = ("keyed", "blind")
+@@ -241,7 +248,7 @@ def main(argv: list[str] | None = None) -> None:
+     ap = RefusingParser(prog="demo_only.fakes_server")
+     ap.add_argument("--outbox", choices=MODES, required=True)
+     ap.add_argument("--crm", choices=MODES, default="keyed")
+-    ap.add_argument("--port", type=int, default=cfg.fakes_port)
++    ap.add_argument("--port", type=bounded_int(0, PORT_MAX), default=cfg.fakes_port)
+     args = ap.parse_args(argv)
+     srv = make_fakes_server(args.outbox, args.port, args.crm)
+     print(f"fakes server {args.outbox} on port {srv.server_address[1]}", flush=True)
+diff --git a/demo_only/portal_demo.py b/demo_only/portal_demo.py
+index 503fcd7..480df26 100644
+--- a/demo_only/portal_demo.py
++++ b/demo_only/portal_demo.py
+@@ -33,6 +33,7 @@ from demo_only.burst import post_with_retries, retry_after_seconds
+ from demo_only.fakes import RecordedQualifier
+ from lead_desk.adapters import HttpCrm, HttpOutbox
+ from lead_desk.constants import (
++    ARMED_READ_MAX,
+     BURST_RETRY_DEADLINE_SECONDS,
+     HTTP_BAD_REQUEST,
+     HTTP_CONFLICT,
+@@ -92,7 +93,6 @@ RECORD_KEYS_MAX: Final = 10
+ LOOPBACK_HOSTS: Final = frozenset({"127.0.0.1", "localhost", "[::1]"})  # as Config.fakes_host spells them
+ LOOPBACK_NAMES: Final = frozenset({"127.0.0.1", "localhost", "::1"})  # as urllib's .hostname spells them
+ ERR_URL_NOT_LOCAL: Final = "desk_url_not_local"
+-ARMED_READ_MAX: Final = 16  # bytes read from the flag file: the longest point name is 2
+ INFO_PATH: Final = "/fake/info"
+ OUTBOX_PATH: Final = "/fake/outbox"
+ CRM_PATH: Final = "/fake/crm"
+diff --git a/load_tools/README.md b/load_tools/README.md
+index 4b3ee09..8a15aa8 100644
+--- a/load_tools/README.md
++++ b/load_tools/README.md
+@@ -46,7 +46,7 @@ stays dead is reported, never hidden. Extra per-request fields: `attempt_count`,
+ 
+ Machine facts are written once at the start to `<log>.facts.json`: `time_wait_count`, `ulimit_n`, `somaxconn`,
+ `nproc` (cpu count and `ulimit -u`), `memory` (kB), `python`, `platform`, plus the scenario, worker and thread counts.
+-`max_in_flight` = workers x threads: a burst larger than that is not fully at one moment.
++A fact the computer could not give (a kernel file that is missing, as on Windows, or cannot be read) holds the word `unreadable`, never an empty value. `max_in_flight` = workers x threads: a burst larger than that is not fully at one moment.
+ 
+ ### Desk book (the desk's SQLite file; opened read-only)
+ Tables used: `receipts(source, source_ref, receipt_id, outcome)`, `leads(lead_id, email_key)`, `followups(lead_id, state, crm_done, updated_at, last_error)`.
+diff --git a/load_tools/catcher.py b/load_tools/catcher.py
+index a85eafe..581cd72 100644
+--- a/load_tools/catcher.py
++++ b/load_tools/catcher.py
+@@ -47,14 +47,14 @@ except ImportError:  # a foreign `tools` package WITHOUT these names is dropped
+     from tools.pathconfine import PathRefused, confine
+ 
+ try:  # started as a script without the src folder on the path: it is added (the desk's own file reader is imported)
+-    from lead_desk.constants import MAX_TEXT_BYTES
++    from lead_desk.constants import MAX_TEXT_BYTES, PORT_MAX
+     from lead_desk.regfile import open_output, read_regular_text
+ except ImportError:
+     sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+-    from lead_desk.constants import MAX_TEXT_BYTES
++    from lead_desk.constants import MAX_TEXT_BYTES, PORT_MAX
+     from lead_desk.regfile import open_output, read_regular_text
+ 
+-from tools.refusing_args import RefusingParser
++from tools.refusing_args import RefusingParser, bounded_int
+ 
+ BACKLOG = 1024
+ LINE_LIMIT = 1 << 20  # one SMTP line (and one message) may be at most 1 MiB
+@@ -209,7 +209,9 @@ def main(argv: list[str] | None = None) -> None:
+     ap = RefusingParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+     ap.add_argument("--out", required=True, type=Path, help="JSONL file; one line per accepted message")
+     ap.add_argument("--host", default="127.0.0.1")
+-    ap.add_argument("--port", type=int, default=2525, help="0 = pick a free port (printed on stdout)")
++    ap.add_argument(
++        "--port", type=bounded_int(0, PORT_MAX), default=2525, help="0 = pick a free port (printed on stdout)"
++    )
+     ap.add_argument(
+         "--control",
+         type=Path,
+diff --git a/load_tools/load_driver.py b/load_tools/load_driver.py
+index 5fb7f75..27984d5 100644
+--- a/load_tools/load_driver.py
++++ b/load_tools/load_driver.py
+@@ -10,6 +10,7 @@ from __future__ import annotations
+ 
+ import http.client
+ import json
++import math
+ import multiprocessing
+ import os
+ import platform
+@@ -37,14 +38,32 @@ except ImportError:  # a foreign `tools` package WITHOUT these names is dropped
+     from tools.pathconfine import PathRefused, confine
+ 
+ try:  # started as a script without the src folder on the path: it is added (the desk's own file reader is imported)
+-    from lead_desk.constants import LOAD_FILE_MAX_BYTES, MAX_TEXT_BYTES
++    from lead_desk.constants import (
++        EXIT_REFUSED,
++        LOAD_FILE_MAX_BYTES,
++        LOAD_RATE_MAX,
++        LOAD_SECONDS_MAX,
++        LOAD_THREADS_MAX,
++        LOAD_TOTAL_MAX,
++        LOAD_WORKERS_MAX,
++        MAX_TEXT_BYTES,
++    )
+     from lead_desk.regfile import open_output, read_regular_text
+ except ImportError:
+     sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
+-    from lead_desk.constants import LOAD_FILE_MAX_BYTES, MAX_TEXT_BYTES
++    from lead_desk.constants import (
++        EXIT_REFUSED,
++        LOAD_FILE_MAX_BYTES,
++        LOAD_RATE_MAX,
++        LOAD_SECONDS_MAX,
++        LOAD_THREADS_MAX,
++        LOAD_TOTAL_MAX,
++        LOAD_WORKERS_MAX,
++        MAX_TEXT_BYTES,
++    )
+     from lead_desk.regfile import open_output, read_regular_text
+ 
+-from tools.refusing_args import RefusingParser
++from tools.refusing_args import RefusingParser, bounded_int
+ 
+ FALLBACK_RETRY_VALUES = (
+     0.1,
+@@ -224,6 +243,7 @@ def _item(door: str, ref: str, ts: float, scenario: str, kind: str) -> dict[str,
+ 
+ SCENARIO_FORM = "bad scenario: use burst:N, rate:R:D or dupmix:TOTAL:FRACTION[:RATE] (numbers only)"
+ SCENARIO_NUMBERS = "bad scenario: numbers must be positive (a fraction is 0 to 1)"  # fixed: no typed text
++SCENARIO_TOO_BIG = "bad scenario: a number is too big (see the limits in lead_desk/constants.py: LOAD_*_MAX)"
+ 
+ 
+ def parse_scenario(text: str) -> tuple[str, list[float]]:
+@@ -236,12 +256,37 @@ def parse_scenario(text: str) -> tuple[str, list[float]]:
+     want = {"burst": (1, 1), "rate": (2, 2), "dupmix": (2, 3)}
+     if name not in want or not want[name][0] <= len(nums) <= want[name][1]:
+         raise ValueError(SCENARIO_FORM)
++    if not all(math.isfinite(x) for x in nums):  # "nan" and "inf" are numbers to float(): int(nan) is a ValueError
++        raise ValueError(SCENARIO_NUMBERS)  # and int(inf) an OverflowError, each with a traceback
+     positive = nums[:2] if name != "dupmix" else [nums[0], *nums[2:]]  # a dupmix fraction may be 0
+     if any(x <= 0 for x in positive) or (name == "dupmix" and not 0 <= nums[1] < 1):
+         raise ValueError(SCENARIO_NUMBERS)
++    if _planned_total(name, nums) < 1:  # burst:0.5 or rate:0.1:1 would plan no request at all
++        raise ValueError(SCENARIO_NUMBERS)
++    if _too_big(name, nums):
++        raise ValueError(SCENARIO_TOO_BIG)
+     return name, nums
+ 
+ 
++def _planned_total(name: str, nums: list[float]) -> int:
++    """How many requests the numbers plan (the count build_schedule makes). `nums` are finite; a product that
++    overflows to infinity plans nothing here and is refused as too big afterwards."""
++    if name != "rate":
++        return int(nums[0])
++    product = nums[0] * nums[1]
++    return int(product) if math.isfinite(product) else LOAD_TOTAL_MAX + 1
++
++
++def _too_big(name: str, nums: list[float]) -> bool:
++    """True when a number is above the limits in constants.py."""
++    if name == "burst":
++        return nums[0] > LOAD_TOTAL_MAX
++    if name == "rate":
++        return nums[0] > LOAD_RATE_MAX or nums[1] > LOAD_SECONDS_MAX or nums[0] * nums[1] > LOAD_TOTAL_MAX
++    rate = nums[DUPMIX_RATE_INDEX] if len(nums) > DUPMIX_RATE_INDEX else DUPMIX_DEFAULT_RATE
++    return nums[0] > LOAD_TOTAL_MAX or rate > LOAD_RATE_MAX or nums[0] / rate > LOAD_SECONDS_MAX
++
++
+ def build_schedule(scenario: str, t0: float, prefix: str, seed: int) -> list[dict[str, Any]]:
+     """The whole open-loop schedule, fixed before anything is sent. Sorted by intended time."""
+     name, nums = parse_scenario(scenario)
+@@ -321,7 +366,10 @@ def _worker(args: tuple[int, str, list[dict[str, Any]], int, Path]) -> None:
+     out.close()
+ 
+ 
+-def _count_time_wait() -> int | None:
++UNREADABLE = "unreadable"  # what a machine fact holds when its kernel file could not be read (never a silent null)
++
++
++def _count_time_wait() -> int | str:
+     total = 0
+     found = False
+     for name in ("/proc/net/tcp", "/proc/net/tcp6"):
+@@ -333,20 +381,20 @@ def _count_time_wait() -> int | None:
+         total += sum(
+             1 for ln in lines if len(ln.split()) >= MIN_TCP_LINE_FIELDS and ln.split()[3] == TCP_STATE_TIME_WAIT
+         )
+-    return total if found else None
++    return total if found else UNREADABLE
+ 
+ 
+-def _read_int(kernel_file: str) -> int | None:
++def _read_int(kernel_file: str) -> int | str:
+     """One whole number from a fixed kernel file (/proc, /sys) named by this module, never by the command line."""
+     try:
+         return int(read_regular_text(kernel_file, MAX_TEXT_BYTES).strip())
+     except (OSError, ValueError):
+-        return None
++        return UNREADABLE
+ 
+ 
+ def machine_facts() -> dict[str, Any]:
+     """Facts that explain a result: recorded once at the start of a run."""
+-    mem: dict[str, int] = {}
++    mem: dict[str, int | str] = {}
+     try:
+         for ln in read_regular_text("/proc/meminfo", MAX_TEXT_BYTES).splitlines():
+             key, _, rest = ln.partition(":")
+@@ -354,6 +402,8 @@ def machine_facts() -> dict[str, Any]:
+                 mem[key + "_kb"] = int(rest.split()[0])
+     except (OSError, ValueError, IndexError):
+         pass
++    for name in ("MemTotal_kb", "MemAvailable_kb"):
++        mem.setdefault(name, UNREADABLE)  # a missing number is said so in the facts file
+     soft = hard = nproc_soft = nproc_hard = None  # the `resource` module does not exist on Windows
+     if sys.platform != "win32":
+         import resource
+@@ -426,8 +476,13 @@ def main(argv: list[str] | None = None) -> int:
+     ap.add_argument("--scenario", required=True, help="burst:N | rate:R:D | dupmix:TOTAL:FRACTION[:RATE]")
+     ap.add_argument("--log", type=Path, required=True, help="request log (JSONL), one line per intended request")
+     ap.add_argument("--facts", type=Path, help="machine facts JSON (default: <log>.facts.json)")
+-    ap.add_argument("--workers", type=int, default=DEFAULT_WORKERS)
+-    ap.add_argument("--threads", type=int, default=DEFAULT_THREADS, help="threads in each worker process")
++    ap.add_argument("--workers", type=bounded_int(1, LOAD_WORKERS_MAX), default=DEFAULT_WORKERS)
++    ap.add_argument(
++        "--threads",
++        type=bounded_int(1, LOAD_THREADS_MAX),
++        default=DEFAULT_THREADS,
++        help="threads in each worker process",
++    )
+     ap.add_argument("--seed", type=int, default=1)
+     ap.add_argument("--id-prefix", default=ID_PREFIX, help="request ids are <prefix>-<n>; change it for every run")
+     a = ap.parse_args(argv)
+@@ -435,13 +490,13 @@ def main(argv: list[str] | None = None) -> int:
+         parse_scenario(a.scenario)
+     except ValueError as e:
+         print(f"ERROR: {e}", file=sys.stderr)
+-        return 2
++        return EXIT_REFUSED
+     facts = a.facts or a.log.with_name(a.log.name + ".facts.json")
+     try:
+         summary = run(a.base_url, a.scenario, a.log, facts, a.workers, a.threads, a.seed, a.id_prefix)
+     except PathRefused as e:  # the same wording and exit code as a bad scenario: nothing was sent or written
+         print(f"ERROR: {e}", file=sys.stderr)
+-        return 2
++        return EXIT_REFUSED
+     print(json.dumps(summary, sort_keys=True))
+     return 0
+ 
+diff --git a/scripts/desk_setting.py b/scripts/desk_setting.py
+index 3fcab4a..ffe924c 100644
+--- a/scripts/desk_setting.py
++++ b/scripts/desk_setting.py
+@@ -6,7 +6,7 @@ It prints the value the desk would use (the database file, its folder, the demo
+ from the DESK_* environment variables by Config.from_env, the same code the desk itself runs. When a DESK_* value is
+ refused it prints the ONE line the desk prints, `the desk refuses a setting: <what is wrong>`, and ends with exit code 4
+ (the desk's own code for a refused setting): no Python traceback, and the text never repeats the value that was typed
+-(the refusal texts name the setting, not its value). `data-dir` also runs the desk's own lead-book check
++(the refusal texts name the setting, not its value). `db-path` and `data-dir` also run the desk's own lead-book check
+ (`the desk refuses to start: ...`, same exit code 4). A wrong command line ends with a usage line and exit code 2."""
+ 
+ from __future__ import annotations
+@@ -20,6 +20,7 @@ from lead_desk.desk import book_problem
+ from lead_desk.envnum import SettingRefused
+ 
+ EXIT_USAGE = 2
++BOOK_WORDS = ("db-path", "data-dir")  # the words that name the book: a folder or pipe there is refused
+ ARGS = 2  # the script name and one word
+ WHAT: dict[str, Callable[[Config], object]] = {
+     "db-path": lambda c: c.db_path,
+@@ -38,7 +39,7 @@ def main(argv: list[str]) -> int:
+     except SettingRefused as e:  # the same line and exit code as the desk itself (server.main)
+         print(f"the desk refuses a setting: {e}")
+         return EXIT_DESK_SETTING_REFUSED
+-    if argv[1] == "data-dir" and (problem := book_problem(config.db_path)) is not None:
++    if argv[1] in BOOK_WORDS and (problem := book_problem(config.db_path)) is not None:
+         # start_all makes this folder next: a book path the desk would refuse (a part of it is a file) ends here
+         print(f"the desk refuses to start: {problem}")
+         return EXIT_DESK_SETTING_REFUSED
+diff --git a/scripts/hubspot_probe.py b/scripts/hubspot_probe.py
+index 28fbb29..10ddf3b 100644
+--- a/scripts/hubspot_probe.py
++++ b/scripts/hubspot_probe.py
+@@ -32,7 +32,7 @@ from typing import Any, Final
+ from urllib.parse import quote, urlsplit
+ 
+ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))  # the repository folder, for tools/
+-from tools.refusing_args import RefusingParser  # noqa: E402
++from tools.refusing_args import EXIT_REFUSED, RefusingParser  # noqa: E402
+ 
+ # the same host as in src/lead_desk/constants.py. This one-file script imports nothing from the desk, and the
+ # repository scan allows the full address only in that file, so it is written in parts here
+@@ -65,7 +65,7 @@ HTTP_SERVER_ERROR: Final = 500
+ HTTP_NOT_FOUND: Final = 404
+ HTTP_TOO_MANY: Final = 429
+ CONTACTS: Final = "/crm/v3/objects/contacts"
+-EXIT_OK, EXIT_FAIL, EXIT_REFUSED = 0, 1, 2
++EXIT_OK, EXIT_FAIL = 0, 1
+ 
+ QUESTIONS: Final = (
+     "owners readable",
+diff --git a/scripts/n8n_api.py b/scripts/n8n_api.py
+index e48357f..d1c2d36 100644
+--- a/scripts/n8n_api.py
++++ b/scripts/n8n_api.py
+@@ -50,6 +50,7 @@ for _p in (str(REPO), str(REPO / "src")):
+ from http_guard import open_http  # noqa: E402
+ 
+ from lead_desk.config import is_loopback_host  # noqa: E402
++from lead_desk.constants import PORT_MAX, SECRET_FILE_MAX_BYTES  # noqa: E402
+ from lead_desk.envnum import SettingRefused, split_url  # noqa: E402
+ from lead_desk.regfile import load_json_file, open_regular, plain_reason  # noqa: E402
+ from tools.pathconfine import ROOTS_ENV, PathRefused, confine_existing  # noqa: E402
+@@ -64,7 +65,6 @@ REFUSED = (
+ # bracketed IPv6 literal, then at most one ":port" of digits. Any other shape (a backslash, a second colon, text after
+ # a bracket, an empty port) is read one way by urlsplit and another by urllib, so it is refused.
+ NETLOC = re.compile(r"(\[[0-9A-Fa-f:.]+\]|[A-Za-z0-9.-]+)(:[0-9]{1,5})?")
+-MAX_PORT = 65535
+ 
+ 
+ def checked_base(url: str) -> str:
+@@ -79,7 +79,7 @@ def checked_base(url: str) -> str:
+     if "@" in parts.netloc or any(c.isspace() or not c.isprintable() for c in url):
+         raise SystemExit(REFUSED)
+     shape = NETLOC.fullmatch(parts.netloc)
+-    if shape is None or (shape.group(2) is not None and not 1 <= int(shape.group(2)[1:]) <= MAX_PORT):
++    if shape is None or (shape.group(2) is not None and not 1 <= int(shape.group(2)[1:]) <= PORT_MAX):
+         raise SystemExit(REFUSED)
+     scheme, host = parts.scheme.lower(), parts.hostname or ""
+     if host and (scheme == "https" or (scheme == "http" and is_loopback_host(host))):
+@@ -91,25 +91,26 @@ BASE = checked_base(os.environ.get("N8N_URL", "http://127.0.0.1:5679"))
+ PROXY_ALLOWED = urlsplit(BASE).scheme.lower() == "https"  # http is only ever to this computer: no proxy for the key
+ 
+ 
+-MAX_KEY = 4096  # an n8n API key is a token of a few hundred characters; anything longer is not one
+-
+-
+ def _read_key() -> str:
+     name = os.environ.get("N8N_API_KEY_FILE")
+     if not name:
+         raise SystemExit("N8N_API_KEY_FILE must be the path of a one-line file with the n8n API key")
+     try:
+         with open_regular(name) as f:  # a pipe, a folder, a missing or an unreadable file: OSError
+-            raw = f.read(MAX_KEY + 1)  # never the whole of a huge file: a key is short
++            raw = f.read(SECRET_FILE_MAX_BYTES + 1)  # never the whole of a huge file: a key is short
+         key = raw.decode("utf-8").strip()  # bytes that are not text: UnicodeDecodeError (a ValueError)
+     except (OSError, ValueError) as e:
+         raise SystemExit(f"cannot read the n8n API key file ({plain_reason(e)})") from None
+     # Printable ASCII without a blank: a second line, a tab or NUL inside, or a non-latin-1 letter would make the header
+     # call fail with a message that holds the key. The text of the file is never part of the message.
+-    if not key or len(key) > MAX_KEY or not all(c.isascii() and c.isprintable() and not c.isspace() for c in key):
++    if (
++        not key
++        or len(key) > SECRET_FILE_MAX_BYTES
++        or not all(c.isascii() and c.isprintable() and not c.isspace() for c in key)
++    ):
+         raise SystemExit(
+             "the n8n API key file must hold one word of printable ASCII (no space, second line or control character) "
+-            f"of at most {MAX_KEY} characters"
++            f"of at most {SECRET_FILE_MAX_BYTES} characters"
+         )
+     return key
+ 
+diff --git a/scripts/run_live_check.py b/scripts/run_live_check.py
+index e9036cf..4eb485c 100644
+--- a/scripts/run_live_check.py
++++ b/scripts/run_live_check.py
+@@ -15,6 +15,8 @@ the provider's own or this computer is refused. The leads' e-mail addresses are
+ from __future__ import annotations
+ 
+ import argparse
++import io
++import os
+ import re
+ import statistics
+ import sys
+@@ -31,11 +33,15 @@ sys.path.insert(0, str(REPO))
+ from lead_desk.config import LiveSettings  # noqa: E402
+ from lead_desk.constants import (  # noqa: E402
+     AI_LABELS,
++    EXIT_REFUSED,
++    EXIT_STOPPED,
+     LIVE_DEFAULT_BASE_URL,
+     LIVE_DEFAULT_EFFORT,
+     LIVE_DEFAULT_MAX_TOKENS,
+     LIVE_EFFORTS,
++    LIVE_LEADS_MAX,
+     LIVE_PRICE_DATE_FLOOR,
++    LIVE_RUNS_MAX,
+ )
+ from lead_desk.live_claude import MONEY_CONTEXT, LiveError, LiveQualifier, SpendLedger, worst_case_usd  # noqa: E402
+ from tools.refusing_args import RefusingParser, refusal  # noqa: E402
+@@ -44,7 +50,6 @@ LEADS = 12
+ RUNS = 3
+ PCT = 100
+ P95 = 0.95
+-EXIT_REFUSED = 2
+ PRICE_DATE_FORM = re.compile(r"\d{4}-\d{2}-\d{2}")
+ PRICE_DATE_FLOOR = date(*LIVE_PRICE_DATE_FLOOR)
+ BODY_OVERHEAD = 600  # bytes of JSON and system text around the question (a safe upper bound, for the estimate)
+@@ -70,6 +75,20 @@ def _emails(n: int) -> list[tuple[str, str]]:
+     return [(f"L{i:012x}", f"made.up.{i}@example.com") for i in range(1, n + 1)]
+ 
+ 
++NO_TERMINAL_LINE = "stopped, nothing was called: there is no terminal to answer the question on"
++
++
++def _no_terminal() -> bool:
++    """True when standard input is closed, missing or the empty device: the question could never be answered."""
++    try:
++        fd = sys.stdin.fileno()
++        return os.path.samestat(os.fstat(fd), os.stat(os.devnull))
++    except io.UnsupportedOperation:  # an object with no descriptor (a test double): input() decides
++        return False
++    except (AttributeError, ValueError, OSError):  # no stdin object, a closed one, or a closed descriptor (EBADF)
++        return True
++
++
+ def _pct(x: float) -> str:
+     return f"{x * PCT:.0f}%"
+ 
+@@ -157,12 +176,15 @@ def main(argv: list[str] | None = None) -> int:
+     ap.add_argument("--leads", type=int, default=LEADS)
+     ap.add_argument("--runs", type=int, default=RUNS)
+     a = ap.parse_args(argv)
+-    if a.leads < 1 or a.runs < 1:
+-        print(refusal("--leads, --runs", "must each be at least 1"))
++    if not (1 <= a.leads <= LIVE_LEADS_MAX and 1 <= a.runs <= LIVE_RUNS_MAX):  # before any list is built
++        print(refusal("--leads, --runs", f"must each be at least 1; at most {LIVE_LEADS_MAX} and {LIVE_RUNS_MAX}"))
+         return EXIT_REFUSED
+     if (problem := option_problem(a)) is not None:  # the one place that judges the typed values (all fixed texts)
+         print(problem)
+         return EXIT_REFUSED
++    if _no_terminal():  # decided BEFORE any cost line is printed: one line, nothing else
++        print(NO_TERMINAL_LINE)
++        return EXIT_STOPPED
+     batch = uuid.uuid4().hex[:8]
+     leads = _emails(a.leads)
+     settings: list[LiveSettings] = []
+@@ -197,9 +219,9 @@ def main(argv: list[str] | None = None) -> int:
+     print(f"expected MAXIMUM cost of this whole run: US${worst_shown} (caps: run {a.cap_run}, total {a.cap_total})")
+     try:
+         answer = input("Start? [y/N] ").strip().lower()
+-    except EOFError:  # no terminal to answer on (closed input, a scheduled job): never read as a yes
+-        print("stopped, nothing was called: there is no terminal to answer the question on")
+-        return 1
++    except (EOFError, OSError):  # no terminal to answer on (closed input, a scheduled job): never read as a yes
++        print(NO_TERMINAL_LINE)  # an empty pipe: only reading shows it
++        return EXIT_STOPPED
+     if answer != "y":
+         print("stopped, nothing was called")
+         return 1
+diff --git a/scripts/run_real_check.py b/scripts/run_real_check.py
+index 2c36a89..fd04325 100644
+--- a/scripts/run_real_check.py
++++ b/scripts/run_real_check.py
+@@ -69,7 +69,11 @@ from lead_desk.adapters import CrmError  # noqa: E402
+ from lead_desk.config import Config  # noqa: E402
+ from lead_desk.constants import (  # noqa: E402
+     CAP_COUNT_MAX,
++    DRY_PORT_COUNT,
++    EXIT_CHECK_FAILED,
++    EXIT_REFUSED,
+     EXIT_SIMULATED_KILL,
++    EXIT_STOPPED,
+     MAIL_IMAP_DEFAULT_HOST,
+     MAIL_SPAM_FOLDER,
+     PORT_MAX,
+@@ -88,7 +92,13 @@ from lead_desk.imap_count import (  # noqa: E402
+     counts_by_inbox,
+ )
+ from lead_desk.live_claude import worst_case_usd  # noqa: E402
+-from lead_desk.regfile import FileRefused, load_json_file, open_output, read_regular_text  # noqa: E402
++from lead_desk.regfile import (  # noqa: E402
++    FileRefused,
++    load_json_file,
++    open_output,
++    read_regular_text,
++    write_regular_text,
++)
+ from lead_desk.smtp_provider import ProviderSettings, SmtpProviderOutbox  # noqa: E402
+ from lead_desk.tls_trust import context_from_ca_file  # noqa: E402
+ from load_tools.check_invariants import InputError, read_book, render_table, run_checks  # noqa: E402
+@@ -96,7 +106,7 @@ from load_tools.load_driver import send_with_retries  # noqa: E402
+ from tools.pathconfine import confine_anywhere  # noqa: E402
+ from tools.refusing_args import RefusingParser, refusal  # noqa: E402
+ 
+-EXIT_REFUSED, EXIT_STOPPED, EXIT_FAILED = 2, 1, 3
++EXIT_FAILED = EXIT_CHECK_FAILED  # the check ran to its end and a check did not hold
+ # Made-up lead addresses on the reserved example domain (not `.test`: a real CRM may refuse that as an invalid
+ # address: an assumption). Nothing is ever
+ # mailed to it: follow-ups go only to the configured inboxes
+@@ -113,7 +123,6 @@ POLL_EXTRA_LOGINS = 3  # after the last wanted mail was seen: one settle poll; a
+ # one repeat of a poll whose connection failed
+ REPEAT_POLL_SECONDS = 1.0  # a pause before a poll whose connection dropped is repeated
+ RETRY_TOTAL_FACTOR = 2.0  # a first mailbox read that ran out of time is tried once more with this many times the time
+-DRY_PORT_COUNT = 5  # with a fixed --dry-port-base: the desk, the fake HubSpot, the mail server and the two mailboxes
+ CONFIG_NAME = re.compile(r"[A-Z0-9_]+")  # a setting name: upper-case letters, digits and underscore only
+ DRY_KEY = "dry-" + "key-" + "for-" + "self-" + "test"  # the made-up key of the fake HubSpot (built from parts)
+ CRASH_REASON = "crash_while_sending"  # what the desk writes on a follow-up that was being sent when it stopped
+@@ -183,8 +192,8 @@ class DryFakes:
+         recipients = ("inbox-a@example.test", "inbox-b@example.test")
+         for im, rcpt in zip(self.imaps, recipients, strict=True):
+             im.user = rcpt  # the mailbox login is the recipient's address, as for a real mailbox
+-        (self._private / "hs.key").write_text(self.state.key, encoding="utf-8")
+-        (self._private / "pw.txt").write_text(self.smtp.password, encoding="utf-8")
++        write_regular_text(self._private / "hs.key", self.state.key)
++        write_regular_text(self._private / "pw.txt", self.smtp.password)
+         pw = str(self._private / "pw.txt")
+         self.env = {
+             "DESK_DB_PATH": str(folder / "run" / "desk.db"),
+@@ -562,14 +571,10 @@ def _readback_failed(
+         + "their lead ids start with L and are listed in the desk's book. Archive them by hand."
+     )
+     print(note)
+-    out = Path(env.get("REAL_RESULT_FILE", run_dir / "result.json"))
+-    with open_output(out, "w", encoding="utf-8") as f:  # a pipe named here is refused (also checked at the start)
+-        f.write(
+-            json.dumps(
+-                {"ok": False, "note": note, "leads_in_book": leads, "hubspot_calls_by_the_desk": hub_stats}, indent=2
+-            )
+-        )
+-    print(f"result file: {out}")
++    write_result(
++        result_path(env, run_dir),
++        {"ok": False, "note": note, "leads_in_book": leads, "hubspot_calls_by_the_desk": hub_stats},
++    )
+     return EXIT_FAILED
+ 
+ 
+@@ -753,7 +758,7 @@ class Desk:
+             "DESK_HUBSPOT_STATS_FILE": str(self.log_path.with_suffix(".hubspot.json")),
+             "DESK_SMTPP_STATS_FILE": str(self.log_path.with_suffix(".smtp.json")),
+         }
+-        with self.log_path.open("wb") as log:
++        with open_output(self.log_path, "a+b") as log:  # a pipe or a device under that name is refused
+             self.proc = subprocess.Popen(  # noqa: S603
+                 [sys.executable, str(REPO / "scripts" / "crash_desk.py")],
+                 cwd=REPO,
+@@ -817,6 +822,59 @@ def drain(desk: Desk, seconds: float) -> dict[str, Any] | None:
+     return None
+ 
+ 
++def result_path(env: dict[str, str], run_dir: Path) -> Path:
++    """The result file: REAL_RESULT_FILE when it is set and not blank, otherwise result.json next to the database."""
++    named = env.get("REAL_RESULT_FILE", "")
++    return Path(named) if named.strip() else run_dir / "result.json"
++
++
++def check_result_file(env: dict[str, str], db: Path) -> None:
++    """Refuse a bad REAL_RESULT_FILE BEFORE anything real runs (the file is written at the very end, so a bad path
++    found then would lose the result of a long run). Raises ValueError with a fixed text that names the setting only.
++    Looks only, makes nothing. Bad: a NUL character, the database file itself (the two settings swapped), a pipe, a
++    device or a folder, and a file whose folder does not exist (only the run folder is made) or cannot be written."""
++    named = env.get("REAL_RESULT_FILE", "")
++    if not named.strip():
++        return  # unset: result.json in the run folder, which the run makes
++    if "\0" in named:
++        raise ValueError("REAL_RESULT_FILE has a bad character in it")
++    out = os.path.abspath(named)
++    if out == os.path.abspath(db):
++        raise ValueError("REAL_RESULT_FILE must not be the database file (DESK_DB_PATH): the two settings are swapped")
++    try:
++        if os.path.lexists(out) and not stat.S_ISREG(os.stat(out).st_mode):
++            raise ValueError(
++                "REAL_RESULT_FILE must name a regular file or a new file, not a pipe, a device or a folder"
++            )
++        folder = os.path.dirname(out)
++        if folder != os.path.abspath(db.parent) and not (
++            os.path.isdir(folder) and os.access(folder, os.W_OK | os.X_OK)
++        ):
++            raise ValueError("REAL_RESULT_FILE: its folder does not exist or cannot be written to")
++    except (OSError, ValueError, TypeError) as e:
++        if isinstance(e, ValueError) and str(e).startswith("REAL_RESULT_FILE"):
++            raise
++        raise ValueError("REAL_RESULT_FILE cannot be used as a result file") from None
++
++
++def write_result(out: Path, payload: dict[str, Any]) -> bool:
++    """Write the result file; True when it was written. When it cannot be (the disk filled, the folder went away), say
++    so in one line and print the whole result on the screen, so a long run's result is never lost."""
++    text = json.dumps(payload, indent=2, default=str)
++    try:
++        with open_output(out, "w", encoding="utf-8") as f:
++            f.write(text)
++    except (OSError, ValueError):
++        print(
++            "result file: it could NOT be written (REAL_RESULT_FILE: no write access, no space or a bad path); "
++            "the result follows"
++        )
++        print(text)
++        return False
++    print(f"result file: {out}")
++    return True
++
++
+ def folder_cannot_be_made(path: str | os.PathLike[str]) -> bool:
+     """True when the folder of `path` surely cannot be made or written to: the path holds a NUL character, or the
+     nearest part that exists is not a folder this process may write to (for example a read-only mount). Looks only: it
+@@ -924,9 +982,7 @@ def _run(a: argparse.Namespace, stack: contextlib.ExitStack) -> int:
+         drain_seconds = positive_seconds("REAL_DRAIN_SECONDS", env, 150.0)
+         mail_wait_seconds = positive_seconds("REAL_MAIL_WAIT_SECONDS", env, 90.0)
+         settle_seconds = positive_seconds("REAL_MAIL_SETTLE_SECONDS", env, MAIL_POLL_SECONDS)
+-        result_file = env.get("REAL_RESULT_FILE")
+-        if result_file and os.path.exists(result_file) and not stat.S_ISREG(os.stat(result_file).st_mode):
+-            raise ValueError("REAL_RESULT_FILE must name a regular file or a new file, not a pipe or a device")
++        check_result_file(env, db)  # before anything real runs: the file is written at the very end
+         inboxes = imap_settings(env)
+         bad_order = check_mailbox_order(env, inboxes)
+         if bad_order:
+@@ -972,7 +1028,7 @@ def _run(a: argparse.Namespace, stack: contextlib.ExitStack) -> int:
+     if not (a.assume_yes and a.dry_fakes):
+         try:
+             answer = input("Start? [y/N] ").strip().lower()
+-        except EOFError:  # no terminal to answer on (a pipe, a scheduled job): never read as a yes
++        except (EOFError, OSError):  # no terminal to answer on (a pipe, a scheduled job): never read as a yes
+             print("stopped, nothing was called: there is no terminal to answer the question on")
+             return EXIT_STOPPED
+         if answer != "y":
+@@ -1012,7 +1068,7 @@ def _run(a: argparse.Namespace, stack: contextlib.ExitStack) -> int:
+         send_all(d1, plan["before"])
+         settled = drain(d1, PRE_CRASH_DRAIN_SECONDS)  # the first batch settles, so only the second can be in flight
+         before_leads = persons // 2 + 1 if settled else 0  # the first half of the people plus the twin
+-        flag.write_text(CRASH_POINT, encoding="utf-8")
++        write_regular_text(flag, CRASH_POINT)
+         send_all(d1, plan["after"])
+         crash_exit = d1.wait_exit(CRASH_WAIT_SECONDS)
+         d1.stop()
+@@ -1149,10 +1205,8 @@ def _run(a: argparse.Namespace, stack: contextlib.ExitStack) -> int:
+         "twin_expectation": "the twin (same person, other address) is a second lead and contact: a known blind spot",
+     }
+     print("\n" + json.dumps(summary, indent=2, sort_keys=True))
+-    out = Path(env.get("REAL_RESULT_FILE", run_dir / "result.json"))
+-    with open_output(out, "w", encoding="utf-8") as f:
+-        f.write(json.dumps({"checks": result, "summary": summary, "per_lead": per_lead}, indent=2, default=str))
+-    print(f"\nresult file: {out}")
++    print()
++    written = write_result(result_path(env, run_dir), {"checks": result, "summary": summary, "per_lead": per_lead})
+     left: list[str] = []
+     if a.cleanup:
+         done, left = archive_all(crm, crm_pairs)
+@@ -1162,7 +1216,7 @@ def _run(a: argparse.Namespace, stack: contextlib.ExitStack) -> int:
+                 f"clean-up: {len(left)} contacts are LEFT (HubSpot contact numbers: {', '.join(left)}); archive by hand"
+             )
+     shutil.rmtree(run_dir / "__pycache__", ignore_errors=True)
+-    return 0 if result["ok"] and not left else EXIT_FAILED
++    return 0 if result["ok"] and written and not left else EXIT_FAILED
+ 
+ 
+ if __name__ == "__main__":
+diff --git a/src/lead_desk/config.py b/src/lead_desk/config.py
+index 9a21e94..8f9257d 100644
+--- a/src/lead_desk/config.py
++++ b/src/lead_desk/config.py
+@@ -220,7 +220,7 @@ def _live_from_env(e: Mapping[str, str]) -> LiveSettings:
+     if "DESK_LIVE_TIMEOUT_SECONDS" in e:
+         kw["timeout_seconds"] = env_number(e, "DESK_LIVE_TIMEOUT_SECONDS", float, high=MODEL_CALL_BUDGET_SECONDS)
+     if "DESK_LIVE_EFFORT" in e:
+-        kw["effort"] = e["DESK_LIVE_EFFORT"]
++        kw["effort"] = e["DESK_LIVE_EFFORT"].strip(" \t\r\n")  # spaces around a value are harmless, as for numbers
+     if "DESK_LIVE_MAX_TOKENS" in e:
+         kw["max_tokens"] = env_number(e, "DESK_LIVE_MAX_TOKENS", int, low=1, high=LIVE_MAX_TOKENS_MAX)
+     if e.get("DESK_LIVE_ALLOW_ANY_BASE_URL", "").strip().lower() == "yes":
+diff --git a/src/lead_desk/constants.py b/src/lead_desk/constants.py
+index 788e94e..7e8534a 100644
+--- a/src/lead_desk/constants.py
++++ b/src/lead_desk/constants.py
+@@ -30,6 +30,11 @@ EXIT_SETTING_REFUSED: Final = (
+ EXIT_DESK_SETTING_REFUSED: Final = 4  # a setting was refused (Config, an adapter, or the Desk)
+ EXIT_PORT_UNAVAILABLE: Final = 5  # the port could not be bound within BIND_RETRY_SECONDS
+ EXIT_SIMULATED_KILL: Final = 137  # scripts/crash_desk.py: os._exit(137) at the chosen crash point
++# Exit codes of the helper scripts (scripts, load_tools, the demo folder); one place, no script has its own copy
++EXIT_STOPPED: Final = 1  # the person answered "no" (or there was nobody to answer): nothing was called
++EXIT_REFUSED: Final = 2  # a bad command line or a bad input: one refusal line, nothing typed is printed back
++EXIT_UNREACHABLE: Final = 3  # the thing the script talks to cannot be reached or did not answer
++EXIT_CHECK_FAILED: Final = 3  # the real-services check ran to its end and a check did not hold
+ 
+ # Field limits
+ SOURCE_REF_MIN: Final = 1
+@@ -182,6 +187,8 @@ LIVE_ERROR_TYPE_MAX: Final = 40
+ LIVE_DEFAULT_TIMEOUT_SECONDS: Final = 8.0  # the total time limit of one call (a worker thread is joined for this long)
+ LIVE_DEFAULT_MAX_TOKENS: Final = 64  # one word comes back; thinking is billed as output and counts here, so not tiny
+ LIVE_REPLY_MAX_BYTES: Final = 65_536
++LIVE_LEADS_MAX: Final = 1_000  # most made-up leads one run of the live check may ask about
++LIVE_RUNS_MAX: Final = 100  # most repeat runs per lead
+ LIVE_PER_MILLION: Final = 1_000_000
+ LIVE_LEDGER_LOCK_TRIES: Final = 50  # blocking ledger lock: tries x LIVE_LEDGER_LOCK_WAIT seconds
+ LIVE_LEDGER_LOCK_WAIT: Final = 0.1
+@@ -490,3 +497,15 @@ LOAD_FILE_MAX_BYTES: Final = 256 * 1024 * 1024  # a load-test log or a /proc tab
+ FLAG_FILE_MAX_BYTES: Final = 4096  # a crash-flag file holds a few words
+ # no price page the check script can read is older than the vendor's paid service
+ LIVE_PRICE_DATE_FLOOR: Final = (2023, 1, 1)  # year, month, day
++
++# -- the helper scripts: limits of what a person may type (a larger number is refused with one line)
++DRY_PORT_COUNT: Final = 5  # --dry-port-base: the desk, the fake HubSpot, the mail server and the two mailboxes
++FAKE_MODEL_DEFAULT_PORT: Final = 48767  # the model stand-in server when no --port is given
++ARMED_READ_MAX: Final = 16  # bytes read from the portal demo's crash-flag file: the longest point name is 2
++MAX_PATH_CHARS: Final = 4096  # a whole path typed on a command line, in characters (the usual Linux limit)
++LOAD_TOTAL_MAX: Final = 100_000  # most requests one load scenario (or one burst) may plan
++LOAD_RATE_MAX: Final = 100_000.0  # most requests per second a rate or dupmix scenario may ask for
++LOAD_SECONDS_MAX: Final = 86_400.0  # longest a rate scenario may run: one day
++LOAD_WORKERS_MAX: Final = 64  # most worker processes of the load driver
++LOAD_THREADS_MAX: Final = 1_024  # most threads in one worker process
++BURST_N_MAX: Final = 10_000  # most requests the burst script sends at one moment (one thread each)
+diff --git a/src/lead_desk/portal_api.py b/src/lead_desk/portal_api.py
+index 9cf7bac..0db4142 100644
+--- a/src/lead_desk/portal_api.py
++++ b/src/lead_desk/portal_api.py
+@@ -63,6 +63,7 @@ from lead_desk.constants import (
+ )
+ from lead_desk.contract import Qualifier
+ from lead_desk.desk import CRM_NOT_ASKED, CRM_STARTED, HINT_INTERNAL_ERROR, HINTS, Desk, review_rows
++from lead_desk.regfile import read_regular_bytes
+ 
+ log = logging.getLogger("lead_desk")
+ PORTAL_DIR: Final = Path(__file__).resolve().parent / "portal"
+@@ -86,7 +87,10 @@ def build_static(root: Path) -> dict[str, tuple[bytes, str]]:
+             continue
+         if p.stat().st_size > STATIC_FILE_MAX_BYTES:
+             continue
+-        out[p.relative_to(root).as_posix()] = (p.read_bytes(), kind)
++        try:
++            out[p.relative_to(root).as_posix()] = (read_regular_bytes(p, STATIC_FILE_MAX_BYTES), kind)
++        except (OSError, ValueError):  # a file that turned into a pipe or grew meanwhile: left out, like a bad link
++            continue
+     return out
+ 
+ 
+diff --git a/src/lead_desk/regfile.py b/src/lead_desk/regfile.py
+index 2ac5054..163141c 100644
+--- a/src/lead_desk/regfile.py
++++ b/src/lead_desk/regfile.py
+@@ -104,12 +104,15 @@ def plain_reason(error: BaseException) -> str:
+ _OUTPUT_MODES = ("a", "a+b", "w")
+ 
+ 
+-def open_output(path: str | os.PathLike[str], mode: str = "a+b", encoding: str | None = None) -> IO[Any]:
++def open_output(
++    path: str | os.PathLike[str], mode: str = "a+b", encoding: str | None = None, newline: str | None = None
++) -> IO[Any]:
+     """Open `path` for writing and return the file object, or raise NotRegularFile (an OSError) for a pipe, a device,
+     a socket, a folder or a NUL character in the name. `mode` is "a" (text append; give `encoding`), "a+b" (binary
+     append and read) or "w" (text write; give `encoding`; the file is emptied only once it is known to be a regular
+-    file). A missing file is created (the folder must exist). Any other OSError (no permission, a missing folder, a
+-    full disk) is raised as it is."""
++    file). `newline` is the one of `open()` (give "" to write line ends exactly as they are). A missing file is
++    created (the folder must exist). Any other OSError (no permission, a missing folder, a full disk) is raised as
++    it is."""
+     if mode not in _OUTPUT_MODES:
+         raise ValueError("mode must be one of " + ", ".join(_OUTPUT_MODES))
+     flags = _COMMON | os.O_CREAT | (os.O_RDWR if "+" in mode else os.O_WRONLY) | (os.O_APPEND if "a" in mode else 0)
+@@ -128,7 +131,15 @@ def open_output(path: str | os.PathLike[str], mode: str = "a+b", encoding: str |
+             raise NotRegularFile("not a regular file")
+         if mode == "w":
+             os.ftruncate(fd, 0)
+-        return os.fdopen(fd, mode, encoding=encoding)
++        return os.fdopen(fd, mode, encoding=encoding, newline=newline)
+     except BaseException:
+         os.close(fd)
+         raise
++
++
++def write_regular_text(path: str | os.PathLike[str], text: str, newline: str | None = None) -> None:
++    """Write `text` (UTF-8) as the whole content of `path`: a new file is created, an old regular file is emptied first.
++    A pipe, a device, a folder or a NUL character in the name is refused (NotRegularFile, an OSError) BEFORE any byte
++    is written; any other OSError (no permission, a missing folder, a full disk) is raised as it is."""
++    with open_output(path, "w", encoding="utf-8", newline=newline) as f:
++        f.write(text)
+diff --git a/src/lead_desk/tls_trust.py b/src/lead_desk/tls_trust.py
+index 869ddd8..c998ac0 100644
+--- a/src/lead_desk/tls_trust.py
++++ b/src/lead_desk/tls_trust.py
+@@ -4,7 +4,13 @@ OpenSSL opens a path itself, and a named pipe (FIFO) or a device given as that p
+ is read here through `lead_desk.regfile` (a regular file or a refusal, at most CA_FILE_MAX_BYTES) and only its CONTENT
+ is handed to `ssl` (cadata). A file with no certificate in it is refused, because a context without any trusted
+ authority would refuse every server later with a confusing text. The refusal is a ValueError with a fixed text that
+-names the setting, never the path or the library's words."""
++names the setting, never the path or the library's words.
++
++What the file may hold: PEM text (one or more certificates; text around them, such as a comment with a non-ASCII
++letter, is allowed, as it is for OpenSSL's own file reader) or one certificate in DER form. Any certificate in the
++file becomes a trust anchor, also one that is not marked as a certification authority: a self-signed server
++certificate (the made-up one of the test servers) is trusted this way, and ONLY for the names written in it (the
++name check stays on). This is the behaviour of the old `cafile=` loading, kept on purpose."""
+ 
+ from __future__ import annotations
+ 
+@@ -14,6 +20,8 @@ from pathlib import Path
+ from lead_desk.constants import CA_FILE_MAX_BYTES
+ from lead_desk.regfile import read_regular_bytes
+ 
++PEM_MARK = b"-----BEGIN"  # a PEM block starts with this line
++
+ 
+ class CaFileRefused(ValueError):
+     """The file of trusted certificates cannot be used. The text names the setting and nothing typed."""
+@@ -30,10 +38,13 @@ def context_from_ca_file(path: str | Path, setting_name: str) -> ssl.SSLContext:
+         raise refused from None
+     if not raw.strip():  # ssl treats an empty cadata as "no file given" and loads the system authorities instead
+         raise refused from None
+-    try:
+-        data: str | bytes = raw.decode("ascii")  # PEM is ASCII text; anything else is tried as DER bytes
+-    except UnicodeError:
+-        data = raw
++    data: str | bytes
++    if PEM_MARK in raw:
++        # PEM: ssl wants an ASCII string. Bytes outside ASCII can only be a comment or a stray character around the
++        # certificates (OpenSSL's file reader skips them too), so they are dropped, not refused.
++        data = raw.decode("ascii", errors="ignore")
++    else:
++        data = raw  # DER: bytes
+     try:
+         ctx = ssl.create_default_context(cadata=data)
+     except (OSError, ValueError):  # ssl.SSLError is an OSError
+diff --git a/tests/test_ca_file_reads.py b/tests/test_ca_file_reads.py
+index 7a84c71..ba8c07f 100644
+--- a/tests/test_ca_file_reads.py
++++ b/tests/test_ca_file_reads.py
+@@ -111,3 +111,144 @@ def test_the_context_trusts_only_the_file_and_checks_the_name(tmp_path: Path) ->
+     ctx = context_from_ca_file(made[0], SETTING)
+     assert ctx.verify_mode == ssl.CERT_REQUIRED and ctx.check_hostname is True
+     assert ctx.cert_store_stats()["x509"] == 1  # the system authorities are not added
++
++
++# -- what the file may hold ----------------------------------------------------------------------------------------
++
++
++def _made(tmp_path: Path) -> tuple[Path, Path]:
++    made = make_cert(tmp_path, "localhost")
++    if made is None:
++        pytest.skip("the openssl program is not installed, so no test certificate can be made")
++    return made
++
++
++def _pem_with_words(tmp_path: Path, before: str, after: str) -> Path:
++    cert, _key = _made(tmp_path)
++    out = tmp_path / "with-words.pem"
++    out.write_bytes(before.encode("utf-8") + cert.read_bytes() + after.encode("utf-8"))
++    return out
++
++
++@pytest.mark.parametrize("entry", ENTRIES)
++@pytest.mark.parametrize(
++    ("before", "after"),
++    [
++        ("# Zertifikat für localhost – äöü\n", ""),
++        ("", "\n# Ende: ünïcode ✓\n"),
++        ("Subject: Müller GmbH\n", "trailing words: é\n"),
++    ],
++    ids=["comment-before", "comment-after", "words-around"],
++)
++def test_a_pem_file_with_non_ascii_words_around_the_certificate_still_loads(
++    tmp_path: Path, entry: str, before: str, after: str
++) -> None:
++    """The old `cafile=` loading accepted such a file (OpenSSL skips text outside the BEGIN and END lines)."""
++    assert _in_child(entry, _pem_with_words(tmp_path, before, after)) == "ok"
++
++
++def test_a_certificate_and_its_key_in_one_file_load_and_only_the_certificate_counts(tmp_path: Path) -> None:
++    from lead_desk.tls_trust import context_from_ca_file
++
++    cert, key = _made(tmp_path)
++    both = tmp_path / "both.pem"
++    both.write_bytes(cert.read_bytes() + key.read_bytes())
++    assert context_from_ca_file(both, SETTING).cert_store_stats()["x509"] == 1
++
++
++@pytest.mark.parametrize("entry", ENTRIES)
++def test_a_der_certificate_still_loads(tmp_path: Path, entry: str) -> None:
++    import ssl
++
++    cert, _key = _made(tmp_path)
++    der = tmp_path / "c.der"
++    der.write_bytes(ssl.PEM_cert_to_DER_cert(cert.read_text(encoding="ascii")))
++    assert _in_child(entry, der) == "ok"
++
++
++@pytest.mark.parametrize("how", ["key_only", "key_with_words", "no_certificate_with_words", "broken_certificate"])
++def test_a_pem_file_without_a_usable_certificate_is_still_refused(tmp_path: Path, how: str) -> None:
++    from lead_desk.tls_trust import CaFileRefused, context_from_ca_file
++
++    cert, key = _made(tmp_path)
++    p = tmp_path / "x.pem"
++    if how == "key_only":
++        p.write_bytes(key.read_bytes())
++    elif how == "key_with_words":
++        p.write_bytes("# Schlüssel – nur ein Schlüssel\n".encode() + key.read_bytes())
++    elif how == "no_certificate_with_words":
++        p.write_bytes("# Zertifikat fehlt – äöü\n-----BEGIN NOTHING-----\nAAAA\n-----END NOTHING-----\n".encode())
++    else:  # a certificate whose body was cut: the lenient decoding must not turn it into a trusted one
++        lines = cert.read_text(encoding="ascii").splitlines()
++        p.write_bytes(("\n".join([*lines[:3], "é" + lines[3][1:], *lines[4:]]) + "\n").encode())
++    with pytest.raises(CaFileRefused) as seen:
++        context_from_ca_file(p, SETTING)
++    assert str(seen.value) == f"{SETTING} cannot be read as a file of trusted certificates"
++
++
++# -- a certificate that is not marked as an authority (a made-up server certificate) --------------------------------
++
++
++def _leaf_cert(tmp_path: Path, host: str) -> tuple[Path, Path]:
++    """A self-signed certificate that says it is NOT a certification authority (basicConstraints CA:FALSE)."""
++    import shutil
++    import subprocess  # noqa: S404
++
++    exe = shutil.which("openssl")
++    if exe is None:
++        pytest.skip("the openssl program is not installed, so no test certificate can be made")
++    cert, key = tmp_path / "leaf.pem", tmp_path / "leaf-key.pem"
++    subprocess.run(  # noqa: S603
++        [exe, "req", "-x509", "-newkey", "rsa:2048", "-nodes", "-keyout", str(key), "-out", str(cert), "-days", "2"]
++        + ["-subj", f"/CN={host}", "-addext", f"subjectAltName=DNS:{host}"]
++        + ["-addext", "basicConstraints=critical,CA:FALSE"],
++        check=True,
++        capture_output=True,
++    )
++    return cert, key
++
++
++def _handshake(ctx: object, cert: Path, key: Path, name: str) -> str:
++    """Connect a client with context `ctx` (for server name `name`) to a server that shows `cert`, over a socket pair.
++    Returns "ok" or the kind of error the client got."""
++    import socket
++    import ssl
++    import threading
++
++    server_ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
++    server_ctx.load_cert_chain(cert, key)
++    near, far = socket.socketpair()
++    near.settimeout(5)
++    far.settimeout(5)
++
++    def serve() -> None:
++        try:
++            with server_ctx.wrap_socket(near, server_side=True) as s:
++                s.sendall(b"hi")
++        except (ssl.SSLError, OSError):  # the client refused the certificate: the handshake fails on this side too
++            near.close()
++
++    th = threading.Thread(target=serve)
++    th.start()
++    try:
++        with ctx.wrap_socket(far, server_hostname=name) as c:  # type: ignore[attr-defined]
++            return "ok" if c.recv(2) == b"hi" else "no data"
++    except ssl.SSLCertVerificationError:
++        return "SSLCertVerificationError"
++    finally:
++        far.close()
++        th.join(10)
++
++
++def test_a_certificate_that_is_not_an_authority_is_trusted_only_for_its_own_name(tmp_path: Path) -> None:
++    """Pinned on purpose (the old `cafile=` loading did the same): the file's certificates are trust anchors even when
++    they are not marked as authorities, so a self-signed server certificate works, and only for the names written in
++    it; every other name is refused."""
++    from lead_desk.tls_trust import context_from_ca_file
++
++    cert, key = _leaf_cert(tmp_path, "localhost")
++    ctx = context_from_ca_file(cert, SETTING)
++    stats = ctx.cert_store_stats()
++    assert stats["x509"] == 1 and stats["x509_ca"] == 0  # a trust anchor that is not an authority
++    assert _handshake(ctx, cert, key, "localhost") == "ok"
++    assert _handshake(ctx, cert, key, "other.example") == "SSLCertVerificationError"
+diff --git a/tests/test_file_reader_refusals.py b/tests/test_file_reader_refusals.py
+index 2ce0b63..5556683 100644
+--- a/tests/test_file_reader_refusals.py
++++ b/tests/test_file_reader_refusals.py
+@@ -11,6 +11,7 @@ Every script runs in its own process with a 5 second limit; made-up data only; n
+ 
+ from __future__ import annotations
+ 
++import ast
+ import json
+ import os
+ import socket
+@@ -174,24 +175,135 @@ def test_the_one_reader_refuses_every_bad_content_with_one_error_type(tmp_path:
+         load_json_file(tmp_path / "missing")
+ 
+ 
+-def test_every_file_read_in_scripts_and_tools_goes_through_the_one_reader() -> None:
+-    """The sibling sweep, pinned: no `json.load(s)`, `.read_text(`, `.read_bytes(` or `open(` on a named file is left
+-    in a script or tool, except the files listed here (repository-owned files, not named by a person)."""
+-    own = {
+-        ("scripts/check_schema.py", "SCHEMA.read_text"),  # the repository's own schema.sql
+-        ("tools/hygiene.py", "path.read_text"),  # term lists passed by the repository's own tests and CI
+-        ("tools/hygiene.py", "(repo / f).read_text"),  # tracked files found by `git ls-files`
+-        ("tools/pathconfine.py", "Path(argv[2])"),  # the explanation in the module text, not a read
+-    }
++# The folders whose code may touch a file or a certificate path, and the call shapes that open one. A call of one
++# of these shapes is allowed only when it is listed in ALLOWED below, with the reason. Everything else goes through
++# lead_desk.regfile (open_regular, open_output, read_regular_*, write_regular_text, load_json_file) or, for a
++# trusted certificate file, lead_desk.tls_trust.
++GUARDED_FOLDERS = ("src/lead_desk", "load_tools", "demo_only", "scripts", "tools")
++FILE_CALL_NAMES = {
++    "read_text",
++    "read_bytes",
++    "write_text",
++    "write_bytes",
++    "open",  # builtin open(), io.open(), os.open(), Path.open(), opener.open()
++    "fdopen",
++    "load",  # json.load(file)
++    "system",  # os.system
++    "popen",  # os.popen
++    "load_verify_locations",
++    "load_cert_chain",
++    "load_default_certs",
++    "create_default_context",
++}
++TLS_LOADER_NAMES = {"load_verify_locations", "load_cert_chain", "load_default_certs"}
++TLS_PATH_KEYWORDS = {"cafile", "capath"}
++# (file, text of the call target) -> why it is not a read of a path named by a person
++ALLOWED = {
++    ("src/lead_desk/regfile.py", "os.open"): "the one place that opens a file (both functions)",
++    ("src/lead_desk/regfile.py", "os.fdopen"): "wraps the descriptor the line above checked",
++    ("src/lead_desk/adapters.py", "_OPENER.open"): "an HTTP request, not a file",
++    ("src/lead_desk/crm_hubspot.py", "_OPENER.open"): "an HTTP request, not a file",
++    ("src/lead_desk/live_claude.py", "_OPENER.open"): "an HTTP request, not a file",
++    ("load_tools/load_driver.py", "opener.open"): "an HTTP request, not a file",
++    ("demo_only/burst.py", "opener.open"): "an HTTP request, not a file",
++    ("demo_only/portal_demo.py", "_OPENER.open"): "an HTTP request, not a file",
++    ("scripts/http_guard.py", "urllib.request.build_opener(*handlers).open"): "an HTTP request, not a file",
++    ("scripts/hubspot_probe.py", "_OPENER.open"): "an HTTP request, not a file",
++    ("src/lead_desk/db.py", "importlib.resources.files('lead_desk').joinpath('schema.sql').read_text"): "package data",
++    ("scripts/check_schema.py", "SCHEMA.read_text"): "the repository's own schema.sql",
++    ("tools/hygiene.py", "path.read_text"): "term lists passed by the repository's own tests and CI",
++    ("tools/hygiene.py", "(repo / f).read_text"): "tracked files found by `git ls-files`",
++    ("demo_only/portal_demo.py", "os.fdopen"): "the descriptor of a temporary file this process just made (mkstemp)",
++    ("src/lead_desk/imap_count.py", "ssl.create_default_context"): "no path: the system authorities or a given context",
++    ("src/lead_desk/smtp_provider.py", "ssl.create_default_context"): "no path: the system authorities",
++    ("src/lead_desk/tls_trust.py", "ssl.create_default_context"): "the ONE reader of a trusted-certificate file",
++    ("demo_only/fake_imap.py", "ctx.load_cert_chain"): "the fake server's own certificate, made at test time",
++    ("demo_only/fake_smtp_tls.py", "self._ctx.load_cert_chain"): "the fake server's own certificate, made at test time",
++}
++TLS_LOADER_FILES = {"demo_only/fake_imap.py", "demo_only/fake_smtp_tls.py"}
++
++
++def _file_calls(repo: Path) -> list[tuple[str, int, str, ast.Call]]:
++    """Every call of a guarded shape in the guarded folders: (file, line, text of the call target, the call)."""
++    found = []
++    for folder in GUARDED_FOLDERS:
++        for py in sorted((repo / folder).rglob("*.py")):
++            rel = py.relative_to(repo).as_posix()
++            for node in ast.walk(ast.parse(py.read_text(encoding="utf-8"))):
++                if not isinstance(node, ast.Call):
++                    continue
++                func = node.func
++                if isinstance(func, ast.Name) and func.id == "open":
++                    found.append((rel, node.lineno, "open", node))
++                elif isinstance(func, ast.Attribute) and func.attr in FILE_CALL_NAMES:
++                    found.append((rel, node.lineno, ast.unparse(func), node))
++    return found
++
++
++def _problems(repo: Path) -> list[str]:
++    """What the guard finds in the tree `repo`: a file call that is not listed, a path given to ssl, a TLS loader
++    outside tls_trust.py and the demo fakes, and a list entry that no longer matches any call."""
+     bad = []
+-    for folder in ("scripts", "tools"):
+-        for py in sorted((REPO / folder).glob("*.py")):
+-            for n, line in enumerate(py.read_text(encoding="utf-8").splitlines(), 1):
+-                code = line.split("#")[0]
+-                for key in (".read_text(", ".read_bytes(", "json.load(", "Path(name).open("):
+-                    if key in code and not any(py.as_posix().endswith(f) and w in code for f, w in own):
+-                        bad.append(f"{py.name}:{n}")
+-    assert not bad, bad
++    used = set()
++    for rel, line, target, call in _file_calls(repo):
++        attr = target.rsplit(".", 1)[-1]
++        for k in call.keywords:
++            if k.arg in TLS_PATH_KEYWORDS:
++                bad.append(f"{rel}:{line}: {target} is given a certificate PATH, {k.arg}= (use lead_desk.tls_trust)")
++        if attr in TLS_LOADER_NAMES and rel not in TLS_LOADER_FILES:
++            bad.append(f"{rel}:{line}: {target} loads certificates outside tls_trust.py and the demo fakes")
++        if (rel, target) in ALLOWED:
++            used.add((rel, target))
++        else:
++            bad.append(f"{rel}:{line}: {target}(...) opens or reads a file outside lead_desk.regfile")
++    bad += [
++        f"{rel}: the allowed call {target} is not in the file any more (remove it from ALLOWED)"
++        for rel, target in ALLOWED
++        if (rel, target) not in used
++    ]
++    return bad
++
++
++def test_every_file_call_in_the_code_goes_through_the_one_reader() -> None:
++    """The sibling sweep, pinned over every folder of code (not only scripts and tools) and every call shape: open(),
++    io.open, os.open, os.fdopen, Path.read_text / read_bytes / write_text / write_bytes / open, json.load, os.system,
++    os.popen and the ssl calls that open a certificate path. A call that is not in ALLOWED fails the test."""
++    assert not _problems(REPO)
++
++
++def test_the_guard_finds_each_call_shape_and_each_tls_path_in_a_planted_tree(tmp_path: Path) -> None:
++    """The guard itself is tested: a planted tree with one call of each shape is reported call by call."""
++    planted = {
++        "scripts/a.py": "import io, os, ssl, json\nfrom pathlib import Path\n"
++        "open('x')\nio.open('x')\nos.open('x', 0)\nPath('x').read_text()\nPath('x').read_bytes()\n"
++        "Path('x').write_text('')\nPath('x').write_bytes(b'')\nPath('x').open()\njson.load(f)\nos.system('x')\n"
++        "os.popen('x')\nssl.create_default_context(cafile='x')\nc.load_verify_locations('x')\n"
++        "c.load_cert_chain('x')\nc.load_default_certs()\n",
++    }
++    for folder in GUARDED_FOLDERS:
++        (tmp_path / folder).mkdir(parents=True)
++    for rel, text in planted.items():
++        (tmp_path / rel).write_text(text, encoding="utf-8")
++    found = [p for p in _problems(tmp_path) if p.startswith("scripts/a.py")]
++    assert len(found) == 15 + 4, found  # 15 calls, plus the path keyword and the three loader names
++    for word in (
++        "open(",
++        "io.open",
++        "os.open",
++        "read_text",
++        "read_bytes",
++        "write_text",
++        "write_bytes",
++        "Path('x').open",
++        "json.load",
++        "os.system",
++        "os.popen",
++        "cafile",
++        "load_verify_locations",
++        "load_cert_chain",
++        "load_default_certs",
++    ):
++        assert any(word in p for p in found), word
+ 
+ 
+ # -- (2) the two survivors --------------------------------------------------------------------------------------------
+diff --git a/tests/test_load_driver_facts.py b/tests/test_load_driver_facts.py
+new file mode 100644
+index 0000000..ec01f38
+--- /dev/null
++++ b/tests/test_load_driver_facts.py
+@@ -0,0 +1,47 @@
++"""Class: a machine fact that could not be read must say so, never be a silent null. The load driver reads its facts
++from /proc and /sys through the one file reader (lead_desk.regfile). On Linux those files report themselves as regular
++files, so the reader works on them (pinned here against a real machine); where a file is missing or cannot be read
++(Windows, a locked-down container, a file over the cap) the fact holds the word `unreadable`. Made-up data only."""
++
++from __future__ import annotations
++
++import sys
++
++import pytest
++
++from lead_desk.regfile import FileRefused
++from load_tools import load_driver
++
++LINUX = pytest.mark.skipif(not sys.platform.startswith("linux"), reason="the /proc and /sys files are a Linux thing")
++
++
++@LINUX
++def test_on_linux_the_proc_files_are_read_through_the_regular_file_reader() -> None:
++    facts = load_driver.machine_facts()
++    assert isinstance(facts["memory"]["MemTotal_kb"], int) and facts["memory"]["MemTotal_kb"] > 0, facts["memory"]
++    assert isinstance(facts["memory"]["MemAvailable_kb"], int), facts["memory"]
++    assert isinstance(facts["somaxconn"], int) and facts["somaxconn"] > 0, facts["somaxconn"]
++    assert isinstance(facts["time_wait_count"], int) and facts["time_wait_count"] >= 0, facts["time_wait_count"]
++
++
++@pytest.mark.parametrize(
++    "error", [FileNotFoundError("gone"), PermissionError("no"), FileRefused("the file is too big")]
++)
++def test_a_fact_that_cannot_be_read_says_unreadable_and_is_never_null(
++    monkeypatch: pytest.MonkeyPatch, error: Exception
++) -> None:
++    def refuse(*_a: object, **_k: object) -> str:
++        raise error
++
++    monkeypatch.setattr(load_driver, "read_regular_text", refuse)
++    facts = load_driver.machine_facts()
++    assert facts["somaxconn"] == "unreadable"
++    assert facts["time_wait_count"] == "unreadable"
++    assert facts["memory"] == {"MemTotal_kb": "unreadable", "MemAvailable_kb": "unreadable"}
++    assert None not in (facts["somaxconn"], facts["time_wait_count"], *facts["memory"].values())
++
++
++def test_a_kernel_file_with_rubbish_in_it_is_unreadable_not_a_crash(monkeypatch: pytest.MonkeyPatch) -> None:
++    monkeypatch.setattr(load_driver, "read_regular_text", lambda *_a, **_k: "MemTotal: lots kB\n")
++    facts = load_driver.machine_facts()
++    assert facts["somaxconn"] == "unreadable" and facts["memory"]["MemTotal_kb"] == "unreadable"
+diff --git a/tests/test_no_terminal_questions.py b/tests/test_no_terminal_questions.py
+index 3adec40..798e435 100644
+--- a/tests/test_no_terminal_questions.py
++++ b/tests/test_no_terminal_questions.py
+@@ -58,9 +58,8 @@ def test_the_live_check_meets_a_closed_input_with_one_plain_line(tmp_path: Path)
+         child.join(10)
+     assert code == "1", (code, out, err)
+     assert err == "" and "Traceback" not in out
+-    assert out.splitlines()[-1].endswith(  # the question itself is printed first, on the same line
+-        "stopped, nothing was called: there is no terminal to answer the question on"
+-    )
++    # ONE line: the cost lines and the question are not printed when nobody can answer
++    assert out.splitlines() == ["stopped, nothing was called: there is no terminal to answer the question on"], out
+     assert not (tmp_path / "ledger.jsonl").exists()  # nothing was reserved or written
+ 
+ 
+@@ -95,3 +94,37 @@ def test_every_input_call_of_the_repository_handles_a_closed_input() -> None:
+                     bad[str(py.relative_to(REPO))] = lines
+     assert seen >= 2  # the two check scripts ask a question: the scan finds them
+     assert bad == {}, bad
++
++
++def test_the_live_check_refuses_a_huge_lead_count_in_one_line_and_builds_nothing(tmp_path: Path) -> None:
++    import subprocess
++
++    base = [sys.executable, str(REPO / "scripts" / "run_live_check.py"), *_live_args(tmp_path)]
++    for flag in ("--leads", "--runs"):
++        for huge in ("99999999999999999999", "1001", "0", "-1"):
++            r = subprocess.run(  # noqa: S603
++                [*base, flag, huge], capture_output=True, text=True, timeout=20, stdin=subprocess.DEVNULL, check=False
++            )
++            assert r.returncode == 2, (flag, huge, r.returncode, r.stderr[-200:])
++            assert len(r.stdout.splitlines()) == 1 and r.stderr == "" and (huge[:4] not in r.stdout or len(huge) < 4), (
++                flag,
++                huge,
++                r.stdout,
++            )
++    assert not (tmp_path / "ledger.jsonl").exists()
++
++
++def test_the_live_check_with_a_closed_descriptor_prints_one_line(tmp_path: Path) -> None:
++    import subprocess
++
++    code = (
++        "import os, sys, runpy; os.close(0); sys.argv = sys.argv[1:]; runpy.run_path(sys.argv[0], run_name='__main__')"
++    )
++    r = subprocess.run(  # noqa: S603
++        [sys.executable, "-c", code, str(REPO / "scripts" / "run_live_check.py"), *_live_args(tmp_path)],
++        capture_output=True,
++        text=True,
++        timeout=30,
++        check=False,
++    )
++    assert r.returncode == 1 and r.stderr == "" and len(r.stdout.splitlines()) == 1, (r.returncode, r.stdout, r.stderr)
+diff --git a/tests/test_real_check_dry.py b/tests/test_real_check_dry.py
+index 2c70a9e..822f1ec 100644
+--- a/tests/test_real_check_dry.py
++++ b/tests/test_real_check_dry.py
+@@ -845,3 +845,82 @@ def test_a_result_file_that_is_a_named_pipe_is_refused_at_the_start(
+     assert rrc.main(["--config", str(cfg)]) == rrc.EXIT_REFUSED
+     out = capsys.readouterr().out
+     assert "REAL_RESULT_FILE must name a regular file" in out and "pipe-name" not in out
++
++
++# -- REAL_RESULT_FILE is checked at the START, and a failed write never loses the result ------------------------------
++
++
++def _bad_result_files(tmp_path: Path) -> dict[str, str]:
++    return {
++        "missing_folder": str(tmp_path / "no-such-folder" / "result.json"),
++        "nul_character": str(tmp_path / "a\0b.json"),
++        "folder_where_a_file_belongs": str(tmp_path),
++        "the_database_path_swapped_in": str(tmp_path / "run" / "desk.db"),
++    }
++
++
++@pytest.mark.parametrize(
++    "case", ["missing_folder", "nul_character", "folder_where_a_file_belongs", "the_database_path_swapped_in"]
++)
++def test_a_bad_result_file_is_refused_at_the_start_before_the_question_and_before_anything_is_made(
++    tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, case: str
++) -> None:
++    monkeypatch.setattr("builtins.input", lambda *_a: pytest.fail("the start question was asked"))
++    value = _bad_result_files(tmp_path)[case]
++    cfg = _valid_config(tmp_path, REAL_RESULT_FILE=value)
++    code = rrc.main(["--config", str(cfg)])
++    out = capsys.readouterr().out
++    assert code == rrc.EXIT_REFUSED, out
++    lines = out.splitlines()
++    assert lines and lines[-1].startswith("refused: ") and "REAL_RESULT_FILE" in lines[-1], out
++    assert "Traceback" not in out and "no-such-folder" not in out and str(tmp_path) not in out
++    assert not (tmp_path / "run").exists(), "something was made before the refusal"
++
++
++def test_a_result_file_in_a_good_folder_or_in_the_run_folder_is_accepted_at_the_start(tmp_path: Path) -> None:
++    db = tmp_path / "run" / "desk.db"
++    rrc.check_result_file({"REAL_RESULT_FILE": str(tmp_path / "ok.json")}, db)  # an existing, writable folder
++    rrc.check_result_file({"REAL_RESULT_FILE": str(tmp_path / "run" / "r.json")}, db)  # the run folder is made later
++    rrc.check_result_file({"REAL_RESULT_FILE": "   "}, db)  # blank: the default file next to the database
++    rrc.check_result_file({}, db)
++
++
++def test_a_result_that_cannot_be_written_is_printed_on_the_screen_with_one_line(
++    tmp_path: Path, capsys: pytest.CaptureFixture[str]
++) -> None:
++    payload = {"checks": {"ok": True}, "summary": {"leads": 12}}
++    assert rrc.write_result(tmp_path / "gone" / "result.json", payload) is False
++    out = capsys.readouterr().out
++    first, _, rest = out.partition("\n")
++    assert first.startswith("result file: it could NOT be written") and "gone" not in first
++    assert json.loads(rest) == payload and "Traceback" not in out
++    good = tmp_path / "result.json"
++    assert rrc.write_result(good, payload) is True
++    assert json.loads(good.read_text(encoding="utf-8")) == payload
++
++
++def test_a_failed_write_after_a_failed_read_back_keeps_the_result_on_the_screen(
++    capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
++) -> None:
++    from lead_desk.adapters import CrmNothingStored
++
++    class Broken:
++        def __init__(self, *_a: Any, **_k: Any) -> None:
++            pass
++
++        def rows_with_prefix(self, _prefix: str) -> Any:
++            raise CrmNothingStored("the hubspot call cap is used up")
++
++    real_open = rrc.open_output
++
++    def open_output(path: Any, *args: Any, **kwargs: Any) -> Any:
++        if Path(path).name == "result.json":  # as if the disk had filled up at the very end
++            raise OSError(28, "No space left on device")
++        return real_open(path, *args, **kwargs)
++
++    monkeypatch.setattr(rrc, "HubspotCrm", Broken)
++    monkeypatch.setattr(rrc, "open_output", open_output)
++    code = rrc.main(["--dry-fakes", "--assume-yes", "--cleanup"])
++    out = capsys.readouterr().out
++    assert code == rrc.EXIT_FAILED and "Traceback" not in out and "Errno" not in out and "No space" not in out
++    assert "it could NOT be written" in out and '"ok": false' in out and "may still be in HubSpot" in out
+diff --git a/tests/test_regfile_limits_in_constants.py b/tests/test_regfile_limits_in_constants.py
+index c9ad09f..762c47c 100644
+--- a/tests/test_regfile_limits_in_constants.py
++++ b/tests/test_regfile_limits_in_constants.py
+@@ -5,6 +5,7 @@ opening calls keep a terminal from becoming the controlling terminal. Made-up da
+ from __future__ import annotations
+ 
+ import ast
++import importlib
+ import os
+ import sys
+ from datetime import date
+@@ -70,3 +71,106 @@ def test_the_opening_flags_keep_a_terminal_from_becoming_the_controlling_one(tmp
+     assert regfile._FLAGS & os.O_NOCTTY and regfile._COMMON & os.O_NOCTTY
+     f = regfile.open_output(tmp_path / "out", "a+b")  # the flags still open a normal file
+     f.close()
++
++
++# -- the limits and exit codes of the helper scripts: defined once, in constants.py ----------------------------------
++
++GUARDED_FOLDERS = ("src/lead_desk", "load_tools", "demo_only", "scripts", "tools")
++ONLY_IN_CONSTANTS = {
++    "EXIT_REFUSED",
++    "EXIT_UNREACHABLE",
++    "EXIT_STOPPED",
++    "DRY_PORT_COUNT",
++    "FAKE_MODEL_DEFAULT_PORT",
++    "ARMED_READ_MAX",
++    "MAX_PATH_CHARS",
++    "MAX_KEY",
++    "MAX_PORT",
++    "PORT_MAX",
++    "SECRET_FILE_MAX_BYTES",
++    "LOAD_TOTAL_MAX",
++    "LOAD_RATE_MAX",
++    "LOAD_SECONDS_MAX",
++    "LOAD_WORKERS_MAX",
++    "LOAD_THREADS_MAX",
++    "BURST_N_MAX",
++}
++
++
++def _code_files() -> list[Path]:
++    return [
++        p
++        for folder in GUARDED_FOLDERS
++        for p in sorted((REPO / folder).rglob("*.py"))
++        if p.relative_to(REPO).as_posix() != "src/lead_desk/constants.py"
++    ]
++
++
++def test_no_script_or_module_defines_one_of_the_shared_limits_or_exit_codes_itself() -> None:
++    """Class: the same number defined in several files (EXIT_REFUSED four times, the key-file cap twice, the default
++    port of the model stand-in in code and in a doc line) drifts apart. They are assigned in constants.py only."""
++    bad = []
++    for py in _code_files():
++        tree = ast.parse(py.read_text(encoding="utf-8"))
++        for node in ast.walk(tree):
++            targets: list[ast.expr] = []
++            if isinstance(node, ast.Assign):
++                for t in node.targets:
++                    targets += t.elts if isinstance(t, ast.Tuple) else [t]
++            elif isinstance(node, ast.AnnAssign):
++                targets = [node.target]
++            bad += [
++                f"{py.relative_to(REPO).as_posix()}:{node.lineno}: {t.id}"
++                for t in targets
++                if isinstance(t, ast.Name) and t.id in ONLY_IN_CONSTANTS
++            ]
++    assert not bad, bad
++
++
++def test_the_port_of_the_model_stand_in_is_a_number_in_constants_only() -> None:
++    found = [
++        f"{py.relative_to(REPO).as_posix()}:{n.lineno}"
++        for py in _code_files()
++        for n in ast.walk(ast.parse(py.read_text(encoding="utf-8")))
++        if isinstance(n, ast.Constant) and n.value == constants.FAKE_MODEL_DEFAULT_PORT
++    ]
++    assert not found, found
++    assert constants.FAKE_MODEL_DEFAULT_PORT == 48767
++
++
++def test_every_script_sees_the_same_objects_as_constants() -> None:
++    sys.path.insert(0, str(REPO / "scripts"))
++    import hubspot_probe
++    import refusals
++    import run_live_check
++    import run_real_check
++
++    from demo_only import portal_demo
++    from tools import pathconfine, refusing_args
++
++    assert refusing_args.EXIT_REFUSED is constants.EXIT_REFUSED is refusals.EXIT_REFUSED
++    assert hubspot_probe.EXIT_REFUSED is constants.EXIT_REFUSED is run_live_check.EXIT_REFUSED
++    assert run_real_check.EXIT_REFUSED is constants.EXIT_REFUSED
++    assert run_real_check.EXIT_STOPPED is constants.EXIT_STOPPED
++    assert refusals.EXIT_UNREACHABLE is constants.EXIT_UNREACHABLE
++    assert run_real_check.DRY_PORT_COUNT is constants.DRY_PORT_COUNT
++    assert pathconfine.MAX_PATH_CHARS is constants.MAX_PATH_CHARS
++    assert portal_demo.ARMED_READ_MAX is constants.ARMED_READ_MAX
++
++
++def test_the_n8n_key_file_has_the_cap_of_the_other_key_readers(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
++    key = tmp_path / "key"
++    key.write_text("k" * constants.SECRET_FILE_MAX_BYTES, encoding="ascii")
++    monkeypatch.setenv("N8N_API_KEY_FILE", str(key))  # the module reads the key when it is imported
++    monkeypatch.delenv("N8N_URL", raising=False)
++    monkeypatch.syspath_prepend(str(REPO / "scripts"))
++    sys.modules.pop("n8n_api", None)
++    n8n_api = importlib.import_module("n8n_api")
++    try:
++        assert not hasattr(n8n_api, "MAX_KEY") and not hasattr(n8n_api, "MAX_PORT")
++        assert n8n_api._read_key() == "k" * constants.SECRET_FILE_MAX_BYTES
++        key.write_text("k" * (constants.SECRET_FILE_MAX_BYTES + 1), encoding="ascii")
++        with pytest.raises(SystemExit, match=f"at most {constants.SECRET_FILE_MAX_BYTES} characters"):
++            n8n_api._read_key()
++    finally:
++        sys.modules.pop("n8n_api", None)
+diff --git a/tests/test_script_number_limits.py b/tests/test_script_number_limits.py
+new file mode 100644
+index 0000000..517c0ce
+--- /dev/null
++++ b/tests/test_script_number_limits.py
+@@ -0,0 +1,285 @@
++"""Class: a number typed on a command line (a port, a count, a scenario) must end in ONE fixed refusal line (exit 2)
++when it is not a usable whole number or is out of range, never in a Python traceback (OverflowError from a port of
++99999, ValueError from `Barrier(0)`, `int(nan)`, `int(inf)`) and never with the typed text printed back. The limits
++come from lead_desk/constants.py. One shared type, `tools.refusing_args.bounded_int`, is used by every script; one case
++per script. Each script runs in its own process with a 10 second limit; made-up data only; no network."""
++
++from __future__ import annotations
++
++import os
++import subprocess  # noqa: S404
++import sys
++from pathlib import Path
++
++import pytest
++
++from lead_desk import constants
++from load_tools import load_driver
++from tools.refusing_args import BOUNDED_INT_TEXT, bounded_int
++
++REPO = Path(__file__).resolve().parents[1]
++BAD_PORTS = ["99999", "65536", "-5", "abc", "1e3", "", "٣" * 10, "9" * 5000]
++PORT_TEXT = f"refused: --port: must be a whole number from 0 to {constants.PORT_MAX}"
++
++
++def _run(args: list[str], *, cwd: Path = REPO, with_pythonpath: bool = True) -> tuple[int, str, str]:
++    env = {k: v for k, v in os.environ.items() if not k.startswith(("DESK_", "N8N_", "PYTHON"))}
++    env["PYTHONDONTWRITEBYTECODE"] = "1"
++    if with_pythonpath:
++        env["PYTHONPATH"] = str(REPO / "src") + os.pathsep + str(REPO)
++    try:
++        done = subprocess.run(  # noqa: S603
++            [sys.executable, *args],
++            cwd=cwd,
++            env=env,
++            capture_output=True,
++            text=True,
++            timeout=10,
++            stdin=subprocess.DEVNULL,
++        )
++    except subprocess.TimeoutExpired:
++        pytest.fail("the script did not end: it started to serve or to wait instead of refusing")
++    return done.returncode, done.stdout, done.stderr
++
++
++def _assert_one_refusal(code: int, out: str, err: str, line: str, typed: str) -> None:
++    assert code == constants.EXIT_REFUSED, (code, out, err)
++    assert out.splitlines() == [line], (out, err)
++    assert "Traceback" not in out + err and "Error" not in out + err, (out, err)
++    if typed and len(typed) < 100 and not typed.lstrip("-").isdigit():  # a short number may be part of a limit
++        assert typed not in out + err, "the typed text was printed back"
++
++
++def test_the_constants_hold_the_limits_and_the_exit_codes_once() -> None:
++    assert constants.EXIT_REFUSED == 2 and constants.EXIT_UNREACHABLE == 3 and constants.EXIT_STOPPED == 1
++    assert constants.PORT_MAX == 65535 and constants.FAKE_MODEL_DEFAULT_PORT == 48767
++    for name in ("LOAD_TOTAL_MAX", "LOAD_RATE_MAX", "LOAD_SECONDS_MAX", "LOAD_WORKERS_MAX", "LOAD_THREADS_MAX"):
++        assert getattr(constants, name) > 0, name
++
++
++# -- the shared type ---------------------------------------------------------------------------------------------------
++
++
++@pytest.mark.parametrize("bad", ["", " ", "abc", "1.5", "1e3", "nan", "inf", "-1", "0", "11", "9" * 5000, "٣٣٣٣٣٣٣٣"])
++def test_bounded_int_refuses_everything_outside_the_range_with_the_fixed_text(bad: str) -> None:
++    import argparse
++
++    parse = bounded_int(1, 10)
++    with pytest.raises(argparse.ArgumentTypeError) as seen:
++        parse(bad)
++    assert str(seen.value) == "must be a whole number from 1 to 10" and BOUNDED_INT_TEXT.fullmatch(str(seen.value))
++
++
++@pytest.mark.parametrize("good", ["1", "10", " 5 ", "+3", "007"])
++def test_bounded_int_accepts_the_edges(good: str) -> None:
++    assert 1 <= bounded_int(1, 10)(good) <= 10
++
++
++# -- one case per script ---------------------------------------------------------------------------------------------
++
++
++@pytest.mark.parametrize("bad", BAD_PORTS)
++@pytest.mark.parametrize(
++    "script",
++    [
++        ["load_tools/catcher.py", "--out", "{out}"],
++        ["-m", "demo_only.fakes_server", "--outbox", "keyed"],
++        ["-m", "demo_only.fake_model_server"],
++    ],
++    ids=["catcher", "fakes_server", "fake_model_server"],
++)
++def test_a_bad_port_is_one_refusal_line_in_every_server_script(tmp_path: Path, script: list[str], bad: str) -> None:
++    args = [a.replace("{out}", str(tmp_path / "mail.jsonl")) for a in script]
++    code, out, err = _run([*args, f"--port={bad}"])
++    _assert_one_refusal(code, out, err, PORT_TEXT, bad)
++
++
++@pytest.mark.parametrize("bad", ["0", "-1", "abc", "1.5", str(constants.BURST_N_MAX + 1), "9" * 5000])
++def test_a_bad_burst_count_is_one_refusal_line_and_never_barrier_zero(bad: str) -> None:
++    code, out, err = _run(
++        ["-m", "demo_only.burst", "--url", "http://127.0.0.1:1/", "--email", "a@example.com", "--ref-prefix", "p"]
++        + ["--source", "form", f"--n={bad}"]
++    )
++    _assert_one_refusal(code, out, err, f"refused: --n: must be a whole number from 1 to {constants.BURST_N_MAX}", bad)
++
++
++@pytest.mark.parametrize(
++    ("option", "bad", "high"),
++    [
++        ("--workers", "0", constants.LOAD_WORKERS_MAX),
++        ("--workers", "-3", constants.LOAD_WORKERS_MAX),
++        ("--workers", str(constants.LOAD_WORKERS_MAX + 1), constants.LOAD_WORKERS_MAX),
++        ("--threads", "0", constants.LOAD_THREADS_MAX),
++        ("--threads", "-1", constants.LOAD_THREADS_MAX),
++        ("--threads", str(constants.LOAD_THREADS_MAX + 1), constants.LOAD_THREADS_MAX),
++        ("--threads", "many", constants.LOAD_THREADS_MAX),
++    ],
++)
++def test_a_bad_worker_or_thread_count_is_one_refusal_line(tmp_path: Path, option: str, bad: str, high: int) -> None:
++    code, out, err = _run(
++        ["-m", "load_tools.load_driver", "--base-url", "http://127.0.0.1:1", "--scenario", "burst:3"]
++        + ["--log", str(tmp_path / "l.jsonl"), f"{option}={bad}"]
++    )
++    _assert_one_refusal(code, out, err, f"refused: {option}: must be a whole number from 1 to {high}", bad)
++    assert not list(tmp_path.iterdir()), "something was written before the refusal"
++
++
++# -- the scenario words ------------------------------------------------------------------------------------------------
++
++NOT_FINITE = ["burst:nan", "burst:inf", "burst:-inf", "burst:infinity", "rate:nan:1", "rate:5:inf", "rate:inf:inf"]
++NOT_FINITE += ["dupmix:nan:0.5", "dupmix:10:nan", "dupmix:inf:0.5", "dupmix:10:0.5:nan", "dupmix:10:0.5:inf"]
++TOO_BIG = [
++    f"burst:{constants.LOAD_TOTAL_MAX + 1}",
++    "burst:1e999",
++    "burst:1e300",
++    f"rate:{constants.LOAD_RATE_MAX * 2}:1",
++    f"rate:1:{constants.LOAD_SECONDS_MAX * 2}",
++    "rate:1e200:1e200",
++    "rate:100000:100000",
++    f"dupmix:{constants.LOAD_TOTAL_MAX + 1}:0.5",
++    "dupmix:1e300:0.5",
++    "dupmix:10:0.5:1e300",
++    "dupmix:100000:0.5:0.0001",
++]
++EMPTY = ["burst:0.5", "rate:0.1:1", "rate:1e-300:1", "dupmix:0.5:0.5"]
++
++
++@pytest.mark.parametrize("scenario", NOT_FINITE + TOO_BIG + EMPTY)
++def test_a_scenario_with_a_number_that_cannot_be_used_is_a_value_error_with_a_fixed_text(scenario: str) -> None:
++    with pytest.raises(ValueError) as seen:  # not OverflowError, not a traceback of int(nan) / int(inf)
++        load_driver.parse_scenario(scenario)
++    assert type(seen.value) is ValueError and scenario not in str(seen.value)
++    with pytest.raises(ValueError):
++        load_driver.build_schedule(scenario, 0.0, "p", 1)
++
++
++@pytest.mark.parametrize("scenario", NOT_FINITE + TOO_BIG + EMPTY)
++def test_the_load_driver_ends_a_bad_scenario_with_one_line_and_exit_2(tmp_path: Path, scenario: str) -> None:
++    code, out, err = _run(
++        ["-m", "load_tools.load_driver", "--base-url", "http://127.0.0.1:1", f"--scenario={scenario}"]
++        + ["--log", str(tmp_path / "l.jsonl")]
++    )
++    assert code == constants.EXIT_REFUSED and out == "", (code, out, err)
++    assert len(err.splitlines()) == 1 and err.startswith("ERROR: bad scenario"), err
++    assert "Traceback" not in err and scenario not in err
++    assert not list(tmp_path.iterdir())
++
++
++def test_the_edges_of_the_limits_are_accepted() -> None:
++    assert load_driver.parse_scenario(f"burst:{constants.LOAD_TOTAL_MAX}")[0] == "burst"
++    assert load_driver.parse_scenario("burst:1")[1] == [1.0]
++    assert load_driver.parse_scenario(f"rate:{constants.LOAD_RATE_MAX}:1")[0] == "rate"
++    assert load_driver.parse_scenario(f"rate:1:{constants.LOAD_SECONDS_MAX}")[0] == "rate"
++    assert load_driver.parse_scenario("dupmix:10:0:1")[0] == "dupmix"
++    assert len(load_driver.build_schedule("burst:7", 0.0, "p", 1)) == 7
++    assert len(load_driver.build_schedule("rate:10:2", 0.0, "p", 1)) == 20
++
++
++# -- the model stand-in: starts without PYTHONPATH, reads a key file with a cap --------------------------------------
++
++
++def test_the_model_stand_in_starts_without_pythonpath_like_the_catcher(tmp_path: Path) -> None:
++    """`python -m demo_only.fake_model_server` from the repository folder, with no PYTHONPATH at all, must reach its own
++    argument check (the one-line refusal), not die with ModuleNotFoundError on `lead_desk`."""
++    code, out, err = _run(["-m", "demo_only.fake_model_server", "--port=99999"], with_pythonpath=False)
++    assert "ModuleNotFoundError" not in err and "Traceback" not in err, err
++    assert code == constants.EXIT_REFUSED and out.splitlines() == [PORT_TEXT], (out, err)
++    code, out, err = _run(
++        ["load_tools/catcher.py", "--out", str(tmp_path / "m"), "--port=99999"], with_pythonpath=False
++    )
++    assert code == constants.EXIT_REFUSED and out.splitlines() == [PORT_TEXT], (out, err)
++
++
++class _Started(Exception):
++    """Raised by a stand-in for make_model_server: the key file was accepted and the server would start."""
++
++
++def _main_with_key(monkeypatch: pytest.MonkeyPatch, key_file: Path) -> str | None:
++    from demo_only import fake_model_server as fms
++
++    seen: list[str | None] = []
++
++    def start(**kw: object) -> None:
++        seen.append(kw["key"])  # type: ignore[arg-type]
++        raise _Started
++
++    monkeypatch.setattr(fms, "make_model_server", start)
++    monkeypatch.setattr(sys, "argv", ["fake_model_server", "--port", "0", "--key-file", str(key_file)])
++    with pytest.raises(_Started):
++        fms.main()
++    return seen[0]
++
++
++def test_the_model_stand_in_reads_at_most_the_key_file_cap(
++    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
++) -> None:
++    from demo_only import fake_model_server as fms
++
++    monkeypatch.chdir(tmp_path)
++    cap = constants.SECRET_FILE_MAX_BYTES
++    ok = tmp_path / "ok.key"
++    ok.write_bytes(b"k" * cap)  # exactly the cap: accepted
++    assert _main_with_key(monkeypatch, ok) == "k" * cap
++    big = tmp_path / "big.key"
++    big.write_bytes(b"k" * (3 * 1024 * 1024))  # three megabytes: refused, and never read whole
++    reads: list[int] = []
++    real = fms.read_regular_bytes
++
++    def counting(path: object, max_bytes: int) -> bytes:
++        reads.append(max_bytes)
++        return real(path, max_bytes)  # type: ignore[arg-type]
++
++    monkeypatch.setattr(fms, "read_regular_bytes", counting)
++    monkeypatch.setattr(fms, "make_model_server", lambda **kw: pytest.fail("a key file over the cap was accepted"))
++    monkeypatch.setattr(sys, "argv", ["fake_model_server", "--port", "0", "--key-file", str(big)])
++    with pytest.raises(SystemExit) as seen:
++        fms.main()
++    assert seen.value.code == constants.EXIT_REFUSED and reads == [cap]
++    assert capsys.readouterr().out.strip() == "refused: --call-log or --key-file cannot be used: give a regular file"
++
++
++def _desk_setting(word: str, env: dict[str, str]) -> tuple[int, str]:
++    import subprocess
++    import sys
++
++    base = {k: v for k, v in os.environ.items() if not k.startswith("DESK_")}
++    r = subprocess.run(  # noqa: S603
++        [sys.executable, str(REPO / "scripts" / "desk_setting.py"), word],
++        capture_output=True,
++        text=True,
++        timeout=30,
++        check=False,
++        env={**base, "PYTHONPATH": str(REPO / "src"), **env},
++    )
++    return r.returncode, r.stdout + r.stderr
++
++
++def test_the_book_path_is_never_printed_when_it_is_a_folder_or_a_pipe(tmp_path: Path) -> None:
++    for word in ("db-path", "data-dir"):
++        code, out = _desk_setting(word, {"DESK_DB_PATH": str(tmp_path)})
++        assert code == 4 and out.startswith("the desk refuses to start:") and str(tmp_path) not in out, (word, out)
++    code, out = _desk_setting("db-path", {"DESK_DB_PATH": str(tmp_path / "new.sqlite3")})
++    assert code == 0 and out.strip() == str(tmp_path / "new.sqlite3")
++
++
++def test_a_port_and_an_effort_with_spaces_around_them_are_treated_alike(tmp_path: Path) -> None:
++    code, out = _desk_setting("port", {"DESK_PORT": " 5 "})
++    assert (code, out.strip()) == (0, "5")  # spaces around a value are harmless, for every setting
++    from lead_desk.config import _live_from_env
++
++    env = {
++        "DESK_LIVE_MODEL": "m",
++        "DESK_LIVE_KEY_FILE": str(tmp_path / "k"),
++        "DESK_LIVE_LEDGER_PATH": str(tmp_path / "l"),
++        "DESK_LIVE_PRICE_DATE": "2026-01-01",
++        "DESK_LIVE_RUN_ID": "r",
++        "DESK_LIVE_PRICE_IN_PER_MTOK": "1",
++        "DESK_LIVE_PRICE_OUT_PER_MTOK": "1",
++        "DESK_LIVE_CAP_RUN_USD": "1",
++        "DESK_LIVE_CAP_TOTAL_USD": "1",
++        "DESK_LIVE_EFFORT": " low ",
++    }
++    try:
++        assert _live_from_env(env).effort == "low"
++    except KeyError as e:  # a name this made-up set lacks: the test needs the real list
++        raise AssertionError(f"test setup lacks {e}") from None
+diff --git a/tests/test_special_output_files.py b/tests/test_special_output_files.py
+index bc16d71..331fba7 100644
+--- a/tests/test_special_output_files.py
++++ b/tests/test_special_output_files.py
+@@ -350,7 +350,8 @@ def test_invariant_checker_refuses_a_pipe_as_its_json_output(tmp_path: Path) ->
+ @FIFO_SKIP
+ @pytest.mark.parametrize("flag", ["--call-log", "--key-file"])
+ def test_fake_model_server_refuses_a_pipe_for_its_files_before_it_starts(tmp_path: Path, flag: str) -> None:
+-    pytest.importorskip("demo_only.fake_model_server")
++    import demo_only.fake_model_server  # noqa: F401  (a plain import: a broken module fails this test, it is not skipped)
++
+     os.mkfifo(tmp_path / "p")
+     script = REPO / "demo_only" / "fake_model_server.py"
+     answer = in_child(run_script(script, flag, str(tmp_path / "p"), "--port", "0"), "")
+diff --git a/tests/test_tools_and_fakes_pipes.py b/tests/test_tools_and_fakes_pipes.py
+index 1a567ca..d5c4ae1 100644
+--- a/tests/test_tools_and_fakes_pipes.py
++++ b/tests/test_tools_and_fakes_pipes.py
+@@ -141,7 +141,7 @@ def test_the_catcher_reads_no_mode_from_a_pipe_and_writes_nothing_to_one(pipe: P
+ 
+ @FIFO_SKIP
+ def test_the_load_driver_reads_no_number_from_a_pipe(pipe: Path) -> None:
+-    assert _in_child("driver_kernel", pipe) == "ok|None"
++    assert _in_child("driver_kernel", pipe) == "ok|unreadable"
+ 
+ 
+ @FIFO_SKIP
+diff --git a/tools/pathconfine.py b/tools/pathconfine.py
+index bd83201..c75a27f 100644
+--- a/tools/pathconfine.py
++++ b/tools/pathconfine.py
+@@ -1,4 +1,5 @@
+-"""One place that decides whether a file path typed on a command line may be opened. Standard library only.
++"""One place that decides whether a file path typed on a command line may be opened. Standard library only (the one
++limit it shares with the desk, MAX_PATH_CHARS, is read from lead_desk/constants.py).
+ 
+ Class of bug: a command-line tool opened whatever path it was given (``Path(argv[2]).read_text()``), so a path written
+ by a faulty script or by an AI agent that drives the tool (``../../secret``, an absolute path, a link that points out
+@@ -85,7 +86,14 @@ from collections.abc import Iterable, Sequence
+ from pathlib import Path
+ from types import ModuleType
+ 
+-MAX_PATH_CHARS = 4096  # a whole path, in characters (the usual Linux limit; Windows allows less)
++try:  # started as a script without the src folder on the path: it is added (the limit lives in constants.py)
++    from lead_desk.constants import MAX_PATH_CHARS
++except ImportError:
++    import sys
++
++    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
++    from lead_desk.constants import MAX_PATH_CHARS
++
+ MAX_NAME_CHARS = 255  # one file name of a NEW file
+ ROOTS_ENV = "LEAD_DESK_PATH_ROOTS"
+ REPO_ROOT = Path(__file__).resolve().parents[1]
+diff --git a/tools/refusing_args.py b/tools/refusing_args.py
+index 814a4bf..c0ba345 100644
+--- a/tools/refusing_args.py
++++ b/tools/refusing_args.py
+@@ -15,14 +15,24 @@ matches `--[a-z][a-z-]*` (an option name given by the script, never typed text)
+ from __future__ import annotations
+ 
+ import re
+-from argparse import ArgumentParser
++import sys
++from argparse import ArgumentParser, ArgumentTypeError
++from collections.abc import Callable
++from pathlib import Path
+ from typing import NoReturn
+ 
+-EXIT_REFUSED = 2
+-EXIT_UNREACHABLE = 3  # the thing the script talks to cannot be reached or did not answer
++try:  # started as a script without the src folder on the path: it is added (the exit codes live in constants.py)
++    from lead_desk.constants import EXIT_REFUSED, EXIT_UNREACHABLE
++except ImportError:
++    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
++    from lead_desk.constants import EXIT_REFUSED, EXIT_UNREACHABLE
++
++__all__ = ["EXIT_REFUSED", "EXIT_UNREACHABLE", "RefusingParser", "bounded_int", "refusal"]
+ OPTION_NAME = re.compile(r"--[a-z][a-z-]*(/--[a-z][a-z-]*)*")
+ # the fixed texts of a script's own argument types (`argparse.ArgumentTypeError` messages): shown as they are
+ TYPE_TEXTS = ("is not a number", "needs ID=IN_PRICE,OUT_PRICE")
++# the fixed text of `bounded_int`: only the two limits the script gave (never a typed word) are in it
++BOUNDED_INT_TEXT = re.compile(r"must be a whole number from -?\d+ to \d+")
+ 
+ 
+ # the fixed texts a script passes to `parser.error()` itself (no typed word in them): shown under their own option names
+@@ -34,6 +44,25 @@ def refusal(option: str, text: str) -> str:
+     return f"refused: {option}: {text}"
+ 
+ 
++def bounded_int(low: int, high: int) -> Callable[[str], int]:
++    """An argparse `type=` for a whole number from `low` to `high` (both included). Anything else (a word, a number
++    that is too small or too big, `nan`, `1e999`, a text of thousands of digits) is refused with one fixed text that
++    holds only the two limits. Why: `type=int` lets a number like 99999 reach `socket.bind` (an OverflowError
++    traceback) or `0` reach `threading.Barrier(0)` (a ValueError traceback)."""
++    text = f"must be a whole number from {low} to {high}"
++
++    def parse(value: str) -> int:
++        try:
++            number = int(value)
++        except ValueError:  # also a text of more than 4300 digits
++            raise ArgumentTypeError(text) from None
++        if not low <= number <= high:
++            raise ArgumentTypeError(text)
++        return number
++
++    return parse
++
++
+ class RefusingParser(ArgumentParser):
+     """argparse that ends a bad command line with the one refusal line (on standard output, exit 2) and never prints
+     what was typed."""
+@@ -51,7 +80,7 @@ class RefusingParser(ArgumentParser):
+                 text = "needs a value"
+             elif what.startswith("invalid choice"):
+                 text = "is not one of the allowed values (see --help)"
+-            elif what in TYPE_TEXTS:
++            elif what in TYPE_TEXTS or BOUNDED_INT_TEXT.fullmatch(what):
+                 text = what
+             else:
+                 text = "cannot be used like this (see --help)"
+diff --git a/tools/scrub_n8n_export.py b/tools/scrub_n8n_export.py
+index 6f67bb4..64349cf 100644
+--- a/tools/scrub_n8n_export.py
++++ b/tools/scrub_n8n_export.py
+@@ -57,7 +57,7 @@ for _p in (str(_REPO / "src"), str(_REPO)):
+     if _p not in sys.path:
+         sys.path.insert(0, _p)
+ 
+-from lead_desk.regfile import load_json_file  # noqa: E402
++from lead_desk.regfile import load_json_file, write_regular_text  # noqa: E402
+ from tools.pathconfine import PathRefused, confine, confine_existing  # noqa: E402
+ 
+ TOP = ("name", "active", "nodes", "connections")
+@@ -208,8 +208,9 @@ def main(argv: list[str]) -> int:
+         print("refused: in.json: not an n8n workflow (an object whose nodes are a list of objects)", file=sys.stderr)
+         return 2
+     try:
+-        data = (json.dumps(scrub(wf), indent=2, ensure_ascii=False) + chr(10)).encode("utf-8")  # before the file opens
+-        dst_path.write_bytes(data)
++        text = json.dumps(scrub(wf), indent=2, ensure_ascii=False) + chr(10)
++        text.encode("utf-8")  # before the file opens: text that cannot be encoded must not leave an emptied file
++        write_regular_text(dst_path, text, newline="")  # a pipe or a device under that name is refused, line ends as is
+     except (
+         OSError,
+         ValueError,

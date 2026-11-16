@@ -1,0 +1,22 @@
+# item 2 grep (run 2026-11-06T15:39:29Z in handover/tickets, all tickets except P3a.md)
+--- grep -n -i -E 'create extension' *.md (minus P3a.md): 0 lines
+--- grep -n -i -E 'pgcrypto' *.md (minus P3a.md): 0 lines
+--- grep -n -i -E 'create (role|user|group)' *.md (minus P3a.md): 3 lines
+AK-G15.md:687:  - `_SAFE_CREATE` (`store/migrate.py:80-84`) accepts `CREATE OR REPLACE FUNCTION` and `CREATE TRIGGER` and refuses every other `CREATE`, `CREATE ROLE` incl
+P2a.md:444:8. CI: confirm the CI database user may `CREATE ROLE` and `ALTER ROLE ... SET` on 17.10 (trust auth, superuser in the service; UNVERIFIED), and whether a 17.10
+P2a.md:532:  - **Cap on open stop requests: can it be a PostgreSQL role setting? Honest answer: no, not the cap itself.** Checked on a throwaway PostgreSQL 16.15 (T-115 t
+--- grep -n -i -E 'alter (user|group|system)' *.md (minus P3a.md): 0 lines
+--- grep -n -i -E 'copy [^.]*program' *.md (minus P3a.md): 1 lines
+AK-G16.md:48:- **container image**: one packed, read-only copy of the program and everything it needs to run; the same image runs every part below.
+--- grep -n -i -E '\bLOAD '' *.md (minus P3a.md): 0 lines
+--- grep -n -i -E '\bDO \$' *.md (minus P3a.md): 0 lines
+--- grep -n -i -E 'discard (all|plans|temp)' *.md (minus P3a.md): 0 lines
+--- grep -n -i -E 'begin atomic' *.md (minus P3a.md): 0 lines
+--- grep -n -i -E 'set role' *.md (minus P3a.md): 19 lines
+AK-G15.md:257:  - **Said plainly (R2-ADV-1):** a session of the migration role that is a member of the re-run owner role (and so can `SET ROLE` to it) can still re-run a 
+AK-G15.md:574:- **AK-G2 BN-24 (APPROVED, order 43 item 15; written by the lead at `tickets/AK-G2.md:720-732`).** This replaces revision 2's "AK-G2 BUILD NOTE REQUEST". Wh
+AK-G15.md:702:  - *Why it is open.* PostgreSQL (general knowledge, UNVERIFIED) lets a role run `ALTER FUNCTION ... OWNER TO r` only when it can `SET ROLE` to `r` and `r` 
+AK-G16.md:83:- **Database roles (the grants the kit must match).** `store/migrate.py`: `Grant(kind, runtime, portal, purge, purge_cols)` (`:23-37`); a relation not in `GR
+AK-G2.md:723:- **A fixed owner role, not "the owner".** The function is owned by its own NOLOGIN role, the re-run owner role. Its name is fixed once per deployment: `migr
+AK-G2.md:729:  - **D10** (`:266`, BN-7 `:564`) and **D13** (`:505`): their "`reopen_inbound`, then dispatch" step becomes "reopen through the re-run owner's path, then di
+--- ls | grep P7: 0  (no P7 ticket in tickets/)

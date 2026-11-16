@@ -1,0 +1,16 @@
+K1 pieces unsorted	KILLED	FAILED tests/test_take_script_refusals.py::test_the_scan_reads_the_pieces_of_a_place_in_source_order	1 failed, 67 passed, 70 deselected in 46.08s	46
+K2 any usefixtures	KILLED	FAILED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[another marker that names the word as an argument]	1 failed, 24 passed, 70 deselected in 48.22s	49
+K3 monkeypatch param not required	KILLED	FAILED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[monkeypatch is not a parameter at all]	1 failed, 63 passed, 70 deselected in 48.98s	49
+K4 any non-None tempdir	KILLED	FAILED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[the patch names the system temp folder as a literal]	1 failed, 54 passed, 70 deselected in 48.17s	48
+K5 patch order ignored	KILLED	FAILED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[the temp folder patch comes after the run]	1 failed, 52 passed, 70 deselected in 46.99s	47
+K6 fold: format dropped	SURVIVED		73 passed, 70 deselected in 48.56s	49
+K7 fold: percent dropped	KILLED	FAILED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[flags built by a percent format with a tuple]	1 failed, 45 passed, 70 deselected in 46.69s	47
+K8 fold: names unresolved	KILLED	FAILED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[keep word assigned before the plus]	1 failed, 46 passed, 70 deselected in 51.65s	52
+K9 fold: attributes unresolved	KILLED	FAILED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[keep word assigned in a class]	1 failed, 48 passed, 70 deselected in 52.06s	52
+K10 placeholders not stripped	SURVIVED		73 passed, 70 deselected in 51.20s	52
+K11 monkeypatch rebind unchecked	KILLED	FAILED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[monkeypatch rebound by a with]	1 failed, 64 passed, 70 deselected in 50.83s	51
+K12 run line is the dry flag	KILLED	FAILED tests/test_take_script_refusals.py::test_every_keep_self_test_in_the_suite_uses_its_own_temp_folder	1 failed, 2 passed, 70 deselected in 56.89s	57
+K13 scan ignores bytes	KILLED	FAILED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[bytes]	1 failed, 13 passed, 70 deselected in 55.50s	56
+K14 usefixtures param default accepted	KILLED	FAILED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[parameter with a default]	1 failed, 26 passed, 70 deselected in 51.62s	52
+K15 tmp folder names not derived	KILLED	FAILED tests/test_take_script_refusals.py::test_the_scan_judges_every_sample_source[the patch names a folder built from tmp_path]	1 failed, 56 passed, 70 deselected in 49.31s	50
+DONE

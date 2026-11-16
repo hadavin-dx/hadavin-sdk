@@ -1,0 +1,8 @@
+desc: facts: ledger 1240 -> 1250 (limit 13.21 -> 13.31)
+file: facts-v27.py occurrences replaced: 1
+build rc=0
+check rc=1
+C07 info: OWNER-SHEET-v27-A.md 7473 words (target 6300: NOT met)
+C07 info: OWNER-SHEET-v27-B.md 7516 words (target 6300: NOT met)
+check-v27: 1 failure(s)
+FAIL C03 facts money differs

@@ -1,0 +1,17 @@
+dash  main  INT   exit=TIMEOUT wanted=130 folders_left=1 stray_programs=1 seconds_to_end=20.0 BAD
+dash  main  TERM  exit=143 wanted=143 folders_left=0 stray_programs=0 seconds_to_end=0.1 OK
+dash  main  HUP   exit=TIMEOUT wanted=129 folders_left=1 stray_programs=1 seconds_to_end=20.0 BAD
+dash  main  QUIT  exit=TIMEOUT wanted=131 folders_left=1 stray_programs=1 seconds_to_end=20.0 BAD
+dash  mask  INT   exit=TIMEOUT wanted=130 folders_left=1 stray_programs=0 seconds_to_end=20.0 BAD
+dash  mask  TERM  exit=143 wanted=143 folders_left=0 stray_programs=0 seconds_to_end=0.0 OK
+dash  mask  HUP   exit=TIMEOUT wanted=129 folders_left=1 stray_programs=0 seconds_to_end=20.0 BAD
+dash  mask  QUIT  exit=TIMEOUT wanted=131 folders_left=1 stray_programs=0 seconds_to_end=20.0 BAD
+bash  main  INT   exit=TIMEOUT wanted=130 folders_left=1 stray_programs=1 seconds_to_end=20.0 BAD
+bash  main  TERM  exit=143 wanted=143 folders_left=0 stray_programs=0 seconds_to_end=0.1 OK
+bash  main  HUP   exit=TIMEOUT wanted=129 folders_left=1 stray_programs=1 seconds_to_end=20.0 BAD
+bash  main  QUIT  exit=TIMEOUT wanted=131 folders_left=1 stray_programs=1 seconds_to_end=20.0 BAD
+bash  mask  INT   exit=TIMEOUT wanted=130 folders_left=1 stray_programs=0 seconds_to_end=20.0 BAD
+bash  mask  TERM  exit=143 wanted=143 folders_left=0 stray_programs=0 seconds_to_end=0.0 OK
+bash  mask  HUP   exit=TIMEOUT wanted=129 folders_left=1 stray_programs=0 seconds_to_end=20.0 BAD
+bash  mask  QUIT  exit=TIMEOUT wanted=131 folders_left=1 stray_programs=0 seconds_to_end=20.0 BAD
+BAD rows: 12

@@ -1,0 +1,135 @@
+LEAD-REL | G1 -> Re-pin: one commit id for the take program and the files it  | ...NVERIFIED stale text. The lead shows the final head's grep at re-pin. G1 stays NO until that grep and 
+LEAD-REL | G21 -> HubSpot identities: for each (the key n8n uses, the take pro | ...t grep and a second reader are shown. The HubSpot key is not widened (G21). The owner sheet no longer c
+LEAD-REL | G1 -> Re-pin: one commit id for the take program and the files it  | ...ssage must carry the sentence "the take program made no delete call" (G1, G27), and R5 has no "old wor
+LEAD-REL | G27 -> Contact list: only made-up contacts of this run (`take-<run  | ...e must carry the sentence "the take program made no delete call" (G1, G27), and R5 has no "old wording"
+LEAD-REL | G12 -> Claims: the one sentence, the ban list and lease sentence of | ...conflict across the inputs and need your decision: the lease wording (G12), the exit code for person C 
+LEAD-REL | G6 -> Exit-code rule (person C "unknown" and every number the take | ...d your decision: the lease wording (G12), the exit code for person C (G6), US$180 against US$189 (G14)
+LEAD-REL | G14 -> Money figures: model name; tokens in and out per call; both  | ...ording (G12), the exit code for person C (G6), US$180 against US$189 (G14), DECISION-one-store line 14 
+LEAD-REL | G20 -> DECISION-one-store line 14 ("ONE database") edited to "one P | ...ONS (a), lines 25 and 26, say n8n lives in a separate database `n8n` (G20: the package must state both)
+LEAD-REL | G3 -> n8n holds only the connection values the checker expects and | ...atabase secrets in the earlier note, four database roles in the plan: G3). 4. The owner can no longer 
+LEAD-REL | G1 -> Re-pin: one commit id for the take program and the files it  | ...issing item is a plain no-go. Independent reading is now required for G1 and G2 (a named `egm:*` revie
+LEAD-REL | G2 -> Flow checksum compare (the lead and the named reader state t | ...item is a plain no-go. Independent reading is now required for G1 and G2 (a named `egm:*` reviewer age
+LEAD-REL | G33 -> Spend lock: the model program makes no paid call until the t | ...ach has a "no run" or "stated and accepted" default): the spend lock (G33), the cancel race after `end`
+LEAD-REL | G34 -> Cancel race: the take program never calls the model after `e | ...ccepted" default): the spend lock (G33), the cancel race after `end` (G34), whether the take program as
+LEAD-REL | G35 -> Typed figure: whether the take program, at its final head, a | ...end` (G34), whether the take program asks the owner to type a figure (G35), the film cue and the lead's
+LEAD-REL | G36 -> Film cue and the lead's n8n timing: the exact printed line t | ...owner to type a figure (G35), the film cue and the lead's n8n timing (G36), the per-run key file (G37),
+LEAD-REL | G37 -> Key file per run: the path contains the run name; its folder | ..., the film cue and the lead's n8n timing (G36), the per-run key file (G37), the demo mail filter, subje
+LEAD-REL | G38 -> Demo mail and prep contact: the subject start of the take's  | ...key file (G37), the demo mail filter, subject start and prep contact (G38), the end-date refusal (G16; 
+LEAD-REL | G16 -> (the numbers-message line "End-date refusal" is written in 1 | ...l filter, subject start and prep contact (G38), the end-date refusal (G16; no run on Mon 23 Nov in any 
+LEAD-REL | G10 -> Times by the formula of section 2 on the run date; the take  | ...ase, Q25 and Q26), the second alarm and the cancel buffer (section 2, G10, G30: no lead timer), D5 as O
+LEAD-REL | G30 -> No lead-side timer (lead answer Q26): none exists and none i | ...Q25 and Q26), the second alarm and the cancel buffer (section 2, G10, G30: no lead timer), D5 as OWNER-
+LEAD-REL | G30 -> No lead-side timer (lead answer Q26): none exists and none i | ...separate funding option is dropped (Q24). Earlier v19 additions stay: G30, G31, G32, the balance as the
+LEAD-REL | G31 -> Other channel to reach the lead (owner sheet section 1, R8): | ...ate funding option is dropped (Q24). Earlier v19 additions stay: G30, G31, G32, the balance as the real
+LEAD-REL | G32 -> Older key: its exact name and creation date as the key list  | ...unding option is dropped (Q24). Earlier v19 additions stay: G30, G31, G32, the balance as the real expo
+LEAD-REL | G14 -> Money figures: model name; tokens in and out per call; both  | ... v19 additions stay: G30, G31, G32, the balance as the real exposure (G14), the owner's minutes at "Typ
+LEAD-REL | G39 -> Start line: the exact line the owner types, with `-I` (which | ...rm formula, the post-by source. New in v22: the `-I` start line gate (G39), run length against `need_se
+LEAD-REL | G40 -> Times in three separate numbers-message lines (minutes at "T | ..., run length against `need_seconds` with separate Y, RL and FP lines (G40, G10), the cancelled state wo
+LEAD-REL | G10 -> Times by the formula of section 2 on the run date; the take  | ... length against `need_seconds` with separate Y, RL and FP lines (G40, G10), the cancelled state word gi
+LEAD-REL | G41 -> Cancelled state word: the exact word the key list shows besi | ...Y, RL and FP lines (G40, G10), the cancelled state word given by you (G41), the HubSpot app secret revo
+LEAD-REL | G42 -> HubSpot app secrets: for each of the two private apps (and a | ...ncelled state word given by you (G41), the HubSpot app secret revoke (G42, sheet 8.4), the cancel card 
+LEAD-REL | G32 -> Older key: its exact name and creation date as the key list  | ...app secret revoke (G42, sheet 8.4), the cancel card as single source, G32 wording ("no file the lead re
+LEAD-REL | G39 -> Start line: the exact line the owner types, with `-I` (which | ... start line with `-I` is no longer a FREEZE item: it is the lead gate G39 and must be shown before the 
+LEAD-REL | G34 -> Cancel race: the take program never calls the model after `e | ...t because the take program's behaviour on a cancelled key is unknown (G34); `end` first keeps the key a
+LEAD-REL | G34 -> Cancel race: the take program never calls the model after `e | ... unknown (G34); `end` first keeps the key alive a few minutes longer. G34 evidence ("the take program n
+LEAD-REL | G27 -> Contact list: only made-up contacts of this run (`take-<run  | ... and notice print no delete count (the clean-up message then says so, G27); a second reader named | com
+LEAD-REL | G35 -> Typed figure: whether the take program, at its final head, a | ... ask the owner to type nothing but `y`, the challenge line and `end` (G35) | copied text | wording not 
+LEAD-REL | G34 -> Cancel race: the take program never calls the model after `e | ...nd 8.1; UNVERIFIED all; the answer goes into the numbers message; see G34); lock file and refusals (sec
+LEAD-REL | G34 -> Cancel race: the take program never calls the model after `e | ...ction 9); the sheet now says (7.8) why `end` comes before the cancel; G34 can flip that | file and line
+LEAD-REL | G1 -> Re-pin: one commit id for the take program and the files it  | ...th "n8n is off"; the sentence "the take program made no delete call" (G1) and the number of demo mails
+LEAD-REL | G19 -> Clean start: fresh made-up person ids; the handled-people ta | ... database container, port, marker and take lock, a fresh clean start (G19), an updated ledger total and
+LEAD-REL | G32 -> Older key: its exact name and creation date as the key list  | ... UTC = IST), older key (name, creation date and that nothing uses it (G32), or "none"), message place (
+LEAD-REL | G31 -> Other channel to reach the lead (owner sheet section 1, R8): | ...lace (the chat in which the owner received the sheet), other channel (G31), account name, the three mod
+LEAD-REL | G35 -> Typed figure: whether the take program, at its final head, a | ... prints its version id, "Take program asks you to type a figure: no" (G35), "Spend lock: shown or NOT S
+LEAD-REL | G33 -> Spend lock: the model program makes no paid call until the t | ...ks you to type a figure: no" (G35), "Spend lock: shown or NOT SHOWN" (G33), "End-date refusal: shown or
+LEAD-REL | G16 -> (the numbers-message line "End-date refusal" is written in 1 | ...T SHOWN" (G33), "End-date refusal: shown or lead verifies at re-pin" (G16), the cancelled state word (G
+LEAD-REL | G41 -> Cancelled state word: the exact word the key list shows besi | ...l: shown or lead verifies at re-pin" (G16), the cancelled state word (G41), the start line and "the lea
+LEAD-REL | G39 -> Start line: the exact line the owner types, with `-I` (which | ...start line and "the lead has seen it work at the final version: yes" (G39), the key file size range in 
+LEAD-REL | G40 -> Times in three separate numbers-message lines (minutes at "T | ...h the USD form) PS, SL, Y, RL, FP (Y, RL and FP each on its own line, G40), M, Z, B (need_seconds), lat
+LEAD-REL | G18 -> What the take program does on a wrong line after `end`, on C | ... during the run or right after `end` and the exit code accepted then (G18, G34), UNVERIFIED items the l
+LEAD-REL | G34 -> Cancel race: the take program never calls the model after `e | ...ng the run or right after `end` and the exit code accepted then (G18, G34), UNVERIFIED items the lead h
+LEAD-REL | G36 -> Film cue and the lead's n8n timing: the exact printed line t | ...RIFIED items the lead has seen since Film cue, the lead's n8n timing (G36); demo mail subject start, fi
+LEAD-REL | G38 -> Demo mail and prep contact: the subject start of the take's  | ...ming (G36); demo mail subject start, filter and prep contact address (G38); recording tool and box, how
+LEAD-REL | G24 -> Places and tools: message place; recording tool, whether it  | ...aches the owner and the editor, editor hours, the post checker's way (G24) Take program folder (cd line
+LEAD-REL | G37 -> Key file per run: the path contains the run name; its folder | ...ke broker port, model key file (per-run path that does not exist yet, G37), model settings file, model 
+LEAD-REL | G1 -> Re-pin: one commit id for the take program and the files it  | ...owner sheet R8); posting place and account Statements: every 1a gate (G1 to G15, G17 to G24, G31 to G4
+LEAD-REL | G15 -> Rehearsal: loopback re-smoke passed; ONE made-up contact in  | ...sheet R8); posting place and account Statements: every 1a gate (G1 to G15, G17 to G24, G31 to G42) YES 
+LEAD-REL | G17 -> Notice and printed result: the real wording of both (copied  | ... R8); posting place and account Statements: every 1a gate (G1 to G15, G17 to G24, G31 to G42) YES or it
+LEAD-REL | G24 -> Places and tools: message place; recording tool, whether it  | ...osting place and account Statements: every 1a gate (G1 to G15, G17 to G24, G31 to G42) YES or its state
+LEAD-REL | G31 -> Other channel to reach the lead (owner sheet section 1, R8): | ...g place and account Statements: every 1a gate (G1 to G15, G17 to G24, G31 to G42) YES or its stated "NO
+LEAD-REL | G42 -> HubSpot app secrets: for each of the two private apps (and a | ... and account Statements: every 1a gate (G1 to G15, G17 to G24, G31 to G42) YES or its stated "NOT SHOWN
+LEAD-REL | G15 -> Rehearsal: loopback re-smoke passed; ONE made-up contact in  | ...d | lead | take program notice text and the rehearsal printed result (G15, G17) | before the message | 
+LEAD-REL | G17 -> Notice and printed result: the real wording of both (copied  | ...ead | take program notice text and the rehearsal printed result (G15, G17) | before the message | | por
+LEAD-REL | G7 -> Ports: rehearsal uses 5690 with its broker 5691 and a contro | ...15, G17) | before the message | | ports, folders, file names | lead | G7, G8, the take scripts | befor
+LEAD-REL | G8 -> n8n state: started by the lead with the take scripts on the  | ...G17) | before the message | | ports, folders, file names | lead | G7, G8, the take scripts | before th
+LEAD-REL | G17 -> Notice and printed result: the real wording of both (copied  | ...unts, notice and result wording | lead | the rehearsal's real notice (G17), never invented | before the
+LEAD-REL | G11 -> Helpers named (roles in section 7): each a human; film and p | ...t 5.1; UNVERIFIED) | before the message | | roles and places | lead | G11, G24 | before the message | |
+LEAD-REL | G24 -> Places and tools: message place; recording tool, whether it  | ...; UNVERIFIED) | before the message | | roles and places | lead | G11, G24 | before the message | | mode
+LEAD-REL | G16 -> (the numbers-message line "End-date refusal" is written in 1 | ...safe word, letters and digits) | when the model program is restarted (G16) | Second message (clean-up m
+LEAD-REL | G27 -> Contact list: only made-up contacts of this run (`take-<run  | ... | Second message (clean-up message): "n8n is off", the contact list (G27), the sentence "the take prog
+LEAD-REL | G25 -> Go word: you compare the owner's typed yes word for word wit | ... and button words), checks, laptop, Gmail, film profile, yes. 3 lead: G25 "go". 4 owner: two alarms, ol
+LEAD-REL | G16 -> (the numbers-message line "End-date refusal" is written in 1 | ... (6.2), model key (sheet section 6); lead restarts the model program (G16, G26). 5 owner: the run (shee
+LEAD-REL | G26 -> Immediately before the run you read the take program's check | ...), model key (sheet section 6); lead restarts the model program (G16, G26). 5 owner: the run (sheet sec
+LEAD-REL | G30 -> No lead-side timer (lead answer Q26): none exists and none i | ...: shuts down the model program after that word (no lead timer exists, G30: without that word nothing is
+LEAD-REL | G37 -> Key file per run: the path contains the run name; its folder | ...s. 9 lead: has erased the key file right after "model key cancelled" (G37); retire check (section 8 not
+LEAD-REL | G1 -> Re-pin: one commit id for the take program and the files it  | ... or that the take program deletes or does not delete contacts, unless G1 and the printed result both s
+LEAD-REL | G19 -> Clean start: fresh made-up person ids; the handled-people ta | ...re". Allowed caption: "one Postgres server, two databases", only with G19 evidence. - **Claim wording (
+LEAD-REL | G24 -> Places and tools: message place; recording tool, whether it  | ...9 asks you to confirm), and only the fixed page-area box is recorded (G24).  ## 6. Contact list after t
+LEAD-REL | G27 -> Contact list: only made-up contacts of this run (`take-<run  | ...ontact list after the take At most four made-up contacts of this run (G27). The owner's method is owner
+LEAD-REL | G1 -> Re-pin: one commit id for the take program and the files it  | ...m never deletes; the lead shows the final head's grep at re-pin (Q23, G1). No file gives contact ids: 
+LEAD-REL | G24 -> Places and tools: message place; recording tool, whether it  | ..., the page area of the film profile's browser window, only if it can (G24); if it can only record the w
+LEAD-REL | G42 -> HubSpot app secrets: for each of the two private apps (and a | ...), HubSpot private apps | owner earlier | lead states keep or revoke (G42); the owner revokes the named
+LEAD-REL | G3 -> n8n holds only the connection values the checker expects and | ...atabase container | | n8n owner login, n8n API access | owner / lead (G3) | lead states whether kept; 
+LEAD-REL | G3 -> n8n holds only the connection values the checker expects and | ... inside n8n (FACTS) | owner earlier | lead removes it before the run (G3) | No value is ever sent or f
+LEAD-REL | G35 -> Typed figure: whether the take program, at its final head, a | ... the settings figures by eye, but a decision does not change code, so G35 settles it from the code at t
+v22-OPEN | G32 -> Older key: its exact name and creation date as the key list  | ...y the owner (card Part 2 b) after the message states nothing uses it (G32); an older key left alive mea
+v22-OPEN | G7 -> Ports: rehearsal uses 5690 with its broker 5691 and a contro | ... the final head | Default `none`: only 0 accepted | | 4 | Take port | G7: 5678 and 5679 are the owner'
+v22-OPEN | G21 -> HubSpot identities: for each (the key n8n uses, the take pro | ...eletes | Default: no read-only claim anywhere; list permission names (G21) | | 6 | US$180 against US$18
+v22-OPEN | G14 -> Money figures: model name; tokens in and out per call; both  | ... line 15: "US$180 of 189 at the time of writing, checked by a human"; G14 needs the program limit no hi
+v22-OPEN | G24 -> Places and tools: message place; recording tool, whether it  | ...ts no masked account and no path, with the tool recording one window (G24) | | 10 | Contact ids | no fi
+v22-OPEN | G36 -> Film cue and the lead's n8n timing: the exact printed line t | ...own default is 2 s in v3, allowed 1 to 60; read it at the final head, G36), usage lag and gap 30 min (c
+v22-OPEN | G11 -> Helpers named (roles in section 7): each a human; film and p | ... program gives up after 40 min (sample) | | 12 | Helpers | Sheet 5.2, G11 | Default: two humans besides
+v22-OPEN | G3 -> n8n holds only the connection values the checker expects and | ...no post | | 13 | n8n access and the model credential in n8n's store | G3: the lead needs n8n access to
+v22-OPEN | G16 -> (the numbers-message line "End-date refusal" is written in 1 | ...nly | Decided (Q27): the message says "lead verifies at re-pin" until G16 is shown; the owner sheet doe
+v22-OPEN | G24 -> Places and tools: message place; recording tool, whether it  | ...run; if wanted, a separate written message | | 19 | Places and tools (G24), page button words, key list
+v22-OPEN | G20 -> DECISION-one-store line 14 ("ONE database") edited to "one P | ...ate database `n8n`, so the file disagrees with itself | Edit line 14 (G20) | | 22 | Technical guard for
+v22-OPEN | G1 -> Re-pin: one commit id for the take program and the files it  | ...possible to claim without being built | | 23 | Independent reader for G1 and G2 | v17 reviews: the lea
+v22-OPEN | G2 -> Flow checksum compare (the lead and the named reader state t | ...e to claim without being built | | 23 | Independent reader for G1 and G2 | v17 reviews: the lead attes
+v22-OPEN | G22 -> The owner's roles confirmed: decision 7 lists only `y`, the  | ... `y`, the challenge and `end`, yet the Sheet lists more owner tasks | G22; the evidence runner found no
+v22-OPEN | G18 -> What the take program does on a wrong line after `end`, on C | ... owner cancels the key mid-run, or the film pause ends without `end` (G18) | the card and R6 depend on 
+v22-OPEN | G31 -> Other channel to reach the lead (owner sheet section 1, R8): | ...the run day; I can not invent one | Default: none named means no run (G31). Your answer: what it is | |
+v22-OPEN | G18 -> What the take program does on a wrong line after `end`, on C | ...e | Default: unknown; the sheet says type nothing and send the words (G18, answer goes into the numbers
+v22-OPEN | G32 -> Older key: its exact name and creation date as the key list  | ...mbers message | | 31 | The older key: statement that nothing uses it (G32) | card Part 2 b now needs it
+v22-OPEN | G33 -> Spend lock: the model program makes no paid call until the t | ...sed check in 8.1 exact; needs the lead's code at the final head (Note G33) | Default: "Spend lock: NOT 
+v22-OPEN | G34 -> Cancel race: the take program never calls the model after `e | ...y still need the key; the exit-code rule can fail a correct run (Note G34) | Default: unknown; the mess
+v22-OPEN | G35 -> Typed figure: whether the take program, at its final head, a | ...cannot change code; a prompt forces a FREEZE with the key alive (Note G35) | Default: unknown means no 
+v22-OPEN | G36 -> Film cue and the lead's n8n timing: the exact printed line t | ...er a copied printed line or a minute offset after "run started" (Note G36) | Default: no cue named, no 
+v22-OPEN | G37 -> Key file per run: the path contains the run name; its folder | ... name must come with a new key file path, the folder must exist (Note G37) | Default: statement missing
+v22-OPEN | G38 -> Demo mail and prep contact: the subject start of the take's  | ...n of "demo mail" and a prep address the film search never finds (Note G38) | Default: prep contact `pre
+v22-OPEN | G1 -> Re-pin: one commit id for the take program and the files it  | ...ion id otherwise | Default: the numbers message says "no"; the lead's G1 statement and the one-file fi
+v22-OPEN | G24 -> Places and tools: message place; recording tool, whether it  | ...e film person films on their own machine (then the recording tool and G24 change). Default: disclosure 
+v22-OPEN | G34 -> Cancel race: the take program never calls the model after `e | ...thing but the take program's behaviour on a cancelled key is unknown (G34), so the printed result may b
+v22-OPEN | G34 -> Cancel race: the take program never calls the model after `e | ...bers message that the take program never calls the model after `end` (G34) | | 53 | Cancelled state wor
+v22-OPEN | G41 -> Cancelled state word: the exact word the key list shows besi | ...ncelled state word and what the cancel button does (security major 3; G41) | the sheet no longer accept
+v22-OPEN | G42 -> HubSpot app secrets: for each of the two private apps (and a | ...o word, no run | | 54 | HubSpot app secrets revoke (security major 5; G42; sheet 8.4) | R8 forbade anyt
+v22-OPEN | G39 -> Start line: the exact line the owner types, with `-I` (which | ...reason and end date) | | 55 | Start line with `-I` (security major 1; G39) | `-I` removes the script fo
+v22-OPEN | G40 -> Times in three separate numbers-message lines (minutes at "T | ... no run | | 56 | Run length against `need_seconds` (security major 2; G40, G10) | the take program need
+v22-OPEN | G10 -> Times by the formula of section 2 on the run date; the take  | ...un | | 56 | Run length against `need_seconds` (security major 2; G40, G10) | the take program needs at 
+v22-OPEN | G32 -> Older key: its exact name and creation date as the key list  | ... message | | 57 | Older key: owner statement added (security major 4; G32) | the message can only say "
+v22-OPEN | G37 -> Key file per run: the path contains the run name; its folder | ... `/home/`; any other path in the message is a mistake in the message (G37) | | 59 | Sheet says "the car
+v22-OPEN | G25 -> Go word: you compare the owner's typed yes word for word wit | ...) | covers vendor behaviour the owner cannot observe | Default: keep; G25 compares it word for word | |
+v22-CHAN | G39 -> Start line: the exact line the owner types, with `-I` (which | .... Bullet length only partly (see above). - Security majors 1-7: gates G39 (-I start line) and G40 (sepa
+v22-CHAN | G40 -> Times in three separate numbers-message lines (minutes at "T | ...tly (see above). - Security majors 1-7: gates G39 (-I start line) and G40 (separate Y, RL, FP lines, RL
+v22-CHAN | G41 -> Cancelled state word: the exact word the key list shows besi | ...tart line) and G40 (separate Y, RL, FP lines, RL >= need_seconds/60); G41 cancelled state word given by
+v22-CHAN | G32 -> Older key: its exact name and creation date as the key list  | ...); G41 cancelled state word given by the lead, no "differs" fallback; G32 aligned with R2(b) with "unkn
+v22-CHAN | G42 -> HubSpot app secrets: for each of the two private apps (and a | ...crets (phrase "HubSpot apps revoked") with a STILL WORKS branch, gate G42; step 7.8 states the end-firs
+v22-CHAN | G34 -> Cancel race: the take program never calls the model after `e | ...; step 7.8 states the end-first decision with the reason (cancel race G34 unknown); section 1 line 7 ma
+v22-CHAN | G16 -> (the numbers-message line "End-date refusal" is written in 1 | ... per key cancelled"; cross-refs and release-note ordering (items 7/8, G16, G37 vs step 9). - Independen
+v22-CHAN | G37 -> Key file per run: the path contains the run name; its folder | ...key cancelled"; cross-refs and release-note ordering (items 7/8, G16, G37 vs step 9). - Independent F1 
+v22-CHAN | G39 -> Start line: the exact line the owner types, with `-I` (which | ...- 50 min). Arithmetic in evidence-v22/arith-v22.txt. - Note v6: gates G39-G42 added; template range G1-
+v22-CHAN | G42 -> HubSpot app secrets: for each of the two private apps (and a | ... min). Arithmetic in evidence-v22/arith-v22.txt. - Note v6: gates G39-G42 added; template range G1-G15,
+v22-CHAN | G1 -> Re-pin: one commit id for the take program and the files it  | ...nce-v22/arith-v22.txt. - Note v6: gates G39-G42 added; template range G1-G15, G17-G24, G31-G42; items 
+v22-CHAN | G15 -> Rehearsal: loopback re-smoke passed; ONE made-up contact in  | ...-v22/arith-v22.txt. - Note v6: gates G39-G42 added; template range G1-G15, G17-G24, G31-G42; items 9 (O
+v22-CHAN | G17 -> Notice and printed result: the real wording of both (copied  | ...arith-v22.txt. - Note v6: gates G39-G42 added; template range G1-G15, G17-G24, G31-G42; items 9 (ORDER 
+v22-CHAN | G24 -> Places and tools: message place; recording tool, whether it  | ...h-v22.txt. - Note v6: gates G39-G42 added; template range G1-G15, G17-G24, G31-G42; items 9 (ORDER 034)
+v22-CHAN | G31 -> Other channel to reach the lead (owner sheet section 1, R8): | ....txt. - Note v6: gates G39-G42 added; template range G1-G15, G17-G24, G31-G42; items 9 (ORDER 034) and 
+v22-CHAN | G42 -> HubSpot app secrets: for each of the two private apps (and a | .... - Note v6: gates G39-G42 added; template range G1-G15, G17-G24, G31-G42; items 9 (ORDER 034) and 10 (

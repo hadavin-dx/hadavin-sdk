@@ -1,0 +1,7 @@
+MATCH spend_nonneg.sql doc= 5d765255bd1c real= 5d765255bd1c | doc says same-as-v16: yes | real same-as-v16: True
+MATCH spend_nonneg_finite.sql doc= bd0409c9bde0 real= bd0409c9bde0 | doc says same-as-v16: yes | real same-as-v16: True
+MATCH spend_nonneg_upgrade.sql doc= fafa71faa08d real= fafa71faa08d | doc says same-as-v16: yes | real same-as-v16: True
+MATCH spend_decrease_log.sql doc= b4dfdf3a62d3 real= b4dfdf3a62d3 | doc says same-as-v16: **no** (v16: | real same-as-v16: False
+MATCH spend_guarded_writes.sql doc= 03380075e512 real= 03380075e512 | doc says same-as-v16: new | real same-as-v16: None
+v16 hash quoted MATCH 4c37aea8c0b3 4c37aea8c0b3
+rows 5 matching 5

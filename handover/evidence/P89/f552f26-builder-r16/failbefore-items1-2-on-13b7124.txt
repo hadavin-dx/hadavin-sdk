@@ -1,0 +1,119 @@
+.FFF                                                                     [100%]
+=================================== FAILURES ===================================
+____________ test_one_ellipsis_costs_no_search_per_candidate_start _____________
+
+    def test_one_ellipsis_costs_no_search_per_candidate_start():
+        secret = "a" * 1999 + "b"
+        line = (
+            "a" * 1998 + "c" + "..."
+        ) * 1000  # every start of a head matches 1998 characters and fails on the last
+        hits = list(mr._DOTS.finditer(line))
+        assert len(hits) == 1000, "the test line does not hold 1,000 ellipses"
+        _CountingText.calls, _CountingText.limit = 0, 4 * len(hits)
+>       spans = mr._fragment_spans(_CountingText(line), secret, hits)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:787: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tools/mutation_runner.py:533: in _fragment_spans
+    i = text.find(head, i + 1, start)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_mutation_runner_keywords.py:771: in find
+    self._count()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa...aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaac...'
+
+    def _count(self) -> None:
+        type(self).calls += 1
+        if type(self).calls > type(self).limit:
+>           raise AssertionError(
+                "the scan makes a search per candidate start, not a pass per ellipsis"
+            )
+E           AssertionError: the scan makes a search per candidate start, not a pass per ellipsis
+
+tests/test_mutation_runner_keywords.py:766: AssertionError
+_____ test_the_work_of_one_ellipsis_is_linear_in_the_length_of_the_secret ______
+
+    def test_the_work_of_one_ellipsis_is_linear_in_the_length_of_the_secret():
+        """Counted, not timed: the executed lines of the two passes (``_prefix_table``, ``_longest_overlap``) stay within a fixed multiple of ``hits x len(secret)``."""
+        secret = "a" * 1999 + "b"
+        line = ("a" * 1998 + "c" + "...") * 100
+        hits = list(mr._DOTS.finditer(line))
+        events = [0]
+    
+        def tracer(frame, event, arg):
+            code = frame.f_code
+            if code.co_filename != mr.__file__ or code.co_name not in (
+                "_prefix_table",
+                "_longest_overlap",
+            ):
+                return None
+    
+            def local(frame, event, arg):
+                if event == "line":
+                    events[0] += 1
+                return local
+    
+            return local
+    
+        before = sys.gettrace()
+        sys.settrace(tracer)
+        try:
+            mr._fragment_spans(line, secret, hits)
+        finally:
+            sys.settrace(before)
+>       assert events[0] > len(hits), (
+            "the passes were not counted (the scan does not use _prefix_table and _longest_overlap)"
+        )
+E       AssertionError: the passes were not counted (the scan does not use _prefix_table and _longest_overlap)
+E       assert 0 > 100
+E        +  where 100 = len([<re.Match object; span=(1999, 1999), match=''>, <re.Match object; span=(4001, 4001), match=''>, <re.Match object; spa...5), match=''>, <re.Match object; span=(10007, 10007), match=''>, <re.Match object; span=(12009, 12009), match=''>, ...])
+
+tests/test_mutation_runner_keywords.py:822: AssertionError
+_ test_the_environment_is_read_once_and_a_change_during_the_run_changes_nothing _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-13794/test_the_environment_is_read_o0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fb8cf2ece20>
+
+    def test_the_environment_is_read_once_and_a_change_during_the_run_changes_nothing(
+        tmp_path, monkeypatch
+    ):
+        old = _fake_dsn()
+        new = _url("svc", "Nw4", "Yv8", rest="other.invalid/y")
+        monkeypatch.setenv(DSN_NAME, old)
+        body = (
+            "import os\nfrom pk.core import go\n\n"
+            f"def test_a():\n    assert go(True) is True, os.environ[{DSN_NAME!r}]\n"
+            f"    assert os.environ[{DSN_NAME!r}] == {old!r}, 'the child got another value than the snapshot'\n"
+        )
+        root = _tree(tmp_path, {CORE_TEST: body})
+        first = Mutant("flip", "src/pk/core.py", "return flag", "return not flag", "AssertionError")
+        second = Mutant("flip2", "src/pk/core.py", "return flag", "return not flag", "AssertionError")
+        lines: dict[str, str] = {}
+    
+        def change_the_variable(_row):
+            monkeypatch.setenv(
+                DSN_NAME, new
+            )  # the caller edits its own environment while the run is going
+    
+        try:
+            rows = _run(
+                root,
+                [first, second],
+                pass_env=(DSN_NAME,),
+                first_lines=lines,
+                on_result=change_the_variable,
+            )
+        except mr.CanaryFailed:
+>           raise AssertionError(
+                "a canary run got the changed value: the environment was read again"
+            ) from None
+E           AssertionError: a canary run got the changed value: the environment was read again
+
+tests/test_mutation_runner_keywords.py:1259: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_mutation_runner_keywords.py::test_one_ellipsis_costs_no_search_per_candidate_start
+FAILED tests/test_mutation_runner_keywords.py::test_the_work_of_one_ellipsis_is_linear_in_the_length_of_the_secret
+FAILED tests/test_mutation_runner_keywords.py::test_the_environment_is_read_once_and_a_change_during_the_run_changes_nothing
+3 failed, 1 passed, 130 deselected in 1.73s

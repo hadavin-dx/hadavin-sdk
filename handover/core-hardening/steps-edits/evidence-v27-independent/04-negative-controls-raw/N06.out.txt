@@ -1,0 +1,9 @@
+desc: source: B fourth alarm removed
+file: OWNER-SHEET-v27-SOURCE.md occurrences replaced: 1
+build rc=0
+check rc=1
+C07 info: OWNER-SHEET-v27-A.md 7473 words (target 6300: NOT met)
+C07 info: OWNER-SHEET-v27-B.md 7501 words (target 6300: NOT met)
+check-v27: 2 failure(s)
+FAIL C138 B lacks 'alarm 4 at 16:00 UTC = 21:30 IST (do 7.11 now, whatever else is open)'
+FAIL C139 B: the cancel-by time is not before the older-key time (read from the text)

@@ -1,0 +1,4 @@
+keycheck {"tried": 200000, "accepted_by_main_rule": 89840, "refused_by_this_code": 0, "examples": []}
+p1 {"seed": 20261111, "cases": 3000, "refused": 0, "a_not_placeholder": 0, "b_runs_readable": 0, "c_checked": 680, "c_readable": 0, "seconds": 26.9}
+p2 {"seed": 8, "cases": 4000, "a_identifier_readable": 867, "b_bare_domain_token": 0, "c_not_idempotent": 0, "seconds": 6.1, "b_examples": []}
+n9 {"seed": 9, "cases": 3000, "readable": 0, "seconds": 2.0}

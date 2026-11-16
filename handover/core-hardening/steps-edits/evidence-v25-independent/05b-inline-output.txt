@@ -1,0 +1,34 @@
+frozen/OWNER-SHEET-v25-A.md inline spans 80 unique 37
+  SYNTAX-FAIL exit 2 | -b@ | bash: -@: invalid option
+Usage:	bash [GNU long option] [option] ...
+	bash [GNU long option] [option]
+  SYNTAX-FAIL exit 2 | -c@ | bash: -@: invalid option
+Usage:	bash [GNU long option] [option] ...
+	bash [GNU long option] [option]
+  SYNTAX-FAIL exit 2 | -rw------- | bash: -w: invalid option
+Usage:	bash [GNU long option] [option] ...
+	bash [GNU long option] [option]
+  SYNTAX-FAIL exit 2 | <...> | bash: -c: line 1: syntax error near unexpected token `newline'
+bash: -c: line 1: `<...>'
+  SYNTAX-FAIL exit 2 | run-<run name> | bash: -c: line 1: syntax error near unexpected token `newline'
+bash: -c: line 1: `run-<run name>'
+  SYNTAX-FAIL exit 2 | take-<run name> | bash: -c: line 1: syntax error near unexpected token `newline'
+bash: -c: line 1: `take-<run name>'
+ unique spans failing bash -n: 6
+frozen/OWNER-SHEET-v25-B.md inline spans 80 unique 37
+  SYNTAX-FAIL exit 2 | -b@ | bash: -@: invalid option
+Usage:	bash [GNU long option] [option] ...
+	bash [GNU long option] [option]
+  SYNTAX-FAIL exit 2 | -c@ | bash: -@: invalid option
+Usage:	bash [GNU long option] [option] ...
+	bash [GNU long option] [option]
+  SYNTAX-FAIL exit 2 | -rw------- | bash: -w: invalid option
+Usage:	bash [GNU long option] [option] ...
+	bash [GNU long option] [option]
+  SYNTAX-FAIL exit 2 | <...> | bash: -c: line 1: syntax error near unexpected token `newline'
+bash: -c: line 1: `<...>'
+  SYNTAX-FAIL exit 2 | run-<run name> | bash: -c: line 1: syntax error near unexpected token `newline'
+bash: -c: line 1: `run-<run name>'
+  SYNTAX-FAIL exit 2 | take-<run name> | bash: -c: line 1: syntax error near unexpected token `newline'
+bash: -c: line 1: `take-<run name>'
+ unique spans failing bash -n: 6

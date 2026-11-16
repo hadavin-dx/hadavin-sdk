@@ -1,0 +1,10 @@
+NEGATIVE N4d-P4bsh-symlink  setup: mv $PS/P-4b.sh $PS/real.sh; ln -s real.sh $PS/P-4b.sh  VARX: 
+##### b27
+STOP LINK: /z/hbroot/_local/scratch/wp6-smoke/pastes/P-4b.sh is a symbolic link; it must be a plain file. Next: write nothing; tell the builder, then aside "/z/hbroot/_local/scratch/wp6-smoke/pastes/P-4b.sh" and make the file again with the step that writes it.
+##### b27 exit=1
+##### b36
+STOP LINK: /z/hbroot/_local/scratch/wp6-smoke/pastes/P-4b.sh is a symbolic link; it must be a plain file. Next: write nothing; tell the builder, then aside "/z/hbroot/_local/scratch/wp6-smoke/pastes/P-4b.sh" and make the file again with the step that writes it.
+##### b36 exit=1
+##### b37
+STOP C9: the P-4b files do not pass C2c. Next: run C2c and fix.
+##### b37 exit=1

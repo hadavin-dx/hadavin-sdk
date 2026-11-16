@@ -1,0 +1,10 @@
+== NEW (0dabf1f + the rev-7 redact.py entries)
+'?password=ab&amp;_id=7 x' -> '?password=<SECRET_1>&amp;_id=7 x' {'<SECRET_1>': 'ab'}
+'?password=ab&_id=7 x' -> '?password=<SECRET_1>&_id=7 x' {'<SECRET_1>': 'ab'}
+'?a=1&amp;password=ab12cd&amp;next=/home x' -> '?a=1&amp;password=<SECRET_1>&amp;next=/home x' {'<SECRET_1>': 'ab12cd'}
+'?password=ab12cd&amp;user=bob x' -> '?password=<SECRET_1>&amp;user=bob x' {'<SECRET_1>': 'ab12cd'}
+== BASE 0dabf1f
+'?password=ab&amp;_id=7 x' -> '?password=<SECRET_1>&amp;_id=7 x' {'<SECRET_1>': 'ab'}
+'?password=ab&_id=7 x' -> '?password=<SECRET_1>&_id=7 x' {'<SECRET_1>': 'ab'}
+'?a=1&amp;password=ab12cd&amp;next=/home x' -> '?a=1&amp;password=<SECRET_1>&amp;next=/home x' {'<SECRET_1>': 'ab12cd'}
+'?password=ab12cd&amp;user=bob x' -> '?password=<SECRET_1>&amp;user=bob x' {'<SECRET_1>': 'ab12cd'}

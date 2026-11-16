@@ -1,0 +1,38 @@
+date 2026-11-16T10:42:45Z
+patch sha256:
+12e4be6f42e2f47ae254276cdcf27b1cb31b50d5fa40a1adcedde4acfeb6b9ce  /home/user/hadavin-sdk/handover/core-hardening/patches-ready/v6-extra/FIX-id-vs-command-withheld.patch
+shipped test file (extracted from the patch) sha256:
+a27dc6e60b4387308c888b458779fbc258a0f9af2fe73c96fb6271475114ccf7  /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f2/shipped/test_g4_ids_not_withheld.py
+
+== OLD CODE: tree p (base + v3, gate.py WITHOUT the fix), shipped test run from outside the tree
+0
+            length = 32 + i % 33
+            token = (head + digest)[:length]
+            prefix = _LOWER_PREFIXES[i % len(_LOWER_PREFIXES)]
+            text = f"{prefix}-{token}"
+>           assert withhold_commands(text) == text, text
+E           AssertionError: run-ec2a675fead68d1983adc49e01ff169f
+E           assert '[command withheld (G4)]' == 'run-ec2a675f...dc49e01ff169f'
+E             
+E             - run-ec2a675fead68d1983adc49e01ff169f
+E             + [command withheld (G4)]
+
+../shipped/test_g4_ids_not_withheld.py:128: AssertionError
+=========================== short test summary info ============================
+FAILED ../shipped/test_g4_ids_not_withheld.py::test_a_known_id_that_reads_like_a_cloud_cmdlet_is_kept
+FAILED ../shipped/test_g4_ids_not_withheld.py::test_no_id_is_withheld_for_any_first_four_hex_digits[run]
+FAILED ../shipped/test_g4_ids_not_withheld.py::test_no_id_is_withheld_for_any_first_four_hex_digits[pln]
+FAILED ../shipped/test_g4_ids_not_withheld.py::test_no_id_is_withheld_for_any_first_four_hex_digits[apr]
+FAILED ../shipped/test_g4_ids_not_withheld.py::test_no_id_is_withheld_for_any_first_four_hex_digits[evt]
+FAILED ../shipped/test_g4_ids_not_withheld.py::test_pseudo_random_ids_and_plan_hashes_are_never_withheld
+FAILED ../shipped/test_g4_ids_not_withheld.py::test_boundaries_of_the_id_exception[pln-ec2a0000000000000000000000000000-True]
+FAILED ../shipped/test_g4_ids_not_withheld.py::test_boundaries_of_the_id_exception[pln-ec2a00000000000000000000000000000-True]
+FAILED ../shipped/test_g4_ids_not_withheld.py::test_boundaries_of_the_id_exception[PLN-EC2ABBBBBBBBBBBBBBBBBBBBBBBBBBBB-True]
+FAILED ../shipped/test_g4_ids_not_withheld.py::test_boundaries_of_the_id_exception[Remove-ec2a0000000000000000000000000000-suffix-True]
+FAILED ../shipped/test_g4_ids_not_withheld.py::test_property_any_long_hex_token_after_a_lowercase_prefix_is_not_withheld
+11 failed, 12 passed in 1.33s
+imported from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f2/p/src/hadavin_sdk/__init__.py
+== NEW CODE shipped test in tree p
+a27dc6e60b4387308c888b458779fbc258a0f9af2fe73c96fb6271475114ccf7  tests/test_g4_ids_not_withheld.py
+.......................                                                  [100%]
+23 passed in 1.27s

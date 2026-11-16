@@ -1,0 +1,34 @@
+== I. extension-owned objects with a default grant to everyone (pg_stat_statements, contrib, installed by the superuser)
+I1 acl of the view after CREATE 1.9: ('{postgres=arwdDxt/postgres,=r/postgres}',)
+I2 after REVOKE ... FROM PUBLIC: ('{postgres=arwdDxt/postgres}',)
+I3 after ALTER EXTENSION UPDATE to 1.10 : ('{postgres=arwdDxt/postgres,=r/postgres}',)
+I4 Q2 rows: 10; rows of extension members: 2
+    {'kind': 'view', 'schema': 'public', 'name': 'pg_stat_statements', 'sub': '', 'owner': 'postgres', 'family_owned': False, 'extension': 'pg_stat_statements', 'extension_owner': 'postgres', 'extension_family_owned': False, 'grantee': None, 'privilege_type': 'SELECT'}
+    {'kind': 'view', 'schema': 'public', 'name': 'pg_stat_statements_info', 'sub': '', 'owner': 'postgres', 'family_owned': False, 'extension': 'pg_stat_statements', 'extension_owner': 'postgres', 'extension_family_owned': False, 'grantee': None, 'privilege_type': 'SELECT'}
+== J. file_fdw foreign table: DML codes granted / not granted
+J foreign table SELECT [granted]                                   | allowed (no error)
+J foreign table INSERT [granted]                                   | 0A000 cannot insert into foreign table "ft"
+J foreign table UPDATE [granted]                                   | 0A000 cannot update foreign table "ft"
+J foreign table DELETE [granted]                                   | 0A000 cannot delete from foreign table "ft"
+J foreign table TRUNCATE [granted]                                 | 0A000 cannot truncate foreign table "ft"
+J foreign table SELECT [none]                                      | 42501 permission denied for foreign table ft
+J foreign table INSERT [none]                                      | 42501 permission denied for foreign table ft
+J foreign table UPDATE [none]                                      | 42501 permission denied for foreign table ft
+J foreign table DELETE [none]                                      | 42501 permission denied for foreign table ft
+J foreign table TRUNCATE [none]                                    | 0A000 cannot truncate foreign table "ft"
+== K. schema USAGE by DROP ... IF EXISTS of a name that does not exist
+K1 no USAGE on other                                               | 42501 permission denied for schema other
+K2 USAGE on other                                                  | allowed (no error)
+K3 USAGE through PUBLIC                                            | allowed (no error)
+== L. pg_database_owner: is there any statement that removes it?
+L REVOKE pg_database_owner FROM r3_mig: no error; notices: ['WARNING: role "r3_mig" has not been granted membership in role "pg_database_owner" by role "postgres"']
+L REVOKE pg_database_owner FROM r3_mig GRANTED BY postgres: no error; notices: ['WARNING: role "r3_mig" has not been granted membership in role "pg_database_owner" by role "postgres"']
+L owner of r3o: ('r3_mig',)
+== M. grant option held from two grantors
+M1 start: {r3_mig=arwdDxt/r3_mig,r3_boss=r*/r3_mig,r3_boss2=r*/r3_mig,r3_boss=r*/r3_boss2,r3_rt=r/r3_boss}
+M2 after superuser REVOKE GRANT OPTION ... CASCADE: {r3_mig=arwdDxt/r3_mig,r3_boss=r/r3_mig,r3_boss2=r*/r3_mig,r3_boss=r*/r3_boss2,r3_rt=r/r3_boss}
+M3 after SET ROLE r3_boss2; same REVOKE: {r3_mig=arwdDxt/r3_mig,r3_boss=r/r3_mig,r3_boss2=r*/r3_mig,r3_boss=r/r3_boss2}
+== N. time-limit order on a role with a saved statement_timeout = 1ms, 100 fresh connections each
+N path first: failures 0 of 100 {}
+N limits first: failures 0 of 100 {}
+N control, no limits: 20 of 20 cancelled

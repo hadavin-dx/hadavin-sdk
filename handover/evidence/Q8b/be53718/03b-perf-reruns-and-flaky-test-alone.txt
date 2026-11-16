@@ -1,0 +1,27 @@
+## perf run 1 17:04:38 load: 4.26 4.55 4.77
+
+T-E8 watchdog: pg_sleep(30) cancelled after 2.01s (watchdog 2.0s; the assertion allows 3.0s: the timer, the cancel round trip to the server and the connection close)
+............................                                             [100%]
+28 passed, 10687 deselected in 55.68s
+exit 0
+## perf run 2 17:05:35 load: 4.27 4.50 4.74
+E        +    where <function is_superlinear at 0x7fa73a4bd620> = timing.is_superlinear
+
+tests/test_migration_numbers.py:836: AssertionError
+1 failed, 27 passed, 10687 deselected in 63.72s (0:01:03)
+exit 1
+## the failing perf test alone x3 17:06:40 load: 4.63 4.56 4.74
+FAILED tests/test_migration_numbers.py::test_the_timing_harness_flags_a_quadratic_stand_in
+1 failed, 132 deselected in 0.64s
+FAILED tests/test_migration_numbers.py::test_the_timing_harness_flags_a_quadratic_stand_in
+1 failed, 132 deselected in 0.67s
+FAILED tests/test_migration_numbers.py::test_the_timing_harness_flags_a_quadratic_stand_in
+1 failed, 132 deselected in 0.70s
+## same test on clean origin/main 2a8c2aac (worktree EV-Q8b-main), PYTHONPATH=its src, load 4.45 4.52 4.72
+.                                                                        [100%]
+1 passed, 132 deselected in 0.68s
+FAILED tests/test_migration_numbers.py::test_the_timing_harness_flags_a_quadratic_stand_in
+1 failed, 132 deselected in 0.67s
+FAILED tests/test_migration_numbers.py::test_the_timing_harness_flags_a_quadratic_stand_in
+1 failed, 132 deselected in 0.64s
+/home/user/build/EV-Q8b-main/src/hadavin_sdk/__init__.py

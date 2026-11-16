@@ -1,0 +1,65 @@
+gates on head 2905c1d, 2026-11-09T06:51Z
+$ uv run --all-extras --group test --group lint ruff check
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+All checks passed!
+exit 0
+
+$ uv run --all-extras --group test --group lint ruff format --check
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+328 files already formatted
+exit 0
+
+(first try used the test+lint groups: bandit is only in the scan group, so it did not start: exit 2, no check ran; redone below as CI does it)
+
+$ uv run --all-extras --group test --group lint mypy
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+src/hadavin_sdk/guard/http.py:163: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+src/hadavin_sdk/guard/http.py:171: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+Success: no issues found in 106 source files
+exit 0
+
+$ uv run --all-extras --group test --group lint python tools/mypy_ratchet.py
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+28 listed, 79 findings, 0 problems
+exit 0
+
+$ env PYTHONPATH=demos/ask-your-data uv run --all-extras --group test --group lint lint-imports
+The core never imports a demo KEPT
+A demo never reaches the executor or any secret holder KEPT
+
+Contracts: 6 kept, 0 broken.
+exit 0
+
+$ uv run --all-extras --group test --group lint deptry .
+Assuming the corresponding module name of package 'zizmor' is 'zizmor'. Install the package or configure a package_module_name_map entry to override this behaviour.
+Scanning 141 files...
+
+[1m[32mSuccess! No dependency issues found.[m
+exit 0
+
+$ uv run --all-extras --group test --group lint vulture
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+exit 0
+
+$ uv run --all-extras --group test --group lint python tools/vulture_whitelist_check.py
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+81 entries, 0 problems
+exit 0
+
+$ bash -c uv export --locked --all-extras --group test --group lint --no-hashes --no-emit-project > /tmp/claude-0/-home-user/39edf7c7-26f2-5129-9a6e-500351b26399/scratchpad/locked.txt 2>/dev/null; uv run --all-extras --group test --group lint python tools/licence_check.py /tmp/claude-0/-home-user/39edf7c7-26f2-5129-9a6e-500351b26399/scratchpad/locked.txt tools/licence_exceptions.txt
+ok        vulture 2.16: The MIT License (MIT); MIT License
+ok        werkzeug 3.1.9: BSD-3-Clause
+ok        xmltodict 1.0.4: MIT
+92 packages read, 6 exceptions used, 0 problems
+exit 0
+
+$ /tmp/claude-0/-home-user/39edf7c7-26f2-5129-9a6e-500351b26399/scratchpad/al/actionlint -color=false -shellcheck=
+exit 0
+
+$ uvx --from bandit==1.9.4 bandit -q -r src demos tools -ll
+[manager]	WARNING	Test in comment: the is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: pinned is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: bytes is not a test name or id, ignoring
+[tester]	WARNING	nosec encountered (B102), but no failed test on file src/hadavin_sdk/tools.py:389
+[tester]	WARNING	nosec encountered (B102), but no failed test on file src/hadavin_sdk/tools.py:389
+exit 0

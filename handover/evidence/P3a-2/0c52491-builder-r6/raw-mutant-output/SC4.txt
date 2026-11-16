@@ -1,0 +1,12 @@
+### tests/test_migration_wiring.py::test_the_membership_message_says_it_may_be_another_session rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+__________ test_the_membership_message_says_it_may_be_another_session __________
+tests/test_migration_wiring.py:991: in test_the_membership_message_says_it_may_be_another_session
+    assert (
+E   AssertionError: assert 'a role membership changed while the file ran (it may be another session; run migrate again)' in 'migration 0001_f1.sql left the database session changed: role role_a has a new member role_b (without grant option)'
+E    +  where 'migration 0001_f1.sql left the database session changed: role role_a has a new member role_b (without grant option)' = str(ConfigError('migration 0001_f1.sql left the database session changed: role role_a has a new member role_b (without grant option)'))
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_the_membership_message_says_it_may_be_another_session
+1 failed in 0.35s
+

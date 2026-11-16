@@ -1,0 +1,32 @@
+01 desk_setting port=huge int(5000 digits) | rc=4 | tb=no | the desk refuses a setting: DESK_PORT is not a number
+02 desk_setting port=0 | rc=0 | tb=no | 0
+03 desk_setting port=70000 | rc=4 | tb=no | the desk refuses a setting: DESK_PORT must be between 0 and 65535
+04 desk_setting port=-1 | rc=4 | tb=no | the desk refuses a setting: DESK_PORT must be between 0 and 65535
+05 desk_setting port=control chars | rc=4 | tb=no | the desk refuses a setting: DESK_PORT is not a number
+06 desk_setting port=nan | rc=4 | tb=no | the desk refuses a setting: DESK_PORT is not a number
+07 desk_setting fakes-port=1e999 | rc=4 | tb=no | the desk refuses a setting: DESK_FAKES_PORT is not a number
+08 desk_setting db-path=huge | rc=0 | tb=no | xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+09 desk_setting unknown word | rc=2 | tb=no | usage: python scripts/desk_setting.py db-path | data-dir | fakes-port | port
+10 desk_setting no args | rc=2 | tb=no | usage: python scripts/desk_setting.py db-path | data-dir | fakes-port | port
+11 feed --index huge | rc=2 | tb=no | refused: --index: must be a whole number
+12 feed --index -5 | rc=2 | tb=no | refused: --index: must be a whole number from 1 to 6
+13 feed --source ctl | rc=2 | tb=no | refused: --source: is not one of the allowed values (see --help)
+14 hubspot_probe --yes-spend-calls huge | rc=2 | tb=no | refused: --yes-spend-calls: must be a whole number
+15 hubspot_probe --dry-run bad-port url | rc=2 | tb=no | planned calls: 7 (hard budget 8 incl. retries and the fallback delete)
+16 hubspot_probe --token-env ctl | rc=0 | tb=no | planned calls: 7 (hard budget 8 incl. retries and the fallback delete)
+17 run_real_check --config NUL-in-path (can't pass NUL; empty) | rc=2 | tb=no | refused: PathRefused: --config: names a folder, not a file
+18 run_real_check --config dir | rc=2 | tb=no | refused: PathRefused: --config: names a folder, not a file
+19 run_real_check --config FIFO | rc=2 | tb=no | refused: NotRegularFile
+20 run_real_check --dry-port-base huge | rc=2 | tb=no | refused: --dry-port-base: must be a whole number
+21 run_live_check key-file FIFO | rc=1 | tb=TRACEBACK | models: 1, calls per model: 36, prices dated 2026-11-04
+22 run_live_check cap=1e999 | rc=2 | tb=no | refused: DESK_LIVE_CAP_RUN_USD is outside the allowed range
+23 run_live_check cap=nan | rc=2 | tb=no | refused: DESK_LIVE_CAP_RUN_USD must be a positive number
+24 run_live_check model ctl | rc=1 | tb=TRACEBACK | models: 1, calls per model: 36, prices dated 2026-11-04
+25 n8n_api key file FIFO | rc=1 | tb=no | cannot read the n8n API key file (NotRegularFile)
+26 n8n_api key file 100MB NUL | rc=1 | tb=no | the n8n API key file must hold one word of printable ASCII (no space, second line or control character) of at 
+27 scrub_n8n_export FIFO input | rc=2 | tb=no | usage: python -m tools.scrub_n8n_export in.json out.json
+28 scrub_n8n_export 100MB NUL | rc=2 | tb=no | usage: python -m tools.scrub_n8n_export in.json out.json
+27b scrub_n8n_export FIFO input | rc=2 | tb=no | refused: in.json: cannot be read as a JSON workflow file
+28b scrub_n8n_export 100MB NUL | rc=2 | tb=no | refused: in.json: cannot be read as a JSON workflow file
+29 scrub_n8n_export output=FIFO | rc=2 | tb=no | refused: in.json: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)
+30 scrub_n8n_export input dir | rc=2 | tb=no | refused: in.json: path is outside the allowed folders (add a folder with LEAD_DESK_PATH_ROOTS)

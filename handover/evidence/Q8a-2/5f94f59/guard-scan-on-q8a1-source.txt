@@ -1,0 +1,13 @@
+guard file: /home/user/build/EV-Q8a2r2-q8a1/tests/test_lockin_guard.py
+hadavin_sdk: /home/user/build/EV-Q8a2r2-q8a1/src/hadavin_sdk/__init__.py
+SRC scanned: /home/user/build/EV-Q8a2r2-q8a1/src
+literal_problems(SRC, VENDOR_MODULES, LITERAL_OK) -> 1 line(s): ["hadavin_sdk.approvals.receiver:18: vendor word in a path or key in '/slack/actions'"]
+    hadavin_sdk.approvals.receiver:18: vendor word in a path or key in '/slack/actions'
+identifier_problems(SRC, VENDOR_MODULES, IDENTIFIER_OK, TABLE_VENDOR_NAMES) -> 5 line(s): ["hadavin_sdk.approvals.gate:102: vendor word 'slack' in the name '_SLACK'", "hadavin_sdk.approvals.receiver:22: vendor word 'slack' in the name 'handle_slack_action'", "hadavin_sdk.defaults:132: vendor word 'slack' in the name 'K8S_LOG_SLACK_BYTES'", "hadavin_sdk.llm.openai_compat:35: vendor word 'openai' in the name '_OPENAI_ALIAS'", "hadavin_sdk.runtime.tick:44: vendor word 'slack' in the name 'TICK_SLACK_S'"]
+    hadavin_sdk.approvals.gate:102: vendor word 'slack' in the name '_SLACK'
+    hadavin_sdk.approvals.receiver:22: vendor word 'slack' in the name 'handle_slack_action'
+    hadavin_sdk.defaults:132: vendor word 'slack' in the name 'K8S_LOG_SLACK_BYTES'
+    hadavin_sdk.llm.openai_compat:35: vendor word 'openai' in the name '_OPENAI_ALIAS'
+    hadavin_sdk.runtime.tick:44: vendor word 'slack' in the name 'TICK_SLACK_S'
+VENDOR_WORDS: ('slack', 'teams', 'aws', 'azure', 'gcp', 'github', 'gitlab', 'bedrock', 'anthropic', 'vertex', 'gemini', 'openai', 'kms', 's3', 'foundry', 'google', 'gcs', 'gcloud', 'amazon', 'microsoft', 'alibaba', 'oracle', 'digitalocean', 'openstack', 'cloudwatch', 'pagerduty')
+TABLE_VENDOR_NAMES: ['AnthropicSettings', 'AwsKmsSettings', 'AwsSecretsManagerSettings', 'AzureImmutableBlobSettings', 'AzureKeyVaultKeySettings', 'AzureKeyVaultSettings', 'BedrockSettings', 'GcpKmsSettings', 'GcpSecretManagerSettings', 'GeminiSettings', 'S3ObjectLockSettings', 'SlackSettings', '_anthropic_hosts', '_aws', '_aws_host', '_s3_anchor_hosts', '_vertex_host']

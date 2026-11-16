@@ -1,0 +1,11 @@
+FAIL I02 OWNER-APPENDIX-v29-A.md:10 UTC time without IST pair: "te: after 18:30 UTC your phone's IST date is already the ne"
+FAIL I02 OWNER-APPENDIX-v29-B.md:10 UTC time without IST pair: "te: after 18:30 UTC your phone's IST date is already the ne"
+FAIL I02 v29-OPEN-FOR-LEAD.md:106 UTC time without IST pair: 'est start 11:30 UTC): 60 minutes cover the checks, the key '
+FAIL I02 v29-OPEN-FOR-LEAD.md:107 UTC time without IST pair: "ula gives 17:39 UTC and the program's refusal limit is 18:1"
+FAIL I02 v29-OPEN-FOR-LEAD.md:109 UTC time without IST pair: " Z) gives 17:39 UTC; the program's refusal limit is 18:14:4"
+FAIL I02 v29-OPEN-FOR-LEAD.md:26 UTC time without IST pair: ' Nov 2026 15:00 UTC | the v18 text said "no source"; the ev'
+FAIL I06 v29-OPEN-FOR-LEAD.md misspelled/odd placeholder '[LEAD FILLS before the message ...]'
+FAIL I06 v29-OPEN-FOR-LEAD.md misspelled/odd placeholder '[OWNER FILLS ...]'
+FAIL I06 v29-OPEN-FOR-LEAD.md odd placeholder '[LEAD FILLS before the message ...]'
+FAIL I06 v29-OPEN-FOR-LEAD.md odd placeholder '[OWNER FILLS ...]'
+indep_check: 10 failure line(s)

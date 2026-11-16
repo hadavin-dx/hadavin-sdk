@@ -1,0 +1,13 @@
+..FF..                                                                   [100%]
+=================================== FAILURES ===================================
+E   AssertionError: the decision text is not in the CHANGELOG
+    assert 'core has no shared helper' in '# Changelog\n\n## Unreleased\n\n### Upgrade steps\n- **Breaking: the first stage is now called `demo`; `environment: ...495991b7852b855`\n  - `tools/mutation_runner.py`: `489517fb224f0598e14244ded1b37fe2a68be69e2396e56e450be0d8b1c0a1a7`\n'
+/home/user/build/ER-pdbanner12-06ed/tests/test_changelog_numbers.py:72: AssertionError: the decision text is not in the CHANGELOG
+E   AssertionError: assert None
+     +  where None = <function search at 0x7f537cfbe2a0>('\\b4531 on Python 3\\.12, 4627 on Python 3\\.14 \\(from the formula; CI runs 3\\.12 and 3\\.13\\)', '# Changelog\n\n## Unreleased\n\n### Upgrade steps\n- **Breaking: the first stage is now called `demo`; `environment: ...495991b7852b855`\n  - `tools/mutation_runner.py`: `489517fb224f0598e14244ded1b37fe2a68be69e2396e56e450be0d8b1c0a1a7`\n')
+     +    where <function search at 0x7f537cfbe2a0> = re.search
+/home/user/build/ER-pdbanner12-06ed/tests/test_changelog_numbers.py:87: AssertionError: assert None
+=========================== short test summary info ============================
+FAILED tests/test_changelog_numbers.py::test_the_three_equal_listings_and_the_one_superset_are_the_files_the_changelog_names
+FAILED tests/test_changelog_numbers.py::test_the_changelog_pyc_range_is_the_rule_of_the_code_with_the_numbers_of_its_two_interpreters
+2 failed, 4 passed in 0.05s

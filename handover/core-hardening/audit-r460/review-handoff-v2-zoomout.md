@@ -1,0 +1,15 @@
+# Hand-off v2 zoom-out review (egm-zoom-out, read-only, condensed copy), 2026-11-16
+Verdict: fix first, then proceed. 0 Blockers, 10 Majors, 7 nits. Not run: tests, code; did not open gate.py beyond a grep, redact.py, store/*, agent_loop.py, adapters, the five audits.
+## Majors
+- M1 D1 makes spend_window_end mandatory in every stage incl. prod: a self-inflicted outage on a date; the rule is about the demo test-call window. Safer: require in demo/pilot, prod only on explicit opt-out; lead alone confirming is too weak.
+- M2 D6 renaming stage dev to demo breaks published config `environment: dev|pilot|prod` (CHANGELOG:198); demo repos and client configs not checked; only 2 src lines (config.py:317, :366). Option: keep dev and key rules off != "prod", or accept dev as a deprecated alias one release.
+- M3 D11/PR-M5 flag `self_hosted_zero_cost` is self-attested (openai_compat fronts paid vendors) and unused: no zero-price route exists. Refuse zero prices outright as k1b/replay.py:85-90 does (it exempts llm_kind fake; v2 text dropped that exemption). Defer flag and M5 until a client has a self-hosted route.
+- M4 M2/M3 split builds two ledger APIs (book_cost vs reserve/settle) on the same lines (agent_loop.py:424-441). Merge, or state book_cost is deleted in M3. on_attempt retry hook depends on unread adapter bodies: gate it separately.
+- M5 D5 Decimal vs integer money (CLAUDE.md says integers) must be settled before PR-M2, not "when asked".
+- M6 Crash between reserve and settle leaves an over-count; labelled "design choice" which is not an allowed exception (fix-dont-defer). Add reserve_id row or settle-on-start sweep, or record as explicit owner exception.
+- M7 settle_spend raises ValueError after the provider already billed: clamp and log instead; store the day key in the Reservation (midnight/timezone rollover).
+- M8 G4 is an open-ended denylist over five PRs; class-level-fixes asks for an allowlist/grammar at the choke point; evaluate "show approver only known read-only or prose shapes, withhold the rest". gate.py was never opened beyond lines 1-12 and 366-377.
+- M9 Wall-hit notice has no dedupe (daily/monthly stops today use _to with no card, agent_loop.py:240-243): one card per blocked run; also counts toward false-abstain rate; no ceiling set.
+- M10 Reserve sizing (3 chars/token + max_tokens*price) can refuse legitimate calls; add a dry run against all fixture and demo configs to E0.
+## Nits
+N1 almost every PR tagged uncapped (review-loop-speed-rules cause 1); cap PR-G1, E3, M4. N2 merge PR-R1+R3, D2 into D3, E1 into E3; M4 timezone into M1 or defer; D6 identity split is a design item. N3 PR-1 pass-through seam with hooks for optional PR-2b. N4 "Every reviewer Blocker and Major is answered" over-claims: use "specified, unverified" for anything on unread code (READY 6, 9, 2). N5 D4 needs a hard deadline before the first pilot config. N6 move the unverified-arithmetic caveat to section 0. N7 D12 mid-month timezone switch can reset or double-count a month.

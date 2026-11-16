@@ -1,0 +1,159 @@
+diff -ruN a/CONTRACT-DELTA.md b/CONTRACT-DELTA.md
+--- a/CONTRACT-DELTA.md	2026-11-09 19:41:15.559568537 +0000
++++ b/CONTRACT-DELTA.md	2026-11-09 19:41:15.579687868 +0000
+@@ -97,3 +97,5 @@
+ ## Tests the lead must change (hand-built rows need the new mark)
+ - tests/test_hardening_cloud.py::test_f4_startup_reads_capability_again and tests/test_hardening_cloud_b.py::test_f3_reaper_makes_stuck_sending_u_02, test_g8_earlier_unclear_send_is_never_r, test_g8_no_requeue_when_mode_unknown, test_g8_startup_waits_when_mode_unknown build a "killed mid-send" row by hand (`state='sending'`, `crm_done=1` or nothing). Such a row now needs `send_started=1` (and `crm_done=1`) to count as "may have sent"; without the mark it is a row that never sent and is put back to `pending` on any sender. The setup SQL is the only change.
+ - tests/test_flow.py `EXPECT[("D1","blind")]` is now `(1, "sent", None)` (a kill before the send is put back and sent); changed in fix 7.
++
++- Round S1e (AI step after the claim): `run_followup` no longer asks the AI step before the claim. Before, the row was still `pending` while a slow model call ran, so the reaper (it drives `pending` rows older than the 2 s grace) started a second drive and the model was asked twice. Now the claim comes first and the AI step runs in `_after_claim`, so one claimed row means one model call. Contract line 21, rule (4), is replaced by: "Only the thread that won the claim asks the AI step, the CRM or the sender ... A failed AI step after the claim is one automatic try (`internal:<class>`, back to `pending`, `failed` at the cap)." Same effect as before for a failing AI step: one automatic try, row `pending`, `last_error` `internal:<class>`, `failed` at 5 tries; the difference is that `attempts` (the claim count) now also counts that try, as the entry above already says it does.
+diff -ruN a/contract.md b/contract.md
+--- a/contract.md	2026-11-09 19:41:15.559355968 +0000
++++ b/contract.md	2026-11-09 19:41:15.579364814 +0000
+@@ -19,7 +19,7 @@
+ 
+ State once: only the POST /leads rows carry `receipt_id`. The 409 and `bad_decision` rows never carry it. A 503 from a lock wait, and 500, carry the receipt number, or `null` if the receipt was not yet written. 400 `bad_envelope` and 413 `too_large` carry `null`.
+ 
+-Input rules (each has a test in `tests/test_hardening.py`): (1) JSON nested so deeply that the parser gives up is a 400 `bad_envelope` (counted in `rejected_envelopes`), not a 500; for `/resolve` it is a 400 `bad_decision`. (2) The stored copy of the payload escapes every non-ASCII character (`ensure_ascii`), so a JSON escape for half a character (a lone surrogate) is stored as text; a name, email, phone, company or message that contains one cannot be stored and gives verdict `review` with reason `bad_field:<field>`. (3) An email whose lower-case form is longer than 254 characters (some letters become two when lower-cased) gives verdict `review`, reason `invalid_email`, not a 500. (4) The AI step can run twice when two requests drive the same new lead at the same moment (a cost; the label stored is the first one written; only the thread that won the claim asks the CRM or sends, so there is no second email from this; a CRM row can be put again only after a leftover intent mark, and then only on a keyed CRM, see the CRM row above). (5) A follow-up stuck in `sending` is put back by the reaper after send timeout + 3 busy waits without a restart (keyed -> `pending`, blind -> `unknown`); a restart does the same at once. Nothing is decided while the sender's capability cannot be read.
++Input rules (each has a test in `tests/test_hardening.py`): (1) JSON nested so deeply that the parser gives up is a 400 `bad_envelope` (counted in `rejected_envelopes`), not a 500; for `/resolve` it is a 400 `bad_decision`. (2) The stored copy of the payload escapes every non-ASCII character (`ensure_ascii`), so a JSON escape for half a character (a lone surrogate) is stored as text; a name, email, phone, company or message that contains one cannot be stored and gives verdict `review` with reason `bad_field:<field>`. (3) An email whose lower-case form is longer than 254 characters (some letters become two when lower-cased) gives verdict `review`, reason `invalid_email`, not a 500. (4) Only the thread that won the claim asks the AI step, the CRM or the sender, so two requests that drive the same new lead at the same moment, or a request and the reaper, ask the AI step once (the claim comes first; the reaper only drives `pending` rows, and a claimed row is `sending`); a CRM row can be put again only after a leftover intent mark, and then only on a keyed CRM, see the CRM row above. A failed AI step after the claim is one automatic try (`internal:<class>`, back to `pending`, `failed` at the cap). (5) A follow-up stuck in `sending` is put back by the reaper after send timeout + 3 busy waits without a restart (keyed -> `pending`, blind -> `unknown`); a restart does the same at once. Nothing is decided while the sender's capability cannot be read.
+ 
+ ## Resolve check order (`POST /review/{item_id}/resolve`)
+ 1. Body parse layer: `server.py` parses the JSON; `Desk.resolve(item_id, decision)` receives an already parsed `decision`. A body that is not JSON, or has no `decision`, or a `decision` that is not a string: 400 `{"error":"bad_decision"}` with NO item lookup (so even an unknown item id gives 400 here).
+diff -ruN a/src/lead_desk/desk.py b/src/lead_desk/desk.py
+--- a/src/lead_desk/desk.py	2026-11-09 19:41:15.560576302 +0000
++++ b/src/lead_desk/desk.py	2026-11-09 19:41:15.582086462 +0000
+@@ -1005,13 +1005,14 @@
+             return False
+ 
+     def run_followup(self, lead_id: str) -> None:
+-        """Follow-up steps 1-5 for one lead, as a fresh drive: step 1 (the label), then the claim (step 3) as
++        """Follow-up steps 1-5 for one lead, as a fresh drive: the claim (step 3) as
+         `self._claim(None, lead_id, ("pending",))` (an automatic driver never takes a `failed` row) and, only if the
+-        claim returned True, steps 2, 4 and 5 (`_after_claim`: the CRM row once, then `_send_claimed`). A lost claim
+-        (False) returns quietly. Catches Exception, logs the class name only; an exception in step 1 counts as one
+-        automatic try (`_defer_pending`: back to waiting with a backoff, `failed` only at the cap), except a database
+-        that stayed locked: the follow-up then stays pending and the reaper drives it later. A follow-up that is not
+-        `pending` is left alone (nothing to drive). D1 and D2 live in `_send_claimed`."""
++        claim returned True, steps 1, 2, 4 and 5 (`_after_claim`: the label, the CRM row once, then `_send_claimed`).
++        The AI step is asked only by the thread that won the claim, never before it. A lost claim (False) returns
++        quietly. Catches Exception, logs the class name only; an exception in step 1 counts as one automatic try
++        (`_abort_unsent`: back to waiting with a backoff, `failed` only at the cap), except a database that stayed
++        locked: the try is given back and the reaper drives it later. A follow-up that is not `pending` is left
++        alone (nothing to drive). D1 and D2 live in `_send_claimed`."""
+         self._used = True
+         # With the reaper running, a drive that finds no place leaves its row to the reaper. Without a reaper nobody
+         # else would drive it, so it waits for a place (every place is held by a drive that ends on its own timeouts).
+@@ -1028,20 +1029,11 @@
+ 
+     def _run_followup(self, lead_id: str) -> None:
+         try:
+-            state0 = (
+-                self._conn()
+-                .execute("SELECT state, auto_attempts FROM followups WHERE lead_id=?", (lead_id,))
+-                .fetchone()
+-            )
++            state0 = self._conn().execute("SELECT state FROM followups WHERE lead_id=?", (lead_id,)).fetchone()
+             if state0 is None or state0[0] != "pending":
+                 return
+-            try:
+-                self._label_step(lead_id)
+-            except Exception as e:
+-                log.warning("follow-up step 1 failed: %s", type(e).__name__)
+-                if not db.is_busy(e):
+-                    self._defer_pending(lead_id, f"internal:{type(e).__name__}", int(state0[1]))
+-                return
++            # The AI step runs only after the claim (in `_after_claim`): while the row is still `pending` the reaper
++            # would treat a slow drive as absent and start a second one, and the model would be asked twice.
+             if self._claim(None, lead_id, ("pending",)):
+                 self._after_claim(lead_id, auto=True)
+         except Exception as e:
+diff -ruN a/tests/test_ai_after_claim.py b/tests/test_ai_after_claim.py
+--- a/tests/test_ai_after_claim.py	1970-01-01 00:00:00.000000000 +0000
++++ b/tests/test_ai_after_claim.py	2026-11-09 19:41:15.583498222 +0000
+@@ -0,0 +1,86 @@
++"""The AI step is asked only after the claim: one claimed row, one model call. Made-up data only."""
++
++from __future__ import annotations
++
++import threading
++from typing import Any
++
++from support import lead, run_threads
++
++from lead_desk.gate import PENDING_GRACE_SECONDS, SEND_MAX_ATTEMPTS
++
++
++class SlowQualifier:
++    """Counts calls, signals the first, then waits (up to `hold` seconds) before answering."""
++
++    mode = "recorded"
++
++    def __init__(self, hold: float, fail: bool = False) -> None:
++        self.calls = 0
++        self.hold = hold
++        self.fail = fail
++        self.entered = threading.Event()
++        self.release = threading.Event()
++        self._lock = threading.Lock()
++
++    def qualify(self, lead_id: str, email_key: str) -> Any:
++        with self._lock:
++            self.calls += 1
++        self.entered.set()
++        self.release.wait(timeout=self.hold)
++        if self.fail:
++            raise RuntimeError("model down")
++        return "warm"
++
++
++def new_lead(rig: Any, ref: str) -> str:
++    reply = rig.desk.process("form", ref, lead())
++    assert reply.status == 201, reply.body
++    return str(reply.body["lead_id"])
++
++
++def test_reaper_does_not_ask_model_again(env: Any) -> None:
++    rig = env.rig()
++    q = SlowQualifier(hold=3.0)
++    rig.desk.qualifier = q
++    lid = new_lead(rig, "a1")
++    drive = threading.Thread(target=rig.desk.run_followup, args=(lid,))
++    drive.start()
++    assert q.entered.wait(timeout=10)
++    rig.clock.advance(PENDING_GRACE_SECONDS + 1)  # past the grace: the reaper treats a pending row as due
++    rig.desk.reap_once()
++    q.release.set()
++    drive.join(timeout=30)
++    assert q.calls == 1
++    assert rig.state(lid) == ("sent", None)
++
++
++def test_two_drives_ask_model_once(env: Any) -> None:
++    rig = env.rig()
++    q = SlowQualifier(hold=0.5)
++    rig.desk.qualifier = q
++    lid = new_lead(rig, "b1")
++    out = run_threads([lambda: rig.desk.run_followup(lid), lambda: rig.desk.run_followup(lid)])
++    assert all(r is None for r in out), out
++    assert q.calls == 1
++    assert rig.state(lid) == ("sent", None)
++
++
++def test_model_error_is_one_try_each(env: Any) -> None:
++    rig = env.rig()
++    q = SlowQualifier(hold=0.0, fail=True)
++    rig.desk.qualifier = q
++    lid = new_lead(rig, "c1")
++    for n in range(1, SEND_MAX_ATTEMPTS + 1):
++        if n == 1:
++            rig.desk.run_followup(lid)
++        else:
++            rig.clock.advance(20)  # longer than the longest wait between tries
++            rig.desk.reap_once()
++        tries, claims = rig.query("SELECT auto_attempts, attempts FROM followups")[0]
++        assert (tries, claims, q.calls) == (n, n, n)
++        want = "failed" if n == SEND_MAX_ATTEMPTS else "pending"
++        assert rig.state(lid) == (want, "internal:RuntimeError")
++    rig.clock.advance(20)
++    rig.desk.reap_once()
++    assert q.calls == SEND_MAX_ATTEMPTS  # a failed row is not driven again

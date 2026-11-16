@@ -1,0 +1,22 @@
+./tests/test_repo_rules.py:23:    out = run_fixed(
+./tests/test_mode_banner.py:432:    out = run_fixed(
+./tests/test_mode_banner.py:2430:    out = run_fixed(
+./tests/test_demo_only_guard.py:58:        run_fixed(["git", "init", "-q", str(tmp_path)], check=True)
+./tests/test_demo_only_guard.py:64:    run_fixed(["git", "-C", str(repo), "add", "-A"], check=True)
+./tests/test_demo_only_guard.py:499:    done = run_fixed(
+./tests/test_demo_only_guard.py:581:    run_fixed(["git", "-C", str(repo), "add", "src/pkg/added.py"], check=True)
+./tests/test_demo_only_guard.py:675:    run_fixed(
+./tests/test_demo_only_guard.py:794:    run_fixed(
+./tests/test_demo_only_guard.py:1225:            run_fixed(["chown", "-R", "65534:65534", str(base)], check=True)
+./tests/test_demo_only_guard.py:1227:        done = run_fixed(
+./tests/test_demo_only_guard.py:1237:        run_fixed(["chmod", "-R", "u+rwx", str(base)], check=False)
+./tests/test_demo_only_guard.py:2643:            fixed_run.run_fixed([sys.executable, "-c", "pass"], check=True, **kwargs)
+./tests/test_demo_only_guard.py:2671:            fixed_run.run_fixed(bad, check=True)
+./tests/test_demo_only_guard.py:2677:            fixed_run.run_fixed(bad, check=True)
+./tests/test_demo_only_guard.py:2687:    done = fixed_run.run_fixed([sys.executable, "-c", "print(7)"], check=True, capture_output=True)
+./tests/test_demo_only_guard.py:2691:        fixed_run.run_fixed([missing], check=True)
+./tools/scan_repo.py:92:    listing = run_fixed(cmd, capture_output=True, check=True).stdout
+./tools/demo_only_guard.py:479:    done = run_fixed(
+./tools/demo_only_guard.py:498:    done = run_fixed(
+./tools/demo_only_guard.py:1147:            checked = run_fixed(
+./tools/demo_only_guard.py:1158:        return run_fixed(

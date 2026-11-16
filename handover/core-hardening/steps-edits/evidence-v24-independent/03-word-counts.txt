@@ -1,0 +1,2 @@
+OWNER-SHEET-v24-A.md wc-w=6489 py-split=6489 regex-nonspace-tokens 6489 chars 35584  awk=6489
+OWNER-SHEET-v24-B.md wc-w=6445 py-split=6445 regex-nonspace-tokens 6445 chars 35375  awk=6445

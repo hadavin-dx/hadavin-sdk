@@ -1,0 +1,8 @@
+desc: source: wait hard-coded to 10 seconds
+build rc=0
+check rc=1
+C07 info: OWNER-SHEET-v28-A.md 6049, OWNER-CARD-v28-A.md 1372, OWNER-NUMBERS-v28-A.md 844, OWNER-FILM-v28.md 285 total 8550
+C07 info: OWNER-SHEET-v28-B.md 6028, OWNER-CARD-v28-B.md 1353, OWNER-NUMBERS-v28-B.md 859, OWNER-FILM-v28.md 285 total 8525
+check-v28: 2 failure(s)
+FAIL C140 A lacks 'Wait at least the "Minimum think time" of the message (the program ref'
+FAIL C140 B lacks 'Wait at least the "Minimum think time" of the message (the program ref'

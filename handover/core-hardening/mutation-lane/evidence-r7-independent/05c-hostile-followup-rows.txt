@@ -1,0 +1,4 @@
+ROW|T-rm then --restore|run exit=3 | restore exit=0 | file regular+original back: YES | state: [] | msg: test group already gone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r7ind/hostile/h2/tmpstate/hadavin-mut
+ROW|T-ln then --restore|run exit=3 | restore exit=3 | file regular+original back: symlink | state: [82035c9968d52e40.backup 82035c9968d52e40.planted.json ] | msg: RESTORE FAILED: cannot write src/mod.py back: marker file: 'src/mod.py' passes through a symbolic link (mod.py): refused; the mutant may still be planted; marke
+ROW|R2 then --restore (symlink still there)|restore exit=3 | real file text back: NO | msg: RESTORE FAILED: cannot write src/mod.py back: marker file: 'src/mod.py' passes through a symbolic link (src): refused; the mutant may still be planted; marker a
+ROW|R2 then rename back and --restore|original text back: YES | state: []

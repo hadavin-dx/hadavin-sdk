@@ -1,0 +1,8 @@
+desc: source: wrong weekday
+build rc=0
+check rc=1
+C07 info: OWNER-SHEET-v28-A.md 6054, OWNER-CARD-v28-A.md 1372, OWNER-NUMBERS-v28-A.md 844, OWNER-FILM-v28.md 285 total 8555
+C07 info: OWNER-SHEET-v28-B.md 6033, OWNER-CARD-v28-B.md 1353, OWNER-NUMBERS-v28-B.md 859, OWNER-FILM-v28.md 285 total 8530
+check-v28: 2 failure(s)
+FAIL C04 OWNER-SHEET-v28-A.md wrong weekday Tue 16 Nov 2026
+FAIL C04 OWNER-SHEET-v28-B.md wrong weekday Tue 16 Nov 2026

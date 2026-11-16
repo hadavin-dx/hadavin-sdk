@@ -1,0 +1,14 @@
+INFO prose UTC time not directly paired (IST elsewhere on line):  "Mon 23 Nov before 18:29 UTC", has no IS
+INFO 18:29 UTC quoted without pair on its line
+INFO 23:59 IST quoted, partner elsewhere on line
+INFO 23:59 IST quoted, partner elsewhere on line
+INFO time pairs in NEW blocks: 23; keyword-context checks: 35
+INFO E-01 owner NEW text has UNVERIFIED(info): e end of this file under UNVERIFIED. In the edited
+INFO E-12 owner NEW text has UNVERIFIED(info): t read from the program (UNVERIFIED): if the progr
+INFO E-16 owner NEW text has UNVERIFIED(info): ther a volume is used is UNVERIFIED. What the assi
+INFO E-24 owner NEW text has UNVERIFIED(info): ## UNVERIFIED list (17 live 
+INFO E-48 owner NEW text has UNVERIFIED(info): s revoked is not proven (UNVERIFIED).    The scree
+INFO E-52 owner NEW text has UNVERIFIED(info): it is really used for is UNVERIFIED. What would se
+INFO banned scan: 10 entries, 0 found in this file
+rows=56 old_blocks=57 apply_now=44 hold=12 hold_blocks=13 fences=228
+RESULT PASS 0

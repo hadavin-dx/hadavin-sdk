@@ -1,0 +1,30 @@
+v01-no-pre-stage bash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1351 failed=21 (the made-up input and output files w | first: FAIL (secret still visible): wrapped assignment, bracket opened and closed (first 6 characters)
+v02-pwcmds-list-unused bash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1342 failed=30 (the made-up input and output files w | first: FAIL (secret still visible): mysql (first 6 characters)
+v03-nonascii-noop bash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1366 failed=6 (the made-up input and output files we | first: FAIL (secret still visible): zero-width space inside a name (assignment) (first 6 characters)
+v04-ml-start-off bash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1358 failed=14 (the made-up input and output files w | first: FAIL (secret still visible): wrapped assignment, bracket opened and closed (first 6 characters)
+v05-length-guard-off bash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1371 failed=1 (the made-up input and output files we | first: FAIL (evidence was hidden): a 30000-character line carries a cut notice with its true length
+v06-url-userinfo-off bash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1327 failed=45 (the made-up input and output files w | first: FAIL (secret still visible): at6 (first 6 characters)
+v07-canary-count-off-by-one bash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1372 failed=0 (the made-up input and output files we | first: 
+v08-selftest-count-off-by-one bash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1398 failed=0 (the made-up input and output files we | first: 
+v10-bearer-rule-off bash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1357 failed=15 (the made-up input and output files w | first: FAIL (secret still visible): bare Bearer value
+v11-jwt-rule-off bash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1369 failed=3 (the made-up input and output files we | first: FAIL (secret still visible): JWT-shaped value
+v15-dotted-camel-rule-reverted bash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1371 failed=1 (the made-up input and output files we | first: FAIL (evidence was hidden): dotted CamelCase name stays
+v16-ml-continue-off bash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1360 failed=12 (the made-up input and output files w | first: FAIL (secret still visible): wrapped assignment, bracket opened and closed (first 6 characters)
+v09-signal-kids-not-killed bash: rc=0 folders_left_in_private_tmp=0 SELF-TEST: passed=1398 failed=0 (the made-up input and output files we | first: 
+v12-recount-always-ok bash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1396 failed=2 (the made-up input and output files we | first: FAIL (machinery): a judge accepted a result with the wrong number of cases
+v13-watchdog-off bash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1397 failed=1 (the made-up input and output files we | first: FAIL (machinery): the time limit did not end a stuck run cleanly (exit=0, programs left=0, folders left=1)
+v14-premain-not-background bash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1397 failed=1 (the made-up input and output files we | first: FAIL (machinery): signal TERM in the pre-main phase (exit=143, seconds=30, programs left=0)
+v17-escaped-quote-string-rule-off bash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1360 failed=12 (the made-up input and output files w | first: FAIL (secret still visible): escaped quotes: name and string value (first 6 characters)
+v18-unicode-escape-key-rule-off bash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1366 failed=6 (the made-up input and output files we | first: FAIL (secret still visible): JSON key written with a unicode escape (first 6 characters)
+v19-shape-rule-separators-off bash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1354 failed=18 (the made-up input and output files w | first: FAIL (secret still visible): password flag after && (first 6 characters)
+v20-glued-names-off bash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1354 failed=18 (the made-up input and output files w | first: FAIL (secret still visible): glued name DBPASS (first 6 characters)
+v21-git-safety-settings-off bash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1397 failed=1 (the made-up input and output files we | first: FAIL (machinery): a git call is missing one of the safety settings (log.showSignature, gpg.program, core.hooks
+v22-relative-tmpdir-allowed bash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1397 failed=1 (the made-up input and output files we | first: FAIL (machinery): a relative TMPDIR must be refused (exit=2)
+v23-xml-text-rule-off bash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1366 failed=6 (the made-up input and output files we | first: FAIL (secret still visible): XML element text (first 6 characters)
+v24-userinfo-no-scheme-rule-off bash: PLANT-FAILED (text to damage not found)
+v25-identified-by-rule-off bash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1366 failed=6 (the made-up input and output files we | first: FAIL (secret still visible): SQL IDENTIFIED BY (first 6 characters)
+v26-colon-equals-rule-off bash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1366 failed=6 (the made-up input and output files we | first: FAIL (secret still visible): name := value inside braces (first 6 characters)
+v27-requirepass-line-rule-off bash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1360 failed=12 (the made-up input and output files w | first: FAIL (secret still visible): config line requirepass (first 6 characters)
+v28-second-literal-rule-off bash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1366 failed=6 (the made-up input and output files we | first: FAIL (secret still visible): second text after a hidden one (first 6 characters)
+v29-escaped-slash-userinfo-off bash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1366 failed=6 (the made-up input and output files we | first: FAIL (secret still visible): web address with escaped slashes (first 6 characters)
+run exit 0

@@ -1,0 +1,44 @@
+..............F
+=================================== FAILURES ===================================
+_ test_the_real_script_refuses_a_pipe_for_any_file_setting_without_hanging[DESK_HUBSPOT_KEY_FILE] _
+
+tmp_path = PosixPath('/home/user/build/rr6/tmp-B2/pytest-of-unknown/pytest-39/test_the_real_script_refuses_a0')
+capsys = <_pytest.capture.CaptureFixture object at 0x7fef2e57c620>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fef2ef4d0d0>
+setting = 'DESK_HUBSPOT_KEY_FILE'
+
+    @FIFO_SKIP
+    @pytest.mark.parametrize(
+        "setting",
+        [
+            "DESK_HUBSPOT_KEY_FILE",
+            "DESK_SMTPP_PASSWORD_FILE",
+            "REAL_IMAP_1_PASSWORD_FILE",
+            "REAL_IMAP_2_PASSWORD_FILE",
+            "DESK_SMTPP_CA_FILE",
+            "REAL_IMAP_1_CA_FILE",
+            "DESK_LEADFLOW_FILE",
+            "DESK_APPROVERS_FILE",
+            "DESK_REPLIES_PATH",
+        ],
+    )
+    def test_the_real_script_refuses_a_pipe_for_any_file_setting_without_hanging(
+        tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, setting: str
+    ) -> None:
+        monkeypatch.setattr("builtins.input", _no_question)
+        fifo = tmp_path / "the.pipe"
+        os.mkfifo(fifo)
+        cfg = _valid_config(tmp_path, **{setting: str(fifo)})
+        result: list[int] = []
+>       assert _within(15, lambda: result.append(rrc.main(["--config", str(cfg)])), unblock=fifo), "it hung on a pipe"
+E       AssertionError: it hung on a pipe
+E       assert False
+E        +  where False = _within(15, <function test_the_real_script_refuses_a_pipe_for_any_file_setting_without_hanging.<locals>.<lambda> at 0x7fef2ef52e80>, unblock=PosixPath('/home/user/build/rr6/tmp-B2/pytest-of-unknown/pytest-39/test_the_real_script_refuses_a0/the.pipe'))
+
+tests/test_real_run_v6.py:267: AssertionError
+----------------------------- Captured stdout call -----------------------------
+refused: DESK_HUBSPOT_KEY_FILE: the hubspot key file holds no key
+=========================== short test summary info ============================
+FAILED tests/test_real_run_v6.py::test_the_real_script_refuses_a_pipe_for_any_file_setting_without_hanging[DESK_HUBSPOT_KEY_FILE]
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 14 passed in 15.25s

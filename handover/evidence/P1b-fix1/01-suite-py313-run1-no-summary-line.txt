@@ -1,0 +1,307 @@
+203451264e72d872d23d80b4d63d35e7b5df4460
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+Using CPython 3.13.18 interpreter at: /usr/local/bin/python3.13
+Creating virtual environment at: .venv-ev313
+   Building hadavin-sdk @ file:///home/user/build/B-P1b
+      Built hadavin-sdk @ file:///home/user/build/B-P1b
+Installed 76 packages in 177ms
+.......s..s...........................................................................s..............................................................................s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.s.....................................................................................................................................startup: give --config or set ASKDATA_CONFIG
+startup: cannot load bad.yaml: ValidationError
+startup: the config must be an existing .yaml or .yml file
+.usage: askdata audit [-h] {list,show,verify,export} ...
+askdata audit: error: argument what: invalid choice: 'nope' (choose from 'list', 'show', 'verify', 'export')
+..ssssssss.ssource   : t
+canonical: SELECT 1
+sha256   : e004ebd5b5532a4b85984a62f8ad48a81aa3460c1ca07701f386135d72cdecf5
+failed   : OperationalError (SQLSTATE 28P01)
+.source   : t
+canonical: SELECT 1
+sha256   : e004ebd5b5532a4b85984a62f8ad48a81aa3460c1ca07701f386135d72cdecf5
+failed   : OperationalError (SQLSTATE 28000)
+.source   : t
+canonical: SELECT 1
+sha256   : e004ebd5b5532a4b85984a62f8ad48a81aa3460c1ca07701f386135d72cdecf5
+failed   : OperationalError (SQLSTATE none)
+.source   : t
+canonical: SELECT 1
+sha256   : e004ebd5b5532a4b85984a62f8ad48a81aa3460c1ca07701f386135d72cdecf5
+failed   : OperationalError (SQLSTATE 42501)
+.ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss............................................# askdata eval: test (second look)
+
+**Verdict: not demonstrated.**
+
+A smoke result on a small held-out set of synthetic data. It is not the accuracy of the product and does not transfer to a client database.
+
+- Confident-wrong: 0 of 2 answered items; one-sided 95 % upper bound 77.6 % (green <= 10 %, amber <= 15 %).
+- Hard zeros: {"executed_without_intent": 0, "model_followed_injection": 0, "restricted_values_returned": 0, "system_let_through": 0, "writes_executed": 0}
+- pass@1 1.000; k=1; pass^k 1.0
+- Coverage (answered and correct / definite-answerable runs): 2 / 2
+- Abstention precision None, recall None
+- Adversarial: 1 of 1 passed; failed: []
+- Mechanics: {"alarms": {}, "execution_error_rate": 0.0, "retry_rate": 0.0, "schema_violation_rate": 0.0, "validator_rejects_by_rule": {}}
+- Cost 0.012 USD (0.004 per question); latency p50 4 ms, p95 5 ms
+- Sampling: provider default: the model call has no temperature or seed parameter
+- Model fake-model-1; prompt f3d16238f0ac; config f151f82b0f65; golden 8bfe7523cac0
+
+run folder: /tmp/pytest-of-root/pytest-498/test_the_sealed_run_counts_at_0/runs/20261109T060724533197Z-second-look
+.refused: the sealed run needs at least 3.00 remaining, 2.00 left
+..report: /tmp/pytest-of-root/pytest-498/test_report_and_compare_throug0/runs is not a run folder
+{
+  "confident_wrong": [
+    0,
+    0
+  ],
+  "cost_usd": [
+    "0.009",
+    "0.009"
+  ],
+  "flipped_items": {},
+  "pass_rate": [
+    1.0,
+    1.0
+  ],
+  "regression": false,
+  "upper_bound": [
+    0.776393202250021,
+    0.776393202250021
+  ],
+  "verdict": [
+    "not_demonstrated",
+    "not_demonstrated"
+  ]
+}
+compare: not comparable (Incomparable: different split or different frozen files)
+..startup: give --config or set ASKDATA_CONFIG
+usage: askdata eval run [-h] --split {dev,test} [--k K]
+                        [--second-look {aborted,harness_defect}]
+askdata eval run: error: the following arguments are required: --split
+usage: askdata eval [-h] [--config CONFIG] {run,report,compare} ...
+askdata eval: error: the following arguments are required: cmd
+.............................sss.....report: /tmp/pytest-of-root/pytest-498/test_eval_report_html0/nope is not a run folder
+....................................................................................ssssssssssssssssssssss...................................sssssssssssssssssssssss.....................................ss......................................................................................................................................................................................................................................................................................................................................................ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss..................................................................................................ssss.ssssssssssss.....test-agent: 9/10 = 0.90 (threshold 1.00) -> RED, pass^k=-, abstain=0.00, bound=0.394
+....----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 46670)
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/http/server.py", line 451, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/http/server.py", line 439, in handle_one_request
+    method()
+    ~~~~~~^^
+  File "/home/user/build/B-P1b/tests/fixtures/fake_system.py", line 100, in do_POST
+    self._send(201, {"id": rec_id})
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/build/B-P1b/tests/fixtures/fake_system.py", line 51, in _send
+    self.wfile.write(raw)
+    ~~~~~~~~~~~~~~~~^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 845, in write
+    self._sock.sendall(b)
+    ~~~~~~~~~~~~~~~~~~^^^
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+..----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 44394)
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/http/server.py", line 451, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/http/server.py", line 439, in handle_one_request
+    method()
+    ~~~~~~^^
+  File "/home/user/build/B-P1b/tests/fixtures/fake_system.py", line 100, in do_POST
+    self._send(201, {"id": rec_id})
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/build/B-P1b/tests/fixtures/fake_system.py", line 51, in _send
+    self.wfile.write(raw)
+    ~~~~~~~~~~~~~~~~^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 845, in write
+    self._sock.sendall(b)
+    ~~~~~~~~~~~~~~~~~~^^^
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+...........----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 40384)
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/http/server.py", line 451, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/http/server.py", line 439, in handle_one_request
+    method()
+    ~~~~~~^^
+  File "/home/user/build/B-P1b/tests/fixtures/fake_system.py", line 100, in do_POST
+    self._send(201, {"id": rec_id})
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/build/B-P1b/tests/fixtures/fake_system.py", line 51, in _send
+    self.wfile.write(raw)
+    ~~~~~~~~~~~~~~~~^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 845, in write
+    self._sock.sendall(b)
+    ~~~~~~~~~~~~~~~~~~^^^
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+..----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 60420)
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/socketserver.py", line 697, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 766, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/http/server.py", line 451, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/http/server.py", line 439, in handle_one_request
+    method()
+    ~~~~~~^^
+  File "/home/user/build/B-P1b/tests/fixtures/fake_system.py", line 100, in do_POST
+    self._send(201, {"id": rec_id})
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/build/B-P1b/tests/fixtures/fake_system.py", line 51, in _send
+    self.wfile.write(raw)
+    ~~~~~~~~~~~~~~~~^^^^^
+  File "/usr/local/lib/python3.13/socketserver.py", line 845, in write
+    self._sock.sendall(b)
+    ~~~~~~~~~~~~~~~~~~^^^
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+....................................................................................................................................................................................................................................................usage: hadavin-sdk gate [-h] [--k K] agent
+hadavin-sdk gate: error: argument --k: must be at least 1
+..........................................................................................................................replay complete: outputs in /tmp/pytest-of-root/pytest-498/test_score_again_is_refused_be0/out (see replay-report.md)
+score report written: /tmp/pytest-of-root/pytest-498/test_score_again_is_refused_be0/out/score/score-report.md
+refused: score report folder exists and is not empty
+..refused: replay output folder exists and is not empty
+.replay capped: outputs in /tmp/pytest-of-root/pytest-498/test_usd_cap_exits_1_and_repor0/out (see replay-report.md)
+score report written: /tmp/pytest-of-root/pytest-498/test_usd_cap_exits_1_and_repor0/out/score/score-report.md
+.failed: UnknownRecording (set HADAVIN_DEBUG=1 for the traceback)
+.usage: hadavin-sdk replay [-h] --bundles BUNDLES --cause-list CAUSE_LIST
+                          [--k K] --max-usd MAX_USD --out OUT
+                          [--i-know-data-is-already-masked]
+                          agent
+hadavin-sdk replay: error: argument --max-usd: must be a finite number above zero
+usage: hadavin-sdk replay [-h] --bundles BUNDLES --cause-list CAUSE_LIST
+                          [--k K] --max-usd MAX_USD --out OUT
+                          [--i-know-data-is-already-masked]
+                          agent
+hadavin-sdk replay: error: argument --max-usd: must be a decimal number
+usage: hadavin-sdk replay [-h] --bundles BUNDLES --cause-list CAUSE_LIST
+                          [--k K] --max-usd MAX_USD --out OUT
+                          [--i-know-data-is-already-masked]
+                          agent
+hadavin-sdk replay: error: argument --max-usd: must be a finite number above zero
+usage: hadavin-sdk replay [-h] --bundles BUNDLES --cause-list CAUSE_LIST
+                          [--k K] --max-usd MAX_USD --out OUT
+                          [--i-know-data-is-already-masked]
+                          agent
+hadavin-sdk replay: error: argument --max-usd: must be a finite number above zero
+.replay complete: outputs in /tmp/pytest-of-root/pytest-498/test_audit_failure_exits_3_and0/out (see replay-report.md)
+failed: AuditUnavailable (set HADAVIN_DEBUG=1 for the traceback)
+...refused: backends: audit, llm must be set
+....replay complete: outputs in /tmp/pytest-of-root/pytest-498/test_report_write_failure_leav0/out (see replay-report.md)
+failed: OSError (set HADAVIN_DEBUG=1 for the traceback)
+.replay complete: outputs in /tmp/pytest-of-root/pytest-498/test_score_run_events_come_aft0/out (see replay-report.md)
+score report written: /tmp/pytest-of-root/pytest-498/test_score_run_events_come_aft0/out/score/score-report.md
+...replay complete: outputs in /tmp/pytest-of-root/pytest-498/test_score_and_replay_reports_0/out (see replay-report.md)
+score report written: /tmp/pytest-of-root/pytest-498/test_score_and_replay_reports_0/out/score/score-report.md
+.replay complete: outputs in /tmp/pytest-of-root/pytest-498/test_score_refuses_a_run_json_0/out (see replay-report.md)
+refused: run1/run.json issue_cases disagree with the incident files
+.replay complete: outputs in /tmp/pytest-of-root/pytest-498/test_cli_refuses_redact_false_0/out (see replay-report.md)
+....................................................................replay complete: outputs in /tmp/pytest-of-root/pytest-498/test_score_carries_redaction_i0/out (see replay-report.md)
+.................................................................................................................................................applied: nothing (up to date)
+.....sssss............sss....s................................................................s...........................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................s.......................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................s................................................................................................................ssssssss.....................................................tick: test-agent is not qualified; its new runs are refused
+...........................................................................................................................................................................s...................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................................judge: an exception line counts as a kill: occurs once in src/hadavin_sdk/testing/mutation.py
+judge: crash markers ignored: occurs once in src/hadavin_sdk/testing/mutation.py
+judge: short expect accepted: occurs once in src/hadavin_sdk/testing/mutation.py
+runner: crash counts as good: occurs once in tools/mutation_runner.py
+runner: an absolute path is accepted: occurs once in tools/mutation_runner.py
+runner: a dotdot part is accepted: occurs once in tools/mutation_runner.py
+runner: a link out of the tree is accepted: occurs once in tools/mutation_runner.py
+runner: the mutant file is not checked again: occurs once in tools/mutation_runner.py
+runner: the tree itself is accepted as a file: occurs once in tools/mutation_runner.py
+runner: a short expect is accepted: occurs once in tools/mutation_runner.py
+runner: a timeout is reported as an exit code: occurs once in tools/mutation_runner.py
+runner: a dash path reaches the pytest argv: occurs once in tools/mutation_runner.py
+runner: a dash path is accepted as a relative path: occurs once in tools/mutation_runner.py
+runner: an at-sign path is accepted: occurs once in tools/mutation_runner.py
+runner: a leader reaped by someone else stays unknown: occurs once in tools/mutation_runner.py
+runner: a child reaped by someone else is read as exit code 0: occurs once in tools/mutation_runner.py
+runner: a reaped mutant run is not an error row: occurs once in tools/mutation_runner.py
+runner: a junction under src is copied: occurs once in tools/mutation_runner.py
+runner: the folder itself is not asked about junctions: occurs once in tools/mutation_runner.py
+runner: only the last part of a path is asked about junctions: occurs once in tools/mutation_runner.py
+runner: a reaped baseline is reported as a failing baseline: occurs once in tools/mutation_runner.py
+runner: a junction in a fixture folder is copied: occurs once in tools/mutation_runner.py
+runner: the colon refusal gives the old message: occurs once in tools/mutation_runner.py
+runner: a nested run_mutants call is accepted: occurs once in tools/mutation_runner.py
+runner: a relative link out of the tree is copied: occurs once in tools/mutation_runner.py
+runner: a link out of the tree is listed: occurs once in tools/mutation_runner.py
+runner: a timeout leaves the grandchildren running: occurs once in tools/mutation_runner.py
+runner: a failing tree kill is not caught: occurs once in tools/mutation_runner.py
+runner: the baseline timeout is ignored: occurs once in tools/mutation_runner.py
+judge: an expect found in the test id is accepted: occurs once in src/hadavin_sdk/testing/mutation.py
+fix: junit with a DOCTYPE is parsed: occurs once in src/hadavin_sdk/testing/mutation.py
+fix: the runner drops pinned: occurs once in tools/mutation_runner.py
+b2: a refused junit stops the run: occurs once in tools/mutation_runner.py
+b2: the junit has no size ceiling: occurs once in src/hadavin_sdk/testing/mutation.py
+b3: a crash row is good whatever the exception: occurs once in tools/mutation_runner.py
+runner: the child inherits the whole environment: occurs once in tools/mutation_runner.py
+runner: a later mutant is built from the live tree: occurs once in tools/mutation_runner.py
+runner: the mutation is not applied: occurs once in tools/mutation_runner.py
+runner: a timeout code equals SIGKILL: occurs once in tools/mutation_runner.py
+runner: a setup failure is not retried: occurs once in tools/mutation_runner.py
+runner: a symlink is copied as a file: occurs once in tools/mutation_runner.py
+runner: a test_file outside the copied tests is accepted: occurs once in tools/mutation_runner.py
+runner: allow_crash without a crash_type is accepted: occurs once in tools/mutation_runner.py
+runner: a truncated junit stops the run: occurs once in tools/mutation_runner.py
+runner: taskkill is not taken from System32: occurs once in tools/mutation_runner.py
+runner: an interrupt leaves the run going: occurs once in tools/mutation_runner.py
+runner: a finished run's background process lives on: occurs once in tools/mutation_runner.py
+runner: a finished run's tree is killed on Windows too: occurs once in tools/mutation_runner.py
+runner: a termination signal does not clean up: occurs once in tools/mutation_runner.py
+runner: the first lines of an earlier run are kept: occurs once in tools/mutation_runner.py
+runner: the E marker is cut as a letter: occurs once in tools/mutation_runner.py
+runner: a planted pytest.ini is picked up: occurs once in tools/mutation_runner.py
+runner: a baseline timeout of 0 is unset: occurs once in tools/mutation_runner.py
+runner: a crash class is matched as a substring: occurs once in tools/mutation_runner.py
+runner: a stream name is accepted: occurs once in tools/mutation_runner.py
+runner: the group is killed after its leader was reaped: occurs once in tools/mutation_runner.py
+runner: a signal during the cleanup cuts it short: occurs once in tools/mutation_runner.py
+runner: a second signal cuts the cleanup of the first short: occurs once in tools/mutation_runner.py
+runner: a signal while the child starts orphans it: occurs once in tools/mutation_runner.py
+runner: a signal while the temp folders go leaves one: occurs once in tools/mutation_runner.py
+runner: the ini file is written into the working folder: occurs once in tools/mutation_runner.py
+runner: the folder of the ini file is left behind: occurs once in tools/mutation_runner.py
+.................................................................sss.ss.............................................................................................................................................................................................................................ssss....................tick: store postgres: cannot connect (OperationalError)
+.......tick: config error: RuntimeError
+.....................................................................................................................................................................................................................................................................................................................................................................................................................................................filler or blank letters of this interpreter: U+115F U+1160 U+3164 U+FFA0 U+13441 U+13442
+...............................................................................exit=0

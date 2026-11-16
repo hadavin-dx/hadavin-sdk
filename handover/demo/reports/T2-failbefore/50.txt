@@ -1,0 +1,32 @@
+mutant 50: 'WHERE lead_id=? AND attempts=? AND state=\'sending\'"' -> 'WHERE lead_id=? AND attempts=?"' in src/lead_desk/desk.py
+.......F..............                                                   [100%]
+=================================== FAILURES ===================================
+_____________________ test_late_result_leaves_put_back_row _____________________
+
+env = <conftest.Env object at 0x7f3e276c3130>
+
+    def test_late_result_leaves_put_back_row(env) -> None:
+        hook = BlockAt("D2")  # after the send returned, before the result is written
+        rig = env.rig(hooks=hook)
+        lid = _new_lead(rig)
+        th = threading.Thread(target=rig.desk.run_followup, args=(lid,), daemon=True)
+        th.start()
+        assert hook.reached.wait(timeout=15), "the drive never reached the send"
+        try:
+            # the row is put back to `pending` meanwhile (as the reaper does); the claim count stays the same
+            sql_exec(rig.db_path, "UPDATE followups SET state='pending' WHERE lead_id=?", (lid,))
+        finally:
+            hook.release.set()
+            th.join(timeout=15)
+        assert not th.is_alive()
+        state, err, sent_at, _ = _row(rig, lid)
+>       assert (state, err, sent_at) == ("pending", None, None)
+E       AssertionError: assert ('sent', None, 1700000000) == ('pending', None, None)
+E         
+E         At index 0 diff: 'sent' != 'pending'
+E         Use -v to get more diff
+
+tests/test_mutants_round2.py:102: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_mutants_round2.py::test_late_result_leaves_put_back_row - A...
+1 failed, 21 passed in 0.19s

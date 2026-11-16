@@ -1,0 +1,6 @@
+split-tree dry check (r2): fresh git archive b4cce5b + patches from ../patches-ready/v2; every 'old' text must occur exactly once in its file
+C = C-01 only; Ca = C-01 + G5-wording; A = A-01 only; Aa = A-01 + G5-wording; C2-* checked in C trees, A2-* in A trees
+C 53 mutants; problems: []
+Ca 53 mutants; problems: []
+A 58 mutants; problems: []
+Aa 58 mutants; problems: []

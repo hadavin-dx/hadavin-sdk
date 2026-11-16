@@ -1,0 +1,7 @@
+frozen tree 49d3c85938fe5323a3378a49195d3b8da434b3ca patch-crlf=/home/user/build/rr6/out/R7J/core-fix-on-frozen-r7j.patch patch-lf=/home/user/build/rr6/out/R7J/core-fix-on-frozen-r7j-lf.patch
+checkout a: .ps1 line endings before patching: CRLF CRLF 
+checkout b: .ps1 line endings before patching: CRLF CRLF 
+checkout c: .ps1 line endings before patching: LF LF 
+checkout a patch crlf: git apply --check rc=0
+checkout b patch crlf: git apply --check rc=0
+checkout c patch lf: git apply --check rc=0

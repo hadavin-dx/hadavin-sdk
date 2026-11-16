@@ -1,0 +1,49 @@
+...............................FF.FFFFFFFFFFFFF..                        [100%]
+=================================== FAILURES ===================================
+E   ValueError: lstat: embedded null character in path
+<frozen posixpath>:451: ValueError: lstat: embedded null character in path
+E   ValueError: lstat: embedded null character in path
+<frozen posixpath>:451: ValueError: lstat: embedded null character in path
+E   TypeError: atomic_write() takes 2 positional arguments but 3 were given
+/home/user/build/ER-sonarpath4-a/tests/test_pathguard.py:460: TypeError: atomic_write() takes 2 positional arguments but 3 were given
+E   TypeError: atomic_write() takes 2 positional arguments but 3 were given
+/home/user/build/ER-sonarpath4-a/tests/test_pathguard.py:467: TypeError: atomic_write() takes 2 positional arguments but 3 were given
+E   AssertionError: R2 not refused ('../x.txt'): TypeError
+/home/user/build/ER-sonarpath4-a/tests/test_pathguard.py:54: AssertionError: R2 not refused ('../x.txt'): TypeError
+E   Failed: DID NOT RAISE TypeError
+/home/user/build/ER-sonarpath4-a/tests/test_pathguard.py:489: Failed: DID NOT RAISE TypeError
+E   TypeError: atomic_write() takes 2 positional arguments but 3 were given
+/home/user/build/ER-sonarpath4-a/tests/test_pathguard.py:494: TypeError: atomic_write() takes 2 positional arguments but 3 were given
+E   AssertionError: R8 not refused (final name is a link out): TypeError
+/home/user/build/ER-sonarpath4-a/tests/test_pathguard.py:54: AssertionError: R8 not refused (final name is a link out): TypeError
+E   TypeError: atomic_write() takes 2 positional arguments but 3 were given
+/home/user/build/ER-sonarpath4-a/tests/test_pathguard.py:518: TypeError: atomic_write() takes 2 positional arguments but 3 were given
+E   TypeError: atomic_write() takes 2 positional arguments but 3 were given
+/home/user/build/ER-sonarpath4-a/tests/test_pathguard.py:536: TypeError: atomic_write() takes 2 positional arguments but 3 were given
+E   AttributeError: module 'hadavin_sdk.k1b.atomic' has no attribute 'secrets'
+/home/user/build/ER-sonarpath4-a/tests/test_pathguard.py:541: AttributeError: module 'hadavin_sdk.k1b.atomic' has no attribute 'secrets'
+E   TypeError: atomic_write() takes 2 positional arguments but 3 were given
+/home/user/build/ER-sonarpath4-a/tests/test_pathguard.py:560: TypeError: atomic_write() takes 2 positional arguments but 3 were given
+E   TypeError: atomic_write() takes 2 positional arguments but 3 were given
+/home/user/build/ER-sonarpath4-a/tests/test_pathguard.py:570: TypeError: atomic_write() takes 2 positional arguments but 3 were given
+E   TypeError: atomic_write() takes 2 positional arguments but 3 were given
+/home/user/build/ER-sonarpath4-a/tests/test_pathguard.py:580: TypeError: atomic_write() takes 2 positional arguments but 3 were given
+E   TypeError: atomic_write() takes 2 positional arguments but 3 were given
+/home/user/build/ER-sonarpath4-a/tests/test_pathguard.py:665: TypeError: atomic_write() takes 2 positional arguments but 3 were given
+=========================== short test summary info ============================
+FAILED tests/test_pathguard.py::test_confined_turns_a_nul_into_a_config_error
+FAILED tests/test_pathguard.py::test_a_nul_in_the_cause_list_folder_is_a_config_error
+FAILED tests/test_pathguard.py::test_atomic_write_writes_utf8_with_unix_newlines_and_backslash_escapes
+FAILED tests/test_pathguard.py::test_atomic_write_replaces_an_existing_file
+FAILED tests/test_pathguard.py::test_atomic_write_refuses_a_name_that_is_not_a_plain_name
+FAILED tests/test_pathguard.py::test_atomic_write_needs_a_base_and_a_name - F...
+FAILED tests/test_pathguard.py::test_atomic_write_refuses_a_name_whose_temp_name_would_be_too_long
+FAILED tests/test_pathguard.py::test_atomic_write_does_not_write_through_a_link_that_leaves_the_folder
+FAILED tests/test_pathguard.py::test_atomic_write_temp_name_is_random_and_not_chosen_by_the_caller
+FAILED tests/test_pathguard.py::test_atomic_write_temp_name_keeps_the_tmp_suffix
+FAILED tests/test_pathguard.py::test_atomic_write_creates_its_temp_file_exclusively
+FAILED tests/test_pathguard.py::test_atomic_write_removes_its_temp_file_when_the_rename_fails
+FAILED tests/test_pathguard.py::test_atomic_write_removes_its_temp_file_when_the_write_fails
+FAILED tests/test_pathguard.py::test_atomic_write_removes_its_temp_file_on_ctrl_c
+FAILED tests/test_pathguard.py::test_random_names_never_change_anything_outside_the_base
+15 failed, 34 passed in 0.21s

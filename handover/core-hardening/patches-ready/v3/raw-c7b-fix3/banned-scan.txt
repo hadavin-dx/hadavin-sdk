@@ -1,0 +1,1 @@
+banned-term scan, 10 terms, hits: 0

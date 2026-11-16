@@ -1,0 +1,143 @@
+# every backtick name that is not in src/tests/demos today; PLANNED = introduced by the PR of the section it sits in (or a name of this document's own text); EVIDENCE = a file/script of the evidence folders
+CORE-PR-HANDOFF-v15.md	line 12	WindowOnlyGate	PLANNED	## 0. What failed, what is uncertain, what was not run (read
+CORE-PR-HANDOFF-v15.md	line 14	add_spend_v15	EVIDENCE	## 0. What failed, what is uncertain, what was not run (read
+CORE-PR-HANDOFF-v15.md	line 14	apply_audit_reader	PLANNED	## 0. What failed, what is uncertain, what was not run (read
+CORE-PR-HANDOFF-v15.md	line 15	tcp_user_timeout	PLANNED	## 0. What failed, what is uncertain, what was not run (read
+CORE-PR-HANDOFF-v15.md	line 28	spend.window_end	PLANNED	## 1. Words used (each means one thing everywhere)
+CORE-PR-HANDOFF-v15.md	line 29	scope_missing	PLANNED	## 1. Words used (each means one thing everywhere)
+CORE-PR-HANDOFF-v15.md	line 31	SpendScope	PLANNED	## 1. Words used (each means one thing everywhere)
+CORE-PR-HANDOFF-v15.md	line 31	old_usd	PLANNED	## 1. Words used (each means one thing everywhere)
+CORE-PR-HANDOFF-v15.md	line 31	new_usd	PLANNED	## 1. Words used (each means one thing everywhere)
+CORE-PR-HANDOFF-v15.md	line 74	window_end	PLANNED	## 4. Ladder (rung table, R448)
+CORE-PR-HANDOFF-v15.md	line 79	ProcessCap	PLANNED	## 4. Ladder (rung table, R448)
+CORE-PR-HANDOFF-v15.md	line 89	SpendSettings	PLANNED	### 5.1 Settings (S-1)
+CORE-PR-HANDOFF-v15.md	line 89	defaults.PAID_DETECTOR_KINDS	PLANNED	### 5.1 Settings (S-1)
+CORE-PR-HANDOFF-v15.md	line 89	GateSettings	PLANNED	### 5.1 Settings (S-1)
+CORE-PR-HANDOFF-v15.md	line 90	window_owner	PLANNED	### 5.1 Settings (S-1)
+CORE-PR-HANDOFF-v15.md	line 91	Limits.call_cap	PLANNED	### 5.1 Settings (S-1)
+CORE-PR-HANDOFF-v15.md	line 91	max_call_usd	PLANNED	### 5.1 Settings (S-1)
+CORE-PR-HANDOFF-v15.md	line 93	reserve_margin	PLANNED	### 5.1 Settings (S-1)
+CORE-PR-HANDOFF-v15.md	line 93	guardrail_usd_per_unit	PLANNED	### 5.1 Settings (S-1)
+CORE-PR-HANDOFF-v15.md	line 93	guardrail_unit_chars	PLANNED	### 5.1 Settings (S-1)
+CORE-PR-HANDOFF-v15.md	line 93	guardrail_max_chars	PLANNED	### 5.1 Settings (S-1)
+CORE-PR-HANDOFF-v15.md	line 93	max_plausible_tokens	PLANNED	### 5.1 Settings (S-1)
+CORE-PR-HANDOFF-v15.md	line 93	clean_tokens	PLANNED	### 5.1 Settings (S-1)
+CORE-PR-HANDOFF-v15.md	line 93	max_input_tokens	PLANNED	### 5.1 Settings (S-1)
+CORE-PR-HANDOFF-v15.md	line 93	cli_daily_usd	PLANNED	### 5.1 Settings (S-1)
+CORE-PR-HANDOFF-v15.md	line 94	studio_daily_usd	PLANNED	### 5.1 Settings (S-1)
+CORE-PR-HANDOFF-v15.md	line 94	unattributed_daily_usd	PLANNED	### 5.1 Settings (S-1)
+CORE-PR-HANDOFF-v15.md	line 96	price_basis	PLANNED	### 5.1 Settings (S-1)
+CORE-PR-HANDOFF-v15.md	line 100	defaults.KNOWN_TIERED_MODEL_PREFIXES	PLANNED	### 5.1 Settings (S-1)
+CORE-PR-HANDOFF-v15.md	line 101	cachedContent	PLANNED	### 5.1 Settings (S-1)
+CORE-PR-HANDOFF-v15.md	line 102	zero_price_allowed	PLANNED	### 5.1 Settings (S-1)
+CORE-PR-HANDOFF-v15.md	line 103	UNATTRIBUTED_ID	PLANNED	### 5.1 Settings (S-1)
+CORE-PR-HANDOFF-v15.md	line 103	CLI_ID	PLANNED	### 5.1 Settings (S-1)
+CORE-PR-HANDOFF-v15.md	line 104	studio_monthly_usd	PLANNED	### 5.1 Settings (S-1)
+CORE-PR-HANDOFF-v15.md	line 104	cli_monthly_usd	PLANNED	### 5.1 Settings (S-1)
+CORE-PR-HANDOFF-v15.md	line 105	window_only_gate	PLANNED	### 5.1 Settings (S-1)
+CORE-PR-HANDOFF-v15.md	line 109	SpendWindow	PLANNED	### 5.2 The window end (S-1)
+CORE-PR-HANDOFF-v15.md	line 109	SpendRefused	PLANNED	### 5.2 The window end (S-1)
+CORE-PR-HANDOFF-v15.md	line 111	build_window	PLANNED	### 5.2 The window end (S-1)
+CORE-PR-HANDOFF-v15.md	line 122	spend.reason_string	PLANNED	### 5.2b What ends the run when the gate refuses, in S-1 (re
+CORE-PR-HANDOFF-v15.md	line 123	spend_refused	PLANNED	### 5.2b What ends the run when the gate refuses, in S-1 (re
+CORE-PR-HANDOFF-v15.md	line 127	s1_runtime	PLANNED	### 5.2b What ends the run when the gate refuses, in S-1 (re
+CORE-PR-HANDOFF-v15.md	line 127	NetworkStub	PLANNED	### 5.2b What ends the run when the gate refuses, in S-1 (re
+CORE-PR-HANDOFF-v15.md	line 127	network_runtime	PLANNED	### 5.2b What ends the run when the gate refuses, in S-1 (re
+CORE-PR-HANDOFF-v15.md	line 131	bad_amount	PLANNED	### 5.3 The gate: contract per PR, wiring order, one attempt
+CORE-PR-HANDOFF-v15.md	line 131	guardrail_text_too_long	PLANNED	### 5.3 The gate: contract per PR, wiring order, one attempt
+CORE-PR-HANDOFF-v15.md	line 131	RouteLike	PLANNED	### 5.3 The gate: contract per PR, wiring order, one attempt
+CORE-PR-HANDOFF-v15.md	line 132	CallCtx	PLANNED	### 5.3 The gate: contract per PR, wiring order, one attempt
+CORE-PR-HANDOFF-v15.md	line 133	KeptTotal	PLANNED	### 5.3 The gate: contract per PR, wiring order, one attempt
+CORE-PR-HANDOFF-v15.md	line 133	spend_scope	PLANNED	### 5.3 The gate: contract per PR, wiring order, one attempt
+CORE-PR-HANDOFF-v15.md	line 133	ScopedDetector	PLANNED	### 5.3 The gate: contract per PR, wiring order, one attempt
+CORE-PR-HANDOFF-v15.md	line 133	_SCOPE	PLANNED	### 5.3 The gate: contract per PR, wiring order, one attempt
+CORE-PR-HANDOFF-v15.md	line 133	_KEPT	PLANNED	### 5.3 The gate: contract per PR, wiring order, one attempt
+CORE-PR-HANDOFF-v15.md	line 134	CallGate	PLANNED	### 5.3 The gate: contract per PR, wiring order, one attempt
+CORE-PR-HANDOFF-v15.md	line 134	build_gate	PLANNED	### 5.3 The gate: contract per PR, wiring order, one attempt
+CORE-PR-HANDOFF-v15.md	line 170	spend_settle_failed	PLANNED	# S-1 only: None when no paid kind
+CORE-PR-HANDOFF-v15.md	line 170	spend_giveback_failed	PLANNED	# S-1 only: None when no paid kind
+CORE-PR-HANDOFF-v15.md	line 170	spend_usage_above_bound	PLANNED	# S-1 only: None when no paid kind
+CORE-PR-HANDOFF-v15.md	line 170	spend_kept_after_failure	PLANNED	# S-1 only: None when no paid kind
+CORE-PR-HANDOFF-v15.md	line 170	spend_released_client_error	PLANNED	# S-1 only: None when no paid kind
+CORE-PR-HANDOFF-v15.md	line 170	usage_missing	PLANNED	# S-1 only: None when no paid kind
+CORE-PR-HANDOFF-v15.md	line 171	_ABANDONED	PLANNED	# S-1 only: None when no paid kind
+CORE-PR-HANDOFF-v15.md	line 172	definite_client_error	PLANNED	# S-1 only: None when no paid kind
+CORE-PR-HANDOFF-v15.md	line 172	defaults.NO_BILL_STATUSES	PLANNED	# S-1 only: None when no paid kind
+CORE-PR-HANDOFF-v15.md	line 172	unattributed_scope	PLANNED	# S-1 only: None when no paid kind
+CORE-PR-HANDOFF-v15.md	line 172	call_cap	PLANNED	# S-1 only: None when no paid kind
+CORE-PR-HANDOFF-v15.md	line 172	spend.max_call_usd	PLANNED	# S-1 only: None when no paid kind
+CORE-PR-HANDOFF-v15.md	line 172	spend.unattributed_daily_usd	PLANNED	# S-1 only: None when no paid kind
+CORE-PR-HANDOFF-v15.md	line 172	unattributed_monthly_usd	PLANNED	# S-1 only: None when no paid kind
+CORE-PR-HANDOFF-v15.md	line 172	unattributed_max_call_usd	PLANNED	# S-1 only: None when no paid kind
+CORE-PR-HANDOFF-v15.md	line 174	default_scope	PLANNED	# S-1 only: None when no paid kind
+CORE-PR-HANDOFF-v15.md	line 174	window_only	PLANNED	# S-1 only: None when no paid kind
+CORE-PR-HANDOFF-v15.md	line 174	build_window_only_gate	PLANNED	# S-1 only: None when no paid kind
+CORE-PR-HANDOFF-v15.md	line 178	test_c6_every_chat_goes_through_retry	PLANNED	# S-1 only: None when no paid kind
+CORE-PR-HANDOFF-v15.md	line 186	max_requests	PLANNED	# S-1 only: None when no paid kind
+CORE-PR-HANDOFF-v15.md	line 188	self._retry_args	PLANNED	# S-1 only: None when no paid kind
+CORE-PR-HANDOFF-v15.md	line 214	max_call	PLANNED	# S-1 only: None when no paid kind
+CORE-PR-HANDOFF-v15.md	line 217	call_too_large	PLANNED	# S-1 only: None when no paid kind
+CORE-PR-HANDOFF-v15.md	line 217	call_retry_budget	PLANNED	# S-1 only: None when no paid kind
+CORE-PR-HANDOFF-v15.md	line 219	spend.clean_tokens	PLANNED	# S-1 only: None when no paid kind
+CORE-PR-HANDOFF-v15.md	line 219	route.max_input_tokens	PLANNED	# S-1 only: None when no paid kind
+CORE-PR-HANDOFF-v15.md	line 219	spend.max_plausible_tokens	PLANNED	# S-1 only: None when no paid kind
+CORE-PR-HANDOFF-v15.md	line 220	RELEASE_EXTRA_STATUSES	PLANNED	# S-1 only: None when no paid kind
+CORE-PR-HANDOFF-v15.md	line 248	Limits.unattributed_scope	PLANNED	### 5.5 The runtime side (S-2a)
+CORE-PR-HANDOFF-v15.md	line 248	_REQUESTER	PLANNED	### 5.5 The runtime side (S-2a)
+CORE-PR-HANDOFF-v15.md	line 251	self._handle_body	PLANNED	### 5.5 The runtime side (S-2a)
+CORE-PR-HANDOFF-v15.md	line 252	_SPEND_MODE	PLANNED	### 5.5 The runtime side (S-2a)
+CORE-PR-HANDOFF-v15.md	line 254	WARNING_SPEND	PLANNED	### 5.5 The runtime side (S-2a)
+CORE-PR-HANDOFF-v15.md	line 264	call_context_missing	PLANNED	### 5.5 The runtime side (S-2a)
+CORE-PR-HANDOFF-v15.md	line 268	POLICY_STOP_REASONS	PLANNED	### 5.5 The runtime side (S-2a)
+CORE-PR-HANDOFF-v15.md	line 279	PostgresStore.startup_checks	PLANNED	### 5.5b S-2b: card once, store timeouts, status line
+CORE-PR-HANDOFF-v15.md	line 279	statement_timeout_ms	PLANNED	### 5.5b S-2b: card once, store timeouts, status line
+CORE-PR-HANDOFF-v15.md	line 285	spend_nonneg	PLANNED	### 5.6 The database side
+CORE-PR-HANDOFF-v15.md	line 285	spend_nonneg_finite	PLANNED	### 5.6 The database side
+CORE-PR-HANDOFF-v15.md	line 285	OWNER_YES	PLANNED	### 5.6 The database side
+CORE-PR-HANDOFF-v15.md	line 286	spend_decrease_log	PLANNED	### 5.6 The database side
+CORE-PR-HANDOFF-v15.md	line 286	TG_TABLE_SCHEMA	PLANNED	### 5.6 The database side
+CORE-PR-HANDOFF-v15.md	line 286	spend_keep_keys	PLANNED	### 5.6 The database side
+CORE-PR-HANDOFF-v15.md	line 288	check_owner_gates	PLANNED	### 5.6 The database side
+CORE-PR-HANDOFF-v15.md	line 288	OwnerYes	PLANNED	### 5.6 The database side
+CORE-PR-HANDOFF-v15.md	line 291	audit_reader_role	PLANNED	### 5.6 The database side
+CORE-PR-HANDOFF-v15.md	line 291	pg_total_relation_size	EVIDENCE	### 5.6 The database side
+CORE-PR-HANDOFF-v15.md	line 291	audit_read	PLANNED	### 5.6 The database side
+CORE-PR-HANDOFF-v15.md	line 291	SpendSettings.decrease_log_dsn_secret	PLANNED	### 5.6 The database side
+CORE-PR-HANDOFF-v15.md	line 298	spend_add	PLANNED	### 5.6 The database side
+CORE-PR-HANDOFF-v15.md	line 302	GuardrailPrice	PLANNED	### 5.7 The guardrail call (paid, metered from S-2a)
+CORE-PR-HANDOFF-v15.md	line 302	usd_per_unit	PLANNED	### 5.7 The guardrail call (paid, metered from S-2a)
+CORE-PR-HANDOFF-v15.md	line 302	unit_chars	PLANNED	### 5.7 The guardrail call (paid, metered from S-2a)
+CORE-PR-HANDOFF-v15.md	line 302	GUARDRAIL_MAX_REQUESTS	PLANNED	### 5.7 The guardrail call (paid, metered from S-2a)
+CORE-PR-HANDOFF-v15.md	line 306	spend.cli_daily_usd	PLANNED	### 5.8 Command-line paths and the replay thread (S-2a)
+CORE-PR-HANDOFF-v15.md	line 306	spend.cli_monthly_usd	PLANNED	### 5.8 Command-line paths and the replay thread (S-2a)
+CORE-PR-HANDOFF-v15.md	line 353	test_c5_unmetered_only_in_tests	PLANNED	## 6. Every paid path, and what covers it (the honest list)
+CORE-PR-HANDOFF-v15.md	line 353	test_c1_every_network_kind_passes_gate	PLANNED	## 6. Every paid path, and what covers it (the honest list)
+CORE-PR-HANDOFF-v15.md	line 353	test_c2_every_make_call_passes_gate	PLANNED	## 6. Every paid path, and what covers it (the honest list)
+CORE-PR-HANDOFF-v15.md	line 353	test_c3_chat_sites_are_the_known_five	PLANNED	## 6. Every paid path, and what covers it (the honest list)
+CORE-PR-HANDOFF-v15.md	line 353	test_c4_charge_callers_pass_booked	PLANNED	## 6. Every paid path, and what covers it (the honest list)
+CORE-PR-HANDOFF-v15.md	line 353	test_c7_window_only_gate_not_in_use	PLANNED	## 6. Every paid path, and what covers it (the honest list)
+CORE-PR-HANDOFF-v15.md	line 353	test_c8_every_detector_kind_is_classified	PLANNED	## 6. Every paid path, and what covers it (the honest list)
+CORE-PR-HANDOFF-v15.md	line 363	PAID_DETECTOR_KINDS	PLANNED	### 7.1 PRs (cap tag: U = uncapped, security or money; C = c
+CORE-PR-HANDOFF-v15.md	line 363	KNOWN_TIERED_MODEL_PREFIXES	PLANNED	### 7.1 PRs (cap tag: U = uncapped, security or money; C = c
+CORE-PR-HANDOFF-v15.md	line 381	Grant.audit_read	PLANNED	### 7.1 PRs (cap tag: U = uncapped, security or money; C = c
+CORE-PR-HANDOFF-v15.md	line 401	PRICE_FLOOR_USD_PER_MTOK	PLANNED	### 7.2 Evidence batch (an EVIDENCE RUNNER runs these; the r
+CORE-PR-HANDOFF-v15.md	line 404	PLANNED_EDGES	PLANNED	### 7.2 Evidence batch (an EVIDENCE RUNNER runs these; the r
+CORE-PR-HANDOFF-v15.md	line 425	held_dir	PLANNED	### 7.2 Evidence batch (an EVIDENCE RUNNER runs these; the r
+CORE-PR-HANDOFF-v15.md	line 439	llm.callgate	PLANNED	### 8.1 Planned imports (module-import-time edges added or p
+CORE-PR-HANDOFF-v15-other-tracks.md	line 40	SpendRefused	PLANNED	## O-2 Facts used (v8 numbering kept; read in v8, cite lines
+CORE-PR-HANDOFF-v15-other-tracks.md	line 51	_Mapping	PLANNED	## O-3 What v9 changed in the copied text (review findings a
+CORE-PR-HANDOFF-v15-other-tracks.md	line 51	allow_group_read	PLANNED	## O-3 What v9 changed in the copied text (review findings a
+CORE-PR-HANDOFF-v15-other-tracks.md	line 52	restore_kinds	PLANNED	## O-3 What v9 changed in the copied text (review findings a
+CORE-PR-HANDOFF-v15-other-tracks.md	line 52	hash_chain_ok	PLANNED	## O-3 What v9 changed in the copied text (review findings a
+CORE-PR-HANDOFF-v15-other-tracks.md	line 52	anchored_checkpoints	PLANNED	## O-3 What v9 changed in the copied text (review findings a
+CORE-PR-HANDOFF-v15-other-tracks.md	line 52	anchor_supplied	PLANNED	## O-3 What v9 changed in the copied text (review findings a
+CORE-PR-HANDOFF-v15-other-tracks.md	line 52	signing_key_location	PLANNED	## O-3 What v9 changed in the copied text (review findings a
+CORE-PR-HANDOFF-v15-other-tracks.md	line 52	masking_damage	PLANNED	## O-3 What v9 changed in the copied text (review findings a
+CORE-PR-HANDOFF-v15-other-tracks.md	line 58	tamper_evident	PLANNED	### O-4.6 Audit claims, named and bounded (resolves security
+CORE-PR-HANDOFF-v15-other-tracks.md	line 60	defaults.AUDIT_MAX_UNSIGNED_TAIL	PLANNED	### O-4.6 Audit claims, named and bounded (resolves security
+CORE-PR-HANDOFF-v15-other-tracks.md	line 62	anchor_retention_probed	PLANNED	### O-4.6 Audit claims, named and bounded (resolves security
+CORE-PR-HANDOFF-v15-other-tracks.md	line 62	anchor_retention_proven	PLANNED	### O-4.6 Audit claims, named and bounded (resolves security
+CORE-PR-HANDOFF-v15-other-tracks.md	line 80	read_private_file	PLANNED	### O-4.8 Key-file read (resolves v4 zoom M-7, security M-6,
+CORE-PR-HANDOFF-v15-other-tracks.md	line 82	S_IRGRP	PLANNED	### O-4.8 Key-file read (resolves v4 zoom M-7, security M-6,
+CORE-PR-HANDOFF-v15-other-tracks.md	line 115	_join_continuations	PLANNED	### O-4.9 G4 rows: only what leaks on old code ships (resolv
+CORE-PR-HANDOFF-v15-other-tracks.md	line 142	get_object_lock_configuration	PLANNED	### O-4.11 Housekeeping track (non-gating)

@@ -1,0 +1,17 @@
+baseline FAIL lines: v32 0, v33 0 (v33 baseline counts only what is not yet written when this runs)
+H04  v32 checker: anchor absent                      v33 checker: caught (8 new FAIL line(s))
+H05  v32 checker: anchor absent                      v33 checker: caught (2 new FAIL line(s))
+H07  v32 checker: anchor absent                      v33 checker: caught (1 new FAIL line(s))
+H14  v32 checker: NOT caught (no new FAIL line)      v33 checker: caught (2 new FAIL line(s))
+H17  v32 checker: NOT caught (no new FAIL line)      v33 checker: caught (1 new FAIL line(s))
+H18  v32 checker: NOT caught (no new FAIL line)      v33 checker: caught (2 new FAIL line(s))
+H19  v32 checker: NOT caught (no new FAIL line)      v33 checker: caught (2 new FAIL line(s))
+H20  v32 checker: NOT caught (no new FAIL line)      v33 checker: caught (2 new FAIL line(s))
+H23  v32 checker: NOT caught (no new FAIL line)      v33 checker: caught (4 new FAIL line(s))
+H35  v32 checker: NOT caught (no new FAIL line)      v33 checker: caught (1 new FAIL line(s))
+H38  v32 checker: NOT caught (no new FAIL line)      v33 checker: caught (2 new FAIL line(s))
+v32 checker misses 8 of 11; v33 checker misses 0 of 11
+
+real	0m10.769s
+user	0m9.007s
+sys	0m0.491s

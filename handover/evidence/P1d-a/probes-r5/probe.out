@@ -1,0 +1,74 @@
+== NEW (0dabf1f + the rev-7 redact.py entries)
+K41 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaapassword=<SECRET_1> x'
+K41q '?aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaapassword=<SECRET_1> x'
+K41q2 'x?aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaatoken=<SECRET_1>&user=bob'
+K42 '<HIGHENTROPY_1><SECRET_1> x'
+K42b 'passwordxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx=4xKp2Vb9Lr3NcW8dYh6uJs x'
+K42q '?passwordxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx=<SECRET_1> x'
+K43 'passwordxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx="<SECRET_1>"'
+K43s "passwordxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx='<SECRET_1>'"
+Q18 '?token=<SECRET_1> x'
+Q18b '?token=<SECRET_1>&cdEFG= x'
+Q19 '?password=<SECRET_1>&_id=7 x'
+Q20 '?password=<SECRET_1>&client_id=7 x'
+Q21 '?password=<SECRET_1>&x-y=1 x'
+Q22 '?password=<SECRET_1>&amp;_id=7 x'
+Q22b '?password=<SECRET_1>&amp;x-y=1 x'
+Q2 '?password=<SECRET_1>&user=bob x'
+Q4 '?password=<SECRET_1>&user=bob x'
+Q10 '?password=<SECRET_1> y'
+Q11 '?password=<SECRET_1> x=1'
+Q16 '?password=<SECRET_1>"x=1 y'
+Q17 '?password=<SECRET_1>"x=1 y'
+Q13 '?user=bob&password=<SECRET_1>&next=/home x'
+Q15 '?a=1&amp;password=<SECRET_1>&amp;next=/home x'
+H34a 'password=<SECRET_1>'
+H34b 'password=<SECRET_1>'
+SC1 'password=<SECRET_1>;ef56'
+PU1 'password=<SECRET_2> x'
+F16 'password=<SECRET_1>'
+Q6 '?password=<SECRET_1> x'
+BTK '`a https://evil.com/p password=<SECRET_1> b'
+dots 100000 0.23 s
+amp 100000 0.17 s
+ampq 100011 0.37 s
+pw 100000 0.85 s
+pwq 100001 0.9 s
+mix 99000 0.62 s
+== BASE 0dabf1f
+K41 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaapassword=4xKp2Vb9Lr3NcW8dYh6uJs x'
+K41q '?aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaapassword=4xKp2Vb9Lr3NcW8dYh6uJs x'
+K41q2 'x?aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaatoken=4xKp2Vb9Lr3NcW8dYh6uJs&user=bob'
+K42 'passwordxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx=4xKp2Vb9Lr3NcW8dYh6uJs x'
+K42b 'passwordxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx=4xKp2Vb9Lr3NcW8dYh6uJs x'
+K42q '?passwordxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx=4xKp2Vb9Lr3NcW8dYh6uJs x'
+K43 'passwordxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx="4xKp2Vb9Lr3NcW8dYh6uJs"'
+K43s "passwordxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx='4xKp2Vb9Lr3NcW8dYh6uJs'"
+Q18 '?token=<SECRET_1>&c+d/e= x'
+Q18b '?token=<SECRET_1>&cdEFG= x'
+Q19 '?password=<SECRET_1>&_id=7 x'
+Q20 '?password=<SECRET_1>&client_id=7 x'
+Q21 '?password=<SECRET_1>&x-y=1 x'
+Q22 '?password=<SECRET_1>&amp;_id=7 x'
+Q22b '?password=<SECRET_1>&amp;x-y=1 x'
+Q2 '?password=<SECRET_1>&user=bob x'
+Q4 '?password=<SECRET_1>&cd34ef56&user=bob x'
+Q10 '?password=<SECRET_1>&cd34#x=1 y'
+Q11 '?password=<SECRET_1>&cd34 x=1'
+Q16 '?password=<SECRET_1>&cd34"x=1 y'
+Q17 '?password=<SECRET_1>&amp;cd34"x=1 y'
+Q13 '?user=bob&password=<SECRET_1>&next=/home x'
+Q15 '?a=1&amp;password=<SECRET_1>&amp;next=/home x'
+H34a 'password=<SECRET_1>&cd34ef56gh78ij'
+H34b 'password=<SECRET_1>&amp;4xKp2Vb9Lr3NcW8dYh6uJs'
+SC1 'password=<SECRET_1>&cd34;ef56'
+PU1 'password=<SECRET_1>&amp; x'
+F16 'password=<SECRET_1>&user=bob'
+Q6 '?password=<SECRET_1>&debug x'
+BTK '`a https://evil.com/p password=<SECRET_1> b'
+dots 100000 0.2 s
+amp 100000 0.17 s
+ampq 100011 0.25 s
+pw 100000 0.29 s
+pwq 100001 0.29 s
+mix 99000 0.2 s

@@ -1,0 +1,85 @@
+== A-00: date -u
+bash -n rc=0 
+== A-01: ls -l
+bash -n rc=0 
+== A-02: clear
+bash -n rc=0 
+== A-03: date -u
+bash -n rc=0 
+== A-04: ls -l "<path from the message>"
+bash -n rc=0 
+== A-05: date -u
+bash -n rc=0 
+== A-06: date -u
+bash -n rc=0 
+== A-07: python3 -I scripts/run_real_check_n8n.py --take 
+bash -n rc=0 
+== A-08: grep -m1 "^<setting name>=" "<model settings file>" | cut -c1-60
+bash -n rc=0 
+== A-09: clear
+bash -n rc=0 
+== A-10: date -u
+bash -n rc=0 
+== A-11: date -u
+bash -n rc=0 
+== A-12: (set -C; umask 077; read -rs -p 'paste key, Enter: ' K && [ -n "$K" ] && printf '%s\n' "$K" > "<key file>" ); 
+bash -n rc=0 
+== A-13: ls -l "<key file>"
+bash -n rc=0 
+== A-14: date -u
+bash -n rc=0 
+== A-15: clear
+bash -n rc=0 
+== A-16: date -u
+bash -n rc=0 
+== A-17: date -u
+bash -n rc=0 
+== A-18: date -u
+bash -n rc=0 
+== A-19: echo $?
+bash -n rc=0 
+== A-20: date -u
+bash -n rc=0 
+== B-00: date -u
+bash -n rc=0 
+== B-01: ls -l
+bash -n rc=0 
+== B-02: clear
+bash -n rc=0 
+== B-03: date -u
+bash -n rc=0 
+== B-04: ls -l "<path from the message>"
+bash -n rc=0 
+== B-05: date -u
+bash -n rc=0 
+== B-06: date -u
+bash -n rc=0 
+== B-07: python3 -I scripts/run_real_check_n8n.py --take 
+bash -n rc=0 
+== B-08: grep -m1 "^<setting name>=" "<model settings file>" | cut -c1-60
+bash -n rc=0 
+== B-09: clear
+bash -n rc=0 
+== B-10: date -u
+bash -n rc=0 
+== B-11: date -u
+bash -n rc=0 
+== B-12: (set -C; umask 077; read -rs -p 'paste key, Enter: ' K && [ -n "$K" ] && printf '%s\n' "$K" > "<key file>" ); 
+bash -n rc=0 
+== B-13: ls -l "<key file>"
+bash -n rc=0 
+== B-14: date -u
+bash -n rc=0 
+== B-15: clear
+bash -n rc=0 
+== B-16: date -u
+bash -n rc=0 
+== B-17: date -u
+bash -n rc=0 
+== B-18: date -u
+bash -n rc=0 
+== B-19: echo $?
+bash -n rc=0 
+== B-20: date -u
+bash -n rc=0 
+bash -n failures: 0

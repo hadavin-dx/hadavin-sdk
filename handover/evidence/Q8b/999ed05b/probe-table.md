@@ -1,0 +1,32 @@
+| group | key | `KEY=v` main / head | `KEY: v` main / head | `"KEY": "v"` main / head | `--KEY v` main / head |
+|---|---|---|---|---|---|
+| key | passcode | R / m | R / m | m / m | R / m |
+| key | passkey | R / m | R / m | m / m | R / m |
+| key | sessionkey | R / m | R / m | m / m | R / m |
+| key | session_key | R / m | R / m | m / m | R / m |
+| key | session_value | R / m | R / m | m / m | R / m |
+| key | pass_code | R / m | R / m | m / m | R / m |
+| key | pass_value | R / m | R / m | m / m | R / m |
+| key | auth_value | R / m | R / m | R / m | R / m |
+| key | bearer_value | R / m | R / m | R / m | R / m |
+| key | key-data | m / m | m / m | m / m | R / m |
+| key | cert-data | m / m | m / m | m / m | R / m |
+| key | certificate-data | m / m | m / m | m / m | R / m |
+| key | session_cookie | m / m | m / m | m / m | R / m |
+| key | newpass | m / m | m / m | m / m | R / R |
+| key | oldpass | m / m | m / m | m / m | R / R |
+| key | postgresauth | m / m | m / m | m / m | R / R |
+| key | signing_key | R / m | R / m | R / m | R / m |
+| key | encryption_key | R / m | R / m | R / m | R / m |
+| key | authorization | m / m | m / m | m / m | R / R |
+| key | client_secret | m / m | m / m | m / m | R / m |
+| key | api_key | m / m | m / m | m / m | R / m |
+| benign | bypass | m / m | m / m | m / m | R / R |
+| benign | compass | m / m | m / m | m / m | R / R |
+| benign | oauth | m / m | m / m | m / m | R / R |
+| benign | obsession | m / m | m / m | m / m | R / R |
+| benign | author | R / R | R / R | R / R | R / R |
+| benign | authority | R / R | R / R | R / R | R / R |
+| benign | passed | R / R | R / R | m / m | R / R |
+| benign | passenger | R / R | R / R | m / m | R / R |
+| benign | sessions | R / R | R / R | m / m | R / R |

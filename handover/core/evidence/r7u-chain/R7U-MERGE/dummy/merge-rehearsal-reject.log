@@ -1,0 +1,11 @@
+copied /home/user/build/rr6/tree-R7T -> /home/user/build/rr6/out/R7U-MERGE/dummy/tree-R7U-rej
+diff A: 595 bytes, 2 files
+diff B: 496 bytes, 1 files
+diff C: 0 bytes, 0 files
+applied A: 2 files
+diff C is empty: nothing to apply
+REJECTED: diff B does not apply cleanly on top of the previous steps (dry run, nothing changed by this step). Tree so far: /home/user/build/rr6/out/R7U-MERGE/dummy/tree-R7U-rej
+failing files and hunks:
+  checking file CHANGELOG.md -> Hunk #1 FAILED at 1.
+  checking file CHANGELOG.md -> 1 out of 1 hunk FAILED
+full dry-run output: /home/user/build/rr6/out/R7U-MERGE/dummy/tree-R7U-rej-merge-report/dry-B.log

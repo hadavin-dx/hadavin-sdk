@@ -1,0 +1,8 @@
+# Checklist rev 11 round 2 readiness review (egm-implementation-readiness, condensed copy of inline report, 2026-11-16)
+Verdict: 0 Blockers, 0 Majors; round-1 Blockers/Majors closed in the text; 3 Minors. Ran nothing, computed no sha256.
+Minor 1: C:331 (table E row C1) says only "fix WTN"; the printed STOP (C:63) says if folder $WT is missing, do not make it, ask in the channel. Add that to the row.
+Minor 2: C:7-8: FINAL5, PIN, BR (C2) and every "tell the builder" STOP (A7, C4, C5, C6, C9) need the channel person; open item L2 must be answered before starting.
+Minor 3: C:265-266 (C8) grep -o pattern would swallow trailing . or /; no hit in plan or patches today; take/n8n.lock and take/n8n.pid appear only in the printed list.
+Round-1 closure: B1/M8 (question 2) closed (B2 C:173-180, accept 2 C:43); M1 planok/chainmark closed; M2 7-char/branch count/second pin closed; M3 aside uses mv -n; M4 norm/hbok closed; M5 D1a pid checks closed; M6 mostly closed (N2: hand-typed control file still passes p4bcheck, lead attestation); M7 D2 /proc/version checks closed; M9 full sha256 in A2 closed; stranger M2 closed with fallback; M3, M5, M6, M9 closed; stranger M8 not re-judged (F still says v4/v5/v6).
+Verified by reading/grep: all 10 questions covered by one block each; every STOP id has a table E row except C1 wording; acc5.sh matches C6 wording; CHAIN tables agree (+35 lines, P-4b 258/258/270); 64-char constants agree.
+Not checked: sha256 values, rebuilding CHAIN 2/3/4 and line counts 587/622/780, full patches and edit lists, diff against rev10, anything in Git Bash/WSL/patch, A9 Windows-form-once, P1, evidence-c11.md in full. Any edit to LEAD-FILL-list-v5.md after hashing makes A2 STOP.

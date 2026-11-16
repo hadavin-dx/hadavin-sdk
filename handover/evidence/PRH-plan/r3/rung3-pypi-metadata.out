@@ -1,0 +1,6 @@
+PyPI JSON API, fetched 2026-11-11 17:06 UTC
+strip-ansi | version 0.1.1 | uploaded 2020-06-20T22:24:49 | licence - | classifiers [] | requires_python >=3.6,<4.0 | Strip ANSI escape sequences from a string
+stransi | version 0.3.0 | uploaded 2021-12-20T00:22:26 | licence MIT | classifiers ['MIT License'] | requires_python >=3.8,<4.0 | A lightweight parser for ANSI escape sequences
+pyte | version 0.8.2 | uploaded 2023-11-12T09:33:41 | licence - | classifiers ['GNU Lesser General Public License v3 (LGPLv3)'] | requires_python >=3.8 | Simple VTXXX-compatible terminal emulator.
+regex | version 2026.11.9 | uploaded 2026-11-09T00:39:39 | licence Apache-2.0 AND CNRI-Python | classifiers [] | requires_python >=3.11 | Alternative regular expression module, to replace re.
+ansi2txt | version 0.2.0 | uploaded 2023-02-23T20:44:39 | licence - | classifiers ['GNU Affero General Public License v3', 'MIT License'] | requires_python >=3.7,<4.0 | ansi to plain text converter

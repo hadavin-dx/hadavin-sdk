@@ -1,0 +1,103 @@
+.F..........FF.............                                              [100%]
+=================================== FAILURES ===================================
+____ test_no_redaction_pattern_is_super_linear_on_its_own_keywords_repeated ____
+
+    @pytest.mark.perf
+    def test_no_redaction_pattern_is_super_linear_on_its_own_keywords_repeated():
+        cases = [
+            (name, lambda t, p=pat: _scan(p, t), unit)
+            for name, pat in _redact_module().PATTERNS
+            for unit in _units(pat)
+        ]
+        assert len(cases) >= 150, "the sweep would look at too little"
+        # every slow pattern AND every pattern that could not be timed, each by name (a refusal does not stop the sweep)
+>       assert timing.problems(cases, SMALL, BIG) == []
+E       assert ["BANKACCT on...es not count"] == []
+E         
+E         Left contains one more item: "BANKACCT on 'a.': could not be timed: 1 calls took 2.58e-05 s of processor time but 0.00568 s of real time: the work mostly waits (sleep, input and output, a lock) or runs in a child process, which processor time does not count"
+E         Use -v to get more diff
+
+tests/test_k5_perf.py:83: AssertionError
+_______ test_the_time_of_a_long_run_grows_no_faster_than_its_length[\\u] _______
+
+unit = '\\u'
+
+    @pytest.mark.perf
+    @pytest.mark.parametrize("unit", ["%C3", "%C3%A", "&#", "&#x4", "\\u", "%", "&a"])
+    def test_the_time_of_a_long_run_grows_no_faster_than_its_length(unit):
+        # the shared rule (`tests/fixtures/timing.py`) instead of "twice the input, under four times the time", which a
+        # quadratic cost (exactly four times) could pass: 8x the text may take at most 24x the time. The old pattern took about
+        # 0.2 s at 2000 groups and 10 s at 16000 groups here (a ratio of about 64), and only when the run is followed by a
+        # character that is not part of it: a run that ends the text is found at once, so the text below has both ends.
+>       measured = timing.growth(
+            lambda run: runmap.partial_escape_start("x" + run + "y"), unit, 6_000, 48_000
+        )
+
+tests/test_runmap_partial_escape.py:128: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/fixtures/timing.py:239: in growth
+    t_small, t_big = seconds_per_call_each(fn, texts, clock)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/fixtures/timing.py:205: in seconds_per_call_each
+    if (took := batch(calls[i])) >= MIN_BATCH_S:
+                ^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+n = 1
+
+    def batch(n: int) -> float:
+        started = wall()
+        took = timed(n)
+        waited = wall() - started
+        if waited >= WAIT_MIN_S and waited > WAIT_FACTOR * took:
+>           raise Untimeable(
+                f"{n} calls took {took:.3g} s of processor time but {waited:.3g} s of real time: the work mostly "
+                "waits (sleep, input and output, a lock) or runs in a child process, which processor time does not count"
+            )
+E           tests.fixtures.timing.Untimeable: 1 calls took 0.000187 s of processor time but 0.00939 s of real time: the work mostly waits (sleep, input and output, a lock) or runs in a child process, which processor time does not count
+
+tests/fixtures/timing.py:177: Untimeable
+________ test_the_time_of_a_long_run_grows_no_faster_than_its_length[%] ________
+
+unit = '%'
+
+    @pytest.mark.perf
+    @pytest.mark.parametrize("unit", ["%C3", "%C3%A", "&#", "&#x4", "\\u", "%", "&a"])
+    def test_the_time_of_a_long_run_grows_no_faster_than_its_length(unit):
+        # the shared rule (`tests/fixtures/timing.py`) instead of "twice the input, under four times the time", which a
+        # quadratic cost (exactly four times) could pass: 8x the text may take at most 24x the time. The old pattern took about
+        # 0.2 s at 2000 groups and 10 s at 16000 groups here (a ratio of about 64), and only when the run is followed by a
+        # character that is not part of it: a run that ends the text is found at once, so the text below has both ends.
+>       measured = timing.growth(
+            lambda run: runmap.partial_escape_start("x" + run + "y"), unit, 6_000, 48_000
+        )
+
+tests/test_runmap_partial_escape.py:128: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/fixtures/timing.py:239: in growth
+    t_small, t_big = seconds_per_call_each(fn, texts, clock)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/fixtures/timing.py:205: in seconds_per_call_each
+    if (took := batch(calls[i])) >= MIN_BATCH_S:
+                ^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+n = 1
+
+    def batch(n: int) -> float:
+        started = wall()
+        took = timed(n)
+        waited = wall() - started
+        if waited >= WAIT_MIN_S and waited > WAIT_FACTOR * took:
+>           raise Untimeable(
+                f"{n} calls took {took:.3g} s of processor time but {waited:.3g} s of real time: the work mostly "
+                "waits (sleep, input and output, a lock) or runs in a child process, which processor time does not count"
+            )
+E           tests.fixtures.timing.Untimeable: 1 calls took 0.000219 s of processor time but 0.0124 s of real time: the work mostly waits (sleep, input and output, a lock) or runs in a child process, which processor time does not count
+
+tests/fixtures/timing.py:177: Untimeable
+=========================== short test summary info ============================
+FAILED tests/test_k5_perf.py::test_no_redaction_pattern_is_super_linear_on_its_own_keywords_repeated
+FAILED tests/test_runmap_partial_escape.py::test_the_time_of_a_long_run_grows_no_faster_than_its_length[\\u]
+FAILED tests/test_runmap_partial_escape.py::test_the_time_of_a_long_run_grows_no_faster_than_its_length[%]
+3 failed, 24 passed, 600 deselected in 206.11s (0:03:26)

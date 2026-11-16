@@ -1,0 +1,28 @@
+=== as8 diff:
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+-    Z = 1
++    Z = 3
+--- check:
+   the change has no builder notes file (handover/evidence/**/NOTES.md)
+   tests/zzev/test_assign.py: the test test_as_attr is new or changed and has no row of its own in the notes
+   tests/zzev/test_assign.py: the test test_as_base is new or changed and has no row of its own in the notes
+   tests/zzev/test_assign.py: the test test_as_call is new or changed and has no row of its own in the notes
+   (exit 1)
+=== ut1 diff:
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+-    def setUp(self): self.x = 1
++    def setUp(self): self.x = 2
+--- check:
+   (exit 0)
+=== cf10 diff:
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+-def pm_fx(): yield 1
++def pm_fx(): yield 2
+--- check:
+   (exit 0)
+=== as10 diff:
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+-W = (WALRUS := 1)
++W = (WALRUS := 2)
+--- check:
+   (exit 0)

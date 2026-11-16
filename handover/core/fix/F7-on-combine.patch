@@ -1,0 +1,305 @@
+diff -ruN '--exclude=.git' '--exclude=__pycache__' '--exclude=*.pyc' '--exclude=.pytest_cache' '--exclude=.ruff_cache' '--exclude=data' -x '*.egg-info' tmp-F7chk/c/scripts/desk_setting.py tree-F7/scripts/desk_setting.py
+--- a/scripts/desk_setting.py	2026-11-13 14:15:33.172965675 +0000
++++ b/scripts/desk_setting.py	2026-11-13 14:06:41.800138401 +0000
+@@ -6,7 +6,8 @@
+ from the DESK_* environment variables by Config.from_env, the same code the desk itself runs. When a DESK_* value is
+ refused it prints the ONE line the desk prints, `the desk refuses a setting: <what is wrong>`, and ends with exit code 4
+ (the desk's own code for a refused setting): no Python traceback, and the text never repeats the value that was typed
+-(the refusal texts name the setting, not its value). A wrong command line ends with a usage line and exit code 2."""
++(the refusal texts name the setting, not its value). `data-dir` also runs the desk's own lead-book check
++(`the desk refuses to start: ...`, same exit code 4). A wrong command line ends with a usage line and exit code 2."""
+ 
+ from __future__ import annotations
+ 
+@@ -15,6 +16,7 @@
+ 
+ from lead_desk.config import Config
+ from lead_desk.constants import EXIT_DESK_SETTING_REFUSED
++from lead_desk.desk import book_problem
+ from lead_desk.envnum import SettingRefused
+ 
+ EXIT_USAGE = 2
+@@ -36,6 +38,10 @@
+     except SettingRefused as e:  # the same line and exit code as the desk itself (server.main)
+         print(f"the desk refuses a setting: {e}")
+         return EXIT_DESK_SETTING_REFUSED
++    if argv[1] == "data-dir" and (problem := book_problem(config.db_path)) is not None:
++        # start_all makes this folder next: a book path the desk would refuse (a part of it is a file) ends here
++        print(f"the desk refuses to start: {problem}")
++        return EXIT_DESK_SETTING_REFUSED
+     print(WHAT[argv[1]](config))
+     return 0
+ 
+diff -ruN '--exclude=.git' '--exclude=__pycache__' '--exclude=*.pyc' '--exclude=.pytest_cache' '--exclude=.ruff_cache' '--exclude=data' -x '*.egg-info' tmp-F7chk/c/scripts/start_all.ps1 tree-F7/scripts/start_all.ps1
+--- a/scripts/start_all.ps1	2026-11-13 14:15:33.173292954 +0000
++++ b/scripts/start_all.ps1	2026-11-13 14:15:30.403626172 +0000
+@@ -15,7 +15,8 @@
+ }
+ $dataDir = Get-DeskSetting 'data-dir'
+ $fakesPort = Get-DeskSetting 'fakes-port'
+-New-Item -ItemType Directory -Force -Path $dataDir | Out-Null
++try { New-Item -ItemType Directory -Force -Path $dataDir | Out-Null }
++catch { Write-Host 'the desk refuses to start: the lead book folder cannot be made here (no such place, or no write access)'; exit 4 }
+ if ((Test-Path "$dataDir\fakes.pid") -or (Test-Path "$dataDir\desk.pid")) {
+     throw 'pid files exist: run scripts\reset.ps1 first'
+ }
+diff -ruN '--exclude=.git' '--exclude=__pycache__' '--exclude=*.pyc' '--exclude=.pytest_cache' '--exclude=.ruff_cache' '--exclude=data' -x '*.egg-info' tmp-F7chk/c/scripts/start_all.sh tree-F7/scripts/start_all.sh
+--- a/scripts/start_all.sh	2026-11-13 14:15:33.173410724 +0000
++++ b/scripts/start_all.sh	2026-11-13 14:06:41.800470668 +0000
+@@ -22,7 +22,8 @@
+ }
+ data_dir="$(desk_setting data-dir)"
+ fakes_port="$(desk_setting fakes-port)"
+-mkdir -p "$data_dir"
++# the folder cannot be made (a read-only place, a system folder): the desk's refusal line and exit code 4, no typed path
++mkdir -p "$data_dir" 2>/dev/null || { echo "the desk refuses to start: the lead book folder cannot be made here (no such place, or no write access)" >&2; exit 4; }
+ if [[ -e "$data_dir/fakes.pid" ]] || [[ -e "$data_dir/desk.pid" ]]; then
+   echo "pid files exist: run scripts/reset.sh first" >&2
+   exit 1
+diff -ruN '--exclude=.git' '--exclude=__pycache__' '--exclude=*.pyc' '--exclude=.pytest_cache' '--exclude=.ruff_cache' '--exclude=data' -x '*.egg-info' tmp-F7chk/c/src/lead_desk/desk.py tree-F7/src/lead_desk/desk.py
+--- a/src/lead_desk/desk.py	2026-11-13 14:15:33.174598168 +0000
++++ b/src/lead_desk/desk.py	2026-11-13 14:09:45.998098000 +0000
+@@ -312,6 +312,37 @@
+ NOT_A_FILE_BOOK_PROBLEM = (
+     "the lead book path names a pipe, a device or a folder: it must be a regular file or a new name"
+ )
++FOLDER_PART_IS_A_FILE_BOOK_PROBLEM = (
++    "the lead book folder cannot be made: a part of its path is a file (or a pipe or a device), not a folder"
++)
++FOLDER_CANNOT_BE_MADE_BOOK_PROBLEM = "the lead book folder cannot be made here (no such place, or no write access)"
++
++
++def _folder_part_is_not_a_folder(db_path: Path | str) -> bool:
++    """True when the nearest part of the book's folder path that exists is not a folder (it is a file, a pipe, a
++    device, a link to nothing): the folder could never be made under it. Looks only, makes nothing."""
++    try:
++        here = Path(os.path.abspath(db_path)).parent
++        while not os.path.lexists(here):
++            if here.parent == here:
++                return False
++            here = here.parent
++        return not here.is_dir()
++    except (OSError, ValueError, TypeError):
++        return False
++
++
++def make_book_folder(db_path: Path | str) -> str | None:
++    """Make the folder of the lead book; None when it is made or already there, else why it cannot be (one plain
++    line, never the typed path). The one place the desk makes this folder, so a path under a file or under a place
++    that refuses (a read-only mount, a system folder) is a refusal line, not a Python traceback."""
++    try:
++        Path(db_path).parent.mkdir(parents=True, exist_ok=True)
++    except (OSError, ValueError):
++        if _folder_part_is_not_a_folder(db_path):
++            return FOLDER_PART_IS_A_FILE_BOOK_PROBLEM
++        return FOLDER_CANNOT_BE_MADE_BOOK_PROBLEM
++    return None
+ 
+ 
+ def book_problem(db_path: Path | str) -> str | None:
+@@ -322,9 +353,12 @@
+     a private memory book. (A `file:` name is NOT refused: the desk resolves every other name to an absolute path
+     before SQLite sees it, so `file::memory:` is a plain file called that, never a memory book.) An existing path
+     that is a pipe, a device or a folder is refused too (SQLite ends a pipe with a "disk I/O error" traceback); a name
+-    that does not exist yet is fine, the book is made there."""
++    that does not exist yet is fine, the book is made there. A name whose folder cannot be made because a part of the
++    path is a file (`/dev/null/x.db`) is refused too (`make_book_folder` answers the rest: a read-only place)."""
+     if str(db_path) == ":memory:":
+         return MEMORY_BOOK_PROBLEM
++    if _folder_part_is_not_a_folder(db_path):
++        return FOLDER_PART_IS_A_FILE_BOOK_PROBLEM
+     try:
+         mode = os.stat(db_path).st_mode  # follows a link: a link to a pipe is a pipe
+     except (OSError, ValueError):  # not there yet (a new book is made), or not something to look at
+diff -ruN '--exclude=.git' '--exclude=__pycache__' '--exclude=*.pyc' '--exclude=.pytest_cache' '--exclude=.ruff_cache' '--exclude=data' -x '*.egg-info' tmp-F7chk/c/src/lead_desk/server.py tree-F7/src/lead_desk/server.py
+--- a/src/lead_desk/server.py	2026-11-13 14:15:33.176049659 +0000
++++ b/src/lead_desk/server.py	2026-11-13 14:06:32.511247625 +0000
+@@ -1137,7 +1137,9 @@
+     if (problem := desk_module.book_problem(config.db_path)) is not None:
+         print(f"the desk refuses to start: {problem}", flush=True)
+         sys.exit(EXIT_DESK_SETTING_REFUSED)
+-    config.db_path.parent.mkdir(parents=True, exist_ok=True)
++    if (problem := desk_module.make_book_folder(config.db_path)) is not None:  # a refusal line, never a traceback
++        print(f"the desk refuses to start: {problem}", flush=True)
++        sys.exit(EXIT_DESK_SETTING_REFUSED)
+     try:
+         lock = lockfile.acquire(config.db_path)
+     except lockfile.LockHeldError:
+diff -ruN '--exclude=.git' '--exclude=__pycache__' '--exclude=*.pyc' '--exclude=.pytest_cache' '--exclude=.ruff_cache' '--exclude=data' -x '*.egg-info' tmp-F7chk/c/tests/test_book_folder_refusals.py tree-F7/tests/test_book_folder_refusals.py
+--- a/tests/test_book_folder_refusals.py	1970-01-01 00:00:00.000000000 +0000
++++ b/tests/test_book_folder_refusals.py	2026-11-13 14:07:21.574422262 +0000
+@@ -0,0 +1,158 @@
++"""Class F7b: a lead-book path whose FOLDER cannot be made (a part of the path is a file, a pipe or a device, or the
++place refuses folders) ends with the desk's one refusal line and exit code 4: no Python traceback, never the typed
++name. The choke points are `desk.book_problem` (looks) and `desk.make_book_folder` (makes the folder and answers for
++its failure); `server.main` and scripts/desk_setting.py (so start_all.sh and start_all.ps1) route through them.
++Made-up names only, no network."""
++
++from __future__ import annotations
++
++import io
++import os
++import random
++import string
++from contextlib import redirect_stderr, redirect_stdout
++from pathlib import Path
++
++import pytest
++from test_reset_scripts import WINDOWS, _run
++from test_special_output_files import FIFO_SKIP, in_child
++
++from lead_desk.desk import (
++    FOLDER_CANNOT_BE_MADE_BOOK_PROBLEM,
++    FOLDER_PART_IS_A_FILE_BOOK_PROBLEM,
++    book_problem,
++    make_book_folder,
++)
++
++REPO = Path(__file__).resolve().parents[1]
++TYPED = "zqx-typed-name"  # a folder name the operator typed: no refusal may repeat it
++NEEDS_PROC = pytest.mark.skipif(not Path("/proc/self").is_dir(), reason="no /proc on this platform")
++
++
++def _desk_main(path: str) -> str:
++    """Child: the desk's own main() with DESK_DB_PATH=path; answers 'CODE|all text printed'."""
++    from lead_desk.server import main
++
++    os.environ["DESK_DB_PATH"] = path
++    out = io.StringIO()
++    code: object = 0
++    with redirect_stdout(out), redirect_stderr(out):
++        try:
++            main()
++        except SystemExit as e:
++            code = e.code
++    return f"{code}|{out.getvalue().strip()}"
++
++
++def _paths(tmp_path: Path) -> dict[str, str]:
++    """Book paths whose folder cannot be made, by what is in the way. Each value is the typed book path."""
++    (tmp_path / TYPED).write_text("x", encoding="utf-8")
++    (tmp_path / "gone").symlink_to(tmp_path / "nowhere")
++    found = {
++        "a regular file in the way": str(tmp_path / TYPED / "book.db"),
++        "a file two levels up": str(tmp_path / TYPED / "a" / "b" / "book.db"),
++        "a link to nothing in the way": str(tmp_path / "gone" / "book.db"),
++    }
++    if Path("/dev/null").exists():
++        found["a device in the way"] = "/dev/null/" + TYPED + "/book.db"
++    if hasattr(os, "mkfifo"):
++        os.mkfifo(tmp_path / "pipe")
++        found["a pipe in the way"] = str(tmp_path / "pipe" / TYPED / "book.db")
++    return found
++
++
++def test_the_desk_refuses_a_book_whose_folder_cannot_be_made_in_one_line(tmp_path: Path) -> None:
++    for what, path in _paths(tmp_path).items():
++        answer = in_child(_desk_main, path)
++        code, _, text = answer.partition("|")
++        assert code == "4", (what, answer)
++        assert "Traceback" not in text and TYPED not in text, (what, answer)
++        assert text == "the desk refuses to start: " + FOLDER_PART_IS_A_FILE_BOOK_PROBLEM, (what, answer)
++        assert not Path(path + ".lock").exists()
++
++
++@NEEDS_PROC
++def test_the_desk_refuses_a_place_that_will_not_make_a_folder_in_one_line() -> None:
++    """/proc takes no new folders (even for root): the part that exists IS a folder, so only the make step can tell."""
++    path = f"/proc/{TYPED}/book.db"
++    answer = in_child(_desk_main, path)
++    code, _, text = answer.partition("|")
++    assert code == "4" and "Traceback" not in text and TYPED not in text, answer
++    assert text == "the desk refuses to start: " + FOLDER_CANNOT_BE_MADE_BOOK_PROBLEM, answer
++
++
++def test_make_book_folder_makes_what_can_be_made_and_answers_for_the_rest(tmp_path: Path) -> None:
++    book = tmp_path / "new" / "deeper" / "book.db"
++    assert book_problem(book) is None and make_book_folder(book) is None and book.parent.is_dir()
++    assert make_book_folder(book) is None  # already there
++    assert make_book_folder(str(tmp_path / "a\x00b" / "book.db")) in (None, FOLDER_CANNOT_BE_MADE_BOOK_PROBLEM)
++    for what, path in _paths(tmp_path).items():
++        assert book_problem(path) == FOLDER_PART_IS_A_FILE_BOOK_PROBLEM, what
++        assert make_book_folder(path) == FOLDER_PART_IS_A_FILE_BOOK_PROBLEM, what
++
++
++def test_property_a_path_under_a_file_is_always_refused_and_never_repeats_the_typed_names(tmp_path: Path) -> None:
++    """Generated paths: a made-up chain of folder names with a regular file placed at a random depth. For every one,
++    both choke points answer with the one plain line (never raise, never contain a typed name) and nothing is made
++    under the file; a chain with no file in it is fine and is made."""
++    rng = random.Random(7)  # fixed seed: the same 150 paths every run
++    letters = string.ascii_lowercase + string.digits + " .-_"
++    for i in range(150):
++        names = ["q" + "".join(rng.choice(letters) for _ in range(rng.randint(1, 12))).strip(". ") for _ in range(4)]
++        names = [n for n in names if n and n not in (".", "..")]
++        root = tmp_path / f"case{i}"
++        root.mkdir()
++        depth = rng.randint(0, len(names) - 1)
++        chain = root.joinpath(*names[:depth]) if depth else root
++        chain.mkdir(parents=True, exist_ok=True)
++        blocker = chain / names[depth]
++        blocker.write_text("x", encoding="utf-8")
++        book = blocker.joinpath(*names[depth + 1 :], "book.db")
++        assert book_problem(book) == FOLDER_PART_IS_A_FILE_BOOK_PROBLEM, book
++        assert make_book_folder(book) == FOLDER_PART_IS_A_FILE_BOOK_PROBLEM, book
++        assert not any(n in FOLDER_PART_IS_A_FILE_BOOK_PROBLEM for n in names if len(n) > 4)
++        assert blocker.is_file()  # nothing was made over the file
++        free = root / "free" / names[0] / "book.db"
++        assert book_problem(free) is None and make_book_folder(free) is None and free.parent.is_dir()
++
++
++# ---------------------------------------------------------------- the start script
++@pytest.mark.skipif(WINDOWS, reason="the Windows form is pinned by its text below")
++def test_start_all_sh_refuses_a_book_folder_that_cannot_be_made_in_one_line(tmp_path: Path) -> None:
++    """Only the `data-dir` call of start_all.sh can see this (the settings are all good): a script that loses that
++    call goes on and fails some other way, so this test kills the mutant that removes it."""
++    for what, path in _paths(tmp_path).items():
++        done = _run("start_all.sh", Path(path))
++        text = done.stdout + done.stderr
++        assert done.returncode == 4, (what, done.returncode, text)
++        assert text.strip() == "the desk refuses to start: " + FOLDER_PART_IS_A_FILE_BOOK_PROBLEM, (what, text)
++        assert TYPED not in text and "Traceback" not in text and "mkdir" not in text, (what, text)
++
++
++@NEEDS_PROC
++@pytest.mark.skipif(WINDOWS, reason="the Windows form is pinned by its text below")
++def test_start_all_sh_refuses_a_place_that_will_not_make_a_folder_in_one_line() -> None:
++    done = _run("start_all.sh", Path(f"/proc/{TYPED}/book.db"))
++    text = done.stdout + done.stderr
++    assert done.returncode == 4, (done.returncode, text)
++    assert text.strip() == "the desk refuses to start: " + FOLDER_CANNOT_BE_MADE_BOOK_PROBLEM, text
++    assert TYPED not in text and "mkdir" not in text and "Traceback" not in text, text
++
++
++def test_the_start_scripts_say_the_same_refusal_in_both_forms() -> None:
++    """start_all.ps1 cannot run on this machine: its text is pinned (refusal line and exit code 4 when the folder
++    cannot be made); start_all.sh is run by the tests above."""
++    ps = (REPO / "scripts" / "start_all.ps1").read_text(encoding="utf-8")
++    sh = (REPO / "scripts" / "start_all.sh").read_text(encoding="utf-8")
++    line = "the desk refuses to start: the lead book folder cannot be made here (no such place, or no write access)"
++    assert "catch { Write-Host '" + line + "'; exit 4 }" in ps
++    assert 'mkdir -p "$data_dir" 2>/dev/null || { echo "' + line + '" >&2; exit 4; }' in sh
++    assert ps.index("try { New-Item") < ps.index("catch {")
++    helper = (REPO / "scripts" / "desk_setting.py").read_text(encoding="utf-8")
++    assert 'argv[1] == "data-dir" and (problem := book_problem(config.db_path)) is not None' in helper
++
++
++@FIFO_SKIP
++def test_a_pipe_as_the_book_is_still_refused_by_its_own_line(tmp_path: Path) -> None:
++    os.mkfifo(tmp_path / "book")
++    assert book_problem(tmp_path / "book") not in (None, FOLDER_PART_IS_A_FILE_BOOK_PROBLEM)
+diff -ruN '--exclude=.git' '--exclude=__pycache__' '--exclude=*.pyc' '--exclude=.pytest_cache' '--exclude=.ruff_cache' '--exclude=data' -x '*.egg-info' tmp-F7chk/c/tests/test_lead_step_route.py tree-F7/tests/test_lead_step_route.py
+--- a/tests/test_lead_step_route.py	2026-11-13 14:15:33.182106951 +0000
++++ b/tests/test_lead_step_route.py	2026-11-13 14:05:52.756533459 +0000
+@@ -426,8 +426,10 @@
+ def test_demo_launchers_name_the_demo_file_and_the_off_switch() -> None:
+     ps = (REPO / "scripts" / "start_all.ps1").read_text(encoding="utf-8")
+     sh = (REPO / "scripts" / "start_all.sh").read_text(encoding="utf-8")
+-    assert ps.index("DESK_LEADFLOW_FILE") < ps.index("python -c")  # before the first helper call
+-    assert sh.index("DESK_LEADFLOW_FILE") < sh.index("python -c")
++    # the demo file is named BEFORE the first call that reads the desk's settings (the first Config.from_env of the
++    # launcher now runs inside scripts/desk_setting.py, which the wrapper calls as `desk_setting data-dir`)
++    assert ps.index("DESK_LEADFLOW_FILE") < ps.index("Get-DeskSetting 'data-dir'")
++    assert sh.index("DESK_LEADFLOW_FILE") < sh.index('"$(desk_setting data-dir)"')
+     assert "-cne 'off'" in ps and "demo_only/leadflow.json" in ps and "reminder@example.test" in ps
+     assert '!= off ]] && [[ -n "$DESK_LEADFLOW_FILE" ]]' in sh and "export DESK_NUDGE_TO" in sh
+     assert (REPO / "demo_only" / "leadflow.json").is_file()

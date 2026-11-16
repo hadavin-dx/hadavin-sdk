@@ -1,0 +1,6 @@
+# C3b v7 fix pass hand-back, condensed copy, 2026-11-16 (unverified until round 5 review)
+Patch unchanged: plan-v5-repin-v6.patch sha256 8a83abaa5c10db10...c90011d2. Edited: LEAD-CHECKLIST-v5.md, LEAD-FILL-list-v5.md, evidence-c7g.md (section 13).
+Apply chain on scratch: input plan sha256 prefix 67a0a195537de875 unchanged; both patches rc 0; counts 24 10 2 1; marker lines 2 3 4 125 258 275 433 434 585 586 (17 markers on 10 lines).
+Fixed: M1 B1 edit PF never PT; M2 new A9 plan-path check (cygpath -w, counts must be 1 and 2); M3 order: Q5, Q7 in C2, Q6 in C4, Q9 in A9, Q1/Q1b in new C2b (old B2), B covers 2,3,4,8; M4 A8 STOP next action (cmp, mv PF PF.old), C9 and D1 newline guard, D1 ready command refusing non-digit pid or no NEED-LEAD R2 pid= line; M5 D2 rewritten (WSL, awk last P-4b block, cmdline check n8n-stand-in and recorded pid, two ready resume messages, Q2 now says P-1). Minors: C3 brief names plan by Windows path and ban sentence; C6 ready block; early R2 branch tested (STOP, nothing sent, rc 1).
+Tests: 24 checklist blocks pass bash -n and dash -n; scratch runs of A8, A9, C6, C9, D1, D2; banned words 0.
+Not tested: WSL /proc, real P-4b hit, stand-in under WSL, cygpath in Git for Windows, patch in Git Bash, CRLF PROGRESS.md; cygpath replaced by a stub; A1 to D2 not run as one pass.

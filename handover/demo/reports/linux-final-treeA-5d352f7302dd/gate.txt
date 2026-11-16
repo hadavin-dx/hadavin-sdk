@@ -1,0 +1,14 @@
+final_gate: tarball=/tmp/linux-ev/dpld-final5a-5d352f7302dd.tar.gz mode=full workdir=/tmp/linux-ev/wA
+[stage 0] venv-create: exit=0 2.6s -> /tmp/linux-ev/wA/raw/0-venv-create.txt
+[stage 0] pip-install-hashed: exit=0 5.4s -> /tmp/linux-ev/wA/raw/0-pip-install-hashed.txt
+[stage 0] patch-server-hooks: exit=0 0.0s -> /tmp/linux-ev/wA/raw/0-patch-server-hooks.txt
+[stage 1] ruff-check: exit=0 0.0s -> /tmp/linux-ev/wA/raw/1-ruff-check.txt
+[stage 1] ruff-format-check: exit=0 0.0s -> /tmp/linux-ev/wA/raw/1-ruff-format-check.txt
+[stage 1] mypy-linux: exit=0 1.3s -> /tmp/linux-ev/wA/raw/1-mypy-linux.txt
+[stage 1] bandit: exit=0 0.4s -> /tmp/linux-ev/wA/raw/1-bandit.txt
+[stage 1] check-schema: exit=0 0.1s -> /tmp/linux-ev/wA/raw/1-check-schema.txt
+[stage 2] pytest-run-1: exit=1 357.6s -> /tmp/linux-ev/wA/raw/2-pytest-run-1.txt
+[stage 2] pytest-run-2: exit=1 354.7s -> /tmp/linux-ev/wA/raw/2-pytest-run-2.txt
+[stage 2] pytest-run-3: exit=1 354.5s -> /tmp/linux-ev/wA/raw/2-pytest-run-3.txt
+report written: /tmp/linux-ev/outA/final-gate-5d352f7302dd.md
+final_gate: done (workdir /tmp/linux-ev/wA). No verdict is given; read the report.

@@ -1,0 +1,265 @@
+FFFFFFFF........F........................FF......                        [100%]
+=================================== FAILURES ===================================
+______________________ test_reaper_needs_age_above_grace _______________________
+env = <conftest.Env object at 0x7fba55b8c2f0>
+    def test_reaper_needs_age_above_grace(env) -> None:
+        """The clocks count whole seconds, so a difference equal to the grace can be a real age just over 24 s. The reaper
+        takes a row only when it is strictly older than the grace."""
+        rig = env.rig()
+        lid = new_lead(rig, "i1")
+        grace = rig.desk.stuck_grace_seconds
+        set_follow(rig, lid, state="sending", crm_done=0, send_started=0, updated_at=rig.clock() - grace)
+>       assert rig.desk.reap_once()["requeued"] == 0
+E       assert 1 == 0
+tests/test_loss_path_s1i.py:43: AssertionError
+_______________________ test_equal_budget_sum_is_refused _______________________
+    def test_equal_budget_sum_is_refused() -> None:
+        # arguments: budget, margin, smallest grace, write deadline, busy wait
+        constants.validate_model_budget(9, 10, 20, 10, 5)
+>       with pytest.raises(ValueError, match="below the stuck grace"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+tests/test_loss_path_s1i.py:53: Failed
+____________________ test_declared_timeout_at_limit_refused ____________________
+env = <conftest.Env object at 0x7fba55ac1590>
+    def test_declared_timeout_at_limit_refused(env) -> None:
+        rig = env.rig()
+        limit = rig.desk.stuck_grace_seconds - constants.MODEL_GRACE_MARGIN_SECONDS
+        class Declares(RecordedQualifier):
+            def __init__(self, path: Any, timeout: float) -> None:
+                super().__init__(path)
+                self.timeout_seconds = timeout
+>       with pytest.raises(DeskSettingRefused, match="timeout_seconds"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+tests/test_loss_path_s1i.py:69: Failed
+_______________________ test_label_store_needs_the_claim _______________________
+env = <conftest.Env object at 0x7fba55ac2ad0>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fba55b57e10>
+    def test_label_store_needs_the_claim(env, monkeypatch) -> None:
+        """The row is put back and claimed again between the stamp and the label write: the stale drive stores nothing
+        and goes no further."""
+        rig = env.rig()
+        lid = new_lead(rig, "i2")
+        real = rig.desk._locked_retry
+        def retry(fn: Any) -> Any:
+            if "store" in fn.__qualname__:
+                set_follow(rig, lid, attempts=99)  # a new claim happened first
+            return real(fn)
+        monkeypatch.setattr(rig.desk, "_locked_retry", retry)
+        rig.desk.run_followup(lid)
+>       assert row(rig, lid, "ai_label, state, crm_done, attempts") == (None, "sending", 0, 99)
+E       AssertionError: assert ('warm', 'sending', 0, 99) == (None, 'sending', 0, 99)
+E         
+E         At index 0 diff: 'warm' != None
+E         Use -v to get more diff
+tests/test_loss_path_s1i.py:91: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  lead_desk:desk.py:988 crm step: the follow-up is no longer ours, nothing was asked
+___________________ test_crm_down_leftover_mark_not_unknown ____________________
+env = <conftest.Env object at 0x7fba55a8c510>
+    def test_crm_down_leftover_mark_not_unknown(env) -> None:
+        """A leftover crm_done=2 and a CRM that is down: nothing was asked in this try, so no person is sent to look. The
+        try is used up with a backoff (the cap then ends it `failed`, which Retry starts again) and nothing is put."""
+        crm = DownCrm()
+        rig = env.rig()
+        rig.desk.crm = crm
+        lid = new_lead(rig, "i3")
+        set_follow(rig, lid, crm_done=2, ai_label="warm")
+        rig.desk.run_followup(lid)
+        state, last_error, crm_done = row(rig, lid, "state, last_error, crm_done")
+>       assert (state, crm_done) == ("pending", 2) and str(last_error).startswith("internal:")
+E       AssertionError: assert (('unknown', 2) == ('pending', 2)
+E         
+E         At index 0 diff: 'unknown' != 'pending'
+E         Use -v to get more diff)
+tests/test_loss_path_s1i.py:118: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  lead_desk:desk.py:384 crm capability not re-read: OSError
+_____________________ test_exit_steps_run_when_one_raises ______________________
+env = <conftest.Env object at 0x7fba55a8d480>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fba55a8dba0>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3736/test_exit_steps_run_when_one_r0')
+    def test_exit_steps_run_when_one_raises(env, monkeypatch, tmp_path) -> None:
+        rig = env.rig()
+        seen: dict[str, Any] = {"closed": False, "socket": False}
+        class Stub:
+            server_address = ("127.0.0.1", 0)
+            def serve_forever(self) -> None:
+                raise KeyboardInterrupt
+            def server_close(self) -> None:
+                seen["socket"] = True
+        class Failing(Desk):
+            def stop_background(self, *a: Any, **k: Any) -> None:
+                raise RuntimeError("cannot stop")
+            def close(self) -> None:
+                seen["closed"] = True
+                super().close()
+        monkeypatch.setenv("DESK_DB_PATH", str(tmp_path / "exit.sqlite3"))
+        monkeypatch.setenv("DESK_PORT", "0")
+        monkeypatch.setattr(server, "Desk", Failing)
+        monkeypatch.setattr(server, "load_demo_adapters", lambda cfg: (rig.desk.crm, rig.desk.outbox, rig.desk.qualifier))
+        monkeypatch.setattr(server, "make_server", lambda desk, cfg: Stub())
+        errors: list[BaseException] = []
+        def run() -> None:
+            try:
+                server.main()
+            except BaseException as e:  # noqa: BLE001 (the test reports it)
+                errors.append(e)
+        t = threading.Thread(target=run, daemon=True)
+        t.start()
+        t.join(timeout=20)
+>       assert not t.is_alive() and not errors
+E       AssertionError: assert (not False and not [RuntimeError('cannot stop')])
+E        +  where False = is_alive()
+E        +    where is_alive = <Thread(Thread-1 (run), stopped daemon 140438275217088)>.is_alive
+tests/test_loss_path_s1i.py:162: AssertionError
+----------------------------- Captured stdout call -----------------------------
+desk listening on http://127.0.0.1:0
+_____________________ test_other_value_error_is_not_exit_4 _____________________
+a = (Config(db_path=PosixPath('/tmp/pytest-of-root/pytest-3736/test_other_value_error_is_not_0/other.sqlite3'), bind='127...., <demo_only.fakes.KeyedOutbox object at 0x7fba55ace7b0>, <demo_only.fakes.RecordedQualifier object at 0x7fba55ace9f0>)
+k = {'hooks': None}
+    def broken(*a: Any, **k: Any) -> Any:
+>       raise ValueError("some other problem")
+E       ValueError: some other problem
+tests/test_loss_path_s1i.py:174: ValueError
+During handling of the above exception, another exception occurred:
+env = <conftest.Env object at 0x7fba55ace570>
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7fba55ace690>
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3736/test_other_value_error_is_not_0')
+    def test_other_value_error_is_not_exit_4(env, monkeypatch, tmp_path) -> None:
+        rig = env.rig()
+        monkeypatch.setenv("DESK_DB_PATH", str(tmp_path / "other.sqlite3"))
+        monkeypatch.setenv("DESK_PORT", "0")
+        monkeypatch.setattr(server, "load_demo_adapters", lambda cfg: (rig.desk.crm, rig.desk.outbox, rig.desk.qualifier))
+        def broken(*a: Any, **k: Any) -> Any:
+            raise ValueError("some other problem")
+        monkeypatch.setattr(server, "Desk", broken)
+        with pytest.raises(ValueError, match="some other problem"):  # a traceback, not a refusal
+>           server.main()
+tests/test_loss_path_s1i.py:178: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+hooks = None
+    def main(hooks: Hooks | None = None) -> None:
+        """python -m lead_desk.server: open-file check, lock file, adapters, desk, bind, reaper, startup (schema and
+        sweep), serve. Exit code 2 if another desk holds the lock or the port is taken (OSError, not only EADDRINUSE);
+        exit code 1 if the sender cannot be reached; exit code 3 if MAX_HANDLER_THREADS does not fit the open-file limit;
+        exit code 4 if the desk refuses a setting when it is built (the AI adapter declares a `timeout_seconds` above
+        the stuck grace minus its margin): the message is printed, nothing is served.
+        SIGTERM stops it like Ctrl+C: the reaper is stopped, then the lock is given back. `hooks` goes to the Desk
+        (tests/crash_launcher.py and scripts/video_crash.py pass `FlagFileHooks(path)`)."""
+        try:
+            ensure_descriptor_budget()
+        except DescriptorBudgetError as e:
+            print(str(e), flush=True)
+            sys.exit(EXIT_SETTING_REFUSED)
+        config = Config.from_env()
+        config.db_path.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            lock = lockfile.acquire(config.db_path)
+        except lockfile.LockHeldError:
+            print("another desk is using this database", flush=True)
+            sys.exit(EXIT_ANOTHER_DESK)
+        except OSError as e:  # the lock file cannot be used for another reason (a folder, no permission)
+            print(f"cannot take the lock file: {type(e).__name__}", flush=True)
+            sys.exit(EXIT_ANOTHER_DESK)
+        try:
+            crm, outbox, qualifier = load_demo_adapters(config)
+        except FakesUnreachable:
+            print("cannot read /fake/info from the sender", flush=True)
+            sys.exit(EXIT_ADAPTERS_UNREACHABLE)
+        try:
+            desk = Desk(config, crm, outbox, qualifier, hooks=hooks)
+        except (
+            ValueError
+        ) as e:  # the desk refuses a setting (an AI adapter whose time limit is longer than the stuck grace)
+            print(f"the desk refuses to start: {e}", flush=True)
+>           sys.exit(EXIT_DESK_SETTING_REFUSED)
+E           SystemExit: 4
+src/lead_desk/server.py:1002: SystemExit
+----------------------------- Captured stdout call -----------------------------
+the desk refuses to start: some other problem
+_____________________ test_give_back_replaces_stale_marker _____________________
+env = <conftest.Env object at 0x7fba558fe470>
+    def test_give_back_replaces_stale_marker(env) -> None:
+        rig = env.rig()
+        lid = new_lead(rig, "i6")
+        set_follow(rig, lid, state="sending", attempts=3, auto_attempts=1, last_error=NO_DESCRIPTORS_ERROR)
+        rig.desk._give_back(lid, 3, None)  # a lock give-back
+>       assert row(rig, lid, "state, last_error") == ("pending", None)
+E       AssertionError: assert ('pending', 'no_descriptors') == ('pending', None)
+E         
+E         At index 1 diff: 'no_descriptors' != None
+E         Use -v to get more diff
+tests/test_loss_path_s1i.py:189: AssertionError
+_______________________ test_crm_read_down_spends_a_try ________________________
+env = <conftest.Env object at 0x7fba55c0f7d0>
+    def test_crm_read_down_spends_a_try(env) -> None:
+        """Round 6: a leftover crm_done=2 and a CRM mode read that fails for another reason (the CRM is down) is no longer
+        `unknown`: nothing was asked, so the try is used up with a backoff and the mark stays 2."""
+        crm = RereadCrm(FakesUnreachable("URLError"))
+        rig = env.rig()
+        rig.desk.crm = crm
+        lid = new_lead(rig, "h9")
+        set_follow(rig, lid, crm_done=2, ai_label="warm")
+        rig.desk.run_followup(lid)
+>       assert follow(rig, lid, "state, auto_attempts, crm_done, last_error") == (
+            "pending",
+            1,
+            2,
+            "internal:SendUnreachable",
+        )
+E       AssertionError: assert ('unknown', 1..._unconfirmed') == ('pending', 1...dUnreachable')
+E         
+E         At index 0 diff: 'unknown' != 'pending'
+E         Use -v to get more diff
+tests/test_loss_path_s1h.py:233: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  lead_desk:desk.py:384 crm capability not re-read: FakesUnreachable
+____________________ test_declared_model_timeout_is_checked ____________________
+env = <conftest.Env object at 0x7fba558a25f0>
+    def test_declared_model_timeout_is_checked(env) -> None:
+        rig = env.rig()
+        grace = rig.desk.stuck_grace_seconds
+        limit = grace - constants.MODEL_GRACE_MARGIN_SECONDS
+        class Declares(RecordedQualifier):
+            def __init__(self, path: Any, timeout: float) -> None:
+                super().__init__(path)
+                self.timeout_seconds = timeout
+        Desk(rig.config, rig.crm, rig.outbox, Declares(rig.replies_path, limit - 1)).close()  # below the limit: fine
+>       with pytest.raises(ValueError, match="timeout_seconds"):  # at the limit: refused (a tie on whole-second clocks)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+tests/test_loss_path_s1g.py:322: Failed
+________________________ test_model_budget_is_validated ________________________
+    def test_model_budget_is_validated() -> None:
+        # arguments: budget, margin, smallest grace, write deadline, busy wait
+        constants.validate_model_budget(9, 10, 20, 10, 5)
+        bad_values = (
+            (10, 10, 20, 10, 5),  # budget plus margin equal to the grace
+            (11, 10, 20, 10, 5),  # budget plus margin over the grace
+            (0, 10, 20, 10, 5),
+            (float("nan"), 10, 20, 10, 5),
+            (True, 10, 20, 10, 5),
+            (10, -1, 20, 10, 5),
+            ("10", 10, 20, 10, 5),
+            (10, 10, 20, 0, 5),
+        )
+        for bad in bad_values:
+>           with pytest.raises(ValueError, match="MODEL|stuck grace|write deadline"):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE ValueError
+tests/test_loss_path_s1g.py:342: Failed
+=========================== short test summary info ============================
+FAILED tests/test_loss_path_s1i.py::test_reaper_needs_age_above_grace - asser...
+FAILED tests/test_loss_path_s1i.py::test_equal_budget_sum_is_refused - Failed...
+FAILED tests/test_loss_path_s1i.py::test_declared_timeout_at_limit_refused - ...
+FAILED tests/test_loss_path_s1i.py::test_label_store_needs_the_claim - Assert...
+FAILED tests/test_loss_path_s1i.py::test_crm_down_leftover_mark_not_unknown
+FAILED tests/test_loss_path_s1i.py::test_exit_steps_run_when_one_raises - Ass...
+FAILED tests/test_loss_path_s1i.py::test_other_value_error_is_not_exit_4 - Sy...
+FAILED tests/test_loss_path_s1i.py::test_give_back_replaces_stale_marker - As...
+FAILED tests/test_loss_path_s1h.py::test_crm_read_down_spends_a_try - Asserti...
+FAILED tests/test_loss_path_s1g.py::test_declared_model_timeout_is_checked - ...
+FAILED tests/test_loss_path_s1g.py::test_model_budget_is_validated - Failed: ...
+11 failed, 38 passed in 2.35s

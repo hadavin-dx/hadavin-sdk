@@ -1,0 +1,11 @@
+# result-review-1c: egm-design (fix plan vs rules), round 1. Saved by the session; CONDENSED from the reviewer's returned report. Reviewer did NOT read Parts II-VI of AUDIT-FINDINGS and opened no src lines except a grep of `.chat(` call sites.
+Major:
+- RD-1 Fix plan puts Blockers A-01, A-02, B-01 under "honesty of text" (step 2) behind Majors. They are audit, redaction and state guarantee gaps (no round cap). Move A-01, B-01 into step 1; A-02 reword is only a stop-gap, say so.
+- RD-2 Plan omits B-04 (duplicate event = two runs/approvals/actions), A-05 (no production host for the approval receiver), A-04 (requester check compares two id namespaces), B-03, B-02, A-07. Add to step 1 or 1b.
+- RD-3 Moving audit reconcile and disabled sources into tick adds duty to a job nothing watches (X-06, heartbeat PENDING). Make a tick heartbeat/dead-man check a prerequisite.
+- RD-4 "demo meter becomes the core one" would create a fourth file store (JSON plus .lock). Promote algorithm and tests, store the counters in the Store (atomic conditional update).
+- RD-5 Choke point: a shared function called by 3 loops misses guard/judge.py:72 and extract.py:47 model calls. Better: enforce at the llm client boundary (guarded client: kill switch, atomic reserve, call, settle in finally, audit intent before the paid call), plus a repo guard test that fails on an unwrapped `.chat(` call outside the kind.
+- RD-6 Settle at reserve amount on failure or abandoned thread (k1b loop.py:104-109); C-01 must land before X-02.
+- RD-7 Lock-in: Postgres only store kind (exception has no owner/trigger; fixes deepen it); approval channel Slack-only (approver id slack:<id>); scheduler and receiver hosting have no kind or alternative; egress guard covers 2 of about 12 call sites (A-06) and is missing from plan.
+Nit: raise X-02 to Blocker; CRM-COULD-DO must never apply to money, approval, redaction, audit code; section 4 lacks ladder line, round-cap statement, ledger mapping and a "proposal, pre-review" label; A-10 dead code belongs with the A-02 fix; CI/dev tooling export path not noted; no portable audit anchor option.
+Consistent with rules: C-01 first; role split and "dev"->"demo" marked owner yes; archive-not-delete; no finding flags no-code tools (n8n questions are questions only).

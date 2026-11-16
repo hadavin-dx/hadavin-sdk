@@ -1,0 +1,27 @@
+== OWNER-SHEET-v26-A.md
+13\.21 count=0 lines=
+0\.81 count=2 lines=65,77,
+18:29 count=3 lines=18,67,89,
+23:59 count=2 lines=18,89,
+18:14 count=0 lines=
+18:19 count=0 lines=
+23:49 count=0 lines=
+6435 OWNER-SHEET-v26-A.md
+== OWNER-SHEET-v26-B.md
+13\.21 count=0 lines=
+0\.81 count=2 lines=65,77,
+18:29 count=3 lines=18,67,89,
+23:59 count=2 lines=18,89,
+18:14 count=0 lines=
+18:19 count=0 lines=
+23:49 count=0 lines=
+6434 OWNER-SHEET-v26-B.md
+860/60 = 14.333333333333334 14.33
+-- 13.21 in note/open:
+LEAD-RELEASE-NOTE-v10.md:1
+v26-OPEN-FOR-LEAD.md:0
+LEAD-RELEASE-NOTE-v10.md:11:6. **Older key: the lead decides, between two options; the bui
+LEAD-RELEASE-NOTE-v10.md:75:- **Terms and who gives them:** planned start PS (you choose w
+LEAD-RELEASE-NOTE-v10.md:77:- **Worked example (invented), Wed 18 Nov 2026:** PS 11:00, SL
+LEAD-RELEASE-NOTE-v10.md:158:- Older key, B: its own step 7.11, latest time 16:00 UTC = 21
+v26-OPEN-FOR-LEAD.md:85:| 79 | B: the owner always cancels the older key at 7.11, by 16:00

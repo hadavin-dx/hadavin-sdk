@@ -1,0 +1,3 @@
+uv 0.11.32; GNU patch 2.7.6; bandit 1.8.6 (uvx); ruff via repo group
+ruff 0.17.1
+Python 3.13.18

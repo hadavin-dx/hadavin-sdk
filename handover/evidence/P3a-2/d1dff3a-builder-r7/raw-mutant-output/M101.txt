@@ -1,0 +1,13 @@
+### tests/test_migration_wiring.py::test_a_new_trigger_is_not_a_refusal_and_is_watched_from_then_on rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_______ test_a_new_trigger_is_not_a_refusal_and_is_watched_from_then_on ________
+tests/test_migration_wiring.py:535: in test_a_new_trigger_is_not_a_refusal_and_is_watched_from_then_on
+    assert isinstance(err, ConfigError) and "0002_f2.sql" in str(err), err
+E   AssertionError: None
+E   assert (False)
+E    +  where False = isinstance(None, ConfigError)
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_a_new_trigger_is_not_a_refusal_and_is_watched_from_then_on
+1 failed in 0.44s
+

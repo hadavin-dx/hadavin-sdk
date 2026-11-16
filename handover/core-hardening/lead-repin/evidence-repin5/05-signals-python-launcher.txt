@@ -1,0 +1,9 @@
+main  INT   exit=130 wanted=130 folders_left=0 stray_programs=0 OK
+main  TERM  exit=143 wanted=143 folders_left=0 stray_programs=0 OK
+main  HUP   exit=129 wanted=129 folders_left=0 stray_programs=0 OK
+main  QUIT  exit=131 wanted=131 folders_left=0 stray_programs=0 OK
+mask  INT   exit=130 wanted=130 folders_left=0 stray_programs=0 OK
+mask  TERM  exit=143 wanted=143 folders_left=0 stray_programs=0 OK
+mask  HUP   exit=129 wanted=129 folders_left=0 stray_programs=0 OK
+mask  QUIT  exit=131 wanted=131 folders_left=0 stray_programs=0 OK
+BAD rows: 0

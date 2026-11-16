@@ -1,0 +1,37 @@
+Pager usage is off.
+== (c1) a fresh database: the public schema owner and access list
+ nspname |       owner       |                            nspacl                             
+---------+-------------------+---------------------------------------------------------------
+ public  | pg_database_owner | {pg_database_owner=UC/pg_database_owner,=U/pg_database_owner}
+(1 row)
+
+ grantee |   grantee_name    | privilege_type |      grantor      
+---------+-------------------+----------------+-------------------
+    6171 | pg_database_owner | USAGE          | pg_database_owner
+    6171 | pg_database_owner | CREATE         | pg_database_owner
+       0 | (everyone)        | USAGE          | pg_database_owner
+(3 rows)
+
+== (c2) acldefault for a schema (what a NULL nspacl means): nothing for everyone
+                acldefault                
+------------------------------------------
+ {pg_database_owner=UC/pg_database_owner}
+(1 row)
+
+== (c3) a database owned by a plain role pc_mig: is pc_mig a member of pg_database_owner and of the public owner
+CREATE ROLE
+== (c4) connected as pc_mig (database owner): may it CREATE in public, and is it a member of pg_database_owner
+SET
+ current_user | member_of_db_owner | can_create_in_public | usage 
+--------------+--------------------+----------------------+-------
+ pc_mig       | t                  | t                    | t
+(1 row)
+
+== (c5) a plain new role (stands for everyone): USAGE and CREATE on public
+CREATE ROLE
+SET
+ usage | create_ 
+-------+---------
+ t     | f
+(1 row)
+

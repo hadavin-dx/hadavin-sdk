@@ -1,0 +1,14 @@
+unplanted v25 built files: intended checks failing: none
+N01  planted in the built v25 files: C70 fails YES (other new codes failing: none)
+N05  planted in the built v25 files: C71 fails YES (other new codes failing: none)
+N10  planted in the built v25 files: C72 fails YES (other new codes failing: ['C75'])
+N11  planted in the built v25 files: C73 fails YES (other new codes failing: none)
+N12  planted in the built v25 files: C74 fails YES (other new codes failing: none)
+N14  planted in the built v25 files: C75 fails YES (other new codes failing: none)
+M4a  planted in the built v25 files: C76 fails YES (other new codes failing: none)
+M4b  planted in the built v25 files: C77 fails YES (other new codes failing: none)
+M4c  planted in the built v25 files: C78 fails YES (other new codes failing: none)
+M4d  planted in the built v25 files: C79 fails YES (other new codes failing: none)
+C55 slash gap: the v25 rule (skip a match with "/" and fewer than 60 characters) skips the 47-character text: YES (v25 missed it)
+v26-fail-proof: 0 problem(s)
+exit=0 secs=0

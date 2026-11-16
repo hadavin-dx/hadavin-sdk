@@ -1,0 +1,98 @@
+DEBUG Found workspace root: `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p`
+DEBUG Adding root workspace member: `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p`
+DEBUG Found workspace configuration at `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/pyproject.toml`
+DEBUG Searching for user configuration in: `/root/.config/uv/uv.toml`
+DEBUG uv 0.11.32 (x86_64-unknown-linux-gnu)
+DEBUG Found project root: `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p`
+DEBUG Discovered project `hadavin-sdk` at: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p
+DEBUG No Python version file found in workspace: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p
+DEBUG Using Python request `>=3.12` from `requires-python` metadata
+DEBUG Checking for Python environment at: `.venv`
+DEBUG The project environment's Python version satisfies the request: `Python >=3.12`
+DEBUG Using request connect timeout of 10s and read timeout of 30s
+DEBUG Found static `requires-dist` for: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/
+DEBUG Existing `uv.lock` satisfies workspace requirements
+Resolved 101 packages in 1ms
+DEBUG Computed cache info: Timestamp(SystemTime { tv_sec: 1794826188, tv_nsec: 225660438 }), None, None, {}, {"src": Some(Timestamp(Timestamp(SystemTime { tv_sec: 1794826188, tv_nsec: 225660438 })))}. Most recently modified: pyproject.toml
+DEBUG Requirement already installed: hadavin-sdk==0.1.0 (from file:///tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p)
+DEBUG Requirement already installed: pytest==9.1.1
+DEBUG Requirement already installed: ruff==0.17.1
+DEBUG Requirement already installed: moto==5.2.4
+DEBUG Requirement already installed: pglast==8.7
+DEBUG Requirement already installed: markdown-it-py==4.2.0
+DEBUG Requirement already installed: pydantic==2.14.1
+DEBUG Requirement already installed: pydantic-settings==2.16.1
+DEBUG Requirement already installed: pyyaml==6.0.3
+DEBUG Requirement already installed: anthropic==2.1.0
+DEBUG Requirement already installed: psycopg==3.3.6
+DEBUG Requirement already installed: sqlglot==30.24.0
+DEBUG Requirement already installed: boto3==1.43.118
+DEBUG Requirement already installed: cryptography==50.0.2
+DEBUG Requirement already installed: azure-identity==1.26.0
+DEBUG Requirement already installed: azure-keyvault-keys==4.11.3
+DEBUG Requirement already installed: azure-keyvault-secrets==4.11.3
+DEBUG Requirement already installed: azure-storage-blob==12.31.0
+DEBUG Requirement already installed: google-cloud-kms==3.18.0
+DEBUG Requirement already installed: google-cloud-secret-manager==2.31.0
+DEBUG Requirement already installed: google-cloud-storage==3.17.1
+DEBUG Requirement already installed: iniconfig==2.3.1
+DEBUG Requirement already installed: packaging==26.3
+DEBUG Requirement already installed: pluggy==1.7.0
+DEBUG Requirement already installed: pygments==2.21.0
+DEBUG Requirement already installed: botocore==1.43.122
+DEBUG Requirement already installed: requests==2.34.2
+DEBUG Requirement already installed: responses==0.26.3
+DEBUG Requirement already installed: werkzeug==3.1.9
+DEBUG Requirement already installed: xmltodict==1.0.4
+DEBUG Requirement already installed: py-partiql-parser==0.6.3
+DEBUG Requirement already installed: mdurl==0.1.2
+DEBUG Requirement already installed: annotated-types==0.8.0
+DEBUG Requirement already installed: pydantic-core==2.50.1
+DEBUG Requirement already installed: typing-extensions==4.16.0
+DEBUG Requirement already installed: typing-inspection==0.4.4
+DEBUG Requirement already installed: python-dotenv==1.2.4
+DEBUG Requirement already installed: anyio==4.15.1
+DEBUG Requirement already installed: docstring-parser==0.18.0
+DEBUG Requirement already installed: httpx2==2.16.0
+DEBUG Requirement already installed: jiter==0.18.0
+DEBUG Requirement already installed: opentelemetry-api==1.45.2
+DEBUG Requirement already installed: sniffio==1.3.1
+DEBUG Requirement already installed: google-auth==2.62.0
+DEBUG Requirement already installed: psycopg-binary==3.3.6
+DEBUG Requirement already installed: jmespath==1.1.0
+DEBUG Requirement already installed: s3transfer==0.19.3
+DEBUG Requirement already installed: cffi==2.1.1
+DEBUG Requirement already installed: azure-core==1.41.0
+DEBUG Requirement already installed: msal==1.39.0
+DEBUG Requirement already installed: msal-extensions==1.3.1
+DEBUG Requirement already installed: isodate==0.7.2
+DEBUG Requirement already installed: google-api-core==2.43.0
+DEBUG Requirement already installed: grpc-google-iam-v1==0.14.6
+DEBUG Requirement already installed: grpcio==1.84.1
+DEBUG Requirement already installed: proto-plus==1.29.0
+DEBUG Requirement already installed: protobuf==7.36.2
+DEBUG Requirement already installed: google-cloud-core==2.8.0
+DEBUG Requirement already installed: google-crc32c==1.9.0
+DEBUG Requirement already installed: google-resumable-media==2.11.0
+DEBUG Requirement already installed: python-dateutil==2.9.0.post0
+DEBUG Requirement already installed: urllib3==2.8.0
+DEBUG Requirement already installed: certifi==2026.10.19
+DEBUG Requirement already installed: charset-normalizer==3.5.2
+DEBUG Requirement already installed: idna==3.20
+DEBUG Requirement already installed: markupsafe==3.0.4
+DEBUG Requirement already installed: httpcore2==2.16.0
+DEBUG Requirement already installed: truststore==0.10.5
+DEBUG Requirement already installed: pyasn1-modules==0.4.2
+DEBUG Requirement already installed: pycparser==3.12
+DEBUG Requirement already installed: pyjwt==2.15.1
+DEBUG Requirement already installed: googleapis-common-protos==1.76.0
+DEBUG Requirement already installed: grpcio-status==1.84.1
+DEBUG Requirement already installed: six==1.17.0
+DEBUG Requirement already installed: h11==0.16.0
+DEBUG Requirement already installed: pyasn1==0.6.5
+Checked 76 packages in 0.88ms
+DEBUG Using Python 3.13.18 interpreter at: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/bin/python3
+DEBUG Running `python -c print('ok offline')`
+DEBUG Spawned child 9259 in process group 9256
+ok offline
+DEBUG Command exited with code: 0

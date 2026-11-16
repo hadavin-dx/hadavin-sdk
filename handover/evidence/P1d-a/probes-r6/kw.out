@@ -1,0 +1,14 @@
+== orig
+PA1 '?bypass=<SECRET_1> x'
+PA2 'my.pass=<SECRET_1> x'
+PA3 'session=<SECRET_1> x'
+PA4 'author=ab12cd x'
+PA5 'x.auth:<SECRET_1> x'
+PA6 'passage=ab12cd x'
+== atomq2
+PA1 '?bypass=<SECRET_1> x'
+PA2 'my.pass=<SECRET_1> x'
+PA3 'session=<SECRET_1> x'
+PA4 'author=ab12cd x'
+PA5 'x.auth:<SECRET_1> x'
+PA6 'passage=ab12cd x'

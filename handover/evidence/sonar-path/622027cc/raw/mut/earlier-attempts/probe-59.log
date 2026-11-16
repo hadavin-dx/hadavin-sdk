@@ -1,0 +1,3 @@
+sdk /home/user/build/E-work/mut-tree/src/hadavin_sdk/__init__.py
+ok  KILLED         R4-07 the range is dropped: Mongolian vowel separator  [test_pin_r4_range_07] t=4s
+SLICE 59:60 1 of 1 good; problems: []; elapsed 4s

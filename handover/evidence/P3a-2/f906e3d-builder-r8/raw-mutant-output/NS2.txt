@@ -1,0 +1,15 @@
+### tests/test_migration_postgres.py::test_a_superuser_among_the_named_roles_does_not_widen_the_read_back[settings] rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_ test_a_superuser_among_the_named_roles_does_not_widen_the_read_back[settings] _
+tests/test_migration_postgres.py:2418: in test_a_superuser_among_the_named_roles_does_not_widen_the_read_back
+    assert x not in text and y not in text, rows
+E   AssertionError: [('', 'hadavin_test_ux_778ca56c', '{work_mem=5MB}')]
+E   assert ('hadavin_test_ux_778ca56c' not in ' hadavin_te...ork_mem=5MB}'
+E     
+E     'hadavin_test_ux_778ca56c' is contained here:
+E        hadavin_test_ux_778ca56c {work_mem=5MB})
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_a_superuser_among_the_named_roles_does_not_widen_the_read_back[settings]
+1 failed in 0.50s
+

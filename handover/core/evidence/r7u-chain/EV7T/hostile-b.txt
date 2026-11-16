@@ -1,0 +1,31 @@
+## contacts_not_accounted_for
+created=None, accounted=0                                                   -> RAISED CounterUnreadable: the number of contacts the desk created is not known
+created=None, accounted=5                                                   -> RAISED CounterUnreadable: the number of contacts the desk created is not known
+created=None, accounted=0, open=3, leads=9                                  -> RAISED CounterUnreadable: the number of contacts the desk created is not known
+created=8, accounted=8, open=1, leads=9                                     -> 1
+created=8, accounted=8, open=2 (retried), leads=9                           -> 1
+created=0, accounted=0, open=1 (unknown 1, nothing listed), leads=9         -> 1
+created=0, accounted=0, open=0                                              -> 0
+created=-1 accounted=0                                                      -> 0
+## read_counter_files_checked / counter_is_known
+missing folder                                                              -> (CounterRead(totals={}, files=0, unreadable=0), False)
+empty folder (no glob match)                                                -> (CounterRead(totals={}, files=0, unreadable=0), False)
+half-written file                                                           -> (CounterRead(totals={}, files=1, unreadable=1), False)
+zero-byte file                                                              -> (CounterRead(totals={}, files=1, unreadable=1), False)
+file with no 'created'                                                      -> (CounterRead(totals={'calls': 3}, files=1, unreadable=0), False)
+good file                                                                   -> (CounterRead(totals={'created': 3, 'create_open': 1}, files=1, unreadable=0), True)
+good file + list-valued file                                                -> (CounterRead(totals={'created': 3, 'create_open': 1}, files=2, unreadable=1), False)
+other tag only (older run)                                                  -> (CounterRead(totals={}, files=0, unreadable=0), False)
+empty tag                                                                   -> RAISED ValueError: the run tag must not be empty
+tag None                                                                    -> RAISED ValueError: the run tag must not be empty
+## exit_code_of
+ok,written,[],0,known                                                       -> 0
+ok,written,[],0,counter NOT known                                           -> 1
+create_unknown=1, nothing listed: unseen=contacts_not_accounted_for(0,0,1,9) then exit_code -> 1
+create_unknown=1, listed 1 (accounted=1): exit_code                         -> 0
+## HubspotCrm with unwritable counters file, create not sent
+put() with a folder named as the counters file                              -> RAISED CrmCounterUnwritable: the counters file cannot be written: the create was not sent
+contacts at the fake after put: 0 stats: {'calls': 0, 'creates': 0, 'created': 0, 'create_open': 0, 'create_unknown': 0, 'conflicts': 0, 'gets': 0, 'searches': 0, 'archives': 0, 'rate_limited': 0, 'patch': 0}
+put() with writable file                                                    -> 'PUT'
+file after: {"archives": 0, "calls": 1, "conflicts": 0, "create_open": 0, "create_unknown": 0, "created": 1, "creates": 1, "gets": 0, "patch": 0, "rate_limited": 0, "searches": 0} contacts: 1
+rc=0

@@ -1,0 +1,23 @@
+MUTANT A-01-m17  VERDICT: SURVIVED
+description: local_dir outbox WARNING removed
+base commit: b4cce5b6ae80b45125604b8295ebb35bd2ea1c2c   root: /tmp/c8/wA   file: src/hadavin_sdk/audit/local_dir.py
+command: env -i PATH=/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin HOME=/root PYTHONDONTWRITEBYTECODE=1 /tmp/c8/wA/.venv/bin/python -m pytest -q -p no:cacheprovider --tb=line -rf tests/test_a01_audit_reconcile.py tests/test_p7_tick.py tests/test_s2_audit.py tests/test_p3b_neutral_audit.py   (cwd=/tmp/c8/wA)
+rc: 0
+restore check: diff <saved original> <file after restore>: rc=0 (0 = identical)
+pytest summary line: 104 passed in 17.84s
+first failing test: -
+all failing tests (0): -
+--- OLD TEXT (full) ---
+            _LOG.warning(
+                "audit outcome not written (%s): event %s goes to the outbox",
+                type(exc).__name__,
+                event.event_id,
+            )
+
+--- NEW TEXT (full) ---
+
+--- PYTEST OUTPUT (full) ---
+........................................................................ [ 69%]
+................................                                         [100%]
+104 passed in 17.84s
+

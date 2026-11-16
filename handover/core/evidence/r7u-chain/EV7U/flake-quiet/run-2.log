@@ -1,0 +1,22 @@
+..................                                                       [100%]
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_r7s_findings.py::test_s3_a_created_contact_the_list_does_not_show_ends_the_check_with_the_failed_exit_code[with-cleanup-f3-silent]
+PASSED tests/test_r7s_findings.py::test_s3_a_created_contact_the_list_does_not_show_ends_the_check_with_the_failed_exit_code[without-cleanup-f3-silent]
+PASSED tests/test_r7t_findings.py::test_t15_the_counting_rule_takes_open_creates_as_possible_contacts_and_never_more_than_the_leads
+PASSED tests/test_r7t_findings.py::test_t15_the_window_after_the_request_and_before_the_count_leaves_the_create_open
+PASSED tests/test_r7t_findings.py::test_t15_the_window_before_the_reply_also_leaves_the_create_open
+PASSED tests/test_r7t_findings.py::test_t15_every_normal_end_of_a_create_closes_it
+PASSED tests/test_r7t_findings.py::test_t15_a_run_with_a_window_in_the_counter_and_a_hidden_contact_ends_as_failed
+PASSED tests/test_r7t_findings.py::test_t15_a_window_in_the_counter_with_nothing_hidden_is_no_false_alarm[made-and-listed]
+PASSED tests/test_r7t_findings.py::test_t15_a_window_in_the_counter_with_nothing_hidden_is_no_false_alarm[retried]
+PASSED tests/test_r7t_findings.py::test_t15_a_create_that_waits_on_a_429_and_then_succeeds_opens_and_closes_exactly_once
+PASSED tests/test_r7t_findings.py::test_t17_a_create_that_may_have_made_the_contact_is_counted_as_unknown[drop]
+PASSED tests/test_r7t_findings.py::test_t17_a_create_that_may_have_made_the_contact_is_counted_as_unknown[500]
+PASSED tests/test_r7t_findings.py::test_t17_a_create_that_may_have_made_the_contact_is_counted_as_unknown[408]
+PASSED tests/test_r7t_findings.py::test_t17_a_429_after_the_waits_proves_nothing_was_stored
+PASSED tests/test_r7t_findings.py::test_t17_an_unknown_create_with_nothing_hidden_is_no_false_alarm[made-and-listed]
+PASSED tests/test_r7t_findings.py::test_t17_an_unknown_create_with_nothing_hidden_is_no_false_alarm[retried]
+PASSED tests/test_r7t_findings.py::test_t17_an_unknown_create_and_a_contact_the_list_does_not_show_ends_as_failed
+PASSED tests/test_r7t_findings.py::test_t18_a_counters_file_that_cannot_be_written_stops_the_create_before_it_is_sent
+18 passed, 172 deselected in 405.67s (0:06:45)

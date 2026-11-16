@@ -1,0 +1,7 @@
+I10 the text after a password word is not read as a whole
+replaced: '    passwords = [m.group(1) for m in matches]\n'
+by: '    passwords = []\n'
+summary: FAILED tests/test_mutation_runner_keywords.py::test_the_pieces_of_an_unquoted_password_that_holds_a_semicolon_or_an_ampersand_are_secrets
+exit=1
+FAILED kept tests:
+test_the_pieces_of_an_unquoted_password_that_holds_a_semicolon_or_an_ampersand_are_secrets

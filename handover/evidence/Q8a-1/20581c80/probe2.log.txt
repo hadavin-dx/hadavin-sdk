@@ -1,0 +1,10 @@
+str no marker
+repr no marker
+errors() LEAK
+errors(include_input=False) no marker
+json() LEAK
+args no marker
+1 validation error for AuditEvent
+event_id
+  Value error, event_id must be a plain file name: lower-case letters, digits, dash and underscore, at most 128 characters, starting with a letter or digit, and not a reserved device name [type=value_error]
+    For further information visit https://errors.pydantic.dev/2.14/v/value_error

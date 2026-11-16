@@ -1,0 +1,1540 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+........................................................................ [ 22%]
+..............................................F......................... [ 45%]
+........................................................................ [ 67%]
+.F...FF................FF.............................F....FFFFFFFFFFFFF [ 90%]
+FFFFFFF..FFFFFFFFFFFFFF.....F.                                           [100%]
+=================================== FAILURES ===================================
+_________ test_a_default_call_passes_pytest_no_plugin_and_no_env_names _________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3485/test_a_default_call_passes_pyt0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f029c64fc40>
+
+    def test_a_default_call_passes_pytest_no_plugin_and_no_env_names(tmp_path, monkeypatch):
+        root = _tree(tmp_path, {CORE_TEST: PASSES})
+        calls = []
+    
+        def fake(*args, **kwargs):
+            calls.append((len(args), kwargs))
+            return 0
+    
+        monkeypatch.setattr(mr, "_pytest", fake)
+        _run(root)
+>       assert calls == [
+            (
+                4,
+                {
+                    "plugin": "",
+                    "env_names": (),
+                    "environ": mr._env_snapshot(()),
+                    "hosts": mr.THROWAWAY_HOSTS,
+                },
+            )
+        ], "a default call changed the arguments of the pytest run"
+E       AssertionError: a default call changed the arguments of the pytest run
+E       assert [(4, {'plugin...': '/root'}})] == [(4, {'plugin....1', '::1')})]
+E         
+E         At index 0 diff: (4, {'plugin': '', 'env_names': (), 'environ': {'PATH': '/home/user/build/venv-evpr89r22-fb/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin', 'HOME': '/root'}}) != (4, {'plugin': '', 'env_names': (), 'environ': {'PATH': '/home/user/build/venv-evpr89r22-fb/bin:/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/o...
+E         
+E         ...Full output truncated, use '-vv' to show
+
+tests/test_mutation_runner_keywords.py:1350: AssertionError
+_ test_the_second_layer_replaces_a_whole_slot_of_caller_text_that_holds_a_secret _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3485/test_the_second_layer_replaces0')
+
+    def test_the_second_layer_replaces_a_whole_slot_of_caller_text_that_holds_a_secret(tmp_path):
+        # a caller whose test function, listed class, expect text or mutant name holds the password: the allowlist would show it, the second layer
+        # gives the fixed text of that slot instead, WHOLE (a piece cut out of a text the reader knows would show by its place what was cut)
+        shown = _shown(tmp_path, body=f"def {_PW}():\n    pass\n", classes=(_PW, f"Lib{_PW}Error"))
+>       assert mr._shown_id(f"tests/test_core::{_PW}", shown) == mr.ID_HIDDEN, (
+            "a test id that holds a secret was not replaced whole by the fixed text"
+        )
+E       AssertionError: a test id that holds a secret was not replaced whole by the fixed text
+E       assert 'tests/test_core::[REDACTED]' == '[test id not shown]'
+E         
+E         - [test id not shown]
+E         + tests/test_core::[REDACTED]
+
+tests/test_mutation_runner_keywords.py:3476: AssertionError
+__ test_fuzz_every_output_field_holds_only_allowlisted_classes_and_caller_ids __
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3485/test_fuzz_every_output_field_h0')
+
+    def test_fuzz_every_output_field_holds_only_allowlisted_classes_and_caller_ids(tmp_path):
+        """Seeded: 60 secrets x 8 forms of child text (plain, slice, reversed, base64, hex, rot13, upper, percent) = 480 iterations, 13 outputs each
+        (6,240), and the ``first_lines`` entry of every row that has one. Each output must be IN the set of texts built from the caller's side; no
+        random piece is compared with the runner's fixed words."""
+>       counts = _fuzz(tmp_path)
+                 ^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:3755: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_mutation_runner_keywords.py:3746: in _fuzz
+    _check_one_output(kind, value, shown, counts)
+tests/test_mutation_runner_keywords.py:3682: in _check_one_output
+    ids, labels, classes, lines = _fuzz_allowed(shown)
+                                  ^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+shown = _Shown(secrets=('postgresql://svc:7BUSfRTRb3ee@db.invalid:5432/app', '7BUSfRTRb3ee'), classes=frozenset({'ResourceWarn...ror', 'BytesWarning'}), files={'tests/test_core': 'tests/test_core'}, names={'tests/test_core': frozenset({'test_a'})})
+
+    def _fuzz_allowed(shown):
+        """What an output may be, written from the caller's side only: the fixed labels of a row, test ids made of the caller's file and function
+        names, and lines made of an allowlisted class name, the fixed expect words and the caller's expect text."""
+        ids = {
+            f"tests/test_core::{function}{end}"
+            for function in ("test_a", "test_own", "test_pinned")
+            for end in ("", mr.PARAMETERS_HIDDEN)
+        }
+        labels = {
+            "TIMEOUT", "JUNIT REFUSED", "COLLECTION ERROR", "FIXTURE ERROR", "SKIPPED TESTS", "EXIT CODE 2", mr.ID_HIDDEN,
+        }  # fmt: skip
+        classes = sorted(shown.classes | {mr.CLASS_HIDDEN})
+>       classes.append(mr.ASSERT_SHOWN)
+                       ^^^^^^^^^^^^^^^
+E       AttributeError: module 'tools.mutation_runner' has no attribute 'ASSERT_SHOWN'
+
+tests/test_mutation_runner_keywords.py:3671: AttributeError
+_ test_the_fuzz_check_fails_when_the_class_or_the_id_allowlist_is_switched_off _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3485/test_the_fuzz_check_fails_when0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f029c8e83d0>
+
+    def test_the_fuzz_check_fails_when_the_class_or_the_id_allowlist_is_switched_off(
+        tmp_path, monkeypatch
+    ):
+        # the control of the fuzz: the same check on a runner that shows the child's class name, or the child's test id, must fail
+        with monkeypatch.context() as off:
+            off.setattr(mr, "_shown_class", lambda raw, shown: mr._leading_class(raw))
+            with pytest.raises(AssertionError, match="a first line is not an allowlisted class"):
+>               _fuzz(tmp_path, range(3))
+
+tests/test_mutation_runner_keywords.py:3771: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_mutation_runner_keywords.py:3746: in _fuzz
+    _check_one_output(kind, value, shown, counts)
+tests/test_mutation_runner_keywords.py:3682: in _check_one_output
+    ids, labels, classes, lines = _fuzz_allowed(shown)
+                                  ^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+shown = _Shown(secrets=('postgresql://svc:7BUSfRTRb3ee@db.invalid:5432/app', '7BUSfRTRb3ee'), classes=frozenset({'ResourceWarn...ror', 'BytesWarning'}), files={'tests/test_core': 'tests/test_core'}, names={'tests/test_core': frozenset({'test_a'})})
+
+    def _fuzz_allowed(shown):
+        """What an output may be, written from the caller's side only: the fixed labels of a row, test ids made of the caller's file and function
+        names, and lines made of an allowlisted class name, the fixed expect words and the caller's expect text."""
+        ids = {
+            f"tests/test_core::{function}{end}"
+            for function in ("test_a", "test_own", "test_pinned")
+            for end in ("", mr.PARAMETERS_HIDDEN)
+        }
+        labels = {
+            "TIMEOUT", "JUNIT REFUSED", "COLLECTION ERROR", "FIXTURE ERROR", "SKIPPED TESTS", "EXIT CODE 2", mr.ID_HIDDEN,
+        }  # fmt: skip
+        classes = sorted(shown.classes | {mr.CLASS_HIDDEN})
+>       classes.append(mr.ASSERT_SHOWN)
+                       ^^^^^^^^^^^^^^^
+E       AttributeError: module 'tools.mutation_runner' has no attribute 'ASSERT_SHOWN'
+
+tests/test_mutation_runner_keywords.py:3671: AttributeError
+________ test_a_pattern_or_an_empty_text_in_the_host_list_is_refused[*] ________
+
+bad = '*'
+
+    @pytest.mark.parametrize("bad", ["*", ""])
+    def test_a_pattern_or_an_empty_text_in_the_host_list_is_refused(bad):
+        for value in (
+            "postgresql://postgres@localhost:5432/postgres",
+            f"host={_TMP} dbname=x",
+            "dbname=x",
+        ):
+>           with pytest.raises(ValueError, match="exact host names"):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AssertionError: Regex pattern did not match.
+E             Expected regex: 'exact host names'
+E             Actual message: 'HADAVIN_TEST_PG_DSN is refused: its address names no host and no hostaddr, so it would use the default local socket of this machine, which the runner cannot check. Write the host (or the socket folder) and list it in throwaway_hosts'
+
+tests/test_mutation_runner_keywords.py:3922: AssertionError
+________ test_a_pattern_or_an_empty_text_in_the_host_list_is_refused[] _________
+
+bad = ''
+
+    @pytest.mark.parametrize("bad", ["*", ""])
+    def test_a_pattern_or_an_empty_text_in_the_host_list_is_refused(bad):
+        for value in (
+            "postgresql://postgres@localhost:5432/postgres",
+            f"host={_TMP} dbname=x",
+            "dbname=x",
+        ):
+>           with pytest.raises(ValueError, match="exact host names"):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           AssertionError: Regex pattern did not match.
+E             Expected regex: 'exact host names'
+E             Actual message: 'HADAVIN_TEST_PG_DSN is refused: its address names no host and no hostaddr, so it would use the default local socket of this machine, which the runner cannot check. Write the host (or the socket folder) and list it in throwaway_hosts'
+
+tests/test_mutation_runner_keywords.py:3922: AssertionError
+_ test_one_run_goes_through_the_real_address_check_the_real_lock_folder_and_the_allowlist _
+
+_real_lock_dir = PosixPath('/tmp/pytest-of-root/pytest-3485/test_one_run_goes_through_the_0')
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3485/test_one_run_goes_through_the_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f029c5a90f0>
+
+    @pytest.mark.skipif(os.name == "nt", reason="the lock folder checks are POSIX")
+    def test_one_run_goes_through_the_real_address_check_the_real_lock_folder_and_the_allowlist(
+        _real_lock_dir, tmp_path, monkeypatch
+    ):
+        dsn, word = _secret_dsn()
+        monkeypatch.setenv(DSN_NAME, dsn)
+        root = _tree(tmp_path, {CORE_TEST: RAISES_A_CLASS_OF_ITS_OWN})
+        checked = []
+        real_check = mr._refuse_unsafe_address
+        monkeypatch.setattr(
+            mr, "_refuse_unsafe_address", lambda *a: checked.append(a[2]) or real_check(*a)
+        )
+        folder = _real_lock_dir / f"hadavin_mutation_locks_{os.getuid()}"
+        during: list[list[str]] = []
+        lines: dict[str, str] = {}
+        crash = Mutant("flip", "src/pk/core.py", "return flag", "return not flag", "scratch")
+    
+        def run(**kw):
+            return run_mutants(
+                root, [crash], [CORE_TEST], extra_dirs=(), timeout=120, pass_env=(DSN_NAME,),
+                first_lines=lines, on_result=lambda _row: during.append(sorted(os.listdir(folder))), **kw,
+            )  # fmt: skip
+    
+        _must_raise(
+            "the made-up host was accepted without being named",
+            ValueError,
+            run,
+            match="host is not one of",
+        )
+        assert not folder.exists(), "a refused address still made the lock folder"
+        rows = run(throwaway_hosts=FAKE_HOSTS)
+        # once before anything runs for each call, then once more at the start of each of the three child runs (first run, mutant, canary)
+>       assert checked == [mr.THROWAWAY_HOSTS, FAKE_HOSTS, FAKE_HOSTS, FAKE_HOSTS, FAKE_HOSTS], (
+            f"the address check was not called with the caller's host list: {checked}"
+        )
+E       AssertionError: the address check was not called with the caller's host list: [('localhost', '127.0.0.1', '::1'), ('db.invalid',)]
+E       assert [('localhost'...db.invalid',)] == [('localhost'...db.invalid',)]
+E         
+E         Right contains 3 more items, first extra item: ('db.invalid',)
+E         Use -v to get more diff
+
+tests/test_mutation_runner_keywords.py:4384: AssertionError
+___________ test_the_refusals_come_in_the_order_the_docstring_gives ____________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3485/test_the_refusals_come_in_the_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f029c5d42f0>
+
+    def test_the_refusals_come_in_the_order_the_docstring_gives(tmp_path, monkeypatch):
+        """All 13 documented steps are pinned: at each step everything an EARLIER step refuses is put right and everything a LATER step refuses
+        is still wrong, and the message must be the one of that step."""
+        doc = " ".join((mr.__doc__ or "").split())
+        places = [doc.find(words) for words, _message in REFUSAL_ORDER]
+>       assert len(REFUSAL_ORDER) == 13 and -1 not in places and places == sorted(places), (
+            f"the docstring does not list the refusals in the order of the code: {places}"
+        )
+E       AssertionError: the docstring does not list the refusals in the order of the code: [9009, 9098, 9156, -1, 9336, -1, 9460, -1, 9743, 10618, 10766, 11300, -1]
+E       assert (13 == 13 and -1 not in [9009, 9098, 9156, -1, 9336, -1, ...])
+E        +  where 13 = len((('A path in ``tests`` or ``extra_dirs``', 'path escapes its tree'), ('a name in ``pass_env`` that is not allowed', 'p...ds'), ('A ``conftest`` that is not a plugin file', 'conftest must be'), ('an address longer than', 'longer than'), ...))
+
+tests/test_mutation_runner_keywords.py:4480: AssertionError
+_ test_a_test_id_that_holds_the_password_is_the_fixed_text_and_never_a_name_with_a_piece_cut_out _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3485/test_a_test_id_that_holds_the_0')
+
+    def test_a_test_id_that_holds_the_password_is_the_fixed_text_and_never_a_name_with_a_piece_cut_out(
+        tmp_path,
+    ):
+        # the address of a throwaway container: login and password are both the usual default name, and a test file is named after the database
+        shown, word = _weak_shown(tmp_path, _WEAK["the usual default name"])
+        for test_id in (
+            f"tests/test_{word}_store::test_x",
+            f"tests/test_{word}_store/TestK::test_in_class",
+        ):
+            out = mr._shown_id(test_id, shown)
+>           assert mr.MASK not in out, (
+                "a test id was shown with a piece cut out of a file name: the place of the cut shows what the password is"
+            )
+E           AssertionError: a test id was shown with a piece cut out of a file name: the place of the cut shows what the password is
+E           assert '[REDACTED]' not in 'tests/test_...tore::test_x'
+E             
+E             '[REDACTED]' is contained here:
+E               tests/test_[REDACTED]_store::test_x
+E             ?            ++++++++++
+
+tests/test_mutation_runner_keywords.py:4590: AssertionError
+_ test_with_a_weak_password_every_slot_is_whole_or_its_fixed_text_and_fixed_words_stay[a function name of the test file] _
+
+case = 'a function name of the test file'
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3485/test_with_a_weak_password_ever0')
+
+    @pytest.mark.parametrize("case", sorted(_WEAK))
+    def test_with_a_weak_password_every_slot_is_whole_or_its_fixed_text_and_fixed_words_stay(
+        case, tmp_path
+    ):
+        shown, word = _weak_shown(tmp_path, _WEAK[case])
+        seen = set()
+        for slot, own, fixed, got in _weak_outputs(shown):
+>           assert mr.MASK not in got, (
+                f"a marker was put inside a text ({case}, slot {slot}): the slot must be whole or its fixed text"
+            )
+E           AssertionError: a marker was put inside a text (a function name of the test file, slot id): the slot must be whole or its fixed text
+E           assert '[REDACTED]' not in 'tests/test_...::[REDACTED]'
+E             
+E             '[REDACTED]' is contained here:
+E               tests/test_core::[REDACTED]
+E             ?                  ++++++++++
+
+tests/test_mutation_runner_keywords.py:4626: AssertionError
+_ test_with_a_weak_password_every_slot_is_whole_or_its_fixed_text_and_fixed_words_stay[a piece of Python's exception names] _
+
+case = "a piece of Python's exception names"
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3485/test_with_a_weak_password_ever1')
+
+    @pytest.mark.parametrize("case", sorted(_WEAK))
+    def test_with_a_weak_password_every_slot_is_whole_or_its_fixed_text_and_fixed_words_stay(
+        case, tmp_path
+    ):
+        shown, word = _weak_shown(tmp_path, _WEAK[case])
+        seen = set()
+        for slot, own, fixed, got in _weak_outputs(shown):
+>           assert mr.MASK not in got, (
+                f"a marker was put inside a text ({case}, slot {slot}): the slot must be whole or its fixed text"
+            )
+E           AssertionError: a marker was put inside a text (a piece of Python's exception names, slot class): the slot must be whole or its fixed text
+E           assert '[REDACTED]' not in 'Postgres[REDACTED]'
+E             
+E             '[REDACTED]' is contained here:
+E               Postgres[REDACTED]
+
+tests/test_mutation_runner_keywords.py:4626: AssertionError
+_ test_with_a_weak_password_every_slot_is_whole_or_its_fixed_text_and_fixed_words_stay[a piece of every test id] _
+
+case = 'a piece of every test id'
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3485/test_with_a_weak_password_ever2')
+
+    @pytest.mark.parametrize("case", sorted(_WEAK))
+    def test_with_a_weak_password_every_slot_is_whole_or_its_fixed_text_and_fixed_words_stay(
+        case, tmp_path
+    ):
+        shown, word = _weak_shown(tmp_path, _WEAK[case])
+        seen = set()
+        for slot, own, fixed, got in _weak_outputs(shown):
+>           assert mr.MASK not in got, (
+                f"a marker was put inside a text ({case}, slot {slot}): the slot must be whole or its fixed text"
+            )
+E           AssertionError: a marker was put inside a text (a piece of every test id, slot id): the slot must be whole or its fixed text
+E           assert '[REDACTED]' not in '[REDACTED]s...[REDACTED]_a'
+E             
+E             '[REDACTED]' is contained here:
+E               [REDACTED]s/[REDACTED]_core::[REDACTED]_a
+E             ? ++++++++++
+
+tests/test_mutation_runner_keywords.py:4626: AssertionError
+_ test_with_a_weak_password_every_slot_is_whole_or_its_fixed_text_and_fixed_words_stay[a word of the runner's fixed texts (class)] _
+
+case = "a word of the runner's fixed texts (class)"
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3485/test_with_a_weak_password_ever3')
+
+    @pytest.mark.parametrize("case", sorted(_WEAK))
+    def test_with_a_weak_password_every_slot_is_whole_or_its_fixed_text_and_fixed_words_stay(
+        case, tmp_path
+    ):
+        shown, word = _weak_shown(tmp_path, _WEAK[case])
+        seen = set()
+        for slot, own, fixed, got in _weak_outputs(shown):
+>           assert mr.MASK not in got, (
+                f"a marker was put inside a text ({case}, slot {slot}): the slot must be whole or its fixed text"
+            )
+E           AssertionError: a marker was put inside a text (a word of the runner's fixed texts (class), slot id): the slot must be whole or its fixed text
+E           assert '[REDACTED]' not in 'tests/test_...n_[REDACTED]'
+E             
+E             '[REDACTED]' is contained here:
+E               tests/test_core/TestK::test_in_[REDACTED]
+E             ?                                ++++++++++
+
+tests/test_mutation_runner_keywords.py:4626: AssertionError
+_ test_with_a_weak_password_every_slot_is_whole_or_its_fixed_text_and_fixed_words_stay[a word of the runner's fixed texts (expect)] _
+
+case = "a word of the runner's fixed texts (expect)"
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3485/test_with_a_weak_password_ever4')
+
+    @pytest.mark.parametrize("case", sorted(_WEAK))
+    def test_with_a_weak_password_every_slot_is_whole_or_its_fixed_text_and_fixed_words_stay(
+        case, tmp_path
+    ):
+        shown, word = _weak_shown(tmp_path, _WEAK[case])
+        seen = set()
+>       for slot, own, fixed, got in _weak_outputs(shown):
+                                     ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:4625: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+shown = _Shown(secrets=('postgresql://postgres:expect@localhost:5432/postgres', 'expect'), classes=frozenset({'ResourceWarning..., 'test_x', 'test_a', 'test_in_class'}), 'tests/test_core': frozenset({'TestK', 'test_x', 'test_a', 'test_in_class'})})
+
+    def _weak_outputs(shown):
+        """Every kind of shown text for the two test files: ``(slot, what the caller's own text is, what the runner gave)``."""
+        for path in ("tests/test_core", _STORE_TEST.removesuffix(".py")):
+            for rest in ("::test_a", "::test_x", "/TestK::test_in_class"):
+                yield "id", path + rest, mr.ID_HIDDEN, mr._shown_id(path + rest, shown)
+                got = mr._shown_id(path + rest + "[7]", shown)
+                assert got == mr.ID_HIDDEN or got.endswith(mr.PARAMETERS_HIDDEN), got
+                yield "id", path + rest, mr.ID_HIDDEN, got.removesuffix(mr.PARAMETERS_HIDDEN)
+        for name in ("PostgresError", "TestClassError"):
+            yield "class", name, mr.CLASS_HIDDEN, mr._shown_line(f"E   lib.{name}: x", shown)
+        for expect in ("assert", "expect the test class", "Error: boom"):
+            line = mr._shown_line("E   KeyError: zzz", shown, expect)
+            head, found, tail = line.partition(" [expect not found] ")
+>           assert (head, found) == ("KeyError", " [expect not found] "), line
+E           AssertionError: KeyError [[REDACTED] not found] assert
+E           assert ('KeyError [[...] assert', '') == ('KeyError', ... not found] ')
+E             
+E             At index 0 diff: 'KeyError [[REDACTED] not found] assert' != 'KeyError'
+E             Use -v to get more diff
+
+tests/test_mutation_runner_keywords.py:4615: AssertionError
+_ test_with_a_weak_password_every_slot_is_whole_or_its_fixed_text_and_fixed_words_stay[one character] _
+
+case = 'one character'
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3485/test_with_a_weak_password_ever5')
+
+    @pytest.mark.parametrize("case", sorted(_WEAK))
+    def test_with_a_weak_password_every_slot_is_whole_or_its_fixed_text_and_fixed_words_stay(
+        case, tmp_path
+    ):
+        shown, word = _weak_shown(tmp_path, _WEAK[case])
+        seen = set()
+        for slot, own, fixed, got in _weak_outputs(shown):
+>           assert mr.MASK not in got, (
+                f"a marker was put inside a text ({case}, slot {slot}): the slot must be whole or its fixed text"
+            )
+E           AssertionError: a marker was put inside a text (one character, slot id): the slot must be whole or its fixed text
+E           assert '[REDACTED]' not in '[REDACTED]e...[REDACTED]_a'
+E             
+E             '[REDACTED]' is contained here:
+E               [REDACTED]es[REDACTED]s/[REDACTED]es[REDACTED]_core::[REDACTED]es[REDACTED]_a
+E             ? ++++++++++
+
+tests/test_mutation_runner_keywords.py:4626: AssertionError
+_ test_with_a_weak_password_every_slot_is_whole_or_its_fixed_text_and_fixed_words_stay[the usual default name] _
+
+case = 'the usual default name'
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3485/test_with_a_weak_password_ever6')
+
+    @pytest.mark.parametrize("case", sorted(_WEAK))
+    def test_with_a_weak_password_every_slot_is_whole_or_its_fixed_text_and_fixed_words_stay(
+        case, tmp_path
+    ):
+        shown, word = _weak_shown(tmp_path, _WEAK[case])
+        seen = set()
+        for slot, own, fixed, got in _weak_outputs(shown):
+>           assert mr.MASK not in got, (
+                f"a marker was put inside a text ({case}, slot {slot}): the slot must be whole or its fixed text"
+            )
+E           AssertionError: a marker was put inside a text (the usual default name, slot id): the slot must be whole or its fixed text
+E           assert '[REDACTED]' not in 'tests/test_...tore::test_a'
+E             
+E             '[REDACTED]' is contained here:
+E               tests/test_[REDACTED]_store::test_a
+E             ?            ++++++++++
+
+tests/test_mutation_runner_keywords.py:4626: AssertionError
+_ test_with_a_weak_password_every_slot_is_whole_or_its_fixed_text_and_fixed_words_stay[the word assert] _
+
+case = 'the word assert'
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3485/test_with_a_weak_password_ever7')
+
+    @pytest.mark.parametrize("case", sorted(_WEAK))
+    def test_with_a_weak_password_every_slot_is_whole_or_its_fixed_text_and_fixed_words_stay(
+        case, tmp_path
+    ):
+        shown, word = _weak_shown(tmp_path, _WEAK[case])
+        seen = set()
+>       for slot, own, fixed, got in _weak_outputs(shown):
+                                     ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:4625: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+shown = _Shown(secrets=('postgresql://postgres:assert@localhost:5432/postgres', 'assert'), classes=frozenset({'ResourceWarning..., 'test_x', 'test_a', 'test_in_class'}), 'tests/test_core': frozenset({'TestK', 'test_x', 'test_a', 'test_in_class'})})
+
+    def _weak_outputs(shown):
+        """Every kind of shown text for the two test files: ``(slot, what the caller's own text is, what the runner gave)``."""
+        for path in ("tests/test_core", _STORE_TEST.removesuffix(".py")):
+            for rest in ("::test_a", "::test_x", "/TestK::test_in_class"):
+                yield "id", path + rest, mr.ID_HIDDEN, mr._shown_id(path + rest, shown)
+                got = mr._shown_id(path + rest + "[7]", shown)
+                assert got == mr.ID_HIDDEN or got.endswith(mr.PARAMETERS_HIDDEN), got
+                yield "id", path + rest, mr.ID_HIDDEN, got.removesuffix(mr.PARAMETERS_HIDDEN)
+        for name in ("PostgresError", "TestClassError"):
+            yield "class", name, mr.CLASS_HIDDEN, mr._shown_line(f"E   lib.{name}: x", shown)
+        for expect in ("assert", "expect the test class", "Error: boom"):
+            line = mr._shown_line("E   KeyError: zzz", shown, expect)
+            head, found, tail = line.partition(" [expect not found] ")
+            assert (head, found) == ("KeyError", " [expect not found] "), line
+>           yield "expect", expect, mr.EXPECT_HIDDEN, tail
+                                    ^^^^^^^^^^^^^^^^
+E           AttributeError: module 'tools.mutation_runner' has no attribute 'EXPECT_HIDDEN'
+
+tests/test_mutation_runner_keywords.py:4616: AttributeError
+_ test_with_a_weak_password_every_slot_is_whole_or_its_fixed_text_and_fixed_words_stay[two characters] _
+
+case = 'two characters'
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3485/test_with_a_weak_password_ever8')
+
+    @pytest.mark.parametrize("case", sorted(_WEAK))
+    def test_with_a_weak_password_every_slot_is_whole_or_its_fixed_text_and_fixed_words_stay(
+        case, tmp_path
+    ):
+        shown, word = _weak_shown(tmp_path, _WEAK[case])
+        seen = set()
+        for slot, own, fixed, got in _weak_outputs(shown):
+>           assert mr.MASK not in got, (
+                f"a marker was put inside a text ({case}, slot {slot}): the slot must be whole or its fixed text"
+            )
+E           AssertionError: a marker was put inside a text (two characters, slot id): the slot must be whole or its fixed text
+E           assert '[REDACTED]' not in 't[REDACTED]...REDACTED]t_a'
+E             
+E             '[REDACTED]' is contained here:
+E               t[REDACTED]ts/t[REDACTED]t_core::t[REDACTED]t_a
+E             ?  ++++++++++
+
+tests/test_mutation_runner_keywords.py:4626: AssertionError
+_ test_a_name_of_python_itself_is_shown_whole_also_when_it_holds_the_password __
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3485/test_a_name_of_python_itself_i0')
+
+    def test_a_name_of_python_itself_is_shown_whole_also_when_it_holds_the_password(tmp_path):
+        for parts in (("Er", "ror"), ("Key", "Error"), ("Fai", "led"), ("r",)):
+            shown, word = _weak_shown(tmp_path, parts)
+            for name in ("KeyError", "AssertionError", "Failed"):
+>               assert mr._shown_line(f"E   {name}: x", shown) == name, (
+                    f"a name of Python itself was replaced or cut for a password of {len(word)} characters that is a piece of it"
+                )
+E               AssertionError: a name of Python itself was replaced or cut for a password of 5 characters that is a piece of it
+E               assert 'Key[REDACTED]' == 'KeyError'
+E                 
+E                 - KeyError
+E                 + Key[REDACTED]
+
+tests/test_mutation_runner_keywords.py:4659: AssertionError
+__ test_a_weak_password_in_a_real_run_gives_rows_that_are_whole_or_fixed_text __
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3485/test_a_weak_password_in_a_real0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f029c5aa660>
+
+    def test_a_weak_password_in_a_real_run_gives_rows_that_are_whole_or_fixed_text(
+        tmp_path, monkeypatch
+    ):
+        # login and password both ``test``: every test id holds the password, so every id is the fixed text; the class and the fixed words stay
+        word = "".join(_WEAK["a piece of every test id"])
+        monkeypatch.setenv(
+            DSN_NAME, _url("svc", *_WEAK["a piece of every test id"], rest=f"{FAKE_HOST}/app")
+        )
+        root = _tree(tmp_path, {CORE_TEST: USES_GO})
+        lines: dict[str, str] = {}
+        rows = _run(root, [FLIP], pass_env=(DSN_NAME,), first_lines=lines)
+>       assert rows == [("flip", Verdict.KILLED, mr.ID_HIDDEN, True)], (
+            f"not the fixed text for a test id that holds the password {word!r}: shown"
+        )
+E       AssertionError: not the fixed text for a test id that holds the password 'test': shown
+E       assert [('flip', <Ve...ED]_a', True)] == [('flip', <Ve...hown]', True)]
+E         
+E         At index 0 diff: ('flip', <Verdict.KILLED: 'KILLED'>, '[REDACTED]s/[REDACTED]_core::[REDACTED]_a', True) != ('flip', <Verdict.KILLED: 'KILLED'>, '[test id not shown]', True)
+E         Use -v to get more diff
+
+tests/test_mutation_runner_keywords.py:4675: AssertionError
+_____________ test_a_bare_assert_line_shows_the_fixed_word_assert ______________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3485/test_a_bare_assert_line_shows_0')
+
+    def test_a_bare_assert_line_shows_the_fixed_word_assert(tmp_path):
+        shown = _shown(tmp_path)
+        for line in (
+            "E   assert 1 == 2",
+            "assert 1 == 2",
+            "E   assert",
+            "E       assert go(True) is False",
+        ):
+>           assert mr._shown_line(line, shown) == mr.ASSERT_SHOWN, (
+                                                  ^^^^^^^^^^^^^^^
+                f"a bare assert line did not give the fixed word (line {line!r})"
+            )
+E           AttributeError: module 'tools.mutation_runner' has no attribute 'ASSERT_SHOWN'
+
+tests/test_mutation_runner_keywords.py:4691: AttributeError
+___ test_a_tests_entry_written_with_a_leading_dot_slash_still_shows_its_ids ____
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3485/test_a_tests_entry_written_wit0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f029c5aba10>
+
+    def test_a_tests_entry_written_with_a_leading_dot_slash_still_shows_its_ids(tmp_path, monkeypatch):
+>       assert mr._id_form("./tests/test_core.py") == "tests/test_core" == mr._id_form(CORE_TEST), (
+            "a tests entry written ./tests/... did not give the id form of pytest"
+        )
+E       AssertionError: a tests entry written ./tests/... did not give the id form of pytest
+E       assert './tests/test_core' == 'tests/test_core'
+E         
+E         - tests/test_core
+E         + ./tests/test_core
+E         ? ++
+
+tests/test_mutation_runner_keywords.py:4703: AssertionError
+_______ test_the_function_that_starts_a_child_checks_the_address_itself ________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3485/test_the_function_that_starts_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f029c5a8210>
+
+    def test_the_function_that_starts_a_child_checks_the_address_itself(tmp_path, monkeypatch):
+        # a direct call of the private function, past ``run_mutants``: the variable must not reach a child with an unchecked address
+        started = []
+    
+        def popen(*a, **k):
+            started.append(a)
+            raise ValueError("a child was started")
+    
+        monkeypatch.setattr(mr.subprocess, "Popen", popen)
+        (tmp_path / "t.py").write_text("def test_a():\n    pass\n", encoding="utf-8")
+        for label, value, why in (
+            ("a host that is not listed", "postgresql://u@other.invalid/db", "host is not one of"),
+            ("no address at all", "not an address", "not in a shape"),
+            ("an empty text", "", "not in a shape"),
+        ):
+>           _must_raise(
+                f"the function that starts a child handed over an unchecked address ({label})",
+                ValueError,
+                mr._pytest,
+                tmp_path,
+                ["t.py"],
+                tmp_path / "r.xml",
+                60,
+                env_names=(DSN_NAME,),
+                environ={DSN_NAME: value},
+                match=why,
+            )
+
+tests/test_mutation_runner_keywords.py:4734: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'the function that starts a child handed over an unchecked address (a host that is not listed)'
+error = <class 'ValueError'>, call = <function _pytest at 0x7f029e3ebec0>
+match = 'host is not one of'
+args = (PosixPath('/tmp/pytest-of-root/pytest-3485/test_the_function_that_starts_0'), ['t.py'], PosixPath('/tmp/pytest-of-root/pytest-3485/test_the_function_that_starts_0/r.xml'), 60)
+kwargs = {'env_names': ('HADAVIN_TEST_PG_DSN',), 'environ': {'HADAVIN_TEST_PG_DSN': 'postgresql://u@other.invalid/db'}}
+
+    def _must_raise(label, error, call, *args, match="", **kwargs):
+        """``call`` must raise ``error`` (its text holding ``match``); otherwise the first assertion line says ``label``."""
+        try:
+            call(*args, **kwargs)
+        except error as exc:
+            text = str(exc)
+        else:
+            raise AssertionError(f"{label}: nothing was raised")
+        # checked outside the ``except`` block, so the first line of a failure is this assertion and not the error that was caught
+>       assert match in text, f"{label}: raised another message: {text}"
+E       AssertionError: the function that starts a child handed over an unchecked address (a host that is not listed): raised another message: a child was started
+E       assert 'host is not one of' in 'a child was started'
+
+tests/test_mutation_runner_keywords.py:118: AssertionError
+_ test_the_scheme_and_the_keys_are_lower_case_and_the_two_options_take_listed_values _
+
+    def test_the_scheme_and_the_keys_are_lower_case_and_the_two_options_take_listed_values():
+        def refused(label, value):
+            _must_raise(
+                label, ValueError, mr._refuse_unsafe_address, DSN_NAME, value, mr.THROWAWAY_HOSTS,
+                match="not in a shape",
+            )  # fmt: skip
+    
+        for scheme in ("POSTGRESQL", "Postgres", "postgresQL"):
+>           refused("a scheme that is not in lower case was accepted", f"{scheme}://localhost/app")
+
+tests/test_mutation_runner_keywords.py:4764: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_mutation_runner_keywords.py:4758: in refused
+    _must_raise(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+label = 'a scheme that is not in lower case was accepted'
+error = <class 'ValueError'>
+call = <function _refuse_unsafe_address at 0x7f029e3eaac0>
+match = 'not in a shape'
+args = ('HADAVIN_TEST_PG_DSN', 'POSTGRESQL://localhost/app', ('localhost', '127.0.0.1', '::1'))
+kwargs = {}
+
+    def _must_raise(label, error, call, *args, match="", **kwargs):
+        """``call`` must raise ``error`` (its text holding ``match``); otherwise the first assertion line says ``label``."""
+        try:
+            call(*args, **kwargs)
+        except error as exc:
+            text = str(exc)
+        else:
+>           raise AssertionError(f"{label}: nothing was raised")
+E           AssertionError: a scheme that is not in lower case was accepted: nothing was raised
+
+tests/test_mutation_runner_keywords.py:116: AssertionError
+_ test_no_error_the_runner_raises_keeps_another_exception_or_child_text_in_its_chain _
+
+_real_lock_dir = PosixPath('/tmp/pytest-of-root/pytest-3485/test_no_error_the_runner_raise0')
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3485/test_no_error_the_runner_raise0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f029c5a8de0>
+
+    @pytest.mark.skipif(os.name == "nt", reason="POSIX lock folder")
+    def test_no_error_the_runner_raises_keeps_another_exception_or_child_text_in_its_chain(
+        _real_lock_dir, tmp_path, monkeypatch
+    ):
+        hostile = "Zq9x" + "CHILD" + "K4mTw"  # text only the child wrote
+        shown = _shown(tmp_path)
+        errors: dict[str, BaseException] = {}
+        junit = tmp_path / "base.xml"
+        junit.write_bytes(f"<testsuites>{hostile}".encode() + b"\xff\xfe" + hostile.encode())
+        errors["a result file with a bad byte"] = _raised(mr._refuse_skips_in_baseline, junit, shown)
+        junit.write_text(f"<testsuites>&{hostile};</testsuites>", encoding="utf-8")
+        errors["a result file with an unknown entity"] = _raised(
+            mr._refuse_skips_in_baseline, junit, shown
+        )
+        junit.write_text(f"<testsuites><{hostile}", encoding="utf-8")
+        errors["a truncated result file"] = _raised(mr._refuse_skips_in_baseline, junit, shown)
+        junit.write_text(
+            _case(f"tests.{hostile}", hostile, f"<skipped message={hostile!r}/>"), encoding="utf-8"
+        )
+        errors["a baseline that skipped"] = _raised(mr._refuse_skips_in_baseline, junit, shown)
+        folder = _real_lock_dir / f"hadavin_mutation_locks_{os.getuid()}"
+        folder.symlink_to(tmp_path)
+        errors["a link in place of the lock folder"] = _raised(mr._open_lock_dir)
+        folder.unlink()
+        with mr._one_run_per_database(["host=x dbname=y"]):
+            errors["a lock that is held"] = _raised(
+                lambda: mr._one_run_per_database(["host=x dbname=y"]).__enter__()
+            )
+        (folder / _lock_name("x\n\n\nz")).mkdir()
+        errors["a lock file that cannot be opened"] = _raised(
+            lambda: mr._one_run_per_database(["host=x dbname=z"]).__enter__()
+        )
+        with monkeypatch.context() as broken:
+            broken.setattr(
+                mr, "_lock_or_raise", lambda fd: (_ for _ in ()).throw(OSError(errno.EIO, hostile))
+            )
+            errors["a lock file that cannot be locked"] = _raised(
+                lambda: mr._one_run_per_database(["host=x dbname=w"]).__enter__()
+            )
+        assert len(errors) == 8
+        for label, error in errors.items():
+            chain = _chain(error)
+>           assert len(chain) == 1, (
+                f"an error of the runner keeps another exception in its chain ({label}): {[type(e).__name__ for e in chain]}"
+            )
+E           AssertionError: an error of the runner keeps another exception in its chain (a result file with a bad byte): ['RuntimeError', 'UnicodeDecodeError']
+E           assert 2 == 1
+E            +  where 2 = len([RuntimeError('the unmutated copy left no usable JUnit file to check for skips: UnicodeDecodeError'), UnicodeDecodeError('utf-8', b'<testsuites>Zq9xCHILDK4mTw\xff\xfeZq9xCHILDK4mTw', 26, 27, 'invalid start byte')])
+
+tests/test_mutation_runner_keywords.py:4844: AssertionError
+_______ test_the_error_of_a_failed_canary_copy_keeps_no_other_exception ________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3485/test_the_error_of_a_failed_can0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f029c5aa2e0>
+
+    @pytest.mark.skipif(os.name == "nt", reason="POSIX lock folder")
+    def test_the_error_of_a_failed_canary_copy_keeps_no_other_exception(tmp_path, monkeypatch):
+        monkeypatch.setenv(DSN_NAME, _fake_dsn())
+        root = _tree(tmp_path, {CORE_TEST: USES_GO})
+        real_copy, runs = shutil.copytree, []
+    
+        def copytree(*a, **k):
+            if len(runs) >= 2:
+                raise OSError("disk full")
+            return real_copy(*a, **k)
+    
+        monkeypatch.setattr(
+            mr, "_pytest", lambda *a, **k: runs.append(1) or (0 if len(runs) == 1 else 1)
+        )
+        monkeypatch.setattr(mr.shutil, "copytree", copytree)
+        monkeypatch.setattr(mr, "SETUP_WAIT", 0)
+        error = _raised(_run, root, [FLIP], pass_env=(DSN_NAME,), forbid_skips=False)
+        assert "could not be rebuilt for the canary" in str(error), error
+>       assert len(_chain(error)) == 1, (
+            "the error of a failed canary copy keeps another exception in its chain"
+        )
+E       AssertionError: the error of a failed canary copy keeps another exception in its chain
+E       assert 2 == 1
+E        +  where 2 = len([RuntimeError("the unmutated copy could not be rebuilt for the canary run after mutant 'flip': OSError"), OSError('disk full')])
+E        +    where [RuntimeError("the unmutated copy could not be rebuilt for the canary run after mutant 'flip': OSError"), OSError('disk full')] = _chain(RuntimeError("the unmutated copy could not be rebuilt for the canary run after mutant 'flip': OSError"))
+
+tests/test_mutation_runner_keywords.py:4871: AssertionError
+_ test_a_lock_folder_that_cannot_be_looked_at_is_the_documented_refusal_and_leaks_no_descriptor _
+
+_real_lock_dir = PosixPath('/tmp/pytest-of-root/pytest-3485/test_a_lock_folder_that_cannot1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f029c5aa270>
+
+    @pytest.mark.skipif(os.name == "nt", reason="POSIX owners and modes")
+    def test_a_lock_folder_that_cannot_be_looked_at_is_the_documented_refusal_and_leaks_no_descriptor(
+        _real_lock_dir, monkeypatch
+    ):
+        opened, closed = [], []
+        real_open, real_close = os.open, os.close
+    
+        def fstat(_fd):
+            raise OSError(errno.EIO, "no record")
+    
+        monkeypatch.setattr(os, "open", lambda *a, **k: opened.append(real_open(*a, **k)) or opened[-1])
+        monkeypatch.setattr(os, "close", lambda fd: closed.append(fd) or real_close(fd))
+        monkeypatch.setattr(os, "fstat", fstat)
+        caught = None
+        try:
+            mr._open_lock_dir()
+        except (RuntimeError, OSError) as exc:
+            caught = exc
+        monkeypatch.undo()
+>       assert isinstance(caught, RuntimeError) and "could not be made or opened" in str(caught), (
+            f"a lock folder that cannot be looked at was not the documented refusal: {caught!r}"
+        )
+E       AssertionError: a lock folder that cannot be looked at was not the documented refusal: OSError(5, 'no record')
+E       assert (False)
+E        +  where False = isinstance(OSError(5, 'no record'), RuntimeError)
+
+tests/test_mutation_runner_keywords.py:4895: AssertionError
+_ test_the_projection_argument_is_required_so_a_forgotten_one_cannot_show_child_text _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3485/test_the_projection_argument_i0')
+
+    def test_the_projection_argument_is_required_so_a_forgotten_one_cannot_show_child_text(tmp_path):
+        import inspect
+    
+        for function in (
+            mr._refuse_skips_in_baseline,
+            mr._baseline_failure,
+            mr._canary_refusal,
+            mr._row,
+        ):
+            parameter = inspect.signature(function).parameters["shown"]
+>           assert parameter.default is inspect.Parameter.empty, (
+                f"{function.__name__} has a default for what may be shown: a call that forgets it would show the child's text"
+            )
+E           AssertionError: _refuse_skips_in_baseline has a default for what may be shown: a call that forgets it would show the child's text
+E           assert None is <class 'inspect._empty'>
+E            +  where None = <Parameter "shown: '_Shown | None' = None">.default
+E            +  and   <class 'inspect._empty'> = <class 'inspect.Parameter'>.empty
+E            +    where <class 'inspect.Parameter'> = <module 'inspect' from '/usr/local/lib/python3.13/inspect.py'>.Parameter
+
+tests/test_mutation_runner_keywords.py:4954: AssertionError
+_ test_the_fuzz_check_can_fail_in_every_branch[failure-the unmutated copy does not pass its tests (exit code 1): Zork-more than the run end] _
+
+kind = 'failure'
+value = 'the unmutated copy does not pass its tests (exit code 1): Zork'
+why = 'more than the run end'
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3485/test_the_fuzz_check_can_fail_i0')
+
+    @pytest.mark.parametrize(
+        ("kind", "value", "why"),
+        [
+            ("failure", "the unmutated copy does not pass its tests (exit code 1): Zork", "more than the run end"),
+            ("failure", "the unmutated copy does not pass its tests (exit code 1): KeyError: text", "more than the run end"),
+            ("skip", "the unmutated copy skipped 1 selected test(s): ['tests/other::test_a']", "not the caller's text"),
+            ("skip", "the unmutated copy skipped 1 selected test(s): child text", "not the fixed text with a list"),
+            ("skip", "after mutant 'flip': the unmutated copy skipped 1 selected test(s): ['tests/test_core::test_a']", "not the fixed text with a list"),
+            ("canary", "the unmutated copy skipped 1 selected test(s): ['tests/test_core::test_a']", "not the fixed text with a list"),
+            ("canary", "after mutant 'flip': the unmutated copy skipped 1 selected test(s): ['x::y']", "not the caller's text"),
+            ("canary", "the unmutated copy no longer passes its tests after mutant 'flip' (exit code 1): child text", "not the fixed text"),
+            ("canary", "the unmutated copy no longer passes its tests after mutant 'other' (exit code 1)", "not the fixed text"),
+            ("id", "tests/test_[REDACTED]::test_a", "a marker inside a text"),
+            ("line", "Key[REDACTED]", "a marker inside a text"),
+        ],
+    )  # fmt: skip
+    def test_the_fuzz_check_can_fail_in_every_branch(kind, value, why, tmp_path):
+        counts = dict.fromkeys(
+            ("outputs", "id shown", "id replaced", "class shown", "class replaced"), 0
+        )
+        with pytest.raises(AssertionError, match=why):
+>           _check_one_output(kind, value, _shown(tmp_path), counts)
+
+tests/test_mutation_runner_keywords.py:4983: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_mutation_runner_keywords.py:3682: in _check_one_output
+    ids, labels, classes, lines = _fuzz_allowed(shown)
+                                  ^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+shown = _Shown(secrets=('postgresql://svc:Zq9xK4mTw@db.invalid/app', 'Zq9xK4mTw'), classes=frozenset({'ResourceWarning', 'Depr...ror', 'BytesWarning'}), files={'tests/test_core': 'tests/test_core'}, names={'tests/test_core': frozenset({'test_a'})})
+
+    def _fuzz_allowed(shown):
+        """What an output may be, written from the caller's side only: the fixed labels of a row, test ids made of the caller's file and function
+        names, and lines made of an allowlisted class name, the fixed expect words and the caller's expect text."""
+        ids = {
+            f"tests/test_core::{function}{end}"
+            for function in ("test_a", "test_own", "test_pinned")
+            for end in ("", mr.PARAMETERS_HIDDEN)
+        }
+        labels = {
+            "TIMEOUT", "JUNIT REFUSED", "COLLECTION ERROR", "FIXTURE ERROR", "SKIPPED TESTS", "EXIT CODE 2", mr.ID_HIDDEN,
+        }  # fmt: skip
+        classes = sorted(shown.classes | {mr.CLASS_HIDDEN})
+>       classes.append(mr.ASSERT_SHOWN)
+                       ^^^^^^^^^^^^^^^
+E       AttributeError: module 'tools.mutation_runner' has no attribute 'ASSERT_SHOWN'
+
+tests/test_mutation_runner_keywords.py:3671: AttributeError
+_ test_the_fuzz_check_can_fail_in_every_branch[failure-the unmutated copy does not pass its tests (exit code 1): KeyError: text-more than the run end] _
+
+kind = 'failure'
+value = 'the unmutated copy does not pass its tests (exit code 1): KeyError: text'
+why = 'more than the run end'
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3485/test_the_fuzz_check_can_fail_i1')
+
+    @pytest.mark.parametrize(
+        ("kind", "value", "why"),
+        [
+            ("failure", "the unmutated copy does not pass its tests (exit code 1): Zork", "more than the run end"),
+            ("failure", "the unmutated copy does not pass its tests (exit code 1): KeyError: text", "more than the run end"),
+            ("skip", "the unmutated copy skipped 1 selected test(s): ['tests/other::test_a']", "not the caller's text"),
+            ("skip", "the unmutated copy skipped 1 selected test(s): child text", "not the fixed text with a list"),
+            ("skip", "after mutant 'flip': the unmutated copy skipped 1 selected test(s): ['tests/test_core::test_a']", "not the fixed text with a list"),
+            ("canary", "the unmutated copy skipped 1 selected test(s): ['tests/test_core::test_a']", "not the fixed text with a list"),
+            ("canary", "after mutant 'flip': the unmutated copy skipped 1 selected test(s): ['x::y']", "not the caller's text"),
+            ("canary", "the unmutated copy no longer passes its tests after mutant 'flip' (exit code 1): child text", "not the fixed text"),
+            ("canary", "the unmutated copy no longer passes its tests after mutant 'other' (exit code 1)", "not the fixed text"),
+            ("id", "tests/test_[REDACTED]::test_a", "a marker inside a text"),
+            ("line", "Key[REDACTED]", "a marker inside a text"),
+        ],
+    )  # fmt: skip
+    def test_the_fuzz_check_can_fail_in_every_branch(kind, value, why, tmp_path):
+        counts = dict.fromkeys(
+            ("outputs", "id shown", "id replaced", "class shown", "class replaced"), 0
+        )
+        with pytest.raises(AssertionError, match=why):
+>           _check_one_output(kind, value, _shown(tmp_path), counts)
+
+tests/test_mutation_runner_keywords.py:4983: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_mutation_runner_keywords.py:3682: in _check_one_output
+    ids, labels, classes, lines = _fuzz_allowed(shown)
+                                  ^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+shown = _Shown(secrets=('postgresql://svc:Zq9xK4mTw@db.invalid/app', 'Zq9xK4mTw'), classes=frozenset({'ResourceWarning', 'Depr...ror', 'BytesWarning'}), files={'tests/test_core': 'tests/test_core'}, names={'tests/test_core': frozenset({'test_a'})})
+
+    def _fuzz_allowed(shown):
+        """What an output may be, written from the caller's side only: the fixed labels of a row, test ids made of the caller's file and function
+        names, and lines made of an allowlisted class name, the fixed expect words and the caller's expect text."""
+        ids = {
+            f"tests/test_core::{function}{end}"
+            for function in ("test_a", "test_own", "test_pinned")
+            for end in ("", mr.PARAMETERS_HIDDEN)
+        }
+        labels = {
+            "TIMEOUT", "JUNIT REFUSED", "COLLECTION ERROR", "FIXTURE ERROR", "SKIPPED TESTS", "EXIT CODE 2", mr.ID_HIDDEN,
+        }  # fmt: skip
+        classes = sorted(shown.classes | {mr.CLASS_HIDDEN})
+>       classes.append(mr.ASSERT_SHOWN)
+                       ^^^^^^^^^^^^^^^
+E       AttributeError: module 'tools.mutation_runner' has no attribute 'ASSERT_SHOWN'
+
+tests/test_mutation_runner_keywords.py:3671: AttributeError
+_ test_the_fuzz_check_can_fail_in_every_branch[skip-the unmutated copy skipped 1 selected test(s): ['tests/other::test_a']-not the caller's text] _
+
+kind = 'skip'
+value = "the unmutated copy skipped 1 selected test(s): ['tests/other::test_a']"
+why = "not the caller's text"
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3485/test_the_fuzz_check_can_fail_i2')
+
+    @pytest.mark.parametrize(
+        ("kind", "value", "why"),
+        [
+            ("failure", "the unmutated copy does not pass its tests (exit code 1): Zork", "more than the run end"),
+            ("failure", "the unmutated copy does not pass its tests (exit code 1): KeyError: text", "more than the run end"),
+            ("skip", "the unmutated copy skipped 1 selected test(s): ['tests/other::test_a']", "not the caller's text"),
+            ("skip", "the unmutated copy skipped 1 selected test(s): child text", "not the fixed text with a list"),
+            ("skip", "after mutant 'flip': the unmutated copy skipped 1 selected test(s): ['tests/test_core::test_a']", "not the fixed text with a list"),
+            ("canary", "the unmutated copy skipped 1 selected test(s): ['tests/test_core::test_a']", "not the fixed text with a list"),
+            ("canary", "after mutant 'flip': the unmutated copy skipped 1 selected test(s): ['x::y']", "not the caller's text"),
+            ("canary", "the unmutated copy no longer passes its tests after mutant 'flip' (exit code 1): child text", "not the fixed text"),
+            ("canary", "the unmutated copy no longer passes its tests after mutant 'other' (exit code 1)", "not the fixed text"),
+            ("id", "tests/test_[REDACTED]::test_a", "a marker inside a text"),
+            ("line", "Key[REDACTED]", "a marker inside a text"),
+        ],
+    )  # fmt: skip
+    def test_the_fuzz_check_can_fail_in_every_branch(kind, value, why, tmp_path):
+        counts = dict.fromkeys(
+            ("outputs", "id shown", "id replaced", "class shown", "class replaced"), 0
+        )
+        with pytest.raises(AssertionError, match=why):
+>           _check_one_output(kind, value, _shown(tmp_path), counts)
+
+tests/test_mutation_runner_keywords.py:4983: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_mutation_runner_keywords.py:3682: in _check_one_output
+    ids, labels, classes, lines = _fuzz_allowed(shown)
+                                  ^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+shown = _Shown(secrets=('postgresql://svc:Zq9xK4mTw@db.invalid/app', 'Zq9xK4mTw'), classes=frozenset({'ResourceWarning', 'Depr...ror', 'BytesWarning'}), files={'tests/test_core': 'tests/test_core'}, names={'tests/test_core': frozenset({'test_a'})})
+
+    def _fuzz_allowed(shown):
+        """What an output may be, written from the caller's side only: the fixed labels of a row, test ids made of the caller's file and function
+        names, and lines made of an allowlisted class name, the fixed expect words and the caller's expect text."""
+        ids = {
+            f"tests/test_core::{function}{end}"
+            for function in ("test_a", "test_own", "test_pinned")
+            for end in ("", mr.PARAMETERS_HIDDEN)
+        }
+        labels = {
+            "TIMEOUT", "JUNIT REFUSED", "COLLECTION ERROR", "FIXTURE ERROR", "SKIPPED TESTS", "EXIT CODE 2", mr.ID_HIDDEN,
+        }  # fmt: skip
+        classes = sorted(shown.classes | {mr.CLASS_HIDDEN})
+>       classes.append(mr.ASSERT_SHOWN)
+                       ^^^^^^^^^^^^^^^
+E       AttributeError: module 'tools.mutation_runner' has no attribute 'ASSERT_SHOWN'
+
+tests/test_mutation_runner_keywords.py:3671: AttributeError
+_ test_the_fuzz_check_can_fail_in_every_branch[skip-the unmutated copy skipped 1 selected test(s): child text-not the fixed text with a list] _
+
+kind = 'skip'
+value = 'the unmutated copy skipped 1 selected test(s): child text'
+why = 'not the fixed text with a list'
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3485/test_the_fuzz_check_can_fail_i3')
+
+    @pytest.mark.parametrize(
+        ("kind", "value", "why"),
+        [
+            ("failure", "the unmutated copy does not pass its tests (exit code 1): Zork", "more than the run end"),
+            ("failure", "the unmutated copy does not pass its tests (exit code 1): KeyError: text", "more than the run end"),
+            ("skip", "the unmutated copy skipped 1 selected test(s): ['tests/other::test_a']", "not the caller's text"),
+            ("skip", "the unmutated copy skipped 1 selected test(s): child text", "not the fixed text with a list"),
+            ("skip", "after mutant 'flip': the unmutated copy skipped 1 selected test(s): ['tests/test_core::test_a']", "not the fixed text with a list"),
+            ("canary", "the unmutated copy skipped 1 selected test(s): ['tests/test_core::test_a']", "not the fixed text with a list"),
+            ("canary", "after mutant 'flip': the unmutated copy skipped 1 selected test(s): ['x::y']", "not the caller's text"),
+            ("canary", "the unmutated copy no longer passes its tests after mutant 'flip' (exit code 1): child text", "not the fixed text"),
+            ("canary", "the unmutated copy no longer passes its tests after mutant 'other' (exit code 1)", "not the fixed text"),
+            ("id", "tests/test_[REDACTED]::test_a", "a marker inside a text"),
+            ("line", "Key[REDACTED]", "a marker inside a text"),
+        ],
+    )  # fmt: skip
+    def test_the_fuzz_check_can_fail_in_every_branch(kind, value, why, tmp_path):
+        counts = dict.fromkeys(
+            ("outputs", "id shown", "id replaced", "class shown", "class replaced"), 0
+        )
+        with pytest.raises(AssertionError, match=why):
+>           _check_one_output(kind, value, _shown(tmp_path), counts)
+
+tests/test_mutation_runner_keywords.py:4983: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_mutation_runner_keywords.py:3682: in _check_one_output
+    ids, labels, classes, lines = _fuzz_allowed(shown)
+                                  ^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+shown = _Shown(secrets=('postgresql://svc:Zq9xK4mTw@db.invalid/app', 'Zq9xK4mTw'), classes=frozenset({'ResourceWarning', 'Depr...ror', 'BytesWarning'}), files={'tests/test_core': 'tests/test_core'}, names={'tests/test_core': frozenset({'test_a'})})
+
+    def _fuzz_allowed(shown):
+        """What an output may be, written from the caller's side only: the fixed labels of a row, test ids made of the caller's file and function
+        names, and lines made of an allowlisted class name, the fixed expect words and the caller's expect text."""
+        ids = {
+            f"tests/test_core::{function}{end}"
+            for function in ("test_a", "test_own", "test_pinned")
+            for end in ("", mr.PARAMETERS_HIDDEN)
+        }
+        labels = {
+            "TIMEOUT", "JUNIT REFUSED", "COLLECTION ERROR", "FIXTURE ERROR", "SKIPPED TESTS", "EXIT CODE 2", mr.ID_HIDDEN,
+        }  # fmt: skip
+        classes = sorted(shown.classes | {mr.CLASS_HIDDEN})
+>       classes.append(mr.ASSERT_SHOWN)
+                       ^^^^^^^^^^^^^^^
+E       AttributeError: module 'tools.mutation_runner' has no attribute 'ASSERT_SHOWN'
+
+tests/test_mutation_runner_keywords.py:3671: AttributeError
+_ test_the_fuzz_check_can_fail_in_every_branch[skip-after mutant 'flip': the unmutated copy skipped 1 selected test(s): ['tests/test_core::test_a']-not the fixed text with a list] _
+
+kind = 'skip'
+value = "after mutant 'flip': the unmutated copy skipped 1 selected test(s): ['tests/test_core::test_a']"
+why = 'not the fixed text with a list'
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3485/test_the_fuzz_check_can_fail_i4')
+
+    @pytest.mark.parametrize(
+        ("kind", "value", "why"),
+        [
+            ("failure", "the unmutated copy does not pass its tests (exit code 1): Zork", "more than the run end"),
+            ("failure", "the unmutated copy does not pass its tests (exit code 1): KeyError: text", "more than the run end"),
+            ("skip", "the unmutated copy skipped 1 selected test(s): ['tests/other::test_a']", "not the caller's text"),
+            ("skip", "the unmutated copy skipped 1 selected test(s): child text", "not the fixed text with a list"),
+            ("skip", "after mutant 'flip': the unmutated copy skipped 1 selected test(s): ['tests/test_core::test_a']", "not the fixed text with a list"),
+            ("canary", "the unmutated copy skipped 1 selected test(s): ['tests/test_core::test_a']", "not the fixed text with a list"),
+            ("canary", "after mutant 'flip': the unmutated copy skipped 1 selected test(s): ['x::y']", "not the caller's text"),
+            ("canary", "the unmutated copy no longer passes its tests after mutant 'flip' (exit code 1): child text", "not the fixed text"),
+            ("canary", "the unmutated copy no longer passes its tests after mutant 'other' (exit code 1)", "not the fixed text"),
+            ("id", "tests/test_[REDACTED]::test_a", "a marker inside a text"),
+            ("line", "Key[REDACTED]", "a marker inside a text"),
+        ],
+    )  # fmt: skip
+    def test_the_fuzz_check_can_fail_in_every_branch(kind, value, why, tmp_path):
+        counts = dict.fromkeys(
+            ("outputs", "id shown", "id replaced", "class shown", "class replaced"), 0
+        )
+        with pytest.raises(AssertionError, match=why):
+>           _check_one_output(kind, value, _shown(tmp_path), counts)
+
+tests/test_mutation_runner_keywords.py:4983: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_mutation_runner_keywords.py:3682: in _check_one_output
+    ids, labels, classes, lines = _fuzz_allowed(shown)
+                                  ^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+shown = _Shown(secrets=('postgresql://svc:Zq9xK4mTw@db.invalid/app', 'Zq9xK4mTw'), classes=frozenset({'ResourceWarning', 'Depr...ror', 'BytesWarning'}), files={'tests/test_core': 'tests/test_core'}, names={'tests/test_core': frozenset({'test_a'})})
+
+    def _fuzz_allowed(shown):
+        """What an output may be, written from the caller's side only: the fixed labels of a row, test ids made of the caller's file and function
+        names, and lines made of an allowlisted class name, the fixed expect words and the caller's expect text."""
+        ids = {
+            f"tests/test_core::{function}{end}"
+            for function in ("test_a", "test_own", "test_pinned")
+            for end in ("", mr.PARAMETERS_HIDDEN)
+        }
+        labels = {
+            "TIMEOUT", "JUNIT REFUSED", "COLLECTION ERROR", "FIXTURE ERROR", "SKIPPED TESTS", "EXIT CODE 2", mr.ID_HIDDEN,
+        }  # fmt: skip
+        classes = sorted(shown.classes | {mr.CLASS_HIDDEN})
+>       classes.append(mr.ASSERT_SHOWN)
+                       ^^^^^^^^^^^^^^^
+E       AttributeError: module 'tools.mutation_runner' has no attribute 'ASSERT_SHOWN'
+
+tests/test_mutation_runner_keywords.py:3671: AttributeError
+_ test_the_fuzz_check_can_fail_in_every_branch[canary-the unmutated copy skipped 1 selected test(s): ['tests/test_core::test_a']-not the fixed text with a list] _
+
+kind = 'canary'
+value = "the unmutated copy skipped 1 selected test(s): ['tests/test_core::test_a']"
+why = 'not the fixed text with a list'
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3485/test_the_fuzz_check_can_fail_i5')
+
+    @pytest.mark.parametrize(
+        ("kind", "value", "why"),
+        [
+            ("failure", "the unmutated copy does not pass its tests (exit code 1): Zork", "more than the run end"),
+            ("failure", "the unmutated copy does not pass its tests (exit code 1): KeyError: text", "more than the run end"),
+            ("skip", "the unmutated copy skipped 1 selected test(s): ['tests/other::test_a']", "not the caller's text"),
+            ("skip", "the unmutated copy skipped 1 selected test(s): child text", "not the fixed text with a list"),
+            ("skip", "after mutant 'flip': the unmutated copy skipped 1 selected test(s): ['tests/test_core::test_a']", "not the fixed text with a list"),
+            ("canary", "the unmutated copy skipped 1 selected test(s): ['tests/test_core::test_a']", "not the fixed text with a list"),
+            ("canary", "after mutant 'flip': the unmutated copy skipped 1 selected test(s): ['x::y']", "not the caller's text"),
+            ("canary", "the unmutated copy no longer passes its tests after mutant 'flip' (exit code 1): child text", "not the fixed text"),
+            ("canary", "the unmutated copy no longer passes its tests after mutant 'other' (exit code 1)", "not the fixed text"),
+            ("id", "tests/test_[REDACTED]::test_a", "a marker inside a text"),
+            ("line", "Key[REDACTED]", "a marker inside a text"),
+        ],
+    )  # fmt: skip
+    def test_the_fuzz_check_can_fail_in_every_branch(kind, value, why, tmp_path):
+        counts = dict.fromkeys(
+            ("outputs", "id shown", "id replaced", "class shown", "class replaced"), 0
+        )
+        with pytest.raises(AssertionError, match=why):
+>           _check_one_output(kind, value, _shown(tmp_path), counts)
+
+tests/test_mutation_runner_keywords.py:4983: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_mutation_runner_keywords.py:3682: in _check_one_output
+    ids, labels, classes, lines = _fuzz_allowed(shown)
+                                  ^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+shown = _Shown(secrets=('postgresql://svc:Zq9xK4mTw@db.invalid/app', 'Zq9xK4mTw'), classes=frozenset({'ResourceWarning', 'Depr...ror', 'BytesWarning'}), files={'tests/test_core': 'tests/test_core'}, names={'tests/test_core': frozenset({'test_a'})})
+
+    def _fuzz_allowed(shown):
+        """What an output may be, written from the caller's side only: the fixed labels of a row, test ids made of the caller's file and function
+        names, and lines made of an allowlisted class name, the fixed expect words and the caller's expect text."""
+        ids = {
+            f"tests/test_core::{function}{end}"
+            for function in ("test_a", "test_own", "test_pinned")
+            for end in ("", mr.PARAMETERS_HIDDEN)
+        }
+        labels = {
+            "TIMEOUT", "JUNIT REFUSED", "COLLECTION ERROR", "FIXTURE ERROR", "SKIPPED TESTS", "EXIT CODE 2", mr.ID_HIDDEN,
+        }  # fmt: skip
+        classes = sorted(shown.classes | {mr.CLASS_HIDDEN})
+>       classes.append(mr.ASSERT_SHOWN)
+                       ^^^^^^^^^^^^^^^
+E       AttributeError: module 'tools.mutation_runner' has no attribute 'ASSERT_SHOWN'
+
+tests/test_mutation_runner_keywords.py:3671: AttributeError
+_ test_the_fuzz_check_can_fail_in_every_branch[canary-after mutant 'flip': the unmutated copy skipped 1 selected test(s): ['x::y']-not the caller's text] _
+
+kind = 'canary'
+value = "after mutant 'flip': the unmutated copy skipped 1 selected test(s): ['x::y']"
+why = "not the caller's text"
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3485/test_the_fuzz_check_can_fail_i6')
+
+    @pytest.mark.parametrize(
+        ("kind", "value", "why"),
+        [
+            ("failure", "the unmutated copy does not pass its tests (exit code 1): Zork", "more than the run end"),
+            ("failure", "the unmutated copy does not pass its tests (exit code 1): KeyError: text", "more than the run end"),
+            ("skip", "the unmutated copy skipped 1 selected test(s): ['tests/other::test_a']", "not the caller's text"),
+            ("skip", "the unmutated copy skipped 1 selected test(s): child text", "not the fixed text with a list"),
+            ("skip", "after mutant 'flip': the unmutated copy skipped 1 selected test(s): ['tests/test_core::test_a']", "not the fixed text with a list"),
+            ("canary", "the unmutated copy skipped 1 selected test(s): ['tests/test_core::test_a']", "not the fixed text with a list"),
+            ("canary", "after mutant 'flip': the unmutated copy skipped 1 selected test(s): ['x::y']", "not the caller's text"),
+            ("canary", "the unmutated copy no longer passes its tests after mutant 'flip' (exit code 1): child text", "not the fixed text"),
+            ("canary", "the unmutated copy no longer passes its tests after mutant 'other' (exit code 1)", "not the fixed text"),
+            ("id", "tests/test_[REDACTED]::test_a", "a marker inside a text"),
+            ("line", "Key[REDACTED]", "a marker inside a text"),
+        ],
+    )  # fmt: skip
+    def test_the_fuzz_check_can_fail_in_every_branch(kind, value, why, tmp_path):
+        counts = dict.fromkeys(
+            ("outputs", "id shown", "id replaced", "class shown", "class replaced"), 0
+        )
+        with pytest.raises(AssertionError, match=why):
+>           _check_one_output(kind, value, _shown(tmp_path), counts)
+
+tests/test_mutation_runner_keywords.py:4983: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_mutation_runner_keywords.py:3682: in _check_one_output
+    ids, labels, classes, lines = _fuzz_allowed(shown)
+                                  ^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+shown = _Shown(secrets=('postgresql://svc:Zq9xK4mTw@db.invalid/app', 'Zq9xK4mTw'), classes=frozenset({'ResourceWarning', 'Depr...ror', 'BytesWarning'}), files={'tests/test_core': 'tests/test_core'}, names={'tests/test_core': frozenset({'test_a'})})
+
+    def _fuzz_allowed(shown):
+        """What an output may be, written from the caller's side only: the fixed labels of a row, test ids made of the caller's file and function
+        names, and lines made of an allowlisted class name, the fixed expect words and the caller's expect text."""
+        ids = {
+            f"tests/test_core::{function}{end}"
+            for function in ("test_a", "test_own", "test_pinned")
+            for end in ("", mr.PARAMETERS_HIDDEN)
+        }
+        labels = {
+            "TIMEOUT", "JUNIT REFUSED", "COLLECTION ERROR", "FIXTURE ERROR", "SKIPPED TESTS", "EXIT CODE 2", mr.ID_HIDDEN,
+        }  # fmt: skip
+        classes = sorted(shown.classes | {mr.CLASS_HIDDEN})
+>       classes.append(mr.ASSERT_SHOWN)
+                       ^^^^^^^^^^^^^^^
+E       AttributeError: module 'tools.mutation_runner' has no attribute 'ASSERT_SHOWN'
+
+tests/test_mutation_runner_keywords.py:3671: AttributeError
+_ test_the_fuzz_check_can_fail_in_every_branch[canary-the unmutated copy no longer passes its tests after mutant 'flip' (exit code 1): child text-not the fixed text] _
+
+kind = 'canary'
+value = "the unmutated copy no longer passes its tests after mutant 'flip' (exit code 1): child text"
+why = 'not the fixed text'
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3485/test_the_fuzz_check_can_fail_i7')
+
+    @pytest.mark.parametrize(
+        ("kind", "value", "why"),
+        [
+            ("failure", "the unmutated copy does not pass its tests (exit code 1): Zork", "more than the run end"),
+            ("failure", "the unmutated copy does not pass its tests (exit code 1): KeyError: text", "more than the run end"),
+            ("skip", "the unmutated copy skipped 1 selected test(s): ['tests/other::test_a']", "not the caller's text"),
+            ("skip", "the unmutated copy skipped 1 selected test(s): child text", "not the fixed text with a list"),
+            ("skip", "after mutant 'flip': the unmutated copy skipped 1 selected test(s): ['tests/test_core::test_a']", "not the fixed text with a list"),
+            ("canary", "the unmutated copy skipped 1 selected test(s): ['tests/test_core::test_a']", "not the fixed text with a list"),
+            ("canary", "after mutant 'flip': the unmutated copy skipped 1 selected test(s): ['x::y']", "not the caller's text"),
+            ("canary", "the unmutated copy no longer passes its tests after mutant 'flip' (exit code 1): child text", "not the fixed text"),
+            ("canary", "the unmutated copy no longer passes its tests after mutant 'other' (exit code 1)", "not the fixed text"),
+            ("id", "tests/test_[REDACTED]::test_a", "a marker inside a text"),
+            ("line", "Key[REDACTED]", "a marker inside a text"),
+        ],
+    )  # fmt: skip
+    def test_the_fuzz_check_can_fail_in_every_branch(kind, value, why, tmp_path):
+        counts = dict.fromkeys(
+            ("outputs", "id shown", "id replaced", "class shown", "class replaced"), 0
+        )
+        with pytest.raises(AssertionError, match=why):
+>           _check_one_output(kind, value, _shown(tmp_path), counts)
+
+tests/test_mutation_runner_keywords.py:4983: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_mutation_runner_keywords.py:3682: in _check_one_output
+    ids, labels, classes, lines = _fuzz_allowed(shown)
+                                  ^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+shown = _Shown(secrets=('postgresql://svc:Zq9xK4mTw@db.invalid/app', 'Zq9xK4mTw'), classes=frozenset({'ResourceWarning', 'Depr...ror', 'BytesWarning'}), files={'tests/test_core': 'tests/test_core'}, names={'tests/test_core': frozenset({'test_a'})})
+
+    def _fuzz_allowed(shown):
+        """What an output may be, written from the caller's side only: the fixed labels of a row, test ids made of the caller's file and function
+        names, and lines made of an allowlisted class name, the fixed expect words and the caller's expect text."""
+        ids = {
+            f"tests/test_core::{function}{end}"
+            for function in ("test_a", "test_own", "test_pinned")
+            for end in ("", mr.PARAMETERS_HIDDEN)
+        }
+        labels = {
+            "TIMEOUT", "JUNIT REFUSED", "COLLECTION ERROR", "FIXTURE ERROR", "SKIPPED TESTS", "EXIT CODE 2", mr.ID_HIDDEN,
+        }  # fmt: skip
+        classes = sorted(shown.classes | {mr.CLASS_HIDDEN})
+>       classes.append(mr.ASSERT_SHOWN)
+                       ^^^^^^^^^^^^^^^
+E       AttributeError: module 'tools.mutation_runner' has no attribute 'ASSERT_SHOWN'
+
+tests/test_mutation_runner_keywords.py:3671: AttributeError
+_ test_the_fuzz_check_can_fail_in_every_branch[canary-the unmutated copy no longer passes its tests after mutant 'other' (exit code 1)-not the fixed text] _
+
+kind = 'canary'
+value = "the unmutated copy no longer passes its tests after mutant 'other' (exit code 1)"
+why = 'not the fixed text'
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3485/test_the_fuzz_check_can_fail_i8')
+
+    @pytest.mark.parametrize(
+        ("kind", "value", "why"),
+        [
+            ("failure", "the unmutated copy does not pass its tests (exit code 1): Zork", "more than the run end"),
+            ("failure", "the unmutated copy does not pass its tests (exit code 1): KeyError: text", "more than the run end"),
+            ("skip", "the unmutated copy skipped 1 selected test(s): ['tests/other::test_a']", "not the caller's text"),
+            ("skip", "the unmutated copy skipped 1 selected test(s): child text", "not the fixed text with a list"),
+            ("skip", "after mutant 'flip': the unmutated copy skipped 1 selected test(s): ['tests/test_core::test_a']", "not the fixed text with a list"),
+            ("canary", "the unmutated copy skipped 1 selected test(s): ['tests/test_core::test_a']", "not the fixed text with a list"),
+            ("canary", "after mutant 'flip': the unmutated copy skipped 1 selected test(s): ['x::y']", "not the caller's text"),
+            ("canary", "the unmutated copy no longer passes its tests after mutant 'flip' (exit code 1): child text", "not the fixed text"),
+            ("canary", "the unmutated copy no longer passes its tests after mutant 'other' (exit code 1)", "not the fixed text"),
+            ("id", "tests/test_[REDACTED]::test_a", "a marker inside a text"),
+            ("line", "Key[REDACTED]", "a marker inside a text"),
+        ],
+    )  # fmt: skip
+    def test_the_fuzz_check_can_fail_in_every_branch(kind, value, why, tmp_path):
+        counts = dict.fromkeys(
+            ("outputs", "id shown", "id replaced", "class shown", "class replaced"), 0
+        )
+        with pytest.raises(AssertionError, match=why):
+>           _check_one_output(kind, value, _shown(tmp_path), counts)
+
+tests/test_mutation_runner_keywords.py:4983: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_mutation_runner_keywords.py:3682: in _check_one_output
+    ids, labels, classes, lines = _fuzz_allowed(shown)
+                                  ^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+shown = _Shown(secrets=('postgresql://svc:Zq9xK4mTw@db.invalid/app', 'Zq9xK4mTw'), classes=frozenset({'ResourceWarning', 'Depr...ror', 'BytesWarning'}), files={'tests/test_core': 'tests/test_core'}, names={'tests/test_core': frozenset({'test_a'})})
+
+    def _fuzz_allowed(shown):
+        """What an output may be, written from the caller's side only: the fixed labels of a row, test ids made of the caller's file and function
+        names, and lines made of an allowlisted class name, the fixed expect words and the caller's expect text."""
+        ids = {
+            f"tests/test_core::{function}{end}"
+            for function in ("test_a", "test_own", "test_pinned")
+            for end in ("", mr.PARAMETERS_HIDDEN)
+        }
+        labels = {
+            "TIMEOUT", "JUNIT REFUSED", "COLLECTION ERROR", "FIXTURE ERROR", "SKIPPED TESTS", "EXIT CODE 2", mr.ID_HIDDEN,
+        }  # fmt: skip
+        classes = sorted(shown.classes | {mr.CLASS_HIDDEN})
+>       classes.append(mr.ASSERT_SHOWN)
+                       ^^^^^^^^^^^^^^^
+E       AttributeError: module 'tools.mutation_runner' has no attribute 'ASSERT_SHOWN'
+
+tests/test_mutation_runner_keywords.py:3671: AttributeError
+_ test_the_fuzz_check_can_fail_in_every_branch[id-tests/test_[REDACTED]::test_a-a marker inside a text] _
+
+kind = 'id', value = 'tests/test_[REDACTED]::test_a'
+why = 'a marker inside a text'
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3485/test_the_fuzz_check_can_fail_i9')
+
+    @pytest.mark.parametrize(
+        ("kind", "value", "why"),
+        [
+            ("failure", "the unmutated copy does not pass its tests (exit code 1): Zork", "more than the run end"),
+            ("failure", "the unmutated copy does not pass its tests (exit code 1): KeyError: text", "more than the run end"),
+            ("skip", "the unmutated copy skipped 1 selected test(s): ['tests/other::test_a']", "not the caller's text"),
+            ("skip", "the unmutated copy skipped 1 selected test(s): child text", "not the fixed text with a list"),
+            ("skip", "after mutant 'flip': the unmutated copy skipped 1 selected test(s): ['tests/test_core::test_a']", "not the fixed text with a list"),
+            ("canary", "the unmutated copy skipped 1 selected test(s): ['tests/test_core::test_a']", "not the fixed text with a list"),
+            ("canary", "after mutant 'flip': the unmutated copy skipped 1 selected test(s): ['x::y']", "not the caller's text"),
+            ("canary", "the unmutated copy no longer passes its tests after mutant 'flip' (exit code 1): child text", "not the fixed text"),
+            ("canary", "the unmutated copy no longer passes its tests after mutant 'other' (exit code 1)", "not the fixed text"),
+            ("id", "tests/test_[REDACTED]::test_a", "a marker inside a text"),
+            ("line", "Key[REDACTED]", "a marker inside a text"),
+        ],
+    )  # fmt: skip
+    def test_the_fuzz_check_can_fail_in_every_branch(kind, value, why, tmp_path):
+        counts = dict.fromkeys(
+            ("outputs", "id shown", "id replaced", "class shown", "class replaced"), 0
+        )
+        with pytest.raises(AssertionError, match=why):
+>           _check_one_output(kind, value, _shown(tmp_path), counts)
+
+tests/test_mutation_runner_keywords.py:4983: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_mutation_runner_keywords.py:3682: in _check_one_output
+    ids, labels, classes, lines = _fuzz_allowed(shown)
+                                  ^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+shown = _Shown(secrets=('postgresql://svc:Zq9xK4mTw@db.invalid/app', 'Zq9xK4mTw'), classes=frozenset({'ResourceWarning', 'Depr...ror', 'BytesWarning'}), files={'tests/test_core': 'tests/test_core'}, names={'tests/test_core': frozenset({'test_a'})})
+
+    def _fuzz_allowed(shown):
+        """What an output may be, written from the caller's side only: the fixed labels of a row, test ids made of the caller's file and function
+        names, and lines made of an allowlisted class name, the fixed expect words and the caller's expect text."""
+        ids = {
+            f"tests/test_core::{function}{end}"
+            for function in ("test_a", "test_own", "test_pinned")
+            for end in ("", mr.PARAMETERS_HIDDEN)
+        }
+        labels = {
+            "TIMEOUT", "JUNIT REFUSED", "COLLECTION ERROR", "FIXTURE ERROR", "SKIPPED TESTS", "EXIT CODE 2", mr.ID_HIDDEN,
+        }  # fmt: skip
+        classes = sorted(shown.classes | {mr.CLASS_HIDDEN})
+>       classes.append(mr.ASSERT_SHOWN)
+                       ^^^^^^^^^^^^^^^
+E       AttributeError: module 'tools.mutation_runner' has no attribute 'ASSERT_SHOWN'
+
+tests/test_mutation_runner_keywords.py:3671: AttributeError
+_ test_the_fuzz_check_can_fail_in_every_branch[line-Key[REDACTED]-a marker inside a text] _
+
+kind = 'line', value = 'Key[REDACTED]', why = 'a marker inside a text'
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3485/test_the_fuzz_check_can_fail_i10')
+
+    @pytest.mark.parametrize(
+        ("kind", "value", "why"),
+        [
+            ("failure", "the unmutated copy does not pass its tests (exit code 1): Zork", "more than the run end"),
+            ("failure", "the unmutated copy does not pass its tests (exit code 1): KeyError: text", "more than the run end"),
+            ("skip", "the unmutated copy skipped 1 selected test(s): ['tests/other::test_a']", "not the caller's text"),
+            ("skip", "the unmutated copy skipped 1 selected test(s): child text", "not the fixed text with a list"),
+            ("skip", "after mutant 'flip': the unmutated copy skipped 1 selected test(s): ['tests/test_core::test_a']", "not the fixed text with a list"),
+            ("canary", "the unmutated copy skipped 1 selected test(s): ['tests/test_core::test_a']", "not the fixed text with a list"),
+            ("canary", "after mutant 'flip': the unmutated copy skipped 1 selected test(s): ['x::y']", "not the caller's text"),
+            ("canary", "the unmutated copy no longer passes its tests after mutant 'flip' (exit code 1): child text", "not the fixed text"),
+            ("canary", "the unmutated copy no longer passes its tests after mutant 'other' (exit code 1)", "not the fixed text"),
+            ("id", "tests/test_[REDACTED]::test_a", "a marker inside a text"),
+            ("line", "Key[REDACTED]", "a marker inside a text"),
+        ],
+    )  # fmt: skip
+    def test_the_fuzz_check_can_fail_in_every_branch(kind, value, why, tmp_path):
+        counts = dict.fromkeys(
+            ("outputs", "id shown", "id replaced", "class shown", "class replaced"), 0
+        )
+        with pytest.raises(AssertionError, match=why):
+>           _check_one_output(kind, value, _shown(tmp_path), counts)
+
+tests/test_mutation_runner_keywords.py:4983: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_mutation_runner_keywords.py:3682: in _check_one_output
+    ids, labels, classes, lines = _fuzz_allowed(shown)
+                                  ^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+shown = _Shown(secrets=('postgresql://svc:Zq9xK4mTw@db.invalid/app', 'Zq9xK4mTw'), classes=frozenset({'ResourceWarning', 'Depr...ror', 'BytesWarning'}), files={'tests/test_core': 'tests/test_core'}, names={'tests/test_core': frozenset({'test_a'})})
+
+    def _fuzz_allowed(shown):
+        """What an output may be, written from the caller's side only: the fixed labels of a row, test ids made of the caller's file and function
+        names, and lines made of an allowlisted class name, the fixed expect words and the caller's expect text."""
+        ids = {
+            f"tests/test_core::{function}{end}"
+            for function in ("test_a", "test_own", "test_pinned")
+            for end in ("", mr.PARAMETERS_HIDDEN)
+        }
+        labels = {
+            "TIMEOUT", "JUNIT REFUSED", "COLLECTION ERROR", "FIXTURE ERROR", "SKIPPED TESTS", "EXIT CODE 2", mr.ID_HIDDEN,
+        }  # fmt: skip
+        classes = sorted(shown.classes | {mr.CLASS_HIDDEN})
+>       classes.append(mr.ASSERT_SHOWN)
+                       ^^^^^^^^^^^^^^^
+E       AttributeError: module 'tools.mutation_runner' has no attribute 'ASSERT_SHOWN'
+
+tests/test_mutation_runner_keywords.py:3671: AttributeError
+_ test_fuzz_with_weak_passwords_every_output_is_whole_caller_text_or_a_fixed_text _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3485/test_fuzz_with_weak_passwords_0')
+
+    def test_fuzz_with_weak_passwords_every_output_is_whole_caller_text_or_a_fixed_text(tmp_path):
+        """Seeded: 150 passwords that are pieces of the caller's own text x 3 child texts. No output holds a marker inside a text, every output is
+        in the allowed set, and each fixed replacement was reached."""
+>       counts = _weak_fuzz(tmp_path, range(150))
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_mutation_runner_keywords.py:5030: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_mutation_runner_keywords.py:5006: in _weak_fuzz
+    ids, _labels, _classes, _lines = _fuzz_allowed(shown)
+                                     ^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+shown = _Shown(secrets=('postgresql://svc:flip@db.invalid:5432/app', 'flip'), classes=frozenset({'ResourceWarning', 'Deprecati...ror', 'BytesWarning'}), files={'tests/test_core': 'tests/test_core'}, names={'tests/test_core': frozenset({'test_a'})})
+
+    def _fuzz_allowed(shown):
+        """What an output may be, written from the caller's side only: the fixed labels of a row, test ids made of the caller's file and function
+        names, and lines made of an allowlisted class name, the fixed expect words and the caller's expect text."""
+        ids = {
+            f"tests/test_core::{function}{end}"
+            for function in ("test_a", "test_own", "test_pinned")
+            for end in ("", mr.PARAMETERS_HIDDEN)
+        }
+        labels = {
+            "TIMEOUT", "JUNIT REFUSED", "COLLECTION ERROR", "FIXTURE ERROR", "SKIPPED TESTS", "EXIT CODE 2", mr.ID_HIDDEN,
+        }  # fmt: skip
+        classes = sorted(shown.classes | {mr.CLASS_HIDDEN})
+>       classes.append(mr.ASSERT_SHOWN)
+                       ^^^^^^^^^^^^^^^
+E       AttributeError: module 'tools.mutation_runner' has no attribute 'ASSERT_SHOWN'
+
+tests/test_mutation_runner_keywords.py:3671: AttributeError
+_ test_the_weak_password_fuzz_fails_when_a_slot_is_cut_or_shown_with_the_password _
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-3485/test_the_weak_password_fuzz_fa0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f029c5a9390>
+
+    def test_the_weak_password_fuzz_fails_when_a_slot_is_cut_or_shown_with_the_password(
+        tmp_path, monkeypatch
+    ):
+        # the control: a second layer that cuts the password out (the old behaviour), and one that does nothing, must both fail the same check
+        with monkeypatch.context() as cut:
+>           cut.setattr(mr, "_own_text", lambda text, fixed, secrets: mr._masked(text, secrets))
+E           AttributeError: <module 'tools.mutation_runner' from '/home/user/build/EV-PR89-r22-fb/tools/mutation_runner.py'> has no attribute '_own_text'
+
+tests/test_mutation_runner_keywords.py:5050: AttributeError
+____ test_g_every_search_string_occurs_exactly_once_in_the_file_it_targets _____
+
+    def test_g_every_search_string_occurs_exactly_once_in_the_file_it_targets():
+        lines = []
+        for m in mm.M:
+            text = (ROOT / m.file).read_text(encoding="utf-8")
+            count = text.count(m.old)
+>           assert count == 1, f"{m.name}: the search string occurs {count} times in {m.file}"
+E           AssertionError: runner: a mutant run does not load the conftest: the search string occurs 0 times in tools/mutation_runner.py
+E           assert 0 == 1
+
+tests/test_mutation_runner_meta.py:187: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_mutation_runner_keywords.py::test_a_default_call_passes_pytest_no_plugin_and_no_env_names
+FAILED tests/test_mutation_runner_keywords.py::test_the_second_layer_replaces_a_whole_slot_of_caller_text_that_holds_a_secret
+FAILED tests/test_mutation_runner_keywords.py::test_fuzz_every_output_field_holds_only_allowlisted_classes_and_caller_ids
+FAILED tests/test_mutation_runner_keywords.py::test_the_fuzz_check_fails_when_the_class_or_the_id_allowlist_is_switched_off
+FAILED tests/test_mutation_runner_keywords.py::test_a_pattern_or_an_empty_text_in_the_host_list_is_refused[*]
+FAILED tests/test_mutation_runner_keywords.py::test_a_pattern_or_an_empty_text_in_the_host_list_is_refused[]
+FAILED tests/test_mutation_runner_keywords.py::test_one_run_goes_through_the_real_address_check_the_real_lock_folder_and_the_allowlist
+FAILED tests/test_mutation_runner_keywords.py::test_the_refusals_come_in_the_order_the_docstring_gives
+FAILED tests/test_mutation_runner_keywords.py::test_a_test_id_that_holds_the_password_is_the_fixed_text_and_never_a_name_with_a_piece_cut_out
+FAILED tests/test_mutation_runner_keywords.py::test_with_a_weak_password_every_slot_is_whole_or_its_fixed_text_and_fixed_words_stay[a function name of the test file]
+FAILED tests/test_mutation_runner_keywords.py::test_with_a_weak_password_every_slot_is_whole_or_its_fixed_text_and_fixed_words_stay[a piece of Python's exception names]
+FAILED tests/test_mutation_runner_keywords.py::test_with_a_weak_password_every_slot_is_whole_or_its_fixed_text_and_fixed_words_stay[a piece of every test id]
+FAILED tests/test_mutation_runner_keywords.py::test_with_a_weak_password_every_slot_is_whole_or_its_fixed_text_and_fixed_words_stay[a word of the runner's fixed texts (class)]
+FAILED tests/test_mutation_runner_keywords.py::test_with_a_weak_password_every_slot_is_whole_or_its_fixed_text_and_fixed_words_stay[a word of the runner's fixed texts (expect)]
+FAILED tests/test_mutation_runner_keywords.py::test_with_a_weak_password_every_slot_is_whole_or_its_fixed_text_and_fixed_words_stay[one character]
+FAILED tests/test_mutation_runner_keywords.py::test_with_a_weak_password_every_slot_is_whole_or_its_fixed_text_and_fixed_words_stay[the usual default name]
+FAILED tests/test_mutation_runner_keywords.py::test_with_a_weak_password_every_slot_is_whole_or_its_fixed_text_and_fixed_words_stay[the word assert]
+FAILED tests/test_mutation_runner_keywords.py::test_with_a_weak_password_every_slot_is_whole_or_its_fixed_text_and_fixed_words_stay[two characters]
+FAILED tests/test_mutation_runner_keywords.py::test_a_name_of_python_itself_is_shown_whole_also_when_it_holds_the_password
+FAILED tests/test_mutation_runner_keywords.py::test_a_weak_password_in_a_real_run_gives_rows_that_are_whole_or_fixed_text
+FAILED tests/test_mutation_runner_keywords.py::test_a_bare_assert_line_shows_the_fixed_word_assert
+FAILED tests/test_mutation_runner_keywords.py::test_a_tests_entry_written_with_a_leading_dot_slash_still_shows_its_ids
+FAILED tests/test_mutation_runner_keywords.py::test_the_function_that_starts_a_child_checks_the_address_itself
+FAILED tests/test_mutation_runner_keywords.py::test_the_scheme_and_the_keys_are_lower_case_and_the_two_options_take_listed_values
+FAILED tests/test_mutation_runner_keywords.py::test_no_error_the_runner_raises_keeps_another_exception_or_child_text_in_its_chain
+FAILED tests/test_mutation_runner_keywords.py::test_the_error_of_a_failed_canary_copy_keeps_no_other_exception
+FAILED tests/test_mutation_runner_keywords.py::test_a_lock_folder_that_cannot_be_looked_at_is_the_documented_refusal_and_leaks_no_descriptor
+FAILED tests/test_mutation_runner_keywords.py::test_the_projection_argument_is_required_so_a_forgotten_one_cannot_show_child_text
+FAILED tests/test_mutation_runner_keywords.py::test_the_fuzz_check_can_fail_in_every_branch[failure-the unmutated copy does not pass its tests (exit code 1): Zork-more than the run end]
+FAILED tests/test_mutation_runner_keywords.py::test_the_fuzz_check_can_fail_in_every_branch[failure-the unmutated copy does not pass its tests (exit code 1): KeyError: text-more than the run end]
+FAILED tests/test_mutation_runner_keywords.py::test_the_fuzz_check_can_fail_in_every_branch[skip-the unmutated copy skipped 1 selected test(s): ['tests/other::test_a']-not the caller's text]
+FAILED tests/test_mutation_runner_keywords.py::test_the_fuzz_check_can_fail_in_every_branch[skip-the unmutated copy skipped 1 selected test(s): child text-not the fixed text with a list]
+FAILED tests/test_mutation_runner_keywords.py::test_the_fuzz_check_can_fail_in_every_branch[skip-after mutant 'flip': the unmutated copy skipped 1 selected test(s): ['tests/test_core::test_a']-not the fixed text with a list]
+FAILED tests/test_mutation_runner_keywords.py::test_the_fuzz_check_can_fail_in_every_branch[canary-the unmutated copy skipped 1 selected test(s): ['tests/test_core::test_a']-not the fixed text with a list]
+FAILED tests/test_mutation_runner_keywords.py::test_the_fuzz_check_can_fail_in_every_branch[canary-after mutant 'flip': the unmutated copy skipped 1 selected test(s): ['x::y']-not the caller's text]
+FAILED tests/test_mutation_runner_keywords.py::test_the_fuzz_check_can_fail_in_every_branch[canary-the unmutated copy no longer passes its tests after mutant 'flip' (exit code 1): child text-not the fixed text]
+FAILED tests/test_mutation_runner_keywords.py::test_the_fuzz_check_can_fail_in_every_branch[canary-the unmutated copy no longer passes its tests after mutant 'other' (exit code 1)-not the fixed text]
+FAILED tests/test_mutation_runner_keywords.py::test_the_fuzz_check_can_fail_in_every_branch[id-tests/test_[REDACTED]::test_a-a marker inside a text]
+FAILED tests/test_mutation_runner_keywords.py::test_the_fuzz_check_can_fail_in_every_branch[line-Key[REDACTED]-a marker inside a text]
+FAILED tests/test_mutation_runner_keywords.py::test_fuzz_with_weak_passwords_every_output_is_whole_caller_text_or_a_fixed_text
+FAILED tests/test_mutation_runner_keywords.py::test_the_weak_password_fuzz_fails_when_a_slot_is_cut_or_shown_with_the_password
+FAILED tests/test_mutation_runner_meta.py::test_g_every_search_string_occurs_exactly_once_in_the_file_it_targets
+42 failed, 276 passed in 102.12s (0:01:42)

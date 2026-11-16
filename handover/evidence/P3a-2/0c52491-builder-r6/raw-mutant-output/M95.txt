@@ -1,0 +1,15 @@
+### tests/test_migration_wiring.py::test_clean_run_reads_before_each_file_insert rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_________________ test_clean_run_reads_before_each_file_insert _________________
+tests/test_migration_wiring.py:376: in test_clean_run_reads_before_each_file_insert
+    assert log.index(mig._READBACK_VALUES_SQL) < first_file, (
+E   AssertionError: saved values are read before the first file
+E   assert 11 < 10
+E    +  where 11 = <built-in method index of list object at 0x7fd7093b4680>("SELECT current_user, session_user, current_setting('session_replication_role'), current_setting('search_path'), curre...ding'), current_setting('lock_timeout'), current_setting('statement_timeout'), transaction_timestamp(), txid_current()")
+E    +    where <built-in method index of list object at 0x7fd7093b4680> = ['SELECT pg_advisory_xact_lock(%s)', "SET LOCAL lock_timeout = '5s';", "SET LOCAL statement_timeout = '60s';", 'SELECT...as_role(session_user, r.oid, 'MEMBER')) ORDER BY r.rolname", "SELECT to_regclass('pg_parameter_acl') IS NOT NULL", ...].index
+E    +    and   "SELECT current_user, session_user, current_setting('session_replication_role'), current_setting('search_path'), curre...ding'), current_setting('lock_timeout'), current_setting('statement_timeout'), transaction_timestamp(), txid_current()" = mig._READBACK_VALUES_SQL
+=========================== short test summary info ============================
+FAILED tests/test_migration_wiring.py::test_clean_run_reads_before_each_file_insert
+1 failed in 0.40s
+

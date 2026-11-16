@@ -1,0 +1,7 @@
+tests/test_prh_regressions.py::test_tail_row_trail_is_masked
+tests/test_prh_regressions.py::test_tail_row_on_the_next_line_is_masked
+tests/test_prh_regressions.py::test_tail_row_long_tail_is_masked
+tests/test_prh_regressions.py::test_a_refusal_is_not_masked_unless_the_row_says_so
+tests/test_prh_steps.py::test_undo_entity_cut_by_a_control_reference_is_whole
+tests/test_prh_steps.py::test_pass_bound_holds_for_a_seeded_search
+tests/test_prh_steps.py::test_every_regression_row_needs_at_most_seven_passes

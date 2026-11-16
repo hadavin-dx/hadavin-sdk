@@ -1,0 +1,14 @@
+...FF                                                                    [100%]
+=================================== FAILURES ===================================
+E   AssertionError: an outside digest file was trusted
+    assert False is True
+     +  where False = ScoreResult(runs=[RunScore(run_index=1, classes={'case-001': 'hit', 'case-002': 'hit'}, hits=2, hne=0, misses=0, not_s... outputs_digest='e9d47d5630a4ae1a2f3717d544032daa2ec12873197ca7daf34c75770a1859ef', outputs_changed=False, warnings=[]).outputs_changed
+/home/user/build/E-work/b-tree/tests/test_pathguard_callers.py:90: AssertionError: an outside digest file was trusted
+E   AssertionError: Regex pattern did not match.
+      Expected regex: 'outputs folder: contains a control character'
+      Actual message: 'outputs folder does not exist'
+/home/user/build/E-work/b-tree/tests/test_pathguard_callers.py:96: AssertionError: Regex pattern did not match.
+=========================== short test summary info ============================
+FAILED tests/test_pathguard_callers.py::test_a_replay_digest_file_that_is_a_link_out_counts_as_unreadable_not_as_missing
+FAILED tests/test_pathguard_callers.py::test_a_nul_in_the_outputs_folder_is_a_refusal_not_a_crash
+2 failed, 3 passed in 2.59s

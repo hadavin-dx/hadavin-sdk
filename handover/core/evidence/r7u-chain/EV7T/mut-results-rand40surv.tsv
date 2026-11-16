@@ -1,0 +1,10 @@
+R07	demo_only/bad_request.py	tests/test_r7t_findings.py tests/test_r7s_findings.py	KILLED	['1 failed, 22 passed in 35.07s']
+R07	restored-byte-equal=True
+R10	scripts/run_real_check.py	NOT-APPLIED count=0
+R19	scripts/run_real_check.py	tests/test_r7t_findings.py tests/test_r7s_findings.py	KILLED	['1 failed, 1 passed in 0.28s']
+R19	restored-byte-equal=True
+R20	scripts/run_real_check.py	tests/test_r7t_findings.py tests/test_r7s_findings.py	KILLED	['1 failed, 1 passed in 0.31s']
+R20	restored-byte-equal=True
+R27	scripts/run_real_check.py	NOT-APPLIED count=0
+R39	tests/support.py	tests/test_r7t_findings.py tests/test_r7s_findings.py	KILLED	['1 failed, 15 passed in 35.24s']
+R39	restored-byte-equal=True

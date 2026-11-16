@@ -1,0 +1,50 @@
+E-01 matched
+E-02 matched
+E-03 matched
+E-06 matched
+E-07 matched
+E-08 matched
+E-09 matched
+E-11 matched
+E-12 matched
+E-14 matched
+E-15 matched
+E-16 matched
+E-17 matched
+E-18 matched
+E-19 matched
+E-20 matched
+E-21 matched
+E-22 matched
+E-23 matched
+E-24 matched
+E-25 matched
+E-26 matched
+E-27 matched
+E-28 matched
+E-29 matched
+E-30 matched
+E-31 matched
+E-32 matched
+E-33 matched
+E-34 matched
+E-36 matched
+E-37 matched
+E-38 matched
+E-43 matched
+E-46 matched
+E-47 matched
+E-48 matched
+E-51 matched
+E-52 matched
+E-54 matched
+E-55 matched
+E-56 matched
+E-57 matched
+E-58 matched
+Apply now rows 44 matched 44 not matched 0
+scratch AGENT-SCOPE-DO-AND-DONT.md 37 lines
+scratch DECISION-one-store.md 29 lines
+scratch OWNER-STEPS-realrun-v3.md 300 lines
+hold rows not applied ['E-04', 'E-05', 'E-13', 'E-39', 'E-40', 'E-41', 'E-42', 'E-44', 'E-45', 'E-49', 'E-50', 'E-53']
+HOLD marker text in scratch-apply files: 0

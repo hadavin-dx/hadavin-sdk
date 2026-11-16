@@ -1,0 +1,2 @@
+SLIP: first full queue (17:10:01) killed by my own kill of the wrong heavy.sh pid at ~17:11; restarted
+17:10:44

@@ -1,0 +1,4 @@
+check-v26: 2 failure(s)
+FAIL C55 A holds secret-shaped text (pattern \bsk-[A-Za-z0-9_-]{8,})
+FAIL C55 B holds secret-shaped text (pattern \bsk-[A-Za-z0-9_-]{8,})
+build=0 exit=1

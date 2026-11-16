@@ -1,0 +1,44 @@
+INFO K01 letter A words: sheet 6054 card 1372 numbers 844 film 285 total 8555
+INFO K01 letter B words: sheet 6033 card 1353 numbers 859 film 285 total 8530
+INFO K02 LEAD-RELEASE-NOTE-v12.md UTC time(s) with no IST beside: 3 ['18:14 UTC', '18:14:40 UTC', '18:14 UTC']
+INFO K02 LEAD-RELEASE-NOTE-v12.md IST time with no UTC before it: 44:40 IST
+INFO K02 v28-OPEN-FOR-LEAD.md UTC time(s) with no IST beside: 4 ['15:00 UTC', '18:14:40 UTC', '18:14 UTC', '11:30 UTC']
+INFO K02 v28-OPEN-FOR-LEAD.md IST time with no UTC before it: 44:40 IST
+INFO K02 pairs per file: OWNER-SHEET-v28-A.md=3, OWNER-CARD-v28-A.md=0, OWNER-NUMBERS-v28-A.md=4, OWNER-SHEET-v28-B.md=3, OWNER-CARD-v28-B.md=0, OWNER-NUMBERS-v28-B.md=5, OWNER-FILM-v28.md=1, LEAD-RELEASE-NOTE-v12.md=22, v28-OPEN-FOR-LEAD.md=18
+INFO K03 weekday-date mentions checked: 45
+INFO K04 LEAD-RELEASE-NOTE-v12.md:11 18:14 UTC source word: lease
+INFO K04 LEAD-RELEASE-NOTE-v12.md:75 18:14:40 UTC source word: deadline
+INFO K04 LEAD-RELEASE-NOTE-v12.md:75 23:44:40 IST source word: deadline
+INFO K04 LEAD-RELEASE-NOTE-v12.md:77 18:14:40 UTC source word: need_seconds
+INFO K04 LEAD-RELEASE-NOTE-v12.md:202 18:14 UTC source word: NONE
+INFO K04 v28-OPEN-FOR-LEAD.md:85 18:14:40 UTC source word: deadline
+INFO K04 v28-OPEN-FOR-LEAD.md:85 18:14 UTC source word: deadline
+INFO K04 v28-OPEN-FOR-LEAD.md:107 18:04 UTC source word: lease
+INFO K04 v28-OPEN-FOR-LEAD.md:107 23:34 IST source word: lease
+INFO K04 v28-OPEN-FOR-LEAD.md:107 18:14:40 UTC source word: lease
+INFO K04 v28-OPEN-FOR-LEAD.md:107 23:44:40 IST source word: lease
+INFO K05 numbers A: 38 angle slots inside the labelled sample; label strings OWNER 1, LEAD 1
+INFO K05 numbers B: 38 angle slots inside the labelled sample; label strings OWNER 1, LEAD 1
+INFO K06 internal-id scan done on 7 owner pages (R1,R4-R10, W1-W9, L1-L5 are labels the pages define themselves)
+INFO K07 sheet A items per section: {1: 0, 2: 0, 3: 4, 5: 9, 6: 7, 7: 11, 8: 8, 9: 0}
+INFO K07 sheet B items per section: {1: 0, 2: 0, 3: 4, 5: 9, 6: 7, 7: 11, 8: 8, 9: 0}
+INFO K08 OWNER-SHEET-v28 hunk A23-23/B23-23 older-key vocabulary=True : [OWNER-CARD-v28-A.md)] -> [OWNER-CARD-v28-B.md)]
+INFO K08 OWNER-SHEET-v28 hunk A31-31/B31-31 older-key vocabulary=True : [] -> [stays valid and] / [6.7,] -> [7.11, so a missed 7.11 can mean spending] / [your new key is saved)] -> [the deadline)]
+INFO K08 OWNER-SHEET-v28 hunk A42-42/B42-42 older-key vocabulary=True : [OWNER-NUMBERS-v28-A.md] -> [OWNER-NUMBERS-v28-B.md]
+INFO K08 OWNER-SHEET-v28 hunk A51-51/B51-51 older-key vocabulary=True : [The older key's last-used time must be "never" or more than 7 days before the run day: els] -> []
+INFO K08 OWNER-SHEET-v28 hunk A53-53/B53-53 older-key vocabulary=True : [] -> [The older key stays valid during the run and I understand it can spend money and the card ] / [] -> [it myself at 7.11 by <the older-key time of] / [older key myself after my new model key is saved] -> [message> on the run day]
+INFO K08 OWNER-SHEET-v28 hunk A58-58/B58-58 older-key vocabulary=True : [Three] -> [Four] / [time;] -> [time, alarm 4 at the older-key time (do 7.11 now, whatever else is open);]
+INFO K08 OWNER-SHEET-v28 hunk A66-66/B66-66 older-key vocabulary=True : [checks, then the older key.**] -> [checks.**] / [Only now, if the message names an older key: send "I cancel the older key <its name>, noth] -> [The] / [and the lead decides.] -> [until you cancel it at 7.11.]
+INFO K08 OWNER-SHEET-v28 hunk A69-69/B69-69 older-key vocabulary=True : [cancelled] -> [left alone]
+INFO K08 OWNER-SHEET-v28 hunk A79-79/B79-79 older-key vocabulary=True : [If 6.7 cancelled] -> [After your yes, whatever way the run ended (finished, declined, time passed, key save fail] / [(or] -> [<its name>, nothing else I know uses it", then cancel] / [message says none):] -> [older key by the card's L2, steps 2 to 4, only if its name and creation date equal the bla
+INFO K08 OWNER-CARD-v28 hunk A7-7/B7-7 older-key vocabulary=True : [] -> [It does not mean no valid key remains: the older key may still spend until 7.11 (L2).]
+INFO K08 OWNER-CARD-v28 hunk A13-13/B13-13 older-key vocabulary=True : [once (the 7-day rule below never applies to that).] -> [once.] / [only] -> [] / [6.7, after 6.6 passed (new key saved, size checked), and only if its last-used] -> [7.11, always, by the older-key] / [is "never" or more than 7 days before] -> [of the message on] / [day (this 7-day rule belongs to] -
+INFO K08 OWNER-CARD-v28 hunk A15-15/B15-15 older-key vocabulary=True : [] -> [______| older-key time]
+INFO K08 OWNER-CARD-v28 hunk A17-17/B17-17 older-key vocabulary=True : [failed", do the card for your own key, no run;] -> [failed";]
+INFO K08 OWNER-CARD-v28 hunk A21-21/B21-21 older-key vocabulary=True : [three] -> [four]
+INFO K08 OWNER-NUMBERS-v28 hunk A5-5/B5-5 older-key vocabulary=True : [no file] -> [left alone and valid during] / [lead read uses it] -> [run] / ["none"; "unknown" means no run)] -> ["none") Older-key time: 16:00 UTC = 21:30 IST on the run day]
+INFO K08 OWNER-NUMBERS-v28 hunk A28-28/B28-28 older-key vocabulary=True : [] -> [cancel-by time is before the older-key time. The]
+INFO K09 credential kinds named: ['gmail app password', 'hubspot app secret', 'model key']
+FAIL K04 LEAD-RELEASE-NOTE-v12.md:202 18:14 UTC listed with no source on the line
+chk28i: 1 failure(s)
+exit 1

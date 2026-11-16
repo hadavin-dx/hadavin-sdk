@@ -1,0 +1,3 @@
+ok  KILLED       81 every pass counted twice (the seeded search reaches the bound)  [test_pass_bound_holds_for_a_seeded_search]
+ok  KILLED       78 a refusal reads as masked again (the verdict of a path that returned nothing)  [test_a_refusal_is_not_masked_unless_the_row_says_so]
+81 of 81 good; problems: []

@@ -1,0 +1,8 @@
+case 790 strict True tagged True producers ['clean', 'clean']
+len 1604 parts lens [12, 14]
+text around secret: '270> , <IPV4_7> , <IPV4_314> , <IPV4_284> , <IPV4_200> , <IPV4_288> , <IPV4_234> , passw<i> </i>d=[PART1]\\U0000000b[PART2] , <IPV4_135> , <IPV4_60> '
+count <IPV4_ junk: 120 distinct: 103
+MAIN clean: leaked []
+PROTO( proto ) clean: leaked longest .311x9/7qk38 n 10
+out around leak: 'CRET_1> , <IPV4_50> , <IPV4_160> , <IPV4_270> , <IPV4_7> , <IPV4_314> , <IPV4_284> , <IPV4_200> , <IPV4_288> , <IPV4_234> , passwd=<SECRET_4> [PART2] , <IPV4_135> , <IPV4_60'
+strip changes text: False D!=S: False removed chars: []

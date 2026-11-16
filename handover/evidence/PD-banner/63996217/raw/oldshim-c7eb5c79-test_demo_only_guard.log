@@ -1,0 +1,338 @@
+........................................................................ [ 47%]
+...................................................FFF.................. [ 94%]
+........                                                                 [100%]
+=================================== FAILURES ===================================
+_ test_authorization_pair_with_a_scheme_word_hides_the_token_at_8_10_and_11_characters _
+
+    def test_authorization_pair_with_a_scheme_word_hides_the_token_at_8_10_and_11_characters() -> None:
+        # what it shows (`authorization=Bearer <token>` of 8, 10 or 11 characters stayed visible; the core hides them)
+        for n in (8, 10, 11):
+            token = "q" * n
+            for scheme in ("Bearer", "bearer", "Basic"):
+                shown = g._hide_secrets(f"fatal: authorization={scheme} {token} tail")
+>               assert token not in shown, f"{scheme} {n} characters stayed visible: {shown!r}"
+E               AssertionError: Bearer 8 characters stayed visible: 'fatal: authorization=<hidden> qqqqqqqq tail'
+E               assert 'qqqqqqqq' not in 'fatal: auth...qqqqqqq tail'
+E                 
+E                 'qqqqqqqq' is contained here:
+E                   fatal: authorization=<hidden> qqqqqqqq tail
+E                 ?                               ++++++++
+
+tests/test_demo_only_guard.py:2101: AssertionError
+__ test_a_bare_word_bypass_is_hidden_unless_its_value_is_a_plain_on_off_word ___
+
+    def test_a_bare_word_bypass_is_hidden_unless_its_value_is_a_plain_on_off_word() -> None:
+        # visible side
+        for line in (
+            "bypass=true",
+            "BYPASS=False",
+            "bypass=Yes",
+            "bypass=no",
+            "bypass=ON",
+            "bypass=off",
+            "bypass=0",
+            "bypass=1  ",
+        ):
+            assert g._hide_secrets(line) == line, f"a plain flag was hidden: {line!r}"
+        # hidden side: any other value, a flag with more stuck to it, case does not matter
+        for value in ("abc123", "truex", "true,abc123", "2", "yes!", "Secret7"):
+            for name in ("bypass", "BYPASS", "Bypass"):
+                shown = g._hide_secrets(f"{name}={value} tail")
+>               assert shown == f"{name}=<hidden> tail", (
+                    f"a hidden-side value stayed visible, {name}={value}: {shown!r}"
+                )
+E               AssertionError: a hidden-side value stayed visible, bypass=abc123: 'bypass=abc123 tail'
+E               assert 'bypass=abc123 tail' == 'bypass=<hidden> tail'
+E                 
+E                 - bypass=<hidden> tail
+E                 + bypass=abc123 tail
+
+tests/test_demo_only_guard.py:2127: AssertionError
+_ test_a_bare_scheme_word_hides_a_token_of_16_or_more_or_one_that_mixes_letters_and_digits _
+
+    def test_a_bare_scheme_word_hides_a_token_of_16_or_more_or_one_that_mixes_letters_and_digits() -> (
+        None
+    ):
+        assert "<hidden>" in g._hide_secrets("Bearer " + "a" * 16), "a 16 letter bearer token stayed"
+        assert "<hidden>" in g._hide_secrets("Basic " + "a" * 16), "a 16 letter basic token stayed"
+        for scheme, n in (("Bearer", 11), ("Bearer", 3), ("basic", 7), ("BASIC", 2)):
+            token = ("a1" * 10)[:n]
+            shown = g._hide_secrets(f"x {scheme} {token} y")
+>           assert token not in shown, f"{scheme} {n} mixed characters stayed: {shown!r}"
+E           AssertionError: Bearer 11 mixed characters stayed: 'x Bearer a1a1a1a1a1a y'
+E           assert 'a1a1a1a1a1a' not in 'x Bearer a1a1a1a1a1a y'
+E             
+E             'a1a1a1a1a1a' is contained here:
+E               x Bearer a1a1a1a1a1a y
+
+tests/test_demo_only_guard.py:2149: AssertionError
+==================================== PASSES ====================================
+_______________ test_every_symlink_under_a_product_root_is_a_hit _______________
+----------------------------- Captured stdout call -----------------------------
+src/pkg/to_file.py: symlink-in-product-root
+src/pkg/to_dir: symlink-in-product-root
+src/pkg/to_out.py: symlink-in-product-root
+src/pkg/dangling.py: symlink-in-product-root
+_______ test_a_repository_that_has_the_folder_needs_the_copy_run_marker ________
+----------------------------- Captured stdout call -----------------------------
+tools/demo_only_guard.copy_run: copy-run-not-wired (the folder exists, so CI must run the copy run and the marker file must say so)
+_ test_the_copy_run_if_present_does_nothing_without_a_folder_and_runs_with_one _
+----------------------------- Captured stdout call -----------------------------
+.                                                                        [100%]
+1 passed in 0.00s
+F                                                                        [100%]
+=================================== FAILURES ===================================
+______________________________ test_needs_folder _______________________________
+
+    def test_needs_folder():
+>       import demo_only.fakes
+E       ModuleNotFoundError: No module named 'demo_only'
+
+tests/test_needs.py:2: ModuleNotFoundError
+=========================== short test summary info ============================
+FAILED tests/test_needs.py::test_needs_folder - ModuleNotFoundError: No modul...
+1 failed in 0.01s
+___________ test_a_clean_product_passes_in_a_copy_without_the_folder ___________
+----------------------------- Captured stdout call -----------------------------
+.                                                                        [100%]
+1 passed in 0.01s
+________ test_a_product_that_reaches_into_the_folder_fails_in_the_copy _________
+----------------------------- Captured stdout call -----------------------------
+demo_only_guard: package pkg is not imported from the copy: no pass reported
+----------------------------- Captured stderr call -----------------------------
+Traceback (most recent call last):
+  File "<string>", line 2, in <module>
+    m = importlib.import_module(sys.argv[1])
+  File "/usr/local/lib/python3.13/importlib/__init__.py", line 88, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1404, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1369, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1340, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 1027, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/tmp/demo-only-guard-mv18bu31/copy/src/pkg/__init__.py", line 4, in <module>
+    importlib.import_module("demo" + "_only.fakes")
+    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/importlib/__init__.py", line 88, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1404, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1369, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1312, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "<frozen importlib._bootstrap>", line 1404, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1369, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1333, in _find_and_load_unlocked
+ModuleNotFoundError: No module named 'demo_only'
+____________________ test_the_copy_run_really_has_no_folder ____________________
+----------------------------- Captured stdout call -----------------------------
+F                                                                        [100%]
+=================================== FAILURES ===================================
+______________________________ test_needs_folder _______________________________
+
+    def test_needs_folder():
+>       import demo_only.fakes
+E       ModuleNotFoundError: No module named 'demo_only'
+
+tests/test_needs.py:2: ModuleNotFoundError
+=========================== short test summary info ============================
+FAILED tests/test_needs.py::test_needs_folder - ModuleNotFoundError: No modul...
+1 failed in 0.01s
+.                                                                        [100%]
+1 passed in 0.00s
+_ test_the_copy_run_imports_the_copy_even_if_the_original_is_on_the_import_path _
+----------------------------- Captured stdout call -----------------------------
+.                                                                        [100%]
+1 passed in 0.01s
+demo_only_guard: package pkg_missing is not imported from the copy: no pass reported
+----------------------------- Captured stderr call -----------------------------
+Traceback (most recent call last):
+  File "<string>", line 2, in <module>
+    m = importlib.import_module(sys.argv[1])
+  File "/usr/local/lib/python3.13/importlib/__init__.py", line 88, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1404, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1369, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1333, in _find_and_load_unlocked
+ModuleNotFoundError: No module named 'pkg_missing'
+_______ test_the_copy_run_child_gets_only_the_allowed_environment_names ________
+----------------------------- Captured stdout call -----------------------------
+.                                                                        [100%]
+1 passed in 0.00s
+F                                                                        [100%]
+=================================== FAILURES ===================================
+___________________________________ test_env ___________________________________
+
+    def test_env():
+>       assert 'HADAVIN_TEST_CALLER_TOKEN' not in os.environ
+E       AssertionError: assert 'HADAVIN_TEST_CALLER_TOKEN' not in environ({'HOME': '/root', 'TERM': 'linux', 'PATH': '/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bi...only-guard-ib2_w2qu/copy/src', 'PYTEST_VERSION': '9.2.0', 'PYTEST_CURRENT_TEST': 'tests/test_env.py::test_env (call)'})
+E        +  where environ({'HOME': '/root', 'TERM': 'linux', 'PATH': '/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bi...only-guard-ib2_w2qu/copy/src', 'PYTEST_VERSION': '9.2.0', 'PYTEST_CURRENT_TEST': 'tests/test_env.py::test_env (call)'}) = os.environ
+
+tests/test_env.py:5: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_env.py::test_env - AssertionError: assert 'HADAVIN_TEST_CAL...
+1 failed in 0.02s
+_ test_the_copy_run_says_which_files_are_left_out_because_git_does_not_track_them _
+----------------------------- Captured stdout call -----------------------------
+.                                                                        [100%]
+1 passed in 0.00s
+__ test_a_loop_of_links_is_a_hit_never_a_traceback_even_where_resolve_raises ___
+----------------------------- Captured stdout call -----------------------------
+demo_only: symlink-loop (a loop of links, or a chain too long to follow)
+=========================== short test summary info ============================
+PASSED tests/test_demo_only_guard.py::test_this_repository_is_clean_and_the_scan_is_not_vacuous
+PASSED tests/test_demo_only_guard.py::test_the_folder_name_is_in_the_settings_file_only
+PASSED tests/test_demo_only_guard.py::test_a_clean_product_passes_even_though_the_folder_holds_fake_ids
+PASSED tests/test_demo_only_guard.py::test_product_code_that_names_the_folder_is_a_hit_with_file_and_line_only
+PASSED tests/test_demo_only_guard.py::test_a_fake_record_id_in_product_code_is_a_hit_and_the_id_is_not_printed
+PASSED tests/test_demo_only_guard.py::test_the_table_name_and_listed_phrases_are_not_hits_but_a_path_or_a_longer_word_is
+PASSED tests/test_demo_only_guard.py::test_a_listed_phrase_that_no_product_file_holds_is_a_stale_hit
+PASSED tests/test_demo_only_guard.py::test_the_folder_inside_a_product_root_is_a_hit
+PASSED tests/test_demo_only_guard.py::test_a_missing_product_root_is_a_hit_not_a_silent_pass
+PASSED tests/test_demo_only_guard.py::test_a_loader_may_name_the_folder_and_nothing_else_may
+PASSED tests/test_demo_only_guard.py::test_a_loader_may_name_the_folder_once_only_and_may_not_hold_a_fake_id
+PASSED tests/test_demo_only_guard.py::test_a_stale_loader_entry_is_a_hit
+PASSED tests/test_demo_only_guard.py::test_ignored_files_and_binary_endings_are_skipped
+PASSED tests/test_demo_only_guard.py::test_pin_every_file_type_is_read_not_only_a_list_of_endings
+PASSED tests/test_demo_only_guard.py::test_a_file_that_is_not_text_and_not_a_known_binary_ending_is_refused
+PASSED tests/test_demo_only_guard.py::test_the_other_product_folders_are_scanned_too[templates]
+PASSED tests/test_demo_only_guard.py::test_the_other_product_folders_are_scanned_too[tools]
+PASSED tests/test_demo_only_guard.py::test_the_other_product_folders_are_scanned_too[demos]
+PASSED tests/test_demo_only_guard.py::test_the_settings_of_this_repository_scan_every_product_folder
+PASSED tests/test_demo_only_guard.py::test_every_symlink_under_a_product_root_is_a_hit
+PASSED tests/test_demo_only_guard.py::test_a_product_root_that_is_itself_a_symlink_is_a_hit
+PASSED tests/test_demo_only_guard.py::test_pin_the_folder_inside_a_product_root_is_a_hit_at_any_depth_and_in_any_spelling
+PASSED tests/test_demo_only_guard.py::test_a_file_or_folder_name_that_holds_the_folder_name_is_a_hit
+PASSED tests/test_demo_only_guard.py::test_pin_a_line_that_names_the_folder_in_another_spelling_is_a_hit
+PASSED tests/test_demo_only_guard.py::test_the_exempt_files_are_exactly_the_guard_itself_and_each_is_skipped_whole
+PASSED tests/test_demo_only_guard.py::test_a_repository_that_has_the_folder_needs_the_copy_run_marker
+PASSED tests/test_demo_only_guard.py::test_the_copy_run_if_present_does_nothing_without_a_folder_and_runs_with_one
+PASSED tests/test_demo_only_guard.py::test_property_a_hit_is_reported_exactly_where_it_was_planted
+PASSED tests/test_demo_only_guard.py::test_good_settings_load
+PASSED tests/test_demo_only_guard.py::test_a_bad_setting_stops_the_guard[over0-'folder']
+PASSED tests/test_demo_only_guard.py::test_a_bad_setting_stops_the_guard[over1-'folder']
+PASSED tests/test_demo_only_guard.py::test_a_bad_setting_stops_the_guard[over2-'product_roots']
+PASSED tests/test_demo_only_guard.py::test_a_bad_setting_stops_the_guard[over3-'product_roots']
+PASSED tests/test_demo_only_guard.py::test_a_bad_setting_stops_the_guard[over4-'skip_suffixes']
+PASSED tests/test_demo_only_guard.py::test_a_bad_setting_stops_the_guard[over5-starts with a dot]
+PASSED tests/test_demo_only_guard.py::test_a_bad_setting_stops_the_guard[over6-'exempt_files']
+PASSED tests/test_demo_only_guard.py::test_a_bad_setting_stops_the_guard[over7-'allowed_phrases']
+PASSED tests/test_demo_only_guard.py::test_a_bad_setting_stops_the_guard[over8-'product_packages']
+PASSED tests/test_demo_only_guard.py::test_a_bad_setting_stops_the_guard[over9-'loader_max_lines']
+PASSED tests/test_demo_only_guard.py::test_a_bad_setting_stops_the_guard[over10-'loader_max_lines']
+PASSED tests/test_demo_only_guard.py::test_a_bad_setting_stops_the_guard[over11-'copy_run_marker']
+PASSED tests/test_demo_only_guard.py::test_a_bad_setting_stops_the_guard[over12-'folder']
+PASSED tests/test_demo_only_guard.py::test_a_bad_setting_stops_the_guard[over13-not a valid pattern]
+PASSED tests/test_demo_only_guard.py::test_a_bad_setting_stops_the_guard[over14-must be lists]
+PASSED tests/test_demo_only_guard.py::test_a_folder_name_that_is_a_path_stops_the_guard
+PASSED tests/test_demo_only_guard.py::test_a_pattern_that_matches_the_empty_text_stops_the_guard
+PASSED tests/test_demo_only_guard.py::test_exit_codes_clean_dirty_and_required_folder_missing
+PASSED tests/test_demo_only_guard.py::test_the_script_runs_as_a_program_on_this_repository
+PASSED tests/test_demo_only_guard.py::test_the_copy_has_no_folder_and_nothing_else_is_lost
+PASSED tests/test_demo_only_guard.py::test_a_clean_product_passes_in_a_copy_without_the_folder
+PASSED tests/test_demo_only_guard.py::test_a_product_that_reaches_into_the_folder_fails_in_the_copy
+PASSED tests/test_demo_only_guard.py::test_the_copy_run_really_has_no_folder
+PASSED tests/test_demo_only_guard.py::test_the_scan_refuses_a_folder_that_is_not_a_git_checkout
+PASSED tests/test_demo_only_guard.py::test_a_file_is_scanned_whether_it_is_added_to_git_or_not
+PASSED tests/test_demo_only_guard.py::test_a_link_outside_the_product_folders_that_points_into_the_folder_is_a_hit
+PASSED tests/test_demo_only_guard.py::test_the_copy_run_imports_the_copy_even_if_the_original_is_on_the_import_path
+PASSED tests/test_demo_only_guard.py::test_the_copy_run_fails_when_the_package_comes_from_somewhere_else
+PASSED tests/test_demo_only_guard.py::test_the_copy_run_without_a_package_to_check_is_refused
+PASSED tests/test_demo_only_guard.py::test_a_listed_phrase_is_matched_in_its_own_case_and_not_beside_a_dash
+PASSED tests/test_demo_only_guard.py::test_a_text_file_renamed_to_a_binary_ending_is_read_and_a_real_binary_is_searched_as_bytes
+PASSED tests/test_demo_only_guard.py::test_a_submodule_under_a_product_root_is_a_hit_and_one_outside_is_not
+PASSED tests/test_demo_only_guard.py::test_a_full_width_spelling_of_the_name_is_a_hit_in_a_line_and_in_a_path
+PASSED tests/test_demo_only_guard.py::test_a_compiled_or_packed_file_in_a_product_folder_is_refused
+PASSED tests/test_demo_only_guard.py::test_a_binary_is_searched_as_bytes_in_utf8_and_both_utf16_orders
+PASSED tests/test_demo_only_guard.py::test_text_written_as_utf16_without_a_mark_is_found_in_a_text_ending
+PASSED tests/test_demo_only_guard.py::test_a_binary_that_is_not_valid_text_and_has_no_nul_is_searched_not_skipped
+PASSED tests/test_demo_only_guard.py::test_a_submodule_that_is_listed_as_exempt_is_not_a_second_hit
+PASSED tests/test_demo_only_guard.py::test_a_submodule_whose_folder_is_missing_is_still_a_hit
+PASSED tests/test_demo_only_guard.py::test_an_entry_git_lists_that_cannot_be_read_is_a_hit_not_a_skip
+PASSED tests/test_demo_only_guard.py::test_a_compiled_or_packed_file_is_refused_by_its_first_bytes_whatever_its_ending
+PASSED tests/test_demo_only_guard.py::test_every_archive_ending_is_refused_like_a_zip
+PASSED tests/test_demo_only_guard.py::test_the_name_is_found_as_utf32_in_a_binary_and_in_a_text_ending
+PASSED tests/test_demo_only_guard.py::test_a_file_over_the_size_cap_is_a_hit_and_is_not_read
+PASSED tests/test_demo_only_guard.py::test_the_settings_file_checks_the_size_cap_the_copy_exclusions_and_the_child_environment
+PASSED tests/test_demo_only_guard.py::test_a_hit_is_printed_with_control_characters_escaped_and_never_as_a_workflow_command
+PASSED tests/test_demo_only_guard.py::test_the_copy_run_child_gets_only_the_allowed_environment_names
+PASSED tests/test_demo_only_guard.py::test_the_copy_holds_exactly_the_tracked_files_whatever_their_names
+PASSED tests/test_demo_only_guard.py::test_the_copy_does_not_depend_on_the_git_variables_of_the_caller
+PASSED tests/test_demo_only_guard.py::test_a_folder_that_a_loader_entry_names_is_still_a_folder_hit
+PASSED tests/test_demo_only_guard.py::test_the_byte_patterns_are_built_once_for_a_whole_scan
+PASSED tests/test_demo_only_guard.py::test_a_full_width_product_root_that_is_the_folder_is_a_hit
+PASSED tests/test_demo_only_guard.py::test_the_marks_table_covers_every_default_ending_and_each_real_sample_passes
+PASSED tests/test_demo_only_guard.py::test_a_foreign_file_with_a_picture_font_or_pdf_ending_is_a_hit_for_every_ending
+PASSED tests/test_demo_only_guard.py::test_an_ending_with_no_known_mark_cannot_be_listed_in_the_settings
+PASSED tests/test_demo_only_guard.py::test_an_entry_is_gone_only_when_the_system_says_no_such_file
+PASSED tests/test_demo_only_guard.py::test_a_tracked_file_in_a_folder_that_cannot_be_entered_is_a_hit_not_a_skip
+PASSED tests/test_demo_only_guard.py::test_the_marker_must_be_an_empty_regular_file
+PASSED tests/test_demo_only_guard.py::test_an_exempt_file_must_not_be_a_link_and_the_size_cap_still_applies
+PASSED tests/test_demo_only_guard.py::test_the_modes_exclude_each_other_and_pytest_arguments_need_a_copy_run_flag
+PASSED tests/test_demo_only_guard.py::test_the_copy_run_says_which_files_are_left_out_because_git_does_not_track_them
+PASSED tests/test_demo_only_guard.py::test_the_samples_cover_exactly_the_kinds_the_guard_lists
+PASSED tests/test_demo_only_guard.py::test_every_first_byte_kind_is_a_hit_by_kind_under_an_unmarked_and_a_marked_ending
+PASSED tests/test_demo_only_guard.py::test_all_four_mach_o_magic_values_are_hits
+PASSED tests/test_demo_only_guard.py::test_a_pe_header_that_cannot_say_is_not_called_a_pe_file_and_one_far_in_is_found
+PASSED tests/test_demo_only_guard.py::test_an_unmarked_ending_that_is_not_utf8_is_a_hit_and_is_not_searched_and_a_nul_file_is_read_as_text
+PASSED tests/test_demo_only_guard.py::test_webp_ttf_and_otf_with_wrong_first_bytes_are_hits_and_with_the_right_ones_pass
+PASSED tests/test_demo_only_guard.py::test_an_svg_is_text_it_is_read_and_a_binary_one_is_refused
+PASSED tests/test_demo_only_guard.py::test_an_exempt_file_that_is_a_binary_is_a_hit_by_kind
+PASSED tests/test_demo_only_guard.py::test_the_docstring_states_that_the_first_512_bytes_decide_and_appended_data_is_not_looked_at
+PASSED tests/test_demo_only_guard.py::test_the_copy_run_refuses_a_tracked_symlink_that_is_absolute_or_leaves_the_copy_or_enters_the_folder
+PASSED tests/test_demo_only_guard.py::test_a_path_swapped_for_a_link_after_the_check_is_refused_not_copied_through
+PASSED tests/test_demo_only_guard.py::test_the_copy_run_does_not_start_when_the_scan_has_a_hit
+PASSED tests/test_demo_only_guard.py::test_an_entry_that_cannot_be_inspected_is_a_hit_or_present_never_absent
+PASSED tests/test_demo_only_guard.py::test_if_present_and_require_do_not_take_an_unreadable_folder_for_a_missing_one
+PASSED tests/test_demo_only_guard.py::test_a_file_the_person_running_the_guard_ignores_for_themselves_is_still_scanned
+PASSED tests/test_demo_only_guard.py::test_two_chained_links_cannot_lead_the_copy_run_out_of_the_copy
+PASSED tests/test_demo_only_guard.py::test_a_loop_of_tracked_links_stops_the_copy_run_and_a_safe_link_is_still_copied
+PASSED tests/test_demo_only_guard.py::test_a_parent_folder_swapped_for_a_link_between_the_check_and_the_open_is_refused
+PASSED tests/test_demo_only_guard.py::test_without_the_walk_flags_a_link_anywhere_on_the_path_is_refused
+PASSED tests/test_demo_only_guard.py::test_a_loop_of_links_is_a_hit_never_a_traceback_even_where_resolve_raises
+PASSED tests/test_demo_only_guard.py::test_a_file_that_vanishes_at_any_point_of_the_scan_is_never_a_traceback
+PASSED tests/test_demo_only_guard.py::test_a_file_in_a_product_folder_is_looked_at_with_one_lstat
+PASSED tests/test_demo_only_guard.py::test_a_failed_git_call_shows_the_first_line_of_gits_own_message_masked
+PASSED tests/test_demo_only_guard.py::test_pin_a_file_that_is_only_the_mz_mark_and_nul_bytes_is_a_hit
+PASSED tests/test_demo_only_guard.py::test_pin_a_file_that_is_only_the_rar_mark_and_nul_bytes_is_a_hit
+PASSED tests/test_demo_only_guard.py::test_pin_plain_text_that_starts_like_a_mark_and_utf16_text_are_not_hits
+PASSED tests/test_demo_only_guard.py::test_pin_bzip2_needs_a_level_from_1_to_9
+PASSED tests/test_demo_only_guard.py::test_pin_bzip2_needs_a_block_or_end_of_stream_mark
+PASSED tests/test_demo_only_guard.py::test_the_listings_of_tracked_files_agree_on_a_repo_with_a_global_ignore_file_and_an_unusual_name
+PASSED tests/test_demo_only_guard.py::test_pin_git_message_hides_names_with_key_or_token
+PASSED tests/test_demo_only_guard.py::test_the_guard_bearer_and_basic_patterns_are_the_text_of_the_core_ones
+PASSED tests/test_demo_only_guard.py::test_a_bare_scheme_word_hides_what_the_core_hides_and_no_more_by_a_table
+PASSED tests/test_demo_only_guard.py::test_a_bearer_token_of_11_and_a_basic_token_of_7_stay_visible
+PASSED tests/test_demo_only_guard.py::test_after_an_authorization_header_name_everything_to_the_end_of_the_line_is_hidden
+PASSED tests/test_demo_only_guard.py::test_a_name_value_pair_hides_quoted_and_odd_values_and_the_wider_name_list
+PASSED tests/test_demo_only_guard.py::test_url_credentials_are_hidden_up_to_the_last_at_sign_whatever_they_hold
+PASSED tests/test_demo_only_guard.py::test_pin_the_masker_costs_time_in_proportion_to_the_line_and_never_raises_on_a_long_line
+PASSED tests/test_demo_only_guard.py::test_pin_the_masker_hides_a_line_of_60000_characters_in_under_5_seconds
+PASSED tests/test_demo_only_guard.py::test_pin_the_masker_pair_step_reads_each_character_a_bounded_number_of_times_whatever_the_line
+PASSED tests/test_demo_only_guard.py::test_a_bearer_token_after_a_secret_looking_name_is_hidden_with_its_scheme_word
+PASSED tests/test_demo_only_guard.py::test_a_basic_token_after_a_secret_looking_name_is_hidden_with_its_scheme_word
+PASSED tests/test_demo_only_guard.py::test_pin_the_colon_form_is_left_alone_by_the_masker
+PASSED tests/test_demo_only_guard.py::test_a_bearer_token_of_11_characters_stays_visible_as_on_main
+PASSED tests/test_demo_only_guard.py::test_the_masker_hides_the_scheme_word_and_the_token_of_a_bearer_and_a_basic_line
+PASSED tests/test_demo_only_guard.py::test_a_fat_mach_o_with_64_bit_offsets_is_a_hit_in_both_byte_orders
+PASSED tests/test_demo_only_guard.py::test_the_compiled_python_range_follows_the_running_interpreter_and_python_2_is_not_read
+PASSED tests/test_demo_only_guard.py::test_a_file_that_swaps_the_link_target_of_a_copied_link_is_refused_in_plain_words
+PASSED tests/test_demo_only_guard.py::test_the_link_chain_message_says_too_long_or_looped
+PASSED tests/test_demo_only_guard.py::test_a_tracked_file_whose_parent_folder_became_a_link_is_a_link_hit
+PASSED tests/test_demo_only_guard.py::test_the_module_docstring_lists_exactly_the_kinds_of_first_bytes_in_the_table
+PASSED tests/test_demo_only_guard.py::test_pin_a_copy_keeps_the_file_mode_where_os_has_no_fchmod
+PASSED tests/test_demo_only_guard.py::test_pin_a_copy_keeps_the_file_mode_when_os_has_fchmod
+PASSED tests/test_demo_only_guard.py::test_an_entry_swapped_between_the_check_and_the_copy_is_refused_in_words_never_a_traceback
+PASSED tests/test_demo_only_guard.py::test_a_loader_behind_a_folder_that_became_a_link_is_a_hit
+PASSED tests/test_demo_only_guard.py::test_an_exempt_file_behind_a_folder_that_became_a_link_is_a_hit
+PASSED tests/test_demo_only_guard.py::test_the_copy_run_marker_behind_a_folder_that_became_a_link_is_a_hit
+PASSED tests/test_demo_only_guard.py::test_a_chain_of_45_links_is_a_hit_and_the_rule_text_names_both_causes
+PASSED tests/test_demo_only_guard.py::test_pin_the_shared_start_of_a_program_refuses_a_shell_and_a_command_string
+PASSED tests/test_demo_only_guard.py::test_pin_the_shared_start_of_a_program_names_a_missing_program_and_runs_a_found_one
+FAILED tests/test_demo_only_guard.py::test_authorization_pair_with_a_scheme_word_hides_the_token_at_8_10_and_11_characters
+FAILED tests/test_demo_only_guard.py::test_a_bare_word_bypass_is_hidden_unless_its_value_is_a_plain_on_off_word
+FAILED tests/test_demo_only_guard.py::test_a_bare_scheme_word_hides_a_token_of_16_or_more_or_one_that_mixes_letters_and_digits
+3 failed, 149 passed in 13.18s

@@ -1,0 +1,4 @@
+HEAD d15e53a8352079c8a7915f6a520198e9099db933
+$ /home/user/build/venv-p6a-313/bin/ruff format --check src tests demos
+315 files already formatted
+exit=0

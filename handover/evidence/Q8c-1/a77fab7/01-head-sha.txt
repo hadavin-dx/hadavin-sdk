@@ -1,0 +1,3 @@
+a77fab727f8435177a9c4789ba63c9c4218c5c57
+a77fab727f8435177a9c4789ba63c9c4218c5c57 Q8c PR 1, fix batch 1: one-part Vault grant, closed guard gaps, honest "not run yet" wording
+2a8c2aac89f83dd0a45af0412563b59ff4fe5632

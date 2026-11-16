@@ -1,0 +1,11 @@
+diff -ruN a/CHANGELOG.md b/CHANGELOG.md
+--- a/CHANGELOG.md	2026-11-14 16:26:19.334359304 +0000
++++ b/CHANGELOG.md	2026-11-14 16:26:19.338211158 +0000
+@@ -1,6 +1,6 @@
+ # Changes
+ 
+-## Round 7k (the r7j review and the last mutants of pass 9)
++conflict line from X
+ 
+ * Key text: an error raised by the live model call, the CRM call or the key-file reader no longer keeps the earlier
+   error as its `__context__` (it could hold request data); `raise ... from None` only hides it from the printout.

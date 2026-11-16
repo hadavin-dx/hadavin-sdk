@@ -1,0 +1,262 @@
+HEAD under test: 304c3bd34c50d740385003cf9b87168345c9d48d
+/home/user/build/ER-pdbind11-old1/src/hadavin_sdk/__init__.py
+.................................................................s...... [ 23%]
+........................................................................ [ 46%]
+........................................................................ [ 69%]
+.................................................F...................... [ 92%]
+..............FFFFFFF.F                                                  [100%]
+=================================== FAILURES ===================================
+__________ test_changelog_numbers_and_lists_are_the_ones_in_the_code ___________
+
+    def test_changelog_numbers_and_lists_are_the_ones_in_the_code() -> None:
+        changelog = Path(__file__).resolve().parents[1] / "CHANGELOG.md"
+        if not changelog.is_file():  # the mutation runner copies src and tests only
+            pytest.skip("no CHANGELOG.md next to the tests (a mutation copy)")
+        problems = _changelog_problems(changelog.read_text(encoding="utf-8"), *_code_numbers())
+>       assert not problems, f"the CHANGELOG and the code differ: {problems}"
+E       AssertionError: the CHANGELOG and the code differ: ["the CHANGELOG does not say 'runs 263 mutants (262 on Python 3.14'"]
+E       assert not ["the CHANGELOG does not say 'runs 263 mutants (262 on Python 3.14'"]
+
+tests/test_bindguard.py:4151: AssertionError
+________ test_a_tool_put_into_the_hooks_of_a_sealed_runtime_is_counted _________
+
+tmp_path = PosixPath('/home/user/build/er-pdbind11-tmp/pytest-of-root/pytest-77/test_a_tool_put_into_the_hooks0')
+
+    def test_a_tool_put_into_the_hooks_of_a_sealed_runtime_is_counted(tmp_path: Path) -> None:
+        """Class: SEAL-COMPLETE (round 10, design M-1). ``build()`` gives the runtime its own copy of ``tools``; adding a tool
+        to that dict keeps the identity of the hooks and of the dict, so an identity check read a runtime with a real
+        callable in it as a stand-in. Fails on 304c3bd3."""
+        app = _built(tmp_path)
+        rt = _core_runtime(app)
+        hooks = rt.hooks
+        assert not _runtime_counted(app, rt), "control: the runtime build() made was counted"
+        hooks.tools["lookup"] = _real_function
+        try:
+>           assert _runtime_counted(app, rt), (
+                "a tool added to hooks.tools after the seal was not counted"
+            )
+E           AssertionError: a tool added to hooks.tools after the seal was not counted
+E           assert False
+E            +  where False = _runtime_counted(<tests.test_bindguard._Built object at 0x7f8a61c0dc50>, <hadavin_sdk.runtime.agent_loop.Runtime object at 0x7f8a619cecb0>)
+
+tests/test_bindguard.py:5166: AssertionError
+_ test_the_toolbox_and_the_executor_of_a_sealed_runtime_cannot_be_changed_unseen _
+
+tmp_path = PosixPath('/home/user/build/er-pdbind11-tmp/pytest-of-root/pytest-77/test_the_toolbox_and_the_execu0')
+
+    def test_the_toolbox_and_the_executor_of_a_sealed_runtime_cannot_be_changed_unseen(
+        tmp_path: Path,
+    ) -> None:
+        """Class: SEAL-COMPLETE (round 10, codebase N11). A member of the toolbox, a name added to it, or the secrets the
+        executor holds is replaced after the seal. Fails on 304c3bd3 (the fields were compared by identity only)."""
+        from hadavin_sdk.tools import ToolBox
+    
+        app = _built(tmp_path)
+        rt = _core_runtime(app)
+        box = ToolBox({}, {"echo": lambda inp, ctx: "x"}, timeout_s=1.0)
+        rt.hooks.toolbox = box
+        _seal(rt)
+        assert not _runtime_counted(app, rt), "control: a runtime sealed with a toolbox was counted"
+        box.abandoned()  # rebinds ``_abandoned`` (state that moves in use)
+        assert not _runtime_counted(app, rt), (
+            "control: ordinary use of the toolbox made it read as real"
+        )
+        executor = rt.hooks.execute.__self__
+        in_dict = (
+            ("a function of the toolbox replaced", box._fns, "echo", _real_function),
+            ("a name added to the toolbox", box._fns, "extra", _real_function),
+        )
+        for label, target, key, new in in_dict:
+            had, was = key in target, target.get(key)
+            target[key] = new
+            try:
+>               assert _runtime_counted(app, rt), f"{label} was not counted"
+E               AssertionError: a function of the toolbox replaced was not counted
+E               assert False
+E                +  where False = _runtime_counted(<tests.test_bindguard._Built object at 0x7f8a61c7c750>, <hadavin_sdk.runtime.agent_loop.Runtime object at 0x7f8a61c58050>)
+
+tests/test_bindguard.py:5216: AssertionError
+_ test_the_code_and_the_closure_cells_of_a_hook_function_cannot_be_rewritten_unseen _
+
+tmp_path = PosixPath('/home/user/build/er-pdbind11-tmp/pytest-of-root/pytest-77/test_the_code_and_the_closure_0')
+
+    def test_the_code_and_the_closure_cells_of_a_hook_function_cannot_be_rewritten_unseen(
+        tmp_path: Path,
+    ) -> None:
+        """Class: SEAL-COMPLETE (round 10, design M-1). ``post_card`` and ``request_approval`` are closures made by
+        ``build()``: a cell's content (``cell.cell_contents = x``) or the function's code can be rewritten and the function
+        object stays the same. Fails on 304c3bd3."""
+        app = _built(tmp_path)
+        rt = _core_runtime(app)
+        hooks = rt.hooks
+        assert not _runtime_counted(app, rt), "control"
+        for name in ("post_card", "request_approval"):
+            fn = getattr(hooks, name)
+            assert fn.__closure__, f"control: {name} has no closure cell to rewrite"
+            for index, cell in enumerate(fn.__closure__):
+                was = cell.cell_contents
+                cell.cell_contents = _Opaque()
+                try:
+>                   assert _runtime_counted(app, rt), (
+                        f"cell {index} of {name} rewritten was not counted"
+                    )
+E                   AssertionError: cell 0 of post_card rewritten was not counted
+E                   assert False
+E                    +  where False = _runtime_counted(<tests.test_bindguard._Built object at 0x7f8a624b1650>, <hadavin_sdk.runtime.agent_loop.Runtime object at 0x7f8a619cceb0>)
+
+tests/test_bindguard.py:5254: AssertionError
+_____________ test_the_judged_names_of_a_runtime_are_all_its_keys ______________
+
+tmp_path = PosixPath('/home/user/build/er-pdbind11-tmp/pytest-of-root/pytest-77/test_the_judged_names_of_a_run0')
+
+    def test_the_judged_names_of_a_runtime_are_all_its_keys(tmp_path: Path) -> None:
+        """Class: SEAL-COMPLETE (round 10, codebase M1). ``_RUNTIME_SEALED`` and ``_RUNTIME_SERVICES`` together name every
+        key of a built ``Runtime``; a member added to ``Runtime.__init__`` fails here until it is judged (it would
+        otherwise be believed whatever it held). Fails on 304c3bd3 (``_evidence`` and ``_kinds`` were not listed)."""
+        from hadavin_sdk.approvals import requests as R
+    
+        keys = set(object.__getattribute__(_core_runtime(_built(tmp_path)), "__dict__"))
+        judged = set(R._RUNTIME_SEALED) | set(R._RUNTIME_SERVICES)
+>       assert judged == keys, (
+            f"the judged names and the keys of a built Runtime differ: {sorted(judged ^ keys)}"
+        )
+E       AssertionError: the judged names and the keys of a built Runtime differ: ['_evidence', '_kinds']
+E       assert {'agents', 'a...', 'llm', ...} == {'_evidence',... 'hooks', ...}
+E         
+E         Extra items in the right set:
+E         '_evidence'
+E         '_kinds'
+E         Use -v to get more diff
+
+tests/test_bindguard.py:5277: AssertionError
+_________ test_a_kinds_or_evidence_put_on_the_core_runtime_is_counted __________
+
+tmp_path = PosixPath('/home/user/build/er-pdbind11-tmp/pytest-of-root/pytest-77/test_a_kinds_or_evidence_put_o0')
+
+    def test_a_kinds_or_evidence_put_on_the_core_runtime_is_counted(tmp_path: Path) -> None:
+        """Class: SEAL-COMPLETE (round 10, codebase M1). ``rt._kinds = <object with __contains__>`` ran foreign code on the
+        paths ``on_decided`` reaches. Fails on 304c3bd3 for both members."""
+    
+        class Contains:
+            def __contains__(self, item: object) -> bool:
+                return True
+    
+        app = _built(tmp_path)
+        rt = _core_runtime(app)
+        own = object.__getattribute__(rt, "__dict__")
+        assert not _runtime_counted(app, rt), "control"
+        for name, other in (
+            ("_kinds", Contains()),
+            ("_kinds", frozenset({"another-kind"})),
+            ("_kinds", set(own["_kinds"])),
+            ("_evidence", _Opaque()),
+        ):
+            was = own[name]
+            own[name] = other
+            try:
+>               assert _runtime_counted(app, rt), (
+                    f"a replaced {name} ({type(other).__name__}) was not counted"
+                )
+E               AssertionError: a replaced _kinds (Contains) was not counted
+E               assert False
+E                +  where False = _runtime_counted(<tests.test_bindguard._Built object at 0x7f8a62225ad0>, <hadavin_sdk.runtime.agent_loop.Runtime object at 0x7f8a61c5b9d0>)
+
+tests/test_bindguard.py:5303: AssertionError
+________________ test_a_sealed_runtime_that_is_dropped_is_freed ________________
+
+tmp_path = PosixPath('/home/user/build/er-pdbind11-tmp/pytest-of-root/pytest-77/test_a_sealed_runtime_that_is_0')
+
+    def test_a_sealed_runtime_that_is_dropped_is_freed(tmp_path: Path) -> None:
+        """Class: LEAK (round 10, design M-2). The seal's value used to hold the hooks, which reach the runtime (hooks ->
+        ``request_approval`` -> ``Approvals`` -> ``on_decided`` -> holder -> runtime): the weak table never freed one. A
+        built app is dropped and the runtime must be gone after ``gc.collect()``. Fails on 304c3bd3."""
+        import gc
+        import weakref
+    
+        from hadavin_sdk.approvals import requests as R
+    
+        app = _built(tmp_path)
+        rt = _core_runtime(app)
+        assert rt in R._RUNTIME_SEALS, "control: the runtime was not sealed"
+        ref = weakref.ref(rt)
+        del app, rt
+        gc.collect()
+>       assert ref() is None, "a dropped runtime is still held (the seal keeps it alive)"
+E       AssertionError: a dropped runtime is still held (the seal keeps it alive)
+E       assert <hadavin_sdk.runtime.agent_loop.Runtime object at 0x7f8a61c5a670> is None
+E        +  where <hadavin_sdk.runtime.agent_loop.Runtime object at 0x7f8a61c5a670> = <weakref at 0x7f8a6184e160; to 'hadavin_sdk.runtime.agent_loop.Runtime' at 0x7f8a61c5a670>()
+
+tests/test_bindguard.py:5326: AssertionError
+___________________________ test_the_seal_is_private ___________________________
+
+tmp_path = PosixPath('/home/user/build/er-pdbind11-tmp/pytest-of-root/pytest-77/test_the_seal_is_private0')
+
+    def test_the_seal_is_private(tmp_path: Path) -> None:
+        """Class: API (round 10, design N-1). The function that records what a runtime may be believed to hold is not a
+        public name of the approvals package or of ``requests``. Fails on 304c3bd3 (it was ``seal_runtime``)."""
+        from hadavin_sdk import approvals
+        from hadavin_sdk.approvals import requests as R
+    
+>       assert not hasattr(R, "seal_runtime"), "seal_runtime is a public name of requests"
+E       AssertionError: seal_runtime is a public name of requests
+E       assert not True
+E        +  where True = hasattr(<module 'hadavin_sdk.approvals.requests' from '/home/user/build/ER-pdbind11-old1/src/hadavin_sdk/approvals/requests.py'>, 'seal_runtime')
+
+tests/test_bindguard.py:5336: AssertionError
+______ test_an_object_read_after_the_budget_ran_out_is_not_blamed_for_it _______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f8a61c733f0>
+
+    def test_an_object_read_after_the_budget_ran_out_is_not_blamed_for_it(
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Class: TEXT (round 10, codebase N12). One ``Scan`` covers a request: when the budget runs out the object that
+        crossed the limit can be a small one asked about last, and the line blamed it. The scan now records the object that
+        used the most of the budget, and the line for another object says so. Fails on 304c3bd3 (both lines said
+        ``over budget (too many values to check)``). The budget is made small (90 values) so the first store (72 values)
+        leaves too little for the channel (32 values)."""
+        from hadavin_sdk import standins
+    
+        monkeypatch.setattr(standins, "SCAN_NODES", 90)
+        store, channel = MemoryStore(), FakeChannel("sig" + "-b11-test")
+        scan = standins.Scan()
+        lines = bindguard.held_services_found({"a_store": store, "b_channel": channel}, scan)
+>       assert lines == (
+            "held b_channel: not read in full, another object (MemoryStore) used most of the budget",
+        ), f"the lines were {lines}"
+E       AssertionError: the lines were ('held b_channel: over budget (too many values to check)',)
+E       assert ('held b_chan...s to check)',) == ('held b_chan... the budget',)
+E         
+E         At index 0 diff: 'held b_channel: over budget (too many values to check)' != 'held b_channel: not read in full, another object (MemoryStore) used most of the budget'
+E         Use -v to get more diff
+
+tests/test_bindguard.py:5383: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_bindguard.py::test_changelog_numbers_and_lists_are_the_ones_in_the_code
+FAILED tests/test_bindguard.py::test_a_tool_put_into_the_hooks_of_a_sealed_runtime_is_counted
+FAILED tests/test_bindguard.py::test_the_toolbox_and_the_executor_of_a_sealed_runtime_cannot_be_changed_unseen
+FAILED tests/test_bindguard.py::test_the_code_and_the_closure_cells_of_a_hook_function_cannot_be_rewritten_unseen
+FAILED tests/test_bindguard.py::test_the_judged_names_of_a_runtime_are_all_its_keys
+FAILED tests/test_bindguard.py::test_a_kinds_or_evidence_put_on_the_core_runtime_is_counted
+FAILED tests/test_bindguard.py::test_a_sealed_runtime_that_is_dropped_is_freed
+FAILED tests/test_bindguard.py::test_the_seal_is_private - AssertionError: se...
+FAILED tests/test_bindguard.py::test_an_object_read_after_the_budget_ran_out_is_not_blamed_for_it
+9 failed, 301 passed, 1 skipped in 33.30s
+pytest rc=1
+== bind_mutants.py row B98 (head's runner) on this old tree
+Traceback (most recent call last):
+  File "/home/user/build/ER-pdbind11-old1/tests/bind_mutants.py", line 2500, in <module>
+    res = run_mutants(
+        ROOT,
+    ...<5 lines>...
+        first_lines=first_lines,
+    )
+  File "/home/user/build/ER-pdbind11-old1/tools/mutation_runner.py", line 388, in run_mutants
+    return _run_mutants(
+        root, mutants, tests, extra_dirs, only, timeout, baseline_timeout, on_result,
+        {} if first_lines is None else first_lines,
+    )  # fmt: skip
+  File "/home/user/build/ER-pdbind11-old1/tools/mutation_runner.py", line 527, in _run_mutants
+    raise RuntimeError("the unmutated copy does not pass its tests")
+RuntimeError: the unmutated copy does not pass its tests
+mutants rc=1

@@ -1,0 +1,4 @@
+dash main | head -1: script rc=4 folders_left=1 frag_leftover=0
+dash mask | head -1: script rc=0 folders_left=0
+bash main | head -1: script rc=4 folders_left=1 frag_leftover=0
+bash mask | head -1: script rc=0 folders_left=0

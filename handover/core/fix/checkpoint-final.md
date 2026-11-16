@@ -1,0 +1,1 @@
+60 min reached. f8-on-v2.patch final (full set 2220 passed). f8-on-frozen.patch: applies on tree-REB, ruff/bandit clean, 3 of 479 tests in the subset still fail (see report); fail-before on tree-REB not run.

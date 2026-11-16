@@ -1,0 +1,443 @@
+diff --git a/src/lead_desk/config.py b/src/lead_desk/config.py
+index d9c7b07..563f922 100644
+--- a/src/lead_desk/config.py
++++ b/src/lead_desk/config.py
+@@ -55,12 +55,20 @@ from lead_desk.constants import (
+ )
+ from lead_desk.envnum import SettingRefused, env_number, split_url
+ from lead_desk.identity import PLAIN_ADDRESS, encodable, has_control_char
++from lead_desk.regfile import open_regular
+ from lead_desk.urls import desk_origin
+ 
+ _LABEL = r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?"
+ _HOST_NAME = re.compile(rf"^{_LABEL}(?:\.{_LABEL})*$|^\[[0-9a-f:]+\]$")
+ 
+ 
++def _plain_host_text(text: str) -> bool:
++    """True for text that is only printable ASCII with no space: no control character, line break, escape, full-width
++    digit or other look-alike letter. Every spelling of an address or name (even a bad one) passes; the other checks
++    still judge what it means."""
++    return text.isascii() and text.isprintable() and not any(c.isspace() for c in text)
++
++
+ def is_loopback_host(name: str) -> bool:
+     """True for localhost and for a loopback address (brackets allowed); a wildcard, a name or any other address is
+     reachable from, or reaches, other computers. Fails closed: anything it cannot read is not loopback."""
+@@ -261,7 +269,7 @@ def read_approvers(path: Path) -> tuple[tuple[tuple[str, str], ...], str]:
+     optional). Returns ((id, name), ...) and the label. Only the file shape is checked here; Config checks the
+     values. Raises SettingRefused (naming DESK_APPROVERS_FILE and the entry number, never the text)."""
+     try:
+-        with path.open("rb") as f:
++        with open_regular(path) as f:
+             raw = f.read(APPROVERS_FILE_MAX_BYTES + 1)
+     except OSError:
+         raise SettingRefused("the approvers file cannot be read") from None
+@@ -384,7 +392,7 @@ def _read_leadflow(path: Path) -> Leadflow:
+     """Read a leadflow file (the shape is in docs/settings.md). Raises SettingRefused naming DESK_LEADFLOW_FILE and the
+     entry, never a value. `nudge_after_seconds` absent or null = reminders off (None)."""
+     try:
+-        with path.open("rb") as f:
++        with open_regular(path) as f:
+             raw = f.read(LEADFLOW_FILE_MAX_BYTES + 1)
+     except OSError:
+         raise SettingRefused("DESK_LEADFLOW_FILE cannot be read") from None
+@@ -519,6 +527,8 @@ class Config:
+             raise SettingRefused("qualifier live_claude needs the live model settings (DESK_LIVE_*)")
+         if not self.bind or not self.fakes_host:
+             raise SettingRefused("DESK_BIND and DESK_FAKES_HOST must not be empty")
++        if not all(_plain_host_text(x) for x in (self.bind, self.fakes_host)):
++            raise SettingRefused("DESK_BIND and DESK_FAKES_HOST must be plain ASCII text on one line, with no spaces")
+         if not is_loopback_host(self.fakes_host):  # the stand-ins are local by construction: the banner relies on it
+             raise SettingRefused(
+                 "DESK_FAKES_HOST (or DESK_FAKES_URL) must be this computer: localhost or a loopback address"
+diff --git a/src/lead_desk/crm_hubspot.py b/src/lead_desk/crm_hubspot.py
+index 227b7e3..372cf37 100644
+--- a/src/lead_desk/crm_hubspot.py
++++ b/src/lead_desk/crm_hubspot.py
+@@ -82,6 +82,7 @@ from lead_desk.constants import (
+     REPLY_MAX_BYTES,
+ )
+ from lead_desk.envnum import SettingRefused, env_number, split_url
++from lead_desk.regfile import open_regular
+ from lead_desk.run_stats import write_stats
+ 
+ LEAD_ID_PROPERTY: Final = "hadavin_lead_id"  # created by hand in the CRM account; this module never creates one
+@@ -256,7 +257,7 @@ class HubspotCrm:
+ 
+     def _key(self) -> str:
+         try:
+-            with self.s.key_file.open("rb") as f:
++            with open_regular(self.s.key_file) as f:
+                 raw = f.read(SECRET_FILE_MAX_BYTES + 1)
+         except OSError:
+             raise CrmConfigError("the hubspot key file cannot be read") from None  # the OS error holds the path
+diff --git a/src/lead_desk/envnum.py b/src/lead_desk/envnum.py
+index 087304a..3f5e236 100644
+--- a/src/lead_desk/envnum.py
++++ b/src/lead_desk/envnum.py
+@@ -8,6 +8,7 @@ from __future__ import annotations
+ 
+ import math
+ import re
++import unicodedata
+ from collections.abc import Callable, Mapping
+ from decimal import Decimal
+ from typing import Any
+@@ -64,7 +65,11 @@ def env_number(
+ 
+ def split_url(name: str, text: str) -> SplitResult:
+     """`urlsplit(text)` for the value of setting `name`: text that cannot be split (an unclosed bracket such as
+-    `http://[/`) is a SettingRefused naming the setting, never a bare ValueError."""
++    `http://[/`) is a SettingRefused naming the setting, never a bare ValueError. Text with a control character, a
++    line break or a space is refused too: urlsplit silently drops tabs and line ends, so such a value would pass the
++    checks and still be a different text from the one that is later used."""
++    if any(unicodedata.category(c) in ("Cc", "Zs", "Zl", "Zp") for c in text):
++        raise SettingRefused(f"{name} is not a valid address")
+     try:
+         return urlsplit(text)
+     except ValueError:
+diff --git a/src/lead_desk/hooks.py b/src/lead_desk/hooks.py
+index 212e3ac..0cb2253 100644
+--- a/src/lead_desk/hooks.py
++++ b/src/lead_desk/hooks.py
+@@ -8,6 +8,7 @@ from pathlib import Path
+ from typing import Final
+ 
+ from lead_desk.constants import EXIT_SIMULATED_KILL
++from lead_desk.regfile import open_regular
+ 
+ # The five points the portal demo lets a visitor arm: A, A2, B (receipt and verdict), D1 (follow-up claimed,
+ # before the send mark), D2 (outbox.send returned, result not yet recorded).
+@@ -37,7 +38,8 @@ class FlagFileHooks(Hooks):
+ 
+     def crash_point(self, name: str, conn: sqlite3.Connection | None) -> None:
+         try:
+-            wanted = self.flag_path.read_text(encoding="utf-8").strip()
++            with open_regular(self.flag_path) as f:
++                wanted = f.read().decode("utf-8").strip()
+         except OSError:
+             return
+         if wanted != name:
+diff --git a/src/lead_desk/live_claude.py b/src/lead_desk/live_claude.py
+index 5829d6c..0544cad 100644
+--- a/src/lead_desk/live_claude.py
++++ b/src/lead_desk/live_claude.py
+@@ -56,6 +56,7 @@ from lead_desk.constants import (
+     LIVE_REPLY_MAX_BYTES,
+     LIVE_REPORTED_TOKENS_MAX,
+ )
++from lead_desk.regfile import open_regular
+ 
+ SYSTEM_TEXT = (
+     "You sort sales leads. Answer with exactly one word: hot, warm or cold. No other text, no punctuation. "
+@@ -236,7 +237,7 @@ class SpendLedger:
+         settled: dict[str, Decimal] = {}
+         try:
+             try:
+-                with open(self.path, "rb") as f:
++                with open_regular(self.path) as f:
+                     raw = f.read(LIVE_LEDGER_FILE_MAX_BYTES + 1)  # one read; never more than the cap plus one byte
+             except FileNotFoundError:
+                 raw = b""
+@@ -421,7 +422,8 @@ class LiveQualifier:
+     def _read_key(self) -> str:
+         if not self._key:
+             try:
+-                key = self.s.key_file.read_text(encoding="utf-8").strip()
++                with open_regular(self.s.key_file) as f:
++                    key = f.read().decode("utf-8").strip()
+             except (OSError, UnicodeError):
+                 raise LiveTransport("the key file cannot be read") from None  # the error holds the path
+             # one line only, as in the HubSpot and SMTP readers (their other rules differ)
+diff --git a/src/lead_desk/regfile.py b/src/lead_desk/regfile.py
+new file mode 100644
+index 0000000..4672a94
+--- /dev/null
++++ b/src/lead_desk/regfile.py
+@@ -0,0 +1,35 @@
++"""The one way the library opens a file it only reads (settings, key and flag files): a REGULAR file or a refusal.
++
++A pipe (FIFO), a device or a socket has no end, so a plain read of one can wait for ever. The file is opened without
++waiting (O_NONBLOCK, so opening a pipe returns at once), its kind is checked on the open handle (not on the name, so
++a swap between the check and the read changes nothing) and anything but a regular file is refused with an OSError,
++which every reader already turns into its own fixed "cannot be read" text (never the path)."""
++
++from __future__ import annotations
++
++import os
++import stat
++from typing import IO
++
++_FLAGS = os.O_RDONLY | getattr(os, "O_NONBLOCK", 0) | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_BINARY", 0)
++
++
++class NotRegularFile(OSError):
++    """The path is a pipe, a device, a socket, a folder or has a NUL character: not something to read as a file. The
++    text never holds the path."""
++
++
++def open_regular(path: str | os.PathLike[str]) -> IO[bytes]:
++    """Open `path` for reading bytes; a missing file raises FileNotFoundError and any other kind of file than a
++    regular one raises NotRegularFile (both are OSError)."""
++    try:
++        fd = os.open(path, _FLAGS)
++    except ValueError:  # an embedded NUL character
++        raise NotRegularFile("not a regular file") from None
++    try:
++        if not stat.S_ISREG(os.fstat(fd).st_mode):
++            raise NotRegularFile("not a regular file")
++        return os.fdopen(fd, "rb")
++    except BaseException:
++        os.close(fd)
++        raise
+diff --git a/src/lead_desk/smtp_provider.py b/src/lead_desk/smtp_provider.py
+index 2d6f90b..3c2e66c 100644
+--- a/src/lead_desk/smtp_provider.py
++++ b/src/lead_desk/smtp_provider.py
+@@ -51,6 +51,7 @@ from lead_desk.contract import (
+     is_fd_exhaustion,
+ )
+ from lead_desk.envnum import SettingRefused, env_number
++from lead_desk.regfile import open_regular
+ from lead_desk.run_stats import write_stats
+ from lead_desk.smtp_outbox import (
+     _ADDRESS,
+@@ -152,7 +153,7 @@ def read_secret_file(path: Path, what: str = "smtp password") -> str:
+     At most SECRET_FILE_MAX_BYTES are read; a UTF-8 byte-order mark is accepted; a file of several lines or in another
+     text format is refused with a fixed, helpful text. Raises SendRefused (never the path, never the content)."""
+     try:
+-        with path.open("rb") as f:
++        with open_regular(path) as f:
+             raw = f.read(SECRET_FILE_MAX_BYTES + 1)
+     except OSError:
+         raise SendRefused(f"the {what} file cannot be read") from None
+diff --git a/src/lead_desk/trace.py b/src/lead_desk/trace.py
+index 48eb438..de9a2ce 100644
+--- a/src/lead_desk/trace.py
++++ b/src/lead_desk/trace.py
+@@ -31,6 +31,7 @@ from typing import Any, Literal
+ 
+ from lead_desk.constants import EXIT_SIMULATED_KILL
+ from lead_desk.hooks import Hooks
++from lead_desk.regfile import open_regular
+ 
+ WINDOWS = ("ai_after", "crm_before_put", "crm_after_put", "send_before", "send_after")
+ 
+@@ -127,7 +128,8 @@ class CrashWindows:
+         if window not in WINDOWS:
+             raise ValueError(window)
+         try:
+-            wanted = self.flag_path.read_text(encoding="utf-8").strip()
++            with open_regular(self.flag_path) as f:
++                wanted = f.read().decode("utf-8").strip()
+             if wanted != window:
+                 return
+             self.flag_path.unlink()
+diff --git a/tests/test_special_files_and_plain_text.py b/tests/test_special_files_and_plain_text.py
+new file mode 100644
+index 0000000..736c39a
+--- /dev/null
++++ b/tests/test_special_files_and_plain_text.py
+@@ -0,0 +1,202 @@
++"""Class F3: a reader of a settings, key or ledger file must read a REGULAR file or refuse, and a setting that names a
++host or an address must be plain one-line ASCII text. Made-up data only, no network.
++
++Part 1: every library reader is called on a named pipe (FIFO) in a child process with a 5 second limit. A reader
++that waits for ever on the pipe is a failure (the child is killed and the test fails). The expected answer is the
++reader's own fixed refusal text, which holds neither the path nor anything else.
++Part 2: DESK_BIND, DESK_FAKES_HOST and the address settings refuse a control character, a line break, an escape, a
++space and a full-width digit. A trailing line end on a NUMBER (`12\\n`) stays accepted on purpose: env_number strips
++spaces, tabs and line ends from both ends (documented there and pinned in test_env_numbers.py)."""
++
++from __future__ import annotations
++
++import multiprocessing
++import os
++from pathlib import Path
++from queue import Empty
++from typing import Any
++
++import pytest
++
++from lead_desk.config import Config, read_approvers, read_leadflow
++from lead_desk.crm_hubspot import HubspotSettings
++from lead_desk.envnum import SettingRefused, split_url
++from lead_desk.hooks import FlagFileHooks
++from lead_desk.trace import CrashWindows
++
++FIFO_SKIP = pytest.mark.skipif(not hasattr(os, "mkfifo"), reason="no named pipes on this platform")
++
++
++def _reader_outcome(what: str, path: str, queue: Any) -> None:
++    """Runs in a child process: call one reader on `path` and put "KindName|text" (or ACCEPTED) on the queue."""
++    import test_core_key_readers as k
++
++    from lead_desk.live_claude import SpendLedger
++
++    p = Path(path)
++    fns = {
++        "approvers": lambda: read_approvers(p),
++        "leadflow": lambda: read_leadflow(p),
++        "smtp": lambda: k.read_smtp(p),
++        "hubspot": lambda: k.read_hubspot(p),
++        "live": lambda: k.read_live(p),
++        "ledger": lambda: SpendLedger(p)._totals("run-a"),
++        "flags": lambda: (FlagFileHooks(p).crash_point("x", None), CrashWindows(p).hit("ai_after")),
++    }
++    try:
++        fns[what]()
++    except Exception as e:  # report every kind of failure to the parent
++        queue.put(type(e).__name__ + "|" + str(e))
++    else:
++        queue.put("ACCEPTED")
++
++
++def _in_child(what: str, path: Path) -> str:
++    """The outcome of one reader on `path` in a child process; the test fails when the child is still waiting after
++    5 seconds (the child is then stopped)."""
++    ctx = multiprocessing.get_context("spawn")
++    queue = ctx.Queue()
++    child = ctx.Process(target=_reader_outcome, args=(what, str(path), queue))
++    child.start()
++    try:
++        return str(queue.get(timeout=5))
++    except Empty:
++        pytest.fail(f"the {what} reader waited for ever on a named pipe")
++    finally:
++        child.terminate()
++        child.join(10)
++
++
++REFUSALS = {
++    "approvers": ("SettingRefused", "the approvers file cannot be read"),
++    "leadflow": ("SettingRefused", "DESK_LEADFLOW_FILE cannot be read"),
++    "smtp": ("SendRefused", "the smtp password file cannot be read"),
++    "hubspot": ("CrmConfigError", "the hubspot key file cannot be read"),
++    "live": ("LiveTransport", "the key file cannot be read"),
++    "ledger": ("LiveCapReached", None),  # its own fixed text; only the kind is pinned here
++}
++
++
++@FIFO_SKIP
++@pytest.mark.parametrize("what", sorted(REFUSALS))
++def test_a_reader_refuses_a_named_pipe_at_once(tmp_path: Path, what: str) -> None:
++    pipe = tmp_path / "pipe-name"
++    os.mkfifo(pipe)
++    kind, _, text = _in_child(what, pipe).partition("|")
++    want_kind, want_text = REFUSALS[what]
++    assert kind == want_kind
++    if want_text is not None:
++        assert text == want_text
++    assert "pipe-name" not in text and str(tmp_path) not in text
++
++
++@FIFO_SKIP
++def test_the_crash_flag_readers_do_not_wait_on_a_named_pipe(tmp_path: Path) -> None:
++    pipe = tmp_path / "flag"
++    os.mkfifo(pipe)
++    assert _in_child("flags", pipe) == "ACCEPTED"  # both return at once (a flag that cannot be read is no flag)
++
++
++@FIFO_SKIP
++def test_open_regular_refuses_pipe_folder_and_nul_and_reads_a_file(tmp_path: Path) -> None:
++    from lead_desk.regfile import NotRegularFile, open_regular
++
++    os.mkfifo(tmp_path / "p")
++    for bad in (tmp_path / "p", tmp_path, str(tmp_path / "a\x00b")):
++        with pytest.raises(NotRegularFile):
++            open_regular(bad)
++    with pytest.raises(FileNotFoundError):
++        open_regular(tmp_path / "missing")
++    good = tmp_path / "f"
++    good.write_bytes(b"abc")
++    with open_regular(good) as f:
++        assert f.read() == b"abc"
++    link = tmp_path / "link"
++    link.symlink_to(good)  # a link to a regular file keeps working (as before)
++    with open_regular(link) as f:
++        assert f.read() == b"abc"
++
++
++@FIFO_SKIP
++def test_readers_of_a_symlink_to_a_pipe_refuse_too(tmp_path: Path) -> None:
++    os.mkfifo(tmp_path / "p")
++    (tmp_path / "l").symlink_to(tmp_path / "p")
++    for what in ("approvers", "leadflow"):
++        assert _in_child(what, tmp_path / "l").endswith("cannot be read")
++
++
++# ---------------------------------------------------------------- Part 2: plain one-line text
++BAD_TEXT = [
++    "127.0.0.1\n",
++    "\n127.0.0.1",
++    "127.0.0.1\x1b",
++    "127.0.0.\x1b[31m1",
++    "127.0.0.1\x00",
++    "127.0.0.1 ",
++    " 127.0.0.1",
++]
++BAD_TEXT += ["１２７.0.0.1", "127.0.0.1 ", "local host", "127.0.0.1\t", "127.0.0.1\x7f", "hеst"]
++GOOD_TEXT = ["127.0.0.1", "localhost", "[::1]", "::", "0", "[::1", "host.example", "192.0.2.7"]
++
++
++@pytest.mark.parametrize("bad", BAD_TEXT)
++def test_bind_and_fakes_host_refuse_control_characters_and_look_alikes(bad: str) -> None:
++    with pytest.raises(SettingRefused, match="DESK_BIND and DESK_FAKES_HOST must be plain ASCII text"):
++        Config.from_env({"DESK_BIND": bad})
++    with pytest.raises(SettingRefused, match="DESK_BIND and DESK_FAKES_HOST must be plain ASCII text"):
++        Config.from_env({"DESK_FAKES_HOST": bad})
++
++
++def test_bind_still_accepts_every_plain_spelling() -> None:
++    for good in GOOD_TEXT:
++        assert Config.from_env({"DESK_BIND": good}).bind == good
++
++
++@pytest.mark.parametrize(
++    "bad", ["http://127.0.0.1:1\n", "http://127.0.0.1:1\x1b", "http://127.0.0.1\n:1", "http:// 127.0.0.1:1"]
++)
++def test_fakes_url_refuses_control_characters(bad: str) -> None:
++    with pytest.raises(SettingRefused, match="DESK_FAKES_URL is not a valid address"):
++        Config.from_env({"DESK_FAKES_URL": bad})
++
++
++@pytest.mark.parametrize("allow_any", [False, True])
++@pytest.mark.parametrize("tail", ["\n", "\r\n", "\t", "\x1b", " ", " "])
++def test_hubspot_base_url_refuses_a_trailing_control_character(tmp_path: Path, allow_any: bool, tail: str) -> None:
++    key = tmp_path / "k"
++    key.write_text("Z" * 12)
++    for base in ("https://api.example.test" + tail, "https://api" + tail + ".example.test"):
++        with pytest.raises(SettingRefused, match="DESK_HUBSPOT_BASE_URL is not a valid address"):
++            HubspotSettings(key_file=key, max_calls=1, base_url=base, allow_any_base_url=allow_any)
++    env = {
++        "DESK_HUBSPOT_KEY_FILE": str(key),
++        "DESK_HUBSPOT_MAX_CALLS": "1",
++        "DESK_HUBSPOT_BASE_URL": "https://api.example.test" + tail,
++        "DESK_HUBSPOT_ALLOW_ANY_BASE_URL": "yes" if allow_any else "no",
++    }
++    with pytest.raises(SettingRefused, match="DESK_HUBSPOT_BASE_URL is not a valid address"):
++        HubspotSettings.from_env(env)
++
++
++def test_hubspot_base_url_plain_text_still_works(tmp_path: Path) -> None:
++    key = tmp_path / "k"
++    key.write_text("Z" * 12)
++    s = HubspotSettings(key_file=key, max_calls=1, base_url="https://api.example.test", allow_any_base_url=True)
++    assert s.base_url == "https://api.example.test"
++
++
++def test_split_url_refuses_every_control_and_space_character_in_a_generated_set() -> None:
++    chars = [chr(c) for c in range(0, 0x21)] + [chr(0x7F), "\u0085", " ", " ", " ", "　"]
++    for c in chars:
++        for text in (f"http://h{c}:1", f"http://h:1{c}", f"{c}http://h:1"):
++            with pytest.raises(SettingRefused, match="X is not a valid address"):
++                split_url("X", text)
++    assert split_url("X", "http://h.example:1").port == 1
++
++
++def test_a_number_with_a_trailing_line_end_stays_accepted_on_purpose() -> None:
++    assert Config.from_env({"DESK_PORT": "12\n"}).port == 12  # documented in env_number, pinned in test_env_numbers
++    with pytest.raises(SettingRefused, match="DESK_PORT is not a number"):
++        Config.from_env({"DESK_PORT": "1\n2"})
++    with pytest.raises(SettingRefused, match="DESK_PORT is not a number"):
++        Config.from_env({"DESK_PORT": "１２"})

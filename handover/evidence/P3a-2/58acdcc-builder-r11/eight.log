@@ -1,0 +1,18 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+copy of the repository: /tmp/migrate-mutants-aqwoilhc/repo
+import path: /tmp/migrate-mutants-aqwoilhc/repo/src/hadavin_sdk/__init__.py
+BASELINE rc=0 8 passed in 1.40s (2.7s, 8 killer ids)
+name | kind | description | result | failing killers (only the ones that fail) | seconds
+RA1b | behaviour | the rights of a column are not part of its state | KILLED | tests/test_migration_postgres.py::test_a_second_right_on_a_column_that_already_had_one_is_refused | 2.1s
+SC11 | behaviour | the owner of a changed schema is not read | KILLED | tests/test_migration_postgres.py::test_a_schema_that_a_file_changed_is_read_back_whatever_schema_it_is[owner] | 2.0s
+DP5 | behaviour | the default rights of the owning role itself are read as rights of a stranger | SURVIVED | - | 2.0s
+SW20 | test-helper | the read of pg_shdepend in the sweep is not in a savepoint | KILLED | tests/test_migration_postgres.py::test_a_refused_read_in_the_sweep_does_not_abort_the_transaction_of_the_caller | 2.0s
+LV1 | behaviour | a lock wait of 0 seconds is accepted | BROKEN | tests/test_k2_migrations.py::test_a_lock_wait_that_is_not_a_whole_number_of_seconds_from_1_up_is_refused_before_anything_is_done[0] | 1.9s
+LV2 | behaviour | a bool is accepted as a number of seconds | BROKEN | tests/test_k2_migrations.py::test_a_lock_wait_that_is_not_a_whole_number_of_seconds_from_1_up_is_refused_before_anything_is_done[True] | 2.0s
+LV3 | behaviour | a string or a fraction is accepted as a number of seconds | BROKEN | tests/test_k2_migrations.py::test_a_lock_wait_that_is_not_a_whole_number_of_seconds_from_1_up_is_refused_before_anything_is_done[1.5] | 2.1s
+LV4 | behaviour | one above the largest wait is accepted | BROKEN | tests/test_k2_migrations.py::test_a_lock_wait_that_is_not_a_whole_number_of_seconds_from_1_up_is_refused_before_anything_is_done[2147484] | 2.0s
+behaviour: 2 of 7 killed
+prose: 0 of 0 killed
+test-helper: 1 of 1 killed
+not killed: ['DP5:SURVIVED', 'LV1:BROKEN', 'LV2:BROKEN', 'LV3:BROKEN', 'LV4:BROKEN']
+3 of 8 killed

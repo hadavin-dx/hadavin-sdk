@@ -1,0 +1,53 @@
+# P4d ticket, round 1: disposition of all 37 findings
+
+Applied to `handover/tickets/P4d.md` (revision 3), 2026-11-05 (UTC). Source: `handover/reviews/P4d-round1-resolve-report.md` (all PROPOSE FIX), findings in `P4d-round1-adversarial.md` (A1-A21) and `P4d-round1-correctness.md` (C1-C16). Each claim was re-checked in code on ce70eb5 before editing (commands in the ticket's "Verified facts"). Nothing was run against Postgres (none available). Sections below are ticket sections: Header = shared fields; Rules = "Rules stated once"; P4d-a / P4d-b / P4d-c = sub-tickets; Pending = "PENDING LEAD".
+
+Counts: FIXED 36, REJECTED 0, ESCALATED 1 (C6). The decisions A5 (maintenance identity, run counter wiring) and A11 (exemption wording) are fixed in the ticket and also appear in the escalated list because a lead choice remains.
+
+| Finding | Sev | Status | Section | One line |
+|---|---|---|---|---|
+| A1 | BLOCKER | FIXED | P4d-b "Money SQL rules" 1 | Cap evaluated on the first booking: ensure counter rows, one `UPDATE ... WHERE (cap IS NULL OR usd+amt<=cap) RETURNING` per counter; tests B1, mutants b1-b3. |
+| A2 | BLOCKER | FIXED | P4d-b rules 2; B4(iii); b6 | Settle is one claim `UPDATE ... WHERE status='open' RETURNING` in the counter transaction; lock order reservation, run, day, month; two-handle settle race; read-then-write mutant. |
+| A3 | BLOCKER | FIXED | P4d-b Interface | "Same content" = (agent_id, day, reserved_usd, run_id) numeric; replay of open id returns status open; replay of settled id is `StaleState`; different day is `ReservationConflict`; tests B2, mutant b9. |
+| A4 | MAJOR | FIXED | Header "Path class"; P4d-b | Per A11 the Postgres money SQL is in P4d; ticket rewritten once; open point 1 removed. |
+| A5 | MAJOR | FIXED (lead choices remain) | P4d-b "Interface sufficiency" | Added `run_cap`/run counter, kill-switch refusal, `SpendCapExceeded.which`, `get_spend_reservation`, DB-clock `created_at`, partial index, `release_spend`, sweep, each with evidence (memo-3 s2, memo-2, `agent_loop.py:245-246`, `limits.py:22-28`); out-of-scope items named; Pending 2 and 3. |
+| A6 | MAJOR | FIXED | Rules; P4d-a Interface and edge table | One shared validator set in `protocol.py` (type, finite, sign, bound 10**12, decimals via normalize, cap and day rules); 22-row edge table; mutants a5. |
+| A7 | MAJOR | FIXED | P4d-a Interface "Old methods" | `add_spend`/`add_cost` refuse NaN, Infinity, negative, over-range now; 8 decimals still accepted; nothing pins accept-negative; damaged-counter test uses an admin connection. |
+| A8 | MAJOR | FIXED | P4d-b Files (DDL), Security | Full DDL with CHECKs (NaN and Infinity excluded by range), partial index, BEFORE UPDATE freeze trigger, GRANTS row without DELETE, `purge=""`, runtime negative tests. |
+| A9 | MAJOR | FIXED | P4d-b Rollback | Written procedure (kill switch, sweep open reservations at reserved, deploy old code, optional reconciliation, never drop the table); `gone` refusal at `migrate.py:320` tested (B8c); `missing_methods` change listed. |
+| A10 | MAJOR | FIXED | Rules "Error rule"; P4d-a `@_writes` | Rule stated once; one decorator on every write method with an AST sibling check; connection/schema/privilege errors stay driver errors. |
+| A11 | MAJOR | FIXED (exemption in Pending 1) | P4d-c Interface, Files, Tests | `pg_driver` hands out only `connect_admin`, `sql`, `errors` (+ `conninfo`); guard flags importorskip, import_module, `postgres.psycopg` attribute, `pg_driver(` calls; file-level allow-list with stale/expiry checks; per-file counts; "bodies unchanged" corrected. |
+| A12 | MAJOR | FIXED | Header; sub-tickets a, b, c | Split into three sub-tickets in one file, in order, each with its own files, tests, mutants and evidence names. |
+| A13 | MAJOR | FIXED | P4d-a Interface (`check_id`, `check_text`), Hostile values | Id grammar `[A-Za-z0-9._:-]{1,200}` by `fullmatch`; deep NUL/surrogate/NaN scan of values and keys; random incompressible long-id test; expected exception per case. |
+| A14 | MAJOR | FIXED | P4d-a Interface `require_backend`, session-end check | Exact rule (`HADAVIN_REQUIRE_PG` non-empty and not "0", or `CI` in true/1); session-end check on skips and postgres count; other `importorskip` callers converted in P4d-c. Partly not applicable: the contract tests carry no `live`/`perf` markers (`grep pytest.mark tests/contracts`: only `parametrize`). |
+| A15 | MAJOR | FIXED | P4d-a/b Tests and Mutation plans | Deterministic admin-lock races; recording proxy instead of AST scan; reverse-order `list_approvals` test with tie-break; false fail-before labels turned into regression pins; the missing mutants added (b1-b16); silent clamp replaced by a loud rollback. |
+| A16 | MAJOR | FIXED | P4d-a Interface `check_step_name`; step table | `re.fullmatch(r"[a-z_]+", s)`; rows `"abc\n"`, `"abc "`, `"ABC"`, `""`, Unicode, NUL; verified by running Python (`match` accepts `"abc\n"`). |
+| A17 | MAJOR | FIXED | Rules "Error rule"; P4d-b lock order, B4(v) | One lock order; bounded retry (3) then `StoreBusy`; `is_connectivity_error` excludes SQLSTATE class 40. Corrected the name: psycopg 3.3.6 has no `TransactionRollbackError` (ran `hasattr`: False); deadlock/serialization chain to `OperationalError` (ran). |
+| A18 | MAJOR | FIXED | P4d-b Files, Security, B8; P4d-a A4 | Migration number = next free at merge time, renumber before any shared database applies it; rows for "table present, no grant" and "table absent"; non-superuser owner migrate test; closed-port test made non-racy. |
+| A19 | MAJOR | FIXED | P4d-b B4 process rows | 8-process Postgres row (A11, plan 8(b); the lead's brief said 4, A11 wins) and a SIGKILL-while-blocked row; memory stated as single-process, DEV_ONLY. |
+| A20 | MINOR | FIXED | P4d-b Security "Tenants" | No tenant column now: `spend` and `spend_month` are keyed `(agent_id, day)` with no tenant (`0001_core.sql:91`); P7b migration named (add `tenant`, swap PKs on all three tables); cross-agent clash test in B2. |
+| A21 | MINOR | FIXED | P4d-b Interface, B3, B5 | Second settle amount ignored and documented/tested; boundary `<=` vs `limits.blocked` `>=` stated and tested; release distinct from settle at zero; `run_id` now books a run counter; exact env values; method count now 37. |
+| C1 | MAJOR | FIXED | P4d-b B8(a)-(c) | Old code on the new schema added (old rows pass; old `migrate` fails loudly); "behind" database built by hand (`migrate()` cannot, `migrate.py:150-166`); ledger read at `migrate.py:319`; UNVERIFIED mark dropped for that. |
+| C2 | MAJOR | FIXED | P4d-b Files | `test_p2_postgres.py:290` assertion listed as a required change (derive the list from the files); `:61` column test also named. |
+| C3 | MAJOR | FIXED | Rules "Error rule" | Option B chosen: constraint violations map to Protocol errors; connection/schema/privilege errors stay driver types classified by `is_connectivity_error` (callers `tick.py:342,362`, `chain.py:531`, `cli.py:368` unchanged). |
+| C4 | MAJOR | FIXED | P4d-b B4(ii)-(iii), b6 | Same-id concurrent reserve and same-id concurrent settle races; non-atomic settle mutant; first-insert cap case. |
+| C5 | MAJOR | FIXED | P4d-a Interface "Old methods" | NaN/Infinity/negative refused in old methods now; no test accepts them. |
+| C6 | MAJOR | ESCALATED | P4d-c Files; Pending 1 | The 8 `tests/demo_askdata/` files conflict with F7's "only kinds/"; ticket writes a file-level, dated, expiring exemption as an amendment request, marked PENDING LEAD. |
+| C7 | MAJOR | FIXED | P4d-c Interface, Files | Per-file counts given; `pg_driver` namespace (`sql`, `errors`, `conninfo`, `connect_admin`); `allow_module_level` for module-level callers; the other `importorskip` callers converted; bodies change, assertions do not. |
+| C8 | MINOR | FIXED | Header "Path class" | Set to money (store included), no round cap, one money PR at a time with P4a and P4b1. |
+| C9 | MINOR | FIXED | P4d-b Files (DDL), Security | DDL, PK, CHECKs, index and the freeze trigger stated; settle guard `WHERE status='open'`; negative tests. |
+| C10 | MINOR | FIXED | Verified facts "Corrected citations"; P4d-a Security | `DEV_ONLY` `table.py:593`, entry `:599`; privilege tests use `has_table_privilege` (`test_p2_postgres.py:173-192`, `test_p7_store.py:136-154`); `audit_outbox` excluded (`migrate.py:59`); new negative tests run real statements. |
+| C11 | MINOR | FIXED | P4d-a Tests "Regression pins"; P4d-b | Rows that already pass on ce70eb5 (duplicate `create_run`, `build()` mapping, `check_grants`, registry) renamed regression pins killed by a mutant. |
+| C12 | MINOR | FIXED | P4d-b Rollback; B8(d) | Old custom stores fail `missing_methods` at `app.py:147`; listed as a behaviour change with a test of the message. |
+| C13 | MINOR | FIXED | P4d-a `check_step_name`, `check_usd` order | `fullmatch`; `is_finite()` before any comparison; `"abc\n"` in the table (both verified by running). |
+| C14 | MINOR | FIXED | Rules "Money type"; P4d-b Interface | Returned amounts of the new methods quantized to -6; wording "no money migration" explained (A3 anticipated the new table, A9 B1: no existing column changes); replay of settled id, second settle with any amount, unknown `run_id` defined. |
+| C15 | MINOR | FIXED | Header "Depends on"; field order | Hot-file orders added (memory, migrate, CHANGELOG: P3a, P4d, P4a, P4b1; postgres.py; test_lockin_guard.py); `test_store.py`, `test_k2_migrations.py`, `test_p2_postgres.py` overlap with P3b named; Tests now precede Mutation plan in each sub-ticket. |
+| C16 | MINOR | FIXED | P4d-a Interface (recording proxy), A2 pass rule | AST scan replaced by a recording proxy (receiver is the fixture by construction); pass rule: 50 repeats, exactly one winner, no raw driver error. |
+
+## ESCALATED / PENDING LEAD (also listed at the end of the ticket)
+1. C6 / A11: amendment to F7 so that the 8 named `tests/demo_askdata/` files are exempt from the "psycopg only in tests/contracts/kinds/" rule, with a dated expiring entry (`review_by` 2026-12-31 proposed).
+2. A5: which database identity may run `sweep_spend_reservations` (P4b2's maintenance role; a table grant cannot separate it from the runtime role's settle right).
+3. A5: the run counter is `runs.cost_usd`; callers must stop pairing `limits.charge` with `store.add_cost` for reserved calls (P4b1/P4c wiring).
+4. Minor choices: `StoreBusy` subclassing `StoreUnavailable`; `pg_driver` has four names; P4d-c review tier; deployed agent ids vs the id grammar; code default `store` is `memory` (`table.py:586`).
+
+UNVERIFIED (not run, not read): all Postgres behaviour (no server here); the `PENDING` mechanism's exact shape; how existing tests build an "old release" for the `gone` check; the mutation runner; PR #48's signatures.

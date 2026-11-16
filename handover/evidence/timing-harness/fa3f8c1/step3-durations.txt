@@ -1,0 +1,27 @@
+== branch
+38 passed in 0.98s
+8 passed in 98.61s (0:01:38)
+77.01s call     tests/test_k5_perf.py::test_no_redaction_pattern_is_super_linear_on_its_own_keywords_repeated
+8.86s call     tests/test_k5_perf.py::test_the_harness_flags_a_quadratic_pattern_and_passes_a_linear_one
+3.77s call     tests/test_k5_perf.py::test_the_slowest_measured_shape_at_the_cap_stays_under_a_ceiling
+3.22s call     tests/test_k5_perf.py::test_redact_untrusted_end_to_end_is_not_super_linear_with_views[curl-u]
+2.04s call     tests/test_k5_perf.py::test_redact_untrusted_end_to_end_is_not_super_linear_with_views[fullwidth]
+1.83s call     tests/test_k5_perf.py::test_redact_untrusted_end_to_end_is_not_super_linear_with_views[zero-width]
+1.15s call     tests/test_k5_perf.py::test_redact_untrusted_end_to_end_is_not_super_linear_with_views[json-escape]
+0.70s call     tests/test_k5_perf.py::test_redact_untrusted_end_to_end_is_not_super_linear_with_views[password]
+slowest in test_timing_fixture:
+0.81s call     tests/test_timing_fixture.py::test_a_call_too_fast_to_time_is_refused_not_passed
+0.04s call     tests/test_timing_fixture.py::test_other_programs_taking_the_machine_in_two_of_three_batches_change_nothing[1.0]
+0.02s call     tests/test_timing_fixture.py::test_other_programs_taking_the_machine_in_two_of_three_batches_change_nothing[0.05]
+== main
+10 passed in 0.05s
+8 passed in 33.76s
+16.25s call     tests/test_k5_perf.py::test_no_redaction_pattern_is_super_linear_on_its_own_keywords_repeated
+8.89s call     tests/test_k5_perf.py::test_the_harness_flags_a_quadratic_pattern_and_passes_a_linear_one
+3.62s call     tests/test_k5_perf.py::test_redact_untrusted_end_to_end_is_not_super_linear_with_views[curl-u]
+1.91s call     tests/test_k5_perf.py::test_the_slowest_measured_shape_at_the_cap_stays_under_a_ceiling
+0.93s call     tests/test_k5_perf.py::test_redact_untrusted_end_to_end_is_not_super_linear_with_views[fullwidth]
+0.89s call     tests/test_k5_perf.py::test_redact_untrusted_end_to_end_is_not_super_linear_with_views[zero-width]
+0.71s call     tests/test_k5_perf.py::test_redact_untrusted_end_to_end_is_not_super_linear_with_views[password]
+0.52s call     tests/test_k5_perf.py::test_redact_untrusted_end_to_end_is_not_super_linear_with_views[json-escape]
+slowest in test_timing_fixture:

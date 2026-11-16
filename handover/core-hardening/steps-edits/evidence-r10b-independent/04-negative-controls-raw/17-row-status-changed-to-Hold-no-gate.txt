@@ -1,0 +1,11 @@
+rc=1
+FAIL E-01 Hold row has a NEW block without [HOLD label
+FAIL E-01 Hold without gate in header
+FAIL Apply now 41 != 42
+FAIL Hold 13 != 12
+FAIL Counts sentence differs from computed status counts
+FAIL Hold id list in Counts differs from headers
+FAIL Apply now id list in Counts differs from headers
+FAIL index row mismatch E-01: ['OWNER-STEPS-realrun-v3.md', '3', 'Apply now'] vs OWNER-STEPS-realrun-v3.md 3 Hold
+FAIL index gate differs for E-01
+RESULT FAIL 9

@@ -1,0 +1,4 @@
+HEAD 8b2b71685c4a83d6e1d4abc8e93b90998dce36d1
+$ /home/user/build/venv-p77-313/bin/python tools/scan_repo.py
+
+exit=0

@@ -1,0 +1,29 @@
+ M contract.md
+ M docs/real-services.md
+ M docs/settings.md
+ M pyproject.toml
+ M scripts/real-run.env.example
+ M scripts/run_live_check.py
+ M scripts/run_real_check.py
+ M src/lead_desk/config.py
+ M src/lead_desk/constants.py
+ M src/lead_desk/crm_hubspot.py
+ M src/lead_desk/live_claude.py
+ M src/lead_desk/smtp_provider.py
+ M tests/conftest.py
+ M tests/test_clock_steps.py
+ M tests/test_crm_hubspot.py
+ M tests/test_env_numbers.py
+ M tests/test_ledger_amounts.py
+ M tests/test_live_claude.py
+ M tests/test_path_confinement.py
+ M tests/test_real_check_dry.py
+?? scripts/precheck.py
+?? scripts/terminal_guard.py
+?? tests/keep_scan.py
+?? tests/keep_scan_cases.txt
+?? tests/test_core_key_readers.py
+?? tests/test_desk_address_required.py
+?? tests/test_real_run_v6.py
+?? tests/test_start_prompt_hardening.py
+?? tests/test_take_script_refusals.py

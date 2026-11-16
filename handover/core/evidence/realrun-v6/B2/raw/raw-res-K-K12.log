@@ -1,0 +1,23 @@
+..F
+=================================== FAILURES ===================================
+_______ test_every_keep_self_test_in_the_suite_uses_its_own_temp_folder ________
+
+    def test_every_keep_self_test_in_the_suite_uses_its_own_temp_folder() -> None:
+        """A test that runs the self-test with --keep leaves a folder behind: it must use the own_tempdir fixture (or set
+        tempfile.tempdir itself). A new test that forgets this fails here, so the system temp folder stays clean."""
+        found = 0
+        for path in sorted(p for p in (REPO / "tests").rglob("*.py") if p.name != "keep_scan.py"):
+            leaks, n = keep_self_tests_that_leak(path.read_text(encoding="utf-8"))
+            found += n
+>           assert leaks == [], f"{path.name}: {leaks} run the keep self-test without own_tempdir: they leave a folder"
+E           AssertionError: test_take_script_refusals.py: ['test_dry_fakes_folder_is_deleted_also_when_the_self_test_fails'] run the keep self-test without own_tempdir: they leave a folder
+E           assert ['test_dry_fa...f_test_fails'] == []
+E             
+E             Left contains one more item: 'test_dry_fakes_folder_is_deleted_also_when_the_self_test_fails'
+E             Use -v to get more diff
+
+tests/test_take_script_refusals.py:283: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_take_script_refusals.py::test_every_keep_self_test_in_the_suite_uses_its_own_temp_folder
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 2 passed, 70 deselected in 56.89s

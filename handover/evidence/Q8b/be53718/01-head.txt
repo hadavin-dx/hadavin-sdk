@@ -1,0 +1,4 @@
+be53718ccbf5e2038cc18c87d334577e7b11ace8
+be53718ccbf5e2038cc18c87d334577e7b11ace8 2a8c2aac89f83dd0a45af0412563b59ff4fe5632 Q8b: no half-masked value under a credential key; card text is masked before dots are bracketed
+2a8c2aac89f83dd0a45af0412563b59ff4fe5632
+2a8c2aac89f83dd0a45af0412563b59ff4fe5632

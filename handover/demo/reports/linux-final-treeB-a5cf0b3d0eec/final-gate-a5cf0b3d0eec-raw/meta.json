@@ -1,0 +1,14 @@
+{
+ "tarball": "/tmp/linux-ev/dpld-final5b-a5cf0b3d0eec.tar.gz",
+ "tarball_name": "dpld-final5b-a5cf0b3d0eec.tar.gz",
+ "tarball_sha256": "60f1019ff3de1071648d8e0096258626eb7d766822f70254f1d8f9a9669ca5d3",
+ "tree": "/tmp/linux-ev/wB/src/dpld-final5b-a5cf0b3d0eec",
+ "workdir": "/tmp/linux-ev/wB",
+ "host": "Linux-6.18.44-fc-v310-x86_64-with-glibc2.39",
+ "cores": 4,
+ "python": "Python 3.12.3",
+ "venv": "/tmp/linux-ev/wB/venv (the unpacked copy was made a throw-away git repository so the git-based hygiene tests can run)",
+ "started_utc": "2026-11-09 17:32:05",
+ "mode": "full",
+ "server_py_hooks": "PATCHED hooks 1 and 2 in /tmp/linux-ev/wB/src/dpld-final5b-a5cf0b3d0eec/src/lead_desk/server.py | hook 3: constants.LISTEN_QUEUE = 1024"
+}

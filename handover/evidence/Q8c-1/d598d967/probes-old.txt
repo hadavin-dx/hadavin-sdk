@@ -1,0 +1,159 @@
+### baseline
+exit=0
+
+
+### a1 R17 claim in module gets extra clause
+exit=1
+policy page: docs/declared-permissions.md differs from the data; run --write and commit
+
+### a2 R17 claim in head line gets extra clause
+exit=1
+policy page: secrets/vault: claim 'the + matches exactly one whole path part, nothing deeper' has 0 marks in the head of tests/fixtures/policy_sources_2026-11-11.txt, needs exactly one
+policy page: tests/fixtures/policy_sources_2026-11-11.txt: the claim start 'the + matches exactly one whole path part, and never a prefix of a longer part' matches no claim: delete it
+
+### b swap marks R17<->R18
+exit=1
+policy page: signer/vault_transit: claim "the exact path R18 does not also allow Vault's longer sign p" has 2 marks in the head of tests/fixtures/policy_sources_2026-11-11.txt, needs exactly one
+
+### c1 start of R17 claim also under NOBODY
+exit=1
+policy page: secrets/vault: claim 'the + matches exactly one whole path part, nothing deeper' has 2 marks in the head of tests/fixtures/policy_sources_2026-11-11.txt, needs exactly one
+
+### c2 start of R18 claim also under BUILDER
+exit=1
+policy page: signer/vault_transit: claim "the exact path R18 does not also allow Vault's longer sign p" has 2 marks in the head of tests/fixtures/policy_sources_2026-11-11.txt, needs exactly one
+
+### c3 full R17 text under both marks
+exit=1
+policy page: secrets/vault: claim 'the + matches exactly one whole path part, nothing deeper' has 2 marks in the head of tests/fixtures/policy_sources_2026-11-11.txt, needs exactly one
+
+### d0 BOM at file start
+exit=1
+Traceback (most recent call last):
+  File "/home/user/build/EV-Q8c1r7-d598d967/probes/old/p7/tools/policy_page.py", line 1067, in <module>
+    BUILDER_ONLY_SOURCES, PARTLY_BUILDER_ONLY_SOURCES = builder_marks(DATA_ROOT)
+                                                        ~~~~~~~~~~~~~^^^^^^^^^^^
+  File "/home/user/build/EV-Q8c1r7-d598d967/probes/old/p7/tools/policy_page.py", line 1059, in builder_marks
+    known = set(source_ids(root))
+                ~~~~~~~~~~^^^^^^
+  File "/home/user/build/EV-Q8c1r7-d598d967/probes/old/p7/tools/policy_page.py", line 672, in source_ids
+    raise PolicyError(f"{where}: a row has five columns: id | url | commit | sha256 | note")
+PolicyError: tests/fixtur
+
+### d1 BOM before first data row only
+exit=1
+Traceback (most recent call last):
+  File "/home/user/build/EV-Q8c1r7-d598d967/probes/old/p8/tools/policy_page.py", line 1067, in <module>
+    BUILDER_ONLY_SOURCES, PARTLY_BUILDER_ONLY_SOURCES = builder_marks(DATA_ROOT)
+                                                        ~~~~~~~~~~~~~^^^^^^^^^^^
+  File "/home/user/build/EV-Q8c1r7-d598d967/probes/old/p8/tools/policy_page.py", line 1059, in builder_marks
+    known = set(source_ids(root))
+                ~~~~~~~~~~^^^^^^
+  File "/home/user/build/EV-Q8c1r7-d598d967/probes/old/p8/tools/policy_page.py", line 675, in source_ids
+    raise PolicyError(f"{where}: id {key!r} is not a source id or is used twice")
+PolicyError: tests/fixtures/policy_s
+
+### d2 BOM before BUILDER-ONLY line
+exit=1
+Traceback (most recent call last):
+  File "/home/user/build/EV-Q8c1r7-d598d967/probes/old/p9/tools/policy_page.py", line 1067, in <module>
+    BUILDER_ONLY_SOURCES, PARTLY_BUILDER_ONLY_SOURCES = builder_marks(DATA_ROOT)
+                                                        ~~~~~~~~~~~~~^^^^^^^^^^^
+  File "/home/user/build/EV-Q8c1r7-d598d967/probes/old/p9/tools/policy_page.py", line 1054, in builder_marks
+    raise PolicyError(f"{SOURCES}: needs exactly one line starting `# {tag}:`")
+PolicyError: tests/fixtures/policy_sources_2026-11-11.txt: needs exactly one line starting `# BUILDER-ONLY:`
+
+### d3 BOM before CLAIM-READ-BY-BUILDER line
+exit=1
+Traceback (most recent call last):
+  File "/home/user/build/EV-Q8c1r7-d598d967/probes/old/p10/tools/policy_page.py", line 1067, in <module>
+    BUILDER_ONLY_SOURCES, PARTLY_BUILDER_ONLY_SOURCES = builder_marks(DATA_ROOT)
+                                                        ~~~~~~~~~~~~~^^^^^^^^^^^
+  File "/home/user/build/EV-Q8c1r7-d598d967/probes/old/p10/tools/policy_page.py", line 1059, in builder_marks
+    known = set(source_ids(root))
+                ~~~~~~~~~~^^^^^^
+  File "/home/user/build/EV-Q8c1r7-d598d967/probes/old/p10/tools/policy_page.py", line 672, in source_ids
+    raise PolicyError(f"{where}: a row has five columns: id | url | commit | sha256 | note")
+PolicyError: tests/fix
+
+### d4 BOM before CLAIM-READ-BY-NOBODY line
+exit=1
+Traceback (most recent call last):
+  File "/home/user/build/EV-Q8c1r7-d598d967/probes/old/p11/tools/policy_page.py", line 1067, in <module>
+    BUILDER_ONLY_SOURCES, PARTLY_BUILDER_ONLY_SOURCES = builder_marks(DATA_ROOT)
+                                                        ~~~~~~~~~~~~~^^^^^^^^^^^
+  File "/home/user/build/EV-Q8c1r7-d598d967/probes/old/p11/tools/policy_page.py", line 1059, in builder_marks
+    known = set(source_ids(root))
+                ~~~~~~~~~~^^^^^^
+  File "/home/user/build/EV-Q8c1r7-d598d967/probes/old/p11/tools/policy_page.py", line 672, in source_ids
+    raise PolicyError(f"{where}: a row has five columns: id | url | commit | sha256 | note")
+PolicyError: tests/fix
+
+### d5 BOM before PARTLY-BUILDER-ONLY line
+exit=1
+Traceback (most recent call last):
+  File "/home/user/build/EV-Q8c1r7-d598d967/probes/old/p12/tools/policy_page.py", line 1067, in <module>
+    BUILDER_ONLY_SOURCES, PARTLY_BUILDER_ONLY_SOURCES = builder_marks(DATA_ROOT)
+                                                        ~~~~~~~~~~~~~^^^^^^^^^^^
+  File "/home/user/build/EV-Q8c1r7-d598d967/probes/old/p12/tools/policy_page.py", line 1054, in builder_marks
+    raise PolicyError(f"{SOURCES}: needs exactly one line starting `# {tag}:`")
+PolicyError: tests/fixtures/policy_sources_2026-11-11.txt: needs exactly one line starting `# PARTLY-BUILDER-ONLY:`
+
+### e1 trailing ' ;;' on BUILDER line
+exit=1
+policy page: secrets/vault: claim 'the + matches exactly one whole path part, nothing deeper' has 0 marks in the head of tests/fixtures/policy_sources_2026-11-11.txt, needs exactly one
+policy page: tests/fixtures/policy_sources_2026-11-11.txt: the claim start 'the + matches exactly one whole path part ;;' matches no claim: delete it
+
+### e2 trailing ' ;;' on NOBODY line
+exit=1
+policy page: source/kubernetes: claim '`create` on `selfsubjectrulesreviews`, `selfsubjectaccessrev' has 0 marks in the head of tests/fixtures/policy_sources_2026-11-11.txt, needs exactly one
+policy page: tests/fixtures/policy_sources_2026-11-11.txt: the claim start '`create` on `selfsubjectrulesreviews`, `selfsubjectaccessreviews` ;;' matches no claim: delete it
+
+### e3 trailing ' ;; ' (with space) on NOBODY line
+exit=1
+Traceback (most recent call last):
+  File "/home/user/build/EV-Q8c1r7-d598d967/probes/old/p15/tools/policy_page.py", line 1099, in <module>
+    CLAIM_READERS = claim_readers(DATA_ROOT)
+  File "/home/user/build/EV-Q8c1r7-d598d967/probes/old/p15/tools/policy_page.py", line 1094, in claim_readers
+    raise PolicyError(f"{SOURCES}: the `# {tag}:` line holds an empty claim start")
+PolicyError: tests/fixtures/policy_sources_2026-11-11.txt: the `# CLAIM-READ-BY-NOBODY:` line holds an empty claim start
+
+### e4 trailing ';;' no space on NOBODY line
+exit=1
+policy page: source/kubernetes: claim '`create` on `selfsubjectrulesreviews`, `selfsubjectaccessrev' has 0 marks in the head of tests/fixtures/policy_sources_2026-11-11.txt, needs exactly one
+policy page: tests/fixtures/policy_sources_2026-11-11.txt: the claim start '`create` on `selfsubjectrulesreviews`, `selfsubjectaccessreviews`;;' matches no claim: delete it
+
+### f1 NOTE_CLASSES empty tuple
+exit=1
+policy page: NOTE_CLASSES entry ('secrets/vault', 'zzz probe note') matches no note: delete it
+
+### f2 NOTE_CLASSES (claim,5)
+exit=1
+policy page: NOTE_CLASSES entry ('secrets/vault', 'zzz probe note') matches no note: delete it
+
+### f3 NOTE_CLASSES (claim,'')
+exit=1
+policy page: NOTE_CLASSES entry ('secrets/vault', 'zzz probe note') matches no note: delete it
+
+### f4 NOTE_CLASSES key not a pair
+exit=1
+Traceback (most recent call last):
+  File "/home/user/build/EV-Q8c1r7-d598d967/probes/old/p20/tools/policy_page.py", line 1639, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "/home/user/build/EV-Q8c1r7-d598d967/probes/old/p20/tools/policy_page.py", line 1618, in main
+    bad = data_problems()
+  File "/home/user/build/EV-Q8c1r7-d598d967/probes/old/p20/tools/policy_page.py", line 722, in data_problems
+    out += note_problems(policies, NOTE_CLASSES, known)
+           ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/user/build/EV-Q8c1r7-d598d967/probes/old/p20/tools/policy_page.py", line 1309, in note_problems
+    keys = _class_keys(kind, text, classes)
+  File "/home/use
+
+### g1 R17 grant verified None, no pending row
+exit=1
+policy page: docs/declared-permissions.md differs from the data; run --write and commit
+
+### g2 R18 grant verified None, no pending row
+exit=1
+policy page: docs/declared-permissions.md differs from the data; run --write and commit

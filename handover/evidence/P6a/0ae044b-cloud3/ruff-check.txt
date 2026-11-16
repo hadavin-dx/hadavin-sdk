@@ -1,0 +1,181 @@
+0ae044b25a3113244777cd078fc9a784647af924
+$ <build>/venv-p72-313/bin/ruff check src tests demos tools
+EXE001 Shebang is present but file is not executable
+ --> tools/p6a1_mutants.py:1:1
+  |
+1 | #!/usr/bin/env python3
+  | ^^^^^^^^^^^^^^^^^^^^^^
+2 | """P6a-1 hand mutants for PR 72 (branch core/P6a). Made-up code only, no model calls, no spend.
+  |
+
+S603 `subprocess` call: check for execution of untrusted input
+   --> tools/p6a1_mutants.py:586:12
+    |
+585 | def git(*a: str) -> subprocess.CompletedProcess:
+586 |     return subprocess.run(["git", "-C", str(WT), *a], capture_output=True, text=True, timeout=60)
+    |            ^^^^^^^^^^^^^^
+
+PLW1510 `subprocess.run` without explicit `check` argument
+   --> tools/p6a1_mutants.py:586:12
+    |
+585 | def git(*a: str) -> subprocess.CompletedProcess:
+586 |     return subprocess.run(["git", "-C", str(WT), *a], capture_output=True, text=True, timeout=60)
+    |            ^^^^^^^^^^^^^^
+help: Add explicit `check=False`
+    |
+585 | def git(*a: str) -> subprocess.CompletedProcess:
+    -     return subprocess.run(["git", "-C", str(WT), *a], capture_output=True, text=True, timeout=60)
+586 +     return subprocess.run(["git", "-C", str(WT), *a], check=False, capture_output=True, text=True, timeout=60)
+587 |
+    |
+note: This suggestion may be incorrect or produce invalid syntax. It requires manual review and cannot be applied automatically
+
+S607 Starting a process with a partial executable path
+   --> tools/p6a1_mutants.py:586:27
+    |
+585 | def git(*a: str) -> subprocess.CompletedProcess:
+586 |     return subprocess.run(["git", "-C", str(WT), *a], capture_output=True, text=True, timeout=60)
+    |                           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+S603 `subprocess` call: check for execution of untrusted input
+   --> tools/p6a1_mutants.py:597:13
+    |
+595 |         cmd.append("-x")
+596 |     try:
+597 |         p = subprocess.run(cmd, cwd=WT, env=env, capture_output=True, text=True, timeout=TIMEOUT_S)
+    |             ^^^^^^^^^^^^^^
+598 |     except subprocess.TimeoutExpired:
+599 |         return "TIMEOUT", [], [], ""
+    |
+
+PLW1510 `subprocess.run` without explicit `check` argument
+   --> tools/p6a1_mutants.py:597:13
+    |
+595 |         cmd.append("-x")
+596 |     try:
+597 |         p = subprocess.run(cmd, cwd=WT, env=env, capture_output=True, text=True, timeout=TIMEOUT_S)
+    |             ^^^^^^^^^^^^^^
+598 |     except subprocess.TimeoutExpired:
+599 |         return "TIMEOUT", [], [], ""
+    |
+help: Add explicit `check=False`
+    |
+596 |     try:
+    -         p = subprocess.run(cmd, cwd=WT, env=env, capture_output=True, text=True, timeout=TIMEOUT_S)
+597 +         p = subprocess.run(cmd, check=False, cwd=WT, env=env, capture_output=True, text=True, timeout=TIMEOUT_S)
+598 |     except subprocess.TimeoutExpired:
+    |
+note: This suggestion may be incorrect or produce invalid syntax. It requires manual review and cannot be applied automatically
+
+S603 `subprocess` call: check for execution of untrusted input
+   --> tools/p6a1_mutants.py:622:12
+    |
+620 |     tmp = Path(tempfile.mkdtemp(prefix="p6a1-mutants-"))
+621 |     WT = tmp / "wt"
+622 |     made = subprocess.run(
+    |            ^^^^^^^^^^^^^^
+623 |         ["git", "-C", str(HERE), "worktree", "add", "--detach", str(WT), "HEAD"],
+624 |         capture_output=True,
+    |
+
+PLW1510 `subprocess.run` without explicit `check` argument
+   --> tools/p6a1_mutants.py:622:12
+    |
+620 |     tmp = Path(tempfile.mkdtemp(prefix="p6a1-mutants-"))
+621 |     WT = tmp / "wt"
+622 |     made = subprocess.run(
+    |            ^^^^^^^^^^^^^^
+623 |         ["git", "-C", str(HERE), "worktree", "add", "--detach", str(WT), "HEAD"],
+624 |         capture_output=True,
+    |
+help: Add explicit `check=False`
+    |
+623 |         ["git", "-C", str(HERE), "worktree", "add", "--detach", str(WT), "HEAD"],
+    -         capture_output=True,
+624 +         check=False, capture_output=True,
+625 |         text=True,
+    |
+note: This suggestion may be incorrect or produce invalid syntax. It requires manual review and cannot be applied automatically
+
+S607 Starting a process with a partial executable path
+   --> tools/p6a1_mutants.py:623:9
+    |
+621 |     WT = tmp / "wt"
+622 |     made = subprocess.run(
+623 |         ["git", "-C", str(HERE), "worktree", "add", "--detach", str(WT), "HEAD"],
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+624 |         capture_output=True,
+625 |         text=True,
+    |
+
+S603 `subprocess` call: check for execution of untrusted input
+   --> tools/p6a1_mutants.py:633:9
+    |
+631 |         return _run()
+632 |     finally:
+633 |         subprocess.run(
+    |         ^^^^^^^^^^^^^^
+634 |             ["git", "-C", str(HERE), "worktree", "remove", "--force", str(WT)], capture_output=True
+635 |         )
+    |
+
+PLW1510 `subprocess.run` without explicit `check` argument
+   --> tools/p6a1_mutants.py:633:9
+    |
+631 |         return _run()
+632 |     finally:
+633 |         subprocess.run(
+    |         ^^^^^^^^^^^^^^
+634 |             ["git", "-C", str(HERE), "worktree", "remove", "--force", str(WT)], capture_output=True
+635 |         )
+    |
+help: Add explicit `check=False`
+    |
+633 |         subprocess.run(
+    -             ["git", "-C", str(HERE), "worktree", "remove", "--force", str(WT)], capture_output=True
+634 +             ["git", "-C", str(HERE), "worktree", "remove", "--force", str(WT)], check=False, capture_output=True
+635 |         )
+    |
+note: This suggestion may be incorrect or produce invalid syntax. It requires manual review and cannot be applied automatically
+
+S607 Starting a process with a partial executable path
+   --> tools/p6a1_mutants.py:634:13
+    |
+632 |     finally:
+633 |         subprocess.run(
+634 |             ["git", "-C", str(HERE), "worktree", "remove", "--force", str(WT)], capture_output=True
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+635 |         )
+636 |         shutil.rmtree(tmp, ignore_errors=True)
+    |
+
+S603 `subprocess` call: check for execution of untrusted input
+   --> tools/p6a1_mutants.py:640:11
+    |
+639 | def _run() -> int:
+640 |     chk = subprocess.run(
+    |           ^^^^^^^^^^^^^^
+641 |         [PY, "-c", "import hadavin_sdk;print(hadavin_sdk.__file__)"],
+642 |         cwd=WT,
+    |
+
+PLW1510 `subprocess.run` without explicit `check` argument
+   --> tools/p6a1_mutants.py:640:11
+    |
+639 | def _run() -> int:
+640 |     chk = subprocess.run(
+    |           ^^^^^^^^^^^^^^
+641 |         [PY, "-c", "import hadavin_sdk;print(hadavin_sdk.__file__)"],
+642 |         cwd=WT,
+    |
+help: Add explicit `check=False`
+    |
+641 |         [PY, "-c", "import hadavin_sdk;print(hadavin_sdk.__file__)"],
+    -         cwd=WT,
+642 +         check=False, cwd=WT,
+643 |         env={**os.environ, "PYTHONPATH": str(WT / "src")},
+    |
+note: This suggestion may be incorrect or produce invalid syntax. It requires manual review and cannot be applied automatically
+
+Found 14 errors.
+exit=1

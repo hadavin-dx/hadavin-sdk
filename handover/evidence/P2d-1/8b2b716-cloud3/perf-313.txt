@@ -1,0 +1,5 @@
+HEAD 8b2b71685c4a83d6e1d4abc8e93b90998dce36d1
+$ pytest -q -m perf -rs (5 files)
+.............                                                            [100%]
+13 passed, 213 deselected in 70.87s (0:01:10)
+exit=0

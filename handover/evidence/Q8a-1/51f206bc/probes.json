@@ -1,0 +1,1431 @@
+[
+ {
+  "channel": "errors.shown_id",
+  "value": "canary",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "?"
+ },
+ {
+  "channel": "errors.shown_name(no loaded)",
+  "value": "canary",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "<not shown>"
+ },
+ {
+  "channel": "errors.shown_name(loaded=[v])",
+  "value": "canary",
+  "reaches_output": true,
+  "needles": [
+   "zqcanary7xkw"
+  ],
+  "sample": "<canary>"
+ },
+ {
+  "channel": "errors.shown_name(loaded_ids ctx)",
+  "value": "canary",
+  "reaches_output": true,
+  "needles": [
+   "zqcanary7xkw"
+  ],
+  "sample": "<canary>"
+ },
+ {
+  "channel": "AuditEvent(event_id=) ctor",
+  "value": "canary",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "accepted (no error)"
+ },
+ {
+  "channel": "AuditEvent.model_validate",
+  "value": "canary",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "accepted (no error)"
+ },
+ {
+  "channel": "AuditEvent.model_validate_json",
+  "value": "canary",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "accepted (no error)"
+ },
+ {
+  "channel": "AuditEvent.model_validate_strings",
+  "value": "canary",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "accepted (no error)"
+ },
+ {
+  "channel": "LocalDirSink.write_intent (+log)",
+  "value": "canary",
+  "reaches_output": true,
+  "needles": [
+   "zqcanary7xkw"
+  ],
+  "sample": "returned '<canary>.json'"
+ },
+ {
+  "channel": "LocalDirSink.write_outcome (+log)",
+  "value": "canary",
+  "reaches_output": true,
+  "needles": [
+   "zqcanary7xkw"
+  ],
+  "sample": "returned '<canary>.json'"
+ },
+ {
+  "channel": "LocalDirSink.reconcile",
+  "value": "canary",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "reconcile returned 0"
+ },
+ {
+  "channel": "LocalDirSink root-under-file name",
+  "value": "canary",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "Traceback (most recent call last):\n  File \"/home/user/build/EV-Q8a1b18-51f206bc/probes/probe.py\", line 86, in <module>\n    try: s2.write_intent(AuditEvent(**bas"
+ },
+ {
+  "channel": "errors.shown_id",
+  "value": "capital",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "?"
+ },
+ {
+  "channel": "errors.shown_name(no loaded)",
+  "value": "capital",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "<not shown>"
+ },
+ {
+  "channel": "errors.shown_name(loaded=[v])",
+  "value": "capital",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "<not shown>"
+ },
+ {
+  "channel": "errors.shown_name(loaded_ids ctx)",
+  "value": "capital",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "<not shown>"
+ },
+ {
+  "channel": "AuditEvent(event_id=) ctor",
+  "value": "capital",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "1 validation error for AuditEvent\nevent_id\n  Value error, event_id must be a plain file name: lower-case letters, digits, dash and underscore, at most 128 chara"
+ },
+ {
+  "channel": "AuditEvent.model_validate",
+  "value": "capital",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "1 validation error for AuditEvent\nevent_id\n  Value error, event_id must be a plain file name: lower-case letters, digits, dash and underscore, at most 128 chara"
+ },
+ {
+  "channel": "AuditEvent.model_validate_json",
+  "value": "capital",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "1 validation error for AuditEvent\nevent_id\n  Value error, event_id must be a plain file name: lower-case letters, digits, dash and underscore, at most 128 chara"
+ },
+ {
+  "channel": "AuditEvent.model_validate_strings",
+  "value": "capital",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "1 validation error for AuditEvent\nevent_id\n  Value error, event_id must be a plain file name: lower-case letters, digits, dash and underscore, at most 128 chara"
+ },
+ {
+  "channel": "LocalDirSink.write_intent (+log)",
+  "value": "capital",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "Traceback (most recent call last):\n  File \"/home/user/build/EV-Q8a1b18-51f206bc/probes/probe.py\", line 74, in <module>\n    r = getattr(sink, meth)(ev); out = \"r"
+ },
+ {
+  "channel": "LocalDirSink.write_outcome (+log)",
+  "value": "capital",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "returned None"
+ },
+ {
+  "channel": "LocalDirSink.reconcile",
+  "value": "capital",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "reconcile returned 0"
+ },
+ {
+  "channel": "LocalDirSink root-under-file name",
+  "value": "capital",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "Traceback (most recent call last):\n  File \"/home/user/build/EV-Q8a1b18-51f206bc/probes/probe.py\", line 86, in <module>\n    try: s2.write_intent(AuditEvent(**bas"
+ },
+ {
+  "channel": "errors.shown_id",
+  "value": "libtext",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "?"
+ },
+ {
+  "channel": "errors.shown_name(no loaded)",
+  "value": "libtext",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "<not shown>"
+ },
+ {
+  "channel": "errors.shown_name(loaded=[v])",
+  "value": "libtext",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "<not shown>"
+ },
+ {
+  "channel": "errors.shown_name(loaded_ids ctx)",
+  "value": "libtext",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "<not shown>"
+ },
+ {
+  "channel": "AuditEvent(event_id=) ctor",
+  "value": "libtext",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "1 validation error for AuditEvent\nevent_id\n  Value error, event_id must be a plain file name: lower-case letters, digits, dash and underscore, at most 128 chara"
+ },
+ {
+  "channel": "AuditEvent.model_validate",
+  "value": "libtext",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "1 validation error for AuditEvent\nevent_id\n  Value error, event_id must be a plain file name: lower-case letters, digits, dash and underscore, at most 128 chara"
+ },
+ {
+  "channel": "AuditEvent.model_validate_json",
+  "value": "libtext",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "1 validation error for AuditEvent\nevent_id\n  Value error, event_id must be a plain file name: lower-case letters, digits, dash and underscore, at most 128 chara"
+ },
+ {
+  "channel": "AuditEvent.model_validate_strings",
+  "value": "libtext",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "1 validation error for AuditEvent\nevent_id\n  Value error, event_id must be a plain file name: lower-case letters, digits, dash and underscore, at most 128 chara"
+ },
+ {
+  "channel": "LocalDirSink.write_intent (+log)",
+  "value": "libtext",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "Traceback (most recent call last):\n  File \"/home/user/build/EV-Q8a1b18-51f206bc/probes/probe.py\", line 74, in <module>\n    r = getattr(sink, meth)(ev); out = \"r"
+ },
+ {
+  "channel": "LocalDirSink.write_outcome (+log)",
+  "value": "libtext",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "returned None"
+ },
+ {
+  "channel": "LocalDirSink.reconcile",
+  "value": "libtext",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "reconcile returned 0"
+ },
+ {
+  "channel": "LocalDirSink root-under-file name",
+  "value": "libtext",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "Traceback (most recent call last):\n  File \"/home/user/build/EV-Q8a1b18-51f206bc/probes/probe.py\", line 86, in <module>\n    try: s2.write_intent(AuditEvent(**bas"
+ },
+ {
+  "channel": "errors.shown_id",
+  "value": "pathlike",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "?"
+ },
+ {
+  "channel": "errors.shown_name(no loaded)",
+  "value": "pathlike",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "<not shown>"
+ },
+ {
+  "channel": "errors.shown_name(loaded=[v])",
+  "value": "pathlike",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "<not shown>"
+ },
+ {
+  "channel": "errors.shown_name(loaded_ids ctx)",
+  "value": "pathlike",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "<not shown>"
+ },
+ {
+  "channel": "AuditEvent(event_id=) ctor",
+  "value": "pathlike",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "1 validation error for AuditEvent\nevent_id\n  Value error, event_id must be a plain file name: lower-case letters, digits, dash and underscore, at most 128 chara"
+ },
+ {
+  "channel": "AuditEvent.model_validate",
+  "value": "pathlike",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "1 validation error for AuditEvent\nevent_id\n  Value error, event_id must be a plain file name: lower-case letters, digits, dash and underscore, at most 128 chara"
+ },
+ {
+  "channel": "AuditEvent.model_validate_json",
+  "value": "pathlike",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "1 validation error for AuditEvent\nevent_id\n  Value error, event_id must be a plain file name: lower-case letters, digits, dash and underscore, at most 128 chara"
+ },
+ {
+  "channel": "AuditEvent.model_validate_strings",
+  "value": "pathlike",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "1 validation error for AuditEvent\nevent_id\n  Value error, event_id must be a plain file name: lower-case letters, digits, dash and underscore, at most 128 chara"
+ },
+ {
+  "channel": "LocalDirSink.write_intent (+log)",
+  "value": "pathlike",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "Traceback (most recent call last):\n  File \"/home/user/build/EV-Q8a1b18-51f206bc/probes/probe.py\", line 74, in <module>\n    r = getattr(sink, meth)(ev); out = \"r"
+ },
+ {
+  "channel": "LocalDirSink.write_outcome (+log)",
+  "value": "pathlike",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "returned None"
+ },
+ {
+  "channel": "LocalDirSink.reconcile",
+  "value": "pathlike",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "reconcile returned 0"
+ },
+ {
+  "channel": "errors.shown_id",
+  "value": "hex48",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "?"
+ },
+ {
+  "channel": "errors.shown_name(no loaded)",
+  "value": "hex48",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "<not shown>"
+ },
+ {
+  "channel": "errors.shown_name(loaded=[v])",
+  "value": "hex48",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "<not shown>"
+ },
+ {
+  "channel": "errors.shown_name(loaded_ids ctx)",
+  "value": "hex48",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "<not shown>"
+ },
+ {
+  "channel": "AuditEvent(event_id=) ctor",
+  "value": "hex48",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "accepted (no error)"
+ },
+ {
+  "channel": "AuditEvent.model_validate",
+  "value": "hex48",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "accepted (no error)"
+ },
+ {
+  "channel": "AuditEvent.model_validate_json",
+  "value": "hex48",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "accepted (no error)"
+ },
+ {
+  "channel": "AuditEvent.model_validate_strings",
+  "value": "hex48",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "accepted (no error)"
+ },
+ {
+  "channel": "LocalDirSink.write_intent (+log)",
+  "value": "hex48",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "returned 'a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4.json'"
+ },
+ {
+  "channel": "LocalDirSink.write_outcome (+log)",
+  "value": "hex48",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "returned 'a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4.json'"
+ },
+ {
+  "channel": "LocalDirSink.reconcile",
+  "value": "hex48",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "reconcile returned 0"
+ },
+ {
+  "channel": "LocalDirSink root-under-file name",
+  "value": "hex48",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "Traceback (most recent call last):\n  File \"/home/user/build/EV-Q8a1b18-51f206bc/probes/probe.py\", line 86, in <module>\n    try: s2.write_intent(AuditEvent(**bas"
+ },
+ {
+  "channel": "errors.shown_id",
+  "value": "long5120",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "?"
+ },
+ {
+  "channel": "errors.shown_name(no loaded)",
+  "value": "long5120",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "<not shown>"
+ },
+ {
+  "channel": "errors.shown_name(loaded=[v])",
+  "value": "long5120",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "<not shown>"
+ },
+ {
+  "channel": "errors.shown_name(loaded_ids ctx)",
+  "value": "long5120",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "<not shown>"
+ },
+ {
+  "channel": "AuditEvent(event_id=) ctor",
+  "value": "long5120",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "1 validation error for AuditEvent\nevent_id\n  Value error, event_id must be a plain file name: lower-case letters, digits, dash and underscore, at most 128 chara"
+ },
+ {
+  "channel": "AuditEvent.model_validate",
+  "value": "long5120",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "1 validation error for AuditEvent\nevent_id\n  Value error, event_id must be a plain file name: lower-case letters, digits, dash and underscore, at most 128 chara"
+ },
+ {
+  "channel": "AuditEvent.model_validate_json",
+  "value": "long5120",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "1 validation error for AuditEvent\nevent_id\n  Value error, event_id must be a plain file name: lower-case letters, digits, dash and underscore, at most 128 chara"
+ },
+ {
+  "channel": "AuditEvent.model_validate_strings",
+  "value": "long5120",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "1 validation error for AuditEvent\nevent_id\n  Value error, event_id must be a plain file name: lower-case letters, digits, dash and underscore, at most 128 chara"
+ },
+ {
+  "channel": "LocalDirSink.write_intent (+log)",
+  "value": "long5120",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "Traceback (most recent call last):\n  File \"/home/user/build/EV-Q8a1b18-51f206bc/probes/probe.py\", line 74, in <module>\n    r = getattr(sink, meth)(ev); out = \"r"
+ },
+ {
+  "channel": "LocalDirSink.write_outcome (+log)",
+  "value": "long5120",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "returned None"
+ },
+ {
+  "channel": "LocalDirSink.reconcile",
+  "value": "long5120",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "reconcile returned 0"
+ },
+ {
+  "channel": "errors.shown_id",
+  "value": "newline",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "?"
+ },
+ {
+  "channel": "errors.shown_name(no loaded)",
+  "value": "newline",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "<not shown>"
+ },
+ {
+  "channel": "errors.shown_name(loaded=[v])",
+  "value": "newline",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "<not shown>"
+ },
+ {
+  "channel": "errors.shown_name(loaded_ids ctx)",
+  "value": "newline",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "<not shown>"
+ },
+ {
+  "channel": "AuditEvent(event_id=) ctor",
+  "value": "newline",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "1 validation error for AuditEvent\nevent_id\n  Value error, event_id must be a plain file name: lower-case letters, digits, dash and underscore, at most 128 chara"
+ },
+ {
+  "channel": "AuditEvent.model_validate",
+  "value": "newline",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "1 validation error for AuditEvent\nevent_id\n  Value error, event_id must be a plain file name: lower-case letters, digits, dash and underscore, at most 128 chara"
+ },
+ {
+  "channel": "AuditEvent.model_validate_json",
+  "value": "newline",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "1 validation error for AuditEvent\nevent_id\n  Value error, event_id must be a plain file name: lower-case letters, digits, dash and underscore, at most 128 chara"
+ },
+ {
+  "channel": "AuditEvent.model_validate_strings",
+  "value": "newline",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "1 validation error for AuditEvent\nevent_id\n  Value error, event_id must be a plain file name: lower-case letters, digits, dash and underscore, at most 128 chara"
+ },
+ {
+  "channel": "LocalDirSink.write_intent (+log)",
+  "value": "newline",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "Traceback (most recent call last):\n  File \"/home/user/build/EV-Q8a1b18-51f206bc/probes/probe.py\", line 74, in <module>\n    r = getattr(sink, meth)(ev); out = \"r"
+ },
+ {
+  "channel": "LocalDirSink.write_outcome (+log)",
+  "value": "newline",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "returned None"
+ },
+ {
+  "channel": "LocalDirSink.reconcile",
+  "value": "newline",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "reconcile returned 0"
+ },
+ {
+  "channel": "errors.shown_id",
+  "value": "S1_str_override",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "?"
+ },
+ {
+  "channel": "errors.shown_name(no loaded)",
+  "value": "S1_str_override",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "<not shown>"
+ },
+ {
+  "channel": "errors.shown_name(loaded=[v])",
+  "value": "S1_str_override",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "<not shown>"
+ },
+ {
+  "channel": "errors.shown_name(loaded_ids ctx)",
+  "value": "S1_str_override",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "<not shown>"
+ },
+ {
+  "channel": "AuditEvent(event_id=) ctor",
+  "value": "S1_str_override",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "1 validation error for AuditEvent\nevent_id\n  Value error, event_id must be a plain file name: lower-case letters, digits, dash and underscore, at most 128 chara"
+ },
+ {
+  "channel": "AuditEvent.model_validate",
+  "value": "S1_str_override",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "1 validation error for AuditEvent\nevent_id\n  Value error, event_id must be a plain file name: lower-case letters, digits, dash and underscore, at most 128 chara"
+ },
+ {
+  "channel": "LocalDirSink.write_intent (+log)",
+  "value": "S1_str_override",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "Traceback (most recent call last):\n  File \"/home/user/build/EV-Q8a1b18-51f206bc/probes/probe.py\", line 74, in <module>\n    r = getattr(sink, meth)(ev); out = \"r"
+ },
+ {
+  "channel": "LocalDirSink.write_outcome (+log)",
+  "value": "S1_str_override",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "returned None"
+ },
+ {
+  "channel": "LocalDirSink.reconcile",
+  "value": "S1_str_override",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "reconcile returned 0"
+ },
+ {
+  "channel": "errors.shown_id",
+  "value": "S2_eq_override",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "?"
+ },
+ {
+  "channel": "errors.shown_name(no loaded)",
+  "value": "S2_eq_override",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "<not shown>"
+ },
+ {
+  "channel": "errors.shown_name(loaded=[v])",
+  "value": "S2_eq_override",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "<not shown>"
+ },
+ {
+  "channel": "errors.shown_name(loaded_ids ctx)",
+  "value": "S2_eq_override",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "<not shown>"
+ },
+ {
+  "channel": "AuditEvent(event_id=) ctor",
+  "value": "S2_eq_override",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "1 validation error for AuditEvent\nevent_id\n  Value error, event_id must be a plain file name: lower-case letters, digits, dash and underscore, at most 128 chara"
+ },
+ {
+  "channel": "AuditEvent.model_validate",
+  "value": "S2_eq_override",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "1 validation error for AuditEvent\nevent_id\n  Value error, event_id must be a plain file name: lower-case letters, digits, dash and underscore, at most 128 chara"
+ },
+ {
+  "channel": "LocalDirSink.write_intent (+log)",
+  "value": "S2_eq_override",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "Traceback (most recent call last):\n  File \"/home/user/build/EV-Q8a1b18-51f206bc/probes/probe.py\", line 74, in <module>\n    r = getattr(sink, meth)(ev); out = \"r"
+ },
+ {
+  "channel": "LocalDirSink.write_outcome (+log)",
+  "value": "S2_eq_override",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "returned None"
+ },
+ {
+  "channel": "LocalDirSink.reconcile",
+  "value": "S2_eq_override",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "reconcile returned 0"
+ },
+ {
+  "channel": "config.Route.model_id",
+  "value": "canary",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "accepted"
+ },
+ {
+  "channel": "config.Route.max_tokens (str/errors()/json())",
+  "value": "canary",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "1 validation error for Route\nmax_tokens\n  Input should be a valid integer, unable to parse string as an integer [type=int_parsing]\n    For further information v"
+ },
+ {
+  "channel": "config.Route.unknown_key (str/errors()/json())",
+  "value": "canary",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "1 validation error for Route\n<unknown key>\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev"
+ },
+ {
+  "channel": "config.System.base_url",
+  "value": "canary",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "accepted"
+ },
+ {
+  "channel": "config.Route.model_id",
+  "value": "capital",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "accepted"
+ },
+ {
+  "channel": "config.Route.max_tokens (str/errors()/json())",
+  "value": "capital",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "1 validation error for Route\nmax_tokens\n  Input should be a valid integer, unable to parse string as an integer [type=int_parsing]\n    For further information v"
+ },
+ {
+  "channel": "config.Route.unknown_key (str/errors()/json())",
+  "value": "capital",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "1 validation error for Route\n<unknown key>\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev"
+ },
+ {
+  "channel": "config.System.base_url",
+  "value": "capital",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "accepted"
+ },
+ {
+  "channel": "config.Route.model_id (str/errors()/json())",
+  "value": "libtext",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "1 validation error for Route\nmodel_id\n  String should match pattern '^[A-Za-z0-9][A-Za-z0-9._:@/-]{0,127}$' [type=string_pattern_mismatch]\n    For further infor"
+ },
+ {
+  "channel": "config.Route.max_tokens (str/errors()/json())",
+  "value": "libtext",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "1 validation error for Route\nmax_tokens\n  Input should be a valid integer, unable to parse string as an integer [type=int_parsing]\n    For further information v"
+ },
+ {
+  "channel": "config.Route.unknown_key (str/errors()/json())",
+  "value": "libtext",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "1 validation error for Route\n<unknown key>\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev"
+ },
+ {
+  "channel": "config.System.base_url",
+  "value": "libtext",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "accepted"
+ },
+ {
+  "channel": "config.Route.model_id (str/errors()/json())",
+  "value": "pathlike",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "1 validation error for Route\nmodel_id\n  String should match pattern '^[A-Za-z0-9][A-Za-z0-9._:@/-]{0,127}$' [type=string_pattern_mismatch]\n    For further infor"
+ },
+ {
+  "channel": "config.Route.max_tokens (str/errors()/json())",
+  "value": "pathlike",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "1 validation error for Route\nmax_tokens\n  Input should be a valid integer, unable to parse string as an integer [type=int_parsing]\n    For further information v"
+ },
+ {
+  "channel": "config.Route.unknown_key (str/errors()/json())",
+  "value": "pathlike",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "1 validation error for Route\n<unknown key>\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev"
+ },
+ {
+  "channel": "config.System.base_url",
+  "value": "pathlike",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "accepted"
+ },
+ {
+  "channel": "config.Route.model_id (str/errors()/json())",
+  "value": "hex48",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "1 validation error for Route\nmodel_id\n  Value error, a model id has no run of 32 or more letters and digits (the shape of a pasted key); write the model's short"
+ },
+ {
+  "channel": "config.Route.max_tokens (str/errors()/json())",
+  "value": "hex48",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "1 validation error for Route\nmax_tokens\n  Input should be a valid integer, unable to parse string as an integer [type=int_parsing]\n    For further information v"
+ },
+ {
+  "channel": "config.Route.unknown_key (str/errors()/json())",
+  "value": "hex48",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "1 validation error for Route\n<unknown key>\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev"
+ },
+ {
+  "channel": "config.System.base_url",
+  "value": "hex48",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "accepted"
+ },
+ {
+  "channel": "config.Route.model_id (str/errors()/json())",
+  "value": "long5120",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "1 validation error for Route\nmodel_id\n  String should match pattern '^[A-Za-z0-9][A-Za-z0-9._:@/-]{0,127}$' [type=string_pattern_mismatch]\n    For further infor"
+ },
+ {
+  "channel": "config.Route.max_tokens (str/errors()/json())",
+  "value": "long5120",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "1 validation error for Route\nmax_tokens\n  Input should be a valid integer, unable to parse string as an integer [type=int_parsing]\n    For further information v"
+ },
+ {
+  "channel": "config.Route.unknown_key (str/errors()/json())",
+  "value": "long5120",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "1 validation error for Route\n<unknown key>\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev"
+ },
+ {
+  "channel": "config.System.base_url",
+  "value": "long5120",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "accepted"
+ },
+ {
+  "channel": "config.Route.model_id (str/errors()/json())",
+  "value": "newline",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "1 validation error for Route\nmodel_id\n  String should match pattern '^[A-Za-z0-9][A-Za-z0-9._:@/-]{0,127}$' [type=string_pattern_mismatch]\n    For further infor"
+ },
+ {
+  "channel": "config.Route.max_tokens (str/errors()/json())",
+  "value": "newline",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "1 validation error for Route\nmax_tokens\n  Input should be a valid integer, unable to parse string as an integer [type=int_parsing]\n    For further information v"
+ },
+ {
+  "channel": "config.Route.unknown_key (str/errors()/json())",
+  "value": "newline",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "1 validation error for Route\n<unknown key>\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev"
+ },
+ {
+  "channel": "config.System.base_url",
+  "value": "newline",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "accepted"
+ },
+ {
+  "channel": "config.Route.model_id",
+  "value": "S1_str_override",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "accepted"
+ },
+ {
+  "channel": "config.Route.max_tokens (str/errors()/json())",
+  "value": "S1_str_override",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "1 validation error for Route\nmax_tokens\n  Input should be a valid integer, unable to parse string as an integer [type=int_parsing]\n    For further information v"
+ },
+ {
+  "channel": "config.Route.unknown_key (str/errors()/json())",
+  "value": "S1_str_override",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "1 validation error for Route\n<unknown key>\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev"
+ },
+ {
+  "channel": "config.System.base_url",
+  "value": "S1_str_override",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "accepted"
+ },
+ {
+  "channel": "config.Route.model_id",
+  "value": "S2_eq_override",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "accepted"
+ },
+ {
+  "channel": "config.Route.max_tokens (str/errors()/json())",
+  "value": "S2_eq_override",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "1 validation error for Route\nmax_tokens\n  Input should be a valid integer, unable to parse string as an integer [type=int_parsing]\n    For further information v"
+ },
+ {
+  "channel": "config.Route.unknown_key (str/errors()/json())",
+  "value": "S2_eq_override",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "1 validation error for Route\n<unknown key>\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev"
+ },
+ {
+  "channel": "config.System.base_url",
+  "value": "S2_eq_override",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "accepted"
+ },
+ {
+  "channel": "check-config:canary: agent id in agents.yaml (rc=0)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "the configuration files are accepted. Not checked: tool module code is not run, so the operations bound inside a tool module, and the start-up of the backends, "
+ },
+ {
+  "channel": "check-config:canary: agent id in agents.yaml DEBUG=1 (rc=0)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "the configuration files are accepted. Not checked: tool module code is not run, so the operations bound inside a tool module, and the start-up of the backends, "
+ },
+ {
+  "channel": "check-config:canary: model_route name (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: agent test-agent: model_route is not one of the configured routes\n"
+ },
+ {
+  "channel": "check-config:canary: model_route name DEBUG=1 (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: agent test-agent: model_route is not one of the configured routes\n"
+ },
+ {
+  "channel": "check-config:canary: unknown top-level key (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: 1 validation error for Config\n<unknown key>\n  Extra inputs are not permitted [type=extra_forbidden]\n"
+ },
+ {
+  "channel": "check-config:canary: unknown top-level key DEBUG=1 (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: 1 validation error for Config\n<unknown key>\n  Extra inputs are not permitted [type=extra_forbidden]\n"
+ },
+ {
+  "channel": "check-config:canary: tool name in scope_allowed (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: agent test-agent: scope_allowed entry 1 has no contract\n"
+ },
+ {
+  "channel": "check-config:canary: tool name in scope_allowed DEBUG=1 (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: agent test-agent: scope_allowed entry 1 has no contract\n"
+ },
+ {
+  "channel": "check-config:canary: prompt_file path (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: agent test-agent: prompt_file missing\n"
+ },
+ {
+  "channel": "check-config:canary: prompt_file path DEBUG=1 (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: agent test-agent: prompt_file missing\n"
+ },
+ {
+  "channel": "check-config:canary: non-int max_steps (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: 1 validation error for AgentRecord\nmax_steps\n  Input should be a valid integer, unable to parse string as an integer [type=int_parsing]\n"
+ },
+ {
+  "channel": "check-config:canary: non-int max_steps DEBUG=1 (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: 1 validation error for AgentRecord\nmax_steps\n  Input should be a valid integer, unable to parse string as an integer [type=int_parsing]\n"
+ },
+ {
+  "channel": "check-config:capital: agent id in agents.yaml (rc=0)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "the configuration files are accepted. Not checked: tool module code is not run, so the operations bound inside a tool module, and the start-up of the backends, "
+ },
+ {
+  "channel": "check-config:capital: agent id in agents.yaml DEBUG=1 (rc=0)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "the configuration files are accepted. Not checked: tool module code is not run, so the operations bound inside a tool module, and the start-up of the backends, "
+ },
+ {
+  "channel": "check-config:capital: model_route name (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: agent test-agent: model_route is not one of the configured routes\n"
+ },
+ {
+  "channel": "check-config:capital: model_route name DEBUG=1 (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: agent test-agent: model_route is not one of the configured routes\n"
+ },
+ {
+  "channel": "check-config:capital: unknown top-level key (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: 1 validation error for Config\n<unknown key>\n  Extra inputs are not permitted [type=extra_forbidden]\n"
+ },
+ {
+  "channel": "check-config:capital: unknown top-level key DEBUG=1 (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: 1 validation error for Config\n<unknown key>\n  Extra inputs are not permitted [type=extra_forbidden]\n"
+ },
+ {
+  "channel": "check-config:capital: tool name in scope_allowed (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: agent test-agent: scope_allowed entry 1 has no contract\n"
+ },
+ {
+  "channel": "check-config:capital: tool name in scope_allowed DEBUG=1 (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: agent test-agent: scope_allowed entry 1 has no contract\n"
+ },
+ {
+  "channel": "check-config:capital: prompt_file path (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: agent test-agent: prompt_file missing\n"
+ },
+ {
+  "channel": "check-config:capital: prompt_file path DEBUG=1 (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: agent test-agent: prompt_file missing\n"
+ },
+ {
+  "channel": "check-config:capital: non-int max_steps (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: 1 validation error for AgentRecord\nmax_steps\n  Input should be a valid integer, unable to parse string as an integer [type=int_parsing]\n"
+ },
+ {
+  "channel": "check-config:capital: non-int max_steps DEBUG=1 (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: 1 validation error for AgentRecord\nmax_steps\n  Input should be a valid integer, unable to parse string as an integer [type=int_parsing]\n"
+ },
+ {
+  "channel": "check-config:libtext: agent id in agents.yaml (rc=0)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "the configuration files are accepted. Not checked: tool module code is not run, so the operations bound inside a tool module, and the start-up of the backends, "
+ },
+ {
+  "channel": "check-config:libtext: agent id in agents.yaml DEBUG=1 (rc=0)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "the configuration files are accepted. Not checked: tool module code is not run, so the operations bound inside a tool module, and the start-up of the backends, "
+ },
+ {
+  "channel": "check-config:libtext: model_route name (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: agent test-agent: model_route is not one of the configured routes\n"
+ },
+ {
+  "channel": "check-config:libtext: model_route name DEBUG=1 (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: agent test-agent: model_route is not one of the configured routes\n"
+ },
+ {
+  "channel": "check-config:libtext: unknown top-level key (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: 1 validation error for Config\n<unknown key>\n  Extra inputs are not permitted [type=extra_forbidden]\n"
+ },
+ {
+  "channel": "check-config:libtext: unknown top-level key DEBUG=1 (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: 1 validation error for Config\n<unknown key>\n  Extra inputs are not permitted [type=extra_forbidden]\n"
+ },
+ {
+  "channel": "check-config:libtext: tool name in scope_allowed (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: agent test-agent: scope_allowed entry 1 has no contract\n"
+ },
+ {
+  "channel": "check-config:libtext: tool name in scope_allowed DEBUG=1 (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: agent test-agent: scope_allowed entry 1 has no contract\n"
+ },
+ {
+  "channel": "check-config:libtext: prompt_file path (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: agent test-agent: prompt_file missing\n"
+ },
+ {
+  "channel": "check-config:libtext: prompt_file path DEBUG=1 (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: agent test-agent: prompt_file missing\n"
+ },
+ {
+  "channel": "check-config:libtext: non-int max_steps (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: 1 validation error for AgentRecord\nmax_steps\n  Input should be a valid integer, unable to parse string as an integer [type=int_parsing]\n"
+ },
+ {
+  "channel": "check-config:libtext: non-int max_steps DEBUG=1 (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: 1 validation error for AgentRecord\nmax_steps\n  Input should be a valid integer, unable to parse string as an integer [type=int_parsing]\n"
+ },
+ {
+  "channel": "check-config:pathlike: agent id in agents.yaml (rc=0)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "the configuration files are accepted. Not checked: tool module code is not run, so the operations bound inside a tool module, and the start-up of the backends, "
+ },
+ {
+  "channel": "check-config:pathlike: agent id in agents.yaml DEBUG=1 (rc=0)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "the configuration files are accepted. Not checked: tool module code is not run, so the operations bound inside a tool module, and the start-up of the backends, "
+ },
+ {
+  "channel": "check-config:pathlike: model_route name (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: agent test-agent: model_route is not one of the configured routes\n"
+ },
+ {
+  "channel": "check-config:pathlike: model_route name DEBUG=1 (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: agent test-agent: model_route is not one of the configured routes\n"
+ },
+ {
+  "channel": "check-config:pathlike: unknown top-level key (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: 1 validation error for Config\n<unknown key>\n  Extra inputs are not permitted [type=extra_forbidden]\n"
+ },
+ {
+  "channel": "check-config:pathlike: unknown top-level key DEBUG=1 (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: 1 validation error for Config\n<unknown key>\n  Extra inputs are not permitted [type=extra_forbidden]\n"
+ },
+ {
+  "channel": "check-config:pathlike: tool name in scope_allowed (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: agent test-agent: scope_allowed entry 1 has no contract\n"
+ },
+ {
+  "channel": "check-config:pathlike: tool name in scope_allowed DEBUG=1 (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: agent test-agent: scope_allowed entry 1 has no contract\n"
+ },
+ {
+  "channel": "check-config:pathlike: prompt_file path (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: agent test-agent: prompt_file missing\n"
+ },
+ {
+  "channel": "check-config:pathlike: prompt_file path DEBUG=1 (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: agent test-agent: prompt_file missing\n"
+ },
+ {
+  "channel": "check-config:pathlike: non-int max_steps (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: 1 validation error for AgentRecord\nmax_steps\n  Input should be a valid integer, unable to parse string as an integer [type=int_parsing]\n"
+ },
+ {
+  "channel": "check-config:pathlike: non-int max_steps DEBUG=1 (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: 1 validation error for AgentRecord\nmax_steps\n  Input should be a valid integer, unable to parse string as an integer [type=int_parsing]\n"
+ },
+ {
+  "channel": "check-config:hex48: agent id in agents.yaml (rc=0)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "the configuration files are accepted. Not checked: tool module code is not run, so the operations bound inside a tool module, and the start-up of the backends, "
+ },
+ {
+  "channel": "check-config:hex48: agent id in agents.yaml DEBUG=1 (rc=0)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "the configuration files are accepted. Not checked: tool module code is not run, so the operations bound inside a tool module, and the start-up of the backends, "
+ },
+ {
+  "channel": "check-config:hex48: model_route name (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: agent test-agent: model_route is not one of the configured routes\n"
+ },
+ {
+  "channel": "check-config:hex48: model_route name DEBUG=1 (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: agent test-agent: model_route is not one of the configured routes\n"
+ },
+ {
+  "channel": "check-config:hex48: unknown top-level key (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: 1 validation error for Config\n<unknown key>\n  Extra inputs are not permitted [type=extra_forbidden]\n"
+ },
+ {
+  "channel": "check-config:hex48: unknown top-level key DEBUG=1 (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: 1 validation error for Config\n<unknown key>\n  Extra inputs are not permitted [type=extra_forbidden]\n"
+ },
+ {
+  "channel": "check-config:hex48: tool name in scope_allowed (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: agent test-agent: scope_allowed entry 1 has no contract\n"
+ },
+ {
+  "channel": "check-config:hex48: tool name in scope_allowed DEBUG=1 (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: agent test-agent: scope_allowed entry 1 has no contract\n"
+ },
+ {
+  "channel": "check-config:hex48: prompt_file path (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: agent test-agent: prompt_file missing\n"
+ },
+ {
+  "channel": "check-config:hex48: prompt_file path DEBUG=1 (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: agent test-agent: prompt_file missing\n"
+ },
+ {
+  "channel": "check-config:hex48: non-int max_steps (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: 1 validation error for AgentRecord\nmax_steps\n  Input should be a valid integer, unable to parse string as an integer [type=int_parsing]\n"
+ },
+ {
+  "channel": "check-config:hex48: non-int max_steps DEBUG=1 (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: 1 validation error for AgentRecord\nmax_steps\n  Input should be a valid integer, unable to parse string as an integer [type=int_parsing]\n"
+ },
+ {
+  "channel": "check-config:malformed yaml with canary (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: not valid YAML (line 2, column 3)\n"
+ },
+ {
+  "channel": "check-config:malformed yaml with canary DEBUG=1 (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: not valid YAML (line 2, column 3)\n"
+ },
+ {
+  "channel": "check-config:non-utf8 bytes + canary (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: agents.yaml: cannot be read (UnicodeDecodeError)\n"
+ },
+ {
+  "channel": "check-config:non-utf8 bytes + canary DEBUG=1 (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: agents.yaml: cannot be read (UnicodeDecodeError)\n"
+ },
+ {
+  "channel": "check-config:action file name holds canary (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: not valid YAML (line 1, column 12)\n"
+ },
+ {
+  "channel": "check-config:action file name holds canary DEBUG=1 (rc=2)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "refused: not valid YAML (line 1, column 12)\n"
+ },
+ {
+  "channel": "check-config:baseline (no change) (rc=0)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "the configuration files are accepted. Not checked: tool module code is not run, so the operations bound inside a tool module, and the start-up of the backends, "
+ },
+ {
+  "channel": "check-config:baseline (no change) DEBUG=1 (rc=0)",
+  "value": "stdout+stderr",
+  "reaches_output": false,
+  "needles": [],
+  "sample": "the configuration files are accepted. Not checked: tool module code is not run, so the operations bound inside a tool module, and the start-up of the backends, "
+ }
+]

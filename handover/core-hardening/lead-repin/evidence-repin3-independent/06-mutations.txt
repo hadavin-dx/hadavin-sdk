@@ -1,0 +1,30 @@
+m01-drop-unquoted-value-rule.sh bash rc=3 FAIL_lines=0 
+m01-drop-unquoted-value-rule.sh dash rc=3 FAIL_lines=0 
+m02-drop-bearer-rule.sh bash rc=1 FAIL_lines=2 SELF-TEST: passed=117 failed=2 (the made-up input and output files were deleted)
+m02-drop-bearer-rule.sh dash rc=1 FAIL_lines=2 SELF-TEST: passed=117 failed=2 (the made-up input and output files were deleted)
+m03-selftest-always-returns-0.sh bash rc=0 FAIL_lines=0 SELF-TEST: passed=119 failed=0 (the made-up input and output files were deleted)
+m03-selftest-always-returns-0.sh dash rc=0 FAIL_lines=0 SELF-TEST: passed=119 failed=0 (the made-up input and output files were deleted)
+m04-skip-canary-abort.sh bash rc=0 FAIL_lines=0 SELF-TEST: passed=119 failed=0 (the made-up input and output files were deleted)
+m04-skip-canary-abort.sh dash rc=0 FAIL_lines=0 SELF-TEST: passed=119 failed=0 (the made-up input and output files were deleted)
+m05-drop-email-rule.sh bash rc=1 FAIL_lines=2 SELF-TEST: passed=117 failed=2 (the made-up input and output files were deleted)
+m05-drop-email-rule.sh dash rc=1 FAIL_lines=2 SELF-TEST: passed=117 failed=2 (the made-up input and output files were deleted)
+m06-drop-cli-flag-rule.sh bash rc=1 FAIL_lines=4 SELF-TEST: passed=115 failed=4 (the made-up input and output files were deleted)
+m06-drop-cli-flag-rule.sh dash rc=1 FAIL_lines=4 SELF-TEST: passed=115 failed=4 (the made-up input and output files were deleted)
+m07-drop-AKIA-rule.sh bash rc=1 FAIL_lines=2 SELF-TEST: passed=117 failed=2 (the made-up input and output files were deleted)
+m07-drop-AKIA-rule.sh dash rc=1 FAIL_lines=2 SELF-TEST: passed=117 failed=2 (the made-up input and output files were deleted)
+m08-remove-pat-word.sh bash rc=1 FAIL_lines=2 SELF-TEST: passed=117 failed=2 (the made-up input and output files were deleted)
+m08-remove-pat-word.sh dash rc=1 FAIL_lines=2 SELF-TEST: passed=117 failed=2 (the made-up input and output files were deleted)
+m09-cut-before-mask.sh bash rc=1 FAIL_lines=1 SELF-TEST: passed=118 failed=1 (the made-up input and output files were deleted)
+m09-cut-before-mask.sh dash rc=1 FAIL_lines=1 SELF-TEST: passed=118 failed=1 (the made-up input and output files were deleted)
+m10-drop-yaml-next-line-block.sh bash rc=1 FAIL_lines=3 SELF-TEST: passed=116 failed=3 (the made-up input and output files were deleted)
+m10-drop-yaml-next-line-block.sh dash rc=1 FAIL_lines=3 SELF-TEST: passed=116 failed=3 (the made-up input and output files were deleted)
+m11-jwt-rule-dropped.sh bash rc=0 FAIL_lines=0 SELF-TEST: passed=119 failed=0 (the made-up input and output files were deleted)
+m11-jwt-rule-dropped.sh dash rc=0 FAIL_lines=0 SELF-TEST: passed=119 failed=0 (the made-up input and output files were deleted)
+m12-canary-filter_ready-always-ok.sh bash rc=0 FAIL_lines=0 SELF-TEST: passed=119 failed=0 (the made-up input and output files were deleted)
+m12-canary-filter_ready-always-ok.sh dash rc=0 FAIL_lines=0 SELF-TEST: passed=119 failed=0 (the made-up input and output files were deleted)
+c1-m02+m03.sh main-mode rc=0 stopped_at_canary=0 stdout_lines=562 bearer_leak_lines=0
+c2-m02+m04.sh main-mode rc=3 stopped_at_canary=1 stdout_lines=0 bearer_leak_lines=0
+m04-skip-canary-abort.sh main-mode rc=3 stopped_at_canary=1 stdout_lines=0 bearer_leak_lines=0
+x Bearer <masked>
+eyJabcdefghijk.abcdef.sig
+c2-m02+m04.sh (corrected: abort test disabled) rc=0 STOP_in_stderr=0 stdout_lines=562 canary_text=masking self-test (canary) before any file was opened: FAIL (secret still visible): bare Bearer value

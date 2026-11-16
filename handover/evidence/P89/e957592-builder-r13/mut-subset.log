@@ -1,0 +1,44 @@
+HEAD 0cd10b99f3c591e2d2bba04a6b6aeb16a56826da
+ M CHANGELOG.md
+ M tests/fixtures/mutation_manifest.json
+ M tests/mutation_runner_mutants.py
+ok  KILLED       runner: the FIXTURE ERROR row keeps no message  [test_a_fixture_error_in_the_mutant_run_is_an_error_row_not_a]
+ok  KILLED       runner: the password of a URL is not a secret  [test_masked_replaces_the_value_and_the_url_password]
+ok  KILLED       runner: the head scan window is one short  [test_the_fragment_scan_finds_the_largest_head_and_tail_at_ev]
+ok  KILLED       runner: the unencoded-separator URL passwords are not read  [test_a_url_password_with_unencoded_separators_is_masked]
+ok  KILLED       runner: dots that share a dot are not all found  [test_dots_that_share_a_dot_are_all_found]
+ok  KILLED       runner: a password that decodes to an odd character is accepted  [test_a_password_that_decodes_to_an_odd_character_is_refused_]
+ok  KILLED       runner: the password word is read only in lower case  [test_passwd_and_pwd_words_are_secrets]
+ok  KILLED       runner: the password after a password word is not a secret  [test_the_pieces_of_an_unquoted_password_that_holds_a_semicol]
+ok  KILLED       runner: the rest of an unquoted password is not a secret  [test_an_unquoted_password_with_a_semicolon_or_an_ampersand_i]
+ok  KILLED       runner: the tail scan window is one short  [test_the_fragment_scan_finds_the_largest_head_and_tail_at_ev]
+ok  KILLED       runner: a plus in a URL password is not read as a space  [test_a_plus_in_a_url_password_is_also_read_as_a_space]
+ok  KILLED       runner: the message of a COLLECTION ERROR row shows the passed value  [test_the_message_of_a_collection_error_never_holds_the_passe]
+ok  KILLED       runner: the message of a FIXTURE ERROR row shows the passed value  [test_the_message_of_a_fixture_error_never_holds_the_passed_v]
+ok  KILLED       runner: the canary skip message shows the passed value  [test_the_canary_skip_message_never_holds_the_passed_value]
+ok  KILLED       runner: the quote(safe='') form of a password is not a secret  [test_the_re_encoded_forms_of_a_url_password_are_secrets]
+ok  KILLED       runner: the quote_plus form of a password is not a secret  [test_the_re_encoded_forms_of_a_url_password_are_secrets]
+ok  KILLED       runner: the quote form with the slash kept is not a secret  [test_the_re_encoded_forms_of_a_url_password_are_secrets]
+ok  KILLED       runner: the lower-case hex forms of a password are not secrets  [test_the_re_encoded_forms_of_a_url_password_are_secrets]
+ok  KILLED       runner: a password is decoded only twice  [test_a_password_that_was_encoded_twice_or_more_is_decoded_un]
+ok  KILLED       runner: only the first decoding step is checked for odd characters  [test_a_password_that_was_encoded_twice_or_more_is_decoded_un]
+ok  KILLED       runner: a password word inside a longer word is not read  [test_a_password_word_inside_a_longer_word_and_in_any_case_is]
+ok  KILLED       runner: the lock file name depends on the password  [test_the_lock_file_name_does_not_depend_on_the_password]
+BAD WRONG_REASON runner: a port after the host is read as the start of a password  [test_a_host_with_a_port_is_not_read_as_a_url_login_and_a_num]
+      first line: E           ValueError: HADAVIN_TEST_PG_DSN is refused: the password in it, percent-decoded holds a non-ASCII character. The runner hides a secret by 
+BAD WRONG_REASON runner: a port followed by a question mark or a hash is a password  [test_a_host_with_a_port_is_not_read_as_a_url_login_and_a_num]
+      first line: E           ValueError: HADAVIN_TEST_PG_DSN is refused: the password in it, percent-decoded holds a non-ASCII character. The runner hides a secret by 
+BAD WRONG_REASON runner: a value of exactly the ceiling is refused  [test_a_value_longer_than_the_ceiling_is_refused_without_show]
+      first line: E               ValueError: HADAVIN_TEST_PG_DSN is refused: its value is longer than 2000 characters (no address is, and the runner would scan every s
+ok  KILLED       runner: a value over the ceiling is accepted  [test_a_value_longer_than_the_ceiling_is_refused_without_show]
+ok  KILLED       runner: the one-character ellipsis is not looked for  [test_a_piece_beside_a_unicode_ellipsis_is_masked_like_one_be]
+BAD WRONG_REASON runner: the one-character ellipsis has the width of three dots  [test_a_piece_beside_a_unicode_ellipsis_is_masked_like_one_be]
+      first line: E           AssertionError: a piece beside the ellipsis '…' was not masked: E   x == '[REDACTED]…vN[REDACTED]' y
+ok  KILLED       runner: the line is cut at the ceiling of dots, one too early  [test_a_piece_next_to_dots_hides_only_that_piece_of_a_short_s]
+ok  KILLED       runner: a line with exactly the ceiling of dots is replaced  [test_a_piece_next_to_dots_hides_only_that_piece_of_a_short_s]
+ok  KILLED       runner: an empty secret is not left out  [test_nothing_is_rebuilt_when_no_secret_is_set]
+ok  KILLED       conftest: the old address is not put back  [test_the_fixture_that_guards_the_database_address_fails_a_te]
+ok  KILLED       conftest: an address that a test added is not removed  [test_the_fixture_that_guards_the_database_address_removes_an]
+ok  KILLED       conftest: a changed address does not fail the test  [test_the_fixture_that_guards_the_database_address_fails_a_te]
+30 of 34 good; problems: ['runner: a port after the host is read as the start of a password', 'runner: a port followed by a question mark or a hash is a password', 'runner: a value of exactly the ceiling is refused', 'runner: the one-character ellipsis has the width of three dots']
+exit=1

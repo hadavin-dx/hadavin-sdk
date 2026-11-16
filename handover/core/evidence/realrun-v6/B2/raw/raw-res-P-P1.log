@@ -1,0 +1,19 @@
+F
+=================================== FAILURES ===================================
+__________ test_hubspot_from_env_refuses_an_address_that_is_not_named __________
+
+    def test_hubspot_from_env_refuses_an_address_that_is_not_named() -> None:
+        with pytest.raises(ValueError, match="DESK_HUBSPOT_BASE_URL is required for the hubspot CRM") as e:
+            HubspotSettings.from_env(HUBSPOT)
+        assert "never filled in by a default" in str(e.value)
+        for blank in BLANKS:
+>           with pytest.raises(ValueError, match="DESK_HUBSPOT_BASE_URL is required"):
+E           AssertionError: Regex pattern did not match.
+E             Expected regex: 'DESK_HUBSPOT_BASE_URL is required'
+E             Actual message: 'DESK_HUBSPOT_BASE_URL must be an http(s) address with a host and no path'
+
+tests/test_desk_address_required.py:50: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_desk_address_required.py::test_hubspot_from_env_refuses_an_address_that_is_not_named
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed in 0.05s

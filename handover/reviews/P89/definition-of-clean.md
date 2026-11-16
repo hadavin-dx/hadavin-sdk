@@ -1,0 +1,6 @@
+# PR89: definition of clean (pinned 2026-11-11 02:50Z UTC, IST 08:20, under ORDER 236)
+1. A reviewer may raise a Major (or Blocker) only with (a) a concrete failing input, written out, that makes a secret or a piece of it reach a log or result row, or makes a documented guarantee false, and (b) the file:line. No input, no Major: the item goes to Minor or Nit.
+2. Polish items (wording, extra mutants, extra tests, docs precision, speed-test shape, memory figures) are Minor or Nit. They are batched into the builder's next push and never start a new round.
+3. Each report states coverage: lines read of lines total, per file. A report that read a fraction says so and cannot be counted as a clean pass for the rest.
+4. A round is clean when no reviewer raised a Major with a concrete failing input. Two consecutive clean rounds close the redaction rows (uncapped path, so no round cap before that).
+5. Before the next full round after r11: ONE egm-zoom-out reviewer answers "should the nested-repr skeleton masking exist at all, or does a simpler rule hold (never echo env-derived values; drop the whole output line when it contains the secret's plain-character skeleton, depth-independent)?" It must name a failing input if it says the simpler rule is not enough. The rung table goes in the PR body.

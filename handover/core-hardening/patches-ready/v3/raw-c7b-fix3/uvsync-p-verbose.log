@@ -1,0 +1,281 @@
+2026-11-16T10:49:56Z
+CMD: uv sync -v --all-extras --group test (cwd=tree P, with the session's own proxy settings)
+DEBUG Found workspace root: `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p`
+DEBUG Adding root workspace member: `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p`
+DEBUG Found workspace configuration at `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/pyproject.toml`
+DEBUG Searching for user configuration in: `/root/.config/uv/uv.toml`
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+DEBUG uv 0.11.32 (x86_64-unknown-linux-gnu)
+DEBUG Found project root: `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p`
+DEBUG No Python version file found in workspace: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p
+DEBUG Using Python request `>=3.12` from `requires-python` metadata
+DEBUG Checking for Python environment at: `.venv`
+DEBUG Searching for Python >=3.12 in managed installations or search path
+DEBUG Searching for managed installations at `/root/.local/share/uv/python`
+DEBUG Found `cpython-3.13.18-linux-x86_64-gnu` at `/usr/local/bin/python3` (first executable in the search path)
+Using CPython 3.13.18 interpreter at: /usr/local/bin/python3
+Creating virtual environment at: .venv
+DEBUG Using base executable for virtual environment: /usr/local/bin/python3
+DEBUG Using request connect timeout of 10s and read timeout of 30s
+DEBUG Found static `requires-dist` for: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/
+DEBUG Existing `uv.lock` satisfies workspace requirements
+Resolved 101 packages in 3ms
+DEBUG Identified uncached distribution: hadavin-sdk @ file:///tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p
+DEBUG Registry requirement already cached: pytest==9.1.1
+DEBUG Registry requirement already cached: ruff==0.17.1
+DEBUG Registry requirement already cached: moto==5.2.4
+DEBUG Registry requirement already cached: pglast==8.7
+DEBUG Registry requirement already cached: markdown-it-py==4.2.0
+DEBUG Registry requirement already cached: pydantic==2.14.1
+DEBUG Registry requirement already cached: pydantic-settings==2.16.1
+DEBUG Registry requirement already cached: pyyaml==6.0.3
+DEBUG Registry requirement already cached: anthropic==2.1.0
+DEBUG Registry requirement already cached: psycopg==3.3.6
+DEBUG Registry requirement already cached: sqlglot==30.24.0
+DEBUG Registry requirement already cached: boto3==1.43.118
+DEBUG Registry requirement already cached: cryptography==50.0.2
+DEBUG Registry requirement already cached: azure-identity==1.26.0
+DEBUG Registry requirement already cached: azure-keyvault-keys==4.11.3
+DEBUG Registry requirement already cached: azure-keyvault-secrets==4.11.3
+DEBUG Registry requirement already cached: azure-storage-blob==12.31.0
+DEBUG Registry requirement already cached: google-cloud-kms==3.18.0
+DEBUG Registry requirement already cached: google-cloud-secret-manager==2.31.0
+DEBUG Registry requirement already cached: google-cloud-storage==3.17.1
+DEBUG Registry requirement already cached: iniconfig==2.3.1
+DEBUG Registry requirement already cached: packaging==26.3
+DEBUG Registry requirement already cached: pluggy==1.7.0
+DEBUG Registry requirement already cached: pygments==2.21.0
+DEBUG Registry requirement already cached: botocore==1.43.122
+DEBUG Registry requirement already cached: requests==2.34.2
+DEBUG Registry requirement already cached: responses==0.26.3
+DEBUG Registry requirement already cached: werkzeug==3.1.9
+DEBUG Registry requirement already cached: xmltodict==1.0.4
+DEBUG Registry requirement already cached: py-partiql-parser==0.6.3
+DEBUG Registry requirement already cached: mdurl==0.1.2
+DEBUG Registry requirement already cached: annotated-types==0.8.0
+DEBUG Registry requirement already cached: pydantic-core==2.50.1
+DEBUG Registry requirement already cached: typing-extensions==4.16.0
+DEBUG Registry requirement already cached: typing-inspection==0.4.4
+DEBUG Registry requirement already cached: python-dotenv==1.2.4
+DEBUG Registry requirement already cached: anyio==4.15.1
+DEBUG Registry requirement already cached: docstring-parser==0.18.0
+DEBUG Registry requirement already cached: httpx2==2.16.0
+DEBUG Registry requirement already cached: jiter==0.18.0
+DEBUG Registry requirement already cached: opentelemetry-api==1.45.2
+DEBUG Registry requirement already cached: sniffio==1.3.1
+DEBUG Registry requirement already cached: google-auth==2.62.0
+DEBUG Registry requirement already cached: psycopg-binary==3.3.6
+DEBUG Registry requirement already cached: jmespath==1.1.0
+DEBUG Registry requirement already cached: s3transfer==0.19.3
+DEBUG Registry requirement already cached: cffi==2.1.1
+DEBUG Registry requirement already cached: azure-core==1.41.0
+DEBUG Registry requirement already cached: msal==1.39.0
+DEBUG Registry requirement already cached: msal-extensions==1.3.1
+DEBUG Registry requirement already cached: isodate==0.7.2
+DEBUG Registry requirement already cached: google-api-core==2.43.0
+DEBUG Registry requirement already cached: grpc-google-iam-v1==0.14.6
+DEBUG Registry requirement already cached: grpcio==1.84.1
+DEBUG Registry requirement already cached: proto-plus==1.29.0
+DEBUG Registry requirement already cached: protobuf==7.36.2
+DEBUG Registry requirement already cached: google-cloud-core==2.8.0
+DEBUG Registry requirement already cached: google-crc32c==1.9.0
+DEBUG Registry requirement already cached: google-resumable-media==2.11.0
+DEBUG Registry requirement already cached: python-dateutil==2.9.0.post0
+DEBUG Registry requirement already cached: urllib3==2.8.0
+DEBUG Registry requirement already cached: certifi==2026.10.19
+DEBUG Registry requirement already cached: charset-normalizer==3.5.2
+DEBUG Registry requirement already cached: idna==3.20
+DEBUG Registry requirement already cached: markupsafe==3.0.4
+DEBUG Registry requirement already cached: httpcore2==2.16.0
+DEBUG Registry requirement already cached: truststore==0.10.5
+DEBUG Registry requirement already cached: pyasn1-modules==0.4.2
+DEBUG Registry requirement already cached: pycparser==3.12
+DEBUG Registry requirement already cached: pyjwt==2.15.1
+DEBUG Registry requirement already cached: googleapis-common-protos==1.76.0
+DEBUG Registry requirement already cached: grpcio-status==1.84.1
+DEBUG Registry requirement already cached: six==1.17.0
+DEBUG Registry requirement already cached: h11==0.16.0
+DEBUG Registry requirement already cached: pyasn1==0.6.5
+DEBUG Using request connect timeout of 10s and read timeout of 30s
+DEBUG Computed cache info: Timestamp(SystemTime { tv_sec: 1794826188, tv_nsec: 225660438 }), None, None, {}, {"src": Some(Timestamp(Timestamp(SystemTime { tv_sec: 1794826188, tv_nsec: 225660438 })))}. Most recently modified: pyproject.toml
+   Building hadavin-sdk @ file:///tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p
+DEBUG Building: hadavin-sdk @ file:///tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p
+DEBUG Assessing Python executable as base candidate: /usr/local/bin/python3
+DEBUG Creating build environment for: hadavin-sdk @ file:///tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p
+DEBUG Using base executable for virtual environment: /usr/local/bin/python3
+DEBUG Resolving build requirements
+DEBUG Solving with installed Python version: 3.13.18
+DEBUG Solving with target Python version: >=3.13.18
+DEBUG Solving with exclude-newer: grpcio-status: 2026-10-24T00:00:00Z, grpcio: 2026-10-24T00:00:00Z, google-api-core: 2026-10-24T00:00:00Z
+DEBUG Adding direct dependency: uv-build>=0.12, <0.14
+DEBUG Found fresh response for: https://pypi.org/simple/uv-build/
+DEBUG Searching for a compatible version of uv-build (>=0.12, <0.14)
+DEBUG Selecting: uv-build==0.13.8 [compatible] (uv_build-0.13.8-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl)
+DEBUG Found fresh response for: https://files.pythonhosted.org/packages/12/15/c930402a150079e487b72f8567de0641416037eae7b80199e6b7e9c3672b/uv_build-0.13.8-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata
+DEBUG Tried 1 versions: uv-build 1
+DEBUG marker environment resolution took 0.006s
+DEBUG Installing in uv-build==0.13.8 in /root/.cache/uv/builds-v0/.tmpThtMGo
+DEBUG Registry requirement already cached: uv-build==0.13.8
+DEBUG Installing build requirement: uv-build==0.13.8
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/_OWVnEAoib3jVEmZ/uv_build-0.13.8.data/scripts/uv-build` to `/root/.cache/uv/builds-v0/.tmpThtMGo/lib/python3.13/site-packages/uv_build-0.13.8.data/scripts/uv-build`: Operation not supported (os error 95), falling back
+DEBUG Creating PEP 517 build environment
+DEBUG Calling `uv_build.get_requires_for_build_editable()`
+DEBUG Calling `uv_build.build_editable(__import__("os").fsdecode(b"/root/.cache/uv/builds-v0/.tmpr6qAUj"), {}, None)`
+DEBUG Built `hadavin-sdk @ file:///tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p` into `hadavin_sdk-0.1.0-py3-none-any.whl`
+      Built hadavin-sdk @ file:///tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p
+Prepared 1 package in 69ms
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/6m51KN4mlAwPRms7/google_cloud_secret_manager-2.31.0.dist-info/RECORD` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/google_cloud_secret_manager-2.31.0.dist-info/RECORD`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/lgr4sNScdgS5ACDP/docstring_parser-0.18.0.dist-info/RECORD` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/docstring_parser-0.18.0.dist-info/RECORD`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/2tf6gPqGffZfnyat/hadavin_sdk-0.1.0.dist-info/RECORD` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/hadavin_sdk-0.1.0.dist-info/RECORD`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/PxtWUgAxk_8wvmzR/google_cloud_core-2.8.0.dist-info/RECORD` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/google_cloud_core-2.8.0.dist-info/RECORD`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/qj3NNj6rOlDqU1Xe/httpx2-2.16.0.dist-info/RECORD` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/httpx2-2.16.0.dist-info/RECORD`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/cI5BfdcEjgmvNp34/google_crc32c-1.9.0.dist-info/RECORD` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/google_crc32c-1.9.0.dist-info/RECORD`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/nyAagOV1Wo-kRZ-c/pytest/__init__.py` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/pytest/__init__.py`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/Z7h1gSdE8yw9ob16/google/cloud/_storage/gapic_version.py` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/google/cloud/_storage/gapic_version.py`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/axrjIm9oUXY6M2bF/google_resumable_media-2.11.0.dist-info/RECORD` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/google_resumable_media-2.11.0.dist-info/RECORD`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/uvRSONLvsnpfUzZ9/jiter/__init__.pyi` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/jiter/__init__.pyi`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/_fgO1AXRwpxFwbah/python_dateutil-2.9.0.post0.dist-info/RECORD` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/python_dateutil-2.9.0.post0.dist-info/RECORD`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/J-w-dwF_LkajKJAn/opentelemetry/_logs/__init__.py` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/opentelemetry/_logs/__init__.py`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/2qC5_YPHcctEBhBF/iniconfig/_parse.py` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/iniconfig/_parse.py`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/2k68tnk3H7hMHae3/urllib3-2.8.0.dist-info/RECORD` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/urllib3-2.8.0.dist-info/RECORD`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/Yc7Q-sCxtyAtilsO/ruff-0.17.1.data/scripts/ruff` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/ruff-0.17.1.data/scripts/ruff`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/X4n8VonMxDv_KyLB/packaging/_ranges.py` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/packaging/_ranges.py`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/duaQKhbBbkrcam6m/moto/transcribe/responses.py` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/moto/transcribe/responses.py`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/YukuuRJATadYv7b8/sniffio-1.3.1.dist-info/LICENSE.APACHE2` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/sniffio-1.3.1.dist-info/LICENSE.APACHE2`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/OxR42SLJ-H5YTFD7/certifi-2026.10.19.dist-info/RECORD` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/certifi-2026.10.19.dist-info/RECORD`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/mbSej1bs82rvAg4y/pluggy-1.7.0.dist-info/RECORD` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/pluggy-1.7.0.dist-info/RECORD`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/7Ynbc0K9x3h9yXZ3/google/auth/jwt.py` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/google/auth/jwt.py`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/MC-ogmexUJ1nMMLi/charset_normalizer/constant.py` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/charset_normalizer/constant.py`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/Y5gOlfCVhOB5NGha/pygments/unistring.py` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/pygments/unistring.py`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/EwXDSj1LXhyru69w/idna/cli.py` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/idna/cli.py`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/plX4OGND4KGbf5Xu/markupsafe/__init__.py` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/markupsafe/__init__.py`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/dEJKBBa28rqCsdr2/psycopg_binary/types/numutils.c` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/psycopg_binary/types/numutils.c`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/sykMfIuCXrOpTPm1/httpcore2-2.16.0.dist-info/RECORD` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/httpcore2-2.16.0.dist-info/RECORD`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/fKfYDqe9XC0Wjvwp/botocore/parsers.py` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/botocore/parsers.py`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/zpJofR9hFg0e34AB/jmespath-1.1.0.dist-info/RECORD` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/jmespath-1.1.0.dist-info/RECORD`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/xfqv0m3uRTBJX-KY/truststore-0.10.5.dist-info/RECORD` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/truststore-0.10.5.dist-info/RECORD`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/F5gr4BAPHRZkC_yY/s3transfer-0.19.3.dist-info/RECORD` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/s3transfer-0.19.3.dist-info/RECORD`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/TBKgfs_mximWGvmN/pyasn1_modules/rfc3565.py` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/pyasn1_modules/rfc3565.py`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/1cEZIuqQb8GVtaex/cffi/lock.py` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/cffi/lock.py`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/A097OtZrZx9W5Axs/pycparser/_ast_gen.py` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/pycparser/_ast_gen.py`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/aniVEG4m3PdtxxE8/azure_core-1.41.0.dist-info/RECORD` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/azure_core-1.41.0.dist-info/RECORD`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/qxgIWnxC2BHsrAza/jwt/jwks_client.py` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/jwt/jwks_client.py`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/RP6aJYzZrG5XZDC0/googleapis_common_protos-1.76.0.dist-info/RECORD` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/googleapis_common_protos-1.76.0.dist-info/RECORD`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/ADiPN4_CGQYTaWB6/msal-1.39.0.dist-info/RECORD` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/msal-1.39.0.dist-info/RECORD`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/pTzgrB24xlHA8GgO/msal_extensions/libsecret.py` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/msal_extensions/libsecret.py`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/psCMsft0GsdeJmGd/isodate-0.7.2.dist-info/RECORD` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/isodate-0.7.2.dist-info/RECORD`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/8WP2E_bSM2T63UM6/grpc_status/rpc_status.py` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/grpc_status/rpc_status.py`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/E6RDWJX7QhM1RlfV/google/api_core/universe.py` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/google/api_core/universe.py`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/0S3dYq9p06QtgbAO/six-1.17.0.dist-info/RECORD` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/six-1.17.0.dist-info/RECORD`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/Bg4phhCqQNezSRa1/h11/_util.py` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/h11/_util.py`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/a5Qg98m2bDVw4VMx/grpc_google_iam_v1-0.14.6.dist-info/RECORD` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/grpc_google_iam_v1-0.14.6.dist-info/RECORD`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/lCyU82w0XvvJuevV/pyasn1-0.6.5.dist-info/RECORD` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/pyasn1-0.6.5.dist-info/RECORD`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/BvQCFnPlEWSdFsvZ/grpc/beta/__init__.py` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/grpc/beta/__init__.py`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/fZEkQ9bHoUlYkiJE/werkzeug/debug/shared/ICON_LICENSE.md` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/werkzeug/debug/shared/ICON_LICENSE.md`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/LeT7aWFYKaKkpI0n/proto/_package_info.py` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/proto/_package_info.py`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/GXHyLx5cql_jGb-t/xmltodict.py` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/xmltodict.py`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/bfmq0_xNnHI4bCeL/py_partiql_parser/__init__.py` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/py_partiql_parser/__init__.py`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/UAltYwLGivP9tdNq/google/protobuf/pyext/__init__.py` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/google/protobuf/pyext/__init__.py`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/hXMMAoVAguvL9DUj/mdurl/_parse.py` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/mdurl/_parse.py`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/0mI_n6ptnN3JV90i/requests-2.34.2.dist-info/RECORD` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/requests-2.34.2.dist-info/RECORD`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/zZMKMx4eN9GS-h-B/annotated_types/__init__.py` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/annotated_types/__init__.py`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/_LWlnM2ZVTw_UMWW/responses-0.26.3.dist-info/RECORD` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/responses-0.26.3.dist-info/RECORD`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/HThQf3EvWh2CgglX/pydantic_core/__init__.py` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/pydantic_core/__init__.py`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/JbUJqSumgslWnQZ8/typing_inspection-0.4.4.dist-info/RECORD` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/typing_inspection-0.4.4.dist-info/RECORD`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/EVyTW5nptIgX2fpt/python_dotenv-1.2.4.dist-info/RECORD` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/python_dotenv-1.2.4.dist-info/RECORD`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/1qb6aqr7LTIm7X13/typing_extensions.py` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/typing_extensions.py`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/453AgjhPRH03SBmC/anyio/to_process.py` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/anyio/to_process.py`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/kEUg7xXzNcy0vnnb/anthropic-2.1.0.dist-info/RECORD` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/anthropic-2.1.0.dist-info/RECORD`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/NN4Bp9FENSzjc2aw/pglast/precedence.py` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/pglast/precedence.py`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/AUKuyPGkswgUOax3/markdown_it/helpers/__init__.py` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/markdown_it/helpers/__init__.py`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/0_NJlixF1tKazAb_/pydantic/v1/main.py` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/pydantic/v1/main.py`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/cAk3jFJkR85xXPv5/pydantic_settings/main.py` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/pydantic_settings/main.py`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/-M6pHeIG3xO8Ppul/yaml/constructor.py` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/yaml/constructor.py`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/4F6RfJutGQs82YbS/azure/identity/_bearer_token_provider.py` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/azure/identity/_bearer_token_provider.py`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/afNFSP73la4YOQdu/azure_keyvault_keys-4.11.3.dist-info/RECORD` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/azure_keyvault_keys-4.11.3.dist-info/RECORD`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/jyag0qZ4qx1NxrBm/azure/keyvault/secrets/_client.py` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/azure/keyvault/secrets/_client.py`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/FKoDWnNWjFmcNmJQ/azure_storage_blob-12.31.0.dist-info/RECORD` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/azure_storage_blob-12.31.0.dist-info/RECORD`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/b3b1BJCF8FrobbMD/google_cloud_kms-3.18.0.dist-info/RECORD` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/google_cloud_kms-3.18.0.dist-info/RECORD`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/nljFhTX1xR9b6207/sqlglot-30.24.0.dist-info/RECORD` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/sqlglot-30.24.0.dist-info/RECORD`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/7dppldLqZiTMUx1U/boto3/ec2/__init__.py` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/boto3/ec2/__init__.py`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/1HgtKyA6qMxxyZCV/psycopg-3.3.6.dist-info/RECORD` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/psycopg-3.3.6.dist-info/RECORD`: Operation not supported (os error 95), falling back
+DEBUG Failed to reflink `/root/.cache/uv/archive-v0/WYBfA2eDkBsM9-by/cryptography-50.0.2.dist-info/RECORD` to `/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p/.venv/lib/python3.13/site-packages/cryptography-50.0.2.dist-info/RECORD`: Operation not supported (os error 95), falling back
+Installed 76 packages in 398ms
+ + annotated-types==0.8.0
+ + anthropic==2.1.0
+ + anyio==4.15.1
+ + azure-core==1.41.0
+ + azure-identity==1.26.0
+ + azure-keyvault-keys==4.11.3
+ + azure-keyvault-secrets==4.11.3
+ + azure-storage-blob==12.31.0
+ + boto3==1.43.118
+ + botocore==1.43.122
+ + certifi==2026.10.19
+ + cffi==2.1.1
+ + charset-normalizer==3.5.2
+ + cryptography==50.0.2
+ + docstring-parser==0.18.0
+ + google-api-core==2.43.0
+ + google-auth==2.62.0
+ + google-cloud-core==2.8.0
+ + google-cloud-kms==3.18.0
+ + google-cloud-secret-manager==2.31.0
+ + google-cloud-storage==3.17.1
+ + google-crc32c==1.9.0
+ + google-resumable-media==2.11.0
+ + googleapis-common-protos==1.76.0
+ + grpc-google-iam-v1==0.14.6
+ + grpcio==1.84.1
+ + grpcio-status==1.84.1
+ + h11==0.16.0
+ + hadavin-sdk==0.1.0 (from file:///tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/p)
+ + httpcore2==2.16.0
+ + httpx2==2.16.0
+ + idna==3.20
+ + iniconfig==2.3.1
+ + isodate==0.7.2
+ + jiter==0.18.0
+ + jmespath==1.1.0
+ + markdown-it-py==4.2.0
+ + markupsafe==3.0.4
+ + mdurl==0.1.2
+ + moto==5.2.4
+ + msal==1.39.0
+ + msal-extensions==1.3.1
+ + opentelemetry-api==1.45.2
+ + packaging==26.3
+ + pglast==8.7
+ + pluggy==1.7.0
+ + proto-plus==1.29.0
+ + protobuf==7.36.2
+ + psycopg==3.3.6
+ + psycopg-binary==3.3.6
+ + py-partiql-parser==0.6.3
+ + pyasn1==0.6.5
+ + pyasn1-modules==0.4.2
+ + pycparser==3.12
+ + pydantic==2.14.1
+ + pydantic-core==2.50.1
+ + pydantic-settings==2.16.1
+ + pygments==2.21.0
+ + pyjwt==2.15.1
+ + pytest==9.1.1
+ + python-dateutil==2.9.0.post0
+ + python-dotenv==1.2.4
+ + pyyaml==6.0.3
+ + requests==2.34.2
+ + responses==0.26.3
+ + ruff==0.17.1
+ + s3transfer==0.19.3
+ + six==1.17.0
+ + sniffio==1.3.1
+ + sqlglot==30.24.0
+ + truststore==0.10.5
+ + typing-extensions==4.16.0
+ + typing-inspection==0.4.4
+ + urllib3==2.8.0
+ + werkzeug==3.1.9
+ + xmltodict==1.0.4
+rc=0
+2026-11-16T10:49:57Z

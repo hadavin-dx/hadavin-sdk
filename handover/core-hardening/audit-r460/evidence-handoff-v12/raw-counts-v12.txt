@@ -1,0 +1,22 @@
+merge table rows: 13 ['S-1', 'S-2a', 'S-2b', 'DB-1', 'PR-2', 'R', 'K1', 'A1', 'G-W', 'G', 'H-0', 'H-1', 'H-2'] distinct: 13 expected 13: True
+other-tracks PR ids in O-6 rows: ['PR-2', 'R', 'K1', 'A1', 'G-W', 'G', 'H-0', 'H-1', 'H-2']
+main 'four small PRs' 1
+main 'all four rc' 0
+main 'four commands' 0
+main 'two commands' 0
+main 'v11-CHANGES' 0
+main 'evidence-handoff-v11/' 0
+main 'CORE-PR-HANDOFF-v11' 0
+main 'five commands' count: 1 | 'nine' count: 7 | 'seven' count: 5
+other 'four small PRs' 0
+other 'all four rc' 0
+other 'four commands' 0
+other 'two commands' 0
+other 'v11-CHANGES' 0
+other 'evidence-handoff-v11/' 0
+other 'CORE-PR-HANDOFF-v11' 0
+other 'five commands' count: 3 | 'nine' count: 8 | 'seven' count: 4
+gate4.sh commands: 10
+llm group wording 9 today / 10 planned: True
+S-2a row mentions spend_support: 4
+Q34 L8/O1 present: True True

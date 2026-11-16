@@ -1,0 +1,2 @@
+banned list size 10 files scanned 161 files with any hit 0
+EDITS.md hits 0

@@ -1,0 +1,176 @@
+diff --git a/tests/test_mutants_round2.py b/tests/test_mutants_round2.py
+new file mode 100644
+index 0000000..46a15bd
+--- /dev/null
++++ b/tests/test_mutants_round2.py
+@@ -0,0 +1,170 @@
++"""Round 2 mutation guards (test side only, nothing in src). Each test asserts what a caller or the lead book can see
++and fails when one specific small change is made to the desk. Made-up data only."""
++
++from __future__ import annotations
++
++import sqlite3
++import threading
++from typing import Any
++
++import pytest
++from support import BlockAt, lead, sql_exec
++
++from demo_only.fakes import BlindOutbox
++from lead_desk import db, identity
++from lead_desk.desk import Desk
++
++
++def _new_lead(rig: Any, ref: str = "r1", email: str | None = None) -> str:
++    """Receipt and decision only (no follow-up drive): the lead id of the new lead."""
++    reply = rig.desk.process("form", ref, lead() if email is None else lead(email=email))
++    assert reply.status == 201, reply.body
++    return str(reply.body["lead_id"])
++
++
++def _row(rig: Any, lid: str) -> tuple[Any, ...]:
++    return rig.query("SELECT state, last_error, sent_at, auto_attempts FROM followups WHERE lead_id=?", (lid,))[0]
++
++
++# -- #3: the email key drops surrounding blanks
++def test_email_key_strips_blanks() -> None:
++    assert identity.normalise_email("  Ada@Example.TEST \t") == "ada@example.test"
++    assert identity.normalise_email("\n Ada@Example.test\n") == identity.normalise_email("ada@example.test")
++
++
++# -- #35: a replay drives a pending follow-up exactly when its pause is over
++def test_replay_due_exactly_at_pause_end(env) -> None:
++    rig = env.rig()
++    lid = _new_lead(rig)
++    sql_exec(
++        rig.db_path,
++        "UPDATE followups SET auto_attempts=1, updated_at=? WHERE lead_id=?",
++        (rig.clock.t, lid),
++    )  # one automatic try was made just now: the pause after it is 1 s
++    assert rig.desk.process("form", "r1", lead()).drive_lead_id is None  # 0 s later: not due
++    rig.clock.advance(1)
++    assert rig.desk.process("form", "r1", lead()).drive_lead_id == lid  # exactly 1 s later: due
++    rig.clock.advance(5)
++    assert rig.desk.process("form", "r1", lead()).drive_lead_id == lid  # later still: due
++
++
++# -- #49 (and the sent side of #48): sent_at and last_error after each kind of result
++def test_sent_sets_time_and_clears_error(env) -> None:
++    rig = env.rig()
++    lid = _new_lead(rig)
++    rig.outbox.fail_next("unreachable")
++    rig.desk.run_followup(lid)
++    assert _row(rig, lid)[:3] == ("pending", "unreachable", None)
++    rig.clock.advance(10)
++    rig.desk.run_followup(lid)
++    state, err, sent_at, _ = _row(rig, lid)
++    assert (state, err, sent_at) == ("sent", None, rig.clock.t)
++
++
++@pytest.mark.parametrize("mode, expected", [("refuse", "pending"), ("unreachable", "pending"), ("drop", "failed")])
++def test_unsent_result_has_no_sent_time(env, mode: str, expected: str) -> None:
++    rig = env.rig()
++    lid = _new_lead(rig)
++    if mode == "drop":  # keyed sender, unclear end, cap reached: failed
++        sql_exec(rig.db_path, "UPDATE followups SET auto_attempts=99 WHERE lead_id=?", (lid,))
++    rig.outbox.fail_next(mode)  # type: ignore[arg-type]
++    rig.desk.run_followup(lid)
++    state, err, sent_at, _ = _row(rig, lid)
++    assert state == expected and err is not None
++    assert sent_at is None
++
++
++def test_blind_unclear_end_has_no_sent_time(env) -> None:
++    rig = env.rig(outbox=BlindOutbox())
++    lid = _new_lead(rig)
++    rig.outbox.fail_next("drop")
++    rig.desk.run_followup(lid)
++    state, err, sent_at, _ = _row(rig, lid)
++    assert (state, err, sent_at) == ("unknown", "ambiguous", None)
++
++
++# -- #50: a late result for a row that is no longer `sending` changes nothing
++def test_late_result_leaves_put_back_row(env) -> None:
++    hook = BlockAt("D2")  # after the send returned, before the result is written
++    rig = env.rig(hooks=hook)
++    lid = _new_lead(rig)
++    th = threading.Thread(target=rig.desk.run_followup, args=(lid,), daemon=True)
++    th.start()
++    assert hook.reached.wait(timeout=15), "the drive never reached the send"
++    try:
++        # the row is put back to `pending` meanwhile (as the reaper does); the claim count stays the same
++        sql_exec(rig.db_path, "UPDATE followups SET state='pending' WHERE lead_id=?", (lid,))
++    finally:
++        hook.release.set()
++        th.join(timeout=15)
++    assert not th.is_alive()
++    state, err, sent_at, _ = _row(rig, lid)
++    assert (state, err, sent_at) == ("pending", None, None)
++
++
++# -- #52: Retry of a pending or failed row whose claim could not be made answers 503 busy
++@pytest.mark.parametrize("start", ["pending", "failed"])
++def test_retry_busy_is_503(env, monkeypatch: pytest.MonkeyPatch, start: str) -> None:
++    rig = env.rig()
++    lid = _new_lead(rig)
++    sql_exec(rig.db_path, "UPDATE followups SET state=? WHERE lead_id=?", (start, lid))
++    monkeypatch.setattr(Desk, "_claim", lambda *a, **k: False)  # the database stayed locked: no claim
++    reply = rig.desk.retry("F" + lid)
++    assert (reply.status, reply.body) == (503, {"error": "busy"})
++    assert rig.state(lid)[0] == start  # nothing changed
++
++
++# -- #58: resolve acts only on `unknown` rows
++@pytest.mark.parametrize("decision", ["sent", "not_sent", "crm_present"])
++def test_resolve_ignores_failed_row(env, decision: str) -> None:
++    rig = env.rig()
++    lid = _new_lead(rig)
++    sql_exec(
++        rig.db_path, "UPDATE followups SET state='failed', last_error='refused', crm_done=2 WHERE lead_id=?", (lid,)
++    )
++    before = rig.query("SELECT * FROM followups WHERE lead_id=?", (lid,))
++    reply = rig.desk.resolve("F" + lid, decision)
++    assert reply.status == 409 and reply.body["error"] == "not_unknown", reply.body
++    assert rig.query("SELECT * FROM followups WHERE lead_id=?", (lid,)) == before
++
++
++# -- #60: the receipt count matches only when it equals the expected number
++def test_counts_match_needs_equality(env) -> None:
++    rig = env.rig()
++    _new_lead(rig, "a1")
++    _new_lead(rig, "a2", "other@example.test")
++    assert rig.desk.counts(2).body["expected_match"] is True
++    for expected in (1, 3):
++        body = rig.desk.counts(expected).body
++        assert body["received"] == 2
++        assert body["expected_match"] is False and body["ok"] is False
++    assert rig.desk.counts(None).body["expected_match"] is None
++
++
++# -- #65: "database table is locked" (code 6) is busy, whatever the message says
++@pytest.mark.parametrize("code", [5, 6, 261, 262])
++def test_is_busy_takes_both_lock_codes(code: int) -> None:
++    exc = sqlite3.OperationalError("some neutral text")
++    exc.sqlite_errorcode = code  # type: ignore[attr-defined]
++    assert db.is_busy(exc) is True
++
++
++def test_is_busy_refuses_other_errors() -> None:
++    other = sqlite3.OperationalError("some neutral text")
++    other.sqlite_errorcode = 1  # type: ignore[attr-defined]
++    assert db.is_busy(other) is False
++    assert db.is_busy(ValueError("database is locked")) is False
++
++
++# -- #67: only schema versions 0 and 1 are accepted
++@pytest.mark.parametrize("version", [2, 3, 7])
++def test_schema_version_refused(version: int) -> None:
++    con = sqlite3.connect(":memory:", isolation_level=None)
++    try:
++        con.execute(f"PRAGMA user_version={version}")
++        with pytest.raises(RuntimeError, match="unsupported schema version"):
++            db.init_schema(con)
++        assert con.execute("PRAGMA user_version").fetchone()[0] == version  # nothing was written
++        assert con.execute("SELECT count(*) FROM sqlite_master").fetchone()[0] == 0
++    finally:
++        con.close()

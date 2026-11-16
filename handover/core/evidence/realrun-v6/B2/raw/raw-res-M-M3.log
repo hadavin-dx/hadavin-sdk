@@ -1,0 +1,26 @@
+..............................F
+=================================== FAILURES ===================================
+_________________ test_windows_needs_a_console_not_just_isatty _________________
+
+    def test_windows_needs_a_console_not_just_isatty() -> None:
+        """The Windows rule, with a stand-in for GetConsoleMode (the real call was not run: no Windows machine here).
+        isatty on the NUL device was not verified on the owner's Python; the console test makes that not matter."""
+        nul = _Terminal()  # a stream whose isatty says True, as the C runtime has answered for NUL
+        calls: list[object] = []
+    
+        def not_a_console(stream: object) -> bool:
+            calls.append(stream)
+            return False
+    
+        def a_console(stream: object) -> bool:
+            return True
+    
+>       assert REAL_CONSOLE_INPUT(nul, windows=True, probe=not_a_console) is False and calls == [nul]
+E       assert (True is False)
+E        +  where True = REAL_CONSOLE_INPUT(<test_start_prompt_hardening._Terminal object at 0x7f883e093f40>, windows=True, probe=<function test_windows_needs_a_console_not_just_isatty.<locals>.not_a_console at 0x7f883dd816c0>)
+
+tests/test_start_prompt_hardening.py:290: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_start_prompt_hardening.py::test_windows_needs_a_console_not_just_isatty
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 30 passed in 0.18s

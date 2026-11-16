@@ -1,0 +1,38 @@
+_s2')
+content = '{"created": [1]}'
+
+    @pytest.mark.parametrize(
+        "content", ['{"created": ', "[]", '{"created": [1]}', '{"created": "x"}', "", "null"], ids=repr
+    )
+    def test_t2_a_file_that_is_not_a_set_of_whole_numbers_is_unreadable_and_never_a_crash(
+        tmp_path: Path, content: str
+    ) -> None:
+        (tmp_path / "desk-raaaaaa-1.hubspot.json").write_text(content, encoding="utf-8")
+>       read = rrc.read_counter_files_checked(tmp_path, ".hubspot.json", "raaaaaa")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_r7t_findings.py:103: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+run_dir = PosixPath('/home/user/build/rr6/out/EV7T/tmp-mut/pytest-of-unknown/pytest-6/test_t2_a_file_that_is_not_a_s2')
+suffix = '.hubspot.json', tag = 'raaaaaa'
+
+    def read_counter_files_checked(run_dir: Path, suffix: str, tag: str) -> CounterRead:
+        """The sum of the counter files the desks of THIS run (run tag `tag`) wrote. A file of an older run in a shared run
+        folder has another tag (or none) and is not read."""
+        total: Counter[str] = Counter()
+        if not tag:
+            raise ValueError("the run tag must not be empty")
+        files = unreadable = 0
+        for p in sorted(run_dir.glob(f"desk-{tag}-*{suffix}")):
+            files += 1
+            try:
+>               total.update({k: int(v) for k, v in load_json_file(p).items()})
+                                 ^^^^^^
+E               TypeError: int() argument must be a string, a bytes-like object or a real number, not 'list'
+
+scripts/run_real_check.py:953: TypeError
+=========================== short test summary info ============================
+FAILED tests/test_r7t_findings.py::test_t2_a_file_that_is_not_a_set_of_whole_numbers_is_unreadable_and_never_a_crash['{"created": [1]}']
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 4 passed, 126 deselected in 0.27s

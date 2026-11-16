@@ -1,0 +1,23 @@
+== v16 sheet sec 5 A twice B ten:
+17:- **You** = the owner. **Studio lead** = the Claude session that works with you: software; runs commands on this laptop in its own session (it shares your Linux user); never sees your screen; never
+18:- **The run** = the one filmed run with 3 made-up **test people**, always written "person A", "person B", "person C": address `take-<run name>-a@example.com` (`-b@`, `-c@`) and a **person id** (not
+115:Watch twice (full speed; then pausing on each cut) in the player of OI-32 with the appendix 14 list (also: no key text, no account number, nothing that breaks appendix 7, the proof picture labelle
+131:You post; Claude never posts (upload site and uploader: OI-32). The studio lead writes the post text; the person on row 15 checks it against appendix 7. **The post may state only what a frame of t
+239:4. **Finish reading** (browser; Freeze does not stop this): write balance and money used so far; add the increase to the running total. The page is a record and lags: no rise does not prove nothin
+== v3 exit codes:
+92:NEEDS-OWNER. The lead sends one message with: at most **3 model calls** in this take; the worst case per call (a dollar figure the lead types from the stage settings; the program only checks that it is a finite number
+95:NEEDS-OWNER, in your own WSL window, take folder open, fresh browser profile (step 19 below), laptop on mains. The lead gives you the one line to run (form: `python scripts/run_real_check_n8n.py --take <take config>`)
+125:5. Run `python scripts/run_real_check_n8n.py --retire-check <take config>` BEFORE you delete the two secret files and while your take config file still exists (keep the config OUTSIDE the take folder, for example in 
+168:## Refusals, deadline and exit codes (from the code)
+172:- Exit codes: 0 pass; 1 the answer was not y or the confirmation line did not match; 2 a refusal (config, probe, no keyboard, end of input, Ctrl-C BEFORE the first send (after the sends began it is exit 3 with the te
+== AGENT-SCOPE 22 'shown in the notice'
+1
+== QUESTIONS Q21 header line number
+54:## Q21 (from lane c round 2, cross-read/NOT-CHECKED-lane-c-r2.md)
+== FACTS line 3 'no limit questions'
+no limit questions, just tell him the number); n8n push to the public repo branch n8n-evidence-rerun done; real run (take, B2, C) approved 'once everything is ready'; owner watches the final video and posts it himself; repo visibility: do NOT ask
+== ORDERS line 150 exact quote
+1
+== need_seconds/lease 860/ 'minimum think time 2 s' in v3
+inputs/AGENT-SCOPE-DO-AND-DONT.md:21:- MUST NOT: start without a real tty, a typed `y`, and then the random 6-digit challenge plus the take id typed by the person, each answer not faster than the mini
+inputs/OWNER-STEPS-realrun-v3.md:171:- Take-start deadline: the take refuses to start unless it can finish about 860 s (about 14 minutes; the code's message says "about 15 minutes") before `TAKE_WINDO

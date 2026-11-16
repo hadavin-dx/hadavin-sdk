@@ -1,0 +1,5 @@
+OWNER-SHEET-v27-A.md 7473 words
+OWNER-SHEET-v27-B.md 7516 words
+LEAD-RELEASE-NOTE-v11.md 11067 words
+v27-OPEN-FOR-LEAD.md 6007 words
+rc=0

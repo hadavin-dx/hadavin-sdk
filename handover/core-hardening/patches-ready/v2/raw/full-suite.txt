@@ -1,0 +1,9 @@
+cmd: env -i ... uv run --all-extras --group test pytest tests -p no:cacheprovider -q  (final head, work copy)
+rc=1
+FAILED tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked
+FAILED tests/test_repo_rules.py::test_licences_are_proprietary - subprocess.C...
+2 failed, 9451 passed, 455 skipped in 240.07s (0:04:00)
+--- same 2 tests on pristine b4cce5b:
+FAILED tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked
+FAILED tests/test_repo_rules.py::test_licences_are_proprietary - subprocess.C...
+2 failed in 2.66s

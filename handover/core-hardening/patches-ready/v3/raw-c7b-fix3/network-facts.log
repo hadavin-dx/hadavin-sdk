@@ -1,0 +1,9 @@
+2026-11-16T10:50:08Z
+== A: inside 'env -i PATH HOME' (same environment as the test run): is the proxy variable present?
+proxy-related variables: 0
+== B: env -i curl to pypi.org index (8 s limit; shows whether direct network exists)
+http=200
+rc=0
+== C: same curl with the session proxy
+http=200
+rc=0

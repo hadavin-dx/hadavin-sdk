@@ -1,0 +1,8 @@
+modules on disk: 102
+== today (top-level edges): edges=330
+  cycle: ['hadavin_sdk.approvals', 'hadavin_sdk.approvals.channel', 'hadavin_sdk.approvals.requests']
+== v8 planned overlay: edges=362
+  cycle: ['hadavin_sdk.approvals', 'hadavin_sdk.approvals.channel', 'hadavin_sdk.approvals.requests'] | contains a planned or changed module: []
+  NEW or CHANGED cycles caused by the v8 shape: 0
+== v6 shape (llm.gate imports llm.common):
+  cycle: ['hadavin_sdk.llm.common', 'hadavin_sdk.llm.gate']

@@ -1,0 +1,24 @@
+### tests/test_migration_postgres.py::test_the_portal_role_is_refused_what_the_other_roles_are_refused rc=1
+FFF                                                                      [100%]
+=================================== FAILURES ===================================
+_ test_the_portal_role_is_refused_what_the_other_roles_are_refused[column_update_via_group-can UPDATE runs.state] _
+tests/test_migration_postgres.py:2459: in test_the_portal_role_is_refused_what_the_other_roles_are_refused
+    assert "for the portal role SELECT only" in msg, msg
+E   AssertionError: the portal role holds privileges outside the portal grant map: hadavin_test_pt_0d35a573: can UPDATE runs.state (the grant map is the list in the code of the tables each role of this package may use, and the rights each may have on each: the one right it may have on each)
+E   assert 'for the portal role SELECT only' in 'the portal role holds privileges outside the portal grant map: hadavin_test_pt_0d35a573: can UPDATE runs.state (the g...the tables each role of this package may use, and the rights each may have on each: the one right it may have on each)'
+_ test_the_portal_role_is_refused_what_the_other_roles_are_refused[select_on_the_ledger-can SELECT schema_migrations] _
+tests/test_migration_postgres.py:2459: in test_the_portal_role_is_refused_what_the_other_roles_are_refused
+    assert "for the portal role SELECT only" in msg, msg
+E   AssertionError: the portal role holds privileges outside the portal grant map: hadavin_test_pt_b5acebf9: can SELECT schema_migrations (not in the grant map); hadavin_test_pt_b5acebf9: can SELECT schema_migrations.version; hadavin_test_pt_b5acebf9: can SELECT schema_migrations.applied_at (the grant map is the list in the code of the tables each role of this package may use, and the rights each may have on each: the one right it may have on each)
+E   assert 'for the portal role SELECT only' in 'the portal role holds privileges outside the portal grant map: hadavin_test_pt_b5acebf9: can SELECT schema_migrations...the tables each role of this package may use, and the rights each may have on each: the one right it may have on each)'
+_ test_the_portal_role_is_refused_what_the_other_roles_are_refused[create_in_the_schema-can CREATE in schema] _
+tests/test_migration_postgres.py:2459: in test_the_portal_role_is_refused_what_the_other_roles_are_refused
+    assert "for the portal role SELECT only" in msg, msg
+E   AssertionError: the portal role holds privileges outside the portal grant map: hadavin_test_pt_f9a9d640: can CREATE in schema hadavin_test_293462b87041 (the grant map is the list in the code of the tables each role of this package may use, and the rights each may have on each: the one right it may have on each)
+E   assert 'for the portal role SELECT only' in 'the portal role holds privileges outside the portal grant map: hadavin_test_pt_f9a9d640: can CREATE in schema hadavin...the tables each role of this package may use, and the rights each may have on each: the one right it may have on each)'
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_the_portal_role_is_refused_what_the_other_roles_are_refused[column_update_via_group-can UPDATE runs.state]
+FAILED tests/test_migration_postgres.py::test_the_portal_role_is_refused_what_the_other_roles_are_refused[select_on_the_ledger-can SELECT schema_migrations]
+FAILED tests/test_migration_postgres.py::test_the_portal_role_is_refused_what_the_other_roles_are_refused[create_in_the_schema-can CREATE in schema]
+3 failed in 0.96s
+

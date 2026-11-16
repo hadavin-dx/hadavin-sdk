@@ -1,0 +1,4 @@
+HEAD 977c214fd0c78284249e03c7f914ec0eb090487d
+$ /home/user/build/venv-p71-977c214-312/bin/python -VV
+Python 3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]
+exit=0

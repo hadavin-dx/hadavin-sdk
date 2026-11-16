@@ -1,0 +1,45 @@
+short names 35
+rows parsed 72
+C-1 old text once on its line: 72 of 72 ok, 0 bad
+ids consecutive from 1: True
+C-1b applied bottom-up in table order: 72 rows, 0 mismatches, 9 files written to /tmp/tmp6xyyl01q
+cites checked 255, beyond end of file 0
+internal labels in new texts: 0
+stale phrase '52.9' in new texts of rows: none
+stale phrase '0 rows' in new texts of rows: none
+stale phrase 'shows 0' in new texts of rows: none
+stale phrase 'never deletes' in new texts of rows: [8]
+stale phrase '70 to 75' in new texts of rows: none
+stale phrase '80 kills' in new texts of rows: none
+stale phrase 'archive|delete' in new texts of rows: none
+stale phrase "studio lead's made" in new texts of rows: none
+stale phrase 'studio lead table' in new texts of rows: none
+banned strings in report: none
+secret-like or e-mail strings in report: none
+C-4a mf-form.json [1, 1, 1] PASS
+C-4a mf-hook.json [1, 1, 1] PASS
+C-4a mf-recovery.json [1, 1, 1] PASS
+C-4a mf-sub-crm-mail.json [1, 1, 1] PASS
+recount ready 35 of 72
+table 3b recount: 11 question lines checked, all equal: True
+TOTAL line: | TOTAL | all rows | 72 | ready 35, on defaults only 34, with a check 3 | |
+lines with 18 runs and not naming both voided runs (report text): [52, 54, 449]
+rows whose new text has 18 without naming both voided runs: none
+rows with the 60.1 to 61.9 figure and no L-PAGE hold: none
+prose 'the lead' hits: 2 | 'claim' hits outside claim table/claim row/claimed: 1
+cite keys used but not defined: none
+labels missing from glossary: none
+--- c6m extra checks ---
+wrong-word slips 'studio lead' + made-up/table/name in new text or reason: none
+pipe-grep text 'archive|delete' anywhere in the report: 0
+'new in this report' near contact deletion: 0
+rows saying the take script archives as fact: none
+report cites Q19 : 11
+report cites Q22 : 6
+report cites Q23 : 18
+report cites Q25 : 3
+report cites Q27 : 13
+report cites Q21.1 : 3
+action box first (before section 0): True
+every row has a viewer column text: True
+IST given with the money stop: True | take target: True

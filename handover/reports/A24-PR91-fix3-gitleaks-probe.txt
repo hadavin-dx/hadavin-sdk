@@ -1,0 +1,8 @@
+archive sha256 (CI pin 551f6fc8...70eb): 551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+8.30.1
+attributes=[none] -> leaks found: 1
+attributes=[cred.txt -diff] -> no leaks found
+attributes=[cred.txt binary] -> no leaks found
+attributes=[* -diff] -> no leaks found
+attributes=[cred.txt -text] -> leaks found: 1
+attributes=[cred.txt diff=foo] -> leaks found: 1

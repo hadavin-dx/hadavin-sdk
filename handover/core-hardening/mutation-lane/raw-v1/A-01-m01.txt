@@ -1,0 +1,12 @@
+src/hadavin_sdk/runtime/tick.py
+(no-op control)
+OLD:     if fn is None:
+        return
+    _LOG.info("audit_reconcile
+NEW:     if fn is None:
+        return
+    _LOG.info("audit_reconcile
+
+........................................................................ [ 69%]
+................................                                         [100%]
+104 passed in 19.21s

@@ -1,0 +1,13 @@
+BANNED list length: 10
+../EDITS.md: distinct banned strings 0, occurrences 0
+../../inputs/AGENT-SCOPE-DO-AND-DONT.md: distinct banned strings 0, occurrences 0
+../../inputs/DECISION-one-store.md: distinct banned strings 0, occurrences 0
+../../inputs/DECISIONS-2026-11-16.md: distinct banned strings 0, occurrences 0
+../../inputs/FACTS-ALREADY-DONE.md: distinct banned strings 0, occurrences 0
+../../inputs/OWNER-STEPS-realrun-v3.md: distinct banned strings 0, occurrences 0
+../../inputs/plan-wp6-resmoke-v5.md: distinct banned strings 0, occurrences 0
+../verify11.py: distinct banned strings 0, occurrences 0
+../resolve-r11.md: distinct banned strings 0, occurrences 0
+../checkpoint-r11.md: distinct banned strings 0, occurrences 0
+../build-r11.py: distinct banned strings 0, occurrences 0
+TOTAL distinct-string hits over scanned files: 0

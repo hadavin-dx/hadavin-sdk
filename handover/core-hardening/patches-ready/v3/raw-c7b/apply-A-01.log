@@ -1,0 +1,10 @@
+patching file src/hadavin_sdk/runtime/tick.py
+patching file src/hadavin_sdk/audit/protocol.py
+patching file src/hadavin_sdk/audit/chain.py
+patching file src/hadavin_sdk/audit/local_dir.py
+patching file src/hadavin_sdk/audit/spill.py
+patching file src/hadavin_sdk/backends/table.py
+Hunk #1 succeeded at 196 (offset 5 lines).
+patching file src/hadavin_sdk/k1b/audit_sink.py
+patching file tests/test_a01_audit_reconcile.py
+patching file tests/test_p7_tick.py

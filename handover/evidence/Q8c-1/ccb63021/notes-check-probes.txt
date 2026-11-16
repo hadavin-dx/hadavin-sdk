@@ -1,0 +1,24 @@
+walrus plant exit 1
+tests/test_probe_w.py: the test test_p is new or changed and has no row of its own in the notes
+usefixtures plant exit 1
+tests/test_probe_u.py: the test test_p is new or changed and has no row of its own in the notes
+star plant exit 1
+tests/test_probe_s.py: the test test_p is new or changed and has no row of its own in the notes
+runtime_name plant exit 1
+tests/test_probe_r.py: the test test_p is new or changed and has no row of its own in the notes
+walrus control exit 1
+tests/test_probe_w.py: the test test_p has a row whose reason points at nothing: the mutant `B1 probe` is in no mutant file
+usefixtures control exit 1
+tests/test_probe_u.py: the test test_p has a row whose reason points at nothing: the mutant `B1 probe` is in no mutant file
+star control exit 1
+tests/test_probe_s.py: the test test_p has a row whose reason points at nothing: the mutant `B1 probe` is in no mutant file
+runtime_name control exit 1
+tests/test_probe_r.py: the test test_p has a row whose reason points at nothing: the mutant `B1 probe` is in no mutant file
+walrus control exit 0
+
+usefixtures control exit 0
+
+star control exit 0
+
+runtime_name control exit 0
+

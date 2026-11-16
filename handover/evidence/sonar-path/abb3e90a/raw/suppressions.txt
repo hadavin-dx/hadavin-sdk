@@ -1,0 +1,19 @@
+## added lines markers (origin/main...head)
+noqa: 0
+type: *ignore: 0
+fmt: *skip: 0
+pragma: *no cover: 0
+NOSONAR: 0
+nosec: 0
+## removed lines markers
+noqa: 0
+type: *ignore: 0
+fmt: *skip: 3
+pragma: *no cover: 0
+NOSONAR: 5
+nosec: 0
+## NOSONAR on origin/main (src+tests, count lines)
+5
+## NOSONAR on head
+0
+## added marker lines

@@ -1,0 +1,33 @@
+banned strings loaded: 10
+handover/core-hardening/audit-r460/CORE-PR-HANDOFF-v11.md: 0
+handover/core-hardening/audit-r460/CORE-PR-HANDOFF-v11-other-tracks.md: 0
+handover/core-hardening/audit-r460/evidence-handoff-v11/apply_part1.py: 0
+handover/core-hardening/audit-r460/evidence-handoff-v11/apply_part2.py: 0
+handover/core-hardening/audit-r460/evidence-handoff-v11/apply_part3.py: 0
+handover/core-hardening/audit-r460/evidence-handoff-v11/apply_part4.py: 0
+handover/core-hardening/audit-r460/evidence-handoff-v11/apply_part5.py: 0
+handover/core-hardening/audit-r460/evidence-handoff-v11/apply_part6.py: 0
+handover/core-hardening/audit-r460/evidence-handoff-v11/apply_part7.py: 0
+handover/core-hardening/audit-r460/evidence-handoff-v11/apply_part8.py: 0
+handover/core-hardening/audit-r460/evidence-handoff-v11/apply_part9.py: 0
+handover/core-hardening/audit-r460/evidence-handoff-v11/banned_count_v11.py: 0
+handover/core-hardening/audit-r460/evidence-handoff-v11/check_gate4_vs_ci.py: 0
+handover/core-hardening/audit-r460/evidence-handoff-v11/cite_check_v11.py: 0
+handover/core-hardening/audit-r460/evidence-handoff-v11/cycles_report.json: 0
+handover/core-hardening/audit-r460/evidence-handoff-v11/cycles_v11_from_independent.py: 0
+handover/core-hardening/audit-r460/evidence-handoff-v11/gate4.sh: 0
+handover/core-hardening/audit-r460/evidence-handoff-v11/import_graph_v11.py: 0
+handover/core-hardening/audit-r460/evidence-handoff-v11/merge_probe_v11.py: 0
+handover/core-hardening/audit-r460/evidence-handoff-v11/raw-banned-v11.txt: 0
+handover/core-hardening/audit-r460/evidence-handoff-v11/raw-cite-check-v11-other.txt: 0
+handover/core-hardening/audit-r460/evidence-handoff-v11/raw-cite-check-v11.txt: 0
+handover/core-hardening/audit-r460/evidence-handoff-v11/raw-cycles-v11-independent-script.txt: 0
+handover/core-hardening/audit-r460/evidence-handoff-v11/raw-gate4-syntax.txt: 0
+handover/core-hardening/audit-r460/evidence-handoff-v11/raw-gate4-vs-ci.txt: 0
+handover/core-hardening/audit-r460/evidence-handoff-v11/raw-import-graph-v11-parents.txt: 0
+handover/core-hardening/audit-r460/evidence-handoff-v11/raw-import-graph-v11.txt: 0
+handover/core-hardening/audit-r460/evidence-handoff-v11/raw-merge-probe-v11.txt: 0
+handover/core-hardening/audit-r460/evidence-handoff-v11/raw-snippets-v11.txt: 0
+handover/core-hardening/audit-r460/evidence-handoff-v11/snippet_check_v11.py: 0
+handover/core-hardening/audit-r460/checkpoint-handoff-v11.md: 0
+TOTAL banned-string matches: 0

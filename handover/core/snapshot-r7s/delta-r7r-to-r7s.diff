@@ -1,0 +1,863 @@
+diff -ru -N -x __pycache__ -x .pytest_cache -x data -x .ruff_cache tree-R7R/demo_only/bad_request.py tree-R7S/demo_only/bad_request.py
+--- tree-R7R/demo_only/bad_request.py	2026-11-14 10:57:52.799158752 +0000
++++ tree-R7S/demo_only/bad_request.py	2026-11-14 12:50:10.909261191 +0000
+@@ -18,7 +18,9 @@
+ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+ from typing import Any
+ 
++from lead_desk.config import is_loopback_host
+ from scripts.http_guard import HeadDeadline
++from tools.refusing_args import LOOPBACK_HOST_TEXT
+ 
+ BAD_REQUEST_ERRORS = (KeyError, TypeError, ValueError, AttributeError, IndexError, RecursionError)
+ METHOD_NAMES = ("do_GET", "do_POST", "do_PATCH", "do_DELETE", "do_PUT")
+@@ -31,10 +33,21 @@
+     """The server class of every fake. The standard library prints a traceback to the error output for ANY exception in
+     a handler thread; a test client that hangs up on purpose (a request with no body, a bad one, a late body) made the
+     fake write its answer to a closed connection and print `Exception occurred during processing of request` into the
+-    middle of a test run. Fix at this one place: a client that left is silent; every other error is still reported."""
++    middle of a test run. Fix at this one place: a client that left is silent; every other error is still reported.
++
++    Second job, at the same one place: a fake has no sign-in, so it must listen on this computer only. The refusal of a
++    host that is not loopback (the all-interfaces address, another computer's address, a name, an empty host) is made
++    BEFORE the base class opens the port, so every fake and every future fake that extends this class has it. The one
++    rule is `lead_desk.config.is_loopback_host`; there is no second copy."""
+ 
+     daemon_threads = True
+ 
++    def __init__(self, server_address: Any, request_handler_class: Any, bind_and_activate: bool = True) -> None:
++        host = server_address[0] if isinstance(server_address, tuple) and server_address else None
++        if not isinstance(host, str) or not is_loopback_host(host):  # fails closed: anything unreadable is refused
++            raise ValueError(LOOPBACK_HOST_TEXT)
++        super().__init__(server_address, request_handler_class, bind_and_activate)
++
+     def handle_error(self, request: Any, client_address: Any) -> None:
+         if isinstance(sys.exception(), CLIENT_GONE):
+             return
+diff -ru -N -x __pycache__ -x .pytest_cache -x data -x .ruff_cache tree-R7R/scripts/run_real_check.py tree-R7S/scripts/run_real_check.py
+--- tree-R7R/scripts/run_real_check.py	2026-11-14 11:00:01.713885256 +0000
++++ tree-R7S/scripts/run_real_check.py	2026-11-14 13:12:24.276728033 +0000
+@@ -597,6 +597,20 @@
+     return EXIT_FAILED
+ 
+ 
++def contacts_not_accounted_for(created: int | None, accounted: int) -> int:
++    """How many contacts the desk says it created that the check did not account for: `created` is the desk's own
++    counter for THIS run (None: no counter, which check F3 already fails), `accounted` is the contacts the CRM list
++    showed (archived or left). More shown than created is not an error (a 409 answer is no create; a crash can end a
++    call between the create and the count)."""
++    return max(0, (created or 0) - accounted)
++
++
++def exit_code_of(ok: bool, written: bool, left: list[str], unseen: int) -> int:
++    """0 only if every check holds, the result file was written, no listed contact was left and no created contact is
++    unaccounted for. The one place the end of the run is decided."""
++    return 0 if ok and written and not left and not unseen else EXIT_FAILED
++
++
+ def archive_all(crm: HubspotCrm, pairs: list[tuple[str, str]]) -> tuple[int, list[str]]:
+     """Archive every contact; one failure does not stop the rest. Returns (archived, contact numbers left behind)."""
+     done, left = 0, []
+@@ -815,10 +829,12 @@
+     """The desk as a child process (scripts/crash_desk.py, which can be stopped on purpose at a named moment). `env` is
+     the finished child environment (from child_environment): nothing else is added except PYTHONPATH."""
+ 
+-    def __init__(self, env: dict[str, str], run_dir: Path, port: int, label: str) -> None:
++    def __init__(self, env: dict[str, str], run_dir: Path, port: int, label: str, tag: str | None = None) -> None:
+         self.env = {**env, "PYTHONPATH": os.pathsep.join([str(REPO / "src"), str(REPO)])}
+         self.port, self.label = port, label
+-        self.log_path = run_dir / f"desk-{label}.log"
++        # the files of this desk carry the run tag: a run folder used before holds files of another run (other tag), and
++        # their counters must never be added to this run's (read_counter_files takes only the files of one tag)
++        self.log_path = run_dir / (f"desk-{tag}-{label}.log" if tag else f"desk-{label}.log")
+         self.proc: subprocess.Popen[bytes] | None = None
+         self.url = f"http://127.0.0.1:{port}"
+ 
+@@ -872,9 +888,11 @@
+             return None
+ 
+ 
+-def read_counter_files(run_dir: Path, suffix: str) -> dict[str, int]:
++def read_counter_files(run_dir: Path, suffix: str, tag: str) -> dict[str, int]:
++    """The sum of the counter files the desks of THIS run (run tag `tag`) wrote. A file of an older run in a shared run
++    folder has another tag (or none) and is not read."""
+     total: Counter[str] = Counter()
+-    for p in sorted(run_dir.glob(f"desk-*{suffix}")):
++    for p in sorted(run_dir.glob(f"desk-{tag}-*{suffix}")):
+         try:
+             total.update({k: int(v) for k, v in load_json_file(p).items()})
+         except (OSError, ValueError, AttributeError):
+@@ -1138,8 +1156,8 @@
+                 continue
+             lines[key] = line
+ 
+-    d1 = Desk(child_env, run_dir, port, "1")
+-    d2 = Desk({**child_env}, run_dir, port, "2")
++    d1 = Desk(child_env, run_dir, port, "1", tag)
++    d2 = Desk({**child_env}, run_dir, port, "2", tag)
+     sending_at_kill = 0
+     crash_exit: int | None = None
+     before_leads = 0
+@@ -1186,7 +1204,7 @@
+     try:
+         crm_pairs = [(lid, cid) for lid, cid in crm.rows_with_prefix("L") if lid in lead_ids]
+     except CrmError as e:  # includes the read-back call cap: say what may be left, never end in a traceback
+-        return _readback_failed(a, run_dir, env, e, len(lead_ids), read_counter_files(run_dir, ".hubspot.json"))
++        return _readback_failed(a, run_dir, env, e, len(lead_ids), read_counter_files(run_dir, ".hubspot.json", tag))
+     crm_rows = [{"lead_id": lid} for lid, _ in crm_pairs]
+ 
+     sent_ids = {lid for lid, (s, _, _) in book["followups"].items() if s == "sent"}  # only these must show up
+@@ -1228,8 +1246,8 @@
+         max_unknown=unknown_allowance(sending_at_kill),  # only follow-ups in flight at the kill may end unknown
+         intended=intended,
+     )
+-    hub_stats = read_counter_files(run_dir, ".hubspot.json")
+-    smtp_stats = read_counter_files(run_dir, ".smtp.json")
++    hub_stats = read_counter_files(run_dir, ".hubspot.json", tag)
++    smtp_stats = read_counter_files(run_dir, ".smtp.json", tag)
+     result["checks"] += floor_checks(
+         book,
+         persons + 1,
+@@ -1288,15 +1306,25 @@
+     print()
+     written = write_result(result_path(env, run_dir), {"checks": result, "summary": summary, "per_lead": per_lead})
+     left: list[str] = []
++    accounted = len(crm_pairs)
+     if a.cleanup:
+         done, left = archive_all(crm, crm_pairs)
++        accounted = done + len(left)
+         print(f"clean-up: {done} contacts archived (only those carrying this run's lead ids)")
+         if left:
+             print(
+                 f"clean-up: {len(left)} contacts are LEFT (HubSpot contact numbers: {', '.join(left)}); archive by hand"
+             )
++    unseen = contacts_not_accounted_for(hub_stats.get("created"), accounted)
++    if (
++        unseen
++    ):  # the list did not show a contact the desk created (list lag): it was not archived and may still be there
++        print(
++            f"{unseen} contacts may be left in HubSpot: the desk created {hub_stats.get('created')}, the list showed "
++            f"{accounted}. Their lead ids start with L and are in the desk's book; check HubSpot and archive by hand."
++        )
+     shutil.rmtree(run_dir / "__pycache__", ignore_errors=True)
+-    return 0 if result["ok"] and written and not left else EXIT_FAILED
++    return exit_code_of(result["ok"], written, left, unseen)
+ 
+ 
+ if __name__ == "__main__":
+diff -ru -N -x __pycache__ -x .pytest_cache -x data -x .ruff_cache tree-R7R/tests/support.py tree-R7S/tests/support.py
+--- tree-R7R/tests/support.py	2026-11-14 10:47:58.633398359 +0000
++++ tree-R7S/tests/support.py	2026-11-14 12:50:48.325769200 +0000
+@@ -27,7 +27,7 @@
+ from dataclasses import dataclass, field
+ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+ from pathlib import Path
+-from typing import Any, Final, cast
++from typing import Any, Final, NoReturn, cast
+ 
+ import pytest
+ 
+@@ -45,6 +45,19 @@
+ DEMO_LEADFLOW: Final[dict[str, Any]] = json.loads((REPO / "demo_only" / "leadflow.json").read_text(encoding="utf-8"))
+ 
+ 
++REQUIRE_SCAN_ENV: Final = "DPLD_REQUIRE_SCAN"  # set on CI: a test that cannot run there is a failure, not a skip
++
++
++def skip_or_fail_without_openssl() -> NoReturn:
++    """The one place a missing openssl program is handled by a test that needs a made-up certificate. Elsewhere it is
++    a skip (the program is optional on a laptop); with DPLD_REQUIRE_SCAN set (CI) it is a failure, so a CI image without
++    openssl cannot turn the mail tests into silent skips."""
++    text = "the openssl program is not installed, so no test certificate can be made"
++    if os.environ.get(REQUIRE_SCAN_ENV):
++        pytest.fail(f"{text} ({REQUIRE_SCAN_ENV} is set: a skip here would hide the test)")
++    pytest.skip(text)
++
++
+ def lead_ids_containing(monkeypatch: Any, fragment: str) -> None:
+     """Every lead number made from now on holds `fragment` in its random hex part (a random draw can do this by
+     chance: "L" and 12 hex characters can spell ada, bad, face...). Lets a test prove that a probe made of hex letters
+diff -ru -N -x __pycache__ -x .pytest_cache -x data -x .ruff_cache tree-R7R/tests/test_ca_file_reads.py tree-R7S/tests/test_ca_file_reads.py
+--- tree-R7R/tests/test_ca_file_reads.py	2026-11-14 10:47:58.633254951 +0000
++++ tree-R7S/tests/test_ca_file_reads.py	2026-11-14 12:50:48.327515386 +0000
+@@ -14,7 +14,7 @@
+ from typing import Any
+ 
+ import pytest
+-from support import run_program
++from support import run_program, skip_or_fail_without_openssl
+ 
+ from demo_only.fake_smtp_tls import make_cert
+ from lead_desk.constants import CA_FILE_MAX_BYTES
+@@ -97,7 +97,7 @@
+ def test_a_valid_ca_file_still_works(tmp_path: Path, entry: str) -> None:
+     made = make_cert(tmp_path, "localhost")
+     if made is None:
+-        pytest.skip("the openssl program is not installed, so no test certificate can be made")
++        skip_or_fail_without_openssl()
+     assert _in_child(entry, made[0]) == "ok"
+ 
+ 
+@@ -108,7 +108,7 @@
+ 
+     made = make_cert(tmp_path, "localhost")
+     if made is None:
+-        pytest.skip("the openssl program is not installed, so no test certificate can be made")
++        skip_or_fail_without_openssl()
+     ctx = context_from_ca_file(made[0], SETTING)
+     assert ctx.verify_mode == ssl.CERT_REQUIRED and ctx.check_hostname is True
+     assert ctx.cert_store_stats()["x509"] == 1  # the system authorities are not added
+@@ -120,7 +120,7 @@
+ def _made(tmp_path: Path) -> tuple[Path, Path]:
+     made = make_cert(tmp_path, "localhost")
+     if made is None:
+-        pytest.skip("the openssl program is not installed, so no test certificate can be made")
++        skip_or_fail_without_openssl()
+     return made
+ 
+ 
+@@ -196,7 +196,7 @@
+ 
+     exe = shutil.which("openssl")
+     if exe is None:
+-        pytest.skip("the openssl program is not installed, so no test certificate can be made")
++        skip_or_fail_without_openssl()
+     cert, key = tmp_path / "leaf.pem", tmp_path / "leaf-key.pem"
+     run_program(
+         [exe, "req", "-x509", "-newkey", "rsa:2048", "-nodes", "-keyout", str(key), "-out", str(cert), "-days", "2"]
+diff -ru -N -x __pycache__ -x .pytest_cache -x data -x .ruff_cache tree-R7R/tests/test_file_call_guard.py tree-R7S/tests/test_file_call_guard.py
+--- tree-R7R/tests/test_file_call_guard.py	2026-11-14 11:46:01.646067535 +0000
++++ tree-R7S/tests/test_file_call_guard.py	2026-11-14 12:51:12.806145509 +0000
+@@ -173,6 +173,7 @@
+     "asyncio.open_connection",
+     "asyncio.start_unix_server",
+     "asyncio.open_unix_connection",
++    "demo_only.bad_request.QuietServer",  # r7s: the server class of every fake; a use outside the listed files is new
+ }
+ # R7: names that read standard input (a wait on a person or a pipe), stop or signal a process, look at a path without a
+ # regular-file check, fetch from the network, or start a debugger or an interactive prompt
+@@ -537,7 +538,7 @@
+     (
+         "demo_only/bad_request.py",
+         "ThreadingHTTPServer",
+-    ): "the base class of QuietServer, which every fake extends; each fake's factory refuses a non-loopback host",
++    ): "QuietServer refuses a non-loopback bind",
+     ("demo_only/fake_imap.py", "socket.socket"): "the fake IMAP server's own socket (listener and type names)",
+     ("demo_only/fake_imap.py", "self._srv.bind"): "binds the fake IMAP server to a loopback address",
+     ("demo_only/fake_imap.py", "self._srv.listen"): "listens on that loopback socket",
+@@ -549,6 +550,18 @@
+     ("demo_only/fake_smtp_tls.py", "socket.socket"): "the fake SMTP-over-TLS server's own sockets",
+     ("demo_only/fake_smtp_tls.py", "self._srv.bind"): "binds the fake mail server to a loopback address",
+     ("demo_only/fake_smtp_tls.py", "self._srv.listen"): "listens on that loopback socket",
++    (
++        "demo_only/fake_hubspot.py",
++        "QuietServer",
++    ): "the fake HubSpot server extends QuietServer, which refuses a non-loopback bind",
++    (
++        "demo_only/fake_model_server.py",
++        "QuietServer",
++    ): "the fake model server is a QuietServer, which refuses a non-loopback bind",
++    (
++        "demo_only/fakes_server.py",
++        "QuietServer",
++    ): "the fakes server extends QuietServer, which refuses a non-loopback bind",
+     ("demo_only/fakes_server.py", "srv.serve_forever"): "serves that loopback fakes server",
+     ("scripts/run_real_check.py", "socket.socket"): "asks the system for a free loopback port",
+     ("scripts/run_real_check.py", "s.bind"): "binds 127.0.0.1 port 0 only to learn a free port",
+diff -ru -N -x __pycache__ -x .pytest_cache -x data -x .ruff_cache tree-R7R/tests/test_r7_mail_context.py tree-R7S/tests/test_r7_mail_context.py
+--- tree-R7R/tests/test_r7_mail_context.py	2026-11-14 10:47:58.631694589 +0000
++++ tree-R7S/tests/test_r7_mail_context.py	2026-11-14 12:50:51.446631665 +0000
+@@ -18,7 +18,7 @@
+ from typing import Any
+ 
+ import pytest
+-from support import run_python  # placed with the other test helpers
++from support import run_python, skip_or_fail_without_openssl  # placed with the other test helpers
+ 
+ from demo_only.fake_imap import FakeImap
+ from demo_only.fake_smtp_tls import FAKE_PASSWORD, FakeSmtp, make_cert
+@@ -49,7 +49,7 @@
+     def __init__(self, tmp: Path, host: str = HOST) -> None:
+         made = make_cert(tmp, host)
+         if made is None:
+-            pytest.skip("the openssl program is not installed, so no test certificate can be made")
++            skip_or_fail_without_openssl()
+         self.cert, self.key = made
+         self.ctx = ssl.create_default_context(cafile=str(self.cert))  # trusts the test certificate; checks the name
+ 
+diff -ru -N -x __pycache__ -x .pytest_cache -x data -x .ruff_cache tree-R7R/tests/test_r7c_mail6_killers.py tree-R7S/tests/test_r7c_mail6_killers.py
+--- tree-R7R/tests/test_r7c_mail6_killers.py	2026-11-14 10:47:58.634478277 +0000
++++ tree-R7S/tests/test_r7c_mail6_killers.py	2026-11-14 12:50:48.329018864 +0000
+@@ -10,7 +10,7 @@
+ from pathlib import Path
+ 
+ import pytest
+-from support import script_module
++from support import script_module, skip_or_fail_without_openssl
+ 
+ from demo_only.fake_imap import FakeImap
+ from demo_only.fake_smtp_tls import FAKE_PASSWORD, FakeSmtp, make_cert
+@@ -32,7 +32,7 @@
+ 
+     made = make_cert(tmp_path, HOST)
+     if made is None:
+-        pytest.skip("no openssl")
++        skip_or_fail_without_openssl()
+     pw = tmp_path / "pw.txt"
+     pw.write_text(FAKE_PASSWORD + "\n", encoding="utf-8")
+     srv = FakeSmtp(made[0], made[1], HOST, implicit_tls=True)
+@@ -86,7 +86,7 @@
+ 
+     made = make_cert(tmp_path, HOST)
+     if made is None:
+-        pytest.skip("no openssl")
++        skip_or_fail_without_openssl()
+     pw = tmp_path / "pw.txt"
+     pw.write_text(FAKE_PASSWORD + "\n", encoding="utf-8")
+     srv = FakeImap(made[0], made[1], HOST, {"INBOX": ["RUN1-L1"]})
+diff -ru -N -x __pycache__ -x .pytest_cache -x data -x .ruff_cache tree-R7R/tests/test_r7c_mail_killers.py tree-R7S/tests/test_r7c_mail_killers.py
+--- tree-R7R/tests/test_r7c_mail_killers.py	2026-11-14 10:47:58.631822344 +0000
++++ tree-R7S/tests/test_r7c_mail_killers.py	2026-11-14 12:50:48.329492304 +0000
+@@ -15,7 +15,7 @@
+ from pathlib import Path
+ 
+ import pytest
+-from support import script_module
++from support import script_module, skip_or_fail_without_openssl
+ 
+ from demo_only.fake_smtp_tls import FAKE_PASSWORD, make_cert
+ from lead_desk.imap_count import ImapCountError, ImapSettings, counts_by_key
+@@ -77,7 +77,7 @@
+ def test_m6_the_total_time_limit_holds_inside_one_slow_line_or_literal(mode: str, tmp_path: Path) -> None:
+     made = make_cert(tmp_path, HOST)
+     if made is None:
+-        pytest.skip("no openssl")
++        skip_or_fail_without_openssl()
+     cert, key = made
+     pw = tmp_path / "pw.txt"
+     pw.write_text(FAKE_PASSWORD + "\n", encoding="utf-8")
+diff -ru -N -x __pycache__ -x .pytest_cache -x data -x .ruff_cache tree-R7R/tests/test_r7f_findings.py tree-R7S/tests/test_r7f_findings.py
+--- tree-R7R/tests/test_r7f_findings.py	2026-11-14 10:47:58.633425749 +0000
++++ tree-R7S/tests/test_r7f_findings.py	2026-11-14 12:50:51.449865875 +0000
+@@ -181,7 +181,7 @@
+     def __init__(self, tmp: Path) -> None:
+         made = make_cert(tmp, "localhost")
+         if made is None:
+-            pytest.skip("the openssl program is not installed, so no test certificate can be made")
++            support.skip_or_fail_without_openssl()
+         self.cert, self.key = made
+ 
+     def context(self) -> ssl.SSLContext:
+diff -ru -N -x __pycache__ -x .pytest_cache -x data -x .ruff_cache tree-R7R/tests/test_r7m_new.py tree-R7S/tests/test_r7m_new.py
+--- tree-R7R/tests/test_r7m_new.py	2026-11-14 10:47:58.631561510 +0000
++++ tree-R7S/tests/test_r7m_new.py	2026-11-14 12:50:53.809773051 +0000
+@@ -12,6 +12,7 @@
+ from typing import Any
+ 
+ import pytest
++from support import skip_or_fail_without_openssl
+ 
+ from demo_only.fake_imap import FakeImap
+ from demo_only.fake_smtp_tls import FAKE_PASSWORD, FakeSmtp, make_cert
+@@ -26,7 +27,7 @@
+ def cert(tmp_path: Path) -> tuple[Path, Path]:
+     made = make_cert(tmp_path, HOST)
+     if made is None:
+-        pytest.skip("the openssl program is not installed, so no test certificate can be made")
++        skip_or_fail_without_openssl()
+     return made
+ 
+ 
+diff -ru -N -x __pycache__ -x .pytest_cache -x data -x .ruff_cache tree-R7R/tests/test_r7n_findings.py tree-R7S/tests/test_r7n_findings.py
+--- tree-R7R/tests/test_r7n_findings.py	2026-11-14 11:05:29.622028372 +0000
++++ tree-R7S/tests/test_r7n_findings.py	2026-11-14 12:50:58.493869918 +0000
+@@ -76,6 +76,7 @@
+ from typing import Any
+ 
+ import pytest
++from support import skip_or_fail_without_openssl
+ 
+ from demo_only.fake_smtp_tls import FAKE_PASSWORD, close_listener, make_cert
+ from lead_desk import imap_count, server
+@@ -151,7 +152,7 @@
+ def cert(tmp_path: Path) -> tuple[Path, Path]:
+     made = make_cert(tmp_path, HOST)
+     if made is None:
+-        pytest.skip("the openssl program is not installed, so no test certificate can be made")
++        skip_or_fail_without_openssl()
+     return made
+ 
+ 
+@@ -1262,7 +1263,7 @@
+ 
+     made = make_cert(tmp_path, HOST)
+     if made is None:
+-        pytest.skip("the openssl program is not installed, so no test certificate can be made")
++        skip_or_fail_without_openssl()
+     cert, key = made
+ 
+     ctx = ssl.create_default_context(cafile=str(cert))
+diff -ru -N -x __pycache__ -x .pytest_cache -x data -x .ruff_cache tree-R7R/tests/test_r7q_findings.py tree-R7S/tests/test_r7q_findings.py
+--- tree-R7R/tests/test_r7q_findings.py	2026-11-14 11:54:14.961878100 +0000
++++ tree-R7S/tests/test_r7q_findings.py	2026-11-14 13:12:10.852477575 +0000
+@@ -18,11 +18,14 @@
+           | folders too, and it does not flag the real tree                             | (new guard)
+   q8      | the fake servers stay silent when the client left, and print every other    | FAILS
+           | error                                                                       | (no QuietServer)
++  q9      | an error after the mailbox login is replaced by ONE fixed text; the         | PIN
++          | server's or the library's text is neither the cause nor the context (r7s)   |
+ """
+ 
+ from __future__ import annotations
+ 
+ import imaplib
++import inspect
+ import json
+ import sys
+ import types
+@@ -31,6 +34,8 @@
+ from typing import Any
+ 
+ import pytest
++from support import HOST
++from test_r7n_findings import PLAIN, _chain
+ 
+ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+ import run_real_check as rrc  # noqa: E402
+@@ -75,7 +80,7 @@
+ 
+ 
+ def _live_env(tmp_path: Path, model: str) -> dict[str, str]:
+-    (tmp_path / "k").write_text("made-up-key-for-tests-only\n", encoding="utf-8")
++    (tmp_path / "k").write_text(PLAIN + "\n", encoding="utf-8")
+     return {
+         "DESK_LIVE_MODEL": model,
+         "DESK_LIVE_KEY_FILE": str(tmp_path / "k"),
+@@ -273,7 +278,7 @@
+             raise MemoryError("out of memory") from inner
+ 
+     with pytest.raises(MemoryError) as info:
+-        _boundary(raiser)("s3cret-made-up")
++        _boundary(raiser)(PLAIN)
+     e = info.value
+     assert type(e) is MemoryError
+     assert e.__cause__ is None and e.__context__ is None and e.__suppress_context__ is True
+@@ -284,10 +289,10 @@
+         raise ValueError("library text with " + secret)
+ 
+     with pytest.raises(_Refusal) as info:
+-        _boundary(raiser)("s3cret-made-up")
++        _boundary(raiser)(PLAIN)
+     e = info.value
+     assert str(e) == "fixed text" and e.__cause__ is None and e.__context__ is None
+-    assert "s3cret-made-up" not in repr(e.args)
++    assert PLAIN not in repr(e.args)
+ 
+ 
+ @pytest.mark.parametrize("cls", [KeyboardInterrupt, SystemExit])
+@@ -301,7 +306,7 @@
+             raise cls() from inner
+ 
+     with pytest.raises(cls) as info:
+-        _boundary(raiser)("s3cret-made-up")
++        _boundary(raiser)(PLAIN)
+     e = info.value
+     assert type(e) is cls
+     assert e.__cause__ is None and e.__context__ is None
+@@ -499,9 +504,9 @@
+ @pytest.mark.parametrize(
+     ("exc", "expected"),
+     [
+-        (OSError("made-up detail with SECRET-PW"), "ImapConnectionError"),
+-        (imaplib.IMAP4.abort("made-up detail with SECRET-PW"), "ImapConnectionError"),
+-        (imaplib.IMAP4.error("made-up detail with SECRET-PW"), "ImapCountError"),
++        (OSError("made-up detail with " + PLAIN), "ImapConnectionError"),
++        (imaplib.IMAP4.abort("made-up detail with " + PLAIN), "ImapConnectionError"),
++        (imaplib.IMAP4.error("made-up detail with " + PLAIN), "ImapCountError"),
+     ],
+ )
+ def test_q9_an_error_after_the_login_is_replaced_by_the_fixed_text(
+@@ -511,10 +516,10 @@
+     from lead_desk import imap_count
+ 
+     pw = tmp_path / "pw"
+-    pw.write_text("SECRET-PW\n", encoding="utf-8")
++    pw.write_text(PLAIN + "\n", encoding="utf-8")
+     monkeypatch.setattr(imap_count, "_BoundedImap", _LoggedInImap)
+     monkeypatch.setattr(imap_count, "require_modern_protocol", lambda *_a, **_k: None)
+-    s = imap_count.ImapSettings("h.test", "u", pw)
++    s = imap_count.ImapSettings(HOST, "u", pw)
+ 
+     def work(_m: Any) -> dict[str, dict[str, int]]:
+         raise exc
+@@ -523,4 +528,18 @@
+         imap_count._session(s, work)
+     assert type(info.value).__name__ == expected
+     assert str(info.value) == "the mailbox could not be read"
+-    assert "SECRET-PW" not in repr(info.value.args) and info.value.__cause__ is None
++    assert PLAIN not in repr(info.value.args)
++    # the error that was caught must not hang on as the cause OR the context (a `raise X` inside the except block
++    # with no `from None` keeps it as __context__, and a program reading the chain would reach the server's text)
++    assert info.value.__cause__ is None and info.value.__context__ is None
++    for link in _chain(
++        info.value
++    ):  # every error reachable from it, by text (not the frames: this test holds the canary)
++        assert PLAIN not in str(link) + repr(link) + repr(link.args)
++    # `_session` is wrapped by secret_boundary, which cuts every chain it sees: that wrapper alone would hide a missing
++    # `from None` inside _session. So the function under the wrapper is called too: its own error must already say
++    # "do not show the earlier error" (r7s, order C-R7S item 5).
++    with pytest.raises(imap_count.ImapCountError) as raw:
++        inspect.unwrap(imap_count._session)(s, work)
++    assert raw.value.__cause__ is None and raw.value.__suppress_context__ is True
++    assert str(raw.value) == "the mailbox could not be read"
+diff -ru -N -x __pycache__ -x .pytest_cache -x data -x .ruff_cache tree-R7R/tests/test_r7s_findings.py tree-R7S/tests/test_r7s_findings.py
+--- tree-R7R/tests/test_r7s_findings.py	1970-01-01 00:00:00.000000000 +0000
++++ tree-R7S/tests/test_r7s_findings.py	2026-11-14 13:12:31.126221496 +0000
+@@ -0,0 +1,307 @@
++"""Round 7S: tests for the findings of the r7r review. Made-up data only, loopback only; no real model, mail or spend.
++Header table: finding, what is pinned, result on a copy of r7r (FAILS = new behaviour, fails before the fix; PIN = code
++that is already right or guards against a wrong fix, passes by design; a mutant planted on r7s is killed by it, see
++R7S-RESULTS.md).
++
++  finding | what is pinned                                                              | on r7r
++  ------- | --------------------------------------------------------------------------- | ------
++  s1      | QuietServer (the one server class of every fake) refuses a bind that is not | FAILS
++          | this computer. FAILS: itself, a subclass, FakeHubspot. PIN: the other two   |
++          | fakes (their factories already refuse)                                      |
++  s1b     | the file-call guard sees every use of QuietServer outside its own file      | FAILS
++  s1c     | a loopback bind still works                                                 | PIN
++  s1d     | an address that is not a host and a port is refused (fails closed)          | FAILS
++  s3      | a contact the desk created that the CRM list does not show is said and ends | FAILS
++          | the check with the failed exit code, with and without the clean-up          |
++  s3d     | a contact left by a failed archive is said as LEFT, not again as missing    | PIN
++  s3e     | the exit code is 0 only if checks hold, file written, none left, none        | FAILS
++          | unaccounted (one failing part at a time)                                    |
++  s3b     | the desk's counter files are those of THIS run: an old file in a shared     | FAILS
++          | run folder does not count                                                   |
++  s3c     | the counting rule itself (created, accepted number, no counter)             | FAILS
++  s6      | a test that needs openssl fails on CI (DPLD_REQUIRE_SCAN set) and skips     | FAILS
++          | without it; no test file skips on a missing openssl by itself               |
++"""
++
++from __future__ import annotations
++
++import ast
++import json
++from pathlib import Path
++from typing import Any
++
++import pytest
++from support import HOST, REPO, script_module
++from test_file_call_guard import _plant, _problems
++
++from tools.refusing_args import LOOPBACK_HOST_TEXT
++
++rrc = script_module("run_real_check")
++
++# Addresses that are not this computer. Built from parts so no line holds a whole address (the repo's scan reads lines).
++ALL_INTERFACES = ".".join(["0"] * 4)
++OTHER_ADDRESS = ".".join(["192", "0", "2", "1"])  # documentation range
++NOT_LOOPBACK = [ALL_INTERFACES, OTHER_ADDRESS, "", "::", "example." + "com"]
++
++
++def _handler() -> type:
++    return type("H", (), {})
++
++
++# -- s1: the loopback refusal sits in QuietServer ------------------------------------------------------------------
++
++
++@pytest.mark.parametrize("host", NOT_LOOPBACK)
++def test_s1_quiet_server_itself_refuses_a_bind_that_is_not_this_computer(host: str) -> None:
++    from demo_only.bad_request import QuietServer
++
++    with pytest.raises(ValueError, match=LOOPBACK_HOST_TEXT):
++        QuietServer((host, 0), _handler())
++
++
++@pytest.mark.parametrize("host", NOT_LOOPBACK)
++def test_s1_a_subclass_in_any_file_refuses_too(host: str) -> None:
++    from demo_only.bad_request import QuietServer
++
++    class Later(QuietServer):  # a fake someone adds next year
++        pass
++
++    with pytest.raises(ValueError, match=LOOPBACK_HOST_TEXT):
++        Later((host, 0), _handler())
++
++
++@pytest.mark.parametrize("host", NOT_LOOPBACK)
++def test_s1_the_fake_hubspot_server_refuses(host: str) -> None:
++    from demo_only.fake_hubspot import HubspotState, serve
++
++    with pytest.raises(ValueError, match=LOOPBACK_HOST_TEXT):
++        serve(HubspotState("k", "ok"), host, 0)
++
++
++@pytest.mark.parametrize("host", [h for h in NOT_LOOPBACK if h])  # an empty host means "the default" for this factory
++def test_s1_the_fakes_server_refuses(host: str) -> None:
++    from demo_only.fakes_server import make_fakes_server
++
++    with pytest.raises(ValueError, match=LOOPBACK_HOST_TEXT):
++        make_fakes_server(host=host)
++
++
++@pytest.mark.parametrize("host", NOT_LOOPBACK)
++def test_s1_the_fake_model_server_refuses(host: str) -> None:
++    from demo_only.fake_model_server import make_model_server
++
++    with pytest.raises(ValueError, match=LOOPBACK_HOST_TEXT):
++        make_model_server(host, 0, "ok", "k")
++
++
++@pytest.mark.parametrize("address", [(None, 0), (b"127.0.0.1", 0), (), "127.0.0.1", 8080], ids=repr)
++def test_s1_an_address_that_is_not_a_host_and_port_is_refused(address: Any) -> None:
++    """Fails closed: what cannot be read as a host name is not loopback."""
++    from demo_only.bad_request import QuietServer
++
++    with pytest.raises(ValueError, match=LOOPBACK_HOST_TEXT):
++        QuietServer(address, _handler())
++
++
++def test_s1_the_refusal_comes_before_any_socket_is_made(monkeypatch: pytest.MonkeyPatch) -> None:
++    """Nothing may listen, even for a moment: the check runs before the base class opens the port."""
++    import socket
++
++    from demo_only.bad_request import QuietServer
++
++    made: list[object] = []
++    real = socket.socket.__init__
++
++    def counting(self: socket.socket, *a: Any, **k: Any) -> None:
++        made.append(self)
++        real(self, *a, **k)
++
++    monkeypatch.setattr(socket.socket, "__init__", counting)
++    with pytest.raises(ValueError):
++        QuietServer((ALL_INTERFACES, 0), _handler())
++    assert made == []
++
++
++@pytest.mark.parametrize("host", [HOST, "localhost", "127.0.0.1"])
++def test_s1c_a_loopback_bind_still_works(host: str) -> None:
++    from demo_only.bad_request import QuietServer
++
++    srv = QuietServer((host, 0), _handler())
++    try:
++        assert srv.server_address[1] > 0 and srv.daemon_threads is True
++    finally:
++        srv.server_close()
++
++
++def test_s1b_the_guard_sees_a_use_of_quiet_server_outside_its_own_file(tmp_path: Path) -> None:
++    for shape in (
++        "from demo_only.bad_request import QuietServer\nclass S(QuietServer):\n    pass",
++        "from demo_only.bad_request import QuietServer\nsrv = QuietServer(('x', 0), None)",
++        "from demo_only import bad_request\nclass S(bad_request.QuietServer):\n    pass",
++    ):
++        root = _plant(tmp_path / str(abs(hash(shape))), shape, "demo_only")
++        found = [p for p in _problems(root, {}, {}) if p.startswith("demo_only/planted.py")]
++        assert found, shape
++
++
++# -- s3: a contact the desk created that the CRM list does not show -----------------------------------------------
++
++
++def test_s3c_the_counting_rule() -> None:
++    assert rrc.contacts_not_accounted_for(5, 5) == 0
++    assert rrc.contacts_not_accounted_for(5, 4) == 1
++    assert rrc.contacts_not_accounted_for(5, 0) == 5
++    assert rrc.contacts_not_accounted_for(4, 5) == 0  # a 409 conflict or a crash in the middle of a call: not an error
++    assert rrc.contacts_not_accounted_for(None, 5) == 0  # no counter: check F3 already fails that run
++
++
++@pytest.mark.parametrize(
++    ("ok", "written", "left", "unseen", "zero"),
++    [
++        (True, True, [], 0, True),
++        (False, True, [], 0, False),
++        (True, False, [], 0, False),
++        (True, True, ["7"], 0, False),
++        (True, True, [], 1, False),  # only an unaccounted contact is wrong: that alone ends the run as failed
++    ],
++)
++def test_s3e_the_exit_code_is_zero_only_when_nothing_is_open(
++    ok: bool, written: bool, left: list[str], unseen: int, zero: bool
++) -> None:
++    assert (rrc.exit_code_of(ok, written, left, unseen) == 0) is zero
++
++
++def _hiding_crm(hidden: int) -> type:
++    class Hiding(rrc.HubspotCrm):
++        """A CRM whose LIST shows `hidden` contacts fewer than exist (list lag)."""
++
++        def rows_with_prefix(self, prefix: str) -> list[tuple[str, str]]:
++            rows = super().rows_with_prefix(prefix)
++            return rows[: len(rows) - hidden]
++
++    return Hiding
++
++
++@pytest.mark.parametrize(
++    ("cleanup", "floors_silent"),
++    [(True, True), (False, True), (True, False)],
++    ids=["with-cleanup-f3-silent", "without-cleanup-f3-silent", "with-cleanup-f3-also-fails"],
++)
++def test_s3_a_created_contact_the_list_does_not_show_ends_the_check_with_the_failed_exit_code(
++    capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, cleanup: bool, floors_silent: bool
++) -> None:
++    """`floors_silent` is the case of the finding: the hidden contact belongs to a lead the book does not show as
++    CRM-done, so floor F3 has nothing to say (here the floors are made silent to build that case with the real desk)."""
++    monkeypatch.setattr(rrc, "HubspotCrm", _hiding_crm(1))
++    if floors_silent:
++        monkeypatch.setattr(rrc, "floor_checks", lambda *_a, **_k: [])
++    code = rrc.main(["--dry-fakes", "--assume-yes", *(["--cleanup"] if cleanup else [])])
++    out = capsys.readouterr().out
++    assert "1 contacts may be left" in out, out[-2500:]
++    assert code == rrc.EXIT_FAILED, out[-2500:]
++
++
++def test_s3_a_contact_left_by_a_failed_archive_is_said_once_as_left_not_again_as_missing(
++    capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
++) -> None:
++    """The contact the list showed but the archive call refused is counted (done + left), not reported twice."""
++
++    class Flaky(rrc.HubspotCrm):
++        tried = 0
++
++        def archive(self, cid: str) -> None:
++            type(self).tried += 1
++            if type(self).tried == 1:
++                raise rrc.CrmError("made-up refusal")
++            super().archive(cid)
++
++    monkeypatch.setattr(rrc, "HubspotCrm", Flaky)
++    code = rrc.main(["--dry-fakes", "--assume-yes", "--cleanup"])
++    out = capsys.readouterr().out
++    assert "contacts are LEFT" in out and "may be left" not in out
++    assert code == rrc.EXIT_FAILED, out[-2500:]
++
++
++def test_s3_nothing_hidden_still_ends_with_zero(
++    capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
++) -> None:
++    monkeypatch.setattr(rrc, "HubspotCrm", _hiding_crm(0))
++    code = rrc.main(["--dry-fakes", "--assume-yes", "--cleanup"])
++    out = capsys.readouterr().out
++    assert "may be left" not in out and code == 0, out[-2500:]
++
++
++def test_s3b_counter_files_of_an_older_run_in_the_same_folder_do_not_count(
++    capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
++) -> None:
++    class Seeded(rrc.DryFakes):
++        def __init__(self, *a: Any, **k: Any) -> None:
++            super().__init__(*a, **k)
++            run = Path(self.env["DESK_DB_PATH"]).parent
++            run.mkdir(parents=True, exist_ok=True)
++            for name in ("desk-3.hubspot.json", "desk-r" + "000000-1.hubspot.json"):  # unlike this run's tag
++                (run / name).write_text(json.dumps({"created": 99, "creates": 99, "calls": 99}), encoding="utf-8")
++            for name in ("desk-3.smtp.json", "desk-r" + "000000-1.smtp.json"):
++                (run / name).write_text(json.dumps({"sent": 99, "attempts": 99}), encoding="utf-8")
++
++    monkeypatch.setattr(rrc, "DryFakes", Seeded)
++    code = rrc.main(["--dry-fakes", "--assume-yes", "--cleanup"])
++    out = capsys.readouterr().out
++    assert "may be left" not in out and code == 0, out[-2500:]
++
++
++def test_s3b_the_counter_reader_takes_only_the_files_of_the_given_run(tmp_path: Path) -> None:
++    (tmp_path / "desk-raaaaaa-1.hubspot.json").write_text('{"created": 2}', encoding="utf-8")
++    (tmp_path / "desk-raaaaaa-2.hubspot.json").write_text('{"created": 3}', encoding="utf-8")
++    (tmp_path / "desk-rbbbbbb-1.hubspot.json").write_text('{"created": 50}', encoding="utf-8")
++    (tmp_path / "desk-1.hubspot.json").write_text('{"created": 70}', encoding="utf-8")
++    assert rrc.read_counter_files(tmp_path, ".hubspot.json", "raaaaaa") == {"created": 5}
++    assert rrc.read_counter_files(tmp_path, ".hubspot.json", "rcccccc") == {}
++
++
++def test_s3b_the_desk_writes_its_counters_under_the_run_tag(tmp_path: Path) -> None:
++    d = rrc.Desk({}, tmp_path, 1, "7", tag="rabcdef")
++    assert d.log_path.name == "desk-rabcdef-7.log"
++    assert d.log_path.with_suffix(".hubspot.json").name == "desk-rabcdef-7.hubspot.json"
++
++
++# -- s6: a missing openssl is a failure on CI, a skip elsewhere ---------------------------------------------------
++
++
++def test_s6_without_the_require_flag_a_missing_openssl_is_a_skip(monkeypatch: pytest.MonkeyPatch) -> None:
++    from support import skip_or_fail_without_openssl
++
++    monkeypatch.delenv("DPLD_REQUIRE_SCAN", raising=False)
++    with pytest.raises(
++        BaseException
++    ) as info:  # BaseException: a wrong outcome must show as a failed assert, not a skip
++        skip_or_fail_without_openssl()
++    assert info.type is pytest.skip.Exception
++
++
++def test_s6_with_the_require_flag_a_missing_openssl_is_a_failure(monkeypatch: pytest.MonkeyPatch) -> None:
++    from support import skip_or_fail_without_openssl
++
++    monkeypatch.setenv("DPLD_REQUIRE_SCAN", "1")
++    with pytest.raises(BaseException) as info:  # a skip here would be the very thing this test is about
++        skip_or_fail_without_openssl()
++    assert info.type is pytest.fail.Exception and "openssl" in str(info.value)
++
++
++def test_s6_no_test_file_skips_on_a_missing_openssl_by_itself() -> None:
++    """The class: a skip written next to a certificate that could not be made hides the whole test on CI. Every such
++    place goes through support.skip_or_fail_without_openssl."""
++    own = Path(__file__).resolve()
++    bad = []
++    for py in sorted((REPO / "tests").glob("*.py")):
++        if py == own:
++            continue
++        for node in ast.walk(ast.parse(py.read_text(encoding="utf-8"))):
++            if (
++                isinstance(node, ast.Call)
++                and ast.unparse(node.func) == "pytest.skip"
++                and node.args
++                and any(w in ast.unparse(node.args[0]).lower() for w in ("openssl program", "no openssl"))
++            ):
++                bad.append(f"{py.name}:{node.lineno}")
++    assert not bad, "pytest.skip next to openssl (use skip_or_fail_without_openssl): " + ", ".join(bad)
+diff -ru -N -x __pycache__ -x .pytest_cache -x data -x .ruff_cache tree-R7R/tests/test_real_check_dry.py tree-R7S/tests/test_real_check_dry.py
+--- tree-R7R/tests/test_real_check_dry.py	2026-11-14 10:47:58.635352229 +0000
++++ tree-R7S/tests/test_real_check_dry.py	2026-11-14 12:51:11.814941518 +0000
+@@ -10,6 +10,7 @@
+ from typing import Any
+ 
+ import pytest
++from support import skip_or_fail_without_openssl
+ 
+ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+ import run_real_check as rrc  # noqa: E402
+@@ -857,7 +858,7 @@
+     try:
+         fakes = rrc.DryFakes(tmp_path)
+     except ValueError:
+-        pytest.skip("the openssl program is needed for the dry fakes")
++        skip_or_fail_without_openssl()
+     try:
+         assert fakes.env["REAL_DRAIN_SECONDS"] == "240"
+     finally:
+diff -ru -N -x __pycache__ -x .pytest_cache -x data -x .ruff_cache tree-R7R/tests/test_smtp_provider.py tree-R7S/tests/test_smtp_provider.py
+--- tree-R7R/tests/test_smtp_provider.py	2026-11-14 10:47:58.633694551 +0000
++++ tree-R7S/tests/test_smtp_provider.py	2026-11-14 12:55:21.066663754 +0000
+@@ -10,6 +10,7 @@
+ from typing import Any
+ 
+ import pytest
++from support import skip_or_fail_without_openssl
+ 
+ from demo_only.fake_imap import FakeImap
+ from demo_only.fake_smtp_tls import FAKE_PASSWORD, FakeSmtp, make_cert
+@@ -31,7 +32,7 @@
+     def __init__(self, tmp: Path) -> None:
+         made = make_cert(tmp, HOST)
+         if made is None:
+-            pytest.skip("the openssl program is not installed, so no test certificate can be made")
++            skip_or_fail_without_openssl()
+         self.cert, self.key = made
+         self.ctx = ssl.create_default_context(cafile=str(self.cert))  # trusts the test certificate; checks the name
+ 

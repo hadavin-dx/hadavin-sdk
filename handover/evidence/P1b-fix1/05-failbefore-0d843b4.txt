@@ -1,0 +1,485 @@
+0d843b4183becafaca8ddef74e529a93d0e3e398
+test_textnorm_round1.py copied from 203451264e72 into this worktree; python=Python 3.13.18
+.FF.F.FFFFFFFFFFFFFFF.F                                                  [100%]
+=================================== FAILURES ===================================
+___ test_m1_a_decomposed_text_finds_a_precomposed_identifier_and_the_reverse ___
+
+    def test_m1_a_decomposed_text_finds_a_precomposed_identifier_and_the_reverse():
+        """FAILS before: ``contains`` was False for a decomposed text and a precomposed value (a new false abstain; P1a, with whole-text NFKC, said True in
+        BOTH directions - checked on origin/core/P1a bf955e9). The comparison stays exact: a different letter is still different."""
+        decomposed, precomposed = "José", "José"
+>       assert evidence.contains("see " + decomposed + " ok", precomposed) is True
+E       AssertionError: assert False is True
+E        +  where False = <function contains at 0x7f27c57ade40>((('see ' + 'José') + ' ok'), 'José')
+E        +    where <function contains at 0x7f27c57ade40> = evidence.contains
+
+tests/test_textnorm_round1.py:80: AssertionError
+_ test_m1_grounded_takes_a_precomposed_identifier_seen_decomposed_and_refuses_a_decomposed_one_as_p1a_did _
+
+    def test_m1_grounded_takes_a_precomposed_identifier_seen_decomposed_and_refuses_a_decomposed_one_as_p1a_did():
+        """FAILS before (the first assert). On origin/core/P1a ``grounded`` accepted the precomposed identifier whatever the spelling in the tool result, and
+        REFUSED a decomposed identifier because ``canonical(value) != value`` (the value the executor gets is the one that is compared); both kept."""
+        contract = _contract("name")
+>       assert evidence.grounded(contract, {"name": "José"}, ["pod José up"], {}) is True
+E       AssertionError: assert False is True
+E        +  where False = <function grounded at 0x7f27c57ae160>(namespace(input_schema={'type': 'object', 'properties': {'name': {'type': 'string', 'identifier': True}}}), {'name': 'José'}, ['pod José up'], {})
+E        +    where <function grounded at 0x7f27c57ae160> = evidence.grounded
+
+tests/test_textnorm_round1.py:94: AssertionError
+_ test_m1_the_canonical_view_normalises_once_per_non_ascii_character_not_once_per_character _
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f27c57f2140>
+
+    def test_m1_the_canonical_view_normalises_once_per_non_ascii_character_not_once_per_character(
+        monkeypatch,
+    ):
+        """FAILS before (one NFKC call per character, ASCII included). A text of 5,000 ASCII characters with 3 accented letters makes 3 calls."""
+        calls = []
+        real = unicodedata.normalize
+    
+        def counting(form, s):
+            calls.append(s)
+            return real(form, s)
+    
+        monkeypatch.setattr(runmap.unicodedata, "normalize", counting)
+        text = "a" * 2500 + "é" + "b" * 2500 + "éé"
+        assert runmap.canonical(text) == text
+>       assert len(calls) == 3, f"{len(calls)} NFKC calls"
+E       AssertionError: 5003 NFKC calls
+E       assert 5003 == 3
+E        +  where 5003 = len(['a', 'a', 'a', 'a', 'a', 'a', ...])
+
+tests/test_textnorm_round1.py:153: AssertionError
+_ test_m3_the_corpus_of_made_up_ascii_secrets_is_never_refused_by_the_strict_default _
+
+    def test_m3_the_corpus_of_made_up_ascii_secrets_is_never_refused_by_the_strict_default():
+        """FAILS before (200 of 200 refused). Ceiling: 0 refused. The corpus script and its numbers are in the report (m3_corpus.py)."""
+        rng = Det(20261109)
+        alnum = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+        values = ["".join(rng.choice(alnum) for _ in range(rng.randint(8, 24))) for _ in range(100)]
+        values += ["Café" + str(rng.randint(10, 99)) + rng.choice("!#-") + "xyz" for _ in range(50)]
+        refused = []
+        for value in values:
+            try:
+                textnorm.register_value(value)
+            except textnorm.CoverageRefused:
+                refused.append(len(value))
+>       assert refused == [], f"{len(refused)} of {len(values)} ordinary secrets were refused"
+E       AssertionError: 150 of 150 ordinary secrets were refused
+E       assert [18, 19, 9, 17, 9, 16, ...] == []
+E         
+E         Left contains 150 more items, first extra item: 18
+E         Use -v to get more diff
+
+tests/test_textnorm_round1.py:179: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 18 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 19 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 9 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 17 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 9 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 16 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 15 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 21 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 23 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 19 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 20 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 21 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 9 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 9 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 17 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 23 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 22 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 22 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 12 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 19 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 23 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 12 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 20 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 11 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 23 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 19 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 20 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 11 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 9 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 24 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 14 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 16 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 16 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 22 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 14 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 22 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 20 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 9 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 14 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 11 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 21 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 15 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 21 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 14 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 22 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 22 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 23 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 19 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 16 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 20 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 13 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 23 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 11 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 15 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 24 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 22 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 17 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 18 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 23 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 21 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 19 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 21 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 21 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 9 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 16 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 22 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 23 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 11 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 22 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 13 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 13 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 14 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 20 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 12 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 20 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 15 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 8 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 21 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 21 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 19 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 15 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 23 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 18 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 15 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 22 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 23 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 19 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 17 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 22 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 17 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 13 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 9 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 11 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 24 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+WARNING  hadavin_sdk.guard:textnorm.py:1413 textnorm: protected value of 10 characters registered with coverage=exact_only narrowed=False (Latin letters or digits: a separator, an invisible character, a look-alike or another case is covered, one inserted letter is not)
+____________ test_m4_a_clean_text_over_the_size_rule_is_not_flagged ____________
+
+    def test_m4_a_clean_text_over_the_size_rule_is_not_flagged():
+        """FAILS before (every over-cap text was flagged guard_unavailable: a false abstain)."""
+        text = _over_cap()
+        assert len(text) > defaults.TEXTNORM_MAX_CHARS
+        verdict = injection.injection_check(injection.RegexDetector(0.5), text, "t")
+>       assert verdict.flagged is False and verdict.reason_code is None
+E       AssertionError: assert (True is False)
+E        +  where True = Verdict(schema_version=1, flagged=True, score=1.0, backend='regex', reason_code='guard_unavailable', cost_usd=Decimal('0')).flagged
+
+tests/test_textnorm_round1.py:196: AssertionError
+------------------------------ Captured log call -------------------------------
+WARNING  hadavin_sdk.guard:injection.py:99 detector RegexDetector failed, run flagged: TextTooLong: the text is too long: 262248 of 262144 allowed
+___ test_m4_a_steering_phrase_anywhere_in_a_text_over_the_size_rule_is_found ___
+
+    def test_m4_a_steering_phrase_anywhere_in_a_text_over_the_size_rule_is_found():
+        """FAILS before (flagged for the wrong reason: the reason code is guard_unavailable, not injection_suspected). The phrase sits at the head, at the
+        end, hidden with a Cyrillic o, and exactly across a piece boundary."""
+        detector = injection.RegexDetector(0.5)
+        phrase = "ignore previous instructions"
+>       size = defaults.TEXTNORM_INJECTION_CHUNK_CHARS
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.defaults' has no attribute 'TEXTNORM_INJECTION_CHUNK_CHARS'. Did you mean: 'TEXTNORM_INSERTION_MIN_CHARS'?
+
+tests/test_textnorm_round1.py:204: AttributeError
+_______ test_m4_a_text_over_the_ceiling_is_still_flagged_as_unavailable ________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f27c565e430>
+
+    def test_m4_a_text_over_the_ceiling_is_still_flagged_as_unavailable(monkeypatch):
+        """The documented ceiling (``defaults.TEXTNORM_INJECTION_MAX_CHARS``): over it the check refuses (guard_unavailable), never passes. Lowered here so
+        the test stays small. FAILS before only through the missing constant."""
+>       monkeypatch.setattr(defaults, "TEXTNORM_INJECTION_MAX_CHARS", defaults.TEXTNORM_MAX_CHARS + 100)
+E       AttributeError: <module 'hadavin_sdk.defaults' from '/home/user/build/EV-P1b-fix1-0d843b4/src/hadavin_sdk/defaults.py'> has no attribute 'TEXTNORM_INJECTION_MAX_CHARS'
+
+tests/test_textnorm_round1.py:224: AttributeError
+_______ test_m7_an_unmeasured_script_takes_the_largest_measured_minimum ________
+
+    def test_m7_an_unmeasured_script_takes_the_largest_measured_minimum():
+        """FAILS before (default 8, below the measured Greek 12 and Cyrillic 10). Georgian is not in the table."""
+        georgian = "".join(chr(0x10D0 + i) for i in range(14))
+        assert textnorm.value_scripts(georgian) == {"GEORGIAN"}
+        measured = max(n for _g, n in defaults.TEXTNORM_INSERTION_MIN_CHARS_BY_SCRIPT)
+>       assert (
+            textnorm._insertion_minimum(georgian)
+            == defaults.TEXTNORM_INSERTION_MIN_CHARS
+            == measured
+            == 12
+        )
+E       assert 8 == 12
+E        +  where 8 = defaults.TEXTNORM_INSERTION_MIN_CHARS
+
+tests/test_textnorm_round1.py:235: AssertionError
+_ test_m8_threads_that_share_one_scan_cache_scope_neither_crash_nor_answer_wrongly _
+
+    def test_m8_threads_that_share_one_scan_cache_scope_neither_crash_nor_answer_wrongly():
+        """FAILS before (``KeyError`` and ``RuntimeError: dictionary changed size during iteration`` in the eviction, reproduced on 0d843b4 in every one
+        of 3 runs). 12 threads, 6 texts, a cache of 2."""
+        texts = [f"pass word {i} " * 30 for i in range(6)]
+        errors = []
+        old = sys.getswitchinterval()
+        sys.setswitchinterval(1e-6)
+    
+        def work(k):
+            try:
+                for i in range(120):
+                    if scan_holds(text=texts[(k + i) % 6], value="passwor" + "d") is not True:
+                        errors.append("wrong answer")
+            except (KeyError, RuntimeError, AssertionError, textnorm.TextnormError) as exc:
+                errors.append(f"{type(exc).__name__}: {exc}"[:80])
+    
+        try:
+            with scan_cache():
+                with ThreadPoolExecutor(max_workers=12) as pool:
+                    list(pool.map(work, range(12)))
+                scope = textnorm._SCAN_CACHE.get()
+>               assert len(scope.bundles) <= defaults.TEXTNORM_SCAN_CACHE_TEXTS
+                           ^^^^^^^^^^^^^
+E               AttributeError: 'dict' object has no attribute 'bundles'
+
+tests/test_textnorm_round1.py:265: AttributeError
+_____________ test_m8_a_thread_waits_while_the_scope_lock_is_held ______________
+
+    def test_m8_a_thread_waits_while_the_scope_lock_is_held():
+        """FAILS before (the scope had no lock; also fails on a name, ``scope.lock``). Deterministic: while this thread holds the lock of the scope, a thread
+        that scans a text inside the same scope must wait; once the lock is released it finishes."""
+        done = threading.Event()
+        with scan_cache():
+            scope = textnorm._SCAN_CACHE.get()
+            ctx = contextvars.copy_context()
+>           assert hasattr(scope.lock, "acquire"), "the scope has no real lock"
+                           ^^^^^^^^^^
+E           AttributeError: 'dict' object has no attribute 'lock'
+
+tests/test_textnorm_round1.py:279: AttributeError
+__________ test_m8_the_scope_keeps_no_text_and_is_empty_after_it_ends __________
+
+    def test_m8_the_scope_keeps_no_text_and_is_empty_after_it_ends():
+        """R2-09 confirmed: the keys are SHA-256 digests; the values are folded views kept only inside the scope; nothing remains when it ends."""
+        text = "a secret pass\u200bword in a log line"
+        with scan_cache():
+            scan_holds(text=text, value="password")
+            scope = textnorm._SCAN_CACHE.get()
+>           bundles = scope.bundles
+                      ^^^^^^^^^^^^^
+E           AttributeError: 'dict' object has no attribute 'bundles'
+
+tests/test_textnorm_round1.py:302: AttributeError
+_______ test_m12_the_limits_of_the_scan_live_in_defaults_not_in_textnorm _______
+
+    def test_m12_the_limits_of_the_scan_live_in_defaults_not_in_textnorm():
+        """FAILS before (``_SCAN_KEY_CAP``, ``_SCAN_CACHE_TEXTS``, ``_MINIMUM_FLOOR`` and ``_PINNED_PYTHON`` were module constants of textnorm)."""
+        for name in ("_SCAN_KEY_CAP", "_SCAN_CACHE_TEXTS", "_MINIMUM_FLOOR", "_PINNED_PYTHON"):
+>           assert not hasattr(textnorm, name), name
+E           AssertionError: _SCAN_KEY_CAP
+E           assert not True
+E            +  where True = hasattr(textnorm, '_SCAN_KEY_CAP')
+
+tests/test_textnorm_round1.py:311: AssertionError
+_ test_m13_scan_holds_takes_keywords_only_and_no_caller_passes_two_positional_strings _
+
+    def test_m13_scan_holds_takes_keywords_only_and_no_caller_passes_two_positional_strings():
+        """FAILS before (positional calls were accepted)."""
+>       with pytest.raises(TypeError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE TypeError
+
+tests/test_textnorm_round1.py:318: Failed
+______ test_m14_importing_textnorm_costs_under_fifty_milliseconds_itself _______
+
+    def test_m14_importing_textnorm_costs_under_fifty_milliseconds_itself():
+        """FAILS before (about 100 to 115 ms, two loops over every code point at import). The module file is run once more under a probe name inside the
+        package (every module it imports is already loaded, so the time is its own); the best of three runs is taken."""
+        path = Path(textnorm.__file__)
+        best = None
+        for n in range(3):
+            name = f"hadavin_sdk.guard._import_probe{n}"
+            spec = importlib.util.spec_from_file_location(name, path)
+            module = importlib.util.module_from_spec(spec)
+            sys.modules[name] = module
+            try:
+                start = time.perf_counter()
+                spec.loader.exec_module(module)
+                took = time.perf_counter() - start
+            finally:
+                del sys.modules[name]
+            best = took if best is None else min(best, took)
+        print(f"\nPERF import of textnorm: {best * 1000:.1f} ms self")
+>       assert best < 0.05, f"{best * 1000:.0f} ms"
+E       AssertionError: 127 ms
+E       assert 0.12725930099986726 < 0.05
+
+tests/test_textnorm_round1.py:353: AssertionError
+----------------------------- Captured stdout call -----------------------------
+
+PERF import of textnorm: 127.3 ms self
+_ test_m14_the_lazy_tables_are_built_once_and_still_reachable_by_their_old_names _
+
+    def test_m14_the_lazy_tables_are_built_once_and_still_reachable_by_their_old_names():
+        """The digit and punctuation tables are built on first use under a lock and published as one pair; ``_DIGITS`` and ``_PUNCT`` still work."""
+        assert (
+>           textnorm._DIGITS is textnorm._lazy_tables()[0]
+                                ^^^^^^^^^^^^^^^^^^^^^
+            and textnorm._PUNCT is textnorm._lazy_tables()[1]
+        ), "the lazy tables are never kept: each use builds them again"
+E       AttributeError: module 'hadavin_sdk.guard.textnorm' has no attribute '_lazy_tables'
+
+tests/test_textnorm_round1.py:359: AttributeError
+_ test_m16_a_spacing_mark_or_modifier_symbol_does_not_split_a_mixed_script_word _
+
+    def test_m16_a_spacing_mark_or_modifier_symbol_does_not_split_a_mixed_script_word():
+        """FAILS before (the word was cut at the mark, so Latin and Cyrillic never met). Mc: U+0903 and U+093E; Sk: U+02C2."""
+        cyr = "аб"
+        for mark in ("ः", "ा", "˂"):
+>           assert has_mixed_script("ab" + mark + cyr) is True, hex(ord(mark))
+E           AssertionError: 0x903
+E           assert False is True
+E            +  where False = has_mixed_script((('ab' + 'ः') + 'аб'))
+
+tests/test_textnorm_round1.py:373: AssertionError
+______________ test_m16_the_apostrophe_limit_is_pinned_and_named _______________
+
+    def test_m16_the_apostrophe_limit_is_pinned_and_named():
+        """LIMIT PIN (passes before and after): five characters people type as an apostrophe are not read as one by ``could_be_same_person``; the docstring
+        says so; the scan finds a protected name written either way. Adding them needs the golden hashes re-made (see the docstring)."""
+        for ch in ("ʼ", "′", "ʹ", "`", "´"):
+            assert textnorm.could_be_same_person("O'Brien", "O" + ch + "Brien") is False
+            assert scan_holds(text="x O" + ch + "Brien y", value="O'Brien") is True
+>       assert (
+            "U+02BC" in textnorm.could_be_same_person.__doc__
+            and "LIMIT" in textnorm.could_be_same_person.__doc__
+        )
+E       AssertionError: assert ('U+02BC' in 'DENY comparator (separation of duties, a blocklist): True when ANY spelling variant of ``a`` equals ANY spelling vari... DIFFERENT here (``allow_equal`` says so too) and\nshare a scan key (``scan_keyset``). Not transitive. NEVER an ALLOW.')
+E        +  where 'DENY comparator (separation of duties, a blocklist): True when ANY spelling variant of ``a`` equals ANY spelling vari... DIFFERENT here (``allow_equal`` says so too) and\nshare a scan key (``scan_keyset``). Not transitive. NEVER an ALLOW.' = <function could_be_same_person at 0x7f27c5a96160>.__doc__
+E        +    where <function could_be_same_person at 0x7f27c5a96160> = textnorm.could_be_same_person
+
+tests/test_textnorm_round1.py:384: AssertionError
+_ test_m17_the_text_with_and_without_its_marks_is_a_marks_variant_not_a_spelling_variant _
+
+    def test_m17_the_text_with_and_without_its_marks_is_a_marks_variant_not_a_spelling_variant():
+        """FAILS before (the module docstring and the comment of the key cap called the text with and without Mc/Sk "2 spelling variants")."""
+        source = Path(textnorm.__file__).read_text(encoding="utf-8")
+>       assert "2 spelling variants (the text as it is" not in source
+E       assert '2 spelling ...ext as it is' not in '"""The shar...turn False\n'
+E         
+E         '2 spelling variants (the text as it is' is contained here:
+E         ?           ^^
+E           can keys: 2 spelling variants (the text as it is, the text without Mc/Sk) x 4 tag texts x 2 passes = 16. The most a
+E         ?           ^^^^^^^^^^^^^^^^^^^^^        +++++++++++++++++++
+E           # real text reaches is 2 x 6 + 1 = 13: the fourth tag text (the decoded tags alone) is ASCII and does not depend on the variant, and both passes
+E           # read ASCII alike, so it makes ONE key, not four....
+E         
+E         ...Full output truncated, use '-vv' to show
+
+tests/test_textnorm_round1.py:394: AssertionError
+_ test_c6_a_text_with_a_spacing_mark_and_a_tag_text_makes_more_than_eight_keys_and_never_more_than_thirteen _
+
+    def test_c6_a_text_with_a_spacing_mark_and_a_tag_text_makes_more_than_eight_keys_and_never_more_than_thirteen():
+        """BOUND PIN (passes before and after; the old assertion of 8 keys for every text was in test_textnorm_scan and is fixed there): the Mc + tag case
+        makes 9 to 13 keys, under the cap of 16."""
+        tags = "".join(chr(0xE0000 + ord(c)) for c in "xy")
+        text = "Η" + tags + "ంΗq"
+        n = len(textnorm.scan_keyset(text))
+>       assert 8 < n <= 13 <= defaults.TEXTNORM_SCAN_KEY_CAP, n
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.defaults' has no attribute 'TEXTNORM_SCAN_KEY_CAP'
+
+tests/test_textnorm_round1.py:431: AttributeError
+==================================== PASSES ====================================
+__ test_m1_perf_the_canonical_form_of_a_mostly_ascii_text_at_the_cap_is_fast ___
+----------------------------- Captured stdout call -----------------------------
+
+PERF canonical at the cap (262144 chars, mostly ASCII): 0.052 s
+=========================== short test summary info ============================
+PASSED tests/test_textnorm_round1.py::test_m10_app_build_calls_require_pinned_unidata_for_live_stages
+PASSED tests/test_textnorm_round1.py::test_m1_equivalence_the_fast_canonical_view_equals_the_per_character_reference
+PASSED tests/test_textnorm_round1.py::test_m1_perf_the_canonical_form_of_a_mostly_ascii_text_at_the_cap_is_fast
+PASSED tests/test_textnorm_round1.py::test_m18_the_worst_case_text_makes_each_hit_compare_almost_to_the_end
+FAILED tests/test_textnorm_round1.py::test_m1_a_decomposed_text_finds_a_precomposed_identifier_and_the_reverse
+FAILED tests/test_textnorm_round1.py::test_m1_grounded_takes_a_precomposed_identifier_seen_decomposed_and_refuses_a_decomposed_one_as_p1a_did
+FAILED tests/test_textnorm_round1.py::test_m1_the_canonical_view_normalises_once_per_non_ascii_character_not_once_per_character
+FAILED tests/test_textnorm_round1.py::test_m3_the_corpus_of_made_up_ascii_secrets_is_never_refused_by_the_strict_default
+FAILED tests/test_textnorm_round1.py::test_m4_a_clean_text_over_the_size_rule_is_not_flagged
+FAILED tests/test_textnorm_round1.py::test_m4_a_steering_phrase_anywhere_in_a_text_over_the_size_rule_is_found
+FAILED tests/test_textnorm_round1.py::test_m4_a_text_over_the_ceiling_is_still_flagged_as_unavailable
+FAILED tests/test_textnorm_round1.py::test_m7_an_unmeasured_script_takes_the_largest_measured_minimum
+FAILED tests/test_textnorm_round1.py::test_m8_threads_that_share_one_scan_cache_scope_neither_crash_nor_answer_wrongly
+FAILED tests/test_textnorm_round1.py::test_m8_a_thread_waits_while_the_scope_lock_is_held
+FAILED tests/test_textnorm_round1.py::test_m8_the_scope_keeps_no_text_and_is_empty_after_it_ends
+FAILED tests/test_textnorm_round1.py::test_m12_the_limits_of_the_scan_live_in_defaults_not_in_textnorm
+FAILED tests/test_textnorm_round1.py::test_m13_scan_holds_takes_keywords_only_and_no_caller_passes_two_positional_strings
+FAILED tests/test_textnorm_round1.py::test_m14_importing_textnorm_costs_under_fifty_milliseconds_itself
+FAILED tests/test_textnorm_round1.py::test_m14_the_lazy_tables_are_built_once_and_still_reachable_by_their_old_names
+FAILED tests/test_textnorm_round1.py::test_m16_a_spacing_mark_or_modifier_symbol_does_not_split_a_mixed_script_word
+FAILED tests/test_textnorm_round1.py::test_m16_the_apostrophe_limit_is_pinned_and_named
+FAILED tests/test_textnorm_round1.py::test_m17_the_text_with_and_without_its_marks_is_a_marks_variant_not_a_spelling_variant
+FAILED tests/test_textnorm_round1.py::test_c6_a_text_with_a_spacing_mark_and_a_tag_text_makes_more_than_eight_keys_and_never_more_than_thirteen
+19 failed, 4 passed in 3.04s
+rc=1

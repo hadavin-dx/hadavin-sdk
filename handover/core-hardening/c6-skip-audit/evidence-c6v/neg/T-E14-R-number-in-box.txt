@@ -1,0 +1,31 @@
+45 s lines are compared): every copy (30 found) equals the source value 45 :: []
+PASS c6v TIE recovery interval 'every <n> seconds' (the file mf-recovery.json says secondsInterval): every copy (10 found) equals the source value 30 :: []
+PASS c6v TIE kept stand-in crash runs: every copy (2 found) equals the source value 18 :: []
+PASS c6v TIE kept runs: every copy (7 found) equals the source value 18 :: []
+PASS c6v TIE alert delay minutes (claims-A.md says 780 s): every copy (7 found) equals the source value 13 :: []
+PASS c6v TIE relayed runs behind the alert delay (claims-A.md says n=2): every copy (1 found) equals the source value 2 :: []
+PASS c6v TIE LRN14 cites: every cited line number is one of the lines the check proved equal in v14 and the newest note (8, 33, 149, 150): [8, 33, 149, 150] :: [8, 33, 149, 150]
+PASS c6v TIE ORDERS cites: every ORD:<n> next to 'Wed 18 Nov', 'Q21.1', '= line' or 'no takeover' points to the ORDERS.md line that says so :: []
+PASS c6v TIE ORDERS cite list: 'ORD:<n> = line <n> of ORDERS.md' names one number twice, and that line is Q21.1 :: ('150', '150')
+PASS c6v TIE row lists: no written list of row numbers is a near copy (same length, same first row, other rows) of the rows that wait for a check [23, 58, 59], wait for the owner, belong to L-ONEDB [90, 91] or to C-8 [58, 59] :: []
+PASS c6v names: the report names no 'evidence-c6t/' file and no 'c6t-APPLIED-ROWS.md' (this run's files carry c6v) :: (0, 0)
+FAIL c6v names: every evidence-c6v file the report names exists in this folder (neg-output.txt is written after this check): ['contact-grep-output.txt', 'neg-output.txt', 'neg_controls_c6v.py', 'neg_new_c6u.py', 'run_all.sh', 'static-checks-output.txt', 'static-checks.sh', 'tree', 'verify-c6v-output.txt', 'verify-c6v.py', 'verify_c6u_part2.py'] :: ['contact-grep-output.txt', 'verify_c6u_part2.py']
+PASS c6v M5: no sentence says the test program is not among the audited files (mf.py IS audited); the old words appear only quoted :: []
+PASS c6v naive: no text says 'steps 5 to 9' for the list TASKS (5) to (9) (the old words appear only quoted) :: []
+PASS class 1: the census file census-c6v.json exists (written by the build step of run_all.sh) :: /home/user/hadavin-sdk/handover/core-hardening/c6-skip-audit/evidence-c6v/census-c6v.json
+PASS class 1: every safe-default phrase, every UNVERIFIED/VERIFIED/CHECKED count and every 'Confirmed?' cell equals the census of the build (32 items) :: {}
+PASS class 1: phrases that would reverse a safe default are absent everywhere (10 phrases) :: []
+PASS class 1: the fixed safe-default sentences each appear at least once in the whole report
+PASS class 1: the L-LEASE row of section 3 shows 'No' in the Confirmed? column and the G12 hold :: ["| L-LEASE | studio lead (his answers: ORD:151, Q21.2; ORD:186, Q22 (c) of 12:50 UTC = 18:20 IST; ORD:230, L-Q22c, the newest) | Which sentence about the 45-second setting goes on the closing card (line 1) and in the scene 3 caption? 1 and 2 count only if L-POST is answered 'no'. NONE (the default)
+PASS class 1: every line that quotes the G12 approval answer quotes 'I do not approve it' and never 'I approve it' (3 lines) :: 3
+PASS class 2: every count of 'N rows/edits' with N of 30 or more equals one of the computed counts [37, 38, 57, 95, 99, 104] (history lines excepted) :: []
+PASS class 2: every 'the folder holds OWNER-SHEET-vN' names the same N, the newest on disk (v33) :: {'33'}
+PASS class 2: every 'At HH:MM:SS UTC' of the owner-sheet statement is the same time (['18:29:49']) :: {'18:29:49'}
+PASS class 2: 'to N files' is 10 everywhere (found ['10']) and the number of TASKS is twelve everywhere (found []) :: (['10'], [])
+FAIL class 2: 'two OPEN (OWNER ONLY) questions' and 'five OPEN items' are the only forms, and the section 3 rows give exactly two OWNER ONLY questions (found [('five', ' items'), ('two', ' (OWNER ONLY) questions')]) :: ([('five', ' items'), ('two', ' (OWNER ONLY) questions')], 0)
+PASS class 2: no TASK number above twelve (the list has 12 tasks) :: 12
+PASS class 4: every place that quotes a card line (from its first eight words; the shorter option (b) of L-CARDLEN differs earlier and is a different text on purpose) quotes it whole and equal to the line in rows 13 and 14 (4 lines) :: []
+PASS class 1: 'changes no running n8n' appears in the box and in section 1c :: (1, 1)
+SUMMARY: 235 checks, 10 FAILED: no owner sheet changed after the stated check time (C-10c is current); c6v N5: the start box is under 2,500 words (c6s: 3,488; 2479 words now) and states its own real count; the box line of L-SHEET and the section 0 bullet each print every real v33 file with its real written time (UTC): [('OWNER-SHEET-v33-A.md', '18:40:14'), ('OWNER-SHEET-v33-B.md', '18:40:14'), ('OWNER-SHEET-v33-SOURCE.md', '18:33:33')]; E-count: the start box states its own word count once and it equals the real count of the box without its heading line (2479); E-rnum: the start box holds no R-number, WP number or ledger id (they are for studio notes, not for the person who answers); E-mtime: no owner sheet and no release note (any variant, SOURCE included) was written after the check time 2026-11-16T18:29:49Z (read from the files at run time); E-mtime: the report names the newest release note LEAD-RELEASE-NOTE-v17.md and its real written time 18:40:14 UTC; M4: no sentence says the box was 'rewritten and shorter' without the real count next to it; the count is 2479; c6v names: every evidence-c6v file the report names exists in this folder (neg-output.txt is written after this check): ['contact-grep-output.txt', 'neg-output.txt', 'neg_controls_c6v.py', 'neg_new_c6u.py', 'run_all.sh', 'static-checks-output.txt', 'static-checks.sh', 'tree', 'verify-c6v-output.txt', 'verify-c6v.py', 'verify_c6u_part2.py']; class 2: 'two OPEN (OWNER ONLY) questions' and 'five OPEN items' are the only forms, and the section 3 rows give exactly two OWNER ONLY questions (found [('five', ' items'), ('two', ' (OWNER ONLY) questions')])
+
+EXIT CODE 1

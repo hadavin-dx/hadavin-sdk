@@ -1,0 +1,56 @@
+...FFFF....F..F....F.F.FFFF                                              [100%]
+=================================== FAILURES ===================================
+E   OSError: [Errno 36] File name too long: '/tmp/pytest-of-unknown/pytest-1092/test_a_long_name_is_a_refusal_3/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+
+During handling of the above exception, another exception occurred:
+E   Failed: operator_dir L=256: OSError escaped: "[Errno 36] File name too long: '/tmp/pytest-of-unknown/pytest-1092/test_a_long_n"
+/home/user/build/E-work/c-tree/tests/test_pathguard_batch5.py:87: Failed: operator_dir L=256: OSError escaped: "[Errno 36] File name too long: '/tmp/pytest-of-unknown/pytest-1092/test_a_long_n"
+E   OSError: [Errno 36] File name too long: '/tmp/pytest-of-unknown/pytest-1092/test_a_long_name_is_a_refusal_4/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+
+During handling of the above exception, another exception occurred:
+E   Failed: operator_dir L=257: OSError escaped: "[Errno 36] File name too long: '/tmp/pytest-of-unknown/pytest-1092/test_a_long_n"
+/home/user/build/E-work/c-tree/tests/test_pathguard_batch5.py:87: Failed: operator_dir L=257: OSError escaped: "[Errno 36] File name too long: '/tmp/pytest-of-unknown/pytest-1092/test_a_long_n"
+E   OSError: [Errno 36] File name too long: '/tmp/pytest-of-unknown/pytest-1092/test_a_long_name_is_a_refusal_5/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+
+During handling of the above exception, another exception occurred:
+E   Failed: operator_dir L=300: OSError escaped: "[Errno 36] File name too long: '/tmp/pytest-of-unknown/pytest-1092/test_a_long_n"
+/home/user/build/E-work/c-tree/tests/test_pathguard_batch5.py:87: Failed: operator_dir L=300: OSError escaped: "[Errno 36] File name too long: '/tmp/pytest-of-unknown/pytest-1092/test_a_long_n"
+E   OSError: [Errno 36] File name too long: '/tmp/pytest-of-unknown/pytest-1092/test_a_long_name_is_a_refusal_6/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+
+During handling of the above exception, another exception occurred:
+E   Failed: operator_dir L=1000: OSError escaped: "[Errno 36] File name too long: '/tmp/pytest-of-unknown/pytest-1092/test_a_long_n"
+/home/user/build/E-work/c-tree/tests/test_pathguard_batch5.py:87: Failed: operator_dir L=1000: OSError escaped: "[Errno 36] File name too long: '/tmp/pytest-of-unknown/pytest-1092/test_a_long_n"
+E   OSError: [Errno 36] File name too long: '/tmp/pytest-of-unknown/pytest-1092/test_pin_the_error_of_the_oper0/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+/usr/local/lib/python3.13/pathlib/_local.py:515: OSError: [Errno 36] File name too long: '/tmp/pytest-of-unknown/pytest-1092/test_pin_the_error_of_the_oper0/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+E   OSError: [Errno 36] File name too long: '/tmp/pytest-of-unknown/pytest-1092/test_pin_every_short_mix_of_lo0/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+
+During handling of the above exception, another exception occurred:
+E   Failed: operator_dir ('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',): OSError escaped: "[Errno 36] File name too long: '/tmp/pytest-of-unknown/pytest-1092/test_pin_ever"
+/home/user/build/E-work/c-tree/tests/test_pathguard_batch5.py:87: Failed: operator_dir ('xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',): OSError escaped: "[Errno 36] File name too long: '/tmp/pytest-of-unknown/pytest-1092/test_pin_ever"
+E   AssertionError: [('R10 a NUL in a path is not turned into a refusal', 0), ('R11a a folder named as a file is accepted', 0), ('S-score ... file is not guarded', 0), ('S-signer public key file is not guarded', 0), ('S-vault jwt path is not guarded', 0), ...]
+    assert not [('R10 a NUL in a path is not turned into a refusal', 0), ('R11a a folder named as a file is accepted', 0), ('S-score ... file is not guarded', 0), ('S-signer public key file is not guarded', 0), ('S-vault jwt path is not guarded', 0), ...]
+/home/user/build/E-work/c-tree/tests/test_pathguard_batch5.py:198: AssertionError: [('R10 a NUL in a path is not turned into a refusal', 0), ('R11a a folder named as a file is accepted', 0), ('S-score ... file is not guarded', 0), ('S-signer public key file is not guarded', 0), ('S-vault jwt path is not guarded', 0), ...]
+E   PermissionError: [Errno 13] denied
+/home/user/build/E-work/c-tree/tests/test_pathguard_batch5.py:218: PermissionError: [Errno 13] denied
+E   OSError: [Errno 36] File name too long: '/home/user/build/E-work/c-tree/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/b/__init__.py'
+/usr/local/lib/python3.13/pathlib/_local.py:515: OSError: [Errno 36] File name too long: '/home/user/build/E-work/c-tree/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/b/__init__.py'
+E   OSError: [Errno 36] File name too long: '/tmp/pytest-of-unknown/pytest-1092/test_a_key_file_name_too_long_0/kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk'
+/usr/local/lib/python3.13/pathlib/_local.py:515: OSError: [Errno 36] File name too long: '/tmp/pytest-of-unknown/pytest-1092/test_a_key_file_name_too_long_0/kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk'
+E   RuntimeError: Could not determine home directory.
+/usr/local/lib/python3.13/pathlib/_local.py:808: RuntimeError: Could not determine home directory.
+E   Failed: DID NOT RAISE ConfigError
+/home/user/build/E-work/c-tree/tests/test_pathguard_batch5.py:270: Failed: DID NOT RAISE ConfigError
+=========================== short test summary info ============================
+FAILED tests/test_pathguard_batch5.py::test_a_long_name_is_a_refusal_never_an_oserror_in_every_typed_path_entry_point[256]
+FAILED tests/test_pathguard_batch5.py::test_a_long_name_is_a_refusal_never_an_oserror_in_every_typed_path_entry_point[257]
+FAILED tests/test_pathguard_batch5.py::test_a_long_name_is_a_refusal_never_an_oserror_in_every_typed_path_entry_point[300]
+FAILED tests/test_pathguard_batch5.py::test_a_long_name_is_a_refusal_never_an_oserror_in_every_typed_path_entry_point[1000]
+FAILED tests/test_pathguard_batch5.py::test_pin_the_error_of_the_operating_system_is_never_chained_or_quoted
+FAILED tests/test_pathguard_batch5.py::test_pin_every_short_mix_of_long_names_dots_links_and_loops_is_a_refusal_or_a_result
+FAILED tests/test_pathguard_batch5.py::test_every_mutant_row_old_text_occurs_exactly_once_in_its_file
+FAILED tests/test_pathguard_batch5.py::test_pin_an_error_while_asking_if_a_path_is_a_file_is_a_refusal
+FAILED tests/test_pathguard_batch5.py::test_a_tool_module_part_longer_than_a_file_name_is_a_config_error
+FAILED tests/test_pathguard_batch5.py::test_a_key_file_name_too_long_for_the_system_is_a_refusal_not_an_oserror
+FAILED tests/test_pathguard_batch5.py::test_a_key_path_with_an_unknown_home_is_a_refusal_not_a_runtimeerror
+FAILED tests/test_pathguard_batch5.py::test_a_tools_file_for_an_agent_id_longer_than_a_file_name_is_refused_in_words
+12 failed, 15 passed in 0.26s

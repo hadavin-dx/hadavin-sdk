@@ -1,0 +1,4 @@
+BANNED strings loaded: 10
+files scanned: 198 total hits: 0
+CORE-PR-HANDOFF-v11.md hits: 0
+CORE-PR-HANDOFF-v11-other-tracks.md hits: 0

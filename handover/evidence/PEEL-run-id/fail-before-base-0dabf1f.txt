@@ -1,0 +1,360 @@
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+FFFFFFFFFFFFFFFFFFFFFFFFF                                                [100%]
+=================================== FAILURES ===================================
+________________________ test_t1_given_id_is_the_run_id ________________________
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-570/test_t1_given_id_is_the_run_id0/config')
+
+    def test_t1_given_id_is_the_run_id(cfg_dir):
+        rt, cfg = build(cfg_dir)
+>       run = rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), run_id=GOOD)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+
+tests/test_peel_run_id.py:32: TypeError
+__________ test_t2_same_id_twice_is_refused_and_nothing_else_happens ___________
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-570/test_t2_same_id_twice_is_refus0/config')
+
+    def test_t2_same_id_twice_is_refused_and_nothing_else_happens(cfg_dir):
+        rt, cfg = build(cfg_dir)
+        doc = _doc(cfg, "chat.txt")
+>       rt.handle(AGENT, PRINCIPAL, doc, trigger_ref="m-1", run_id=GOOD)
+E       TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+
+tests/test_peel_run_id.py:40: TypeError
+_____________ test_t3_without_run_id_ids_are_fresh_and_well_formed _____________
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-570/test_t3_without_run_id_ids_are0/config')
+
+    def test_t3_without_run_id_ids_are_fresh_and_well_formed(cfg_dir):
+        rt, cfg = build(cfg_dir)
+        doc = _doc(cfg, "injected.txt")  # stops before the model, so the recording is not used up
+        a = rt.handle(AGENT, PRINCIPAL, doc)
+>       b = rt.handle(AGENT, PRINCIPAL, doc, run_id=None)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+
+tests/test_peel_run_id.py:54: TypeError
+_____________ test_t4_hostile_ids_are_refused_before_any_write[''] _____________
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-570/test_t4_hostile_ids_are_refuse0/config')
+bad = ''
+
+    @pytest.mark.parametrize("bad", HOSTILE, ids=[repr(h)[:30] for h in HOSTILE])
+    def test_t4_hostile_ids_are_refused_before_any_write(cfg_dir, bad):
+        rt, cfg = build(cfg_dir)
+        with pytest.raises(InvalidRunId):
+>           rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), run_id=bad)
+E           TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+
+tests/test_peel_run_id.py:86: TypeError
+___________ test_t4_hostile_ids_are_refused_before_any_write['run-'] ___________
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-570/test_t4_hostile_ids_are_refuse1/config')
+bad = 'run-'
+
+    @pytest.mark.parametrize("bad", HOSTILE, ids=[repr(h)[:30] for h in HOSTILE])
+    def test_t4_hostile_ids_are_refused_before_any_write(cfg_dir, bad):
+        rt, cfg = build(cfg_dir)
+        with pytest.raises(InvalidRunId):
+>           rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), run_id=bad)
+E           TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+
+tests/test_peel_run_id.py:86: TypeError
+_ test_t4_hostile_ids_are_refused_before_any_write['run-aaaaaaaaaaaaaaaaaaaaaaaaa0] _
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-570/test_t4_hostile_ids_are_refuse2/config')
+bad = 'run-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+
+    @pytest.mark.parametrize("bad", HOSTILE, ids=[repr(h)[:30] for h in HOSTILE])
+    def test_t4_hostile_ids_are_refused_before_any_write(cfg_dir, bad):
+        rt, cfg = build(cfg_dir)
+        with pytest.raises(InvalidRunId):
+>           rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), run_id=bad)
+E           TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+
+tests/test_peel_run_id.py:86: TypeError
+_ test_t4_hostile_ids_are_refused_before_any_write['run-aaaaaaaaaaaaaaaaaaaaaaaaa1] _
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-570/test_t4_hostile_ids_are_refuse3/config')
+bad = 'run-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+
+    @pytest.mark.parametrize("bad", HOSTILE, ids=[repr(h)[:30] for h in HOSTILE])
+    def test_t4_hostile_ids_are_refused_before_any_write(cfg_dir, bad):
+        rt, cfg = build(cfg_dir)
+        with pytest.raises(InvalidRunId):
+>           rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), run_id=bad)
+E           TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+
+tests/test_peel_run_id.py:86: TypeError
+_ test_t4_hostile_ids_are_refused_before_any_write['run-AAAAAAAAAAAAAAAAAAAAAAAAA] _
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-570/test_t4_hostile_ids_are_refuse4/config')
+bad = 'run-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
+
+    @pytest.mark.parametrize("bad", HOSTILE, ids=[repr(h)[:30] for h in HOSTILE])
+    def test_t4_hostile_ids_are_refused_before_any_write(cfg_dir, bad):
+        rt, cfg = build(cfg_dir)
+        with pytest.raises(InvalidRunId):
+>           rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), run_id=bad)
+E           TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+
+tests/test_peel_run_id.py:86: TypeError
+_ test_t4_hostile_ids_are_refused_before_any_write['run-ggggggggggggggggggggggggg] _
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-570/test_t4_hostile_ids_are_refuse5/config')
+bad = 'run-gggggggggggggggggggggggggggggggg'
+
+    @pytest.mark.parametrize("bad", HOSTILE, ids=[repr(h)[:30] for h in HOSTILE])
+    def test_t4_hostile_ids_are_refused_before_any_write(cfg_dir, bad):
+        rt, cfg = build(cfg_dir)
+        with pytest.raises(InvalidRunId):
+>           rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), run_id=bad)
+E           TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+
+tests/test_peel_run_id.py:86: TypeError
+_ test_t4_hostile_ids_are_refused_before_any_write['../aaaaaaaaaaaaaaaaaaaaaaaaaa] _
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-570/test_t4_hostile_ids_are_refuse6/config')
+bad = '../aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+
+    @pytest.mark.parametrize("bad", HOSTILE, ids=[repr(h)[:30] for h in HOSTILE])
+    def test_t4_hostile_ids_are_refused_before_any_write(cfg_dir, bad):
+        rt, cfg = build(cfg_dir)
+        with pytest.raises(InvalidRunId):
+>           rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), run_id=bad)
+E           TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+
+tests/test_peel_run_id.py:86: TypeError
+_ test_t4_hostile_ids_are_refused_before_any_write['run-0123456789abcdef012345678_0] _
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-570/test_t4_hostile_ids_are_refuse7/config')
+bad = 'run-0123456789abcdef0123456789abcdef\n'
+
+    @pytest.mark.parametrize("bad", HOSTILE, ids=[repr(h)[:30] for h in HOSTILE])
+    def test_t4_hostile_ids_are_refused_before_any_write(cfg_dir, bad):
+        rt, cfg = build(cfg_dir)
+        with pytest.raises(InvalidRunId):
+>           rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), run_id=bad)
+E           TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+
+tests/test_peel_run_id.py:86: TypeError
+_ test_t4_hostile_ids_are_refused_before_any_write['\\nrun-0123456789abcdef0123456] _
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-570/test_t4_hostile_ids_are_refuse8/config')
+bad = '\nrun-0123456789abcdef0123456789abcdef'
+
+    @pytest.mark.parametrize("bad", HOSTILE, ids=[repr(h)[:30] for h in HOSTILE])
+    def test_t4_hostile_ids_are_refused_before_any_write(cfg_dir, bad):
+        rt, cfg = build(cfg_dir)
+        with pytest.raises(InvalidRunId):
+>           rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), run_id=bad)
+E           TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+
+tests/test_peel_run_id.py:86: TypeError
+_ test_t4_hostile_ids_are_refused_before_any_write['run-0123456789abcdef012345678_1] _
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-570/test_t4_hostile_ids_are_refuse9/config')
+bad = 'run-0123456789abcdef0123456789abcdef '
+
+    @pytest.mark.parametrize("bad", HOSTILE, ids=[repr(h)[:30] for h in HOSTILE])
+    def test_t4_hostile_ids_are_refused_before_any_write(cfg_dir, bad):
+        rt, cfg = build(cfg_dir)
+        with pytest.raises(InvalidRunId):
+>           rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), run_id=bad)
+E           TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+
+tests/test_peel_run_id.py:86: TypeError
+_ test_t4_hostile_ids_are_refused_before_any_write['run-aaaaaaaaaaaaaaaaaaaaaaaaa2] _
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-570/test_t4_hostile_ids_are_refuse10/config')
+bad = 'run-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\x00'
+
+    @pytest.mark.parametrize("bad", HOSTILE, ids=[repr(h)[:30] for h in HOSTILE])
+    def test_t4_hostile_ids_are_refused_before_any_write(cfg_dir, bad):
+        rt, cfg = build(cfg_dir)
+        with pytest.raises(InvalidRunId):
+>           rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), run_id=bad)
+E           TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+
+tests/test_peel_run_id.py:86: TypeError
+_ test_t4_hostile_ids_are_refused_before_any_write['run-aaaaaaaaaaaaaaaaaaaaaaaaa3] _
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-570/test_t4_hostile_ids_are_refuse11/config')
+bad = 'run-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa١'
+
+    @pytest.mark.parametrize("bad", HOSTILE, ids=[repr(h)[:30] for h in HOSTILE])
+    def test_t4_hostile_ids_are_refused_before_any_write(cfg_dir, bad):
+        rt, cfg = build(cfg_dir)
+        with pytest.raises(InvalidRunId):
+>           rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), run_id=bad)
+E           TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+
+tests/test_peel_run_id.py:86: TypeError
+_ test_t4_hostile_ids_are_refused_before_any_write['run-0123456789abcdef012345678_2] _
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-570/test_t4_hostile_ids_are_refuse12/config')
+bad = 'run-0123456789abcdef0123456789abcdef:1'
+
+    @pytest.mark.parametrize("bad", HOSTILE, ids=[repr(h)[:30] for h in HOSTILE])
+    def test_t4_hostile_ids_are_refused_before_any_write(cfg_dir, bad):
+        rt, cfg = build(cfg_dir)
+        with pytest.raises(InvalidRunId):
+>           rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), run_id=bad)
+E           TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+
+tests/test_peel_run_id.py:86: TypeError
+_ test_t4_hostile_ids_are_refused_before_any_write['aaaaaaaaaaaaaaaaaaaaaaaaaaaaa] _
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-570/test_t4_hostile_ids_are_refuse13/config')
+bad = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+
+    @pytest.mark.parametrize("bad", HOSTILE, ids=[repr(h)[:30] for h in HOSTILE])
+    def test_t4_hostile_ids_are_refused_before_any_write(cfg_dir, bad):
+        rt, cfg = build(cfg_dir)
+        with pytest.raises(InvalidRunId):
+>           rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), run_id=bad)
+E           TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+
+tests/test_peel_run_id.py:86: TypeError
+_ test_t4_hostile_ids_are_refused_before_any_write['ru-aaaaaaaaaaaaaaaaaaaaaaaaaa] _
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-570/test_t4_hostile_ids_are_refuse14/config')
+bad = 'ru-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+
+    @pytest.mark.parametrize("bad", HOSTILE, ids=[repr(h)[:30] for h in HOSTILE])
+    def test_t4_hostile_ids_are_refused_before_any_write(cfg_dir, bad):
+        rt, cfg = build(cfg_dir)
+        with pytest.raises(InvalidRunId):
+>           rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), run_id=bad)
+E           TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+
+tests/test_peel_run_id.py:86: TypeError
+_ test_t4_hostile_ids_are_refused_before_any_write['run_aaaaaaaaaaaaaaaaaaaaaaaaa] _
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-570/test_t4_hostile_ids_are_refuse15/config')
+bad = 'run_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+
+    @pytest.mark.parametrize("bad", HOSTILE, ids=[repr(h)[:30] for h in HOSTILE])
+    def test_t4_hostile_ids_are_refused_before_any_write(cfg_dir, bad):
+        rt, cfg = build(cfg_dir)
+        with pytest.raises(InvalidRunId):
+>           rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), run_id=bad)
+E           TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+
+tests/test_peel_run_id.py:86: TypeError
+____________ test_t4_hostile_ids_are_refused_before_any_write[123] _____________
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-570/test_t4_hostile_ids_are_refuse16/config')
+bad = 123
+
+    @pytest.mark.parametrize("bad", HOSTILE, ids=[repr(h)[:30] for h in HOSTILE])
+    def test_t4_hostile_ids_are_refused_before_any_write(cfg_dir, bad):
+        rt, cfg = build(cfg_dir)
+        with pytest.raises(InvalidRunId):
+>           rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), run_id=bad)
+E           TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+
+tests/test_peel_run_id.py:86: TypeError
+_ test_t4_hostile_ids_are_refused_before_any_write[b'run-0123456789abcdef01234567] _
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-570/test_t4_hostile_ids_are_refuse17/config')
+bad = b'run-0123456789abcdef0123456789abcdef'
+
+    @pytest.mark.parametrize("bad", HOSTILE, ids=[repr(h)[:30] for h in HOSTILE])
+    def test_t4_hostile_ids_are_refused_before_any_write(cfg_dir, bad):
+        rt, cfg = build(cfg_dir)
+        with pytest.raises(InvalidRunId):
+>           rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), run_id=bad)
+E           TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+
+tests/test_peel_run_id.py:86: TypeError
+___________ test_t4_hostile_ids_are_refused_before_any_write[['x']] ____________
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-570/test_t4_hostile_ids_are_refuse18/config')
+bad = ['x']
+
+    @pytest.mark.parametrize("bad", HOSTILE, ids=[repr(h)[:30] for h in HOSTILE])
+    def test_t4_hostile_ids_are_refused_before_any_write(cfg_dir, bad):
+        rt, cfg = build(cfg_dir)
+        with pytest.raises(InvalidRunId):
+>           rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), run_id=bad)
+E           TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+
+tests/test_peel_run_id.py:86: TypeError
+_____________________ test_t5_accepts_exactly_the_pattern ______________________
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-570/test_t5_accepts_exactly_the_pa0/config')
+
+    def test_t5_accepts_exactly_the_pattern(cfg_dir):
+        """Every one-character damage (replace, insert, cut) of a valid id, at every position, with an awkward alphabet."""
+        alphabet = "0123456789abcdefABCDEFg-_:/. \n\x00" + chr(0x661)
+        rt, cfg = build(cfg_dir)
+        doc = _doc(cfg, "injected.txt")  # stops before the model, so the recording is not used up
+        cases = {GOOD}
+        for k in range(len(GOOD) + 1):
+            cases.add(GOOD[:k] + GOOD[k + 1 :])
+            for c in alphabet:
+                cases.add(GOOD[:k] + c + GOOD[k + 1 :])
+                cases.add(GOOD[:k] + c + GOOD[k:])
+        ok = bad = 0
+        for text in sorted(cases):
+            if RUN_ID_PATTERN.fullmatch(text):
+                assert rt.handle(AGENT, PRINCIPAL, doc, run_id=text).run_id == text
+                ok += 1
+            else:
+                with pytest.raises(InvalidRunId):
+>                   rt.handle(AGENT, PRINCIPAL, doc, run_id=text)
+E                   TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+
+tests/test_peel_run_id.py:112: TypeError
+____________________ test_t6_the_ak_g2_id_shape_is_accepted ____________________
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-570/test_t6_the_ak_g2_id_shape_is_0/config')
+
+    def test_t6_the_ak_g2_id_shape_is_accepted(cfg_dir):
+        rt, cfg = build(cfg_dir)
+        assert len(AK_G2_SHAPE) == 36
+        assert (
+>           rt.handle(AGENT, PRINCIPAL, _doc(cfg, "chat.txt"), run_id=AK_G2_SHAPE).run_id == AK_G2_SHAPE
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        )
+E       TypeError: Runtime.handle() got an unexpected keyword argument 'run_id'
+
+tests/test_peel_run_id.py:121: TypeError
+_______________ test_t7_run_id_is_keyword_only_with_default_none _______________
+
+    def test_t7_run_id_is_keyword_only_with_default_none():
+>       p = inspect.signature(Runtime.handle).parameters["run_id"]
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'run_id'
+
+tests/test_peel_run_id.py:126: KeyError
+=========================== short test summary info ============================
+FAILED tests/test_peel_run_id.py::test_t1_given_id_is_the_run_id - TypeError:...
+FAILED tests/test_peel_run_id.py::test_t2_same_id_twice_is_refused_and_nothing_else_happens
+FAILED tests/test_peel_run_id.py::test_t3_without_run_id_ids_are_fresh_and_well_formed
+FAILED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['']
+FAILED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['run-']
+FAILED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['run-aaaaaaaaaaaaaaaaaaaaaaaaa0]
+FAILED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['run-aaaaaaaaaaaaaaaaaaaaaaaaa1]
+FAILED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['run-AAAAAAAAAAAAAAAAAAAAAAAAA]
+FAILED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['run-ggggggggggggggggggggggggg]
+FAILED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['../aaaaaaaaaaaaaaaaaaaaaaaaaa]
+FAILED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['run-0123456789abcdef012345678_0]
+FAILED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['\\nrun-0123456789abcdef0123456]
+FAILED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['run-0123456789abcdef012345678_1]
+FAILED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['run-aaaaaaaaaaaaaaaaaaaaaaaaa2]
+FAILED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['run-aaaaaaaaaaaaaaaaaaaaaaaaa3]
+FAILED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['run-0123456789abcdef012345678_2]
+FAILED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['aaaaaaaaaaaaaaaaaaaaaaaaaaaaa]
+FAILED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['ru-aaaaaaaaaaaaaaaaaaaaaaaaaa]
+FAILED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['run_aaaaaaaaaaaaaaaaaaaaaaaaa]
+FAILED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write[123]
+FAILED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write[b'run-0123456789abcdef01234567]
+FAILED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write[['x']]
+FAILED tests/test_peel_run_id.py::test_t5_accepts_exactly_the_pattern - TypeE...
+FAILED tests/test_peel_run_id.py::test_t6_the_ak_g2_id_shape_is_accepted - Ty...
+FAILED tests/test_peel_run_id.py::test_t7_run_id_is_keyword_only_with_default_none
+25 failed in 0.65s

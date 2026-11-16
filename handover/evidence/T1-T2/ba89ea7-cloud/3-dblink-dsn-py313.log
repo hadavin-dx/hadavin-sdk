@@ -1,0 +1,14 @@
+HEAD ba89ea751e0197ff64bd20143cd606eaa6529d01
+CMD /home/user/build/venv-t1t2-313/bin/python -m pytest tests/demo_askdata/test_verify_readonly.py tests/demo_askdata/test_validate_harm.py -k dblink or extension -p no:cacheprovider -rs -v
+============================= test session starts ==============================
+platform linux -- Python 3.13.18, pytest-9.2.0, pluggy-1.7.0 -- /home/user/build/venv-t1t2-313/bin/python
+rootdir: /home/user/build/EV-T1T2-ba89ea7/wt
+configfile: pyproject.toml
+plugins: anyio-4.15.1
+collecting ... collected 271 items / 269 deselected / 2 selected
+
+tests/demo_askdata/test_verify_readonly.py::test_file_and_network_extension_turns_the_script_red PASSED [ 50%]
+tests/demo_askdata/test_validate_harm.py::test_reading_attack_does_harm_unvalidated_and_is_refused_when_validated[dblink-connect] PASSED [100%]
+
+====================== 2 passed, 269 deselected in 0.80s =======================
+exit=0

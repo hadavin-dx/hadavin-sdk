@@ -1,0 +1,32 @@
+ok  KILLED    R9D4 a bare bearer scheme word is not hidden | killer=test_a_bare_scheme_word_hides_at_least_what_the_core_hides_by_a_table | expect_in_first=True
+    first: E               AssertionError: Bearer 12: the guard and the core disagree: 'x Bearer aaaaaaaaaaaa y' vs 'x Bearer <hidden> y'
+ok  KILLED    R9D5 a bare basic scheme word is not hidden | killer=test_a_bare_scheme_word_hides_at_least_what_the_core_hides_by_a_table | expect_in_first=True
+    first: E               AssertionError: basic 8: the guard and the core disagree: 'x basic aaaaaaaa y' vs 'x basic <hidden> y'
+ok  KILLED    R9D7 a quoted value is read as an unquoted one | killer=test_a_name_value_pair_hides_quoted_and_odd_values_and_the_wider_name_ | expect_in_first=True
+    first: E               AssertionError: quoted password="ab cd'ef": 'fatal: password=<hidden> cd\'ef" tail'
+ok  KILLED    R9D8 an inner quote or ampersand ends an unquoted value | killer=test_a_name_value_pair_hides_quoted_and_odd_values_and_the_wider_name_ | expect_in_first=True
+    first: E               AssertionError: unquoted password="ab'cd": "fatal: password=<hidden>'cd tail"
+ok  KILLED    R13A5 banner_or_unconfirmed catches every error | killer=test_a_bug_in_banner_or_unconfirmed_is_not_turned_into_a_banner | expect_in_first=True
+    first: E       AssertionError: banner_or_unconfirmed: a bug of an unnamed type was turned into a banner
+ok  KILLED    R14C1 the endpoint check of a source catches every error | killer=test_a_bug_in_reading_the_endpoint_of_a_source_is_not_turned_into_an_a | expect_in_first=True
+    first: E       AssertionError: a bug of an unnamed type in the endpoint of a source was turned into an answer
+BAD WRONG_REASON R13A8 the list of read errors takes every error | killer=test_the_list_of_read_errors_holds_no_type_that_takes_every_error | expect_in_first=False
+    first: E       AssertionError: READ_ERRORS is not the five named types: (<class 'TypeError'>, <class 'ValueError'>, <class 'AttributeError'>, <class 'LookupError'>, <class 'Runt
+ok  KILLED    R13A9 the shared start of a program accepts a shell | killer=test_pin_the_shared_start_of_a_program_refuses_a_shell_a_hook_and_any_ | expect_in_first=True
+    first: E           AssertionError: a program was started with {'shell': True}
+ok  KILLED    R14A1 a quoted token after a scheme word in an authorization | killer=test_a_quoted_authorization_value_after_a_scheme_word_is_hidden_whole | expect_in_first=True
+    first: E       AssertionError: the quoted authorization value was not hidden whole
+ok  KILLED    R14A2 a token with a dash after a bare scheme word ends at t | killer=test_a_basic_token_of_17_characters_with_a_dash_is_hidden_where_the_co | expect_in_first=True
+    first: E       AssertionError: a 17 character Basic token with a dash stayed visible
+ok  KILLED    R14A3 a token of 12 characters after a bare scheme word is h | killer=test_pin_a_basic_token_of_12_characters_with_a_dash_stays_visible_as_i | expect_in_first=True
+    first: E       AssertionError: a 12 character Basic token with a dash was hidden
+ok  KILLED    R13B1 the token after a scheme word in an authorization pair | killer=test_authorization_pair_with_a_scheme_word_hides_the_token_at_8_10_and | expect_in_first=True
+    first: E               AssertionError: Bearer 8 characters stayed visible: 'fatal: authorization=<hidden> qqqqqqqq tail'
+ok  KILLED    R13B2 a bare word bypass with any value is shown when nothin | killer=test_a_bare_word_bypass_is_hidden_unless_its_value_is_a_plain_on_off_w | expect_in_first=True
+    first: E           AssertionError: a hidden-side value at the end of the line stayed visible: 'bypass=abc123'
+ok  KILLED    R13B3 a token that mixes letters and digits is not hidden af | killer=test_a_bare_scheme_word_hides_a_token_of_16_or_more_or_one_that_mixes_ | expect_in_first=True
+    first: E           AssertionError: Bearer 11 mixed characters stayed: 'x Bearer a1a1a1a1a1a y'
+ok  KILLED    R13B4 a plain flag is shown although more text follows it on | killer=test_a_bare_word_bypass_is_hidden_unless_its_value_is_a_plain_on_off_w | expect_in_first=True
+    first: E       AssertionError: a flag with a word after it was shown
+n 15 bad 1
+rc=0

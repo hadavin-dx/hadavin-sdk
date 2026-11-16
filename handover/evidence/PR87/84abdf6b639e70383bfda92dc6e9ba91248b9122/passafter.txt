@@ -1,0 +1,32 @@
+$ pytest tests/test_peel_run_id.py at head
+..........................                                               [100%]
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_peel_run_id.py::test_t1_given_id_is_the_run_id
+PASSED tests/test_peel_run_id.py::test_t2_same_id_twice_is_refused_and_nothing_else_happens
+PASSED tests/test_peel_run_id.py::test_t3_without_run_id_ids_are_fresh_and_well_formed
+PASSED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['']
+PASSED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['run-']
+PASSED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['run-aaaaaaaaaaaaaaaaaaaaaaaaa0]
+PASSED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['run-aaaaaaaaaaaaaaaaaaaaaaaaa1]
+PASSED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['run-AAAAAAAAAAAAAAAAAAAAAAAAA]
+PASSED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['run-ggggggggggggggggggggggggg]
+PASSED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['../aaaaaaaaaaaaaaaaaaaaaaaaaa]
+PASSED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['run-0123456789abcdef012345678_0]
+PASSED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['\\nrun-0123456789abcdef0123456]
+PASSED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['run-0123456789abcdef012345678_1]
+PASSED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['run-aaaaaaaaaaaaaaaaaaaaaaaaa2]
+PASSED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['run-aaaaaaaaaaaaaaaaaaaaaaaaa3]
+PASSED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['run-0123456789abcdef012345678_2]
+PASSED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['aaaaaaaaaaaaaaaaaaaaaaaaaaaaa]
+PASSED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['ru-aaaaaaaaaaaaaaaaaaaaaaaaaa]
+PASSED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write['run_aaaaaaaaaaaaaaaaaaaaaaaaa]
+PASSED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write[123]
+PASSED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write[b'run-0123456789abcdef01234567]
+PASSED tests/test_peel_run_id.py::test_t4_hostile_ids_are_refused_before_any_write[['x']]
+PASSED tests/test_peel_run_id.py::test_t5_accepts_exactly_the_pattern
+PASSED tests/test_peel_run_id.py::test_t6_the_ak_g2_id_shape_is_accepted
+PASSED tests/test_peel_run_id.py::test_t7_run_id_is_keyword_only_with_default_none
+PASSED tests/test_peel_run_id.py::test_t8_model_pattern_is_the_written_out_oracle
+26 passed in 15.97s
+exit=0

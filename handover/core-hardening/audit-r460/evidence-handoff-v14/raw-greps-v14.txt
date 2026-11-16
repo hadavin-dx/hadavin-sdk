@@ -1,0 +1,39 @@
+# raw-greps-v14.txt: greps run 2026-11-16T15:57:10Z on the live tree (read only); method printed with each
+## G1 multi-line-aware count: build( calls with an llm= keyword in tests (python ast, multi-line calls included)
+build(llm=) calls: 26 in 11 files; whose value text names NetworkLLM: 0
+## G4 make("llm" sites in tests (lines, files)
+14
+5
+## G17 SECURITY DEFINER or CREATE FUNCTION in src (siblings of B1)
+## G18 detector kind names, backends/table.py
+    "detector": {
+        "regex": Entry(RegexSettings, f"{_BUILTIN}:regex_detector", neutral=True),
+        # llm_judge connects through the configured llm kind (its hosts are the llm's).
+        "llm_judge": Entry(
+            JudgeSettings, "hadavin_sdk.guard.judge:make", status=_UNVERIFIED, neutral=True
+        ),
+        "bedrock_guardrail": Entry(
+            GuardrailSettings,
+            "hadavin_sdk.guard.bedrock_guardrail:make",
+## G19 NetworkLLM passed to build in tests (text grep, any line)
+0
+## G20 src names planned by this document (0 expected)
+max_requests: 0
+allow_group_read: 0
+fileguard: 0
+reason_string: 0
+KeptTotal: 0
+RouteLike: 0
+check_owner_gates: 0
+## G21 tests that monkeypatch _migration_files
+grep: /home/user/hadavin-sdk/tests/__pycache__/test_k5_fixes1.cpython-313-pytest-9.1.1.pyc: binary file matches
+grep: /home/user/hadavin-sdk/tests/__pycache__/test_k2_migrations.cpython-313-pytest-9.1.1.pyc: binary file matches
+grep: /home/user/hadavin-sdk/tests/__pycache__/test_k5_fixes2.cpython-313-pytest-9.1.1.pyc: binary file matches
+/home/user/hadavin-sdk/tests/test_k5_fixes1.py:184:    numbers = [p.name[:4] for p in mig._migration_files()]
+/home/user/hadavin-sdk/tests/test_k5_fixes1.py:186:    assert mig.check_ledger(mig._migration_files()) == []
+/home/user/hadavin-sdk/tests/test_k2_migrations.py:30:    files = mig._migration_files()
+/home/user/hadavin-sdk/tests/test_k2_migrations.py:108:    monkeypatch.setattr(mig, "_migration_files", lambda: files)
+/home/user/hadavin-sdk/tests/test_k2_migrations.py:389:    files = mig._migration_files()
+/home/user/hadavin-sdk/tests/test_k2_migrations.py:390:    monkeypatch.setattr(mig, "_migration_files", lambda: files[:-
+/home/user/hadavin-sdk/tests/test_k5_fixes2.py:269:    return mig._migration_files(folder)
+/home/user/hadavin-sdk/tests/test_k5_fixes2.py:300:        monkeypatch.setattr(mig, "_migration_files", lambda: files)

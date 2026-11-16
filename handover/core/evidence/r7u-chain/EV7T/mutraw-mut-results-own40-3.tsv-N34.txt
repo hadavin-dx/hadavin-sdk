@@ -1,0 +1,66 @@
+AST ONE CHECK FAILED
+
+lead id          state    CRM rows  mails
+L249c8d20e36b    sent            1      1
+L35b2d03bc5a0    sent            1      1
+L451b4d7b6b28    sent            0      1
+L6bed83b90b14    unknown         1      1
+L7983eddc644e    sent            1      1
+L87bcdae8ad1f    unknown         1      0
+L9f522a2aca07    sent            1      1
+La359ba746f66    sent            1      1
+Lcba1cca238a5    unknown         1      1
+
+{
+  "crm_contacts_per_lead_max": 1,
+  "crm_contacts_with_our_ids": 8,
+  "desk_crash_exit_code": 137,
+  "desk_idle_at_end": true,
+  "followup_states": {
+    "sent": 6,
+    "unknown": 3
+  },
+  "hubspot_calls_by_readback": {
+    "archives": 0,
+    "calls": 1,
+    "conflicts": 0,
+    "create_open": 0,
+    "create_unknown": 0,
+    "created": 0,
+    "creates": 0,
+    "gets": 1,
+    "patch": 0,
+    "rate_limited": 0,
+    "searches": 0
+  },
+  "hubspot_calls_by_the_desk": {},
+  "imap_logins": 2,
+  "leads_in_book": 9,
+  "leads_with_more_than_one_mail": 0,
+  "mail_last_poll_failed": false,
+  "mail_poll_repeats": 0,
+  "mailbox_folders_could_not_check": 0,
+  "mails_allowed_by_the_desk_max": 12,
+  "mails_in_mailbox": 8,
+  "mails_in_spam_folder": 0,
+  "mails_per_mailbox_in_config_order": [
+    3,
+    5
+  ],
+  "mails_sent_by_the_desk_total": 8,
+  "people_sent": 8,
+  "requests_intended": 13,
+  "seconds_total": 5.4,
+  "smtp_by_the_desk": {
+    "attempts": 9,
+    "sent": 8
+  },
+  "twin_expectation": "the twin (same person, other address) is a second lead and contact: a known blind spot"
+}
+
+result file: /home/user/build/rr6/out/EV7T/tmp-mut-mutY3/real-dry-ieu7goh3/run/result.json
+clean-up: 8 contacts archived (only those carrying this run's lead ids)
+=========================== short test summary info ============================
+FAILED tests/test_r7t_findings.py::test_t9_a_missing_counter_with_a_hidden_contact_ends_as_failed
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 17 passed, 118 deselected in 42.61s

@@ -1,0 +1,36 @@
+### tests/test_migration_postgres.py::test_the_portal_role_is_refused_what_the_other_roles_are_refused rc=1
+FFF                                                                      [100%]
+=================================== FAILURES ===================================
+_ test_the_portal_role_is_refused_what_the_other_roles_are_refused[column_update_via_group-can UPDATE runs.state] _
+tests/test_migration_postgres.py:2455: in test_the_portal_role_is_refused_what_the_other_roles_are_refused
+    with pytest.raises(ConfigError) as e:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+_ test_the_portal_role_is_refused_what_the_other_roles_are_refused[select_on_the_ledger-can SELECT schema_migrations] _
+tests/test_migration_postgres.py:2455: in test_the_portal_role_is_refused_what_the_other_roles_are_refused
+    with pytest.raises(ConfigError) as e:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+_ test_the_portal_role_is_refused_what_the_other_roles_are_refused[create_in_the_schema-can CREATE in schema] _
+tests/test_migration_postgres.py:2455: in test_the_portal_role_is_refused_what_the_other_roles_are_refused
+    with pytest.raises(ConfigError) as e:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_the_portal_role_is_refused_what_the_other_roles_are_refused[column_update_via_group-can UPDATE runs.state]
+FAILED tests/test_migration_postgres.py::test_the_portal_role_is_refused_what_the_other_roles_are_refused[select_on_the_ledger-can SELECT schema_migrations]
+FAILED tests/test_migration_postgres.py::test_the_portal_role_is_refused_what_the_other_roles_are_refused[create_in_the_schema-can CREATE in schema]
+3 failed in 0.92s
+
+### tests/test_k2_migrations.py::test_migrate_refuses_a_portal_role_that_inherits_write_rights rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+________ test_migrate_refuses_a_portal_role_that_inherits_write_rights _________
+tests/test_k2_migrations.py:444: in test_migrate_refuses_a_portal_role_that_inherits_write_rights
+    with pytest.raises(ConfigError, match="can UPDATE runs"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+=========================== short test summary info ============================
+FAILED tests/test_k2_migrations.py::test_migrate_refuses_a_portal_role_that_inherits_write_rights
+1 failed in 0.70s
+

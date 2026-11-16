@@ -1,0 +1,4 @@
+BANNED entries read: 10 (type tuple)
+REPORT-c6p.md: files scanned 1, total hits 0, files with hits 0
+REPORT-c6o.md: files scanned 1, total hits 0, files with hits 0
+.: files scanned 93, total hits 0, files with hits 0

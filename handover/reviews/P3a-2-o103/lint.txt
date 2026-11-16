@@ -1,0 +1,7 @@
+HEAD 63658aaceadc2f3e8e5429c5d01681c3b8b42f67
+$ ruff check src tests demos
+Uninstalled 1 package in 1ms
+Installed 1 package in 4ms
+All checks passed!
+$ ruff format --check src tests demos
+317 files already formatted

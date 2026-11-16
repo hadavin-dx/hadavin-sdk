@@ -1,0 +1,14 @@
+# PD Part 2 round 9, design reviewer (egm-design), head 83cdb7a293b7d5ba7d79bedaf3c8990fe99c4ee4
+
+Read-only, snapshot /home/user/build/snap/pdbind-83cdb7a2/. Condensed by the lead session from the inline report. Result: 0 Blocker, 3 Major, 4 Minor, 1 Nit. Round 10 required (Majors 1 and 2 are fail-open by an in-process value).
+Not read in full by the reviewer: tests and bind_mutants delta (class 4 only spot-checked); models.py not in the snapshot.
+Fixed from r8 and not re-opened: clock tzinfo (plain_datetime, exact type, None or UTC by identity; models.now pinned by __code__), pins (22 keys; 20 by pin_all, Runtime and FakeSecretProvider by pin_module; _RUNTIME_PIN gone; serve checks the pin), holder key read without ==, refusal text ASCII, over-budget label fail-closed.
+
+M1 standins.py:577: the last-depth-level check judges atoms by type only. _entered (498-502) applies plain_datetime and _path_slots_plain; the final level skips both. A datetime with a hostile tzinfo or a Path with a real object in a slot at level 9 reads as plain: real service called a stand-in. No test at depth 9 for datetime or Path. Fix: same atom judge at that line; tests at depth 9 for each.
+M2 requests.py:58-73: _runtime_ok pins the class and checks store, llm, detector only. Runtime has no __slots__ or __setattr__: rt.on_decided = evil or rt.tick = ... on the INSTANCE shadows the pinned class method (non-data descriptor). Only a class-level patch test exists (test_bindguard.py:4322). Fix: __dict__ keys exactly those __init__ writes; judge hooks, registry, audit, agents, limits too, or reject keys matching any class method name; instance-shadow test.
+M3 CHANGELOG "full budget about 100 ms" is per object, not per request: held_services_found (bindguard.py:153) calls verdict() per held object with a fresh 250,000-node budget; _runtime_ok then calls is_stand_in again on the same store, llm, detector. Pre-auth cost is at least 2x the store scan plus channel and detector. Fix: state the per-request worst case or share one budget across real_now.
+m4 CHANGELOG line 16 still says allow_public_bind_reason is "10 to 200 printable characters"; reason_problem (bindguard.py:244-246) now rejects non-ASCII too (breaking, unstated); the _shown host/bind rule (letters, digits and . : - _ [ ] % only, else "(unreadable)") not described.
+m5 hold_run_ids not recorded in overrides (brief said record it); proof is a text grep of approvals/*.py, which does not prove no reach via holder["rt"].hooks.hold_run_ids (not judged by M2).
+m6 real_now judges the clock, then receive (requests.py:357) runs self.clock().timestamp(); Approvals.clock is re-settable; check-versus-use race unstated (CHANGELOG names it for the channel only).
+m7 models.now trusted by __code__ identity only; its globals (models.datetime, models.UTC) are not pinned: foreign code before authentication. Pin or state the limit.
+N8 test_bindguard.py:4256 dead `(...) if False else (...)` expression.

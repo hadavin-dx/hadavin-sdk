@@ -1,0 +1,5 @@
+OWNER-SHEET-v26-A.md 6435 words
+OWNER-SHEET-v26-B.md 6434 words
+LEAD-RELEASE-NOTE-v10.md 10309 words
+v26-OPEN-FOR-LEAD.md 5020 words
+exit=0 secs=0

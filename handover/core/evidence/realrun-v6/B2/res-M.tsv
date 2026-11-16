@@ -1,0 +1,23 @@
+M1 stdin_is_terminal always True	KILLED	FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_a_stdin_that_is_not_a_terminal[y\n]	1 failed in 0.11s	0
+M2 isatty only (no console test)	KILLED? wrong-reason suspected (error text in output)	FAILED tests/test_start_prompt_hardening.py::test_a_failing_console_probe_is_not_a_terminal	1 failed, 31 passed in 0.18s	0
+M3 windows probe ignored	KILLED	FAILED tests/test_start_prompt_hardening.py::test_windows_needs_a_console_not_just_isatty	1 failed, 30 passed in 0.18s	0
+M4 windows probe fails open	KILLED	FAILED tests/test_start_prompt_hardening.py::test_windows_needs_a_console_not_just_isatty	1 failed, 30 passed in 0.16s	0
+M5 ask_to_start takes y	KILLED	FAILED tests/test_start_prompt_hardening.py::test_only_the_destination_host_starts_the_real_check_never_a_y[y]	1 failed, 9 passed in 0.13s	0
+M6 ask_to_start reads a non-terminal	KILLED	FAILED tests/test_start_prompt_hardening.py::test_ask_to_start_never_reads_what_is_not_a_terminal_and_never_takes_y	1 failed, 32 passed in 0.17s	0
+M7 ask_to_start takes y as the word	KILLED	FAILED tests/test_start_prompt_hardening.py::test_ask_to_start_never_reads_what_is_not_a_terminal_and_never_takes_y	1 failed, 32 passed in 0.18s	1
+M8 real early check removed	KILLED	FAILED tests/test_start_prompt_hardening.py::test_real_check_dry_fakes_without_assume_yes_also_needs_a_terminal	1 failed, 5 passed in 0.13s	0
+M9 live early check removed	KILLED	FAILED tests/test_start_prompt_hardening.py::test_live_check_refuses_a_stdin_that_is_not_a_terminal[y\n]	1 failed, 33 passed in 0.20s	1
+M10 real: any answer starts	KILLED	FAILED tests/test_start_prompt_hardening.py::test_a_terminal_reaches_the_question_and_a_wrong_answer_stops	1 failed, 8 passed in 0.14s	0
+M11 live: any answer starts	KILLED	FAILED tests/test_start_prompt_hardening.py::test_live_check_a_y_or_a_wrong_host_stops[y]	1 failed, 50 passed in 0.24s	1
+M12 real early refusal exit 1	KILLED	FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_a_stdin_that_is_not_a_terminal[y\n]	1 failed in 0.10s	0
+M13 banner without mailbox lines	KILLED	FAILED tests/test_start_prompt_hardening.py::test_the_banner_shows_where_each_key_goes_before_the_question	1 failed, 20 passed in 0.16s	0
+M14 banner not printed	KILLED	FAILED tests/test_start_prompt_hardening.py::test_the_banner_shows_where_each_key_goes_before_the_question	1 failed, 20 passed in 0.16s	0
+M15 imap host shape unchecked	KILLED	FAILED tests/test_start_prompt_hardening.py::test_an_unreplaced_or_odd_mailbox_host_is_refused_before_the_question	1 failed, 22 passed in 0.21s	0
+M16 imap falls back to default	KILLED	FAILED tests/test_start_prompt_hardening.py::test_an_unreplaced_or_odd_mailbox_host_is_refused_before_the_question	1 failed, 22 passed in 0.17s	0
+M17 unnamed check off	KILLED	FAILED tests/test_start_prompt_hardening.py::test_real_check_refuses_an_address_the_settings_do_not_name[absent-DESK_HUBSPOT_BASE_URL]	1 failed, 56 passed in 0.23s	1
+M18 loopback by substring	KILLED	FAILED tests/test_start_prompt_hardening.py::test_live_check_assume_yes_refuses_a_loopback_lookalike[http://127.0.0.1.evil.test]	1 failed, 39 passed in 0.19s	0
+M19 live no-base-url refusal off	KILLED	FAILED tests/test_start_prompt_hardening.py::test_live_check_has_no_default_address	1 failed, 48 passed in 0.22s	1
+M20 guard ignores the name input	KILLED	FAILED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[alias of input]	1 failed, 65 passed in 0.31s	1
+M21 guard ignores sys.stdin attribute	KILLED	FAILED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[for line in sys.stdin]	1 failed, 71 passed in 0.33s	1
+M22 guard ignores getpass import	KILLED	FAILED tests/test_start_prompt_hardening.py::test_the_guard_finds_every_way_python_can_read_a_person[from getpass import getpass as g]	1 failed, 73 passed in 0.30s	1
+M23 repo walk skips scripts	KILLED	FAILED tests/test_start_prompt_hardening.py::test_only_the_terminal_guard_reads_a_person_in_the_whole_repository	1 failed, 126 passed in 1.20s	2

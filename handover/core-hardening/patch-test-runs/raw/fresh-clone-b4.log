@@ -1,0 +1,70 @@
+cmd: env -i PATH=$PATH HOME=$HOME uv run --all-extras --group test pytest tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked tests/test_repo_rules.py::test_licences_are_proprietary -p no:cacheprovider -x --no-header
+head: b4cce5b6a
+Linux vm 6.18.44-fc-v470 #1 SMP PREEMPT_DYNAMIC @0 x86_64 x86_64 x86_64 GNU/Linux
+Mon Nov 16 09:30:46 UTC 2026
+Using CPython 3.13.18 interpreter at: /usr/local/bin/python3
+Creating virtual environment at: .venv
+   Building hadavin-sdk @ file:///tmp/c7clone/b4
+      Built hadavin-sdk @ file:///tmp/c7clone/b4
+Installed 76 packages in 207ms
+============================= test session starts ==============================
+collected 2 items
+
+tests/test_no_reference_material.py F
+
+=================================== FAILURES ===================================
+____________________ test_no_vendor_brand_string_is_tracked ____________________
+
+    def test_no_vendor_brand_string_is_tracked():
+        """Scan every text file (any suffix, e.g. .tsx/.svg); binary files are skipped; undecodable text FAILS."""
+        bad = []
+        for rel in _tracked():
+            if rel in SELF:
+                continue
+            try:
+                raw = (ROOT / rel).read_bytes()
+            except OSError as exc:
+                bad.append(f"{rel}: unreadable ({exc.__class__.__name__})")
+                continue
+            if b"\0" in raw:  # binary: covered by the hash test
+                continue
+            try:
+                text = raw.decode("utf-8")
+            except UnicodeDecodeError:
+                bad.append(f"{rel}: not UTF-8 text, cannot be scanned for vendor strings")
+                continue
+            bad += [f"{rel}: {s!r}" for s in BANNED if s in text]
+>       assert not bad, "vendor brand strings or unscannable files in the repo: " + "; ".join(bad)
+E       AssertionError: vendor brand strings or unscannable files in the repo: handover/BRIEF-PREAMBLE-studio-2026-11-06.md: '[BANNED-WORD-REDACTED]'; handover/reviews/P1a-idempotence-probe.txt: not UTF-8 text, cannot be scanned for vendor strings; handover/demo/portal/portal-design-v2.md: '[BANNED-WORD-REDACTED]'
+E       assert not ["handover/BRIEF-PREAMBLE-studio-2026-11-06.md: '[BANNED-WORD-REDACTED]'", 'handover/reviews/P1a-idempotence-probe.txt: not UTF-8 text, cannot be scanned for vendor strings', "handover/demo/portal/portal-design-v2.md: '[BANNED-WORD-REDACTED]'"]
+
+tests/test_no_reference_material.py:87: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_no_reference_material.py::test_no_vendor_brand_string_is_tracked
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+============================== 1 failed in 2.46s ===============================
+rc=1
+cmd (test 2 alone, because -x stops at first failure): uv run ... pytest tests/test_repo_rules.py::test_licences_are_proprietary -p no:cacheprovider -x --no-header
+============================= test session starts ==============================
+collected 1 item
+
+tests/test_repo_rules.py F
+
+=================================== FAILURES ===================================
+________________________ test_licences_are_proprietary _________________________
+
+    def test_licences_are_proprietary():
+        files = tracked_files(ROOT)
+        assert {"LICENSE", "pyproject.toml"} <= set(files)
+>       assert licence_problems(ROOT, files) == []
+E       AssertionError: assert ['handover/pr...Hadavin', ...] == []
+E         
+E         Left contains 10 more items, first extra item: 'handover/promotion-inputs/apexc/LICENSE: not the proprietary licence text'
+E         Use -v to get more diff
+
+tests/test_repo_rules.py:120: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_repo_rules.py::test_licences_are_proprietary - AssertionErr...
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+============================== 1 failed in 0.13s ===============================
+rc=1

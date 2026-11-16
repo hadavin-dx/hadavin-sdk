@@ -1,0 +1,31 @@
+$ git merge-tree --write-tree origin/core/q8a-1-live-override-refusals 02068ebe
+95eaef065ea10f2076452daf823fc3909b7d4282
+100644 9107c49d1dd3d0be8383e008ae71c251e8f91fbb 1	CHANGELOG.md
+100644 f6b921d3e8b684e38db12829ab73a00d04759dc1 2	CHANGELOG.md
+100644 341ddf6b3f45b330d25b75853d1a51ff10c63ddc 3	CHANGELOG.md
+
+Auto-merging CHANGELOG.md
+CONFLICT (content): Merge conflict in CHANGELOG.md
+Auto-merging src/hadavin_sdk/runtime/tick.py
+5d merge-tree rc=1
+
+$ same with --name-only
+95eaef065ea10f2076452daf823fc3909b7d4282
+CHANGELOG.md
+
+Auto-merging CHANGELOG.md
+CONFLICT (content): Merge conflict in CHANGELOG.md
+Auto-merging src/hadavin_sdk/runtime/tick.py
+5d merge-tree --name-only rc=1
+
+EXTRA (not in the brief): the guard on the merged tree
+merged tree 95eaef065ea10f2076452daf823fc3909b7d4282 = git merge-tree --write-tree origin/core/q8a-1-live-override-refusals(f6fad26f) 02068ebe; whole tree exported with git archive; CHANGELOG.md holds the conflict markers
+guard file: /tmp/claude-0/-home-user-hadavin-sdk/3c7954a2-a1b2-5867-97dd-d4d94c9e06fd/scratchpad/merged/tests/test_lockin_guard.py
+hadavin_sdk: /tmp/claude-0/-home-user-hadavin-sdk/3c7954a2-a1b2-5867-97dd-d4d94c9e06fd/scratchpad/merged/src/hadavin_sdk/__init__.py
+SRC scanned: /tmp/claude-0/-home-user-hadavin-sdk/3c7954a2-a1b2-5867-97dd-d4d94c9e06fd/scratchpad/merged/src
+literal_problems(SRC, VENDOR_MODULES, LITERAL_OK) -> 0 line(s): []
+identifier_problems(SRC, VENDOR_MODULES, IDENTIFIER_OK, TABLE_VENDOR_NAMES) -> 0 line(s): []
+VENDOR_WORDS: ('slack', 'teams', 'aws', 'azure', 'gcp', 'github', 'gitlab', 'bedrock', 'anthropic', 'vertex', 'gemini', 'openai', 'kms', 's3', 'foundry', 'google', 'gcs', 'gcloud', 'amazon', 'microsoft', 'alibaba', 'oracle', 'digitalocean', 'openstack', 'cloudwatch', 'pagerduty')
+TABLE_VENDOR_NAMES: ['AnthropicSettings', 'AwsKmsSettings', 'AwsSecretsManagerSettings', 'AzureImmutableBlobSettings', 'AzureKeyVaultKeySettings', 'AzureKeyVaultSettings', 'BedrockSettings', 'GcpKmsSettings', 'GcpSecretManagerSettings', 'GcsRetentionLockSettings', 'GeminiSettings', 'S3ObjectLockSettings', 'SlackSettings', '_anthropic_hosts', '_aws', '_aws_host', '_s3_anchor_hosts', '_vertex_host']
+scan rc=0
+5e pytest (6 files, full export) rc=0 last: 431 passed in 70.18s (0:01:10)

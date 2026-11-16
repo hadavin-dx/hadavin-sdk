@@ -1,0 +1,4 @@
+# PR89 round 16, head f552f26 - slice tools/mutation_runner.py 1-640 (egm-design). Read only, nothing run. Diff hunks not read (code at head reviewed).
+No Blocker/Major. Hand-traced: KMP scan (_prefix_table, _longest_overlap, _fragment_spans), _masked bounds, _env_snapshot use (secrets, lock name, child env), _address_parts odd URLs -> "unparsed", _url_passwords `12/45`. Round-15 items in slice: lock name parse dependence documented; 12/45 gap closed in code; Windows paragraph accurate. Not read: 641-1111.
+- s1 Minor mutation_runner.py:594 (doc 93, 585): work cap counts dots x secrets pairs, not characters; ~2000-char all-special password gives tens of long secrets, one 100k-char line of ~1000 dots is ~10^8 steps (slow, not a leak). Weight the cap by secret length or say "pairs" in the docstring.
+- s2 Nit :559 2-char secret gets no fragment scan (by design). s3 Nit docstring "snapshot" means root/src in line 3 and environment in line 94.

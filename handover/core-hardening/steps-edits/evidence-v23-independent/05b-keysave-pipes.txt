@@ -1,0 +1,16 @@
+LINE under test (from sheet): ( set -C; umask 077; read -rs -p 'paste key, Enter: ' K && [ -n "$K" ] && printf '%s\n' "$K" > "<key file>" ); echo "exit $?"
+1 normal paste + Enter               stdout='exit 0' stderr_has_path=False exists=True mode=0o600 size=26 key_text_printed=False
+   k1 content equals key+newline: True size expected 26
+2 empty input (just Enter)           stdout='exit 1' stderr_has_path=False exists=False key_text_printed=False
+2b empty stdin (EOF)                 stdout='exit 1' stderr_has_path=False exists=False key_text_printed=False
+2c spaces only                       stdout='exit 1' stderr_has_path=False exists=False key_text_printed=False
+3 no trailing newline                stdout='exit 1' stderr_has_path=False exists=False key_text_printed=False
+4 existing file (must not overwrite) stdout='exit 1' stderr_has_path=True exists=True mode=0o644 size=4 key_text_printed=False
+   content after = 'OLD\n'
+5 missing folder                     stdout='exit 1' stderr_has_path=True exists=False key_text_printed=False
+6 key with spaces around             stdout='exit 0' stderr_has_path=False exists=True mode=0o600 size=26 key_text_printed=False
+   k6 content equals key+newline (spaces trimmed): True
+7 two lines pasted                   stdout='exit 0' stderr_has_path=False exists=True mode=0o600 size=26 key_text_printed=False
+   k7 only first line saved: True
+8 key with backslash+tab inside      stdout='exit 0' stderr_has_path=False exists=True mode=0o600 size=28 key_text_printed=False
+   k8 content equals? True

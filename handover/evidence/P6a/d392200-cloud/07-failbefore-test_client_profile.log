@@ -1,0 +1,1192 @@
+HEAD(base)=0dabf1fa7a2ed58e14b8bca13be1141ac59f9c71
+python=Python 3.13.18
+cmd=pytest -q -rA -p no:cacheprovider tests/test_client_profile.py
+.......F...FFFFFFFFFFF......FFFFFFFFFF..F..F.FFFFFFFFFFFFFFFFFFFFFFFF    [100%]
+=================================== FAILURES ===================================
+________________ test_the_facts_stated_in_the_reasons_are_true _________________
+
+    def test_the_facts_stated_in_the_reasons_are_true():
+        """A reason that says `NOT_PROD`, "sends text out" or "sends no text out" is checked against the code, both
+        ways: the claim must be true, and a pair the code treats that way must say so."""
+>       from hadavin_sdk.config import _sends_text_out
+E       ImportError: cannot import name '_sends_text_out' from 'hadavin_sdk.config' (/home/user/build/EV-P6a-d392200/base/src/hadavin_sdk/config.py)
+
+tests/test_client_profile.py:276: ImportError
+____________ test_each_test_double_is_refused_alone[secrets-pilot] _____________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-4936/test_each_test_double_is_refus0')
+made = ['signer'], keyword = 'secrets', env = 'pilot'
+
+    @pytest.mark.parametrize(("keyword", "env"), list(product(REFUSED, ["pilot", "prod"])))
+    def test_each_test_double_is_refused_alone(tmp_path, made, keyword, env):
+        root = _cfg_for(tmp_path, env)
+        with pytest.raises(ConfigError, match="allow_test_doubles") as err:
+>           app_mod.build(root, ["ito-agent"], **{keyword: SAMPLES[keyword]})
+
+tests/test_client_profile.py:321: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/app.py:144: in build
+    signer = make("signer", b.signer, secrets)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+capability = 'signer'
+args = (Ed25519LocalSettings(kind='ed25519_local', key_label=None, private_key_path=PosixPath('/tmp/pytest-of-root/pytest-493..._key_secret_name=None, passphrase_secret_name=None), <tests.test_client_profile._MadeSecrets object at 0x7f37ffa3b0e0>)
+kwargs = {}
+
+    def fake_make(capability, *args, **kwargs):
+        record.append(capability)
+        if capability == "secrets":
+            return _MadeSecrets()
+>       raise _Reached(capability)
+E       tests.test_client_profile._Reached: signer
+
+tests/test_client_profile.py:98: _Reached
+_____________ test_each_test_double_is_refused_alone[secrets-prod] _____________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-4936/test_each_test_double_is_refus1')
+made = ['signer'], keyword = 'secrets', env = 'prod'
+
+    @pytest.mark.parametrize(("keyword", "env"), list(product(REFUSED, ["pilot", "prod"])))
+    def test_each_test_double_is_refused_alone(tmp_path, made, keyword, env):
+        root = _cfg_for(tmp_path, env)
+        with pytest.raises(ConfigError, match="allow_test_doubles") as err:
+>           app_mod.build(root, ["ito-agent"], **{keyword: SAMPLES[keyword]})
+
+tests/test_client_profile.py:321: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/app.py:144: in build
+    signer = make("signer", b.signer, secrets)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+capability = 'signer'
+args = (Ed25519LocalSettings(kind='ed25519_local', key_label=None, private_key_path=None, private_key_secret_name='audit-key', passphrase_secret_name=None), <tests.test_client_profile._MadeSecrets object at 0x7f37ffa3b0e0>)
+kwargs = {}
+
+    def fake_make(capability, *args, **kwargs):
+        record.append(capability)
+        if capability == "secrets":
+            return _MadeSecrets()
+>       raise _Reached(capability)
+E       tests.test_client_profile._Reached: signer
+
+tests/test_client_profile.py:98: _Reached
+____________ test_each_test_double_is_refused_alone[channel-pilot] _____________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-4936/test_each_test_double_is_refus2')
+made = ['secrets', 'signer'], keyword = 'channel', env = 'pilot'
+
+    @pytest.mark.parametrize(("keyword", "env"), list(product(REFUSED, ["pilot", "prod"])))
+    def test_each_test_double_is_refused_alone(tmp_path, made, keyword, env):
+        root = _cfg_for(tmp_path, env)
+        with pytest.raises(ConfigError, match="allow_test_doubles") as err:
+>           app_mod.build(root, ["ito-agent"], **{keyword: SAMPLES[keyword]})
+
+tests/test_client_profile.py:321: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/app.py:144: in build
+    signer = make("signer", b.signer, secrets)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+capability = 'signer'
+args = (Ed25519LocalSettings(kind='ed25519_local', key_label=None, private_key_path=PosixPath('/tmp/pytest-of-root/pytest-493..._key_secret_name=None, passphrase_secret_name=None), <tests.test_client_profile._MadeSecrets object at 0x7f37ff70ad50>)
+kwargs = {}
+
+    def fake_make(capability, *args, **kwargs):
+        record.append(capability)
+        if capability == "secrets":
+            return _MadeSecrets()
+>       raise _Reached(capability)
+E       tests.test_client_profile._Reached: signer
+
+tests/test_client_profile.py:98: _Reached
+_____________ test_each_test_double_is_refused_alone[channel-prod] _____________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-4936/test_each_test_double_is_refus3')
+made = ['secrets', 'signer'], keyword = 'channel', env = 'prod'
+
+    @pytest.mark.parametrize(("keyword", "env"), list(product(REFUSED, ["pilot", "prod"])))
+    def test_each_test_double_is_refused_alone(tmp_path, made, keyword, env):
+        root = _cfg_for(tmp_path, env)
+        with pytest.raises(ConfigError, match="allow_test_doubles") as err:
+>           app_mod.build(root, ["ito-agent"], **{keyword: SAMPLES[keyword]})
+
+tests/test_client_profile.py:321: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/app.py:144: in build
+    signer = make("signer", b.signer, secrets)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+capability = 'signer'
+args = (Ed25519LocalSettings(kind='ed25519_local', key_label=None, private_key_path=None, private_key_secret_name='audit-key', passphrase_secret_name=None), <tests.test_client_profile._MadeSecrets object at 0x7f37ff709e50>)
+kwargs = {}
+
+    def fake_make(capability, *args, **kwargs):
+        record.append(capability)
+        if capability == "secrets":
+            return _MadeSecrets()
+>       raise _Reached(capability)
+E       tests.test_client_profile._Reached: signer
+
+tests/test_client_profile.py:98: _Reached
+____________ test_each_test_double_is_refused_alone[detector-pilot] ____________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-4936/test_each_test_double_is_refus4')
+made = ['secrets', 'signer'], keyword = 'detector', env = 'pilot'
+
+    @pytest.mark.parametrize(("keyword", "env"), list(product(REFUSED, ["pilot", "prod"])))
+    def test_each_test_double_is_refused_alone(tmp_path, made, keyword, env):
+        root = _cfg_for(tmp_path, env)
+        with pytest.raises(ConfigError, match="allow_test_doubles") as err:
+>           app_mod.build(root, ["ito-agent"], **{keyword: SAMPLES[keyword]})
+
+tests/test_client_profile.py:321: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/app.py:144: in build
+    signer = make("signer", b.signer, secrets)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+capability = 'signer'
+args = (Ed25519LocalSettings(kind='ed25519_local', key_label=None, private_key_path=PosixPath('/tmp/pytest-of-root/pytest-493..._key_secret_name=None, passphrase_secret_name=None), <tests.test_client_profile._MadeSecrets object at 0x7f37ff5d5e00>)
+kwargs = {}
+
+    def fake_make(capability, *args, **kwargs):
+        record.append(capability)
+        if capability == "secrets":
+            return _MadeSecrets()
+>       raise _Reached(capability)
+E       tests.test_client_profile._Reached: signer
+
+tests/test_client_profile.py:98: _Reached
+____________ test_each_test_double_is_refused_alone[detector-prod] _____________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-4936/test_each_test_double_is_refus5')
+made = ['secrets', 'signer'], keyword = 'detector', env = 'prod'
+
+    @pytest.mark.parametrize(("keyword", "env"), list(product(REFUSED, ["pilot", "prod"])))
+    def test_each_test_double_is_refused_alone(tmp_path, made, keyword, env):
+        root = _cfg_for(tmp_path, env)
+        with pytest.raises(ConfigError, match="allow_test_doubles") as err:
+>           app_mod.build(root, ["ito-agent"], **{keyword: SAMPLES[keyword]})
+
+tests/test_client_profile.py:321: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/app.py:144: in build
+    signer = make("signer", b.signer, secrets)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+capability = 'signer'
+args = (Ed25519LocalSettings(kind='ed25519_local', key_label=None, private_key_path=None, private_key_secret_name='audit-key', passphrase_secret_name=None), <tests.test_client_profile._MadeSecrets object at 0x7f37ff5d6190>)
+kwargs = {}
+
+    def fake_make(capability, *args, **kwargs):
+        record.append(capability)
+        if capability == "secrets":
+            return _MadeSecrets()
+>       raise _Reached(capability)
+E       tests.test_client_profile._Reached: signer
+
+tests/test_client_profile.py:98: _Reached
+______________ test_each_test_double_is_refused_alone[llm-pilot] _______________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-4936/test_each_test_double_is_refus6')
+made = ['secrets', 'signer'], keyword = 'llm', env = 'pilot'
+
+    @pytest.mark.parametrize(("keyword", "env"), list(product(REFUSED, ["pilot", "prod"])))
+    def test_each_test_double_is_refused_alone(tmp_path, made, keyword, env):
+        root = _cfg_for(tmp_path, env)
+        with pytest.raises(ConfigError, match="allow_test_doubles") as err:
+>           app_mod.build(root, ["ito-agent"], **{keyword: SAMPLES[keyword]})
+
+tests/test_client_profile.py:321: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/app.py:144: in build
+    signer = make("signer", b.signer, secrets)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+capability = 'signer'
+args = (Ed25519LocalSettings(kind='ed25519_local', key_label=None, private_key_path=PosixPath('/tmp/pytest-of-root/pytest-493..._key_secret_name=None, passphrase_secret_name=None), <tests.test_client_profile._MadeSecrets object at 0x7f37ff666c30>)
+kwargs = {}
+
+    def fake_make(capability, *args, **kwargs):
+        record.append(capability)
+        if capability == "secrets":
+            return _MadeSecrets()
+>       raise _Reached(capability)
+E       tests.test_client_profile._Reached: signer
+
+tests/test_client_profile.py:98: _Reached
+_______________ test_each_test_double_is_refused_alone[llm-prod] _______________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-4936/test_each_test_double_is_refus7')
+made = ['secrets', 'signer'], keyword = 'llm', env = 'prod'
+
+    @pytest.mark.parametrize(("keyword", "env"), list(product(REFUSED, ["pilot", "prod"])))
+    def test_each_test_double_is_refused_alone(tmp_path, made, keyword, env):
+        root = _cfg_for(tmp_path, env)
+        with pytest.raises(ConfigError, match="allow_test_doubles") as err:
+>           app_mod.build(root, ["ito-agent"], **{keyword: SAMPLES[keyword]})
+
+tests/test_client_profile.py:321: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/app.py:144: in build
+    signer = make("signer", b.signer, secrets)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+capability = 'signer'
+args = (Ed25519LocalSettings(kind='ed25519_local', key_label=None, private_key_path=None, private_key_secret_name='audit-key', passphrase_secret_name=None), <tests.test_client_profile._MadeSecrets object at 0x7f37ff6785a0>)
+kwargs = {}
+
+    def fake_make(capability, *args, **kwargs):
+        record.append(capability)
+        if capability == "secrets":
+            return _MadeSecrets()
+>       raise _Reached(capability)
+E       tests.test_client_profile._Reached: signer
+
+tests/test_client_profile.py:98: _Reached
+_____________ test_each_test_double_is_refused_alone[clock-pilot] ______________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-4936/test_each_test_double_is_refus8')
+made = ['secrets', 'signer'], keyword = 'clock', env = 'pilot'
+
+    @pytest.mark.parametrize(("keyword", "env"), list(product(REFUSED, ["pilot", "prod"])))
+    def test_each_test_double_is_refused_alone(tmp_path, made, keyword, env):
+        root = _cfg_for(tmp_path, env)
+        with pytest.raises(ConfigError, match="allow_test_doubles") as err:
+>           app_mod.build(root, ["ito-agent"], **{keyword: SAMPLES[keyword]})
+
+tests/test_client_profile.py:321: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/app.py:144: in build
+    signer = make("signer", b.signer, secrets)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+capability = 'signer'
+args = (Ed25519LocalSettings(kind='ed25519_local', key_label=None, private_key_path=PosixPath('/tmp/pytest-of-root/pytest-493..._key_secret_name=None, passphrase_secret_name=None), <tests.test_client_profile._MadeSecrets object at 0x7f37ff6789e0>)
+kwargs = {}
+
+    def fake_make(capability, *args, **kwargs):
+        record.append(capability)
+        if capability == "secrets":
+            return _MadeSecrets()
+>       raise _Reached(capability)
+E       tests.test_client_profile._Reached: signer
+
+tests/test_client_profile.py:98: _Reached
+______________ test_each_test_double_is_refused_alone[clock-prod] ______________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-4936/test_each_test_double_is_refus9')
+made = ['secrets', 'signer'], keyword = 'clock', env = 'prod'
+
+    @pytest.mark.parametrize(("keyword", "env"), list(product(REFUSED, ["pilot", "prod"])))
+    def test_each_test_double_is_refused_alone(tmp_path, made, keyword, env):
+        root = _cfg_for(tmp_path, env)
+        with pytest.raises(ConfigError, match="allow_test_doubles") as err:
+>           app_mod.build(root, ["ito-agent"], **{keyword: SAMPLES[keyword]})
+
+tests/test_client_profile.py:321: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/app.py:144: in build
+    signer = make("signer", b.signer, secrets)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+capability = 'signer'
+args = (Ed25519LocalSettings(kind='ed25519_local', key_label=None, private_key_path=None, private_key_secret_name='audit-key', passphrase_secret_name=None), <tests.test_client_profile._MadeSecrets object at 0x7f37ff5d9a50>)
+kwargs = {}
+
+    def fake_make(capability, *args, **kwargs):
+        record.append(capability)
+        if capability == "secrets":
+            return _MadeSecrets()
+>       raise _Reached(capability)
+E       tests.test_client_profile._Reached: signer
+
+tests/test_client_profile.py:98: _Reached
+________________ test_all_at_once_names_all_in_signature_order _________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-4936/test_all_at_once_names_all_in_0')
+made = ['signer']
+
+    def test_all_at_once_names_all_in_signature_order(tmp_path, made):
+        root = pilot_cfg(tmp_path)
+        with pytest.raises(ConfigError, match="allow_test_doubles") as err:
+>           app_mod.build(root, ["ito-agent"], **{k: SAMPLES[k] for k in REFUSED})
+
+tests/test_client_profile.py:328: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/app.py:144: in build
+    signer = make("signer", b.signer, secrets)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+capability = 'signer'
+args = (Ed25519LocalSettings(kind='ed25519_local', key_label=None, private_key_path=PosixPath('/tmp/pytest-of-root/pytest-493..._key_secret_name=None, passphrase_secret_name=None), <tests.test_client_profile._MadeSecrets object at 0x7f37ffa3b0e0>)
+kwargs = {}
+
+    def fake_make(capability, *args, **kwargs):
+        record.append(capability)
+        if capability == "secrets":
+            return _MadeSecrets()
+>       raise _Reached(capability)
+E       tests.test_client_profile._Reached: signer
+
+tests/test_client_profile.py:98: _Reached
+________________________ test_a_falsy_double_is_refused ________________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-4936/test_a_falsy_double_is_refused0')
+made = ['secrets', 'signer']
+
+    def test_a_falsy_double_is_refused(tmp_path, made):
+        root = pilot_cfg(tmp_path)
+        with pytest.raises(ConfigError, match="allow_test_doubles") as err:
+>           app_mod.build(root, ["ito-agent"], channel=_FalsyChannel())
+
+tests/test_client_profile.py:387: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/app.py:144: in build
+    signer = make("signer", b.signer, secrets)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+capability = 'signer'
+args = (Ed25519LocalSettings(kind='ed25519_local', key_label=None, private_key_path=PosixPath('/tmp/pytest-of-root/pytest-493..._key_secret_name=None, passphrase_secret_name=None), <tests.test_client_profile._MadeSecrets object at 0x7f37ff627980>)
+kwargs = {}
+
+    def fake_make(capability, *args, **kwargs):
+        record.append(capability)
+        if capability == "secrets":
+            return _MadeSecrets()
+>       raise _Reached(capability)
+E       tests.test_client_profile._Reached: signer
+
+tests/test_client_profile.py:98: _Reached
+_____________________ test_a_refusal_builds_nothing_first ______________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-4936/test_a_refusal_builds_nothing_0')
+made = ['secrets', 'signer']
+
+    def test_a_refusal_builds_nothing_first(tmp_path, made):
+        root = pilot_cfg(tmp_path)
+        with pytest.raises(ConfigError, match="allow_test_doubles"):
+>           app_mod.build(root, ["ito-agent"], llm=ScriptedLLM())
+
+tests/test_client_profile.py:394: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/app.py:144: in build
+    signer = make("signer", b.signer, secrets)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+capability = 'signer'
+args = (Ed25519LocalSettings(kind='ed25519_local', key_label=None, private_key_path=PosixPath('/tmp/pytest-of-root/pytest-493..._key_secret_name=None, passphrase_secret_name=None), <tests.test_client_profile._MadeSecrets object at 0x7f37fffe7af0>)
+kwargs = {}
+
+    def fake_make(capability, *args, **kwargs):
+        record.append(capability)
+        if capability == "secrets":
+            return _MadeSecrets()
+>       raise _Reached(capability)
+E       tests.test_client_profile._Reached: signer
+
+tests/test_client_profile.py:98: _Reached
+_______________ test_a_keyword_added_later_is_refused_by_default _______________
+
+    def test_a_keyword_added_later_is_refused_by_default():
+>       helper = app_mod._test_doubles_given
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.app' has no attribute '_test_doubles_given'
+
+tests/test_client_profile.py:399: AttributeError
+_____________ test_any_environment_that_is_not_demo_is_live[Demo] ______________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-4936/test_any_environment_that_is_n0')
+made = ['secrets', 'signer']
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f37ff834e10>
+environment = 'Demo'
+
+    @pytest.mark.parametrize("environment", ["Demo", "uat", ""])
+    def test_any_environment_that_is_not_demo_is_live(tmp_path, made, monkeypatch, environment):
+        """An environment value that is not a stage is live: the switch is needed there too. `Config.environment` is a
+        Literal, so such a value never comes out of `load_config`; `model_copy` builds it. Defence in depth for a hand-built
+        Config, not a reachable load (only this synthetic state reaches that branch)."""
+        copied = load_config(pilot_cfg(tmp_path)).model_copy(update={"environment": environment})
+        monkeypatch.setattr(app_mod, "load_config", lambda _dir: copied)
+        with pytest.raises(ConfigError, match="allow_test_doubles") as err:
+>           app_mod.build(tmp_path, ["ito-agent"], llm=ScriptedLLM())
+
+tests/test_client_profile.py:417: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/app.py:144: in build
+    signer = make("signer", b.signer, secrets)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+capability = 'signer'
+args = (Ed25519LocalSettings(kind='ed25519_local', key_label=None, private_key_path=PosixPath('/tmp/pytest-of-root/pytest-493..._key_secret_name=None, passphrase_secret_name=None), <tests.test_client_profile._MadeSecrets object at 0x7f37ff66a7b0>)
+kwargs = {}
+
+    def fake_make(capability, *args, **kwargs):
+        record.append(capability)
+        if capability == "secrets":
+            return _MadeSecrets()
+>       raise _Reached(capability)
+E       tests.test_client_profile._Reached: signer
+
+tests/test_client_profile.py:98: _Reached
+______________ test_any_environment_that_is_not_demo_is_live[uat] ______________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-4936/test_any_environment_that_is_n1')
+made = ['secrets', 'signer']
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f37ff64b070>
+environment = 'uat'
+
+    @pytest.mark.parametrize("environment", ["Demo", "uat", ""])
+    def test_any_environment_that_is_not_demo_is_live(tmp_path, made, monkeypatch, environment):
+        """An environment value that is not a stage is live: the switch is needed there too. `Config.environment` is a
+        Literal, so such a value never comes out of `load_config`; `model_copy` builds it. Defence in depth for a hand-built
+        Config, not a reachable load (only this synthetic state reaches that branch)."""
+        copied = load_config(pilot_cfg(tmp_path)).model_copy(update={"environment": environment})
+        monkeypatch.setattr(app_mod, "load_config", lambda _dir: copied)
+        with pytest.raises(ConfigError, match="allow_test_doubles") as err:
+>           app_mod.build(tmp_path, ["ito-agent"], llm=ScriptedLLM())
+
+tests/test_client_profile.py:417: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/app.py:144: in build
+    signer = make("signer", b.signer, secrets)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+capability = 'signer'
+args = (Ed25519LocalSettings(kind='ed25519_local', key_label=None, private_key_path=PosixPath('/tmp/pytest-of-root/pytest-493..._key_secret_name=None, passphrase_secret_name=None), <tests.test_client_profile._MadeSecrets object at 0x7f37ff9082c0>)
+kwargs = {}
+
+    def fake_make(capability, *args, **kwargs):
+        record.append(capability)
+        if capability == "secrets":
+            return _MadeSecrets()
+>       raise _Reached(capability)
+E       tests.test_client_profile._Reached: signer
+
+tests/test_client_profile.py:98: _Reached
+_______________ test_any_environment_that_is_not_demo_is_live[] ________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-4936/test_any_environment_that_is_n2')
+made = ['secrets', 'signer']
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7f37ff64a670>
+environment = ''
+
+    @pytest.mark.parametrize("environment", ["Demo", "uat", ""])
+    def test_any_environment_that_is_not_demo_is_live(tmp_path, made, monkeypatch, environment):
+        """An environment value that is not a stage is live: the switch is needed there too. `Config.environment` is a
+        Literal, so such a value never comes out of `load_config`; `model_copy` builds it. Defence in depth for a hand-built
+        Config, not a reachable load (only this synthetic state reaches that branch)."""
+        copied = load_config(pilot_cfg(tmp_path)).model_copy(update={"environment": environment})
+        monkeypatch.setattr(app_mod, "load_config", lambda _dir: copied)
+        with pytest.raises(ConfigError, match="allow_test_doubles") as err:
+>           app_mod.build(tmp_path, ["ito-agent"], llm=ScriptedLLM())
+
+tests/test_client_profile.py:417: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+src/hadavin_sdk/app.py:144: in build
+    signer = make("signer", b.signer, secrets)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+capability = 'signer'
+args = (Ed25519LocalSettings(kind='ed25519_local', key_label=None, private_key_path=PosixPath('/tmp/pytest-of-root/pytest-493..._key_secret_name=None, passphrase_secret_name=None), <tests.test_client_profile._MadeSecrets object at 0x7f37ff5dda90>)
+kwargs = {}
+
+    def fake_make(capability, *args, **kwargs):
+        record.append(capability)
+        if capability == "secrets":
+            return _MadeSecrets()
+>       raise _Reached(capability)
+E       tests.test_client_profile._Reached: signer
+
+tests/test_client_profile.py:98: _Reached
+__________________ test_only_the_value_true_is_the_switch[no] __________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-4936/test_only_the_value_true_is_th0')
+made = [], switch = 'no'
+
+    @pytest.mark.parametrize("switch", ["no", "yes", 1, [True]], ids=["no", "yes", "one", "list"])
+    def test_only_the_value_true_is_the_switch(tmp_path, made, switch):
+        root = pilot_cfg(tmp_path)
+        with pytest.raises(ConfigError, match="allow_test_doubles") as err:
+>           app_mod.build(root, ["ito-agent"], llm=ScriptedLLM(), allow_test_doubles=switch)
+E           TypeError: build() got an unexpected keyword argument 'allow_test_doubles'
+
+tests/test_client_profile.py:426: TypeError
+_________________ test_only_the_value_true_is_the_switch[yes] __________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-4936/test_only_the_value_true_is_th1')
+made = [], switch = 'yes'
+
+    @pytest.mark.parametrize("switch", ["no", "yes", 1, [True]], ids=["no", "yes", "one", "list"])
+    def test_only_the_value_true_is_the_switch(tmp_path, made, switch):
+        root = pilot_cfg(tmp_path)
+        with pytest.raises(ConfigError, match="allow_test_doubles") as err:
+>           app_mod.build(root, ["ito-agent"], llm=ScriptedLLM(), allow_test_doubles=switch)
+E           TypeError: build() got an unexpected keyword argument 'allow_test_doubles'
+
+tests/test_client_profile.py:426: TypeError
+_________________ test_only_the_value_true_is_the_switch[one] __________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-4936/test_only_the_value_true_is_th2')
+made = [], switch = 1
+
+    @pytest.mark.parametrize("switch", ["no", "yes", 1, [True]], ids=["no", "yes", "one", "list"])
+    def test_only_the_value_true_is_the_switch(tmp_path, made, switch):
+        root = pilot_cfg(tmp_path)
+        with pytest.raises(ConfigError, match="allow_test_doubles") as err:
+>           app_mod.build(root, ["ito-agent"], llm=ScriptedLLM(), allow_test_doubles=switch)
+E           TypeError: build() got an unexpected keyword argument 'allow_test_doubles'
+
+tests/test_client_profile.py:426: TypeError
+_________________ test_only_the_value_true_is_the_switch[list] _________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-4936/test_only_the_value_true_is_th3')
+made = [], switch = [True]
+
+    @pytest.mark.parametrize("switch", ["no", "yes", 1, [True]], ids=["no", "yes", "one", "list"])
+    def test_only_the_value_true_is_the_switch(tmp_path, made, switch):
+        root = pilot_cfg(tmp_path)
+        with pytest.raises(ConfigError, match="allow_test_doubles") as err:
+>           app_mod.build(root, ["ito-agent"], llm=ScriptedLLM(), allow_test_doubles=switch)
+E           TypeError: build() got an unexpected keyword argument 'allow_test_doubles'
+
+tests/test_client_profile.py:426: TypeError
+__________________ test_the_switch_lets_a_test_double_through __________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-4936/test_the_switch_lets_a_test_do0')
+made = []
+
+    def test_the_switch_lets_a_test_double_through(tmp_path, made):
+        root = pilot_cfg(tmp_path)
+        with pytest.raises(_Reached):
+>           app_mod.build(root, ["ito-agent"], llm=ScriptedLLM(), allow_test_doubles=True)
+E           TypeError: build() got an unexpected keyword argument 'allow_test_doubles'
+
+tests/test_client_profile.py:441: TypeError
+___________ test_the_live_hooks_are_exactly_two_parameters_of_build ____________
+
+    def test_the_live_hooks_are_exactly_two_parameters_of_build():
+>       hooks = app_mod._LIVE_HOOKS
+                ^^^^^^^^^^^^^^^^^^^
+E       AttributeError: module 'hadavin_sdk.app' has no attribute '_LIVE_HOOKS'
+
+tests/test_client_profile.py:455: AttributeError
+___________ test_a_real_llm_kind_in_demo_needs_the_field[anthropic] ____________
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-4936/test_a_real_llm_kind_in_demo_n0/config')
+kind = 'anthropic'
+
+    @pytest.mark.parametrize("kind", REAL_LLM_KINDS)
+    def test_a_real_llm_kind_in_demo_needs_the_field(cfg_dir, kind):
+        _edit(cfg_dir, lambda d: d["backends"].update(llm={"kind": kind, **LLM_SETTINGS[kind]}))
+>       with pytest.raises(ConfigError, match="made_up_data_only") as err:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigError
+
+tests/test_client_profile.py:493: Failed
+____________ test_a_real_llm_kind_in_demo_needs_the_field[bedrock] _____________
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-4936/test_a_real_llm_kind_in_demo_n1/config')
+kind = 'bedrock'
+
+    @pytest.mark.parametrize("kind", REAL_LLM_KINDS)
+    def test_a_real_llm_kind_in_demo_needs_the_field(cfg_dir, kind):
+        _edit(cfg_dir, lambda d: d["backends"].update(llm={"kind": kind, **LLM_SETTINGS[kind]}))
+>       with pytest.raises(ConfigError, match="made_up_data_only") as err:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigError
+
+tests/test_client_profile.py:493: Failed
+_____________ test_a_real_llm_kind_in_demo_needs_the_field[gemini] _____________
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-4936/test_a_real_llm_kind_in_demo_n2/config')
+kind = 'gemini'
+
+    @pytest.mark.parametrize("kind", REAL_LLM_KINDS)
+    def test_a_real_llm_kind_in_demo_needs_the_field(cfg_dir, kind):
+        _edit(cfg_dir, lambda d: d["backends"].update(llm={"kind": kind, **LLM_SETTINGS[kind]}))
+>       with pytest.raises(ConfigError, match="made_up_data_only") as err:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigError
+
+tests/test_client_profile.py:493: Failed
+_________ test_a_real_llm_kind_in_demo_needs_the_field[openai_compat] __________
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-4936/test_a_real_llm_kind_in_demo_n3/config')
+kind = 'openai_compat'
+
+    @pytest.mark.parametrize("kind", REAL_LLM_KINDS)
+    def test_a_real_llm_kind_in_demo_needs_the_field(cfg_dir, kind):
+        _edit(cfg_dir, lambda d: d["backends"].update(llm={"kind": kind, **LLM_SETTINGS[kind]}))
+>       with pytest.raises(ConfigError, match="made_up_data_only") as err:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigError
+
+tests/test_client_profile.py:493: Failed
+_______________ test_the_vendor_detector_in_demo_needs_the_field _______________
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-4936/test_the_vendor_detector_in_de0/config')
+
+    def test_the_vendor_detector_in_demo_needs_the_field(cfg_dir):
+        _edit(cfg_dir, lambda d: d["backends"].update(detector=[GUARDRAIL]))
+>       with pytest.raises(ConfigError, match="made_up_data_only") as err:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigError
+
+tests/test_client_profile.py:500: Failed
+_____________ test_every_detector_kind_is_local_or_refused_in_demo _____________
+
+    def test_every_detector_kind_is_local_or_refused_in_demo():
+>       from hadavin_sdk.backends.table import LOCAL_DETECTORS
+E       ImportError: cannot import name 'LOCAL_DETECTORS' from 'hadavin_sdk.backends.table' (/home/user/build/EV-P6a-d392200/base/src/hadavin_sdk/backends/table.py)
+
+tests/test_client_profile.py:506: ImportError
+_____ test_a_detector_kind_nobody_reviewed_is_treated_as_sending_text_out ______
+
+    def test_a_detector_kind_nobody_reviewed_is_treated_as_sending_text_out():
+>       from hadavin_sdk.config import _sends_text_out
+E       ImportError: cannot import name '_sends_text_out' from 'hadavin_sdk.config' (/home/user/build/EV-P6a-d392200/base/src/hadavin_sdk/config.py)
+
+tests/test_client_profile.py:521: ImportError
+_________ test_the_local_detector_list_is_exactly_regex_and_llm_judge __________
+
+    def test_the_local_detector_list_is_exactly_regex_and_llm_judge():
+        """The allow-list of detectors that send no text out is a reviewed decision: a kind joins it only by a change
+        that names it here too."""
+>       from hadavin_sdk.backends.table import LOCAL_DETECTORS
+E       ImportError: cannot import name 'LOCAL_DETECTORS' from 'hadavin_sdk.backends.table' (/home/user/build/EV-P6a-d392200/base/src/hadavin_sdk/backends/table.py)
+
+tests/test_client_profile.py:534: ImportError
+_______________ test_a_real_channel_kind_in_demo_needs_the_field _______________
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-4936/test_a_real_channel_kind_in_de0/config')
+
+    def test_a_real_channel_kind_in_demo_needs_the_field(cfg_dir):
+        assert REAL_CHANNEL_KINDS == ["slack"]
+        _edit(cfg_dir, lambda d: d["backends"].update(channel=SLACK))
+>       with pytest.raises(ConfigError, match="made_up_data_only") as err:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ConfigError
+
+tests/test_client_profile.py:542: Failed
+______________ test_with_the_field_a_real_llm_kind_loads_in_demo _______________
+
+config_dir = PosixPath('/tmp/pytest-of-root/pytest-4936/test_with_the_field_a_real_llm0/config')
+
+    def load_config(config_dir: Path | None = None) -> Config:
+        """Every start-up problem (missing HADAVIN_CONFIG_DIR, bad YAML, bad values) is a ConfigError."""
+        try:
+            root = Path(config_dir) if config_dir else Settings().config_dir  # type: ignore[call-arg]
+            raw = _read_yaml(root / "config.yaml")
+            egress = _read_yaml(root / "egress.yaml").get("hosts") or []
+            if early := deferred.key_problems("config.yaml", raw):
+                raise ConfigError("; ".join(early))
+            if moved := [k for k in MOVED if k in raw]:
+                raise ConfigError("; ".join(f"{k} moved to {MOVED[k]}" for k in moved))
+            for key in ("golden_dir", "inputs_dir"):
+                if key in raw:
+                    raw[key] = root / raw[key]
+            raw["backends"] = parse_backends(raw.get("backends"), root)
+>           return Config(**raw, egress_hosts=frozenset(egress), root=root)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           pydantic_core._pydantic_core.ValidationError: 1 validation error for Config
+E           made_up_data_only
+E             Extra inputs are not permitted [type=extra_forbidden]
+E               For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden
+
+src/hadavin_sdk/config.py:496: ValidationError
+
+The above exception was the direct cause of the following exception:
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-4936/test_with_the_field_a_real_llm0/config')
+
+    def test_with_the_field_a_real_llm_kind_loads_in_demo(cfg_dir):
+        def both(d):
+            d["made_up_data_only"] = True
+            d["backends"]["llm"] = {"kind": "openai_compat", **LLM_SETTINGS["openai_compat"]}
+    
+        _edit(cfg_dir, both)
+>       assert load_config(cfg_dir).backends.llm.kind == "openai_compat"
+               ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_client_profile.py:553: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+config_dir = PosixPath('/tmp/pytest-of-root/pytest-4936/test_with_the_field_a_real_llm0/config')
+
+    def load_config(config_dir: Path | None = None) -> Config:
+        """Every start-up problem (missing HADAVIN_CONFIG_DIR, bad YAML, bad values) is a ConfigError."""
+        try:
+            root = Path(config_dir) if config_dir else Settings().config_dir  # type: ignore[call-arg]
+            raw = _read_yaml(root / "config.yaml")
+            egress = _read_yaml(root / "egress.yaml").get("hosts") or []
+            if early := deferred.key_problems("config.yaml", raw):
+                raise ConfigError("; ".join(early))
+            if moved := [k for k in MOVED if k in raw]:
+                raise ConfigError("; ".join(f"{k} moved to {MOVED[k]}" for k in moved))
+            for key in ("golden_dir", "inputs_dir"):
+                if key in raw:
+                    raw[key] = root / raw[key]
+            raw["backends"] = parse_backends(raw.get("backends"), root)
+            return Config(**raw, egress_hosts=frozenset(egress), root=root)
+        except ConfigError:
+            raise
+        except ValidationError as exc:
+>           raise ConfigError(_validation_text(exc)) from exc
+E           hadavin_sdk.errors.ConfigError: 1 validation error for Config
+E           made_up_data_only
+E             Extra inputs are not permitted [type=extra_forbidden]
+E               For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden
+
+src/hadavin_sdk/config.py:500: ConfigError
+____________________ test_three_refusals_come_in_one_error _____________________
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-4936/test_three_refusals_come_in_on0/config')
+
+    def test_three_refusals_come_in_one_error(cfg_dir):
+        def many(d):
+            d["backends"]["llm"] = {"kind": "openai_compat", **LLM_SETTINGS["openai_compat"]}
+            d["backends"]["detector"] = [GUARDRAIL]
+            d["backends"]["audit"] = {"kind": "chain"}
+            d["backends"]["anchor"] = ANCHOR | {"mode": "COMPLIANCE"}
+    
+        _edit(cfg_dir, many)
+>       with pytest.raises(ConfigError, match="made_up_data_only") as err:
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'made_up_data_only'
+E         Actual message: '1 validation error for Config\n  Value error, environment demo: refused: anchor mode COMPLIANCE outside prod or without retention_ack [type=value_error]\n    For further information visit https://errors.pydantic.dev/2.14/v/value_error'
+
+tests/test_client_profile.py:564: AssertionError
+_________________ test_the_field_is_refused_in_pilot_and_prod __________________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-4936/test_the_field_is_refused_in_p0')
+
+    def test_the_field_is_refused_in_pilot_and_prod(tmp_path):
+        for env in ("pilot", "prod"):
+            root = _cfg_for(tmp_path / env, env)
+            _edit(root, lambda d: d.update(made_up_data_only=True))
+            with pytest.raises(ConfigError, match="made_up_data_only") as err:
+                load_config(root)
+>           assert "demo configs only" in str(err.value)
+E           AssertionError: assert 'demo configs only' in '1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden'
+E            +  where '1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden' = str(ConfigError('1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden'))
+E            +    where ConfigError('1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden') = <ExceptionInfo ConfigError('1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden') tblen=2>.value
+
+tests/test_client_profile.py:578: AssertionError
+_____ test_the_field_is_refused_in_any_environment_that_is_not_demo[Demo] ______
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-4936/test_the_field_is_refused_in_a0')
+environment = 'Demo'
+
+    @pytest.mark.parametrize("environment", ["Demo", "uat", ""])
+    def test_the_field_is_refused_in_any_environment_that_is_not_demo(tmp_path, environment):
+        """A copied config whose environment is not a stage is live, so it may not say it holds made-up data. Such a value
+        never comes out of `load_config` (Literal); `model_copy` builds it. Defence in depth, not a reachable load: only
+        this synthetic state tells a rule that names pilot and prod apart from one that names every non-demo value."""
+        copied = load_config(pilot_cfg(tmp_path)).model_copy(
+            update={"environment": environment, "made_up_data_only": True}
+        )
+>       with pytest.raises(ValueError, match="made_up_data_only"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'made_up_data_only'
+E         Actual message: 'environment Demo: refused: anchor: none, signer ed25519_local with a key file (use private_key_secret_name)'
+
+tests/test_client_profile.py:589: AssertionError
+______ test_the_field_is_refused_in_any_environment_that_is_not_demo[uat] ______
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-4936/test_the_field_is_refused_in_a1')
+environment = 'uat'
+
+    @pytest.mark.parametrize("environment", ["Demo", "uat", ""])
+    def test_the_field_is_refused_in_any_environment_that_is_not_demo(tmp_path, environment):
+        """A copied config whose environment is not a stage is live, so it may not say it holds made-up data. Such a value
+        never comes out of `load_config` (Literal); `model_copy` builds it. Defence in depth, not a reachable load: only
+        this synthetic state tells a rule that names pilot and prod apart from one that names every non-demo value."""
+        copied = load_config(pilot_cfg(tmp_path)).model_copy(
+            update={"environment": environment, "made_up_data_only": True}
+        )
+>       with pytest.raises(ValueError, match="made_up_data_only"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'made_up_data_only'
+E         Actual message: 'environment uat: refused: anchor: none, signer ed25519_local with a key file (use private_key_secret_name)'
+
+tests/test_client_profile.py:589: AssertionError
+_______ test_the_field_is_refused_in_any_environment_that_is_not_demo[] ________
+
+tmp_path = PosixPath('/tmp/pytest-of-root/pytest-4936/test_the_field_is_refused_in_a2')
+environment = ''
+
+    @pytest.mark.parametrize("environment", ["Demo", "uat", ""])
+    def test_the_field_is_refused_in_any_environment_that_is_not_demo(tmp_path, environment):
+        """A copied config whose environment is not a stage is live, so it may not say it holds made-up data. Such a value
+        never comes out of `load_config` (Literal); `model_copy` builds it. Defence in depth, not a reachable load: only
+        this synthetic state tells a rule that names pilot and prod apart from one that names every non-demo value."""
+        copied = load_config(pilot_cfg(tmp_path)).model_copy(
+            update={"environment": environment, "made_up_data_only": True}
+        )
+>       with pytest.raises(ValueError, match="made_up_data_only"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AssertionError: Regex pattern did not match.
+E         Expected regex: 'made_up_data_only'
+E         Actual message: 'environment : refused: anchor: none, signer ed25519_local with a key file (use private_key_secret_name)'
+
+tests/test_client_profile.py:589: AssertionError
+______________________ test_the_field_still_loads_in_demo ______________________
+
+config_dir = PosixPath('/tmp/pytest-of-root/pytest-4936/test_the_field_still_loads_in_0/config')
+
+    def load_config(config_dir: Path | None = None) -> Config:
+        """Every start-up problem (missing HADAVIN_CONFIG_DIR, bad YAML, bad values) is a ConfigError."""
+        try:
+            root = Path(config_dir) if config_dir else Settings().config_dir  # type: ignore[call-arg]
+            raw = _read_yaml(root / "config.yaml")
+            egress = _read_yaml(root / "egress.yaml").get("hosts") or []
+            if early := deferred.key_problems("config.yaml", raw):
+                raise ConfigError("; ".join(early))
+            if moved := [k for k in MOVED if k in raw]:
+                raise ConfigError("; ".join(f"{k} moved to {MOVED[k]}" for k in moved))
+            for key in ("golden_dir", "inputs_dir"):
+                if key in raw:
+                    raw[key] = root / raw[key]
+            raw["backends"] = parse_backends(raw.get("backends"), root)
+>           return Config(**raw, egress_hosts=frozenset(egress), root=root)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           pydantic_core._pydantic_core.ValidationError: 1 validation error for Config
+E           made_up_data_only
+E             Extra inputs are not permitted [type=extra_forbidden]
+E               For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden
+
+src/hadavin_sdk/config.py:496: ValidationError
+
+The above exception was the direct cause of the following exception:
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-4936/test_the_field_still_loads_in_0/config')
+
+    def test_the_field_still_loads_in_demo(cfg_dir):
+        _edit(cfg_dir, lambda d: d.update(made_up_data_only=True))
+>       assert load_config(cfg_dir).made_up_data_only is True
+               ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_client_profile.py:595: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+config_dir = PosixPath('/tmp/pytest-of-root/pytest-4936/test_the_field_still_loads_in_0/config')
+
+    def load_config(config_dir: Path | None = None) -> Config:
+        """Every start-up problem (missing HADAVIN_CONFIG_DIR, bad YAML, bad values) is a ConfigError."""
+        try:
+            root = Path(config_dir) if config_dir else Settings().config_dir  # type: ignore[call-arg]
+            raw = _read_yaml(root / "config.yaml")
+            egress = _read_yaml(root / "egress.yaml").get("hosts") or []
+            if early := deferred.key_problems("config.yaml", raw):
+                raise ConfigError("; ".join(early))
+            if moved := [k for k in MOVED if k in raw]:
+                raise ConfigError("; ".join(f"{k} moved to {MOVED[k]}" for k in moved))
+            for key in ("golden_dir", "inputs_dir"):
+                if key in raw:
+                    raw[key] = root / raw[key]
+            raw["backends"] = parse_backends(raw.get("backends"), root)
+            return Config(**raw, egress_hosts=frozenset(egress), root=root)
+        except ConfigError:
+            raise
+        except ValidationError as exc:
+>           raise ConfigError(_validation_text(exc)) from exc
+E           hadavin_sdk.errors.ConfigError: 1 validation error for Config
+E           made_up_data_only
+E             Extra inputs are not permitted [type=extra_forbidden]
+E               For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden
+
+src/hadavin_sdk/config.py:500: ConfigError
+______________ test_a_loose_yes_does_not_switch_the_field_on[yes] ______________
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-4936/test_a_loose_yes_does_not_swit0/config')
+value = 'yes'
+
+    @pytest.mark.parametrize("value", ["yes", 1, "true", "on"])
+    def test_a_loose_yes_does_not_switch_the_field_on(cfg_dir, value):
+        """The field is a strict bool: "yes", 1, "true" and "on" are refused, so a safety switch cannot turn on from
+        loose input. A plain bool would let these through."""
+        _edit(cfg_dir, lambda d: d.update(made_up_data_only=value))
+        with pytest.raises(ConfigError, match="made_up_data_only") as err:
+            load_config(cfg_dir)
+>       assert "valid boolean" in str(err.value)
+E       AssertionError: assert 'valid boolean' in '1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden'
+E        +  where '1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden' = str(ConfigError('1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden'))
+E        +    where ConfigError('1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden') = <ExceptionInfo ConfigError('1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden') tblen=2>.value
+
+tests/test_client_profile.py:605: AssertionError
+_______________ test_a_loose_yes_does_not_switch_the_field_on[1] _______________
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-4936/test_a_loose_yes_does_not_swit1/config')
+value = 1
+
+    @pytest.mark.parametrize("value", ["yes", 1, "true", "on"])
+    def test_a_loose_yes_does_not_switch_the_field_on(cfg_dir, value):
+        """The field is a strict bool: "yes", 1, "true" and "on" are refused, so a safety switch cannot turn on from
+        loose input. A plain bool would let these through."""
+        _edit(cfg_dir, lambda d: d.update(made_up_data_only=value))
+        with pytest.raises(ConfigError, match="made_up_data_only") as err:
+            load_config(cfg_dir)
+>       assert "valid boolean" in str(err.value)
+E       AssertionError: assert 'valid boolean' in '1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden'
+E        +  where '1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden' = str(ConfigError('1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden'))
+E        +    where ConfigError('1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden') = <ExceptionInfo ConfigError('1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden') tblen=2>.value
+
+tests/test_client_profile.py:605: AssertionError
+_____________ test_a_loose_yes_does_not_switch_the_field_on[true] ______________
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-4936/test_a_loose_yes_does_not_swit2/config')
+value = 'true'
+
+    @pytest.mark.parametrize("value", ["yes", 1, "true", "on"])
+    def test_a_loose_yes_does_not_switch_the_field_on(cfg_dir, value):
+        """The field is a strict bool: "yes", 1, "true" and "on" are refused, so a safety switch cannot turn on from
+        loose input. A plain bool would let these through."""
+        _edit(cfg_dir, lambda d: d.update(made_up_data_only=value))
+        with pytest.raises(ConfigError, match="made_up_data_only") as err:
+            load_config(cfg_dir)
+>       assert "valid boolean" in str(err.value)
+E       AssertionError: assert 'valid boolean' in '1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden'
+E        +  where '1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden' = str(ConfigError('1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden'))
+E        +    where ConfigError('1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden') = <ExceptionInfo ConfigError('1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden') tblen=2>.value
+
+tests/test_client_profile.py:605: AssertionError
+______________ test_a_loose_yes_does_not_switch_the_field_on[on] _______________
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-4936/test_a_loose_yes_does_not_swit3/config')
+value = 'on'
+
+    @pytest.mark.parametrize("value", ["yes", 1, "true", "on"])
+    def test_a_loose_yes_does_not_switch_the_field_on(cfg_dir, value):
+        """The field is a strict bool: "yes", 1, "true" and "on" are refused, so a safety switch cannot turn on from
+        loose input. A plain bool would let these through."""
+        _edit(cfg_dir, lambda d: d.update(made_up_data_only=value))
+        with pytest.raises(ConfigError, match="made_up_data_only") as err:
+            load_config(cfg_dir)
+>       assert "valid boolean" in str(err.value)
+E       AssertionError: assert 'valid boolean' in '1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden'
+E        +  where '1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden' = str(ConfigError('1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden'))
+E        +    where ConfigError('1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden') = <ExceptionInfo ConfigError('1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden') tblen=2>.value
+
+tests/test_client_profile.py:605: AssertionError
+___________ test_a_value_that_is_not_a_bool_is_refused_at_load[word] ___________
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-4936/test_a_value_that_is_not_a_boo0/config')
+value = 'maybe'
+
+    @pytest.mark.parametrize("value", ["maybe", None, [True]], ids=["word", "null", "list"])
+    def test_a_value_that_is_not_a_bool_is_refused_at_load(cfg_dir, value):
+        """A null or a list is not a yes: the config does not load (the field is not optional)."""
+        _edit(cfg_dir, lambda d: d.update(made_up_data_only=value))
+        with pytest.raises(ConfigError, match="made_up_data_only") as err:
+            load_config(cfg_dir)
+>       assert "valid boolean" in str(
+            err.value
+        )  # a type error, not "extra input" (which the base already says)
+E       AssertionError: assert 'valid boolean' in '1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden'
+E        +  where '1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden' = str(ConfigError('1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden'))
+E        +    where ConfigError('1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden') = <ExceptionInfo ConfigError('1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden') tblen=2>.value
+
+tests/test_client_profile.py:614: AssertionError
+___________ test_a_value_that_is_not_a_bool_is_refused_at_load[null] ___________
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-4936/test_a_value_that_is_not_a_boo1/config')
+value = None
+
+    @pytest.mark.parametrize("value", ["maybe", None, [True]], ids=["word", "null", "list"])
+    def test_a_value_that_is_not_a_bool_is_refused_at_load(cfg_dir, value):
+        """A null or a list is not a yes: the config does not load (the field is not optional)."""
+        _edit(cfg_dir, lambda d: d.update(made_up_data_only=value))
+        with pytest.raises(ConfigError, match="made_up_data_only") as err:
+            load_config(cfg_dir)
+>       assert "valid boolean" in str(
+            err.value
+        )  # a type error, not "extra input" (which the base already says)
+E       AssertionError: assert 'valid boolean' in '1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden'
+E        +  where '1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden' = str(ConfigError('1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden'))
+E        +    where ConfigError('1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden') = <ExceptionInfo ConfigError('1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden') tblen=2>.value
+
+tests/test_client_profile.py:614: AssertionError
+___________ test_a_value_that_is_not_a_bool_is_refused_at_load[list] ___________
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-4936/test_a_value_that_is_not_a_boo2/config')
+value = [True]
+
+    @pytest.mark.parametrize("value", ["maybe", None, [True]], ids=["word", "null", "list"])
+    def test_a_value_that_is_not_a_bool_is_refused_at_load(cfg_dir, value):
+        """A null or a list is not a yes: the config does not load (the field is not optional)."""
+        _edit(cfg_dir, lambda d: d.update(made_up_data_only=value))
+        with pytest.raises(ConfigError, match="made_up_data_only") as err:
+            load_config(cfg_dir)
+>       assert "valid boolean" in str(
+            err.value
+        )  # a type error, not "extra input" (which the base already says)
+E       AssertionError: assert 'valid boolean' in '1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden'
+E        +  where '1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden' = str(ConfigError('1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden'))
+E        +    where ConfigError('1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden') = <ExceptionInfo ConfigError('1 validation error for Config\nmade_up_data_only\n  Extra inputs are not permitted [type=extra_forbidden]\n    For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden') tblen=2>.value
+
+tests/test_client_profile.py:614: AssertionError
+______________ test_an_unquoted_yes_in_the_file_is_the_yaml_true _______________
+
+config_dir = PosixPath('/tmp/pytest-of-root/pytest-4936/test_an_unquoted_yes_in_the_fi0/config')
+
+    def load_config(config_dir: Path | None = None) -> Config:
+        """Every start-up problem (missing HADAVIN_CONFIG_DIR, bad YAML, bad values) is a ConfigError."""
+        try:
+            root = Path(config_dir) if config_dir else Settings().config_dir  # type: ignore[call-arg]
+            raw = _read_yaml(root / "config.yaml")
+            egress = _read_yaml(root / "egress.yaml").get("hosts") or []
+            if early := deferred.key_problems("config.yaml", raw):
+                raise ConfigError("; ".join(early))
+            if moved := [k for k in MOVED if k in raw]:
+                raise ConfigError("; ".join(f"{k} moved to {MOVED[k]}" for k in moved))
+            for key in ("golden_dir", "inputs_dir"):
+                if key in raw:
+                    raw[key] = root / raw[key]
+            raw["backends"] = parse_backends(raw.get("backends"), root)
+>           return Config(**raw, egress_hosts=frozenset(egress), root=root)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           pydantic_core._pydantic_core.ValidationError: 1 validation error for Config
+E           made_up_data_only
+E             Extra inputs are not permitted [type=extra_forbidden]
+E               For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden
+
+src/hadavin_sdk/config.py:496: ValidationError
+
+The above exception was the direct cause of the following exception:
+
+cfg_dir = PosixPath('/tmp/pytest-of-root/pytest-4936/test_an_unquoted_yes_in_the_fi0/config')
+
+    def test_an_unquoted_yes_in_the_file_is_the_yaml_true(cfg_dir):
+        """Pins today's behaviour so a change is seen: the file is read as YAML 1.1, where an unquoted `yes` is the
+        boolean true (the quoted string "yes" is refused, see the loose-yes row). So `made_up_data_only: yes` in the
+        file switches the field on, the same as `true`; it is the operator's own word either way."""
+        path = cfg_dir / "config.yaml"
+        path.write_text(
+            path.read_text(encoding="utf-8") + "\nmade_up_data_only: yes\n", encoding="utf-8"
+        )
+>       assert load_config(cfg_dir).made_up_data_only is True
+               ^^^^^^^^^^^^^^^^^^^^
+
+tests/test_client_profile.py:627: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+config_dir = PosixPath('/tmp/pytest-of-root/pytest-4936/test_an_unquoted_yes_in_the_fi0/config')
+
+    def load_config(config_dir: Path | None = None) -> Config:
+        """Every start-up problem (missing HADAVIN_CONFIG_DIR, bad YAML, bad values) is a ConfigError."""
+        try:
+            root = Path(config_dir) if config_dir else Settings().config_dir  # type: ignore[call-arg]
+            raw = _read_yaml(root / "config.yaml")
+            egress = _read_yaml(root / "egress.yaml").get("hosts") or []
+            if early := deferred.key_problems("config.yaml", raw):
+                raise ConfigError("; ".join(early))
+            if moved := [k for k in MOVED if k in raw]:
+                raise ConfigError("; ".join(f"{k} moved to {MOVED[k]}" for k in moved))
+            for key in ("golden_dir", "inputs_dir"):
+                if key in raw:
+                    raw[key] = root / raw[key]
+            raw["backends"] = parse_backends(raw.get("backends"), root)
+            return Config(**raw, egress_hosts=frozenset(egress), root=root)
+        except ConfigError:
+            raise
+        except ValidationError as exc:
+>           raise ConfigError(_validation_text(exc)) from exc
+E           hadavin_sdk.errors.ConfigError: 1 validation error for Config
+E           made_up_data_only
+E             Extra inputs are not permitted [type=extra_forbidden]
+E               For further information visit https://errors.pydantic.dev/2.14/v/extra_forbidden
+
+src/hadavin_sdk/config.py:500: ConfigError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED tests/test_client_profile.py::test_the_prod_fixture_loads
+PASSED tests/test_client_profile.py::test_secrets_env_is_refused_in_a_client_profile[pilot]
+PASSED tests/test_client_profile.py::test_secrets_env_is_refused_in_a_client_profile[prod]
+PASSED tests/test_client_profile.py::test_a_pilot_config_that_omits_store_is_refused
+PASSED tests/test_client_profile.py::test_a_demo_anchor_only_failure_does_not_advise_the_field
+PASSED tests/test_client_profile.py::test_demo_only_is_exactly_the_six_pairs
+PASSED tests/test_client_profile.py::test_every_pair_is_decided_with_a_reason
+PASSED tests/test_client_profile.py::test_planted_kind_in_neither_set_is_reported
+PASSED tests/test_client_profile.py::test_planted_pair_in_both_sets_is_reported
+PASSED tests/test_client_profile.py::test_planted_empty_reason_is_reported
+PASSED tests/test_client_profile.py::test_sources_keeps_its_own_refusal
+PASSED tests/test_client_profile.py::test_tools_keeps_its_own_refusal
+PASSED tests/test_client_profile.py::test_no_door_in_src_or_demos
+PASSED tests/test_client_profile.py::test_planted_doors_are_reported[direct]
+PASSED tests/test_client_profile.py::test_planted_doors_are_reported[partial]
+PASSED tests/test_client_profile.py::test_planted_doors_are_reported[double_star]
+PASSED tests/test_client_profile.py::test_no_override_passes_the_check[pilot]
+PASSED tests/test_client_profile.py::test_no_override_passes_the_check[prod]
+PASSED tests/test_client_profile.py::test_the_live_hooks_need_no_switch[hold_run_ids]
+PASSED tests/test_client_profile.py::test_the_live_hooks_need_no_switch[timeout_s]
+PASSED tests/test_client_profile.py::test_every_refused_keyword_has_a_sample
+FAILED tests/test_client_profile.py::test_the_facts_stated_in_the_reasons_are_true
+FAILED tests/test_client_profile.py::test_each_test_double_is_refused_alone[secrets-pilot]
+FAILED tests/test_client_profile.py::test_each_test_double_is_refused_alone[secrets-prod]
+FAILED tests/test_client_profile.py::test_each_test_double_is_refused_alone[channel-pilot]
+FAILED tests/test_client_profile.py::test_each_test_double_is_refused_alone[channel-prod]
+FAILED tests/test_client_profile.py::test_each_test_double_is_refused_alone[detector-pilot]
+FAILED tests/test_client_profile.py::test_each_test_double_is_refused_alone[detector-prod]
+FAILED tests/test_client_profile.py::test_each_test_double_is_refused_alone[llm-pilot]
+FAILED tests/test_client_profile.py::test_each_test_double_is_refused_alone[llm-prod]
+FAILED tests/test_client_profile.py::test_each_test_double_is_refused_alone[clock-pilot]
+FAILED tests/test_client_profile.py::test_each_test_double_is_refused_alone[clock-prod]
+FAILED tests/test_client_profile.py::test_all_at_once_names_all_in_signature_order
+FAILED tests/test_client_profile.py::test_a_falsy_double_is_refused - tests.t...
+FAILED tests/test_client_profile.py::test_a_refusal_builds_nothing_first - te...
+FAILED tests/test_client_profile.py::test_a_keyword_added_later_is_refused_by_default
+FAILED tests/test_client_profile.py::test_any_environment_that_is_not_demo_is_live[Demo]
+FAILED tests/test_client_profile.py::test_any_environment_that_is_not_demo_is_live[uat]
+FAILED tests/test_client_profile.py::test_any_environment_that_is_not_demo_is_live[]
+FAILED tests/test_client_profile.py::test_only_the_value_true_is_the_switch[no]
+FAILED tests/test_client_profile.py::test_only_the_value_true_is_the_switch[yes]
+FAILED tests/test_client_profile.py::test_only_the_value_true_is_the_switch[one]
+FAILED tests/test_client_profile.py::test_only_the_value_true_is_the_switch[list]
+FAILED tests/test_client_profile.py::test_the_switch_lets_a_test_double_through
+FAILED tests/test_client_profile.py::test_the_live_hooks_are_exactly_two_parameters_of_build
+FAILED tests/test_client_profile.py::test_a_real_llm_kind_in_demo_needs_the_field[anthropic]
+FAILED tests/test_client_profile.py::test_a_real_llm_kind_in_demo_needs_the_field[bedrock]
+FAILED tests/test_client_profile.py::test_a_real_llm_kind_in_demo_needs_the_field[gemini]
+FAILED tests/test_client_profile.py::test_a_real_llm_kind_in_demo_needs_the_field[openai_compat]
+FAILED tests/test_client_profile.py::test_the_vendor_detector_in_demo_needs_the_field
+FAILED tests/test_client_profile.py::test_every_detector_kind_is_local_or_refused_in_demo
+FAILED tests/test_client_profile.py::test_a_detector_kind_nobody_reviewed_is_treated_as_sending_text_out
+FAILED tests/test_client_profile.py::test_the_local_detector_list_is_exactly_regex_and_llm_judge
+FAILED tests/test_client_profile.py::test_a_real_channel_kind_in_demo_needs_the_field
+FAILED tests/test_client_profile.py::test_with_the_field_a_real_llm_kind_loads_in_demo
+FAILED tests/test_client_profile.py::test_three_refusals_come_in_one_error - ...
+FAILED tests/test_client_profile.py::test_the_field_is_refused_in_pilot_and_prod
+FAILED tests/test_client_profile.py::test_the_field_is_refused_in_any_environment_that_is_not_demo[Demo]
+FAILED tests/test_client_profile.py::test_the_field_is_refused_in_any_environment_that_is_not_demo[uat]
+FAILED tests/test_client_profile.py::test_the_field_is_refused_in_any_environment_that_is_not_demo[]
+FAILED tests/test_client_profile.py::test_the_field_still_loads_in_demo - had...
+FAILED tests/test_client_profile.py::test_a_loose_yes_does_not_switch_the_field_on[yes]
+FAILED tests/test_client_profile.py::test_a_loose_yes_does_not_switch_the_field_on[1]
+FAILED tests/test_client_profile.py::test_a_loose_yes_does_not_switch_the_field_on[true]
+FAILED tests/test_client_profile.py::test_a_loose_yes_does_not_switch_the_field_on[on]
+FAILED tests/test_client_profile.py::test_a_value_that_is_not_a_bool_is_refused_at_load[word]
+FAILED tests/test_client_profile.py::test_a_value_that_is_not_a_bool_is_refused_at_load[null]
+FAILED tests/test_client_profile.py::test_a_value_that_is_not_a_bool_is_refused_at_load[list]
+FAILED tests/test_client_profile.py::test_an_unquoted_yes_in_the_file_is_the_yaml_true
+48 failed, 21 passed in 1.77s
+exit=1

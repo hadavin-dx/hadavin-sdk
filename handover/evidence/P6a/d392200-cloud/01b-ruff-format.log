@@ -1,0 +1,7 @@
+HEAD=d3922003925722275704b84f580152d35dd90c9c
+python=Python 3.13.18
+cmd=ruff format --check src tests demos tools
+start=2026-11-10T19:19:46Z
+319 files already formatted
+exit=0
+end=2026-11-10T19:19:46Z

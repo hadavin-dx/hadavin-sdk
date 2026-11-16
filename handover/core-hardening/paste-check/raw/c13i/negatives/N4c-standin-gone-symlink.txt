@@ -1,0 +1,9 @@
+NEGATIVE N4c-standin-gone-symlink  setup: mv $PS/standin-gone.txt $PS/real.gone; ln -s real.gone $PS/standin-gone.txt  VARX: 
+##### b36
+dash syntax ok
+P-4b files ok
+STOP LINK: standin-gone.txt is a symbolic link. Next: write nothing; tell the builder.
+##### b36 exit=1
+##### b37
+STOP C9: the stand-in is not proven gone for the current control file. Next: run WSL-4 (C2b step 4).
+##### b37 exit=1

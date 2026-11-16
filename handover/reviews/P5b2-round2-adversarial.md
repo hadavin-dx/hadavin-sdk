@@ -1,0 +1,20 @@
+# P5b2 round 2, adversarial review (ticket rev 2, 163 lines) - agent a5327645bc4e346a8
+Status: REPORTED (saved by the lead from the hand-back, condensed; model output, not user authority). Read-only; read current main (cites ce70eb5).
+Verdict: not buildable as written; no Blocker; 6 Major, 4 Minor, 3 Nit.
+| id | sev | lines | problem | fix |
+|---|---|---|---|---|
+| R2-ADV-1 | Major | 31,33,37 | Ticket never says whether locked_downgrade / wrong_literal read auto_class/auto_reason from scan or from CSV cols 6-7; if CSV, a human edit defeats the lock (M9/M19 not planted that way). Redaction hole. | compare takes every automatic column from scan() only; add 8th list auto_drift (cols 2-7 differ from scan or site) + unit case + mutant; or drop stored auto columns. |
+| R2-ADV-2 | Major | 30,67(5) | Token hash changes on ruff format (magic trailing comma, quote normalisation); unit (5) tests only re-wrap. | Normalise before hashing (trailing comma, redundant parens, string quotes via ast constant); unit cases + mutants. |
+| R2-ADV-3 | Major | 31,129 | Taint follows assignments only; append/extend/add/insert/update, subscript targets, for targets, walrus, with-as not tainted; join(list) provenance crosses functions (app.py:125-130, registry.py:212-231). | Add mutating calls, subscript, for, walrus to taint pass with unit cases; lists from called functions: lock unproven-origin with callee-read note or name the callee in --review hint. |
+| R2-ADV-4 | Major | 60,103(M25) | Where the PATTERNS check on reason lives is unspecified; generator is stdlib-only so cannot import tests module; M25 may not be a generator mutant. | Decide: check is a test importing PATTERNS and M25 mutates the test file (runner supports test-file mutants), or copy regexes into the generator. |
+| R2-ADV-5 | Major | 21,123,129,113,137 | _fail "recommended FOREIGN" conflicts with P5b3 from_cause rewrite (no cause); 29 calls have no recommended class; FOREIGN could be 48+ and STOP at 30 fires; "18 to about 23" has no derivation. | State recommended class for _fail and the 29 calls (OPERATOR after reading, shared reason); rule for no-cause rows (NO_CAUSE exemption); re-derive or delete the 18-23 claim. |
+| R2-ADV-6 | Major | 35 | Evasion routes: ConfigError subclass building its own text in __init__; from_cause body in errors.py; cls(...), type(x)(...), getattr, partial. | Scan rule (e) for subclass factories and cls(...) in classmethods; from_cause body a row or exempt by name; list getattr/partial as accepted gap in docstring. |
+| R2-ADV-7 | Major | 51,72 | Mutant runner temp tree unspecified (pyproject, tools/__init__, tests/, tests/data, src/); mutants may be killed by import errors, not assertions. | List exact tree; pytest -p no:cacheprovider --rootdir <tmp>; pre-check unmutated tree passes. |
+| R2-ADV-8 | Minor | 115,8,117 | Reviewers/Tier text out of date vs order 20 items 3 and 6 (cap 3 rounds, two reviewers). | Update Reviewers and Done; keep redaction no-cap as PENDING LEAD. |
+| R2-ADV-9 | Minor | 20 | tools.py:120 locked FOREIGN but taints only the field path loc, not input; over-taint counts toward STOP 30 with no override. | Narrow documented override, or state intentional over-classification. |
+| R2-ADV-10 | Minor | 72 (M8) | M8 bundles two edits. | Split M8a/M8b (count 30+; update lines 72,109). |
+| R2-ADV-11 | Minor | 38 | Relative --csv resolution undefined. | One sentence: against --root. |
+| R2-ADV-12 | Nit | 64 (F0) | test_k2_migrations may skip and exit 0 without evidence. | Use the two AST guard tests only. |
+| R2-ADV-13 | Nit | 52,124 | P5a pins refer to files that do not exist yet. | None now. |
+Verified: 174-3=171 constructions in 37 files; per-file counts; _fail 30 occurrences in k1b/bundle.py; cited sites exist; tools/ absent (P1m dependency real); tests/__init__.py exists; arithmetic 171/200/158/129/140/202/44 and mutant rows 29.
+Not checked: author's AST figures 42/114/15/17; py3.12 token stability; P3a/P4a/P4b2/P5a effects; whether any src code appends str(exc) to a joined list; 140 classifications; ci.yml lines 79,81,119.

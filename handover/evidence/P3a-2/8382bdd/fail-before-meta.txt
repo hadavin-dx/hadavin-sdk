@@ -1,0 +1,7 @@
+import path: /home/user/build/EV-P3a2-old-42fc259/src/hadavin_sdk/__init__.py
+test_k2_migrations rc=0 duration_s=8
+test_k5_round10_postgres rc=1 duration_s=2
+test_migration_names rc=0 duration_s=0
+test_migration_postgres rc=1 duration_s=47
+test_migration_rules rc=1 duration_s=2
+test_migration_wiring rc=1 duration_s=1

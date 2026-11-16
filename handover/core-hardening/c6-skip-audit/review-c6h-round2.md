@@ -1,0 +1,6 @@
+# C6h round 2 review (egm codebase-details, condensed copy), 2026-11-16
+Verdict: 0 Blockers, 0 Majors, 4 Minors, 2 Nits. Round 2 clean; claimed c6g fixes true; new cites exist. Read only; scratchpad copies not compared with branches via git show.
+Verified true: T7b and N8N-START.md:27 (lane3 relay n=1, settings absent; PAGE-STATEMENTS-V4.md:125-126 UNBACKED); closing card :41 vs scene 4 :90 and :82; v9 "never deletes" at :18,:40,:169,:285,:288 vs AGENT-SCOPE:20; REPORT.md top block matches REPORT-c6h.md; many other cites re-opened true.
+Minors: 1 key-rights sentence is v9 :171 not :169 (fixed); 2 "code deletes" stated flatly though code not on disk (fixed: per AGENT-SCOPE:20); 3 N8N-START.md:40-48 T7b facts unused; M2 must say key-in-body-field case (added); 4 Q11 default (c) not carried into section 7 / CL1 (fixed section 7; ask lead to name (c) as ORDERS.md:151 and that QUEUE rule 6 was not read).
+Nits: REPORT-c6g vs c6f "byte-equal" unchecked; closing note at line 392 formatting.
+Not checked: runtime; scratchpad vs origin; REPORT.md lines 63-end; QUEUE rule 6 text; absent files (qualify_stage.py, take n8n_start.sh, mf_result_*, bible, review-codebase-1.md, take run_real_check_n8n.py, crm_hubspot.py); file mtimes.

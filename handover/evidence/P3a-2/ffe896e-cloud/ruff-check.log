@@ -1,0 +1,9 @@
+HEAD=ffe896eb4e0b951ff80c90bffa4ed1cb72983849
+warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
+Using CPython 3.13.18 interpreter at: /usr/local/bin/python3.13
+Creating virtual environment at: /home/user/build/EV-P73-ffe896e/venv3.13
+   Building hadavin-sdk @ file:///home/user/build/EV-P73-ffe896e/wt
+      Built hadavin-sdk @ file:///home/user/build/EV-P73-ffe896e/wt
+Installed 76 packages in 164ms
+All checks passed!
+exit=0

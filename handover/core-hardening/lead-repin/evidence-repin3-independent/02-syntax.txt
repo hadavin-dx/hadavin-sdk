@@ -1,0 +1,6 @@
+== sh -n
+rc=0
+== bash -n
+rc=0
+== dash -n
+rc=0

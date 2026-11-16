@@ -1,0 +1,51 @@
+OLD-CODE RUN, tree P, test file = shipped test file
+T0 2026-11-16T10:54:29Z tree Q (clean reference) gate.py: 0dbf8c4ad9862355c99e37b62f44b64840bad638e87436f63d945617b4a8641a  /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/q/src/hadavin_sdk/approvals/gate.py
+T1 2026-11-16T10:54:29Z P before revert:  0dbf8c4ad9862355c99e37b62f44b64840bad638e87436f63d945617b4a8641a  src/hadavin_sdk/approvals/gate.py
+T1b backup copy of P gate.py: 0dbf8c4ad9862355c99e37b62f44b64840bad638e87436f63d945617b4a8641a  /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/gate.NEW.backup
+OLD gate.py (fix reverse-applied on a copy outside the tree): 8baee5702e06d3d482c08cc9e77df171979510c9fb7d09c4d5f9aec6edb88b0a  /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f3/gate.OLD
+T2 2026-11-16T10:54:29Z P after revert (old code in place): 8baee5702e06d3d482c08cc9e77df171979510c9fb7d09c4d5f9aec6edb88b0a  src/hadavin_sdk/approvals/gate.py
+CMD: env -i PATH HOME uv run --all-extras --group test pytest -v -p no:cacheprovider tests/test_g4_ids_not_withheld.py
+tests/test_g4_ids_not_withheld.py::test_a_known_id_that_reads_like_a_cloud_cmdlet_is_kept FAILED [  4%]
+tests/test_g4_ids_not_withheld.py::test_no_id_is_withheld_for_any_first_four_hex_digits[run] FAILED [  8%]
+tests/test_g4_ids_not_withheld.py::test_no_id_is_withheld_for_any_first_four_hex_digits[pln] FAILED [ 13%]
+tests/test_g4_ids_not_withheld.py::test_no_id_is_withheld_for_any_first_four_hex_digits[apr] FAILED [ 17%]
+tests/test_g4_ids_not_withheld.py::test_no_id_is_withheld_for_any_first_four_hex_digits[evt] FAILED [ 21%]
+tests/test_g4_ids_not_withheld.py::test_pseudo_random_ids_and_plan_hashes_are_never_withheld FAILED [ 26%]
+tests/test_g4_ids_not_withheld.py::test_real_new_id_values_are_not_withheld PASSED [ 30%]
+tests/test_g4_ids_not_withheld.py::test_real_cloud_cmdlets_are_still_withheld[Remove-EC2Instance -InstanceId i-123] PASSED [ 34%]
+tests/test_g4_ids_not_withheld.py::test_real_cloud_cmdlets_are_still_withheld[remove-ec2instance -InstanceId i-123] PASSED [ 39%]
+tests/test_g4_ids_not_withheld.py::test_real_cloud_cmdlets_are_still_withheld[Remove-ec2a1 -x] PASSED [ 43%]
+tests/test_g4_ids_not_withheld.py::test_real_cloud_cmdlets_are_still_withheld[Stop-S3Object -Bucket b] PASSED [ 47%]
+tests/test_g4_ids_not_withheld.py::test_real_cloud_cmdlets_are_still_withheld[Remove-AzResourceGroup -Name rg] PASSED [ 52%]
+tests/test_g4_ids_not_withheld.py::test_real_cloud_cmdlets_are_still_withheld[Delete-ec2a0000000000000000000000000000x] PASSED [ 56%]
+tests/test_g4_ids_not_withheld.py::test_a_name_that_is_not_all_hex_digits_is_never_mistaken_for_an_id PASSED [ 60%]
+tests/test_g4_ids_not_withheld.py::test_boundaries_of_the_id_exception[pln-ec2a000000000000000000000000000-False] PASSED [ 65%]
+tests/test_g4_ids_not_withheld.py::test_boundaries_of_the_id_exception[pln-ec2a0000000000000000000000000000-True] FAILED [ 69%]
+tests/test_g4_ids_not_withheld.py::test_boundaries_of_the_id_exception[pln-ec2a00000000000000000000000000000-True] FAILED [ 73%]
+tests/test_g4_ids_not_withheld.py::test_boundaries_of_the_id_exception[PLN-EC2ABBBBBBBBBBBBBBBBBBBBBBBBBBBB-True] FAILED [ 78%]
+tests/test_g4_ids_not_withheld.py::test_boundaries_of_the_id_exception[pln-ec2a0000000000000000000000000000_x-False] PASSED [ 82%]
+tests/test_g4_ids_not_withheld.py::test_boundaries_of_the_id_exception[pln-ec2a0000000000000000000000000000g-False] PASSED [ 86%]
+tests/test_g4_ids_not_withheld.py::test_boundaries_of_the_id_exception[Remove-ec2a0000000000000000000000000000-suffix-True] FAILED [ 91%]
+tests/test_g4_ids_not_withheld.py::test_boundaries_of_the_id_exception[Remove-ec200000000000000000000000000000000-suffix-True] PASSED [ 95%]
+tests/test_g4_ids_not_withheld.py::test_property_any_long_hex_token_after_a_lowercase_prefix_is_not_withheld FAILED [100%]
+FAILED tests/test_g4_ids_not_withheld.py::test_a_known_id_that_reads_like_a_cloud_cmdlet_is_kept
+FAILED tests/test_g4_ids_not_withheld.py::test_no_id_is_withheld_for_any_first_four_hex_digits[run]
+FAILED tests/test_g4_ids_not_withheld.py::test_no_id_is_withheld_for_any_first_four_hex_digits[pln]
+FAILED tests/test_g4_ids_not_withheld.py::test_no_id_is_withheld_for_any_first_four_hex_digits[apr]
+FAILED tests/test_g4_ids_not_withheld.py::test_no_id_is_withheld_for_any_first_four_hex_digits[evt]
+FAILED tests/test_g4_ids_not_withheld.py::test_pseudo_random_ids_and_plan_hashes_are_never_withheld
+FAILED tests/test_g4_ids_not_withheld.py::test_boundaries_of_the_id_exception[pln-ec2a0000000000000000000000000000-True]
+FAILED tests/test_g4_ids_not_withheld.py::test_boundaries_of_the_id_exception[pln-ec2a00000000000000000000000000000-True]
+FAILED tests/test_g4_ids_not_withheld.py::test_boundaries_of_the_id_exception[PLN-EC2ABBBBBBBBBBBBBBBBBBBBBBBBBBBB-True]
+FAILED tests/test_g4_ids_not_withheld.py::test_boundaries_of_the_id_exception[Remove-ec2a0000000000000000000000000000-suffix-True]
+FAILED tests/test_g4_ids_not_withheld.py::test_property_any_long_hex_token_after_a_lowercase_prefix_is_not_withheld
+======================== 11 failed, 12 passed in 0.92s =========================
+pytest rc=1
+T3 2026-11-16T10:54:30Z P after old-code run: 8baee5702e06d3d482c08cc9e77df171979510c9fb7d09c4d5f9aec6edb88b0a  src/hadavin_sdk/approvals/gate.py
+T4 2026-11-16T10:54:30Z P after restore: 0dbf8c4ad9862355c99e37b62f44b64840bad638e87436f63d945617b4a8641a  src/hadavin_sdk/approvals/gate.py
+restored equals Q: YES
+CMD (restored code): same g4 -v run
+============================== 23 passed in 1.21s ==============================
+pytest rc=0
+T5 2026-11-16T10:54:32Z P final: 0dbf8c4ad9862355c99e37b62f44b64840bad638e87436f63d945617b4a8641a  src/hadavin_sdk/approvals/gate.py
+git status lines: 18

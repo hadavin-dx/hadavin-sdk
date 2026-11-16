@@ -1,0 +1,4 @@
+hubspot: 1512 files; accepted by both 366; refused by both 1146 (text changed in 848); accepted only by the OLD code 0; accepted only by the NEW code 0
+smtp: 1512 files; accepted by both 448; refused by both 1064 (text changed in 766); accepted only by the OLD code 0; accepted only by the NEW code 0
+live: 1512 files; accepted by both 582; refused by both 833 (text changed in 677); accepted only by the OLD code 97; accepted only by the NEW code 0
+RESULT: no difference outside the allowed ones

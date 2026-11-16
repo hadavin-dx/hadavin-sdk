@@ -1,0 +1,4 @@
+NEGATIVE N3c-b25-progress-symlink-victim  setup: echo victim > $EVD/victim.txt; rm $EVD/PROGRESS.md; ln -s victim.txt $EVD/PROGRESS.md  VARX: 
+##### blocks/x-b25-sp.sh
+STOP LINK: /z/hbroot/egm/duplicate-proof-lead-desk/wp6/evidence-2/PROGRESS.md is a symbolic link or not a plain file. Next: write nothing; tell the builder.
+##### blocks/x-b25-sp.sh exit=1

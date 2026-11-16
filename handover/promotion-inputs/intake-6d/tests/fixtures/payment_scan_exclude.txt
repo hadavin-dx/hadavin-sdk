@@ -1,0 +1,5 @@
+# Existing files the payment scan does not cover (written once at the WP0 head commit; changed only by the lead).
+# One path per line; no wildcards. Both files import subprocess (a mutation runner and a git-based checker); the scan flags that in the tools zone.
+# demo_only/data is NOT listed: its four .py files are clean today, so they are scanned like every other file.
+tools/mutate_src.py
+tools/check_core_copies.py

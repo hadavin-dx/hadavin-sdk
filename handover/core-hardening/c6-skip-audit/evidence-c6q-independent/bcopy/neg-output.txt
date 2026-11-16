@@ -1,0 +1,56 @@
+V0-control-unchanged                             exit 1  WRONG  failed checks: 1; first: FAIL no owner sheet changed after the stated check time (C-10c is current) :: ['OWNER-SHEET-v29-SOURCE.md', 'O
+V1a-oldquote-row1                                exit 1  OK  failed checks: 3; first: FAIL C-1 old text occurs once on its stated line (94 rows) :: [1]
+V1b-oldquote-row40                               exit 1  OK  failed checks: 3; first: FAIL C-1 old text occurs once on its stated line (94 rows) :: [40]
+V2b-61.1-everywhere                              exit 1  OK  failed checks: 5; first: FAIL C-1 old text occurs once on its stated line (94 rows) :: [73, 33, 76]
+V2c-61.1-in-NEW-text-row39                       exit 1  OK  failed checks: 3; first: FAIL figure 60.1 to 61.9 exact everywhere (20 occurrences) :: ['60.1 to 61.1']
+V3a-VOID-label-removed-prose                     exit 1  OK  failed checks: 2; first: FAIL report prose lines with '18 runs' name both voided runs :: [81]
+V3c-VOID-label-removed-in-NEW-text-row39         exit 1  OK  failed checks: 2; first: FAIL new texts with '18 runs' name both voided runs :: [39]
+V4a-IST-arith-wrong                              exit 1  OK  failed checks: 2; first: FAIL every 'UTC = IST' pair is exactly UTC + 5:30 (40 pairs) :: [('18', '19', '23', '19')]
+V4c-IST-word-broken-in-NEW-text-row6             exit 1  OK  failed checks: 2; first: FAIL in every new text each UTC has its own IST (UTC count <= IST count) :: [6]
+V5-fakekey-akia-in-row1-NEWtext                  exit 1  OK  failed checks: 2; first: FAIL no secret-like or e-mail string in report :: 1
+V5-fakekey-sk-in-row1-NEWtext                    exit 1  OK  failed checks: 2; first: FAIL no secret-like or e-mail string in report :: 1
+V5-fakekey-ghp-in-row1-NEWtext                   exit 1  OK  failed checks: 2; first: FAIL no secret-like or e-mail string in report :: 1
+V6-one-row-deleted                               exit 1  OK  failed checks: 8; first: FAIL ids are exactly 1..N, no duplicate :: N=93
+V7-split-wrong-11-runs-done                      exit 1  OK  failed checks: 2; first: FAIL 18 kept runs split: every '<n> runs done' is 10 and every '<n> runs unknown' is 8 :: (['11', '10'], ['8',
+V10-index-not-seen-accepted-back-in-row8         exit 1  OK  failed checks: 3; first: FAIL no stale phrase in new texts :: [('index not seen, accepted', [8])]
+N1-card-word-count-wrong-in-row13                exit 1  OK  failed checks: 4; first: FAIL box prints all four card lines exactly as the rows have them and the total (91 words, about 36 s, budget 
+N2-row11-says-103-words                          exit 1  OK  failed checks: 2; first: FAIL row 11 states the same words, seconds, budget and total (about 190 s) :: - The one video: scenes 1 to 4 a
+N3-row-N-reference-in-new-text                   exit 1  OK  failed checks: 2; first: FAIL no 'row N' reference in any new text :: [(21, 'row 13')]
+N4-accepted-exit-in-row8                         exit 1  OK  failed checks: 2; first: FAIL no 'accepted' exit slip in any new text :: [8]
+N5-5a-page-row-missing                           exit 1  OK  failed checks: 3; first: FAIL 5a lists exactly the 36 viewer-visible run-sheet and page rows :: (35, 36)
+N6-newest-sheet-claim-stale-v27                  exit 1  OK  failed checks: 3; first: FAIL report names the check time 2026-11-16T16:32:07Z and the newest sheet version on disk (v29) :: [29, 29, 2
+N7-row90-broken-sentence-and-third-place         exit 1  OK  failed checks: 2; first: FAIL row 90 new text ends with the database n8n (so 'owned by' attaches to it) and has no 'third place' :: aba
+N8-row6-claims-deletion-erases                   exit 1  OK  failed checks: 2; first: FAIL row 6 item 16 does not claim that deleting erases the data
+N9-row8-latest-start-missing                     exit 1  OK  failed checks: 2; first: FAIL row 8 has 18:04 UTC = 23:34 IST, a plan fact that moves, (a)(b)(c), UNVERIFIED, STOP
+N10-144.3-unlabelled-row47                       exit 1  OK  failed checks: 2; first: FAIL every new text with 144.3 labels it as from n8n coming back up :: [47]
+N11-lease-none-meaning-missing                   exit 1  OK  failed checks: 2; first: FAIL section 3 L-LEASE: newest word, honest claim of 'none', G12 open, reading-2 facts not to be spoken, repla
+N12-label-GATE-used-before-defined-in-box        exit 1  OK  failed checks: 2; first: FAIL no owner sheet changed after the stated check time (C-10c is current) :: ['OWNER-SHEET-v29-SOURCE.md', 'O
+N13-box-too-long                                 exit 1  OK  failed checks: 2; first: FAIL no owner sheet changed after the stated check time (C-10c is current) :: ['OWNER-SHEET-v29-SOURCE.md', 'O
+N14-L-SCENES-question-back                       exit 1  OK  failed checks: 4; first: FAIL section 3 'rows tied to it' column equals the recount
+N15-row13-NOT-FILMABLE-back                      exit 1  OK  failed checks: 7; first: FAIL table 3b equals the recount (13 lines) :: (13, 13)
+N16-stale-103-words-line                         exit 1  OK  failed checks: 2; first: FAIL no stale card word count (103, 75, 71) outside history lines :: [700]
+N17-box-names-an-n8n-setting                     exit 1  OK  failed checks: 2; first: FAIL no owner sheet changed after the stated check time (C-10c is current) :: ['OWNER-SHEET-v29-SOURCE.md', 'O
+N18-lease-sentence-on-the-card-by-default-row13  exit 1  OK  failed checks: 2; first: FAIL rows 13 and 21 carry the plain statement and no 45-second sentence by default
+N19-death-of-5a-counts-wrong-3b                  exit 1  OK  failed checks: 2; first: FAIL table 3b equals the recount (13 lines) :: (13, 13)
+C1-check-label-C-8-back-in-row70                 exit 1  OK  failed checks: 2; first: FAIL no report label, check label, source cite or report word in any new text or viewer cell (all 94 rows, no 
+C2-source-cite-RES97-in-row25                    exit 1  OK  failed checks: 2; first: FAIL no report label, check label, source cite or report word in any new text or viewer cell (all 94 rows, no 
+C3-reading-1-in-row13                            exit 1  OK  failed checks: 2; first: FAIL no report label, check label, source cite or report word in any new text or viewer cell (all 94 rows, no 
+C4-this-report-in-row21-view                     exit 1  OK  failed checks: 3; first: FAIL no report label, check label, source cite or report word in any new text or viewer cell (all 94 rows, no 
+C5-L-SCENES-back-in-3e                           exit 1  OK  failed checks: 2; first: FAIL L-SCENES appears only in coverage lines (section 8), never in a live table or row
+C6-length-table-number-wrong                     exit 1  OK  failed checks: 2; first: FAIL table of lengths in the box (6 rows) equals the recomputation from the quoted card lines and lease senten
+C8-C10b-pass-cell-says-only-b                    exit 1  OK  failed checks: 2; first: FAIL C-10b: pass and fail cells agree (all of (a), (b) and (c) shown / any not shown)
+C9-no-take-line-twice-in-box                     exit 1  OK  failed checks: 2; first: FAIL the 'no take on Mon 23 Nov unless (a), (b) and (c)' line is in the box once, with 18:04 UTC = 23:34 IST o
+C10-row90-ends-with-own-state                    exit 1  OK  failed checks: 2; first: FAIL row 90 new text ends with the database n8n (so 'owned by' attaches to it) and has no 'third place' :: ase
+C11-section9-duplicate-bullet                    exit 1  OK  failed checks: 2; first: FAIL no owner sheet changed after the stated check time (C-10c is current) :: ['OWNER-SHEET-v29-SOURCE.md', 'O
+C12-G12-gone-from-L-LEASE                        exit 1  OK  failed checks: 2; first: FAIL section 3 L-LEASE: newest word, honest claim of 'none', G12 open, reading-2 facts not to be spoken, repla
+C13-ORD147-departure-gone-from-section0          exit 1  OK  failed checks: 2; first: FAIL departure from ORD:147 stated in section 0, in the L-DEL row and in row 8
+C14-item15-without-real-value                    exit 1  OK  failed checks: 2; first: FAIL row 6 item 15 says what the second scan searches for (real key values read from the key file, not printed
+C15-L-POST-gone-from-box                         exit 1  OK  failed checks: 3; first: FAIL table 3b equals the recount (12 lines) :: (12, 13)
+C16-1051-line-without-UNVERIFIED                 exit 1  OK  failed checks: 2; first: FAIL every line that names plan line 1051 says it is UNVERIFIED :: [700]
+C17-ready-used-before-defined-in-box-intro       exit 1  OK  failed checks: 2; first: FAIL no owner sheet changed after the stated check time (C-10c is current) :: ['OWNER-SHEET-v29-SOURCE.md', 'O
+C18-check-time-not-in-report                     exit 1  OK  failed checks: 3; first: FAIL every 'UTC = IST' pair is exactly UTC + 5:30 (40 pairs) :: [('10', '00', '22', '10'), ('10', '00', '22', 
+C19-row11-total-wrong                            exit 1  OK  failed checks: 2; first: FAIL row 11 states the same words, seconds, budget and total (about 190 s) :: - The one video: scenes 1 to 4 a
+C20-add-16-wording-back                          exit 1  OK  failed checks: 2; first: FAIL answer 2 replaces answer 1: net +15 words and no 'add 16' wording
+C21-tied-column-lacks-L-POST                     exit 1  OK  failed checks: 2; first: FAIL section 3 'rows tied to it' column equals the recount
+O-REPORT-c6p-itself-must-fail                    exit 1  OK  failed checks: 32; first: FAIL no report label, check label, source cite or report word in any new text or viewer cell (all 94 rows, no 
+SUMMARY: 55 copies, 1 wrong

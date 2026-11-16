@@ -1,0 +1,32 @@
+MUTANT A-01-m13  VERDICT: KILLED
+description: chain WARNING logs run id instead of event id
+base commit: b4cce5b6ae80b45125604b8295ebb35bd2ea1c2c   root: /tmp/c8/wA   file: src/hadavin_sdk/audit/chain.py
+command: env -i PATH=/nix/var/nix/profiles/default/bin:/root/.local/bin:/root/.cargo/bin:/usr/local/go/bin:/opt/node22/bin:/opt/maven/bin:/opt/gradle/bin:/opt/rbenv/bin:/root/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin HOME=/root PYTHONDONTWRITEBYTECODE=1 /tmp/c8/wA/.venv/bin/python -m pytest -q -p no:cacheprovider --tb=line -rf tests/test_a01_audit_reconcile.py tests/test_p7_tick.py tests/test_s2_audit.py tests/test_p3b_neutral_audit.py   (cwd=/tmp/c8/wA)
+rc: 1
+restore check: diff <saved original> <file after restore>: rc=0 (0 = identical)
+pytest summary line: 1 failed, 103 passed in 17.78s
+first failing test: tests/test_a01_audit_reconcile.py::test_a_failed_outcome_write_logs_type_and_id_but_never_the_body
+all failing tests (1): tests/test_a01_audit_reconcile.py::test_a_failed_outcome_write_logs_type_and_id_but_never_the_body
+--- OLD TEXT (full) ---
+"audit outcome not appended (%s): event %s goes to the outbox",
+                type(exc).__name__,
+                event.event_id,
+--- NEW TEXT (full) ---
+"audit outcome not appended (%s): event %s goes to the outbox",
+                type(exc).__name__,
+                event.run_id,
+--- PYTEST OUTPUT (full) ---
+...F.................................................................... [ 69%]
+................................                                         [100%]
+=================================== FAILURES ===================================
+E   AssertionError: assert ('OSError' in 'WARNING  hadavin_sdk.audit.chain:chain.py:223 audit outcome not appended (OSError): event run-2 goes to the outbox\n' and 'evt-316cafc290df43558e1b07c0a03e2d77' in 'WARNING  hadavin_sdk.audit.chain:chain.py:223 audit outcome not appended (OSError): event run-2 goes to the outbox\n')
+     +  where 'WARNING  hadavin_sdk.audit.chain:chain.py:223 audit outcome not appended (OSError): event run-2 goes to the outbox\n' = <_pytest.logging.LogCaptureFixture object at 0x7f2d0932c190>.text
+     +  and   'evt-316cafc290df43558e1b07c0a03e2d77' = AuditEvent(schema_version=1, event_id='evt-316cafc290df43558e1b07c0a03e2d77', ts=datetime.datetime(2026, 11, 16, 9, 26...sion=None, rule_id=None, result='OK', error_code=None, caught_by=None, output_hash=None, restored_hash=None, rows=None).event_id
+     +  and   'WARNING  hadavin_sdk.audit.chain:chain.py:223 audit outcome not appended (OSError): event run-2 goes to the outbox\n' = <_pytest.logging.LogCaptureFixture object at 0x7f2d0932c190>.text
+------------------------------ Captured log call -------------------------------
+WARNING  hadavin_sdk.audit.chain:chain.py:223 audit outcome not appended (OSError): event run-2 goes to the outbox
+/tmp/c8/wA/tests/test_a01_audit_reconcile.py:60: AssertionError: assert ('OSError' in 'WARNING  hadavin_sdk.audit.chain:chain.py:223 audit outcome not appended (OSError): event run-2 goes to the outbox\n' and 'evt-316cafc290df43558e1b07c0a03e2d77' in 'WARNING  hadavin_sdk.audit.chain:chain.py:223 audit outcome not appended (OSError): event run-2 goes to the outbox\n')
+=========================== short test summary info ============================
+FAILED tests/test_a01_audit_reconcile.py::test_a_failed_outcome_write_logs_type_and_id_but_never_the_body
+1 failed, 103 passed in 17.78s
+

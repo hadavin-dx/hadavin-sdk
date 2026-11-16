@@ -1,0 +1,18 @@
+...........F
+=================================== FAILURES ===================================
+________________ test_429_waits_the_named_seconds_then_succeeds ________________
+
+rig = <test_crm_hubspot.Rig object at 0x7fb54ff39d60>
+
+    def test_429_waits_the_named_seconds_then_succeeds(rig: Rig) -> None:
+        mode(rig, "r429", times=1, retry_after="0.2")
+        c = rig.crm()
+        assert c.put("L-1", REC) == "PUT"
+>       assert c.stats()["rate_limited"] == 1 and c.stats()["calls"] == 2
+E       assert (0 == 1)
+
+tests/test_crm_hubspot.py:188: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_crm_hubspot.py::test_429_waits_the_named_seconds_then_succeeds
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+1 failed, 11 passed in 7.35s

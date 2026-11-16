@@ -1,0 +1,12 @@
+### tests/test_migration_postgres.py::test_the_function_half_of_the_ownership_check_finds_a_function_alone rc=1
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_____ test_the_function_half_of_the_ownership_check_finds_a_function_alone _____
+tests/test_migration_postgres.py:1878: in test_the_function_half_of_the_ownership_check_finds_a_function_alone
+    with pytest.raises(ConfigError, match=r"cannot change 1 object"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   Failed: DID NOT RAISE ConfigError
+=========================== short test summary info ============================
+FAILED tests/test_migration_postgres.py::test_the_function_half_of_the_ownership_check_finds_a_function_alone
+1 failed in 0.64s
+
