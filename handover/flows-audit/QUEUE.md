@@ -16,3 +16,6 @@ F5 RUN-SHEET WORDING: paste-ready safe sentences for every claim the CLAIMS TABL
 F6 Idle fallback: architecture audit rule R460 on the next unreviewed area of your own audit.
 
 F7 [UPDATE 2026-11-16] Read inputs/FACTS-ALREADY-DONE.md: never write an owner step for anything listed there; the claims table and run sheet must not ask the owner for accounts or keys.
+
+F8 [ORDER 016] SECOND TOOL LANE: a stronger JSON checker for the flows (connections, orphan nodes, expression references, error-path settings, credential names) with a self-test; run it on pristine and patched flows in parallel lanes; compare with M1/M3 outputs of system-map (read via git show) and list differences.
+F9 [ORDER 016] Paste-ready run-sheet sentences for the 3 scenes that use real-v5 vs film-v5 (which flow each scene runs), checked against the node names.
