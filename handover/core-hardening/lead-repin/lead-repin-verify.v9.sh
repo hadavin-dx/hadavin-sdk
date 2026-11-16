@@ -1635,7 +1635,7 @@ self_test_meta() {
     else mt_bad "bash --posix with SHELLOPTS=posix:xtrace must hide the value and print no trace (exit=$st_r)"; fi
     for st_fd in 1 2; do
       st_o=$(printf 'password %s_63_ tail\n' "$base" | env BASH_XTRACEFD=$st_fd LEAD_REPIN_NO_META=1 TMPDIR="$st_child" bash "$SELF" --mask 2>&1); st_r=$?
-      if [ "$st_r" -eq 0 ] && ! printf '%s' "$st_o" | grep -a -q -F -- "${base}_63_" && printf '%s\n' "$st_o" | grep -a -q -F -- 'tail'; then mt_ok "bash with BASH_XTRACEFD=$st_fd (bash would close that output when the variable is unset): the line is masked and the output stays open"
+      if [ "$st_r" -eq 0 ] && ! printf '%s' "$st_o" | grep -a -q -F -- "${base}_63_" && printf '%s\n' "$st_o" | grep -a -q -F -- '<masked>'; then mt_ok "bash with BASH_XTRACEFD=$st_fd (bash would close that output when the variable is unset): the line is masked and the output stays open"
       else mt_bad "bash with BASH_XTRACEFD=$st_fd must still print the masked line (exit=$st_r)"; fi
     done
     st_o=$(printf 'password %s_64_ tail\n' "$base" | env SHELLOPTS=xtrace:verbose LEAD_REPIN_NO_META=1 TMPDIR="$st_child" bash "$SELF" --mask 2>&1 >/dev/null); st_r=$?

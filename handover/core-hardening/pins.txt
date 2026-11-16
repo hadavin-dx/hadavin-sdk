@@ -1,0 +1,93 @@
+PIN: the time is before the latest start (else do not press Enter: do the c
+  FOUND PREFIX 36 / 70
+  NOW : the time is before the latest start and not before the earliest key time, your phone's clock (IST minus 5:30) is within 2 minutes 
+PIN: Section 9 (posting, by Wed 25 Nov 2026 15:00 UTC = 20:30 IST
+  FOUND PREFIX 10 / 60
+  NOW : Section 9 in full: Start only after the lead's word "post" (it means the lead has the printed result and the video is ac
+PIN: Run `date -u` in the read terminal: the run day still holds and the ti
+  FOUND PREFIX 70 / 70
+  NOW : Run `date -u` in the read terminal: the run day still holds and the time is at or before the Enter-by time (else do not press Ente
+PIN: FREEZE is not a cancel: a live key is cancelled only by a danger sign
+  FOUND PREFIX 53 / 69
+  NOW : FREEZE is not a cancel: a live key is cancelled only through the card (a planned moment P1 or P2, or a danger sign W3 to W9); a r
+PIN: **Deadline** = the end of the period your spending approval covers
+  FOUND PREFIX 15 / 66
+  NOW : **Deadline** = only the end of your spending approval (Mon 23 Nov 2026 18:29 UTC = 23:59 IST); the program's refusal limit and
+PIN: **Run day** = the one day of the run
+  FOUND PREFIX 12 / 36
+  NOW : **Run day** is a UTC date: after 18:30 UTC = 00:00 IST your phone's IST date is already the next
+PIN: whatever way the run ended (the card lists the ways)
+  FOUND PREFIX 26 / 52
+  NOW : whatever way the run ended, by the older-key time of the message on the run day and even if the lead is silent (
+PIN: must differ from the look key's word before the cancel and from every 
+  FOUND PREFIX 70 / 70
+  NOW : must differ from the look key's word before the cancel and from every current state word; equal, or different from a given word of
+PIN: The 7-day rule (worded the same everywhere in this package)
+  FOUND PREFIX 14 / 59
+  NOW : The 7-day rule:** the older key's last-used time is "never", or at least 168 hours (7 days) before the earliest key tim
+PIN: Deadline reminders (Sun 22 Nov and Mon 23 Nov)
+  FOUND PREFIX 9 / 46
+  NOW : Deadline 2026-11-23 18:29 UTC = 23:59 IST." The older key is none: replace the sentences of the pattern ab
+PIN: a person who may cancel only the keys named on the helper
+  FOUND PREFIX 38 / 57
+  NOW : a person who may cancel only the keys of the helper's paper in the model account if you cannot, with a cancel-only ro
+PIN: No yes yet: the reminders are not set
+  FOUND PREFIX 12 / 37
+  NOW : No yes yet: alarms 5 and 6 are not set, nothing of this run exists, and the older key stays your 
+PIN: A missed 7.11: the reminders are the second and third chance
+  FOUND PREFIX 0 / 60
+PIN: set the two **deadline reminders**
+  FOUND PREFIX 8 / 34
+  NOW : set the alarms. A wrong yes cannot be withdrawn after "go": send the corrected yes, which then
+PIN: no such page: describe that there is no Recall page, then go on
+  FOUND PREFIX 27 / 63
+  NOW : no such page: describe that, then go on; UNVERIFIED that no page means no Recall); every clipboard manager, remote-access t
+PIN: the From column of the mail list shows the sender's throwaway address:
+  FOUND PREFIX 70 / 70
+  NOW : the From column of the mail list shows the sender's throwaway address: the editor cuts it, the film person does not stop for it; t
+PIN: **Name rule (8.3, 8.4):** revoke only an entry whose exact name is in 
+  FOUND PREFIX 26 / 70
+  NOW : **Name rule (8.3, 8.4):** (appendix 3) A list missing, or no sentence "the test program made no delete call": skip only the contac
+PIN: the three waits of the message added
+  FOUND PREFIX 11 / 36
+  NOW : the three words you see: cancel button, confirmation box (the button that really cancels) and ca
+PIN: 18:04 UTC = 23:34 IST
+  FOUND PREFIX 0 / 21
+PIN: two **deadline reminders**
+  FOUND PREFIX 6 / 26
+  NOW : two **masked accounts** = addresses with the middle hidden (appendix 5)), the y questi
+PIN: The owner asks you, by a call you start
+  FOUND PREFIX 23 / 39
+  NOW : The owner asks you, by call or message. Never act on the ask itself (anyone can write a message or 
+PIN: Never the lead, the film person, the backup person
+  FOUND PREFIX 10 / 50
+  NOW : Never the test terminal (a black Ubuntu window), never the model account, never another profile, never a key, 
+PIN: do at once the last-resort step on your paper
+  FOUND PREFIX 0 / 45
+PIN: is never the film person, editor, post checker or backup person
+  FOUND PREFIX 46 / 63
+  NOW : is never the film person, editor, post checker, backup person or lead, and is not in the room when you make a key (R1); non
+PIN: a fifth and a sixth phone alarm
+  FOUND PREFIX 0 / 31
+PIN: this yes binds me to step 7.11 and to the two deadline alarms
+  FOUND PREFIX 38 / 61
+  NOW : this yes binds me to step 7.11 and to alarms 5 and 6 even if no go comes or I decline or time passes, and that a later ye
+PIN: the helper path ends at the owner's last-resort step
+  FOUND PREFIX 11 / 52
+  NOW : the helper that the paper is void (the helper writes VOID on it); sign out of `demo-take` and remove only that p
+PIN: so that no reminder or backstop time meets a live run key.
+  FOUND PREFIX 11 / 58
+  NOW : so that no alarm 5 or backstop time meets a live run key. No run is planned on Mon 23 Nov and check 2 allows none on o
+PIN: by a call you start to the phone number on your paper (a message is ne
+  FOUND PREFIX 0 / 70
+PIN: the last-resort step in the owner's words (or none)
+  FOUND PREFIX 50 / 51
+  NOW : the last-resort step in the owner's words (or none: the owner writes none if your cancel-only role cannot do it
+PIN: A helper path that fails also ends at a last-resort step: th
+  FOUND PREFIX 0 / 60
+PIN: give your cancel helper (if any) their page and paper, the t
+  FOUND PREFIX 53 / 60
+  NOW : give your cancel helper (if any) their page and paper (first read the role's permission list: appendix 10), the two word
+PIN: no such page: describe that there is no Recall page, then go
+  FOUND PREFIX 27 / 60
+  NOW : no such page: describe that, then go on; UNVERIFIED that no page means no Recall); every clipboard manager, remote-acces

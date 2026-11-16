@@ -4,3 +4,4 @@
 - Next: write the v21 main text (chunks chunk_sec0.md, chunk_56c.md, chunk_o.md written; patch script next), other-tracks file, CHANGES, OPEN-FOR-LEAD, INVENTORY, sha256, secrets run, gate4.
 - Blockers: none. Not committed, nothing pushed, no spend.
 gate4 bg started 19:34 UTC, expected ~6 min, log /tmp/claude-0/gate4_run.out
+- 19:48 UTC (01:18 IST) checkpoint 2. Done: documents built (main 0 placeholders, other-tracks, CHANGES, OPEN-FOR-LEAD, INVENTORY); post-build sweep fixed 2 stale phrases and a stale "NOT run" comment in gate4_v21.sh; banned-string scan found the 16 strings echoed in raw-gate4-v21-pytest.txt (from the known failing guard test of another folder, L20): redacted with a note at the top of that file, compare_gate4 re-run rc=0. Next: banned scan on v21 files only, sha256, handback. No background process running.

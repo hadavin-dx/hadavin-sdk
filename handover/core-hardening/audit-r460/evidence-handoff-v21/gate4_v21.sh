@@ -1,5 +1,5 @@
 #!/bin/sh
-# gate4.sh v21 copy (differs from the v18 copy only in the output folder and the last step, which calls compare_gate4.py; NOT run in v21).
+# gate4.sh v21 copy (differs from the v18 copy only in the output folder and the last step, which calls compare_gate4.py; run once in v21, raw/raw-gate4-v21-*.txt).
 # usage: sh gate4.sh <prefix>      (start it from any folder; it finds the repository root itself)
 # Repository root = four folders above this script's own folder (evidence-handoff-v21 -> audit-r460 -> core-hardening -> handover -> root).
 # Outputs go into THIS script's folder (the evidence folder) as <prefix>-<name>.txt; each file ends with its own rc=<exit code>.

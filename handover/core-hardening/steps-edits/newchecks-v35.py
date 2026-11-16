@@ -95,15 +95,15 @@ def secret_hits(t):
     return out
 need('C70', 'IST** = UTC + 5:30')                                                                                       # N01 offset label
 need('C71', 'A line saying contacts will be deleted or archived, or asking you to type a figure, is always a difference.')  # N05 R5
-need('C72', 'the time is before the latest start (else do not press Enter: do the card)')                              # N10 warning before cancel path
-need('C73', 'Posting (by Wed 25 Nov 2026 15:00 UTC = 20:30 IST'); need('C73', 'Section 9 (posting, by Wed 25 Nov 2026 15:00 UTC = 20:30 IST')
+need('C72', 'the time is at or before the Enter-by time (else do not press Enter: send "time passed"')                              # N10 warning before cancel path
+need('C73', 'Posting (by Wed 25 Nov 2026 15:00 UTC = 20:30 IST'); need('C73', 'Section 9 in full: Start only after the lead\'s word "post"')
 for n, t in SH:
     if t.count('Wed 25 Nov 2026 15:00 UTC = 20:30 IST') < 2: fail('C73', n + ': the post-by date must be the same on the sheet pointer and the film page')                                                       # N11 post-by date tied to the literal
 for n, t in (('N', NOTE), ('O', OPEN)):
     for m in re.finditer(r'[Pp]ost(?:ing)?[- ]by[^.\n]{0,40}?(Mon|Tue|Wed|Thu|Fri) (\d{1,2}) Nov', t):
         if (m[1], m[2]) != ('Wed', '25'): fail('C73', '%s post-by date %s %s' % (n, m[1], m[2]))
 need('C74', 'You delete only made-up contacts of this run and demo mails, by hand, one by one.')                         # N12 active voice, who does what
-need('C75', 'Run `date -u` in the read terminal: the run day still holds and the time is before the latest start (else do not press Enter')  # N14 full command
+need('C75', 'Run `date -u` in the read terminal: the run day still holds and the time is at or before the Enter-by time (else do not press Enter')  # N14 full command
 need('C76', 'Prices per million: in USD 3.00, out USD 15.00')                                                          # M4 price line
 need('C77', 'Tokens in and out per call: 40000 and 10000'); need('C77', 'TOKENS_IN = 40000 | TOKENS_OUT = 10000')      # M4 tokens
 need('C78', 'DEADLINE = 2026-11-23T18:29:00Z')                                                                          # M4 DEADLINE line
@@ -125,16 +125,16 @@ s6 = A.find('## 6. The model key'); s7 = A.find('## 7. The run')
 i6 = A.find('\n7. **Last checks, then the older key.**', s6, s7); i66 = A.find('\n6. ', s6, s7)
 if i6 < 0 or i66 < 0 or i66 > i6: fail('C89', 'A: the older-key step is not after step 6.6 inside section 6')
 need('C90', '**Filled after you press create (6.3):**'); need('C90', '**Filled in step 2:**')
-need('C91', 'FREEZE is not a cancel: a live key is cancelled only by a danger sign')
+need('C91', 'FREEZE is not a cancel: a live key is cancelled only through the card (a planned moment P1 or P2, or a danger sign W3 to W9)')
 need('C92', 'the **backup person** (one named human you can call'); need('C92', 'none named: no run')
 need('C93', 'the only valid answer is their own written words "matches the sentences"')
 need('C94', 'A differing printed count: send the counts, do not post, FREEZE.')
 for nm, t in SH:                                                                                                        # Gmail label and Chrome profile: a click path (UNVERIFIED, tolerated) in both places, never "how unknown"
     if 'how unknown' in t: fail('C95', nm + ': "how unknown" still present')
     need('C95', 'Gmail on the web: gear icon, See all settings, Filters and Blocked Addresses', ((nm, t),)); need('C95', 'click your profile picture at the top right, Add profile, Continue without an account', ((nm, t),))
-need('C96', '**Deadline** = the end of the period your spending approval covers')
+need('C96', '**Deadline** = only the end of your spending approval (Mon 23 Nov 2026 18:29 UTC = 23:59 IST)')
 need('C97', 'remove only that profile, never your normal profile')
-need('C98', '**Key** alone = a model key'); need('C98', 'a **run** = this one filmed attempt'); need('C98', '**Run day** = the one day of the run')
+need('C98', '**Key** alone = a model key'); need('C98', 'a **run** = this one filmed attempt'); need('C98', '**Run day** is a UTC date')
 for slot in ('Other channel:', 'Backup person:', 'Cancelled word:', 'Last-resort step:', 'Key list time zone:', 'Model settings file:', 'Key file:', 'Take folder:', 'cd line:', 'Key list address:',
              'Prepaid page address:', 'Masked in the notice:', 'Gap before 8.1:', 'Spend lock:', 'Key file size in bytes:', 'Price page:', 'Film cue:', 'Waiting line:', 'Demo mail subject start:',
              'Earlier demo mails expected:', 'Recording tool:', 'Posting place:', 'Video by:', 'Latest start:', 'Cancel-by time:', 'Earliest key time:'):
@@ -198,7 +198,7 @@ need('C136', "that page's host name only"); need('C136', "the part of the page's
 need('C137', 'passes 7.11 before 8.1')                                       # S B1
 need('C137', '(after your yes, 7.11 still follows, before 8.1)')
 need('C137', 'by the older-key time of the message on the run day and even if the lead is silent', (('B', B),))
-need('C137', 'whatever way the run ended (the card lists the ways)', (('B', B),)); need('C137', 'Every way the run ends (finished, "I decline", "time passed"')
+need('C137', 'whatever way the run ended, by the older-key time of the message', (('B', B),)); need('C137', 'Every way the run ends (finished, "I decline", "time passed"')
 need('C138', 'Four phone alarms'); need('C138', 'alarm 4 at the older-key time (do 7.11 now, whatever else is open')   # S B1 fourth alarm
 need('C139', 'The cancel-by time is before the older-key time.')                                                         # S B1 time order checked by the owner
 _ct = re.search(r'Cancel-by time: (\d\d):(\d\d) UTC', B); _ot = re.search(r'Older-key time: (\d\d):(\d\d) UTC', B)
@@ -244,7 +244,7 @@ for nm, t in SH:                                                                
         if m: fail('C160', '%s holds the literal %r outside the numbers page' % (nm, m[0]))
 need('C161', 'whatever way the run ended', (('B', B),))                                                                  # RC1: one older-key point for every exit
 need('C161', 'every way the run ends passes here before 8.1')                                                            # RC1 both sheets
-need('C162', 'FREEZE is not a cancel: a live key is cancelled only by a danger sign')                                    # RC1: FREEZE never cancels
+need('C162', 'FREEZE is not a cancel: a live key is cancelled only through the card (a planned moment P1 or P2, or a danger sign W3 to W9)')                                    # RC1: FREEZE never cancels
 need('C162', '**Not danger signs (no card, no FREEZE):** a lead message "wait"')                                         # RC1: a wait is never a trigger
 need('C163', '"confirmed" (5.9)'); need('C163', 'the seven words, which alone start or end a step')                                    # N2: the new lead word and the count
 need('C164', 'Write its state word before the cancel.'); need('C164', 'must differ from the look key\'s word before the cancel and from every live word')   # N2
@@ -294,7 +294,7 @@ for _s in ('18:04 UTC = 23:34 IST', '18:19 UTC = 23:49 IST'):
     if _s not in NOTE or _s not in OPEN: fail('C179', 'note or open list lacks %r (L-23NOV)' % _s)
 need('C180', '[OWNER FILLS:'); need('C180', '[LEAD FILLS at re-pin:')                                                      # L-FACTS: visibly different placeholder rows
 need('C181', 'the seven words, which alone start or end a step'); need('C181', '"continue" (after a FREEZE)')            # S R8: the whole word set
-need('C182', 'The 7-day rule (worded the same everywhere in this package)')                                                                               # S: the 7-day rule stated once in full
+need('C182', 'The 7-day rule:** the older key\'s last-used time is "never", or at least 168 hours (7 days)')                                                                               # S: the 7-day rule stated once in full
 if 'Open 102' not in OPEN or 'Open 103' not in NOTE: fail('C183', 'the open questions about the card word count and the 18:04 derivation are missing')
 if 'UNVERIFIED' not in OPEN or 'E-52' not in OPEN: fail('C184', 'O: the L-APP2 / E-52 UNVERIFIED row is missing')
 
@@ -310,17 +310,17 @@ for _n, _t in (('A', A), ('B', B), ('NOTE', NOTE), ('OPEN', OPEN)):             
     if 'unless you know something else uses' in _t: fail('C186', '%s holds the escape (describe the older key, then cancel anyway)' % _n)
 _i7 = A[A.find('Older key point (cannot be undone'):]; _i7 = _i7[:_i7.find('## 8.')] if '## 8.' in _i7 else _i7[:3000]
 if 'nothing else I know uses it' in _i7 or 'I cancel the older key <its name> now, the yes covers it' not in _i7: fail('C186', 'A 7.11: the forced cancel must use the phrase without the claim that nothing else uses the key')
-need('C187', 'Deadline reminders (Sun 22 Nov and Mon 23 Nov)'); need('C187', 'a person who may cancel only the keys named on the helper')       # S M3
+need('C187', 'Alarm 5 (Sun 22 Nov) and alarm 6 (Mon 23 Nov)'); need('C187', 'a person who may cancel only the keys named on the helper')       # S M3
 if F.get('bs') != 'Sun 22 Nov 2026 18:09 UTC = 23:39 IST': fail('C187', 'facts: backstop time is not Sun 22 Nov 2026 18:09 UTC = 23:39 IST')
-need('C187', 'Sun 22 Nov 2026 18:09 UTC = 23:39 IST'); need('C187', 'No yes yet: the reminders are not set'); need('C187', 'A missed 7.11: the reminders are the second and third chance')
-need('C187', 'set the two **deadline reminders**')
+need('C187', 'Sun 22 Nov 2026 18:09 UTC = 23:39 IST'); need('C187', 'No yes yet: alarms 5 and 6 are not set'); need('C187', 'a missed 7.11: they are the second and third chance')
+need('C187', 'alarm 5 and alarm 6 of 5.8 are the fifth and sixth')
 if 'waits for your message "cancel the older key' in NOTE + OPEN or 'waits for your message "cancel the older key' in A: fail('C188', 'a text still says the older key in A waits for a lead message (S M1)')
 if 'does NOT wait for a message from you' not in NOTE: fail('C188', 'note: A older key still seems to wait for a lead message')
 _sb = F.get('sevenback', '?')
 if _sb not in NOTE:
     fail('C189', 'note: the 7-day time (%s) is missing (S M1)' % _sb)
 if _sb not in OPEN: fail('C189', 'open list lacks the 7-day time %s' % _sb)
-need('C190', 'no such page: describe that there is no Recall page, then go on')                                                                    # S m4: Recall
+need('C190', 'no such page: describe that, then go on; UNVERIFIED that no page means no Recall')                                                                    # S m4: Recall
 need('C191', 'no clipboard manager, remote-access or screen-capture tool running'); need('C191', 'every clipboard manager, remote-access tool or screen-capture tool')     # S m5
 need('C192', 'never a file manager, a second terminal window or the clipboard (no copy and paste)')                      # S m6 film person
 need('C192', "the From column of the mail list shows the sender's throwaway address: the film person does not stop for")   # N B1
@@ -390,7 +390,7 @@ _FILM = _pg('OWNER-FILM-PERSON-%s.md' % _V)
 _BM = 'Mon 23 Nov 2026 18:09 UTC = 23:39 IST'
 if F.get('bm') != _BM: fail('C210', 'facts: the Monday reminder is not %s' % _BM)                                            # S M1: owner-side stop on deadline day
 for _nm, _t in (('A', A), ('B', B)):
-    for _s in (_BM, '18:19 UTC = 23:49 IST', '18:04 UTC = 23:34 IST', 'two **deadline reminders**', 'key of L1 that you find valid is cancelled at once by steps 2 to 4', 'Deadline reminders (Sun 22 Nov and Mon 23 Nov)'):
+    for _s in (_BM, '18:19 UTC = 23:49 IST', 'Alarm 5 (Sun 22 Nov) and alarm 6 (Mon 23 Nov)', 'key of L1 that you find valid is cancelled at once by steps 2 to 4'):
         if _s not in _t: fail('C210', '%s lacks %r' % (_nm, _s))
     if 'If your run day is Mon 23 Nov' in _t: fail('C210', '%s keeps the dead Mon 23 Nov paragraph' % _nm)
     if _BM not in SHEETS_DISK[_nm]: fail('C210', 'sheet %s itself does not carry the Monday reminder' % _nm)
@@ -503,7 +503,7 @@ for _n, _t in (('NOTE', NOTE), ('OPEN', OPEN)):
 # C230 (S M3 and N M3; class: a role named but with no page, trigger or scope): the helper page
 if not _HP: fail('C230', 'the cancel helper page OWNER-HELPER-%s.md does not exist' % _V9)
 else:
-    for _s in (_FF['helper_scope'], 'The owner asks you, by a call you start', 'Never the lead, the film person, the backup person', 'not the film person, the editor, the post checker or the backup person', 'every key on your paper that is still valid is cancelled', 'do at once the last-resort step on your paper', 'Never copy, type or photograph key text',
+    for _s in (_FF['helper_scope'], 'The owner asks you, by call or message. Never act on the ask itself', 'Never act for the lead, the film person, the backup person', 'not the film person, the editor, the post checker or the backup person', 'every key on your paper that is still valid is cancelled', 'the last-resort step on your paper (model account only) at once, but only if your cancel-only role can do it', 'Never copy, type or photograph key text',
                'plus %s minutes' % _FF['hw'], _FF['hcb'], _FF['hok'], _FF['dl_day'] + ' ' + _FF['rv23']):
         if _s not in _HP: fail('C230', 'helper page lacks %r' % _s[:70])
     if _HP.count('you called the owner twice, 5 minutes apart, with no answer') != 2: fail('C230', 'helper page: triggers (b) and (c) do not both need two calls to the owner')
@@ -519,15 +519,15 @@ for _n, _t in (('A', A), ('B', B)):
     if re.search(r'cancel-by time of (?:Sun|Mon)', _t): fail('C231', '%s calls the backstop time a cancel-by time' % _n)
 # C232 (S minor 5, N minor): alarms: two deadline reminders are a fifth and a sixth alarm, set at 5.8
 for _n, _t in (('A', A), ('B', B)):
-    for _s in ('a fifth and a sixth phone alarm', 'check all six are set and ring with sound', 'two **deadline reminders**'):
+    for _s in ('alarm 5 and alarm 6 of 5.8 are the fifth and sixth', 'check all six are set and ring with sound'):
         if _s not in SHEETS_DISK[_n]: fail('C232', 'sheet %s lacks %r' % (_n, _s))
-    if 'a fifth and a sixth phone alarm' not in _CARD[_n]: fail('C232', 'card %s lacks the fifth and sixth alarm' % _n)
+    if 'alarm 5' not in _CARD[_n]: fail('C232', 'card %s lacks the fifth and sixth alarm' % _n)
     if _FF['bs'] not in _t or _FF['bm'] not in _t: fail('C232', '%s lacks a deadline reminder time' % _n)
 # C233 (N M7; class: one statement with two sources): the yes is typed from one pattern, and it binds the owner
 for _n, _t in (('A', A), ('B', B)):
     _ym = re.search(r'[Ii]n this pattern: "(Yes, run.*?IST\.)"', _t, re.S)
     if not _ym or _FF['bt_end'] not in _ym[1]: fail('C233', '%s: the typed yes does not carry the end of the last resort %s (stranger M5)' % (_n, _FF['bt_end']))
-    for _s in ('this yes binds me to step 7.11 and to the two deadline alarms', 'cancel helper <name or none>', 'Two sources: the lead\'s sentence and this pattern must b', 'a later yes replaces this one'):
+    for _s in ('this yes binds me to step 7.11 and to alarms 5 and 6', 'cancel helper <name or none>', 'Two sources: the lead\'s sentence and this pattern must b', 'a later yes replaces this one'):
         if _s not in _t: fail('C233', '%s lacks %r' % (_n, _s))
 # C234 (N: raw recording; S: owner-open row): the raw recording is a secret file with an owner for deleting
 for _n, _t in (('A', A), ('B', B)):
@@ -621,7 +621,7 @@ for _n, _t in (('card A', _CARD['A']), ('card B', _CARD['B'])):
 for _n, _t in (('A', A), ('B', B)):
     if _t.count('18:31 UTC = 00:01 IST') < 3 or _t.count('18:41 UTC = 00:11 IST') < 3: fail('C246', '%s: a chain end (18:31 UTC = 00:01 IST, 18:41 UTC = 00:11 IST) is not stated in the card, the yes and part 10 (need 3 each)' % _n)
     if _t.count('at once after') < 3: fail('C246', '%s: "at once after" is not in the card, the yes and part 10' % _n)
-    if 'A helper path that fails also ends at a last-resort step: the helper does the one on its paper' not in _t: fail('C246', '%s lacks "the helper path ends at the owner\'s last-resort step"' % _n)
+    if 'the helper does the last-resort step on its paper (none: only yours is left); call the backup person at once' not in _t: fail('C246', '%s lacks "the helper path ends at the owner\'s last-resort step"' % _n)
 if _FF['bm_chain'] != 'Mon 23 Nov 2026 18:31 UTC = 00:01 IST' or not _FF['bt_end'].endswith('18:41 UTC = 00:11 IST'): fail('C246', 'the chain end figures are not 18:31 UTC = 00:01 IST and 18:41 UTC = 00:11 IST')
 # C247 (S M2; class: a typed line wider than the shape that was checked): the cd line is `cd ` plus the Take folder, in 7.2, the rows rule and R6
 for _n, _t in (('A', A), ('B', B)):
@@ -635,10 +635,10 @@ for _n, _t in (('NOTE', NOTE), ('OPEN', OPEN)):
     if 'OWNER-HELPER-v35.md' not in _t: fail('C248', '%s does not list the helper page' % _n)
 # C249 (S m2-m8; class: a stop or a rule only in some places): the Sunday rule, the paper void step, helper trigger, the film stop
 for _n, _t in (('A', A), ('B', B)):
-    for _s in ('Sunday run day: a run on Sun 22 Nov is allowed only if its cancel-by time is at or before ' + _FF['sun_cb'], 'so that no reminder or backstop time meets a live run key.'):
+    for _s in ('Sunday run day: a run on Sun 22 Nov is allowed only if its cancel-by time is at or before ' + _FF['sun_cb'], 'so that no alarm 5 or backstop time meets a live run key.'):
         if _s not in _t: fail('C249', '%s lacks %r' % (_n, _s[:70]))
 if _HP:
-    for _s in ('(write VOID on it; a new paper replaces it)', "the owner's phone number", 'by a call you start to the phone number on your paper (a message is never enough', 'Sun 22 Nov 2026 18:19 UTC = 23:49 IST and Mon 23 Nov 2026 18:19 UTC = 23:49 IST', 'you have none'):
+    for _s in ('(write VOID on it; a new paper replaces it)', "the owner's phone number", 'call the owner yourself on the phone number on your paper', 'Sun 22 Nov 2026 18:19 UTC = 23:49 IST and Mon 23 Nov 2026 18:19 UTC = 23:49 IST', 'you have none'):
         if _s not in _HP: fail('C249', 'the helper page lacks %r' % _s[:70])
 if 'Your "stop" is a danger sign for the owner (W3)' not in _FILM9 and _FILM9: fail('C249', 'the film person page lacks the "stop" effect')
 for _n, _t in (('A', A), ('B', B)):
@@ -737,11 +737,10 @@ _pin('C266', 'no other words may be posted', 1, 1)
 _ban('C266', r'(?i)\b(?:lease|crash recovery|recovery after a crash)\b', {'A': A, 'B': B, 'helper': _HELP, 'film': _FILM})
 _ban('C266', r'(?i)post (?:also|as well|any other|extra|additional)\b[^.]{0,30}(?:text|words|sentence|line|caption)', {'A': A, 'B': B})
 # C267 (security M1) a failed helper cancel ends at a last-resort step (on the helper paper or none) and the typed yes names the case
-for _p in ('do at once the last-resort step on your paper', "the last-resort step in the owner's words (or none)"):
+for _p in ('the last-resort step on your paper (model account only) at once, but only if your cancel-only role can do it', "the last-resort step in the owner's words (or none"):
     if _p not in _HELP or len(_occ(_S10, _p)) != 1: fail('C267', 'helper page or source lacks %r' % _p)
 _pin('C267', 'the helper does the last-resort step on its paper (none: only yours is left); call the backup person at once')
 _pin('C267', 'a helper whose cancel fails does only the last-resort step on its paper or none', 1, 1)
-_pin('C267', 'A helper path that fails also ends at a last-resort step: the helper does the one on its paper (none: only yours is left).', 1, 1)
 _ban('C267', r'(?i)the helper has (?:none|no last-resort)|you have none, so if your cancel fails and the owner', {'A': A, 'B': B, 'helper': _HELP.replace('Paper says none: you have none, so if the owner cannot be reached', 'X')})
 # C268 (security M2 and minor 7) the lead pages: one claim sentence, no open lease wording, one 7-day wording
 for _n, _t in (('note', NOTE), ('open list', OPEN)):
@@ -751,9 +750,9 @@ if 'one sentence (lead answer Q22c)' not in NOTE: fail('C268', 'the note does no
 if 'Two blanks are allowed at hand-over, the cancel button word and the cancelled word: the owner phones them after step 5.9 on the run day' not in _HELP: fail('C269', 'the helper page does not say when the helper paper is completed')
 if "until both are written you act only on the owner's call or at a backstop time" not in _HELP: fail('C269', 'the helper page does not say what the helper does until the paper is complete')
 _pin('C269', 'then phone your cancel helper the button word and the cancelled word', 1, 1)
-_pin('C269', 'give your cancel helper (if any) their page and paper, the two words of 5.9 still blank', 1, 1)
+_pin('C269', 'give your cancel helper (if any) their page and paper (first read the role\'s permission list: appendix 10), the two words of 5.9 still blank', 1, 1)
 # C270 (stranger B3) one exit for a missing Recall page
-_pin('C270', 'no such page: describe that there is no Recall page, then go on')
+_pin('C270', 'no such page: describe that, then go on; UNVERIFIED that no page means no Recall')
 _ban('C270', r'Recall[^.]{0,260}(?:this is a STOP|written answer)', {'source': _S10, 'A': A, 'B': B})
 # C271 (security minors 1, 2, 4, 5) reminders, backstop times, phone fallback, mismatch exit, 22 minutes
 _ban('C271', r'a reminder never cancels a live run key|up to 20 minutes', _ALLTXT)

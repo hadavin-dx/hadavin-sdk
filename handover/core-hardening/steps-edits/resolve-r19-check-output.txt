@@ -144,3 +144,14 @@ round 19 checks done
 r19 golden: 3378 pinned sentences, 0 differences
 ---- negative controls
 NEG r11hold caught | FAIL hold row NEW without label E-13
+NEG r11e53 caught | FAIL E-53 unless clause
+NEG r11e09 caught | FAIL E-09 credentials
+NEG r11addr caught | FAIL E-06 bare address: the address the assis
+NEG r11slot caught | FAIL E-12 lacks crash check: tested or untested
+NEG r11e36 caught | FAIL E-36 text N not quoted in why
+NEG r11e58 NOT CAUGHT | FAIL r19 count applied '18:29 UTC = 23:59 IST' is 29, expected 30
+FAIL negative control not caught: r11e58
+NEG nd14 caught | FAIL ND14 missing
+NEG e17lease caught | FAIL E-17 lease sentence added
+NEG e22 caught | FAIL crash check untested missing in E-22
+NEG e43 caught | FAIL E-43 lacks stage.journal

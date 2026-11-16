@@ -1,6 +1,6 @@
 # Inventory, evidence-handoff-v21 (author-run, PostgreSQL 16.15 only, scratch clusters deleted by trap)
 
-`sha256-v21.txt` hashes every file of this folder except itself; it includes this file. Check: `sha256sum -c sha256-v21.txt` inside this folder.
+`sha256-v21.txt` hashes every file of this folder except itself and `raw/raw-sha256-check-v21.txt` (the output of the check, written after it), and the four v21 documents one folder up (`../CORE-PR-HANDOFF-v21.md`, `../CORE-PR-HANDOFF-v21-other-tracks.md`, `../v21-CHANGES.md`, `../v21-OPEN-FOR-LEAD.md`); it includes this file. Check: `sha256sum -c sha256-v21.txt` inside this folder.
 
 Current layer (v21):
 - Postgres: `run_pg_v21.sh` (usage in its second line), `pg_v21.py` (safety checks, controls and stated exploits: counts in `CORE-PR-HANDOFF-v21.md` section 0 item 5), `pg_v16_regress.py` (175 v16 checks on the v21 files).
