@@ -320,12 +320,15 @@ RVW=$(bash "$TAKE" --reviewer-words); RVWRC=$?
 [ "$RVWRC" = 0 ] && [ "$(printf '%s\n' "$RVW" | wc -l)" = 3 ]; ok $? "word list: take_check.sh --reviewer-words prints three lines and exits 0 (got exit $RVWRC)"
 while IFS= read -r l; do grep -q -x -F -- "$l" "$HERE/README.md"; ok $? "word list: README has this line exactly as take_check.sh prints it: ${l:0:60}..."; done <<< "$RVW"
 # the other scripts that call take_check.sh must not hold a copy of the list or of its rules. f8-r8: (a) no variable of the list, (b) the script's own test name appears nowhere, (c) no line holds three or more different listed words (a copy such as grep -E "session|lead to confirm|PLACEHOLDER" holds three), (d) the stand-in name and the pin line check come from take_check.sh
-no_list_copy() { # $1 = the script file to look at; prints the offending lines; status 1 when there is a copy
+no_list_copy() { # $1 = the script file to look at; prints the offending lines; status 1 when there is a copy. A copy is: a line holding two or more different tool or model names; a line that joins two or more listed words with | (a grep pattern); the script's own test name; a REVIEWER_ variable
   local f=$1 w; w=$(printf '%s\n' "$RVW" | sed -n '1,2p' | sed 's/^[^:]*: //' | tr ' ' '\n' | tr 'A-Z' 'a-z' | grep . | sort -u | tr '\n' ' ')
-  awk -v words="$w" 'BEGIN { n = split(words, a, " "); for (i = 1; i <= n; i++) L[a[i]] = 1 }
-    { line = tolower($0); gsub(/[^a-z]+/, " ", line); m = split(line, tok, " "); delete seen; c = 0
-      for (i = 1; i <= m; i++) if (tok[i] in L && !(tok[i] in seen)) { seen[tok[i]] = 1; c++ }
-      if (c >= 3 || index(tolower($0), "testonly") > 0 || $0 ~ /REVIEWER_(WORDS|STANDINS)/) { print FILENAME ":" NR ": " substr($0, 1, 120); bad = 1 } }
+  awk -v words="$w" 'BEGIN { n = split(words, a, " "); for (i = 1; i <= n; i++) L[a[i]] = 1
+      n = split("claude anthropic opus sonnet haiku fable gpt chatgpt openai codex gemini copilot llama mistral grok qwen kimi devin cursor deepseek", a, " "); for (i = 1; i <= n; i++) T[a[i]] = 1 }
+    { low = tolower($0); c = 0; delete seen; k = split($0, seg, "|")
+      for (i = 1; i <= k; i++) { x = tolower(seg[i]); sub(/^[^a-z]+/, "", x); sub(/[^a-z].*$/, "", x); if ((x in L) && !(x in seen)) { seen[x] = 1; c++ } }
+      g = low; gsub(/[^a-z]+/, " ", g); m = split(g, tok, " "); delete tseen; tc = 0
+      for (i = 1; i <= m; i++) if ((tok[i] in T) && !(tok[i] in tseen)) { tseen[tok[i]] = 1; tc++ }
+      if (c >= 2 || tc >= 2 || index(low, "testonly") > 0 || $0 ~ /REVIEWER_(WORDS|STANDINS)/) { print FILENAME ":" NR ": " substr($0, 1, 120); bad = 1 } }
     END { exit bad }' "$f"
 }
 NLC=$(no_list_copy "$HERE/run_all.sh" 2>&1); ok $? "word list: run_all.sh holds no copy of the list or of its rules (no line with three listed words, no stand-in test name, no REVIEWER_ variable) ${NLC:0:150}"
