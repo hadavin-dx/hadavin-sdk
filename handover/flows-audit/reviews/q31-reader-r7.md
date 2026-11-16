@@ -1,0 +1,13 @@
+# QUESTIONS.md Q31 round 7 read (agent a3fe3d6), 0 Blockers, 9 Majors; saved by flows-audit, condensed; reviewer words unverified.
+M1 line 42 stale "(open questions in all: 73 + 1 + 1 = 75)" vs 80 OPEN elsewhere (40, 449, 604).
+M2 item 85 option (1) rests on "the older 11:55Z take start" (line 600), defined nowhere (grep RUNBOOK/TAKE-CHECKLIST none); RUNBOOK limit is 12:00Z (307).
+M3 item 85 asks only chain sum 1 (06:48Z/06:53Z); chain sum 2 (422 min) needs 05:58Z/05:53Z; default 06:48Z under sum 2 gives take 12:50Z, 50 min past 12:00Z.
+M4 item 84 default unusable (599-600): Wed 18 re-pin started 04:00Z ends 08:29Z > 06:48Z/06:53Z; item 85 latest end applies only to last slip day Mon 23 Nov 12:00Z (RUNBOOK 8 reading A) but not said; implied start about 02:19Z not stated.
+M5 "send" two meanings: glossary (175) paid model call vs item 5 (454) contacts per send, item 87 "positive-control send".
+M6 line 422 "five different things" but Timing case 1/2 and chain sum 1/2 are the same pair (RUNBOOK 6 line 264, 8 line 310; Case B = Case A + 55 min: 367 -> 422); "steps 1 to 29" but RUNBOOK has step 30; "step 4a is the part between 4 and 5" but 4b also.
+M7 "Gate"/"the GATE" (line 422 vs 49): item 17 (466) says F-031 matters before THE GATE (F-011/F-041, GO row 7); F-031 is GO row 6. Also overloaded: clock, take, pin/re-pin.
+M8 Items not one question/default/time: items 3, 8, 10, 14, 36, 38, 39, 56, 71, 76 carry several times/defaults; item 8 (b)/(c) ask one answer twice; ~25 BLOCKED input items (33-38, 47-65, 77-82, 87) say "names no default" then give an "AUDIT PROPOSAL", line 421 says default applies; line 449 "80 items" well over 100 answers.
+M9 Index contradicts items 80/81/87: line 527 step 4a waits (item 80 says step 5 waits, item 81 says 4a does not wait); line 550 item 87 "Tue 09:00Z row" vs item 87 due Wed 18 Nov 05:45Z; line 421 "covers items 1 to 31 only" but lists 14, 25, 38, 53, 83, 86; index lines 539-542 out of time order; item 5 "message 1 about 07:30Z lists 7 contacts" vs item 24(c) positive control 07:30-07:40Z creates 2 of them (and item 8(d) line 457).
+Nits: "Case A" never used vs 452/473; history text inside items 15, 32; [PARTLY SUPERSEDED] inside [OPEN] item 8; stage program/service/qualify_stage names; owner vs studio owner.
+Counts passed: main 80 (78 OPEN, 1 ANSWERED, 1 NOTE), second list 8 (40 OPEN, 43 ANSWERED, 5 NOTE) plus 15A OPEN -> 80 OPEN and 88 labelled (matches lines 40, 42, 449, 604 except stale 75). Arithmetic (367/422, 06:53/05:58, 06:48/05:53, 269 min, IST) recomputed by reviewer: correct.
+Not read: QUESTIONS 60-405 (except 130, 175, 186, 187), RUNBOOK outside 250-332, ORDERS, TAKE-CHECKLIST, OWNER-STEPS-q16-rows, FINDINGS, LEDGER-ROWS, FIX-PLAN, fix-q31-7.md, history 606-653.
