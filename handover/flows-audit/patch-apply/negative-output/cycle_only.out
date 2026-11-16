@@ -1,0 +1,9 @@
+### neg/cycle_only
+FAIL neg/cycle_only/mf-form.json unreachable from any trigger ['CycA', 'CycB']
+mf-form.json nodes=17 connections=16 triggers=['Receive'] saveDataSuccess=all saveDataError=all
+mf-hook.json nodes=15 connections=14 triggers=['Receive'] saveDataSuccess=all saveDataError=all
+FAIL neg/cycle_only/mf-recovery.json IF node StuckRow lacks output(s) [1]
+FAIL neg/cycle_only/mf-recovery.json IF node AlertRow lacks output(s) [1]
+mf-recovery.json nodes=10 connections=9 triggers=['Every30s'] saveDataSuccess=none saveDataError=none
+mf-sub-crm-mail.json nodes=20 connections=26 triggers=['SubIn'] saveDataSuccess=all saveDataError=all
+RESULT: 3 FAIL, 0 WARN

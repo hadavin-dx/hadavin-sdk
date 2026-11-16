@@ -1,0 +1,350 @@
+
+# Claims table, lane B: plans, notes and READMEs about what the flows and the system do
+
+Static reading only. Nothing ran (no n8n, Postgres, HubSpot, mail server). Written for the lead; no secret and no real address in this file.
+
+## What failed, what is uncertain, what I did not check (read first)
+- The take scripts and the stage the plan relies on are NOT in this checkout: `qualify_stage.py`, `run_real_check_n8n.py`, `n8n_drive.py`, `n8n_kill.py`, `n8n_start.sh`, `imap_count.py`, `run_real_check.py` (found nothing by file name). Also absent: the desk repository (`LiveQualifier`, `SpendLedger`), `WP6-RUNBOOK.md`, every `evidence-int-*` folder, the lane3 raw files. Every sentence that only those files could prove is UNTRACED, not "supported".
+- The only stage code present is the prototype `n8n-mainframe/stage_server.py` (60 lines). I read it in full.
+- n8n's own source is not here. Claims about what n8n does inside (storing run data, reading `$env`, Gmail behaviour) are UNTRACED unless a flow parameter shows it.
+- Numbers from V7, lane3, the probe files and the clean-machine files are relayed. I did not open raw runs (they are not in the repository). They get the verdict SUPPORTED ONLY BY RELAYED NUMBER with the named file.
+- I did not read `docs/` of the desk repo, `PAGE-STATEMENTS-V4.md` and `VIDEO-RUNSHEET.md` (lane A has them). I did not re-check `doubled` and the ledger count in `mf.py` (only the `lost` line, mf.py:83).
+- Nothing was patched. Where a file says one thing and the flows another, I judge the file as it stands.
+
+## Part 1: OWNER-STEPS (task a)
+- The file `OWNER-STEPS` that PLAN-4-NLITE-FROM-LEAD.md:130 and :176 point to (the plan writes `OWNER-STEPS-realrun.md` and "OWNER-STEPS v2/plans") does not exist under that name anywhere in `handover/`, in the egm copies, or in the trees of the 386 remote branches I searched cheaply (file-name search). Mentions only: PLAN-4 lines 53, 130, 153, 176; flows-audit/ORDERS.md:60; RULE-R456-WORK-CONDUCT.md:19.
+- UPDATE (coordinator message): a later version now exists in this checkout: `handover/flows-audit/inputs/OWNER-STEPS-realrun-v3.md` (193 lines, "Replaces OWNER-STEPS-realrun.md (v2, kept untouched as history)"). v2 itself is still not in the checkout. Its sentences are rows B-190 and later in Part 2.
+- Also read for the decisions in force: `inputs/DECISION-one-store.md`, `inputs/AGENT-SCOPE-DO-AND-DONT.md`. Their sentences are checked only where they contradict a flow (rows X-1 to X-4).
+
+## Part 2: key and abbreviations
+Paths are under `handover/demo/` unless stated. RV5 = n8n-flows-real-v5, FV5 = n8n-flows-film-v5, BM = n8n-mainframe/build_mainframe.py (generator; the JSON matches it, checked by parsing both folders), SUB = mf-sub-crm-mail.json, FORM = mf-form.json, REC = mf-recovery.json, PLAN = PLAN-4-NLITE-FROM-LEAD.md, ONS = flows-audit/inputs/OWNER-STEPS-realrun-v3.md.
+Verdicts: SUPPORTED (read in the node or SQL), UNSUPPORTED (the files in this repository contradict it or show it false), OVERSTATED (partly true; says more than the node does), UNTRACED (the code that would prove it is not in the repository), SUPPORTED ONLY BY RELAYED NUMBER (a run-time fact; source file named).
+Skipped on purpose: stage directions, install and start commands, hour estimates, calendar rows, status lines, click paths. A cell "-" means no rewording needed.
+
+Facts used for verdicts (all read in the files):
+- Claim (FORM, RV5 and FV5): `INSERT INTO mf_leads(lead_key,email,name,state,claimed_until,claim_token,attempts) VALUES ($1,$2,$3, CASE WHEN $4::boolean THEN 'processing' ELSE 'review' END, now() + interval '45 seconds', gen_random_uuid()::text, ...) ON CONFLICT (lead_key) DO NOTHING RETURNING lead_key, claim_token, state;` ; table key `lead_key text PRIMARY KEY` (n8n-flows/mf_leads.sql:4).
+- MailClaim (SUB): `UPDATE mf_leads SET mail_sent=true ... WHERE lead_key=$1 AND claim_token=$2 AND mail_sent=false AND state='processing' RETURNING lead_key;`. SendMail: retryOnFail false, onError continueErrorOutput, subject `'[demo] lead ' + lead_key`, options only `appendAttribution false`.
+- CrmIdOk (SUB, v5): `/^[0-9]+$/.test(String(CrmUpsert.id ?? CrmUpsert.vid ?? ''))`; false goes to OutStage.
+- REC: ClaimStuck (`state NOT IN ('done','review','unknown','failed') AND claimed_until < now() AND attempts < 3 ... FOR UPDATE SKIP LOCKED LIMIT 5`), MarkFailed (`CASE WHEN mail_sent THEN 'unknown' ELSE 'failed'`), AlertClaim (`alert_until=now() + interval '720 seconds'`), AlertMark (`alert_sent=true ... AND alert_token=$2`), AlertMark and ClaimStuck and MarkFailed and RunSub onError continueRegularOutput; link order from the timer: MarkFailed, ClaimStuck (then RunSub), AlertClaim (BM:115).
+- Real HubSpot node (BM:25-30): `operation upsert`, `email` from SubIn, custom properties hadavin_lead_id and hadavin_label; comment in BM:26 says the node upserts keyed on the e-mail and answers `{vid, isNew}`; no timeout option; retry 2, error output.
+- Env reads: RV5 `$env.DESK_URL`, `DESK_TIMEOUT_MS`, `DESK_ALERT_TO`; FV5 `MF_STAGE_URL`, `MF_STAGE_TIMEOUT_MS`, `MF_CRM_URL`. No other `$env` in the 8 files.
+- Diff real-v4 against real-v5 (parsed JSON): added CrmIdOk; changed CrmUpsert (credential id) and SetCrmId; form, hook, recovery files identical. Film: added CrmIdOk, changed SetCrmId.
+
+## Part 3: the claims
+
+### demo/PLAN-4-NLITE-FROM-LEAD.md (a plan; most sentences describe code still to be built)
+| id | source | exact sentence | node(s) and flow file | findings | verdict | safe wording |
+|---|---|---|---|---|---|---|
+| B-001 | PLAN:9 | "so the table key, mail subject token and HubSpot `hadavin_lead_id` stay equal" | FORM/HOOK `Item` (lead_key from body.submission_id or message_id) -> Claim; SUB SendMail subject `'[demo] lead ' + lead_key`; SUB CrmUpsert property hadavin_lead_id = lead_key (RV5) | F-002 (empty key) | SUPPORTED | - |
+| B-002 | PLAN:9 | "The take generates its own `L` + 16 hex key per person and uses it as the door id (`submission_id`)" | none (take script absent); flows accept any string | F-002 | UNTRACED | - |
+| B-003 | PLAN:9, :57, :184 | "the same lead sent twice (a resend or a repeat submit with the same id) is processed once." | Claim `ON CONFLICT (lead_key) DO NOTHING RETURNING`; `Claimed` IF lead_key notEmpty -> `Stored` SELECT -> `ReplyStored` (repeat true); MailClaim `mail_sent=false` (RV5, FV5) | F-002 | SUPPORTED | Keep as is. It holds for the same non-empty id; an empty id is not rejected today (F-002). |
+| B-004 | PLAN:9 | "It must NOT claim that the same person through two different doors is one lead." | FORM key = `submission_id`, HOOK key = `message_id` (BM:120-121); no cross-door key | - | SUPPORTED | - |
+| B-005 | PLAN:11 | "the Send Email node has no custom-header option (so the independent mail count uses the subject token `[demo] lead <key>`)" | SUB SendMail parameters: subject token, options `{appendAttribution: false}` only | - | SUPPORTED | Flow side only. What the n8n source says is not checkable here. |
+| B-006 | PLAN:12 | "`mf-sub-crm-mail.json` stores `String($json.vid)`; if the real HubSpot node returns `id`, the column holds the text "undefined" ... Fixed in WP4" | v4 SetCrmId stored `String($json.vid)`; v5 SUB SetCrmId `String($json.id ?? $json.vid ?? '')` plus new IF CrmIdOk (RV5, FV5) | F-016 | SUPPORTED | Say "fixed in the v5 flow files, not yet run" (V5-README:17). |
+| B-007 | PLAN:34 | "Lead doors ... 1 n8n Webhook + Respond ... CUT-TO-CONFIG (exists)" | FORM/HOOK `Receive` webhook responseMode responseNode; Respond nodes | F-009 | SUPPORTED | - |
+| B-008 | PLAN:35 | "One row per lead, repeats dropped ... 1 Postgres node, ON CONFLICT DO NOTHING" | Claim (quoted above) | - | SUPPORTED | - |
+| B-009 | PLAN:37 | "1 HubSpot node 2.2 upsert by e-mail" | RV5 SUB CrmUpsert `n8n-nodes-base.hubspot` 2.2, operation upsert, key = e-mail (BM:26 comment) | F-033 | SUPPORTED | Upsert is keyed on the e-mail address only. |
+| B-010 | PLAN:37 | "CRM write | one contact per lead" | same node; key is e-mail only | F-033 | OVERSTATED | One contact per e-mail address. Two different lead ids with the same e-mail share one contact, and the last lead id written replaces the earlier one. The take uses three different made-up addresses. |
+| B-011 | PLAN:38 | "Mail send | one mail per lead | 1 Send Email behind MailClaim" | MailClaim `mail_sent=false ... RETURNING`; SendMail retryOnFail false; failure -> MarkUnknownA | F-042 | OVERSTATED | At most one mail per lead id. If the send is cut off, the lead ends "unknown", the mail may or may not have gone, and an alert is sent. |
+| B-012 | PLAN:39 | "Recovery and alerts | finish half-done leads; tell a person | 1 Schedule + Postgres + sub-flow" | REC Every30s (30 s), ClaimStuck, StuckRow, RunSub, AlertClaim, AlertRow, AlertSend, AlertMark | F-008, F-014 | SUPPORTED | - |
+| B-013 | PLAN:39 | "V7: K1 K2 K3 K3B 80 kills 0 lost 0 doubled (v3, lease 20 s)" | v3 flows, not v5 | - | SUPPORTED ONLY BY RELAYED NUMBER | Source: V7-NUMBERS-lead-read.md:12 ("80 kills", lead read raw). Say "v3 flows, lease 20 s, stand-ins". |
+| B-014 | PLAN:40 | "Spend cap, window end, one model call per lead ... the per-lead journal, window refusal, loopback only | KEEP-CODE thin wrapper (WP1)" | prototype stage_server.py: journal yes (lines 48-58), loopback bind yes (line 60), no window check, no spend check of its own (calls the desk's LiveQualifier, line 54) | F-013 | UNTRACED | The planned `qualify_stage.py` does not exist. The prototype has no window refusal. |
+| B-015 | PLAN:41 | "Independent model-call count ... 2 `SpendLedger` totals (DESK_LIVE_LEDGER_PATH) read before and after" | none (desk and take script absent) | - | UNTRACED | - |
+| B-016 | PLAN:42 | "Independent mail count | count what really arrived | 2 imap_count.py ... subject mode, exact compare" | flow side: subject token only; `imap_count.py` absent | - | UNTRACED | - |
+| B-017 | PLAN:43 | "Independent CRM count and archive ... `HubspotCrm.rows_with_prefix("L")`, `archive_all` ... reused as is" | none | - | UNTRACED | - |
+| B-018 | PLAN:44 | "Mail polling loop | wait, settle, retry | 2 `poll_mailboxes`" | none | - | UNTRACED | - |
+| B-019 | PLAN:45 | "Reusable as written | operator safety | 2 `ask_yes` ... `probe_mailbox`, `probe_hubspot`, `mask_result`, `scrub` ..." | none | - | UNTRACED | - |
+| B-020 | PLAN:46 | "NOT reusable (Mode A names) ... `wait_for_enter_or_flag` (waits for the typed word `end` or an `end.flag`, not Enter)" | none | - | UNTRACED | - |
+| B-021 | PLAN:47 | "Send with loss rule ... resend on no verdict or `n8n_error`, 1 post + 3 resends = 4 posts, 5 s gap" | flow side: replies carry `verdict`, `n8n_error: false` (ReplyRan, ReplyStored); resend logic absent | - | UNTRACED | - |
+| B-022 | PLAN:48 | "Kill and restart of n8n ... pid check, process-group kill" | none | - | UNTRACED | - |
+| B-023 | PLAN:49 | "Table read-back | final state per lead | 3 `docker exec <pg> psql -At -F '|'`" | none (script absent). Columns exist in mf_leads (alert_sent only in the v3/v4 DDL) | F-001 | UNTRACED | - |
+| B-024 | PLAN:50 | "Pass rule, result file, audit lines | the verdict | 5 | none higher | yes | KEEP-CODE (WP3b)" | none | F-043 | UNTRACED | Drop the word "audit"; say "result lines". The flows keep one row per lead with the current state only (F-043). |
+| B-025 | PLAN:53 | "Retire-check extension | prove secrets dead | WP3b `--retire-check` probes + vendor revocation screenshots" | none | - | UNTRACED | - |
+| B-026 | PLAN:57 | "leads arrive through n8n" | FORM/HOOK `Receive` | - | SUPPORTED | - |
+| B-027 | PLAN:57 | "n8n writes the CRM contact" | RV5 SUB CrmUpsert (HubSpot node); FV5 SUB CrmUpsert is an HTTP call to the CRM stand-in | F-006 | SUPPORTED | True for real-v5 only. In film scenes say "a stand-in CRM". (Rule break, see Part 4.) |
+| B-028 | PLAN:57 | "(n8n) sends the mail" | SUB SendMail (emailSend 2.1, credential mf-mail-smtp) | - | SUPPORTED | In film scenes the mail server is a stand-in. |
+| B-029 | PLAN:57 | "our code caps the spend" | none (SpendLedger is in the desk repo; stage_server.py only calls it) | F-013 | UNTRACED | - |
+| B-030 | PLAN:57 | "asks the model once per lead" | Qualify retryOnFail, maxTries 2 posts to the stage; the once-only part is the stage journal. Prototype: stage_server.py:48-58 | F-013, F-045 | UNTRACED | Only the prototype's journal is present; the take's stage is not. |
+| B-031 | PLAN:57 | "counts the mails and contacts on its own credentials" | none (take script absent) | - | UNTRACED | - |
+| B-032 | PLAN:57 | "recovery is about the lease plus 25 to 30 s" | REC Every30s, ClaimStuck `claimed_until < now()`, then RunSub (up to 5 leads one after another) | F-003, F-012 | OVERSTATED | After a stop, a lead is picked up at the first 30 s check after its 45 s lease ends, then the run itself takes time. Not measured at 45 s. Measured at lease 20 s: up to 59.6 s (V7 K1). Do not state a number. |
+| B-033 | PLAN:57 | "real-v4 lease is 45 s" | Claim `interval '45 seconds'` (RV5, FV5) | - | SUPPORTED | - |
+| B-034 | PLAN:57 | "V7's 59.6 s max was at lease 20 s" | - | - | SUPPORTED ONLY BY RELAYED NUMBER | Source: V7-NUMBERS-lead-read.md:20 (K1 18.0 / 29.65 / 59.6). |
+| B-035 | PLAN:57 | "lane3 measured 144 s at lease 120 s" | - | - | SUPPORTED ONLY BY RELAYED NUMBER | Source: lane3, relayed by the lead; the raw file is not in the repository. |
+| B-036 | PLAN:57 | "NOT "alert within 30 s" (AF1 measured 272 s)" | AlertClaim 720 s window, AlertBackoff | F-014 | SUPPORTED ONLY BY RELAYED NUMBER | Source: V7-NUMBERS-lead-read.md:4 (AF1, n=1, first alert 272.1 s). |
+| B-037 | PLAN:57 | "Single-dependency audit: n8n has Make as named alternative; HubSpot behind the n8n node and behind `HubspotCrm` ... No new lock-in." | No Make flow exists. RV5 wires the HubSpot node directly (BM:25-30). Postgres, Send Email nodes are n8n nodes | F-033 | OVERSTATED | n8n is the only engine built. Make is only named. In the real flows HubSpot is called straight by an n8n node, with no interface of our own in front. |
+| B-038 | PLAN:66 | "Subject token constant `SUBJECT_TOKEN_PREFIX = "[demo] lead "` ... live in ONE module, `src/lead_desk/imap_count.py`" | flow subject is `'[demo] lead ' + lead_key`; module absent | - | UNTRACED | Flow side matches; the module is not in the repository. |
+| B-039 | PLAN:67 | "Reply JSON (flow reply): fields `verdict` (str), `lead_key` (str), `repeat` (bool), `n8n_error` (bool). A missing field gives `None` / `False`." | ReplyRan `{n8n_error, lead_key, verdict}`; ReplyReview same; ReplyStored adds `repeat: true` | - | SUPPORTED | - |
+| B-040 | PLAN:68 | "SQL (fixed text): SELECT lead_key, state, mail_sent, (crm_id ~ '^[0-9]+$') AS has_crm, alert_sent FROM mf_leads WHERE lead_key = ANY(...)" | columns exist in the v3/v4 DDL; `n8n-flows/mf_leads.sql` has no alert column | F-001 | UNTRACED | Works only if the table is created from the v4 DDL (F-001 patch). |
+| B-041 | PLAN:77 | "binds 127.0.0.1 only ... the key must match `^L[0-9a-f]{16}$` (else 400 `bad_key`) ... past `STAGE_WINDOW_END_UTC` -> 403 `window_closed`, no model call" | prototype binds 127.0.0.1 (stage_server.py:60) but has no key check, no window check | F-002, F-013 | UNTRACED | `qualify_stage.py` is not in the repository. Do not describe these checks as present. |
+| B-042 | PLAN:78 | "the n8n claim row stops a second door/resend from starting the lead twice" | Claim is keyed on the id sent; the two doors read different fields (submission_id, message_id) | F-019 | OVERSTATED | It stops a resend or a repeat with the same id (also the same id sent to the other door). A different id for the same person is a different lead. |
+| B-043 | PLAN:78 | "the stage journal stops the recovery flow from calling the model again after a kill that came after the model call and before the table update" | prototype stage_server.py:48-52 (label returned from the journal) | F-013 | SUPPORTED | For the prototype stage; the take's stage is not in the repository. |
+| B-044 | PLAN:78 | "the take's resend loop is the caller's loss rule" | none | - | UNTRACED | - |
+| B-045 | PLAN:79 | "All model calls run under ONE in-process lock (single flight)." | prototype: the lock `LK` covers only the journal check and the "started" write (stage_server.py:48-52); `Q.qualify` runs after the lock (line 54) | F-013 | UNSUPPORTED | The only stage in the repository does not hold a lock around the model call. Until `qualify_stage.py` exists and test qs_01 passes, say nothing about single flight. |
+| B-046 | PLAN:79 | "Expected result of 10 concurrent posts for one key: exactly 1 fresh call, the other 9 answer the same label with `cached: true` (0 unknown)." | prototype: the other callers find "started" with no label and get `{label:"unknown", unknown_model:true}` (stage_server.py:51) | F-013 | UNSUPPORTED | The prototype answers "unknown" to the other nine. Nothing shows the promised result. |
+| B-047 | PLAN:79 | "started with no label answers `{label: "unknown", unknown_model: true}` and makes no second call" | stage_server.py:51 | F-013 | SUPPORTED | - |
+| B-048 | PLAN:80 | "Logs and journal hold lead key, label and cached flag only, never the e-mail." | prototype journal writes lead_key, started, label (lines 52, 56, 58); log_message is silent | F-045 | SUPPORTED | Prototype only. |
+| B-049 | PLAN:80 | "The model input stays what the desk sends today (lead id plus normalised made-up e-mail)" | prototype passes `o.get("email")` to `Q.qualify` (line 54); desk absent | F-045 | UNTRACED | The e-mail address reaches the stage; whether it is masked before the model is not shown. |
+| B-050 | PLAN:108 | "both replies must carry the same key and the second `repeat: true`" | first reply ReplyRan (no repeat field); repeat reply ReplyStored `repeat: true` | - | SUPPORTED | - |
+| B-051 | PLAN:112 | "done = exactly 1 CRM row, exactly 1 mail, has_crm true (numeric id); unknown = exactly 1 CRM row, 0 or 1 mail ...; failed = 0 mails" | MarkDone only after SendMail success; CrmIdOk digits before MailClaim; MarkFailed `CASE WHEN mail_sent THEN 'unknown' ELSE 'failed'`; MailClaim sets mail_sent before SendMail | F-031 | SUPPORTED | Statically consistent. The counting itself is in absent scripts. |
+| B-052 | PLAN:112 | "person B: exactly 1 table row for B's key and at most 1 reply with `repeat: false` (a lost first reply can make the first delivered reply a repeat ...)" | Claim PRIMARY KEY; ReplyRan has no `repeat`, ReplyStored `repeat: true` | - | SUPPORTED | - |
+| B-053 | PLAN:121 | "an IF node after it routes an empty value to the existing failure path ... so the lead ends `failed`/retries by the normal rule, never `done` with "undefined"" | SetCrmId then CrmIdOk (digits test) -> OwnsClaim1 (true) or OutStage (false); REC retries up to attempts 3 then MarkFailed | F-016 | SUPPORTED | The check is stricter than "empty": only an all-digit id passes (V5-README:22). Not run. |
+| B-054 | PLAN:122 | "T1 (burst of 10) and K1 (n=5) re-run on film-v5: 0 lost, 0 doubled" | V5-README:17 "T17, T18, M1 and K1 on v5 have NOT been run" | - | UNSUPPORTED | Say "not yet run on v5". |
+| B-055 | PLAN:122 | "a node-by-node diff of real-v5 against real-v4 shows only SetCrmId, the new IF and the credential id" | my parse: real-v5 adds CrmIdOk; CrmUpsert (credential id) and SetCrmId changed; other 3 files identical | - | SUPPORTED | - |
+| B-056 | PLAN:126 | "recovery wording "about the lease plus 25 to 30 s"" | see B-032 | F-003 | OVERSTATED | See B-032. |
+| B-057 | PLAN:126 | "`smtp_catcher.py .drop = 1`" (accepts a mail, then drops the connection) | n8n-tests/smtp_catcher.py:44-47 (mail stored, then count decremented and return without answer) | F-005 | SUPPORTED | - |
+| B-058 | PLAN:137 | "inside the US$189 window cap (ends 2026-11-23 23:59 IST)" | none (ledger and stage settings absent) | - | UNTRACED | - |
+| B-059 | PLAN:154 | "The spend ledger and the stage journal stay as audit (keys and labels only)." | stage_server.py journal; mf_leads keeps current state only | F-043 | OVERSTATED | Say "stay as a record of model calls (lead keys and labels only)". It is not a record of what happened to each lead. |
+| B-060 | PLAN:192 | "The mail node has no timeout; a send longer than the 45 s lease ends `unknown` (safe, the scene changes)." | SendMail options have no timeout; recovery re-run -> MailClaim returns no row -> MarkUnknownB (`AND mail_sent`); main run's MarkDone then matches no row -> OutLost | F-012 | SUPPORTED | - |
+| B-061 | PLAN:194 | "Lease 45 s in real-v4/v5 (DESIGN-A-README says 120 for the n8n-flows folder)" | RV5/FV5 `interval '45 seconds'`; n8n-flows/mf-form.json `interval '120 seconds'` | - | SUPPORTED | - |
+| B-062 | PLAN:195 | "v5 changes only SetCrmId." | adds node CrmIdOk and its connections; CrmUpsert credential id | - | OVERSTATED | "v5 changes SetCrmId, adds the check CrmIdOk, and sets the HubSpot credential id." |
+| B-063 | PLAN:197 | "The alert count is not independent (alert goes to the owner's address)" | RV5 AlertSend toEmail `={{ $env.DESK_ALERT_TO }}` | F-030 | SUPPORTED | - |
+
+### demo/WATCH-CHECKLIST.md (about the older desk run `run_real_check.py`, not the n8n flows)
+| id | source | exact sentence | node(s) and flow file | findings | verdict | safe wording |
+|---|---|---|---|---|---|---|
+| B-064 | WATCH:5 | "only counts and a pass/fail table. It is built never to print a key, an e-mail address or a message text." | none (`run_real_check.py` absent) | - | UNTRACED | - |
+| B-065 | WATCH:8 | "The docs say nobody outside your own inboxes receives anything (docs/real-services.md)" | none (docs absent) | - | UNTRACED | - |
+| B-066 | WATCH:9 | "Key files are named by path only in the config; the script prints no key." | none | - | UNTRACED | - |
+| B-067 | WATCH:10 | "The run reads and archives contacts by a lead id (starting with `L`) and the contact property `hadavin_lead_id`." | flow property name matches (RV5 CrmUpsert); script absent | - | UNTRACED | - |
+| B-068 | WATCH:10 | "A real run prints "HubSpot contact numbers" only if some contacts were left behind." | none | - | UNTRACED | - |
+| B-069 | WATCH:14 | "The real run first prints the worst case of calls, mails and dollars and asks y/N" | none | - | UNTRACED | - |
+
+### demo/DOUBTFUL-SCENE.md
+| id | source | exact sentence | node(s) and flow file | findings | verdict | safe wording |
+|---|---|---|---|---|---|---|
+| B-070 | DOUBTFUL:3 | "the SMTP stand-in with .drop = 1 (accepts a mail, then drops the connection)" | smtp_catcher.py:44-47 | - | SUPPORTED | - |
+| B-071 | DOUBTFUL:3 | "a stage with a loopback fake model" | stage_server.py imports `lead_desk.live_claude` (desk absent); the fake model server is not in the repository | - | UNTRACED | - |
+| B-072 | DOUBTFUL:4 | "The take lease is 45 s (UNMEASURED)." | Claim `interval '45 seconds'` | - | SUPPORTED | - |
+| B-073 | DOUBTFUL:4 | "The table screen is BUILT, NOT RUN" | n8n-table-screen and n8n-table-screen-v2 exist; no run evidence | F-023 | SUPPORTED | - |
+| B-074 | DOUBTFUL:9 | "A person sends one made-up lead through the form entry (... path mf-form). They see: the request goes in and n8n answers." | FORM `Receive` path mf-form; ReplyRan after RunSub | F-005 | SUPPORTED | The answer arrives only after the mail step (F-005); do not say the intake list is still empty. |
+| B-075 | DOUBTFUL:10 | "The mail step is made to fail AFTER the mail left: the SMTP stand-in with .drop = 1 accepts the mail, then drops the connection before it says "queued"." | smtp_catcher.py stores (line 40) before the drop (lines 44-47) | F-005 | SUPPORTED | Only on the stand-in, as the caption says. |
+| B-076 | DOUBTFUL:11 | "The person sees the answer to the caller say outcome "unknown", not "done"." | SendMail error output -> MarkUnknownA -> OutUnknown; reply field is `verdict` ('unknown'); `outcome` is an internal field | F-015 | OVERSTATED | "The reply says verdict "unknown"." |
+| B-077 | DOUBTFUL:12 | "The owner gets ONE alert e-mail" | REC AlertClaim -> AlertSend -> AlertMark; AlertMark onError continueRegularOutput; 720 s claim window | F-014 | OVERSTATED | "The owner gets an alert e-mail, normally one. If the follow-up database update fails, it can come again about every 12 minutes." |
+| B-078 | DOUBTFUL:12 | "subject "[demo] Lead desk: mail outcome unknown for <lead id>", text "the mail may or may not have been sent. A person decides."" | BM:108-109 (exact text) | F-042 | SUPPORTED | The text is exact. "A person decides" suggests a decision step; the flow has none (F-042). Safe: "a person has to look at this lead in the table and decide outside this flow; the flow does not record the decision". |
+| B-079 | DOUBTFUL:12 | "The intake mailbox is expected to show 1 mail ... and no second one after the lease passes." | MailClaim already true; ClaimStuck excludes state unknown | - | SUPPORTED | - |
+| B-080 | DOUBTFUL:12 | "the one measured first alert on a refused alert send was 272.1 s (AF1, n=1, test settings), so never "alert within 30 s"" | - | F-014 | SUPPORTED ONLY BY RELAYED NUMBER | Source: V7-NUMBERS-lead-read.md:4. |
+| B-081 | DOUBTFUL:12 | "K3 and K3B (n=20 each, kill variants, v3, lease 20 s): unknown, 1 alert each, 0 re-mails, about 30 s kill to final." | - | F-007 | SUPPORTED ONLY BY RELAYED NUMBER | Source: V7-NUMBERS-lead-read.md:8-9, :22-23 (28.4 to 31.0 s). Kill variants, not the mail drop. |
+| B-082 | DOUBTFUL:12 | "If the alert mail cannot be sent it waits with retries, no cap" | AlertSend error output -> AlertBackoff `60 s * LEAST(alert_attempts,5)`; no attempts limit in AlertClaim | F-014 | SUPPORTED | - |
+| B-083 | DOUBTFUL:12 | "A Slack alert: NOT BUILT." | no slack node in the 8 files | - | SUPPORTED | - |
+| B-084 | DOUBTFUL:13 | "state unknown, mail_sent true, alert_sent true (false while the alert waits)" | MarkUnknownA; MailClaim; AlertMark | - | SUPPORTED | - |
+| B-085 | DOUBTFUL:13 | "seven safe columns, no name or address" | n8n-table-screen-v2 ReadLeads: `SELECT lead_key, state, attempts, mail_sent, alert_sent, updated_at FROM mf_leads ...` (six) | F-003 | UNSUPPORTED | "six columns: lead id, state, tries, mail sent, alert sent, last change". |
+| B-086 | DOUBTFUL:13 | "the request body stays in n8n data until pruned" | - | F-011 | SUPPORTED ONLY BY RELAYED NUMBER | Source: N8N-START.md:40-42 (T7b, lane3 HB171). |
+| B-087 | DOUBTFUL:13 | "AF1 (n=1) covers state unknown unchanged and alert_sent true after the alert" | - | - | SUPPORTED ONLY BY RELAYED NUMBER | Source: V7-NUMBERS-lead-read.md:4. |
+
+### demo/FAILED-TAKE-NOTE.md (about `run_real_check.py`, absent)
+| id | source | exact sentence | node(s) and flow file | findings | verdict | safe wording |
+|---|---|---|---|---|---|---|
+| B-088 | FAILED:6 | "Exit code 1 means it stopped before calling anything ... Nothing was called, nothing to clean" | none | - | UNTRACED | - |
+| B-089 | FAILED:7 | "Exit code 2 means it refused at the start ... Nothing was called." | none | - | UNTRACED | - |
+| B-090 | FAILED:8 | "Exit code 3 means the run could not finish, a check failed ..." | none | - | UNTRACED | - |
+| B-091 | FAILED:9 | "With `--cleanup` the run archives only the contacts that carry this run's lead ids" | none | - | UNTRACED | - |
+| B-092 | FAILED:12 | "Each run has hard caps set in the config: HubSpot calls ... and mails" | none | - | UNTRACED | - |
+| B-093 | FAILED:16 | "`end.flag`: what it is, who writes it, when it ends a take. Not found anywhere." | PLAN:46 explains `wait_for_enter_or_flag` (typed word `end` or an `end.flag`) | - | UNSUPPORTED | Stale. PLAN-4 line 46 and ONS step 18 now describe it. |
+| B-094 | FAILED:17 | ""Retire check": what is retired, and how to check it. Not found." | PLAN:114 and :154 define `--retire-check`; ONS step 22 | - | UNSUPPORTED | Stale; now defined. |
+| B-095 | FAILED:19 | ""Credits end 23 Nov": which credits ... Not found" | PLAN:137 "US$189 window cap (ends 2026-11-23 23:59 IST)" | - | UNSUPPORTED | Stale; PLAN-4 names it. |
+| B-096 | FAILED:20 | "those scripts are not in the demo repository I can read" | find by name: not in this checkout either | - | SUPPORTED | - |
+
+### demo/RUN-ON-LAPTOP.md
+| id | source | exact sentence | node(s) and flow file | findings | verdict | safe wording |
+|---|---|---|---|---|---|---|
+| B-097 | RUN:22 | "The harness refuses a run folder that is not fresh, so run_chain.py copies this folder ... into a new work folder for every test" | run_chain.py:18-19 copies; harness absent | - | UNTRACED | - |
+| B-098 | RUN:26 | "T14 ... idle stack for 120 s, recovery running, no lead sent: pass = 0 stage requests, 0 model calls, 0 CRM requests, 0 mails (so no alert), 0 SMTP connections, 0 table rows." | REC guards StuckRow and AlertRow (empty claim returns `{success:true}`, BM:114); `def t14` exists, mf.py:321 | F-001 | SUPPORTED | - |
+| B-099 | RUN:27 | "T15 ... CRM refuses every call (HTTP 500) from the start: pass = state failed, exactly 1 alert naming the lead, 0 mails ..., 0 CRM rows" | CrmUpsert error output -> OutStage; MarkFailed; AlertClaim | F-014 | SUPPORTED ONLY BY RELAYED NUMBER | Source: V7-NUMBERS-lead-read.md:12 (v3, lease 20 s). |
+| B-100 | RUN:38 | "the design lease is 120 s (flows in n8n-flows/ are built with 120" | n8n-flows/mf-form.json 120 s; shipped RV5/FV5 45 s | - | OVERSTATED | "n8n-flows/ is the older copy with a 120 s lease; the shipped real and film flows use 45 s." |
+| B-101 | RUN:56 | "lost = no final state in time (done, unknown, failed or review)" | mf.py:83 `o["lost"] = r["state"] not in ("done","unknown","failed") or ...` (review counts as lost) | F-031 | UNSUPPORTED | "lost = no final state of done, unknown or failed in time". |
+| B-102 | RUN:63 | "T8: cap stage refuses / errors / times out ...: 0 mails ..., 0 CRM writes, 0 model calls, state failed, exactly 1 alert per lead" | Qualify error output and LabelOk false -> OutStage | F-014 | SUPPORTED ONLY BY RELAYED NUMBER | Source: V7-NUMBERS-lead-read.md:12. |
+| B-103 | RUN:64 | "unknown is allowed: a lease shorter than the SMTP hold gives a safe but unneeded unknown" | MarkUnknownB `AND mail_sent` | - | SUPPORTED | - |
+| B-104 | RUN:65 | "T11: 8 leads in flight, n8n killed and restarted, TWO recovery workflows at once: nothing lost, nothing doubled." | ClaimStuck `FOR UPDATE SKIP LOCKED` | - | SUPPORTED ONLY BY RELAYED NUMBER | Source: V7-NUMBERS-lead-read.md (T10, T11 lead re-read raw). |
+| B-105 | RUN:66 | "T13: duplicate delivery of one lead id (3 at once), Postgres killed mid-burst of 12 leads, then n8n killed and restarted ...: nothing lost, nothing doubled." | - | - | SUPPORTED ONLY BY RELAYED NUMBER | Source: V7-NUMBERS-lead-read.md:14 ("T13 from the runner report, lead has not re-read its raw file"). |
+| B-106 | RUN:67-68 | "For each point: lost 0, doubled 0, extras none, money ok, kill point reached in every sample" | - | F-007 | SUPPORTED ONLY BY RELAYED NUMBER | Source: V7-NUMBERS-lead-read.md:8-9, :20-23 (v3, lease 20 s). |
+| B-107 | RUN:78 | "n8n's own HTTP node timeout (15 s) fires before a 40 s CRM hold" | n8n-flows SUB Qualify and CrmUpsert timeout 15000, maxTries 3; v5 uses 10 s, 2 tries | - | SUPPORTED | For the n8n-flows copy only; v5 is 10 s. |
+| B-108 | RUN:81 | "mf.py creates the table itself with the four alert columns" | mf.py inline copy (F-001) | F-001 | SUPPORTED | - |
+
+### demo/RERUN-RUNBOOK.md (procedure for another machine; claims are probe results)
+| id | source | exact sentence | node(s) and flow file | findings | verdict | safe wording |
+|---|---|---|---|---|---|---|
+| B-109 | RERUN:5 | "root user; 4 cpus; 16 GB memory; Python 3.13 and Node 22 and npm 10 pre-installed; ... Docker client 29.9.2 with no daemon running" | - | - | SUPPORTED ONLY BY RELAYED NUMBER | Source: N8N-ENV-PROBE.md and DOCKER-PROBE.md. |
+| B-110 | RERUN:25 | "n8n 2.46.6 needs Node 24 or newer; the machine's Node 22 makes n8n print "not supported" and exit" | - | - | SUPPORTED ONLY BY RELAYED NUMBER | Source: N8N-ENV-PROBE.md:6 and :208. |
+| B-111 | RERUN:42 | "the tag pull and the first two digest pulls got HTTP 429 ...; the third digest pull worked in 9 s" | - | - | SUPPORTED ONLY BY RELAYED NUMBER | Source: DOCKER-PROBE.md:5 says the tag pull failed twice and the digest pull worked "on the third try". The two texts count differently; the source is the probe. |
+| B-112 | RERUN:62 | "a build made under Node 22 and run under Node 24 crashed with "Could not initialize the vm expression engine"" | - | - | SUPPORTED ONLY BY RELAYED NUMBER | Source: N8N-ENV-PROBE.md:8. |
+| B-113 | RERUN:81 | "n8n readiness 503 at 4 s and 200 at 8 s; task broker port listening from 4 s; Postgres ready over TCP 2 s after the container started" | - | - | SUPPORTED ONLY BY RELAYED NUMBER | Source: N8N-ENV-PROBE.md (probe). |
+| B-114 | RERUN:88 | "Probe result: mean idle 90.1 percent on the 130 rows" | - | - | SUPPORTED ONLY BY RELAYED NUMBER | Source: N8N-ENV-PROBE.md. |
+| B-115 | RERUN:115 | "a clone of the public repo main with depth 1 ... (2 s, 5.0 MB ...; head f3c39cf) ... 5 passed in 8 s" | - | - | SUPPORTED ONLY BY RELAYED NUMBER | Source: probe files; clean-machine/*.md uses the same head f3c39cf. |
+
+### demo/CLEAN-MACHINE-1.md (the shipped desk demo, not the n8n flows)
+| id | source | exact sentence | node(s) and flow file | findings | verdict | safe wording |
+|---|---|---|---|---|---|---|
+| B-116 | CM:5 | "13 of 13 documented Linux steps rc 0 on both versions" | - | - | SUPPORTED ONLY BY RELAYED NUMBER | Source: clean-machine/A-quickstart.md (lists the same 13 steps, rc 0). |
+| B-117 | CM:5 | "Form lead 201 new; same request 201 replayed; ... counts received 2, new 1, duplicate 1; outbox count 1" | - | - | SUPPORTED ONLY BY RELAYED NUMBER | Source: clean-machine/A-quickstart.md. |
+| B-118 | CM:9 | "TOTAL with gitleaks: 3879 passed, 4 skipped, 0 failed" (3883 collected; without gitleaks 30 failed) | - | - | SUPPORTED ONLY BY RELAYED NUMBER | Source: clean-machine/B-suite.md (3879 + 4 = 3883). Say "30 tests need the gitleaks program". |
+| B-119 | CM:14 | "Final received 4, new 2, duplicate 2, 4 receipt rows, 2 leads, 2 CRM contacts, 2 mails (one per person) ... stable 15 s later." | - | - | SUPPORTED ONLY BY RELAYED NUMBER | Source: clean-machine/C-e2e.md. |
+| B-120 | CM:15 | "3 CRM contacts, 3 mails, received 5, new 3, duplicate 2, 0 pending, 0 failed, no second mail after 12 s" | - | - | SUPPORTED ONLY BY RELAYED NUMBER | Source: clean-machine/C2-e2e-313.md. |
+
+### demo/n8n-flows/N8N-START.md
+| id | source | exact sentence | node(s) and flow file | findings | verdict | safe wording |
+|---|---|---|---|---|---|---|
+| B-121 | START:4 | "SQLite inside n8n ... Postgres 16 for the lead table (separate from n8n's own SQLite)." | no DB_TYPE or DB_POSTGRESDB name anywhere under handover/demo (grep, 0 hits) | F-011, F-041 | SUPPORTED | Accurate today. Becomes false once n8n is moved into Postgres (DECISION-one-store). Default video wording: "n8n keeps its own records". |
+| B-122 | START:13 | "The three environment variables (the only ones the real-node flows read)" DESK_URL, DESK_TIMEOUT_MS, DESK_ALERT_TO | RV5 `$env` reads: exactly these three | F-037 | SUPPORTED | - |
+| B-123 | START:13 | "n8n 2.46.6 default blocks $env in nodes" | none (n8n source absent) | F-037 | UNTRACED | - |
+| B-124 | START:13 | "The mail recipient for new leads is a constant inside the SendMail node (replace INTAKE_ADDRESS_PLACEHOLDER), not an environment variable." | RV5 SendMail toEmail "INTAKE_ADDRESS_PLACEHOLDER" | - | SUPPORTED | - |
+| B-125 | START:23-26 | "SAVE_ON_SUCCESS=none: n8n stores no run data ... for runs that succeed." (and the three like it) | none (n8n source absent) | F-008, F-011 | UNTRACED | The file itself says "effect as I understand it, not each measured". |
+| B-126 | START:27 | "The settings reduce what is stored; they do not make it zero." | - | F-011 | SUPPORTED ONLY BY RELAYED NUMBER | Source: T7b, lane3 HB171 as relayed (lines 40-42). |
+| B-127 | START:27 | "Every flow also carries the same values in its own workflow settings (saveDataSuccessExecution none, saveDataErrorExecution none, saveManualExecutions false)." | `settings` of all 8 JSON files (BM:44) | F-008 | SUPPORTED | The owner decided runs are saved ON for the take (F-008); the JSON still says none. |
+| B-128 | START:30 | "Alert e-mails ... are sent by the recovery flow from the table state, not once inside a run." | REC AlertClaim -> AlertSend -> AlertMark | - | SUPPORTED | - |
+| B-129 | START:30 | "Honest limit: the alert goes through the same SMTP server as the lead mail; if that server is down, nobody is notified until it is back, there is no second channel and no cap on alert_attempts." | SendMail and AlertSend both use credential mf-mail-smtp | F-030, F-035 | SUPPORTED | - |
+| B-130 | START:30 | "Tested: not yet (v3 flows are built; laptop run V7 pending; hung-SMTP test AF2 written, not run)." | V7-NUMBERS-lead-read.md shows V7 and AF1 ran | - | UNSUPPORTED | Stale. V7 ran on v3 (lease 20 s); AF2 (hung SMTP) is still not run. |
+| B-131 | START:33 | "Bind n8n to loopback only ... so the webhook is reachable from the machine itself only." | none (start script absent) | F-009, F-036 | UNTRACED | - |
+| B-132 | START:33 | "The recovery flow runs from its own 30 s timer" | REC Every30s secondsInterval 30 | - | SUPPORTED | - |
+| B-133 | START:36 | "No key is a node parameter, a header text, an environment variable of the flows or part of a flow file." | credentials referenced by id and name only; `$env` names above carry no secret; no secret string in the 8 files | - | SUPPORTED | - |
+| B-134 | START:36 | "They are encrypted at rest by N8N_ENCRYPTION_KEY" | none (n8n source) | - | UNTRACED | - |
+| B-135 | START:36 | "The desk's model key lives in the desk side's own key file, never in n8n." | flows send only `{lead_key, email}` to the stage | - | SUPPORTED | Flow side only; the stage's key file is not in the repository. |
+| B-136 | START:40 | "Laptop T7b ...: lead name 3 hits and e-mail 2 hits, ONLY in the write-ahead file; the planted fake model key and fake SMTP password in no file." | - | F-011 | SUPPORTED ONLY BY RELAYED NUMBER | Source: T7b raw file V5-T7b-demo444dcbf65 (laptop-local, not read; START:55). |
+| B-137 | START:41 | "Laptop V5 T7b: name 3 and e-mail 2 in LIVE rows of the execution_data table; fake key, fake SMTP password and the stage key file: none." | - | F-011 | SUPPORTED ONLY BY RELAYED NUMBER | Same source. |
+| B-138 | START:42 | "lane3 HB171: with the four settings the webhook REQUEST BODY ... is still in the write-ahead file and, after a checkpoint, in execution_data." | - | F-011 | SUPPORTED ONLY BY RELAYED NUMBER | Source: lane3 HB171, relayed; raw not in the repository. |
+| B-139 | START:44 | "Credentials ... and the stage key file never reached n8n's data folder in these scans." | - | F-011 | SUPPORTED ONLY BY RELAYED NUMBER | Source: T7b, one machine, flows 1ced4e1f. |
+| B-140 | START:45 | "The lead fields (name, e-mail) DO reach n8n's database through the webhook request body, even with the four settings on" | - | F-011 | SUPPORTED ONLY BY RELAYED NUMBER | Source: T7b and lane3 HB171. Do not say "no lead data stays in n8n". |
+| B-141 | START:51 | "no run of the four real-node files at all (built, not run)" | no run evidence for RV5 | - | SUPPORTED | - |
+
+### demo/n8n-flows/DESIGN-A-README.md (v2 text with later corrections)
+| id | source | exact sentence | node(s) and flow file | findings | verdict | safe wording |
+|---|---|---|---|---|---|---|
+| B-142 | DESIGN:6 | "mf-sub-crm-mail.json : the ONE sub-workflow ... used by the main flows and by recovery: cap stage, CRM create-or-update, mail." | `RunSub` (executeWorkflow) in FORM, HOOK, REC | - | SUPPORTED | - |
+| B-143 | DESIGN:13 | "Webhook -> Edit Fields -> Valid (e-mail pattern) -> Postgres Claim ... an invalid e-mail is stored as state review with attempts 0 -> IF row came back ... No row (a repeat): Postgres SELECT state, Respond with the stored state" | FORM Receive, Item, Valid, Claim, Claimed, IsProcessing, ReplyReview, Stored, ReplyStored (BM:79-94) | F-002, F-031 | SUPPORTED | A lead in state review is never read again and raises no alert (F-031). |
+| B-144 | DESIGN:14 | "Verdict values: new, processing, done, review, unknown, failed." | BM:76 VERDICT map and ReplyStored map | - | SUPPORTED | - |
+| B-145 | DESIGN:15 | "Qualify (HTTP Request to the cap stage, retry 3, error output)" | RV5/FV5 Qualify retryOnFail true, maxTries 2, timeout 10 s; n8n-flows copy maxTries 3 | - | OVERSTATED | "retry 3 in the older n8n-flows copy; 2 tries of 10 s in the shipped v5 flows". |
+| B-146 | DESIGN:15 | "IF label is hot/warm/cold and not unknown_model (else NO CRM write and NO mail: fail closed)" | SUB LabelOk `['hot','warm','cold'].includes($json.label) && !$json.unknown_model`; false -> OutStage | F-013 | SUPPORTED | - |
+| B-147 | DESIGN:15 | "CRM create-or-update (HTTP Request, keyed on the lead id property and the e-mail)" | film: HTTP stand-in (crm_stub keyed on both); real-v5: HubSpot node keyed on the e-mail only | F-033 | OVERSTATED | True for the stand-in. The real HubSpot node is keyed on the e-mail only. |
+| B-148 | DESIGN:15 | "SetCrmId (conditional on claim_token and state processing) -> MailClaim: UPDATE mail_sent = true WHERE mail_sent = false AND claim_token matches RETURNING" | SUB SetCrmId and MailClaim SQL (quoted above) | - | SUPPORTED | - |
+| B-149 | DESIGN:15 | "Send Email node (Retry On Fail OFF, On Error = continue with error output) -> success: state done (conditional); error output: state unknown ... If no row came back (mail_sent already true): state unknown ... (never a resend)." | SendMail; MarkDone; MarkUnknownA; MarkUnknownB | - | SUPPORTED | - |
+| B-150 | DESIGN:15, :32 | "state unknown + one alert" / "unknown ... 1 alert" | alerts come from REC state (see B-155) | F-014 | OVERSTATED | "state unknown, and an alert is sent from the 30 s check; it can repeat (see B-155)". |
+| B-151 | DESIGN:15 | "Every update is conditional on the claim token, so a run that lost its lease changes nothing (outcome lost_claim, verdict processing)." | SetCrmId, MailClaim, MarkDone, MarkUnknownA/B all test claim_token; but CrmUpsert and the model call run before any token check | F-012 | OVERSTATED | "changes nothing in the table and sends no mail. The CRM upsert (same e-mail) and the stage call can still happen." |
+| B-152 | DESIGN:16 | "ONE Postgres statement claims up to 5 rows: state not in (done, review, unknown, failed) AND claimed_until < now() AND attempts < 3, ORDER BY created_at, FOR UPDATE SKIP LOCKED, sets a new lease and token, attempts + 1" | REC ClaimStuck | F-012 | SUPPORTED | - |
+| B-153 | DESIGN:16 | "rows with attempts >= 3 and an expired lease -> state failed + one alert (the row can only be returned once)" | REC MarkFailed sets `unknown` when mail_sent is true, else `failed` | F-014 | OVERSTATED | "failed (or unknown if the mail may have gone), then an alert from the alert check". |
+| B-154 | DESIGN:17 | "Constants in the nodes (no expression): mail recipient intake at example.test, alert recipient alerts at example.test." | FV5 constants; RV5 SendMail placeholder and AlertSend `$env.DESK_ALERT_TO` (an expression) | - | OVERSTATED | True for the film flows only. |
+| B-155 | DESIGN:20 | "Shipped lease for the real and film flows: 45 seconds, built with 2 tries of 10 s per stage" | Claim 45 s; Qualify and CrmUpsert maxTries 2, timeout 10 s | - | SUPPORTED | - |
+| B-156 | DESIGN:20 | "it must be longer than the longest normal run (...), so recovery never takes a lead that a live run still holds" | at 45 s: two Qualify tries + two CrmUpsert tries at 10 s plus pauses is about 42 s before the mail; SendMail and the HubSpot node have no timeout | F-012 | OVERSTATED | True for the 120 s design value only. At 45 s a slow live run can still be taken over; the result is a safe "unknown", not a second mail. |
+| B-157 | DESIGN:23 | "environment access in nodes must be allowed (N8N_BLOCK_ENV_ACCESS_IN_NODE=false in 2.46.6)" | none | F-037 | UNTRACED | - |
+| B-158 | DESIGN:28 | "stage_server.py ... calls the desk's own LiveQualifier and SpendLedger (reserve before, settle after, caps)" | stage_server.py:10-11, :16, :54 (imports LiveQualifier; SpendLedger not imported there) | - | UNTRACED | - |
+| B-159 | DESIGN:28 | "a per-lead journal means a re-run never calls the model twice" | stage_server.py:17-23 (a missing or unreadable journal is read as empty), :48-52 | F-013 | OVERSTATED | "for the same journal file; if the journal is deleted or unreadable the stage starts from empty." |
+| B-160 | DESIGN:28 | "a lead with a started call and no answer returns label unknown (no second call)" | stage_server.py:51 | F-013 | SUPPORTED | - |
+| B-161 | DESIGN:28 | "GET /mail_count ... NOT called from inside the flow" | no flow JSON contains `mail_count` | - | SUPPORTED | - |
+| B-162 | DESIGN:36 | "(1) MarkFailed branch runs FIRST in the timer's connection order; (2) ClaimStuck, RunSub (recovery), MarkFailed and AlertFailed are set to continue on error ... (3) the CRM call has an error output ... same stage_failed outcome" | BM:115 link order; ClaimStuck, RunSub, MarkFailed onError continueRegularOutput; CrmUpsert -> OutStage (out 1). Node `AlertFailed` no longer exists (AlertClaim, AlertMark, AlertBackoff replace it) | F-008 | SUPPORTED | Node names changed in v3 and later. |
+| B-163 | DESIGN:39 | "AlertClaim takes up to 5 rows in state unknown or failed with alert_sent=false, AlertSend mails the alert recipient, AlertMark sets alert_sent=true only after the send succeeded." | REC AlertClaim LIMIT 5, AlertSend, AlertMark (wired from AlertSend output 0 only) | - | SUPPORTED | - |
+| B-164 | DESIGN:39 | "A lead that hit the 3-try cap with mail_sent true is now state unknown ... with mail_sent false it is failed." | MarkFailed CASE | - | SUPPORTED | - |
+| B-165 | DESIGN:40 | "Retry: a row whose send failed is tried again after 60 s x (1 + min(attempts, 4)) = 60, 120, 180, 240, then every 300 s. There is NO cap on alert_attempts" | RV5 AlertClaim window 720 s (V4 build); AlertBackoff `60 s * LEAST(alert_attempts, 5)` | F-014 | OVERSTATED | v3 text. In v5 a claimed alert is not taken again for 720 s, and after a refused send the wait is 60 s times the attempt number, up to 300 s. Still no cap. |
+| B-166 | DESIGN:41 | "the only alert channel is e-mail through the SAME SMTP server that sends the lead mail" | both nodes use credential mf-mail-smtp | F-030 | SUPPORTED | - |
+| B-167 | DESIGN:41 | "Duplicates (never losses) are possible when the mark fails after a successful send or a send outlasts its 60 s claim window." | AlertMark onError continueRegularOutput; window 60 s (v3) or 720 s (v4/v5) | F-014 | SUPPORTED | In v5 the window is 720 s. |
+| B-168 | DESIGN:42 | "Alert latency: up to about 30 s after the state is set (one tick), longer while a hung send occupies a tick." | BM:115: from the timer, ClaimStuck then RunSub run before AlertClaim; RunSub can take tens of seconds per lead, up to 5 leads; AF1 272.1 s | F-003, F-012, F-014 | OVERSTATED | "The alert goes out at the first 30 s check that reaches it. A slow re-run of another lead in the same check, or a refused alert send, delays it (one measured case: 272 s)." |
+| B-169 | DESIGN:44-45 | "v3 can send TWO alerts for one lead ... 2 alerts at about 120 s (lane3 measured, relayed, one run)" | - | F-014 | SUPPORTED ONLY BY RELAYED NUMBER | Source: lane3 B90, relayed; raw not in repository. |
+| B-170 | DESIGN:45 | "v4 ... lengthens the claim to 12 minutes and retries a failed send through AlertBackoff." | RV5 AlertClaim `interval '720 seconds'`; AlertBackoff exists | F-014 | SUPPORTED | - |
+
+### demo/n8n-flows-real-v5/V5-README.md and n8n-flows-film-v5/V5-README.md (identical, diff checked)
+| id | source | exact sentence | node(s) and flow file | findings | verdict | safe wording |
+|---|---|---|---|---|---|---|
+| B-171 | V5:3 | "SetCrmId stores crm_id = String($json.id ?? $json.vid ?? '')." | SUB SetCrmId queryReplacement (RV5, FV5) | F-016 | SUPPORTED | - |
+| B-172 | V5:4 | "Non-empty goes on to OwnsClaim1 (the old path). Empty goes to OutStage, the SAME node a CRM refusal uses" | link CrmIdOk -> OwnsClaim1 (0), -> OutStage (1) | - | OVERSTATED | The test is all digits, not non-empty (the file corrects itself at line 22). |
+| B-173 | V5:4 | "so the lead is retried by the normal rule and ends failed with 1 alert, never done" | OutStage; REC ClaimStuck (attempts < 3) then MarkFailed; AlertClaim | F-014 | OVERSTATED | "ends failed and an alert is sent; the alert can repeat. T18 has not been run." |
+| B-174 | V5:6 | "on an empty answer SetCrmId has already written an empty text into crm_id (not NULL, not numeric). The take treats it as not has_crm." | SetCrmId runs before CrmIdOk; take script absent | F-016 | SUPPORTED | Flow part read; the take script is not in the repository. |
+| B-175 | V5:14 | "Node-by-node diff real-v5 against real-v4: only SetCrmId, CrmIdOk with its connections, the credential id." | my parse (Part 2) | - | SUPPORTED | - |
+| B-176 | V5:17 | "T17, T18, M1 and K1 on v5 have NOT been run." | no result files | - | SUPPORTED | - |
+| B-177 | V5:19 | "crm_stub.py: control field upsert_answer on POST /control: "id" (default), "vid", "none"." | crm_stub.py:9 CTL has `upsert_answer: "id"`; line 42 reads it | - | SUPPORTED | - |
+| B-178 | V5:20 | "mf.py: new tests T17 (id only: done, numeric crm_id, 1 mail, 0 alerts) and T18" | mf.py:339 `def t17`, :348 `def t18` | - | SUPPORTED | Tests exist; not run. |
+| B-179 | V5:22 | "CrmIdOk is now a boolean IF on the expression test of ^[0-9]+$ ... Only an all-digit id goes on; empty, the text undefined, letters, negative and decimal values go to OutStage (failed, 1 alert)." | SUB CrmIdOk `/^[0-9]+$/.test(String(CrmUpsert.id ?? CrmUpsert.vid ?? ''))` | F-014 | SUPPORTED | "1 alert" see B-173. |
+| B-180 | V5:22 | "n8n-tests/test_crmid_regex.py evaluates the real expression in node on 10 made-up answers (PASS, both folders)" | test file exists (CASES list, 22 lines); PASS not re-run | - | SUPPORTED ONLY BY RELAYED NUMBER | Source: the file's own statement; I did not run it (static work). |
+| B-181 | V5:22 | "a non-numeric real id would now FAIL the lead, so check that first" | CrmIdOk digits | - | SUPPORTED | - |
+
+### demo/n8n-owns-vs-desk-owns.md
+| id | source | exact sentence | node(s) and flow file | findings | verdict | safe wording |
+|---|---|---|---|---|---|---|
+| B-182 | OWNS:4 | "n8n owns (stated by the lead): intake, field mapping, the ten-at-once trigger, alerts, and plain sends in client builds." | Receive, Item, Claim, REC alert nodes, SendMail. No node is a "ten-at-once trigger" | - | OVERSTATED | "n8n receives the leads, maps the fields, keeps the one-row-per-lead claim, sends the lead mail and the alert mail." Explain or drop "ten-at-once trigger". |
+| B-183 | OWNS:5 | "The desk owns (...): a receipt first, a keyed claim, ambiguous sends marked for a person, approval, its own counts, the live-model cost caps and on-screen masking." | none in the flows; desk repo absent. No approval node, column or form in any flow (F-042) | F-042 | UNSUPPORTED | Remove "approval". Say: "marks sends it cannot be sure about so that a person looks at them; keeps its own counts". |
+| B-184 | OWNS:5 | "Redaction and the spend cap of the real-service checks sit in the lead's take harness (stated, not tested by me)." | none | F-045 | UNTRACED | - |
+| B-185 | OWNS:6-7 | "n8n's default duplicate node let duplicates through at ten-at-once on a reused n8n ... clean in 12 of 20 bursts ... (published 18 of 20) and 2 of 5" | - | - | SUPPORTED ONLY BY RELAYED NUMBER | Source: N8N-RERUN-1.md ("12 of 20", "18 of 20"); n8n-published-numbers.md:14. |
+| B-186 | OWNS:7-8 | "Variants b, c, d ... 20 of 20 clean each"; "Variant e ... 25 of 25 clean"; "second CRM row ... 1 of 50" | - | - | SUPPORTED ONLY BY RELAYED NUMBER | Source: n8n-published-numbers.md:16-18, :26-28. These are test variants, not the take's flows. |
+| B-187 | OWNS:9 | "A database rule (a unique index with the insert set to skip repeats) kept exactly 1 row in 20 of 20 bursts ... an IF box on it sent exactly 1 call down the "new" path and 9 down the "duplicate" path in 20 of 20 bursts" | the take's Claim + `Claimed` IF use the same mechanism on a PRIMARY KEY | - | SUPPORTED ONLY BY RELAYED NUMBER | Source: n8n-skip-on-conflict.md:44-45, :58. The mechanism is in the flows; the count is the test flow's. |
+| B-188 | OWNS:12 | "The one n8n flow I tested loses a lead when n8n is killed between its database insert and its work ... 5 of 5 kills lost the lead" | a test flow with a 4 s Wait, not the take's flows (which have the 30 s recovery) | - | SUPPORTED ONLY BY RELAYED NUMBER | Source: this file (demo session's own run); no raw file in the repository. |
+| B-189 | OWNS:26-29 | "a receipt written before anything else happens, a keyed claim ..., ambiguous sends marked for a person, the portal, approval of changed repeats, and a count of its own"; "the desk never sent a second e-mail by itself" | none (desk repo absent) | F-042 | UNTRACED | Remove "approval of changed repeats" from anything the video or page says. |
+| B-190 | OWNS:14 | "25 of 25 kills kept the lead and did the work at most once" (desk crash points) | - | - | SUPPORTED ONLY BY RELAYED NUMBER | Source: this file (demo session, desk checkout absent). |
+
+### demo/n8n-skip-on-conflict.md
+| id | source | exact sentence | node(s) and flow file | findings | verdict | safe wording |
+|---|---|---|---|---|---|---|
+| B-191 | SKIP:7 | "a new insert output one item holding the inserted row ..., and a skipped duplicate also output one item, but that item held only success true and no row fields, so an IF node that tests "lead_id is not empty" separates the two." | take's `Claimed` IF tests `lead_key` notEmpty after the Claim INSERT (BM:84); BM:114 comment says the same about the Postgres node | - | SUPPORTED ONLY BY RELAYED NUMBER | Source: this file, section 1 and 3 (20 of 20 bursts, n8n 2.46.6). |
+| B-192 | SKIP:63 | "a unique index in Postgres plus Skip on Conflict kept exactly 1 row in 20 of 20 bursts" | mf_leads `lead_key text PRIMARY KEY` | - | SUPPORTED ONLY BY RELAYED NUMBER | Source: n8n-skip-on-conflict.md:44-45. |
+| B-193 | SKIP:65 | "The two-step "If Row Does Not Exist" then Insert made extra rows in 9 of 10 bursts" | not used in the take | - | SUPPORTED ONLY BY RELAYED NUMBER | Source: n8n-skip-on-conflict.md:47. |
+| B-194 | SKIP:19 | "There is no single "insert if not exists" operation." (Data Table, 2.46.6) | none (n8n source) | - | UNTRACED | - |
+
+### demo/n8n-published-numbers.md
+| id | source | exact sentence | node(s) and flow file | findings | verdict | safe wording |
+|---|---|---|---|---|---|---|
+| B-195 | PUB:3 | "variant a, ten at once: 18 of 20 at one CRM row and one email" | - | - | OVERSTATED | Own reruns: 12 of 20 and 2 of 5 on a reused stack; 12 of 12 for the first burst on a fresh stack (PUB:14, :33). Quote with the stack condition or leave out. |
+| B-196 | PUB:4 | "K1 (crash after step 1): crashed entry visible 1 of 5" | - | - | UNSUPPORTED | PUB:30: "NO MATCHING ROW" in the branch tables. Leave out. |
+| B-197 | PUB:5 | "kill runs with no effect: 1 of 15" | - | - | UNSUPPORTED | PUB:31: README says 0 of 15; own rerun 0 of 15. Use 0 of 15 with the stack condition. |
+| B-198 | PUB:6 | "variant e: second CRM row appeared in 4 of 10 (builder rerun 1 of 10)" | - | - | OVERSTATED | PUB:28: NOT REPRODUCED (1 of 10 and 1 of 50). Leave out or state both. |
+| B-199 | PUB:21 | "a kill, CRM request in flight: 1 CRM row, 0 emails after one retry | 5 of 5" (rerun 1 of 5) | - | - | OVERSTATED | PUB:21: NOT REPRODUCED. Leave out. |
+| B-200 | PUB:22 | "a kill, the two email points: 1 CRM row and 1 email | 9 of 10" (rerun 3 of 10) | - | - | OVERSTATED | PUB:22: NOT REPRODUCED. Leave out. |
+| B-201 | PUB:15-20, :23-27, :29 | variants b, c, d "20 of 20", replay "0 of 20 each", kill rows "0 of 15", variant e "(1,1) x5", "10 of 10", "status not sent at 60 s 0 of 15" | - | - | SUPPORTED ONLY BY RELAYED NUMBER | Source: this file's own table, REPRODUCED rows, each with its stack condition (N8N-RERUN-1.md, n8n-rerun/). Not the take's flows. |
+
+### flows-audit/inputs/OWNER-STEPS-realrun-v3.md (ONS; new from the coordinator message)
+| id | source | exact sentence | node(s) and flow file | findings | verdict | safe wording |
+|---|---|---|---|---|---|---|
+| B-202 | ONS:11 | "A is sent twice, B is sent ten times at once, C is sent once while the lead stops and restarts n8n by hand." | flows side: Claim and recovery; take script absent | - | UNTRACED | - |
+| B-203 | ONS:12 | "n8n: the flow tool that takes the leads in, writes the CRM contact and sends the mail." | RV5 Receive, CrmUpsert, SendMail | F-006 | SUPPORTED | True for the real take. Film scenes: "a stand-in CRM". |
+| B-204 | ONS:12 | "The stage: a small program of ours that asks the AI model once per lead and enforces the money cap." | none (`qualify_stage.py` absent; prototype relies on the desk for the cap) | F-013 | UNTRACED | - |
+| B-205 | ONS:22 | "The challenge only blocks blind and piped answers (and any answer typed in under 2 seconds). It does NOT stop a tool that reads the screen and types the number back." | none | - | UNTRACED | - |
+| B-206 | ONS:23 | "The spending cap and the window end are only settings in the stage settings file, a backstop that YOU check by eye ... The program does not enforce a fixed ceiling" | none | - | UNTRACED | Plain and honest; keep. |
+| B-207 | ONS:23 | "The real protection against a loop or a double call is in the design: one paid call per lead id, recorded before the call is made." | prototype stage_server.py:52 writes "started" before the call (line 54) | F-013 | SUPPORTED | Prototype only; the take's stage is absent. Concurrent same-key callers get "unknown" (B-046). |
+| B-208 | ONS:41 | "Without this Gmail rewrites the From line to the SENDER address and the claim "the company address works live" fails." | SendMail fromEmail is the placeholder FROM_ADDRESS_PLACEHOLDER (RV5) | - | UNTRACED | Gmail behaviour, not in a flow. |
+| B-209 | ONS:52 | "the take reads ONLY the Gmail label named `demo` ... the take refuses every other folder ... The mail must appear only there, once." | none (take script absent); flow sends at most one mail | - | UNTRACED | - |
+| B-210 | ONS:95 | "True order on screen: (a) ... `mailbox login: still works` and `HubSpot login: still works` ...; (b) the notice ... random 6-digit "Confirmation number" ...; (c) "Type y to start"; (d) ..." | none | - | UNTRACED | - |
+| B-211 | ONS:95 | "A piped or scripted `y` is refused ... The flags `--yes` and `-y` do not exist and are refused." | none | - | UNTRACED | - |
+| B-212 | ONS:96-97 | "An answer typed in under 2 seconds is refused ... A take id can be used once ... marker file `~/.hadavin-take-tags/<id>.used`" | none | - | UNTRACED | - |
+| B-213 | ONS:99 | "During the take: contacts appear in HubSpot, one mail per person appears in the `demo` label." | CrmUpsert; MailClaim; SendMail | F-042 | OVERSTATED | "up to one mail per person. If the mail step is cut off, that person's lead ends "unknown", an alert is sent, and the label may hold 0 or 1 mail." |
+| B-214 | ONS:103 | "Only the exact word `end` ends the pause ... the second wrong line also prints "type exactly: end" and then the script goes ahead and archives anyway; ... Ctrl-C or closing the window also still archives." | none | - | UNTRACED | Compare PLAN:111 (archive in a `finally`). |
+| B-215 | ONS:103, :112 | "The script then archives this take's contacts." | AGENT-SCOPE:20 says the code does it as a DELETE call (`crm_hubspot.py`, absent) | - | UNTRACED | One word, one meaning: say "deletes" if it is a delete (AGENT-SCOPE:20); "archive" is HubSpot's own word. |
+| B-216 | ONS:108 | "the frame scan finds no address except `take-<id>-a/b/c@example.com`" | flow constants are example.test (film) and placeholders (real) | - | UNTRACED | The doubtful scene (film flows) shows example.test addresses; PLAN:126 expects example.test there. The two scans name different endings. |
+| B-217 | ONS:125 | "It must print "refused as expected" for the mailbox and for HubSpot; exit code 0. "STILL WORKS" (exit 3) ... "could not tell" (exit 2)" | none | - | UNTRACED | PLAN:114 says only "exit 0 only if both are refused". |
+| B-218 | ONS:127 | "The copy of the passwords inside n8n dies ONLY by your revocation in this step; that is a screenshot, not a check." | credentials live in n8n's store (START:36) | - | SUPPORTED | - |
+| B-219 | ONS:131 | "The post says only: leads arrive through n8n; n8n writes the CRM contact and sends the mail; our code caps the spend, asks the model once per lead and counts the mails and contacts on its own credentials; **a lead sent twice with the same id is processed once**." | see B-026 to B-031 | F-006 | SUPPORTED | Clauses 1, 2, 3 (partly) and 5 are supported; "caps the spend", "asks the model once", "counts ... on its own credentials" are UNTRACED (B-029 to B-031). Add "(real services)" before "n8n writes the CRM contact". |
+| B-220 | ONS:131 | "It must NOT say: the same person through two doors is one lead; no lead data stays in n8n; recovery within 60 s; alert within 30 s." | B-004, B-032, B-036, B-140 | F-011 | SUPPORTED | - |
+| B-221 | ONS:153 | "Six core test files, Windows: 697 passed, 115 skipped (POSIX-only), 0 failed. Same six files, WSL: 810 passed, 2 skipped." | - | - | SUPPORTED ONLY BY RELAYED NUMBER | Source: `evidence-int-6\INDEX.md` on head 4d7c335 (not in this checkout); the file itself says UNVERIFIED for the current head. |
+| B-222 | ONS:154-156 | "`test_real_check_take` ... Windows: 166 passed."; "`test_real_check_n8n` ..., WSL: 445 passed, 0 failed."; "`test_n8n_drive.py`, WSL, 8 runs: 118 passed, 2 skipped each. `qs_01` x20: 20 of 20" | - | - | SUPPORTED ONLY BY RELAYED NUMBER | Same source and caveat. |
+| B-223 | ONS:157-158 | "Ruff check and format ... clean. Bandit: 2 Low notes."; "`evidence-int-mut-1` 71 killed, 6 survived (survivors addressed by tests); `evidence-int-mut-2` (money core) 18 killed, 0 survived." | - | - | SUPPORTED ONLY BY RELAYED NUMBER | Source: evidence-int-mut-1 and -2 (absent). "Survivors addressed by tests" is not shown; say "6 survivors". |
+| B-224 | ONS:166 | "The take does not check by itself: the alert mail, mail in any folder other than `demo`, the CRM id read back from HubSpot ..., the manual n8n kill and restart, and the second door (the hook door)." | PLAN:112 says the alert is not independent; hook door not exercised (PLAN:108) | F-030 | UNTRACED | Consistent with PLAN-4; script absent. |
+| B-225 | ONS:170-172 | "Lock file ... Take-start deadline: ... refuses to start unless it can finish about 860 s ... Exit codes: 0 pass; 1 ...; 2 a refusal ...; 3 a count or verdict failure." | none | - | UNTRACED | - |
+| B-226 | ONS:176 | "`REAL_IMAP_1_FOLDERS=demo` (any other value is refused; an omitted line stops the take ...)" | none | - | UNTRACED | - |
+
+## Part 4: sentences that break the lead's answers (Q4 to Q9)
+
+Rules: (R1) the video does not say "one database" (default: "n8n keeps its own records"); (R2) no "approval" and no "audit trail" words (narrow claim: "the same lead id sent twice is processed once"); (R3) scene 5 says "a stand-in CRM", "HubSpot" only for real-v5 scenes.
+
+R1, "one database": none of the 14 files says it. Not a break. But DECISION-one-store.md:14 ("ONE database for everything we own") is a decision in force, and N8N-START.md:4 ("separate from n8n's own SQLite") says the opposite. Whichever stands, the video must use "n8n keeps its own records" until the move to Postgres is proven (the decision calls itself "an AIM, not a state", DECISION:23, :26).
+
+R2, "approval" and "audit":
+- n8n-owns-vs-desk-owns.md:5 "ambiguous sends marked for a person, approval, its own counts" (B-183). Breaks R2.
+- n8n-owns-vs-desk-owns.md:26 "the portal, approval of changed repeats" (B-189). Breaks R2.
+- PLAN-4:50 "Pass rule, result file, audit lines" (B-024). Word "audit". Internal plan table, not video text; reword before any reuse.
+- PLAN-4:154 "The spend ledger and the stage journal stay as audit (keys and labels only)." (B-059). Word "audit". Reword.
+- Near misses (no banned word, but the same idea): the alert text "A person decides." (BM:109; DOUBTFUL:12, B-078; F-042 gives the safe wording); DECISION-one-store.md:16 "Audit = the lifecycle rows of `mf_leads` (state and timestamps)" breaks R2 and contradicts F-043 (one row per lead, state overwritten, no order of events). Not one of the 14 files, but a decision in force.
+- "Single-dependency audit" at PLAN-4:57 uses "audit" in a different sense (design review); fine, but keep it out of the video text.
+
+R3, stand-in versus HubSpot:
+- PLAN-4:57 and ONS:12, :131 "n8n writes the CRM contact" (B-027, B-203, B-219) has no scene qualifier. It is true only for the real-v5 flows. For scene 5 (film flows, SMTP stand-in with `.drop`) the CRM is the stand-in (FV5 CrmUpsert is an HTTP call to `crm_stub`); say "a stand-in CRM".
+- DOUBTFUL-SCENE.md does not mention a CRM or HubSpot at all (checked). Not a break.
+- n8n-flows-real-v5 and film-v5 READMEs say "HubSpot" only about the real build or the credential id. Not a break.
+- WATCH-CHECKLIST.md:10 names HubSpot; it describes the older desk run, not scene 5.
+
+Other claims the lead's answers touch:
+- "The same lead id sent twice is processed once" is stated in PLAN:9, :57, :184, ONS:131, :135 and is SUPPORTED (B-003). It is the one claim to keep.
+- "Exactly 1 alert", "ONE alert" (DOUBTFUL:12, V5:4, DESIGN:15, :32, RUN-ON-LAPTOP:63): OVERSTATED (B-077, B-150, B-173).
+
+## Part 5: extra rows from the decisions in force (not in the 14 files; found while reading them)
+| id | source | exact sentence | node(s) and flow file | findings | verdict | safe wording |
+|---|---|---|---|---|---|---|
+| X-1 | AGENT-SCOPE:6 | "alert on failure (capped at 3, no lead data in the alert)" | REC AlertClaim has no attempts limit; AlertSend body carries the lead id only (BM:109) | F-014 | UNSUPPORTED | "alert on failure; the alert repeats with no cap; the text carries the lead id only". The "no lead data" half is SUPPORTED (the id is not a name or address). |
+| X-2 | AGENT-SCOPE:7 | "MUST NOT: process the same lead key twice" | REC ClaimStuck re-runs the same key up to 3 attempts by design; CrmUpsert and Qualify can run again | F-012 | OVERSTATED | "must not send the mail twice for the same lead key". The mail is at most once (MailClaim); a re-run can repeat the stage call (answered from the journal) and the CRM upsert (same e-mail). |
+| X-3 | AGENT-SCOPE:16 | "make a second paid call for the same key (a 502 means "may be unknown", callers never loop)" | Qualify retryOnFail maxTries 2 posts again on a failure | F-013 | UNTRACED | n8n retries a failed stage call once (2 tries); the stage answers from its journal. The stage is absent. |
+| X-4 | DECISION:16 | "Audit = the lifecycle rows of `mf_leads` (state and timestamps)." | mf_leads has `updated_at` only; state is overwritten | F-043 | UNSUPPORTED | Do not use "audit". Say "the table shows the current state and whether the mail and the alert went out". |
+
+## Part 6: counts and worst rows
+Counts are in the Part 7 block at the end (computed from the tables by grep).
