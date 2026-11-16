@@ -13,5 +13,5 @@
 
 ## Round 1 resolve checks (2026-11-16)
 - Uncited findings: `python3 -I work/uncited_findings.py <CH>/AUDIT-FINDINGS.md` -> 150 findings, 4 without any file:line cite (D2-18, D2-19, D2-21, D3-22) = 2.7 percent.
-- Re-read sample (PLAN step 6, every 5th CONFIRMED row of verify-V1..V4 in table order, 85 rows, first quote of each row, quote searched within 3 lines around the cited line in the snapshot): 10 of 10 found (V1 A-05, A-10, X-05, X-10; V2 B-01, B-06, B-11; V3 C-01, C-07, C-16). This tests that the quote is at the line, not that the claim follows. RV1 found one wrong verifier row (V2 B-06: README line 38 vs 33; README:33 is right) outside this sample.
+- Re-read sample (PLAN step 6, every 5th of the 85 CONFIRMED rows of verify-V1..V4 in table order = 17 rows; the first 10 of those 17 were checked, first quote of each row, quote searched within 3 lines around the cited line in the snapshot): 10 of 10 found (V1 A-05, A-10, X-05, X-10; V2 B-01, B-06, B-11; V3 C-01, C-07, C-16). This tests that the quote is at the line, not that the claim follows. RV1 found one wrong verifier row (V2 B-06: README line 38 vs 33; README:33 is right) outside this sample.
 - Patch dry runs after regeneration: work/evidence-ch-3-patch-dryrun.txt (all 5 "checking file", no error), against a copy of AUDIT-FINDINGS.md as on origin/cloud/core-hardening.
