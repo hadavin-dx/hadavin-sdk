@@ -4,7 +4,8 @@ import os, re, shutil, subprocess, sys, tempfile
 H = os.path.dirname(os.path.abspath(__file__)) + '/'
 FILES = ['facts-v26.py', 'build-v26.py', 'check-v26.py', 'OWNER-SHEET-v26-SOURCE.md', 'LEAD-RELEASE-NOTE-v10-SOURCE.md', 'v26-OPEN-FOR-LEAD-SOURCE.md', 'v26-CHANGES.md', 'pointers-v26.txt', 'newchecks-v26.py']
 def run(d):
-    subprocess.run([sys.executable, '-B', d + 'build-v26.py', d], capture_output=True)
+    rb = subprocess.run([sys.executable, '-B', d + 'build-v26.py', d], capture_output=True, text=True)
+    if rb.returncode: return {'FAIL BUILD stopped: ' + (rb.stderr.strip().split('\n') or [''])[-1][:80]}, rb       # the build's own assertions (marker left, run length below 860 s)
     r = subprocess.run([sys.executable, '-B', d + 'check-v26.py'], capture_output=True, text=True, env=dict(os.environ, V26_DIR=d))
     return set(l for l in r.stdout.split('\n') if l.startswith('FAIL')), r
 # (id, file, old, new, what)
@@ -142,8 +143,189 @@ Q = [
 ('Q24', S, 'Only six words in a lead message', 'Only five words in a lead message', 'R8 word count changed'),
 ]
 P = P + Q
-EXPECT = {}          # plant id -> the check codes MEANT to catch it (filled below from the learn run, then read by a person)
-def codes_of(lines): return set(re.match(r'FAIL (C\d+[a-z]?)', l)[1] for l in lines if re.match(r'FAIL (C\d+[a-z]?)', l))
+SLASHKEY = 'q' * 8 + '/' + 'Z' * 16 + '_' + 'k' * 12 + '-' + 'm' * 9           # 47 characters with a slash, built from parts, never a real key
+# plants of v26: the v25 misses (N01 N05 N10 N11 N12 N14, security M4 x4, C55 slash gap) and 21 new kinds (R01-R21): each names the check MEANT to catch it
+V26 = [
+('N01', S, '**IST** = UTC + 5:30', '**IST** = UTC + 4:30', 'IST offset label wrong (v25 plant N01)'),
+('N05', S, 'deleted or archived, or asking', 'deleted or deleted, or asking', 'R5 archived turned into deleted (N05)'),
+('N10', S, ' (else do not press Enter: do the card)', '', 'warning before the start-line step removed (N10)'),
+('N11', S, '## 9. Posting (by {{postby}})', '## 9. Posting (by Thu 26 Nov 2026 15:00 UTC = 20:30 IST)', 'post-by date moved with a consistent weekday (N11)'),
+('N12', S, 'You delete only made-up contacts of this run and demo mails, by hand, one by one.', 'Only made-up contacts of this run and demo mails are deleted, one by one.', 'R7 second person turned passive (N12)'),
+('N14', S, 'Run `date -u` in the read terminal: the run day still holds', 'Run `date` in the read terminal: the run day still holds', 'shortened command date -u to date (N14)'),
+('M4a', S, 'Prices per million: in USD {{p_in}}, out USD {{p_out}}', 'Prices per million: in USD {{p_out}}, out USD {{p_in}}', 'price line swap (security M4)'),
+('M4b', S, 'Tokens in and out per call: {{tok_in}} and {{tok_out}}', 'Tokens in and out per call: {{tok_out}} and {{tok_in}}', 'tokens swap in the sample (security M4)'),
+('M4c', S, 'DEADLINE = {{dl_iso}}', 'DEADLINE = 2026-11-23T18:19:00Z', 'DEADLINE line wrong (security M4)'),
+('M4d', S, 'Deadline {{dl_full}}.', 'Deadline 2026-11-23 18:19 UTC = 23:49 IST.', 'yes-line deadline pair changed to another valid pair (security M4)'),
+('M4e', S, 'Silence minutes: 3   Give-up minutes: 40', 'Silence minutes: 3   Give-up minutes: 40   Key: ' + SLASHKEY, 'secret-shaped text with a slash, 47 characters (C55 slash gap)'),
+('R01', S, '7.11, always, by {{okb}}', '7.11, always, by 18:30 UTC = 00:00 IST', 'B older-key cancel time after 18:14 UTC'),
+('R02', S, '**Older key (cannot be undone).**', '**Older key.**', 'B 7.11 title loses the irreversible warning'),
+('R03', S, 'exactly the rows you wrote minus K', 'exactly N minus K', 'card proof uses N minus K again'),
+('R04', S, 'otherwise only at 6.7, after 6.6 passed (new key saved, size checked)', 'otherwise at once', 'A older-key cancel before the key is saved'),
+('R05', S, '`PRICE_OUT_CENTS`, `CALL_CEILING`,', '`PRICE_OUT_CENTS`,', 'one of the seven setting names dropped'),
+('R06', S, 'or `prep-` and ending', 'and ending', 'R7 prep prefix dropped'),
+('R07', S, 'in the read terminal must say no such file. Send the two times', 'in the read terminal must say nothing. Send the two times', '8.1 proof of the deleted key file weakened'),
+('R08', S, '"restarted" (6.6), ', '', 'R8 loses the restarted word (and its count stays six)'),
+('R09', S, '(a human you can call who', '(a person who', 'backup person no longer a human you can call'),
+('R10', S, 'the only valid answer is their own written words "matches the sentences"', 'the answer can be a thumbs-up', 'post checker valid answer removed'),
+('R11', S, '**Deadline** = the end of the period your spending approval covers', '**Deadline** = the end of the run', 'deadline definition changed'),
+('R12', S, 'A differing printed count: send the counts, do not post, FREEZE.', 'A differing printed count: post anyway.', '7.10 mismatch action changed'),
+('R13', S, 'remove only that profile, never your normal profile', 'remove your profiles', '8.7 profile removal widened'),
+('R14', S, 'Gap before 8.1: <minutes>', '', 'sample numbers message loses the gap slot'),
+('R15', S, 'the narrowest scopes that allow model calls', 'any scopes', 'create-form scopes widened'),
+('R16', S, 'W9 the text of the older key appeared on your screen', 'W9 the older key was seen', 'W9 older key exposure trigger weakened'),
+('R17', S, 'plugged in; sleep Never', 'plugged in', 'laptop sleep value dropped'),
+('R18', S, '**FREEZE** (a key alive: the card first)', '**FREEZE**', 'FREEZE loses the card-first rule'),
+('R19', S, '**Key** alone = a model key', '**Key** alone = any key', 'word key given a second meaning'),
+('R20', S, 'make a Chrome profile `demo-take`', 'make a Chrome profile `demo-film`', 'profile name differs between steps'),
+('R21', S, 'without a Google account (how unknown: ask the lead)', 'without a Google account', 'Chrome profile how-to and ask-the-lead removed'),
+]
+P = P + V26
+EXPECT = {
+  'M01': ['C04', 'C17', 'C48'],
+  'M02': ['C04', 'C17', 'C48'],
+  'M03': ['C04', 'C17', 'C48'],
+  'M04': ['C04', 'C17', 'C48'],
+  'M05': ['C19'],
+  'M06': ['C19'],
+  'M07': ['C19'],
+  'M08': ['C19'],
+  'M09': ['C19'],
+  'M10': ['C19'],
+  'M11': ['C04'],
+  'M12': ['C04'],
+  'M13': ['C04'],
+  'M14': ['C04'],
+  'M15': ['C04'],
+  'M16': ['C20'],
+  'M17': ['C20'],
+  'M18': ['C16'],
+  'M19': ['C22'],
+  'M20': ['C21'],
+  'M21': ['C19'],
+  'M22': ['C23'],
+  'M23': ['C03', 'C18'],
+  'M24': ['BUILD'],
+  'M25': ['BUILD'],
+  'M26': ['C06'],
+  'M27': ['C16'],
+  'M28': ['C19'],
+  'M29': ['C19'],
+  'M30': ['C19'],
+  'M31': ['BUILD'],
+  'M32': ['C03'],
+  'M33': ['C04'],
+  'M34': ['C23'],
+  'M35': ['C23'],
+  'M36': ['C22'],
+  'M37': ['C03'],
+  'M38': ['C17', 'C49', 'C77'],
+  'M39': ['C21'],
+  'M40': ['C17', 'C23'],
+  'M41': ['C17'],
+  'M42': ['C17'],
+  'M43': ['C19'],
+  'M44': ['C19'],
+  'M45': ['C11'],
+  'M46': ['C19'],
+  'M47': ['C04', 'C73'],
+  'M48': ['C19'],
+  'M49': ['C19'],
+  'M50': ['C17'],
+  'M51': ['C12', 'C21'],
+  'M52': ['C16'],
+  'M53': ['C17'],
+  'M54': ['C04', 'C79'],
+  'P01': ['C03', 'C04', 'C17', 'C48'],
+  'P02': ['C03'],
+  'P03': ['C03'],
+  'P04': ['C03', 'C79'],
+  'P05': ['C03', 'C04', 'C18', 'C79', 'C86'],
+  'P06': ['C04'],
+  'P07': ['C03', 'C04', 'C73'],
+  'P09': ['C14a'],
+  'P10': ['C14b'],
+  'P11': ['C14c', 'C25'],
+  'P12': ['C14d'],
+  'P13': ['C14e'],
+  'P14': ['C14f', 'C23'],
+  'P15': ['C102'],
+  'P16': ['C89'],
+  'P17': ['C14h'],
+  'P18': ['C14i'],
+  'P19': ['C14j', 'C46'],
+  'P20': ['C14k'],
+  'P21': ['C14m', 'C44'],
+  'P22': ['C21'],
+  'P23': ['C14q'],
+  'P24': ['C14r'],
+  'P25': ['C14o'],
+  'P26': ['C14p'],
+  'P27': ['C52'],
+  'P29': ['C11'],
+  'P30': ['C10'],
+  'P31': ['C14s', 'C23'],
+  'P32': ['C23'],
+  'P33': ['C23'],
+  'P34': ['C13', 'C24'],
+  'P35': ['C15'],
+  'P36': ['C15'],
+  'P37': ['C05'],
+  'P38': ['C04', 'C17'],
+  'P39': ['C04'],
+  'P40': ['C04'],
+  'P41': ['C05'],
+  'P43': ['C04'],
+  'P44': ['C08'],
+  'P45': ['C27', 'C61'],
+  'Q01': ['C48'],
+  'Q02': ['C48'],
+  'Q03': ['C49', 'C77'],
+  'Q08': ['C50'],
+  'Q09': ['C51'],
+  'Q10': ['C52'],
+  'Q11': ['C53'],
+  'Q12': ['C54'],
+  'Q13': ['C55'],
+  'Q15': ['C56'],
+  'Q16': ['C56'],
+  'Q18': ['C57', 'C83'],
+  'Q20': ['C58'],
+  'Q22': ['C59'],
+  'Q24': ['C60'],
+}
+EXPECT['N01'] = ['C70']
+EXPECT['N05'] = ['C71']
+EXPECT['N10'] = ['C72']
+EXPECT['N11'] = ['C73']
+EXPECT['N12'] = ['C74']
+EXPECT['N14'] = ['C75']
+EXPECT['M4a'] = ['C76']
+EXPECT['M4b'] = ['C77']
+EXPECT['M4c'] = ['C78']
+EXPECT['M4d'] = ['C79']
+EXPECT['M4e'] = ['C55']
+EXPECT['R01'] = ['C27', 'C86']
+EXPECT['R02'] = ['C88']
+EXPECT['R03'] = ['C28', 'C87']
+EXPECT['R04'] = ['C89']
+EXPECT['R05'] = ['C81']
+EXPECT['R06'] = ['C83']
+EXPECT['R07'] = ['C84']
+EXPECT['R08'] = ['C60', 'C85']
+EXPECT['R09'] = ['C92']
+EXPECT['R10'] = ['C93']
+EXPECT['R11'] = ['C96']
+EXPECT['R12'] = ['C94']
+EXPECT['R13'] = ['C97']
+EXPECT['R14'] = ['C99']
+EXPECT['R15'] = ['C100']
+EXPECT['R16'] = ['C28']
+EXPECT['R17'] = ['C101']
+EXPECT['R18'] = ['C91']
+EXPECT['R19'] = ['C98']
+EXPECT['R20'] = ['C103']
+EXPECT['R21'] = ['C95']
+def codes_of(lines): return set(re.match(r'FAIL (C\d+[a-z]?|BUILD)', l)[1] for l in lines if re.match(r'FAIL (C\d+[a-z]?|BUILD)', l))
 def main():
     learn = os.environ.get('LEARN') == '1'
     tmp = tempfile.mkdtemp(); base = tmp + '/base/'; os.mkdir(base)
@@ -159,11 +341,12 @@ def main():
         got, r = run(d); new_f = set(map(norm, got)) - set(map(norm, b0))
         nc = codes_of(new_f)
         if learn: print('LEARN', pid, sorted(nc), 'TB' if 'Traceback' in r.stderr else ''); continue
-        meant = EXPECT.get(pid)
+        meant = set(EXPECT.get(pid) or [])
         if not meant: print(pid, 'NO-MEANT-CHECK-DECLARED', what); mis += 1; continue
         if nc & meant: cau += 1; print(pid, 'CAUGHT by', ','.join(sorted(nc & meant)), '|', what)
         elif nc: inc += 1; mis += 1; print(pid, 'MISSED (only other checks fired: %s; meant %s)' % (','.join(sorted(nc)), ','.join(sorted(meant))), what)
         else: mis += 1; print(pid, 'MISSED (no check fired; meant %s)' % ','.join(sorted(meant)), what)
     if not learn: print('TOTAL plants %d: caught by the meant check %d, missed %d (of them caught only by another check %d), anchor-not-found %d' % (len(P), cau, mis, inc, anc))
     shutil.rmtree(tmp)
-main()
+    return 1 if (mis or anc) else 0
+sys.exit(main())

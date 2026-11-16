@@ -112,7 +112,7 @@ need('C81', 'for exactly these seven settings, `MODEL_NAME`, `TOKENS_IN`, `TOKEN
 need('C81', 'first do 6.1 (Recording and the Privacy switches OFF')
 need('C82', 'has no `..` and no part starting with `.`'); need('C82', 'the key file name contains the run name and lies inside the Take folder of the message')
 need('C83', 'addresses starting `take-<run name>-` or `prep-` and ending `@example.com`')
-need('C84', 'type `rm -- "<key file>"`'); need('C84', 'must say no such file')
+need('C84', 'type `rm -- "<key file>"`'); need('C84', 'then `ls -l "<key file>"` in the read terminal must say no such file')
 need('C85', '"restarted" (6.6)'); need('C85', '"restarted" came after 6.6')
 need('C86', '7.11, always, by 16:00 UTC = 21:30 IST', (('B', B),)); need('C86', 'Not done by 16:00 UTC = 21:30 IST', (('B', B),))
 if '16:00 UTC' in A: fail('C86', 'A holds the B-only time')
@@ -127,7 +127,8 @@ need('C91', '**FREEZE** (a key alive: the card first)')
 need('C92', 'the **backup person** (a human you can call'); need('C92', 'none named: no run')
 need('C93', 'the only valid answer is their own written words "matches the sentences"')
 need('C94', 'A differing printed count: send the counts, do not post, FREEZE.')
-need('C95', 'ask the lead for the click path') if False else need('C95', 'how unknown: ask the lead')
+for nm, t in SH:                                                                                                        # Gmail label and Chrome profile: how, or an explicit "ask the lead" (both places)
+    if t.count('how unknown: ask the lead') != 2: fail('C95', '%s: "how unknown: ask the lead" appears %d times (expected 2: Gmail label, Chrome profile)' % (nm, t.count('how unknown: ask the lead')))
 need('C96', '**Deadline** = the end of the period your spending approval covers')
 need('C97', 'remove only that profile, never your normal profile')
 need('C98', '**Key** alone = a model key'); need('C98', 'a **run** = this one filmed attempt'); need('C98', '**Run day** = the one day of the run')
@@ -137,3 +138,7 @@ for slot in ('Other channel:', 'Backup person:', 'Cancelled word:', 'Last-resort
     need('C99', slot)
 need('C100', 'the per-key limit if the message names one, the narrowest scopes that allow model calls')                 # per-key limit and scopes before create
 need('C101', 'plugged in; sleep Never')                                                                                  # laptop slot
+need('C102', '(no earlier run used it or begins like it)')                                                               # run name reuse rule
+for nm, t in SH:                                                                                                         # one Chrome profile name everywhere
+    names = set(re.findall(r'`(demo-[a-z]+)`', t))
+    if names != {'demo-take'} or t.count('demo-take') < 3: fail('C103', '%s: Chrome profile names %s, demo-take x%d' % (nm, sorted(names), t.count('demo-take')))

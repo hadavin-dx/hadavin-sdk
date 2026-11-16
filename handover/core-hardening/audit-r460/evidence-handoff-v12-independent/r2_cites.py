@@ -48,7 +48,9 @@ def resolve(name):
         return core, "unique-in-core"
     if len(c) == 1:
         return c, "unique"
-    pref = [r for r in c if r.startswith(("tests/", "demos/", ".github/"))]
+    pref = [r for r in c if r.startswith(("src/", "tests/", "demos/", ".github/"))]
+    if len(pref) == 1:
+        return pref, "unique-in-code"
     if len(c) > 1:
         return c, "multi"
     return [], "none"
@@ -78,7 +80,9 @@ def idents(seg):
         for t in re.findall(r"[A-Za-z_][A-Za-z0-9_]*", span):
             if len(t) < 4 or t in STOP:
                 continue
-            if ("_" in t) or re.search(r"[a-z][A-Z]", t) or (t.isupper() and len(t) > 3) or (t[0].isupper()) or (t + "(" in span) or ("." + t in span):
+            if t in {"UNVERIFIED", "NEEDED", "CHECK", "CHANGELOG", "Tests", "Step", "What", "Memory", "Only", "Searched", "Compiled", "Python", "Scratch", "Ships", "Callers", "Exposure", "Status", "File", "Postgres", "Mapping", "Migrations", "OpenAI", "Budget_"}:
+                continue
+            if ("_" in t) or re.search(r"[a-z][A-Z]", t) or (t.isupper() and len(t) > 3) or (t[0].isupper() and re.search(r"[a-z]", t) and re.search(r"[A-Z]", t[1:])) or (t + "(" in span) or ("." + t in span) or (t[0].isupper() and t[1:].islower() and len(t) >= 6):
                 toks.append(t)
     seen = []
     for t in toks:
@@ -122,7 +126,11 @@ for doc in docs:
             lo = max(line.rfind(". ", 0, s) + 1, line.rfind("| ", 0, s) + 1, cites[i - 1][1] if i else 0)
             hi = cites[i + 1][0] if i + 1 < len(cites) else len(line)
             before = line[lo:s]; after = line[e:hi]
-            anch = idents(before) or idents(after)
+            near = idents(line[max(lo, s - 90):s])
+            anch = near[-2:] if near else idents(after[:90])
+            wide = False
+            if not anch:
+                anch = idents(line[lo:s]) + idents(after); wide = True
             cand, how = resolve(path)
             for (a, b) in rs:
                 base = dict(doc=dn, line=ln, cite="%s:%d%s" % (path, a, "-%d" % b if b != a else ""), kind=kind, cls="A")
@@ -148,7 +156,7 @@ for doc in docs:
                     add(**base, claim=claim, target=r, actual="range ok, no anchor: " + " | ".join(x.strip() for x in L[a - 1:b][:1])[:60], status="MATCH", note="range-only"); continue
                 hit = [t for t in anch if re.search(r"(?<![A-Za-z0-9_])" + re.escape(t) + r"(?![A-Za-z0-9_])", win)]
                 if hit:
-                    add(**base, claim=claim, target=r, actual="%s present in %d-%d" % (hit[0], a, b), status="MATCH", note="anchor"); continue
+                    add(**base, claim=claim, target=r, actual="%s present in %d-%d" % (hit[0], a, b), status="MATCH", note="anchor-wide" if wide else "anchor"); continue
                 anyfile = [(t, word_lines(r, t)) for t in anch]
                 found = [(t, w) for t, w in anyfile if w]
                 if found:

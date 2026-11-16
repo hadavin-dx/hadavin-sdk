@@ -1,5 +1,5 @@
 #!/bin/sh
-# lead-repin-verify.sh (version 5): checklist printer for the lead at re-pin.
+# lead-repin-verify.sh (version 6): checklist printer for the lead at re-pin.
 #
 # WHAT IT DOES TO YOUR MACHINE (exact):
 #   - reads files: grep, sed, awk, tr, wc, find, sha256sum, git rev-parse / log / status
@@ -20,7 +20,7 @@
 #     is itself private);
 #   - DELETES only inside the work folder it made itself (the path is checked to be of the form
 #     .../lead-repin.XXXXXX before rm -rf). It deletes the whole work folder: in the modes --self-test and
-#     --mask; when the canary test fails or the setup fails; and when the run is interrupted (INT, TERM, HUP or
+#     --mask; when the canary test fails or the setup fails; and when the run is interrupted (INT, TERM, HUP, QUIT or
 #     PIPE signal). A normal run that reaches its end keeps the work folder with the masked output copy; delete
 #     it yourself;
 #   - makes NO network call and NO model call. Apart from the tools named above it starts no other program of
@@ -71,11 +71,13 @@ MASKLINE=$WORK/mask-line.sed  # line rules only (the final belt over the whole o
 MASKAWK=$WORK/mask.awk        # second stage: opaque strings, containers, pairs of lines, cutting long lines
 SHAOK=$WORK/sha-ok.txt        # the checksum lines THIS script printed itself (block R00): only these may stay unmasked
 OUT=$WORK/lead-repin-verify-out.txt
+LENCUT=$WORK/lencut.txt       # one line per input line that the length guard cut before masking (a count for the summary)
 NL=$(printf '\n_'); NL=${NL%_}
 CLEAN=1                       # 1 = remove the work folder on exit; set to 0 only after the canary passed in a normal run
 FINISHED=0                    # set to 1 only when a normal run has reached its end and removed the file-name lists
 BGPID=
 cleanup() {
+  [ -n "$WDPID" ] && { kill_tree "$WDPID"; WDPID=; }
   case $WORK in */lead-repin.??????) ;; *) return 0 ;; esac
   [ -d "$WORK" ] || return 0
   rm -f "$WORK"/st-in.txt "$WORK"/st-out*.txt "$WORK"/canary.out 2>/dev/null   # canary files go away on every exit path
@@ -96,7 +98,13 @@ kill_tree() {
   kill $kt_all 2>/dev/null
   return 0
 }
-on_signal() { CLEAN=1; trap '' INT TERM HUP PIPE QUIT; [ -n "$BGPID" ] && kill_tree "$BGPID"; cleanup; exit "$1"; }
+MAINPID=$$; WDPID=
+start_watchdog() { # ends the whole run (as a TERM signal) after LEAD_REPIN_MAX_SECONDS (default 1200); stopped again by cleanup
+  MAXSEC=${LEAD_REPIN_MAX_SECONDS:-1200}
+  ( sleep "$MAXSEC"; : > "$WORK/timeout.flag"; kill -TERM "$MAINPID" 2>/dev/null ) &
+  WDPID=$!
+}
+on_signal() { [ -f "$WORK/timeout.flag" ] && echo "STOP: the run took longer than ${MAXSEC:-1200} seconds (LEAD_REPIN_MAX_SECONDS) and was ended; the work folder was removed" >&2; CLEAN=1; trap '' INT TERM HUP PIPE QUIT; [ -n "$BGPID" ] && kill_tree "$BGPID"; cleanup; exit "$1"; }
 trap cleanup EXIT
 trap 'on_signal 130' INT
 trap 'on_signal 143' TERM
@@ -139,6 +147,9 @@ bg_wait() { "$@" & BGPID=$!; wait "$BGPID"; bg_rc=$?; BGPID=; return "$bg_rc"; }
 #     passwd "v" ;  the password is v .
 #  9  e-mail addresses are replaced by <email-masked>.
 # Stage 2 (mask.awk), see the comments in that file.
+# planned number of checks (the canary alone; the whole --self-test): a run that passes fewer or more is NOT accepted
+CANARY_PLANNED=0
+SELFTEST_PLANNED=0
 SOH=$(printf '\001')
 write_mask_sed() {
   # NAME RULE (one general rule, not a list of names): an identifier is secret when
@@ -224,6 +235,9 @@ EOF
   } > "$MASKSED"
   line_rules > "$MASKLINE"
 }
+# PWCMDS: commands that take a password as a short flag (-p -P -a -w -k or -pVALUE). THIS IS A LIST: a command that is not on it
+# is only covered by the shape rule (a line that starts like a command and has -p, -P or -w and a value that is not a number).
+PWCMDS='docker|podman|nerdctl|skopeo|buildah|helm|redis-cli|ldapsearch|ldapmodify|ldapadd|ldapdelete|ldappasswd|ldapwhoami|zip|zipcloak|unzip|7z|7za|7zr|rar|unrar|arj|htpasswd|smbclient|smbget|rpcclient|mount|psql|pg_dump|pg_restore|mongo|mongosh|mongoexport|mongoimport|sqlcmd|bcp|ftp|lftp|ncftp|rclone|openconnect|openssl|ccrypt|gpg|gpg2|mysql|mysqldump|mysqladmin|mariadb|mongodump|mongorestore|sshpass|cqlsh|beeline|impala-shell|influx|svn|hg|az|cryptsetup|ansible|ansible-playbook|vncpasswd|xfreerdp|rdesktop|remmina'
 line_rules() {
   cat <<EOF
 s/(^|[^A-Za-z0-9])(((max|num|n|total|prompt|completion|input|output|cached?|reserved)[_.-]?)+)(tok)(ens)/\1\2\5${SOH}\6/Ig
@@ -237,7 +251,8 @@ s/(-----BEGIN [A-Z ]*(PRIVATE|SECRET|ENCRYPTED)[A-Z ]*-----).*/\1<masked>/
 s/(["'](${IDQ})["'][[:space:]]*:[[:space:]]*)(${STR}|${UNQ})/\1"<masked>"/Ig
 s/(["'](name|key|var|variable|env)["'][[:space:]]*:[[:space:]]*["'](${IDQ})["'][[:space:]]*,[[:space:]]*["'][A-Za-z_]*["'][[:space:]]*:[[:space:]]*)(${STR}|${UNQ})/\1"<masked>"/Ig
 s/([{,][[:space:]]*(${IDB})[[:space:]]*:[[:space:]]*)(${STR}|${UNQ})/\1<masked>/Ig
-s#(://[^:/@[:space:]]+:)[^[:space:]]*@#\1<masked>@#g
+s#(//[^:/@[:space:]]*:)[^[:space:]]*@#\1<masked>@#g
+s#(://)[^:/@[:space:]]{16,}@#\1<masked>@#g
 s#(Bearer)[[:space:]]+[A-Za-z0-9._~+/=-]{6,}#\1 <masked>#Ig
 s#(Basic)[[:space:]]+[A-Za-z0-9+/=]{16,}#\1 <masked>#Ig
 s/((authorization|proxy-authorization)["']?[[:space:]]*:[[:space:]]*[A-Za-z][A-Za-z0-9-]*[[:space:]]+)[^[:space:]"'<]+/\1<masked>/Ig
@@ -264,9 +279,16 @@ s/((${ID})["']?[[:space:]]*,[[:space:]]*)(${STR})/\1<masked>/Ig
 s/((${ID})[[:space:]]+)(${STR})/\1<masked>/Ig
 s/((${ID})[[:space:]]+(is|was|are|equals|set to|of)[[:space:]]+)[^[:space:]<"'][^]"')}]*/\1<masked>/Ig
 s/((${ID})["']?[[:space:]]*:[[:space:]]*)(${STR}|[^][{}[:space:]<"'][^]"')}]*)/\1<masked>/Ig
-s/((^|[[:space:]])--?([A-Za-z0-9]+[_-])*(keys?|tokens?|secrets?|passw[o0]?r?d|passphrase|pass|pwd|pw|psw|pswd|pat|credentials?|auth|bearer)([_-][A-Za-z0-9_-]*)?([[:space:]]+|=))(${STR}|[^[:space:]<-][^[:space:]]*)/\1<masked>/Ig
+s/((^|[[:space:]])--?([A-Za-z0-9]+[_-])*(keys?|tokens?|secrets?|passw[o0]?r?d|passphrase|pass|passin|passout|pwd|pw|psw|pswd|pat|credentials?|creds?|userpass|auth|bearer)([_-][A-Za-z0-9_-]*)?([[:space:]]+|=))(${STR}|[^[:space:]<-][^[:space:]]*)/\1<masked>/Ig
 s/((^|[[:space:]])(machine|default)([[:space:]].*)?[[:space:]](password|passwd|passw0rd|account)[[:space:]]+)[^[:space:]<][^[:space:]]*/\1<masked>/Ig
-s/((^|[^A-Za-z0-9_])(sshpass|mysql|mysqldump|mysqladmin|mariadb|mongodump|mongorestore|redis-cli)[^|;&]*[[:space:]]-[pP])([[:space:]]*)(${STR}|[^[:space:]<-][^[:space:]]*)/\1\4<masked>/Ig
+:pwl
+s/(((^|[^A-Za-z0-9_])(${PWCMDS})[^|;&]*[[:space:]]-(p|P))[[:space:]]*)(${STR}|[^[:space:]<-][^[:space:]]*)/\1<masked>/I
+s/(((^|[^A-Za-z0-9_])(${PWCMDS})[^|;&]*[[:space:]]-(a|w|k|pw|pass))[[:space:]]+)(${STR}|[^[:space:]<-][^[:space:]]*)/\1<masked>/I
+tpwl
+s@(^${PFX0}[[:space:]]*([\$]|#|>|RUN|CMD|run:|-)?[[:space:]]*[a-z][a-z0-9._-]*[[:space:]]([^|;&]*[[:space:]])?-(p|P|w)[[:space:]]+)[0-9:.]*[^0-9:.[:space:]<~/-][^[:space:]]{2,}@\1<masked>@I
+s/((^|[[:space:]])(-U|--user|--username)(=|[[:space:]]+)[^[:space:]%<]*%)[^[:space:]<][^[:space:]]*/\1<masked>/Ig
+s/((^|[^A-Za-z0-9_])htpasswd[^|;&]*[[:space:]]-[A-Za-z]*b[A-Za-z]*([[:space:]]+[^[:space:]|;&<-][^[:space:]|;&]*)*[[:space:]]+)[^[:space:]|;&<-][^[:space:]|;&]*/\1<masked>/I
+s/((^|[^A-Za-z0-9_])(echo|printf)([[:space:]]+-[A-Za-z]+)*[[:space:]]+)[^[:space:]<|;&-][^[:space:]|;&]*([[:space:]]*\|[^|].*(stdin|passwd|password|login|chpasswd))/\1<masked>\5/I
 s/((${ID})([[:space:]]+[A-Za-z0-9_]+){1,2}[[:space:]]*:[[:space:]]*)[^[:space:]<"'].*/\1<masked>/Ig
 s/[A-Za-z0-9._%+-]+@([A-Za-z0-9-]+\.)+[A-Za-z]{2,}/<email-masked>/g
 EOF
@@ -645,7 +667,7 @@ filter_ready() {
 # which also cuts long lines and SAYS that the line was cut. A NUL byte would make some tools stop reading a
 # line, so it is shown as ? first.
 mask() {
-  tr '\000' '?' | sed -E -f "$MASKSED" | awk -v CUT=240 -f "$MASKAWK"
+  tr '\000' '?' | awk -v MODE=pre -v MAXL=20000 -v CF="$LENCUT" -f "$MASKAWK" | sed -E -f "$MASKSED" | awk -v CUT=240 -v MAXL=20000 -f "$MASKAWK"
 }
 # mask_line: the line rules only plus the awk stage: the final belt over the whole output
 mask_line() { sed -E -f "$MASKLINE" | awk -v CUT=1000 -v OKF="$SHAOK" -f "$MASKAWK"; }
@@ -883,6 +905,54 @@ self_test() {
     printf 'yaml name at the start of a line hides the whole rest|kq80ya|wm80ya|S\n' >> "$WORK/st-pt.txt"
     printf 'token: "kq81yb%s" note_kept_81\n' x
     printf 'yaml quoted value at the start of a line|kq81yb|kq81yb|S\n' >> "$WORK/st-pt.txt"
+
+    # ---- v6 additions: classes found by the v5 reviews (every value is built from parts; first 6 and last 6 characters are checked)
+    v6n=100
+    v6() { v6n=$((v6n + 1)); hd=$(printf 'zq%03dv' "$v6n"); tl=$(printf 'xm%03dd' "$v6n"); vv=$hd$tl; }
+    v6_reg() { printf '%s|%s|%s|%s\n' "$1" "$hd" "$tl" "$2" >> "$WORK/st-pt.txt"; }
+    # (1) userinfo forms of a web address: empty user part, host without a dot, password with a slash or an at sign, user part that is itself the token
+    v6; printf 'cache redis://:%s@localhost:6379/0 ok\n' "$vv"; v6_reg 'web address with an empty user part and a host without a dot' LS
+    v6; printf 'broker amqp://:%s@mq:5672\n' "$vv"; v6_reg 'web address amqp, empty user part' LS
+    v6; printf 'x //:%s@host/p y\n' "$vv"; v6_reg 'web address without a scheme, empty user part' LS
+    v6; printf 'mongodb://bob:%s/x@h/db\n' "$vv"; v6_reg 'web address, password holding a slash' LS
+    v6; printf 'clone https://%s@github.example/o/r.git\n' "$vv"; v6_reg 'web address whose user part is the token (no colon)' LS
+    v6; printf 'ssh://:%s@h\n' "$vv"; v6_reg 'web address ssh, empty user part' LS
+    # (2) password as a flag after a command
+    v6; printf 'docker login -u bob -p %s registry\n' "$vv"; v6_reg 'docker login -p' LS
+    v6; printf 'redis-cli -a %s ping\n' "$vv"; v6_reg 'redis-cli -a' LS
+    v6; printf 'ldapsearch -x -D cn=admin -w %s -b dc=x\n' "$vv"; v6_reg 'ldapsearch -w' LS
+    v6; printf 'zip -P %s out.zip f.txt\n' "$vv"; v6_reg 'zip -P' LS
+    v6; printf '7z a -p%s out.7z f\n' "$vv"; v6_reg '7z -pVALUE' LS
+    v6; printf 'unrar x -p%s a.rar\n' "$vv"; v6_reg 'unrar -pVALUE' LS
+    v6; printf 'htpasswd -b users.txt bob %s\n' "$vv"; v6_reg 'htpasswd -b' LS
+    v6; printf 'htpasswd -nb bob %s | tee f\n' "$vv"; v6_reg 'htpasswd -nb' LS
+    v6; printf 'smbclient //h/s -U bob%%%s\n' "$vv"; v6_reg 'smbclient -U user%password' LS
+    v6; printf 'openssl enc -aes-256-cbc -k %s -in a\n' "$vv"; v6_reg 'openssl -k' LS
+    v6; printf 'echo %s | docker login --password-stdin r\n' "$vv"; v6_reg 'echo value piped into a login' LS
+    v6; printf 'skopeo copy --src-creds bob:%s a b\n' "$vv"; v6_reg 'skopeo --src-creds' LS
+    v6; printf 'sudo docker login -p %s && echo done\n' "$vv"; v6_reg 'sudo docker login -p, more after it' LS
+    v6; printf '$ mytool run -p %s now\n' "$vv"; v6_reg 'unknown command, shape rule -p' LS
+    printf 'docker run -p 5678:5678 img kept_docker_port\nmkdir -p 5678 kept_mkdir_port\nls -a kept_ls_a\ngrep -a -n delete f kept_grep_flags\n'
+    # (3) a value that continues on the next lines
+    v6; printf 'SECRET_NAME = (\n    "%s"\n)\nkept_after_ml_1 = 1\n' "$vv"; v6_reg 'wrapped assignment, bracket opened and closed' M
+    v6; printf 'API_KEY = \\\n    %s\nkept_after_ml_2 = 1\n' "$vv"; v6_reg 'assignment continued with a backslash' M
+    v6; printf 'TOKENS = [\n  "%s",\n  "%s"\n]\nkept_after_ml_3 = 1\n' "$vv" "$vv"; v6_reg 'list opened after a secret name' M
+    v6; printf 'X_SECRET=$(\n  fetch "%s"\n)\nkept_after_ml_4=1\n' "$vv"; v6_reg 'command substitution opened after a secret name' M
+    v6; printf 'password = f("a",\n    "%s")\nkept_after_ml_5 = 1\n' "$vv"; v6_reg 'call opened on the line and closed two lines later' M
+    v6; printf 'cfg = dict(password=("a"\n   "%s"),\n   other=1)\nkept_after_ml_6 = 1\n' "$vv"; v6_reg 'secret inside a wrapped call' M
+    v6; printf '12:API_KEY = (\n13-    "%s"\n14-)\n' "$vv"; v6_reg 'wrapped assignment with a grep prefix' M
+    # (8) a name with a zero-width space or another non-ASCII byte in it
+    v6; printf 'pass\342\200\213word = %s\n' "$vv"; v6_reg 'zero-width space inside a name (assignment)' M
+    v6; printf '"api\342\200\213_key": "%s"\n' "$vv"; v6_reg 'zero-width space inside a quoted JSON name' M
+    v6; printf 'passw\303\266rd: %s\n' "$vv"; v6_reg 'letter with an accent inside a name' M
+    v6; printf '\345\257\206\347\240\201: %s\n' "$vv"; v6_reg 'name made only of non-ASCII letters' M
+    # (7) length guard: a very long line is cut before the sed stage; the notice carries the true length
+    v6; printf 'API_KEY=%s%s\n' "$vv" "$(awk 'BEGIN{for(i=0;i<30000;i++) printf "x"}')"; v6_reg 'secret at the start of a 30000-character line' M
+    printf 'kept_long_guard %s\n' "$(awk 'BEGIN{for(i=0;i<30000;i++) printf "y"}')"
+    # (9) dots and slashes inside one opaque string
+    v6; hd=$(printf 'Kq%02dZvAb' "$v6n"); tl=$(printf 'Pq%02dRsDf' "$v6n"); printf 'see %s.Wm%02dXdCe.%s here\n' "$hd" "$v6n" "$tl"; v6_reg 'opaque string cut by dots' A
+    v6; hd=$(printf 'Kq%02dZvAb' "$v6n"); tl=$(printf 'Pq%02dRsD' "$v6n"); printf 'see %s/Wm%02dXdCe/%s here\n' "$hd" "$v6n" "$tl"; v6_reg 'opaque string cut by slashes (25 characters)' A
+    printf 'class com.example.MyClass2.HandlerFactory kept_dotted_camel\nsee tests/test_qs_37_refuses_after_window_end.py kept_dotted_file\nThe name is kept_sentence_end.\n'
     printf 'nul?b %s\n' x >/dev/null
     printf 'a\000b kept_nul_line\n'
 
@@ -1077,6 +1147,20 @@ self_test() {
   chk_kept 'text after a multi-line quoted value stays' 'kept_after_mq: ok'
   chk_kept 'text after a multi-line plain value stays' 'kept_after_mp: ok'
   chk_kept 'text after a long hidden container stays' '"kept_after_big": "ok"'
+  chk_kept 'docker run -p with a port number stays' 'kept_docker_port'
+  chk_kept 'mkdir -p with a number stays' 'kept_mkdir_port'
+  chk_kept 'ls -a stays' 'kept_ls_a'
+  chk_kept 'grep -a -n stays' 'kept_grep_flags'
+  chk_kept 'text after a wrapped assignment stays (1)' 'kept_after_ml_1 = 1'
+  chk_kept 'text after a wrapped assignment stays (2)' 'kept_after_ml_2 = 1'
+  chk_kept 'text after a wrapped assignment stays (3)' 'kept_after_ml_3 = 1'
+  chk_kept 'text after a wrapped assignment stays (4)' 'kept_after_ml_4=1'
+  chk_kept 'text after a wrapped assignment stays (5)' 'kept_after_ml_5 = 1'
+  chk_kept 'text after a wrapped assignment stays (6)' 'kept_after_ml_6 = 1'
+  chk_kept 'a 30000-character line carries a cut notice with its true length' 'this line has 30016 characters'
+  chk_kept 'dotted CamelCase name stays' 'com.example.MyClass2.HandlerFactory'
+  chk_kept 'file name with dots stays' 'tests/test_qs_37_refuses_after_window_end.py'
+  chk_kept 'a name followed by a full stop stays' 'kept_sentence_end.'
   chk_kept 'a NUL byte is shown as ? (tr stage)' 'a?b kept_nul_line'
   st_leak=0
   grep -a -q -F -- "$base" "$res" && st_leak=1
@@ -1171,18 +1255,20 @@ self_test_meta() {
   if ! grep -a -q -F -- "${base}_63_" "$WORK/st-x.err" "$WORK/st-x.out"; then mt_ok "sh -x does not print a value (the script turns the trace off)"; else mt_bad "sh -x printed a value"; fi
   rm -f "$WORK/st-x.out" "$WORK/st-x.err"
   # signals in the MAIN phase (a fake git that sleeps keeps the checklist busy), and in --mask with an open input
-  st_fake=$WORK/st-fakebin; mkdir -p "$st_fake"; printf '#!/bin/sh\nexec sleep 31\n' > "$st_fake/git"; chmod +x "$st_fake/git"
+  st_fake=$WORK/st-fakebin; mkdir -p "$st_fake"; printf '#!/bin/sh\necho $$ > "%s/git.pid"\nexec sleep 31\n' "$st_fake" > "$st_fake/git"; chmod +x "$st_fake/git"
   for st_sig in TERM:143 HUP:129; do   # INT and QUIT cannot be tested from a shell: a program started with & by a non-interactive shell ignores them (see evidence-repin5, python launcher)
     st_sn=${st_sig%%:*}; st_se=${st_sig##*:}
     PATH="$st_fake:$PATH" LEAD_REPIN_NO_META=1 TMPDIR="$st_child" sh "$st_sa" "$st_t" > /dev/null 2>&1 &
     st_p=$!; st_i=0
-    while [ "$st_i" -lt 30 ] && ! ps -A -o args= 2>/dev/null | grep -q '^sleep 31$'; do st_i=$((st_i + 1)); sleep 1; done
+    rm -f "$st_fake/git.pid"
+    while [ "$st_i" -lt 30 ] && [ ! -s "$st_fake/git.pid" ]; do st_i=$((st_i + 1)); sleep 1; done
+    st_gp=$(cat "$st_fake/git.pid" 2>/dev/null)
     kill -s "$st_sn" "$st_p" 2>/dev/null; wait "$st_p"; st_r=$?
     sleep 1
-    st_stray=$(ps -A -o args= 2>/dev/null | grep -c '^sleep 31$'); st_left=$(ls "$st_child" | wc -l | tr -d ' ')
+    st_stray=0; if [ -n "$st_gp" ] && kill -0 "$st_gp" 2>/dev/null; then st_stray=1; fi; st_left=$(ls "$st_child" | wc -l | tr -d ' ')
     if [ "$st_r" -eq "$st_se" ] && [ "$st_stray" -eq 0 ] && [ "$st_left" -eq 0 ]; then mt_ok "signal $st_sn in the main phase: exit $st_se, no program of the run left running, no folder left"
     else mt_bad "signal $st_sn in the main phase (exit=$st_r wanted $st_se, programs left=$st_stray, folders left=$st_left)"; fi
-    [ "$st_stray" -gt 0 ] && pkill -x -f '^sleep 31$' 2>/dev/null
+    [ "$st_stray" -gt 0 ] && kill "$st_gp" 2>/dev/null   # only the process this check itself started (its recorded PID)
     rm -rf "$st_child"/lead-repin.??????
   done
   st_pf=$WORK/st-pid; sh -c 'echo $$ > "$1"; exec sleep 29' sh "$st_pf" | LEAD_REPIN_NO_META=1 TMPDIR="$st_child" sh "$st_sa" --mask > /dev/null 2>&1 &
@@ -1211,20 +1297,20 @@ esac
 st_verdict() {
   [ "$2" -eq 0 ] || return 1
   grep -a -q '^FAIL' "$1" && return 1
-  grep -a -q '^SELF-TEST: passed=[1-9][0-9]* failed=0 ' "$1" || return 1
+  grep -a -q "^SELF-TEST: passed=${3:-[1-9][0-9]*} failed=0 " "$1" || return 1
   return 0
 }
 # st_recount FILE RC: the same judgement again, by a different route (awk counts FAIL lines and reads the tally)
 st_recount() {
   [ "$2" -eq 0 ] || return 1
-  awk '/^FAIL/ { f++ } /^SELF-TEST: passed=[1-9][0-9]* failed=0 / { ok++ } END { exit (f == 0 && ok == 1) ? 0 : 1 }' "$1"
+  awk -v want="${3:-}" '/^FAIL/ { f++ } /^SELF-TEST: passed=[0-9]+ failed=0 / { split($2, a, "="); if (a[2] + 0 >= 1 && (want == "" || a[2] + 0 == want + 0)) ok++ } END { exit (f == 0 && ok == 1) ? 0 : 1 }' "$1"
 }
 run_canary() {
   self_test 1 > "$WORK/canary.out" 2>&1 < /dev/null &
   BGPID=$!; wait "$BGPID"; canary_rc=$?; BGPID=
   CANARY=$(cat "$WORK/canary.out" 2>/dev/null)
-  if st_verdict "$WORK/canary.out" "$canary_rc" && st_recount "$WORK/canary.out" "$canary_rc"; then canary_rc=0; else canary_rc=1; fi
-  rm -f "$WORK/canary.out"
+  if st_verdict "$WORK/canary.out" "$canary_rc" "$CANARY_PLANNED" && st_recount "$WORK/canary.out" "$canary_rc" "$CANARY_PLANNED"; then canary_rc=0; else canary_rc=1; fi
+  rm -f "$WORK/canary.out" "$LENCUT"
   return "$canary_rc"
 }
 
@@ -1238,13 +1324,14 @@ case ${1:-} in
     BGPID=$!; wait "$BGPID"; mrc=$?; BGPID=
     exit "$mrc" ;;
   --self-test)
-    CLEAN=1
+    CLEAN=1; start_watchdog
     if [ -z "${SELFTEST_FILTER:-}" ]; then filter_ready || { echo "STOP: the masking filter is not usable here (needs GNU sed or a sed that knows s///I)" >&2; exit 3; }; fi
     self_test 0 > "$WORK/st-full.out" 2>&1 < /dev/null &
     BGPID=$!; wait "$BGPID"; strc=$?; BGPID=
     cat "$WORK/st-full.out"
     # two independent judgements: the function st_verdict AND a recount written out here (a damaged function cannot pass alone)
-    if st_verdict "$WORK/st-full.out" "$strc" && st_recount "$WORK/st-full.out" "$strc"; then exit 0; fi
+    if [ -n "${SELFTEST_FILTER:-}" ]; then stp=; elif [ -n "${LEAD_REPIN_NO_META:-}" ]; then stp=$CANARY_PLANNED; else stp=$SELFTEST_PLANNED; fi
+    if st_verdict "$WORK/st-full.out" "$strc" "$stp" && st_recount "$WORK/st-full.out" "$strc" "$stp"; then exit 0; fi
     exit 1 ;;
 esac
 
@@ -1259,6 +1346,8 @@ if ! run_canary; then
   printf 'STOP: the masking self-test (canary) FAILED, so the filter cannot be trusted and no take file was opened:\n%s\n' "$CANARY" >&2
   exit 3
 fi
+start_watchdog
+printf 'WORK-FOLDER: %s\nCOPY-OF-OUTPUT (masked): %s\n' "$WORK" "$OUT" >&2   # on the screen even when the output is redirected
 CLEAN=0   # the canary passed: a normal run keeps the masked output copy (every other exit above and below removes the folder)
 
 # ---------------------------------------------------------------- settings
@@ -1310,7 +1399,7 @@ resolve() { # resolve VARNAME FILENAME
   eval "rv_cur=\${$1:-}"
   if [ -n "$rv_cur" ]; then PATHNOTES="$PATHNOTES$1 = $rv_cur  (from the environment)
 "; return; fi
-  make_list "$WORK/named.$2.txt" "$TAKE_DIR" "named:$2"
+  bg_wait make_list "$WORK/named.$2.txt" "$TAKE_DIR" "named:$2"
   rv_n=$(wc -l < "$WORK/named.$2.txt" | tr -d ' ')
   if [ "${rv_n:-0}" -eq 0 ]; then
     eval "$1=\"\$TAKE_DIR/$2\""
@@ -1330,19 +1419,19 @@ resolve TAKE_PY run_real_check_n8n.py
 resolve CRM_PY crm_hubspot.py
 resolve DRIVE_PY n8n_drive.py
 resolve N8N_PY n8n.py
-[ -n "$ONE_STORE" ] || { make_list "$WORK/named.one.txt" "$TAKE_DIR" "named:DECISION-one-store.md"; ONE_STORE=$(head -1 "$WORK/named.one.txt"); [ -n "$ONE_STORE" ] || ONE_STORE=$TAKE_DIR/DECISION-one-store.md; }
+[ -n "$ONE_STORE" ] || { bg_wait make_list "$WORK/named.one.txt" "$TAKE_DIR" "named:DECISION-one-store.md"; ONE_STORE=$(head -1 "$WORK/named.one.txt"); [ -n "$ONE_STORE" ] || ONE_STORE=$TAKE_DIR/DECISION-one-store.md; }
 
-make_list "$WORK/list-code.txt" "$TAKE_DIR" code
-make_list "$WORK/list-flows.txt" "$FLOWS_DIR" json
-make_list "$WORK/list-test-all.txt" "$TAKE_DIR" pyall
+bg_wait make_list "$WORK/list-code.txt" "$TAKE_DIR" code
+bg_wait make_list "$WORK/list-flows.txt" "$FLOWS_DIR" json
+bg_wait make_list "$WORK/list-test-all.txt" "$TAKE_DIR" pyall
 if [ -n "$MODEL_DIR" ] && [ -d "$MODEL_DIR" ]; then
-  make_list "$WORK/list-model.txt" "$MODEL_DIR" py
-  make_list "$WORK/list-model-all.txt" "$MODEL_DIR" pyall
+  bg_wait make_list "$WORK/list-model.txt" "$MODEL_DIR" py
+  bg_wait make_list "$WORK/list-model-all.txt" "$MODEL_DIR" pyall
 else : > "$WORK/list-model.txt"; : > "$WORK/list-model-all.txt"; fi
 # the four resolved files are always searched first; the general list then leaves them out (no double counting)
 : > "$WORK/four.txt"
 for f4 in "$TAKE_PY" "$CRM_PY" "$DRIVE_PY" "$N8N_PY"; do [ -f "$f4" ] && printf '%s\n' "$f4" >> "$WORK/four.txt"; done
-grep -v -F -x -f "$WORK/four.txt" "$WORK/list-code.txt" > "$WORK/list-code-rest.txt" 2>/dev/null
+bg_wait grep -v -F -x -f "$WORK/four.txt" "$WORK/list-code.txt" > "$WORK/list-code-rest.txt" 2>/dev/null
 [ -s "$WORK/four.txt" ] || cp "$WORK/list-code.txt" "$WORK/list-code-rest.txt"
 
 # ---------------------------------------------------------------- counters and search helpers
@@ -1459,7 +1548,7 @@ model_notice() {
 
 # ---------------------------------------------------------------- the checklist
 main() {
-  printf 'lead-repin-verify.sh v5  (reads only; prints, never judges; the lead reads this output before sharing it)\n'
+  printf 'lead-repin-verify.sh v6  (reads only; prints, never judges; the lead reads this output before sharing it)\n'
   printf 'masking self-test (canary) before any file was opened: %s\n' "$CANARY"
   printf 'take folder: %s\n' "$TAKE_DIR"
   printf 'private work folder (made by mktemp; after this run it keeps ONLY the masked output copy and the three masking rule files; delete it yourself): %s\n' "$WORK"
@@ -1643,6 +1732,7 @@ VALEOF
     "$blocks" "$search_blocks" "$with_hits" "$zero_hits" "$info_blocks" "$files_missing" "$files_unreadable"
   printf 'Hidden by the masking filter in search results: %s line(s) had a value hidden, %s of them were hidden whole (next-line rule).\n' "$HIDDEN_VALUES" "$HIDDEN_LINES"
   printf 'Search lines that were NOT printed in full: %s search(es) had a PRINT MISMATCH; %s matching line(s) had the match word hidden (read the lines marked above).\n' "$T_MISMATCH" "$T_WORDHID"
+  printf 'Length guard: %s input line(s) were longer than 20000 characters and were cut before masking (each is printed cut, with a CUT note when more than 240 characters remain).\n' "$( [ -f "$LENCUT" ] && wc -l < "$LENCUT" | tr -d ' ' || echo 0 )"
   printf 'Masking is a safety net: read this output yourself before you share it.\n'
   return 0
 }
