@@ -1,13 +1,16 @@
 # Core patch copies A-01 and C-01 (ORDER 012 item 2): a ready copy, NOT to be applied now
 
-**STATUS (read this first).** `REVIEW.md:5` (in the folder above this one) says, word for word: "A-01 is DEFERRED, the C-01 extras (the token ceiling)
-are CUT, the G5 wording patch is KEPT (text only)", and `REVIEW.md` item 3 of its list (line 64) says "C-01: DO NOT APPLY NOW ... The file as written carries the
-token ceiling (cut by the lead's default) and does not apply to this checkout." Those three are the lead's default of 2026-11-16, not a confirmed decision of the
-studio head; he may veto them. So: **do not apply `A-01.patch` or `C-01.patch` today.** Everything below is the ready copy, kept so that it can be applied
-quickly if the studio head decides to bring A-01 back or to keep the price check of C-01. `C-01.patch` as it stands still carries the token ceiling that was cut. For the price check alone use the separate file
-`C-01-price-only.patch` (same price rule, no `max_tokens` ceiling, no `defaults.py` change, 24 tests instead of 26; decision table, rows 2 and 3). Do not edit `C-01.patch` by hand.
+**STATUS (read this first).** `../REVIEW.md:5` (the file one folder up) says, word for word: "A-01 is DEFERRED, the C-01 extras (the token ceiling)
+are CUT, the G5 wording patch is KEPT (text only)", and item 3 of its list says "C-01: DO NOT APPLY NOW". Those three are the lead's default of 2026-11-16, not a confirmed decision of the
+studio head; he may veto them. So today: **apply nothing from this folder**, and when something is applied later, only on a copy of the commit `b4cce5b`, never on head
+(section "Which commit these patches fit").
+- **Price check (C-01):** the default, if the studio head keeps it, is `C-01-price-only.patch` (price rule only, no `max_tokens` ceiling, no `defaults.py` change, 24 new tests, plus 6 of A-01 = 30 in the recipe).
+  `C-01.patch` is the alternative that also carries the ceiling that was cut (26 new tests; 32 with A-01). Use one of the two, never both. Do not edit either file by hand.
+- **A-01 (the tick drains the audit outbox):** there is NO applicable A-01 today. Even if the studio head says yes to row 1 of the decision table, `A-01.patch` must stay off until rows 5 and 6 are decided,
+  and row 6 needs a per-row guard in the chain drain for which no patch file exists. The file is kept only as a ready copy.
+- **G5 wording:** text only, no patch file (section "G5 wording drop").
 
-Date of this text: 2026-11-16, fourth fixer pass. Static for databases (no database was started); the tests, lint and `git apply --check` were re-run in this pass.
+Date of this text: 2026-11-16, fifth fixer pass. Nothing that needs a database was run (no database was started); the lint, `git apply --check` and test runs named below were re-run in this pass.
 
 ## Words used here (plain meanings; each word keeps this one meaning in this folder)
 | Word | Meaning here |
