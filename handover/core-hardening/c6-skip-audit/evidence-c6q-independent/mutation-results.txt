@@ -1,8 +1,8 @@
-baseline fails: indep=3 builder=1
+baseline fails: indep=1 builder=1
 M01-wrong-count-48-ready                         indep:CAUGHT builder:CAUGHT | box says 49 ready, 42 default, 3 check and 91 wave-1 rows | box says the ready count
 M02-wrong-count-41-default                       indep:CAUGHT builder:MISSED | box says 49 ready, 42 default, 3 check and 91 wave-1 rows | -
 M03-wave1-90                                     indep:CAUGHT builder:MISSED | every statement of the wave 1 size says 91 (2 found) | -
-M04-stale-58s-in-box                             indep:MISSED builder:MISSED | - | -
+M04-stale-58s-in-box                             indep:CAUGHT builder:MISSED | box has no '58 s' | -
 M05-row11-card-58s                               indep:CAUGHT builder:CAUGHT | no '58 s' in any new text | row 11 states the same words, seconds, budget and total (about 190 s)
 M06-label-leak-row-N                             indep:CAUGHT builder:CAUGHT | no report labels in ANY new text (all 94 rows) | no 'row N' reference in any new text
 M07-label-leak-KEYdigits                         indep:CAUGHT builder:CAUGHT | no report labels in ANY new text (all 94 rows) | no report label, check label, source cite or report word in any new te
@@ -32,4 +32,4 @@ M30-stale-61.1-range                             indep:CAUGHT builder:CAUGHT | r
 M31-wrong-sum-card-90-to-100                     indep:CAUGHT builder:CAUGHT | every stated card total (1 found) equals recomputed 90 words / 36 s /  | box prints all four card lines exactly as the rows have them and the t
 M32-lease-sentence-in-spoken-line1-via-row14     indep:CAUGHT builder:MISSED | lease sentence absent from card/caption new texts (rows 11,13,14,21) | -
 N0-control-unchanged                             indep:MISSED builder:MISSED | - | -
-TOTAL mutations incl control: 33; indep caught 31, builder caught 24
+TOTAL mutations incl control: 33; indep caught 32, builder caught 24

@@ -259,3 +259,36 @@ for nm in 'AB':                                                                 
         if pg + nm + '.md' not in _s: fail('C170', '%s does not name %s%s.md' % (nm, pg, nm))
     if 'OWNER-FILM-PERSON-v29.md' not in _s: fail('C170', 'sheet %s does not name the film page' % nm)
 
+# ---- Part 6 (v29): one check per finding of review-v28-security.md, review-v28-stranger.md and evidence-v28-independent/00-SUMMARY.md that v29 fixed. Each fails on the built v28 files (v29-fail-proof.py).
+import os as _os
+def _wc(t): return len(t.split())
+for nm in 'AB':                                                                                                          # L-LEN: the sheet page alone is at most 6,300 words
+    if _wc(SHEETS_DISK[nm]) > 6300: fail('C171', 'sheet %s has %d words (limit 6300)' % (nm, _wc(SHEETS_DISK[nm])))
+if not _os.path.exists(D + 'OWNER-APPENDIX-v29-A.md') or not _os.path.exists(D + 'OWNER-FILM-PERSON-v29.md'): fail('C171', 'appendix or film person page missing')
+need('C172', 'Four phone alarms')                                                                                        # S B1: A has the owner-side older-key end and the fourth alarm
+need('C172', 'Older key point (cannot be undone; every way the run ends passes here before 8.1)')                       # 7.11 in both routes
+need('C172', 'a FREEZE does not stop this')                                                                              # S B2: B 7.11 and FREEZE: the older key ends even after FREEZE
+for nm in 'AB':                                                                                                          # S M: the letter is in the heading and footer of every page
+    for pg, foot in (('OWNER-SHEET-v29-', 'End of sheet %s' % nm), ('OWNER-CARD-v29-', 'End of the card, sheet %s' % nm), ('OWNER-APPENDIX-v29-', 'End of the appendix, sheet %s' % nm)):
+        try: _t = open(D + pg + nm + '.md', encoding='utf-8').read()
+        except OSError: fail('C173', pg + nm + '.md missing'); continue
+        if 'sheet %s' % nm not in _t.split('\n', 3)[0] + _t.split('\n', 3)[1] + _t.split('\n', 3)[2] or foot not in _t: fail('C173', '%s%s.md lacks the letter in its heading or its footer' % (pg, nm))
+need('C174', 'n8n credentials: exactly the three, by name')                                                              # S: numbers page slot
+need('C175', 'alone (R1), with the narrowest scopes the create form offers')                                            # S: look key clauses
+need('C175', 'cancel is proven')
+need('C176', 'if used less than 7 days ago take B'); need('C176', '7 days (168 hours) or more', (('A', A),))                          # S: the 7-day rule at exactly 7 days, route A/B condition (L-A/B)
+for _n, _t in (('NOTE', NOTE), ('OPEN', OPEN)):                                                                          # L-23NOV: 18:14 only with the refusal-limit label and its IST pair
+    for _m in re.finditer(r'18:14', _t):
+        _w = _t[max(0, _m.start() - 160):_m.end() + 80]
+        if 'refusal limit' not in _w: fail('C177', '%s holds 18:14 without the label "refusal limit" near it: %r' % (_n, _t[_m.start() - 30:_m.end() + 20]))
+for _n, _t in (('A', A), ('B', B)):
+    for _m in re.finditer(r'18:14', _t): fail('C177', '%s sheet holds 18:14 (the owner pages never need the refusal limit)' % _n)
+if 'A gap longer than the lease' in NOTE or 'lease sentence of section 5 decided' in NOTE: fail('C178', 'N: the lease sentence is not struck from the public post (lead answer Q22c)')   # L-Q22c
+if 'start margin' not in NOTE: fail('C178', 'N: 860 s is not called the start margin')
+for _s in ('18:04 UTC = 23:34 IST', '18:19 UTC = 23:49 IST'):
+    if _s not in NOTE or _s not in OPEN: fail('C179', 'note or open list lacks %r (L-23NOV)' % _s)
+need('C180', '[OWNER FILLS:'); need('C180', '[LEAD FILLS at re-pin:')                                                      # L-FACTS: visibly different placeholder rows
+need('C181', 'the seven words, which alone start or end a step'); need('C181', '"continue" (after a FREEZE)')            # S R8: the whole word set
+need('C182', 'Seven days means 168 hours')                                                                               # S: 168 hours stated once
+if 'Open 102' not in OPEN or 'Open 103' not in NOTE: fail('C183', 'the open questions about the card word count and the 18:04 derivation are missing')
+if 'UNVERIFIED' not in OPEN or 'E-52' not in OPEN: fail('C184', 'O: the L-APP2 / E-52 UNVERIFIED row is missing')

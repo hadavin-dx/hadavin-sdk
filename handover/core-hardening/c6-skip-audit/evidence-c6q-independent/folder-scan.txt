@@ -1,0 +1,4 @@
+files scanned 546 | banned-list entries 10
+banned: files with hits 0 hits 0
+secret-shaped: files 0 hits 0
+e-mail-shaped (non-example domains): files 0 hits 0

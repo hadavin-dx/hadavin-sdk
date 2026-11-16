@@ -287,6 +287,7 @@ note|th that does not exist yet, |G37
 note|the app-password page path (|8.3
 note|the delete wording present (|R5
 note|the exit code for person C (|G6
+note|the latest start on 23 Nov (|Open 103
 note|the owner to type a figure (|G35
 note|the word "restarted" (sheet |6.6
 note|time if the run ends before |6.7
@@ -304,6 +305,7 @@ note|| G9 | Shutdown order as in |section 4
 note|| roles and places | lead | |G11
 open| 5.3 (Windows power pages), |5.4
 open| Gmail is signed in only at |8.3
+open| I cannot derive 18:04: see |Open 103
 open| `end` (G18) | the card and |R6
 open| and Conversation view) and |5.5
 open| as written | | 68 | R2 and |R3
@@ -328,6 +330,7 @@ open|00 UTC = 21:30 IST | v28 B: |7.11
 open|23 | Independent reader for |G1
 open|3 (rows 59 and 68) | R2 and |R3
 open|5.6, 6.2 alarm 4, 6.3, 6.7, |7.11
+open|8:04: see Open 103 | Answer |Open 103
 open|; G42; sheet 8.4) | the old |R8
 open|; both sheets stay | | 74 | |R2
 open|; the owner revokes them at |8.4
