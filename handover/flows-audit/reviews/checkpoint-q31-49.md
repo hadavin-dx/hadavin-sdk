@@ -4,3 +4,6 @@
 - next: write and run scratchpad/fq49/apply_fq49.py, then checkers.
 - blockers: FINDINGS.md uses N4 for the F-018 reader and Row 4 key; the lead's brief uses N4 for the F-008 input. Plan: N4 holds both (parts (a) and (b)).
 - commit SHA: none (nothing committed).
+
+## Checkpoint 2 (final)
+Edits applied and checked; report in fix-q31-49.md. Nothing left to do except hand back.
