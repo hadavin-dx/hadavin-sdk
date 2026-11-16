@@ -4,7 +4,7 @@ What is old, what replaced it, and how it is marked. Patch files were not edited
 ## Patches and files in `paste-check/` (the plan chain: see `PLAN-CHAIN.md`)
 | Old file | Status | Replaced by | Marker |
 |---|---|---|---|
-| `plan-v5-repin.patch`, `-repin-v2`, `-repin-v3`, `-repin-v4`, `-repin-v5` | SUPERSEDED, do not apply (fail or give wrong counts) | `plan-v5-repin-v6.patch` (sha256 `8a83abaa...`) | this index only (patch files) |
+| `plan-v5-repin.patch`, `-repin-v2`, `-repin-v3`, `-repin-v4`, `-repin-v5` | SUPERSEDED, do not apply (tested on the plan after `plan-v5-fixes.patch`: `plan-v5-repin.patch` gives checklist counts 4 0 2 0 and `-repin-v2` gives 24 0 2 1, both wrong; `-repin-v3`, `-v4` and `-v5` apply and give 24 10 2 1 but a different plan sha256 than `-repin-v6`, which the later steps need) | `plan-v5-repin-v6.patch` (sha256 `8a83abaa...`) | this index only (patch files) |
 | `REPORT-repin.md`, `-v2`, `-v3`, `-v4` | SUPERSEDED | `REPORT-repin-v6.md` | banner on line 1 (`REPORT-repin-v5.md` already had one) |
 | `plan-v5-gate-rows.patch`, `plan-v5-gate-rows-v2.patch` | SUPERSEDED, do not apply | `plan-v5-gate-rows-v3.patch` (sha256 `498c1e5f...`) | this index only |
 | `REPORT-c13-v2.md` | SUPERSEDED | `REPORT-c13-v3.md` | banner on line 1 |
