@@ -10,6 +10,12 @@ SECRETS = [r"AKIA[0-9A-Z]{16}", r"-----BEGIN [A-Z ]*PRIVATE KEY-----", r"ghp_[A-
            r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[a-z]{2,}"]
 ALLOWED = {"AKIAIOSFODNN7EXAMPLE", "noreply@anthropic.com"}
 STATUS = {"READ", "SKIMMED", "NOT-READ"}
+OUT_HEADS = {
+    "MASTER-MAP.md": ["Components", "Stores", "Workflows", "Workflow walk", "Scripts", "Jobs", "Credentials",
+                      "Ports and hosts", "Agents and sessions", "Repos and branches", "Docs", "Tests", "Folders",
+                      "Not visible or out of scope"],
+    "SWEEP.md": ["Findings", "Fix plan", "Exceptions", "Claims check", "Lessons", "Counts"],
+}
 
 
 def sections(text):
@@ -42,7 +48,11 @@ def empty_fields(name, text, heads):
 
 def coverage(name, text):
     d = sections(text).get("Coverage", [])
-    return [f"{name}: coverage status invalid: {r[:3]}" for r in table_rows(d) if len(r) < 3 or r[2] not in STATUS]
+    rows = table_rows(d)
+    bad = [f"{name}: coverage status invalid: {r[:3]}" for r in rows if len(r) < 3 or r[2] not in STATUS]
+    if any(len(r) > 2 and r[2] == "NOT-READ" for r in rows) and "PARTIAL" not in text:
+        bad.append(f"{name}: has NOT-READ rows but no PARTIAL flag")
+    return bad
 
 
 def owner_count(text):
@@ -50,10 +60,12 @@ def owner_count(text):
     for key in KEYS:
         if key not in d:
             continue
-        needed = [b for b in d[key] if b.get("verdict") == "NEEDED"]
-        plain = [b for b in needed if not b.get("exception") or b.get("exception") == "none"]
-        if len(plain) != 1:
-            defects.append(f"ONE-PLACE: job {key} has {len(plain)} NEEDED rows without exception (expected 1)")
+        owners = [r for r in d[key] if r.get("_owner")]
+        if len(owners) != 1:
+            defects.append(f"ONE-PLACE: job {key} has {len(owners)} Owner lines (expected 1)")
+        for r in d[key]:
+            if r.get("verdict") == "NEEDED" and (r.get("exception") or "none") == "none":
+                defects.append(f"ONE-PLACE: job {key} has a NEEDED row without exception id")
     return defects
 
 
@@ -74,8 +86,7 @@ def sections_by_job(text):
                 row["exception"] = row.get("exception")
                 out[key].append(row)
         elif key and line.startswith("Owner:"):
-            out[key].append({"verdict": "NEEDED", "exception": "none" if "exception: none" in line else None,
-                             "_owner_line": line})
+            out[key].append({"_owner": True})
     return out
 
 
@@ -99,6 +110,8 @@ def run(base):
             t = open(p, encoding="utf-8", errors="replace").read()
             if f == "ONE-PLACE-TABLE.md":
                 defects += owner_count(t)
+            if f in OUT_HEADS:
+                defects += empty_fields(f, t, OUT_HEADS[f])
     for root, _, files in os.walk(base):
         if os.sep + "tests" in root or os.sep + "tools" in root:
             continue

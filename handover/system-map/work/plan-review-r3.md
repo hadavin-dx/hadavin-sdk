@@ -1,0 +1,5 @@
+# PLAN-002 v3 review round 3 (egm-implementation-readiness sonnet). 0 Blocker, 4 Major, 2 Nit. Cap reached (3 rounds).
+M1 one-place table has no exception column; Owner line counted as NEEDED row. M2 scan_outputs spec differs from script (outputs headings, manifest/PARTIAL, gitleaks, noreply, stale partition note). M3 no home for P/A/R rows; L6 and continuation lane file names and template. M4 evidence runner commands, args, pass criteria.
+N1 L2 rule exact names vs depth-2 md; non-md top-level files stop launch. N2 folder allowlist; paths with spaces.
+## Disposition (lead, build-time fixes, no egm-resolve call)
+Rule used: handover/.claude rule review-loop-speed-rules.md "Design docs: stop after the round with 0 blockers; remaining majors become build-time fixes". All four Majors and both Nits fixed in PLAN-002.md and tools/scan_outputs.py (19 unittest pass). EGM resolve skill NOT run for round 3 (honest gap: the fixes are the lead's own, checked by the result review in step 4 of the plan).
