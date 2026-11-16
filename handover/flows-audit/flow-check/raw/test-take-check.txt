@@ -1,4 +1,8 @@
-ok   control: exit 0, OVERRIDES line says none, pinned WARN count and the words 'known defects' are printed (got exit 0)
+ok   control: the committed pin gives exit 0, or exit 4 with 'pin not yet confirmed by the lead' while its reviewer line names a session; the reviewer line is printed as written; OVERRIDES says none (got exit 4)
+ok   Q1: a pin with a person's reviewer line gives exit 0; the line is printed as written; the output does not say a person read the pin (got exit 0)
+ok   Q1: a reviewer line naming a session and 'lead to confirm' is exit 4 with the plain reason, never 'a person read' (got exit 4)
+ok   Q1: '# reviewed by: Audit Session B, 2026-11-16' is exit 4 (got exit 4)
+ok   Q1: '# reviewed by: A. Person, 2026-11-16, Lead To Confirm' is exit 4 (got exit 4)
 ok   B1a: --write-warn-pin on the pin in use is refused (exit 2) and leaves it unchanged (got exit 2)
 ok   B1b: a clean run writes a NEW pin with date and sha256 and exits 4, not 0 (got exit 4)
 ok   M-3: the written pin says it is not yet read and holds the placeholder line
@@ -18,7 +22,3 @@ ok   M-1: the output does not say 'deleted at clean-up'
 ok   M1: TAKE_CHECK_WARN_PIN without the test flag is exit 4 and is named in the top block and the FINAL line (got exit 4)
 ok   M1: TAKE_CHECK_FLOWS without the test flag is exit 4 and is printed (got exit 4)
 ok   M1: TAKE_CHECK_DDL without the test flag is exit 4 and is printed (got exit 4)
-ok   M1: TAKE_CHECK_CK without the test flag is exit 4 and is printed (got exit 4)
-ok   M1: TAKE_CHECK_FORM_EXPECT without the test flag is exit 4 and is printed (got exit 4)
-ok   M1: with the test flag the override is allowed but still printed (got exit 0)
-ok   M3: a folder named mf-hook.json is a FAIL, exit 1 (got exit 1)
