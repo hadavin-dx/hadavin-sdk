@@ -1,2 +1,10 @@
+command: sh handover/flows-audit/tools/check_patches.sh (from repo root, runs git apply --check then a scratch apply of each patch alone, parses patched JSON)
+run at: 2026-11-16T08:45:05Z, after the round 1 and 2 comment edits in patches F-002, F-004, F-008
+patch files sha256:
+8e8b4e710d147014  handover/flows-audit/patches/F-001-one-ddl.patch
+f5c34d37a0794bb5  handover/flows-audit/patches/F-002-take-key-check-and-claim-error-path.patch
+78059910c23d9258  handover/flows-audit/patches/F-003-runsheet-claims.patch
+71bda71b405f1fc1  handover/flows-audit/patches/F-004-page-statement-17.patch
+c9d61339d1619de9  handover/flows-audit/patches/F-008-save-runs-for-the-take.patch
 PASS 5 patches
 exit 0
