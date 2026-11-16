@@ -233,6 +233,23 @@ reviewer_ok() {
       case "$REVIEWER_STANDINS" in *" $w "*) return 1;; esac
     done
   fi
+  # round f8-r5: dotted or hyphenated letters ('O.L.L.M.', 'C.l.a.u.d.e') are cut into one-letter words above, so a stand-in word hides in them. Per space-separated token: join each run of one-letter pieces and refuse it when it equals a stand-in word, or contains one of 3 or more letters. Only runs of one-letter pieces are searched, so 'Aiden', 'Botha' and "O'Brien" are not hit.
+  if ! { [ "${TAKE_CHECK_TEST:-}" = 1 ] && [ -n "${TAKE_CHECK_WARN_PIN:-}" ] && [ "$first" = testonly ]; }; then
+    local tok part run
+    for tok in $(printf '%s' "$name" | tr 'A-Z' 'a-z' | tr -s ' ' '\n'); do
+      run=""
+      for part in $(printf '%s' "$tok" | tr -cs 'a-z' ' ') ""; do
+        if [ ${#part} -eq 1 ]; then run="$run$part"; continue; fi
+        if [ -n "$run" ]; then
+          for w in $REVIEWER_STANDINS; do
+            [ "$run" = "$w" ] && return 1
+            [ ${#w} -ge 3 ] && case "$run" in *"$w"*) return 1;; esac
+          done
+          run=""
+        fi
+      done
+    done
+  fi
   for w in $words; do
     c=${w:0:1}
     [ ${#w} -ge 2 ] && [ -z "$(printf '%s' "$w" | tr -d "$c")" ] && return 1
