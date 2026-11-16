@@ -36,7 +36,7 @@ def trial(v, ln, tmp):
     return res, len(b0)
 tmp = tempfile.mkdtemp()
 r32, b32 = trial('v33', 'v17', tmp); r34, b34 = trial('v34', 'v18', tmp)
-print('baseline FAIL lines: v33 %d, v34 %d (v34 baseline counts only what is not yet written when this runs)' % (b32, b33))
+print('baseline FAIL lines: v33 %d, v34 %d (v34 baseline counts only what is not yet written when this runs)' % (b32, b34))
 for i, _, _ in M: print('%s  v33 checker: %-34s v34 checker: %s' % (i, r32[i], r34[i]))
 print('v33 checker misses %d of %d; v34 checker misses %d of %d' % (sum(1 for x in r32.values() if x.startswith('NOT')), len(M), sum(1 for x in r34.values() if not x.startswith('caught')), len(M)))
 shutil.rmtree(tmp)

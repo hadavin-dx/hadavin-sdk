@@ -1,0 +1,2 @@
+== bash start 19:08:11 load 2.46 4.31 5.27
+heavy-slot: slot 2 taken at 2026-11-16T19:08:11Z

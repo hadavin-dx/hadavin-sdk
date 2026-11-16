@@ -142,3 +142,36 @@ r18 checks: 102 count/pair/forbidden checks; 0 failures in the section
 round 18 checks done
 ---- negative controls
 NEG r11hold caught | FAIL hold row NEW without label E-13
+NEG r11e53 caught | FAIL E-53 unless clause
+NEG r11e09 caught | FAIL E-09 credentials
+NEG r11addr caught | FAIL E-06 bare address: the address the assis
+NEG r11slot caught | FAIL E-12 lacks crash check: tested or untested
+NEG r11e36 caught | FAIL E-36 text N not quoted in why
+NEG r11e58 caught | FAIL E-58 times
+NEG nd14 caught | FAIL ND14 missing
+NEG e17lease caught | FAIL E-17 lease sentence added
+NEG e22 caught | FAIL crash check untested missing in E-22
+NEG e43 caught | FAIL E-43 lacks stage.journal
+NEG e49 caught | FAIL E-49 consent not tied to message (a) to (d)
+NEG e49day caught | FAIL E-49 lacks day format example
+NEG e53 caught | FAIL E-53 lacks override of line 27
+NEG e51 caught | FAIL E-51 wording
+NEG e52 caught | FAIL E-52 new word not once: A mail address
+NEG e04 caught | FAIL E-04 no final full stop
+NEG e07 caught | FAIL E-07 lacks "nobody on this branch"
+NEG e08 caught | FAIL E-08 lacks "nobody on this branch"
+NEG record caught | FAIL old record format
+NEG nd8date caught | FAIL ND record carries a date: ND8: A|B <date and time in UTC and IST>
+NEG rehearsal caught | FAIL rehearsal alone: hing leaves the laptop. - The rehearsal comes aft
+NEG q195 caught | FAIL E-48 Q19.5 wording
+NEG m4 caught | FAIL E-12 lacks what happens next
+NEG e31 caught | FAIL E-31 unproven claim
+NEG line14 caught | FAIL line 14 lacks search path =
+NEG e14 caught | FAIL E-14 post meaning
+NEG r12nd15 caught | FAIL r12 ND15 missing
+NEG r12shred caught | FAIL r12 E-48 lacks Shredding does not revoke
+NEG r12key2 caught | FAIL r17 r12 key step F question lacks 'the one that you open at `http://localhost:5678`? 
+NEG r12slot caught | FAIL r12 E-12 lacks exactly one of these four labels
+NEG r12call caught | FAIL r12 E-12 delete call
+NEG r12pw caught | FAIL r12 E-09 lacks Never type a password inside a command line
+NEG r12vol caught | FAIL E-16 lacks UNVERIFIED

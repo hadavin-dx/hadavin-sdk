@@ -1,0 +1,1 @@
+SCANNED 45 files; banned names list has 10 entries (read at run time); totals {'banned': 0, 'secret': 0, 'mail': 0}
