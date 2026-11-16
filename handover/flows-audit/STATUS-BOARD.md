@@ -1,20 +1,20 @@
-UPDATED_UTC: 2026-11-16T11:51:52Z
+UPDATED_UTC: 2026-11-16T11:52:35Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
 ITEMS_OPEN: 10
-PERCENT: 78
-AGENTS_RUNNING: 7
-CAPACITY: 0.26 load of 4 cores, mem 0/15 GB, RAM 896/16087 MB, disk 26G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 2.0G /tmp/claude-0 , agents 7 (light+heavy per list)
+PERCENT: 80
+AGENTS_RUNNING: 8
+CAPACITY: 0.32 load of 4 cores, mem 0/15 GB, RAM 925/16087 MB, disk 26G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 2.0G /tmp/claude-0 , agents 8 (light+heavy per list)
 INTERRUPTED: none
 FAILED: FAILED: ruff format --check failed (17 files); my 16 files now formatted; inputs/plan-wp6-resmoke-v5.md is the lead's (1 left). ruff check has 53 lint errors in my tools: lint fixer running. F8 r10 Blocker: pin rewrite self-approves, fixer running
 FAILED: ruff format --check on inputs/plan-wp6-resmoke-v5.md (lead-owned); check_refs unresolved CUT-LIST.md:17 (fixer running); lint fixer changed no_name.out (crash removed)
 FAILED: F8 fixer says ruff format failure did not reproduce; not yet confirmed by evidence runner (a5a7e77 running)
 FAILED: evidence runner (independent): run_all.sh exit 1 (case new-warn-changes-the-pin missing FINAL text) - F8 fixer had reported exit 0; ruff format --check exit 1 only inputs/plan-wp6-resmoke-v5.md (lead file); TAKE_CHECK_FLOWS=/tmp/x gave exit 1 (a real FAIL stays 1, my expectation of 4 was wrong); fixer a8d895a running
-NEXT: 7 running; 8th lane waits (RUNBOOK/F8/OWNER-STEPS files are being edited). Disk 26G free 34pct
-PUSHED_UTC: 2026-11-16T11:51:52Z
+NEXT: 8 running (ORDER 033 met). FIX-PLAN line 65 stale guard text found by grep after fixer said done; fixed. Disk 26G free 34pct
+PUSHED_UTC: 2026-11-16T11:52:35Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -33,13 +33,14 @@ PUSHED_UTC: 2026-11-16T11:51:52Z
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | % | state | last output |
 |---|---|---|---|---|---|---|---|---|
-| a28c12d | fixer | sonnet | RW/CT r2 + Q28 caption | 11:50 | 12:20 | 70 | running | fix-rwct4.md |
-| af263ed | fixer | sonnet | TAKE-CHECKLIST+FIX-PLAN Q27-30 | 11:48 | 12:15 | 60 | running | fix-q27-tcfp.md |
-| ad0b4d9 | comprehension | sonnet | fresh read OWNER-STEPS | 11:49 | 12:00 | 60 | running | reviews/ |
-| a3adc27 | fixer | sonnet | RUNBOOK r3 | 11:51 | 12:20 | 10 | running | fix-runbook3.md |
-| a2c7078 | fixer | sonnet | F8 Majors Q1-Q5 | 11:51 | 12:20 | 10 | running | flow-check/fix-f8-r10c.md |
-| new1 | style | sonnet | QUESTIONS.md read | 11:52 | 12:05 | 5 | running | reviews/ |
-| new2 | design | sonnet | 2nd reviewer core patches | 11:52 | 12:10 | 5 | running | reviews/ |
+| a28c12d | fixer | sonnet | RW/CT r2 + Q28 caption | 11:50 | 12:20 | 75 | running | fix-rwct4.md |
+| a3adc27 | fixer | sonnet | RUNBOOK r3 | 11:51 | 12:20 | 40 | running | fix-runbook3.md |
+| a2c7078 | fixer | sonnet | F8 Majors Q1-Q5 | 11:51 | 12:20 | 40 | running | flow-check/fix-f8-r10c.md |
+| a1d824d | style | sonnet | QUESTIONS.md read | 11:52 | 12:05 | 40 | running | reviews/ |
+| ae52291 | design | sonnet | 2nd reviewer core patches | 11:52 | 12:10 | 40 | running | reviews/ |
+| aa389ec | fixer | sonnet | OWNER-STEPS pass 3 | 11:58 | 12:25 | 10 | running | fix-ownersteps6.md |
+| aa8ff3d | readiness | sonnet | review TC+FP | 12:00 | 12:15 | 5 | running | reviews/ |
+| a8d5a98 | codebase-details | sonnet | citations TC+FP | 12:00 | 12:15 | 5 | running | reviews/ |
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
