@@ -35,3 +35,24 @@ Files changed: FINDINGS.md, LEDGER-ROWS.md (this log is new). Backups: scratchpa
 3. F-031: confirm part 1 alone closes the Blocker and part 2 is take-day evidence only.
 4. F-002 T21: confirm the lead accepts ALTER ROLE NOLOGIN plus pg_terminate_backend (not REVOKE CONNECT) as the method, and names the test log path.
 5. T19 wait in seconds and N (replacing 10 s): lead fills after the rehearsal (already Q24-2).
+
+## Round 9 fix (FIXER, 2026-11-16; sources reviews/findings-r9-readiness.md and reviews/findings-r9-codebase.md; each claim read against the files first; nothing ran in n8n, Postgres or HubSpot; backups in the scratchpad as bak-f9-*.md)
+Both FINDINGS.md and LEDGER-ROWS.md edited with the same text in every fix cell (old-vs-new compare: only F-001 and F-013 differ, as before). No rating changed; counts kept (45 rows, Blocker 5, Major 5, Nit 35, BEFORE 11, AFTER 34).
+- F-002 (fix cell): T19 command and what to read from it; mailbox count method LEAD FILLS with needed-by time; IST added (07:00Z = 12:30 IST); log path needed-by time; flows must be imported and ACTIVATED (production /webhook/ address); T20 extra case with no key field; T21: PGPASSWORD for step 3, terminate count meaning and pg_signal_backend; F-002b proposed time; order and time of applying F-002 and F-008.
+- F-007: naming table text written into the fix cell (from L3-5), lane3 mapping LEAD FILLS; cite check 13 corrected to line 257; pass part 2b checks table content; allowed-hit list LEAD FILLS with time; order against F-004 stated (F-004 patch first; verified from the patch context).
+- F-004, F-028: order (F-003, F-004, F-007 table, F-028); F-028 pass line added (count of numbered statements equals the Total line).
+- F-031: choice made (sentence in the run sheet; alert is the AFTER flow change); placement LEAD FILLS; order after F-003; IST; part 2 key list and time.
+- F-011: setup commands, start line (LEAD FILLS), expected output (LEAD FILLS), negative test, slot, downgrade check (b) tightened, role count wording aligned with F-010.
+- F-018: HubSpot contact count method, wait value source, DESK_ALERT_TO owner and time, probe time.
+- F-029: grep -rlF over $FILLED and $EXPORT; contradiction (fails loudly vs silent trace) removed (UNVERIFIED stated).
+- F-037: rating untouched; grep form changed to list form; worst case stated; filled copy status clarified.
+- F-041: cites fixed (row 7 line 145, Block R7 226-236; "marked LEAD FILLS" claim removed; REPORT.md:622 described correctly); role count wording; Part A pattern mismatch noted.
+- F-001: psql command, owner, time. NOT COVERED 1: stale T17-T21/M0/M1/K1 laptop line replaced. 'BEFORE n' defined in the header. F-009, F-015, F-017, F-021, F-032, F-035: decision proposed in words (lead confirms). F-027, F-039, F-046: pointers named.
+## For other files (not edited by this fixer)
+- TAKE-CHECKLIST.md:246 (check 3b): still says T21 uses revoke CONNECT and T19 "under 10 s (fixed bound)". Point it to the F-002 T21 METHOD (ALTER ROLE NOLOGIN plus pg_terminate_backend) and say N is PROVISIONAL (lead sets it, Q24-2).
+- TAKE-CHECKLIST.md Block R7 Part A: grep pattern `one database` only; F-041 downgrade check (a) uses `one database|single database`; align with -E.
+- TAKE-CHECKLIST.md check 7: needs the F-004 Blocker-if-said grep and the order note; row 13 / check 13 allowed-hit list and the K3/K3B wording are LEAD FILLS.
+- FIX-PLAN.md: item 3 step 7 needs the DESK_ALERT_TO check owner/time (lead, at re-pin, before first lead); item 8b grep must read as in F-041.
+- QUESTIONS.md / ORDERS.md: ORDERS.md:32 still says T1; F-002 lift question (T21), F-037 rating, F-031 Blocker question stay as listed above.
+## Checks (exit codes read directly)
+count_findings 0 (45 rows, 5/5/35, BEFORE 11, AFTER 34); check_secrets 0 (0 hits, 1813 files); check_refs 0 (5162 references); ruff check 0; ruff format --check 0.

@@ -16,6 +16,7 @@
 # Round 10b (review f8-r10 round 2): the top block and the FINAL line print a sha256 of the four flow files; the pin header needs a "# reviewed by: NAME, DATE" line without the word PLACEHOLDER (exit 4 otherwise); --write-warn-pin writes only when the only problem is the WARN difference; the run-saving INFO line no longer promises a deletion (the take never deletes anything).
 # Round 10c (review f8-r10b round 2): (Q1) the output never says a person read the pin: it prints the reviewer line as written, and a reviewer line that names a session or says "lead to confirm" is exit 4 ("pin not yet confirmed by the lead"), so the first exit 0 needs the lead's own line; (Q2) the flow files (the four and every other *.json in the folder) are hashed before the checker and again after the last read, a difference is exit 4, an unreadable file prints MISSING; (Q5) a checker exit status above 3 is shown and returned as 3.
 # Round 10d (review f8-r10c): (A1) the pin comment no longer claims a person read each line (only the WARN lines are hashed; comment lines are not protected); (B1) the pin header carries '# flows sha256 ...' (the combined sha256 of the four flow files, as printed in the top block); a different sha is exit 4, a pin without that line is exit 4, so a changed flow with the same counts and WARNs no longer passes; (B2) the reviewer line must be 'NAME, YYYY-MM-DD' (optionally ', note'), a real date not in the future, and a name that is not a stand-in (TBD, x, claude agent, ...); (B3) with the test flag and an override a run that would pass is exit 5 (not 0), TAKE_CHECK_FLOWS together with --flows is exit 2, and the top block says where the folder name came from; (B4 is in run_all.sh); the flow_snapshot (sha256 of the flow files) is taken before any other read of them; a sha256sum failure is a problem (exit 4), never an empty hash.
+# Round f8-r6 (review f8-r5; f8-r4 and f8-r5 added the dotted-letter rules): the reviewer-line check now squashes the name and the note into lower-case letters only and refuses a long tool or model name inside it (Claude, ChatGPT, OpenAI, Gemini ...), refuses short stand-ins (LLM, GPT, bot, AI) as whole words or as the join of 1-2 letter pieces across spaces, dots and hyphens, checks the note, tells the truth in its refusal message, and allows a date one day ahead of the UTC date. Heuristic only: a person reading the pin lines is the control.
 # Usage: bash take_check.sh [--flows DIR] [--write-warn-pin NEWFILE]   (NEWFILE must not exist yet; the pin in use is take-warns.pin next to this script)
 LC_ALL=C; export LC_ALL
 HERE=$(cd "$(dirname "$0")" && pwd)
@@ -216,38 +217,51 @@ if [ "$NRC" -ne 0 ]; then echo "!!! THE WARN-LINE HELPER FAILED (exit status $NR
 grep . "$NORM" | LC_ALL=C sort > "$NORM.now"
 echo "--- (6) Checker result and the WARN baseline ---"
 echo "${RESULTLINE:-RESULT line missing}. WARN lines that rest on an n8n rule nobody verified: $UNVN."
-# round 10d (B2) + round f8-r4 (M1): the reviewer line grammar: NAME, YYYY-MM-DD[, note]. NAME = letters, spaces, dots, apostrophes, hyphens. The name is cut into words at EVERY character that is not a letter (so "Claude-Code", "TBD." and "Unknown-" are cut like "Claude Code"), lower-cased, and refused when ANY word is in the stand-in list below, when it has fewer than 3 letters in all, or when a word is one letter repeated (aaa, xxx). The date must be real, not in the future and not older than the pin's own date line. A SCRIPT CANNOT KNOW WHO READ THE PIN: this only turns away names that are obviously not a person. A made-up human-looking name passes; that is why the output prints the line as written and why the pin must be looked at in the git diff.
+# round 10d (B2) + round f8-r4 (M1) + round f8-r6: the reviewer line grammar (the f8-r6 squashed-string and joined-pieces rules are described below the stand-in list): NAME, YYYY-MM-DD[, note]. NAME = letters, spaces, dots, apostrophes, hyphens. The name is cut into words at EVERY character that is not a letter (so "Claude-Code", "TBD." and "Unknown-" are cut like "Claude Code"), lower-cased, and refused when ANY word is in the stand-in list below, when it has fewer than 3 letters in all, or when a word is one letter repeated (aaa, xxx). The date must be real, at most one day ahead of the UTC date, and not older than the pin's own date line. A SCRIPT CANNOT KNOW WHO READ THE PIN: this only turns away names that are obviously not a person. A made-up human-looking name passes; that is why the output prints the line as written and why the pin must be looked at in the git diff.
 # Test-only way (exit 5 only, never 0): when the test flag TAKE_CHECK_TEST=1 AND a pin override TAKE_CHECK_WARN_PIN are both active, a name whose FIRST word is "testonly" skips the stand-in list. A run with an override can never be exit 0, so no stand-in name can give exit 0 without a human. "testonly" itself is on the list, so without both the flag and the override it is refused like any stand-in.
-REVIEWER_STANDINS=" tbd todo name placeholder unknown nobody someone anonymous claude agent session bot assistant gpt model lead person xxx abc standin stand test reviewer runall dummy example sample fake sonnet opus haiku gemini llm ai code user admin testonly "
+REVIEWER_STANDINS=" tbd todo name placeholder unknown nobody someone anonymous claude agent session bot assistant gpt model lead person xxx abc standin stand test reviewer runall dummy example sample fake sonnet opus haiku gemini llm llms gpts bots agents assistants models robots ai code user admin testonly "
+# round f8-r6 (review f8-r5): the name and the note are both turned into one "squashed" string (lower-case letters only, every other character removed) and refused when it contains a long stand-in (REVIEWER_LONG, 5 or more letters, except grok). That catches Cla.ude, Claudebot, Openai, Gptbot and C-l-a-u-d-e in one place, whatever sits between the letters. Short stand-ins (llm, gpt, bot, ai, tbd, ...) are refused as whole words (above) and as the join of a run of words of 1 or 2 letters (so "O L L M", "L. L. M.", "Ol-L-M"); they are never searched inside longer words, so Botha and Aiden stay valid. REVIEWER_ALLOW holds real-name words that contain a long stand-in; they are left out of the squashed string. This is a guess about words, not a proof of a person: only a named human reading the pin lines is the control (README, Q31 item 15). The note is checked for the tool and model names only (REVIEWER_LONG_NOTE), because a note may say "lead" or "code" in normal use.
+REVIEWER_LONG_NOTE=" claude chatgpt gptbot openai anthropic gemini llama mistral grok deepseek copilot assistant robot sonnet haiku "
+REVIEWER_LONG_NAME=" placeholder anonymous unknown nobody someone reviewer dummy example sample agent "
+REVIEWER_ALLOW=" claudette "
+squash_hits() { # $1 = text, $2 = list of long stand-ins, $3 = 1 to drop REVIEWER_ALLOW words first; returns 0 when a stand-in is inside the squashed text
+  local t=$1 list=$2 drop=$3 w sq="" x
+  for w in $(printf '%s' "$t" | tr 'A-Z' 'a-z' | tr -cs 'a-z' ' '); do
+    if [ "$drop" = 1 ]; then case "$REVIEWER_ALLOW" in *" $w "*) continue;; esac; fi
+    sq="$sq$w"
+  done
+  for x in $list; do case "$sq" in *"$x"*) return 0;; esac; done
+  return 1
+}
 reviewer_ok() {
-  local r=$1 pindate=${2:-} name date words w first c
+  local r=$1 pindate=${2:-} name date note="" words w first c run tomorrow
   case $r in *,\ [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]|*,\ [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9],\ *) ;; *) return 1;; esac
   name=${r%%,*}; date=${r#*, }; date=${date%%,*}
+  case $r in *,\ [0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9],\ *) note=${r#*, $date, };; esac
   case $name in [A-Za-z]*) ;; *) return 1;; esac
-  case $name in *[!A-Za-z\ .\'-]*) return 1;; esac
+  case $name in *[!A-Za-z\ .\'-]*) return 1;; esac   # ASCII letters, space, dot, apostrophe, hyphen only: this also refuses digits, underscores, accents, curly quotes and zero-width characters
   [ "$(printf '%s' "$name" | tr -cd 'A-Za-z' | wc -c)" -ge 3 ] || return 1
   words=$(printf '%s' "$name" | tr 'A-Z' 'a-z' | tr -cs 'a-z' ' ')
   first=${words# }; first=${first%% *}
+  squash_hits "$note" "$REVIEWER_LONG_NOTE" 0 && return 1
+  for w in $(printf '%s' "$note" | tr 'A-Z' 'a-z' | tr -cs 'a-z' ' '); do
+    case " llm llms gpt gpts bot bots ai " in *" $w "*) return 1;; esac
+  done
   if ! { [ "${TAKE_CHECK_TEST:-}" = 1 ] && [ -n "${TAKE_CHECK_WARN_PIN:-}" ] && [ "$first" = testonly ]; }; then
     for w in $words; do
       case "$REVIEWER_STANDINS" in *" $w "*) return 1;; esac
     done
-  fi
-  # round f8-r5: dotted or hyphenated letters ('O.L.L.M.', 'C.l.a.u.d.e') are cut into one-letter words above, so a stand-in word hides in them. Per space-separated token: join each run of one-letter pieces and refuse it when it equals a stand-in word, or contains one of 3 or more letters. Only runs of one-letter pieces are searched, so 'Aiden', 'Botha' and "O'Brien" are not hit.
-  if ! { [ "${TAKE_CHECK_TEST:-}" = 1 ] && [ -n "${TAKE_CHECK_WARN_PIN:-}" ] && [ "$first" = testonly ]; }; then
-    local tok part run
-    for tok in $(printf '%s' "$name" | tr 'A-Z' 'a-z' | tr -s ' ' '\n'); do
-      run=""
-      for part in $(printf '%s' "$tok" | tr -cs 'a-z' ' ') ""; do
-        if [ ${#part} -eq 1 ]; then run="$run$part"; continue; fi
-        if [ -n "$run" ]; then
-          for w in $REVIEWER_STANDINS; do
-            [ "$run" = "$w" ] && return 1
-            [ ${#w} -ge 3 ] && case "$run" in *"$w"*) return 1;; esac
-          done
-          run=""
-        fi
-      done
+    squash_hits "$name" "$REVIEWER_LONG_NOTE$REVIEWER_LONG_NAME" 1 && return 1
+    run=""
+    for w in $words ""; do
+      if [ -n "$w" ] && [ ${#w} -le 2 ]; then run="$run$w"; continue; fi
+      if [ -n "$run" ]; then
+        [ ${#run} -ge 2 ] && case "$REVIEWER_STANDINS" in *" $run "*) return 1;; esac
+        for c in $REVIEWER_STANDINS; do
+          [ ${#c} -ge 3 ] && case "$run" in *"$c"*) return 1;; esac
+        done
+        run=""
+      fi
     done
   fi
   for w in $words; do
@@ -255,7 +269,8 @@ reviewer_ok() {
     [ ${#w} -ge 2 ] && [ -z "$(printf '%s' "$w" | tr -d "$c")" ] && return 1
   done
   [ "$(date -u -d "$date" +%Y-%m-%d 2>/dev/null)" = "$date" ] || return 1
-  [ "$date" \> "$(date -u +%Y-%m-%d)" ] && return 1
+  tomorrow=$(date -u -d "tomorrow" +%Y-%m-%d 2>/dev/null) || return 1
+  [ "$date" \> "$tomorrow" ] && return 1   # a date one day ahead of the UTC date is allowed (an IST date between 00:00 and 05:30 is already tomorrow in UTC terms); two days ahead is refused
   [ -n "$pindate" ] && [ "$date" \< "$pindate" ] && return 1
   return 0
 }
@@ -277,7 +292,7 @@ else
   if [ -z "$HDRREV" ]; then echo "!!! THE PIN HEADER HAS NO '# reviewed by: NAME, DATE' LINE: nobody has said that a person read these WARN lines. This script exits 4."; PROBLEMS+=("pin has no reviewer line")
   elif printf '%s' "$HDRREV" | grep -q -F "PLACEHOLDER"; then echo "!!! THE PIN HEADER STILL HAS THE PLACEHOLDER IN ITS 'reviewed by' LINE: the file was written by the script and no person has read it. Read every line, then replace that line. This script exits 4."; PROBLEMS+=("pin not reviewed (placeholder)")
   elif printf '%s' "$HDRREV" | grep -q -i -E "session|lead to confirm"; then echo "!!! pin not yet confirmed by the lead: the 'reviewed by' line of the pin (as written: $HDRREV) names a session or says the lead still has to confirm. A session is not a person who read the WARN lines. The lead reads every WARN line and replaces that line with: # reviewed by: NAME, YYYY-MM-DD. This script exits 4."; PROBLEMS+=("pin not yet confirmed by the lead")
-  elif ! reviewer_ok "$HDRREV" "$HDRDATE"; then echo "!!! THE 'reviewed by' LINE OF THE PIN IS NOT A PERSON'S NAME AND A DATE (as written: $HDRREV): it must read '# reviewed by: NAME, YYYY-MM-DD' (optionally followed by ', a note'), with a real date that is not in the future and not older than the pin's own date line, and a name that is not a stand-in (no word of it may be TBD, test, reviewer, a placeholder, an agent, a model name, a session and so on, however it is joined with dots or hyphens). A script cannot know who read the pin. This script exits 4."; PROBLEMS+=("pin reviewer line malformed or a stand-in"); fi
+  elif ! reviewer_ok "$HDRREV" "$HDRDATE"; then echo "!!! THE 'reviewed by' LINE OF THE PIN IS NOT A PERSON'S NAME AND A DATE (as written: $HDRREV): it must read '# reviewed by: NAME, YYYY-MM-DD' (optionally followed by ', a note'), with a real date that is not in the future and not older than the pin's own date line, and a name that is not a stand-in. What this checks: the name and the note are turned into lower-case letters only; they are refused when they contain a tool or model name such as Claude, ChatGPT or Gemini (even with dots, hyphens or spaces between the letters), when a whole word of the name is a stand-in such as TBD, test, reviewer, bot, AI or LLM, or when single letters or two-letter pieces joined together spell one of those words (for example O L L M). Only plain ASCII letters, spaces, dots, apostrophes and hyphens are allowed in the name. It does NOT prove that a real person wrote the line: it is a guess about words, and a person reading the pin lines is the real control. This script exits 4."; PROBLEMS+=("pin reviewer line malformed or a stand-in"); fi
   if [ -z "$HDRFLOWS" ]; then echo "!!! THE PIN HEADER HAS NO '# flows sha256 ...' LINE: a changed flow file with the same step counts and WARN lines would pass. This script exits 4."; PROBLEMS+=("pin has no flows sha")
   elif [ -n "$FLOWSHA_HEX" ] && [ "$HDRFLOWS" != "$FLOWSHA_HEX" ]; then echo "!!! THE FLOW FILES DO NOT MATCH THE SHA-256 WRITTEN IN THE PIN (pin $HDRFLOWS, files $FLOWSHA_HEX): a flow file differs from the one a person pinned. If the change is intended, a person reads it, writes a NEW pin (--write-warn-pin) and installs it by hand. This script exits 4."; PROBLEMS+=("flow files differ from the pinned sha"); fi
   if [ -z "$HDRDATE" ]; then echo "!!! THE PIN HEADER HAS NO DATE ('# date (UTC): YYYY-MM-DD'): nobody can tell when a person read these WARN lines. This script exits 4."; PROBLEMS+=("pin has no date"); fi

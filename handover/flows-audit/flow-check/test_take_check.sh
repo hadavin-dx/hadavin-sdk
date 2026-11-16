@@ -24,9 +24,12 @@ has() { grep -q -F -- "$2" "$S/$1.txt"; }
 cmp_pins() { cmp -s <(grep -v '^#' "$1") <(grep -v '^#' "$2"); }
 PIN="$HERE/take-warns.pin"
 PINSUM=$(sha256sum < "$PIN" | cut -d' ' -f1)
+PD=$(sed -n 's/^# date (UTC): \([0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}\)$/\1/p' "$PIN" | head -n 1)   # f8-r6: the date used in every reviewer line below is the pin's own date line (never older than the pin, never in the future while the pin is not), so no test breaks when the calendar moves on
+TODAY=$(date -u +%Y-%m-%d); TOMORROW=$(date -u -d tomorrow +%Y-%m-%d); IN2DAYS=$(date -u -d "2 days" +%Y-%m-%d)
+[ -n "$PD" ] || { echo "no date line in the pin"; exit 2; }
 # round 10c (Q1): the committed pin keeps a reviewer line that names a session, so a bare take exits 4 until the lead edits it. Cases that need exit 0 use LEADPIN (same WARN lines, a person's reviewer line); SESSPIN keeps the session wording
-{ echo "# reviewed by: Testonly Reviewer, 2026-11-16"; grep -v '^# reviewed by' "$PIN"; } > "$S/lead.pin"; LEADPIN="$S/lead.pin"
-{ echo "# reviewed by: flows-audit session, 2026-11-16, content read by that session only, lead to confirm"; grep -v '^# reviewed by' "$PIN"; } > "$S/sess.pin"
+{ echo "# reviewed by: Testonly Reviewer, $PD"; grep -v '^# reviewed by' "$PIN"; } > "$S/lead.pin"; LEADPIN="$S/lead.pin"
+{ echo "# reviewed by: flows-audit session, $PD, content read by that session only, lead to confirm"; grep -v '^# reviewed by' "$PIN"; } > "$S/sess.pin"
 
 # the control: the plain take on the patched copy. Exit 0 only when the committed pin carries a reviewer line that is not a session (round 10c); until then exit 4 with the plain reason
 tk control -- --flows "$P"
@@ -34,10 +37,10 @@ CRL=$(sed -n 's/^# reviewed by: //p' "$PIN" | head -n 1)
 { [ "$RC" = 0 ] || { [ "$RC" = 4 ] && has control "pin not yet confirmed by the lead"; }; } && has control "OVERRIDES: none" && has control "Pinned WARN lines:" && has control "known defects" && has control "$CRL"; ok $? "control: the committed pin gives exit 0, or exit 4 with 'pin not yet confirmed by the lead' while its reviewer line names a session; the reviewer line is printed as written; OVERRIDES says none (got exit $RC)"
 # Q1: with a person's reviewer line the same take is exit 0, and the output never says a person read the pin
 tk q1ok TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$LEADPIN" -- --flows "$P"
-[ "$RC" = 5 ] && has q1ok "reviewed by (as written in the pin): Testonly Reviewer, 2026-11-16" && ! has q1ok "a person read"; ok $? "Q1/B3: a pin with a person's reviewer line gives exit 5 (a would-be pass with the pin override; 5, never 0); the line is printed as written; the output does not say a person read the pin (got exit $RC)"
+[ "$RC" = 5 ] && has q1ok "reviewed by (as written in the pin): Testonly Reviewer, $PD" && ! has q1ok "a person read"; ok $? "Q1/B3: a pin with a person's reviewer line gives exit 5 (a would-be pass with the pin override; 5, never 0); the line is printed as written; the output does not say a person read the pin (got exit $RC)"
 tk q1a TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/sess.pin" -- --flows "$P"
 [ "$RC" = 4 ] && has q1a "pin not yet confirmed by the lead" && has q1a "as written: flows-audit session" && ! has q1a "a person read and accepted"; ok $? "Q1: a reviewer line naming a session and 'lead to confirm' is exit 4 with the plain reason, never 'a person read' (got exit $RC)"
-for pair in "only-session:# reviewed by: Audit Session B, 2026-11-16" "only-confirm:# reviewed by: A. Person, 2026-11-16, Lead To Confirm"; do
+for pair in "only-session:# reviewed by: Audit Session B, $PD" "only-confirm:# reviewed by: A. Person, $PD, Lead To Confirm"; do
   nm=q1-${pair%%:*}; { echo "${pair#*:}"; grep -v '^# reviewed by' "$PIN"; } > "$S/$nm.pin"
   tk "$nm" TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/$nm.pin" -- --flows "$P"
   [ "$RC" = 4 ] && has "$nm" "pin not yet confirmed by the lead"; ok $? "Q1: '${pair#*:}' is exit 4 (got exit $RC)"
@@ -53,7 +56,7 @@ tk b1b -- --flows "$P" --write-warn-pin "$S/new.pin"
 # a pin written by the script is NOT valid until a person replaces the placeholder in its header (round 10b, M-3); reviewed.pin stands for that person's edit
 grep -q '^# flows sha256 (the four flow files, combined, as printed in the top block of take_check.sh): [0-9a-f]\{64\}$' "$S/new.pin"; ok $? "B1: the written pin carries the '# flows sha256' line"
 grep -q 'PLACEHOLDER' "$S/new.pin" && grep -q 'NOT YET READ BY A PERSON' "$S/new.pin"; ok $? "M-3: the written pin says it is not yet read and holds the placeholder line"
-sed 's/^# reviewed by: .*/# reviewed by: Testonly Reviewer, 2026-11-16/' "$S/new.pin" > "$S/reviewed.pin"
+sed "s/^# reviewed by: .*/# reviewed by: Testonly Reviewer, $PD/" "$S/new.pin" > "$S/reviewed.pin"
 tk m3p1 TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/new.pin" -- --flows "$P"
 [ "$RC" = 4 ] && has m3p1 "STILL HAS THE PLACEHOLDER"; ok $? "M-3: a pin whose header still has the placeholder is exit 4 (got exit $RC)"
 grep -v '^# reviewed by' "$S/reviewed.pin" > "$S/norev.pin"
@@ -205,29 +208,29 @@ grep -v '^# flows sha256' "$LEADPIN" > "$S/noflowsha.pin"
 tk b1nosha TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/noflowsha.pin" -- --flows "$P"
 [ "$RC" = 4 ] && has b1nosha "THE PIN HEADER HAS NO '# flows sha256 ...' LINE"; ok $? "B1: a pin without the flows sha256 line is exit 4 (got exit $RC)"
 # B2: the reviewer line must read NAME, YYYY-MM-DD (optional note); stand-ins are exit 4
-for pair in "b2-agent:claude agent, 2026-11-16" "b2-tbd:TBD" "b2-x:x, 2026-11-16" "b2-nodate:Testonly Reviewer" "b2-baddate:Testonly Reviewer, 2026-13-45" "b2-future:Testonly Reviewer, 2999-01-01" "b2-empty-name:, 2026-11-16" "b2-digits:R2D2 4, 2026-11-16" "b2-ai:Some Assistant, 2026-11-16" "b2-placeholder-word:Name Placeholder, 2026-11-16"; do
+for pair in "b2-agent:claude agent, $PD" "b2-tbd:TBD" "b2-x:x, $PD" "b2-nodate:Testonly Reviewer" "b2-baddate:Testonly Reviewer, 2026-13-45" "b2-future:Testonly Reviewer, 2999-01-01" "b2-empty-name:, $PD" "b2-digits:R2D2 4, $PD" "b2-ai:Some Assistant, $PD" "b2-placeholder-word:Name Placeholder, $PD"; do
   nm=${pair%%:*}; { echo "# reviewed by: ${pair#*:}"; grep -v '^# reviewed by' "$PIN"; } > "$S/$nm.pin"
   tk "$nm" TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/$nm.pin" -- --flows "$P"
   [ "$RC" = 4 ] && grep -q -E "^!!! (THE 'reviewed by' LINE OF THE PIN IS NOT A PERSON|pin not yet confirmed)" "$S/$nm.txt"; ok $? "B2: reviewer line '${pair#*:}' is exit 4 (got exit $RC)"
 done
-{ echo "# reviewed by: Jane Q. Roe-Smith, 2026-11-16, read all 4 WARN lines"; grep -v '^# reviewed by' "$PIN"; } > "$S/b2good.pin"
+{ echo "# reviewed by: Jane Q. Roe-Smith, $PD, read all 4 WARN lines"; grep -v '^# reviewed by' "$PIN"; } > "$S/b2good.pin"
 tk b2good TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/b2good.pin" -- --flows "$P"
-[ "$RC" = 5 ] && ! has b2good "NOT A PERSON"; ok $? "B2: 'Jane Q. Roe-Smith, 2026-11-16, read all 4 WARN lines' is accepted (would-be pass with the override: exit 5) (got exit $RC)"
+[ "$RC" = 5 ] && ! has b2good "NOT A PERSON"; ok $? "B2: 'Jane Q. Roe-Smith, $PD, read all 4 WARN lines' is accepted (would-be pass with the override: exit 5) (got exit $RC)"
 # f8-r4 (M1): the bypasses of review f8-r3 (words joined by dots or hyphens, two stand-in words, a repeated letter, the script's own stand-in names, a date far in the past or before the pin's own date). Each must be exit 4 with the reviewer-line message, even with the test flag and the pin override (a name that is not "Testonly ..." gets no test allowance)
-for pair in "m1-tbd-dot:TBD., 2026-11-16" "m1-claude-code:Claude-Code, 2026-11-16" "m1-agent-dot:Agent., 2026-11-16" "m1-unknown-dash:Unknown-, 2026-11-16" "m1-sonnet-opus:Sonnet Opus, 2026-11-16" "m1-aaa:Aaa, 2026-11-16" "m1-runall:Runall Standin, 2026-11-16" "m1-test-reviewer:Test Reviewer, 2026-11-16" "m1-testonly-no-flag-name:Testonly Reviewer, 2026-11-16" "m1-model-in-name:Jane Gemini, 2026-11-16" "m1-year2000:Jane Q. Roe-Smith, 2000-01-01" "m1-before-pin:Jane Q. Roe-Smith, 2026-11-15" "m1-dotted-llm:Pat O.L.L.M., 2026-11-16" "m1-dotted-claude:P.a.t C.l.a.u.d.e, 2026-11-16"; do
+for pair in "m1-tbd-dot:TBD., $PD" "m1-claude-code:Claude-Code, $PD" "m1-agent-dot:Agent., $PD" "m1-unknown-dash:Unknown-, $PD" "m1-sonnet-opus:Sonnet Opus, $PD" "m1-aaa:Aaa, $PD" "m1-runall:Runall Standin, $PD" "m1-test-reviewer:Test Reviewer, $PD" "m1-testonly-no-flag-name:Testonly Reviewer, $PD" "m1-model-in-name:Jane Gemini, $PD" "m1-year2000:Jane Q. Roe-Smith, 2000-01-01" "m1-before-pin:Jane Q. Roe-Smith, 2026-11-15" "m1-dotted-llm:Pat O.L.L.M., $PD" "m1-dotted-claude:P.a.t C.l.a.u.d.e, $PD"; do
   nm=${pair%%:*}; { echo "# reviewed by: ${pair#*:}"; grep -v '^# reviewed by' "$PIN"; } > "$S/$nm.pin"
   tk "$nm" TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/$nm.pin" -- --flows "$P"
   [ "$nm" = m1-testonly-no-flag-name ] && tk "$nm" TAKE_CHECK_WARN_PIN="$S/$nm.pin" -- --flows "$P"   # the test allowance needs BOTH the flag and the override
   [ "$RC" = 4 ] && grep -q -E "^!!! THE 'reviewed by' LINE OF THE PIN IS NOT A PERSON" "$S/$nm.txt"; ok $? "M1: reviewer line '${pair#*:}' is exit 4 with the reviewer-line message (got exit $RC)"
 done
 # f8-r5: names that must still be accepted (would-be pass with the override: exit 5, never the stand-in message). 'Zed' (3 letters, human-looking) is accepted by design: a script cannot tell it from a real name
-for pair in "r5-pat-smith:Pat Smith, 2026-11-16" "r5-obrien:O'Brien, 2026-11-16" "r5-aiden-botha:Aiden Botha, 2026-11-16" "r5-zed:Zed Smith, 2026-11-16"; do
+for pair in "r5-pat-smith:Pat Smith, $PD" "r5-obrien:O'Brien, $PD" "r5-aiden-botha:Aiden Botha, $PD" "r5-zed:Zed Smith, $PD"; do
   nm=${pair%%:*}; { echo "# reviewed by: ${pair#*:}"; grep -v '^# reviewed by' "$PIN"; } > "$S/$nm.pin"
   tk "$nm" TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/$nm.pin" -- --flows "$P"
   [ "$RC" = 5 ] && ! has "$nm" "NOT A PERSON"; ok $? "f8-r5: reviewer line '${pair#*:}' is accepted (would-be pass with the override: exit 5) (got exit $RC)"
 done
 # the test allowance: flag + override + first word Testonly = exit 5 (never 0); the same name without the flag was refused above
-{ echo "# reviewed by: Testonly Runall, 2026-11-16"; grep -v '^# reviewed by' "$PIN"; } > "$S/m1-allow.pin"
+{ echo "# reviewed by: Testonly Runall, $PD"; grep -v '^# reviewed by' "$PIN"; } > "$S/m1-allow.pin"
 tk m1-allow TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/m1-allow.pin" -- --flows "$P"
 [ "$RC" = 5 ] && ! has m1-allow "NOT A PERSON"; ok $? "M1: with the test flag AND a pin override, a 'Testonly ...' name is accepted and the run is exit 5, never 0 (got exit $RC)"
 # the real bypass: the script's own stand-in pin copied in as THE pin (no override, no test flag) must not give exit 0. A mirror folder holds copies of the scripts, the real checker and the pin; demo/ is a link to the real demo folder
@@ -236,12 +239,12 @@ mir() { local nm=$1; shift; env -u TAKE_CHECK_TEST -u TAKE_CHECK_CK -u TAKE_CHEC
 mir mirbase
 MIRSHA=$(sed -n 's/^  combined: \([0-9a-f]\{64\}\)$/\1/p' "$S/mirbase.txt" | head -n 1)
 [ -n "$MIRSHA" ]; ok $? "M1: the mirror run printed the combined flows sha256 (needed to build the stand-in pins below)"
-for pair in "mir-testrev:Testonly Reviewer, 2026-11-16" "mir-test-reviewer:Test Reviewer, 2026-11-16" "mir-runall:Runall Standin, 2026-11-16" "mir-tbd:TBD., 2026-11-16" "mir-claudecode:Claude-Code, 2026-11-16"; do
+for pair in "mir-testrev:Testonly Reviewer, $PD" "mir-test-reviewer:Test Reviewer, $PD" "mir-runall:Runall Standin, $PD" "mir-tbd:TBD., $PD" "mir-claudecode:Claude-Code, $PD"; do
   nm=${pair%%:*}; { echo "# reviewed by: ${pair#*:}"; grep -v '^# reviewed by' "$PIN" | sed "s/^\(# flows sha256 .*: \)[0-9a-f]\{64\}\$/\1$MIRSHA/"; } > "$MIR/flows-audit/flow-check/take-warns.pin"
   mir "$nm"
   [ "$RC" = 4 ] && grep -q "NOT A PERSON" "$S/$nm.txt"; ok $? "M1: '${pair#*:}' in the real pin place, no override, no test flag: exit 4, never 0 (got exit $RC)"
 done
-{ echo "# reviewed by: Jane Q. Roe-Smith, 2026-11-16, read all WARN lines"; grep -v '^# reviewed by' "$PIN" | sed "s/^\(# flows sha256 .*: \)[0-9a-f]\{64\}\$/\1$MIRSHA/"; } > "$MIR/flows-audit/flow-check/take-warns.pin"
+{ echo "# reviewed by: Jane Q. Roe-Smith, $PD, read all WARN lines"; grep -v '^# reviewed by' "$PIN" | sed "s/^\(# flows sha256 .*: \)[0-9a-f]\{64\}\$/\1$MIRSHA/"; } > "$MIR/flows-audit/flow-check/take-warns.pin"
 mir mir-human
 [ "$RC" = 0 ]; ok $? "M1 (honesty check): a made-up human-looking name in the real pin place IS accepted, exit 0: the script cannot know who read the pin; it only turns away stand-ins (got exit $RC)"
 # B3: a would-be pass with a leaked override and the test flag is exit 5, never 0; a copy of the real checker given by TAKE_CHECK_CK is shown
