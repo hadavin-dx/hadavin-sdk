@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T13:56:32Z
-PUSHED_UTC: 2026-11-16T13:29:54Z
+UPDATED_UTC: 2026-11-16T13:56:52Z
+PUSHED_UTC: 2026-11-16T13:56:52Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
@@ -46,9 +46,9 @@ INTERRUPTED: none
 
 | agent id | purpose | started (UTC) | expected end | state | what it produced so far |
 |---|---|---|---|---|---|
-| (see agent list) | cold read GLOSSARY.md after my rewrite | 2026-11-16T13:56:32Z | +5 min | running | nothing yet |
+| ac7873f66d3765a40 | cold read GLOSSARY.md after my rewrite | 2026-11-16T13:56Z | +5 min | running | nothing yet |
 
-CAPACITY: 1 agent running, 7 below the 8 of ORDER 040. Reason: every file in work/ has had a cold read, so no unread independent file is left; the 7 missing slots are not idle by choice. I am now editing pages I own (GLOSSARY.md done this beat), and each edited page gets one cold re-read. Edits to different pages could be given to agents; I do them myself so each stays checked.
+CAPACITY: 1 agent running, 7 below the 8 of ORDER 040. Reason: every file in work/ has had a cold read, so no unread independent file is left; I am editing pages I own and each edited page gets one cold re-read.
 
 Next 5 independent tasks: Read-this-first blocks on L1c/L3c/L4c/L5b/L6; collapse stacked paragraphs in t19-history, premortem, critical-path, open-items; rewrite rehearsal-passed-limits-draft.md as one block; purpose headers on the evidence files; fix BRIEF-EVIDENCE-1/2 and LEAD-NOTICE-batch-1 tables.
 
