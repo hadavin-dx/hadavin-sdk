@@ -1,0 +1,40 @@
+PASS P0 all table rows parsed :: (94, [])
+PASS R1 94 rows :: 94
+PASS R2 ids are exactly 1..94 with no duplicate or gap :: []
+PASS R2b table order inside each file is highest line first
+PASS S1 old text once on stated line (94 rows) :: []
+PASS S2 rows apply in table order on copies :: []
+PASS N1 recount 94 = ready 49 + defaults 36 + check 3 + waiting 6 :: {'ready': 49, 'default': 36, 'check': 3, 'wait': 6}
+PASS N2 check rows are 23,58,59 and waiting rows are 53,55,62,64,66,68
+PASS N3 wave 1 = 85 by recount :: 85
+PASS N4 prose '94 rows' always 94 (2 found) :: [94, 94]
+PASS N4 prose 'Of the N rows' always 94 (2 found) :: [94, 94]
+PASS N4 prose 'N are ready' always 49 (1 found) :: [49]
+PASS N4 prose 'N ready (box)' always 49 (1 found) :: [49]
+PASS N4 prose 'wave 1 N rows' always 85 (1 found) :: [85]
+PASS N4 prose 'N apply on the default' always 36 (2 found) :: [36, 36]
+PASS N5 no stale count words 89 rows / 40 apply / '= 89' / '89 rows'
+PASS N6 section 3b TOTAL line says 94 / ready 49 / defaults 36 / check 3 / waiting 6 :: ['| TOTAL | all rows | 94 | ready 49, on defaults only 36, with a check 3, waiting for the answer of L-SAVEERR 6 (default no), NOT FILMABLE until an answer 0 | |']
+PASS N7 printed lists of the 49 ready rows equal the recount (2 lists) :: [49, 49]
+PASS N8 rows over 10 files sum to 94 :: {'handover/demo/VIDEO-RUNSHEET.md': 44, 'handover/demo/n8n-flows/PAGE-STATEMENTS-V4.md': 23, 'handover/demo/n8n-flows/N8N-START.md': 11, 'handover/demo/n8n-mainframe/mf.py': 2, 'handover/demo/n8n-flows-real-v5/mf-form.json': 2, 'handover/demo/n8n-flows-real-v5/mf-hook.json': 2, 'handover/demo/n8n-fl
+PASS T1 every HH:MM UTC has its IST (+5:30) on the same line (62 times) :: []
+PASS T2 every explicit UTC = IST pair is +5:30 (61 pairs) :: []
+PASS T3 inside every NEW text, each UTC time has its IST :: []
+PASS W1 every weekday+day string is right for 2026 (20 found) :: []
+PASS W2 report uses at least Wed 18, Mon 23, Wed 25 (Mon 16 optional) :: [('Mon', 23), ('Wed', 18), ('Wed', 25)]
+PASS W3 ISO dates in 2026-11 are valid dates
+PASS C1 length table: seconds = words/150*60, budget = rounded up to 5, total = 150 + budget (6 rows) :: []
+PASS C2 table words: lease 1 adds 25, lease 2 adds 40 over none (both lengths); (b) is 16 words below (a) :: {('none', '(a)'): 90, ('none', '(b)'): 74, ('1', '(a)'): 115, ('1', '(b)'): 99, ('2', '(a)'): 130, ('2', '(b)'): 114}
+PASS C3 every 'N words, about X s' statement matches words/150*60 within 0.5 s (17 statements) :: []
+PASS C4 box card line word counts add up to the stated 90 ({1: 11, 2: 35, 3: 22, 4: 22}) :: {1: 11, 2: 35, 3: 22, 4: 22}
+FAIL C5 each quoted card line has the stated number of words (recounted by split) :: [(1, 11, 11), (2, 35, 35), (3, 22, 13), (4, 22, 22)]
+FAIL V1 no row-number reference, question label, check label or report word inside any new text or viewer cell :: [(5, 'new', 'row'), (6, 'new', 'row'), (8, 'new', 'row'), (8, 'view', 'row'), (17, 'view', 'row'), (93, 'view', 'row'), (94, 'view', 'row'), (23, 'new', 'row'), (23, 'new', 'row'), (23, 'new', 'row')]
+PASS X1 lease sentence ('We make this claim only when') is in no row's new text (L-POST default) :: []
+FAIL X2 no stale '58 s' card length outside quoted history lines
+PASS X3 the gate sentence (a step on the run sheet that blocks the take until a named person has written a result on it) is defined once in the box
+PASS X4 key shapes: no AKIA/sk-/ghp_/key=... token or Authorization/--header/-H bearer on any command line
+PASS X5 no e-mail address
+FAIL X6 stopwatch figures: '60.1 to 61.9' and '52.8 to 54.9' used, no other 6x.y ranges
+PASS X7 deleted-gate guard: report says nothing was applied/run (NOT APPLIED on all 94, 'NOTHING IN THIS REPORT HAS BEEN APPLIED' in box)
+PASS X8 confirmed? stays No: no 'Confirmed? | Yes'
+SUMMARY: 4 FAILED ['C5 each quoted card line has the stated number of words (recounted by split)', 'V1 no row-number reference, question label, check label or report word inside any new text or viewer cell', "X2 no stale '58 s' card length outside quoted history lines", "X6 stopwatch figures: '60.1 to 61.9' and '52.8 to 54.9' used, no other 6x.y ranges"]

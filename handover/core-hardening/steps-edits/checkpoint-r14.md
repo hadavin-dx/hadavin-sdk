@@ -1,4 +1,2 @@
-# Checkpoint round 14 (16:45 UTC = 22:15 IST)
-Done: read both r13 reviews, resolve-r13, ORDERS answers, E-48/E-12/E-09/E-16/E-37/E-52/E-54/E-55/E-57/E-58, verify13.py.
-Next: save EDITS.round13.md, build-r14.py (anchored patches), verify14.py, resolve-r14.md.
-Blockers: none.
+# checkpoint r14 (final)
+Done: EDITS.md round 14 built (build-r14.py, 0 anchor errors); verify14.py exit 0 with 97 negative controls caught; resolve-r14.md and resolve-r14-check-output.txt written; EDITS.round13.md untouched. Next: lead runs the egm review of the result; answers questions 1 to 5 in resolve-r14.md. Blockers: none for the builder. No commit, no push.
