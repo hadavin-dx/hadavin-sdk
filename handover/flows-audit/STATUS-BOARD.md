@@ -1,21 +1,21 @@
-UPDATED_UTC: 2026-11-16T09:48:47Z
+UPDATED_UTC: 2026-11-16T09:48:53Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
 ITEMS_OPEN: 7
-PERCENT: 82
-AGENTS_RUNNING: 7
-CAPACITY: 1.81 load of 4 cores, mem 0/15 GB, disk free 28G, agents 7 (light+heavy per list)
+PERCENT: 83
+AGENTS_RUNNING: 6
+CAPACITY: 1.74 load of 4 cores, mem 0/15 GB, disk free 28G, agents 6 (light+heavy per list)
 INTERRUPTED: none
 FAILED: F8: $env nodes, 2 webhooks without auth, 7 false-pass Majors (fixer running)
-F3: fixer done (14 mutants killed by its own run); independent rerun + fresh security review running; Python 3.9/3.10 never run (README says 3.9+)
+F3: independent rerun clean (91 tests on 3.11-3.13, 14/14 mutants killed, hostile inputs refused); NOT run: Python 3.9/3.10, macOS, WSL, live n8n import; fresh security review still running
 ROLES: script fixed, rerun running; doc v4 rewritten (guard uses unverified psql features), 2nd security review running; script still has S3 credential check off by default
 claims: reviews found 16 Majors (swapped rows 13/18 cites, wrong OWNER-STEPS line, "lead" word, undefined labels, 114 SUPPORTED includes rows needing a run); r4 fixer running; F-01 still unreadable
 F5: fresh reader found 4 Blockers (address wording, ungated "same alert logic", step 9 switch, card line numbers) + 15 Majors; facts reviewer pending; round 4 fixer to follow
-NEXT: collect F8, F3 x2, F5 facts, ROLES evidence + doc review, claims fixer; then F5 round 4 fixer
-PUSHED_UTC: 2026-11-16T09:48:47Z
+NEXT: collect F8, F3 security review, F5 facts, ROLES evidence + doc review, claims fixer; then F5 round 4 fixer
+PUSHED_UTC: 2026-11-16T09:48:53Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -35,7 +35,6 @@ PUSHED_UTC: 2026-11-16T09:48:47Z
 | id | role | model | what it does | started UTC | expected end UTC | % | state | last output |
 |---|---|---|---|---|---|---|---|---|
 | ab790c7cf5d1d6137 | fixer F8 r2 | sonnet | REPORT.md start-here + header | 09:37 | 09:50 | 20 | running | flow-check/ |
-| afea7e66 | F3 evidence rerun | sonnet | EVIDENCE RUNNER tests, mutants, hostile inputs | 09:50 | 10:02 | 5 | running | fill_flows/evidence-f3-r4-rerun.md |
 | a3c7bc5f | F3 security reviewer r2 | egm-design | fresh static security review | 09:50 | 10:00 | 5 | running | inline |
 | aab6e65c | F5 facts reviewer | egm-codebase-details | fresh cites/numbers check | 09:52 | 10:02 | 5 | running | inline |
 | a10cbf4d | ROLES script evidence r4 | sonnet | EVIDENCE RUNNER tests, mutants, 15 hostile flows | 09:55 | 10:07 | 5 | running | roles-coverage-check/evidence-r4.md |
