@@ -312,7 +312,7 @@ while IFS='|' read -r want line why pd envx; do
 done <<< "$RV_CASES"
 [ -n "${RV_DUMP:-}" ] && exit 0
 # f8-r8: the number of word-check cases is pinned EXACTLY (a floor let 16 cases be deleted without a sound). Change RV_EXPECT together with the case list, and say so in the fix log.
-RV_EXPECT=@@RVN@@
+RV_EXPECT=249
 RV_LISTED=$(grep -c -E '^(ok|no)\|' <<< "$RV_CASES")
 [ "$rv_n" -eq "$RV_EXPECT" ] && [ "$RV_LISTED" -eq "$RV_EXPECT" ]; ok $? "reviewer line: exactly $RV_EXPECT word-check cases ran (ran $rv_n, listed $RV_LISTED)"
 # the word list lives in take_check.sh only; the README must print exactly the same two lines
@@ -598,6 +598,50 @@ done
 { echo "# reviewed by: Jane Q. Roe-Smith, $PD, read all WARN lines"; grep -v '^# reviewed by' "$PIN" | sed "s/^\(# flows sha256 .*: \)[0-9a-f]\{64\}\$/\1$MIRSHA/"; } > "$MIR/flows-audit/flow-check/take-warns.pin"
 mir mir-human
 [ "$RC" = 0 ]; ok $? "M1 (honesty check): a made-up human-looking name in the real pin place IS accepted, exit 0: the script cannot know who read the pin; it only turns away stand-ins (got exit $RC)"
+# ---- round f8-r8 whole-take cases ----
+# M1: a plain shell variable must not move the date rule. The reviewer line below is dated 2998-01-02; the real pin place, no override, no test flag: REVIEWER_TODAY=2999-01-01 used to make it pass (exit 0, OVERRIDES: none)
+FUT=2998-01-02
+{ echo "# reviewed by: Jane Q. Roe-Smith, $FUT"; grep -v '^# reviewed by' "$PIN" | sed "s/^\(# flows sha256 .*: \)[0-9a-f]\{64\}\$/\1$MIRSHA/"; } > "$MIR/flows-audit/flow-check/take-warns.pin"
+for mv in "REVIEWER_TODAY=2999-01-01" "TAKE_CHECK_TODAY=2999-01-01" "REVIEWER_TODAY=2999-01-01 TAKE_CHECK_TODAY=2999-01-01"; do
+  MIRENV="$mv"; mir "m1v-${mv//[^A-Z0-9]/}"; MIRENV=""
+  nm="m1v-${mv//[^A-Z0-9]/}"
+  [ "$RC" = 4 ] && has "$nm" "rule: future date" && has "$nm" "OVERRIDES: none"; ok $? "f8-r8 M1: with '$mv' exported, a pin line dated $FUT is exit 4 'rule: future date' and OVERRIDES says none (got exit $RC)"
+done
+{ echo "# reviewed by: Pat Smith, $FUT"; grep -v '^# reviewed by' "$PIN"; } > "$S/m1v-test.pin"
+tk m1v-test TAKE_CHECK_TEST=1 TAKE_CHECK_TODAY=2999-01-01 REVIEWER_TODAY=2999-01-01 TAKE_CHECK_WARN_PIN="$S/m1v-test.pin" -- --flows "$P"
+[ "$RC" = 4 ] && has m1v-test "rule: future date"; ok $? "f8-r8 M1: even with the test flag, TAKE_CHECK_TODAY and REVIEWER_TODAY do not move the date rule in a take (they are read only by --check-reviewer-line) (got exit $RC)"
+grep -q 'REVIEWER_TODAY' "$HERE/README.md"; ok $? "f8-r8 M1: the README names REVIEWER_TODAY and says it has no effect"
+# a line over 128 KiB (more than a command line can carry) is refused, never read as ok, and the output does not repeat it
+{ printf '# reviewed by: Pat Smith, %s, ' "$PD"; head -c 200000 /dev/zero | tr '\0' x; printf '\n'; grep -v '^# reviewed by' "$PIN"; } > "$S/big.pin"
+tk big TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/big.pin" -- --flows "$P"
+[ "$RC" = 4 ] && has big "rule: too long" && has big "[cut: 300 of 2000" && ! grep -q -E 'x{301}' "$S/big.txt"; ok $? "f8-r8: a reviewer line of 200 KiB is exit 4 with 'rule: too long', printed cut at 300 characters with its length (got exit $RC)"
+# a note with shell syntax is only text: accepted (exit 5 with the override), nothing is run
+SENT="$S/sentinel-ran"; rm -f -- "$SENT" "$SENT-2"
+{ printf '# reviewed by: Pat Smith, %s, run $(touch %s) and `touch %s-2` and "q" and '"'"'r'"'"' ; touch %s\n' "$PD" "$SENT" "$SENT" "$SENT"; grep -v '^# reviewed by' "$PIN"; } > "$S/shellnote.pin"
+tk shellnote TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/shellnote.pin" -- --flows "$P"
+[ "$RC" = 5 ] && ! has shellnote "NOT A PERSON" && [ ! -e "$SENT" ] && [ ! -e "$SENT-2" ] && has shellnote 'run $(touch'; ok $? "f8-r8: a note holding \$(...), backticks and quotes is accepted as plain text (exit 5 with the override) and nothing is executed (got exit $RC)"
+# the 300-character cut: the printed line is cut and says how long it was
+CUTNOTE=$(head -c 400 /dev/zero | tr '\0' y); CUTLINE="Pat Smith, $PD, $CUTNOTE"
+{ printf '# reviewed by: %s\n' "$CUTLINE"; grep -v '^# reviewed by' "$PIN"; } > "$S/cut.pin"
+tk cut TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/cut.pin" -- --flows "$P"
+[ "$RC" = 5 ] && has cut "[cut: 300 of ${#CUTLINE} characters shown]" && ! grep -q -E 'y{301}' "$S/cut.txt"; ok $? "f8-r8: a 400-character note is accepted and printed cut at 300 with '[cut: 300 of ${#CUTLINE} characters shown]' (got exit $RC)"
+# hidden characters through the whole take, in the name and in the note (each is exit 4, rule hidden character, and the output holds none of them)
+i=0
+for hl in "Pat Cl$(printf '\315\217')aude, $PD" "Pat Smith, $PD, ok$(printf '\357\270\217')" "$(printf '\343\205\244\343\205\244\343\205\244'), $PD" "Pat Smith, $PD, a$(printf '\342\200\250')b" "Pat $(printf '\314\201\314\201\314\201'), $PD" "Pat Smith$(printf '\341\205\237'), $PD"; do
+  i=$((i+1)); nm=hid$i; { printf '# reviewed by: %s\n' "$hl"; grep -v '^# reviewed by' "$PIN"; } > "$S/$nm.pin"
+  tk "$nm" TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/$nm.pin" -- --flows "$P"
+  [ "$RC" = 4 ] && has "$nm" "rule: hidden character" && ! LC_ALL=C grep -q -a -E $'\315\217|\357\270\217|\343\205\244|\342\200\250|\314\201|\341\205\237' "$S/$nm.txt"; ok $? "f8-r8 M2: hidden-character line #$i is exit 4 'rule: hidden character' and the output repeats none of the characters (got exit $RC)"
+done
+# m2: Possession is not the word session (word match, as the README says): accepted; Sessions keeps its own message
+{ echo "# reviewed by: Pat Possession, $PD"; grep -v '^# reviewed by' "$PIN"; } > "$S/poss.pin"
+tk poss TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/poss.pin" -- --flows "$P"
+[ "$RC" = 5 ] && ! has poss "NOT A PERSON" && ! has poss "not yet confirmed by the lead"; ok $? "f8-r8 m2: 'Pat Possession' is not read as the word session (exit 5 with the override) (got exit $RC)"
+# helper options
+[ "$(bash "$TAKE" --safe-text "a$(printf '\342\200\250')b$(printf '\033')c")" = "abc" ]; ok $? "f8-r8: --safe-text removes line separators and control characters"
+[ "$(bash "$TAKE" --safe-text "$(head -c 350 /dev/zero | tr '\0' z)")" = "$(head -c 300 /dev/zero | tr '\0' z) [cut: 300 of 350 characters shown]" ]; ok $? "f8-r8: --safe-text cuts at 300 characters and says the length"
+# README: a short blacklist, not a definition of a person; hidden-character and cut wording
+grep -q -i 'short blacklist' "$HERE/README.md" && grep -q -F 'cut at 300' "$HERE/README.md"; ok $? "f8-r8: the README says the list is a short blacklist and that the printed line is cut at 300 characters"
+! grep -q -i -E 'printed exactly as written|prints the reviewer line as written' "$HERE/README.md" "$TAKE"; ok $? "f8-r8 m4: neither the README nor the script says the reviewer line is printed 'exactly as written'"
 # B3: a would-be pass with a leaked override and the test flag is exit 5, never 0; a copy of the real checker given by TAKE_CHECK_CK is shown
 tk b3ck TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$LEADPIN" TAKE_CHECK_CK="$S/ck-copy.py" -- --flows "$P"
 [ "$RC" = 5 ] && has b3ck "ACTIVE ENVIRONMENT OVERRIDES: TAKE_CHECK_CK=$S/ck-copy.py" && has b3ck "a run that would pass exits 5, never 0" && grep -q '^FINAL: take_check exit status 5\.' "$S/b3ck.txt"; ok $? "B3: test flag plus a leaked TAKE_CHECK_CK (and the pin override) is exit 5 with the FINAL line saying 5, not exit 0 (got exit $RC)"
