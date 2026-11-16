@@ -1,4 +1,23 @@
 # REPORT from core-hardening (cloud to lead). Newest block on top, UTC and IST.
+FILE-INDEX: handover/core-hardening/REPORT.md | ORDER 002 | SETUP DONE on disk, skills not yet visible in this session
+
+## 2026-11-16 06:13 UTC / 11:43 IST - ORDER 002 SETUP RETRY
+Failures/gaps first:
+- The egm skills and egm:* agents are NOT in this running session's Skill/Agent lists (they are read at session start). A NEW session is needed before any EGM call. I did not run the dry run or any EGM skill.
+- Install warning from `claude plugin list`: "Default agents/ folder is ignored because the manifest sets 'agents'".
+- Patch script wrote opus to 6 files (3 skills x 2 plugin folders) and sonnet to 64; no `inherit` left.
+Done:
+- `claude plugin install egm@egm`: "Successfully installed plugin: egm@egm (scope: user)". Marketplace was already added (ORDER 001). Plugin list: egm@egm v0.1.1, scope user, enabled. Claude Code 2.1.325.
+- `python3 handover/tools/egm_model_patch.py`: "done: 70 file(s) changed in 2 plugin folder(s)".
+Proof `grep -rh "^model:" ~/.claude/plugins/*/egm* | sort | uniq -c`:
+```
+      6 model: claude-opus-5-5
+     64 model: claude-sonnet-5-5
+```
+7 egm skills on disk (each in 2 plugin folders): egm-bootstrap, egm-brainstorm, egm-draft, egm-drift-report, egm-resolve, egm-review-loop, egm-review.
+egm agents on disk: egm, egm-codebase-details, egm-comprehension, egm-design, egm-implementation-readiness, egm-inventive-catalyst, egm-structural, egm-style, egm-zoom-out (agent files); source agent files also bootstrap_orchestrator, synthesizer (no egm-synthesizer or egm-bootstrap-orchestrator file name found, check in new session).
+No work started, no agents run, no secrets, no spend, no merge.
+
 FILE-INDEX: handover/core-hardening/REPORT.md | ORDER 001 | BLOCKED
 
 ## 2026-11-16 06:09 UTC / 11:39 IST - ORDER 001 SETUP: BLOCKED at plugin install (stopped per step 5)
