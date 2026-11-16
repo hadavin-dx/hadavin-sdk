@@ -6,10 +6,12 @@ LANE_HEADS = ["Coverage", "Components", "Stores", "Workflows", "Workflow walk", 
               "Credentials", "Docs and tests and folders", "Findings", "Checkpoint"]
 KEYS = ["STORE", "LOG", "FILTER", "COUNTER", "RETRY", "NOTICE", "OTHER"]
 SECRETS = [r"AKIA[0-9A-Z]{16}", r"-----BEGIN [A-Z ]*PRIVATE KEY-----", r"ghp_[A-Za-z0-9]{36}",
-           r"xox[baprs]-[A-Za-z0-9-]{10,}", r"sk-[A-Za-z0-9_-]{20,}", r"github_pat_[A-Za-z0-9_]{20,}", r"gh[ours]_[A-Za-z0-9]{30,}",
+           r"xox[baprs]-[A-Za-z0-9-]{10,}", r"(?<![A-Za-z0-9])sk-[A-Za-z0-9_-]{20,}", r"github_pat_[A-Za-z0-9_]{20,}", r"gh[ours]_[A-Za-z0-9]{30,}",
            r"eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}", r"[Bb]earer [A-Za-z0-9._~+/=-]{20,}",
-           r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[a-z]{2,}"]
+           r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}"]
 ALLOWED = {"AKIAIOSFODNN7EXAMPLE", "noreply@anthropic.com"}
+# a hyphenated run of short lowercase words (for example a made-up identifier with hyphens) is an identifier, not a key
+SK_IDENT = re.compile(r"sk(?:-[a-z]{2,12}){2,}(?:-v\d+)?")
 STATUS = {"READ", "SKIMMED", "NOT-READ"}
 OUT_HEADS = {
     "MASTER-MAP.md": ["Components", "Stores", "Workflows", "Workflow walk", "Scripts", "Jobs", "Credentials",
@@ -126,11 +128,11 @@ def secrets(name, text):
     for pat in SECRETS:
         for m in re.finditer(pat, text):
             v = m.group(0)
-            if v in ALLOWED:
+            if v in ALLOWED or ("@" in v and v.lower() in {a for a in ALLOWED if "@" in a}):
                 continue
-            if "@" in v and re.search(r"@(?:[a-z0-9-]+\.)*(?:example\.(?:com|org|net|test)|invalid|test|localhost)$", v):
+            if "@" in v and re.search(r"@(?:[a-z0-9-]+\.)*(?:example\.(?:com|org|net|test)|invalid|test|localhost)$", v, re.I):
                 continue  # reserved made-up domains (RFC 2606)
-            if v.startswith("sk-") and sum(c.isupper() or c.isdigit() for c in v) < 6:
+            if v.startswith("sk-") and SK_IDENT.fullmatch(v):
                 continue  # an identifier such as sk-address-required-after-v2, not a key
             if True:
                 d.append(f"{name}: secret-like value of type {pat[:20]}")
@@ -152,13 +154,23 @@ def run(base):
                 defects += counts_consistent(t)
             if f in OUT_HEADS:
                 defects += empty_fields(f, t, OUT_HEADS[f])
-    skip = {os.path.realpath(os.path.join(base, "tests")), os.path.realpath(os.path.join(base, "tools"))}
     for root, dirs, files in os.walk(base):
-        dirs[:] = [d for d in dirs if os.path.realpath(os.path.join(root, d)) not in skip and d != "__pycache__"]
         for f in files:
-            if f.endswith((".md", ".tsv", ".json", ".patch", ".txt", ".py", ".sh", ".sql", ".yml", ".yaml", ".env")):
-                defects += secrets(os.path.relpath(os.path.join(root, f), base),
-                                   open(os.path.join(root, f), encoding="utf-8", errors="replace").read())
+            p = os.path.join(root, f)
+            rel = os.path.relpath(p, base)
+            try:
+                with open(p, "rb") as fh:
+                    raw = fh.read()
+            except OSError as e:
+                defects.append("%s: unreadable, not scanned (%s)" % (rel, e.__class__.__name__))
+                continue
+            if raw[:2] in (b"\xff\xfe", b"\xfe\xff"):
+                text = raw.decode("utf-16", errors="replace")
+            elif b"\0" in raw[:8192]:
+                continue  # binary file (for example .pyc): nothing to read as text
+            else:
+                text = raw.decode("utf-8", errors="replace")
+            defects += secrets(rel, text)
     return defects
 
 

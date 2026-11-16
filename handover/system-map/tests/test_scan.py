@@ -33,6 +33,36 @@ class Scan(unittest.TestCase):
         t = "## Coverage\n| path | bytes | status | note |\n|---|---|---|---|\n| a | 1 | MAYBE | |\n"
         self.assertTrue(so.coverage("L", t))
 
+    def test_lowercase_and_mixed_sk_keys_found(self):
+        self.assertTrue(so.secrets("f", "k=" + "sk-" + "abcdefghij" * 3))
+        self.assertTrue(so.secrets("f", "k=" + "sk-" + "aB" * 12))
+        self.assertTrue(so.secrets("f", "k=" + "sk-" + "proj-" + "abcdefghijklmnopqrstuvwx"))
+
+    def test_sk_identifier_and_inside_words_not_flagged(self):
+        self.assertEqual(so.secrets("f", "use " + "sk-address-required-after-v2" + " here"), [])
+        self.assertEqual(so.secrets("f", "the task-assignment-requirements-for-all-users list"), [])
+
+    def test_email_any_case_tld(self):
+        for tld in (".com", ".COM", ".Com"):
+            self.assertTrue(so.secrets("f", "who" + "@" + "corp" + tld), tld)
+        self.assertEqual(so.secrets("f", "who" + "@" + "Example" + ".COM"), [])
+
+    def test_run_scans_tools_tests_odd_extensions_and_skips_binary(self):
+        import tempfile
+        base = tempfile.mkdtemp()
+        os.makedirs(os.path.join(base, "work"))
+        fake = "AKIA" + "ABCDEFGHIJKLMNOP"
+        for rel in ("tools/x.py", "tests/y.py", "z.cfg", "sub/noext"):
+            os.makedirs(os.path.dirname(os.path.join(base, rel)), exist_ok=True)
+            with open(os.path.join(base, rel), "w") as fh:
+                fh.write("key " + fake + "\n")
+        with open(os.path.join(base, "bin.dat"), "wb") as fh:
+            fh.write(b"\0\0" + fake.encode())
+        out = "\n".join(so.run(base))
+        for rel in ("tools/x.py", "tests/y.py", "z.cfg", "sub/noext"):
+            self.assertIn(os.path.normpath(rel), out)
+        self.assertNotIn("bin.dat", out)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -21,7 +21,7 @@ class R460(unittest.TestCase):
         self.assertTrue(so.secrets("f", "t " + "github_pat_" + "A" * 30))
         self.assertTrue(so.secrets("f", "t " + "eyJ" + "a" * 20 + "." + "b" * 20 + "." + "c" * 20))
         self.assertTrue(so.secrets("f", "Authorization: Bearer " + "a" * 30))
-    def test_json_and_patch_files_scanned_but_tools_dir_skipped(self):
+    def test_json_patch_and_tools_files_all_scanned(self):
         d = tempfile.mkdtemp(); os.makedirs(os.path.join(d, "work"))
         os.makedirs(os.path.join(d, "flowcheck")); os.makedirs(os.path.join(d, "tools-notes")); os.makedirs(os.path.join(d, "tools"))
         bad = "k " + "sk-" + "A" * 30
@@ -31,7 +31,7 @@ class R460(unittest.TestCase):
         res = so.run(d)
         self.assertTrue(any("f.json" in x for x in res))
         self.assertTrue(any("tools-notes" in x for x in res))
-        self.assertFalse(any(x.startswith(os.path.join("tools", "t.py")) for x in res))
+        self.assertTrue(any(x.startswith(os.path.join("tools", "t.py")) for x in res))  # tools/ is scanned now
 
 
 if __name__ == "__main__":

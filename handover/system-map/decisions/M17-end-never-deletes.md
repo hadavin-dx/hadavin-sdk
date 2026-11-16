@@ -22,3 +22,9 @@ Files marked V5 are owned by core-hardening (this session does not edit them): V
 | LEAD-PAGE | 6 | "...asks you to confirm and archives its own contacts afterwards;" | "...asks you to confirm, and at `end` only closes the pause and lists leftover made-up contacts by lead key and contact id; the owner deletes them by hand;" |
 
 Open: the program itself (notice line, prompt) must change to match; no file in this checkout is that program, so who changes it is a question for the lead. Until it changes, the owner pages must not say the text above as fact about the program.
+
+## Corrections after a cite check (16 Nov, an independent read of every row)
+- Row V5 43-44: line 44 is really "7. After the run: G (only if it failed), H (watch the edited video), I (clean-up), J (post)." Quote it that way.
+- Row LEAD-PAGE: the "take script" text is on LEAD-PAGE.md line 9, not line 6.
+- Also still says "deleted" at `end` and is NOT yet in the table above (to be added to the same edit pass): V5 line 124 start of the warning ("closing the terminal, Ctrl-C or two wrong words in a row ENDS the pause and DELETES the contacts"); V5 line 127 second half ("a second wrong line also ends the pause and deletes the contacts. Closed input on the first prompt ends the pause at once"); V5 line 138 ("the number of contacts you deleted", a failed-run reply, fine if the owner deletes by hand); OWNER-RUN-DAY-CARD lines 25 and 27 (ends the pause "and delete the contacts"; "the program's own screen says archive where it means delete"; "if the HubSpot key used cannot delete contacts, the deletion can fail after the sends").
+- The OCC (clean-up card) row cites no old text and was not checked.

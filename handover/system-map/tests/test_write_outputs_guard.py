@@ -1,6 +1,8 @@
 import os, shutil, subprocess, sys, tempfile, unittest
 
 BASE = os.path.join(os.path.dirname(__file__), "..")
+sys.path.insert(0, os.path.join(BASE, "tools"))
+from safe_write import adopt
 
 
 class WriteOutputsGuard(unittest.TestCase):
@@ -24,12 +26,26 @@ class WriteOutputsGuard(unittest.TestCase):
         shutil.copytree(BASE, d, ignore=shutil.ignore_patterns(".git", "__pycache__", "archive"))
         run = lambda *a: subprocess.run([sys.executable, os.path.join(d, "tools", "write_outputs.py"), d, *a], capture_output=True, text=True)
         self.assertEqual(run("--force").returncode, 0)  # valid registry for both files
-        before = open(os.path.join(d, "SWEEP.md")).read()
-        with open(os.path.join(d, "ONE-PLACE-TABLE.md"), "a") as f:
+        sweep, table = os.path.join(d, "SWEEP.md"), os.path.join(d, "ONE-PLACE-TABLE.md")
+        marker = "STALE-MARKER-93"
+        self.assertNotIn(marker, open(sweep).read())
+        # control: an adopted file carrying the marker IS regenerated, so the marker can detect a rewrite
+        with open(sweep, "a") as f:
+            f.write("\n" + marker + "\n")
+        adopt(d, "SWEEP.md")
+        self.assertEqual(run().returncode, 0)
+        self.assertNotIn(marker, open(sweep).read())
+        # real check: SWEEP.md is adopted and carries the marker, ONE-PLACE-TABLE.md is hand-edited
+        with open(sweep, "a") as f:
+            f.write("\n" + marker + "\n")
+        adopt(d, "SWEEP.md")
+        with open(table, "a") as f:
             f.write("\nHAND-EDIT-92\n")
         r = run()
         self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
-        self.assertEqual(open(os.path.join(d, "SWEEP.md")).read(), before)
+        self.assertIn("REFUSED: ONE-PLACE-TABLE.md", r.stdout + r.stderr)
+        self.assertIn(marker, open(sweep).read())  # SWEEP.md was not rewritten
+        self.assertIn("HAND-EDIT-92", open(table).read())
 
 
 if __name__ == "__main__":

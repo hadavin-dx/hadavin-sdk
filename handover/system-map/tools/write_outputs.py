@@ -347,6 +347,9 @@ op += ["## Seed check against DECISION", "", "| seed row | state in repo | statu
  "| HubSpot and Gmail | client systems; only a fake CRM in the rig; real run NOT VISIBLE | CONSISTENT with DECISION (line 11); real run UNVERIFIED | `handover/demo3/kill/fakes.py:103 \"hit = next((r for r in rows.values()\"` |", "",
  "## Not visible", "", "| copy | what | verdict | exception | proposal | studio head yes needed | state vs DECISION | reason | evidence |", "|---|---|---|---|---|---|---|---|---|",
  "| TAKE-REPO | duplicate-proof-lead-desk | N/A: not visible | none | N/A: not visible | no | N/A: not visible | not visible, the laptop lead covers it locally; content not guessed | NOT VISIBLE: duplicate-proof-lead-desk |", ""]
+for _n in ("SWEEP.md", "ONE-PLACE-TABLE.md"):  # check both before writing either: all or nothing
+    if refused(base, _n, OVERWRITE_OK):
+        print("REFUSED: %s was edited by hand or has no record of being generated; use --force to overwrite" % _n); sys.exit(1)
 if not safe_write(base, "SWEEP.md", SWEEP_TEXT, OVERWRITE_OK):
     print("REFUSED: SWEEP.md was edited by hand or has no record of being generated; use --force to overwrite"); sys.exit(1)
 if not safe_write(base, "ONE-PLACE-TABLE.md", "\n".join(op), OVERWRITE_OK):
