@@ -9,7 +9,7 @@
 | studio head | the human who runs the studio (whether this is the owner is NOT SETTLED) | human |
 | owner | the human at the laptop | human |
 
-## Terms whose meaning is not recorded (ask the lead session)
+## Unknown: do not use in new text (meaning not recorded; ask the lead session)
 D-04, D-05, F-008, LP-n, GO-1, k1b, KeyOk, Claim, WARDEN, film-v5, Mode A, stage.journal, job keys (STORE, RETRY, NOTICE, FILTER, COUNTER, LOG, OTHER). Nobody has filled these in yet.
 
 
