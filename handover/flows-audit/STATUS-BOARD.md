@@ -1,17 +1,17 @@
-UPDATED_UTC: 2026-11-16T13:29:35Z
+UPDATED_UTC: 2026-11-16T13:35:49Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
-ITEMS_OPEN: 8
-PERCENT: 94
+ITEMS_OPEN: 30
+PERCENT: 80
 AGENTS_RUNNING: 6
-CAPACITY: 2.11 load of 4 cores, mem 0/15 GB, RAM 998/16087 MB, disk 24G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 3.5G /tmp/claude-0 , agents 6 (light+heavy per list)
+CAPACITY: 0.36 load of 4 cores, mem 0/15 GB, RAM 940/16087 MB, disk 24G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 3.5G /tmp/claude-0 , agents 6 (light+heavy per list)
 INTERRUPTED: none
 FAILED: - F8 reviewer_ok accepted Pat O.L.L.M. (fix running a2b5712); shellcheck not installed
-NEXT: collect a9f42a4, aeff058, a27d393, af8079a, adc6253, a2c5368; verify each; then reviews of fixed files and citation fix pass
-PUSHED_UTC: 2026-11-16T13:29:35Z
+NEXT: claims fixer, drift refresh, r12 reviews, F8 r8, REVIEW r15
+PUSHED_UTC: 2026-11-16T13:35:49Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -30,20 +30,20 @@ PUSHED_UTC: 2026-11-16T13:29:35Z
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | state | produced so far |
 |---|---|---|---|---|---|---|---|
-| a9f42a4 | reviewer | sonnet | REVIEW.md r15 design review (uncapped) | 13:26Z | 13:40Z | running | pending |
-| aeff058 | reviewer | sonnet | REVIEW.md r15 cites and counts (uncapped) | 13:26Z | 13:40Z | running | pending |
-| a27d393 | evidence runner | sonnet | F8 r7 tests, hostile inputs, run_all.sh exit | 13:26Z | 13:45Z | running | pending |
-| af8079a | reviewer | sonnet | F8 r7 fresh review (uncapped) | 13:26Z | 13:40Z | running | pending |
-| adc6253 | fixer | sonnet | TAKE-CHECKLIST/FIX-PLAN r11 fixes (10 Majors) | 13:28Z | 13:50Z | running | pending |
-| a2c5368 | fixer | sonnet | RUNBOOK r11 fixes (3 Majors + skeleton) | 13:29Z | 13:50Z | running | pending |
-| (7 of 8) | - | - | 8th lane waits: citation fix pass and drift-007 refresh need QUESTIONS, RUNBOOK, TAKE-CHECKLIST files to settle (fixers adc6253, a2c5368 editing); QUESTIONS r14 review can start after them; no lead answer needed | - | ~13:50Z | waiting | - |
+| a83d02c | fixer | sonnet | F8 take_check.sh reviewer_ok round 8 (uncapped) | 13:31Z | 14:15Z | running | edits flow-check files, log fix-f8-r8.md |
+| ac31c40 | fixer | sonnet | REVIEW.md round 15 (core patches, uncapped) | 13:32Z | 14:15Z | running | edits REVIEW.md, log fix-review12.md |
+| ac58611 | reviewer | sonnet | r12 consistency review RUNBOOK/TAKE-CHECKLIST/FIX-PLAN | 13:34Z | 13:55Z | running | findings inline |
+| a57e58c | reviewer | sonnet | r12 stranger read FIX-PLAN/TAKE-CHECKLIST | 13:34Z | 13:55Z | running | findings inline |
+| a7b9b54 | fixer | sonnet | CLAIMS-TABLE r5 Majors | 13:35Z | 14:10Z | running | edits CLAIMS-TABLE.md, log fix-claims5.md |
+| a05ea97 | drift | sonnet | refresh drift-007 | 13:36Z | 13:55Z | running | writes reviews/drift-007.md |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
-1. Fresh stranger read of QUESTIONS after round 7 (Blockers/Majors only) once the owner-part fixer is done
-2. Citation lane on RUNBOOK/TAKE-CHECKLIST numbers and cites after r6 reads
-3. Post-twice script and run_real_check_n8n.py read-only review (waits: lead puts them on a branch, Q29-4)
-4. Evidence runner + review of F8 round 4 after fixer
-5. Drift report refresh reviews/drift-007.md before FINAL
+1. Facts + second-angle review of CLAIMS-TABLE after fixer a7b9b54 (needs its report)
+2. Citation-fix pass for 41 MISMATCH rows (waits for QUESTIONS/RUNBOOK/TC to settle)
+3. Evidence runner + fresh F8 review after a83d02c (needs its report)
+4. Round 16 REVIEW.md review after ac31c40 (needs its report)
+5. Post-twice script / run_real_check_n8n.py review (needs lead to place files on a branch, Q29-4)
+Missing lanes (2 of 8): rows 1-5 above each wait on a running agent or a lead answer.
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
