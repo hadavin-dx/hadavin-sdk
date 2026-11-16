@@ -338,3 +338,72 @@ rc=1
 scratch folder: /tmp/tmp.ZKtnFhuozL (left in place; nothing in the repository was changed)
 ```
 Fresh chain re-run (fix pass 2): fixes, repin-v6, gate-rows-v3 each dry run then apply, rc 0 each, shas 53f1670383a2c728, 39af84aec78b650f, 515cf4704ebba5bd; then apply-v10-after-chain.py: 'failing []', rc 0, sha256 28f92c5d1211207cce0222c87bb7a6e6dc8e39a21a659624a1a7fe9cc32992ce, 780 lines; A6 counts 24 10 2 1; UNVERIFIED numbers 1 to 20, 0 duplicates; input plan sha unchanged (67a0a195537de875). Tested repin patches on the plan after fixes: repin 4 0 2 0, repin-v2 24 0 2 1 (wrong), repin-v3 to v5 24 10 2 1 with other shas, v6 24 10 2 1 (39af84aec78b650f). Banned-word list (10 entries, read from tests/test_no_reference_material.py): 0 hits in the changed files and the final plan.
+
+## Part G (fix pass 3, builder run, NOT independent evidence): hardened apply-v10-after-chain.py, 17 cases
+Command: `bash test-apply-v10-after-chain.sh <plan after gate-rows-v3>` (plan rebuilt from the original by the three patches, sha 515cf4704ebba5bd). Decisions: a RENUMBER with `to=15` is accepted (same sha 28f92c5d, T14); `shift = 4` with spaces, `shift=x`, a deleted line, `shift=0` and an edit list without 27 are refused. Raw output, rc of the script shown below the block:
+```
+515cf4704ebba5bd
+## T1 good input
+29 old edits; corrected or added: ['2', '4', '5', '18', '19', '20', '21', '29', '30']
+failing []
+written /tmp/tmp.09o5QykTbG/out1.md 28f92c5d1211207c 780 lines
+rc=0 out_exists=yes sha=28f92c5d1211207c
+T1 full sha equals expected: YES lines=780
+## T2 wrong input sha (one byte appended)
+REFUSED: input sha256 is a908e9862ea369c9, expected 515cf4704ebba5bd (the plan after fixes, repin-v6 and gate-rows-v3)
+rc=1 out_exists=no
+## T3 wrong input: only the first 100 lines of the chained plan
+REFUSED: input sha256 is 82dbe0f86a00b3a2, expected 515cf4704ebba5bd (the plan after fixes, repin-v6 and gate-rows-v3)
+rc=1 out_exists=no
+## T4 equal paths
+REFUSED: input and output are the same path
+rc=1 sha_after=515cf4704ebba5bd
+## T5 same file by another name (symlink)
+REFUSED: input and output are the same path
+rc=1 sha_after=515cf4704ebba5bd
+## T6 output already exists
+REFUSED: output path already exists or is a symlink (this script never overwrites and never follows a link)
+rc=1 content=keep
+## T7 failed edit (old text of edit 3 damaged in a scratch copy of the edit list)
+damaged edit 3 old text
+REFUSED: 1 edit(s) did not find their old text exactly once; nothing written
+29 old edits; corrected or added: ['2', '4', '5', '18', '19', '20', '21', '29', '30']
+failing [('3', 0)]
+rc=1 out_exists=no
+## T8 missing output folder
+REFUSED: output folder does not exist
+rc=1
+## T9 wrong argument count
+REFUSED: usage: apply-v10-after-chain.py <chained plan> <new output file>
+rc=1
+## T10 RENUMBER line deleted (must refuse)
+REFUSED: corrections file must hold exactly one RENUMBER line, found 0
+rc=1 out_exists=no sha=
+## T11 shift=0 (must refuse: edits 8, 13, 27 would not change)
+REFUSED: RENUMBER changed nothing in edit(s) ['8', '13', '27'] (shift 0 or from/to range wrong); nothing written
+29 old edits; corrected or added: ['2', '4', '5', '18', '19', '20', '21', '29', '30']
+failing []
+rc=1 out_exists=no sha=
+## T12 'shift = 4' with spaces (malformed, must refuse)
+REFUSED: RENUMBER line is malformed: 'RENUMBER edits=8,13,27 from=13 to=16 shift = 4'
+rc=1 out_exists=no sha=
+## T13 shift=4 text with a non-integer shift=x (must refuse)
+REFUSED: RENUMBER line is malformed: 'RENUMBER edits=8,13,27 from=13 to=16 shift=x'
+rc=1 out_exists=no sha=
+## T14 to=15 (decision: accepted, item 16 is not referenced by edits 8, 13, 27, so the sha must stay 28f92c5d)
+29 old edits; corrected or added: ['2', '4', '5', '18', '19', '20', '21', '29', '30']
+failing []
+written /tmp/tmp.09o5QykTbG/rn-to15/out.md 28f92c5d1211207c 780 lines
+rc=0 out_exists=yes sha=28f92c5d1211207c
+## T15 shift=4 but edit list reduced to 8,13 (must refuse: 27 missing)
+REFUSED: RENUMBER must list edits 8, 13 and 27
+rc=1 out_exists=no sha=
+## T16 dangling symlink as output (must refuse, nothing created at the target)
+REFUSED: output path already exists or is a symlink (this script never overwrites and never follows a link)
+rc=1 target_exists=no
+## T17 symlink to an existing file as output (must refuse, file untouched)
+REFUSED: output path already exists or is a symlink (this script never overwrites and never follows a link)
+rc=1 content=keep2
+scratch folder: /tmp/tmp.09o5QykTbG (left in place; nothing in the repository was changed)
+```
+Script exit code of the test run: 0 (the test script itself always ends 0; the per-case rc= lines above are the results).

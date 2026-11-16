@@ -1,4 +1,4 @@
-# PLAN-CHAIN: the one order in which the plan is patched (2026-11-16, chain builder; fixes finding 1 of `../cross-read/one-place-sweep-r2.md`; fix pass 2 after `review-chain-r1.md`: final sha is now `28f92c5d1211207c`, see section 6)
+# PLAN-CHAIN: the one order in which the plan is patched (2026-11-16, chain builder; fixes finding 1 of `../cross-read/one-place-sweep-r2.md`; fix pass 2 after `review-chain-r1.md`: final sha is now `28f92c5d1211207c`, see section 6; fix pass 3 after `review-chain-r2.md` and `evidence-chain-r2.md`: script and test hardened, section 5 and 6)
 Words: "the plan" = `inputs/plan-wp6-resmoke-v5.md` (never edited; every step below ran on a copy). "Chain" = the patch steps in order. "Edit list" = `plan-v10-real-v5-edits.md` (text for the lead; 29 edits).
 
 ## 0. What failed, what is uncertain, what I did not check (read first)
@@ -52,9 +52,9 @@ sha256sum inputs/plan-wp6-resmoke-v5.md        # must start 515cf4704ebba5bd
 python3 <path>/core-hardening/paste-check/apply-v10-after-chain.py inputs/plan-wp6-resmoke-v5.md "$W/real-v5-plan.md"   # failing []
 sha256sum "$W/real-v5-plan.md"                  # must start 28f92c5d1211207c
 ```
-The script reads `plan-v10-real-v5-edits.md` and `plan-v10-corrections-after-chain.md` from its own folder; it writes only to the second argument. It is a copy of the logic of `apply-v10.py` with the corrections table added; I did not change `apply-v10.py`. Fix pass 2 (review M2): the script now refuses an input whose sha256 is not the gate-rows-v3 result (`515cf4704ebba5bd...`), refuses equal or same-file paths (also by symlink), refuses an output that already exists, writes only when every edit found its old text exactly once, and exits 1 on any refusal or failure (0 only when written). Test on scratch copies: `test-apply-v10-after-chain.sh`, output in `evidence-chain-r1.md` Part F.
+The script reads `plan-v10-real-v5-edits.md` and `plan-v10-corrections-after-chain.md` from its own folder; it writes only to the second argument. It is a copy of the logic of `apply-v10.py` with the corrections table added; I did not change `apply-v10.py`. Fix pass 2 (review M2): the script now refuses an input whose sha256 is not the gate-rows-v3 result (`515cf4704ebba5bd...`), refuses equal or same-file paths (also by symlink), refuses an output that already exists, writes only when every edit found its old text exactly once, and exits 1 on any refusal or failure (0 only when written). Fix pass 3 (review r2 N1, N2; evidence r2 failures 3 and 4): the script also refuses a missing, repeated or malformed `RENUMBER` line (an integer `shift`, `from`, `to`, edit list 8, 13, 27 required), refuses when any of edits 8, 13, 27 is not changed by the renumbering, refuses any symlink as output (also a dangling one) and creates the output with exclusive create (mode `x`, no follow), and reads the edit files as UTF-8. A `RENUMBER` with `to=15` instead of `16` is accepted and gives the same sha (item 16 is not referenced by edits 8, 13, 27); that is a decision, tested as T14. Test on scratch copies: `test-apply-v10-after-chain.sh` (17 cases, T1 compares the full sha to `28f92c5d...`); builder runs: `evidence-chain-r1.md` Part F (9 cases, older script) and Part G (17 cases, this script). Part G is the builder's own run, not independent evidence.
 
-## 6. Final numbers of the chain (fix pass 2, recorded 2026-11-16)
+## 6. Final numbers of the chain (fix pass 2, recorded 2026-11-16; unchanged by fix pass 3, re-run in `evidence-chain-r1.md` Part G)
 | What | Value |
 |---|---|
 | Final plan sha256 | `28f92c5d1211207cce0222c87bb7a6e6dc8e39a21a659624a1a7fe9cc32992ce` |
@@ -62,4 +62,5 @@ The script reads `plan-v10-real-v5-edits.md` and `plan-v10-corrections-after-cha
 | Checklist A6 counts (`<FINAL[-]`, `LEAD-FILL [0-9]`, HEAD_PIN lines, RE-PIN line) | 24 10 2 1 |
 | Steps, floor, unrun files, section 7 rows | 156, 176 min = 2 h 56 min, 78, 24 |
 | UNVERIFIED items | numbered 1 to 20, each once (no duplicate number) |
-**For the lead and the builder who owns `LEAD-CHECKLIST-v5.md`:** line 64 of that file names `b0caeb84c5a28a94` as the expected sha256 for CHAIN=4; it must now read `28f92c5d1211207c` (I may not edit that file). Not checked: the plan itself, any paste in it, n8n, Git Bash.
+| Marker lines (`grep -n -o 'LEAD-FILL [0-9][0-9a-z]*'`, checklist A7), CHAIN=4 | 17 marker texts on 10 lines: 2, 3, 4, 137, 270, 287, 509, 510, 774, 775 (the checklist says 777 and 778 for the last two; those are wrong by 3, `evidence-chain-r2.md` F1, re-checked by me on the final plan) |
+**For the lead and the builder who owns `LEAD-CHECKLIST-v5.md`:** line 64 of that file names `b0caeb84c5a28a94` as the expected sha256 for CHAIN=4; it must now read `28f92c5d1211207c`, and line 66 (A7) must say 774 and 775, not 777 and 778, for CHAIN=4 (I may not edit that file). Not checked: the plan itself, any paste in it, n8n, Git Bash.
