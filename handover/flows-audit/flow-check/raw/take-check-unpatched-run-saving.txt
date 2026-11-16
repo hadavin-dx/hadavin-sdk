@@ -1,5 +1,5 @@
 === NOTHING RAN IN n8n. Import of these files into n8n was never tried. ===
-OVERRIDES: none
+ACTIVE ENVIRONMENT OVERRIDES: TAKE_CHECK_WARN_PIN=/tmp/claude-0/-home-user/9d809a30-0790-5792-93c1-8c5abd22e849/scratchpad/fin/tc/test-lead.pin (test flag TAKE_CHECK_TEST=1 is set: this is a test run, not a take check)
 Flows folder checked: demo/n8n-flows-real-v5
 sha256 of the four flow files checked (compare with the sha written down at re-pin; it is the sha256 of the four lines below, without the two leading spaces):
   combined: b967e9d7cf2f4c636dda1f6d56cd9087fd61af1465a087c157ed79803649acb9
@@ -7,6 +7,7 @@ sha256 of the four flow files checked (compare with the sha written down at re-p
   305fbbf51279fae303d72f24d4addc15d549975004b6c303db03ff00636544de  mf-hook.json
   03c566bba549524b7bed0e787fdd46c4a01653450ef97691d14f4614357b0759  mf-recovery.json
   b3277363ae04b365459d902e5b5be099f1957126e3d48dbe42c47332cf53ff36  mf-sub-crm-mail.json
+  other *.json files in the folder (also read by this script, sha256 taken too): 0
 === READ THIS BLOCK BEFORE ANYTHING ELSE ===
 --- (1) The lead table and the column check ---
 Table definition used for the column check: demo/n8n-flows-v4/mf_leads.sql (the take needs demo/n8n-flows-v4/mf_leads.sql, with the four alert columns, not the older one in demo/n8n-flows).
@@ -65,7 +66,8 @@ STEPS THAT READ ENVIRONMENT VARIABLES (2):
 If n8n on the filming machine blocks environment-variable access inside steps, those steps stop working. No file check can see that setting. To see which steps would break, run the checker with --block-env-access (exit 1 expected today). exit 0 does NOT mean authentication was checked.
 --- (6) Checker result and the WARN baseline ---
 RESULT: 0 FAIL, 23 WARN. WARN lines that rest on an n8n rule nobody verified: 2.
-Pinned WARN lines: 22 (pin dated 2026-11-16, reviewed by: flows-audit session, 2026-11-16, content read by that session only, lead to confirm, sha256 378e11212191edcb...). They stand for KNOWN DEFECTS and open decisions that a person read and accepted (for example: a missing answer to the caller when a step fails, steps that turn an error into normal-looking data, IF branches that lead nowhere, ids still to be filled). They are NOT fixed; exit 0 hides none of them.
+Pinned WARN lines: 22 (pin dated 2026-11-16, sha256 378e11212191edcb...). (this script cannot tell who really read the lines; the reviewer line is printed exactly as written in the pin file) reviewed by (as written in the pin): stand-in line written by run_all.sh for its own test runs, 2026-11-16
+The pinned lines stand for KNOWN DEFECTS and open decisions (for example: a missing answer to the caller when a step fails, steps that turn an error into normal-looking data, IF branches that lead nowhere, ids still to be filled). They are NOT fixed; exit 0 hides none of them. Only the reviewer line above says who, if anyone, read them.
 !!! THE WARN SET CHANGED against take-warns.pin (+ new, - gone). Read each line; if all are intended, write a NEW pin file with: bash take_check.sh --write-warn-pin NEWFILE (the run then exits 4 on purpose; install the file by hand, see README). This script exits 4.
   - WARN mf-form.json patch F-002 (Claim step: alwaysOutputData/onError) is UNPROVEN until a test run in n8n shows a repeated lead key still gets its answer
   - WARN mf-form.json webhook Receive: REPLY GAP: if ['RunSub', 'Stored'] fails the run stops and the caller gets no answer (error path has no reply; read from the file, n8n not run)
@@ -183,4 +185,4 @@ Known open problems: 17
 Not proven: that n8n accepts these files on import; what n8n really does when a step fails (for example whether a repeated lead key still gets its answer, and whether a failed step reaches the failure line: only a test run in n8n can show it); whether the SQL inside the postgres nodes is correct (only the column names are compared, and only with --ddl); who calls a web address, whether the flow is active, and test versus production web address; expression syntax beyond node names; secrets in a shape this scan does not list; every rule marked 'n8n rule UNVERIFIED' (webhook authentication values, credential kinds, retry limits, onError values, position of the error output, default responseMode, duplicate method+path or webhookId).
 Passing this check does NOT mean the flows are ready to film.
 Open items counted: checker known open problems 17 + psql gate 1 + problems of this script 4 (entry flows without the key check: 2, counted inside the problems).
-FINAL: take_check exit status 4. Flow files sha256 (four files, combined): b967e9d7cf2f4c636dda1f6d56cd9087fd61af1465a087c157ed79803649acb9. RESULT: 0 FAIL, 23 WARN. 22 pinned WARN lines stand for known defects that are not fixed. OVERRIDES: none. exit 0 = no definite fault in the files; NOTHING ran in n8n; open items: 22. (1 = fault in a file, 4 = table check missing or failed, or a check of this script failed.) This is not a pass for filming.
+FINAL: take_check exit status 4. Flow files sha256 (four files, combined): b967e9d7cf2f4c636dda1f6d56cd9087fd61af1465a087c157ed79803649acb9. RESULT: 0 FAIL, 23 WARN. 22 pinned WARN lines stand for known defects that are not fixed. ACTIVE ENVIRONMENT OVERRIDES: TAKE_CHECK_WARN_PIN=/tmp/claude-0/-home-user/9d809a30-0790-5792-93c1-8c5abd22e849/scratchpad/fin/tc/test-lead.pin (test flag TAKE_CHECK_TEST=1 is set: this is a test run, not a take check). exit 0 = no definite fault in the files; NOTHING ran in n8n; open items: 22. (1 = fault in a file, 4 = table check missing or failed, or a check of this script failed.) This is not a pass for filming.

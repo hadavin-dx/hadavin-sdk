@@ -22,3 +22,4 @@ ok   M-1: the output does not say 'deleted at clean-up'
 ok   M1: TAKE_CHECK_WARN_PIN without the test flag is exit 4 and is named in the top block and the FINAL line (got exit 4)
 ok   M1: TAKE_CHECK_FLOWS without the test flag is exit 4 and is printed (got exit 4)
 ok   M1: TAKE_CHECK_DDL without the test flag is exit 4 and is printed (got exit 4)
+ok   M1: TAKE_CHECK_CK without the test flag is exit 4 and is printed (got exit 4)
