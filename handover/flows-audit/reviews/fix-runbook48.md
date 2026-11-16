@@ -37,8 +37,8 @@
 
 ## Matching changes needed in other files (not edited; the lead or the owner of each file does them)
 - FIX-PLAN.md line 24 cites "RUNBOOK step 24 and 16.7" for the start-state gate: it is now 16.5.
-- TAKE-CHECKLIST.md: the contact total and the Tuesday control wording (Inputs list, Step D, check 5b) should say 12 and keysave word `19t`; TAKE-CHECKLIST lines 170, 206 cite step 16.6 (still the refused second start, valid) and "step 16 (1)" (valid in meaning).
-- QUESTIONS.md is append only: Q31 items 25, 50, 55 and 87 may be appended with the new due times (control command needed Tue about 09:29Z (14:59 IST); post-twice script Tue 09:00Z (14:30 IST)).
+- TAKE-CHECKLIST.md: the contact total and the Tuesday control wording (Inputs list, Step D, check 5b) should say 12 and keysave word `19t`; Citations of step 16.6 (still the refused second start) stay valid; line numbers not re-checked.
+- QUESTIONS.md is append only: Q31 items 25, 50, 55 and 70 may be appended with the new due times (control command needed Tue about 09:29Z (14:59 IST); post-twice script Tue 09:00Z (14:30 IST)).
 - OWNER-STEPS-q16-rows.md: one message per contact vs two batch messages (I43) and 12 contacts.
 
 ## Raw tool output (run from handover/flows-audit after the edits)
@@ -50,3 +50,4 @@ check_secrets: PASS 0 hits in 2918 files
 check_counts: PASS 52 files / 655 nodes
 RUNBOOK.md fences 2 bad 0
 ```
+- Note: the file counts in the tool lines differ between two runs (1043 then 1044 formatted files) because files were added by someone else while I worked; both runs passed.
