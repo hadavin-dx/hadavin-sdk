@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T17:34:42Z
+UPDATED_UTC: 2026-11-16T17:38:35Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -6,12 +6,12 @@ BOOT_ID: e78580c0
 ITEMS_TOTAL: 10
 ITEMS_OPEN: 30
 PERCENT: 70
-AGENTS_RUNNING: 8
-CAPACITY: 5.02 load of 4 cores, mem 1/15 GB, RAM 1382/16087 MB, disk 12G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 13G /tmp/claude-0 , agents 8 (light+heavy per list)
+AGENTS_RUNNING: 7
+CAPACITY: 3.10 load of 4 cores, mem 1/15 GB, RAM 1495/16087 MB, disk 11G free of 252G, top3 522M /tmp/tmp.4gOIkjhGSB 603M /tmp/tmp.iOksNU37hQ 13G /tmp/claude-0 , agents 7 (light+heavy per list)
 INTERRUPTED: none
 FAILED: none (F8 run_all.sh intermittent exit 1 is an evidence finding: 3 of 6 plain runs failed, cause unknown, fixer acf8ab59 on it; ruff format --check passes 741 files)
-NEXT: verify fixer outputs as they land; fresh readers next
-PUSHED_UTC: 2026-11-16T17:34:42Z
+NEXT: save reports, verify fixers, fresh readers
+PUSHED_UTC: 2026-11-16T17:38:35Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -31,20 +31,19 @@ PUSHED_UTC: 2026-11-16T17:34:42Z
 | id | role | model | what it does | started UTC | expected end UTC | state | produced so far |
 |---|---|---|---|---|---|---|---|
 | acf8ab59 | F8 flow-check r11 fixer | sonnet | fix flow-check (uncapped) | 15:50Z | 17:50Z | running | run_all.sh intermittent exit 1, cause unknown |
-| afb92136 | REVIEW.md r39 fixer | sonnet | 1 Blocker + 29 Majors from design r38 and reader r38 (uncapped) | 17:24Z | 17:50Z | running | editing REVIEW.md |
-| a8762897 | Q31 r25 fixer | sonnet | 11 Majors from reader r24 + items 113-117 | 17:27Z | 17:45Z | running | editing QUESTIONS.md |
-| a7e25c30 | patch-copies r15 fixer | sonnet | 1 + 11 Majors, two reports (uncapped) | 17:31Z | 17:50Z | running | editing README + DEAD-MAN-CHECK |
-| aa94dee5 | plan-files r33 stranger read | sonnet | RUNBOOK 1-68/227-end, FIX-PLAN 73-201, TAKE-CHECKLIST 88-446 | 17:31Z | 17:45Z | running | reading |
-| ab23e14c | plan-files r33 shell check | sonnet | commands in TAKE-CHECKLIST/FIX-PLAN, second angle | 17:31Z | 17:45Z | running | reading |
-| a7210dc0 | FINDINGS/LEDGER r19 stranger read | sonnet | 45 rows as a doer | 17:32Z | 17:45Z | running | reading |
-| a18fc902 | RW/CT r32 stranger read | sonnet | RW 1-321/452-end, CT 468-629/880-end | 17:33Z | 17:47Z | running | reading |
+| a7e25c30 | patch-copies r15 fixer | sonnet | README/DEAD-MAN-CHECK Majors (uncapped) | 17:15Z | 17:50Z | running | editing |
+| a5856771 | FINDINGS/LEDGER r19 fixer | sonnet | r19 findings + F-003 cite :51 | 17:20Z | 17:50Z | running | editing |
+| a8ff9e50 | REVIEW.md r40 fixer | sonnet | r34 reports, leftovers (uncapped) | 17:30Z | 18:00Z | running | editing REVIEW.md |
+| a0aa4509 | Q31 r26 stranger read | sonnet | read QUESTIONS.md | 17:28Z | 17:45Z | running | reading |
+| a4f7b824 | plan-files r33 fixer | sonnet | B1 receipt + 12 Majors + shell guards | 17:38Z | 18:10Z | running | editing RUNBOOK/FIX-PLAN/TAKE-CHECKLIST |
+| ae6343b9 | RW/CT r32 fixer | sonnet | 2 Blockers + 10 Majors | 17:38Z | 18:05Z | running | editing RW/CT |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
-1. FINDINGS/LEDGER r19 fixer after stranger read (batch with evidence slip: F-003 cite :50 -> :51)
-2. Plan-files r33 fixer after both reports land
-3. Q31 r25: verify, then fresh reader; add NQ from RW/CT r31 (Q-new-1 CrmUpsert login) and plan-files r32 (SHA_R20-23 blocks step 1?; HubSpot permission answer time)
-4. REVIEW.md r39 verify (count_review 28/4/13/11, 25/3), fix patch-copies cites by heading, citation checker, fresh design/reader
-5. F8 r11 report then evidence runner alone plus uncapped reviews
+1. Q31 fixer after r26 read (Q-new-1, SHA_R20-23, HubSpot answer time)
+2. Fresh readers for plan-files, RW/CT after fixers
+3. REVIEW.md r40 verify (count_review 28/4/13/11), citation checker
+4. patch-copies r16 readers after r15 fixer
+5. F8 r11 report then evidence runner alone
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
