@@ -1,13 +1,13 @@
-UPDATED_UTC: 2026-11-16T10:33:27Z
+UPDATED_UTC: 2026-11-16T10:34:42Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
 ITEMS_OPEN: 6
-PERCENT: 71
-AGENTS_RUNNING: 5
-CAPACITY: 1.06 load of 4 cores, mem 0/15 GB, RAM 860/16087 MB, disk 27G free of 252G, top3 564M /tmp/claude-0 649M /tmp/pytest-of-root 871M /tmp/f3m , agents 5 (light+heavy per list)
+PERCENT: 72
+AGENTS_RUNNING: 6
+CAPACITY: 1.15 load of 4 cores, mem 0/15 GB, RAM 908/16087 MB, disk 27G free of 252G, top3 569M /tmp/claude-0 649M /tmp/pytest-of-root 871M /tmp/f3m , agents 6 (light+heavy per list)
 INTERRUPTED: none
 FAILED: ROLES: PARKED by lead (client build, after video, no new lanes). Script r6: independent rerun 71 tests OK, gate rc 0, but 7 of 15 random mutants survive (lines 141,145,147,280,358,371,417); not fixed because parked; v4 doc security Blocker (Part C unguarded) unfixed
 claims: r5 counts independently rerun and match (113/69/48/28/69=327, 79 rows); BUT 37 Table 2 rows (41-77) have no LIVE/OUT tag; example.test vs example.com rows 2 and 5 rest on OWNER-STEPS v3 only; row 33 archive step unproven; 2 wrong cites (A-097, A-068); r6 fix pending (tags, desk-repo traces, cites)
@@ -27,10 +27,11 @@ F8 r4 independent evidence: gates rc 0 (with repo config), 577/0/58 on py3.11/3.
 Q15 answered by lead and applied to CLAIMS-TABLE (rows 14-15 OUT, 16-17 LIVE, no numbers on a card); F5 checker PASS after; but F-003 patch closing card is 4 lines vs the lead's one line: fix after patch reviews land
 Q13 answered by lead (take uses run_real_check_n8n.py, cleanup OFF, owner deletes leftovers by hand); take scripts are not in this repo so the claim stays 'lead verifies at re-pin'; claims fixer applying
 decisions r2 fixer done (own report: 67 edits, 45=8/8/29 as rated, every scene 5-11 / 60.1 text carries a cut marker); NOT done: M4 re-rating and M8 scene 4 caption wait for lead (Q14); VIDEO-RUNSHEET still has scenes 5-11 (lead applies); independent evidence running
-patches r1 reviews: wording read 2 Blockers + 12 Majors (not ready to read aloud: unbacked retention line, 45+30 s bound, undefined words, card too long vs Q15 one line), facts read 0 Blocker + 6 Majors (patched run sheet still contradicts itself: scenes 5-11 rows, 355 s, example.test, execution list empty, statement 20 numbers); r2 fixer running
 decisions r2 evidence: 25 unmarked phrase hits (film-v5 25, one database 9, approval 11, audit trail 8, 61.9 at SCENE-FLOW-MAP:40 = open Q14/M8); BEFORE measured on parent of a bundled commit; edit lists not compared line by line
-NEXT: F3 r7, F8 r5, patches r2, Q16 fixers; claims reread
-PUSHED_UTC: 2026-11-16T10:33:27Z
+patches r2 fixer: not decided: card says 'processed once' (lead's Q15 wording) vs reviewers' 'handled once'; rows 5-11 moved to LATER VIDEO section, not deleted; statements 12/19 still carry 59.6 s and 120 s (not in video); hunk-by-hunk and V7 raw not checked; r2 reviews running
+claims reread: 9 Majors: CT and RW disagree on B-214, B-213, line 104, row 48 (take never deletes), B-017 verdict; 'lead' two meanings; 're-pin' undefined; RW counts 80/50 vs CT 83/51; r8 fixer running
+NEXT: F3 r7, F8 r5, patch r2 reviews, claims r8 fixers
+PUSHED_UTC: 2026-11-16T10:34:42Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -51,10 +52,10 @@ PUSHED_UTC: 2026-11-16T10:33:27Z
 |---|---|---|---|---|---|---|---|---|
 | f3ev6 | F3 r6 evidence runner | sonnet | independent rerun, mutants on new code, e2e | 10:21 | 10:51 | 5 | running | fill_flows/evidence-f3-r6.md |
 | f8fix5 | F8 r5 fixer | sonnet | 4 Majors of owner-morning review (placeholders hidden, wrong table SQL, unpatched files, --fail-unverified) | 10:41 | 11:10 | 5 | running | flow-check/fix-f8-r5.md |
-| patfix2 | patches r2 fixer | sonnet | 2 Blockers + 18 Majors of two reviews, card to one line (Q15) | 10:40 | 11:05 | 5 | running | patches/fix-r2.md |
 | f3fix7 | F3 round 7 fixer | sonnet | security review 4 Majors, 5 surviving mutants, noqa | 10:35 | 11:05 | 5 | running | fill_flows/fix-f3-r7.md |
-| q16fix | apply Q16 answer | sonnet | QUESTIONS, claims rows, OWNER-STEPS rows file | 10:36 | 10:50 | 5 | running | reviews-f1/fix-q16.md |
-| claimrd | claims Q13/r7 reread | sonnet | stranger read | 10:36 | 10:50 | 5 | running | reviews-f1/ |
+| patrd2 | patches r2 wording read | sonnet | aloud read, card one line | 10:40 | 10:50 | 5 | running | patches/ |
+| patfc2 | patches r2 facts read | sonnet | claims vs flows, totals | 10:40 | 10:50 | 5 | running | patches/ |
+| claimfix8 | claims r8 fixer | sonnet | 9 Majors of reread: CT vs RW same text, counts | 10:44 | 11:00 | 5 | running | reviews-f1/fix-f1-r8.md |
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
