@@ -1,5 +1,5 @@
 """Independent check: reads the report only (not build_c6o.py). EXITS NON-ZERO IF ANY CHECK FAILS (no check is printed-text-only).
-Usage: python3 -B -I verify-c6s.py [path-to-report]   (default: REPORT-c6s.md next to this folder). Prints PASS/FAIL per check, a summary line, and exits 1 on any FAIL.
+Usage: python3 -B -I verify-c6t.py [path-to-report]   (default: REPORT-c6t.md next to this folder). Prints PASS/FAIL per check, a summary line, and exits 1 on any FAIL.
 Checks: 1) old text once on its line; 2) ids are exactly 1..N; 3) rows applied in table order on copies, bottom-up per file;
 4) every cite exists; 5) no internal labels or stale phrases in new texts; 6) banned strings (read at run time, counts only) and secret-like strings;
 7) flow-file saving values; 8) per-question recount equals the report; 9) the figure 60.1 to 61.9 and 52.8 to 54.9 are exact everywhere;
@@ -8,10 +8,10 @@ Checks: 1) old text once on its line; 2) ids are exactly 1..N; 3) rows applied i
 import re, os, shutil, tempfile, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-H = "/home/user/hadavin-sdk"
-STEPS = os.environ.get("C6S_STEPS", H + "/handover/core-hardening/steps-edits")  # the negative controls point this at a changed copy
+H = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
+STEPS = os.environ.get("C6T_STEPS", H + "/handover/core-hardening/steps-edits")  # the negative controls point this at a changed copy
 T = "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/c6/tree/handover"
-R = sys.argv[1] if len(sys.argv) > 1 else H + "/handover/core-hardening/c6-skip-audit/REPORT-c6s.md"
+R = sys.argv[1] if len(sys.argv) > 1 else H + "/handover/core-hardening/c6-skip-audit/REPORT-c6t.md"
 raw = open(R, encoding="utf-8").read()
 txt = raw.split("\n")
 FAILS = []
@@ -249,9 +249,9 @@ check("section 0 says the row count of the table", bool(m) and int(m.group(1)) =
 m = re.search(r"%d are ready" % len(ready), full)
 check("box says the ready count", bool(m), len(ready))
 check("action box first (before section 0)", full.index("## Start here") < full.index("## 0. Failures"))
-# 14.. content checks of c6q, c6r and c6s live in verify_c6s_part2.py; each top-level statement runs on its own, a crash is a FAIL
+# 14.. content checks of c6q, c6r and c6s live in verify_c6t_part2.py; each top-level statement runs on its own, a crash is a FAIL
 import ast
-_p2 = os.path.join(os.path.dirname(os.path.abspath(__file__)), "verify_c6s_part2.py")
+_p2 = os.path.join(os.path.dirname(os.path.abspath(__file__)), "verify_c6t_part2.py")
 _src2 = open(_p2, encoding="utf-8").read()
 for _node in ast.parse(_src2).body:
     try:

@@ -1,4 +1,4 @@
-# part 2 of verify-c6s.py: executed statement by statement so that one crash is one FAIL, not the end of the run
+# part 2 of verify-c6t.py: executed statement by statement so that one crash is one FAIL, not the end of the run
 # 14 c6q content checks
 import glob
 bylead = {r["i"]: r for r in rows}
@@ -99,7 +99,7 @@ got5 = [int(m.group(1)) for m in re.finditer(r"^\| (\d+) \| (?:run sheet|page st
 check("5a lists exactly the %d viewer-visible run-sheet and page rows" % len(vis), got5 == vis and any("PAGE-STATEMENTS" in bylead[k]["f"] for k in got5), (len(got5), len(vis)))
 check("5a text equals each row's own 'what the viewer sees' cell", all(("| %d | " % k) in a5 and bylead[k]["view"] in a5 for k in vis))
 # owner sheets
-cs = rd(H + "/handover/core-hardening/c6-skip-audit/evidence-c6s/static-checks-output.txt")
+cs = rd(H + "/handover/core-hardening/c6-skip-audit/evidence-c6t/static-checks-output.txt")
 ct = re.search(r"check time \(UTC\): (\S+)", cs).group(1)
 vs = sorted(int(m.group(1)) for f in glob.glob(STEPS + "/OWNER-SHEET-v*.md") for m in [re.search(r"OWNER-SHEET-v(\d+)", f)] if m)
 check("report names the check time %s and the newest sheet version on disk (v%s)" % (ct, vs[-1] if vs else "?"), bool(vs) and ("v%d" % vs[-1]) in full and ct[11:19] in full and ct[:10] in full, vs[-3:])
@@ -243,7 +243,7 @@ check("89 rows of 94 name a file that is not in the repository (recounted: %d ro
 check("no row old or new text holds a raw '|' (it would break its table cell)", all("|" not in r["rawold"] and "|" not in r["rawnew"] for r in rows), [r["i"] for r in rows if "|" in r["rawold"] or "|" in r["rawnew"]])
 # untouched files
 for nm in ("REPORT-c6q.md", "REPORT-c6p.md"):
-    check("%s was not changed by this run (it is older than the build of REPORT-c6s.md and holds its own title line)" % nm, os.path.getmtime(H + "/handover/core-hardening/c6-skip-audit/" + nm) < os.path.getmtime(R) and rd(H + "/handover/core-hardening/c6-skip-audit/" + nm).startswith("# REPORT-" + nm[7:10]), "")
+    check("%s was not changed by this run (it is older than the build of REPORT-c6t.md and holds its own title line)" % nm, os.path.getmtime(H + "/handover/core-hardening/c6-skip-audit/" + nm) < os.path.getmtime(R) and rd(H + "/handover/core-hardening/c6-skip-audit/" + nm).startswith("# REPORT-" + nm[7:10]), "")
 check("row 6 item 12 checks that the sheet's made-up domain and marker equal the ones of the risks list item 11 before any deletion instruction", "made-up e-mail domain and the name marker by which the sheet tells the owner to find leftover contacts must be exactly the ones" in bylead[6]["new"], "")
 _bl = [l for l in box.split("\n") if l.startswith("| L-SHEET |")]
 _wr = [(os.path.basename(f), datetime.datetime.fromtimestamp(os.path.getmtime(f), datetime.timezone.utc).strftime("%H:%M:%S")) for f in sorted(sw)]
