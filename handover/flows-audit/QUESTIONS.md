@@ -65,11 +65,11 @@ F8 round 6 made take_check.sh exit 4 (not 0) when the table file is missing, zer
 4 The sentence for a lead with an invalid e-mail address (Q7): three candidates (CLAIMS-TABLE row 78, RUNSHEET-WORDING N-3, A-057). Which one is the run-sheet sentence? My recommendation: row 78.
 5 Retention text for scene 1 to 4: hard statement (CLAIMS-TABLE row 16) or hedged (RUNSHEET-WORDING A-053, on the card)? Your Q15 says no numbers on the card; my recommendation: hedged, in notes only.
 
-## Q20 ANSWERED (lead, ORDERS.md 11:20Z) for items 1 to 3 as 'lead verifies at re-pin' rows; item 4 (DESK_ALERT_TO) stays OPEN. (flows-audit, 2026-11-16 UTC): three facts only you can give, from OWNER-STEPS-q16-rows.md (fix-q16-rows-r2.md)
+## Q20 ANSWERED (lead, ORDERS.md 11:20Z) for items 1 to 3 as 'lead verifies at re-pin' rows; item 4 (DESK_ALERT_TO) ANSWERED (lead, ORDERS.md line 138, item 4): the lead sets it at take prep and verifies the value at re-pin; no address is typed in any file. (flows-audit, 2026-11-16 UTC): three facts only you can give, from OWNER-STEPS-q16-rows.md (fix-q16-rows-r2.md)
 1. Where is the take folder (the folder the take scripts and the v4 mf_leads.sql copy live in)? No input names it.
 2. Where does the lead get the From address and the intake address for FROM_ADDRESS_PLACEHOLDER and INTAKE_ADDRESS_PLACEHOLDER? OWNER-STEPS v3 tells the owner to send the lead no addresses, and v3 step 8 has the owner type the SENDER address into n8n. Which settings file or message holds them?
 3. Is the intake address the RECEIVER mailbox? (I inferred it from the flow's toEmail field; the row says unconfirmed.)
-(Q20 addition) 4. mf-recovery.json line 178 reads a third address, DESK_ALERT_TO, from an n8n setting (mf-recovery.json read by the fixer; not run). Which value does the take use, and who sets it? The start script is the lead's, which I have not seen.
+(Q20 addition) 4. ANSWERED (lead, ORDERS.md line 138): the lead sets DESK_ALERT_TO at take prep; the lead verifies the value at re-pin; never typed in a file. Original question: mf-recovery.json line 178 reads a third address, DESK_ALERT_TO, from an n8n setting (mf-recovery.json read by the fixer; not run). Which value does the take use, and who sets it? The start script is the lead's, which I have not seen.
 (Q19 addition) The full list of 15 wording conflicts the mechanical fixer left for you, with both texts and line numbers, is in fix-sweep.md under needs-lead; Q19 holds the five that block the take.
 
 ## Q21 ANSWERED (lead, ORDERS.md 11:25Z): 1 fill_flows literals, check that no flow node reads $env; 2 saved runs: the lead's optional clean-up of the take's own database, written nowhere in the video or the owner sheet; 3 F-011 and F-041 stay Major until a fix and a test exist, F-044 both options written (lead decides at re-pin), cost line 'up to 3 live model calls under the owner's standing credits yes; no US$0 claim'. Applied in FINDINGS, FIX-PLAN, EXCEPTIONS, LEDGER-ROWS (log fix-sweep2.md). (11:10Z, from the second one-place sweep and the contradiction re-read; see reviews/sweep2-one-place.md and reviews/contra-vs-decisions-r2.md)
@@ -90,8 +90,8 @@ fill_flows (frozen) accepts an output path whose parent folder is a symbolic lin
 
 ## Q22 (after the 11:25Z answer, open lead decisions that had no number; pointers only, nothing here blocks the take)
 Each is already written in a file; this list only gives it a place.
-1. F-002, F-031 and F-007 are Blockers by the lead's order (ORDER 007 item 2); by the one rating rule they would be Major (FINDINGS counts paragraph, REPORT item 'Where I disagree'). Lead keeps or changes.
-2. F-013 (a stage call that never finishes ends failed after 3 tries): FINDINGS F-013 row, 'confirm the trade-off'. Lead decides.
-3. CUT-LIST: which one of the 7 overlapping top-level notes is kept as the single note, and the owner's yes for the whole archive list (CUT-LIST.md, 'Also candidates'). Lead and owner.
-4. Q20 item 4: the value of DESK_ALERT_TO and who sets it (the start script is the lead's).
-5. Lead decision 2: the take never deletes contacts; the owner deletes the leftovers by hand (Q13; FIX-PLAN, line 'Not a numbered item').
+1. ANSWERED (lead, ORDERS.md line 138, item 1): F-002, F-031 and F-007 stay Blocker (ORDER 007 stands). By the one rating rule they would be Major; that rating note stays in REPORT ('Where I disagree').
+2. ANSWERED (lead, ORDERS.md line 138, item 2): F-013 accepted as the trade-off: a stage call that never finishes ends failed after 3 tries, for a person to look at. Never described as retrying forever.
+3. PARTLY ANSWERED (lead, ORDERS.md line 138, item 3): the single note is n8n-owns-vs-desk-owns.md (this audit's pick); the other six are archive candidates. STILL OPEN: the owner's yes for the archive list, asked once by the lead in a table later; archive means move, never delete.
+4. ANSWERED (lead, ORDERS.md line 138, item 4): Q20 item 4: the lead sets DESK_ALERT_TO at take prep and verifies the value at re-pin; never typed in a file.
+5. CONFIRMED (lead, ORDERS.md line 138, item 5): Lead decision 2: the take never deletes contacts; the owner deletes the leftovers by hand (Q13; FIX-PLAN, line 'Not a numbered item').
