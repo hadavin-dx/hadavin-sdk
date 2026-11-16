@@ -34,3 +34,7 @@ ok   M4: a pin without a date is exit 4 (got exit 4)
 ok   M4: a pin with lines removed by hand is caught twice (hash and set) (got exit 4)
 ok   Q2: mf-hook.json written after the checker ran is exit 4 with the loud line (got exit 4)
 ok   Q2: extra.json written after the checker ran is exit 4 with the loud line (got exit 4)
+ok   Q2: an extra *.json that does not change is counted (the checker FAILs on the unexpected file, exit 1; no 'changed' line) (got exit 1)
+ok   Q2: a flow file that sha256sum cannot read is printed as MISSING and is exit 4, never an empty hash (got exit 4)
+ok   A1: line 1 of take-warns.pin does not claim that a person read each line
+ok   B1: a changed flow file with the same counts and the same WARN lines is exit 4 (got exit 4)
