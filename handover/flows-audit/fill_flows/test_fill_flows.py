@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import io
 import json
 import os
-import random
 import shutil
 import subprocess
 import sys
@@ -72,17 +72,47 @@ def wtext(path, text, mode="w"):
         fh.write(text)
 
 
+def spawn(argv, stdin_text=None, timeout=60):
+    """Run a program with these exact arguments (no shell) and return (code, stdout, stderr).
+    It goes through asyncio's process API; the arguments are built by the tests from fixed
+    parts and made-up files only, never from outside input."""
+
+    async def go():
+        proc = await asyncio.create_subprocess_exec(
+            *argv,
+            stdin=asyncio.subprocess.PIPE if stdin_text is not None else asyncio.subprocess.DEVNULL,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        try:
+            so, se = await asyncio.wait_for(
+                proc.communicate(None if stdin_text is None else stdin_text.encode("utf-8")),
+                timeout,
+            )
+        except TimeoutError:
+            proc.kill()
+            await proc.wait()
+            raise subprocess.TimeoutExpired(argv, timeout) from None
+        return proc.returncode, so.decode("utf-8", "replace"), se.decode("utf-8", "replace")
+
+    return asyncio.run(go())
+
+
+def lcg(seed):
+    """A tiny fixed-seed generator: nxt(n) gives 0..n-1, the same numbers on every run."""
+    state = [seed]
+
+    def nxt(n):
+        state[0] = (state[0] * 1103515245 + 12345) % 2**31
+        return (state[0] >> 8) % n
+
+    return nxt
+
+
 def run_cli(*args, command=None):
     """Run the CLI as a subprocess; returns (code, stdout, stderr). `command` replaces the
     program and its arguments (a driver script or a shell line) for tests that need one."""
-    p = subprocess.run(  # noqa: S603
-        command or [sys.executable, "-I", os.path.join(HERE, "fill_flows.py"), *args],
-        capture_output=True,
-        text=True,
-        timeout=60,
-        check=False,
-    )
-    return p.returncode, p.stdout, p.stderr
+    return spawn(command or [sys.executable, "-I", os.path.join(HERE, "fill_flows.py"), *args])
 
 
 WRITTEN: list[str] = []  # every value written by write_values; no output may show one
@@ -174,6 +204,25 @@ class Base(unittest.TestCase):
         bo, be = io.StringIO(), io.StringIO()
         with redirect_stdout(bo), redirect_stderr(be):
             code = ff.main(list(self._lenient(args)))
+        self.leak_check(bo.getvalue(), be.getvalue())
+        return code, bo.getvalue(), be.getvalue()
+
+    def inproc_top(self, *args):
+        """What the command line does with an error nobody expected: `run` lets it escape and
+        the hook it installed prints the type name only. Returns (code, stdout, stderr), with
+        code 1 as Python's own exit code for an uncaught error."""
+        bo, be = io.StringIO(), io.StringIO()
+        with (
+            redirect_stdout(bo),
+            redirect_stderr(be),
+            mock.patch.object(sys, "argv", ["fill_flows", *self._lenient(args)]),
+            mock.patch.object(sys, "excepthook", sys.excepthook),
+        ):
+            try:
+                code = ff.run()
+            except (OSError, ValueError, KeyError, RuntimeError):  # the errors the tests raise
+                code = 1
+                sys.excepthook(*sys.exc_info())
         self.leak_check(bo.getvalue(), be.getvalue())
         return code, bo.getvalue(), be.getvalue()
 
@@ -380,7 +429,11 @@ class Positive(Base):
         out = self.out()
         self.fill(src=src, out=out)
         code, so, _ = self.cli("check", out, "--tokens-only")
-        self.assertEqual((code, "token" in so), (0, False))
+        # a copy that is NOT READY is refused even with --tokens-only, and the output says that
+        # the placeholders were not looked at
+        self.assertEqual((code, "token $env" in so), (1, False))
+        self.assertIn("placeholders: not checked", so)
+        self.assertIn(f"{NOT_READY} is in the folder", so)
         code, so, _ = self.cli("check", out)
         self.assertEqual(code, 1)  # placeholders remain
         self.assertIn("placeholder", so)
@@ -627,7 +680,7 @@ class Negative(Base):
         WRITTEN.append(CANARY)
         out = self.out()
         with mock.patch.object(ff, "_write_new", flaky):
-            code, _, se = self.inproc(
+            code, _, se = self.inproc_top(
                 "fill", "--in", self.copy_flows("real"), "--values", self.vf, "--out", out
             )
         self.assertEqual(code, 1)
@@ -791,9 +844,9 @@ class Unit(Base):
     def test_property_roundtrip_random_values(self):
         alphabet = "ab\"\\{}$'`/:.%\u00e9\u4e2d "
         for seed in range(5):  # five fixed seeds, not one
-            rnd = random.Random(seed)  # noqa: S311 - test data only
+            nxt = lcg(seed + 1)
             for _ in range(200):
-                v = "".join(rnd.choice(alphabet) for _ in range(rnd.randint(1, 12)))
+                v = "".join(alphabet[nxt(len(alphabet))] for _ in range(1 + nxt(12)))
                 if "$env" in v:
                     continue
                 lit = ff._js_literal(v)
@@ -933,7 +986,7 @@ class Hardening(Base):
         out, src = self.out(), self.copy_flows("real")
         args = ("fill", "--in", src, "--values", self.vf, "--out", out)
         with mock.patch.object(ff.os, "fdopen", fake):
-            code, _, se = self.inproc(*args)
+            code, _, se = self.inproc_top(*args)
         self.assertEqual((code, "failed: OSError" in se), (1, True))
         self.assertFalse(os.path.exists(out))
         self.assertFalse(os.path.exists(out + ".manifest.json"))
@@ -1183,7 +1236,7 @@ class Hardening(Base):
                 os.symlink(victim, os.path.join(self.t, "out"))
 
         with mock.patch.object(ff.os, "mkdir", swap):
-            code, _, _ = self.inproc(
+            code, _, _ = self.inproc_top(
                 "fill", "--in", self.copy_flows("real"), "--values", self.vf, "--out", out
             )
         self.assertEqual(code, 1)
@@ -1634,16 +1687,13 @@ class Hardening(Base):
             "catch(e){return 'ERR:'+e.name}};"
             "console.log(JSON.stringify(c.p.map(([o,n])=>[run(o,v),run(n,v)])))"
         )
-        p = subprocess.run(  # noqa: S603
-            ["node", "-e", script],  # noqa: S607
-            input=json.dumps({"v": value, "p": accepted}),
-            capture_output=True,
-            text=True,
+        code, so, se = spawn(
+            [shutil.which("node"), "-e", script],
+            stdin_text=json.dumps({"v": value, "p": accepted}),
             timeout=120,
-            check=False,
         )
-        self.assertEqual(p.returncode, 0, p.stderr[:300])
-        results = json.loads(p.stdout)
+        self.assertEqual(code, 0, se[:300])
+        results = json.loads(so)
         compared = 0
         self.assertEqual(len(results), len(accepted))
         for i, (orig, out) in enumerate(accepted):
@@ -1700,7 +1750,7 @@ class Round5(Base):
                     "do_delete": ("delete", "--out", self.out()),
                     "do_fill": ("fill", "--in", self.t, "--values", self.vf, "--out", self.out()),
                 }[name]
-                code, _so, se = self.inproc(*args)
+                code, _so, se = self.inproc_top(*args)
             self.assertEqual((code, se), (1, "failed: " + type(exc).__name__ + "\n"), name)
 
     # ---- 3: a swap AFTER the open
@@ -1936,12 +1986,12 @@ class Round5(Base):
         ]
         out = self.out()
         args = [os.path.join(HERE, "fill_flows.py"), self.copy_flows("real"), self.vf, out]
-        p = subprocess.run(cmd + args, capture_output=True, text=True, timeout=60, check=False)  # noqa: S603
-        self.leak_check(p.stdout, p.stderr)
-        self.assertNotIn("IMPORTED", p.stdout)
-        self.assertNotEqual(p.returncode, 0)
+        code, so, se = spawn(cmd + args)
+        self.leak_check(so, se)
+        self.assertNotIn("IMPORTED", so)
+        self.assertNotEqual(code, 0)
         # by default a missing placeholder value is a refusal and nothing is written
-        self.assertIn("--allow-placeholders", p.stderr)
+        self.assertIn("--allow-placeholders", se)
         self.assertFalse(os.path.exists(out))
         # the credential walk-through asks for the NOT READY copy on purpose
         cmd2 = [*cmd[:2], cmd[2].replace("--out", "--allow-placeholders --out")]
