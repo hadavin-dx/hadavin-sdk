@@ -9,13 +9,15 @@ Deviation to note: the lane briefs start with the markers `STUDIO-PREAMBLE v1` a
 Agent register (id, purpose, start, expected end, state):
 | PR1-impl, PR1-zoom, PR2-impl | plan reviews r1, r2 | 06:47-06:55 | done | closed (reported) |
 | LANE-L1 | audit handover top files, tools, demo ORDERS/REPORT/APPLY-LIST, pr-text etc (148 files) | 06:53 | +60 min | running |
-| LANE-L2 | audit demo3 kill (flows, SQL, harness, runs) and demo3 top docs (756 files) | 06:53 | +60 min | running |
-| LANE-L3 | audit demo3 evidence, tools, scratch (1420 files, mostly skimmable patch chains) | 06:53 | +60 min | running |
+| LANE-L2 | audit demo3 kill (flows, SQL, harness, runs) and demo3 top docs (756 files) | 06:53 | +60 min | closed (reported: 46 READ, 709 SKIMMED, 1 NOT-READ, 25 findings, 5 Blocker candidates) |
+| LANE-L3 | audit demo3 evidence, tools, scratch (1420 files, mostly skimmable patch chains) | 06:53 | +60 min | closed (reported: PARTIAL, 20 READ, 1293 SKIMMED, 107 NOT-READ, 42 findings, 1 Blocker) |
 | LANE-L4 | audit rest of handover/demo (1659 files, mostly scan outputs) | 06:53 | +60 min | running |
 | LANE-L5a | audit .claude, .github, demos, docs, tools, root files (111 files) | 06:53 | +60 min | running |
 | LANE-L5b | audit src and tests (core, out of take scope; job-key grep) (376 files) | 06:53 | +60 min | closed (reported: PARTIAL by design, all SKIMMED, 79/79 own citations found, 11 findings) |
 | PR3-impl | egm-implementation-readiness sonnet, PLAN-002 v3 round 3 | 06:57 | +10 min | running |
 | LANE-L4c | continuation of L4: READ the 137 NOT-READ report/review files | 06:58 | +45 min | running |
+| LANE-L2c | continuation of L2: read demo3/register.md fully (1 file) | 07:01 | +30 min | running |
+| LANE-L3c | continuation of L3: READ 158 review/resolve/lint reports and partly-read scripts | 07:01 | +45 min | running |
 Not visible: take code repo duplicate-proof-lead-desk (lead covers locally; not guessed).
 
 ## Status 2026-11-16 06:50 UTC / 12:20 IST - ORDER 002 plan v2 written
