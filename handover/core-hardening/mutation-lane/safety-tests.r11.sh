@@ -1625,7 +1625,7 @@ res = r.tree_check(a, rt, fr, mk); print("m7 tree_check:", res)
 if "<marker left behind>" not in res: bad.append("m7: dangling marker not counted")
 # m8: a timeout kills the whole process group of a helper, not only its leader
 try:
-    r.run_cmd(["bash", "-c", f'"{sl}" 3157 & exec "{sl}" 3158'], timeout=1)
+    r.run_cmd([__import__("shutil").which("bash"), "-c", f'"{sl}" 3157 & exec "{sl}" 3158'], timeout=1)
     bad.append("m8: no timeout")
 except subprocess.TimeoutExpired:
     pass

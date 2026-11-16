@@ -1788,7 +1788,9 @@ def check_test_args(tests: list[str], root: pathlib.Path) -> None:
             raise no(t, "is not an allowed option")
         else:
             path = t.split("::", 1)[0]
-            if not path or not (real_root / path).resolve().is_relative_to(real_root):
+            if not path or too_long(str(real_root) + "/" + path):  # r11 m2: root plus path together
+                raise no(t, "is empty or too long together with --root")
+            if not (real_root / path).resolve().is_relative_to(real_root):
                 raise no(t, "is not a path inside --root")
         i += 1
 
@@ -1839,10 +1841,9 @@ def check_pytest_config(root: pathlib.Path, tests: list[str]) -> None:
                     f"or remove the file: refused"
                 )
     dirs = []
-    for t in tests:
-        if not t.startswith("-"):
-            q = (root / t.split("::", 1)[0]).resolve()
-            dirs.append(q if q.is_dir() else q.parent)
+    for t in path_args(tests):
+        q = (root / t.split("::", 1)[0]).resolve()
+        dirs.append(q if q.is_dir() else q.parent)
     start = pathlib.Path(os.path.commonpath([str(d) for d in dirs])) if dirs else root
     if not start.is_relative_to(root):
         start = root
@@ -2551,6 +2552,25 @@ def too_long(v: str) -> str | None:
 ARG_MAX_BYTES = 100_000  # one program argument: Linux allows 131072 bytes (MAX_ARG_STRLEN); r11 m1
 
 
+def path_indexes(tests: list[str]) -> list[int]:
+    """r11 m1 (class: a word that is not a path treated as one): the arguments after `--` that are PATHS (with an optional ::node).
+    Not paths: an option (starts with "-"), the expression after -k or -m, the plugin name after -p. ONE parser, used by the
+    length check, by `check_pytest_config` (r10 crashed there with a traceback on a long -k expression) and by `check_test_args`."""
+    out, skip = [], False
+    for i, w in enumerate(tests):
+        if skip:
+            skip = False
+        elif w in ("-k", "-m", "-p"):
+            skip = True
+        elif not w.startswith("-"):
+            out.append(i)
+    return out
+
+
+def path_args(tests: list[str]) -> list[str]:
+    return [tests[i] for i in path_indexes(tests)]
+
+
 def refuse_in_state_folders(path: pathlib.Path, what: str) -> None:
     """r11 m3 (class: a folder created before every refusal that could stop it): no output path, and no folder to be created for
     one, may lie in a folder a marker may live in (ours and the other usual places). Works on a path that does not exist yet."""
@@ -2722,26 +2742,22 @@ def main():
     default_repo = str(pathlib.Path(__file__).resolve().parent)
     if not a.restore or repo_given or a.sha is not None:
         a.repo = a.repo or default_repo
-    ap_prev = None
-    for t in tests:  # the test paths and words after `--`
+    paths_among = set(path_indexes(tests))
+    for ix, t in enumerate(tests):  # the test paths and words after `--`
         # r11 m1: the path-length limits are for PATH-shaped arguments only; the text after -k or -m is an expression (and
         # the name after -p a plugin name), never a path, so a long expression is not refused for its length. One limit
         # stays for every word: what one program argument can hold (128 KiB on Linux, E2BIG when more).
-        is_word = ap_prev in ("-k", "-m", "-p") or t.startswith("-")
-        why = (
-            "it holds a NUL"
-            if "\0" in t
-            else (
-                f"it is {len(os.fsencode(t))} bytes long (the limit for one argument is {ARG_MAX_BYTES})"
-                if len(os.fsencode(t)) > ARG_MAX_BYTES
-                else None
-            )
-            if is_word
-            else too_long(t)
-        )
+        size = len(os.fsencode(t))
+        if "\0" in t:
+            why = "it holds a NUL"
+        elif ix in paths_among:
+            why = too_long(t)
+        elif size > ARG_MAX_BYTES:
+            why = f"it is {size} bytes long (the limit for one argument is {ARG_MAX_BYTES})"
+        else:
+            why = None
         if why:
             ap.error(f"a test argument is not usable as a path or word: {why}")
-        ap_prev = t
     root = pathlib.Path(a.root)
     try:
         is_folder = root.is_dir()

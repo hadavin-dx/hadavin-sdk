@@ -3,6 +3,7 @@ changes| page, 6.7 A phrase order | |6.7
 changes| re-checks | none new | | 9 |R8
 changes| release note section 5 and |G12
 changes| see m2 to m4 | C175 | | 12 |6.7
+changes| the plants for those (N01, |R18
 changes| time is the lead's choice (|Open 79
 changes| timeline | see failure 3 | |Open 104
 changes| while the word is unknown; |5.9
@@ -14,6 +15,7 @@ changes|e carrier | none new | | m8 |Open 5
 changes|e; lead asked to name them (|Open 105
 changes|er for the post sentences | |R8
 changes|f 6.7 already cancelled it, |7.11
+changes|hes a rename; (b) the first |5.8
 changes|hole-balance exposure is in |R4
 changes|ls** (security M2, note G3, |Open 14
 changes|mbers page n8n slot and the |R1
@@ -24,6 +26,7 @@ changes|older; the lead names them (|Open 105
 changes|ps. Exact blocker, asked as |Open 102
 changes|r-side older-key end | Step |7.11
 changes|rd formatting, Recall page, |6.7
+changes|s pattern held a `;`, which |R8
 changes|state word, scopes, tokens, |7.6
 changes|t is 18:14:40 UTC. Asked as |Open 103
 changes|the post sentences | R8 and |section 10

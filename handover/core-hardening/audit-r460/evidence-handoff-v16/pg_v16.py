@@ -346,6 +346,7 @@ mkrole("ar2_v16")
 a2 = connect(dsn("ar2_v16", "exp_c"))
 check("J1 S-2b detection: where DB-2 is NOT applied (database exp_c) to_regclass('spend_decrease_log') is NULL for a reader that has no privilege", a2.execute("SELECT to_regclass('spend_decrease_log') IS NULL").fetchone()[0] is True)
 check("J2 S-2b detection: where DB-2 is applied (database exp_a) the audit reader sees it", ar.execute("SELECT to_regclass('spend_decrease_log') IS NOT NULL").fetchone()[0] is True)
+check("J3 the RUNTIME role (no privilege on the log) sees the log through to_regclass in the applied database exp_a", rt.execute("SELECT to_regclass('spend_decrease_log') IS NOT NULL").fetchone()[0] is True)
 
 
 # ================================================================= v16 NEW SECTIONS

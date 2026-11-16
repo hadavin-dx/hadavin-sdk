@@ -257,6 +257,12 @@ patch("| L-SAVE | studio lead", "Yes (PLAN:125). Checks: C-11 (static, done) and
 patch("| L-CARD (was Q1, part 1)", "3, 4, 11, 12, 13, 14, 15, 20, 29, 31, 81, 86 |", "3, 4, 11, 12, 13, 14, 15, 20, 29, 31, 81, 86 |")
 
 exec(open(E + "c6r_rows.py", encoding="utf-8").read())
+patch("| L-SAVE | studio lead", "studio lead (what the owner approved on 2026-11-16, ONE:22-27: saving SUCCESSFUL runs, on made-up data, for the take only, deleted and turned off afterwards; his words do not mention saving FAILED runs, which the second setting does, so the studio lead confirms both)", "studio lead (what the owner approved on 2026-11-16, ONE:22-27: saving SUCCESSFUL runs, on made-up data, for the take only, deleted and turned off afterwards; this question covers successful runs only, failed runs are L-SAVEERR)")
+patch("| L-SAVE | studio lead", "Does the take save every run in n8n (EXECUTIONS_DATA_SAVE_ON_SUCCESS=all and _ON_ERROR=all), so that the execution list filmed in scenes 1 and 2 shows runs?", "Does the take save every successful run in n8n (EXECUTIONS_DATA_SAVE_ON_SUCCESS=all), so that the execution list filmed in scenes 1 and 2 shows runs?")
+patch("| L-SAVE | studio lead", "Yes (the plan of the re-smoke already says all for both settings, PLAN:125).", "Yes (the plan of the re-smoke says all for both settings, PLAN:125; the owner's words cover the successful-run setting).")
+patch("| L-SAVE | studio lead", "Why failed runs matter: with saving of failed runs on, a failed run keeps the contact's name and e-mail address in n8n's database, which is why the leak scan and the deletion after the take exist (rows 6 and 49).", "Saved runs keep the contact's name and e-mail address in n8n's database, which is why the leak scan and the deletion after the take exist (rows 6 and 49).")
+i = find("| L-SAVE | studio lead")
+L.insert(i + 1, "| L-SAVEERR | studio lead, with the owner's confirmation (the owner's words cover successful runs only; saving FAILED runs is a separate setting the owner has not been asked about, c6q design review M-E) | Does the take also save FAILED runs in n8n (EXECUTIONS_DATA_SAVE_ON_ERROR=all, flow-file setting saveDataErrorExecution)? | No (the lowest-data choice; the execution list of scenes 1 and 2 needs successful runs only). Say yes only if a failed run must be filmed; then the studio lead gets the owner's yes first, the six rows that wait are re-issued, and the leak scan covers failed runs. Checks: none run. | No | If yes: rows 53, 55, 62, 64, 66 and 68 are applied as written in their old and new text and row 92 is changed to set the failed-run setting to all. | 53, 55, 62, 64, 66, 68 |")
 # ---------------------------------------------------------------- tables 3b / section 3 tied columns are regenerated from the statuses below
 TOK = re.compile(r"L-[A-Z]+|C-\d+[a-d]?")
 cnt = {}
@@ -270,7 +276,12 @@ for k in sorted(ROWS):
 withc = [k for k in sorted(ROWS) if any(t.startswith("C-") for t in TOK.findall(getrow(k)[COL["st"]]))]
 onlyq = [k for k in sorted(ROWS) if k not in ready and k not in withc]
 W1 = len(ready) + len(onlyq)
-assert (len(ready), len(onlyq), len(withc), W1) == (49, 42, 3, 91)
+waits = [k for k in sorted(ROWS) if "waits for the answer of L-SAVEERR" in getrow(k)[COL["st"]]]
+ready = [k for k in ready if k not in waits]
+withc = [k for k in withc if k not in waits]
+onlyq = [k for k in onlyq if k not in waits]
+W1 = len(ready) + len(onlyq)
+assert (len(ready), len(onlyq), len(withc), len(waits), W1) == (49, 36, 3, 6, 85), (len(ready), len(onlyq), len(withc), len(waits), W1)
 lst = lambda a: ", ".join(map(str, a))
 # table 3b: rebuild all question/check lines
 b0 = find("| L-APPROX | 33, 39, 73")
@@ -334,7 +345,7 @@ patch("| c6b to c6n |", "c6p (this file) supersedes c6o, which superseded c6n;",
 patch("| c6b to c6n |", "| c6b to c6n |", "| c6b to c6p |")
 
 # ---------------------------------------------------------------- section 0
-L[0] = "# REPORT-c6q: video audit fix pass, supersedes REPORT-c6p.md (2026-11-16, UTC; IST = UTC + 5:30)"
+L[0] = "# REPORT-c6r: video audit fix pass, supersedes REPORT-c6q.md (2026-11-16, UTC; IST = UTC + 5:30)"
 i0 = find("- THE LAST REPORT (REPORT-c6o.md) FAILED INDEPENDENT REVIEW")
 L[i0] = L[i0].replace("- THE LAST REPORT (REPORT-c6o.md) FAILED INDEPENDENT REVIEW:", "- HISTORY, c6o (REPORT-c6o.md FAILED INDEPENDENT REVIEW):", 1)
 L[i0] = L[i0].replace("This report (c6p) fixes every item or labels it in section 9; section 8 lists each item with its fix. THIS REPORT HAS NOT BEEN REVIEWED YET by independent reviewers; I did not run the EGM steps (the studio lead runs them). The main faults of c6o that c6p corrects:", "c6p fixed these; the main faults of c6o were:", 1)
@@ -425,7 +436,8 @@ sec1 = find("## 1. How to use this report")
 del L[wi:e]
 e = find("## 0. Failures")
 BOX = open(E + "c6r_box.txt", encoding="utf-8").read().rstrip("\n") + "\n"
-rep = dict(N=N, r=len(ready), o=len(onlyq), c=len(withc), cl=lst(withc), W1=W1, NA=NA[2], SA=round(float(NA[3])), BA=NA[4], NB=NB[2], SB=round(float(NB[3])), BB=NB[4], R2=R2, C1=C1, L2=L2, L3=L3, L4=L4,
+LSHEET = ("| L-SHEET | OWNER ONLY (the studio lead asks him): confirm the ONE final owner sheet (the checklist the owner reads). At {CTU} UTC = {CTI} IST the folder holds %s. | The sheet you name final. NOT covered by 'apply all defaults'. |" % V29TXT)
+rep = dict(LSHEET=LSHEET, w=len(waits), wl=lst(waits), N=N, r=len(ready), o=len(onlyq), c=len(withc), cl=lst(withc), W1=W1, NA=NA[2], SA=round(float(NA[3])), BA=NA[4], NB=NB[2], SB=round(float(NB[3])), BB=NB[4], R2=R2, C1=C1, L2=L2, L3=L3, L4=L4,
            w1=W_A[0], w2=W_A[1], w3=W_A[2], w4=W_A[3], TABLE=TABLE, CTU=CTU, CTI=CTI)
 for k, v in rep.items():
     BOX = BOX.replace("{%s}" % k, str(v))
@@ -435,5 +447,6 @@ sec1 = find("## 1. How to use this report")
 L[sec1 + 1:sec1 + 1] = words_block[1:] + [""] if False else []
 # insert the second word list right after the heading of section 1
 L[sec1 + 1:sec1 + 1] = words_block[1:]
+exec(open(E + "c6r_text.py", encoding="utf-8").read())
 open(D + "REPORT-c6r.md", "w", encoding="utf-8").write("\n".join(L))
 print("built REPORT-c6r.md: %d lines" % len(L), "rows", N, "box words", len(BOX.split()))

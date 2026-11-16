@@ -5,9 +5,9 @@ import os, re, sys
 D = os.path.dirname(os.path.abspath(__file__)) + '/'
 rd = lambda n: open(D + n, encoding='utf-8').read()
 src = rd('newchecks-v29.py'); head = src[:src.index('# ---- Part 1')]; body = src[src.index('# ---- Part 4 (v29)'):]
-def run(A, B, NOTE, OPEN, SD):
+def run(A, B, NOTE, OPEN, SD, FF=None):
     fails = []
-    ns = dict(A=A, B=B, NOTE=NOTE, OPEN=OPEN, SHEETS_DISK=SD, D=D, fail=lambda c, m: fails.append(c), F={'okb': '16:00 UTC = 21:30 IST'}, SEC=[])
+    ns = dict(A=A, B=B, NOTE=NOTE, OPEN=OPEN, SHEETS_DISK=SD, D=D, fail=lambda c, m: fails.append(c), F=FF or {'okb': '16:00 UTC = 21:30 IST'}, SEC=[])
     exec(head + '\n' + body, ns); return set(fails)
 codes = sorted(set(re.findall(r"\b(C1[6-8]\d)\b", body)))
 va, vb = rd('OWNER-SHEET-v28-A.md'), rd('OWNER-SHEET-v28-B.md')
@@ -18,7 +18,8 @@ import importlib.util
 spec = importlib.util.spec_from_file_location('b28', D + 'build-v29.py'); bm = importlib.util.module_from_spec(spec); sys.argv = ['x', D]; spec.loader.exec_module(bm)
 sa, sb = rd('OWNER-SHEET-v29-A.md'), rd('OWNER-SHEET-v29-B.md')
 wa = bm.combine(sa, rd('OWNER-CARD-v29-A.md')) + '\n' + rd('OWNER-APPENDIX-v29-A.md') + '\n' + rd('OWNER-FILM-PERSON-v29.md'); wb = bm.combine(sb, rd('OWNER-CARD-v29-B.md')) + '\n' + rd('OWNER-APPENDIX-v29-B.md') + '\n' + rd('OWNER-FILM-PERSON-v29.md')
-new = run(wa, wb, rd('LEAD-RELEASE-NOTE-v13.md'), rd('v29-OPEN-FOR-LEAD.md'), {'A': sa, 'B': sb})
+_fn = {}; exec(open(D + 'facts-v29.py', encoding='utf-8').read(), _fn)
+new = run(wa, wb, rd('LEAD-RELEASE-NOTE-v13.md'), rd('v29-OPEN-FOR-LEAD.md'), {'A': sa, 'B': sb}, _fn['F'])
 cannot = [c for c in codes if c not in old]
 print('checks in Part 4 and 5: %d' % len(codes)); print('fail on built v28: %d' % len(old & set(codes)))
 print('do NOT fail on built v28 (cannot prove a change; reason must be given in v29-CHANGES.md): %s' % (cannot or 'none'))

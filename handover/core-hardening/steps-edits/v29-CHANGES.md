@@ -3,7 +3,7 @@
 Written Mon 16 Nov 2026 by the builder (build-only; the lead runs the EGM reviewers and the evidence runner). Nothing here touches a real vendor page, n8n, HubSpot, Gmail, Windows or WSL: every vendor, button and screen step stays UNVERIFIED. Raw check output is in v29-check-output.txt.
 
 ## What is NOT fully fixed or NOT proven (first)
-1. **Length (security M5, stranger major 1, ORDER L-LEN): met only for the sheet page alone.** Sheet A is 6,288 words and sheet B about 6,060 by `wc -w` of the built file (the limit is 6,300). The printed card (A 1,377, B 1,325 words) is a separate page, the linked appendix holds 3,209 (A) and 3,186 (B), the film person page 363. Sheet plus card is about 7,665 for A. If the brief meant the card to count, this is NOT met, and I could not cut it further without deleting safety steps. Exact blocker, asked as Open 102. All appendix text still binds the owner (nothing deleted; the sheet points to each part).
+1. **Length (security M5, stranger major 1, ORDER L-LEN): met only for the sheet page alone.** Sheet A is 6,296 words and sheet B 6,070 by `wc -w` of the built file (the limit is 6,300; A has 4 words of room). The printed card (A 1,496, B 1,444 words; its own word list stays on the card so it can be used alone) is a separate page, the linked appendix holds 3,078 (A) and 3,055 (B), the film person page 361. Sheet plus card is 7,792 for A. If the brief meant the card to count, this is NOT met, and I could not cut it further without deleting safety steps. Exact blocker, asked as Open 102. All appendix text still binds the owner (nothing deleted; the sheet points to each part).
 2. **Two older-key times in route B stay** (stranger major 4): the cancel-by time (12:10 UTC = 17:40 IST) and the older-key time (16:00 UTC = 21:30 IST). Route B is the lead's own route; the sheet now makes the owner check that the cancel-by time is before the older-key time (check C139), but whether B should have one time is the lead's choice (Open 79).
 3. **Alarm 2 has no margin** (stranger major 7): the formula puts `end` exactly at alarm 2. The sheet tells the owner to press Enter on the start line at least 5 minutes before the latest start; a margin term in the formula is the lead's decision (Open 104).
 4. **Latest start Mon 23 Nov 18:04 UTC = 23:34 IST** (lead order L-23NOV) is used as given. I cannot derive it: the build's formula gives 17:39 UTC and the program's refusal limit is 18:14:40 UTC. Asked as Open 103. No sheet starts a run on 23 Nov.
@@ -34,7 +34,7 @@ Written Mon 16 Nov 2026 by the builder (build-only; the lead runs the EGM review
 ## Stranger review (review-v28-stranger.md): 13 majors and minors
 | # | fix | note |
 |---|---|---|
-| 1 length | sheet 6,288 words; sample numbers message, click paths and rationale moved to the appendix | failure 1 |
+| 1 length | sheet 6,296 words; sample numbers message, click paths and rationale moved to the appendix | failure 1 |
 | 2 placeholders | visibly different bracket rows | C180 |
 | 3 A aborted run | 7.11 in A plus alarm 4 | C172 |
 | 4 B older key | 7.11 checks the last-used time and describes it before cancelling; FREEZE stops nothing | failure 2 |
@@ -60,3 +60,8 @@ Minor items (state word, scopes, tokens, 7.6 profile, privacy order, "copy a har
 
 ## Files
 Sources: OWNER-SHEET-v29-SOURCE.md, LEAD-RELEASE-NOTE-v13-SOURCE.md, v29-OPEN-FOR-LEAD-SOURCE.md, facts-v29.py. Built by build-v29.py: sheet, card, appendix (A and B), OWNER-FILM-PERSON-v29.md, LEAD-RELEASE-NOTE-v13.md, v29-OPEN-FOR-LEAD.md. Scripts: check-v29.py, newchecks-v29.py (C171 to C184 are new), mut29.py, v29-fail-proof.py. No v27/v28 file and nothing in ../inputs/ was edited.
+
+## Check results (raw output in v29-check-output.txt)
+check-v29.py: 0 failures. mut29.py: 182 plants (16 new, W01 to W16, one per new check C171 to C184), caught by the meant check 181, missed 0, anchor-not-found 0, plus one negative control that must print MISSED and does. v29-fail-proof.py: 16 of the 25 Part 4/5/6 checks fail on the built v28 files, none fails on v29; the 9 that cannot fail on v28 are listed in failure 7 above. Banned-vendor scan: 0 hits (counts only; the list was read from the repo test at run time).
+Known weakness of the checks (not fixed): a few facts are written in two places (sheet and appendix); a `need()` check passes if either copy survives, so the plants for those (N01, R18, P30, W03, W05 to W07, W11, W12, W14, W15) change every copy. A check per copy is still to build.
+Mistakes of mine found during this pass: (a) C10 (card words defined before use) had become a silent no-pass because the card's word list was moved to the appendix; I put the list back on the card and the plant P30 now catches a rename; (b) the first 5.8 yes pattern held a `;`, which R8 forbids; fixed.

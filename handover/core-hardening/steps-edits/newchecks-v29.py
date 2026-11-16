@@ -281,7 +281,7 @@ need('C175', 'cancel is proven')
 need('C176', 'if used less than 7 days ago take B'); need('C176', '7 days (168 hours) or more', (('A', A),))                          # S: the 7-day rule at exactly 7 days, route A/B condition (L-A/B)
 for _n, _t in (('NOTE', NOTE), ('OPEN', OPEN)):                                                                          # L-23NOV: 18:14 only with the refusal-limit label and its IST pair
     for _m in re.finditer(r'18:14', _t):
-        _w = _t[max(0, _m.start() - 120):_m.start()]
+        _w = _t[max(0, _m.start() - 60):_m.start()]
         if 'refusal limit' not in _w: fail('C177', '%s holds 18:14 without the label "refusal limit" near it: %r' % (_n, _t[_m.start() - 30:_m.end() + 20]))
 for _n, _t in (('A', A), ('B', B)):
     for _m in re.finditer(r'18:14', _t): fail('C177', '%s sheet holds 18:14 (the owner pages never need the refusal limit)' % _n)

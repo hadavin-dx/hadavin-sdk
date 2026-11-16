@@ -1,0 +1,28 @@
+== check-v29.py (date 16:46 UTC)
+C07 info: OWNER-SHEET-v29-A.md 6296, OWNER-CARD-v29-A.md 1496, OWNER-NUMBERS-v29-A.md 0, OWNER-FILM-v29.md 0 total 7792
+C07 info: OWNER-SHEET-v29-B.md 6070, OWNER-CARD-v29-B.md 1444, OWNER-NUMBERS-v29-B.md 0, OWNER-FILM-v29.md 0 total 7514
+check-v29: 0 failure(s)
+== mut29.py (tail)
+W16 CAUGHT by C171 | sheet grows over 6,300 words
+TOTAL plants 182 (negative controls ok 1, not counted below):
+TOTAL plants 182: caught by the meant check 181, missed 0 (of them caught only by another check 0), anchor-not-found 0
+== v29-fail-proof.py
+checks in Part 4 and 5: 25
+fail on built v28: 16
+do NOT fail on built v28 (cannot prove a change; reason must be given in v29-CHANGES.md): ['C161', 'C162', 'C164', 'C165', 'C166', 'C167', 'C168', 'C169', 'C171']
+fail on built v29: none
+v29-fail-proof: 0 problem(s)
+== banned scan (counts only)
+banned entries 10 files 18 exact hits 0 case-insensitive hits 0
+== word counts
+  6296 OWNER-SHEET-v29-A.md
+  6070 OWNER-SHEET-v29-B.md
+  1496 OWNER-CARD-v29-A.md
+  1444 OWNER-CARD-v29-B.md
+  3078 OWNER-APPENDIX-v29-A.md
+  3055 OWNER-APPENDIX-v29-B.md
+   361 OWNER-FILM-PERSON-v29.md
+ 21800 total
+== final re-run after last CHANGES edit
+check-v29: 0 failure(s)
+TOTAL plants 182: caught by the meant check 181, missed 0 (of them caught only by another check 0), anchor-not-found 0

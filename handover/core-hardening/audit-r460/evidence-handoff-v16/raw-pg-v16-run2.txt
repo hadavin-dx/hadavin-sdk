@@ -102,12 +102,13 @@ PASS H2 the OWNER (migration role) is also refused by the append-only trigger: T
 PASS H3 the refused statements changed nothing
 PASS H4 LIMIT STATED, not hidden: the database owner can DISABLE the trigger (tgenabled = D while off) and delete; an append-only trigger shows edits, it does not stop the owner
 PASS H5 the trigger is back on afterwards
-INFO I timing (runtime role, 20000 lowering UPDATEs, migration role = non-superuser, indicative, one run per script run; the script is run twice): without trigger 1495 ms, with trigger 2427 ms, +0.047 ms per lowering
+INFO I timing (runtime role, 20000 lowering UPDATEs, migration role = non-superuser, indicative, one run per script run; the script is run twice): without trigger 1353 ms, with trigger 2577 ms, +0.061 ms per lowering
 INFO I size: log 2211840 bytes, 20000 rows, 110.6 bytes per row, who = rtr_v16/rtr_v16
 PASS I1 the timing run's log rows record the RUNTIME login role, not postgres  [rtr_v16,rtr_v16]
 PASS I2 the log has one row per lowering (20000 rows)  [20000]
 PASS J1 S-2b detection: where DB-2 is NOT applied (database exp_c) to_regclass('spend_decrease_log') is NULL for a reader that has no privilege
 PASS J2 S-2b detection: where DB-2 is applied (database exp_a) the audit reader sees it
+PASS J3 the RUNTIME role (no privilege on the log) sees the log through to_regclass in the applied database exp_a
 PASS Q1 every pg_hba rule of the throwaway cluster uses scram-sha-256 (no trust)  [[('scram-sha-256', 6)]]
 PASS Q2 password_encryption is scram-sha-256 and the stored role passwords are SCRAM verifiers
 PASS Q3 a right password logs in
@@ -178,5 +179,5 @@ PASS P4 NEGATIVE: a reader that is a member of the runtime role is reported
 PASS P5 a role whose VALID UNTIL is in the past cannot log in (password authentication failed)  [none/password-auth-failed]
 PASS P6 NEGATIVE: a reader role created without VALID UNTIL is reported ('has no VALID UNTIL')
 PASS P7 revoking by NOLOGIN stops new logins  [none/other:connection failed: connection to server on socket "/var/lib/]
-INFO 174 of 174 checks passed
+INFO 175 of 175 checks passed
 rc=0
