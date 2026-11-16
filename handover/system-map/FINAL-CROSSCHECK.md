@@ -82,10 +82,10 @@ Not a real contradiction: SWEEP L4c-FD-001 says a patch "touches core src"; it e
 | 18 | four draft or earlier-audit copies of page statements and run sheet audits | "duplicate" is only the audit's reading of names and first lines | NOT YET: update the referring files first |
 | 19 | seven overlapping top-level n8n history notes | overlapping | NOT YET: one is cited by the findings table |
 | 20-21 | BRIEF-PREAMBLE-studio-2026-11-06.md, CLOUD-RESUME-2026-11-06.md | old copies | YES only after you name an archive place outside the repository (no live caller; one history line names the first; it holds a banned word) |
-| 22 | CLOUD-RESUME.md | old note | NOT YET: one reference in questions-for-lead.md (the cited line 1127 is NOT CHECKED: the only copy here, handover/demo3/questions-for-lead.md, has 14 lines) |
+| 22 | CLOUD-RESUME.md | old note | NOT YET: one reference in questions-for-lead.md (the cited line 1127 is NOT CHECKED: the only copy here, handover/demo3/questions-for-lead.md, has 13 lines (grep -c '')) |
 | 23-25 | CLOUD-RESUME-2026-11-07, -09, CLOUD-PROMPT.md | the CH list wanted them archived | NO: 4, 10 and 8 lines name them |
 | 26 | one of the two identical bible-extract files | duplicates | NOT YET: add a redirect first |
-| 27 | setting min_redaction_window | nothing reads it | NOT YET: a code edit (3 references in 2 test files: tests/test_k5_layers.py:30 and :87, tests/test_k5_fixes9.py:365); owner chooses |
+| 27 | setting min_redaction_window | nothing reads it | NOT YET: a code edit (3 references in 2 test files: tests/test_k5_layers.py:30 and :87, tests/test_k5_fixes9.py:365; the setting itself is defined at src/hadavin_sdk/scrub_settings.py:20 and mirrored at src/hadavin_sdk/tools.py:58; whether any production path reads it: NOT CHECKED); owner chooses |
 | 28-30, 32 | field trigger_ref, replay_records, dead_letters, the `live` test marker | CH called them unused | NO: trigger_ref is read at agent_loop.py:346 in this checkout (the audited b4cce5b only wrote it) and is a NOT NULL column (0001_core.sql:11), replay_records at deferred.py:95, a CI line selects on `live`, dead_letters is an applied database migration |
 | 31 | src/hadavin_sdk/extract.py | no source code calls it | NO until you choose: keep and wrap (CH fix plan) or archive (CH cut list); two tests import it |
 | 33 | desk repository parts (second store, counters, retry loop, follow-up mail) | the desk is retired from the take | NOT YET: desk security patches first (sweep rows 15-17) |
