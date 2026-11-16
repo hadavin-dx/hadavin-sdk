@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T10:06:20Z
+UPDATED_UTC: 2026-11-16T10:07:14Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -6,10 +6,10 @@ BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
 ITEMS_OPEN: 8
 PERCENT: 85
-AGENTS_RUNNING: 8
-CAPACITY: 2.93 load of 4 cores, mem 1/15 GB, disk free 27G, agents 8 (light+heavy per list)
+AGENTS_RUNNING: 7
+CAPACITY: 3.55 load of 4 cores, mem 0/15 GB, disk free 27G, agents 7 (light+heavy per list)
 INTERRUPTED: none
-FAILED: F8: second reviewer found 5 Majors (no-auth webhook only WARN, webhook credential kind unchecked, HubSpot credential uncovered, placeholder ids pass quietly, alwaysOutputData WARN only) + wrong doc lines; r3 fixer running after the evidence runner; $env nodes may fail on n8n default (unverified); 2 webhooks without auth are lead decisions
+FAILED: F8: independent rerun: self-test 469/0/32 and run_all rc 0 match the claim, but ruff check FAILS (213 errors) and ruff format --check fails on check_flows.py and selftest.py; 3 of 20 line mutants survive (lines 389, 398, 462); r3 fixer told to fix both plus 5 Majors from the second review; $env nodes may fail on n8n default (unverified); 2 webhooks without auth are lead decisions
 F3: r5 fixer done (113 tests, 3.11 to 3.13 only; its own numbers); NOT run: Python 3.9, 3.10, macOS (F_GETPATH branch never executed), a real n8n, non-root; n8n folder import may ignore NOT-READY note file; independent rerun and fresh security review running
 ROLES: PARKED by lead (client build, after video, no new lanes). Script r6: independent rerun 71 tests OK, gate rc 0, but 7 of 15 random mutants survive (lines 141,145,147,280,358,371,417); not fixed because parked; v4 doc security Blocker (Part C unguarded) unfixed
 claims: r4 facts review 3 Majors (row 33 says script does not delete contacts but 3 files say it archives; rows 2 and 5 example.test vs example.com; row 21 sibling at OWNER-STEPS:107), reader review of lines 1-133 found 6 Blockers; remainder reader and r5 fixer running; F-01 review unreadable so B-214, B-215 UNTRACED; this lane deleted fix-f5-r4.md earlier (rebuilt shorter)
@@ -17,8 +17,8 @@ F5: r4 facts review 3 Majors (wrong line cites, wrong file named for stand-in st
 F2: C-1 Major withdrawn and now independently confirmed (Route and load_config both refuse NaN/Infinity on pydantic 2.14.1; zero, -1 and tiny prices are accepted, so the price-above-0 check is still a real gap); now 0 Blocker, 5 Major, 14 Nit; patches deferred by lead
 ROLES folder marked NOT FOR THE TAKE in its README (lead decision 3); necessity review: RUNSHEET and CLAIMS still carry the 11-scene plan until r5 fixers finish
 claims lane B cite check: 127 of 226 B rows, 123 OK, 4 WRONG (B-107, B-155, B-114, B-184) sent to the r5 fixer; 99 B rows unchecked
-NEXT: collect F3 evidence+security, F8 ev+r3, F5 r5, claims r5, cl-rd2, cite lane A; D04-D05 note BLOCKED needs Q2 text (Q12)
-PUSHED_UTC: 2026-11-16T10:06:20Z
+NEXT: collect F3 evidence+security, F8 r3, F5 r5, claims r5, cl-rd2, cite lane A
+PUSHED_UTC: 2026-11-16T10:07:14Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -37,7 +37,6 @@ PUSHED_UTC: 2026-11-16T10:06:20Z
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | % | state | last output |
 |---|---|---|---|---|---|---|---|---|
-| f8-ev | EVIDENCE RUNNER F8 r2 | sonnet | rerun checker, selftest, gate, mutants | 09:58 | 10:12 | 5 | running | flow-check/evidence-r2.md |
 | f8-fix3 | F8 r3 fixer (Majors) | sonnet | fix 5 Majors + docs after evidence | 10:05 | 10:20 | 5 | running | flow-check/fix-f8-r3.md |
 | f5-fix5 | F5 r5 fixer (scope cut + Majors) | sonnet | real-v5 only, fix facts+reader Majors | 10:12 | 10:30 | 5 | running | fix-f5-r5.md |
 | cl-rd2 | claims reader review lines 134-end | sonnet | rest of table | 10:12 | 10:25 | 5 | running | (report inline) |

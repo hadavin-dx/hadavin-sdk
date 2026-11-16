@@ -50,15 +50,18 @@ def main(argv):
     print("total rows:", sum(len(r) for r in rows.values()))
     if len(argv) > 2:
         have = {re.match(r"([AB])-(\d+)", i).groups() for i in ids if re.match(r"[AB]-\d+", i)}
-        want = set()
+        want, untraced = set(), set()
         for line in open(argv[2], encoding="utf-8"):
-            m = re.match(r"\| ([AB])-(\d+)", line)
+            m = re.match(r"\| ([AB])-(\d+) ", line)
             if m:
-                want.add(m.groups())
+                c = [x.strip() for x in line.strip()[1:-1].split(" | ")]
+                if len(c) >= 7 and re.match(r"(UNSUPPORTED|OVERSTATED|DELETE|STALE)", c[5]):
+                    want.add(m.groups())
+                elif len(c) >= 7 and c[5].startswith("UNTRACED"):
+                    untraced.add(m.groups())
         miss = sorted(want - have)
-        extra = sorted(have - want)
-        print("claim ids in CLAIMS-TABLE.md:", len(want), "| with no row here:", [f"{a}-{b}" for a, b in miss])
-        print("row ids here that are not A/B claim ids there:", [f"{a}-{b}" for a, b in extra])
+        print("claim ids marked UNSUPPORTED, OVERSTATED, DELETE or STALE in CLAIMS-TABLE.md:", len(want), "| with no row here:", [f"{a}-{b}" for a, b in miss])
+        print("claim ids marked UNTRACED there:", len(untraced), "| with no row here:", len(untraced - have), "(scope: UNTRACED claims have no safe wording, so they get a row only when a file sentence had to change)")
         if miss:
             bad.append("claim ids missing")
     for b in bad:
