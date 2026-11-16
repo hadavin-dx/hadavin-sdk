@@ -1,0 +1,63 @@
+PASS short names found (at least 30) :: 35
+PASS rows parsed (at least 90) :: 94
+PASS C-1 old text occurs once on its stated line (94 rows) :: []
+PASS ids are exactly 1..N, no duplicate :: N=94
+PASS C-1b all rows apply in table order on copies, no mismatch :: []
+PASS C-1b table order is bottom-up within each file (highest line first) :: []
+PASS each file's rows form one block in the table :: ['handover/demo/VIDEO-RUNSHEET.md', 'handover/demo/n8n-flows/PAGE-STATEMENTS-V4.md', 'handover/demo/n8n-flows/N8N-START.md', 'handover/demo/n8n-mainframe/mf.py', 'handover/demo/n8n-flows-real-v5/mf-form.json', 'handover/demo/n8n-flows-real-v5/mf-hook.json', 'handover/demo/n8n-flows-real-v5/mf-recove
+PASS cites exist (328 checked) :: 0
+PASS every cite key is defined in section 1 :: []
+PASS no internal labels in new texts :: []
+PASS no stale phrase in new texts :: []
+PASS banned vendor strings in report: count 0 of 10 listed (names not printed) :: count=0
+PASS no secret-like or e-mail string in report :: 0
+PASS C-4a the four flow files give saving all/all/manual-false once each (4 files) :: []
+PASS recount: ready + defaults + check + not-filmable = N :: (49, 40, 3, 2, 94)
+PASS table 3b equals the recount (12 lines) :: (12, 12)
+PASS 3b TOTAL line equals the recount :: ['| TOTAL | all rows | 94 | ready 49, on defaults only 40, with a check 3, NOT FILMABLE until an answer 2 | |']
+PASS section 3 'rows tied to it' column equals the recount
+PASS figure 60.1 to 61.9 exact everywhere (20 occurrences) :: []
+PASS no '61.1' or other upper bound next to 60.1
+PASS figure 52.8 to 54.9 exact everywhere (5 occurrences) :: []
+PASS 61.9 only after 60.1 to
+PASS 18 kept runs split: every '<n> runs done' is 10 and every '<n> runs unknown' is 8 :: (['10', '10'], ['8', '8'])
+PASS K1 5 and K2 5 everywhere :: [('5', '5'), ('5', '5'), ('5', '5')]
+PASS K3B 5 and K3 3 everywhere :: [('5', '3'), ('5', '3'), ('5', '3'), ('5', '3')]
+PASS 18 kept runs = K1 5 + K2 5 + K3B 5 + K3 3
+PASS every 'UTC = IST' pair is exactly UTC + 5:30 (18 pairs) :: []
+PASS every clock time in UTC or Z has its IST nearby (outside old-text quotes) :: []
+PASS every new text with UTC also has IST :: []
+PASS in every new text each UTC has its own IST (UTC count <= IST count) :: []
+PASS IST given with the money stop
+FAIL report prose lines with '18 runs' name both voided runs :: [77]
+PASS new texts with '18 runs' name both voided runs :: []
+PASS reason cells with '18 runs' name both voided runs unless the new text does :: []
+PASS box says the row count of the table :: ('94', 94)
+PASS section 0 says the row count of the table :: ('94', 94)
+PASS box says the ready count :: 49
+PASS box and section 0 name the same NOT FILMABLE rows :: [13, 21]
+PASS action box first (before section 0)
+PASS rows 13 and 21 are NOT FILMABLE and carry no 'within 45 seconds' sentence :: [13, 21]
+PASS row 11 writes no known-false total and says EST NOT MEASURED
+PASS row 11 is tied to L-CARD
+PASS L-CARDLEN gives both options with numbers (about 75 words / about 60 s, total about 210 s)
+PASS L-SCENES question present with the 40 s and 25 s budgets
+PASS rows 15, 20, 29, 31 tied to L-CARDTEXT
+PASS rows 1, 33, 39 split: an always part and an L-APPROX part
+PASS 'sped up, real wait' label in the exceptions of rows 1 and 17
+PASS every new text that says NO NUMBER carries the 45 s carve-out :: []
+PASS row 47 and the n=1 rows say n=2 for 144.3 s
+PASS residual lines have rows (RS:57, 52, 30, 6, 47; PG:144, 121, 132; ONE:1, 26)
+PASS row 8 reads every request line, answers Q27 (a)(b)(c), key scope UNVERIFIED, made-up vs real
+PASS row 6 has the second leak scan (item 15) and the after-take deletion (item 16), no blank and no builder note
+PASS generator rule on rows 62 to 69 and row 92 edits the generator
+PASS reply line has seconds and IST
+PASS box says six blocking steps (the word four only in the slip note)
+PASS no 'two stores' or 'three stores' in any new text
+PASS section 0 states the spoken card word count equal to the count from the rows (103) :: 103
+PASS run-sheet list headings are given at lines 49 and 61 (not 59 and 71)
+PASS no bare 'lead' in new texts (the one decision sentence excepted) :: []
+PASS section 8 has the coverage of the c6n reviews
+SUMMARY: 60 checks, 1 FAILED: report prose lines with '18 runs' name both voided runs
+
+EXIT CODE 1

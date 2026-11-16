@@ -9,20 +9,30 @@ HERE = os.path.dirname(os.path.abspath(__file__)) + '/'
 FAILS = []
 def fail(code, msg): FAILS.append('%s %s' % (code, msg))
 def rd(n): return open(D + n, encoding='utf-8').read()
-ns = {}; exec(open(D + 'facts-v28.py', encoding='utf-8').read(), ns); F = ns['F']
-bns = {'__name__': 'x'}
-import importlib.util
-spec = importlib.util.spec_from_file_location('b24', D + 'build-v28.py'); b = importlib.util.module_from_spec(spec)
-sys.argv = ['x', D]; spec.loader.exec_module(b)
-GEN = b.build()
+def stop(msg):                                                 # a crash of facts or build is a FAIL line, never a traceback (evidence run v27, N03)
+    print('FAIL C00 ' + msg); print('check-v28: 1 failure(s)'); sys.exit(1)
+ns = {}
+try:
+    exec(open(D + 'facts-v28.py', encoding='utf-8').read(), ns); F = ns['F']
+    import importlib.util
+    spec = importlib.util.spec_from_file_location('b28', D + 'build-v28.py'); b = importlib.util.module_from_spec(spec)
+    sys.argv = ['x', D]; spec.loader.exec_module(b)
+    GEN = b.build()
+except BaseException as e:
+    stop('facts or build stopped: %s: %s' % (type(e).__name__, str(e)[:120]))
 for n, o in GEN.items():                                   # C01 copies cannot differ from source
     if not os.path.exists(D + n): fail('C01', 'missing ' + n); continue
     if rd(n) != o: fail('C01', n + ' differs from what its source and facts build')
-for n in ('OWNER-SHEET-v28-A.md', 'OWNER-SHEET-v28-B.md', 'LEAD-RELEASE-NOTE-v11.md', 'v28-OPEN-FOR-LEAD.md', 'v28-CHANGES.md'):
+PAGES = ('OWNER-SHEET-v28-A.md', 'OWNER-CARD-v28-A.md', 'OWNER-NUMBERS-v28-A.md', 'OWNER-SHEET-v28-B.md', 'OWNER-CARD-v28-B.md', 'OWNER-NUMBERS-v28-B.md', 'OWNER-FILM-v28.md')
+for n in PAGES + ('LEAD-RELEASE-NOTE-v12.md', 'v28-OPEN-FOR-LEAD.md', 'v28-CHANGES.md'):
     if not os.path.exists(D + n): fail('C02', 'file missing: ' + n)
-A = rd('OWNER-SHEET-v28-A.md') if os.path.exists(D + 'OWNER-SHEET-v28-A.md') else ''
-B = rd('OWNER-SHEET-v28-B.md') if os.path.exists(D + 'OWNER-SHEET-v28-B.md') else ''
-ALL = {n: rd(n) for n in ('OWNER-SHEET-v28-A.md', 'OWNER-SHEET-v28-B.md', 'LEAD-RELEASE-NOTE-v11.md', 'v28-OPEN-FOR-LEAD.md', 'v28-CHANGES.md') if os.path.exists(D + n)}
+def whole(k):                                              # the sheet with its card page and numbers page put back, and the film page: what the owner reads
+    try: return b.combine(rd('OWNER-SHEET-v28-%s.md' % k), rd('OWNER-CARD-v28-%s.md' % k), rd('OWNER-NUMBERS-v28-%s.md' % k), rd('OWNER-FILM-v28.md'))
+    except Exception as e: fail('C02', 'cannot combine pages of %s: %s' % (k, type(e).__name__)); return ''
+A = whole('A'); B = whole('B')
+ALL = {'OWNER-SHEET-v28-A.md': A, 'OWNER-SHEET-v28-B.md': B}
+for n in ('LEAD-RELEASE-NOTE-v12.md', 'v28-OPEN-FOR-LEAD.md', 'v28-CHANGES.md'):
+    if os.path.exists(D + n): ALL[n] = rd(n)
 # C03 arithmetic from primitives (independent of facts-v28.py: written out here)
 price_c = (40000 * 300 + 10000 * 1500) // 1000000
 if price_c != 27: fail('C03', 'price per call is not 27 cents')
@@ -70,11 +80,15 @@ try:
         for w in words:
             if w.lower() in t.lower(): fail('C06', '%s holds a banned word (index %d)' % (n, words.index(w)))
 except Exception as e: fail('C06', 'banned list unreadable: %s' % type(e).__name__)
-# C07 word counts
-for n in ('OWNER-SHEET-v28-A.md', 'OWNER-SHEET-v28-B.md'):
-    c = len(ALL.get(n, '').split())
-    if c > 7600: fail('C07', '%s has %d words (regression ceiling 7600 = the v28 measured size plus a small margin; the brief target 6300 and the v26 cap 6500 are NOT met, see v28-CHANGES.md item 3)' % (n, c))
-    print('C07 info: %s %d words (target 6300: %s)' % (n, c, 'met' if c < 6300 else 'NOT met'))
+# C07 word counts by the same split(): the sheet itself must be under 6300 words; every page is printed
+tot = {}
+for k in 'AB':
+    cnt = {p: len(rd(p).split()) if os.path.exists(D + p) else 0 for p in ('OWNER-SHEET-v28-%s.md' % k, 'OWNER-CARD-v28-%s.md' % k, 'OWNER-NUMBERS-v28-%s.md' % k, 'OWNER-FILM-v28.md')}
+    tot[k] = sum(cnt.values())
+    sh = cnt['OWNER-SHEET-v28-%s.md' % k]
+    if sh >= 6300: fail('C07', 'sheet %s has %d words (target under 6300; v27 had 7473 with the card inside)' % (k, sh))
+    if tot[k] > 7473: fail('C07', 'sheet %s with its card, numbers and film pages has %d words: more than the v27 sheet (7473)' % (k, tot[k]))
+    print('C07 info: %s' % ', '.join('%s %d' % (p, c) for p, c in cnt.items()), 'total', tot[k])
 # C08 variant checks and no marker
 for n, t in (('A', A), ('B', B)):
     if '[[' in t or ']]' in t or '{{' in t: fail('C08', n + ' has a marker')
@@ -158,7 +172,7 @@ for n, t in (('A', A), ('B', B)):
 
 # ---- v25b additions: C16 to C25 (each closes a gap the ported v23 plants M01 to M54 showed) ----
 import difflib
-NOTE = ALL.get('LEAD-RELEASE-NOTE-v11.md', ''); OPEN = ALL.get('v28-OPEN-FOR-LEAD.md', ''); CHG = ALL.get('v28-CHANGES.md', '')
+NOTE = ALL.get('LEAD-RELEASE-NOTE-v12.md', ''); OPEN = ALL.get('v28-OPEN-FOR-LEAD.md', ''); CHG = ALL.get('v28-CHANGES.md', '')
 TEXTS = {'sheetA': A, 'sheetB': B, 'note': NOTE, 'open': OPEN, 'changes': CHG}
 # C16 every pointer target exists: Open N has a row, G N has a row, sheet N.M is a step, open rows run 1..n with no gap
 open_rows = [int(m[1]) for m in re.finditer(r'^\| (\d+) \|', OPEN, re.M)]

@@ -22,14 +22,23 @@ def tidy(o):
     o = re.sub(r'[ \t]+\n', '\n', o); o = re.sub(r' {2,}(?=[.,;:)])', '', o); return o.replace('( ', '(')
 POINTER = ("### THE CARD (the separate printed page OWNER-CARD-v28-%s.md)\nPrint that page and keep it beside you. Every step called \"the card\", every danger sign W1 to W9 and the cancel lists L1 to L5 are on that page only; "
            "this sheet does not repeat them. Fill its blanks before you press create of the run key.\n\n")
+NPOINTER = "## 3. The numbers message\nThe sample numbers message and your checks of it are on the separate page OWNER-NUMBERS-v28-%s.md (same letter as this sheet). You use them at 5.1 and 5.8.\n\n"
+def cut(o, name):
+    i = o.index('<<%s\n' % name); j = o.index('%s>>\n' % name)
+    return o[:i] + '@@%s@@' % name + o[j + len(name) + 3:], o[i + len(name) + 3:j].strip('\n') + '\n'
 def split(o):
-    """returns (sheet text with the card and film blocks cut out, card text, film text)"""
-    c0 = o.index('<<CARD\n'); c1 = o.index('CARD>>\n'); f0 = o.index('<<FILM\n'); f1 = o.index('FILM>>')
-XX
-def combine(sheet, card, film):
-    """the whole text a check reads: the card put back in place, the film page appended"""
+    """returns (sheet text with the card, numbers and film blocks cut out, card text, numbers text, film text)"""
+    o, card = cut(o, 'CARD'); o, nums = cut(o, 'NUMBERS')
+    f0 = o.index('<<FILM\n'); f1 = o.index('FILM>>')
+    film = o[f0 + 7:f1].strip('\n') + '\n'; o = o[:f0].rstrip('\n') + '\n'
+    return o, card, nums, film
+def combine(sheet, card, nums, film):
+    """the whole text a check reads: card and numbers pages put back in place, film page appended"""
     i = sheet.index('### THE CARD'); j = sheet.index('### The rules')
-    return sheet[:i] + card.rstrip('\n') + '\n\n' + sheet[j:].rstrip('\n') + '\n\n' + film
+    sheet = sheet[:i] + card.rstrip('\n') + '\n\n' + sheet[j:]
+    i = sheet.index('## 3. The numbers message'); j = sheet.index('## 5. Before the yes')
+    sheet = sheet[:i] + nums.rstrip('\n') + '\n\n' + sheet[j:]
+    return sheet.rstrip('\n') + '\n\n' + film
 def build():
     out = {}
     src = open(D + 'OWNER-SHEET-v28-SOURCE.md', encoding='utf-8').read()
@@ -38,9 +47,9 @@ def build():
     for k in 'AB':
         o = tidy(fill(variant(src, k)))
         assert '[[' not in o and ']]' not in o and '{{' not in o, 'leftover in ' + k
-        sheet, card, film = split(o)
-        out['OWNER-SHEET-v28-%s.md' % k] = sheet.replace('@@POINTER@@', POINTER % k)
-        out['OWNER-CARD-v28-%s.md' % k] = card; films.append(film)
+        sheet, card, nums, film = split(o)
+        out['OWNER-SHEET-v28-%s.md' % k] = sheet.replace('@@CARD@@', POINTER % k).replace('@@NUMBERS@@', NPOINTER % k)
+        out['OWNER-CARD-v28-%s.md' % k] = card; out['OWNER-NUMBERS-v28-%s.md' % k] = nums; films.append(film)
     assert films[0] == films[1], 'the film page differs between A and B'
     out['OWNER-FILM-v28.md'] = films[0]
     for s, d in (('LEAD-RELEASE-NOTE-v12-SOURCE.md', 'LEAD-RELEASE-NOTE-v12.md'), ('v28-OPEN-FOR-LEAD-SOURCE.md', 'v28-OPEN-FOR-LEAD.md')):
