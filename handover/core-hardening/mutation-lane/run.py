@@ -79,6 +79,8 @@ TESTS are pytest arguments (paths / -k ...). The command run is, with only the e
 """
 
 import argparse
+import configparser
+import errno
 import fcntl
 import hashlib
 import io
@@ -94,6 +96,7 @@ import sys
 import tarfile
 import tempfile
 import time
+import tomllib
 
 # skipped in the tree comparison: `.venv` ONLY directly under the root (the scratch environment); the two
 # cache folders at any depth. A `.venv` deeper in the tree is compared like any other folder.
@@ -103,27 +106,32 @@ SKIP_ANY = {"__pycache__", ".pytest_cache"}
 STATE = pathlib.Path(tempfile.gettempdir()) / f"hadavin-mutation-lane-{os.geteuid()}"
 NAME_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*")
 SHA_RE = re.compile(r"[0-9a-fA-F]{4,64}")
-# every catchable signal whose default action ends the process (SIGPIPE/SIGXFSZ are ignored by Python; the
-# synchronous SIGSEGV/SIGFPE/SIGILL/SIGBUS/SIGSYS are not "sent" by anyone and cannot be resumed)
-HANDLED_SIGNALS = tuple(
+# Every signal that can be sent to a process, except the ones named here (review r4 M1). Not handled, with the reason:
+# SIGKILL and SIGSTOP cannot be caught; SIGCHLD (a child changed state), SIGCONT, SIGWINCH and SIGURG are
+# informational and do not end the process; SIGTSTP, SIGTTIN and SIGTTOU only stop it; SIGPIPE and SIGXFSZ are
+# turned into ordinary errors by Python. All the rest (including SIGTRAP, SIGSYS, SIGSTKFLT, all real-time
+# signals and SIGSEGV/SIGBUS/SIGFPE/SIGILL when another process sends them with kill()) end the process by
+# default, so each one is caught: the file is restored first. A real memory fault inside this very process
+# cannot be handled in Python (the faulting instruction would run again); that case is the SIGKILL case:
+# the marker stays and `--restore` recovers.
+_NOT_HANDLED = frozenset(
     getattr(signal, n)
     for n in (
-        "SIGTERM",
-        "SIGINT",
-        "SIGHUP",
-        "SIGQUIT",
-        "SIGABRT",
-        "SIGALRM",
-        "SIGUSR1",
-        "SIGUSR2",
-        "SIGXCPU",
-        "SIGVTALRM",
-        "SIGPROF",
-        "SIGIO",
-        "SIGPWR",
+        "SIGKILL",
+        "SIGSTOP",
+        "SIGCHLD",
+        "SIGCONT",
+        "SIGWINCH",
+        "SIGURG",
+        "SIGTSTP",
+        "SIGTTIN",
+        "SIGTTOU",
+        "SIGPIPE",
+        "SIGXFSZ",
     )
     if hasattr(signal, n)
 )
+HANDLED_SIGNALS = tuple(sorted(int(x) for x in signal.valid_signals() if x not in _NOT_HANDLED))
 # `-p no:NAME` may only switch off one of these (review r3 safety Major A: `-p no:runner` runs NO test and every
 # mutant would look like a survivor; `no:skipping`, `no:python`, `no:terminal`, `no:mark` change what is run or
 # reported). A fixed set, exact names: every core plugin is refused by not being in it.
@@ -245,25 +253,122 @@ def check_single_link(path: pathlib.Path, what: str) -> None:
         )
 
 
-def write_target(path: pathlib.Path, data: bytes, create: bool = False, mode: int = 0o644) -> None:
-    """Write the file under test in place, without following a link at the last path part. The checks are made
-    on the OPEN file, before anything is truncated: it must be a regular file with exactly one name (a hard link
-    would write through to another tree). `create=True` (restore only) re-creates a deleted file with O_EXCL."""
-    flags = os.O_WRONLY | os.O_NOFOLLOW
+def _open_parent(root: pathlib.Path | None, path: pathlib.Path, create_dirs: bool) -> tuple[int, str]:
+    """Open the folder that holds `path` one component at a time with O_NOFOLLOW and dir_fd, starting at `root`
+    (or, with no root, at the parent folder itself): a folder swapped for a symbolic link after the path checks
+    is refused, never followed (review r4 nit 3). Returns (fd of the parent folder, last name)."""
+    if root is None:
+        base, parts = path.parent, []
+    else:
+        base = root
+        try:
+            parts = list(path.parent.relative_to(root).parts)
+        except ValueError as e:
+            raise Refused(f"{path} is not inside {root}: not written") from e
+    dflags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
+    fd = os.open(base, os.O_RDONLY | os.O_DIRECTORY)
     try:
-        fd = os.open(path, flags)
-    except FileNotFoundError:
-        if not create:
+        for part in parts:
+            try:
+                nxt = os.open(part, dflags, dir_fd=fd)
+            except FileNotFoundError:
+                if not create_dirs:
+                    raise
+                os.mkdir(part, 0o755, dir_fd=fd)
+                nxt = os.open(part, dflags, dir_fd=fd)
+            except OSError as e:
+                if e.errno in (errno.ELOOP, errno.ENOTDIR):
+                    raise Refused(
+                        f"{path}: the folder {part!r} is a symbolic link or not a folder: not written"
+                    ) from e
+                raise
+            os.close(fd)
+            fd = nxt
+        return fd, path.name
+    except BaseException:
+        os.close(fd)
+        raise
+
+
+def write_target(
+    path: pathlib.Path,
+    data: bytes,
+    create: bool = False,
+    mode: int = 0o644,
+    root: pathlib.Path | None = None,
+    on_open=None,
+) -> None:
+    """Write the file under test in place. No link is followed at any path part below `root` (each folder is
+    opened with O_NOFOLLOW from its parent's descriptor), the open cannot block on a FIFO (O_NONBLOCK), and the
+    checks are made on the OPEN file, before anything is truncated: it must be a regular file with exactly one
+    name (a hard link would write through to another tree). `on_open` is called after those checks and just
+    before the file is truncated: only from then on has the file been touched. `create=True` (restore only)
+    re-creates a deleted file (and missing folders) with O_EXCL and sets exactly `mode` (umask does not apply)."""
+    pfd, name = _open_parent(root, path, create)
+    try:
+        flags = os.O_WRONLY | os.O_NOFOLLOW | os.O_NONBLOCK
+        created = False
+        try:
+            fd = os.open(name, flags, dir_fd=pfd)
+        except FileNotFoundError:
+            if not create:
+                raise
+            fd = os.open(name, flags | os.O_CREAT | os.O_EXCL, mode, dir_fd=pfd)
+            created = True
+        except OSError as e:
+            if e.errno == errno.ENXIO:  # a FIFO with no reader
+                raise Refused(f"{path} is not a regular file (a FIFO): not written") from e
+            if e.errno == errno.ELOOP:
+                raise Refused(f"{path} is a symbolic link: not written") from e
             raise
-        fd = os.open(path, flags | os.O_CREAT | os.O_EXCL, mode)
+    finally:
+        os.close(pfd)
     with os.fdopen(fd, "wb") as fh:
         st = os.fstat(fh.fileno())
         if not stat.S_ISREG(st.st_mode) or st.st_nlink != 1:
             raise Refused(
                 f"{path} is not a regular file with exactly one name (links: {st.st_nlink}): not written"
             )
+        if created:
+            os.fchmod(fh.fileno(), mode)  # the umask of the caller must not change the recorded mode
+        if on_open is not None:
+            on_open()
         fh.truncate(0)
         fh.write(data)
+
+
+def read_regular(path: pathlib.Path) -> bytes:
+    """Read a file without following a link at the last part and without blocking on a FIFO."""
+    try:
+        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+    except OSError as e:
+        raise Refused(f"{path} cannot be opened safely ({e.strerror}): refused") from e
+    with os.fdopen(fd, "rb") as fh:
+        if not stat.S_ISREG(os.fstat(fh.fileno()).st_mode):
+            raise Refused(f"{path} is not a regular file: refused")
+        return fh.read()
+
+
+def write_out(path: pathlib.Path, text: str) -> None:
+    """Write an output file (raw file, baseline, tree diff, --out-json): never through a symbolic link, only to a
+    regular file (review r4 nit 11)."""
+    try:
+        fd = os.open(
+            path, os.O_WRONLY | os.O_CREAT | os.O_NOFOLLOW | os.O_NONBLOCK, 0o644
+        )
+    except OSError as e:
+        raise Refused(f"output file {path} cannot be written safely ({e.strerror}): refused") from e
+    with os.fdopen(fd, "w", encoding="utf-8") as fh:
+        if not stat.S_ISREG(os.fstat(fh.fileno()).st_mode):
+            raise Refused(f"output file {path} is not a regular file: refused")
+        fh.truncate(0)
+        fh.write(text)
+
+
+def check_out_path(path: pathlib.Path) -> None:
+    """Before anything is planted: an output path must not be a symbolic link or a special file."""
+    if path.is_symlink() or (path.exists() and not path.is_file()):
+        raise Refused(f"output path {path} is a symbolic link or not a regular file: refused")
 
 
 def decode_text(b: bytes, rel: str) -> str:
