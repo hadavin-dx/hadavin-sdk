@@ -5,12 +5,12 @@ Done: plan v3.1 final (3 EGM rounds, round 3 = 0 Blockers). L0 done: tools + 52 
 Admitted slips so far: plan said 54 flow files (truth 52); my first fixture test passed a mutant (equal fixtures) and check_secrets skipped a file with a name prefix: both found and fixed with evidence.
 Agents running: 6 language-model agents (sonnet builders, see register), 0 script lanes. Open: QUESTIONS.md Q1 (Tier B scope), no answer yet; proceeding as written.
 ## AGENT REGISTER (id | purpose | started UTC/IST | expected end | last checked | state | next)
-| L1 | real-v5 + film-v5 full tables, hunts | 06:59/12:29 | +60 min | 06:59 | starting | checkpoint 30 min |
-| L2a | table-screen-v2, desk doors, scripts inventory | 06:59/12:29 | +60 min | 06:59 | starting | checkpoint |
-| L2b-1 | real family Tier B | 06:59/12:29 | +60 min | 06:59 | starting | checkpoint |
-| L2b-2 | film family Tier B | 06:59/12:29 | +60 min | 06:59 | starting | checkpoint |
-| L2b-3 | plain/v1/table-screen Tier B | 06:59/12:29 | +60 min | 06:59 | starting | checkpoint |
-| L3 | claims + store table | 06:59/12:29 | +60 min | 06:59 | starting | checkpoint |
+| L1 (abc27aedaacbaf16c) | real-v5 + film-v5 full tables, hunts | 06:59/12:29 | +60 min | 06:59 | running | checkpoint 30 min |
+| L2a (ab8d57b118be6e605) | table-screen-v2, desk doors, scripts inventory | 06:59/12:29 | +60 min | 06:59 | running | checkpoint |
+| L2b-1 (a1cf3a69d8895a4c8) | real family Tier B | 06:59/12:29 | +60 min | 06:59 | running | checkpoint |
+| L2b-2 (a00b41f23f1263f79) | film family Tier B | 06:59/12:29 | +60 min | 06:59 | running | checkpoint |
+| L2b-3 (a5f74ac38268fb2e4) | plain/v1/table-screen Tier B | 06:59/12:29 | +60 min | 06:59 | running | checkpoint |
+| L3 (a67e3bbe8d590c17a) | claims + store table | 06:59/12:29 | +60 min | 06:59 | running | checkpoint |
 (plan reviewers P1d P1r P2d P2r P3d P3r: all closed)
 
 ## STATUS 06:47 UTC / 12:17 IST: ORDER 002 started, plan written (PLAN-002.md), plan review next
