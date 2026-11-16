@@ -2,7 +2,7 @@
 For the studio lead only. Moved out of OWNER-VIEW.md on 2026-11-16 (ORDER 017); sections 1 and 2 were rewritten the same day. The owner steps are v5 (inputs/OWNER-STEPS-realrun-v5-core-hardening.md); v3 is archived, not deleted. Everything here is for the lead: accounts, keys, Docker, engineering status, drift items.
 
 ## Next action
-START WITH TAKE-BLOCKERS.md row 1: name a builder and a date to extend `fill_flows.py` to the PATCHED real-v5 copy (fill DESK_URL, DESK_TIMEOUT_MS, DESK_ALERT_TO). Row 2 (rehearsals, studio lead) and row 3 (four security text edits) run in parallel. Then row 4 (take date), row 5 (QUESTIONS item 1 and the HubSpot lines). Live status: STATUS-BOARD.md.
+START WITH TAKE-BLOCKERS.md row 1: name a builder and a date to extend `fill_flows.py` to the PATCHED real-v5 copy (fill DESK_URL, DESK_TIMEOUT_MS, DESK_ALERT_TO). Row 2 (rehearsals, studio lead) and row 3 (four security text edits) run in parallel. Then row 4 (take date), row 5 (apply decisions/M17-end-never-deletes.md, then the HubSpot lines). Live status: STATUS-BOARD.md.
 
 Written Mon 16 Nov 2026, about 09:15 UTC / 14:45 IST, by the system-map session from the other sessions' files; updated 2026-11-16T10:20:53Z. Made-up data only. A number or claim taken from another file shows its source as file:line or section.
 

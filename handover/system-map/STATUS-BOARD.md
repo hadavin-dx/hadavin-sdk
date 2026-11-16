@@ -1,17 +1,17 @@
 # STATUS BOARD system-map
-UPDATED_UTC: 2026-11-16T10:22:06Z (IST = UTC+5:30)
+UPDATED_UTC: 2026-11-16T10:23:51Z (IST = UTC+5:30)
 SESSION: system-map
 ORDER: 017-024; lead ANSWER 10:20Z (take uses the PATCHED real-v5 copy) read; ORDER 024 done
 STATE: WORKING
 BOOT_ID: 6bc0bf7e
 ITEMS_TOTAL: 16
-ITEMS_OPEN: 5
-PERCENT: 80
-AGENTS_RUNNING: 6 (consistency check of today's edits; README and LEAD-PAGE structure; rehearsal rows from the pre-mortem; stale-term re-grep; OWNER-VIEW naive read; reading-order triage). Done: pre-mortem saved (work/premortem-r1.md); SUPERSEDED headers on flowset/REPORT.md, not-checked-r2.md, zoom-out-fastest-path.md.
+ITEMS_OPEN: 4
+PERCENT: 85
+AGENTS_RUNNING: 6 (numbering clash check; run-day card end-deletes check; ONE-PLACE stale gates; merged rehearsal rows; post-claim wording check; board and queue fact check). Done this beat: 6 hand-backs digested (work/agent-reports-batch3.md), board, OWNER-VIEW row 3, README/LEAD-PAGE pointer, REPORT.md line applied.
 INTERRUPTED: none
-NEXT: apply the lead's ANSWER (patched copy: F-002 and F-008 applied, then fill_flows) to QUESTIONS 7, TAKE-BLOCKERS rows 1 and 2, README and LEAD-PAGE (my earlier note recommended the unpatched files; now superseded). Then collect the 6 reports and apply wording fixes; scan_outputs.py fix and tests still to do. ORDER 024: sed never ran, counts 6 opus, 64 sonnet, 0 fable. M14: 1 failed (licence, branch artefact), 9390 passed, rc=1. HELD for the lead: does end delete (QUESTIONS 1); v5 step J editor; D-04/D-05; rehearsal trim; row 1 builder and date.
+NEXT: patched-copy answer already applied everywhere; next: apply the 6 agent reports' wording fixes (STATUS-BOARD, OWNER-VIEW row 3, REPORT.md, README/LEAD-PAGE structure); scan_outputs.py fix and tests still to do. ORDER 024: sed never ran, counts 6 opus, 64 sonnet, 0 fable. M14: 1 failed (licence, branch artefact), 9390 passed, rc=1. HELD for the lead: v5 step J editor; D-04/D-05 (post only); QUESTIONS 8 (film pause); rehearsal trim; row 1 builder and date.
 CAPACITY: nproc 4, load 0.13, mem 15 GB total 0 used, disk 40 percent
-FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); no named person to start Docker and rehearse; no take date. (3) S9-1..5 and S9-12 not applied in v5 or the scope sheet. (4) flow-set choice A to D open; the take-time value substitution (BL-wp6-G1) is not built; the mail credential mf-mail-smtp risk has no written fix. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.
+FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); the studio lead starts Docker and runs the rehearsal (decision 12); no take date. (3) S9-5, S9-12, S9-3, S9-2 not yet applied in v5 or the scope sheet; S9-1 and S9-4 deferred, describe-only (decision 5). (4) the take-time value substitution (BL-wp6-G1) is not built. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.
 PUSHED_UTC: 2026-11-16T10:11:31Z
 
 ## ITEMS
@@ -32,7 +32,7 @@ PUSHED_UTC: 2026-11-16T10:11:31Z
 | M13 | three-way consistency | DONE (drift section 12) | 100 | | |
 | M14 | heavy lane in fresh clone | DONE twice; latest head: 1 real failure (licence files), see FAILED | 100 | /tmp/sm-fresh2.pytest.log | |
 | M15 | cut list reconcile | reconciliation note added to ARCHIVE-CUT-LIST.md; one list to sign after the take | 80 | ARCHIVE-CUT-LIST.md | |
-| M16 | flow-set question | round 1 reviewed, fixes applied (NO-GO rule, credential risk); fresh reader running | 70 | flowset/REPORT.md | |
+| M16 | flow-set question | DONE, closed by decision 1 (real-v5 only; film-v5 out) | 100 | flowset/REPORT.md | |
 
 ## AGENTS
 | id | role | model | what it does | started UTC / IST | expected end UTC / IST | state |
