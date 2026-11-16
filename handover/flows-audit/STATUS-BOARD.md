@@ -1,13 +1,13 @@
-UPDATED_UTC: 2026-11-16T10:29:50Z
+UPDATED_UTC: 2026-11-16T10:31:15Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
-ITEMS_OPEN: 8
-PERCENT: 67
+ITEMS_OPEN: 7
+PERCENT: 68
 AGENTS_RUNNING: 5
-CAPACITY: 0.93 load of 4 cores, mem 0/15 GB, RAM 900/16087 MB, disk 27G free of 252G, top3 558M /tmp/claude-0 649M /tmp/pytest-of-root 871M /tmp/f3m , agents 5 (light+heavy per list)
+CAPACITY: 0.58 load of 4 cores, mem 0/15 GB, RAM 907/16087 MB, disk 27G free of 252G, top3 562M /tmp/claude-0 649M /tmp/pytest-of-root 871M /tmp/f3m , agents 5 (light+heavy per list)
 INTERRUPTED: none
 FAILED: ROLES: PARKED by lead (client build, after video, no new lanes). Script r6: independent rerun 71 tests OK, gate rc 0, but 7 of 15 random mutants survive (lines 141,145,147,280,358,371,417); not fixed because parked; v4 doc security Blocker (Part C unguarded) unfixed
 claims: r5 counts independently rerun and match (113/69/48/28/69=327, 79 rows); BUT 37 Table 2 rows (41-77) have no LIVE/OUT tag; example.test vs example.com rows 2 and 5 rest on OWNER-STEPS v3 only; row 33 archive step unproven; 2 wrong cites (A-097, A-068); r6 fix pending (tags, desk-repo traces, cites)
@@ -28,8 +28,9 @@ Q15 answered by lead and applied to CLAIMS-TABLE (rows 14-15 OUT, 16-17 LIVE, no
 Q13 answered by lead (take uses run_real_check_n8n.py, cleanup OFF, owner deletes leftovers by hand); take scripts are not in this repo so the claim stays 'lead verifies at re-pin'; claims fixer applying
 decisions r2 fixer done (own report: 67 edits, 45=8/8/29 as rated, every scene 5-11 / 60.1 text carries a cut marker); NOT done: M4 re-rating and M8 scene 4 caption wait for lead (Q14); VIDEO-RUNSHEET still has scenes 5-11 (lead applies); independent evidence running
 patches r1 reviews: wording read 2 Blockers + 12 Majors (not ready to read aloud: unbacked retention line, 45+30 s bound, undefined words, card too long vs Q15 one line), facts read 0 Blocker + 6 Majors (patched run sheet still contradicts itself: scenes 5-11 rows, 355 s, example.test, execution list empty, statement 20 numbers); r2 fixer running
-NEXT: F3 r7 fixer after evidence; F8 r5, patches r2, Q13 apply, decisions evidence
-PUSHED_UTC: 2026-11-16T10:29:50Z
+decisions r2 evidence: 25 unmarked phrase hits (film-v5 25, one database 9, approval 11, audit trail 8, 61.9 at SCENE-FLOW-MAP:40 = open Q14/M8); BEFORE measured on parent of a bundled commit; edit lists not compared line by line
+NEXT: F3 r7, F8 r5, patches r2, run-sheet Q13 fixers running
+PUSHED_UTC: 2026-11-16T10:31:15Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -50,9 +51,9 @@ PUSHED_UTC: 2026-11-16T10:29:50Z
 |---|---|---|---|---|---|---|---|---|
 | f3ev6 | F3 r6 evidence runner | sonnet | independent rerun, mutants on new code, e2e | 10:21 | 10:51 | 5 | running | fill_flows/evidence-f3-r6.md |
 | f8fix5 | F8 r5 fixer | sonnet | 4 Majors of owner-morning review (placeholders hidden, wrong table SQL, unpatched files, --fail-unverified) | 10:41 | 11:10 | 5 | running | flow-check/fix-f8-r5.md |
-| q13fix | apply Q13 answer to claims rows | sonnet | rows 33, B-067/091/213/215 | 10:33 | 10:48 | 5 | running | reviews-f1/fix-q13.md |
-| decev2 | decisions r2 evidence runner | sonnet | independent counts and unmarked-text grep | 10:36 | 10:50 | 5 | running | reviews/evidence-decisions-r2.md |
 | patfix2 | patches r2 fixer | sonnet | 2 Blockers + 18 Majors of two reviews, card to one line (Q15) | 10:40 | 11:05 | 5 | running | patches/fix-r2.md |
+| f3fix7 | F3 round 7 fixer | sonnet | security review 4 Majors, 5 surviving mutants, noqa | 10:35 | 11:05 | 5 | running | fill_flows/fix-f3-r7.md |
+| rwq13 | RUNSHEET-WORDING Q13 fixer | sonnet | apply Q13 to run-sheet rows, section 6 count | 10:35 | 10:50 | 5 | running | reviews-f1/fix-f5-q13.md |
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
