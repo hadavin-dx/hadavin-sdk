@@ -201,3 +201,22 @@ REFUSED: import check: 'docs/note.txt' is not a plain .py module path, so the ch
   PASS: T30a file unchanged
   PASS: T30b with --skip-import-check it runs (rc 0) and the raw file says so
 == T31 a timeout keeps the output printed before it
+  PASS: T31 raw file says TIMEOUT and holds the early output
+--- output printed before the timeout ---
+.
+  PASS: T31 file restored
+== T32 special files are never read: a FIFO in the tree, and a FIFO as the marker, give a refusal (exit 2) instead of a hang
+  PASS: T32a FIFO in the tree refused, no hang (got 2; 124 or 137 = hung)
+  PASS: T32b FIFO as marker refused, no hang (got 2; 124 or 137 = hung)
+== T33 a .venv folder deeper than the top is compared like any other folder (exit 2)
+  PASS: T33 nested .venv refused (got 2)
+== T34 test output that is not UTF-8 is replaced, not an error (fake python that prints byte 0xff and fails)
+  PASS: T34 run ends normally (rc 0) with verdict KILLED in the raw file
+  PASS: T34 file restored
+== T35 --restore with another TMPDIR: the marker kept by a run that used the default folder is found; exit 3 while the file is still planted
+./safety-tests.sh: line 222: 21452 Killed                  ( export TMPDIR=/tmp; exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+STILL PLANTED: src/mod.py differs from the backup kept by a run that used another TMPDIR; restore with: TMPDIR=/tmp python3 /home/user/hadavin-sdk/handover/core-hardening/mutation-lane/run.py --root /tmp/claude-0/-home-u
+  PASS: T35a exit 3 (got 3) and the file is still planted
+  PASS: T35b restoring with the right TMPDIR works
+  PASS: T35c nothing planted anywhere: exit 0 (got 0)
+FAILED CHECKS: 0

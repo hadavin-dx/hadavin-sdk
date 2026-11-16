@@ -1,0 +1,28 @@
+S603 `subprocess` call: check for execution of untrusted input
+   --> run.py:219:12
+    |
+217 | ) -> subprocess.CompletedProcess:
+218 |     """The one place that starts a helper program (git, patch, the import probe): fixed argument list, no shell."""
+219 |     return subprocess.run(
+    |            ^^^^^^^^^^^^^^
+220 |         argv, input=input_bytes, capture_output=True, check=False, cwd=cwd, env=env, timeout=timeout
+221 |     )
+    |
+
+S603 `subprocess` call: check for execution of untrusted input
+   --> run.py:578:12
+    |
+576 |     cmd = [str(py), "-m", "pytest", "-q", "-p", "no:cacheprovider", "--tb=line", "-rf", *tests]
+577 |     # one process group, so a timeout or a signal can stop all of it
+578 |     proc = subprocess.Popen(
+    |            ^^^^^^^^^^^^^^^^
+579 |         cmd,
+580 |         cwd=root,
+    |
+
+Found 2 errors.
+--- ruff format --check run.py make_mutants_v2.py
+2 files already formatted
+All checks passed!
+--- bash -n safety-tests.sh
+bash -n: clean
