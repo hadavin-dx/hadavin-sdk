@@ -1,2 +1,2 @@
-fixed command (D = mutated copy of the pristine flows): python3 -I /home/user/hadavin-sdk/handover/flows-audit/flow-check/check_flows.py D --baseline ../../demo/n8n-flows-real-v5 --expect mf-form.json=12:11 --expect mf-hook.json=12:11 --expect mf-recovery.json=10:9 --expect mf-sub-crm-mail.json=20:26 --quiet-info
-plus the extra option where a case lists one
+checker: /home/user/hadavin-sdk/handover/flows-audit/flow-check/check_flows.py
+fixed command per case: python3 -I CHECKER D --baseline PRISTINE <--expect lines recomputed from D> --quiet-info [extra option]

@@ -344,6 +344,25 @@ def _write_new(path: str, data: bytes) -> None:
         raise
 
 
+def _check_parent_links(parent: str) -> None:
+    """Refuse a parent path that goes through a symlink made by another user. A link owned by
+    you or by root (for example /tmp on macOS) is accepted: its target is still checked for
+    /mnt and for git, and the files are 0600 in a 0700 folder."""
+    me = os.getuid()
+    p = os.path.abspath(parent)
+    while True:
+        try:
+            st = os.lstat(p)
+        except OSError:
+            st = None
+        if st is not None and stat.S_ISLNK(st.st_mode) and st.st_uid not in (me, 0):
+            raise Refused("a folder in the output path is a symlink made by another user")
+        up = os.path.dirname(p)
+        if up == p:
+            return
+        p = up
+
+
 # ---------------------------------------------------------------- modes
 
 
@@ -361,7 +380,8 @@ def do_fill(in_dir: str, values_path: str, out_dir: str) -> int:
     manifest_path = out_dir + MANIFEST_SUFFIX
     if under_mnt(os.path.dirname(out_dir)) or under_mnt(out_dir):
         raise Refused("output path is under /mnt (Windows drive): file modes do not protect it")
-    if inside_git(out_dir) or inside_git(os.path.dirname(out_dir)):
+    _check_parent_links(os.path.dirname(out_dir))
+    if inside_git(os.path.dirname(out_dir)):
         raise Refused("output path is inside a git repository (a parent folder has .git)")
     if os.path.lexists(out_dir) or os.path.lexists(manifest_path):
         raise Refused("output folder or its manifest already exists (delete it first)")
@@ -534,6 +554,7 @@ def _signature_ok(out_dir: str, present: set, force_hash: bool) -> None:
 def do_delete(out_dir: str, force_hash: bool, no_manifest: bool = False) -> int:
     out_dir = os.path.abspath(out_dir.rstrip("/") or "/")
     manifest_path = out_dir + MANIFEST_SUFFIX
+    _check_parent_links(os.path.dirname(out_dir))
     has_dir = os.path.lexists(out_dir)
     has_man = os.path.lexists(manifest_path)
     if has_dir and (os.path.islink(out_dir) or not os.path.isdir(out_dir)):

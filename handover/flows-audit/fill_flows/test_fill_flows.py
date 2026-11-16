@@ -899,6 +899,103 @@ class Hardening(Base):
         self.assertEqual(code, 3)
         self.assertIn("value of DESK_URL ends with '/'", se)
 
+    # ---- round 3: tests for the four surviving hand mutants and the symlinked parent
+    def test_no_manifest_force_hash_refuses_a_folder_named_like_a_json_file(self):
+        # kills "S_ISREG removed": a folder x.json (mode 0600) passes the mode check and, with
+        # --force-hash, the read check; without the plain-file check unlink would fail half way.
+        out = self.made()
+        os.unlink(out + ".manifest.json")
+        os.mkdir(os.path.join(out, "zz.json"), 0o600)
+        for extra in ((), ("--force-hash",)):
+            code, _, se = self.cli("delete", "--out", out, "--no-manifest", *extra)
+            self.assertEqual((code, "not a plain .json file" in se), (1, True), se)
+            self.assertEqual(len(os.listdir(out)), 5)  # nothing was deleted
+
+    def test_no_manifest_refuses_a_fifo_without_hanging(self):
+        out = self.made()
+        os.unlink(out + ".manifest.json")
+        os.mkfifo(os.path.join(out, "zz.json"), 0o600)
+        code, _, se = self.cli("delete", "--out", out, "--no-manifest", "--force-hash")
+        self.assertEqual((code, "not a plain .json file" in se), (1, True), se)
+        self.assertEqual(len(os.listdir(out)), 5)
+
+    def test_fill_names_a_leftover_manifest_plainly(self):
+        # kills "manifest-exists refusal removed": without it the O_EXCL write fails with an
+        # unhelpful "failed: FileExistsError"
+        out = self.out()
+        man = out + ".manifest.json"
+        wtext(man, "keep me")
+        code, _, se = self.fill(out=out)
+        self.assertEqual((code, "already exists" in se, "failed" in se), (1, True, False), se)
+        self.assertEqual(rtext(man), "keep me")
+        self.assertFalse(os.path.exists(out))
+
+    def test_fill_into_a_symlink_that_points_into_git_names_the_real_cause(self):
+        # the link itself is the refusal (it exists); no folder is made in the git folder
+        repo = os.path.join(self.t, "repo")
+        os.makedirs(os.path.join(repo, ".git"))
+        link = self.out("lnk")
+        os.symlink(repo, link)
+        code, _, se = self.fill(out=link)
+        self.assertEqual((code, "already exists" in se), (1, True), se)
+        self.assertEqual(os.listdir(repo), [".git"])
+
+    def test_delete_no_manifest_refuses_a_symlink_or_folder_in_the_manifest_place(self):
+        # kills "manifest-is-symlink check removed" on delete
+        for kind in ("link", "dir"):
+            out = self.made()
+            os.unlink(out + ".manifest.json")
+            victim = os.path.join(self.t, "victim-" + kind)
+            wtext(victim, "precious")
+            if kind == "link":
+                os.symlink(victim, out + ".manifest.json")
+            else:
+                os.mkdir(out + ".manifest.json")
+            for extra in ((), ("--force-hash",)):
+                code, _, se = self.cli("delete", "--out", out, "--no-manifest", *extra)
+                self.assertEqual((code, "manifest is a symlink or not a file" in se), (1, True))
+                self.assertEqual(len(os.listdir(out)), 4)  # nothing deleted
+            self.assertEqual(rtext(victim), "precious")
+            if kind == "link":
+                os.unlink(out + ".manifest.json")
+            else:
+                os.rmdir(out + ".manifest.json")
+            shutil.rmtree(out)
+
+    # ---- round 3: a symlinked output parent
+    def test_symlinked_parent_of_my_own_is_accepted_and_works_end_to_end(self):
+        real = os.path.join(self.t, "real-parent")
+        os.mkdir(real, 0o700)
+        link = os.path.join(self.t, "link-parent")
+        os.symlink(real, link)
+        out = os.path.join(link, "sub")
+        self.assertEqual(self.fill(out=out)[0], 3)
+        self.assertEqual(sorted(os.listdir(real)), ["sub", "sub.manifest.json"])
+        self.assertEqual(self.cli("delete", "--out", out)[0], 0)
+        self.assertEqual(os.listdir(real), [])
+
+    def test_symlinked_parent_made_by_another_user_is_refused(self):
+        real = os.path.join(self.t, "real-parent")
+        os.mkdir(real, 0o700)
+        link = os.path.join(self.t, "link-parent")
+        os.symlink(real, link)
+        out = os.path.join(link, "sub")
+        real_lstat = os.lstat
+
+        def other_owner(path, *a, **k):
+            st = real_lstat(path, *a, **k)
+            if os.fspath(path) == link:
+                return os.stat_result((st.st_mode,) + tuple(st)[1:4] + (4242,) + tuple(st)[5:])
+            return st
+
+        with mock.patch.object(ff.os, "lstat", other_owner):
+            code, _, se = self.inproc(
+                "fill", "--in", self.copy_flows("real"), "--values", self.vf, "--out", out
+            )
+            self.assertEqual((code, "symlink made by another user" in se), (1, True), se)
+            self.assertEqual(os.listdir(real), [])
+            self.assertEqual(self.inproc("delete", "--out", out)[0], 1)
+
 
 if __name__ == "__main__":
     unittest.main()

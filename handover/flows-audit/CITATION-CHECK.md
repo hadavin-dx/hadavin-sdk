@@ -1,0 +1,375 @@
+# CITATION-CHECK (raw script output, evidence runner)
+
+Script: /tmp/citecheck/citecheck.py. Documents: CLAIMS-TABLE.md, SCENE-FLOW-MAP.md, F6-AUDIT.md. Match/no-match only, no judgement.
+
+## Counts
+- citations found: 199
+- resolved (file exists, line in range): 199
+- out of range: 0
+- unresolvable file names: 0
+- quotes (12+ chars, same line as a citation) found within +-3 lines: 78
+- quotes not found: 157
+- quotes skipped (too short after trimming ellipsis): 0
+- citations whose file name matches more than one file (any match accepted): 72
+
+Method notes: a quote is any backtick or double-quoted string of 12+ characters on the same line/table row as a citation; it is tested against every cited file of that row (+-3 lines); text cut with "..." is tested piece by piece (pieces of 6+ chars); whitespace is normalised and case is ignored as a fallback. Bare `:N` after a cite counts as the same file. `file line N` forms included. Citations written another way (e.g. "file, line N" or line numbers alone) are not extracted.
+
+## Failing rows
+- CLAIMS-TABLE.md:46 | A-030 | quote `could not tell` | QUOTE NOT FOUND within +-3 lines of cited lines VIDEO-RUNSHEET.md:35-35
+- CLAIMS-TABLE.md:48 | A-036 | quote `Alert mail subject '[demo] Lead desk: mail outcome unknown ...` | QUOTE NOT FOUND within +-3 lines of cited lines VIDEO-RUNSHEET.md:38-38
+- CLAIMS-TABLE.md:60 | A-021 | quote `mail not yet delivered` | QUOTE NOT FOUND within +-3 lines of cited lines VIDEO-RUNSHEET.md:90-90, PAGE-STATEMENTS-V4.md:150-150, PAGE-STATEMENTS-V4.md:153-153
+- CLAIMS-TABLE.md:68 | B-183 | quote `The desk owns (...): a receipt first, a keyed ...` | QUOTE NOT FOUND within +-3 lines of cited lines n8n-owns-vs-desk-owns.md:5-5
+- CLAIMS-TABLE.md:78 | B-010 | quote `CRM write / one contact per lead' ...` | QUOTE NOT FOUND within +-3 lines of cited lines PLAN-4-NLITE-FROM-LEAD.md:37-37
+- CLAIMS-TABLE.md:79 | B-011 | quote `Mail send / one mail per lead / 1 ...` | QUOTE NOT FOUND within +-3 lines of cited lines PLAN-4-NLITE-FROM-LEAD.md:38-38
+- CLAIMS-TABLE.md:82 | B-045 | quote ` | none | Single flight is not built: callers that arrive while the first call is still running get ` | QUOTE NOT FOUND within +-3 lines of cited lines PLAN-4-NLITE-FROM-LEAD.md:79-79
+- CLAIMS-TABLE.md:85 | B-093 | quote `end.flag`: what it is, who writes it, when it ...` | QUOTE NOT FOUND within +-3 lines of cited lines FAILED-TAKE-NOTE.md:16-16
+- CLAIMS-TABLE.md:86 | B-094 | quote `Retire check': what is retired, and how to check ...` | QUOTE NOT FOUND within +-3 lines of cited lines FAILED-TAKE-NOTE.md:17-17
+- CLAIMS-TABLE.md:87 | B-095 | quote `Credits end 23 Nov': which credits ... Not found' ...` | QUOTE NOT FOUND within +-3 lines of cited lines FAILED-TAKE-NOTE.md:19-19
+- CLAIMS-TABLE.md:93 | B-150 | quote `state unknown + one alert' / 'unknown ... 1 ...` | QUOTE NOT FOUND within +-3 lines of cited lines DESIGN-A-README.md:15-15, DESIGN-A-README.md:32-32
+- CLAIMS-TABLE.md:103 | B-182 | quote `n8n owns (stated by the lead): intake, field mapping, ...` | QUOTE NOT FOUND within +-3 lines of cited lines n8n-owns-vs-desk-owns.md:4-4
+- CLAIMS-TABLE.md:167 | A-016 | quote `The screen is the evidence.` | QUOTE NOT FOUND within +-3 lines of cited lines mf.py:119-138
+- CLAIMS-TABLE.md:172 | A-021 | quote `Kill cases K3B/K3 may be spoken only as ` | QUOTE NOT FOUND within +-3 lines of cited lines mf.py:158-158, mf.py:164-164
+- CLAIMS-TABLE.md:173 | A-022 | quote `Lane3 K3 = killed after the CRM write` | QUOTE NOT FOUND within +-3 lines of cited lines mf.py:151-164
+- CLAIMS-TABLE.md:173 | A-022 | quote `lane3 K3 = this page's K3B and lane3 K6 = this page's demo K3` | QUOTE NOT FOUND within +-3 lines of cited lines mf.py:151-164
+- CLAIMS-TABLE.md:206 | A-055 | quote `real-v4 and v5 use 45 s, DESIGN-A-README says 120 s for its flows folder` | QUOTE NOT FOUND within +-3 lines of cited lines n8n-flows/DESIGN-A-README.md:10-10
+- CLAIMS-TABLE.md:206 | A-055 | quote `interval '45 seconds'` | QUOTE NOT FOUND within +-3 lines of cited lines n8n-flows/DESIGN-A-README.md:10-10
+- CLAIMS-TABLE.md:206 | A-055 | quote ` side is now explained in the README itself) | Say ` | QUOTE NOT FOUND within +-3 lines of cited lines n8n-flows/DESIGN-A-README.md:10-10
+- CLAIMS-TABLE.md:210 | A-060 | quote `when n8n was killed after the mail step began, every lead ended unknown, none was lost and none was ` | QUOTE NOT FOUND within +-3 lines of cited lines mf.py:158-158, mf.py:164-164
+- CLAIMS-TABLE.md:227 | A-077 | quote `lane3 K3 = this page's K3B (killed after the mail left: unknown + 1 alert)` | QUOTE NOT FOUND within +-3 lines of cited lines mf.py:158-158
+- CLAIMS-TABLE.md:227 | A-077 | quote `Plain wording: ` | QUOTE NOT FOUND within +-3 lines of cited lines mf.py:158-158
+- CLAIMS-TABLE.md:240 | A-090 | quote `Arms the alert-only refusal on the stand-in (AF1 fault: answers 451 twice)` | QUOTE NOT FOUND within +-3 lines of cited lines smtp_catcher.py:26-28
+- CLAIMS-TABLE.md:240 | A-090 | quote `; the next N recipients whose address contains the text get ` | QUOTE NOT FOUND within +-3 lines of cited lines smtp_catcher.py:26-28
+- CLAIMS-TABLE.md:243 | A-093 | quote `Test: demo K3 (1 intake mail per lead) and K3B (0 intake mails per lead). n=20 each, lease 20 s. Ale` | QUOTE NOT FOUND within +-3 lines of cited lines mf.py:158-158, mf.py:164-164
+- CLAIMS-TABLE.md:293 | V4 | quote ` of the desk repo, ` | QUOTE NOT FOUND within +-3 lines of cited lines mf.py:83-83
+- CLAIMS-TABLE.md:293 | V4 | quote `VIDEO-RUNSHEET.md` | QUOTE NOT FOUND within +-3 lines of cited lines mf.py:83-83
+- CLAIMS-TABLE.md:293 | V4 | quote ` and the ledger count in ` | QUOTE NOT FOUND within +-3 lines of cited lines mf.py:83-83
+- CLAIMS-TABLE.md:297 | PLAN-4 | quote ` that PLAN-4-NLITE-FROM-LEAD.md:130 and :176 point to (the plan writes ` | QUOTE NOT FOUND within +-3 lines of cited lines PLAN-4-NLITE-FROM-LEAD.md:130-130, PLAN-4-NLITE-FROM-LEAD.md:176-176, flows-audit/ORDERS.md:60-60, RULE-R456-WORK-CONDUCT.md:19-19
+- CLAIMS-TABLE.md:297 | PLAN-4 | quote ` and "OWNER-STEPS v2/plans") does not exist under that name anywhere in ` | QUOTE NOT FOUND within +-3 lines of cited lines PLAN-4-NLITE-FROM-LEAD.md:130-130, PLAN-4-NLITE-FROM-LEAD.md:176-176, flows-audit/ORDERS.md:60-60, RULE-R456-WORK-CONDUCT.md:19-19
+- CLAIMS-TABLE.md:307 | RV5 | quote `INSERT INTO mf_leads(lead_key,email,name,state,claimed_until,claim_token,attempts) VALUES ($1,$2,$3,` | QUOTE NOT FOUND within +-3 lines of cited lines n8n-flows/mf_leads.sql:4-4
+- CLAIMS-TABLE.md:332 | B-013 | quote `V7: K1 K2 K3 K3B 80 kills 0 lost 0 doubled (v3, lease 20 s)` | QUOTE NOT FOUND within +-3 lines of cited lines V7-NUMBERS-lead-read.md:12-12
+- CLAIMS-TABLE.md:332 | B-013 | quote `, lead read raw). Say ` | QUOTE NOT FOUND within +-3 lines of cited lines V7-NUMBERS-lead-read.md:12-12
+- CLAIMS-TABLE.md:349 | B-030 | quote `asks the model once per lead` | QUOTE NOT FOUND within +-3 lines of cited lines stage_server.py:48-58
+- CLAIMS-TABLE.md:353 | B-034 | quote `V7's 59.6 s max was at lease 20 s` | QUOTE NOT FOUND within +-3 lines of cited lines V7-NUMBERS-lead-read.md:20-20
+- CLAIMS-TABLE.md:355 | B-036 | quote `alert within 30 s` | QUOTE NOT FOUND within +-3 lines of cited lines V7-NUMBERS-lead-read.md:4-4
+- CLAIMS-TABLE.md:360 | B-041 | quote `binds 127.0.0.1 only ... the key must match `^L[0-9a-f]{16}$` (else 400 `bad_key`) ... past `STAGE_W` | QUOTE NOT FOUND within +-3 lines of cited lines stage_server.py:60-60
+- CLAIMS-TABLE.md:360 | B-041 | quote `qualify_stage.py` | QUOTE NOT FOUND within +-3 lines of cited lines stage_server.py:60-60
+- CLAIMS-TABLE.md:362 | B-043 | quote `the stage journal stops the recovery flow from calling the model again after a kill that came after ` | QUOTE NOT FOUND within +-3 lines of cited lines stage_server.py:48-52
+- CLAIMS-TABLE.md:364 | B-045 | quote `All model calls run under ONE in-process lock (single flight).` | QUOTE NOT FOUND within +-3 lines of cited lines stage_server.py:48-52
+- CLAIMS-TABLE.md:364 | B-045 | quote ` covers only the journal check and the "started" write (stage_server.py:48-52); ` | QUOTE NOT FOUND within +-3 lines of cited lines stage_server.py:48-52
+- CLAIMS-TABLE.md:364 | B-045 | quote ` runs after the lock (line 54) | F-013 | UNSUPPORTED | The only stage in the repository does not hol` | QUOTE NOT FOUND within +-3 lines of cited lines stage_server.py:48-52
+- CLAIMS-TABLE.md:365 | B-046 | quote `Expected result of 10 concurrent posts for one key: exactly 1 fresh call, the other 9 answer the sam` | QUOTE NOT FOUND within +-3 lines of cited lines stage_server.py:51-51
+- CLAIMS-TABLE.md:365 | B-046 | quote ` with no label and get `{label:` | QUOTE NOT FOUND within +-3 lines of cited lines stage_server.py:51-51
+- CLAIMS-TABLE.md:365 | B-046 | quote `, unknown_model:true}` (stage_server.py:51) | F-013 | UNSUPPORTED | In the prototype, callers that a` | QUOTE NOT FOUND within +-3 lines of cited lines stage_server.py:51-51
+- CLAIMS-TABLE.md:366 | B-047 | quote `started with no label answers `{label: ` | QUOTE NOT FOUND within +-3 lines of cited lines stage_server.py:51-51
+- CLAIMS-TABLE.md:366 | B-047 | quote `, unknown_model: true}` and makes no second call` | QUOTE NOT FOUND within +-3 lines of cited lines stage_server.py:51-51
+- CLAIMS-TABLE.md:376 | B-057 | quote ``smtp_catcher.py .drop = 1`` | QUOTE NOT FOUND within +-3 lines of cited lines n8n-tests/smtp_catcher.py:44-47
+- CLAIMS-TABLE.md:397 | B-070 | quote `the SMTP stand-in with .drop = 1 (accepts a mail, then drops the connection)` | QUOTE NOT FOUND within +-3 lines of cited lines smtp_catcher.py:44-47
+- CLAIMS-TABLE.md:407 | B-080 | quote `the one measured first alert on a refused alert send was 272.1 s (AF1, n=1, test settings), so never` | QUOTE NOT FOUND within +-3 lines of cited lines V7-NUMBERS-lead-read.md:4-4
+- CLAIMS-TABLE.md:408 | B-081 | quote `K3 and K3B (n=20 each, kill variants, v3, lease 20 s): unknown, 1 alert each, 0 re-mails, about 30 s` | QUOTE NOT FOUND within +-3 lines of cited lines V7-NUMBERS-lead-read.md:8-9, V7-NUMBERS-lead-read.md:22-23
+- CLAIMS-TABLE.md:413 | B-086 | quote `the request body stays in n8n data until pruned` | QUOTE NOT FOUND within +-3 lines of cited lines N8N-START.md:40-42
+- CLAIMS-TABLE.md:414 | B-087 | quote `AF1 (n=1) covers state unknown unchanged and alert_sent true after the alert` | QUOTE NOT FOUND within +-3 lines of cited lines V7-NUMBERS-lead-read.md:4-4
+- CLAIMS-TABLE.md:432 | B-097 | quote `The harness refuses a run folder that is not fresh, so run_chain.py copies this folder ... into a ne` | QUOTE NOT FOUND within +-3 lines of cited lines run_chain.py:18-19
+- CLAIMS-TABLE.md:433 | B-098 | quote `T14 ... idle stack for 120 s, recovery running, no lead sent: pass = 0 stage requests, 0 model calls` | QUOTE NOT FOUND within +-3 lines of cited lines mf.py:321-321
+- CLAIMS-TABLE.md:433 | B-098 | quote `{success:true}` | QUOTE NOT FOUND within +-3 lines of cited lines mf.py:321-321
+- CLAIMS-TABLE.md:434 | B-099 | quote `T15 ... CRM refuses every call (HTTP 500) from the start: pass = state failed, exactly 1 alert namin` | QUOTE NOT FOUND within +-3 lines of cited lines V7-NUMBERS-lead-read.md:12-12
+- CLAIMS-TABLE.md:436 | B-101 | quote `lost = no final state in time (done, unknown, failed or review)` | QUOTE NOT FOUND within +-3 lines of cited lines mf.py:83-83
+- CLAIMS-TABLE.md:436 | B-101 | quote `o["lost"] = r["state"] not in ("done","unknown","failed") or ...` | QUOTE NOT FOUND within +-3 lines of cited lines mf.py:83-83
+- CLAIMS-TABLE.md:436 | B-101 | quote `lost = no final state of done, unknown or failed in time` | QUOTE NOT FOUND within +-3 lines of cited lines mf.py:83-83
+- CLAIMS-TABLE.md:437 | B-102 | quote `T8: cap stage refuses / errors / times out ...: 0 mails ..., 0 CRM writes, 0 model calls, state fail` | QUOTE NOT FOUND within +-3 lines of cited lines V7-NUMBERS-lead-read.md:12-12
+- CLAIMS-TABLE.md:440 | B-105 | quote `T13: duplicate delivery of one lead id (3 at once), Postgres killed mid-burst of 12 leads, then n8n ` | QUOTE NOT FOUND within +-3 lines of cited lines V7-NUMBERS-lead-read.md:14-14
+- CLAIMS-TABLE.md:441 | B-106 | quote `For each point: lost 0, doubled 0, extras none, money ok, kill point reached in every sample` | QUOTE NOT FOUND within +-3 lines of cited lines V7-NUMBERS-lead-read.md:8-9, V7-NUMBERS-lead-read.md:20-23
+- CLAIMS-TABLE.md:449 | B-110 | quote `n8n 2.46.6 needs Node 24 or newer; the machine's Node 22 makes n8n print ` | QUOTE NOT FOUND within +-3 lines of cited lines N8N-ENV-PROBE.md:6-6, N8N-ENV-PROBE.md:208-208
+- CLAIMS-TABLE.md:450 | B-111 | quote `the tag pull and the first two digest pulls got HTTP 429 ...; the third digest pull worked in 9 s` | QUOTE NOT FOUND within +-3 lines of cited lines DOCKER-PROBE.md:5-5
+- CLAIMS-TABLE.md:451 | B-112 | quote `a build made under Node 22 and run under Node 24 crashed with ` | QUOTE NOT FOUND within +-3 lines of cited lines N8N-ENV-PROBE.md:8-8
+- CLAIMS-TABLE.md:509 | B-158 | quote `stage_server.py ... calls the desk's own LiveQualifier and SpendLedger (reserve before, settle after` | QUOTE NOT FOUND within +-3 lines of cited lines stage_server.py:10-11, stage_server.py:16-16, stage_server.py:54-54
+- CLAIMS-TABLE.md:510 | B-159 | quote `a per-lead journal means a re-run never calls the model twice` | QUOTE NOT FOUND within +-3 lines of cited lines stage_server.py:17-23
+- CLAIMS-TABLE.md:510 | B-159 | quote `for the same journal file; if the journal file is missing or cannot be read (an operating-system err` | QUOTE NOT FOUND within +-3 lines of cited lines stage_server.py:17-23
+- CLAIMS-TABLE.md:511 | B-160 | quote `a lead with a started call and no answer returns label unknown (no second call)` | QUOTE NOT FOUND within +-3 lines of cited lines stage_server.py:51-51
+- CLAIMS-TABLE.md:532 | B-177 | quote `crm_stub.py: control field upsert_answer on POST /control: ` | QUOTE NOT FOUND within +-3 lines of cited lines crm_stub.py:9-9
+- CLAIMS-TABLE.md:532 | B-177 | quote ` (default), ` | QUOTE NOT FOUND within +-3 lines of cited lines crm_stub.py:9-9
+- CLAIMS-TABLE.md:532 | B-177 | quote ` | crm_stub.py:9 CTL has `upsert_answer: ` | QUOTE NOT FOUND within +-3 lines of cited lines crm_stub.py:9-9
+- CLAIMS-TABLE.md:533 | B-178 | quote `mf.py: new tests T17 (id only: done, numeric crm_id, 1 mail, 0 alerts) and T18` | QUOTE NOT FOUND within +-3 lines of cited lines mf.py:339-339
+- CLAIMS-TABLE.md:544 | B-185 | quote `n8n's default duplicate node let duplicates through at ten-at-once on a reused n8n ... clean in 12 o` | QUOTE NOT FOUND within +-3 lines of cited lines n8n-published-numbers.md:14-14
+- CLAIMS-TABLE.md:545 | B-186 | quote `Variants b, c, d ... 20 of 20 clean each` | QUOTE NOT FOUND within +-3 lines of cited lines n8n-published-numbers.md:16-18, n8n-published-numbers.md:26-28
+- CLAIMS-TABLE.md:545 | B-186 | quote `Variant e ... 25 of 25 clean` | QUOTE NOT FOUND within +-3 lines of cited lines n8n-published-numbers.md:16-18, n8n-published-numbers.md:26-28
+- CLAIMS-TABLE.md:546 | B-187 | quote `A database rule (a unique index with the insert set to skip repeats) kept exactly 1 row in 20 of 20 ` | QUOTE NOT FOUND within +-3 lines of cited lines n8n-skip-on-conflict.md:44-45, n8n-skip-on-conflict.md:58-58
+- CLAIMS-TABLE.md:546 | B-187 | quote ` path and 9 down the ` | QUOTE NOT FOUND within +-3 lines of cited lines n8n-skip-on-conflict.md:44-45, n8n-skip-on-conflict.md:58-58
+- CLAIMS-TABLE.md:546 | B-187 | quote ` path in 20 of 20 bursts` | QUOTE NOT FOUND within +-3 lines of cited lines n8n-skip-on-conflict.md:44-45, n8n-skip-on-conflict.md:58-58
+- CLAIMS-TABLE.md:555 | B-192 | quote `a unique index in Postgres plus Skip on Conflict kept exactly 1 row in 20 of 20 bursts` | QUOTE NOT FOUND within +-3 lines of cited lines n8n-skip-on-conflict.md:44-45
+- CLAIMS-TABLE.md:555 | B-192 | quote `lead_key text PRIMARY KEY` | QUOTE NOT FOUND within +-3 lines of cited lines n8n-skip-on-conflict.md:44-45
+- CLAIMS-TABLE.md:556 | B-193 | quote `The two-step ` | QUOTE NOT FOUND within +-3 lines of cited lines n8n-skip-on-conflict.md:47-47
+- CLAIMS-TABLE.md:556 | B-193 | quote ` then Insert made extra rows in 9 of 10 bursts` | QUOTE NOT FOUND within +-3 lines of cited lines n8n-skip-on-conflict.md:47-47
+- CLAIMS-TABLE.md:578 | B-207 | quote `The real protection against a loop or a double call is in the design: one paid call per lead id, rec` | QUOTE NOT FOUND within +-3 lines of cited lines stage_server.py:52-52
+- CLAIMS-TABLE.md:578 | B-207 | quote ` before the call (line 54) | F-013 | SUPPORTED | Prototype only; the take's stage is absent. Concurr` | QUOTE NOT FOUND within +-3 lines of cited lines stage_server.py:52-52
+- CLAIMS-TABLE.md:603 | R1 | quote `n8n keeps its own records` | QUOTE NOT FOUND within +-3 lines of cited lines DECISION-one-store.md:14-14, N8N-START.md:4-4
+- CLAIMS-TABLE.md:603 | R1 | quote `an AIM, not a state` | QUOTE NOT FOUND within +-3 lines of cited lines DECISION-one-store.md:14-14, N8N-START.md:4-4
+- CLAIMS-TABLE.md:610 | B-078 | quote `A person decides.` | QUOTE NOT FOUND within +-3 lines of cited lines DECISION-one-store.md:16-16
+- F6-AUDIT.md:28 | line 28 | quote `n8n-flows-real-v5/mf-hook.json` | QUOTE NOT FOUND within +-3 lines of cited lines n8n-mainframe/build_mainframe.py:77-95
+- F6-AUDIT.md:28 | line 28 | quote `n8n-flows-film-v5` | QUOTE NOT FOUND within +-3 lines of cited lines n8n-mainframe/build_mainframe.py:77-95
+- F6-AUDIT.md:30 | F-009 | quote `same as mf-form` | QUOTE NOT FOUND within +-3 lines of cited lines mf.py:119-128, mf.py:121-124, mf.py:125-126, mf.py:129-134
+- F6-AUDIT.md:30 | F-009 | quote `grep mf-hook` | QUOTE NOT FOUND within +-3 lines of cited lines mf.py:119-128, mf.py:121-124, mf.py:125-126, mf.py:129-134
+- F6-AUDIT.md:30 | F-009 | quote ` (mf.py:119-128) loops BOTH doors (mf.py:121-124), posts each key twice and asserts verdict ` | QUOTE NOT FOUND within +-3 lines of cited lines mf.py:119-128, mf.py:121-124, mf.py:125-126, mf.py:129-134
+- F6-AUDIT.md:30 | F-009 | quote `repeat: true` | QUOTE NOT FOUND within +-3 lines of cited lines mf.py:119-128, mf.py:121-124, mf.py:125-126, mf.py:129-134
+- F6-AUDIT.md:30 | F-009 | quote `, a missing key, and the kill and error paths (K1-K5 use mf-form; the 10-at-once burst, mf.py:129-13` | QUOTE NOT FOUND within +-3 lines of cited lines mf.py:119-128, mf.py:121-124, mf.py:125-126, mf.py:129-134
+- F6-AUDIT.md:40 | F6-01 | quote `, no onError, no retry, no timeout), :44 (` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:227-227, build_mainframe.py:75-75, build_mainframe.py:86-92, mf-sub-crm-mail.json:94-94, mf.py:3-3, mf.py:13-13, dn1_common.py:112-112, mf.py:62-62, build_mainframe.py:53-53, build_mainframe.py:76-76, build_mainframe.py:98-99, build_mainframe.py:91-91
+- F6-AUDIT.md:40 | F6-01 | quote ` has no executionTimeout), :76 (VERDICT), :91 (ReplyStored) | **A failing or hung sub-workflow gives` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:227-227, build_mainframe.py:75-75, build_mainframe.py:86-92, mf-sub-crm-mail.json:94-94, mf.py:3-3, mf.py:13-13, dn1_common.py:112-112, mf.py:62-62, build_mainframe.py:53-53, build_mainframe.py:76-76, build_mainframe.py:98-99, build_mainframe.py:91-91
+- F6-AUDIT.md:40 | F6-01 | quote ` (build_mainframe.py:86-92); no node sets it true. RunSub has no error output, so a sub-workflow tha` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:227-227, build_mainframe.py:75-75, build_mainframe.py:86-92, mf-sub-crm-mail.json:94-94, mf.py:3-3, mf.py:13-13, dn1_common.py:112-112, mf.py:62-62, build_mainframe.py:53-53, build_mainframe.py:76-76, build_mainframe.py:98-99, build_mainframe.py:91-91
+- F6-AUDIT.md:40 | F6-01 | quote ` shape (UNVERIFIED). (2) Timeouts, real-v5: the HubSpot node ` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:227-227, build_mainframe.py:75-75, build_mainframe.py:86-92, mf-sub-crm-mail.json:94-94, mf.py:3-3, mf.py:13-13, dn1_common.py:112-112, mf.py:62-62, build_mainframe.py:53-53, build_mainframe.py:76-76, build_mainframe.py:98-99, build_mainframe.py:91-91
+- F6-AUDIT.md:40 | F6-01 | quote ` has no timeout option (mf-sub-crm-mail.json:94) and ` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:227-227, build_mainframe.py:75-75, build_mainframe.py:86-92, mf-sub-crm-mail.json:94-94, mf.py:3-3, mf.py:13-13, dn1_common.py:112-112, mf.py:62-62, build_mainframe.py:53-53, build_mainframe.py:76-76, build_mainframe.py:98-99, build_mainframe.py:91-91
+- F6-AUDIT.md:40 | F6-01 | quote ` has none (:265); ` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:227-227, build_mainframe.py:75-75, build_mainframe.py:86-92, mf-sub-crm-mail.json:94-94, mf.py:3-3, mf.py:13-13, dn1_common.py:112-112, mf.py:62-62, build_mainframe.py:53-53, build_mainframe.py:76-76, build_mainframe.py:98-99, build_mainframe.py:91-91
+- F6-AUDIT.md:40 | F6-01 | quote ` has one (:25, default 10 s, 2 tries). In film-v5 ` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:227-227, build_mainframe.py:75-75, build_mainframe.py:86-92, mf-sub-crm-mail.json:94-94, mf.py:3-3, mf.py:13-13, dn1_common.py:112-112, mf.py:62-62, build_mainframe.py:53-53, build_mainframe.py:76-76, build_mainframe.py:98-99, build_mainframe.py:91-91
+- F6-AUDIT.md:40 | F6-01 | quote ` is an HTTP call WITH timeout 10000 and 2 tries (:81, :91-92), so the hang risk there is only ` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:227-227, build_mainframe.py:75-75, build_mainframe.py:86-92, mf-sub-crm-mail.json:94-94, mf.py:3-3, mf.py:13-13, dn1_common.py:112-112, mf.py:62-62, build_mainframe.py:53-53, build_mainframe.py:76-76, build_mainframe.py:98-99, build_mainframe.py:91-91
+- F6-AUDIT.md:40 | F6-01 | quote `. (3) Lease and waiting sender: the 45 s lease is in the built flows (` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:227-227, build_mainframe.py:75-75, build_mainframe.py:86-92, mf-sub-crm-mail.json:94-94, mf.py:3-3, mf.py:13-13, dn1_common.py:112-112, mf.py:62-62, build_mainframe.py:53-53, build_mainframe.py:76-76, build_mainframe.py:98-99, build_mainframe.py:91-91
+- F6-AUDIT.md:40 | F6-01 | quote ` in mf-form.json, mf-hook.json, mf-recovery.json; the tests use MF_LEASE, default 20 s, mf.py:3, :13` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:227-227, build_mainframe.py:75-75, build_mainframe.py:86-92, mf-sub-crm-mail.json:94-94, mf.py:3-3, mf.py:13-13, dn1_common.py:112-112, mf.py:62-62, build_mainframe.py:53-53, build_mainframe.py:76-76, build_mainframe.py:98-99, build_mainframe.py:91-91
+- F6-AUDIT.md:40 | F6-01 | quote `; the M-tests in mf.py use 75 s, mf.py:62) gives up at about the lease, so recovery may take the lea` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:227-227, build_mainframe.py:75-75, build_mainframe.py:86-92, mf-sub-crm-mail.json:94-94, mf.py:3-3, mf.py:13-13, dn1_common.py:112-112, mf.py:62-62, build_mainframe.py:53-53, build_mainframe.py:76-76, build_mainframe.py:98-99, build_mainframe.py:91-91
+- F6-AUDIT.md:40 | F6-01 | quote ` (build_mainframe.py:53, wired at :70) stops a second mail. "Safe" here means only "no second mail";` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:227-227, build_mainframe.py:75-75, build_mainframe.py:86-92, mf-sub-crm-mail.json:94-94, mf.py:3-3, mf.py:13-13, dn1_common.py:112-112, mf.py:62-62, build_mainframe.py:53-53, build_mainframe.py:76-76, build_mainframe.py:98-99, build_mainframe.py:91-91
+- F6-AUDIT.md:40 | F6-01 | quote ` are both mapped to verdict ` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:227-227, build_mainframe.py:75-75, build_mainframe.py:86-92, mf-sub-crm-mail.json:94-94, mf.py:3-3, mf.py:13-13, dn1_common.py:112-112, mf.py:62-62, build_mainframe.py:53-53, build_mainframe.py:76-76, build_mainframe.py:98-99, build_mainframe.py:91-91
+- F6-AUDIT.md:40 | F6-01 | quote ` with HTTP 200 (VERDICT, build_mainframe.py:76). "Processing on a failed stage" means the sender is ` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:227-227, build_mainframe.py:75-75, build_mainframe.py:86-92, mf-sub-crm-mail.json:94-94, mf.py:3-3, mf.py:13-13, dn1_common.py:112-112, mf.py:62-62, build_mainframe.py:53-53, build_mainframe.py:76-76, build_mainframe.py:98-99, build_mainframe.py:91-91
+- F6-AUDIT.md:40 | F6-01 | quote `; the sender hears nothing unless it repeats the same key, which then gets ` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:227-227, build_mainframe.py:75-75, build_mainframe.py:86-92, mf-sub-crm-mail.json:94-94, mf.py:3-3, mf.py:13-13, dn1_common.py:112-112, mf.py:62-62, build_mainframe.py:53-53, build_mainframe.py:76-76, build_mainframe.py:98-99, build_mainframe.py:91-91
+- F6-AUDIT.md:40 | F6-01 | quote `. (5) Repeat key: its reply is read from ` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:227-227, build_mainframe.py:75-75, build_mainframe.py:86-92, mf-sub-crm-mail.json:94-94, mf.py:3-3, mf.py:13-13, dn1_common.py:112-112, mf.py:62-62, build_mainframe.py:53-53, build_mainframe.py:76-76, build_mainframe.py:98-99, build_mainframe.py:91-91
+- F6-AUDIT.md:40 | F6-01 | quote `. All six states are mapped (build_mainframe.py:91); only a missing row (deleted between Claim and S` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:227-227, build_mainframe.py:75-75, build_mainframe.py:86-92, mf-sub-crm-mail.json:94-94, mf.py:3-3, mf.py:13-13, dn1_common.py:112-112, mf.py:62-62, build_mainframe.py:53-53, build_mainframe.py:76-76, build_mainframe.py:98-99, build_mainframe.py:91-91
+- F6-AUDIT.md:40 | F6-01 | quote `, and a failing SELECT is a bare 500 (same class). Class: the reply says nothing true about a failed` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:227-227, build_mainframe.py:75-75, build_mainframe.py:86-92, mf-sub-crm-mail.json:94-94, mf.py:3-3, mf.py:13-13, dn1_common.py:112-112, mf.py:62-62, build_mainframe.py:53-53, build_mainframe.py:76-76, build_mainframe.py:98-99, build_mainframe.py:91-91
+- F6-AUDIT.md:40 | F6-01 | quote ` (safe: the key makes a resend idempotent). This adds a seventh reply value, ` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:227-227, build_mainframe.py:75-75, build_mainframe.py:86-92, mf-sub-crm-mail.json:94-94, mf.py:3-3, mf.py:13-13, dn1_common.py:112-112, mf.py:62-62, build_mainframe.py:53-53, build_mainframe.py:76-76, build_mainframe.py:98-99, build_mainframe.py:91-91
+- F6-AUDIT.md:40 | F6-01 | quote `, so the reply-contract table proposed in F6-03 must list it too; (2) map ` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:227-227, build_mainframe.py:75-75, build_mainframe.py:86-92, mf-sub-crm-mail.json:94-94, mf.py:3-3, mf.py:13-13, dn1_common.py:112-112, mf.py:62-62, build_mainframe.py:53-53, build_mainframe.py:76-76, build_mainframe.py:98-99, build_mainframe.py:91-91
+- F6-AUDIT.md:40 | F6-01 | quote ` with 503, and a missing ` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:227-227, build_mainframe.py:75-75, build_mainframe.py:86-92, mf-sub-crm-mail.json:94-94, mf.py:3-3, mf.py:13-13, dn1_common.py:112-112, mf.py:62-62, build_mainframe.py:53-53, build_mainframe.py:76-76, build_mainframe.py:98-99, build_mainframe.py:91-91
+- F6-AUDIT.md:40 | F6-01 | quote ` with 503, instead of ` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:227-227, build_mainframe.py:75-75, build_mainframe.py:86-92, mf-sub-crm-mail.json:94-94, mf.py:3-3, mf.py:13-13, dn1_common.py:112-112, mf.py:62-62, build_mainframe.py:53-53, build_mainframe.py:76-76, build_mainframe.py:98-99, build_mainframe.py:91-91
+- F6-AUDIT.md:40 | F6-01 | quote ` with 200; (3) timeouts: set ` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:227-227, build_mainframe.py:75-75, build_mainframe.py:86-92, mf-sub-crm-mail.json:94-94, mf.py:3-3, mf.py:13-13, dn1_common.py:112-112, mf.py:62-62, build_mainframe.py:53-53, build_mainframe.py:76-76, build_mainframe.py:98-99, build_mainframe.py:91-91
+- F6-AUDIT.md:40 | F6-01 | quote ` on the real-v5 ` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:227-227, build_mainframe.py:75-75, build_mainframe.py:86-92, mf-sub-crm-mail.json:94-94, mf.py:3-3, mf.py:13-13, dn1_common.py:112-112, mf.py:62-62, build_mainframe.py:53-53, build_mainframe.py:76-76, build_mainframe.py:98-99, build_mainframe.py:91-91
+- F6-AUDIT.md:40 | F6-01 | quote ` only. Do NOT set a workflow ` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:227-227, build_mainframe.py:75-75, build_mainframe.py:86-92, mf-sub-crm-mail.json:94-94, mf.py:3-3, mf.py:13-13, dn1_common.py:112-112, mf.py:62-62, build_mainframe.py:53-53, build_mainframe.py:76-76, build_mainframe.py:98-99, build_mainframe.py:91-91
+- F6-AUDIT.md:40 | F6-01 | quote ` below the lease without testing first: Qualify (2 x 10 s) plus CrmUpsert (2 x 10 s) can already rea` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:227-227, build_mainframe.py:75-75, build_mainframe.py:86-92, mf-sub-crm-mail.json:94-94, mf.py:3-3, mf.py:13-13, dn1_common.py:112-112, mf.py:62-62, build_mainframe.py:53-53, build_mainframe.py:76-76, build_mainframe.py:98-99, build_mainframe.py:91-91
+- F6-AUDIT.md:41 | F6-02 | quote `), :80-81 | **The e-mail check may reject a "from" value that mail gateways commonly send (the audit` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:86-86, build_mainframe.py:78-78, dn1_common.py:122-123
+- F6-AUDIT.md:41 | F6-02 | quote ` and accepts only ` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:86-86, build_mainframe.py:78-78, dn1_common.py:122-123
+- F6-AUDIT.md:41 | F6-02 | quote `. A mail gateway that sends (as the auditor expects, not observed) ` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:86-86, build_mainframe.py:78-78, dn1_common.py:122-123
+- F6-AUDIT.md:41 | F6-02 | quote `, an address with a trailing space, or a raw ` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:86-86, build_mainframe.py:78-78, dn1_common.py:122-123
+- F6-AUDIT.md:41 | F6-02 | quote ` header fails it, and the lead is stored as state ` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:86-86, build_mainframe.py:78-78, dn1_common.py:122-123
+- F6-AUDIT.md:41 | F6-02 | quote ` and replied ` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:86-86, build_mainframe.py:78-78, dn1_common.py:122-123
+- F6-AUDIT.md:41 | F6-02 | quote ` with a 200. Nothing alerts on ` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:86-86, build_mainframe.py:78-78, dn1_common.py:122-123
+- F6-AUDIT.md:41 | F6-02 | quote ` and nothing reads it again (F-031), so a real client's valid lead is silently parked. The test send` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:86-86, build_mainframe.py:78-78, dn1_common.py:122-123
+- F6-AUDIT.md:41 | F6-02 | quote ` (dn1_common.py:122-123), so no test shows it. The class is "input shape assumed from the test sende` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:86-86, build_mainframe.py:78-78, dn1_common.py:122-123
+- F6-AUDIT.md:41 | F6-02 | quote ` if present before the regex; and add one test with a display-name address. Needs F-031's alert on ` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:86-86, build_mainframe.py:78-78, dn1_common.py:122-123
+- F6-AUDIT.md:42 | F6-03 | quote `), build_mainframe.py:121 | **The door's field contract (` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:7-7, build_mainframe.py:121-121, DESIGN-A-README.md:7-7, N8N-START.md:33-33
+- F6-AUDIT.md:42 | F6-03 | quote `) is written only in the generator and in the test helper.** The folder READMEs (DESIGN-A-README.md:` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:7-7, build_mainframe.py:121-121, DESIGN-A-README.md:7-7, N8N-START.md:33-33
+- F6-AUDIT.md:42 | F6-03 | quote ` in those and in RUN-ON-LAPTOP.md and VIDEO-RUNSHEET.md finds nothing. Checked across the whole repo` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:7-7, build_mainframe.py:121-121, DESIGN-A-README.md:7-7, N8N-START.md:33-33
+- F6-AUDIT.md:42 | F6-03 | quote `. A person wiring a real mail gateway has to read the generator. The Item node types each field as s` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:7-7, build_mainframe.py:121-121, DESIGN-A-README.md:7-7, N8N-START.md:33-33
+- F6-AUDIT.md:42 | F6-03 | quote ` is UNKNOWN (outcome unknown: an error or a coercion to text; untested, same as F-002 note). | [fix ` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:7-7, build_mainframe.py:121-121, DESIGN-A-README.md:7-7, N8N-START.md:33-33
+- F6-AUDIT.md:42 | F6-03 | quote ` if F6-01 is applied) in V5-README.md; one T-test posting a numeric and an object ` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:7-7, build_mainframe.py:121-121, DESIGN-A-README.md:7-7, N8N-START.md:33-33
+- F6-AUDIT.md:43 | F6-04 | quote ` is the only primary key of ` | QUOTE NOT FOUND within +-3 lines of cited lines build_mainframe.py:82-84, PLAN-4-NLITE-FROM-LEAD.md:9-9, PLAN-4-NLITE-FROM-LEAD.md:9-9
+- F6-AUDIT.md:43 | F6-04 | quote `; the form door stores ` | QUOTE NOT FOUND within +-3 lines of cited lines build_mainframe.py:82-84, PLAN-4-NLITE-FROM-LEAD.md:9-9, PLAN-4-NLITE-FROM-LEAD.md:9-9
+- F6-AUDIT.md:43 | F6-04 | quote `, the hook door ` | QUOTE NOT FOUND within +-3 lines of cited lines build_mainframe.py:82-84, PLAN-4-NLITE-FROM-LEAD.md:9-9, PLAN-4-NLITE-FROM-LEAD.md:9-9
+- F6-AUDIT.md:44 | F6-06 | quote ` (mf.py:121-124) posts twice to both mf-form and mf-hook and asserts ` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:7-7, N8N-START.md:33-33, mf.py:121-124, mf.py:125-126, mf.py:129-134, mf.py:125-125
+- F6-AUDIT.md:44 | F6-06 | quote `repeat: true` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:7-7, N8N-START.md:33-33, mf.py:121-124, mf.py:125-126, mf.py:129-134, mf.py:125-125
+- F6-AUDIT.md:44 | F6-06 | quote `the hook door is tested for plain and repeat only` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:7-7, N8N-START.md:33-33, mf.py:121-124, mf.py:125-126, mf.py:129-134, mf.py:125-125
+- F6-AUDIT.md:45 | F6-07 | quote ` is not refused.** Item reads ` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:46-46, build_mainframe.py:77-84
+- F6-AUDIT.md:45 | F6-07 | quote ` as a string; if the field is absent the key is empty or null (n8n result UNVERIFIED). Then either t` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:46-46, build_mainframe.py:77-84
+- F6-AUDIT.md:45 | F6-07 | quote ` and the next keyless mail collides with it on ` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:46-46, build_mainframe.py:77-84
+- F6-AUDIT.md:45 | F6-07 | quote ` and is answered as a repeat, so a second, different lead is answered as a repeat and never processe` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:46-46, build_mainframe.py:77-84
+- F6-AUDIT.md:45 | F6-07 | quote ` (a new reply value, list it in the F6-03 table). Test (T20-style): empty, missing, numeric and obje` | QUOTE NOT FOUND within +-3 lines of cited lines mf-hook.json:46-46, build_mainframe.py:77-84
+- F6-AUDIT.md:49 | F-010 | quote `responseMode: responseNode` | QUOTE NOT FOUND within +-3 lines of cited lines build_mainframe.py:19-19
+- F6-AUDIT.md:49 | F-010 | quote ` is idempotent (` | QUOTE NOT FOUND within +-3 lines of cited lines build_mainframe.py:19-19
+- F6-AUDIT.md:49 | F-010 | quote `), so a resend with the same key cannot make two rows or two mails; ` | QUOTE NOT FOUND within +-3 lines of cited lines build_mainframe.py:19-19
+- F6-AUDIT.md:49 | F-010 | quote `'s notEmpty check on ` | QUOTE NOT FOUND within +-3 lines of cited lines build_mainframe.py:19-19
+- F6-AUDIT.md:49 | F-010 | quote ` correctly routes a conflict (zero rows, one empty item) to ` | QUOTE NOT FOUND within +-3 lines of cited lines build_mainframe.py:19-19
+- F6-AUDIT.md:49 | F-010 | quote ` that all four sub-workflow end nodes (OutDone, OutUnknown, OutStage, OutLost) set; the door has no ` | QUOTE NOT FOUND within +-3 lines of cited lines build_mainframe.py:19-19
+- F6-AUDIT.md:66 | F6-03 | quote `options.timeout` | QUOTE NOT FOUND within +-3 lines of cited lines build_mainframe.py:27-27
+- F6-AUDIT.md:66 | F6-03 | quote ` fails, and what the Set node does with a missing or object ` | QUOTE NOT FOUND within +-3 lines of cited lines build_mainframe.py:27-27
+
+## All resolved citations (file | line | cited text, first 120 chars)
+- CLAIMS-TABLE.md:15 | D2 | flows-audit/tools/scratch/007/work/b/handover/demo/n8n-flows/PAGE-STATEMENTS-V4.md (+9 same-name):151 | - K1 (killed after the claim): n=5, done. Median 60.8, max 61.9 (from the 17:19Z relay; n unchanged, final per-test medi
+- CLAIMS-TABLE.md:17 | P1 | flows-audit/tools/scratch/rp/c/b/handover/demo/VIDEO-RUNSHEET.md (+5 same-name):64 | 3. The stand-in drop on the film flows with .drop = 1: run it five times; note intake count (0 or 1), alert count, state
+- CLAIMS-TABLE.md:24 | Q6 | flows-audit/tools/scratch/rp/c/b/handover/demo/VIDEO-RUNSHEET.md (+5 same-name):4 | - Matched to the real take: lease 45 s; real mail service and real CRM service in scenes 1 to 4 (made-up people only); s
+- CLAIMS-TABLE.md:24 | Q6 | flows-audit/tools/scratch/rp/c/b/handover/demo/VIDEO-RUNSHEET.md (+5 same-name):30 | | 1. Stack at rest | Opens the prepared screen set: the n8n flow list (entry flows and recovery flow switched on, table-
+- CLAIMS-TABLE.md:25 | Q7 | flows-audit/tools/scratch/007/work/b/handover/demo/n8n-flows/PAGE-STATEMENTS-V4.md (+9 same-name):33 | 1. "A lead whose mail outcome is unknown, or that could not be finished, is noted in the lead table and an alert e-mail
+- CLAIMS-TABLE.md:26 | Q8 | flows-audit/tools/scratch/rp/c/b/handover/demo/VIDEO-RUNSHEET.md (+5 same-name):39 | | 10. Doubtful case, step 5: the table row (UNBACKED, fallback) | Fallback (keep it): a plain picture of the rows taken
+- CLAIMS-TABLE.md:26 | Q8 | flows-audit/tools/scratch/rp/c/b/handover/demo/VIDEO-RUNSHEET.md (+5 same-name):62 | 1. Import and activate the table screen flow (the rehearsal under way): open it once; confirm six columns and no name or
+- CLAIMS-TABLE.md:26 | Q8 | flows-audit/tools/scratch/rp/c/b/handover/demo/VIDEO-RUNSHEET.md (+5 same-name):88 | - Table screen: v2 is built (n8n-table-screen-v2, preview images in the folder), NOT run in n8n; the laptop agent re-sho
+- CLAIMS-TABLE.md:27 | V4 | flows-audit/tools/scratch/rp/c/b/handover/demo/VIDEO-RUNSHEET.md (+5 same-name):33 | | 4. Kill n8n mid-lead, recovery finishes it | Sends a new made-up lead. At the kill point (after the claim row is writt
+- CLAIMS-TABLE.md:27 | V4 | flows-audit/tools/scratch/rp/c/b/handover/demo/VIDEO-RUNSHEET.md (+5 same-name):41 | | 12. Closing card | No clicks. Voice over one card, six short lines. | Line 1, claim: a lead sent twice with the same i
+- CLAIMS-TABLE.md:27 | V4 | flows-audit/tools/scratch/007/work/b/handover/demo/n8n-flows/PAGE-STATEMENTS-V4.md (+9 same-name):120 | 17. "Recovery was measured at three leases, all on one machine with made-up data: 20 s lease (v3, laptop, n=20 per kill
+- CLAIMS-TABLE.md:27 | V4 | flows-audit/tools/scratch/007/work/b/handover/demo/n8n-flows/PAGE-STATEMENTS-V4.md (+9 same-name):149 | 20. "At the film lease of 45 s, a lead interrupted by an n8n crash was finished about a minute after the crash." Seconds
+- CLAIMS-TABLE.md:38 | A-001 | flows-audit/tools/scratch/rp/c/b/handover/demo/VIDEO-RUNSHEET.md (+5 same-name):4 | - Matched to the real take: lease 45 s; real mail service and real CRM service in scenes 1 to 4 (made-up people only); s
+- CLAIMS-TABLE.md:39 | A-005 | flows-audit/tools/scratch/rp/c/b/handover/demo/VIDEO-RUNSHEET.md (+5 same-name):8 | Written by the cloud demo session from: V7-NUMBERS-lead-read, DOUBTFUL-SCENE, PLAN-4-NLITE-FROM-LEAD (section 0, WP5, se
+- CLAIMS-TABLE.md:40 | A-087 | flows-audit/tools/scratch/rp/c/b/handover/demo/VIDEO-RUNSHEET.md (+5 same-name):23 | - Recovery wording: the lane3 lease-45 runs have landed as a relayed figure (60.1 to 61.9 s, 18 kill runs); the scene 4
+- CLAIMS-TABLE.md:40 | A-087 | flows-audit/tools/scratch/rp/c/b/handover/demo/VIDEO-RUNSHEET.md (+5 same-name):33 | | 4. Kill n8n mid-lead, recovery finishes it | Sends a new made-up lead. At the kill point (after the claim row is writt
+- CLAIMS-TABLE.md:41 | A-008 | flows-audit/tools/scratch/rp/c/b/handover/demo/VIDEO-RUNSHEET.md (+5 same-name):30 | | 1. Stack at rest | Opens the prepared screen set: the n8n flow list (entry flows and recovery flow switched on, table-
+- CLAIMS-TABLE.md:42 | A-084 | flows-audit/tools/scratch/rp/c/b/handover/demo/VIDEO-RUNSHEET.md (+5 same-name):30 | | 1. Stack at rest | Opens the prepared screen set: the n8n flow list (entry flows and recovery flow switched on, table-
+- CLAIMS-TABLE.md:43 | A-007 | flows-audit/tools/scratch/rp/c/b/handover/demo/VIDEO-RUNSHEET.md (+5 same-name):30 | | 1. Stack at rest | Opens the prepared screen set: the n8n flow list (entry flows and recovery flow switched on, table-
+- CLAIMS-TABLE.md:44 | A-016 | flows-audit/tools/scratch/rp/c/b/handover/demo/VIDEO-RUNSHEET.md (+5 same-name):32 | | 3. Same lead sent again | Pastes the same send note again with the same lead key. | The reply gives the stored state,
+- CLAIMS-TABLE.md:45 | A-017 | flows-audit/tools/scratch/rp/c/b/handover/demo/VIDEO-RUNSHEET.md (+5 same-name):33 | | 4. Kill n8n mid-lead, recovery finishes it | Sends a new made-up lead. At the kill point (after the claim row is writt
+- CLAIMS-TABLE.md:46 | A-030 | flows-audit/tools/scratch/rp/c/b/handover/demo/VIDEO-RUNSHEET.md (+5 same-name):35 | | 6. Doubtful case, step 1: the lead goes in | Sends a made-up lead through the film-flows entry (LOOPBACK address, path
+- CLAIMS-TABLE.md:47 | A-033 | flows-audit/tools/scratch/rp/c/b/handover/demo/VIDEO-RUNSHEET.md (+5 same-name):36 | | 7. Doubtful case, step 2: the mail may or may not have gone | Arms the SMTP stand-in with .drop = 1 before the send (i
+- CLAIMS-TABLE.md:47 | A-033 | flows-audit/tools/scratch/rp/c/b/handover/demo/VIDEO-RUNSHEET.md (+5 same-name):37 | | 8. Doubtful case, step 3: the answer says unknown (UNBACKED, fallback) | Fallback: no typing, no reading aloud; voice
+- CLAIMS-TABLE.md:48 | A-036 | flows-audit/tools/scratch/rp/c/b/handover/demo/VIDEO-RUNSHEET.md (+5 same-name):38 | | 9. Doubtful case, step 4: one alert, no second mail | Waits with the stopwatch overlay, then cuts or speeds up. Shows
+- CLAIMS-TABLE.md:49 | A-040 | flows-audit/tools/scratch/rp/c/b/handover/demo/VIDEO-RUNSHEET.md (+5 same-name):39 | | 10. Doubtful case, step 5: the table row (UNBACKED, fallback) | Fallback (keep it): a plain picture of the rows taken
+- CLAIMS-TABLE.md:49 | A-040 | flows-audit/tools/scratch/rp/c/b/handover/demo/VIDEO-RUNSHEET.md (+5 same-name):50 | 1. The table screen is BUILT, NOT RUN: the laptop rehearsal is in progress; do not say it works. Keep the screenshot fal
+- CLAIMS-TABLE.md:49 | A-040 | demo/DOUBTFUL-SCENE.md:13 | 5. The person shows the table row for that lead: state unknown, mail_sent true, alert_sent true (false while the alert w
+- CLAIMS-TABLE.md:50 | A-042 | flows-audit/tools/scratch/rp/c/b/handover/demo/VIDEO-RUNSHEET.md (+5 same-name):39 | | 10. Doubtful case, step 5: the table row (UNBACKED, fallback) | Fallback (keep it): a plain picture of the rows taken
+- CLAIMS-TABLE.md:50 | A-042 | flows-audit/tools/scratch/rp/c/b/handover/demo/VIDEO-RUNSHEET.md (+5 same-name):62 | 1. Import and activate the table screen flow (the rehearsal under way): open it once; confirm six columns and no name or
+- CLAIMS-TABLE.md:50 | A-042 | flows-audit/tools/scratch/rp/c/b/handover/demo/VIDEO-RUNSHEET.md (+5 same-name):88 | - Table screen: v2 is built (n8n-table-screen-v2, preview images in the folder), NOT run in n8n; the laptop agent re-sho
+- CLAIMS-TABLE.md:51 | A-050 | flows-audit/tools/scratch/rp/c/b/handover/demo/VIDEO-RUNSHEET.md (+5 same-name):41 | | 12. Closing card | No clicks. Voice over one card, six short lines. | Line 1, claim: a lead sent twice with the same i
+- CLAIMS-TABLE.md:52 | A-051 | flows-audit/tools/scratch/rp/c/b/handover/demo/VIDEO-RUNSHEET.md (+5 same-name):41 | | 12. Closing card | No clicks. Voice over one card, six short lines. | Line 1, claim: a lead sent twice with the same i
+- CLAIMS-TABLE.md:52 | A-051 | demo/PLAN-4-NLITE-FROM-LEAD.md:57 | Claims check: the video may say "leads arrive through n8n; n8n writes the CRM contact and sends the mail; our code caps
+- CLAIMS-TABLE.md:52 | A-051 | demo/PLAN-4-NLITE-FROM-LEAD.md:126 | - Owner: the demo session. Edit the existing `VIDEO-RUNSHEET.md` and `DOUBTFUL-SCENE.md` (no new document): make the run
+- CLAIMS-TABLE.md:53 | A-053 | flows-audit/tools/scratch/rp/c/b/handover/demo/VIDEO-RUNSHEET.md (+5 same-name):41 | | 12. Closing card | No clicks. Voice over one card, six short lines. | Line 1, claim: a lead sent twice with the same i
+- CLAIMS-TABLE.md:54 | A-091 | flows-audit/tools/scratch/rp/c/b/handover/demo/VIDEO-RUNSHEET.md (+5 same-name):41 | | 12. Closing card | No clicks. Voice over one card, six short lines. | Line 1, claim: a lead sent twice with the same i
+- CLAIMS-TABLE.md:55 | A-023 | flows-audit/tools/scratch/rp/c/b/handover/demo/VIDEO-RUNSHEET.md (+5 same-name):82 | Added 17:40Z (lead note, lane3 HB189): closing card and scene 11 must not imply alerts are always quick. History line fo
+- CLAIMS-TABLE.md:55 | A-023 | flows-audit/tools/scratch/rp/c/b/handover/demo/VIDEO-RUNSHEET.md (+5 same-name):90 | Scene 4 caption (FINAL, lane3 HB194, lease 45 s, film-v4, RELAYED-INDEPENDENT): "About a minute after the crash (measure
+- CLAIMS-TABLE.md:55 | A-023 | flows-audit/tools/scratch/007/work/b/handover/demo/n8n-flows/PAGE-STATEMENTS-V4.md (+9 same-name):134 | 19. "An alert can arrive up to about 13 minutes late if n8n itself dies while it is sending the alert; it is not lost."
+- CLAIMS-TABLE.md:55 | A-023 | flows-audit/tools/scratch/007/work/b/handover/demo/n8n-flows/PAGE-STATEMENTS-V4.md (+9 same-name):156 | - Alert after a crash DURING the alert send: up to 13 minutes late (KS n=2, 780 s), not lost (statement 19).
+- CLAIMS-TABLE.md:56 | A-098 | flows-audit/tools/scratch/007/work/b/handover/demo/n8n-flows/PAGE-STATEMENTS-V4.md (+9 same-name):134 | 19. "An alert can arrive up to about 13 minutes late if n8n itself dies while it is sending the alert; it is not lost."
+- CLAIMS-TABLE.md:57 | A-026 | flows-audit/tools/scratch/rp/c/b/handover/demo/VIDEO-RUNSHEET.md (+5 same-name):86 | - Scene 5 caption (approved): "Test scene on a stand-in: the real CRM cannot be made to refuse."
+- CLAIMS-TABLE.md:58 | A-092 | flows-audit/tools/scratch/rp/c/b/handover/demo/VIDEO-RUNSHEET.md (+5 same-name):87 | - OWNER CROP LIST (frame scan must find no address except example.test): (1) receiver mailbox: the account address in th
+- CLAIMS-TABLE.md:59 | A-019 | flows-audit/tools/scratch/rp/c/b/handover/demo/VIDEO-RUNSHEET.md (+5 same-name):90 | Scene 4 caption (FINAL, lane3 HB194, lease 45 s, film-v4, RELAYED-INDEPENDENT): "About a minute after the crash (measure
+- CLAIMS-TABLE.md:60 | A-021 | flows-audit/tools/scratch/rp/c/b/handover/demo/VIDEO-RUNSHEET.md (+5 same-name):90 | Scene 4 caption (FINAL, lane3 HB194, lease 45 s, film-v4, RELAYED-INDEPENDENT): "About a minute after the crash (measure
+- CLAIMS-TABLE.md:60 | A-021 | flows-audit/tools/scratch/007/work/b/handover/demo/n8n-flows/PAGE-STATEMENTS-V4.md (+9 same-name):150 | NAMING (lead, final): lane3 K3 = this page's K3B (killed after the mail left: unknown + 1 alert); lane3 K6 = this page's
+- CLAIMS-TABLE.md:60 | A-021 | flows-audit/tools/scratch/007/work/b/handover/demo/n8n-flows/PAGE-STATEMENTS-V4.md (+9 same-name):153 | - K3B (n=5) and K3 (n=3): lead ends unknown with 1 alert to the owner, no second mail. Plain wording: "killed after the
+- CLAIMS-TABLE.md:61 | A-057 | flows-audit/tools/scratch/007/work/b/handover/demo/n8n-flows/PAGE-STATEMENTS-V4.md (+9 same-name):33 | 1. "A lead whose mail outcome is unknown, or that could not be finished, is noted in the lead table and an alert e-mail
+- CLAIMS-TABLE.md:62 | A-073 | flows-audit/tools/scratch/007/work/b/handover/demo/n8n-flows/PAGE-STATEMENTS-V4.md (+9 same-name):120 | 17. "Recovery was measured at three leases, all on one machine with made-up data: 20 s lease (v3, laptop, n=20 per kill
+- CLAIMS-TABLE.md:63 | A-076 | flows-audit/tools/scratch/007/work/b/handover/demo/n8n-flows/PAGE-STATEMENTS-V4.md (+9 same-name):149 | 20. "At the film lease of 45 s, a lead interrupted by an n8n crash was finished about a minute after the crash." Seconds
+- CLAIMS-TABLE.md:64 | A-081 | flows-audit/tools/scratch/007/work/b/handover/demo/n8n-flows/PAGE-STATEMENTS-V4.md (+9 same-name):159 | Caption rule: only K1 and K2 (done), or the range. NEVER "within 60 s".
+- CLAIMS-TABLE.md:64 | A-081 | flows-audit/tools/scratch/007/work/b/handover/demo/n8n-flows/PAGE-STATEMENTS-V4.md (+9 same-name):161 | Caption wording: "about a minute after the crash (measured at lease 45 s: 18 kill runs, 60.1 to 61.9 s; K1 n=5 median 60
+- CLAIMS-TABLE.md:65 | B-076 | demo/DOUBTFUL-SCENE.md:11 | 3. The person sees the answer to the caller say outcome "unknown", not "done". Mark: READ-ONLY (OutUnknown node); reply
+- CLAIMS-TABLE.md:66 | B-077 | demo/DOUBTFUL-SCENE.md:12 | 4. The owner gets ONE alert e-mail, subject "[demo] Lead desk: mail outcome unknown for <lead id>", text "the mail may o
+- CLAIMS-TABLE.md:67 | B-213 | flows-audit/inputs/OWNER-STEPS-realrun-v3.md:99 | - During the take: contacts appear in HubSpot, one mail per person appears in the `demo` label. The lead stops and resta
+- CLAIMS-TABLE.md:68 | B-183 | demo/n8n-owns-vs-desk-owns.md:5 | 2. **The desk owns** (repo text, mostly not tested by me): a receipt first, a keyed claim, ambiguous sends marked for a
+- CLAIMS-TABLE.md:69 | X-4 | flows-audit/inputs/DECISION-one-store.md:16 | 3. **Logs: one place = Postgres.** Execution log = n8n's execution history in Postgres (turn "save successful production
+- CLAIMS-TABLE.md:70 | B-059 | demo/PLAN-4-NLITE-FROM-LEAD.md:154 | 7. `run_real_check_n8n.py --retire-check <take config>` must say refused for the mailbox and HubSpot. **The n8n encrypte
+- CLAIMS-TABLE.md:76 | A-059 | flows-audit/tools/scratch/007/work/b/handover/demo/n8n-flows/PAGE-STATEMENTS-V4.md (+9 same-name):44 | 3. "The same failure cases (T8, T15) were not run on the v4 flows."
+- CLAIMS-TABLE.md:77 | A-083 | flows-audit/tools/scratch/007/work/b/handover/demo/n8n-flows/PAGE-STATEMENTS-V4.md (+9 same-name):130 | Total: 20 statements (numbers 1 to 20; statement 20 is placed after the honest-limits block).
+- CLAIMS-TABLE.md:78 | B-010 | demo/PLAN-4-NLITE-FROM-LEAD.md:37 | | CRM write | one contact per lead | 1 HubSpot node 2.2 upsert by e-mail (mf-sub-crm-mail.json 72-110); real node not ye
+- CLAIMS-TABLE.md:79 | B-011 | demo/PLAN-4-NLITE-FROM-LEAD.md:38 | | Mail send | one mail per lead | 1 Send Email behind MailClaim | mf-sub-crm-mail.json 167-244 | nothing | CUT-TO-CONFIG
+- CLAIMS-TABLE.md:80 | B-037 | demo/PLAN-4-NLITE-FROM-LEAD.md:57 | Claims check: the video may say "leads arrive through n8n; n8n writes the CRM contact and sends the mail; our code caps
+- CLAIMS-TABLE.md:81 | B-042 | demo/PLAN-4-NLITE-FROM-LEAD.md:78 | - **Why three idempotency layers exist (so a reviewer does not cut one):** the n8n claim row stops a second door/resend
+- CLAIMS-TABLE.md:82 | B-045 | demo/PLAN-4-NLITE-FROM-LEAD.md:79 | - **Concurrency.** All model calls run under ONE in-process lock (single flight). A per-call result `(label, network_att
+- CLAIMS-TABLE.md:83 | B-054 | demo/PLAN-4-NLITE-FROM-LEAD.md:122 | - Tests: T17 (stand-in CRM answers with only `id`: crm_id stored, lead done) ; T18 (answers with neither: lead ends fail
+- CLAIMS-TABLE.md:84 | B-062 | demo/PLAN-4-NLITE-FROM-LEAD.md:195 | 6. V7 covers v3 flows; v4 is covered by the laptop V4-par runner and lane3 (running); v5 changes only SetCrmId.
+- CLAIMS-TABLE.md:85 | B-093 | demo/FAILED-TAKE-NOTE.md:16 | - **`end.flag`**: what it is, who writes it, when it ends a take. Not found anywhere.
+- CLAIMS-TABLE.md:86 | B-094 | demo/FAILED-TAKE-NOTE.md:17 | - **"Retire check"**: what is retired, and how to check it. Not found.
+- CLAIMS-TABLE.md:87 | B-095 | demo/FAILED-TAKE-NOTE.md:19 | - **"Credits end 23 Nov"**: which credits (a service plan, an API budget, a video tool?). Not found in any file I may re
+- CLAIMS-TABLE.md:88 | B-100 | demo/RUN-ON-LAPTOP.md:38 | - `--reps` = kills per point (8 first; then 20: rerun with `--reps 20 --tag L20`). `--lease 20` is the TEST lease so rec
+- CLAIMS-TABLE.md:89 | B-101 | demo/RUN-ON-LAPTOP.md:56 | - lost = no final state in time (done, unknown, failed or review), or done without exactly 1 CRM row and 1 mail.
+- CLAIMS-TABLE.md:90 | B-130 | demo/n8n-flows/N8N-START.md:30 | Alert e-mails (mail outcome unknown, lead failed) are sent by the recovery flow from the table state, not once inside a
+- CLAIMS-TABLE.md:91 | B-145 | demo/n8n-flows/DESIGN-A-README.md:15 | Sub-workflow: Qualify (HTTP Request to the cap stage, retry 3, error output) -> IF label is hot/warm/cold and not unknow
+- CLAIMS-TABLE.md:92 | B-147 | demo/n8n-flows/DESIGN-A-README.md:15 | Sub-workflow: Qualify (HTTP Request to the cap stage, retry 3, error output) -> IF label is hot/warm/cold and not unknow
+- CLAIMS-TABLE.md:93 | B-150 | demo/n8n-flows/DESIGN-A-README.md:15 | Sub-workflow: Qualify (HTTP Request to the cap stage, retry 3, error output) -> IF label is hot/warm/cold and not unknow
+- CLAIMS-TABLE.md:93 | B-150 | demo/n8n-flows/DESIGN-A-README.md:32 | Count OUTSIDE n8n after each run: expected set (lead ids sent) against observed sets from the mail stand-in file (subjec
+- CLAIMS-TABLE.md:94 | B-151 | demo/n8n-flows/DESIGN-A-README.md:15 | Sub-workflow: Qualify (HTTP Request to the cap stage, retry 3, error output) -> IF label is hot/warm/cold and not unknow
+- CLAIMS-TABLE.md:95 | B-153 | demo/n8n-flows/DESIGN-A-README.md:16 | Recovery (fixed 2026 11 14, finding F-REC-EMPTY from lane3: the Postgres node returns ONE item {success: true} when an U
+- CLAIMS-TABLE.md:96 | B-154 | demo/n8n-flows/DESIGN-A-README.md:17 | Constants in the nodes (no expression): mail recipient intake at example.test, alert recipient alerts at example.test. M
+- CLAIMS-TABLE.md:97 | B-156 | demo/n8n-flows/DESIGN-A-README.md:20 | Shipped lease for the real and film flows (lead decision 17:05Z): 45 seconds, built with 2 tries of 10 s per stage (v4 a
+- CLAIMS-TABLE.md:98 | B-159 | demo/n8n-flows/DESIGN-A-README.md:28 | - stage_server.py PORT JOURNAL MAILFILE (needs the desk checkout and its live-model settings in the environment): POST /
+- CLAIMS-TABLE.md:99 | B-165 | demo/n8n-flows/DESIGN-A-README.md:40 | Table columns for this (mf_leads.sql in n8n-flows-v3): alert_sent, alert_token, alert_until, alert_attempts. Retry: a ro
+- CLAIMS-TABLE.md:100 | B-168 | demo/n8n-flows/DESIGN-A-README.md:42 | Alert latency: up to about 30 s after the state is set (one tick), longer while a hung send occupies a tick.
+- CLAIMS-TABLE.md:103 | B-182 | demo/n8n-owns-vs-desk-owns.md:4 | 1. **n8n owns** (stated by the lead): intake, field mapping, the ten-at-once trigger, alerts, and plain sends in client
+- CLAIMS-TABLE.md:104 | B-195 | demo/n8n-published-numbers.md:3 | - variant a, ten at once: 18 of 20 at one CRM row and one email (builder's overloaded-laptop rerun showed 10 of 20, so t
+- CLAIMS-TABLE.md:105 | B-196 | demo/n8n-published-numbers.md:4 | - K1 (crash after step 1): crashed entry visible 1 of 5 (builder rerun matched differently)
+- CLAIMS-TABLE.md:106 | B-197 | demo/n8n-published-numbers.md:5 | - kill runs with no effect: 1 of 15
+- CLAIMS-TABLE.md:107 | B-198 | demo/n8n-published-numbers.md:6 | - variant e: second CRM row appeared in 4 of 10 (builder rerun 1 of 10)
+- CLAIMS-TABLE.md:108 | B-199 | demo/n8n-published-numbers.md:21 | | a kill, CRM request in flight: 1 CRM row, 0 emails after one retry | 5 of 5 | R2 1 of 5 | NOT REPRODUCED (1 of 5 again
+- CLAIMS-TABLE.md:109 | B-200 | demo/n8n-published-numbers.md:22 | | a kill, the two email points: 1 CRM row and 1 email | 9 of 10 | R2 3 of 10 | NOT REPRODUCED (3 of 10 against 9 of 10)
+- CLAIMS-TABLE.md:110 | X-1 | flows-audit/inputs/AGENT-SCOPE-DO-AND-DONT.md:6 | - MAY: receive a lead on its webhook or form; claim the lead key once in Postgres; write one HubSpot contact; send the i
+- CLAIMS-TABLE.md:111 | X-2 | flows-audit/inputs/AGENT-SCOPE-DO-AND-DONT.md:7 | - MUST NOT: process the same lead key twice; send mail to an address it was not given by the take config; read or print
+- CLAIMS-TABLE.md:167 | A-016 | demo/n8n-mainframe/mf.py:119-138 | def m0():
+- CLAIMS-TABLE.md:172 | A-021 | demo/n8n-mainframe/mf.py:158 | kill_case("K3B", "n8n killed after mail_sent was set, while the SMTP node was connecting (stand-in holds the greetin
+- CLAIMS-TABLE.md:172 | A-021 | demo/n8n-mainframe/mf.py:164 | kill_case("K3", "n8n killed after the mail was delivered (stored by the stand-in), before the table update (acknowle
+- CLAIMS-TABLE.md:173 | A-022 | demo/n8n-mainframe/mf.py:151-164 | def k1(): kill_case("K1", "n8n killed after the claim insert, before the CRM write (CRM request held 6 s before it is st
+- CLAIMS-TABLE.md:206 | A-055 | demo/n8n-flows/DESIGN-A-README.md:10 | - Build script: ../n8n-mainframe/build_mainframe.py (args: out dir, postgres credential id, smtp credential id, sub-work
+- CLAIMS-TABLE.md:210 | A-060 | demo/n8n-mainframe/mf.py:158 | kill_case("K3B", "n8n killed after mail_sent was set, while the SMTP node was connecting (stand-in holds the greetin
+- CLAIMS-TABLE.md:210 | A-060 | demo/n8n-mainframe/mf.py:164 | kill_case("K3", "n8n killed after the mail was delivered (stored by the stand-in), before the table update (acknowle
+- CLAIMS-TABLE.md:227 | A-077 | demo/n8n-mainframe/mf.py:158 | kill_case("K3B", "n8n killed after mail_sent was set, while the SMTP node was connecting (stand-in holds the greetin
+- CLAIMS-TABLE.md:240 | A-090 | demo/n8n-tests/smtp_catcher.py:26-28 | try: nf, sub = open(FILE + ".rcptfail").read().strip().split("|", 1); nf = int(nf)                # faul
+- CLAIMS-TABLE.md:243 | A-093 | demo/n8n-mainframe/mf.py:158 | kill_case("K3B", "n8n killed after mail_sent was set, while the SMTP node was connecting (stand-in holds the greetin
+- CLAIMS-TABLE.md:243 | A-093 | demo/n8n-mainframe/mf.py:164 | kill_case("K3", "n8n killed after the mail was delivered (stored by the stand-in), before the table update (acknowle
+- CLAIMS-TABLE.md:293 | V4 | demo/n8n-mainframe/mf.py:83 | o["lost"] = r["state"] not in ("done", "unknown", "failed") or (r["state"] == "done" and (o["crm_rows"] != 1 or o["m
+- CLAIMS-TABLE.md:297 | PLAN-4 | demo/PLAN-4-NLITE-FROM-LEAD.md:130 | - Owner steps first (about 60 min, full local paths written by the lead in OWNER-STEPS-realrun.md):
+- CLAIMS-TABLE.md:297 | PLAN-4 | demo/PLAN-4-NLITE-FROM-LEAD.md:176 | The real gate is the owner steps and his written yes (OWNER-STEPS plans Phase 0 by Mon 16 18:29Z): footage Mon 16 evenin
+- CLAIMS-TABLE.md:297 | PLAN-4 | flows-audit/ORDERS.md:60 | 1. CLAIMS TABLE: find the video script / scene list and the owner steps in your checkout (search handover/ and any egm c
+- CLAIMS-TABLE.md:297 | PLAN-4 | RULE-R456-WORK-CONDUCT.md:19 | 7. Real keys, accounts, mailboxes: only the owner places them (secrets file, n8n credentials UI); agents never ask for o
+- CLAIMS-TABLE.md:307 | RV5 | flows-audit/tools/scratch/007/work/b/handover/demo/n8n-flows/mf_leads.sql (+5 same-name):4 | lead_key      text PRIMARY KEY,
+- CLAIMS-TABLE.md:332 | B-013 | demo/V7-NUMBERS-lead-read.md:12 | Reading (lead): on v3 the kill series shows 0 lost and 0 doubled in K1, K2, K3, K3B (80 kills), T8/T15 failures end as f
+- CLAIMS-TABLE.md:349 | B-030 | demo/n8n-mainframe/stage_server.py:48-58 | with LK:
+- CLAIMS-TABLE.md:353 | B-034 | demo/V7-NUMBERS-lead-read.md:20 | | K1 | 20 | 0 | 0 | 0 | 18.0 / 29.65 / 59.6 | criterion 60 s: margin 0.4 s at lease 20 s |
+- CLAIMS-TABLE.md:355 | B-036 | demo/V7-NUMBERS-lead-read.md:4 | | AF1 | alert-only SMTP refusal (451 x2) | 1 | true | 0 | 0 | 1 | 1 / 1 / 1 / 1 | first alert 272.1 s, no alert at 20 s
+- CLAIMS-TABLE.md:360 | B-041 | demo/n8n-mainframe/stage_server.py:60 | ThreadingHTTPServer(("127.0.0.1", PORT), H).serve_forever()
+- CLAIMS-TABLE.md:362 | B-043 | demo/n8n-mainframe/stage_server.py:48-52 | with LK:
+- CLAIMS-TABLE.md:364 | B-045 | demo/n8n-mainframe/stage_server.py:48-52 | with LK:
+- CLAIMS-TABLE.md:365 | B-046 | demo/n8n-mainframe/stage_server.py:51 | if j.get("started"): return self._j(200, {"label": "unknown", "unknown_model": True, "cached": True})
+- CLAIMS-TABLE.md:366 | B-047 | demo/n8n-mainframe/stage_server.py:51 | if j.get("started"): return self._j(200, {"label": "unknown", "unknown_model": True, "cached": True})
+- CLAIMS-TABLE.md:376 | B-057 | demo/n8n-tests/smtp_catcher.py:44-47 | try: drop = int(open(FILE + ".drop").read().strip() or 0)                          # fault mode: accept
+- CLAIMS-TABLE.md:397 | B-070 | demo/n8n-tests/smtp_catcher.py:44-47 | try: drop = int(open(FILE + ".drop").read().strip() or 0)                          # fault mode: accept
+- CLAIMS-TABLE.md:407 | B-080 | demo/V7-NUMBERS-lead-read.md:4 | | AF1 | alert-only SMTP refusal (451 x2) | 1 | true | 0 | 0 | 1 | 1 / 1 / 1 / 1 | first alert 272.1 s, no alert at 20 s
+- CLAIMS-TABLE.md:408 | B-081 | demo/V7-NUMBERS-lead-read.md:8-9 | | K3 | n8n killed after the mail was delivered, before the table update | 20 | true | 0 | 0 | 20 | 1 / 1 / 1 / 1 | UNKNO
+- CLAIMS-TABLE.md:408 | B-081 | demo/V7-NUMBERS-lead-read.md:22-23 | | K3 | 20 | 0 | 0 | 20 | 28.5 / 29.45 / 30.5 | |
+- CLAIMS-TABLE.md:413 | B-086 | demo/n8n-flows/N8N-START.md:40-42 | - Laptop T7b, first version (flows commit 1ced4e1f, four settings on, grep only, 572 files): lead name 3 hits and e-mail
+- CLAIMS-TABLE.md:414 | B-087 | demo/V7-NUMBERS-lead-read.md:4 | | AF1 | alert-only SMTP refusal (451 x2) | 1 | true | 0 | 0 | 1 | 1 / 1 / 1 / 1 | first alert 272.1 s, no alert at 20 s
+- CLAIMS-TABLE.md:432 | B-097 | demo/n8n-mainframe/run_chain.py:18-19 | for f in ("package.json", "package-lock.json"): shutil.copy(os.path.join(a.node_modules, f), w)
+- CLAIMS-TABLE.md:433 | B-098 | demo/n8n-mainframe/mf.py:321 | def t14():
+- CLAIMS-TABLE.md:434 | B-099 | demo/V7-NUMBERS-lead-read.md:12 | Reading (lead): on v3 the kill series shows 0 lost and 0 doubled in K1, K2, K3, K3B (80 kills), T8/T15 failures end as f
+- CLAIMS-TABLE.md:436 | B-101 | demo/n8n-mainframe/mf.py:83 | o["lost"] = r["state"] not in ("done", "unknown", "failed") or (r["state"] == "done" and (o["crm_rows"] != 1 or o["m
+- CLAIMS-TABLE.md:437 | B-102 | demo/V7-NUMBERS-lead-read.md:12 | Reading (lead): on v3 the kill series shows 0 lost and 0 doubled in K1, K2, K3, K3B (80 kills), T8/T15 failures end as f
+- CLAIMS-TABLE.md:440 | B-105 | demo/V7-NUMBERS-lead-read.md:14 | ## V7 FINAL (runner abefbabd report, 16:33Z; calendar 15:02-16:32Z, 11 tests, all pass flag true, rc 0; lead re-read raw
+- CLAIMS-TABLE.md:441 | B-106 | demo/V7-NUMBERS-lead-read.md:8-9 | | K3 | n8n killed after the mail was delivered, before the table update | 20 | true | 0 | 0 | 20 | 1 / 1 / 1 / 1 | UNKNO
+- CLAIMS-TABLE.md:441 | B-106 | demo/V7-NUMBERS-lead-read.md:20-23 | | K1 | 20 | 0 | 0 | 0 | 18.0 / 29.65 / 59.6 | criterion 60 s: margin 0.4 s at lease 20 s |
+- CLAIMS-TABLE.md:449 | B-110 | demo/N8N-ENV-PROBE.md:6 | - n8n 2.46.6 (the version in versions.md of the demo repo) says engines node >=24.0.0. This machine's default Node is v2
+- CLAIMS-TABLE.md:449 | B-110 | demo/N8N-ENV-PROBE.md:208 | Your Node.js version 22.23.4 is currently not supported by n8n.
+- CLAIMS-TABLE.md:450 | B-111 | demo/DOCKER-PROBE.md:5 | 2. Pull: the TAG pull `docker pull postgres:16` failed twice with HTTP 429 Too Many Requests from the Docker Hub registr
+- CLAIMS-TABLE.md:451 | B-112 | demo/N8N-ENV-PROBE.md:8 | - npm install of n8n run under Node 22 builds the native module isolated-vm for Node 22; starting under Node 24 then cra
+- CLAIMS-TABLE.md:509 | B-158 | demo/n8n-mainframe/stage_server.py:10-11 | from lead_desk import config
+- CLAIMS-TABLE.md:509 | B-158 | demo/n8n-mainframe/stage_server.py:16 | Q = LiveQualifier(config._live_from_env(os.environ)); LK = threading.Lock()
+- CLAIMS-TABLE.md:509 | B-158 | demo/n8n-mainframe/stage_server.py:54 | try: lab = Q.qualify(k, o.get("email", ""))
+- CLAIMS-TABLE.md:510 | B-159 | demo/n8n-mainframe/stage_server.py:17-23 | def journal():
+- CLAIMS-TABLE.md:511 | B-160 | demo/n8n-mainframe/stage_server.py:51 | if j.get("started"): return self._j(200, {"label": "unknown", "unknown_model": True, "cached": True})
+- CLAIMS-TABLE.md:532 | B-177 | demo/n8n-mainframe/crm_stub.py:9 | ROWS, CTL, LK = [], {"search_delay_ms": 0, "create_ack_delay_ms": 0, "upsert_delay_ms": 0, "upsert_ack_delay_ms": 0, "se
+- CLAIMS-TABLE.md:533 | B-178 | demo/n8n-mainframe/mf.py:339 | def t17():
+- CLAIMS-TABLE.md:544 | B-185 | demo/n8n-published-numbers.md:14 | | variant a, ten at once, one CRM row and one email | 18 of 20 | reused stack: R2 12 of 20, R2b 2 of 5; fresh stack, 1st
+- CLAIMS-TABLE.md:545 | B-186 | demo/n8n-published-numbers.md:16-18 | | variant b, ten at once | 20 of 20 | R2 20 of 20 (21 attempts, 1 invalid: no overlap) | REPRODUCED | reused stack |
+- CLAIMS-TABLE.md:545 | B-186 | demo/n8n-published-numbers.md:26-28 | | variant e, ten at once | (1,1) x5 | R2b 5 of 5; R2c 25 of 25, each (1,1), status sent | REPRODUCED | reused stack (R2b
+- CLAIMS-TABLE.md:546 | B-187 | demo/n8n-skip-on-conflict.md:44-45 | | sk-a (Postgres Insert, skip) | 1, 1, 1, 1, 1 | 1, 1, 1, 1, 1 |
+- CLAIMS-TABLE.md:546 | B-187 | demo/n8n-skip-on-conflict.md:58 | Exact distribution (from if-summary-table.txt): 20 of 20 bursts gave rows for the id = 1, "new" hits = 1, "duplicate" hi
+- CLAIMS-TABLE.md:555 | B-192 | demo/n8n-skip-on-conflict.md:44-45 | | sk-a (Postgres Insert, skip) | 1, 1, 1, 1, 1 | 1, 1, 1, 1, 1 |
+- CLAIMS-TABLE.md:556 | B-193 | demo/n8n-skip-on-conflict.md:47 | | dt-ne-ins (check, then insert) | 9, 10, 1, 9, 3 | 8, 8, 2, 9, 3 |
+- CLAIMS-TABLE.md:578 | B-207 | demo/n8n-mainframe/stage_server.py:52 | jw(lead_key=k, started=True)
+- CLAIMS-TABLE.md:603 | R1 | flows-audit/inputs/DECISION-one-store.md:14 | 1. **ONE database for everything we own: the single Postgres instance of the take** (one container, one engine). n8n's i
+- CLAIMS-TABLE.md:603 | R1 | demo/n8n-flows/N8N-START.md:4 | - n8n 2.46.6, pinned (npm install n8n@2.46.6 into an empty folder; check `npm ls n8n`), regular mode (no queue), SQLite
+- CLAIMS-TABLE.md:606 | B-183 | demo/n8n-owns-vs-desk-owns.md:5 | 2. **The desk owns** (repo text, mostly not tested by me): a receipt first, a keyed claim, ambiguous sends marked for a
+- CLAIMS-TABLE.md:607 | B-189 | demo/n8n-owns-vs-desk-owns.md:26 | - **In the desk (`src/lead_desk`, public repo):** a receipt written before anything else happens, a keyed claim (a send
+- CLAIMS-TABLE.md:610 | B-078 | flows-audit/inputs/DECISION-one-store.md:16 | 3. **Logs: one place = Postgres.** Execution log = n8n's execution history in Postgres (turn "save successful production
+- CLAIMS-TABLE.md:617 | line 617 | demo/WATCH-CHECKLIST.md:10 | 3. **HubSpot names.** The run reads and archives contacts by a lead id (starting with `L`) and the contact property `had
+- CLAIMS-TABLE.md:632 | C4 | flows-audit/inputs/FACTS-ALREADY-DONE.md:3 | DONE (owner): throwaway Gmail mailbox ready, 2-step on, settings done, app passwords saved in files by the owner (the ol
+- F6-AUDIT.md:24 | line 24 | flows-audit/FINDINGS.md:27 | - Severity rubric (PLAN-002 section 4, applied as the one rule below): Blocker = could lose or double-apply a lead or ma
+- F6-AUDIT.md:28 | line 28 | flows-audit/tools/scratch/007/work/b/handover/demo/n8n-mainframe/build_mainframe.py (+14 same-name):77-95 | return {"name": "Lead desk main frame: CRM + mail (sub-workflow)", "nodes": n, "connections": c, "settings": ST}
+- F6-AUDIT.md:30 | F-009 | demo/n8n-mainframe/mf.py:119-128 | def m0():
+- F6-AUDIT.md:30 | F-009 | demo/n8n-mainframe/mf.py:121-124 | for path, mk in (("mf-form", form), ("mf-hook", hook)):
+- F6-AUDIT.md:30 | F-009 | demo/n8n-mainframe/mf.py:125-126 | k = uid("rev"); st, rep = req("mf-form", form(k, email="not-an-email")); o = outcome(k); good = rep.get("verdict") =
+- F6-AUDIT.md:30 | F-009 | demo/n8n-mainframe/mf.py:129-134 | def m1():
+- F6-AUDIT.md:40 | F6-01 | flows-audit/tools/scratch/film-v5/mf-hook.json (+18 same-name):227 | "name": "RunSub",
+- F6-AUDIT.md:40 | F6-01 | flows-audit/tools/scratch/007/work/b/handover/demo/n8n-mainframe/build_mainframe.py (+15 same-name):75 | link(c, "SendMail", "MarkDone", 0); link(c, "SendMail", "MarkUnknownA", 1); link(c, "MarkDone", "DoneOwned"); link(c
+- F6-AUDIT.md:40 | F6-01 | flows-audit/tools/scratch/007/work/b/handover/demo/n8n-mainframe/build_mainframe.py (+15 same-name):86-92 | iff("KeyOk", "={{ /^[A-Za-z0-9_-]{1,64}$/.test($json.lead_key) }}", "boolean", "true", None, [550, 0]),
+- F6-AUDIT.md:40 | F6-01 | flows-audit/tools/scratch/film-v5/mf-sub-crm-mail.json (+17 same-name):94 | "onError": "continueErrorOutput"
+- F6-AUDIT.md:40 | F6-01 | demo/n8n-mainframe/mf.py:3 | env MF_REPS = kills per point (default 20), MF_LEASE = lease seconds used by the TESTS (default 20; the design value i
+- F6-AUDIT.md:40 | F6-01 | demo/n8n-mainframe/mf.py:13 | REPS = int(os.environ.get("MF_REPS", "20")); LEASE = int(os.environ.get("MF_LEASE", "20")); RESULTS = {}
+- F6-AUDIT.md:40 | F6-01 | demo/n8n-tests/dn1_common.py:112 | def post(path, body, t=45):
+- F6-AUDIT.md:40 | F6-01 | demo/n8n-mainframe/mf.py:62 | def req(path, body, t=75): return post(path, body, t=t)
+- F6-AUDIT.md:40 | F6-01 | flows-audit/tools/scratch/007/work/b/handover/demo/n8n-mainframe/build_mainframe.py (+15 same-name):53 | (hubspot("CrmUpsert", [660, -60]) if REAL else None) or http("CrmUpsert", "={{ $env.MF_CRM_URL }}/upsert", "={{
+- F6-AUDIT.md:40 | F6-01 | flows-audit/tools/scratch/007/work/b/handover/demo/n8n-mainframe/build_mainframe.py (+15 same-name):76 | link(c, "MarkUnknownA", "UnknownNewA"); link(c, "UnknownNewA", "OutUnknown", 0); link(c, "UnknownNewA", "OutUnknown"
+- F6-AUDIT.md:40 | F6-01 | flows-audit/tools/scratch/007/work/b/handover/demo/n8n-mainframe/build_mainframe.py (+15 same-name):98-99 | respond("ReplyStored", "={{ { n8n_error: false, lead_key: $('Valid').item.json.lead_key, verdict: ({ done: 'don
+- F6-AUDIT.md:40 | F6-01 | flows-audit/tools/scratch/007/work/b/handover/demo/n8n-mainframe/build_mainframe.py (+15 same-name):91 | iff("Claimed", "={{ $json.lead_key }}", "string", "notEmpty", None, [880, 0]),
+- F6-AUDIT.md:41 | F6-02 | flows-audit/tools/scratch/film-v5/mf-hook.json (+18 same-name):86 | "name": "Valid",
+- F6-AUDIT.md:41 | F6-02 | flows-audit/tools/scratch/007/work/b/handover/demo/n8n-mainframe/build_mainframe.py (+15 same-name):78 | def call_sub(name, pos, **x): return N(name, "n8n-nodes-base.executeWorkflow", 1.2, {"source": "database", "workflowId":
+- F6-AUDIT.md:41 | F6-02 | demo/n8n-tests/dn1_common.py:122-123 | def hook(lead, email=None, name="Test Person"):
+- F6-AUDIT.md:42 | F6-03 | flows-audit/tools/scratch/film-v5/mf-hook.json (+18 same-name):7 | "path": "mf-hook",
+- F6-AUDIT.md:42 | F6-03 | flows-audit/tools/scratch/007/work/b/handover/demo/n8n-mainframe/build_mainframe.py (+15 same-name):121 | # the Postgres node returns ONE item {success: true} when a non-SELECT statement matches no row (n8n source, Postgre
+- F6-AUDIT.md:42 | F6-03 | demo/n8n-flows/DESIGN-A-README.md:7 | - mf-form.json, mf-hook.json : main flows (form entry, e-mail-style webhook entry). Webhook paths mf-form and mf-hook, R
+- F6-AUDIT.md:42 | F6-03 | demo/n8n-flows/N8N-START.md:33 | The lead entries are two webhooks (paths mf-form and mf-hook, Respond to Webhook). Bind n8n to loopback only (N8N_LISTEN
+- F6-AUDIT.md:43 | F6-04 | flows-audit/tools/scratch/007/work/b/handover/demo/n8n-mainframe/build_mainframe.py (+15 same-name):82-84 | # Sender contract: 422 rejected = never retry (no lead_key); 503 retry = the store did not confirm, resend with the
+- F6-AUDIT.md:43 | F6-04 | demo/PLAN-4-NLITE-FROM-LEAD.md:9 | - **WP4 (lead key from the e-mail) and the two-door claim are CUT.** No run-sheet scene uses it, it breaks every stand-i
+- F6-AUDIT.md:43 | F6-04 | demo/PLAN-4-NLITE-FROM-LEAD.md:9 | - **WP4 (lead key from the e-mail) and the two-door claim are CUT.** No run-sheet scene uses it, it breaks every stand-i
+- F6-AUDIT.md:44 | F6-06 | flows-audit/tools/scratch/film-v5/mf-hook.json (+18 same-name):7 | "path": "mf-hook",
+- F6-AUDIT.md:44 | F6-06 | demo/n8n-flows/N8N-START.md:33 | The lead entries are two webhooks (paths mf-form and mf-hook, Respond to Webhook). Bind n8n to loopback only (N8N_LISTEN
+- F6-AUDIT.md:44 | F6-06 | demo/n8n-mainframe/mf.py:121-124 | for path, mk in (("mf-form", form), ("mf-hook", hook)):
+- F6-AUDIT.md:44 | F6-06 | demo/n8n-mainframe/mf.py:125-126 | k = uid("rev"); st, rep = req("mf-form", form(k, email="not-an-email")); o = outcome(k); good = rep.get("verdict") =
+- F6-AUDIT.md:44 | F6-06 | demo/n8n-mainframe/mf.py:129-134 | def m1():
+- F6-AUDIT.md:44 | F6-06 | demo/n8n-mainframe/mf.py:125 | k = uid("rev"); st, rep = req("mf-form", form(k, email="not-an-email")); o = outcome(k); good = rep.get("verdict") =
+- F6-AUDIT.md:45 | F6-07 | flows-audit/tools/scratch/film-v5/mf-hook.json (+18 same-name):46 | "name": "Item",
+- F6-AUDIT.md:45 | F6-07 | flows-audit/tools/scratch/007/work/b/handover/demo/n8n-mainframe/build_mainframe.py (+15 same-name):77-84 | return {"name": "Lead desk main frame: CRM + mail (sub-workflow)", "nodes": n, "connections": c, "settings": ST}
+- F6-AUDIT.md:49 | F-010 | flows-audit/tools/scratch/007/work/b/handover/demo/n8n-mainframe/build_mainframe.py (+15 same-name):19 | return N(name, "n8n-nodes-base.postgres", 2.5, {"operation": "executeQuery", "query": q, "options": o}, pos, credent
+- F6-AUDIT.md:66 | F6-03 | flows-audit/tools/scratch/007/work/b/handover/demo/n8n-mainframe/build_mainframe.py (+15 same-name):27 | # answer {vid, isNew} (Simplify Output off) -> the contact id is $json.vid. The node has NO timeout option; retry an

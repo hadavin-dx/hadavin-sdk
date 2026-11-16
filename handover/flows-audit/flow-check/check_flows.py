@@ -11,7 +11,9 @@ Options:
   --patch-checks F002,F008      assert the F-002 and/or F-008 patch content (names, links, settings) in the given DIRs
   --diff-base DIR --allow F002,F008 (--allow requires --patch-checks naming at least the same patches) [--diff-out FILE]
                                 node-level diff DIR vs DIR (patched vs unpatched); FAIL on any change the allowed patches do not explain
-  --quiet-info                  do not print the type table and the placeholder list
+  --quiet-info                  do not print the type table and the placeholder list (the credential list per flow is always printed)
+  --require-webhook-auth        a webhook or form trigger without authentication is a FAIL (default: WARN, counted as a known open problem)
+  --block-env-access            a node that reads $env.X is a FAIL (default: WARN): use when the take switches off env access inside nodes
 
 F8 EXTENSION (flow-check/): started from patch-apply/check_flows.py (F4 round 3), nothing removed. New checks are listed in
 flow-check/REPORT.md. New options: --require-webhook-auth (webhook without authentication = FAIL, default WARN), --table (print
@@ -27,7 +29,7 @@ ending in 'Trigger'. respondToWebhook is NOT a trigger.
 F-002 alwaysOutputData/onError on Claim is only printed with a WARN (UNPROVEN until test T19): exit 0 does NOT clear F-002.
 Exit code: 0 only if no FAIL; 1 otherwise; 2 for a usage error."""
 import json, os, re, sys, collections
-OPTS = {"webhook_auth": False, "table": False}
+OPTS = {"webhook_auth": False, "table": False, "block_env": False}
 
 FILES_DEFAULT = ["mf-form.json", "mf-hook.json", "mf-recovery.json", "mf-sub-crm-mail.json"]
 TRIGGER_EXACT = {"n8n-nodes-base.webhook", "n8n-nodes-base.executeWorkflowTrigger", "n8n-nodes-base.formTrigger"}
@@ -223,7 +225,7 @@ def extra_checks(d, tag, nodes, adj, trig, sticky):
             if not isinstance(wb, int) or isinstance(wb, bool) or not 0 <= wb <= 5000: warn(tag, "node %s waitBetweenTries=%r (0 to 5000 ms is the n8n screen limit, not a proven import rule; %s)" % (nm, wb, UNV))
         elif "maxTries" in n or "waitBetweenTries" in n: warn(tag, "node %s sets maxTries/waitBetweenTries but retryOnFail is not true (ignored by n8n)" % nm)
         if "alwaysOutputData" in n and not isinstance(n["alwaysOutputData"], bool): fail(tag, "node %s alwaysOutputData=%r is not a boolean" % (nm, n["alwaysOutputData"]))
-        if n.get("alwaysOutputData") and n.get("onError") == "continueErrorOutput": warn(tag, "node %s has alwaysOutputData together with continueErrorOutput (F-002 pattern; n8n behaviour NOT proven here)" % nm)
+        if n.get("alwaysOutputData") and n.get("onError") == "continueErrorOutput": warn(tag, "node %s has alwaysOutputData together with continueErrorOutput (F-002 pattern: a repeat lead key must still get its answer; what n8n does is NOT proven until test T19)" % nm)
         if n.get("onError") == "continueRegularOutput" and short in EXTERNAL: silent.append(nm)
         if short in EXTERNAL and not n.get("retryOnFail"): noretry.append(nm)
         if n.get("disabled") is True: warn(tag, "node %s is disabled (n8n passes data through it; it sends and writes nothing)" % nm)
@@ -235,6 +237,11 @@ def extra_checks(d, tag, nodes, adj, trig, sticky):
             if not isinstance(v, dict) or not str(v.get("name") or "").strip(): fail(tag, "node %s credential %r has no name" % (nm, k))
             elif not str(v.get("id") or "").strip(): fail(tag, "node %s credential %r has no id (name %r)" % (nm, k, v.get("name")))
         secret_scan(n, tag)
+        envs = sorted({e for s_ in strings(n.get("parameters", {})) for e in ENVTOK.findall(s_)})
+        if envs:
+            msg = "node %s reads %s; if the take blocks environment-variable access inside nodes (n8n setting, name not verified here: %s) this node stops working" % (nm, ", ".join(envs), UNV)
+            if OPTS["block_env"]: fail(tag, msg)
+            else: warn(tag, msg + " [run with --block-env-access to make it a FAIL]", known=True)
         if n["type"] == "n8n-nodes-base.webhook":
             au = (n.get("parameters") or {}).get("authentication", "none")
             if au in ("none", None, ""):
@@ -373,6 +380,8 @@ def info(d, tag):
         for e in ENVTOK.findall(s): where[e].add(n.get("name"))
     for k in sorted(where): print("  placeholder/env %-34s count=%d nodes=%s" % (k, len(re.findall(re.escape(k), raw)), sorted(where[k])))
     if not where: print("  placeholder/env: none")
+
+def creds(d):
     cr = [(n.get("name"), k, (v or {}).get("name"), (v or {}).get("id")) for n in d.get("nodes", []) for k, v in (n.get("credentials") or {}).items() if isinstance(v, dict)]
     print("  credentials (node, kind, name, id): " + ("; ".join("%s %s %s %s" % c for c in cr) if cr else "none"))
 
@@ -496,6 +505,7 @@ def main(argv):
         elif a == "--quiet-info": quiet = True
         elif a == "--require-webhook-auth": OPTS["webhook_auth"] = True
         elif a == "--table": OPTS["table"] = True
+        elif a == "--block-env-access": OPTS["block_env"] = True
         elif a.startswith("--"): print("unknown option", a); return 2
         else: dirs.append(a)
         i += 1
@@ -523,6 +533,7 @@ def main(argv):
             if r: print("%s nodes=%d connections=%d triggers=%s saveDataSuccess=%s saveDataError=%s" % (fn, r["nodes"], r["connections"], r["triggers"], d.get("settings", {}).get("saveDataSuccessExecution"), d.get("settings", {}).get("saveDataErrorExecution")))
             if not r: continue
             try:
+                creds(d)
                 if not quiet: info(d, tag)
                 if pc: patch_checks(d, fn, pc, tag)
                 if diffbase:

@@ -106,7 +106,7 @@ it by id (placeholder `SUB_WORKFLOW_ID`). Do the steps in this order:
 | Code | Meaning |
 |---|---|
 | 0 | Done: for `fill`, the copy is written and no placeholder is left; for `check`, nothing wrong. |
-| 1 | Refused, or `check` found problems (or the folder holds no `.json`). The message names the key, file or line, never a value. |
+| 1 | Refused, or `check` found problems (for example a placeholder is still there: `check` ends with 1 until every one is filled) (or the folder holds no `.json`). The message names the key, file or line, never a value. |
 | 2 | The command was typed wrongly (missing option). |
 | 3 | `fill` wrote the copy, but placeholders are left. `NOT READY TO IMPORT: N placeholders left` is printed on the error screen. Do not import this copy. |
 | 4 | Nothing to fill: the input has no marker and no placeholder you gave a value for (probably already filled, or the wrong folder). Nothing is written. |
@@ -150,6 +150,20 @@ Files are mode 0600 and the folder 0700, created without following symlinks.
 3. In n8n: remove the imported workflows and the saved executions (executions can hold the values).
 4. Remember: deleting a file is not a secure wipe; the bytes may stay on the disk. Treat any value
    that mattered as exposed and replace it (use made-up or throwaway values for demos).
+
+## Folders that are links (symlinks) in the output path
+- The output folder itself and the fingerprint file must not be links (refused).
+- A link in the folders above it is accepted when you or root made it (for example `/tmp` on a
+  Mac). The real place it leads to is still checked for `/mnt` and for git. A link made by another
+  user is refused for `fill` and `delete`, because it could send your files somewhere you did not
+  choose.
+
+## What `delete --no-manifest` cannot tell
+It has no fingerprint to compare with. If someone who already controls your account edits a
+file of this program's output so that it is still valid JSON without `$env`, still mode 0600 and
+yours, the folder is still deleted. This is accepted: that someone could delete the folder
+anyway, and the command only removes files of this program's own kind inside a 0700 folder that
+you named. Use the normal `delete` (with the fingerprint file) when you have it.
 
 ## Known limits (not fixed, by design)
 - Someone who can already write inside the parent folder while this runs could swap a path between
