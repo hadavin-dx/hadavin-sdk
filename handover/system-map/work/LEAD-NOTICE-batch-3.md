@@ -10,3 +10,4 @@ Ten held pages carry the archive sentence (UNVERIFIED until your loopback re-smo
 8. SWEEP: owner's dollar limit and agent-day estimate (blank, due 17 Nov).
 9. Meanings of DESK_* names in README were inferred from names: please confirm.
 10. TAKE-BLOCKERS: the generator path (two different paths appear in the files), the path to n8n_api.py, whether the crash test is required, which runs the "rehearsal passed" rule covers, who edits the program's notice and prompt text.
+11. v4.2 lines 453 ("no archive call, read-only identity") and 507 ("never deletes") are now wrong; the HubSpot key needs an archive right (P09, OD-18); the r34 program's console line may still say "never deletes"; unknown whether HubSpot's filtered list shows archived contacts. v4.2 itself is untouched.
