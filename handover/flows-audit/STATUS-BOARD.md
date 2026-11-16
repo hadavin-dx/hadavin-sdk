@@ -1,15 +1,15 @@
-UPDATED_UTC: 2026-11-16T08:40:02Z
+UPDATED_UTC: 2026-11-16T08:41:36Z
 SESSION: flows-audit
 ORDER: 007 (and 008 board)
 STATE: WORKING
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 6
 ITEMS_OPEN: 1
-PERCENT: 75
-AGENTS_RUNNING: 2
+PERCENT: 82
+AGENTS_RUNNING: 1
 INTERRUPTED: none
-NEXT: wait for round 2 reviewers, resolve, REPORT, FINAL
-PUSHED_UTC: 2026-11-16T08:40:02Z
+NEXT: wait for round 2 codebase-details report, then fix, REPORT, FINAL
+PUSHED_UTC: 2026-11-16T08:41:36Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -25,7 +25,7 @@ PUSHED_UTC: 2026-11-16T08:40:02Z
 | id | role | model | what it does | started UTC | expected end UTC | % | state | last output |
 |---|---|---|---|---|---|---|---|---|
 | a67bc58ea7908a0c4 | egm-codebase-details | sonnet | round 2: facts, patches, cross-doc | 08:40 | 08:48 | 08:40 | running | none |
-| a7a738b60de986730 | egm-zoom-out | sonnet | round 2: ratings, scope, readability | 08:40 | 08:48 | 08:40 | running | none |
+| a7a738b60de986730 | egm-zoom-out | sonnet | round 2 ratings | 08:40 | 08:42 | 08:41 | done (fixes applied) | close |
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
