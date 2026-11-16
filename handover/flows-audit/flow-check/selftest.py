@@ -7,7 +7,7 @@ Usage:  selftest.py PRISTINE_REAL_DIR [PATCHED_REAL_DIR [PRISTINE_FILM_DIR]]
 Environment (both optional, both documented here and nowhere else):
   FC_CK   path of another checker script to run the same cases against (default: check_flows.py next to this file).
           Used to prove the new cases fail on the old patch-apply/check_flows.py.
-  FC_OUT  folder for the raw .out files (default: selftest-output/ next to this file). It is emptied first, but only if it is
+  FC_OUT  folder for the raw .out files (default: a new temporary folder, its path is printed at the end; the committed selftest-output/ is rewritten only when FC_OUT names it). It is emptied first, but only if it is
           empty, missing, or holds the marker file CHECK-COMMAND.txt of an earlier run; otherwise the self-test stops.
 Each case copies a pristine folder, plants ONE defect, runs the checker, and requires ALL of:
   (1) the exit code (1 for a FAIL case, 0 for a WARN case or a control),
@@ -30,7 +30,7 @@ import traceback
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 CK = os.environ.get("FC_CK") or HERE + "/check_flows.py"
-OUT = os.environ.get("FC_OUT") or HERE + "/selftest-output"
+OUT = os.environ.get("FC_OUT") or ""  # round 8: empty = a new temporary folder is made in main(); the committed selftest-output/ is rewritten only when FC_OUT names it: a run never rewrites the committed selftest-output/ folder unless FC_OUT names it
 args = [a for a in sys.argv[1:]]
 if not args:
     print(__doc__)
@@ -613,6 +613,12 @@ def g_wrongcount(j, d):
     j["nodes"].append(sticky("Extra"))  # a note changes the node count and nothing else
 
 
+def g_extra_conn(j, d):
+    """one more link from a node that already links to another node, to a node that is already reachable: the connection count grows by one and nothing else changes"""
+    src = a_source(j)
+    j["connections"][src]["main"][0].append(dict(j["connections"][src]["main"][0][0]))
+
+
 def g_settings_null(j, d):
     j["settings"] = None
 
@@ -1088,6 +1094,7 @@ G = [
     ),
     ("env_read_blocked_strict", g_env_read, "FAIL", "reads $env", ("--block-env-access",), []),
     ("wrong_count", g_wrongcount, "FAIL", "node count", (), []),
+    ("wrong_count_more_connections", g_extra_conn, "FAIL", "connection count", (), []),
     ("settings_null", g_settings_null, "FAIL", "settings is not an object", (), []),
     ("settings_list", g_settings_list, "FAIL", "settings is not an object", (), []),
     (
@@ -1545,6 +1552,9 @@ def lines_of(out, level):
 
 
 def main():
+    global OUT
+    if not OUT:
+        OUT = tempfile.mkdtemp(prefix="fc-selftest-out-")
     if os.path.isdir(OUT) and os.listdir(OUT) and not os.path.isfile(OUT + "/CHECK-COMMAND.txt"):
         print(
             f"REFUSED: {OUT} is not empty and is not an earlier self-test output folder; set FC_OUT to a new or empty folder"
@@ -1619,7 +1629,7 @@ def main():
     def one(name, mut, level, text, extra, also, tv, src, f):
         nonlocal skipped
         n = f"{name}@{tv}-{f}"
-        d, sk, exp = make(n, mut, work, src, f, keep_counts=(name == "wrong_count"))
+        d, sk, exp = make(n, mut, work, src, f, keep_counts=(name in ("wrong_count", "wrong_count_more_connections")))
         if sk:
             skipped += 1
             skipnames[name] = skipnames.get(name, 0) + 1
@@ -2609,6 +2619,18 @@ def main():
         dd1 == ["p[X] (added)"] and dd2 == ["p[X] (removed)"],
         f"{dd1} {dd2}",
     )
+    # round 8: value_is_safe on values where "no {{ }} block" and "a block that is not a reference" differ from the safe forms (kills a swap of `or` to `and`)
+    vs = {
+        "": um.value_is_safe("abc"),  # no block, nothing 6+ characters long
+        "ref": um.value_is_safe("={{ $env.SOME_NAME }}"),
+        "other_block": um.value_is_safe("={{ foo.bar }}"),  # a block that is not a reference, no quoted text
+        "mixed": um.value_is_safe("={{ $json.a }}{{ foo.bar }}"),
+    }
+    report(
+        "r8_value_is_safe_rejects_no_block_and_non_reference_block_and_accepts_a_reference",
+        vs == {"": False, "ref": True, "other_block": False, "mixed": False},
+        f"{vs}",
+    )
     try:
         cols = um.parse_ddl(rt(ddl4))
         tb, wd = um.sql_use(
@@ -2786,6 +2808,7 @@ def main():
             "SKIPPED, by case name (a case is skipped on a file that lacks the node type it needs): "
             + ", ".join(f"{k}={v}" for k, v in sorted(skipnames.items()))
         )
+    print(f"case output folder: {OUT}")
     print(f"SELFTEST: {ok} as expected, {bad} not as expected, {skipped} skipped (not applicable)")
     shutil.rmtree(work, ignore_errors=True)
     return 1 if bad else 0
