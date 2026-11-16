@@ -317,3 +317,35 @@ interrupted as expected (<Signals.SIGTERM: 15>,)
   PASS: T42 IO file restored
   PASS: T42 IO state empty
   PASS: T42 IO no orphan pytest
+  PASS: T42 PWR exit 158 (got 158)
+  PASS: T42 PWR file restored
+  PASS: T42 PWR state empty
+  PASS: T42 PWR no orphan pytest
+== T43 --restore must not stop a stranger that has the orphan's number (review r3 minor: start time + full argument list)
+safety-tests.sh: line 1331: 30000 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T43 setup: the stranger (a pytest of its own that names the root) is its own group leader
+process 30139 is not this run's pytest (or cannot be verified): left alone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8/full/tmpstate/hadavin-m
+  PASS: T43a restore exit 0 and the file is back (rc 0)
+  PASS: T43a the stranger was left alone
+safety-tests.sh: line 1331: 30139 Killed                  ( cd "$T/root" && exec setsid "$T/root/.venv/bin/python" -m pytest -q -p no:cacheprovider tests/test_slow.py > /dev/null 2>&1 )
+safety-tests.sh: line 1331: 30162 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+stopped orphaned test group 30174; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8/full/tmpstate/hadavin-mutation-lane-0/4c7d45f31f59bf3a.backup; h
+  PASS: T43b a marker with a group but no recorded identity: file restored (rc 0) and the group found by the recorded command (review r4 nit 7: fallback)
+safety-tests.sh: line 1331: 30268 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+process 30280 is not this run's pytest (or cannot be verified): left alone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8/full/tmpstate/hadavin-m
+  FAIL: T43c a marker with a group and NO identity and NO command at all: file restored (rc 3), nothing stopped on a guess
+== T44 the leader is dead but a member of the test group still runs: --restore stops it (review r3 minor)
+safety-tests.sh: line 1331: 30338 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_spawn.py ) > /dev/null 2>&1
+  PASS: T44 setup: the leader is gone, 'sleep 3137' (a member of its group) still runs
+stopped orphaned test group 30350; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8/full/tmpstate/hadavin-mutation-lane-0/4c7d45f31f59bf3a.backup; hash matches saved or
+  PASS: T44 restore exit 0, file back (rc 0)
+  PASS: T44 the surviving member was stopped
+== T45 SIGKILL before the second marker (no group recorded yet): --restore finds the group by the command the first marker names (review r3 minor)
+safety-tests.sh: line 1331: 30432 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T45 setup: the orphan runs
+stopped orphaned test group 30476; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8/full/tmpstate/hadavin-mutation-lane-0/4c7d45f31f59bf3a.backup; h
+  PASS: T45 restore exit 0, file back (rc 0)
+  PASS: T45 the orphan was stopped
+== T46 timeout branch with stop_group failing: signals disarmed BEFORE stop_group is called, the leader still stopped, and the result is a TIMEOUT verdict, not a traceback (review r4 evidence)
+rc: None SIG.allow seen inside stop_group: [False] after: False
+  PASS: T46 SIG.allow was already False when the timeout branch called stop_group, and the result is TIMEOUT (no traceback)

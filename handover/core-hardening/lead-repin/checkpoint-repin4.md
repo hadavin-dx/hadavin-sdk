@@ -6,3 +6,6 @@ Commit SHA: none (no commit allowed).
 Done: v4 script assembled (sh/dash/bash syntax ok); --self-test 299 passed 0 failed under dash and bash; leak probe 0 fragments; 1 MB lines about 0.5 s; signal tests (108 runs) ok; mutation tests on copies run; git index unchanged.
 Next: write LEAD-REPIN-VERIFY.md v4 (glossary, corrected claims), v4-CHANGES.md, copy script to final place, sha256, banned-string count, report.
 Blockers: none. Commit SHA: none (no commit allowed).
+
+## 14:08 UTC (19:38 IST) final
+All deliverables written; report sent. Commit SHA: none (no commit allowed).
