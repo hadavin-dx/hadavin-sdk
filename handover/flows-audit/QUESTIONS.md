@@ -155,3 +155,8 @@ Failure first: a fresh reader says the lead could not run the plan today without
 2. Late second mail: the after-take recount should read the mailbox, not only the mf_leads table. Recommendation: add a mailbox recount to the counts proof after the stated wait.
 3. Fallback if T19/T20 fail on the patched copy: confirm whether the take is NO-GO (my reading of Q27-9) or runs the unpatched real-v5 with the caption cut.
 4. Who reviews the post-twice script and run_real_check_n8n.py when you supply them (byte-identical body check)? I can, read-only, if they are put on the branch.
+
+## Q30 (flows-audit, 2026-11-16 12:10Z) — gaps inside Q27 found by the stale-text read (reviews/crossread-q27-stale-r1.md)
+1. F-002 check is "Wed 07:30Z" but the rehearsal starts about 07:30Z after practice run (1 h) and Row 4 (0.5 h). Is the F-002 test at the end of the practice run, and does the practice run start about 06:00Z?
+2. F-031 and F-007 are rated Blocker but are text fixes: are they part of Tuesday's GO test (take-path code only), or do they close with the caption changes?
+3. n8n_drive.py: on a take branch, or provided by you at re-pin?
