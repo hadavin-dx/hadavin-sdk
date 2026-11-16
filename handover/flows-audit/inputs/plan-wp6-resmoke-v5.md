@@ -190,23 +190,37 @@ done
 `egress.py SSLOG OURS` (byte for byte as v3 section 3, from v1 lines 68-85; OURS = file of our non-n8n pids; every pid in an `fd` line counts as ours; prints `NONLOOP|DNS <n> <who> <netid> <state> <peer> <pids>`):
 ```python
 import collections, re, sys
-ours = {x.strip() for x in open(sys.argv[2]) if x.strip()}; ino = {}; out = collections.Counter(); dns = collections.Counter()
+
+ours = {x.strip() for x in open(sys.argv[2]) if x.strip()}
+ino = {}
+out = collections.Counter()
+dns = collections.Counter()
 LOOP = re.compile(r"^(127\.|\[::1\]|\[::ffff:127\.)")
 for line in open(sys.argv[1]):
     if line.startswith("fd "):
-        f = line.split() + [""]; ours.add(f[1]); ino.update({i: f[1] for i in f[2].split(",") if i}); continue
+        f = line.split() + [""]
+        ours.add(f[1])
+        ino.update({i: f[1] for i in f[2].split(",") if i})
+        continue
     f = line.split()
-    if line.startswith("@") or len(f) < 6: continue
+    if line.startswith("@") or len(f) < 6:
+        continue
     peer = f[5]
-    if peer.endswith(":*"): continue  # an unconnected UDP socket has no peer
-    pids = set(re.findall(r"pid=(\d+)", line)); i = re.findall(r"ino:(\d+)", line)
-    if i and i[0] in ino: pids.add(ino[i[0]])
+    if peer.endswith(":*"):
+        continue  # an unconnected UDP socket has no peer
+    pids = set(re.findall(r"pid=(\d+)", line))
+    i = re.findall(r"ino:(\d+)", line)
+    if i and i[0] in ino:
+        pids.add(ino[i[0]])
     who = "ours" if pids & ours else ("other" if pids else "no-process")
     k = (who, f[0], f[1], peer, ",".join(sorted(pids)))
-    if peer.rsplit(":", 1)[-1] == "53": dns[k] += 1
-    elif not LOOP.match(peer): out[k] += 1
+    if peer.rsplit(":", 1)[-1] == "53":
+        dns[k] += 1
+    elif not LOOP.match(peer):
+        out[k] += 1
 for name, cnt in (("NONLOOP", out), ("DNS", dns)):
-    for k, n in sorted(cnt.items()): print(name, n, *k)
+    for k, n in sorted(cnt.items()):
+        print(name, n, *k)
 ```
 
 `run.sh STEP LOG [ARG]` (the tee wrapper, outside every paste; R5):

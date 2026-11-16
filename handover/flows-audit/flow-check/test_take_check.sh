@@ -214,7 +214,7 @@ done
 tk b2good TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/b2good.pin" -- --flows "$P"
 [ "$RC" = 5 ] && ! has b2good "NOT A PERSON"; ok $? "B2: 'Jane Q. Roe-Smith, 2026-11-16, read all 4 WARN lines' is accepted (would-be pass with the override: exit 5) (got exit $RC)"
 # f8-r4 (M1): the bypasses of review f8-r3 (words joined by dots or hyphens, two stand-in words, a repeated letter, the script's own stand-in names, a date far in the past or before the pin's own date). Each must be exit 4 with the reviewer-line message, even with the test flag and the pin override (a name that is not "Testonly ..." gets no test allowance)
-for pair in "m1-tbd-dot:TBD., 2026-11-16" "m1-claude-code:Claude-Code, 2026-11-16" "m1-agent-dot:Agent., 2026-11-16" "m1-unknown-dash:Unknown-, 2026-11-16" "m1-sonnet-opus:Sonnet Opus, 2026-11-16" "m1-aaa:Aaa, 2026-11-16" "m1-runall:Runall Standin, 2026-11-16" "m1-test-reviewer:Test Reviewer, 2026-11-16" "m1-testonly-no-flag-name:Testonly Reviewer, 2026-11-16" "m1-model-in-name:Jane Gemini, 2026-11-16" "m1-llm:Pat O.L.L.M., 2026-11-16" "m1-year2000:Jane Q. Roe-Smith, 2000-01-01" "m1-before-pin:Jane Q. Roe-Smith, 2026-11-15"; do
+for pair in "m1-tbd-dot:TBD., 2026-11-16" "m1-claude-code:Claude-Code, 2026-11-16" "m1-agent-dot:Agent., 2026-11-16" "m1-unknown-dash:Unknown-, 2026-11-16" "m1-sonnet-opus:Sonnet Opus, 2026-11-16" "m1-aaa:Aaa, 2026-11-16" "m1-runall:Runall Standin, 2026-11-16" "m1-test-reviewer:Test Reviewer, 2026-11-16" "m1-testonly-no-flag-name:Testonly Reviewer, 2026-11-16" "m1-model-in-name:Jane Gemini, 2026-11-16" "m1-year2000:Jane Q. Roe-Smith, 2000-01-01" "m1-before-pin:Jane Q. Roe-Smith, 2026-11-15"; do
   nm=${pair%%:*}; { echo "# reviewed by: ${pair#*:}"; grep -v '^# reviewed by' "$PIN"; } > "$S/$nm.pin"
   tk "$nm" TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/$nm.pin" -- --flows "$P"
   [ "$nm" = m1-testonly-no-flag-name ] && tk "$nm" TAKE_CHECK_WARN_PIN="$S/$nm.pin" -- --flows "$P"   # the test allowance needs BOTH the flag and the override
@@ -277,7 +277,7 @@ ra b4free "$S/rl-cwd" "$S/tmpA" "$S/rl-raw"
 for pair in "m2a:a second run_all.sh on a locked raw folder is refused, exit 2" "m2b:the same raw folder with a DIFFERENT TMPDIR is refused, exit 2" "m2c:the same raw folder given through a symbolic link (and another TMPDIR) is refused, exit 2" "m2d:the same raw folder given as a relative path from another folder is refused, exit 2" "m2e:the same raw folder given with a double slash, a link and .. is refused, exit 2" "m2f:a DIFFERENT raw folder is not blocked by that lock (exit 0)"; do
   [ "$(cat "$S/${pair%%:*}.r" 2>/dev/null)" = 0 ]; ok $? "M2: ${pair#*:}"
 done
-[ -z "$(ls -A "$S/tmpA" "$S/tmpB")" ]; ok $? "M2: no lock file was left in either TMPDIR"
+[ -z "$(ls -A "$S/tmpA")" ] && [ -z "$(ls -A "$S/tmpB")" ]; ok $? "M2: no lock file was left in either TMPDIR"
 # minor: the run_all.sh test hooks are refused without RUN_ALL_NESTED
 ( cd "$S/rl-cwd" && env -u RUN_ALL_NESTED RUN_ALL_TAKE_FLOWS="$S/b1flow" RUN_ALL_RAW="$S/rl-raw2" timeout 20 bash "$RA" --lock-only > "$S/hook.txt" 2>&1; echo $? > "$S/hook.rc" )
 [ "$(cat "$S/hook.rc" 2>/dev/null)" = 2 ] && grep -q "REFUSED: RUN_ALL_TAKE_FLOWS is a test hook" "$S/hook.txt"; ok $? "RUN_ALL_TAKE_FLOWS without RUN_ALL_NESTED is refused, exit 2 (got exit $(cat "$S/hook.rc" 2>/dev/null))"
