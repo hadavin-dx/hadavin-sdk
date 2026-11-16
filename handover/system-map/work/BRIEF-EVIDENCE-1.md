@@ -23,20 +23,25 @@ You are working for Hadavin (solo AI studio, owner the owner). These rules bind 
 21. STAGES (R449, owner HARD rule 2026-11-06): the stages are DEMO, PILOT and PROD, in that order, and nothing else; never "dev", "staging" or "test" as a stage name in code, config, URLs, docs, tickets or tests. Core config accepts exactly these three values; "dev" is refused with a message naming the rename. A project's own labels (for example "uat") are labels mapped to one stage in the project's config; core tests the stage, never a label. Existing frozen text that says "dev" is read as "demo" (build note P0t).
 
 ---
-EVIDENCE RUNNER. This section is the only task text and it overrides preamble rules 1, 3, 8 and 12 and the preamble's file rules for this task.
+EVIDENCE RUNNER. This section is the only task text and it overrides preamble rules 1, 3, 8 and 12 and the preamble's file rules for this task; preamble rule 13 applies only as the EVIDENCE RUNNER marker.
 Words: evidence runner = a helper that runs listed commands and records raw output; it never judges and never fixes. Repo root /home/user/hadavin-sdk; work in handover/system-map/ (Linux paths).
 
-STEP 0. Run `cat work/OWNER-ONLY.txt ; echo rc=$?`. Its paths are relative to /home/user/hadavin-sdk, one per line; a path is listed if it equals a line or starts with a line plus a slash. If the file is missing or empty, write that in work/evidence-1.md and stop. Never open a listed path. If any output names a listed path, replace that line with `<PATH>: NOT READ`.
-STEP 1. Run these eight commands, each exactly, each followed by `; echo rc=$?` (add it where missing), from handover/system-map/. Paste the command, the exit code and the raw output (the last 40 lines if longer) under one heading per command in work/evidence-1.md. If a command fails, record it and go on. If git has no history for a command (for example HEAD~3), record the failure and go on.
+STEP 0. Run `cat work/OWNER-ONLY.txt ; echo rc=$?`. Its paths are relative to /home/user/hadavin-sdk, one per line; a path is listed if it equals a line or starts with a line plus a slash. Ignore blank lines and lines starting with #; strip CR and a trailing slash from each line. Record step 0 as the count of lines only, not the list. The listed-path rule applies to every output you record. If the file is missing or empty, write that in work/evidence-1.md and stop. Never open a listed path. If any output names a listed path, replace that line with `<PATH>: NOT READ`.
+STEP 1. Run these command groups (1 to 8), each exactly, each followed by `; echo rc=$?` (add it where missing), from handover/system-map/. Paste the command, the exit code and the raw output under one heading per command in work/evidence-1.md. Record the exit code first; then, if the output is longer than 40 lines, keep the last 40 lines and write "trimmed" under the heading. If a command fails, record it and go on. If git has no history for a command (for example HEAD~3), record the failure and go on.
  1. python3 tools/partition.py ../.. /tmp/manifests
  2. python3 -m unittest discover tests
  3. python3 tools/scan_outputs.py .
  4. python3 tools/check_citations.py ../.. /tmp/cit-lanes.tsv work/L1.md work/L1c.md work/L2.md work/L2c.md work/L3.md work/L3c.md work/L4.md work/L4c.md work/L5a.md work/L5ac.md work/L5b.md work/L6.md
  5. python3 tools/check_citations.py ../.. /tmp/cit-out.tsv MASTER-MAP.md SWEEP.md ONE-PLACE-TABLE.md
- 6. cut -f4 /tmp/cit-lanes.tsv | sort | uniq -c   (then the same for /tmp/cit-out.tsv)
- 7. grep -c '^| ' MASTER-MAP.md ; grep -c '^Owner:' ONE-PLACE-TABLE.md ; grep -n '^## ' SWEEP.md ONE-PLACE-TABLE.md
- 8. git status --short ; git diff --stat HEAD~3 -- ../../src ../../tests
-Commands with a pipe: record the exit code of the first command by running `set -o pipefail` first or by writing `${PIPESTATUS[0]}`, and write which one you used. Do not cut output with `head` or `tail` before recording the exit code.
-ALLOWED: the commands above, the scripts under tools/, the unit tests in tests/, `git status` and `git diff --stat`. Writes by the tools under /tmp are allowed. The only repo file you write is work/evidence-1.md; its first line is `EVIDENCE RUNNER`.
-NOT ALLOWED: editing any other file; network commands; git commit, push, checkout or reset; background processes; writing any secret. Mask values as <MASKED:secret>, <MASKED:address> or <MASKED:key>.
-REPORT: one line per command with its exit code, returned to the caller. Decision 1 (the video is real-v5 scenes 1 to 4) and decision 3 (the roles proposal is parked) are context only: take no action on them.
+ 6a. set -o pipefail; cut -f4 /tmp/cit-lanes.tsv | sort | uniq -c; echo rc=$?
+ 6b. set -o pipefail; cut -f4 /tmp/cit-out.tsv | sort | uniq -c; echo rc=$?
+ 7a. grep -c '^| ' MASTER-MAP.md ; echo rc=$?
+ 7b. grep -c '^Owner:' ONE-PLACE-TABLE.md ; echo rc=$?
+ 7c. grep -n '^## ' SWEEP.md ONE-PLACE-TABLE.md ; echo rc=$?
+ 8a. git status --short ; echo rc=$?
+ 8b. git diff --stat HEAD~3 -- ../../src ../../tests ; echo rc=$?
+One heading per numbered line (1 to 5, 6a, 6b, 7a, 7b, 7c, 8a, 8b); that is 12 headings for the "eight" listed groups.
+Every piped command uses `set -o pipefail` (written in the command); write that in the file. Do not cut output with `head` or `tail` before recording the exit code. If /tmp/manifests does not exist after command 1, record that and go on.
+ALLOWED: the commands above, `git rev-parse HEAD`, the scripts under tools/, the unit tests in tests/, `git status` and `git diff --stat`. Writes by the tools under /tmp are allowed. The only repo file you write is work/evidence-1.md (also when step 0 stops you); its first line is `EVIDENCE RUNNER`.
+NOT ALLOWED: editing any other file; network commands; git commit, push, checkout or reset; background processes; writing any secret. Mask any token-like string or e-mail address as <MASKED:secret>, <MASKED:address> or <MASKED:key>.
+REPORT: one line per command with its exit code, then the path work/evidence-1.md and the head SHA from `git rev-parse HEAD`, returned to the caller. Decision 1 (the video is real-v5 scenes 1 to 4) and decision 3 (the roles proposal is parked) are context only: take no action on them.
