@@ -1,13 +1,13 @@
-UPDATED_UTC: 2026-11-16T10:27:26Z
+UPDATED_UTC: 2026-11-16T10:27:58Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
 ITEMS_OPEN: 8
-PERCENT: 60
-AGENTS_RUNNING: 8
-CAPACITY: 2.02 load of 4 cores, mem 0/15 GB, RAM 886/16087 MB, disk 27G free of 252G, top3 584M /tmp/claude-0 649M /tmp/pytest-of-root 871M /tmp/f3m , agents 8 (light+heavy per list)
+PERCENT: 62
+AGENTS_RUNNING: 7
+CAPACITY: 1.89 load of 4 cores, mem 0/15 GB, RAM 904/16087 MB, disk 27G free of 252G, top3 551M /tmp/claude-0 649M /tmp/pytest-of-root 871M /tmp/f3m , agents 7 (light+heavy per list)
 INTERRUPTED: none
 FAILED: ROLES: PARKED by lead (client build, after video, no new lanes). Script r6: independent rerun 71 tests OK, gate rc 0, but 7 of 15 random mutants survive (lines 141,145,147,280,358,371,417); not fixed because parked; v4 doc security Blocker (Part C unguarded) unfixed
 claims: r5 counts independently rerun and match (113/69/48/28/69=327, 79 rows); BUT 37 Table 2 rows (41-77) have no LIVE/OUT tag; example.test vs example.com rows 2 and 5 rest on OWNER-STEPS v3 only; row 33 archive step unproven; 2 wrong cites (A-097, A-068); r6 fix pending (tags, desk-repo traces, cites)
@@ -21,15 +21,15 @@ claims stranger read of lines 1-260: 3 Blockers 16 Majors (gating of row 33 on a
 F5 facts review r5: 0 Blocker 6 Major (about 25 wrong CLAIMS-TABLE line cites; A-084 example.test vs example.com; deleting saved runs may not remove n8n copy; decision 2 pasted as fact; B-215 cite; B-010 three vs two leads); r6 fixer running
 F8 design review r3: 0 Blocker 5 Major (cross-folder duplicate webhook paths never checked; $env reads exit 0 by default; memory-sourced n8n rules are FAILs without UNVERIFIED tag; self-baseline makes IF gap only WARN; stale README/REPORT claims); r4 fixer running
 desk repo trace: 18 UNTRACED rows traced (13 SUPPORTED text-only, 4 OVERSTATED, 1 UNSUPPORTED); desk script as checked in ARCHIVES contacts at the end, against decision 2 (Q13 asked); nothing ever ran against real HubSpot/Gmail; PLAN-4 cites wrong against the 1113-line file
-F8 r4 fixer done (own numbers: run_all rc 0, self-test 577/0/58 skips, gates rc 0, 3 survivors killed); NOT done: every n8n rule from memory UNVERIFIED, env-access setting invisible to a file check, run_all.sh/take_check.sh have no self-test, 58 skips never fail the run, 2 nits open; independent rerun + reviewer running
 F5 r7 fixer: checker rc 0 twice (157 rows, 0 ids missing) as of CLAIMS-TABLE before claims r7; must rerun after claims r7 fixer; section 6 still says '73 in round 6' vs checker 78 (stale); nothing ran in n8n
 decisions pass review: 9 Majors (stale 8 files, count readings disagree, F6B steps 1-5 still describe film-set switching, TRUNCATE would destroy lead_key to crm_id list, F-003/F-004 patches still insert scene 5 text); fixer r2 + patch regeneration running; Q14 asked the lead to re-rate F-005/F-006/F-023/F6B-01/F6B-13 and decide the scene 4 caption
 F3 security review 4: 0 Blocker, 4 Majors (check says 0 problems when the manifest is not found; --tokens-only accepts a NOT READY copy; stray .DS_Store blocks check and delete; README claims Python 3.11/3.12 never run) + nits incl 6 noqa vs no-suppression rule; fixer waits for the independent evidence run (still running)
 claims r7 fixer: 6 Majors fixed (own report), F5 checker PASS 157 rows (rerun by me, see rc), counts unchanged 126/69/52/29/51=327; open: Q15 closing card (rows 14-15 tags wait for lead), Q13 contact cleanup; M8 words and 'settings-file figures' (M16) still open; 2 cites were not wrong (evidence script compared claim text to code line); independent re-read of r7 not done
-F8 owner-morning review (reading only): 4 Majors: take check passes with FROM/INTAKE address placeholders still in 2 mail nodes; real-v5 has no table SQL and the nearest one lacks the 4 alert columns so no alert would ever send (Q16 to lead); real-v5 files lack F-002 and F-008 (saved runs off) with no warning; --fail-unverified claim wider than the code. r5 fixer running
 F-003/F-004 regenerated (builder: check PASS 5, no 60.1/film-v5/scene 5 in added lines; own numbers); NOT done: scene rows 5-11 and 'Update 17:08Z' caption still in VIDEO-RUNSHEET (lead applies), wording rows held by D1/D2/P2/P4a-c not pasted, 20 s source unconfirmed, F-001 patch line 7 names film-v5; 3 independent checks running
-NEXT: F3 r7 fixer after evidence; F8 r5, decisions r2, patch checks
-PUSHED_UTC: 2026-11-16T10:27:26Z
+F8 r4 independent evidence: gates rc 0 (with repo config), 577/0/58 on py3.11/3.12/3.13, hostile inputs no traceback; BUT 12 of 25 mutants survived (6 in code: lines 48,117,317,502,1045,1189) sent to r5 fixer; Python 3.10 untested; owner-morning review 4 Majors (placeholders hidden by --quiet-info, wrong table SQL = no alert (Q16), unpatched real-v5 files, --fail-unverified over-claim) in r5 fixer
+Q15 answered by lead and applied to CLAIMS-TABLE (rows 14-15 OUT, 16-17 LIVE, no numbers on a card); F5 checker PASS after; but F-003 patch closing card is 4 lines vs the lead's one line: fix after patch reviews land
+NEXT: F3 r7 fixer after evidence; F8 r5, decisions r2, 3 patch checks; patch closing card to one line
+PUSHED_UTC: 2026-11-16T10:27:58Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -49,7 +49,6 @@ PUSHED_UTC: 2026-11-16T10:27:26Z
 | id | role | model | what it does | started UTC | expected end UTC | % | state | last output |
 |---|---|---|---|---|---|---|---|---|
 | f3ev6 | F3 r6 evidence runner | sonnet | independent rerun, mutants on new code, e2e | 10:21 | 10:51 | 5 | running | fill_flows/evidence-f3-r6.md |
-| f8ev4 | F8 r4 evidence runner | sonnet | independent rerun, 25 mutants, hostile inputs | 10:33 | 10:55 | 5 | running | flow-check/evidence-r4.md |
 | decfix2 | decisions text fixer r2 | sonnet | 9 Majors of review (M4/M8 left to lead, Q14) | 10:37 | 11:00 | 5 | running | reviews/apply-decisions-r2.md |
 | f8fix5 | F8 r5 fixer | sonnet | 4 Majors of owner-morning review (placeholders hidden, wrong table SQL, unpatched files, --fail-unverified) | 10:41 | 11:10 | 5 | running | flow-check/fix-f8-r5.md |
 | patev | patches r2 evidence runner | sonnet | independent apply, grep, JSON | 10:45 | 11:00 | 5 | running | lanes7/evidence-patches-r2b.txt |
