@@ -1,18 +1,18 @@
 # STATUS BOARD system-map
-UPDATED_UTC: 2026-11-16T11:27:05Z
+UPDATED_UTC: 2026-11-16T11:28:07Z
 SESSION: system-map
 ORDER: 017-028 read (ORDER 028 at 11:31Z: start up to 8, name them here); lead ANSWER 10:23Z item 8 (pause stays) read; no Q22 text exists in ORDERS.md or inputs/
 STATE: WORKING
 BOOT_ID: 6bc0bf7e
 ITEMS_TOTAL: 20
-ITEMS_OPEN: 14 (rows below 100 percent in the table; counted by an agent, it found 12 was wrong). PERCENT mean of the table is 83.6, not 85. M3, M4, M6 queue tags now match the board (checked 11:2xZ, digest 152); M9 and M15 queue tags say DONE while the board says 90 and 80 percent (digest 152)
-PERCENT: 83.6 (mean of the table, counted by an agent; was 85)
-AGENTS_RUNNING: 8 running (ORDER 028), all started this beat. Digested through batch 214. Decision list: work/decision-list-for-lead.md (sections A-G, proposals only).
+ITEMS_OPEN: 15 (rows below 100 percent: M2-M10, M14, M15, M17-M20; 5 rows are at 100). CORRECTION: my earlier "14" and "6 at 100" were wrong; recounted by script at 11:3xZ over the 20 rows. PERCENT mean of the table is 83.1 (sum 1662 over 20 rows), not 83.6. M3, M4, M6 queue tags now match the board (checked 11:2xZ, digest 152); M9 and M15 queue tags say DONE while the board says 90 and 80 percent (digest 152)
+PERCENT: 83.1 (script recount: 1662 / 20; the earlier 83.6 was wrong)
+AGENTS_RUNNING: 8 running (ORDER 028): 7 started this beat, 1 (aa4eceede4525a8d0) from the last beat. Digested through batch 221.
 INTERRUPTED: none
-NEXT: digest the 8 new hand-backs (decision list re-read, core-hardening PLAN, REVIEW, T19 steps, patches vs ledger, LEAD-PAGE vs list, QUEUE vs board, ONE-PLACE-TABLE 31-end cites); send the list to the lead; next beat in 5 minutes.
-CAPACITY: nproc 4, load 0.2, RAM about 900/16087 MB, disk / 43% used (23G free); top disk users: /tmp/claude-0 1.3 GB (session scratch, not mine to clear), /home/user/hadavin-sdk 304 MB, my folder 4.5 MB.
+NEXT: digest the 8 hand-backs (re-smoke plan 1-150, 150-300, 300-558; owner steps v5 1-100, 100-end; TAKE-BLOCKERS; STATUS-BOARD; ONE-PLACE-TABLE 31-end cites); second fix pass on the decision list; next beat in 5 minutes.
+CAPACITY: nproc 4, load under 0.5, RAM about 900/16087 MB, disk / 43% used (23G free); top disk users: /tmp/claude-0 1.3 GB (session scratch, not mine to clear), /home/user/hadavin-sdk 304 MB, my folder 4.5 MB.
 FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); the studio lead starts Docker and runs the rehearsal (decision 12); no take date. (3) S9-5, S9-12, S9-3, S9-2 not yet applied in v5 or the scope sheet; S9-1 and S9-4 deferred, describe-only (decision 5). (4) the take-time value substitution (BL-wp6-G1) is not built. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.
-PUSHED_UTC: 2026-11-16T11:27:05Z
+PUSHED_UTC: 2026-11-16T11:28:07Z
 
 ## ITEMS
 | # | item | state | % | evidence file | note |
@@ -38,14 +38,14 @@ PUSHED_UTC: 2026-11-16T11:27:05Z
 | M20 | SESSION-HANDOFF live state | BLOCKED: file is on the studio laptop, not in the repo | 0 | | the lead pastes the text into inputs/; the lead has set no date |
 | M16 | flow-set question | DONE, closed by decision 1 (real-v5 only; film-v5 out) | 100 | flowset/REPORT.md | |
 
-## AGENTS (ORDER 028: 8 running, all started this beat)
+## AGENTS (ORDER 028: 8 running)
 | id | purpose | state |
 |---|---|---|
-| a860b81bfce5d497a | decision list re-read | running, read-only |
-| aeabdca645f09245b | core-hardening PLAN cold read | running, read-only |
-| a2878dbd29b269000 | core-hardening REVIEW cold read | running, read-only |
-| a069efe5bfff78c63 | T19 steps cold read | running, read-only |
-| a560e1624166be961 | patches vs ledger check | running, read-only |
-| ae47d8b3d64a86b98 | LEAD-PAGE vs decision list | running, read-only |
-| ac9c5158e3bc31575 | QUEUE vs board | running, read-only |
 | aa4eceede4525a8d0 | ONE-PLACE-TABLE 31-end cites | running, read-only |
+| a780dae674713c3e6 | re-smoke plan 1-150 cold read | running, read-only |
+| aa320f2437047add3 | re-smoke plan 150-300 cold read | running, read-only |
+| a5959279a02c2093a | re-smoke plan 300-558 cold read | running, read-only |
+| abbc7ecb96674dcb8 | owner steps v5 1-100 cold read | running, read-only |
+| acebc745fc4f98cbf | owner steps v5 100-end cold read | running, read-only |
+| a6b232f4b2fb101b0 | TAKE-BLOCKERS cold read | running, read-only |
+| a5294423eac0e0595 | STATUS-BOARD cold read | running, read-only |
