@@ -25,7 +25,7 @@ PASS W2 report uses at least Wed 18, Mon 23, Wed 25 (Mon 16 optional) :: [('Mon'
 PASS W3 ISO dates in 2026-11 are valid dates
 PASS C1 length table: seconds = words/150*60, budget = rounded up to 5, total = 150 + budget (6 rows) :: []
 PASS C2 table words: lease 1 adds 25, lease 2 adds 40 over none (both lengths); (b) is 16 words below (a) :: {('none', '(a)'): 90, ('none', '(b)'): 74, ('1', '(a)'): 115, ('1', '(b)'): 99, ('2', '(a)'): 130, ('2', '(b)'): 114}
-PASS C3 every 'N words, about X s' statement matches words/150*60 within 0.5 s (17 statements) :: []
+PASS C3 every 'N words, about X s' statement matches words/150*60 within 0.5 s (18 statements) :: []
 PASS C4 box card line word counts add up to the stated 90 ({1: 11, 2: 35, 3: 22, 4: 22}) :: {1: 11, 2: 35, 3: 22, 4: 22}
 PASS C5 each quoted card line has the stated number of words (recounted by split) :: [(1, 11, 11), (2, 35, 35), (3, 22, 22)]
 PASS V1 no row-number reference, question label, check label or report word inside any new text or viewer cell :: []
