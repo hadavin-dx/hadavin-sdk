@@ -1,5 +1,5 @@
 # STATUS BOARD system-map
-UPDATED_UTC: 2026-11-16T09:42:25Z (IST = UTC+5:30)
+UPDATED_UTC: 2026-11-16T09:45:49Z (IST = UTC+5:30)
 SESSION: system-map
 ORDER: 017-020 on top of 016; queue M10-M16
 STATE: WORKING
@@ -7,12 +7,12 @@ BOOT_ID: 6bc0bf7e
 ITEMS_TOTAL: 16
 ITEMS_OPEN: 5
 PERCENT: 80
-AGENTS_RUNNING: 4 reviewers + 1 heavy test run (5 lanes)
+AGENTS_RUNNING: 3 reviewers (3 lanes; refilling; the heavy test run finished)
 INTERRUPTED: none
-NEXT: collect four reviews (cards vs v5, README and lead page, ONE-PLACE table, tools R460); read the M14 re-run on core-hardening head 60338533 (76 percent done, result not known yet); core-hardening still has to apply drift/APPLIED-S9.md (S9-1..5 and S9-12)
-CAPACITY: 4 cores, load average 1.0 (about 25 percent, below the 70 percent target; the test run is single-process and the reviewers read only); memory 1 of 15 GB (7 percent); disk 38 percent used, 25 GB free; heavy slots 1 of 3 used
-FAILED: (1) ORDER 019 CLOSED, real defect: fresh clone of cloud/core-hardening gives 2 failed, 9389 passed, 455 skipped (rc=1): vendor word 'Port.io' in handover/BRIEF-PREAMBLE-studio-2026-11-06.md and patch-test-runs logs, one non-UTF-8 file handover/reviews/P1a-idempotence-probe.txt; 10 handover/promotion-inputs/apexc files with a wrong licence text. None of those paths is on main, so a PR from this branch fails 2 guard tests. Fix owner: core-hardening. (2) Owner cards facts check had 5 Majors: fixed, re-read pending. (3) v5 still lacks the S9 edits (APPLIED-S9.md). (4) No take date in v5; no one named for Docker (R8-4).
-PUSHED_UTC: 09:42:25Z
+NEXT: collect S9 implementation-readiness, drift work-list read and the licence-failure cause; apply Blockers; core-hardening still has to apply drift/APPLIED-S9.md (S9-1..5 and S9-12) and fix the licence test; keep 4 or more lanes
+CAPACITY: 4 cores, test run finished, about 1 of 4 busy (reviewers read only; below the 70 percent target, more lanes next beat); memory 1 of 15 GB; disk 38 percent used; heavy slots 0 of 3 used
+FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); no named person to start Docker and rehearse; no take date. (3) S9-1..5 and S9-12 not applied in v5 or the scope sheet. (4) flow-set choice A to D open; the take-time value substitution (BL-wp6-G1) is not built; the mail credential mf-mail-smtp risk has no written fix.
+PUSHED_UTC: 09:45:49Z
 
 ## ITEMS
 | # | item | state | % | evidence file | note |
@@ -30,15 +30,13 @@ PUSHED_UTC: 09:42:25Z
 | M11 | FACTS-ALREADY-DONE sweep | DONE (drift section 11) | 100 | | |
 | M12 | video-date sweep | DONE (drift section 11) | 100 | | |
 | M13 | three-way consistency | DONE (drift section 12) | 100 | | |
-| M14 | heavy lane in fresh clone | earlier head: 2 real failures; RE-RUN on new head 60338533 running | 70 | /tmp/sm-fresh2.pytest.log | |
+| M14 | heavy lane in fresh clone | DONE twice; latest head: 1 real failure (licence files), see FAILED | 100 | /tmp/sm-fresh2.pytest.log | |
 | M15 | cut list reconcile | reconciliation note added to ARCHIVE-CUT-LIST.md; one list to sign after the take | 80 | ARCHIVE-CUT-LIST.md | |
 | M16 | flow-set question | round 1 reviewed, fixes applied (NO-GO rule, credential risk); fresh reader running | 70 | flowset/REPORT.md | |
 
 ## AGENTS
 | id | role | model | what it does | started UTC / IST | expected end UTC / IST | % | state | last output |
 |---|---|---|---|---|---|---|---|---|
-| a03ce68b | egm-codebase-details | sonnet | owner cards against v5 facts | 09:41 / 15:11 | 09:48 / 15:18 | 30 | running | none |
-| a0d023db | egm-comprehension | sonnet | README and lead page naive read | 09:41 / 15:11 | 09:48 / 15:18 | 30 | running | none |
-| a1891dd1 | egm-design | sonnet | ONE-PLACE table alignment | 09:41 / 15:11 | 09:48 / 15:18 | 30 | running | none |
-| a7d88c75 | egm-design | sonnet | R460 on tools: generator literals and hand edits | 09:42 / 15:12 | 09:50 / 15:20 | 10 | running | none |
-| heavy-2 | pytest (shell, not an agent) | n/a | core test suite, fresh clone head 60338533 | 09:39 / 15:09 | 10:10 / 15:40 | 76 | running | /tmp/sm-fresh2.pytest.log |
+| abe6bd87 | egm-implementation-readiness | sonnet | can core-hardening apply the S9 edits as written | 09:45:49Z UTC | +6 min | 10 | running | none |
+| a549160e | egm-comprehension | sonnet | drift work list read as the studio lead | 09:45:49Z UTC | +6 min | 10 | running | none |
+| a9a2b9f3 | egm-codebase-details | sonnet | cause of the 11 licence-file failures | 09:45:49Z UTC | +5 min | 10 | running | none |

@@ -25,7 +25,7 @@ M10 [PARTLY DONE 2026-11-16, ring log in rings/RING-LOG.md; fresh round running]
 M11 [DONE 2026-11-16, results in drift/REPORT.md section 11] FACTS-ALREADY-DONE SWEEP: grep every document in the repo and in the other two sessions' pushed files (git show origin/cloud/<name>:...) for owner-step lists that ask the owner for accounts, keys, mailboxes, Docker, HubSpot accounts; list each place with line number and exact fix (one place per job).
 M12 [DONE 2026-11-16, drift/REPORT.md section 11] VIDEO-DATE SWEEP: every place that states a take date, post date or first slot (queue says Wed 18 morning IST, owner-steps say Thu 19 slot, deadline Wed 25 Nov 20:30 IST): list place, quote, fix.
 M13 [DONE 2026-11-16, drift/REPORT.md section 12] THREE-WAY CONSISTENCY: ports, folder names, file names, step ids that appear in OWNER-STEPS v4, plan v5 and the run sheet: table of disagreements.
-M14 [DONE 2026-11-16 earlier clone 14d8fe46d; RE-RUN on new head 60338533 running] HEAVY LANE: re-run the core test suite in a FRESH git clone of cloud/core-hardening head (not a scratch copy) with 3 slots, record the two baseline failures exactly (vendor-word, licence) and whether they exist in a clean clone.
+M14 [DONE 2026-11-16 earlier clone 14d8fe46d; re-run on new head 60338533: 1 failed (licence files), 9390 passed] HEAVY LANE: re-run the core test suite in a FRESH git clone of cloud/core-hardening head (not a scratch copy) with 3 slots, record the two baseline failures exactly (vendor-word, licence) and whether they exist in a clean clone.
 M15 [DONE: reconciliation note in ARCHIVE-CUT-LIST.md] Cut list (archive, never delete) for repo files not used by the take: next area under R460.
 Keep at least 4 agents running; when one finishes start the next in the same turn.
 
