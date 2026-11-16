@@ -4,7 +4,7 @@ BASE = os.path.join(os.path.dirname(__file__), "..")
 sys.path.insert(0, os.path.join(BASE, "tools"))
 from safe_write import adopt
 
-PIN = {  # names of the job rows tools/write_outputs.py gives verdicts to (id sets at its lines 123-168)
+PIN = {  # names of the job rows tools/write_outputs.py gives verdicts to (its PIN dict and the verdict tables CORE, FORCE, PROP, CONFLICT and the others)
     'L6-J-001': 'STORE place: Postgres table mf_leads (take claim and state table)',
     'L6-J-002': 'STORE place: n8n internal data (workflows, credentials, execution history)',
     'L6-J-003': 'STORE place: stage.journal file (model-call write-ahead guard)',
@@ -40,6 +40,7 @@ PIN = {  # names of the job rows tools/write_outputs.py gives verdicts to (id se
     'L6-J-039': 'COUNTER place: test and run counts quoted as proof (full-suite totals, skip counts, case counts)',
     'L6-J-040': 'COUNTER place: heavy-job slot and agent-count limits (3, 4, 2 slots; 8 builders; no cap)',
     'L6-J-042': 'RETRY place: node retry on Qualify and CrmUpsert (3 tries each) inside the sub-workflow',
+    'L6-J-043': 'RETRY place: alert claim and backoff (claim 720 s, backoff 60 s to 300 s) and the start-time clear of stale alert claims',
     'L6-J-044': 'RETRY place: desk reaper, locked-database retry, mirror busy wait (10, 60, 180, 420 s)',
     'L6-J-045': 'RETRY place: core runtime tick (approval sweep, reconcile, stuck-run rule to NEEDS_PERSON, checkpoint, purge)',
     'L6-J-046': 'RETRY place: core llm retry (bounded backoff with jitter)',
@@ -99,17 +100,17 @@ class WriteOutputsGuard(unittest.TestCase):
 
     def test_job_ids_used_by_write_outputs_still_name_the_same_jobs(self):
         """Fails if a job row used by write_outputs.py is renamed, moved or renumbered.
-        PIN is a second copy of the id sets in tools/write_outputs.py lines 123-168: add new ids there too."""
+        PIN is a second copy of the PIN dict in tools/write_outputs.py: add new ids to both."""
         rows = {}
         with open(os.path.join(BASE, "work", "L6.md"), encoding="utf-8") as f:
             for l in f:
                 m = re.match(r"\| (L6-J-\d+) \|", l)
                 if m:
                     rows[m.group(1)] = [x.strip() for x in l.strip().strip("|").split(" | ")][1]
-        self.assertEqual(len(PIN), 47)
+        self.assertEqual(len(PIN), 48)
         for jid, name in PIN.items():
             self.assertIn(jid, rows, "work/L6.md has no job row %s" % jid)
-            self.assertEqual(rows[jid], name, "job %s was renamed or moved; re-check the id sets in tools/write_outputs.py lines 123-168" % jid)
+            self.assertEqual(rows[jid], name, "job %s was renamed or moved; re-check the PIN dict and the verdict tables in tools/write_outputs.py" % jid)
 
 
     def _copy_sm(self):
@@ -118,58 +119,123 @@ class WriteOutputsGuard(unittest.TestCase):
         gen = os.path.join(d, "hand-kept", ".generated-hashes.json")
         if os.path.exists(gen):
             os.remove(gen)
+        old = os.environ.get("WRITE_OUTPUTS_TOOL_UNDER_TEST")  # optional: run these tests against another copy of the tool (old-code proof)
+        if old:
+            shutil.copy(old, os.path.join(d, "tools", "write_outputs.py"))
         return d
 
     def _run(self, d):
         return subprocess.run([sys.executable, os.path.join(d, "tools", "write_outputs.py"), d, "--force"], capture_output=True, text=True)
 
-    def test_block_follows_the_row_name_not_the_row_number(self):
-        """B3: a row renumbered into another number range must stay in the block its own name says (old code used number ranges)."""
-        d = self._copy_sm()
+    def _edit_l6(self, d, fn):
         path = os.path.join(d, "work", "L6.md")
-        text = open(path, encoding="utf-8").read()
-        # L6-J-001 is a STORE row; give it a number inside the LOG range by swapping the ids of rows 1 and 15
-        text = text.replace("| L6-J-001 |", "| L6-J-TMP |").replace("| L6-J-015 |", "| L6-J-001 |").replace("| L6-J-TMP |", "| L6-J-015 |")
-        open(path, "w", encoding="utf-8").write(text)
+        lines = open(path, encoding="utf-8").read().split("\n")
+        open(path, "w", encoding="utf-8").write("\n".join(fn(lines)))
+
+    def test_every_row_sits_in_the_block_its_pinned_name_says(self):
+        """B3/B4-8: each job row in ONE-PLACE-TABLE.md sits under the block named by its own first word; L6-J-001 (a STORE row)
+        is under the STORE block, L6-J-015 (a LOG row) under the LOG block, and no row is lost or doubled."""
+        d = self._copy_sm()
         r = self._run(d)
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
-        block = None
+        block, seen = None, {}
         for line in open(os.path.join(d, "ONE-PLACE-TABLE.md"), encoding="utf-8"):
             m = re.match(r"## Job: (\w+)", line)
             if m:
                 block = m.group(1)
-            elif re.match(r"\| L6-J-\d+ \| (\w+) place:", line) and block:
-                self.assertEqual(re.match(r"\| L6-J-\d+ \| (\w+) place:", line).group(1), block, "row sits in the wrong block: " + line[:80])
             elif line.startswith("## Appendix"):
                 block = None
+            rm = re.match(r"\| (L6-J-\d+) \| (\w+) place:", line)
+            if rm and block:
+                self.assertEqual(rm.group(2), block, "row sits in the wrong block: " + line[:80])
+                seen[rm.group(1)] = block
+        self.assertEqual(seen.get("L6-J-001"), "STORE")
+        self.assertEqual(seen.get("L6-J-015"), "LOG")
+        self.assertEqual(len(seen), len(set(seen)))
+        self.assertGreater(len(seen), 40)
 
-    def test_moved_row_keeps_its_own_result(self):
-        """B3: moving a job row to another place in work/L6.md must not change any row's result."""
+    def test_line_order_does_not_change_the_output(self):
+        """B3/B4-2: moving a job row to another line in work/L6.md (ids travel with their content) must not change any output."""
         d = self._copy_sm()
         before = self._run(d)
         self.assertEqual(before.returncode, 0, before.stdout + before.stderr)
         want = open(os.path.join(d, "ONE-PLACE-TABLE.md"), encoding="utf-8").read()
-        path = os.path.join(d, "work", "L6.md")
-        lines = open(path, encoding="utf-8").read().split("\n")
-        idx = [i for i, l in enumerate(lines) if l.startswith("| L6-J-")]
-        a, b = idx[7], idx[30]
-        lines[a], lines[b] = lines[b], lines[a]
-        open(path, "w", encoding="utf-8").write("\n".join(lines))
+        def swap(lines):
+            idx = [i for i, l in enumerate(lines) if l.startswith("| L6-J-")]
+            a, b = idx[7], idx[30]
+            lines[a], lines[b] = lines[b], lines[a]
+            return lines
+        self._edit_l6(d, swap)
         r = self._run(d)
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         self.assertEqual(open(os.path.join(d, "ONE-PLACE-TABLE.md"), encoding="utf-8").read(), want)
 
-    def test_stale_row_id_is_an_error_not_a_silent_no_op(self):
-        """B3: a verdict table that names a row id which is not in work/L6.md must stop the tool with the id named."""
+    def test_renumbered_rows_are_an_error_naming_the_row(self):
+        """B4-1: if two rows swap ids (their content stays), verdict tables would give each verdict to the wrong row; the tool must stop."""
         d = self._copy_sm()
         path = os.path.join(d, "work", "L6.md")
-        lines = open(path, encoding="utf-8").read().split("\n")
-        lines = [l for l in lines if not l.startswith("| L6-J-059 |")]  # the last row goes away; tables still name it
-        open(path, "w", encoding="utf-8").write("\n".join(lines))
+        text = open(path, encoding="utf-8").read()
+        text = text.replace("| L6-J-001 |", "| L6-J-TMP |").replace("| L6-J-015 |", "| L6-J-001 |").replace("| L6-J-TMP |", "| L6-J-015 |")
+        open(path, "w", encoding="utf-8").write(text)
         r = self._run(d)
-        self.assertNotEqual(r.returncode, 0)
-        self.assertIn("stale job row ids", r.stdout + r.stderr)
-        self.assertIn("L6-J-059", r.stdout + r.stderr)
+        out = r.stdout + r.stderr
+        self.assertNotEqual(r.returncode, 0, out)
+        self.assertIn("differs from the pinned name", out)
+        self.assertIn("L6-J-001", out)
+        self.assertIn("L6-J-015", out)
+
+    def test_stale_row_id_is_an_error_not_a_silent_no_op(self):
+        """B3: a verdict table that names a row id which is not in work/L6.md must stop the tool with the id named (last row deleted)."""
+        d = self._copy_sm()
+        self._edit_l6(d, lambda lines: [l for l in lines if not l.startswith("| L6-J-059 |")])
+        r = self._run(d)
+        out = r.stdout + r.stderr
+        self.assertNotEqual(r.returncode, 0, out)
+        self.assertIn("missing from work/L6.md", out)
+        self.assertIn("L6-J-059", out)
+
+    def test_mid_row_deletion_is_an_error_naming_the_row(self):
+        """B4-3/B4-4: deleting a row from the middle (a table row 030, and the special-case row 043) must stop the tool and name that row."""
+        for jid in ("L6-J-030", "L6-J-043"):
+            with self.subTest(row=jid):
+                d = self._copy_sm()
+                self._edit_l6(d, lambda lines: [l for l in lines if not l.startswith("| %s |" % jid)])
+                r = self._run(d)
+                out = r.stdout + r.stderr
+                self.assertNotEqual(r.returncode, 0, out)
+                self.assertIn("missing from work/L6.md", out)
+                self.assertIn(jid, out)
+                self.assertNotIn("Traceback", out)
+
+    def test_new_unregistered_row_is_an_error_naming_the_row(self):
+        """B4-5: a row id that is in no registered set (a new row 060) must stop the tool, not be accepted silently."""
+        d = self._copy_sm()
+        def add(lines):
+            last = max(i for i, l in enumerate(lines) if l.startswith("| L6-J-059 |"))
+            lines.insert(last + 1, lines[last].replace("| L6-J-059 |", "| L6-J-060 |", 1))
+            return lines
+        self._edit_l6(d, add)
+        r = self._run(d)
+        out = r.stdout + r.stderr
+        self.assertNotEqual(r.returncode, 0, out)
+        self.assertIn("in no registered set", out)
+        self.assertIn("L6-J-060", out)
+
+    def test_fix_plan_row_numbers_in_the_text_match_the_fix_plan(self):
+        """B4-9: 'Fix plan row N' in the generated files is generated from the fix plan list, not typed in."""
+        d = self._copy_sm()
+        r = self._run(d)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        text = open(os.path.join(d, "SWEEP.md"), encoding="utf-8").read()
+        self.assertNotIn("@FIXROW", text)
+        table = {}
+        sec = text[text.index("Fix plan"):]
+        for m in re.finditer(r"^\| (\d+) \| [^|]*\| ([^|]*) \|", sec, re.M):
+            table[m.group(1)] = m.group(2)
+        for m in re.finditer(r"Fix plan row (\d+)", text):
+            self.assertIn(m.group(1), table)
+        self.assertIn("L6-FD-001", table.get("1", ""))
+        self.assertIn("L2-FD-018", table.get("7", ""))
 
 
 if __name__ == "__main__":

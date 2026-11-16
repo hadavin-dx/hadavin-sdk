@@ -1,4 +1,4 @@
-"""Writes SWEEP.md and ONE-PLACE-TABLE.md from work/merged-findings.md and work/L6.md (PLAN-002 5.2, 5.3), version 3
+"""Writes SWEEP.md and ONE-PLACE-TABLE.md from work/merged-findings.md and work/L6.md (PLAN-002 5.2, 5.3), version 4 (batch 4: row names pinned, see PIN)
 (result review round 1 and round 2 applied, see work/result-resolve-r1.md and work/result-resolve-r2.md).
 Usage: python3 tools/write_outputs.py <dir>"""
 import re, sys, os
@@ -46,7 +46,7 @@ RERATE = {"L4-FD-004": ("Major", "count slip, no action changes"), "L3-FD-040": 
           "L1c-FD-001": ("Blocker", "credential on the same runner as test code")}
 NOTE = {"L2-FD-001": "Result review: static inference from harness.py:34 (the GREP step shows SQLite in 11 runs); evidence is the kill rig, not the take flows (film-v5, real-v5 NOT VISIBLE); state: PLAN NOT DONE (DECISION line 8 already corrects it).",
         "L6-FD-001": "Result review: same as L2-FD-001; state PLAN NOT DONE; rig evidence.",
-        "L6-FD-002": "Result review: rig flows set saving none on purpose for the planted-data test; turning saving on needs the masking check first (Fix plan row 1).",
+        "L6-FD-002": "Result review: rig flows set saving none on purpose for the planted-data test; turning saving on needs the masking check first (Fix plan row @FIXROW:L6-FD-001@).",
         "L2-FD-008": "Result review: fault Fc holds every SMTP connection for the whole run (a total mail outage); no alert was seen within the 330 s window plus 20 s settle; Fc1 (first connection only) gave lead_alerts=1 in 6 of 6 runs (RESULTS.md); the design point stands: with mail fully down there is no second channel.",
         "L6-FD-005": "Result review: same as L2-FD-008; also one SMTP credential serves alert mail and lead mail, and both run inside the same n8n and Postgres.",
         "L3-FD-040": "Result review: cites a round-12 design review of a paused patch; its own text says 0 Blocker, 2 Major; claim sentence missing in the lane row.",
@@ -116,8 +116,86 @@ for l in open(os.path.join(base, "work/L6.md"), encoding="utf-8"):
             sys.exit("work/L6.md: job row %s has %d cells (expected at least 15)" % (m.group(1), len(cells)))
         rows[m.group(1)] = cells
 NJOBS = len(rows)
+# PIN: job id -> the exact row name the verdict tables below were written for. PLAIN: rows that get no verdict table but are registered,
+# so a new or renamed row is never accepted silently. Every id in work/L6.md must be in exactly one of the two, with the same name.
+PIN = {
+ 'L6-J-001': 'STORE place: Postgres table mf_leads (take claim and state table)',
+ 'L6-J-002': 'STORE place: n8n internal data (workflows, credentials, execution history)',
+ 'L6-J-003': 'STORE place: stage.journal file (model-call write-ahead guard)',
+ 'L6-J-004': 'STORE place: desk SQLite book (desk.sqlite3, lock file, wal, shm) with its portal',
+ 'L6-J-005': 'STORE place: desk money files (SpendLedger JSON-lines plus lock, live ledger, HubSpot and SMTP stats files)',
+ 'L6-J-006': 'STORE place: core Store kinds memory and postgres (with migrations 0001 to 0005, tool_calls, redaction_maps)',
+ 'L6-J-007': 'STORE place: core file stores qualified.jsonl and replay-records.jsonl',
+ 'L6-J-008': 'STORE place: ask-your-data demo files (query ledger, audit directory, cost meter plus lock, kill-switch flag, eval lock.json, eval run folders, recorded replies, seal files)',
+ 'L6-J-009': 'STORE place: ask-your-data demo Postgres databases (seed A, seed B, clean twin, login askdata_ro)',
+ 'L6-J-010': 'STORE place: kill-test rig (scratch Postgres on port 55432, fake CRM rows, fake journal, events.jsonl, mails.jsonl, control files, run folders)',
+ 'L6-J-011': 'STORE place: HubSpot (CRM) and Gmail (client systems of record)',
+ 'L6-J-012': 'STORE place: document and snapshot stores (pr-stack raw API JSON, patch and PR-text version chains, superseded patch series)',
+ 'L6-J-013': 'LOG place: n8n execution history (execution log of the take)',
+ 'L6-J-014': 'LOG place: mf_leads lifecycle rows (audit of the take)',
+ 'L6-J-016': 'LOG place: desk logs (desk.log, request-log page, receipts, desk-1.log, fakes.log)',
+ 'L6-J-017': 'LOG place: kill-rig run records (results.jsonl, RESULTS.md, run_all.progress, run folders, events.jsonl, mails.jsonl)',
+ 'L6-J-018': 'LOG place: session logs of the build process (demo REPORT.md 660 KB, ORDERS.md, APPLY-LIST.md, demo3 REPORT.md, register.md, cloud-register.md, blocker ledger rows)',
+ 'L6-J-020': 'LOG place: ask-your-data query ledger and audit directory (core LocalDirSink)',
+ 'L6-J-021': 'LOG place: core audit kinds (audit.chain, audit.local_dir, k1b audit sink, tool_calls rows)',
+ 'L6-J-022': 'LOG place: CI logs (GitHub Actions job logs, mutants, perf step)',
+ 'L6-J-023': 'LOG place: idle log files (crm.log, smtp.log, stage.log empty in all 126 run folders)',
+ 'L6-J-027': 'FILTER place: CRM upsert match on lead id OR e-mail',
+ 'L6-J-028': 'FILTER place: second entry flow mf-hook and the dead if nodes UnknownNewA, UnknownNew',
+ 'L6-J-029': 'FILTER place: desk same-lead filter, size and stall limits, receipts',
+ 'L6-J-030': 'FILTER place: ask-your-data gate, parse, validator C1, SQLSTATE policy, CLI ask path',
+ 'L6-J-031': 'FILTER place: core input filters (injection tripwire, judge, redaction, evidence check, egress allowlist, text cleaning in approvals/gate.py, k1b redaction)',
+ 'L6-J-032': 'FILTER place: core action gate and executor lookup (authorizer allow, needs approval, deny; idempotency-key lookup)',
+ 'L6-J-033': 'FILTER place: repo hygiene filters (secret scan and allowlists, scan_repo, hygiene test, nosemgrep form guard, pull-request hooks)',
+ 'L6-J-035': 'COUNTER place: stage.journal model-call count (the cap in effect: one call per lead)',
+ 'L6-J-036': 'COUNTER place: desk /counts endpoint, call caps and the fake outbox count',
+ 'L6-J-037': 'COUNTER place: ask-your-data cost meter, kill switch and eval counters (meter reserve and settle, sealed-run counter, test_runs)',
+ 'L6-J-038': 'COUNTER place: core Limits (daily and monthly caps, kill switch in Store) and k1b per-invocation budget',
+ 'L6-J-039': 'COUNTER place: test and run counts quoted as proof (full-suite totals, skip counts, case counts)',
+ 'L6-J-040': 'COUNTER place: heavy-job slot and agent-count limits (3, 4, 2 slots; 8 builders; no cap)',
+ 'L6-J-042': 'RETRY place: node retry on Qualify and CrmUpsert (3 tries each) inside the sub-workflow',
+ 'L6-J-043': 'RETRY place: alert claim and backoff (claim 720 s, backoff 60 s to 300 s) and the start-time clear of stale alert claims',
+ 'L6-J-044': 'RETRY place: desk reaper, locked-database retry, mirror busy wait (10, 60, 180, 420 s)',
+ 'L6-J-045': 'RETRY place: core runtime tick (approval sweep, reconcile, stuck-run rule to NEEDS_PERSON, checkpoint, purge)',
+ 'L6-J-046': 'RETRY place: core llm retry (bounded backoff with jitter)',
+ 'L6-J-047': 'RETRY place: core extract with one retry and DeadLetter (add_dead_letter in Store)',
+ 'L6-J-048': 'RETRY place: ask-your-data pipeline attempts and pgsource retry once, connect pause and watchdog',
+ 'L6-J-049': 'RETRY place: test-rig and session wait loops (queue scripts with sleep 5 loops, rescue copy loop, heartbeat loop, chunked run driver)',
+ 'L6-J-050': 'RETRY place: CI re-runs (weekly cron, curl download retry 5 times) and mutation runner setup (5 tries)',
+ 'L6-J-054': 'NOTICE place: desk follow-up mail and portal screens',
+ 'L6-J-056': 'NOTICE place: core approvals channel (Slack message with Approve and Reject)',
+ 'L6-J-057': 'NOTICE place: build-process notices (Dependabot, CodeRabbit review, prompt hook, weekly CI, heartbeat blocks, ORDERS cadence, questions-for-lead)',
+ 'L6-J-058': 'OTHER place: one shared Postgres credential and role for all nodes',
+ 'L6-J-059': 'OTHER place: review-round loops (round cap of 2 passed on documentation and test patches; severity rises with rounds)',
+}
+PLAIN = {
+ 'L6-J-015': 'LOG place: process output files (n8n.out, stage stderr, take-script result.json, notices)',
+ 'L6-J-019': 'LOG place: lane3 evidence reports and raw logs (about 90 reports, raw/, progress notes, REPORT archive)',
+ 'L6-J-024': 'FILTER place: Claim insert ON CONFLICT on mf_leads (the dedupe)',
+ 'L6-J-025': 'FILTER place: shape check (Valid node regex) and review state',
+ 'L6-J-026': 'FILTER place: stage.journal repeat guard (one model call per lead key)',
+ 'L6-J-034': 'COUNTER place: independent count rule (one new, nine duplicate, one e-mail, one CRM row)',
+ 'L6-J-041': 'RETRY place: mf-recovery sweep (every 30 s, lease 120 s, at most 3 attempts, marks failed or unknown)',
+ 'L6-J-051': 'NOTICE place: alert mail for unknown or failed leads (AlertSend in mf-recovery)',
+ 'L6-J-052': 'NOTICE place: lead intake mail inside the sub-workflow',
+ 'L6-J-053': 'NOTICE place: proof screens for the video (n8n executions, mf_leads rows, HubSpot, Gmail)',
+ 'L6-J-055': 'NOTICE place: refusal and start-question messages of the desk and real-run scripts',
+}
+_both = sorted(set(PIN) & set(PLAIN))
+if _both:
+    sys.exit("tools/write_outputs.py: ids in both PIN and PLAIN: " + ", ".join(_both))
+_missing = sorted(k for k in list(PIN) + list(PLAIN) if k not in rows)
+if _missing:
+    sys.exit("tools/write_outputs.py: job row ids missing from work/L6.md (deleted or renumbered): " + ", ".join(_missing))
+_unlisted = sorted(k for k in rows if k not in PIN and k not in PLAIN)
+if _unlisted:
+    sys.exit("tools/write_outputs.py: job rows in no registered set (new row? add it to PIN or PLAIN with its name): " + ", ".join(_unlisted))
+_renamed = ["%s: pinned %r, work/L6.md has %r" % (k, n[:50], rows[k][1][:50]) for k, n in sorted({**PIN, **PLAIN}.items()) if rows[k][1] != n]
+if _renamed:
+    sys.exit("tools/write_outputs.py: job row name differs from the pinned name (row renamed, moved or renumbered; check the verdict tables for it): " + "; ".join(_renamed))
 _have = sorted(int(k.rsplit("-", 1)[1]) for k in rows)
-assert _have == list(range(1, NJOBS + 1)), "work/L6.md job rows are not contiguous L6-J-001..%03d" % NJOBS
+if _have != list(range(1, NJOBS + 1)):
+    sys.exit("work/L6.md job rows are not contiguous L6-J-001..%03d" % NJOBS)
 KEYS = ["STORE", "LOG", "FILTER", "COUNTER", "RETRY", "NOTICE", "OTHER"]
 # A job row belongs to the block named by its own first words ("STORE place: ..."), not by its position or number.
 BLOCK_OF = {}
@@ -137,7 +215,7 @@ OWNERLINE = {
  "OTHER": "none proposed yet: identities and roles (L6-J-058) have no single place; the laptop lead names one"}
 OPEN = {
  "LOG": "Open owner (audit, who approved what): none proposed; the audit place L6-J-014 is NEEDED under L6-EX-05 for the desk and core only.",
- "COUNTER": "Open owner (money cap): none. No place enforces a dollar ceiling for the take in the files seen; stage.journal is a per-lead repeat guard, not a dollar ceiling. The laptop lead names the place before the video (Fix plan row 2).",
+ "COUNTER": "Open owner (money cap): none. No place enforces a dollar ceiling for the take in the files seen; stage.journal is a per-lead repeat guard, not a dollar ceiling. The laptop lead names the place before the video (Fix plan row @FIXROW:L6-FD-003@).",
  "OTHER": "Open owner (identities and roles): the laptop lead names one; the fix is the three roles of DECISION line 14 plus a migrations identity (Fix plan)."}
 SHORT = {"STORE": "table mf_leads in the one Postgres", "LOG": "n8n execution history in Postgres (plan, not done in the rig)",
          "FILTER": "claim insert with ON CONFLICT on mf_leads", "COUNTER": "proof count: stage.journal (proposal, UNVERIFIED); money cap: no place, open",
@@ -173,9 +251,11 @@ TEXT = {"L6-J-023": "NOT-NEEDED: most of the 378 log files are empty (run folder
         "L6-J-047": "KEEP-CORE: no runtime caller in the take, but registered in the guard registry (`src/hadavin_sdk/guard/producers.py:36 \"extract validation errors\"`) and used by a test; never archive"}
 EVID = {"L6-J-011": "`handover/system-map/DECISION-one-store.md:11 \"HubSpot (CRM) and Gmail\"`; real HubSpot and Gmail NOT VISIBLE"}
 _TABLES = {"APPX": APPX, "CORE": CORE, "FORCE": FORCE, "PROP": PROP, "CONFLICT": CONFLICT, "NOTDONE": NOTDONE, "UNDEC": UNDEC, "UNVER": UNVER, "TEXT": TEXT, "EVID": EVID}
-_stale = sorted((name, k) for name, tab in _TABLES.items() for k in tab if k not in rows)
+SPECIAL = {"L6-J-043"}  # rows with a special case in info(); must stay pinned
+_TABLES["SPECIAL"] = SPECIAL
+_stale = sorted((name, k) for name, tab in _TABLES.items() for k in tab if k not in rows or k not in PIN)
 if _stale:  # an id that no longer names a job row would otherwise be a silent no-op
-    sys.exit("tools/write_outputs.py: stale job row ids (no such row in work/L6.md): " + ", ".join("%s:%s" % s for s in _stale))
+    sys.exit("tools/write_outputs.py: stale job row ids (no such row in work/L6.md, or not pinned in PIN): " + ", ".join("%s:%s" % s for s in _stale))
 def verdict(n, p):
     if n in CORE: return "KEEP-CORE"
     if n in FORCE: return FORCE[n]
@@ -193,7 +273,8 @@ def info(n):
     elif v == "KEEP-CORE": prop = "KEEP-CORE (out of take scope; no move)"
     elif v in ("OWNER", "NEEDED"): prop = "keep"
     else: prop = "MERGE-INTO " + m.group(1).strip() if m else "ARCHIVE (after the studio head says yes)"
-    assert not (prop.startswith("ARCHIVE") and v == "KEEP-CORE"), "row %s: KEEP-CORE code must not be archived" % n
+    if prop.startswith("ARCHIVE") and v == "KEEP-CORE":
+        sys.exit("tools/write_outputs.py: row %s: KEEP-CORE code must not be archived" % n)
     yes = "no" if re.match(r"(keep|KEEP|STOP|FIX)", prop) else "yes"
     st = ("CONFLICT" if n in CONFLICT else "PLAN NOT DONE" if n in NOTDONE else "UNDECIDED (DECISION line 20)" if n in UNDEC
           else "UNVERIFIED (file not read for this row)" if n in UNVER else "OK")
@@ -283,7 +364,7 @@ for key in KEYS:
     vc = Counter(info(n)[2] for n in ns)
     HEADLINE.append("- %s: place = %s; %d rows (%s)." % (key, SHORT[key], len(ns), ", ".join("%s %d" % kv for kv in sorted(vc.items()))))
 HEADLINE += ["- Open for the laptop lead: the place that holds the dollar cap, the second alert channel and its watcher, what the take proof counter reads.",
-             "- Open for the studio head: key rotation and any history rewrite (Fix plan row 7).",
+             "- Open for the studio head: key rotation and any history rewrite (Fix plan row @FIXROW:L2-FD-018@).",
              "- NOT VISIBLE: the take repository `duplicate-proof-lead-desk`; anything that needs n8n running is UNVERIFIED.", ""]
 out = ["# SWEEP: duplicates, dead, idle, inconsistent and unverified parts", "",
  "Static review of the repository on branch cloud/system-map. No n8n runtime, no network: anything needing a runtime is UNVERIFIED. The take code repository `duplicate-proof-lead-desk` is NOT VISIBLE here (the laptop lead covers it locally).", "",
@@ -299,13 +380,13 @@ for i, r in enumerate(fixrows, 1):
 EXH = "| id | what | reason | responsible person | removal trigger | decision line ||---|---|---|---|---|---|"
 exh = ["| id | what | reason | responsible person | removal trigger | decision line |", "|---|---|---|---|---|---|"]
 EX1 = [
- ("L6-EX-01", "n8n internal data (workflows, credentials, execution history)", "second of the three stores DECISION keeps; must run on Postgres, but the kill rig used SQLite", "laptop lead", "n8n data moved to the one Postgres (DECISION line 14; Fix plan row 1)", "DECISION line 14"),
+ ("L6-EX-01", "n8n internal data (workflows, credentials, execution history)", "second of the three stores DECISION keeps; must run on Postgres, but the kill rig used SQLite", "laptop lead", "n8n data moved to the one Postgres (DECISION line 14; Fix plan row @FIXROW:L6-FD-001@)", "DECISION line 14"),
  ("L6-EX-02", "stage.journal file (per-request write-ahead guard against a second model call)", "the one stated exception in DECISION; real file NOT VISIBLE: qualify_stage.py", "laptop lead", "after the video, core store-kind item (DECISION line 17)", "DECISION line 17"),
  ("L6-EX-05", "mf_leads lifecycle rows", "state per request, latest state only: not an append-only history, so it cannot show a double send or a sequence (an event table was ruled out before the video by DECISION line 16). Not accepted until tested: this is a defect with a next step", "laptop lead", "an event table after the video, or the independent count proves no double send", "DECISION line 16"),
  ("L6-EX-07", "alert claim and backoff as helper of the recovery sweep", "stops a second alert for the same request; double-alert window if a send was in flight at a kill (not tested). Not accepted until tested: this is a defect with a next step", "laptop lead", "test: kill a send in flight and count the alerts; re-check if the sweep gets a second channel", "DECISION line 7")]
 EX2 = [
  ("L6-EX-03", "HubSpot (CRM) and Gmail", "client systems of record; the take writes to them, the independent count reads them", "client", "not an exception to the one-store rule: it is the client's own system; no removal", "DECISION line 11"),
- ("L6-EX-04", "process output files (n8n output, stage stderr and result.json)", "diagnostics meant to hold no lead data; the claim 'no lead data' is CONTRADICTED by L2-FD-002 (Claims check)", "laptop lead", "not an exception to the one-store rule; the planted-data check in Fix plan row 1 decides what may stay", "DECISION line 10"),
+ ("L6-EX-04", "process output files (n8n output, stage stderr and result.json)", "diagnostics meant to hold no lead data; the claim 'no lead data' is CONTRADICTED by L2-FD-002 (Claims check)", "laptop lead", "not an exception to the one-store rule; the planted-data check in Fix plan row @FIXROW:L6-FD-001@ decides what may stay", "DECISION line 10"),
  ("L6-EX-06", "shape check node (Valid regex) in the entry flow", "cheap check before the claim insert; same flow", "laptop lead", "not an exception: part of a flow, no removal", "DECISION line 7"),
  ("L6-EX-08", "request intake mail inside the sub-workflow", "a notice to the sales request's sender, not to our person", "client", "not an exception: part of a flow, no removal", "DECISION line 11"),
  ("L6-EX-09", "proof screens for the video (n8n executions)", "DECISION names these as the screens shown", "laptop lead", "after the video", "DECISION line 18")]
@@ -360,8 +441,17 @@ op += ["## Seed check against DECISION", "", "| seed row | state in repo | statu
 for _n in ("SWEEP.md", "ONE-PLACE-TABLE.md"):  # check both before writing either: all or nothing
     if refused(base, _n, OVERWRITE_OK):
         print("REFUSED: %s was edited by hand or has no record of being generated; use --force to overwrite" % _n); sys.exit(1)
+def _fixno(m):
+    hits = [i for i, r in enumerate(fixrows, 1) if m.group(1) in re.split(r"[,\s]+", r[1])]
+    if len(hits) != 1:
+        sys.exit("tools/write_outputs.py: Fix plan row for %s found %d times (expected once)" % (m.group(1), len(hits)))
+    return str(hits[0])
+SWEEP_TEXT = re.sub(r"@FIXROW:([A-Za-z0-9-]+)@", _fixno, SWEEP_TEXT)
+OP_TEXT = re.sub(r"@FIXROW:([A-Za-z0-9-]+)@", _fixno, "\n".join(op))
+if "@FIXROW:" in SWEEP_TEXT + OP_TEXT:
+    sys.exit("tools/write_outputs.py: unresolved Fix plan row token")
 if not safe_write(base, "SWEEP.md", SWEEP_TEXT, OVERWRITE_OK):
     print("REFUSED: SWEEP.md was edited by hand or has no record of being generated; use --force to overwrite"); sys.exit(1)
-if not safe_write(base, "ONE-PLACE-TABLE.md", "\n".join(op), OVERWRITE_OK):
+if not safe_write(base, "ONE-PLACE-TABLE.md", OP_TEXT, OVERWRITE_OK):
     print("REFUSED: ONE-PLACE-TABLE.md was edited by hand or has no record of being generated; use --force to overwrite"); sys.exit(1)
 print(len(rows_f), "findings;", len(rows), "job rows;", nrows, "in blocks;", len(fixrows), "fix rows; blockers touching the take", touch)
