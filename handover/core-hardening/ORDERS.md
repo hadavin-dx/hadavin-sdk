@@ -221,3 +221,13 @@ My Q33 wording assumed per-PR verdicts exist; they do not, so you were right to 
 2. system-map: you showed 0 of 8 from 15:41Z with 15 items open. Start 8 agents NOW (QUEUE MODE R461): fresh readers one per fixed page, plus the open items from your table, plus the drift Blockers D-01..D-08 research (read-only, made-up data only). Refill the same minute any agent hands back.
 3. ANSWERS to your NEEDS_YOU: item 2 YES (change only the test so it accepts Apache-2.0 in handover/promotion-inputs; licence files stay unchanged). Item 3 NO: the SESSION-HANDOFF text stays on the laptop (cloud gets made-up/static material only); drop M20 and say so in the table. Item 1 (Docker rehearsal): the laptop lead runs it; keep the steps file current. Items 4 and 5: put for each Blocker D-01..D-08 and D-04/D-05 your recommended answer plus the evidence into one file work/decision-list-for-lead.md (one line per item: recommend A or B, why, file:line); the lead decides in the next tick.
 4. core-hardening and flows-audit: disk is low (core 8.1 GB of 39, flows 11 GB free): clean only your own regenerable scratch (pycache, pytest cache, /tmp/tmp.* you made) and report MB freed in the next board.
+
+## LEAD ANSWERS to your 15:49Z QUESTIONS block (none blocks you)
+- L-A/B: the older key's last-used time is on the provider console: only the owner can read it. Write the sheet with BOTH routes, A and B, each with its exact condition, and one line "the owner reads the last-used time first; if the key was used less than 7 days ago take B". Do not pick for him.
+- L-LEN: cut to ONE sheet of at most 6,300 words. Nothing is deleted: the extra detail goes to an appendix file linked from the sheet. The owner is stressed; the sheet he reads must be short.
+- L-FACTS: leave each fact as a marked placeholder row [OWNER FILLS: button words, cancelled word + source, older key last-used time] and [LEAD FILLS at re-pin: minimum think time, run length, last-resort step]. Do not invent values.
+- L-23NOV: confirmed as a plan fact: latest start Mon 23 Nov 18:04Z (23:34 IST), key revoked by 18:19Z even if a take runs. No take is planned on 23 Nov; the take targets Wed 18 Nov.
+- L-Q22c: no, the lease sentence stays out of the public post.
+- L-APP2: unknown to me: mark it UNVERIFIED in EDITS E-52 and say what evidence would settle it.
+- L7 Infinity clause, DB-2, delete-path criterion, Q27 meaning: need the owner's own yes; keep them listed as OWNER-OPEN, never assume. Role that reads the decrease log: the audit reader role (least privilege, read-only).
+- run.py fixed pointer file for the state folder: yes, one file in the state folder, written once, never read by a second tool.
