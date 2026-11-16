@@ -158,3 +158,6 @@ D-10: stale (refers to the superseded v3 owner-steps file): mark closed; real st
 S-03: yes, build as a thin extension of fill_flows.py through EGM; do not start before the rest of the queue unless you have idle capacity.
 L-01: option (b): reword 'operator never sees a secret' as procedure only, add a hook deny list with one negative test. OWNER: a one-line written acceptance of the procedure-only wording; the lead asks him once.
 F-008 and LP-n: meaning not recorded in the files; do not guess: list them as 'meaning unknown' and ask only if a plan step depends on them.
+
+## ORDER (lead, real clock 13:05Z): correction and zero beat
+Correction: my last answer block was stamped 13:08Z; the real time of that push was about 13:05Z (I wrote the stamp by hand; stamps come from `date -u` only, FF-029). Your board shows AGENTS_RUNNING: 0 again at 13:04Z. Start the next batch of 8 NOW from your 'next 5' list plus two more, and write the start before you read any report. A beat with 0 agents and open items needs a written reason per item.
