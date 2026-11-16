@@ -23,9 +23,12 @@ Proposed answer times: items that block the filming by Tue 17 Nov 12:29 UTC / 17
 - **Proposed run dates (mine):** run (a) Mon 16 Nov 14:00 UTC / 19:30 IST if the lead agrees today; run (b) Tue 17 Nov 14:00 UTC / 19:30 IST; start-notice deadline for the last-day take: Mon 23 Nov 15:14:40 UTC / 20:44:40 IST if A13 is no; Mon 23 Nov 11:14:40 UTC / 16:44:40 IST if A13 is yes (4 h rerun margin). Answer A13 before A5.
 - "If silent: none" means no fallback is proposed; filming stays blocked until someone answers. Every such item that is NOT a filming blocker is answered or escalated to the owner by Fri 20 Nov 12:29 UTC / 17:59 IST at the latest (proposal); a filming blocker follows the escalation rule below.
 
-**Escalation rule (proposal):** if a filming blocker (section A) has no answer by Tue 17 Nov 12:29 UTC / 17:59 IST, the lead asks the owner the same day; no answer by Wed 18 Nov 12:29 UTC / 17:59 IST means no take is scheduled before the next answer. The take date can never pass Mon 23 Nov (latest start 18:14:40 UTC / 23:44:40 IST).
-**Two meanings of "run (a)":** this list uses run (a) = loopback re-smoke (TAKE-BLOCKERS.md line 34). LEAD-PAGE.md line 13 uses it for the stand-in rehearsal (a test run with stand-in programs and no real account). A2 asks the lead to say which one the rule "rehearsal passed" means.
-**Crash test and the take:** LEAD-PAGE.md says D-05 blocks the post, not the take; A3 asks whether the crash test is also required before the take. If the lead answers no, A3 closes and B2 stays.
+### Escalation rule (proposal)
+ if a filming blocker (section A) has no answer by Tue 17 Nov 12:29 UTC / 17:59 IST, the lead asks the owner the same day; no answer by Wed 18 Nov 12:29 UTC / 17:59 IST means no take is scheduled before the next answer. The take date can never pass Mon 23 Nov (latest start 18:14:40 UTC / 23:44:40 IST).
+### Two meanings of "run (a)"
+ this list uses run (a) = loopback re-smoke (TAKE-BLOCKERS.md line 34). LEAD-PAGE.md line 13 uses it for the stand-in rehearsal (a test run with stand-in programs and no real account). A2 asks the lead to say which one the rule "rehearsal passed" means.
+### Crash test and the take
+ LEAD-PAGE.md says D-05 blocks the post, not the take; A3 asks whether the crash test is also required before the take. If the lead answers no, A3 closes and B2 stays.
 
 ## A. Blocks the filming
 | # | Question (yes/no or a name) | Proposed answer by | Proposed default if silent | Source |
@@ -53,7 +56,7 @@ Proposed answer times: items that block the filming by Tue 17 Nov 12:29 UTC / 17
 | B4 | Who accepts a crash limit in writing if the test shows a double mail: the owner or the lead? Three pages name three different people. | Fri 20 Nov 12:29 UTC / 17:59 IST | the owner accepts in writing, in the chat with the studio lead (no other channel is named in any file) | digest 198 (item 13) |
 | B5 | Who (a person other than the author) checks the post text against the banned list? One name. | Fri 20 Nov 12:29 UTC / 17:59 IST | the post is held until a name is written (nobody posts unchecked) | OWNER-VIEW.md row 6 |
 
-## C. Pages that disagree (a person must pick one; answer by the time in the "Who answers" line above: Fri 20 Nov 12:29 UTC / 17:59 IST, except C2, C3, C6, C7 on Tue 17 Nov 12:29 UTC / 17:59 IST)
+## C. Pages that disagree (a person must pick one; proposed answer time: Fri 20 Nov 12:29 UTC / 17:59 IST, except C2, C3, C6 and C7 on Tue 17 Nov 12:29 UTC / 17:59 IST)
 | # | Conflict | Source |
 |---|---|---|
 | C1 | banned-claims.md vs v5 step J: the banned list is stricter than step J's wording. Which wins? (Decision 1 allows one claim.) | digest 73, 134, 262, 268 |
@@ -64,7 +67,6 @@ Proposed answer times: items that block the filming by Tue 17 Nov 12:29 UTC / 17
 | C6 | REPORT.md says "citations 1020 of 1020"; SWEEP.md:5 says 2013 of 2013. REPORT.md also says 2013 of 2013 at line 97 (1020 is a run on SWEEP.md and ONE-PLACE-TABLE.md, lines 31, 40). Which is current? | digest 176 |
 | C7 | Which numbers are right for M3, M5, M14: drift/REPORT.md or the board (the board is mine and follows the last check)? The two disagree. Answer: drift/REPORT.md, board, or a named recount. | STATUS-BOARD.md; digest 152, 218 |
 | C8 | Add a Decision column to ARCHIVE-CUT-LIST: yes/no. (Where the archive lives is C9.) ARCHIVE-CUT-LIST has no Decision column and says in lines 28-30 that M and K must stay, D and E hold, L folds into the cross-check, while rows A-M still say move. | digest 173, 179 |
-
 | C9 | Is the archive kept inside or outside the repo? Answer: inside or outside. | digest 173, 179 |
 
 ## D. Small, safe changes that need the lead's yes because the files are not mine
@@ -90,10 +92,10 @@ Proposed answer times: items that block the filming by Tue 17 Nov 12:29 UTC / 17
 |---|---|---|---|
 | F1 | Decide who checks that the flows read their settings through the allowed route (`$vars` in the flow files) | 9 | engineering session from A1, before run (b) |
 | F2 | Decide who works through the re-smoke plan's list of items marked UNVERIFIED | 11 | engineering session from A1, before run (b) |
-| F3 | LP-1: decide whether the web form needs a shared secret code | 17 | the lead, Tue 17 Nov 12:29 UTC / 17:59 IST | (default NONE: LP-1 meaning NOT RECORDED)
+| F3 | LP-1: decide whether the web form needs a shared secret code | 17 | the lead, Tue 17 Nov 12:29 UTC / 17:59 IST (default NONE: LP-1 meaning NOT RECORDED) |
 | F4 | LP-3: decide what to do with `extract.py` (can wait until after the take) | 18 | the lead, Fri 20 Nov 12:29 UTC / 17:59 IST |
 | F5 | SETTLED by decision 1 (real-v5 only; the old 20 h / 41 h estimate is dropped) | 20 | the lead, Tue 17 Nov 12:29 UTC / 17:59 IST |
-| F6 | LP-5: decide between accepting the secrets-on-one-laptop risk and a second laptop user (decision 5 settles what the lead reads) | 21 | the lead, Tue 17 Nov 12:29 UTC / 17:59 IST | (default NONE: LP-5 meaning NOT RECORDED)
+| F6 | LP-5: decide between accepting the secrets-on-one-laptop risk and a second laptop user (decision 5 settles what the lead reads) | 21 | the lead, Tue 17 Nov 12:29 UTC / 17:59 IST (default NONE: LP-5 meaning NOT RECORDED) |
 | F7 | The click paths in v3 are unverified; v4 and later replace v3 (decision 10), so confirm they are dropped | 22 | engineering session, before run (b) |
 | F8 | Decide the open parts of F-002 (a generator patch), ORDER 013 (C-01 itself is cut by decision 4) | 23 | the lead, Fri 20 Nov 12:29 UTC / 17:59 IST |
 | F9 | Send the owner the HubSpot check line and name which login key to replace (OWNER-VIEW row 7) | 8 | the lead, Tue 17 Nov 12:29 UTC / 17:59 IST |
