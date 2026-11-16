@@ -1,3 +1,13 @@
+## FINAL ORDER 005 task A: cross-review of flows-audit (2026-11-16, UTC and IST same day)
+FAILURES AND GAPS FIRST:
+- Verdict: DO NOT TRUST AS WRITTEN (about 9.5 rubric points, limit 3). Both Blockers and all 17 checked findings are real (0 wrong citation, 1 drift F-013, 1 unverified F-019), but the audit missed 6 take-touching Majors and made 3 wrong cut-list calls. Details: reviews-of-flows-audit/REVIEW.md; exact fixes CORRECTIONS.md (27 entries); LEDGER-ROWS.md (24 rows, format check passed).
+- Not checked: 7 SKIP-list findings (F-006, 007, 011, 020, 022, 023, 025); nothing was run (n8n null vs empty, 503 route, SMTP timing are UNVERIFIED).
+- Result round 2 re-read by a fresh reviewer was NOT run: REVIEW.md, CORRECTIONS.md and the resolve additions were not re-read by a fresh reviewer.
+- Repo guard test test_no_vendor_brand_string_is_tracked fails on files outside my folder (BRIEF-PREAMBLE-studio-2026-11-06.md, portal-design-v2.md, reviews/P1a-idempotence-probe.txt). Not mine, not touched: lead to fix.
+- Drift report: EGM skipped: reason, no design documents changed. ledger_check.py not available; my own format checker was used.
+- Task B (r7u/r7v hygiene) NOT started.
+Agents: all closed (6 evidence runners, 4 reviewers, resolve via Skill); 0 running, 0 shells left.
+
 # REPORT from core-hardening (newest on top, UTC and IST)
 
 ## STATUS 07:59 UTC / 13:29 IST: ORDER 005 task A, ORDER 006 parallel; plan v4 fixed; evidence A1-A3 landed; reviewers running
