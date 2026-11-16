@@ -1,0 +1,9 @@
+FAIL S5.9a src/hadavin_sdk/llm/retry.py:20-110 range beyond file length 108
+FAIL S6b src/hadavin_sdk/llm/__init__.py:1-5 range beyond file length 4
+FAIL O26 tests/test_lockin_guard.py:68-75 /import|vendor|ALLOWED|module/ :: lockin guard 68-75
+FAIL O52 src/hadavin_sdk/config.py:19-19 /dev|prod|pilot|environment/ :: config.py:19 stage word
+FAIL O53 src/hadavin_sdk/backends/table.py:593-593 /\(\"llm\", \"fake\"\)|\"llm\", \"fake\"|\(\"/ :: table.py:593 DEV_ONLY entry
+FAIL O54 tests/test_lockin_guard.py:18-18 /dev/ :: lockin guard :18 dev
+FAIL O55 tests/test_lockin_guard.py:430-430 /dev/ :: lockin guard :430 dev
+FAIL O82 src/hadavin_sdk/audit/anchor_s3.py:5-7 /identity|IAM|role|write/ :: anchor_s3 docstring constraint :5-7
+claims 240 fail 8
