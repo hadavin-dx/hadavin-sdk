@@ -1,5 +1,5 @@
 # STATUS BOARD system-map
-UPDATED_UTC: 2026-11-16T11:05:50Z
+UPDATED_UTC: 2026-11-16T11:06:19Z
 SESSION: system-map
 ORDER: 017-025; lead ANSWER 10:23Z item 8 (pause stays) read
 STATE: WORKING
@@ -10,9 +10,9 @@ PERCENT: 85
 AGENTS_RUNNING: 6 running now (ORDER 027, refilled after 9 finished and digested as batches 91-98; list below in NEXT)
 INTERRUPTED: none
 NEXT: collect and digest the 6 new hand-backs (stranger reads of run-day card steps 15-28, OWNER-VIEW rows 4-7, TAKE-BLOCKERS rows 6-9, LEAD-PAGE, README; cite check of batches 91-98); send the lead the decision list (work/open-items-table.md, digest batches 26 and 65-98); find the arguments for tools/check_citations.py
-CAPACITY: nproc 4, load 0.30 0.18 0.17, RAM 869/16087 MB used, disk / used 41% free 23G; / used 41% free 23G; , top3: /home/user/hadavin-sdk/handover/system-map/work 2092KB /home/user/hadavin-sdk/handover/system-map/flowcheck 464KB /home/user/hadavin-sdk/handover/system-map/reviews-of-core-hardening 364KB
+CAPACITY: nproc 4, load 0.28 0.18 0.17, RAM 855/16087 MB used, disk / 41% used, 23G free (tmp same disk), top3: work 2092KB, flowcheck 464KB, reviews-of-core-hardening 364KB
 FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); the studio lead starts Docker and runs the rehearsal (decision 12); no take date. (3) S9-5, S9-12, S9-3, S9-2 not yet applied in v5 or the scope sheet; S9-1 and S9-4 deferred, describe-only (decision 5). (4) the take-time value substitution (BL-wp6-G1) is not built. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.
-PUSHED_UTC: 2026-11-16T11:05:50Z
+PUSHED_UTC: 2026-11-16T11:06:19Z
 
 ## ITEMS
 | # | item | state | % | evidence file | note |
