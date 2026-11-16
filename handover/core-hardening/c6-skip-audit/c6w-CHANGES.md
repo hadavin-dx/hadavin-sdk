@@ -7,7 +7,7 @@ FAILURES AND OPEN ITEMS FIRST (all mine, none hidden):
 4. The box is 2,465 words, not the 2,500 I aimed at, plus 17 heading words; the verifier requires the box including its heading line under 2,500 (it is 2,482 with the heading).
 5. Not fixed in c6w: naive m9 is only named in section 9 (the three counts are not reconciled in the text); the 1c-I G12 order was not re-read by anyone but me.
 6a. RUN 1 OF run_all.sh FAILED (evidence-c6w/run1-summary.txt): while it ran, another session wrote owner sheet v35 and release note v19 (19:33 to 19:37 UTC), so the unchanged copy V0 of the negative controls failed 12 checks and 23 changed copies were counted wrong or skipped (neg-output.txt of run 1 is overwritten by run 2). I fixed it by FREEZING the input: run_all.sh copies only the sheets and notes written up to 2026-11-16T19:30:00Z (= 01:00:00 IST on 2026-11-17) into evidence-c6w/steps-frozen/ and every script reads that copy. The report names the later files with their real written times and says by script compare that the v35 sheets equal v34 after the version number and that v19 is byte-identical to v18. I did not read v35 or v19 beyond that compare; whether the lead wants them the base of the next round is the lead's call.
-6b. The counts of the negative controls and of the scan below are those of run 2 and were written AFTER run 2 (the final check of run 2 could not know them); they were then compared by a check-only run, see verify-c6w-output.txt.
+6b. RUN COUNT, STATED PLAINLY: run_all.sh ran 2 times (run-log.txt has 2 lines; the cap was 2). Run 1 failed (see 6a). Run 2 ended with 2 FAILED checks and 4 wrong negative copies, because of three defects of my own scripts (the changed copies were named REPORT-copy.md so the answer-line check failed on every copy; the COUNT name pattern did not accept an underscore; a late-file sentence format clashed with older ported controls). I fixed those and re-ran the pieces ONE BY ONE with the same commands as run_all.sh (static-checks.sh, build_c6w.py, census, scan_c6w.py, neg_controls_c6w.py via heavy-slot, verify-c6w.py): the final outputs come from these piece runs, NOT from one run_all.sh run. The counts below are from that last piece run. Two later changed copies (W-C7-late-file-unnamed and W-C7-late-file-time-deleted in neg_new_c6w.py) were NOT run by neg_controls_c6w.py (no heavy slot was free for 25 minutes; my queued job was stopped by me); I ran them by hand, see late-mutants-manual.txt (both caught, the unchanged copy passes). The count of negative changed copies below therefore excludes these two.
 6. Slip of c6v, restated: c6v ran 6 full runs of run_all.sh against a cap of 3. c6w ran it 2 time(s) (cap 2); extra single script runs (verify alone, neg alone) are not full runs.
 
 ## Map: each finding of review-c6v-design.md and review-c6v-naive.md to its own fix and its own check
@@ -61,9 +61,9 @@ FAILURES AND OPEN ITEMS FIRST (all mine, none hidden):
 
 COUNT verify checks: 272
 COUNT full runs of run_all.sh: 2
-COUNT negative changed copies: 311
+COUNT negative changed copies: 314
 COUNT negative wrong copies: 0
-COUNT scanned files: 336
+COUNT scanned files: 349
 
 ## Which branch holds what, and who read what
 - The report, this file, the scripts and the outputs are in handover/core-hardening/c6-skip-audit/ and its evidence-c6w/ folder (branch cloud/core-hardening). Nothing is committed by me. The 99 demo-file rows concern branch cloud/flows-audit (folder handover/); the 5 rows 70, 71, 72, 90 and 91 concern inputs/DECISION-one-store.md on cloud/core-hardening.

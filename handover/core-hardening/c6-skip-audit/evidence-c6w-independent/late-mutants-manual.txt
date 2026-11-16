@@ -1,0 +1,4 @@
+# manual runs of the two late-file changed copies (not via neg_controls_c6w.py: no heavy slot was free; verify is a light script); V0 = unchanged copy, same environment, exit must be 0
+== V0: SUMMARY: 272 checks, 0 FAILED
+== unnamed: SUMMARY: 272 checks, 1 FAILED: D-late: every sheet or release note file written after the freeze (5 found in the live folder) is named in the report with its real written time (UTC), and the folder re
+== time: SUMMARY: 272 checks, 1 FAILED: D-late: every sheet or release note file written after the freeze (5 found in the live folder) is named in the report with its real written time (UTC), and the folder re

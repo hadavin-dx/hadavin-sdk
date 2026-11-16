@@ -228,3 +228,19 @@ NEG r14e16 caught | FAIL r13 E-16 trigger
 NEG r14e55 caught | FAIL r14 E-55 lacks your items 2, 3, 4, 5 and 6
 NEG r14e37 caught | FAIL r14 E-37 note
 NEG r14consent caught | FAIL r14 E-12 consent reach
+NEG r14testitem caught | FAIL r14 E-12 test item
+NEG r14margin caught | FAIL r14 E-12 margin
+NEG r14fallback caught | FAIL r13 E-12 lacks The time of day is not yet chosen
+NEG r14conf caught | FAIL confirmation letters
+NEG r14count caught | FAIL r14 counting check word
+NEG r14line30 caught | FAIL r14 18:14:40 pair missing
+NEG r14clip caught | FAIL r14 E-09 clipboard history
+NEG r14e57 caught | FAIL E-57 lacks step 22 item 3
+NEG r14forcedd caught | FAIL r14 3c lacks `key revoked` is never a confirmation
+NEG r14bareno caught | FAIL r14 3e bare no
+NEG r14g caught | FAIL r14 3g new key storage
+NEG r14opt caught | FAIL r14 3i options
+NEG r14nd15 caught | FAIL r14 ND15 spots
+NEG r15B caught | FAIL r15 E-48 B lacks 'count only when you type them yourself, as a new message'
+NEG r15B2 caught | FAIL r15 E-48 B lacks 'never count'
+NEG r15e52 caught | FAIL r15 E-52 how you reply lacks 'Only you can write these words'

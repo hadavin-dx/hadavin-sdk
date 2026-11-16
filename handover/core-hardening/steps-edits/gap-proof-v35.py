@@ -22,6 +22,8 @@ M = [('X03', 'tops itself up when low (must be off)', 'tops itself up when low (
  ('H18', 'Paste once (Ctrl+Shift+V', 'Paste as often as you like (Ctrl+Shift+V'), ('H19', 'starts `-rw-------`', 'starts `-rw-r--r--`'),
  ('H20', 'time or key state is never tolerated.', 'time or key state is tolerated.'), ('H23', "then cancel the older key by the card's L2, steps 2 to 4, only if its name and creation date equal the blanks", "then cancel the older key by the card's L2, steps 2 to 4"),
  ('H35', 'if key text appears, close it and tell the owner it appeared', 'if key text appears, keep it and tell the owner it appeared'), ('H38', 'even if a run was in progress (no run is planned on that day)', 'unless a run was in progress (no run is planned on that day)')]
+# round 7: the helper sentence was reworded (tell -> call) so the v35 anchor differs; the mutation idea is the same
+ALT = {'v35': {'H35': ('if key text appears, close it and call the owner: it appeared', 'if key text appears, keep it and call the owner: it appeared')}}
 def trial(v, ln, tmp):
     base = tmp + '/' + v + '/'; os.mkdir(base)
     for f in files(v, ln, None):
@@ -30,6 +32,7 @@ def trial(v, ln, tmp):
     for i, o, n in M:
         d = tmp + '/%s-%s/' % (v, i); shutil.copytree(base, d); f = d + 'OWNER-SHEET-%s-SOURCE.md' % v
         s = open(f, encoding='utf-8').read()
+        if o not in s and i in ALT.get(v, {}): o, n = ALT[v][i]
         if o not in s: res[i] = 'anchor absent'; continue
         open(f, 'w', encoding='utf-8').write(s.replace(o, n, 1)); got = run(d, v)
         res[i] = 'build stopped' if got is None else ('caught (%d new FAIL line(s))' % len(got - b0) if got - b0 else 'NOT caught (no new FAIL line)')

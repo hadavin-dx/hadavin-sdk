@@ -1,0 +1,5 @@
+# forged counts in a copy of c6w-CHANGES.md (the real file is untouched); each must exit 1 with V13 failed; the unchanged copy must exit 0
+unchanged: exit 0 SUMMARY: 272 checks, 0 FAILED
+forged 'COUNT full runs of run_all.sh: 3': exit 1 1 V13 failure
+forged 'COUNT verify checks: 300': exit 1 1 V13 failure
+forged 'COUNT negative changed copies: 267': exit 1 1 V13 failure

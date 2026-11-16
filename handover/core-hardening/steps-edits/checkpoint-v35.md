@@ -1,7 +1,7 @@
 # checkpoint v35 (builder, round 2 of owner sheet; security uncapped)
-Time: see last line. Started 19:33 UTC; box 60 minutes (ends 20:33 UTC).
-Done so far: v35 copies of scripts and sources made (facts, build, check, newchecks, mut, gap-proof, fail-proof; lead note v19 source; open list source). Edits made in OWNER-SHEET-v35-SOURCE.md: P1/P2 vs W3-W9, Enter-by time (one boundary rule), alarms 5 and 6 (no "deadline reminder"), Sunday older-key before alarm 5 in check 2, 7-day vs 7.11 sentence, none/never word, 6.4 checking aid, copy button, section 9 home, film rule heading, F10 rewrite.
-Next: helper page and film page rewrite, word cuts (sheet A over by about 100 words), check pins, new meaning checks, lead note v19, open list rows, CHANGES, mut35, fail-proof, gap-proof.
-Open (lead): L-LEN, exit-code rule, day clock, yes length.
-Time pairs: 18:29 UTC=23:59 IST, 18:19=23:49, 18:09=23:39 kept by facts.
-19:50 UTC (approx, 19:39)
+Started 19:33 UTC; box 60 minutes (ends 20:33 UTC). Last update: see the date line at the end.
+Done: all source edits; build (sheet A 6274, five pages 15,577; sheet B 6071, five pages 15,193); check-v35.py 0 failures with 7 new meaning checks C274 to C280; lead note v19 and open list rows 121 to 131 written; ledgers re-accepted after reading the diffs.
+In progress: mut35.py and v35-fail-proof.py wait in heavy-slot.sh for a free slot (all 3 slots are held by other jobs; each waits at most 25 minutes, then exits 75 and I report that honestly).
+Next: re-point mut35 and gap-proof anchors lost by the edits, plants for C274 to C280, write v35-CHANGES.md, final report.
+Open (lead): L-LEN, exit-code rule, day clock, yes length, Sunday at-once rule, film person exposure options (rows 121 to 131).
+Mon Nov 16 19:58:33 UTC 2026

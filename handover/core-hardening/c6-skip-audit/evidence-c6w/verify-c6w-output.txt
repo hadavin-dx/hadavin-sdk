@@ -222,7 +222,7 @@ PASS c6w names: the report names no 'evidence-c6t/' file and no 'c6t-APPLIED-ROW
 PASS c6w names: every evidence-c6w file the report names exists in this folder (neg-output.txt is written after this check): ['contact-grep-output.txt', 'neg-output.txt', 'neg_controls_c6w.py', 'neg_new_c6u.py', 'run_all.sh', 'static-checks-output.txt', 'static-checks.sh', 'tree', 'verify-c6w-output.txt', 'verify-c6w.py', 'verify_c6w_part2.py'] :: []
 PASS c6w M5: no sentence says the test program is not among the audited files (mf.py IS audited); the old words appear only quoted :: []
 PASS c6w naive: no text says 'steps 5 to 9' for the list TASKS (5) to (9) (the old words appear only quoted) :: []
-FAIL D-late: every sheet or release note file written after the freeze (5 found in the live folder) is named in the report with its real written time (UTC), and the folder read by the checks holds none of them :: ['OWNER-SHEET-v35-A.md', 'OWNER-SHEET-v35-B.md', 'OWNER-SHEET-v35-SOURCE.md', 'LEAD-RELEASE-NOTE-v19.md']
+PASS D-late: every sheet or release note file written after the freeze (5 found in the live folder) is named in the report with its real written time (UTC), and the folder read by the checks holds none of them :: []
 PASS class 1: the census file census-c6w.json exists (written by the build step of run_all.sh) :: /home/user/hadavin-sdk/handover/core-hardening/c6-skip-audit/evidence-c6w/census-c6w.json
 PASS class 1: every safe-default phrase, every UNVERIFIED/VERIFIED/CHECKED count and every 'Confirmed?' cell equals the census of the build (51 items) :: {}
 PASS class 1: phrases that would reverse a safe default are absent everywhere (10 phrases) :: []
@@ -272,5 +272,5 @@ PASS C7-4 'N items are OPEN' says Five in every place (found ['Five']) :: ['Five
 PASS C7-5 every place that names the check time names 19:44:12 (found ['19:44:12']) :: ['19:44:12', '19:44:12', '19:44:12', '19:44:12', '19:44:12']
 PASS C7-6 every question line of L-LEASE (3) carries the G12 hold :: 3
 PASS C7-7 no sentence says that anything held under G12 can be filmed while G12 is open; 'cannot be filmed' stays in the box (1 times) :: []
-FAIL V13: every COUNT line of c6w-CHANGES.md equals the number in the output file (verify checks counted live, run-log.txt lines, neg-output.txt, scan-c6w-output.txt) and the run count in the report equals the run-log lines (differences: [('negative changed copies', 311, 314), ('scanned files', 336, 347)]) :: [('negative changed copies', 311, 314), ('scanned files', 336, 347)]
-SUMMARY: 272 checks, 2 FAILED: D-late: every sheet or release note file written after the freeze (5 found in the live folder) is named in the report with its real written time (UTC), and the folder read by the checks holds none of them; V13: every COUNT line of c6w-CHANGES.md equals the number in the output file (verify checks counted live, run-log.txt lines, neg-output.txt, scan-c6w-output.txt) and the run count in the report equals the run-log lines (differences: [('negative changed copies', 311, 314), ('scanned files', 336, 347)])
+PASS V13: every COUNT line of c6w-CHANGES.md equals the number in the output file (verify checks counted live, run-log.txt lines, neg-output.txt, scan-c6w-output.txt) and the run count in the report equals the run-log lines (differences: []) :: []
+SUMMARY: 272 checks, 0 FAILED

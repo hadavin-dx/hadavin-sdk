@@ -1,0 +1,12 @@
+static-checks exit 0
+box words (counted without the heading line): stated 2465, counted 2465; part 2 409
+wrote REPORT-c6w.md (936 lines)
+census written: 42 phrases
+verify exit 1
+SUMMARY: 271 checks, 11 FAILED: report names the check time 2026-11-16T19:35:07Z and the newest sheet version on disk (v35); L-SHEET reads 'confirm the one final sheet' and names the newest version (v
+neg exit 1
+SUMMARY: 311 copies, 23 wrong
+scan exit 0
+SCANNED 336 files; banned names list has 10 entries (read at run time); totals {'banned': 0, 'secret': 0, 'mail': 0}
+heavy-slot: slot 2 freed, exit 1
+rc=1

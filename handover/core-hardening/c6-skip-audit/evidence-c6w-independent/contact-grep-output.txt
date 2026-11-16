@@ -1,0 +1,2 @@
+## command: grep -il -E 'DELETE|archive' mf-form.json mf-hook.json mf-recovery.json mf-sub-crm-mail.json; echo exit $?
+exit 1 (1 = no file matches)

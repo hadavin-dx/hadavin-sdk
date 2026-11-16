@@ -1,0 +1,2 @@
+SCANNED (own output only; folders tree/, steps-snapshot/ and steps-frozen/ are skipped): c6-skip-audit/, evidence-c6w/, neg/
+SCANNED 349 files; banned names list has 10 entries (read at run time); totals {'banned': 0, 'secret': 0, 'mail': 0}
