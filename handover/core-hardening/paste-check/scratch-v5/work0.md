@@ -116,7 +116,7 @@ case "$p" in ''|*[!0-9]*) echo "R2: bad pid: STOP"; exit 1;; esac
 [ -d /proc/$p ] || { echo "R2: pid $p is not alive: nothing sent"; exit 0; }
 [ "$(tr '\0' '\n' < /proc/$p/environ 2>/dev/null | grep -cFx "N8N_USER_FOLDER=$f/n8n")" = 1 ] || { echo "R2: environ of pid $p does not name $f/n8n: STOP, nothing sent"; exit 1; }
 /bin/kill -TERM -- -$p; i=0; while [ $i -lt 30 ] && [ -d /proc/$p ]; do i=$((i+1)); sleep 1; done
-if [ -d /proc/$p ]; then /bin/kill -KILL -- -$p; echo "R2: KILL sent after ${i}s"; fi
+if [ -d /proc/$p ]; then /bin/kill -KILL -- -$p; j=0; while [ $j -lt 5 ] && [ -d /proc/$p ]; do j=$((j+1)); sleep 1; done; echo "R2: KILL sent after ${i}s"; fi
 echo "R2 end: alive=$([ -d /proc/$p ] && echo yes || echo no)"
 ```
   -> the last line `R2 end: alive=no` (any other line or `alive=yes` = STOP, tell the lead). The KILL goes out only if the pid is still alive after TERM and 30 s. Labelled CLEAN-UP, never counted for K5. The SIGTERM that `timeout 60` sends to a start that did not refuse is CLEAN-UP too (it is not R2).

@@ -111,3 +111,57 @@ REFUSED: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpa
   PASS: T20.3 exit 129/130/143 (got 129)
   PASS: T20.3 file restored
   PASS: T20.3 state empty
+  PASS: T20.4 exit 129/130/143 (got 129)
+  PASS: T20.4 file restored
+  PASS: T20.4 state empty
+  PASS: T20.5 exit 129/130/143 (got 129)
+  PASS: T20.5 file restored
+  PASS: T20.5 state empty
+== T21 signal handler logic (deterministic): a signal while planted is only remembered, then delivered once
+handler logic ok
+  PASS: T21 handler logic
+== T22 state folder checks: wrong mode, a link, another owner are refused (exit 2)
+REFUSED: state folder /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r2new/tmpstate/hadavin-mutation-lane-0 is not a plain f
+  PASS: T22a mode 755 refused (got 2)
+REFUSED: state folder /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r2new/tmpstate/hadavin-mutation-lane-0 is not a plain f
+  PASS: T22b symlinked state folder refused (got 2)
+  PASS: T22b nothing written through the link
+REFUSED: state folder /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r2new/tmpstate/hadavin-mutation-lane-0 is not a plain f
+  PASS: T22c other owner refused (got 2)
+== T23 forged state: a backup whose hash differs, a marker that is a link, --restore inside the real repository: all refused, nothing written
+safety-tests.sh: line 145: 18880 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+REFUSED: the saved backup does not match the hash recorded in the marker: refused
+  PASS: T23a hash mismatch refused (got 2)
+  PASS: T23a file not written
+REFUSED: state file /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r2new/tmpstate/hadavin-mutation-lane-0/3db70c013276bede.p
+  PASS: T23b marker as a link refused (got 2)
+  PASS: T23b file not written
+process 18889 is not this run's pytest: left alone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r2new/tmpstate/hadavin-mutation-lane-0/3db70c013276bede.backup; hash matches saved original: True
+  PASS: T23 genuine restore still works
+REFUSED: --root /home/user/hadavin-sdk/handover/core-hardening/mutation-lane is, contains or lies inside the real repository /home/user/hadavin-sdk: u
+  PASS: T23c --restore in the real repository refused (got 2)
+== T24 import check: the tests would load the target from another tree (exit 2); the right tree passes and is recorded
+REFUSED: import check: `import mod` loads '/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r2new/toy/repo/src/mod.py', not /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad
+  PASS: T24a refused (got 2)
+  PASS: T24a file unchanged
+  PASS: T24b recorded in the raw file
+  PASS: T24b raw file lists 4 environment names
+== T25 pytest options that move the root, config or import base are refused after --
+  PASS: T25 --basetemp=/x refused (got 2)
+  PASS: T25 --rootdir=/x refused (got 2)
+  PASS: T25 --junitxml=/x/y.xml refused (got 2)
+  PASS: T25 --confcutdir=/x refused (got 2)
+  PASS: T25 --override-ini=addopts=-x refused (got 2)
+  PASS: T25 -cfoo.ini refused (got 2)
+  PASS: T25 -oaddopts=-x refused (got 2)
+  PASS: T25 --import-mode=append refused (got 2)
+  PASS: T25 file unchanged, state empty
+== T26 the start hook fails after the tests were started: the test group is still stopped (review 4 M2)
+RuntimeError as expected: start hook failed
+  PASS: T26 no orphan pytest left
+== T27 a mutant whose new text equals the old text is refused (exit 2)
+REFUSED: mutant m1: old text is empty or equal to new text (a no-op)
+  PASS: T27 exit 2 (got 2)
+== T28 a clean run leaves no temporary file in the state folder
+  PASS: T28 state empty (ls -A)
+FAILED CHECKS: 0
