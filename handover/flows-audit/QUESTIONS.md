@@ -95,3 +95,10 @@ Each is already written in a file; this list only gives it a place.
 3. PARTLY ANSWERED (lead, ORDERS.md line 138, item 3): the single note is n8n-owns-vs-desk-owns.md (this audit's pick); the other six are archive candidates. STILL OPEN: the owner's yes for the archive list, asked once by the lead in a table later; archive means move, never delete.
 4. ANSWERED (lead, ORDERS.md line 138, item 4): Q20 item 4: the lead sets DESK_ALERT_TO at take prep and verifies the value at re-pin; never typed in a file.
 5. CONFIRMED (lead, ORDERS.md line 138, item 5): Lead decision 2: the take never deletes contacts; the owner deletes the leftovers by hand (Q13; FIX-PLAN, line 'Not a numbered item').
+
+## Q24 (gate 2 r2 fixer, 2026-11-16 UTC; from reviews/adversarial-gate-r2.md; pointers, nothing here blocks the take until the date is missing)
+1. Date X: no re-pin time written by date X means the take is postponed. Date X: lead to set. I did not invent one.
+2. The 45 s lease threshold N (the rehearsal step time above which recovery is off for the take) and the 'under 10 s' line for the POST 2 reply: lead to set before the rehearsal; the rehearsal measures both. Today neither is measured (n8n never ran).
+3. DESK_ALERT_TO: the files show the unfilled real-v5 has 3 $env reads (DESK_ALERT_TO, DESK_URL, DESK_TIMEOUT_MS) and fill_flows writes literals for all three, so the gate is '0 reads after fill'. Please confirm that 'never typed in a file' (Q20 item 4) means: set in the lead's own values file outside the repository, made-up address.
+4. The counts proof (FIX-PLAN item 3 (c)) now says the counts come from the take, read after it with a SELECT-only login, which narrows lead decision item 9 (rehearsal screenshot or node preview). Keep the narrowing?
+5. The caption owner must change RUNSHEET-WORDING A-016f to 'one mail sent, one row in state done' (this fixer may not edit that file).
