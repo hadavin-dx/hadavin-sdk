@@ -12,8 +12,8 @@ PASS E-files: every file name in the start box is a real file (or the one this w
 PASS E-owneronly: L-SHEET and L-SAVEERR say OWNER ONLY in the start box and in section 3 (as the first words of the cell), and no other question does :: (['L-SAVEERR', 'L-SHEET'], ['L-SAVEERR', 'L-SHEET'])
 PASS E-kept: every 'N kept runs' statement says 18 (11 places) :: ['18']
 PASS E-rn: every 'release note vN' with an LRN cite within 160 characters agrees with the cite; the short-name table maps LRN14 to LEAD-RELEASE-NOTE-v14.md :: []
-FAIL E-mtime: no owner sheet and no release note (any variant, SOURCE included) was written after the check time 2026-11-16T17:44:13Z (read from the files at run time) :: ['LEAD-RELEASE-NOTE-v16.md']
-FAIL E-mtime: the report names the newest release note LEAD-RELEASE-NOTE-v16.md and its real written time 17:44:14 UTC
+FAIL E-mtime: no owner sheet and no release note (any variant, SOURCE included) was written after the check time 2026-11-16T17:45:02Z (read from the files at run time) :: ['LEAD-RELEASE-NOTE-v16.md']
+FAIL E-mtime: the report names the newest release note LEAD-RELEASE-NOTE-v16.md and its real written time 17:45:03 UTC
 FAIL E-mtime: the report names the SOURCE file of the newest release note with its real written time :: None
 PASS E-paths: run_all.sh, static-checks.sh, the builder, the verifier and the negative controls hold no absolute path of this machine (the one input tree T of the audited demo files is set by C6T_TREE) :: []
 PASS E-lrn: the check output says lines 8, 33, 149 and 150 are the same in release note v14 and in the newest note, so the LRN14 cites hold
@@ -32,6 +32,6 @@ PASS N6: option (b) of L-CARDLEN is printed in the start box (74 words) with the
 PASS m6: every 'second person' says who (someone who did not write the scan) :: 8
 PASS E-defs: the start box itself holds ['G12 = YOUR gate', 'MY ASSUMPTION', 'LRN14:33', "this report's own reading", 'You are the STUDIO LEAD'] and section 1c holds ["Q27 (a), (b), (c) = your plan's three questions", "EGM = the studio's review method", 'KEY = a secret code', 'a warning mail the system is built to send to a person', "this report's own reading"] :: []
 PASS E-scan: row 6 and section 1c both say the key scanner is read by a second person (someone who did not write the scan) and tested with a fake key before it touches a real key
-SUMMARY: 198 checks, 5 FAILED: F4 the report names the newest owner sheet version (v31) and release note (v16) on disk, and the check time; E-mtime: no owner sheet and no release note (any variant, SOURCE included) was written after the check time 2026-11-16T17:44:13Z (read from the files at run time); E-mtime: the report names the newest release note LEAD-RELEASE-NOTE-v16.md and its real written time 17:44:14 UTC; E-mtime: the report names the SOURCE file of the newest release note with its real written time; M4: no sentence says the box was 'rewritten and shorter' without the real count next to it; the count is 2495
+SUMMARY: 198 checks, 5 FAILED: F4 the report names the newest owner sheet version (v31) and release note (v16) on disk, and the check time; E-mtime: no owner sheet and no release note (any variant, SOURCE included) was written after the check time 2026-11-16T17:45:02Z (read from the files at run time); E-mtime: the report names the newest release note LEAD-RELEASE-NOTE-v16.md and its real written time 17:45:03 UTC; E-mtime: the report names the SOURCE file of the newest release note with its real written time; M4: no sentence says the box was 'rewritten and shorter' without the real count next to it; the count is 2495
 
 EXIT CODE 1

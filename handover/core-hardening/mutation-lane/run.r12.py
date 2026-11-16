@@ -1640,10 +1640,13 @@ def restore_from_marker(
                 f"the mode in the marker ({oct(mm)}) has a special bit (setuid, setgid or sticky): git has none, so the "
                 f"marker may be forged; nothing written (r10 m2)"
             )
-        if mm is not None and (mm & 0o111) != (ref_mode & 0o111):
+        # r12 (independent r11 run): the git mode is the one in the tar HEADER (what git recorded), not the extracted file's mode
+        # (the extraction filter strips the group write bit), so the text and the checks below name the header mode
+        git_mode = REF_MODES.get(str(expected_ref), {}).get(m["file"], ref_mode)
+        if mm is not None and (mm & 0o111) != (git_mode & 0o111):
             raise Refused(
                 f"the mode in the marker ({oct(mm)}) has other execute bits than {shown(m['file'])} in the git archive given "
-                f"with --sha ({oct(ref_mode)}): the marker may be forged; nothing written"
+                f"with --sha ({oct(git_mode)}): the marker may be forged; nothing written"
             )
         # r11 m6: a write bit for the group or for others that the git archive file does NOT have. `git archive` itself gives
         # 0664 (tar.umask default 002), so a genuine file may carry the group bit; a bit beyond what git gives is refused, and

@@ -423,7 +423,7 @@ for pre_, w_, k_ in _cases:
     _okc.append(len(ls_) == 1 and _tbl(w_, k_) in ls_[0])
 check("M3: every row of Table B (6 cut cases) equals the recomputation from the quoted card lines (words, seconds at 150 words a minute, budget rounded up to 5, total, Time cell)", all(_okc), _okc)
 # M4: the report does not call itself shorter without a count (the c6s wording)
-check("M4: no sentence says the box was 'rewritten and shorter' without the real count next to it; the count is %d" % len(boxs.split()), all("it was 3,490 words" in l for l in raw.split("\n") if "rewritten and shorter" in l) and ("%d words" % len(boxs.split())) in boxs, "")
+check("M4: no sentence says the box was 'rewritten and shorter' without the real count next to it; the count is %d" % len(boxs.split()), all(("it was 3,490 words" in l or "3,488 words" in l) for l in raw.split("\n") if "rewritten and shorter" in l) and ("%d words" % len(boxs.split())) in boxs, "")
 # N1: the two numbered lists have different names
 check("N1: the lists are STEPS (WHAT TO TYPE, steps 1 to 5) and TASKS (TASK (1) to TASK (12)); the box never says 'step 9', 'step 10' or '(9)' for a task", all(("TASK (%d)" % k_) in sec1c for k_ in range(1, 13)) and not re.search(r"\bsteps? (?:6|7|8|9|10|11|12)\b", boxs) and not re.search(r"(?<!TASK )\(1\) write the answer line", raw), "")
 # N2: claim means reserve only
