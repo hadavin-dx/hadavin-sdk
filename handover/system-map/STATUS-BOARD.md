@@ -42,14 +42,14 @@ INTERRUPTED: none
 | M20 | SESSION-HANDOFF live state | BLOCKED: file is on the studio laptop, not in the repo | 0 | | the lead pastes the text into inputs/; the lead has set no date |
 | M16 | flow-set question | DONE, closed by decision 1 (real-v5 only; film-v5 out) | 100 | flowset/REPORT.md | |
 
-## AGENTS (UPDATED_UTC 2026-11-16T14:40:00Z; PUSHED_UTC 2026-11-16T14:40:00Z)
+## AGENTS (UPDATED_UTC 2026-11-16T14:40:22Z; PUSHED_UTC 2026-11-16T14:40:22Z)
 | id | task | state |
 |---|---|---|
-| a36da6db961eb2d5f | cold read L3c (re-read) | running |
-| acae633d7e6422ebb | cold read LEAD-NOTICE-batch-1 (fourth) | running |
-| (replacement launched this turn) | cold read open-items-table (seventh) | running |
+| a7f43265c93e70f0b | cold read open-items-table (seventh) | running |
+| a853c85e39884785e | cold read LEAD-NOTICE-batch-1 (fifth) | running |
+| adfbe9a6d699e16a9 | cold read t19-terms (fourth) | running |
 
-CAPACITY: 3 of 8 slots used. Missing 5: pages L5ac, L5b, checklist, v5-edits-for-M17, decision list, L1c finding texts and t19 step tables await my edits and a mid-edit read is wasted; evidence-1, evidence-2 and partition are blocked by the missing work/OWNER-ONLY.txt; held pages are not mine to edit.
+CAPACITY: 3 of 8 slots used. Missing 5: pages L5ac, L5b, checklist, v5-edits-for-M17, decision list, L1c and L3c term glosses and t19 step tables await my edits and a mid-edit read is wasted; evidence-1, evidence-2 and partition are blocked by the missing work/OWNER-ONLY.txt; held pages are not mine to edit.
 NEXT 5: fix L5ac; fix L5b; fix v5-edits-for-M17; fix ARCHITECTURE-AUDIT-CHECKLIST; fix decision-list rows.
 
 Words: UTC = world time; IST = UTC plus 5 h 30 min. Cold read = an agent reads one page with no background and lists what it cannot follow. Held = a finding on a page that belongs to the lead, which I do not edit.
