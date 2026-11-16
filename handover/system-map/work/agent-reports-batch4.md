@@ -951,3 +951,7 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 685 decision-list r8: body stale. FIXED by CURRENT r8 (rows not rewritten, TO DO).
 - 686 L4c r6: next list sends reader to real-run. FIXED by CURRENT r6.
 - 687 L5ac r6: stacked terms. FIXED by GLOSSARY r6.
+
+- 688 owner-timeline r7: stacked amendments, unfilled rows. FIXED by CURRENT r7 (rows not rewritten, TO DO).
+- 689 t19 steps r9: not runnable, F8 unset. RECORDED in CURRENT r9 (needs lead).
+- 690 banned-claims r5: history range wrong. FIXED by CURRENT r5.
