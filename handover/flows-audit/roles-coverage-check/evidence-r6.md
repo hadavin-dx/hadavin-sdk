@@ -1,11 +1,19 @@
 # Evidence r6 (raw output; EVIDENCE RUNNER, no judgement)
-Date 2026-11-16 UTC. Run on Python 3.13, system ruff/bandit (not uv run). Nothing committed; real script untouched.
+Date 2026-11-16 UTC. Python 3.13, system ruff/bandit (not uv run). Nothing committed; real script untouched.
 
 ## Failures first
-- Steps 1-3: none. All exit codes 0.
-- Step 4: 0 of 18 mutants survived (3 named + 15 random). Not covered: the 15 random mutants are one-line operator swaps chosen with seed 20261116 from lines >= 31; most hit error-path lines. Equivalent-mutant check not done.
-- Difference from claim: ruff format says '11 files already formatted' (fix-roles-r6.md claimed 10). Only 2 .py files are in the folder; the count includes other files ruff found (not investigated).
-- Not run: pytest repo suite, uv run variant, CodeQL/Sonar/CodeRabbit.
+- Step 4: 7 of 15 random mutants SURVIVED the 71 tests (the 3 named mutants R5-08, R5-20, R5-22 were all killed). Survivors, by line of check_grants_cover_queries.py (first match on the line replaced):
+  - line 141: `return None, [...]` -> `return 1, [...]`
+  - line 145: `return None, [...]` -> `return 1, [...]`
+  - line 147: `return None, [...]` -> `return 1, [...]`
+  - line 280: `.strip()` removed in `[p.strip() for p in s.split(";") if p.strip()]` (first .strip())
+  - line 358: `if t and t.group(1) in COLS` -> `if t or t.group(1) in COLS`
+  - line 371: default `require_new_cred=False` -> `True` in def run(...)
+  - line 417: ` or ` -> ` and ` inside the text of a message string (text-only change)
+- Step 4 first attempt was invalid: the scratch copy lacked README.md, so a baseline test errored and every mutant showed KILLED. Caught by a baseline run on the scratch copy (71 tests, errors=1), README copied, whole step 4 rerun; the table below is the rerun. Scratch baseline now: Ran 71 tests, OK.
+- Difference from claim: ruff format prints '11 files already formatted' (fix-roles-r6.md says 10). Folder holds 2 .py files; why 11 not investigated.
+- Steps 1-3: no failures, all exit codes 0; grep noqa|nosec: no hits (grep_rc=1).
+- Not run: repo pytest suite, uv run variant, CodeQL/Sonar/CodeRabbit. Equivalent-mutant analysis not done. Random mutants: seed 20261116, one operator swap each, lines >= 31.
 
 ## 1. python3 -m unittest -v test_check_grants
 ```
@@ -127,7 +135,7 @@ TOTAL PROBLEMS: 0
 rc=0
 ```
 
-## 3. ruff check / ruff format --check / bandit -ll -r / grep noqa|nosec (grep_rc=1 means no hits)
+## 3. ruff check / ruff format --check / bandit -ll -r / grep noqa|nosec
 ```
 All checks passed!
 rc=0
@@ -164,25 +172,25 @@ rc=0
 grep_rc=1
 ```
 
-## 4. Mutants on scratch copy (/tmp/claude-0/ev/scratch/base, one mutation each, python3 -m unittest test_check_grants)
-Harness: /tmp/claude-0/ev/scratch/mut.py (seed 20261116). Named mutants: R5-08 except UNEXPECTED->ZeroDivisionError; R5-20 removed |'' from LITERAL; R5-22 notes dropped from foreign_db_access strings().
+## 4. Mutants on scratch copy (rerun, valid). Harness /tmp/claude-0/ev/scratch/mut.py
+Named: R5-08 except UNEXPECTED->ZeroDivisionError; R5-20 removed the doubled-quote alternative from LITERAL; R5-22 notes dropped from the strings() call in foreign_db_access.
 ```
-R5-08 KILLED FAILED (failures=1, errors=2)
-R5-20 KILLED FAILED (failures=1, errors=1)
-R5-22 KILLED FAILED (failures=1, errors=1)
-RANDOM1 line 149: 'if not '->'if ' | if not isinstance(raw, list): | KILLED FAILED (failures=63, errors=5)
-RANDOM2 line 417: ' or '->' and ' | f"({node.get('disabled')!r}); it is checked as if enabled, remove it or enable it" | KILLED FAILED (errors=1)
-RANDOM3 line 242: ' != '->' == ' | params = {k: v for k, v in (node.get("parameters") or {}).items() if k != "query"} | KILLED FAILED (failures=11, errors=1)
-RANDOM4 line 145: 'return None'->'return 1' | return None, [f"cannot read flow file ({type(e).__name__}: {e})"] | KILLED FAILED (errors=1)
-RANDOM5 line 444: ' == '->' != ' | if cred == OLD_CREDENTIAL: | KILLED FAILED (failures=3, errors=1)
-RANDOM6 line 356: ' in '->' not in ' | for p in parts: | KILLED FAILED (errors=86)
-RANDOM7 line 371: 'False'->'True' | def run(folders, doc, out=print, require_new_cred=False): | KILLED FAILED (errors=1)
-RANDOM8 line 358: ' and '->' or ' | if t and t.group(1) in COLS: | KILLED FAILED (errors=1)
-RANDOM9 line 364: ' in '->' not in ' | if t in skip: | KILLED FAILED (failures=52, errors=4)
-RANDOM10 line 141: 'return None'->'return 1' | return None, [f"cannot read flow file ({why})"] | KILLED FAILED (errors=1)
-RANDOM11 line 455: ' in '->' not in ' | if login not in grants: | KILLED FAILED (errors=86)
-RANDOM12 line 147: 'return None'->'return 1' | return None, [f"malformed flow file: top level is {type_name(data)}, expected an object"] | KILLED FAILED (errors=1)
-RANDOM13 line 181: 'all('->'any(' | return re.findall(r"[a-z_]+", s) | KILLED FAILED (failures=72, errors=9)
-RANDOM14 line 363: ' in '->' not in ' | for t in (t for t in toks(s) if t in COLS): | KILLED FAILED (errors=86)
-RANDOM15 line 280: '.strip()'->'' | return [p.strip() for p in s.split(";") if p.strip()] | KILLED FAILED (errors=1)
+R5-08 KILLED FAILED (failures=1, errors=1)
+R5-20 KILLED FAILED (failures=1)
+R5-22 KILLED FAILED (failures=1)
+RANDOM1 line 149: 'if not '->'if ' | if not isinstance(raw, list): | KILLED FAILED (failures=63, errors=4)
+RANDOM2 line 417: ' or '->' and ' | f"({node.get('disabled')!r}); it is checked as if enabled, remove it or enable it" | SURVIVED OK
+RANDOM3 line 242: ' != '->' == ' | params = {k: v for k, v in (node.get("parameters") or {}).items() if k != "query"} | KILLED FAILED (failures=11)
+RANDOM4 line 145: 'return None'->'return 1' | return None, [f"cannot read flow file ({type(e).__name__}: {e})"] | SURVIVED OK
+RANDOM5 line 444: ' == '->' != ' | if cred == OLD_CREDENTIAL: | KILLED FAILED (failures=3)
+RANDOM6 line 356: ' in '->' not in ' | for p in parts: | KILLED FAILED (errors=85)
+RANDOM7 line 371: 'False'->'True' | def run(folders, doc, out=print, require_new_cred=False): | SURVIVED OK
+RANDOM8 line 358: ' and '->' or ' | if t and t.group(1) in COLS: | SURVIVED OK
+RANDOM9 line 364: ' in '->' not in ' | if t in skip: | KILLED FAILED (failures=52, errors=3)
+RANDOM10 line 141: 'return None'->'return 1' | return None, [f"cannot read flow file ({why})"] | SURVIVED OK
+RANDOM11 line 455: ' in '->' not in ' | if login not in grants: | KILLED FAILED (errors=85)
+RANDOM12 line 147: 'return None'->'return 1' | return None, [f"malformed flow file: top level is {type_name(data)}, expected an object"] | SURVIVED OK
+RANDOM13 line 181: 'all('->'any(' | return re.findall(r"[a-z_]+", s) | KILLED FAILED (failures=72, errors=8)
+RANDOM14 line 363: ' in '->' not in ' | for t in (t for t in toks(s) if t in COLS): | KILLED FAILED (errors=85)
+RANDOM15 line 280: '.strip()'->'' | return [p.strip() for p in s.split(";") if p.strip()] | SURVIVED OK
 ```

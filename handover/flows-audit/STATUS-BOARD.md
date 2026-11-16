@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T09:59:21Z
+UPDATED_UTC: 2026-11-16T09:59:43Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -6,16 +6,16 @@ BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
 ITEMS_OPEN: 7
 PERCENT: 85
-AGENTS_RUNNING: 9
-CAPACITY: 2.31 load of 4 cores, mem 0/15 GB, disk free 27G, agents 9 (light+heavy per list)
+AGENTS_RUNNING: 8
+CAPACITY: 2.31 load of 4 cores, mem 0/15 GB, disk free 27G, agents 8 (light+heavy per list)
 INTERRUPTED: none
 FAILED: F8: second reviewer found 5 Majors (no-auth webhook only WARN, webhook credential kind unchecked, HubSpot credential uncovered, placeholder ids pass quietly, alwaysOutputData WARN only) + wrong doc lines; r3 fixer running after the evidence runner; $env nodes may fail on n8n default (unverified); 2 webhooks without auth are lead decisions
 F3: rerun clean earlier; fresh security review r2 found no Blocker but 12 real Minor/Nit (nested-template lexer, delete recovery dead end, delete not idempotent, missing-value copy written); r5 fixer running; 3.9/3.10, macOS, live import not run
-ROLES: v4 doc has a security Blocker (Part C unguarded, can lock out the administrator) + 8 Majors, marked in file, NOT fixed (parked pending Q11); script: r6 fixer says 3 mutants killed, 71 tests, gate rc 0 (its own claim), independent rerun running; split-string SQL in Code nodes only caught if text names mf_leads
+ROLES: PARKED by lead (client build, after video, no new lanes). Script r6: independent rerun 71 tests OK, gate rc 0, but 7 of 15 random mutants survive (lines 141,145,147,280,358,371,417); not fixed because parked; v4 doc security Blocker (Part C unguarded) unfixed
 claims: r4 fixer done (327 = 114/69/49/25/70; 11 SUPPORTED marked text-only needs run); two fresh reviewers running; reader nits left (pronoun drift, several meanings of take); F-01 review unreadable so B-214, B-215 UNTRACED; SLIP: that fixer deleted untracked fix-f5-r4.md (log rebuilt by me from the fixer report, shorter)
 F5: r4 done, two fresh reviewers running; fix-f5-r4.md was deleted by another agent and rebuilt shorter by me; lead decision 10:02Z cuts scenes 5-11 so a scope pass is needed; Q-A to Q-E open for coordinator
-NEXT: apply lead decisions 2026-11-16 (real-v5 only); collect F3 r5, F8, ROLES rerun, cite check, F5+claims reviews
-PUSHED_UTC: 2026-11-16T09:59:21Z
+NEXT: apply lead decisions (real-v5 only); collect F3 r5, F8 evidence+r3, cite check, F5+claims reviews
+PUSHED_UTC: 2026-11-16T09:59:43Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -37,7 +37,6 @@ PUSHED_UTC: 2026-11-16T09:59:21Z
 | a4083fcf | F3 round 5 fixer | sonnet | fix 12 security findings | 09:59 | 10:15 | 5 | running | fill_flows/fix-f3-r5.md |
 | cite-f6b-f2 | citation checker F6b+F2 | sonnet | check cites in F6B-AUDIT, F2 REVIEW | 09:57 | 10:10 | 5 | running | reviews/citations-f6b-f2.md |
 | f8-ev | EVIDENCE RUNNER F8 r2 | sonnet | rerun checker, selftest, gate, mutants | 09:58 | 10:12 | 5 | running | flow-check/evidence-r2.md |
-| roles-ev6 | EVIDENCE RUNNER ROLES r6 | sonnet | rerun tests, gate, 18 mutants | 10:00 | 10:12 | 5 | running | roles-coverage-check/evidence-r6.md |
 | f5-fac | F5 r4 facts reviewer | sonnet | check cites, ports, paste rules | 10:03 | 10:15 | 5 | running | (report inline) |
 | f5-rd | F5 r4 reader reviewer | sonnet | fresh reader pass | 10:03 | 10:15 | 5 | running | (report inline) |
 | f8-fix3 | F8 r3 fixer (Majors) | sonnet | fix 5 Majors + docs after evidence | 10:05 | 10:20 | 5 | running | flow-check/fix-f8-r3.md |
