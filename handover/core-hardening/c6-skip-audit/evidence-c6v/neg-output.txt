@@ -47,7 +47,7 @@ C14-item15-without-real-value                    exit 1  OK  failed checks: 1 (n
 C15-L-POST-gone-from-box                         exit 1  OK  failed checks: 5 (new vs unchanged: 5); first new: FAIL table 3b equals the recount (13 lines) :: (13, 14)
 C16-1051-line-without-UNVERIFIED                 exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL every line that names plan line 1051 says it is UNVERIFIED :: [885]
 C17-ready-used-before-defined-in-box-intro       exit 1  OK  failed checks: 3 (new vs unchanged: 3); first new: FAIL c6v N5: the start box is under 2,500 words (c6s: 3,488; 2479 words now) and states its own real count :: 
-C18-check-time-not-in-report                     exit 0  WRONG  failed checks: 0 (new vs unchanged: 0); first new: none
+C18-check-time-not-in-report                     exit 1  OK  failed checks: 3 (new vs unchanged: 3); first new: FAIL every 'UTC = IST' pair is exactly UTC + 5:30 (107 pairs) :: [('10', '00', '00', '34'), ('10', '00', '00',
 C19-row11-total-wrong                            exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL row 11 states the same words, seconds, budget and total (about 190 s) :: - The one video: scenes 1 to 4 a
 C20-add-16-wording-back                          exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL answer 2 replaces answer 1: net +15 words and no 'add 16' wording
 C21-tied-column-lacks-L-POST                     exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL section 3 'rows tied to it' column equals the recount
@@ -265,4 +265,4 @@ W-row96-pipe-unescaped                           exit 1  OK  failed checks: 1 (n
 W-row96-anchor-30-s-EST-only                     exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL class 6: every old text shorter than 40 characters occurs exactly once in the whole file (chained rows ex
 W-row96-after-row15-order                        exit 1  OK  failed checks: 2 (new vs unchanged: 2); first new: FAIL C-1b all rows apply in table order on copies, no mismatch :: [96]
 W-box-extra-words                                exit 1  OK  failed checks: 2 (new vs unchanged: 2); first new: FAIL c6v N5: the start box is under 2,500 words (c6s: 3,488; 2478 words now) and states its own real count :: 
-SUMMARY: 267 copies, 1 wrong
+SUMMARY: 267 copies, 0 wrong

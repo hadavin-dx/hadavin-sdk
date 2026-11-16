@@ -1337,7 +1337,7 @@ if not os.environ.get('NO_NEG'):
     _skpre = 'sk-' + 'ant-' + 'api03-'
     neg('r16F1word', '`key gone, no more decisions`', '`key gone`', 'r16 F1 word lacks', 2)
     neg('r16F1time', 'you revoke it whatever you have written, and then you write `key gone, no more decisions`', 'you revoke it and write `key revoked`', 'r16 F1 E-55 lacks', 9)
-    neg('r16F2a', 'or any other contact, you delete nothing and tell the assistant.\n~~~~\nWhy: ', 'you delete them all.\n~~~~\nWhy: ', 'r16 F2 E-62 lacks')
+    neg('r16F2a', 'or any other contact, you delete nothing and tell the assistant.\n~~~~\nWhy: ', 'you delete them all.\n~~~~\nWhy: ', 'r16 F2 E-04 lacks', 9)
     neg('r16F2b', "(with this take's id); if you find more than 3, or any other contact", "(made-up names); if you find more than 3, or any other contact", 'r16 F2 E-42')
     neg('r16F2c', '### E-62: OWNER-STEPS-realrun-v3.md, line 112', '### E-63: OWNER-STEPS-realrun-v3.md, line 112', 'ids differ')
     neg('r16F3', 'password files and editor copies made in step 8', 'other files made in step 8', 'r16 F3 G lacks')

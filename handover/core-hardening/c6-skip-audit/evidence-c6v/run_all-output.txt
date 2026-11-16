@@ -7,3 +7,8 @@ wrote REPORT-c6v.md (884 lines)
 census written: 25 phrases
 verify exit 0
 SUMMARY: 238 checks, 0 FAILED
+neg exit 0
+SUMMARY: 267 copies, 0 wrong
+scan exit 0
+SCANNED 315 files; banned names list has 10 entries (read at run time); totals {'banned': 0, 'secret': 0, 'mail': 0}
+heavy-slot: slot 1 freed, exit 0

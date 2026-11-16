@@ -30,7 +30,7 @@ DRAFT 2026-11-15 by the lead, edited 2026-11-16 for the owner decision on saved 
 
 ## 4b. The lead in the take preparation (planned; written only after the owner's preparation question is answered)
 - MAY: post ONE made-up enquiry to the web address of the take's own n8n on this laptop, only after the owner's written `Yes, send the one enquiry on <day>` (<day> written like `Wed 18 Nov 2026`) that the owner wrote after the assistant's message stating the points (a) to (d) of the Phase 1 text of the sheet; read the counts that follow (names and counts only); tell the owner which traces the enquiry leaves.
-- MUST NOT: post a second enquiry; read or print n8n's credentials or any secret file; hold or use a real secret key of its own; start the model stage with a real key file or with the web address of the real AI model; answer a prompt of the take program; delete a contact, a mail or a table row by itself.
+- MUST NOT: post a second enquiry; read or print n8n's credentials or any secret file; hold or use a real secret key of its own; start the model stage with a real key file unless the owner's written yes with a number for one paid call is quoted; answer a prompt of the take program; delete a contact, a mail or a table row by itself.
 - Section 4b overrides line 27 (no real key, no answer to a prompt of the take program) only for this one enquiry and only for what the MAY line allows. Line 27 stays in force for everything else.
 - Enforced by: nothing in code is known for the posting itself; the model stage refuses a second paid call per enquiry key (section 2); that the stage can run with the stand-in model and a made-up key file in a real take folder is UNVERIFIED (plan v5 step 3.3 shows it for the stand-in test only).
 
