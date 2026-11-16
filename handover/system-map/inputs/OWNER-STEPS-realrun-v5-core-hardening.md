@@ -46,8 +46,8 @@ This sheet lists only what ONLY YOU can do. Things you already did are left out 
 4. D: check what the film may show.
 5. E: start the run; you type `y` and the confirmation line.
 6. F: the film pause; you type `end` only when filming of the contact list is done.
-7. F2: delete this run's contacts and demo mails (after the studio lead says filming is finished).
-8. After the run: G (only if it failed), H (watch the edited video), I (clean-up), J (post).
+7. F2: count this run's contacts with three searches (a, b, c), compare with the program's printed list, and only then delete them and the demo mails (after the studio lead says filming is finished).
+8. After the run: G (only if it failed; it uses the same three searches and the same count-first-then-delete order as F2), H (watch the edited video), I (clean-up), J (post).
 
 **Date:** the studio lead gives the run date. Until it does, do nothing. Fixed times: stop time 18:29 UTC = 23:59 IST on Mon 23 Nov 2026. The stop time limits only the start and the spending of the run. Watching (H) and clean-up (I) have their own deadlines, which the studio lead gives you (open); they are not tied to the stop time. The post is planned for Wed 25 Nov 2026, 15:00 UTC = 20:30 IST.
 
@@ -71,7 +71,7 @@ This sheet lists only what ONLY YOU can do. Things you already did are left out 
 ## Before the run
 
 ### Step A. The written answers: the password risk and the yes with numbers (you, once per paid run)
-**Part 1. The password risk (answer this first).** The checking program you start (the program) runs on your laptop under the same login as the files that hold your passwords, and the studio lead's session can work with that laptop. Nothing technical stops either of them opening those files. If one went wrong or someone took it over, it could read the passwords of your throwaway accounts and use them. They hold made-up data only. UNVERIFIED: whether anything else on the laptop could also read the files. Do you accept this for this run, yes or no, in writing? Answer in one line, for example: "Yes, I accept the password risk for run <run name>." or "No." Until you answer yes in writing, no run starts. If you answer no, no run starts, and the studio lead then proposes another way. This answer covers ONE run, like the money yes below; answer again for every new run (answer each time until the studio lead says in writing that one answer covers all runs of this video). It stays OWNER TO APPROVE, not assumed accepted.
+**Part 1. The password risk (answer this first).** The checking program you start (the program) runs on your laptop under the same login as the files that hold your passwords, and the studio lead's session can work with that laptop (UNVERIFIED: this is not taken from a source file; how the studio lead's session reaches the laptop, if at all, has not been confirmed). Nothing technical stops either of them opening those files. If one went wrong or someone took it over, it could read the passwords of your throwaway accounts and use them. They hold made-up data only. UNVERIFIED: whether anything else on the laptop could also read the files. Do you accept this for this run, yes or no, in writing? Answer in one line, for example: "Yes, I accept the password risk for run <run name>." or "No." Until you answer yes in writing, no run starts. If you answer no, no run starts, and the studio lead then proposes another way. This answer covers ONE run, like the money yes below; answer again for every new run (answer each time until the studio lead says in writing that one answer covers all runs of this video). It stays OWNER TO APPROVE, not assumed accepted.
 
 **Part 2. The written yes with numbers.** The studio lead sends one message with:
 - at most 3 model calls in this run;
@@ -148,13 +148,13 @@ When: after you typed `end`, the program printed its result and its list of cont
 4. Tell the studio lead: "contacts and demo mails deleted" and the number of contacts you deleted.
 You should see the filtered list empty and the label `demo` and the Inbox empty.
 
-> **WARNING before step G. In step G delete ONLY mails in the receiver account and ONLY HubSpot contacts of the failed run (the studio lead gives you the count and the run name). Never delete the marker file `~/.hadavin-take-tags/<run name>.used`.**
+> **WARNING before step G. You cannot undo the deletes in step G yourself. In step G delete ONLY mails in the receiver account and ONLY HubSpot contacts found by the three search texts of step F2 for the failed run (the studio lead gives you the count and the run name), and only after the three counts add up to the studio lead's count. Never delete the marker file `~/.hadavin-take-tags/<run name>.used`.**
 
 ### Step G. If a run fails (you)
 The studio lead says why, by message. Then:
 1. In the receiver Gmail, select the demo mails in the label `demo` and in the Inbox, click the Trash icon, open Trash, click "Empty Trash now". (This is "delete" in the Words box.)
-2. In HubSpot, delete any contacts left behind that the studio lead counted (the program's printed list is the source; use the search text of step F2): Contacts, tick them, More, Delete. Delete only contacts whose name or address carries this run name.
-3. Tell the studio lead: "demo mails deleted" and the number of contacts you deleted.
+2. Contacts left behind. The take never deletes contacts; it lists any left behind and the owner deletes them by a filtered list. Do F2 step 1 and F2 step 2 exactly as written there (write down the number, do the three searches a, b and c, add the three counts, compare, and only when the sum matches delete; final check: the three searches each show nothing), with one difference: the number to compare with is the count the studio lead gives you by message for the failed run (the program's printed list, if it printed one, is the source of that count). If the program printed no list and the studio lead's count is 0, tell the studio lead before you delete anything. If the sum does not equal the count, stop and tell the studio lead before you delete anything. Delete nothing found by any wider search.
+3. Tell the studio lead: "demo mails deleted" and the number of contacts you deleted (the sum of the three search counts, or 0).
 4. Give a NEW written yes with numbers (step A) and pick a NEW run name. A run that got past both typed answers has used its name even if it failed.
 If the studio lead later says a new run is no longer possible before the stop time, no new run happens.
 
@@ -206,9 +206,9 @@ The exact final words come from the studio lead after the rehearsal. Until you h
 | Before a run | your answer on the run date; the run name you picked (a word, no secret); your written answer on the password risk (step A, part 1) and your written yes with numbers (step A, part 2) |
 | Run day | "label and inbox empty"; "profile ready"; "done" for n8n, only if asked; any problem line from step C |
 | During a run | the exit code and the last printed line if the run stops; "closed the terminal early" if it happens; the proof screen you picked |
-| After a run that succeeded | "contacts and demo mails deleted" and the number of contacts deleted (step F2) |
+| After a run that succeeded | "contacts and demo mails deleted" and the number of contacts deleted (the sum of the three search counts, step F2); also the three counts and the number in the program's printed list if they did not match |
 | After the edited video | "accepted" or the bad seconds; "an address is visible" if you see one |
-| After a failed run | "demo mails deleted" and the number of contacts deleted; a new written yes |
+| After a failed run | "demo mails deleted" and the number of contacts deleted (the sum of the three search counts, step G); the three counts if they did not match the studio lead's count; a new written yes |
 | Clean-up | the names of the HubSpot private apps you made; the screenshots; the retire-check output (words and exit code only); "retire check passed"; "secret files deleted" |
 | Before posting | the post text, for comparison with the final claim |
 
