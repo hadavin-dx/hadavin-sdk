@@ -315,6 +315,9 @@ try:
             refuse("non-alphabet letter", "the name holds the sign U+%04X (%s), a Latin sign that looks like a letter but is not one of an ordinary alphabet; write plain letters" % (ord(ch), unicodedata.name(ch, "?").lower()))
         if ch not in " .'-" and unicodedata.category(ch)[0] not in "LM":
             refuse("name characters", "the name may hold only letters, spaces, dots, apostrophes and hyphens (no digits or other signs)")
+    for ch in note_scan:   # f8-r11 (M1): the same sign in the note could stand for a letter of a listed word (Cǀaude)
+        if unicodedata.name(ch, "").startswith("LATIN LETTER ") and not unicodedata.name(ch, "").startswith("LATIN LETTER SMALL CAPITAL"):
+            refuse("non-alphabet letter", "the note holds the sign U+%04X (%s), a Latin sign that looks like a letter but is not one of an ordinary alphabet; write plain letters" % (ord(ch), unicodedata.name(ch, "?").lower()))
     letters = [ch for ch in name if unicodedata.category(ch)[0] == "L"]
     need = 2 if letters and all(script_of(ch) == "CJK" for ch in letters) else 3   # a name in Han, Kana or Hangul letters is often 2 characters
     if len(letters) < need:

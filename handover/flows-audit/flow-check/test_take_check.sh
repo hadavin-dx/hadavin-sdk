@@ -327,6 +327,22 @@ no|Pat Llamas, {TODAY}|rule: listed word llama
 no|Pat Alexa, {TODAY}, read all lines|rule: listed word alexa
 no|Pat Smith, {TODAY}, jenkins read it|rule: listed word jenkins
 no|Pat Smith, {TODAY}, lead to confirm|rule: lead to confirm
+# f8-r11 (M1, review f8-r10 second angle F1, F2): a Latin sign that is no letter (click, glottal stop) is refused in the name and the note; Greek, Han, Hangul and Arabic letters inside a Latin word; the look-alikes that README promises (o with a stroke, dotless i, the Latin letter script g, small capitals), the note-only signs $ and !, and a name squeezed with a hyphen and a space
+ok|Łukasz Þórðarson, {TODAY}
+no|Cǀaude Smith, {TODAY}|rule: non-alphabet letter
+no|Pat Smith, {TODAY}, Cǀaude read it|rule: non-alphabet letter
+no|Claυde Smith, {TODAY}|rule: mixed alphabets
+no|Pat Smi李th, {TODAY}|rule: mixed alphabets
+no|Pat Smi김th, {TODAY}|rule: mixed alphabets
+no|Pat Smiعth, {TODAY}|rule: mixed alphabets
+no|øpus Smith, {TODAY}|rule: listed word opus
+no|bıng Smith, {TODAY}|rule: listed word bing
+no|ɡpt Smith, {TODAY}|rule: listed word gpt
+no|ᴄʟᴀᴜᴅᴇ Smith, {TODAY}|rule: listed word claude
+no|Pat Smith, {TODAY}, ᴄʟᴀᴜᴅᴇ read it|rule: listed word claude
+no|Pat Smith, {TODAY}, read with Opu$|rule: listed word opus
+no|Pat Smith, {TODAY}, read with b!ng|rule: listed word bing
+no|Cl- aude Smith, {TODAY}|rule: listed word claude
 EOF
 )
 rv_n=0
@@ -344,7 +360,7 @@ while IFS='|' read -r want line why pd envx; do
 done <<< "$RV_CASES"
 [ -n "${RV_DUMP:-}" ] && exit 0
 # f8-r8: the number of word-check cases is pinned EXACTLY (a floor let 16 cases be deleted without a sound). Change RV_EXPECT together with the case list, and say so in the fix log.
-RV_EXPECT=275
+RV_EXPECT=290
 RV_LISTED=$(grep -c -E '^(ok|no)\|' <<< "$RV_CASES")
 [ "$rv_n" -eq "$RV_EXPECT" ] && [ "$RV_LISTED" -eq "$RV_EXPECT" ]; ok $? "reviewer line: exactly $RV_EXPECT word-check cases ran (ran $rv_n, listed $RV_LISTED)"
 # the word list lives in take_check.sh only; the README must print exactly the same two lines

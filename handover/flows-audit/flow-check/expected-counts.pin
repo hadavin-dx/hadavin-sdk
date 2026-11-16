@@ -1,0 +1,8 @@
+# The expected number of cases of the two big test programs that run_all.sh runs. ONE place; run_all.sh (and nothing else) reads it.
+# If a count changes on purpose (a case was added or removed), edit the number here in the same change and say why in the fix log.
+# If a number drifts WITHOUT that, run_all.sh exits 1 and says COUNT DRIFT (a hook that makes a test program stop early, a skipped block, a deleted case).
+selftest_as_expected=682
+selftest_not_as_expected=0
+selftest_skipped=62
+take_suite_cases=496
+take_suite_not_as_expected=0

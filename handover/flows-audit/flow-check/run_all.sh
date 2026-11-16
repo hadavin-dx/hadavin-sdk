@@ -20,6 +20,48 @@
 set -u
 HERE=$(cd "$(dirname "$0")" && pwd); D="$HERE/../../demo"; PT="$HERE/../patches"; CK="$HERE/check_flows.py"; RAWFINAL="${RUN_ALL_RAW:-$HERE/raw}"   # RAWFINAL = the tracked raw folder (locked; written only with --refresh); RAW (the scratch folder of this run) is made below   # RUN_ALL_RAW, RUN_ALL_TAKE_FLOWS and RUN_ALL_NESTED exist only for the nested failure tests below (second runs of this script that are made to fail); RUN_ALL_DROP_LEAD and RUN_ALL_PLANT_TCFAIL_FLOWS (round 10c) are honoured only together with RUN_ALL_NESTED
 TCUNSET=(-u TAKE_CHECK_TEST -u TAKE_CHECK_CK -u TAKE_CHECK_WARN_PIN -u TAKE_CHECK_FLOWS -u TAKE_CHECK_DDL -u TAKE_CHECK_FORM_EXPECT)   # round 10c (Q4): every take_check.sh call below starts from a clean TAKE_CHECK_* environment, whatever the caller exported
+# f8-r11: the pinned case counts, in ONE place (expected-counts.pin next to this script). count_check SELFTEST_FILE TTC_FILE [PIN]: prints one line, returns 0 when both programs ran exactly the pinned number of cases, 1 otherwise (the number drifted, a line is missing or printed twice, or a case was not as expected).
+count_check() {
+  local st=$1 tt=$2 pin=${3:-$HERE/expected-counts.pin} k v e_ok="" e_bad="" e_skip="" e_tt="" e_ttbad="" msg="" n
+  [ -f "$pin" ] || { echo "COUNT DRIFT: the pin file $pin is missing"; return 1; }
+  while IFS='=' read -r k v; do
+    case $k in selftest_as_expected) e_ok=$v;; selftest_not_as_expected) e_bad=$v;; selftest_skipped) e_skip=$v;; take_suite_cases) e_tt=$v;; take_suite_not_as_expected) e_ttbad=$v;; esac
+  done < <(grep -E '^[a-z_]+=[0-9]+$' "$pin")
+  for v in "$e_ok" "$e_bad" "$e_skip" "$e_tt" "$e_ttbad"; do [[ $v =~ ^[0-9]+$ ]] || { echo "COUNT DRIFT: $pin does not hold all five numbers"; return 1; }; done
+  n=$(grep -c -E '^SELFTEST: [0-9]+ as expected, [0-9]+ not as expected, [0-9]+ skipped \(not applicable\)$' "$st" 2>/dev/null)
+  if [ "$n" != 1 ]; then msg="$msg [self-test summary line found $n times (want 1) in $st]"
+  else
+    local l; l=$(grep -E '^SELFTEST: ' "$st")
+    [[ $l =~ ^SELFTEST:\ ([0-9]+)\ as\ expected,\ ([0-9]+)\ not\ as\ expected,\ ([0-9]+)\ skipped ]]
+    [ "${BASH_REMATCH[1]}" = "$e_ok" ] || msg="$msg [self-test as expected: ${BASH_REMATCH[1]}, pinned $e_ok]"
+    [ "${BASH_REMATCH[2]}" = "$e_bad" ] || msg="$msg [self-test not as expected: ${BASH_REMATCH[2]}, pinned $e_bad]"
+    [ "${BASH_REMATCH[3]}" = "$e_skip" ] || msg="$msg [self-test skipped: ${BASH_REMATCH[3]}, pinned $e_skip]"
+  fi
+  n=$(grep -c -E '^test_take_check: [0-9]+ of [0-9]+ cases as expected, [0-9]+ not as expected$' "$tt" 2>/dev/null)
+  if [ "$n" != 1 ]; then msg="$msg [take-suite summary line found $n times (want 1) in $tt]"
+  else
+    local l; l=$(grep -E '^test_take_check: ' "$tt")
+    [[ $l =~ ^test_take_check:\ ([0-9]+)\ of\ ([0-9]+)\ cases\ as\ expected,\ ([0-9]+)\ not ]]
+    [ "${BASH_REMATCH[2]}" = "$e_tt" ] || msg="$msg [take suite cases: ${BASH_REMATCH[2]}, pinned $e_tt]"
+    [ "${BASH_REMATCH[1]}" = "${BASH_REMATCH[2]}" ] || msg="$msg [take suite: only ${BASH_REMATCH[1]} of ${BASH_REMATCH[2]} as expected]"
+    [ "${BASH_REMATCH[3]}" = "$e_ttbad" ] || msg="$msg [take suite not as expected: ${BASH_REMATCH[3]}, pinned $e_ttbad]"
+  fi
+  if [ -n "$msg" ]; then echo "COUNT DRIFT (expected-counts.pin):$msg"; return 1; fi
+  echo "COUNTS match expected-counts.pin: self-test $e_ok as expected / $e_bad not / $e_skip skipped; take suite $e_tt of $e_tt cases"; return 0
+}
+# publish_raw SRC DST: copies every plain file of SRC into DST, each under a temporary name and then renamed (a reader never sees half a file); files of DST that SRC does not have are left alone; prints the number copied; returns 1 if one copy failed
+publish_raw() {
+  local src=$1 dst=$2 f b n=0 bad=0
+  mkdir -p -- "$dst" || return 1
+  for f in "$src"/*; do
+    [ -f "$f" ] || continue
+    b=$(basename -- "$f")
+    if cp -- "$f" "$dst/.$b.tmp.$$" && mv -f -- "$dst/.$b.tmp.$$" "$dst/$b"; then n=$((n+1)); else bad=$((bad+1)); rm -f -- "$dst/.$b.tmp.$$"; echo "REFRESH FAILED for $b" >&2; fi
+  done
+  echo "$n"; [ "$bad" = 0 ]
+}
+if [ "${1:-}" = "--publish-raw" ]; then publish_raw "${2:?SRC}" "${3:?DST}"; exit $?; fi
+if [ "${1:-}" = "--check-counts" ]; then count_check "${2:?SELFTEST_FILE}" "${3:?TTC_FILE}" "${4:-}"; exit $?; fi
 STRICT_IDS=""; ARGS=(); LOCKONLY=""; REFRESH=""; KEEP=""
 for a in "$@"; do case "$a" in --strict) STRICT_IDS="--require-real-credential-ids";; --lock-only) LOCKONLY=1;; --refresh) REFRESH=1;; --keep) KEEP=1;; *) ARGS+=("$a");; esac; done
 # f8-r11 (review f8-r10 M2, F12): the variables that change WHAT is checked or HOW MANY cases run are refused (exit 2) when they are set, whatever the caller meant: a stray one must never make this script pass without the whole suite. The names only are printed, never a value.
@@ -60,10 +102,13 @@ fi
 RUN_ALL_SELF=$$   # the nested runs started below get this as RUN_ALL_PARENT_PID
 # f8-r11: this run's own scratch folder for ALL raw output; never shared, removed at the end unless the run failed or --keep (never in the nested test runs)
 RAW=$(mktemp -d "${TMPDIR:-/tmp}/fc8raw.XXXXXX") || { echo "REFUSED: cannot make the scratch raw folder"; exit 2; }
-W=""; MADE_W=""
+W=""; MADE_W=""; WORKSTARTED=""
 cleanup() {
   [ -z "$MADE_W" ] || rm -rf -- "$W"   # only a folder this script made itself (mktemp below)
-  if [ -n "${RAW:-}" ] && [ -d "$RAW" ] && [ -z "$KEEP" ] && { [ -n "${RUN_ALL_NESTED:-}" ] || [ "${RUN_ALL_RC:-1}" = 0 ]; }; then rm -rf -- "$RAW"; elif [ -n "${RAW:-}" ] && [ -d "$RAW" ]; then echo "raw output of this run is kept in: $RAW"; fi
+  # keep the scratch raw folder when --keep, or when a run that had started its work ended with a status other than 0 (never in the nested test runs, which fail on purpose)
+  if [ -n "${RAW:-}" ] && [ -d "$RAW" ]; then
+    if [ -z "$KEEP" ] && { [ -n "${RUN_ALL_NESTED:-}" ] || [ -z "$WORKSTARTED" ] || [ "${RUN_ALL_RC:-1}" = 0 ]; }; then rm -rf -- "$RAW"; else echo "raw output of this run is kept in: $RAW"; fi
+  fi
 }
 trap cleanup EXIT
 if [ -n "${ARGS[0]:-}" ]; then
@@ -76,7 +121,7 @@ fi
 mkdir -p -- "$W/c/handover/demo/n8n-flows" "$W/c/handover/demo/n8n-mainframe" "$W/g" "$RAW" || exit 2
 cp -- "$D"/n8n-flows/*.json "$D/n8n-flows/mf_leads.sql" "$D/n8n-flows/PAGE-STATEMENTS-V4.md" "$W/c/handover/demo/n8n-flows/" || exit 2
 cp -- "$D/VIDEO-RUNSHEET.md" "$W/c/handover/demo/" && cp -- "$D/n8n-mainframe/build_mainframe.py" "$W/c/handover/demo/n8n-mainframe/" || exit 2
-: > "$RAW/apply.log"
+: > "$RAW/apply.log"; WORKSTARTED=1
 ( cd "$W/c" && git init -q . 2>/dev/null; true )
 for p in F-002-take-key-check-and-claim-error-path F-008-save-runs-for-the-take; do
   ( cd "$W/c" && git apply --check "$PT/$p.patch" && git apply "$PT/$p.patch" ) >> "$RAW/apply.log" 2>&1 || { echo "ABORT: git apply $p (see raw/apply.log)"; exit 3; }
@@ -311,6 +356,9 @@ show pristine-film patched-film pristine-strict-film patched-strict-film
 STLINE=$(grep -h '^SELFTEST: ' "$RAW/selftest-new.txt" | tail -n 1)   # round 10d: the summary line by its text, not the last line of the file
 [ -n "$STLINE" ] || { STLINE="SELFTEST summary line missing in raw/selftest-new.txt"; RC=1; }
 echo "[selftest exit=$ST] $STLINE"
+CNTMSG=$(count_check "$RAW/selftest-new.txt" "$RAW/test-take-check.txt") || RC=1   # f8-r11 (review f8-r10 M2, F12): both case counts are pinned in expected-counts.pin; a drift fails loudly
+echo "$CNTMSG"
+[ "$ST" = 0 ] || tail -n 5 "$RAW/selftest-new.txt" 2>/dev/null | cut -c1-300 | sed 's/^/  selftest tail: /'   # f8-r11: a failing self-test shows where its output ended
 echo "[take_check.sh exit=$TC] missing lines:${TCMISS:- none}"
 LW=$(grep -h '^OPEN LEAD DECISIONS:' "$RAW/pristine.txt" | sed -E 's/OPEN LEAD DECISIONS: ([0-9]+) webhook.* ([0-9]+) \$env.*/\1 \2/')
 [ -n "${RUN_ALL_NESTED:-}" ] && [ -n "${RUN_ALL_DROP_LEAD:-}" ] && LW=""   # test hook (round 10c, Q3)
@@ -324,8 +372,17 @@ PINSHOWN=$(bash "$HERE/take_check.sh" --safe-text "$PINREV")   # round f8-r8: th
 if [ -z "$PINREV" ]; then PINMSG="COMMITTED PIN (take-warns.pin) has no reviewer line. NOT confirmed by the lead: a bare take_check.sh exits 4 until the lead adds one (this run used a stand-in line, so its take check could pass)."
 elif PINWHY=$(env -u TAKE_CHECK_TEST -u TAKE_CHECK_WARN_PIN bash "$HERE/take_check.sh" --check-reviewer-line "$PINREV" "$PINDATE" "${PINRCPT:-nohash!!}"); then PINMSG="COMMITTED PIN (take-warns.pin) reviewer line (hidden characters removed, cut at 300): '$PINSHOWN' (this script cannot tell who really read it)."
 else PINMSG="COMMITTED PIN (take-warns.pin) reviewer line (hidden characters removed, cut at 300): '$PINSHOWN'. NOT confirmed by the lead: take_check.sh refuses it ($(printf '%s' "$PINWHY" | cut -c1-120)), so a bare take_check.sh exits 4 until the lead replaces that line (this run used a stand-in line, so its take check could pass)."; fi
+[ -n "$STLINE" ] && [ "${STLINE#SELFTEST summary line missing}" != "$STLINE" ] && { echo "  selftest output (last 5 lines of $RAW/selftest-new.txt):"; tail -n 5 "$RAW/selftest-new.txt" 2>/dev/null | cut -c1-300 | sed 's/^/    /'; }
 echo "run_all exit status (real-v5 default runs + self-test): $RC"
 echo "real-v5 placeholder ids: $(grep -c 'still placeholders' "$RAW/pristine.txt") file(s) warn in the committed flows (pass --strict to make that a failure)"
 echo "$PINMSG"
 echo "$LEADMSG"
+# f8-r11: publish into the tracked raw/ folder only when asked, only at the very end, each file under a temporary name and then renamed
+if [ -n "$REFRESH" ]; then
+  PUBN=$(publish_raw "$RAW" "$RAWABS") || RC=1
+  echo "raw files refreshed in $RAWABS: $PUBN (run exit status $RC)"
+else
+  echo "tracked raw folder $RAWABS was NOT changed (pass --refresh to publish this run's raw files)"
+fi
+RUN_ALL_RC=$RC
 exit $RC
