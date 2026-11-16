@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T18:09:55Z
+UPDATED_UTC: 2026-11-16T18:14:41Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -6,12 +6,12 @@ BOOT_ID: e78580c0
 ITEMS_TOTAL: 10
 ITEMS_OPEN: 30
 PERCENT: 70
-AGENTS_RUNNING: 8
-CAPACITY: 3.96 load of 4 cores, mem 1/15 GB, RAM 1078/16087 MB, disk 12G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 13G /tmp/claude-0 , agents 8 (light+heavy per list)
+AGENTS_RUNNING: 9
+CAPACITY: 3.89 load of 4 cores, mem 1/15 GB, RAM 1112/16087 MB, disk 12G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 13G /tmp/claude-0 , agents 9 (light+heavy per list)
 INTERRUPTED: none
 FAILED: none (F8 run_all.sh intermittent exit 1 is an evidence finding: 3 of 6 plain runs failed, cause unknown, fixer acf8ab59 on it; ruff format --check passes 741 files)
-NEXT: Q31 edit pass; F8 fixer; verify four fixers
-PUSHED_UTC: 2026-11-16T18:09:55Z
+NEXT: save and fix patch-copies r18 reports; F8 fixer after evidence
+PUSHED_UTC: 2026-11-16T18:14:41Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -30,19 +30,20 @@ PUSHED_UTC: 2026-11-16T18:09:55Z
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | state | produced so far |
 |---|---|---|---|---|---|---|---|
-| aeb2251e | fixer | sonnet | plan-files r34 fixes (RUNBOOK/FIX-PLAN/TAKE-CHECKLIST) | 17:5xZ | about 18:20Z | running | not yet reported |
+| aeb2251e | fixer | sonnet | plan-files r34 fixes (RUNBOOK/FIX-PLAN/TAKE-CHECKLIST) | 17:59Z | about 18:25Z | running | not yet reported |
 | a55f209a | evidence runner | sonnet | F8 r11 run_all repeat runs, raw output | 18:00Z | about 18:30Z | running | not yet |
-| ab3bac8b | fixer | sonnet | patch-copies r17 fixes (README, DEAD-MAN-CHECK) | 18:02Z | about 18:20Z | running | not yet |
-| a2dde29a | reviewer comprehension | sonnet | Q31 r28 stranger read | 18:07Z | about 18:15Z | running | not yet |
 | af88197e | fixer | sonnet | REVIEW.md r42 fixes (r36 + r37 reports) | 18:08Z | about 18:30Z | running | not yet |
-| a2cb770e | reviewer comprehension | sonnet | FINDINGS/LEDGER r23 stranger read | 18:08Z | about 18:16Z | running | not yet |
 | ae4cb7af | fixer | sonnet | RW/CT r34 fixes (r34 + r35 reports) | 18:09Z | about 18:25Z | running | not yet |
-| ae32698a | citation checker | sonnet | cites/times in 10 re-edited FINDINGS rows | 18:09Z | about 18:20Z | running | not yet |
+| ae32698a | citation checker | sonnet | cites/times in 10 re-edited FINDINGS rows | 18:10Z | about 18:20Z | running | not yet |
+| af3084cb | fixer | sonnet | Q31 r28 fixes, adds items 136/137 | 18:11Z | about 18:30Z | running | not yet |
+| a4320843 | fixer | sonnet | FINDINGS/LEDGER r22 fixes (r23 reader) | 18:12Z | about 18:30Z | running | not yet |
+| a52cb486 | reviewer comprehension | sonnet | patch-copies r18 stranger read | 18:13Z | about 18:22Z | running | not yet |
+| acce19e7 | reviewer codebase-details | sonnet | patch-copies r18 shell/SQL read | 18:13Z | about 18:22Z | running | not yet |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
-1. Q31 edit pass (r28 readers + F-011/one-database questions + item 26 path:2) after a2dde29a reports
+1. Save and fix patch-copies r18 reader reports (uncapped)
 2. F8 fixer (uncapped) after evidence runner a55f209a: reviewer r12 M1-M3
-3. Verify and review plan-files, patch-copies, REVIEW.md, RW/CT fixer outputs
+3. Verify and review plan-files, REVIEW.md, RW/CT, Q31, FINDINGS fixer outputs
 4. drift-007-r3 refresh before FINAL
 5. Questions for lead (REVIEW.md:77 move, builder session name, second-send item)
 
