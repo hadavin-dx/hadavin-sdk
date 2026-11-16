@@ -1,5 +1,12 @@
 # REPORT from core-hardening (newest on top, UTC and IST)
 
+## STATUS 07:59 UTC / 13:29 IST: ORDER 005 task A, ORDER 006 parallel; plan v4 fixed; evidence A1-A3 landed; reviewers running
+- Plan round 2 done: 0 Blockers (design 12 Major, readiness 7 Major); all applied as v3/v4 rulings (plan-resolve-2.md). No plan round 3.
+- Done: evidence-A1 (17 findings), A2 (8 flows), A3 (patches apply and rebuild). Early facts, unjudged: F-002 and F-008 patches apply cleanly; cumulative rebuild changes saveData settings in all 8 files vs committed (baseline not yet separated).
+- Agents running (all sonnet): A2b flow supplement (runner), A3b baseline and pristine patch checks (runner), A4 pair diffs and referrers (runner), R1 egm-codebase-details (citations, spot-check, missed items), R4 egm-comprehension (wording).
+- Critical path: A2b+A3b -> R2 egm-design (idempotency, patches vs take); A4 -> R3 egm-zoom-out (cut list, one place per job). Then resolve, REVIEW.md, CORRECTIONS.md, LEDGER-ROWS.md, FINAL, push. Container load low (4 cores, 14 GB free).
+- Task B waits for A to be pushed.
+
 ## STATUS 07:56 UTC / 13:26 IST: plan round 1 resolved; REVIEW-PLAN v2 written; plan round 2 next
 - Plan reviewers P1a (egm-design: 2 Blocker, 10 Major) and P1b (egm-implementation-readiness: 0 Blocker, 6 Major) are CLOSED. Findings saved as plan-review-1a.md, 1b.md. Plan v2 applies them (pinned sha 35235ac, 17 CHECK findings named, patch checks run in a copy, 3 evidence runners that only record, verdict rubric).
 - Register: no agent running now. Next: plan round 2 (egm-review-loop), then E1-E3 evidence runners.
