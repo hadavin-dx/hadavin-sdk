@@ -1,0 +1,191 @@
+at1|kq01zv|wm01xd|LS
+at2|kq02zv|wm02xd|LS
+at3|kq03zv|wm03xd|LS
+at4|kq04zv|wm04xd|LS
+at5|kq05zv|wm05xd|LS
+at6|kq06zv|wm06xd|LS
+at7|kq07zv|wm07xd|LS
+sl1|kq08zv|wm08xd|LS
+sl2|kq09zv|wm09xd|LS
+sl3|kq10zv|wm10xd|LS
+sl4|kq11zv|wm11xd|LS
+sl5|kq12zv|wm12xd|LS
+sl6|kq13zv|wm13xd|LS
+sl7|kq14zv|wm14xd|LS
+sc1|kq15zv|wm15xd|LS
+sc2|kq16zv|wm16xd|LS
+sc3|kq17zv|wm17xd|LS
+sc4|kq18zv|wm18xd|LS
+sc5|kq19zv|wm19xd|LS
+sc6|kq20zv|wm20xd|LS
+sc7|kq21zv|wm21xd|LS
+cm1|kq22zv|wm22xd|LS
+cm2|kq23zv|wm23xd|LS
+cm3|kq24zv|wm24xd|LS
+cm4|kq25zv|wm25xd|LS
+cm5|kq26zv|wm26xd|LS
+cm6|kq27zv|wm27xd|LS
+cm7|kq28zv|wm28xd|LS
+sp1|kq29zv|wm29xd|LS
+sp2|kq30zv|wm30xd|LS
+sp3|kq31zv|wm31xd|LS
+sp4|kq32zv|wm32xd|LS
+sp5|kq33zv|wm33xd|LS
+sp7|kq34zv|wm34xd|LS
+up1|KQ35ZV|WM35XD|LS
+up2|KQ36ZV|WM36XD|LS
+up3|KQ37ZV|WM37XD|LS
+up4|KQ38ZV|WM38XD|LS
+up5|KQ39ZV|WM39XD|LS
+up6|KQ40ZV|WM40XD|LS
+up7|KQ41ZV|WM41XD|LS
+dg1|484271|334295|LS
+dg2|484371|334395|LS
+dg3|484471|334495|LS
+dg4|484571|334595|LS
+dg5|484671|334695|LS
+dg6|484771|334795|LS
+dg7|484871|334895|LS
+name secretValue 1|kq49zv|wm49xd|LS
+name secretValue 2|kq50zv|wm50xd|LS
+name secretValue 3|kq51zv|wm51xd|LS
+name tokenString 1|kq52zv|wm52xd|LS
+name tokenString 2|kq53zv|wm53xd|LS
+name tokenString 3|kq54zv|wm54xd|LS
+name passwordHash 1|kq55zv|wm55xd|LS
+name passwordHash 2|kq56zv|wm56xd|LS
+name passwordHash 3|kq57zv|wm57xd|LS
+name authTokenValue 1|kq58zv|wm58xd|LS
+name authTokenValue 2|kq59zv|wm59xd|LS
+name authTokenValue 3|kq60zv|wm60xd|LS
+name keyValue 1|kq61zv|wm61xd|LS
+name keyValue 2|kq62zv|wm62xd|LS
+name keyValue 3|kq63zv|wm63xd|LS
+name secretdata 1|kq64zv|wm64xd|LS
+name secretdata 2|kq65zv|wm65xd|LS
+name secretdata 3|kq66zv|wm66xd|LS
+name cookie 1|kq67zv|wm67xd|LS
+name cookie 2|kq68zv|wm68xd|LS
+name cookie 3|kq69zv|wm69xd|LS
+name session_id 1|kq70zv|wm70xd|LS
+name session_id 2|kq71zv|wm71xd|LS
+name session_id 3|kq72zv|wm72xd|LS
+name sessionId 1|kq73zv|wm73xd|LS
+name sessionId 2|kq74zv|wm74xd|LS
+name sessionId 3|kq75zv|wm75xd|LS
+name signature 1|kq76zv|wm76xd|LS
+name signature 2|kq77zv|wm77xd|LS
+name signature 3|kq78zv|wm78xd|LS
+name hmac 1|kq79zv|wm79xd|LS
+name hmac 2|kq80zv|wm80xd|LS
+name hmac 3|kq81zv|wm81xd|LS
+name dsn 1|kq82zv|wm82xd|LS
+name dsn 2|kq83zv|wm83xd|LS
+name dsn 3|kq84zv|wm84xd|LS
+name webhookUrl 1|kq85zv|wm85xd|LS
+name webhookUrl 2|kq86zv|wm86xd|LS
+name webhookUrl 3|kq87zv|wm87xd|LS
+name salt 1|kq88zv|wm88xd|LS
+name salt 2|kq89zv|wm89xd|LS
+name salt 3|kq90zv|wm90xd|LS
+name otp 1|kq91zv|wm91xd|LS
+name otp 2|kq92zv|wm92xd|LS
+name otp 3|kq93zv|wm93xd|LS
+name certFile 1|kq94zv|wm94xd|LS
+name certFile 2|kq95zv|wm95xd|LS
+name certFile 3|kq96zv|wm96xd|LS
+name Passw0rd 1|kq97zv|wm97xd|LS
+name Passw0rd 2|kq98zv|wm98xd|LS
+name Passw0rd 3|kq99zv|wm99xd|LS
+yaml header 1|kq01yb|wm01yc|S
+yaml header 2|kq02yb|wm02yc|S
+yaml header 3|kq03yb|wm03yc|S
+yaml header 4|kq04yb|wm04yc|S
+yaml header 5|kq05yb|wm05yc|S
+yaml header 6|kq06yb|wm06yc|S
+yaml header 7|kq07yb|wm07yc|S
+yaml header 8|kq08yb|wm08yc|S
+yaml header 9|kq09yb|wm09yc|S
+yaml header 10|kq10yb|wm10yc|S
+yaml multi-line quoted|kq91mq|wm91mq|M
+yaml multi-line plain|kq92mp|wm92mp|M
+big container line 120|kq120cz|kq150cz|A
+mysql|kq93mr|wm93mr|LS
+sshpass|kq94ms|wm94ms|LS
+xml attribute pair|kq96mu|wm96mu|LS
+netrc|kq97mv|wm97mv|LS
+Passw0rd list|kq98mw|wm99mx|LS
+20 hex characters in a triple-quote body|a1b2c3d4e5f6|b7b8c9d0|LA
+web address only|kq90pw|wm90pw|LS
+web address password with an at sign|kq91pw|wm91pw|LS
+private key block opener with the body on the same line|kq92pk|wm92pk|S
+yaml name at the start of a line hides the whole rest|kq80ya|wm80ya|S
+yaml quoted value at the start of a line|kq81yb|kq81yb|S
+web address with an empty user part and a host without a dot|zq101v|xm101d|LS
+web address amqp, empty user part|zq102v|xm102d|LS
+web address without a scheme, empty user part|zq103v|xm103d|LS
+web address, password holding a slash|zq104v|xm104d|LS
+web address whose user part is the token (no colon)|zq105v|xm105d|LS
+web address ssh, empty user part|zq106v|xm106d|LS
+docker login -p|zq107v|xm107d|LS
+redis-cli -a|zq108v|xm108d|LS
+ldapsearch -w|zq109v|xm109d|LS
+zip -P|zq110v|xm110d|LS
+7z -pVALUE|zq111v|xm111d|LS
+unrar -pVALUE|zq112v|xm112d|LS
+htpasswd -b|zq113v|xm113d|LS
+htpasswd -nb|zq114v|xm114d|LS
+smbclient -U user%password|zq115v|xm115d|LS
+openssl -k|zq116v|xm116d|LS
+echo value piped into a login|zq117v|xm117d|LS
+skopeo --src-creds|zq118v|xm118d|LS
+sudo docker login -p, more after it|zq119v|xm119d|LS
+unknown command, shape rule -p|zq120v|xm120d|LS
+wrapped assignment, bracket opened and closed|zq121v|xm121d|M
+assignment continued with a backslash|zq122v|xm122d|M
+list opened after a secret name|zq123v|xm123d|M
+command substitution opened after a secret name|zq124v|xm124d|M
+call opened on the line and closed two lines later|zq125v|xm125d|M
+secret inside a wrapped call|zq126v|xm126d|M
+wrapped assignment with a grep prefix|zq127v|xm127d|M
+zero-width space inside a name (assignment)|zq128v|xm128d|M
+zero-width space inside a quoted JSON name|zq129v|xm129d|M
+letter with an accent inside a name|zq130v|xm130d|M
+name made only of non-ASCII letters|zq131v|xm131d|M
+secret at the start of a 30000-character line|zq132v|xm132d|M
+opaque string cut by dots|Kq133ZvAb|Pq133RsDf|A
+opaque string cut by slashes (25 characters)|Kq134ZvAb|Pq134RsD|A
+escaped quotes: name and string value|zr201v|xn201d|LS
+escaped quotes: name and plain value|zr202v|xn202d|LS
+escaped single quotes: name and value|zr203v|xn203d|LS
+JSON key written with a unicode escape|zr204v|xn204d|LS
+password flag after &&|zr205v|xn205d|LS
+password flag after a pipe|zr206v|xn206d|LS
+password flag inside $( )|zr207v|xn207d|LS
+password flag, command given with a path|zr208v|xn208d|LS
+password flag after a variable assignment|zr209v|xn209d|LS
+password flag on a continuation line|zr210v|xn210d|LS
+password flag, quoted value with a space|zr211v|xn211d|LS
+glued name DBPASS|zr212v|xn212d|LS
+glued name ROOTPW|zr213v|xn213d|LS
+config line requirepass|zr214v|xn214d|LS
+config line masterauth|zr215v|xn215d|LS
+session id name jsessionid|zr216v|xn216d|LS
+XML element text|zr217v|xn217d|LS
+value that starts with an angle bracket|zr218v|xn218d|LS
+comparison of a password with a text|zr219v|xn219d|LS
+name := value in the middle of a line|zr220v|xn220d|LS
+name := value inside braces|zr221v|xn221d|LS
+name := unquoted value|zr222v|xn222d|LS
+SQL IDENTIFIED BY|zr223v|xn223d|LS
+second text after a hidden one|zr224v|xn224d|LS
+closing bracket inside a mid-line value|zr225v|xn225d|LS
+web address, token as user part, host without a dot|zr226v|xn226d|LS
+web address with escaped slashes|zr227v|xn227d|LS
+web address with escaped slashes, no colon|zr228v|xn228d|LS
+user:password@host without a scheme|zr229v|xn229d|LS
+Bearer value with a hash sign|zr230v|xn230d|LS
+Bearer value of 5 characters|kq7z2|kq7z2|LS
+echo piped into sudo -S|zr231v|xn231d|LS
+echo piped into kinit|zr232v|xn232d|LS
+echo piped into ssh-add|zr233v|xn233d|LS

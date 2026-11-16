@@ -31,7 +31,7 @@ function blob(tok,   n, c) {
   n = length(tok)
   if (n < 16) return 0
   if (tok !~ /[0-9]/ || tok !~ /[A-Za-z]/) return 0
-  if (n < 240) return (tok ~ /^[0-9a-fA-F]+$/) ? 1 : 0     # 16 to 23 characters: hidden only when all hex (hex keys, short hashes of keys)
+  if (n < 24) return (tok ~ /^[0-9a-fA-F]+$/) ? 1 : 0     # 16 to 23 characters: hidden only when all hex (hex keys, short hashes of keys)
   if (tok ~ /\//) {
     c = substr(tok, 1, 1)
     if (c == "/" || c == "." || c == "~") return -1

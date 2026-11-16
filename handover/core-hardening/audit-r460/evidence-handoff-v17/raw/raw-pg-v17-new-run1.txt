@@ -20,6 +20,7 @@ PASS K m5: with the record unwritable, switching ON still works  [err=None]
 PASS K m5: with the record unwritable, switching OFF is refused (fail closed) and the switch stays ON  [err=42P01]
 PASS K m5: with the record writable again a switch OFF is recorded (1 row)  [1]
 CONTROL-OK (the new check fails on v16) K m5: v16 file: switching ON with the record unwritable  [err=42P01]
+PASS H1 m4: with no held file, a positive reserve (INSERT ... ON CONFLICT branch) on a NaN row RETURNS NaN, so the code check after RETURNING is needed in the INSERT branch too  [NaN]
 PASS G0 the four DB-3 functions are SECURITY DEFINER, owned by the non-superuser migration role, search_path pg_catalog, pg_temp  [[('migr17', False, True, ['search_path=pg_catalog, pg_temp'])]]
 PASS G0 PUBLIC has no EXECUTE on any of them
 PASS G1 runtime role: direct INSERT into spend refused 42501
@@ -48,5 +49,5 @@ PASS G10 temporary tables named spend, spend_month, kill_switch plus search_path
 PASS G11 DB-1 default, DB-2 and DB-3 apply together through the real migrate() (names do not clash)  [['0006_nn', '0007_dec', '0008_guard']]
 CONTROL-OK (the new check fails on v16) G1/G4 v16 design: the runtime role zeroes a settled total of 10 by direct UPDATE  [total is 0 (the exposure of security major M1)]
 CONTROL-OK (the new check fails on v16) G9 v16 design: the runtime role switches the kill switch OFF and picks the `by` text  [(False, 'chosen-by-caller')]
-SUMMARY 48 of 48 checks passed
+SUMMARY 49 of 49 checks passed
 rc=0

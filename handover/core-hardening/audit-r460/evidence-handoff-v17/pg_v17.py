@@ -94,6 +94,14 @@ for tag, folder in (("v17", H17), ("v16", H16)):
     else:
         control("K m5: v16 file: switching ON with the record unwritable", on_err is not None, f"err={on_err}")
 
+
+# ------------------------------------------------------------------ H: security minor m4 (the INSERT branch can return a bad total too)
+db = "h_" + secrets.token_hex(3); build(db, [])
+mgh = psycopg.connect(dsn("migr17", db), autocommit=True)
+mgh.execute("INSERT INTO spend (agent_id, day, usd) VALUES ('n', %s, 'NaN')", (D,))
+r = mgh.execute("INSERT INTO spend (agent_id, day, usd) VALUES ('n', %s, 1) ON CONFLICT (agent_id, day) DO UPDATE SET usd = spend.usd + EXCLUDED.usd RETURNING usd", (D,)).fetchone()[0]
+check("H1 m4: with no held file, a positive reserve (INSERT ... ON CONFLICT branch) on a NaN row RETURNS NaN, so the code check after RETURNING is needed in the INSERT branch too", r.is_nan(), str(r))
+
 # ------------------------------------------------------------------ G: DB-3 prototype, runtime role has SELECT only plus EXECUTE
 def apply_grants(db, rt_exec=True):
     mg = psycopg.connect(dsn("migr17", db), autocommit=True)
