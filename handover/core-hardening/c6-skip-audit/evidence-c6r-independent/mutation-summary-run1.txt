@@ -1,0 +1,45 @@
+/home/user/hadavin-sdk/handover/core-hardening/c6-skip-audit/evidence-c6r-independent/mutate_c6r.py:39: DeprecationWarning: 'count' is passed as positional argument
+  ls[k] = re.sub(r"(NOT APPLIED[^|]*\| )(handover/\S+)", lambda mm: mm.group(1) + fn(mm.group(2)), l, 1)
+/home/user/hadavin-sdk/handover/core-hardening/c6-skip-audit/evidence-c6r-independent/mutate_c6r.py:97: DeprecationWarning: 'count' is passed as positional argument
+  M["34-IST-dropped-in-new-text"] = "\n".join(ls[:k] + [l[:j] + re.sub(r" = \d\d:\d\d IST", "", l[j:], 1)] + ls[k + 1:])
+01-weekday-Wed18-to-Tue                    CAUGHT    W1 every weekday+day string is right for
+02-weekday-Mon23-to-Tue                    CAUGHT    W1 every weekday+day string is right for
+03-weekday-Wed25-to-Thu                    CAUGHT    W1 every weekday+day string is right for
+04-IST-dropped-money-stop                  CAUGHT    T1 every HH:MM UTC has its IST (+5:30) o
+05-IST-arith-wrong                         CAUGHT    T1 every HH:MM UTC has its IST (+5:30) o; T2 every explicit UTC = IST pair is +5:3
+06-IST-wrong-in-section0                   CAUGHT    T1 every HH:MM UTC has its IST (+5:30) o; T2 every explicit UTC = IST pair is +5:3
+07-count-49-ready-to-48                    CAUGHT    N4 prose 'N ready (box)' always 49 (1 fo
+08-wave1-85-to-84                          CAUGHT    N4 prose 'wave 1 N rows' always 85 (1 fo
+09-TOTAL-line-ready-50                     CAUGHT    N6 section 3b TOTAL line says 94 / ready
+10-defaults-36-to-37                       CAUGHT    N4 prose 'N apply on the default' always
+11-94-rows-to-93-in-box                    CAUGHT    N4 prose '94 rows' always 94 (2 found)
+12-status-ready-to-default-row1            CAUGHT    R1 94 rows; R2 ids are exactly 1..94 with no duplica; N1 recount 94 = ready 49 + defaults 36 +; N3 wave 1 = 85 by recount; N7 printed lists of the 49 ready rows
+13-table-row-50-deleted                    CAUGHT    R1 94 rows; R2 ids are exactly 1..94 with no duplica; N1 recount 94 = ready 49 + defaults 36 +; N3 wave 1 = 85 by recount; N8 rows over 10 files sum to 94
+14-duplicate-id-50-as-49                   CAUGHT    R2 ids are exactly 1..94 with no duplica
+15-old-text-one-char-row40                 CAUGHT    S1 old text once on stated line (94 rows; S2 rows apply in table order on copies
+16-line-number-shifted-row40               CAUGHT    R2b table order inside each file is high; S1 old text once on stated line (94 rows; S2 rows apply in table order on copies
+17-lease-sentence-on-caption-row21         CAUGHT    X1 lease sentence ('We make this claim o
+18-lease-sentence-on-row13                 CAUGHT    X1 lease sentence ('We make this claim o
+19-stale-58s-in-card-line                  CAUGHT    C3 every 'N words, about X s' statement ; X2 no stale '58 s' card length outside q
+20-gate-sentence-deleted                   CAUGHT    X3 the gate sentence (a step on the run 
+21-key-on-command-line-row5                CAUGHT    X4 key shapes: no AKIA/sk-/ghp_/key=... 
+22-fake-AKIA-row6                          CAUGHT    X4 key shapes: no AKIA/sk-/ghp_/key=... 
+23-card-seconds-wrong-table                CAUGHT    C1 length table: seconds = words/150*60,
+24-card-budget-wrong-table                 CAUGHT    C1 length table: seconds = words/150*60,
+25-card-total-wrong-table                  CAUGHT    C1 length table: seconds = words/150*60,
+26-card-line2-word-count                   CAUGHT    C4 box card line word counts add up to t; C5 each quoted card line has the stated 
+27-prose-90w-about-40s                     MISSED    
+28-row-number-in-viewer-cell-row3          CAUGHT    V1 no row-number reference, question lab
+29-row-number-in-new-text-row4             CAUGHT    V1 no row-number reference, question lab
+30-61.1-in-new-text-row39                  CAUGHT    X6 stopwatch figures: '60.1 to 61.9' and
+31-ready-list-item-dropped                 CAUGHT    N7 printed lists of the 49 ready rows eq
+32-waiting-row53-set-ready                 CAUGHT    R1 94 rows; R2 ids are exactly 1..94 with no duplica; N1 recount 94 = ready 49 + defaults 36 +; N2 check rows are 23,58,59 and waiting r; N8 rows over 10 files 
+33-waiting-6-to-5-in-TOTAL                 CAUGHT    N6 section 3b TOTAL line says 94 / ready
+34-IST-dropped-in-new-text                 CAUGHT    T1 every HH:MM UTC has its IST (+5:30) o; T3 inside every NEW text, each UTC time 
+35-box-wave1-85-to-89                      CAUGHT    N4 prose 'wave 1 N rows' always 85 (1 fo; N5 no stale count words 89 rows / 40 app
+36-row40-file-path-swapped                 CAUGHT    S1 old text once on stated line (94 rows; S2 rows apply in table order on copies
+37-two-rows-order-swapped                  MISSED    
+38-minute-wrong-IST                        CAUGHT    T1 every HH:MM UTC has its IST (+5:30) o; T2 every explicit UTC = IST pair is +5:3
+39-hash-secret-pk-ghp-in-prose             CAUGHT    X4 key shapes: no AKIA/sk-/ghp_/key=... 
+40-closing-card-table-words-wrong          CAUGHT    C1 length table: seconds = words/150*60,; C2 table words: lease 1 adds 25, lease 2
+TOTAL 40  CAUGHT 38  MISSED 2  other 0

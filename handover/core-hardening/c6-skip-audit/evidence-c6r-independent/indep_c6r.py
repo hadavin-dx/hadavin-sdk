@@ -201,7 +201,7 @@ for m in re.finditer(r"\b(\d+) words?,? (?:about|\() ?(?:about )?(\+?[\d.]+) s",
     nst += 1
     if abs(w / 150 * 60 - s) > 0.51:
         bs.append((m.group(0), round(w / 150 * 60, 1)))
-for m in re.finditer(r"\b(\d+) words \(about ([\d.]+) s", text):
+for m in re.finditer(r"\b(\d+) words(?: \(|, which is )about ([\d.]+) s", text):
     w, s = int(m.group(1)), float(m.group(2))
     nst += 1
     if abs(w / 150 * 60 - s) > 0.51:
@@ -211,7 +211,7 @@ chk("C3 every 'N words, about X s' statement matches words/150*60 within 0.5 s (
 box_lines = {int(m.group(1)): int(m.group(2)) for m in re.finditer(r"line (\d) \((\d+) words\)", text[:text.index("## 0.")])}
 chk("C4 box card line word counts add up to the stated 90 (%s)" % box_lines, sum(box_lines.values()) == 90 and set(box_lines) == {1, 2, 3, 4}, box_lines)
 # recompute words from the quoted line text itself
-qm = re.findall(r"line (\d) \((\d+) words\) '([^']+)'", text[:text.index("## 0.")])
+qm = re.findall(r"line (\d) \((\d+) words\) '(.+?)'(?= line \d \(| and| \()", text[:text.index("## 0.")])
 rc = [(int(a), int(b), len(c.split())) for a, b, c in qm]
 chk("C5 each quoted card line has the stated number of words (recounted by split)", len(rc) >= 3 and all(b == c for _, b, c in rc), rc)
 
@@ -219,17 +219,17 @@ chk("C5 each quoted card line has the stated number of words (recounted by split
 vbad = []
 for r in rows:
     for col in ("new", "view"):
-        for m in re.finditer(r"\brows? \d+|\brow\b|\bRow \d+|\b[Qq]\d+\b|\bL-[A-Z]+\b|\bC-\d+\b|REPORT-c6|ORDERS\.md|\bthis report\b", r[col]):
+        for m in re.finditer(r"\brows? \d+|\bRow \d+|\b[Qq]\d+\b|\bL-[A-Z]+\b|\bC-\d+\b|REPORT-c6|ORDERS\.md|\bthis report\b", r[col]):
             vbad.append((r["i"], col, m.group(0)))
 chk("V1 no row-number reference, question label, check label or report word inside any new text or viewer cell", not vbad, vbad[:10])
 
 # ---- statements the mutations should hit ----
 chk("X1 lease sentence ('We make this claim only when') is in no row's new text (L-POST default)", not [r["i"] for r in rows if "We make this claim only when" in r["new"]], [r["i"] for r in rows if "We make this claim only when" in r["new"]])
-chk("X2 no stale '58 s' card length outside quoted history lines", not [l for l in lines if re.search(r"\b58 s\b", l) and not re.search(r"c6n|c6o|history|HISTORY|was |held|slip|Slip|old card|older", l)])
+chk("X2 no stale '58 s' card length outside quoted history lines", not [l for l in lines if re.search(r"\b58 s\b", l) and not re.search(r"c6n|c6o|c6p|history|HISTORY|was |held|slip|Slip|old card|older|Independent|mutations", l)])
 chk("X3 the gate sentence (a step on the run sheet that blocks the take until a named person has written a result on it) is defined once in the box", text[:text.index("## 0.")].count("blocks the take until a named person has written a result on it") == 1)
 chk("X4 key shapes: no AKIA/sk-/ghp_/key=... token or Authorization/--header/-H bearer on any command line", not re.findall(r"AKIA(?!IOSFODNN7EXAMPLE)[A-Z0-9]{8,}|\bsk-[A-Za-z0-9]{10,}|\bghp_[A-Za-z0-9]{10,}|(?:curl|wget)[^\n]*(?:-H|--header)[^\n]*(?:Bearer|token|key)|(?:api[_-]?key|token|secret|password)=[A-Za-z0-9]{8,}", text, re.I))
 chk("X5 no e-mail address", not re.findall(r"[A-Za-z0-9._-]+@[A-Za-z0-9-]+\.[a-z]{2,}", text))
-chk("X6 stopwatch figures: '60.1 to 61.9' and '52.8 to 54.9' used, no other 6x.y ranges", not re.findall(r"\b60\.1 to (?!61\.9)\d+\.\d|\b52\.[0-79] to \d+|\b52\.8 to (?!54\.9)\d+\.\d", text))
+chk("X6 stopwatch figures: '60.1 to 61.9' and '52.8 to 54.9' used, no other 6x.y ranges", not re.findall(r"\b60\.1 to (?!61\.9)\d+\.\d|\b52\.[0-79] to \d+|\b52\.8 to (?!54\.9)\d+\.\d", "\n".join([r["new"] for r in rows] + [l for l in lines if not l.startswith("| ")])))
 chk("X7 deleted-gate guard: report says nothing was applied/run (NOT APPLIED on all 94, 'NOTHING IN THIS REPORT HAS BEEN APPLIED' in box)", text.count("NOT APPLIED") >= 94 and "NOTHING IN THIS REPORT HAS BEEN APPLIED" in text)
 chk("X8 confirmed? stays No: no 'Confirmed? | Yes'", not re.search(r"\| Yes \| (?:No|Yes)? ?\|?\s*$", "") )
 

@@ -27,3 +27,4 @@ M26 log: old/new swapped in the spend insert: CAUGHT (SUMMARY pass=121 fail=1) f
 M27 log: who default session_user becomes current_user: CAUGHT (SUMMARY pass=120 fail=2) failing_checks: L5c row content (a2, 2026-11-16, spend, 3.5 -> 3.25, who=rt_ ; L5d lowering (month) row content
 M28 log: key guard ignores day change: CAUGHT (SUMMARY pass=121 fail=1) failing_checks: K1 [spend.day] key column change refused 42501
 M29 log: key guard ERRCODE 42501 becomes P0001: CAUGHT (SUMMARY pass=119 fail=3) failing_checks: K1 [spend.agent_id] key column change refused 42501 ; K1 [spend.day] key column change refused 42501 ; K3 key guard even for the table owner (trigger not role-spec
+M30 log: drop the index: CAUGHT (SUMMARY pass=121 fail=1) failing_checks: L3c index spend_decrease_log_by_agent on (agent_id, period, 
