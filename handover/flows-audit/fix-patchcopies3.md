@@ -1,0 +1,35 @@
+# fix-patchcopies3 (fixer, uncapped security path), 2026-11-16, round 3 of patch-copies
+
+Inputs: `reviews/patchcopies-code-r3.md` (M1-M6, minors), `reviews/patchcopies-reader-r3.md` (B1-B4, M1-M6, terms, minors). Reviewer words were unverified; each cite was opened first.
+Files edited: `reviews-of-core-patches/patch-copies/README.md`, `DEAD-MAN-CHECK.md`, `A-01.patch` (two lines in the new code, one line in the new test, one hunk-header count). `C-01.patch` unchanged. No commit.
+Not done: no database started; full test run repeated only before the last two-line patch change (see below); nothing run on head except `git apply --check`.
+
+## Findings checked against source, and what changed
+- Code M2 (cites): PARTLY WRONG. The README cites were right at `b4cce5b` (`Route` :55, `Config` :316, `refused` :365, `ci.yml` :119/:88/:94, fixture `environment: dev`); the reviewer compared with head (`f05790e42`: :64/:332/:393, :181/:92/:100, `demo`). Every cite is now marked "at b4cce5b" or "at head". `C-01.patch` does fail at head (`git apply --check` exit 1, `config.py:362`; the line is `if is_live(self.environment):` at `config.py:394`). Stated in README.
+- Code M1, Reader B/M4: status line quoting `REVIEW.md:5` and item 3 (now line 62; the reviewer said 61, the file moved) added at the top of both files; both now say "ready copy, not to apply now".
+- Code M3: the "open option (b) exempt openai_compat" is replaced by the recorded C-8 decision, the exact rollout note, the missing test name (`test_a_self_hosted_model_priced_zero_is_refused_and_a_notional_price_loads`: confirmed absent from the patch), and the stage rule (`fake` is in `DEV_ONLY` at b4cce5b `table.py:593`, `DEMO_ONLY` at head).
+- Code M4: A-6 precondition (confirmed: `chain.py:243` unguarded, DELETE at :244), X-2, A-1, A-3, A-8 notes added to README; the dead-man "does not cover" now says a stuck backlog turns the step RED once A-01 is on.
+- Code M5, Reader B4: criterion renamed "no new failure"; both baseline failures named. NEW FINDING that corrects my own earlier text (first and second passes): `test_licences_are_proprietary` does NOT fail only because of missing git history; in a real clone it still fails with 10 problems in copies of other projects under `handover/promotion-inputs/` (LICENSE files of apexc, dealdesk, helios, killswitch, portal-kit, refunds, warden; pyproject of killswitch and portal-kit). `test_no_vendor_brand_string_is_tracked` fails on `handover/demo/portal/portal-design-v2.md` and `handover/BRIEF-PREAMBLE-studio-2026-11-06.md` (banned string not printed). Both need the lead (not my files); recorded as decision row 9.
+- Code M6, Reader B1-B3: full runnable recipe (clone from the GitHub repository or the local checkout, fetch the sha, mkdir with home, baseline-failed list, exit 1 expected, pass = empty diff + count line + equal exit codes, uv offline note). Recipe was executed by me in this pass in the form `run()` uses (I used `uv run --offline` and a local clone as source; I did NOT test cloning from GitHub, nor an empty uv cache).
+- Reader M1-M3, M6: "Who runs each step" table; a task/decision table in the dead-man file; psql password via `PGPASSWORD` on one command or `PGPASSFILE`, where `<host>`/`<database>` come from, where the SQL is saved; identity table numbered with a rollback column (the `PUBLIC` revoke row gets a restore recipe).
+- Reader M4: ONE decision table (9 rows: decision, who, blocks merge, default).
+- Reader M5: G5 anchor made unambiguous (line 7 is "The original module notes follow.", the paragraph is at line 9).
+- Reader terms: "words used here" box (tick, step, kind, audit kind, outbox, reconcile x3, owner x3, studio head vs lead, builder vs fixer, gate/check/pass, G2-G5, RUNG, CODE-LAST, b4cce5b vs head).
+- Minors fixed: C-01 does not protect routes built without `load_config` (C-3) and replay's `== 0` lets a negative price through (C-4): stated; exit 1 of the tick only when the store is reachable (else 4): stated; "run from any folder" removed; llm entries cite now :512-541; 3x tick period explained (slowest period, 90 for a 30-second tick); clock-skew note; hand-typed step list note; "6 new tests + 2 edits" replaced by "6 new tests, one hunk with 2 changed assertions"; `ec65e4614` text removed.
+- Code minor (A-01 test): the test for a kind without `reconcile` took `caplog` and never read it: now asserts the tick's ERROR line. `match="finite"` dependence on pydantic's wording: stated.
+- Reader minor (`%d` of `fn()`): CHECKED, my first reading was wrong: logging does not raise on `None`, it prints a logging error to stderr and the step still records success. Fixed in the patch: `int(fn())` (a kind that returns `None` now turns the step red).
+- Not changed: "the lead" vs "studio head" meanings kept as the studio's (lead = AI session, not a person); README previously called the runner "a human"; replaced.
+- Soft-lock note: `default_transaction_read_only` can be switched back by the login for its own session; stated in the identity table.
+
+## Commands and raw lines
+All in `env -i PATH=$PATH HOME=$HOME`, `uv run --offline --all-extras --group test`, Python 3.13.18, clones of the working copy fetched at b4cce5b6ae80b45125604b8295ebb35bd2ea1c2c.
+- `git apply --check` on a fresh `git archive b4cce5b` (final patch texts): `C-01 rc=0`, `A-01 rc=0`. At head (`git archive HEAD`, A-01 first text): C-01 rc=1 (`patch failed: src/hadavin_sdk/config.py:362`), A-01 rc=0.
+- Baseline (unpatched clone), `pytest -q -p no:cacheprovider -m "not live and not perf" -rf`: `2 failed, 9364 passed, 454 skipped, 26 deselected in 239.30s (0:03:59)`, exit 1.
+- Patched clone (A-01 text before the last two-line edit), same command: `2 failed, 9396 passed, 454 skipped, 26 deselected in 277.71s (0:04:37)`, exit 1; `diff baseline-failed.txt patched-failed.txt`: empty ("SAME").
+- Final patch text: `pytest -q tests/test_a01_audit_reconcile.py tests/test_c01_route_limits.py tests/test_p7_tick.py`: `73 passed`. Same two new files on the unpatched clone: `13 failed, 19 passed in 6.43s`.
+- Final patch text: `ruff check`: `All checks passed!`; `ruff format --check`: `301 files already formatted`; `ruff format --check` on the 8 touched python files: `8 files already formatted` (my first edit of A-01 had two over-long comment lines that `ruff format` would have changed; found and fixed by removing the comments); `bandit -q -r src demos tools -ll`: exit 0.
+- Grep for e-mail addresses and handles over README.md, DEAD-MAN-CHECK.md, A-01.patch, C-01.patch: only `@pytest.mark.parametrize` decorators matched; no handle, no e-mail. The G5 patch file was not recreated.
+
+## Not checked
+Database behaviour (static); a clone from the GitHub URL; an empty uv cache; the `perf` tests; the full suite on the final text of A-01.patch (only the 73 tests above); whether the two baseline failures also occur at head; a rebuilt C-01 for head; `README.md` was written by me in full (not diffed against the reviewers' wording).
+EGM: this fixer ran no EGM skill; the lead runs the next review round.

@@ -7,7 +7,7 @@ studio head; he may veto them. So: **do not apply `A-01.patch` or `C-01.patch` t
 quickly if the studio head decides to bring A-01 back or to keep the price check of C-01. `C-01.patch` as it stands still carries the token ceiling that was cut; to
 apply only the price check, delete the `max_tokens` line (hunk 1) and the `defaults.py` hunk first (see the decision table, row 2).
 
-Date of this text: 2026-11-16, third fixer pass, static for databases: no database was started.
+Date of this text: 2026-11-16, third fixer pass. Static for databases (no database was started); the tests, lint and `git apply --check` were re-run in this pass.
 
 ## Words used here (plain meanings; each word keeps this one meaning in this folder)
 | Word | Meaning here |
@@ -133,7 +133,7 @@ cp "$W/patched/tests/test_a01_audit_reconcile.py" "$W/patched/tests/test_c01_rou
 cd "$W/unpatched" && env -i PATH="$PATH" HOME="$HOME" uv run --all-extras --group test pytest -q -p no:cacheprovider \
   tests/test_a01_audit_reconcile.py tests/test_c01_route_limits.py -rf ; echo "exit=$?"     # expected exit 1
 ```
-Seen in the first pass: exit 1, `13 failed, 19 passed`. (This third pass re-ran it: see "Results".) Each failure is about behaviour, not a missing name:
+Seen in the first pass and again in the third pass: exit 1, `13 failed, 19 passed`. Each failure is about behaviour, not a missing name:
 - 6 price cases: `Failed: DID NOT RAISE ConfigError` (a price of 0 or -1 loads on old code).
 - `test_max_tokens_above_the_ceiling_is_refused`: `DID NOT RAISE ConfigError` (200_001 loads on old code).
 - `test_the_step_is_in_the_tick_list`: `'audit_reconcile' in [...]` is false.
@@ -145,7 +145,16 @@ and 16 NaN and Infinity price cases, which pydantic already refuses (pydantic 2.
 upgrade may need that one word changed). Those 16 pin today's behaviour and cannot fail on old code.
 
 ### Results of the runs of this pass (2026-11-16, third pass)
-RESULTS_PLACEHOLDER
+All numbers below were seen in this pass, in real clones checked out at `b4cce5b` (with `uv run --offline`, from a warm `uv` cache; Python 3.13.18, pydantic 2.14.1 from `uv.lock`):
+- `git apply --check` on a fresh `git archive b4cce5b` extracted into a new folder, run with `env -i`: `C-01.patch` exit 0, `A-01.patch` exit 0 (final text of both files).
+- Baseline, unpatched clone, full run: `2 failed, 9364 passed, 454 skipped, 26 deselected in 239.30s`, exit 1. Failed: `test_no_vendor_brand_string_is_tracked`, `test_licences_are_proprietary` (causes above).
+- Patched clone, full run: `2 failed, 9396 passed, 454 skipped, 26 deselected in 277.71s`, exit 1; `diff` of the two failed lists prints nothing (same two names); 9396 = 9364 + 32.
+  **Honest limit:** this full run used the text of `A-01.patch` from 10 minutes before the final one; the final text only differs by two lines (the step logs `int(fn())`; the test for a kind
+  without `reconcile` asserts the tick's ERROR line). After that change I re-ran only `tests/test_a01_audit_reconcile.py`, `tests/test_c01_route_limits.py` and `tests/test_p7_tick.py`: `73 passed`.
+  The full run was not repeated on the final text.
+- Gates on the final patched clone: `ruff check`: `All checks passed!`; `ruff format --check`: `301 files already formatted`; `ruff format --check` on the 8 touched python files: `8 files already formatted`;
+  `bandit -q -r src demos tools -ll`: exit 0.
+- New tests on the unpatched clone (only the two new test files copied in), final text: `13 failed, 19 passed in 6.43s`.
 
 ## What each patch is
 | Patch | Files | RUNG (tool ladder) | Tests added |
