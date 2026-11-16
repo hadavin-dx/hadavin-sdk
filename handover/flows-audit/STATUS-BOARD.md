@@ -1,13 +1,13 @@
-UPDATED_UTC: 2026-11-16T10:45:15Z
+UPDATED_UTC: 2026-11-16T10:47:17Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
 ITEMS_OPEN: 4
-PERCENT: 81
-AGENTS_RUNNING: 2
-CAPACITY: 1.71 load of 4 cores, mem 0/15 GB, RAM 870/16087 MB, disk 27G free of 252G, top3 327M /tmp/core-venv 645M /tmp/claude-0 871M /tmp/f3m , agents 2 (light+heavy per list)
+PERCENT: 83
+AGENTS_RUNNING: 3
+CAPACITY: 0.63 load of 4 cores, mem 0/15 GB, RAM 882/16087 MB, disk 27G free of 252G, top3 327M /tmp/core-venv 646M /tmp/claude-0 871M /tmp/f3m , agents 3 (light+heavy per list)
 INTERRUPTED: none
 FAILED: ROLES: PARKED by lead (client build, after video, no new lanes). Script r6: independent rerun 71 tests OK, gate rc 0, but 7 of 15 random mutants survive (lines 141,145,147,280,358,371,417); not fixed because parked; v4 doc security Blocker (Part C unguarded) unfixed
 claims: r5 counts independently rerun and match (113/69/48/28/69=327, 79 rows); BUT 37 Table 2 rows (41-77) have no LIVE/OUT tag; example.test vs example.com rows 2 and 5 rest on OWNER-STEPS v3 only; row 33 archive step unproven; 2 wrong cites (A-097, A-068); r6 fix pending (tags, desk-repo traces, cites)
@@ -35,8 +35,8 @@ claims r8 independent evidence: counts and paste checker agree (327; 124/69/54/2
 F8 r5 independent evidence: 10 of 25 mutants survive (3 real gaps: lines 519, 62, 1508; 6 text only), non-UTF8 --ddl exit 3 internal error not 2, non-UTF8 flow file silent; --ddl missing alert columns only WARN exit 0; local ruff 0.16.9 vs repo pin 0.17.1; run_all rc 0 twice; r6 fixer running
 citation check patches r3: unsourced relayed figures stay labelled relayed (144.3 s n=1 at 120 s, 780 s, 8 of 18, T13 database kill); V7 L12 stale 'B90 n=2'; K4/K5 not-run scope v3 only; reviewer errors on AF1 and evidence file corrected by me
 zoom-out: queue may be over-built for one take; 3 take risks unowned (HubSpot id shape before rehearsal, test vs production webhook URL, clean-up of saved runs); asked lead in Q17, queue unchanged
-NEXT: F3 r7 and F8 r6 fixers; Q14 and Q17 wait for lead
-PUSHED_UTC: 2026-11-16T10:45:15Z
+NEXT: F3 r7 evidence + security review; F8 r6 fixer; Q14 Q17 wait
+PUSHED_UTC: 2026-11-16T10:47:17Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -56,8 +56,9 @@ PUSHED_UTC: 2026-11-16T10:45:15Z
 | id | role | model | what it does | started UTC | expected end UTC | % | state | last output |
 |---|---|---|---|---|---|---|---|---|
 | f3ev6 | F3 r6 evidence runner | sonnet | independent rerun, mutants on new code, e2e | 10:21 | 10:51 | 5 | running | fill_flows/evidence-f3-r6.md |
-| f3fix7 | F3 round 7 fixer | sonnet | security review 4 Majors, 5 surviving mutants, noqa | 10:35 | 11:05 | 5 | running | fill_flows/fix-f3-r7.md |
 | f8fix6 | F8 round 6 fixer | sonnet | 2 Blockers + 10 Majors (false all-clear), 3 real mutant gaps, non-UTF8 | 10:46 | 11:15 | 5 | running | flow-check/fix-f8-r6.md |
+| f3ev7 | F3 r7 evidence runner | sonnet | independent rerun, 25 new mutants, hostile inputs | 10:50 | 11:20 | 5 | running | fill_flows/evidence-f3-r7.md |
+| f3sec5 | F3 r7 security reviewer | sonnet | fresh security review of snapshot | 10:50 | 11:15 | 5 | running | (inline) |
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
