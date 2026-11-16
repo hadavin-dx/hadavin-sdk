@@ -10,7 +10,7 @@ Words used below: a **flow file** is one exported n8n workflow (a `.json` text f
 3. **Decide the open points** below (no password on two web addresses; environment variables inside steps).
 4. **Try one import into n8n.** Nothing here proves that n8n accepts these files.
 5. **Start state:** use lead keys and e-mail addresses never used before (new ones on every retake); before the first send the table has 0 rows for them, the mailbox and the n8n run list are empty or filtered to the take, and a HubSpot search finds nothing.
-6. **Proof words:** 'processed once' is shown by exactly 1 mail, the table row in state done and the second POST answered in under 10 s. Do not say 'the CRM was called once' (the CRM step upserts on the e-mail, so a contact count proves nothing).
+6. **Proof words:** 'processed once' is shown by exactly 1 mail after the stated wait plus the table row in state done (FIX-PLAN rule (b)). The time of the second reply is logged, but it is not proof (Q25-3). Do not say 'the CRM was called once' (the CRM step upserts on the e-mail, so a contact count proves nothing).
 7. **Timing:** write down the run list you expect and when the second POST is sent; rehearse that exact choice. Time Qualify and the CRM write against the 45 s lease.
 8. **Screens:** list the screens shown but not opened; made-up addresses only; watch the whole recording once for personal data and secrets before publishing. An extra or stray mail means stop and retake; the lead calls an abort.
 9. **Rows left in the table (gate 2 r2):** run `select count(*) from mf_leads where state not in ('done','review','unknown','failed')`; it must be 0 for the whole table, not only the take's keys, because the recovery flow re-claims old stuck rows and sends their mail.
