@@ -1,0 +1,23 @@
+price line 0.28                    rc=1 CAUGHT PROBLEM: [A] price line Price per call at full size: U is 0.28, expected 0.27
+expected total 0.82                rc=1 CAUGHT PROBLEM: [A] price line Expected total: USD ([\d.]+) \ is 0.82, expected 0.81
+renamed placeholder                rc=1 CAUGHT PROBLEM: [A] placeholder spelled differently or unknown: 'runname'
+Open list form missing row         rc=1 CAUGHT PROBLEM: note: Open 91 does not exist (70 rows)
+paraphrased cancel rule            rc=1 CAUGHT PROBLEM: [A] cancel-rule fragment ['with all filters off', 'press the cancel button', 'steps 2 to 4'] outside 
+pointer 7.8 -> 7.6 (open)          rc=1 CAUGHT PROBLEM: open: pointer 7.6 has no topic word of its target nearby: ...cels the key right after typing  (sheet 
+pointer 8.4 -> 8.3 (note)          rc=1 CAUGHT PROBLEM: note: pointer 8.3 has no topic word of its target nearby: ...e hubspot app secret revoke (g42, sheet 
+pointer R7 -> R9 (sheet)           rc=1 CAUGHT PROBLEM: sheet: pointer R9 has no topic word of its target nearby: ...d ; in the browser do only the card and 
+wrong sum check 3                  rc=1 CAUGHT PROBLEM: [A] check 3 worked example sum wrong
+wrong IST pair                     rc=1 CAUGHT PROBLEM: [A] deadline phrase count 1
+wrong weekday                      rc=1 CAUGHT PROBLEM: [A] weekday Tue 23
+gate id in sheet                   rc=1 CAUGHT PROBLEM: [A] sheet cites a gate id
+banned word                        rc=1 CAUGHT PROBLEM: banned words found or list unread
+verb send                          rc=1 CAUGHT PROBLEM: [A] banned verb or old word 'Send' near 'its value). The lead restarts the model progr'
+R10 without card first             rc=1 CAUGHT PROBLEM: [A] R10 without "key alive: card first": g text is in that setting, then FREEZE (R10). Any other line
+860 s as 14.4                      rc=1 CAUGHT PROBLEM: note lacks '14.33'
+tolerated list 5 not 6             rc=1 CAUGHT PROBLEM: [A] tolerated item 'HubSpot private-app' missing in open list
+yes sentence outside charset       rc=1 CAUGHT PROBLEM: [A] yes charset ['!']
+unlisted set phrase                rc=1 CAUGHT PROBLEM: [A] card step 5 phrase
+card step missing                  rc=1 CAUGHT PROBLEM: [A] card steps 5
+in any case cites Q25 only         rc=1 CAUGHT PROBLEM: in any case cites Q25: tact (G38), the end-date refusal (G16; no run on Mon 23 Nov in any case, Q25: 
+older key bracket clause           rc=1 CAUGHT PROBLEM: [A] yes charset ['[']
+planted 22, caught 22, missed/setup-failed 0

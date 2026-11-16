@@ -11,7 +11,7 @@
 - P6: note intro says section numbers are the note's own unless written "sheet section".
 - P7: 860 seconds = 14.33 minutes, marked as the lead's reading of the program's start margin.
 - P8: key-save line reworded: one Ctrl-D leaves the prompt waiting; spaces around a pasted key are trimmed; a multi-line paste is UNVERIFIED.
-- P9: check-v23.py now catches wrong price lines, renamed placeholders, the list form "Open 2 and 91", a paraphrased cancel rule, pointers to the wrong target, and a wrong check-3 sum. Planted runs are in evidence-v23.
+- P9: check-v23.py now catches wrong price lines, renamed placeholders, the list form of Open pointers with a missing row, a paraphrased cancel rule, pointers to the wrong target, and a wrong check-3 sum. Planted runs are in evidence-v23.
 - The cancel rule is restated outside the card only as "do the card".
 - Card is one self-contained page with blanks, button words, `date -u`, last resort.
 - Terms defined before use; "take" renamed "test"; one verb "tell"; "still works" as the lead's word became "revoke again".

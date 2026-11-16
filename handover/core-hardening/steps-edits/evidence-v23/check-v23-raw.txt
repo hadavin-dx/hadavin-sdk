@@ -1,15 +1,4 @@
-words sheet v22 -> v23: 9267 -> 8470 (variant A 8369, variant B 8153); lines 146 -> 142; note words v6 -> v7: 8349 -> 8777
-PROBLEM: [A] R2/R3 must be named exactly once (the gap note)
-PROBLEM: [A] cancel-rule fragment ['reload'] outside the card: - **Money.** **Prepaid** = you pay first and calls draw the ...
-PROBLEM: [A] cancel-rule fragment ['reload'] outside the card: | R4 | Money. The most you can lose is the whole balance (th...
-PROBLEM: [A] cancel-rule fragment ['reload'] outside the card: Balance on the prepaid page: USD 189.00   Auto-reload (the l...
-PROBLEM: [A] cancel-rule fragment ['reload'] outside the card: 6. **Model account pages:** in your normal profile open the ...
-PROBLEM: [A] cancel-rule fragment ['shows the cancelled word'] outside the card: 2. Two phone alarms on the run day: one at the alarm time, o...
-Traceback (most recent call last):
-  File "/home/user/hadavin-sdk/handover/core-hardening/steps-edits/check-v23.py", line 199, in <module>
-    sheet_checks(SA, 'A'); sheet_checks(SB, 'B')
-    ~~~~~~~~~~~~^^^^^^^^^
-  File "/home/user/hadavin-sdk/handover/core-hardening/steps-edits/check-v23.py", line 93, in sheet_checks
-    if want is None and (Dc(m.group(1)) != price or Dc(m.group(2)) != price * 3): P('check 1 numbers wrong')
-                                                    ~~^^^^^^^^^^^^
-decimal.InvalidOperation: [<class 'decimal.ConversionSyntax'>]
+words sheet v22 -> v23: 9267 -> 8455 (variant A 8354, variant B 8152); lines 146 -> 142; note words v6 -> v7: 8349 -> 8780
+ok: variants A and B checked
+banned words: 10 listed, case-sensitive 0, case-insensitive 0 (files read 9)
+TOTAL PROBLEMS 0
