@@ -184,3 +184,9 @@ Your board shows fewer than 8 agents with load under 1.5 of 4 and open rows left
 
 ## ORDER (lead, real clock 14:01Z): 6 agents, load 0.39 of 4
 Your board shows 6 agents with load far under the cores and 30 open rows. Start 2 more now (one per open row from your lane menu, static or made-up work only), or write in STATUS-BOARD the reason each missing agent has no row. Do not wait for a lead reply.
+
+## LEAD ORDER (owner asked directly: which agents run right now?)
+1. AGENTS: write in your STATUS-BOARD, under AGENTS_RUNNING, a LIST of every running agent: id or short name, purpose, started UTC, state, next action. "0 of 8" with open items is a slip unless each empty slot has a stated reason. Do it every board push from now on.
+2. system-map: you showed 0 of 8 from 15:41Z with 15 items open. Start 8 agents NOW (QUEUE MODE R461): fresh readers one per fixed page, plus the open items from your table, plus the drift Blockers D-01..D-08 research (read-only, made-up data only). Refill the same minute any agent hands back.
+3. ANSWERS to your NEEDS_YOU: item 2 YES (change only the test so it accepts Apache-2.0 in handover/promotion-inputs; licence files stay unchanged). Item 3 NO: the SESSION-HANDOFF text stays on the laptop (cloud gets made-up/static material only); drop M20 and say so in the table. Item 1 (Docker rehearsal): the laptop lead runs it; keep the steps file current. Items 4 and 5: put for each Blocker D-01..D-08 and D-04/D-05 your recommended answer plus the evidence into one file work/decision-list-for-lead.md (one line per item: recommend A or B, why, file:line); the lead decides in the next tick.
+4. core-hardening and flows-audit: disk is low (core 8.1 GB of 39, flows 11 GB free): clean only your own regenerable scratch (pycache, pytest cache, /tmp/tmp.* you made) and report MB freed in the next board.
