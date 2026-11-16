@@ -1,0 +1,5 @@
+# fix-rwct7 (round 12z citation lane, RW/CT)
+Backup: /tmp/claude-0/-home-user/9d809a30-0790-5792-93c1-8c5abd22e849/scratchpad/bak-rwct7/. Script: scratchpad/rwct7.py (exact replacements, each with a count check). Nothing committed; nothing ran in n8n.
+Majors fixed: (1) A-021 old text is now only the words between the quote marks (lead-in and full stop stay), new string has no full stop; (2) A-021 and CT say lead record; (3) B-045 string starts In the prototype (stage_server.py), note on PLAN:77 and :81; (4) B-219 and B-003b HELD with A-016f (status row 35, notes, CT); (5) B-003a says not stopped by the claim row today; B-003b old text now covers the untraced clauses and its new string is the scoped sentence (aligned with B-219).
+Minors fixed: A-077b relayed-count wording added (RW and CT); A-021 scope note (section 7, later video; A-019a and A-023a edit other sentences of R:90); B-046 old text includes the leading space; B-010 small letter, no full stop.
+Other copies of processed once: note added in CLAIMS-TABLE.md (before the Exactly 1 alert bullet); DECISIONS-2026-11-16.md:2 still uses the broad words, file is the lead's: next step for the lead.

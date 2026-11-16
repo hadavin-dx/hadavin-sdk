@@ -6,14 +6,16 @@
 #   1 = the checker found at least one FAIL (a definite fault in a file).
 #   2 = the checker was started wrongly (bad command line, for example the table file cannot be read).
 #   3 = the checker itself broke.
+#   5 = (round 10d) the run WOULD have been exit 0, but an environment override is active (only allowed with the test flag TAKE_CHECK_TEST=1): it is a test run, never a take check. A take check that passes is exit 0 only with NO override.
 #   4 = the checker found no FAIL, but a check this take depends on did not happen or found a mismatch: the table file demo/n8n-flows-v4/mf_leads.sql is missing, OR 0 query strings were read, OR a query uses a column or table that file does not define, OR a postgres step has no query text (its columns were not compared), OR a flow other than the recovery flow still has run saving off (the take shows the run list, so run saving must be ON: that is the case on the committed real-v5 folder until patch F-008 is applied; the take runs on the patched copy, decision Q17-4/Q18), OR the recorded accept for the recovery flow excused nothing.
 # The recovery flow (exact file name mf-recovery.json, nothing else) keeps run saving off on purpose: it fires every 30 s and the one video makes no recovery claim (decision 4). It is printed as an ACCEPTED line, not a WARN. No blanket accept exists in this script.
 # film-v5 is NOT FOR THE TAKE and is not checked here.
 # The table definition the take needs is demo/n8n-flows-v4/mf_leads.sql (lead decision, order Q16). It is looked up at that exact path only (no search for a file of the same name elsewhere).
 # Round 9 (review f8-design-r3, 4 Majors): (M1) the top block and the FINAL line print RESULT and the WARN count; the set of WARN lines is pinned in take-warns.pin (folder paths removed) and ANY change is exit 4; (M2) every flow except mf-recovery.json must have run saving exactly all / all / True (a missing settings block, a missing key or an odd word is exit 4, not only "none"/false); (M3) a key check that is ABSENT is exit 4, and when both entry flows have it the checker's F-002 content check (--patch-checks F002) runs on them; (M4) the patched copy is detected by the KeyOk node: the node:connection count 15:14 is then expected without any environment variable (12:11 for an unpatched file).
-# Round 10 (review f8-r10): (B1) --write-warn-pin refuses a file that exists (so it can never overwrite the pin in use), writes only when the run has no FAIL and a RESULT line, writes AFTER the comparison, prints the difference and always exits 4: a run that writes a pin is never a pass; a person installs the pin by hand (see README). (M1) the top block and the FINAL line print an OVERRIDES line; an environment override (TAKE_CHECK_CK, TAKE_CHECK_WARN_PIN, TAKE_CHECK_FLOWS, TAKE_CHECK_DDL, TAKE_CHECK_FORM_EXPECT) is exit 4 unless the test flag TAKE_CHECK_TEST=1 is set (only selftest and run_all.sh set it); the documented way to check another folder is the option --flows DIR, which is printed. (M3/M5) the checker FAILs a listed flow that is not a regular file; the F-002 content check also asserts the reply steps and lead_key. F-008 content check (--patch-checks F008) is NOT used here: it would turn the planted run-saving cases (exit 4 by design) into exit 1; the exact run-saving check below judges F-008 instead. (M4) the pin header carries a date and the sha256 of the WARN lines; a pin that does not match its own hash is exit 4; the pinned WARN count is printed and said to stand for known defects. (N1-N4) LC_ALL=C sort, helper exit statuses checked, closing-block lines must appear once, absolute paths before the cd, one temp folder removed on exit.
+# Round 10 (review f8-r10): (B1) --write-warn-pin refuses a file that exists (so it can never overwrite the pin in use), writes only when the run has no FAIL and a RESULT line, writes AFTER the comparison, prints the difference and exits 4 when it wrote the file (a run that writes a pin is never a pass; refused = 2, checker FAIL = 1, checker broke = 3, other problems = 4 and nothing written); a person installs the pin by hand (see README). (M1) the top block and the FINAL line print an OVERRIDES line; an environment override (TAKE_CHECK_CK, TAKE_CHECK_WARN_PIN, TAKE_CHECK_FLOWS, TAKE_CHECK_DDL, TAKE_CHECK_FORM_EXPECT) is exit 4 unless the test flag TAKE_CHECK_TEST=1 is set (only selftest and run_all.sh set it); the documented way to check another folder is the option --flows DIR, which is printed. (M3/M5) the checker FAILs a listed flow that is not a regular file; the F-002 content check also asserts the reply steps and lead_key. F-008 content check (--patch-checks F008) is NOT used here: it would turn the planted run-saving cases (exit 4 by design) into exit 1; the exact run-saving check below judges F-008 instead. (M4) the pin header carries a date and the sha256 of the WARN lines; a pin that does not match its own hash is exit 4; the pinned WARN count is printed and said to stand for known defects. (N1-N4) LC_ALL=C sort, helper exit statuses checked, closing-block lines must appear once, absolute paths before the cd, one temp folder removed on exit.
 # Round 10b (review f8-r10 round 2): the top block and the FINAL line print a sha256 of the four flow files; the pin header needs a "# reviewed by: NAME, DATE" line without the word PLACEHOLDER (exit 4 otherwise); --write-warn-pin writes only when the only problem is the WARN difference; the run-saving INFO line no longer promises a deletion (the take never deletes anything).
 # Round 10c (review f8-r10b round 2): (Q1) the output never says a person read the pin: it prints the reviewer line as written, and a reviewer line that names a session or says "lead to confirm" is exit 4 ("pin not yet confirmed by the lead"), so the first exit 0 needs the lead's own line; (Q2) the flow files (the four and every other *.json in the folder) are hashed before the checker and again after the last read, a difference is exit 4, an unreadable file prints MISSING; (Q5) a checker exit status above 3 is shown and returned as 3.
+# Round 10d (review f8-r10c): (A1) the pin comment no longer claims a person read each line (only the WARN lines are hashed; comment lines are not protected); (B1) the pin header carries '# flows sha256 ...' (the combined sha256 of the four flow files, as printed in the top block); a different sha is exit 4, a pin without that line is exit 4, so a changed flow with the same counts and WARNs no longer passes; (B2) the reviewer line must be 'NAME, YYYY-MM-DD' (optionally ', note'), a real date not in the future, and a name that is not a stand-in (TBD, x, claude agent, ...); (B3) with the test flag and an override a run that would pass is exit 5 (not 0), TAKE_CHECK_FLOWS together with --flows is exit 2, and the top block says where the folder name came from; (B4 is in run_all.sh); the flow_snapshot (sha256 of the flow files) is taken before any other read of them; a sha256sum failure is a problem (exit 4), never an empty hash.
 # Usage: bash take_check.sh [--flows DIR] [--write-warn-pin NEWFILE]   (NEWFILE must not exist yet; the pin in use is take-warns.pin next to this script)
 LC_ALL=C; export LC_ALL
 HERE=$(cd "$(dirname "$0")" && pwd)
@@ -27,6 +29,9 @@ while [ $# -gt 0 ]; do
     *) echo "$USAGE"; exit 2;;
   esac
 done
+if [ -n "$FLOWSARG" ] && [ -n "${TAKE_CHECK_FLOWS:-}" ]; then
+  echo "REFUSED: the environment variable TAKE_CHECK_FLOWS and the option --flows are both set; the folder to check would be ambiguous. Give only --flows DIR (the documented way), or only the variable in a test."; exit 2
+fi
 OVR=()   # active environment overrides (each one changes what is checked)
 for v in TAKE_CHECK_CK TAKE_CHECK_WARN_PIN TAKE_CHECK_FLOWS TAKE_CHECK_DDL TAKE_CHECK_FORM_EXPECT; do
   if [ -n "${!v:-}" ]; then
@@ -49,12 +54,8 @@ TMP=$(mktemp -d "${TMPDIR:-/tmp}/take-check.XXXXXX") || exit 3
 trap 'rm -rf -- "$TMP"' EXIT
 OUT="$TMP/out"; NORM="$TMP/norm"
 DDL="${TAKE_CHECK_DDL:-demo/n8n-flows-v4/mf_leads.sql}"
-has_keyok() { python3 -I -c 'import json,sys; sys.exit(0 if any(n.get("name") == "KeyOk" for n in json.load(open(sys.argv[1], encoding="utf-8"))["nodes"]) else 1)' "$1" 2>/dev/null; }   # the node list is read as JSON (a text match would also hit a leftover connection that names KeyOk)
-# node:connection count of mf-form and mf-hook, detected per file: 15:14 when the file holds the F-002 key check (it adds 3 nodes), else 12:11. TAKE_CHECK_FORM_EXPECT (test hook) overrides both.
-FORMCNT_FORM="${TAKE_CHECK_FORM_EXPECT:-$(has_keyok "$D/mf-form.json" && echo 15:14 || echo 12:11)}"
-FORMCNT_HOOK="${TAKE_CHECK_FORM_EXPECT:-$(has_keyok "$D/mf-hook.json" && echo 15:14 || echo 12:11)}"
-PCOPT=(); if has_keyok "$D/mf-form.json" && has_keyok "$D/mf-hook.json"; then PCOPT=(--patch-checks F002); fi   # both entry flows carry the key check: also check its content (names, links, condition); only F002 here, because F-008 is judged by the exact settings check below
-DDLOPT=(); [ -f "$DDL" ] && DDLOPT=(--ddl "$DDL")
+# round 10d: sha256 of stdin as 64 hex characters; no output and status 1 when sha256sum fails (a failure must never turn into an empty hash)
+sha_stdin() { local o; o=$(sha256sum 2>/dev/null) || return 1; o=${o%% *}; case $o in *[!0-9a-f]*|"") return 1;; esac; [ ${#o} -eq 64 ] || return 1; printf '%s' "$o"; }
 # round 10c (Q2): sha256 of the four flow files AND of every other *.json in the folder (this script reads all *.json there for the run-saving check), taken BEFORE the checker runs and again after the last read; a difference is exit 4. A file that is not a regular file or that sha256sum cannot read is printed as MISSING (never as an empty hash).
 flow_snapshot() {
   SNAP_FOUR=""; SNAP_OTHER=""; SNAP_MISSING=0
@@ -72,7 +73,13 @@ flow_snapshot() {
     else SNAP_OTHER="${SNAP_OTHER}MISSING  $f"$'\n'; SNAP_MISSING=1; fi
   done
 }
-flow_snapshot; SNAP_BEFORE="$SNAP_FOUR$SNAP_OTHER"; FLOWSHA_LINES=$SNAP_FOUR; FLOWSHA_MISSING=$SNAP_MISSING; OTHER_LINES=$SNAP_OTHER
+flow_snapshot; SNAP_BEFORE="$SNAP_FOUR$SNAP_OTHER"; FLOWSHA_LINES=$SNAP_FOUR; FLOWSHA_MISSING=$SNAP_MISSING; OTHER_LINES=$SNAP_OTHER   # round 10d: taken BEFORE has_keyok and the other reads of the flow files below
+has_keyok() { python3 -I -c 'import json,sys; sys.exit(0 if any(n.get("name") == "KeyOk" for n in json.load(open(sys.argv[1], encoding="utf-8"))["nodes"]) else 1)' "$1" 2>/dev/null; }   # the node list is read as JSON (a text match would also hit a leftover connection that names KeyOk)
+# node:connection count of mf-form and mf-hook, detected per file: 15:14 when the file holds the F-002 key check (it adds 3 nodes), else 12:11. TAKE_CHECK_FORM_EXPECT (test hook) overrides both.
+FORMCNT_FORM="${TAKE_CHECK_FORM_EXPECT:-$(has_keyok "$D/mf-form.json" && echo 15:14 || echo 12:11)}"
+FORMCNT_HOOK="${TAKE_CHECK_FORM_EXPECT:-$(has_keyok "$D/mf-hook.json" && echo 15:14 || echo 12:11)}"
+PCOPT=(); if has_keyok "$D/mf-form.json" && has_keyok "$D/mf-hook.json"; then PCOPT=(--patch-checks F002); fi   # both entry flows carry the key check: also check its content (names, links, condition); only F002 here, because F-008 is judged by the exact settings check below
+DDLOPT=(); [ -f "$DDL" ] && DDLOPT=(--ddl "$DDL")
 python3 -I "${TAKE_CHECK_CK:-$HERE/check_flows.py}" "$D" "${DDLOPT[@]}" "${PCOPT[@]}" \
   --accept-if mf-recovery.json=StuckRow:1 --accept-if mf-recovery.json=AlertRow:1 \
   --accept-no-save mf-recovery.json \
