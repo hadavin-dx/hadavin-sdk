@@ -1,4 +1,4 @@
-$ python3 -I /home/user/hadavin-sdk/handover/flows-audit/flow-check/check_flows.py /tmp/fc-selftest-tzg4izta/only-form --files mf-form.json --baseline /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-real-v5
+$ python3 -I /home/user/hadavin-sdk/handover/flows-audit/flow-check/check_flows.py /tmp/fc-selftest-67peae4v/only-form --files mf-form.json --baseline /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-real-v5
 # ===== READ THIS FIRST (plain words; every line of this header starts with '#') =====
 # What this is: a read-only check of the exported n8n flow files (text files). It never started n8n.
 # Verdict: exit code 0 does NOT mean the flows are ready to film. It only means the checker found no structural FAIL.
@@ -10,11 +10,11 @@ $ python3 -I /home/user/hadavin-sdk/handover/flows-audit/flow-check/check_flows.
 # A credential id that is still a placeholder is always a WARN (use --require-real-credential-ids to make it a FAIL).
 # The numbers for THIS run (open decisions, known open problems, accepted IF branches) are printed in the closing block: 'OPEN LEAD DECISIONS' and 'Known open problems'.
 # =============================================================================
-### /tmp/fc-selftest-tzg4izta/only-form
-WARN-LEAD-DECISION /tmp/fc-selftest-tzg4izta/only-form/mf-form.json webhook Receive has no authentication (anyone who knows the address can post) [open web address: the owner decides, see REPORT.md; run with --require-webhook-auth to make it a FAIL]
-WARN /tmp/fc-selftest-tzg4izta/only-form/mf-form.json webhook Receive: REPLY GAP: if ['Claim', 'RunSub', 'Stored'] fails the run stops and the caller gets no answer (error path has no reply; read from the file, n8n not run)
-  [/tmp/fc-selftest-tzg4izta/only-form/mf-form.json] webhook Receive: 3 respondToWebhook node(s) reachable ['ReplyRan', 'ReplyReview', 'ReplyStored']; paths without a reply: none
-WARN /tmp/fc-selftest-tzg4izta/only-form/mf-form.json external-call nodes without retryOnFail: ['Claim', 'RunSub', 'Stored']
+### /tmp/fc-selftest-67peae4v/only-form
+WARN-LEAD-DECISION /tmp/fc-selftest-67peae4v/only-form/mf-form.json webhook Receive has no authentication (anyone who knows the address can post) [open web address: the owner decides, see REPORT.md; run with --require-webhook-auth to make it a FAIL]
+WARN /tmp/fc-selftest-67peae4v/only-form/mf-form.json webhook Receive: REPLY GAP: if ['Claim', 'RunSub', 'Stored'] fails the run stops and the caller gets no answer (error path has no reply; read from the file, n8n not run)
+  [/tmp/fc-selftest-67peae4v/only-form/mf-form.json] webhook Receive: 3 respondToWebhook node(s) reachable ['ReplyRan', 'ReplyReview', 'ReplyStored']; paths without a reply: none
+WARN /tmp/fc-selftest-67peae4v/only-form/mf-form.json external-call nodes without retryOnFail: ['Claim', 'RunSub', 'Stored']
 mf-form.json nodes=12 connections=11 triggers=['Receive'] saveDataSuccess=none saveDataError=none
   credentials (node, kind, name, id): Claim postgres n8n-publish-pg cred-real-1; Stored postgres n8n-publish-pg cred-real-1
   types: n8n-nodes-base.executeWorkflow v1.2 x1; n8n-nodes-base.if v2.2 x2; n8n-nodes-base.postgres v2.5 x2; n8n-nodes-base.respondToWebhook v1.4 x3; n8n-nodes-base.set v3.4 x3; n8n-nodes-base.webhook v2 x1
@@ -23,8 +23,8 @@ RESULT: 0 FAIL, 3 WARN
 OPEN LEAD DECISIONS: 1 webhook(s) without auth, 0 $env node(s)  (exit 0 does NOT mean authentication was checked)
 No static tool can see whether n8n blocks environment-variable access inside nodes (an n8n instance setting): check it on the machine that films the take; run with --block-env-access to see which steps depend on it.
 Known open problems: 2
-  - /tmp/fc-selftest-tzg4izta/only-form/mf-form.json: webhook Receive has no authentication (anyone who knows the address can post) [open web address: the owner decides, see REPORT.md; run with --require-webhook-auth to make it a FAIL]
-  - /tmp/fc-selftest-tzg4izta/only-form/mf-form.json: webhook Receive: REPLY GAP: if ['Claim', 'RunSub', 'Stored'] fails the run stops and the caller gets no answer (error path has no reply; read from the file, n8n not run)
+  - /tmp/fc-selftest-67peae4v/only-form/mf-form.json: webhook Receive has no authentication (anyone who knows the address can post) [open web address: the owner decides, see REPORT.md; run with --require-webhook-auth to make it a FAIL]
+  - /tmp/fc-selftest-67peae4v/only-form/mf-form.json: webhook Receive: REPLY GAP: if ['Claim', 'RunSub', 'Stored'] fails the run stops and the caller gets no answer (error path has no reply; read from the file, n8n not run)
 Not proven: that n8n accepts these files on import; what n8n really does when a step fails (F-002, tests T19 and T20); the SQL inside the postgres nodes; who calls a web address, whether the flow is active, and test versus production web address; expression syntax beyond node names; secrets in a shape this scan does not list; every rule marked 'n8n rule UNVERIFIED' (webhook authentication values, credential kinds, retry limits, onError values, position of the error output, default responseMode, duplicate method+path or webhookId).
 Passing this check does NOT mean the flows are ready to film.
 exit=0

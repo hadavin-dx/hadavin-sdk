@@ -1,4 +1,4 @@
-$ python3 -I /home/user/hadavin-sdk/handover/flows-audit/flow-check/check_flows.py /tmp/fc-selftest-tzg4izta/empty-dir --files all
+$ python3 -I /home/user/hadavin-sdk/handover/flows-audit/flow-check/check_flows.py /tmp/fc-selftest-67peae4v/empty-dir --files all
 # ===== READ THIS FIRST (plain words; every line of this header starts with '#') =====
 # What this is: a read-only check of the exported n8n flow files (text files). It never started n8n.
 # Verdict: exit code 0 does NOT mean the flows are ready to film. It only means the checker found no structural FAIL.
@@ -10,8 +10,8 @@ $ python3 -I /home/user/hadavin-sdk/handover/flows-audit/flow-check/check_flows.
 # A credential id that is still a placeholder is always a WARN (use --require-real-credential-ids to make it a FAIL).
 # The numbers for THIS run (open decisions, known open problems, accepted IF branches) are printed in the closing block: 'OPEN LEAD DECISIONS' and 'Known open problems'.
 # =============================================================================
-### /tmp/fc-selftest-tzg4izta/empty-dir
-FAIL /tmp/fc-selftest-tzg4izta/empty-dir --files all: this folder holds no *.json file, so nothing was checked
+### /tmp/fc-selftest-67peae4v/empty-dir
+FAIL /tmp/fc-selftest-67peae4v/empty-dir --files all: this folder holds no *.json file, so nothing was checked
 RESULT: 1 FAIL, 0 WARN
 OPEN LEAD DECISIONS: 0 webhook(s) without auth, 0 $env node(s)  (exit 0 does NOT mean authentication was checked)
 No static tool can see whether n8n blocks environment-variable access inside nodes (an n8n instance setting): check it on the machine that films the take; run with --block-env-access to see which steps depend on it.
