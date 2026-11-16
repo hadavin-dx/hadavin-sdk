@@ -19,7 +19,7 @@ Linux, macOS, or WSL (Windows Subsystem for Linux) using the Linux home folder (
 anything). Native Windows is not supported: the program checks this when it starts and refuses
 with a plain message if the system cannot open files without following symlinks.
 Python 3.11 or newer: the program refuses to start on an older Python. The tests were run on
-3.11, 3.12 and 3.13 (all three, last run recorded in `fix-f3-r7.md`); no older version and no
+3.11, 3.12 and 3.13 (all three, last run recorded in `fix-f3-r8.md`); no older version and no
 Mac was ever run. Always use full paths (below); a relative `--in` path depends on the folder
 you are standing in.
 
@@ -85,8 +85,16 @@ Keep it OUTSIDE any git folder, NOT under `/mnt`, and make it readable by you on
    (`.fill_flows-output`) but has NO fingerprint file next to it (a copied or moved folder) is a
    problem too, as is a marker that names another folder, and a folder or file that is no longer
    private (mode 0700 for the folder, 0600 for the files, yours): `cp -r` can loosen them.
-   An input folder has no marker and no fingerprint file, so only the token scan runs there.
-   Do not copy a filled folder to import it: import from the folder `fill` made.
+   A folder with NO marker file and NO fingerprint file next to it is a problem as well: it is
+   not shown to be a copy that `fill` made. This is what a copy made with `cp -r filled/*`, a zip
+   or an rsync that skips hidden files looks like (the marker file starts with a dot), and also
+   what an input folder looks like. `check` also reports as a problem: a folder that sits inside
+   a git repository, inside a cloud-synced or backed-up folder, or on `/mnt` (the same places
+   `fill` refuses); a file that has a second name (a hard link: the other name would not be
+   removed by `delete`); and a fingerprint file that says the copy was written with placeholders
+   left (`fill` writes a `ready` flag into it), even when the note file was deleted afterwards or
+   `--tokens-only` is used. Do not copy a filled folder to import it: import from the folder
+   `fill` made.
 
        python3 -I "$TOOL" check "$HOME/keep/filled"
 
@@ -175,8 +183,9 @@ it by id (placeholder `SUB_WORKFLOW_ID`). Do the steps in this order:
   that fails by itself removes what it made (including a file cut in the middle). A Ctrl-C during
   a fill is held back while a file or the folder is being made and noted, so it leaves nothing
   behind either; so are the signals terminate (SIGTERM) and hang-up (SIGHUP): the fill cleans up
-  and ends with code 1 (the clean-up itself is shielded from a second signal). Only a kill that
-  cannot be caught (power cut, `kill -9`) leaves a partial copy; the note
+  and ends with code 1 (the clean-up itself is shielded from a second signal). These three
+  signals (SIGINT, SIGTERM, SIGHUP) are the ones handled. A stop by any other signal (SIGKILL,
+  SIGQUIT, SIGUSR1, SIGALRM, SIGXCPU and so on) or a power cut can leave a partial copy; the note
   `NOT-READY-DO-NOT-IMPORT.txt` is written first and removed last, so such a copy is still
   marked and `check` refuses it. It can also leave the manifest cut
   short with no folder: the next `fill` then says the manifest exists; run
@@ -215,7 +224,12 @@ the path. The first folder in the output path is looked up by name once; a link 
 only when you or root made it. The git and `/mnt` checks are made on the typed path first and
 then again on the place the OPEN folder (and the open values file) really is in, asked of the
 open handle (Linux: `/proc/self/fd`; macOS: `F_GETPATH`), so a link swapped in between the check
-and the open is caught. On another system the second check falls back to the typed path.
+and the open is caught. On another system the second check falls back to the typed path and the program prints one
+warning line saying so. `delete` makes the same place check but only warns (it still removes the
+copy: leaving it would be worse), and it warns about a file with a second name. Option names
+must be typed in full (`--force-hash`, not `--force`): an abbreviation is refused with code 2.
+`delete` also refuses an `--out` whose last part is empty or is not a plain file name (for
+example `/`).
 A plain text is filled only in the address fields `url`, `toEmail`, `fromEmail`, `ccEmail` and
 `bccEmail` (the list `PLAIN_KEYS` in the program); a number that is too large for JSON (such as
 `1e999`) is refused instead of being written as `Infinity`; the output files are flushed to disk.

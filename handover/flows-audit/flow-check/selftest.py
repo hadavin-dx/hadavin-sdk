@@ -2727,7 +2727,7 @@ def main():
                     ),
                     (
                         "WARN",
-                        f"--accept-no-save {fn_} names this file but it is not a flow that only has a schedule trigger",
+                        f"{fn_} --accept-no-save names this file but it is not a flow that only has a schedule trigger",
                     ),
                 ],
                 must_not=[
