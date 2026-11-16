@@ -1,0 +1,22 @@
+command: sh handover/flows-audit/tools/check_patches.sh (from repo root; git apply --check, then scratch apply of each patch alone, parse patched JSON)
+run at: 2026-11-16T10:26:41Z (after regenerating F-003 and F-004 per lead decision 1, inputs/DECISIONS-2026-11-16.md)
+patch files sha256 (first 16 hex):
+8e8b4e710d147014  handover/flows-audit/patches/F-001-one-ddl.patch
+f5c34d37a0794bb5  handover/flows-audit/patches/F-002-take-key-check-and-claim-error-path.patch
+41c55262f2974c98  handover/flows-audit/patches/F-003-runsheet-claims.patch
+8b3ac562f22a3fb7  handover/flows-audit/patches/F-004-page-statement-17.patch
+c9d61339d1619de9  handover/flows-audit/patches/F-008-save-runs-for-the-take.patch
+archived old F-003 and F-004 (sha256 first 16 hex):
+78059910c23d9258  handover/flows-audit/patches/archive-pre-decision1/F-003-runsheet-claims.patch
+71bda71b405f1fc1  handover/flows-audit/patches/archive-pre-decision1/F-004-page-statement-17.patch
+target files sha256 (unchanged, patches not applied to the tree):
+5eff2ed7d2838f2e  handover/demo/VIDEO-RUNSHEET.md
+031554c115ed36b9  handover/demo/n8n-flows/PAGE-STATEMENTS-V4.md
+--- output ---
+PASS 5 patches
+exit 0
+--- banned strings in ADDED lines of F-003 and F-004 (60.1, 61.9 range, film-v5, scenes 5 to 11) ---
+0
+(count above is lines matching; 0 expected)
+--- individual apply of F-004 and F-003 together on a clean copy ---
+both apply together: ok

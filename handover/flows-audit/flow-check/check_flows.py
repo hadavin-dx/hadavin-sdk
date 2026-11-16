@@ -55,7 +55,10 @@ OPTS = {
     "fail_unv": False,
     "cred_names": {},
     "accept_if": {},
+    "ddl": None,  # table name -> set of column names, from --ddl FILE
 }
+PARAM_PH = []  # placeholders found in node settings (not credential ids): they must be filled before import
+SQL_DONE = {"checked": 0}  # queries compared with the --ddl table definition
 LEAD = {
     "webhook": 0,
     "env": 0,
@@ -178,6 +181,86 @@ HEADER = """# ===== READ THIS FIRST (plain words; every line of this header star
 # The numbers for THIS run (open decisions, known open problems, accepted IF branches) are printed in the closing block: 'OPEN LEAD DECISIONS' and 'Known open problems'.
 # =============================================================================
 """
+
+
+SQL_WORDS = set(
+    "select insert into values update set delete from where and or not in is null like between exists case when then else end on conflict do nothing "
+    "returning order by group having limit offset for skip locked as join left right inner outer using distinct all any true false default "
+    "asc desc union with text int integer bigint boolean timestamptz timestamp interval uuid numeric varchar date jsonb json".split()
+)
+TABLE_AFTER = {"from", "update", "into", "join"}
+PH_WORD = re.compile(r"[A-Za-z0-9_]*(?:" + "|".join(re.escape(x) for x in PLACEHOLDERS) + r")[A-Za-z0-9_]*")
+
+
+def parse_ddl(text):
+    """CREATE TABLE name( col ..., ...) -> {table: {columns}} (lower case). Comments are dropped; constraint lines are not columns."""
+    text = re.sub(r"--[^\n]*", "", text)
+    out = {}
+    for m in re.finditer(r"create\s+table\s+(?:if\s+not\s+exists\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*\(", text, re.I):
+        depth, i, part, parts = 1, m.end(), "", []
+        while i < len(text) and depth:
+            c = text[i]
+            depth += (c == "(") - (c == ")")
+            if depth == 1 and c == ",":
+                parts.append(part)
+                part = ""
+            elif depth:
+                part += c
+            i += 1
+        parts.append(part)
+        cols = set()
+        for x in parts:
+            w = x.split()
+            if w and w[0].lower() not in ("primary", "unique", "check", "foreign", "constraint", "like"):
+                cols.add(w[0].strip('"').lower())
+        out[m.group(1).lower()] = cols
+    return out
+
+
+def sql_use(query):
+    """(tables, words) used by one query text: words = names that are neither SQL words, functions, parameters nor text values."""
+    q = re.sub(r"\{\{.*?\}\}", " ", query.lstrip("="), flags=re.S)
+    q = re.sub(r"'(?:[^']|'')*'", " ", q)
+    q = re.sub(r"--[^\n]*", " ", q)
+    q = re.sub(r"\$\d+|::\s*[A-Za-z_][A-Za-z0-9_]*", " ", q)
+    toks = list(re.finditer(r"[A-Za-z_][A-Za-z0-9_]*", q))
+    tables, words = set(), set()
+    prev = ""
+    for m in toks:
+        w = m.group(0).lower()
+        nxt = q[m.end() :].lstrip()[:1]
+        if prev in TABLE_AFTER and w not in SQL_WORDS and nxt != "(" or prev == "into" and w not in SQL_WORDS:
+            tables.add(w)
+        elif w not in SQL_WORDS and nxt != "(":
+            words.add(w)
+        prev = w
+    return tables, words
+
+
+def sql_check(n, tag):
+    """Every column named in a postgres query must exist in the table definition given with --ddl (names are read from the text, not run)."""
+    ddl = OPTS["ddl"]
+    if ddl is None:
+        return
+    prm = n.get("parameters")
+    for q in [x for k, x in (prm or {}).items() if k == "query" and isinstance(x, str)]:
+        SQL_DONE["checked"] += 1
+        tables, words = sql_use(q)
+        known = set().union(*[ddl[t] for t in tables if t in ddl]) if tables else set()
+        absent = sorted(t for t in tables if t not in ddl)
+        miss = sorted(w for w in words if w not in known and w not in tables)
+        if absent:
+            warn(
+                tag,
+                f"node {n['name']}: the query uses table(s) {absent} that the --ddl file does not define",
+                known=True,
+            )
+        if miss and not absent:
+            warn(
+                tag,
+                f"node {n['name']}: the query uses column(s) {miss} that the --ddl file does not define; in n8n this step would fail on every run",
+                known=True,
+            )
 
 
 def is_trigger(t):
@@ -416,11 +499,17 @@ def secret_scan_top(d, tag):
 
 def webhook_paths(n, nodes, adj, tag):
     """Every path from a responseNode webhook must end in respondToWebhook. Walk is stopped at respond nodes."""
-    mode = (n.get("parameters") or {}).get("responseMode", "onReceived")
+    prm = n.get("parameters") or {}
+    mode = prm.get("responseMode", "onReceived")
+    if "responseMode" not in prm:
+        unv(
+            tag,
+            f"webhook {n['name']} sets no responseMode: this check assumes n8n answers at once (onReceived), which is from memory of n8n, so the reply path was not checked",
+        )
     if mode != "responseNode":
         print(
-            "  [{}] webhook {} responseMode={} (n8n answers by itself, no respondToWebhook needed; default onReceived is {})".format(
-                tag, n["name"], mode, UNV
+            "  [{}] webhook {} responseMode={} (n8n answers by itself, no respondToWebhook needed)".format(
+                tag, n["name"], mode
             )
         )
         return
@@ -551,10 +640,10 @@ def extra_checks(d, tag, nodes, adj, trig, sticky):
         ):
             fail(tag, f"node {nm} lacks a numeric typeVersion")
         if n.get("onError") not in ONERROR_OK:
-            warn(
+            unv(
                 tag,
-                "node {} onError={!r} is not one of stopWorkflow, continueRegularOutput, continueErrorOutput ({}: value list from memory of the n8n UI, no source in this repo)".format(
-                    nm, n.get("onError"), UNV
+                "node {} onError={!r} is not one of stopWorkflow, continueRegularOutput, continueErrorOutput (value list from memory of the n8n UI, no source in this repo)".format(
+                    nm, n.get("onError")
                 ),
             )
         if "retryOnFail" in n and not isinstance(n["retryOnFail"], bool):
@@ -562,14 +651,14 @@ def extra_checks(d, tag, nodes, adj, trig, sticky):
         if n.get("retryOnFail"):
             mt, wb = n.get("maxTries", 3), n.get("waitBetweenTries", 1000)
             if not isinstance(mt, int) or isinstance(mt, bool) or not 2 <= mt <= 5:
-                warn(
+                unv(
                     tag,
-                    f"node {nm} maxTries={mt!r} (2 to 5 is the n8n screen limit, not a proven import rule; {UNV})",
+                    f"node {nm} maxTries={mt!r} (2 to 5 is the n8n screen limit, not a proven import rule)",
                 )
             if not isinstance(wb, int) or isinstance(wb, bool) or not 0 <= wb <= 5000:
-                warn(
+                unv(
                     tag,
-                    f"node {nm} waitBetweenTries={wb!r} (0 to 5000 ms is the n8n screen limit, not a proven import rule; {UNV})",
+                    f"node {nm} waitBetweenTries={wb!r} (0 to 5000 ms is the n8n screen limit, not a proven import rule)",
                 )
         elif "maxTries" in n or "waitBetweenTries" in n:
             warn(
@@ -643,6 +732,16 @@ def extra_checks(d, tag, nodes, adj, trig, sticky):
             if any(p in wv for p in PLACEHOLDERS):
                 phs.append(f"{nm} sub-workflow id {wv}")
         secret_scan(n, tag)
+        prm_ = n.get("parameters")
+        if isinstance(prm_, dict):
+            for k_, v_ in prm_.items():
+                if k_ != "workflowId":
+                    for s_ in strings(v_):
+                        for w_ in PH_WORD.findall(s_):
+                            PARAM_PH.append(f"{tag} node {nm} setting {k_!r}: {w_}")
+                            pph.append(f"{nm} {k_}: {w_}")
+        if short == "postgres":
+            sql_check(n, tag)
         envs = sorted({e for s_ in strings(n.get("parameters", {})) for e in ENVTOK.findall(s_)})
         if envs:
             msg = "node {} reads {}; if the take blocks environment-variable access inside nodes (n8n setting, name not verified here: {}) this node stops working".format(
@@ -704,6 +803,12 @@ def extra_checks(d, tag, nodes, adj, trig, sticky):
             fail(tag, msg + " (--require-real-credential-ids)")
         else:
             warn(tag, msg + " [run with --require-real-credential-ids to make this a FAIL]")
+    if pph:
+        msg = f"{len(pph)} value(s) in node settings are still placeholders; these must be filled before import: " + "; ".join(sorted(set(pph)))
+        if OPTS["real_ids"]:
+            fail(tag, msg + " (--require-real-credential-ids)")
+        else:
+            warn(tag, msg + " [run with --require-real-credential-ids to make this a FAIL]", known=True)
     if noretry:
         warn(tag, f"external-call nodes without retryOnFail: {sorted(noretry)}")
     if silent:
