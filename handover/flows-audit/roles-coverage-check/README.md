@@ -1,3 +1,5 @@
+> STATUS 2026-11-16: CLIENT BUILD / AFTER THE VIDEO, NOT FOR THE TAKE (lead decision 2026-11-16 item 3: ROLES-PROPOSAL parked). Do not run for the take. The script reads section 4 of ../ROLES-PROPOSAL.md, so archive this folder and that document together; never delete. Latest independent rerun (evidence-r6.md): 71 tests pass, 7 of 15 random mutants survive.
+
 # roles-coverage-check
 
 `check_grants_cover_queries.py` reads the flow JSON files and the database-login grants and fails (exit 1, a `FAIL` line each) on: a table other than `mf_leads`, a statement kind other than SELECT/INSERT/UPDATE (DELETE, TRUNCATE, DROP and similar are refused), a column a query needs but no grant gives, a grant wider than the queries need (table-level grant, or a column no query uses: "unused grant"), a login with no grants, a missing folder, an unreadable flow file, a folder with zero Postgres nodes.

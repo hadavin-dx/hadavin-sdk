@@ -243,8 +243,10 @@ def g_hs_nocred(j, d):
     n = first_of(j, "hubspot")
     if not n: return SKIP
     n.pop("credentials")
-def g_env_optional(j, d): first_nt(j)["parameters"]["note"] = "={{ $env?.SOME_NAME }}"
-def g_env_bare(j, d): first_nt(j)["parameters"]["note"] = "={{ Object.keys($env) }}"
+def _newnode(j, name, text):
+    j["nodes"].append(noop(name)); node(j, name)["parameters"]["note"] = text; j["connections"][a_source(j)]["main"][0].append(link(name))
+def g_env_optional(j, d): _newnode(j, "EnvOptX", "={{ $env?.SOME_NAME }}")
+def g_env_bare(j, d): _newnode(j, "EnvBareX", "={{ Object.keys($env) }}")
 def g_ref_backtick(j, d): first_nt(j)["parameters"]["note"] = "={{ $(`Nope`).first().json.x }}"
 def g_ref_dynamic(j, d): first_nt(j)["parameters"]["note"] = "={{ $('No' + 'pe').first().json.x }}"
 def g_dupwh_slash(j, d):
@@ -384,8 +386,8 @@ G = [
  ("hubspot_credential_missing", g_hs_nocred, "FAIL", "has no credentials block", (), []),
  ("placeholder_ids_are_warn_even_when_quiet", None, "WARN", "still placeholders", (), []),
  ("placeholder_ids_fail_when_required", None, "FAIL", "still placeholders", ("--require-real-credential-ids",), []),
- ("env_read_optional_chain_strict", g_env_optional, "FAIL", "$env?.SOME_NAME", ("--block-env-access",), ["reads $env"]),
- ("env_read_bare_strict", g_env_bare, "FAIL", "reads $env", ("--block-env-access",), []),
+ ("env_read_optional_chain_strict", g_env_optional, "FAIL", "node EnvOptX reads $env?.SOME_NAME", ("--block-env-access",), ["reads $env", "WITHOUT respondToWebhook"]),
+ ("env_read_bare_strict", g_env_bare, "FAIL", "node EnvBareX reads $env", ("--block-env-access",), ["reads $env", "WITHOUT respondToWebhook"]),
  ("expression_names_missing_node_in_backticks", g_ref_backtick, "FAIL", "refers to $('Nope')", (), []),
  ("expression_computed_node_name_is_warn", g_ref_dynamic, "WARN", "computed name", (), []),
  ("webhook_path_reused_with_slash_and_case", g_dupwh_slash, "FAIL", "two webhooks share method+path", (), []),
