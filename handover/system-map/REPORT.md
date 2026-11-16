@@ -1,5 +1,11 @@
 # REPORT from system-map (newest on top, UTC and IST)
 
+## Status 2026-11-16 07:04 UTC / 12:34 IST - first pass of all 6 lanes done; 5 continuation lanes running
+Agents running: 5 language-model agents (sonnet): L1c (86 unread files of L1), L2c (demo3/register.md), L3c (158 unread/partly read evidence files), L4c (137 unread reports), L5ac (8 files). 0 script lanes. Next: when they close, L6 job pass, merge, evidence runner, result reviewers.
+First-pass numbers (lane files in work/): findings L1 38, L2 25 (5 Blocker candidates), L3 42 (1), L4 22 (1), L5a 25, L5b 11; all lanes PARTIAL except L2 (1 file) and L5a (8 files): NOT-READ files are being read by the continuation lanes.
+My own check on the six first-pass lane files: check_citations.py 990 of 990 citations FOUND (0 drift, 0 mismatch). scan_outputs.py defects: 1 blank cell (L5a ## Scripts), missing PARTIAL flags on L2 and the not-yet-started continuation files (expected, I fix at merge).
+Top results so far (candidates, the result reviewers decide severity): n8n ran on SQLite in all kill runs (DECISION says Postgres); 1659 files in demo/ are about the retired desk, none mention mf_leads, stage.journal or Postgres; flows save no executions (DECISION line 16 says on); slow SMTP leaves a lead unknown with no alert and the alert uses the same SMTP; mf-hook duplicates mf-form (10 of 12 nodes identical); four retry engines; SpendLedger money counter not in DECISION; core has Limits, audit and Postgres store kinds that overlap the take's places.
+
 ## Status 2026-11-16 07:00 UTC / 12:30 IST - lanes running, plan review closed
 Agents running: 4 language-model agents (sonnet): LANE-L1, LANE-L2, LANE-L3, LANE-L5a (read-only auditors, one lane file each) + LANE-L4c (reads the 137 report files L4 left NOT-READ). 0 script lanes. Closed: L4 (PARTIAL, 1 Blocker + 15 Major + 6 Nit candidates; 1659 files all about the retired desk, none mention mf_leads/stage.journal/Postgres), L5b (PARTIAL by design, 11 findings). Plan review: round 3 found 0 Blocker, 4 Major (merge/evidence mechanics); fixed in PLAN-002.md and tools/scan_outputs.py as build-time fixes (work/plan-review-r3.md; egm-resolve NOT run for round 3, said plainly). Scripts: partition, check_citations, scan_outputs, 19 unittest pass.
 Open slips: lane L4 used read-only shell commands and a scratch generator although its brief said no Bash (only L4.md written, no git, no network); L5b marked all 376 files SKIMMED (core is out of scope by my brief; plan rule bent, noted).
@@ -8,7 +14,7 @@ Agents running: 6 language-model agents (sonnet, read-only auditors, one lane fi
 Deviation to note: the lane briefs start with the markers `STUDIO-PREAMBLE v1` and `EGM-GATE v1` and tell the lane to read work/BRIEF-LANE.md, which holds the full preamble text plus the MUST-NOT list, instead of pasting 4 KB into six prompts.
 Agent register (id, purpose, start, expected end, state):
 | PR1-impl, PR1-zoom, PR2-impl | plan reviews r1, r2 | 06:47-06:55 | done | closed (reported) |
-| LANE-L1 | audit handover top files, tools, demo ORDERS/REPORT/APPLY-LIST, pr-text etc (148 files) | 06:53 | +60 min | running |
+| LANE-L1 | audit handover top files, tools, demo ORDERS/REPORT/APPLY-LIST, pr-text etc (148 files) | 06:53 | +60 min | closed (reported: PARTIAL, 45 READ, 17 SKIMMED, 86 NOT-READ, 38 findings, 0 Blocker) |
 | LANE-L2 | audit demo3 kill (flows, SQL, harness, runs) and demo3 top docs (756 files) | 06:53 | +60 min | closed (reported: 46 READ, 709 SKIMMED, 1 NOT-READ, 25 findings, 5 Blocker candidates) |
 | LANE-L3 | audit demo3 evidence, tools, scratch (1420 files, mostly skimmable patch chains) | 06:53 | +60 min | closed (reported: PARTIAL, 20 READ, 1293 SKIMMED, 107 NOT-READ, 42 findings, 1 Blocker) |
 | LANE-L4 | audit rest of handover/demo (1659 files, mostly scan outputs) | 06:53 | +60 min | running |
@@ -19,6 +25,7 @@ Agent register (id, purpose, start, expected end, state):
 | LANE-L2c | continuation of L2: read demo3/register.md fully (1 file) | 07:01 | +30 min | running |
 | LANE-L3c | continuation of L3: READ 158 review/resolve/lint reports and partly-read scripts | 07:01 | +45 min | running |
 | LANE-L5ac | continuation of L5a: read its 8 NOT-READ files | 07:03 | +20 min | running |
+| LANE-L1c | continuation of L1: read 86 NOT-READ files (patch chains skimmed per family allowed) | 07:04 | +45 min | running |
 Not visible: take code repo duplicate-proof-lead-desk (lead covers locally; not guessed).
 
 ## Status 2026-11-16 06:50 UTC / 12:20 IST - ORDER 002 plan v2 written
