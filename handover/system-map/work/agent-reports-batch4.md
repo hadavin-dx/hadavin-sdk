@@ -913,3 +913,5 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 
 - 658 BRIEF-LANE r8: scope split. FIXED by CURRENT RULES r8 addition.
 - 659 end-delete-cases r6: live steps unclear. FIXED by CURRENT.
+
+- 660 L2c r7: action not runnable. FIXED by ACTION AND TERMS.
