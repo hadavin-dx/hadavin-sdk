@@ -110,7 +110,7 @@ M = [
 ('M45', S, 'you read both again at 6.2 and 7.1', 'you read both again at 6.2 and 7.3', 'R4 pointer 7.1 to 7.3'),
 ('M46', S, 'after the model key\'s cancel press, card step 3)', 'after the model key\'s cancel press, card step 5)', '8.1 card step 3 to 5'),
 ('M47', S, '## 9. Posting (by {{postby}}', '## 9. Posting (by Wed 25 Nov 2026 15:00 UTC = 20:00 IST', 'post-by IST in sheet'),
-('M48', C, 'sheet 7.8', 'sheet 7.7', 'CHANGES pointer 7.8 to 7.7 (needs a table row to bind)'),
+('M48', C, 'sheet 8.1 no longer asks per-key readings', 'sheet 8.2 no longer asks per-key readings', 'CHANGES table pointer 8.1 to 8.2'),
 ('M49', O, "the sheet's 7.8 error sentence stays", "the sheet's 7.7 error sentence stays", 'open row pointer 7.8 to 7.7'),
 ('M50', N, 'gives 0.27; ceiling 3 gives expected total 0.81', 'gives 0.28; ceiling 3 gives expected total 0.81', 'note worked price'),
 ('M51', S, 'tell "{{ph_dmd}}".', 'tell "all done".', 'unlisted set phrase told in 8.5'),

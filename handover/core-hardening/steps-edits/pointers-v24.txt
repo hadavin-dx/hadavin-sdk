@@ -1,25 +1,78 @@
+changes| R4 ("not a control"); note |G14
+changes| R8 (section 2); 6.4 line | |R8
 changes| and auto-reload re-read at |6.2
-changes| says test terminal; 12 "if |7.4
-changes| the 7.2 checksum line, the |6.3
+changes| five steps, "If it fails" (|section 2
+changes| only after the last line | |6.4
+changes| reading and its mention at |5.6
 changes| was made" starts clean-up (|8.2
-changes|.3 key-file listing and the |6.6
-changes|00 words; candidates: rules |R1
+changes| | program limit relation | |R4
+changes|, blanks N and create time (|section 2
+changes|-l` "No such file" check at |6.3
+changes|.6; the per-key readings in |8.1
+changes|4 and C12 | | security N5 | |R4
+changes|4h | ## Other Rules R2 and |R3
+changes|6 | file contents wording | |R1
 changes|8.2). Full date compared at |6.3
-changes|R8). ## Other Rules R2 and |R3
+changes|N3 | R6 characters | R6 and |R8
+changes|R8 | C14h | ## Other Rules |R2
+changes|R9 (a) and receiver Gmail | |R9
+changes|R9 (a) and sender address | |R9
+changes|` | Card, "After the card" (|section 2
+changes|age line (lead side); sheet |8.1
+changes|and auto-reload again | R4; |6.2
+changes|ard list (b) B, 5.1, yes B (|5.8
+changes|card self-contained | Card (|section 2
 changes|cel rule: the card in sheet |section 2
-changes|checksum line in the sheet (|7.2
-changes|d cannot reverse the order (|R8
-changes|d was applied only in part (|section 4
-changes|ds; candidates: rules R1/R4/|R9
-changes|ies, the sample notice, the |7.2
+changes|ction 2); named in the yes (|5.8
+changes|curity N3 | R6 characters | |R6
+changes|ds | R6 and R8 (section 2); |6.4
+changes|e at start | 6.2; Card (e); |7.3
+changes|ecording OFF | Card step 1; |R1
+changes|ecurity N4 | R8 semicolon | |R8
+changes|f it fails", both variants (|section 2
+changes|haracter rule vs commands | |R6
+changes|hird alarm, date at start | |6.2
+changes|ity N5 | R4 plural | R4 and |6.6
+changes|l 7 | READ and TEST notes | |5.1
+changes|lder key | Card list (b) B, |5.1
+changes|le vs commands | R6 and R8 (|section 2
+changes|lead cannot reverse order | |R8
+changes|list (e) and "If it fails" (|section 2
 changes|ll date compared at 6.3 and |7.3
-changes|mbers-message sample lines, |section 1
+changes|ms found and fixed in v24b: |G5
+changes|nce and auto-reload again | |R4
+changes|nd create time (section 2); |6.3
+changes|nd receiver Gmail | R9 (a) (|section 2
+changes|nger M8 | 6.6 three times | |6.6
 changes|o-reload re-read at 6.2 and |7.1
-changes|order (R8). ## Other Rules |R2
+changes|ock for the notice window | |7.4
+changes|ock tolerance, think time | |7.4
 changes|ot rewritten; its gate list |G1
+changes|pares with the message) and |5.6
+changes|r rule vs commands | R6 and |R8
+changes|ranger M6 | | security N4 | |R8
+changes|rd list (b) B (i) and (ii); |8.6
+changes|rial 2 | no checksum line | |7.2
 changes|ritten; its gate list G1 to |G42
-changes|rt, card (e), date check at |7.3
-changes|words; candidates: rules R1/|R4
+changes|s, N minus K | Card step 4 (|section 2
+changes|sarial 1-14) "Card" = sheet |section 2
+changes|sarial 8 | ignore `.used` | |5.1
+changes|st (b) B, 5.1, yes B (5.8), |8.6
+changes|started | "After the card" (|section 2
+changes|t present | | security N3 | |R6
+changes|t present | | stranger N5 | |R9
+changes|tate; last resort bounded | |8.4
+changes|ty M4 | full date | 6.3 and |7.3
+changes|unded | 8.4; "If it fails"; |5.8
+changes|ust judge | | stranger M8 | |6.6
+changes|uto-reload again | R4; 6.2; |7.1
+changes|y after earliest key time | |6.2
+changes|y was made | Card list (d); |8.2
+changes|| circular order of facts | |5.1
+changes|| security M4 | full date | |6.3
+changes|| security N5 | R4 plural | |R4
+changes|| security N8 | key scope | |6.3
+changes|| tested | | security N11 | |R9
 note| (c), in force (lead answer |Q22
 note| 0 accepted) | not read | | |G7
 note| 1a gate (G1 to G15, G17 to |G24

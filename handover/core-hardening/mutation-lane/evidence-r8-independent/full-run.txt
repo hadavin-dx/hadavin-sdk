@@ -460,3 +460,9 @@ INTERRUPTED (signal 64): no mutant planted, no marker
   T47b real signals sent from outside while the tests are awaited: TRAP RTMIN RTMAX SYS STKFLT(16) SEGV BUS FPE ILL
   PASS: T47b TRAP exit 133 (got 133), file restored, state empty, no orphan
   PASS: T47b RTMIN exit 162 (got 162), file restored, state empty, no orphan
+  PASS: T47b RTMAX exit 192 (got 192), file restored, state empty, no orphan
+  PASS: T47b SYS exit 159 (got 159), file restored, state empty, no orphan
+  PASS: T47b 16 exit 144 (got 144), file restored, state empty, no orphan
+  PASS: T47b SEGV exit 139 (got 139), file restored, state empty, no orphan
+  PASS: T47b BUS exit 135 (got 135), file restored, state empty, no orphan
+  PASS: T47b FPE exit 136 (got 136), file restored, state empty, no orphan
