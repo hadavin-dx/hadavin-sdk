@@ -10,9 +10,10 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-W = "/tmp/pa13b"
+W = os.path.join(tempfile.gettempdir(), "pa13b")
 SRC = W + "/g/glob/real"
 BASE = W + "/g/base/real"
 NEG = W + "/neg"
@@ -81,7 +82,8 @@ def m_switch(j, d):
 
 
 def m_parse(j, d):
-    open(d + "/mf-form.json", "w").write("{bad")
+    with open(d + "/mf-form.json", "w", encoding="utf-8") as fh:
+        fh.write("{bad")
     return False
 
 
@@ -210,11 +212,10 @@ MUTANTS = [
 
 
 def run(c, name):
-    r = subprocess.run(c, capture_output=True, text=True)
+    r = subprocess.run(c, capture_output=True, text=True, check=False)  # exit code is the result
     out = r.stdout + r.stderr
-    open(f"{OUT}/{name}.out", "w").write(
-        "$ " + " ".join(c) + "\n" + out + f"exit={r.returncode}\n"
-    )
+    with open(f"{OUT}/{name}.out", "w") as fh:
+        fh.write("$ " + " ".join(c) + "\n" + out + f"exit={r.returncode}\n")
     return r.returncode, out
 
 
@@ -224,12 +225,13 @@ def main():
     shutil.rmtree(OUT, ignore_errors=True)
     os.makedirs(OUT)
     ref = cmd("<DIR>")
-    open(OUT + "/CHECK-COMMAND.txt", "w").write(
-        " ".join(ref)
-        + "\n(<DIR> = the mutated copy of "
-        + SRC
-        + "; usage cases below add or drop one option)\nusage case 1: same plus  --expect mf-bogus.json=1:1\nusage case 2: same without --patch-checks\n"
-    )
+    with open(OUT + "/CHECK-COMMAND.txt", "w") as fh:
+        fh.write(
+            " ".join(ref)
+            + "\n(<DIR> = the mutated copy of "
+            + SRC
+            + "; usage cases below add or drop one option)\nusage case 1: same plus  --expect mf-bogus.json=1:1\nusage case 2: same without --patch-checks\n"
+        )
     good = 0
     bad = []
 
@@ -253,10 +255,12 @@ def main():
         d = NEG + "/" + name
         shutil.copytree(SRC, d)
         p = d + "/mf-form.json"
-        j = json.load(open(p))
+        with open(p) as fh:
+            j = json.load(fh)
         r = fn(j, d)
         if r is not False:
-            json.dump(j, open(p, "w"))
+            with open(p, "w") as fh:
+                json.dump(j, fh)
         judge(name, 1, text, cmd(d))
     judge(
         "usage_unknown_expect",

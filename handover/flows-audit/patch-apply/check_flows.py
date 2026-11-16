@@ -100,9 +100,13 @@ def load(path, tag):
     try:
         with open(path, encoding="utf-8") as f:
             return json.load(f)
-    except Exception as e:
+    except (OSError, ValueError, RecursionError) as e:
         fail(tag, f"parse failure {type(e).__name__}")
         return None
+
+
+def has(outs, i):
+    return i < len(outs) and bool(outs[i])
 
 
 def targets_of(outs):
@@ -133,7 +137,7 @@ def check_flow(d, tag, expect, baseline_d):
     for src, outs in conns.items():
         if src not in nameset:
             fail(tag, f"connection source {src!r} is not a node")
-        for typ, idx, t in targets_of(outs):
+        for _typ, _idx, t in targets_of(outs):
             ncon += 1
             if t not in nameset:
                 fail(tag, f"dangling target {t!r} from {src!r}")
@@ -165,10 +169,7 @@ def check_flow(d, tag, expect, baseline_d):
     for n in nodes:
         outs = conns.get(n["name"], {}).get("main", [])
 
-        def has(i):
-            return i < len(outs) and bool(outs[i])
-
-        if n.get("onError") == "continueErrorOutput" and not has(1):
+        if n.get("onError") == "continueErrorOutput" and not has(outs, 1):
             fail(
                 tag,
                 "node {} has onError=continueErrorOutput but main[1] is missing or has no target".format(n["name"]),
@@ -192,7 +193,7 @@ def check_flow(d, tag, expect, baseline_d):
             else:
                 need = [0, 1]
             kind = n["type"].split(".")[-1].upper()
-            miss = [i for i in need if not has(i)]
+            miss = [i for i in need if not has(outs, i)]
             if miss:
                 bo = base_conns.get(n["name"], {}).get("main", [])
                 base_missing = (
@@ -271,7 +272,7 @@ def deep_diff(a, b, path=""):
         elif len(a) != len(b):
             out.append(f"{path} (list length {len(a)} -> {len(b)})")
         else:
-            for i, (x, y) in enumerate(zip(a, b)):
+            for i, (x, y) in enumerate(zip(a, b, strict=True)):
                 out += deep_diff(x, y, f"{path}[{i}]")
     elif a != b:
         out.append(path)
@@ -463,7 +464,8 @@ def main(argv):
                 print("bad --expect value, want FILE=NODES:CONNS")
                 return 2
         elif a == "--expect-json":
-            expect.update(json.load(open(val(), encoding="utf-8")))
+            with open(val(), encoding="utf-8") as fh:
+                expect.update(json.load(fh))
         elif a == "--files":
             files = val().split(",")
         elif a == "--baseline":
@@ -539,9 +541,11 @@ def main(argv):
         text = "\n".join(diffsum) + "\n"
         print(text)
         if diffout:
-            open(diffout, "w", encoding="utf-8").write(
-                "# node-level diff, unpatched generator output vs patched (paths only, no values)\n# allowed patches: {}\n{}".format(",".join(allow) or "none", text)
-            )
+            with open(diffout, "w", encoding="utf-8") as fh:
+                fh.write(
+                    "# node-level diff, unpatched generator output vs patched (paths only, no values)\n"
+                    f"# allowed patches: {','.join(allow) or 'none'}\n{text}"
+                )
     print(f"RESULT: {len(FAILS)} FAIL, {len(WARNS)} WARN")
     return 1 if FAILS else 0
 
