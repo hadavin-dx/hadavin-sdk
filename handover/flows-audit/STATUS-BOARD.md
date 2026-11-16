@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T18:44:00Z
+UPDATED_UTC: 2026-11-16T18:48:48Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -6,12 +6,12 @@ BOOT_ID: e78580c0
 ITEMS_TOTAL: 10
 ITEMS_OPEN: 30
 PERCENT: 70
-AGENTS_RUNNING: 8
-CAPACITY: 1.26 load of 4 cores, mem 1/15 GB, RAM 1101/16087 MB, disk 12G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 12G /tmp/claude-0 , agents 8 (light+heavy per list)
+AGENTS_RUNNING: 7
+CAPACITY: 1.24 load of 4 cores, mem 1/15 GB, RAM 1108/16087 MB, disk 12G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 12G /tmp/claude-0 , agents 7 (light+heavy per list)
 INTERRUPTED: none
 FAILED: none (F8 run_all.sh intermittent exit 1 is an evidence finding: 3 of 6 plain runs failed, cause unknown, fixer acf8ab59 on it; ruff format --check passes 741 files)
-NEXT: verify F8 and REVIEW.md fixers
-PUSHED_UTC: 2026-11-16T18:44:00Z
+NEXT: patch-copies r20 fixer after a5762186; verify F8/REVIEW/Q31/FINDINGS fixers
+PUSHED_UTC: 2026-11-16T18:48:48Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -30,20 +30,20 @@ PUSHED_UTC: 2026-11-16T18:44:00Z
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | state | produced so far |
 |---|---|---|---|---|---|---|---|
-| a7b88145 | fixer | sonnet | F8 r12 fixes (flow-check) | 18:29Z | about 18:55Z | running | not yet |
-| a9e07c82 | fixer | sonnet | plan-files r37 fixes (RUNBOOK/TAKE-CHECKLIST/FIX-PLAN) | 18:38Z | about 18:58Z | running | not yet |
-| ab58317c | reviewer technical | sonnet | patch-copies r20 shell read | 18:39Z | about 18:52Z | running | not yet |
-| a83c0c44 | fixer | sonnet | REVIEW.md r44 single fixer (r39 x2 + r40 reads) | 18:41Z | about 19:05Z | running | not yet |
-| a1af3e58 | reviewer comprehension | sonnet | FINDINGS/LEDGER r27 stranger read (unread rows) | 18:42Z | about 18:52Z | running | not yet |
-| ab408d4e | reviewer comprehension | sonnet | RW/CT r40 stranger read (unread ranges) | 18:42Z | about 18:52Z | running | not yet |
-| aec6e6e1 | reviewer comprehension | sonnet | patch-copies r20 stranger read | 18:43Z | about 18:53Z | running | not yet |
-| ae27aebf | fixer | sonnet | Q31 r31 fixes | 18:44Z | about 18:58Z | running | not yet |
+| a7b88145 | fixer | sonnet | F8 r12 fixes (flow-check) | 18:29Z | about 18:58Z | running | not yet |
+| a83c0c44 | fixer | sonnet | REVIEW.md r44 single fixer | 18:41Z | about 19:05Z | running | not yet |
+| ae27aebf | fixer | sonnet | Q31 r31 fixes (QUESTIONS.md) | 18:44Z | about 18:58Z | running | not yet |
+| a7b221f6 | fixer | sonnet | FINDINGS/LEDGER r27 Nit fixes | 18:44Z | about 18:58Z | running | not yet |
+| a5762186 | reviewer comprehension | sonnet | patch-copies README 220-525 read | 18:45Z | about 18:52Z | running | not yet |
+| acfd6c69 | fixer | sonnet | RW/CT r40 fixes (RW, CT) | 18:47Z | about 19:00Z | running | not yet |
+| a1f31ee1 | fixer | sonnet | plan-files r38 fixes (RUNBOOK/TAKE-CHECKLIST/FIX-PLAN) | 18:48Z | about 19:00Z | running | not yet |
+| (slot 8 empty) | - | - | reason: every remaining file set has an active editor; a second reader would race the edit. Patch-copies r20 fixer waits for a5762186 | - | - | waiting | - |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
-1 verify and review F8 r12 fixes (two uncapped reviewers + evidence runner)
-2 plan-files r38 fixer (reviews/plan-files-reader-r38.md) after r37 fixer
+1 patch-copies r20 fixer (3 reports) after a5762186 reports
+2 verify then review F8 r12 fixes (two uncapped reviewers + evidence runner)
 3 verify REVIEW.md r44 fixer, then fresh uncapped design + stranger readers
-4 fixers for FINDINGS/LEDGER r27, RW/CT r40, patch-copies r20 reads
+4 verify Q31 r31 and FINDINGS/LEDGER r27 fixers; fresh readers of unread rows
 5 drift-007 r3 refresh and trigger-word grep before FINAL
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
