@@ -1,13 +1,13 @@
-UPDATED_UTC: 2026-11-16T11:16:55Z
+UPDATED_UTC: 2026-11-16T11:18:27Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
-ITEMS_OPEN: 7
-PERCENT: 91
+ITEMS_OPEN: 6
+PERCENT: 92
 AGENTS_RUNNING: 4
-CAPACITY: 1.31 load of 4 cores, mem 0/15 GB, RAM 928/16087 MB, disk 27G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 1.3G /tmp/claude-0 , agents 4 (light+heavy per list)
+CAPACITY: 1.20 load of 4 cores, mem 0/15 GB, RAM 890/16087 MB, disk 27G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 1.3G /tmp/claude-0 , agents 4 (light+heavy per list)
 INTERRUPTED: none
 FAILED: ROLES: PARKED by lead (client build, after video, no new lanes). Script r6: independent rerun 71 tests OK, gate rc 0, but 7 of 15 random mutants survive (lines 141,145,147,280,358,371,417); not fixed because parked; v4 doc security Blocker (Part C unguarded) unfixed
 claims: r5 counts independently rerun and match (113/69/48/28/69=327, 79 rows); BUT 37 Table 2 rows (41-77) have no LIVE/OUT tag; example.test vs example.com rows 2 and 5 rest on OWNER-STEPS v3 only; row 33 archive step unproven; 2 wrong cites (A-097, A-068); r6 fix pending (tags, desk-repo traces, cites)
@@ -60,8 +60,8 @@ FAILED: F8 independent evidence on final head: mutants N04 (check_flows.py:1200)
 F8 design review r3: 0 Blocker, 4 Majors (no WARN baseline so exit 0 hides a new WARN; run-saving check is a blacklist and take_check does not require all/all/True; key check present = node name only, patch checks never run on the filmed files; no documented way to run take_check on the patched copy); fixer to follow after f8fix8
 sweep2 citation check: 7 wrong (QUESTIONS.md:5 still says deleted at clean-up; EXCEPTIONS.md:8 row numbers; role-count sources disagree; stale FINDINGS line cites; two Q22 headings); pointer fixer launching
 drift lane 008: 8 contradictions between audit files (DESK_ALERT_TO still open in FINDINGS/LEDGER, F-013 OPEN in LEDGER, 'deleted at clean-up' in QUESTIONS:5 and REPORT:51, RW Q-A/D1/port lines, CT:447 Q7 NOT DONE); fixers running (cite5, drift8fix); sweep3 found 13 one-place conflicts, 9 questions for the lead (reviews/sweep3-one-place.md) to go into QUESTIONS Q25 after cite5
-NEXT: running: F8 fixer r8, cite5, drift8 fixer, branch cross-read; next: F8 design Majors fixer, Q25 for lead, refill to 8, FINAL search
-PUSHED_UTC: 2026-11-16T11:16:55Z
+NEXT: running: F8 fixer r8, Q23/Q24 applier, cross-read fixer, stranger read owner sheet; next: F8 design Majors fixer, Q25, refill to 8
+PUSHED_UTC: 2026-11-16T11:18:27Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -80,10 +80,10 @@ PUSHED_UTC: 2026-11-16T11:16:55Z
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | % | state | last output |
 |---|---|---|---|---|---|---|---|---|
-| xread2 | cross-read system-map+core-hardening branches | sonnet | contradictions with our files | 11:27 | 11:40 | 5 | running | reviews/crossread-branches-r1.md
 | f8fix8 | F8 fixer r8 (N04 N11) | sonnet | surviving mutants | 11:58 | 12:10 | 5 | running | flow-check/fix-f8-r8.md
-| cite5 | pointer fixer sweep2+drift8 | sonnet | QUESTIONS EXCEPTIONS FINDINGS REPORT LEDGER | 12:02 | 12:15 | 5 | running | fix-cite5.md
-| drift8fix | claims files drift fixes | sonnet | RW CT items 4-6,8 | 12:03 | 12:15 | 5 | running | fix-drift8.md
+| af15ea7 | q23q24 applier | sonnet | apply Q23/Q24 answers | 11:20 | 11:35 | 5 | running | fix-q23q24.md
+| a613ad5 | xread fixer | sonnet | fix our files from cross-read | 11:20 | 11:35 | 5 | running | fix-xread.md
+| afdebea | stranger read owner sheet | sonnet | 10-minute test OWNER-STEPS | 11:20 | 11:30 | 5 | running | (inline)
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
