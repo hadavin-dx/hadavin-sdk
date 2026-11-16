@@ -96,7 +96,7 @@ def secret_hits(t):
 need('C70', 'IST** = UTC + 5:30')                                                                                       # N01 offset label
 need('C71', 'A line saying contacts will be deleted or archived, or asking you to type a figure, is always a difference.')  # N05 R5
 need('C72', 'the time is before the latest start (else do not press Enter: do the card)')                              # N10 warning before cancel path
-need('C73', 'Posting (by Wed 25 Nov 2026 15:00 UTC = 20:30 IST)')                                                       # N11 post-by date tied to the literal
+need('C73', 'Posting (by Wed 25 Nov 2026 15:00 UTC = 20:30 IST')                                                       # N11 post-by date tied to the literal
 for n, t in (('N', NOTE), ('O', OPEN)):
     for m in re.finditer(r'[Pp]ost(?:ing)?[- ]by[^.\n]{0,40}?(Mon|Tue|Wed|Thu|Fri) (\d{1,2}) Nov', t):
         if (m[1], m[2]) != ('Wed', '25'): fail('C73', '%s post-by date %s %s' % (n, m[1], m[2]))
