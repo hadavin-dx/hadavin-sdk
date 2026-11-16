@@ -78,10 +78,16 @@ SUT=$SUT_REAL
 stop_case F-sigint-suite INT 130 1 suite
 stop_case G-sighup-nested HUP 129 1 nested
 # H (f8-r13): two SIGTERM in a row at selftest.py itself (run_all.sh and the time-limit command can both send one). The second used to cut the clean-up of the first short and leave fc-selftest-* in TMPDIR. Five tries, each aimed at the moment the work folder appears.
-DEMO=$(cd "$SD/../../demo" && pwd); HL=0
+DEMO=$(cd "$SD/../../demo" && pwd); HL=0; PT=$(cd "$SD/../patches" && pwd)
+# the patched flows that selftest.py needs (the same steps as run_all.sh: copy the committed flows, apply the two patches, run the generator)
+HW="$T/h-work/c/handover/demo"; mkdir -p "$HW/n8n-flows" "$HW/n8n-mainframe" "$T/h-gen"
+cp -- "$DEMO"/n8n-flows/*.json "$DEMO/n8n-flows/mf_leads.sql" "$DEMO/n8n-flows/PAGE-STATEMENTS-V4.md" "$HW/n8n-flows/" && cp -- "$DEMO/VIDEO-RUNSHEET.md" "$HW/" && cp -- "$DEMO/n8n-mainframe/build_mainframe.py" "$HW/n8n-mainframe/"
+HGO=1
+( cd "$T/h-work/c" && env GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null GIT_CONFIG_NOSYSTEM=1 git init -q . && for p in F-002-take-key-check-and-claim-error-path F-008-save-runs-for-the-take; do env GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null GIT_CONFIG_NOSYSTEM=1 git apply "$PT/$p.patch" || exit 1; done && cd "$HW/n8n-mainframe" && MF_REAL=1 MF_V4=1 MF_TRIES=2 MF_TMO_MS=10000 timeout 300 python3 build_mainframe.py "$T/h-gen/real" PG_CREDENTIAL_ID SMTP_CREDENTIAL_ID SUB_WORKFLOW_ID 45 HS_CRED_PLACEHOLDER ) > "$T/h-build.txt" 2>&1 || HGO=""
+[ -n "$HGO" ]; ok $? "H-double-sigterm: the patched flows for selftest.py were built (set-up)"
 for k in 1 2 3 4 5; do
   mkdir -p "$T/h-tmp-$k"
-  env TMPDIR="$T/h-tmp-$k" FC_OUT="$T/h-out-$k" python3 -I "$SD/selftest.py" "$DEMO/n8n-flows-real-v5" "$DEMO/n8n-flows-real-v5" "$DEMO/n8n-flows-film-v5" > "$T/h-$k.txt" 2>&1 &
+  env TMPDIR="$T/h-tmp-$k" FC_OUT="$T/h-out-$k" python3 -I "$SD/selftest.py" "$DEMO/n8n-flows-real-v5" "$T/h-gen/real" "$DEMO/n8n-flows-film-v5" > "$T/h-$k.txt" 2>&1 &
   HP=$!; RUNPID=$HP
   for i in $(seq 1 400); do [ -n "$(ls -A "$T/h-tmp-$k" 2>/dev/null | grep '^fc-selftest-[^o]')" ] && break; sleep 0.05; done
   kill -TERM "$HP" 2>/dev/null; kill -TERM "$HP" 2>/dev/null
