@@ -75,3 +75,9 @@ REFUSED: git rev-parse failed for --repo /tmp/claude-0/-home-user/957f9d59-4d7f-
   declared --extra: exit code 0
   PASS: T14b exit 0
 == T15 SIGKILL of run.py leaves the test group alive; --restore stops it and restores
+./safety-tests.sh: line 77: 15349 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T15 orphan pytest alive
+stopped orphaned test group 15358; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r3/s-r2/tmpstate/hadavin-mutation-lane-0/9d3739a1f2d77e8e.backup; hash matches saved original: True
+  PASS: T15 orphan stopped
+  PASS: T15 file restored
+== T16 SIGHUP restores too (exit 129)
