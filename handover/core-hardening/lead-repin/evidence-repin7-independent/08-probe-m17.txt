@@ -1,0 +1,6 @@
+== v7.sh
+http -a alice:qzvxmrtkzz example.test
+http --auth=<masked>
+== mut/m17.sh
+http -a alice:qzvxmrtkzz example.test
+http --auth=<masked>

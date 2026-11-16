@@ -1,0 +1,12 @@
+v7.sh exit=0
+total 112
+-rw------- lead-repin-verify-out.txt
+-rw------- mask-line.sed
+-rw------- mask.awk
+-rw------- mask.sed
+mut/m13.sh exit=0
+total 112
+-rw-r--r-- lead-repin-verify-out.txt
+-rw-r--r-- mask-line.sed
+-rw-r--r-- mask.awk
+-rw-r--r-- mask.sed
