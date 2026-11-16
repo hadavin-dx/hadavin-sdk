@@ -1,0 +1,5 @@
+# Owner sheet v34 independent evidence (EVIDENCE RUNNER, condensed copy), 2026-11-16
+Raw: evidence-v34-independent/00-TABLE.md. Recorded, not judged.
+Deviations: the 30 checks said not to fail on v33 were not re-verified; every hostile edit of a built page was also caught by C01 (rebuild-and-compare), so the 7 edits mainly test C01; scans covered only the 24 v34 files plus lead note v18; EDITS.md and checkpoint-v34.md showed modified in git status, by someone else.
+Results: build exit 0; check-v34 0 failures; v34-fail-proof exit 0; gap-proof v33 misses 4 of 15, v34 misses 0 of 15; mut34 via heavy-slot (no wait) baseline 0, 300 plants, 299 caught, 0 missed, negative control MISSED as expected. Words: sheet A 6277, card A 2211, appendix A 5753, sheet B 6078, card B 2126, appendix B 5684, film 577, helper 897; five-page totals A 15715, B 15362. Time pairs 18:29=23:59, 18:19=23:49, 18:04=23:34 right on all 8 pages. Banned scan 0; secret-shape 0; 11 email-shape all @example.com.
+Hostile edits 7 of 7 caught (H1-H7: times, helper time, balance, pointer words, deadline).
