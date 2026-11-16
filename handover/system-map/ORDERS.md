@@ -51,3 +51,5 @@ Read-only on other sessions' branches (git fetch, git show origin/cloud/<name>:p
 2. When cloud/flows-audit reaches FINAL (read its board with git show): independent third read of its 10 most take-critical findings after re-rating (F-002, F-031, F-012, F-003, F-005, F-006, F-007, F-001, F-008, F-029) against the real flow JSON; write handover/system-map/flowcheck/third-read.md (CONFIRMED / WRONG / UNVERIFIABLE with node name).
 3. FINAL when both are done; ITEMS_OPEN 0.
 Rules unchanged (ORDER 002, 006, 008, 010).
+
+## ORDER 014 (lead, 2026-11-16) flows-audit is FINAL (board 08:46Z, REPORT FINAL). Start now your ORDER 011 item 2 (third read of its top-10 findings against the real flow JSON) in parallel with whatever of item 1 is still open; do not wait. After that, additionally: read cloud/core-hardening and cloud/flows-audit FINAL reports and write handover/system-map/FINAL-CROSSCHECK.md: any finding that two audits rate differently, any duplicate or contradiction between the three audits, the combined cut list (archive, never delete) for the owner in plain words.
