@@ -1,5 +1,10 @@
 # REPORT from system-map (newest on top, UTC and IST)
 
+## Status 07:52 UTC / 13:22 IST - ORDER 005 (independent review of core-hardening) started; plan review round 1 running
+Failed or not checked yet: nothing verified yet; this is the plan stage. Facts found: target = branch cloud/core-hardening, audited commit b4cce5b; target src/demos/tests equal b4cce5b, but my branch is on a later base (22 files in src differ), so I read code from a snapshot of b4cce5b. Target: 150 findings (5 Blocker, 80 Major, 65 Nit).
+Agents running (sonnet, read-only egm reviewers, started 07:52 UTC, expected end +15 min): a2c6595cb01e7a3cb egm-implementation-readiness (plan round 1) | ab54d54f12b810c45 egm-zoom-out (plan round 1). Next: egm-resolve, then builders V1-V5, H1, H2 (45 min box) and an evidence runner.
+Plan: handover/system-map/reviews-of-core-hardening/PLAN.md.
+
 ## FINAL 07:39 UTC / 13:09 IST - ORDER 002 outputs written; round 2 resolved; waiting for the lead
 WHAT FAILED OR WAS NOT CHECKED (first): no n8n runtime and no network, so every claim about n8n behaviour is UNVERIFIED. The take repository `duplicate-proof-lead-desk` is NOT VISIBLE. 183 files were NOT-READ (L1c 18, L3c 66, L4c 99); unread means unchecked, not clean. Round 2 found 9 Blockers and 19 Majors (zoom-out 0/5, design 4/6, comprehension 3/8, codebase-details 2/4); all were applied in generator v3 (work/result-resolve-r2.md, auto accept; 2 items partly contested, 1 escalated). There is no third result round, so the v3 text has NOT been re-reviewed by a fresh reviewer. Five ARCHIVE proposals (L6-J-019, 055, 012, 039, 049) were not grepped for callers: the laptop lead greps first (work/drift-report.md).
 OUTPUTS: MASTER-MAP.md (797 rows), SWEEP.md (314 raw findings, 20 Blocker; deduplicated 307, 16 Blocker, 10 touch the take), ONE-PLACE-TABLE.md (7 keys, 7 Owner lines, 59 rows = 49 + 10 appendix).
