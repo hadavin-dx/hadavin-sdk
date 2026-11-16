@@ -634,11 +634,16 @@ def restore_target(
     with os.fdopen(fd, "r+b" if writable else "rb") as fh:
         already = fh.read() == saved
         need_mode = (
-            not created and mode is not None and writable and stat.S_IMODE(st.st_mode) != mode
+            not created
+            and mode is not None
+            and writable
+            and st.st_nlink == 1
+            and stat.S_IMODE(st.st_mode) != mode
         )
-        if writable and not created and st.st_nlink != 1 and (need_mode or not already):
-            # r9 minor 6: checked BEFORE the mode is touched or anything is written (the other name may be a file
-            # outside the scratch tree). A file with two names that already holds the original needs neither.
+        if writable and not created and st.st_nlink != 1 and not already:
+            # r9 minor 6: checked BEFORE anything is written. The mode of a file with two names is NEVER changed (the other
+            # name may be a file outside the scratch tree: r8 changed its mode); a two-name file that already holds the
+            # original text is left as it is (content is what is verified), with its mode as the tests left it.
             raise Refused(
                 f"{path} is not a regular file with exactly one name (links: {st.st_nlink}): not written, mode not changed"
             )
