@@ -7,7 +7,7 @@ GOOD = "\n".join(f"## {h}\nNONE FOUND: x" for h in so.LANE_HEADS)
 
 class Scan(unittest.TestCase):
     def test_blank_cell(self):
-        t = GOOD.replace("NONE FOUND: x", "| a | b |\n|---|---|\n| 1 |  |", 1)
+        t = GOOD.replace("## Components\nNONE FOUND: x", "## Components\n| a | b |\n|---|---|\n| 1 |  |", 1)
         self.assertTrue(so.empty_fields("L", t, so.LANE_HEADS))
     def test_missing_heading(self):
         self.assertTrue(so.empty_fields("L", GOOD.replace("## Jobs", "## Other"), so.LANE_HEADS))
@@ -22,6 +22,7 @@ class Scan(unittest.TestCase):
         fake = "AKIA" + "ABCDEFGHIJKLMNOP"
         self.assertTrue(so.secrets("f", "key " + fake))
         self.assertEqual(so.secrets("f", "key AKIAIOSFODNN7EXAMPLE"), [])
+    def test_noreply_allowed(self): self.assertEqual(so.secrets("f", "Co-Authored-By: X <noreply@anthropic.com>"), [])
     def test_coverage_status(self):
         t = "## Coverage\n| path | bytes | status | note |\n|---|---|---|---|\n| a | 1 | MAYBE | |\n"
         self.assertTrue(so.coverage("L", t))

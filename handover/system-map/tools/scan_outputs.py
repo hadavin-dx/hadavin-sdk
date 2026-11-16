@@ -8,7 +8,7 @@ KEYS = ["STORE", "LOG", "FILTER", "COUNTER", "RETRY", "NOTICE", "OTHER"]
 SECRETS = [r"AKIA[0-9A-Z]{16}", r"-----BEGIN [A-Z ]*PRIVATE KEY-----", r"ghp_[A-Za-z0-9]{36}",
            r"xox[baprs]-[A-Za-z0-9-]{10,}", r"sk-[A-Za-z0-9]{20,}",
            r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[a-z]{2,}"]
-ALLOWED = {"AKIAIOSFODNN7EXAMPLE"}
+ALLOWED = {"AKIAIOSFODNN7EXAMPLE", "noreply@anthropic.com"}
 STATUS = {"READ", "SKIMMED", "NOT-READ"}
 
 
