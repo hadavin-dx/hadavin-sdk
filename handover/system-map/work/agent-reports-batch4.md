@@ -915,3 +915,11 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 659 end-delete-cases r6: live steps unclear. FIXED by CURRENT.
 
 - 660 L2c r7: action not runnable. FIXED by ACTION AND TERMS.
+
+- 661 L1c r7: legend contradiction. FIXED by LEGEND.
+- 662 L4c r4: quarantine incomplete. FIXED by QUARANTINE r4 (row check TO DO).
+- 663 L5ac r4: FD-001 table missing. FIXED by READ FIRST r4.
+- 664 premortem r7: no summary. FIXED by CURRENT SUMMARY.
+- 665 end-delete-cases r7: step 3a missing. FIXED by CURRENT r7.
+- 666 decision-list r7: run (a) meaning split. FIXED by CURRENT r7 (row splits TO DO).
+- 667 L3c r5: gloss-pending terms. FIXED by TERMS r5.
