@@ -7,7 +7,8 @@ import sys
 
 H = os.path.dirname(os.path.abspath(__file__))
 R = os.path.join(H, "..")
-P = json.load(open(os.path.join(H, "mask_patterns.json")))
+with open(os.path.join(H, "mask_patterns.json")) as fh:
+    P = json.load(fh)
 vals = [re.compile(r) for r in P["value_regexes"]]
 whole = re.compile(P["whole_token_regex"])
 allow = [re.compile(r) for r in P["allow_regexes"]]
@@ -27,8 +28,10 @@ for d, _, fs in os.walk(R):
         if rel.startswith(skip) or rel.startswith(".git"):
             continue
         try:
-            t = open(p, encoding="utf-8").read()
-        except Exception:
+            with open(p, encoding="utf-8") as fh:
+                t = fh.read()
+        except (OSError, UnicodeDecodeError):
+            # unreadable or binary file: not a text file to scan
             continue
         n += 1
         for i, l in enumerate(t.splitlines(), 1):

@@ -9,11 +9,12 @@ import sys
 p = sys.argv[1] if len(sys.argv) > 1 else "FINDINGS.md"
 c = collections.Counter()
 ids = []
-for l in open(p, encoding="utf-8"):
-    m = re.match(r"\| (F-\d+) \| (\w+)[^|]* \| [^|]* \| [^|]* \| (\w+)", l)
-    if m:
-        ids.append(m.group(1))
-        c[(m.group(2), "BEFORE" if m.group(3) == "BEFORE" else "AFTER")] += 1
+with open(p, encoding="utf-8") as fh:
+    for l in fh:
+        m = re.match(r"\| (F-\d+) \| (\w+)[^|]* \| [^|]* \| [^|]* \| (\w+)", l)
+        if m:
+            ids.append(m.group(1))
+            c[(m.group(2), "BEFORE" if m.group(3) == "BEFORE" else "AFTER")] += 1
 print("rows", len(ids), "unique", len(set(ids)))
 tot = collections.Counter()
 for s in ("Blocker", "Major", "Nit"):

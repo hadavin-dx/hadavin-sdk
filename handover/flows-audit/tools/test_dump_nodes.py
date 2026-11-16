@@ -1,24 +1,34 @@
 """Run: python3 tools/test_dump_nodes.py (exit 0 = all 8 fixture cases pass). Made-up fixtures only."""
 
+import contextlib
+import io
 import os
-import subprocess
 import sys
+
+import dump_nodes
 
 here = os.path.dirname(os.path.abspath(__file__))
 
 
+class Result:
+    def __init__(self, returncode, stdout):
+        self.returncode = returncode
+        self.stdout = stdout
+
+
+def run(*a):
+    """Run dump_nodes.py in this process (same code, same output)."""
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        rc = dump_nodes.main(list(a))
+    return Result(rc, buf.getvalue())
+
+
 def table(name):
-    return subprocess.run(
-        [
-            sys.executable,
-            os.path.join(here, "dump_nodes.py"),
-            "table",
-            os.path.join(here, "fixtures", name),
-        ],
-        capture_output=True,
-        text=True,
-        check=True,
-    ).stdout
+    r = run("table", os.path.join(here, "fixtures", name))
+    if r.returncode != 0:
+        raise RuntimeError(f"dump_nodes table {name} failed with exit code {r.returncode}")
+    return r.stdout
 
 
 def row(out, node):
@@ -37,12 +47,6 @@ if not row(table("errtarget.json"), "Err").rstrip().endswith("ENTRY |") or not r
 s = table("secret.json")
 if "hunter2" in s or "A" * 40 in s or s.count("<masked>") < 2:
     fail.append("4 secret and 40-char value must be masked")
-
-
-def run(*a):
-    return subprocess.run(
-        [sys.executable, os.path.join(here, "dump_nodes.py"), *a], capture_output=True, text=True
-    )
 
 
 fx = os.path.join(here, "fixtures")
