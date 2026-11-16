@@ -6,6 +6,7 @@ Claim rows start with `| A-nnn |`, `| B-nnn |` or `| X-n |` and must have 7 cell
 The verdict is the first phrase of cell 6 (longest phrase first).
 Prints: verdict counts, counts per lane, offenders, number of ids and unique ids.
 """
+
 import collections
 import re
 import sys

@@ -7,20 +7,19 @@ FAIL /tmp/pa13b/neg/no_name/mf-form.json unreachable from any trigger ['Claim', 
 FAIL /tmp/pa13b/neg/no_name/mf-form.json node count 14 != expected 15
 mf-form.json nodes=14 connections=14 triggers=['Receive'] saveDataSuccess=all saveDataError=all
 Traceback (most recent call last):
-  File "/home/user/hadavin-sdk/handover/flows-audit/patch-apply/check_flows.py", line 284, in <module>
+  File "/home/user/hadavin-sdk/handover/flows-audit/patch-apply/check_flows.py", line 561, in <module>
     sys.exit(main(sys.argv[1:]))
              ~~~~^^^^^^^^^^^^^^
-  File "/home/user/hadavin-sdk/handover/flows-audit/patch-apply/check_flows.py", line 272, in main
-    if pc: patch_checks(d, fn, pc, tag)
-           ~~~~~~~~~~~~^^^^^^^^^^^^^^^^
-  File "/home/user/hadavin-sdk/handover/flows-audit/patch-apply/check_flows.py", line 168, in patch_checks
-    if not get(d, nm): fail(tag, "F-002 node %s missing" % nm)
+  File "/home/user/hadavin-sdk/handover/flows-audit/patch-apply/check_flows.py", line 543, in main
+    patch_checks(d, fn, pc, tag)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/home/user/hadavin-sdk/handover/flows-audit/patch-apply/check_flows.py", line 296, in patch_checks
+    if not get(d, nm):
            ~~~^^^^^^^
-  File "/home/user/hadavin-sdk/handover/flows-audit/patch-apply/check_flows.py", line 156, in get
-    def get(d, name): return next((n for n in d["nodes"] if n["name"] == name), None)
-                             ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/user/hadavin-sdk/handover/flows-audit/patch-apply/check_flows.py", line 156, in <genexpr>
-    def get(d, name): return next((n for n in d["nodes"] if n["name"] == name), None)
-                                                            ~^^^^^^^^
+  File "/home/user/hadavin-sdk/handover/flows-audit/patch-apply/check_flows.py", line 281, in get
+    return next((n for n in d["nodes"] if n["name"] == name), None)
+  File "/home/user/hadavin-sdk/handover/flows-audit/patch-apply/check_flows.py", line 281, in <genexpr>
+    return next((n for n in d["nodes"] if n["name"] == name), None)
+                                          ~^^^^^^^^
 KeyError: 'name'
 exit=1

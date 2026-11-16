@@ -28,23 +28,39 @@ Files changed: CLAIMS-TABLE.md, lanes13/claims-A.md, lanes13/claims-B.md, fix-f1
 
 Script text (count.py; run `python3 count.py CLAIMS-TABLE.md`):
 ```python
-import re,sys,collections
-V=["SUPPORTED ONLY BY RELAYED NUMBER","SUPPORTED","OVERSTATED","UNSUPPORTED","UNTRACED"]
+import re, sys, collections
+
+V = ["SUPPORTED ONLY BY RELAYED NUMBER", "SUPPORTED", "OVERSTATED", "UNSUPPORTED", "UNTRACED"]
+
+
 def count(path, start=None):
-    c=collections.Counter(); lane=collections.Counter(); bad=[]; ids=[]
-    txt=open(path,encoding='utf-8').read().split('\n')
+    c = collections.Counter()
+    lane = collections.Counter()
+    bad = []
+    ids = []
+    txt = open(path, encoding="utf-8").read().split("\n")
     for l in txt:
-        m=re.match(r'\| (A-\d+|B-\d+|X-\d) \|',l)
-        if not m: continue
-        cells=l.strip().strip('|').split(' | ')
-        if len(cells)!=7: bad.append((m.group(1),len(cells))); 
-        v=cells[5] if len(cells)==7 else None
-        if v is None: continue
+        m = re.match(r"\| (A-\d+|B-\d+|X-\d) \|", l)
+        if not m:
+            continue
+        cells = l.strip().strip("|").split(" | ")
+        if len(cells) != 7:
+            bad.append((m.group(1), len(cells)))
+        v = cells[5] if len(cells) == 7 else None
+        if v is None:
+            continue
         for k in V:
-            if v.startswith(k): c[k]+=1; lane[m.group(1)[0]]+=1; break
-        else: bad.append((m.group(1),'noverdict',v[:30]))
+            if v.startswith(k):
+                c[k] += 1
+                lane[m.group(1)[0]] += 1
+                break
+        else:
+            bad.append((m.group(1), "noverdict", v[:30]))
         ids.append(m.group(1))
-    return c,lane,bad,ids
-if __name__=='__main__':
-    c,l,b,ids=count(sys.argv[1]); print(dict(c),dict(l),b,len(ids),len(set(ids)))
+    return c, lane, bad, ids
+
+
+if __name__ == "__main__":
+    c, l, b, ids = count(sys.argv[1])
+    print(dict(c), dict(l), b, len(ids), len(set(ids)))
 ```

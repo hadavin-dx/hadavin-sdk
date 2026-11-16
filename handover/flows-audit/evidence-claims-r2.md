@@ -81,78 +81,125 @@ MISMATCHES 14
 
 ## Script
 ```python
-import re,collections
-D='/home/user/hadavin-sdk/handover/flows-audit/'
+import re, collections
+
+D = "/home/user/hadavin-sdk/handover/flows-audit/"
+
+
 def cells(l):
-    s=l.strip()
-    parts=re.split(r'(?<!\\)\|',s)
-    return parts[1:-1] if s.endswith('|') else parts[1:]
+    s = l.strip()
+    parts = re.split(r"(?<!\\)\|", s)
+    return parts[1:-1] if s.endswith("|") else parts[1:]
+
+
 def tables(path):
-    L=open(path,encoding='utf-8').read().split('\n')
-    out=[];cur=None
-    for i,l in enumerate(L,1):
-        if l.lstrip().startswith('|'):
-            if cur is None: cur={'start':i,'rows':[]}
-            cur['rows'].append((i,l))
+    L = open(path, encoding="utf-8").read().split("\n")
+    out = []
+    cur = None
+    for i, l in enumerate(L, 1):
+        if l.lstrip().startswith("|"):
+            if cur is None:
+                cur = {"start": i, "rows": []}
+            cur["rows"].append((i, l))
         else:
-            if cur: out.append(cur);cur=None
-    if cur: out.append(cur)
-    return L,out
-res=[]
+            if cur:
+                out.append(cur)
+                cur = None
+    if cur:
+        out.append(cur)
+    return L, out
+
+
+res = []
 # (a)
-for f in ['CLAIMS-TABLE.md','lanes13/claims-A.md','lanes13/claims-B.md']:
-    L,T=tables(D+f)
+for f in ["CLAIMS-TABLE.md", "lanes13/claims-A.md", "lanes13/claims-B.md"]:
+    L, T = tables(D + f)
     for t in T:
-        n=len(cells(t['rows'][0][1]))
-        for i,l in t['rows']:
-            c=len(cells(l))
-            if c!=n: res.append(f'(a) COLS {f}:{i} has {c}, header(line {t["start"]}) {n}')
-        print(f'table {f}:{t["start"]} cols={n} rows={len(t["rows"])}')
+        n = len(cells(t["rows"][0][1]))
+        for i, l in t["rows"]:
+            c = len(cells(l))
+            if c != n:
+                res.append(f"(a) COLS {f}:{i} has {c}, header(line {t['start']}) {n}")
+        print(f"table {f}:{t['start']} cols={n} rows={len(t['rows'])}")
 # claims
-V=['SUPPORTED ONLY BY RELAYED NUMBER','SUPPORTED','OVERSTATED','UNSUPPORTED','UNTRACED']
+V = ["SUPPORTED ONLY BY RELAYED NUMBER", "SUPPORTED", "OVERSTATED", "UNSUPPORTED", "UNTRACED"]
+
+
 def claims(path):
-    L,T=tables(path);d=[]
+    L, T = tables(path)
+    d = []
     for t in T:
-        for i,l in t['rows']:
-            c=[x.strip() for x in cells(l)]
-            if c and re.match(r'^(A|B|X)-\d+$',c[0]) and len(c)>=6: d.append((c[0],c[5],i))
+        for i, l in t["rows"]:
+            c = [x.strip() for x in cells(l)]
+            if c and re.match(r"^(A|B|X)-\d+$", c[0]) and len(c) >= 6:
+                d.append((c[0], c[5], i))
     return d
+
+
 def vk(v):
-    if v.startswith('SUPPORTED ONLY BY RELAYED'): return 'RELAYED-ONLY'
-    for w in ['SUPPORTED','OVERSTATED','UNSUPPORTED','UNTRACED']:
-        if v.startswith(w): return w
-    return 'OTHER:'+v[:30]
-A=claims(D+'lanes13/claims-A.md');B=claims(D+'lanes13/claims-B.md');C=claims(D+'CLAIMS-TABLE.md')
-cnt=lambda x:collections.Counter(vk(v) for _,v,_ in x)
-print('A',len(A),dict(cnt(A)));print('B',len(B),dict(cnt(B)));print('A+B',len(A+B),dict(cnt(A+B)));print('TABLE',len(C),dict(cnt(C)))
-exp={'SUPPORTED':114,'RELAYED-ONLY':69,'OVERSTATED':49,'UNSUPPORTED':25,'UNTRACED':70}
-ab=cnt(A+B)
-for k,v in exp.items():
-    if ab.get(k,0)!=v: res.append(f'(b) {k}: recount {ab.get(k,0)} vs printed {v}')
-if len(A+B)!=327: res.append(f'(b) total {len(A+B)} vs 327')
+    if v.startswith("SUPPORTED ONLY BY RELAYED"):
+        return "RELAYED-ONLY"
+    for w in ["SUPPORTED", "OVERSTATED", "UNSUPPORTED", "UNTRACED"]:
+        if v.startswith(w):
+            return w
+    return "OTHER:" + v[:30]
+
+
+A = claims(D + "lanes13/claims-A.md")
+B = claims(D + "lanes13/claims-B.md")
+C = claims(D + "CLAIMS-TABLE.md")
+cnt = lambda x: collections.Counter(vk(v) for _, v, _ in x)
+print("A", len(A), dict(cnt(A)))
+print("B", len(B), dict(cnt(B)))
+print("A+B", len(A + B), dict(cnt(A + B)))
+print("TABLE", len(C), dict(cnt(C)))
+exp = {"SUPPORTED": 114, "RELAYED-ONLY": 69, "OVERSTATED": 49, "UNSUPPORTED": 25, "UNTRACED": 70}
+ab = cnt(A + B)
+for k, v in exp.items():
+    if ab.get(k, 0) != v:
+        res.append(f"(b) {k}: recount {ab.get(k, 0)} vs printed {v}")
+if len(A + B) != 327:
+    res.append(f"(b) total {len(A + B)} vs 327")
 # per-id verdict diff
-cm={i:vk(v) for i,v,_ in C};ab_m={i:vk(v) for i,v,_ in A+B}
-for i in sorted(set(cm)&set(ab_m)):
-    if cm[i]!=ab_m[i]: res.append(f'(b) verdict differs {i}: lanes {ab_m[i]} vs TABLE {cm[i]}')
+cm = {i: vk(v) for i, v, _ in C}
+ab_m = {i: vk(v) for i, v, _ in A + B}
+for i in sorted(set(cm) & set(ab_m)):
+    if cm[i] != ab_m[i]:
+        res.append(f"(b) verdict differs {i}: lanes {ab_m[i]} vs TABLE {cm[i]}")
 # (c)
-sa=set(ab_m);sc=set(cm)
-for i in sorted(sa-sc): res.append(f'(c) in lanes, missing from CLAIMS-TABLE: {i}')
-for i in sorted(sc-sa): res.append(f'(c) in CLAIMS-TABLE, missing from lanes: {i}')
+sa = set(ab_m)
+sc = set(cm)
+for i in sorted(sa - sc):
+    res.append(f"(c) in lanes, missing from CLAIMS-TABLE: {i}")
+for i in sorted(sc - sa):
+    res.append(f"(c) in CLAIMS-TABLE, missing from lanes: {i}")
 # (e)
-for name,x in [('A',A),('B',B),('TABLE',C)]:
-    c=collections.Counter(i for i,_,_ in x)
-    for i,n in c.items():
-        if n>1: res.append(f'(e) duplicate id {i} x{n} in {name} (lines {[l for j,_,l in x if j==i]})')
-c=collections.Counter(i for i,_,_ in A+B)
-for i,n in c.items():
-    if n>1 and not (i in {j for j,_,_ in A} and i in {j for j,_,_ in B} and False): res.append(f'(e) id {i} x{n} across A+B')
+for name, x in [("A", A), ("B", B), ("TABLE", C)]:
+    c = collections.Counter(i for i, _, _ in x)
+    for i, n in c.items():
+        if n > 1:
+            res.append(
+                f"(e) duplicate id {i} x{n} in {name} (lines {[l for j, _, l in x if j == i]})"
+            )
+c = collections.Counter(i for i, _, _ in A + B)
+for i, n in c.items():
+    if n > 1 and not (i in {j for j, _, _ in A} and i in {j for j, _, _ in B} and False):
+        res.append(f"(e) id {i} x{n} across A+B")
 # (d)
-L=open(D+'CLAIMS-TABLE.md',encoding='utf-8').read().split('\n')
-sec=None;d=collections.Counter()
+L = open(D + "CLAIMS-TABLE.md", encoding="utf-8").read().split("\n")
+sec = None
+d = collections.Counter()
 for l in L:
-    if l.startswith('## '): sec=l
-    if sec and (sec.startswith('## Table 1') or sec.startswith('## Table 2')) and re.match(r'^\|\s*\d+\s*\|',l): d[sec]+=1
-print('(d)',dict(d))
-open('/tmp/ct2/mismatch.txt','w').write('\n'.join(res))
-print('MISMATCHES',len(res));print('\n'.join(res))
+    if l.startswith("## "):
+        sec = l
+    if (
+        sec
+        and (sec.startswith("## Table 1") or sec.startswith("## Table 2"))
+        and re.match(r"^\|\s*\d+\s*\|", l)
+    ):
+        d[sec] += 1
+print("(d)", dict(d))
+open("/tmp/ct2/mismatch.txt", "w").write("\n".join(res))
+print("MISMATCHES", len(res))
+print("\n".join(res))
 ```

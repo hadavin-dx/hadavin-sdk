@@ -28,7 +28,7 @@ the error-settings table per file), --files all (every *.json in each DIR). Noth
 Checks per file (FAIL = exit code 1): JSON parses; every node has name and type; no duplicate names; every connection
 source and target exists; at least one trigger; every node reachable from a trigger (reachability walk over all output
 types, so a node whose only incoming link comes from an orphan or from itself is unreachable); node/connection counts
-equal the expected ones; onError=continueErrorOutput nodes have a non-empty main[1]; IF nodes have both branch outputs;
+equal the expected ones; onError=continueErrorOutput nodes should have a non-empty ERROR output, which is the LAST output (main[1] for most steps, main[2] for an IF step, after the rules for a switch step): a missing one is a WARN (n8n rule UNVERIFIED), a FAIL with --fail-unverified; IF nodes have both branch outputs;
 every $('Name') and $node["Name"] inside an expression names a node of the same file.
 Trigger = exact type n8n-nodes-base.webhook, n8n-nodes-base.executeWorkflowTrigger, n8n-nodes-base.formTrigger, n8n-nodes-base.cron, or a type
 ending in 'Trigger'. respondToWebhook is NOT a trigger.
@@ -66,6 +66,9 @@ SQL_DONE = {
     "col_warn": 0,
     "tbl_warn": 0,
     "no_query": 0,
+    "uncompared": 0,  # query strings with no readable table name (for example only a {{ }} expression): read, but nothing was compared
+    "blanked": 0,  # compared query strings that contain {{ }} parts: those parts were blanked, not compared
+    "same_as_sql_word": 0,  # columns of the --ddl file whose name is also an SQL word: a use of them cannot be told from the SQL word, so they are never compared
 }  # queries compared with the --ddl table definition, and what that comparison found
 CRED_PH = []  # credential ids and sub-workflow ids that are still placeholders (they must be replaced before import)
 ENV_USE = []  # steps that read environment variables: "file node: tokens"
@@ -224,6 +227,9 @@ def final_block():
     else:
         print(
             f"SQL columns compared with the --ddl file: {SQL_DONE['checked']} query string(s) read."
+        )
+        print(
+            f"SQL NOT COMPARED: query strings read but not compared (no table name could be read, for example only a {{{{ }}}} expression)={SQL_DONE['uncompared']}; compared query strings whose {{{{ }}}} parts were blanked={SQL_DONE['blanked']}; table-file columns named like an SQL word (never compared)={SQL_DONE['same_as_sql_word']}"
         )
         print(
             f"SQL WARNS: column WARNs={SQL_DONE['col_warn']} table WARNs={SQL_DONE['tbl_warn']} postgres steps with no query text (not compared)={SQL_DONE['no_query']}"
@@ -408,8 +414,18 @@ def sql_check(n, tag):
             known=True,
         )
     for q in qs:
-        SQL_DONE["checked"] += 1
         tables, words = sql_use(q)
+        if not tables:
+            SQL_DONE["uncompared"] += 1
+            warn(
+                tag,
+                f"node {n['name']}: the query text names no table that could be read (only {{{{ }}}} expressions or no FROM/UPDATE/INTO/JOIN), so its columns were NOT compared with the --ddl file",
+                known=True,
+            )
+            continue
+        SQL_DONE["checked"] += 1
+        if "{{" in q:
+            SQL_DONE["blanked"] += 1
         known = set().union(*[ddl[t] for t in tables if t in ddl]) if tables else set()
         absent = sorted(t for t in tables if t not in ddl)
         miss = sorted(w for w in words if w not in known and w not in tables)
@@ -669,6 +685,12 @@ def secret_scan_top(d, tag):
         fail(tag, f"top-level data (not a node): secret-looking value ({h})")
 
 
+ENTRY_FLOWS = (
+    "mf-form.json",
+    "mf-hook.json",
+)  # the two flows that a caller posts to and that must answer through respondToWebhook steps
+
+
 def webhook_paths(n, nodes, adj, tag):
     """Every path from a responseNode webhook must end in respondToWebhook. Walk is stopped at respond nodes."""
     prm = n.get("parameters") or {}
@@ -677,6 +699,11 @@ def webhook_paths(n, nodes, adj, tag):
         unv(
             tag,
             f"webhook {n['name']} sets no responseMode: this check assumes n8n answers at once (onReceived), which is from memory of n8n, so the reply path was not checked",
+        )
+    if "responseMode" in prm and mode != "responseNode" and tag.rsplit("/", 1)[-1] in ENTRY_FLOWS:
+        fail(
+            tag,
+            f"webhook {n['name']} sets responseMode={mode!r} on an entry flow: the take needs the answer sent by a respondToWebhook step (responseNode), so the caller would get an answer from n8n at once and the reply steps would not be used",
         )
     if mode != "responseNode":
         print(
@@ -1221,7 +1248,7 @@ def check_flow(d, tag, expect, baseline_d):
             ACCEPTED_SAVE.append(f"{tag}: {off}")
             print(
                 f"ACCEPTED: {SAVE_ACCEPT_REASON}: {tag} keeps run-saving settings {off} off on purpose "
-                "(it fires every 30 s, so saved runs would pile up with lead keys and e-mails; the one video makes no recovery claim)"
+                "(the lead says it fires every 30 s, which this check did not read from the file; saved runs would pile up with lead keys and e-mails; the one video makes no recovery claim)"
             )
         elif off:
             if fname_ in OPTS["accept_nosave"]:
@@ -1459,6 +1486,11 @@ def patch_checks(d, fname, which, tag):
                         f"F-002 KeyOk condition is not the expected string {KEY_COND!r} with boolean-true operator",
                     )
                 for nm, code in (("ReplyBadKey", 422), ("ReplyStoreFail", 503)):
+                    if get(d, nm)["type"] != "n8n-nodes-base.respondToWebhook":
+                        fail(
+                            tag,
+                            f"F-002 {nm} is of type {get(d, nm)['type']!r}, expected n8n-nodes-base.respondToWebhook (a step of another type sends no answer)",
+                        )
                     p = get(d, nm)["parameters"]
                     print(
                         "  [{}] {} status={} body={}".format(
@@ -1477,16 +1509,19 @@ def patch_checks(d, fname, which, tag):
                     get(d, "ReplyStoreFail")["parameters"].get("responseBody")
                 ):
                     fail(tag, "F-002 ReplyStoreFail body lacks the $('Valid') reference")
-                print(
-                    "  [{}] Valid lead_key assignment: {}".format(
-                        fname,
-                        [
-                            a.get("value")
-                            for a in get(d, "Valid")["parameters"]["assignments"]["assignments"]
-                            if a.get("name") == "lead_key"
-                        ],
+                lk = [
+                    a.get("value")
+                    for a in (
+                        ((get(d, "Valid") or {}).get("parameters") or {}).get("assignments") or {}
+                    ).get("assignments", [])
+                    if a.get("name") == "lead_key"
+                ]
+                print(f"  [{fname}] Valid lead_key assignment: {lk}")
+                if len(lk) != 1 or not isinstance(lk[0], str) or not lk[0].strip():
+                    fail(
+                        tag,
+                        f"F-002 Valid must set lead_key exactly once with a non-empty value, found {len(lk)} assignment(s)",
                     )
-                )
     if "F008" in which:
         want = "none" if fname == "mf-recovery.json" else "all"
         s = d.get("settings", {})
@@ -1666,6 +1701,14 @@ def main(argv):
                 if not OPTS["ddl"]:
                     print("usage error: --ddl file holds no CREATE TABLE definition")
                     return 2
+                amb = sorted({c for cols in OPTS["ddl"].values() for c in cols} & SQL_WORDS)
+                SQL_DONE["same_as_sql_word"] = len(amb)
+                if amb:
+                    warn(
+                        "sql",
+                        f"the --ddl file has column(s) {amb} named like an SQL word: a use of them in a query cannot be told from the SQL word, so they are never compared",
+                        known=True,
+                    )
             elif a == "--accept-no-save":
                 nm_ = val()
                 if not nm_.endswith(".json") or "/" in nm_ or "\\" in nm_:
@@ -1761,6 +1804,10 @@ def main(argv):
             p = os.path.join(dr, fn)
             tag = f"{dr}/{fn}"
             if not os.path.isfile(p):
+                fail(
+                    tag,
+                    "this listed flow is not a regular file (a folder, a dangling link or missing), so it was NOT checked",
+                )
                 continue
             d = load(p, tag)
             if d is None:

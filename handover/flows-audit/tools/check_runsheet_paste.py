@@ -6,6 +6,7 @@ Checks: (1) every table row has the right number of cells (a pipe sign inside a 
 no apostrophe, no pipe sign and no backtick inside; (3) the banned words (approval, audit trail,
 one database) appear in no paste cell; (4) row ids are unique; (5) row counts per section;
 (6) with CLAIMS-TABLE.md given: every A-/B- claim id there has a row here (by number, letters ignored)."""
+
 import re
 import sys
 
@@ -30,7 +31,12 @@ def main(argv):
     for n, line in enumerate(text, 1):
         if line.startswith("## "):
             sec = line[3:].split(".")[0].strip()[:12]
-        if not (line.startswith("| ") and not line.startswith("| id") and not line.startswith("|---") and not line.startswith("| card line")):
+        if not (
+            line.startswith("| ")
+            and not line.startswith("| id")
+            and not line.startswith("|---")
+            and not line.startswith("| card line")
+        ):
             continue
         cells = [c.strip() for c in line.strip()[1:-1].split(" | ")]
         rid = cells[0]
@@ -78,15 +84,33 @@ def main(argv):
                 continue
             # the verdict is found by its words in the cells after the claim text (cells 4 to 6),
             # not at a fixed cell number, so a moved or added column does not hide a verdict
-            verdict = next((x for x in c[3:7] if re.match(r"(UNSUPPORTED|OVERSTATED|DELETE|STALE|UNTRACED|SUPPORTED)", x)), "")
+            verdict = next(
+                (
+                    x
+                    for x in c[3:7]
+                    if re.match(r"(UNSUPPORTED|OVERSTATED|DELETE|STALE|UNTRACED|SUPPORTED)", x)
+                ),
+                "",
+            )
             if FLAGGED.match(verdict):
                 want.add(m.groups())
             elif verdict.startswith("UNTRACED"):
                 untraced.add(m.groups())
         want -= set()
         miss = sorted(want - have)
-        print("claim ids marked UNSUPPORTED, OVERSTATED, DELETE or STALE in CLAIMS-TABLE.md:", len(want), "| with no row here:", [f"{a}-{b}" for a, b in miss])
-        print("claim ids marked UNTRACED there:", len(untraced), "| with no row here:", len(untraced - have), "(scope: UNTRACED claims have no safe wording, so they get a row only when a file sentence had to change)")
+        print(
+            "claim ids marked UNSUPPORTED, OVERSTATED, DELETE or STALE in CLAIMS-TABLE.md:",
+            len(want),
+            "| with no row here:",
+            [f"{a}-{b}" for a, b in miss],
+        )
+        print(
+            "claim ids marked UNTRACED there:",
+            len(untraced),
+            "| with no row here:",
+            len(untraced - have),
+            "(scope: UNTRACED claims have no safe wording, so they get a row only when a file sentence had to change)",
+        )
         if miss:
             bad.append("claim ids missing")
     for b in bad:
