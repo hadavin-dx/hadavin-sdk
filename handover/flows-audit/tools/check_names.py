@@ -6,6 +6,17 @@ import os
 import re
 import sys
 
+
+def read_lines(path):
+    with open(path) as fh:
+        return fh.readlines()
+
+
+def read_json(path):
+    with open(path) as fh:
+        return json.load(fh)
+
+
 R = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")
 DEMO = os.path.join(R, "demo")
 OUT = os.path.join(R, "flows-audit", "tools", "out")
@@ -14,14 +25,14 @@ bad = []
 rows = 0
 for lf in sorted(glob.glob(os.path.join(R, "flows-audit", "lanes", "*.md"))):
     cur = None
-    for l in open(lf):
+    for l in read_lines(lf):
         m = re.match(r"### (\S+) \(\d+ nodes\)", l)
         if m:
             cur = m.group(1)
-            names = {n["name"] for n in json.load(open(os.path.join(DEMO, cur)))["nodes"]}
+            names = {n["name"] for n in read_json(os.path.join(DEMO, cur))["nodes"]}
             ref = {
                 cells(x)[0]: cells(x)[:10]
-                for x in open(os.path.join(OUT, cur.replace("/", "__")[:-5] + ".md"))
+                for x in read_lines(os.path.join(OUT, cur.replace("/", "__")[:-5] + ".md"))
                 if re.match(r"\| \d+ \|", x)
             }
             continue

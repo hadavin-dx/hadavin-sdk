@@ -172,7 +172,9 @@ def check_flow(d, tag, expect, baseline_d):
         if n.get("onError") == "continueErrorOutput" and not has(outs, 1):
             fail(
                 tag,
-                "node {} has onError=continueErrorOutput but main[1] is missing or has no target".format(n["name"]),
+                "node {} has onError=continueErrorOutput but main[1] is missing or has no target".format(
+                    n["name"]
+                ),
             )
         if n["type"] in IFLIKE:
             if n["type"] == "n8n-nodes-base.switch":
@@ -216,18 +218,20 @@ def check_flow(d, tag, expect, baseline_d):
                 if ref not in nameset:
                     fail(
                         tag,
-                        "node {}: expression refers to $('{}') which is not a node of this file".format(n["name"], ref),
+                        "node {}: expression refers to $('{}') which is not a node of this file".format(
+                            n["name"], ref
+                        ),
                     )
             if PREV.search(s):
-                warn(tag, "node {} uses $prevNode (cannot be resolved statically)".format(n["name"]))
+                warn(
+                    tag, "node {} uses $prevNode (cannot be resolved statically)".format(n["name"])
+                )
     return {"nodes": len(nodes), "connections": ncon, "triggers": trig}
 
 
 def info(d, tag):
     tc = collections.Counter((n.get("type"), n.get("typeVersion")) for n in d.get("nodes", []))
-    print(
-        "  types:", "; ".join(f"{t} v{v} x{c}" for (t, v), c in sorted(tc.items(), key=str))
-    )
+    print("  types:", "; ".join(f"{t} v{v} x{c}" for (t, v), c in sorted(tc.items(), key=str)))
     raw = json.dumps(d)
     where = collections.defaultdict(set)
     for n in d.get("nodes", []):
@@ -312,13 +316,17 @@ def patch_checks(d, fname, which, tag):
                     if d["connections"].get(nm) != want:
                         fail(
                             tag,
-                            "F-002 connection structure of {} is {} expected {}".format(nm, json.dumps(d["connections"].get(nm)), json.dumps(want)),
+                            "F-002 connection structure of {} is {} expected {}".format(
+                                nm, json.dumps(d["connections"].get(nm)), json.dumps(want)
+                            ),
                         )
                 cl = get(d, "Claim")
                 if cl.get("onError") != "continueErrorOutput":
                     fail(tag, "Claim onError is {!r}".format(cl.get("onError")))
                 print(
-                    "  [{}] Claim alwaysOutputData={!r} onError={!r}".format(fname, cl.get("alwaysOutputData"), cl.get("onError"))
+                    "  [{}] Claim alwaysOutputData={!r} onError={!r}".format(
+                        fname, cl.get("alwaysOutputData"), cl.get("onError")
+                    )
                 )
                 warn(tag, F002_UNPROVEN)
                 conds = get(d, "KeyOk")["parameters"].get("conditions", {}).get("conditions") or []
@@ -497,7 +505,9 @@ def main(argv):
     if allow and not set(allow) <= pc:
         fail(
             "args",
-            "--allow {} needs --patch-checks to name the same patches (got {})".format(",".join(allow), ",".join(sorted(pc)) or "none"),
+            "--allow {} needs --patch-checks to name the same patches (got {})".format(
+                ",".join(allow), ",".join(sorted(pc)) or "none"
+            ),
         )
     diffsum = []
     for dr in dirs:

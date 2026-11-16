@@ -13,6 +13,11 @@ import sys
 BANNED = ("approval", "audit trail", "one database")
 
 
+def read_text(path):
+    with open(path, encoding="utf-8") as fh:
+        return fh.read()
+
+
 USAGE = "usage: python3 -I check_runsheet_paste.py RUNSHEET-WORDING.md [CLAIMS-TABLE.md]"
 FLAGGED = re.compile(r"(UNSUPPORTED|OVERSTATED|DELETE|STALE)")
 
@@ -22,7 +27,7 @@ def main(argv):
         print(USAGE)
         return 2
     try:
-        text = open(argv[1], encoding="utf-8").read().split("\n")
+        text = read_text(argv[1]).split("\n")
     except OSError as exc:
         print(f"cannot read {argv[1]}: {exc.strerror}")
         print(USAGE)
@@ -70,7 +75,7 @@ def main(argv):
         have = {re.match(r"([AB])-(\d+)", i).groups() for i in ids if re.match(r"[AB]-\d+", i)}
         want, untraced = set(), set()
         try:
-            table = open(argv[2], encoding="utf-8").read().split("\n")
+            table = read_text(argv[2]).split("\n")
         except OSError as exc:
             print(f"cannot read {argv[2]}: {exc.strerror}")
             print(USAGE)

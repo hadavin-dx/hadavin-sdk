@@ -7,6 +7,17 @@ import os
 import re
 import sys
 
+
+def read_lines(path):
+    with open(path) as fh:
+        return fh.readlines()
+
+
+def read_json(path):
+    with open(path) as fh:
+        return json.load(fh)
+
+
 R = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")
 DEMO = os.path.join(R, "demo")
 LANES = os.path.join(R, "flows-audit", "lanes")
@@ -17,14 +28,14 @@ files = [
 ]
 live = {}
 for f in files:
-    d = json.load(open(f))
+    d = read_json(f)
     if isinstance(d, dict) and "nodes" in d:
         live[os.path.relpath(f, DEMO)] = len(d["nodes"])
 bad = []
 if (len(live), sum(live.values())) != (52, 655):
     bad.append(f"live totals {len(live)} files / {sum(live.values())} nodes, expected 52 / 655")
 rec = {}
-for l in open(os.path.join(R, "flows-audit", "tools", "out", "counts.txt")):
+for l in read_lines(os.path.join(R, "flows-audit", "tools", "out", "counts.txt")):
     m = re.match(r"(\d+) (\S+)", l)
     if m:
         rec[m.group(2)] = int(m.group(1))
@@ -33,7 +44,7 @@ if rec != live:
 seen = {}
 for lf in sorted(glob.glob(LANES + "/*.md")):
     cur = None
-    for l in open(lf):
+    for l in read_lines(lf):
         m = re.match(r"### (\S+) \((\d+) nodes\)", l)
         if m:
             cur = m.group(1)

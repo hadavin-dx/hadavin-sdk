@@ -1,0 +1,8 @@
+ok   control: exit 0, OVERRIDES line says none, pinned WARN count and the words 'known defects' are printed (got exit 0)
+ok   B1a: --write-warn-pin on the pin in use is refused (exit 2) and leaves it unchanged (got exit 2)
+ok   B1b: a clean run writes a NEW pin with date and sha256 and exits 4, not 0 (got exit 4)
+ok   B1b: the written pin, used as the pin, gives exit 0 (got exit 0)
+ok   B1c: --write-warn-pin on an existing file is refused (exit 2) and leaves it unchanged (got exit 2)
+ok   B1d: a run with a FAIL writes no pin and keeps exit 1 (got exit 1)
+ok   B1e: a changed WARN set prints the difference, writes the new file, exits 4 (got exit 4)
+FAIL B1: the pin in use (take-warns.pin) is byte for byte unchanged by all cases above

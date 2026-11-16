@@ -12,6 +12,18 @@ import sys
 
 R = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..")
 DEMO = os.path.join(R, "demo")
+
+
+def read_text(path, **kw):
+    with open(path, **kw) as fh:
+        return fh.read()
+
+
+def line_count(path):
+    with open(path, errors="replace") as fh:
+        return sum(1 for _ in fh)
+
+
 bases = [DEMO, R, os.path.join(R, "..")]
 index = {}
 for d, _, fs in os.walk(DEMO):
@@ -32,7 +44,7 @@ nodes_cache = {}
 
 def nodes(q):
     if q not in nodes_cache:
-        nodes_cache[q] = {x["name"] for x in json.load(open(q)).get("nodes", [])}
+        nodes_cache[q] = {x["name"] for x in json.loads(read_text(q)).get("nodes", [])}
     return nodes_cache[q]
 
 
@@ -43,7 +55,7 @@ for f in [os.path.join(R, "flows-audit", "FINDINGS.md")] + sorted(
 ):
     if not os.path.exists(f):
         continue
-    t = open(f, encoding="utf-8").read()
+    t = read_text(f, encoding="utf-8")
     for p, rest in re.findall(r"([\w./-]+\.json):([A-Za-z](?:(?! and | vs )[^,;)|`\n])*)", t):
         n += 1
         rest = rest.strip()
@@ -56,7 +68,7 @@ for f in [os.path.join(R, "flows-audit", "FINDINGS.md")] + sorted(
             bad.append(f"{os.path.basename(f)}: {p}:{rest[:30]}")
     for p, ln in re.findall(r"([\w./-]+\.(?:md|py|txt|sql|sh)):(\d+)", t):
         n += 1
-        if not any(int(ln) <= sum(1 for _ in open(q, errors="replace")) for q in find_all(p)):
+        if not any(int(ln) <= line_count(q) for q in find_all(p)):
             bad.append(f"{os.path.basename(f)}: {p}:{ln}")
 print(
     "FAIL unresolved: " + "; ".join(bad[:25]) + (f" ... {len(bad)} total" if len(bad) > 25 else "")

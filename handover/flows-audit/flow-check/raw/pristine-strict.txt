@@ -79,7 +79,7 @@ WARN /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows
     AlertSend          emailSend          continueErrorOutput    no         no
     AlertBackoff       postgres           continueRegularOutput  no         no
     AlertMark          postgres           continueRegularOutput  no         no
-ACCEPTED: recovery flow not part of the take (decision 4): /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-real-v5/mf-recovery.json keeps run-saving settings ['saveDataSuccessExecution', 'saveDataErrorExecution', 'saveManualExecutions'] off on purpose (it fires every 30 s, so saved runs would pile up with lead keys and e-mails; the one video makes no recovery claim)
+ACCEPTED: recovery flow not part of the take (decision 4): /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-real-v5/mf-recovery.json keeps run-saving settings ['saveDataSuccessExecution', 'saveDataErrorExecution', 'saveManualExecutions'] off on purpose (the lead says it fires every 30 s, which this check did not read from the file; saved runs would pile up with lead keys and e-mails; the one video makes no recovery claim)
 WARN /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-real-v5/mf-recovery.json IF node StuckRow lacks output(s) [1] (accepted by a recorded decision, --accept-if; an item that would leave by the missing output stops there silently, so a database failure that ends here vanishes with no alert) (project rule: every IF branch leads somewhere)
 WARN /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-real-v5/mf-recovery.json IF node AlertRow lacks output(s) [1] (accepted by a recorded decision, --accept-if; an item that would leave by the missing output stops there silently, so a database failure that ends here vanishes with no alert) (project rule: every IF branch leads somewhere)
 mf-recovery.json nodes=10 connections=9 triggers=['Every30s'] saveDataSuccess=none saveDataError=none saveManual=False
@@ -163,6 +163,7 @@ STEPS THAT READ ENVIRONMENT VARIABLES (2):
   - /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-real-v5/mf-recovery.json node AlertSend: $env.DESK_ALERT_TO
   - /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-real-v5/mf-sub-crm-mail.json node Qualify: $env.DESK_TIMEOUT_MS, $env.DESK_URL
 SQL columns compared with the --ddl file: 14 query string(s) read.
+SQL NOT COMPARED: query strings read but not compared (no table name could be read, for example only a {{ }} expression)=0; compared query strings whose {{ }} parts were blanked=0; table-file columns named like an SQL word (never compared)=0
 SQL WARNS: column WARNs=0 table WARNs=0 postgres steps with no query text (not compared)=0
 Known open problems: 13
   - /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-real-v5/mf-form.json: webhook Receive: REPLY GAP: if ['Claim', 'RunSub', 'Stored'] fails the run stops and the caller gets no answer (error path has no reply; read from the file, n8n not run)

@@ -5,10 +5,12 @@ checker with ONE fixed command line. A mutant counts as caught only if the exit 
 Also runs one control (no defect, must exit 0) and two argument-misuse cases (same command plus/minus one option).
 The exact command is saved to negative-output/CHECK-COMMAND.txt. Exit code 0 only if every case behaves as expected."""
 
+import contextlib
+import importlib.util
+import io
 import json
 import os
 import shutil
-import subprocess
 import sys
 import tempfile
 
@@ -212,11 +214,18 @@ MUTANTS = [
 
 
 def run(c, name):
-    r = subprocess.run(c, capture_output=True, text=True, check=False)  # exit code is the result
-    out = r.stdout + r.stderr
+    # c = ["python3", "-I", CK, *checker_args]; the checker runs in this process, loaded fresh
+    # each time (it keeps its FAIL and WARN lists at module level), same code and same output.
+    spec = importlib.util.spec_from_file_location("check_flows_under_test", CK)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    out_buf, err_buf = io.StringIO(), io.StringIO()
+    with contextlib.redirect_stdout(out_buf), contextlib.redirect_stderr(err_buf):
+        rc = mod.main(c[3:])
+    out = out_buf.getvalue() + err_buf.getvalue()
     with open(f"{OUT}/{name}.out", "w") as fh:
-        fh.write("$ " + " ".join(c) + "\n" + out + f"exit={r.returncode}\n")
-    return r.returncode, out
+        fh.write("$ " + " ".join(c) + "\n" + out + f"exit={rc}\n")
+    return rc, out
 
 
 def main():

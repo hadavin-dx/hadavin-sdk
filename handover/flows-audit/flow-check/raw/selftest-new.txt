@@ -245,11 +245,11 @@ parse_fail@real-mf-hook.json (FAIL, exit 1)                              as expe
 parse_fail@real-mf-recovery.json (FAIL, exit 1)                          as expected
 parse_fail@real-mf-sub-crm-mail.json (FAIL, exit 1)                      as expected
 parse_fail@film-mf-form.json (FAIL, exit 1)                              as expected
-missing_file@real-mf-form.json (FAIL, exit 1)                            as expected
-missing_file@real-mf-hook.json (FAIL, exit 1)                            as expected
-missing_file@real-mf-recovery.json (FAIL, exit 1)                        as expected
-missing_file@real-mf-sub-crm-mail.json (FAIL, exit 1)                    as expected
-missing_file@film-mf-form.json (FAIL, exit 1)                            as expected
+missing_file@real-mf-form.json (FAIL, exit 1)                            NOT AS EXPECTED rc=1 named=1 stray=['FAIL /tmp/fc-selftest-ag8n6rc3/missing_file@real-mf-form.json/mf-form.json this listed flo']
+missing_file@real-mf-hook.json (FAIL, exit 1)                            NOT AS EXPECTED rc=1 named=1 stray=['FAIL /tmp/fc-selftest-ag8n6rc3/missing_file@real-mf-hook.json/mf-hook.json this listed flo']
+missing_file@real-mf-recovery.json (FAIL, exit 1)                        NOT AS EXPECTED rc=1 named=1 stray=['FAIL /tmp/fc-selftest-ag8n6rc3/missing_file@real-mf-recovery.json/mf-recovery.json this li']
+missing_file@real-mf-sub-crm-mail.json (FAIL, exit 1)                    NOT AS EXPECTED rc=1 named=1 stray=['FAIL /tmp/fc-selftest-ag8n6rc3/missing_file@real-mf-sub-crm-mail.json/mf-sub-crm-mail.json']
+missing_file@film-mf-form.json (FAIL, exit 1)                            NOT AS EXPECTED rc=1 named=1 stray=['FAIL /tmp/fc-selftest-ag8n6rc3/missing_file@film-mf-form.json/mf-form.json this listed flo']
 webhook_path_reused_in_other_file@real-mf-form.json (FAIL, exit 1)       as expected
 webhook_path_reused_in_other_file@real-mf-hook.json (FAIL, exit 1)       as expected
 webhook_path_reused_in_other_file@real-mf-recovery.json                  skipped (not applicable to this file)
@@ -445,6 +445,11 @@ disabled_node@real-mf-hook.json (WARN, exit 0)                           as expe
 disabled_node@real-mf-recovery.json (WARN, exit 0)                       as expected
 disabled_node@real-mf-sub-crm-mail.json (WARN, exit 0)                   as expected
 disabled_node@film-mf-form.json (WARN, exit 0)                           as expected
+disabled_external_call_node_is_fail@real-mf-form.json (FAIL, exit 1)     as expected
+disabled_external_call_node_is_fail@real-mf-hook.json (FAIL, exit 1)     as expected
+disabled_external_call_node_is_fail@real-mf-recovery.json (FAIL, exit 1) as expected
+disabled_external_call_node_is_fail@real-mf-sub-crm-mail.json (FAIL, exit 1) as expected
+disabled_external_call_node_is_fail@film-mf-form.json (FAIL, exit 1)     as expected
 read_node_not_upstream@real-mf-form.json (WARN, exit 0)                  as expected
 read_node_not_upstream@real-mf-hook.json (WARN, exit 0)                  as expected
 read_node_not_upstream@real-mf-recovery.json (WARN, exit 0)              as expected
@@ -729,5 +734,5 @@ q18_other_schedule_only_flow_is_not_excused_by_the_recovery_name (exit 0) as exp
 q18_accept_given_for_form_flow_does_not_hide_its_warn (exit 0)           as expected
 q18_accept_given_for_sub_flow_does_not_hide_its_warn (exit 0)            as expected
 SKIPPED, by case name (a case is skipped on a file that lacks the node type it needs): form_trigger_auth_value_not_accepted=2, form_trigger_auth_without_credentials=2, form_trigger_without_auth_default=2, form_trigger_without_auth_strict=2, hubspot_credential_kind_wrong=4, hubspot_credential_missing=4, hubspot_credential_name_wrong=4, response_mode_missing_default_is_warn=2, response_mode_missing_fail_unverified=2, silent_error_external_call=1, webhook_auth_value_not_accepted=2, webhook_auth_value_not_accepted_default_is_warn=2, webhook_auth_without_credentials=2, webhook_auth_without_credentials_default_is_warn=2, webhook_auth_wrong_credential_kind=2, webhook_auth_wrong_credential_kind_default_is_warn=2, webhook_dead_branch=2, webhook_disabled_no_trigger=2, webhook_id_dict_no_crash=2, webhook_id_list_no_crash=2, webhook_id_reused_in_other_file=2, webhook_no_reply_node=2, webhook_parameters_list_no_crash=2, webhook_parameters_text_no_crash=2, webhook_path_reused_in_other_file=2, webhook_path_reused_with_slash_and_case=2, webhook_reply_node_disabled=2, write_node_continues_on_error=3
-case output folder: /tmp/fc8.VZCwTo/selftest-out
-SELFTEST: 668 as expected, 0 not as expected, 62 skipped (not applicable)
+case output folder: /tmp/claude-0/-home-user/9d809a30-0790-5792-93c1-8c5abd22e849/scratchpad/w1/selftest-out
+SELFTEST: 668 as expected, 5 not as expected, 62 skipped (not applicable)
