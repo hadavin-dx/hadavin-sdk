@@ -82,3 +82,39 @@ AssertionError
 M32 CAUGHT need minutes 14.33 to 14.4 | FAIL C03 860 s is not 14.33 min
 M33 CAUGHT deadline weekday in glossary | FAIL C04 OWNER-SHEET-v25-A.md wrong weekday Tue 23 Nov 2026
 M34 CAUGHT R8 loses "A key alive: the card first" | FAIL C19 pointer not in the verified list: sheetA|n words>, is it yours". | | |R9
+M35 CAUGHT tolerated item dropped from note | FAIL C23 note lacks tolerated item: the HubSpot private-app page path
+M36 CAUGHT cancel rule paraphrased in note | FAIL C22 note: cancel-rule wording 'cancelled word each time'
+M37 CAUGHT program limit 13.22 in facts | FAIL C03 facts money differs
+M38 CAUGHT settings TOKENS_OUT 12000 | FAIL C17 sheetA: 'TOKENS_OUT = 12000' says 12000, expected 10000
+M39 CAUGHT card step 5 phrase spelled differently | FAIL C21 A: card step 5 lacks its exact phrase
+M40 CAUGHT B submitted 12 times | FAIL C17 sheetA: 'B submitted 12 times' says 12, expected 10
+M41 CAUGHT IST definition in note | FAIL C17 note: 'IST = UTC + 5:00' says 5:00, expected 5:30
+M42 CAUGHT open list minutes figure | FAIL C17 open: '14.5 min' says 14.5, expected 14.33
+M43 CAUGHT note G33 to G38 | FAIL C19 pointer not in the verified list: note|" default): the spend lock (|G38
+M44 CAUGHT R8 pointer go (5.8) to 5.7 | FAIL C19 pointer not in the verified list: sheetA| start or end a step: "go" (|5.7
+M45 CAUGHT R4 pointer 7.1 to 7.3 | FAIL C19 pointer not in the verified list: sheetA|l; you read both at 6.2 and |7.3
+M46 CAUGHT 8.1 card step 3 to 5 | FAIL C19 pointer not in the verified list: sheetA|e model key's cancel press, |card step 5
+M47 CAUGHT post-by IST in sheet | FAIL C04 OWNER-SHEET-v25-A.md bad pair 15:00 UTC = 20:00 IST
+M48 CAUGHT CHANGES table pointer 8.2 to 8.3 | FAIL C19 pointer not in the verified list: changes| changes (draft stub) sheet |8.3
+M49 CAUGHT open row pointer 7.8 to 7.7 | FAIL C19 pointer not in the verified list: open|e is a FREEZE); the sheet's |7.7
+M50 CAUGHT note worked price | FAIL C17 note: 'gives 0.28;' says 0.28, expected 0.27
+M51 CAUGHT unlisted set phrase sent in 8.5 | FAIL C12 A told phrase not in list: all done
+M52 CAUGHT Open 91 in a list form | FAIL C16 note: Open 91 does not exist (80 rows)
+M53 CAUGHT expected total in note | FAIL C17 note: 'expected total 0.80' says 0.80, expected 0.81
+M54 CAUGHT yes deadline IST pair | FAIL C04 OWNER-SHEET-v25-A.md bad pair 18:29 UTC = 23:29 IST
+Q01 CAUGHT wrong price per call hardcoded | FAIL C48 A holds amount 0.28 (allowed: ['0.27', '0.81', '15.00', '189.00', '3.00'])
+Q02 CAUGHT wrong total hardcoded | FAIL C48 A holds amount 0.84 (allowed: ['0.27', '0.81', '15.00', '189.00', '3.00'])
+Q03 CAUGHT wrong output tokens in the sample | FAIL C49 A holds number 12,000 (allowed: ['1,000,000', '10,000', '10000', '1500', '2026', 
+Q08 CAUGHT STOP RULE step 1 deleted | FAIL C50 A lacks '(1) if a key is alive, do the card now; (2) then FREEZE'
+Q09 CAUGHT stray backtick in card gate (a) | FAIL C51 A line 27 has an odd number of backticks
+Q10 CAUGHT card cancel step changed | FAIL C52 A lacks '3. For each of your keys: press the cancel button; if a box asks, pres'
+Q11 CAUGHT card gate (f) deleted | FAIL C53 A card trigger letters (a) to (i) missing or out of order
+Q12 CAUGHT R4 auto-reload flipped to on | FAIL C54 A holds 'auto-reload on'
+Q13 CAUGHT secret-shaped string (built from parts) in the sheet | FAIL C55 A holds secret-shaped text (pattern \b[A-Za-z0-9+/_-]{40,})
+Q15 CAUGHT sample give-up minutes changed | FAIL C56 A lacks 'Silence minutes: 3   Give-up minutes: 40'
+Q16 CAUGHT sample silence minutes changed | FAIL C56 A lacks 'Silence minutes: 3   Give-up minutes: 40'
+Q18 CAUGHT one delete-domain guard changed | FAIL C57 A has 2 @example.com (expected 3)
+Q20 CAUGHT lead note limit wrong | FAIL C58 note lacks the program limit sum
+Q22 CAUGHT accepted exit codes widened | FAIL C59 A lacks 'Exit codes accepted: 0 only'
+Q24 CAUGHT R8 word count changed | FAIL C60 A R8 says four words but lists 5
+TOTAL plants 111: caught 111, missed 0, anchor-not-found 0
