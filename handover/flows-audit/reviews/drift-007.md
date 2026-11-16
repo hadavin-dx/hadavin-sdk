@@ -1,4 +1,4 @@
-# Drift report ORDER 007 (egm:egm-drift-report), 2026-11-16 08:50 UTC / 14:20 IST
+# Drift report ORDER 007 (egm:egm-drift-report), 2026-11-16 08:47 UTC / 14:17 IST
 Scope: FINDINGS, FIX-PLAN, CUT-LIST, EXCEPTIONS, QUESTIONS, LEDGER-ROWS, patches/, lanes7/ after review round 2. Static. A python script counted rows and compared FINDINGS with LEDGER-ROWS; I read its output and the grep hits below. Raw script output was not saved as a file.
 
 ## Counts

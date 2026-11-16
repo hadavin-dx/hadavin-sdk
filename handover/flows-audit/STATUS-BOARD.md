@@ -1,35 +1,33 @@
-UPDATED_UTC: 2026-11-16T08:41:36Z
+UPDATED_UTC: 2026-11-16T08:46:57Z
 SESSION: flows-audit
 ORDER: 007 (and 008 board)
-STATE: WORKING
+STATE: FINAL
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 6
-ITEMS_OPEN: 1
-PERCENT: 82
-AGENTS_RUNNING: 1
+ITEMS_OPEN: 0
+PERCENT: 100
+AGENTS_RUNNING: 0
 INTERRUPTED: none
-NEXT: wait for round 2 codebase-details report, then fix, REPORT, FINAL
-PUSHED_UTC: 2026-11-16T08:41:36Z
+NEXT: none; waiting for the lead (Q4-Q9)
+PUSHED_UTC: 2026-11-16T08:46:57Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
 |---|---|---|---|---|---|
-| 1 | patch fixes (F-001, F-002, F-004, F-008) | done | 100 | lanes7/evidence-7a.md | not run in n8n |
-| 2 | re-rate by one rule, counts table | done | 100 | FINDINGS.md | review round 1 fixed |
-| 3 | rung tags, BEFORE/AFTER split, CUT-LIST | done | 90 | FIX-PLAN.md | awaits review |
-| 4 | verdicts, approvals, T-test, NOT-covered | done | 90 | lanes7/N7-verdicts.md | awaits review |
-| 5 | new findings | done | 90 | lanes7/N7-new-findings.md | awaits review |
-| 6 | two-reviewer pass, resolve, FINAL | running | 60 | reviews/resolve-007-r1.md | round 1 resolved; round 2 next |
+| 1 | patch fixes (F-001, F-002, F-004, F-008) | done | 100 | lanes7/evidence-7b-check-patches.txt | not run in n8n |
+| 2 | re-rate by one rule, counts table | done | 100 | FINDINGS.md | 45 rows: 8 Blocker, 8 Major, 29 Nit |
+| 3 | fix kinds, BEFORE/AFTER split, CUT-LIST | done | 100 | FIX-PLAN.md | reviewed 2 rounds |
+| 4 | verdicts, approvals, T-tests, NOT-covered | done | 100 | lanes7/N7-verdicts.md | reviewed 2 rounds |
+| 5 | new findings | done | 100 | lanes7/N7-new-findings.md | reviewed 2 rounds |
+| 6 | two-reviewer pass, resolve, drift, FINAL | done | 100 | reviews/drift-007.md, REPORT.md | cap of 2 rounds reached |
 
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | % | state | last output |
 |---|---|---|---|---|---|---|---|---|
-| a67bc58ea7908a0c4 | egm-codebase-details | sonnet | round 2: facts, patches, cross-doc | 08:40 | 08:48 | 08:40 | running | none |
-| a7a738b60de986730 | egm-zoom-out | sonnet | round 2 ratings | 08:40 | 08:42 | 08:41 | done (fixes applied) | close |
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
 |---|---|---|---|---|
 
 ## LEAD ACTIONS NEEDED
-Q3 in QUESTIONS.md (spend ledger: one exception of two files, or move into Postgres). Not blocking.
+Answer Q4-Q9 in QUESTIONS.md (one-database wording, approval words, CRM claim, review rows, table screen, extra demotions). Not blocking; the audit is FINAL.

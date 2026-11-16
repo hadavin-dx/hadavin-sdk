@@ -1,6 +1,6 @@
 # REPORT from flows-audit (newest on top, UTC and IST)
 
-## FINAL ORDER 007 - 2026-11-16 08:51 UTC / 14:21 IST (flows-audit)
+## FINAL ORDER 007 - 2026-11-16 08:47 UTC / 14:17 IST (flows-audit)
 **What is unverified.** Nothing ran in n8n, Postgres, HubSpot or SMTP (not installed here). Every n8n behaviour (error-output pairing, 422/503 replies, zero-row INSERT answer, env access, clean-up of saved runs) is UNVERIFIED until the laptop tests T17-T21 run. The F-002 rebuild diff was not re-run after the round 2 text edits (the patch itself is unchanged); check_patches (apply and JSON parse) was re-run: PASS 5 patches (lanes7/evidence-7b-check-patches.txt).
 **Result.** FINDINGS.md: 45 rows = 8 Blocker, 8 Major, 29 Nit; BEFORE the video 17, AFTER 28. Review: 2 rounds (cap), 2 fresh reviewers each, egm-resolve once (reviews/resolve-007-r1.md with round 2 addendum), drift report reviews/drift-007.md (no drift needing a fix).
 **Where I disagree.** (1) F-002, F-031, F-007 are Blockers by the lead's order; by the one rating rule I would rate them Major. (2) I contested the lighter F-002 route (CHECK constraint only): a bad key would get 503 "retry" instead of 422 "never retry". (3) I demoted rows beyond the lead's list (F-012, F-019, F-022, F-025 and others); this is Q9. (4) Counts assume the video does not say "one database" is n8n's own database; the other reading gives BEFORE 15 (8 Blocker, 6 Major, 1 Nit).
