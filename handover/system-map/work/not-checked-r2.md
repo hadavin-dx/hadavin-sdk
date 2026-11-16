@@ -1,4 +1,6 @@
-# Not checked: open items before the filmed demo run, the take (rewritten Mon 16 Nov 2026 by the system-map session)
+# Open checks before filming (the take = the one filmed run of the demo) (rewritten Mon 16 Nov 2026 by the system-map session)
+
+Order: loopback re-smoke (F3), then row 0, then row 1, then rows 2 and 4 together. Film only after rows 0, 1, 2 and 4 pass. Rows 3, 5, 6, 7 and 8 do not block filming. Key: studio lead, core-hardening session and system-map session are Claude sessions; owner is a human. Answers to F1 to F8 are due by Tue 17 Nov 12:00 UTC / 17:30 IST (proposal); the row times themselves are set by F6. Proposed pass rules (unconfirmed): loopback re-smoke passes when every service answers only on the laptop's own address; row 0 passes when the filled flows import without error. Order of the flow steps (as the page's author understands it; UNVERIFIED): Claim, CrmUpsert, the mail, MarkDone.
 
 ## What the demo does
 The demo takes a made-up sales lead, writes it once into a small database, creates or updates one contact in HubSpot (a sales-contact tool) and sends one mail. The steps run in n8n (a tool that runs such steps). The film must show that the same lead sent twice gives one mail and one contact write. The flow files hold placeholders for settings; a script (fill_flows.py, not built) would fill them from the laptop's environment.
