@@ -1,2 +1,7 @@
 == bash start 19:08:11 load 2.46 4.31 5.27
 heavy-slot: slot 2 taken at 2026-11-16T19:08:11Z
+m23 [bash]: KILLED-phase2 exit=1 SELF-TEST: passed=1634 failed=1 (the made-up input and output files were deleted) first_fail=["FAIL (machinery): LC_ALL is not C in the filter (it is 'unset')"] (100s)
+m24 [bash]: KILLED-phase1 exit=1 fail_lines=3 SELF-TEST: passed=1598 failed=3 (the made-up input and output files were deleted) (3s)
+n01 [bash]: KILLED-phase1 exit=1 fail_lines=13 SELF-TEST: passed=1588 failed=13 (the made-up input and output files were deleted) (3s)
+n02 [bash]: KILLED-phase1 exit=1 fail_lines=2 SELF-TEST: passed=1599 failed=2 (the made-up input and output files were deleted) (3s)
+n03 [bash]: KILLED-phase1 exit=1 fail_lines=8 SELF-TEST: passed=1593 failed=8 (the made-up input and output files were deleted) (3s)

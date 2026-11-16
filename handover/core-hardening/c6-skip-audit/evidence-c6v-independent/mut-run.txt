@@ -1,0 +1,18 @@
+I01-stale-row-count-intro rc=1 new_FAILs=3 CAUGHT  first: FAIL box says the row count of the table :: ('103', 104)
+I02-ready-count rc=1 new_FAILs=1 CAUGHT  first: FAIL box says the ready count :: 57
+I03-wrong-IST-example-line rc=1 new_FAILs=2 CAUGHT  first: FAIL box has one answer line with seconds, three free names, the exception form and L-SHEET apart
+I04-wrong-IST-check-time-one-place rc=1 new_FAILs=1 CAUGHT  first: FAIL every 'UTC = IST' pair is exactly UTC + 5:30 (107 pairs) :: [('19', '04', '00', '44')]
+I05-check-time-UTC-one-place rc=1 new_FAILs=0 MISSED
+I06-G12-hold-removed-L-LEASE rc=1 new_FAILs=3 CAUGHT  first: FAIL c6v N5: the start box is under 2,500 words (c6s: 3,488; 2476 words now) and states its own real count :: 
+I07-card-words-line1 rc=1 new_FAILs=1 CAUGHT  first: FAIL E-cardwords: every '(N words)' printed after a card line equals the real count of the quoted line ([11, 3
+I08-wrong-sheet-version-one-place rc=1 new_FAILs=0 MISSED
+I09-drop-row-50 rc=1 new_FAILs=13 CAUGHT  first: FAIL ids are exactly 1..N, no duplicate :: N=103
+I10-duplicate-row-50 rc=1 new_FAILs=14 CAUGHT  first: FAIL ids are exactly 1..N, no duplicate :: N=105
+I11-box-word-count-stated rc=1 new_FAILs=3 CAUGHT  first: FAIL c6v N5: the start box is under 2,500 words (c6s: 3,488; 2478 words now) and states its own real count :: 
+I12-99-of-104 rc=1 new_FAILs=1 CAUGHT  first: FAIL source-copy statement: the report says the rows were checked against the scratchpad copy, that equality w
+I13-five-open-to-four rc=1 new_FAILs=0 MISSED
+I14-release-note-line-cite rc=1 new_FAILs=0 MISSED
+I15-wrong-version-name-release-note rc=1 new_FAILs=0 MISSED
+I16-waiting-rows-3-to-4 rc=1 new_FAILs=1 CAUGHT  first: FAIL E-numbers: every row count in the start box (all 104, ready 57, default 38, check 3, owner 6, wave 1 95) 
+I17-CHANGES-forged-267: present in CHANGES=True; verify-c6v.py/part2/part3 read c6v-CHANGES.md: True
+I18-CHANGES-forged-heavy-runs: present in CHANGES=True; verify-c6v.py/part2/part3 read c6v-CHANGES.md: True
