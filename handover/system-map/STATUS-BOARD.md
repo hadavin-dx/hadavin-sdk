@@ -1,35 +1,36 @@
-UPDATED_UTC: 2026-11-16T09:05:00Z
+UPDATED_UTC: 2026-11-16T09:07:18Z
 SESSION: system-map
 ORDER: 015 (queue mode; 011 and 014 inside it)
 STATE: WORKING
 BOOT_ID: 6bc0bf7e
 ITEMS_TOTAL: 6
-ITEMS_OPEN: 3
-PERCENT: 60
-AGENTS_RUNNING: 3
+ITEMS_OPEN: 4
+PERCENT: 75
+AGENTS_RUNNING: 4
 INTERRUPTED: none
-NEXT: collect drift report (M3) and the two owner-view reviews (M5); fix Blockers and Majors; start two reviewers on the M4 refresh; then M6
-PUSHED_UTC: 2026-11-16T09:05:00Z
+NEXT: collect 4 reviews (drift facts, map facts, map structure, owner view round 2); fix drift report per comprehension review; then M6
+PUSHED_UTC: 2026-11-16T09:07:18Z
 
 ## ITEMS
 | # | item | state | % | evidence file | note |
 |---|---|---|---|---|---|
 | M1 | flowcheck and third read | done | 100 | flowcheck/REPORT.md, flowcheck/third-read.md | n8n run of patched flows still NOT TESTED (no Docker daemon here) |
 | M2 | FINAL-CROSSCHECK.md | reviewed round 1, fixes applied | 95 | FINAL-CROSSCHECK.md, work/resolve-crosscheck-1.md | design M3 fixed-unverified; round 2 not run |
-| M3 | drift check of take documents | running | 10 | drift/REPORT.md | agent a6ffab42 |
-| M4 | MASTER-MAP and ONE-PLACE-TABLE refresh | done, awaiting 2 reviewers | 90 | MASTER-MAP.md (M4 section), ONE-PLACE-TABLE.md (Appendix B) | paste check and steps edits of core-hardening not landed yet |
-| M5 | OWNER VIEW | draft written, 2 reviewers running | 70 | OWNER-VIEW.md | 47 lines; take date and Docker step disagree with OWNER-STEPS, see drift |
+| M3 | drift check of take documents | report written, reviews: comprehension done (6 Blockers-level fixes to apply), fact check running | 70 | drift/REPORT.md | 24 items: 6 Blocker, 13 Major, 5 Nit |
+| M4 | MASTER-MAP and ONE-PLACE-TABLE refresh | written, 2 reviewers running | 85 | MASTER-MAP.md (M4 section), ONE-PLACE-TABLE.md (Appendix B) | paste check and steps edits of core-hardening not landed yet |
+| M5 | OWNER VIEW | round 1 fixes applied, round 2 reviewer running | 85 | OWNER-VIEW.md, work/resolve-ownerview-1.md | verdict: Wed 18 Nov not yet shown reachable |
 | M6 | idle fallback audit (R460) | todo | 0 | | only if idle |
 
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | % | state | last output |
 |---|---|---|---|---|---|---|---|---|
-| a6ffab42 | drift check M3 | sonnet | compare four take documents | 09:01Z | 09:20Z | 20 | running | none |
-| a84fab15 | egm-comprehension | sonnet | naive read of OWNER-VIEW.md | 09:03Z | 09:13Z | 20 | running | none |
-| acb872ea | egm-codebase-details | sonnet | fact check of OWNER-VIEW.md | 09:03Z | 09:13Z | 20 | running | none |
-| a06c0766 | owner view M5 | sonnet | wrote OWNER-VIEW.md | 08:58Z | 09:03Z | 100 | done | OWNER-VIEW.md |
-| afa277a0 | egm-codebase-details | sonnet | fact check FINAL-CROSSCHECK | 08:56Z | 09:04Z | 100 | done | 2 Majors, 8 Nits, applied |
-| a229dfc6 | egm-design | sonnet | review of FINAL-CROSSCHECK.md | 08:59Z | 09:09Z | 100 | done | 5 Majors, 5 Nits, applied |
+| a40ac6a9 | egm-codebase-details | sonnet | fact check of drift/REPORT.md | 09:12Z | 09:22Z | 50 | running | none |
+| a3d741d1 | egm-codebase-details | sonnet | fact check of the M4 map rows | 09:16Z | 09:26Z | 10 | running | none |
+| a0c76645 | egm-structural | sonnet | structure check of the M4 rows against merge.py | 09:16Z | 09:26Z | 10 | running | none |
+| a79e8b36 | egm-comprehension | sonnet | round 2 read of OWNER-VIEW.md | 09:16Z | 09:26Z | 10 | running | none |
+| a199bbd5 | egm-comprehension | sonnet | read of drift/REPORT.md | 09:12Z | 09:15Z | 100 | done | 1 Blocker-level set, 11 Majors, 6 Nits (to apply) |
+| a84fab15, acb872ea | owner view reviewers | sonnet | round 1 | 09:03Z | 09:09Z | 100 | done | 3 + 11 Majors, applied |
+| a6ffab42 | drift check M3 | sonnet | wrote drift/REPORT.md | 09:01Z | 09:12Z | 100 | done | 24 items |
 
 ## LOST OR INTERRUPTED
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
@@ -37,4 +38,5 @@ PUSHED_UTC: 2026-11-16T09:05:00Z
 | none | | | | |
 
 ## LEAD ACTIONS NEEDED
-Run the patched flow files in n8n on the laptop and test T19 (no container daemon in this session).
+1. Run the patched flow files in n8n on the laptop and test T19 (no container daemon in this session).
+2. Decide the six Blockers of drift/REPORT.md (D-01 to D-05, S-01) before the take; name who starts Docker and the first laptop test (OWNER-VIEW.md section 3, decision 0).
