@@ -141,3 +141,8 @@ r19 word counts (wc -w method, applied sheet and parts): {'applied sheet': 24367
 r19 checks: 165 count/pair/forbidden checks; 0 failures in the section
 round 19 checks done
 r19 golden: 3489 pinned sentences, 0 differences
+r20 checks: need 54, absent 16, closure ids 48; plants (planted, caught): (118, 118)
+---- negative controls
+r19 plants (planted, caught): {'occurrence': (300, 300), 'pair': (105, 105), 'reversal': (21, 21), 'day sheet': (18, 18), 'appendix': (9, 9)}
+r19 golden plants (planted, caught): (318, 318)
+FAILURES 0

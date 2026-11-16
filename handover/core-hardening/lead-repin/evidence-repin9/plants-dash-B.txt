@@ -32,3 +32,9 @@ r02 [dash]: KILLED-phase2 exit=1 SELF-TEST: passed=2092 failed=2 (the made-up in
 r03 [dash]: KILLED-phase1 exit=1 fail_lines=12 SELF-TEST: passed=2042 failed=12 (the made-up input and output files were deleted) (3s)
 r04 [dash]: KILLED-phase1 exit=1 fail_lines=6 SELF-TEST: passed=2048 failed=6 (the made-up input and output files were deleted) (3s)
 r05 [dash]: KILLED-phase1 exit=1 fail_lines=6 SELF-TEST: passed=2048 failed=6 (the made-up input and output files were deleted) (3s)
+r06 [dash]: KILLED-phase1 exit=1 fail_lines=6 SELF-TEST: passed=2048 failed=6 (the made-up input and output files were deleted) (3s)
+r07 [dash]: KILLED-phase1 exit=1 fail_lines=12 SELF-TEST: passed=2042 failed=12 (the made-up input and output files were deleted) (3s)
+r08 [dash]: KILLED-phase1 exit=1 fail_lines=2 SELF-TEST: passed=2052 failed=2 (the made-up input and output files were deleted) (3s)
+r09 [dash]: KILLED-phase1 exit=1 fail_lines=12 SELF-TEST: passed=2042 failed=12 (the made-up input and output files were deleted) (3s)
+n16 [dash]: KILLED-phase1 exit=1 fail_lines=1 SELF-TEST: passed=2053 failed=1 (the made-up input and output files were deleted) (3s)
+heavy-slot: slot 2 freed, exit 0

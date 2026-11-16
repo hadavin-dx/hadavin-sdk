@@ -1,0 +1,13 @@
+SERVER PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-p
+TEMPLATE tplb [('spend_decrease_log.sql', '0006_dec')] -> APPLIED
+TEMPLATE tpla [] -> APPLIED
+TEMPLATE tplc [('spend_nonneg.sql', '0006_a')] -> APPLIED
+DATA round 2: month-table rows that exist BEFORE DB-3 (the first run inserted a month that was not the first of a month, a slip of the runner)
+DATA pre-existing spend_month row '-unattributed:x' | apply=REFUSED 23514 | open_usd column present=0 | ledger rows=5
+DATA pre-existing spend_month row '-cli' | apply=REFUSED 23514 | open_usd column present=0 | ledger rows=5
+DATA pre-existing spend_month row with a newline agent | apply=REFUSED 23514 | open_usd column present=0 | ledger rows=5
+DATA pre-existing spend_month row usd 2e12 | apply=REFUSED 23514 | open_usd column present=0 | ledger rows=5
+DATA pre-existing spend_month row month 1999-01-01 | apply=REFUSED 23514 | open_usd column present=0 | ledger rows=5
+DATA pre-existing clean rows only (control: the file applies) | apply=APPLIED | open_usd column present=1 | ledger rows=7
+DATA DONE
+rc=0
