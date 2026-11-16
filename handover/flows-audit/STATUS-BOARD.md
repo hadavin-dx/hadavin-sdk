@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T20:24:40Z
+UPDATED_UTC: 2026-11-16T20:26:44Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -7,11 +7,11 @@ ITEMS_TOTAL: 10
 ITEMS_OPEN: 30
 PERCENT: 70
 AGENTS_RUNNING: 8
-CAPACITY: 8.57 load of 4 cores, mem 1/15 GB, RAM 1465/16087 MB, disk 14G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 9.1G /tmp/claude-0 , agents 8 (light+heavy per list)
+CAPACITY: 10.07 load of 4 cores, mem 1/15 GB, RAM 1432/16087 MB, disk 14G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 9.1G /tmp/claude-0 , agents 8 (light+heavy per list)
 INTERRUPTED: none
 FAILED: none (F8 run_all.sh intermittent exit 1 is an evidence finding: 3 of 6 plain runs failed, cause unknown, fixer acf8ab59 on it; ruff format --check passes 741 files)
 NEXT: see next5
-PUSHED_UTC: 2026-11-16T20:24:40Z
+PUSHED_UTC: 2026-11-16T20:26:44Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -30,13 +30,14 @@ PUSHED_UTC: 2026-11-16T20:24:40Z
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | state | produced so far |
 |---|---|---|---|---|---|---|---|
-| a7636841 | F8 fixer | sonnet | F8 flow-check fixes r13 (HEAVY only while it runs tests) | 19:50Z | 20:50Z | running | checkpoint pending |
-| a831d233 | fixer | sonnet | FIX-PLAN r64 fixes | 20:14Z | 20:35Z | running | none yet |
-| a452d028 | reader | sonnet | RUNBOOK 220-370 stranger read | 20:34Z | 20:48Z | running | none yet |
-| aeb0421e | reviewer | sonnet | patch-copies uncapped re-read pass 24 | 20:37Z | 20:52Z | running | none yet |
-| ac364a63 | fixer | sonnet | QUESTIONS Q31 fixes (3 reader reports) | 20:40Z | 21:00Z | running | none yet |
-| ad1611e4 | reviewer | sonnet | CLAIMS-TABLE verdict-rule consistency (proposal) | 20:42Z | 20:55Z | running | none yet |
-| a56a9d48 | fixer | sonnet | REVIEW.md r55 fixes (security, uncapped) | 20:44Z | 21:05Z | running | none yet |
+| a7636841 | F8 fixer r12 | sonnet | F8 fixes (may run tests, HEAVY) | 20:07Z | 21:00Z | running | no report yet |
+| a452d028 | RUNBOOK 220-370 reader | sonnet | stranger read | 20:46Z | 21:00Z | running | none yet |
+| ac364a63 | QUESTIONS Q31 fixer | sonnet | text fixes | 20:48Z | 21:05Z | running | none yet |
+| a56a9d48 | REVIEW.md r55 fixer | sonnet | security fixes | 20:49Z | 21:10Z | running | none yet |
+| a57a94ee | TAKE-CHECKLIST 196-end reader | sonnet | stranger read | 20:49Z | 21:00Z | running | none yet |
+| a8d4f2bd | FIX-PLAN follow-up fixer | sonnet | M10/M16/M17 | 20:50Z | 21:10Z | running | none yet |
+| a0116b6f | patch-copies pass 27 fixer | sonnet | r24/r20 fixes (security) | 20:26Z | 21:20Z | running | none yet |
+| aacdc898 | RUNSHEET-WORDING reader r2 | sonnet | stranger read | 20:26Z | 21:05Z | running | none yet |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
 1. CLAIMS-TABLE 301-599 reader and RUNBOOK 433+ I-table reader (never read)
