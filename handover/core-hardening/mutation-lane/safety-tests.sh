@@ -1,8 +1,8 @@
 #!/bin/bash
-# Safety tests T1-T94 of run.py on a TOY repository with made-up files (never the real code).
+# Safety tests T1-T95 of run.py on a TOY repository with made-up files (never the real code).
 # usage: RUN=/path/to/run.py SCRATCH=/some/scratch/dir VENV=/folder/with/bin/python ./safety-tests.sh   (prints PASS/FAIL per check)
 # Round 7: run.py now runs the baseline BY DEFAULT; the helper base()/mut() adds --no-control (the old behaviour) unless NCF is set: `NCF= mut ...` runs with the real default. Against the r6 copy of run.py (no --no-control option) export NCF= (empty).
-# Against an older copy of run.py: STATEDIR=<its state folder name> (NEWTESTS=0 runs only T1-T19; T36-T94 (rounds 4 to 8) need the new code; SKIP_T35=1 skips the test that writes to the shared /tmp folder).
+# Against an older copy of run.py: STATEDIR=<its state folder name> (NEWTESTS=0 runs only T1-T19; T36-T95 (rounds 4 to 8) need the new code; SKIP_T35=1 skips the test that writes to the shared /tmp folder).
 # Round 8: ONLY="T76 T87" runs just those blocks. The shorter script is cut out of THIS file's own text at run time (the
 # header, the chosen blocks, the closing lines), so a block that runs is byte-for-byte the shipped block; there is no separate
 # copy to keep in step. A block that needs a helper defined inside another block must be listed together with it.
@@ -1290,6 +1290,43 @@ PY
 rc=$?; cut -c1-200 "$S/t94.out" | tail -3
 chk "T94 normal run, restore_target raises RuntimeError: exit 3 (got $rc), file still planted, marker and backup kept" "[ $rc -eq 3 ] && planted_kept"
 python3 "$RUN" --root "$T/root" --restore >/dev/null 2>&1; chk "T94 genuine restore afterwards" "[ '$(last)' = return1 -a -z '$(state_files)' ]"
+
+
+echo "== T95 (lead's four findings from the independent r7 run) (a) output that cannot be written, (b) a 200000-deep JSON, (c) a link left in place of the file, (d) forged marker with a swapped backup"
+fresh_root; NCF= mut -- tests/test_fast.py >/dev/full 2>"$S/t95a.err"; rc=$?
+chk "T95a standard output is /dev/full (every write fails): the run ends with the tool's own code 0 (got $rc; r7: 1), file restored, state empty, raw summary written" "[ $rc -eq 0 ] && [ '$(last)' = return1 ] && [ -z '$(state_files)' ] && [ -s '$S/rawT/X-summary.txt' ]"
+fresh_root; NCF= mut -- tests/test_fast.py >&- 2>&-; rc=$?
+chk "T95a2 standard output AND error closed: exit 0 (got $rc), file restored, state empty" "[ $rc -eq 0 ] && [ '$(last)' = return1 ] && [ -z '$(state_files)' ]"
+fresh_root; python3 -c "print('['*200000+']'*200000)" > "$S/deep.json"
+base --list "$S/deep.json" -- tests/test_fast.py >"$S/t95b.out" 2>&1; rc=$?; cut -c1-200 "$S/t95b.out" | tail -2
+chk "T95b a mutants file nested 200000 deep: clean refusal exit 2 (got $rc), REFUSED text, no INTERNAL ERROR, no Traceback, short output ($(wc -l < "$S/t95b.out") lines; r7: INTERNAL ERROR with a traceback)" "[ $rc -eq 2 ] && grep -q REFUSED '$S/t95b.out' && ! grep -q 'INTERNAL ERROR' '$S/t95b.out' && ! grep -q Traceback '$S/t95b.out' && [ \$(wc -l < '$S/t95b.out') -lt 10 ]"
+kill_planted; MK=$(ls "$STATE"/*.planted.json); python3 -c "print('['*200000+']'*200000)" > "$MK"
+python3 "$RUN" --root "$T/root" --restore >"$S/t95b2.out" 2>&1; rc=$?; cut -c1-200 "$S/t95b2.out" | tail -2
+chk "T95b2 a marker nested 200000 deep: exit 3 (got $rc; r7: 2 with INTERNAL ERROR), no Traceback, file still planted" "[ $rc -eq 3 ] && ! grep -q 'INTERNAL ERROR' '$S/t95b2.out' && ! grep -q Traceback '$S/t95b2.out' && [ '$(last)' = return2 ]"
+kill_planted; rm "$T/root/src/mod.py"; ln -s /nonexistent/nowhere "$T/root/src/mod.py"
+python3 "$RUN" --root "$T/root" --restore >"$S/t95c.out" 2>&1; rc=$?; cut -c1-400 "$S/t95c.out"
+chk "T95c a dangling symbolic link in place of the file: exit 3 (got $rc), nothing written through it, the text gives the exact command (rm -- ... mod.py) and the restore command" "[ $rc -eq 3 ] && grep -q 'rm -- .*src/mod.py' '$S/t95c.out' && grep -q -- '--restore' '$S/t95c.out' && [ -L '$T/root/src/mod.py' ] && [ ! -e /nonexistent/nowhere ]"
+rm -- "$T/root/src/mod.py"; python3 "$RUN" --root "$T/root" --restore >/dev/null 2>&1; rc=$?; chk "T95c after the advised rm, --restore re-creates the original: exit 0 (got $rc), file back, state empty" "[ $rc -eq 0 ] && [ '$(last)' = return1 ] && [ -z '$(state_files)' ]"
+kill_planted; mv "$T/root/src" "$T/root/src.moved"; mkdir -p "$S/decoy95/src"; ln -s "$S/decoy95/src" "$T/root/src"
+python3 "$RUN" --root "$T/root" --restore >"$S/t95c2.out" 2>&1; rc=$?; cut -c1-400 "$S/t95c2.out"
+chk "T95c2 a folder on the way is a link: exit 3 (got $rc), the text names the folder and says 'mv --' and the restore command" "[ $rc -eq 3 ] && grep -q 'a folder on the way is a symbolic link' '$S/t95c2.out' && grep -q 'mv -- ' '$S/t95c2.out'"
+rm -f "$T/root/src"; mv "$T/root/src.moved" "$T/root/src"; python3 "$RUN" --root "$T/root" --restore >/dev/null 2>&1
+forge_backup() { python3 - "$STATE" <<'PY'
+import glob, hashlib, json, sys
+mk = glob.glob(sys.argv[1] + "/*.planted.json")[0]; bk = glob.glob(sys.argv[1] + "/*.backup")[0]
+evil = b"def f():\n    return 99  # swapped by someone who can write the state folder\n"
+open(bk, "wb").write(evil)
+m = json.load(open(mk)); m["orig_sha256"] = hashlib.sha256(evil).hexdigest(); json.dump(m, open(mk, "w"))
+PY
+}
+kill_planted; forge_backup
+python3 "$RUN" --root "$T/root" --restore >"$S/t95d1.out" 2>&1; rc=$?; cut -c1-200 "$S/t95d1.out"
+chk "T95d1 HONEST LIMIT, pinned: marker and backup forged TOGETHER (hash matches) by someone who can write the private state folder: a plain --restore accepts them (exit $rc) and the swapped text is written; this cannot be closed without a key the user cannot read (see the docstring)" "[ $rc -eq 0 ] && grep -q 'return 99' '$T/root/src/mod.py'"
+kill_planted; forge_backup
+python3 "$RUN" --root "$T/root" --restore --sha "$SHA" --repo "$T/repo" >"$S/t95d2.out" 2>&1; rc=$?; cut -c1-300 "$S/t95d2.out"
+chk "T95d2 the same forged state with --restore --sha COMMIT: refused, exit 3 (got $rc; r7 ignored --sha and accepted), the swapped text is NOT written (file still planted return2), marker kept" "[ $rc -eq 3 ] && [ '$(last)' = return2 ] && grep -q 'differs from' '$S/t95d2.out' && [ -n \"\$(ls $STATE/*.planted.json)\" ]"
+kill_planted; python3 "$RUN" --root "$T/root" --restore --sha "$SHA" --repo "$T/repo" >"$S/t95d3.out" 2>&1; rc=$?
+chk "T95d3 guard: genuine state with --restore --sha COMMIT: restored, exit 0 (got $rc), state empty" "[ $rc -eq 0 ] && [ '$(last)' = return1 ] && [ -z '$(state_files)' ]"
 
 }
 echo "FAILED CHECKS: $FAILS (of $CHECKS checks run; skipped:${SKIPPED:- none})"

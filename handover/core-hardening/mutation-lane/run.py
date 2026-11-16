@@ -87,6 +87,15 @@ Safety (review 2 M2/M3, review 3 M-A..M-E and nits):
     the expected full command: the group is found by that command, in root, started after the run; with no
     command recorded nothing is stopped.
   * SIGKILL and SIGSTOP cannot be caught: use `--restore`.
+  * FORGED STATE (r8 d): the marker and the backup live in a folder only this user may write (mode 700). Someone who can
+    write there as this user can write a marker plus a swapped backup with a matching hash, and a plain `--restore` then
+    puts the swapped text into the file. That CANNOT be closed by this tool alone: such a person can also edit run.py, the
+    tests and the tree, and a signature would need a key this user cannot read (a root-owned secret or another account).
+    What closes it for the operator: `--restore --sha COMMIT [--repo R] [--patch F]` takes the original from `git archive`
+    of that commit (named on the command line, not read from the state folder) and refuses, exit 3, when the backup differs.
+  * A mutant file replaced by a symbolic link at --restore is never written through; the failure text says the exact two
+    commands to run (remove the link, then --restore again).
+  * Output that cannot be written (/dev/full, closed pipe) is dropped, never an exit 1 or 120; the raw files hold the result.
   * PROCESS GROUP ONLY (review r7 N5): what a test starts is stopped only while it stays in the test's process group. A
     background process that leaves it (`setsid`, `setpgid`, a double fork into a new session) is NOT found and NOT
     stopped, by the sweep after the leader ends or by `--restore`; it can keep writing into the tree later. The tree
@@ -96,7 +105,7 @@ Safety (review 2 M2/M3, review 3 M-A..M-E and nits):
   * Two runs on one root with DIFFERENT TMPDIR do not share a lock folder: a normal run looks in the usual other places
     (/tmp, /var/tmp, /dev/shm, TMP, TEMP) at the start and refuses when another run holds its lock there or left a
     planted file (r7 N6); two runs started within the same instant, before either has taken its lock, can still race
-    (T91).
+    (the refusal is tested in T91; the race is not).
 Output files (review r6 nit 4): `--raw` and `--out-json` may not lie inside --root (they would dirty the tree), an
 output file that already exists must be a regular file with one name, and the folder of `--out-json` must exist: all
 checked before anything is planted. The folder --root is identified by device and inode when the run starts and
@@ -239,6 +248,35 @@ class Refused(Exception):
     pass
 
 
+class SafeOut:
+    """r8: standard output and error that never fail. A closed pipe, /dev/full or a full disk made print() raise (and the
+    flush at exit made Python exit with 1 or 120, which are no exit codes of this tool; found by the independent r7 run).
+    Text that cannot be written is dropped (`lost` is set); the result is always in the raw files and the exit code."""
+
+    encoding = "utf-8"
+
+    def __init__(self, fd: int):
+        self.fd, self.lost = fd, False
+
+    def write(self, text: str) -> int:
+        data = text.encode("utf-8", "replace")
+        try:
+            while data:
+                data = data[os.write(self.fd, data) :]
+        except OSError:
+            self.lost = True
+        return len(text)
+
+    def flush(self) -> None:
+        pass
+
+    def isatty(self) -> bool:
+        return False
+
+    def fileno(self) -> int:
+        return self.fd
+
+
 class Forged(Refused):
     """A marker that names another root or another backup path: it does not belong to this run, so nothing is written
     and `--restore` exits 2. Every OTHER refusal after a marker for this root exists is a failed restore (exit 3)."""
@@ -330,9 +368,18 @@ def read_state(path: pathlib.Path) -> bytes:
         return fh.read()
 
 
+def loads_json(data: bytes | str):
+    """json.loads where every way to say "this is not usable JSON" is one error type (r8: a text nested 200000 deep raised
+    RecursionError, which is no ValueError, and ended as an INTERNAL ERROR with a traceback)."""
+    try:
+        return json.loads(data)
+    except RecursionError as e:
+        raise ValueError("nested too deeply") from e
+
+
 def load_marker(path: pathlib.Path) -> dict:
     try:
-        m = json.loads(read_state(path))
+        m = loads_json(read_state(path))
     except ValueError as e:
         raise Refused(f"marker {path} is not valid JSON: refused") from e
     if not isinstance(m, dict) or not all(
@@ -1086,7 +1133,7 @@ def restore_control(root: pathlib.Path, key: str) -> tuple[bool, str]:
     A control marker that is not valid JSON is a refusal, not a traceback."""
     path = control_marker_path(key)
     try:
-        m = json.loads(read_state(path))
+        m = loads_json(read_state(path))
     except ValueError as e:
         raise Refused(
             f"control marker {path} is not valid JSON: refused (remove it by hand)"
@@ -1118,7 +1165,35 @@ def settle_control(root: pathlib.Path, key: str) -> tuple[bool, str | None]:
         )
 
 
-def restore_from_marker(root: pathlib.Path) -> tuple[bool, str]:
+def link_hint(root: pathlib.Path, rel) -> str:
+    """r8 (independent r7 run, T-ln): when the restore failed because the file under test, or a folder on the way, is now a
+    symbolic link, say exactly what to do. Nothing is ever written through a link."""
+    if not isinstance(rel, str):
+        return ""
+    cur = root
+    parts = pathlib.PurePosixPath(rel).parts
+    for i, part in enumerate(parts):
+        cur = cur / part
+        if cur.is_symlink():
+            try:
+                where = os.readlink(cur)
+            except OSError:
+                where = "?"
+            q, script = shlex.quote(str(cur)), shlex.quote(sys.argv[0])
+            again = f"python3 {script} --root {shlex.quote(str(root))} --restore"
+            if i == len(parts) - 1:
+                return (
+                    f"; the file under test is now a symbolic link ({cur} -> {where}) and nothing was written through it. "
+                    f"Do this: 1) rm -- {q}   2) {again}   (the original is created again from the backup)"
+                )
+            return (
+                f"; a folder on the way is a symbolic link ({cur} -> {where}) and the planted file may be behind it. "
+                f"Do this: 1) mv -- {q} {q}.link   2) put the real folder back under the name {part!r}   3) {again}"
+            )
+    return ""
+
+
+def restore_from_marker(root: pathlib.Path, expected_ref: pathlib.Path | None = None) -> tuple[bool, str]:
     ensure_state()
     key = key_for(root)
     marker = STATE / f"{key}.planted.json"
@@ -1139,6 +1214,16 @@ def restore_from_marker(root: pathlib.Path) -> tuple[bool, str]:
     saved = read_state(bk)
     if sha256(saved) != m["orig_sha256"]:
         raise Refused("the saved backup does not match the hash recorded in the marker: nothing written")
+    if expected_ref is not None:  # --sha given on the restore command line: git, not the state folder, is the authority (r8 d)
+        try:
+            want = read_regular(safe_rel(expected_ref, m["file"], "marker file"))
+        except (Refused, OSError, TypeError) as e:
+            raise Refused(f"the git archive given with --sha has no usable {m['file']!r} ({e}): nothing written") from e
+        if want != saved:
+            raise Refused(
+                f"the saved backup differs from {m['file']} in the git archive given with --sha: the state folder may be "
+                f"forged or --sha is the wrong commit; nothing written. By hand: git show <sha>:{m['file']} > the file"
+            )
     try:
         # must_exist=False: a deleted target is re-created (review r3 minor); checked again right before the write
         target = safe_rel(root, m["file"], "marker file", must_exist=False)
@@ -1158,7 +1243,10 @@ def restore_from_marker(root: pathlib.Path) -> tuple[bool, str]:
         ok = sha256(back) == m["orig_sha256"]
     except (Refused, OSError) as e:
         why = e.strerror or e if isinstance(e, OSError) else e
-        text = f"RESTORE FAILED: cannot write {m['file']} back: {why}; the mutant may still be planted; marker and backup kept"
+        text = (
+            f"RESTORE FAILED: cannot write {m['file']} back: {why}; the mutant may still be planted; marker and backup kept"
+            + link_hint(root, m["file"])
+        )
         return False, f"{control}; {text}" if control else text
     note = " (it already held the original)" if already else ""
     text = f"{orphan}; restored {m['file']} from {bk}{note}; hash matches saved original: {ok}"
@@ -1767,7 +1855,7 @@ def one(a, tests, m, results, ref) -> list[str]:
 def load_mutants(a) -> list[dict]:
     if a.list:
         try:
-            ms = json.loads(pathlib.Path(a.list).read_text(encoding="utf-8"))
+            ms = loads_json(pathlib.Path(a.list).read_text(encoding="utf-8"))
         except (OSError, ValueError) as e:  # missing, unreadable, not UTF-8, not JSON
             raise Refused(
                 f"--list {a.list} cannot be read as a JSON list ({type(e).__name__}: {e}): refused"
@@ -1932,6 +2020,7 @@ def restore_args(a, repo_given: bool) -> str:
 
 
 def main():
+    sys.stdout, sys.stderr = SafeOut(1), SafeOut(2)  # first: even the first refusal text must not be able to fail
     if (
         tuple(sys.version_info[:3]) < MIN_PYTHON
     ):  # before anything else, on every option including --restore (review r5 nit 8)
@@ -2014,7 +2103,7 @@ def main():
         sys.exit(EXIT_REFUSED)
     repo_given = a.repo is not None
     default_repo = str(pathlib.Path(__file__).resolve().parent)
-    if not a.restore or repo_given:
+    if not a.restore or repo_given or a.sha:
         a.repo = a.repo or default_repo
     root = pathlib.Path(a.root)
     if not root.is_dir():
@@ -2056,7 +2145,12 @@ def main():
             if a.restore:
                 # review r6 nit 2: a signal during the restore is remembered, never raised: the restore ends first
                 SIG.critical = True
-                ok, text = restore_from_marker(root)
+                expected_ref = None
+                if a.sha:  # r8 (d): the commit named on the command line decides what the original is
+                    expected_ref = tmpref / "ref"
+                    expected_ref.mkdir()
+                    build_reference(a.repo, resolve_commit(a.repo, a.sha), a.patch, expected_ref)
+                ok, text = restore_from_marker(root, expected_ref)
                 print(text)
                 if SIG.first is not None:
                     print(
@@ -2239,13 +2333,13 @@ def main():
         Exception
     ) as e:  # review r6 nit 5: a bug here must not end in Python's own exit 1 with a bare traceback
         SIG.exiting = True
-        traceback.print_exc()
+        traceback.print_exc(limit=-6)  # the last frames only: a recursion error has thousands
         state = (
             f"a marker exists ({marker}): a mutant may be planted, run --restore"
             if os.path.lexists(marker)
             else "no marker: nothing is planted by this run"
         )
-        print(f"INTERNAL ERROR ({type(e).__name__}: {e}); {state}", file=sys.stderr)
+        print(f"INTERNAL ERROR ({type(e).__name__}: {str(e)[:300]}); {state}", file=sys.stderr)
         raise SystemExit(
             EXIT_RESTORE_FAILED if may_be_planted(a.restore, root, marker, e) else EXIT_REFUSED
         ) from e
