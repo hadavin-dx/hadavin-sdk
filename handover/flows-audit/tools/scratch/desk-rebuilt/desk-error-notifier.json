@@ -1,0 +1,61 @@
+{
+ "name": "Lead desk door: error notifier",
+ "nodes": [
+  {
+   "parameters": {},
+   "name": "Error Trigger",
+   "type": "n8n-nodes-base.errorTrigger",
+   "typeVersion": 1,
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "fromEmail": "desk-door@example.test",
+    "toEmail": "={{ $env.DESK_ALERT_TO }}",
+    "subject": "Lead desk door: the desk did not answer",
+    "emailFormat": "text",
+    "text": "={{ 'The desk did not answer after retries. ' + $json.execution.error.message + '. Execution ' + $json.execution.id + '.' }}",
+    "options": {
+     "appendAttribution": false
+    }
+   },
+   "name": "Notify",
+   "type": "n8n-nodes-base.emailSend",
+   "typeVersion": 2.1,
+   "position": [
+    220,
+    0
+   ],
+   "retryOnFail": true,
+   "maxTries": 3,
+   "waitBetweenTries": 1000,
+   "credentials": {
+    "smtp": {
+     "id": "CREDENTIAL_ID_PLACEHOLDER",
+     "name": "desk-alert-smtp"
+    }
+   }
+  }
+ ],
+ "connections": {
+  "Error Trigger": {
+   "main": [
+    [
+     {
+      "node": "Notify",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1",
+  "saveDataSuccessExecution": "none",
+  "saveDataErrorExecution": "none"
+ }
+}

@@ -1,0 +1,237 @@
+{
+ "name": "Lead Desk door: Email Intake",
+ "nodes": [
+  {
+   "parameters": {
+    "httpMethod": "POST",
+    "path": "desk-webhook",
+    "responseMode": "responseNode",
+    "options": {}
+   },
+   "name": "Receive the submission",
+   "type": "n8n-nodes-base.webhook",
+   "typeVersion": 2,
+   "position": [
+    0,
+    0
+   ],
+   "webhookId": "door-hook-wh"
+  },
+  {
+   "parameters": {
+    "assignments": {
+     "assignments": [
+      {
+       "id": "source",
+       "name": "source",
+       "value": "webhook",
+       "type": "string"
+      },
+      {
+       "id": "source_ref",
+       "name": "source_ref",
+       "value": "={{ $json.body.message_id }}",
+       "type": "string"
+      },
+      {
+       "id": "payload",
+       "name": "payload",
+       "value": "={{ {\"name\": $json.body.from_name, \"email\": $json.body.from_email, \"message\": $json.body.body} }}",
+       "type": "object"
+      }
+     ]
+    },
+    "options": {}
+   },
+   "name": "Map to the desk format",
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 3.4,
+   "position": [
+    220,
+    0
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "={{ $env.DESK_URL }}/leads",
+    "sendBody": true,
+    "contentType": "json",
+    "specifyBody": "json",
+    "jsonBody": "={{ { source: $json.source, source_ref: $json.source_ref, payload: $json.payload } }}",
+    "options": {
+     "timeout": "={{ Number($env.DESK_TIMEOUT_MS) }}",
+     "response": {
+      "response": {
+       "fullResponse": true,
+       "neverError": false
+      }
+     }
+    }
+   },
+   "name": "Send to the desk",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    440,
+    0
+   ],
+   "retryOnFail": true,
+   "maxTries": 3,
+   "waitBetweenTries": 1000,
+   "onError": "continueErrorOutput"
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "const r = $input.first().json; const ref = $('Map to the desk format').first().json.source_ref;\nlet body = r.body; if (typeof body === 'string') { try { body = JSON.parse(body); } catch (e) { body = null; } }\nconst verdict = body && typeof body === 'object' ? (body.verdict || null) : null;\nif (!verdict) { return [{json: {n8n_error: true, error: 'desk answer had no verdict', desk_status: r.statusCode, lead_ref: ref}}]; }\nreturn [{json: {n8n_error: false, desk_status: r.statusCode, verdict: verdict, desk: body, lead_ref: ref}}];"
+   },
+   "name": "Shape the reply",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    660,
+    -100
+   ]
+  },
+  {
+   "parameters": {
+    "mode": "runOnceForAllItems",
+    "jsCode": "const ref = $('Map to the desk format').first().json.source_ref;\nreturn [{json: {n8n_error: true, error: 'desk call failed after retries', lead_ref: ref}}];"
+   },
+   "name": "Shape the error reply",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    660,
+    100
+   ]
+  },
+  {
+   "parameters": {
+    "respondWith": "json",
+    "responseBody": "={{ $json }}",
+    "options": {
+     "responseCode": "={{ $json.n8n_error ? 502 : 200 }}"
+    }
+   },
+   "name": "Reply 2xx",
+   "type": "n8n-nodes-base.respondToWebhook",
+   "typeVersion": 1.4,
+   "position": [
+    880,
+    -100
+   ]
+  },
+  {
+   "parameters": {
+    "respondWith": "json",
+    "responseBody": "={{ $json }}",
+    "options": {
+     "responseCode": 502
+    }
+   },
+   "name": "Reply error",
+   "type": "n8n-nodes-base.respondToWebhook",
+   "typeVersion": 1.4,
+   "position": [
+    880,
+    100
+   ]
+  },
+  {
+   "parameters": {
+    "errorType": "errorMessage",
+    "errorMessage": "={{ 'desk_unreachable lead_id=' + $json.lead_ref }}"
+   },
+   "name": "Fail the run (fires the error workflow)",
+   "type": "n8n-nodes-base.stopAndError",
+   "typeVersion": 1,
+   "position": [
+    1100,
+    100
+   ]
+  }
+ ],
+ "connections": {
+  "Receive the submission": {
+   "main": [
+    [
+     {
+      "node": "Map to the desk format",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Map to the desk format": {
+   "main": [
+    [
+     {
+      "node": "Send to the desk",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Send to the desk": {
+   "main": [
+    [
+     {
+      "node": "Shape the reply",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    [
+     {
+      "node": "Shape the error reply",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Shape the reply": {
+   "main": [
+    [
+     {
+      "node": "Reply 2xx",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Shape the error reply": {
+   "main": [
+    [
+     {
+      "node": "Reply error",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Reply error": {
+   "main": [
+    [
+     {
+      "node": "Fail the run (fires the error workflow)",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1",
+  "saveDataSuccessExecution": "none",
+  "saveDataErrorExecution": "none",
+  "saveManualExecutions": false
+ }
+}
