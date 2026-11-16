@@ -12,5 +12,5 @@ Answered by the 16 Nov decisions: scope (1), HubSpot delete scope (2; item 1 ans
 ## Note on item 7: SUPERSEDED by the lead's answer of 16 Nov 10:20Z (patched copy). The earlier recommendation of the unpatched files is withdrawn.
 Checks that stay: regenerate the patched copy, run flowcheck on the final folder, record its sha, run T19 on the laptop, check n8n's run list and Postgres tables for stored lead data. Keep "processed once" out of the caption until T19 passes.
 
-## 8. Does the film pause stay? (added 16 Nov, system-map session)
+## 8. Does the film pause stay? ANSWERED (a) by the lead 16 Nov 10:23Z: the pause stays; `end` stops the take and lists leftovers, never deletes. Card v2 applied. (added 16 Nov, system-map session)
 ANSWERS 10:13Z item 1 says "film-v5 is out, so no film pause" and also says `end` stops the take and lists leftover contacts. Both cannot hold unless the program still pauses after the 3 contacts exist. Which is it: (a) the pause stays (the owner films the HubSpot list, then types `end`); (b) no pause. The run-day card draft (work/run-day-card-draft-v2.md) assumes (a). Needed before the card is replaced.
