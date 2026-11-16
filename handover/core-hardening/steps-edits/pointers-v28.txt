@@ -19,6 +19,7 @@ changes|.9 and 6.3 and the paste at |6.4
 changes|6.4 and 8.1 | C111 | | m-10 |R8
 changes|; (c) the last-resort step (|Open 4
 changes|C139 | | m-8 stray space in |R1
+changes|OT overwritten, needs-lead (|Open 101
 changes|Recall path | C114 | | N9 B |7.11
 changes|`rm` result | C132 | | m-14 |5.7
 changes|ad sends | C60 C163 | | m-5 |7.4
@@ -54,6 +55,7 @@ changes|he contact deleting; 8.3 to |8.5
 changes|ilm pause closes the chat | |7.6
 changes|is no run | C168 | | m-17 B |6.7
 changes|isplay not exempt in W7 and |R1
+changes|kept with their conditions; |5.6
 changes|leave app passwords alive | |8.2
 changes|lm pause against the card | |7.6
 changes|ncelled word can be wrong | |5.9
@@ -458,6 +460,7 @@ open|folder, cd line, gap before |8.1
 open|g balance (security-nit 12, |R4
 open|ght only by the size (sheet |6.4
 open|he figure in words (row 77; |Q24
+open|heir conditions; the sheet (|5.6
 open|hosen: the sheet says so in |R1
 open|ifies at final check" until |G16
 open|illed | v27 adds sheet step |5.9

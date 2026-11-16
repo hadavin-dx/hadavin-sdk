@@ -1,4 +1,4 @@
-1,28c1,81
+1,28c1,83
 < changes| card, If it fails, FREEZE, |R1
 < changes| default; B text rewritten; |G26
 < changes| term definitions and the B |7.11
@@ -49,6 +49,7 @@
 > changes|6.4 and 8.1 | C111 | | m-10 |R8
 > changes|; (c) the last-resort step (|Open 4
 > changes|C139 | | m-8 stray space in |R1
+> changes|OT overwritten, needs-lead (|Open 101
 > changes|Recall path | C114 | | N9 B |7.11
 > changes|`rm` result | C132 | | m-14 |5.7
 > changes|ad sends | C60 C163 | | m-5 |7.4
@@ -84,6 +85,7 @@
 > changes|ilm pause closes the chat | |7.6
 > changes|is no run | C168 | | m-17 B |6.7
 > changes|isplay not exempt in W7 and |R1
+> changes|kept with their conditions; |5.6
 > changes|leave app passwords alive | |8.2
 > changes|lm pause against the card | |7.6
 > changes|ncelled word can be wrong | |5.9
@@ -109,189 +111,191 @@
 > changes|| 5.9 "On the run day", "do |6.1
 > changes|| C14l | | N8 Recall note | |6.1
 > note| (Open 71), the word count (|Open 75
-37a91
+37a93
 > note| New lead word "confirmed" (|R8
-39a94
+39a96
 > note| R1. - One older-key point: |7.11
-43a99
+43a101
 > note| aborted-run message for A (|Open 96
-66c122
+66c124
 < note| older key cancelled (A: at |6.7
 ---
 > note| older key (A: cancelled at |6.7
-83a140,141
+83a142,143
 > note| the older key <its name>", |Open 96
 > note| the run ends passes before |8.1
-84a143
+84a145
 > note| then answer "confirmed" at |5.9
-99a159
+99a161
 > note|.md); rule ids R1 and R4 to |R10
-102c162
+102c164
 < note|1:30 IST), model key (sheet |section 6
 ---
 > note|25 "go". 4 owner: look key (|5.9
-110,111c170
+110,111c172
 < note|A or -B.md; rule ids R1 and |R4
 < note|B.md; rule ids R1 and R4 to |R10
 ---
 > note|A is the one sent. In both, |7.11
-112a172
+112a174
 > note|D; you see the real word at |5.9
-114d173
+114d175
 < note|ET-v27-A or -B.md; rule ids |R1
-119a179
+119a181
 > note|LM-v28.md); rule ids R1 and |R4
-122a183
+122a185
 > note|WNER-FILM-v28.md); rule ids |R1
-130a192
+130a194
 > note|asked address> Gap before |8.1
-137a200
+137a202
 > note|celled word and its source (|Open 53
-181a245
+181a247
 > note|en words): you answer it at |5.9
-206d269
+206d271
 < note|hree; four in B), look key (|5.9
-224d286
+224d288
 < note|list inside the sheet's own |section 2
-228a291
+228a293
 > note|me display exempt in W7 and |R1
-256a320
+256a322
 > note|our in B), model key (sheet |section 6
-259a324
+259a326
 > note|pen 53), the choice A or B (|Open 71
-264a330
+264a332
 > note|r left valid and handled at |7.11
-288a355
+288a357
 > note|t a cancel. The look key of |5.9
-323d389
+323d391
 < open| new safety steps (look key |5.9
-327d392
+327d394
 < open| route (fourth phone alarm, |7.11
-328a394,396
+328a396,398
 > open| single point 7.11) | in A, |7.11
 > open| steps at 5.6, 6.2 alarm 4, |6.3
 > open| the older key <its name>" (|Open 96
-337a406
+337a408
 > open|5.6, 6.2 alarm 4, 6.3, 6.7, |7.11
-345a415
+345a417
 > open|agraph was NOT proven safe (|Open 97
-353a424
+353a426
 > open|at a time); B is built, and |7.11
-368a440
+368a442
 > open|e older key stays valid and |7.11
-381a454
+381a456
 > open|ey when the run ends before |6.7
-391a465
+387a463
+> open|heir conditions; the sheet (|5.6
+391a468
 > open|is for you and the owner at |5.1
-395c469
+395c472
 < open|le. WHEN IT FAILS (v27): at |5.6
 ---
 > open|le. WHEN IT FAILS (v28): at |5.6
-398a473
+398a476
 > open|n A, when a run ends before |6.7
-400a476
+400a479
 > open|nger M-15; the single point |7.11
-408a485,487
+408a488,490
 > open|ou and the owner at 5.1 and |5.8
 > open|ou or from the look key: at |5.9
 > open|r in the older-key steps at |5.6
-412,413d490
+412,413d493
 < open|s "differs from the word at |6.3
 < open|s (sample 20 s, a proposal; |Open 11
-414a492
+414a495
 > open|s at 5.6, 6.2 alarm 4, 6.3, |6.7
-415a494
+415a497
 > open|s then yours to send before |6.3
-426a506
+426a509
 > open|the older-key steps at 5.6, |6.2
-432a513,514
+432a516,517
 > open|ts means no run, checked at |5.8
 > open|u answer "confirmed" (a new |R8
-441c523,525
+441c526,528
 < sheetA| (the fixed printed line of |6.4
 ---
 > sheetA| 6.4. After the `exit 0` of |6.4
 > sheetA| 7.11 still follows, before |8.1
 > sheetA| Same words as the sheet. **|R9
-443a528,529
+443a531,532
 > sheetA| and describe which (8.3 to |8.5
 > sheetA| cancel: only at 6.7, after |6.6
-444a531
+444a534
 > sheetA| is a real key, alive until |card step 4
-445a533
+445a536
 > sheetA| run that ended before 6.7: |7.11
-447d534
+447d537
 < sheetA| start or end a step: "go" (|5.8
-451c538
+451c541
 < sheetA| which. Contacts: delete by |R7
 ---
 > sheetA|", FREEZE, no `end`) passes |7.11
-455d541
+455d544
 < sheetA|), you see the real word at |5.9
-456a543,544
+456a546,547
 > sheetA|): "go" (5.8), "confirmed" (|5.9
 > sheetA|); you see the real word at |5.9
-457a546
+457a549
 > sheetA|, at 7.11) and the deleting |R7
-458a548,549
+458a551,552
 > sheetA|.9 and 6.3 and the paste at |6.4
 > sheetA|.9 and 6.3 and the paste of |6.4
-461a553,554
+461a556,557
 > sheetA|D; you see the real word at |5.9
 > sheetA|ER-FILM-v28.md (R9, 8.8 and |section 9
-465a559
+465a562
 > sheetA|The planned cancel: only at |6.7
-467d560
+467d563
 < sheetA|account. For the older key (|6.7
-477a571
+477a574
 > sheetA|be the times (8.8). **Step |8.8
-480,481c574,575
+480,481c577,578
 < sheetA|d (its list L2 included, at |6.7
 < sheetA|d, at 6.7) and the deleting |R7
 ---
 > sheetA|ck as the first sentence of |8.7
 > sheetA|d (its list L2 included, at |7.11
-485a580
+485a583
 > sheetA|e fixed printed commands of |5.7
-486a582
+486a585
 > sheetA|e key's one-time display at |5.9
-489c585,586
+489c588,589
 < sheetA|e; you see the real word at |5.9
 ---
 > sheetA|ed commands of 5.7, 6.4 and |8.1
 > sheetA|ed printed commands of 5.7, |6.4
-491d587
+491d590
 < sheetA|ep 5 is done (a look key of |5.9
-492a589
+492a592
 > sheetA|firmed" (5.9), "restarted" (|6.6
-493a591
+493a594
 > sheetA|go to the test terminal for |6.4
-495c593,594
+495c596,597
 < sheetA|he Privacy switches back as |8.7
 ---
 > sheetA|haring. ### The rules (R1, |R4
 > sheetA|he clean-up message): "go" (|5.8
-497a597
+497a600
 > sheetA|he run key (the look key of |5.9
-500c600,602
+500c603,605
 < sheetA|ill spend). ### The rules (|R1
 ---
 > sheetA|il address (the one copy at |6.3
 > sheetA|ing starts (after your yes, |7.11
 > sheetA|is step and describe which (|8.3
-504,506c606
+504,506c609
 < sheetA|lay at 6.3 and the paste at |6.4
 < sheetA|lay at 6.3 and the paste of |6.4
 < sheetA|lly 1, plus the look key of |5.9
 ---
 > sheetA|led after you press create (|6.3
-507a608,609
+507a611,612
 > sheetA|low the film and post page (|R9
 > sheetA|low the film and post page, |section 9
-516a619,620
+516a622,623
 > sheetA|nything else. The look key (|5.9
 > sheetA|o `end`) passes 7.11 before |8.1
-519c623,629
+519c626,632
 < sheetA|p: "go" (5.8), "restarted" (|6.6
 ---
 > sheetA|ollow). Contacts: delete by |R7
@@ -301,27 +305,27 @@
 > sheetA|or sharing. ### The rules (|R1
 > sheetA|ost page OWNER-FILM-v28.md (|R9
 > sheetA|page OWNER-FILM-v28.md (R9, |8.8
-522c632
+522c635
 < sheetA|r screen, otherwise only at |6.7
 ---
 > sheetA|post page. | Same page. | | |R10
-524d633
+524d636
 < sheetA|ress create of the run key (|6.3
-525a635
+525a638
 > sheetA|run ends passes here before |8.1
-528c638,639
+528c641,642
 < sheetA|scribe the times (8.8). | | |R10
 ---
 > sheetA|s of it, and "confirmed" of |5.9
 > sheetA|sage "wait" or a slow lead (|6.6
-530c641
+530c644
 < sheetA|spend). ### The rules (R1, |R4
 ---
 > sheetA|sses here before 8.1).** If |6.7
-534,535d644
+534,535d647
 < sheetA|therwise only at 6.7, after |6.6
 < sheetA|thout `end`, and proceed at |8.1
-539,542c648,651
+539,542c651,654
 < sheetA|utside the key's display at |6.3
 < sheetA|witches OFF; when you reach |6.1
 < sheetA|y switches are already OFF (|5.7
@@ -331,98 +335,98 @@
 > sheetA|y switches must be OFF now (|6.1
 > sheetA|y they must be OFF again at |5.9
 > sheetA|y's own one-time display at |5.9
-543a653
+543a656
 > sheetA|yet: do its steps 2 to 4 as |5.9
-545,546c655,656
+545,546c658,659
 < sheetB| (its list L2 included, and |7.11
 < sheetB| (the fixed printed line of |6.4
 ---
 > sheetB| 6.4. After the `exit 0` of |6.4
 > sheetB| 7.11 still follows, before |8.1
-547a658
+547a661
 > sheetB| Same words as the sheet. **|R9
-550c661
+550c664
 < sheetB| and 7.11) and the deleting |R7
 ---
 > sheetB| and describe which (8.3 to |8.5
-551a663
+551a666
 > sheetB| is a real key, alive until |card step 4
-553d664
+553d667
 < sheetB| start or end a step: "go" (|5.8
-557c668
+557c671
 < sheetB| which. Contacts: delete by |R7
 ---
 > sheetB|", FREEZE, no `end`) passes |7.11
-561d671
+561d674
 < sheetB|), you see the real word at |5.9
-562a673,674
+562a676,677
 > sheetB|): "go" (5.8), "confirmed" (|5.9
 > sheetB|); you see the real word at |5.9
-564c676
+564c679
 < sheetB|, "If it fails", FREEZE and |R1
 ---
 > sheetB|, at 7.11) and the deleting |R7
-565a678,679
+565a681,682
 > sheetB|.9 and 6.3 and the paste at |6.4
 > sheetB|.9 and 6.3 and the paste of |6.4
-566a681
+566a684
 > sheetB|4 at the older-key time (do |7.11
-569a685,686
+569a688,689
 > sheetB|D; you see the real word at |5.9
 > sheetB|ER-FILM-v28.md (R9, 8.8 and |section 9
-575d691
+575d694
 < sheetB|account. For the older key (|7.11
-586a703
+586a706
 > sheetB|be the times (8.8). **Step |8.8
-589a707,708
+589a710,711
 > sheetB|ck as the first sentence of |8.7
 > sheetB|d (its list L2 included, at |7.11
-593a713
+593a716
 > sheetB|e fixed printed commands of |5.7
-594a715
+594a718
 > sheetB|e key's one-time display at |5.9
-597c718,719
+597c721,722
 < sheetB|e; you see the real word at |5.9
 ---
 > sheetB|ed commands of 5.7, 6.4 and |8.1
 > sheetB|ed printed commands of 5.7, |6.4
-599,600d720
+599,600d723
 < sheetB|ep 5 is done (a look key of |5.9
 < sheetB|er your yes, do 7.11 before |8.1
-602c722
+602c725
 < sheetB|every route after your yes; |7.11
 ---
 > sheetB|firmed" (5.9), "restarted" (|6.6
-603a724
+603a727
 > sheetB|go to the test terminal for |6.4
-605c726,727
+605c729,730
 < sheetB|he Privacy switches back as |8.7
 ---
 > sheetB|haring. ### The rules (R1, |R4
 > sheetB|he clean-up message): "go" (|5.8
-607a730
+607a733
 > sheetB|he run key (the look key of |5.9
-609a733,734
+609a736,737
 > sheetB|il 7.11 (L2). The look key (|5.9
 > sheetB|il address (the one copy at |6.3
-610a736
+610a739
 > sheetB|is step and describe which (|8.3
-614,616c740
+614,616c743
 < sheetB|lay at 6.3 and the paste at |6.4
 < sheetB|lay at 6.3 and the paste of |6.4
 < sheetB|lly 1, plus the look key of |5.9
 ---
 > sheetB|led after you press create (|6.3
-617a742,743
+617a745,746
 > sheetB|low the film and post page (|R9
 > sheetB|low the film and post page, |section 9
-623c749
+623c752
 < sheetB|n your screen, otherwise at |7.11
 ---
 > sheetB|nce. The planned cancel: at |7.11
-626a753
+626a756
 > sheetB|o `end`) passes 7.11 before |8.1
-629c756,762
+629c759,765
 < sheetB|p: "go" (5.8), "restarted" (|6.6
 ---
 > sheetB|ollow). Contacts: delete by |R7
@@ -432,27 +436,27 @@
 > sheetB|or sharing. ### The rules (|R1
 > sheetB|ost page OWNER-FILM-v28.md (|R9
 > sheetB|page OWNER-FILM-v28.md (R9, |8.8
-632c765,766
+632c768,769
 < sheetB|pplies. ### The rules (R1, |R4
 ---
 > sheetB|post page. | Same page. | | |R10
 > sheetB|r key may still spend until |7.11
-634d767
+634d770
 < sheetB|ress create of the run key (|6.3
-636c769
+636c772
 < sheetB|rt applies. ### The rules (|R1
 ---
 > sheetB|run ends passes here before |8.1
-639c772,773
+639c775,776
 < sheetB|scribe the times (8.8). | | |R10
 ---
 > sheetB|s of it, and "confirmed" of |5.9
 > sheetB|sage "wait" or a slow lead (|6.6
-642d775
+642d778
 < sheetB|t 16:00 UTC = 21:30 IST (do |7.11
-646d778
+646d781
 < sheetB|thout `end`, and proceed at |8.1
-650,654c782,785
+650,654c785,788
 < sheetB|utside the key's display at |6.3
 < sheetB|witches OFF; when you reach |6.1
 < sheetB|y route, after your yes, do |7.11
@@ -463,5 +467,5 @@
 > sheetB|y switches must be OFF now (|6.1
 > sheetB|y they must be OFF again at |5.9
 > sheetB|y's own one-time display at |5.9
-655a787
+655a790
 > sheetB|yet: do its steps 2 to 4 as |5.9
