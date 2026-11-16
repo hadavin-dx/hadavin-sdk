@@ -83,3 +83,84 @@ BAD: ['row 2 still says ONLY', 'an argparse error: exit 2 or not named in the ro
   FAIL: T97d m1 row 2 of the exit table: no 'ONLY'; an argument error, a state folder not mode 700, a lock held and a --sha that names no commit all exit 2 and are named in it (exit 1; r9: fails)
 /tmp/safety-only.uJIKa0.sh: line 70: 15400 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
   FAIL: T97e m2 recorded mode 0 (decimal 0), file deleted: --restore re-creates it with exactly that mode: exit 0 (got 0), mode 644 (r9: 644)
+/tmp/safety-only.uJIKa0.sh: line 70: 19767 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  FAIL: T97e m2 recorded mode 4755 (decimal 2541), file deleted: --restore re-creates it with exactly that mode: exit 0 (got 0), mode 644 (r9: 644)
+/tmp/safety-only.uJIKa0.sh: line 70: 23416 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: the mode in the marker (0o4755) has other execute bits than src/mod.py in the git archive given with --sha (0o644): the marker may be forged; nothing written; the mutant may still be p
+  FAIL: T97e2 m2 marker mode 4755 with --sha: exit 3 (got 3; r9: 0 and the mode written), 'special bit', nothing written (still planted)
+/tmp/safety-only.uJIKa0.sh: line 70: 26335 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+test group already gone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10-indep/r9t/tmpstate/hadavin-mutation-lane-0/7cd5638658d89e69.backup; hash 
+  FAIL: T97e2 m2 marker mode 666 with --sha: exit 3 (got 0; r9: 0 and the mode written), 'special bit', nothing written (still planted)
+  FAIL: T97f m3 --out-json in another searched state folder (via TMP): exit 2 (got 5; r9: wrote it), file not created; an existing foreign file: exit 2 (got 5; r9: overwritten), still 'precious', no raw file written
+  PASS: T97f2 guard: the tool's own earlier result file may be overwritten: exit 0 both times (got 0, 0)
+uncaught KeyboardInterrupt
+leaked ['/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10-indep/r9t/tmpstate/mutation-ref-6s8wri3u']
+  FAIL: T97g m4 SIGTERM arriving right after the temporary folder is made: exit 143 and the folder is removed (r9: an uncaught KeyboardInterrupt, the folder leaked)
+REFUSED: marker is for another root ('/nowhere/else'): refused
+REFUSED: marker is for another root ('/nowhere/else'): refused
+  FAIL: T97h m5 forged marker (another root) with --sha: tree equal: exit 2 (got 2), text says the tree equals the git archive and 'does NOT mean nothing is planted'; tree different: exit 3 (got 2; r9: 2), marker kept
+m6 mode after a failed reopen: 0o644
+m7 tree_check: []
+m8 child of the helper still alive after the timeout: True
+BAD: ['m6: mode 0o644', 'm7: dangling marker not counted', "m8: the helper's child survived", 'm11: raised [Errno 5] Input/output error']
+  FAIL: T97i m6 (a failed reopen gives the mode back), m7 (a dangling link as marker counts), m8 (a timeout kills the helper's child too), m11 (a failed folder sync after the removal is a warning, not an error) (exit 1; r9: fails all four)
+/tmp/safety-only.uJIKa0.sh: line 70: 26900 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10-indep/in/run.r9.py", line 2389, in main
+    ok, text = restore_from_marker(root, expected_ref, set(a.extra))
+               ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10-indep/in/run.r9.py", line 1417, in restore_from_marker
+    unlink_state(marker)
+    ~~~~~~~~~~~~^^^^^^^^
+  File "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10-indep/in/run.r9.py", line 393, in unlink_state
+    fsync_state_dir()
+    ~~~~~~~~~~~~~~~^^
+  File "<stdin>", line 3, in boom
+OSError: [Errno 5] Input/output error
+INTERNAL ERROR (OSError: [Errno 5] Input/output error); no marker: nothing is planted by this run
+  FAIL: T97j m11 --restore with a failing state-folder sync: exit 0 (got 2; r9: INTERNAL ERROR, backup stranded), file back, state empty, a WARNING printed
+/tmp/safety-only.uJIKa0.sh: line 70: 27930 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+REFUSED: a mutant (evil
+PASSED: faked line[31m) is still planted in src/mod.py from an earlier run that was killed. Restore with: python3 /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10-indep/in/run.r9.py --root /tmp/claude-0/-home-user/957f9d5
+  FAIL: T97k m9 a marker whose mutant name holds a newline and an escape code: the refusal prints it quoted (exit 2): no line starts with 'PASSED:', no raw escape character in the output (r9: both)
+uncaught FileNotFoundError
+  FAIL: T97l m10 no usable temporary folder while the module loads: exit 2 with a REFUSED text (r9: the exception ends the program before main)
+  FAIL: T97m m6 the docstring says a read-only file that already holds the original keeps its mode (T88d) and no longer promises the mode in that case (exit 1; r9: fails)
+== T98 (r10, independent r9 run: over-long paths; a signal in the start-up window; the S603 lint; the exact limit (d) of plain --restore)
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10-indep/in/run.r9.py", line 2605, in <module>
+    main()
+  BAD root: exit 1
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10-indep/in/run.r9.py", line 2605, in <module>
+    main()
+  BAD name: exit 1
+REFUSED: --sha is not a commit id: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10-indep/in/run.r9.py", line 2432, in main
+    safe_rel(root, m["file"], f"mutant {m['id']} file"), f"mutant {m['id']} target"
+  BAD file: exit 2
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10-indep/in/run.r9.py", line 2399, in main
+    check_pytest_config(root, tests)
+  BAD test: exit 2
+  FAIL: T98a a path over 4096 bytes (--root, a 300-byte name, --sha, --file, a test path) ends in a refusal, exit 2, no traceback: 4 of 5 wrong (r9: exit 1 or a traceback)
+Traceback (most recent call last):
+  File "<stdin>", line 9, in <module>
+  File "<frozen runpy>", line 294, in run_path
+  FAIL: T98b SIGINT during the module's start-up lines: the run ends with exit 130 and no traceback (got 130; r9: KeyboardInterrupt traceback, exit 1)
+noqa: [] direct Popen calls: 1
+  FAIL: T98c no 'noqa' comment and no direct subprocess.Popen call (every program is started by the one class Child) (exit 1; r9: fails)
+/tmp/safety-only.uJIKa0.sh: line 70: 28298 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: the saved backup differs from src/mod.py in the git archive given with --sha: the state folder may be forged or --sha is the wrong commit; nothing written. By hand: git show <sha>:src/
+/tmp/safety-only.uJIKa0.sh: line 70: 28501 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+test group already gone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10-indep/r9t/tmpstate/hadavin-mutation-lane-0/7cd5638658d89e69.backup; hash 
+  PASS: T98d limit (d): with --sha a forged marker+backup with a matching hash is NOT trusted: exit 3 (got 3), nothing written (last 'return2' = return2), swapped text written 0 times, marker kept; plain --restore trusts it (pinned limit): swapped text written 1 time(s), exit 0
+/tmp/safety-only.uJIKa0.sh: line 70: 29262 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: the mode in the marker (0o777) has other execute bits than src/mod.py in the git archive given with --sha (0o644): the marker may be forged; nothing written; the mutant may still be pl
+  PASS: T98e forged marker with mode 0777: --sha refuses it, exit 3 (got 3), nothing written (last 'return2' = return2)
+test group already gone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10-indep/r9t/tmpstate/hadavin-mutation-lane-0/7cd5638658d89e69.backup; hash 
+  PASS: T98e2 plain --restore with the same marker (pinned limit (d)): the file is restored to the recorded original, written with mode masked to 0777 at most (got exit 0, mode 777)
+missing ['plain --restore', 'forged'] no (d): True
+  FAIL: T98f the docstring states limit (d): plain --restore trusts a forged marker with a matching backup, only --sha closes it (exit 1; r9: fails)
+FAILED CHECKS: 23 (of 46 checks run; skipped: none)

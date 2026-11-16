@@ -8,6 +8,7 @@ def run(d):
     if rb.returncode: return {'FAIL BUILD stopped: ' + (rb.stderr.strip().split('\n') or [''])[-1][:80]}, rb       # the build's own assertions (marker left, run length below 860 s)
     r = subprocess.run([sys.executable, '-B', d + 'check-v29.py'], capture_output=True, text=True, env=dict(os.environ, V27_DIR=d))
     return set(l for l in r.stdout.split('\n') if l.startswith('FAIL')), r
+ALLCOPIES = {'N01', 'R18', 'P30'}
 # (id, file, old, new, what)
 import ast
 def _banned():
@@ -28,10 +29,10 @@ P = [
 ('P10', 'OWNER-SHEET-v29-SOURCE.md', 'switch it OFF yourself at once with the tool the numbers message names', 'say "stop" and wait', 'recording stop by voice'),
 ('P11', 'OWNER-SHEET-v29-SOURCE.md', 'alarm 1 at the latest start, alarm 2 at the alarm time', 'alarm 2 at the alarm time', 'first alarm removed'),
 ('P12', 'OWNER-SHEET-v29-SOURCE.md', 'Text between backticks is typed without the backticks. ', '', 'backtick sentence removed'),
-('P13', 'OWNER-SHEET-v29-SOURCE.md', "only if the window's last line is `paste key, Enter:` (otherwise do not paste; copy a harmless word such as `clear`; describe the last line; then the card), ", '', 'paste condition removed'),
+('P13', 'OWNER-SHEET-v29-SOURCE.md', "only if the window's last line is `paste key, Enter:` ", '', 'paste condition removed'),
 ('P14', 'OWNER-SHEET-v29-SOURCE.md', ' with paper notes "READ" and "TEST"', '', 'window labels removed'),
 ('P15', 'OWNER-SHEET-v29-SOURCE.md', '(no earlier run used it or begins like it)', '(any run name will do)', 'run-name reuse rule removed'),
-('P16', 'OWNER-SHEET-v29-SOURCE.md', 'only at 6.7, after 6.6 passed (new key saved, size checked)', 'at 6.4', 'A older key cancelled before the key is saved'),
+('P16', 'OWNER-SHEET-v29-SOURCE.md', '**Last checks, then the older key.**', '**Last checks.**', 'A older key step renamed (no longer after 6.6)'),
 ('P17', 'OWNER-SHEET-v29-SOURCE.md', 'reverses `end` and the card, ', '', 'lead may reverse order'),
 ('P18', 'OWNER-SHEET-v29-SOURCE.md', 'within the "Minutes at Type y to start" of the message, counted from the time `date -u` shows when the notice appeared (note that time at once)', 'within the minutes the message names', 'no clock for the notice window'),
 ('P19', 'OWNER-SHEET-v29-SOURCE.md', 'if 7.4 never happened, send "none" for the time in 8.1. ', '', 'run that never started'),
@@ -68,9 +69,9 @@ V = [
 ('V03', S, 'Any other difference: press nothing, go to "If it fails". ', '', 'differing cancel word rule removed'),
 ('V04', S, '(the lead cannot see your screen); you see the real word at 5.9 and the lead answers "confirmed"', '(the lead cannot see your screen); the lead gives it', 'cancelled word no longer seen by the owner'),
 ('V05', S, ' passes 7.11 before 8.1.**', '.**', 'B 7.11 not reachable from every route (security B1)'),
-('V06', S, '[[B:, alarm 4 at the older-key time (do 7.11 now, whatever else is open)]]', '', 'B fourth alarm removed'),
-('V07', S, '[[B:The cancel-by time is before the older-key time.]]', '', 'cancel-by before older-key time no longer checked'),
-('V08', S, 'Wait at least the "Minimum think time" of the message (', 'Wait 10 seconds (', 'minimum think time back to 10 seconds'),
+('V06', S, ', alarm 4 at the older-key time (do 7.11 now, whatever else is open, even if the lead is silent)', '', 'B fourth alarm removed'),
+('V07', S, ' The cancel-by time is before the older-key time.', '', 'cancel-by before older-key time no longer checked'),
+('V08', S, 'Wait at least the "Minimum think time" of the message', 'Wait 10 seconds', 'minimum think time back to 10 seconds'),
 ('V09', S, 'In the test terminal type the printed line of 6.4 (R6 shape check of its key file path first): it waits at the paste line and nothing is alive yet. ', '', 'key-save line no longer typed before create'),
 ('V10', S, 'Test program asks you to type a figure: no', 'Test program asks you to type a figure: yes', 'typed-figure line changed'),
 ('V11', S, 'first read its last-used time in the key list and describe it to the lead (a use after', 'first read its time and describe it to the lead (a use after', 'B 7.11 last-used time dropped'),
@@ -78,8 +79,8 @@ V = [
 ('V13', O, 'Safe default if you do not answer: A', 'Safe default if you do not answer: B', 'open list names B as default'),
 ('V14', N, 'sheet B has a fourth alarm at', 'sheet B has an alarm at', 'note G30 loses the fourth alarm'),
 ('V15', O, 'WHEN IT FAILS (v29)', 'WHEN IT FAILS', 'A 7-day failure handling removed from open list'),
-('V16', O, 'NOT MET at v29', 'MET at v29', 'open list says word target met'),
-('V17', S, 'A run that ended before 6.7: 7.11 says what happens.', '', 'A older key: what happens after an early end no longer said'),
+('V16', O, 'MET for the sheet page alone by', 'Word target not stated by', 'open list says word target met'),
+('V17', S, 'If the run ends before 6.7 the older key is still valid: you cancel it at 7.11', 'If the run ends before 6.7 nothing more happens: 7.11', 'A older key: what happens after an early end no longer said'),
 ('V18', S, 'none within the silence minutes: describe, FREEZE; no key is alive then', '', 'no shell prompt: no action'),
 ('V19', S, 'Start only after the lead\'s word "post"', 'Start', 'posting without the lead word'),
 ('V20', S, 'say "filmed" and read both counts aloud', 'say "filmed"', 'film counts no longer read aloud'),
@@ -136,7 +137,7 @@ M = [
 ('M45', S, 'you read both at 6.2 and 6.7', 'you read both at 6.2 and 6.8', 'R4 pointer 6.7 to 6.8'),
 ('M46', S, 'after the model key\'s cancel press, card step 3)', 'after the model key\'s cancel press, card step 5)', '8.1 card step 3 to 5'),
 ('M47', S, '## 9. Posting (by {{postby}}', '## 9. Posting (by Wed 25 Nov 2026 15:00 UTC = 20:00 IST', 'post-by IST in sheet'),
-('M48', C, '8.3 to 8.5 still follow', '8.3 to 8.9 still follow', 'CHANGES table pointer 8.5 to 8.9'),
+('M48', C, '6.7 in A now reads the last-used time', '6.9 in A now reads the last-used time', 'CHANGES table pointer 6.7 to 6.9'),
 ('M49', O, "the sheet's 7.8 error sentence stays", "the sheet's 7.7 error sentence stays", 'open row pointer 7.8 to 7.7'),
 ('M50', N, 'gives 0.27; ceiling 3 gives expected total 0.81', 'gives 0.28; ceiling 3 gives expected total 0.81', 'note worked price'),
 ('M51', S, 'send "{{ph_dmd}}"', 'send "all done"', 'unlisted set phrase sent in 8.5'),
@@ -165,7 +166,7 @@ Q = [
 ('Q18', S, 'or not ending `@example.com`', 'or not ending `@example.org`', 'one delete-domain guard changed'),
 ('Q20', N, 'program limit = 12.40 + 0.81 = 13.21', 'program limit = 12.40 + 0.81 = 13.12', 'lead note limit wrong'),
 ('Q22', S, 'Exit codes accepted: 0 only', 'Exit codes accepted: 0 or 1', 'accepted exit codes widened'),
-('Q24', S, 'Only seven words in a lead message', 'Only six words in a lead message', 'R8 word count changed'),
+('Q24', S, 'the seven words, which alone start or end a step', 'the six words, which alone start or end a step', 'R8 word count changed'),
 ]
 P = P + Q
 SLASHKEY = 'q' * 8 + '/' + 'Z' * 16 + '_' + 'k' * 12 + '-' + 'm' * 9           # 47 characters with a slash, built from parts, never a real key
@@ -185,7 +186,7 @@ V26 = [
 ('R01', S, '7.11, always, by the older-key time of the message', '7.11, always, by 18:30 UTC = 00:00 IST', 'B older-key cancel time after 18:14 UTC'),
 ('R02', S, '**Older key point (cannot be undone;', '**Older key point (', 'B 7.11 title loses the irreversible warning'),
 ('R03', S, 'exactly the rows you wrote minus K', 'exactly N minus K', 'card proof uses N minus K again'),
-('R04', S, 'only at 6.7, after 6.6 passed (new key saved, size checked)', 'at once', 'A older-key cancel before the key is saved'),
+('R04', S, '**Last checks, then the older key.**', '**Last checks.**', 'A older-key cancel before the key is saved'),
 ('R05', S, '`PRICE_OUT_CENTS`, `CALL_CEILING`,', '`PRICE_OUT_CENTS`,', 'one of the seven setting names dropped'),
 ('R06', S, '`-c@` or `prep-<run name>@example.com`', '`-c@`', 'R7 prep prefix dropped'),
 ('R07', S, 'in the read terminal must say no such file (', 'in the read terminal must say nothing (', '8.1 proof of the deleted key file weakened'),
@@ -365,7 +366,7 @@ def main():
         d = tmp + '/' + pid + '/'; shutil.copytree(base, d)
         s = open(d + f, encoding='utf-8').read()
         if old not in s: print(pid, 'ANCHOR-NOT-FOUND', what); anc += 1; continue
-        open(d + f, 'w', encoding='utf-8').write(s.replace(old, new, 1))
+        open(d + f, 'w', encoding='utf-8').write(s.replace(old, new) if pid in ALLCOPIES else s.replace(old, new, 1))   # ALLCOPIES: the fact is written in two places (sheet and appendix); a check that needs it anywhere is only tested by changing every copy
         got, r = run(d); new_f = set(map(norm, got)) - set(map(norm, b0))
         nc = codes_of(new_f)
         if learn: print('LEARN', pid, sorted(nc), 'TB' if 'Traceback' in r.stderr else ''); continue

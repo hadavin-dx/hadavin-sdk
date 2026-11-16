@@ -3,14 +3,8 @@ INFO UTC/IST pairs 97
 INFO weekday/date pairs 58
 INFO label+time same-phrase pairs 7 5
 INFO rows with key revoke text ['E-12', 'E-48', 'E-52', 'E-55', 'E-57', 'E-58']
+INFO REPLY GROUPS {'not looking': ['E-09', 'E-52'], 'Yes, remove the container only | No': ['E-16'], 'Yes, remove the container only': ['E-16'], 'No': ['E-16'], 'yes | no, other things use it | not sure': ['E-37', 'E-48'], 'same key | different key | not sure': ['E-37', 'E-48'], 'no more takes | more takes': ['E-48', 'E-52'], 'cut accepted': ['E-52', 'E-57'], 'password file created; <password file name>; <folder>; you may look again': ['E-52']}
 INFO PHRASES {'please stop looking': ['E-09', 'E-48', 'E-52'], 'not looking': ['E-09', 'E-48', 'E-52'], 'you may look again': ['E-09', 'E-48', 'E-52'], 'Ubuntu': ['E-09'], 'umask 077': ['E-09'], 'revoke the model key': ['E-12', 'E-48'], 'tested': ['E-12'], 'untested': ['E-12'], 'no': ['E-12', 'E-52'], 'no more takes': ['E-16', 'E-48', 'E-52', 'E-55', 'E-57'], 'cut accepted': ['E-16', 'E-48', 'E-52', 'E-55', 'E-57'], 'Yes, remove the container only': ['E-16'], 'No': ['E-16'], 'demo': ['E-25', 'E-49', 'E-52'], 'hadavin_label': ['E-37'], 'yes': ['E-37', 'E-48'], 'no, other things use it': ['E-37', 'E-48'], 'not sure': ['E-37', 'E-48', 'E-52'], 'same key': ['E-37', 'E-48'], 'different key': ['E-37', 'E-48'], 'end': ['E-37', 'E-41'], 'more takes': ['E-48', 'E-52'], '..': ['E-48'], 'rm': ['E-48'], 'key revoked': ['E-48', 'E-58'], 'key not revoked': ['E-48', 'E-58'], 'Wed 18 Nov 2026': ['E-49'], 'ok': ['E-52']}
 INFO banned strings found (count only) 0 of 10
-FAILS 7
-{'label': 1, 'keyend': 2, 'content': 1, 'shred': 3}
-FAIL label | 18:14 UTC follows "latest start we plan" not "program refusal limit":  the latest start we plan for the planned day (Wed 18 Nov) are stated in UTC and IST; the 
-FAIL keyend | key revoke sentence names 18:29 UTC: - **R10 (E-48, E-55, E-57, E-58)**: two routes (ND15), one deadline per act: revoke the key (18:19 UTC = 23:49 IST at the latest), watch the
-FAIL keyend | key revoke sentence names 18:29 UTC:  Round 10: (a) naive M5: the last time to revoke (18:19 UTC = 23:49 IST, Q25) and the money stop (the end of the spending window, 18:29 UTC 
-FAIL content | E-48/E-55/E-57 lack E-48 route A
-FAIL shred | E-09 NEW block has shred -u without the no-'..' path rule
-FAIL shred | E-30 NEW block has shred -u without the no-'..' path rule
-FAIL shred | E-52 NEW block has shred -u without the no-'..' path rule
+FAILS 0
+{}

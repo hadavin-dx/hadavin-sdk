@@ -498,3 +498,88 @@ returncode still None, leader reaped: stop_group calls: []
 /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10-indep/in/safety-tests.sh: line 557: 10267 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
 process 15076 is not this run's pytest (or cannot be verified): left alone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10-indep/full/tmpstate/
   PASS: T51a identical command line, other start time: stranger left alone, file restored (rc 0)
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10-indep/in/safety-tests.sh: line 557: 18993 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+stopped orphaned test group 22577; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10-indep/full/tmpstate/hadavin-mutation-lane-0/25ab0fb16d88732f.
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10-indep/in/safety-tests.sh: line 557: 22577 Killed                  ( cd "$T/root" && exec setsid "${ARGV[@]}" > /dev/null 2>&1 )
+  PASS: T51a (control) identical command line AND identical start time: stopped (rc 0)
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10-indep/in/safety-tests.sh: line 570: 25659 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T51b outside-root setup: the member of the dead leader's group runs
+process 26434 is not this run's pytest (or cannot be verified): left alone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10-indep/full/tmpstate/
+  PASS: T51b outside-root: member left alone, file restored, exit 3 because the group is unsettled (r8 N2) (rc 3)
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10-indep/in/safety-tests.sh: line 570: 26577 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T51b early-start setup: the member of the dead leader's group runs
+process 27295 is not this run's pytest (or cannot be verified): left alone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10-indep/full/tmpstate/
+  PASS: T51b early-start: member left alone, file restored, exit 3 because the group is unsettled (r8 N2) (rc 3)
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10-indep/in/safety-tests.sh: line 570: 27900 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T51b control setup: the member of the dead leader's group runs
+stopped orphaned test group 28180; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10-indep/full/tmpstate/hadavin-mutation-lane-0/25ab0fb16d88732f.
+  PASS: T51b control (member works in root, started after the recorded start): stopped (rc 0)
+works_in wrong: []
+  PASS: T51c works_in matches whole path parts: /root2/x is not inside /root
+== T52 (review r4 nit 1) a plant that fails on the open file is a clean refusal, not RESTORE FAILED; --restore with the file already original clears the marker
+REFUSED: cannot plant into src/mod.py: Permission denied
+  PASS: T52a read-only target: exit 2 (got 2) with 'cannot plant', no 'RESTORE FAILED', file unchanged, state empty
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10-indep/in/safety-tests.sh: line 1753: 28414 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+test group already gone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10-indep/full/tmpstate/hadavin-mutation-lane-0/25ab0fb16d88732f.backup (it
+  PASS: T52b file already equals the backup (two names): --restore exit 0 (got 0), marker and backup cleared, nothing written
+== T53 (review r4 nit 2) a FIFO in place of the target: --restore refuses instead of hanging
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10-indep/in/safety-tests.sh: line 1753: 28688 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T53 FIFO as the target at --restore (valid marker): exit 3 (restore failed, r6 review M1; r6 code: 2), no hang (got 3; 124 or 137 = hung), marker and backup kept
+  PASS: T53 and the genuine restore works afterwards
+== T54 (review r4 nit 4) ANY file in the tree with two names is refused, not only the target
+REFUSED: docs/note.txt is not a regular file with exactly one name (links: 2): a hard-linked scratch tree shares files with another tree: refused
+  PASS: T54 hard-linked docs/note.txt refused naming the file (rc 2, hits 1); target untouched
+== T55 (review r4 nit 5) a background process that outlives the test leader is stopped and recorded
+  PASS: T55a leftover 'sleep 3141' stopped (rc 5), the raw file says so
+  T55b control run killed with SIGKILL: --restore stops its test group
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10-indep/in/safety-tests.sh: line 1753: 30525 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --control --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T55b setup: the control run's pytest still runs
+  PASS: T55b the next run refuses and points at --restore (rc 2)
+control run: stopped orphaned test group 30594; no marker in /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10-indep/full/tmpstate/hadavin-mutation-lane-0 or in ['/dev/shm',
+  PASS: T55b --restore exit 0 (got 0), the orphaned control test group stopped, state empty, file unchanged
+== T56 (review r4 nit 9) no /proc, no waitid: a refusal at the start, on any option
+REFUSED: this tool works on Linux only (it reads /proc to identify and stop an orphaned test run and uses waitid); on this system a --restore could not stop a leftover test run: refused
+  PASS: T56 non-Linux: exit 2 (got 2) with 'Linux only'
+== T57 (review r4 nit 10) the restore command in the refusal carries --repo; --restore needs no git repository
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10-indep/in/safety-tests.sh: line 1753:  1001 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+REFUSED: a mutant ("X-m1") is still planted in "src/mod.py" from an earlier run that was killed. Restore with: python3 /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10-indep/in/run.py --root /tmp/claude-0/-home-user/957f9d59-4d7f-59
+  PASS: T57a the printed command contains --repo /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10-indep/full/toy/repo
+test group already gone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10-indep/full/tmpstate/hadavin-mutation-lane-0/25ab0fb16d88732f.backup; ha
+  PASS: T57b --restore from a copy of the script in a folder that is no git repository: exit 0 (got 0), file back
+  PASS: T57c a restore on the real repository is still refused without --repo (rc 2)
+== T58 (review r4 nit 11) output files never follow a link; reap waits for the leader it killed
+  PASS: T58a --raw file is a link: exit 2 (got 2), the victim is untouched, nothing planted
+  PASS: T58b --out-json is a link: exit 2 (got 2), victim untouched, nothing planted
+  PASS: T58c --raw is a symbolic link to a folder: exit 2 (got 2), nothing written into it
+returncode after reap: -9 still unreaped child: False
+  PASS: T58d reap kills AND waits: no zombie, returncode set
+== T59 (review r4 nit 12) the restored mode does not depend on the umask
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10-indep/in/safety-tests.sh: line 1753:  4218 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T59 mode 640 after a restore under umask 077 (got 640)
+== T60 (review r4 nit 3) a folder swapped for a link between the path check and the write is not followed
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10-indep/in/safety-tests.sh: line 1753:  5235 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+(False, 'RESTORE FAILED: cannot write "src/mod.py" back: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10-indep/full/toy/root/src/mod.py: the folder \'src\' is a symbolic link or not a folder:
+  PASS: T60 the file behind the swapped link was not written
+== T62 (review r4 nit 4) a bind mount inside the root (one name per file, same filesystem) is refused
+REFUSED: docs is a mount point inside --root /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10-indep/full/toy/root: it shows another tree's files inside the scratch tree: re
+  PASS: T62 mount point docs/ refused for that reason (rc 2)
+  PASS: T62 nothing planted, bind source untouched
+refused: with space/m is a mount point inside --root /a/root: it shows another tree's fil
+root itself, .venv and a sibling prefix (/a/root2) are no refusal
+parsed: ['/a/root/with space/m', '/a/root/back\\slash']
+  PASS: T62b refuse_mounts logic: a mount inside is refused; the root, .venv and a sibling prefix are not
+== T61 (review r4 evidence) PYTEST_ADDOPTS, PYTEST_PLUGINS and other steering variables of the caller never reach the tests
+  PASS: T61 with those set in the caller's environment the tests run and see none of them (rc 0, verdict SURVIVED, '1 passed')
+== T63 (review r5 M3) a decoy folder that holds the ORIGINAL bytes: the restore must not report success on the decoy
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10-indep/in/safety-tests.sh: line 1753:  5555 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+(False, 'RESTORE FAILED: cannot write "src/mod.py" back: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10-indep/full/toy/root/src/mod.py: the folder \'src\' is a symbolic link or not a folder:
+  PASS: T63a --restore through a swapped folder: NOT reported as restored; marker and backup kept; the planted file behind the swap is still planted (r5 cleared the marker and left it planted); decoy untouched
+  PASS: T63a the kept marker still allows a genuine restore afterwards
+RESTORE ERROR: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10-indep/full/toy/root/src/mod.py: the folder 'src' is a symbolic link or not a folder: not written
+RESTORE FAILED m1 (marker and backup kept; run --restore)
+  PASS: T63b the run's own restore through a swapped folder: exit 3 (got 3), marker and backup kept, the planted file is still planted behind the swap (r5: exit 0 or 4, marker cleared)
+  PASS: T63b genuine restore afterwards
+== T63c restore_target itself: one descriptor, a swap during the write does not matter, read-only, two names, FIFO, re-creation
+bad: []
+  PASS: T63c restore_target: plain, already-original (no write), swap during the write, link refused, read-only, two names, FIFO, re-creation (rc 0)
+== T64 (review r5 nit 1) a REAL memory fault is not recovered by the signal handler: the process hangs (measured), as the text now says

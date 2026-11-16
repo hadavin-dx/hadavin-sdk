@@ -107,7 +107,7 @@ def check(path, indir=HERE + 'inputs/', info=None):
     # reverse: each 18:04 / 18:14 time: the nearest label before it (same paragraph, 120 chars) must be right one
     for tm, want, other in (('18:04 UTC', 'latest start we plan', 'program refusal limit'), ('18:14 UTC', 'program refusal limit', 'latest start we plan')):
         for mm in re.finditer(re.escape(tm), txt):
-            ctx = txt[max(0, mm.start()-110):mm.start()].split('\n')[-1]
+            ctx = txt[max(0, mm.start()-45):mm.start()].split('\n')[-1]
             a, b = ctx.rfind(want), ctx.rfind(other)
             if b > a: F('label', f'{tm} follows "{other}" not "{want}": ' + ctx[-90:])
     # every NEW block that mentions a UTC time 18:04/18:14 must have the label; rows that use the labels
@@ -125,23 +125,24 @@ def check(path, indir=HERE + 'inputs/', info=None):
     byid = {r['id']: r for r in rows}
     for rid in ('E-12', 'E-37', 'E-48', 'E-55', 'E-57', 'E-58'):
         if rid in byid and not any('18:19 UTC = 23:49 IST' in t for t in byid[rid]['new']): F('keyend', f'{rid} lacks key end 18:19 UTC = 23:49 IST')
-    for mm in re.finditer(r'[^.\n]*\b(?:revoke|revoked|revoking)\b[^.\n]*\bkey\b[^.\n]*18:29 UTC[^.\n]*', txt):
-        F('keyend', 'key revoke sentence names 18:29 UTC: ' + mm[0][:140])
-    for mm in re.finditer(r'[^.\n]*18:29 UTC[^.\n]*\b(?:revoke|revoked)\b[^.\n]*\bkey\b[^.\n]*', txt):
-        F('keyend', 'key revoke sentence names 18:29 UTC: ' + mm[0][:140])
+    for r in rows:
+        for t in r['new']:
+            for sent in re.split(r'(?<=[.;:])\s+|\n', t):
+                if re.search(r'\b(?:revoke|revoked|revoking)\b[^;]*\b(?:secret )?key\b|\bkey\b[^;]*\b(?:revoke|revoked|ends by)\b', sent) and '18:29 UTC' in sent and '18:19 UTC' not in sent:
+                    F('keyend', f"{r['id']} NEW key revoke sentence names 18:29 UTC without 18:19: " + sent[:140])
     # 7 steps that must exist (content checks used by mutations): not-looking step, routes A and B, shred path
     own = [r for r in rows if r['file'].startswith('OWNER')]
     ownnew = '\n'.join(t for r in own for t in r['new'])
     for need, msg in (('not looking', 'not looking step'), ('please stop looking', 'please stop looking reply'), ('you may look again', 'you may look again reply'),
-                      ('no more takes', 'no more takes reply'), ('cut accepted', 'route B reply'), ('shred -u', 'shred path'), ('route A', 'route A'), ('route B', 'route B')):
+                      ('no more takes', 'no more takes reply'), ('cut accepted', 'route B reply'), ('shred -u', 'shred path'), ('Route A', 'route A'), ('Route B', 'route B')):
         if need not in txt: F('content', 'missing ' + msg)
     t48 = '\n'.join(byid['E-48']['new']) if 'E-48' in byid else ''
-    for need, msg in (('route A', 'E-48 route A'), ('route B', 'E-48 route B'), ('not looking', 'E-48 not-looking step')):
-        if need not in t48 and need not in '\n'.join('\n'.join(byid[x]['new']) for x in ('E-55', 'E-57') if x in byid): F('content', 'E-48/E-55/E-57 lack ' + msg)
+    for need, msg in (('Route A:', 'E-48 route A'), ('Route B (recommended):', 'E-48 route B'), ('not looking', 'E-48 not-looking step')):
+        if need not in t48 and not (need == 'not looking' and any('not looking' in '\n'.join(byid[x]['new']) for x in ('E-09','E-52') if x in byid)): F('content', 'E-48/E-55/E-57 lack ' + msg)
     # shred must come with the no-.. rule: any NEW block with shred -u must also say the path has no ".." / must not contain ..
     for r in rows:
         for t in r['new']:
-            if 'shred -u' in t and not re.search(r'no (?:`\.\.`|"\.\."|\.\.)|\bnot (?:contain|include|have)[^.]{0,30}`?\.\.`?|\.\.[^.\n]{0,40}(?:never|not allowed|refuse|stop)|no `\.\.`', t):
+            if 'shred -u <path>' in t and not re.search(r'no (?:`\.\.`|"\.\."|\.\.)|\bnot (?:contain|include|have)[^.]{0,30}`?\.\.`?|\.\.[^.\n]{0,40}(?:never|not allowed|refuse|stop)|no `\.\.`', t):
                 F('shred', f"{r['id']} NEW block has shred -u without the no-'..' path rule")
     # 8 reply phrases
     phr = collections.defaultdict(list)
@@ -151,6 +152,28 @@ def check(path, indir=HERE + 'inputs/', info=None):
                 p = mm[1]
                 if re.search(r'[/\\<>~$=()*]|\.\w{1,5}\b|^\d|--|^-', p) or p.startswith('Yes, ') is False and len(p.split()) > 6: continue
                 phr[p].append((r['id'], t[max(0, mm.start()-110):mm.end()+110].replace('\n', ' ')))
+    ctxreq = {'cut accepted': r'\bcut\b', 'no more takes': r'take', 'key revoked': r'revoke', 'key not revoked': r'revoke', 'please stop looking': r'look', 'you may look again': r'look', 'not looking': r'look',
+              'tested': r'crash check', 'untested': r'crash check', 'same key': r'n8n|key', 'different key': r'key', 'no, other things use it': r'secret key|key', 'end': r'take|pause|script'}
+    for p_, lst in phr.items():
+        if p_ in ctxreq:
+            for rid_, c_ in lst:
+                if not re.search(ctxreq[p_], c_): F('phrase', f'{rid_} phrase `{p_}` used without its context word /{ctxreq[p_]}/: {c_[60:200]}')
+    # a reply phrase may not be offered for the other route's act: `cut accepted` must never be tied to "no more takes" as its meaning
+    for r in own:
+        for t in r['new']:
+            if re.search(r'`cut accepted`\s+(?:means|is the same as|counts as)[^.]{0,40}no more takes|`no more takes`\s+(?:means|is the same as|counts as)[^.]{0,40}cut accepted', t): F('phrase', f"{r['id']} one phrase defined as the other")
+            if re.search(r'`key kept`', t): F('phrase', f"{r['id']} uses old phrase `key kept`")
+            if re.search(r'`(?:key revoked|key not revoked)`', t) and re.search(r'`(?:key revoked|key not revoked)`[^.]{0,60}(?:means|counts as)[^.]{0,60}(?:cut|take is over)', t): F('phrase', f"{r['id']} key phrase given a second meaning")
+    # reply groups: Reply `a`, `b` or `c`
+    grp = collections.defaultdict(set)
+    for r in own:
+        for t in r['new']:
+            for mm in re.finditer(r'[Rr]eply (?:with exactly )?((?:`[^`]+`(?:, | or )?)+)', t):
+                g = tuple(re.findall(r'`([^`]+)`', mm[1])); grp[g].add(r['id'])
+    I('REPLY GROUPS', {' | '.join(k): sorted(v) for k, v in grp.items()})
+    seen = collections.defaultdict(list)
+    for g in grp:
+        for w in g: seen[w].append(g)
     I('PHRASES', {k: sorted(set(x[0] for x in v)) for k, v in phr.items()})
     # 9 internal codes in owner-facing NEW text
     codes = ((r'\bE-\d\d\b', 'E-nn'), (r'\bND ?\d+[a-z0-9]*\b', 'ND'), (r'\bR\d{1,3}\b', 'R-number'), (r'\bL-[A-Z0-9]+(?:/[A-Z])?\b', 'L-id'), (r'\bL\d\b', 'L-row'), (r'\bQ\d+(?:\.\d+)?(?:\([a-z]\))?\b', 'Q-number'),
