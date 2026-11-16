@@ -1,0 +1,173 @@
+GENUINE-CHECK v20 DB-3 guard verdict CLEAN; DB-2 guard verdict CLEAN; genuine DBs applied ok
+H01 | FLAGGED(5) | ok | probe ok; data unchanged; leak YES; structure vs genuine: functions
+H02 | FLAGGED(13) | ok | probe ok; data CHANGED; leak no; structure vs genuine: functions
+H03 | FLAGGED(5) | ok | probe 42501,ok; data unchanged; leak no; structure vs genuine: functions
+H04 | FLAGGED(7) | REJECTED by server 0A000: WITH clause containing a data-modi | n/a (not applied)
+H05 | FLAGGED(2) | ok | probe ok; data unchanged; leak no; structure vs genuine: functions
+H06 | FLAGGED(6) | ok | probe ok; data CHANGED; leak no; structure vs genuine: functions
+H07 | FLAGGED(8) | ok | probe ok; data CHANGED; leak no; structure vs genuine: functions
+H08 | FLAGGED(7) | ok | probe ok; data CHANGED; leak no; structure vs genuine: functions
+H09 | FLAGGED(9) | ok | probe ok; data CHANGED; leak no; structure vs genuine: functions
+H10 | FLAGGED(5) | ok | probe ok; data CHANGED; leak no; structure vs genuine: functions
+H11 | FLAGGED(6) | ok | probe ok; data CHANGED; leak no; structure vs genuine: functions
+H12 | FLAGGED(6) | ok | probe ok; data CHANGED; leak no; structure vs genuine: functions
+H13 | FLAGGED(13) | ok | probe ok; data CHANGED; leak no; structure vs genuine: functions
+H14 | FLAGGED(5) | ok | probe ok; data CHANGED; leak no; structure vs genuine: functions
+H15 | FLAGGED(1) | REJECTED by migrate() ConfigError: migrations are inconsiste | n/a (not applied)
+H16 | FLAGGED(6) | ok | probe ok; data CHANGED; leak no; structure vs genuine: functions
+H17 | FLAGGED(6) | ok | probe ok; data CHANGED; leak no; structure vs genuine: functions
+H18 | FLAGGED(7) | ok | probe ok; data CHANGED; leak no; structure vs genuine: functions
+H19 | FLAGGED(6) | ok | probe ok; data CHANGED; leak no; structure vs genuine: functions
+H20 | FLAGGED(6) | ok | probe ok; data CHANGED; leak no; structure vs genuine: functions
+H21 | FLAGGED(6) | ok | probe ok; data CHANGED; leak no; structure vs genuine: functions
+H22 | FLAGGED(6) | ok | probe ok; data CHANGED; leak no; structure vs genuine: functions
+H23 | FLAGGED(2) | ok | probe ok; data CHANGED; leak no; structure vs genuine: functions
+H24 | FLAGGED(1) | ok | probe ok; data unchanged; leak no; structure vs genuine: functions
+H25 | FLAGGED(1) | ok | probe 42501; data unchanged; leak no; structure vs genuine: functions
+H26 | FLAGGED(7) | ok | probe ok; data CHANGED; leak no; structure vs genuine: functions
+H27 | FLAGGED(7) | ok | probe ok; data CHANGED; leak no; structure vs genuine: functions
+H28 | FLAGGED(6) | ok | probe ok; data CHANGED; leak no; structure vs genuine: functions
+H29 | FLAGGED(1) | ok | probe ok; data CHANGED; leak no; structure vs genuine: functions
+H30 | FLAGGED(1) | REJECTED by server 42501: must be able to SET ROLE "op17" | n/a (not applied)
+H31 | FLAGGED(8) | REJECTED by migrate() ConfigError: migrations are inconsiste | n/a (not applied)
+H32 | FLAGGED(1) | REJECTED by migrate() ConfigError: the runtime role holds mo | n/a (not applied)
+H33 | FLAGGED(6) | ok | probe ok; data CHANGED; leak no; structure vs genuine: functions
+H34 | FLAGGED(4) | ok | probe ok; data CHANGED; leak no; structure vs genuine: functions
+H35 | FLAGGED(4) | ok | probe ok; data CHANGED; leak no; structure vs genuine: functions
+H36 | FLAGGED(4) | ok | probe ok; data CHANGED; leak no; structure vs genuine: functions
+H37 | FLAGGED(5) | ok | probe ok; data CHANGED; leak no; structure vs genuine: functions
+H38 | FLAGGED(5) | ok | probe ok; data CHANGED; leak no; structure vs genuine: functions
+H39 | FLAGGED(5) | ok | probe ok; data CHANGED; leak no; structure vs genuine: functions
+H40 | FLAGGED(5) | ok | probe ok; data CHANGED; leak no; structure vs genuine: functions
+H41 | FLAGGED(1) | ok | probe ok; data unchanged; leak no; structure vs genuine: triggers
+H42 | FLAGGED(1) | ok | probe ok; data unchanged; leak no; structure vs genuine: triggers
+H43 | FLAGGED(1) | ok | probe ok; data unchanged; leak no; structure vs genuine: triggers
+H44 | FLAGGED(1) | ok | probe ok; data unchanged; leak no; structure vs genuine: triggers
+H45 | FLAGGED(1) | ok | probe ok; data unchanged; leak no; structure vs genuine: triggers
+H46 | FLAGGED(1) | ok | probe ok; data unchanged; leak no; structure vs genuine: triggers,constraints
+H47 | FLAGGED(1) | ok | probe ok; data unchanged; leak no; structure vs genuine: same
+H48 | FLAGGED(1) | ok | probe ok; data unchanged; leak no; structure vs genuine: constraints
+H49 | FLAGGED(6) | ok | probe ok; data unchanged; leak no; structure vs genuine: triggers,functions
+H50 | FLAGGED(1) | REJECTED by migrate() ConfigError: migrations are inconsiste | n/a (not applied)
+H51 | FLAGGED(1) | REJECTED by migrate() ConfigError: migrations are inconsiste | n/a (not applied)
+H52 | FLAGGED(2) | REJECTED by migrate() ConfigError: migrations are inconsiste | n/a (not applied)
+H53 | FLAGGED(2) | REJECTED by migrate() ConfigError: migrations are inconsiste | n/a (not applied)
+H54 | FLAGGED(1) | REJECTED by migrate() ConfigError: migrations are inconsiste | n/a (not applied)
+H55 | FLAGGED(1) | REJECTED by server 42501: permission denied to set role "rt1 | n/a (not applied)
+H56 | FLAGGED(2) | REJECTED by server 42501: permission denied to set session a | n/a (not applied)
+H57 | FLAGGED(1) | REJECTED by server 42501: permission denied to set role "rt1 | n/a (not applied)
+H58 | FLAGGED(1) | REJECTED by server 42501: permission denied to set role "rt1 | n/a (not applied)
+H59 | FLAGGED(1) | ok | probe 42501; data unchanged; leak no; structure vs genuine: same
+H60 | FLAGGED(1) | REJECTED by server 42501: permission denied to grant role "o | n/a (not applied)
+H61 | FLAGGED(6) | ok | probe ok; data CHANGED; leak no; structure vs genuine: functions
+H62 | FLAGGED(6) | ok | probe ok; data CHANGED; leak no; structure vs genuine: functions
+H63 | FLAGGED(2) | REJECTED by server 42601: syntax error at or near "SECURITY  | n/a (not applied)
+H64 | FLAGGED(2) | REJECTED by server 42601: syntax error at or near "DEF‍INER" | n/a (not applied)
+H65 | FLAGGED(6) | REJECTED by server 42601: syntax error at or near "；" | n/a (not applied)
+H66 | FLAGGED(1) | REJECTED by migrate() ConfigError: migrations are inconsiste | n/a (not applied)
+H67 | CLEAN | ok | probe 23514; data unchanged; leak no; structure vs genuine: constraints  <<< BYPASS-CANDIDATE
+H68 | CLEAN | ok | probe 23514; data unchanged; leak no; structure vs genuine: constraints  <<< BYPASS-CANDIDATE
+H69 | FLAGGED(4) | REJECTED by migrate() ConfigError: migrations are inconsiste | n/a (not applied)
+H70 | FLAGGED(2) | ok | probe ok; data unchanged; leak no; structure vs genuine: functions,constraints
+H71 | FLAGGED(1) | ok | probe ok; data unchanged; leak no; structure vs genuine: functions,constraints
+H72 | FLAGGED(1) | ok | probe ok; data unchanged; leak no; structure vs genuine: triggers,functions,constraints
+H73 | FLAGGED(1) | ok | probe ok; data unchanged; leak no; structure vs genuine: functions,constraints
+H74 | FLAGGED(2) | ok | probe ok; data unchanged; leak no; structure vs genuine: functions,constraints
+H75 | CLEAN | ok | probe ok,ok; data CHANGED; leak no; structure vs genuine: constraints  <<< BYPASS-CANDIDATE
+H76 | CLEAN | ok | probe ok; data CHANGED; leak no; structure vs genuine: constraints  <<< BYPASS-CANDIDATE
+H77 | FLAGGED(1) | ok | probe ok; data unchanged; leak no; structure vs genuine: functions,constraints
+H78 | FLAGGED(1) | ok | probe ok; data unchanged; leak no; structure vs genuine: functions
+D01 | 0 characters '' (expected by the file's rule: refuse) | error 23514 | day rows=0 usd=0 open=0; month rows=0 usd=0 open=0
+D02 | 1 character 'a' (expected by the file's rule: accept) | ok [['1', '1']] | day rows=1 usd=1 open=1; month rows=1 usd=1 open=1
+D03 | 200 characters (expected by the file's rule: accept) | ok [['1', '1']] | day rows=1 usd=1 open=1; month rows=1 usd=1 open=1
+D04 | 201 characters (expected by the file's rule: refuse) | error 23514 | day rows=0 usd=0 open=0; month rows=0 usd=0 open=0
+D05 | first char '.' (expected by the file's rule: refuse) | error 23514 | day rows=0 usd=0 open=0; month rows=0 usd=0 open=0
+D06 | first char '_' (expected by the file's rule: refuse) | error 23514 | day rows=0 usd=0 open=0; month rows=0 usd=0 open=0
+D07 | first char '-' (expected by the file's rule: refuse) | error 23514 | day rows=0 usd=0 open=0; month rows=0 usd=0 open=0
+D08 | inner space 'a b' (expected by the file's rule: refuse) | error 23514 | day rows=0 usd=0 open=0; month rows=0 usd=0 open=0
+D09 | leading space (expected by the file's rule: refuse) | error 23514 | day rows=0 usd=0 open=0; month rows=0 usd=0 open=0
+D10 | trailing space (expected by the file's rule: refuse) | error 23514 | day rows=0 usd=0 open=0; month rows=0 usd=0 open=0
+D11 | trailing newline (expected by the file's rule: refuse) | error 23514 | day rows=0 usd=0 open=0; month rows=0 usd=0 open=0
+D12 | inner tab (expected by the file's rule: refuse) | error 23514 | day rows=0 usd=0 open=0; month rows=0 usd=0 open=0
+D13 | carriage return (expected by the file's rule: refuse) | error 23514 | day rows=0 usd=0 open=0; month rows=0 usd=0 open=0
+D14 | single quote (expected by the file's rule: refuse) | error 23514 | day rows=0 usd=0 open=0; month rows=0 usd=0 open=0
+D15 | double quote (expected by the file's rule: refuse) | error 23514 | day rows=0 usd=0 open=0; month rows=0 usd=0 open=0
+D16 | backslash (expected by the file's rule: refuse) | error 23514 | day rows=0 usd=0 open=0; month rows=0 usd=0 open=0
+D17 | percent (expected by the file's rule: refuse) | error 23514 | day rows=0 usd=0 open=0; month rows=0 usd=0 open=0
+D18 | dollar (expected by the file's rule: refuse) | error 23514 | day rows=0 usd=0 open=0; month rows=0 usd=0 open=0
+D19 | semicolon (expected by the file's rule: refuse) | error 23514 | day rows=0 usd=0 open=0; month rows=0 usd=0 open=0
+D20 | star (expected by the file's rule: refuse) | error 23514 | day rows=0 usd=0 open=0; month rows=0 usd=0 open=0
+D21 | equals (expected by the file's rule: refuse) | error 23514 | day rows=0 usd=0 open=0; month rows=0 usd=0 open=0
+D22 | DEL 0x7f (expected by the file's rule: refuse) | error 23514 | day rows=0 usd=0 open=0; month rows=0 usd=0 open=0
+D23 | zero-width space inside (expected by the file's rule: refuse) | error 23514 | day rows=0 usd=0 open=0; month rows=0 usd=0 open=0
+D24 | RTL override U+202E (expected by the file's rule: refuse) | error 23514 | day rows=0 usd=0 open=0; month rows=0 usd=0 open=0
+D25 | BOM U+FEFF at end (expected by the file's rule: refuse) | error 23514 | day rows=0 usd=0 open=0; month rows=0 usd=0 open=0
+D26 | Cyrillic a (U+0430) first (expected by the file's rule: refuse) | error 23514 | day rows=0 usd=0 open=0; month rows=0 usd=0 open=0
+D27 | full-width a (U+FF41) (expected by the file's rule: refuse) | error 23514 | day rows=0 usd=0 open=0; month rows=0 usd=0 open=0
+D28 | NFD e + combining acute (expected by the file's rule: refuse) | error 23514 | day rows=0 usd=0 open=0; month rows=0 usd=0 open=0
+D29 | NFC e-acute (expected by the file's rule: refuse) | error 23514 | day rows=0 usd=0 open=0; month rows=0 usd=0 open=0
+D30 | emoji (expected by the file's rule: refuse) | error 23514 | day rows=0 usd=0 open=0; month rows=0 usd=0 open=0
+D31 | NUL byte (client side) (expected by the file's rule: refuse) | error None | no row can exist (NUL cannot be stored in text)
+D32 | allowed set all together (expected by the file's rule: accept) | ok [['1', '1']] | day rows=1 usd=1 open=1; month rows=1 usd=1 open=1
+D33 | case twin 'A' vs 'a' (stated: separate budgets) (expected by the file' | ok [['1', '1']] | day rows=1 usd=1 open=1; month rows=1 usd=1 open=1
+D34 | NULL agent id (expected by the file's rule: no row) | error 23502 | 
+D35 | reserve 0 (expected: no row) | ok [] | day rows=0 usd=0 open=0; month rows=0 usd=0 open=0
+D36 | reserve -1 (expected: no row) | ok [] | day rows=0 usd=0 open=0; month rows=0 usd=0 open=0
+D37 | reserve NULL (expected: no row) | ok [] | day rows=0 usd=0 open=0; month rows=0 usd=0 open=0
+D38 | reserve 0.0000001 (expected: accept) | ok [['1E-7', '1E-7']] | day rows=1 usd=1E-7 open=1E-7; month rows=1 usd=1E-7 open=1E-7
+D39 | reserve 999999999999.99 (expected: accept) | ok [['999999999999.99', '999999999999.99']] | day rows=1 usd=999999999999.99 open=999999999999.99; month rows=1 usd=
+D40 | reserve 1e12 exactly (expected: 23514) | error 23514 | day rows=0 usd=0 open=0; month rows=0 usd=0 open=0
+D41 | reserve 1e12 - 0.0000001 (boundary under) (expected: accept) | ok [['999999999999.9999999', '999999999999.9999999 | day rows=1 usd=999999999999.9999999 open=999999999999.9999999; month r
+D42 | reserve 1e20 (expected: 23514) | error 23514 | day rows=0 usd=0 open=0; month rows=0 usd=0 open=0
+D43 | reserve NaN (expected: refuse) | error 23514 | day rows=0 usd=0 open=0; month rows=0 usd=0 open=0
+D44 | reserve Infinity (expected: refuse) | error 23514 | day rows=0 usd=0 open=0; month rows=0 usd=0 open=0
+D45 | reserve -Infinity (expected: no row) | ok [] | day rows=0 usd=0 open=0; month rows=0 usd=0 open=0
+D46 | reserve 1e131072 (numeric max digits) (expected: 23514 or 22003) | error 23514 | day rows=0 usd=0 open=0; month rows=0 usd=0 open=0
+D47 | reserve with day 2019-12-31 | error 23514 | day rows=0 usd=0 open=0; month rows=0 usd=0 open=0
+D48 | reserve with day 2020-01-01 | ok [['1', '1']] | day rows=1 usd=1 open=1; month rows=1 usd=1 open=1
+D49 | reserve with day 2099-12-31 | ok [['1', '1']] | day rows=1 usd=1 open=1; month rows=1 usd=1 open=1
+D50 | reserve with day 2100-01-01 | error 23514 | day rows=0 usd=0 open=0; month rows=0 usd=0 open=0
+D51 | reserve with day infinity | error 23514 | day rows=0 usd=0 open=0; month rows=0 usd=0 open=0
+D52 | reserve with day NULL | error 23502 | day rows=0 usd=0 open=0; month rows=0 usd=0 open=0
+D53 | settle worst=10 actual=0 after reserve 10 (give back) | ok [['0', '0']] | day rows=1 usd=0 open=0; month rows=1 usd=0 open=0
+D54 | settle worst=11 (more than open 10) | error 23514 | day rows=1 usd=10 open=10; month rows=1 usd=10 open=10
+D55 | settle actual NULL | ok [['10', '10']] | day rows=1 usd=10 open=10; month rows=1 usd=10 open=10
+D56 | settle worst NULL | ok [['10', '10']] | day rows=1 usd=10 open=10; month rows=1 usd=10 open=10
+D57 | settle worst negative -5, actual 0 (try to raise open) | ok [['10', '10']] | day rows=1 usd=10 open=10; month rows=1 usd=10 open=10
+D58 | settle actual negative -1 | ok [['10', '10']] | day rows=1 usd=10 open=10; month rows=1 usd=10 open=10
+D59 | settle actual 1e12 (above ceiling) | error 23514 | day rows=1 usd=10 open=10; month rows=1 usd=10 open=10
+D60 | settle actual NaN | error 23514 | day rows=1 usd=10 open=10; month rows=1 usd=10 open=10
+D61 | settle actual 50 above worst 10 (stated safe direction) | ok [['50', '50']] | day rows=1 usd=50 open=0; month rows=1 usd=50 open=0
+D62 | settle day NULL | ok [] | day rows=1 usd=10 open=10; month rows=1 usd=10 open=10
+D63 | settle for another day (no row for that day) | ok [] | day rows=1 usd=10 open=10; month rows=1 usd=10 open=10
+D64 | settle twice: second give-back of the same 10 | ok [['0', '0']] | day rows=1 usd=0 open=0; month rows=1 usd=0 open=0
+D64b second give-back error 23514 day rows=1 usd=0 open=0; month rows=1 usd=0 open=0
+D65 | settle where the month row is MISSING (day row only, open 7) | ok [] | day rows=1 usd=7 open=7; month rows=0 usd=0 open=0
+D66 | settle where the DAY row is MISSING (month row only, open 7) | ok [] | day rows=0 usd=0 open=0; month rows=1 usd=7 open=7
+D67 | reserve 1 when only the day row exists (month row created?) | ok [['4', '1']] | day rows=1 usd=4 open=4; month rows=1 usd=1 open=1
+D68 cutover settle error 23514 day=(Decimal('5'), Decimal('0')) month=(Decimal('5'), Decimal('0'))
+D69 cutover bad row refused 23514
+D70 invariant violations 0
+invariant month 0
+R01 | CREATE TEMP TABLE spend, then spend_reserve (does the definer write th | ok ; ok:[(Decimal('1'), Decimal('1'))] ; ok:[(0,)]
+R02 | CREATE TEMP TABLE spend_month + kill_switch, then kill_switch_engage | ok ; ok ; ok:[(None,)]
+R03 | CREATE TEMP TABLE spend with a trigger (own temp table) and call spend | ok ; ok ; ok ; ok:[(Decimal('1'), Decimal('1'))]
+R04 | CREATE TRIGGER on the real spend table | ok ; 42501
+R05 | SET search_path = pg_temp, public then call the functions | ok ; ok:[(Decimal('1'), Decimal('1'))]
+R06 | CREATE TEMP VIEW spend then reserve | ok ; ok:[(Decimal('1'), Decimal('1'))]
+R07 | CREATE FUNCTION in public (shadow spend_reserve) | 42501
+R08 | CREATE FUNCTION pg_temp.spend_reserve then call unqualified | ok ; ok:[(Decimal('1'), Decimal('1'))]
+R09 | SET ROLE migr17 / set_config role / SET SESSION AUTHORIZATION | 42501 ; 42501 ; 42501
+R10 | COPY spend TO PROGRAM / COPY FROM PROGRAM | 42501 ; 42501
+R11 | ALTER TABLE spend DISABLE TRIGGER ALL; TRUNCATE spend; DROP TABLE spen | 42501 ; 42501 ; 42501
+R12 | DROP FUNCTION spend_settle; CREATE OR REPLACE spend_reserve; ALTER FUN | 42501 ; 42501 ; 42501
+R13 | set_config('session_replication_role','replica'); LOCK TABLE spend ACC | 42501 ; 25P01
+R14 | CREATE RULE / POLICY / VIEW on spend | 42501 ; 42501 ; 42501
+R15 | kill_switch_release as runtime; direct UPDATE kill_switch; direct UPDA | 42501 ; 42501 ; 42501 ; 42501
+R16 | settle ANOTHER agent's open reservation (stated limit (b) of the file) | ok:[(Decimal('40'), Decimal('40'))] ; ok:[(Decimal('0'), Decimal('0'))]
+R17 | reserve to the ceiling then settle at 0 (stated limit (a) of the file) | ok:[(Decimal('999999999999'), Decimal('999999999999') ; ok:[(Decimal('0'), Decimal('0'))]
+R18 | create a temp table named spend_decrease_log / audit_entries then lowe | ok ; ok:[(Decimal('5'), Decimal('5'))] ; ok:[(Decimal('0'), Decimal('0'))]
+R19 | SET LOCAL statement_timeout / lock_timeout then reserve inside a trans | ok ; ok:[(Decimal('9'), Decimal('9'))] ; ok
+R20 | CREATE TABLE in public, CREATE SCHEMA, CREATE EXTENSION | 42501 ; 42501 ; 42501
+SUMMARY file spellings=78 data cases=72 runtime-login cases=20 bypass candidates=4: ['H67', 'H68', 'H75', 'H76']
+rc=0

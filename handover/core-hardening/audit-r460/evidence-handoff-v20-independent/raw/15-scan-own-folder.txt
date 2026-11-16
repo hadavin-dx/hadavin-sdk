@@ -1,0 +1,13 @@
+files scanned 45; unreadable 0; banned strings checked 10; banned hits 0 in 0 files (after NFKC and zero-width removal)
+secret-shape aws-access-key-shape: 0 hits
+secret-shape private-key-block: 0 hits
+secret-shape github-token: 0 hits
+secret-shape api-key-sk: 0 hits
+secret-shape slack-token: 0 hits
+secret-shape google-key: 0 hits
+secret-shape url-with-password: 0 hits
+secret-shape long-hex-40plus: 64 hits at handover/core-hardening/audit-r460/evidence-handoff-v20-independent/raw/09-ruff-check-v20files.txt:466, handover/core-hardening/audit-r460/evidence-handoff-v20-independent/raw/09-ruff-check-v20files.txt:474, handover/core-hardening/audit-r460/evidence-handoff-v20-independent/raw/09-ruff-check-v20files.txt:475, handover/core-hardening/audit-r460/evidence-handoff-v20-independent/raw/09-ruff-check-v20files.txt:483, handover/core-hardening/audit-r460/evidence-handoff-v20-independent/raw/09-ruff-check-v20files.txt:618, handover/core-hardening/audit-r460/evidence-handoff-v20-independent/raw/09-ruff-check-v20files.txt:619
+secret-shape email-address: 0 hits
+secret-shape twelve-digit-number: 200 hits at handover/core-hardening/audit-r460/evidence-handoff-v20-independent/hostile_v20_indep.py:311, handover/core-hardening/audit-r460/evidence-handoff-v20-independent/hostile_v20_indep.py:312, handover/core-hardening/audit-r460/evidence-handoff-v20-independent/hostile_v20_indep.py:389, handover/core-hardening/audit-r460/evidence-handoff-v20-independent/raw/09-ruff-check-v20files.txt:1779, handover/core-hardening/audit-r460/evidence-handoff-v20-independent/raw/09-ruff-check-v20files.txt:1780, handover/core-hardening/audit-r460/evidence-handoff-v20-independent/raw/09-ruff-check-v20files.txt:1789
+secret-shape password-literal: 0 hits
+rc=1

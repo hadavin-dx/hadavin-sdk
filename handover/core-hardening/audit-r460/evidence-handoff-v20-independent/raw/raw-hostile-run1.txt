@@ -169,4 +169,7 @@ R17 | reserve to the ceiling then settle at 0 (stated limit (a) of the file) | o
 R18 | create a temp table named spend_decrease_log / audit_entries then lowe | ok ; ok:[(Decimal('5'), Decimal('5'))] ; ok:[(Decimal('0'), Decimal('0'))]
 R19 | SET LOCAL statement_timeout / lock_timeout then reserve inside a trans | ok ; ok:[(Decimal('9'), Decimal('9'))] ; ok
 R20 | CREATE TABLE in public, CREATE SCHEMA, CREATE EXTENSION | 42501 ; 42501 ; 42501
-SUMMARY file spellings=78 data cases=72 runtime-login cases=20 bypass candidates=4: ['H67', 'H68', 'H75', 'H76']
+R21 | LOCK TABLE spend ACCESS EXCLUSIVE inside a transaction (R13 hit 25P01  | ok ; 42501 ; ok
+R22 | SELECT ... FOR UPDATE on spend; LOCK ROW EXCLUSIVE; inside a transacti | ok ; 42501 ; ok ; ok ; 42501 ; ok
+SUMMARY file spellings=78 data cases=72 runtime-login cases=22 bypass candidates=4: ['H67', 'H68', 'H75', 'H76']
+rc=0

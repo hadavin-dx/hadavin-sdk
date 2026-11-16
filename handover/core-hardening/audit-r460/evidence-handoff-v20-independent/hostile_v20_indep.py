@@ -391,6 +391,8 @@ rcase("R18", "create a temp table named spend_decrease_log / audit_entries then 
 rcase("R19", "SET LOCAL statement_timeout / lock_timeout then reserve inside a transaction block, ROLLBACK after reserve", ["BEGIN", "SELECT * FROM spend_reserve('rb', '2026-11-16', 9)", "ROLLBACK"], "SELECT count(*) FROM public.spend WHERE agent_id = 'rb'")
 rcase("R20", "CREATE TABLE in public, CREATE SCHEMA, CREATE EXTENSION", ["CREATE TABLE public.t_rt (x int)", "CREATE SCHEMA s_rt", "CREATE EXTENSION IF NOT EXISTS dblink"])
 
+rcase("R21", "LOCK TABLE spend ACCESS EXCLUSIVE inside a transaction (R13 hit 25P01 before any privilege check)", ["BEGIN", "LOCK TABLE spend IN ACCESS EXCLUSIVE MODE", "ROLLBACK"])
+rcase("R22", "SELECT ... FOR UPDATE on spend; LOCK ROW EXCLUSIVE; inside a transaction", ["BEGIN", "SELECT * FROM spend FOR UPDATE", "ROLLBACK", "BEGIN", "LOCK TABLE spend IN ROW EXCLUSIVE MODE", "ROLLBACK"])
 # ---------------------------------------------------------------- output
 cand = [r for r in rows if r[7] == "BYPASS-CANDIDATE"]
 json.dump(rows, open(os.environ.get("HV_ROWS_JSON", "/dev/null"), "w"))

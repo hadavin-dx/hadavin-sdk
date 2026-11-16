@@ -26,7 +26,7 @@ _CANON19 = {
     'Why these two times': (1, 1, 0),
     'Words in this item:': (1, 1, 0),
     'it is not deferrable (key step D.5)': (1, 1, 0),
-    'alarm 1, alarm 3 and the last time to revoke': (1, 1, 0),
+    'alarm 1, alarm 3 and the last time to revoke': (2, 1, 0),
     'A confirmation cannot be withdrawn once the key is revoked.': (2, 1, 0),
     'No default pick: the assistant does not recommend a route': (1, 0, 0),
     'touch nothing that you are not sure about': (1, 1, 0),
@@ -36,7 +36,7 @@ _CANON19 = {
     'Item 1 starts only when ALL the conditions of key step G.2 are true': (2, 0, 0),
     'It never starts while a copy of the key exists and the key is not revoked': (1, 1, 0),
     'asks you to type the words yourself in a new message': (1, 0, 0),
-    'What you have not finished by 18:29 UTC = 23:59 IST you finish': (3, 2, 0),
+    'What you have not finished by 18:29 UTC = 23:59 IST you finish': (2, 2, 0),
     'Tue 24 Nov 2026 18:29 UTC = 23:59 IST': (10, 4, 1),
     'not all': (2, 0, 0),
     'if you have not typed `yes, no more takes` by 18:19 UTC = 23:49 IST, revoke the key at that time anyway': (1, 1, 0),
@@ -46,18 +46,18 @@ _CANON19 = {
     'A confirmation is exactly one of two messages': (2, 0, 0),
     'touch NOTHING of that kind': (1, 1, 0),
     'your list says that your own n8n does not use it': (1, 1, 0),
-    '18:19 UTC = 23:49 IST': (0, 0, 0),
-    '18:29 UTC = 23:59 IST': (0, 0, 0),
+    '18:19 UTC = 23:49 IST': (38, 16, 8),
+    '18:29 UTC = 23:59 IST': (30, 10, 4),
     '17:49 UTC = 23:19 IST': (2, 1, 0),
     '18:09 UTC = 23:39 IST': (2, 1, 0),
     '06:00 UTC = 11:30 IST': (2, 1, 0),
-    '`yes, no more takes`': (0, 0, 0),
-    '`key gone, no more decisions`': (0, 0, 0),
-    '`cut accepted`': (0, 0, 0),
+    '`yes, no more takes`': (31, 11, 3),
+    '`key gone, no more decisions`': (25, 14, 1),
+    '`cut accepted`': (16, 2, 1),
     '`start clean-up`': (4, 3, 0),
     '`shred done key copies`': (6, 6, 0),
     '`shred done other files`': (7, 6, 0),
-    '`key revoked`': (0, 0, 0),
+    '`key revoked`': (17, 10, 0),
     '`route A`': (4, 1, 0),
     '`route B`': (4, 1, 0),
 }
@@ -113,5 +113,13 @@ if len(_rows18) < 18 or len(set(_wd)) != len(_wd): F('r19 typed words: %d rows, 
 for _l in _norm19(_DAY.split('## Table of the typed words', 1)[1]) if _DAY else []:
     if _l.startswith('| `') and _l not in set(_norm19(_AP)): F('r19 day sheet table row differs: ' + _l[:60])
 print('r19 applied sheet words (wc -w method): %d; day sheet %d; appendix %d' % (len(_AP.split()), len(_DAY.split()), len(_APP.split())))
+
+def _seg19(t, a, b):
+    i = t.find(a); j = t.find(b, i + 1) if i >= 0 else -1
+    return len(t[i:j].split()) if i >= 0 and j > i else -1
+_wc = {'applied sheet': len(_AP.split()), 'key step C (alarms)': _seg19(_AP, 'Key step C. Your alarms.', 'Key step D.'), 'key step D.5': _seg19(_AP, 'D.5. The last time to revoke', 'Key step E.'),
+       'table of typed words': _seg19(_AP, 'Table of the typed words', 'The assistant never opens the key file'), 'card with one-liners': _seg19(_AP, 'The one order (the card; read it first)', 'Key step A.'),
+       'key step I': _seg19(_AP, 'Key step I. Revoke the key', 'Key step J.'), 'key step G with G.2': _seg19(_AP, 'Key step G. The shred rule.', 'Key step H.'), 'identification check': _seg19(_AP, 'Identify first, then revoke or delete', 'Item 3 has a second job')}
+print('r19 word counts (wc -w method, applied sheet and parts):', _wc)
 print('r19 checks:', _r19n, 'count/pair/forbidden checks;', len(_r19f), 'failures in the section')
 print('round 19 checks done')

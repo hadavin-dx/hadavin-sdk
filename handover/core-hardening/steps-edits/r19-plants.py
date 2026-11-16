@@ -36,6 +36,6 @@ for _o, _n in _REV19:
     _plant19('reversal', _o[:50], _AP.replace(_o, _n, 1), _DAY, _APP)
 for _i, _l in enumerate([l_ for l_ in _DAY.split('\n') if l_.strip() and not l_.startswith('#')][4:]):
     if _i % 3 == 0: _plant19('day sheet', 'line %d' % _i, _AP, _DAY.replace(_l, _l + ' (changed)', 1), _APP)
-for _i, _l in enumerate([l_ for l_ in _APP.split('\n') if len(l_.strip()) > 80 and not l_.startswith('#') and l_.strip() in set(_norm18(txt)) and ' the ' in l_][:12]):
+for _i, _l in enumerate([l_ for l_ in _APP.split('\n') if len(l_.strip()) > 80 and not l_.startswith('#') and l_.strip() in set(_norm19(txt)) and ' the ' in l_][:12]):
     _plant19('appendix', 'line %d' % _i, _AP, _DAY, _APP.replace(_l, _l.replace(' the ', ' a ', 1) + ' (changed)', 1))
 print('r19 plants (planted, caught):', {k_: tuple(v_) for k_, v_ in _pl19.items()})
