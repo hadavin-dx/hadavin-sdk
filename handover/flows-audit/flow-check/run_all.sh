@@ -108,7 +108,7 @@ grep -q -E "^  combined: [0-9a-f]{64}$" "$RAW/take-check.txt" || TCMISS="$TCMISS
 grep -q -E "^FINAL: .*Flow files sha256 \(four files, combined\): [0-9a-f]{64}\." "$RAW/take-check.txt" || TCMISS="$TCMISS [the sha256 of the four flow files is not printed in the FINAL line]"
 grep -q -F "!!!" "$RAW/take-check.txt" && TCMISS="$TCMISS [a !!! line: the take script found a table or column problem]"
 # take_check.sh failure exits (each must be 4 with its own loud line): table file missing, old table without the alert columns, no query text to read
-mkdir -p "$W/tc" && cp -r -- "$D/n8n-flows-real-v5" "$W/tc/noquery" || TCMISS="$TCMISS [could not make the no-query test folder]"
+mkdir -p "$W/tc" && cp -r -- "$W/g/real" "$W/tc/noquery" || TCMISS="$TCMISS [could not make the no-query test folder]"
 python3 -I - "$W/tc/noquery" <<'PYEOF' || TCMISS="$TCMISS [no-query test folder not built]"
 import glob, json, sys
 for p in glob.glob(sys.argv[1] + "/*.json"):
@@ -213,7 +213,7 @@ tcfail sub-run-saving-key-missing "RUN SAVING IS NOT EXACTLY all / all / True" T
 tcfail hook-run-saving-block-empty "RUN SAVING IS NOT EXACTLY all / all / True" TAKE_CHECK_FLOWS="$W/tc/hook-emptyset"
 tcfail key-check-absent-is-exit-4 "The take needs F-002: this script exits 4" TAKE_CHECK_FLOWS="$W/tc/f008-only-src"
 tcfail new-warn-changes-the-pin "THE WARN SET CHANGED against take-warns.pin" TAKE_CHECK_FLOWS="$W/tc/warn-new"
-tcfail warn-pin-file-missing "THE WARN BASELINE FILE IS MISSING" TAKE_CHECK_WARN_PIN="$W/tc/no-such.pin"
+tcfail warn-pin-file-missing "THE WARN BASELINE FILE IS MISSING" TAKE_CHECK_FLOWS="$W/g/real" TAKE_CHECK_WARN_PIN="$W/tc/no-such.pin"
 env "${TCUNSET[@]}" bash "$HERE/take_check.sh" --flows "$W/tc/disabled-send" > "$RAW/take-check-disabled-send.txt" 2>&1; x=$?
 [ "$x" = 1 ] && grep -q -F "is an external-call node and is disabled" "$RAW/take-check-disabled-send.txt" || TCMISS="$TCMISS [take_check disabled-send: want exit 1 and the disabled external-call FAIL, got exit $x]"
 # Round 10 (review f8-r10): the take-level shell test (B1 pin writing, M1 overrides, M3 flow that is not a file, M4 pin hash, count change without an orphan) lives in test_take_check.sh; it runs on a temporary copy
@@ -224,10 +224,10 @@ tcfail form-run-saving-off "A FLOW THAT THE TAKE USES HAS RUN SAVING OFF" TAKE_C
 grep -q -F "WARN mf-form.json this flow's run-saving settings" "$RAW/take-check-form-run-saving-off.txt" || TCMISS="$TCMISS [take_check form-run-saving-off: the file-specific WARN line for mf-form.json is missing]"
 tcfail sub-run-saving-off "A FLOW THAT THE TAKE USES HAS RUN SAVING OFF" TAKE_CHECK_FLOWS="$W/tc/sub-off" TAKE_CHECK_FORM_EXPECT=15:14
 grep -q -F "WARN mf-sub-crm-mail.json this flow's run-saving settings" "$RAW/take-check-sub-run-saving-off.txt" || TCMISS="$TCMISS [take_check sub-run-saving-off: the file-specific WARN line for mf-sub-crm-mail.json is missing]"
-tcfail recovery-accept-idle "excused nothing" TAKE_CHECK_FLOWS="$W/tc/rec-saves" TAKE_CHECK_FORM_EXPECT=15:14
+tcfail recovery-accept-idle "THE RECOVERY FLOW IS NOT PRINTED AS ACCEPTED" TAKE_CHECK_FLOWS="$W/tc/rec-saves" TAKE_CHECK_FORM_EXPECT=15:14
 grep -q -F "WARN accept-no-save --accept-no-save mf-recovery.json excused nothing" "$RAW/take-check-recovery-accept-idle.txt" || TCMISS="$TCMISS [take_check recovery-accept-idle: the file-specific WARN line is missing]"
-tcfail no-table-file "THE TABLE FILE IS MISSING" TAKE_CHECK_DDL="$W/tc/does-not-exist.sql"
-tcfail old-table "A COLUMN OR TABLE IS MISSING" TAKE_CHECK_DDL="$D/n8n-flows/mf_leads.sql"
+tcfail no-table-file "THE TABLE FILE IS MISSING" TAKE_CHECK_FLOWS="$W/g/real" TAKE_CHECK_DDL="$W/tc/does-not-exist.sql"
+tcfail old-table "A COLUMN OR TABLE IS MISSING" TAKE_CHECK_FLOWS="$W/g/real" TAKE_CHECK_DDL="$D/n8n-flows/mf_leads.sql"
 tcfail zero-queries "0 QUERY STRINGS WERE READ" TAKE_CHECK_FLOWS="$W/tc/noquery"
 # Round 7: a failing take script must give a clean report, not a crash. A second run of this script is made on a copy whose form flow has run saving off:
 # its take check exits 4, so the nested run must end with exit status 1, show "take_check.sh exit=4" and a named missing line, and must not crash ("unbound variable").

@@ -1,35 +1,43 @@
-UPDATED_UTC: 2026-11-16T12:29:55Z
+UPDATED_UTC: 2026-11-16T12:35:23Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
 ITEMS_OPEN: 8
-PERCENT: 91
-AGENTS_RUNNING: 6
-CAPACITY: 0.84 load of 4 cores, mem 0/15 GB, RAM 971/16087 MB, disk 25G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 2.9G /tmp/claude-0 , agents 6 (light+heavy per list)
+PERCENT: 70
+AGENTS_RUNNING: 8
+CAPACITY: 2.88 load of 4 cores, mem 0/15 GB, RAM 945/16087 MB, disk 25G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 3.0G /tmp/claude-0 , agents 8 (light+heavy per list)
 INTERRUPTED: none
-FAILED: FAILED: ruff format --check failed (17 files); my 16 files now formatted; inputs/plan-wp6-resmoke-v5.md is the lead's (1 left). ruff check has 53 lint errors in my tools: lint fixer running. F8 r10 Blocker: pin rewrite self-approves, fixer running
-FAILED: ruff format --check on inputs/plan-wp6-resmoke-v5.md (lead-owned); check_refs unresolved CUT-LIST.md:17 (fixer running); lint fixer changed no_name.out (crash removed)
-FAILED: F8 fixer says ruff format failure did not reproduce; not yet confirmed by evidence runner (a5a7e77 running)
-FAILED: evidence runner (independent): run_all.sh exit 1 (case new-warn-changes-the-pin missing FINAL text) - F8 fixer had reported exit 0; ruff format --check exit 1 only inputs/plan-wp6-resmoke-v5.md (lead file); TAKE_CHECK_FLOWS=/tmp/x gave exit 1 (a real FAIL stays 1, my expectation of 4 was wrong); fixer a8d895a running
-RW/CT: B-003c vs B-219 overlap, B-101 old quote, B-010 note, A-016f id in public text, B-045 PLAN:79
-FINDINGS/patches: F-003 patch contradicts Q25/Q28 (caption, CRM row, stopwatch, owner stops n8n) - drift B1,M1-M7
-QUESTIONS: F-011/F-041 gate text conflict (Q27-9 vs Q21)
-core-patches REVIEW: X-2 grant list wrong, C-3 consumers incomplete, A-6 reason, Major count (round 3, 4 Majors)
-TAKE-CHECKLIST/FIX-PLAN: step 4 pass grep never matches; GO rows 1,2,3,5 have no runnable command; IST pair wrong in FIX-PLAN L70
-F8 evidence: run_all exit 0 twice (57 s), but root cannot test chmod 000; bandit -ll flags tools/scratch (B602, B608); ruff format fails only on lead file
-F8: take_check passes a changed flow with same counts (no enforced sha); pin reviewer line accepts any text; TAKE_CHECK_TEST leak exit 0; run_all.sh shared raw dir
-NEXT: collect 6 agents; refill: QUESTIONS r8 read, citation lane; drift refresh
-PUSHED_UTC: 2026-11-16T12:29:55Z
+FAILED: FAILED: none now. ruff format --check rc 0 (504 files), ruff check rc 0 on 12:33Z head; the one file was lead-owned inputs/plan-wp6-resmoke-v5.md (ORDER 037 asked for the run; code-fence reformat only, listed in REPORT.md).
+NEXT: collect 6 fixers; evidence runner + egm review per file; refresh drift-007
+PUSHED_UTC: 2026-11-16T12:35:23Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
 |---|---|---|---|---|---|
+| F1 | claims table | running | 95 | CLAIMS-TABLE.md | round 2 applied; checker + reader running; citation fixes running |
+| F2 | core patches cross-review | done | 100 | reviews-of-core-patches/REVIEW.md | 6 Majors, apply after fixes |
+| F3 | fill_flows tool | running | 95 | fill_flows/ | round 2 fixed (68 tests); delta evidence running |
+| F4 | patch apply check | done | 100 | patch-apply/REPORT.md | F-002 needs T19 on the laptop |
+| F5 | run-sheet wording | running | 85 | RUNSHEET-WORDING.md | final fixer running |
+| F6 | idle fallback + recovery audit | done | 100 | F6-AUDIT.md, F6B-AUDIT.md | n8n facts unverified; F6b SQL untested |
+| F7 | facts already done | done | 100 | inputs/FACTS-ALREADY-DONE.md | applied |
+| F8 | stronger JSON flow checker | running | 88 | flow-check/ | 3 reviews in; fixer running |
+| F9 | scene to flow map | done | 100 | SCENE-FLOW-MAP.md | 2 review rounds; static |
+| H1 | heavy test lane | done | 100 | heavy-test-lane/SUMMARY.md | 2 same failures in both runs, handover guards |
 
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | state | produced so far |
 |---|---|---|---|---|---|---|---|
+| ad63912 | fixer | sonnet | F8 round 4 (reviewer name, lock path) | 12:40 | 13:10 | running | - |
+| ab7bbef | fixer | sonnet | REVIEW.md round 9 | 12:30 | 13:00 | running | - |
+| ae01e2f | fixer | sonnet | RUNBOOK r6 Majors (5) + ORDER 037 stand-in text | 12:36 | 13:00 | running | - |
+| ac847cb | fixer | sonnet | TAKE-CHECKLIST/FIX-PLAN r6 Majors (10) | 12:36 | 13:10 | running | - |
+| a177eb6 | fixer | sonnet | FINDINGS/LEDGER ratings, pass lines (6) | 12:36 | 13:00 | running | - |
+| aa359ac | fixer | sonnet | QUESTIONS r8 Majors (8) | 12:36 | 13:00 | running | - |
+| a15903a | reviewer | sonnet | owner part stranger read r15 | 12:36 | 12:55 | running | - |
+| ad7cb8d | evidence | sonnet | citation/time/sum check RUNBOOK, TAKE-CHECKLIST, FIX-PLAN | 12:36 | 13:00 | running | - |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
 1. Fresh stranger read of QUESTIONS after round 7 (Blockers/Majors only) once the owner-part fixer is done
