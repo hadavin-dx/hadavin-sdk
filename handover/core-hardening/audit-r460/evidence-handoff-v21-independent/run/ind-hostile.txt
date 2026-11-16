@@ -1,0 +1,199 @@
+SERVER PostgreSQL 16.15 (Ubuntu 16.15-0ubuntu0.24.04.1) on x86_64-p
+TEMPLATE tplb [('spend_decrease_log.sql', '0006_dec')] -> APPLIED
+TEMPLATE tpla [] -> APPLIED
+TEMPLATE tplc [('spend_nonneg.sql', '0006_a')] -> APPLIED
+DB-3 SPELLINGS: 78
+C00 | spend_guarded_writes.sql | guard=CLEAN | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=23514 neg=23514] | CONTROL: the unmodified DB-3 file
+H01 | spend_guarded_writes.sql | guard=1 problems [ALTER TABLE ... ADD whose text is not the pinned text of this file (th] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=ACC neg=23514] | ceiling 1e12 -> 1e30 on spend.usd
+H02 | spend_guarded_writes.sql | guard=1 problems [ALTER TABLE ... ADD whose text is not the pinned text of this file (th] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=23514 neg=23514] | ceiling -> 1e20 on spend.open_usd
+H03 | spend_guarded_writes.sql | guard=1 problems [ALTER TABLE ... ADD whose text is not the pinned text of this file (th] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=ACC neg=23514] | ceiling written as 1e12*1e9 (arithmetic)
+H04 | spend_guarded_writes.sql | guard=1 problems [ALTER TABLE ... ADD whose text is not the pinned text of this file (th] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=ACC neg=23514] | ceiling replaced by 'Infinity'::numeric
+H05 | spend_guarded_writes.sql | guard=1 problems [ALTER TABLE ... ADD whose text is not the pinned text of this file (th] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=23514 neg=ACC] | usd >= 0 -> usd >= -1e30 (negative totals allowed)
+H06 | spend_guarded_writes.sql | guard=1 problems [ALTER TABLE ... ADD whose text is not the pinned text of this file (th] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=23514 neg=23514] | month table ceiling -> 1e30
+H07 | spend_guarded_writes.sql | guard=1 problems [ALTER TABLE ... ADD whose text is not the pinned text of this file (th] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=23514 neg=23514] | CHECK ... OR open_usd > 0 appended (bypass by a second column)
+H08 | spend_guarded_writes.sql | guard=1 problems [ALTER TABLE ... ADD whose text is not the pinned text of this file (th] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=ACC neg=ACC] | CHECK (true)
+H09 | spend_guarded_writes.sql | guard=1 problems [ALTER TABLE ... ADD whose text is not the pinned text of this file (th] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=ACC neg=23514] | CHECK (usd IS NULL OR usd >= 0) and no ceiling
+H10 | spend_guarded_writes.sql | guard=1 problems [ALTER TABLE ... ADD whose text is not the pinned text of this file (th] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=ACC neg=23514] | ceiling comparison flipped: usd < 1e12 -> usd > -1e12 
+H11 | spend_guarded_writes.sql | guard=1 problems [ALTER TABLE ... ADD whose text is not the pinned text of this file (th] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=ACC nl=23514 1e20=23514 neg=23514] | agent regex allows a space: [A-Za-z0-9._:@/+ -]
+H12 | spend_guarded_writes.sql | guard=1 problems [ALTER TABLE ... ADD whose text is not the pinned text of this file (th] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=ACC 1e20=23514 neg=23514] | agent regex allows newline via \n in the class
+H13 | spend_guarded_writes.sql | guard=1 problems [ALTER TABLE ... ADD whose text is not the pinned text of this file (th] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=ACC nl=ACC 1e20=23514 neg=23514] | agent regex start anchor removed (unanchored)
+H14 | spend_guarded_writes.sql | guard=1 problems [ALTER TABLE ... ADD whose text is not the pinned text of this file (th] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=ACC nl=ACC 1e20=23514 neg=23514] | agent regex end anchor removed
+H15 | spend_guarded_writes.sql | guard=1 problems [ALTER TABLE ... ADD whose text is not the pinned text of this file (th] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=23514 neg=23514] | agent operator ~ -> ~* (case-insensitive: harmless) 
+H16 | spend_guarded_writes.sql | guard=1 problems [ALTER TABLE ... ADD whose text is not the pinned text of this file (th] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=23514] | owner[space=ACC nl=ACC 1e20=23514 neg=23514] | agent operator ~ -> !~ (inverted)
+H17 | spend_guarded_writes.sql | guard=1 problems [ALTER TABLE ... ADD whose text is not the pinned text of this file (th] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=23514 neg=23514] | agent rule NOT VALID
+H18 | spend_guarded_writes.sql | guard=1 problems [ALTER TABLE ... ADD whose text is not the pinned text of this file (th] | server=APPLIED | fn=4 rt[space=2201B lead=2201B nl=2201B 1e20=2201B day1999=2201B ok=2201B] | owner[space=2201B nl=2201B 1e20=2201B neg=2201B] | agent rule: length {0,199} -> {0,99999}
+H19 | spend_guarded_writes.sql | guard=1 problems [ALTER TABLE ... ADD whose text is not the pinned text of this file (th] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=23514 neg=23514] | agent rule E-string spelling (same meaning)
+H20 | spend_guarded_writes.sql | guard=1 problems [ALTER TABLE ... ADD whose text is not the pinned text of this file (th] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=23514 neg=23514] | agent rule dollar-quoted regex (same meaning)
+H21 | spend_guarded_writes.sql | guard=1 problems [ALTER TABLE ... ADD whose text is not the pinned text of this file (th] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=ACC nl=ACC 1e20=23514 neg=23514] | agent rule OR whitespace alternative
+H22 | spend_guarded_writes.sql | guard=1 problems [ALTER TABLE ... ADD whose text is not the pinned text of this file (th] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=23514 neg=23514] | agent rule on spend_month only weakened (space allowed)
+H23 | spend_guarded_writes.sql | guard=CLEAN | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=ACC nl=ACC 1e20=23514 neg=23514] | agent rule dropped from spend (line deleted)
+H24 | spend_guarded_writes.sql | guard=1 problems [ALTER TABLE ... ADD whose text is not the pinned text of this file (th] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=ACC nl=ACC 1e20=23514 neg=23514] | agent rule replaced by CHECK (agent_id <> '')
+H25 | spend_guarded_writes.sql | guard=1 problems [ALTER TABLE ... ADD whose text is not the pinned text of this file (th] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=ACC nl=ACC 1e20=23514 neg=23514] | agent rule: char_length(agent_id) BETWEEN 1 AND 200 only
+H26 | spend_guarded_writes.sql | guard=1 problems [ALTER TABLE ... ADD whose text is not the pinned text of this file (th] | server=REFUSED 0A000 | - | - | agent rule: IN (SELECT ...) is refused by server; test the guard text only
+H27 | spend_guarded_writes.sql | guard=1 problems [ALTER TABLE ... ADD whose text is not the pinned text of this file (th] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=23514 neg=23514] | day window upper bound -> 9999-01-01
+H28 | spend_guarded_writes.sql | guard=1 problems [ALTER TABLE ... ADD whose text is not the pinned text of this file (th] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=23514 neg=23514] | day window lower bound -> 0001-01-01 (year 1)
+H29 | spend_guarded_writes.sql | guard=CLEAN | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=23514 neg=23514] | month window removed
+H30 | spend_guarded_writes.sql | guard=1 problems [ALTER TABLE ... ADD whose text is not the pinned text of this file (th] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=23514 neg=23514] | lowercase keywords: alter table ... add constraint ... check
+H31 | spend_guarded_writes.sql | guard=1 problems [ALTER TABLE ... ADD whose text is not the pinned text of this file (th] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=23514 neg=23514] | ALTER TABLE ONLY spend ADD ... (agent rule)
+H32 | spend_guarded_writes.sql | guard=1 problems [ALTER TABLE ... ADD whose text is not the pinned text of this file (th] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=23514 neg=23514] | ALTER TABLE IF EXISTS spend ADD ... (agent rule)
+H33 | spend_guarded_writes.sql | guard=1 problems [ALTER TABLE with a schema-qualified name: 'ALTER TABLE public . spend ] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=23514 neg=23514] | schema-qualified public.spend (agent rule)
+H34 | spend_guarded_writes.sql | guard=1 problems [ALTER TABLE ... ADD whose text is not the pinned text of this file (th] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=23514 neg=23514] | constraint renamed (agent rule): spend_agent_len -> spend_agent_len2
+H35 | spend_guarded_writes.sql | guard=1 problems [ALTER TABLE ... ADD whose text is not the pinned text of this file (th] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=23514] | owner[space=23514 nl=23514 1e20=23514 neg=23514] | two ADD CONSTRAINT actions in ONE statement (comma)
+H36 | spend_guarded_writes.sql | guard=CLEAN | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=23514 neg=23514] | comment inside the statement (-- comment line)
+H37 | spend_guarded_writes.sql | guard=CLEAN | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=23514 neg=23514] | block comment inside the CHECK expression
+H38 | spend_guarded_writes.sql | guard=CLEAN | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=23514 neg=23514] | tab and newline whitespace between tokens (same meaning)
+H39 | spend_guarded_writes.sql | guard=1 problems [ALTER TABLE ... ADD whose text is not the pinned text of this file (th] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=23514 neg=23514] | NO INHERIT added (same meaning on a plain table)
+H40 | spend_guarded_writes.sql | guard=1 problems [ALTER TABLE ... ADD whose text is not the pinned text of this file (th] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=23514 neg=23514] | NOT   VALID with extra spaces and lowercase
+H41 | spend_guarded_writes.sql | guard=1 problems [ALTER TABLE ... ADD whose text is not the pinned text of this file (th] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=23514 neg=23514] | Cyrillic a in the constraint name (lookalike)
+H42 | spend_guarded_writes.sql | guard=CLEAN | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=23514 neg=23514] | fullwidth parenthesis lookalike inside a comment-only statement appended
+H43 | spend_guarded_writes.sql | guard=1 problems [ALTER TABLE: every action must start with ADD (DISABLE TRIGGER, DROP C] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=ACC nl=ACC 1e20=23514 neg=23514] | DROP CONSTRAINT spend_agent_len appended
+H44 | spend_guarded_writes.sql | guard=1 problems [ALTER TABLE: every action must start with ADD (DISABLE TRIGGER, DROP C] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=ACC neg=ACC] | DROP CONSTRAINT IF EXISTS spend_guarded_ok appended
+H45 | spend_guarded_writes.sql | guard=1 problems [ALTER TABLE: every action must start with ADD (DISABLE TRIGGER, DROP C] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=23514 neg=23514] | DROP CONSTRAINT spend_month_window appended (lowercase)
+H46 | spend_guarded_writes.sql | guard=1 problems [ALTER TABLE: every action must start with ADD (DISABLE TRIGGER, DROP C] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=ACC neg=23514] | DROP + ADD in one statement with a weaker CHECK (the upgrade shape)
+H47 | spend_guarded_writes.sql | guard=1 problems [ALTER TABLE: every action must start with ADD (DISABLE TRIGGER, DROP C] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=23514 neg=23514] | DISABLE TRIGGER ALL on spend
+H48 | spend_guarded_writes.sql | guard=1 problems [ALTER TABLE: every action must start with ADD (DISABLE TRIGGER, DROP C] | server=REFUSED 0A000 | - | - | ALTER COLUMN usd TYPE real (loses the numeric ceiling meaning)
+H49 | spend_guarded_writes.sql | guard=1 problems [ALTER TABLE: every action must start with ADD (DISABLE TRIGGER, DROP C] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=23514 neg=23514] | ALTER COLUMN usd DROP NOT NULL
+H50 | spend_guarded_writes.sql | guard=1 problems [ALTER TABLE ... ADD whose text is not the pinned text of this file (th] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=23514 neg=23514] | ADD COLUMN open_usd DEFAULT 1e20 (default over the ceiling)
+H51 | spend_guarded_writes.sql | guard=1 problems [ALTER TABLE ... ADD whose text is not the pinned text of this file (th] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=23514 neg=23514] | ADD COLUMN IF NOT EXISTS open_usd (same meaning)
+H52 | spend_guarded_writes.sql | guard=3 problems [ALTER TABLE: every action must start with ADD (DISABLE TRIGGER, DROP C] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=ACC nl=ACC 1e20=23514 neg=23514] | RENAME CONSTRAINT spend_agent_len TO old_len + new weak one
+H53 | spend_guarded_writes.sql | guard=1 problems [ALTER TABLE: every action must start with ADD (DISABLE TRIGGER, DROP C] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=23514 neg=23514] | DISABLE ROW LEVEL SECURITY / no-op policy
+H54 | spend_guarded_writes.sql | guard=1 problems [statement is not on the allow-list of shapes (CREATE RULE): 'CREATE RU] | server=ERROR ConfigError:migrations are inconsistent: 0007_x.sql: statement | - | - | CREATE RULE ... DO INSTEAD NOTHING on spend
+H55 | spend_guarded_writes.sql | guard=1 problems [OWNER TO is not allowed: 'ALTER TABLE spend OWNER TO rt17'] | server=REFUSED 42501 | - | - | ALTER TABLE spend OWNER TO rt17
+H56 | spend_guarded_writes.sql | guard=1 problems [GRANT is not allowed in a .sql file (grants come from configuration): ] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=23514 neg=23514] | GRANT INSERT, UPDATE ON spend TO rt17
+H57 | spend_guarded_writes.sql | guard=1 problems [GRANT is not allowed in a .sql file (grants come from configuration): ] | server=ERROR ConfigError:the runtime role holds more than the grant map: rt | - | - | GRANT ALL ON ALL TABLES IN SCHEMA public TO PUBLIC
+H58 | spend_guarded_writes.sql | guard=1 problems [GRANT is not allowed in a .sql file (grants come from configuration): ] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=23514 neg=23514] | GRANT EXECUTE ON FUNCTION kill_switch_release() TO rt17
+H59 | spend_guarded_writes.sql | guard=1 problems [OWNER TO is not allowed: 'ALTER FUNCTION spend_reserve ( text , date ,] | server=REFUSED 42501 | - | - | ALTER FUNCTION spend_reserve OWNER TO rt17
+H60 | spend_guarded_writes.sql | guard=1 problems [statement is not on the allow-list of shapes (ALTER of anything but AD] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=23514 neg=23514] | ALTER FUNCTION spend_reserve SET search_path = public
+H61 | spend_guarded_writes.sql | guard=1 problems [statement is not on the allow-list of shapes (ALTER of anything but AD] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=23514 neg=23514] | ALTER FUNCTION spend_settle SECURITY INVOKER
+H62 | spend_guarded_writes.sql | guard=1 problems [statement is not on the allow-list of shapes (ALTER of anything but AD] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=23514 neg=23514] | ALTER FUNCTION ... RESET ALL (drops pinned search_path)
+H63 | spend_guarded_writes.sql | guard=1 problems [statement is not on the allow-list of shapes (ALTER of anything but AD] | server=REFUSED 42501 | - | - | ALTER ROLE rt17 SET search_path = public (role-level setting)
+H64 | spend_guarded_writes.sql | guard=1 problems [SET is allowed only as `SET LOCAL lock_timeout|statement_timeout = <va] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=23514 neg=23514] | SET search_path = public at the top of the file
+H65 | spend_guarded_writes.sql | guard=1 problems [SET is allowed only as `SET LOCAL lock_timeout|statement_timeout = <va] | server=REFUSED 42883 | - | - | SET LOCAL search_path = pg_temp, public after lock_timeout
+H66 | spend_guarded_writes.sql | guard=1 problems [statement is not on the allow-list of shapes (bare SELECT): "SELECT pg] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=23514 neg=23514] | set_config('search_path', ..., true) via SELECT
+H67 | spend_guarded_writes.sql | guard=1 problems [statement is not on the allow-list of shapes (DO block): "DO $$ BEGIN ] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=23514 neg=23514] | ALTER DATABASE ... SET search_path via DO/EXECUTE
+H68 | spend_guarded_writes.sql | guard=1 problems [statement is not on the allow-list of shapes (DO block): "DO $$ BEGIN ] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=ACC nl=ACC 1e20=23514 neg=23514] | DO block that drops a constraint via EXECUTE
+H69 | spend_guarded_writes.sql | guard=1 problems [statement is not on the allow-list of shapes (PREPARE): 'PREPARE hv AS] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=23514 neg=23514] | PREPARE + EXECUTE of a DROP CONSTRAINT
+H70 | spend_guarded_writes.sql | guard=1 problems [statement is not on the allow-list of shapes (UPDATE at file level): '] | server=REFUSED 42501 | - | - | UPDATE pg_constraint SET convalidated = false (needs a superuser)
+H71 | spend_guarded_writes.sql | guard=1 problems [SET is allowed only as `SET LOCAL lock_timeout|statement_timeout = <va] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=23514 neg=23514] | lock_timeout 5s -> 0 (no timeout)
+H72 | spend_guarded_writes.sql | guard=1 problems [SET is allowed only as `SET LOCAL lock_timeout|statement_timeout = <va] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=23514 neg=23514] | statement_timeout 60s -> 0
+H73 | spend_guarded_writes.sql | guard=1 problems [SET is allowed only as `SET LOCAL lock_timeout|statement_timeout = <va] | server=REFUSED 42501 | - | - | SET LOCAL role rt17 mid-file (identity change; later statements run as rt17)
+H74 | spend_guarded_writes.sql | guard=1 problems [spend_reserve(text,date,numeric) differs from its pin (head or body ch] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=23514 neg=23514] | reserve: guard p_worst > 0 -> p_worst <> 0 (negative reserve)
+H75 | spend_guarded_writes.sql | guard=1 problems [spend_settle(text,date,numeric,numeric) differs from its pin (head or ] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=23514 neg=23514] | settle: drop the p_actual >= 0 guard on the first UPDATE
+H76 | spend_guarded_writes.sql | guard=2 problems [spend_reserve(text,date,numeric) differs from its pin (head or body ch] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=23514 neg=23514] | agent id lower() inside reserve (changes budget identity)
+H77 | spend_guarded_writes.sql | guard=1 problems [kill_switch_release() has no REVOKE ALL ON FUNCTION kill_switch_releas] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=23514 neg=23514] | REVOKE line for kill_switch_release removed
+H78 | spend_guarded_writes.sql | guard=6 problems [function leak_q(text) is not on the list of this file] | server=APPLIED | fn=4 rt[space=23514 lead=23514 nl=23514 1e20=23514 day1999=23514 ok=ACC] | owner[space=23514 nl=23514 1e20=23514 neg=23514] | extra SELECT-only function with a SECURITY DEFINER body (data leak shape)
+O01 | spend_nonneg.sql | guard=1 problems [ALTER TABLE ... ADD whose text is not the pinned text of this file (th] | server=APPLIED | cons=['spend_usd_ok'] | owner[neg=ACC nan=ACC inf=ACC ok=ACC] | DB-1 default: CHECK (usd >= -5)
+O02 | spend_nonneg.sql | guard=1 problems [ALTER TABLE ... ADD whose text is not the pinned text of this file (th] | server=APPLIED | cons=['spend_usd_ok'] | owner[neg=23514 nan=ACC inf=ACC ok=ACC] | DB-1 default: NOT VALID
+O03 | spend_nonneg.sql | guard=1 problems [ALTER TABLE ... ADD whose text is not the pinned text of this file (th] | server=APPLIED | cons=['spend_usd_ok'] | owner[neg=ACC nan=ACC inf=ACC ok=ACC] | DB-1 default: CHECK (usd >= 0 OR true)
+O04 | spend_nonneg.sql | guard=CLEAN | server=APPLIED | cons=['spend_usd_ok'] | owner[neg=23514 nan=ACC inf=ACC ok=ACC] | DB-1 default: month rule dropped
+O05 | spend_nonneg.sql | guard=1 problems [ALTER TABLE ... ADD whose text is not the pinned text of this file (th] | server=APPLIED | cons=['spend_usd_ok'] | owner[neg=23514 nan=ACC inf=ACC ok=ACC] | DB-1 default: lowercase + ONLY
+O06 | spend_nonneg.sql | guard=1 problems [ALTER TABLE: every action must start with ADD (DISABLE TRIGGER, DROP C] | server=APPLIED | cons=[] | owner[neg=ACC nan=ACC inf=ACC ok=ACC] | DB-1 default: DROP CONSTRAINT appended
+O07 | spend_nonneg.sql | guard=1 problems [ALTER TABLE: every action must start with ADD (DISABLE TRIGGER, DROP C] | server=APPLIED | cons=['spend_usd_ok'] | owner[neg=ACC nan=ACC inf=ACC ok=ACC] | DB-1 default: second statement ADD CONSTRAINT other name CHECK (true) plus DROP of first via comma
+O08 | spend_nonneg.sql | guard=CLEAN | server=APPLIED | cons=['spend_usd_ok'] | owner[neg=23514 nan=ACC inf=ACC ok=ACC] | DB-1 default: lock_timeout removed
+O09 | spend_nonneg_finite.sql | guard=2 problems [ALTER TABLE ... ADD whose text is not the pinned text of this file (th] | server=APPLIED | cons=['spend_usd_ok'] | owner[neg=23514 nan=23514 inf=ACC ok=ACC] | DB-1 finite: 'Infinity' -> 'NaN'::numeric bound
+O10 | spend_nonneg_finite.sql | guard=2 problems [ALTER TABLE ... ADD whose text is not the pinned text of this file (th] | server=APPLIED | cons=['spend_usd_ok'] | owner[neg=23514 nan=23514 inf=23514 ok=ACC] | DB-1 finite: bound 'Infinity' -> 1e300 (finite but huge)
+O11 | spend_nonneg_finite.sql | guard=2 problems [ALTER TABLE ... ADD whose text is not the pinned text of this file (th] | server=APPLIED | cons=['spend_usd_ok'] | owner[neg=23514 nan=23514 inf=23514 ok=ACC] | DB-1 finite: `OR usd IS NULL`
+O12 | spend_nonneg_finite.sql | guard=CLEAN | server=APPLIED | cons=['spend_usd_ok'] | owner[neg=23514 nan=23514 inf=23514 ok=ACC] | DB-1 finite: block comment hides weaker bound
+O13 | spend_nonneg_upgrade.sql | guard=1 problems [ALTER TABLE: every action must start with ADD (DISABLE TRIGGER, DROP C] | server=APPLIED | cons=[] | owner[neg=ACC nan=ACC inf=ACC ok=ACC] | DB-1 upgrade: ADD part removed (constraint only dropped)
+O14 | spend_nonneg_upgrade.sql | guard=1 problems [ALTER TABLE: every action must start with ADD (DISABLE TRIGGER, DROP C] | server=APPLIED | cons=['spend_usd_ok'] | owner[neg=23514 nan=23514 inf=23514 ok=ACC] | DB-1 upgrade: re-added as CHECK (usd >= -1)
+O15 | spend_nonneg_upgrade.sql | guard=1 problems [ALTER TABLE: every action must start with ADD (DISABLE TRIGGER, DROP C] | server=APPLIED | cons=['spend_usd_ok'] | owner[neg=23514 nan=23514 inf=23514 ok=ACC] | DB-1 upgrade: DROP CONSTRAINT IF EXISTS + ADD ... NOT VALID
+O16 | spend_nonneg_upgrade.sql | guard=CLEAN | server=APPLIED | cons=['spend_usd_ok'] | owner[neg=23514 nan=23514 inf=23514 ok=ACC] | DB-1 upgrade: month statement removed
+O17 | spend_nonneg_upgrade.sql | guard=2 problems [ALTER TABLE: every action must start with ADD (DISABLE TRIGGER, DROP C] | server=APPLIED | cons=['spend_usd_ok'] | owner[neg=23514 nan=23514 inf=23514 ok=ACC] | DB-1 upgrade: ceiling 1e12 instead of Infinity (stricter, harmless: control of a legit change)
+O18 | spend_decrease_log.sql | guard=1 problems [ALTER TABLE: every action must start with ADD (DISABLE TRIGGER, DROP C] | server=APPLIED | log_rows 0->0 | decrease=None keychange=None rt_delete_log=42501 owner_delete_log=None | DB-2: ALTER TABLE spend DISABLE TRIGGER ALL appended
+O19 | spend_decrease_log.sql | guard=1 problems [ALTER TABLE: every action must start with ADD (DISABLE TRIGGER, DROP C] | server=APPLIED | log_rows 0->1 | decrease=None keychange=42501 rt_delete_log=42501 owner_delete_log=None | DB-2: ALTER TABLE spend_decrease_log DISABLE TRIGGER spend_decrease_log_append_only appended
+O20 | spend_decrease_log.sql | guard=CLEAN | server=APPLIED | log_rows 0->1 | decrease=None keychange=42501 rt_delete_log=42501 owner_delete_log=42501 | DB-2: ADD CONSTRAINT CHECK (true) on spend_decrease_log appended
+O21 | spend_decrease_log.sql | guard=1 problems [OWNER TO is not allowed: 'ALTER TABLE spend_decrease_log OWNER TO rt17] | server=REFUSED 42501 | - | - | DB-2: ALTER TABLE spend_decrease_log OWNER TO rt17
+O22 | spend_decrease_log.sql | guard=1 problems [GRANT is not allowed in a .sql file (grants come from configuration): ] | server=APPLIED | log_rows 0->1 | decrease=None keychange=42501 rt_delete_log=42501 owner_delete_log=42501 | DB-2: GRANT DELETE ON spend_decrease_log TO rt17
+O23 | spend_decrease_log.sql | guard=1 problems [statement is not on the allow-list of shapes (DROP other than DROP TRI] | server=APPLIED | log_rows 0->0 | decrease=None keychange=42501 rt_delete_log=42501 owner_delete_log=None | DB-2: DROP TRIGGER spend_log_decrease ON spend
+O24 | spend_decrease_log.sql | guard=1 problems [statement is not on the allow-list of shapes (ALTER of anything but AD] | server=APPLIED | log_rows 0->0 | decrease=42501 keychange=42501 rt_delete_log=42501 owner_delete_log=None | DB-2: ALTER FUNCTION spend_log_decrease() SECURITY INVOKER
+O25 | spend_decrease_log.sql | guard=1 problems [statement is not on the allow-list of shapes (ALTER of anything but AD] | server=APPLIED | log_rows 0->1 | decrease=None keychange=42501 rt_delete_log=42501 owner_delete_log=42501 | DB-2: ALTER FUNCTION spend_log_decrease() SET search_path = public
+O26 | spend_decrease_log.sql | guard=CLEAN | server=APPLIED | log_rows 0->1 | decrease=None keychange=42501 rt_delete_log=42501 owner_delete_log=42501 | DB-2: ALTER TABLE spend ADD CONSTRAINT stray CHECK (usd >= -1e30) (unrelated ADD in DB-2)
+O27 | spend_decrease_log.sql | guard=CLEAN | server=APPLIED | log_rows 0->1 | decrease=None keychange=42501 rt_delete_log=42501 owner_delete_log=42501 | DB-2: lock_timeout removed
+CASES RUN: 106
+SUMMARY-LINES (id, guard clean, applied by real migrate(), weakened by probes):
+  total=106 guard_clean=14 applied=95 weakened=30 CLEAN+APPLIED+WEAKENED=1 ['H23']
+  guard clean AND applied (any): ['C00', 'H23', 'H29', 'H36', 'H37', 'H38', 'H42', 'O04', 'O08', 'O12', 'O16', 'O20', 'O26', 'O27']
+DATA CASES (unmodified DB-3 file)
+DATA setup DB-3 on tplb -> APPLIED
+DATA reserve agent -cli | sqlstate=23514 | state_changed=False
+DATA reserve agent -unattributed:foo | sqlstate=23514 | state_changed=False
+DATA reserve agent - | sqlstate=23514 | state_changed=False
+DATA reserve agent 200 chars | rows=1 [('1', '1')] | state_changed=True
+DATA reserve agent 201 chars | sqlstate=23514 | state_changed=False
+DATA reserve agent e-acute NFC | sqlstate=23514 | state_changed=False
+DATA reserve agent Cyrillic lookalike | sqlstate=23514 | state_changed=False
+DATA reserve agent trailing newline | sqlstate=23514 | state_changed=False
+DATA reserve agent leading space | sqlstate=23514 | state_changed=False
+DATA reserve agent trailing space | sqlstate=23514 | state_changed=False
+DATA reserve agent inner space | sqlstate=23514 | state_changed=False
+DATA reserve agent tab | sqlstate=23514 | state_changed=False
+DATA reserve agent zero-width space | sqlstate=23514 | state_changed=False
+DATA reserve agent fullwidth a | sqlstate=23514 | state_changed=False
+DATA reserve agent NUL-free empty string | sqlstate=23514 | state_changed=False
+DATA reserve agent NULL agent | sqlstate=23502 | state_changed=False
+DATA reserve NULL day | sqlstate=23502 | state_changed=False
+DATA reserve NULL worst | rows=0 [] | state_changed=False
+DATA reserve NaN | sqlstate=23514 | state_changed=False
+DATA reserve Infinity | sqlstate=23514 | state_changed=False
+DATA reserve -Infinity | rows=0 [] | state_changed=False
+DATA reserve negative -1 | rows=0 [] | state_changed=False
+DATA reserve zero | rows=0 [] | state_changed=False
+DATA reserve 1e12 (ceiling) | sqlstate=23514 | state_changed=False
+DATA reserve 999999999999.99 | rows=1 [('999999999999.99', '999999999999.99')] | state_changed=True
+DATA reserve 1e20 | sqlstate=23514 | state_changed=False
+DATA reserve 1e30 | sqlstate=23514 | state_changed=False
+DATA reserve day infinity | sqlstate=23514 | state_changed=False
+DATA reserve day -infinity | sqlstate=23514 | state_changed=False
+DATA reserve day 2100-01-01 | sqlstate=23514 | state_changed=False
+DATA reserve day 2020-01-01 | rows=1 [('1', '1')] | state_changed=True
+DATA reserve day 2019-12-31 | sqlstate=23514 | state_changed=False
+DATA reserve 6e11 first (agent cum) | rows=1 [('600000000000', '600000000000')] | state_changed=True
+DATA reserve 6e11 second (cumulative 1.2e12 over the ceiling) | sqlstate=23514 | state_changed=False
+DATA setup reserve sa 10 | rows=1 [('10', '10')] | state_changed=True
+DATA setup reserve sb 7 (other agent) | rows=1 [('7', '7')] | state_changed=True
+DATA settle NULL agent | rows=0 [] | state_changed=False
+DATA settle NULL day | rows=0 [] | state_changed=False
+DATA settle NULL worst | rows=0 [] | state_changed=False
+DATA settle NULL actual | rows=0 [] | state_changed=False
+DATA settle worst -1 | rows=0 [] | state_changed=False
+DATA settle actual -1 | rows=0 [] | state_changed=False
+DATA settle unknown agent | rows=0 [] | state_changed=False
+DATA settle day without a row | rows=0 [] | state_changed=False
+DATA settle worst 11 > open 10 | sqlstate=23514 | state_changed=False
+DATA settle actual NaN | sqlstate=23514 | state_changed=False
+DATA settle worst NaN | sqlstate=23514 | state_changed=False
+DATA settle worst Infinity | sqlstate=23514 | state_changed=False
+DATA settle actual 1e20 | sqlstate=23514 | state_changed=False
+DATA settle actual 1e12 | sqlstate=23514 | state_changed=False
+DATA settle settle agent sa for agent sb money (other agent's open 7, worst 7) | rows=1 [('0', '0')] | state_changed=True
+DATA settle valid settle sa 10 -> 4 | rows=1 [('4', '4')] | state_changed=True
+DATA settle repeat of the valid settle (open is 0 now) | sqlstate=23514 | state_changed=False
+DATA settle settle worst 0 actual 3 (adds spend with no reservation) | rows=1 [('7', '7')] | state_changed=True
+DATA settle settle worst 0 actual 0 (no-op) | rows=1 [('7', '7')] | state_changed=False
+DATA setup reserve sc 5 | rows=1 [('5', '5')] | state_changed=True
+DATA settle with the MONTH row missing | rows=0 [] | state_changed=False
+DATA setup reserve sd 5 | rows=1 [('5', '5')] | state_changed=True
+DATA settle with the DAY row missing | rows=0 [] | state_changed=False
+DATA runtime calls kill_switch_engage() | sqlstate=42501
+DATA runtime calls kill_switch_release() | sqlstate=42501
+DATA operator calls kill_switch_engage() | sqlstate=None
+DATA operator calls kill_switch_release() | sqlstate=None
+DATA runtime direct INSERT into spend | sqlstate=42501
+DATA runtime direct UPDATE spend | sqlstate=42501
+DATA runtime direct UPDATE kill_switch | sqlstate=42501
+DATA runtime DELETE spend | sqlstate=42501
+DATA runtime TRUNCATE spend | sqlstate=42501
+DATA pre-existing spend row '-cli' | apply=REFUSED 23514 | open_usd column present=0 | ledger rows=5
+DATA pre-existing spend_month row '-unattributed:x' | could not be inserted before DB-3: 23514
+DATA pre-existing spend row with a trailing space 'a ' | apply=REFUSED 23514 | open_usd column present=0 | ledger rows=5
+DATA pre-existing spend row usd 2e12 over the ceiling | apply=REFUSED 23514 | open_usd column present=0 | ledger rows=5
+DATA pre-existing spend row day 1999-01-01 | apply=REFUSED 23514 | open_usd column present=0 | ledger rows=5
+DATA pre-existing spend row NaN total | apply=REFUSED 23514 | open_usd column present=0 | ledger rows=5
+DATA cutover apply: APPLIED
+DATA cutover: settle the pre-existing reservation worst 5 actual 0 (open_usd is 0 after the file) | sqlstate=23514 | state_changed=False
+DATA cutover: reserve 3 more on the same agent-day | rows=1 [('8', '8')] | state_changed=True
+DATA cutover: settle worst 3 actual 0 | rows=1 [('5', '5')] | state_changed=True
+DATA cutover: settle worst 3 again (nothing open) | sqlstate=23514 | state_changed=False
+DATA cutover final rows: ([('cut', datetime.date(2026, 11, 16), Decimal('5'), Decimal('0'))], [('cut', datetime.date(2026, 11, 1), Decimal('5'), Decimal('0'))])
+DATA DONE
+rc=0

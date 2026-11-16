@@ -1,0 +1,122 @@
+== T2 SIGKILL while a mutant is planted
+  file now: return2
+/tmp/safety-only.tDT2In.sh: line 1032: 25902 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T2 file stays planted
+== T3 the next run refuses and says how to restore
+REFUSED: a mutant ("X-m1") is still planted in "src/mod.py" from an earlier run that was killed. Restore with: python3 /tmp/claude-0/-home-user/957f9d59-4d7f-59
+  exit code 2
+  PASS: T3 exit 2
+== T4 marker lost: the tree check against a fresh git archive still refuses
+REFUSED: scratch tree differs from git archive 29e1532ebb05d1a7e62ec954e765746fdc85775c + patches in 1 file(s), first: ['src/mod.py']: it may hold a planted cha
+  exit code 2
+  PASS: T4 exit 2
+== T5 --restore puts the saved original back
+test group already gone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r14/dev4/s/tmpstate/hadavin-mutation-lane-0/11502156071ee478.backup; hash matches saved original: True; NOTE 0o664 became 0o644: --restore never writes a group write bit
+  PASS: T5 file restored
+  PASS: T5 state folder empty
+== T39 the orphan cannot be stopped (no permission) during --restore: the file is still restored (review r3 minor)
+/tmp/safety-only.tDT2In.sh: line 1032: 30638 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+False could NOT stop test group 30762 (Operation not permitted): file restored anyway; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r14/dev4/s/tmpstate/hadavin-mutation-lane-0/11502156071ee478.backup; hash
+  PASS: T39 file restored although stop_group raised PermissionError, and the result is NOT ok (the orphan may still run; r8 N2) (rc 1)
+  PASS: T39 the report says the orphan was not stopped
+== T58 (review r4 nit 11) output files never follow a link; reap waits for the leader it killed
+  PASS: T58a --raw file is a link: exit 2 (got 2), the victim is untouched, nothing planted
+  PASS: T58b --out-json is a link: exit 2 (got 2), victim untouched, nothing planted
+  PASS: T58c --raw is a symbolic link to a folder: exit 2 (got 2), nothing written into it
+returncode after reap: -9 still unreaped child: False
+  PASS: T58d reap kills AND waits: no zombie, returncode set
+== T80 (review r6 nit 4) output paths are checked BEFORE anything is planted: --out-json inside --root, a missing folder, a file with two names, --raw inside --root
+REFUSED: output path /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r14/dev4/s/toy/root/out.json lies inside --root /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c
+  PASS: T80a --out-json inside --root: refused, exit 2 (got 2), no mutant run (no X-m1.txt), file unchanged, no out file
+REFUSED: the folder of output path /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r14/dev4/s/no-such-folder/out.json does not exist: refused (nothing is created for you)
+  PASS: T80b --out-json in a folder that does not exist: refused before planting, exit 2 (got 2), no X-m1.txt (r6: ran everything, failed at the end)
+REFUSED: output path /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r14/dev4/s/out80.json has more than one name (hard link): refused
+  PASS: T80c --out-json that has two names: refused, exit 2 (got 2), the other name still holds 'precious', no X-m1.txt
+REFUSED: output path /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r14/dev4/s/rawT/X-m1.txt has more than one name (hard link): refused
+  PASS: T80d a raw file that has two names: refused before planting, exit 2 (got 2), the other name untouched, file unchanged
+REFUSED: --raw /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r14/dev4/s/toy/root/rawinside lies inside --root /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/s
+  PASS: T80e --raw inside --root: refused, exit 2 (got 2), nothing created there, file unchanged
+== T90 (review r7 N4) an output file that is also an input of the run (run.py itself, --list, --patch) or another output is refused before anything is planted
+REFUSED: --out-json "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r14/dev4/s/./runcopy.py" holds a `.` or `..` part: write it without . or ..
+  PASS: T90a --out-json is the running script itself (another spelling of its path): exit 2 (got 2; r7: ran and truncated it), script unchanged, nothing planted
+REFUSED: --out-json /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r14/dev4/s/two.json already exists and is not a result file of this tool (a JSON list of objects with id an
+  PASS: T90b --out-json is the --list file: exit 2 (got 2; r7: the list was overwritten by the results), list unchanged
+REFUSED: --out-json /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r14/dev4/s/note90.patch already exists and is not a result file of this tool (a JSON list of objects with i
+  PASS: T90c --out-json is a --patch file: exit 2 (got 2; r7: the patch was overwritten), patch unchanged
+REFUSED: two output files have the same path (--out-json is also a raw file): refused
+  PASS: T90d --out-json is the same path as a raw file of this run: exit 2 (got 2), file unchanged
+  PASS: T90e guard: an ordinary --out-json still works: exit 0 (got 0), the file exists
+== T96 (r9: review r8 B1 and M1, class: an exit code that says nothing is planted while planted-ness is unknown; docs must match code) --restore with NO marker, --restore --sha, other TMPDIR, documented exit codes
+REFUSED: no marker in /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r14/dev4/s/tmpstate/hadavin-mutation-lane-0 or in ['/dev/shm', '/tmp', '/var/tmp']: nothing is recorded as planted, but WITHOUT a marker this CANNOT TELL whether a file is still planted (a lost marker, or 
+  PASS: T96a --restore with no marker anywhere and no --sha: exit 2 (got 2; r8: 0), text says CANNOT TELL and names both ways out (TMPDIR of the killed run, --sha), file untouched
+the tree equals the git archive given with --sha: no file is planted or changed
+  PASS: T96b --restore --sha COMMIT, no marker, tree equals git: exit 0 (got 0), text says the tree equals the git archive (r8: ignored --sha, said CANNOT TELL)
+/tmp/safety-only.tDT2In.sh: line 70:  7034 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+the tree differs from the git archive given with --sha in 1 file(s), first: ['src/mod.py']: a mutant may still be planted (no marker was found to restore it from). By hand: git show <sha>:<file> > <file> for each
+  PASS: T96b2 marker LOST while the file is planted, --restore --sha COMMIT: exit 3 (got 3; r8: 0), names src/mod.py, file still planted (nothing is guessed), a hand copy from git then gives exit 0
+  PASS: T96b3 after the hand copy from git: exit 0 (got 0)
+/tmp/safety-only.tDT2In.sh: line 1032: 11298 Killed                  ( export TMPDIR=$OT; exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T96c killed run with TMPDIR outside the searched places, file planted: plain --restore exits 2 (got 2; r8: 0 'nothing recorded'), --restore --sha exits 3 (got 3; r8: 0), the file is still planted
+  PASS: T96c3 guard: --restore with the TMPDIR of the killed run restores it: exit 0 (got 0), file back, its state folder empty
+exit 2: the docstring rows that contain 'NO marker for this root exists anywhere': ['2']
+exit 0: the docstring rows that contain 'found the whole tree equal': ['0']
+exit 3: the docstring rows that contain 'when the tree differs from git': ['3']
+exit 2: the docstring rows that contain 'names another root or another backup path': ['2']
+BAD: []
+  PASS: T96d the exit-code table of the docstring is parsed; every code in the code has a row, and four observed --restore results (no marker, --sha equal, --sha different, marker for another root) sit in the row that says so; the new options are named (exit 0; r8: fails)
+/tmp/safety-only.tDT2In.sh: line 70: 15292 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+marker NOT discarded (exit 3): 11502156071ee478.planted.json was written for another folder than the one now at /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r14/dev4/s/toy/root (renamed away, replaced, or no folder identit
+marker and backup discarded (the tree equals the git archive given with --sha: no file is planted or changed; 11502156071ee478.planted.json: test group already gone). ACCEPTED BY YOU (--accept-unchecked-folder), not checked: 11502156071ee478.planted.
+  PASS: T96e stale folder identity in the marker: --restore exits 3 for ever (got 3); --discard-marker without --sha is refused, exit 2 (got 2); with --sha and an equal tree but a marker that does not prove its folder: exit 3 (got 3; r10 M1), marker kept (1); with --accept-unchecked-folder: exit 0 (got 0), state empty
+/tmp/safety-only.tDT2In.sh: line 70: 15525 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+marker NOT discarded: the tree differs from the git archive given with --sha in 1 file(s), first: ['src/mod.py']: a mutant may still be planted (no marker was found to restore it from). By hand: git show <sha>:<file> > <file> for each
+  PASS: T96e2 --discard-marker while the file is STILL planted (tree differs from git): exit 3 (got 3; r8: 2), nothing removed, file still planted
+/tmp/safety-only.tDT2In.sh: line 1032: 15810 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/big.py --old 'X = 1' --new 'X = 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: cannot write "src/big.py" back: File too large; the mutant may still be planted; marker and backup kept
+  PASS: T96f GUARD (passes on r8 too: it pins the behaviour): the write is cut short by a 1 KiB file-size limit: exit 3 (got 3), 'RESTORE FAILED', the file holds only a part (1024 bytes), marker and backup KEPT (1); the second restore without the limit: exit 0 (got 0), file equals git, state empty
+/tmp/safety-only.tDT2In.sh: line 70: 16059 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: cannot write "src/mod.py" back: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r14/dev4/s/toy/root/src/mod.py is not a regular file with exactly one name (links: 2): not written, mode not changed; the mutant 
+  PASS: T96g the planted file got a second name after the plant: exit 3 (got 3), the text says 'mode not changed', the mode is still 600 (got 600; r8 set it to 644 first), file still planted, marker kept
+REFUSED: mutant m1 file: 'src/__pycache__/m2.py' lies in a folder the tree comparison does not look at (.pytest_cache, .venv, __pycache__): refused
+  PASS: T96h a mutant file inside __pycache__ (exit 2) or .pytest_cache (exit 2), or an --extra there (exit 2): all exit 2 (r8: planted them: not 2), nothing planted, state empty
+  PASS: T96h2 GUARD (passes on r8 too): --file . is a clean refusal, exit 2 (got 2), no INTERNAL ERROR
+REFUSED: marker is for another root ("/nowhere/else"): refused
+exit 2 does NOT mean nothing is planted: nothing was written and the file under test was not checked; `--restore --sha COMMIT [--repo R]` compares the files with git
+  PASS: T96h3 a marker that names another root (forged): exit 2 (got 2), and the text says that exit 2 does NOT mean nothing is planted and names --sha (r8: no such warning)
+  PASS: T96i --out-json or --raw inside the state folder: exit 2 (got 2, 2; r8 wrote there), no file created, nothing planted
+/tmp/safety-only.tDT2In.sh: line 70: 16622 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T96j1 SIGTERM while 'git archive' stalls inside --restore --sha: ends at once with 143 (got 143; r8: the signal was only remembered and the run hung), the file is still planted and marker and backup are kept (nothing was written)
+RESTORE FAILED: git did not finish within 2 s and was stopped (--helper-timeout); the mutant may still be planted; marker and backup kept (run --restore again when the cause is fixed)
+  PASS: T96j2 a stalled 'git archive' with --helper-timeout 2: stopped, exit 3 (got 3; r8: unknown option), text 'did not finish within 2 s', marker kept, file still planted
+folder syncs after write: 1 after removal: 2
+  PASS: T96k write_state syncs the state FOLDER once, unlink_state removes and syncs it again (exit 0; r8: no folder sync, no unlink_state)
+/tmp/safety-only.tDT2In.sh: line 70: 17335 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: the mode in the marker (0o777) has other execute bits than "src/mod.py" in the git archive given with --sha (0o664): the marker may be forged; nothing written; the mutant may still be planted; marker and backup kept (run --restore aga
+  PASS: T96l marker mode 0777 (git has no execute bit for this file) with --restore --sha: exit 3 (got 3; r8: restored and wrote 0777), 'execute bits', file still planted
+  PASS: T96l2 guard: the genuine mode with --sha restores: exit 0 (got 0), state empty
+== T97 (r10: review r9 M1 M2 m1-m11; classes: an exit 0 for a place that was not looked at; an empty value read as 'not given'; a window before the signal handling; state text echoed raw)
+/tmp/safety-only.tDT2In.sh: line 1032: 17779 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+marker NOT discarded (exit 3): 11502156071ee478.planted.json was written for another folder than the one now at /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r14/dev4/s/toy/root (renamed away, replaced, or no folder identity recorded): the folder the mutant was planted in 
+marker and backup discarded (the tree equals the git archive given with --sha: no file is planted or changed; 11502156071ee478.planted.json: test group already gone). ACCEPTED BY YOU (--accept-unchecked-folder), not checked: 11502156071ee478.planted.json was written for another folder than the one n
+  PASS: T97a M1 root renamed away, a full git copy at its path: --discard-marker exits 3 (got 3; r9: 0 and deleted marker and backup), marker kept (1), the text says the other folder was NOT compared; with --accept-unchecked-folder: exit 0 (got 0), state empty, text says ACCEPTED BY YOU; the mutant stays in the renamed-away folder
+/tmp/safety-only.tDT2In.sh: line 70: 18305 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T97b M1 unreadable marker (garbage): --discard-marker exits 3 (got 3; r9: 0), marker kept (1), with --accept-unchecked-folder exit 0 (got 0) and state empty
+/tmp/safety-only.tDT2In.sh: line 70: 18768 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T97b M1 unreadable marker (list): --discard-marker exits 3 (got 3; r9: 0), marker kept (1), with --accept-unchecked-folder exit 0 (got 0) and state empty
+/tmp/safety-only.tDT2In.sh: line 70: 19700 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+usage: run.py [-h] --root ROOT [--prefix PREFIX] [--raw RAW] [--sha SHA]
+              [--list LIST] [--id ID] [--file FILE] [--old OLD] [--new NEW]
+              [--desc DESC] [--control] [--no-control] [--out-json OUT_JSON]
+              [--timeout TIMEOUT] [--pythonpath PYTHONPATH] [--repo REPO]
+              [--real-repo REAL_REPO] [--patch PATCH] [--extra EXTRA]
+              [--skip-import-check] [--restore] [--discard-marker]
+              [--accept-unchecked-folder] [--helper-timeout HELPER_TIMEOUT]
+run.py: error: argument --sha: '' is not a commit id (4 to 64 hexadecimal digits; an empty value is refused: is a shell variable unset?)
+  PASS: T97c M2 --sha "" with a forged marker and backup: exit 2 (got 2; r9: 0, the swapped text was written), the swapped text is NOT in the file (still planted), marker kept
+  PASS: T97c2 siblings (on r9 only --out-json "" failed; the other two already refused; a bundle of three): --sha zz (got 2), --repo "" (got 2), --out-json "" (got 2) are all refused with exit 2, nothing planted
+exit 2 for an argparse error: named in row 2: True
+exit 2 for a state folder that is not mode 700: named in row 2: True
+exit 2 for a lock held by a live run: named in row 2: True
+exit 2 for a --sha that names no commit: named in row 2: True
+BAD: []
+  PASS: T97d m1 row 2 of the exit table: no 'ONLY'; an argument error, a state folder not mode 700, a lock held and a --sha that names no commit all exit 2 and are named in it (exit 0; r9: fails)

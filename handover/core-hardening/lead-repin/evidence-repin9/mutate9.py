@@ -54,7 +54,7 @@ M = [
 ("q02", "s/((${ID})[[:space:]]*[=!]==?[[:space:]]*)(${STR})/\\1<masked>/Ig\n", "\n"),
 ("q03", "s/((${ID})\\.(equals|equalsignorecase|startswith|endswith|compare)", "s/((${ID})\\.(zzequals)"),
 ("q04", "[[:space:]]*:[[:space:]]*[\"'](${IDQ})[\"']/${RS}&/Ig", "[[:space:]]*:[[:space:]]*[\"'](${IDQ})[\"']/&/Ig"),
-("q05", "s/${RS}//g\n", "\n"),
+("q05", "s/${RS}//g\n", "\n", 2),
 ("q06", "for fn_v in $(compgen -A function 2>/dev/null); do unset -f \"$fn_v\" 2>/dev/null; done", ":"),
 ("q07", "NXT = 3   # v9", "NXT = 0   # v9"),
 ("q08", "(${IDB}|data|stringdata|binarydata)", "(${IDB})"),
@@ -65,6 +65,16 @@ M = [
 ("q13", L("s/((^|[^A-Za-z0-9_.-])(([A-Za-z0-9]+[_.-])*)(keys?|tokens?"), "\n"),
 ("q14", L("s/((^|[^A-Za-z0-9_.-])(([A-Za-z0-9]+[_.-])*)(secrets?|passw"), "\n"),
 
+("r01", "; exec 1>&8 2>&9 8>&- 9>&-; fi", "; fi"),
+("r02", "#!/bin/sh\nset +x +v 2>/dev/null          # v9: the very first", "#!/bin/sh\n: # v9: the very first"),
+("r03", "s/((${ID})[[:space:]]*[=!]==?[[:space:]]*)([^[:space:]<\"'=${DC1}${DC2}][^[:space:]]*)/\\1<masked>/Ig\n", "\n"),
+("r04", "s/(ConvertTo-SecureString(", "s/(ConvertTo-SecureStringZ("),
+("r05", "(hook|webhook|incoming)[^[:space:]/]*/", "(zzhook)[^[:space:]/]*/"),
+("r06", "/(web)?hooks?/([^[:space:]/]+/)*)", "/zzhooks?/([^[:space:]/]+/)*)"),
+("r07", "s/(${RS}(<|${STX})[A-Za-z]+", "s/(${RS}Q(<|${STX})[A-Za-z]+"),
+("r08", "if (secret_name(t)) NXT = 3", "if (secret_name(t)) NXT = 0"),
+("r09", "(<|${STX})[A-Za-z]+[[:space:]]([^>]*[[:space:]])?(key|name|var|variable|env|id)=[\"'](${IDQ})[\"']/${RS}&/Ig", "Q(<|${STX})[A-Za-z]+[[:space:]]([^>]*[[:space:]])?(key|name|var|variable|env|id)=[\"'](${IDQ})[\"']/${RS}&/Ig"),
+("m10b", "PRE=\"[\\\"']?[]]?[[:space:]]*=\"", "PRE=\"[\\\"']?[[:space:]]*=\""),
 ("n16", "EBD='\\\\\"'", "EBD=''"),
 ]
 import hashlib

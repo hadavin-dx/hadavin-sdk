@@ -794,6 +794,12 @@ try:
     cfg = au.inputs_from_config(SimpleNamespace(operator_role="op17", kill_switch_alert_minutes=60), SimpleNamespace(runtime_role="rt17", audit_reader_role="ar17", definer_owner_role=""))
     check(f"M4 the settings give the arguments: {cfg}", cfg == {"roles": {"runtime": "rt17", "operator": "op17"}, "owner": None, "audit_reader_role": "ar17", "alert_minutes": 60})
     check("M4 the arguments run the query: secdef_problems(**) on the clean database is empty", au.secdef_problems(rtm, roles=cfg["roles"], owner=cfg["owner"]) == [])
+
+    section("v22 security m5: the L26b Option A pattern run on the server (v21 ran it in Python re only)")
+    OPTA = "^(-cli|-unattributed:[A-Za-z0-9][A-Za-z0-9._:@/+-]{0,180}|[A-Za-z0-9][A-Za-z0-9._:@/+-]{0,199})$"
+    cases = [("-cli", True), ("-unattributed:a", True), ("-unattributed:" + "a" * 181, True), ("-unattributed:" + "a" * 182, False), ("a" * 200, True), ("a" * 201, False), ("-other", False), ("-cli ", False), ("", False), ("-unattributed:", False), ("-unattributed:-a", False)]
+    gotA = [(c[:20] + f"..({len(c)})", bool(rtm.execute("SELECT %s ~ %s", (c, OPTA)).fetchone()[0])) for c, _ in cases]
+    check(f"m5 Option A pattern on the server: all {len(cases)} cases as expected; the longest pseudo id that fits is -unattributed: plus 181 characters (195), so an agent name of 182 or more characters has no pseudo id and the store must refuse it before building the id", [g for _, g in gotA] == [w for _, w in cases], str(gotA))
 except Exception as e:
     import traceback; traceback.print_exc(); check("v22 section ran to its end", False, type(e).__name__ + " " + str(e)[:200])
 

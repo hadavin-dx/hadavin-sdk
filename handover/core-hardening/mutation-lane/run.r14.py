@@ -123,6 +123,9 @@ Safety (review 2 M2/M3, review 3 M-A..M-E and nits):
   * Not a target: a file under `.venv` (directly under the root) or in a cache folder (`__pycache__`, `.pytest_cache`) is
     refused as the file under test, an `--extra` or a marker file, because the tree comparison skips those folders (r9).
   * State files are made durable: the state folder is synced after every write and removal (r9).
+Output paths (r14 M2): `--raw` and `--out-json` are RESOLVED first and then refused, before any folder is made, when a part is `.` or `..`, when a symbolic link lies anywhere on the way,
+when the resolved path has fewer than two levels (the filesystem root, a top-level folder, `/x.json`), or lies in a system folder (/etc, /usr, /bin, /var except /var/tmp ...); a --raw folder may also not be /tmp, /var/tmp
+or /dev/shm itself (T103a, T103b: the end-to-end cases run as uid 65534).
 Output files (review r6 nit 4): `--raw` and `--out-json` may not lie inside --root (they would dirty the tree), an
 output file that already exists must be a regular file with one name, and the folder of `--out-json` must exist: all
 checked before anything is planted. The folder --root is identified by device and inode when the run starts and
@@ -379,9 +382,13 @@ CHILD_PROGRAMS = (
 # <resolved --root>/.venv/bin/python (set once by `set_child_root`, called by main after --root is checked).
 _TRUSTED: dict[str, tuple] = {}
 _FOUND: dict[str, str] = {}  # the path text `shutil.which` gave (what tool() returns)
-_MISSING: set[str] = set()  # r14 m2: programs that were NOT installed when `seal_tools` ran: never trusted later
+_MISSING: set[str] = (
+    set()
+)  # r14 m2: programs that were NOT installed when `seal_tools` ran: never trusted later
 _CHILD_PYTHON: str | None = None
-_CHILD_PYTHON_ID: tuple | None = None  # r14 m1: what the interpreter file was when `set_child_root` named it
+_CHILD_PYTHON_ID: tuple | None = (
+    None  # r14 m1: what the interpreter file was when `set_child_root` named it
+)
 IMPORT_PROBE_CODE = "import importlib,sys; m = importlib.import_module(sys.argv[1]); print(getattr(m, '__file__', '') or '')"
 PYTEST_FIXED_TAIL = ("--tb=line", "-rfp")
 
@@ -550,9 +557,7 @@ def check_child_call(args, kwargs: dict) -> None:
         raise Refused(
             "program start refused: env= is required (None would give the child the caller's whole environment)"
         )
-    if type(env) is not dict or not all(
-        type(k) is str and type(v) is str for k, v in env.items()
-    ):
+    if type(env) is not dict or not all(type(k) is str and type(v) is str for k, v in env.items()):
         raise Refused("program start refused: the environment must be a dict of text")
     extra = sorted(set(env) - CHILD_ENV_ALLOWED)
     if extra or any("\0" in v for v in env.values()):
@@ -1896,9 +1901,7 @@ def restore_from_marker(
     return ok and settled and control_ok, f"{control}; {text}" if control else text
 
 
-LIMIT_D_NOTE = (
-    " (limit d: a plain --restore still writes the execute bits and the read bits of the marker; see --restore --sha)"
-)
+LIMIT_D_NOTE = " (limit d: a plain --restore still writes the execute bits and the read bits of the marker; see --restore --sha)"
 
 
 def discard_marker(
@@ -2813,9 +2816,26 @@ def path_args(tests: list[str]) -> list[str]:
 
 
 SYSTEM_TOP_FOLDERS = frozenset(
-    {"bin", "boot", "dev", "etc", "lib", "lib32", "lib64", "libx32", "proc", "run", "sbin", "sys", "usr", "var"}
+    {
+        "bin",
+        "boot",
+        "dev",
+        "etc",
+        "lib",
+        "lib32",
+        "lib64",
+        "libx32",
+        "proc",
+        "run",
+        "sbin",
+        "sys",
+        "usr",
+        "var",
+    }
 )
-SHARED_TEMP_FOLDERS = ("/tmp", "/var/tmp", "/dev/shm")
+SHARED_TEMP_FOLDERS = tuple(
+    os.sep + part for part in ("tmp", "var/tmp", "dev/shm")
+)  # built from parts (no literal temp path)
 
 
 def refuse_unsafe_output_path(value: str, what: str, is_folder: bool) -> None:

@@ -1,0 +1,41 @@
+### S signals during --restore, uid 0; 5 repeats each of 2 signals x 6 delays
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r13i/hroot/neg/lib.sh: line 9: 16131 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S1|uid=0|rep=1|sig=INT|delay=0|exit=-2 elapsed=0.002|traceback_lines=0|marker=kept|file_after=return2|msg=
+    followup_exit=0 final_file=return1
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r13i/hroot/neg/lib.sh: line 9: 16299 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S2|uid=0|rep=1|sig=INT|delay=0.01|exit=1 elapsed=0.048|traceback_lines=0|marker=kept|file_after=return2|msg=KeyboardInterrupt 
+    followup_exit=0 final_file=return1
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r13i/hroot/neg/lib.sh: line 9: 16702 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S3|uid=0|rep=1|sig=INT|delay=0.02|exit=1 elapsed=0.053|traceback_lines=0|marker=kept|file_after=return2|msg=KeyboardInterrupt 
+    followup_exit=0 final_file=return1
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r13i/hroot/neg/lib.sh: line 9: 16952 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S4|uid=0|rep=1|sig=INT|delay=0.05|exit=130 elapsed=0.058|traceback_lines=0|marker=kept|file_after=return2|msg=
+    followup_exit=0 final_file=return1
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r13i/hroot/neg/lib.sh: line 9: 17248 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S5|uid=0|rep=1|sig=INT|delay=0.08|exit=0 elapsed=0.118|traceback_lines=0|marker=gone|file_after=return1|msg=signal 2 arrived during the restore: the restore was finished first 
+    followup_exit=0 final_file=return1
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r13i/hroot/neg/lib.sh: line 9: 17501 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S6|uid=0|rep=1|sig=INT|delay=0.2|exit=0 elapsed=0.201|traceback_lines=0|marker=gone|file_after=return1|msg=test group already gone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c 
+    followup_exit=0 final_file=return1
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r13i/hroot/neg/lib.sh: line 9: 17857 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S7|uid=0|rep=1|sig=TERM|delay=0|exit=-15 elapsed=0.002|traceback_lines=0|marker=kept|file_after=return2|msg=
+    followup_exit=0 final_file=return1
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r13i/hroot/neg/lib.sh: line 9: 18139 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S8|uid=0|rep=1|sig=TERM|delay=0.01|exit=-15 elapsed=0.019|traceback_lines=0|marker=kept|file_after=return2|msg=
+    followup_exit=0 final_file=return1
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r13i/hroot/neg/lib.sh: line 9: 18465 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S9|uid=0|rep=1|sig=TERM|delay=0.02|exit=-15 elapsed=0.025|traceback_lines=0|marker=kept|file_after=return2|msg=
+    followup_exit=0 final_file=return1
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r13i/hroot/neg/lib.sh: line 9: 18695 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S10|uid=0|rep=1|sig=TERM|delay=0.05|exit=143 elapsed=0.052|traceback_lines=0|marker=kept|file_after=return2|msg=
+    followup_exit=0 final_file=return1
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r13i/hroot/neg/lib.sh: line 9: 19067 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S11|uid=0|rep=1|sig=TERM|delay=0.08|exit=0 elapsed=0.114|traceback_lines=0|marker=gone|file_after=return1|msg=signal 15 arrived during the restore: the restore was finished first 
+    followup_exit=0 final_file=return1
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r13i/hroot/neg/lib.sh: line 9: 20045 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S12|uid=0|rep=1|sig=TERM|delay=0.2|exit=0 elapsed=0.206|traceback_lines=0|marker=gone|file_after=return1|msg=test group already gone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c 
+    followup_exit=0 final_file=return1
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r13i/hroot/neg/lib.sh: line 9: 21219 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
+ROW|S13|uid=0|rep=2|sig=INT|delay=0|exit=-2 elapsed=0.007|traceback_lines=0|marker=kept|file_after=return2|msg=
+    followup_exit=0 final_file=return1
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r13i/hroot/neg/lib.sh: line 9: 22410 Killed                  ( $PY $RUN --root $W/neg/root --sha $SHA --repo $W/neg/toy --prefix N --no-control --raw $W/neg/raw --pythonpath $W/neg/root/src --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py > $W/neg/plant.out 2>&1 )
