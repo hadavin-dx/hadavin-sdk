@@ -74,8 +74,6 @@ check("B1 fix: v13 shape, delta -1 on a row of 2 works", add_spend_v13(store, "a
 check("B1 fix: v13 shape, give back to exactly 0 works (positive control)", add_spend_v13(store, "a", DAY, Decimal("-1")) == (Decimal(0), Decimal(0)))
 st = sqlstate(lambda: add_spend_v13(store, "a", DAY, Decimal("-0.01")))
 check("B1 fix: v13 shape, a delta that would go below zero is refused by the database (23514)", st == "CheckViolation/23514", st)
-st = sqlstate(lambda: add_spend_v13(store, "nobody", DAY, Decimal("-1")))
-check("B1 fix: negative delta for a missing row is an error in code (LookupError, not a Postgres error)", st is None or True)
 try: add_spend_v13(store, "nobody", DAY, Decimal("-1")); check("missing-row error raised", False)
 except LookupError: check("missing-row error raised (LookupError)", True)
 check("positive and zero deltas still upsert", add_spend_v13(store, "a", DAY, Decimal("2")) == (Decimal(2), Decimal(2)) and add_spend_v13(store, "z", DAY, Decimal("0")) == (Decimal(0), Decimal(0)))
