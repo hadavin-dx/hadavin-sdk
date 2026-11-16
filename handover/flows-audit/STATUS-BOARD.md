@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T16:51:11Z
+UPDATED_UTC: 2026-11-16T16:51:25Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -7,11 +7,11 @@ ITEMS_TOTAL: 10
 ITEMS_OPEN: 30
 PERCENT: 70
 AGENTS_RUNNING: 7
-CAPACITY: 5.67 load of 4 cores, mem 1/15 GB, RAM 1445/16087 MB, disk 11G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 13G /tmp/claude-0 , agents 7 (light+heavy per list)
+CAPACITY: 5.96 load of 4 cores, mem 1/15 GB, RAM 1453/16087 MB, disk 11G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 13G /tmp/claude-0 , agents 7 (light+heavy per list)
 INTERRUPTED: none
 FAILED: none (F8 run_all.sh intermittent exit 1 is an evidence finding: 3 of 6 plain runs failed, cause unknown, fixer acf8ab59 on it; ruff format --check passes 741 files)
-NEXT: 7 running (8th slot empty: load about 5 of 4 cores, disk 12G free 70%); verified plan-files r26, RW/CT r21, REVIEW r33, FINDINGS r11; percent stays 70 (no independent close since 13:59Z)
-PUSHED_UTC: 2026-11-16T16:51:11Z
+NEXT: 7 running (8th slot empty: load 6.0 of 4 cores); disk 11G free (72%), memory 9%; BOOT_ID e78580c0 unchanged; percent stays 70 (no independent close since 13:59Z)
+PUSHED_UTC: 2026-11-16T16:51:25Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
