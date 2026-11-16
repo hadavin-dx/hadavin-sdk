@@ -26,3 +26,14 @@ test group already gone; restored src/mod.py from /tmp/claude-0/-home-user/957f9
 works_in wrong: []
   PASS: T51c works_in matches whole path parts: /root2/x is not inside /root
 == T88 (review r7 N7) as a NORMAL USER: real permission bits (as root a mode bit never blocks a write, so the earlier suite never ran this path)
+== T51 (review r4 evidence) --restore identity checks: start time, dead leader, works_in
+  FAIL: T51a (control) identical command line AND identical start time: stopped (rc 0)
+  FAIL: T51b outside-root: member left alone, file restored, exit 3 because the group is unsettled (r8 N2) (rc 0)
+  FAIL: T51b early-start: member left alone, file restored, exit 3 because the group is unsettled (r8 N2) (rc 0)
+  FAIL: T51b control (member works in root, started after the recorded start): stopped (rc 0)
+== T88 (review r7 N7) as a NORMAL USER: real permission bits (as root a mode bit never blocks a write, so the earlier suite never ran this path)
+RESTORE FAILED: cannot write src/mod.py back: the file is read-only and differs from the original; the mutant may still be planted; marker and backup kept
+FAILED CHECKS: 4 (of 16 checks run; skipped: none)
+FAILED CHECKS: 4 (of 16 checks run; skipped: none)
+  FAIL: T88 the blocks T52 T53 T76 T85 T87 T88 T92 T93 T94 run again as the unprivileged user nobody (uid 65534): 0 failed checks (child exit 0)
+FAILED CHECKS: 5 (of 10 checks run; skipped: none)

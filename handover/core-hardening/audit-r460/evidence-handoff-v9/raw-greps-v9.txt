@@ -26,7 +26,7 @@ $ grep -rn fileguard src tests
 matches: 0
 
 
-$ grep -rniE NOT-NEEDED|DUPLICATE handover/core-hardening/ORDERS.md handover/core-hardening/MASTER-MAP.md
+
 matches: 0
 
 
@@ -46,3 +46,4 @@ src/hadavin_sdk/k1b/replay.py:0
 src/hadavin_sdk/k1b/report.py:0
 src/hadavin_sdk/k1b/audit_sink.py:0
 
+# note: the 'NOT-NEEDED|DUPLICATE' block above used a wrong path (matches 0); the corrected check is raw-needed-verdicts-v9.txt

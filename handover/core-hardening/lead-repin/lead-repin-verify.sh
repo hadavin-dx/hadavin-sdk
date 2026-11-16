@@ -1036,7 +1036,7 @@ local_flow_report() {
   lf_files=$(cd "$lf_root" && find . -path '*/_local/*' -type f -name '*.json' -print 2>/dev/null | wc -l | tr -d ' ')
   printf '_local flow json files: %s. Only the matched WORD of each delete-word hit is printed (file:line:word), never the line, because a local copy may hold real values; open the lines yourself.\n' "$lf_files"
   if [ "${lf_files:-0}" -gt 0 ]; then
-    lf_n=$( (cd "$lf_root" && find . -path '*/_local/*' -type f -name '*.json' -print 2>/dev/null | sort | while IFS= read -r lf_f; do grep -a -n -o -E -i -e "$DELETE_RE" -- "$lf_f" 2>/dev/null | sed "s#^#$lf_f:#"; done) | mask | tee "$WORK/lf.txt" | wc -l | tr -d ' ')
+    lf_n=$( (cd "$lf_root" && find . -path '*/_local/*' -type f -name '*.json' -print 2>/dev/null | sort | while IFS= read -r lf_f; do grep -a -n -o -E -i -e "$DELETE_RE" -- "$lf_f" 2>/dev/null | LFF=$lf_f awk '{ print ENVIRON["LFF"] ":" $0 }'; done) | mask | tee "$WORK/lf.txt" | wc -l | tr -d ' ')
     head -50 "$WORK/lf.txt"
     printf '  _local delete-word hits: %s (first 50 shown above)\n' "$lf_n"
     rm -f "$WORK/lf.txt"
@@ -1087,7 +1087,7 @@ grep -v -F -x -f "$WORK/four.txt" "$WORK/list-code.txt" > "$WORK/list-code-rest.
 blocks=0; search_blocks=0; with_hits=0; zero_hits=0; info_blocks=0; files_missing=0; files_unreadable=0
 bh=0; bf=0; bm=0; bu=0; bkind=search
 S_HITS=0; S_FILES=0; S_MISS=0; S_UNR=0; LAST_HITS=0
-HIDDEN_VALUES=0; HIDDEN_LINES=0; S_MISMATCH=0; S_WORDHID=0; T_MISMATCH=0; T_WORDHID=0
+HIDDEN_VALUES=0; HIDDEN_LINES=0; S_MISMATCH=0; S_WORDHID=0; T_MISMATCH=0; T_WORDHID=0; T_ZEROFILES=0
 
 begin() { # id, title, question
   [ -d "$WORK" ] || exit 9
@@ -1112,6 +1112,7 @@ search_end() {
   if [ "$S_UNR" -gt 0 ]; then printf ' (%s file(s) UNREADABLE: this count is NOT complete)' "$S_UNR"; fi
   printf '\n'
   T_MISMATCH=$((T_MISMATCH + S_MISMATCH)); T_WORDHID=$((T_WORDHID + S_WORDHID))
+  [ "$S_FILES" -eq 0 ] && T_ZEROFILES=$((T_ZEROFILES + 1))
   bh=$((bh + S_HITS)); bf=$((bf + S_FILES)); bm=$((bm + S_MISS)); bu=$((bu + S_UNR))
   files_missing=$((files_missing + S_MISS)); files_unreadable=$((files_unreadable + S_UNR))
   LAST_HITS=$S_HITS
@@ -1178,7 +1179,7 @@ lines() { # lines FILE FROM TO   (prints with line numbers; says when the range 
   if [ "$n" -lt "$a" ]; then printf '(file is shorter than line %s: that line number is stale or wrong)\n' "$a"
   else
     if [ "$n" -lt "$b" ]; then printf '(the file ends at line %s: lines %s-%s do not exist)\n' "$n" "$((n + 1))" "$b"; fi
-    sed -n "${a},${b}p" "$f" | awk -v s="$a" '{ printf "%d:%s\n", NR + s - 1, $0 }' | mask
+    sed -n "${a},${b}p" -- "$f" | awk -v s="$a" '{ printf "%d:%s\n", NR + s - 1, $0 }' | mask
   fi
 }
 list_info() { # list_info LABEL LISTFILE
@@ -1214,11 +1215,17 @@ main() {
   list_info "model program python files (tests left out)" "$WORK/list-model.txt"
   model_notice "Q27 a (model side), Q27 b (model side and qs_37 on the model side) and Q27 c (half B)"
 
+  : > "$SHAOK"
   begin R00 "Final head identity (G1, G26)" "Which commit id and which file checksums are these answers about?"
   if command -v git >/dev/null 2>&1 && g rev-parse --git-dir >/dev/null 2>&1; then
     printf 'git work tree top folder: %s (if this is a PARENT of the take folder, the commit id below is the parent repository'"'"'s)\n' "$(g rev-parse --show-toplevel 2>&1)"
-    printf 'HEAD: %s\n' "$(g rev-parse HEAD 2>&1)"
+    head_l="HEAD: $(g rev-parse HEAD 2>&1)"
+    printf '%s\n' "$head_l" >> "$SHAOK"; printf '%s\n' "$head_l"
+    # core.fsmonitor=false is read as a true/false switch only by git 2.36 and newer; an older git reads it as the name
+    # of a program to run, so git status is skipped there
+    gv=$(git --version 2>/dev/null | awk '{ split($3, a, "."); print a[1] * 1000 + a[2] }')
     if [ -n "$LEAD_REPIN_NO_STATUS" ]; then printf 'changed or untracked files (count): NOT READ (LEAD_REPIN_NO_STATUS is set)\n'
+    elif [ "${gv:-0}" -lt 2036 ]; then printf 'changed or untracked files (count): NOT READ (git version %s is older than 2.36: the switch core.fsmonitor=false could be read as a program name)\n' "$(git --version 2>&1)"
     else printf 'changed or untracked files (count): %s\n' "$(g status --porcelain 2>&1 | wc -l | tr -d ' ')"; fi
     g log -1 --format='last commit: %h %ci' 2>&1
   else
@@ -1227,7 +1234,8 @@ main() {
   for f in "$TAKE_PY" "$CRM_PY" "$DRIVE_PY" "$N8N_PY"; do
     if [ -f "$f" ]; then
       bf=$((bf + 1))
-      if command -v sha256sum >/dev/null 2>&1; then sha256sum "$f" 2>&1; else shasum -a 256 "$f" 2>&1; fi
+      if command -v sha256sum >/dev/null 2>&1; then sha_l=$(sha256sum -- "$f" 2>&1); else sha_l=$(shasum -a 256 -- "$f" 2>&1); fi
+      printf '%s\n' "$sha_l" >> "$SHAOK"; printf '%s\n' "$sha_l"
     else bm=$((bm + 1)); files_missing=$((files_missing + 1)); printf 'FILE MISSING (adjust the path): %s\n' "$f"; fi
   done
   finish_info R00
@@ -1358,6 +1366,16 @@ VALEOF
 
   printf '\n'
   if [ -z "$MODEL_DIR" ] || [ ! -d "$MODEL_DIR" ]; then printf 'CANNOT BE ANSWERED WITHOUT MODEL_DIR: Q27 a model side, Q27 b model side and qs_37 model side, Q27 c half B (so Q27 c cannot be answered at all by this run).\n'; fi
+  rc_n=0
+  printf 'RUN-CHECK (what this run itself could not do; it does not judge the answers):\n'
+  [ "$files_missing" -gt 0 ] && { rc_n=$((rc_n + 1)); printf '  STOP-SIGNAL: %s file(s) MISSING (a wrong path, not a zero count): fix the path and run again.\n' "$files_missing"; }
+  [ "$files_unreadable" -gt 0 ] && { rc_n=$((rc_n + 1)); printf '  STOP-SIGNAL: %s file(s) UNREADABLE (not searched): fix the permission or tell the lead.\n' "$files_unreadable"; }
+  [ "$T_ZEROFILES" -gt 0 ] && { rc_n=$((rc_n + 1)); printf '  STOP-SIGNAL: %s search(es) looked at ZERO FILES: a "0 matching lines" there means nothing.\n' "$T_ZEROFILES"; }
+  [ "$T_MISMATCH" -gt 0 ] && { rc_n=$((rc_n + 1)); printf '  STOP-SIGNAL: %s search(es) printed fewer lines than grep counted (PRINT MISMATCH).\n' "$T_MISMATCH"; }
+  [ "$T_WORDHID" -gt 0 ] && { rc_n=$((rc_n + 1)); printf '  STOP-SIGNAL: on %s matching line(s) the searched word itself was hidden: open those lines in the file yourself.\n' "$T_WORDHID"; }
+  if [ -z "$MODEL_DIR" ] || [ ! -d "$MODEL_DIR" ]; then printf '  LIMIT: MODEL_DIR not set: the model side of Q27 a, b and c was NOT looked at (that is not a failure of the run; it means those answers are open).\n'; fi
+  if [ "$rc_n" -eq 0 ]; then printf '  RUN-CHECK: no stop signal from the run itself. This does NOT mean the answers are good: read every block.\n'
+  else printf '  RUN-CHECK: %s stop signal(s). Do not use the zero counts of the searches named above; fix, run again, or ask the lead.\n' "$rc_n"; fi
   printf 'SUMMARY: blocks=%s search_blocks=%s with_hits=%s zero_hits=%s information_blocks=%s files_missing=%s files_unreadable=%s (counts only; nothing judged; the lead reads each block and the per-search ZERO lines)\n' \
     "$blocks" "$search_blocks" "$with_hits" "$zero_hits" "$info_blocks" "$files_missing" "$files_unreadable"
   printf 'Hidden by the masking filter in search results: %s line(s) had a value hidden, %s of them were hidden whole (next-line rule).\n' "$HIDDEN_VALUES" "$HIDDEN_LINES"
@@ -1376,6 +1394,7 @@ for fin_f in "$WORK"/* "$WORK"/.[!.]*; do
   [ -e "$fin_f" ] || continue
   case $fin_f in "$OUT"|"$MASKSED"|"$MASKLINE"|"$MASKAWK") ;; *) rm -rf "$fin_f" ;; esac
 done
+FINISHED=1   # the file-name lists are gone: from here a stop keeps only the masked output copy and the rule files
 {
   printf 'Final pass over the whole output above: %s additional value(s) hidden (0 means the search-time filter had already hidden everything the belt knows).\n' "$(( ${ca:-0} - ${cb:-0} ))"
   printf 'The work folder %s now holds only: the masked output copy and the three masking rule files (lists of file names were deleted).\n' "$WORK"
