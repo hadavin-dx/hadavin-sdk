@@ -839,3 +839,50 @@ safety-tests.sh: line 1097: 17920 Killed                  ( exec python3 "$RUN" 
   PASS: T55b setup: the control run's pytest still runs
   PASS: T55b the next run refuses and points at --restore (rc 2)
 control run: stopped orphaned test group 17931; no marker in /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/full1/tmpstate/hadavin-mutation-lane-0 or in ['/dev/shm', '/tmp', 
+  PASS: T55b --restore exit 0 (got 0), the orphaned control test group stopped, state empty, file unchanged
+== T56 (review r4 nit 9) no /proc, no waitid: a refusal at the start, on any option
+REFUSED: this tool works on Linux only (it reads /proc to identify and stop an orphaned test run and uses waitid); on this system a --restore could not stop a leftover test run: refused
+  PASS: T56 non-Linux: exit 2 (got 2) with 'Linux only'
+== T57 (review r4 nit 10) the restore command in the refusal carries --repo; --restore needs no git repository
+safety-tests.sh: line 1097: 18081 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+REFUSED: a mutant (X-m1) is still planted in src/mod.py from an earlier run that was killed. Restore with: python3 /home/user/hadavin-sdk/handover/core-hardening/mutation-lane/run.py --root /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchp
+  PASS: T57a the printed command contains --repo /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/full1/toy/repo
+test group already gone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/full1/tmpstate/hadavin-mutation-lane-0/074f0546ced99fec.backup; hash matches 
+  PASS: T57b --restore from a copy of the script in a folder that is no git repository: exit 0 (got 0), file back
+  PASS: T57c a restore on the real repository is still refused without --repo (rc 2)
+== T58 (review r4 nit 11) output files never follow a link; reap waits for the leader it killed
+  PASS: T58a --raw file is a link: exit 2 (got 2), the victim is untouched, nothing planted
+  PASS: T58b --out-json is a link: exit 2 (got 2), victim untouched, nothing planted
+  PASS: T58c --raw is a symbolic link to a folder: exit 2 (got 2), nothing written into it
+returncode after reap: -9 still unreaped child: False
+  PASS: T58d reap kills AND waits: no zombie, returncode set
+== T59 (review r4 nit 12) the restored mode does not depend on the umask
+safety-tests.sh: line 1097: 18410 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T59 mode 640 after a restore under umask 077 (got 640)
+== T60 (review r4 nit 3) a folder swapped for a link between the path check and the write is not followed
+safety-tests.sh: line 1097: 18629 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+(False, "RESTORE FAILED: cannot write src/mod.py back: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/full1/toy/root/src/mod.py: the folder 'src' is a symbolic link or not a folder: not written;
+  PASS: T60 the file behind the swapped link was not written
+== T62 (review r4 nit 4) a bind mount inside the root (one name per file, same filesystem) is refused
+REFUSED: docs is a mount point inside --root /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/full1/toy/root: it shows another tree's files inside the scratch tree: refused
+  PASS: T62 mount point docs/ refused for that reason (rc 2)
+  PASS: T62 nothing planted, bind source untouched
+refused: with space/m is a mount point inside --root /a/root: it shows another tree's fil
+root itself, .venv and a sibling prefix (/a/root2) are no refusal
+parsed: ['/a/root/with space/m', '/a/root/back\\slash']
+  PASS: T62b refuse_mounts logic: a mount inside is refused; the root, .venv and a sibling prefix are not
+== T61 (review r4 evidence) PYTEST_ADDOPTS, PYTEST_PLUGINS and other steering variables of the caller never reach the tests
+  PASS: T61 with those set in the caller's environment the tests run and see none of them (rc 0, verdict SURVIVED, '1 passed')
+== T63 (review r5 M3) a decoy folder that holds the ORIGINAL bytes: the restore must not report success on the decoy
+safety-tests.sh: line 1097: 18797 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+(False, "RESTORE FAILED: cannot write src/mod.py back: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/full1/toy/root/src/mod.py: the folder 'src' is a symbolic link or not a folder: not written;
+  PASS: T63a --restore through a swapped folder: NOT reported as restored; marker and backup kept; the planted file behind the swap is still planted (r5 cleared the marker and left it planted); decoy untouched
+  PASS: T63a the kept marker still allows a genuine restore afterwards
+RESTORE ERROR: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/full1/toy/root/src/mod.py: the folder 'src' is a symbolic link or not a folder: not written
+RESTORE FAILED m1 (marker and backup kept; run --restore)
+  PASS: T63b the run's own restore through a swapped folder: exit 3 (got 3), marker and backup kept, the planted file is still planted behind the swap (r5: exit 0 or 4, marker cleared)
+  PASS: T63b genuine restore afterwards
+== T63c restore_target itself: one descriptor, a swap during the write does not matter, read-only, two names, FIFO, re-creation
+bad: []
+  PASS: T63c restore_target: plain, already-original (no write), swap during the write, link refused, read-only, two names, FIFO, re-creation (rc 0)
+== T64 (review r5 nit 1) a REAL memory fault is not recovered by the signal handler: the process hangs (measured), as the text now says

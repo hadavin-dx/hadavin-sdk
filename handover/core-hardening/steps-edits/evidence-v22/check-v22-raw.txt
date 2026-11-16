@@ -1,0 +1,19 @@
+lines: {'S': 146, 'N': 152, 'O': 67}  words v21 -> v22: 7943 -> 9267  note words v5 -> v6: 7281 -> 8349
+ok: 9 headings
+ok: R1..R10 each defined once
+ok: G1..G42 each defined once
+ok: gate groups a (35), b (4), c (3) checked
+ok: sheet cites no gate id
+open rows: 61
+ok: note section 0 items 1..10 in order
+numbered items per sheet section: {2: 6, 5: 8, 6: 6, 7: 10, 8: 8}
+ok: item, card and section pointers checked
+ok: single-source phrases checked
+banned words: 10 listed, occurrences case-sensitive 0, case-insensitive 0 (files read: 5)
+ok: word checks run
+UTC = IST pairs checked: 20
+weekday mentions checked: 11
+ok: arithmetic, weekdays, UTC/IST pairs, buffer examples and sample dates checked
+ok: set phrases: 15 listed, 12 used in a send context, charset and spelling checked
+ok: pointer map equals the frozen map (73 lines carry pointers)
+TOTAL PROBLEMS 0

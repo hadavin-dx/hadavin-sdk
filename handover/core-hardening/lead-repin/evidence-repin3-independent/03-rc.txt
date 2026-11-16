@@ -1,0 +1,2 @@
+bash rc=0
+dash rc=0

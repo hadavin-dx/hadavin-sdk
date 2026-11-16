@@ -1,1 +1,312 @@
-{}
+{
+"## 6. The model key (R1 applies; every command U#1": [
+"R1"
+],
+"**Commands you may type (all of them; any other #1": [
+"6.4",
+"7.3",
+"7.9",
+"R8"
+],
+"**How to read it:** before the day, read section#1": [
+"section 2",
+"section 4"
+],
+"**Part 1, when you do the card (the one list).**#1": [
+"6.5",
+"7.8",
+"Part 1",
+"R1",
+"R10"
+],
+"**Part 2, what you may cancel or revoke (the onl#1": [
+"6.2",
+"6.2",
+"6.3",
+"Part 2",
+"R4"
+],
+"**Part 3, the steps in order.**#1": [
+"Part 3"
+],
+"**Part 4, if something fails.** The key list pag#1": [
+"6.2",
+"Part 4"
+],
+"**STOP RULE (the only meaning of \"unsure\" in thi#1": [
+"R1",
+"R10",
+"R10"
+],
+"**Set phrases you send (all of them; each exactl#1": [
+"5.8",
+"6.2",
+"6.5",
+"7.4",
+"8.2",
+"8.3",
+"8.4",
+"8.5",
+"8.8",
+"R1",
+"R1",
+"R8",
+"card Part 4",
+"card step 1",
+"card step 5"
+],
+"- **Deadline** = Mon 23 Nov 2026 18:29 UTC = 23:#1": [
+"6.2",
+"7.3",
+"section 3"
+],
+"- **How the parts fit (UNVERIFIED, from the lead#1": [
+"R1",
+"R4"
+],
+"- **HubSpot** = a ready-made online service for #1": [
+"R7"
+],
+"- **If the lead does not answer:** nothing start#1": [
+"8.7"
+],
+"- **Lead** = the Claude session you chat with, w#1": [
+"R1",
+"R8"
+],
+"- **Model key** = any paid-model key you create #1": [
+"5.6",
+"6.2",
+"6.3",
+"6.3",
+"6.6",
+"7.1"
+],
+"- **Numbers message** = the lead's written messa#1": [
+"R8",
+"section 3"
+],
+"- **Plain money words:** **prepaid** = you pay f#1": [
+"5.6"
+],
+"- **Reading the counts:** the test sends person #1": [
+"R10"
+],
+"- **Run name** = 4 to 12 lowercase letters and d#1": [
+"5.1"
+],
+"- **Silence minutes** = how long the take termin#1": [
+"R10"
+],
+"- **Take terminal** = the WSL window in which th#1": [
+"5.1",
+"section 2"
+],
+"- **Three money amounts, never mixed:** **expect#1": [
+"R4"
+],
+"- **UNVERIFIED** = nobody has run or seen it. Th#1": [
+"R10"
+],
+"- **Version id** = a short code naming the exact#1": [
+"7.2",
+"7.3"
+],
+"- **Words that look alike, one meaning each:** *#1": [
+"7.3",
+"7.9"
+],
+"1. **Run name** (rule in section 1): open the re#1": [
+"section 1"
+],
+"1. In the read terminal run `date -u` right afte#1": [
+"5.6",
+"7.4",
+"card step 3"
+],
+"2. **People:** the numbers message names a human#1": [
+"section 1"
+],
+"2. Contacts: only after the lead writes \"n8n is #1": [
+"R7"
+],
+"2. Take terminal: type the `cd` line from the me#1": [
+"R10"
+],
+"2. Two phone alarms, one set to the IST time of #1": [
+"6.5",
+"Part 4"
+],
+"3. **Laptop on the run day:** plugged in; sleep #1": [
+"8.7"
+],
+"3. Cancel each key of Part 2 (a), one by one. Ri#1": [
+"Part 2"
+],
+"3. In the read terminal `ls -l \"<key file>\"` mus#1": [
+"R10"
+],
+"3. Type the start line exactly as the numbers me#1": [
+"R10",
+"R10"
+],
+"4. **Receiver Gmail:** label `demo` exists; a fi#1": [
+"R10",
+"R7"
+],
+"4. Compare the notice (R5) within the minutes th#1": [
+"R5",
+"R6"
+],
+"4. In WSL (bash) type the printed line with the #1": [
+"6.6"
+],
+"4. Proof: reload the page. Each cancelled key sh#1": [
+"Part 4"
+],
+"5. Demo mails: delete this run's demo mails in t#1": [
+"R7"
+],
+"5. If the line is not `exit 0` (an error about a#1": [
+"6.6"
+],
+"5. You type nothing in the take terminal while i#1": [
+"R10"
+],
+"6. **Model account pages:** in your normal profi#1": [
+"R4"
+],
+"6. Film pause (starts at the film cue: watch the#1": [
+"R6"
+],
+"6. Retire check: the lead checks that each revok#1": [
+"8.3",
+"8.4"
+],
+"6. The run is over, however far it got. Go on at#1": [
+"7.9",
+"8.1"
+],
+"6. `ls -l \"<key file>\"` starts `-rw-------` and #1": [
+"6.5",
+"R10",
+"R10"
+],
+"7. **Settings figures:** for each setting in the#1": [
+"R10",
+"R10"
+],
+"7. Alone, check that Recording is OFF and that t#1": [
+"R6"
+],
+"7. Put the laptop settings and the Privacy switc#1": [
+"5.3",
+"6.1"
+],
+"8. The finished video reaches you by the way the#1": [
+"R9"
+],
+"Balance on the prepaid page: USD 189.00   Auto-r#1": [
+"5.6"
+],
+"Written Mon 16 Nov 2026. Times are written UTC f#1": [
+"R1",
+"R10",
+"section 2",
+"section 2",
+"section 3"
+],
+"You post, in the place and account the numbers m#1": [
+"7.10",
+"7.6",
+"R8"
+],
+"| 1 | you | Choose the run name (5.1), send it w#1": [
+"5.1"
+],
+"| 10 | lead, you | \"n8n is off\"; you delete the #1": [
+"section 8"
+],
+"| 3 | you | Checks of section 3 | no yes, no run#1": [
+"section 3"
+],
+"| 4 | you | Laptop, Gmail, film profile, model p#1": [
+"5.2",
+"5.7"
+],
+"| 5 | you, lead | Type the yes (5.8); the lead a#1": [
+"5.8"
+],
+"| 6 | you | Not before the earliest key time: tw#1": [
+"6.2",
+"6.3",
+"6.6"
+],
+"| 7 | lead, you | Lead restarts the model progra#1": [
+"6.6"
+],
+"| 8 | you | The run, film pause, `end`, the card#1": [
+"section 7"
+],
+"| 9 | you | Read results after the card (7.9, 7.#1": [
+"7.10",
+"7.9"
+],
+"| R1 | you | You make and save the model key alo#1": [
+"6.1",
+"6.3",
+"6.4",
+"8.7",
+"R1",
+"R10",
+"card Part 2"
+],
+"| R10 | you | FREEZE = in the take terminal type#1": [
+"7.9",
+"R1",
+"R10",
+"R7"
+],
+"| R2 | you | What you may cancel or revoke: card#1": [
+"R2",
+"card Part 2"
+],
+"| R3 | you | When and how to cancel the key and #1": [
+"R3"
+],
+"| R4 | you, lead | Money. The most you can lose #1": [
+"5.7",
+"R10",
+"R4",
+"section 1",
+"section 3"
+],
+"| R5 | you | Compare every number and name in th#1": [
+"R5",
+"section 3"
+],
+"| R6 | you | `y`, the challenge line (challenge,#1": [
+"R10",
+"R6",
+"R8",
+"section 2"
+],
+"| R7 | you | You delete only made-up contacts of#1": [
+"5.4",
+"8.5",
+"R10",
+"R7"
+],
+"| R8 | you | The lead's messages give values (a #1": [
+"5.8",
+"8.2",
+"8.6",
+"R10",
+"R8"
+],
+"| R9 | you | Recording is ON only in the film pa#1": [
+"6.4",
+"8.8",
+"R9"
+]
+}
