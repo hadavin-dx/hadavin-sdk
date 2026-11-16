@@ -1,0 +1,11 @@
+--- a/handover/demo/n8n-flows/PAGE-STATEMENTS-V4.md
++++ b/handover/demo/n8n-flows/PAGE-STATEMENTS-V4.md
+@@ -117,7 +117,7 @@
+     Test: AF2, not run.
+     Raw file: none named.
+ 
+-17. "Recovery within 60 s was measured only at the 20 s test lease (max 59.6 s, margin 0.4 s, n=20 per kill point, one machine); at the shipped 120 s lease lane3 measured 144.3 s once (n=1, v4 K1); at the 45 s film lease nothing is measured. Rough rule from lane3: about the lease plus 25 s; the 20 s data is lease + 40 s so treat the rule as rough."
++17. "Recovery was measured at three leases, all on one machine with made-up data: 20 s lease (v3, laptop, n=20 per kill point): slowest 59.6 s; 45 s lease (film-v4, lane3 relay, 18 kill runs): 60.1 to 61.9 s; 120 s lease (lane3 relay): 144.2 to 144.4 s. The shipped lease is 45 s. Never write 'within 60 s'."
+     Tag: 20 s figure MEASURED-ON-LAPTOP (lead-read). 120 s figure RELAYED-INDEPENDENT (one figure, report not seen). 45 s: NOT RUN.
+     Test: lease table, not run.
+     Raw file: V7-v3 folder for the 20 s figure; none for the others.

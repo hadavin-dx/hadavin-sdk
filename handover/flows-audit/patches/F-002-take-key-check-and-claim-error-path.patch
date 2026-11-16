@@ -1,0 +1,24 @@
+--- a/handover/demo/n8n-mainframe/build_mainframe.py
++++ b/handover/demo/n8n-mainframe/build_mainframe.py
+@@ -79,8 +79,11 @@
+     n = [N("Receive", "n8n-nodes-base.webhook", 2, {"httpMethod": "POST", "path": path, "responseMode": "responseNode", "options": {}}, [0, 0], webhookId=wid),
+          setf("Item", {"lead_key": ("={{ $json.body.%s }}" % ref, "string"), "email": ("={{ $json.body.%s }}" % em, "string"), "name": ("={{ $json.body.%s }}" % nm, "string")}, [220, 0]),
+          setf("Valid", {"lead_key": ("={{ $json.lead_key }}", "string"), "email": ("={{ $json.email }}", "string"), "name": ("={{ $json.name }}", "string"), "valid": ("={{ %s }}" % EMV, "boolean")}, [440, 0]),
++         iff("KeyOk", "={{ String($json.lead_key || '').trim() }}", "string", "notEmpty", None, [550, 0]),
++         N("ReplyBadKey", "n8n-nodes-base.respondToWebhook", 1.4, {"respondWith": "json", "responseBody": "={{ { n8n_error: false, lead_key: '', verdict: 'rejected', reason: 'lead_key missing' } }}", "options": {"responseCode": 422}}, [550, 180]),
++         N("ReplyStoreFail", "n8n-nodes-base.respondToWebhook", 1.4, {"respondWith": "json", "responseBody": "={{ { n8n_error: true, lead_key: $('Valid').item.json.lead_key, verdict: 'not_stored' } }}", "options": {"responseCode": 503}}, [880, 180]),
+          pg("Claim", "INSERT INTO mf_leads(lead_key,email,name,state,claimed_until,claim_token,attempts) VALUES ($1,$2,$3, CASE WHEN $4::boolean THEN 'processing' ELSE 'review' END, now() + interval '%d seconds', gen_random_uuid()::text, CASE WHEN $4::boolean THEN 1 ELSE 0 END) "
+-            "ON CONFLICT (lead_key) DO NOTHING RETURNING lead_key, claim_token, state;" % LEASE, "={{ [$json.lead_key, $json.email, $json.name, $json.valid] }}", [660, 0]),
++            "ON CONFLICT (lead_key) DO NOTHING RETURNING lead_key, claim_token, state;" % LEASE, "={{ [$json.lead_key, $json.email, $json.name, $json.valid] }}", [660, 0], onError="continueErrorOutput"),
+          iff("Claimed", "={{ $json.lead_key }}", "string", "notEmpty", None, [880, 0]),
+          iff("IsProcessing", "={{ $json.state }}", "string", "equals", "processing", [1100, -100]),
+          setf("SubInput", {"lead_key": ("={{ $json.lead_key }}", "string"), "claim_token": ("={{ $json.claim_token }}", "string"), "email": ("={{ $('Valid').item.json.email }}", "string")}, [1320, -160]),
+@@ -90,7 +93,7 @@
+          pg("Stored", "SELECT state FROM mf_leads WHERE lead_key=$1;", "={{ [$('Valid').item.json.lead_key] }}", [1100, 240]),
+          respond("ReplyStored", "={{ { n8n_error: false, lead_key: $('Valid').item.json.lead_key, verdict: ({ done: 'done', processing: 'processing', new: 'processing', review: 'review', unknown: 'unknown', failed: 'failed' })[$json.state] || 'processing', repeat: true } }}", [1320, 240])]
+     c = {}
+-    link(c, "Receive", "Item"); link(c, "Item", "Valid"); link(c, "Valid", "Claim"); link(c, "Claim", "Claimed"); link(c, "Claimed", "IsProcessing", 0); link(c, "Claimed", "Stored", 1)
++    link(c, "Receive", "Item"); link(c, "Item", "Valid"); link(c, "Valid", "KeyOk"); link(c, "KeyOk", "Claim", 0); link(c, "KeyOk", "ReplyBadKey", 1); link(c, "Claim", "Claimed", 0); link(c, "Claim", "ReplyStoreFail", 1); link(c, "Claimed", "IsProcessing", 0); link(c, "Claimed", "Stored", 1)
+     link(c, "IsProcessing", "SubInput", 0); link(c, "IsProcessing", "ReplyReview", 1); link(c, "SubInput", "RunSub"); link(c, "RunSub", "ReplyRan"); link(c, "Stored", "ReplyStored")
+     return {"name": name, "nodes": n, "connections": c, "settings": ST}
+ def recovery():
