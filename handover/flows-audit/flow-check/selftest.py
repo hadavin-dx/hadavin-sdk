@@ -18,6 +18,7 @@ FAIL cases run with --fail-unverified (rules that come from memory of n8n are on
 Expected node and connection counts are recomputed from the mutated file so a count mismatch is not a knock-on, except in the case that tests it.
 Generic cases run on 4 real files and 1 film file; cases that cannot apply to a file are printed as skipped."""
 
+import atexit
 import contextlib
 import copy
 import importlib.util
@@ -25,6 +26,7 @@ import io
 import json
 import os
 import shutil
+import signal
 import sys
 import tempfile
 import traceback
@@ -1612,6 +1614,10 @@ def main():
     shutil.rmtree(OUT, ignore_errors=True)
     os.makedirs(OUT)
     work = tempfile.mkdtemp(prefix="fc-selftest-")
+    # f8-r12 (M2): a stop signal (time limit, Ctrl-C, closed terminal) must not leave the work folder behind: turn the signals into a normal exit so the clean-up below runs.
+    atexit.register(shutil.rmtree, work, ignore_errors=True)
+    for _sig in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
+        signal.signal(_sig, lambda n, _f: sys.exit(128 + n))
     ok = bad = skipped = 0
     wt(
         OUT + "/CHECK-COMMAND.txt",
