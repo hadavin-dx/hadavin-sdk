@@ -131,8 +131,10 @@ recorded in the marker: a folder that has been renamed away and replaced by anot
 write permission is given back on the open file, the same inode is opened for writing, the original text and mode are
 written back (r7 N7; as root a mode bit never blocks a write, so this path is only proven as a normal user, T88). A read-only
 file that ALREADY holds the original text is left as it is, mode included (nothing is written, T88d); if it cannot be opened for
-writing the added owner permission is taken away again (r10 m6). The recorded mode is restored exactly: mode 0 stays 0, and setuid,
-setgid and sticky bits are restored as recorded; with --sha a marker mode with such a bit, or writable by everybody, is refused (r10 m2).
+writing the added owner permission is taken away again (r10 m6). The recorded mode is restored exactly: mode 0 stays 0, and the mode is CHECKED after the write (r11). A plain `--restore` never
+writes a setuid, setgid or sticky bit: a marker mode with such a bit is cut to its lowest 9 bits and the text says so (r11 MAJ-1;
+a forged marker cannot make a setuid file); with --sha a marker mode with such a bit, or with a write bit for the group or for others,
+is refused (r10 m2, r11 m6).
 `--out-json` may not be run.py itself, the `--list` file, a `--patch` file or the same path as a raw file (r7 N4), may not lie in any
 state folder that is searched (ours, /tmp, /var/tmp, /dev/shm, TMP, TEMP), and an existing file is overwritten only when it is a
 result file of this tool (a JSON list of objects with id and verdict; r10 m3). Helper programs (git, patch, the import probe) run
@@ -140,9 +142,10 @@ in their own process group and the whole group is killed on a timeout (r10 m8); 
 characters are shown as \\xNN (r10 m9).
 Limit (d), exact: a plain `--restore` (no --sha) believes the marker and the backup in the state folder; a person or program
 that can write that folder AS THIS USER can write a forged marker plus a backup whose hash matches, and plain --restore would write that
-text into the file (a mode with the execute bits or writable by everybody is cut to at most 0777, never more). Only `--restore --sha
+text into the file (a mode with a setuid, setgid or sticky bit is cut to its lowest 9 bits, never more: r11 MAJ-1, T99b). Only `--restore --sha
 COMMIT` closes it: the original then comes from git, a forged marker is refused or ignored, never trusted (T98d, T98e). Use --sha
-whenever the state folder may not be trusted. A path over 4096 bytes, or a name over 255 bytes, is refused with exit 2 (T98a). The
+whenever the state folder may not be trusted. A path of 4096 bytes or more (the kernel counts the closing NUL: 4095 is the longest), the root plus a relative path together, or a name over 255
+bytes, is refused with exit 2; the length limits apply to path-shaped arguments only (a long -k expression is fine, T98a, T99c). The
 signal handlers are installed right after the imports; a signal before that (Python's own start-up, about 20 to 50 ms) ends the
 process by that signal at a time when nothing has been written (T98b).
 NOT A SANDBOX (read this): the tests run as this user with this user's full file rights. The tool checks the
@@ -366,10 +369,49 @@ def shown(x, limit: int = 200) -> str:
 _CTRL = re.compile("[\x00-\x08\x0b-\x1f\x7f]")
 
 
+CHILD_ENV_ALLOWED = frozenset({"PATH", "HOME", "LC_ALL", "PYTHONDONTWRITEBYTECODE", "PYTHONPATH"})
+
+
+def check_child_call(args, kwargs: dict) -> None:
+    """r11 (review r10 S603): the checks every program start must pass, in ONE place (a test calls this directly and through
+    Child). Raises Refused. The argument list is a list of str (never one shell string), the program is an absolute path, no
+    text holds a NUL, no shell, no `executable=` or `preexec_fn=` override, and an environment holds only names from
+    CHILD_ENV_ALLOWED (no LD_PRELOAD, no BASH_ENV, no GIT_* ...)."""
+    if type(args) is not list or not args or not all(type(a) is str for a in args):
+        raise Refused(
+            "program start refused: the arguments must be a non-empty list of text (never one shell string)"
+        )
+    if not os.path.isabs(args[0]):
+        raise Refused(
+            f"program start refused: the program must be an absolute path, got {shown(args[0])}"
+        )
+    if any("\0" in a for a in args):
+        raise Refused("program start refused: an argument holds a NUL character")
+    if kwargs.get("shell"):
+        raise Refused("program start refused: a shell is never used")
+    for bad in ("executable", "preexec_fn", "pass_fds", "creationflags"):
+        if kwargs.get(bad):
+            raise Refused(f"program start refused: {bad}= is not allowed")
+    env = kwargs.get("env")
+    if env is not None:
+        if not isinstance(env, dict) or not all(
+            type(k) is str and type(v) is str for k, v in env.items()
+        ):
+            raise Refused("program start refused: the environment must be a dict of text")
+        extra = sorted(set(env) - CHILD_ENV_ALLOWED)
+        if extra or any("\0" in v for v in env.values()):
+            raise Refused(f"program start refused: environment variable(s) not allowed: {extra}")
+
+
 class Child(subprocess.Popen):
-    """The ONE way this tool starts another program: a fixed argument list (never a shell string), the program found by `tool()`
-    or the scratch `.venv`, a clean environment, its own process group. A named subclass so that this single class is where the
-    start happens; the arguments are built by this tool, never taken as one string from the caller (see run_cmd and run_tests)."""
+    """The ONE way this tool starts another program (r11: a real guard, not only a name). Every start runs
+    `check_child_call` first: a list of text, an absolute program path, no NUL, no shell, an environment from the fixed
+    allowed names. The arguments are built by this tool (run_cmd and run_tests), never taken as one string from the caller;
+    the check is there so that a later change cannot weaken that without a test failing (T99a)."""
+
+    def __init__(self, args, *a, **kw):
+        check_child_call(args, kw)
+        super().__init__(args, *a, **kw)
 
 
 class SafeOut:
@@ -794,6 +836,15 @@ def restore_target(
                 # r10: a write by a user without CAP_FSETID (not root) clears the setuid and setgid bits, so the recorded
                 # mode is set once more AFTER the write (T97e as user nobody: 4755 came back as 755)
                 os.fchmod(fh.fileno(), want)
+        if writable and (created or need_mode):
+            # r11 MAJ-1: the mode is CHECKED after the write, never assumed (a bit the kernel dropped is a failure, not a pass)
+            got = stat.S_IMODE(os.fstat(fh.fileno()).st_mode)
+            want_mode = 0o644 if mode is None else mode
+            if got != want_mode:
+                raise Refused(
+                    f"{path}: the mode after the write is {oct(got)}, not the recorded {oct(want_mode)} "
+                    f"(the system did not keep it): marker and backup kept"
+                )
         fh.seek(0)
         return already, fh.read()
 
@@ -935,6 +986,12 @@ def safe_rel(base: pathlib.Path, rel, what: str, must_exist: bool = True) -> pat
         raise Refused(f"{what}: not a usable relative path: {rel!r}"[:300])
     if too_long(rel):
         raise Refused(f"{what}: not a usable relative path: {too_long(rel)}")
+    if too_long(
+        os.fspath(base) + "/" + rel
+    ):  # r11 m2: the whole path (root + relative part) is what the kernel sees
+        raise Refused(
+            f"{what}: root plus relative path is too long: {too_long(os.fspath(base) + '/' + rel)}"
+        )
     pp = pathlib.PurePosixPath(rel)
     if pp.is_absolute() or ".." in pp.parts:
         raise Refused(f"{what}: must be relative to the root and contain no '..': {rel!r}")
@@ -1540,7 +1597,7 @@ def restore_from_marker(
         mm = m.get("mode") if isinstance(m.get("mode"), int) else None
         special = (
             f"the mode in the marker ({oct(mm)}) has a special bit (setuid, setgid, sticky) or is writable by "
-            f"everybody: git has neither, so the marker may be forged; nothing written (r10 m2)"
+            f"group or others: git has neither, so the marker may be forged; nothing written (r10 m2)"
             if mm is not None
             else ""
         )
@@ -1551,7 +1608,7 @@ def restore_from_marker(
                 f"the mode in the marker ({oct(mm)}) has other execute bits than {shown(m['file'])} in the git archive given "
                 f"with --sha ({oct(ref_mode)}): the marker may be forged; nothing written"
             )
-        if mm is not None and mm & 0o002:
+        if mm is not None and mm & 0o022:  # r11 m6: any group or other write bit, not only "other"
             raise Refused(special)
     try:
         # must_exist=False: a deleted target is re-created (review r3 minor); checked again right before the write
@@ -1566,6 +1623,15 @@ def restore_from_marker(
             and 0 <= m["mode"] <= 0o7777
             else 0o644
         )
+        mode_note = ""
+        if mode & 0o7000:
+            # r11 MAJ-1: a plain --restore believes the marker, and a forged marker must never make a setuid, setgid or sticky
+            # file: the bits are cut off (never written); the content is still restored; the text says so
+            mode_note = (
+                f"; NOTE the marker mode {oct(mode)} had a setuid, setgid or sticky bit: --restore never writes those, the "
+                f"file got {oct(mode & 0o777)} (set the special bit by hand if it was really there)"
+            )
+            mode &= 0o777
         if isinstance(m.get("root_dev"), int) and isinstance(m.get("root_ino"), int):
             now = os.stat(root)
             if (now.st_dev, now.st_ino) != (m["root_dev"], m["root_ino"]):
@@ -1584,9 +1650,7 @@ def restore_from_marker(
         )
         return False, f"{control}; {text}" if control else text
     note = " (it already held the original)" if already else ""
-    text = (
-        f"{orphan}; restored {shown(m['file'])} from {bk}{note}; hash matches saved original: {ok}"
-    )
+    text = f"{orphan}; restored {shown(m['file'])} from {bk}{note}; hash matches saved original: {ok}{mode_note}"
     if ok and not settled:
         text += (
             "; the test group may STILL RUN (it could not be stopped or verified): marker and backup KEPT, stop it by "
@@ -1608,6 +1672,8 @@ def discard_marker(
     another root or backup, it is damaged) used to strand the operator: exit 3 or 2 on every try and no command to remove it.
     Deleting a marker is safe only when the files themselves are known to be original: the tree under --root must equal the
     git archive named by --sha, and no orphaned test group of that marker may still run.
+    r11 m7: the CONTROL marker (a killed baseline run) has no folder identity to check; it is removed after the same git comparison and
+    after its test group is stopped, so the identity check applies to the mutant marker only.
     r10 M1 (class: an exit code 0 that says "nothing is planted" while the place the mutant was planted is not looked at): the
     tree under --root says nothing about a folder that was renamed away, and a marker that cannot be read says nothing about
     its test group. So the marker must PROVE it belongs to the folder now at --root (its recorded device and inode equal this
@@ -2473,11 +2539,27 @@ def too_long(v: str) -> str | None:
         raw = os.fsencode(v)
     except UnicodeEncodeError:
         return "it is not valid text for a file name"
-    if len(raw) > PATH_MAX_BYTES:
-        return f"it is {len(raw)} bytes long (the limit is {PATH_MAX_BYTES})"
+    if (
+        len(raw) >= PATH_MAX_BYTES
+    ):  # r11 m2: the 4096 of the kernel counts the closing NUL, so 4095 bytes is the longest path
+        return f"it is {len(raw)} bytes long (the limit is {PATH_MAX_BYTES - 1})"
     if any(len(part) > NAME_MAX_BYTES for part in raw.split(b"/")):
         return f"one name in it is longer than {NAME_MAX_BYTES} bytes"
     return None
+
+
+ARG_MAX_BYTES = 100_000  # one program argument: Linux allows 131072 bytes (MAX_ARG_STRLEN); r11 m1
+
+
+def refuse_in_state_folders(path: pathlib.Path, what: str) -> None:
+    """r11 m3 (class: a folder created before every refusal that could stop it): no output path, and no folder to be created for
+    one, may lie in a folder a marker may live in (ours and the other usual places). Works on a path that does not exist yet."""
+    here = pathlib.Path(os.path.abspath(path)).resolve()
+    for state in (f.resolve() for f in state_folders()):
+        if here.is_relative_to(state):
+            raise Refused(
+                f"{what} {path} lies in the state folder {state}: refused (a file written there could pose as a marker)"
+            )
 
 
 def nonempty(v: str) -> str:
@@ -2640,11 +2722,26 @@ def main():
     default_repo = str(pathlib.Path(__file__).resolve().parent)
     if not a.restore or repo_given or a.sha is not None:
         a.repo = a.repo or default_repo
+    ap_prev = None
     for t in tests:  # the test paths and words after `--`
-        if too_long(t) or "\0" in t:
-            ap.error(
-                f"a test argument is not usable as a path or word: {too_long(t) or 'it holds a NUL'}"
+        # r11 m1: the path-length limits are for PATH-shaped arguments only; the text after -k or -m is an expression (and
+        # the name after -p a plugin name), never a path, so a long expression is not refused for its length. One limit
+        # stays for every word: what one program argument can hold (128 KiB on Linux, E2BIG when more).
+        is_word = ap_prev in ("-k", "-m", "-p") or t.startswith("-")
+        why = (
+            "it holds a NUL"
+            if "\0" in t
+            else (
+                f"it is {len(os.fsencode(t))} bytes long (the limit for one argument is {ARG_MAX_BYTES})"
+                if len(os.fsencode(t)) > ARG_MAX_BYTES
+                else None
             )
+            if is_word
+            else too_long(t)
+        )
+        if why:
+            ap.error(f"a test argument is not usable as a path or word: {why}")
+        ap_prev = t
     root = pathlib.Path(a.root)
     try:
         is_folder = root.is_dir()
@@ -2653,6 +2750,14 @@ def main():
         is_folder = False
     if not is_folder:
         print(f"REFUSED: --root {shown(a.root)} is not a folder", file=sys.stderr)
+        sys.exit(EXIT_REFUSED)
+    if too_long(
+        str(root) + "/x"
+    ):  # r11 m2: after resolve() the path can be longer than the text given
+        print(
+            f"REFUSED: --root {shown(a.root)}: the resolved folder path {too_long(str(root) + '/x')}",
+            file=sys.stderr,
+        )
         sys.exit(EXIT_REFUSED)
     a.root = str(root)
     global ROOT_IDENT
@@ -2781,6 +2886,11 @@ def main():
             ):  # before anything is created there (r9 N4 gap)
                 raise Refused(
                     f"--raw {rawdir} lies in the state folder {STATE}: refused (a file written there could pose as a marker)"
+                )
+            refuse_in_state_folders(rawdir, "--raw")  # r11 m3: BEFORE the folder is created
+            if too_long(os.path.abspath(rawdir) + "/" + a.prefix + "-" + "x" * 60 + ".txt"):
+                raise Refused(
+                    f"--raw {shown(a.raw)}: the folder plus a raw file name would be too long a path"
                 )
             rawdir.mkdir(parents=True, exist_ok=True)
             outs = [rawdir / f"{a.prefix}-{n}.txt" for n in sorted(RESERVED_IDS)]

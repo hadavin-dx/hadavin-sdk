@@ -24,11 +24,11 @@ def load_banned():
     bt = open('/home/user/hadavin-sdk/tests/test_no_reference_material.py', encoding='utf-8').read()
     m = re.search(r'BANNED = \((.*?)\n\)', bt, re.S)
     return ast.literal_eval('(' + m.group(1) + ')')
-def check(path, indir=HERE + 'inputs/', info=None):
+def check(path, indir=HERE + 'inputs/', info=None, text=None):
     fails = []
     def F(k, m): fails.append((k, m))
     I = info if info is not None else (lambda *a: None)
-    txt = open(path, encoding='utf-8').read(); rows = parse(txt)
+    txt = text if text is not None else open(path, encoding='utf-8').read(); rows = parse(txt)
     st = lambda r: r['status'].split(' (')[0].strip()
     # 1 rows, ids
     exp = ['E-%02d' % n for n in range(1, 59) if n not in (10, 35)]
@@ -144,6 +144,18 @@ def check(path, indir=HERE + 'inputs/', info=None):
         for t in r['new']:
             if 'shred -u <path>' in t and not re.search(r'no (?:`\.\.`|"\.\."|\.\.)|\bnot (?:contain|include|have)[^.]{0,30}`?\.\.`?|\.\.[^.\n]{0,40}(?:never|not allowed|refuse|stop)|no `\.\.`', t):
                 F('shred', f"{r['id']} NEW block has shred -u without the no-'..' path rule")
+    # 7b row-level content that the round must keep
+    def need(rid, subs, tag):
+        t_ = '\n'.join(byid[rid]['new']) if rid in byid else ''
+        for sb in subs:
+            if sb not in t_: F('rowcontent', f'{rid} NEW lacks ({tag}): {sb!r}')
+    need('E-09', ['please stop looking', 'wait for its written reply `not looking`', 'write `you may look again`'], 'not-looking step')
+    need('E-48', ['3j.', 'Route A:', 'Route B (recommended):', 'WHATEVER you answer', 'it contains no `..`'], 'routes, deadline, shred rule')
+    need('E-55', ['`no more takes`', '18:19 UTC = 23:49 IST', '18:29 UTC = 23:59 IST'], 'trigger and two deadlines')
+    need('E-16', ['only after you have written `no more takes`'], 'clean-up trigger')
+    need('E-57', ['18:19 UTC = 23:49 IST', '`cut accepted`'], 'cut step')
+    need('E-58', ['`key revoked`', '`key not revoked`', '18:19 UTC = 23:49 IST', '18:29 UTC = 23:59 IST'], 'send table')
+    need('E-37', ['18:19 UTC = 23:49 IST'], 'key end')
     # 8 reply phrases
     phr = collections.defaultdict(list)
     for r in own:

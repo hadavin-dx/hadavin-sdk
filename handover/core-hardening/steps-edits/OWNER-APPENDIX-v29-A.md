@@ -64,9 +64,6 @@ R10, the silence rule: no new line in the test terminal for the silence minutes,
 
 8.4: (HubSpot: Settings (gear), Integrations, Private Apps; UNVERIFIED, tolerated)
 
-## Appendix part 6: The words used on the card
-Card, **Words on this card.** **Key list** = the model account page that lists keys with name, creation time, last-used time and a state word. **Alive** = from the moment you press the create button of the key list until step 5 is done (a look key: until step 4 is done). **Latest start**, **Lead**, **send**, **other channel**, **backup person**: as in the sheet. **Phone alarm** = one of the four alarms of 6.2. **Read terminal** = a second Ubuntu window where you only type `date -u`, `ls -l`, `clear` and the grep of 5.7. **Test terminal** = the Ubuntu window where the test program runs. **Normal profile** = the Chrome profile you always use. **Recording** = any screen recording or sharing.
-
 ## Appendix part 7: Why and background (rationale that is not a step)
 5.1, why the 7-day rule: Why: sheet A cancels the older key, and a key used in the last 7 days probably still serves a program of yours; sheet B leaves it alone until the older-key time, so it can spend money until then (R4). 
 

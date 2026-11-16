@@ -78,12 +78,38 @@ rend = sorted(x[0] for x in sheets if int(x[1]) == newest)
 NEWEST_ONLY_SOURCE = all("SOURCE" in x for x in rend)
 mt = re.findall(r"^(\d{4}-\d\d-\d\dT(\d\d:\d\d:\d\d)Z) (OWNER-SHEET-v28-[AB]\.md)$", cs, re.M)
 V28T = sorted(set(m[1] for m in mt))[-1]
-mt29 = re.findall(r"^(\d{4}-\d\d-\d\dT(\d\d:\d\d:\d\d)Z) (OWNER-SHEET-v29-SOURCE\.md)$", cs, re.M)
-V29T = mt29[-1][1] if mt29 else None
-assert newest == 29 and NEWEST_ONLY_SOURCE and V29T, (newest, rend, V29T)
-RANGE = "v19 to v%d-SOURCE" % newest
-sheet_zero = all(x[2] == "0" for x in sheets if x[0] != "OWNER-SHEET-v19.md")
-assert sheet_zero and [x for x in sheets if x[0] == "OWNER-SHEET-v19.md"][0][2] == "1"
+mt29 = re.findall(r"^(\d{4}-\d\d-\d\dT(\d\d:\d\d:\d\d)Z) (OWNER-SHEET-v29-[A-Z]+\.md)$", cs, re.M)
+V29 = {m[2]: m[1] for m in mt29}
+assert set(V29) == {"OWNER-SHEET-v29-A.md", "OWNER-SHEET-v29-B.md", "OWNER-SHEET-v29-SOURCE.md"}, V29
+assert newest == 29
+assert all(v <= CT for v in [m[0] for m in mt29]), "a v29 file is newer than the check time: rerun static-checks.sh"
+RANGE = "v19 to v%d (all variants, the templates called SOURCE included)" % newest
+
+
+def shortn(n):
+    return re.sub(r"^OWNER-SHEET-|\.md$", "", n)
+
+
+def hh(t):
+    return "%s UTC = %s IST" % (t, ist("0000-00-00T" + t))
+
+
+V29TXT = ("OWNER-SHEET-v29-A.md (written %s) and OWNER-SHEET-v29-B.md (written %s), both rendered sheets, and OWNER-SHEET-v29-SOURCE.md (the template; written %s)"
+          % (hh(V29["OWNER-SHEET-v29-A.md"]), hh(V29["OWNER-SHEET-v29-B.md"]), hh(V29["OWNER-SHEET-v29-SOURCE.md"])))
+nd = [(shortn(x[0]), x[2]) for x in sheets if x[2] != "0"]
+assert [x for x in sheets if x[3] != "0" or x[4] != "0"] == [], "a sheet holds 'read, create and change only' or 'does not delete': text must change"
+assert nd == [("v19", "1")], nd
+rogroups = {}
+for x in sheets:
+    rogroups.setdefault(int(x[5]), []).append(shortn(x[0]))
+
+
+def squash(names):
+    return ", ".join(names)
+
+
+ROTXT = "; ".join("%s mention%s in %s" % ({0: "no", 1: "one", 2: "two"}.get(k, str(k)), "" if k == 1 else "s", squash(v)) for k, v in sorted(rogroups.items()))
+SHEETFACT = ("'never deletes' occurs only in v19 (1 hit); 'read, create and change only' and 'does not delete' occur nowhere; mentions of read-only or read only (a count of any mention, which can be about something other than the HubSpot key): %s" % ROTXT)
 SHEETCHK = ("%s UTC = %s IST" % (CTU, CTI))
 
 # ---------------------------------------------------------------- table of card lengths (numbers computed from the texts)

@@ -1,0 +1,52 @@
+"""v16 patch, part A: reads CORE-PR-HANDOFF-v15.md, applies exact replacements (each must match the stated number of
+times), writes CORE-PR-HANDOFF-v16.md. Replayable: run from this folder with python -B -I patch_v16_main_a.py."""
+import re, sys
+from pathlib import Path
+ROOT = Path(__file__).resolve().parent.parent
+s = (ROOT / "CORE-PR-HANDOFF-v15.md").read_text(encoding="utf-8")
+log = []
+def R(old, new, n=1):
+    global s
+    c = s.count(old)
+    if c != n:
+        print(f"PATCH MISMATCH expected {n} got {c}: {old[:90]!r}"); sys.exit(1)
+    s = s.replace(old, new); log.append(old[:60])
+def line_starting(prefix, new):
+    global s
+    lines = s.split("\n"); hit = [i for i, l in enumerate(lines) if l.startswith(prefix)]
+    if len(hit) != 1:
+        print(f"LINE MISMATCH {len(hit)}: {prefix[:70]!r}"); sys.exit(1)
+    lines[hit[0]] = new; s = "\n".join(lines); log.append(prefix[:60])
+
+# ---- 0. names (global renames; the history sentence of item 6 keeps v15-CHANGES.md)
+s = s.replace("`v14-CHANGES.md` and `v15-CHANGES.md`", "@@HIST@@")
+for a, b in (("CORE-PR-HANDOFF-v15-other-tracks.md", "CORE-PR-HANDOFF-v16-other-tracks.md"), ("v15-CHANGES.md", "v16-CHANGES.md"),
+             ("v15-OPEN-FOR-LEAD.md", "v16-OPEN-FOR-LEAD.md"), ("resolve-handoff-v15.md", "resolve-handoff-v16.md"),
+             ("evidence-handoff-v15/pg_v15.py", "evidence-handoff-v16/pg_v16.py"), ("pg_run_v15.sh", "pg_run_v16.sh"), ("pg_v15.py", "pg_v16.py"),
+             ("raw-pg-v15-run1.txt", "raw-pg-v16-run1.txt"), ("raw-pg-v15-run2.txt", "raw-pg-v16-run2.txt"),
+             ("raw-pg-version-v15.txt", "raw-pg-version-v16.txt"), ("raw-pg-v15.txt", "raw-pg-v16-run1.txt"),
+             ("evidence-handoff-v15/held-sql/", "evidence-handoff-v16/held-sql/"), ("93 of 93", "174 of 174"),
+             ("SpendSettings.decrease_log_dsn_secret", "PostgresSettings.audit_reader_dsn_secret")):
+    s = s.replace(a, b)
+s = s.replace("@@HIST@@", "`v14-CHANGES.md` and `v15-CHANGES.md` (v15's file stays in this folder)")
+
+# ---- title and opening
+R("# Core hardening hand-off v15: spend track only (R460), 2026-11-16 UTC (same date in IST)", "# Core hardening hand-off v16: spend track only (R460), 2026-11-16 UTC (same date in IST)")
+R("Replaces v14 for everything about spend. v14, v13, v12, v11, v10 and v4 to v9 stay as they are.", "Replaces v15 for everything about spend. v15, v14, v13, v12, v11, v10 and v4 to v9 stay as they are.")
+R("What changed from v14, finding by finding, with the test that fails on the old design:", "What changed from v15, finding by finding, with the test that fails on the old design:")
+R("Raw output of every check I ran: `evidence-handoff-v15/` (the v14 programs that were not re-run stay in `evidence-handoff-v14/` and are named as carried).", "Raw output of every check I ran: `evidence-handoff-v16/` (the v15 and v14 programs that were not re-run stay in `evidence-handoff-v15/` and `evidence-handoff-v14/` and are named as carried).")
+R("v15 moved each correction into the place it belongs, deleted the sentences it replaced, and deleted 5.11.", "v15 moved each correction into the place it belongs, deleted the sentences it replaced, and deleted 5.11; v16 does the same for the findings of the two v15 reviews.")
+R("Round: 7 of the spend track after v13 (money path, no round cap).", "Round: 8 of the spend track after v13 (money path, no round cap).")
+
+# ---- section 0 item 0 and item 2 (full lines)
+line_starting("0. **What v15 changes, what failed, what is uncertain (read first).**",
+"0. **What v16 changes, what failed, what is uncertain (read first).** v15 failed two independent reviews (security: 0 blockers, 6 majors, 8 minors; readiness: 0 blockers, 5 majors, 9 minors). Every finding, its fix and its place: `v16-CHANGES.md` and `resolve-handoff-v16.md`. Every question that is yours: `v16-OPEN-FOR-LEAD.md`. **Read first. (1) What was NOT run: no unit test of this change (none is written), no `bandit` of this change, no CodeQL, and none of the EGM skills (I cannot invoke them from here; review of this text is still owed). `gate4.sh` ran once, on the UNCHANGED tree, as a copy (`evidence-handoff-v16/gate4_v16.sh`): `ruff check`, `ruff format --check`, the timing tests and `bandit` ended `rc=0`, but `pytest` ended `rc=1` with 2 failed and 9364 passed (the two failures are repository-wide guard tests that scan the `handover/` folder, outside this folder: `tests/test_no_reference_material.py` names two files under `handover/core-hardening/lead-repin/` that are not UTF-8 text, and `tests/test_repo_rules.py::test_licences_are_proprietary` names 10 licence files under `handover/promotion-inputs/`; raw files `evidence-handoff-v16/raw-gate4-base-*.txt`; neither is caused by anything I wrote; both need the lead, section 10 question L20). Nothing in `src/`, `tests/` or `inputs/` was edited. (2) Every Postgres result is Postgres 16.15 only. CI uses 17.10 and the lowest version the studio supports is not stated in anything I read; it is now a question to you (L18) and an independent run on 14 and 17 is asked for in 7.2. Only the 16 binaries exist on this machine. (3) Five things need the OWNER's own yes and are marked OWNER-OPEN everywhere; nothing here assumes an answer, and the default of each is \"not built\" (answer in `ORDERS.md`, last lead block): L7 (the `Infinity` clause), L9 (DB-2), L16 (a delete path for the decrease record; v16's append-only triggers make a delete impossible by accident, 5.6 item 1(l)), L17 (the meaning of Q27, other-tracks file), and the money unit D5 (non-blocking). Decisions that are the lead's: L10, L11, L13, L14, L15, L18, L19, L20; L12 is answered (the audit-reader role).** **(4) What v16 fixed that you can check:** the code now refuses a negative or not-a-number total itself, with no held file applied, and the second-reader and stop checks do not crash on a bad row (5.4 item 4b, run: `raw-pg-v16-run1.txt` K1 to K9 and L1 to L5); the audit-reader secret is held by the operator command line only, never by the agent process, with a written credential policy and a negative test (5.6 item 1(g), P1 to P7); every change of the kill switch is recorded by DB-2 (5.6 item 1(m), M1 to M9), and both records are append-only even for the owner (item 1(l), H1 to H5); a guard test over every SQL file refuses an unsafe `SECURITY DEFINER` function (item 1(j), O1 to O3); one named `Gate` protocol is the seam for S-1 and S-2a (5.3); the Postgres run is on a cluster with password logins, not trust (Q1 to Q5; 174 of 174 checks in each of two runs). **(5) Still open after v16, each stated where it lives:** (a) a 429 or 5xx storm can still use up an agent's day; v16 adds a circuit breaker that spaces the attempts but does not change the daily bound (5.3, 5.9 row 8; question O1); (b) the runtime database role can still lower any spend total and switch the kill switch off; DB-1 and DB-2 only refuse bad values and record changes; the dated design of the real control, L-2, is 5.10b (due 2026-12-04); (c) vendor facts I could not check (5.7, 5.9); (d) what was and was not run: item 2.")
+line_starting("2. **What was run in v15, and what was not.**",
+"2. **What was run in v16, and what was not.** **Run:** a throwaway Postgres 16.15 cluster on this machine (unix socket, own folder, deleted afterwards, **every connection through `scram-sha-256` password authentication, no `trust` line; the passwords are random, made per run and never printed; checks Q1 to Q5 prove it**), made-up data, the real `store/migrate.py` and `store/postgres.py` code of `src/` imported read-only, the migration step run as a plain non-superuser role that owns the database (printed: `rolsuper` false), the runtime, portal and audit-reader roles as plain roles: `evidence-handoff-v16/pg_v16.py` through `pg_run_v16.sh`, 174 of 174 checks in each of two runs (`raw-pg-v16-run1.txt`, `raw-pg-v16-run2.txt`). New in v16: sections K and L (no held file applied: the old write shape and the real `Limits.blocked` as negative controls, the v16 reference code beside them), M (kill-switch record, run through the real `store.set_kill_switch`, with the temporary-table attack and a negative control), N (the upgrade file), O (the `SECURITY DEFINER` guard and 14 mutants), P (the audit reader's temporary-table check before and after `REVOKE`, role membership, `VALID UNTIL`), Q (password authentication), H (append-only, the owner refused, the stated limit that the owner can switch the trigger off), I (timing, run twice: +0.062 and +0.047 ms per lowering). The independent re-run of v15's script on 14 and 17 is asked for (section 10, L18) and NOT done. **Not run:** the test suite on a changed tree (no change exists), the `ruff` and `bandit` steps on a changed tree, Postgres 14 and 17.10, any vendor call, any spend, the EGM skills. The prototypes (`add_spend_v15`, `add_spend_v16`, `spend_totals_v16`, `blocked_v16`, `reader_problems`, `apply_audit_reader`, `secdef_guard_v16.py`) live only in `evidence-handoff-v16/` and are not product code. Every design below is **specified**; items that a raw file shows are marked \"run on 16.15\"; the rest is **unverified**.")
+R("**Still unverified:** everything on 17.10,", "**Still unverified:** everything on 14 and 17.10,")
+R("the key guard, the decrease record, the temporary-table attack and its negative control, `REVOKE TEMPORARY`, the audit-reader role, the retention delete and the timing, as 5.6 says.", "the key guard, the decrease record, the kill-switch record, the append-only triggers, the temporary-table attack and its negative control, `REVOKE TEMPORARY`, the audit-reader role and its checks, the default-to-variant upgrade, the `SECURITY DEFINER` guard and the timing, as 5.6 says; all on a cluster with password logins.")
+
+# ---- section 1 words
+R("- **The customer demo** is the event the owner is preparing for.", "- **Audit reader**: one database login role that can only read the two records DB-2 adds (5.6 item 1(g)). **Operator command line**: the `hadavin-sdk` commands that a person runs on purpose (`limits status`, `migrate`); it is a different process from the agent, and only it may hold the audit-reader secret. **Decrease record**: the table of every lowering of a spend total. **Kill-switch record**: the table of every change of the kill switch (DB-2, v16).\n- **The customer demo** is the event the owner is preparing for.")
+print("part A ok", len(log))
+(ROOT / "CORE-PR-HANDOFF-v16.md").write_text(s, encoding="utf-8")

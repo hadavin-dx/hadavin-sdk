@@ -32,7 +32,7 @@ D = {
  "v21-git-safety-settings-off": ("-c log.showSignature=false -c gpg.program=/bin/false -c core.hooksPath=/dev/null ", ""),
  "v22-relative-tmpdir-allowed": (L("case ${TMPDIR:-/tmp} in /*)"), "\n"),
  "v23-xml-text-rule-off": (L("s/(<(${IDB})([[:space:]][^>]*)?>)[^<]+<"), "\n"),
- "v24-userinfo-no-scheme-rule-off": (L("s#(^|[[:space:]]"), "\n"),
+ "v24-userinfo-no-scheme-rule-off": (L("s#(^|[[:space:]\"'=(])([A-Za-z0-9._-]+:)"), "\n"),
  "v25-identified-by-rule-off": (L("s/(IDENTIFIED[[:space:]]+"), "\n"),
  "v26-colon-equals-rule-off": (L("s/((${ID})[[:space:]]*:=[[:space:]]*)"), "\n"),
  "v27-requirepass-line-rule-off": (L("s/(^${PFX0}[[:space:]]*(requirepass|masterauth"), "\n"),
