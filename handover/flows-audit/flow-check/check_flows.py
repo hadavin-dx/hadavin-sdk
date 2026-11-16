@@ -61,6 +61,22 @@ def final_block():
           "expression syntax beyond node names; secrets in a shape this scan does not list; every rule marked '%s' (retry limits, onError values, position of the error output)." % UNV)
     print("Passing this check does NOT mean the flows are ready to film.")
 
+HEADER = """# ===== READ THIS FIRST (plain words; every line of this header starts with '#') =====
+# What this is: a read-only check of the exported n8n flow files (text files). It never started n8n.
+# Verdict: exit code 0 does NOT mean the flows are ready to film. It only means the checker found no structural FAIL.
+#   Safe to import into n8n?  NOT KNOWN. Import was never tried. Test ONE import first (the owner or the laptop lead).
+# Exit code: 0 = no FAIL line (WARN lines may still exist). 1 = at least one FAIL line (a definite fault in a file). 2 = wrong command line.
+# FAIL = a definite fault in the file. WARN = something a person must read; a WARN can be serious and does not change the exit code.
+# "Known open problems" (closing block) counts WARN lines that are real defects we already know: no password on a web address,
+#   a step whose failure leaves the caller with no answer (reply gap), $env reads, and F-002 (repeat lead key, unproven).
+#   Unpatched flows ("pristine") give 6; patched flows give 8 because patch F-002 adds 2 lines (one per flow file mf-form and mf-hook) saying F-002 is unproven.
+# Three decisions are open (details in REPORT.md, box "Start here"):
+#   1. Web addresses (webhooks) of mf-form and mf-hook have no password: accept for the take, or add one (run with --require-webhook-auth to see the effect).
+#   2. Four steps read environment variables ($env): allow that in the take, or change the steps (run with --block-env-access to see the effect).
+#   3. Two yes/no steps (StuckRow, AlertRow in mf-recovery) lack a second branch: project rule says FAIL; --baseline excuses them as WARN only because the unpatched flows already had it.
+# =============================================================================
+"""
+
 def is_trigger(t): return t in TRIGGER_EXACT or t.endswith("Trigger")
 
 def strings(o):
@@ -515,6 +531,7 @@ def main(argv):
         if not isinstance(v, dict) or set(v) - {"nodes", "connections"}: fail("--expect", "bad entry for %r: %r" % (k, v))
     if allow and not set(allow) <= pc: fail("args", "--allow %s needs --patch-checks to name the same patches (got %s)" % (",".join(allow), ",".join(sorted(pc)) or "none"))
     diffsum = []
+    print(HEADER, end="")
     for dr in dirs:
         print("### %s" % dr)
         if not os.path.isdir(dr): fail(dr, "not a directory"); continue
