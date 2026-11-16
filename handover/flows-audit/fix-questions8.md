@@ -1,0 +1,7 @@
+# fix-questions8 (fixer log, 2026-11-16)
+Target: QUESTIONS.md (backup: scratchpad bak-q8.md). Not committed.
+Checks: check_secrets exit 1 (4 hits, all in reviews/citation-r7.md lines 9-11, not my file; baseline before my edits was exit 0, so another fixer's new file); check_refs exit 0; ruff check exit 0; ruff format --check exit 0.
+Counts by script: L rows 33; Q31 items 1..19 (was 14). Index and counts updated (19 questions; "other 18 items").
+Done: header/line cites, Q30 cite, ORDER 037 item 3 section, L5 numbers and two deadlines, L15 reworded, glossary (page, T21, stage journal, owner-sheet labels, pin/reviewer line, Case A/B, money stop, rehearsal, loopback, send, delete messages), Row 4 timing (ends about 07:35Z), T21 in take-prep gate, Tuesday NO-GO consequence (Q31 item 6), Q25 item 10 superseded, Q17 item 5 conflict flagged, Q31 batch staggered 9 (06:30Z), 3 (06:45Z), 8 (07:00Z), item 5 recount, item 2 key revocation vs retake/slip, new items 15 (named WARN reader), 16-19 (coordinator).
+Not done / uncertain: runbook v4 file not readable here (UNVERIFIED); all times planned by the audit, lead to confirm; item 15 name cannot be given by the audit.
+Edits needed in files I may not edit: RUNBOOK.md (step 16, kind (ii) text, 19a/21/23, I14/I15/I23, step 4b name), TAKE-CHECKLIST.md (rehearsal lines, short stand-in word list, reader time), FIX-PLAN.md lines 22 and 32, FINDINGS.md line 49 and counts per Q31 item 19, OWNER-STEPS-q16-rows.md (item 1, Words, re-pin paragraph, rehearsal contact line, retake timing, item 7).
