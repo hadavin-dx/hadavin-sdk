@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T14:57:36Z
-PUSHED_UTC: 2026-11-16T14:57:36Z
+UPDATED_UTC: 2026-11-16T14:59:34Z
+PUSHED_UTC: 2026-11-16T14:59:34Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
@@ -15,7 +15,7 @@ PROGRESS: 5 of 20 table items at 100 percent (M1, M11, M12, M13, M16); mean abou
 Terms: take = the one filmed run; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
 AGENTS_RUNNING: 8 of 8 (2026-11-16T14:52:51Z)
 CAPACITY nproc=4 load=0.17 disk: 18G free
-NEXT: hand-backs digested through 1613. Next 5 independent tasks: fix L5ac old lines 2-8; fix GLOSSARY Majors (digest 1545); fix L5b; fix v5-edits-for-M17; fix decision-list-for-lead rows.
+NEXT: hand-backs digested through 1624. Next 5 independent tasks: fix L5ac old lines 2-8; fix GLOSSARY Majors (digest 1545); fix L5b; fix v5-edits-for-M17; fix decision-list-for-lead rows.
 INTERRUPTED: none
 
 ## ITEMS
@@ -43,15 +43,21 @@ INTERRUPTED: none
 | M16 | flow-set question | DONE, closed by decision 1 (real-v5 only; film-v5 out) | 100 | flowset/REPORT.md | |
 
 ## AGENTS
-UPDATED_UTC: 2026-11-16T14:57:36Z | PUSHED_UTC: 2026-11-16T14:57:36Z
-| id | purpose | started | state |
-|---|---|---|---|
-| aed356e98c4570f40 | cold read L4c 200-270 | earlier | running |
-| (seven new, ids in session list) | re-reads AFTER the key clean-up: L2 1-50, L5b 1-50, L5a 1-50, L1c 1-50, L3 1-50, L4 1-50, L6 1-50 (tests that the old legends no longer clash with the new KEY) | 14:57Z | running |
-Closed and digested 1606-1613: acaae475e12d35716, a1ecbf103415ff110, a777629a5b8ac2fd5, a292cbc971a07f8dd, af7d1d8bfe4dd0f0e, af16d8be5305c28b7, a3409135c9e88bed9, a678ed3f61f9f4390; earlier: aaf4bdac38117a27e, ac52fcad88c7668b5, a67c11dde1aafd3c8, a0b02682c66e17388 (reports digested in 1602-1605 range; not separately numbered: L3c 60-130 Blocker no header, merged-findings 60-130 Blocker L3-FD-001 to 011 bare quotes, L2 170-240 and L3 130-200 same table class).
-FINDING: old LEGEND blocks clashed with the new KEY (two definitions of NOT-READ). Fixed this beat: old legend lines replaced by one PAGE SCOPE line and the GLOSSARY pointer on line 1 rewritten, on all 12 pages. READ-TRUNCATED added. A TABLE-KEY (columns, LISTED-ONLY, empty, repeated notes) added to 9 table pages.
-CAPACITY: 8 of 8. No missing slots.
-NEXT 5: read the 7 re-read reports (does the class gap close?); write one group row above each 71-row table (L2, L4c, L5b) naming grep patterns and results; L1c finding sentences for FD-001, FD-016, FD-021 (read merged-findings first); L5ac old lines 2-8; merged-findings legend (17 lane-labelled Blockers, 0 confirmed). Held-page items (1580, 1582, 1588) to LEAD-NOTICE.
+UPDATED_UTC: 2026-11-16T14:59:34Z | PUSHED_UTC: 2026-11-16T14:59:34Z
+| id | purpose | state |
+|---|---|---|
+| a93921ab4f6712335 | cold read L5b 200-end | running |
+| ac42d4d03f5ceca39 | cold read L3 270-end | running |
+| acdf230aa66f521d2 | cold read L1 200-end | running |
+| a53053c9c98bb5c86 | cold read L2 310-end | running |
+| a9736197cd289fa57 | cold read merged-findings 200-end | running |
+| aaaccbd483fcb454b | cold read L5ac 40-end | running |
+| (2 new this beat, ids in session list) | decision-list-for-lead whole; L6 50-130 | running |
+| (1 slot) | cold read L4c 270-end launched earlier; closed | see below |
+Closed and digested 1614-1624: a7be941d222d498d6, aed356e98c4570f40, abbe3b6ab0e90ba10, a96cc4f1bf77fa6c4, a19edbe24451b8ff7, aae6258c0d19aa2c4, ab92f3515be1723d8, abfc502f31b9968f2, ab1318946b2bfbce8, a0e284175225d5644, a08e5640583626469.
+FINDING: the 7 re-reads show the key clean-up did NOT close the class gap: no purpose line, "real-v5 scenes 1 to 4" undefined. Fixed on all 12 pages this beat (PURPOSE line, scope in words, DECISION tied to DECISION-one-store.md). Needs another re-read to confirm: not yet proven.
+CAPACITY: 8 of 8 (counts as started; check ListAgents). No missing slots.
+NEXT 5: re-read two cleaned pages to test the purpose and scope fix; one group note with grep patterns above each 71-row table (L2, L4c, L5b); L1c finding sentences FD-001, FD-016, FD-021; findings-table column legend in L4c and merged-findings; t19-gaps-r2 as one row per gap. Held-page items (1580, 1582, 1588) to LEAD-NOTICE.
 
 
 ## Details (long text moved from the FAILED line)

@@ -1,4 +1,6 @@
 # Merged findings of the six review lanes (record, not a to-do list)
+> PURPOSE: this page records which files the lane opened, how far it read each, and which findings it raised, so the lead can decide what to fix. It states no result about the system itself beyond the findings cited by id.
+
 
 <!-- LANE-KEY -->
 > KEY (inline, added 16 Nov 2026, so this page can be read alone)
@@ -8,7 +10,7 @@
 > - Status words: READ = opened fully, apart from any cut named in the row. READ-TRUNCATED = opened fully but long lines were cut at the length named in the row. SKIMMED = only headers, search hits or a first and last slice read. LISTED-ONLY = name and size seen, contents not opened. NOT-READ = not opened (older rows also use it for "only the top read": treat those as LISTED-ONLY). OWNER-ONLY = never opened. Draw no conclusion from the absence of findings in a file that is not READ.
 > - UNVERIFIED = no source file states it and nobody checked. NOT FOUND = searched, none found. N/A = does not apply (the reason follows).
 > - Job keys (what a component does): COUNTER counts events; FILTER refuses input; RETRY repeats a failed step; LOG records output; STORE holds data; NOTICE alerts a person; OTHER none of these.
-> - DECISION line N = a cite to a numbered line of the lead session's decision list; what N points to is NOT RECORDED on this page (see GLOSSARY.md).
+> - DECISION line N = line N of DECISION-one-store.md (decision 10 of inputs/DECISIONS-2026-11-16.md names that file and its line 14; two copies exist and which one is meant is not recorded). The sentence on line N is NOT RECORDED here, so every finding citing one is UNVERIFIED.
 > - The lead / lead session = the Claude session giving orders. Studio lead = the Claude session doing the technical steps. Other terms: GLOSSARY.md.
 
 Older legends (eleven stacked notes, r9 to r13) are in work/merged-findings-history.md and work/merged-findings-history-2.md (ignore them). Cite finding ids or section names, not line numbers (the only line numbers on this page are "DECISION line N", which means a line of that file).

@@ -1,4 +1,6 @@
 # Lane L5ac: status and key (added 16 Nov 2026 by the system-map session)
+> PURPOSE: this page records which files the lane opened, how far it read each, and which findings it raised, so the lead can decide what to fix. It states no result about the system itself beyond the findings cited by id.
+
 
 <!-- LANE-KEY -->
 > KEY (inline, added 16 Nov 2026, so this page can be read alone)
@@ -8,7 +10,7 @@
 > - Status words: READ = opened fully, apart from any cut named in the row. READ-TRUNCATED = opened fully but long lines were cut at the length named in the row. SKIMMED = only headers, search hits or a first and last slice read. LISTED-ONLY = name and size seen, contents not opened. NOT-READ = not opened (older rows also use it for "only the top read": treat those as LISTED-ONLY). OWNER-ONLY = never opened. Draw no conclusion from the absence of findings in a file that is not READ.
 > - UNVERIFIED = no source file states it and nobody checked. NOT FOUND = searched, none found. N/A = does not apply (the reason follows).
 > - Job keys (what a component does): COUNTER counts events; FILTER refuses input; RETRY repeats a failed step; LOG records output; STORE holds data; NOTICE alerts a person; OTHER none of these.
-> - DECISION line N = a cite to a numbered line of the lead session's decision list; what N points to is NOT RECORDED on this page (see GLOSSARY.md).
+> - DECISION line N = line N of DECISION-one-store.md (decision 10 of inputs/DECISIONS-2026-11-16.md names that file and its line 14; two copies exist and which one is meant is not recorded). The sentence on line N is NOT RECORDED here, so every finding citing one is UNVERIFIED.
 > - The lead / lead session = the Claude session giving orders. Studio lead = the Claude session doing the technical steps. Other terms: GLOSSARY.md.
 
 What this page is: a static read-only audit of eight files (the changelog, two question sets, a checker, a data generator, a seal file, a read-only-login check script and a mutation-runner tool) from the ask-your-data demo and the shared core. Relevance to the take (the one filmed run of the lead-intake demo): none of these eight files is on the take's path as far as this lane saw; the page is kept for the record and only the Findings table can matter. Status: all eight files READ in full; nothing was run; no severity here is confirmed by the studio lead (the Claude session doing the technical steps) or the studio head (the human who runs the studio). Ids: C component, S store, W workflow, WK workflow step, X script, K credential, D document, T test, F folder, FD finding; find a finding by its id, not a line number. Meaning NOT RECORDED (do not use): the term list in the line below.

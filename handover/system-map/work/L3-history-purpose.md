@@ -1,0 +1,1602 @@
+This page is self-contained: the KEY below defines the terms it uses. work/GLOSSARY.md adds optional detail.
+# Lane L3
+
+<!-- LANE-KEY -->
+> KEY (inline, added 16 Nov 2026, so this page can be read alone)
+> - take = the one recorded run of the lead-intake demo (made-up data, run through n8n), planned for 23 Nov 2026.
+> - lane = one read-only audit pass over a set of files by one agent. L1c, L3c, L4c, L5ac are continuation lanes that read what the first lane left. Findings are cited by id (for example L1c-FD-003 = finding 3 of lane L1c), not by line number; the merged list is merged-findings.md.
+> - Size columns are bytes unless the header says otherwise.
+> - Status words: READ = opened fully, apart from any cut named in the row. READ-TRUNCATED = opened fully but long lines were cut at the length named in the row. SKIMMED = only headers, search hits or a first and last slice read. LISTED-ONLY = name and size seen, contents not opened. NOT-READ = not opened (older rows also use it for "only the top read": treat those as LISTED-ONLY). OWNER-ONLY = never opened. Draw no conclusion from the absence of findings in a file that is not READ.
+> - UNVERIFIED = no source file states it and nobody checked. NOT FOUND = searched, none found. N/A = does not apply (the reason follows).
+> - Job keys (what a component does): COUNTER counts events; FILTER refuses input; RETRY repeats a failed step; LOG records output; STORE holds data; NOTICE alerts a person; OTHER none of these.
+> - DECISION line N = a cite to a numbered line of the lead session's decision list; what N points to is NOT RECORDED on this page (see GLOSSARY.md).
+> - The lead / lead session = the Claude session giving orders. Studio lead = the Claude session doing the technical steps. Other terms: GLOSSARY.md.
+
+<!-- TABLE-KEY -->
+> TABLE KEY (added 16 Nov 2026). Coverage tables on this page have the columns: path | size in bytes | status | note. If a row says SKIMMED but its note says "not opened", read it as LISTED-ONLY (name, size, and where the note says so a checksum; contents not read). If a note says only a grep or a count line was taken, the file's contents were not read and no claim on this page rests on them. A size of 0 means the file is empty. A note repeated on many rows describes the method for the whole group; it is not a per-file result. Where a note names a search (grep) without its pattern or its hits, the pattern and the hits are NOT RECORDED.
+
+
+> PAGE SCOPE (replaces the old legend; statuses are defined only in the KEY above): scope = real-v5 scenes 1 to 4 (decision 1 in inputs/DECISIONS-2026-11-16.md). Owner and date of each continuation lane: NOT SET (the studio lead names them in the launch message).
+
+## Coverage
+| path | bytes | status | note |
+|---|---|---|---|
+| handover/demo3/evidence/REPORT-archive-2026-11-14.md | 377458 | SKIMMED | file over 200 KB: headings and grep of TOTALS and HEARTBEAT 99-101 only |
+| handover/demo3/evidence/b10-final-run.md | 983 | READ | all |
+| handover/demo3/evidence/checkpoint-b14b.md | 397 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/checkpoint-b15b.md | 538 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/checkpoint-b16.md | 1228 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/checkpoint-b17.md | 980 | SKIMMED | checkpoint: first 12 lines |
+| handover/demo3/evidence/checkpoint-b18.md | 987 | SKIMMED | checkpoint: first 12 lines |
+| handover/demo3/evidence/checkpoint-b19.md | 1435 | SKIMMED | checkpoint: first 12 lines |
+| handover/demo3/evidence/checkpoint-b20.md | 1335 | SKIMMED | checkpoint: first 12 lines |
+| handover/demo3/evidence/checkpoint-b21.md | 7701 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/checkpoint-b22.md | 3751 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/checkpoint-b23.md | 4723 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/claims-stack-on-f3c39cf8.patch | 99933 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/claims-stack-rebase-notes.md | 2006 | READ | all |
+| handover/demo3/evidence/claims-stack-tests.md | 2153 | READ | all |
+| handover/demo3/evidence/claims-stale-after-pr14.md | 8022 | READ | lines 1-40 of 44 |
+| handover/demo3/evidence/cold-reader-n8n-limits.md | 16011 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 12 of 108 |
+| handover/demo3/evidence/cold-reader-readme.md | 6220 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 12 of 61 |
+| handover/demo3/evidence/cold-reader-settings-portal.md | 30516 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 12 of 171 |
+| handover/demo3/evidence/cold-reader-tests-realservices.md | 9050 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 12 of 44 |
+| handover/demo3/evidence/core/core-fix-on-frozen-r7e.patch | 994075 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan file list (152 diff headers) and first 12 lines |
+| handover/demo3/evidence/crash-soak-b.md | 3178 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 26 of 37 |
+| handover/demo3/evidence/crash-soak-blind.md | 10943 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 26 of 75 |
+| handover/demo3/evidence/crash-soak.md | 8588 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 26 of 68 |
+| handover/demo3/evidence/crosscheck-demo-numbers.md | 11168 | READ | all, cells cut |
+| handover/demo3/evidence/delta-fix-2-r4-to-r5.diff | 58018 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/delta-fix-5-r5-to-r6.diff | 32442 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/delta-fix-8-r2-to-r3.diff | 9814 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/delta-fix-9-r2-to-r3.diff | 6778 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/e10-fix-5-r4-report.md | 2009 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 7 |
+| handover/demo3/evidence/e8-fix-6-report.md | 1779 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 7 |
+| handover/demo3/evidence/e9-fix-6-r2-report.md | 3363 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 7 |
+| handover/demo3/evidence/failures.md | 6844 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 9 of 43 |
+| handover/demo3/evidence/flake-chase-fakes.md | 3624 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 8 of 29 |
+| handover/demo3/evidence/go1/diff-recovery.out | 1467 | SKIMMED | partial: first 12 lines |
+| handover/demo3/evidence/go1/ks-fixed.out | 705 | READ | all |
+| handover/demo3/evidence/go1/ks-mut.out | 0 | READ | 0 bytes, nothing to read |
+| handover/demo3/evidence/go1/mut-diff.out | 303 | READ | all |
+| handover/demo3/evidence/go1/sql-review.out | 1533 | READ | all |
+| handover/demo3/evidence/hang-hunt.md | 4955 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 9 of 59 |
+| handover/demo3/evidence/hostile-f7-rerun-6b1fe49.md | 21442 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 14 of 50 |
+| handover/demo3/evidence/hostile-f7-rerun-c14a514.md | 30611 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 14 of 65 |
+| handover/demo3/evidence/hostile-f7-rerun-edadd00.md | 17840 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 14 of 50 |
+| handover/demo3/evidence/hostile-f7-rerun.md | 2206 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 14 of 16 |
+| handover/demo3/evidence/hostile.md | 14522 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 14 of 137 lines |
+| handover/demo3/evidence/identity-fuzz-b.md | 236627 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 9 of 659 |
+| handover/demo3/evidence/identity-fuzz.md | 97505 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 9 of 392 |
+| handover/demo3/evidence/lane3-fix-1-evidence.md | 879 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-1-notes.md | 9252 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-1-r2-evidence.md | 2011 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-1-r2-notes.md | 8341 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-1-r2.patch | 38763 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-1-r3-notes.md | 8467 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-1-r3.patch | 56018 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-1-r4-notes.md | 14008 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-1-r4.patch | 73454 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-1-r5-notes.md | 13108 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-1-r5.patch | 117848 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-1-r6-notes.md | 14365 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-1-r6.patch | 169040 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-1.patch | 25811 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-10-notes.md | 8479 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-10-r2-notes.md | 14259 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-10-r2.patch | 89994 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-10-r3-notes.md | 10064 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-10-r3-parts/lane3-fix-10-r3-part-01-src.patch | 31798 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-10-r3-parts/lane3-fix-10-r3-part-02-scripts.patch | 31485 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-10-r3-parts/lane3-fix-10-r3-part-03-tests-1of2.patch | 59270 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-10-r3-parts/lane3-fix-10-r3-part-04-tests-2of2.patch | 30358 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-10-r3-parts/lane3-fix-10-r3-part-05-docs.patch | 29334 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-10-r3-recut.patch | 182245 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-10-r3.patch | 182245 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-10-r4-notes.md | 8786 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-10-r4-parts/lane3-fix-10-r4-part-01-src-and-tools.patch | 39478 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-10-r4-parts/lane3-fix-10-r4-part-02-scripts.patch | 43384 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-10-r4-parts/lane3-fix-10-r4-part-03-tests-a.patch | 62199 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-10-r4-parts/lane3-fix-10-r4-part-04-tests-b.patch | 66414 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-10-r4-parts/lane3-fix-10-r4-part-05-docs.patch | 42605 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-10-r4.patch | 254080 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-10-r5-notes.md | 3053 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-10-r5-parts/lane3-fix-10-r5-part1.patch | 75779 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-10-r5-parts/lane3-fix-10-r5-part2.patch | 77318 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-10-r5-parts/lane3-fix-10-r5-part3.patch | 64602 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-10-r5-parts/lane3-fix-10-r5-part4.patch | 66003 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-10-r5-parts/lane3-fix-10-r5-part5.patch | 24103 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-10-r5.patch | 307805 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-10-r6-notes.md | 8612 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-10-r6-parts/lane3-fix-10-r6-part1.patch | 68763 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-10-r6-parts/lane3-fix-10-r6-part2.patch | 60863 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-10-r6-parts/lane3-fix-10-r6-part3.patch | 71726 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-10-r6-parts/lane3-fix-10-r6-part4.patch | 72320 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-10-r6-parts/lane3-fix-10-r6-part5.patch | 79847 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-10-r6-parts/lane3-fix-10-r6-part6.patch | 4277 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-10-r6.patch | 357796 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-10.patch | 27865 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-for-stack.patch | 39849 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-notes.md | 6822 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-2-r10-notes.md | 7563 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-2-r10-on-fix-1-r6.patch | 395634 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r10-parts/part1-src-and-scripts.diff | 4481 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r10-parts/part2-docs.diff | 5346 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r10-parts/part3-tests-r8.diff | 7839 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r10-parts/part4-tests-r9.diff | 9606 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r11-notes.md | 5464 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-2-r11-on-fix-1-r6.patch | 409939 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r11-parts/part1-src.diff | 6119 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r11-parts/part2-tests-support-r6-r7-r11.diff | 17511 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r11-parts/part3-tests-r8-r9-pathwalk-settings.diff | 14256 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r12-notes.md | 2995 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-2-r12-on-fix-1-r6.patch | 428147 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r12-parts/part01.diff | 58787 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r12-parts/part02.diff | 69175 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r12-parts/part03.diff | 83631 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r12-parts/part04.diff | 63209 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r12-parts/part05.diff | 69643 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r12-parts/part06.diff | 83702 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r13-wip-on-r12-tree.patch | 103112 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r2-for-stack.patch | 83364 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r2-notes.md | 21009 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-2-r2.patch | 84855 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r3-for-stack.patch | 107700 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r3-notes.md | 11289 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-2-r3-on-fix-1-r4.patch | 109679 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r3-on-fix-1-r5.patch | 109201 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r3.patch | 109192 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r4-for-stack.patch | 143788 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r4-notes.md | 3437 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-2-r4-on-fix-1-r4.patch | 145767 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r4-on-fix-1-r5.patch | 145289 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r4-on-fix-1-r6.patch | 145204 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r4.patch | 145280 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r5-notes.md | 4210 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-2-r5-on-fix-1-r6.patch | 174215 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r5-recut.patch | 322776 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r6-notes.md | 3811 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-2-r6-on-fix-1-r6.patch | 250408 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r6-recut.patch | 390356 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r7-notes.md | 10163 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-2-r7-on-fix-1-r6.patch | 297108 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r7-recut.patch | 437056 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r8-notes.md | 11385 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-2-r8-on-fix-1-r6.patch | 354108 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r8-parts/lane3-fix-2-r8-part-01-src.patch | 57130 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r8-parts/lane3-fix-2-r8-part-02-r7-test-1of3.patch | 24678 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r8-parts/lane3-fix-2-r8-part-02-r7-test-2of3.patch | 27292 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r8-parts/lane3-fix-2-r8-part-02-r7-test-3of3.patch | 17935 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r8-parts/lane3-fix-2-r8-part-03-other-tests-1of2.patch | 84988 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r8-parts/lane3-fix-2-r8-part-03-other-tests-2of2.patch | 39193 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r8-parts/lane3-fix-2-r8-part-04-docs.patch | 75936 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r8-parts/lane3-fix-2-r8-part-05-scripts-load_tools-demo_only.patch | 27998 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r8-recut.patch | 502217 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r9-notes.md | 8616 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-2-r9-on-fix-1-r6.patch | 387435 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r9-parts/part1-src-and-scripts.diff | 4568 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r9-parts/part2-docs.diff | 34986 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r9-parts/part3-tests-small.diff | 13134 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r9-parts/part4-tests-r7-r8.diff | 17108 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2-r9-parts/part5-tests-r9-new.diff | 14387 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-2.patch | 41340 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-3-evidence.md | 2299 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-3-notes.md | 2806 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-3-r2-evidence.md | 7261 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-3-r2-notes.md | 2921 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-3-r2.patch | 6849 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-3-r3-notes.md | 1517 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-3-r3.patch | 7367 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-3-r4.patch | 7355 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-3-r5.patch | 7614 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-3.patch | 3904 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-4-for-stack-r2.patch | 23811 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-4-for-stack-r3.patch | 26294 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-4-for-stack-r4.patch | 28608 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-4-notes.md | 9237 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-4-r2-notes.md | 8804 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-4-r2.patch | 23669 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-4-r3-notes.md | 5364 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-4-r3.patch | 26152 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-4-r4-notes.md | 5715 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-4-r4.patch | 28466 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-4.patch | 7092 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-5-notes.md | 2784 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-5-r10-notes.md | 12847 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-5-r10-parts/lane3-fix-5-r10-part-01-scripts-readme.patch | 43054 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-5-r10-parts/lane3-fix-5-r10-part-02-order-and-words-tests.patch | 32171 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-5-r10-parts/lane3-fix-5-r10-part-03-other-reset-tests.patch | 61787 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-5-r10-parts/lane3-fix-5-r10-part-04-other-tests.patch | 40368 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-5-r10.patch | 177380 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-5-r11-parts/lane3-fix-5-r11-part-01-scripts-readme.patch | 46702 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-5-r11-parts/lane3-fix-5-r11-part-02-order-and-words-tests.patch | 45956 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-5-r11-parts/lane3-fix-5-r11-part-03-other-reset-tests.patch | 66980 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-5-r11-parts/lane3-fix-5-r11-part-04-other-tests.patch | 56169 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-5-r11.patch | 215807 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-5-r2-notes.md | 3747 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-5-r2.patch | 16836 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-5-r3-notes.md | 3388 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-5-r3.patch | 17562 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-5-r4-notes.md | 4666 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-5-r4.patch | 31168 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-5-r5-notes.md | 5542 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-5-r5.patch | 58505 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-5-r6-notes.md | 2516 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-5-r6.patch | 74925 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-5-r7-notes.md | 6961 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-5-r7.patch | 69693 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-5-r8-notes.md | 12177 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-5-r8-parts/lane3-fix-5-r8-part-01-scripts-readme.patch | 31517 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-5-r8-parts/lane3-fix-5-r8-part-02-reset-tests.patch | 64634 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-5-r8-parts/lane3-fix-5-r8-part-03-port-tests.patch | 33848 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-5-r8.patch | 129999 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-5-r9-notes.md | 11627 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-5-r9-parts/lane3-fix-5-r9-part-01-scripts-readme.patch | 35350 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-5-r9-parts/lane3-fix-5-r9-part-02-reset-tests.patch | 87555 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-5-r9-parts/lane3-fix-5-r9-part-03-port-tests.patch | 32684 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-5-r9.patch | 155589 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-5.patch | 5765 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-6-notes.md | 4091 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-6-r2-for-stack.patch | 51413 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-6-r2-notes.md | 9446 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-6-r2.patch | 50249 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-6-r3-for-stack.patch | 97373 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-6-r3-notes.md | 5732 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-6-r3.patch | 95672 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-6.patch | 23639 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-6b.patch | 2965 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-7-notes.md | 2606 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-7.patch | 6060 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-8-notes.md | 6696 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-8-r2-notes.md | 677 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-8-r2-on-fix-4-r4.patch | 32389 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-8-r2.patch | 29905 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-8-r3-on-fix-4-r4.patch | 32806 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-8-r3.patch | 30322 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-8.patch | 18123 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-9-notes.md | 5306 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-9-r2-notes.md | 354 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-9-r2.patch | 16486 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-9-r3-notes.md | 84 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan; notes lines grepped |
+| handover/demo3/evidence/lane3-fix-9-r3.patch | 17097 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lane3-fix-9.patch | 12560 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/lint-lane3-fix-10-r3.md | 846 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/lint-lane3-fix-2-r8.md | 1051 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/load-claims.md | 17595 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 9 of 97 |
+| handover/demo3/evidence/m1-report.md | 5930 | READ | all, cells cut to 330 chars |
+| handover/demo3/evidence/m2-report.md | 5228 | READ | all, cells cut |
+| handover/demo3/evidence/m3-report.md | 1978 | READ | all |
+| handover/demo3/evidence/m4-report.md | 3095 | READ | all, cells cut |
+| handover/demo3/evidence/m6-report.md | 4008 | READ | all |
+| handover/demo3/evidence/m8-report.md | 2478 | READ | all, cells cut |
+| handover/demo3/evidence/m9-report.md | 7014 | READ | all |
+| handover/demo3/evidence/matrix1-check.md | 6474 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 8 lines plus grep |
+| handover/demo3/evidence/mutation-identity-claims.md | 11854 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 9 of 77 |
+| handover/demo3/evidence/mutation-pathconfine.md | 6954 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 9 of 60 |
+| handover/demo3/evidence/numbers-audit.md | 17550 | READ | all, cells cut to 380 chars |
+| handover/demo3/evidence/patch-status.md | 6583 | READ | all, cells cut to 330 chars |
+| handover/demo3/evidence/path-tests-c14a514.md | 1665 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 7 |
+| handover/demo3/evidence/paused-b21-2026-11-14.md | 6638 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 14 |
+| handover/demo3/evidence/paused-b22-2026-11-14.md | 6457 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 9 |
+| handover/demo3/evidence/paused-b23-2026-11-14.md | 4113 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 9 |
+| handover/demo3/evidence/py313-base.md | 998 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 7 |
+| handover/demo3/evidence/py313-stack.md | 453 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 7 |
+| handover/demo3/evidence/py313-unskip.md | 2332 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 7 |
+| handover/demo3/evidence/py313-vs-py312.md | 3039 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 12 |
+| handover/demo3/evidence/raw/E5-a-test_env_numbers.log | 420 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/E5-a-test_live_claude.log | 100 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/E5-a-test_settings_lane3.log | 191 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/E5-b-test_env_numbers.log | 420 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/E5-b-test_live_claude.log | 1860 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/E5-b-test_settings_lane3.log | 969 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/E5-c.log | 457 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/E5-d.log | 111 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/E5-e-full.log | 10249 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/E5-f1.log | 0 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/E5-f2.log | 84 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/E7-a1.log | 864 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/E7-a2.log | 864 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b-n2-1.log | 2255 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b-n2-2.log | 426 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b-n2-3.log | 426 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b-n4-1.log | 426 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b-n4-2.log | 426 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b-n4-3.log | 426 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b10-fails-before.log | 15617 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b10-full-final.log | 5766 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b10-full-r2-head1.log | 7988 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b10-mutants.log | 1264 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b10-r3-subset.log | 180 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b11-fails-before.log | 1825 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b11-full-313.log | 5675 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b11-full-status.log | 376 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b11-new-312.log | 410 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b11-new-313.log | 410 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b11-r3-fails-before.log | 1950 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b11-r3-full-313.log | 5653 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b11-r3-full-status.log | 376 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b11-r3-new-313.log | 410 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b12-fails-before.log | 10678 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b12-final-full.log | 7106 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b12-full-final.log | 7106 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b12-full-run1-15failed.log | 39864 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b12-mutation.log | 1649 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b13-fails-before.log | 20275 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b13-full-attempt1-5failed.log | 17417 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b13-full-wait.log | 182 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b13-full.log | 14822 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b13-mutation.log | 708 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b13-patch-sha256.txt | 286 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b14-fails-before.log | 318356 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b14-full-313.log | 3466 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b14-full-final.log | 5784 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b14-mutants.log | 1102 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b14-sweep-after.log | 3462 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b14-sweep-before.log | 3484 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b15-full-final.log | 11489 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b15-full-final2-hung-at-18pct.log | 927 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b15-full-final3.log | 5989 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b15b-fails-before.log | 61252 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b15b-mutation.log | 445 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b16-fails-before.log | 172214 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b16-full-final.log | 6559 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b16-full-run1-1failed.log | 7841 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b16-mutation.log | 3276 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b16-xdist.log | 1001 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b17-behaviour-before.log | 465725 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b17-full-final.log | 17001 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b17-mutation.log | 2700 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b17-rerun-after-fix.log | 591 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b18-fails-before.log | 39774 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b18-full-final.log | 51241 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b18-gitleaks-rerun.log | 100 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b18-hygiene-alone.log | 99 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b18-mutation.log | 1387 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b18-old-guard-misses.log | 386 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b18-patch-sha256.txt | 286 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b18-wallclock-alone.log | 98 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b19-bandit.log | 1899 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b19-e501.log | 19 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b19-fails-before-r8.log | 76113 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b19-fails-before.log | 77226 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b19-full-final.log | 8006 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b19-guards-alone.log | 422 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b19-line-length.log | 739 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b19-mutation.log | 3605 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b19-mypy-linux.log | 44 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b19-mypy-win.log | 44 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b19-patch-sha256.txt | 2066 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b19-ruff-check.log | 357 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b19-ruff-format.log | 8220 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b1d-12-files-run.log | 3834 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b1d-burst-100.txt | 348 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b1d-docs-claims-and-hygiene-rerun.log | 111 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b1d-new-tests-on-r3-tree.log | 20561 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b1e-404-root.txt | 999 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b1e-fails-before.log | 14742 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b1e-full-suite.log | 6473 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b1e-hygiene-first-run-failed.log | 2797 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b1e-new-tests-and-hygiene.log | 111 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b1e-stack-tests.log | 111 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b1f-fails-before.log | 18970 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b1f-full.log | 6663 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b1f-patch-sha-after.txt | 134 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b1f-patch-sha-before.txt | 134 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b20-fails-before.log | 6763 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b20-full-final.log | 5082 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b20-full-first-FAILED-13.log | 25332 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b20-guard-hygiene-alone.log | 105 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b20-guard-wallclock-alone.log | 105 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b20-lint-bandit.log | 1904 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b20-lint-first-run-findings.log | 958 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b20-lint-mypy-linux.log | 49 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b20-lint-mypy-win32.log | 49 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b20-lint-ruff-check.log | 24 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b20-lint-ruff-format.log | 33 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b20-mutation.log | 3562 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b20-patch-sha256.txt | 1564 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b20p-bandit.log | 1899 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b20p-mypy-linux.log | 44 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b20p-mypy-win.log | 44 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b20p-ruff-check.log | 19 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b20p-ruff-format.log | 28 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-fails-before.log | 59710 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-full-final.log | 6546 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-full-run1-1failed.log | 8576 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-guards-alone.log | 155 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-lint-bandit.log | 1904 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-lint-mypy-linux.log | 49 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-lint-mypy-win32.log | 49 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-lint-ruff-check.log | 24 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-lint-ruff-format.log | 33 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-mutation-r9.log | 1511 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-mutation.log | 5492 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-patch-sha256.txt | 822 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-r10-fails-before.log | 73715 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-r10-full-final.log | 36846 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-r10-full-final.log.start | 73 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-r10-full-rerun-git-tests-1-FAILED-hygiene-literals.log | 2760 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-r10-full-rerun-git-tests-2-FAILED-gitleaks-two-commit-history.log | 8064 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-r10-full-rerun-git-tests.log | 513 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-r10-lint-bandit.log | 1239 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-r10-lint-mypy-linux.log | 49 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-r10-lint-mypy-win32.log | 49 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-r10-lint-ruff-check.log | 24 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-r10-lint-ruff-format.log | 33 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-r10-mutant-diffs-pp0.txt | 5824 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-r10-mutant-diffs-pp1.txt | 6245 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-r10-mutant-diffs-pp2.txt | 7361 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-r10-mutant-diffs-pp3.txt | 5237 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-r10-mutant-diffs-re0.txt | 769 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-r10-mutant-diffs-re10.txt | 2228 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-r10-mutant-diffs-re20.txt | 505 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-r10-mutant-diffs-re30.txt | 5411 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-r10-mutants-ALL.log | 20933 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-r10-mutants-pp0.log | 4547 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-r10-mutants-pp1.log | 4379 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-r10-mutants-pp2.log | 4522 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-r10-mutants-pp3.log | 4198 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-r10-mutants-re0.log | 1051 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-r10-mutants-re10.log | 946 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-r10-mutants-re20.log | 531 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-r10-mutants-re30.log | 1427 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-r10-mutation-tools/mut2.py | 2145 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-r10-mutation-tools/mutate-r10.py | 13976 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-r10-mutation-tools/mutate-r10b.py | 14675 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-r10-mutation-tools/mutate-r10c.py | 15247 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-r10-mutation-tools/mutate-r10d.py | 14715 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-r10-mutation-tools/mutate-r10e.py | 14897 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-r10-mutation-tools/mutate-r9.py | 10525 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-r10-mutation-tools/mutate.py | 9008 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-r10-patch-sha256.txt | 979 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-r9-after-order-words.log | 100 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-r9-fails-before.log | 39020 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-r9-full-final.log | 4801 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-r9-lint-bandit.log | 1904 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-r9-lint-mypy-linux.log | 49 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-r9-lint-mypy-win32.log | 49 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-r9-lint-ruff-check.log | 24 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-r9-lint-ruff-format.log | 33 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-r9-patch-sha256.txt | 829 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b21-repro-prefix-72files.log | 3566 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b22-changed-run.log | 117 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b22-fails-before.log | 201169 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b22-guards-alone.log | 207 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b22-lint-bandit.log | 1986 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b22-lint-e501.log | 94 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b22-lint-mypy-linux.log | 103 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b22-lint-mypy-win32.log | 103 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b22-lint-ruff-check.log | 80 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b22-lint-ruff-format.log | 98 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b22-mutation.log | 4281 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b22-mypy.log | 44 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b22-patch-sha256.txt | 401 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b22-r10-changed-run.log | 117 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b22-r10-fails-before.log | 9775 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b22-r10-guards-alone.log | 207 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b22-r10-mutation.log | 4543 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b22-r10-patch-sha256.txt | 389 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b22-r11-changed-run.log | 393 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b22-r11-fails-before.log | 1709 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b22-r11-guards-alone.log | 39 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b22-r11-lint-head.txt | 63 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b22-r11-mutation.log | 22397 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b22-r11-nonroot-lane3.log | 475 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b22-r11-patch-sha256.txt | 445 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b22-r12-changed-run.log | 153 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b22-r12-fails-before.log | 1968 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b22-r12-full-fg.log | 5137 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b22-r12-full.log | 30892 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b22-r12-lint-head.txt | 63 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b22-r12-mutation.log | 20007 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b22-r12-nonroot-final.log | 371 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b22-r12-nonroot.log | 483 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b22-r12-patch-sha256.txt | 1126 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b22-r13-mutation-header.txt | 388 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b22-r13-mutation.log | 64880 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b22-ruff-check.log | 19 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b22-ruff-format.log | 28 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-callers.log | 3296 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-fails-before-exit-table.log | 8939 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-fails-before.log | 38353 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-hygiene.log | 112 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-lint-bandit.log | 1899 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-lint-mypy-linux.log | 44 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-lint-mypy-win32.log | 44 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-lint-ruff-check.log | 19 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-lint-ruff-format.log | 28 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-mutation.log | 3067 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-patch-sha256.txt | 822 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r5-callers.log | 4619 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r5-fails-before.log | 136708 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r5-lint-bandit.log | 1234 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r5-lint-mypy-linux.log | 44 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r5-lint-mypy-win32.log | 44 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r5-lint-ruff-check.log | 19 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r5-lint-ruff-format.log | 28 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r5-mutation.log | 13491 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r5-patch-sha256.txt | 668 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r5-start-run1.log | 368 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r5-start-run2.log | 368 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r5-start-run3.log | 368 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r5-wallclock-test_burst_retry.log | 99 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r5-wallclock-test_clock_steps.log | 99 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-fails-before-start.log | 5642 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-full-final.log | 5166 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-full-final.time | 129 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-full-final.xml | 684472 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-full-run1-nogit.log | 36252 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-git-files-run.log | 4975 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-lint-bandit.log | 1234 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-lint-mypy-linux.log | 44 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-lint-mypy-win32.log | 44 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-lint-ruff-check.log | 19 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-lint-ruff-format.log | 28 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-mutation.log | 3271 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-patch-sha256.txt | 784 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-red-failed-names.txt | 1588 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-red-first.log | 22701 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/dmesg-01.txt | 306 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/dmesg-02.txt | 306 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/dmesg-03.txt | 306 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/dmesg-04.txt | 306 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/dmesg-05.txt | 306 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/dmesg-06.txt | 306 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/dmesg-07.txt | 306 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/dmesg-08.txt | 306 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/dmesg-09.txt | 306 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/dmesg-10.txt | 306 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/dmesg-11.txt | 306 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/dmesg-12.txt | 306 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/dmesg-13.txt | 306 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/dmesg-14.txt | 306 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/dmesg-15.txt | 306 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/dmesg-16.txt | 306 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/dmesg-17.txt | 306 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/dmesg-18.txt | 306 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/dmesg-19.txt | 306 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/dmesg-20.txt | 306 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/run-01.log | 14053 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/run-01.xml | 17417 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/run-02.log | 14053 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/run-02.xml | 17417 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/run-03.log | 5845 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/run-03.xml | 17417 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/run-04.log | 14053 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/run-04.xml | 17417 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/run-05.log | 14053 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/run-05.xml | 17417 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/run-06.log | 14053 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/run-06.xml | 17417 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/run-07.log | 14053 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/run-07.xml | 17417 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/run-08.log | 14053 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/run-08.xml | 17417 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/run-09.log | 14053 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/run-09.xml | 17417 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/run-10.log | 2223 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/run-10.xml | 17417 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/run-11.log | 14053 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/run-11.xml | 17417 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/run-12.log | 14053 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/run-12.xml | 17417 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/run-13.log | 14053 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/run-13.xml | 17417 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/run-14.log | 14053 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/run-14.xml | 17417 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/run-15.log | 14053 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/run-15.xml | 17417 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/run-16.log | 14053 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/run-16.xml | 17417 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/run-17.log | 14053 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/run-17.xml | 17417 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/run-18.log | 14053 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/run-18.xml | 17417 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/run-19.log | 14053 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/run-19.xml | 17417 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/run-20.log | 14053 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/run-20.xml | 17417 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-r6-reruns/summary.txt | 2083 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-wallclock-1.log | 110 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b23-wallclock-2.log | 110 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b24-lint-b21.log | 84 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b25-lint-b22.log | 84 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b26-lint-b23.log | 84 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b27-lint-b22-r11.log | 84 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b28-lint-b21-r9.log | 40 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b29-lint-b23-r5.log | 40 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b2d-apply-check-r6.txt | 712 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b2d-apply-check.txt | 319 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b2d-fails-on-r3.txt | 2684 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b2d-full.log | 9979 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b2d-nonroot.log | 18766 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b2d-patch-sha-before.txt | 134 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b2d-patch-sha256.txt | 481 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b30-lint-b21-r10.log | 505 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b31-lint-b22-r12.log | 505 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b4b-r2-fails-before-base-docs.log | 4969 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b4b-r2-fails-casefold-copy.log | 9708 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b4b-r2-fails-doc-edit.log | 1836 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b4b-r2-full-suite.log | 10074 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b4b-r2-pass-patched.log | 99 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b4b-r2-stack-tree.log | 111 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b4c-apply-check.txt | 68 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b4c-base-docs.log | 10142 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b4c-casefold.log | 9737 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b4c-contract-letter.log | 1457 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b4c-contract-phrase.log | 1757 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b4c-dup-anchor.log | 2207 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b4c-full-suite.log | 6473 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b4c-hygiene.log | 1153 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b4c-limits_bullet-letter.log | 1479 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b4c-limits_bullet-phrase.log | 1780 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b4c-mutation-summary.txt | 913 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b4c-other-forms.log | 1512 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b4c-pass-patched.log | 111 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b4c-readme_def-letter.log | 1533 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b4c-readme_def-phrase.log | 1834 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b4c-readme_notclaimed-letter.log | 1507 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b4c-readme_notclaimed-phrase.log | 1808 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b4c-refused.log | 1508 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b4c-stack-tree.log | 123 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b4d-apply-check.txt | 648 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b4d-fails-before.log | 2628 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b4d-full.log | 7706 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b4d-mutation-summary.txt | 424 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b4d-node-lower.txt | 144 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b4d-other-trees.log | 399 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b4d-pass-patched.log | 111 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b5e-fails-before-list.txt | 5746 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b5e-fails-before.log | 83037 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b5e-full-invalid-run1-basetemp-outside-TMPDIR.log | 242150 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b5e-full.log | 7040 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b5e-nonroot-chmod.log | 1935 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b5e-old-script-8cases.log | 14063 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b5e-smtp-experiment.log | 625 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b5e-xdist.log | 1040 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b6-full-suite.log | 8522 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b6-new-tests-on-base.log | 985 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b6-new-tests-patched.log | 98 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b6-rerun-hygiene.log | 680 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b6b-6b-fails-on-base.log | 366 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b6b-6b-pass.log | 18 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b6b-affected-patched.log | 4566 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b6b-apply-checks.log | 199 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b6b-dry-fakes-assume-yes.log | 4926 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b6b-facts.txt | 7374 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b6b-final-new-and-hygiene.log | 111 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b6b-mutation-pins.log | 4691 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b6b-new-tests-on-base.log | 18 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b6b-stack-new-tests.log | 18 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b6c-apply-checks.log | 199 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b6c-fails-before.log | 20518 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b6c-full.log | 8832 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b6c-mutation-pins.log | 219 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b7-full-suite.log | 4848 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b7-mutants.log | 816 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b8-fails-before.log | 20542 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b8-full-suite-run1-1-failed-hygiene.log | 8944 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b8-full-suite.log | 6433 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b8-mutation.log | 787 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b9-fails-before.log | 2264 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b9-fails-before2.log | 2264 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b9-full-313.log | 6098 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b9-link.log | 123 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b9-new-312.log | 201 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b9-new-313.log | 201 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b9-new2-313.log | 711 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b9-three-312.log | 217 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/b9-three-313.log | 217 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/batch-p1.log | 118 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/batch-p1.out | 0 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/batch-p1.pid | 6 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/batch-p2.log | 121 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/burst-150-r0-p1-1.log | 562 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/burst-150-r0-p1-2.log | 563 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/burst-150-r0-p1-3.log | 563 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/burst-150-r0-p2-1.log | 568 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/burst-150-r0-p2-2.log | 567 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/burst-150-r0-p2-3.log | 566 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/burst-300-r0-p1-1.log | 4483 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/burst-300-r0-p1-2.log | 4482 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/burst-300-r0-p1-3.log | 4482 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/burst-300-r0-p2-1.log | 568 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/burst-300-r0-p2-2.log | 565 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/burst-300-r0-p2-3.log | 4486 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/burst-300-r1-p1-1.log | 564 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/burst-300-r1-p1-2.log | 564 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/burst-300-r1-p1-3.log | 564 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/burst-300-r1-p2-1.log | 569 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/burst-300-r1-p2-2.log | 566 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/burst-300-r1-p2-3.log | 567 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/c.log | 16416 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/claims-stack-diffstat.txt | 787 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/classify-p1.jsonl | 2289 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/classify-p2.jsonl | 1532 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/drv-burst_100-p0-0.desk.log | 41 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/drv-burst_100-p0-0.log | 867 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/drv-burst_300-p1-1.desk.log | 41 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/drv-burst_300-p1-1.log | 867 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/drv-burst_300-p1-2.desk.log | 41 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/drv-burst_300-p1-2.log | 882 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/drv-burst_300-p1-3.desk.log | 41 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/drv-burst_300-p1-3.log | 871 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/drv-burst_300-p2-1.desk.log | 190 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/drv-burst_300-p2-1.log | 883 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/drv-burst_300-p2-2.desk.log | 79 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/drv-burst_300-p2-2.log | 884 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/drv-burst_300-p2-3.desk.log | 338 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/drv-burst_300-p2-3.log | 884 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/drv-dupmix_1000_0.3_200-p1-1.desk.log | 45453 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/drv-dupmix_1000_0.3_200-p1-1.log | 918 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/drv-dupmix_1000_0.3_200-p1-2.desk.log | 43073 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/drv-dupmix_1000_0.3_200-p1-2.log | 915 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/drv-dupmix_1000_0.3_200-p1-3.desk.log | 37800 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/drv-dupmix_1000_0.3_200-p1-3.log | 918 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/drv-dupmix_1000_0.3_200-p2-1.desk.log | 50041 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/drv-dupmix_1000_0.3_200-p2-1.log | 919 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/drv-dupmix_1000_0.3_200-p2-2.desk.log | 46453 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/drv-dupmix_1000_0.3_200-p2-2.log | 916 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/drv-dupmix_1000_0.3_200-p2-3.desk.log | 49218 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/drv-dupmix_1000_0.3_200-p2-3.log | 920 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/drv-rate_100_10-p1-1.desk.log | 52050 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/drv-rate_100_10-p1-1.log | 887 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/drv-rate_100_10-p1-2.desk.log | 52324 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/drv-rate_100_10-p1-2.log | 884 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/drv-rate_100_10-p1-3.desk.log | 52106 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/drv-rate_100_10-p1-3.log | 886 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/drv-rate_100_10-p2-1.desk.log | 50282 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/drv-rate_100_10-p2-1.log | 888 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/drv-rate_100_10-p2-2.desk.log | 54555 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/drv-rate_100_10-p2-2.log | 889 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/drv-rate_100_10-p2-3.desk.log | 54702 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/drv-rate_100_10-p2-3.log | 888 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e.log | 13904 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e10-fix-5-r4-full.log | 6433 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e10-progress.txt | 127 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e10-stack-apply.txt | 252 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e10-vmstat-end.txt | 433 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e10-vmstat-start.txt | 432 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e10-xd-1.log | 507 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e10-xd-10.log | 507 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e10-xd-11.log | 507 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e10-xd-12.log | 507 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e10-xd-13.log | 507 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e10-xd-14.log | 507 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e10-xd-15.log | 507 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e10-xd-16.log | 507 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e10-xd-17.log | 507 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e10-xd-18.log | 507 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e10-xd-19.log | 507 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e10-xd-2.log | 507 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e10-xd-20.log | 507 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e10-xd-3.log | 507 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e10-xd-4.log | 507 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e10-xd-5.log | 507 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e10-xd-6.log | 507 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e10-xd-7.log | 507 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e10-xd-8.log | 507 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e10-xd-9.log | 507 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e10-xdist.txt | 1851 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e3-fix1-full.log | 429546 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e3-fix1-new.log | 1175 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e3-stack-full.log | 430794 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e3-stack-new.log | 1176 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e3c-a.log | 464 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e3c-b-files.txt | 356 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e3c-b.log | 1825 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e3c-d.log | 20612 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e3c-f.log | 11026 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e6/1-fix-serial.log | 7110 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e6/2-base-serial.log | 19918 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e6/3-xdist-n2-run1.log | 6942 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e6/3-xdist-n2-run2.log | 6942 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e6/3-xdist-n2-run3.log | 6942 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e6/3-xdist-n2-run4.log | 6942 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e6/3-xdist-n2-run5.log | 6942 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e6/3-xdist-n3-run1.log | 6942 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e6/3-xdist-n3-run2.log | 6942 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e6/3-xdist-n3-run3.log | 6942 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e6/3-xdist-n3-run4.log | 6942 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e6/3-xdist-n3-run5.log | 6942 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e6/4-hygiene.log | 19576 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e6/6-full-serial.log | 436844 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e8-fix-6-commands.log | 2011 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e8-fix-6-failsbefore-base.log | 4954 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e8-fix-6-failsbefore-patched.log | 110 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e8-fix-6-suite.log | 6433 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e9-fix-6-r2-full.log | 7584 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/e9-progress.txt | 121 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/edge-cases-x20-series.txt | 671 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/env-py313-base.txt | 569 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/f7-new-tests-6b1fe49.log | 1769 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/failing-ids-main-61ded9e.txt | 4345 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/failing-ids-pr12-8d65577-run1.txt | 4461 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/failing-ids-pr12-8d65577-run2.txt | 5357 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/fails-before-bashmin-r6.log | 4478 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/failures-alone-main.log | 5651 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/failures-basetemp-outside-main.log | 76935 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/fix1-full-run1-interrupted.log | 378125 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/fix1-full-run2-sigterm.log | 22292 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/fix1-full-run3-interrupted.log | 288112 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/fix1-hyg.log | 3175 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/fix1-new.log | 1260 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/fix1-tail.log | 55135 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/g0.log | 1008 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/g0.xml | 101229 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/g1.log | 1650 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/g1.xml | 211117 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/g2.log | 1810 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/g2.xml | 247123 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/g3.log | 2512 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/g3.xml | 123112 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/guards.log | 207 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hang-a-run1.log | 98 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hang-a-run10.log | 98 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hang-a-run2.log | 98 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hang-a-run3.log | 98 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hang-a-run4.log | 98 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hang-a-run5.log | 98 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hang-a-run6.log | 98 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hang-a-run7.log | 98 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hang-a-run8.log | 98 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hang-a-run9.log | 98 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hang-b-run1.log | 179 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hang-b-run2.log | 180 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hang-b-run3.log | 180 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hang-b-run4.log | 180 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hang-b-run5.log | 179 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hang-c-full.log | 22284 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hang-c-full.recovered.log | 387374 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hang-c2-full.log | 397102 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hang-c2-junit.xml | 535118 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hang-d1-run1.log | 98 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hang-d1-run2.log | 98 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hang-d1-run3.log | 98 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hang-d1-run4.log | 98 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hang-d1-run5.log | 98 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hang-d2-run1.log | 98 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hang-d2-run2.log | 98 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hang-d2-run3.log | 98 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hang-d2-run4.log | 98 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hang-d2-run5.log | 98 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hang-summary.txt | 666 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hostile-f7-f-e-final.log | 10087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hostile-f7-f-f-final.log | 9883 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hostile-f7-g-6b1fe49.log | 14776 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hostile-f7-g-c14a514.log | 14661 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hostile-f7-hostile_unc-final.log | 6168 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hostile-f7-hostile_unc2-final.log | 2065 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hostile-f7-rerun-d5b4451.log | 6928 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hostile-f7-rerun-edadd00.log | 6874 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hostile-fakeserver-extra.log | 1618 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hostile-fakeserver-mainb.log | 7361 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hostile-fakeserver-pr12b.log | 6261 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hostile-foreign-tools.log | 49500 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hostile-foreign-tools2.log | 7516 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hostile-hardlink-mainb.log | 1766 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hostile-hardlink-pr12b.log | 1766 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hostile-n8n-import.log | 38737 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hostile-n8n-syspath.log | 1948 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hostile-unc-mainb.log | 4529 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hostile-unc-pr12b.log | 5713 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hostile-unc2-mainb.log | 1835 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hostile-unc2-pr12b.log | 1917 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hyg-base-test_codeant_hygiene.log | 1336 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hyg-base-test_hygiene.log | 3173 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hyg-stack-test_codeant_hygiene.log | 1337 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/hyg-stack-test_hygiene.log | 3174 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/invalid-basetemp-hang-a-run1.log | 2261 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/invalid-basetemp-hang-a-run10.log | 2264 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/invalid-basetemp-hang-a-run2.log | 2261 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/invalid-basetemp-hang-a-run3.log | 2261 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/invalid-basetemp-hang-a-run4.log | 2261 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/invalid-basetemp-hang-a-run5.log | 2261 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/invalid-basetemp-hang-a-run6.log | 2261 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/invalid-basetemp-hang-a-run7.log | 2261 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/invalid-basetemp-hang-a-run8.log | 2261 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/invalid-basetemp-hang-a-run9.log | 2261 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/invalid-basetemp-hang-summary.txt | 261 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/lane3-fix-2-r2-r1-table.txt | 11779 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/lane3-fix-2-r3-fails-on-r2.txt | 2218 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/lane3-fix-2-r3-full-suite.log | 7352 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/lane3-fix-3-r4-tests.log | 523 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/lane3-fix-3-r5-tests.log | 522 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/lane3-fix-5-r4-fails-before-list.txt | 2110 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/lane3-fix-5-r4-full-suite-n4.log | 4534 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/lane3-fix-5-r4-xdist-proof.txt | 727 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/lint-head.txt | 63 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/lockstep-main.log | 24920 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/lockstep-pr12.log | 24920 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/m1-env.txt | 529 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/m1-envnames-before.txt | 3833 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/m1-envnames-run.txt | 3635 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/m1-rerun-default-1.log | 45085 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/m1-rerun-default-2.log | 45085 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/m1-rerun-default-3.log | 45085 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/m1-rerun-shuf-1.log | 45079 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/m1-rerun-shuf-2.log | 45079 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/m1-rerun-shuf-3.log | 45079 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/m1-run.log | 47296 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/m1-status-before.txt | 0 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/m2-rerun/default-1.log | 45085 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/m2-rerun/default-2.log | 45085 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/m2-rerun/default-3.log | 45085 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/m2-rerun/ids-d1 | 3013 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/m2-rerun/reversed-1.log | 45075 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/m2-rerun/reversed-2.log | 45075 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/m2-rerun/reversed-3.log | 45075 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/m2-run.log | 47290 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/m3-failed.txt | 3013 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/m3-run.log | 49567 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/m4-bin-s0.log | 124 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/m4-bin-s20261114.log | 124 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/m4-full.log | 4421 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/m4-nobin.log | 45182 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/m4-status-after.txt | 0 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/m4-status-before.txt | 0 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/m6-pip-install.log | 3767 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/m6-pip-list.txt | 588 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/m6-run1.log | 191 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/m6-run1.rc | 13 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/m6-run2-files.txt | 327 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/m6-run2.log | 672 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/m6-run2.rc | 14 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/m6-status-after.txt | 251 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/m6-status-before.txt | 13 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/m8-runA.log | 672 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/m8-runB.log | 672 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/m9-datawatch.txt | 142 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/m9-full.log | 17340 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/pass2.done | 20 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/pass2.out | 0 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/pass2.pid | 5 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/path-tests-6b1fe49-sidebyside.log | 47030 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/path-tests-c14a514.log | 47030 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-A.txt | 775 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-B.txt | 540 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-B1.txt | 146 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-B1b.txt | 207 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-B1c.txt | 112 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-B1d.txt | 323 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-B1e.txt | 479 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-B1f.txt | 498 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-B2.txt | 162 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-B2b.txt | 223 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-B2c.txt | 568 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-B2d.txt | 367 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-B3.txt | 110 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-B3b.txt | 112 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-B3c.txt | 90 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-B4.txt | 110 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-B4b.txt | 339 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-B4c.txt | 177 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-B4d.txt | 204 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-B5.txt | 110 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-B5b.txt | 112 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-B5c.txt | 55 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-B5d.txt | 434 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-B5e.txt | 1439 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-B6.txt | 109 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-B6b.txt | 197 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-B6c.txt | 507 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-B7.txt | 92 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-B8.txt | 121 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-B9.txt | 180 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-C.txt | 1130 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-D.txt | 252 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-E.txt | 131 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-E3.txt | 110 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-E3b.txt | 210 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-E3c.txt | 263 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-E4.txt | 82 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-E4b.txt | 231 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-E5.txt | 285 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-E6.txt | 260 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-E7.txt | 301 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-E8.txt | 207 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-F.txt | 174 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-G.txt | 148 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-H.txt | 86 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-I.txt | 274 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-J.txt | 108 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-K.txt | 124 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-L.txt | 108 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-M.txt | 104 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-M1.txt | 84 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-M2.txt | 123 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-M4.txt | 223 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-M6.txt | 181 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-N.txt | 194 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-O.txt | 77 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-Q1.txt | 534 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-Q10.txt | 343 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-Q11.txt | 112 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-Q2.txt | 1839 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-Q2b.txt | 7427 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-Q3.txt | 1421 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-Q3b.txt | 1423 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-Q3c.txt | 2091 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-Q4.txt | 304 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-Q5.txt | 174 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-Q5b.txt | 254 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-Q6.txt | 264 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-Q6b.txt | 377 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-Q7.txt | 124 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-Q8.txt | 598 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-Q8b.txt | 679 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-Q9.txt | 134 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/progress-R1.txt | 84 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/proto-p1-firstattempt.jsonl | 1964 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/proto-p1.err | 0 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/proto-p1.jsonl | 8854 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/proto-p1.pid | 6 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/proto-p2.err | 0 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/proto-p2.jsonl | 8891 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/py313-unskip-browser1-base.log | 12584 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/py313-unskip-browser1-stack.log | 12585 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/py313-unskip-browser2-base.log | 15369 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/py313-unskip-browser2-stack.log | 15370 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/py313-unskip-gitleaks-base.log | 8082 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/py313-unskip-gitleaks-stack.log | 8083 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/py313-unskip-pip-browser.log | 1046 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/py313-unskip-pip-dev.log | 3202 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q1-serial-partial.log | 417497 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q1-serial.log | 429827 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q1-xdist1.log | 831084 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q1-xdist2.log | 832340 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-lockstep-b1-s1.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-lockstep-b1-s2.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-lockstep-b1-s3.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-lockstep-b2-s1.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-lockstep-b2-s2.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-lockstep-b2-s3.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-lockstep-b3-s1.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-lockstep-b3-s2.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-lockstep-b3-s3.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-lockstep-b4-s1.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-lockstep-b4-s2.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-lockstep-b4-s3.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-lockstep-b5-s1.log | 16082 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-lockstep-b5-s2.log | 16082 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-lockstep-b5-s3.log | 16082 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b1-s1.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b1-s2.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b1-s3.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b10-s1.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b10-s2.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b10-s3.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b11-s1.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b11-s2.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b11-s3.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b12-s1.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b12-s2.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b12-s3.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b13-s1.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b13-s2.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b13-s3.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b14-s1.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b14-s2.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b14-s3.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b15-s1.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b15-s2.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b15-s3.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b16-s1.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b16-s2.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b16-s3.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b17-s1.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b17-s2.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b17-s3.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b18-s1.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b18-s2.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b18-s3.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b19-s1.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b19-s2.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b19-s3.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b2-s1.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b2-s2.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b2-s3.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b20-s1.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b20-s2.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b20-s3.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b3-s1.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b3-s2.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b3-s3.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b4-s1.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b4-s2.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b4-s3.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b5-s1.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b5-s2.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b5-s3.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b6-s1.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b6-s2.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b6-s3.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b7-s1.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b7-s2.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b7-s3.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b8-s1.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b8-s2.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b8-s3.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b9-s1.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b9-s2.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/main-stagger-b9-s3.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/summary-main-lockstep.txt | 744 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/summary-main-stagger.txt | 3693 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/summary-trial-lockstep.txt | 189 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/trial-lockstep-b1-s1.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/trial-lockstep-b1-s2.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q10/trial-lockstep-b1-s3.log | 16087 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q11-fix.diff | 700 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q3-pids.txt | 61986 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q3-round-logs.tgz | 1664638 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q3-round-table.md | 27607 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q3-rounds-partial-1246.jsonl | 237551 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q3-rounds.jsonl | 383817 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q3b-pids.txt | 66881 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q3b-rounds-partial-1259.jsonl | 301277 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q3b-rounds-table.md | 31047 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q3b-rounds.jsonl | 395817 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q3b-run.out | 0 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q3c-legacy-run1-rounds.jsonl | 46597 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q3c-legacy-run2-rounds.jsonl | 46796 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q3c-pids.txt | 61910 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q3c-q3c-rounds-partial-1320.jsonl | 332285 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q3c-round-logs.tgz | 2257534 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q3c-round-table.md | 27271 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q3c-rounds.jsonl | 486762 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q3c-single-probe.json | 11681 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q3c-snapshot.jsonl | 11311 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q8-results.jsonl | 7488 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q8-runner.out | 0 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q8b-results.jsonl | 11019 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q8b-run.out | 0 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q9-added-lines.txt | 54647 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q9-collect-base.txt | 367644 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q9-collect-qq.txt | 3135 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q9-collect-series.txt | 367644 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q9-names-added.txt | 163 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q9-theirs-on-series.err | 0 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/q9-theirs-on-series.md | 85354 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/r1-a.json | 36716 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/r1-a.log | 241 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/r1-b.json | 12554 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/r1-b.log | 156 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/r1-c.json | 673 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/r1-c.log | 131 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/r1-driver.log | 0 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/r2-a.json | 36330 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/r2-a.log | 241 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/r2-b.json | 12262 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/r2-b.log | 156 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/r2-driver.log | 0 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/s7001-a.json | 35577 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/s7001-a.log | 241 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/s7001-b.json | 12256 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/s7001-b.log | 153 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/s7001-c.json | 662 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/s7001-c.log | 130 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/s7001-d.json | 40029 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/s7001-d.log | 752 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/s7002-a.json | 35881 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/s7002-a.log | 241 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/s7002-b.json | 12510 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/s7002-b.log | 154 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/s7002-c.json | 662 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/s7002-c.log | 130 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/s7002-d.json | 39639 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/s7002-d.log | 752 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/s7003-a.json | 35613 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/s7003-a.log | 241 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/s7003-b.json | 12272 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/s7003-b.log | 153 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/s7003-c.json | 664 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/s7003-c.log | 130 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/s7003-d.json | 40244 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/s7003-d.log | 753 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/s7004-a.json | 36154 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/s7004-a.log | 241 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/s7004-b.json | 12241 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/s7004-b.log | 154 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/s7004-c.json | 662 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/s7004-c.log | 130 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/s7004-d.json | 41185 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/s7004-d.log | 752 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/s7005-a.json | 35385 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/s7005-a.log | 241 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/s7005-b.json | 12374 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/s7005-b.log | 153 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/s7005-c.json | 662 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/s7005-c.log | 130 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/s7005-d.json | 39197 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/s7005-d.log | 752 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/serial.sh | 636 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/stack-full.log | 434319 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/stack-hyg.log | 3176 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/stack-new.log | 1261 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/stoptest-file-alone-main.log | 8200 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/suite-6b1fe49.log | 428661 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/suite-6b1fe49.partial.log | 315534 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/suite-base.log | 428640 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/suite-edadd00.log | 429456 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/suite-edadd00.partial.log | 429456 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/suite-final-run1.log | 30843 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/suite-final-run1.recovered.log | 399340 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/suite-main-diag-v.log | 92851 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/suite-main-run1.log | 2968 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/suite-main-run2.log | 2968 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/suite-pr12-run1.log | 3094 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/suite-pr12-run2.log | 3239 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/suite-py313-base.log | 430132 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/suite-py313-base.partial.log | 296689 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/suite-py313-stack.log | 428576 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/suite-py313-stack.partial.log | 281035 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/suite-stack.log | 428547 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/suite-stack.partial.log | 428547 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/summary.txt | 896 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/unskip-browser-base.log | 27993 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/unskip-browser-stack.log | 27995 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/unskip-gitleaks-base.log | 8083 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/unskip-gitleaks-stack.log | 8084 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/raw/xdist.sh | 1197 | SKIMMED | raw family: listing, size, md5 duplicate scan, pytest summary-line grep, reference check from reports |
+| handover/demo3/evidence/reader-e3b.md | 12318 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 8 of 67 |
+| handover/demo3/evidence/reader-pr12-e-marks.md | 8658 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): lines 1-8 and 40-64 of 64 |
+| handover/demo3/evidence/reader-xdist-flake.md | 10293 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 8 of 50 |
+| handover/demo3/evidence/resolve-lane3-fix-10-r1.md | 8409 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/resolve-lane3-fix-10-r2.md | 4190 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/resolve-lane3-fix-10-r3.md | 9984 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/resolve-lane3-fix-10-r4.md | 9826 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/resolve-lane3-fix-10-r5.md | 8442 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/resolve-lane3-fix-10-r6.md | 6771 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/resolve-lane3-fix-2-r10.md | 8008 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/resolve-lane3-fix-2-r11.md | 1702 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/resolve-lane3-fix-2-r12.md | 8363 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 5 lines |
+| handover/demo3/evidence/resolve-lane3-fix-2-r3.md | 3868 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/resolve-lane3-fix-2-r5.md | 5397 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/resolve-lane3-fix-2-r6.md | 2244 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/resolve-lane3-fix-2-r7.md | 7108 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/resolve-lane3-fix-2-r8.md | 8084 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/resolve-lane3-fix-5-2-r1.md | 3852 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/resolve-lane3-fix-5-r10.md | 7008 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/resolve-lane3-fix-5-r6.md | 6130 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/resolve-lane3-fix-5-r7.md | 3336 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/resolve-lane3-fix-5-r8.md | 11481 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/resolve-lane3-fix-5-r9.md | 1662 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/resolve-lane3-fix-6-r1-and-fix-4-r3.md | 5197 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/resolve-lane3-fix-6-r2.md | 4528 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/resolve-lane3-fix-8-9-r1.md | 2743 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/resolve-round1-lane3-fix-1-and-3.md | 16649 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/resolve-round1-lane3-fix-2.md | 15350 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/resolve-round1-lane3-fix-4.md | 3792 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/resolve-round2-lane3-fix-1.md | 15647 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/resolve-round2-lane3-fix-2.md | 4716 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/resolve-round4-lane3-fix-1.md | 3157 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-1-comprehension-r1.md | 5669 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-1-r2-comprehension.md | 8334 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-1-r2-technical.md | 7766 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-1-r3-comprehension.md | 2650 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-1-r3-technical.md | 1698 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-1-r4-comprehension.md | 3313 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-1-r4-technical.md | 2533 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-1-r5-technical.md | 3701 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-1-technical-r1.md | 5939 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-10-codedetails.md | 6435 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-10-design.md | 5977 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-10-r2-codedetails.md | 2175 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-10-r2-design.md | 2677 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-10-r3-codedetails.md | 3823 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-10-r3-design.md | 2701 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-10-r4-codedetails.md | 2910 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-10-r4-design.md | 2415 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-10-r5-codedetails.md | 5412 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-10-r5-design.md | 7038 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-10-r6-codedetails.md | 2631 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-10-r6-design.md | 4306 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 3 lines |
+| handover/demo3/evidence/review-lane3-fix-2-design-r1.md | 10097 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-2-r10-codedetails.md | 2303 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-2-r10-design.md | 1738 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-2-r11-codedetails.md | 3127 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-2-r11-design.md | 3046 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-2-r12-codedetails.md | 4905 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): word count only |
+| handover/demo3/evidence/review-lane3-fix-2-r12-design.md | 5959 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 4 lines |
+| handover/demo3/evidence/review-lane3-fix-2-r2-codedetails.md | 3418 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-2-r2-design.md | 3316 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 3 lines |
+| handover/demo3/evidence/review-lane3-fix-2-r3-design.md | 3026 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-2-r3-technical.md | 3481 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-2-r4.md | 4101 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-2-r5-codedetails.md | 3359 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-2-r5-design.md | 4348 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-2-r6-codedetails.md | 3246 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-2-r6-design.md | 3505 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-2-r7-codedetails.md | 3600 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-2-r7-design.md | 6199 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-2-r8-codedetails.md | 2178 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-2-r8-design.md | 2956 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 3 lines |
+| handover/demo3/evidence/review-lane3-fix-2-r9.md | 2225 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-2-technical-r1.md | 8020 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-3-r1.md | 4842 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-3-r2.md | 3459 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-3-r3.md | 1196 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-3-r4.md | 952 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-4-r1-comprehension.md | 2675 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-4-r1-technical.md | 2875 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-4-r2-technical.md | 3622 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-4-r3-technical.md | 2028 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-5-r1.md | 5351 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-5-r10-codedetails.md | 4583 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-5-r10-design.md | 4478 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 3 lines |
+| handover/demo3/evidence/review-lane3-fix-5-r2.md | 1903 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-5-r3.md | 2337 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-5-r4-technical.md | 2540 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-5-r5.md | 3326 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-5-r6-codedetails.md | 4882 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-5-r6-design.md | 4243 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-5-r7-codedetails.md | 2105 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-5-r7-design.md | 2521 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-5-r8-codedetails.md | 2647 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-5-r8-design.md | 1377 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-5-r9-codedetails.md | 3978 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-5-r9-design.md | 3273 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-6-r1-comprehension.md | 6103 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-6-r1-technical.md | 4950 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-6-r2-comprehension.md | 12635 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-6-r2-technical.md | 941 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-7-r1.md | 1674 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-8-r1.md | 3212 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-8-r2.md | 2106 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-8-r3-delta.md | 1787 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-9-r1.md | 2550 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-9-r2.md | 1437 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-fix-9-r3-delta.md | 1234 | NOT-READ | not opened; listed in Checkpoint |
+| handover/demo3/evidence/review-lane3-needed-check-1.md | 7643 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 8 of 31 |
+| handover/demo3/evidence/skipped-on-purpose.md | 5230 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 9 of 44 |
+| handover/demo3/evidence/snapshot-b21-tree-vs-head-2026-11-14.patch | 336336 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/snapshot-b22-tree-vs-head-2026-11-14.patch | 622629 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/snapshot-b23-tree-vs-head-2026-11-14.patch | 382980 | SKIMMED | patch chain family: listing, byte size, md5 duplicate scan |
+| handover/demo3/evidence/suite-pr14-6b1fe49.md | 1954 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 7 |
+| handover/demo3/evidence/suite-pr14-edadd00.md | 1445 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 7 |
+| handover/demo3/evidence/suite-pr14.md | 2434 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 7 |
+| handover/demo3/evidence/summary.md | 8851 | READ | all 66 lines, cells cut to 400 chars |
+| handover/demo3/evidence/trace-b90-report.md | 5350 | READ | lines 5-36 |
+| handover/demo3/evidence/unskip-browser.md | 1873 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 7 |
+| handover/demo3/evidence/unskip-gitleaks.md | 2145 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 7 |
+| handover/demo3/evidence/xdist-proof.md | 4240 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 8 of 39 |
+| handover/demo3/evidence/xdist-root-cause.md | 3745 | SKIMMED | PARTIAL (outside PLAN section 6 allowance; continuation lane should READ): first 8 of 24 |
+| handover/demo3/scratch/e-f7.py | 1424 | SKIMMED | scratch: first 6 lines or listing; md5 duplicate scan |
+| handover/demo3/scratch/f-f7.py | 2768 | SKIMMED | scratch: first 6 lines or listing; md5 duplicate scan |
+| handover/demo3/scratch/foreignA/tools/__init__.py | 41 | SKIMMED | scratch: first 6 lines or listing; md5 duplicate scan |
+| handover/demo3/scratch/foreignB/tools/__init__.py | 1 | SKIMMED | scratch: first 6 lines or listing; md5 duplicate scan |
+| handover/demo3/scratch/foreignB/tools/pathconfine.py | 46 | SKIMMED | scratch: first 6 lines or listing; md5 duplicate scan |
+| handover/demo3/scratch/foreignC/tools/other.py | 4 | SKIMMED | scratch: first 6 lines or listing; md5 duplicate scan |
+| handover/demo3/scratch/foreignD/tools/__init__.py | 1 | SKIMMED | scratch: first 6 lines or listing; md5 duplicate scan |
+| handover/demo3/scratch/foreignD/tools/pathconfine.py | 314 | SKIMMED | scratch: first 6 lines or listing; md5 duplicate scan |
+| handover/demo3/scratch/fs/cwd/dangling_log | -1 | SKIMMED | scratch: first 6 lines or listing; md5 duplicate scan |
+| handover/demo3/scratch/fs/cwd/dirlink | -1 | SKIMMED | scratch: first 6 lines or listing; md5 duplicate scan |
+| handover/demo3/scratch/fs/cwd/outlink | 4096 | SKIMMED | scratch: first 6 lines or listing; md5 duplicate scan |
+| handover/demo3/scratch/fs/cwd/sym_ctl | 3 | SKIMMED | scratch: first 6 lines or listing; md5 duplicate scan |
+| handover/demo3/scratch/fs/cwd/sym_key | -1 | SKIMMED | scratch: first 6 lines or listing; md5 duplicate scan |
+| handover/demo3/scratch/fs/cwd/sym_log | 2 | SKIMMED | scratch: first 6 lines or listing; md5 duplicate scan |
+| handover/demo3/scratch/fs/outside/outlog.jsonl | 2 | SKIMMED | scratch: first 6 lines or listing; md5 duplicate scan |
+| handover/demo3/scratch/fs/outside/outmode.txt | 3 | SKIMMED | scratch: first 6 lines or listing; md5 duplicate scan |
+| handover/demo3/scratch/fs/pid | 6 | SKIMMED | scratch: first 6 lines or listing; md5 duplicate scan |
+| handover/demo3/scratch/fs/tmp/sym_key_tmp | -1 | SKIMMED | scratch: first 6 lines or listing; md5 duplicate scan |
+| handover/demo3/scratch/fs_cases.sh | 2796 | SKIMMED | scratch: first 6 lines or listing; md5 duplicate scan |
+| handover/demo3/scratch/g-f7.py | 4182 | SKIMMED | scratch: first 6 lines or listing; md5 duplicate scan |
+| handover/demo3/scratch/hl-mainb/outside/secret.txt | 13 | SKIMMED | scratch: first 6 lines or listing; md5 duplicate scan |
+| handover/demo3/scratch/hl-mainb/root/hl_in.txt | 12 | SKIMMED | scratch: first 6 lines or listing; md5 duplicate scan |
+| handover/demo3/scratch/hl-mainb/root/hl_out.txt | 13 | SKIMMED | scratch: first 6 lines or listing; md5 duplicate scan |
+| handover/demo3/scratch/hl-mainb/root/inside.txt | 12 | SKIMMED | scratch: first 6 lines or listing; md5 duplicate scan |
+| handover/demo3/scratch/hl-mainb/root/sym_out.txt | 13 | SKIMMED | scratch: first 6 lines or listing; md5 duplicate scan |
+| handover/demo3/scratch/hl-pr12b/outside/secret.txt | 13 | SKIMMED | scratch: first 6 lines or listing; md5 duplicate scan |
+| handover/demo3/scratch/hl-pr12b/root/hl_in.txt | 12 | SKIMMED | scratch: first 6 lines or listing; md5 duplicate scan |
+| handover/demo3/scratch/hl-pr12b/root/hl_out.txt | 13 | SKIMMED | scratch: first 6 lines or listing; md5 duplicate scan |
+| handover/demo3/scratch/hl-pr12b/root/inside.txt | 12 | SKIMMED | scratch: first 6 lines or listing; md5 duplicate scan |
+| handover/demo3/scratch/hl-pr12b/root/sym_out.txt | 13 | SKIMMED | scratch: first 6 lines or listing; md5 duplicate scan |
+| handover/demo3/scratch/hostile_hardlink.py | 1710 | SKIMMED | scratch: first 6 lines or listing; md5 duplicate scan |
+| handover/demo3/scratch/hostile_unc.py | 1357 | SKIMMED | scratch: first 6 lines or listing; md5 duplicate scan |
+| handover/demo3/scratch/hostile_unc2.py | 827 | SKIMMED | scratch: first 6 lines or listing; md5 duplicate scan |
+| handover/demo3/scratch/n8n_probe.py | 600 | SKIMMED | scratch: first 6 lines or listing; md5 duplicate scan |
+| handover/demo3/scratch/note.sh | 164 | SKIMMED | scratch: first 6 lines or listing; md5 duplicate scan |
+| handover/demo3/scratch/q11_probe.py | 1200 | SKIMMED | scratch: first 6 lines or listing; md5 duplicate scan |
+| handover/demo3/scratch/q11_probe2.py | 922 | SKIMMED | scratch: first 6 lines or listing; md5 duplicate scan |
+| handover/demo3/scratch/x-mainb.jsonl | 0 | SKIMMED | scratch: first 6 lines or listing; md5 duplicate scan |
+| handover/demo3/scratch/x-pr12b.jsonl | 0 | SKIMMED | scratch: first 6 lines or listing; md5 duplicate scan |
+| handover/demo3/tools/q1_compare.py | 893 | SKIMMED | script: header lines and diff against its sibling copy; not read in full |
+| handover/demo3/tools/q2-fuzz.py | 25276 | SKIMMED | script: header lines and diff against its sibling copy; not read in full |
+| handover/demo3/tools/q2-report.py | 1756 | SKIMMED | script: header lines and diff against its sibling copy; not read in full |
+| handover/demo3/tools/q2-run.sh | 797 | SKIMMED | script: header lines and diff against its sibling copy; not read in full |
+| handover/demo3/tools/q2b-fuzz.py | 36199 | SKIMMED | script: header lines and diff against its sibling copy; not read in full |
+| handover/demo3/tools/q2b-report.py | 2327 | SKIMMED | script: header lines and diff against its sibling copy; not read in full |
+| handover/demo3/tools/q2b-run.sh | 940 | SKIMMED | script: header lines and diff against its sibling copy; not read in full |
+| handover/demo3/tools/q3-soak.py | 25532 | SKIMMED | script: header lines and diff against its sibling copy; not read in full |
+| handover/demo3/tools/q3b-soak.py | 28014 | SKIMMED | script: header lines and diff against its sibling copy; not read in full |
+| handover/demo3/tools/q3c-single-probe.py | 2211 | SKIMMED | script: header lines and diff against its sibling copy; not read in full |
+| handover/demo3/tools/q3c-soak.py | 30920 | SKIMMED | script: header lines and diff against its sibling copy; not read in full |
+| handover/demo3/tools/q4_batch.sh | 961 | SKIMMED | script: header lines and diff against its sibling copy; not read in full |
+| handover/demo3/tools/q4_burst.sh | 875 | SKIMMED | script: header lines and diff against its sibling copy; not read in full |
+| handover/demo3/tools/q4_classify.py | 2276 | SKIMMED | script: header lines and diff against its sibling copy; not read in full |
+| handover/demo3/tools/q4_driver.sh | 2621 | SKIMMED | script: header lines and diff against its sibling copy; not read in full |
+| handover/demo3/tools/q4_extract.py | 570 | SKIMMED | script: header lines and diff against its sibling copy; not read in full |
+| handover/demo3/tools/q4_pass2.sh | 569 | SKIMMED | script: header lines and diff against its sibling copy; not read in full |
+| handover/demo3/tools/q4_proto.py | 8574 | SKIMMED | script: header lines and diff against its sibling copy; not read in full |
+| handover/demo3/tools/q4_stats.py | 2698 | SKIMMED | script: header lines and diff against its sibling copy; not read in full |
+| handover/demo3/tools/q8_mutate.py | 5443 | SKIMMED | script: header lines and diff against its sibling copy; not read in full |
+| handover/demo3/tools/q8b_mutate.py | 7821 | SKIMMED | script: header lines and diff against its sibling copy; not read in full |
+| handover/demo3/tools/q9_added.py | 444 | SKIMMED | script: header lines and diff against its sibling copy; not read in full |
+| handover/demo3/tools/q9_names.py | 1635 | SKIMMED | script: header lines and diff against its sibling copy; not read in full |
+| handover/demo3/tools/q9src/check_numbers_names.py | 13418 | SKIMMED | claims series patches and logs: duplicate-path grep for e-mail and secret types only |
+| handover/demo3/tools/q9src/claims-series-log.txt | 5573 | SKIMMED | claims series patches and logs: duplicate-path grep for e-mail and secret types only |
+| handover/demo3/tools/q9src/numbers-names-check-d2-after-v5.md | 85340 | SKIMMED | claims series patches and logs: duplicate-path grep for e-mail and secret types only |
+| handover/demo3/tools/q9src/numbers-names-check-pass1.md | 84403 | SKIMMED | claims series patches and logs: duplicate-path grep for e-mail and secret types only |
+| handover/demo3/tools/q9src/numbers-names-check.md | 86864 | SKIMMED | claims series patches and logs: duplicate-path grep for e-mail and secret types only |
+| handover/demo3/tools/q9src/series/0001-Fix-false-and-stale-sentences-in-the-docs-and-workfl.patch | 68693 | SKIMMED | claims series patches and logs: duplicate-path grep for e-mail and secret types only |
+| handover/demo3/tools/q9src/series/0002-Fix-start_all.ps1-empty-value-check-tighten-one-asse.patch | 5531 | SKIMMED | claims series patches and logs: duplicate-path grep for e-mail and secret types only |
+| handover/demo3/tools/q9src/series/0003-Review-fixes-of-the-first-docs-change.patch | 9331 | SKIMMED | claims series patches and logs: duplicate-path grep for e-mail and secret types only |
+| handover/demo3/tools/q9src/series/0004-Soften-or-source-unbacked-sentences-in-README-SECURI.patch | 33692 | SKIMMED | claims series patches and logs: duplicate-path grep for e-mail and secret types only |
+| handover/demo3/tools/q9src/series/0005-Review-fixes-README-timing-sentence-versions.md-note.patch | 10394 | SKIMMED | claims series patches and logs: duplicate-path grep for e-mail and secret types only |
+| handover/demo3/tools/q9src/series/0006-Soften-or-source-unbacked-sentences-in-docs-tests-li.patch | 111354 | SKIMMED | claims series patches and logs: duplicate-path grep for e-mail and secret types only |
+| handover/demo3/tools/q9src/series/0007-Review-fixes-licence-sentence-reminders-slow-sender-.patch | 18292 | SKIMMED | claims series patches and logs: duplicate-path grep for e-mail and secret types only |
+| handover/demo3/tools/q9src/series/0008-Soften-or-source-unbacked-sentences-in-contract-n8n-.patch | 142081 | SKIMMED | claims series patches and logs: duplicate-path grep for e-mail and secret types only |
+| handover/demo3/tools/q9src/series/0009-Review-fixes-of-the-contract-and-probe-sentences.patch | 11373 | SKIMMED | claims series patches and logs: duplicate-path grep for e-mail and secret types only |
+| handover/demo3/tools/q9src/series/0010-Correct-sentences-about-tests-found-wrong-by-a-searc.patch | 88505 | SKIMMED | claims series patches and logs: duplicate-path grep for e-mail and secret types only |
+| handover/demo3/tools/q9src/series/0011-Recount-the-collected-test-total-in-versions.md.patch | 3718 | SKIMMED | claims series patches and logs: duplicate-path grep for e-mail and secret types only |
+| handover/demo3/tools/q9src/series/0012-Review-fixes-stage-copy-note-replay-count-run-figure.patch | 25817 | SKIMMED | claims series patches and logs: duplicate-path grep for e-mail and secret types only |
+| handover/demo3/tools/q9src/series/0013-Cross-check-numbers-and-names-against-the-code-fix-f.patch | 38001 | SKIMMED | claims series patches and logs: duplicate-path grep for e-mail and secret types only |
+
+## Components
+| id | name | purpose | evidence | job keys |
+|---|---|---|---|---|
+| L3-C-001 | lead_desk (public demo repo, separate from hadavin-sdk) | The product that every report here tests: a desk with SQLite book, portal, fakes; Mode A product | `handover/demo3/evidence/crosscheck-demo-numbers.md:3 "(the lead_desk repo, not hadavin-sdk)"` | STORE |
+| L3-C-002 | demo fakes (fake mail system, CRM, model server) | Stand-ins used by soaks and fuzz so no real service is called | `handover/demo3/evidence/cold-reader-tests-realservices.md:2 "no real service contacted"` | OTHER |
+| L3-C-003 | load_tools (check_invariants, catcher) | Repo tool that checks the book after every soak round | `handover/demo3/evidence/crash-soak.md:11 "exited 0 (all 7 checks hold)"` | COUNTER |
+| L3-C-004 | evidence-runner harness (tools/q*, scratch/*) | Our own scripts that kill, fuzz, load and mutate the desk | `handover/demo3/tools/q3-soak.py:7 "Evidence runner only: it never edits the product code"` | OTHER |
+| L3-C-005 | n8n recovery flow mf-recovery (go1 fix) | Postgres sweep that retries stuck leads and sends one alert mail | `handover/demo3/evidence/go1/sql-review.out:2 "UPDATE mf_leads SET claimed_until=now()"` | RETRY |
+
+## Stores
+| id | name | purpose | job owner | inputs | outputs | failure path | retry | timeout | idempotency | logs to | identity | tested where | used by | evidence | job keys |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| L3-S-001 | desk SQLite book (leads, follow-ups, receipts) | Holds every lead and follow-up state of the desk product | desk (retired from take) | requests through two doors | counts, review list, portal rows | unknown state listed for a person | reaper and resend by id | UNVERIFIED | unique key on email key | UNVERIFIED | UNVERIFIED | crash soaks Q3, Q3b, Q3c; fuzz Q2 | UNVERIFIED | `handover/demo3/evidence/crash-soak.md:15 "7220 distinct leads"`; `handover/demo3/evidence/crash-soak-blind.md:9 "every one listed in"` | STORE |
+| L3-S-002 | Postgres mf_leads (n8n take) | Claim and state table for the take; unique lead key | n8n Postgres nodes | lead id | state, mail claim, alert state | state failed or unknown | ClaimStuck up to 3 attempts | UNVERIFIED | unique lead key | UNVERIFIED | UNVERIFIED | kill harness go1 | UNVERIFIED | `handover/demo3/evidence/go1/sql-review.out:4 "UPDATE mf_leads SET state=CASE WHEN mail_sent"`; `handover/demo3/evidence/trace-b90-report.md:6 "Both mails are real sends from two separate SMTP"` | STORE |
+| L3-S-003 | tests write a data/ folder into the repo tree | Empty folder created by one test during full runs | tests | N/A: not a store, a side effect | empty folder | none | N/A: none | N/A: none | N/A: none | none | UNVERIFIED | m9 datawatch run | UNVERIFIED | `handover/demo3/evidence/m9-report.md:19 "APPEARED (dir)"`; `handover/demo3/evidence/b10-final-run.md:22 "an EMPTY data/ directory exists"` | STORE |
+| L3-S-004 | evidence/raw/progress-*.txt (74 files) | One timestamped note file per agent | agents | agent notes | text lines | N/A: none | none | N/A: none | N/A: none | itself | UNVERIFIED | not tested | UNVERIFIED | `handover/demo3/scratch/note.sh:3 "progress-B.txt"` | LOG |
+
+## Workflows
+| id | name | purpose | job owner | inputs | outputs | failure path | retry | timeout | idempotency | logs to | identity | tested where | used by | evidence | job keys |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| L3-W-001 | mf-recovery (probe-v3 and go1 versions) | Every 30 s: mark failed, claim stuck leads, claim and send alert mail | n8n (take) | mf_leads rows | alert mail, state updates | emailSend onError continueErrorOutput | claim of 120 s then up to 3 attempts | no node timeout set | token on alert mark, not on send | n8n execution history | UNVERIFIED | kill harness only, not a runtime run in this box | take | `handover/demo3/evidence/trace-b90-report.md:9 "Trigger: node Every30s"`; `handover/demo3/evidence/trace-b90-report.md:11 "no node timeout set"` | RETRY |
+
+## Workflow walk
+| id | flow | node | type | trigger or branch | error path | retry or timeout | on kill or restart | on duplicate | on out-of-order | on empty or huge input | writes where | person sees | identity | evidence |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| L3-WK-001 | L3-W-001 | Every30s | scheduleTrigger 1.2 | every 30 s, fans out to three nodes | N/A: trigger | UNVERIFIED | UNVERIFIED | UNVERIFIED | UNVERIFIED | UNVERIFIED | mf_leads | UNVERIFIED | UNVERIFIED | `handover/demo3/evidence/trace-b90-report.md:9 "Trigger: node Every30s"` |
+| L3-WK-002 | L3-W-001 | ClaimStuck | postgres executeQuery | claims stuck rows | none stated | 120 s claim | UNVERIFIED | claim_token rotates | UNVERIFIED | UNVERIFIED | mf_leads | UNVERIFIED | UNVERIFIED | `handover/demo3/evidence/go1/sql-review.out:2 "UPDATE mf_leads SET claimed_until=now()"` |
+| L3-WK-003 | L3-W-001 | MarkFailed | postgres executeQuery | after 3 attempts | none stated | attempts at least 3 | UNVERIFIED | state guard in WHERE | UNVERIFIED | UNVERIFIED | mf_leads | UNVERIFIED | UNVERIFIED | `handover/demo3/evidence/go1/sql-review.out:4 "UPDATE mf_leads SET state=CASE WHEN mail_sent"` |
+| L3-WK-004 | L3-W-001 | AlertClaim | postgres executeQuery | unknown or failed and not alert_sent | none stated | claim 720 s in go1; 60 s in probe-v3 | go1 adds clear of unsent claims on n8n start | two sends possible in probe-v3 (token guards mark only) | UNVERIFIED | UNVERIFIED | mf_leads | UNVERIFIED | UNVERIFIED | `handover/demo3/evidence/go1/sql-review.out:6 "UPDATE mf_leads SET alert_until=now() + interval '720 seconds'"`; `handover/demo3/evidence/trace-b90-report.md:27 "The token guard protects only the mark"` |
+| L3-WK-005 | L3-W-001 | AlertSend | emailSend 2.1 | if lead_key not empty | onError continueErrorOutput | no timeout set; socket 10 min by library default | UNVERIFIED | second mail if two claims | UNVERIFIED | UNVERIFIED | SMTP server | UNVERIFIED | UNVERIFIED | `handover/demo3/evidence/trace-b90-report.md:11 "AlertRow (if lead_key notEmpty)"`; `handover/demo3/evidence/trace-b90-report.md:20 "SOCKET_TIMEOUT 10 min"` |
+| L3-WK-006 | L3-W-001 | AlertMark | postgres executeQuery | after send | none stated | N/A: single update | UNVERIFIED | matches zero rows if token changed | UNVERIFIED | UNVERIFIED | mf_leads | UNVERIFIED | UNVERIFIED | `handover/demo3/evidence/go1/sql-review.out:10 "UPDATE mf_leads SET alert_sent=true, updated_at=now()"` |
+| L3-WK-007 | L3-W-001 | ClearStaleAlertClaims (go1, n8n started) | postgres executeQuery | on n8n start | none stated | N/A: one-shot | this is the kill-restart repair | clears only unsent claims | UNVERIFIED | UNVERIFIED | mf_leads | UNVERIFIED | UNVERIFIED | `handover/demo3/evidence/go1/sql-review.out:12 "UPDATE mf_leads SET alert_until=NULL, alert_token=NULL WHERE alert_sent=false"` |
+
+## Scripts
+| id | name | purpose | job owner | inputs | outputs | failure path | retry | timeout | idempotency | logs to | identity | tested where | used by | evidence | job keys |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| L3-X-001 | handover/demo3/tools/q1_compare.py | compare per-test results of two logs | evidence runner | repo worktree path (hardcoded) | evidence files | exit code | none | hard timeout in script or shell | UNVERIFIED | raw/ files | UNVERIFIED | not tested | UNVERIFIED | UNVERIFIED: header only seen in listing (path handover/demo3/tools/q1_compare.py) | OTHER |
+| L3-X-002 | handover/demo3/tools/q2-fuzz.py | seeded fuzz of identity key (campaigns a-c) | evidence runner | repo worktree path (hardcoded) | evidence files | exit code | none | hard timeout in script or shell | UNVERIFIED | raw/ files | UNVERIFIED | not tested | UNVERIFIED | UNVERIFIED: header only seen in listing (path handover/demo3/tools/q2-fuzz.py) | OTHER |
+| L3-X-003 | handover/demo3/tools/q2b-fuzz.py | copy of q2-fuzz with campaign d | evidence runner | repo worktree path (hardcoded) | evidence files | exit code | none | hard timeout in script or shell | UNVERIFIED | raw/ files | UNVERIFIED | not tested | UNVERIFIED | `handover/demo3/tools/q2b-fuzz.py:2 "Q2b copy of q2-fuzz.py (campaigns a-c unchanged"` | OTHER |
+| L3-X-004 | handover/demo3/tools/q2-run.sh | driver for q2-fuzz | evidence runner | repo worktree path (hardcoded) | evidence files | exit code | none | hard timeout in script or shell | UNVERIFIED | raw/ files | UNVERIFIED | not tested | UNVERIFIED | `handover/demo3/tools/q2-run.sh:4 "P=/home/user/work/final-venv/bin/python"` | OTHER |
+| L3-X-005 | handover/demo3/tools/q2b-run.sh | driver for q2b-fuzz | evidence runner | repo worktree path (hardcoded) | evidence files | exit code | none | hard timeout in script or shell | UNVERIFIED | raw/ files | UNVERIFIED | not tested | UNVERIFIED | UNVERIFIED: header only seen in listing (path handover/demo3/tools/q2b-run.sh) | OTHER |
+| L3-X-006 | handover/demo3/tools/q2-report.py | report writer for q2 | evidence runner | repo worktree path (hardcoded) | evidence files | exit code | none | hard timeout in script or shell | UNVERIFIED | raw/ files | UNVERIFIED | not tested | UNVERIFIED | UNVERIFIED: header only seen in listing (path handover/demo3/tools/q2-report.py) | OTHER |
+| L3-X-007 | handover/demo3/tools/q2b-report.py | report writer for q2b | evidence runner | repo worktree path (hardcoded) | evidence files | exit code | none | hard timeout in script or shell | UNVERIFIED | raw/ files | UNVERIFIED | not tested | UNVERIFIED | UNVERIFIED: header only seen in listing (path handover/demo3/tools/q2b-report.py) | OTHER |
+| L3-X-008 | handover/demo3/tools/q3-soak.py | crash soak, keyed mail | evidence runner | repo worktree path (hardcoded) | evidence files | exit code | none | hard timeout in script or shell | UNVERIFIED | raw/ files | UNVERIFIED | not tested | UNVERIFIED | `handover/demo3/tools/q3-soak.py:7 "Evidence runner only: it never edits the product code"` | OTHER |
+| L3-X-009 | handover/demo3/tools/q3b-soak.py | copy of q3 soak, second seed | evidence runner | repo worktree path (hardcoded) | evidence files | exit code | none | hard timeout in script or shell | UNVERIFIED | raw/ files | UNVERIFIED | not tested | UNVERIFIED | `handover/demo3/tools/q3b-soak.py:2 "Q3b crash soak (copy of q3-soak.py, second seed"` | OTHER |
+| L3-X-010 | handover/demo3/tools/q3c-soak.py | copy of q3 soak, blind mail mode | evidence runner | repo worktree path (hardcoded) | evidence files | exit code | none | hard timeout in script or shell | UNVERIFIED | raw/ files | UNVERIFIED | not tested | UNVERIFIED | `handover/demo3/tools/q3c-soak.py:2 "Q3c (copy of Q3 soak, BLIND mail mode default"` | OTHER |
+| L3-X-011 | handover/demo3/tools/q3c-single-probe.py | single probe of blind crash point | evidence runner | repo worktree path (hardcoded) | evidence files | exit code | none | hard timeout in script or shell | UNVERIFIED | raw/ files | UNVERIFIED | not tested | UNVERIFIED | UNVERIFIED: header only seen in listing (path handover/demo3/tools/q3c-single-probe.py) | OTHER |
+| L3-X-012 | handover/demo3/tools/q4_batch.sh | load batch driver | evidence runner | repo worktree path (hardcoded) | evidence files | exit code | none | hard timeout in script or shell | UNVERIFIED | raw/ files | UNVERIFIED | not tested | UNVERIFIED | UNVERIFIED: header only seen in listing (path handover/demo3/tools/q4_batch.sh) | OTHER |
+| L3-X-013 | handover/demo3/tools/q4_burst.sh | burst driver | evidence runner | repo worktree path (hardcoded) | evidence files | exit code | none | hard timeout in script or shell | UNVERIFIED | raw/ files | UNVERIFIED | not tested | UNVERIFIED | UNVERIFIED: header only seen in listing (path handover/demo3/tools/q4_burst.sh) | OTHER |
+| L3-X-014 | handover/demo3/tools/q4_driver.sh | load driver | evidence runner | repo worktree path (hardcoded) | evidence files | exit code | none | hard timeout in script or shell | UNVERIFIED | raw/ files | UNVERIFIED | not tested | UNVERIFIED | `handover/demo3/tools/q4_driver.sh:4 "L=/home/user/work/q4-logs"` | OTHER |
+| L3-X-015 | handover/demo3/tools/q4_pass2.sh | second pass | evidence runner | repo worktree path (hardcoded) | evidence files | exit code | none | hard timeout in script or shell | UNVERIFIED | raw/ files | UNVERIFIED | not tested | UNVERIFIED | UNVERIFIED: header only seen in listing (path handover/demo3/tools/q4_pass2.sh) | OTHER |
+| L3-X-016 | handover/demo3/tools/q4_classify.py | classify load results | evidence runner | repo worktree path (hardcoded) | evidence files | exit code | none | hard timeout in script or shell | UNVERIFIED | raw/ files | UNVERIFIED | not tested | UNVERIFIED | UNVERIFIED: header only seen in listing (path handover/demo3/tools/q4_classify.py) | OTHER |
+| L3-X-017 | handover/demo3/tools/q4_extract.py | extract numbers | evidence runner | repo worktree path (hardcoded) | evidence files | exit code | none | hard timeout in script or shell | UNVERIFIED | raw/ files | UNVERIFIED | not tested | UNVERIFIED | UNVERIFIED: header only seen in listing (path handover/demo3/tools/q4_extract.py) | OTHER |
+| L3-X-018 | handover/demo3/tools/q4_proto.py | protocol probe | evidence runner | repo worktree path (hardcoded) | evidence files | exit code | none | hard timeout in script or shell | UNVERIFIED | raw/ files | UNVERIFIED | not tested | UNVERIFIED | UNVERIFIED: header only seen in listing (path handover/demo3/tools/q4_proto.py) | OTHER |
+| L3-X-019 | handover/demo3/tools/q4_stats.py | statistics | evidence runner | repo worktree path (hardcoded) | evidence files | exit code | none | hard timeout in script or shell | UNVERIFIED | raw/ files | UNVERIFIED | not tested | UNVERIFIED | UNVERIFIED: header only seen in listing (path handover/demo3/tools/q4_stats.py) | OTHER |
+| L3-X-020 | handover/demo3/tools/q8_mutate.py | mutation runner for pathconfine | evidence runner | repo worktree path (hardcoded) | evidence files | exit code | none | hard timeout in script or shell | UNVERIFIED | raw/ files | UNVERIFIED | not tested | UNVERIFIED | `handover/demo3/tools/q8_mutate.py:1 "Q8 mutation runner: one exact-text change per mutant"` | OTHER |
+| L3-X-021 | handover/demo3/tools/q8b_mutate.py | mutation runner for identity and claims | evidence runner | repo worktree path (hardcoded) | evidence files | exit code | none | hard timeout in script or shell | UNVERIFIED | raw/ files | UNVERIFIED | not tested | UNVERIFIED | UNVERIFIED: header only seen in listing (path handover/demo3/tools/q8b_mutate.py) | OTHER |
+| L3-X-022 | handover/demo3/tools/q9_added.py | list added lines of the claims series | evidence runner | repo worktree path (hardcoded) | evidence files | exit code | none | hard timeout in script or shell | UNVERIFIED | raw/ files | UNVERIFIED | not tested | UNVERIFIED | UNVERIFIED: header only seen in listing (path handover/demo3/tools/q9_added.py) | OTHER |
+| L3-X-023 | handover/demo3/tools/q9_names.py | check backticked names exist | evidence runner | repo worktree path (hardcoded) | evidence files | exit code | none | hard timeout in script or shell | UNVERIFIED | raw/ files | UNVERIFIED | not tested | UNVERIFIED | UNVERIFIED: header only seen in listing (path handover/demo3/tools/q9_names.py) | OTHER |
+| L3-X-024 | handover/demo3/tools/q9src/check_numbers_names.py | the demo session numbers and names check (copy) | evidence runner | repo worktree path (hardcoded) | evidence files | exit code | none | hard timeout in script or shell | UNVERIFIED | raw/ files | UNVERIFIED | not tested | UNVERIFIED | `handover/demo3/evidence/crosscheck-demo-numbers.md:19 "Their check script and status block"` | OTHER |
+| L3-X-025 | handover/demo3/scratch/e-f7.py | path hostile inputs, first set | evidence runner | repo worktree path (hardcoded) | evidence files | exit code | none | hard timeout in script or shell | UNVERIFIED | raw/ files | UNVERIFIED | not tested | UNVERIFIED | UNVERIFIED: header only seen in listing (path handover/demo3/scratch/e-f7.py) | OTHER |
+| L3-X-026 | handover/demo3/scratch/f-f7.py | e-f7 plus 8 cases | evidence runner | repo worktree path (hardcoded) | evidence files | exit code | none | hard timeout in script or shell | UNVERIFIED | raw/ files | UNVERIFIED | not tested | UNVERIFIED | `handover/demo3/evidence/hostile-f7-rerun-6b1fe49.md:3 "plus 8 new cases"` | OTHER |
+| L3-X-027 | handover/demo3/scratch/g-f7.py | f-f7 plus 15 cases | evidence runner | repo worktree path (hardcoded) | evidence files | exit code | none | hard timeout in script or shell | UNVERIFIED | raw/ files | UNVERIFIED | not tested | UNVERIFIED | `handover/demo3/evidence/hostile-f7-rerun-c14a514.md:3 "plus 15 new cases tagged NEW"` | OTHER |
+| L3-X-028 | handover/demo3/scratch/hostile_unc.py | UNC path inputs | evidence runner | repo worktree path (hardcoded) | evidence files | exit code | none | hard timeout in script or shell | UNVERIFIED | raw/ files | UNVERIFIED | not tested | UNVERIFIED | UNVERIFIED: header only seen in listing (path handover/demo3/scratch/hostile_unc.py) | OTHER |
+| L3-X-029 | handover/demo3/scratch/hostile_unc2.py | extra UNC inputs | evidence runner | repo worktree path (hardcoded) | evidence files | exit code | none | hard timeout in script or shell | UNVERIFIED | raw/ files | UNVERIFIED | not tested | UNVERIFIED | UNVERIFIED: header only seen in listing (path handover/demo3/scratch/hostile_unc2.py) | OTHER |
+| L3-X-030 | handover/demo3/scratch/hostile_hardlink.py | hard link and symlink inputs | evidence runner | repo worktree path (hardcoded) | evidence files | exit code | none | hard timeout in script or shell | UNVERIFIED | raw/ files | UNVERIFIED | not tested | UNVERIFIED | UNVERIFIED: header only seen in listing (path handover/demo3/scratch/hostile_hardlink.py) | OTHER |
+| L3-X-031 | handover/demo3/scratch/n8n_probe.py | import-order probe for scripts/n8n_api.py | evidence runner | repo worktree path (hardcoded) | evidence files | exit code | none | hard timeout in script or shell | UNVERIFIED | raw/ files | UNVERIFIED | not tested | UNVERIFIED | UNVERIFIED: header only seen in listing (path handover/demo3/scratch/n8n_probe.py) | OTHER |
+| L3-X-032 | handover/demo3/scratch/q11_probe.py | ps COLUMNS probe | evidence runner | repo worktree path (hardcoded) | evidence files | exit code | none | hard timeout in script or shell | UNVERIFIED | raw/ files | UNVERIFIED | not tested | UNVERIFIED | UNVERIFIED: header only seen in listing (path handover/demo3/scratch/q11_probe.py) | OTHER |
+| L3-X-033 | handover/demo3/scratch/q11_probe2.py | second ps probe | evidence runner | repo worktree path (hardcoded) | evidence files | exit code | none | hard timeout in script or shell | UNVERIFIED | raw/ files | UNVERIFIED | not tested | UNVERIFIED | UNVERIFIED: header only seen in listing (path handover/demo3/scratch/q11_probe2.py) | OTHER |
+| L3-X-034 | handover/demo3/scratch/fs_cases.sh | filesystem edge cases driver | evidence runner | repo worktree path (hardcoded) | evidence files | exit code | none | hard timeout in script or shell | UNVERIFIED | raw/ files | UNVERIFIED | not tested | UNVERIFIED | UNVERIFIED: header only seen in listing (path handover/demo3/scratch/fs_cases.sh) | OTHER |
+| L3-X-035 | handover/demo3/scratch/note.sh | append a progress line to raw/progress-B.txt | evidence runner | repo worktree path (hardcoded) | evidence files | exit code | none | hard timeout in script or shell | UNVERIFIED | raw/ files | UNVERIFIED | not tested | UNVERIFIED | `handover/demo3/scratch/note.sh:3 "progress-B.txt"` | OTHER |
+
+## Jobs
+| id | name | purpose | job owner | inputs | outputs | failure path | retry | timeout | idempotency | logs to | identity | tested where | used by | evidence | job keys |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| L3-J-001 | full suite run | one serial pytest run per head or fix round | evidence runner | made-up data, loopback only | raw/*full*.log | exit code and recorded counts | none | script-level | UNVERIFIED | raw/ files | UNVERIFIED | itself | UNVERIFIED | `handover/demo3/evidence/summary.md:32 "Not run (owner rule: GitHub CI only"`; `handover/demo3/evidence/lane3-fix-10-r6-notes.md:38 "ONE full run on a one-commit scratch repo"` | COUNTER |
+| L3-J-002 | crash soak | 300 rounds of kill and restart on the desk book | evidence runner | made-up data, loopback only | raw/q3*-rounds.jsonl | exit code and recorded counts | none | script-level | UNVERIFIED | raw/ files | UNVERIFIED | itself | UNVERIFIED | `handover/demo3/evidence/crash-soak.md:16 "386 kills in 300 rounds"`; `handover/demo3/evidence/crash-soak-b.md:25 "35 of 46 recovery crash-point kills did not fire"` | RETRY |
+| L3-J-003 | identity fuzz | seeded fuzz of the email key | evidence runner | made-up data, loopback only | raw/q2* | exit code and recorded counts | none | script-level | UNVERIFIED | raw/ files | UNVERIFIED | itself | UNVERIFIED | `handover/demo3/evidence/identity-fuzz.md:7 "Round 2 campaign c (replays) was NOT run"`; `handover/demo3/evidence/identity-fuzz-b.md:6 "Sizes were reduced from Q2's defaults"` | FILTER |
+| L3-J-004 | mutation runs | exact-text mutants of pathconfine and identity | evidence runner | made-up data, loopback only | raw/q8*-results.jsonl | exit code and recorded counts | none | script-level | UNVERIFIED | raw/ files | UNVERIFIED | itself | UNVERIFIED | `handover/demo3/evidence/mutation-pathconfine.md:5 "29 killed, 5 survived"` | OTHER |
+| L3-J-005 | hostile inputs | path and filesystem edge inputs | evidence runner | made-up data, loopback only | raw/hostile-* | exit code and recorded counts | none | script-level | UNVERIFIED | raw/ files | UNVERIFIED | itself | UNVERIFIED | `handover/demo3/evidence/hostile-f7-rerun-c14a514.md:5 "Total inputs: 46"` | FILTER |
+| L3-J-006 | n8n kill test go1 | kill n8n during alert send, count alerts | evidence runner | made-up data, loopback only | evidence/go1/ | exit code and recorded counts | none | script-level | UNVERIFIED | raw/ files | UNVERIFIED | itself | UNVERIFIED | `handover/demo3/REPORT.md:18 "FIXED flows (kill/flows-go1"` | NOTICE |
+
+## Credentials
+| id | name | purpose | job owner | inputs | outputs | failure path | retry | timeout | idempotency | logs to | identity | tested where | used by | evidence | job keys |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| L3-K-001 | ANTHROPIC_BASE_URL (name only; unset by the runner before runs) | environment variable name seen in the box | evidence runner | N/A: credential | N/A: credential | none | N/A: credential | N/A: credential | N/A: credential | none | process env | UNVERIFIED | none | `handover/demo3/evidence/m1-report.md:42 "Names before: raw/m1-envnames-before.txt"` | OTHER |
+| L3-K-002 | AWS_ACCESS_KEY_ID (name only; unset by the runner before runs) | environment variable name seen in the box | evidence runner | N/A: credential | N/A: credential | none | N/A: credential | N/A: credential | N/A: credential | none | process env | UNVERIFIED | none | `handover/demo3/evidence/m1-report.md:42 "Names before: raw/m1-envnames-before.txt"` | OTHER |
+| L3-K-003 | AWS_SECRET_ACCESS_KEY (name only; unset by the runner before runs) | environment variable name seen in the box | evidence runner | N/A: credential | N/A: credential | none | N/A: credential | N/A: credential | N/A: credential | none | process env | UNVERIFIED | none | `handover/demo3/evidence/m1-report.md:42 "Names before: raw/m1-envnames-before.txt"` | OTHER |
+
+## Docs and tests and folders
+| id | name | purpose | evidence | job keys |
+|---|---|---|---|---|
+| L3-D-001 | evidence/*.md report files (about 90) | reports, readers, cold readers, checkpoints | `handover/demo3/evidence/summary.md:1 "# PYTHON 3.13 CROSS-VERSION RESULT"` | LOG |
+| L3-D-002 | evidence/REPORT-archive-2026-11-14.md | heartbeats 1-101 of the session | `handover/demo3/evidence/REPORT-archive-2026-11-14.md:1 "# REPORT archive 2026-11-14"` | LOG |
+| L3-D-003 | evidence/numbers-audit.md | grep audit of every number claim | `handover/demo3/evidence/numbers-audit.md:1 "# NUMBERS AUDIT"` | COUNTER |
+| L3-D-004 | evidence/crosscheck-demo-numbers.md | cross-check of the demo session numbers and names | `handover/demo3/evidence/crosscheck-demo-numbers.md:1 "# Q9 cross-check"` | COUNTER |
+| L3-F-001 | evidence/raw/ | raw logs and progress notes | `handover/demo3/evidence/m1-report.md:5 "Log: raw/m1-run.log"` | LOG |
+| L3-F-002 | evidence/go1/ | kill-test raw output for the fixed n8n flow | `handover/demo3/REPORT.md:18 "raw agent output evidence/go1/"` | RETRY |
+| L3-F-003 | evidence/core/ | one 994 KB patch for the demo core | `handover/demo3/evidence/patch-status.md:27 "Not patches: cloud-core patch is another repo"` | OTHER |
+| L3-F-004 | tools/ | evidence-runner scripts and q9src copy | `handover/demo3/tools/q3-soak.py:7 "Evidence runner only: it never edits the product code"` | OTHER |
+| L3-F-005 | scratch/ | hostile-input work folders | `handover/demo3/scratch/note.sh:3 "progress-B.txt"` | OTHER |
+| L3-T-001 | tests/test_path_confinement.py (in lead_desk repo, not here) | 378 tests, one skipped on 3.12 | `handover/demo3/evidence/summary.md:38 "tests/test_path_confinement.py alone"` | FILTER |
+| L3-T-002 | tests/test_reset_scripts.py (lead_desk repo) | two xdist-only failures from COLUMNS | `handover/demo3/evidence/xdist-root-cause.md:3 "Cause (PROVEN by one-change experiments)"` | OTHER |
+| L3-P-001 | desk 8765 and demo servers 8766 | ports named in the README | `handover/demo3/evidence/cold-reader-readme.md:12 "port 8766 ... demo servers"` | OTHER |
+| L3-A-001 | evidence runners A to R1, builders B1 to B31, reviewers | agents that wrote the reports; progress files list them | `handover/demo3/scratch/note.sh:3 "progress-B.txt"` | OTHER |
+| L3-R-001 | public main f3c39cf8 of lead_desk; PR 12 and PR 14 | base heads tested | `handover/demo3/evidence/summary.md:1 "PYTHON 3.13 CROSS-VERSION RESULT"` | OTHER |
+
+## Findings
+| id | claim type | severity | evidence | conflicts with | job key |
+|---|---|---|---|---|---|
+| L3-FD-001 | idle | Major | `handover/demo3/evidence/m6-report.md:10 "113 passed, 0 skipped"`; `handover/demo3/evidence/crash-soak-b.md:13 "5 follow-ups in state"`; `handover/system-map/DECISION-one-store.md:15 "The desk SQLite and its portal are retired from the take"` | DECISION line 15 | STORE |
+| L3-FD-002 | duplicate | Major | `handover/demo3/evidence/hostile-f7-rerun.md:1 "F7 rerun on d5b4451"`; `handover/demo3/evidence/hostile-f7-rerun-6b1fe49.md:3 "plus 8 new cases"`; `handover/demo3/evidence/hostile-f7-rerun-c14a514.md:3 "plus 15 new cases tagged NEW"` | none | FILTER |
+| L3-FD-003 | duplicate | Nit | `handover/demo3/evidence/lane3-fix-10-r3-notes.md:55 "the recut has the same sha256"` | none | OTHER |
+| L3-FD-004 | inconsistent | Nit | `handover/demo3/evidence/raw/suite-stack.partial.log:3911 "EXIT_CODE=0 WALL_SECONDS=1193"`; `handover/demo3/evidence/raw/suite-edadd00.partial.log:3929 "3681 passed, 200 skipped in 1215.22s"` | none | LOG |
+| L3-FD-005 | inconsistent | Nit | `handover/demo3/evidence/py313-vs-py312.md:3 "raw/suite-base.log was not copied"` | `handover/demo3/evidence/raw/suite-base.log:3910 "3683 passed, 200 skipped in 1188.75s"` | LOG |
+| L3-FD-006 | inconsistent | Major | `handover/demo3/evidence/summary.md:55 "IMPORTANT: none of the four runs below printed"`; `handover/demo3/evidence/REPORT-archive-2026-11-14.md:1346 "**TOTALS today:** 57 tests failed in total"` | `handover/demo3/evidence/REPORT-archive-2026-11-14.md:992 "**TOTALS since session start:** 69 test failures"` | COUNTER |
+| L3-FD-007 | unverified | Major | `handover/demo3/evidence/crosscheck-demo-numbers.md:3 "I ran no test, only"`; `handover/demo3/evidence/crosscheck-demo-numbers.md:10 "One real behaviour change in a test."`; `handover/demo3/evidence/claims-stack-tests.md:2 "Stack: base + claims-stack-on-f3c39cf8.patch"` | none | COUNTER |
+| L3-FD-008 | inconsistent | Major | `handover/demo3/evidence/patch-status.md:14 "frozen claims series = claims-stack-on-f3c39cf8.patch"` | `handover/demo3/evidence/crosscheck-demo-numbers.md:26 "30 files changed, 230 insertions, 215 deletions"` | OTHER |
+| L3-FD-009 | inconsistent | Major | `handover/demo3/evidence/crosscheck-demo-numbers.md:9 "NO (flag wrong; the numbers 92, 10, 3883 are right)"` | none | COUNTER |
+| L3-FD-010 | unverified | Major | `handover/demo3/evidence/cold-reader-n8n-limits.md:3 "no workflow was imported into or run in a real n8n"` | none | OTHER |
+| L3-FD-011 | inconsistent | Major | `handover/demo3/evidence/cold-reader-settings-portal.md:11 "A bad value stops the start with an error."` | `handover/demo3/evidence/cold-reader-settings-portal.md:12 "the desk starts"` | OTHER |
+| L3-FD-012 | unverified | Major | `handover/demo3/evidence/crash-soak.md:18 "18 point kills did NOT fire"`; `handover/demo3/evidence/crash-soak-b.md:25 "35 of 46 recovery crash-point kills did not fire"` | DECISION line 15 | RETRY |
+| L3-FD-013 | unverified | Major | `handover/demo3/evidence/trace-b90-report.md:36 "Suggested fix (not applied)"`; `handover/demo3/evidence/go1/sql-review.out:6 "interval '720 seconds'"`; `handover/demo3/REPORT.md:18 "B90 (hold 90 s, no kill) on fixed flows: 1 alert at 120 s"` | `handover/demo3/evidence/trace-b90-report.md:28 "Not 'exactly once' anywhere"` | NOTICE |
+| L3-FD-014 | unverified | Major | `handover/demo3/evidence/go1/mut-diff.out:1 "374c374"`; `handover/demo3/REPORT.md:18 "raw agent output evidence/go1/"` | none | RETRY |
+| L3-FD-015 | unverified | Major | `handover/demo3/tools/q2-run.sh:4 "P=/home/user/work/final-venv/bin/python"`; `handover/demo3/tools/q4_driver.sh:4 "L=/home/user/work/q4-logs"`; `handover/demo3/tools/q8_mutate.py:3 "/home/user/work/q8-base"` | none | OTHER |
+| L3-FD-016 | duplicate | Major | `handover/demo3/tools/q3b-soak.py:2 "Q3b crash soak (copy of q3-soak.py, second seed"`; `handover/demo3/tools/q3c-soak.py:2 "Q3c (copy of Q3 soak, BLIND mail mode default"`; `handover/demo3/tools/q2b-fuzz.py:2 "Q2b copy of q2-fuzz.py (campaigns a-c unchanged"` | none | OTHER |
+| L3-FD-017 | duplicate | Nit | `handover/demo3/tools/q8_mutate.py:1 "Q8 mutation runner: one exact-text change per mutant"`; `handover/demo3/tools/q4_driver.sh:4 "L=/home/user/work/q4-logs"` | none | OTHER |
+| L3-FD-018 | dead | Nit | UNVERIFIED: scratch/x-mainb.jsonl and scratch/x-pr12b.jsonl are 0 bytes in the directory listing; no report cites them | none | OTHER |
+| L3-FD-019 | idle | Nit | `handover/demo3/scratch/note.sh:3 "progress-B.txt"`; `pyproject.toml:82 "testpaths"` | none | LOG |
+| L3-FD-020 | duplicate | Nit | `handover/demo3/scratch/hostile_hardlink.py:9 "FAKE-OUTSIDE"` | none | OTHER |
+| L3-FD-021 | idle | Major | `handover/demo3/evidence/paused-b21-2026-11-14.md:3 "Round 11 is NOT finished"`; `handover/demo3/evidence/paused-b22-2026-11-14.md:1 "round 13 NOT finished"`; `handover/demo3/evidence/paused-b23-2026-11-14.md:4 "The ONE final full run was NOT done."`; `handover/demo3/evidence/paused-b22-2026-11-14.md:8 "not split, not re-verified on a fresh archive"` | none | OTHER |
+| L3-FD-022 | duplicate | Major | `handover/demo3/evidence/lane3-fix-10-r3-notes.md:4 "it REPLACES"`; `handover/demo3/REPORT.md:52 "evidence/snapshot-b21/b22/b23-tree-vs-head-2026-11-14.patch"` | none | OTHER |
+| L3-FD-023 | ops | Major | `handover/demo3/evidence/lane3-fix-10-r6-notes.md:38 "ONE full run on a one-commit scratch repo"`; `handover/demo3/evidence/checkpoint-b17.md:8 "Full run: 2 failed (own test hygiene"` | none | COUNTER |
+| L3-FD-024 | unverified | Major | `handover/demo3/evidence/lane3-fix-2-r6-notes.md:25 "hung at about 18% in tests/test_fakes_body_before_answer.py"`; `handover/demo3/evidence/flake-chase-fakes.md:3 "STOPPED EARLY on the lane lead's order"`; `handover/demo3/evidence/reader-xdist-flake.md:6 "Never reproduced."` | `handover/demo3/evidence/hang-hunt.md:6 "No hang, no test failure"` | RETRY |
+| L3-FD-025 | inconsistent | Nit | `handover/demo3/evidence/lane3-fix-2-r6-notes.md:18 "Second full run: raw/b15-full-final2.log"` | none | LOG |
+| L3-FD-026 | unverified | Nit | `handover/demo3/evidence/reader-pr12-e-marks.md:60 "Whether pytest really printed any"` | none | COUNTER |
+| L3-FD-027 | inconsistent | Nit | `handover/demo3/evidence/claims-stack-tests.md:14 "6 playwright not installed"`; `handover/demo3/evidence/m9-report.md:56 "playwright not installed 22+28+113+1+1+1 = 166"` | none | COUNTER |
+| L3-FD-028 | ops | Nit | `handover/demo3/evidence/m9-report.md:19 "APPEARED (dir)"`; `handover/demo3/evidence/b10-final-run.md:22 "an EMPTY data/ directory exists"` | none | STORE |
+| L3-FD-029 | unverified | Nit | `handover/demo3/evidence/matrix1-check.md:14 "NOT FOUND (cannot be read anywhere"`; `handover/demo3/evidence/m4-report.md:7 "printed no SKIPPED lines in the log"`; `handover/demo3/evidence/m8-report.md:24 "I cannot prove from the log that the order differed"` | none | COUNTER |
+| L3-FD-030 | inconsistent | Nit | `handover/demo3/evidence/m6-report.md:2 "worktree /home/user/work/m7-tree"` | none | OTHER |
+| L3-FD-031 | duplicate | Major | `handover/demo3/evidence/checkpoint-b17.md:4 "Commit SHA: none (not committed"`; `handover/demo3/scratch/note.sh:3 "progress-B.txt"`; `handover/demo3/evidence/REPORT-archive-2026-11-14.md:1 "# REPORT archive 2026-11-14"` | none | LOG |
+| L3-FD-032 | unverified | Major | `handover/demo3/evidence/raw/summary.txt:9 "e rc=1 wall=1146s"`; `handover/demo3/evidence/raw/e.log:178 "assert not <re.Match object; span=(4501, 4504)"` | none | LOG |
+| L3-FD-033 | security | Nit | UNVERIFIED: fake password-like literal in a connection-string test id, TYPE credential-shaped; echoed in 27 raw logs, first at `handover/demo3/evidence/raw/hang-c2-full.log:2888 "test_addresses_of_any_kind_are_replaced"` | none | OTHER |
+| L3-FD-034 | security | Nit | UNVERIFIED: business e-mail address (TYPE e-mail, studio security contact, not shown) in claims patches at handover/demo3/tools/q9src/series/0004-Soften-or-source-unbacked-sentences-in-README-SECURI.patch:80 | none | NOTICE |
+| L3-FD-035 | idle | Nit | `handover/demo3/evidence/patch-status.md:27 "Not patches: cloud-core patch is another repo"` | none | OTHER |
+| L3-FD-036 | duplicate | Major | `handover/demo3/evidence/crosscheck-demo-numbers.md:47 "REAPER_PASS_SECONDS 10.0"`; `handover/demo3/evidence/trace-b90-report.md:9 "Trigger: node Every30s"` | DECISION line 15 | RETRY |
+| L3-FD-037 | duplicate | Major | `handover/demo3/evidence/crash-soak-blind.md:9 "every one listed in"`; `handover/demo3/evidence/trace-b90-report.md:11 "AlertRow (if lead_key notEmpty)"` | DECISION line 15 | NOTICE |
+| L3-FD-038 | duplicate | Major | `handover/demo3/evidence/identity-fuzz.md:3 "Target: public main f3c39cf8"` | DECISION line 7 | FILTER |
+| L3-FD-039 | unverified | Nit | `handover/demo3/evidence/mutation-pathconfine.md:5 "29 killed, 5 survived"` | none | FILTER |
+| L3-FD-040 | security | Blocker | `handover/demo3/evidence/review-lane3-fix-2-r12-design.md:2 "(money file) with a plain open"` | `handover/demo3/evidence/paused-b22-2026-11-14.md:1 "round 13 NOT finished"` | STORE |
+| L3-FD-041 | ops | Major | `handover/demo3/evidence/review-lane3-fix-2-r2-design.md:2 "0 blocker, 1 major, 6 minor/notes"`; `handover/demo3/evidence/review-lane3-fix-2-r8-design.md:1 "0 blocker, 3 major, 7 minor, 4 nit"`; `handover/demo3/evidence/review-lane3-fix-2-r12-design.md:1 "0 Blocker, 2 Major, 5 minor, 3 nit"`; `handover/demo3/evidence/review-lane3-fix-10-r6-design.md:2 "0 Blocker, 4 Major, 5 Minor, 3 Nit"` | none | OTHER |
+| L3-FD-042 | dead | Nit | UNVERIFIED: handover/demo3/scratch/fs has symlinks with outward and absolute targets; four listed rows (cwd/dangling_log, cwd/dirlink, cwd/sym_key, tmp/sym_key_tmp) point at missing targets, seen by directory listing only | none | OTHER |
+
+## Checkpoint
+Rewritten at the end of the run (1420 files in the table; counts below are from the table): READ 20, SKIMMED 1293, NOT-READ 107. Lane status: PARTIAL.
+done: all report-type files in handover/demo3/evidence/*.md were opened at least at the top (the READ ones in full); family scans (listing, size, md5 duplicate check, pytest summary-line grep, reference check from reports to raw files) over all 1411 files that exist on disk; secret and e-mail regex scan over the whole demo3 tree (no key, token or private-key value found; two address types recorded as findings).
+next (continuation lane): READ in full the files whose note says PARTIAL (hostile*, crash-soak*, cold-reader-*, load-claims, mutation-*, identity-fuzz*, hang-hunt, failures, reader-*, xdist-*, review-lane3-needed-check-1, paused-b21/22/23, py313-*, suite-pr14*, unskip-*), then read every script in tools/ and scratch/ in full, then sample raw/*.log families beyond the summary line.
+blockers: (1) these PARTIAL files are report or script types, which PLAN section 6 does not allow to be SKIMMED; the status is recorded honestly as SKIMMED with the PARTIAL note. (2) The table has 1420 rows but 1411 files exist as regular reachable files; the rows without a file are dangling symlinks under scratch/fs (4 listed in the first check, the other 5 not named here). (5) The 109 review-, resolve- and lint- reports in evidence/ were not read (about 100 stay NOT-READ); they hold the per-round severity counts that the severity trend finding L3-FD-041 only samples. (3) Nothing was run; every runtime claim stays UNVERIFIED. (4) Patch-chain contents (lane3-fix-*, delta-fix-*, snapshots, core patch) were not read, only sized and hashed.
