@@ -1,0 +1,15 @@
+# Batch 3 apply rules (lead 16:50Z, work/LEAD-ANSWERS.md lines 59-71). Read those lines first.
+Never write the owner's personal name: "owner". "lead" = the Claude session giving orders.
+## The corrected sentence (replaces EVERY earlier archive sentence, including the 16:41Z one that said the program archives with the take's key)
+"The take's HubSpot key cannot archive or delete. After you type end, the program tries once to archive this take's three made-up contacts; whatever it cannot archive it lists, and you archive or delete those by hand from the printed list." Mark UNVERIFIED until the lead's loopback re-smoke (whether the refusal prints cleanly; whether HubSpot's filtered list shows archived contacts). Because the key is read-only, expect all three contacts on the printed list: write that as the expected case, UNVERIFIED. Remove every claim that the key can archive, that the take archives them itself as a finished fact, "contacts done" wording that implies the program cleaned up, and any "key needs an archive right" (P09/OD-18): decision 2 keeps the key read-only.
+By-hand rule: the lead says "archive or delete by hand". If a page earlier had a stricter rule that existed in its -history-1 copy (for example delete only after a written word from the lead), keep that rule and state it plainly; do not add new strictness.
+## Lead facts now known (fill the matching "[lead fills]" / UNVERIFIED marks; mark the others as stated)
+- Builders r37, r38, r39 finish about 17:15Z, 18:10Z, 18:40Z (22:45, 23:40, 00:10 IST); then reviews and merge chain; re-pin target Tue 17 Nov 08:00Z (13:30 IST). Row 1 builder = these laptop lead agents (builders r37-r39), not a named person.
+- F-002, security rules A, E, F, I, DESK_* meanings, generator path: UNVERIFIED; core-hardening names them. Write UNVERIFIED, not blank.
+- Look of the HubSpot accounts, proof-screen choices: [OWNER FILLS]. Who films: the lead's Claude records via Playwright; the owner watches and posts. Backstop line name: core-hardening reads it from stage.env (UNVERIFIED until then).
+- demo-take profile name and place: [OWNER FILLS at the profile and filming check]; the deadline exception stays UNVERIFIED.
+- HubSpot check line and date: [LEAD FILLS at re-pin]. Login-key choice: closed after the scan (no key found in the seven files; counts only, UNVERIFIED limits in answer 8).
+- Third refill time 17:30Z / 23:00 IST. Percents M1 M2 M4-M8 M10-M13 M20: [LEAD FILLS at refill from the live state]. Video: record Wed 18 Nov earlier that day; post Wed 18 Nov 15:00Z / 20:30 IST.
+- Dollar limit: API credits US$189 prepaid, in-code backstop below it, window to Mon 23 Nov 18:29Z / 23:59 IST. Agent-day estimate: about 2 days of agent time to the take.
+- scripts/n8n_api.py is in the take repo. Crash test (DM): required. "Rehearsal passed" covers the loopback re-smoke and the rehearsal. Program notice and prompt text: edited by the fix builders, the lead approves.
+- v4.2 lines 453 and 507 are corrected by the lead in v4.3 (not by you).
