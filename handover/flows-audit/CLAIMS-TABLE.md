@@ -1,5 +1,7 @@
 # CLAIMS TABLE (queue item F1), flows-audit, 2026-11-16
 
+Wording rule: RUNSHEET-WORDING.md holds the paste text; CLAIMS-TABLE.md holds the verdict, tag, live or out status and to-do. A difference between them is a defect to fix, not a choice.
+
 ## Start here: scope 2026-11-16 (read first)
 This file is a to-do list for the words of the demo video and its notes. "Decision N" always means item N of handover/flows-audit/inputs/DECISIONS-2026-11-16.md (the coordinator's binding decisions of 2026-11-16). "D1 to D3" are three different things: open choices, listed under "Choices the coordinator must make before the take". The paths of all files are under "Index by file".
 1. The ONE video is made only from the real-v5 flows (the four n8n flow files mf-form, mf-hook, mf-recovery and mf-sub-crm-mail that use the real mail service and the real customer list, HubSpot), scenes 1 to 4 of VIDEO-RUNSHEET.md (decision 1). Its one claim: a lead record sent twice with the same id is processed once.
@@ -50,7 +52,7 @@ This file is a to-do list for the words of the demo video and its notes. "Decisi
 **What failed or was not checked (read this first).**
 - Nothing ran. No test was run in n8n (the workflow tool), Postgres (the lead-table database: the database that holds one row per lead record), HubSpot (the CRM, meaning the customer list) or a mail server. All data is made up.
 - 69 of the 327 claims are RELAYED-ONLY: they rest on a number that another session sent us and whose raw file is not in this checkout. One summary of those numbers is present (handover/demo/V7-NUMBERS-lead-read.md, the coordinator's own reading); the raw laptop files are absent.
-- 51 claims are UNTRACED: the file or step (a "node", one step inside a flow file) that would prove or disprove them is not in this checkout, so nothing can be said either way. UNSUPPORTED is different: the files we have contradict the claim or show it false (29 claims). Do not film or post an UNTRACED or UNSUPPORTED claim as fact. Most of the 69 RELAYED-ONLY and 51 UNTRACED claims have no replacement text (the exceptions are the claims among the 12 added on purpose, listed under "Count"): leave such a sentence out. The lane A ones (lane A = the claims from the two video files, see the glossary) that touch the video are listed under "Before filming: claims to leave out" below. 18 claims moved from UNTRACED after a read-only trace of the public desk repository (see "What the desk repository trace shows" below).
+- 51 claims are UNTRACED: the file or step (a "node", one step inside a flow file) that would prove or disprove them is not in this checkout, so nothing can be said either way. UNSUPPORTED is different: the files we have contradict the claim or show it false (29 claims). Do not film or post an UNTRACED or UNSUPPORTED claim as fact. Most of the 69 RELAYED-ONLY and 51 UNTRACED claims have no replacement text (the exceptions are the claims among the 12 added on purpose, listed under "Count"): leave such a sentence out. The lane A ones (lane A = the claims from the two video files, see the glossary) that touch the video are listed under "Before filming: claims to leave out" below. 18 claims moved from UNTRACED after a read-only trace of the public desk repository (see "What the desk repository trace shows" below). (definitions: see the glossary line)
 - HubSpot (the real CRM) was never tested by us. Whether it answers with the id HubSpot gives each contact as an all-digit `id` or as `vid` is not checked (ID-VID-CHECK.md in this folder). If it answers anything else, the lead record fails and no mail is sent (read in the flow text, not run). No scene may say "the real CRM answered with an id" until check P4a is read.
 - n8n runs on its own database today (a small SQLite file). This rests on one earlier smoke run (a first trial run of the whole take set-up; DECISION-one-store.md line 8), not on a check of the take machine. "One database" must stay out of the video unless the re-smoke (the next such trial run) proves otherwise (check P4b).
 - After the take (decision 2): the take's HubSpot identity is read-only and the take never deletes contacts. The made-up contacts stay in HubSpot; the coordinator lists them by lead key and contact id and the owner deletes them by hand in the HubSpot user interface (check P4c). Older files say otherwise: OWNER-STEPS-realrun-v3.md line 103 (and the notice at line 95) say the script archives them, PLAN-4-NLITE-FROM-LEAD.md line 111 says archive_all runs in a finally block, AGENT-SCOPE-DO-AND-DONT.md line 20 says the code deletes them (its F-01 is a code fix whose file, review-codebase-1.md, is not in this checkout). Only ORDERS.md line 82 (flows-audit/ORDERS.md, not demo/ORDERS.md) says they stay. The public desk repository (read-only trace) shows that its script run_real_check.py DOES archive the contacts of its run at the end when it is started with the option --cleanup (default off): crm_hubspot.py:492-499 sends the HubSpot delete call, run_real_check.py:1101-1107 calls it. The take does not use that path. Lead answer Q13 (ORDERS.md, 10:23Z): the take uses run_real_check_n8n.py in take mode plus n8n_drive.py, not the desk script's archive_all path; in the take the HubSpot identity is read-only and cleanup is OFF (result.json archive_contacts 'no'); leftovers are listed once by lead key and contact id and the owner deletes them by hand. The old desk harness still deletes; the take does not. Lead verifies at re-pin: the take scripts are not in this repository, so this is the lead's statement, not seen by us. The take scripts (run_real_check_n8n.py, n8n_drive.py) are not in this repository, so B-214 and B-215 stay UNTRACED, and B-067 and B-091 are OVERSTATED (they say the take's run archives). B-017 is SUPPORTED as a description of the old desk harness. Rows 32, 33 and 48 and the lane rows give the same text (round 8); B-214 gets no wording, only a HELD, DO NOT QUOTE marker, because what the take script does at a wrong or closed answer is not seen by us.
@@ -85,7 +87,7 @@ This file is a to-do list for the words of the demo video and its notes. "Decisi
 **Order of work (agent and coordinator).** This is the only order; no other list in this file overrides it.
 1. Settle D1, D2, D3 (coordinator). D1 is already settled for this video by decision 1 (no recovery time in a caption); D2 matters for row 3 (a planning figure); D3 matters only for out rows.
 2. First the coordinator confirms the Gmail filter and label `demo` (owner step 4) and the HubSpot property `hadavin_label` (owner step 6): rows 1 and 4 wait for both and for P4a. Then run and read P4a (rows 1, 4, 7, 39 and the CRM clause of row 79 wait for it), then P2 (row 6 only; row 16 does not wait for P2), then P4b (row 36). The laptop agent runs them, the coordinator reads them. P1 is for the later video only; the rows that need it are out.
-3. Work the live rows of Table 1 (tags [LIVE] and [LIVE, TEXT ONLY]) top to bottom (the table is grouped by file, so one visit per file) and tick the "done" column: rows 1 to 9, 16, 17, 22, 32, 33, 36, 39 and 79 (rows 14 and 15 stay OUT: lead answer Q15). Table 2 and the out rows of Table 1 wait for the later video or for the next time their file is opened.
+3. Work the live rows of Table 1 (tags [LIVE] and [LIVE, TEXT ONLY]) top to bottom (the table is grouped by file, so one visit per file) and tick the "done" column: rows 1 to 9, 16, 17, 22, 32, 33, 36, 39, 79, 85, 86 and 87 (rows 14 and 15 stay OUT: lead answer Q15). Table 2 and the out rows of Table 1 wait for the later video or for the next time their file is opened.
 4. Before filming, go through "Before filming: claims to leave out" below.
 5. After the take: P4c (count what is left in HubSpot; row 33 is already safe text before the take).
 
@@ -276,6 +278,9 @@ Lane rows below are the first-pass reports. Where a lane row's replacement wordi
 
 # LANE A (verbatim: the reader notes below are the lane A working file pasted whole; it has its own headings, counts and 'What I read' sections, and the first tables above are the current ones)
 
+Tables 1 and 2 win over every row below; the wording below is first-pass and may be wrong
+
+
 
 Round 1 fixes (2026-11-16, queue item F1): inner pipes: A-011 and A-090 had pipe signs inside a cell and were fixed in round 2; A-004, A-005, A-007, A-016, A-017, A-019, A-021, A-030, A-033 (verdict now OVERSTATED), A-034, A-035, A-036 and A-050 (verdict cell now names the overstated words), A-040 to A-042, A-053, A-057, A-076, A-077, A-081 reworded; new rows A-084 to A-098 cover sentences the first pass missed.
 # Claims table, lane A: VIDEO-RUNSHEET.md and PAGE-STATEMENTS-V4.md
@@ -292,7 +297,7 @@ Static reading only. Nothing ran (no n8n, Postgres, HubSpot, mail server). Writt
 
 ## Words used
 - R = handover/demo/VIDEO-RUNSHEET.md. P = handover/demo/n8n-flows/PAGE-STATEMENTS-V4.md. BM = handover/demo/n8n-mainframe/build_mainframe.py. RV5 = handover/demo/n8n-flows-real-v5/. FV5 = handover/demo/n8n-flows-film-v5/. SUB = mf-sub-crm-mail.json, REC = mf-recovery.json, FORM = mf-form.json (HOOK = mf-hook.json is the same flow with other field names).
-- Verdicts: SUPPORTED = a node or SQL does exactly this in the take files (read only; "text-only, needs run" in the verdict cell, and the older "run-dependent", mean the node path exists but what n8n really does was never observed). SUPPORTED ONLY BY RELAYED NUMBER = a number from a run nobody here saw; the source is named. OVERSTATED = partly true; the words say more than the files show. UNSUPPORTED = a finding or the files we have say the opposite or show it false. UNTRACED = I could not trace it (the code or finding that would prove it is absent), reason given. A claim with no node and no contradiction is UNTRACED.
+- Verdicts: SUPPORTED = a node or SQL does exactly this in the take files (read only; "text-only, needs run" in the verdict cell, and the older "run-dependent", mean the node path exists but what n8n really does was never observed). SUPPORTED ONLY BY RELAYED NUMBER = a number from a run nobody here saw; the source is named. OVERSTATED = partly true; the words say more than the files show. UNSUPPORTED = a finding or the files we have say the opposite or show it false. UNTRACED = I could not trace it (the code or finding that would prove it is absent), reason given. A claim with no node and no contradiction is UNTRACED. (definitions: see the glossary line)
 - lane3, V7, HB-numbers = earlier test runs by other sessions; their raw files are not in this repository (FINDINGS NOT COVERED item 5).
 - The real flows use a HubSpot node (RV5 SUB CrmUpsert, type n8n-nodes-base.hubspot) and placeholders for addresses; the film flows use an HTTP call to a stand-in CRM (FV5 SUB CrmUpsert, type httpRequest, url $env.MF_CRM_URL). Verified.
 
@@ -439,6 +444,9 @@ Counted by script from the first verdict word of each row after the round 2 fixe
 ---
 
 # LANE B (verbatim: the lane B working file pasted whole; it has its own 'What failed' section and counts, which are older than the Start here block above)
+
+Tables 1 and 2 win over every row below; the wording below is first-pass and may be wrong
+
 
 
 # Claims table, lane B: plans, notes and READMEs about what the flows and the system do
@@ -793,6 +801,9 @@ Other claims the lead's answers touch:
 | X-4 | DECISION:16 | "Audit = the lifecycle rows of `mf_leads` (state and timestamps)." | mf_leads has `updated_at` only; state is overwritten | F-043 | UNSUPPORTED | Do not use "audit". Say "the table shows the current state and whether the mail and the alert went out". |
 
 ## Part 5b: owner steps in OWNER-STEPS-realrun-v3.md that are STALE (coordinator message, FACTS-ALREADY-DONE.md)
+
+Superseded by the Owner steps already done section for steps 4 and 6
+
 Source of the "done" facts: inputs/FACTS-ALREADY-DONE.md line 3 (throwaway Gmail ready, 2-step on, settings done, app passwords saved in files by the owner, old practice app password revoked; HubSpot test account, users created, key given; n8n account with HubSpot, Claude and Gmail credentials in n8n's own store; Anthropic key saved, credits usable) and line 5 (it says Phase 0 of OWNER-STEPS-realrun-v3.md is stale; queue item C4 rewrites it as v4). These are not claims about what the flows do, so they have no B-row; they must not be listed as open steps.
 | ONS line | step | verdict | why |
 |---|---|---|---|

@@ -1119,7 +1119,7 @@ def _folder_left_behind(dfd: int, folder_name: str, has_man: bool) -> Refused:
     )
 
 
-def _warn_delete_place(dfd: int, out_dir: str) -> None:
+def _warn_delete_place(dfd: int, out_dir: str, present: set) -> None:
     """`delete` still removes a copy that sits in a git repository, a cloud-synced folder or on
     /mnt (leaving it would be worse), but says that other copies may exist, and names any file
     that has a second name (a hard link): that other name is not removed."""
@@ -1127,7 +1127,7 @@ def _warn_delete_place(dfd: int, out_dir: str) -> None:
         _check_open_place(dfd, out_dir, "the folder")
     except Refused as e:
         _say(f"warning: {e}; other copies of it may exist and are not removed", err=True)
-    for n in sorted(os.listdir(dfd)):
+    for n in sorted(present):
         ls = _lstat_or_none(n, dfd)
         if ls is not None and stat.S_ISREG(ls.st_mode) and ls.st_nlink > 1:
             _say(
@@ -1197,8 +1197,8 @@ def do_delete(
             dfd = os.open(folder_name, DIR_FLAGS, dir_fd=pfd)
         except OSError:
             raise Refused("output folder is a symlink or not a folder; nothing deleted") from None
-        _warn_delete_place(dfd, out_dir)
         present = set(os.listdir(dfd))
+        _warn_delete_place(dfd, out_dir, present)
         todo: list[str] = []
         others: list[str] = []
         if no_manifest:
