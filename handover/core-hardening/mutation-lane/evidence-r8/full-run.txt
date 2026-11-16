@@ -845,3 +845,6 @@ test group already gone; restored src/mod.py from /tmp/claude-0/-home-user/957f9
 safety-tests.sh: line 69: 21102 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
 RESTORE FAILED: the saved backup differs from src/mod.py in the git archive given with --sha: the state folder may be forged or --sha is the wrong commit; nothing written. By hand: git show <sha>:src/mod.py > the file; the mutant may still be planted; marker and backup kept (run --restore again when
   PASS: T95d2 the same forged state with --restore --sha COMMIT: refused, exit 3 (got 3; r7 ignored --sha and accepted), the swapped text is NOT written (file still planted return2), marker kept
+safety-tests.sh: line 69: 25040 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T95d3 guard: genuine state with --restore --sha COMMIT: restored, exit 0 (got 0), state empty
+FAILED CHECKS: 3 (of 395 checks run; skipped: none)

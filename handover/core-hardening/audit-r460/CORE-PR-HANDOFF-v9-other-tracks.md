@@ -1,0 +1,193 @@
+# Core hardening hand-off v9, other tracks (everything that is not spend), 2026-11-16 UTC (same date in IST)
+
+Companion of `CORE-PR-HANDOFF-v9.md` (the spend track). Split made on the lead's answer Q33 option (b). The content of v8 sections 4.6 to 4.11 is copied by script from `CORE-PR-HANDOFF-v8.md` (exact lines 550-636, `evidence-handoff-v9/mk_other.py`), then changed only where a review finding or a rename says so (list in section O-3 and in `v9-CHANGES.md`). Inside the copied text, "4.x" means section "O-4.x" here, "E0-n" is a v8 evidence id (the v9 ids are in section O-7), and "D n" and "F n" are the rows of sections O-1 and O-2.
+
+**Core is paused for the customer demo (answer Q28). Nothing here blocks the demo, nothing here may be built before two independent reviewers have read it, and every owner step is POST-DEMO and needs a new owner yes.** Status of every item: **specified, unverified** (written from code I opened; nothing run).
+
+## O-0 What failed, what is uncertain, what was not run (read first)
+
+1. Nothing was run except small read-only programs (`evidence-handoff-v9/`). No test suite, no `ruff`, no `bandit`, no Postgres.
+2. **The lead's order and this task's brief disagree about seven PRs.** The lead's wording was to drop PRs whose per-item verdict (the lead's own "needed-check" list) is NOT-NEEDED or DUPLICATE; the brief says to carry them over unchanged. I followed the brief. **That verdict is not supplied** for any item below: my inputs contain no per-item verdicts (grep of `ORDERS.md` and `MASTER-MAP.md`, `raw-greps-v9.txt`). Every item carries the line "needed-check verdict: not supplied". The lead decides which items stay.
+3. The copied sections 4.7 to 4.10 are a copy of text that three reviews read; v8 reviewed it as part of a larger document. Findings that touch them are applied (O-3). The security review's major about the extract schema guard is already in the text (4.7, the schema guard).
+4. Vendor and database facts: none of these items rely on one except H-1 (S3 Object Lock behaviour, UNVERIFIED, see O-7 E0-O8).
+
+## O-1 Decisions that these tracks need (from v8 section 3, unchanged except where marked)
+
+| Id | Question | Answer in force |
+|---|---|---|
+| D2 | G4: wording or behaviour first | Wording first: G-W merges before G. |
+| D3 | Are `get-secret-value`, `get-session-token` read-only in approval text | Default no, withheld (row G5a). If the lead says read-only, drop the row. |
+| D4 | Refuse signer or anchor kind `none` in pilot | Warn only until decided; owner; POST-DEMO. |
+| D6 | Old stage name | Follow R449: refuse the old name, rename to `demo`. Alias default: none. |
+| D16 | Lowercase bare SQL | Shown unless a code marker is present (rule G3). |
+| D17 | Redaction base64 second pass and speculative patterns | Deferred; a pattern ships only if its canary leaks on old code. |
+| D18 | Anchor-writer identity split, outbox alert age | Deferred to the first pilot config; H-1 writes the `anchor_s3.py` docstring. |
+| D21 | Upper-case or `.EXE` program names | Dropped: `channel.clean` defangs the dot; a display change, not a leak. |
+| D22 | PDFs and images in `extract()` | Always refused; trigger: first client build needing PDF adds a text kind in front. |
+
+Every row: needed-check verdict not supplied.
+
+## O-2 Facts used (v8 numbering kept; read in v8, cite lines machine-checked in v9)
+
+| # | Fact | Source |
+|---|---|---|
+| F1 | G4 is a display filter: it swaps commands in model-written approval text for `[command withheld (G4)]`; it does not decide whether a tool runs. | `approvals/gate.py:681-698` |
+| F2 | `_WRITE_SHAPES` is one compiled regex with no global ignore-case; SQL words are upper-case only. | `approvals/gate.py:647-678` |
+| F10 | `extract()` has no non-test caller in `src/`; recorded fake replies are keyed on `sha256(documents[0])` when documents exist. | `llm/fake.py:39-40` |
+| F11 | `Verification`, `verify_rows` and `audit_verify` as 4.6 describes. | `audit/chain.py:134-149`, `:363-383`; `cli.py:349-363` |
+| F12 | `mounted_file._fetch` checks; `signer.py` has no checks. | `actions/secrets_file.py:34-64`; `audit/signer.py:104-108` |
+| F16 | `DeadLetter`, `Valid`, `runmap` functions as 4.7 describes. | `models.py:218-222`; `extract.py:18-25`; `guard/runmap.py` |
+| F17 | `injection_check` catches every `Exception` (spend track edits it to re-raise `SpendRefused`; this track does not touch it). | `guard/injection.py:85-101` |
+
+## O-3 What v9 changed in the copied text (review findings applied)
+
+- Fileguard PR renamed **K1** (v8 called it S1, which clashed with the spend PR S-1 of the spend track).
+- The "I did not search" sentence in O-4.8 now states the grep that was run and its result.
+- The test-module rule for the later spend gate (module-prefix "starts with tests") is a spend-track matter and is gone there; nothing in this file uses it.
+- Evidence rows are rewritten as runnable commands (O-7): test path or script, output file, pass rule, author PR, no circular dependency; the bandit command is the one of `.github/workflows/ci.yml:119`.
+- Times: all dates are UTC with IST beside the clock times that matter (none of these items has a clock time).
+
+
+### O-4.6 Audit claims, named and bounded (resolves security major 10 and nit 13; v5 readiness nits)
+
+`tamper_evident` is removed from the design (one word would claim more than the code detects). `verify_rows` returns named facts, each with its bound:
+- `rows` and `hash_chain_ok` (no link or hash problem): only the rows in the chain table.
+- `signed_through` and `unsigned_tail`: the last `unsigned_tail` rows are not covered by any signature, so they can be rewritten without detection until the next checkpoint. Ceiling: new `defaults.AUDIT_MAX_UNSIGNED_TAIL` (value 100, equal to today's `checkpoint_every` default at `chain.py:161` (`ChainSettings.checkpoint_every`, `backends/table.py:193`)); `checkpoint_every` is validated `<= ceiling` where the chain settings are read (the settings class is `ChainSettings`, `backends/table.py:192-193`, default 100: read). When a public key was given and `unsigned_tail > ceiling`, `problems` gets one line, so `ok` and the exit code 1 change (a deployment with no signer is not failed by this). Not a claim that the tail "stays at most `checkpoint_every`": it grows when the signer or the anchor fails.
+- `anchored_checkpoints` (count of signed checkpoints whose `(head, signature)` equals the anchor's copy) and `anchor_supplied` (`anchors is not None`): zero checkpoints means a count of 0, never a vacuous "anchored".
+- **`anchor_retention_probed`** (renamed from v5's `anchor_retention_proven`, security major 10): true only when the anchor kind's start-up probe ran and passed (GCS `probed`, `anchor_gcs.py:69-85`; Azure `probed`, `anchor_azure.py:83-96`); false for S3 until H-1 adds its probe. It reports that a probe ran, not that retention holds against the same host. The CLI prints it as "retention probed by the anchor kind: yes/no".
+- **`signing_key_location`** (`secret`, `file`, `none`) is printed by the CLI **as configured** ("signing key location (from settings): file"); the verifier holds only a public key and cannot confirm where the private key really is.
+`cli.audit_verify` (`cli.py:349-363`) prints these lines and "not covered: rows still in the outbox, a stolen signing key, the last N unsigned rows"; exit codes stay 0 / 1 / 3. `ChainAudit.verify` passes `self.checkpoint_every` (`chain.py:171`); the bare `verify_rows` default is the ceiling. Tests on `verify_rows` with plain lists (no Postgres): healthy; no key; tail above ceiling with a key; anchors off; one broken link; zero checkpoints; the printed words (`probed`, `configured`) are pinned so a later edit cannot drift back to "proven". A healthy chain stays within the ceiling because the inline checkpoint signs at `seq % checkpoint_every == 0` (`chain.py:203`) and `tick` checkpoints: **specified, unverified**.
+
+### O-4.7 `extract()` masking and restore (resolves v4 security B-4, B-5, M-7 to M-9, N-2; v5 security major 9)
+
+Order inside `extract` before any model call: (1) decode **strict UTF-8** (intended difference from the runtime's `"replace"` at `evals.py:63`: a replacement character would hide the bytes it replaced from the redactor); failure returns `DeadLetter(run_id, reason="extract_unmaskable", errors=["document is not UTF-8 text"])` with a fixed string and no content (`errors` is a required `list[str]`, `models.py:221`); accepted encoding: UTF-8 only, a PDF, image or UTF-16 file is refused (D22). (2) `text = runmap.redact_untrusted(text, mapping)` with a fresh `mapping` (not `redact_text`: an untrusted document that already contains `<EMAIL_1>` next to a real e-mail must not forge a placeholder; same call as `evals.py:63`); a `RedactionError` returns `DeadLetter(reason="extract_unredactable", errors=["document could not be masked"])`, no call. (3) The retry text uses `safe_head(str(exc), 300, mapping)` with the same mapping (today `extract.py:58` passes none, so placeholder numbers can collide with the document's). (4) **Schema guard (security major 9):** `schema.model_json_schema()` is sent to the model, and a field default, `examples`, `const` or enum value could hold a real value. Before the first call `extract` runs `redact_untrusted(json.dumps(schema_json), {})`; if the result differs, it raises `ValueError("output schema holds text the redactor would mask")` (a programmer error, no call, nothing sent). `system`, the fixed ask line and the caller's own constants are **not masked**; a caller that builds them from client text must mask them first. If a model-reply cache is ever added it must key on the masked text (nothing found in `llm/`, section 0 item 3).
+
+**Result and restore contract (two cases, both specified).** `Valid.data` holds exactly what the model returned, so a masked value stays a placeholder. `extract` takes a new keyword `restore_kinds: frozenset[str] = frozenset()`. The placeholder-to-original map is **not a public field**. It lives in a private holder class `_Mapping` (module `extract.py`, `__slots__ = ("_m",)`) held in a field `Valid._map: _Mapping | None = field(default=None, repr=False, compare=False)`, filled only with `runmap.storable(mapping, restore_kinds)`:
+- `restore_kinds` empty (the default): the holder is `None` and no original leaves `extract` at all.
+- `restore_kinds` non-empty: the holder exists; it refuses to be copied out. `_Mapping.__repr__` returns `"<mapping withheld>"`; `__reduce__` and `__reduce_ex__` raise `TypeError` (so `pickle` fails loudly); `__copy__` and `__deepcopy__` return an **empty** holder, so `dataclasses.asdict(valid)` (which deep-copies fields) neither leaks nor raises and holds no original; there is no `__iter__`, `__getitem__` or `__dict__`. **Copy gap (security nit 6):** v7 let a copy's empty holder look like a real one, so `Valid.restore` on a copy would silently return text that still holds placeholders. v8: the empty holder created by `__copy__` or `__deepcopy__` is marked `copied=True`; `restore` on it raises `ValueError("mapping is not available on a copy")`. Test: `copy.deepcopy(valid).restore(...)` raises; `valid.restore(...)` on the original still works.
+- The only way to use it is the method `Valid.restore(kinds: frozenset[str]) -> BaseModel`: `kinds` must be a subset of the `restore_kinds` given to `extract` (else `ValueError`), then it does `restored = runmap.restore_value(self.data.model_dump(mode="json"), self._map._m, kinds)` and returns `type(self.data).model_validate(restored)` (`restore_value` takes only `str`, `dict`, `list`, F16). `kinds` is always passed explicitly (with `None` it would restore `NAME`, `ADDRESS`, `PHONE`, `EMAIL`). `IBAN` is not a stored kind and **is not added**: the IBAN test asserts the value stays a placeholder after restore. Default scope: extract is for fields that are not personal data.
+- **Leak tests (canary built from parts):** `repr`, `str`, `dataclasses.asdict`, `copy.copy`, `copy.deepcopy` and `json.dumps(asdict(...), default=str)` of a `Valid` made with a non-empty `restore_kinds` contain no canary; `pickle.dumps(valid)` raises `TypeError`; `vars(valid)` shows `_map` only as the holder (its repr has no canary). `DeadLetter.errors` and every log line from a run where the model **echoes a canary-bearing placeholder or its input** hold no original: the canary is in the document, the fake model's reply repeats whatever it was sent, and the test searches `DeadLetter.errors`, `caplog` and the requests the fake recorded (`FakeLLM.calls`; the test class `ScriptLLM.everything_sent()` also works).
+
+**Does masking damage the fields extract reads (M-9)?** Not measured. Risk from the pattern names: `PHONE`, `IBAN`, `CREDITCARD` and high-entropy patterns may match invoice numbers or references. E0-10 (no model, no spend) runs `redact_untrusted` over a made-up invoice corpus and counts, per schema field, how often the field's value changes; the PR ships only when amounts, dates and codes the schema reads show zero changes, or the changed kinds are named and the lead accepts them. The false-abstain and dead-letter rate by reason is then reported on the golden set (E0-9). Recorded fake replies are keyed on `sha256(documents[0])` (only when documents exist, `llm/fake.py:39-40`), so recordings are re-keyed in the same PR. Tests: an e-mail, a phone number and a card number in the document do not appear in the requests the fake recorded (`FakeLLM.calls`); placeholders in the result; restore with an allowlist returns the original; a non-UTF-8 document makes no call; a document with a forged `<EMAIL_1>` next to a real e-mail does not restore to the real one; a schema with a real-looking default raises before any call. `guard/producers.py` row 36 is reworded so it does not imply the document is protected before this PR.
+
+### O-4.8 Key-file read (resolves v4 zoom M-7, security M-6, citation row on `config.py`)
+
+Extract, do not copy: move the opened-file checks of `secrets_file._fetch` (`actions/secrets_file.py:49-64`: `S_ISREG`, readable-by-others, writable-by-group-or-others, read) into `hadavin_sdk/fileguard.py:read_private_file(path, *, what, allow_group_read, max_bytes) -> bytes` (standard library only; `what` supplies the message wording so the "mount it 0400 or 0440" text stays for mounts only). It opens the path as given with `O_NOFOLLOW|O_NONBLOCK` (so it **refuses a symlinked key**: a Kubernetes or Docker secret mount links its files, so a signer key on such a mount must be read through the mounted-file secrets kind, not `private_key_path`; the CLI error says so). `max_bytes` is new behaviour (default taken from `defaults.py`, tested with an oversized file).
+- `mounted_file._fetch` keeps `confined()` and passes `allow_group_read=True` (0440 mounts keep working; its existing tests must pass unchanged, E0-1).
+- `audit/signer.build_local` (`signer.py:104-108`) uses `allow_group_read=False`; the refusal mask there includes `S_IRGRP` (the mounted-file mask at `secrets_file.py:54` allows group read and does not).
+- **Windows rule:** group and other bits do not exist there, so the check is skipped (as at `secrets_file.py:54`) and the folder ACL decides. v6 states it in the error text and the docs; and in prod `ed25519_local` with a key file is already refused (**`config.py:395-396`**, corrected from v5's `393-394`). Tests that write keys must create them 0600 (`signer.py:182` does); the mode of hand-written fixtures is unchecked (E0-1 finds failures).
+- **Siblings (K1 also covers):** `audit/signer.py:197` (`load_private_key`, `read_bytes`) goes through `read_private_file` too; `audit/signer.py:209` (`load_public_key`, `read_bytes`) holds no secret, so only the regular-file check and a size cap apply.
+- Imports: `tests/test_lockin_guard.py:68-75` constrains vendor and library imports only; `fileguard` imports the standard library only. Searched in v9 (`evidence-handoff-v9/raw-greps-v9.txt`, grep `fileguard` over `src` and `tests`: no hit; `tests/test_lockin_guard.py` lists vendor modules only, e.g. lines 42-51): no test forbids `audit` importing a neutral module. E0-O1 still runs the guard.
+
+### O-4.9 G4 rows: only what leaks on old code ships (resolves v4 readiness B2/M7, v5 security nit 13, citation row 'probes')
+
+Wording: G4 is a display filter, so "not shown" means the approval text does not display the line; it does not mean the command is blocked (F1). Rule: every row is run in E0-6 on the UNCHANGED gate first; only rows whose "not shown" example is **actually shown today** ship, each with a test proven failing on old code. Rows already not shown are dropped. The evidence run (`evidence-handoff-v4.md`, 125 pytest passed, 36 probes, 0 mismatches) confirms all definite v4 claims: G2a, G2b, G3 (12 lines plus the alias gap), G4a and G5a leak today; `> /dev/null kubectl delete pod x` is already not shown; **`git rebase -i HEAD~3` is already not shown, so its row is dropped** (v4's own rule). The other G5b words (`checkout clean commit merge pull`) were not probed: they stay candidates. G4 is a display filter only (F1).
+
+**G3 discriminator.** The pinned shown lines and the lines to withhold share one lexical shape (`tests/test_g4_parity.py:98,221-222`), so no word rule separates them; a case-insensitive copy of the SQL alternatives of `_WRITE_SHAPES` withholds a match only when the same **physical line** also carries a marker. The marker test sees the line text before the match start and from the match start on; a match inside a fenced block is judged by its own line only (fences not handled). Compiled and matched in a scratch script (Python `re`), not run through the repo's gate:
+- M1 a `;` anywhere after the match end on the line.
+- M2 an odd number of backticks before the match start on the line.
+- M3 after the match start: `\bset\s+[\w."]+\s*=` or `\bwhere\s+[\w."]+\s*(?:=|<>|!=|<|>|\bin\b|\blike\b)` (case-insensitive; `set x=1` and `where id=1` without spaces match).
+- M4 after the match start: `\bvalues\s*\(` or `\binto\s+[\w."]+\s*\(`.
+- M5 before the match start: `(?:^|\s)(?:\$|sql>|mysql>|psql>)\s*$` or `\s-[ce]\s+["']?$`.
+The lowercase copy covers DROP, TRUNCATE, DELETE FROM, INSERT INTO and UPDATE only (the SQL alternatives that need a marker); the upper-case path is unchanged. The `UPDATE` alternative in both copies becomes `UPDATE\s+(?:ONLY\s+)?ID(?:\s+(?:AS\s+)?\w+)?\s+SET\b` (fixes `UPDATE t AS a SET x=1` and `UPDATE ONLY t SET x=1`, shown today).
+
+Scratch result (match = not shown):
+| Line | Marker | Not shown | Needed |
+|---|---|---|---|
+| `drop table users;` | M1 | yes | yes |
+| `` `drop table users` `` | M2 | yes | yes |
+| `delete from users where id = 1` and `...where id=1` | M3 | yes | yes |
+| `update only t as a set x=1` | M3 | yes | yes |
+| `insert into t values (1)` | M4 | yes | yes |
+| `$ drop table users` | M5 | yes | yes |
+| `drop table pressure`, `we should delete from the queue only after a fix`, `update its set of rules`, `delete from the queue where possible` (all pinned shown) | none | no | no |
+| `drop table users` bare | none | no | accepted as shown (D16) |
+| `we will drop table pressure; then rest` | M1 | yes | false positive, counted by E0-6 against the 2% budget |
+
+| Item | Function | Rule | Not shown | Shown | Today |
+|---|---|---|---|---|---|
+| G1 | docstrings `gate.py:4`, `gate.py:366-377`, `channel.py:19-21` | Wording only: "a closed list of programs plus SQL and shell shapes". Its own PR G-W, merged first (D2). | n/a | n/a | wording |
+| G2a | new `_join_continuations(text)` before `_PROGRAM` | Join backslash+newline, `^`+newline, backtick+newline (the `_TOKEN` pattern stops at a newline, `gate.py:546`). Joined text withholds to the end of the joined line, which can swallow the next physical line (`gate.py:695` cuts at the next `\n`): add a false-positive test where the line after a backtick-newline is plain prose. | ``kubectl \`` newline `delete ns prod` | ``we wrap lines with a backslash \`` newline `like this` | leaks (probed) |
+| G2b | `_story` (`gate.py:608-615`) | Skip leading **bare** redirection tokens `>`, `>>`, `2>`, `<`, each plus the one target token after it, then judge the first remaining token. Not `|` (a pipe starts another command; `kubectl \| grep` stays prose-like). Glued forms (`>/dev/null`, `2>&1`) need no change: they already withhold. | `kubectl > /dev/null delete pod x` | `the aws Lambda runtime` | leaks (probed) |
+| G3 | `_WRITE_SHAPES` | marker rule and alias fix above | table above | table above | leaks (probed, 12 lines) |
+| G4a | `rm` shape (`gate.py:674`) | `\brm(?:\s+-[A-Za-z]+)*\s+(?:-[a-zA-Z]*[rRf][a-zA-Z]*\|--recursive\|--force)(?=\s+\S)` (keeps the long flags that v4's text dropped). Scratch: withholds `rm -v -rf /x`, `rm -rf /x`, `rm --force x`; shows `rm the file` and `rm -v x`. `rm` is not in `_NAMES` (`gate.py:540`), so the shape is the only guard. | `rm -v -rf /x` | `rm the file` | leaks (probed) |
+| G5a | `_AWS_READ_PREFIXES` use (`gate.py:404`, `:597`) | Candidate (D3, default yes): a closed list `_AWS_NOT_READ = {"get-secret-value","get-session-token","get-login-password","get-authorization-token","get-password-data"}` consulted first in `_readonly`. Justification: these calls are read verbs that return a secret or a token to whoever pastes them; the prefix rule `get-` cannot tell them apart. The list is closed and short on purpose and is a second list to maintain; if the lead prefers no second list, the row is dropped and the generic `get-` read rule stays. | `aws secretsmanager get-secret-value --secret-id x` | `aws s3 ls` | leaks (probed) |
+| G5b | `_WRITE_VERBS` / `_OWN` | **Dropped:** `git rebase -i HEAD~3` is not shown today. `checkout clean commit merge pull` stay candidates until probed. | | `the docker image was rebuilt overnight` (pinned) | rebase: not a leak; others unprobed |
+| G2c | program-name case and suffix | **Dropped (D21).** | | | defanged by `channel.clean` |
+| cand | `dd of=`, `mkfs`, `chmod -R`, `kill`, `shutdown`, `crontab -r`, `sed -i`, `rsync --delete`, redirect to a path, `tee`, `curl -X DELETE`, PowerShell verbs, quoted-command prose, read verb with write flag, capital-first positional, COPY, LOAD DATA, `nextval`, VACUUM, CALL, EXEC, DO, GRANT forms | each ships only if E0-6 shows a leak and no pinned shown line breaks | v3 section 5 | `we should kill the idea` | not probed |
+
+Pinned shown lines (all must stay shown; E0-6 runs them): `rm the file`, `drop table pressure`, `we should delete from the queue only after a fix`, `a 'kubectl rollout restart' replaced the pods`, `the docker image was rebuilt overnight`, `update its set of rules`, `the aws Lambda runtime`. G4 stays a hybrid (closed program list plus shapes); the allowlist alternative stays rejected (prose is unbounded; 2% false-positive budget on at least 200 sentences) with the trigger: E0-6 finds a bypass class the shapes cannot cover, or measures false positives well under 2%. `_clean_line` normalisation runs before the `_OWN` lookup; `_subcommands` already lower-cases words (`gate.py:573-589`).
+
+### O-4.10 Redaction patterns (PR-2 first and alone)
+
+PR-2 (4.7) ships first and alone. The pattern PR (R) ships only patterns whose canary leaks on old code (E0-4), each with a canary test (fake values built from parts; the only literal allowed is `AKIAIOSFODNN7EXAMPLE`) and a near-miss test:
+- `PHONE` (`guard/redact.py:472`): `( ) . /` separators. Not shown `(415) 555-0132`; near-miss a date `2026-11-16`.
+- `IBAN` (`:247`): spaced 4-character groups and lower case, normalised first.
+- `CREDITCARD` (`:451`, 4-4-4-4 only today): 15-digit 4-6-5 grouping, 17-19 digits, dot separator. The value `4111...` also appears in `tests/warden_port/privacy_corpus.py:42` and `tests/warden_port/test_redaction.py:309,356`.
+- `EMAIL` (`:236`): non-ASCII local part, quoted local part, soft break.
+- A new pattern named `CREDPAIR` (a new label, not in `redact.py` today): `{"name": "<credential key>", "value": "..."}` in either order, case-insensitive, modelled on the HAR cookie pair near `:513`; share the credential-key test with `k1b/redaction.py:103` (`_pair`).
+- URL credentials (signed-URL signature parameters, reset-link path tokens) and bare `passphrase`, `cvv`, `pin`, `dob` keys.
+Deferred, trigger in D17: the base64 second pass and any pattern with no leaking canary. The input tripwire after masking depends on E0-4 (redacting masked text must be a fixed point).
+
+### O-4.11 Housekeeping track (non-gating)
+
+- **H-0 stage rename (R449):** `field_validator("environment", mode="before")` on `Config` raises `ValueError("environment 'dev' was renamed to 'demo'; change it in your config")`; `load_config` returns a `ConfigError` (`config.py:451-454`). Value or logic sites: `config.py:317`, `:366-367`, `:19`, `backends/table.py:593` (`DEV_ONLY` to `DEMO_ONLY`), `tests/test_lockin_guard.py:18,430`, `tests/fixtures/config/config.yaml:2`, `tests/test_p4_secrets.py:106`, `tests/warden_port/test_audit_chain.py:568`, `tests/test_p1b_backends.py:89-91`. Wording sites: `actions/secrets_env.py:1`, `audit/signer.py:64,98`, `table.py:126,214,254,591`, `config.py:346`, `defaults.py:100`, `registry.py:50`, `tools.py:361`, `agent_loop.py:179,553,572`, `actions/contract.py:34`, `store/postgres.py:75,90`. Leave `guard/redact.py:1162` (a word list). CHANGELOG upgrade step; E0-8 greps demos for `environment: dev`. Round cap 2. It protects nothing today and, since M1 and M2 spell no stage name, it can land at any point.
+- **H-1 audit retention floor and S3 probe:** the floor is **new** (the existing default of `retain_days` is 1, `backends/table.py:155`, `Field(default=1, ge=1)`; v4's wording "the existing 7" was wrong). One place covers all three anchor kinds: `_anchor_refusals(environment, b)` (`config.py:377-398`) gains `anchor.retain_days < defaults.ANCHOR_MIN_RETAIN_DAYS` (new constant, 7) in pilot and prod, so no per-kind build site changes (the settings class is `_AnchorSettings`, `table.py:150-157`, read). The S3 Object Lock probe is a new `probed(client, settings)` in `anchor_s3.py` (the S3 kind module only) modelled on GCS `probed` (`anchor_gcs.py:69-85`) and Azure `probed` (`anchor_azure.py:83-96`), reading the bucket's object-lock configuration. H-1 also writes the module docstring of `anchor_s3.py` stating the identity rights the writer needs (D18; the docstring states one constraint at `:5-7` and no actions today).
+- **H-2 evidence docs:** wording and docs only, round cap 2, not a PR of its own if H-1 or G-W is open.
+
+
+
+## O-5 Dependency and least-privilege check for these tracks
+
+- **Fileguard (K1):** standard library only; adds no identity. Over-breadth review line: none, it only narrows what a key file may be (a symlinked or group-readable signer key is refused).
+- **Audit claims (A1) and retention floor (H-1):** no new role. H-1's S3 probe reads the bucket's object-lock configuration, so it needs one read action on that bucket for the anchor-writing identity; the exact action name is **UNVERIFIED** (vendor documentation not read; needs a third party) and the PR ships the policy text, the per-action reason, a negative test (the identity cannot delete) and an over-breadth line before review. Single dependency: the probe sits in `anchor_s3.py` (the S3 kind); GCS and Azure already have theirs.
+- **Extract masking (PR-2), redaction (R), approval text (G-W, G):** no identities, no vendor imports; masking happens before any model sees text.
+- **Over-breadth line for every new role:** none of these PRs adds a role.
+
+## O-6 PR series (non-spend), one status column
+
+Cap tag: U = uncapped (security, redaction, audit, secret), C = capped at 2 rounds. Every PR: needed-check verdict not supplied.
+
+| Order | PR | Content | Cap | Depends on | Status |
+|---|---|---|---|---|---|
+| 1 | PR-2 | `extract()` masking, `redact_untrusted`, private mapping holder and `Valid.restore`, schema guard, re-keyed recordings (O-4.7) | U | none | specified, unverified |
+| 2 | R | Redaction patterns that leak on old code (O-4.10) | U | E0-O4 | specified, unverified |
+| 3 | K1 | `fileguard`, signer key check (O-4.8) | U | none | specified, unverified |
+| 4 | A1 | Audit claims (O-4.6) | U | none | specified, unverified |
+| 5 | G-W | G1 wording only | C | none | specified, unverified |
+| 6 | G | G2a, G2b, G3, G4a, G5a rows that leak on old code (O-4.9) | U | G-W, E0-O6 | specified, unverified |
+| 7 | H-0 | stage rename (O-4.11) | C | none | specified, unverified |
+| 8 | H-1 | retention floor and S3 probe (O-4.11) | U | none | specified, unverified |
+| 9 | H-2 | evidence docs (O-4.11) | C | none | specified, unverified |
+
+All nine start together; G after G-W; R after E0-O4. Merge order is free except those two. One full suite per PR at its final head; heavy jobs through the slot rule (`faster-builds` rule 2) not more than 3 at once.
+
+## O-7 Evidence batch (an EVIDENCE RUNNER runs these; the runner never judges)
+
+Output folder: `handover/core-hardening/audit-r460/evidence-handoff-v9/` (the runner writes). No item depends on a later PR. "Author PR" is the PR whose builder writes the missing test or script. The repository has no `scripts/` folder and no mutation tool (v8 fact).
+
+| Id | Command | Output file | Pass rule | Author PR |
+|---|---|---|---|---|
+| E0-O1 | `uv run --all-extras --group test ruff check > E0-O1-ruff.txt 2>&1; echo rc=$? >> E0-O1-ruff.txt`; same pattern for `ruff format --check`; `uv run --all-extras --group test pytest > E0-O1-pytest.txt 2>&1; echo rc=$? >> E0-O1-pytest.txt`; `bandit -q -r src demos -ll > E0-O1-bandit.txt 2>&1; echo rc=$? >> E0-O1-bandit.txt` (the command of `ci.yml:119`). Plus for K1: `uv run --all-extras --group test pytest tests/test_p4_secrets.py tests/test_lockin_guard.py -q` (mounted-file tests unchanged) | `E0-O1-*.txt` | all four rc=0 at each PR's final head | exists |
+| E0-O4 | `uv run --all-extras --group test pytest tests/test_redaction_canaries.py -q > E0-O4.txt 2>&1`: one canary per pattern of O-4.10 run on the OLD tree (`git stash`-free: run against a checkout of the pre-R commit) and the new tree; masked text is a fixed point; fuzz `redact_text` 500 inputs | `E0-O4.txt`, `E0-O4-failing-on-old.txt` | a pattern ships only if its canary fails on old code | R |
+| E0-O6 | `uv run --all-extras --group test pytest tests/test_g4_rows.py -q > E0-O6.txt 2>&1`: every row of O-4.9 and every pinned shown line through `withhold_commands` and `channel.clean`, old tree and new tree; false-positive rate on 200 made-up prose sentences. **The 200 sentences and the corpus do not exist; G's builder writes made-up ones or the lead supplies input.** | `E0-O6.txt` | each shipped row leaks on old code; no pinned line changes; false positives at most 2 percent | G |
+| E0-O9 | extract report: with the fake kind, `uv run --all-extras --group test pytest tests/test_extract_masking.py -q > E0-O9.txt 2>&1`: every leak test of O-4.7 (canary from parts), the forged placeholder test, the schema-guard test; dead-letter rate by reason on the golden set **which does not exist; the lead supplies or approves it**; never write "N/M correct" without the answerable-abstained split (`.claude/rules/false-abstain-reporting.md`) | `E0-O9.txt` | all pass; each new test fails on old code | PR-2 |
+| E0-O10 | masking damage: `python evidence-handoff-v9/masking_damage.py` (written by PR-2; about 30 made-up invoices, no model, no spend) counts per schema field how many values change under `redact_untrusted`. **No corpus exists.** | `E0-O10.txt` | zero changes in amount, date and code fields, or the changed kinds are named and the lead accepts them | PR-2 |
+| E0-O8 | H-0 and H-1: `grep -rn "environment: dev" tests demos docs > E0-O8-grep.txt`; `uv run --all-extras --group test pytest tests/test_stage_rename.py tests/test_anchor_retention.py -q > E0-O8.txt 2>&1`; the S3 probe against a fake client and, **UNVERIFIED**, against a real bucket (needs a third party and the owner: POST-DEMO) | `E0-O8*.txt` | grep empty after H-0; tests pass | H-0, H-1 |
+| E0-O11 | A1: `uv run --all-extras --group test pytest tests/test_audit_verify_claims.py -q > E0-O11.txt 2>&1` (the cases listed in O-4.6, including the pinned words "probed" and "configured") | `E0-O11.txt` | pass; new tests fail on old code | A1 |
+
+## O-8 Item homes
+
+| Item | Home |
+|---|---|
+| Extract masking | PR-2 |
+| Redaction | R |
+| Key file read | K1 |
+| Audit claims, retention | A1, H-1 |
+| Approval text | G-W, G |
+| Stage rename | H-0 |
+| Evidence docs | H-2 |
+
+## O-9 What I did NOT check
+
+All of the copied text was written from code read in v8 and was not re-read this pass except through the citation program (`evidence-handoff-v9/raw-cite-check-v9.txt`, which checks that each cited line exists and holds the named identifier; it does not check meaning). No test was run. Vendor facts for the S3 probe are UNVERIFIED. The per-item needed-check verdicts were not supplied. No commit exists. Independent reviewers follow.

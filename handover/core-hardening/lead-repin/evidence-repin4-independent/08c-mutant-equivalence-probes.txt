@@ -1,0 +1,18 @@
+m05 mutant: git clone https://bob:<email-masked>/r.git|
+m05 mutant: x = "https://bob:pw9@h/p"|
+m05 mutant: status: ok  user=a url=ftp://u:zz9@h|
+m05 mutant: note kind: Sunfern42!|
+m05 mutant: -----BEGIN PRIVATE KEY-----<masked>|
+m09 mutant: git clone https://bob:<masked>@example.invalid/r.git|
+m09 mutant: x = "https://bob:<masked>@h/p"|
+m09 mutant: status: ok  user=a url=ftp://u:<masked>@h|
+m09 mutant: note kind: Sunfern42!|
+m09 mutant: -----BEGIN PRIVATE KEY-----<masked>|
+m13 mutant: git clone https://bob:<masked>@example.invalid/r.git|
+m13 mutant: x = "https://bob:<masked>@h/p"|
+m13 mutant: status: ok  user=a url=ftp://u:<masked>@h|
+m13 mutant: note kind: Sunfern42!|
+m13 mutant: -----BEGIN PRIVATE KEY-----<masked>|
+ORIGINAL
+git clone https://bob:<masked>@example.invalid/r.git
+note kind: Sunfern42!

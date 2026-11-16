@@ -1,5 +1,5 @@
 #!/bin/sh
-# lead-repin-verify.sh (version 4): checklist printer for the lead at re-pin.
+# lead-repin-verify.sh (version 5): checklist printer for the lead at re-pin.
 #
 # WHAT IT DOES TO YOUR MACHINE (exact):
 #   - reads files: grep, sed, awk, tr, wc, find, sha256sum, git rev-parse / log / status
@@ -41,8 +41,9 @@
 #
 # Exit codes: 0 the checklist ran to its end (this does NOT mean the answers are good: read the output);
 #   2 setup problem (no work folder, take folder missing); 3 the masking filter is not usable or failed its
-#   own test, no take file or input was opened; 4 the output pipeline failed; 129/130/141/143 stopped by HUP/INT/PIPE/TERM
-#   (the work folder is removed); for --self-test: 0 all cases passed, 1 at least one failed.
+#   own test, no take file or input was opened; 4 the output pipeline failed; 129/130/131/141/143 stopped by
+#   HUP/INT/QUIT/PIPE/TERM (the work folder is removed, and so are the programs the run had started); for --self-test:
+#   0 all cases passed, 1 at least one failed.
 #
 # Needs: GNU sed (or a sed that knows the s///I flag; the canary stops the run otherwise), grep, awk, tr, find.
 # Every file name below is "adjust if different": set the variable in the environment.
@@ -50,6 +51,13 @@
 # have at most 3 folders between the take folder and the file, preferring a scripts/ folder below the take
 # folder) and prints which one it used.
 #   TAKE_PY CRM_PY DRIVE_PY N8N_PY FLOWS_DIR MODEL_DIR MODEL_SETTINGS ONE_STORE END_RE MODEL_RE DELETE_RE LEAD_REPIN_NO_STATUS
+set +x +v 2>/dev/null          # a trace option from the caller (sh -x, sh -v) would print every line, secret values included
+# PATH: keep only absolute folders. An empty or relative entry (a dot, for example) would let a program planted
+# in the current folder run instead of the real sed, awk, grep or git.
+SAVE_IFS=$IFS; NEWPATH=; IFS=:
+for pth_d in ${PATH:-}; do case $pth_d in /*) NEWPATH=${NEWPATH:+$NEWPATH:}$pth_d ;; esac; done
+IFS=$SAVE_IFS; PATH=${NEWPATH:-/usr/bin:/bin}; export PATH
+unset ENV BASH_ENV CDPATH GREP_OPTIONS GREP_COLOR GREP_COLORS SED_OPTIONS
 LC_ALL=C; export LC_ALL        # byte-wise matching: a byte that is not valid text cannot make a tool skip a line
 set -u
 umask 077
@@ -64,20 +72,36 @@ MASKAWK=$WORK/mask.awk        # second stage: opaque strings, containers, pairs 
 OUT=$WORK/lead-repin-verify-out.txt
 NL=$(printf '\n_'); NL=${NL%_}
 CLEAN=1                       # 1 = remove the work folder on exit; set to 0 only after the canary passed in a normal run
+FINISHED=0                    # set to 1 only when a normal run has reached its end and removed the file-name lists
 BGPID=
 cleanup() {
   case $WORK in */lead-repin.??????) ;; *) return 0 ;; esac
   [ -d "$WORK" ] || return 0
   rm -f "$WORK"/st-in.txt "$WORK"/st-out*.txt "$WORK"/canary.out 2>/dev/null   # canary files go away on every exit path
+  # a normal run that did NOT reach its end (an error, an unset variable) must not keep file-name lists: remove all
+  [ "$CLEAN" = 0 ] && [ "$FINISHED" = 0 ] && CLEAN=1
   [ "$CLEAN" = 1 ] && rm -rf "$WORK"
   return 0
 }
-on_signal() { CLEAN=1; [ -n "$BGPID" ] && kill "$BGPID" 2>/dev/null; cleanup; exit "$1"; }
+# kill_tree PID: send TERM to PID and to every process below it (found with ps -A -o pid= -o ppid=), so that the
+# grep, sed, awk and git programs of a stopped pipeline do not keep running. It only ever touches PID and its descendants.
+kill_tree() {
+  kt_all=$1; kt_new=$1; kt_i=0
+  while [ -n "$kt_new" ] && [ "$kt_i" -lt 8 ]; do
+    kt_new=$(ps -A -o pid= -o ppid= 2>/dev/null | awk -v roots="$kt_new" 'BEGIN { n = split(roots, r, " "); for (i = 1; i <= n; i++) R[r[i]] = 1 } ($2 in R) && !($1 in R) { print $1 }')
+    kt_all="$kt_all $kt_new"; kt_i=$((kt_i + 1))
+  done
+  # shellcheck disable=SC2086
+  kill $kt_all 2>/dev/null
+  return 0
+}
+on_signal() { CLEAN=1; trap '' INT TERM HUP PIPE QUIT; [ -n "$BGPID" ] && kill_tree "$BGPID"; cleanup; exit "$1"; }
 trap cleanup EXIT
 trap 'on_signal 130' INT
 trap 'on_signal 143' TERM
 trap 'on_signal 129' HUP
 trap 'on_signal 141' PIPE
+trap 'on_signal 131' QUIT
 # bg_wait CMD...: run CMD in the background and wait for it, so a signal that reaches this shell is handled
 # at once (a plain foreground command would delay the trap until the command ends)
 bg_wait() { "$@" & BGPID=$!; wait "$BGPID"; bg_rc=$?; BGPID=; return "$bg_rc"; }
@@ -1110,7 +1134,7 @@ model_notice() {
 
 # ---------------------------------------------------------------- the checklist
 main() {
-  printf 'lead-repin-verify.sh v4  (reads only; prints, never judges; the lead reads this output before sharing it)\n'
+  printf 'lead-repin-verify.sh v5  (reads only; prints, never judges; the lead reads this output before sharing it)\n'
   printf 'masking self-test (canary) before any file was opened: %s\n' "$CANARY"
   printf 'take folder: %s\n' "$TAKE_DIR"
   printf 'private work folder (made by mktemp; after this run it keeps ONLY the masked output copy and the three masking rule files; delete it yourself): %s\n' "$WORK"
