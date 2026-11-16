@@ -13,6 +13,7 @@ Proposed answer times: items that block the filming by Tue 17 Nov 12:29 UTC / 17
 - **studio lead** = **the lead** = the one Claude session that works with the owner (same party everywhere in this list).
 - **decision N** = item N in inputs/DECISIONS-2026-11-16.md (12 items). **D-04, D-05, LP-1..LP-5, S9-n, F-008, C-01** = row ids on LEAD-PAGE.md, decisions/ and drift/REPORT.md; the row text is on those pages.
 - **T19** = the planned test that sends one lead twice and expects one processing; **crash test** = the planned test that stops n8n mid-run and restarts it; neither has run. **"rehearsal passed"** = the result file of a rehearsal run with every row PASS (the owner's card requires the studio lead to say it). **rerun margin** = the time kept free after a take's start so one failed take can be repeated (proposed: 4 hours). **engineering session** = a Claude session that does the technical steps.
+- **mail-crash test** = the crash test (above) as it applies to the mail step. **loopback re-smoke** = run (a): the second smoke run on the studio lead's own machine where every service answers only on 127.0.0.1. **Route config** = a settings item from decision 4 that I could not find explained in any file I read; ask core-hardening. **board** = STATUS-BOARD.md. **owner cards** = OWNER-RUN-DAY-CARD.md and OWNER-CLEANUP-CARD.md. **M3, M5, M14** = rows of STATUS-BOARD.md.
 - **step J** = the "post" step of inputs/OWNER-STEPS-realrun-v5-core-hardening.md. **core-hardening** = the other cloud session that owns that file.
 - **digest N** = numbered entry N in work/agent-reports-batch4.md (the reasoning behind a row).
 - **Proposed run dates (mine):** run (a) Mon 16 Nov 14:00 UTC / 19:30 IST if the lead agrees today; run (b) Tue 17 Nov 14:00 UTC / 19:30 IST; start-notice deadline for the last-day take: Mon 23 Nov 15:14:40 UTC / 20:44:40 IST.
@@ -28,17 +29,17 @@ Proposed answer times: items that block the filming by Tue 17 Nov 12:29 UTC / 17
 | A1 | Name the builder of the flow-fill step (`fill_flows.py`; the filled, patched real-v5 copy is not built, see TAKE-BLOCKERS.md line 33): ____ . | Mon 16 Nov 18:00 UTC / 23:30 IST | if no name by then, the studio lead starts one engineering session at once and reports its start time in the plan, with finish Tue 17 Nov 12:29 UTC / 17:59 IST (a person or a session, either is accepted) | TAKE-BLOCKERS.md row 1 (line 33); LEAD-PAGE.md ask 1; digest 155, 189, 193 |
 | A2 | Does the rule "rehearsal passed" cover run (a), run (b) or both? | Tue 17 Nov 12:29 UTC / 17:59 IST | both | TAKE-BLOCKERS.md line 34; LEAD-PAGE.md ask 2; digest 189 |
 | A3 | Is the mail-crash test required before the take: yes/no? If yes, name who runs it and when (UTC and IST). | Tue 17 Nov 12:29 UTC / 17:59 IST | yes, run by the engineering session from A1 before run (b) ends (T19 and the crash test are not run yet) | TAKE-BLOCKERS.md line 47, 51; digest 209, 220 |
-| A4 | Does run (a) start Mon 16 Nov 14:00 UTC / 19:30 IST: yes/no? (If no, a separate answer: the new hour in UTC and IST.) LEAD-PAGE.md ask 6 still says "LEAD FILLS". | Mon 16 Nov 13:00 UTC / 18:30 IST | if silent, run (a) moves to Tue 17 Nov 08:00 UTC / 13:30 IST, six hours before run (b) at 14:00 UTC; run (b) then starts only if run (a) has passed, otherwise it waits; the take date stays unconfirmed | LEAD-PAGE.md lines 10, 20, 21; digest 193 |
-| A5 | Name the take date and start time (give both in UTC and IST), or write "no take yet". It must reach the owner at least 3 hours before the start. | Tue 17 Nov 18:00 UTC / 23:30 IST (4 hours after the proposed run (b) start of 14:00 UTC), and in any case before Mon 23 Nov 15:14:40 UTC / 20:44:40 IST | none; Wed 18 Nov is NOT confirmed. Last allowed message time: Mon 23 Nov 15:14:40 UTC / 20:44:40 IST | OWNER-VIEW.md line 4; TAKE-BLOCKERS.md row 4 |
+| A4a | Does run (a) start Mon 16 Nov 14:00 UTC / 19:30 IST: yes/no? (A4b, if A4a is no: write the new start in UTC and IST. Decision 12 says the first laptop rehearsal is "tonight or tomorrow morning IST"; this row only checks my proposed hour.) LEAD-PAGE.md ask 6 still says "LEAD FILLS". | Mon 16 Nov 13:00 UTC / 18:30 IST | if silent, run (a) moves to Tue 17 Nov 08:00 UTC / 13:30 IST, six hours before run (b) at 14:00 UTC; run (b) then starts only if run (a) has passed, otherwise it waits; the take date stays unconfirmed | LEAD-PAGE.md lines 10, 20, 21; digest 193 |
+| A5 | Name the take date and start time (give both in UTC and IST), or write "no take yet". It must reach the owner at least 3 hours before the start. | Tue 17 Nov 12:29 UTC / 17:59 IST (the same time as the escalation rule above), and in any case before Mon 23 Nov 15:14:40 UTC / 20:44:40 IST | none; Wed 18 Nov is NOT confirmed. Last allowed message time: Mon 23 Nov 15:14:40 UTC / 20:44:40 IST | OWNER-VIEW.md line 4; TAKE-BLOCKERS.md row 4 |
 | A6 | Is the video's proof of the contact count the rehearsal screenshot: yes/no? (A "counts proof" is the screen that shows the 3 contacts; no means the screen of n8n's Postgres node preview instead; decision 9 leaves it open.) | Tue 17 Nov 12:29 UTC / 17:59 IST | rehearsal screenshot | DECISIONS-2026-11-16.md item 9; digest 192 |
 | A7 | Port number for the take (decision 6 says "its own free port" and gives no number): ____ . | Tue 17 Nov 13:00 UTC / 18:30 IST (1 hour before run (b)) | if silent, no run starts until a number is written in the plan; the engineering session from A1 may propose a free one but the lead writes it | DECISIONS item 6; digest 172, 192 |
 | A8 | Name who supplies the path to `n8n_api.py` (not in this checkout): ____ . | Mon 16 Nov 18:00 UTC / 23:30 IST | if silent, the studio lead asks the owner on Tue 17 Nov; flow import cannot be tested until then | TAKE-BLOCKERS.md; digest 189 |
 | A9 | Fill four things on the run-day card: how the receiver account looks (line 31), how the demo HubSpot account looks (line 59), the candidate proof screens and who films (both line 35). Yes/no for all four: will the studio lead fill each of them by Tue 17 Nov 12:29 UTC / 17:59 IST? If any is no, write which one and a new time. | Tue 17 Nov 12:29 UTC / 17:59 IST | yes; the card stays unusable until then | OWNER-RUN-DAY-CARD.md lines 31, 35, 59; digest 154, 157, 188, 197 |
-| A10 | Replace "the take deletes" wording in v5 lines 31, 63, 114, 124, 127-130, the program's notice and prompt, drift/REPORT.md:33, drift/APPLIED-S9.md:12 and inputs/AGENT-SCOPE-DO-AND-DONT.md:20 (which says the code makes a DELETE call; check run_real_check_n8n.py:1051 too) with "the take never deletes; the owner deletes leftovers by hand" (decision 2). Does core-hardening edit v5 and the program text: yes/no? | Tue 17 Nov 12:29 UTC / 17:59 IST | core-hardening edits v5 and the program text; this session edits only its own pages | DECISIONS item 2; digest 164, 191, 195 |
-| A11 | Does the engineering session from A1 check whether the model program loads Route config (decision 4): yes/no? | Tue 17 Nov 13:00 UTC / 18:30 IST | yes; the session writes yes or no in the plan | DECISIONS item 4; digest 172, 192 |
+| A10 | FYI (decision 2 already settles the wording; the only open part is who edits: yes/no, core-hardening does it). Replace "the take deletes" wording in v5 lines 31, 63, 114, 124, 127-130, the program's notice and prompt, drift/REPORT.md:33, drift/APPLIED-S9.md:12 and inputs/AGENT-SCOPE-DO-AND-DONT.md:20 (which says the code makes a DELETE call; check run_real_check_n8n.py:1051 too) with "the take never deletes; the owner deletes leftovers by hand" (decision 2). Does core-hardening edit v5 and the program text: yes/no? | Tue 17 Nov 12:29 UTC / 17:59 IST | core-hardening edits v5 and the program text; this session edits only its own pages | DECISIONS item 2; digest 164, 191, 195 |
+| A11 | FYI (decision 4 makes this check conditional). Does the engineering session from A1 check whether the model program loads Route config (decision 4): yes/no? | Tue 17 Nov 13:00 UTC / 18:30 IST | yes; the session writes yes or no in the plan | DECISIONS item 4; digest 172, 192 |
 | A12 | Does the engineering session from A1 check n8n's run list for stored lead data after patch F-008: yes/no? | Tue 17 Nov 13:00 UTC / 18:30 IST | yes | digest 192 (QUESTIONS item 7) |
 | A13 | The last day allows a start before 18:14:40 UTC / 23:44:40 IST. TAKE-BLOCKERS.md line 54 uses a 4-hour rerun margin that no file sets; with it the last first-try start is 14:14:40 UTC / 19:44:40 IST. Do you set the rerun margin at 4 hours: yes/no? | Tue 17 Nov 12:29 UTC / 17:59 IST | yes | TAKE-BLOCKERS.md lines 28, 54; digest 222 |
-| A14 | Define T19 inside TAKE-BLOCKERS.md (it occurs 0 times in the re-smoke plan, line 55 says so): yes/no? | Tue 17 Nov 12:29 UTC / 17:59 IST | yes (the list's terms section defines it) | TAKE-BLOCKERS.md lines 34, 55; digest 222 |
+| A14 | FYI (this is an edit task, done by me in the terms section above). Define T19 inside TAKE-BLOCKERS.md (it occurs 0 times in the re-smoke plan, line 55 says so): yes/no? | Tue 17 Nov 12:29 UTC / 17:59 IST | yes (the list's terms section defines it) | TAKE-BLOCKERS.md lines 34, 55; digest 222 |
 
 ## B. Blocks only the post (Wed 25 Nov 15:00 UTC / 20:30 IST)
 | # | Question | Proposed answer by | Proposed default if silent | Source |
@@ -48,9 +49,9 @@ Proposed answer times: items that block the filming by Tue 17 Nov 12:29 UTC / 17
 | B3 | Who edits step J of the owner steps file (core-hardening's file)? One name. | Fri 20 Nov 12:29 UTC / 17:59 IST | the studio lead | decisions/D04-D05.md line 9; digest 185 |
 | B4 | Who accepts a crash limit in writing if the test shows a double mail: the owner or the lead? Three pages name three different people. | Fri 20 Nov 12:29 UTC / 17:59 IST | the owner accepts in writing, in the chat with the studio lead (no other channel is named in any file) | digest 198 (item 13) |
 | B5 | Who (a person other than the author) checks the post text against the banned list? One name. | Fri 20 Nov 12:29 UTC / 17:59 IST | the post is held until a name is written (nobody posts unchecked) | OWNER-VIEW.md row 6 |
-| B6 | Does any sentence beyond "A lead sent twice with the same id is processed once." stay in the post: yes/no? | Fri 20 Nov 12:29 UTC / 17:59 IST | no | D04-D05.md line 16 |
+| B6 | (Same question as B1, kept for the record; answer B1 only.) Does any sentence beyond "A lead sent twice with the same id is processed once." stay in the post: yes/no? | Fri 20 Nov 12:29 UTC / 17:59 IST | no | D04-D05.md line 16 |
 
-## C. Pages that disagree (a person must pick one; no date needed beyond A10)
+## C. Pages that disagree (a person must pick one; answer by the time in the "Who answers" line above: Fri 20 Nov 12:29 UTC / 17:59 IST, except C2, C3, C6, C7 on Tue 17 Nov 12:29 UTC / 17:59 IST)
 | # | Conflict | Source |
 |---|---|---|
 | C1 | banned-claims.md vs v5 step J: the banned list is stricter than step J's wording. Which wins? (Decision 1 allows one claim.) | digest 73, 134, 262, 268 |
@@ -67,7 +68,7 @@ Proposed answer times: items that block the filming by Tue 17 Nov 12:29 UTC / 17
 ## D. Small, safe changes that need the lead's yes because the files are not mine
 - Yes/no each: (D1) add a placeholder check in `tools/scan_outputs.py` (flag "[studio lead fills" and "LEAD FILLS"): digest 165.
 - (D2) yes/no: add one-line "terms are defined below" pointers and a job-key legend (STORE, FILTER, RETRY, NOTICE, COUNTER, LOG, OTHER) at the top of MASTER-MAP.md, ONE-PLACE-TABLE.md and SWEEP.md: digest 175, 178, 181, 190.
-- (D3) Who wrote the 11:31 UTC time stamp inside ORDER 028 (ORDERS.md, the last order in the file)? Name one. The stamp is later than the real clock at the time (11:15:50 UTC): who wrote it? Digest 150.
+- (D3) Answer by Fri 20 Nov 12:29 UTC / 17:59 IST (a question of fact, not a decision). Who wrote the 11:31 UTC time stamp inside ORDER 028 (ORDERS.md, the last order in the file)? Name one. The stamp is later than the real clock at the time (11:15:50 UTC): who wrote it? Digest 150.
 
 ## E. Added 16 Nov after batch 199-206 (more pages read; all proposals)
 | # | Question | Proposed answer by | Proposed default if silent | Source |
@@ -85,16 +86,16 @@ Proposed answer times: items that block the filming by Tue 17 Nov 12:29 UTC / 17
 ## F. Rows that were only in work/open-items-table.md (added 16 Nov). Each row: answer yes (owner and date as proposed) or name another owner and date. The row text is on the table line given.
 | # | Open item (answer: yes, or another owner and date) | Table line | Proposed owner and date (proposal) |
 |---|---|---|---|
-| F1 | `$vars` use in flows | 9 | engineering session from A1, before run (b) |
-| F2 | The plan's UNVERIFIED list | 11 | engineering session from A1, before run (b) |
-| F3 | LP-1 shared form code | 17 | the lead, Tue 17 Nov 12:29 UTC / 17:59 IST |
-| F4 | LP-3 `extract.py` (can wait) | 18 | the lead, Fri 20 Nov 12:29 UTC / 17:59 IST |
-| F5 | LP-4 estimate 20 h / 41 h | 20 | the lead, Tue 17 Nov 12:29 UTC / 17:59 IST |
-| F6 | LP-5 secrets / second laptop user | 21 | the lead, Tue 17 Nov 12:29 UTC / 17:59 IST |
-| F7 | v3 click paths unverified | 22 | engineering session, before run (b) |
-| F8 | F-002, C-01 full fix, ORDER 013 | 23 | the lead, Fri 20 Nov 12:29 UTC / 17:59 IST |
-| F9 | HubSpot check line and which login key to replace (OWNER-VIEW row 7) | 8 | the lead, Tue 17 Nov 12:29 UTC / 17:59 IST |
-| F10 | How the program pause shows on screen (run-day card step 17 depends on it) | 15 | engineering session, before run (b) |
+| F1 | Decide who checks that the flows read their settings through the allowed route (`$vars` in the flow files) | 9 | engineering session from A1, before run (b) |
+| F2 | Decide who works through the re-smoke plan's list of items marked UNVERIFIED | 11 | engineering session from A1, before run (b) |
+| F3 | LP-1: decide whether the web form needs a shared secret code | 17 | the lead, Tue 17 Nov 12:29 UTC / 17:59 IST |
+| F4 | LP-3: decide what to do with `extract.py` (can wait until after the take) | 18 | the lead, Fri 20 Nov 12:29 UTC / 17:59 IST |
+| F5 | LP-4: the 20 h / 41 h estimate predates the real-v5-only scope (decision 1); confirm it is dropped | 20 | the lead, Tue 17 Nov 12:29 UTC / 17:59 IST |
+| F6 | LP-5: decide between accepting the secrets-on-one-laptop risk and a second laptop user (decision 5 settles what the lead reads) | 21 | the lead, Tue 17 Nov 12:29 UTC / 17:59 IST |
+| F7 | The click paths in v3 are unverified; v4 and later replace v3 (decision 10), so confirm they are dropped | 22 | engineering session, before run (b) |
+| F8 | Decide the open parts of F-002 (a generator patch), ORDER 013 (C-01 itself is cut by decision 4) | 23 | the lead, Fri 20 Nov 12:29 UTC / 17:59 IST |
+| F9 | Send the owner the HubSpot check line and name which login key to replace (OWNER-VIEW row 7) | 8 | the lead, Tue 17 Nov 12:29 UTC / 17:59 IST |
+| F10 | Say how the film pause shows on screen (run-day card step 17 depends on it) | 15 | engineering session, before run (b) |
 
 ## Overlaps (one answer can close several rows; proposal)
 A1's answer covers A7, A11, A12 and E5. A10, C5 and E4 touch the same "take deletes" and v5 line 124 wording. A3, B2 and B4 are one crash-test question asked three ways (take blocker, post wording, who accepts). C1 and E2 ask the same banned-claims against step J question. A6 and E3 both depend on decision 9. C6 and E8 both cover REPORT.md counts; C7 and E6 both cover drift/REPORT.md.
