@@ -19,7 +19,7 @@ NEEDS_YOU, in this order (for the lead session to answer or pass to the studio l
 FAILED: M14 test_licences_are_proprietary fails (1 failed, 9390 passed); the n8n run has not happened. Full text under Details at the end of this file. Times in the Details are UTC only; IST is +5:30.
 PROGRESS: 5 of 20 table items at 100 percent; mean of the percent column 83 (counted from the ITEMS table on this page). Percent is how far a page has been checked, not confidence the take will work.
 Terms: M-number (M3, M14, M20) = a row of the ITEMS table below; D-number (D-01) = a row of drift/REPORT.md, a place where two documents disagree; studio head = a role name from older notes whose meaning is UNVERIFIED; take = the one filmed run (video scope: only scenes 1 to 4, version real-v5, decision 1 of inputs/DECISIONS-2026-11-16.md; decisions 5, 11, 12 are in the same file; film-v5 = the longer version that is not filmed); T19 = the test that sends the same made-up lead twice and expects one mail, one HubSpot write, one stored row (work/t19-terms.md); owner = the human; studio lead = the Claude session that does the technical steps and is the only one that messages the owner; lead session = the Claude session that gives me orders; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
-AGENTS_RUNNING: 5
+AGENTS_RUNNING: 3
 CAPACITY nproc=4 load=0.17 disk: 18G free
 NEXT: digest hand-backs; readers on patch and timing pages; v4.3 against final wording r37-r39
 INTERRUPTED: none
@@ -50,11 +50,9 @@ INTERRUPTED: none
 
 ## AGENTS
 - a07e3a4f8e7705fb2 REMARK: re-mark patch rows against lead answers (overlay); running; next: overlay table
-- af2ef855cfd0e1651 FIX-M17: fix M17 page and end-delete-cases after reader round 1 (last fix round); running; next: edits
-- a6fd1c9832e937a2a READ-T3: cold read of work/timing-check-v42-part3.md; running; next: report
-- a2d3b7b55c2ed19a8 LEAD-NOTICE-2: write work/LEAD-NOTICE-batch-2.md (open questions for the lead); running; next: file
-- ad4e0366c7b35e8ff FIX-OI: store-claim fixes in open-items-table and L4c-key-shape-check; running; next: edits
-EMPTY SLOTS: 3. Reason: the patch reader waits for the REMARK overlay; v4.3 against the final wording of rounds 36/34/35 (r37-r39) is not final; lane readers have no new work (partition 4470 of 4470, 0 problems).
+- a2d3b7b55c2ed19a8 LEAD-NOTICE-2: write work/LEAD-NOTICE-batch-2.md; running; next: file
+- a410f5746ff3b84b9 FIX-T3: fix work/timing-check-v42-part3.md after reader round 1 (last fix round); running; next: edits
+EMPTY SLOTS: 5. Reason: no independent work is open. The patch reader waits for the REMARK overlay (one fresh reader per rewritten page); the v4.3 final wording of rounds 36/34/35 (r37-r39) is not final; lane readers have nothing new (partition 4470 of 4470, 0 problems); held pages are not editable by me; remaining items wait for lead answers (LEAD-NOTICE-batch-2).
 
 ## Details (long text moved from the FAILED line)
 FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); the studio lead starts Docker and runs the rehearsal (decision 12); no take date. (3) S9-5, S9-12, S9-3, S9-2 not yet applied in v5 or the scope sheet; S9-1 and S9-4 deferred, describe-only (decision 5). (4) the take-time value substitution (BL-wp6-G1) is not built. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.

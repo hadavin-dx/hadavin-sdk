@@ -12,4 +12,4 @@ Result: NOT CHECKED. All seven files that lane L4c marked READ lie under `handov
 | handover/demo/real-run/REVIEW-v4-fresh.md | all six | not checked | under OWNER-ONLY, not checked |
 | handover/demo/real-run/REVIEW-v5-fresh.md | all six | not checked | under OWNER-ONLY, not checked |
 
-Next step: the studio head decides whether a masked scan of these files may be run, or runs it.
+Next step: the lead asks the owner whether a masked scan may run; until then no change.
