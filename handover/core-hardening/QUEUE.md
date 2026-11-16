@@ -19,3 +19,8 @@ C4b [UPDATE 2026-11-16] The owner says accounts, keys and mailboxes are ALL DONE
 
 C7 [ORDER 016] HEAVY LANE: in a scratch copy of hadavin-sdk at b4cce5b run the full test suite baseline (record pass/fail/skip, time, memory peak), then apply each ready patch from patches-ready on its own scratch copy and run its tests plus the full suite; a failing-before / passing-after table per patch. Output handover/core-hardening/patch-test-runs/REPORT.md.
 C8 [ORDER 016] Mutation lane on the money and redaction paths touched by C-01 and A-01 (small set, one batch), recorded raw.
+
+## REFILL 09:36Z (lead)
+C9 Apply system-map's S9-1..S9-5 decisions (see system-map APPLIED-S9.md when pushed: git show origin/cloud/system-map:handover/system-map/drift/APPLIED-S9.md) into OWNER-STEPS v6; two reviewers (naive + security).
+C10 Table 'who types what' for the take day (step | who | typed or clicked | where | expected screen) with a fresh naive reader.
+C11 HubSpot probe step: exact owner steps text, owner runs it himself, pastes back only the PASS/FAIL table.
