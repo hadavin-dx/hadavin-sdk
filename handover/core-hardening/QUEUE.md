@@ -16,3 +16,6 @@ C5 READY-TO-APPLY core patches (C-01, A-01, G5 wording, dead-man note) already i
 C6 Idle fallback: architecture audit rule R460 on the next unreviewed area of your own audit.
 
 C4b [UPDATE 2026-11-16] The owner says accounts, keys and mailboxes are ALL DONE (inputs/FACTS-ALREADY-DONE.md). C4 therefore becomes: rewrite OWNER-STEPS-realrun-v3.md as v4 containing ONLY what is still owner-only (typing y/challenge/end at the take, written yes with numbers, take-day laptop settings, watch, post, clean-up revokes); strip every Phase 0 step the facts file says is done; keep the lead's steps out of the owner file. Output handover/core-hardening/steps-edits/OWNER-STEPS-realrun-v4.md plus a diff list.
+
+C7 [ORDER 016] HEAVY LANE: in a scratch copy of hadavin-sdk at b4cce5b run the full test suite baseline (record pass/fail/skip, time, memory peak), then apply each ready patch from patches-ready on its own scratch copy and run its tests plus the full suite; a failing-before / passing-after table per patch. Output handover/core-hardening/patch-test-runs/REPORT.md.
+C8 [ORDER 016] Mutation lane on the money and redaction paths touched by C-01 and A-01 (small set, one batch), recorded raw.
