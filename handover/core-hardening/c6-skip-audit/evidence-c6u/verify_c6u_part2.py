@@ -447,3 +447,66 @@ check("E-scan: row 6 and section 1c both say the key scanner is read by a second
 
 _ow = "that G12 is about 'processed once' beside a crash scene is this report's own reading"
 check("E-defs2: the label of the wider reading of G12 stands whole in every place it is given (%d), and 'EGM = ...' and 'KEY = ...' stand in every place they are defined (%d, %d), none of them reworded" % (raw.count(_ow), raw.count("EGM = the studio's review method"), raw.count("KEY = a secret code")), _ow in sec1c and raw.count("EGM = the studio's review method") >= 3 and raw.count("KEY = a secret code") >= 2 and "EGM is the studio" not in raw and "KEY is a secret" not in raw, "")
+
+# ======================================================================== c6u: FACTS-SOURCE TIES (class: a fact printed in several places is compared, in every copy, with ONE source)
+# c6t verified each fact where it was first written; a changed copy of ONE place passed (14 of 40 changes of the c6t independent evidence). Each check below
+# finds EVERY copy by pattern and compares it with a value computed from a file, a recount or one declared table; it fails if there is no copy at all.
+def _tie(name, pattern, expected, text=None, flags=0):
+    ms = [m.groups() for m in re.finditer(pattern, raw if text is None else text, flags)]
+    exp = tuple(str(e) for e in expected)
+    bad_ = [g for g in ms if tuple(g[:len(exp)]) != exp]
+    check("c6u TIE %s: every copy (%d found) equals the source value %s" % (name, len(ms), "/".join(exp)), len(ms) >= 1 and not bad_, bad_[:4])
+_total_w = sum(_cw)
+_secs = round(_total_w / 150.0 * 60)
+_bud = -(-_secs // 5) * 5
+_tie("card total words, seconds, budget (recomputed from the four quoted lines)", r"(\d+) words, about (\d+) s, budget (\d+) s", (_total_w, _secs, _bud))
+_tie("card total words 'spoken card holds'", r"the spoken card holds (\d+) words", (_total_w,))
+_tie("card seconds 'at 150 words a minute'", r"about (\d+) s at 150 words", (_secs,))
+_ob = part2[part2.index("OPTION (b) OF L-CARDLEN"):part2.index("THE CLOSING CARD UNDER THE DEFAULTS")]
+_obw = sum(len(q_.split()) for q_ in re.findall(r"line \d '(.*?)'(?= line \d '|\s*$)", _ob.split("): line 1", 1)[1] if "): line 1" in _ob else "", re.S)) if "): line 1" in _ob else -1
+_obs = round(_obw / 150.0 * 60)
+_tie("option (b) words (recomputed from its four quoted lines)", r"the (\d+)-word text", (_obw,))
+_tie("option (b) title words", r"OPTION \(b\) OF L-CARDLEN, (\d+) words", (_obw,))
+_tie("option (b) seconds and budget", r"the \d+-word text in part 2: about (\d+) s, budget (\d+) s", (_obs, -(-_obs // 5) * 5))
+_ord = rd(H + "/handover/core-hardening/ORDERS.md").split("\n")
+_lease = int(re.search(r"lease (\d+) s", _ord[150]).group(1))      # ORDERS.md line 151 (Q21.2): the one source of the lease setting
+_tie("lease seconds in '<n>-second limit/setting/sentence/window/lease/check'", r"(\d+)-second (?:limit|setting|sentence|window|lease|check)", (_lease,))
+_tie("lease seconds in 'within <n> seconds' (a gap that counts for the claim)", r"within (45|\d+) seconds of the first send", (_lease,))
+_tie("lease seconds in 'lease <n> s' for the take's series (the 20 and 120 s lines are older series: only the 45 s lines are compared)", r"lease (45) s", (_lease,))
+_rec = json.load(open(T + "/demo/n8n-flows/mf-recovery.json"))
+_every = re.search(r'"secondsInterval":\s*(\d+)', rd(T + "/demo/n8n-flows/mf-recovery.json")).group(1)
+_tie("recovery interval 'every <n> seconds' (the file mf-recovery.json says secondsInterval)", r"every (\d+) seconds", (_every,))
+_kept = 5 + 5 + 5 + 3      # K1, K2, K3B, K3 (the table of kept runs in section 1b; checked above)
+_tie("kept stand-in crash runs", r"(\d+) stand-in crash runs", (_kept,))
+_tie("kept runs", r"(\d+) kept (?:crash )?runs", (_kept,))
+_cl = rd(T + "/flows-audit/lanes13/claims-A.md")
+_dl_s = int(re.search(r"\((\d+) s, RELAYED", _cl).group(1)); _dl_n = int(re.search(r"up to 13 min late \(n=(\d+)\)", _cl).group(1))
+_tie("alert delay minutes (claims-A.md says %d s)" % _dl_s, r"(\d+)-minute alert delay", (_dl_s // 60,))
+_tie("relayed runs behind the alert delay (claims-A.md says n=%d)" % _dl_n, r"alert delay \((\d+) relayed runs\)", (_dl_n,))
+_rn_ = rd(STEPS + "/" + max([f for f in os.listdir(STEPS) if re.fullmatch(r"LEAD-RELEASE-NOTE-v\d+\.md", f)], key=lambda f: int(re.search(r"v(\d+)", f).group(1)))).split("\n")
+_lrn = sorted(set(int(x) for x in re.findall(r"LRN14:(\d+)", raw)))
+check("c6u TIE LRN14 cites: every cited line number is one of the lines the check proved equal in v14 and the newest note (8, 33, 149, 150): %s" % _lrn, set(_lrn) <= {8, 33, 149, 150} and len(_lrn) >= 3, _lrn)
+_ob_ = []
+for _m in re.finditer(r"ORD:(\d+)", raw):
+    _n = int(_m.group(1)); _c = raw[max(0, _m.start() - 70):_m.end() + 12]; _ln = _ord[_n - 1] if 0 < _n <= len(_ord) else ""
+    if ("18 Nov" in _c or "Q21.1" in _c) and not _ln.startswith("Q21.1"):
+        _ob_.append((_n, "18 Nov / Q21.1"))
+    if "= line" in _c and not _ln.startswith("Q21.1"):
+        _ob_.append((_n, "= line"))
+    if "ORD:%d's 'no takeover" % _n in _c + raw[_m.end():_m.end() + 20] and "no takeover" not in _ln:
+        _ob_.append((_n, "no takeover"))
+check("c6u TIE ORDERS cites: every ORD:<n> next to 'Wed 18 Nov', 'Q21.1', '= line' or 'no takeover' points to the ORDERS.md line that says so", not _ob_, _ob_[:4])
+_m_ = re.search(r"ORD:(\d+) = line (\d+) of ORDERS\.md", raw)
+check("c6u TIE ORDERS cite list: 'ORD:<n> = line <n> of ORDERS.md' names one number twice, and that line is Q21.1", bool(_m_) and _m_.group(1) == _m_.group(2) and _ord[int(_m_.group(1)) - 1].startswith("Q21.1"), _m_.groups() if _m_ else None)
+# row lists: every written list of row numbers that has the length and the first number of a group the table defines, and differs from it, is a changed copy
+_grp = {}
+_grp["rows that wait for a check"] = sorted(r["i"] for r in rows if "after check" in r["st"])
+_grp["rows that wait for the owner"] = sorted(r["i"] for r in rows if "waits for the answer of L-SAVEERR" in r["st"])
+_grp["rows of L-ONEDB"] = sorted(r["i"] for r in rows if "L-ONEDB" in r["st"] or r["i"] in (90, 91))
+_grp["rows of check C-8"] = sorted(r["i"] for r in rows if "after check C-8" in r["st"])
+_runs_ = []
+for _m in re.finditer(r"\b\d+(?:, \d+)+(?: and \d+)?\b", raw):
+    _nums = [int(x) for x in re.findall(r"\d+", _m.group(0))]
+    _runs_.append(_nums)
+_near = [(g, n_) for g, v in _grp.items() if len(v) >= 2 for n_ in _runs_ if len(n_) == len(v) and n_[0] == v[0] and n_ != v]
+check("c6u TIE row lists: no written list of row numbers is a near copy (same length, same first row, other rows) of the rows that wait for a check %s, wait for the owner, belong to L-ONEDB %s or to C-8 %s" % (_grp["rows that wait for a check"], _grp["rows of L-ONEDB"], _grp["rows of check C-8"]), not _near and all(sum(1 for n_ in _runs_ if n_ == v) >= 1 for v in _grp.values() if len(v) >= 2), _near[:4])

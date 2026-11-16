@@ -20,3 +20,5 @@ m19 [/bin/dash]: SURVIVED exit=0 SELF-TEST: passed=1615 failed=0 (the made-up in
 m20 [/bin/dash]: KILLED-phase1 exit=1 fail_lines=7 SELF-TEST: passed=1576 failed=6 (the made-up input and output files were deleted) (3s)
 m21 [/bin/dash]: SURVIVED exit=0 SELF-TEST: passed=1615 failed=0 (the made-up input and output files were deleted) first_fail=[] (100s)
 m22 [/bin/dash]: SURVIVED exit=0 SELF-TEST: passed=1615 failed=0 (the made-up input and output files were deleted) first_fail=[] (90s)
+m23 [/bin/dash]: KILLED-phase2 exit=1 SELF-TEST: passed=1614 failed=1 (the made-up input and output files were deleted) first_fail=["FAIL (machinery): LC_ALL is not C in the filter (it is 'unset')"] (110s)
+m24 [/bin/dash]: KILLED-phase1 exit=1 fail_lines=3 SELF-TEST: passed=1579 failed=3 (the made-up input and output files were deleted) (3s)

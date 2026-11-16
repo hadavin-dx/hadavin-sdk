@@ -519,7 +519,7 @@ check("N3 both constraints now carry the Infinity clause, same names, no second 
 check("N4 the runtime role is now refused NaN (23514)", sqlstate(lambda: rn.execute("INSERT INTO spend (agent_id, day, usd) VALUES ('z', %s, 'NaN')", (DAY,))) == "CheckViolation/23514")
 
 # ---------------------------------------------------------------- O. class-level guard over SECURITY DEFINER (security major 6)
-ALLOWED = {"spend_log_decrease", "kill_switch_log_change"}
+ALLOWED = {"spend_log_decrease", "kill_switch_log_change", "kill_switch_log_insert"}  # v19: the DB-2 file also defines kill_switch_log_insert (security minor m1)
 real_sql = sorted(m.MIGRATIONS.glob("*.sql")); held_sql = sorted(HELD.glob("*.sql"))
 probs = [p for f in real_sql + held_sql for p in sg.check_sql_text(f.name, f.read_text(), ALLOWED)]
 check(f"O1 the guard finds no problem in the {len(real_sql)} real migrations and the {len(held_sql)} held files", probs == [], "; ".join(probs)[:200])

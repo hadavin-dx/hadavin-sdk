@@ -1,0 +1,32 @@
+banned strings loaded 10
+files scanned 1682
+banned-string hits (case-insens): files 2 total 4
+secret-shape hits: files 93 total 127
+  secret-shape OWNER-CARD-v28-A.md 1
+  secret-shape OWNER-CARD-v28-B.md 1
+  secret-shape OWNER-CARD-v29-A.md 1
+  secret-shape OWNER-CARD-v29-B.md 1
+  secret-shape OWNER-CARD-v30-A.md 1
+  secret-shape OWNER-CARD-v30-B.md 1
+  secret-shape OWNER-CARD-v31-A.md 1
+  secret-shape OWNER-CARD-v31-B.md 1
+  secret-shape OWNER-CARD-v32-A.md 1
+  secret-shape OWNER-CARD-v32-B.md 1
+  secret-shape OWNER-SHEET-v16.md 1
+  secret-shape OWNER-SHEET-v20.md 1
+  secret-shape OWNER-SHEET-v21.md 2
+  secret-shape OWNER-SHEET-v22.md 2
+  secret-shape OWNER-SHEET-v28-SOURCE.md 1
+non-example email hits: files 55 total 73
+  email OWNER-APPENDIX-v29-A.md 1
+  email OWNER-APPENDIX-v29-B.md 1
+  email OWNER-APPENDIX-v30-A.md 1
+  email OWNER-APPENDIX-v30-B.md 1
+  email OWNER-SHEET-v20.md 2
+  email OWNER-SHEET-v21.md 2
+  email OWNER-SHEET-v22.md 2
+  email OWNER-SHEET-v23.md 2
+  email OWNER-SHEET-v24-A.md 3
+  email OWNER-SHEET-v24-B.md 3
+  banned-in scratch16/neg-r16banned.md 2
+  banned-in scratch17/neg-r16banned.md 2
