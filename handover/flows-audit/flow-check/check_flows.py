@@ -643,9 +643,16 @@ EXPR_BLOCK = re.compile(r"\{\{(.*?)\}\}", re.DOTALL)
 OK_WORDS = {"bearer", "basic", "token"}
 
 
+SECRET_LAST_WORDS = ("pass", "pwd", "passwd", "password", "passphrase", "secret", "token", "apikey", "key")
+
+
 def key_is_secretish(k):
     kk = re.sub(r"[-_\s]", "", str(k)).lower()
-    return kk == "pass" or kk.endswith(SECRET_KEY_ENDS)
+    if kk == "pass" or kk.endswith(SECRET_KEY_ENDS):
+        return True
+    # f8-r11 (M3): the LAST WORD of a camelCase / snake_case key (smtpPass, db_pass, userPwd) names a secret; 'bypass' or 'compass' is one word and stays clean
+    words = re.findall(r"[A-Z]+(?![a-z])|[A-Z]?[a-z]+|\d+", re.sub(r"[-_\s]+", " ", str(k)).replace(" ", "_").replace("_", " "))
+    return len(words) > 1 and words[-1].lower() in SECRET_LAST_WORDS[:-1]
 
 
 def value_is_safe(v):
@@ -690,7 +697,7 @@ def secret_scan(n, tag):
         for label, rx in SECRET_RX:
             if rx.search(s2):
                 hits.append(label)
-    for k, v, _p in kv_items({x: y for x, y in n.items() if x != "credentials"}):
+    for k, v, _p in kv_items(n):  # f8-r11 (F3): the credentials block is scanned too (a secret written beside the credential id and name)
         if (
             key_is_secretish(k)
             and len(v) >= SECRET_MIN_LEN
