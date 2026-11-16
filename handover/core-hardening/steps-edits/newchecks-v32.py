@@ -405,7 +405,7 @@ if 'fourth alarm' in NOTE and 'both sheets' not in NOTE: fail('C212', 'note: the
 _w = 'will probably fail on Wed 18 Nov'
 _r71 = [l for l in OPEN.split('\n') if l.startswith('| 71 |')]
 if not _r71 or 'No default pick' not in _r71[0] or _w not in _r71[0] or abs(_r71[0].find(_w) - _r71[0].find('No default pick')) > 500: fail('C212', 'open row 71: the warning is not beside the no-default wording')
-if NOTE.count(_w) < 2: fail('C212', 'note: the warning "%s" is missing (count %d)' % (_w, NOTE.count(_w)))
+if NOTE.count(_w) < 3: fail('C212', 'note: the warning "%s" is missing (count %d)' % (_w, NOTE.count(_w)))
 # C213 (evidence H06): ANY phrasing in a lead page or sheet that makes the older-key cancel wait for, or be released by, a lead message
 _REL = re.compile(r"(?:on|after|upon|when|once|if) (?:your|the lead's|a lead|the lead|you send|you say) (?:message|word|words|sentence|tells)|(?:lead|you|it) (?:sends?|says?|gives?|writes?|tells?|messages?|releases?|allows?|permits?|approves?|confirms?|signals?|answers?)(?: the owner| him)? (?:the |him |it )?(?:words? |message |go-ahead |signal |release )?[\"“]?(?:cancel|release|go|ok)|waits? for (?:your|a|the lead)|(?:release|permission|go-ahead|signal) (?:from|of|by) (?:the )?lead|until (?:the lead|you) (?:says?|sends?|tells?)|(?:lead|message|word) (?:releases?|allows?|permits?|approves?|frees?|lifts?|unlocks?) (?:\\w+ ){0,4}(?:older key|cancel)", re.I)
 _NEG = re.compile(r"\bno lead message\b|does NOT wait|not wait|no message from you|no word of the lead|\bnever\b|without|\bnor\b|was wrong|said so in|no message|not needed|not accepted|neither|no longer|is closed|no lead word|does not wait|not a|only the owner|owner's own")
@@ -503,9 +503,10 @@ for _n, _t in (('NOTE', NOTE), ('OPEN', OPEN)):
 # C230 (S M3 and N M3; class: a role named but with no page, trigger or scope): the helper page
 if _V9 != 'v32' or not _HP: fail('C230', 'the cancel helper page OWNER-HELPER-v32.md does not exist')
 else:
-    for _s in (_FF['helper_scope'], 'The owner himself asks you', 'Never the lead, the film person, the backup person', 'not the film person, the editor, the post checker or the backup person', 'you called the owner twice, 5 minutes apart, with no answer', 'every key on your paper that is still valid is cancelled', 'The last-resort step is the owner\'s, not yours', 'Never copy, type or photograph key text',
+    for _s in (_FF['helper_scope'], 'The owner himself asks you', 'Never the lead, the film person, the backup person', 'not the film person, the editor, the post checker or the backup person', 'every key on your paper that is still valid is cancelled', 'The last-resort step is the owner\'s, not yours', 'Never copy, type or photograph key text',
                'plus %s minutes' % _FF['hw'], _FF['hcb'], _FF['hok'], _FF['dl_day'] + ' ' + _FF['rv23']):
         if _s not in _HP: fail('C230', 'helper page lacks %r' % _s[:70])
+    if _HP.count('you called the owner twice, 5 minutes apart, with no answer') != 2: fail('C230', 'helper page: triggers (b) and (c) do not both need two calls to the owner')
     if len(re.findall(r'\(([a-d])\) ', _HP)) != 4: fail('C230', 'helper page does not have exactly the four triggers (a) to (d)')
     if re.search(r'(?i)\blead (?:may|can) (?:ask|tell|release)', _HP): fail('C230', 'helper page lets the lead release a cancel')
 for _n, _t in (('A', A), ('B', B)):
@@ -519,7 +520,7 @@ for _n, _t in (('A', A), ('B', B)):
 # C232 (S minor 5, N minor): alarms: two deadline reminders are a fifth and a sixth alarm, set at 5.8
 for _n, _t in (('A', A), ('B', B)):
     for _s in ('a fifth and a sixth phone alarm', 'check all six are set and ring with sound', 'two **deadline reminders**'):
-        if _s not in _t: fail('C232', '%s lacks %r' % (_n, _s))
+        if _s not in SHEETS_DISK[_n] or _s not in _CARD[_n]: fail('C232', '%s (sheet or card) lacks %r' % (_n, _s))
     if _FF['bs'] not in _t or _FF['bm'] not in _t: fail('C232', '%s lacks a deadline reminder time' % _n)
 # C233 (N M7; class: one statement with two sources): the yes is typed from one pattern, and it binds the owner
 for _n, _t in (('A', A), ('B', B)):

@@ -378,12 +378,10 @@ for lbl, stmt, probe in (('SET "role" TO rt17 (quoted name)', 'SET "role" TO rt1
     admin.execute("RESET ALL"); admin.execute(stmt); cu = admin.execute("SELECT current_user, session_user").fetchone(); admin.execute("RESET ALL")
     f18, f19 = both(stmt + ";\n", {})
     check(f"MA1 real server: {lbl} changes the session identity on 16.15 (current_user, session_user = {cu}); v18 guard flags it = {f18}; v19 guard flags it = {f19}", (cu[0] == "rt17" or cu[1] == "rt17") and f19)
-    stated_ok = True
     if f18: info(f"MA1 note: the v18 guard already flagged: {lbl}")
-admin.execute("CREATE ROLE ma_probe NOLOGIN"); admin.execute("SET ROLE ma_probe"); admin.execute("RESET ROLE")
 mgp.execute("CREATE TABLE public.secret_t (v text)"); mgp.execute("INSERT INTO public.secret_t VALUES ('made-up-secret')")
 LEAK = "CREATE OR REPLACE FUNCTION leak(q text) RETURNS xml LANGUAGE sql SECURITY DEFINER SET search_path = pg_catalog, pg_temp AS $f$ SELECT query_to_xml(q, true, false, '') $f$;\nREVOKE ALL ON FUNCTION leak(text) FROM PUBLIC;\nGRANT EXECUTE ON FUNCTION leak(text) TO rt17;\n"
-mgp.execute(LEAK.split("\nGRANT")[0].replace("\n", " ").replace("REVOKE", "; REVOKE") if False else LEAK.split("\n")[0]); mgp.execute("REVOKE ALL ON FUNCTION leak(text) FROM PUBLIC"); mgp.execute("GRANT EXECUTE ON FUNCTION leak(text) TO rt17")
+mgp.execute(LEAK.split("\n")[0]); mgp.execute("REVOKE ALL ON FUNCTION leak(text) FROM PUBLIC"); mgp.execute("GRANT EXECUTE ON FUNCTION leak(text) TO rt17")
 rtp = psycopg.connect(dsn("rt17", dbp), autocommit=True)
 direct = st(lambda: rtp.execute("SELECT * FROM public.secret_t")); via = rtp.execute("SELECT leak('select * from public.secret_t')").fetchone()[0]
 f18, f19 = both(LEAK.replace("\nGRANT EXECUTE ON FUNCTION leak(text) TO rt17;\n", "\n"), {"leak(text)": "definer"})

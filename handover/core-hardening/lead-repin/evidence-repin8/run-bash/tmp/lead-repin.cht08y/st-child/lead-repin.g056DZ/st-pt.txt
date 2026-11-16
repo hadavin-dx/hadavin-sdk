@@ -167,3 +167,68 @@ password flag after a variable assignment|zr209v|xn209d|LS
 password flag on a continuation line|zr210v|xn210d|LS
 password flag, quoted value with a space|zr211v|xn211d|LS
 glued name DBPASS|zr212v|xn212d|LS
+glued name ROOTPW|zr213v|xn213d|LS
+config line requirepass|zr214v|xn214d|LS
+config line masterauth|zr215v|xn215d|LS
+session id name jsessionid|zr216v|xn216d|LS
+XML element text|zr217v|xn217d|LS
+value that starts with an angle bracket|zr218v|xn218d|LS
+comparison of a password with a text|zr219v|xn219d|LS
+name := value in the middle of a line|zr220v|xn220d|LS
+name := value inside braces|zr221v|xn221d|LS
+name := unquoted value|zr222v|xn222d|LS
+SQL IDENTIFIED BY|zr223v|xn223d|LS
+second text after a hidden one|zr224v|xn224d|LS
+closing bracket inside a mid-line value|zr225v|xn225d|LS
+web address, token as user part, host without a dot|zr226v|xn226d|LS
+web address with escaped slashes|zr227v|xn227d|LS
+web address with escaped slashes, no colon|zr228v|xn228d|LS
+user:password@host without a scheme|zr229v|xn229d|LS
+Bearer value with a hash sign|zr230v|xn230d|LS
+Bearer value of 5 characters|kq7z2|kq7z2|LS
+echo piped into sudo -S|zr231v|xn231d|LS
+echo piped into kinit|zr232v|xn232d|LS
+echo piped into ssh-add|zr233v|xn233d|LS
+control byte 0x01 inside the name password|zs301v|xo301d|
+ESC inside the name password|zs302v|xo302d|
+backspace inside the name api_key|zs303v|xo303d|
+NUL inside the name password|zs304v|xo304d|
+bidi control inside the name token|zs305v|xo305d|
+CR between the name and the equals sign|zs306v|xo306d|
+value that starts with the exact mark and goes on|zs307v|xo307d|
+value <massive...>|zs308v|xo308d|
+prose: token is <ma...>|zs309v|xo309d|
+flag --token <m...>|zs310v|xo310d|
+Bearer <e...>|zs311v|xo311d|
+YAML value that starts with the exact email mark and goes on|zs312v|xo312d|
+upper case mark with a value|zs313v|xo313d|
+HTML entities for the quotes|zs314v|xo314d|
+numeric HTML entities for the quotes|zs315v|xo315d|
+URL-encoded equals sign|zs316v|xo316d|
+double-escaped quotes|zs317v|xo317d|LS
+CDATA text of an XML element|zs318v|xo318d|LS
+XML element written with entities|zs319v|xo319d|
+XML attribute named password|zs320v|xo320d|LS
+XML key and value attributes|zs321v|xo321d|LS
+login(user, "value")|zs322v|xo322d|LS
+api_key == "value"|zs323v|xo323d|LS
+set_password("value")|zs324v|xo324d|LS
+bare password VALUE (one space)|zs325v|xo325d|LS
+Basic VALUE inside a sentence (sed rule alone)|zs326v|xo326d|LS
+Basic VALUE at line start (sed rule alone)|zs327v|xo327d|LS
+commented-out bare password VALUE (#)|zs328v|xo328d|LS
+commented-out bare secret VALUE (//)|zs329v|xo329d|LS
+commented-out bare token TAB VALUE (;)|zs330v|xo330d|LS
+commented-out requirepass VALUE (#, no space)|zs331v|xo331d|LS
+requirepass: a second word on the line is hidden too|zs332v|xo332d|LS
+rootpw: a second word on the line is hidden too|zs333v|xo333d|LS
+bare password TAB VALUE|zs334v|xo334d|LS
+bare db_password TAB VALUE|zs335v|xo335d|LS
+bare secret TAB VALUE|zs336v|xo336d|LS
+bare token TAB VALUE|zs337v|xo337d|LS
+bare Password, several spaces|zs338v|xo338d|LS
+bare password, indented, mixed white space|zs339v|xo339d|LS
+netrc style: user line, then password line|zs340v|xo340d|LS
+http -a user:password|zs341v|xo341d|LS
+wget --user user:password|zs342v|xo342d|LS
+http --proxy-user user:password|zs343v|xo343d|LS
