@@ -1,13 +1,13 @@
-UPDATED_UTC: 2026-11-16T10:28:42Z
+UPDATED_UTC: 2026-11-16T10:29:04Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
 ITEMS_OPEN: 8
-PERCENT: 64
+PERCENT: 66
 AGENTS_RUNNING: 6
-CAPACITY: 1.50 load of 4 cores, mem 0/15 GB, RAM 924/16087 MB, disk 27G free of 252G, top3 551M /tmp/claude-0 649M /tmp/pytest-of-root 871M /tmp/f3m , agents 6 (light+heavy per list)
+CAPACITY: 1.45 load of 4 cores, mem 0/15 GB, RAM 876/16087 MB, disk 27G free of 252G, top3 551M /tmp/claude-0 649M /tmp/pytest-of-root 871M /tmp/f3m , agents 6 (light+heavy per list)
 INTERRUPTED: none
 FAILED: ROLES: PARKED by lead (client build, after video, no new lanes). Script r6: independent rerun 71 tests OK, gate rc 0, but 7 of 15 random mutants survive (lines 141,145,147,280,358,371,417); not fixed because parked; v4 doc security Blocker (Part C unguarded) unfixed
 claims: r5 counts independently rerun and match (113/69/48/28/69=327, 79 rows); BUT 37 Table 2 rows (41-77) have no LIVE/OUT tag; example.test vs example.com rows 2 and 5 rest on OWNER-STEPS v3 only; row 33 archive step unproven; 2 wrong cites (A-097, A-068); r6 fix pending (tags, desk-repo traces, cites)
@@ -21,7 +21,6 @@ claims stranger read of lines 1-260: 3 Blockers 16 Majors (gating of row 33 on a
 F5 facts review r5: 0 Blocker 6 Major (about 25 wrong CLAIMS-TABLE line cites; A-084 example.test vs example.com; deleting saved runs may not remove n8n copy; decision 2 pasted as fact; B-215 cite; B-010 three vs two leads); r6 fixer running
 F8 design review r3: 0 Blocker 5 Major (cross-folder duplicate webhook paths never checked; $env reads exit 0 by default; memory-sourced n8n rules are FAILs without UNVERIFIED tag; self-baseline makes IF gap only WARN; stale README/REPORT claims); r4 fixer running
 F5 r7 fixer: checker rc 0 twice (157 rows, 0 ids missing) as of CLAIMS-TABLE before claims r7; must rerun after claims r7 fixer; section 6 still says '73 in round 6' vs checker 78 (stale); nothing ran in n8n
-decisions pass review: 9 Majors (stale 8 files, count readings disagree, F6B steps 1-5 still describe film-set switching, TRUNCATE would destroy lead_key to crm_id list, F-003/F-004 patches still insert scene 5 text); fixer r2 + patch regeneration running; Q14 asked the lead to re-rate F-005/F-006/F-023/F6B-01/F6B-13 and decide the scene 4 caption
 F3 security review 4: 0 Blocker, 4 Majors (check says 0 problems when the manifest is not found; --tokens-only accepts a NOT READY copy; stray .DS_Store blocks check and delete; README claims Python 3.11/3.12 never run) + nits incl 6 noqa vs no-suppression rule; fixer waits for the independent evidence run (still running)
 claims r7 fixer: 6 Majors fixed (own report), F5 checker PASS 157 rows (rerun by me, see rc), counts unchanged 126/69/52/29/51=327; open: Q15 closing card (rows 14-15 tags wait for lead), Q13 contact cleanup; M8 words and 'settings-file figures' (M16) still open; 2 cites were not wrong (evidence script compared claim text to code line); independent re-read of r7 not done
 F-003/F-004 regenerated (builder: check PASS 5, no 60.1/film-v5/scene 5 in added lines; own numbers); NOT done: scene rows 5-11 and 'Update 17:08Z' caption still in VIDEO-RUNSHEET (lead applies), wording rows held by D1/D2/P2/P4a-c not pasted, 20 s source unconfirmed, F-001 patch line 7 names film-v5; 3 independent checks running
@@ -29,8 +28,9 @@ F8 r4 independent evidence: gates rc 0 (with repo config), 577/0/58 on py3.11/3.
 Q15 answered by lead and applied to CLAIMS-TABLE (rows 14-15 OUT, 16-17 LIVE, no numbers on a card); F5 checker PASS after; but F-003 patch closing card is 4 lines vs the lead's one line: fix after patch reviews land
 patches independent check: apply alone and together rc 0, PASS 5, target files unchanged; added lines clean for 60.1/film-v5/scene 5, but F-001 patch line 7 names film-v5, patched VIDEO-RUNSHEET keeps scene rows 5-11 (12 rows) and lines 12/64/84, PAGE-STATEMENTS line 151 keeps 61.9; evidence file is a summary not a full log; wording reviews running
 Q13 answered by lead (take uses run_real_check_n8n.py, cleanup OFF, owner deletes leftovers by hand); take scripts are not in this repo so the claim stays 'lead verifies at re-pin'; claims fixer applying
-NEXT: F3 r7 fixer after evidence; F8 r5, decisions r2, patch reviews, Q13 apply
-PUSHED_UTC: 2026-11-16T10:28:42Z
+decisions r2 fixer done (own report: 67 edits, 45=8/8/29 as rated, every scene 5-11 / 60.1 text carries a cut marker); NOT done: M4 re-rating and M8 scene 4 caption wait for lead (Q14); VIDEO-RUNSHEET still has scenes 5-11 (lead applies); independent evidence running
+NEXT: F3 r7 fixer after evidence; F8 r5, patch reviews, Q13 apply, decisions evidence
+PUSHED_UTC: 2026-11-16T10:29:04Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -50,11 +50,11 @@ PUSHED_UTC: 2026-11-16T10:28:42Z
 | id | role | model | what it does | started UTC | expected end UTC | % | state | last output |
 |---|---|---|---|---|---|---|---|---|
 | f3ev6 | F3 r6 evidence runner | sonnet | independent rerun, mutants on new code, e2e | 10:21 | 10:51 | 5 | running | fill_flows/evidence-f3-r6.md |
-| decfix2 | decisions text fixer r2 | sonnet | 9 Majors of review (M4/M8 left to lead, Q14) | 10:37 | 11:00 | 5 | running | reviews/apply-decisions-r2.md |
 | f8fix5 | F8 r5 fixer | sonnet | 4 Majors of owner-morning review (placeholders hidden, wrong table SQL, unpatched files, --fail-unverified) | 10:41 | 11:10 | 5 | running | flow-check/fix-f8-r5.md |
 | patrd | patches wording stranger read | sonnet | read-aloud wording | 10:45 | 11:00 | 5 | running | - |
 | patfc | patches facts review | sonnet | numbers vs flows/decisions | 10:45 | 11:00 | 5 | running | - |
 | q13fix | apply Q13 answer to claims rows | sonnet | rows 33, B-067/091/213/215 | 10:33 | 10:48 | 5 | running | reviews-f1/fix-q13.md |
+| decev2 | decisions r2 evidence runner | sonnet | independent counts and unmarked-text grep | 10:36 | 10:50 | 5 | running | reviews/evidence-decisions-r2.md |
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
