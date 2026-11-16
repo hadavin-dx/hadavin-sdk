@@ -1003,7 +1003,7 @@ bash -c 'sleep 60' "$RAS" & R12SP=$!
 r12run m3a RUN_ALL_NESTED=1 RUN_ALL_PARENT_PID=$R12SP timeout 120 bash "$RAS" --raw-dir "$S/r12-rawC" --lock-only
 kill "$R12SP" 2>/dev/null; wait "$R12SP" 2>/dev/null
 [ "$RC" = 2 ] && r12has m3a "does not name a running run_all.sh that started this run" && [ ! -e "$S/r12-rawC" ]; ok $? "M3: a live process that is not an ancestor, whose command line holds run_all.sh, is not accepted as the parent of a nested run (exit 2) (got exit $RC)"
-r12run m3b timeout 120 bash -c 'RUN_ALL_NESTED=1 RUN_ALL_PARENT_PID=$$ bash "$0" --raw-dir "$1" --lock-only' "$RAS" "$S/r12-rawD"
+r12run m3b timeout 120 bash -c 'RUN_ALL_NESTED=1 RUN_ALL_PARENT_PID=$$ bash "$0" --raw-dir "$1" --lock-only; exit $?' "$RAS" "$S/r12-rawD"
 [ "$RC" = 0 ] && r12has m3b "lock acquired"; ok $? "M3: a nested run whose parent is a real ancestor run_all.sh is accepted (got exit $RC)"
 # M3: SHELLOPTS / BASHOPTS in the environment (can switch tracing on, cannot be removed): refused at once, the name only
 r12run m3c env SHELLOPTS=braceexpand:hashall timeout 120 bash "$RAS" --raw-dir "$S/r12-rawE" --lock-only
