@@ -113,3 +113,8 @@ The v8 builder ran chmod 755 on /home/user and /home/user/hadavin-sdk to let a t
 
 ## 2026-11-16T18:45:34Z chmod answered by the lead (18:44Z)
 Done: both folders set to 750 (was 755), checked with stat. Count-only key scan of the repo folder run, counts in the REPORT. Builder briefs now say: restore modes in a finally and never chmod outside the lead-repin folder.
+
+## 2026-11-16T18:48:08Z lead 18:46Z chmod answer: three results
+1. stat before: 755 root on /home/user and /home/user/hadavin-sdk; set to 750 and checked (750 root both). The test user reads a /tmp copy, no group needed.
+2. Count-only scan (sk-, AKIA, ghp_, github_pat_, BEGIN PRIVATE KEY) over git ls-files, .git/config and .git/hooks, allowed AKIAIOSFODNN7EXAMPLE excluded: NOT 0. 23,499 files: sk- 319, AKIA 227, ghp_ 192, github_pat_ 6, PRIVATE KEY 347. Largest: handover/reports/A24-PR91-fix3-failbefore.txt (321, not mine), handover/evidence/* (not mine), mine: lead-repin 157 in 80 files (plant and probe outputs built from parts) and patches-ready 25 in 5 files. I did NOT open values and did NOT check each is fake; lead please decide who reviews the other folders. .git/config and .git/hooks: counts were included, no separate breakdown.
+3. Builder rule sent to the v9 and r13 builders (restore any mode in a finally, never chmod outside your folder, never write to /). Added to future briefs.
