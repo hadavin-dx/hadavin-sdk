@@ -1,5 +1,8 @@
 {
+  "schema": "key_name_regex: case-insensitive regex tested against the parameter KEY; a string value under a matching key is masked. value_regexes: tested against a string VALUE (search) = bearer text, credential-bearing connection string. whole_token_regex: a string value that is ENTIRELY one key-like token (fullmatch) is masked; URLs and SQL never fullmatch it, so they are copied. expression_regexes: for values starting with '=' (n8n expressions) only these are searched. allow_regexes: tokens that are allowed to appear (git shas); fullmatch.",
   "key_name_regex": "(token|secret|password|passwd|apikey|api_key|authorization|bearer)",
-  "value_regexes": ["Bearer\\s+\\S+", "[A-Za-z0-9_\\-]{32,}", "[a-z][a-z0-9+.\\-]*://[^\\s/@:]+:[^\\s/@]+@\\S+"],
-  "note": "Used by dump_nodes.py (masking) and check_secrets.py (new files must contain no value matching these). Expressions starting with '=' are not masked (they are code, not values). Credential NAMES, URLs and SQL text are copied."
+  "value_regexes": ["Bearer\\s+[A-Za-z0-9._~+/=\\-]{8,}", "[a-z][a-z0-9+.\\-]*://[^\\s/@:]+:[^\\s/@]+@\\S+"],
+  "whole_token_regex": "[A-Za-z0-9_\\-]{32,}",
+  "expression_regexes": ["Bearer\\s+[A-Za-z0-9._~+/=\\-]{8,}", "[a-z][a-z0-9+.\\-]*://[^\\s/@:]+:[^\\s/@]+@\\S+"],
+  "allow_regexes": ["[0-9a-f]{40}", "[0-9a-f]{7,12}"]
 }

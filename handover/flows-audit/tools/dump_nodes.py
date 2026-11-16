@@ -7,12 +7,21 @@ Secret-looking parameter values are masked; only key names are printed."""
 import json, re, sys, glob, os
 _P = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'mask_patterns.json')))
 SECRET_KEY = re.compile(_P['key_name_regex'], re.I)
-SECRET_VAL = re.compile('|'.join('(?:%s)' % r for r in _P['value_regexes']))
+VALUE_RES = [re.compile(r) for r in _P['value_regexes']]
+EXPR_RES = [re.compile(r) for r in _P['expression_regexes']]
+WHOLE = re.compile(_P['whole_token_regex'])
+ALLOW = [re.compile(r) for r in _P['allow_regexes']]
+
+def _secret_value(v, key):
+    if v.startswith('='): return any(r.search(v) for r in EXPR_RES)
+    if SECRET_KEY.search(key): return True
+    if any(r.search(v) for r in VALUE_RES): return True
+    return bool(WHOLE.fullmatch(v)) and not any(r.fullmatch(v) for r in ALLOW)
 
 def mask(v, key=''):
     if isinstance(v, dict): return {k: mask(x, k) for k, x in v.items()}
     if isinstance(v, list): return [mask(x, key) for x in v]
-    if isinstance(v, str) and not v.startswith('=') and (SECRET_KEY.search(key) or SECRET_VAL.search(v)): return '<masked>'
+    if isinstance(v, str) and _secret_value(v, key): return '<masked>'
     return v
 
 def load(path):
@@ -29,8 +38,8 @@ def load(path):
 def reachable(d, edges):
     """Dead rule: no incoming edge AND not a trigger AND not an Execute Workflow sub-entry AND not error-workflow target."""
     incoming = {t for l in edges.values() for _, t in l}
-    entry = [n['name'] for n in d['nodes'] if 'trigger' in n['type'].lower() or n['type'].endswith('.webhook')
-             or n['type'].endswith('executeWorkflowTrigger') or n['type'].endswith('errorTrigger')]
+    entry = [n['name'] for n in d['nodes'] if not n.get('disabled') and ('trigger' in n['type'].lower() or n['type'].endswith('.webhook')
+             or n['type'].endswith('executeWorkflowTrigger') or n['type'].endswith('errorTrigger'))]
     seen, stack = set(entry), list(entry)
     while stack:
         for _, t in edges.get(stack.pop(), []):
@@ -49,6 +58,19 @@ def table(path):
         print(f"| {k} | {n['name']} | {n['type']} v{n.get('typeVersion')} | {p} | {edges.get(n['name'], 'none')} | {n.get('onError')} | {n.get('retryOnFail')}/{n.get('maxTries')}/{n.get('waitBetweenTries')} | {n.get('disabled')} | {cred} | {reach[n['name']]} |")
     dang = [(s, t) for s, l in edges.items() for _, t in l if t not in names]
     print(f"dangling edges: {dang}; node names unique: {len(names) == len(set(names))}")
+
+JUDGE = ['purpose', 'trigger or upstream', 'inputs', 'outputs', 'error path', 'idempotency key', 'writes (store, table or file)', 'secrets (names only)', 'identity it runs as', 'logs to', 'what a person sees', 'stop condition', 'finding id']
+
+def skeleton(path):
+    """table rows plus 13 judgement columns marked TODO (lane agents replace TODO only)."""
+    import io, contextlib
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf): table(path)
+    for l in buf.getvalue().splitlines():
+        if l.startswith('| # |'): print(l + ' ' + ' | '.join(JUDGE) + ' |')
+        elif l.startswith('|---'): print(l + '---|' * len(JUDGE))
+        elif re.match(r'\| \d+ \|', l): print(l + ' TODO |' * len(JUDGE))
+        else: print(l)
 
 def flow_files(root):
     return [f for f in sorted(glob.glob(os.path.join(root, 'n8n-*/**/*.json'), recursive=True))
@@ -91,5 +113,6 @@ if __name__ == '__main__':
     if cmd == 'table': [table(p) for p in args]
     elif cmd == 'counts': counts(args[0])
     elif cmd == 'diff': diff(*args)
+    elif cmd == 'skeleton': [skeleton(p) for p in args]
     elif cmd == 'check': sys.exit(max([check(p) for p in args] or [0]))
     else: sys.exit(__doc__)

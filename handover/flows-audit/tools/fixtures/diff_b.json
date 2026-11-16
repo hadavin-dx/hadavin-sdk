@@ -1,0 +1,51 @@
+{
+ "name": "fx",
+ "nodes": [
+  {
+   "name": "Start",
+   "type": "n8n-nodes-base.webhook",
+   "typeVersion": 1,
+   "parameters": {},
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "name": "Work",
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 1,
+   "parameters": {
+    "v": 2
+   },
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "name": "Extra",
+   "type": "n8n-nodes-base.noOp",
+   "typeVersion": 1,
+   "parameters": {},
+   "position": [
+    0,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "Start": {
+   "main": [
+    [
+     {
+      "node": "Work",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {}
+}

@@ -1,21 +1,21 @@
-REMOVED node RCrmSearch
-REMOVED node RMailAlready
 REMOVED node RMarkMailSent
-REMOVED node RMarkDone
+REMOVED node RQualify
+REMOVED node RCrmSearch
+REMOVED node RItem
+REMOVED node RMailAlready
+REMOVED node RSendMail
+REMOVED node RSaveLabel
 REMOVED node RCrmNone
 REMOVED node RCrmCreate
 REMOVED node RSetCrm
 REMOVED node RMarkUnknown
+REMOVED node RMarkDone
 REMOVED node RCrmExists
-REMOVED node RSaveLabel
-REMOVED node RItem
-REMOVED node RQualify
-REMOVED node RSendMail
+ADDED node StuckRow
 ADDED node RunSub
 ADDED node AlertFailed
-ADDED node MarkFailed
-ADDED node StuckRow
 ADDED node FailedRow
+ADDED node MarkFailed
 CHANGED ClaimStuck.parameters: {"operation": "executeQuery", "query": "UPDATE mf_leads SET updated_at=now() WHERE lead_key IN (SELECT lead_key FROM mf_leads WHERE state NOT IN ('done','unknown') AND updated_at < now() - interval '20 seconds' ORDER BY created_at LIMIT 20 FOR UPDATE SKIP LOCKED) RETURNING lead_key, email, name, mai -> {"operation": "executeQuery", "query": "UPDATE mf_leads SET claimed_until=now() + interval '120 seconds', claim_token=gen_random_uuid()::text, attempts=attempts+1, updated_at=now() WHERE lead_key IN (SELECT lead_key FROM mf_leads WHERE state NOT IN ('done','review','unknown','failed') AND claimed_un
 CHANGED ClaimStuck.onError: null -> "continueRegularOutput"
 REMOVED edge ('ClaimStuck', 0, 'RItem')
