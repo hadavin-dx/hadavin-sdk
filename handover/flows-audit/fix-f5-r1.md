@@ -26,3 +26,4 @@ W-23 fixed: one name per column, with the on-screen name once in the words list.
 W-24 fixed: double quotes outside, single quotes inside.
 W-25 fixed: "claim window" explained in A-098; "claim" and "window" no longer used loosely.
 Disputed: none. Unverified: all relayed numbers, P1, P2, P3, D1 to D3, what program is the stand-in mail server, T8/T15 meaning.
+ORDER 019 addition: fixed. Row N-8 in RUNSHEET-WORDING.md section 1 gives the flow-set switch between scenes 4 and 5 (deactivate all four real-v5 flows including recovery, activate film-v5, clean leftover lead rows). UNCHECKED: whether the take scripts do this switch; the lead checks.

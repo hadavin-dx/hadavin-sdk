@@ -106,7 +106,7 @@ def g_shape_link(j, d): j["connections"][a_source(j)]["main"][0].append({"type":
 def g_shape_node(j, d): j["nodes"].append("not a node")
 def g_shape_params(j, d): first_nt(j)["parameters"] = []
 def g_shape_idx(j, d): j["connections"][a_source(j)]["main"][0].append({"node": first_nt(j)["name"], "type": "main", "index": "0"})
-def g_shape_top(j, d): return [j]          # whole file becomes a JSON list
+def g_shape_top(j, d): return ("REPLACE", [j])          # whole file becomes a JSON list
 def g_noname(j, d): first_nt(j).pop("name")
 def g_nonlist_nodes(j, d): j["nodes"] = {"a": 1}
 def g_parse(j, d): open(d + "/" + FOCUS, "w").write("{bad"); return False
@@ -306,7 +306,7 @@ def make(name, mut, work, src, which, keep_counts=False):
     if mut is not None:
         j = json.load(open(d + "/" + which)); r = mut(j, d)
         if r == SKIP: return d, True, []
-        if isinstance(r, list): j = r
+        if isinstance(r, tuple) and r and r[0] == "REPLACE": j = r[1]
         if r is not False: json.dump(j, open(d + "/" + which, "w"), indent=1)
     exp = []
     for f in FILES:
