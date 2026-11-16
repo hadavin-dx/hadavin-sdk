@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T12:57:09Z
-PUSHED_UTC: 2026-11-16T12:57:09Z
+UPDATED_UTC: 2026-11-16T12:58:20Z
+PUSHED_UTC: 2026-11-16T12:58:20Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
@@ -14,8 +14,8 @@ FAILED: M14 test_licences_are_proprietary fails (1 failed, 9390 passed); the n8n
 PROGRESS: 4 of 18 table items at 100 percent (M1, M11, M12, M13); mean about 83 percent. Percent is how far a page has been checked, not confidence the take will work.
 Terms: take = the one filmed run; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
 AGENTS_RUNNING: 8 launched this beat (ListAgents run in the same turn showed only 1 completed agent, so the 8 are from the launch results, UNVERIFIED by list)
-CAPACITY nproc=4 load=0.06 0.18 0.17 disk: 19G free, MB freed 0
-NEXT: digested through 868. Findings on pages the lead holds (OWNER-VIEW, cleanup card, review-r460-tools, egm-dryrun) are in work/agent-reports-batch4.md for the lead. Next 5 independent tasks: (1) fix decision-list-for-lead from its re-read; (2) fix owner-timeline-draft split rows; (3) fix lane files L1c-L5ac legend terms and owners; (4) re-read merged-findings legend; (5) re-read open-items-table.
+CAPACITY nproc=4 load=0.04 0.15 0.16 disk: 19G free, MB freed 0
+NEXT: digested through 876. Findings on pages the lead holds (OWNER-VIEW, cleanup card, review-r460-tools, egm-dryrun) are in work/agent-reports-batch4.md for the lead. Next 5 independent tasks: (1) fix decision-list-for-lead from its re-read; (2) fix owner-timeline-draft split rows; (3) fix lane files L1c-L5ac legend terms and owners; (4) re-read merged-findings legend; (5) re-read open-items-table.
 INTERRUPTED: none
 
 ## ITEMS
@@ -46,16 +46,16 @@ INTERRUPTED: none
 
 | agent id | purpose | started (UTC) | expected end | state | what it produced so far |
 |---|---|---|---|---|---|
-| a1ebf9b6d42df2efb | premortem-r1 re-read (sonnet) | 12:56 | 12:58 | completed | report digested 861-868 |
-| a05539e02e3ddb23d | L3c re-read (sonnet) | 12:56 | 12:58 | completed | report digested 861-868 |
-| ab6418c25eedb8863 | L2c re-read (sonnet) | 12:56 | 12:58 | completed | report digested 861-868 |
-| a50f5a318e21add99 | BRIEF-LANE re-read (sonnet) | 12:56 | 12:58 | completed | report digested 861-868 |
-| aff361ab486bded28 | L4c re-read (sonnet) | 12:56 | 12:58 | completed | report digested 861-868 |
-| aa1cc530468991237 | L5b re-read (sonnet) | 12:56 | 12:58 | completed | report digested 861-868 |
-| a3e55d00baed10635 | merged-findings re-read (sonnet) | 12:56 | 12:58 | completed | report digested 861-868 |
-| a931d593154511d81 | FINAL-CROSSCHECK re-read (sonnet) | 12:56 | 12:58 | completed | report digested 861-868 |
+| a08d6b34b97d46d1b | PLAN-002 read (sonnet) | 13:00 | 13:02 | completed | report digested 869-876 |
+| a52ad765155e9df8b | L1c read (sonnet) | 13:00 | 13:02 | completed | report digested 869-876 |
+| a8d565eb0c2fe9025 | open-items read (sonnet) | 13:00 | 13:02 | completed | report digested 869-876 |
+| aeefab0b7f95e8c81 | decision-list read (sonnet) | 13:00 | 13:02 | completed | report digested 869-876 |
+| a6448f3a963b97f79 | t19 steps read (sonnet) | 13:00 | 13:02 | completed | report digested 869-876 |
+| a4e97886f58972f39 | L5ac read (sonnet) | 13:00 | 13:02 | completed | report digested 869-876 |
+| a0776f9e56e9a9d6a | end-delete-cases read (sonnet) | 13:00 | 13:02 | completed | report digested 869-876 |
+| ad310556250f87ae4 | banned-claims read (sonnet) | 13:00 | 13:02 | completed | report digested 869-876 |
 
-Zero running at this beat; 8 fresh re-reads launch right after this push. Next 5 independent tasks: fold PLAN-002, L1c, open-items, decision-list, merged-findings (history to files).
+Zero running at this beat; 8 fresh re-reads launch right after this push. Folded for real this beat: PLAN-002, open-items, decision-list, end-delete-cases, banned-claims. Next 5 independent tasks: fold L1c, merged-findings, L5b, L5ac, FINAL-CROSSCHECK.
 
 Words: UTC = world time; IST = UTC plus 5 h 30 min. Cold read = an agent reads one page with no background and lists what it cannot follow. Held = a finding on a page that belongs to the lead, which I do not edit.
 
