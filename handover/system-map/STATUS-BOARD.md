@@ -1,5 +1,5 @@
 # STATUS BOARD system-map
-UPDATED_UTC: 2026-11-16T10:33:54Z (IST = UTC+5:30)
+UPDATED_UTC: 2026-11-16T10:35:05Z (IST = UTC+5:30)
 SESSION: system-map
 ORDER: 017-025; lead ANSWER 10:23Z item 8 (pause stays) read
 STATE: WORKING
@@ -7,12 +7,12 @@ BOOT_ID: 6bc0bf7e
 ITEMS_TOTAL: 20
 ITEMS_OPEN: 12 (rows below 100 percent or blocked in the table, counted by an agent; M3, M4 and M6 queue tags do not match the board, to reconcile)
 PERCENT: 85
-AGENTS_RUNNING: 3 running (cleanup-card re-read; v3 to v5 cite map; banned-phrase scan); 7 finished and applied or digested this beat. Below the 6 target: refilling as work is found. Evidence: applied fixes are grep-verified single matches; scan/tests not re-run this beat.
+AGENTS_RUNNING: 6 (banned-term second pass; v3 cite replacements; clean-up card remaining fixes; decision 3/7 text fixes; T19 steps gaps; README/LEAD-PAGE structure). The 7 earlier agents and the banned-phrase scan finished and were applied or digested. Evidence: edits grep-verified single matches; scan_outputs and tests not re-run since.
 INTERRUPTED: none
 NEXT: patched-copy answer already applied everywhere; next: apply the 6 agent reports' wording fixes (STATUS-BOARD, OWNER-VIEW row 3, REPORT.md, README/LEAD-PAGE structure); scan_outputs.py fix and tests still to do. ORDER 024: sed never ran, counts 6 opus, 64 sonnet, 0 fable. M14: 1 failed (licence, branch artefact), 9390 passed, rc=1. HELD for the lead: v5 step J editor; D-04/D-05 (post only); QUESTIONS 8 (film pause); rehearsal trim; row 1 builder and date.
-CAPACITY: nproc 4, load 0.81, RAM 0 GB used of 15 GB, DISK / 24 GB free of 252 GB (40 percent used); top 3: /tmp/pytest-of-root 616M, /tmp/sm-fresh 624M, /tmp/claude-0 1.3G; nothing removed.
+CAPACITY: nproc 4, load 0.34, RAM 0 GB used of 15 GB, DISK / 24 GB free of 252 GB (40 percent used); top 3: /tmp/pytest-of-root 616M, /tmp/sm-fresh 624M, /tmp/claude-0 1.3G; nothing removed.
 FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); the studio lead starts Docker and runs the rehearsal (decision 12); no take date. (3) S9-5, S9-12, S9-3, S9-2 not yet applied in v5 or the scope sheet; S9-1 and S9-4 deferred, describe-only (decision 5). (4) the take-time value substitution (BL-wp6-G1) is not built. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.
-PUSHED_UTC: 2026-11-16T10:33:54Z
+PUSHED_UTC: 2026-11-16T10:35:05Z
 
 ## ITEMS
 | # | item | state | % | evidence file | note |
@@ -41,6 +41,9 @@ PUSHED_UTC: 2026-11-16T10:33:54Z
 ## AGENTS (from the real agent list at the last beat)
 | id | role | what it does | state |
 |---|---|---|---|
-| a49d69a126296e804 | comprehension | cleanup card re-read after edits | running |
-| a047dcd70cde93203 | codebase-details | LEAD-PAGE v3 cites to v5 lines | running |
-| a0f29d4ba25a0fb43 | style | banned-phrase scan across pages | running |
+| accc01dc8aa91e95c | style | second banned-term pass | running |
+| ac8d20d7c2ba6c429 | codebase-details | v3 cite replacement text | running |
+| ae145533e16d4cf1e | comprehension | clean-up card remaining fixes | running |
+| ae3610a4178e60117 | codebase-details | decision 3 and 7 text fixes | running |
+| ad61c438eb8fc7d8b | implementation-readiness | T19 steps gaps | running |
+| afaba8812f8d58da8 | structural | README and LEAD-PAGE structure | running |
