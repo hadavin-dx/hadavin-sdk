@@ -1046,3 +1046,9 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 757 FINAL-CROSSCHECK r13: r12 left r11 standing; route config void. FIXED by STATUS r13; terms with no recorded meaning marked.
 - 758 BRIEF-LANE r12: r10/r11 conflict, rule 17 waiver, terms. FIXED by BINDING r13.
 - NOTE: six hand-backs (open-items r12, L3c r9, L1c r11, not-checked r11, critical-path r19, owner-timeline r12) completed but were not seen by me; re-reads launched.
+
+- 759 L1c r11: contradictions on terms, FD-021 unread bodies, stacked paragraphs. FIXED by CURRENT r11; cells TO DO.
+- 760 L3c r9: line 299 status, FD-001 cell, unrated counts. FIXED by GLOSSARY r9.
+- 761 critical-path r19: times not derivable, terms in ignored lines. FIXED by CURRENT ANSWER r20.
+- 762 owner-timeline r12: amendments chain. FIXED by CURRENT r12; table fold TO DO.
+- 763 not-checked r11: standalone, nine-vs-eight, deadlines. FIXED by CURRENT r12.
