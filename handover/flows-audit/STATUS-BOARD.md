@@ -1,13 +1,13 @@
-UPDATED_UTC: 2026-11-16T10:23:20Z
+UPDATED_UTC: 2026-11-16T10:24:06Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
 ITEMS_OPEN: 8
-PERCENT: 52
-AGENTS_RUNNING: 6
-CAPACITY: 3.30 load of 4 cores, mem 0/15 GB, RAM 959/16087 MB, disk 27G free of 252G, top3 649M /tmp/pytest-of-root 657M /tmp/claude-0 871M /tmp/f3m , agents 6 (light+heavy per list)
+PERCENT: 54
+AGENTS_RUNNING: 8
+CAPACITY: 3.16 load of 4 cores, mem 0/15 GB, RAM 898/16087 MB, disk 27G free of 252G, top3 649M /tmp/pytest-of-root 664M /tmp/claude-0 871M /tmp/f3m , agents 8 (light+heavy per list)
 INTERRUPTED: none
 FAILED: F3: r6 fixer reports 128 tests, gates rc 0, 19 of 20 old mutants killed, 11 of 128 new tests fail on old code (its own numbers, independent rerun running); NOT proven: macOS F_GETPATH real call, n8n reading of escaped $env, mutation coverage of new code, py3.9/3.10/3.12, one unexplained suite failure that did not repeat; real n8n import not run
 ROLES: PARKED by lead (client build, after video, no new lanes). Script r6: independent rerun 71 tests OK, gate rc 0, but 7 of 15 random mutants survive (lines 141,145,147,280,358,371,417); not fixed because parked; v4 doc security Blocker (Part C unguarded) unfixed
@@ -23,12 +23,12 @@ F5 facts review r5: 0 Blocker 6 Major (about 25 wrong CLAIMS-TABLE line cites; A
 F8 design review r3: 0 Blocker 5 Major (cross-folder duplicate webhook paths never checked; $env reads exit 0 by default; memory-sourced n8n rules are FAILs without UNVERIFIED tag; self-baseline makes IF gap only WARN; stale README/REPORT claims); r4 fixer running
 desk repo trace: 18 UNTRACED rows traced (13 SUPPORTED text-only, 4 OVERSTATED, 1 UNSUPPORTED); desk script as checked in ARCHIVES contacts at the end, against decision 2 (Q13 asked); nothing ever ran against real HubSpot/Gmail; PLAN-4 cites wrong against the 1113-line file
 claims r6 fixer done (own numbers: 126/69/52/29/51=327, 84 to-do rows all tagged; M8 words and M16 partly open; Q13: desk script archives contacts only with --cleanup, take script not in desk repo, decision 2 unconfirmed; closing card rows 16/17 vs scenes 1-4 open); independent rerun + reader running; F5 checker must be rerun after it
-decisions applied by agent to 12 files (56 edits, own count); NOT done: F-003/F-004 patches still insert scene 5 text and 60.1 to 61.9 s (must be regenerated), ratings of rows for out-of-video scenes not re-rated (lead call), OWNER-STEPS v4 and VIDEO-RUNSHEET are LEAD-TO-APPLY; reviewer running
 claims r6 independent rerun: counts match (126/69/52/29/51=327, 84 rows, tags 10+7+67); BUT F5 checker exits 1 (5 ids missing from RUNSHEET-WORDING: B-016,019,038,088,092); 2 cites (mf.py:158, stage_server.py:48) do not show the claimed text; F5 r7 fixer running
 F8 r4 fixer done (own numbers: run_all rc 0, self-test 577/0/58 skips, gates rc 0, 3 survivors killed); NOT done: every n8n rule from memory UNVERIFIED, env-access setting invisible to a file check, run_all.sh/take_check.sh have no self-test, 58 skips never fail the run, 2 nits open; independent rerun + reviewer running
 F5 r7 fixer: checker rc 0 twice (157 rows, 0 ids missing) as of CLAIMS-TABLE before claims r7; must rerun after claims r7 fixer; section 6 still says '73 in round 6' vs checker 78 (stale); nothing ran in n8n
-NEXT: collect F3 ev+sec, F8 ev+review, claims r7, decisions review; rerun F5 checker after claims r7
-PUSHED_UTC: 2026-11-16T10:23:20Z
+decisions pass review: 9 Majors (stale 8 files, count readings disagree, F6B steps 1-5 still describe film-set switching, TRUNCATE would destroy lead_key to crm_id list, F-003/F-004 patches still insert scene 5 text); fixer r2 + patch regeneration running; Q14 asked the lead to re-rate F-005/F-006/F-023/F6B-01/F6B-13 and decide the scene 4 caption
+NEXT: collect F3 ev+sec, F8 ev+review, claims r7, decisions r2, patches
+PUSHED_UTC: 2026-11-16T10:24:06Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -49,10 +49,11 @@ PUSHED_UTC: 2026-11-16T10:23:20Z
 |---|---|---|---|---|---|---|---|---|
 | f3ev6 | F3 r6 evidence runner | sonnet | independent rerun, mutants on new code, e2e | 10:21 | 10:51 | 5 | running | fill_flows/evidence-f3-r6.md |
 | f3sec4 | F3 security review 4 (fresh, owner-under-pressure angle) | sonnet | what r3 missed | 10:21 | 10:41 | 5 | running | (inline) |
-| decrv | decisions-apply result review (egm-codebase-details) | sonnet | 56 edits vs 12 decisions, missed spots, counts | 10:26 | 10:41 | 5 | running | - |
 | clfix7 | claims r7 fixer | sonnet | 6 Majors of stranger read + 2 wrong cites | 10:31 | 10:55 | 5 | running | reviews-f1/fix-f1-r7.md |
 | f8ev4 | F8 r4 evidence runner | sonnet | independent rerun, 25 mutants, hostile inputs | 10:33 | 10:55 | 5 | running | flow-check/evidence-r4.md |
 | f8rv4 | F8 r4 second reviewer (owner-morning angle) | sonnet | what r3 missed | 10:33 | 10:48 | 5 | running | - |
+| decfix2 | decisions text fixer r2 | sonnet | 9 Majors of review (M4/M8 left to lead, Q14) | 10:37 | 11:00 | 5 | running | reviews/apply-decisions-r2.md |
+| patchre | regenerate F-003/F-004 patches real-v5 only | sonnet | remove scene 5 / 60.1-61.9 s / film-v5 text | 10:37 | 11:05 | 5 | running | patches/REGENERATED-NOTE.md |
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
