@@ -261,7 +261,10 @@ class Positive(Base):
         self.assertEqual(self.fill(src=src, out=o1)[0], 3)
         self.assertEqual(self.fill(src=src, out=o2)[0], 3)
         self.assertEqual(tree_hash(o1), tree_hash(o2))
-        self.assertEqual(rtext(o1 + ".manifest.json"), rtext(o2 + ".manifest.json"))
+        m1, m2 = jload(o1 + ".manifest.json"), jload(o2 + ".manifest.json")
+        m1["files"].pop(ff.MARKER_NAME)  # the marker holds the folder name
+        m2["files"].pop(ff.MARKER_NAME)
+        self.assertEqual(m1, m2)
 
     def test_already_filled_input_exit_4(self):
         src = self.copy_flows("film")
