@@ -1,0 +1,12 @@
+PTY normal + Enter                 output='paste key, Enter: exit 0' key_echoed=False exists=True
+PTY Enter only                     output='paste key, Enter: exit 1' key_echoed=False exists=False
+PTY Ctrl-D only                    output='paste key, Enter: exit 1' key_echoed=False exists=False
+PTY text then Ctrl-D (no Enter)    output='paste key, Enter:' key_echoed=False exists=False
+PTY text then Ctrl-D twice         output='paste key, Enter: exit 1' key_echoed=False exists=False
+Traceback (most recent call last):
+  File "/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/ks_pty_part.py", line 48, in <module>
+    pty_run('existing file',(fake+'\n').encode(),fresh('p6'),pre=mk)
+                                                                 ^^
+NameError: name 'mk' is not defined
+PTY existing file                  output='paste key, Enter: bash: line 1: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/ks/keys/p6: can' key_echoed=False exists=True
+PTY missing folder                 output='paste key, Enter: bash: line 1: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/ks/nofolder/p7:' key_echoed=False exists=False

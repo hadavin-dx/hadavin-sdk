@@ -1,0 +1,55 @@
+M0-baseline                                                    applied=True rc=0 problems=0
+M1-wrong-IST-pair                                              applied=True rc=1 problems=1
+      PROBLEM: OWNER-SHEET-v22.md: 11:30 UTC is not 17:30 IST
+M2-wrong-weekday                                               applied=True rc=1 problems=2
+      PROBLEM: OWNER-SHEET-v22.md: Thu 18 Nov 2026 weekday wrong
+      PROBLEM: ps/file examples are not on the sample run day
+M3-broken-pointer                                              applied=True rc=1 problems=3
+      PROBLEM: OWNER-SHEET-v22.md: pointer 5.9 does not exist (sheet section 5 has 8 items)
+      PROBLEM: sheet points at 5.9 but the unit-keyword table has no entry (add one)
+      PROBLEM: pointer map changed at "| R8 | you | The lead's messages give values (a ": frozen ['5.8', '8.2', '8.6', 'R10', 'R8'], now ['5.9', '8.2', '8.6', 'R10', 'R8']
+M4-changed-R-pointer-target                                    applied=True rc=1 problems=1
+      PROBLEM: pointer map changed at '8. The finished video reaches you by the way the': frozen ['R9'], now ['R7']
+M5-unlisted-set-phrase                                         applied=True rc=0 problems=0
+M6-banned-word                                                 applied=True rc=1 problems=1
+      PROBLEM: banned words found or list unread
+M7-wrong-sum                                                   applied=True rc=1 problems=3
+      PROBLEM: sample: sum of y minutes, run length and film pause
+      PROBLEM: sample: alarm time is not latest start + y minutes + run length + film pause
+      PROBLEM: check 4 worked example text does not match the arithmetic (17:38:00)
+M8-repeated-rule-phrase(exact)                                 applied=True rc=1 problems=1
+      PROBLEM: note or open list restates the cancel rule phrase 'Cancelling may not be undoable'
+M9-gate-id-in-sheet                                            applied=True rc=1 problems=3
+      PROBLEM: sheet cites a gate id: ['G30']
+      PROBLEM: pointer map changed at '3. Cancel each key of Part 2 (a), one by one (G3': frozen None, now ['Part 2']
+      PROBLEM: pointer map changed at '3. Cancel each key of Part 2 (a), one by one. Ri': frozen ['Part 2'], now None
+M10-wrong-price                                                applied=True rc=0 problems=0
+M11-bad-Open-pointer                                           applied=True rc=0 problems=0
+M12-placeholder-name-mismatch                                  applied=True rc=0 problems=0
+X1-repeated-rule-paraphrase(trigger+steps restated in 7.9)     applied=True rc=0 problems=0
+X2-Open-pointer-exists-but-wrong-target                        applied=True rc=0 problems=0
+X3-sheet-pointer-in-open-wrong-target(7.8->7.6)                applied=True rc=0 problems=0
+X4-note-sheet-pointer-wrong-target(8.4->8.3)                   applied=True rc=0 problems=0
+X5-run-length-below-need(15->10 in sample)                     applied=True rc=1 problems=1
+      PROBLEM: separate lines disagree with the sums line
+X6-R-pointer-in-note-wrong-target(R7->R9)                      applied=True rc=0 problems=0
+X7-cancel-by-too-late(12:10->18:25 pair consistent)            applied=True rc=1 problems=1
+      PROBLEM: sample: cancel-by time is not alarm time + margin
+X8-card-step-pointer-wrong(card step 5->card step 3)           applied=True rc=1 problems=2
+      PROBLEM: set-phrase list does not point at the card
+      PROBLEM: pointer map changed at '**Set phrases you send (all of them; each exactl': frozen ['5.8', '6.2', '6.5', '7.4', '8.2', '8.3', '8.4', '8.5', '8.8', 'R1', 'R1', 'R8
+X9-sheet-section-pointer-wrong(section 4->section 5)           applied=True rc=1 problems=1
+      PROBLEM: pointer map changed at '**How to read it:** before the day, read section': frozen ['section 2', 'section 4'], now ['section 2', 'section 5']
+X10-stale-section-in-note(G9 section 4->section 3)             applied=True rc=0 problems=0
+X11-deadline-weekday-in-note                                   applied=True rc=1 problems=1
+      PROBLEM: LEAD-RELEASE-NOTE-v6.md: Tue 23 Nov 2026 weekday wrong
+X12-wrong-sum-in-sample-total-11:30+30                         applied=True rc=0 problems=0
+--- part 2 (variants added after misses; checker unchanged) ---
+M5b-unlisted-set-phrase(lowercase send)                        applied=True rc=1 problems=1
+      PROBLEM: quoted phrase 'all done' is sent or written but is not in the set-phrase list
+M10b-wrong-price(notice line 0.27->0.28)                       applied=True rc=0 problems=0
+M10c-wrong-price(expected total in message 0.81->0.82)         applied=True rc=0 problems=0
+M12b-placeholder(<run name>-><runname> in 5.1)                 applied=True rc=0 problems=0
+M12c-placeholder(set phrase list <name>-><new name>)           applied=True rc=0 problems=0
+M11b-bad-Open-pointer(single number 91)                        applied=True rc=1 problems=1
+      PROBLEM: LEAD-RELEASE-NOTE-v6.md refers to Open 91 (only 61)

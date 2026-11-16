@@ -1,0 +1,12 @@
+wc -l -w -c (lines words bytes)
+   118   7943  43710 OWNER-SHEET-v21.md
+   146   9267  50715 OWNER-SHEET-v22.md
+   147   7281  40105 LEAD-RELEASE-NOTE-v5.md
+   152   8349  45919 LEAD-RELEASE-NOTE-v6.md
+    56   2801  14869 v21-OPEN-FOR-LEAD.md
+    67   3583  18921 v22-OPEN-FOR-LEAD.md
+   686  39224 214239 total
+OWNER-SHEET-v21.md lines over 100 words: 25 over 200: 7 longest 5 (words,line): [(364, 35), (283, 36), (268, 65), (241, 33), (212, 40)]
+   sentence-ish ends: 310 ; occurrences of UNVERIFIED: 26 ; "the card": 0 ; FREEZE: 7
+OWNER-SHEET-v22.md lines over 100 words: 36 over 200: 6 longest 5 (words,line): [(242, 18), (241, 55), (241, 49), (237, 52), (228, 56)]
+   sentence-ish ends: 377 ; occurrences of UNVERIFIED: 32 ; "the card": 42 ; FREEZE: 11
