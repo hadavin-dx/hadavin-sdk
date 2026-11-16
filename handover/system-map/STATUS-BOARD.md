@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T12:05:30Z
-PUSHED_UTC: 2026-11-16T12:05:30Z
+UPDATED_UTC: 2026-11-16T12:05:51Z
+PUSHED_UTC: 2026-11-16T12:05:51Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
@@ -13,9 +13,9 @@ NEEDS_YOU, in this order (lead; one action each; times UTC / IST):
 FAILED: M14 test_licences_are_proprietary fails (1 failed, 9390 passed); the n8n run has not happened. Full text under Details at the end of this file. Times in the Details are UTC only; IST is +5:30.
 PROGRESS: 15 of 20 table items not done (table below; M3, M14, M20 are rows in it); mean 83.1 percent (1662 / 20). Percent is how far a page has been checked, not confidence the take will work.
 Terms: take = the one filmed run; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
-AGENTS_RUNNING: 8 running (ORDER 035 minimum met), new this beat: PLAN-002 r4, critical-path r7, QUEUE, open-items-table, decision-list, end-delete-cases, premortem, not-checked-r2. 0 missing.
-CAPACITY: nproc=4 load=0.09 0.22 0.22 | RAM used/total MB 894/16087 | /dev/vda        252G   18G   22G  46% / | 2340 |  top disk user I made: work/ (KB, last field); MB freed this beat: 0 (ORDER 031)
-NEXT: digested through 466. Fix my own files from digests 424-433 (decision-list A3/A5/A13 split rows, open-items-table Person column, end-delete-cases step 15/18, cleanup 3a-0, rehearsal-limits plain words). Next 5 tasks with more capacity: (1) T19 steps actor and time; (2) banned-claims sources; (3) PLAN-002 L4 limit; (4) QUEUE glossary and dates; (5) core-hardening review files CORRECTIONS/REVIEW/LEDGER-ROWS.
+AGENTS_RUNNING: 8 running (ORDER 035 met). Ended: critical-path r7 (digest 467). New: owner-timeline-draft cold read. 0 missing.
+CAPACITY: nproc=4 load=0.12 0.22 0.22 | RAM used/total MB 903/16087 | /dev/vda        252G   18G   22G  46% / | 2344 |  top disk user I made: work/ (KB, last field); MB freed: 0 (ORDER 031)
+NEXT: digested through 467. Fix my own files from digests 424-433 (decision-list A3/A5/A13 split rows, open-items-table Person column, end-delete-cases step 15/18, cleanup 3a-0, rehearsal-limits plain words). Next 5 tasks with more capacity: (1) T19 steps actor and time; (2) banned-claims sources; (3) PLAN-002 L4 limit; (4) QUEUE glossary and dates; (5) core-hardening review files CORRECTIONS/REVIEW/LEDGER-ROWS.
 INTERRUPTED: none
 
 ## ITEMS
@@ -45,14 +45,14 @@ INTERRUPTED: none
 ## AGENTS
 | agent id | purpose | started (UTC) | expected end | state | produced so far |
 |---|---|---|---|---|---|
-| (launched 12:05) | cold read PLAN-002 r4 | 12:05 | +10 min | running | nothing yet |
-| (launched 12:05) | cold read critical-path r7 | 12:05 | +10 min | running | nothing yet |
-| (launched 12:05) | cold read QUEUE | 12:05 | +10 min | running | nothing yet |
-| (launched 12:05) | cold read open-items-table | 12:05 | +10 min | running | nothing yet |
-| (launched 12:05) | cold read decision-list-for-lead | 12:05 | +10 min | running | nothing yet |
-| (launched 12:05) | cold read end-delete-cases | 12:05 | +10 min | running | nothing yet |
-| (launched 12:05) | cold read premortem-r1 | 12:05 | +10 min | running | nothing yet |
-| (launched 12:05) | cold read not-checked-r2 | 12:05 | +10 min | running | nothing yet |
+| a9f51305 | cold read PLAN-002 r4 (read-only) | 12:05 | +10 min | running | nothing yet |
+| a0d51904 | cold read QUEUE (read-only) | 12:05 | +10 min | running | nothing yet |
+| af131f7f | cold read open-items-table (read-only) | 12:05 | +10 min | running | nothing yet |
+| a1b8dc73 | cold read decision-list-for-lead (read-only) | 12:05 | +10 min | running | nothing yet |
+| ae96d46f | cold read end-delete-cases (read-only) | 12:05 | +10 min | running | nothing yet |
+| a00b175a | cold read premortem-r1 (read-only) | 12:05 | +10 min | running | nothing yet |
+| aa1a340d | cold read not-checked-r2 (read-only) | 12:05 | +10 min | running | nothing yet |
+| (new) | cold read owner-timeline-draft (read-only) | 12:05 | +10 min | running | nothing yet |
 
 Words: UTC = world time; IST = UTC plus 5 h 30 min. Cold read = an agent reads one page with no background and lists what it cannot follow. Held = a finding on a page that belongs to the lead, which I do not edit.
 

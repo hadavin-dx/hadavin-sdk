@@ -669,3 +669,5 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 464 PLAN-002 r3: Blockers lines 35, 38, 3, status OWNER-ONLY. All fixed in this push (OWNER-ONLY.txt named; L4 and L6 lines; statuses).
 - 465 core-hardening REVIEW (held): CORRECTIONS items 1-3 not in REVIEW.md; C-01 max_tokens extra, A-01 Limits.stop stale; 5 vs 3 Majors; 57+2 vs 85; fake vs fake and openai_compat; no owner/date for alert. Review could not find inputs/ from that folder.
 - 466 README + ONE-PLACE-TABLE (held): 'lead' alone; 'the two cards' unnamed; v3 status; T19, film pause, end, challenge, $env, DESK_*, BL-wp6-G1 undefined; row 1 builder named by studio lead.
+
+- 467 critical-path r7: earliest take has four versions (22:30 UTC Mon / 04:00 IST Tue; 00:30-01:30 UTC; 22:30-23:30 UTC; 01:30 UTC Tue), IST wrong for one; row 1 script owner unclear (studio lead owns row 1 and supplies the script, yet it is missing); cut-and-check and reviewer rows have no owner; take length unset; three timing views; words defined twice; core-hardening unknown repeated, wants one Unscheduled row. TO FIX: one 'Earliest take' line, delete the others.
