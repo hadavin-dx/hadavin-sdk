@@ -1,4 +1,5 @@
 # Lane L4c
+NOTE 16 Nov 2026 (system-map session): this lane marked seven files under handover/demo/real-run/ as READ before decision 5 (the lead reads only masked take outputs, never owner-only or real-run folders) was applied. Whether these files are masked builder notes or owner-only is NOT known: the studio lead must say. Until then the continuation lane must not open real-run, and nothing in this file may be used for the take. Line 146 'none describes the take stores' holds only for the 38 files read, not for all 137.
 
 ## Coverage
 Lane is PARTIAL. READ 38, SKIMMED 0, NOT-READ 99 (of 137). Honest reason: the 137 reports hold about 1.4 MB of text; my context budget ran out after 38 full reads, so the other 99 were not opened (not even grepped as "nothing found"). They are NOT-READ and a second continuation lane is needed for them. Nothing in this file says "nothing found" about a NOT-READ file. A grep for postgres, mf_leads, stage.journal, sqlite and journal over the folder list was run only to find where to read first; it is not a read.

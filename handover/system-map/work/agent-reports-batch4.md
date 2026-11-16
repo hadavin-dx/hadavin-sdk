@@ -704,3 +704,12 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 
 - 492 BRIEF-EVIDENCE-1: owner-only ban absent; rule conflict auditor vs runner; preamble rules 1, 3, 12 not followable; exit codes of pipes; raw output may leak secrets; /tmp vs 'edit no other file'. FIXED by an ADDED paragraph at the end (the same fix likely needed in BRIEF-EVIDENCE-2: read running).
 - 493 lane L5b (1-150): 'findings below' not in lines 1-150 and 143 of 376 rows shown (read was capped, not truncated file; unverified); owner/date for continuation 'none named yet'; legend terms group L, CORE row, kind overlap hunt; identical note on every row; relevance of SDK source to real-v5 not stated. TO FIX.
+
+- 494 L1c: 16 raw JSON (4.9 MB) vs 13 rows; L1c-S-001 'retired by DECISION' not in decisions; rows 'final' cite superseded v6; '3 markdown files' vs 1 listed; undefined take, job keys, Q3, D-PR, Way A. TO FIX in L1c.
+- 495 L2c: DECISION line 14 / DB_* unsupported; coverage lists only register.md but findings cite REPORT.md; S-001 vs sweep row; undefined UNVERIFIED, box, desk, REV-*. TO FIX.
+- 496 L3c: undefined fix-N rM, MATRIX-1, blind mail; '(see note)' points nowhere; line 26 'superseded per its notes' yet not opened; owner-only not defined; no video-scope marker. TO FIX.
+- 497 L4c: seven real-run files marked READ (decision 5): L4c must say they are masked take outputs or stop; continuation lane must exclude real-run; line 146 'none describes the take stores' only true of the 38 read. Possible BREACH of decision 5: report to lead.
+- 498 BRIEF-EVIDENCE-2: no owner-only ban; no-git vs git command; preamble rules unfollowable; no failure rule. FIXED by ADDED paragraph (also applied to EVIDENCE-1: OWNER-ONLY.txt format and missing-file rule).
+- 499 BRIEF-EVIDENCE-1 r2: OWNER-ONLY.txt format and missing rule; no-git vs command 8; MASKED types; decision refs. FIXED by ADDED paragraph.
+- 500 PLAN-002 r5: lane rules L1-L5a not told to skip OWNER-ONLY; REMAINDER line; briefs quote the list; partition.py missing-file exit. FIXED in sections 3 and 76. work/OWNER-ONLY.txt does not exist yet: the lead must write it.
+- 501 L5ac: undefined terms; owners/dates missing on FD-006/7/9/10-13; FD-010 vs table; 'NOT PARTIAL' vs unread tests; FD-004/007/009 scope vs decisions 4 and 5. TO FIX.
