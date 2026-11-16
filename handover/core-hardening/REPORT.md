@@ -1,5 +1,18 @@
 # REPORT from core-hardening (newest on top, UTC and IST)
 
+## FINAL 07:34 UTC / 13:04 IST: ORDER 002 part 1 (static architecture audit) written; part 2 not started
+FAILURES AND GAPS FIRST
+- Nothing was run: no test, no program, no network. Every statement is from reading code; anything needing a runtime is UNVERIFIED.
+- About 125 of 150 findings were checked by nobody against the code. Checked: 5 by me, the 6 biggest by a second builder, 16 + 14 by two reviewers (all supported; small fact and line slips fixed).
+- NOT-AUDITED parts (lists in AUDIT-FINDINGS.md section 0): for example the secret-pattern table in guard/redact.py. We do not know if those patterns catch what they claim.
+- Builders finished in 10-12 min of a 60 min box, so depth differs by lane. Lanes D1 and D2 are condensed re-typed text, not verbatim. Plan v4 rulings were never re-reviewed. The seeded sampler found 0 findings (format mismatch), so spot-checks were chosen by hand.
+- The round 2 rewrite was NOT read by a fresh reviewer (cap of 2 result rounds reached). Patches (patches/C-01-and-A-02.patch) pass `git apply --check` and ruff; tests were NOT run.
+- No severity was changed. The lead must decide the Blocker set (builders 5; reviewers about 3; list 1 is in force) and 12 questions (section 10).
+- Extra verdict words used: FIX-NEEDED, UNVERIFIED. No CRM-COULD-DO assessment was made. Ledger rows use 7 columns, the checklist asks 9: lead, say which.
+DELIVERED: MASTER-MAP.md, AUDIT-FINDINGS.md (150 findings, about 120 distinct), patches/, result-review-1a..1d, 2a..2c, result-resolve-1/2.
+AGENTS/SHELLS: all agents I started are closed (plan reviewers, evidence runner, 6 lane builders, cross builder, 7 result reviewers); no shells left running.
+PART 2 (r7u/r7v hygiene) is NOT started; it needs a new GO. Stopping and waiting.
+
 ## STATUS 07:32 UTC / 13:02 IST: round 2 comprehension + codebase-details applied; zoom-out pending
 - Done: result-review-2a.md (codebase: 16 of 16 supported, small fact slips fixed in the text), 2c.md (naive reader: summary rewritten, one reconciled list of worst items, question labels, 36-use and line fixes). AUDIT-FINDINGS.md rebuilt (571 lines), banned-string check clean.
 - Register: a1ffa3792b4edc893 egm-zoom-out round 2 (sonnet, read-only) running. a6b1ec9d26c8cfa2f and a43eefe25fb9f16f9 closed.
