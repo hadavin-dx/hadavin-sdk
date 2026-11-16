@@ -34,7 +34,7 @@ Each step starts with the hat that does it.
 2. [LEAD] Before filming: apply the rows whose "Goes where" is LEAD to the working files they name (run sheet, plan, READMEs). Nothing has been applied yet.
 3. [LEAD] Before filming: delete old saved runs in n8n so the run list starts empty (A-007, A-010). Plan to crop or hide every real mailbox address in the mail panes (A-005, A-084).
 4. [LEAD] Activate only the four real-v5 flows. Scenes 1 to 4 run on them.
-5. [PRESENTER] Scene 1 (stack at rest): paste A-008a on the card; in voice N-6, A-007 and A-010.
+5. [PRESENTER] Scene 1 (stack at rest): paste A-008a and A-008b on the card; in voice N-6, A-007 and A-010.
 6. [PRESENTER] Scene 2 (one lead goes in): no wording change in this file.
 7. [PRESENTER] Scene 3 (same lead again): A-016a in voice, A-016c as caption, A-016d in voice once. A-016b is added after filming (step 19).
 8. [PRESENTER] Scene 4 (stop n8n in the middle of a lead): N-5a in voice, N-5b label on screen; the stopwatch shows the wait (default, row A-017a) or A-017b as caption if D1 is yes.
@@ -52,7 +52,7 @@ Each step starts with the hat that does it.
 14. [PRESENTER] Scene 9 (the alert): show the alert as built (A-036a, no paste), tag S5-b on the stand-in inbox pane, A-036b and N-4c in voice. [LEAD] N-1 replaces the run sheet line only.
 15. [PRESENTER] Scene 10 (the table row): A-043 caption, A-044a label, A-044b voice. [LEAD] The rows A-040, A-041, A-042 are notes for the lead (they say how to prepare the screenshot of six columns); they are not text for the screen.
 16. [PRESENTER] Scene 11 is optional. This file proposes no wording change for it: scene 11 was not reviewed, and A-008b does not promise anything for it.
-17. [PRESENTER] Scene 12 (closing card): A-050a, A-051a (or A-051b if D1 is yes), A-053, A-091, N-3, V-41, A-023a on the card (V-41 and A-023a are card lines 4 and 2 of the history); A-050b and A-021 in voice.
+17. [PRESENTER] Scene 12 (closing card): A-050a and A-050b, A-051a (or A-051b if D1 is yes), A-053, A-091, N-3, V-41, A-023a on the card (V-41 and A-023a are card lines 4 and 2 of the history); A-050c and A-021 in voice.
 18. [LEAD] After filming: delete the saved runs in n8n (A-007, A-010); check every frame for addresses other than example.test (A-005, A-084).
 19. [LEAD] After filming, in the edit: add A-016b in voice only if the recording shows exactly 1 CRM row and 1 e-mail message for the repeated lead.
 

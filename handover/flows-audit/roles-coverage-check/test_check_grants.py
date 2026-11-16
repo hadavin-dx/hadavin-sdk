@@ -142,5 +142,179 @@ class Tests(Base):
         self.assertFalse(hasattr(m, "G"), "grants must not be hardcoded in the script")
 
 
+PGT = "n8n-nodes-base.postgres"
+
+
+class Round4(Base):
+    """Round 4: nodes the first versions did not read, and the review items S1 to S5."""
+
+    def flow(self, name):
+        f = self.flows / f"{name}.json"
+        return f, json.loads(f.read_text())
+
+    def add_node(self, flow, node):
+        f, d = self.flow(flow)
+        d["nodes"].append(node)
+        f.write_text(json.dumps(d))
+
+    def edit_nodes(self, flow, fn):
+        f, d = self.flow(flow)
+        fn(d["nodes"])
+        f.write_text(json.dumps(d))
+
+    # F6a-d: SQL or database access in a node that is not the checked Postgres node
+    def test_f6a_sql_in_code_node(self):
+        self.add_node("mf-form", {"name": "Sneaky", "type": "n8n-nodes-base.code",
+                                  "parameters": {"jsCode": "const q = 'DELETE FROM mf_leads';"}})
+        self.assertFails("Sneaky")
+
+    def test_f6b_mysql_type_node(self):
+        self.add_node("mf-form", {"name": "M", "type": "n8n-nodes-base.mySql", "parameters": {"query": "x"}})
+        self.assertFails("database node type")
+
+    def test_f6c_postgres_tool_node(self):
+        self.add_node("mf-form", {"name": "T", "type": "n8n-nodes-base.postgresTool", "parameters": {}})
+        self.assertFails("database node type")
+
+    def test_f6d_sql_text_in_set_node(self):
+        self.add_node("mf-form", {"name": "S", "type": "n8n-nodes-base.set",
+                                  "parameters": {"values": {"string": [{"name": "q", "value": "DROP TABLE mf_leads"}]}}})
+        self.assertFails("SQL-like text")
+
+    def test_f6e_innocent_node_text_not_flagged(self):
+        self.add_node("mf-form", {"name": "Ok", "type": "n8n-nodes-base.set",
+                                  "parameters": {"values": {"string": [{"name": "a", "value": "please update your details"}]}}})
+        rc, out = self.check()
+        self.assertEqual(rc, 0, out)
+
+    # I4c: one file with no Postgres node while the others keep theirs
+    def test_i4c_file_without_postgres_node(self):
+        self.edit_nodes("mf-hook", lambda ns: ns.__setitem__(slice(None), [n for n in ns if n["type"] != PGT]))
+        self.assertFails("mf-hook: this file has zero Postgres nodes")
+
+    # S1
+    def test_s1_no_folder_given(self):
+        rc, out = run("--roles-doc", self.doc)
+        self.assertEqual(rc, 1, out)
+        self.assertIn("no flow folder given", out)
+
+    def test_s1_wrong_folder_missing_file(self):
+        (self.flows / "mf-recovery.json").unlink()
+        self.assertFails("flow files are")
+
+    def test_s1_wrong_node_count(self):
+        def drop_one(ns):
+            for i, n in enumerate(ns):
+                if n["type"] == PGT and n["name"] == "Stored":
+                    del ns[i]
+                    return
+        self.edit_nodes("mf-form", drop_one)
+        self.assertFails("13 postgres nodes, expected 14")
+
+    # S2
+    def test_s2_operation_not_execute_query(self):
+        def op(ns):
+            for n in ns:
+                if n["type"] == PGT and n["name"] == "Stored":
+                    n["parameters"]["operation"] = "deleteTable"
+        self.edit_nodes("mf-form", op)
+        self.assertFails("only executeQuery is checked")
+
+    def test_s2_expression_query(self):
+        self.set_query("mf-form", "Stored", lambda q: "=" + q)
+        self.assertFails("n8n expression")
+
+    def test_s2_missing_operation(self):
+        def op(ns):
+            for n in ns:
+                if n["type"] == PGT and n["name"] == "Stored":
+                    del n["parameters"]["operation"]
+        self.edit_nodes("mf-form", op)
+        self.assertFails("only executeQuery is checked")
+
+    # S3
+    def creds(self, mapping):
+        """Point every Postgres node at the credential for its login."""
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("chk", SCRIPT)
+        m = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(m)
+        for flow in m.EXPECTED_FLOWS:
+            def setc(ns, flow=flow):
+                for n in ns:
+                    if n["type"] == PGT:
+                        login = m.NODE_LOGIN.get((flow, n["name"])) or m.SUB
+                        n["credentials"] = {"postgres": {"id": "x", "name": mapping.get(login, "wrong")}}
+            self.edit_nodes(flow, setc)
+
+    GOOD = {"mf_door": "n8n-publish-pg-door", "mf_sub": "n8n-publish-pg-sub",
+            "mf_recover": "n8n-publish-pg-recover", "mf_alert": "n8n-publish-pg-alert"}
+
+    def test_s3_old_shared_credential_rejected(self):
+        rc, out = run("--roles-doc", self.doc, "--require-new-credentials", self.flows)
+        self.assertEqual(rc, 1, out)
+        self.assertIn("still uses the old shared credential", out)
+
+    def test_s3_correct_credentials_pass(self):
+        self.creds(self.GOOD)
+        rc, out = run("--roles-doc", self.doc, "--require-new-credentials", self.flows)
+        self.assertEqual(rc, 0, out)
+
+    def test_s3_wrong_credential_for_login(self):
+        self.creds(dict(self.GOOD, mf_sub="n8n-publish-pg-door"))
+        rc, out = run("--roles-doc", self.doc, "--require-new-credentials", self.flows)
+        self.assertEqual(rc, 1, out)
+        self.assertIn("is not 'n8n-publish-pg-sub'", out)
+
+    def test_s3_missing_credential(self):
+        def nocred(ns):
+            for n in ns:
+                if n["type"] == PGT and n["name"] == "Stored":
+                    n.pop("credentials")
+        self.edit_nodes("mf-form", nocred)
+        self.assertFails("no postgres credential")
+
+    # S4
+    def test_s4_select_star(self):
+        self.set_query("mf-form", "Stored", lambda q: "SELECT * FROM mf_leads WHERE lead_key=$1;")
+        self.assertFails("SELECT *")
+
+    def test_s4_returning_star(self):
+        self.set_query("mf-sub-crm-mail", "MarkDone", lambda q: q.replace("RETURNING lead_key", "RETURNING *"))
+        self.assertFails("SELECT * / RETURNING *")
+
+    def test_s4_insert_without_column_list(self):
+        self.set_query("mf-form", "Claim", lambda q: "INSERT INTO mf_leads VALUES ($1,$2,$3,'x',now(),'t',0);")
+        self.assertFails("INSERT without a column list")
+
+    def test_s4_update_from(self):
+        self.set_query("mf-sub-crm-mail", "MarkDone",
+                       lambda q: "UPDATE mf_leads SET state='done' FROM mf_leads WHERE lead_key=$1;")
+        self.assertFails("UPDATE ... FROM")
+
+    def test_s4_cte_write(self):
+        self.set_query("mf-sub-crm-mail", "MarkDone",
+                       lambda q: "UPDATE mf_leads SET state='done' WHERE lead_key IN "
+                                 "(WITH d AS (DELETE FROM mf_leads RETURNING lead_key) SELECT lead_key FROM d);")
+        self.assertFails("WITH (CTE) not allowed")
+
+    def test_s4_copy(self):
+        self.set_query("mf-form", "Stored", lambda q: "COPY mf_leads TO '/tmp/x';")
+        self.assertFails("COPY")
+
+    # S5
+    def test_s5_uppercase_column_is_read(self):
+        self.set_query("mf-sub-crm-mail", "MarkDone", lambda q: q.replace("state='processing'", "EMAIL='x'", 1))
+        self.assertFails("UNCOVERED")
+
+    def test_s5_mixed_case_write(self):
+        self.set_query("mf-sub-crm-mail", "MarkDone", lambda q: q.replace("SET state='done'", "SET Name='z', state='done'", 1))
+        self.assertFails("UNCOVERED [('UPDATE', 'name')]")
+
+    def test_s5_quoted_name(self):
+        self.set_query("mf-form", "Stored", lambda q: 'SELECT state FROM "mf_leads" WHERE lead_key=$1;')
+        self.assertFails("quoted name")
+
+
 if __name__ == "__main__":
     unittest.main()
