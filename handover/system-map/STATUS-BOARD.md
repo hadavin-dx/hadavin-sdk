@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T12:58:44Z
-PUSHED_UTC: 2026-11-16T12:58:44Z
+UPDATED_UTC: 2026-11-16T13:00:18Z
+PUSHED_UTC: 2026-11-16T13:00:18Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
@@ -13,9 +13,9 @@ NEEDS_YOU, in this order (studio lead; one action each; times UTC / IST):
 FAILED: M14 test_licences_are_proprietary fails (1 failed, 9390 passed); the n8n run has not happened. Full text under Details at the end of this file. Times in the Details are UTC only; IST is +5:30.
 PROGRESS: 4 of 18 table items at 100 percent (M1, M11, M12, M13); mean about 83 percent. Percent is how far a page has been checked, not confidence the take will work.
 Terms: take = the one filmed run; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
-AGENTS_RUNNING: 8 launched this beat (ListAgents run in the same turn showed only 1 completed agent, so the 8 are from the launch results, UNVERIFIED by list)
-CAPACITY nproc=4 load=0.07 0.15 0.16 disk: 19G free, MB freed 0
-NEXT: digested through 876. Findings on pages the lead holds (OWNER-VIEW, cleanup card, review-r460-tools, egm-dryrun) are in work/agent-reports-batch4.md for the lead. Next 5 independent tasks: (1) fix decision-list-for-lead from its re-read; (2) fix owner-timeline-draft split rows; (3) fix lane files L1c-L5ac legend terms and owners; (4) re-read merged-findings legend; (5) re-read open-items-table.
+AGENTS_RUNNING: 0 at this beat (the agent list shows all helpers finished); 8 new helpers start right after this push.
+CAPACITY nproc=4 load=0.20 0.19 0.18 disk: 19G free, MB freed 0
+NEXT: hand-backs digested through 893 (a digest = one short line in work/agent-reports-batch4.md for each helper report). Findings on pages the lead holds are in that file for the lead. Next 5 independent tasks: fold L1c, merged-findings, L5b, L4c and FINAL-CROSSCHECK (fold = move old stacked notes into a history file and keep the live text).
 INTERRUPTED: none
 
 ## ITEMS
@@ -46,16 +46,17 @@ INTERRUPTED: none
 
 | agent id | purpose | started (UTC) | expected end | state | what it produced so far |
 |---|---|---|---|---|---|
-| a8d0742736aab3815 | PLAN-002 re-read after fold (sonnet) | 12:58 | 13:01 | running | nothing yet |
-| a98571f4b96ea0dd1 | open-items re-read after fold (sonnet) | 12:58 | 13:01 | running | nothing yet |
-| a74d6527bcae1c8ae | decision-list re-read after fold (sonnet) | 12:58 | 13:01 | running | nothing yet |
-| acc5eb81473464af6 | end-delete-cases re-read after fold (sonnet) | 12:58 | 13:01 | running | nothing yet |
-| a673f9b4a21675ebb | banned-claims re-read after fold (sonnet) | 12:58 | 13:01 | running | nothing yet |
-| a56b6fb9524663915 | L1c re-read (sonnet) | 12:58 | 13:01 | running | nothing yet |
-| a3a928972cb113a35 | L5ac re-read (sonnet) | 12:58 | 13:01 | running | nothing yet |
-| a8cbdcbdf7b5ecf52 | t19 steps re-read (sonnet) | 12:58 | 13:01 | running | nothing yet |
+| a491026889941c9f0 | L5ac re-read (sonnet) | 13:05 | 13:08 | completed | report digested 885-893 |
+| a61de0b562fec3583 | row1-builder-brief read (sonnet) | 13:05 | 13:08 | completed | report digested 885-893 |
+| a4b52c8efd1c6a768 | LEAD-NOTICE read (sonnet) | 13:05 | 13:08 | completed | report digested 885-893 |
+| ac98bf7b3d48db305 | rehearsal-limits read (sonnet) | 13:05 | 13:08 | completed | report digested 885-893 |
+| a87e13904d06df5e2 | ARCHIVE-CUT-LIST read (sonnet) | 13:05 | 13:08 | completed | report digested 885-893 |
+| a0b405b78bc48e328 | M17 read (sonnet) | 13:05 | 13:08 | completed | report digested 885-893 |
+| a7a6e0b108c184e56 | STATUS-BOARD read (sonnet) | 13:05 | 13:08 | completed | report digested 885-893 |
+| a4292119df862631f | critical-path-r1 read (sonnet) | 13:05 | 13:08 | completed | report digested 885-893 |
+| a51e8723fda241341 | critical-path read (wrong path, no review) (sonnet) | 13:05 | 13:08 | completed | report digested 885-893 |
 
-8 running. Next 5 independent tasks: fold L1c, merged-findings, L5b, L5ac, FINAL-CROSSCHECK (history to files).
+Zero running at this beat; 8 start right after this push.
 
 Words: UTC = world time; IST = UTC plus 5 h 30 min. Cold read = an agent reads one page with no background and lists what it cannot follow. Held = a finding on a page that belongs to the lead, which I do not edit.
 
