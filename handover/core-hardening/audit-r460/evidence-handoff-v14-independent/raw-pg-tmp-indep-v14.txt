@@ -86,19 +86,20 @@ RESET
  t
 (1 row)
 
-psql:/var/lib/postgresql/hadavin_v14_indep_scratch/pg_tmp.sql:52: ERROR:  3D000: database "exp" does not exist
-LOCATION:  get_database_oid, dbcommands.c:3089
+REVOKE
  rt14_can_temp_after 
 ---------------------
- t
+ f
 (1 row)
 
 SET
-CREATE TABLE
+psql:/var/lib/postgresql/hadavin_v14_indep_scratch/pg_tmp.sql:55: ERROR:  42501: permission denied for schema pg_temp_3
+LINE 1: CREATE TEMP TABLE spend_decrease_log (agent_id text);
+                          ^
+LOCATION:  aclcheck_error, aclchk.c:2812
 RESET
 the migration role (database owner is postgres here; the check uses the role name) is unaffected only if it holds TEMP itself:
-psql:/var/lib/postgresql/hadavin_v14_indep_scratch/pg_tmp.sql:58: ERROR:  3D000: database "exp" does not exist
-LOCATION:  get_database_oid, dbcommands.c:3089
+GRANT
  mig14_can_temp 
 ----------------
  t
@@ -116,8 +117,7 @@ CREATE FUNCTION
 CREATE TRIGGER
 CREATE TRIGGER
 CREATE TABLE
-psql:spend_decrease_log.sql:38: ERROR:  42501: must be owner of table spend_decrease_log
-LOCATION:  aclcheck_error, aclchk.c:2950
+CREATE INDEX
 CREATE FUNCTION
 REVOKE
 CREATE TRIGGER

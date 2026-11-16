@@ -11,9 +11,10 @@ export PYTHONDONTWRITEBYTECODE=1
 runuser -u postgres -- psql -X -h $D -d postgres -At -c "select version()" > "$OUT/raw-pg-version-indep-v14.txt"
 E=$A/evidence-handoff-v14
 for n in b1 tmp m3; do
-  runuser -u postgres -- psql -X -h $D -d postgres -c "create database exp_$n" >/dev/null
+  runuser -u postgres -- psql -X -h $D -d postgres -c "create database exp" >/dev/null   # builder's SQL files name the database exp
   cp "$E/pg_$n.sql" "$D/pg_$n.sql"; cp "$E"/held-sql/*.sql "$D/"; chown postgres "$D"/*.sql
-  (cd $D && runuser -u postgres -- psql -X -v ON_ERROR_STOP=0 -h $D -d exp_$n -f "$D/pg_$n.sql") > "$OUT/raw-pg-$n-indep-v14.txt" 2>&1
+  (cd $D && runuser -u postgres -- psql -X -v ON_ERROR_STOP=0 -h $D -d exp -f "$D/pg_$n.sql") > "$OUT/raw-pg-$n-indep-v14.txt" 2>&1
+  runuser -u postgres -- psql -X -h $D -d postgres -c "drop database exp" >/dev/null
 done
 # builder's real-code script re-run, unmodified, on my cluster
 "$PY" -I "$E/pg_real_code_v14.py" "$D" "$ROOT/src" > "$OUT/raw-pg-real-code-indep-v14.txt" 2>&1; echo "rc=$?" >> "$OUT/raw-pg-real-code-indep-v14.txt"

@@ -464,3 +464,18 @@ INTERRUPTED (signal 64): no mutant planted, no marker
   PASS: T47b SYS exit 159 (got 159), file restored, state empty, no orphan
   PASS: T47b 16 exit 144 (got 144), file restored, state empty, no orphan
   PASS: T47b SEGV exit 139 (got 139), file restored, state empty, no orphan
+  PASS: T47b BUS exit 135 (got 135), file restored, state empty, no orphan
+  PASS: T47b FPE exit 136 (got 136), file restored, state empty, no orphan
+  PASS: T47b ILL exit 132 (got 132), file restored, state empty, no orphan
+== T48 (review r4 M2) pytest cannot take its root, settings or conftest from above --root
+  PASS: T48a the command carries --rootdir and --confcutdir (both = root)
+  PASS: T48 setup.py above the root refused (rc 2, hits 1)
+  PASS: T48 conftest.py above the root refused (rc 2, hits 1)
+  PASS: T48 pyproject.toml WITHOUT a pytest section above the root refused (rc 2, hits 1)
+  PASS: T48 pyproject.toml with a dotted-key pytest setting above the root refused (rc 2, hits 1)
+  PASS: T48 tox.ini with a pytest section above the root refused (rc 2, hits 1)
+  PASS: T48 setup.cfg with a pytest section above the root refused (rc 2, hits 1)
+  PASS: T48 an ini file INSIDE the root is accepted (rc 0) and the raw file records a normal verdict
+pyproject cases wrong: []
+  PASS: T48 pyproject.toml is parsed: dotted keys, inline tables, native table found; no section and look-alike table not; invalid TOML counted (fail closed)
+== T49 (review r4 M3) a mutant's tests that change the tree stop the loop before the next mutant
