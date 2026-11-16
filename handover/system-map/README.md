@@ -5,7 +5,7 @@ WARNING: the CURRENT owner steps are inputs/OWNER-STEPS-realrun-v5-core-hardenin
 ## BEFORE THE TAKE: the one open list (16 Nov 2026, about 12:00 UTC / 17:30 IST; every item blocks the take)
 1. Take date and start time (v5 gives none; target Wed 18 Nov, not confirmed).
 2. A named person to start Docker and run the first rehearsal (the five changed flows have never run in n8n).
-3. Security edits S9-1 to S9-6 applied in v5 and the scope sheet by core-hardening (list: drift/APPLIED-S9.md).
+3. Security edits S9-1 to S9-5 and S9-12 applied in v5 and the scope sheet by core-hardening (list: drift/APPLIED-S9.md).
 4. Flow-set decision A, B, C and D (flowset/REPORT.md); default: two separate sessions, no live switch.
 5. HubSpot key must be able to delete contacts (drift R8-5), plus the HubSpot check and login-key choice (OWNER-VIEW row 7; the exact lines do not exist yet: the studio lead writes them or removes the row).
 6. The two failing guard tests on core-hardening (not a take blocker, blocks a pull request).
