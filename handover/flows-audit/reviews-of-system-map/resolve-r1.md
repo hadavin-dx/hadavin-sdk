@@ -1,14 +1,14 @@
 # Goldfish Annotated Review Report (egm:egm-resolve, round 1 of max 2)
 
-Status: resolved (lead instruction: judge on evidence, PROPOSE FIX for valid findings, no questions; ESCALATE items go to the laptop lead; no severity changed except three CONTESTs below, each with a rubric reason)
+Status: resolved (lead instruction: judge on evidence, PROPOSE FIX for valid findings, no questions; ESCALATE items go to the laptop lead). Severities of the merged findings are mine, by the PLAN-005 rubric. Three reviewer ratings are CONTESTED (XR-14, XR-15, XR-18: reviewer Blocker, rubric Major). Separately, XR-25 and XR-29 re-rate target rows (13 Blocker rows to Major, 1 to Nit; 49 sampled Major rows to Nit); those are corrections to the target, not changes to reviewer findings.
 
-**Target:** outputs of cloud session system-map (branch cloud/system-map, head 707768f), read-only. **Inputs:** lane-R5-B, -M1, -M2, -D, -Z, -C and evidence-5.md in this folder. 32 merged findings (from 6 lanes: about 150 lane findings and rows, deduplicated).
+**Target:** outputs of cloud session system-map (branch cloud/system-map, head 707768f), read-only. **Inputs:** lane-R5-B, -M1, -M2, -D, -Z, -C and evidence-5.md in this folder. 33 merged findings, deduplicated from the six lanes. Round 1 of the draft review (R5-V) added fixes XR-33 and corrected counts.
 
-Counts by category: PROPOSE FIX 28, ESCALATE 4, CONTEST 0 whole findings (3 severity CONTESTs: XR-14, XR-15, XR-18, reviewer Blocker to Major by the PLAN-005 rubric), DECLINE 0.
+Counts by category: PROPOSE FIX 29, ESCALATE 4, CONTEST 0 whole findings (3 severity CONTESTs above), DECLINE 0.
 
-ESCALATE first (need facts outside every file the reviewers could read): XR-21, XR-23, XR-30, XR-32.
+ESCALATE first (need facts outside every file the reviewers could read: the take repo, the owner or the laptop lead): XR-21, XR-23, XR-30, XR-32.
 
-Rubric used (PLAN-005): Blocker = could lose or double-apply a lead or mail, leak, or a published claim is false; Major = wrong failure path, a second store, or an unbacked claim; Nit = naming or leftovers.
+Rubric (PLAN-005): Blocker = could lose or double-apply a lead or mail, leak, or a published claim is false; Major = wrong failure path, a second store, or an unbacked claim; Nit = naming or leftovers. Words: PROPOSE FIX = the finding is valid, here is the exact edit; ESCALATE = valid or not, the evidence is outside our reach, give it to a person; CONTEST = the reviewer's rating is wrong, reason given; DECLINE = a Nit recorded, no fix.
 
 ## Prioritized findings
 
@@ -35,7 +35,7 @@ Rubric used (PLAN-005): Blocker = could lose or double-apply a lead or mail, lea
 
 ### XR-4 [table: RETRY J-042 and fix plan row 11] - Severity: Major
 * **Sources:** R5-D-4, R5-Z-16
-* **Discrepancy:** Node retry on Qualify and CrmUpsert is called DUPLICATE of the recovery sweep and proposed for trim, but it does a different job (fast in-run retry inside the 120 s lease; the sweep only acts after the lease ends). The row itself says the trim is not implementable as written. stage.journal caps the paid call and the CRM upsert is keyed, so the retry is safe.
+* **Discrepancy:** Node retry on Qualify and CrmUpsert is called DUPLICATE of the recovery sweep and proposed for trim, but it does a different job (fast in-run retry inside the 120 s lease; the sweep only acts after the lease ends). The row itself says the trim is not implementable as written. In the rig the fake journal caps the paid call (fakes.py:137) and the CRM upsert is keyed, so the retry looks safe; the real stage.journal is not visible (UNVERIFIED for the take).
 * **AI Suggestion:** PROPOSE FIX
 * **Proposed edit (location):** ONE-PLACE-TABLE.md:98 (J-042), SWEEP.md:372 (row 11)
 * **Change:** J-042 verdict NEEDED (fast-path layer); delete 'trim node retry' from row 11; keep the dead-node removal as its own step with a re-run.
@@ -49,10 +49,10 @@ Rubric used (PLAN-005): Blocker = could lose or double-apply a lead or mail, lea
 
 ### XR-6 [cut destination] - Severity: Major
 * **Sources:** R5-Z-13
-* **Discrepancy:** The archive destination archive/<same path> is outside handover/. CLAUDE.md (Design rules, last bullet): 'no private notes outside handover/'. These files include the owner's full name and a login in 79 paths (L1-FD-021), and the CI allowlist guards handover/ only (.github/workflows/ci.yml:198-222). No archive/ folder exists.
+* **Discrepancy:** The archive destination archive/<same path> is outside handover/. CLAUDE.md (Design rules, last bullet): 'no private notes outside handover/'. L1-FD-021 reports 79 hits of a name and login in 8 files; 72 of the 79 are in public GitHub API JSON (a public handle), no e-mail. A hygiene scan for a second folder is not shown (ci.yml:195-224 is a temporary gitleaks allowlist, not a private-notes guard; tools/scan_repo.py was not opened: UNVERIFIED). No archive/ folder exists.
 * **AI Suggestion:** PROPOSE FIX
-* **Proposed edit (location):** ONE-PLACE-TABLE.md:12,29; SWEEP.md fix plan rows 8-12,18-24
-* **Change:** Destination = handover/archive/<same path>. Add the new folder to the CI allowlist and the hygiene scan in the same step. State that git history still holds old copies.
+* **Proposed edit (location):** ONE-PLACE-TABLE.md:12; SWEEP.md fix plan rows 8, 9, 18-23
+* **Change:** Destination = handover/archive/<same path>. Check that the real hygiene scan covers handover/archive/ in the same step (do NOT add it to the gitleaks allowlist: that would hide findings). State that git history still holds old copies.
 
 ### XR-7 [table: FILTER J-028] - Severity: Major
 * **Sources:** R5-Z-14, R5-D per-job, L2-FD-004 (M1 lane)
@@ -70,10 +70,10 @@ Rubric used (PLAN-005): Blocker = could lose or double-apply a lead or mail, lea
 
 ### XR-9 [table: 'one place per job'] - Severity: Major
 * **Sources:** R5-Z-17, R5-C-14, R5-D-10, R5-D-11
-* **Discrepancy:** The table and headline say one owner per job and one Postgres, but: COUNTER has two owners (XR-1) and none for the money cap; LOG owner (n8n history in Postgres) does not exist in the flows today (all saving 'none'); FILTER has three dedupe layers with different keys; STORE is three places by DECISION (one a file); OTHER proposes none. 'Open owner: none' for the money cap is UNVERIFIED (take repo not visible), not 'none'. Only LOG, FILTER, RETRY, NOTICE, STORE name a verified place.
+* **Discrepancy:** The table and headline say one owner per job and one Postgres, but: COUNTER has two owners (XR-1) and none for the money cap; LOG owner (n8n history in Postgres) does not exist in the flows today (all saving 'none'); FILTER has three dedupe layers with different keys; STORE is three places by DECISION (one a file); OTHER proposes none. 'Open owner: none' for the money cap is UNVERIFIED (take repo not visible), not 'none'. Only STORE, FILTER, RETRY and NOTICE name a place seen working in the rig; LOG is a plan.
 * **AI Suggestion:** PROPOSE FIX
 * **Proposed edit (location):** ONE-PLACE-TABLE.md:1,40,72,81,123-125; SWEEP.md:25
-* **Change:** Reword 'one place per job' to 'one proposed owner per job; 5 of 7 verified in the rig, 2 open (COUNTER: independent count not shown to run outside n8n; OTHER: none)'. Replace 'Open owner (money cap): none' with 'UNVERIFIED; options: stage.journal is not a ceiling; provider-side limit; core Limits reserve-before-call'.
+* **Change:** Reword 'one place per job' to 'one proposed owner per job; 4 of 7 seen working in the rig (STORE, FILTER, RETRY, NOTICE); LOG is a plan (every flow saves nothing today); COUNTER (independent count not shown to run outside n8n) and OTHER are open'. Replace 'Open owner (money cap): none' with 'UNVERIFIED; options: stage.journal is not a ceiling; provider-side limit; core Limits reserve-before-call'.
 
 ### XR-10 [table: state column 'OK'] - Severity: Major
 * **Sources:** R5-Z-5, R5-C-16
@@ -126,7 +126,7 @@ Rubric used (PLAN-005): Blocker = could lose or double-apply a lead or mail, lea
 
 ### XR-17 [decision (d): key rotation / history rewrite, and decision lists differ] - Severity: Major
 * **Sources:** R5-C-6, R5-D decisions 4
-* **Discrepancy:** Consequences are not stated (a history rewrite changes every commit id in a public repo; which keys are real is UNVERIFIED; exception L6-EX-10 not shown). Fix row 7 mixes untrack/rotate, move to archive/ and rewrite in one cell. SWEEP.md:16-17 and REPORT.md:7 list the open decisions differently (R5-C reads a studio-head key decision; R5-D reads the fourth decision as 'independent count outside n8n; three roles vs a fourth identity').
+* **Discrepancy:** Consequences are not stated (a history rewrite changes every commit id in a public repo; which keys are real is UNVERIFIED; the never-delete rule L6-EX-10 at SWEEP.md:414 says credential files are untracked and rotated, never archived, and row 7 also moves them to archive/). Fix row 7 mixes untrack/rotate, move to archive/ and rewrite in one cell. SWEEP.md:16-17 and REPORT.md:7 list the open decisions differently (R5-C reads a studio-head key decision; R5-D reads the fourth decision as 'independent count outside n8n; three roles vs a fourth identity').
 * **AI Suggestion:** PROPOSE FIX
 * **Proposed edit (location):** SWEEP.md:16-17,368; REPORT.md:7
 * **Change:** Make one list used in SWEEP headline, REPORT and fix plan. Split row 7 into three rows (untrack; rotate if real; rewrite history, with its consequence in one sentence).
@@ -136,7 +136,7 @@ Rubric used (PLAN-005): Blocker = could lose or double-apply a lead or mail, lea
 * **Discrepancy:** Headline lists only row 7 as open for the studio head, yet the before-18-Nov band needs a yes on seven mandatory rows (1,3,7,13,14,16,17) plus optional 5 and 6, and 19 table rows say 'yes needed'. A fifth decision (one more lane for 183 NOT-READ files: 18+66+99 = 183, correct) is missing. Headline omits the 10-row appendix (counts 49 + 10 = 59 are right, per-job keyed totals are 12,11,10,7,10,7,2) and gives no Blocker count. Reviewer severity Blocker for the first item; CONTEST to Major (rubric).
 * **AI Suggestion:** PROPOSE FIX
 * **Proposed edit (location):** SWEEP.md:5-17,360-378; ONE-PLACE-TABLE.md:14
-* **Change:** Add one line: 'Needs a yes: N rows (list ids). Open decisions: 5 (list). Blockers: 16 after merging duplicates (see REVIEW).' Fix '1 rows'. Delete the reference to 'severity cells' at table line 14 or add the column.
+* **Change:** Add one line: 'Needs a yes: N rows (list ids). Open decisions: 5 (list). Blockers: 16 in the target's count, 4 after re-rating (see REVIEW).' Fix '1 rows'. Delete the reference to 'severity cells' at table line 14 or add the column.
 
 ### XR-19 [fix plan: bands and order] - Severity: Major
 * **Sources:** R5-C-18..21, R5-D bands, R5-D-5
@@ -178,7 +178,7 @@ Rubric used (PLAN-005): Blocker = could lose or double-apply a lead or mail, lea
 * **Discrepancy:** Of the 20 raw Blocker rows: 20 of 20 facts are CONFIRMED against the cited lines (evidence-5 shows every cited line exact). By the PLAN-005 rubric only 4 distinct issues stand as Blocker: L1c-FD-021 (false claim in live PR text), L2-FD-002 (+ leak half of L6-FD-001: made-up e-mail, name and key canary in n8n's own file), L2-FD-008 (= L6-FD-005: mail lost with no alert), L4c-FD-002 (key forwarded after redirect, printed in traceback). 13 rows are Major (L1-FD-021, L1c-FD-001, L2-FD-001, L2-FD-003, L2-FD-007, L2-FD-018, L4c-FD-001, L6-FD-002, L6-FD-003, L6-FD-004, L6-FD-006, L6-FD-017, L6-FD-026) and 1 is Nit (L4c-FD-003). The lane header said 11; recounting its row list gives 13 (lane slip, corrected here). Duplicates: L6-FD-002 = L2-FD-003, L6-FD-017 = L2-FD-007, L6-FD-005 = L2-FD-008, L6-FD-001 = L2-FD-001 + L2-FD-002 (16 distinct, matching the target's own dedupe). Of the 4 standing Blockers: L1c-FD-021 and L4c-FD-002 depend on patch/paste state UNVERIFIED; the first-three statements stand on the rig only (take flows not visible).
 * **AI Suggestion:** PROPOSE FIX
 * **Proposed edit (location):** SWEEP.md:35-355 severity cells; REPORT.md headline '10 Blockers touching the take'
-* **Change:** Re-rate the 13 rows to Major and L4c-FD-003 to Nit; merge the four duplicate pairs; headline: '4 Blocker issues, 12 Major, ... (rubric in PLAN-005)'. Keep row ids.
+* **Change:** Re-rate the 13 rows to Major and L4c-FD-003 to Nit; merge the four duplicate pairs; headline: of the 16 distinct findings the target counts as Blocker, 4 stay Blocker, 11 become Major (13 rows, two duplicate pairs) and 1 becomes Nit (4 + 11 + 1 = 16). Keep row ids.
 
 ### XR-27 [sweep: rows with no claim] - Severity: Major
 * **Sources:** R5-M1 structural
@@ -196,10 +196,10 @@ Rubric used (PLAN-005): Blocker = could lose or double-apply a lead or mail, lea
 
 ### XR-29 [sweep: Major severity inflation] - Severity: Major
 * **Sources:** R5-M1, R5-M2
-* **Discrepancy:** Of the 105 Majors sampled by the reviewers: 44 are Nit by the rubric (M1 27, M2 17), 12 have no claim sentence (XR-27), 1 is a meta row, 48 agree Major (M1 31, M2 17). Leftover copies, internal count slips, rig-only and retired-desk items, stale rule pointers are Nit. The 105 sampled are half of 209; the unsampled 104 are NOT-CHECKED.
+* **Discrepancy:** Of the 106 Major rows the two sample lanes tagged (recounted from their row tags: M1 71 rows, M2 35 rows; the lane headers said 70, 27 and 17 and do not match their own rows): 52 agree Major, 49 are tagged Nit, 4 are tagged 'no claim', 1 is a meta row. Leftover copies, internal count slips, rig-only and retired-desk items, stale rule pointers are Nit. The 106 checked are about half of 209; the other 103 are NOT-CHECKED.
 * **AI Suggestion:** PROPOSE FIX
 * **Proposed edit (location):** SWEEP.md Major rows listed in lane files
-* **Change:** Re-rate the 44 named rows (lane files list the ids). Run the same check on the other 104 (a continuation lane).
+* **Change:** Re-rate the 49 rows tagged Nit in lane-R5-M1 and lane-R5-M2 (ids are in the lane files). Run the same check on the other 103 Major rows (a continuation lane).
 
 ### XR-30 [sweep: possible Blockers hidden as Major] - Severity: Major
 * **Sources:** R5-M1
@@ -214,6 +214,13 @@ Rubric used (PLAN-005): Blocker = could lose or double-apply a lead or mail, lea
 * **AI Suggestion:** ESCALATE
 * **Proposed edit (location):** ONE-PLACE-TABLE.md rows named
 * **Change:** Laptop lead or studio head with the take repo and desk repo checks these 12 rows; take repo not visible here (third party/owner).
+
+### XR-33 [table: further wording and consistency gaps] - Severity: Major
+* **Sources:** R5-C-13, R5-Z-16, R5-D per-job, R5-Z-15, R5-C-16, R5-M1 L3-FD-009, R5-M2 L5ac-FD-013
+* **Discrepancy:** (a) Rows cite rig files (flows-go1/mf-form.json) while J-058 says the take flows are NOT VISIBLE; the table never says whether the rig flows are the take flows (R5-C-13). (b) J-059 'STOP (process waste, not a file)' names nobody and nothing to stop; the cited resolve-lane3-fix-2-r12 and fix-5-r8 are credential/security work with uncapped rounds (R5-Z-16). (c) DECISION:9 calls stage.journal 'the money guard' while the table says it is not a dollar ceiling: never reconciled (R5-D per-job). (d) J-004 (desk ARCHIVE) and J-005 (desk money MERGE) give one retired desk two dispositions (R5-Z-15). (e) J-051 is state OK while rated Blocker (R5-C-16, same class as XR-10). (f) Nits: L3-FD-009 (doc says -q prints per-file lines; wrong), L5ac-FD-013 (stale pointer to scripts/mutation_check.py).
+* **AI Suggestion:** PROPOSE FIX
+* **Proposed edit (location):** ONE-PLACE-TABLE.md J-004, J-005, J-051, J-058, J-059; DECISION-one-store.md:9
+* **Change:** (a) add one line stating which flows the take uses (UNVERIFIED until the take repo is read). (b) name who stops what, or drop the row; the review rounds on credential work are uncapped. (c) one sentence in DECISION and table: stage.journal = per-lead one-call guard, not a dollar cap. (d) one disposition for the desk. (e) see XR-10. (f) fix the two lines.
 
 ### XR-24 [missed rows] - Severity: Nit
 * **Sources:** R5-D-12, R5-Z-7
