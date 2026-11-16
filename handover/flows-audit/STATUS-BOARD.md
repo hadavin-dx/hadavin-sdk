@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T17:49:50Z
+UPDATED_UTC: 2026-11-16T17:54:37Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -7,11 +7,11 @@ ITEMS_TOTAL: 10
 ITEMS_OPEN: 30
 PERCENT: 70
 AGENTS_RUNNING: 8
-CAPACITY: 6.30 load of 4 cores, mem 1/15 GB, RAM 1136/16087 MB, disk 12G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 13G /tmp/claude-0 , agents 8 (light+heavy per list)
+CAPACITY: 5.89 load of 4 cores, mem 1/15 GB, RAM 1398/16087 MB, disk 12G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 13G /tmp/claude-0 , agents 8 (light+heavy per list)
 INTERRUPTED: none
 FAILED: none (F8 run_all.sh intermittent exit 1 is an evidence finding: 3 of 6 plain runs failed, cause unknown, fixer acf8ab59 on it; ruff format --check passes 741 files)
-NEXT: REVIEW.md reads land then one fixer; Q31 reader then fixer
-PUSHED_UTC: 2026-11-16T17:49:50Z
+NEXT: Q31 fixer after read; REVIEW.md r41 verify; patch-copies r16 verify
+PUSHED_UTC: 2026-11-16T17:54:37Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -31,20 +31,20 @@ PUSHED_UTC: 2026-11-16T17:49:50Z
 | id | role | model | what it does | started UTC | expected end UTC | state | produced so far |
 |---|---|---|---|---|---|---|---|
 | acf8ab59 | F8 flow-check r11 fixer | sonnet | fix flow-check (uncapped) | 15:50Z | 18:00Z | running | run_all.sh intermittent exit 1, cause unknown; running 2h |
-| a4f7b824 | plan-files r33 fixer | sonnet | B1 receipt + 12 Majors + shell guards | 17:38Z | 18:10Z | running | editing RUNBOOK/FIX-PLAN/TAKE-CHECKLIST |
 | a0fef7e3 | patch-copies r16 fixer | sonnet | 4 Majors + 8 Nits (uncapped) | 17:46Z | 18:10Z | running | editing README/DEAD-MAN-CHECK |
-| aa23f813 | REVIEW.md r35 design read | sonnet | design critique (uncapped) | 17:46Z | 17:58Z | running | reading |
-| a46b7605 | REVIEW.md r40 citation checker | sonnet | cites and numbers | 17:46Z | 17:58Z | running | writing citation-review40.md |
 | a0d9069a | FINDINGS/LEDGER r20 fixer | sonnet | r20/r21a/r21b findings | 17:47Z | 18:15Z | running | editing FINDINGS/LEDGER |
 | a37a1cd3 | Q31 r27 stranger read | sonnet | QUESTIONS 420-737 | 17:48Z | 18:00Z | running | reading |
-| aeddf43e | REVIEW.md r35b read 440-610, 745-804 | sonnet | stranger read (uncapped) | 17:49Z | 18:00Z | running | reading |
+| a4c8e047 | plan-files r34 stranger read | sonnet | RUNBOOK/FIX-PLAN/TAKE-CHECKLIST | 17:52Z | 18:05Z | running | reading |
+| a0f5ba85 | plan-files r34 shell read | sonnet | command blocks vs take_check.sh | 17:52Z | 18:05Z | running | reading |
+| ad3348bd | RW/CT r33 stranger read | sonnet | RUNSHEET-WORDING/CLAIMS-TABLE | 17:52Z | 18:05Z | running | reading |
+| a485bdf2 | REVIEW.md r41 fixer | sonnet | r35/r35 design/r35b/citation findings (uncapped) | 17:53Z | 18:20Z | running | editing REVIEW.md |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
-1. REVIEW.md r41 fixer after design r35, citation, r35b reads (one fixer)
-2. Q31 r27 fixer after reader
-3. Fresh readers for plan-files (r34) and RW/CT (r33) after fixers
-4. Patch-copies r17 readers after r16 fixer
-5. F8 r11 report then evidence runner alone
+1. Q31 fixer after r27 read (plus NQ-A..NQ-F and plan-files questions)
+2. Verify and re-read REVIEW.md after r41 fixer (count_review 28/4/13/11)
+3. Verify patch-copies r16 fixer then r17 readers (sha 64fdf315 e7ff677e ca4982eb)
+4. F8 r11 report then evidence runner alone
+5. Plan-files / RW-CT fixers after r34/r33 reads
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
