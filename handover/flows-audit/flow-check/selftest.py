@@ -193,10 +193,60 @@ def g_src_ghost(j, d): j["connections"]["Ghost"] = {"main": [[link(first_nt(j)["
 def g_env_read(j, d): first_nt(j)["parameters"]["note"] = "={{ $env.SOME_NAME }}"
 def g_wrongcount(j, d): j["nodes"].append(sticky("Extra"))   # a note changes the node count and nothing else
 
+def g_settings_null(j, d): j["settings"] = None
+def g_settings_list(j, d): j["settings"] = []
+def _wh(j): return [n for n in j["nodes"] if n["type"] == "n8n-nodes-base.webhook"]
+def g_wh_params_list(j, d):
+    w = _wh(j)
+    if not w: return SKIP
+    w[0]["parameters"] = ["x"]
+def g_wh_params_str(j, d):
+    w = _wh(j)
+    if not w: return SKIP
+    w[0]["parameters"] = "x"
+def g_wh_id_dict(j, d):
+    w = _wh(j)
+    if not w: return SKIP
+    w[0]["webhookId"] = {"a": 1}
+def g_wh_id_list(j, d):
+    w = _wh(j)
+    if not w: return SKIP
+    w[0]["webhookId"] = ["a"]
+def g_secret_in_expr(j, d): first_nt(j)["parameters"]["apiKey"] = "={{ $json.a || '" + "".join(["h", "unter", "2", "xyz"]) + "' }}"
+def g_env_bracket(j, d): first_nt(j)["parameters"]["note"] = '={{ $env["SOME_NAME"] }}'
+def g_env_process(j, d): first_nt(j)["parameters"]["note"] = "={{ process.env.SOME_NAME }}"
+def g_wh_auth_nocred(j, d):
+    w = _wh(j)
+    if not w: return SKIP
+    w[0].setdefault("parameters", {})["authentication"] = "headerAuth"; w[0].pop("credentials", None)
+def g_wh_auth_cred(j, d):
+    w = _wh(j)
+    if not w: return SKIP
+    w[0].setdefault("parameters", {})["authentication"] = "headerAuth"; w[0]["credentials"] = {"httpHeaderAuth": {"id": "H1", "name": "mf-hook-header"}}
+def g_form_auth_nocred(j, d):
+    w = _wh(j)
+    if not w: return SKIP
+    w[0]["type"] = "n8n-nodes-base.formTrigger"; w[0].setdefault("parameters", {})["authentication"] = "basicAuth"; w[0].pop("credentials", None)
+def g_cred_kind(j, d):
+    n = first_of(j, "postgres")
+    if not n: return SKIP
+    k = list(n["credentials"])[0]; n["credentials"]["smtp"] = n["credentials"].pop(k)
+def g_cred_name(j, d):
+    n = first_of(j, "postgres")
+    if not n: return SKIP
+    k = list(n["credentials"])[0]; n["credentials"][k]["name"] = "some-other-credential"
+def g_noretry_new(j, d):
+    j["nodes"].append({"name": "NoRetryX", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4, "position": [0, 0], "parameters": {"method": "GET"}})
+    j["connections"][a_source(j)]["main"][0].append(link("NoRetryX"))
+def g_upstream_swallow(j, d):
+    j["nodes"].append({"name": "SwallowA", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4, "position": [0, 0], "parameters": {"method": "GET"}, "onError": "continueRegularOutput", "retryOnFail": True})
+    j["nodes"].append({"name": "WriteB", "type": "n8n-nodes-base.httpRequest", "typeVersion": 4, "position": [0, 0], "parameters": {"method": "POST"}, "retryOnFail": True})
+    j["connections"][a_source(j)]["main"][0].append(link("SwallowA")); j["connections"]["SwallowA"] = {"main": [[link("WriteB")]]}
+def g_sticky_ref_ok(j, d): j["nodes"].append(sticky("Note", "see $('Nope') for details"))
+
 # ---- file-specific mutators ----
 def f_noreply(j, d): j["connections"]["Stored"] = {"main": [[]]}
 def f_bad_ref_reply(j, d): node(j, "ReplyStored")["parameters"]["responseBody"] = "={{ $('Nope').item.json.x }}"
-def f_selfref_ok(j, d): node(j, "Valid")["parameters"]["note"] = "={{ $('Valid').item.json.x }}"
 
 # case: (name, mutator, level, text, extra checker options, knock-on texts, files)   level: FAIL, WARN or None (control)
 GEN5 = "gen"
@@ -257,7 +307,22 @@ G = [
  ("connection_source_not_a_node", g_src_ghost, "FAIL", "connection source 'Ghost' is not a node", (), []),
  ("env_read_blocked_strict", g_env_read, "FAIL", "reads $env", ("--block-env-access",), []),
  ("wrong_count", g_wrongcount, "FAIL", "node count", (), []),
+ ("settings_null", g_settings_null, "FAIL", "settings is not an object", (), []),
+ ("settings_list", g_settings_list, "FAIL", "settings is not an object", (), []),
+ ("webhook_parameters_list_no_crash", g_wh_params_list, "FAIL", "parameters is not an object", (), []),
+ ("webhook_parameters_text_no_crash", g_wh_params_str, "FAIL", "parameters is not an object", (), []),
+ ("webhook_id_dict_no_crash", g_wh_id_dict, "FAIL", "webhookId is not text", (), []),
+ ("webhook_id_list_no_crash", g_wh_id_list, "FAIL", "webhookId is not text", (), []),
+ ("secret_inside_json_expression", g_secret_in_expr, "FAIL", "literal value under key 'apiKey'", (), []),
+ ("env_read_bracket_form_strict", g_env_bracket, "FAIL", "reads $env", ("--block-env-access",), []),
+ ("env_read_process_env_strict", g_env_process, "FAIL", "reads process.env", ("--block-env-access",), []),
+ ("webhook_auth_without_credentials", g_wh_auth_nocred, "FAIL", "but the node has no credentials block", (), []),
+ ("form_trigger_auth_without_credentials", g_form_auth_nocred, "FAIL", "but the node has no credentials block", (), ["unreachable", "orphan", "WITHOUT respondToWebhook", "no respondToWebhook"]),
+ ("credential_kind_wrong", g_cred_kind, "FAIL", "do not include the expected kind 'postgres'", (), []),
+ ("credential_name_wrong", g_cred_name, "FAIL", "expected 'n8n-publish-pg' (--expect-credential)", ("--expect-credential", "postgres=n8n-publish-pg"), []),
  # WARN cases
+ ("new_external_call_without_retry_is_warn", g_noretry_new, "WARN", "'NoRetryX'", (), ["WITHOUT respondToWebhook"]),
+ ("write_after_swallowed_error_is_warn", g_upstream_swallow, "WARN", "write node WriteB has upstream external call(s) that continue on error: ['SwallowA']", (), ["WITHOUT respondToWebhook"]),
  ("bad_onerror_value_is_warn", g_badonerr, "WARN", "n8n rule UNVERIFIED", (), []),
  ("max_tries_out_of_range_is_warn", g_maxtries, "WARN", "maxTries=9", (), []),
  ("wait_out_of_range_is_warn", g_wait, "WARN", "waitBetweenTries=9000", (), []),
@@ -280,6 +345,7 @@ FH = [
  ("if_one_branch", g_if_one_branch, "FAIL", "IF node", (), ["orphan", "unreachable"]),
  ("if_error_output_is_last_output", g_if_err_last, "FAIL", "its error output main[2]", (), []),
  ("reply_after_store_cut", f_noreply, "FAIL", "WITHOUT respondToWebhook at ['Stored']", (), ["orphan", "unreachable"]),
+ ("reply_body_names_missing_node", f_bad_ref_reply, "FAIL", "refers to $('Nope')", (), []),
 ]
 CONTROLS = [
  ("control_unmutated", None, ()),
@@ -288,6 +354,9 @@ CONTROLS = [
  ("control_pass_through_key_is_not_a_secret", g_passthrough, ()),
  ("control_env_reference_is_not_a_secret", g_env_ok, ()),
  ("control_filter_with_one_output", g_filter_ok, ()),
+ ("control_webhook_auth_with_credentials", g_wh_auth_cred, ()),
+ ("control_sticky_note_text_may_quote_a_node_name", g_sticky_ref_ok, ()),
+ ("control_credential_names_as_expected", None, ("--expect-credential", "postgres=n8n-publish-pg", "--expect-credential", "smtp=mf-mail-smtp")),
 ]
 
 FOCUS = "mf-form.json"
@@ -346,11 +415,13 @@ def main():
     out = base_out[("real", "mf-form.json")]
     report("control_known_problems_are_listed (REPLY GAP and no authentication counted)", "REPLY GAP" in out and any(l.startswith("  - ") and "no authentication" in l for l in out.splitlines()))
     # negative / warn cases
+    skipnames = {}
     def one(name, mut, level, text, extra, also, tv, src, f):
         nonlocal skipped
         n = "%s@%s-%s" % (name, tv, f); d, sk, exp = make(n, mut, work, src, f, keep_counts=(name == "wrong_count"))
-        if sk: skipped += 1; print("%-72s skipped (not applicable to this file)" % n); return
+        if sk: skipped += 1; skipnames[name] = skipnames.get(name, 0) + 1; print("%-72s skipped (not applicable to this file)" % n); return
         rc, out = run(cmd(d, src, exp, extra), n); fl, wl = lines_of(out, "FAIL"), lines_of(out, "WARN")
+        if "Traceback" in out: report(n + " (no crash)", False, "the checker printed a Traceback"); return
         if level == "FAIL":
             named = [l for l in fl if text in l]; stray = [l for l in fl if text not in l and not any(a in l for a in also)]
             good = rc == 1 and bool(named) and not stray; why = "rc=%d named=%d stray=%s" % (rc, len(named), [s[:90] for s in stray[:2]])
@@ -364,21 +435,69 @@ def main():
     for name, mut, level, text, extra, also in FH:
         for tv, src, f in [t for t in targets if t[2] in ("mf-form.json", "mf-hook.json")]: one(name, mut, level, text, extra, also, tv, src, f)
     if PATCHED:
-        P = [("patched_control", None, 0, ""),
-             ("patched_wrong_code", lambda j, d: node(j, "ReplyBadKey")["parameters"]["options"].__setitem__("responseCode", 400), 1, "ReplyBadKey responseCode is 400 expected 422"),
-             ("patched_failreply_cut", lambda j, d: j["connections"].__setitem__("ReplyStoreFail", {"main": [[link("Claimed")]]}), 1, "unexplained connection change for source ReplyStoreFail"),
-             ("patched_errlink_cut", lambda j, d: j["connections"]["Claim"]["main"].pop(), 1, "its error output main[1]"),
-             ("patched_badkey_reply_cut", lambda j, d: j["connections"].__setitem__("ReplyBadKey", {"main": [[link("Item")]]}), 1, "unexplained connection change for source ReplyBadKey")]
-        for name, mut, want, text in P:
-            d, sk, _ = make(name, mut, work, PATCHED, "mf-form.json")
+        def pick(j, avoid=()): return [x["name"] for x in j["nodes"] if x["name"] not in trig(j) and x["type"] != "n8n-nodes-base.stickyNote" and x["name"] not in ("KeyOk", "ReplyBadKey", "ReplyStoreFail", "Claim", "Valid") + tuple(avoid)][0]
+        def m_removed(j, d):
+            nm = [x["name"] for x in j["nodes"] if x["type"] == "n8n-nodes-base.set"][-1]; j["nodes"] = [x for x in j["nodes"] if x["name"] != nm]
+        def m_added(j, d): j["nodes"].append(noop("Sneaky")); j["connections"][a_source(j)]["main"][0].append(link("Sneaky"))
+        def m_fiveoh(j, d): node(j, "ReplyStoreFail")["parameters"]["options"]["responseCode"] = 500
+        def m_nobody(j, d): node(j, "ReplyStoreFail")["parameters"]["responseBody"] = "={{ 'no' }}"
+        def m_cond(j, d): node(j, "KeyOk")["parameters"]["conditions"]["conditions"][0]["leftValue"] = "={{ true }}"
+        def m_claimerr(j, d): node(j, "Claim")["onError"] = "stopWorkflow"
+        def m_changed(j, d): node(j, pick(j))["notes"] = "changed by a test"
+        def m_settings(j, d): j["settings"]["executionTimeout"] = 5
+        def m_top(j, d): j["extraTopLevelKey"] = "x"
+        def m_f008_form(j, d): j["settings"]["saveDataSuccessExecution"] = "none"
+        def m_f008_rec(j, d): j["settings"]["saveDataSuccessExecution"] = "all"
+        def m_f002_in_rec(j, d): j["nodes"].append(noop("KeyOk")); j["connections"][a_source(j)]["main"][0].append(link("KeyOk"))
+        KN = ("connection count", "node count", "orphan nodes", "unreachable from", "unexplained connection change", "F-002 ")
+        P = [("patched_control", None, 0, "", "mf-form.json", ()),
+             ("patched_wrong_code", lambda j, d: node(j, "ReplyBadKey")["parameters"]["options"].__setitem__("responseCode", 400), 1, "ReplyBadKey responseCode is 400 expected 422", "mf-form.json", ()),
+             ("patched_failreply_cut", lambda j, d: j["connections"].__setitem__("ReplyStoreFail", {"main": [[link("Claimed")]]}), 1, "unexplained connection change for source ReplyStoreFail", "mf-form.json", ()),
+             ("patched_errlink_cut", lambda j, d: j["connections"]["Claim"]["main"].pop(), 1, "its error output main[1]", "mf-form.json", ()),
+             ("patched_badkey_reply_cut", lambda j, d: j["connections"].__setitem__("ReplyBadKey", {"main": [[link("Item")]]}), 1, "unexplained connection change for source ReplyBadKey", "mf-form.json", ()),
+             ("patched_storefail_code_500", m_fiveoh, 1, "ReplyStoreFail responseCode is 500 expected 503", "mf-form.json", ()),
+             ("patched_storefail_body_without_valid_ref", m_nobody, 1, "lacks the $('Valid') reference", "mf-form.json", ()),
+             ("patched_keyok_condition_changed", m_cond, 1, "KeyOk condition is not the expected string", "mf-form.json", ()),
+             ("patched_claim_onerror_changed", m_claimerr, 1, "Claim onError is 'stopWorkflow'", "mf-form.json", ("its error output",)),
+             ("patched_f002_node_in_recovery_flow", m_f002_in_rec, 1, "F-002 node KeyOk must exist only in mf-form and mf-hook", "mf-recovery.json", ("unexplained added node",)),
+             ("patched_f008_wrong_value_form", m_f008_form, 1, "F-008 saveDataSuccessExecution is 'none' expected 'all'", "mf-form.json", ()),
+             ("patched_f008_wrong_value_recovery", m_f008_rec, 1, "F-008 saveDataSuccessExecution is 'all' expected 'none'", "mf-recovery.json", ()),
+             ("diff_unexplained_added_node", m_added, 1, "unexplained added node Sneaky", "mf-form.json", ()),
+             ("diff_unexplained_removed_node", m_removed, 1, "unexplained removed node", "mf-form.json", ("dangling target", "connection source", "orphan", "WITHOUT respondToWebhook", "no respondToWebhook", "unexplained connection change")),
+             ("diff_unexplained_changed_node", m_changed, 1, "unexplained change in node", "mf-form.json", ()),
+             ("diff_unexplained_settings_change", m_settings, 1, "unexplained settings change executionTimeout", "mf-form.json", ()),
+             ("diff_unexplained_top_level_change", m_top, 1, "unexplained top-level change extraTopLevelKey", "mf-form.json", ())]
+        for name, mut, want, text, which, extra_kn in P:
+            d, sk, _ = make(name, mut, work, PATCHED, which)
             exp = []
             for f, (nn, cc) in PCOUNTS.items(): exp += ["--expect", "%s=%d:%d" % (f, nn, cc)]
-            if name != "patched_control":   # planted edits change counts only by the connection cut; keep the fixed patched counts
-                exp = [x for x in exp]
             c = ["python3", "-I", CK, d, "--baseline", PRIS] + exp + ["--patch-checks", "F002,F008", "--diff-base", PRIS, "--allow", "F002,F008", "--quiet-info"]
             rc, out = run(c, name); fl = lines_of(out, "FAIL")
-            good = rc == want and (want == 0 and not fl or any(text in l for l in fl) and all(text in l or any(k in l for k in ("connection count", "orphan nodes", "unreachable from", "unexplained connection change", "F-002 ")) for l in fl))
-            report("%s (exit %d)" % (name, want), good, "rc=%d fails=%s" % (rc, [x[:90] for x in fl[:2]]))
+            good = "Traceback" not in out and rc == want and (want == 0 and not fl or any(text in l for l in fl) and all(text in l or any(k in l for k in KN + tuple(extra_kn)) for l in fl))
+            report("%s (exit %d)" % (name, want), good, "rc=%d fails=%s" % (rc, [x[:90] for x in fl[:3]]))
+    # --- cases that are about the command line, an empty folder and a file text the normal mutators cannot make ---
+    def special(name, argv, want_rc, text, cwd_dir=None):
+        rc, out = run(["python3", "-I", CK] + argv, name)
+        report("%s (exit %d)" % (name, want_rc), rc == want_rc and text in out and "Traceback" not in out, "rc=%d text_found=%s traceback=%s" % (rc, text in out, "Traceback" in out))
+    emptyd = work + "/empty-dir"; os.makedirs(emptyd)
+    special("args_unknown_patch_name", [PRIS, "--patch-checks", "F02"], 2, "unknown --patch-checks name")
+    special("args_allow_unknown_patch_name", [PRIS, "--patch-checks", "F002", "--allow", "F-002"], 2, "unknown --allow name")
+    special("args_allow_without_patch_checks", [PRIS, "--allow", "F002"], 2, "needs --patch-checks")
+    special("args_option_without_value_baseline", [PRIS, "--baseline"], 2, "needs a value")
+    special("args_option_without_value_expect", [PRIS, "--expect"], 2, "needs a value")
+    special("args_bad_expect_value", [PRIS, "--expect", "nonsense"], 2, "bad --expect value")
+    special("args_unknown_option", [PRIS, "--nope"], 2, "unknown option")
+    special("args_no_directory_given", [], 2, "Usage")
+    special("args_expect_unknown_file_key", [PRIS, "--expect", "other.json=1:1"], 2, "unknown file key")
+    special("args_files_not_json_names", [PRIS, "--files", "a.txt"], 2, "--files wants")
+    special("args_expect_credential_bad_value", [PRIS, "--expect-credential", "nonsense"], 2, "bad --expect-credential")
+    ej = work + "/expect-list.json"; open(ej, "w").write("[1, 2]")
+    special("args_expect_json_not_an_object", [PRIS, "--expect-json", ej], 2, "bad --expect-json")
+    special("files_all_on_empty_folder_is_fail", [emptyd, "--files", "all"], 1, "holds no *.json file")
+    special("not_a_directory_is_fail", [work + "/does-not-exist"], 1, "not a directory")
+    dk = work + "/dupkey"; shutil.copytree(PRIS, dk); t = open(dk + "/mf-form.json").read(); open(dk + "/mf-form.json", "w").write(t.rstrip().rstrip("}") + ', "settings": {}, "settings": {"a": 1}}')
+    special("duplicate_json_key_is_fail", [dk, "--baseline", PRIS], 1, "duplicate JSON key")
+    if skipnames: print("SKIPPED, by case name (a case is skipped on a file that lacks the node type it needs): " + ", ".join("%s=%d" % kv for kv in sorted(skipnames.items())))
     print("SELFTEST: %d as expected, %d not as expected, %d skipped (not applicable)" % (ok, bad, skipped))
     shutil.rmtree(work, ignore_errors=True); return 1 if bad else 0
 sys.exit(main())
