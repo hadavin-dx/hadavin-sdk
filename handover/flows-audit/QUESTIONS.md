@@ -21,3 +21,6 @@ Q6 ANSWERED: 'a stand-in CRM' on screen for scene 5; 'HubSpot' only for scenes t
 Q7 ANSWERED: the sentence in the run sheet before the video; the IF plus alert after (F-031).
 Q8 ANSWERED: do not run the table screen; a rehearsal screenshot or the Postgres node preview for scene 10 (F-023).
 Q9 ANSWERED: all demotions accepted. F-012, F-014 (with F-040), F-019, F-022, F-025, F-035, F-036, F-039, F-044, F-045 stay Nit for the take, each noted 'Major for a client build'. Counts stay 45 rows = 8 Blocker, 8 Major, 29 Nit; BEFORE 17, AFTER 28.
+
+## Q10 (from F9, 2026-11-16, not blocking; reviewer check pending)
+SCENE-FLOW-MAP.md finds: real-v5 and film-v5 use the same workflow titles and the same webhook path (mf-form), so only one set can be active at a time. The take must switch from real-v5 (scenes 1-4) to film-v5 (scenes 5-11) between scenes 4 and 5. VIDEO-RUNSHEET.md does not say so; whether the take scripts already do it is UNCHECKED (scripts not in this checkout). Recommendation: add one run-sheet line "switch flow set after scene 4" and rehearse it. Also: CrmIdOk accepts only all-digit CRM ids and real-v5 was never run, so scenes 2-4 depend on HubSpot answering with a digit id (needs the laptop run). Scene 10 preview must be a one-off Postgres node typed in the editor (no flow reads the table).
