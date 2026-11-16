@@ -147,18 +147,18 @@ write_mask_sed() {
   #      cert, ...) at a separator or at the start, also followed by value, string, data, text, hash, bytes or material
   #      (keyValue, saltHash), or
   #  (c) it ENDS in key, token, secret, password, pwd, credential (apiKey, accessToken).
-  STRONG='(secret|passw(or)?d|passphrase|credential|token|apikey)'
-  W='(keys?|tokens?|secrets?|passw(or)?ds?|passphrases?|pass|pwd|pws?|psw|pswd|pat|credentials?|authorization|auth|bearer|private|cookies?|sessions?|signatures?|hmac|dsn|webhooks?|salt|otp|certs?|certificates?)'
+  STRONG='(secret|passw[o0]?r?d|passphrase|credential|token|apikey)'
+  W='(keys?|tokens?|secrets?|passw[o0]?r?ds?|passphrases?|pass|pwd|pws?|psw|pswd|pat|credentials?|authorization|auth|bearer|private|cookies?|sessions?|signatures?|hmac|dsn|webhooks?|salt|otp|certs?|certificates?)'
   WS='(value|string|data|text|hash|bytes|material)'
-  SUF='(keys?|tokens?|secrets?|passw(or)?ds?|pwd|credentials?)'
+  SUF='(keys?|tokens?|secrets?|passw[o0]?r?ds?|pwd|credentials?)'
   # IDB: an identifier that contains a secret word; IDQ: the same inside quotes (spaces count as separators)
   IDB="(([A-Za-z0-9_.-]*$STRONG[A-Za-z0-9_.-]*)|((([A-Za-z0-9_.-]*[_.-])?$W)(([_.-]|$WS)[A-Za-z0-9_.-]*)?)|([A-Za-z0-9_.-]*$SUF([_.-][A-Za-z0-9_.-]*)?))"
   IDQ="(([A-Za-z0-9_. -]*$STRONG[A-Za-z0-9_. -]*)|((([A-Za-z0-9_. -]*[_. -])?$W)(([_. -]|$WS)[A-Za-z0-9_. -]*)?)|([A-Za-z0-9_. -]*$SUF([_. -][A-Za-z0-9_. -]*)?))"
   ID="(^|[^A-Za-z0-9])$IDB"          # IDB with a left edge (the edge character is part of the match)
   PRE="[\"']?[]]?[[:space:]]*="       # what may stand between the name and  =   ( name"]  = )
-  # optional grep prefix: NN:  NN-  path:NN:  path-NN-   (a path before a matching line may hold spaces and dashes
-  # but no colon; before a context line it may hold dashes but no spaces; a path with a colon is not recognised)
-  PFX0='(([^:]+:|[^:[:space:]]+-)?[0-9]+[-:])?'
+  # optional grep prefix: NN:  NN-  path:NN:  path-NN-   (the path may hold spaces and dashes but no colon; a path
+  # with a colon is not recognised: search such a file on its own, where the prefix is only NN:)
+  PFX0='(([^:]+[:-])?[0-9]+[-:])?'
   YPRE="^${PFX0}[[:space:]]*(- +)?[\"']?"      # start of a line: optional grep prefix, indent, list dash, quote
   DQ='"([^"\\]|\\.)*"'                         # a double-quoted string that may hold \" inside
   SQ="'([^'\\\\]|\\\\.)*'"                     # the same with single quotes
@@ -228,6 +228,7 @@ line_rules() {
   cat <<EOF
 s/(^|[^A-Za-z0-9])(((max|num|n|total|prompt|completion|input|output|cached?|reserved)[_.-]?)+)(tok)(ens)/\1\2\5${SOH}\6/Ig
 s/(tok)(eniz|enis)/\1${SOH}\2/Ig
+s/(<[A-Za-z]+[[:space:]]([^>]*[[:space:]])?(key|name|var|variable|env|id)=["'](${IDQ})["'][[:space:]]+(value|val|data|content)=)(${STR}|[^[:space:]>/<"'][^[:space:]>/]*)/\1"<masked>"/Ig
 s/((${ID})${PRE}[[:space:]]*)(""")([^"]|"[^"]|""[^"])*"""/\1<masked>"""/Ig
 s/((${ID})${PRE}[[:space:]]*''')([^']|'[^']|''[^'])*'''/\1<masked>'''/Ig
 /(${ID})${PRE}[[:space:]]*""".*"""/I!s/((${ID})${PRE}[[:space:]]*""").*/\1<masked>/I
@@ -263,7 +264,10 @@ s/((${ID})["']?[[:space:]]*,[[:space:]]*)(${STR})/\1<masked>/Ig
 s/((${ID})[[:space:]]+)(${STR})/\1<masked>/Ig
 s/((${ID})[[:space:]]+(is|was|are|equals|set to|of)[[:space:]]+)[^[:space:]<"'][^]"')}]*/\1<masked>/Ig
 s/((${ID})["']?[[:space:]]*:[[:space:]]*)(${STR}|[^][{}[:space:]<"'][^]"')}]*)/\1<masked>/Ig
-s/((^|[[:space:]])--?([A-Za-z0-9]+[_-])*(keys?|tokens?|secrets?|passw(or)?d|passphrase|pass|pwd|pw|psw|pswd|pat|credentials?|auth|bearer)([_-][A-Za-z0-9_-]*)?([[:space:]]+|=))(${STR}|[^[:space:]<-][^[:space:]]*)/\1<masked>/Ig
+s/((^|[[:space:]])--?([A-Za-z0-9]+[_-])*(keys?|tokens?|secrets?|passw[o0]?r?d|passphrase|pass|pwd|pw|psw|pswd|pat|credentials?|auth|bearer)([_-][A-Za-z0-9_-]*)?([[:space:]]+|=))(${STR}|[^[:space:]<-][^[:space:]]*)/\1<masked>/Ig
+s/((^|[[:space:]])(machine|default)([[:space:]].*)?[[:space:]](password|passwd|passw0rd|account)[[:space:]]+)[^[:space:]<][^[:space:]]*/\1<masked>/Ig
+s/((^|[^A-Za-z0-9_])(sshpass|mysql|mysqldump|mysqladmin|mariadb|mongodump|mongorestore|redis-cli)[^|;&]*[[:space:]]-[pP])([[:space:]]*)(${STR}|[^[:space:]<-][^[:space:]]*)/\1\4<masked>/Ig
+s/((${ID})([[:space:]]+[A-Za-z0-9_]+){1,2}[[:space:]]*:[[:space:]]*)[^[:space:]<"'].*/\1<masked>/Ig
 s/[A-Za-z0-9._%+-]+@([A-Za-z0-9-]+\.)+[A-Za-z]{2,}/<email-masked>/g
 EOF
 }
@@ -301,8 +305,9 @@ function snake_name(t,   n, p, i, d) {
 # blob: 1 = hide, 0 = keep, -1 = split at slashes and judge the pieces
 function blob(tok,   n, c) {
   n = length(tok)
-  if (n < 24) return 0
+  if (n < 16) return 0
   if (tok !~ /[0-9]/ || tok !~ /[A-Za-z]/) return 0
+  if (n < 24) return (tok ~ /^[0-9a-fA-F]+$/) ? 1 : 0     # 16 to 23 characters: hidden only when all hex (hex keys, short hashes of keys)
   if (tok ~ /\//) {
     c = substr(tok, 1, 1)
     if (c == "/" || c == "." || c == "~") return -1
@@ -360,6 +365,7 @@ function camel_split(k,   i, n, c, p, o) {
 function secret_name(k,   n, w, i, x, joined) {
   k = camel_split(k)
   k = tolower(k)
+  gsub(/0/, "o", k)    # passw0rd, s3cret style spellings: a zero is read as the letter o
   gsub(/[^a-z0-9]+/, " ", k)
   n = split(k, w, " ")
   joined = ""
@@ -490,7 +496,10 @@ BEGIN {
   n0 = length(line)
   if (n0 > WIN) line = substr(line, 1, WIN)
   pfx = ""; body = line
-  if (match(line, /^(([^:]+:|[^: \t]+-)?[0-9]+[-:])/)) { pfx = substr(line, 1, RLENGTH); body = substr(line, RLENGTH + 1) }
+  if (match(line, /^(([^:]+[:-])?[0-9]+[-:])/)) {
+    pfx = substr(line, 1, RLENGTH); body = substr(line, RLENGTH + 1)
+    if (pfx !~ /^[0-9]+[-:]$/) pfx = genmask(pfx)   # a long prefix may have swallowed text: it is masked too (path pieces stay readable)
+  }
   keep = 0
   # a checksum line that THIS script printed itself (R00) stays readable: it must equal, character for character, a line
   # the script wrote to the file OKF. A line that only LOOKS like a checksum line (a hex string and two spaces, from a
@@ -865,6 +874,7 @@ self_test() {
     self_test_meta
   fi
   printf 'SELF-TEST: passed=%s failed=%s (the made-up input and output files were deleted)\n' "$pass" "$fail"
+  [ -n "${LEAD_REPIN_TEST_LATE_FAIL:-}" ] && fail=$((fail + 1))   # test hook: a failure that only the return value shows
   [ "$fail" -eq 0 ] && [ "$st_leak" -eq 0 ]
 }
 # self_test_meta: proves that the self-test, the abort and the readiness check can themselves FAIL. It runs this
@@ -928,11 +938,16 @@ st_verdict() {
   grep -a -q '^SELF-TEST: passed=[1-9][0-9]* failed=0 ' "$1" || return 1
   return 0
 }
+# st_recount FILE RC: the same judgement again, by a different route (awk counts FAIL lines and reads the tally)
+st_recount() {
+  [ "$2" -eq 0 ] || return 1
+  awk '/^FAIL/ { f++ } /^SELF-TEST: passed=[1-9][0-9]* failed=0 / { ok++ } END { exit (f == 0 && ok == 1) ? 0 : 1 }' "$1"
+}
 run_canary() {
   self_test 1 > "$WORK/canary.out" 2>&1 < /dev/null &
   BGPID=$!; wait "$BGPID"; canary_rc=$?; BGPID=
   CANARY=$(cat "$WORK/canary.out" 2>/dev/null)
-  st_verdict "$WORK/canary.out" "$canary_rc"; canary_rc=$?
+  if st_verdict "$WORK/canary.out" "$canary_rc" && st_recount "$WORK/canary.out" "$canary_rc"; then canary_rc=0; else canary_rc=1; fi
   rm -f "$WORK/canary.out"
   return "$canary_rc"
 }
@@ -952,7 +967,8 @@ case ${1:-} in
     self_test 0 > "$WORK/st-full.out" 2>&1 < /dev/null &
     BGPID=$!; wait "$BGPID"; strc=$?; BGPID=
     cat "$WORK/st-full.out"
-    if st_verdict "$WORK/st-full.out" "$strc"; then exit 0; fi
+    # two independent judgements: the function st_verdict AND a recount written out here (a damaged function cannot pass alone)
+    if st_verdict "$WORK/st-full.out" "$strc" && st_recount "$WORK/st-full.out" "$strc"; then exit 0; fi
     exit 1 ;;
 esac
 
@@ -1232,7 +1248,8 @@ main() {
     printf 'not a git work tree (or git missing): cannot print a commit id here\n'
   fi
   for f in "$TAKE_PY" "$CRM_PY" "$DRIVE_PY" "$N8N_PY"; do
-    if [ -f "$f" ]; then
+    if [ -f "$f" ] && [ ! -r "$f" ]; then bu=$((bu + 1)); files_unreadable=$((files_unreadable + 1)); printf 'UNREADABLE (checksum not made, NOT zero): %s\n' "$f"
+    elif [ -f "$f" ]; then
       bf=$((bf + 1))
       if command -v sha256sum >/dev/null 2>&1; then sha_l=$(sha256sum -- "$f" 2>&1); else sha_l=$(shasum -a 256 -- "$f" 2>&1); fi
       printf '%s\n' "$sha_l" >> "$SHAOK"; printf '%s\n' "$sha_l"
