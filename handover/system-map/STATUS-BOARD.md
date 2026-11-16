@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC 2026-11-16T14:05:48Z
-PUSHED_UTC 2026-11-16T14:05:48Z
+UPDATED_UTC: 2026-11-16T14:07:46Z
+PUSHED_UTC: 2026-11-16T14:07:46Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
@@ -45,16 +45,18 @@ INTERRUPTED: none
 ## AGENTS
 | agent id | purpose | started (UTC) | expected end | state | what it produced so far |
 |---|---|---|---|---|---|
-| a77af774a28353d7e | readiness read rehearsal-limits-draft | ~14:16 | ~14:26 | running | nothing yet |
-| a44c9594c43198b91 | readiness read t19-and-stored-data-steps | ~14:16 | ~14:26 | running | nothing yet |
-| a4b76c1cc1ec5dcac | readiness read row1-builder-brief | ~14:16 | ~14:26 | running | nothing yet |
-| acdca44268e11dab9 | zoom-out read open-items-table | ~14:16 | ~14:26 | running | nothing yet |
-| af48a026c161a7a92 | zoom-out read not-checked-r2 | ~14:16 | ~14:26 | running | nothing yet |
-| ae1e1ba19cfe79b66 | style read banned-claims-clean | ~14:16 | ~14:26 | running | nothing yet |
-| af3397819dca38c4a | style read BRIEF-EVIDENCE-1 | ~14:16 | ~14:26 | running | nothing yet |
-| a05822b8d982df9a5 | style read owner-timeline-draft | ~14:16 | ~14:26 | running | nothing yet |
+| a7bbadc3c462b4bf5 | structural read OWNER-VIEW | about 2026-11-16T14:07Z | +5 min | running | nothing yet |
+| aab96214a95405f9f | zoom-out read TAKE-BLOCKERS | about 2026-11-16T14:07Z | +5 min | running | nothing yet |
+| abccee6c173e680b5 | readiness read decision-list | about 2026-11-16T14:07Z | +5 min | running | nothing yet |
+| a21414915018cbcaa | style read GLOSSARY | about 2026-11-16T14:07Z | +5 min | running | nothing yet |
+| a99e86e330bbffdf0 | readiness read M17 | about 2026-11-16T14:07Z | +5 min | running | nothing yet |
+| adc6c5ca4bced0e4e | zoom-out read STATUS-BOARD | about 2026-11-16T14:07Z | +5 min | running | nothing yet |
+| a140d639ac33dbe82 | readiness read audit checklist | about 2026-11-16T14:07Z | +5 min | running | nothing yet |
+| a9d3babd04ee1526a | comprehension read LEAD-NOTICE | about 2026-11-16T14:07Z | +5 min | running | nothing yet |
 
-CAPACITY: 8 running. Next 5: fix BRIEF-EVIDENCE-1/2; banned-claims stub; open-items-table How-to-read; evidence file headers; GLOSSARY shrink. Every work/ file has had a cold read; the open rows are my own page fixes.
+Reason for readers not fixers: reads are second lenses on pages not yet second-read; fixes to my pages follow after digests (digested through 1404).
+NEXT 5: fix open-items-table, not-checked-r2, owner-timeline-draft, BRIEF-EVIDENCE-1, GLOSSARY.
+CAPACITY: 8 running.
 
 Words: UTC = world time; IST = UTC plus 5 h 30 min. Cold read = an agent reads one page with no background and lists what it cannot follow. Held = a finding on a page that belongs to the lead, which I do not edit.
 
