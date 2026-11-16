@@ -1,15 +1,15 @@
-UPDATED_UTC: 2026-11-16T08:28:47Z
+UPDATED_UTC: 2026-11-16T08:30:43Z
 SESSION: core-hardening
 ORDER: 007 + 009 + 008 board
 STATE: WORKING
 BOOT_ID: 190f8fa6
 ITEMS_TOTAL: 7
 ITEMS_OPEN: 1
-PERCENT: 85
+PERCENT: 92
 AGENTS_RUNNING: 1
 INTERRUPTED: none (first board; no previous BOOT_ID to compare, so a restart before now cannot be seen)
-NEXT: wait for codebase-details reviewer, egm-resolve, fix, FINAL (item 6 deferred by lead)
-PUSHED_UTC: 2026-11-16T08:28:47Z
+NEXT: wait for round-2 reviewer (a26d006cae6a913b1), fix Blocker/Major only, then FINAL (item 6 deferred by lead)
+PUSHED_UTC: 2026-11-16T08:30:43Z
 
 ## ITEMS (ORDER 007)
 | # | item | state | % | evidence or output file | note |
@@ -20,12 +20,12 @@ PUSHED_UTC: 2026-11-16T08:28:47Z
 | 4 | job-to-single-owner table | done | 100 | item4-job-owner-table.md | |
 | 5 | right-size fix plan | done (unreviewed) | 85 | AUDIT-FINDINGS.md section 4 v5 | cites re-opened for the 4 core fixes only |
 | 6 | task B r7u/r7v hygiene | deferred by lead (ORDER 009; not open) | 0 | ORDERS.md ORDER 009 | cancelled for now by the lead |
-| 7 | fresh two-reviewer pass, resolve, FINAL | running | 50 | zoom-out report applied in AUDIT-FINDINGS.md; codebase-details pending | round 1 of 2 |
+| 7 | fresh two-reviewer pass, resolve, FINAL | running | 80 | result-resolve-3-item7.md (round 1 resolved, 21 fixes); round 2 reviewer running | round 2 of 2 |
 
 ## AGENTS (2 running; closed since the last board)
 | id | role | model | what it does | started UTC | expected end UTC | % | state | last output |
 |---|---|---|---|---|---|---|---|---|
-| a39b636574d6627d9 | reviewer codebase-details | sonnet | checks cites and facts of items 1-5 | 2026-11-16T08:26:07Z | 08:38Z | 0 | running | none yet |
+| a39b636574d6627d9 | reviewer codebase-details | sonnet | round 1 cites and facts | 08:26Z | done | 100 | done (reported, closed) | item7-review-round1.md |
 | a9e282986228ea115 | reviewer zoom-out | sonnet (done, reported, closed) | checks size, ratings, completeness | 2026-11-16T08:26:07Z | 08:38Z | 0 | running | none yet |
 | a2227583ca61bc58d | redact reader 2 | sonnet | lines 255-484 | earlier | done | 100 | done | item3-redact/reader-2-*.md |
 | a681f5d0c896e7103 | redact reader 3 | sonnet | lines 480-700 | earlier | done | 100 | done | item3-redact/reader-3-*.md |
