@@ -1,0 +1,2 @@
+# Naive-reader round 2 of OWNER-VIEW (condensed; 28 findings, 6 Blockers claimed)
+Applied this round (cap reached; Blockers and Majors only): deadline conflict (single decide-by Tue 17 Nov 12:29 UTC / 17:59 IST), Docker cross-reference, drift item range, counts. Not applied (open, cap): glossary placement at the end (line 4), line 30 run-on split, steps 16/17 where the 6-digit number comes from, row order 19 before 17, trial length 3.5-4.5 h versus 2 h 51 min wording, README now replaced by START HERE. Raw report held in the session transcript.
