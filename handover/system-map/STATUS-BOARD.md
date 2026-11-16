@@ -1,13 +1,13 @@
 # STATUS BOARD system-map
-UPDATED_UTC: 2026-11-16T11:09:20Z
+UPDATED_UTC: 2026-11-16T11:12:00Z
 SESSION: system-map
 ORDER: 017-025; lead ANSWER 10:23Z item 8 (pause stays) read
 STATE: WORKING
 BOOT_ID: 6bc0bf7e
 ITEMS_TOTAL: 20
-ITEMS_OPEN: 12 (rows below 100 percent or blocked in the table, counted by an agent; M3, M4 and M6 queue tags do not match the board, to reconcile)
-PERCENT: 85
-AGENTS_RUNNING: 4 running now (decision-code lookup, OWNER-VIEW rows 1-3 vs v5, ONE-PLACE-TABLE head read, tools check); refilling to 6 or more this turn; digested through batch 111
+ITEMS_OPEN: 14 (rows below 100 percent in the table; counted by an agent, it found 12 was wrong). PERCENT mean of the table is 83.6, not 85. M3, M4, M6 queue tags still contradict QUEUE.md (digest 117), lead to decide
+PERCENT: 83.6 (mean of the table, counted by an agent; was 85)
+AGENTS_RUNNING: 6 started this turn (SWEEP.md read, DECISION-one-store read, open-items-table read, FINAL-CROSSCHECK rows 1-14 read, banned-claims lines 1-14 read, DECISIONS vs LEAD-PAGE number check); digested through batch 119
 INTERRUPTED: none
 NEXT: collect and digest the 6 new hand-backs (stranger reads of run-day card steps 15-28, OWNER-VIEW rows 4-7, TAKE-BLOCKERS rows 6-9, LEAD-PAGE, README; cite check of batches 91-98); send the lead the decision list (work/open-items-table.md, digest batches 26 and 65-98); find the arguments for tools/check_citations.py
 CAPACITY: nproc 4, load 0.53 0.31 0.21, RAM 888/16087 MB used, disk / 42% used, 23G free (tmp same disk), top3: work 2.1MB, flowcheck 0.5MB, reviews-of-core-hardening 0.4MB
