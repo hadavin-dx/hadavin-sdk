@@ -30,3 +30,76 @@ Status: DRAFT, unverified. Nothing was run. Sources: work/timing-check-a.md (wri
 12. (g) NO HEAVY RUN ON THE TAKE LAPTOP IN THE WINDOW. Where: demo/speed/RUNBOOK-SPEED-3.md:75 (windows of about 71 and about 81 minutes, 152 minutes in total, each longer than 49); demo/speed/RUNBOOK-INPUTS.md:27-32 (one full serial test run is 15 to 17 minutes); RUNBOOK-SPEED-3.md:46,49-50 (the speed windows use heavy_slot on the laptop). The take run uses the owner's laptop (v5:62, 108). Nothing in v5 forbids a heavy job there (timing-check-a.md rows 22-26, 32). Who must answer: studio lead. PROPOSAL: add one line to v5 and to RUNBOOK-SPEED-3.md: "From 17:00 UTC = 22:30 IST on the take day until the clean-up is done, no speed run, mutation run, full test run or other heavy job on the take laptop." The cloud container may still run them. If the lead agrees, the lead session also states it in the lead's own run plan.
 13. (h) THE v4.2 RUNBOOK AND LANE D SOURCES. Correction to timing-check-a.md point 1, which says v4.2 is not in the checkout: a file with that title exists at handover/system-map/inputs/lead-reviews/LEAD-RUNBOOK-TAKE-DAY-v4.2.md (628 lines; I found it, I did not read it whole). Timing checker A did not read it, so no finding above is checked against v4.2. A search of v4.2 for the 14 minute and 49 minute figures and 18:14 found none; it names the stop time 18:29 / 23:59 at line 223 and a chain that "must end before 18:29Z with margin" at line 265 (G7), and says one repeat of T-06 to T-10 takes about 168 minutes (line 524). Its timing sentences still need the same check. The sources it cites for its own changes, `wp6\fix-p13\review-fix-13m\LANE-D-REPORT-SUMMARY.md` (lane D report, review round 31) and the two memory notes RESMOKE and NOCAP (named in v4.2, line 5), are not in this checkout (find found no LANE-D-REPORT file; the paths are Windows paths of the studio laptop). Who must answer: studio lead, to supply those files or confirm they may be ignored; a separate checker for v4.2. PROPOSAL: run a second timing check on v4.2 (lines 209-265, 505-530 first) against the 49-minute window; until then treat the v5 findings above as unchecked for v4.2, and tell no owner a v4.2 timing sentence is correct.
 Not checked: what the 49 minutes contain, the source of the 14 minutes, any click path or duration on the owner's laptop, and whether decisions A4 and A13 have changed since Mon 16 Nov 14:25 UTC.
+
+## Open questions from the v4.2 timing check part 2, the lane D patch lists and the decision list (added 2026-11-16, NOTICE-14)
+Status: DRAFT, unverified. Nothing was run. Sources: work/timing-check-v42-part2.md (rows R-xx), work/RUNBOOK-V4.3-PATCH-laneD-28-32.md and -33-36.md, work/critical-path-r2.md section 0e, work/decision-list-for-lead.md. Items 14 to 26 are questions only; no one in the system-map session can answer them. Items 14 to 18 narrow items 6 to 9 above; answer 6 first, because 6 decides what 15 asks. Reply in work/LEAD-ANSWERS.md, one line per item: `N | answer | date` (date in UTC). Times are UTC / IST (IST = UTC + 5:30). Short meanings: "the program" = scripts/run_real_check_n8n.py, the take program, whose source is not in this checkout; "v4.2" = inputs/lead-reviews/LEAD-RUNBOOK-TAKE-DAY-v4.2.md; "lane D" = the code-review notes 13o, 13p, 13q and 13r in inputs/lead-reviews/; "core-hardening" = the separate Claude session that owns the program and the take-day sheet v5.
+
+14. Does stage.env set the program's start refusal to 49 minutes or to 14 minutes?
+   Who can answer: core-hardening (it can read the setting; the program is not in this checkout), then the studio lead confirms.
+   What it blocks: the wording of v4.2 line 450 ("window too close", row R-36) and of v5 lines 17 and 201 (item 7 above); until the number is read, no sheet may state a latest start as fact (17:40 UTC / 23:10 IST for 49, or 18:15 UTC / 23:45 IST for 14).
+   Reply: `14 | 49 | date`, `14 | 14 | date` or `14 | other: <number> | date`.
+
+15. Which of these parts are inside the 49 minutes? (This is the detail behind item 6.) Answer yes or no for each: (a) the owner typing `y`, the confirmation line and `end`; (b) the scene 4 stop and restart; (c) the two mailbox waits (at least 170 s each, so at least 340 s; MAIL_WAIT_SECONDS 150 plus MAIL_SETTLE_SECONDS 20); (d) the film pause (no limit, see item 8); (e) the 120 s wait after the first Ctrl-C; (f) the counts proof after the take; (g) the program's own clean-up.
+   Who can answer: studio lead (its own order, ORDERS.md line 183).
+   What it blocks: rows R-26, R-33, R-34, R-35, R-49 of timing-check-v42-part2.md, and the proposed margin for a slow answer (R-35: 10 minutes, so 17:30 UTC / 23:00 IST, not measured).
+   Reply: `15 | a yes, b yes, c no, ... | date` (all seven letters).
+
+16. Which cut-off governs a slipped take on Mon 23 Nov: a start by 12:00 UTC (17:30 IST) or a start by 17:40 UTC (23:10 IST)?
+   Where: v4.2 lines 222, 482 and 526 say 12:00 UTC "until"; the hard window allows a start until 17:40 UTC; the chain in v4.2 line 265 (G7) ends at 12:30 UTC, after 12:00. 12:00 gives away 5 h 40 min of room.
+   Who can answer: studio lead; the owner decides whether the planning limit moves (R-30).
+   What it blocks: v4.2 lines 482, 524 and 526 (rows R-30, R-46, R-48) and the section 3 stop-time row (line 223, which has no row for the latest start).
+   Reply: `16 | 12:00 stays | date` or `16 | 17:40 governs | date` or `16 | other: <time> | date`.
+
+17. What does "the same day" mean for the owner clean-up and the key revocation after a late Monday take?
+   Where: v4.2 lines 510, 514, 595 and 596 (rows R-42, R-60). A take that starts at 17:40 UTC ends at 18:29 UTC = 23:59 IST; the lead's watch ends at 18:49 UTC = 00:19 IST on Tue 24 Nov, so "the same day" cannot be met in IST.
+   Who can answer: studio lead, with the owner for the revocation time (the model key must stay valid until the clean-up).
+   What it blocks: the wording of the clean-up message (U-19) and steps O6 and O7.
+   Reply: `17 | next morning | date` or `17 | same day, time <UTC> | date`.
+
+18. If the scene 4 stop and restart can take up to 248 s but the limit LIMIT_S is 180 s, which is it: raise the limit, cut scene 4, or leave it for the rehearsal to measure?
+   Where: v4.2 line 473 (stop 53 s, plus readiness loop up to 120 s, plus lease 45 s, plus check 30 s = 248 s; the lease may overlap the stop, so the real figure may be lower; not measured).
+   Who can answer: studio lead (G6 rule 2 says scene 4 is cut when over the limit).
+   What it blocks: the number written in <TAKE_NOTES>, the 49-minute rebuild (R-27) and the scene 4 filming plan.
+   Reply: `18 | limit 180 stays, rehearsal measures | date` or `18 | limit <seconds> | date` or `18 | cut scene 4 | date`.
+
+19. Lane D X1 (13p): does the owner grant an exemption so that the stand-in SELF_TEST_CAP_TOTAL_USD may stay as a literal in code?
+   Who can answer: the owner (money rule: no cap literal in code), asked through the studio lead.
+   What it blocks: v4.2 line 233 (patch row B1): without an answer the sentence "no cap or date literal in code" cannot say whether an exemption exists.
+   Reply: `19 | granted | date` or `19 | refused | date`.
+
+20. Lane D X3 (13p): keep both money refusals, A (the code cap is above the credit total typed by the person) and B (the cap minus the ledger total is above the credits left), or drop A and keep B? Lane D says they are the same check twice.
+   Who can answer: studio lead (design choice; the money path is uncapped for review).
+   What it blocks: patch row B1 (which refusal texts go into v4.2 section 4).
+   Reply: `20 | keep both | date` or `20 | drop A | date`.
+
+21. Lane D X7 (13p): is the build_notice path fixed so that a too-large money figure gives "refused:" and exit 2, or does it still give a traceback with exit 1?
+   Who can answer: core-hardening (the code is not in this checkout).
+   What it blocks: patch rows B5 and B6: the runbook must not write "exit 2" for refusal C until this is confirmed.
+   Reply: `21 | fixed, exit 2 | date` or `21 | not fixed, exit 1 | date`.
+
+22. The exit-3 header in v4.2 line 159 reads "Exit 3 (still held or unreadable)". Lane D (13r) says the script says "cannot see". Which words go in the header?
+   Who can answer: studio lead (lane D gives no new text; patch E row 3).
+   What it blocks: patch E rows 1 to 5 (the whole exit-3 bullet).
+   Reply: `22 | <header text> | date`.
+
+23. Does the `lslocks` hint stay in the held-lock refusal? Lane D 13r X5 says it clashes with the rule "record counts only, no pid list"; 13r item 6 still prints it.
+   Who can answer: studio lead; core-hardening says what the code prints.
+   What it blocks: patch E rows 21 and 22 (v4.2 lines 376 and 380); the string must not change until decided.
+   Reply: `23 | keep lslocks | date` or `23 | drop lslocks | date`.
+
+24. Do the "ROUND NN PENDING" labels stay in v4.2 until the code of that round is final, or are the lane D wordings applied now and the labels removed (patch D rows A4c, A5, A7; patch E rows 5, 10 to 14)? Related open points: whether the config-phase `<withheld` wording of 13o replaces the v4.2 sentence (A4c); whether the refusal for a close window prints "about 15 minutes" or the computed minutes (A5, C3); whether the person-C line is set on the wait-limit path (A7, X5).
+   Who can answer: studio lead (the take-day text is the lead's).
+   What it blocks: the whole v4.3 patch; nothing may be applied until this is answered.
+   Reply: `24 | keep labels | date` or `24 | apply and remove | date`.
+
+25. Which schedule is current: the one in v4.2 section 3 (line 202 on: re-pin done Tue 17 Nov 08:00 UTC, GO or NO-GO Tue 17 Nov 14:00 UTC, practice run Wed 18 Nov) or the chain in work/critical-path-r2.md (latest start of the flow build Mon 23 Nov 03:40 UTC, take start 17:40 UTC)? Section 0e of critical-path-r2.md says the page was built without reading v4.2 and the two are not compared; every time on that page is unverified against v4.2.
+   Who can answer: studio lead.
+   What it blocks: which of the two pages may be given to the owner, and the 3-hour notice time in item 10.
+   Reply: `25 | v4.2 | date`, `25 | critical-path-r2 | date` or `25 | other: <text> | date`.
+
+26. Two files named DECISION-one-store.md exist (system-map/ and system-map/inputs/) and differ. Which copy is current?
+   Who can answer: studio lead.
+   What it blocks: rows D-02, D-07, D-08 and D-09 of work/decision-list-for-lead.md (line numbers cite the inputs/ copy), and any fix of line 14 of that file.
+   Reply: `26 | inputs | date` or `26 | system-map | date`.
+
+Not checked for items 14 to 26: whether items 6 to 13 were already answered in work/LEAD-ANSWERS.md (I did not open that file); the v4.2 runbook and the lane D files in inputs/lead-reviews/ beyond what the three patch and timing notes quote; the program source (not in this checkout); and whether the wording of the lane D marks matches the code.

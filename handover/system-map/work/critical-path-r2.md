@@ -2,6 +2,13 @@ Status: DRAFT, unverified
 
 # CRITICAL PATH r2: working backward from the take on Mon 23 Nov 2026 (written Mon 16 Nov 2026; replaces work/critical-path-r1.md, which was built on a missed 14:00 start)
 
+## Summary (3 lines)
+- Question: what is the latest start of each step so that the take can start by 17:40 UTC / 23:10 IST on Mon 23 Nov 2026?
+- Answer: step 4 (build and import the flows) must start by Mon 23 Nov 03:40 UTC / 09:10 IST; every later step is in the chain table in section 2. Caveat: every duration is an estimate (most come from an earlier page, r1), and the 49-minute take window is the lead session's order, with its contents unconfirmed.
+- CONFLICT: section 3 of the v4.2 runbook (inputs/lead-reviews/LEAD-RUNBOOK-TAKE-DAY-v4.2.md, line 202) sets different dates: re-pin by Tue 17 Nov 08:00 UTC, GO / NO-GO Tue 17 Nov 14:00 UTC, practice run Wed 18 Nov. Until the two are compared, do not use the dates on this page.
+
+(Words, sources and the recommendation on the 3-hour notice are in section 0, after section 7. Read them if a label below is unclear.)
+
 Times are UTC / IST (IST = UTC + 5:30). Every deadline below is a PROPOSAL unless a source file states it. "NOT STATED" means no input file gives the number. Nothing here was run; I read only the five input files named in the brief.
 
 ## 1. Fixed ends (what the lead ordered, and what the files say)
@@ -14,39 +21,42 @@ Times are UTC / IST (IST = UTC + 5:30). Every deadline below is a PROPOSAL unles
 
 Conflict to settle: owner-timeline-draft.md:41 gives a latest start of 18:14:40 UTC / 23:44:40 IST. That is a window of only 14 min 20 s (18:29:00 - 18:14:40). The lead's 49-minute window gives 17:40. The draft's start, notice (:42) and A13 times are all 34 min 40 s too late if the lead's window is right. I did not edit the draft (inputs are read-only for me).
 
-## 2. Chain table, working backward (A13 = NO, no rerun; base case)
+## 2. Chain table, working backward (A13 = NO, no rerun; base case; A13 is explained in section 0a)
 The "3-hour notice before the start" is anchored the way owner-timeline-draft.md:16 and :42 say (3 hours before the START). critical-path-r1.md:4 and :20 instead counted it back from the owner's setup, which it assumed starts 30 minutes before the take (ASSUMED, no source). The two readings differ by 30 minutes; the stricter reading is in section 5.
+
+How to read this table: it runs from step 12 (the end) down to step 1 (the start), so read it from the bottom up to follow time order. In the "latest start" column most cells are a latest START time; step 12 shows an END time, and several cells say NOT STATED because no source gives a time.
 
 Arithmetic: each row's latest start = the next row's latest start - this row's duration. All on Mon 23 Nov except where marked.
 
 | # | step | owner (role) | stated duration (source) | latest start UTC / IST | depends on |
 |---|---|---|---|---|---|
-| 12 | Take ends (stop time) | owner + laptop lead | window 49 min (lead order; what fills it NOT STATED) | end 18:29 / 23:59 | 11 |
+| 12 | Take ends (stop time) | owner | window 49 min (lead order; what fills it NOT STATED) | end 18:29 / 23:59 | 11 |
 | 11 | Take: rows 5-8 (the program runs; owner types `y` and the challenge; up to 3 model calls; film pause; `end`) | owner, studio lead | 49 min worst case (lead order). Inside it only one limit is written: row 7 pause alarm 10 min (owner-timeline-draft.md:40, PROPOSAL). The rest NOT STATED | 17:40 / 23:10 (17:40 + 0:49 = 18:29) | 10 |
 | 10 | Owner setup (laptop plugged in, sleep Never, lid action Do nothing) and owner "yes" (row 4), studio lead numbers message (row 3) | owner, studio lead | NOT STATED. r1 assumed 30 min (r1:4, ASSUMED) | NOT STATED; must fit between 9 and 17:40 | 9 |
 | 9 | 3-hour wait after the owner notice | owner (waits) | 3 h (owner-timeline-draft.md:16 and :42: "at least 3 hours") | 14:40 / 20:10 (17:40 - 3:00) | 8 |
 | 8 | Owner notice sent (row 1) | studio lead | send time NOT STATED (a message) | send by 14:40 / 20:10; the cell text is still TBD (owner-timeline-draft.md:16) | 7 |
-| 7 | Review of the rehearsal results (r1 row 2c: a person reads them) | person NOT NAMED (r1 condition 2) | 2 h (r1:20, an r1 estimate with no cited source) | 12:40 / 18:10 (14:40 - 2:00) | 6 |
-| 6 | Rehearsal on the laptop with stand-in programs (r1 row 2b; decision 12: "first laptop rehearsal of the changed flows") | laptop lead | 1.5 h (r1:20, same limit); decision 12 gives no duration | 11:10 / 16:40 (12:40 - 1:30) | 5 |
+| 7 | Review of the rehearsal results (r1 row 2c: a person reads them) | UNASSIGNED (r1 condition 2) | 2 h (r1:20, an r1 estimate with no cited source) | 12:40 / 18:10 (14:40 - 2:00) | 6 |
+| 6 | Rehearsal on the laptop with stand-in programs (r1 row 2b; decision 12: "first laptop rehearsal of the changed flows") | UNASSIGNED | 1.5 h (r1:20, same limit); decision 12 gives no duration | 11:10 / 16:40 (12:40 - 1:30) | 5 |
 | 5 | Loopback re-smoke (r1 row 2a = plan-wp6-resmoke-v5 = open-items "run (a)") | studio lead | Plan: 171 min = 2 h 51 min clean, "a floor, not a quote" (plan:5, :443); quote 3.5 to 4.5 h realistic (plan:5, :22, :445). r1 used 5 h (r1:20). Base uses 5 h | 06:10 / 11:40 (11:10 - 5:00) | 4 |
-| 4 | Build fill_flows copy and import the flows into n8n (r1 row 1) | builder NOT NAMED | 2.5 h (r1:20, an r1 estimate). open-items-table.md:28 says fill_flows.py is "not built"; the plan (:4, :223) says it read `fill_flows.py` in the glue folder. I could not check the disk | 03:40 / 09:10 (06:10 - 2:30) | 1, 2, 3 |
+| 4 | Build fill_flows copy and import the flows into n8n (r1 row 1) | UNASSIGNED | 2.5 h (r1:20, an r1 estimate). open-items-table.md:28 says fill_flows.py is "not built"; the plan (:4, :223) says it read `fill_flows.py` in the glue folder. I could not check the disk | 03:40 / 09:10 (06:10 - 2:30) | 1, 2, 3 |
 | 3 | Decision A4 (does run (a) start) answered yes | studio lead | answer UNKNOWN; due Mon 16 Nov 13:00 / 18:30 and already passed (open-items-table.md:34) | NOT STATED; before step 5 | none |
-| 2 | scripts/n8n_api.py supplied; core-hardening edits finished | lead session / core-hardening | NOT STATED (r1:7-12 conditions 4 and 6) | NOT STATED; before step 4 and step 5 | none |
-| 1 | A builder named for step 4 | studio head, else the owner | NOT STATED. Proposed: if unnamed by Mon 16 Nov 18:00 / 23:30 the owner is asked and answers by Tue 17 Nov 01:30 / 07:00 (open-items-table.md:14, PROPOSAL) | Tue 17 Nov 03:30 / 09:00 (open-items-table.md:28, PROPOSAL) | none |
+| 2 | scripts/n8n_api.py supplied; core-hardening edits finished | UNASSIGNED | NOT STATED (r1:7-12 conditions 4 and 6) | NOT STATED; before step 4 and step 5 | none |
+| 1 | A builder named for step 4 | UNASSIGNED (proposed: the owner is asked if no one is named) | NOT STATED. Proposed: if unnamed by Mon 16 Nov 18:00 / 23:30 the owner is asked and answers by Tue 17 Nov 01:30 / 07:00 (open-items-table.md:14, PROPOSAL) | Tue 17 Nov 03:30 / 09:00 (open-items-table.md:28, PROPOSAL) | none |
 
 Backward totals: from the latest start of step 4 (Mon 23 Nov 03:40 / 09:10) to the take start (17:40 / 23:10) is 14 h (2:30 + 5:00 + 1:30 + 2:00 + 3:00 = 14:00). Check: 03:40 + 14:00 = 17:40.
 
 ### Same chain with A13 = YES (4-hour rerun margin kept, one rerun fits)
+Which row is which: the row "Take, FIRST run" is the first take; the last row, "RERUN", is the second take that is used only if the first fails. Everything between them is preparation done before the first take.
 Rule used: owner-timeline-draft.md:42 shows A13 = yes moves the last start 4 h earlier (18:14:40 to 14:14:40) and the notice 4 h earlier (15:14:40 to 11:14:40). I apply the same 4 h to the lead's 17:40.
 | step | latest start UTC / IST |
 |---|---|
-| Take (first run) start | 13:40 / 19:10 (17:40 - 4:00) |
+| Take, FIRST run: start | 13:40 / 19:10 (17:40 - 4:00) |
 | Owner notice sent | 10:40 / 16:10 (13:40 - 3:00) |
 | Review of rehearsal results | 08:40 / 14:10 |
 | Rehearsal | 07:10 / 12:40 |
 | Loopback re-smoke | 02:10 / 07:40 |
 | Build and import | Sun 22 Nov 23:40 / Mon 23 Nov 05:10 |
-| Rerun (a second run, if the first fails) | last start 17:40 / 23:10; must end by 18:29 / 23:59 |
+| RERUN (second take, only if the first take fails): start | last start 17:40 / 23:10; must end by 18:29 / 23:59 |
 
 ## 3. Margin
 Margin here = calendar time between the earliest the chain can start and the latest start in section 2. Last known state: row 1 had not started at Mon 16 Nov 14:25 UTC (r1:21). I use that as "now" because I have no later clock reading.
@@ -99,7 +109,50 @@ Span from the worst-case end to the post: Mon 23 Nov 18:29 to Wed 25 Nov 15:00 =
 Backward arithmetic is impossible past 15:00 on Wed 25 Nov because no duration is stated; the only number is the 44 h 31 min span. If the rerun is used, the rerun's last end is still 18:29 on Mon 23 Nov, so the span is the same.
 
 ## 7. What I did not check
-- I did not open any file outside the five inputs; I did not look for fill_flows.py, scripts/n8n_api.py, OWNER-CLEANUP-CARD.md, decision-list-for-lead.md or TAKE-BLOCKERS.md on disk.
+- In the first draft I opened only the five input files. For the wording fix (section 0) I also read parts of work/GLOSSARY.md, work/decision-list-for-lead.md, work/open-items-table.md, work/owner-timeline-draft.md and the first rows of section 3 of the v4.2 runbook. I did not look for fill_flows.py, scripts/n8n_api.py, OWNER-CLEANUP-CARD.md, decision-list-for-lead.md or TAKE-BLOCKERS.md on disk.
 - I do not know the current time or whether A4, the builder, or any condition has changed since Mon 16 Nov 14:25 UTC.
-- The role names in the "owner" column ("laptop lead", "lead session") are my mapping of the roles named in the brief to the steps; the inputs use only "studio lead", "studio head", "owner", "core-hardening" (r1:15 defines them).
+- Role names: the "owner" column now uses only "owner" and "studio lead" (named in the inputs) or UNASSIGNED. Whether "laptop lead", "studio head" or "core-hardening" is the same person as any of them is not confirmed, so I did not map them.
 - No number was measured; the 14 h chain rests on r1's own estimates (r1:20), the plan's estimates (plan:5, :443, :445) and the lead's order.
+
+## 0. Words and sources (moved after the answer; added in the wording fix of 16 Nov 2026)
+Status of this section: DRAFT. Each meaning below is taken only from the file named; "not recorded" means no file I read states it.
+
+### 0a. Glossary
+| word | meaning | where it comes from |
+|---|---|---|
+| take | the one filmed run of the lead-intake demo (a made-up sales lead goes into n8n, is stored once, creates one HubSpot contact and sends one mail) on made-up data. Its one claim: a lead sent twice with the same id is processed once. In this page its window ends Mon 23 Nov 18:29 UTC / 23:59 IST. Preparation and rehearsal are not a take | work/GLOSSARY.md lines 4 and 61; stop time: section 1 below |
+| n8n | the tool that runs the demo steps | work/GLOSSARY.md line 62 |
+| A13 | the question: decide whether to keep a 4-hour spare for one rerun of the take. The answer is unknown; the base case assumes no. The question is written in work/owner-timeline-draft.md lines 7 and 48, which say it is on work/decision-list-for-lead.md; that decision list, as I read it (32 lines), has no row named A13 (it lists drift rows D-01 to D-10). | work/owner-timeline-draft.md |
+| A4 | the question "does run (a) start today", item A4 of work/decision-list-for-lead.md according to work/open-items-table.md lines 23 and 51. The decision list as I read it has no row named A4. Due Mon 16 Nov 13:00 UTC / 18:30 IST, passed, answer unknown (open-items-table.md line 51). "Run (a)" is the loopback re-smoke (next row), as section 2 step 5 states | work/open-items-table.md |
+| row N | row N of work/owner-timeline-draft.md (the owner's order of messages), unless the text says "step N" or "chain table" (this page's table in section 2) or "r1 row" (work/critical-path-r1.md) | work/GLOSSARY.md line 64 for the general rule; my reading for this page |
+| owner notice | the message from the studio lead to the owner giving the run date and start time, sent at least 3 hours before the start (row 1 of work/owner-timeline-draft.md). The owner then plugs the laptop in, sets sleep to Never and lid action to Do nothing | work/owner-timeline-draft.md row 1 |
+| loopback re-smoke | a manual one-off re-run of the demo flows in n8n 2.46.6 on the laptop's own loopback address (no real mailbox, HubSpot, Gmail, model call or DNS), made-up data, US$0, re-running only what the first smoke run could not prove. The plan's own estimate is 171 min | inputs/plan-wp6-resmoke-v5.md lines 1 and 5 |
+| fill_flows.py | a script that puts the laptop's settings into the n8n flows (open-items-table.md line 45). Whether it exists is UNVERIFIED: open-items-table.md says "not built", the plan (lines 4 and 223) says it read one, and I did not look on disk | work/open-items-table.md; inputs/plan-wp6-resmoke-v5.md |
+| HEAD_PIN | the exact code version (commit eec6ba4 on branch take/nlite-int-r3) the re-smoke plan tests. It is marked PROVISIONAL; only the lead session re-pins it once the final round of scripts exists | inputs/plan-wp6-resmoke-v5.md lines 2 and 3 |
+| lead session | the Claude session that gives orders to the system-map session (me). Old pages say "the lead"; read that as lead session. It is not the studio lead | work/GLOSSARY.md lines 2 and 22 |
+| studio lead | the Claude session that does the technical steps and is the only one that messages the owner | work/GLOSSARY.md line 23 |
+| laptop lead | a label used on SWEEP.md and ONE-PLACE-TABLE.md for the one who gave the written work order. It may match "lead session", but no file says so; its meaning is not confirmed. This page no longer uses it: where the mapping is unconfirmed the chain table says UNASSIGNED | work/GLOSSARY.md line 71 |
+| owner | the human at the laptop | work/GLOSSARY.md line 2 |
+
+### 0b. Sources (full paths; all under /home/user/hadavin-sdk/handover/system-map/)
+| name used on this page | full path | purpose in one line |
+|---|---|---|
+| r1 | /home/user/hadavin-sdk/handover/system-map/work/critical-path-r1.md | the earlier critical-path page (marked SUPERSEDED by this one); source of the 2.5 h, 5 h, 1.5 h and 2 h step estimates and of the "now" of Mon 16 Nov 14:25 UTC |
+| plan | /home/user/hadavin-sdk/handover/system-map/inputs/plan-wp6-resmoke-v5.md | the plan for the loopback re-smoke: steps, minutes, preconditions |
+| owner-timeline-draft.md | /home/user/hadavin-sdk/handover/system-map/work/owner-timeline-draft.md | draft table of the messages the owner and studio lead exchange, with the stop time, notice and post times |
+| open-items-table.md | /home/user/hadavin-sdk/handover/system-map/work/open-items-table.md | list of open questions with proposed answer-by times (A4, builder of fill_flows.py) |
+| decision-list-for-lead.md | /home/user/hadavin-sdk/handover/system-map/work/decision-list-for-lead.md | recommended answers to drift rows D-01 to D-10 |
+| GLOSSARY.md | /home/user/hadavin-sdk/handover/system-map/work/GLOSSARY.md | shared word meanings for the system-map pages |
+
+### 0c. What the 14 h total contains, and how the margin is counted
+- Inside the 14 h (section 2, chain table): step 4 (2 h 30 min), step 5 (5 h), step 6 (1 h 30 min), step 7 (2 h) and step 9 (3 h): 2:30 + 5:00 + 1:30 + 2:00 + 3:00 = 14:00. Step 8 (notice send) has no duration and adds nothing. Steps 1 to 3 have no stated duration and are NOT in the 14 h.
+- Excluded: steps 10, 11 and 12 (owner setup, the take itself, take end). They come after the 14 h chain, which ends at the take start of 17:40 UTC. The owner setup is assumed to fit inside the 3 h wait of step 9 (section 4a, item 2).
+- "7 d - 10 h 45 min" (section 3) is plain clock arithmetic: seven days after Mon 16 Nov 14:25 UTC is Mon 23 Nov 14:25 UTC; the latest start of step 4 is Mon 23 Nov 03:40 UTC, which is 10 h 45 min earlier (14:25 - 03:40). 7 d - 10 h 45 min = 6 d 13 h 15 min.
+- The "now" of Mon 16 Nov 14:25 UTC / 19:55 IST is borrowed from r1 (r1 line 21, the last clock reading there). I took no clock reading myself.
+
+### 0d. Recommendation (PROPOSAL; the lead session decides)
+Of the three readings of the 3-hour notice in section 5, I propose the second: 3 hours before the owner's setup, with setup 30 minutes before the start (notice by 14:10 UTC / 19:40 IST with A13 = no; 10:10 UTC / 15:40 IST with A13 = yes). Reason: it is the stricter one, costs 30 minutes of the roughly 6 days of margin, and cannot leave the owner setting up the laptop inside the 3 hours. The 30-minute setup is r1's guess with no source, so the lead session or the owner should confirm it. The third reading (the draft's 14 min 20 s window) conflicts with the lead's 49-minute window and should not be used.
+
+### 0e. UNVERIFIED against the v4.2 runbook
+The v4.2 runbook IS in this checkout at /home/user/hadavin-sdk/handover/system-map/inputs/lead-reviews/LEAD-RUNBOOK-TAKE-DAY-v4.2.md; its section 3 "Schedule" starts at line 202. This page was built without reading it. Every time and duration on this page is therefore UNVERIFIED against v4.2. (While making this wording fix I saw only the first rows of section 3: they give a different schedule, with the re-pin done by Tue 17 Nov 08:00 UTC, a GO / NO-GO at Tue 17 Nov 14:00 UTC and a practice run on Wed 18 Nov. I did not read the section through or compare it with this page, so the conflict, if any, is not assessed.)
+
