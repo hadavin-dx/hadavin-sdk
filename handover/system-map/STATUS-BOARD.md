@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T15:52Z
-PUSHED_UTC: 2026-11-16T15:52Z
+UPDATED_UTC: 2026-11-16T15:54Z
+PUSHED_UTC: 2026-11-16T15:54Z
 SESSION: system-map
 ORDER: 14:48Z (parallel re-readers while I fix; keep 8 running)
 BOOT_ID: 5cbee216
@@ -18,7 +18,7 @@ NEEDS_YOU, in this order (for the lead session to answer or pass to the studio l
 FAILED: M14 test_licences_are_proprietary fails (1 failed, 9390 passed); the n8n run has not happened. Full text under Details at the end of this file. Times in the Details are UTC only; IST is +5:30.
 PROGRESS: 5 of 20 table items at 100 percent; mean of the percent column 83 (counted from the ITEMS table on this page). Percent is how far a page has been checked, not confidence the take will work.
 Terms: take = the one filmed run (video scope: only scenes 1 to 4, version real-v5, decision 1 of inputs/DECISIONS-2026-11-16.md; decisions 5, 11, 12 are in the same file; film-v5 = the longer version that is not filmed); T19 = the test that sends the same made-up lead twice and expects one mail, one HubSpot write, one stored row (work/t19-terms.md); owner = the human; studio lead = the Claude session that does the technical steps and is the only one that messages the owner; lead session = the Claude session that gives me orders; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
-AGENTS_RUNNING: 8 of 8 at 2026-11-16T15:52Z (list below)
+AGENTS_RUNNING: 8 of 8 at 2026-11-16T15:54Z (list below)
 CAPACITY nproc=4 load=0.17 disk: 18G free
 NEXT: fix my own pages from the board reader's findings (licence question wording, NEEDS_YOU 4 and 5 subjects), work/GLOSSARY.md (heading of the unknown-terms table), decisions/M17-end-never-deletes.md, T19 inline glossary; then 8 fresh readers, one per fixed page
 INTERRUPTED: none
@@ -50,15 +50,15 @@ INTERRUPTED: none
 ## AGENTS
 | Slot | Agent | Job (read only, cold reader of work/ page) | State |
 |---|---|---|---|
-| 1 | reader (id in next board) | re-read rehearsal-passed-limits-draft.md (fixed) | running |
-| 2 | reader (id in next board) | re-read review-m6-r460.md (legend added) | running |
-| 3 | reader (id in next board) | re-read plan-review-r1.md (legend added) | running |
-| 4 | reader (id in next board) | re-read drift-report.md (legend added) | running |
-| 5 | reader (id in next board) | re-read premortem-r1.md (legend added) | running |
-| 6 | reader (id in next board) | re-read rehearsal-trim-notes.md (legend added) | running |
-| 7 | reader (id in next board) | re-read review-lens-dependency.md (legend added) | running |
-| 8 | reader (id in next board) | re-read review-drift-readiness.md (legend added) | running |
-Closed and digested through 1927. Test in progress: does a READ FIRST legend remove the 'nothing defined' Blocker on scratch notes? NEXT for me: header fix per L-page for the 5 shared classes; plain-word rows in decision-list; banned-claims collapse. Held-page findings go to LEAD-NOTICE.
+| 1 | reader (id in next board) | read L1.md | running since 2026-11-16T15:54Z |
+| 2 | reader (id in next board) | read L2.md | running since 2026-11-16T15:54Z |
+| 3 | reader (id in next board) | read L3.md | running since 2026-11-16T15:54Z |
+| 4 | reader (id in next board) | read L4.md | running since 2026-11-16T15:54Z |
+| 5 | reader (id in next board) | read L5a.md | running since 2026-11-16T15:54Z |
+| 6 | reader (id in next board) | read L5b.md | running since 2026-11-16T15:54Z |
+| 7 | reader (id in next board) | read L6.md | running since 2026-11-16T15:54Z |
+| 8 | reader (id in next board) | read decision-list-for-lead.md | running since 2026-11-16T15:54Z |
+Closed and digested through 1935. The READ FIRST legend did not remove the 'terms undefined' Blocker on scratch notes (digests 1928-1935); those notes are at the round cap, so no more rereads. Now reading the pages that carry a KEY sentence. Facts only the studio lead knows (what 'studio head' and the PL/OS/SC/DE prefixes mean) go to work/LEAD-NOTICE-batch-1.md.
 
 ## Details (long text moved from the FAILED line)
 FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); the studio lead starts Docker and runs the rehearsal (decision 12); no take date. (3) S9-5, S9-12, S9-3, S9-2 not yet applied in v5 or the scope sheet; S9-1 and S9-4 deferred, describe-only (decision 5). (4) the take-time value substitution (BL-wp6-G1) is not built. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.

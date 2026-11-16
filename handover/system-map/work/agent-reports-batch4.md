@@ -2251,3 +2251,12 @@ ACTION 1920-1923: prepended a READ FIRST legend (terms, prefixes marked UNVERIFI
 1926 | work/o7-review-R1-codebase-r1.md (aaf6519afb8077216): 1 Blocker (nothing defined; document under review unnamed) + 3 Majors. Legend added.
 1927 | work/o7-review-R4-zoomout-r2.md (adc3b48d213561a70): 1 Blocker (not self-contained) + 4 Majors (F9/F11 which count is right: 314/307 vs 322/315). Legend added; count ruling needs lead.
 CLASS NOTE 3: scratch notes now carry a READ FIRST legend. Re-reading 8 of them (limits draft, m6-r460, plan-review-r1, drift-report, premortem, trim-notes, lens-dependency, drift-readiness) to test whether the legend removes the 'nothing defined' Blocker.
+1928 | work/rehearsal-passed-limits-draft.md (aaca2dddf34d99e78): 2 Blockers (pass-rule decider unclear: owner vs 'studio head'; line 18 points forward, headline wording differs from line 1) + 3 Majors (check order, undefined file names, INDEX path unknown).
+1929 | work/review-m6-r460.md (a5cf1e8ac290325d7): 2 Blockers (Nits N1-N9 not in file; Blocker counts 0 vs 18) + 3 Majors (jargon, M-ids, UNVERIFIED legend).
+1930 | work/plan-review-r1.md (ae4881c9a0425b679): 1 Blocker (PLAN-002 never said what it is / done or to-do) + 3 Majors.
+1931 | work/drift-report.md (a3d5a7f6c3cebacdf): 3 Blockers (roles/terms undefined: laptop lead, studio head, seed row) + 4 Majors.
+1932 | work/premortem-r1.md (a5e2e1f62584c1cba): 3 Blockers (journal, hook door, Step I undefined; Gate B self-contradicting; Gate A FAIL basis) + 5 Majors.
+1933 | work/rehearsal-trim-notes.md (aed0ca2d2a6a4235f): 1 Blocker (STOP set / row ids undefined) + 4 Majors.
+1934 | work/review-lens-dependency.md (ad42496284a17467f): 1 Blocker (prefixes OS:21 etc. need the quoted text) + 6 Majors.
+1935 | work/review-drift-readiness.md (a620d17b7ce72796d): 1 Blocker (READ FIRST legend admits guessing) + 3 Majors.
+CLASS NOTE 4: the READ FIRST legend did NOT remove the Blocker: all 8 readers still report 'terms undefined' and the legend's own 'UNVERIFIED' guesses (prefixes, studio head) are now the complaint. These notes are at round 2 of the cap; no more rereads of scratch notes. Fix that needs a lead fact: what 'studio head', PL/OS/SC/DE prefixes mean (route to LEAD-NOTICE). Next: readers on L1-L6 and decision-list (pages with KEY sentences).
