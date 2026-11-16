@@ -821,7 +821,9 @@ def cross_file(dr, files, seen):
             isw = n["type"] == "n8n-nodes-base.webhook"
             pr = n.get("parameters") if isinstance(n.get("parameters"), dict) else {}
             pth = _addr(n)
-            if pth is None:
+            if not isinstance(n.get("parameters"), dict):
+                pass  # a wrong shape is reported by shape_ok
+            elif pth is None:
                 unv(
                     where,
                     f"{'webhook' if isw else 'form trigger'} {n.get('name')} has no usable path (missing, empty or not text), so a clash of web addresses cannot be checked for it (n8n may use the webhookId instead)",
@@ -837,7 +839,7 @@ def cross_file(dr, files, seen):
             wid = n.get("webhookId")
             if isinstance(wid, str) and wid:
                 if ("id", wid) in seen:
-                    unv(dr, f"two webhooks or form triggers share webhookId {wid!r}: {seen[('id', wid)]} and {where}")
+                    unv(dr, f"two webhooks share webhookId {wid!r} (webhook or form trigger): {seen[('id', wid)]} and {where}")
                 else:
                     seen[("id", wid)] = where
 

@@ -14,6 +14,7 @@ Each case copies a pristine folder, plants ONE defect, runs the checker, and req
   (2) a line that STARTS with FAIL (or WARN) and holds the named text,
   (3) for FAIL cases: every FAIL line is the named cause or a listed knock-on of it (so an unrelated FAIL cannot hide behind it),
   (4) for WARN cases: no FAIL line except listed knock-ons of the planted node, and the same WARN line is not already in the unmutated control.
+FAIL cases run with --fail-unverified (rules that come from memory of n8n are only WARN by default; their default WARN is tested by their own *_default_is_warn cases).
 Expected node and connection counts are recomputed from the mutated file so a count mismatch is not a knock-on, except in the case that tests it.
 Generic cases run on 4 real files and 1 film file; cases that cannot apply to a file are printed as skipped."""
 
@@ -726,6 +727,26 @@ def g_ref_dynamic(j, d):
     first_nt(j)["parameters"]["note"] = "={{ $('No' + 'pe').first().json.x }}"
 
 
+def _real_ids(obj):
+    """Replace every credential id and sub-workflow id of one flow by an id that is not a placeholder."""
+    for n in obj["nodes"]:
+        for v in (n.get("credentials") or {}).values():
+            if isinstance(v, dict):
+                v["id"] = "cred-real-1"
+        pr = n.get("parameters") or {}
+        if "workflowId" in pr:
+            pr["workflowId"] = "wf-real-1"
+
+
+def g_ids_real(j, d):
+    _real_ids(j)
+    for f in FILES:
+        if f != FOCUS and os.path.isfile(d + "/" + f):
+            h = rj(d + "/" + f)
+            _real_ids(h)
+            wj(d + "/" + f, h)
+
+
 def g_dupwh_slash(j, d):
     o = next(f for f in FILES if f != FOCUS and os.path.isfile(d + "/" + f))
     h = rj(d + "/" + o)
@@ -1286,6 +1307,46 @@ G = [
         (),
         ["WITHOUT respondToWebhook"],
     ),
+    (
+        "webhook_auth_value_not_accepted_default_is_warn",
+        g_wh_auth_badvalue,
+        "WARN",
+        "authentication='digestAuth' is not one n8n accepts here",
+        (),
+        [],
+    ),
+    (
+        "webhook_auth_wrong_credential_kind_default_is_warn",
+        g_wh_auth_wrongkind,
+        "WARN",
+        "needs a credential of kind 'httpBasicAuth'",
+        (),
+        [],
+    ),
+    (
+        "webhook_auth_without_credentials_default_is_warn",
+        g_wh_auth_nocred,
+        "WARN",
+        "but the node has no credentials block",
+        (),
+        [],
+    ),
+    (
+        "credential_kind_wrong_default_is_warn",
+        g_cred_kind,
+        "WARN",
+        "do not include the expected kind 'postgres'",
+        (),
+        [],
+    ),
+    (
+        "error_output_position_default_is_warn",
+        g_errout_unwired,
+        "WARN",
+        "its error output main[1]",
+        (),
+        ["alwaysOutputData together with"],
+    ),
     ("env_read_default_is_warn", g_env_read, "WARN", "$env.SOME_NAME", (), []),
     ("webhook_without_auth_default", None, "WARN", "has no authentication", (), []),
     (
@@ -1341,6 +1402,7 @@ CONTROLS = [
         ),
     ),
     ("control_webhook_auth_jwt_with_credentials", g_wh_auth_jwt_ok, ()),
+    ("control_real_ids_pass_when_ids_are_required", g_ids_real, ("--require-real-credential-ids",)),
 ]
 
 FOCUS = "mf-form.json"
@@ -1520,7 +1582,7 @@ def main():
             skipnames[name] = skipnames.get(name, 0) + 1
             print(f"{n:<72} skipped (not applicable to this file)")
             return
-        rc, out = run(cmd(d, src, exp, extra), n)
+        rc, out = run(cmd(d, src, exp, tuple(extra) + (("--fail-unverified",) if level == "FAIL" else ())), n)
         fl, wl = lines_of(out, "FAIL"), lines_of(out, "WARN")
         if "Traceback" in out:
             report(n + " (no crash)", False, "the checker printed a Traceback")
@@ -1791,7 +1853,7 @@ def main():
             c = (
                 ["python3", "-I", CK, d, "--baseline", PRIS]
                 + exp
-                + ["--patch-checks", "F002,F008", "--quiet-info"]
+                + ["--patch-checks", "F002,F008", "--quiet-info", "--fail-unverified"]
                 + (
                     []
                     if name.startswith("patchonly_")
@@ -1864,6 +1926,194 @@ def main():
     t = rt(dk + "/mf-form.json")
     wt(dk + "/mf-form.json", t.rstrip().rstrip("}") + ', "settings": {}, "settings": {"a": 1}}')
     special("duplicate_json_key_is_fail", [dk, "--baseline", PRIS], 1, "duplicate JSON key")
+    def check_out(name, argv, want_rc, must=(), must_not=()):
+        """Run the checker on argv; must = (line prefix, text) pairs that have to appear in a line, must_not = texts that may not appear anywhere."""
+        rc, out = run(["python3", "-I", CK] + argv, name)
+        lines = out.splitlines()
+        miss = [m for m in must if not any(l.startswith(m[0]) and m[1] in l for l in lines)]
+        found = [t for t in must_not if t in out]
+        report(
+            f"{name} (exit {want_rc})",
+            rc == want_rc and not miss and not found and "Traceback" not in out,
+            f"rc={rc} missing={miss} unexpected={found}",
+        )
+
+    # --- several folders in one run: web addresses and webhook ids are compared ACROSS the folders ---
+    mdirs = {}
+    for k in ("a", "b", "c", "d", "e", "f"):
+        mdirs[k] = f"{work}/multi-{k}"
+        shutil.copytree(PRIS, mdirs[k])
+    flags = ["--baseline", PRIS, "--quiet-info"]
+    check_out(
+        "multi_dir_same_webhook_path_default_is_warn",
+        [mdirs["a"], mdirs["b"]] + flags,
+        0,
+        must=[("WARN", "two webhooks share method+path")],
+    )
+    check_out(
+        "multi_dir_same_webhook_path_fail_unverified",
+        [mdirs["a"], mdirs["b"]] + flags + ["--fail-unverified"],
+        1,
+        must=[("FAIL", "two webhooks share method+path")],
+    )
+    check_out(
+        "multi_dir_single_folder_has_no_clash",
+        [mdirs["a"]] + flags + ["--fail-unverified"],
+        0,
+        must_not=["share method+path", "share webhookId", "share path"],
+    )
+    for k, pth in (("c", "path-one"), ("d", "path-two")):
+        for fn in ("mf-form.json", "mf-hook.json"):
+            h = rj(f"{mdirs[k]}/{fn}")
+            for n in h["nodes"]:
+                if n["type"] == "n8n-nodes-base.webhook":
+                    n["webhookId"] = "wid-shared-9" if fn == "mf-form.json" else f"wid-{k}-{fn}"
+                    n["parameters"]["path"] = f"{pth}-{fn}"
+            wj(f"{mdirs[k]}/{fn}", h)
+    check_out(
+        "multi_dir_same_webhook_id_different_paths",
+        [mdirs["c"], mdirs["d"]] + flags + ["--fail-unverified"],
+        1,
+        must=[("FAIL", "share webhookId 'wid-shared-9'")],
+        must_not=["share method+path"],
+    )
+    for k in ("e", "f"):
+        h = rj(f"{mdirs[k]}/mf-form.json")
+        for n in h["nodes"]:
+            if n["type"] == "n8n-nodes-base.webhook":
+                n["type"] = "n8n-nodes-base.formTrigger"
+                n["parameters"]["path"] = "same-form"
+        wj(f"{mdirs[k]}/mf-form.json", h)
+    check_out(
+        "multi_dir_same_form_trigger_path",
+        [mdirs["e"], mdirs["f"]] + flags + ["--fail-unverified"],
+        1,
+        must=[("FAIL", "two form triggers share path")],
+    )
+    wh_only, fm_only = f"{work}/wh-only", f"{work}/fm-only"
+    for dd, as_form in ((wh_only, False), (fm_only, True)):
+        os.makedirs(dd)
+        h = rj(PRIS + "/mf-form.json")
+        for n in h["nodes"]:
+            if n["type"] == "n8n-nodes-base.webhook" and as_form:
+                n["type"] = "n8n-nodes-base.formTrigger"
+                n.pop("webhookId", None)
+        wj(dd + "/mf-form.json", h)
+    check_out(
+        "multi_dir_form_path_and_webhook_path_are_different_addresses",
+        [wh_only, fm_only, "--files", "mf-form.json", "--baseline", PRIS, "--quiet-info", "--fail-unverified"],
+        0,
+        must_not=["share path", "share method+path"],
+    )
+    nopath = f"{work}/nopath"
+    shutil.copytree(PRIS, nopath)
+    h = rj(nopath + "/mf-form.json")
+    for n in h["nodes"]:
+        if n["type"] == "n8n-nodes-base.webhook":
+            n["parameters"].pop("path", None)
+    wj(nopath + "/mf-form.json", h)
+    check_out(
+        "webhook_without_path_default_is_warn",
+        [nopath] + flags,
+        0,
+        must=[("WARN", "has no usable path")],
+        must_not=["share method+path"],
+    )
+    check_out(
+        "webhook_without_path_fail_unverified",
+        [nopath] + flags + ["--fail-unverified"],
+        1,
+        must=[("FAIL", "has no usable path")],
+        must_not=["share method+path"],
+    )
+    # --- the placeholder / env summary line (printed only without --quiet-info) ---
+    only = f"{work}/only-form"
+    os.makedirs(only)
+    h = rj(PRIS + "/mf-form.json")
+    _real_ids(h)
+    wj(only + "/mf-form.json", h)
+    check_out(
+        "info_line_says_none_when_no_placeholder_and_no_env",
+        [only, "--files", "mf-form.json", "--baseline", PRIS],
+        0,
+        must=[("  placeholder/env: none", "")],
+    )
+    check_out(
+        "info_line_lists_placeholders_when_there_are_some",
+        [PRIS, "--baseline", PRIS],
+        0,
+        must=[("  placeholder/env PG_CREDENTIAL_ID", "")],
+        must_not=["placeholder/env: none"],
+    )
+    # --- recorded decisions about IF branches (--accept-if) ---
+    acc = ["--accept-if", "mf-recovery.json=StuckRow:1", "--accept-if", "mf-recovery.json=AlertRow:1"]
+    check_out(
+        "accept_if_both_recorded_is_warn_and_counted",
+        [PRIS, "--quiet-info"] + acc,
+        0,
+        must=[
+            ("WARN", "IF node StuckRow lacks output(s) [1] (accepted by a recorded decision"),
+            ("IF branches accepted by a recorded decision (--accept-if): 2", ""),
+        ],
+    )
+    check_out(
+        "accept_if_missing_is_fail",
+        [PRIS, "--quiet-info"],
+        1,
+        must=[("FAIL", "IF node StuckRow lacks"), ("FAIL", "IF node AlertRow lacks")],
+    )
+    check_out(
+        "accept_if_wrong_output_is_fail",
+        [PRIS, "--quiet-info", "--accept-if", "mf-recovery.json=StuckRow:0"] + acc[2:],
+        1,
+        must=[("FAIL", "IF node StuckRow lacks output(s) [1]")],
+    )
+    check_out(
+        "accept_if_covers_only_what_was_recorded",
+        [PRIS, "--quiet-info"] + acc[:2],
+        1,
+        must=[("WARN", "IF node StuckRow"), ("FAIL", "IF node AlertRow lacks")],
+    )
+    check_out(
+        "accept_if_other_file_name_does_not_excuse",
+        [PRIS, "--quiet-info", "--accept-if", "mf-form.json=StuckRow:1"] + acc[2:],
+        1,
+        must=[("FAIL", "IF node StuckRow lacks")],
+    )
+    check_out(
+        "accept_if_bad_value", [PRIS, "--accept-if", "StuckRow"], 2, must=[("usage error: bad --accept-if", "")]
+    )
+    if PATCHED:
+        nm0 = next(
+            x["name"]
+            for x in rj(PATCHED + "/mf-form.json")["nodes"]
+            if x["name"] not in trig(rj(PATCHED + "/mf-form.json"))
+            and x["type"] != "n8n-nodes-base.stickyNote"
+            and x["name"] not in ("KeyOk", "ReplyBadKey", "ReplyStoreFail", "Claim", "Valid")
+        )
+        dd = f"{work}/difftext"
+        shutil.copytree(PATCHED, dd)
+        h = rj(dd + "/mf-form.json")
+        next(x for x in h["nodes"] if x["name"] == nm0)["notes"] = "changed by a test"
+        wj(dd + "/mf-form.json", h, indent=1)
+        dcmd = [dd, "--baseline", PRIS, "--patch-checks", "F002,F008", "--quiet-info", "--diff-base", PRIS, "--allow", "F002,F008"]
+        for k, v in PCOUNTS.items():
+            dcmd += ["--expect", f"{k}={v[0]}:{v[1]}"]
+        dout = f"{work}/diff-text-out.txt"
+        want = f"  node CHANGED {nm0}: notes (added)"
+        rc, out = run(["python3", "-I", CK] + dcmd + ["--diff-out", dout], "diff_text_exact_line")
+        report(
+            "diff_text_exact_line (the change is one readable line, on screen and in the --diff-out file)",
+            want in out.splitlines() and want in rt(dout).splitlines(),
+            f"rc={rc} on_screen={want in out.splitlines()}",
+        )
+        rc, out = run(["python3", "-I", CK] + dcmd + ["--diff-out", f"{work}/no-such-folder/x.txt"], "diff_out_unwritable")
+        report(
+            "diff_out_unwritable_is_exit_3 (a broken output file is never exit 1)",
+            rc == 3 and "INTERNAL ERROR (exit 3)" in out and "Traceback" not in out,
+            f"rc={rc}",
+        )
+
     if skipnames:
         print(
             "SKIPPED, by case name (a case is skipped on a file that lacks the node type it needs): "
