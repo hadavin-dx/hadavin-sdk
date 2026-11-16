@@ -1034,3 +1034,6 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 748 ARCHIVE-CUT-LIST r10: keep list, citing files. FIXED by VERDICT r11; citation search NOT DONE.
 - 749 L2c r11: env step prints values, definitions lost. FIXED by STEPS r12.
 - 750 M17 r8: HOLD not at top. FIXED by HOLD r8 (banner in place TO DO).
+
+- 751 decision-list r11: deadlines, run (a). FIXED by CURRENT r11; row splits TO DO.
+- 752 merged-findings r9: Blocker count unreadable. FIXED by CURRENT LEGEND r9; lines 172-318 unreviewed.
