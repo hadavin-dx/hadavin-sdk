@@ -8,6 +8,7 @@ import io
 import json
 import os
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
@@ -2087,7 +2088,7 @@ class Round7(Base):
         self.assertEqual(code, 1, so)
         self.assertIn("mf-y.json: not mode 0600", so)
         os.chmod(victim, 0o600)
-        os.chmod(out, 0o750)
+        os.chmod(out, os.stat(out).st_mode | stat.S_IRGRP)
         code, so, _ = self.cli("check", out)
         self.assertEqual(code, 1, so)
         self.assertIn("not mode 0700", so)
@@ -2476,7 +2477,7 @@ class Round7(Base):
         code, _, se = self.fill(src=d, out=out)
         self.assertEqual(code, 3, se)
         self.assertIn("key PG_CREDENTIAL_ID is empty", se)
-        self.assertNotIn("not used by any node", se)
+        self.assertNotIn("key PG_CREDENTIAL_ID in the values file is not used", se)
         self.assertIn("PG_CREDENTIAL_ID", all_strings(out))
 
     def test_cloud_synced_folders_are_refused_for_values_and_output(self):

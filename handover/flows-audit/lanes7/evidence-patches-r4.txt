@@ -12,3 +12,27 @@ c9d61339d1619de9  handover/flows-audit/patches/F-008-save-runs-for-the-take.patc
 together check rc=0
 together apply rc=0
 --- git status ---
+--- patched files (sha 16, lines, path) ---
+26f7225ffcfcf027 108 handover/demo/VIDEO-RUNSHEET.md
+d09b09d159088fa7 152 handover/demo/n8n-flows/PAGE-STATEMENTS-V4.md
+d45eb9ea4786e82b 19 handover/demo/n8n-flows/mf_leads.sql
+f1a1806980e3f365 130 handover/demo/n8n-mainframe/build_mainframe.py
+--- grep -n -i -E (file:line, first 150 chars); 0 hits = none ---
+## 60\.1
+grep rc=1
+## 61\.9
+grep rc=1
+## film-v5
+grep rc=1
+## one database
+grep rc=1
+## approval
+grep rc=1
+## audit trail
+grep rc=1
+## lead decision
+grep rc=1
+## PLAN-4
+grep rc=1
+## WP6
+grep rc=1
