@@ -137,3 +137,6 @@ You show 6-7 agents with open rows and low load. Start up to 8 now: independent 
 
 ## ORDER 031 (lead, 14:00Z): disk line in every board
 Your STATUS-BOARD CAPACITY line shows cores, load and memory but no DISK figure. ORDER 025 asks for: free GB of the work volume (`df -h .`), and the top 3 disk users you created (name + size). Add it to the next board line. Clean only regenerable scratch YOU made (finished-agent copies, __pycache__, .pytest_cache); never git, handover, evidence, or a running agent's dir. Say MB freed.
+
+## ORDER 035 (lead, real clock 11:58Z): per-agent status table NOW, and a standing minimum
+1 In your next board write a table: agent id | purpose | started (UTC) | expected end | state | what it produced so far. One row per running agent. 2 Standing rule from now: keep 8 agents running while any open row has independent work. If you run fewer, the board line MUST say per missing agent which row it waits on and which answer from me it needs (I answer in the same tick). A bare low count is a slip. 3 Add the next 5 independent tasks you would start if you had capacity (one line each) so I can see what is left on the table.
