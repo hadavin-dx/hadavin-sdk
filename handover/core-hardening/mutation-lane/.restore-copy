@@ -1,558 +1,380 @@
-"""`chain` audit: an append-only hash chain in the store's database, with signed checkpoints and anchors.
+"""`hadavin-sdk tick`: one idempotent pass of housekeeping steps, run every 30-60 s by any scheduler.
 
-Ported from WARDEN `audit.py` (main c78d7709): `_Store`, `AuditLog`, `_hash`, `_signed_message`, `verify` and its
-checks, and the append-only `_PG_SCHEMA` pattern (here `store/migrations/0002_audit_chain.sql`). Edits: the
-message prefix is `hadavin-audit`; rows are AuditEvents (hashes and codes only) and the AuditSink Protocol sits on
-top; the signer and anchor come from the backend table; a checkpoint that cannot be signed or anchored is
-logged and retried, never raised (signing is evidence, not a gate: design 4.8).
+Contract (design v5 kernel, section 4):
+* ``STEPS`` runs in order: sweep, reconcile, stuck, checkpoint, purge_evidence (by default daily), reprobe_sources, audit_reconcile. Later PRs only
+  **append** a ``TickStep``.
+* Each step runs in its own ``try``: a failure is logged as ``step=<name> error_kind=<type>
+  message=<redacted, <= 500 chars>`` and written to ``tick_state``; the other steps still run.
+* A step with ``every_s > 0`` runs only if ``now - tick_state.last_run_at >= every_s``.
+* The tick summary line (``heartbeat``) is not a step: it is logged after the steps, is never recorded in
+  ``tick_state`` and cannot change the exit code. The external heartbeat
+  (a ping sent by the CLI entrypoint for every exit code) is PENDING (K7): nothing sends it today.
+* Exit codes: 0 all ok; 1 a step failed (store still reachable); 2 config error, or the store answers but is
+  not ready (missing table or grant: run ``migrate``); 4 store unreachable (connection refused, dropped or
+  timed out), before any step or when it stops answering during the steps; 3 is the CLI wrapper's code for any
+  other uncaught error.
 
-Three layers, because each one alone is beatable:
-* **Append-only.** Triggers abort any UPDATE, DELETE or TRUNCATE. Anyone who can write the database can drop a
-  trigger, so this is a guard rail, not proof.
-* **Hash chain.** Each row's hash covers the previous row's hash and all of its own fields, so an edited,
-  removed or reordered row breaks every link after it.
-* **Signed checkpoints** every `checkpoint_every` rows, over `hadavin-audit:{seq}:{head}`. Someone who edits a
-  row AND recomputes every later hash cannot recompute the signature; someone who also holds the key cannot
-  rewrite the anchors (S3 Object Lock, written by another principal).
-
-Honest limits: rows after the last checkpoint are chained but not yet signed (`verify` reports the tail). On
-the `memory` store the chain is an in-memory SQLite database and is lost on restart, like the store.
-
-Neutral protocol: SQL in the configured store (Postgres or the in-memory SQLite), signed with whichever signer is set.
+Concurrent ticks are safe: every state change is a compare-and-set, and a loser (``StaleState``) skips.
 """
 
 from __future__ import annotations
 
-import contextlib
-import hashlib
-import inspect
-import json
 import logging
-import sqlite3
-import threading
-from collections.abc import Callable, Iterator
+import re
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import UTC
-from typing import Any
+from datetime import datetime, timedelta
+from typing import TYPE_CHECKING, Any
 
-from hadavin_sdk.audit import anchors
-from hadavin_sdk.audit.protocol import AuditUnavailable, DuplicateEvent
-from hadavin_sdk.audit.signer import Alg, Signer, verify_signature
-from hadavin_sdk.errors import ConfigError
-from hadavin_sdk.models import AuditEvent
+from hadavin_sdk.guard.runmap import safe_head
+from hadavin_sdk.models import AuditEvent, RunState, TickState
+from hadavin_sdk.runtime.runs import IllegalTransition, advance
+from hadavin_sdk.store.protocol import StaleState, is_connectivity_error
 
-GENESIS = "0" * 64
-_LOG = logging.getLogger("hadavin_sdk.audit.chain")
-# One chain, many writers: each append holds this transaction-scoped advisory lock (a fixed key).
-_PG_LOCK = int.from_bytes(b"hadvnaud", "big") >> 1
+if TYPE_CHECKING:
+    from hadavin_sdk.app import App
 
-_SQLITE_SCHEMA = """
-CREATE TABLE audit_entries (seq INTEGER PRIMARY KEY, at TEXT NOT NULL, run_id TEXT NOT NULL,
-    kind TEXT NOT NULL, body TEXT NOT NULL, prev TEXT NOT NULL, hash TEXT NOT NULL,
-    event_id TEXT NOT NULL UNIQUE);
-CREATE TABLE audit_checkpoints (seq INTEGER PRIMARY KEY, hash TEXT NOT NULL, signature TEXT NOT NULL,
-    alg TEXT, key_label TEXT);
-CREATE TABLE audit_outbox (event_id TEXT PRIMARY KEY, body TEXT NOT NULL);
-CREATE INDEX audit_entries_by_run ON audit_entries (run_id, seq);
-""" + "".join(
-    f"CREATE TRIGGER {t}_no_{op.lower()} BEFORE {op} ON {t} "
-    "BEGIN SELECT RAISE(ABORT, 'the audit log is append-only'); END;\n"
-    for t in ("audit_entries", "audit_checkpoints")
-    for op in ("UPDATE", "DELETE")
-)
-_ALL_ROWS = (
-    "SELECT seq, at, run_id, kind, body, prev, hash, event_id FROM audit_entries ORDER BY seq"
-)
-
-
-def _hash(prev: str, seq: int, at: str, run_id: str, kind: str, body: str) -> str:
-    material = json.dumps(
-        [prev, seq, at, run_id, kind, body], ensure_ascii=False, separators=(",", ":")
-    )
-    return hashlib.sha256(material.encode("utf-8")).hexdigest()
-
-
-def _takes_meta(put: Callable) -> bool:
-    params = inspect.signature(put).parameters.values()
-    names = {p.name for p in params}
-    return any(p.kind is p.VAR_KEYWORD for p in params) or {"alg", "key_label"} <= names
-
-
-def signer_label(signer: Signer) -> str:
-    """The non-secret name written beside each checkpoint and anchor. The operator's `key_label` setting when
-    set, else a fingerprint of the PUBLIC key: the same key gets the same label whether it was configured by
-    alias, ARN or URL, and the label never holds an account id."""
-    label = getattr(signer, "key_label", None)
-    return label or "pk:" + hashlib.sha256(signer.public_key()).hexdigest()[:16]
-
-
-def _signed_message(seq: int, head: str) -> bytes:
-    return f"hadavin-audit:{seq}:{head}".encode()
-
-
-class _Db:
-    """The few statements the chain runs, on SQLite (the `memory` store) or the `postgres` store's connection.
-    One lock per connection: on postgres it is the store's own, so no store statement lands inside an audit
-    transaction (WARDEN 2026-10-15: a read inside another thread's BEGIN ... COMMIT failed CI twice)."""
-
-    def __init__(self, conn: Any, lock: Any, pg: bool) -> None:
-        self.conn, self.lock, self.pg = conn, lock, pg
-
-    @classmethod
-    def memory(cls) -> _Db:
-        conn = sqlite3.connect(":memory:", isolation_level=None, check_same_thread=False)
-        conn.executescript(_SQLITE_SCHEMA)
-        return cls(conn, threading.Lock(), pg=False)
-
-    def _q(self, sql: str, params: tuple = ()) -> list[tuple]:
-        cur = self.conn.execute(sql.replace("?", "%s") if self.pg else sql, params)
-        return cur.fetchall() if cur.description else []
-
-    def run(self, sql: str, params: tuple = ()) -> list[tuple]:
-        with self.lock:
-            return self._q(sql, params)
-
-    @contextlib.contextmanager
-    def transaction(self) -> Iterator[Callable[..., list[tuple]]]:
-        with self.lock:
-            if self.pg:
-                with self.conn.transaction():
-                    self.conn.execute("SELECT pg_advisory_xact_lock(%s)", (_PG_LOCK,))
-                    yield self._q
-                return
-            self.conn.execute("BEGIN IMMEDIATE")
-            try:
-                yield self._q
-                self.conn.execute("COMMIT")
-            finally:
-                # Only a transaction still open is rolled back: a ROLLBACK with none raised "no transaction is
-                # active" over the error that ended it (WARDEN, Sonar python:S9152).
-                if self.conn.in_transaction:
-                    self.conn.execute("ROLLBACK")
+S = RunState
+TICK_SLACK_S = 60  # the longest gap between ticks (design: every 30-60 s)
+_LOG = logging.getLogger("hadavin_sdk.tick")
+OK, FAILED, SKIPPED = "ok", "failed", "skipped"
 
 
 @dataclass
-class Verification:
-    rows: int = 0
-    signed_through: int = 0
-    problems: list[str] = field(default_factory=list)
-    unreadable: bool = (
-        False  # the audit or its anchors could not be read: not checked, not "tampered"
+class TickContext:
+    app: App
+    now: datetime
+    results: dict[str, str] = field(default_factory=dict)  # step name -> ok / failed / skipped
+
+
+@dataclass(frozen=True)
+class TickStep:
+    name: str  # unique, [a-z_]+ (the tick_state CHECK)
+    every_s: int  # 0 = every tick
+    fn: Callable[[TickContext], None]
+    # Interval read from the config at run time (so it is not frozen at import); wins over `every_s`.
+    interval: Callable[[TickContext], int] | None = None
+
+    def __post_init__(self) -> None:
+        if not re.fullmatch(r"[a-z_]+", self.name) or self.every_s < 0:
+            raise ValueError(f"tick step name must be [a-z_]+ and every_s >= 0: {self.name!r}")
+
+
+def _each(items: list[Any], fn: Callable[[Any], None], what: str) -> None:
+    """Run fn per item; a CAS loser is skipped quietly, any other error is logged and the step fails at the
+    end, after every item had its turn (one bad row never blocks the rest)."""
+    first: Exception | None = None
+    for item in items:
+        try:
+            fn(item)
+        except (StaleState, IllegalTransition):
+            _LOG.debug("%s: moved by another worker, skipped", what)
+        except Exception as exc:  # noqa: BLE001 - isolate the item; re-raised below
+            _LOG.warning("%s: %s", what, type(exc).__name__)
+            first = first or exc
+    if first is not None:
+        raise first
+
+
+def sweep(ctx: TickContext) -> None:
+    """Escalate or expire due approvals; resend requests whose channel send failed."""
+    ctx.app.approvals.sweep(ctx.now)
+    ctx.app.approvals.resend_unsent(ctx.now)
+
+
+def reconcile(ctx: TickContext) -> None:
+    """Advance runs whose approval ended (APPROVED runs the plan). The receiver only records decisions."""
+    store, runtime = ctx.app.store, ctx.app.runtime
+    ended = store.list_approvals({"APPROVED", "REJECTED", "EXPIRED"})
+    # ponytail: scans every ended approval each tick; filter by a reconciled flag when the table grows.
+
+    def one(req) -> None:
+        if store.get_run(req.run_id).state is not S.WAITING_FOR_APPROVAL:
+            return
+        ctx.app.approvals.update_message(req)  # decisions arrive record-only: show the outcome now
+        runtime.on_decided(req.run_id, req.status, store.get_approval_decision(req.approval_id))
+
+    _each(ended, one, "reconcile")
+
+
+def stuck_after_s(app: App, agent_id: str) -> float:
+    """max_steps x call_timeout_s x max_attempts + 60 (design 12.7): the longest a healthy run stays quiet."""
+    llm = app.config.backends.llm
+    agent = app.registry.agents.get(agent_id)
+    steps = (
+        agent.max_steps
+        if agent
+        else max((a.max_steps for a in app.registry.agents.values()), default=1)
     )
-
-    @property
-    def ok(self) -> bool:
-        return not self.problems
-
-    @property
-    def unsigned_tail(self) -> int:
-        return self.rows - self.signed_through
+    return steps * getattr(llm, "call_timeout_s", 60) * getattr(llm, "max_attempts", 1) + 60
 
 
-class ChainAudit:
-    """The AuditSink Protocol over the chain, plus `checkpoint()` (inline every N rows, and from `tick`) and
-    `verify()`. Keys returned by the writes are event ids."""
+STUCK = {
+    S.RECEIVED: "interrupted",
+    S.WORKING: "interrupted",
+    S.PLAN_READY: "interrupted",
+    S.EXECUTING: "outcome_unknown",  # never re-executed: a person checks the system
+    # ponytail: re-run verify once needs the stored RunResult; until then a person checks.
+    S.VERIFYING: "verify_interrupted",
+}
 
-    def __init__(
-        self,
-        db: _Db,
-        signer: Signer | None = None,
-        anchor: Any = None,
-        checkpoint_every: int = 100,
-    ) -> None:
-        self._db, self.signer, self.anchor = db, signer, anchor
-        # A custom anchor kind written before alg and key_label existed takes three arguments: it still works (its
-        # objects just lack the two fields) and is logged once, instead of failing every put with a TypeError.
-        self._anchor_takes_meta = not hasattr(anchor, "put") or _takes_meta(anchor.put)
-        if not self._anchor_takes_meta:
-            _LOG.warning(
-                "audit anchor put() takes no alg/key_label: its objects will not verify offline"
-            )
-        self.checkpoint_every = checkpoint_every
-        # Last resort when even the outbox table cannot be written (the database is down): drained by reconcile.
-        self._pending: list[AuditEvent] = []
-        # Checkpoints whose anchor put failed: retried by the next checkpoint() (ponytail: in-process only; a
-        # restart drops the list and `verify` then reports "never anchored", which is the truth).
-        self._unanchored: dict[int, tuple[str, str]] = {}
 
-    # --- AuditSink ----------------------------------------------------------------------------------
+def stuck(ctx: TickContext) -> None:
+    """Runs quiet for longer than their agent's stuck_after_s go to NEEDS_PERSON with a reason."""
+    app = ctx.app
+    floor = min((stuck_after_s(app, a) for a in app.registry.agents), default=60)
+    for state, reason in STUCK.items():
+        candidates = app.store.list_runs(state, ctx.now - timedelta(seconds=floor))
 
-    def _append(self, event: AuditEvent) -> str:
-        body = event.model_dump_json()
-        at = event.ts.astimezone(UTC).isoformat(timespec="microseconds")
-        kind = f"{event.domain}.{event.operation}"
-        with self._db.transaction() as q:
-            if q("SELECT 1 FROM audit_entries WHERE event_id = ?", (event.event_id,)):
-                raise DuplicateEvent(event.event_id)
-            last = q("SELECT seq, hash FROM audit_entries ORDER BY seq DESC LIMIT 1")
-            seq, prev = (last[0][0] + 1, last[0][1]) if last else (1, GENESIS)
-            q(
-                "INSERT INTO audit_entries (seq, at, run_id, kind, body, prev, hash, event_id) "
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                (
-                    seq,
-                    at,
-                    event.run_id,
-                    kind,
-                    body,
-                    prev,
-                    _hash(prev, seq, at, event.run_id, kind, body),
-                    event.event_id,
-                ),
-            )
-        if self.signer is not None and seq % self.checkpoint_every == 0:
-            self.checkpoint()
-        return event.event_id
-
-    def write_intent(self, event: AuditEvent) -> str:
-        try:
-            return self._append(event)
-        except DuplicateEvent:
-            raise
-        except Exception as exc:
-            raise AuditUnavailable(f"intent {event.event_id}: {exc.__class__.__name__}") from exc
-
-    def write_outcome(self, event: AuditEvent) -> str | None:
-        """Never raises: the chain, then the outbox table, then memory (all drained by reconcile)."""
-        try:
-            return self._append(event)
-        except DuplicateEvent:
-            return event.event_id
-        except Exception as exc:  # noqa: BLE001 - the contract is "never raises"
-            # A line a person can alert on (audit A-01): the error type and the event id only, never the body.
-            _LOG.warning(
-                "audit outcome not appended (%s): event %s goes to the outbox",
-                type(exc).__name__,
-                event.event_id,
-            )
-            try:
-                self._db.run(
-                    "INSERT INTO audit_outbox (event_id, body) VALUES (?, ?) "
-                    "ON CONFLICT (event_id) DO NOTHING",
-                    (event.event_id, event.model_dump_json()),
+        def one(run, state=state, reason=reason) -> None:
+            if run.updated_at >= ctx.now - timedelta(seconds=stuck_after_s(app, run.agent_id)):
+                return
+            advance(app.store, run.run_id, state, S.NEEDS_PERSON, reason)
+            app.audit.write_outcome(
+                AuditEvent(
+                    run_id=run.run_id,
+                    domain="run",
+                    operation="state",
+                    principal="system:tick",
+                    source="tick",
+                    result=S.NEEDS_PERSON.value,
+                    error_code=reason,
                 )
-            except Exception as exc2:  # noqa: BLE001
-                _LOG.error(
-                    "audit outbox not written (%s): event %s is held in memory only",
-                    type(exc2).__name__,
-                    event.event_id,
+            )
+
+        _each(candidates, one, f"stuck {state.value}")
+
+    # A crash between WAITING_FOR_APPROVAL and saving the request leaves a wait nobody can answer.
+    waiting = app.store.list_runs(S.WAITING_FOR_APPROVAL, ctx.now - timedelta(seconds=floor))
+    if waiting:
+        asked = {
+            r.run_id
+            for r in app.store.list_approvals({"PENDING", "APPROVED", "REJECTED", "EXPIRED"})
+        }
+        # ponytail: lists every approval; a by-run lookup when the table grows.
+
+        def orphan(run) -> None:
+            if run.run_id in asked:
+                return
+            advance(
+                app.store, run.run_id, S.WAITING_FOR_APPROVAL, S.NEEDS_PERSON, "approval_missing"
+            )
+            app.audit.write_outcome(
+                AuditEvent(
+                    run_id=run.run_id,
+                    domain="run",
+                    operation="state",
+                    principal="system:tick",
+                    source="tick",
+                    result=S.NEEDS_PERSON.value,
+                    error_code="approval_missing",
                 )
-                self._pending.append(event)
-            return None
-
-    def reconcile(self) -> int:
-        done = 0
-        for event in list(self._pending):
-            if self._drain(event):
-                self._pending.remove(event)
-                done += 1
-        try:
-            queued = self._db.run("SELECT event_id, body FROM audit_outbox ORDER BY event_id")
-        except Exception:  # noqa: BLE001 - the database is still down: retried next time
-            return done
-        for event_id, body in queued:
-            if self._drain(AuditEvent.model_validate_json(body)):
-                self._db.run("DELETE FROM audit_outbox WHERE event_id = ?", (event_id,))
-                done += 1
-        return done
-
-    def _drain(self, event: AuditEvent) -> bool:
-        try:
-            self._append(event)
-        except DuplicateEvent:
-            pass
-        except Exception:  # noqa: BLE001 - stays queued, retried next time
-            return False
-        return True
-
-    def verify_object(self, key: str) -> bool:
-        """The event's row holds its own content's hash and links to the row before it, which holds its own."""
-        found = self._db.run("SELECT seq FROM audit_entries WHERE event_id = ?", (key,))
-        if not found:
-            return False
-        s = found[0][0]
-        rows = self._db.run(
-            "SELECT seq, at, run_id, kind, body, prev, hash FROM audit_entries "
-            "WHERE seq IN (?, ?) ORDER BY seq",
-            (s - 1, s),
-        )
-        by = {r[0]: r for r in rows}
-        row, before = by.get(s), by.get(s - 1)
-        if row is None or (s > 1 and before is None):
-            return False
-        prev = before[6] if before else GENESIS
-        return (
-            row[5] == prev
-            and _hash(row[5], *row[:5]) == row[6]
-            and (before is None or _hash(before[5], *before[:5]) == before[6])
-        )
-
-    def events(self, run_id: str | None = None) -> list[AuditEvent]:
-        if run_id is None:
-            rows = self._db.run("SELECT body FROM audit_entries ORDER BY seq")
-        else:
-            rows = self._db.run(
-                "SELECT body FROM audit_entries WHERE run_id = ? ORDER BY seq", (run_id,)
             )
-        return [AuditEvent.model_validate_json(body) for (body,) in rows]
 
-    # --- checkpoints and verification ---------------------------------------------------------------
-
-    def signed_through(self) -> int:
-        """The last row a checkpoint covers (0 when none does)."""
-        top = self._db.run("SELECT MAX(seq) FROM audit_checkpoints")
-        return int(top[0][0]) if top and top[0][0] is not None else 0
-
-    def checkpoint(self) -> int | None:
-        """Sign the current head (once) and anchor it. Returns the head's seq, or None when there is nothing to
-        sign, no signer, or the signing failed. Never raises: a failure is logged by its kind only and the next
-        call retries; the chain itself is untouched."""
-        if self.signer is None:
-            return None
-        try:
-            self._retry_anchors()
-            last = self._db.run("SELECT seq, hash FROM audit_entries ORDER BY seq DESC LIMIT 1")
-            if not last:
-                return None
-            seq, head = last[0]
-            if self.signed_through() >= seq:
-                return seq
-            signature = self.signer.sign(_signed_message(seq, head)).hex()
-            new = self._db.run(
-                "INSERT INTO audit_checkpoints (seq, hash, signature, alg, key_label) "
-                "VALUES (?, ?, ?, ?, ?) ON CONFLICT (seq) DO NOTHING RETURNING seq",
-                (seq, head, signature, self.signer.alg, signer_label(self.signer)),
-            )
-        except Exception as exc:  # noqa: BLE001 - evidence, not a gate (design 4.8)
-            _LOG.error("audit checkpoint not signed (%s); retried next time", type(exc).__name__)
-            return None
-        if new and self.anchor is not None:
-            self._anchor(seq, head, signature)
-        return seq
-
-    def _anchor(self, seq: int, head: str, signature: str) -> None:
-        try:
-            if self._anchor_takes_meta:
-                self.anchor.put(
-                    seq, head, signature, alg=self.signer.alg, key_label=signer_label(self.signer)
-                )
-            else:
-                self.anchor.put(seq, head, signature)
-        except Exception as exc:  # noqa: BLE001 - an anchor outage must not stop the recording
-            _LOG.error(
-                "audit checkpoint %s not anchored (%s); retried next time", seq, type(exc).__name__
-            )
-            self._unanchored[seq] = (head, signature)
-        else:
-            self._unanchored.pop(seq, None)
-
-    def _retry_anchors(self) -> None:
-        for seq, (head, signature) in sorted(self._unanchored.items()):
-            self._anchor(seq, head, signature)
-
-    def verify(self) -> Verification:
-        """Recompute the whole chain, check every checkpoint signature and, with an anchor, every anchor. Never
-        raises: damage or an unreachable store is a finding."""
-        try:
-            rows = self._db.run(_ALL_ROWS)
-            stored = self._db.run(
-                "SELECT seq, hash, signature, alg FROM audit_checkpoints ORDER BY seq"
-            )
-            checkpoints = [row[:3] for row in stored]
-            row_algs = {row[0]: row[3] for row in stored if row[3]}
-            public = self.signer.public_key() if self.signer is not None else None
-            anchors = self.anchor.all() if self.anchor is not None else None
-        except Exception as exc:  # noqa: BLE001
-            # The class only: driver messages can carry the host and user.
-            return Verification(
-                problems=[f"the audit cannot be read ({type(exc).__name__})"], unreadable=True
-            )
-        alg = self.signer.alg if self.signer is not None else "ed25519"
-        return verify_rows(rows, checkpoints, public, anchors, alg, row_algs)
+        _each(waiting, orphan, "stuck WAITING_FOR_APPROVAL")
 
 
-def verify_rows(
-    rows: list,
-    checkpoints: list,
-    public_key: bytes | None,
-    anchors: dict[int, tuple[str, str]] | None = None,
-    alg: Alg = "ed25519",
-    row_algs: dict[int, str] | None = None,
-) -> Verification:
-    """Rows and checkpoints as read from the tables, in seq order. With `anchors`, every checkpoint must also
-    match the copy written out of reach when it was made. `row_algs` is the scheme each checkpoint row recorded
-    (seq -> alg); a row without one (written before 0004, or by an older runtime) is checked with `alg`."""
-    result = Verification(rows=len(rows))
-    hashes = _check_chain(rows, result.problems)
-    if public_key is None:
-        if checkpoints:
-            result.problems.append("checkpoints exist but no signer is configured to check them")
-    else:
-        _check_checkpoints(checkpoints, hashes, public_key, result, alg, row_algs or {})
-    if anchors is not None:
-        _check_anchors(checkpoints, anchors, result.problems)
-    return result
+def checkpoint(ctx: TickContext) -> None:
+    """Sign an audit checkpoint when the audit kind has them (`chain`); others have nothing to do."""
+    fn = getattr(ctx.app.audit, "checkpoint", None)
+    if fn is not None:
+        fn()
 
 
-def _check_chain(rows: list, problems: list[str]) -> dict[int, str]:
-    hashes: dict[int, str] = {}
-    prev = GENESIS
-    for expected, row in enumerate(rows, 1):
-        seq, at, run_id, kind, body, stored_prev, stored_hash, event_id = row
-        if seq != expected:
-            problems.append(f"row {expected} is missing (next row is {seq})")
-        if stored_prev != prev:
-            problems.append(f"row {seq} does not link to the row before it")
-        if _hash(stored_prev, seq, at, run_id, kind, body) != stored_hash:
-            problems.append(f"row {seq} was changed after it was written")
-        elif _body_event_id(body) != event_id:
-            # The event_id column is outside the hash (it is the dedupe index); the body inside it names
-            # the event, so a changed column (pointing verify_object or a dedupe elsewhere) is caught here.
-            problems.append(f"row {seq} event id column does not match its body")
-        hashes[seq] = stored_hash
-        prev = stored_hash
-    return hashes
+def audit_reconcile(ctx: TickContext) -> None:
+    """Drain the audit outbox: events that could not be appended after their side effect wait there (or in memory)
+    until this runs. Logs how many were written, so a growing backlog is visible (audit A-01). A kind without a
+    `reconcile` has nothing to drain."""
+    fn = getattr(ctx.app.audit, "reconcile", None)
+    if fn is None:
+        return
+    _LOG.info("audit_reconcile drained=%d", fn())
 
 
-def _body_event_id(body: str) -> str | None:
+def purge_evidence(ctx: TickContext) -> None:
+    """Delete tool calls and redaction maps past their retention, at most about every `retention.purge_every_s`.
+
+    The two CEILINGS always run first and need no hook: a redaction map older than `held_maps_max_days` (400) and
+    a tool call older than `held_tool_calls_max_days` (400) go whatever any hold says. Then the ordinary purge
+    (30 days by default): runs that `hooks.hold_run_ids()` names (labelled wrong, harmful or missed, or demoted;
+    none before K6) keep their tool calls and maps until the ceilings. A hold is NOT retroactive: a run already
+    purged before it was named is gone. If the hook raises, the ordinary purge is skipped (keeping too much for a
+    while is the safe direction), the ceilings have already run, the error is logged, and the step then FAILS so
+    `tick_state.last_error` shows it."""
+    app = ctx.app
+    keep = app.config.retention
+    store = app.purge_store or app.store  # the deleting identity, when one is configured
+    maps = store.purge_redaction_maps(
+        ctx.now - timedelta(days=keep.held_maps_max_days), keep_run_ids=frozenset(), keep_open=False
+    )
+    calls = store.purge_tool_calls(
+        ctx.now - timedelta(days=keep.held_tool_calls_max_days), keep_run_ids=frozenset()
+    )
+    hook = app.runtime.hooks.hold_run_ids
     try:
-        return json.loads(body).get("event_id")
-    except (ValueError, AttributeError):
-        return None
-
-
-def _check_checkpoints(
-    checkpoints: list,
-    hashes: dict[int, str],
-    public_key: bytes,
-    result: Verification,
-    alg: Alg = "ed25519",
-    row_algs: dict[int, str] | None = None,
-) -> None:
-    for seq, head, signature in checkpoints:
-        try:
-            raw = bytes.fromhex(signature)
-        except ValueError:
-            raw = b""
-        if not verify_signature(
-            public_key,
-            raw,
-            _signed_message(seq, head),
-            (row_algs or {}).get(seq, alg),  # type: ignore[arg-type]
-        ):
-            result.problems.append(f"checkpoint {seq} has an invalid signature")
-            continue
-        if hashes.get(seq) != head:
-            result.problems.append(f"checkpoint {seq} was signed over a different history")
-            continue
-        result.signed_through = max(result.signed_through, seq)
-
-
-def _check_anchors(
-    checkpoints: list, anchors: dict[int, tuple[str, str]], problems: list[str]
-) -> None:
-    stored = {seq: (head, signature) for seq, head, signature in checkpoints}
-    for seq, pair in sorted(stored.items()):
-        if seq not in anchors:
-            problems.append(f"checkpoint {seq} was never anchored")
-        elif anchors[seq] != pair:
-            problems.append(f"checkpoint {seq} differs from its anchor: the history was rewritten")
-    for seq in sorted(set(anchors) - set(stored)):
-        problems.append(f"anchor {seq} has no checkpoint here: the database lost history")
-
-
-def verify_anchor_bodies(
-    bodies: list[bytes],
-    public_key: bytes,
-    names: list[str] | None = None,
-    assume_alg: Alg | None = None,
-) -> list[str]:
-    """Offline: check the anchor objects alone against a public key. The scheme and key label come from each
-    body (`alg`, `key_label`), so nothing else has to be known. A body from the previous build holds `key_id`
-    (possibly an ARN): it is accepted but never compared or printed, so an upgraded chain with old and new
-    anchors is not a finding and no account id reaches the report.
-
-    `names` (the object names exactly as listed, e.g. `anchors/000000000002.json`, same order as `bodies`): each
-    must be `anchors.key(seq)` for the body's own seq, so an object copied under another name is a finding.
-
-    Legacy anchors (written before `alg` existed) cannot say how they were signed. Upgrade path, no rewrite of
-    the immutable objects: pass `assume_alg` (the scheme of the key that was configured then). The signature
-    check against the public key is then the proof: a wrong guess fails every signature, never passes. Such a
-    body has no label, so the different-keys check skips it."""
-    if not bodies:
-        return ["no anchor objects given: nothing was verified"]
-    if names is not None and len(names) != len(bodies):
-        return ["names and bodies differ in length: nothing was verified"]
-    problems = []
-    labels = set()
-    seqs: set[int] = set()
-    for i, raw in enumerate(bodies):
-        try:
-            a = json.loads(raw)
-            seq, head = a["seq"], a["hash"]
-            alg = a.get("alg") or assume_alg
-            label = a.get("key_label")
-            if type(seq) is not int or seq < 1 or alg is None:
-                raise TypeError("seq or alg")
-            if label is not None:
-                if not isinstance(label, str) or not label:
-                    raise TypeError("label")
-                labels.add(label)
-            elif (
-                "alg" in a and "key_id" not in a
-            ):  # a current body names its key; a legacy one has `key_id`
-                raise TypeError("label")
-            signature = bytes.fromhex(a["signature"])
-        except (ValueError, KeyError, TypeError, AttributeError):
-            problems.append(
-                "an anchor body is unreadable or has no alg and key label "
-                "(a pre-alg anchor: pass assume_alg)"
-            )
-            continue
-        if names is not None and names[i] != anchors.key(seq):
-            problems.append(f"anchor object {names[i]!r} holds seq {seq}: the name does not match")
-        if seq in seqs:
-            problems.append(f"anchor {seq} appears twice")
-        seqs.add(seq)
-        if not verify_signature(public_key, signature, _signed_message(seq, head), alg):
-            problems.append(f"anchor {seq} has an invalid signature")
-    if len(labels) > 1:
-        problems.append(
-            f"anchors report {len(labels)} different key labels: {sorted(labels)} (a relabelled or rotated key)"
+        held = frozenset(hook() or ()) if keep.hold_labelled and hook is not None else frozenset()
+    except Exception as exc:
+        _LOG.error(
+            "purge_evidence: hold_run_ids raised %s: ordinary purge skipped this tick, ceilings applied",
+            type(exc).__name__,
         )
-    return problems
+        raise
+    calls += store.purge_tool_calls(
+        ctx.now - timedelta(days=keep.tool_calls_days), keep_run_ids=held
+    )
+    maps += store.purge_redaction_maps(
+        ctx.now - timedelta(days=keep.redaction_maps_days), keep_run_ids=held
+    )
+    _LOG.info("purge_evidence tool_calls=%d redaction_maps=%d held_runs=%d", calls, maps, len(held))
 
 
-# --------------------------------------------------------------------------- table factory
+def reprobe_sources(ctx: TickContext) -> None:
+    """Probe every configured source's scope again (design 6.6): RBAC can widen after start-up. A problem fails
+    the step loudly (`tick_state.last_error`, exit 1) until the scope is read-only again."""
+    from hadavin_sdk import sources as sources_mod
 
-
-def build(settings, deps) -> ChainAudit:
-    """`backends.audit: {kind: chain, checkpoint_every, anchor}`, in the store's database."""
-    from hadavin_sdk.store.memory import MemoryStore
-
-    store = deps.store
-    if isinstance(store, MemoryStore):
-        db = _Db.memory()
-    elif hasattr(store, "_db") and hasattr(store, "_lock"):
-        # The postgres store's connection and lock (one connection per process; schema from `migrate`).
-        db = _Db(store._db, store._lock, pg=True)
+    app = ctx.app
+    found: list[str] = []
+    for key, source in app.sources.items():
+        token = sources_mod.PROBING.set(True)
         try:
-            db.run("SELECT alg, key_label FROM audit_checkpoints LIMIT 1")
-        except Exception as exc:  # noqa: BLE001 - any driver error here means "not migrated or unreachable"
-            from hadavin_sdk.store.protocol import StoreUnavailable, is_connectivity_error
+            problems = sources_mod.scope_problems({key: source}, app.config.scope_inventory)
+        finally:
+            sources_mod.PROBING.reset(token)
+        if problems:  # fail CLOSED: tools stop reading this source until a probe passes again
+            app.disabled_sources.add(key)
+            found += problems
+        else:
+            app.disabled_sources.discard(key)
+    if found:
+        raise RuntimeError("source scope: " + "; ".join(found))
 
+
+def heartbeat(ctx: TickContext) -> None:
+    """After the steps (not a step): one line with this tick's outcome."""
+    failed = sorted(n for n, r in ctx.results.items() if r == FAILED)
+    _LOG.info("tick ok=%s failed=%s", not failed, ",".join(failed) or "-")
+
+
+STEPS: list[TickStep] = [
+    TickStep("sweep", 0, sweep),
+    TickStep("reconcile", 0, reconcile),
+    TickStep("stuck", 0, stuck),
+    TickStep("checkpoint", 0, checkpoint),
+    TickStep(
+        "purge_evidence",
+        0,
+        purge_evidence,
+        interval=lambda ctx: ctx.app.config.retention.purge_every_s,
+    ),  # its own interval: Config.retention.purge_every_s
+    TickStep(
+        "reprobe_sources",
+        0,
+        reprobe_sources,
+        interval=lambda ctx: ctx.app.config.evidence.source_reprobe_s,
+    ),
+    TickStep("audit_reconcile", 0, audit_reconcile),
+]
+STORE_UNREACHABLE = 4
+STORE_NOT_READY = (
+    2  # the store answers but a table or grant is missing: same code as a config error
+)
+
+
+def _safe_log(msg: str, *args: object) -> None:
+    """Log an error line; a failing log handler must never change the exit code."""
+    try:
+        _LOG.error(msg, *args)
+    except Exception:  # noqa: BLE001, S110 - safe to swallow: this IS the error report, so there is nowhere left to report to; the caller still returns its exit code
+        pass
+
+
+_PROBE = "heartbeat"  # the tick_state key read once, to find out whether the store answers
+
+
+_DRIVERS = ("psycopg", "urllib", "http", "botocore", "boto3", "socket", "ssl")
+
+
+def _message(exc: Exception) -> str:
+    """Redacted and one line. Driver and network errors carry hosts and users: their type says enough."""
+    if type(exc).__module__.split(".")[0] in _DRIVERS or isinstance(exc, OSError):
+        return "(driver error; details withheld)"
+    # redact first, then keep the first 500 characters (a cut first splits a secret); `safe_head` bounds the work
+    return safe_head(str(exc), 500).replace("\n", " ")
+
+
+def _run_step(ctx: TickContext, step: TickStep) -> str:
+    store = ctx.app.store
+    prev, error = None, None
+    try:
+        prev = store.get_tick_state(step.name)
+        every = step.interval(ctx) if step.interval else step.every_s
+        if (
+            step.interval
+        ):  # a tick comes every 30-60 s: due a tick-period early, so the cadence does not drift
+            every = max(every - TICK_SLACK_S, every // 2)
+        # A step whose last run FAILED is due again at the next tick (a persistently raising hold hook must
+        # not push the 30-day purge a whole interval away each time).
+        if (
+            every
+            and prev
+            and prev.last_error is None
+            and (ctx.now - prev.last_run_at).total_seconds() < every
+        ):
+            return SKIPPED
+        step.fn(ctx)
+    except Exception as exc:  # noqa: BLE001 - one step never stops the others
+        error = f"{type(exc).__name__}: {_message(exc)}"
+        _LOG.error("step=%s error_kind=%s message=%s", step.name, type(exc).__name__, _message(exc))
+    try:
+        store.save_tick_state(
+            TickState(
+                step=step.name,
+                last_run_at=ctx.now,
+                last_ok_at=ctx.now if error is None else (prev.last_ok_at if prev else None),
+                last_error=error,
+            )
+        )
+    except Exception as exc:  # noqa: BLE001 - an unrecorded step counts as failed
+        _LOG.error(
+            "step=%s error_kind=%s message=tick_state not saved", step.name, type(exc).__name__
+        )
+        return FAILED
+    return OK if error is None else FAILED
+
+
+def run_tick(app: App, now: datetime | None = None, steps: list[TickStep] | None = None) -> int:
+    """One tick. Returns the exit code: 0 ok, 1 a step failed, 4 the store is unreachable, 2 the store answers but
+    is not ready (STORE_NOT_READY). A config that does not load is the caller's, before this runs."""
+    ctx = TickContext(app, now or app.approvals.clock())
+    try:
+        app.store.get_tick_state(_PROBE)  # the store answers, or nothing runs
+    except Exception as exc:  # noqa: BLE001 - any store failure: change nothing
+        if is_connectivity_error(exc):
+            _safe_log("step=- error_kind=%s message=store unreachable", type(exc).__name__)
+            return STORE_UNREACHABLE
+        _safe_log(
+            "step=- error_kind=%s message=store answers but is not ready: run hadavin-sdk migrate "
+            "and check the runtime role's grants",
+            type(exc).__name__,
+        )
+        return STORE_NOT_READY
+    for step in STEPS if steps is None else steps:
+        ctx.results[step.name] = _run_step(ctx, step)
+    try:
+        heartbeat(ctx)
+    except Exception as exc:  # noqa: BLE001 - a log line never changes the exit code
+        _safe_log("step=- error_kind=%s message=heartbeat line not written", type(exc).__name__)
+    if FAILED in ctx.results.values():
+        # A scheduler must tell "the store went away" (4) from "a step failed with the store up" (1).
+        try:
+            app.store.get_tick_state(_PROBE)
+        except Exception as exc:  # noqa: BLE001 - any store failure
             if is_connectivity_error(exc):
-                # A connection-level failure is an outage, not a missing migration: `tick` exits 4, not 2.
-                raise StoreUnavailable(
-                    f"audit chain: the store is unreachable ({type(exc).__name__})"
-                ) from None
-            raise ConfigError(
-                f"audit chain: the audit tables are missing; run hadavin-sdk migrate "
-                f"({type(exc).__name__})"
-            ) from None
-    else:
-        raise ConfigError("audit chain: needs store memory or postgres")
-    if deps.anchor is not None and deps.signer is None:
-        raise ConfigError("audit chain: an anchor needs a signer (backends.signer)")
-    # The anchor is its own capability (backends.anchor), built before the audit and handed in through Deps.
-    return ChainAudit(db, deps.signer, deps.anchor, settings.checkpoint_every)
+                _safe_log(
+                    "step=- error_kind=%s message=store unreachable after the steps",
+                    type(exc).__name__,
+                )
+                return STORE_UNREACHABLE
+            # answers but not ready: the step failures stand, exit 1
+    return 1 if FAILED in ctx.results.values() else 0

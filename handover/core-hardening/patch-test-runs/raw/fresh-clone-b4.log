@@ -44,3 +44,27 @@ FAILED tests/test_no_reference_material.py::test_no_vendor_brand_string_is_track
 !!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
 ============================== 1 failed in 2.46s ===============================
 rc=1
+cmd (test 2 alone, because -x stops at first failure): uv run ... pytest tests/test_repo_rules.py::test_licences_are_proprietary -p no:cacheprovider -x --no-header
+============================= test session starts ==============================
+collected 1 item
+
+tests/test_repo_rules.py F
+
+=================================== FAILURES ===================================
+________________________ test_licences_are_proprietary _________________________
+
+    def test_licences_are_proprietary():
+        files = tracked_files(ROOT)
+        assert {"LICENSE", "pyproject.toml"} <= set(files)
+>       assert licence_problems(ROOT, files) == []
+E       AssertionError: assert ['handover/pr...Hadavin', ...] == []
+E         
+E         Left contains 10 more items, first extra item: 'handover/promotion-inputs/apexc/LICENSE: not the proprietary licence text'
+E         Use -v to get more diff
+
+tests/test_repo_rules.py:120: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_repo_rules.py::test_licences_are_proprietary - AssertionErr...
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+============================== 1 failed in 0.13s ===============================
+rc=1
