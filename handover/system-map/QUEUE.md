@@ -16,3 +16,6 @@ M5 [round 2 applied; rewrite for M7 running] OWNER VIEW: one-page plain-words st
 M6 [RUNNING 2026-11-16] Idle fallback: architecture audit rule R460 on the next unreviewed area of your own audit.
 
 M7 [UPDATE 2026-11-16] Read inputs/FACTS-ALREADY-DONE.md: M3 drift check must flag every document that still lists a done item as an open owner step (OWNER-STEPS v3, handoff, orders); M5 OWNER VIEW lists only the still-owner-only items.
+
+M8 [ORDER 016] Lane: structure and size audit of the whole studio repo from your checkout (largest folders, duplicated documents, stale handoff-like files, files over 1 MB tracked in git) with an archive cut list (archive, never delete).
+M9 [ORDER 016] Re-check every finding of FACTS-DIGEST (read via git show origin/main is not available: use inputs/ files): flag which of your own documents still contain an owner-open item that is already done.
