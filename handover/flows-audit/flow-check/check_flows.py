@@ -69,6 +69,162 @@ def targets_of(outs):
         for idx, lst in enumerate(lists):
             for c in lst or []: yield typ, idx, c.get("node")
 
+# ---------------- F8 additions ----------------
+ONERROR_OK = {None, "stopWorkflow", "continueRegularOutput", "continueErrorOutput"}
+EXTERNAL = ("postgres", "httpRequest", "hubspot", "emailSend", "executeWorkflow")
+CRED_TYPES = ("postgres", "emailSend", "hubspot")  # these always need an attached credential
+# secret shapes are built from parts so this file holds no secret-looking literal (the one allowed literal is the AWS example key)
+AWS_EXAMPLE = "AKIA" + "IOSFODNN7EXAMPLE"
+SECRET_RX = [("AWS access key id", re.compile(r"AKIA[0-9A-Z]{16}")), ("sk- style key", re.compile(r"\bsk-[A-Za-z0-9_-]{20,}")),
+             ("GitHub token", re.compile(r"\b(?:gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,})")),
+             ("Slack token", re.compile(r"\bxox[abprs]-[A-Za-z0-9-]{10,}")), ("private key block", re.compile("-----" + "BEGIN [A-Z ]*PRIVATE KEY")),
+             ("JWT", re.compile(r"\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.")), ("password inside a URL", re.compile(r"://[^/\s:@{}]+:[^/\s:@{}]{3,}@")),
+             ("literal Bearer value", re.compile(r"Bearer\s+(?![{$=])[A-Za-z0-9._~+/-]{12,}"))]
+SECRET_KEY = re.compile(r"(pass(word|wd)?|secret|token|api[-_]?key|authorization|private[-_]?key|access[-_]?key)", re.I)
+SAFE_VALUE = re.compile(r"\$env\.|\$env\[|\$credentials|\$secrets|\$vars|\{\{\s*\$")
+PLACEHOLDER_VALUE = re.compile(r"^[A-Z][A-Z0-9_]{5,}$")
+
+def kv_items(o, path=""):
+    if isinstance(o, dict):
+        for k, v in o.items():
+            yield from kv_items(v, path + "." + str(k)); 
+            if isinstance(v, str): yield str(k), v, path + "." + str(k)
+    elif isinstance(o, list):
+        for i, v in enumerate(o):
+            if isinstance(v, dict) and "name" in v and isinstance(v.get("value"), str): yield str(v["name"]), v["value"], "%s[%s]" % (path, v["name"])
+            yield from kv_items(v, "%s[%d]" % (path, i))
+
+def secret_scan(n, tag):
+    hits = []
+    for s in strings(n):
+        s2 = s.replace(AWS_EXAMPLE, "")
+        for label, rx in SECRET_RX:
+            if rx.search(s2): hits.append(label)
+    for k, v, p in kv_items(n.get("parameters", {})):
+        if SECRET_KEY.search(k) and len(v) >= 6 and not SAFE_VALUE.search(v) and not PLACEHOLDER_VALUE.match(v) and v.replace(AWS_EXAMPLE, "") != "" and not v.startswith("=") and k.lower() not in ("authentication", "genericauthtype", "nodecredentialtype"):
+            hits.append("literal value under key %r" % k)
+    for h in sorted(set(hits)): fail(tag, "node %s: secret-looking value (%s); keep secrets in n8n credentials or $env" % (n["name"], h))
+
+def webhook_paths(n, nodes, adj, tag):
+    """Every path from a responseNode webhook must end in respondToWebhook. Walk is stopped at respond nodes."""
+    mode = (n.get("parameters") or {}).get("responseMode", "onReceived")
+    if mode != "responseNode":
+        print("  [%s] webhook %s responseMode=%s (n8n answers by itself, no respondToWebhook needed)" % (tag, n["name"], mode)); return
+    byname = {x["name"]: x for x in nodes}; isresp = lambda x: byname[x]["type"] == "n8n-nodes-base.respondToWebhook"
+    seen, stack, bare = {n["name"]}, [n["name"]], []
+    while stack:
+        x = stack.pop()
+        if isresp(x): continue
+        nxt = [t for t in adj.get(x, ()) if t in byname]
+        if not nxt and x != n["name"]: bare.append(x)
+        for t in nxt:
+            if t not in seen: seen.add(t); stack.append(t)
+    if not nxt_any(n["name"], adj): bare.append(n["name"])
+    resp = [x for x in seen if isresp(x)]
+    if bare: fail(tag, "webhook %s (responseNode): path(s) end WITHOUT respondToWebhook at %s" % (n["name"], sorted(bare)))
+    if not resp: fail(tag, "webhook %s (responseNode): no respondToWebhook reachable" % n["name"])
+    risky = sorted(x for x in seen if not isresp(x) and byname[x]["type"].split(".")[-1] in EXTERNAL and byname[x].get("onError") in (None, "", "stopWorkflow"))
+    if risky: warn(tag, "webhook %s: if %s fails the run stops and the caller gets no answer (error path has no reply; read from the file, n8n not run)" % (n["name"], risky))
+    print("  [%s] webhook %s: %d respondToWebhook node(s) reachable %s; paths without a reply: %s" % (tag, n["name"], len(resp), sorted(resp), sorted(bare) or "none"))
+
+def nxt_any(x, adj): return bool(adj.get(x))
+
+def extra_checks(d, tag, nodes, adj, trig, sticky):
+    byname = {x["name"]: x for x in nodes}; conns = d.get("connections", {})
+    # shape of connections, trigger inputs, sticky notes
+    for src, outs in conns.items():
+        if not isinstance(outs, dict) or any(not isinstance(l, list) or any(l2 is not None and not isinstance(l2, list) for l2 in l) for l in outs.values()):
+            fail(tag, "connections of %r are not {type: [[{node,type,index}]]}" % src); continue
+        if src in sticky: fail(tag, "sticky note %r has a connection" % src)
+        for typ, lists in outs.items():
+            for lst in lists:
+                for c in lst or []:
+                    if not isinstance(c, dict) or not isinstance(c.get("index"), int) or c.get("index") < 0 or not c.get("type"): fail(tag, "connection %s -> %s lacks a valid type/index" % (src, c.get("node") if isinstance(c, dict) else c))
+                    elif c.get("node") in trig and byname.get(c["node"], {}).get("type") != "n8n-nodes-base.executeWorkflowTrigger" or c.get("node") in trig: fail(tag, "incoming link %s -> %s into a trigger node (a trigger has no input)" % (src, c["node"]))
+    real = [n for n in nodes if n["type"] != STICKY]
+    if sticky: print("  [%s] sticky notes: %d %s" % (tag, len(sticky), sorted(sticky)))
+    if not real: fail(tag, "sticky-note-only file: no executable node")
+    elif not [n for n in real if n["name"] not in trig]: fail(tag, "file holds only trigger and sticky notes: nothing to run")
+    ids = [n["id"] for n in nodes if "id" in n]
+    di = sorted(k for k, v in collections.Counter(ids).items() if v > 1)
+    if di: fail(tag, "duplicate node ids %s" % di)
+    low = collections.Counter(re.sub(r"\s+", " ", n["name"].strip().lower()) for n in nodes)
+    ln = sorted(k for k, v in low.items() if v > 1 and k not in [x.lower() for x in []])
+    names = [n["name"] for n in nodes]
+    near = sorted(k for k in ln if len({x for x in names if re.sub(r"\s+", " ", x.strip().lower()) == k}) > 1)
+    if near: fail(tag, "names that differ only by case or spaces %s" % near)
+    # per node settings
+    noretry, silent = [], []
+    for n in real:
+        nm, short = n["name"], n["type"].split(".")[-1]
+        pos = n.get("position")
+        if not (isinstance(pos, list) and len(pos) == 2 and all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in pos)): fail(tag, "node %s lacks position [x, y]" % nm)
+        if not isinstance(n.get("typeVersion"), (int, float)) or isinstance(n.get("typeVersion"), bool): fail(tag, "node %s lacks a numeric typeVersion" % nm)
+        if n.get("onError") not in ONERROR_OK: fail(tag, "node %s onError=%r is not one of stopWorkflow, continueRegularOutput, continueErrorOutput" % (nm, n.get("onError")))
+        if "retryOnFail" in n and not isinstance(n["retryOnFail"], bool): fail(tag, "node %s retryOnFail=%r is not a boolean" % (nm, n["retryOnFail"]))
+        if n.get("retryOnFail"):
+            mt, wb = n.get("maxTries", 3), n.get("waitBetweenTries", 1000)
+            if not isinstance(mt, int) or isinstance(mt, bool) or not 2 <= mt <= 5: fail(tag, "node %s maxTries=%r (n8n allows whole numbers 2 to 5)" % (nm, mt))
+            if not isinstance(wb, int) or isinstance(wb, bool) or not 0 <= wb <= 5000: fail(tag, "node %s waitBetweenTries=%r (n8n allows 0 to 5000 ms)" % (nm, wb))
+        elif "maxTries" in n or "waitBetweenTries" in n: warn(tag, "node %s sets maxTries/waitBetweenTries but retryOnFail is not true (ignored by n8n)" % nm)
+        if "alwaysOutputData" in n and not isinstance(n["alwaysOutputData"], bool): fail(tag, "node %s alwaysOutputData=%r is not a boolean" % (nm, n["alwaysOutputData"]))
+        if n.get("alwaysOutputData") and n.get("onError") == "continueErrorOutput": warn(tag, "node %s has alwaysOutputData together with continueErrorOutput (F-002 pattern; n8n behaviour NOT proven here)" % nm)
+        if n.get("onError") == "continueRegularOutput" and short in EXTERNAL: silent.append(nm)
+        if short in EXTERNAL and not n.get("retryOnFail"): noretry.append(nm)
+        if n.get("disabled") is True: warn(tag, "node %s is disabled (links through it do nothing)" % nm)
+        # credentials
+        cr = n.get("credentials")
+        need = short in CRED_TYPES or (short == "httpRequest" and (n.get("parameters") or {}).get("authentication") not in (None, "none", ""))
+        if need and (not isinstance(cr, dict) or not cr): fail(tag, "node %s (%s) has no credentials block" % (nm, short))
+        for k, v in (cr or {}).items():
+            if not isinstance(v, dict) or not str(v.get("name") or "").strip(): fail(tag, "node %s credential %r has no name" % (nm, k))
+            elif not str(v.get("id") or "").strip(): fail(tag, "node %s credential %r has no id (name %r)" % (nm, k, v.get("name")))
+        secret_scan(n, tag)
+        if n["type"] == "n8n-nodes-base.webhook":
+            au = (n.get("parameters") or {}).get("authentication", "none")
+            if au in ("none", None): (fail if OPTS["webhook_auth"] else warn)(tag, "webhook %s has no authentication (anyone who knows the address can post)" % nm)
+            webhook_paths(n, nodes, adj, tag)
+    if noretry: warn(tag, "external-call nodes without retryOnFail: %s" % sorted(noretry))
+    if silent: warn(tag, "external-call nodes with onError=continueRegularOutput (an error becomes normal-looking data): %s" % sorted(silent))
+    # references: upstream check (a node that is not upstream may not have run when the expression reads it)
+    anc = {}
+    rev = collections.defaultdict(set)
+    for a, ts in adj.items():
+        for t in ts: rev[t].add(a)
+    def ancestors(x):
+        if x in anc: return anc[x]
+        out, st = set(), [x]
+        while st:
+            for p in rev.get(st.pop(), ()):
+                if p not in out: out.add(p); st.append(p)
+        anc[x] = out; return out
+    for n in real:
+        for s in strings(n.get("parameters", {})):
+            for m in REF.finditer(s):
+                ref = m.group(1) or m.group(2) or m.group(3) or m.group(4)
+                if ref in byname and ref != n["name"] and ref not in ancestors(n["name"]) and not (n["type"].endswith("Trigger")): warn(tag, "node %s reads $('%s') which is not upstream of it (it may not have run)" % (n["name"], ref))
+                if ref == n["name"]: warn(tag, "node %s reads its own output $('%s')" % (n["name"], ref))
+    if OPTS["table"]:
+        print("  error settings [%s]:" % tag)
+        print("    %-18s %-18s %-22s %-10s %s" % ("node", "type", "onError", "retry", "alwaysOutputData"))
+        for n in nodes: print("    %-18s %-18s %-22s %-10s %s" % (n["name"], n["type"].split(".")[-1], n.get("onError") or "(default stop)", ("x%s/%sms" % (n.get("maxTries", 3), n.get("waitBetweenTries", 1000))) if n.get("retryOnFail") else "no", "yes" if n.get("alwaysOutputData") else "no"))
+
+def cross_file(dr, files):
+    seen = {}
+    for fn in files:
+        p = os.path.join(dr, fn)
+        try: d = json.load(open(p, encoding="utf-8"))
+        except Exception: continue
+        for n in d.get("nodes", []) if isinstance(d, dict) else []:
+            if isinstance(n, dict) and n.get("type") == "n8n-nodes-base.webhook":
+                key = (str((n.get("parameters") or {}).get("httpMethod", "GET")).upper(), str((n.get("parameters") or {}).get("path")))
+                if key in seen: fail(dr, "two webhooks share method+path %s: %s and %s" % (key, seen[key], fn))
+                else: seen[key] = fn
+                wid = n.get("webhookId")
+                if wid:
+                    if ("id", wid) in seen: fail(dr, "two webhooks share webhookId %r: %s and %s" % (wid, seen[("id", wid)], fn))
+                    else: seen[("id", wid)] = fn
+
 def check_flow(d, tag, expect, baseline_d):
     nodes = d.get("nodes")
     if not isinstance(nodes, list): fail(tag, "no nodes list"); return
@@ -247,13 +403,15 @@ def main(argv):
             try: k, v = val().split("=", 1); n, c = v.split(":"); expect[k] = {"nodes": int(n), "connections": int(c)}
             except (ValueError, IndexError): print("bad --expect value, want FILE=NODES:CONNS"); return 2
         elif a == "--expect-json": expect.update(json.load(open(val(), encoding="utf-8")))
-        elif a == "--files": files = val().split(",")
+        elif a == "--files": files = val().split(",")  # "all" = every *.json of each DIR
         elif a == "--baseline": baseline = val()
         elif a == "--patch-checks": pc = set(val().split(","))
         elif a == "--diff-base": diffbase = val()
         elif a == "--allow": allow = [x for x in val().split(",") if x]
         elif a == "--diff-out": diffout = val()
         elif a == "--quiet-info": quiet = True
+        elif a == "--require-webhook-auth": OPTS["webhook_auth"] = True
+        elif a == "--table": OPTS["table"] = True
         elif a.startswith("--"): print("unknown option", a); return 2
         else: dirs.append(a)
         i += 1
@@ -267,6 +425,7 @@ def main(argv):
         print("### %s" % dr)
         if not os.path.isdir(dr): fail(dr, "not a directory"); continue
         have = sorted(x for x in os.listdir(dr) if x.endswith(".json"))
+        if files == ["all"]: files = have
         if have != sorted(files): fail(dr, "file list %s != expected %s" % (have, sorted(files)))
         for fn in files:
             p = os.path.join(dr, fn); tag = "%s/%s" % (dr, fn)
@@ -281,6 +440,7 @@ def main(argv):
             if diffbase:
                 bd2 = load(os.path.join(diffbase, fn), "diff-base/" + fn)
                 if bd2: node_diff(bd2, d, fn, allow, tag, diffsum)
+        cross_file(dr, files)
     if diffbase:
         text = "\n".join(diffsum) + "\n"
         print(text)
