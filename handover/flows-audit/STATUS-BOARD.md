@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T10:12:11Z
+UPDATED_UTC: 2026-11-16T10:12:35Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -6,8 +6,8 @@ BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
 ITEMS_OPEN: 8
 PERCENT: 85
-AGENTS_RUNNING: 8
-CAPACITY: 0.52 load of 4 cores, mem 0/15 GB, disk free 27G, agents 8 (light+heavy per list)
+AGENTS_RUNNING: 7
+CAPACITY: 0.65 load of 4 cores, mem 0/15 GB, disk free 27G, agents 7 (light+heavy per list)
 INTERRUPTED: none
 FAILED: F8: r3 fixer reports ruff+format+bandit rc 0, self-test 538/0/52, 3 mutants killed (its own, not independent; evidence rerun running); n8n authentication values and credential kinds come from memory, UNVERIFIED; $env block (N8N_BLOCK_ENV_ACCESS_IN_NODE) unverified: 2 real-v5 nodes may fail; 2 real-v5 webhooks without auth (lead decision); raw/pristine-no-baseline.txt not regenerated
 F3: evidence r5: 113 OK, gates rc 0, 8 of 20 mutants survive; security review r3 (read only, nothing run): 3 Medium + 3 Low in clean-up, partial copies, check, delete (no value leak found); r6 fixer running; py3.9/3.10, macOS, real n8n not run
@@ -19,8 +19,9 @@ ROLES folder marked NOT FOR THE TAKE in its README (lead decision 3); necessity 
 claims lane B cite check: 127 of 226 B rows, 123 OK, 4 WRONG (B-107, B-155, B-114, B-184) sent to the r5 fixer; 99 B rows unchecked
 ORDER023 cancelled by ORDER 024: sed never ran (denied); 6 opus 64 sonnet 0 fable proven in REPORT.md
 claims cite lane A+rest of B: 200 rows, 198 OK, 2 WRONG (A-097 trace sentence reversed v1/v2 README; A-068 off by one); desk repo IS on this machine (/home/user/duplicate-proof-lead-desk-n8n head f3c39cf) so several UNTRACED rows can be traced: tracer running
-NEXT: Lanes: F3 r6, F8 r3 ev+design review, F5 r5 ev+facts, claims r5 ev+read, desk tracer
-PUSHED_UTC: 2026-11-16T10:12:11Z
+F5 evidence r5: checker check_runsheet_paste.py FAILS vs the new CLAIMS-TABLE (73 ids marked, B-219 has no row); 20 CLAIMS-TABLE line cites no longer hit the claimed text (valid in r4 layout only); checker crashes with no args; 23 of 44 changed rows not named in fix log; fixer will batch with facts review
+NEXT: F5 fix r6 after facts review (cites by anchor, B-219 row); lanes F3 r6, F8 ev+review, claims ev+read, desk tracer
+PUSHED_UTC: 2026-11-16T10:12:35Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -40,7 +41,6 @@ PUSHED_UTC: 2026-11-16T10:12:11Z
 | id | role | model | what it does | started UTC | expected end UTC | % | state | last output |
 |---|---|---|---|---|---|---|---|---|
 | a7f3r6 | f3-fix6 | sonnet | F3 round 6: kill 8 surviving mutants | 10:10 | 10:40 | 5 | running | fill_flows/fix-f3-r6.md |
-| f5ev5 | F5 r5 evidence runner | sonnet | checker + r4/r5 diff + cites | 10:14 | 10:34 | 5 | running | evidence-f5-r5.md |
 | f5rv5 | F5 r5 facts reviewer | sonnet | facts on real-v5 rows | 10:14 | 10:34 | 5 | running | (inline) |
 | clev5 | claims r5 evidence runner | sonnet | counts + verdict diff + cites | 10:18 | 10:38 | 5 | running | reviews-f1/evidence-claims-r5.md |
 | clrd5 | claims r5 stranger read (1-260) | sonnet | reader review of the new top | 10:18 | 10:35 | 5 | running | (inline) |

@@ -916,6 +916,10 @@ def do_delete(out_dir: str, force_hash: bool, no_manifest: bool = False) -> int:
             if force_hash and (no_manifest or not has_dir):
                 if mst.st_uid != me:
                     raise Refused("manifest is not owned by you; nothing deleted")
+                if no_manifest:  # a manifest that still reads fine is still the list to keep to
+                    with contextlib.suppress(Refused):
+                        files = _load_manifest(manifest_name, pfd)
+                        manifest_loaded = True
             else:
                 files = _load_manifest(manifest_name, pfd)
                 manifest_loaded = True

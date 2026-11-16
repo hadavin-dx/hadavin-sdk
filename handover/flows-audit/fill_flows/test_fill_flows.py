@@ -1510,8 +1510,13 @@ class Hardening(Base):
         self.assertEqual((code, "values file is not owned by you" in se), (1, True), se)
         self.assertFalse(os.path.exists(self.out()))
 
+    def _made_real(self):
+        out = self.out()
+        self.fill(src=self.copy_flows("real"), out=out)
+        return out
+
     def test_delete_takes_the_note_and_the_marker_last(self):
-        out = self.made("real")
+        out = self._made_real()
         order = []
         real = os.unlink
 
@@ -1526,7 +1531,7 @@ class Hardening(Base):
         self.assertTrue(order[-1].endswith(".manifest.json"))
 
     def test_delete_stopped_half_way_leaves_a_marked_folder(self):
-        out = self.made("real")
+        out = self._made_real()
         real, count = os.unlink, [0]
 
         def stop(name, *a, **k):
@@ -1900,7 +1905,7 @@ class Round5(Base):
 
     # ---- 12: a copy that still holds placeholders is loud and marked
     def test_incomplete_copy_is_marked_not_ready(self):
-        out = self.made("real")
+        out = self._made_real()
         self.assertIn(NOT_READY, os.listdir(out))
         self.assertIn("NOT READY TO IMPORT", rtext(os.path.join(out, NOT_READY)))
         self.assertEqual(oct(os.stat(os.path.join(out, NOT_READY)).st_mode & 0o777), "0o600")
@@ -1938,10 +1943,10 @@ class Round5(Base):
         self.assertIn("NOT READY TO IMPORT", p.stderr)
 
     def test_delete_handles_the_not_ready_note(self):
-        out = self.made("real")
+        out = self._made_real()
         self.assertEqual(self.cli("delete", "--out", out)[0], 0)
         self.assertFalse(os.path.exists(out))
-        out = self.made("real")
+        out = self._made_real()
         os.unlink(out + ".manifest.json")
         note = os.path.join(out, NOT_READY)
         os.unlink(note)
