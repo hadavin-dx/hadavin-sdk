@@ -1,6 +1,6 @@
 # QUEUE for system-map (lead, 2026-11-16). Ordered backlog that runs WITHOUT waiting for the lead.
 RULES OF THE QUEUE (owner HARD rule 2026-11-16: complete the video work by Wed 18 Nov morning; no idle session):
-1. Always keep at least 3 agents running (use the container: 4 cores, about 15 GB, 3 heavy test slots; light reading and review agents are not core-limited). Start the next queue item the moment a lane frees; never wait for the lead between items.
+1. Always keep at least 6 agents running, up to 8 (ORDER 021, 022, 027, 028; the container has 4 cores, about 15 GB, 3 heavy test slots; light reading and review agents are not core-limited). Start the next queue item the moment a lane frees; never wait for the lead between items.
 2. Take items in order; independent items run in parallel (several at once). EGM sequence per item: your own egm reviewers (two independent) on the result; evidence runner for anything that runs.
 3. Report each finished item in REPORT.md and the board (item state table); only the questions that only the lead or owner can answer go to QUESTIONS.md, and you continue with the next item meanwhile.
 4. Write STATE FINAL only when EVERY item below is done or marked BLOCKED with the exact missing input; the lead refills this file every tick, so re-read it on every board beat (git pull) and append new items to your own list when it grows.
@@ -27,7 +27,7 @@ M12 [DONE 2026-11-16, drift/REPORT.md section 11] VIDEO-DATE SWEEP: every place 
 M13 [DONE 2026-11-16, drift/REPORT.md section 12] THREE-WAY CONSISTENCY: ports, folder names, file names, step ids that appear in OWNER-STEPS v4, plan v5 and the run sheet: table of disagreements.
 M14 [DONE 2026-11-16 earlier clone 14d8fe46d; re-run on new head 60338533: 1 failed (licence files), 9390 passed] HEAVY LANE: re-run the core test suite in a FRESH git clone of cloud/core-hardening head (not a scratch copy) with 3 slots, record the two baseline failures exactly (vendor-word, licence) and whether they exist in a clean clone.
 M15 [DONE: reconciliation note in ARCHIVE-CUT-LIST.md] Cut list (archive, never delete) for repo files not used by the take: next area under R460.
-Keep at least 4 agents running; when one finishes start the next in the same turn.
+Keep at least 6 agents running, up to 8; when one finishes start the next in the same turn.
 
 ## REFILL 09:45Z (lead)
 M16 [CLOSED by lead decision 1 of 16 Nov 2026: the one video is real-v5 only (scenes 1-4); film-v5 (scenes 5-11) is out, so there is no flow-set switch; the text below is history] FLOW-SET QUESTION (was critical path, take day): local check says the take scripts contain NO code that switches the n8n flow set from real-v5 (scenes 1-4) to film-v5 (scenes 5-11); `scripts/n8n_api.py` can import/activate/deactivate but nothing calls it; the lead imports real-v5 by hand (WP6-RUNBOOK line 16). Decide from the run sheet, owner steps and the 'simple video' decisions which scenes the ONE N-lite video really contains and whether film-v5 scenes are in it at all. Output handover/system-map/flowset/REPORT.md: scene list, flow set each needs, exact manual switch steps (n8n_api.py commands, who runs them, how long) or 'film-v5 not in this video'. Two reviewers.
