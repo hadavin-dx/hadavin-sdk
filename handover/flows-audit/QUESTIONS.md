@@ -39,3 +39,6 @@ Lead decision 2026-11-16 item 2 says the take never deletes contacts (leftover m
 
 ## Q14 (flows-audit, 2026-11-16 10:40 UTC): re-rate the rows about scenes that left the video?
 Decision 1 cut scenes 5-11. F-005 and F-006 (Blockers), F-023 (Major), F6B-01 and F6B-13 are about those scenes, yet still count: 8 Blocker / 8 Major / 29 Nit may overstate what the take can reach (by up to 2 Blockers and 1 Major). Recommendation: re-rate them to Nit "for a later video" and recount 45 rows once in FINDINGS, LEDGER-ROWS, REPORT and FIX-PLAN. Needs the lead's yes because a rule in FINDINGS (row not reachable in the take is a Nit) decides it. Also: does the scene 4 caption keep the relayed "K1, 5 runs, median 60.8 s, max 61.9 s" (SCENE-FLOW-MAP:40)? Recommendation: no, cut it with the "60.1 to 61.9 s" number.
+
+## Q15 (flows-audit, 2026-11-16 10:50 UTC): is the closing card (scene 12) in the one video?
+Decisions name scenes 1-4. CLAIMS-TABLE rows 14-17 edit the closing card: if it is shown, rows 14 and 15 become LIVE (19 live rows) and the card must carry no recovery number (decision 1); if it is not shown, rows 14-17 stay OUT. Until you answer, rows 16-17 are kept LIVE and 14-15 OUT. Recommendation: show no closing card with numbers; keep one line "a lead sent twice is processed once" only.
