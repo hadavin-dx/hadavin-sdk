@@ -229,4 +229,4 @@ No studio owner step is added. FACTS-ALREADY-DONE.md lists what is done; none of
 - A-004: do not name a test model on screen or in voice until the rehearsal shows which model setting ran.
 
 ## 7. Coverage
-COVERAGE_PLACEHOLDER
+Counted by script after writing (reading the claims-table row number in brackets in the first column of sections 1, 3 and 4): 117 rows (section 1: 56, section 3: 17, section 4: 44), plus 3 label rows in section 2. Every claims-table row from 1 to 69 appears at least once (the script found no missing number). Several claims rows are split into rows with letters, so the row count is higher than 69. Extra rows not in the claims table: A-004, A-043, A-044a/b, N-1, N-3, N-4a/b/c, N-5a/b, N-6, N-8, S5-voice, V-11, V-41, V-57, P-155 and the section 2 labels. This checks only that each claims number has a row, not that each row's wording is right; the wording is not yet reviewed (round 2 is the last round). Nothing in this file was applied to any other file.

@@ -710,13 +710,13 @@ Source of the "done" facts: inputs/FACTS-ALREADY-DONE.md line 3 (throwaway Gmail
 |---|---|---|---|
 | 30 | Step 1: revoke the old practice-mailbox app password | STALE | FACTS line 3: "the old awspractice app password was revoked" |
 | 34-36 | Step 2: create the two throwaway Gmail accounts | STALE | FACTS line 3: mailbox ready, 2-step on |
-| 41-43 | Step 3: "Send mail as" for the company address | STALE as an open step (settings done, FACTS line 3). The check that Gmail keeps the From line is still open (smoke) |
-| 46-53 | Step 4: filter and label `demo` | STALE if included in "settings done" (FACTS line 3); the file does not name the filter, so confirm with the lead. The take-side rule `REAL_IMAP_1_FOLDERS=demo` (line 52, :176) is a code setting, not an owner step |
-| 56-61 | Step 5: create app passwords | STALE: FACTS line 3 "app passwords saved in files by the owner" |
-| 63-65 | Step 6: HubSpot property `hadavin_label` | STALE if covered by "HubSpot test account, users created, key given" (FACTS line 3); the property is not named there, so confirm |
-| 67-72 | Step 7: HubSpot private apps and tokens | STALE: FACTS line 3 "key given" |
-| 75-79 | Step 8: n8n credentials (SMTP, HubSpot) | STALE: FACTS line 3 "credentials ... kept in n8n's own credential store" |
-| 180-185 | Not-verified items 1, 4 and 5 (click paths, receiver app passwords allowed, HubSpot scope names) | partly STALE: the accounts exist, so item 4 is answered. Items 2, 3 and 6 stay open |
+| 41-43 | Step 3: "Send mail as" for the company address | STALE as an open step | settings done, FACTS line 3. The check that Gmail keeps the From line is still open (smoke) |
+| 46-53 | Step 4: filter and label `demo` | STALE if included in "settings done" | FACTS line 3; the file does not name the filter, so confirm with the lead. The take-side rule `REAL_IMAP_1_FOLDERS=demo` (line 52, :176) is a code setting, not an owner step |
+| 56-61 | Step 5: create app passwords | STALE | FACTS line 3 "app passwords saved in files by the owner" |
+| 63-65 | Step 6: HubSpot property `hadavin_label` | STALE if covered by "HubSpot test account, users created, key given" | FACTS line 3; the property is not named there, so confirm |
+| 67-72 | Step 7: HubSpot private apps and tokens | STALE | FACTS line 3 "key given" |
+| 75-79 | Step 8: n8n credentials (SMTP, HubSpot) | STALE | FACTS line 3 "credentials ... kept in n8n's own credential store" |
+| 180-185 | Not-verified items 1, 4 and 5 (click paths, receiver app passwords allowed, HubSpot scope names) | partly STALE | the accounts exist, so item 4 is answered. Items 2, 3 and 6 stay open |
 Still owner-only (FACTS line 4, so these stay open): typing y, the 6-digit challenge and `end` himself, the written yes with numbers, take-day laptop settings, watching and posting the video, the clean-up revoke (ONS lines 122-125).
 Ground truth caveat: I did not read the memory files FACTS cites; the verdicts follow FACTS-ALREADY-DONE.md only.
 
