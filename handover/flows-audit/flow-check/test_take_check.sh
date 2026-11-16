@@ -841,5 +841,139 @@ PYEOF
 LKX=$?
 tk r9-leak TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$LEADPIN" -- --flows "$S/leak" --write-warn-pin "$S/r9-leak.pin"
 [ "$LKX" = 0 ] && ! grep -q -F -- "$FAKEV" "$S/r9-leak.txt" && { [ ! -e "$S/r9-leak.pin" ] || ! grep -q -F -- "$FAKEV" "$S/r9-leak.pin"; } && grep -q -F "not shaped like an address" "$S/r9-leak.txt"; ok $? "f8-r9 M1(second angle): a mail field filled with a made-up bad value is reported by name only: the value is absent from stdout, stderr and the written pin (planted: $LKX, exit $RC)"
+# ---------------------------------------------------------------------------------------------
+# f8-r11 (review f8-r10 M2 + second angle F5, F6, F8, F9, F10, F11, F12): the cases below were missing
+# mrun NAME FOLDER [ENV...]: the take on FOLDER with a pin copy whose flows sha256 is the folder's own, so exit 4 can only come from the planted fault
+mrun() { local nm=$1 fl=$2; shift 2
+  tk "$nm-a" TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$LEADPIN" "$@" -- --flows "$fl"
+  local fs; fs=$(grep -m 1 -E '^  combined: [0-9a-f]{64}$' "$S/$nm-a.txt" | sed 's/^  combined: //')
+  [ -n "$fs" ] || { RC=99; return; }
+  sed "s/^\(# flows sha256 .*: \)[0-9a-f]\{64\}\$/\1$fs/" "$LEADPIN" > "$S/$nm.pin"
+  tk "$nm" TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$S/$nm.pin" "$@" -- --flows "$fl"; }
+pyedit() { python3 -I - "$@"; }
+# F12 / M2: the pinned case counts (expected-counts.pin) are checked by run_all.sh --check-counts
+RAS="$HERE/run_all.sh"; printf 'SELFTEST: 682 as expected, 0 not as expected, 62 skipped (not applicable)\n' > "$S/cc-st.txt"; printf 'test_take_check: 496 of 496 cases as expected, 0 not as expected\n' > "$S/cc-tt.txt"
+printf 'selftest_as_expected=682\nselftest_not_as_expected=0\nselftest_skipped=62\ntake_suite_cases=496\ntake_suite_not_as_expected=0\n' > "$S/cc.pin"
+bash "$RAS" --check-counts "$S/cc-st.txt" "$S/cc-tt.txt" "$S/cc.pin" > "$S/cc-ok.txt" 2>&1; ok $? "F12: run_all.sh --check-counts accepts the pinned numbers ($(cut -c1-60 "$S/cc-ok.txt"))"
+cc_bad() { local nm=$1 st=$2 tt=$3 pin=$4 want=$5; bash "$RAS" --check-counts "$st" "$tt" "$pin" > "$S/cc-$nm.txt" 2>&1; local x=$?; [ "$x" = 1 ] && grep -q -F "$want" "$S/cc-$nm.txt"; ok $? "F12: count drift '$nm' is exit 1 with '$want' (got exit $x)"; }
+printf 'SELFTEST: 681 as expected, 0 not as expected, 62 skipped (not applicable)\n' > "$S/cc-st-1.txt"; cc_bad selftest-one-less "$S/cc-st-1.txt" "$S/cc-tt.txt" "$S/cc.pin" "self-test as expected: 681, pinned 682"
+printf 'SELFTEST: 682 as expected, 0 not as expected, 61 skipped (not applicable)\n' > "$S/cc-st-2.txt"; cc_bad selftest-skipped-less "$S/cc-st-2.txt" "$S/cc-tt.txt" "$S/cc.pin" "self-test skipped: 61, pinned 62"
+printf 'SELFTEST: 682 as expected, 1 not as expected, 62 skipped (not applicable)\n' > "$S/cc-st-3.txt"; cc_bad selftest-bad "$S/cc-st-3.txt" "$S/cc-tt.txt" "$S/cc.pin" "self-test not as expected: 1, pinned 0"
+: > "$S/cc-st-4.txt"; cc_bad selftest-line-missing "$S/cc-st-4.txt" "$S/cc-tt.txt" "$S/cc.pin" "self-test summary line found 0 times"
+{ cat "$S/cc-st.txt" "$S/cc-st.txt"; } > "$S/cc-st-5.txt"; cc_bad selftest-line-twice "$S/cc-st-5.txt" "$S/cc-tt.txt" "$S/cc.pin" "self-test summary line found 2 times"
+printf 'test_take_check: 275 of 275 cases as expected, 0 not as expected\n' > "$S/cc-tt-1.txt"; cc_bad suite-quick-run "$S/cc-st.txt" "$S/cc-tt-1.txt" "$S/cc.pin" "take suite cases: 275, pinned 496"
+printf 'test_take_check: 495 of 496 cases as expected, 1 not as expected\n' > "$S/cc-tt-2.txt"; cc_bad suite-one-bad "$S/cc-st.txt" "$S/cc-tt-2.txt" "$S/cc.pin" "take suite: only 495 of 496 as expected"
+: > "$S/cc-tt-3.txt"; cc_bad suite-line-missing "$S/cc-st.txt" "$S/cc-tt-3.txt" "$S/cc.pin" "take-suite summary line found 0 times"
+cc_bad pin-missing "$S/cc-st.txt" "$S/cc-tt.txt" "$S/no-such-counts.pin" "the pin file"
+# F12 / M2: stray hook variables are refused by run_all.sh (exit 2, the name is printed, the value never)
+FAKEVAL="zq""wv""-hook-""val"
+for v in FC_CK TEST_TAKE_DEV TEST_TAKE_SCRIPT RV_DUMP RV_ONLY FC_OUT; do
+  ( cd "$S" && env "$v=$FAKEVAL" RUN_ALL_RAW="$S/raw-hook-$v" timeout 30 bash "$RAS" > "$S/hook-$v.txt" 2>&1; echo $? > "$S/hook-$v.rc" )
+  [ "$(cat "$S/hook-$v.rc")" = 2 ] && grep -q "^REFUSED: $v is " "$S/hook-$v.txt" && ! grep -q -F "$FAKEVAL" "$S/hook-$v.txt"; ok $? "F12: run_all.sh with $v set is refused, exit 2, the value is not printed (got exit $(cat "$S/hook-$v.rc"))"
+done
+for v in RUN_ALL_DROP_LEAD RUN_ALL_PLANT_TCFAIL_FLOWS RUN_ALL_PLANT_TCFAIL_WANT; do
+  ( cd "$S" && env -u RUN_ALL_NESTED "$v=x" RUN_ALL_RAW="$S/raw-hook-$v" timeout 30 bash "$RAS" > "$S/hook-$v.txt" 2>&1; echo $? > "$S/hook-$v.rc" )
+  [ "$(cat "$S/hook-$v.rc")" = 2 ] && grep -q "^REFUSED: $v is a test hook" "$S/hook-$v.txt"; ok $? "F12 (minor): run_all.sh with $v and without RUN_ALL_NESTED is refused, exit 2 (got exit $(cat "$S/hook-$v.rc"))"
+done
+( cd "$S" && env RUN_ALL_NESTED=1 RUN_ALL_RAW="$S/raw-nested-stray" timeout 30 bash "$RAS" > "$S/nested-stray.txt" 2>&1; echo $? > "$S/nested-stray.rc" )
+[ "$(cat "$S/nested-stray.rc")" = 2 ] && grep -q "RUN_ALL_PARENT_PID does not name a running run_all.sh" "$S/nested-stray.txt"; ok $? "F12(c): a stray RUN_ALL_NESTED=1 (no live parent run_all.sh) is refused, exit 2, not a silent skip of the nested tests (got exit $(cat "$S/nested-stray.rc"))"
+( cd "$S" && env RUN_ALL_NESTED=1 RUN_ALL_PARENT_PID=1 RUN_ALL_RAW="$S/raw-nested-stray2" timeout 30 bash "$RAS" > "$S/nested-stray2.txt" 2>&1; echo $? > "$S/nested-stray2.rc" )
+[ "$(cat "$S/nested-stray2.rc")" = 2 ] && grep -q "RUN_ALL_PARENT_PID does not name a running run_all.sh" "$S/nested-stray2.txt"; ok $? "F12(c): RUN_ALL_NESTED=1 with a parent pid that is not a run_all.sh is refused, exit 2 (got exit $(cat "$S/nested-stray2.rc"))"
+# the environment scrub prints names only (a fake value built from parts)
+( cd "$S" && env AWS_R11_PROBE="$FAKEVAL" PYTHONPATH="$FAKEVAL" RUN_ALL_RAW="$S/raw-scrub" timeout 30 bash "$RAS" --lock-only > "$S/scrub.txt" 2>&1; echo $? > "$S/scrub.rc" )
+[ "$(cat "$S/scrub.rc")" = 0 ] && grep -q "environment variables removed for this run (names only):.*AWS_R11_PROBE" "$S/scrub.txt" && grep -q "PYTHONPATH" "$S/scrub.txt" && ! grep -q -F "$FAKEVAL" "$S/scrub.txt"; ok $? "F12: run_all.sh removes stray cloud and interpreter variables and prints their names, never their values"
+# raw output goes to a scratch folder; the tracked raw folder is published only on request, each file under a temporary name
+mkdir -p "$S/pub-src" "$S/pub-dst"; echo new > "$S/pub-src/a.txt"; echo keep > "$S/pub-dst/other.txt"; echo old > "$S/pub-dst/a.txt"
+PUBOUT=$(bash "$RAS" --publish-raw "$S/pub-src" "$S/pub-dst" 2>&1); PUBRC=$?
+[ "$PUBRC" = 0 ] && [ "$PUBOUT" = 1 ] && [ "$(cat "$S/pub-dst/a.txt")" = new ] && [ "$(cat "$S/pub-dst/other.txt")" = keep ] && [ -z "$(ls -A "$S/pub-dst" | grep '\.tmp\.')" ]; ok $? "raw publish: a file is replaced whole, a file of the destination that the run did not make is left alone, no temporary file stays (got '$PUBOUT')"
+grep -q 'RAW=$(mktemp -d' "$RAS" && ! grep -q 'RAW="${RUN_ALL_RAW' "$RAS"; ok $? "raw scratch: run_all.sh writes its raw output into its own mktemp folder (the tracked raw folder is RAWFINAL, locked and written only with --refresh)"
+# F6: RV_DUMP / RV_ONLY without TEST_TAKE_DEV are refused by this suite itself
+for v in RV_DUMP RV_ONLY; do
+  env -u TEST_TAKE_DEV "$v=/dev/null" bash "$HERE/test_take_check.sh" "$P" "$S/f6-$v" > "$S/f6-$v.txt" 2>&1; x=$?
+  [ "$x" = 2 ] && grep -q "REFUSED: RV_DUMP / RV_ONLY" "$S/f6-$v.txt" && [ ! -e "$S/f6-$v" ]; ok $? "F6: test_take_check.sh with $v and without TEST_TAKE_DEV is refused, exit 2, and runs no case (got exit $x)"
+done
+# F11: each environment hazard is named and is exit 4
+for v in BASH_ENV ENV LD_PRELOAD LD_LIBRARY_PATH LD_AUDIT PYTHONHOME PYTHONPATH PYTHONSTARTUP; do
+  tk "f11-$v" TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$LEADPIN" "$v=$S/no-such-$v" -- --flows "$P"
+  [ "$RC" = 4 ] && has "f11-$v" "ENVIRONMENT HAZARDS:" && grep -q "variable $v;" "$S/f11-$v.txt" && ! has "f11-$v" "no-such-$v"; ok $? "F11: $v set is exit 4, named as a hazard, its value is not printed (got exit $RC)"
+done
+# F5: a *.json created in the original folder while the checker runs (and a removed file) is caught at the end (exit 4)
+cp -r -- "$P" "$S/f5"; cat > "$S/f5.py" <<PYEOF
+import os, subprocess, sys
+r = subprocess.run([sys.executable, "-I", "$HERE/check_flows.py"] + sys.argv[1:])
+open(os.path.join("$S/f5", "mf-extra-created-during-run.json"), "w", encoding="utf-8").write("{}\n")
+sys.exit(r.returncode)
+PYEOF
+tk f5-new TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$LEADPIN" TAKE_CHECK_CK="$S/f5.py" -- --flows "$S/f5"
+[ "$RC" = 4 ] && has f5-new "A FLOW FILE CHANGED WHILE THIS CHECK RAN"; ok $? "F5: a .json file created in the original folder while the checker ran is exit 4 (got exit $RC)"
+cp -r -- "$P" "$S/f5b"; cat > "$S/f5b.py" <<PYEOF
+import os, subprocess, sys
+r = subprocess.run([sys.executable, "-I", "$HERE/check_flows.py"] + sys.argv[1:])
+os.remove(os.path.join("$S/f5b", "mf-hook.json"))
+sys.exit(r.returncode)
+PYEOF
+tk f5-del TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$LEADPIN" TAKE_CHECK_CK="$S/f5b.py" -- --flows "$S/f5b"
+[ "$RC" = 4 ]; ok $? "F5: a flow file removed from the original folder while the checker ran is exit 4 (got exit $RC)"
+# F8: run saving odd values at take level
+for pair in "err-odd:mf-form.json:saveDataErrorExecution:off" "manual-false:mf-hook.json:saveManualExecutions:False" "manual-string:mf-sub-crm-mail.json:saveManualExecutions:true"; do
+  nm=${pair%%:*}; r=${pair#*:}; fn=${r%%:*}; r=${r#*:}; key=${r%%:*}; val=${r#*:}
+  cp -r -- "$P" "$S/f8-$nm"
+  pyedit "$S/f8-$nm/$fn" "$key" "$val" <<'PYEOF'
+import json, sys
+p, k, v = sys.argv[1:4]
+j = json.load(open(p, encoding="utf-8"))
+j["settings"][k] = {"False": False}.get(v, v)
+json.dump(j, open(p, "w", encoding="utf-8"))
+PYEOF
+  mrun "f8-$nm" "$S/f8-$nm"
+  [ "$RC" = 4 ] && has "f8-$nm" "RUN SAVING IS NOT EXACTLY all / all / True"; ok $? "F8: $fn with $key=$val is exit 4 with the run-saving line (got exit $RC)"
+done
+# F9: a pinned WARN that disappears is exit 4 too (here: retry switched on for the three steps of the first WARN)
+cp -r -- "$P" "$S/f9"; pyedit "$S/f9/mf-form.json" <<'PYEOF'
+import json, sys
+p = sys.argv[1]
+j = json.load(open(p, encoding="utf-8"))
+for n in j["nodes"]:
+    if n["name"] in ("Claim", "RunSub", "Stored"):
+        n["retryOnFail"] = True
+        n["maxTries"] = 2
+json.dump(j, open(p, "w", encoding="utf-8"))
+PYEOF
+mrun f9 "$S/f9"
+[ "$RC" = 4 ] && has f9 "THE WARN SET CHANGED against take-warns.pin"; ok $? "F9: a pinned WARN line that vanished is exit 4, not a pass (got exit $RC)"
+# F10: the take-level content checks (F-002 content, node counts of the recovery and sub-workflow flows, credential names) each have a case
+cp -r -- "$P" "$S/f10a"; pyedit "$S/f10a/mf-hook.json" <<'PYEOF'
+import json, sys
+p = sys.argv[1]
+j = json.load(open(p, encoding="utf-8"))
+for n in j["nodes"]:
+    if n["name"] == "Valid":
+        n["parameters"]["assignments"]["assignments"] = [a for a in n["parameters"]["assignments"]["assignments"] if a.get("name") != "lead_key"]
+json.dump(j, open(p, "w", encoding="utf-8"))
+PYEOF
+mrun f10a "$S/f10a"; [ "$RC" = 1 ] && grep -q "^FAIL .*F-002 Valid must set lead_key" "$S/f10a.txt"; ok $? "F10: the take runs the F-002 content check (Valid without lead_key is exit 1 with its FAIL line) (got exit $RC)"
+for fn in mf-recovery.json mf-sub-crm-mail.json; do
+  nm=f10-count-${fn%.json}; cp -r -- "$P" "$S/$nm"
+  pyedit "$S/$nm/$fn" <<'PYEOF'
+import copy, json, sys
+p = sys.argv[1]
+j = json.load(open(p, encoding="utf-8"))
+n = copy.deepcopy(next(x for x in j["nodes"] if x["type"] == "n8n-nodes-base.set"))
+n["name"] = "ExtraStep"; n["id"] = "f10-extra-id"; n["position"] = [10, 10]
+j["nodes"].append(n)
+json.dump(j, open(p, "w", encoding="utf-8"))
+PYEOF
+  mrun "$nm" "$S/$nm"; [ "$RC" != 0 ] && [ "$RC" != 5 ] && grep -q -E "node count" "$S/$nm.txt"; ok $? "F10: the take holds the expected node count of $fn (one extra step is not a pass) (got exit $RC)"
+done
+cp -r -- "$P" "$S/f10c"; pyedit "$S/f10c/mf-sub-crm-mail.json" <<'PYEOF'
+import json, sys
+p = sys.argv[1]
+j = json.load(open(p, encoding="utf-8"))
+for n in j["nodes"]:
+    if "smtp" in (n.get("credentials") or {}):
+        n["credentials"]["smtp"]["name"] = "some-other-mail-login"
+json.dump(j, open(p, "w", encoding="utf-8"))
+PYEOF
+mrun f10c "$S/f10c"; [ "$RC" = 1 ] && grep -q "^FAIL .*credential 'smtp' has name 'some-other-mail-login'" "$S/f10c.txt"; ok $? "F10: the take holds the expected credential names (--expect-credential) (got exit $RC)"
 echo "test_take_check: $((N-BAD)) of $N cases as expected, $BAD not as expected"
 [ "$BAD" = 0 ]
