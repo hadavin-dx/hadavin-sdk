@@ -46,6 +46,7 @@ def anchors_of(line):
             a.add(w)
     return a
 rows = []; counts = {}
+textof = {}
 def bump(k): counts[k] = counts.get(k, 0) + 1
 for doc in docs:
     for n, line in enumerate(open(doc, encoding="utf-8").read().split("\n"), 1):
@@ -78,9 +79,12 @@ for doc in docs:
                                     d = abs(i - (lo + hi) // 2)
                                     if best is None or d < best[0]: best = (d, i)
                             st = "MOVED"; detail = f"{rel} nearest anchor line {best[1]} (delta {best[0]}) anchors={sorted(fa)[:4]}"
-                bump(st); rows.append((os.path.basename(doc), n, f"{path}:{lo}" + (f"-{hi}" if hi != lo else ""), kind, st, detail))
+                txt0 = ""
+                if cands and st not in ("RANGE", "MISSING"):
+                    _ls = L(code_files[cands[0]]); txt0 = (_ls[lo - 1].strip()[:90] + (" || " + _ls[hi - 1].strip()[:60] if hi != lo else "")) if lo - 1 < len(_ls) else ""
+                bump(st); rows.append((os.path.basename(doc), n, f"{path}:{lo}" + (f"-{hi}" if hi != lo else ""), kind, st, detail, txt0))
 with open(out, "w", newline="") as f:
-    w = csv.writer(f, delimiter="\t"); w.writerow(["doc", "doc_line", "cite", "kind", "status", "detail"]); w.writerows(rows)
+    w = csv.writer(f, delimiter="\t"); w.writerow(["doc", "doc_line", "cite", "kind", "status", "detail", "cited_line_text"]); w.writerows(rows)
 print("cites:", len(rows)); print("status counts:", dict(sorted(counts.items())))
 # backtick-name existence
 for doc in docs:
