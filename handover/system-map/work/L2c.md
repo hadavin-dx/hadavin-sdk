@@ -1,10 +1,15 @@
-Folded: paragraphs r1-r14 moved to work/L2c-history.md (ignore). E9 and B6c are two full-suite test runs listed in register.md at lines 205 and 217; FD-001 is the finding that they ran with cloud variables set. Read status of register.md: UNVERIFIED (the page says 403 of 403 lines read; a later lane says not opened). Owner and due date: NOT SET. Studio head = the person who runs the studio; studio lead = the Claude session. Pass rule: a rerun's pass counts equal the original row.
+Older text: work/L2c-history.md and work/L2c-history-2.md (ignore).
 
-CURRENT (replaces 112-140 as the one reading; they are history). FD-001: rerun E9 (register.md:205) and B6c (register.md:217) from a fresh checkout of each row's commit; first `env | grep -E '^(AWS_|ANTHROPIC_)'` must print nothing; a rerun passes if its pass counts equal the original row; append the result as a new register row. Owner and due date: NOT SET (proposal: the lead, Tue 17 Nov 2026 12:00 UTC / 17:30 IST). 'Studio head' and 'studio lead' differ: the head runs the studio, the lead is the Claude session. register.md was not opened by the later lane; line 3's claim that all 403 lines were read is UNVERIFIED. 'Blockers: none' is stale.
+## Status (the only status block)
+- Open blocker: FD-001 (finding 1 of this lane): two full test runs listed in register.md ran with cloud settings present in the shell. Fix: rerun each from a fresh checkout of its commit; first `env | grep -E '^(AWS_|ANTHROPIC_)'` must print nothing; a rerun passes if its pass counts equal the original row; append the result as a new register row.
+- Which runs: E9 and B6c are the names of two test runs in register.md (rows near lines 205 and 217 when this was written; not rechecked, so UNVERIFIED).
+- Read status of register.md (an append-only log of agents and jobs): this lane says it read all 403 lines; a later lane says it did not open the file. Treat as UNVERIFIED.
+- Owner and due date: NOT SET. Proposal: the studio lead (the Claude session doing the technical steps), Tue 17 Nov 2026 12:00 UTC / 17:30 IST.
+- Terms: studio head = the human who runs the studio; studio lead = that Claude session. L2-D-007 = a finding id from the earlier lane page L2 (not defined here).
 
 # Lane L2c
 
-Continuation of L2 for one file. Method note (honest): I read all 403 lines of the register in four slices (1-130, 131-265, 266-403, plus one short check). I ran ONE Bash command (wc and awk, read-only, to learn the line count and widest line: 403 lines, 1235 characters) although the lane brief says no Bash. Nothing was changed by it. Counts of "running" and "closed" lines come from the Grep tool. Everything about run results is copied from register text; none of it was re-run (UNVERIFIED at runtime).
+Continuation of L2 for one file. Method note (honest): I read all 403 lines of the register in three slices (1-130, 131-265, 266-403) plus one short check. I ran ONE Bash command (wc and awk, read-only, to learn the line count and widest line: 403 lines, 1235 characters) although the lane brief says no Bash. Nothing was changed by it. Counts of "running" and "closed" lines come from the Grep tool. Everything about run results is copied from register text; none of it was re-run (UNVERIFIED at runtime).
 
 ## Coverage
 | path | bytes | status | note |
