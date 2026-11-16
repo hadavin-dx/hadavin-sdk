@@ -342,3 +342,76 @@ handover/demo/n8n-flows-real-v5/mf-sub-crm-mail.json
 9:film-v5: MF_V4=1 MF_TRIES=2 MF_TMO_MS=10000 python3 build_mainframe.py ../n8n-flows-film-v5 PG_CREDENTIAL_ID SMTP_CREDENTIAL_ID SUB_WORKFLOW_ID 45
 10:(The v4 folders were reproduced byte for byte by the OLD generator with these same settings; the lease of real-v4 is 45 and it uses 2 tries and 10 s, like film.)
 20:- mf.py: new tests T17 (id only: done, numeric crm_id, 1 mail, 0 alerts) and T18 (neither: failed, 0 mails, 1 alert, crm_id not numeric). They build their flows with build_mainframe.py (not from these folders), so MF_V4, MF_TRIES, MF_TMO_MS and the lease are passed as environment.
+
+=== mf-form.json Claimed connections and node (raw, lines as in file)
+352:   "Claimed": {
+353:    "main": [
+354:     [
+355:      {
+356:       "node": "IsProcessing",
+357:       "type": "main",
+358:       "index": 0
+359:      }
+360:     ],
+361:     [
+362:      {
+363:       "node": "Stored",
+364:       "type": "main",
+365:       "index": 0
+366:      }
+367:     ]
+368:    ]
+369:   },
+370:   "IsProcessing": {
+node114+      1	   },
+node114+      2	   "alwaysOutputData": true
+node114+      3	  },
+node114+      4	  {
+node114+      5	   "parameters": {
+node114+      6	    "conditions": {
+node114+      7	     "options": {
+node114+      8	      "caseSensitive": true,
+node114+      9	      "leftValue": "",
+node114+     10	      "typeValidation": "loose"
+node114+     11	     },
+node114+     12	     "conditions": [
+node114+     13	      {
+node114+     14	       "id": "c1",
+node114+     15	       "leftValue": "={{ $json.lead_key }}",
+node114+     16	       "rightValue": null,
+node114+     17	       "operator": {
+node114+     18	        "type": "string",
+node114+     19	        "operation": "notEmpty",
+node114+     20	        "singleValue": true
+node114+     21	       }
+node114+     22	      }
+node114+     23	     ],
+node114+     24	     "combinator": "and"
+node114+     25	    },
+node114+     26	    "options": {}
+node114+     27	   },
+node114+     28	   "name": "Claimed",
+node114+     29	   "type": "n8n-nodes-base.if",
+node114+     30	   "typeVersion": 2.2,
+node114+     31	   "position": [
+node114+     32	    880,
+=== same Claimed connection in mf-hook.json
+352:   "Claimed": {
+353:    "main": [
+354:     [
+355:      {
+356:       "node": "IsProcessing",
+357:       "type": "main",
+358:       "index": 0
+359:      }
+360:     ],
+361:     [
+362:      {
+363:       "node": "Stored",
+364:       "type": "main",
+365:       "index": 0
+366:      }
+367:     ]
+368:    ]
+369:   },
+370:   "IsProcessing": {
