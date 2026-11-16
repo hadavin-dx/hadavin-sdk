@@ -1,4 +1,4 @@
-baseline failures: 28
+baseline failures: 0
 P01 CAUGHT by C03,C04,C17,C48 | call ceiling changed
 P02 CAUGHT by C03 | ledger changed (limit 13.21 to 13.31)
 P03 CAUGHT by C03 | 860 s changed
@@ -108,32 +108,3 @@ M42 CAUGHT by C17 | open list minutes figure
 M43 CAUGHT by C19 | note G33 to G38
 M44 CAUGHT by C19 | R8 pointer go (5.8) to 5.7
 M45 CAUGHT by C11 | R4 pointer 6.7 to 6.8
-M46 CAUGHT by C19 | 8.1 card step 3 to 5
-M47 CAUGHT by C04,C73 | post-by IST in sheet
-M48 ANCHOR-NOT-FOUND CHANGES table pointer 8.1 to 8.3
-M49 CAUGHT by C19 | open row pointer 7.8 to 7.7
-M50 CAUGHT by C17 | note worked price
-M51 CAUGHT by C12,C21 | unlisted set phrase sent in 8.5
-M52 CAUGHT by C16 | Open 99 in a list form (no such row)
-M53 CAUGHT by C17 | expected total in note
-M54 CAUGHT by C04,C79 | yes deadline IST pair
-Q01 CAUGHT by C48 | wrong price per call hardcoded
-Q02 CAUGHT by C48 | wrong total hardcoded
-Q03 CAUGHT by C49,C77 | wrong output tokens in the sample
-Q08 CAUGHT by C50 | STOP RULE step 1 deleted
-Q09 CAUGHT by C51 | stray backtick in card gate W1
-Q10 CAUGHT by C52 | card cancel step changed
-Q11 CAUGHT by C53 | card gate W6 deleted
-Q12 CAUGHT by C54 | R4 auto-reload flipped to on
-Q13 CAUGHT by C55 | secret-shaped string (built from parts) in the sheet
-Q15 CAUGHT by C56 | sample give-up minutes changed
-Q16 CAUGHT by C56 | sample silence minutes changed
-Q18 CAUGHT by C57 | one delete-domain guard changed
-Q20 CAUGHT by C58 | lead note limit wrong
-Q22 CAUGHT by C59 | accepted exit codes widened
-Q24 CAUGHT by C60 | R8 word count changed
-N01 CAUGHT by C70 | IST offset label wrong (v25 plant N01)
-N05 CAUGHT by C71 | R5 archived turned into deleted (N05)
-N10 CAUGHT by C72 | warning before the start-line step removed (N10)
-N11 CAUGHT by C73 | post-by date moved with a consistent weekday (N11)
-N12 CAUGHT by C74 | R7 second person turned passive (N12)

@@ -1,29 +1,31 @@
-changes| 7 day rule and the time of |7.11
-changes| could be missed | own step |7.11
-changes| for money after the fixes (|Open 82
-changes| recording OFF before 5.7 | |5.7
-changes| rule and the time of 7.11 (|Open 78, 79, 86
-changes| the owner to ask the lead (|5.4
-changes| whole balance as exposure (|Open 83
-changes|.6), one of six lead words (|R8
-changes|1 post-by date, N12 passive |R7
-changes|3), the phone walk-through (|Open 80, 84
-changes|: cancel only at 6.7, after |6.6
-changes|C103 | | N01 IST label, N05 |R5
-changes|checks; "restarted" word at |6.6
-changes|e the take folder | C82 | | |R7
-changes|ings; deadline unexplained; |8.7
-changes|n their own words | C93 | | |7.10
-changes|names, recording OFF before |5.7
-changes|nd the owner: sheet A or B (|Open 71, 82
-changes|o early | A: cancel only at |6.7
-changes|odel program | "restarted" (|6.6
-changes|owner to ask the lead (5.4, |5.5
-changes|pes missing before create | |6.3
-changes|tested path, never a guess (|Open 85
-changes|the seven settings and does |6.1
-changes|v27.py gained one fact (the |7.11
-changes|| | Deleting the key file | |8.1
+changes| card, If it fails, FREEZE, |R1
+changes| default; B text rewritten; |G26
+changes| term definitions and the B |7.11
+changes| | C125 | | M19 stop before |6.7
+changes| | cancel only at 6.7 after |6.6
+changes|.1, day split, L2 at 6.7 or |7.11
+changes|0 | | M4 clipboard order at |6.3
+changes|1 (B) 7.11 can be skipped | |7.11
+changes|30 C131 | | Security B1 (B) |7.11
+changes|: the click paths in 5.3 to |5.5
+changes|choice is still the lead's (|Open 71
+changes|didates: the click paths in |5.3
+changes|est key time not checked at |6.3
+changes|irm (needs-lead):** (a) B's |7.11
+changes|known good | cancel only at |6.7
+changes|ly at 8.1, day split, L2 at |6.7
+changes|numbers message or picks B (|Open 78
+changes|ogin | sender Gmail only at |8.3
+changes|rminal list, "none" only at |8.1
+changes|rth alarm; cancel-by before |7.11
+changes|s the run at normal waits | |R10
+changes|t be filled before create | |5.9
+changes|tra words are the look key (|5.9
+changes|ult; B text rewritten; G26, |G30
+changes|unprepared | phone tried at |5.3
+changes|y had the typed-figure gate |G35
+changes|y time not checked at 6.3 | |6.3
+changes|| M4 clipboard order at 6.3/|6.4
 note| (c), in force (lead answer |Q22
 note| (within 2 minutes) at 6.3; |6.5
 note| 0 accepted) | not read | | |G7

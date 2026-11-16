@@ -1,32 +1,4 @@
 C07 info: OWNER-SHEET-v27-A.md 7473 words (target 6300: NOT met)
 C07 info: OWNER-SHEET-v27-B.md 7516 words (target 6300: NOT met)
-check-v27: 28 failure(s)
-FAIL C19 pointer not in the verified list: changes| card, If it fails, FREEZE, |R1
-FAIL C19 pointer not in the verified list: changes| default; B text rewritten; |G26
-FAIL C19 pointer not in the verified list: changes| term definitions and the B |7.11
-FAIL C19 pointer not in the verified list: changes| | C125 | | M19 stop before |6.7
-FAIL C19 pointer not in the verified list: changes| | cancel only at 6.7 after |6.6
-FAIL C19 pointer not in the verified list: changes|.1, day split, L2 at 6.7 or |7.11
-FAIL C19 pointer not in the verified list: changes|0 | | M4 clipboard order at |6.3
-FAIL C19 pointer not in the verified list: changes|1 (B) 7.11 can be skipped | |7.11
-FAIL C19 pointer not in the verified list: changes|30 C131 | | Security B1 (B) |7.11
-FAIL C19 pointer not in the verified list: changes|: the click paths in 5.3 to |5.5
-FAIL C19 pointer not in the verified list: changes|choice is still the lead's (|Open 71
-FAIL C19 pointer not in the verified list: changes|didates: the click paths in |5.3
-FAIL C19 pointer not in the verified list: changes|est key time not checked at |6.3
-FAIL C19 pointer not in the verified list: changes|irm (needs-lead):** (a) B's |7.11
-FAIL C19 pointer not in the verified list: changes|known good | cancel only at |6.7
-FAIL C19 pointer not in the verified list: changes|ly at 8.1, day split, L2 at |6.7
-FAIL C19 pointer not in the verified list: changes|numbers message or picks B (|Open 78
-FAIL C19 pointer not in the verified list: changes|ogin | sender Gmail only at |8.3
-FAIL C19 pointer not in the verified list: changes|rminal list, "none" only at |8.1
-FAIL C19 pointer not in the verified list: changes|rth alarm; cancel-by before |7.11
-FAIL C19 pointer not in the verified list: changes|s the run at normal waits | |R10
-FAIL C19 pointer not in the verified list: changes|t be filled before create | |5.9
-FAIL C19 pointer not in the verified list: changes|tra words are the look key (|5.9
-FAIL C19 pointer not in the verified list: changes|ult; B text rewritten; G26, |G30
-FAIL C19 pointer not in the verified list: changes|unprepared | phone tried at |5.3
-FAIL C19 pointer not in the verified list: changes|y had the typed-figure gate |G35
-FAIL C19 pointer not in the verified list: changes|y time not checked at 6.3 | |6.3
-FAIL C19 pointer not in the verified list: changes|| M4 clipboard order at 6.3/|6.4
-rc=1
+check-v27: 0 failure(s)
+rc=0
