@@ -868,3 +868,14 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 624 L3c r4: stacked glossary, FD-001 cell. FIXED by TERMS block.
 
 - 625 M17 r3: stacked STATUS, proposed vs applied, term meanings. FIXED by STATUS paragraph (table not rebuilt).
+
+- 626 ARCHIVE-CUT-LIST r3: no destination, HOLD release. FIXED by CURRENT paragraph.
+- 627 row1-builder-brief r4: done-when, values, ship time. FIXED by CURRENT paragraph.
+- 628 FINAL-CROSSCHECK r7: stacked status. FIXED by STATUS block (old lines not deleted).
+- 629 L5b r4: what survives from older paragraphs. FIXED by ADDED paragraph.
+- 630 not-checked r4: row 5/7 times, terms. FIXED by ADDED paragraph.
+
+- 631 L2c r5: rerun undefined. FIXED by CORRECTION.
+- 632 L1c r5: FD-021 rows, stacked. FIXED by CORRECTION (row fold TO DO).
+- 633 merged-findings r3: path-only rows, severity undefined. FIXED by LEGEND.
+- 634 M17 r4: three STATUS paragraphs. FIXED by READ FIRST.
