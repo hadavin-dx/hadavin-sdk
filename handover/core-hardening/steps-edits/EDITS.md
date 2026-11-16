@@ -109,10 +109,10 @@ Numbers in brackets such as (EL-7) name the earlier-list item the line was check
 - 9 first sentences: "executions saved only for the made-up take data and deleted at clean-up" consistent with EL-2.
 - 15-17: money stage (cap and window end backstop, journal write-ahead, `stage.journal` as the one exception: consistent with EL-1).
 - 18-19, 20 (apart from E-31), 21-22, 23 (apart from E-32, E-33): take script. The F-01 note itself is consistent with today's delete call; D2 now says the take never deletes, so the line is changed in E-40 and E-44 (E-31 and E-45 cover other parts of lines 20 and 23).
-- 24-26, 28-31 (apart from E-34, E-35), 33-35: builders rule "no push", "no live model call", "no real key", sections 5 and 6.
+- 24-26, 28-31 (apart from E-34), 33-35: builders rule "no push", "no live model call", "no real key", sections 5 and 6.
 - Whole file, word search for "portal", "approv", "audit": no claim of a portal, approval step or audit trail (the word "audit" occurs only inside the path `architecture-audit`). Consistent with EL-3 and D1.
 
-**Plan v5 and DECISION-one-store compared with both documents**: loopback re-smoke costs US$0 (EL-5) matches AGENT-SCOPE line 27 ("no live model call or real key"); `stage.journal` stays a file (EL-1) matches AGENT-SCOPE lines 14 to 16 and 20.
+**Plan v5 and DECISION-one-store compared with both documents**: the rehearsal costs US$0 (EL-5) matches AGENT-SCOPE line 27 ("no live model call or real key"); `stage.journal` stays a file (EL-1) matches AGENT-SCOPE lines 14 to 16 and 20.
 
 ## What I did not check
 - Nothing was run: no command, no test, no network. I did not read the plan's steps 0.1 to S11 line by line (only the steps that touch Postgres, executions, clean-up and the tail sections), so a step order change outside those could be missing from this list (plan v5 lines 225 to 400, except S1b, S2, are only skimmed).
@@ -122,3 +122,4 @@ Numbers in brackets such as (EL-7) name the earlier-list item the line was check
 - Round 3 added: I did not run anything; I did not re-read the plan beyond lines 76, 151 and 485-492; EL-1 to EL-7 (the earlier lead decisions) are taken from the C4 brief as the round 2 reviewers listed them, not from a file; I did not check whether the code already prints a list of leftover contacts, nor what the program's pause prompt will say after the change (E-41, E-44).
 - The plan's 558 lines: sections named "12" and "13" do not exist as numbered sections; I read the steps S12 and S13 instead (clean-up, one-store checks) and used them.
 - The old-evidence numbers on OWNER-STEPS lines 152 to 158 and AGENT-SCOPE lines 16 and 22 are stale for the current head by their own admission; I did not try to replace them.
+- Round 5 added: nothing was run except the text check (old texts occur once, counts); I did not read the code, the smoke evidence or any click path; EL-1 to EL-7 are still taken from the C4 brief; the new NOT DECIDED options in items 1, 3 and 6 are proposals and nothing read proves that the start script or the code supports them.
