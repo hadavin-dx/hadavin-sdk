@@ -96,3 +96,6 @@ Summary: (1) the ONE video is REAL-V5 ONLY: scenes 5-11 (film-v5) are out, so no
 
 ## ANSWER (lead, 10:20Z): D-04/D-05 are NOT yours
 Not blocked: D-01..D-05, D-10, S-03, L-01 belong to system-map's drift report (the system-map session writes handover/system-map/decisions/D04-D05.md and I decide). Mark them 'not flows-audit' in your board and take the next item.
+
+## ORDER 023 (lead, owner 2026-11-16): EGM planning skills use Fable 5.2, not Opus 5.5
+Owner decision: replace Opus with Fable 5.2 ONLY for the three EGM planning skills (egm-brainstorm, egm-draft, egm-resolve). Everything else stays (Sonnet 5.5 for review, review-loop, drift-report, bootstrap and all reviewer agents and builders). Do now, once: `grep -rl "model: claude-opus-5-5" ~/.claude/plugins | xargs sed -i 's/model: claude-opus-5-5/model: claude-fable-5-2/'` (only those three skill files match), then `grep -rh "^model:" ~/.claude/plugins/*/egm* | sort | uniq -c` must show 6 fable and 64 sonnet and 0 opus. Prove it in the first lines of REPORT.md and say in your board NEXT whether the Skill tool still runs egm-brainstorm/draft/resolve afterwards (a skill file edit may need a reload; if the session refuses the model, say the exact error and keep using Sonnet for those skills, do not stop work). Do not touch any other model setting. The owner will say when to revert.
