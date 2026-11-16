@@ -47,6 +47,7 @@ orphan_alive() { pgrep -f "$T/root/.venv/bin/python -m pytest" >/dev/null; }
 waitplant() { for _ in $(seq 120); do ls "$STATE"/*.planted.json >/dev/null 2>&1 && [ "$(last)" = return2 ] && { sleep 3; return 0; }; sleep 0.5; done; return 1; }
 # exec: $RP must be the python process itself, not a subshell around it
 bg() { ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) >/dev/null 2>&1 & RP=$!; }
+{
 kill_planted() { fresh_root; bg; waitplant; kill -9 $RP; sleep 1; pkill -9 -f "$T/root/.venv/bin/python -m pytest"; wait $RP 2>/dev/null; }
 keptstate() { [ -n "$(ls "$STATE"/*.planted.json 2>/dev/null)" ] && [ -n "$(ls "$STATE"/*.backup 2>/dev/null)" ]; }
 echo "== T76 (review r6 M1) --restore with a VALID marker: every failure to write back exits 3 (mutant may be planted, marker and backup kept); 2 only for a forged or wrong marker"
