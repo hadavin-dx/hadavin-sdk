@@ -1,5 +1,5 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T13:35:46Z
+UPDATED_UTC: 2026-11-16T13:36:20Z
 PUSHED_UTC: 2026-11-16T13:29:54Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
@@ -15,7 +15,7 @@ PROGRESS: 5 of 20 table items at 100 percent (M1, M11, M12, M13, M16); mean abou
 Terms: take = the one filmed run; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
 AGENTS_RUNNING: 8 at this beat (the minimum is 8)
 CAPACITY nproc=4 load=0.17 disk: 18G free
-NEXT: hand-backs digested through 1142 (a digest = one short line in work/agent-reports-batch4.md for each helper report). Findings on pages the lead holds are in that file for the lead. Next 5 independent tasks: fold L1c, merged-findings, L5b, L4c and FINAL-CROSSCHECK (fold = move old stacked notes into a history file and keep the live text).
+NEXT: hand-backs digested through 1149 (a digest = one short line in work/agent-reports-batch4.md for each helper report). Findings on pages the lead holds are in that file for the lead. Next 5 independent tasks: fold L1c, merged-findings, L5b, L4c and FINAL-CROSSCHECK (fold = move old stacked notes into a history file and keep the live text).
 INTERRUPTED: none
 
 ## ITEMS
@@ -45,15 +45,16 @@ INTERRUPTED: none
 ## AGENTS
 | agent id | purpose | started (UTC) | expected end | state | produced so far |
 |---|---|---|---|---|---|
-| aae225d6b75a50f78 | cold read of work/critical-path-r1.md | 13:33Z-13:36Z | +10 min | running | nothing yet |
-| a55ccad82e45cd87d | cold read of work/open-items-table.md | 13:33Z-13:36Z | +10 min | running | nothing yet |
-| a59029c8b13895f2a | cold read of work/merged-findings.md | 13:33Z-13:36Z | +10 min | running | nothing yet |
-| afafa0b6384497a04 | cold read of work/owner-timeline-draft.md | 13:33Z-13:36Z | +10 min | running | nothing yet |
-| abc98aafcce16204d | cold read of work/not-checked-r2.md | 13:33Z-13:36Z | +10 min | running | nothing yet |
-| a4dbda84faef4f203 | cold read of work/rehearsal-trim-notes.md | 13:33Z-13:36Z | +10 min | running | nothing yet |
-| (new ids below) | cold read of work/L2c-history.md and work/crosscheck-ratings-agent.md | 2026-11-16T13:35:46Z | +10 min | running | nothing yet |
+| a6512ebf62037e146 | cold read of work/L2c-history.md | 13:36Z | +10 min | running | nothing yet |
+| a8be11af617ba14c3 | cold read of work/banned-claims-clean.md | 13:36Z | +10 min | running | nothing yet |
+| a77a72dcb0a4d8603 | cold read of work/end-delete-cases.md | 13:36Z | +10 min | running | nothing yet |
+| ac3c96f7b0306ef53 | cold read of work/plan-resolve-r1.md | 13:36Z | +10 min | running | nothing yet |
+| a18b49e5b216dada9 | cold read of work/L5ac.md | 13:36Z | +10 min | running | nothing yet |
+| aaf181d860a586086 | cold read of work/L3c.md | 13:36Z | +10 min | running | nothing yet |
+| a71481a04d1af0d36 | cold read of work/L1c.md | 13:36Z | +10 min | running | nothing yet |
+| (id in next beat) | cold read of work/premortem-history.md | 13:36Z | +10 min | running | nothing yet |
 
-8 running (the minimum is 8). Ended and digested this beat: a16ff99cd6a3b2029 (1139), ae091854583aeffce (1140), acda4c4ea57a66f05 (1141), a52529c4cafef48a2 (1142), each replaced in the same turn. Next 5 tasks: (1) rewrite GLOSSARY.md; (2) rewrite rehearsal-passed-limits-draft.md as one clean block with a history file; (3) premortem-r1 status block and owner table; (4) decision-list-for-lead status box and split A3/A9/E9; (5) re-read each edited page.
+8 running (the minimum is 8). Ended and digested this beat: a55ccad82e45cd87d (1143), aae225d6b75a50f78 (1144), afafa0b6384497a04 (1145), a59029c8b13895f2a (1146), a4dbda84faef4f203 (1147), abc98aafcce16204d (1148), a449b1a9fe36c7d0c (1149), each replaced in the same turn. Next 5 tasks: (1) rewrite GLOSSARY.md; (2) rewrite rehearsal-passed-limits-draft.md as one clean block; (3) status box on premortem-r1 and critical-path-r1; (4) delete history lines from open-items-table and merged-findings into their history files; (5) re-read each edited page.
 
 Words: UTC = world time; IST = UTC plus 5 h 30 min. Cold read = an agent reads one page with no background and lists what it cannot follow. Held = a finding on a page that belongs to the lead, which I do not edit.
 
