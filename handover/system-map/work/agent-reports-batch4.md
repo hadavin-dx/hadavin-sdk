@@ -1061,3 +1061,5 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 769 premortem r12: owners and dates, cut fixes, terms. FIXED by STATE r12 (unknowns marked).
 - 770 open-items r13: definitions, TB row, column 6, A1/A8. FIXED by TERMS r13.
 - 771 (premortem and L3c duplicates counted above; no 771 content)
+
+- 771 L1c r12: job-keys circular cite, reaper/desk, history marker, row warnings. FIXED by CURRENT r12; cells TO DO.
