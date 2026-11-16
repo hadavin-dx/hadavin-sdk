@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T14:01:59Z
-PUSHED_UTC: 2026-11-16T14:01:59Z
+UPDATED_UTC 2026-11-16T14:03:59Z
+PUSHED_UTC 2026-11-16T14:03:59Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
@@ -15,7 +15,7 @@ PROGRESS: 5 of 20 table items at 100 percent (M1, M11, M12, M13, M16); mean abou
 Terms: take = the one filmed run; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
 AGENTS_RUNNING: 8 (the minimum is 8)
 CAPACITY nproc=4 load=0.17 disk: 18G free
-NEXT: hand-backs digested through 1349 (a digest = one short line in work/agent-reports-batch4.md for each helper report). Findings on pages the lead holds are in that file for the lead. Next 5 independent tasks: fold L1c, merged-findings, L5b, L4c and FINAL-CROSSCHECK (fold = move old stacked notes into a history file and keep the live text).
+NEXT: hand-backs digested through 1364 (a digest = one short line in work/agent-reports-batch4.md for each helper report). Findings on pages the lead holds are in that file for the lead. Next 5 independent tasks: fold L1c, merged-findings, L5b, L4c and FINAL-CROSSCHECK (fold = move old stacked notes into a history file and keep the live text).
 INTERRUPTED: none
 
 ## ITEMS
@@ -43,21 +43,18 @@ INTERRUPTED: none
 | M16 | flow-set question | DONE, closed by decision 1 (real-v5 only; film-v5 out) | 100 | flowset/REPORT.md | |
 
 ## AGENTS
-
 | agent id | purpose | started (UTC) | expected end | state | what it produced so far |
 |---|---|---|---|---|---|
-| a245a03d03baad9b3 | cold read L1c.md | 2026-11-16T14:01:59Z | +5 min | running | nothing yet |
-| a990420fc7985d8b9 | cold read L3c.md | 2026-11-16T14:01:59Z | +5 min | running | nothing yet |
-| a5c7cc8ee72b17e27 | cold read L4c.md | 2026-11-16T14:01:59Z | +5 min | running | nothing yet |
-| acce12c0f3c4efb3a | cold read L5b.md | 2026-11-16T14:01:59Z | +5 min | running | nothing yet |
-| af6309609ed392639 | cold read BRIEF-EVIDENCE-1.md | 2026-11-16T14:01:59Z | +5 min | running | nothing yet |
-| a60b0c29d6f67d49c | cold read BRIEF-EVIDENCE-2.md | 2026-11-16T14:01:59Z | +5 min | running | nothing yet |
-| a40be456116c76449 | cold read owner-timeline-draft.md | 2026-11-16T14:01:59Z | +5 min | running | nothing yet |
-| (new, see agent list) | cold read evidence-1.md | 2026-11-16T14:01:59Z | +5 min | running | nothing yet |
+| aa8d7e3fa605b0f29 | structural read GLOSSARY | ~14:05 | ~14:15 | running | nothing yet |
+| ac20e39eb9c3837b8 | style read decision-list | ~14:05 | ~14:15 | running | nothing yet |
+| a6f2385635e1916fe | style read LEAD-NOTICE | ~14:05 | ~14:15 | running | nothing yet |
+| adba2c50d99348a81 | structural read premortem-r1 | ~14:05 | ~14:15 | running | nothing yet |
+| a3a27acaabd15c948 | structural read critical-path-r1 | ~14:05 | ~14:15 | running | nothing yet |
+| a640b199bda198f21 | zoom-out read end-delete-cases | ~14:05 | ~14:15 | running | nothing yet |
+| aa8b00dd14a3b69c0 | structural read merged-findings | ~14:05 | ~14:15 | running | nothing yet |
+| af59d34f5249172b2 | structural read t19-gap-facts | ~14:05 | ~14:15 | running | nothing yet |
 
-CAPACITY: 8 agents running. Replacements were started in the same turn as each hand-back.
-
-Next 5 independent tasks: apply the 1342-1349 fixes to GLOSSARY (shrink Unknown table); Read-this-first blocks on L1-L6 pages (counts and term pointers; lane pages are mine); collapse stacked paragraphs in t19-history, premortem, critical-path, open-items; purpose headers on the evidence files; LEAD-NOTICE-batch-1 item 1 default and item 3 wording.
+CAPACITY: 8 running. Next 5: fix BRIEF-EVIDENCE-1/2; banned-claims stub; open-items-table How-to-read; evidence file headers; GLOSSARY shrink.
 
 Words: UTC = world time; IST = UTC plus 5 h 30 min. Cold read = an agent reads one page with no background and lists what it cannot follow. Held = a finding on a page that belongs to the lead, which I do not edit.
 
