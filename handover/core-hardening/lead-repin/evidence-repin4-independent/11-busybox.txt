@@ -1,0 +1,11 @@
+sed: applet not found
+awk: applet not found
+-- self-test busybox sh + busybox applets
+rc=2
+0
+mktemp: applet not found
+cannot make the private work folder with mktemp
+
+real	0m0.002s
+user	0m0.001s
+sys	0m0.001s

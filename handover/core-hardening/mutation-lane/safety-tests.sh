@@ -19,7 +19,8 @@ if [ -n "${ONLY:-}" ] && [ -z "${ONLY_CHILD:-}" ]; then
   ' "$SELF" > "$DER"
   ONLY_CHILD=1 bash "$DER"; rc=$?; rm -f "$DER"; exit $rc
 fi
-RUN=${RUN:-$(dirname "$(readlink -f "$0")")/run.py}
+SELF_PATH=$(readlink -f "$0")
+RUN=${RUN:-$(dirname "$SELF_PATH")/run.py}
 S=${SCRATCH:?set SCRATCH to a scratch folder outside every repository}
 VENV=${VENV:?set VENV to a folder with bin/python that has pytest}
 GIT=$(command -v git)
@@ -572,7 +573,7 @@ for variant in outside-root early-start control; do
   chk "T51b $variant setup: the member of the dead leader's group runs" "pgrep -f '$SL 3142' >/dev/null"
   out=$(python3 "$RUN" --root "$T/root" --restore 2>&1); rc=$?; echo "$out" | cut -c1-200; sleep 1
   if [ $variant = control ]; then chk "T51b control (member works in root, started after the recorded start): stopped (rc $rc)" "[ $rc -eq 0 -a '$(last)' = return1 ] && ! pgrep -f '$SL 3142' >/dev/null"
-  else chk "T51b $variant: member left alone, file restored (rc $rc)" "[ $rc -eq 0 -a '$(last)' = return1 ] && pgrep -f '$SL 3142' >/dev/null"; fi
+  else chk "T51b $variant: member left alone, file restored, exit 3 because the group is unsettled (r8 N2) (rc $rc)" "[ $rc -eq 3 -a '$(last)' = return1 ] && pgrep -f '$SL 3142' >/dev/null"; fi
   pkill -9 -f "$SL 314[23]" 2>/dev/null
 done
 # c) works_in matches whole path parts
@@ -1173,7 +1174,7 @@ chk "T87k guard: no marker anywhere and the real-repository check refuses: still
 
 echo "== T88 (review r7 N7) as a NORMAL USER: real permission bits (as root a mode bit never blocks a write, so the earlier suite never ran this path)"
 if [ "$(id -u)" = 0 ] && [ -z "${NONROOT_CHILD:-}" ]; then
-  NR=$(mktemp -d /tmp/r8nonroot.XXXXXX); chmod 755 "$NR"; cp -a "$VENV" "$NR/venv"; cp "$RUN" "$NR/run.py"; cp "$(readlink -f "$0")" "$NR/safety-tests.sh"; mkdir "$NR/s"; chown -R nobody "$NR" 2>/dev/null
+  NR=$(mktemp -d /tmp/r8nonroot.XXXXXX); chmod 755 "$NR"; cp -a "$VENV" "$NR/venv"; cp "$RUN" "$NR/run.py"; cp "$SELF_PATH" "$NR/safety-tests.sh"; mkdir "$NR/s"; chown -R nobody "$NR" 2>/dev/null
   if setpriv --reuid=65534 --regid=65534 --clear-groups true 2>/dev/null; then
     ( cd "$NR" && setpriv --reuid=65534 --regid=65534 --clear-groups env -i PATH="$PATH" HOME="$NR" NONROOT_CHILD=1 RUN="$NR/run.py" SCRATCH="$NR/s" VENV="$NR/venv" ONLY="${NONROOT_ONLY:-T52 T53 T76 T85 T87 T88 T92 T93 T94}" NCF="${NCF---no-control}" bash "$NR/safety-tests.sh" ) >"$S/t88child.out" 2>&1; rc=$?
     grep -E "^== |FAIL" "$S/t88child.out" | cut -c1-200 | head -60; tail -1 "$S/t88child.out"

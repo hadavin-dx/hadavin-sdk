@@ -256,15 +256,15 @@ Every item: command, output file under `handover/core-hardening/audit-r460/evide
 
 ### 4.2 Planned imports (module-import-time edges added or planned; the program reads this table)
 
-Rule: no module in this table may end up in an import cycle that does not exist today. "Type-only" imports sit under `TYPE_CHECKING` and still count in the second counting.
+Rule: no module in this table may end up in an import cycle that does not exist today. "Type-only" imports sit under `TYPE_CHECKING` and still count in the second counting. **The first run of the program (kept as `raw-import-graph-v9-first-run.txt`) found that a type-only import of `config` from `llm.spend` closed a new cycle through `config`, `registry`, `deferred` and `replay_records` (counting `TYPE_CHECKING` imports). So `llm.spend` and `limits` import `config` in neither way: `llm.spend` takes a route through a small `Protocol` class (`input_usd_per_mtok`, `output_usd_per_mtok`, `max_tokens`) that it defines itself.**
 
 <!-- PLANNED-EDGES-BEGIN -->
 | module | run-time imports | type-only imports |
 |---|---|---|
-| llm.spend | models | config |
+| llm.spend | models | |
 | llm.callgate | llm.spend, llm.protocol, models, defaults | |
 | llm.common | llm.spend, llm.protocol | llm.callgate |
-| limits | llm.spend, llm.protocol, models, registry, store.protocol, audit.protocol | config |
+| limits | llm.spend, llm.protocol, models, registry, store.protocol, audit.protocol | |
 | runtime.agent_loop | limits, llm.spend, llm.protocol | |
 | guard.injection | llm.protocol | |
 | guard.bedrock_guardrail | llm.spend, llm.protocol | llm.callgate |
