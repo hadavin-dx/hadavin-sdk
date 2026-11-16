@@ -901,3 +901,15 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 
 - 649 premortem r6: line 24 dropped risk 3/6 decision and terms. FIXED by CURRENT.
 - 650 decision-list r6: five stacked paragraphs, two notice times. FIXED by CURRENT block (row splits TO DO).
+
+- 651 critical-path r14: no single answer. FIXED by CURRENT (table not rewritten).
+
+- 652 rehearsal-limits r4: FINAL dropped sentences. FIXED by CURRENT.
+- 653 t19 r7: four 'READ FIRST' paragraphs. FIXED by CURRENT STATE (steps TO DO).
+- 654 banned-claims-clean r3: counts and terms. FIXED by TERMS and CURRENT.
+- 655 owner-timeline r5: row 9 wrong words. FIXED by CURRENT.
+- 656 PLAN-002 r12: no single plan. FIXED by CURRENT RULINGS.
+- 657 open-items r8: row N ambiguity. FIXED by CURRENT.
+
+- 658 BRIEF-LANE r8: scope split. FIXED by CURRENT RULES r8 addition.
+- 659 end-delete-cases r6: live steps unclear. FIXED by CURRENT.
