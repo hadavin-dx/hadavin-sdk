@@ -174,3 +174,14 @@ Commands (from handover/flows-audit):
 - `python3 tools/check_refs.py`: PASS 5166 references.
 - `python3 -I tools/check_secrets.py`: FAIL 1 hit (not my file, above).
 - `ruff check .`: All checks passed. `ruff format --check .`: 613 files already formatted.
+
+## Round 19 (fixer; reviews: review-design-r19 M1-M6, review-reader-r19 1-9, review-codebase-r19 (0 Blocker, 0 Major), review-codebase-r19b (1 Major provenance, 1 Minor))
+Backup of REVIEW.md before edits: scratchpad `REVIEW.md.bak-r19`. Only REVIEW.md and this file were edited; no patch file.
+Verified before changing: signer reads `audit_checkpoints` (`chain.py:290-293`), `checkpoint()` never raises (`:295-317`); `signer: none` refused in production for every process (`config.py:419-420`, `table.py:604`) = NEW finding, added to X-5.3; `add_dead_letter` has no caller in src; purge login has column SELECT on three tables; kind names for signer, anchor, secrets read in `backends/table.py`; 41+14=55, +15 new = 70 (`SUMMARY.md:22`); `fix-review7.md` does not exist.
+Fixed: M1 (Blocker test, counting grain, four departures rated X-6.6a-d), M2 (decision control table, Decisions 21-24, Q1 with who checks), M3 (Decision 1 criteria with tests and acceptance note), M4 and M5 (identity table: reasons, positive and negative tests, signer SELECT, portal/purge), M6 (kinds recorded), reader 1-9 (words defined, pointers, 41+14, superseded warning, app.build, Protocol, route-config condition, scratch database), r19b (base 1 provenance re-checked: commit 176a0cbe0 and b4cce5b exist in git; src and tests identical to HEAD 07fef531b; git apply --check re-run on `git archive 176a0cbe0`: C-01 1, A-01 0, G5 1; 'git status clean' dropped; X-5.3 one test with three inserts).
+Contested: none. Not done: Q1 search (the take's model program path is not named in any file I read); DEAD-MAN-CHECK.md cite `tick.py:323` now `:324` (nit, note file not edited); the day figures in the decision table are estimates, not measured.
+Commands (from handover/flows-audit):
+- `python3 -I reviews-of-core-patches/count_review.py reviews-of-core-patches/REVIEW.md`: rows 28; Nit 11, Minor 13, Major 4; DECLINE 3, PROPOSE FIX 25 (unchanged).
+- `python3 tools/check_refs.py`: PASS 5166 references.
+- `python3 -I tools/check_secrets.py`: FAIL 1 hit, `flow-check/raw/test-take-check.txt:178` (not my file; value not printed).
+- `ruff format --check .`: 637 files already formatted.
