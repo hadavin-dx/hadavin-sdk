@@ -42,14 +42,14 @@ INTERRUPTED: none
 | M20 | SESSION-HANDOFF live state | BLOCKED: file is on the studio laptop, not in the repo | 0 | | the lead pastes the text into inputs/; the lead has set no date |
 | M16 | flow-set question | DONE, closed by decision 1 (real-v5 only; film-v5 out) | 100 | flowset/REPORT.md | |
 
-## AGENTS (UPDATED_UTC 2026-11-16T14:31:22Z; PUSHED_UTC 2026-11-16T14:31:22Z)
+## AGENTS (UPDATED_UTC 2026-11-16T14:31:33Z; PUSHED_UTC 2026-11-16T14:31:33Z)
 | id | task | state |
 |---|---|---|
 | a928183e4300883ba | re-read L3c | running |
-| aaabac23584d86097 | cold read t19-gap-facts | running |
+| (new) | cold read row-dm-plain | running |
 
-CAPACITY: 2 of 8 slots used. Missing 6: remaining pages (L5ac, L5b, checklist, v5-edits-for-M17, decision list) await my edits and a mid-edit read is wasted; evidence-1, evidence-2 and partition are blocked by the missing work/OWNER-ONLY.txt; held pages are not mine to edit.
-NEXT 5: fix L5ac; fix L5b; fix v5-edits-for-M17; fix ARCHITECTURE-AUDIT-CHECKLIST; re-read LEAD-NOTICE-batch-1.
+CAPACITY: 2 of 8 slots used. Missing 6: remaining pages (L5ac, L5b, checklist, t19-gap-facts, v5-edits-for-M17, decision list) await my edits and a mid-edit read is wasted; evidence-1, evidence-2 and partition are blocked by the missing work/OWNER-ONLY.txt; held pages are not mine to edit.
+NEXT 5: fix L5ac; fix L5b; fix t19-gap-facts; fix v5-edits-for-M17; fix ARCHITECTURE-AUDIT-CHECKLIST.
 
 Words: UTC = world time; IST = UTC plus 5 h 30 min. Cold read = an agent reads one page with no background and lists what it cannot follow. Held = a finding on a page that belongs to the lead, which I do not edit.
 
