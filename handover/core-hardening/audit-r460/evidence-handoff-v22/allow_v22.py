@@ -38,4 +38,5 @@ def check(g, name, text):
     return g.check_sql_text(name, text, ALLOWED_BY_FILE.get(name, {}), extra_statements=EXTRA_BY_FILE.get(name, ()), atomic_tables=ATOMIC_TABLES_BY_FILE.get(name),
                             trigger_pins=TRIGGER_PINS_BY_FILE.get(name), fn_pins=FN_PINS_BY_FILE.get(name), kinds=KINDS_BY_FILE.get(name),
                             add_pins=(set(DDL_PINS_BY_FILE[name]) if name in DDL_PINS_BY_FILE else None),
-                            require_lock_timeout=name in HELD_FILES, require_stmt_timeout=(name == D3))   # v22: a file name that is not a key gets NO pinned DDL (None = every one is a problem)
+                            require_lock_timeout=name in HELD_FILES, require_stmt_timeout=(name == D3),
+                            require_pins=(set(DDL_PINS_BY_FILE[name]) if name in DDL_PINS_BY_FILE else None))   # v22: a file name that is not a key gets NO pinned DDL (None = every one is a problem)

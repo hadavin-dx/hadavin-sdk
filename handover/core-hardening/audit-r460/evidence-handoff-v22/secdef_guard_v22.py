@@ -449,15 +449,16 @@ def _sigs(part_toks, name, problems, pre, kind):
         keys.append(sigkey(na[0], na[2]))
     return keys
 
-def check_sql_text(name, text, allowed, grants_allowed=(), extra_statements=(), atomic_tables=None, trigger_pins=None, fn_pins=None, kinds=None, add_pins=None, require_lock_timeout=False, require_stmt_timeout=False):
+def check_sql_text(name, text, allowed, grants_allowed=(), extra_statements=(), atomic_tables=None, trigger_pins=None, fn_pins=None, kinds=None, add_pins=None, require_lock_timeout=False, require_stmt_timeout=False, require_pins=None):
     """allowed: {"fname(type,type)": "definer" | "invoker"} for THIS file only; extra_statements: fingerprints pinned for this file; atomic_tables: the relations a
     BEGIN ATOMIC body of this file may use. Returns a list of problems (empty = clean). Anything that matches no shape (module docstring) is a problem."""
     problems, created_at, revoked_at, definer_keys = [], {}, {}, set()
     trig_created, trig_dropped, trig_drop_tbl, trig_tbl = {}, {}, {}, {}
     fn_names = {k.split("(")[0] for k in allowed}
     pre = f"{name}: "
-    seen_to, to_warned = set(), set()
-    def _ddl_pin(st_, what):   # v22 m6: CREATE TABLE, CREATE INDEX and COMMENT ON are pinned like ALTER TABLE ... ADD (PIN_ANY = off; None = nothing is allowed)
+    seen_to, to_warned, seen_ddl = set(), set(), set()
+    def _ddl_pin(st_, what):
+        seen_ddl.add(fingerprint(st_))   # v22 m6: CREATE TABLE, CREATE INDEX and COMMENT ON are pinned like ALTER TABLE ... ADD (PIN_ANY = off; None = nothing is allowed)
         if add_pins is not PIN_ANY and (add_pins is None or fingerprint(st_) not in add_pins): problems.append(pre + f"{what} whose text is not the pinned text of this file (v22 m6): {_flat(st_)[:70]!r}")
     for idx, st in enumerate(split_statements(tokenize(text))):
         lead, flat = _lead(st), _flat(st)
@@ -485,7 +486,7 @@ def check_sql_text(name, text, allowed, grants_allowed=(), extra_statements=(), 
             else:
                 acts = _split_commas_top(st[i + 1:])
                 if not acts or not all(_is(a[0], "ADD") for a in acts): problems.append(pre + f"ALTER TABLE: every action must start with ADD (DISABLE TRIGGER, DROP CONSTRAINT, SET, OWNER, ENABLE are refused): {short!r}")
-                elif add_pins is not PIN_ANY and (add_pins is None or fingerprint(st) not in add_pins): problems.append(pre + f"ALTER TABLE ... ADD whose text is not the pinned text of this file, or this file has no pins at all (the CHECK expression, the column and the constraint name are pinned, v21 B1; v22 MJ2: no pin table for a file name means every ADD is a problem): {short!r}")
+                elif (seen_ddl.add(fingerprint(st)) or True) and add_pins is not PIN_ANY and (add_pins is None or fingerprint(st) not in add_pins): problems.append(pre + f"ALTER TABLE ... ADD whose text is not the pinned text of this file, or this file has no pins at all (the CHECK expression, the column and the constraint name are pinned, v21 B1; v22 MJ2: no pin table for a file name means every ADD is a problem): {short!r}")
             continue
         if first == ["COMMENT"] and lead[1:2] == ["ON"]:
             _ddl_pin(st, "COMMENT ON"); continue
@@ -601,6 +602,10 @@ def check_sql_text(name, text, allowed, grants_allowed=(), extra_statements=(), 
     for key in sorted(definer_keys):
         if key not in revoked_at: problems.append(f"{name}: {key} has no REVOKE ALL ON FUNCTION {key} FROM PUBLIC for this signature")
         elif revoked_at[key] < created_at[key]: problems.append(f"{name}: the REVOKE of {key} comes BEFORE its last CREATE (a re-created function would get PUBLIC execute back): put the REVOKE after the CREATE")
+    if require_pins:   # v22 (v21 evidence R01-R04, R08, H23, Q02-Q07): every pinned DDL statement must be PRESENT, not only unchanged when present
+        for fp_ in sorted(set(require_pins) - seen_ddl): problems.append(pre + f"pinned statement {fp_} is missing from this file (a deleted ADD CONSTRAINT / column / COMMENT would leave the server without that check)")
+    for need, lab in ((require_lock_timeout, "lock_timeout"), (require_stmt_timeout, "statement_timeout")):
+        if need and lab not in seen_to and lab not in to_warned: problems.append(pre + f"SET LOCAL {lab} is missing from this file (v22)")
     return problems
 
 def _split_commas_top(toks): return [p for p in _split_commas(toks) if p]
