@@ -1,0 +1,31 @@
+# v18 open for the studio lead (failures first; the package is NOT handover-ready until these are answered)
+
+Written Mon 16 Nov 2026. Each item has a safe default that applies if you do not answer: always the narrower or safer choice. Nothing here was run. I may not edit inputs. "Sheet" = OWNER-SHEET-v18.md, "Note" = LEAD-RELEASE-NOTE-v2.md.
+
+| # | Question (failure or conflict first) | Why it matters | Proposal and safe default |
+|---|---|---|---|
+| 1 | The take program deletes contacts today (AGENT-SCOPE section 3, line 1051, F-01) but decision 2 says it never does | Sheet R7 and the Note's ban list rest on "never deletes"; a printed delete count freezes the owner | Default: no run until the fix is shown at the final head (G1 NO); I changed no code. If you prefer the code as it is, the owner must change decision 2 in writing and R5, R7 and G1 change |
+| 2 | Older key and fresh key per run (FACTS says the key was saved earlier, "no limit questions") | R2 can cancel only by name, so a fresh `run-<run name>` key each run is the only cancel the owner can check; the older key is cancelled once by the owner (R2 b); an older key left alive means no run (R4) | Default: owner cancels the older key; fresh key per run. Alternative (not built): keep the older key and name it `run-...`: impossible, a key cannot be renamed (UNVERIFIED) |
+| 3 | Exit code for person C "unknown" | Q20.4: you read it at the final head | Default `none`: only 0 accepted |
+| 4 | Take port | G7: 5678 and 5679 are the owner's; 5690 to 5693 are the rehearsal | Proposal 5701 (take) and 5702 (take broker), unsourced; you check with `ss -tlnH`; Sheet has no port, the message gives it |
+| 5 | Which HubSpot identity is the take key, and is it read-only | Q20.3 unknown; DECISIONS 2 says read-only; AGENT-SCOPE says the code deletes | Default: no read-only claim anywhere; list permission names (G21) |
+| 6 | US$180 against US$189 | FACTS and AGENT-SCOPE: "US$180 of 189 in-code backstop"; G14 needs the backstop no higher than ledger total + run total | Default: 189 = credit on the prepaid page (a slot), 180 = studio ceiling; run backstop = ledger total + run total, never above 180 |
+| 7 | Who is sent twice | v16 says A twice, B ten times; AGENT-SCOPE says B ten times; decision 1 says "sent twice" | Default: sentence names A twice only if the printed result says it (Note section 5); otherwise a B sentence or no claim |
+| 8 | Claim wording and lease sentence | Q21.2 and plan-v10 Text B conflict | Default A: narrow claim, no lease sentence |
+| 9 | Film content: the earlier shot list filmed the take window (start line, notice, challenge); Sheet R9 now never records the take window | the notice prints masked accounts and a path; the editor sees raw footage | Default: take window never recorded; the proof screen comes from the rehearsal (decision 9). If you want the notice scene: only when the notice prints no masked account and no path, with the tool recording one window (G24) |
+| 10 | Contact ids | no file gives them (Open 15 of v17) | Default: the clean-up message lists exact addresses (always) and ids only if you have them; the owner's check is the address on the opened page (R7). The take-prep made-up contact (decision 8) is on the list with its exact address |
+| 11 | Numbers for the time formula (Note section 2) | no source in the inputs | Proposals: slack 30 min, run length 10 min, longest film pause 10 min, margin 10 min, minutes at "Type y to start" 5, clock tolerance 2 min, silence before FREEZE 3 min, usage lag and gap 30 min (the lag cannot be measured in a loopback rehearsal) |
+| 12 | Helpers | Sheet 5.2, G11 | Default: two humans besides the owner (one films, speaks, edits; one checks the post). With fewer: no post |
+| 13 | n8n access and the model credential in n8n's store | G3: the lead needs n8n access to import flows and to remove the model credential FACTS says is there | Default: you remove it through n8n's programming interface and show it gone; if that needs the owner's n8n login, one separate written message, never on the sheet |
+| 14 | Count of n8n connection values | checker expects three; plan has four database roles; earlier note listed two database secrets | Default: the message lists exactly what is in n8n at the check; you reconcile with the plan |
+| 15 | Window-end setting: does it exist and refuse a call after the window end | AGENT-SCOPE lists money-stop tests on an older head only | Default: Sheet keeps UNVERIFIED; the owner's cancel and the balance carry the money control |
+| 16 | Per-key limit exists (page, amount) or none | R4, yes line | Default: "none exists" unless read from the console |
+| 17 | Second take the same day | needs a new run name, key, key path, folder, database, port, marker; lag between | Default: one take per day |
+| 18 | Step 0 | decision 8: not run; one made-up contact in take prep | Default: not run; if wanted, a separate written message |
+| 19 | Places and tools (G24), page button words, key list "cancelled" word | no source | You fill; the owner sends the visible words once on request |
+| 20 | Post-by time Wed 25 Nov 2026 15:00 UTC | evidence runner found no source in decisions, facts or scope | Default: keep, marked UNVERIFIED; you confirm |
+| 21 | DECISION-one-store line 14 still says ONE database | contradicts decision 10 | Edit it (G20) |
+| 22 | Technical guard for "the lead reads only masked outputs" | the lead shares the owner's Linux user; none exists; Sheet R1 says so and the yes line states it | Default: no guard, honest wording; a separate Linux user for the lead is impossible to claim without being built |
+| 23 | Independent reader for G1 and G2 | v17 reviews: the lead attested its own work | Default: a named `egm:*` reviewer agent that wrote neither the code nor the statement |
+| 24 | Decision 7 lists only `y`, the challenge and `end`, yet the Sheet lists more owner tasks | G22; the evidence runner found no file listing them | Default: you confirm the list in one line, else the task moves to you (each is reversible) |
+| 25 | What the take program does when the owner cancels the key mid-run, or the film pause ends without `end` (G18) | R3 and R6 depend on it | Default: unknown; owner sheet already treats both as called-off runs |

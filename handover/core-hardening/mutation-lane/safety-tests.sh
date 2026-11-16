@@ -644,11 +644,11 @@ cut -c1-220 "$S/t60.out"
 chk "T60 the file behind the swapped link was not written" "[ \"\$(tail -1 $S/evil/mod.py | tr -d ' ')\" = return424242 ]"
 rm -rf "$S/evil"
 echo "== T62 (review r4 nit 4) a bind mount inside the root (one name per file, same filesystem) is refused"
-fresh_root; mkdir -p "$S/mntsrc"; echo beta > "$S/mntsrc/other.txt"
+fresh_root; rm -rf "$S/mntsrc"; mkdir -p "$S/mntsrc"; cp -a "$T/root/docs/." "$S/mntsrc/"   # same content as docs/: the tree comparison alone cannot see the mount
 if mount --bind "$S/mntsrc" "$T/root/docs" 2>/dev/null; then
   mut -- tests/test_fast.py > "$S/t62.out" 2>&1; rc=$?; umount "$T/root/docs"; cut -c1-200 "$S/t62.out"
   chk "T62 mount point docs/ refused for that reason (rc $rc)" "[ $rc -eq 2 ] && grep -q 'mount point' '$S/t62.out'"
-  chk "T62 nothing planted, bind source untouched" "[ '$(last)' = return1 -a -z '$(state_files)' ] && [ \"\$(cat $S/mntsrc/other.txt)\" = beta ]"
+  chk "T62 nothing planted, bind source untouched" "[ '$(last)' = return1 -a -z '$(state_files)' ] && [ \"\$(cat $S/mntsrc/note.txt)\" = alpha ]"
 else echo "  (mount --bind not permitted here: T62 skipped)"; SKIPPED="$SKIPPED T62"; fi
 rm -rf "$S/mntsrc"
 python3 - "$RUN" <<'PY'

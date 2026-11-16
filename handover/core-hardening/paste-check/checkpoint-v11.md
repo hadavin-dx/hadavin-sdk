@@ -1,0 +1,2 @@
+# checkpoint v11 (builder)
+Final note. Done: checklist and fill list at revision 11 (backups *.rev10.md), v11-OPEN-FOR-LEAD.md, v11-CHANGES.md, evidence-c11.md, harness run as uid 65534. Next: the lead commits; independent reviewers read the diff against rev10. Blockers for me: none. Not run: Git Bash, PowerShell, WSL, n8n. Checklist sha256 starts 67111574af9b9a3c. Commit SHA: none (the builder does not commit).
