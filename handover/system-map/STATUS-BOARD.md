@@ -49,11 +49,11 @@ INTERRUPTED: none
 | M16 | flow-set question | DONE, closed by decision 1 (real-v5 only; film-v5 out) | 100 | flowset/REPORT.md | |
 
 ## AGENTS
-- a96f039beb7aec0da | r40 patch round-3 fixer (10 Majors) | started 19:25Z | running | next: recount by script, no new reader unless Blockers
-- ac805d8f8d7b4177b | steps v5 round-8 naive reader (money path, uncapped) | started 19:33Z | running | next: fixer if Blocker/Major
-- a6a517ededc942467 | steps v5 round-8 fact reader | started 19:35Z | running | next: fixer for mismatches
-- afe0dad7bccdc207e | L-01 pages round-8 naive reader (security path, uncapped) | started 19:34Z | running | next: fixer if Blocker/Major
-- a449ad56542253f75 | L-01 pages round-8 fact reader (md5, stamp, cites) | started 19:35Z | running | next: fixer for mismatches
+- a96f039beb7aec0da | r40 patch round-3 fixer (10 Majors) | started about 19:20Z (approx.) | running | next: recount by script, no new reader unless Blockers
+- ac805d8f8d7b4177b | steps v5 round-8 naive reader (money path, uncapped) | started about 19:27Z | running | next: fixer if Blocker/Major
+- a6a517ededc942467 | steps v5 round-8 fact reader | started about 19:29Z | running | next: fixer for mismatches
+- afe0dad7bccdc207e | L-01 pages round-8 naive reader (security path, uncapped) | started about 19:28Z | running | next: fixer if Blocker/Major
+- a449ad56542253f75 | L-01 pages round-8 fact reader (md5, stamp, cites) | started about 19:29Z | running | next: fixer for mismatches
 EMPTY SLOTS (3 of 8; the lead asked for 6, 5 running): drift cite pass waits for steps v5 to settle (its cites move with each fix); resmoke list, store/scope, M14 are at the reader cap (2 rounds); r41-r43 landings and the loopback re-smoke wait on the lead; no other independent open work in QUEUE.
 
 ## Details (long text moved from the FAILED line)
