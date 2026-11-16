@@ -55,6 +55,7 @@ import pathlib
 import re
 import shutil
 import signal
+import stat
 import subprocess
 import sys
 import tarfile
@@ -62,10 +63,23 @@ import tempfile
 import time
 
 SKIP_DIRS = {".venv", "__pycache__", ".pytest_cache"}
-STATE = pathlib.Path(tempfile.gettempdir()) / "hadavin-mutation-lane"  # outside every repository
+# outside every repository, one folder per user (a shared temp folder must not be shared) (review 4 M4)
+STATE = pathlib.Path(tempfile.gettempdir()) / f"hadavin-mutation-lane-{os.geteuid()}"
 NAME_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*")
 SHA_RE = re.compile(r"[0-9a-fA-F]{4,64}")
 HANDLED_SIGNALS = (signal.SIGTERM, signal.SIGINT, signal.SIGHUP)
+# pytest options that move the test root, the config or the import base: refused after `--` (review 4 M5)
+BAD_LONG_ARGS = (
+    "--basetemp",
+    "--rootdir",
+    "--junitxml",
+    "--confcutdir",
+    "--override-ini",
+    "--config-file",
+    "--import-mode",
+    "--pyargs",
+)
+BAD_SHORT_ARGS = ("-c", "-o")
 EXIT_REFUSED, EXIT_RESTORE_FAILED, EXIT_TREE_NOT_CLEAN = 2, 3, 4
 
 
@@ -77,8 +91,86 @@ def sha256(b: bytes) -> str:
     return hashlib.sha256(b).hexdigest()
 
 
+class SigState:
+    """Signal bookkeeping. While a mutant is planted (`critical`) a signal may unwind the run only while
+    the tests are awaited (`allow`); anywhere else it is only remembered and delivered after the restore.
+    Only the FIRST signal ever raises (`fired`); later ones are remembered and ignored (review 4 M3)."""
+
+    critical = False
+    allow = False
+    fired = False
+    first: int | None = None
+
+
+SIG = SigState()
+
+
 def _term(signum, frame):
-    raise KeyboardInterrupt(signum)  # unwinds through the `finally` that restores the file
+    if SIG.first is None:
+        SIG.first = signum
+    if not SIG.fired and (SIG.allow or not SIG.critical):
+        SIG.fired = True
+        SIG.allow = False
+        raise KeyboardInterrupt(SIG.first)  # unwinds through the `finally` that restores the file
+
+
+def deliver_pending() -> None:
+    """Raise the remembered first signal, once, at a point where nothing is planted or the tests are awaited."""
+    if SIG.first is not None and not SIG.fired:
+        SIG.fired = True
+        SIG.allow = False
+        raise KeyboardInterrupt(SIG.first)
+
+
+def ensure_state() -> None:
+    """The state folder: ours, a real folder (not a link), owner-only. Anything else is refused (review 4 M4)."""
+    try:
+        os.mkdir(STATE, 0o700)
+    except FileExistsError:
+        pass
+    st = os.lstat(STATE)
+    if not stat.S_ISDIR(st.st_mode) or st.st_uid != os.geteuid() or st.st_mode & 0o077:
+        raise Refused(
+            f"state folder {STATE} is not a plain folder owned by this user with mode 700: refused (remove it or fix it)"
+        )
+
+
+def write_state(path: pathlib.Path, data: bytes) -> None:
+    """Atomic: a new private file (O_EXCL, mode 600) in the state folder, then rename over the target."""
+    fd, tmp = tempfile.mkstemp(dir=STATE, prefix=".tmp-")
+    try:
+        with os.fdopen(fd, "wb") as fh:
+            fh.write(data)
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(tmp, path)  # replaces a link itself, never follows it
+    except BaseException:
+        pathlib.Path(tmp).unlink(missing_ok=True)
+        raise
+
+
+def read_state(path: pathlib.Path) -> bytes:
+    """Read a state file: no symbolic link, a regular file, owned by this user."""
+    fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
+    with os.fdopen(fd, "rb") as fh:
+        st = os.fstat(fh.fileno())
+        if not stat.S_ISREG(st.st_mode) or st.st_uid != os.geteuid():
+            raise Refused(f"state file {path} is not a regular file owned by this user: refused")
+        return fh.read()
+
+
+def write_target(path: pathlib.Path, data: bytes) -> None:
+    """Write the file under test without following a link at the last path part."""
+    fd = os.open(path, os.O_WRONLY | os.O_TRUNC | os.O_NOFOLLOW)
+    with os.fdopen(fd, "wb") as fh:
+        fh.write(data)
+
+
+def decode_text(b: bytes, rel: str) -> str:
+    try:
+        return b.decode()
+    except UnicodeDecodeError as e:
+        raise Refused(f"{rel} is not UTF-8 text: cannot plant a text mutant in it") from e
 
 
 def tool(name: str) -> str:
@@ -88,9 +180,17 @@ def tool(name: str) -> str:
     return found
 
 
-def run_cmd(argv: list[str], input_bytes: bytes | None = None) -> subprocess.CompletedProcess:
-    """The one place that starts a helper program (git, patch): fixed argument list, no shell."""
-    return subprocess.run(argv, input=input_bytes, capture_output=True, check=False)
+def run_cmd(
+    argv: list[str],
+    input_bytes: bytes | None = None,
+    cwd: pathlib.Path | None = None,
+    env: dict | None = None,
+    timeout: int | None = None,
+) -> subprocess.CompletedProcess:
+    """The one place that starts a helper program (git, patch, the import probe): fixed argument list, no shell."""
+    return subprocess.run(
+        argv, input=input_bytes, capture_output=True, check=False, cwd=cwd, env=env, timeout=timeout
+    )
 
 
 def text_of(cp: subprocess.CompletedProcess) -> str:
@@ -233,21 +333,108 @@ def stop_orphan(m: dict, root: pathlib.Path) -> str:
 
 
 def restore_from_marker(root: pathlib.Path) -> tuple[bool, str]:
-    marker = STATE / f"{key_for(root)}.planted.json"
-    if not marker.exists():
-        return True, "no marker: nothing to restore"
-    m = json.loads(marker.read_text())
-    bk = pathlib.Path(m["backup"]).resolve()
-    if bk.parent != STATE.resolve():
-        raise Refused(f"marker names a backup outside the state folder: {bk}")
-    target = safe_rel(root, m["file"], "marker file")
+    ensure_state()
+    key = key_for(root)
+    marker = STATE / f"{key}.planted.json"
+    if not os.path.lexists(marker):
+        return True, f"no marker in {STATE}: nothing to restore (a run that used another TMPDIR keeps its marker there)"
+    m = json.loads(read_state(marker))
+    if m.get("root") != str(root):
+        raise Refused(f"marker is for another root ({m.get('root')!r}): refused")
+    bk = STATE / f"{key}.backup"
+    if m.get("backup") != str(bk):
+        raise Refused(f"marker names a backup other than {bk}: refused")
+    saved = read_state(bk)
+    if sha256(saved) != m["orig_sha256"]:
+        raise Refused("the saved backup does not match the hash recorded in the marker: refused")
+    target = safe_rel(root, m["file"], "marker file")  # checked again right before the write
     orphan = stop_orphan(m, root)
-    target.write_bytes(bk.read_bytes())
+    write_target(target, saved)
     ok = sha256(target.read_bytes()) == m["orig_sha256"]
     if ok:
         marker.unlink()
         bk.unlink(missing_ok=True)
     return ok, f"{orphan}; restored {m['file']} from {bk}; hash matches saved original: {ok}"
+
+
+def test_env(pythonpath: str | None) -> dict:
+    env = {
+        "PATH": os.environ.get("PATH", ""),
+        "HOME": os.environ.get("HOME", ""),
+        "PYTHONDONTWRITEBYTECODE": "1",
+    }
+    if pythonpath:
+        env["PYTHONPATH"] = pythonpath
+    return env
+
+
+def check_test_args(tests: list[str]) -> None:
+    for t in tests:
+        long_hit = any(t == o or t.startswith(o + "=") for o in BAD_LONG_ARGS)
+        short_hit = any(t.startswith(o) and not t.startswith("--") for o in BAD_SHORT_ARGS)
+        if long_hit or short_hit:
+            raise Refused(
+                f"TESTS argument {t!r} would move the test root, the config or the import base: refused"
+            )
+
+
+def module_of(rel: str) -> str | None:
+    """`src/pkg/mod.py` -> `pkg.mod`; `pkg/__init__.py` -> `pkg`; None if not a plain python module path."""
+    pp = pathlib.PurePosixPath(rel)
+    if pp.suffix != ".py":
+        return None
+    parts = list(pp.parts)
+    if parts and parts[0] == "src":
+        parts = parts[1:]
+    if not parts:
+        return None
+    parts[-1] = pp.stem
+    if parts[-1] == "__init__":
+        parts = parts[:-1]
+    if not parts or not all(x.isidentifier() for x in parts):
+        return None
+    return ".".join(parts)
+
+
+def import_check(root: pathlib.Path, pythonpath: str | None, files: list[str]) -> dict[str, str]:
+    """For each target file: import its module in the SAME environment and folder the tests use and
+    require that the imported file is the one under root (an editable install, a .pth file or an
+    absolute path could point at another tree and make every mutant look like a survivor) (review 4 M5)."""
+    py = root / ".venv/bin/python"
+    if not py.exists():
+        raise Refused(f"{py} does not exist: the scratch root needs its own .venv")
+    out = {}
+    for rel in dict.fromkeys(files):
+        mod = module_of(rel)
+        if mod is None:
+            out[rel] = "not checked (not a plain .py module path)"
+            continue
+        code = "import importlib,sys; m = importlib.import_module(sys.argv[1]); print(getattr(m, '__file__', '') or '')"
+        try:
+            cp = run_cmd(
+                [str(py), "-c", code, mod], cwd=root, env=test_env(pythonpath), timeout=300
+            )
+        except subprocess.TimeoutExpired as e:
+            raise Refused(f"import check of {mod} timed out after 300 s") from e
+        if cp.returncode != 0:
+            raise Refused(f"import check: `import {mod}` failed (rc {cp.returncode}): {text_of(cp)[-300:]}")
+        got = cp.stdout.decode().strip().splitlines()[-1] if cp.stdout.strip() else ""
+        want = (root / rel).resolve()
+        if not got or pathlib.Path(got).resolve() != want:
+            raise Refused(
+                f"import check: `import {mod}` loads {got!r}, not {want}: the tests would not run the mutated file; "
+                f"fix the scratch environment (editable install, .pth file) or pass --pythonpath"
+            )
+        out[rel] = f"import {mod} -> {got} (== root/{rel}: True)"
+    return out
+
+
+def reap(proc: subprocess.Popen) -> str:
+    try:
+        return proc.communicate(timeout=30)[0] or ""
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        return ""
 
 
 def run_tests(
@@ -264,16 +451,10 @@ def run_tests(
     py = root / ".venv/bin/python"
     if not py.exists():
         raise Refused(f"{py} does not exist: the scratch root needs its own .venv")
-    env = {
-        "PATH": os.environ.get("PATH", ""),
-        "HOME": os.environ.get("HOME", ""),
-        "PYTHONDONTWRITEBYTECODE": "1",
-    }
-    if pythonpath:
-        env["PYTHONPATH"] = pythonpath
+    env = test_env(pythonpath)
     cmd = [str(py), "-m", "pytest", "-q", "-p", "no:cacheprovider", "--tb=line", "-rf", *tests]
     # one process group, so a timeout or a signal can stop all of it
-    proc = subprocess.Popen(
+    proc = subprocess.Popen(  # noqa: S603 - fixed argument list, no shell
         cmd,
         cwd=root,
         env=env,
@@ -282,18 +463,24 @@ def run_tests(
         text=True,
         start_new_session=True,
     )
-    if on_start:
-        on_start(proc.pid)
     try:
-        out, _ = proc.communicate(timeout=timeout)
-        return cmd, proc.returncode, out
-    except subprocess.TimeoutExpired:
-        stop_group(proc.pid)
-        proc.communicate()
-        return cmd, None, f"TIMEOUT after {timeout} s"
-    except BaseException:  # SIGTERM / SIGINT while the tests run: stop the test process group, then let the caller restore
+        if on_start:  # inside the try: a failure here must still stop the group (review 4 M2)
+            on_start(proc.pid)
+        SIG.allow = SIG.critical  # only now may a signal unwind us; outside a plant it always may
+        deliver_pending()  # a signal that came earlier (during the planting) is delivered here
+        try:
+            out, _ = proc.communicate(timeout=timeout)
+            result = (cmd, proc.returncode, out)
+        except subprocess.TimeoutExpired:
+            stop_group(proc.pid)
+            reap(proc)
+            result = (cmd, None, f"TIMEOUT after {timeout} s")
+        SIG.allow = False
+        return result
+    except BaseException:  # a signal while the tests run, or a failure: stop the group, let the caller restore
+        SIG.allow = False
         stop_group(proc.pid)  # a group that is already gone must not hide the signal
-        proc.communicate()
+        reap(proc)
         raise
 
 
