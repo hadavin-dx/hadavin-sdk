@@ -1,13 +1,13 @@
-UPDATED_UTC: 2026-11-16T10:14:58Z
+UPDATED_UTC: 2026-11-16T10:15:29Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
 ITEMS_OPEN: 8
-PERCENT: 35
+PERCENT: 40
 AGENTS_RUNNING: 5
-CAPACITY: 3.01 load of 4 cores, mem 0/15 GB, disk free 27G, agents 5 (light+heavy per list)
+CAPACITY: 2.90 load of 4 cores, mem 0/15 GB, disk free 27G, agents 5 (light+heavy per list)
 INTERRUPTED: none
 FAILED: F8: independent rerun r3: run_all rc 0, self-test 538/0/52, ruff, format, bandit rc 0, no noqa; BUT 3 of 16 runnable new mutants survive (lines 608, 964, 1149; 4 of 20 were syntax errors); raw/pristine-no-baseline.txt still old (09:32); n8n auth values, credential kinds, $env block UNVERIFIED; design review running
 F3: evidence r5: 113 OK, gates rc 0, 8 of 20 mutants survive; security review r3 (read only, nothing run): 3 Medium + 3 Low in clean-up, partial copies, check, delete (no value leak found); r6 fixer running; py3.9/3.10, macOS, real n8n not run
@@ -22,8 +22,9 @@ claims cite lane A+rest of B: 200 rows, 198 OK, 2 WRONG (A-097 trace sentence re
 F5 evidence r5: checker check_runsheet_paste.py FAILS vs the new CLAIMS-TABLE (73 ids marked, B-219 has no row); 20 CLAIMS-TABLE line cites no longer hit the claimed text (valid in r4 layout only); checker crashes with no args; 23 of 44 changed rows not named in fix log; fixer will batch with facts review
 claims stranger read of lines 1-260: 3 Blockers 16 Majors (gating of row 33 on a check that runs after the take, scope box contradicts itself, scenes 1-4 never described); r6 fixer running
 F5 facts review r5: 0 Blocker 6 Major (about 25 wrong CLAIMS-TABLE line cites; A-084 example.test vs example.com; deleting saved runs may not remove n8n copy; decision 2 pasted as fact; B-215 cite; B-010 three vs two leads); r6 fixer running
-NEXT: Lanes: F3 r6, F5 r6 fix, claims r6 fix, desk tracer, F8 design review; then F8 r4 batch
-PUSHED_UTC: 2026-11-16T10:14:58Z
+F8 design review r3: 0 Blocker 5 Major (cross-folder duplicate webhook paths never checked; $env reads exit 0 by default; memory-sourced n8n rules are FAILs without UNVERIFIED tag; self-baseline makes IF gap only WARN; stale README/REPORT claims); r4 fixer running
+NEXT: Lanes: F3 r6, F5 r6, claims r6, desk tracer, F8 r4
+PUSHED_UTC: 2026-11-16T10:15:29Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -44,9 +45,9 @@ PUSHED_UTC: 2026-11-16T10:14:58Z
 |---|---|---|---|---|---|---|---|---|
 | a7f3r6 | f3-fix6 | sonnet | F3 round 6: kill 8 surviving mutants | 10:10 | 10:40 | 5 | running | fill_flows/fix-f3-r6.md |
 | trdesk | desk-repo tracer for UNTRACED rows | sonnet | trace B-067.. in the public desk repo | 10:21 | 10:46 | 5 | running | reviews-f1/trace-desk-repo.md |
-| f8rv3 | F8 r3 second reviewer (design angle) | sonnet | take-breaker coverage, false confidence | 10:25 | 10:45 | 5 | running | (inline) |
 | clfix6 | claims r6 fixer | sonnet | tags, gating, counts, desk traces, cites | 10:24 | 10:54 | 5 | running | reviews-f1/fix-f1-r6.md |
 | f5fix6 | F5 r6 fixer | sonnet | cites by id, A-084, B-219, checker | 10:27 | 10:57 | 5 | running | fix-f5-r6.md |
+| f8fix4 | F8 r4 fixer | sonnet | 5 Majors + 3 survivors | 10:33 | 11:08 | 5 | running | flow-check/fix-f8-r4.md |
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
