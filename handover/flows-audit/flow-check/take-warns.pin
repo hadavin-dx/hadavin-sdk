@@ -1,4 +1,4 @@
-# expected WARN lines of the take check (folder path removed, sorted); a person read each one; written by take_check.sh --write-warn-pin
+# expected WARN lines of the take check (folder path removed, sorted); written by take_check.sh --write-warn-pin. Only the WARN lines below are covered by the sha256 line; every comment line (this one, reviewed by, date, flows sha256) is NOT protected by a hash, so a person must look at the git diff of this file. The reviewer line below says who, if anyone, confirmed the WARN lines.
 # reviewed by: flows-audit session, 2026-11-16, content read by that session only, lead to confirm
 # date (UTC): 2026-11-16
 # sha256 of the WARN lines below (LC_ALL=C sort, one per line): 378e11212191edcbb0773a829808263d023d52ec1d71873a97d52cf911e84d44
