@@ -17,7 +17,7 @@ D, MO = date(2026, 11, 16), date(2026, 11, 1)
 def check(name, ok, detail=""):
     res.append(bool(ok)); print(("PASS " if ok else "FAIL ") + name + (f"  [{detail}]" if detail else ""), flush=True)
 def control(name, failed_as_expected, detail=""):
-    res.append(bool(failed_as_expected)); print(("CONTROL-OK (the new check fails on v16) " if failed_as_expected else "CONTROL-FAIL (the new check does NOT fail on v16) ") + name + (f"  [{detail}]" if detail else ""), flush=True)
+    res.append(bool(failed_as_expected)); print(("CONTROL-OK (the old design or old check does not pass the new assertion; the text names which) " if failed_as_expected else "CONTROL-FAIL (the old design or old check DOES pass the new assertion) ") + name + (f"  [{detail}]" if detail else ""), flush=True)
 def info(s): print("INFO " + s, flush=True)
 def dsn(u, db, extra=""): return f"host={sock} dbname={db} user={u} password={PW[u]} {extra}"
 def st(fn):

@@ -1,30 +1,31 @@
-# Hand-off v17: what changed from v16 (v16 files are unchanged)
+# Hand-off v18: what changed from v17 (v17 files are unchanged)
 
-**Failures and gaps first.** (1) Not run: unit tests of the product change (none written), `bandit`, CodeQL, the EGM skills (not invokable from this agent; review of v17 is owed, and DB-3 and the v17 guard are money and audit path text no reviewer has read). (2) `gate4` was NOT run in v17; the v16 baseline (`pytest` rc=1, two guard tests outside this folder, L20) is carried and the tree may have changed since. (3) Postgres results are 16.15 only; 14 and 17.10 are not run (L18). (4) All v17 runs are author-run (an independent re-run is asked for). (5) Everything in `evidence-handoff-v17/` is prototype code. (6) DB-3 changes nothing until the owner says yes (L22) and the lead names the operator role (L23); until then the exposure of v16 section 0 item 5 stands. (7) The guard is a text check on `.sql` files; a function made by hand in a console is only caught by the start-up check. (8) The DB-1 timing numbers differ between runs by more than I can explain (machine noise).
+**Failures and gaps first.** (1) Not run: unit tests of the product change (none written), `bandit`, CodeQL, Postgres 14 and 17.10 (only 16.15 exists here, L18), a Windows checkout, `gate4` (v18 copy not run; the v16 baseline of two failing guard tests outside this folder, L20, is carried and the tree may have changed since), and the EGM skills (not invokable from this agent; the lead runs them; v18 text, the guard and the start-up query are money, audit and secret path and no reviewer has read them). (2) All v18 runs are author-run; no independent evidence runner has repeated them. (3) Everything in `evidence-handoff-v18/` is prototype and reference code. (4) Text only (T), not run: the product `function` kind of `Grant`, `PostgresStore.startup_checks`, the store code L-2, the product tests, and the secrets rule "refuse a file with a group or other bit" (prototype only; the product file kind accepts mode 0440 by design). (5) Stated, not closed: a hostile holder of the runtime login can reserve any amount below the 1,000,000,000,000 ceiling under any agent name and can settle a reservation under another agent's name (one login serves all agents; controls: invoice comparison 7.3 and per-agent logins L-4). (6) My own slips found while building v18: my first guard version read the wrong token position and flagged every legitimate function; and it upper-cased tokens but compared lower-case words, so two rules never fired. Both were caught by the real-file check and fixed before any run is quoted here. (7) The control lines of `pg_v18.py` print "(the new check fails on v16)" even for the six controls that run on the v17 file; the label is wrong for those six, the check text names the right file.
 
-Evidence: `pg_v17.py` 49 of 49 in two runs; the 175 v16 checks on the v17 files 175 of 175 in two runs; 20 guard mutants (12 missed by the v16 guard) and 10 real files clean; secrets 7 checks, 0 failures. Raw files: `evidence-handoff-v17/raw/`.
+Evidence (16.15, author-run): `pg_v18.py` 114 of 114 in two runs (19 are controls); the 175 v16 checks on the v18 files 175 of 175 in two runs; `secdef_mutants_v18.py` 96 checks, 0 failed (the v17 guard misses 39 of them, the v16 guard 66); `run_secrets_v18.sh` 12 of 12. Raw files: `evidence-handoff-v18/raw/`. Timing of the DB-2 decrease trigger (not DB-1): +0.072 and +0.061 ms per lowering (mine), +0.079, +0.054, +0.051 (independent runner): about +0.05 to +0.08 ms.
 
-Column "Fails on v16" says what I ran to show the new test or control does not pass on the v16 design (C = control run in the raw file; T = text only, no run).
+Column "Fails on v17": C = a control run in the raw file shows the check fails or the old behaviour on the v17 file; T = text only, no run.
 
-| Finding | Fix (where in v17 file) | Test | Fails on v16 |
+| Finding | Fix (where in the v18 file) | Test | Fails on v17 |
 |---|---|---|---|
-| Sec M1 kill switch and total lowering | DB-3, 5.6 item 1(o); L22, L23; 5.10b | G0 to G11 (`pg_v17.py`); product `tests/test_guarded_writes_pg.py` (not written) | C: runtime zeroes a settled total of 10; releases the switch with a chosen `by` (G controls) |
-| Sec M2 guard bypassed | v17 guard, 5.6 item 1(j) | S01 to S20 in `secdef_mutants_v17.py`, plus the real files | C: 12 mutants missed by the v16 guard (`raw-secdef-mutants-v17.txt`) |
-| Sec M3 audit-reader secret | 5.6 item 1(g2): placement, start-up probe, spy test replaced | `run_secrets_v17.sh` M3a to M3g; product `tests/test_audit_reader_secret.py` (not written) | C: M3g (group-readable file) is READ by the agent, so the check detects the bad setup; v16 had only the spy test |
-| Sec m4 NaN via INSERT branch | 5.4 item 4b(i) both branches | H1 | C: positive reserve on a NaN row returns NaN with no check |
-| Sec m5 record failure blocks switch | 5.6 item 1(m), DB-2 file v17 | K m5 (3 checks) | C: the v16 file blocks switch ON |
-| Sec m6 breaker code | 5.3 `circuit_open` in codes, 5.5 table and text | `tests/test_breaker.py` (not written) | T |
-| Sec m7 reason-code list | verified in `src/` by hand (guard reason codes read); UNVERIFIED mark removed for `src/` only | none | T |
-| Sec m8 pilot leniency, L-2 date | 5.6 item 4 (pilot with a paid kind refuses); 5.10b slip rule | start-up tests (not written) | T |
-| Ma1 G-4(i) test undefined; item 4 vs DB-1 | 5.4 item 4, 5.6 (c): inline ALTER, test defined with owner S-2a | `test_store_emits_update_for_negative_deltas` (not written) | T |
-| Ma2 upgrade file ownerless; DB-2 tests in DB-1 | 7.1 rows DB-1 and DB-2 | the lock test of every file (L series) | C: L series |
-| Ma3 breaker unspecified | 5.1 settings, 5.3 spec | `tests/test_breaker.py` (not written) | T |
-| Ma4 `GuardrailPrice` source | 5.7 `Deps.spend`, `ALLOWED` | none written | T |
-| Ma5 two reservers | 5.8 `ChainReserver` | `tests/test_chain_reserver.py` (not written) | T |
-| Ma6 gate type | 5.3 `Gate`, S-2a owns the test sites | none written | T |
-| Ma7 pass rule, defaults | 7.2 pass rule, section 10 | none | T |
-| Ma8 timing numbers | 5.6 (b) v16 and v17 raw numbers | raw files | C: v16 text printed v15 numbers |
-| Mi1 to Mi9 | 5.3 (frozenset constant; kept total owner; Ticket limits; route rule), 5.1 (cli rule), 7.2 (one gate4 path, census owners), section 10 (lists), 5.6 (g) signatures | none written | T |
-| Evid 1 DB-2 no `lock_timeout` | line added in the DB-2 file (sha in section 8), 5.6 (n) | lock test for each held file | C: the v16 file waits to my 12 s cap (57014) |
-| Evid 2 section 8 hashes | full table of five files, v15 hash labelled as v15 | `sha256sum -c sha256-v17.txt` | T |
-| Evid 3 `redact.py:1162` | read by hand: the word `"dev"` in `_COMMON`; H-0 adds `"demo"` | none | T |
+| Sec MA1 guard misses spellings A to F | deny-by-default guard, 5.6 item 1(j) | `secdef_mutants_v18.py`: A1-A3, B1-B5, C1-C3, D1-D5, E1-E6, F1-F11, controls K1-K4 | C: the v17 guard misses 39 of the 96 (`raw/raw-secdef-mutants-v18.txt`) |
+| Runner item 1: 8 of 25 spellings missed (DO-block `\|\|`, `format('%s')`, `E' '`, `chr(32)`, quoted names with `--` and `/*`, second overload) | same guard; the runner's 27 spellings copied in (`spellings.json`, `spellings2.json`) | mutants R1 to R27 | C: v17 misses R12-R15, R19-R21, R25 |
+| Sec MA2 start-up query for hand-made functions | 5.5b item 3b, 5.6 item 1(o2), `secdef_audit_v18.py`; owner S-2b and DB-3 PR | `pg_v18.py` MA2 (31 lines incl. 9 controls), m7 (4 lines) | C: `migrate.effective_problems` reports nothing for 9 of 10 hostile changes |
+| Sec MA3 M1 holds only in a hand-granted test | 5.6 item 1(o) "Why GRANTS must change", start gate (vi), E0-DB-4 | `pg_v18.py` MA3: `migrate()` four times, G1, G4, G9, DELETE and TRUNCATE of three tables | C: with `GRANTS` unchanged the runtime role still INSERTs and UPDATEs after `migrate()` |
+| Sec MA4 per-role wording (three functions, not four) | 5.6 item 1(o), start gate (vi), L22 | MA4 (4 checks): EXECUTE and SELECT of each role | T for the wording; C for the rights (operator had SELECT and engage in v17) |
+| Sec m1 "bounded by call cap" is no bound | 5.6 item 1(o) "What stays true" (reserve under any name, cross-agent settle; ceiling 1e12) | G12 (4 checks) | C: v17 accepted a reserve of 1e12 and a caller-chosen month |
+| Sec m2 engage rewrites `by`, silent on missing row | DB-3 file v18; 5.6 item 1(o) | G9 (engage when ON, release when OFF, engage with row missing) | C: v17 file does nothing on a missing row and rewrites `by` |
+| Sec m3 "nothing applied" vacuous, dead code, position, statement_timeout | 5.6 item 1(i); dead code removed from the program | L series: fingerprint before and after for 5 files, a positive check that the fingerprint changes, first-statement position check | C: v16 DB-2 hits 57014 after 12 s (position check on a fabricated file is a unit check, not a control) |
+| Sec m4 `WHEN OTHERS` misses 57014 | DB-2 file v18: `WHEN OTHERS OR QUERY_CANCELED`; 5.6 item 1(b), (m); H1 renamed (it only shows a Postgres fact; the v17-CHANGES row overstated it) | K2 (2 checks) | C: v17 file gives 57014 when the record is locked |
+| Sec m5 secrets | 5.6 item 1(g2): strict prototype, folder-mode test, same-user statement | `run_secrets_v18.sh` M3h to M3l | C: M3i (folder 0755) READS the file; T: product rule and the start-up probe of S-2b not written |
+| Sec m6 operator role membership | per-role list: operator gets EXECUTE on release only, no table right | MA4 | C (see MA4) |
+| Sec m7 DB-3 binds names with the session's search_path | 5.5b item 3b (binding check), 5.6 item 1(o2) | m7 (non-default schema works; lookalike binding found) | C: every other check passes for the mis-bound function |
+| Sec m8 controls only for some claims | each row here says C or T | this table | T |
+| Readiness V17-Ma1 E0-S2-2 said "DB-1's file" | E0-S2-2 row now says only the two inline ALTER statements | text | T |
+| Readiness V17-Ma2 cites of held files and hashes | 5.6 items 1(a), 1(b): v18 paths and hashes; section 8 table and sha256 list incl. `secdef_guard_v16.py` | `sha256sum -c sha256-v18.txt` | T |
+| Readiness V17-Ma3 build-order snippet | `spend=cfg.spend` passed to llm and detector; `"spend"` in both `ALLOWED` sets; cite 162-166 | text | T |
+| Readiness minors: pass rule `-rfs` and message compare; 7.1 rows S-1, S-2a; `Ticket.inner`; `make_call_gate`; 1(j) port target; conditional table rows L9, L18, L21, L22; section 9 name; semgrep and zizmor | the places named in `CORE-PR-HANDOFF-v18.md` | text | T |
+| Coordinator 2: sha256 list must hold `secdef_guard_v16.py` | `sha256-v18.txt` (31 lines) | `sha256sum -c` | T |
+| Coordinator 3: mutants script second argument | usage line, exit 2 | run with 0 and 1 arguments: exit 2 both | C: v17 ran with one and printed no error |
+| Coordinator 4: unbounded month, agent name, amount; missing row; any agent settled by any login | DB-3 file v18 (month from the day, ceiling, length 1 to 200, engage creates the row); cross-agent settle stated (m1) | G12 | C: see m1 and m2 |
+| Coordinator 5 and 6: timing and its name | 5.6 item 1(b) timing sentence: the DB-2 decrease trigger, +0.05 to +0.08 ms | `raw/raw-pg-v16-regress-on-v18-run1.txt`, `-run2.txt` line 105 | T |

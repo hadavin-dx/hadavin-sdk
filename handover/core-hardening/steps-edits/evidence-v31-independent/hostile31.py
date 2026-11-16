@@ -76,27 +76,39 @@ M = [
  ('H40', 'src', SHEET, '{{price}}', '0.28', 1, 'price per call changed to 0.28 in one place of the sheet'),
  ('H41', 'src', NOTE, 'Money-safe default if you do not choose: A', 'Default if you do not choose: A', 1, 'lead note: "Money-safe" removed from the default A sentence'),
  ('H42', 'src', SHEET, 'Dated Mon 16 Nov 2026', 'Dated Mon 16 Dec 2026', 1, 'sheet date Mon 16 Dec 2026 (a Wednesday)'),
- ('H43', 'src', OPEN, '{{dl}}', '18:29 UTC = 23:29 IST', 1, 'open list: deadline IST wrong'),
+ ('H43', 'src', OPEN, '{{bm}}', 'Mon 23 Nov 2026 18:09 UTC = 23:29 IST', 1, 'open list: reminder IST wrong'),
  ('H44', 'src', SHEET, '[OWNER FILLS', '[OWNER FILL', 1, 'one OWNER FILLS placeholder misspelled'),
  ('H45', 'src', SHEET, '[LEAD FILLS at re-pin', '[LEAD FILLS', 1, 'one LEAD FILLS placeholder misspelled'),
- ('H46', 'src', SHEET, '{{limit}}', '13.31', 0, 'limit 13.21 changed (if used in the sheet)'),
+ ('H46', 'src', SHEET, '{{balance}}', '190.00', 1, 'prepaid balance 189.00 changed to 190.00 in one place'),
  ('H47', 'src', SHEET, '{{cb}}', '12:10 UTC = 17:30 IST', 1, 'cancel-by pair wrong (IST)'),
  ('H48', 'src', SHEET, '{{okb}}', '16:00 UTC = 21:00 IST', 1, 'older-key time pair wrong (IST)'),
  ('P01', 'page', 'OWNER-SHEET-v31-A.md', 'alarm 3 at the cancel-by time', 'alarm 3 at the time', 1, 'built sheet A: cancel-by alarm wording cut'),
  ('P02', 'page', 'OWNER-APPENDIX-v31-A.md', '18:19 UTC = 23:49 IST', '18:29 UTC = 23:59 IST', 1, 'built appendix A: 18:19 changed to 18:29 (pair stays consistent)'),
  ('P03', 'page', 'OWNER-APPENDIX-v31-A.md', '18:29 UTC = 23:59 IST', '18:29 UTC = 23:39 IST', 1, 'built appendix A: deadline IST wrong'),
  ('P04', 'page', 'OWNER-SHEET-v31-B.md', '(appendix 7)', '(appendix 12)', 1, 'built sheet B: pointer to a non-existent appendix part'),
- ('P05', 'page', 'OWNER-FILM-PERSON-v31.md', '18:29 UTC = 23:59 IST', '18:29 UTC = 00:29 IST', 1, 'built film page: wrong IST'),
+ ('P05', 'page', 'OWNER-FILM-PERSON-v31.md', 'Mon 23 Nov', 'Tue 23 Nov', 1, 'built film page: wrong weekday'),
  ('P06', 'page', 'OWNER-CARD-v31-B.md', 'cancel-by', 'cutoff', 1, 'built card B: one cancel-by renamed'),
  ('P07', 'page', 'OWNER-SHEET-v31-A.md', '168 hours (7 days)', '168 hours', 1, 'built sheet A: "(7 days)" dropped'),
  ('P08', 'page', 'OWNER-SHEET-v31-A.md', 'Mon 23 Nov 2026', 'Tue 23 Nov 2026', 1, 'built sheet A: wrong weekday'),
  ('P09', 'page', 'LEAD-RELEASE-NOTE-v15.md', ' (warning beside it: A will probably fail on Wed 18 Nov', ' (A will probably fail on Wed 18 Nov', 1, 'built lead note: the "warning beside it" label removed (warning text stays)'),
  ('P10', 'page', 'OWNER-SHEET-v31-A.md', 'Dated Mon 16 Nov 2026', 'Dated Mon 16 Nov 2026 ' + SK1, 1, 'built sheet A: secret-shaped string'),
  ('P11', 'page', 'OWNER-CARD-v31-A.md', 'cancel failed', 'cancel did not work', 1, 'built card A: a "cancel failed" word changed'),
- ('P12', 'page', 'OWNER-APPENDIX-v31-B.md', 'Wed 11 Nov 2026', 'Thu 12 Nov 2026', 1, 'built appendix B: 7-day-back date changed (weekday right)'),
+ ('P12', 'page', 'OWNER-SHEET-v31-B.md', 'before Wed 11 Nov 2026 10:30 UTC = 16:00 IST', 'before Thu 12 Nov 2026 10:30 UTC = 16:00 IST', 1, 'built sheet B: 7-day-back date changed (weekday right)'),
+ ('P13', 'page', 'LEAD-RELEASE-NOTE-v15.md', '14.33', '14.03', 1, 'built lead note: 14.33 minutes changed'),
+ ('H54', 'src', NOTE, 'Mon 23 Nov 2026', 'Mon 23 Nov 2026 (the lead sends you "cancel the older key" and you cancel it)', 1, 'v30 miss H06 variant 1: lead message releases older-key cancel'),
+ ('H55', 'src', NOTE, 'Mon 23 Nov 2026', 'Mon 23 Nov 2026 (When the lead writes "go ahead and cancel the older key", cancel it)', 1, 'v30 miss H06 variant 2'),
+ ('H56', 'src', FACTS, "'gap_max': str(GAP_MAX),", "'gap_max': str(GAP_MAX), 'ls_t': '11:31',", 1, 'v30 miss H15: a fact no source uses'),
+ ('H57', 'src', SHEET, '[LEAD FILLS at re-pin: last-resort step', '[LEAD FILLS: last-resort step', 1, 'v30 miss H09 exact: one LEAD FILLS spelling'),
+ ('H49', 'src', SHEET, '{{bs}}', 'Sun 22 Nov 2026 18:09 UTC = 23:49 IST', 1, 'Sunday reminder IST wrong'),
+ ('H50', 'src', SHEET, '{{fp}}', '12', 1, 'longest film pause 10 changed to 12 in one place'),
+ ('H51', 'src', SHEET, '{{ceil}}', '4', 1, 'call ceiling 3 changed to 4 in one place'),
+ ('H52', 'src', SHEET, '{{ph_tp}}', 'late', 1, 'one "time passed" word changed'),
+ ('H53', 'src', SHEET, '{{rl}}', '12', 1, 'run length 15 changed to 12 in one place'),
 ]
 rows = []
+ONLY = os.environ.get('ONLY'); ONLY = set(ONLY.split(',')) if ONLY else None
 for mid, mode, f, old, new, cnt, what in M:
+    if ONLY and mid not in ONLY: continue
     d = fresh(mid)
     p = d + f
     t = open(p, encoding='utf-8').read()

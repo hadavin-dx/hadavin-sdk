@@ -51,9 +51,9 @@
  [
   "08 step I deadline 18:19->18:29 (pair kept)",
   true,
-  false,
+  true,
   "FAIL r14 3h key end",
-  ""
+  "H31 frozen count of '18:19 UTC = 23:49 IST' in E-48/appendix is (8, 3), expected (9, 3)"
  ],
  [
   "09 step A UTC only 18:19->18:29 (pair broken)",
@@ -114,9 +114,9 @@
  [
   "17 break xref key step I -> L",
   true,
-  false,
+  true,
   "FAIL r15 E-48 C lacks 'if no session is open, go straight to key step I'",
-  ""
+  "D3 ref to undefined key step key step L"
  ],
  [
   "18 break xref appendix K-D -> K-E",
@@ -233,9 +233,9 @@
  [
   "34 drop key gone word from step B list",
   false,
-  false,
+  true,
   "",
-  ""
+  "H12 typed word missing in key step B: key gone, no more decisions"
  ],
  [
   "35 D.5 time 18:19->18:09 (pair kept)",
@@ -256,7 +256,7 @@
   false,
   true,
   "",
-  "H4 window end tied to 18:19 in E-48: The spending window ends 10 minutes later, at 18:19 U"
+  "H31 frozen count of '18:19 UTC = 23:49 IST' in E-48/appendix is (10, 3), expected (9, 3)"
  ],
  [
   "38 E-01 status Apply now -> Hold",
@@ -310,9 +310,9 @@
  [
   "45 H 20 minutes -> 2 minutes (first)",
   false,
-  false,
+  true,
   "",
-  ""
+  "H28 E-48 mentions of 20 minutes not 4"
  ],
  [
   "46 undefined gate G7",
@@ -366,16 +366,16 @@
  [
   "53 UNVERIFIED removed from key step K",
   false,
-  false,
+  true,
   "",
-  ""
+  "H31 frozen count of 'UNVERIFIED' in E-48/appendix is (0, 1), expected (1, 1)"
  ],
  [
   "54 drop only-your-own-typed-messages (key step B ref)",
   false,
-  false,
+  true,
   "",
-  ""
+  "H31 frozen count of 'Only your own typed messages count (key step B)' in E-48/appendix is "
  ],
  [
   "55 E-48 OLD text altered (not in input)",
@@ -415,8 +415,8 @@
  [
   "60 revoke key tied to window: item1 revoke \"at 18:19\" -> \"at 18:29\"",
   false,
-  false,
+  true,
   "",
-  ""
+  "H31 frozen count of '18:19 UTC = 23:49 IST' in E-48/appendix is (8, 3), expected (9, 3)"
  ]
 ]

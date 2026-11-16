@@ -74,6 +74,8 @@ for ent in M:
         out = "TIMEOUT"; rc = "timeout"
     last = [l for l in out.splitlines() if l.startswith("SELF-TEST") or l.startswith("STOP")][-1:] or [out[-100:].replace("\n", " ")]
     nf = sum(1 for l in out.splitlines() if l.startswith("FAIL"))
+    if rc == 3 and "STOP:" in out:
+        print(f"{name} [{shell}]: KILLED-startcheck (exit 3, the script refuses to run) {last[0][:100]}", flush=True); continue
     if rc != 0 and nf == 0:
         print(f"{name} [{shell}]: INVALID-RUN exit={rc} (no FAIL line; not counted as killed) {last[0][:100]}", flush=True); continue
     if rc != 0:
