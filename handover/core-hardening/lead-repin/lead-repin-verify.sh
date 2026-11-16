@@ -1248,6 +1248,14 @@ self_test_meta() {
     "$st_j" "$st_fd/badtally" 0 && st_jok=0
     "$st_j" "$st_fd/empty" 0 && st_jok=0
   done
+  # v6: the planned number of cases is part of the verdict: a good result with another count is refused by both judges
+  st_pok=1
+  for st_j in st_verdict st_recount; do
+    "$st_j" "$st_fd/good" 0 5 || st_pok=0
+    "$st_j" "$st_fd/good" 0 6 && st_pok=0
+    "$st_j" "$st_fd/good" 0 4 && st_pok=0
+  done
+  if [ "$st_pok" -eq 1 ]; then mt_ok "each judge refuses a result whose number of passed cases is not the planned number (a forged shorter list)"; else mt_bad "a judge accepted a result with the wrong number of cases"; fi
   if [ "$st_jok" -eq 1 ]; then mt_ok "each judge of the self-test result accepts a good result and rejects a FAIL line, a bad tally, an empty result and a non-zero return"; else mt_bad "a judge of the self-test result accepted a forged result or rejected a good one"; fi
   rm -rf "$st_fd"
   # the report of left-out files counts names with a line break and symbolic links
@@ -1288,6 +1296,26 @@ self_test_meta() {
     [ "$st_stray" -gt 0 ] && kill "$st_gp" 2>/dev/null   # only the process this check itself started (its recorded PID)
     rm -rf "$st_child"/lead-repin.??????
   done
+  # v6: a signal during the PRE-MAIN phase (the file lists are being made) must act at once, not after the slow program ends
+  rm -f "$st_fake/git" "$st_fake/git.pid"; printf '#!/bin/sh\necho $$ > "%s/find.pid"\nexec sleep 31\n' "$st_fake" > "$st_fake/find"; chmod +x "$st_fake/find"
+  PATH="$st_fake:$PATH" LEAD_REPIN_NO_META=1 TMPDIR="$st_child" sh "$st_sa" "$st_t" > /dev/null 2>&1 &
+  st_p=$!; st_i=0
+  while [ "$st_i" -lt 30 ] && [ ! -s "$st_fake/find.pid" ]; do st_i=$((st_i + 1)); sleep 1; done
+  st_gp=$(cat "$st_fake/find.pid" 2>/dev/null); st_t0=$(date +%s)
+  kill -s TERM "$st_p" 2>/dev/null; wait "$st_p"; st_r=$?; st_t1=$(date +%s)
+  sleep 1; st_stray=0; if [ -n "$st_gp" ] && st_alive "$st_gp"; then st_stray=1; kill "$st_gp" 2>/dev/null; fi
+  if [ "$st_r" -eq 143 ] && [ "$st_stray" -eq 0 ] && [ $((st_t1 - st_t0)) -le 5 ]; then mt_ok "signal TERM while the file lists are made: exit 143 within 5 seconds, no program left"
+  else mt_bad "signal TERM in the pre-main phase (exit=$st_r, seconds=$((st_t1 - st_t0)), programs left=$st_stray)"; fi
+  rm -rf "$st_child"/lead-repin.?????? "$st_fake/find" "$st_fake/find.pid"
+  # v6: the time limit ends a stuck run by itself (here 2 seconds), says so, and leaves no folder
+  printf '#!/bin/sh\necho $$ > "%s/git.pid"\nexec sleep 31\n' "$st_fake" > "$st_fake/git"; chmod +x "$st_fake/git"
+  PATH="$st_fake:$PATH" LEAD_REPIN_MAX_SECONDS=2 LEAD_REPIN_NO_META=1 TMPDIR="$st_child" sh "$st_sa" "$st_t" > /dev/null 2> "$WORK/st-wd.err" &
+  st_p=$!; wait "$st_p"; st_r=$?
+  st_gp=$(cat "$st_fake/git.pid" 2>/dev/null); sleep 1; st_stray=0; if [ -n "$st_gp" ] && st_alive "$st_gp"; then st_stray=1; kill "$st_gp" 2>/dev/null; fi
+  st_left=$(ls "$st_child" | wc -l | tr -d ' ')
+  if [ "$st_r" -eq 143 ] && [ "$st_stray" -eq 0 ] && [ "$st_left" -eq 0 ] && grep -a -q 'took longer than 2 seconds' "$WORK/st-wd.err"; then mt_ok "the time limit (2 seconds here) ends a stuck run: exit 143, a message, no program and no folder left"
+  else mt_bad "the time limit did not end a stuck run cleanly (exit=$st_r, programs left=$st_stray, folders left=$st_left)"; fi
+  rm -rf "$st_child"/lead-repin.?????? "$WORK/st-wd.err"
   st_pf=$WORK/st-pid; sh -c 'echo $$ > "$1"; exec sleep 29' sh "$st_pf" | LEAD_REPIN_NO_META=1 TMPDIR="$st_child" sh "$st_sa" --mask > /dev/null 2>&1 &
   st_p=$!; sleep 3
   kill -s TERM "$st_p" 2>/dev/null; wait "$st_p"; st_r=$?; sleep 1
