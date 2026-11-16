@@ -1152,3 +1152,5 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 845 L5ac r9: eight glossaries. FIXED by single glossary; FD-001 table TO DO.
 - 846 BRIEF-LANE r16: eleven stacked overrides. FIXED by FINAL RULES block.
 - 847 L4c r11: nine stacked, stale counts. FIXED by CURRENT STATE; row markers TO DO.
+- 848 end-delete-cases r15: wrong pointer. FIXED by block.
+- 849 L3c r11: glossary empty, cells contradict. PARTLY FIXED by GLOSSARY r12; cells TO DO.

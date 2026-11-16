@@ -1,3 +1,5 @@
+GLOSSARY r12 (definitions in full; paragraphs 301-319 are history). desk = the n8n workspace the take runs in (UNVERIFIED); take = the filmed run; lead = the Claude session; lane = one read-only audit slice; job keys = labels for what a store is for (LOG, RETRY, COUNTER, STORE, NOTICE, FILTER, OTHER); EVIDENCE RUNNER = an agent that runs checks and never judges; cap 2 = at most 2 review rounds on a non-security path; 'fix-N rM' = fix number N in round M; claim types and 'DECISION line N': meaning not recorded. Cite FD ids, not line numbers. FD-001, 009, 010, 014, 032: read Major cells as Unrated.
+
 GLOSSARY r11 (one only; every other glossary paragraph below is history). desk, take, lead, job keys, claim types, fix-N rM, cap 2, 'DECISION line N', head, main, E marks, stage.journal, egm: gloss pending, ask the studio lead. Severity cells of FD-001, 009, 010, 014, 032 read as Unrated (terms undefined). FD-001 conflicts cell: f3c39cf8 ('public main', crash-soak.md:3) vs 61ded9e ('main', failures.md:4); ignore the suite-pr14 cite.
 
 # Lane L3c
