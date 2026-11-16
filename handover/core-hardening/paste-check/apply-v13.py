@@ -104,9 +104,12 @@ sub('The block does everything only when every check holds: 40 hex characters, a
 
 # ---------- C2b step (2): save P-4b.sh, banned word STOP; limit sentence ----------
 sub('{ grep -n -i -E \'kill|env\\.sh\' "$PASTES/P-4b.sh"; echo "(end: nothing above is right)"; }; [ "$(tail -n 1',
-    '{ grep -n -i -E \'kill|env\\.sh\' "$PASTES/P-4b.sh"; echo "(end: nothing above is right)"; [ "$(grep -c -i -E \'kill|env\\.sh\' "$PASTES/P-4b.sh")" = 0 ] || echo "STOP C2b: the word kill or env.sh is in P-4b.sh (lines above). Next: aside \\"$PASTES/P-4b.sh\\" and run this block again; tell the builder."; }; [ "$(tail -n 1')
+    '{ grep -n -i -E \'kill|env\\.sh\' "$PASTES/P-4b.sh"; echo "(end: nothing above is right)"; [ "$(grep -c -i -E \'kill|env\\.sh\' "$PASTES/P-4b.sh")" = 0 ] || echo "STOP C2b: the word kill or env.sh is in P-4b.sh (lines above). Next: aside \\"$PASTES/P-4b.sh\\" and run this block again; tell the builder."; } || bw=1; [ "$(tail -n 1')
 sub('(2) Save the proposal script as `P-4b.sh` (extracts', '(2) **What `P-4b.sh` can and cannot find (stated limit).** It prints a line only for a process of YOUR user that has `n8n` in its command line (any letter case) and whose `environ` cannot be read. It does not look at any other process: an unreadable process with another name (for example a process started under a different command line) is NOT detected, by this script or by any other block of this file. **The lead must check that by eye** before C9, in WSL, with a read-only command: `ps -u "$(id -u)" -o pid,args` (every process of the user with its command line), and tell the builder about any process you cannot explain. The same holds for the control file: it proves only that the script found the stand-in, which has `n8n` in its name.\nSave the proposal script as `P-4b.sh` (extracts')
 
+sub('else mkdir -p "$PASTES" && sed -n', 'else bw=0; mkdir -p "$PASTES" && sed -n')
+sub('|| echo "STOP C2b: the saved P-4b.sh does not end', '|| { bw=1; echo "STOP C2b: the saved P-4b.sh does not end')
+sub('Next: run A2; then aside \\"$PASTES/P-4b.sh\\" and run this block again."; fi; }', 'Next: run A2; then aside \\"$PASTES/P-4b.sh\\" and run this block again."; }; [ "$bw" = 0 ]; fi; }')
 # ---------- WSL-3/4: symlinks, rc ----------
 sub('else T=$(mktemp) || { echo "STOP C2b: mktemp failed. Next: check the disk and /tmp, run WSL-3 again."; T=; }; if [ -n "$T" ]; then',
     'elif [ -L P-4b.sh ] || [ -L P-4b.control.txt ]; then echo "STOP LINK: P-4b.sh or P-4b.control.txt is a symbolic link. Next: write nothing; tell the builder."; else T=$(mktemp) || { echo "STOP C2b: mktemp failed. Next: check the disk and /tmp, run WSL-3 again."; T=; }; if [ -n "$T" ]; then')
