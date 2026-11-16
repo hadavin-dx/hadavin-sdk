@@ -1,0 +1,1 @@
+STOP: the masking filter is not usable here (the rule file is empty or this sed does not know s///I, which GNU sed does). Nothing was read.

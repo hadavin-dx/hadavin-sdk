@@ -1,0 +1,121 @@
+PASS (hidden): KEY= form
+PASS (hidden, line-only final filter): KEY= form
+PASS (hidden): export TOKEN= form
+PASS (hidden, line-only final filter): export TOKEN= form
+PASS (hidden): password = "..." form
+PASS (hidden, line-only final filter): password = "..." form
+PASS (hidden): JSON quoted key
+PASS (hidden, line-only final filter): JSON quoted key
+PASS (hidden): JSON client_secret no spaces
+PASS (hidden, line-only final filter): JSON client_secret no spaces
+PASS (hidden): Authorization Bearer
+PASS (hidden, line-only final filter): Authorization Bearer
+PASS (hidden): bare Bearer value
+PASS (hidden, line-only final filter): bare Bearer value
+PASS (hidden): sk- value
+PASS (hidden, line-only final filter): sk- value
+PASS (hidden): pat- value
+PASS (hidden, line-only final filter): pat- value
+PASS (hidden): github token shape
+PASS (hidden, line-only final filter): github token shape
+PASS (hidden): YAML next line after grep prefix
+PASS (hidden): YAML block line a
+PASS (hidden): YAML block line b
+PASS (hidden): web address with user:password
+PASS (hidden, line-only final filter): web address with user:password
+PASS (hidden): AKIA-shaped id
+PASS (hidden, line-only final filter): AKIA-shaped id
+PASS (hidden): passwd: form
+PASS (hidden, line-only final filter): passwd: form
+PASS (hidden): pwd= form
+PASS (hidden, line-only final filter): pwd= form
+PASS (hidden): credential = form
+PASS (hidden, line-only final filter): credential = form
+PASS (hidden): secret at column 300 (hidden before the cut)
+PASS (hidden, line-only final filter): secret at column 300 (hidden before the cut)
+PASS (hidden): JSON secret followed by more JSON
+PASS (hidden, line-only final filter): JSON secret followed by more JSON
+PASS (hidden): quoted secret inside a call
+PASS (hidden, line-only final filter): quoted secret inside a call
+PASS (hidden): bare PASS= name
+PASS (hidden, line-only final filter): bare PASS= name
+PASS (hidden): passphrase: name
+PASS (hidden, line-only final filter): passphrase: name
+PASS (hidden): pat = name (personal access token)
+PASS (hidden, line-only final filter): pat = name (personal access token)
+PASS (hidden): os.environ["X_TOKEN"] = "v"
+PASS (hidden, line-only final filter): os.environ["X_TOKEN"] = "v"
+PASS (hidden): .get("API_KEY", "default")
+PASS (hidden, line-only final filter): .get("API_KEY", "default")
+PASS (hidden): ("API_KEY", "value") tuple
+PASS (hidden, line-only final filter): ("API_KEY", "value") tuple
+PASS (hidden): --token value flag
+PASS (hidden, line-only final filter): --token value flag
+PASS (hidden): --password value flag
+PASS (hidden, line-only final filter): --password value flag
+PASS (hidden): --api-key=value flag
+PASS (hidden, line-only final filter): --api-key=value flag
+PASS (hidden): triple-quoted value on one line
+PASS (hidden, line-only final filter): triple-quoted value on one line
+PASS (hidden): triple-quoted value over several lines, line 1
+PASS (hidden): triple-quoted value over several lines, line 2
+PASS (hidden): unterminated quote
+PASS (hidden, line-only final filter): unterminated quote
+PASS (hidden): e-mail address
+PASS (hidden, line-only final filter): e-mail address
+PASS (hidden): JSON name/value pair
+PASS (hidden, line-only final filter): JSON name/value pair
+PASS (hidden): single-quoted dict key 'api_key'
+PASS (hidden, line-only final filter): single-quoted dict key 'api_key'
+PASS (hidden): self.token = value
+PASS (hidden, line-only final filter): self.token = value
+PASS (hidden): accessToken: value (camel case)
+PASS (hidden, line-only final filter): accessToken: value (camel case)
+PASS (hidden): apiKey = value (camel case)
+PASS (hidden, line-only final filter): apiKey = value (camel case)
+PASS (hidden): X-Api-Key: header
+PASS (hidden, line-only final filter): X-Api-Key: header
+PASS (hidden): JS object {token: value}
+PASS (hidden, line-only final filter): JS object {token: value}
+PASS (hidden): export X_PASSWORD=
+PASS (hidden, line-only final filter): export X_PASSWORD=
+PASS (hidden): pw name, triple-quoted over several lines, line 1
+PASS (hidden): pw name, triple-quoted over several lines, line 2
+PASS (hidden): pswd: name
+PASS (hidden, line-only final filter): pswd: name
+PASS (kept): text after a multi-line value closes
+PASS (hidden): single triple quotes over several lines, line 1
+PASS (hidden): single triple quotes over several lines, line 2
+PASS (kept): text after a quoted JSON secret stays readable (DELETE)
+PASS (kept): text after a quoted secret in a call stays readable
+PASS (kept): comparison key == "end" is not hidden
+PASS (kept): plain answer = "end" is not hidden
+PASS (kept): the one allowed example key shows
+PASS (kept): ordinary line with the word end
+PASS (kept): unrelated YAML line after a hidden block
+PASS (kept): unrelated grep line after hidden YAML value
+PASS (kept): long line carries a cut notice
+PASS (kept): text after a hidden --token flag
+PASS (kept): text after a hidden triple-quoted value
+PASS (kept): line after a multi-line triple-quoted value
+PASS (kept): line after a multi-line single-triple-quoted value
+PASS (kept): text after a JSON name/value pair secret: the name stays
+PASS (kept): text after a single-quoted dict secret
+PASS (kept): text after a JS object secret
+PASS (kept): if token: is not a secret line (the line)
+PASS (kept): if token: does not hide the next line
+PASS (kept): author: is not a secret name (the line)
+PASS (kept): author: does not hide the next line
+PASS (kept): if not key_file: is not a YAML name (the line after it stays)
+PASS (kept): author = value is not hidden
+PASS (kept): desk- word is not mangled
+PASS (kept): task- word is not mangled
+PASS (kept): risk- word is not mangled
+PASS (kept): mask- word is not mangled
+PASS (kept): compat- word is not mangled
+PASS (kept): max_tokens is not a secret name
+PASS (kept): tokenizer is not a secret name
+PASS (kept): if token == "end": is not hidden
+PASS (kept): bypass is not a secret name
+SELF-TEST: passed=119 failed=0 (the made-up input and output files were deleted)
+rc=0

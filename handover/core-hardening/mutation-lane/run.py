@@ -1347,7 +1347,7 @@ def pytest_cmd(root: pathlib.Path, tests: list[str]) -> list[str]:
         f"--confcutdir={root}",
         "--tb=line",
         "-rf",
-        *tests,
+        *(t for t in tests if t != "-q"),  # the command already says -q: a second -q drops pytest's summary line
     ]
 
 

@@ -1,0 +1,4 @@
+STOP: the masking self-test (canary) FAILED, so the filter cannot be trusted and no take file was opened:
+FAIL (secret still visible): e-mail address
+FAIL (secret still visible in the line-only final filter): e-mail address
+SELF-TEST: passed=117 failed=2 (the made-up input and output files were deleted)

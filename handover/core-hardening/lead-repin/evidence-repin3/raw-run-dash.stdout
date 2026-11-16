@@ -96,4 +96,245 @@ _local flow json files: 1, delete-word matching lines inside them: 1 (these line
 --- search: delete words in flow json files
 /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/d3/test_runs/take dir/flows/a.json: 1 match line(s)
 1:{"nodes":[{"method":"DELETE","name":"x"},{"api_key": "<masked>"}]}
-    (a value was hidden on 1 line(s) above; 0 of them were hidden w
+    (a value was hidden on 1 line(s) above; 0 of them were hidden whole)
+    [search "delete words in flow json files": matching lines=1 in 1 file(s) with a match, files_read=1 missing=0 unreadable=0]
+READ THE ZERO LINES: "0 matching lines" means "none in the files listed above"; the counts of left-out files above say what was never looked at.
+[block Q23-1] total over all searches in this block: matching lines=20 files_read=6 missing=0 unreadable=0 (a total hides a zero: read the per-search lines above)
+
+===== BLOCK Q23-2: The old line numbers (Q23) =====
+QUESTION: What stands today at run_real_check_n8n.py lines 1045-1056 and crm_hubspot.py lines 500-512? (AGENT-SCOPE line 20 cites a DELETE call at line 1051 and at 504-509; the lead's answer calls that UNVERIFIED stale text.)
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/d3/test_runs/take dir/scripts/run_real_check_n8n.py has 1085 line(s); lines 1045-1056:
+1045:def finish(session, ids):
+1046:    for i in ids:
+1047:    # archive step (made-up)
+1048:        requests.delete(url + i, headers=h)  # line 1051 region
+1049:    return 1
+1050:
+1051:x=1
+1052:y=2
+1053:z=3
+1054:w=4
+1055:end
+1056:API_KEY = <masked>
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/d3/test_runs/take dir/scripts/crm_hubspot.py has 506 line(s); lines 500-512:
+(the file ends at line 506: lines 507-512 do not exist)
+500:def cleanup_contacts(ids):
+501:    for i in ids:
+502:        archive(i)  # 505
+503:    return 0
+504:
+505:def rows_with_prefix(p):
+506:    return http('GET', p)
+[block Q23-2] information block (not a search with hits): files_read=2 missing=0 unreadable=0
+
+===== BLOCK Q23-3: HTTP methods the CRM module uses (Q23, G21) =====
+QUESTION: Which HTTP methods does the CRM module send? (r17 saw only a rows_with_prefix GET)
+--- search: HTTP method names, request helpers, rows_with_prefix (case-sensitive)
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/d3/test_runs/take dir/scripts/crm_hubspot.py: 2 match line(s)
+505:def rows_with_prefix(p):
+506:    return http('GET', p)
+    [search "HTTP method names, request helpers, rows_with_prefix (case-sensitive)": matching lines=2 in 1 file(s) with a match, files_read=1 missing=0 unreadable=0]
+[block Q23-3] total over all searches in this block: matching lines=2 files_read=1 missing=0 unreadable=0 (a total hides a zero: read the per-search lines above)
+
+===== BLOCK Q23-4: Delete wording printed to the owner (G1, G17) =====
+QUESTION: Do the notice or the printed result still say deleted or archived, or print a delete count?
+--- search: delete or archive wording in the take program
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/d3/test_runs/take dir/scripts/run_real_check_n8n.py: 15 match line(s)
+1047:    # archive step (made-up)
+1048:        requests.delete(url + i, headers=h)  # line 1051 region
+--
+1070:archive_api_key = <masked>  # archive
+1071:archive: os.environ["X_TOKEN"] = <masked>
+1072:run archive --password <masked> --verbose
+1073:archive contact <email-masked> done
+1074:archive_pair = ("API_KEY", <masked>)
+1075:archive_token:
+--
+1077:archive_next: stays_visible
+1078:archive_pw = <masked>"<masked>
+<masked>
+1080:<masked>""" # archive end of block
+1081:headers = {"Authorization": "<masked>"}  # archive
+1082:if token:  # archive path stays readable
+--
+1084:url = "https://user:<masked>@host.example/x"  # archive
+1085:desk-aaaaaaaaaaaa archive
+    (a value was hidden on 10 line(s) above; 1 of them were hidden whole)
+    [search "delete or archive wording in the take program": matching lines=15 in 1 file(s) with a match, files_read=1 missing=0 unreadable=0]
+[block Q23-4] total over all searches in this block: matching lines=15 files_read=1 missing=0 unreadable=0 (a total hides a zero: read the per-search lines above)
+
+===== BLOCK Q27a: Model call after the word end (Q27 a, G34): UNVERIFIED until the lead shows it =====
+QUESTION: After the take program reads the word end, can it still call the model? Part 1: lines with the end handling (and 20 lines after). Part 2: every model-call line.
+--- search: end handling in the take program (case-sensitive; includes constants; a hit may be help or usage text: read the line)
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/d3/test_runs/take dir/scripts/run_real_check_n8n.py: 1 match line(s)
+1063:if answer == "end":
+1064-    call_model(x)  # model call after end?
+1065-    sys.exit(0)
+1066-WINDOW_END = '2026-11-23T18:29:00Z'
+1067-need_seconds = 860
+1068-KEYFILE = key_file
+1069-# anything else
+1070-archive_api_key = <masked>  # archive
+1071-archive: os.environ["X_TOKEN"] = <masked>
+1072-run archive --password <masked> --verbose
+1073-archive contact <email-masked> done
+1074-archive_pair = ("API_KEY", <masked>)
+1075-archive_token:
+1076-<masked>
+1077-archive_next: stays_visible
+1078-archive_pw = <masked>"<masked>
+1079-<masked>
+1080-<masked>""" # archive end of block
+1081-headers = {"Authorization": "<masked>"}  # archive
+1082-if token:  # archive path stays readable
+1083-    pass
+    (a value was hidden on 10 line(s) above; 2 of them were hidden whole)
+    [search "end handling in the take program (case-sensitive; includes constants; a hit may be help or usage text: read the line)": matching lines=1 in 1 file(s) with a match, files_read=1 missing=0 unreadable=0]
+--- search: model-call words in the take program, n8n_drive.py and n8n.py
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/d3/test_runs/take dir/scripts/run_real_check_n8n.py: 1 match line(s)
+1064:    call_model(x)  # model call after end?
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/d3/test_runs/take dir/scripts/n8n_drive.py: 2 match line(s)
+2:urlopen(x)  # loopback 127.0.0.1
+3:post_lead(y)
+    [search "model-call words in the take program, n8n_drive.py and n8n.py": matching lines=3 in 2 file(s) with a match, files_read=3 missing=0 unreadable=0]
+--- search: model-call words in the model program folder (only if MODEL_DIR is set)
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/d3/model prog/model_program.py: 1 match line(s)
+1:def call_model():
+    [search "model-call words in the model program folder (only if MODEL_DIR is set)": matching lines=1 in 1 file(s) with a match, files_read=1 missing=0 unreadable=0]
+Q27a reading: end-handling lines=1, model-call lines=3. Zero in either means the words are probably wrong, NOT "no model call".
+Reading a program cannot show (1) a call already sent before end or (2) an n8n retry or lease that fires a call after end: those need a run or a test shown at the final head. Line order is not always run order.
+[block Q27a] total over all searches in this block: matching lines=5 files_read=5 missing=0 unreadable=0 (a total hides a zero: read the per-search lines above)
+
+===== BLOCK Q27b: End-date refusal (Q27 b, G16, G10): UNVERIFIED until the lead shows it =====
+QUESTION: Does a setting that refuses a call after the window end exist, and is a refusal SHOWN at the final head (a test run or a startup refusal)?
+SPEND WARNING: to SEE the refusal run ONLY the named qs_37 test, against the FAKE model. Never start the real model program or the real stage with a real key to "see" a refusal: that can make a paid call. This script starts nothing.
+--- search: window end, need_seconds, refusal words in the take program
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/d3/test_runs/take dir/scripts/run_real_check_n8n.py: 2 match line(s)
+1066:WINDOW_END = '2026-11-23T18:29:00Z'
+1067:need_seconds = 860
+    [search "window end, need_seconds, refusal words in the take program": matching lines=2 in 1 file(s) with a match, files_read=1 missing=0 unreadable=0]
+--- search: same words in the model program folder (only if MODEL_DIR is set)
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/d3/model prog/model_program.py: 1 match line(s)
+3:    if now > WINDOW: raise SystemExit('refused')
+    [search "same words in the model program folder (only if MODEL_DIR is set)": matching lines=1 in 1 file(s) with a match, files_read=1 missing=0 unreadable=0]
+files searched for "python files of the take, tests INCLUDED (for qs_37)": 6
+files searched for "python files of the model program folder, tests INCLUDED (for qs_37)": 2
+left out of "model program folder, python and shell" (/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/d3/model prog) and NOT searched, file counts by reason:
+  deeper than 4 folders below the folder (anywhere): 0
+  symbolic links of any kind (find does not follow them): 0
+  folders or files the find command could not open (permission denied): 0
+  names with a line break (cannot be listed safely): 0
+  inside folders named node_modules: 0
+  inside folders named _local: 0
+  inside folders named secrets: 0
+  inside folders named .venv: 0
+  inside folders named venv: 0
+  inside folders named __pycache__: 0
+  inside folders named tests: 1
+  inside folders named test: 0
+  test files outside tests folders (test_*, *_test.py, conftest.py): 0
+--- search: test name qs_37 in the take folder (tests included)
+    [search "test name qs_37 in the take folder (tests included)": matching lines=0 in 0 file(s) with a match, files_read=6 missing=0 unreadable=0] ZERO HITS: either not there or the search words are wrong; this is not proof of absence
+--- search: test name qs_37 in the model program folder (tests included; only if MODEL_DIR is set)
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/d3/model prog/tests/test_qs.py: 1 match line(s)
+1:def test_qs_37_refusal(): assert True
+    [search "test name qs_37 in the model program folder (tests included; only if MODEL_DIR is set)": matching lines=1 in 1 file(s) with a match, files_read=2 missing=0 unreadable=0]
+--- search: settings lines whose NAME looks like a window end (the value is shown unless it looks secret; the window end is not secret)
+1:export MODEL_WINDOW_END=2026-11-23T18:29:00Z
+NOTE: to SEE the refusal, run the named test (fake model only) or read the startup refusal at the final head; this script only finds text.
+[block Q27b] total over all searches in this block: matching lines=4 files_read=11 missing=0 unreadable=0 (a total hides a zero: read the per-search lines above)
+
+===== BLOCK Q27c: Go marker before any model call (Q27 c, G33): UNVERIFIED until the lead shows it =====
+QUESTION: Does the model program refuse to make a paid call until the take program has written a marker after the accepted challenge? BOTH halves are needed.
+--- search: half A: marker words in the take program
+    [search "half A: marker words in the take program": matching lines=0 in 0 file(s) with a match, files_read=1 missing=0 unreadable=0] ZERO HITS: either not there or the search words are wrong; this is not proof of absence
+--- search: half B: marker words in the model program folder (only if MODEL_DIR is set)
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/d3/model prog/model_program.py: 1 match line(s)
+2:    marker = go_file.exists()
+    [search "half B: marker words in the model program folder (only if MODEL_DIR is set)": matching lines=1 in 1 file(s) with a match, files_read=1 missing=0 unreadable=0]
+Q27c reading: take-program half hits=0, model-program half hits=1. Both halves must be shown; a zero in either half means NOT SHOWN by this search. The .used tag marker is not shown to be the go marker.
+[block Q27c] total over all searches in this block: matching lines=1 files_read=2 missing=0 unreadable=0 (a total hides a zero: read the per-search lines above)
+
+===== BLOCK G35: Prompts to the owner (G35) =====
+QUESTION: Does the take program ask the owner to type anything besides y, the challenge line and end?
+--- search: input and prompt words in the take program
+    [search "input and prompt words in the take program": matching lines=0 in 0 file(s) with a match, files_read=1 missing=0 unreadable=0] ZERO HITS: either not there or the search words are wrong; this is not proof of absence
+[block G35] total over all searches in this block: matching lines=0 files_read=1 missing=0 unreadable=0 (a total hides a zero: read the per-search lines above)
+
+===== BLOCK G06: Exit codes (G6, Q20.4) =====
+QUESTION: Which exit codes can the take program leave, and which one for person C unknown?
+--- search: exit words in the take program
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/d3/test_runs/take dir/scripts/run_real_check_n8n.py: 2 match line(s)
+1049:    return 1
+--
+1065:    sys.exit(0)
+    [search "exit words in the take program": matching lines=2 in 1 file(s) with a match, files_read=1 missing=0 unreadable=0]
+[block G06] total over all searches in this block: matching lines=2 files_read=1 missing=0 unreadable=0 (a total hides a zero: read the per-search lines above)
+
+===== BLOCK G04: Call ceiling, price and ledger (G4, G14) =====
+QUESTION: Where are the call ceiling, retries, ledger total and program limit set?
+--- search: ceiling words in the take program
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/d3/test_runs/take dir/scripts/run_real_check_n8n.py: 2 match line(s)
+180:# filler line 180
+--
+189:# filler line 189
+    [search "ceiling words in the take program": matching lines=2 in 1 file(s) with a match, files_read=1 missing=0 unreadable=0]
+--- search: ceiling words in the model program folder (only if MODEL_DIR is set)
+    [search "ceiling words in the model program folder (only if MODEL_DIR is set)": matching lines=0 in 0 file(s) with a match, files_read=1 missing=0 unreadable=0] ZERO HITS: either not there or the search words are wrong; this is not proof of absence
+[block G04] total over all searches in this block: matching lines=2 files_read=2 missing=0 unreadable=0 (a total hides a zero: read the per-search lines above)
+
+===== BLOCK G18: Stop, signal and lock behaviour (G18) =====
+QUESTION: What happens on a wrong line after end, Ctrl-C, a pause that ends without end, a cancelled key; which lock file is left?
+--- search: signal and lock words in the take program
+    [search "signal and lock words in the take program": matching lines=0 in 0 file(s) with a match, files_read=1 missing=0 unreadable=0] ZERO HITS: either not there or the search words are wrong; this is not proof of absence
+[block G18] total over all searches in this block: matching lines=0 files_read=1 missing=0 unreadable=0 (a total hides a zero: read the per-search lines above)
+
+===== BLOCK G36: Think time, silence and film cue (G36) =====
+QUESTION: Which printed line could start the film pause, and what are the minimum think time, silence and give-up values?
+--- search: pause words in the take program
+    [search "pause words in the take program": matching lines=0 in 0 file(s) with a match, files_read=1 missing=0 unreadable=0] ZERO HITS: either not there or the search words are wrong; this is not proof of absence
+[block G36] total over all searches in this block: matching lines=0 files_read=1 missing=0 unreadable=0 (a total hides a zero: read the per-search lines above)
+
+===== BLOCK G37-38: Per-run key file, demo mail subject, prep contact (G37, G38) =====
+QUESTION: How is the per-run key file made (does it refuse an existing file), what starts the take mail subjects, and does the prep contact address match the film search?
+--- search: file-creation and subject words in the take program
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/d3/test_runs/take dir/scripts/run_real_check_n8n.py: 1 match line(s)
+1068:KEYFILE = key_file
+    [search "file-creation and subject words in the take program": matching lines=1 in 1 file(s) with a match, files_read=1 missing=0 unreadable=0]
+[block G37-38] total over all searches in this block: matching lines=1 files_read=1 missing=0 unreadable=0 (a total hides a zero: read the per-search lines above)
+
+===== BLOCK G07: Ports (G7) =====
+QUESTION: Which of the ports 5678, 5679, 5690-5693, 5701, 5702 are listening now, and does the take program name its own port?
+none of those ports is listening now (from /proc/net/tcp (ports only, address not shown))
+--- search: port numbers in the take program
+    [search "port numbers in the take program": matching lines=0 in 0 file(s) with a match, files_read=1 missing=0 unreadable=0] ZERO HITS: either not there or the search words are wrong; this is not proof of absence
+[block G07] total over all searches in this block: matching lines=0 files_read=2 missing=0 unreadable=0 (a total hides a zero: read the per-search lines above)
+
+===== BLOCK G20: DECISION-one-store line 14 (G20) =====
+QUESTION: Does line 14 still say ONE database?
+/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/d3/test_runs/take dir/DECISION-one-store.md has 14 line(s); lines 14-14:
+14:ONE database
+[block G20] information block (not a search with hits): files_read=1 missing=0 unreadable=0
+
+SUMMARY: blocks=16 search_blocks=13 with_hits=9 zero_hits=4 information_blocks=3 files_missing=0 files_unreadable=0 (counts only; nothing judged; the lead reads each block and the per-search ZERO lines)
+Hidden by the masking filter in search results: 33 line(s) had a value hidden, 5 of them were hidden whole (next-line rule).
+Files left in the work folder (names and sizes; none holds an unmasked line of a searched file):
+  total 96
+  -rw------- 1 root root   469 Nov 16 13:25 four.txt
+  -rw------- 1 root root     0 Nov 16 13:25 grep.err
+  -rw------- 1 root root 24576 Nov 16 13:25 lead-repin-verify-out.txt
+  -rw------- 1 root root   113 Nov 16 13:25 list-code-rest.txt
+  -rw------- 1 root root   582 Nov 16 13:25 list-code.txt
+  -rw------- 1 root root   108 Nov 16 13:25 list-flows.txt
+  -rw------- 1 root root   208 Nov 16 13:25 list-model-all.txt
+  -rw------- 1 root root   104 Nov 16 13:25 list-model.txt
+  -rw------- 1 root root   700 Nov 16 13:25 list-test-all.txt
+  -rw------- 1 root root    24 Nov 16 13:25 m.txt
+  -rw------- 1 root root  6067 Nov 16 13:25 mask-line.sed
+  -rw------- 1 root root  8727 Nov 16 13:25 mask.sed
+  -rw------- 1 root root   118 Nov 16 13:25 named.crm_hubspot.py.txt
+  -rw------- 1 root root   110 Nov 16 13:25 named.n8n.py.txt
+  -rw------- 1 root root   116 Nov 16 13:25 named.n8n_drive.py.txt
+  -rw------- 1 root root   117 Nov 16 13:25 named.one.txt
+  -rw------- 1 root root   125 Nov 16 13:25 named.run_real_check_n8n.py.txt
+Masking is a safety net: read this output yourself before you share it.

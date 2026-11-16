@@ -301,3 +301,541 @@ interrupted as expected (<Signals.SIGTERM: 15>,)
   PASS: T42 ALRM file restored
   PASS: T42 ALRM state empty
   PASS: T42 ALRM no orphan pytest
+  PASS: T42 XCPU exit 152 (got 152)
+  PASS: T42 XCPU file restored
+  PASS: T42 XCPU state empty
+  PASS: T42 XCPU no orphan pytest
+  PASS: T42 VTALRM exit 154 (got 154)
+  PASS: T42 VTALRM file restored
+  PASS: T42 VTALRM state empty
+  PASS: T42 VTALRM no orphan pytest
+  PASS: T42 PROF exit 155 (got 155)
+  PASS: T42 PROF file restored
+  PASS: T42 PROF state empty
+  PASS: T42 PROF no orphan pytest
+  PASS: T42 IO exit 157 (got 157)
+  PASS: T42 IO file restored
+  PASS: T42 IO state empty
+  PASS: T42 IO no orphan pytest
+  PASS: T42 PWR exit 158 (got 158)
+  PASS: T42 PWR file restored
+  PASS: T42 PWR state empty
+  PASS: T42 PWR no orphan pytest
+== T43 --restore must not stop a stranger that has the orphan's number (review r3 minor: start time + full argument list)
+safety-tests.sh: line 1097: 14538 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T43 setup: the stranger (a pytest of its own that names the root) is its own group leader
+process 14696 is not this run's pytest (or cannot be verified): left alone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/full1/tmpstate/hadavin-mut
+  PASS: T43a restore exit 0 and the file is back (rc 0)
+  PASS: T43a the stranger was left alone
+safety-tests.sh: line 1097: 14696 Killed                  ( cd "$T/root" && exec setsid "$T/root/.venv/bin/python" -m pytest -q -p no:cacheprovider tests/test_slow.py > /dev/null 2>&1 )
+safety-tests.sh: line 1097: 14719 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+stopped orphaned test group 14731; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/full1/tmpstate/hadavin-mutation-lane-0/074f0546ced99fec.backup; has
+  PASS: T43b a marker with a group but no recorded identity: file restored (rc 0) and the group found by the recorded command (review r4 nit 7: fallback)
+safety-tests.sh: line 1097: 14783 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+process 14795 is not this run's pytest (or cannot be verified): left alone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/full1/tmpstate/hadavin-mut
+  PASS: T43c a marker with a group and NO identity and NO command at all: file restored (rc 0), nothing stopped on a guess
+== T44 the leader is dead but a member of the test group still runs: --restore stops it (review r3 minor)
+safety-tests.sh: line 1097: 14894 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_spawn.py ) > /dev/null 2>&1
+  PASS: T44 setup: the leader is gone, 'sleep 3137' (a member of its group) still runs
+stopped orphaned test group 14906; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/full1/tmpstate/hadavin-mutation-lane-0/074f0546ced99fec.backup; hash matches saved orig
+  PASS: T44 restore exit 0, file back (rc 0)
+  PASS: T44 the surviving member was stopped
+== T45 SIGKILL before the second marker (no group recorded yet): --restore finds the group by the command the first marker names (review r3 minor)
+safety-tests.sh: line 1097: 14982 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T45 setup: the orphan runs
+stopped orphaned test group 14994; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/full1/tmpstate/hadavin-mutation-lane-0/074f0546ced99fec.backup; has
+  PASS: T45 restore exit 0, file back (rc 0)
+  PASS: T45 the orphan was stopped
+== T46 timeout branch with stop_group failing: signals disarmed BEFORE stop_group is called, the leader still stopped, and the result is a TIMEOUT verdict, not a traceback (review r4 evidence)
+rc: None SIG.allow seen inside stop_group: [False] after: False
+  PASS: T46 SIG.allow was already False when the timeout branch called stop_group, and the result is TIMEOUT (no traceback)
+  PASS: T46 no orphan pytest left although stop_group failed in the timeout branch
+  PASS: T46b through run.py itself (stop_group failing, timeout 3 s): exit 5 INCOMPLETE (a TIMEOUT is no complete run; r5: 0) (got 5), raw file says VERDICT: TIMEOUT, file restored, state empty
+== T47 (review r4 M1) every signal that ends a process is handled, also while the file is planted and while it is restored
+set equals valid_signals minus the six-plus-five excluded: True (51 signals)
+INTERRUPTED (signal 1): no mutant planted, no marker
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+m1 KILLED tests/test_fast.py::test_f
+SUMMARY: 1 mutant(s) planned, 1 ran: 1 KILLED, 0 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 0 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the verdicts are
+tree diff: 0 difference(s)
+INCOMPLETE: not every mutant has a clean KILLED or SURVIVED verdict (exit 5); see the SUMMARY line and the raw files
+102 cases (signal x window); 101 bad: [('plant', 2, 5, 'return 1', []), ('plant', 3, 5, 'return 1', []), ('plant', 4, 5, 'return 1', []), ('plant', 5, 5, 'return 1', []), ('plant', 6, 5, 'return 1', []), ('plant', 7, 5, 'return 1', [])]
+  FAIL: T47a all handled signals in the plant window and the restore window: exit 128+N, file restored, state empty
+  T47b real signals sent from outside while the tests are awaited: TRAP RTMIN RTMAX SYS STKFLT(16) SEGV BUS FPE ILL
+  PASS: T47b TRAP exit 133 (got 133), file restored, state empty, no orphan
+  PASS: T47b RTMIN exit 162 (got 162), file restored, state empty, no orphan
+  PASS: T47b RTMAX exit 192 (got 192), file restored, state empty, no orphan
+  PASS: T47b SYS exit 159 (got 159), file restored, state empty, no orphan
+  PASS: T47b 16 exit 144 (got 144), file restored, state empty, no orphan
+  PASS: T47b SEGV exit 139 (got 139), file restored, state empty, no orphan
+  PASS: T47b BUS exit 135 (got 135), file restored, state empty, no orphan
+  PASS: T47b FPE exit 136 (got 136), file restored, state empty, no orphan
+  PASS: T47b ILL exit 132 (got 132), file restored, state empty, no orphan
+== T48 (review r4 M2) pytest cannot take its root, settings or conftest from above --root
+  PASS: T48a the command carries --rootdir and --confcutdir (both = root)
+  PASS: T48 setup.py above the root refused (rc 2, hits 1)
+  PASS: T48 conftest.py above the root refused (rc 2, hits 1)
+  PASS: T48 pyproject.toml WITHOUT a pytest section above the root refused (rc 2, hits 1)
+  PASS: T48 pyproject.toml with a dotted-key pytest setting above the root refused (rc 2, hits 1)
+  PASS: T48 tox.ini with a pytest section above the root refused (rc 2, hits 1)
+  PASS: T48 setup.cfg with a pytest section above the root refused (rc 2, hits 1)
+  FAIL: T48 an ini file INSIDE the root is accepted (rc 2) and the raw file records a normal verdict
+pyproject cases wrong: []
+  PASS: T48 pyproject.toml is parsed: dotted keys, inline tables, native table found; no section and look-alike table not; invalid TOML counted (fail closed)
+== T49 (review r4 M3) a mutant's tests that change the tree stop the loop before the next mutant
+SUMMARY: 2 mutant(s) planned, 1 ran: 0 KILLED, 1 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 1 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the v
+tree diff: 1 difference(s)
+TREE NOT CLEAN after the loop: ['conftest.py']
+  PASS: T49 test_writeconf.py: exit 4 (got 4), the loop stopped after m1 (no X-m2.txt), m1's raw file records the changed file
+  PASS: T49 test_writeconf.py: target file restored, state empty
+SUMMARY: 2 mutant(s) planned, 1 ran: 0 KILLED, 1 SURVIVED, 0 TIMEOUT, 0 COULD-NOT-PLANT, 0 NO-TEST-PASSED, 0 ERROR; 0 flagged; 1 not run; NO BASELINE (--no-control): INCOMPLETE (exit 5) whatever the v
+tree diff: 1 difference(s)
+TREE NOT CLEAN after the loop: ['data.bin']
+  PASS: T49 test_writedata.py: exit 4 (got 4), the loop stopped after m1 (no X-m2.txt), m1's raw file records the changed file
+  PASS: T49 test_writedata.py: target file restored, state empty
+  PASS: T49 a clean two-mutant run: exit 0 (got 0), both raw files record 'differing files (0; 0 = clean): []' and a digest
+== T50 (review r4 evidence) unreaped_child and the reaped-leader guard, tested directly
+running: True zombie: True reaped: False
+returncode still None, leader reaped: stop_group calls: []
+  PASS: T50 unreaped_child true while running and as a zombie, false once reaped; no stop_group call for a reaped leader whose returncode is None
+== T51 (review r4 evidence) --restore identity checks: start time, dead leader, works_in
+safety-tests.sh: line 524: 17086 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+process 17149 is not this run's pytest (or cannot be verified): left alone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/full1/tmpstate/hadavin-mut
+  PASS: T51a identical command line, other start time: stranger left alone, file restored (rc 0)
+safety-tests.sh: line 524: 17172 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+stopped orphaned test group 17231; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/full1/tmpstate/hadavin-mutation-lane-0/074f0546ced99fec.backup; has
+safety-tests.sh: line 524: 17231 Killed                  ( cd "$T/root" && exec setsid "${ARGV[@]}" > /dev/null 2>&1 )
+  PASS: T51a (control) identical command line AND identical start time: stopped (rc 0)
+safety-tests.sh: line 537: 17309 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T51b outside-root setup: the member of the dead leader's group runs
+process 17361 is not this run's pytest (or cannot be verified): left alone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/full1/tmpstate/hadavin-mut
+  PASS: T51b outside-root: member left alone, file restored (rc 0)
+safety-tests.sh: line 537: 17414 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T51b early-start setup: the member of the dead leader's group runs
+process 17502 is not this run's pytest (or cannot be verified): left alone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/full1/tmpstate/hadavin-mut
+  PASS: T51b early-start: member left alone, file restored (rc 0)
+safety-tests.sh: line 537: 17527 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T51b control setup: the member of the dead leader's group runs
+stopped orphaned test group 17607; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/full1/tmpstate/hadavin-mutation-lane-0/074f0546ced99fec.backup; has
+  PASS: T51b control (member works in root, started after the recorded start): stopped (rc 0)
+works_in wrong: []
+  PASS: T51c works_in matches whole path parts: /root2/x is not inside /root
+== T52 (review r4 nit 1) a plant that fails on the open file is a clean refusal, not RESTORE FAILED; --restore with the file already original clears the marker
+REFUSED: cannot plant into src/mod.py: Permission denied
+  PASS: T52a read-only target: exit 2 (got 2) with 'cannot plant', no 'RESTORE FAILED', file unchanged, state empty
+safety-tests.sh: line 1097: 17665 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+test group already gone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/full1/tmpstate/hadavin-mutation-lane-0/074f0546ced99fec.backup (it already he
+  PASS: T52b file already equals the backup (two names): --restore exit 0 (got 0), marker and backup cleared, nothing written
+== T53 (review r4 nit 2) a FIFO in place of the target: --restore refuses instead of hanging
+safety-tests.sh: line 1097: 17794 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T53 FIFO as the target at --restore (valid marker): exit 3 (restore failed, r6 review M1; r6 code: 2), no hang (got 3; 124 or 137 = hung), marker and backup kept
+  PASS: T53 and the genuine restore works afterwards
+== T54 (review r4 nit 4) ANY file in the tree with two names is refused, not only the target
+REFUSED: docs/note.txt is not a regular file with exactly one name (links: 2): a hard-linked scratch tree shares files with another tree: refused
+  PASS: T54 hard-linked docs/note.txt refused naming the file (rc 2, hits 1); target untouched
+== T55 (review r4 nit 5) a background process that outlives the test leader is stopped and recorded
+  PASS: T55a leftover 'sleep 3141' stopped (rc 5), the raw file says so
+  T55b control run killed with SIGKILL: --restore stops its test group
+safety-tests.sh: line 1097: 17920 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --control --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T55b setup: the control run's pytest still runs
+  PASS: T55b the next run refuses and points at --restore (rc 2)
+control run: stopped orphaned test group 17931; no marker in /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/full1/tmpstate/hadavin-mutation-lane-0 or in ['/dev/shm', '/tmp', 
