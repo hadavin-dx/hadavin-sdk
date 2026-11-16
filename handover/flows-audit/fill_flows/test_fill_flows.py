@@ -299,7 +299,7 @@ class Positive(Base):
             {"credentials": {"c": {"id": "1", "name": "cred $env.DESK_ALERT_TO"}}},
             {"lst": ["plain $env.DESK_TIMEOUT_MS"]},
             {"k $env.DESK_URL": 1},
-            {"jsonBody": "{\"a\": \"$env.DESK_URL\"}"},
+            {"jsonBody": '{"a": "$env.DESK_URL"}'},
         ):
             se = self.refuse(params, "plain text")
             self.assertNotIn(CANARY, se)
@@ -453,7 +453,7 @@ class Negative(Base):
             "={{ `${ `a` }` + $env.DESK_URL }}",
             "={{ `${ `${ `$env.DESK_URL` }` }` }}",
             "={{ $env.DESK_URL + '${' }}",
-            "={{ $env.DESK_URL + \"`\" }}",
+            '={{ $env.DESK_URL + "`" }}',
         ):
             self.refuse({"u": expr}, "not filled")
         s = ff.Subst({"DESK_URL": "x"})
@@ -848,7 +848,9 @@ class Hardening(Base):
         os.chmod(p, 0o600)
         os.chmod(out, 0o500)
         code, _, se = self.cli("delete", "--out", out, "--no-manifest")
-        self.assertEqual((code, "mode 0700 and yours" in se), (1, True), se)  # the check, not EACCES
+        self.assertEqual(
+            (code, "mode 0700 and yours" in se), (1, True), se
+        )  # the check, not EACCES
         os.chmod(out, 0o700)
         with mock.patch.object(ff.os, "getuid", return_value=os.getuid() + 1):
             code, _, se = self.inproc("delete", "--out", out, "--no-manifest")
@@ -1417,7 +1419,7 @@ class Round5(Base):
                     "do_delete": ("delete", "--out", self.out()),
                     "do_fill": ("fill", "--in", self.t, "--values", self.vf, "--out", self.out()),
                 }[name]
-                code, so, se = self.inproc(*args)
+                code, _so, se = self.inproc(*args)
             self.assertEqual((code, se), (1, "failed: " + type(exc).__name__ + "\n"), name)
 
     # ---- 3: a swap AFTER the open
@@ -1430,11 +1432,11 @@ class Round5(Base):
 
         def hook(path, flags, mode=0o777, *, dir_fd=None):
             fd = real_open(path, flags, mode, dir_fd=dir_fd)
-            if dir_fd is not None and path == "out" and flags & os.O_DIRECTORY:
-                if not state["done"]:  # the output folder was just opened: now swap its name
-                    state["done"] = True
-                    os.rename(out, out + ".moved")
-                    os.symlink(victim, out)
+            opened_out = dir_fd is not None and path == "out" and flags & os.O_DIRECTORY
+            if opened_out and not state["done"]:  # the folder was just opened: swap its name
+                state["done"] = True
+                os.rename(out, out + ".moved")
+                os.symlink(victim, out)
             return fd
 
         with mock.patch.object(ff.os, "open", hook):
@@ -1646,7 +1648,11 @@ class Round5(Base):
 
     def test_fill_then_import_stops_when_placeholders_are_left(self):
         # README: `fill && import`. The shell must not reach the second command.
-        cmd = ["sh", "-c", 'python3 -I "$0" fill --in "$1" --values "$2" --out "$3" && echo IMPORTED']
+        cmd = [
+            "sh",
+            "-c",
+            'python3 -I "$0" fill --in "$1" --values "$2" --out "$3" && echo IMPORTED',
+        ]
         out = self.out()
         args = [os.path.join(HERE, "fill_flows.py"), self.copy_flows("real"), self.vf, out]
         p = subprocess.run(cmd + args, capture_output=True, text=True, timeout=60, check=False)  # noqa: S603

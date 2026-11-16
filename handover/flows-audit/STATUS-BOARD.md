@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T09:58:30Z
+UPDATED_UTC: 2026-11-16T09:58:51Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -7,15 +7,15 @@ ITEMS_TOTAL: 12
 ITEMS_OPEN: 7
 PERCENT: 85
 AGENTS_RUNNING: 8
-CAPACITY: 1.47 load of 4 cores, mem 0/15 GB, disk free 27G, agents 8 (light+heavy per list)
+CAPACITY: 1.81 load of 4 cores, mem 0/15 GB, disk free 27G, agents 8 (light+heavy per list)
 INTERRUPTED: none
-FAILED: F8: fixer done (469 as expected, 0 not, 32 skipped; own mutation 39 of 42 caught, 3 equivalent); independent rerun + second reviewer running; $env nodes + 2 webhooks without auth are lead decisions; secret values of 5 characters or fewer not checked
+FAILED: F8: second reviewer found 5 Majors (no-auth webhook only WARN, webhook credential kind unchecked, HubSpot credential uncovered, placeholder ids pass quietly, alwaysOutputData WARN only) + wrong doc lines; r3 fixer running after the evidence runner; $env nodes may fail on n8n default (unverified); 2 webhooks without auth are lead decisions
 F3: rerun clean earlier; fresh security review r2 found no Blocker but 12 real Minor/Nit (nested-template lexer, delete recovery dead end, delete not idempotent, missing-value copy written); r5 fixer running; 3.9/3.10, macOS, live import not run
 ROLES: v4 doc has a security Blocker (Part C unguarded, can lock out the administrator) + 8 Majors, marked in file, NOT fixed (parked pending Q11); script: r6 fixer says 3 mutants killed, 71 tests, gate rc 0 (its own claim), independent rerun running; split-string SQL in Code nodes only caught if text names mf_leads
 claims: reviews found 16 Majors (swapped rows 13/18 cites, wrong OWNER-STEPS line, "lead" word, undefined labels, 114 SUPPORTED includes rows needing a run); r4 fixer running; F-01 still unreadable
 F5: r4 fixer done (141 rows, false "not in this checkout" reason removed); no reviewer has read the round 4 text yet, two fresh reviewers running; Q-A to Q-E (who types machine actions, stopwatch, real-CRM switch) open for coordinator; flow-set switch step 9 still UNCHECKED (scripts absent)
-NEXT: collect F3 r5, claims r4, cite check, F8 rerun+review, ROLES r6 rerun, F5 r4 reviews
-PUSHED_UTC: 2026-11-16T09:58:30Z
+NEXT: collect F3 r5, claims r4, cite check, F8 evidence+r3 fixer, ROLES r6 rerun, F5 r4 reviews
+PUSHED_UTC: 2026-11-16T09:58:51Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -38,10 +38,10 @@ PUSHED_UTC: 2026-11-16T09:58:30Z
 | a4083fcf | F3 round 5 fixer | sonnet | fix 12 security findings | 09:59 | 10:15 | 5 | running | fill_flows/fix-f3-r5.md |
 | cite-f6b-f2 | citation checker F6b+F2 | sonnet | check cites in F6B-AUDIT, F2 REVIEW | 09:57 | 10:10 | 5 | running | reviews/citations-f6b-f2.md |
 | f8-ev | EVIDENCE RUNNER F8 r2 | sonnet | rerun checker, selftest, gate, mutants | 09:58 | 10:12 | 5 | running | flow-check/evidence-r2.md |
-| f8-rev | F8 second reviewer | sonnet | find false passes | 09:58 | 10:10 | 5 | running | (report inline) |
 | roles-ev6 | EVIDENCE RUNNER ROLES r6 | sonnet | rerun tests, gate, 18 mutants | 10:00 | 10:12 | 5 | running | roles-coverage-check/evidence-r6.md |
 | f5-fac | F5 r4 facts reviewer | sonnet | check cites, ports, paste rules | 10:03 | 10:15 | 5 | running | (report inline) |
 | f5-rd | F5 r4 reader reviewer | sonnet | fresh reader pass | 10:03 | 10:15 | 5 | running | (report inline) |
+| f8-fix3 | F8 r3 fixer (Majors) | sonnet | fix 5 Majors + docs after evidence | 10:05 | 10:20 | 5 | running | flow-check/fix-f8-r3.md |
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |

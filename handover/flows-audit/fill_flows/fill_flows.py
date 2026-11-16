@@ -70,10 +70,10 @@ DIR_FLAGS = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_NOFOLLO
 
 def _not_ready_bytes() -> bytes:
     return (
-        "NOT READY TO IMPORT.\n"
-        "fill_flows wrote this copy but placeholder names are still in the files.\n"
-        "Do not import it. Add the missing values, fill again into a new folder, and run check.\n"
-    ).encode("utf-8")
+        b"NOT READY TO IMPORT.\n"
+        b"fill_flows wrote this copy but placeholder names are still in the files.\n"
+        b"Do not import it. Add the missing values, fill again into a new folder, and run check.\n"
+    )
 
 
 def _a(x) -> str:
