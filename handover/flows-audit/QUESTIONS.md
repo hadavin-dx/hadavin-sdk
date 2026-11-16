@@ -538,3 +538,12 @@ Text that no longer applies, moved here unchanged from the places named. Nothing
 
 - (2026-11-16, fix-questions8) Q25 item 10, replaced text: [ANSWERED, lead action pending (the lead decides at re-pin whether the rehearsal goes into real HubSpot, and tells the audit)] ... ANSWERED (lead, item 10): confirmed as Q17 item 5: the real-HubSpot made-up lead comes before the rehearsal. The rehearsal does NOT go into real HubSpot by default (no third contact); the lead decides at re-pin and tells the audit. [superseded by ORDER 037 item 3]
 - (2026-11-16, fix-questions8) Older Q31 times: items 3, 8 and 9 were all due Tue 17 Nov 07:00Z as one batch; item 5 stated both cases of the old L15 decision (rehearsal in or not in real HubSpot); the Q31 header said 14 questions. All replaced as above.
+
+### Q31 additions by fix-rswording8 (2026-11-16, 14:13Z = 19:43 IST), RUNSHEET-WORDING.md
+40. Word choice: RUNSHEET-WORDING.md now says "e-mail message" everywhere (default e-mail message; the lead may change it). Lead: confirm or name another word.
+41. CLAIMS-TABLE.md replacement texts for A-023 and A-088 still say "2 runs"; RUNSHEET-WORDING.md (A-023b, A-088) gives no run count. RUNSHEET-WORDING wins; CLAIMS-TABLE.md needs the same fix (not my file).
+42. Differences to CLAIMS-TABLE.md: this file says DELETE where it says CUT; A-005 and A-084 are HELD here (they are not true before the crop decision) while CLAIMS-TABLE.md says PASTE; A-053b, A-087c, A-087d are SUPERSEDED here.
+43. Who types y, the 6-digit challenge and end at the take: stated in no file read. Lead fills in.
+44. P:149 keeps the tag sentence (RELAYED-INDEPENDENT and the raw-file note) after A-076a/A-076b are deleted; the lead tidies it when A-076c is applied.
+45. The wait (minutes after send 2 before the mailbox is read) and the expected attempts value are unset until the rehearsal; the lead sets both.
+46. Mailbox words: intake mailbox and sending mailbox are placeholders until the lead names the mailboxes at take prep.

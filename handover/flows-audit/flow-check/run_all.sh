@@ -89,7 +89,8 @@ T2=$(date +%s)
 # round 10c (Q1): the committed take-warns.pin keeps the flows-audit reviewer line, so a bare take exits 4 ("pin not yet confirmed by the lead") until the lead edits it. This script tests the FILES, so it runs the take with a copy of the pin whose reviewer line is a stand-in (same WARN lines, same hash); the committed pin's own state is printed near the end.
 STANDIN=$(bash "$HERE/take_check.sh" --standin-name) && [ -n "$STANDIN" ] || { echo "ABORT: take_check.sh --standin-name gave no name (round f8-r8: the stand-in name and the word lists live in take_check.sh only)"; exit 3; }
 PINDATE=$(sed -n 's/^# date (UTC): \([0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}\)$/\1/p' "$HERE/take-warns.pin" | head -n 1)   # round f8-r8: the stand-in line carries the pin's own date (never older than the pin), not the clock date
-mkdir -p "$W/tc" && { echo "# reviewed by: $STANDIN, ${PINDATE:-$(date -u +%Y-%m-%d)}"; grep -v '^# reviewed by' "$HERE/take-warns.pin"; } > "$W/tc/test-lead.pin"; TESTPIN="$W/tc/test-lead.pin"
+PINRCPT=$(sed -n 's/^# sha256 of the WARN lines below.*: \([0-9a-f]\{64\}\)$/\1/p' "$HERE/take-warns.pin" | head -n 1 | cut -c1-8)   # round f8-r9 (M1): the reviewer line carries the first 8 characters of the WARN-lines hash
+mkdir -p "$W/tc" && { echo "# reviewed by: $STANDIN, ${PINDATE:-$(date -u +%Y-%m-%d)}, pin sha256 ${PINRCPT:-missing}"; grep -v '^# reviewed by' "$HERE/take-warns.pin"; } > "$W/tc/test-lead.pin"; TESTPIN="$W/tc/test-lead.pin"
 env "${TCUNSET[@]}" TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$TESTPIN" bash "$HERE/take_check.sh" --flows "${RUN_ALL_TAKE_FLOWS:-$W/g/real}" > "$RAW/take-check.txt" 2>&1; TC=$?   # round 10d (B3): this call has an override (the stand-in pin), so a pass is exit 5, never 0; exit 5 is what is required below   # --flows is the documented way for the folder; the pin override needs the test flag (round 10, M1)
 TCMISS=""   # set BEFORE the first use below (round 7 fix: it used to be set after the first two checks, so a failing take script ended this script with "TCMISS: unbound variable" and the first two checks were thrown away)
 # the FINAL line of take_check.sh must print the same number as its real exit status (a line that always says 0 would hide a failure)
@@ -221,6 +222,7 @@ env "${TCUNSET[@]}" bash "$HERE/take_check.sh" --flows "$W/tc/disabled-send" > "
 # Round 10 (review f8-r10): the take-level shell test (B1 pin writing, M1 overrides, M3 flow that is not a file, M4 pin hash, count change without an orphan) lives in test_take_check.sh; it runs on a temporary copy
 bash "$HERE/test_take_check.sh" "$W/g/real" "$W/tc/ttc" > "$RAW/test-take-check.txt" 2>&1; TT=$?
 [ "$TT" = 0 ] || TCMISS="$TCMISS [test_take_check.sh exit $TT (see raw/test-take-check.txt)]"
+grep -q -x -F "script under test: $HERE/take_check.sh" "$RAW/test-take-check.txt" || TCMISS="$TCMISS [test_take_check.sh did not print 'script under test: $HERE/take_check.sh' (round f8-r9: a leaked TEST_TAKE_SCRIPT must be visible)]"
 tcfail unpatched-run-saving "A FLOW THAT THE TAKE USES HAS RUN SAVING OFF"
 tcfail form-run-saving-off "A FLOW THAT THE TAKE USES HAS RUN SAVING OFF" TAKE_CHECK_FLOWS="$W/tc/form-off" TAKE_CHECK_FORM_EXPECT=15:14
 grep -q -F "WARN mf-form.json this flow's run-saving settings" "$RAW/take-check-form-run-saving-off.txt" || TCMISS="$TCMISS [take_check form-run-saving-off: the file-specific WARN line for mf-form.json is missing]"
@@ -285,7 +287,7 @@ esac
 PINREV=$(sed -n 's/^# reviewed by: \(.*\)$/\1/p' "$HERE/take-warns.pin" | head -n 1)
 PINSHOWN=$(bash "$HERE/take_check.sh" --safe-text "$PINREV")   # round f8-r8: the word rules (session, lead to confirm, placeholder, stand-ins, hidden characters) are asked of take_check.sh, never copied here
 if [ -z "$PINREV" ]; then PINMSG="COMMITTED PIN (take-warns.pin) has no reviewer line. NOT confirmed by the lead: a bare take_check.sh exits 4 until the lead adds one (this run used a stand-in line, so its take check could pass)."
-elif PINWHY=$(env -u TAKE_CHECK_TEST -u TAKE_CHECK_WARN_PIN bash "$HERE/take_check.sh" --check-reviewer-line "$PINREV" "$PINDATE"); then PINMSG="COMMITTED PIN (take-warns.pin) reviewer line (hidden characters removed, cut at 300): '$PINSHOWN' (this script cannot tell who really read it)."
+elif PINWHY=$(env -u TAKE_CHECK_TEST -u TAKE_CHECK_WARN_PIN bash "$HERE/take_check.sh" --check-reviewer-line "$PINREV" "$PINDATE" "${PINRCPT:-nohash!!}"); then PINMSG="COMMITTED PIN (take-warns.pin) reviewer line (hidden characters removed, cut at 300): '$PINSHOWN' (this script cannot tell who really read it)."
 else PINMSG="COMMITTED PIN (take-warns.pin) reviewer line (hidden characters removed, cut at 300): '$PINSHOWN'. NOT confirmed by the lead: take_check.sh refuses it ($(printf '%s' "$PINWHY" | cut -c1-120)), so a bare take_check.sh exits 4 until the lead replaces that line (this run used a stand-in line, so its take check could pass)."; fi
 echo "run_all exit status (real-v5 default runs + self-test): $RC"
 echo "real-v5 placeholder ids: $(grep -c 'still placeholders' "$RAW/pristine.txt") file(s) warn in the committed flows (pass --strict to make that a failure)"
