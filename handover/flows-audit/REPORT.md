@@ -129,3 +129,6 @@ Output:
 Matches the expected 6 opus-5-5 and 64 sonnet-5-5.
 Dry run: egm:egm-review-loop via the Skill tool on a 3-line paragraph; two reviewers (egm:egm-design, egm:egm-implementation-readiness) on sonnet. Both returned FAIL with specific findings. Result in handover/flows-audit/egm-dryrun.md.
 Files read: handover/BRIEF-PREAMBLE.md, MODEL-ROUTING.md, RULE-R456-WORK-CONDUCT.md (first part only, head of each).
+
+## check_secrets (check e), 2026-11-16 11:45Z
+Failure first: `tools/check_secrets.py` returned FAIL 1649 hits before this fix. I checked: the rule was length only (32+ letters, digits, dash, underscore), so test names, headings, table rules and file-hash lines hit. A scan found 0 random-looking tokens and 0 known key prefixes, so no secret was found. I tightened the check (it is mine): plain identifiers with 4+ word parts, dash rules, and 64-hex file hashes on lines saying sha256/hash/derived no longer hit. Result now: `PASS 0 hits in 1670 files`. Cost of the change: a random 40-character token still hits except about 30 in 20000 that look like word_word_word_word; a key written only as lowercase words joined by underscores would pass. Not checked: other scanners (gitleaks) were not run here.

@@ -43,14 +43,14 @@ Words used here (one word, one meaning):
 - "the claims table" = handover/flows-audit/CLAIMS-TABLE.md, the list of what the demo claims and the check for each; P1, P2 and P4a are names of its checks.
 - "the log" = handover/flows-audit/fix-ownersteps-r8.md.
 - "$TOOL" = the path handover/flows-audit/fill_flows/fill_flows.py (the fill program).
-- "r20, r21, r22" = the lead's three open code changes (names from the lead; this sheet does not know them).
+- "r20, r21, r22" = the lead's three open code changes, explained in plain words in the schedule section below (lead answer Q26 item 2).
 - "Step D" = the owner's only step (owner block). The lead's own sub-steps are called "Row 4 part 1, 2 and 3" below; "Step A", "Step B" and "Step C" no longer exist as owner steps. "Step D message" = the lead's message that asks the owner to do Step D.
 - "mailbox words" = one word per mailbox, so that no mailbox has two names. The lead names them at take prep: lead fills in before sending: the word for the sending mailbox, the word for the mailbox that receives the demo mails, and any other mailbox. After that this sheet and the lead use only those words (the older words "intake", "receiving" and "throwaway" below are being replaced by them).
 
 Two different costs (do not mix them): (1) the HubSpot trial account, which the lead states as a plain fact and does not claim is free unless the trial terms were read; (2) the model calls and standing credits. Cost line (the lead's answer Q21, ORDERS.md line 132; the heading of that answer is line 131): up to 3 live model calls under the owner's standing credits yes; no US$0 claim. Ceiling (the lead's answer Q25 item 1, ORDERS.md line 143): the owner's standing yes for the credits already exists (FACTS-ALREADY-DONE.md, owner answers 2026-11-15), so the owner is NOT asked for a new number. The lead states the ceiling for up to 3 sends (Row 4, rehearsal, take) from the ledger at take prep, as one number in US dollars, and writes it down. No live model call and no send to the real HubSpot trial account happens before the ceiling is stated.
 
 ### The lead's order: one numbered sequence
-1. r20, r21 and r22 (the lead's three open code changes; lead fills in before sending: what each one is, in plain words) are merged, reviewed and have final evidence.
+1. r20, r21 and r22 (the lead's three open code changes: see the plain words in the schedule section above) are merged, reviewed and have final evidence.
 2. Re-pin, one event with the re-check inside it (see the words above). The lead sets the date and time: lead sets, not before the final evidence; hard latest Mon 23 Nov before 18:29 UTC (lead answer Q24-1). Rows T5, T6 and T12 are done here. At re-pin the lead also decides whether the rehearsal goes into the real HubSpot trial account (default: no; see the end of Row 4) and tells the owner. No date is invented in this sheet.
    The re-check inside the re-pin: the lead ticks every box of the checklist below, writes "Re-check done" with the date and time on line 4, and tells the owner "re-check done" in the chat. Only now can any Step D message be sent.
 3. L1 copy the table file.
@@ -65,6 +65,26 @@ Two different costs (do not mix them): (1) the HubSpot trial account, which the 
 12. Rehearsal (see the words above; by default on the local stand-in, not the real HubSpot trial account: see the end of Row 4).
 13. The take (take-day rows T1 to T14 below), then Step D message 2 (the take's contact), then the owner's "deleted".
 Ports (decision 6 of 2026-11-16, inputs/DECISIONS-2026-11-16.md line 7): the rehearsal runs on port 5690. The real take uses its own free port, which the lead names in the plan (row T6); ports 5678 and 5679 are the owner's own n8n and the take never uses them. These ports are named only in this paragraph.
+
+### Schedule: two paths (the lead's answer Q26 item 1, ORDERS.md line 147)
+This is the lead's agent-time estimate, not a promise. The lead moves the times; the owner is told the same. Times in UTC and IST (IST = UTC + 5 h 30 min). All dates are 2026.
+Before the split (both paths):
+- Mon 16 Nov to about 04:00 UTC Tue 17 Nov (09:30 IST Tue): r20, r21 and r22 are merged, a fresh three-lane review is done, the final evidence is in, and one mutation batch has run.
+- Tue 17 Nov: re-pin (the check is inside it) by about 08:00 UTC (13:30 IST). Then the practice run (earlier called the loopback re-smoke) takes 3.5 to 4.5 hours and is done about 13:00 UTC (18:30 IST).
+- GO / NO-GO test, Tue 17 Nov 14:00 UTC (19:30 IST): GO only if the practice run is green AND no Blocker or Major finding is open in the take path. Otherwise NO-GO.
+Path GO:
+- Wed 18 Nov: practice run already done; Row 4 first (after the re-pin and the practice run), then Step D message 1, then the rehearsal (about 07:00 to 09:30 UTC, 12:30 to 15:00 IST), then the take at about 10:00 UTC (15:30 IST).
+- Edit the video. The owner posts it Wed 18 Nov at 15:00 UTC (20:30 IST).
+Path NO-GO:
+- The take happens later, still before the money stop (the end of the model credits): Mon 23 Nov before 18:29 UTC (23:59 IST).
+- The owner posts by Wed 25 Nov at 15:00 UTC (20:30 IST).
+Named open risk: a design change to the n8n single-instance guard (the check that refuses a second n8n for the same take; the owner's decision on it is still pending) can add 2 to 3 hours to every step after it, and so can move the GO / NO-GO result.
+Scene 4: filmed only if the rehearsal shows the takeover inside 3 minutes (T3); otherwise it is cut. Row 4 comes first after the re-pin and the practice run (position 10 of the order).
+Plain words for the three open code changes (the lead's answer Q26 item 2, ORDERS.md line 147):
+- r20 = a change to tests only: it stops load from making the take program refuse to run.
+- r21 = the take program (run_real_check_n8n.py): it never writes or deletes anything in HubSpot, it hides secrets, and it finishes cleanly when it is stopped by a signal.
+- r22 = the n8n start and kill scripts: they refuse to start a second n8n for the same take.
+None of the three touches the flow files (F-002, F-008, the flow JSON); they touch scripts and tests only. Step 1 of the order waits only on their merge and review.
 
 ### Re-check checklist (the lead ticks each box; one list, nothing else to tick elsewhere)
 - [ ] the copied table file is the v4 one (L1), and the lead has noted that its first line still says "v3 table"
@@ -109,23 +129,23 @@ This list is for the take day. Row 4 (the section after this list) happens earli
 | T1 | lead | take prep, before scene 2 | Use a made-up person's id and an e-mail address (both made up) that were never used before: not in the practice run, not in the rehearsal, not in the Row 4 test. Check that the table mf_leads has 0 rows for that lead_key. Name the mailboxes with one word each (the lead names them now). Empty the mailbox that receives the demo mails or filter it so older mails cannot be counted as the take's mail (how to empty or filter: UNVERIFIED, the lead decides at re-pin). |
 | T2 | lead | during and after the take | Proof of "processed once" is two things together: exactly 1 mail in the mailbox that receives the demo mails, counted after a stated wait (the wait and the expected number of attempts: lead sets at rehearsal), plus the mf_leads row for that lead_key. The count of CRM rows (HubSpot contacts) alone is NOT proof, because the CRM row is keyed on the e-mail address only. The reply time of the second POST is not part of the proof. The claims table must say the same; it is a different file, so the lead changes it there (listed as an open item in the log). |
 | T3 | lead | scene 4 | The lead stops and starts n8n with the take scripts (decision 7 of 2026-11-16 in inputs/DECISIONS-2026-11-16.md). The owner never does it. No phone filming and no on-screen timer: the lead keeps the time with its own clock off screen. Cut rule: the lead cuts scene 4 if no takeover (the work being picked up again after n8n restarts) shows within 3 minutes (45 s lease plus 30 s check is about 75 s, with margin); the rehearsal measures the real time and the lead sets it. The takeover line is spoken only after a rehearsal has shown it. |
-| T4 | lead | before the take | If check P4a of the claims table (line 30: what the real CRM answers with for a contact's number) fails, the take is postponed. Rows whose check failed are never filmed. |
+| T4 | lead | before the take | If check P4a of the claims table (handover/flows-audit/CLAIMS-TABLE.md, section "Checks (P1, P2, P4a, P4b, P4c)", the P4a bullet at line 138: what the real CRM answers with for a contact's number) fails, the take is postponed. Rows whose check failed are never filmed. |
 | T5 | lead | at re-pin | The re-pin happens after r20, r21 and r22 (the lead's three open code changes) are merged, reviewed and have final evidence. The lead sets the date and time: lead sets, not before the final evidence; hard latest Mon 23 Nov before 18:29 UTC (lead answer Q24-1, ORDERS.md line 141). No date is invented here. (The earlier note "not before about 6 hours after 11:30Z" is dropped: it named no day and the lead's answer Q24-1 replaces it.) |
-| T6 | lead | at re-pin | The port of the real take and the check of scripts/n8n_api.py (decision 7; the path is as written in the decision, unverified): lead, at re-pin; time: lead sets, not before the final evidence; hard latest Mon 23 Nov before 18:29 UTC. |
+| T6 | lead | at re-pin | The port of the real take and the check of scripts/n8n_api.py (decision 7; the path is as written in the decision, unverified): lead, at re-pin. The three scripts n8n_api.py, run_real_check_n8n.py and n8n_drive.py: lead provides at re-pin (the lead's answer Q26 item 3, ORDERS.md line 147; whether n8n_api.py exists in the final tree: the lead verifies, unknown now); time: lead sets, not before the final evidence; hard latest Mon 23 Nov before 18:29 UTC. |
 | T7 | lead | take prep | Made-up sender and receiver addresses are chosen and checked before filming. Only made-up addresses appear on screen. |
 | T8 | lead | during filming | The lead operates the screens (lead fills in before sending: who operates the screen recording, if not the lead). Screens that may be on screen but are never clicked into: credential pages, Settings, any node output that holds environment values. |
 | T9 | lead | after filming | The lead watches the whole recording once, start to end, before anything is published. |
 | T10 | lead | during and after each take | Any extra mail in the mailbox means: stop and retake. It is not explained away. |
 | T11 | lead | any time a check fails | Abort-and-retake rule: the lead calls the abort. Clean check with new keys (a new made-up person's id and a new e-mail address), then film again. |
-| T12 | lead | at re-pin | SUPERSEDED by T13 (lead answer Q25-2, ORDERS.md line 143: the scoped caption replaces both earlier captions). The lead applies the T13 caption in RUNSHEET-WORDING.md A-016f at re-pin; the earlier words one mail sent, one row in state done (Q24-5) are no longer used. The same step is noted in the A-016f row of RUNSHEET-WORDING.md. |
-| T13 | lead | take prep and film | The caption on the screen and on the card is exactly: In this recording, the same lead ID sent twice gave one e-mail message. (Scoped on purpose: the broad sentence is not proven; lead answer Q25-2, ORDERS.md line 143.) |
+| T12 | lead | at re-pin | SUPERSEDED by T13 (lead answer Q25 item 2, ORDERS.md line 144, under the heading on line 143: the scoped caption replaces both earlier captions). The lead applies the T13 caption in RUNSHEET-WORDING.md A-016f at re-pin; the earlier words one mail sent, one row in state done (Q24 item 5, ORDERS.md line 141) are no longer used. The same step is noted in the A-016f row of RUNSHEET-WORDING.md. |
+| T13 | lead | take prep and film | The caption on the screen and on the card is exactly: In this recording, the same lead ID sent twice gave one e-mail message. (Scoped on purpose: the broad sentence is not proven; lead answer Q25 item 2, ORDERS.md line 144.) |
 | T14 | lead | film | The closing card is one line only and holds no numbers. |
 
 Wording note: two proposed steps in the fifth rewrite of this sheet were labelled P1 and P2; those labels clash with the check names P1 and P2 of the claims table, so they are now T1 and T2 and are no longer proposals (T12 was added later; T7 to T11 come from review gaps). The source text for T1 and T2 is handover/flows-audit/reviews/adversarial-takeday-r1.md items 1 and 2 (a reviewer's text read, not run); the sources for T7 to T11 are the review gaps named in the lead's order of that round.
 
 ## Row 4: one made-up person through the real HubSpot trial account (lead's part)
 This is the owner's decision of 2026-11-16: one made-up person goes through the real flows into the real HubSpot trial account, replacing a larger set of real-account checks (decision 8 in inputs/DECISIONS-2026-11-16.md; item 5 of the lead's answer Q17 in handover/flows-audit/ORDERS.md line 117). Why one and not more: it keeps the real-account use and the cost as small as possible.
-Row 4 has three parts, named "Row 4 part 1", "Row 4 part 2" and "Row 4 part 3". They are the lead's work and are not the owner's Step A or Step D (earlier rounds called them Step B, Step C and Step D, which clashed with the owner's names).
+Row 4 has three parts, named "Row 4 part 1", "Row 4 part 2" and "Row 4 part 3". They are the lead's work and are not the owner's Step D, which is the owner's only step (earlier rounds called them Step B, Step C and Step D, which clashed with the owner's names).
 Row 4 happens before the take day (position 10 of the order above), although it is written after the take-day list. On the take day the rows T1 to T14 apply. Do not run Row 4 until: (i) the practice run passed, (ii) the mailbox names are confirmed (re-check checklist), (iii) the lead has stated the ceiling for up to 3 sends from the ledger (the owner is not asked).
 Row 4 part 1 (send): the lead sends ONE made-up person (made-up name, made-up e-mail address) through the real flows into the real HubSpot trial account.
 Row 4 part 2 (the lead checks four things, called "the four checks"):
@@ -149,4 +169,5 @@ Footer: version history (oldest first)
 - Seventh rewrite (round 7): applied reviews/stranger-ownersteps-r6.md; change log in handover/flows-audit/fix-ownersteps-r7.md.
 - Eighth rewrite (round 8): applied reviews/stranger-ownersteps-r8.md; change log in handover/flows-audit/fix-ownersteps-r8.md.
 
-- Ninth rewrite (lead answer Q25, ORDERS.md line 143): Step A removed (the lead states the ceiling; the owner is not asked), re-check merged into re-pin, one word per mailbox, scoped caption and one-line closing card, proof = mailbox count plus table row, scene 4 cut rule 3 minutes; change log in handover/flows-audit/fix-q25-os.md.
+- Ninth rewrite (lead answer Q25, ORDERS.md lines 143 and 144): Step A removed (the lead states the ceiling; the owner is not asked), re-check merged into re-pin, one word per mailbox, scoped caption and one-line closing card, proof = mailbox count plus table row, scene 4 cut rule 3 minutes; change log in handover/flows-audit/fix-q25-os.md.
+- Tenth rewrite (lead answer Q26, ORDERS.md lines 146 and 147): added the two schedule paths and the GO / NO-GO test, the named open risk, r20 / r21 / r22 in plain words, the three scripts as "lead provides at re-pin", scene 4 only after a rehearsal shows takeover inside 3 minutes; fixed the stale pointers in T4, T12 and T13 and the Step A wording; change log in handover/flows-audit/fix-q26-os.md.
