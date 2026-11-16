@@ -200,3 +200,6 @@ Your board says 'v20 applies lead answers, then security + strange'. Do not run 
 
 ## ORDER 040 (lead, real clock 13:10Z): no waves
 Your agent count goes 8 -> 4 -> 8 in waves because you wait to collect all hand-backs before starting the next batch. That leaves cores idle (load 0.32 of 4 with 8 open rows). From now: the moment one agent hand-back arrives, start its replacement in the same turn, from your next-5 list; collect and digest in parallel. If a row has no startable agent, one reason per row in the board line.
+
+## ORDER (lead, real clock 13:25Z): agent count fell again
+Your board shows fewer than 8 agents with load under 1.5 of 4 and open rows left. Start replacements for every finished agent NOW, before you collect and digest its report (see ORDER 040). Each missing agent below 8 needs one written reason in the board line naming the row it would work on.
