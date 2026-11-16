@@ -20,25 +20,35 @@ def variant(s, keep):
     return re.sub(r'\[\[%s:\s?(.*?)\]\]' % keep, r'\1', s, flags=re.S)
 def tidy(o):
     o = re.sub(r'[ \t]+\n', '\n', o); o = re.sub(r' {2,}(?=[.,;:)])', '', o); return o.replace('( ', '(')
-POINTER = ("### THE CARD (the separate printed page OWNER-CARD-v29-%s.md)\nPrint that page and keep it beside you. Every step called \"the card\", every danger sign W1 to W9 and the cancel lists L1 to L5 are on that page only; "
-           "this sheet does not repeat them. Fill its blanks before you press create of the run key.\n\n")
-NPOINTER = "## 3. The numbers message\nThe sample numbers message and your checks of it are on the separate page OWNER-NUMBERS-v29-%s.md (same letter as this sheet). You use them at 5.1 and 5.8.\n\n"
 def cut(o, name):
     i = o.index('<<%s\n' % name); j = o.index('%s>>\n' % name)
-    return o[:i] + '@@%s@@' % name + o[j + len(name) + 3:], o[i + len(name) + 3:j].strip('\n') + '\n'
-def split(o):
-    """returns (sheet text with the card, numbers and film blocks cut out, card text, numbers text, film text)"""
-    o, card = cut(o, 'CARD'); o, nums = cut(o, 'NUMBERS')
-    f0 = o.index('<<FILM\n'); f1 = o.index('FILM>>')
-    film = o[f0 + 7:f1].strip('\n') + '\n'; o = o[:f0].rstrip('\n') + '\n'
-    return o, card, nums, film
-def combine(sheet, card, nums, film):
-    """the whole text a check reads: card and numbers pages put back in place, film page appended"""
-    i = sheet.index('### THE CARD'); j = sheet.index('### The rules')
-    sheet = sheet[:i] + card.rstrip('\n') + '\n\n' + sheet[j:]
-    i = sheet.index('## 3. The numbers message'); j = sheet.index('## 5. Before the yes')
-    sheet = sheet[:i] + nums.rstrip('\n') + '\n\n' + sheet[j:]
-    return sheet.rstrip('\n') + '\n\n' + film
+    return o[:i] + o[j + len(name) + 3:], o[i + len(name) + 3:j].strip('\n') + '\n'
+def unmark(o, name):
+    return o.replace('<<%s\n' % name, '').replace('%s>>\n' % name, '')
+def appendix_blocks(o):
+    """the long detail leaves the sheet and goes to the appendix in order: whole blocks <<F1 title ... F1>>, and inline cuts (((F5 title:: text ))) that leave the pointer "(appendix 5)"; the sheet keeps its own short text beside each"""
+    parts = {}
+    def add(n, t, body):
+        parts.setdefault(n, [t, []])[1].append(body.strip('\n'))
+    def r(m):
+        add(m.group(1), m.group(2), m.group(3)); return ''
+    o = re.sub(r'<<F(\d+) ([^\n]*)\n(.*?)\nF\1>>\n?', r, o, flags=re.S)
+    def r2(m):
+        add(m.group(1), m.group(2), m.group(3)); return ' (appendix %s)' % m.group(1)
+    o = re.sub(r' ?\(\(\(F(\d+) ([^\n:]*?):: (.*?)\)\)\)', r2, o, flags=re.S)
+    return o, [(int(n), v[0], '\n\n'.join(v[1])) for n, v in sorted(parts.items(), key=lambda kv: int(kv[0]))]
+def split(o, k):
+    """returns (sheet text, card print copy, appendix text, film person page)"""
+    o, film = cut(o, 'FILMPERSON')
+    o, parts = appendix_blocks(o)
+    i = o.index('<<CARD\n'); j = o.index('CARD>>\n')
+    card = o[i + 7:j].strip('\n') + '\n'
+    o = unmark(unmark(o, 'CARD'), 'NUMBERS')
+    sheet = o.rstrip('\n') + '\n\n---\nEnd of sheet %s (OWNER-SHEET-v29-%s.md).\n' % (k, k)
+    app = '# Owner appendix v29, sheet %s: the long detail (it binds you the same as the sheet; each part says where the sheet points to it)\n' % k
+    for n, t, body in parts: app += '\n## Appendix part %s: %s\n%s\n' % (n, t, body)
+    app += '\n---\nEnd of the appendix, sheet %s (OWNER-APPENDIX-v29-%s.md).\n' % (k, k)
+    return sheet, card, app, film
 def build():
     out = {}
     src = open(D + 'OWNER-SHEET-v29-SOURCE.md', encoding='utf-8').read()
@@ -47,15 +57,14 @@ def build():
     for k in 'AB':
         o = tidy(fill(variant(src, k)))
         assert '[[' not in o and ']]' not in o and '{{' not in o, 'leftover in ' + k
-        sheet, card, nums, film = split(o)
-        out['OWNER-SHEET-v29-%s.md' % k] = sheet.replace('@@CARD@@', POINTER % k).replace('@@NUMBERS@@', NPOINTER % k)
-        out['OWNER-CARD-v29-%s.md' % k] = card; out['OWNER-NUMBERS-v29-%s.md' % k] = nums; films.append(film)
-    assert films[0] == films[1], 'the film page differs between A and B'
-    out['OWNER-FILM-v29.md'] = films[0]
+        sheet, card, app, film = split(o, k)
+        out['OWNER-SHEET-v29-%s.md' % k] = sheet; out['OWNER-CARD-v29-%s.md' % k] = card; out['OWNER-APPENDIX-v29-%s.md' % k] = app; films.append(film)
+    assert films[0] == films[1], 'the film person page differs between A and B'
+    out['OWNER-FILM-PERSON-v29.md'] = films[0]
     wc = {}
     for k in 'AB':
-        w = [len(out[x % k].split()) for x in ('OWNER-SHEET-v29-%s.md', 'OWNER-CARD-v29-%s.md', 'OWNER-NUMBERS-v29-%s.md')] + [len(out['OWNER-FILM-v29.md'].split())]
-        wc.update({'WC_SHEET_' + k: w[0], 'WC_CARD_' + k: w[1], 'WC_NUM_' + k: w[2], 'WC_FILM_' + k: w[3], 'WC_ALL_' + k: sum(w)})
+        w = [len(out[x % k].split()) for x in ('OWNER-SHEET-v29-%s.md', 'OWNER-CARD-v29-%s.md', 'OWNER-APPENDIX-v29-%s.md')] + [len(out['OWNER-FILM-PERSON-v29.md'].split())]
+        wc.update({'WC_SHEET_' + k: w[0], 'WC_CARD_' + k: w[1], 'WC_APP_' + k: w[2], 'WC_FILMP_' + k: w[3], 'WC_ALL_' + k: w[0] + w[2] + w[3]})
     for s, d in (('LEAD-RELEASE-NOTE-v13-SOURCE.md', 'LEAD-RELEASE-NOTE-v13.md'), ('v29-OPEN-FOR-LEAD-SOURCE.md', 'v29-OPEN-FOR-LEAD.md')):
         if os.path.exists(D + s):
             o = fill(open(D + s, encoding='utf-8').read())
@@ -66,7 +75,7 @@ def build():
 def sample_block(src):
     """the numbers message sample, generated once from the owner sheet source (the note embeds it, so the two cannot drift)"""
     i = src.index('SAMPLE (made-up values, never real):'); j = src.index('```', src.index('```', i) + 3) + 3
-    return tidy(fill(variant(src[i:j], 'A'))) + '\n(sheet B differs only in its older key line: it adds "Older-key time: ' + FACTS['okb'] + ' on the run day" and says the older key is left valid)'
+    return tidy(fill(variant(src[i:j], 'A'))) + '\n(sheet B differs from sheet A in its sheet letter, its older key line (the older key is left valid until the older-key time) and the older-key steps)'
 if __name__ == '__main__':
     for n, o in build().items():
         open(D + n, 'w', encoding='utf-8').write(o); print(n, len(o.split()), 'words')

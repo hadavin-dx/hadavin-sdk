@@ -1,0 +1,66 @@
+
+def sub_line(prefix, newline):
+    """replace the whole line that starts with prefix (exactly one)"""
+    global T
+    ls = T.split('\n')
+    idx = [k for k, l in enumerate(ls) if l.startswith(prefix)]
+    if len(idx) != 1:
+        errs.append(f'line prefix count {len(idx)}: {prefix[:50]!r}'); return
+    ls[idx[0]] = newline
+    T = '\n'.join(ls)
+
+def block_get(rid, nth=0):
+    i, j = row_span(rid)
+    lines = T[i:j].split('\n')
+    r = _find_new(lines, nth)
+    return lines[r[0]:r[1]]
+
+# ================= header, history, counts =================
+sub('exact edit list (round 12, batched fix pass after the round 11 reviews;', 'exact edit list (round 13, batched fix pass after the round 12 reviews;')
+sub('Round 12 (`resolve-r12.md`, same paths: no round cap) applies all of those findings in one batch. The result of round 12 is NOT reviewed yet.',
+    'Round 12 (`resolve-r12.md`, same paths: no round cap) applied all of those findings in one batch; its result was reviewed (`review-c4-r12-security.md`: 1 Blocker, 5 Majors, 6 Minors; `review-c4-r12-naive.md`: 2 Blockers, 10 Majors, 12 Minors; the independent evidence run `evidence-r12-independent/00-SUMMARY.md`: its own checker passed, 50 of 50 planted mistakes were caught, and it observed one label with two times, "latest start time", which is now two names). Round 13 (`resolve-r13.md`, same paths: no round cap) applies all of those findings in one batch. The result of round 13 is NOT reviewed yet.')
+sub('and `EDITS.round11.md` (round 11).', '`EDITS.round11.md` (round 11) and `EDITS.round12.md` (round 12).')
+sub('`resolve-r12.md` and `resolve-r12-check-output.txt`)', '`resolve-r13.md` and `resolve-r13-check-output.txt`)')
+sub('Round 12 added no row (the ids and the counts do not change). It rewrote',
+    'Round 13 added no row (the ids and the counts do not change). It rewrote E-09, E-12, E-16, E-37, E-48, E-52, E-54, E-55 (its old text is now two lines of the file, 119 and 120), E-57 and E-58, changed E-01, E-02, E-03 and E-06, and rewrote NOT DECIDED 7 and 15, the rules R7 and R10, the confirmations h, m and n and the rule R11. Round 12 added no row (the ids and the counts do not change). It rewrote')
+sub('## NOT DECIDED: studio lead or owner only (items 1 to 15).', '## NOT DECIDED: studio lead or owner only (items 1 to 15).')  # unchanged on purpose
+sub('letters run a to l without gaps', 'letters run a to n without gaps')
+
+# ---- two names for two times (coordinator note, evidence r12 observation)
+sub('**latest start time** = the latest time the take program accepts a start, about 18:14 UTC = 23:44 IST on that day (a reading of OWNER-STEPS line 171, UNVERIFIED by code).',
+    '**latest start we plan** = 18:04 UTC = 23:34 IST, the latest time at which the assistant asks for a take to start (confirmed by the studio lead, item L-23NOV; the take needs about 14 minutes 20 seconds, 860 seconds, so a start at that time ends before the last time to revoke). **program refusal limit** = about 18:14 UTC = 23:44 IST on 23 Nov, the time from which the take program itself refuses a start (a reading of OWNER-STEPS line 171, UNVERIFIED by code). These are two different figures and have two different names everywhere in this file and in the owner texts; the older single label that was used for both is retired.')
+sub('that the latest start time and the spending window are stated in UTC and IST', 'that the latest start we plan, the program refusal limit and the spending window are stated in UTC and IST')
+sub('h. E-12 and E-48: on 23 Nov the assistant asks for no start later than 18:04 UTC = 23:34 IST (the program itself accepts about 18:14 UTC = 23:44 IST, UNVERIFIED), and if a take is still running at 18:19 UTC = 23:49 IST the owner revokes the model key anyway unless the assistant says otherwise.',
+    'h. E-12 and E-48: the assistant asks for no start later than 18:04 UTC = 23:34 IST on any day (the latest start we plan; the program refusal limit is about 18:14 UTC = 23:44 IST, UNVERIFIED), and if a take is still running at 18:19 UTC = 23:49 IST the owner revokes the model key anyway.')
+sub('latest start Mon 23 Nov 2026 18:04 UTC = 23:34 IST, key revoked by 18:19 UTC = 23:49 IST even if a take runs,', 'latest start we plan 18:04 UTC = 23:34 IST (Mon 23 Nov 2026), key revoked by 18:19 UTC = 23:49 IST even if a take runs,')
+sub('The 18:14 UTC = 23:44 IST that the program accepts stays a reading of line 171, UNVERIFIED by code.', 'The 18:14 UTC = 23:44 IST (the program refusal limit) stays a reading of line 171, UNVERIFIED by code.')
+sub('the latest start time of about 18:14 UTC = 23:44 IST comes from a reading of OWNER-STEPS line 171', 'the program refusal limit of about 18:14 UTC = 23:44 IST comes from a reading of OWNER-STEPS line 171')
+
+# ================= NOT DECIDED 7 and 15, rules, confirmations =================
+sub('The key is revoked only for `7a: yes` together with `7a2: different key` (E-48, part 3e).',
+    'The key is revoked in every case by 18:19 UTC = 23:49 IST (E-48, part 3a; the security decision S9-3 and the studio lead\'s item L-23NOV); only the answers `7a: yes` together with `7a2: different key` mean that nothing has to be replaced first (E-48, part 3g).')
+sub('E-48 still applies, with its safe default (the assistant asks the owner at clean-up whether to revoke; the owner revokes only after a clear yes, and the second ask comes before 18:19 UTC = 23:49 IST)',
+    'E-48 applies unchanged (the key ends by 18:19 UTC = 23:49 IST whatever the answer; an unanswered or `not sure` answer is treated as "shared", so new keys are made first, E-48 part 3g)')
+i15 = T.index('15. **When the owner writes `no more takes`')
+j15 = T.index('Record: `ND15: A|B <owner message>`.', i15) + len('Record: `ND15: A|B <owner message>`.')
+T = T[:i15] + '''15. **When the owner writes `no more takes`: right after the last take he wants (route A), or only after `cut accepted` (route B)** (E-48 part 3c, E-55, E-57; design M1 and naive B2 of round 11, naive B1 of round 12). Who answers: the owner (it is his chance of a retake and his open secret key); the studio lead decides which route the assistant RECOMMENDS. CONFLICT FOR THE STUDIO LEAD, not decided by the builder: the former default of this item was A (safer: the live key exists for hours). The studio lead's brief for round 13 asked for the owner text to recommend B (write `no more takes` only after `cut accepted`, with the revoke by 18:19 UTC = 23:49 IST either way). The two cannot both be the default. Round 13 therefore writes BOTH routes in full in E-48 part 3c and E-57, each with its exact condition and cost, and puts the recommendation in ONE sentence of E-48 part 3c ("The assistant recommends route B; the choice is yours") that the studio lead keeps, changes to A or deletes. What does not depend on the answer: the key ends by 18:19 UTC = 23:49 IST on Mon 23 Nov 2026 in both routes (E-48 part 3a), the owner sets his own alarm for 17:49 UTC = 23:19 IST that day (part 3b), and the irreversible clean-up (E-55, item 1) starts only after `no more takes`. Options: (A) the key is revoked within hours of the last take (normally Wed 18 Nov); cost: after a bad cut he cannot retake with this key and must make a new secret key and give a new yes (step 20); (B) the key and its copy in the take folder stay alive up to five days (Wed 18 Nov to Mon 23 Nov); benefit: a retake after a bad cut; condition: the cut is watched and `cut accepted` and `no more takes` are written before 18:19 UTC = 23:49 IST on Mon 23 Nov 2026; risk of B: a live paid key and its copy stay on the disk longer, and the revoke on the last day depends on the owner and his alarm (the program has no timer, Q26). Cost: none. Default: not chosen (see the conflict); until the studio lead answers, both routes are in the owner text with the recommendation sentence as written. Record: `ND15: A|B <owner message>`.''' + T[j15:]
+sub_line('- **R7 (E-48)**', '- **R7 (E-48)**: the assistant must send the questions and the steps in its next message after the owner\'s `no more takes` (E-48, part 3d); the studio lead checks it in the chat record of the first take. The owner\'s answers never keep the key alive: `not sure`, `same key` and `no, other things use it` only mean that new keys are made first (part 3g). The key ends by 18:19 UTC = 23:49 IST on Mon 23 Nov 2026 in every case. The owner\'s alarm for 17:49 UTC = 23:19 IST (part 3b) is the only reminder on that day (the program has no timer, Q26); if a session of the assistant is open at that time it asks "Is the key revoked?" first. The studio lead writes the outcome into `ANSWERS-c4.md` as `ND7a-late: key revoked|key not revoked <reason>; <who>; <date and time in UTC and IST>`; a key that is not revoked is listed in the handoff with that date (physically impossible now, needs the owner: stated exception).')
+sub_line('- **R10 (E-48, E-55, E-57, E-58)**', '- **R10 (E-48, E-55, E-57, E-58)**: two routes (ND15), one deadline per act: revoke the key (18:19 UTC = 23:49 IST at the latest), watch the cut (the same 18:19 UTC = 23:49 IST), the rest of the retirement (18:29 UTC = 23:59 IST). The irreversible clean-up (E-55, item 1) starts only after the owner\'s written `no more takes`. The studio lead writes the answer of ND15 into `ANSWERS-c4.md`.')
+sub_line('- **R9 (E-04, E-05', None) if False else None
+sub('\n\n## Decision D5 (security items', '\n- **R11 (E-12, E-54)**: before the sheet is given to the owner, the studio lead fills the placeholder `[LEAD FILLS at re-pin: ...]` (the time of day of the take on Wed 18 Nov 2026, in UTC and IST) in E-12 and E-54, and checks that the same time stands in both. Nothing here invents it.\n\n## Decision D5 (security items')
+sub('- S9-3 (the owner revokes the model secret key at clean-up): E-48 (applies always, with the safe default question; the revoke follows the owner\'s `no more takes`; the second ask and the last time to revoke are 18:19 UTC = 23:49 IST).',
+    '- S9-3 (the owner revokes the model secret key at clean-up): E-48 (applies always; since round 13 the key ends by 18:19 UTC = 23:49 IST WHATEVER the owner answers, the owner sets his own alarm, and the revoke follows the owner\'s `no more takes`).')
+sub('\nl. E-12 gives the request four file labels', '\nl. E-12 gives the request four file labels')
+sub('Confirm that no other file is needed.\n', 'Confirm that no other file is needed.\nm. E-48 part 3i narrows the instruction Q19.5 ("cancel all old model keys except the run key unless the owner writes a reason and an end date"): the owner revokes another key only when he knows its purpose, it was last used more than 7 days ago and it is not held by his own n8n, because revoking an unknown key can break other work and a key held by an n8n may look unused. The figure 7 days is the one of the studio lead\'s item L-A/B (a different key question); the builder applies it here. Confirm the narrowing and the figure, or restore Q19.5 in full.\nn. E-12 widens the yes sentence beyond Q24: "and that it can reach n8n\'s encryption key and the credentials saved in the take\'s n8n". Where n8n\'s encryption key is kept (n8n.env, the take\'s `.n8n/config`, or both) is UNVERIFIED; E-30 names both. Confirm the widening and the wording.\n')
+
+# ================= E-01, E-02, E-03, E-06 =================
+rsub('E-01', 'In the edited parts, "the assistant" is Claude, who works with you;', 'In the edited parts, UNVERIFIED means that nobody has checked it yet: it is a reading or an aim, not a fact. In the edited parts, "the assistant" is Claude, who works with you;')
+why_add('E-01', 'Round 13 (naive M8): UNVERIFIED is explained where the owner first meets it in the edited parts (the sheet\'s own line 7 uses it for the older parts).')
+rsub('E-02', 'fix rounds 3 and 4 are on the branches `take/nlite-int-r3` and `take/nlite-int-r4`, and fix round 5 is being built on `take/nlite-int-r5` (a branch is a named copy of the code).',
+     'fix rounds 3 and 4 are finished as two named copies of the code (called branches), and fix round 5 is being built as a third one.')
+why_add('E-02', 'Round 13 (naive m12): the branch names are removed from the owner text; the owner only needs to know that fix rounds exist and which are finished (E-23 keeps the names).')
+rsub('E-03', 'start the database server, the model stage (our small program that asks the AI model and keeps the money cap) and n8n, import the flows',
+     'start the database server, the model stage (our small program that asks the AI model and keeps the money cap) and n8n (the automation program that runs the flows), import the flows')
+why_add('E-03', 'Round 13 (naive m6): n8n is explained where line 5 first uses it.')
+rsub('E-06', 'called the port number;', 'called the port number (the port number of your own n8n is 5678);')
+why_add('E-06', 'Round 13 (naive M5): the port number is explained with the one example the owner knows.')
