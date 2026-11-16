@@ -42,3 +42,6 @@ Decision 1 cut scenes 5-11. F-005 and F-006 (Blockers), F-023 (Major), F6B-01 an
 
 ## Q15 (flows-audit, 2026-11-16 10:50 UTC): is the closing card (scene 12) in the one video?
 Decisions name scenes 1-4. CLAIMS-TABLE rows 14-17 edit the closing card: if it is shown, rows 14 and 15 become LIVE (19 live rows) and the card must carry no recovery number (decision 1); if it is not shown, rows 14-17 stay OUT. Until you answer, rows 16-17 are kept LIVE and 14-15 OUT. Recommendation: show no closing card with numbers; keep one line "a lead sent twice is processed once" only.
+
+## Q16 (flows-audit, 2026-11-16 10:55 UTC): which table definition does the take use? (F8 reviewer, UNVERIFIED, read only)
+The real-v5 folder holds no SQL file. demo/n8n-flows/mf_leads.sql (the one run_all.sh copies) is the older table without alert_sent, alert_token, alert_until, alert_attempts; mf-recovery.json uses those columns (lines 124, 204, 228). Only demo/n8n-flows-v4/mf_leads.sql has them. On the older table the alert step fails every 30 s and the failure is swallowed, so no alert would ever send. Also real-v5 mail steps still hold FROM_ADDRESS_PLACEHOLDER and INTAKE_ADDRESS_PLACEHOLDER (fill_flows or the owner fills them). Recommendation: add the v4 table file to the take folder and name it in OWNER-STEPS v4. Needs the lead: the file lives outside handover/flows-audit.
