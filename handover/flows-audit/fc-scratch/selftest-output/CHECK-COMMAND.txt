@@ -1,0 +1,2 @@
+checker: /home/user/hadavin-sdk/handover/flows-audit/fc-scratch/check_flows.py
+fixed command per case: python3 -I CHECKER D --baseline PRISTINE <--expect lines recomputed from D> --quiet-info [extra option]

@@ -1,5 +1,7 @@
 #!/bin/bash
-# F8 runner (round 1 fix). Usage: bash run_all.sh [WORKDIR]
+# F8 runner (round 3). Usage: bash run_all.sh [--strict] [WORKDIR]
+#   --strict : also pass --require-real-credential-ids to the default-mode runs, so a credential id or sub-workflow id that is still a placeholder makes this script exit 1.
+#   Last line printed is always 'OPEN LEAD DECISIONS: n webhook(s) without auth, m $env node(s)' (committed flows, real + film): exit 0 does NOT mean authentication was checked.
 # Default WORKDIR is /tmp/fc8 (this script deletes and recreates ONLY that exact default folder). Any other WORKDIR must not exist yet or must be empty; it is never deleted.
 # What it does (nothing is run in n8n):
 #   1. copies the committed real-v5 flows to a scratch folder, applies patch F-002 then F-008 there, runs the flow generator for "real" and "film"
@@ -12,7 +14,9 @@
 set -u
 HERE=$(cd "$(dirname "$0")" && pwd); D="$HERE/../../demo"; PT="$HERE/../patches"; CK="$HERE/check_flows.py"; RAW="$HERE/raw"
 DEFAULT_W=/tmp/fc8
-W=${1:-$DEFAULT_W}
+STRICT_IDS=""; ARGS=()
+for a in "$@"; do if [ "$a" = "--strict" ]; then STRICT_IDS="--require-real-credential-ids"; else ARGS+=("$a"); fi; done
+W=${ARGS[0]:-$DEFAULT_W}
 if [ "$W" = "$DEFAULT_W" ]; then rm -rf -- "$DEFAULT_W"
 elif [ -e "$W" ] && [ -n "$(ls -A -- "$W" 2>/dev/null)" ]; then echo "REFUSED: $W exists and is not empty; this script only deletes its own default folder $DEFAULT_W"; exit 2; fi
 mkdir -p -- "$W/c/handover/demo/n8n-flows" "$W/c/handover/demo/n8n-mainframe" "$W/g" "$RAW" || exit 2
@@ -29,7 +33,7 @@ MF_REAL=1 MF_V4=1 MF_TRIES=2 MF_TMO_MS=10000 python3 build_mainframe.py "$W/g/re
 MF_V4=1 MF_TRIES=2 MF_TMO_MS=10000 python3 build_mainframe.py "$W/g/film" PG_CREDENTIAL_ID SMTP_CREDENTIAL_ID SUB_WORKFLOW_ID 45 > "$RAW/gen-film.log" 2>&1 || { echo "ABORT gen film (raw/gen-film.log)"; exit 3; }
 ( cd "$W/g" && find . -type f | sort | while read -r f; do printf '%s  %s\n' "$(sha256sum "$f" | cut -c1-16)" "$f"; done ) > "$RAW/patched-flows-list.txt"
 cd "$HERE" || exit 3
-E="--expect mf-recovery.json=10:9 --expect mf-sub-crm-mail.json=20:26 --expect-credential postgres=n8n-publish-pg --expect-credential smtp=mf-mail-smtp"
+E="--expect mf-recovery.json=10:9 --expect mf-sub-crm-mail.json=20:26 --expect-credential postgres=n8n-publish-pg --expect-credential smtp=mf-mail-smtp --expect-credential hubspotAppToken=hubspot-app-token $STRICT_IDS"
 STRICT="--require-webhook-auth --block-env-access"
 T0=$(date +%s)
 # one background process per (state, mode); each writes its own file and its own exit code file
@@ -67,4 +71,7 @@ echo "---- summary (default mode must be exit 0; strict mode shows what the owne
 for f in pristine patched pristine-strict patched-strict; do echo "[$f]"; grep -h -E '^(######## |exit=|RESULT|Known open problems)' "$RAW/$f.txt"; done
 echo "[selftest exit=$ST] $(tail -n 1 "$RAW/selftest-new.txt")"
 echo "run_all exit status: $RC"
+echo "placeholder ids: $(grep -h -c 'still placeholders' "$RAW/pristine.txt" | head -1) file(s) warn in the committed flows (pass --strict to make that a failure)"
+LW=$(grep -h '^OPEN LEAD DECISIONS:' "$RAW/pristine.txt" | sed -E 's/OPEN LEAD DECISIONS: ([0-9]+) webhook.* ([0-9]+) \$env.*/\1 \2/' | awk '{w+=$1; e+=$2} END {print w+0, e+0}')
+echo "OPEN LEAD DECISIONS: ${LW% *} webhook(s) without auth, ${LW#* } \$env node(s)"
 exit $RC
