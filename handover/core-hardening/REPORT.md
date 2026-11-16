@@ -1,4 +1,14 @@
 # REPORT from core-hardening (cloud to lead). Newest block on top, UTC and IST.
+NOT VISIBLE
+FILE-INDEX: handover/core-hardening/REPORT.md | ORDER 003 | egm skills and agents NOT VISIBLE in this session
+
+## 2026-11-16 06:14 UTC / 11:44 IST - ORDER 003 PROOF: NOT VISIBLE
+No egm:egm-* skill appears in my Skill tool and no egm:* agent in my Agent tool. This session is the same one that ran ORDER 001 and 002 (not a new session), so its lists were fixed at start, before the install. Install was NOT retried. Dry run NOT run (no egm skill to call).
+Skills I see (Skill tool): session-start-hook, dataviz, artifact-design, artifact-diagramming, artifact-capabilities, update-config, keybindings-help, code-review, simplify, fewer-permission-prompts, loop, claude-api, workflow-authoring, run, plugin-authoring, anthropic-skills:skill-creator, anthropic-skills:xlsx, anthropic-skills:pptx, anthropic-skills:pdf, anthropic-skills:docx, init, security-review, anthropic-skills:built-in-browser, anthropic-skills:chrome-browser, anthropic-skills:computer-use, anthropic-skills:deep-research, anthropic-skills:docs, anthropic-skills:google-workspace, anthropic-skills:import-memory, anthropic-skills:morning.
+Agent types I see (Agent tool): claude, claude-code-guide, Explore, general-purpose, Plan, statusline-setup.
+On disk (from ORDER 002): egm@egm v0.1.1 enabled, user scope, 7 skills and the egm agent files present, models patched.
+Needed: a NEW session (started after the install) for this order; this one cannot load the plugin without a restart. I started no work and no agents.
+
 FILE-INDEX: handover/core-hardening/REPORT.md | ORDER 002 | SETUP DONE on disk, skills not yet visible in this session
 
 ## 2026-11-16 06:13 UTC / 11:43 IST - ORDER 002 SETUP RETRY
