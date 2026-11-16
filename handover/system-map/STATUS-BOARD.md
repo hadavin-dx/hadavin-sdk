@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T15:06:42Z
-PUSHED_UTC: 2026-11-16T15:06:42Z
+UPDATED_UTC: 2026-11-16T15:14:28Z
+PUSHED_UTC: 2026-11-16T15:14:28Z (this push)
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
@@ -15,7 +15,7 @@ PROGRESS: 5 of 20 table items at 100 percent (M1, M11, M12, M13, M16); mean abou
 Terms: take = the one filmed run; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
 AGENTS_RUNNING: 8 of 8 (2026-11-16T14:52:51Z)
 CAPACITY nproc=4 load=0.17 disk: 18G free
-NEXT: hand-backs digested through 1692. Next 5 independent tasks: fix L5ac old lines 2-8; fix GLOSSARY Majors (digest 1545); fix L5b; fix v5-edits-for-M17; fix decision-list-for-lead rows.
+NEXT: hand-backs digested through 1778. Next 5 independent tasks: fix L5ac old lines 2-8; fix GLOSSARY Majors (digest 1545); fix L5b; fix v5-edits-for-M17; fix decision-list-for-lead rows.
 INTERRUPTED: none
 
 ## ITEMS
@@ -43,13 +43,10 @@ INTERRUPTED: none
 | M16 | flow-set question | DONE, closed by decision 1 (real-v5 only; film-v5 out) | 100 | flowset/REPORT.md | |
 
 ## AGENTS
-UPDATED_UTC: 2026-11-16T15:00:08Z | PUSHED_UTC: 2026-11-16T15:00:08Z
-Running (8): LEAD-NOTICE a3c86bb7fa0d1979a, M17 page ae57bc07045e5caf2, ARCHITECTURE-AUDIT-CHECKLIST aaf2bd8792ae1a479, STATUS-BOARD a49acf1ae2fee32bd, plus four launched this beat (L2 240-320, L3 200-280, L6 195-280, L4c 200-280); check ListAgents.
-Closed and digested 1647-1654: a064d4c3af2c06373, a842239f12d867423, ab3f634f30482fc6f, a7997e790086e8be3, a2d43b300998cbf9d, a020b29b20b55d68f, a456416c651f3d192, a0a9a882571df402e. Earlier 1641-1646: af1acff60f0057bd2, a736e222a8d0a61b1, a2622c1cfd350026f, a8fe85e54e9cc0de6, a4045acc4b87dc00e, ad107187f1f9952d0. Earlier 1637-1640: ab648e4ce840aa527, a474e90f25a7d7085, a936f38d048b990c5, a8eeb0ab3459f8777. Earlier 1633-1636: abd14a3aa42add6ae, a96dc65fdf92a6490, ae8e634b8aca10ceb, a0603595fe6a76adf. Earlier 1631-1632: a602134eee67160a4, a8b6a4cf908a8ee42. Earlier 1625-1630: a9736197cd289fa57, aaaccbd483fcb454b, a93921ab4f6712335, acdf230aa66f521d2, a53053c9c98bb5c86, ac42d4d03f5ceca39.
-FINDING: readers of later ranges cannot see the KEY at the top. Class fix: a REMINDER line (job keys, take, DECISION, UNVERIFIED) now sits under every section heading on all 12 pages. Not yet proven by a re-read.
-CAPACITY: 8 of 8. No missing slots.
-NEXT 5 (changed: stop only reading; fix the work/ pages with the open Blockers: t19-terms line 2, open-items-table lines 6 and 19, not-checked-r2 F2 and gating, banned-claims-clean opening, checklist glossary): claim column for L3 Findings and merged-findings L3 rows; L1 blank line 334, FD-021, FD-025; L5b status line and void findings FD-003 to 005; group note with grep patterns above 71-row tables; L1c finding sentences. Held-page items (1580, 1582, 1588) to LEAD-NOTICE.
-
+8 cold readers of agent type egm-comprehension (model sonnet), each reading one page range, none editing. Running at 2026-11-16T15:14:28Z: af6c33c2d49dd4a36 (LEAD-NOTICE-batch-1), a819d0fffd1d1b888 (open-items-table), a91ad82cf795c1223 (decision-list-for-lead), a5175f9049d1dd73f (owner-timeline-draft), a67809c6bad4aa458 (L1c 200-end), plus three launched in the same turn as this push: STATUS-BOARD, not-checked-r2, banned-claims-clean. Finished this stretch: 36 readers, digests 1733 to 1778 in work/agent-reports-batch4.md.
+Missing slots: none.
+Next 5 tasks: (1) fix lane pages: one status table per page, delete the repeated key blocks, relabel rows (class found in digests 1741-1773); (2) fix my own pages: GLOSSARY, M17, ARCHITECTURE-AUDIT-CHECKLIST, t19-terms, STATUS-BOARD; (3) fix checkable items: L2 FD-024 and line 993, L3 blank line, L1 blank line 345, merged-findings line 21 wording, L6 FD-009 and FD-011; (4) write work/OWNER-ONLY.txt when the lead answers LEAD-NOTICE item 2; (5) rerun evidence-1 and evidence-2 after that.
+Nothing about the take is verified: rehearsal and T19 have not run.
 
 ## Details (long text moved from the FAILED line)
 FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); the studio lead starts Docker and runs the rehearsal (decision 12); no take date. (3) S9-5, S9-12, S9-3, S9-2 not yet applied in v5 or the scope sheet; S9-1 and S9-4 deferred, describe-only (decision 5). (4) the take-time value substitution (BL-wp6-G1) is not built. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.
