@@ -1,7 +1,7 @@
 # External dead-man check on `tick_state.last_ok_at` (note only: no core code)
 
 **STATUS OF THE PATCH THIS NOTE DEPENDS ON (read first).** `../REVIEW.md:5` says: "A-01 is DEFERRED, the C-01 extras (the token ceiling) are CUT, the G5 wording patch is KEPT (text only)",
-and `REVIEW.md` item 3 of its list (`../REVIEW.md:67`) says C-01 is "DO NOT APPLY NOW". These are the lead's defaults of 2026-11-16; the studio head may veto them. So today
+and `REVIEW.md` item 3 of its list (`../REVIEW.md:77`) says C-01 is "DO NOT APPLY NOW". These are the lead's defaults of 2026-11-16; the studio head may veto them. So today
 `A-01.patch` is NOT applied, and **the query below ships in its four-name form (it watches four tick steps by name: `sweep`, `reconcile`, `stuck`, `checkpoint`; a tick step is one housekeeping job of the tick, see the box in `README.md`), ready to copy (but the output of this four-name form, which since the twelfth pass also prints the `OK` line and tests for `CLOCK AHEAD`, has never been seen: see "STATUS OF THE TESTS", part 2)**. The fifth name `audit_reconcile` (the tick step that the patch A-01 adds; A-01 makes the tick drain the audit outbox, the holding table of audit events that could not be written at once) exists only after A-01 is applied; it is one separate line to
 add after A-01 (see "Which names to check"). Words (tick, step, outbox, audit kind, reconcile, studio head, lead, database administrator, migrations login, scheduler operator, live): see the box in `README.md` of this folder.
 All line cites are at commit `b4cce5b`, unless marked "newest commit" (`80e9b09a7`; `README.md` says which). This folder is for a copy, never the live code; this note adds no core code.
