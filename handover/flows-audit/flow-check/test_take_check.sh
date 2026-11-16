@@ -895,7 +895,7 @@ done
 # F11: each environment hazard is named and is exit 4
 for v in BASH_ENV ENV LD_PRELOAD LD_LIBRARY_PATH LD_AUDIT PYTHONHOME PYTHONPATH PYTHONSTARTUP; do
   tk "f11-$v" TAKE_CHECK_TEST=1 TAKE_CHECK_WARN_PIN="$LEADPIN" "$v=$S/no-such-$v" -- --flows "$P"
-  [ "$RC" = 4 ] && has "f11-$v" "ENVIRONMENT HAZARDS:" && grep -q "variable $v;" "$S/f11-$v.txt" && ! has "f11-$v" "no-such-$v"; ok $? "F11: $v set is exit 4, named as a hazard, its value is not printed (got exit $RC)"
+  [ "$RC" = 4 ] && has "f11-$v" "ENVIRONMENT HAZARDS:" && grep -q "variable $v;" "$S/f11-$v.txt" && ! grep -v "^ERROR: ld.so: " "$S/f11-$v.txt" | grep -q -F "no-such-$v"; ok $? "F11: $v set is exit 4, named as a hazard, its value is not printed by this script (the dynamic loader itself may print a LD_ value in its own ERROR: ld.so line; those lines are not ours) (got exit $RC)"
 done
 # F5: a *.json created in the original folder while the checker runs (and a removed file) is caught at the end (exit 4)
 cp -r -- "$P" "$S/f5"; cat > "$S/f5.py" <<PYEOF
@@ -958,12 +958,12 @@ for fn in mf-recovery.json mf-sub-crm-mail.json; do
 import copy, json, sys
 p = sys.argv[1]
 j = json.load(open(p, encoding="utf-8"))
-n = copy.deepcopy(next(x for x in j["nodes"] if x["type"] == "n8n-nodes-base.set"))
+n = copy.deepcopy(j["nodes"][-1])
 n["name"] = "ExtraStep"; n["id"] = "f10-extra-id"; n["position"] = [10, 10]
 j["nodes"].append(n)
 json.dump(j, open(p, "w", encoding="utf-8"))
 PYEOF
-  mrun "$nm" "$S/$nm"; [ "$RC" != 0 ] && [ "$RC" != 5 ] && grep -q -E "node count" "$S/$nm.txt"; ok $? "F10: the take holds the expected node count of $fn (one extra step is not a pass) (got exit $RC)"
+  mrun "$nm" "$S/$nm"; [ "$RC" != 0 ] && [ "$RC" != 5 ] && grep -q -E "node count [0-9]+ != expected" "$S/$nm.txt"; ok $? "F10: the take holds the expected node count of $fn (one extra step is not a pass) (got exit $RC)"
 done
 cp -r -- "$P" "$S/f10c"; pyedit "$S/f10c/mf-sub-crm-mail.json" <<'PYEOF'
 import json, sys
