@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# v20: private throwaway cluster, scram-sha-256 only, unix socket only. Usage: bash run_pg_v20.sh <out_dir> <python> <src_dir> <script.py> <outfile> [held-v20] [held-v16]
+# v21: private throwaway cluster, scram-sha-256 only, unix socket only. Usage: bash run_pg_v21.sh <out_dir> <python> <src_dir> <script.py> <outfile> [held-v21] [held-v16]
 set -u
 OUT="${1:?out}"; PY="${2:?python}"; SRC="${3:?src}"; SCRIPT="${4:?script}"; OUTF="${5:?outfile}"
 HERE="$(cd "$(dirname "$0")" && pwd)"; H18="${6:-$HERE/held-sql}"; H16="${7:-$HERE/../evidence-handoff-v16/held-sql}"
-PGB=/usr/lib/postgresql/16/bin; D=/var/lib/postgresql/hadavin_v20_$$
+PGB=/usr/lib/postgresql/16/bin; D=/var/lib/postgresql/hadavin_v21_$$
 export HV_ADMIN_PW="$(head -c 24 /dev/urandom | od -An -tx1 | tr -d ' \n')"
 PWF="$(mktemp)"; chmod 644 "$PWF"; printf '%s' "$HV_ADMIN_PW" > "$PWF"
 runuser -u postgres -- bash -c "rm -rf $D && $PGB/initdb -D $D -U postgres -A scram-sha-256 --pwfile=$PWF -E UTF8 >/dev/null 2>&1 && $PGB/pg_ctl -D $D -o \"-c listen_addresses='' -c unix_socket_directories=$D -c fsync=off\" -l $D/log -w start >/dev/null" || { rm -f "$PWF"; echo "cluster did not start"; exit 1; }

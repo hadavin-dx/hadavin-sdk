@@ -303,6 +303,7 @@ def _call_problems(toks, fn, ddl=False, ok=None):
         if toks[k + 1] != ("punct", "(") or tk[0] not in ("word", "qid"): continue
         if tk[0] == "qid": out.append(f"{fn} body calls a quoted name {tk[1]}"); continue
         if _syntax_paren(toks, k): continue
+        if k and _is(toks[k - 1], "AS"): continue   # v21: `FROM t AS d (a, b)` is an alias with a column list, and `AS type(n)` a type modifier, not a call
         # v20 M1: `%I.name (` is a relation with a column list ONLY right after INTO (v19 skipped it everywhere, which hid EXECUTE format('SELECT %I.evil_fn($1)', ...))
         if k >= 3 and toks[k - 1] == ("punct", ".") and toks[k - 2] == ("word", "I") and toks[k - 3] == ("punct", "%"):
             if k >= 4 and _is(toks[k - 4], "INTO"): continue

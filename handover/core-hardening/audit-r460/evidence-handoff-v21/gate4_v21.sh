@@ -1,7 +1,7 @@
 #!/bin/sh
-# gate4.sh v20 copy (differs from the v18 copy only in the output folder and the last step, which calls compare_gate4.py; NOT run in v20).
+# gate4.sh v21 copy (differs from the v18 copy only in the output folder and the last step, which calls compare_gate4.py; NOT run in v21).
 # usage: sh gate4.sh <prefix>      (start it from any folder; it finds the repository root itself)
-# Repository root = four folders above this script's own folder (evidence-handoff-v20 -> audit-r460 -> core-hardening -> handover -> root).
+# Repository root = four folders above this script's own folder (evidence-handoff-v21 -> audit-r460 -> core-hardening -> handover -> root).
 # Outputs go into THIS script's folder (the evidence folder) as <prefix>-<name>.txt; each file ends with its own rc=<exit code>.
 # The gate is each command's own exit code, never a pipe. Nothing here changes a source file. The timing step runs alone, last but one.
 #
@@ -15,7 +15,7 @@
 set -u
 here=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd) || exit 2
 root=$(CDPATH= cd -- "$here/../../../.." && pwd) || exit 2
-[ $# -eq 1 ] || { echo "usage: sh gate4_v20.sh <prefix>" >&2; exit 2; }
+[ $# -eq 1 ] || { echo "usage: sh gate4_v21.sh <prefix>" >&2; exit 2; }
 p="$here/$1"
 cd "$root" || exit 2
 uv run --all-extras --group test ruff check src tests demos > "$p-ruff.txt" 2>&1; echo "rc=$?" >> "$p-ruff.txt"
