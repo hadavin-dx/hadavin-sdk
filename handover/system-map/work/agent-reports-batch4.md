@@ -1022,3 +1022,7 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 739 PLAN-002 r17: L5c missing, launch gate. FIXED by CURRENT RULINGS r17.
 - 740 critical-path r18: A4 owner wrong. FIXED by CURRENT ANSWER r19.
 - 741 not-checked r10: not self-contained. FIXED by CURRENT r11; fill script owner still unassigned.
+
+- 742 BRIEF-LANE r11: line 42 conflict. FIXED by BINDING r12.
+- 743 rehearsal-limits r7: message not assemblable. Recorded in CURRENT r7; 'passed' rule NOT SET.
+- 744 owner-timeline r10: wait rule contradiction. FIXED by CURRENT r11; cells not ready.
