@@ -340,7 +340,9 @@ MAIL_SHAPE = re.compile(
     r"[^@\s,;]+@[^@\s,;]+\.[A-Za-z]{2,}"
 )  # one plain e-mail address; the shape only, a filled-in wrong address still passes
 PH_WORD = re.compile("|".join(re.escape(x) for x in PLACEHOLDERS))
-PH_TOKEN = re.compile(r"[A-Za-z0-9_]*(?:" + "|".join(re.escape(x) for x in PLACEHOLDERS) + r")[A-Za-z0-9_]*")
+PH_TOKEN = re.compile(
+    r"[A-Za-z0-9_]*(?:" + "|".join(re.escape(x) for x in PLACEHOLDERS) + r")[A-Za-z0-9_]*"
+)
 PH_LABEL = re.compile(r"[A-Z]+(?:_[A-Z]+)*")
 
 
@@ -349,7 +351,9 @@ def ph_labels(text):
     out = []
     for m in PH_TOKEN.finditer(text):
         tok = m.group(0)
-        out.append(tok if len(tok) <= 40 and PH_LABEL.fullmatch(tok) else PH_WORD.search(tok).group(0))
+        out.append(
+            tok if len(tok) <= 40 and PH_LABEL.fullmatch(tok) else PH_WORD.search(tok).group(0)
+        )
     return out
 
 
@@ -392,7 +396,9 @@ def parse_ddl(text):
 def sql_use(query):
     """(tables, words) used by one query text: words = names that are neither SQL words, functions, parameters nor text values."""
     q = re.sub(r"\{\{.*?\}\}", " ", query.lstrip("="), flags=re.DOTALL)
-    q = re.sub(r"\$([A-Za-z_]*)\$.*?\$\1\$", " ", q, flags=re.DOTALL)  # f8-r11 (M4): dollar-quoted text ($$...$$, $tag$...$tag$) is a text value, like '...'
+    q = re.sub(
+        r"\$([A-Za-z_]*)\$.*?\$\1\$", " ", q, flags=re.DOTALL
+    )  # f8-r11 (M4): dollar-quoted text ($$...$$, $tag$...$tag$) is a text value, like '...'
     q = re.sub(r"'(?:[^']|'')*'", " ", q)
     q = re.sub(r"--[^\n]*", " ", q)
     q = re.sub(r"\$\d+|::\s*[A-Za-z_][A-Za-z0-9_]*", " ", q)
@@ -470,7 +476,16 @@ def fold_name(name):
 def mixes_alphabets(name):
     """True when one word holds letters of two alphabets (the first word of each letter's Unicode name: LATIN, CYRILLIC, GREEK, ...)."""
     for w in re.findall(r"[^\W\d_]+", unicodedata.normalize("NFKD", name)):
-        if len({unicodedata.name(c, "?").split()[0] for c in w if unicodedata.category(c)[0] == "L"}) > 1:
+        if (
+            len(
+                {
+                    unicodedata.name(c, "?").split()[0]
+                    for c in w
+                    if unicodedata.category(c)[0] == "L"
+                }
+            )
+            > 1
+        ):
             return True
     return False
 
@@ -654,7 +669,17 @@ EXPR_BLOCK = re.compile(r"\{\{(.*?)\}\}", re.DOTALL)
 OK_WORDS = {"bearer", "basic", "token"}
 
 
-SECRET_LAST_WORDS = ("pass", "pwd", "passwd", "password", "passphrase", "secret", "token", "apikey", "key")
+SECRET_LAST_WORDS = (
+    "pass",
+    "pwd",
+    "passwd",
+    "password",
+    "passphrase",
+    "secret",
+    "token",
+    "apikey",
+    "key",
+)
 
 
 def key_is_secretish(k):
@@ -662,7 +687,10 @@ def key_is_secretish(k):
     if kk == "pass" or kk.endswith(SECRET_KEY_ENDS):
         return True
     # f8-r11 (M3): the LAST WORD of a camelCase / snake_case key (smtpPass, db_pass, userPwd) names a secret; 'bypass' or 'compass' is one word and stays clean
-    words = re.findall(r"[A-Z]+(?![a-z])|[A-Z]?[a-z]+|\d+", re.sub(r"[-_\s]+", " ", str(k)).replace(" ", "_").replace("_", " "))
+    words = re.findall(
+        r"[A-Z]+(?![a-z])|[A-Z]?[a-z]+|\d+",
+        re.sub(r"[-_\s]+", " ", str(k)).replace(" ", "_").replace("_", " "),
+    )
     return len(words) > 1 and words[-1].lower() in SECRET_LAST_WORDS[:-1]
 
 
@@ -708,7 +736,9 @@ def secret_scan(n, tag):
         for label, rx in SECRET_RX:
             if rx.search(s2):
                 hits.append(label)
-    for k, v, _p in kv_items(n):  # f8-r11 (F3): the credentials block is scanned too (a secret written beside the credential id and name)
+    for k, v, _p in kv_items(
+        n
+    ):  # f8-r11 (F3): the credentials block is scanned too (a secret written beside the credential id and name)
         if (
             key_is_secretish(k)
             and len(v) >= SECRET_MIN_LEN
@@ -879,8 +909,13 @@ def extra_checks(d, tag, nodes, adj, trig, sticky):
     if near:
         fail(tag, f"names that differ only by case, spaces, accents or width {near}")
     for n in nodes:
-        if mixes_alphabets(n["name"]):  # f8-r11 (M5): a node name with Latin and Cyrillic/Greek/Armenian letters in ONE word looks like another name
-            fail(tag, f"node name {n['name']!r} mixes letters of two alphabets in one word (a look-alike of another name)")
+        if mixes_alphabets(
+            n["name"]
+        ):  # f8-r11 (M5): a node name with Latin and Cyrillic/Greek/Armenian letters in ONE word looks like another name
+            fail(
+                tag,
+                f"node name {n['name']!r} mixes letters of two alphabets in one word (a look-alike of another name)",
+            )
     # per node settings
     noretry, silent, phs, pph = [], [], [], []
     for n in real:
@@ -984,7 +1019,11 @@ def extra_checks(d, tag, nodes, adj, trig, sticky):
         for k, v in (cr or {}).items():
             idv = str((v or {}).get("id") or "") if isinstance(v, dict) else ""
             if idv and any(p in idv for p in PLACEHOLDERS):
-                phw = ph_labels(idv)[0]  # f8-r11 (M4): a plain label or the placeholder word only, never the rest of the id
+                phw = ph_labels(
+                    idv
+                )[
+                    0
+                ]  # f8-r11 (M4): a plain label or the placeholder word only, never the rest of the id
                 phs.append(f"{nm} credential {k} id {phw}")
                 CRED_PH.append(f"{tag} node {nm} credential {k} id: {phw}")
         wf = (
@@ -1006,7 +1045,9 @@ def extra_checks(d, tag, nodes, adj, trig, sticky):
                         for w_ in ph_labels(s_):
                             PARAM_PH.append(f"{tag} node {nm} setting {k_!r}: {w_}")
                             pph.append(f"{nm} {k_}: {w_}")
-            for k_, v_ in mail_fields(prm_):  # f8-r11 (M5): at any depth (parameters.options.ccEmail, replyTo, ...), not only the top level
+            for k_, v_ in mail_fields(
+                prm_
+            ):  # f8-r11 (M5): at any depth (parameters.options.ccEmail, replyTo, ...), not only the top level
                 if (
                     not v_.startswith("=")
                     and not MAIL_SHAPE.fullmatch(v_.strip())

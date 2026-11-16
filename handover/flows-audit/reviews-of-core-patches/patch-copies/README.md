@@ -12,13 +12,13 @@ studio head; he may veto them. So today: **apply nothing from this folder**, and
   and row 6 needs a per-row guard in the chain drain for which no patch file exists. The file is kept only as a ready copy.
 - **G5 wording:** text only, no patch file (section "G5 wording drop").
 
-Date of this text: 2026-11-16, sixth fixer pass. Nothing that needs a database was run (no database was started). In this pass the verdict script was tested on made-up log files (three cases), and the lint, name and `git apply --check` lines were re-run (see `../fix-patchcopies1.md` for the first database run and `handover/flows-audit/reviews/fix-patchcopies6.md` for this pass). The full test runs quoted below are from the fifth pass and were NOT repeated in the sixth.
+Date of this text: 2026-11-16, seventh fixer pass. Nothing that needs a database was run (no database was started). In this pass the verdict script was tested on made-up log files (ten cases), the lint and bandit commands were re-run in the form of the recipe on one unpatched extract, and the name, secret and `git apply --check` lines were re-run (see `../fix-patchcopies1.md` for the first database run and `handover/flows-audit/reviews/fix-patchcopies7.md` for this pass). The full test runs quoted below are from the fifth pass and were NOT repeated in the sixth or the seventh.
 
 ## Words used here (plain meanings; each word keeps this one meaning in this folder)
 | Word | Meaning here |
 |---|---|
 | tick | the small program a scheduler starts every 30 to 60 seconds; it runs the housekeeping jobs listed under "step" and then exits |
-| step | one housekeeping job inside a tick (`sweep`, `reconcile`, `stuck`, `checkpoint`, ...). A step records "ok" or "failed" in the table `tick_state`. Not "a step of this recipe": those are called "recipe step" |
+| step | one housekeeping job inside a tick (`sweep`, `reconcile`, `stuck`, `checkpoint`, ...). A step records "ok" or "failed" in the table `tick_state`. In this folder "step" always means this tick job; a piece of the recipe or of a procedure is never called a step, it is called a "part" ("part of the recipe", "password procedure") |
 | kind | one pluggable part of the core (for example the audit kind, the llm kind), chosen by name in the config. Every kind has a default and at least one alternative |
 | audit kind | the kind that writes the tamper-evident audit trail; two exist at `b4cce5b`: `chain` (in the database) and `local_dir` (files in a folder) |
 | outbox | a holding table (`audit_outbox`) or folder where an audit event waits when it could not be written at once; "draining" it means writing the waiting events for real |
@@ -26,19 +26,21 @@ Date of this text: 2026-11-16, sixth fixer pass. Nothing that needs a database w
 | studio head, database administrator, migrations login, scheduler operator | "the studio head" = the person who owns the studio and decides. "the migrations login" = the database login that owns the tables and runs the migrations (`store/migrate.py`); it is the "table-owning login". "the database administrator" = the named human (the studio head names him or her, decision D3) who is allowed to sign in with the logins the dead-man statements need; which login each statement needs is in `DEAD-MAN-CHECK.md`, section "Which login runs each statement". "the scheduler operator" = the named person who runs the scheduler job that executes the dead-man check (decision D6; for a client build, the client's operations person). This folder never uses the bare words "owner" or "database owner" for a person or a login |
 | studio head vs lead | the studio head is a person (called "the owner" in older studio notes). The lead is the AI session that directs the other sessions and runs the reviews; the lead is not a person |
 | builder vs fixer | a builder is a session that builds a change; a fixer is a session that corrects an earlier piece of work after a review. Both open pull requests and never merge |
-| gate, check, guard test, verdict | "gate" = a command the repository requires to succeed before a change goes in; locally these are four: `ruff check`, `ruff format --check`, `pytest` and `bandit -ll` (the pull-request checks CodeQL, SonarCloud and CodeRabbit run on GitHub, cannot be run here and are NOT part of any local verdict). "check" = any command or reading whose result is reported. "guard test" = a test in `tests/test_repo_rules.py`, `tests/test_no_reference_material.py` or `tests/test_lockin_guard.py` (the repository rules; listed by name under "Pass rule"). "verdict" = exactly one of three names defined under "Pass rule": PASSED, ADDS NO NEW FAILURE, NOT PASSED |
-| `b4cce5b` and "newest commit" | `b4cce5b` = the commit `b4cce5b6ae80b45125604b8295ebb35bd2ea1c2c`, the one the patches were built on; "newest commit" = the newest commit of this working copy (branch `cloud/flows-audit`): `5b5b8933a` when the fifth pass ran. Earlier text said `f05790e42`; `src/` and `tests/` are identical in the two, so every result for the newest commit below holds for both. Every file and line cite below says "at `b4cce5b`" or "at the newest commit". The word "newest commit" is used only in "studio head" |
+| gate, check, guard test, verdict | "gate" = a command the repository requires to succeed before a change goes in; locally these are four: `ruff check`, `ruff format --check`, `pytest` and `bandit -ll` (the pull-request checks CodeQL, SonarCloud and CodeRabbit run on GitHub, cannot be run here and are NOT part of any local verdict); "the repository gate" = those four commands all succeeding with every test green. The "outbound gate" of `approvals/gate.py` is a different thing (a filter on outgoing text); this folder calls it "the outbound filter" and keeps the word "gate" for it only inside quotes of that file's own text. "check" = any command or reading whose result is reported; in names it also means: "price check" = the rule of C-01 that refuses a route price of 0 or below when the config loads; "dead-man check" = the query of `DEAD-MAN-CHECK.md`; `--check` = the flag of `git apply` and `ruff format` that tests without changing anything. "guard test" = a test in `tests/test_repo_rules.py`, `tests/test_no_reference_material.py` or `tests/test_lockin_guard.py` (the repository rules; listed by name under "Pass rule"). "verdict" = exactly one of three names defined under "Pass rule": PASSED, ADDS NO NEW FAILURE, NOT PASSED |
+| `b4cce5b` and "newest commit" | `b4cce5b` = the commit `b4cce5b6ae80b45125604b8295ebb35bd2ea1c2c`, the one the patches were built on; "newest commit" = the newest commit of this working copy (branch `cloud/flows-audit`): `5b5b8933a` when the fifth pass ran. Earlier text said `f05790e42`; `src/` and `tests/` are identical in the two, so every result for the newest commit below holds for both. Every file and line cite below says "at `b4cce5b`" or "at the newest commit". The bare word "head" never names a commit in this folder: "studio head" is the person (rows below), and a commit is written `b4cce5b` or "newest commit" |
 | unpatched copy / patched copy | a fresh clone checked out at `b4cce5b` with nothing applied / the same with `C-01-price-only.patch` (or `C-01.patch`) then `A-01.patch` applied |
-| G5, G2, G3, G4 | rules of an older outbound text gate: G3 = remove untrusted text, G4 = withhold commands, G5 = block leaked secrets, G2 = flag unverifiable claims. Only G3 and G4 exist in the code |
+| G5, G2, G3, G4 | rules of an older outbound text filter (`approvals/gate.py`): G3 = remove untrusted text, G4 = withhold commands, G5 = block leaked secrets, G2 = flag unverifiable claims. Only G3 and G4 exist in the code |
 | RUNG, CODE-LAST | the ladder from "use something that already exists" to "write our own code" (`handover/BRIEF-PREAMBLE.md` rule 20): our own code is the last resort |
 | I, my, the assistant | the fixer session (an assistant run, not a person) that last edited this file. Older text said "I" without saying who |
 | `../REVIEW.md` and its row ids (C-3, C-4, C-6, C-8, A-1, A-3, A-6, A-8, G-1, X-2, X-5, X-6, D-3) | the review file one folder up (`handover/flows-audit/reviews-of-core-patches/REVIEW.md`); the ids are rows of its findings table: find a row by its id, or an item by its number in the plain summary at the top |
 | "Decision 18, 19, 23" | numbered questions the studio head is asked in item 11 of `../REVIEW.md` (the blocks are near its line 384 to 390); here only: 18 = where the price check lives, 19 = the stand-in price of a self-hosted model, 23 = two questions about the G5 patch: 23a may a cleaned copy of the G5 patch (with the personal repository handle removed from its context lines) be kept in the repository, 23b rewrite the branch history that already contains that handle, or accept it in writing. This folder keeps no G5 patch file, so it follows 23a "no" until the studio head answers |
+| the three numbering schemes | three separate numbered lists are quoted in this folder, and every number is written with the name of its list: (1) "row 1" to "row 9" = the rows of the decision table in this file; (2) "Decision 18", "19", "21", "23" = the numbered questions of `../REVIEW.md` item 11 (row 2 of the table = Decision 18, row 4 = Decision 19, row 7 = Decision 23a; Decision 21, the rotation of the login secrets, is cited only in `DEAD-MAN-CHECK.md`); (3) "D1" to "D6" = the decision and task rows of `DEAD-MAN-CHECK.md` (D1 = table row 1; D2, D3, D4 and D6 = table row 8; D5 appears only in that file). A fourth kind of label, the review row ids (C-3, A-6, ...), is explained in the row above |
+| copy | three things, always named in full: a "patch copy" = one of the files kept in this folder (this is what "a COPY, never the live code" in the first lines means); the "unpatched copy" and the "patched copy" = the two clones in the temporary folder (row above); "copied" in the proof section = the shell command `cp` |
 | ORDER 012 | `handover/flows-audit/ORDERS.md`, section "ORDER 012": the lead's order that asked for these copies. ORDER 009 is cited in the G5 section; its text is not in this checkout (searched `handover/`), so what is said about it there is UNVERIFIED |
 | `system-map` Decision B | the "Decision B" of the system-map review folder `handover/flows-audit/reviews-of-system-map/`; its text was not found there. Here it means only: who picks, and pays for, a second alert channel (row D4 of `DEAD-MAN-CHECK.md`) |
 | BRIEF-PREAMBLE rules 9 and 20 | numbered rules in `handover/BRIEF-PREAMBLE.md`: 9 = cloud sessions open pull requests and never merge, 20 = code last |
 | dead-man check | a query run by something outside the tick that alarms when the tick has stopped; see `DEAD-MAN-CHECK.md` |
-| live | used in this folder in exactly one sense, "real, as opposed to a copy, a recording or a fake": (1) the pytest marker `live` (always in code font) = tests that call a real model; they are left out of every run here; (2) "the live code" = the code the repository really runs, as opposed to the copies in this folder. Nothing else is called "live" here: a real paid model is called a "paid model", and the stages in which the system works for real are called "real-use stages" |
+| live | used in this folder in exactly one sense, "real, as opposed to a copy, a recording or a fake": (1) the pytest marker `live` (always in code font) = tests that call a real model; they are left out of every run here; (2) "the live code" = the code the repository really runs, as opposed to the copies in this folder. Nothing else is called "live" here: a real paid model is called a "paid model", and the stages in which the system works for real are called "real-use stages". One exception that cannot be edited here: the patch files are copies and may not be changed, and their names use "live" for "paid model": the constant `LIVE_LLM`, the test names `test_a_zero_or_negative_price_is_refused_for_a_live_model` and `test_a_priced_live_route_still_loads`, and the test id `live` (in `C-01.patch`). Read those as "paid model" |
 | paid model, real-use stage | "paid model" = any llm kind other than `fake` (the recorded fake never spends). "real-use stage" = any environment stage except the one that allows demo-only kinds (`dev` at `b4cce5b`, `demo` at the newest commit); the kind `fake` is refused in a real-use stage |
 
 ## Decisions that are not mine to make (ONE table; each row says who decides and whether it stops a merge)
@@ -54,8 +56,8 @@ Date of this text: 2026-11-16, sixth fixer pass. Nothing that needs a database w
 | 8 | Dead-man check: D2 the limit in seconds, D3 who is the database administrator, D4 the second alert channel, D6 who is the scheduler operator. Written defaults are in `DEAD-MAN-CHECK.md` (AUDIT PROPOSAL, lead to confirm) | studio head names the persons; see `DEAD-MAN-CHECK.md` | no (a note, no core code) | the written proposals in `DEAD-MAN-CHECK.md` (marked AUDIT PROPOSAL, lead to confirm); nothing is set up until the studio head says yes |
 | 9 | Two baseline failures caused by files under `handover/`: (1) THREE offending files in the vendor-name test (a banned vendor name in two studio notes, and one file that is not text, so the test cannot scan it); (2) non-proprietary licence files in copies of seven other projects (see the two baseline failures under the gate recipe) | the lead fixes them in a separate change; I may not edit them | yes: the repository gate needs every guard test green | the gate stays red at `b4cce5b` |
 
-## Who runs each step
-| Step | Who | What they hold |
+## Who runs each part of the recipe
+| Part of the recipe | Who | What they hold |
 |---|---|---|
 | Clone, apply, run the gates (recipe below) | any person or session; it writes only into a new temporary folder | no credential, no cloud setting (the commands run with `env -i`) |
 | Open the pull request with a patch | a builder session | no approver credential, no executor credential; opens the pull request and never merges (`CLAUDE.md`: cloud sessions never merge) |
@@ -109,35 +111,36 @@ and 32 with `C-01.patch`. (`git apply` writes the files; nothing is committed. A
 `HTTPS_PROXY="$HTTPS_PROXY"` after `env -i` if the network needs a proxy.)
 
 ### The four gate commands (run in the same terminal, so `$W` and `$C` are still set; `ruff check`, `ruff format --check` and `bandit` here, `pytest` in the next section)
+The lines follow the CI file at `b4cce5b` (`ci.yml:77-81` for ruff, `:113` and `:119` for bandit): the `uv` option `--locked` as in CI; the folders `src tests demos` for ruff (CI at the newest commit adds `tools`, a folder that does not exist at `b4cce5b`); and bandit from the dependency group `scan` (CI: `uv sync --only-group scan`), because bandit is pinned only in the group `scan` (`pyproject.toml:54`) and the group `test` does not contain it. CI also passes `--no-build` to `uv sync`; it is left out here on purpose: `uv run --no-build` stopped with "can't be installed because it is marked as `--no-build`" for the project itself (seen in the seventh pass, uv 0.11.32).
 Gate on the exit code of the command itself, never on a `| tail` pipe. `E` runs a command with no cloud settings in the environment, as `.claude/rules/verify-tests-and-evals.md` asks. Each line stores the command's own exit code in `rc` and appends it to `$W/gates.txt`. The folders are `$W/unpatched` (a clone at `b4cce5b`, nothing applied) and `$W/patched` (the same with the patches applied).
 ```
 E() { env -i PATH="$PATH" HOME="$HOME" "$@"; }   # add HTTPS_PROXY="$HTTPS_PROXY" after HOME="$HOME" if the network needs a proxy; add UV_OFFLINE=1 there if there is no network and the uv cache is warm
 : > "$W/gates.txt"
 for t in unpatched patched; do
   cd "$W/$t" || break
-  E uv run --all-extras --group test ruff check;                  rc=$?; echo "$t ruff-check $rc" >> "$W/gates.txt"
-  E uv run --all-extras --group test ruff format --check;         rc=$?; echo "$t ruff-format-check $rc" >> "$W/gates.txt"
-  E uv run --all-extras --group test bandit -q -r src demos -ll;  rc=$?; echo "$t bandit $rc" >> "$W/gates.txt"
+  E uv run --locked --all-extras --group test ruff check src tests demos;          rc=$?; echo "$t ruff-check $rc" >> "$W/gates.txt"
+  E uv run --locked --all-extras --group test ruff format --check src tests demos; rc=$?; echo "$t ruff-format-check $rc" >> "$W/gates.txt"
+  E uv run --locked --only-group scan bandit -q -r src demos -ll;                  rc=$?; echo "$t bandit $rc" >> "$W/gates.txt"
 done
 cat "$W/gates.txt"      # six lines (three per folder); expected: the last number of every line is 0
 ```
 Expected exit codes (ONE table; the `pytest` row is run by the next section):
-| Command (all start with `E uv run --all-extras --group test`) | unpatched copy (`$W/unpatched`) | patched copy (`$W/patched`) |
+| Command (the exact lines are in the block above; `E` is the function defined there) | unpatched copy (`$W/unpatched`) | patched copy (`$W/patched`) |
 |---|---|---|
-| `ruff check` | 0 | 0 |
-| `ruff format --check` | 0 | 0 |
-| `bandit -q -r src demos -ll` (the form of `ci.yml:119` at `b4cce5b`; the form at the newest commit adds `tools`, a folder that does not exist at `b4cce5b`; bandit prints one `nosec` warning, which is not a failure) | 0 | 0 |
-| `pytest -q -p no:cacheprovider -m "not live and not perf" -rf` (the full run, below) | **1** while the two baseline failures exist, 0 after they are fixed | **1** while the two baseline failures exist, 0 after they are fixed |
+| `ruff check src tests demos` | 0 | 0 |
+| `ruff format --check src tests demos` | 0 | 0 |
+| `bandit -q -r src demos -ll` run from the group `scan` (the form of `ci.yml:119` at `b4cce5b`; the form at the newest commit adds `tools`, a folder that does not exist at `b4cce5b`; bandit prints one `nosec` warning, which is not a failure) | 0 | 0 |
+| `pytest -q -p no:cacheprovider -m "not live and not perf" -rfE` (the full run, below) | **1** while the two baseline failures exist, 0 after they are fixed | **1** while the two baseline failures exist, 0 after they are fixed |
 | `pytest` on the two new test files copied onto the unpatched copy (proof section) | 1 (the new tests fail on old code) | not run |
 
 ### Baseline, then the patched run (the full test run), then the verdict script
 The markers `live` (tests that call a real model) and `perf` come from `pyproject.toml`; CI leaves them out of the main run (`ci.yml:88` at `b4cce5b`, `:92` at the newest commit) and runs `perf` in its own step
 (`:94`, newest commit `:100`), which is not part of this recipe.
 ```
-run() {  # $1 = folder, $2 = tag; writes $W/$2.log, $W/$2.rc (the exit code of pytest) and $W/$2-failed.txt
-  ( cd "$1" && env -i PATH="$PATH" HOME="$HOME" uv run --all-extras --group test pytest -q -p no:cacheprovider -m "not live and not perf" -rf > "$W/$2.log" 2>&1; echo $? > "$W/$2.rc" )
+run() {  # $1 = folder, $2 = tag; writes $W/$2.log, $W/$2.rc (the exit code of pytest) and $W/$2-failed.txt (one line per FAILED or ERROR test; -rfE makes pytest print both kinds)
+  ( cd "$1" && env -i PATH="$PATH" HOME="$HOME" uv run --locked --all-extras --group test pytest -q -p no:cacheprovider -m "not live and not perf" -rfE > "$W/$2.log" 2>&1; echo $? > "$W/$2.rc" )
   echo "$2 exit=$(cat "$W/$2.rc")"; tail -n 1 "$W/$2.log"
-  grep '^FAILED' "$W/$2.log" | sed 's/ - .*//' | sort > "$W/$2-failed.txt"
+  grep -E '^(FAILED|ERROR) ' "$W/$2.log" | sed 's/ - .*//' | sort > "$W/$2-failed.txt"
 }
 run "$W/unpatched" baseline        # 1. the baseline FIRST, on the unpatched copy; exit 1 is expected while the two baseline failures below exist
 run "$W/patched"   patched         # 2. the patched copy
@@ -222,7 +225,7 @@ The passing controls: the priced paid-model route and the fake model still load,
 upgrade may need that one word changed). Those 16 pin today's behaviour and cannot fail on old code.
 
 ### Results of the fifth pass (2026-11-16): what was seen
-Seen in this pass in folders made from fresh `git archive b4cce5b` extracts, each turned into a git repository with one commit, patches applied, then `git add -A` (not a clone; `uv run --offline`, warm cache, `env -i`; Python and pydantic as in `uv.lock`). The clone-and-apply steps of the recipe were also run literally on a clone of the local checkout: both `git apply --check` exit 0, `apply exit=0`, and `git ls-files` then lists both new test files.
+Seen in this pass in folders made from fresh `git archive b4cce5b` extracts, each turned into a git repository with one commit, patches applied, then `git add -A` (not a clone; `uv run --offline`, warm cache, `env -i`; Python and pydantic as in `uv.lock`). The clone-and-apply parts of the recipe were also run literally on a clone of the local checkout: both `git apply --check` exit 0, `apply exit=0`, and `git ls-files` then lists both new test files.
 - `git apply --check` on a fresh `b4cce5b` archive: `C-01.patch` rc 0, `C-01-price-only.patch` rc 0, `A-01.patch` rc 0. At the newest commit (`5b5b8933a`): `C-01.patch` rc 1, `C-01-price-only.patch` rc 1, `A-01.patch` rc 0.
 - Baseline (unpatched), full run: `2 failed, 9364 passed, 454 skipped, 26 deselected in 286.64s`, exit 1. Patched with `C-01-price-only.patch` then `A-01.patch`: `2 failed, 9394 passed, 454 skipped, 26 deselected in 286.29s`, exit 1 (9394 = 9364 + 30). Patched with `C-01.patch` then `A-01.patch`: `2 failed, 9396 passed, 454 skipped, 26 deselected in 233.17s`, exit 1 (9396 = 9364 + 32). In all three, the failed tests are the same two guard tests; (a) the `diff` is empty; (d1) `Left contains 10 more items` in all three logs; (d2) the same three offending files in all three logs.
   Verdict by the pass rule for both patched runs: **ADDS NO NEW FAILURE** (the repository gate stays red because of the two baseline failures).
@@ -325,5 +328,5 @@ Risk: sentences 2-4 touch a docstring that `REVIEW.md` row G-1 said might unders
 ## Not checked
 No call to a real model and no network call to a model. No database was started (standing order of this review). `K1bAudit` was not changed. The patches were not rebuilt for commits after
 `b4cce5b` (`C-01.patch` and `C-01-price-only.patch` do not apply at the newest commit; `A-01.patch` applies at the newest commit but its tests were not run there). The `perf` tests were not run. A run with an EMPTY `uv` cache was not made (the runs used a warm cache, offline).
-The full test runs were made in single-commit repositories built from `git archive`, not in clones (the clone and apply steps were run separately). `ruff` and `bandit` were not run on a copy patched with `C-01.patch`.
+The full test runs were made in single-commit repositories built from `git archive`, not in clones (the clone and apply parts were run separately). `ruff` and `bandit` were not run on a copy patched with `C-01.patch`.
 `../REVIEW.md` is not edited by this pass (another session edits it); it may still quote older figures (for example "13 new tests fail on old code" belongs to an earlier version of the patch set); this folder's tables are the current ones. Nothing was committed or pushed.

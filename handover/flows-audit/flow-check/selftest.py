@@ -19,6 +19,7 @@ Expected node and connection counts are recomputed from the mutated file so a co
 Generic cases run on 4 real files and 1 film file; cases that cannot apply to a file are printed as skipped."""
 
 import contextlib
+import copy
 import importlib.util
 import io
 import json
@@ -2965,6 +2966,205 @@ def main():
             0,
             must=[("SQL columns compared with the --ddl file: 14 query string(s) read.", "")],
             must_not=["names no table that could be read"],
+        )
+
+    # --- round f8-r11 (review f8-r10 M3, M4, M5 and second angle F3, F4, F7): secret key names, what is printed, mail settings at any depth, look-alike node names ---
+    fq_ = ["--files", "mf-form.json", "--baseline", PRIS, "--quiet-info"]
+    fakev_ = (
+        "qx" + "7zv" + "kp"
+    )  # a made-up value built from parts; the checker must never print it
+
+    def r11_case(name, mutate, want_rc, must=(), must_not=(), extra=()):
+        dm = f"{work}/r11-{name}"
+        shutil.copytree(only, dm)
+        h = rj(dm + "/mf-form.json")
+        mutate(h)
+        wj(dm + "/mf-form.json", h)
+        check_out(f"r11_{name}", [dm] + fq_ + list(extra), want_rc, must=must, must_not=must_not)
+
+    for nm_, key_, val_ in (
+        ("smtp_pass_camel", "smtpPass", fakev_),
+        ("secret_key", "secretKey", fakev_),
+        ("passphrase", "passphrase", fakev_),
+        ("pwd", "pwd", fakev_),
+        ("signing_key", "signingKey", fakev_),
+        ("db_pass_snake", "db_pass", fakev_),
+        ("three_characters_under_password", "password", "q7z"),
+        ("three_characters_under_token", "token", "q7z"),
+        ("authorization", "authorization", fakev_),
+    ):
+        r11_case(
+            f"m3_secret_key_{nm_}_is_a_fail",
+            lambda h, key_=key_, val_=val_: first_nt(h)["parameters"].update({key_: val_}),
+            1,
+            must=[("FAIL", f"literal value under key {key_!r}")],
+            must_not=[val_],
+        )
+    r11_case(
+        "m3_bypass_is_one_word_and_not_a_secret_key",
+        lambda h: first_nt(h)["parameters"].update({"bypass": fakev_}),
+        0,
+        must_not=["literal value under key"],
+    )
+    r11_case(
+        "m3_secret_in_a_nested_list_and_object",
+        lambda h: first_nt(h)["parameters"].update(
+            {
+                "headers": [{"name": "authorization", "value": "Bearer " + "a" * 20}],
+                "opts": {"deep": {"apiKey": fakev_}},
+            }
+        ),
+        1,
+        must=[("FAIL", "literal value under key 'apiKey'"), ("FAIL", "literal Bearer value")],
+        must_not=[fakev_],
+    )
+    r11_case(
+        "m3_secret_beside_the_credential_id",
+        lambda h: (
+            first_nt(h)
+            .setdefault("credentials", {})
+            .update({"postgres": {"id": "1", "name": "n8n-publish-pg", "secret": fakev_}})
+        ),
+        1,
+        must=[("FAIL", "literal value under key 'secret'")],
+        must_not=[fakev_],
+    )
+    for nm_, val_, lab_ in (
+        ("github_oauth", "gh" + "o_" + "a" * 24, "GitHub token"),
+        ("github_fine_grained", "github" + "_pat_" + "a" * 24, "GitHub token"),
+        ("slack_user", "xo" + "xp-" + "1234567890-abcdef", "Slack token"),
+        ("aws_key_in_node_notes", "k " + "AK" + "IA" + "ABCDEFGHIJKLMNOP", "AWS access key id"),
+    ):
+        r11_case(
+            f"f3_{nm_}_is_a_fail",
+            lambda h, val_=val_, nm_=nm_: (
+                first_nt(h).update({"notes": val_})
+                if nm_.startswith("aws")
+                else first_nt(h)["parameters"].update({"note": val_})
+            ),
+            1,
+            must=[("FAIL", lab_)],
+            must_not=[val_],
+        )
+    # M5 / F4: the mail settings named in MAIL_KEYS are read at any depth and a filled value is never printed
+    badv_ = "zq" + "wv" + "-bad"
+    for key_ in ("fromEmail", "toEmail", "ccEmail", "bccEmail", "replyTo"):
+        for where_ in ("top", "options", "options_list"):
+
+            def mut_(h, key_=key_, where_=where_):
+                prm_ = first_nt(h)["parameters"]
+                if where_ == "top":
+                    prm_[key_] = badv_
+                elif where_ == "options":
+                    prm_["options"] = {key_: badv_}
+                else:
+                    prm_["options"] = [{"x": {key_: badv_}}]
+
+            r11_case(
+                f"m5_mail_{key_}_{where_}_not_an_address",
+                mut_,
+                0,
+                must=[("  - ", f"setting {key_!r}"), ("  - ", "not shaped like an address")],
+                must_not=[badv_],
+            )
+    r11_case(
+        "f4_mail_comma_list_is_not_one_address",
+        lambda h: first_nt(h)["parameters"].update({"toEmail": "a@b.test, c@d.test"}),
+        0,
+        must=[("  - ", "setting 'toEmail'")],
+        must_not=["a@b.test", "c@d.test"],
+    )
+    # M4 / F7: only the placeholder label is printed, never the text around it (made-up values)
+    realish_ = "jane" + "@real-person" + ".test"
+    for nm_, val_, shown_, hidden_ in (
+        ("todo_then_address", "TODO " + realish_, "TODO", realish_),
+        ("lower_case_digits_around_todo", "Hunter2" + "TODO" + "x9", "TODO", "Hunter2"),
+        ("change_me_label", "CHANGE_ME", "CHANGE_ME", "@@"),
+        ("changeme_word", "CHANGEME", "CHANGEME", "@@"),
+        ("hubspot_label", "HUBSPOT_CREDENTIAL_ID", "HUBSPOT_CREDENTIAL_ID", "@@"),
+        ("hs_cred_label", "HS_CRED", "HS_CRED", "@@"),
+    ):
+        r11_case(
+            f"m4_placeholder_{nm_}_prints_only_the_label",
+            lambda h, val_=val_: first_nt(h)["parameters"].update({"toEmail": val_}),
+            0,
+            must=[("  - ", "setting 'toEmail'"), ("  - ", shown_)],
+            must_not=[hidden_],
+        )
+    for nm_, idv_ in (
+        ("credential", "abcd1234PG_CREDENTIAL_ID"),
+        ("sub_workflow", "x9" + "q" + "SUB_WORKFLOW_ID"),
+    ):
+
+        def mut_id_(h, nm_=nm_, idv_=idv_):
+            n_ = first_nt(h)
+            if nm_ == "credential":
+                n_["credentials"] = {"postgres": {"id": idv_, "name": "n8n-publish-pg"}}
+            else:
+                n_["parameters"]["workflowId"] = idv_
+
+        r11_case(
+            f"m4_id_{nm_}_with_text_around_prints_only_the_label",
+            mut_id_,
+            0,
+            must=[
+                (
+                    "  - ",
+                    "id: " + idv_[idv_.index("SUB") :]
+                    if nm_ == "sub_workflow"
+                    else "id: PG_CREDENTIAL_ID",
+                )
+            ],
+            must_not=[idv_[:4] + "1234", "x9q"],
+        )
+
+    # M5 (related): node names that differ only by accents, width or look-alike letters
+    def r11_names(h):
+        a_ = first_nt(h)
+        b_ = copy.deepcopy(a_)
+        b_["name"] = a_["name"].replace("e", "é", 1) if "e" in a_["name"] else a_["name"] + "é"
+        a_["name"] = a_["name"].replace("e", "é", 1) if "e" in a_["name"] else a_["name"] + "é"
+        b_["id"] = "r11-dup-id"
+        h["nodes"].append(b_)
+
+    r11_case(
+        "m5_node_names_that_differ_only_by_an_accent_are_a_fail",
+        r11_names,
+        1,
+        must=[("FAIL", "names that differ only by case, spaces, accents or width")],
+    )
+    r11_case(
+        "m5_node_name_mixing_latin_and_cyrillic_in_one_word_is_a_fail",
+        lambda h: first_nt(h).update({"name": "Sеnd"}),
+        1,
+        must=[("FAIL", "mixes letters of two alphabets in one word")],
+    )
+    # M4: a dollar-quoted text in a query is a text value, not a column name
+    if PATCHED and os.path.isfile(PATCHED + "/mf-sub-crm-mail.json"):
+        dq_ = f"{work}/r11-m4-dollar-quote"
+        shutil.copytree(PATCHED, dq_)
+        h = rj(f"{dq_}/mf-sub-crm-mail.json")
+        qn_ = ""
+        for n_ in h["nodes"]:
+            if (
+                n_["type"] == "n8n-nodes-base.postgres"
+                and "query" in n_.get("parameters", {})
+                and not qn_
+            ):
+                n_["parameters"]["query"] = (
+                    "SELECT lead_key FROM mf_leads WHERE lead_key = $$"
+                    + "Hunter2"
+                    + "Passw0rd$$ OR lead_key = $t$"
+                    + "Other9"
+                    + "Word$t$"
+                )
+                qn_ = n_["name"]
+        wj(f"{dq_}/mf-sub-crm-mail.json", h)
+        check_out(
+            "r11_m4_dollar_quoted_text_in_a_query_is_never_printed_as_a_column",
+            [dq_, "--quiet-info", "--ddl", ddl4] + acc,
+            0,
+            must_not=["hunter2passw0rd", "other9word", "Hunter2Passw0rd"],
         )
 
     if skipnames:
