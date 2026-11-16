@@ -1,0 +1,2 @@
+real-v5: rebuilt from the pristine generator is byte-identical to the committed folder
+film-v5: rebuilt from the pristine generator is byte-identical to the committed folder

@@ -1,0 +1,16 @@
+pristine real-v5 rc=0
+pristine film-v5 rc=0
+f002 real-v5 rc=0
+f002 film-v5 rc=0
+f008 real-v5 rc=0
+f008 film-v5 rc=0
+both real-v5 rc=0
+both film-v5 rc=0
+pristine real-v5 flowcheck rc=1
+pristine film-v5 flowcheck rc=1
+f002 real-v5 flowcheck rc=1
+f002 film-v5 flowcheck rc=1
+f008 real-v5 flowcheck rc=1
+f008 film-v5 flowcheck rc=1
+both real-v5 flowcheck rc=1
+both film-v5 flowcheck rc=1

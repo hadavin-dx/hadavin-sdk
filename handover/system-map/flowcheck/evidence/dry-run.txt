@@ -1,0 +1,23 @@
+== F-001-one-ddl
+checking file handover/demo/n8n-flows/mf_leads.sql
+rc=0
+== F-002-take-key-check-and-claim-error-path
+checking file handover/demo/n8n-mainframe/build_mainframe.py
+rc=0
+== F-003-runsheet-claims
+checking file handover/demo/VIDEO-RUNSHEET.md
+rc=0
+== F-004-page-statement-17
+checking file handover/demo/n8n-flows/PAGE-STATEMENTS-V4.md
+rc=0
+== F-008-save-runs-for-the-take
+checking file handover/demo/n8n-mainframe/build_mainframe.py
+rc=0
+patching file handover/demo/n8n-mainframe/build_mainframe.py
+patching file handover/demo/n8n-mainframe/build_mainframe.py
+Hunk #2 succeeded at 121 (offset 4 lines).
+patching file handover/demo/n8n-mainframe/build_mainframe.py
+patching file handover/demo/n8n-mainframe/build_mainframe.py
+Hunk #1 succeeded at 79 (offset 3 lines).
+Hunk #2 succeeded at 97 (offset 3 lines).
+order F-002,F-008 and F-008,F-002 give the same file
