@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T12:50:04Z
-PUSHED_UTC: 2026-11-16T12:50:04Z
+UPDATED_UTC: 2026-11-16T12:51:52Z
+PUSHED_UTC: 2026-11-16T12:51:52Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
@@ -43,18 +43,19 @@ INTERRUPTED: none
 | M16 | flow-set question | DONE, closed by decision 1 (real-v5 only; film-v5 out) | 100 | flowset/REPORT.md | |
 
 ## AGENTS
+
 | agent id | purpose | started (UTC) | expected end | state | produced so far |
 |---|---|---|---|---|---|
-| a0dfa687a0eb4359a | PLAN-002 r24 read | 2026-11-16T12:50:04Z | +2 min | running | nothing yet |
-| a79740418299455eb | L1c r16 read | 2026-11-16T12:50:04Z | +2 min | running | nothing yet |
-| a1b148984617468f6 | open-items r17 read | 2026-11-16T12:50:04Z | +2 min | running | nothing yet |
-| a146b02ec3f334d13 | M17 r13 read | 2026-11-16T12:50:04Z | +2 min | running | nothing yet |
-| a42164868c93aee8d | ARCHIVE-CUT-LIST r15 read | 2026-11-16T12:50:04Z | +2 min | running | nothing yet |
-| a447b513b78766d31 | critical-path r24 read | 2026-11-16T12:50:04Z | +2 min | running | nothing yet |
-| a4d83dfb97a4ff1c6 | premortem r16 read | 2026-11-16T12:50:04Z | +2 min | running | nothing yet |
-| a6f1346b3f1cf2736 | row1-builder-brief r13 read | 2026-11-16T12:50:04Z | +2 min | running | nothing yet |
+| a00014950690127fc | PLAN-002 re-read (comprehension, sonnet) | 2026-11-16T12:51:52Z | +5 min | running | nothing yet |
+| a0f9599eec0d71ee7 | L1c re-read (comprehension, sonnet) | 2026-11-16T12:51:52Z | +5 min | running | nothing yet |
+| a087ae45a6efbf593 | open-items re-read (comprehension, sonnet) | 2026-11-16T12:51:52Z | +5 min | running | nothing yet |
+| aca24edd897f26488 | premortem re-read (comprehension, sonnet) | 2026-11-16T12:51:52Z | +5 min | running | nothing yet |
+| aa0429caba37fed0b | row1-brief re-read (comprehension, sonnet) | 2026-11-16T12:51:52Z | +5 min | running | nothing yet |
+| ad4126666b10c18a1 | L3c cold read (comprehension, sonnet) | 2026-11-16T12:51:52Z | +5 min | running | nothing yet |
+| a93aad583d9901855 | t19 cold read (comprehension, sonnet) | 2026-11-16T12:51:52Z | +5 min | running | nothing yet |
+| aac24648635535d58 | decision-list cold read (comprehension, sonnet) | 2026-11-16T12:51:52Z | +5 min | running | nothing yet |
 
-Running: 8. Digests done through 823. Three pages (M17, ARCHIVE-CUT-LIST, critical-path) are now short folded pages; PLAN-002, L1c, open-items have a CURRENT STATE block at the top. Next 5 independent tasks: tell the lead of the L4c real-run reads and the missing work/OWNER-ONLY.txt; send held-page digests; fix decision-list row splits; re-read L3c and t19; fold merged-findings.
+Next 5 independent tasks: merged-findings, L5ac, L4c, FINAL-CROSSCHECK, BRIEF-LANE cold reads.
 
 Words: UTC = world time; IST = UTC plus 5 h 30 min. Cold read = an agent reads one page with no background and lists what it cannot follow. Held = a finding on a page that belongs to the lead, which I do not edit.
 
