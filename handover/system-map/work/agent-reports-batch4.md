@@ -889,3 +889,12 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 
 - 640 L2c r6: stacked corrections, dropped action. FIXED by CURRENT STATE paragraph.
 - 641 L1c r6: five CORRECTION paragraphs. FIXED by CURRENT STATE paragraph (rows not rewritten).
+
+- 642 M17 r5: stacked STATUS, wrong V5 quotes. FIXED by CURRENT STATE paragraph (rows TO DO).
+- 643 merged-findings r4: four legends, undefined terms. FIXED by CURRENT LEGEND.
+- 644 row1-builder-brief r6: line 19 not standalone. FIXED by CURRENT ONLY r6.
+- 645 FINAL-CROSSCHECK r9: eight stacked paragraphs. FIXED by STATUS 16 NOV block.
+- 646 ARCHIVE-CUT-LIST r5: five verdict generations. FIXED by CURRENT VERDICT.
+- 647 not-checked r6: line 24 dropped rules. FIXED by CURRENT.
+- 648 L5b r6: dropped definitions. FIXED by CURRENT STATE.
+- (decision-list r6 and premortem r6 ended; their hand-backs not seen by this session, no digest.)
