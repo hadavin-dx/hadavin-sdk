@@ -9,3 +9,87 @@ Written by the fixer. Reader findings are from reviews/fix-plan-reader-r64.md. R
 - M9: item 50 due Tue 08:29Z (13:59 IST).
 - M16: general rule on line 35: a LEAD FILLS/DECIDES with no own time is due at its row time, else Tue 04:00Z (09:30 IST); named times added for Steps 10, 12, 13.
 - M17: UTC/IST pairs added in Steps 12 and 13 and Wednesday schedule.
+
+## Labels moved out of FIX-PLAN.md (fixer 64b; line numbers are those of FIX-PLAN.md BEFORE this fix; the words around each label stay in FIX-PLAN.md)
+Labels removed by the parenthesis rule (the label only; any text after it stayed in the brackets):
+- L33: round 20, M8
+- L86: round 60, M15
+- L109: round 60, M12
+- L120: round 60, M19
+- L133: round 60, B3
+- L186: round 43
+- L188: round 60, M18
+- L196: round 23, M7; round 23, M4
+- L198: round 22, finding 1
+- L199: round 12; round 14; round 23, M8; round 19, operator M2 and M3; round 60, M17; round 23, M9
+- L200: round 33; round 21, M1; round 60, M20
+- L202: round 22, finding 9
+- L203: round 22, finding 9
+- L206: round 12, C1; round 21, M11; round 60, M5
+- L221: round 60, B1; round 60, M16
+- L223: round 60, B1; round 60, M6
+- L224: round 60, B1; round 60, M7; round 12, B7; round 33, shell M3
+- L225: round 60, B1; round 60, M8
+- L226: round 60, B3
+- L227: round 60, M9
+- L228: round 23, M12; round 60, M5
+- L229: round 23, M6
+- L231: round 41, reader finding 2; round 34, reader finding 9; round 60, M13
+- L233: round 41
+- L235: round 60, B3
+- L243: gate 2 r2, item 6
+- L244: gate 2 r2, item 8
+- L246: gate 2 r2, item 5 and 12
+- L247: gate 2 r2, item 7
+- L248: gate 2 r2, item 9
+- L249: gate 2 r2, item 11
+- L252: round 12, C3
+- L257: round 33
+- L285: round 14
+- L318: round 23, M5
+- L319: round 21, M7
+Labels removed by hand:
+- L1: round 14, moved to the top in round 22, finding 9
+- L1: Round 60, B1
+- L3: round 36, reader M6 (the old one-paragraph line 1 was split into short items, same words)
+- L13: round 33
+- L14: round 34, reader finding 5
+- L24: round 43
+- L29: round 30, M8
+- L187: round 23, M12
+- L198: round 23
+- L199: round 14
+- L199: round 23, M11
+- L199: round 16, M5
+- L200: round 13, B2
+- L200: round 41, reader finding 4
+- L201,204,205,206,222,227,228,235: round 60, B1 (8 places, all in 'the copy that stood here is removed')
+- L222: round 60, B1
+- L204: round 21, M6
+- L206: round 21, B1
+- L206: round 33, B1
+- L208: round 12
+- L222: round 22, finding 1; round 60, M2
+- L223: round 22, finding 1
+- L225: FINDINGS round 16Z
+- L231: FINDINGS round 16Z
+- L255: round 16Z
+- L226: round 36, reader M2
+- L227: round 36, reader M2
+- L230: round 60, B3
+- L231: round 34, reader finding 6
+- L233: round 23, M13
+- L235: reference to the heading "Round 21, M9"
+- L325: Round 21, M9
+- L235: round 33, M9
+- L235: round 33, reader M3
+- L238: round 60, M11
+- L242: changed by gate 2 r2, item 10
+- L255: round 60, M10
+- L255: round 60, M10
+Kept on purpose: `round 23` / `round 24` at old lines 195, 275, 281 (they name the lead's code rounds, not review rounds); `RUNBOOK section 10, M7 (b)/(h)/(i)` (a name inside RUNBOOK.md, which this fixer does not edit); rule names (b2) to (b7) and `G3` (names of rules in this file).
+
+## Fixer 64b: other changes (static; nothing run beyond the checks in reviews/fix-fixplan64b.md)
+- M16: owner and `HH:MMZ (HH:MM IST)` added to the LEAD FILLS / LEAD DECIDES text of Plan overview point 6, the Machine paragraph, REPO, the ten values (a list with owner and time per value), the port, the six-statements rows 1 and 3, Step 5/6 script start-up call, Step 10 retake allowed, item 5, 7, 8, 8b and the IDLOG / SUB_ID line. Times are copied from TAKE-CHECKLIST.md Inputs-list items, QUESTIONS.md and the table at the end of FIX-PLAN.md; where no source time exists (six-statements rows 1 and 3) the line-35 rule (Tue 17 Nov 04:00Z (09:30 IST), AUDIT PROPOSAL) is written out.
+- M17: UTC/IST pairs added at old lines 12, 198, 200, 229, 231, 232, 235, 241, 249, 233, 296, 302, 307, 313, 325, 327 and in the Gated Wednesday schedule table (every cell now reads `HH:MMZ (HH:MM IST)`); all pairs re-checked by script (IST = UTC + 5:30).
+- M10: the last-section table now has seven columns (Q31 item, Input, Cell, Supplied word, Step result word, Needed by, Responsible) and 35 rows; rows 10 (a) and 38 (d) added.
