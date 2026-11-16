@@ -20,7 +20,7 @@ FAILED: M14 test_licences_are_proprietary fails (1 failed, 9390 passed); the n8n
 PROGRESS: 5 of 20 table items at 100 percent; mean of the percent column 83 (counted from the ITEMS table on this page). Percent is how far a page has been checked, not confidence the take will work.
 Terms: M-number (M3, M14, M20) = a row of the ITEMS table below; D-number (D-01) = a row of drift/REPORT.md, a place where two documents disagree; studio head = a role name from older notes whose meaning is UNVERIFIED; take = the one filmed run (video scope: only scenes 1 to 4, version real-v5, decision 1 of inputs/DECISIONS-2026-11-16.md; decisions 5, 11, 12 are in the same file; film-v5 = the longer version that is not filmed); T19 = the test that sends the same made-up lead twice and expects one mail, one HubSpot write, one stored row (work/t19-terms.md); owner = the human; studio lead = the Claude session that does the technical steps and is the only one that messages the owner; lead session = the Claude session that gives me orders; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
 AGENTS_RUNNING: 2
-CAPACITY nproc=4 load=0.00 0.10 0.13 (read at 20:31Z) disk: 12G free (floor 6G)
+CAPACITY nproc=4 load=0.00 0.09 0.13 (read at 20:31Z) disk: 12G free (floor 6G)
 NEXT: digest hand-backs; one fresh read per edited held page
 INTERRUPTED: none
 
@@ -49,8 +49,8 @@ INTERRUPTED: none
 | M16 | flow-set question | DONE, closed by decision 1 (real-v5 only; film-v5 out) | 100 | flowset/REPORT.md | |
 
 ## AGENTS
-- a0da1ece800aa189f | steps v5 round-13 fixer (money path) | started about 20:23Z | running | expected end about 20:34Z | next: verify counts, digest, round-14 readers
-- aa5fd0a3bdaf02fcf | L-01 round-13 fixer (security path, new stamp 23:15Z) | started about 20:31Z | running | expected end about 20:41Z | next: verify stamps, md5, 11-block identity, digest, round-14 L-01 readers
+- a0da1ece800aa189f | steps v5 round-13 fixer (money path) | started about 20:23Z | running, past expected end; checking next beat | expected end about 20:34Z | next: verify counts, digest, round-14 readers
+- aa5fd0a3bdaf02fcf | L-01 round-13 fixer (security path, new stamp 23:15Z) | started about 20:30Z | running | expected end about 20:41Z | next: verify stamps, md5, 11-block identity, digest, round-14 L-01 readers
 
 ## EMPTY SLOTS
 - 4+ empty: other pages at reader cap; waiting on r41 (ETA 20:20Z, overdue, ask lead), r42 (ETA 21:00Z), merge chain, lead notice 1-13, loopback re-smoke; r43 cancelled.
