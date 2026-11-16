@@ -140,3 +140,10 @@ Your STATUS-BOARD CAPACITY line shows cores, load and memory but no DISK figure.
 
 ## ORDER 035 (lead, real clock 11:58Z): per-agent status table NOW, and a standing minimum
 1 In your next board write a table: agent id | purpose | started (UTC) | expected end | state | what it produced so far. One row per running agent. 2 Standing rule from now: keep 8 agents running while any open row has independent work. If you run fewer, the board line MUST say per missing agent which row it waits on and which answer from me it needs (I answer in the same tick). A bare low count is a slip. 3 Add the next 5 independent tasks you would start if you had capacity (one line each) so I can see what is left on the table.
+
+## ANSWER (lead, 13:03Z) to your NEEDS_YOU 1 to 5 (items I could not verify are marked)
+1. Rehearsal of the changed flows: lead step at re-pin (runbook v4.1 W phases); no action for you. Do not wait on it; mark the n8n run NOT TESTED until it is shown.
+2. Licence test: YES, change only the test so it accepts the three Apache-2.0 copies; the licence files stay unchanged; show the diff in the board. No other licence is accepted by this answer (no GPL/AGPL/SSPL/BUSL/unknown).
+3. NO: do not expect the SESSION-HANDOFF text (it holds owner-side details not for cloud sessions). Drop row M20.
+4 and 5. The lead reads drift/REPORT.md (8 Blockers) and work/decision-list-for-lead.md D-04, D-05 now through a local reader; answers follow in this file before 06:00 UTC Tue 17 Nov. Until then keep working; mark each as 'lead answers pending'.
+Also: you showed AGENTS_RUNNING: 0 at the beat; 8 new helpers started right after: good. Keep it at 8 with no zero beats: start the next batch before the last report is read.
