@@ -975,3 +975,51 @@ RESTORE FAILED: the mode in the marker (0o4755) has a special bit (setuid, setgi
 RESTORE FAILED: the mode in the marker (0o666) has a special bit (setuid, setgid, sticky) or is writable by everybody: git has neither, so the marker may be forged; nothing written (r10 m2); the mutan
   PASS: T97e2 m2 marker mode 666 with --sha: exit 3 (got 3; r9: 0 and the mode written), 'special bit', nothing written (still planted)
   PASS: T97f m3 --out-json in another searched state folder (via TMP): exit 2 (got 2; r9: wrote it), file not created; an existing foreign file: exit 2 (got 2; r9: overwritten), still 'precious', no raw file written
+  PASS: T97f2 guard: the tool's own earlier result file may be overwritten: exit 0 both times (got 0, 0)
+INTERRUPTED (signal 15): no mutant planted, no marker
+exit 143
+leaked []
+  PASS: T97g m4 SIGTERM arriving right after the temporary folder is made: exit 143 and the folder is removed (r9: an uncaught KeyboardInterrupt, the folder leaked)
+REFUSED: marker is for another root ("/nowhere/else"): refused; the tree equals the git archive given with --sha: no file is planted or changed (the marker was left alone; to remove it use --discard-marker)
+exit 2 does NOT mean nothing is planted anywhere: nothing was written; the files under --root were compared with the git archive of --sha (see above); a folder the marker may name is not looked at
+RESTORE FAILED: marker is for another root ("/nowhere/else"): refused; the tree differs from the git archive given with --sha in 1 file(s), first: ['src/mod.py']: a mutant may still be planted (no marker was found to restore it from). By hand: git show <sha>:<file> > <file> for each; the mutant may 
+  PASS: T97h m5 forged marker (another root) with --sha: tree equal: exit 2 (got 2), text says the tree equals the git archive and 'does NOT mean nothing is planted'; tree different: exit 3 (got 3; r9: 2), marker kept
+m6 mode after a failed reopen: 0o444
+m7 tree_check: ['<marker left behind>']
+m8 child of the helper still alive after the timeout: False
+WARNING: the state folder could not be synced after removing k.json (Input/output error): the removal is not proven durable; after a power loss a stale marker may return (harmless: --restore settles it)
+m11 unlink_state returned, file exists: False
+BAD: []
+  PASS: T97i m6 (a failed reopen gives the mode back), m7 (a dangling link as marker counts), m8 (a timeout kills the helper's child too), m11 (a failed folder sync after the removal is a warning, not an error) (exit 0; r9: fails all four)
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/evidence-r10/frozen/safety-tests.sh: line 70:  6091 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+WARNING: the state folder could not be synced after removing e9436765dc442bb7.planted.json (Input/output error): the removal is not proven durable; after a power loss a stale marker may return (harmless: --restore settles it)
+WARNING: the state folder could not be synced after removing e9436765dc442bb7.backup (Input/output error): the removal is not proven durable; after a power loss a stale marker may return (harmless: --restore settles it)
+test group already gone; restored "src/mod.py" from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r10/full/tmpstate/hadavin-mutation-lane-0/e9436765dc442bb7.backup; hash matches saved original: True
+  PASS: T97j m11 --restore with a failing state-folder sync: exit 0 (got 0; r9: INTERNAL ERROR, backup stranded), file back, state empty, a WARNING printed
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/evidence-r10/frozen/safety-tests.sh: line 70: 10607 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+REFUSED: a mutant ("evil\nPASSED: faked line\u001b[31m") is still planted in "src/mod.py" from an earlier run that was killed. Restore with: python3 /home/user/hadavin-sdk/handover/core-hardening/mutation-lane/evidence-r10/frozen/run.py --root /tmp/c
+  PASS: T97k m9 a marker whose mutant name holds a newline and an escape code: the refusal prints it quoted (exit 2): no line starts with 'PASSED:', no raw escape character in the output (r9: both)
+REFUSED: this tool cannot start here: no usable temporary folder (FileNotFoundError: No usable temporary directory found)
+exit 2
+  PASS: T97l m10 no usable temporary folder while the module loads: exit 2 with a REFUSED text (r9: the exception ends the program before main)
+  PASS: T97m m6 the docstring says a read-only file that already holds the original keeps its mode (T88d) and no longer promises the mode in that case (exit 0; r9: fails)
+== T98 (r10, independent r9 run: over-long paths; a signal in the start-up window; the S603 lint; the exact limit (d) of plain --restore)
+usage: run.py [-h] --root ROOT [--prefix PREFIX] [--raw RAW] [--sha SHA]
+              [--list LIST] [--id ID] [--file FILE] [--old OLD] [--new NEW]
+              [--desc DESC] [--control] [--no-control] [--out-json OUT_JSON]
+usage: run.py [-h] --root ROOT [--prefix PREFIX] [--raw RAW] [--sha SHA]
+              [--list LIST] [--id ID] [--file FILE] [--old OLD] [--new NEW]
+              [--desc DESC] [--control] [--no-control] [--out-json OUT_JSON]
+usage: run.py [-h] --root ROOT [--prefix PREFIX] [--raw RAW] [--sha SHA]
+              [--list LIST] [--id ID] [--file FILE] [--old OLD] [--new NEW]
+              [--desc DESC] [--control] [--no-control] [--out-json OUT_JSON]
+usage: run.py [-h] --root ROOT [--prefix PREFIX] [--raw RAW] [--sha SHA]
+              [--list LIST] [--id ID] [--file FILE] [--old OLD] [--new NEW]
+              [--desc DESC] [--control] [--no-control] [--out-json OUT_JSON]
+usage: run.py [-h] --root ROOT [--prefix PREFIX] [--raw RAW] [--sha SHA]
+              [--list LIST] [--id ID] [--file FILE] [--old OLD] [--new NEW]
+              [--desc DESC] [--control] [--no-control] [--out-json OUT_JSON]
+  PASS: T98a a path over 4096 bytes (--root, a 300-byte name, --sha, --file, a test path) ends in a refusal, exit 2, no traceback: 0 of 5 wrong (r9: exit 1 or a traceback)
+  PASS: T98b SIGINT during the module's start-up lines: the run ends with exit 130 and no traceback (got 130; r9: KeyboardInterrupt traceback, exit 1)
+noqa: [] direct Popen calls: 0
+  PASS: T98c no 'noqa' comment and no direct subprocess.Popen call (every program is started by the one class Child) (exit 0; r9: fails)
