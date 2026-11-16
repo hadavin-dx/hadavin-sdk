@@ -1,0 +1,52 @@
+modules: 102
+planned edges parsed: 31
+planned endpoints that do not exist today (new modules expected): ['hadavin_sdk.llm.callgate', 'hadavin_sdk.llm.spend']
+
+== A-run: today 0 cycle group(s) of size>1 ; with planned edges 0
+  planned-table modules in a cycle group they were NOT in today: []
+
+== A-run+type: today 3 cycle group(s) of size>1 ; with planned edges 3
+  today[0] size 4: config, deferred, registry, replay_records
+  today[1] size 3: approvals.cards, approvals.channel, approvals.requests
+  today[2] size 3: k1b.replay, k1b.report, k1b.score
+  planned[0] size 4 SAME: config, deferred, registry, replay_records
+  planned[1] size 3 SAME: approvals.cards, approvals.channel, approvals.requests
+  planned[2] size 3 SAME: k1b.replay, k1b.report, k1b.score
+  planned-table modules in a cycle group they were NOT in today: []
+
+== B-run: today 4 cycle group(s) of size>1 ; with planned edges 4
+  today[0] size 3: guard, guard.injection, guard.runmap
+  today[1] size 3: approvals, approvals.channel, approvals.requests
+  today[2] size 2: audit, audit.local_dir
+  today[3] size 2: store, store.memory
+  planned[0] size 3 SAME: guard, guard.injection, guard.runmap
+  planned[1] size 3 SAME: approvals, approvals.channel, approvals.requests
+  planned[2] size 2 SAME: audit, audit.local_dir
+  planned[3] size 2 SAME: store, store.memory
+  planned-table modules in a cycle group they were NOT in today: []
+
+== B-run+type: today 6 cycle group(s) of size>1 ; with planned edges 5
+  today[0] size 9: config, deferred, guard.judge, llm, llm.common, llm.fake, llm.retry, registry, replay_records
+  today[1] size 4: approvals, approvals.cards, approvals.channel, approvals.requests
+  today[2] size 3: guard, guard.injection, guard.runmap
+  today[3] size 3: k1b.replay, k1b.report, k1b.score
+  today[4] size 2: audit, audit.local_dir
+  today[5] size 2: store, store.memory
+  planned[0] size 16 CHANGED/NEW: config, deferred, guard, guard.http, guard.injection, guard.judge, guard.runmap, llm, llm.callgate, llm.common, llm.fake, llm.retry, llm.spend, registry, replay_records, tools
+  planned[1] size 4 SAME: approvals, approvals.cards, approvals.channel, approvals.requests
+  planned[2] size 3 SAME: k1b.replay, k1b.report, k1b.score
+  planned[3] size 2 SAME: audit, audit.local_dir
+  planned[4] size 2 SAME: store, store.memory
+  planned-table modules in a cycle group they were NOT in today: ['llm.callgate', 'llm.spend']
+
+== A-run+type+late: today 3 cycle group(s) of size>1 ; with planned edges 3
+  today[0] size 4: config, deferred, registry, replay_records
+  today[1] size 3: approvals.cards, approvals.channel, approvals.requests
+  today[2] size 3: k1b.replay, k1b.report, k1b.score
+  planned[0] size 4 SAME: config, deferred, registry, replay_records
+  planned[1] size 3 SAME: approvals.cards, approvals.channel, approvals.requests
+  planned[2] size 3 SAME: k1b.replay, k1b.report, k1b.score
+  planned-table modules in a cycle group they were NOT in today: []
+
+== hypothetical llm.spend -> config (type-only, counting A, run+type), planned edges included
+  cycle containing llm.spend: config, deferred, guard.judge, llm.callgate, llm.common, llm.spend, registry, replay_records

@@ -519,3 +519,7 @@ works_in wrong: []
 == T52 (review r4 nit 1) a plant that fails on the open file is a clean refusal, not RESTORE FAILED; --restore with the file already original clears the marker
 REFUSED: cannot plant into src/mod.py: Permission denied
   PASS: T52a read-only target: exit 2 (got 2) with 'cannot plant', no 'RESTORE FAILED', file unchanged, state empty
+./safety-tests.sh: line 1332:  3880 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+test group already gone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r8ind/full2/tmpstate/hadavin-mutation-lane-0/c85913c1528da982.backup (it alre
+  PASS: T52b file already equals the backup (two names): --restore exit 0 (got 0), marker and backup cleared, nothing written
+== T53 (review r4 nit 2) a FIFO in place of the target: --restore refuses instead of hanging
