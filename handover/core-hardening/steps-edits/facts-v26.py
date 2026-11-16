@@ -1,4 +1,4 @@
-"""The one place every shared fact of the v24 package is written. Sources use {{name}}; build-v24.py fills them in.
+"""The one place every shared fact of the v26 package is written. Sources use {{name}}; build-v26.py fills them in.
 Every number below is computed from the first lines (integers where money is concerned). Nothing else may state these facts."""
 from decimal import Decimal as Dc
 import datetime as dt
@@ -19,6 +19,8 @@ def pair(d, secs=False):
     return '%s UTC = %s IST' % (d.strftime(f), (d + IST).strftime(f))
 LS = dt.datetime.combine(DAY, dt.time(11, 30)); LF = LS + dt.timedelta(minutes=Y + RL + FP); CB = LF + dt.timedelta(minutes=MG)
 EK = dt.datetime.combine(DAY, dt.time(11, 0))
+OKB = dt.datetime.combine(DAY, dt.time(16, 0))                # latest time to cancel the older key in B (run day); must be well before 18:14 UTC
+assert OKB.time() < dt.time(18, 14)
 LAST = DEADLINE - dt.timedelta(seconds=NEED_S)
 CAP = DEADLINE - dt.timedelta(minutes=Y + RL + FP + MG + 10)
 D23_CB = DEADLINE - dt.timedelta(minutes=10)
@@ -35,7 +37,7 @@ F = {
  'sum': str(Y + RL + FP), 'ceil': str(CEIL), 'tok_in': str(TOK_IN), 'tok_out': str(TOK_OUT), 'p_in': usd(P_IN_C), 'p_out': usd(P_OUT_C),
  'p_in_c': str(P_IN_C), 'p_out_c': str(P_OUT_C),
  'day': DAY.strftime('%a %d %b %Y'), 'day_date': DAY.strftime('%a %b %d'), 'dl_full': '2026-11-23 ' + pair(DEADLINE), 'dl': pair(DEADLINE), 'dl_day': 'Mon 23 Nov 2026', 'dl_iso': '2026-11-23T18:29:00Z', 'dl_sp': '2026-11-23 18:29 UTC',
- 'ek': pair(EK), 'ls': pair(LS), 'lf': pair(LF), 'cb': pair(CB), 'last': pair(LAST, True), 'cap': t(CAP), 'cap_x': '%d minutes' % (Y + RL + FP + MG + 10),
+ 'ek': pair(EK), 'okb': pair(OKB), 'ls': pair(LS), 'lf': pair(LF), 'cb': pair(CB), 'last': pair(LAST, True), 'cap': t(CAP), 'cap_x': '%d minutes' % (Y + RL + FP + MG + 10),
  'd23cb': pair(D23_CB), 'postby': 'Wed 25 Nov 2026 15:00 UTC = 20:30 IST', 'ls_t': t(LS), 'lf_t': t(LF), 'cb_t': t(CB),
  'ps_t': '11:08:07', 'set_t': '11:06:55', 'key_t': '11:07:30',
 }
