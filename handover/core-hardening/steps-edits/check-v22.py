@@ -292,7 +292,7 @@ else:
     # every sending context uses a listed phrase
     body = '\n'.join(l for l in Slines if not l.startswith('**Set phrases you send') and not l.startswith('```'))
     body = re.sub(r'```.*?```', '', S, flags=re.S).replace(lst[0], '')
-    ctx = re.compile(r'(?:\bsend\b|\bsends\b|\bsent\b|\breply\b|write to the lead|\bwrite\b|\bwrote to the lead\b)[^"\n]{0,50}"([^"]+)"')
+    ctx = re.compile(r'(?:\bsend\b|\bsends\b|\bsent\b|\breply\b|\bReply\b|write to the lead|\bwrite\b|\bwrote to the lead\b)[^"\n]{0,50}"([^"]+)"')
     used = set()
     for m in ctx.finditer(nocode(body)):
         ph = norm(m.group(1))

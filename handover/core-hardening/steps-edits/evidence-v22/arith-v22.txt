@@ -1,0 +1,14 @@
+price per call 0.27 x3 = 0.81
+program limit 13.21 = cents 1321
+minutes 5+15+10 = 30  margin 10
+B = deadline - 860 s = 18:14:40  need minutes 14.333333333333334
+deadline - 50 min = 17:39:00
+latest start Wed 18 Nov 11:30 UTC = 17:00 IST
+alarm time Wed 18 Nov 12:00 UTC = 17:30 IST
+cancel-by Wed 18 Nov 12:10 UTC = 17:40 IST
+mon23 latest start 17:39:00 UTC = 23:09 IST
+mon23 alarm 18:09:00 UTC = 23:39 IST
+mon23 cancel-by 18:19:00 UTC = 23:49 IST
+buffer to deadline 0:10:00
+weekdays Mon Wed Mon Wed
+ps example 11:08:07 after file 11:06:55 and after earliest key 11:00, before latest start 11:30: True

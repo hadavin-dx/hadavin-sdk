@@ -1,0 +1,59 @@
+M0 baseline (no change) | planted: none | rc=0 | problems=0 | caught=NO
+M1 wrong IST pair in sheet | planted: OWNER-SHEET-v22.md: Cancel-by time: 12:10 UTC = 17 -> Cancel-by time: 12:10 UTC = 17 | rc=1 | problems=1 | caught=YES
+     PROBLEM: OWNER-SHEET-v22.md: 12:10 UTC is not 17:45 IST
+M2 wrong weekday | planted: OWNER-SHEET-v22.md: Run day: Wed 18 Nov 2026 -> Run day: Thu 18 Nov 2026 | rc=1 | problems=2 | caught=YES
+     PROBLEM: OWNER-SHEET-v22.md: Thu 18 Nov 2026 weekday wrong
+     PROBLEM: ps/file examples are not on the sample run day
+M3 broken item pointer (6.9) | planted: OWNER-SHEET-v22.md: Go on at 7.9 if you typed `end -> Go on at 6.9 if you typed `end | rc=1 | problems=4 | caught=YES
+     PROBLEM: OWNER-SHEET-v22.md: pointer 6.9 does not exist (sheet section 6 has 6 items)
+     PROBLEM: sheet points at 6.9 but the unit-keyword table has no entry (add one)
+     PROBLEM: card step 6 hand-off pointers changed
+M4 banned word inserted (counts only) | planted: OWNER-SHEET-v22.md: Written Mon 16 Nov 2026. -> Written Mon 16 Nov 2026 getpor | rc=1 | problems=3 | caught=YES
+     PROBLEM: banned words found or list unread
+     PROBLEM: pointer map changed at 'Written Mon 16 Nov 2026 [word]. Times are wr': frozen None, now ['R1', 'R10', 'section 2', 'section 2', 'section 3']
+     PROBLEM: pointer map changed at 'Written Mon 16 Nov 2026. Times are written UTC f': frozen ['R1', 'R10', 'section 2', 'section 2', 'section 3'], now None
+M5 unlisted set phrase in a step (send "started ok") | planted: OWNER-SHEET-v22.md: send "run started" to the lead -> send "started ok" to the lead | rc=1 | problems=1 | caught=YES
+     PROBLEM: quoted phrase 'started ok' is sent or written but is not in the set-phrase list
+M5b listed phrase changed in its step only (contacts removed) | planted: OWNER-SHEET-v22.md: Send "contacts deleted <number -> Send "contacts removed <number | rc=1 | problems=2 | caught=YES
+     PROBLEM: quoted phrase 'contacts removed <number>' is sent or written but is not in the set-phrase list
+     PROBLEM: listed set phrase 'contacts deleted <>' is not used in any step or rule
+M5c unlisted phrase with reply verb | planted: OWNER-SHEET-v22.md: Reply "accepted" or list -> Reply "all good" or list | rc=1 | problems=1 | caught=YES
+     PROBLEM: quoted phrase 'all good' is sent or written but is not in the set-phrase list
+M5d listed phrase with a character outside R8 set | planted: OWNER-SHEET-v22.md: "got a message that says <in w -> "got a message that says <in w | rc=1 | problems=2 | caught=YES
+     PROBLEM: set phrase 'got a message that says <>; is it yours?' uses a character outside the second R8 set
+     PROBLEM: listed set phrase 'got a message that says <>; is it yours?' is not used in any step or rule
+M6 cancel rule phrase repeated in R3 row | planted: OWNER-SHEET-v22.md: | R3 | you | When and how to c -> | R3 | you | When and how to c | rc=1 | problems=1 | caught=YES
+     PROBLEM: phrase 'with all filters off' occurs 2 times in the sheet (expected 1)
+M7 minute sum 31 instead of 30 | planted: OWNER-SHEET-v22.md: film pause 10 = 30; margin 10 -> film pause 10 = 31; margin 10 | rc=1 | problems=3 | caught=YES
+     PROBLEM: sample: sum of y minutes, run length and film pause
+     PROBLEM: sample: alarm time is not latest start + y minutes + run length + film pause
+     PROBLEM: check 4 worked example text does not match the arithmetic (17:38:00)
+M8 program limit 13.31 | planted: OWNER-SHEET-v22.md: Program limit: USD 13.21 -> Program limit: USD 13.31 | rc=1 | problems=2 | caught=YES
+     PROBLEM: sample: program limit is not ledger total + expected total
+     PROBLEM: sample settings in cents disagree with the sample money
+M9 gate id in the sheet | planted: OWNER-SHEET-v22.md: Do not use any older sheet -> Do not use G30 or any older sh | rc=1 | problems=1 | caught=YES
+     PROBLEM: sheet cites a gate id: ['G30']
+M10 wrong IST pair in the note | planted: LEAD-RELEASE-NOTE-v6.md: CB = 12:10 UTC = 17:40 IST -> CB = 12:10 UTC = 17:45 IST | rc=1 | problems=2 | caught=YES
+     PROBLEM: LEAD-RELEASE-NOTE-v6.md: 12:10 UTC is not 17:45 IST
+     PROBLEM: note example lacks 'CB = 12:10 UTC = 17:40 IST'
+M11a R-pointer target changed (R7 row: R10 -> R5) | planted: OWNER-SHEET-v22.md: delete none, report in words,  -> delete none, report in words,  | rc=1 | problems=1 | caught=YES
+     PROBLEM: pointer map changed at '| R7 | you | You delete only made-up contacts of': frozen ['5.4', '8.5', 'R10', 'R7'], now ['5.4', '8.5', 'R5', 'R7']
+M11b the v21 F1 class: R10 exit code pointer back to "as R6 says" | planted: OWNER-SHEET-v22.md: the exit code is read only at  -> `echo $?` once, as R6 says | rc=1 | problems=4 | caught=YES
+     PROBLEM: OWNER-SHEET-v22.md still holds old term 'as R6 says'
+     PROBLEM: R10 must point to 7.9 for the exit code
+     PROBLEM: pointer map changed at '| R10 | you | FREEZE = in the take terminal type': frozen ['7.9', 'R1', 'R10', 'R7'], now ['R1', 'R10', 'R6', 'R7']
+M11c step pointer changed (8.1: 7.4 -> 7.3) | planted: OWNER-SHEET-v22.md: right after you type the chall -> right after you type the chall | rc=1 | problems=1 | caught=YES
+     PROBLEM: pointer map changed at '1. In the read terminal run `date -u` right afte': frozen ['5.6', '7.4', 'card step 3'], now ['5.6', '7.3', 'card step 3']
+M11d R1 fail column pointer R10 -> R6 | planted: OWNER-SHEET-v22.md: report in words that a long te -> report in words that a long te | rc=1 | problems=1 | caught=YES
+     PROBLEM: pointer map changed at '| R1 | you | You make and save the model key alo': frozen ['6.1', '6.3', '6.4', '8.7', 'R1', 'R10', 'card Part 2'], now ['6.1', '6.3', '6.4', '8.7', 'R1', 'R6', 'card 
+M12 Open 99 pointer in the note | planted: LEAD-RELEASE-NOTE-v6.md: (Open 51) -> (Open 99) | rc=1 | problems=1 | caught=YES
+     PROBLEM: LEAD-RELEASE-NOTE-v6.md refers to Open 99 (only 61)
+M13 cancel rule restated with R2 outside its row | planted: OWNER-SHEET-v22.md: **How to read it:** -> R2 says you may cancel any key | rc=1 | problems=3 | caught=YES
+     PROBLEM: sheet cites R2 2 times (only its own pointer row may; everything else says "the card")
+     PROBLEM: pointer map changed at '**How to read it:** before the day, read section': frozen ['section 2', 'section 4'], now None
+     PROBLEM: pointer map changed at 'R2 says you may cancel any key. **How to read it': frozen None, now ['R2', 'section 2', 'section 4']
+M14 older key phrase spelled two ways | planted: OWNER-SHEET-v22.md: I cancel the older key <its na -> I cancel the older key <name>" | rc=1 | problems=2 | caught=YES
+     PROBLEM: quoted phrase 'I cancel the older key <name>' is sent or written but is not in the set-phrase list
+     PROBLEM: older key phrase spelled in more than one form: {'I cancel the older key <>, nothing else I know uses it', 'I cancel the older key <>'}
+M15 note section 0 items out of order | planted: LEAD-RELEASE-NOTE-v6.md: 8. **D5 -> 9. **D5 | rc=1 | problems=1 | caught=YES
+     PROBLEM: note section 0 items not in order: [1, 2, 3, 4, 5, 6, 7, 9, 9, 10]

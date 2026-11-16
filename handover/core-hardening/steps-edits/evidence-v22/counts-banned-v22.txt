@@ -1,0 +1,14 @@
+OWNER-SHEET-v22.md case-sensitive 0 case-insensitive 0
+LEAD-RELEASE-NOTE-v6.md case-sensitive 0 case-insensitive 0
+v22-OPEN-FOR-LEAD.md case-sensitive 0 case-insensitive 0
+check-v22.py case-sensitive 0 case-insensitive 0
+evidence-v22/check-v22-raw.txt case-sensitive 0 case-insensitive 0
+evidence-v22/counts-banned-v22.txt case-sensitive 0 case-insensitive 0
+evidence-v22/mutation-v22-raw.txt case-sensitive 0 case-insensitive 0
+evidence-v22/pointer-golden-v22.json case-sensitive 0 case-insensitive 0
+evidence-v22/arith-v22.txt case-sensitive 0 case-insensitive 0
+listed 10 total case-sensitive 0 total case-insensitive 0
+OWNER-SHEET-v21.md lines 118 words 7943
+OWNER-SHEET-v22.md lines 146 words 9267
+LEAD-RELEASE-NOTE-v5.md lines 147 words 7281
+LEAD-RELEASE-NOTE-v6.md lines 152 words 8349

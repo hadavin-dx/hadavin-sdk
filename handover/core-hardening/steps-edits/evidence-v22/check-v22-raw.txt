@@ -14,6 +14,6 @@ ok: word checks run
 UTC = IST pairs checked: 20
 weekday mentions checked: 11
 ok: arithmetic, weekdays, UTC/IST pairs, buffer examples and sample dates checked
-ok: set phrases: 15 listed, 12 used in a send context, charset and spelling checked
+ok: set phrases: 15 listed, 13 used in a send context, charset and spelling checked
 ok: pointer map equals the frozen map (73 lines carry pointers)
 TOTAL PROBLEMS 0
