@@ -1,5 +1,5 @@
 # Owner sheet v27: one filmed run
-Dated Mon 16 Nov 2026. Do not use any older sheet (v4 to v25). Text between backticks is typed without the backticks. Text in angle brackets `<...>` is a value you replace from the numbers message (section 3); never type the brackets. Read sections 1 to 9 once before the day (there is no section 4); on the day follow them in order.
+Dated Mon 16 Nov 2026. Do not use any older sheet (v4 to v26). Text between backticks is typed without the backticks. Text in angle brackets `<...>` is a value you replace from the numbers message (section 3); never type the brackets. Read sections 1 to 9 once before the day (there is no section 4); on the day follow them in order.
 
 ## 1. What happens, and the words
 **The run in short.** You and the **lead** type to each other in a chat; you make a paid key, run a test program once while a **film person** films, cancel the key with **the card** (a printed checklist, section 2), then delete and revoke what the lead lists. Start at 5.1.
