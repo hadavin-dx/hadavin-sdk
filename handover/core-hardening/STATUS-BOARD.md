@@ -1,17 +1,17 @@
-UPDATED_UTC: 2026-11-16T11:35:01Z
+UPDATED_UTC: 2026-11-16T11:39:53Z
 SESSION: core-hardening
-ORDER: 021 + decisions 10:02Z; 024; 027, 028 (refill to 8: started v14 reviews, lane b/c, run.py r4 builder, contradiction re-read)
+ORDER: 021 + decisions 10:02Z; 024; 027, 028, 029 (4 running, reasons below)
 STATE: WORKING
 BOOT_ID: 3dcae981
 ITEMS_TOTAL: 14
 ITEMS_OPEN: 9
 PERCENT: 95
-AGENTS_RUNNING: 7
-CAPACITY: load 0.31 of 4 cores, mem 1.0 of 15.7 GB used (15.1 GB available), disk 8.8 GB free of 252 GB (78% used, limit 90%), top disk /tmp/claude-0 10G, /tmp/c8b 2.1G, /tmp/c5v2 2.0G (my scratch, nothing removed)
+AGENTS_RUNNING: 4
+CAPACITY: load 0.69 of 4 cores, mem 1.0 of 15.7 GB used (15.1 GB available), disk 8.8 GB free of 252 GB (78% used, limit 90%), top disk /tmp/claude-0 11G, /tmp/c8b 2.1G, /tmp/c5v2 1.8G (my scratch, nothing removed)
 INTERRUPTED: none
-FAILED: (1) v15 owner sheet failed 3 of 5 reviews so far: security 7 majors, stranger 5 blockers + 12 majors, adversarial/contradiction (key cancel rules conflict, lease sentence, step 0 vs decisions 2/8, no clock rule at 18:29 UTC); citation check running; lead blanks B1-B29 still empty; v16 builder running (started 11:36Z). (2) lead checklist v8 failed 4 reviews; v9 built, 3 reviews running. (3) run.py r4 written (220 PASS, 0 fail on its own script; 73 fail on r3 code) but NOT yet reviewed; S603 needs lead decision; open nits: marker self-attestation, symlinks, reap. (4) PLAN-CHAIN: v10 edit list does not apply after the 3-patch chain (5 of 29 edits find no old text); corrected list written, not yet reviewed; lead decides if gate-rows and v10 are in the run. (5) lease wording A/B, take port, Q18 approval of run.py r3/r4 undecided. (6) Nothing run with n8n, Postgres, PowerShell, WSL.
-NEXT: v16 owner sheet builder and chain-fix round 2 running; checklist v9 three reviews running; run.py r4 security + evidence running; then fix pass per findings; fix stale REPORT.md rows (C3b, C8 counts).
-PUSHED_UTC: 2026-11-16T11:35:02Z
+FAILED: (1) Lead checklist rev 9 failed 3 reviews (stranger 4 blockers + 12 majors, adversarial 7 majors, citation 7 failures: CHAIN=4 sha/marker lines stale, dash missing in Git Bash, CR loop on Windows); rev 10 builder running. (2) v15 owner sheet failed 5 reviews; v16 builder running. (3) run.py r4 security review: 0 blockers, 3 majors (uncaught signals, settings above root, no tree re-check between mutants) + 12 nits; fix pass waits for evidence runner; S603 needs lead decision. (4) Plan chain round 2: reviewer 0 blockers 3 majors, independent evidence found 4 failures (CHAIN=4 marker lines 774/775 not 777/778, damaged RENUMBER line not refused, dangling symlink written through, checklist sha stale); fix builder running. (5) Lease wording A/B, take port, Q18 approval of run.py r3/r4 undecided. (6) Nothing run with n8n, Postgres, PowerShell, WSL, Git Bash.
+NEXT: rev 10 checklist, v16 owner sheet, chain fix pass 3, run.py evidence then run.py r5 fix builder; then reviews of each; fix stale REPORT.md rows (C3b, C8 counts).
+PUSHED_UTC: 2026-11-16T11:39:53Z
 
 ## ITEMS (QUEUE.md ids; detail in REPORT.md)
 | # | item | state | % | evidence file | note |
@@ -31,15 +31,12 @@ PUSHED_UTC: 2026-11-16T11:35:02Z
 | C11 | HubSpot probe step | in v14 (separate secrets procedure) | 86 | steps-edits/ | |
 | edit list v10 | real-v5 edits | round 6 clean; primary-source git show check done: all claims confirmed, no table file in real-v5 | 99 | paste-check/review-v10-r6.md | decision 6 is the lead's |
 
-## AGENTS (7 running; ORDER 029: 1 short of 8, reason below)
+## AGENTS (4 running; ORDER 029: 4 short of 8, reason per agent below)
 | id | role / lane | model | what it does | started UTC | expected end UTC | state |
 |---|---|---|---|---|---|---|
-| aef0705ce0b5968af | builder owner sheet v16 | sonnet | OWNER-SHEET-v16 + check-v16.py, fixes v15 review findings | 11:36Z | 12:20Z | running |
-| aaeec9d726560a9bc | builder chain fix round 2 | sonnet | plan-v10 corrections, apply script guards, history rows | 11:37Z | 12:10Z | running |
-| ae56d8713a9a9c8ea | reviewer run.py r4 security (egm-codebase-details) | sonnet | run.py r4 + safety-tests.sh, uncapped | 11:32Z | 11:55Z | running |
+| aef0705ce0b5968af | builder owner sheet v16 | sonnet | OWNER-SHEET-v16 + check-v16.py (fixes v15 findings) | 11:36Z | 12:20Z | running |
 | a085bc3af41f32926 | EVIDENCE RUNNER run.py r4 | sonnet | re-runs 220-check script, r3 code, hostile inputs | 11:32Z | 11:55Z | running |
-| aa08f4235991b833b | reviewer checklist v9 stranger (egm-comprehension) | sonnet | cold read of LEAD-CHECKLIST-v5 (rev 9) | 11:34Z | 11:55Z | running |
-| affc9e687ea56b0ee | reviewer checklist v9 adversarial (egm-implementation-readiness) | sonnet | guard bypass, wrong-shell, early LEAD-GO | 11:34Z | 11:55Z | running |
-| a74e33983511072ba | citation checker checklist v9 | sonnet | cites, shas, marker lines per CHAIN, bash -n | 11:34Z | 11:55Z | running |
-Finished since last board: v15 citation check, checklist v9 builder (hand-back saved and pushed), plan-chain evidence runner and reviewer.
-ORDER 029 reason for 7 not 8: the 8th would be a second reviewer on v16 or chain fix, which need their builders' hand-back first (one writer per file). No other independent queue item is open: C3b, C8, C5, C7 wait on lead answers or Q18 stop. Waiting on the lead: lease wording A/B, exit-code rule, blanks B1-B29, take port, whether gate-rows-v3 and v10 edits are in the run, S603 decision, Q18 approval of run.py r3/r4.
+| ad38a5720a8797d65 | builder lead checklist rev 10 | sonnet | fixes all findings of 3 reviews + evidence-chain-r2 | 11:38Z | 12:40Z | running |
+| a6643c89816d0149e | builder chain fix pass 3 | sonnet | apply script guards, tests, flake arithmetic, stale shas | 11:39Z | 12:20Z | running |
+Finished since last board: checklist v9 stranger, adversarial, citation; run.py r4 security review; chain round 2 reviewer and evidence runner; chain fix round 2 builder.
+ORDER 029 reasons for 4 not 8, per missing agent: (a) run.py r5 fix builder: waits for the r4 evidence runner (one writer per file, finishes about 11:55Z). (b) second reviewer for rev 10: waits for the rev 10 builder. (c) second reviewer for v16 plus citation checker: wait for the v16 builder. (d) evidence runner for chain pass 3: waits for the chain fix builder. No other open item has independent work: C3b, C8 new work, C5, C7 are stopped by Q18 or wait on lead answers. Waiting on the lead: lease wording A/B, exit-code rule, blanks B1-B29, take port, whether gate-rows-v3 and v10 edits are in the run, S603 decision, Q18 approval of run.py r3/r4, CHAIN choice.
