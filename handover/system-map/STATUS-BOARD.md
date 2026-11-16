@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T15:02:34Z
-PUSHED_UTC: 2026-11-16T15:02:34Z
+UPDATED_UTC: 2026-11-16T15:04:05Z
+PUSHED_UTC: 2026-11-16T15:04:05Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
@@ -15,7 +15,7 @@ PROGRESS: 5 of 20 table items at 100 percent (M1, M11, M12, M13, M16); mean abou
 Terms: take = the one filmed run; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
 AGENTS_RUNNING: 8 of 8 (2026-11-16T14:52:51Z)
 CAPACITY nproc=4 load=0.17 disk: 18G free
-NEXT: hand-backs digested through 1654. Next 5 independent tasks: fix L5ac old lines 2-8; fix GLOSSARY Majors (digest 1545); fix L5b; fix v5-edits-for-M17; fix decision-list-for-lead rows.
+NEXT: hand-backs digested through 1662. Next 5 independent tasks: fix L5ac old lines 2-8; fix GLOSSARY Majors (digest 1545); fix L5b; fix v5-edits-for-M17; fix decision-list-for-lead rows.
 INTERRUPTED: none
 
 ## ITEMS
@@ -44,7 +44,7 @@ INTERRUPTED: none
 
 ## AGENTS
 UPDATED_UTC: 2026-11-16T15:00:08Z | PUSHED_UTC: 2026-11-16T15:00:08Z
-Running: L4 50-130, L1 1-60, t19-terms (after rewrite), M17 page, v5-edits-for-M17, L5ac 1-40, t19-row-and-steps-r3 1-30, L3 50-130 = 8 started; check ListAgents.
+Running (8): L6 1-60 ac5b58250e316a5a4, L5a 1-60 aa6a040c93313fd4f, L2 1-50 aeb3e967c0e2e9f64, L3 1-50 a200d4d3df216a6a6, open-items-table a54a8d81edee6dd4b, L1c 1-60 a2228d8401eae3533, merged-findings 1-60 a4a2dd567a7845f72, critical-path-r1 ae93ce6ac98ee2cf4; check ListAgents.
 Closed and digested 1647-1654: a064d4c3af2c06373, a842239f12d867423, ab3f634f30482fc6f, a7997e790086e8be3, a2d43b300998cbf9d, a020b29b20b55d68f, a456416c651f3d192, a0a9a882571df402e. Earlier 1641-1646: af1acff60f0057bd2, a736e222a8d0a61b1, a2622c1cfd350026f, a8fe85e54e9cc0de6, a4045acc4b87dc00e, ad107187f1f9952d0. Earlier 1637-1640: ab648e4ce840aa527, a474e90f25a7d7085, a936f38d048b990c5, a8eeb0ab3459f8777. Earlier 1633-1636: abd14a3aa42add6ae, a96dc65fdf92a6490, ae8e634b8aca10ceb, a0603595fe6a76adf. Earlier 1631-1632: a602134eee67160a4, a8b6a4cf908a8ee42. Earlier 1625-1630: a9736197cd289fa57, aaaccbd483fcb454b, a93921ab4f6712335, acdf230aa66f521d2, a53053c9c98bb5c86, ac42d4d03f5ceca39.
 FINDING: readers of later ranges cannot see the KEY at the top. Class fix: a REMINDER line (job keys, take, DECISION, UNVERIFIED) now sits under every section heading on all 12 pages. Not yet proven by a re-read.
 CAPACITY: 8 of 8. No missing slots.

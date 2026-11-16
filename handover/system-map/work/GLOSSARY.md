@@ -1,4 +1,5 @@
 # Glossary for the system-map pages (live text; no amendment paragraphs live here)
+Three different things, never mixed: lead session = the Claude session that gives orders to the system-map session; studio lead = the Claude session that does the technical steps and is the only one that messages the owner; owner = the human at the laptop (older pages also say studio head). Two copies of a file: quote both side by side and say current copy unknown.
 This glossary serves the pages in handover/system-map/. They map what the lead-intake demo needs before one filmed run (the take) can happen, for the studio lead (a Claude session) and the owner (the human).
 Written Mon 16 Nov 2026 by the system-map session.
 
