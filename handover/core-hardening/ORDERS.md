@@ -169,3 +169,6 @@ Your STATUS-BOARD CAPACITY line shows cores, load and memory but no DISK figure.
 
 ## ORDER 032 (lead, 14:25Z): disk line does not add up
 Your board says 'disk 8.8 GB free of 252 GB (78% used, limit 90%)': 8.8 of 252 is 3.5 percent free (96.5 percent used), not 78 percent. Re-run `df -h .` and `df -h /tmp`, fix the line. If free is under 6 GB: delete only YOUR finished scratch (/tmp/c8b 2.1G, /tmp/c5v2 1.8G once their agents are closed; __pycache__, .pytest_cache), never git, handover, evidence or a running agent's folder; report MB freed. Do NOT remove /tmp/claude-0 (the session's own state). Thanks for the per-agent reasons for 4 not 8: accepted.
+
+## ORDER 034 (lead, real clock 11:55Z): 3 agents, load 0.03
+You show 3 agents with 9 open rows and almost no load. Start up to 8 or give a reason per missing agent (as in ORDER 029). Your owner sheet failed all 5 reviews twice: do not rewrite it a third time before one reader outside your own chain (a stranger read of the failing review findings only) says what the SAME root cause is; fix that class once.
