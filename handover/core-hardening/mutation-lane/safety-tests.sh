@@ -24,7 +24,8 @@ chk() { if eval "$2"; then echo "  PASS: $1"; else echo "  FAIL: $1"; FAILS=$((F
 FAILS=0
 orphan_alive() { pgrep -f "$T/root/.venv/bin/python -m pytest" >/dev/null; }
 waitplant() { for _ in $(seq 120); do grep -qs pgid "$STATE"/*.planted.json && return 0; sleep 0.5; done; return 1; }
-bg() { mut "$@" -- tests/test_slow.py >/dev/null 2>&1 & RP=$!; }
+# exec: $RP must be the python process itself, not a subshell around it
+bg() { ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) >/dev/null 2>&1 & RP=$!; }
 echo "== T1 the real repository as --root is refused (exit 2)"
 mut --root /home/user/hadavin-sdk -- tests/test_fast.py 2>&1 | cut -c1-200; rc=${PIPESTATUS[0]}; echo "  exit code $rc"; chk "T1 exit 2" "[ $rc -eq 2 ]"
 echo "== T2 SIGKILL while a mutant is planted"
