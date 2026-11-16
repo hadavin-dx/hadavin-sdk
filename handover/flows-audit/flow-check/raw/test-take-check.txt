@@ -479,3 +479,7 @@ ok   count: mf-hook.json with one extra wired step is exit 1 with a node-count F
 ok   f8-r9 M1: a reviewer line with no 'pin sha256' receipt is exit 4 (rule: receipt missing) (got exit 4)
 ok   f8-r9 M1: a reviewer line with another pin's receipt is exit 4 (rule: receipt wrong) (got exit 4)
 ok   f8-r9 M1: a pin whose WARN lines were edited after the line was written is exit 4 (got exit 4)
+ok   f8-r9 M1: the top block prints the sha256 whose first 8 characters the reviewer line must carry, and a line with the right receipt is accepted (exit 5, test run) (got exit 5)
+ok   f8-r9 M1: helper with the receipt 378e1121 and a line carrying 378e1121: want ok (got: ok)
+ok   f8-r9 M1: helper with the receipt 378e1121 and a line carrying 00000000: want no (got: REFUSED (rule: receipt wrong): the 8 characters after 'pin sha256' are)
+ok   f8-r9 M1: helper with the receipt 378e1121 and a line carrying 378E1121z: want no (got: REFUSED (rule: receipt missing): after the date the line must say ', p)
