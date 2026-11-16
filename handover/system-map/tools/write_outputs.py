@@ -2,6 +2,9 @@
 (result review round 1 and round 2 applied, see work/result-resolve-r1.md and work/result-resolve-r2.md).
 Usage: python3 tools/write_outputs.py <dir>"""
 import re, sys, os
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__))))
+from safe_write import safe_write
+OVERWRITE_OK = "--force" in sys.argv
 from collections import Counter
 base = sys.argv[1]
 esc = lambda s: s.replace(" | ", " / ").replace("|", "/")
@@ -279,7 +282,8 @@ out += ["## Lessons", "",
 bad = [r[1] for r in fixrows if not r[2].rstrip().endswith((".", ")", "?")) and not r[2].startswith("apply the proposals")]
 if bad:
     print("Fix plan action cells not ending in a full stop:", bad); sys.exit(1)
-open(os.path.join(base, "SWEEP.md"), "w").write("\n".join(out))
+if not safe_write(base, "SWEEP.md", "\n".join(out), OVERWRITE_OK):
+    print("REFUSED: SWEEP.md was edited by hand or has no record of being generated; use --force to overwrite"); sys.exit(1)
 
 # ---- ONE-PLACE-TABLE
 HDR = ["| copy | what | verdict | exception | proposal | studio head yes needed | state vs DECISION | reason | evidence |", "|---|---|---|---|---|---|---|---|---|"]
@@ -308,5 +312,6 @@ op += ["## Seed check against DECISION", "", "| seed row | state in repo | statu
  "| HubSpot and Gmail | client systems; only a fake CRM in the rig; real run NOT VISIBLE | CONSISTENT with DECISION (line 11); real run UNVERIFIED | `handover/demo3/kill/fakes.py:103 \"hit = next((r for r in rows.values()\"` |", "",
  "## Not visible", "", "| copy | what | verdict | exception | proposal | studio head yes needed | state vs DECISION | reason | evidence |", "|---|---|---|---|---|---|---|---|---|",
  "| TAKE-REPO | duplicate-proof-lead-desk | N/A: not visible | none | N/A: not visible | no | N/A: not visible | not visible, the laptop lead covers it locally; content not guessed | NOT VISIBLE: duplicate-proof-lead-desk |", ""]
-open(os.path.join(base, "ONE-PLACE-TABLE.md"), "w").write("\n".join(op))
+if not safe_write(base, "ONE-PLACE-TABLE.md", "\n".join(op), OVERWRITE_OK):
+    print("REFUSED: ONE-PLACE-TABLE.md was edited by hand or has no record of being generated; use --force to overwrite"); sys.exit(1)
 print(len(rows_f), "findings;", len(rows), "job rows;", nrows, "in blocks;", len(fixrows), "fix rows; blockers touching the take", touch)
