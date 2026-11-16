@@ -5,7 +5,7 @@ Status: DRAFT. Unverified: (a) what the 49 minutes contain; (b) whether the 17:4
 ## In three lines
 
 1. 49 min = the lead session's order (ORDERS.md line 183); what it contains is unconfirmed. Latest start 17:40Z / 23:10 IST (window end 18:29Z minus 49 min).
-2. Finding for the lead session: the runbook plans the take at "about 60 min" but the window assumes 49 min. If the 49 is the take, the plan is 11 min longer than the window. The lead session must say which number is right and what the 49 contains.
+2. Open question: the runbook plans the take at about 60 min; the order gives 49 min and does not say what it covers; until the lead session answers, this page cannot say whether the plan fits.
 3. Every PROPOSAL below that uses 49 or 17:40Z is conditional on that answer. Nothing in the runbook has been changed.
 
 ## Words used on this page
@@ -15,8 +15,14 @@ Definitions use `work/GLOSSARY.md` wording where it has one; other entries say w
 - **lead session**: the Claude session that gives orders to the system-map session through ORDERS.md (GLOSSARY.md). This page says "the lead" in many rows; read each as "lead session". **studio lead**: the Claude session that does the technical steps and is the only one that messages the owner. **owner**: the human at the laptop who gives the written yes.
 - **gate** (start-state gate): a check of about 25 minutes, planned before the take, on Wed 18 Nov, that the demo is in the right state; the decision is by 10:00Z. Source: runbook lines 93 and 217. What it checks in detail: not covered by this page.
 - **re-pin**: pointing the demo at a new fixed version of the core code (a version id called a sha). The runbook's whole re-pin event is estimated at 223 minutes (line 86). **re-smoke**: a repeat quick test run after the re-pin. The runbook says it has no time limit (line 88). The meaning of "smoke" is my reading, UNVERIFIED.
-- **Row 4**: the runbook's 30-minute Wednesday step (07:00Z to 07:30Z) in which the owner posts one test lead and checks the results. My reading from part 2 (runbook W-02); UNVERIFIED here.
-- **G7**: runbook rule G7 (line 266): the chain of steps after the re-pin must end before 18:29Z.
+- **Row 4**: defined at line 91 and line 457 (W-02): "ONE made-up lead through the real HubSpot trial account", Wed 18 Nov 07:00Z to 07:30Z (12:30 to 13:00 IST), 30 min. The runbook text says the lead states the ceiling and the first mailbox check follows; it does not say who posts. Who posts it: UNKNOWN, ask lead session. (Earlier draft said "the owner posts"; that was a guess and is withdrawn.)
+- **W-03**: the Wednesday rehearsal, 07:30Z to 09:30Z (13:00 to 15:00 IST), about 2 h; defined at line 469. Its step 4 is the scene 4 rehearsal (line 473): the take's n8n is stopped and started again. (A scene is one part of the filmed take; "scene 4" is the part where n8n is stopped and restarted; line 473.)
+- **G7**: runbook rule G7, defined at line 266: if the re-pin is done by Mon 23 Nov 07:00Z, the chain of steps after it must end before 18:29Z "with margin" (no number for the margin). The chain is listed with clock times in the arithmetic section below.
+- **T19, T20, T21**: three tests of patch F-002, defined at line 451: T19 = the reply to the second post arrives inside the test's own 10 s bound and exactly one mail exists; T20 = 200 invalid keys each get an error answer 422 and no row is written; T21 = with the database stopped the answer is 503 "retry", then the same key resent works and sends one mail. They run at the end of the Wed practice hour (line 213).
+- **F-002**: defined at lines 274, 349, 454: a patch (file `F-002-take-key-check-and-claim-error-path.patch`) that adds a key check to the take; ledger id BL-flowslocal-4, severity Blocker, status OPEN (line 274). F-002 is the finding; T19 to T21 are the tests that lift it (line 454). "F-002 deadline Wed 07:30Z" is line 215.
+- **HS-n**: "HARD STOPS", section 7, defined at lines 289 to 291: HS-1 to HS-16 are items the lead session must provide; the step that depends on an item cannot start without it. The list is not read in full here (see "Items without a time" below).
+- **Q26-1** (and Q25 to Q30): labels of numbered answers in `ORDERS.md` of the cloud flows audit (runbook line 115 names that file, lines 143 to 174). That file is not in this checkout; what Q26-1 says: UNKNOWN, ask lead session. The runbook uses it as the source of the schedule row at line 208 and the money-stop row at line 223.
+- **PSG**: PRE-SEND GATE, defined at lines 276 to 285: seven checks (key names, made-up recipient domains, free port, ceiling row, and so on) that must pass and be written in `<TAKE_NOTES>` before any send phase; activation of the flows is its last step.
 - **H1**: the label of this check (timing checker 1, runbook lines 1-320). **v4.2** / **v5**: version 4.2 of the take-day runbook (the file checked here) and version 5 of the owner sheet (`inputs/OWNER-STEPS-realrun-v5-core-hardening.md`); `work/timing-check-a.md` is the earlier check of v5.
 - **EGM**: the studio's review process. **bible**, **R-numbers**: the studio's rule book and its rule numbers. Neither is in this checkout, so I looked up no R-number.
 - **Z** = UTC. **IST** = UTC + 5 h 30 min.
@@ -46,15 +52,26 @@ Written 2026-11-16 (UTC) by timing checker H1. Read-only check; nothing was run.
 | Post (line 220) | 15:00Z + 5:30 | 20:30 IST (correct) |
 | Slipped take cut-off (line 222) | Mon 23 Nov 12:00Z + 5:30 | 17:30 IST (correct) |
 | NO-GO path re-pin (line 221) | 07:00Z + 5:30 | 12:30 IST (correct) |
-| G7 chain (line 266) | 1 h (re-smoke) + 1 h (practice) + 0.5 h (Row 4) + 2 h (rehearsal) + 1 h (take) = 5.5 h; from 07:00Z = 12:30Z end; the 25-minute gate is not in the sum, so 12:55Z | before 17:40Z by 4 h 45 min (17:40 - 12:55) |
+| G7 chain (line 266), steps listed below this table | see the list "G7 chain with clock times" below | ends 12:30Z without the gate, 12:55Z with the 25-minute gate; 4 h 45 min before 17:40Z (17:40 - 12:55) |
 | STOP-N8N worst case (line 156) | 45 s + 5 s + 3 s | 53 s (correct) |
-| Take (about 1 h) versus window | 60 min vs 49 min | the planned take (60) is 11 min LONGER than the worst-case window (49), if the 49 is the take |
+| Take (about 1 h) versus window | 60 min vs 49 min | not comparable until the lead session says what the 49 covers; if it covers the whole take, the planned 60 is 11 min more than 49 (UNVERIFIED) |
 
-Last row: if the 49 minutes is the take's own worst case (UNVERIFIED), a planned take of "about 1 h" (lines 94, 218, 266) does not fit the same figure. The two are not the same quantity (planned estimate versus worst case) but the runbook never says which one the window uses.
+Last row: the runbook never says which quantity the window uses (planned estimate or worst case, take only or take plus gate). Open question, see the top of this page; no conclusion is drawn here.
+
+G7 chain with clock times (line 266 gives the durations; the runbook's own figure for re-smoke is "no limit", so 1 h is the old v4.1 figure used only to show the sum):
+1. 07:00Z (12:30 IST): start of the chain; the re-pin is done by this time (line 266).
+2. re-smoke, 1 h: 07:00Z to 08:00Z.
+3. practice, 1 h: 08:00Z to 09:00Z.
+4. Row 4, 0.5 h: 09:00Z to 09:30Z.
+5. rehearsal, 2 h: 09:30Z to 11:30Z.
+6. take, 1 h: 11:30Z to 12:30Z (13:00 to 18:00 IST). Sum 1 + 1 + 0.5 + 2 + 1 = 5.5 h.
+7. end of the chain as written: 12:30Z.
+8. plus the start-state gate, about 25 min (not in the runbook's sum; it sits before the take, so the take ends 25 min later): end 12:55Z (18:25 IST). 12:55Z is 4 h 45 min before 17:40Z and 5 h 34 min before 18:29Z.
+(The take program start in this chain is 11:55Z = 11:30Z + 25 min.)
 
 ## Findings, by line
 
-Conflict column: YES = conflicts with the 49-minute window / latest start 17:40Z; GAP = no time where one is needed; STALE = contradicts another v4.2 sentence; NO = compatible.
+Conflict column (every YES depends on the open question at the top; none is a finding until the lead session answers): YES = would conflict with the 49-minute window / latest start 17:40Z if the 49 covers what is assumed; GAP = no time where one is needed; STALE = contradicts another v4.2 sentence; NO = compatible.
 
 | # | Line | Quoted text | Conflict? | Why | PROPOSAL (not applied) |
 |---|---|---|---|---|---|
@@ -73,8 +90,8 @@ Conflict column: YES = conflicts with the 49-minute window / latest start 17:40Z
 | 13 | 91, 92, 93 | Row 4 30 min; rehearsal about 2 h to 09:30Z; gate about 25 min, decision by 10:00Z | NO | All Wed 18 Nov; arithmetic correct. | No change. |
 | 14 | 95 | "watch about 20 min; hand-over about 11:20Z" | NO | Not in the 49-minute window (after the take). | No change. |
 | 15 | 96, 220, 224 | post Wed 18 Nov 15:00Z (20:30 IST); latest Wed 25 Nov 15:00Z | NO | After the window. | No change. |
-| 16 | 226 | "a same-day retake for the 15:00Z post is NOT possible unless the watch finishes by 11:15Z" | NO for the Wed take | Arithmetic correct. Note: a retake is a second 49-minute worst case; the sentence says nothing about the 17:40Z latest start. | PROPOSAL: append "A retake on Mon 23 Nov must also start by 17:40Z (23:10 IST). A first run must start by 16:51Z for a retake to start by 17:40Z." Check: 17:40 - 49 min = 16:51Z; this ignores the watch (20 min) and the gate (25 min) that the runbook puts between two runs, so the real first-run deadline is earlier (the last-start rows of its arithmetic table give 16:06Z). Both depend on the 49. |
-| 17 | 156 | "up to 45 s + 5 s + 3 s (53 s worst case)" | NO | 53 s is tiny against 49 min; sum correct. But if the take needs several stops (W-03 step 4, after take), 53 s each, add to the total; I cannot count the stops outside my range. | No change; lead counts stops in the 49-minute build-up. |
+| 16 | 226 | "a same-day retake for the 15:00Z post is NOT possible unless the watch finishes by 11:15Z" | NO for the Wed take | Arithmetic correct. Note: a retake is a second 49-minute worst case; the sentence says nothing about the 17:40Z latest start. | PROPOSAL: append "A retake on Mon 23 Nov must also start by 17:40Z (23:10 IST). A first run must start by 16:06Z for a retake to start by 17:40Z." Steps (both depend on the 49): (1) 16:51Z = 17:40Z - 49 min, which counts only the run itself and is too late, because it leaves no time between two runs; (2) 16:06Z = 17:40Z - (49 min run + 20 min watch + 25 min gate = 94 min), the figure to use, because the runbook puts a watch (line 219) and a gate (line 217) between two runs. |
+| 17 | 156 | "up to 45 s + 5 s + 3 s (53 s worst case)" | NO | 53 s is tiny against 49 min; sum correct. But if the take needs several stops (W-03 step 4, the scene 4 rehearsal, line 473), 53 s each, add to the total; I cannot count the stops outside my range. | No change; lead counts stops in the 49-minute build-up. |
 | 18 | 126 | "retried every 0.1 s for up to 3 s" | NO | Part of the 53 s. | No change. |
 | 19 | 127 (5) | "SIGTERM, then up to 45 s ... SIGKILL ... up to 5 s, then the 3 s final probe ... the lead re-measures at W-03 step 4" | NO | Consistent with row 17. | No change. |
 | 20 | 76 | "Every minute figure is the lead's own estimate ... never a measurement. Where a number is not in a source it says 'lead sets at re-pin'." | NO | Honest label. But the 49 must be added to the list of lead-set figures. | PROPOSAL: add "The 49-minute worst case and the 17:40Z latest start are the lead session's order of 2026-11-16 (ORDERS.md line 183), not a measurement." |
@@ -84,7 +101,7 @@ Conflict column: YES = conflicts with the 49-minute window / latest start 17:40Z
 | 24 | 213 | "practice run (1 h) with F-002 test T19 to T21 at its end" | NO | Wed 18 Nov. | No change. |
 | 25 | 215 | "F-002 deadline \| Wed 07:30" and G4 (line 263) | NO | Correct in IST (13:00). | No change. |
 | 26 | 217 | "about 25 min, then the decision" | NO | Wed. | No change. |
-| 27 | 242 to 250 (section 4) | Max posts per phase, "Total ... 11 with form (a), 12 with form (b)" | NO for time | These are counts, not times. Sum check: 1 + 1 + 3 + 4 + 2 = 11 (form a); with form b the take row is 3 not 2 so 1 + 1 + 3 + 4 + 3 = 12 (correct). But the sum leaves out T21's one lead (rows: T19 1, T21 1, Row 4 3, rehearsal 4, take 2 = 11); T20 is 0 and the positive control is 0. | No change for timing. |
+| 27 | 242 to 250 (section 4) | "Max new HubSpot contacts" per phase, "Total ... 11 with form (a), 12 with form (b)" | NO for time | These are counts of made-up contacts, not times. The sum, as a list: T19 = 1; T21 = 1; Row 4 = 3; rehearsal = 4; take with form (a) = 2. 1 + 1 + 3 + 4 + 2 = 11. With form (b) the take is 3: 1 + 1 + 3 + 4 + 3 = 12. Not in the sum because they are 0: the Tuesday re-smoke, the positive control, T20. (Earlier draft said the sum "leaves out T21"; that was wrong, T21 is in it.) | No change for timing. |
 | 28 | 250 | "13 (A twice, B ten times at once, C once)" | NO | 2 + 10 + 1 = 13 (correct). | No change. |
 | 29 | 262 (G3) and 261 (G2) | "deadline Tue 14:00Z; outside the 223-minute clock" | NO | Tue. | No change. |
 | 30 | 280 (PSG step 2) etc. | No time. | NO | | |
@@ -93,7 +110,7 @@ Rows 27 to 30 are listed so no time statement in the range is silently skipped. 
 
 ## Other time words in range, checked
 
-- Line 39-38 (CHANGES): "Round 33 pending" and "re-pin" are not times.
+- Lines 38 to 39 (typo "Line 39-38" fixed; the line numbers are from my first draft and were not re-checked: line 38 of the runbook is a list of findings not placed, line 5 defines ROUND 33 PENDING in capitals): "Round 33 pending" and "re-pin" are not times.
 - Line 76: "Times: UTC first, then IST (IST = UTC + 5 h 30 min)": correct.
 - Line 161 (not a timing sentence): "run once alone" is advice, no time.
 - Line 163 PORT-FREE: no time.
