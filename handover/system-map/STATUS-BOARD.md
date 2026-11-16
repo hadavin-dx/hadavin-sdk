@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 20:14Z
-PUSHED_UTC: 20:14Z
+UPDATED_UTC: 20:16Z
+PUSHED_UTC: 20:16Z
 SESSION: system-map
 ORDER: lead order 16:04Z (ORDERS.md lines 177-184): 4 agents on runbook v4.3 patch + 49-minute window check, 4 on my open items (queue mode R461)
 BOOT_ID: 5cbee216
@@ -20,7 +20,7 @@ FAILED: M14 test_licences_are_proprietary fails (1 failed, 9390 passed); the n8n
 PROGRESS: 5 of 20 table items at 100 percent; mean of the percent column 83 (counted from the ITEMS table on this page). Percent is how far a page has been checked, not confidence the take will work.
 Terms: M-number (M3, M14, M20) = a row of the ITEMS table below; D-number (D-01) = a row of drift/REPORT.md, a place where two documents disagree; studio head = a role name from older notes whose meaning is UNVERIFIED; take = the one filmed run (video scope: only scenes 1 to 4, version real-v5, decision 1 of inputs/DECISIONS-2026-11-16.md; decisions 5, 11, 12 are in the same file; film-v5 = the longer version that is not filmed); T19 = the test that sends the same made-up lead twice and expects one mail, one HubSpot write, one stored row (work/t19-terms.md); owner = the human; studio lead = the Claude session that does the technical steps and is the only one that messages the owner; lead session = the Claude session that gives me orders; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
 AGENTS_RUNNING: 3
-CAPACITY nproc=4 load=0.36 0.18 0.14 (read at 20:14Z) disk: 13G free (floor 6G)
+CAPACITY nproc=4 load=0.10 0.14 0.13 (read at 20:16Z) disk: 13G free (floor 6G)
 NEXT: digest hand-backs; one fresh read per edited held page
 INTERRUPTED: none
 
@@ -50,7 +50,8 @@ INTERRUPTED: none
 
 ## AGENTS
 - adee8fe2ad0c522b0 | steps v5 round-12 fixer (money path) | started about 20:12Z | running, expected end about 20:20Z | next: digest, round-13 readers
-- (ids a99cca9f7bb8c5f1f naive reader and af8ac853614ad42a9 fact reader; started at 20:14Z; ids in the next beat) | security path | running, expected end about 20:14Z + 7 min | next: save findings, one fixer batch
+- a99cca9f7bb8c5f1f | L-01 round-12 naive reader (security path) | started about 20:16Z | running, expected end about 20:23Z | next: save findings, one fixer batch with the fact reader
+- af8ac853614ad42a9 | L-01 round-12 fact reader | started about 20:16Z | running, expected end about 20:23Z | next: same batch
 - EMPTY SLOTS (3 of 6): all other rows are at the reader cap or wait on r41 (ETA 20:20Z), r42 (ETA 21:00Z), the merge chain, lead notice 1-13, the loopback re-smoke, or on steps v5/L-01 settling (cite pass); r43 is cancelled.
 
 ## Details (long text moved from the FAILED line)
