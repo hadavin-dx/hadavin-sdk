@@ -1,6 +1,10 @@
 # Decisions the studio lead owes, one answer each
 Written Mon 16 Nov 2026 by the system-map session from digest entries 143-198 (work/agent-reports-batch4.md). Reader: the studio lead. Made-up data only. Every date and every default below is MY PROPOSAL, not a fact from a file; the lead may change any of them. Where a default says "if silent", it is only what this session suggests happens when no answer comes. No item here has been run or tested.
 
+**Top five (these hold up the first filming step):** A1 (who builds the flow-fill step), A4 (does run (a) start today), A5 (take date), A7 (port number), A8 (where `n8n_api.py` is). Everything else can wait for the times in each row.
+
+**Who answers:** the studio lead, a Claude session, answers or passes the question to the owner. Where a row says "name", write a person or a session id. Rows in sections C and D have no answer time of their own: proposed answer time for every C and D row is Fri 20 Nov 12:29 UTC / 17:59 IST, except C2, C3, C6 and C7, which block the owner cards, so Tue 17 Nov 12:29 UTC / 17:59 IST. "Before run (b)" in section F means before Tue 17 Nov 14:00 UTC / 19:30 IST.
+
 Words: **studio lead** = the Claude session that works with the owner. **owner** = the human. **run (a)** = the loopback re-smoke; **run (b)** = the first laptop run of real-v5 with made-up data (names used on TAKE-BLOCKERS.md line 34). **take** = the one filmed run.
 
 Proposed answer times: items that block the filming by Tue 17 Nov 12:29 UTC / 17:59 IST (the time LEAD-PAGE.md already uses for LP-1, LP-4, LP-5); items that block only the post (Wed 25 Nov 15:00 UTC / 20:30 IST) by Fri 20 Nov 12:29 UTC / 17:59 IST. The latest filming start is Mon 23 Nov 18:14:40 UTC / 23:44:40 IST, and the start notice must come at least 3 hours before it.
@@ -63,7 +67,7 @@ Proposed answer times: items that block the filming by Tue 17 Nov 12:29 UTC / 17
 ## D. Small, safe changes that need the lead's yes because the files are not mine
 - Yes/no each: (D1) add a placeholder check in `tools/scan_outputs.py` (flag "[studio lead fills" and "LEAD FILLS"): digest 165.
 - (D2) yes/no: add one-line "terms are defined below" pointers and a job-key legend (STORE, FILTER, RETRY, NOTICE, COUNTER, LOG, OTHER) at the top of MASTER-MAP.md, ONE-PLACE-TABLE.md and SWEEP.md: digest 175, 178, 181, 190.
-- (D3) Who wrote the ORDER 028 stamp (11:31 UTC)? Name one. The stamp is later than the real clock at the time (11:15:50 UTC): who wrote it? Digest 150.
+- (D3) Who wrote the 11:31 UTC time stamp inside ORDER 028 (ORDERS.md, the last order in the file)? Name one. The stamp is later than the real clock at the time (11:15:50 UTC): who wrote it? Digest 150.
 
 ## E. Added 16 Nov after batch 199-206 (more pages read; all proposals)
 | # | Question | Proposed answer by | Proposed default if silent | Source |
