@@ -1,0 +1,15 @@
+desc: facts: post-by IST 20:30 -> 20:00
+build rc=0
+check rc=1
+C07 info: OWNER-SHEET-v28-A.md 6054, OWNER-CARD-v28-A.md 1372, OWNER-NUMBERS-v28-A.md 844, OWNER-FILM-v28.md 285 total 8555
+C07 info: OWNER-SHEET-v28-B.md 6033, OWNER-CARD-v28-B.md 1353, OWNER-NUMBERS-v28-B.md 859, OWNER-FILM-v28.md 285 total 8530
+check-v28: 9 failure(s)
+FAIL C03 post-by
+FAIL C04 OWNER-SHEET-v28-A.md bad pair 15:00 UTC = 20:00 IST
+FAIL C04 OWNER-SHEET-v28-A.md bad pair 15:00 UTC = 20:00 IST
+FAIL C04 OWNER-SHEET-v28-B.md bad pair 15:00 UTC = 20:00 IST
+FAIL C04 OWNER-SHEET-v28-B.md bad pair 15:00 UTC = 20:00 IST
+FAIL C73 A lacks 'Posting (by Wed 25 Nov 2026 15:00 UTC = 20:30 IST'
+FAIL C73 B lacks 'Posting (by Wed 25 Nov 2026 15:00 UTC = 20:30 IST'
+FAIL C73 A: the post-by date must be the same on the sheet pointer and the film page
+FAIL C73 B: the post-by date must be the same on the sheet pointer and the film page

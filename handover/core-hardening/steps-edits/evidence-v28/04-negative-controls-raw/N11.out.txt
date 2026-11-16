@@ -1,0 +1,10 @@
+desc: source: key-shaped string (from parts)
+build rc=0
+check rc=1
+C07 info: OWNER-SHEET-v28-A.md 6057, OWNER-CARD-v28-A.md 1372, OWNER-NUMBERS-v28-A.md 844, OWNER-FILM-v28.md 285 total 8558
+C07 info: OWNER-SHEET-v28-B.md 6036, OWNER-CARD-v28-B.md 1353, OWNER-NUMBERS-v28-B.md 859, OWNER-FILM-v28.md 285 total 8533
+check-v28: 4 failure(s)
+FAIL C55 A holds secret-shaped text (pattern \bsk-[A-Za-z0-9_-]{8,})
+FAIL C55 A holds secret-shaped text (pattern \b[A-Za-z0-9+/_-]{40,})
+FAIL C55 B holds secret-shaped text (pattern \bsk-[A-Za-z0-9_-]{8,})
+FAIL C55 B holds secret-shaped text (pattern \b[A-Za-z0-9+/_-]{40,})

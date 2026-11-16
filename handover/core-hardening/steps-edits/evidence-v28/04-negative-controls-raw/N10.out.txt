@@ -1,0 +1,8 @@
+desc: source: 5.9 must differ from the before-cancel word removed
+build rc=0
+check rc=1
+C07 info: OWNER-SHEET-v28-A.md 6045, OWNER-CARD-v28-A.md 1372, OWNER-NUMBERS-v28-A.md 844, OWNER-FILM-v28.md 285 total 8546
+C07 info: OWNER-SHEET-v28-B.md 6024, OWNER-CARD-v28-B.md 1353, OWNER-NUMBERS-v28-B.md 859, OWNER-FILM-v28.md 285 total 8521
+check-v28: 2 failure(s)
+FAIL C164 A lacks "must differ from the look key's word before the cancel and from every "
+FAIL C164 B lacks "must differ from the look key's word before the cancel and from every "

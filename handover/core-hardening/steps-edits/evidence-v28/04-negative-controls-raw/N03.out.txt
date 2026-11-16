@@ -1,0 +1,5 @@
+desc: facts: tokens out 10000 -> 11000 (the old AssertionError crash; must now be a FAIL line)
+build rc=1
+check rc=1
+FAIL C00 facts or build stopped: AssertionError: 
+check-v28: 1 failure(s)

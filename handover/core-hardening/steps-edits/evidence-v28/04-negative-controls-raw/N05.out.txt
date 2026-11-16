@@ -1,0 +1,8 @@
+desc: source: wrong UTC/IST pair in the sheet
+build rc=0
+check rc=1
+C07 info: OWNER-SHEET-v28-A.md 6060, OWNER-CARD-v28-A.md 1372, OWNER-NUMBERS-v28-A.md 844, OWNER-FILM-v28.md 285 total 8561
+C07 info: OWNER-SHEET-v28-B.md 6039, OWNER-CARD-v28-B.md 1353, OWNER-NUMBERS-v28-B.md 859, OWNER-FILM-v28.md 285 total 8536
+check-v28: 2 failure(s)
+FAIL C04 OWNER-SHEET-v28-A.md bad pair 09:00 UTC = 15:00 IST
+FAIL C04 OWNER-SHEET-v28-B.md bad pair 09:00 UTC = 15:00 IST

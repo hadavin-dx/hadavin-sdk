@@ -250,7 +250,7 @@ need('C164', 'Write its state word before the cancel.'); need('C164', 'must diff
 need('C165', "this 7-day rule belongs to the planned cancel only", (('A', A),)); need('C165', 'If its text appeared on your screen: cancel it at once (the 7-day rule below never applies to that)', (('A', A),)); need('C165', 'If its text appeared on your screen: cancel it at once.', (('B', B),))   # N4
 need('C166', 'except the key\'s own one-time display at 5.9 and 6.3 and the paste at 6.4')                              # N1: W7 exemption
 need('C167', 'the test program made no delete call')                                                                      # evidence-runner fix: the no-delete line in both sheets
-if 'the test program never deletes' not in NOTE: fail('C167', 'N: the sentence "the test program never deletes" is missing')   # evidence-runner fix: content check of the note
+if 'Decision 2 stands: the test program never deletes' not in NOTE or 'the test program deletes;' in NOTE: fail('C167', 'N: the sentence "Decision 2 stands: the test program never deletes" is missing or turned into a delete instruction')   # evidence-runner fix: content check of the note
 for nm, t in SH:                                                                                                         # RC2: unknown means no run is stated on the numbers page
     if '"unknown" in any slot' not in t: fail('C168', nm + ': the numbers checks do not say that "unknown" in any slot is no run')
 if 'Open 96' not in NOTE or '\n| 96 |' not in OPEN or '\n| 97 |' not in OPEN: fail('C169', 'note or open list lacks the rows for the aborted-run message and the A/B decision')   # N13 and RC3

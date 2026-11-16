@@ -2,3 +2,13 @@ v17-escaped-quote-string-rule-off dash: rc=1 folders_left_in_private_tmp=0 SELF-
 v18-unicode-escape-key-rule-off dash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1354 failed=6 (the made-up input and output files we | first: FAIL (secret still visible): JSON key written with a unicode escape (first 6 characters)
 v19-shape-rule-separators-off dash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1342 failed=18 (the made-up input and output files w | first: FAIL (secret still visible): password flag after && (first 6 characters)
 v20-glued-names-off dash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1342 failed=18 (the made-up input and output files w | first: FAIL (secret still visible): glued name DBPASS (first 6 characters)
+v21-git-safety-settings-off dash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1385 failed=1 (the made-up input and output files we | first: FAIL (machinery): a git call is missing one of the safety settings (log.showSignature, gpg.program, core.hooks
+v22-relative-tmpdir-allowed dash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1385 failed=1 (the made-up input and output files we | first: FAIL (machinery): a relative TMPDIR must be refused (exit=2)
+v23-xml-text-rule-off dash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1354 failed=6 (the made-up input and output files we | first: FAIL (secret still visible): XML element text (first 6 characters)
+v24-userinfo-no-scheme-rule-off dash: PLANT-FAILED (text to damage not found)
+v25-identified-by-rule-off dash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1354 failed=6 (the made-up input and output files we | first: FAIL (secret still visible): SQL IDENTIFIED BY (first 6 characters)
+v26-colon-equals-rule-off dash: rc=0 folders_left_in_private_tmp=0 SELF-TEST: passed=1360 failed=0 (the made-up input and output files we | first: 
+v27-requirepass-line-rule-off dash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1348 failed=12 (the made-up input and output files w | first: FAIL (secret still visible): config line requirepass (first 6 characters)
+v28-second-literal-rule-off dash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1354 failed=6 (the made-up input and output files we | first: FAIL (secret still visible): second text after a hidden one (first 6 characters)
+v29-escaped-slash-userinfo-off dash: rc=1 folders_left_in_private_tmp=0 SELF-TEST: passed=1354 failed=6 (the made-up input and output files we | first: FAIL (secret still visible): web address with escaped slashes (first 6 characters)
+run exit 0

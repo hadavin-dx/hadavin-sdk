@@ -1,0 +1,79 @@
+t 90) :: 94
+PASS C-1 old text occurs once on its stated line (94 rows) :: []
+PASS ids are exactly 1..N, no duplicate :: N=94
+PASS C-1b all rows apply in table order on copies, no mismatch :: []
+PASS C-1b table order is bottom-up within each file (highest line first) :: []
+PASS each file's rows form one block in the table :: ['handover/demo/VIDEO-RUNSHEET.md', 'handover/demo/n8n-flows/PAGE-STATEMENTS-V4.md', 'handover/demo/n8n-flows/N8N-START.md', 'handover/demo/n8n-mainframe/mf.py', 'handover/demo/n8n-flows-real-v5/mf-form.json', 'handover/demo/n8n-flows-real-v5/mf-hook.json', 'handover/demo/n8n-flows-real-v5/mf-recove
+PASS cites exist (344 checked) :: 0
+PASS every cite key is defined in section 1 :: []
+PASS no internal labels in new texts :: []
+PASS no stale phrase in new texts :: []
+PASS banned vendor strings in report: count 0 of 10 listed (names not printed) :: count=0
+PASS no secret-like or e-mail string in report :: 0
+PASS C-4a the four flow files give saving all/all/manual-false once each (4 files) :: []
+PASS recount: ready + defaults + check = N, none NOT FILMABLE :: (49, 42, 3, 0, 94)
+PASS table 3b equals the recount (12 lines) :: (12, 12)
+PASS 3b TOTAL line equals the recount :: ['| TOTAL | all rows | 94 | ready 49, on defaults only 42, with a check 3, NOT FILMABLE until an answer 0 | |']
+PASS section 3 'rows tied to it' column equals the recount
+PASS figure 60.1 to 61.9 exact everywhere (19 occurrences) :: []
+PASS no '61.1' or other upper bound next to 60.1
+PASS figure 52.8 to 54.9 exact everywhere (5 occurrences) :: []
+PASS 61.9 only after 60.1 to
+PASS 18 kept runs split: every '<n> runs done' is 10 and every '<n> runs unknown' is 8 :: (['10', '10'], ['8', '8'])
+PASS K1 5 and K2 5 everywhere :: [('5', '5'), ('5', '5'), ('5', '5')]
+PASS K3B 5 and K3 3 everywhere :: [('5', '3'), ('5', '3'), ('5', '3'), ('5', '3')]
+PASS 18 kept runs = K1 5 + K2 5 + K3B 5 + K3 3
+PASS every 'UTC = IST' pair is exactly UTC + 5:30 (28 pairs) :: []
+PASS every clock time in UTC or Z has its IST nearby (outside old-text quotes) :: []
+PASS every new text with UTC also has IST :: []
+PASS in every new text each UTC has its own IST (UTC count <= IST count) :: []
+PASS IST given with the money stop
+PASS report prose lines with '18 runs' name both voided runs :: []
+FAIL new texts with '18 runs' name both voided runs :: [39]
+PASS reason cells with '18 runs' name both voided runs unless the new text does :: []
+PASS box says the row count of the table :: ('94', 94)
+PASS section 0 says the row count of the table :: ('94', 94)
+PASS box says the ready count :: 49
+PASS action box first (before section 0)
+PASS no row is NOT FILMABLE (L-LEASE has a default) :: []
+PASS rows 13+14 hold 115 spoken words in 4 lines :: [36, 35, 22, 22]
+PASS box states exactly the counted words and seconds (115 words, about 46 s)
+PASS row 11 states the same words and seconds :: - The one video: scenes 1 to 4 and the closing card (scene 12): scene 1 25 s + scene 2 40 s + scene 3 25 s + scene 4 60 s = 150 s, plus the closing card 50 s (an ESTIMATE from the word count: the four
+PASS section 0 and L-CARDLEN state the same word count :: 11
+PASS no stale word count (103, 75, 71) outside history lines :: []
+PASS rows 13 and 21 carry the reading-1 sentence and apply on the default
+PASS section 3 L-LEASE: cites Q22 (c) ORD:186 and ORD:230, both readings' sentences, plain 'none', recommendation, a default :: 1
+PASS box L-LEASE row gives both sentences and 'none' with its meaning and a default of 1
+PASS L-LEASE definition is the true one (takeover only; repeat refused while the row exists)
+PASS rows 17 and 81 say 'may' about the 45 s setting
+PASS no 'row N' reference in any new text :: []
+PASS no 'accepted' exit slip in any new text :: []
+PASS 5a lists exactly the 36 viewer-visible run-sheet and page rows, with page rows present :: (36, 36)
+PASS 5a text equals each row's own 'what the viewer sees' cell
+PASS report names the newest owner sheet version on disk (v28) :: [28, 28, 28]
+PASS no claim that v25 or v26 is the newest
+PASS row 90 ends with the clause about a separate database and has no 'third place' :: The target is one Postgres server that holds the claim database and a SEPARATE database `n8n` for n8n's own state
+PASS row 91 says the stage journal and some bookkeeping files stay files
+PASS row 6 item 16 does not claim that deleting erases the data :: . The same day, the studio lead deletes every saved run from n8n (every execution, not only the ones on the list) and turns saving off again (both n8n settings and the flow-file settings back to none)
+PASS row 6 keeps items 11 to 16, no blank, no builder note
+PASS row 8 has the latest start 18:04 UTC = 23:34 IST and (a)(b)(c) and UNVERIFIED
+PASS box and C-10b carry 18:04 UTC = 23:34 IST
+PASS row 76 is tagged design intent, rows 25, 37, 38 say 'stored' not 'delivered'
+PASS every new text with 144.3 labels it as from n8n coming back up :: []
+PASS every defined label is first used where it is defined (uppercase terms of the box) :: []
+PASS question labels are first used in the table of questions :: ['L-CARD']
+PASS whole box is shorter than the c6o box (3027 words; c6o 3529, counted with split on 2026-11-16) :: 3027
+PASS box names no n8n setting :: []
+PASS box has one answer line with seconds and the three free names
+PASS box wave 1 count equals ready + defaults (91) :: 91
+PASS box says it edits the flow files and changes no running n8n
+PASS L-SCENES question is gone
+PASS the 4 card line texts in the box (A1 line) are in row 13
+PASS rows 25, 37, 38 and 76 exist as rows (design M8)
+PASS row 6 view and row 8 view have no 'accepted' and no 'row N' :: Nothing on screen; the take is blocked until the workflow list, the owner-sheet 
+PASS generator rule on rows 62 to 69 and row 92 edits the generator
+PASS section 8 has the coverage of the c6o and c6n reviews
+PASS no bare 'lead' in new texts (the one decision sentence excepted) :: []
+SUMMARY: 77 checks, 1 FAILED: new texts with '18 runs' name both voided runs
+
+EXIT CODE 1
