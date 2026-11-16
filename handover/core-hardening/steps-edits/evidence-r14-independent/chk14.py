@@ -90,7 +90,7 @@ def check(txt, indir=HERE + 'inputs/', info=None, banned=None):
     # 3b bare HH:MM in NEW blocks that is not followed by UTC/IST and is not the IST half of a pair
     for r in rows:
         for t in r['new']:
-            for mm in re.finditer(r'(?<![\d:.])(\d{1,2}:\d{2})(?::\d{2})?(?![\d:])(?! (?:UTC|IST))', t):
+            for mm in re.finditer(r'(?<![\d:.])(\d{2}:\d{2})(?::\d{2})?(?![\d:])(?! (?:UTC|IST))', t):
                 pre = t[max(0, mm.start()-12):mm.start()]
                 if re.search(r'(?:=|\() ?(?:about )?$', pre): continue
                 F('bare-time', f"{r['id']} NEW time without UTC/IST label: {t[max(0, mm.start()-30):mm.end()+20]!r}")

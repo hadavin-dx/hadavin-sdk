@@ -1,0 +1,50 @@
+M01 | key end 18:29/23:59 in E-48 3a | CAUGHT | keyend | E-48 revoke sentence names 18:29 UTC without 18:19: The secret key for the model that the 
+M02 | key end 18:29 in E-48 3h | CAUGHT | keyend | E-48 revoke sentence names 18:29 UTC without 18:19: Revoke the key, ALWAYS, by 18:29 UTC =
+M03 | key end 18:29 in E-12 (first occurrence in NEW) | CAUGHT | keyend | E-12 revoke sentence names 18:29 UTC without 18:19: The latest start we plan is 18:04 UTC 
+M04 | key end 18:29 in E-55 | CAUGHT | keyend | E-55 revoke sentence names 18:29 UTC without 18:19: in route B of part 3c, after `cut acce
+M05 | key end 18:29 in E-58 | ANCHOR-ERROR | substring not found
+M06 | key end 18:29 in E-37 | CAUGHT | keyend | E-37 NEW lacks 18:19 UTC = 23:49 IST
+M07 | key end changed to 18:29 everywhere in the file | CAUGHT | keyend,rowcontent | E-12 NEW lacks 18:19 UTC = 23:49 IST
+M08 | weekday wrong: Mon 23 Nov -> Tue 23 Nov (one place, E-48 3a) | CAUGHT | weekday | Tue 23 Nov 2026 is really Mon
+M09 | weekday wrong: Wed 18 Nov -> Thu 18 Nov (E-48 3c) | CAUGHT | weekday | Thu 18 Nov 2026 is really Wed
+M10 | weekday wrong: Mon 16 Nov -> Tue 16 Nov | CAUGHT | weekday | Tue 16 Nov 2026 is really Mon
+M11 | weekday wrong: Mon 23 Nov -> Sun 23 Nov (all) | CAUGHT | old,weekday | E-55 old text occurs 0 times in OWNER-STEPS-realrun-v3.md
+M12 | IST dropped: money stop in E-48 3a | CAUGHT | ist-unpaired,keyend | E-48 NEW UTC time without IST: 'dow ends 10 minutes later, at 18:29 UTC; that is when '
+M13 | IST dropped: latest start we plan in E-12 | CAUGHT | ist-unpaired | E-12 NEW UTC time without IST: 'ove the latest start we plan (18:04 UTC) earlier. The '
+M14 | IST dropped: key end in E-37 | CAUGHT | ist-unpaired,keyend | E-37 NEW UTC time without IST: ' uses ends by Mon 23 Nov 2026 18:19 UTC (step 22 item '
+M15 | wrong IST: 23:49 -> 23:19 in E-55 | CAUGHT | ist,keyend | 18:19 UTC paired with 23:19 IST
+M16 | wrong IST: 17:49 UTC = 23:19 IST alarm -> 23:49 | CAUGHT | ist | 17:49 UTC paired with 23:49 IST
+M17 | not looking removed from E-09 step a (wait clause) | CAUGHT | rowcontent,typing | E-09 step a lacks the wait rule
+M18 | not looking removed from E-09 step a (type nothing secret sentence) | CAUGHT | typing | E-09 step a lacks the wait rule
+M19 | not looking removed from E-09 step f | CAUGHT | typing | E-09 sub-step f lacks please stop looking / not looking
+M20 | not looking removed from E-09 step g | CAUGHT | typing | E-09 sub-step g lacks please stop looking / not looking
+M21 | not looking removed from E-09 step h | CAUGHT | typing | E-09 sub-step h lacks please stop looking / not looking
+M22 | not looking removed from E-48 3g | CAUGHT | typing | E-48 3g lacks not looking / you may look again
+M23 | not looking removed from E-52 typing rule | MISSED | 
+M24 | shred rule line (2) deleted (no .., no space ...) | CAUGHT | shred | E-48 shred rule lacks path has no ..
+M25 | whole shred rule 3f check (3) realpath deleted | CAUGHT | shred | E-48 shred rule lacks realpath
+M26 | route B condition deleted from 3c | CAUGHT | route | E-48 lacks route B condition
+M27 | Route B label removed from E-48 | CAUGHT | route | E-48 lacks route B
+M28 | Q-number inserted in E-09 owner text | CAUGHT | codes | E-09 owner NEW has Q-number: ' tells you the password (Q25).\n   What the '
+M29 | L-id inserted in E-16 owner text | CAUGHT | codes | E-16 owner NEW has L-id: 'written `no more takes` (L-23NOV) in the chat ('
+M30 | ORD: inserted in E-55 owner text | CAUGHT | codes | E-55 owner NEW has ORD:: 'u write `no more takes` (ORD: take-2) (item '
+M31 | 'unless the assistant tells you otherwise' re-added to 3j | CAUGHT | phrase | E-48 NEW re-adds 'unless the assistant tells you otherwise'
+M32 | 18:14:40 inserted without the label (E-37) | CAUGHT | label | 18:14:40 without "program refusal limit" within 260 chars before: t the take uses ends by 
+M33 | header Apply now 44 -> 45 | CAUGHT | counts | header 45/12 vs computed 44/12
+M34 | Hold count 12 -> 13 in header | CAUGHT | counts | header 44/13 vs computed 44/12
+M35 | row E-20 header deleted (55 rows, rest merges) | CAUGHT | counts,ids-order,old,rowcount | 55 rows, expected 56
+M36 | duplicate id: E-21 header renamed E-20 | CAUGHT | counts,ids-order,ids-unique | duplicate ids ['E-20']
+M37 | OLD text of E-09 altered by one word | CAUGHT | old | E-09 old text occurs 0 times in OWNER-STEPS-realrun-v3.md
+M38 | stated line of E-11 wrong (87 -> 88) | CAUGHT | old | E-11 found at line 87 stated [88]
+M39 | HOLD label removed from E-13 NEW (1) | MISSED | 
+M40 | latest start we plan paired with 18:14 in E-12 | CAUGHT | label | 18:14 UTC follows "latest start we plan" instead of "program refusal limit": to confirm th
+M41 | money stop moved to 18:19 in E-12 | MISSED | 
+M42 | shred before revoke: "When the key is revoked, shred" -> "Before the key is revoked, shred" | CAUGHT | order | E-48 lacks "When the key is revoked, shred every file"
+M43 | keep-copies sentence deleted | CAUGHT | order | E-48 lacks "Until the key is revoked, keep its copies"
+M44 | E-13 second pass: index table file name changed for E-14 | CAUGHT | index | E-14 index file AGENT-SCOPE-DO-AND-DONT.md vs OWNER-STEPS-realrun-v3.md
+M45 | phrase `key kept` re-added in E-58 | ANCHOR-ERROR | substring not found
+M46 | banned string appended (in memory only) | CAUGHT | banned | 1 banned strings present (not printed)
+M47 | secret-shaped string appended (in memory only; built from parts) | CAUGHT | secret | secret-shaped match /sk-[A-Za-z0-9_-]{20,}/ len 35
+M48 | owner NEW text: bare time 18:19 for the key end (no UTC/IST) | CAUGHT | bare-time,keyend | E-55 NEW time without UTC/IST label: 'every case by Mon 23 Nov 2026 18:19 at the latest (t
+TOTAL 48 {'CAUGHT': 43, 'ANCHOR-ERROR': 2, 'MISSED': 3}
+baseline fails (present on unmutated file): [('bare-time', "E-12 NEW time without UTC/IST label: 'late, and a take that "), ('bare-time', "E-12 NEW time without UTC/IST label: ' time to watch the cut"), ('keyend', 'E-12 NEW stray key/stop time:  cut before 18:19 in route B. ')]
