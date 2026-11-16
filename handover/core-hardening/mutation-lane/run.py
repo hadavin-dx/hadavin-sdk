@@ -40,8 +40,10 @@ Safety (review 2 M2/M3, review 3 M-A..M-E and nits):
     --noconftest, --ignore, -p with anything but `no:`, -c, -o, --rootdir, --basetemp, ...
   * Every signal that can be sent and that ends a process by default is handled (all of signal.valid_signals() except
     SIGKILL, SIGSTOP, SIGCHLD, SIGCONT, SIGWINCH, SIGURG, SIGTSTP, SIGTTIN, SIGTTOU, SIGPIPE, SIGXFSZ; review r4 M1),
-    in every window: planting, tests awaited, restore (T47). A real memory fault inside this very process (SIGSEGV
-    raised by the CPU, not sent by kill) cannot be handled in Python: it acts like SIGKILL, the marker stays.
+    in every window: planting, tests awaited, restore (T47). A real memory fault inside this very process (SIGSEGV,
+    SIGBUS, SIGFPE, SIGILL raised by the CPU, not sent by kill) is NOT recovered by that handler: the handler returns
+    to the faulting instruction, the process spins at full speed and keeps the lock and the planted file until it is
+    killed by hand (it does NOT act like SIGKILL; measured, T64). Then: `kill -9` it and run `--restore`.
   * While a mutant is planted a signal unwinds the run only while the tests are awaited; a signal at any other
     moment is remembered and delivered after the restore, and only the first signal ever acts (review 4 M3).
     No remaining window is known, but none is proven absent: T20 is a probabilistic burst test, T21 proves
@@ -57,7 +59,8 @@ Safety (review 2 M2/M3, review 3 M-A..M-E and nits):
     runs (review r4 M3). Files declared with --extra may exist; their content is not compared.
   * Any regular file in the tree with more than one name is refused (not only the target). The file under test is
     opened one folder at a time with O_NOFOLLOW from its parent's descriptor (a folder swapped for a link after
-    the checks is refused); its content is READ by path, and the restore is verified by hash after the write.
+    the checks is refused). The restore COMPARES, WRITES and VERIFIES on that one open file (review r5 M3): a folder
+    swapped for a decoy that holds the original bytes cannot make the restore report success.
   * After the test leader ends, processes of its group that are still alive are stopped and recorded in the raw
     file. A control run (`--control`) keeps a control marker while its tests run; if run.py is killed with
     SIGKILL, `--restore` stops the orphaned control test group.
@@ -87,9 +90,23 @@ NOT A SANDBOX (read this): the tests run as this user with this user's full file
 scratch tree and the files it plants into; it cannot stop a test from writing elsewhere. Paths inside --root
 are trusted as a whole: `.venv` (directly under the root) and the cache folders are NOT compared, so a mutant
 planted into, or a test that changes, files in them is not detected; other test files in --root run too.
-Exit codes: 0 all mutants ran and the tree is clean; 2 refused; 3 restore failed (marker and backup
-kept); 4 tree not clean or marker left after the loop; 128+N interrupted by signal N.
-Verdict per mutant from the pytest exit code: 0 SURVIVED, 1 KILLED, anything else ERROR.
+Exit codes (round 6, review r5 M2):
+  0    EVERY mutant ran and got a clean verdict (KILLED or SURVIVED, no flag) and the tree is clean
+  2    refused (nothing planted by this run is left; also: the baseline of the unmutated tree is not usable)
+  3    restore failed (marker and backup kept; run --restore); also --restore could not settle a control run
+  4    tree not clean (before the first mutant, after a mutant, or after the loop) or marker left behind
+  5    INCOMPLETE: at least one mutant has no clean verdict (COULD-NOT-PLANT, TIMEOUT, ERROR, NO-TEST-PASSED,
+       or a KILLED whose failing tests equal the baseline's), or the loop ended before every mutant ran
+  128+N interrupted by signal N
+A line `SUMMARY: ...` (also in raw/<prefix>-summary.txt) counts every verdict; exit 0 means that line shows no
+COULD-NOT-PLANT, TIMEOUT, ERROR, NO-TEST-PASSED, flagged or not-run mutant. Exit 4 wins over exit 5.
+Verdict per mutant from the pytest exit code: 0 SURVIVED (NO-TEST-PASSED when no test passed: all skipped), 1 KILLED,
+None TIMEOUT, anything else ERROR. The mutant ids `baseline`, `tree-diff` and `summary` are reserved (they name
+other raw files).
+Baseline (review r5 M1): with `--control` the unmutated tree is run first; the mutants are REFUSED (exit 2) unless that run
+exits 0 and at least one test passed. A KILLED mutant whose failing tests equal the baseline's failing tests is flagged
+(exit 5). Without `--control` there is no baseline: an already failing tree would make every mutant KILLED, and
+every raw file says `baseline: NOT RUN`; use --control for a result you want to rely on.
 
 Usage:
   run.py --root /tmp/c8/wC --sha b4cce5b --prefix C-01 --raw DIR --list mutants.json -- TESTS...
@@ -99,6 +116,8 @@ mutants.json: [{"id": "m01", "file": "...", "old": "...", "new": "...", "desc": 
 TESTS are pytest arguments (paths / -k ...). The command run is, with only the environment named above:
   <root>/.venv/bin/python -m pytest -q -p no:cacheprovider --rootdir=<root> --confcutdir=<root> --tb=line -rf TESTS
 """
+
+from __future__ import annotations
 
 import argparse
 import configparser
@@ -119,7 +138,6 @@ import sys
 import tarfile
 import tempfile
 import time
-import tomllib
 
 # skipped in the tree comparison: `.venv` ONLY directly under the root (the scratch environment); the two
 # cache folders at any depth. A `.venv` deeper in the tree is compared like any other folder.
@@ -168,7 +186,11 @@ ABOVE_ROOT_FILES = ("setup.py", "conftest.py", "pyproject.toml")
 STATE_PARENTS = tuple(
     pathlib.Path(os.sep, *parts) for parts in (("tmp",), ("var", "tmp"), ("dev", "shm"))
 )
-EXIT_REFUSED, EXIT_RESTORE_FAILED, EXIT_TREE_NOT_CLEAN = 2, 3, 4
+EXIT_REFUSED, EXIT_RESTORE_FAILED, EXIT_TREE_NOT_CLEAN, EXIT_INCOMPLETE = 2, 3, 4, 5
+MIN_PYTHON = (3, 11, 4)  # tomllib (3.11) and tarfile's `filter="data"` (3.11.4)
+# raw files named after a fixed word: a mutant may not take one of these as its id (review r5 nit 7)
+RESERVED_IDS = frozenset({"baseline", "tree-diff", "summary"})
+FULL_SHA_RE = re.compile(r"[0-9a-f]{40}|[0-9a-f]{64}")
 
 
 class Refused(Exception):
@@ -362,6 +384,64 @@ def write_target(
         fh.write(data)
 
 
+def restore_target(
+    path: pathlib.Path,
+    saved: bytes,
+    root: pathlib.Path,
+    create: bool = False,
+    mode: int = 0o644,
+) -> tuple[bool, bytes]:
+    """Put `saved` into the file under test: COMPARE, WRITE and VERIFY on ONE open file (review r5 M3). The folders are
+    opened one at a time with O_NOFOLLOW from `root` (as in write_target), the file is opened ONCE from its parent's
+    descriptor, and everything below is done through that descriptor: a folder swapped for a decoy after the path checks
+    can neither make a decoy that holds the original bytes look like the restored file (r5: compared by path, then
+    skipped the write and cleared the marker) nor receive the write. Returns (already_original, bytes read back from
+    the same open file). The write is skipped when the open file already holds `saved` (a read-only file that was never
+    changed is not an error); a file with more than one name, or that is not a regular file, is never written.
+    `create=True` (restore only) re-creates a deleted file and missing folders with O_EXCL and exactly `mode`."""
+    pfd, name = _open_parent(root, path, create)
+    try:
+        base = os.O_NOFOLLOW | os.O_NONBLOCK  # NONBLOCK: a FIFO must not hang the open
+        created = writable = False
+        try:
+            fd = os.open(name, base | os.O_RDWR, dir_fd=pfd)
+            writable = True
+        except FileNotFoundError:
+            if not create:
+                raise
+            fd = os.open(name, base | os.O_RDWR | os.O_CREAT | os.O_EXCL, mode, dir_fd=pfd)
+            created = writable = True
+        except PermissionError:  # a read-only file: it can still be compared
+            fd = os.open(name, base | os.O_RDONLY, dir_fd=pfd)
+        except OSError as e:
+            if e.errno == errno.ELOOP:
+                raise Refused(f"{path} is a symbolic link: not written") from e
+            raise
+    finally:
+        os.close(pfd)
+    with os.fdopen(fd, "r+b" if writable else "rb") as fh:
+        st = os.fstat(fh.fileno())
+        if not stat.S_ISREG(st.st_mode):
+            raise Refused(f"{path} is not a regular file: not written")
+        if created:
+            os.fchmod(fh.fileno(), mode)  # the umask of the caller must not change the recorded mode
+        already = fh.read() == saved
+        if not already:
+            if not writable:
+                raise PermissionError(errno.EACCES, "the file is read-only and differs from the original")
+            if st.st_nlink != 1:
+                raise Refused(
+                    f"{path} is not a regular file with exactly one name (links: {st.st_nlink}): not written"
+                )
+            fh.seek(0)
+            fh.truncate(0)
+            fh.write(saved)
+            fh.flush()
+            os.fsync(fh.fileno())
+        fh.seek(0)
+        return already, fh.read()
+
+
 def read_regular(path: pathlib.Path) -> bytes:
     """Read a file without following a link at the last part and without blocking on a FIFO."""
     try:
@@ -408,6 +488,13 @@ def tool(name: str) -> str:
     return found
 
 
+def helper_env() -> dict:
+    """The environment of git and patch: only PATH, HOME (for the user's own git settings) and LC_ALL=C. Nothing else of
+    the caller's environment (GIT_DIR, GIT_WORK_TREE, GIT_INDEX_FILE, GIT_CONFIG_*, PATCH settings ...) reaches them, so a
+    variable in the caller's shell cannot point `git archive` or `git rev-parse` at another repository (review r5)."""
+    return {"PATH": os.environ.get("PATH", ""), "HOME": os.environ.get("HOME", ""), "LC_ALL": "C"}
+
+
 def run_cmd(
     argv: list[str],
     input_bytes: bytes | None = None,
@@ -415,9 +502,16 @@ def run_cmd(
     env: dict | None = None,
     timeout: int | None = None,
 ) -> subprocess.CompletedProcess:
-    """The one place that starts a helper program (git, patch, the import probe): fixed argument list, no shell."""
+    """The one place that starts a helper program (git, patch, the import probe): fixed argument list, no shell.
+    With no `env` the helper environment above is used (never the caller's whole environment)."""
     return subprocess.run(
-        argv, input=input_bytes, capture_output=True, check=False, cwd=cwd, env=env, timeout=timeout
+        argv,
+        input=input_bytes,
+        capture_output=True,
+        check=False,
+        cwd=cwd,
+        env=helper_env() if env is None else env,
+        timeout=timeout,
     )
 
 
@@ -529,6 +623,25 @@ def repo_toplevel(repo: str) -> pathlib.Path:
             f"git rev-parse failed for --repo {repo} (rc {cp.returncode}): {text_of(cp)[:200]}"
         )
     return pathlib.Path(cp.stdout.decode(errors="replace").strip()).resolve()
+
+
+def resolve_commit(repo: str, sha: str) -> str:
+    """The full id of the COMMIT `sha` names (review r5 nit 9): a short id can become ambiguous later and an id of a tree
+    or a file is no commit. `git rev-parse --verify <sha>^{commit}`; anything else is refused. The full id is what the
+    raw files record."""
+    if not SHA_RE.fullmatch(sha):
+        raise Refused(f"--sha is not a commit id: {sha!r}")
+    top = repo_toplevel(repo)
+    cp = run_cmd(
+        [tool("git"), "-C", str(top), "rev-parse", "--verify", "--quiet", f"{sha}^{{commit}}"]
+    )
+    full = cp.stdout.decode(errors="replace").strip()
+    if cp.returncode != 0 or not FULL_SHA_RE.fullmatch(full):
+        raise Refused(
+            f"--sha {sha!r} does not name exactly one commit in {top} (unknown, ambiguous, or not a commit): "
+            f"{text_of(cp)[:200]}"
+        )
+    return full
 
 
 def build_reference(repo: str, sha: str, patches: list[str], dest: pathlib.Path) -> None:
@@ -714,39 +827,54 @@ def orphan_candidates(m: dict, root: pathlib.Path) -> list[int]:
     return found
 
 
-def stop_orphan(m: dict, root: pathlib.Path) -> str:
+def stop_orphan(m: dict, root: pathlib.Path) -> tuple[str, bool]:
     """After a SIGKILL of run.py the test group may still run: stop it, but only if it is ours (start time and
     full argument list recorded in the marker must match; review r3 minors). A failure to stop it is reported,
-    never allowed to abort the restore of the file."""
+    never allowed to abort the restore of the file. Returns (what was done, settled): `settled` is True only when
+    nothing of this run's test group is left (stopped, already gone, or its number now belongs to another process
+    while the group has no member), False when it may still run (cannot be verified, not provably ours, could not
+    be stopped); a control marker is removed only when settled (review r5 nit 4)."""
     pgid = m.get("pgid")
     if not isinstance(pgid, int) and not m.get("cmd_head") and not m.get("cmd_argv"):
-        return "no test group recorded"
+        return "no test group recorded", False
     if isinstance(pgid, int) and pgid <= 1:
-        return "no test group recorded"
+        return "no test group recorded", False
     groups = orphan_candidates(m, root)
     if not groups:
-        leader = proc_stat(pgid) if isinstance(pgid, int) else None
-        if (
+        has_identity = (
             isinstance(pgid, int)
-            and (leader is None or leader["state"] == "Z")
-            and not group_members(pgid)
-        ):
-            return "test group already gone"
+            and isinstance(m.get("start_ticks"), int)
+            and isinstance(m.get("argv"), list)
+        )
+        want = m.get("cmd_argv") if isinstance(m.get("cmd_argv"), list) else m.get("cmd_head")
+        has_command = isinstance(want, list) and bool(want) and isinstance(m.get("run_start_ticks"), int)
+        leader = proc_stat(pgid) if isinstance(pgid, int) else None
+        gone = leader is None or leader["state"] == "Z"
+        if isinstance(pgid, int) and gone and not group_members(pgid):
+            return "test group already gone", True
         what = f"process {pgid}" if isinstance(pgid, int) else "no process"
-        return f"{what} is not this run's pytest (or cannot be verified): left alone"
+        text = f"{what} is not this run's pytest (or cannot be verified): left alone"
+        if has_identity and not gone:  # another process now has that number: a group number is never reused while it has members
+            return text, True
+        if not isinstance(pgid, int) and has_command:  # searched by the recorded command: nothing matches
+            return text, True
+        return text, False
     notes = []
+    settled = True
     for g in groups:
         try:
             stop_group(g)
         except OSError as e:
             notes.append(f"could NOT stop test group {g} ({e.strerror or e}): file restored anyway")
+            settled = False
             continue
         for _ in range(50):
             if not group_members(g):
                 break
             time.sleep(0.1)
         notes.append(f"stopped orphaned test group {g}")
-    return "; ".join(notes)
+        settled = settled and not group_members(g)
+    return "; ".join(notes), settled
 
 
 def other_state_check(root: pathlib.Path, key: str) -> tuple[bool, str]:
@@ -787,36 +915,49 @@ def other_state_check(root: pathlib.Path, key: str) -> tuple[bool, str]:
         notes.append(
             f"stale marker in {folder}: {m['file']} already equals its backup (remove it by hand)"
         )
-    return True, "; ".join(
-        notes
-    ) or f"no marker in {STATE} or in {sorted(map(str, spots - {here}))}: nothing to restore"
+    return True, "; ".join(notes) or (
+        f"no marker in {STATE} or in {sorted(map(str, spots - {here}))}: nothing is recorded as planted, but WITHOUT a "
+        f"marker this CANNOT TELL whether a file is still planted (a lost marker, or a run that used another state "
+        f"folder); a normal run compares the tree with the git archive and refuses if it differs"
+    )
 
 
 def control_marker_path(key: str) -> pathlib.Path:
     return STATE / f"{key}.control.json"
 
 
-def restore_control(root: pathlib.Path, key: str) -> str:
+def restore_control(root: pathlib.Path, key: str) -> tuple[bool, str]:
     """A control run (nothing planted) that was killed with SIGKILL leaves its test group running: the control
-    marker names it. Stop it only if it is provably ours (same checks as for a planted run), then remove the
-    marker (review r4 nit 5)."""
+    marker names it. Stop it only if it is provably ours (same checks as for a planted run). The marker is removed
+    only when nothing of the group is left; otherwise it is KEPT and the answer is not ok (review r4 nit 5, r5 nit 4).
+    A control marker that is not valid JSON is a refusal, not a traceback."""
     path = control_marker_path(key)
-    m = json.loads(read_state(path)) if os.path.lexists(path) else None
+    try:
+        m = json.loads(read_state(path))
+    except ValueError as e:
+        raise Refused(f"control marker {path} is not valid JSON: refused (remove it by hand)") from e
     if not isinstance(m, dict) or m.get("root") != str(root):
         raise Refused(f"control marker {path} is not for this root: refused")
-    note = stop_orphan(m, root)
-    path.unlink()
-    return f"control run: {note}"
+    note, settled = stop_orphan(m, root)
+    if settled:
+        path.unlink()
+        return True, f"control run: {note}"
+    return False, (
+        f"control run: {note}; the control marker {path} is KEPT because its test group may still run: "
+        f"stop it by hand, then remove the marker"
+    )
 
 
 def restore_from_marker(root: pathlib.Path) -> tuple[bool, str]:
     ensure_state()
     key = key_for(root)
     marker = STATE / f"{key}.planted.json"
-    control = restore_control(root, key) if os.path.lexists(control_marker_path(key)) else None
+    control_ok, control = (
+        restore_control(root, key) if os.path.lexists(control_marker_path(key)) else (True, None)
+    )
     if not os.path.lexists(marker):
         ok, text = other_state_check(root, key)
-        return ok, f"{control}; {text}" if control else text
+        return ok and control_ok, f"{control}; {text}" if control else text
     m = load_marker(marker)
     if m.get("root") != str(root):
         raise Refused(f"marker is for another root ({m.get('root')!r}): refused")
@@ -828,18 +969,12 @@ def restore_from_marker(root: pathlib.Path) -> tuple[bool, str]:
         raise Refused("the saved backup does not match the hash recorded in the marker: refused")
     # must_exist=False: a deleted target is re-created (review r3 minor); checked again right before the write
     target = safe_rel(root, m["file"], "marker file", must_exist=False)
-    orphan = stop_orphan(m, root)
+    orphan, _ = stop_orphan(m, root)
     mode = m.get("mode") if isinstance(m.get("mode"), int) and 0 <= m["mode"] <= 0o777 else 0o644
     try:
-        try:
-            already = (
-                read_regular(target) == saved
-            )  # the file already holds the original: nothing to write
-        except (Refused, FileNotFoundError):
-            already = False
-        if not already:
-            write_target(target, saved, create=True, mode=mode, root=root)
-        ok = sha256(read_regular(target)) == m["orig_sha256"]
+        # compare, write and verify on ONE open file (review r5 M3); nothing is compared by path
+        already, back = restore_target(target, saved, root, create=True, mode=mode)
+        ok = sha256(back) == m["orig_sha256"]
     except OSError as e:
         raise Refused(f"cannot write {m['file']} back: {e.strerror or e}: refused") from e
     if ok:
@@ -847,7 +982,7 @@ def restore_from_marker(root: pathlib.Path) -> tuple[bool, str]:
         bk.unlink(missing_ok=True)
     note = " (it already held the original)" if already else ""
     text = f"{orphan}; restored {m['file']} from {bk}{note}; hash matches saved original: {ok}"
-    return ok, f"{control}; {text}" if control else text
+    return ok and control_ok, f"{control}; {text}" if control else text
 
 
 def test_env(pythonpath: str | None) -> dict:
@@ -916,6 +1051,8 @@ def pytest_config_in(d: pathlib.Path) -> list[str]:
     found = [n for n in PYTEST_INI_NAMES if (d / n).is_file()]
     f = d / "pyproject.toml"
     if f.is_file():
+        import tomllib  # here, not at the top: a Python without it must still reach the version refusal in main()
+
         try:
             tool = tomllib.loads(f.read_text(encoding="utf-8")).get("tool")
             if isinstance(tool, dict) and "pytest" in tool:
@@ -1127,29 +1264,35 @@ def run_tests(
         SIG.critical = was_critical
         raise
     try:
-        SIG.critical = was_critical
-        deliver_pending()  # a signal remembered during the start (control run: nothing is planted)
-        if on_start:  # inside the try: a failure here must still stop the group (review 4 M2)
-            on_start(proc.pid)
-        SIG.allow = True  # only now may a signal unwind us while a mutant is planted
-        deliver_pending()  # a signal that came earlier (during the planting) is delivered here
         try:
-            out, _ = proc.communicate(timeout=timeout)
-            rc = proc.returncode
-        except subprocess.TimeoutExpired:
-            SIG.allow = False  # first: nothing in the cleanup below may be cut short by a signal
-            stop_or_kill(
-                proc
-            )  # a failure to stop the group is no reason to lose the result (review r4 T46)
-            rest = reap(proc)  # a second communicate() returns everything printed so far
-            out = f"TIMEOUT after {timeout} s\n--- output printed before the timeout ---\n{rest}"
-            rc = None
-        SIG.allow = False
-        try:
-            note = sweep_group(proc.pid)
-        except OSError as e:
-            note = f"could NOT sweep the test group ({e.strerror or e})"
-        return (cmd, rc, out, note)
+            SIG.critical = was_critical
+            deliver_pending()  # a signal remembered during the start (control run: nothing is planted)
+            if on_start:  # inside the try: a failure here must still stop the group (review 4 M2)
+                on_start(proc.pid)
+            SIG.allow = True  # only now may a signal unwind us while a mutant is planted
+            deliver_pending()  # a signal that came earlier (during the planting) is delivered here
+            try:
+                out, _ = proc.communicate(timeout=timeout)
+                rc = proc.returncode
+            except subprocess.TimeoutExpired:
+                SIG.allow = False  # first: nothing in the cleanup below may be cut short by a signal
+                stop_or_kill(
+                    proc
+                )  # a failure to stop the group is no reason to lose the result (review r4 T46)
+                rest = reap(proc)  # a second communicate() returns everything printed so far
+                out = f"TIMEOUT after {timeout} s\n--- output printed before the timeout ---\n{rest}"
+                rc = None
+            SIG.allow = False
+            try:
+                note = sweep_group(proc.pid)
+            except OSError as e:
+                note = f"could NOT sweep the test group ({e.strerror or e})"
+            return (cmd, rc, out, note)
+        finally:
+            # review r5 nit 2: on EVERY way out of the body (also a failure that is no signal) a later signal must not
+            # raise again before the group is stopped below; a signal arriving inside this `finally` still lands in
+            # the outer `except`, which stops the group
+            SIG.allow = False
     except (
         BaseException
     ):  # a signal while the tests run, or a failure: stop the group, let the caller restore
