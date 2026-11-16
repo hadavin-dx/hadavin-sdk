@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T14:54:24Z
-PUSHED_UTC: 2026-11-16T14:54:24Z
+UPDATED_UTC: 2026-11-16T14:55:24Z
+PUSHED_UTC: 2026-11-16T14:55:24Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
@@ -15,7 +15,7 @@ PROGRESS: 5 of 20 table items at 100 percent (M1, M11, M12, M13, M16); mean abou
 Terms: take = the one filmed run; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
 AGENTS_RUNNING: 8 of 8 (2026-11-16T14:52:51Z)
 CAPACITY nproc=4 load=0.17 disk: 18G free
-NEXT: hand-backs digested through 1583. Next 5 independent tasks: fix L5ac old lines 2-8; fix GLOSSARY Majors (digest 1545); fix L5b; fix v5-edits-for-M17; fix decision-list-for-lead rows.
+NEXT: hand-backs digested through 1593. Next 5 independent tasks: fix L5ac old lines 2-8; fix GLOSSARY Majors (digest 1545); fix L5b; fix v5-edits-for-M17; fix decision-list-for-lead rows.
 INTERRUPTED: none
 
 ## ITEMS
@@ -43,20 +43,21 @@ INTERRUPTED: none
 | M16 | flow-set question | DONE, closed by decision 1 (real-v5 only; film-v5 out) | 100 | flowset/REPORT.md | |
 
 ## AGENTS
-UPDATED_UTC: 2026-11-16T14:54:24Z | PUSHED_UTC: 2026-11-16T14:54:24Z
+UPDATED_UTC: 2026-11-16T14:55:24Z | PUSHED_UTC: 2026-11-16T14:55:24Z
 | id | purpose | started | state |
 |---|---|---|---|
-| a7e392c14a57f304d | cold read t19-row-and-steps-r3 (second read; first report arrived late) | 2026-11-16T14:54:24Z | running |
-| ae330aa6ebf8c4a50 | cold read L5ac 1-40 | 2026-11-16T14:54:24Z | running |
-| a94f98152ec38e475 | cold read L3 60-130 | 2026-11-16T14:54:24Z | running |
-| a8545d07e200ec49a | cold read L2 100-170 | 2026-11-16T14:54:24Z | running |
-| a6871daddbc871714 | cold read L1c 1-60 | 2026-11-16T14:54:24Z | running |
-| a9fbd006b9113e655 | cold read GLOSSARY (round 3) | 2026-11-16T14:54:24Z | running |
-| aacc4af4a1ad33f0b | cold read L5b 1-60 | 2026-11-16T14:54:24Z | running |
-| a695e977a1d223ca7 | cold read FINAL-CROSSCHECK 80-160 | 2026-11-16T14:54:24Z | running |
-Closed and digested 1576-1583: ac0db212570710495, ad5994744b3a54003, a7cbbb9c2294e3061, a3e21748ef7e6ee48, a8673ae040b7f0b70, a0d72503b1fd87c62, a30161b62defabd52, a080b86497d435045.
+| a291eb0c09dadbd39 | cold read L4 60-130 | earlier | running |
+| a171b0fac0e0f9056 | cold read L4c 60-130 | earlier | running |
+| a965f30d35bcbb9b8 | cold read L6 1-60 | earlier | running |
+| a39e43a609fdf9e88 | cold read L1 60-130 | earlier | running |
+| a0a89273a36ce81a9 | cold read merged-findings 1-60 | earlier | running |
+| a623527530284c681 | cold read L5a 1-60 | earlier | running |
+| (new, ids in session list) | cold read L4 130-200 | 14:55Z | running |
+| (new, ids in session list) | cold read L1 130-200 | 14:55Z | running |
+Closed and digested 1584-1593: aacc4af4a1ad33f0b, ae330aa6ebf8c4a50, a6871daddbc871714, a7e392c14a57f304d, a695e977a1d223ca7, a9fbd006b9113e655, a94f98152ec38e475, a8545d07e200ec49a, a3acbad022e18ed69, afeca1503e1c57de8.
+DONE this beat: class fix. An inline KEY block (take, lane, status words incl. LISTED-ONLY, UNVERIFIED, job keys, DECISION line N, lead terms) is now at the top of L1, L1c, L2, L3, L3c, L4, L4c, L5a, L5ac, L5b, L6 and merged-findings.
 CAPACITY: 8 of 8. No missing slots.
-NEXT 5: class fix: one inline key (take, DECISION line N, job keys, UNVERIFIED, lane, READ/PARTLY-READ/LISTED-ONLY) at the top of every lane page (L1, L1c, L2, L3, L3c, L4, L4c, L5a, L5ac, L5b, L6); fix t19-gaps-r2 and t19-row-and-steps-r3 (inline glossary, next-action owner); fix critical-path-r1 (1568); fix M17 (1548); send held-page items 1580 and 1582 via LEAD-NOTICE.
+NEXT 5: per-page fixes the key does not cover: L5ac old lines 2-8 and FD-001 table; L1c finding sentences and 18 unread files; L3 md5 result; decision-list-for-lead (cite format, answer order, A5 deadline); t19-gaps-r2 and t19-row-and-steps-r3 inline glossary and numbered steps. Held-page items (1580, 1582, 1588) go to LEAD-NOTICE.
 
 
 ## Details (long text moved from the FAILED line)

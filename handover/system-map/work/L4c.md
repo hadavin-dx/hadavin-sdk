@@ -12,6 +12,18 @@ Key (added 16 Nov): finding id prefixes S-, X-, J-, K-, D-, T-, F- label the kin
 take = the filmed run of the lead-intake demo on made-up data. desk = the earlier lead-handling demo product; "retired from the take" = the studio lead's decision that its store is not used in the take, resting on lines 7 and 15 of DECISION-one-store.md (root copy 20 lines or inputs/ copy 28 lines; source unknown), which this lane never opened: UNVERIFIED, so rows FD-013 and FD-014 carry "premise unverified". lane = one read-only audit slice. job key = a label for what a store or job is for: LOG, RETRY, COUNTER, STORE, NOTICE, FILTER, OTHER. studio lead = the Claude session doing the technical steps. PLAN table = the severity table of PLAN-002.md. Mode A = NOT RECORDED.
 
 # Lane L4c
+
+<!-- LANE-KEY -->
+> KEY (inline, added 16 Nov 2026, so this page can be read alone)
+> - take = the one recorded run of the lead-intake demo (made-up data, run through n8n), planned for 23 Nov 2026.
+> - lane = one read-only audit pass over a set of files by one agent. L1c, L3c, L4c, L5ac are continuation lanes that read what the first lane left. Findings are cited by id (for example L1c-FD-003 = finding 3 of lane L1c), not by line number; the merged list is merged-findings.md.
+> - Size columns are bytes unless the header says otherwise.
+> - Status words: READ = opened fully, apart from any cut named in the row. SKIMMED = only headers, search hits or a first and last slice read. LISTED-ONLY = name and size seen, contents not opened. NOT-READ = not opened (older rows also use it for "only the top read": treat those as LISTED-ONLY). OWNER-ONLY = never opened. Draw no conclusion from the absence of findings in a file that is not READ.
+> - UNVERIFIED = no source file states it and nobody checked. NOT FOUND = searched, none found. N/A = does not apply (the reason follows).
+> - Job keys (what a component does): COUNTER counts events; FILTER refuses input; RETRY repeats a failed step; LOG records output; STORE holds data; NOTICE alerts a person; OTHER none of these.
+> - DECISION line N = a cite to a numbered line of the lead session's decision list; what N points to is NOT RECORDED on this page (see GLOSSARY.md).
+> - The lead / lead session = the Claude session giving orders. Studio lead = the Claude session doing the technical steps. Other terms: GLOSSARY.md.
+
 NOTE 16 Nov 2026 (system-map session): this lane marked seven files under handover/demo/real-run/ as READ before decision 5 (the lead reads only masked take outputs, never owner-only or real-run folders) was applied. Whether these files are masked builder notes or owner-only is NOT known: the studio lead must say. Until then the continuation lane must not open real-run, and nothing in this file may be used for the take. Line 146 'none describes the take stores' holds only for the 38 files read, not for all 137.
 
 ## Coverage

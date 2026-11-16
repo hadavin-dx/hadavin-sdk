@@ -2,6 +2,18 @@ Terms used here (take, DECISION line N, job keys, UNVERIFIED, mf_leads and other
 Purpose: an inventory of one audit lane (CI, hooks, rules, the ask-your-data demo): what it read, what it found. For the lead to confirm or reject; nothing here is applied.
 # Lane L5a
 
+<!-- LANE-KEY -->
+> KEY (inline, added 16 Nov 2026, so this page can be read alone)
+> - take = the one recorded run of the lead-intake demo (made-up data, run through n8n), planned for 23 Nov 2026.
+> - lane = one read-only audit pass over a set of files by one agent. L1c, L3c, L4c, L5ac are continuation lanes that read what the first lane left. Findings are cited by id (for example L1c-FD-003 = finding 3 of lane L1c), not by line number; the merged list is merged-findings.md.
+> - Size columns are bytes unless the header says otherwise.
+> - Status words: READ = opened fully, apart from any cut named in the row. SKIMMED = only headers, search hits or a first and last slice read. LISTED-ONLY = name and size seen, contents not opened. NOT-READ = not opened (older rows also use it for "only the top read": treat those as LISTED-ONLY). OWNER-ONLY = never opened. Draw no conclusion from the absence of findings in a file that is not READ.
+> - UNVERIFIED = no source file states it and nobody checked. NOT FOUND = searched, none found. N/A = does not apply (the reason follows).
+> - Job keys (what a component does): COUNTER counts events; FILTER refuses input; RETRY repeats a failed step; LOG records output; STORE holds data; NOTICE alerts a person; OTHER none of these.
+> - DECISION line N = a cite to a numbered line of the lead session's decision list; what N points to is NOT RECORDED on this page (see GLOSSARY.md).
+> - The lead / lead session = the Claude session giving orders. Studio lead = the Claude session doing the technical steps. Other terms: GLOSSARY.md.
+
+
 > LEGEND (added 16 Nov 2026): a lane = one read-only audit pass over a set of files, run by one agent (lane L1, L2 ... L6; not the parked group L of decision 3). A continuation lane (L1c ...) reads what the first lane left. READ = opened fully. SKIMMED = headers or grep or first and last slice. NOT-READ = not opened or only the top (draw no conclusion from it). OWNER-ONLY = never opened (work/OWNER-ONLY.txt). Scope: real-v5 scenes 1 to 4 (decision 1). Decisions = inputs/DECISIONS-2026-11-16.md. Owner and date of each continuation lane: the studio lead, in the lead's launch message (none named yet).
 
 ## Coverage
