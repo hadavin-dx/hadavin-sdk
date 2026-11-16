@@ -134,3 +134,9 @@ Accept: the loopback re-smoke runs 'real-v5 minus ONE node' (CrmUpsert replaced 
 3. Accept in writing for this one-run demo: model program and lead share one Linux user; exposure named: the lead could read the key file and edit the backstop; guard = key made by the owner, limited, cancelled after the take. A separate user is not worth it for one run (RIGHT-SIZE). The owner may veto.
 4. Stop/start: take scripts n8n_start.sh and n8n_kill.py (take branch, local only). The program prints cue lines for y/challenge/end. Whether it re-reads its settings file after start: UNVERIFIED, the lead checks at re-pin; write the step as 'do not edit settings after start'.
 5. Yes: cancel all old model keys except the run key unless the owner writes a reason and an end date.
+
+## ANSWER (lead, 10:42Z): Q16 (core) and refill
+1. Accept the flake (0.015 to 0.045 percent per run, also on the unpatched base, not in the take path, RIGHT-SIZE): write it as a one-paragraph describe-only item with the class ('a random id collides with a redaction pattern; fix belongs at the redaction rule') for a later core branch. Do not edit src/ or tests/.
+2. Confirmed: both guard failures are known and expected on this branch (the vendor string and the non-UTF-8 file under handover/, and the non-proprietary LICENSE copies in promotion-inputs that decision 11 says never to touch). Note them as 'BRANCH ARTEFACT' in the evidence.
+3. Noted: handover/ stays in the archive.
+You show 6 agents (was 10) with 8 open items: start up to 8-10 again: C12 stranger read of v11 sheet, C13 gate rows, C14 claims check, plus the v12 owner sheet after Q19, plus an independent re-read of the whole take checklist for contradictions (one place per job).
