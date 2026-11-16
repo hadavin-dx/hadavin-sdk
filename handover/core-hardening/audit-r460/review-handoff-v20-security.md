@@ -1,0 +1,27 @@
+# Hand-off v20 security review, round 7 (egm-design, condensed copy of the inline report), 2026-11-16
+Read-only, nothing run: every behaviour claim is a prediction (author evidence is Postgres 16.15 only, author-run). Verdict: no new blocker provable from text; 3 majors, 9 minors. Most v19 findings closed by TEXT plus pins; pins carry more weight than body rules.
+
+## MAJOR
+- M1 Pseudo agent ids `-cli` and `-unattributed:<agent>`: spec line 342 says never written to the table; lines 362, 278, 404, 505 say they are reserved/booked. DB-3 CHECK (spend_guarded_writes.sql lines 43, 48) requires first char A-Z a-z 0-9. After L22, spend_reserve('-cli') raises 23514 (every CLI call with a store fails closed); an existing `-cli`/`-unattributed*` row makes the ADD CONSTRAINT refuse at apply. No test uses a `-` id; L25 does not mention them. Lead decides: change the rule, or skip the DB-3 functions for pseudo ids.
+- M2 "Empty result means error" fails for a rejected settle when rows exist: spend_settle final SELECT does not depend on p_worst/p_actual, so settle(NULL or negative) on an existing reservation returns one row, no error; reservation stays open. Test uses agent `obs` which never had rows, so the empty result came from missing rows. Direction safe (total stays high) but E0-F5 passes vacuously. Fix: make the SELECT depend on the guard or raise; test with existing rows.
+- M3 Least privilege: every definer runs as the database or migration owner (datdba; guard refuses OWNER TO, SET ROLE, ALTER other than ADD). A guard bypass runs with full owner rights (audit tables, DDL, DROP). Need a dedicated NOLOGIN owner role with only SELECT/INSERT/UPDATE on spend, spend_month, kill_switch and INSERT on the two logs; runner runs under it. Text conflict on who may call kill_switch_engage: SQL header lines 20-22 and OPEN-FOR-LEAD L22 say runtime; 5.6c item 6 says operator (same as readiness B2).
+
+## MINOR
+- m4 `_atomic_problems` relation list stops at an alias column list (`FROM spend AS d (a,b), pg_authid` misses pg_authid); same for TABLESAMPLE. Pin catches it in the real file; unit guard alone does not.
+- m5 Unicode folding follows Python not Postgres (Kelvin sign U+212A, long s U+017F, dotless i U+0131): `clocK_timestamp(` read as allowed call; `ſelect(` skipped as syntax word; `Kill_switch` read as pinned relation. Fold ASCII A-Z only; m3's six server comparisons do not cover it.
+- m6 search_path check folds quoted names (`"PG_CATALOG"` passes R4; server treats as different schema). Use `_fold`.
+- m7 Tokenizer ends `--` comment only at `\n`; Postgres also at `\r` (recollection of scan.l, unverified). Today read_text translates `\r`, so agreement is by accident. Fix tokenizer and add a server test.
+- m8 EXECUTE-string body rule forbids a statement only at the START of the string (`...; GRANT ALL ... TO PUBLIC` after first `;` not flagged). Only reachable for unlisted or re-pinned bodies.
+- m9 Fingerprint joins token text with single spaces (`@-` vs `@ -`, `E'x'` vs `E 'x'` collide). Hash exact statement bytes with comments stripped plus token kind and gap flag. Pins live in the same PR as the SQL: a PR editing both passes; the guard is a tripwire.
+- m10 Operators/functions in BEGIN ATOMIC bodies bind at creation with the migration session's search_path (hostile `>(numeric,integer)` or `date_trunc`). Start-up check should read pg_depend and require pg_catalog; runner should set search_path = pg_catalog.
+- m11 Smaller: `_SYNTAX_BEFORE_PAREN` skips unreserved words that can name functions (KEY, FILTER, OVER, CONFLICT, NOTHING, ELSIF); SET LOCAL lock_timeout/statement_timeout accepts 0; CREATE TABLE ... INHERITS (spend) passes S3; DROP TRIGGER IF EXISTS <pinned> ON <any table> unchecked; invoker functions rest on pin only; split_statements CASE/END depth miscounts `AS case`/`AS end` (fails closed mostly); statement_timeout 60 s is per statement, nine ALTERs could run about 9 minutes (comment says file fails at 60 s).
+- m12 60-minute kill-switch alert only fires when `limits status --check` runs; L13 default weekly with nobody named: worst-case detection about 7 days. Schedule at 5 to 15 minutes or drop the number.
+
+## v19 findings
+B1 RETURN body: closed in TEXT. M1 EXECUTE `%I.name(`: closed in TEXT. M2 audit triggers: closed for files; not closed against runtime `ALTER TABLE ... DISABLE TRIGGER` by the owner (tgenabled check unread). M3 MERGE/USING/TABLE: mostly closed (m4 counterexample). M4: closed by pin only. Decrease log unbounded (m5): measured, not closed (L24). Cutover reservations stuck: safe direction; `-cli` row blocks apply (M1). Amount 0/negative/NULL: reserve closed; settle NOT closed with existing rows (M2). ASCII homoglyph agent ids: not closed (stated (b)).
+
+## Held on static read
+Reserve/settle lock order consistent; over-open settle raises 23514 and rolls back; NaN/Infinity refused by usd < 1e12; one-sided day/month row changes nothing; CHECKs no longer NOT VALID; agent regex `$` refuses trailing newline (test lacks trailing `\n`/tab case); no secret found (only AKIAIOSFODNN7EXAMPLE).
+
+## Not checked
+Anything executed; PG 14/17; secdef_mutants_v20.py, secdef_audit_v20.py (tgenabled, owner, ACL), pg_v20.py beyond F5/G12/m3, other four held SQL files, pin values, src store code, GRANTS, concurrency, standard_conforming_strings off, SQL_ASCII, utility statements in LANGUAGE sql bodies, sections 0-5.6 of the 268 KB hand-off.
