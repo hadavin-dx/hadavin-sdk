@@ -26,6 +26,7 @@ Agent register (id, purpose, start, expected end, state):
 | LANE-L3c | continuation of L3: READ 158 review/resolve/lint reports and partly-read scripts | 07:01 | +45 min | closed (reported: PARTIAL, 92 READ, 66 NOT-READ (62 review reports + 4), 37 findings, 0 Blocker; no 2nd continuation, listed for the lead) |
 | LANE-L5ac | continuation of L5a: read its 8 NOT-READ files | 07:03 | +20 min | closed (reported: 8 of 8 READ, 13 findings, 0 Blocker) |
 | LANE-L1c | continuation of L1: read 86 NOT-READ files (patch chains skimmed per family allowed) | 07:04 | +45 min | running |
+| LANE-L6 | cross-cutting job pass over all lane files (one place per job: store, log, filter, counter, retry, notice) | 07:14 | +45 min | running |
 Not visible: take code repo duplicate-proof-lead-desk (lead covers locally; not guessed).
 
 ## Status 2026-11-16 06:50 UTC / 12:20 IST - ORDER 002 plan v2 written
