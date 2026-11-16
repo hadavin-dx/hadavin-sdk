@@ -1,12 +1,12 @@
 # C3 paste check: ROUND 1 RESOLUTION (2026-11-16, supersedes the patch description below)
-Two independent reviewers found 5 Major, 6 Nit each; all fixed in the regenerated patch plan-v5-fixes.patch (dry run: patch-dryrun.txt, rc 0).
+Two independent reviewers found 5 Major, 6 Nit each; all fixed in the regenerated patch plan-v5-fixes.patch (dry run output with rc=0 saved in patch-dryrun.txt).
 - Fix 1 (PowerShell): the switch exists from PowerShell 6, not 7. Now a plain step with an expected output (6 or higher), STOP on 5; the 5.1 replacement is labelled UNVERIFIED.
 - Fix 2 (listener count): one regex that checks 127.0.0.1 for the six fixed ports and any address for 55433 (the earlier form dropped the loopback check).
-- Fix 3 (placeholder): no longer a runner substitution (it contradicted rule R5, verbatim code). The literal prefix text is written into the five places; syntax check of the patched spans 13.1, 13.3, 13.8, 13.9 and block 14: bash -n 0, dash -n 0 (commands in this folder: patch-dryrun.txt, and the check was run on /tmp copy, not saved as file).
+- Fix 3 (placeholder): no longer a runner substitution (it contradicted rule R5, verbatim code). The literal prefix text is written into the five places; syntax check of the PATCHED plan: the same extractor run on a scratch copy of the patched plan, saved as evidence-c3c.md and spans-index-patched.tsv: 161 spans, the new spans 0.1b, 0.1c, the S13 prefix, 13.1, 13.3, 13.8, 13.9 all have bash -n 0 and dash -n 0; the 19 non-zero rows are the same placeholder or bare '&' fragments as before (12 of them in plan lines 108-112); python spans 0 failures.
 - Fix 4 (grep -RhoF) reverted: no evidence it is needed.
 - Added to the patch: 0.1b line-ending scan with missing-path guard, 0.1c data-shape check, UNVERIFIED 13, note that UNVERIFIED 2 is partly stale.
 - Inline spans now covered: evidence-c3b.md, 158 spans: 0 real failures; 11 fail only because of placeholders (<folder>, <pid>, <n>, <step> <log>) or bare '&' fragments; with placeholders filled 2 fragments remain (plan lines 112). Python spans: 8 compiled, 0 fail. The 7 PowerShell spans are only placeholder-scanned (no pwsh here).
-- Still not run: pwsh, shellcheck, n8n, Docker, WSL. Placeholders <pid>, <folder>, <block> are not defined in the plan (readers fill them by meaning).
+- Still not run: pwsh, shellcheck, n8n, Docker, WSL. Round 2 Major: <folder>, <pid>, <block> and the new <the same log path> were undefined and line 241 said <n> was the only value the runner fills in; the patch now rewrites that sentence and defines all four (lead fills them by hand). Round 2 reviewer read files only and ran nothing.
 
 # C3 paste check of plan-wp6-resmoke-v5.md (2026-11-16, core-hardening)
 
