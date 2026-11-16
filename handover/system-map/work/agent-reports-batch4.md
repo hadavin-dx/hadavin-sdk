@@ -999,3 +999,7 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 722 critical-path r17: answer split. FIXED by CURRENT ANSWER r18.
 - 723 not-checked r9: no single schedule. FIXED by CURRENT r10; fill script owner not assigned.
 - 724 L2c r10, 725 ARCHIVE-CUT-LIST r9, 726 owner-timeline r10: finished; hand-back text not seen by me, NOT DIGESTED.
+
+- 724 L2c r10: purpose missing. FIXED by STEPS r11.
+- 725 ARCHIVE-CUT-LIST r9: first move unsafe, approver unclear. FIXED by VERDICT r10.
+- 726 owner-timeline r10: r9 covered only part. FIXED by CURRENT r10; 10-minute wait still open.
