@@ -1,5 +1,8 @@
 # REPORT from system-map (newest on top, UTC and IST)
 
+## Status 2026-11-16 07:25 UTC / 12:55 IST - all lanes closed; SWEEP.md, ONE-PLACE-TABLE.md, MASTER-MAP.md written
+Agents running: 1 (sonnet EVIDENCE-1: runs partition, citation check, scan, unit tests; records raw output only). Own checks: 3740 of 3740 citations FOUND after I fixed 14 drifted or wrong ones; scan_outputs no defects; 21 unit tests OK. Counts: 797 map rows, 311 findings (11 Blocker candidates before L6, now 19). Lane gaps stay listed in SWEEP.md Exceptions (L1c 18, L3c 66, L4c 99 files NOT-READ). Next: evidence-1, 4 result reviewers (codebase-details, zoom-out, comprehension, design), resolve, FINAL.
+
 ## Status 2026-11-16 07:18 UTC / 12:48 IST - L1c closed (PARTIAL, 18 NOT-READ, 1 Blocker + 21 Major candidates); L6 running
 Agents running: 1 (sonnet LANE-L6: one-place job pass over all lane files). L2c, L3c, L4c, L5ac closed earlier. Next: L6 hand-back, merge, write SWEEP and ONE-PLACE-TABLE, evidence runner, result reviewers.
 
@@ -29,7 +32,8 @@ Agent register (id, purpose, start, expected end, state):
 | LANE-L3c | continuation of L3: READ 158 review/resolve/lint reports and partly-read scripts | 07:01 | +45 min | closed (reported: PARTIAL, 92 READ, 66 NOT-READ (62 review reports + 4), 37 findings, 0 Blocker; no 2nd continuation, listed for the lead) |
 | LANE-L5ac | continuation of L5a: read its 8 NOT-READ files | 07:03 | +20 min | closed (reported: 8 of 8 READ, 13 findings, 0 Blocker) |
 | LANE-L1c | continuation of L1: read 86 NOT-READ files (patch chains skimmed per family allowed) | 07:04 | +45 min | closed 07:17 UTC (PARTIAL: 18 NOT-READ) |
-| LANE-L6 | cross-cutting job pass over all lane files (one place per job: store, log, filter, counter, retry, notice) | 07:14 | +45 min | running |
+| EVIDENCE-1 | EVIDENCE RUNNER: runs partition.py, check_citations.py on lanes and 3 outputs, scan_outputs.py, unit tests; saves raw output to work/evidence-1.md; never judges | 07:26 | +15 min | running |
+| LANE-L6 | cross-cutting job pass over all lane files (one place per job: store, log, filter, counter, retry, notice) | 07:14 | +45 min | closed 07:25 UTC (PARTIAL, SKIMMED) |
 Not visible: take code repo duplicate-proof-lead-desk (lead covers locally; not guessed).
 
 ## Status 2026-11-16 06:50 UTC / 12:20 IST - ORDER 002 plan v2 written
