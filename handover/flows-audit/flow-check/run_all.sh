@@ -15,7 +15,7 @@
 # Raw output of every step goes to ./raw/ (files without a suffix = real-v5, files ending -film = film-v5).
 # Exit status: 0 only if every real-v5 default-mode run and the self-test exit 0 and no step aborted. Exit 3 = a build step aborted, 2 = usage/bad folder.
 set -u
-HERE=$(cd "$(dirname "$0")" && pwd); D="$HERE/../../demo"; PT="$HERE/../patches"; CK="$HERE/check_flows.py"; RAW="$HERE/raw"
+HERE=$(cd "$(dirname "$0")" && pwd); D="$HERE/../../demo"; PT="$HERE/../patches"; CK="$HERE/check_flows.py"; RAW="${RUN_ALL_RAW:-$HERE/raw}"   # RUN_ALL_RAW, RUN_ALL_TAKE_FLOWS and RUN_ALL_NESTED exist only for the nested failure test below (a second run of this script whose take check is made to fail)
 STRICT_IDS=""; ARGS=()
 for a in "$@"; do if [ "$a" = "--strict" ]; then STRICT_IDS="--require-real-credential-ids"; else ARGS+=("$a"); fi; done
 if [ -n "${ARGS[0]:-}" ]; then
@@ -72,10 +72,12 @@ python3 -I "$HERE/selftest.py" "$D/n8n-flows-real-v5" "$W/g/real" "$D/n8n-flows-
 T2=$(date +%s)
 # the take script itself: exit 0 and the lines the owner must see (a missing line sets this script's exit status to 1)
 # the take runs on the PATCHED copy (F-002 and F-008 applied, lead answers Q17-4 and Q18): exit 0 required, and the run-saving block must hold ACCEPTED lines only (no WARN)
-TAKE_CHECK_FLOWS="$W/g/real" TAKE_CHECK_FORM_EXPECT=15:14 bash "$HERE/take_check.sh" > "$RAW/take-check.txt" 2>&1; TC=$?
+TAKE_CHECK_FLOWS="${RUN_ALL_TAKE_FLOWS:-$W/g/real}" TAKE_CHECK_FORM_EXPECT=15:14 bash "$HERE/take_check.sh" > "$RAW/take-check.txt" 2>&1; TC=$?
+TCMISS=""   # set BEFORE the first use below (round 7 fix: it used to be set after the first two checks, so a failing take script ended this script with "TCMISS: unbound variable" and the first two checks were thrown away)
+# the FINAL line of take_check.sh must print the same number as its real exit status (a line that always says 0 would hide a failure)
+grep -q -F "FINAL: take_check exit status $TC." "$RAW/take-check.txt" || TCMISS="$TCMISS [FINAL line does not print exit status $TC]"
 grep -q -E "^WARN .*run-saving settings|^WARN accept-no-save" "$RAW/take-check.txt" && TCMISS="$TCMISS [a run-saving WARN on the patched copy]"
 grep -q -F "ACCEPTED: recovery flow not part of the take (decision 4)" "$RAW/take-check.txt" || TCMISS="$TCMISS [ACCEPTED line for the recovery flow]"
-TCMISS=""
 for w in "NOTHING RAN IN n8n" "READ THIS BLOCK BEFORE ANYTHING ELSE" "Query strings read:" "GATE BEFORE THE FIRST SEND" "Is saving of past runs off" "key check" "FINAL: take_check exit status"; do
   grep -q -F -- "$w" "$RAW/take-check.txt" || TCMISS="$TCMISS [$w]"
 done
@@ -99,7 +101,7 @@ PYEOF
 tcfail() { # name expected-line env-assignments...
   nm=$1; want=$2; shift 2
   env "$@" bash "$HERE/take_check.sh" > "$RAW/take-check-$nm.txt" 2>&1; x=$?
-  [ "$x" = 4 ] && grep -q -F -- "$want" "$RAW/take-check-$nm.txt" || TCMISS="$TCMISS [take_check $nm: want exit 4 and '$want', got exit $x]"
+  [ "$x" = 4 ] && grep -q -F -- "$want" "$RAW/take-check-$nm.txt" && grep -q -F "FINAL: take_check exit status 4." "$RAW/take-check-$nm.txt" || TCMISS="$TCMISS [take_check $nm: want exit 4, the FINAL line with 4 and '$want', got exit $x]"
 }
 # Q18: the take on the patched copy with ONE run-saving fault planted: each must be exit 4 with its own loud line (the checker must not hide it)
 for nm in form-off sub-off rec-saves; do cp -r -- "$W/g/real" "$W/tc/$nm" || TCMISS="$TCMISS [could not make the $nm test folder]"; done
@@ -130,7 +132,7 @@ printf 'import sys\nsys.exit(3)\n' > "$W/tc/exit3.py"
 for pair in "2:bad-ddl:TAKE_CHECK_DDL=$W/tc/bad-ddl.sql" "3:exit3:TAKE_CHECK_CK=$W/tc/exit3.py"; do
   want=${pair%%:*}; rest=${pair#*:}; nm=${rest%%:*}; assign=${rest#*:}
   env "$assign" TAKE_CHECK_FLOWS="$W/g/real" TAKE_CHECK_FORM_EXPECT=15:14 bash "$HERE/take_check.sh" > "$RAW/take-check-$nm.txt" 2>&1; x=$?
-  [ "$x" = "$want" ] && grep -q -F "THE CHECKER DID NOT GIVE A VERDICT (its exit status is $want" "$RAW/take-check-$nm.txt" || TCMISS="$TCMISS [take_check $nm: want exit $want and the no-verdict line, got exit $x]"
+  [ "$x" = "$want" ] && grep -q -F "THE CHECKER DID NOT GIVE A VERDICT (its exit status is $want" "$RAW/take-check-$nm.txt" && grep -q -F "FINAL: take_check exit status $want." "$RAW/take-check-$nm.txt" || TCMISS="$TCMISS [take_check $nm: want exit $want and the no-verdict line, got exit $x]"
 done
 # (3) the saving-ON flows must be named in the top block with their reason (INFO), not shown silently
 [ "$(grep -c '^INFO: mf-.* run saving is ON' "$RAW/take-check.txt")" = 3 ] || TCMISS="$TCMISS [take_check: want 3 INFO lines saying run saving is ON on purpose (form, hook, sub-workflow)]"
@@ -141,6 +143,14 @@ tcfail recovery-accept-idle "accept-no-save --accept-no-save mf-recovery.json ex
 tcfail no-table-file "THE TABLE FILE IS MISSING" TAKE_CHECK_DDL="$W/tc/does-not-exist.sql"
 tcfail old-table "A COLUMN OR TABLE IS MISSING" TAKE_CHECK_DDL="$D/n8n-flows/mf_leads.sql"
 tcfail zero-queries "0 QUERY STRINGS WERE READ" TAKE_CHECK_FLOWS="$W/tc/noquery"
+# Round 7: a failing take script must give a clean report, not a crash. A second run of this script is made on a copy whose form flow has run saving off:
+# its take check exits 4, so the nested run must end with exit status 1, show "take_check.sh exit=4" and a named missing line, and must not crash ("unbound variable").
+if [ -z "${RUN_ALL_NESTED:-}" ]; then
+  mkdir -p "$W/tc/nested-raw"
+  RUN_ALL_NESTED=1 RUN_ALL_RAW="$W/tc/nested-raw" RUN_ALL_TAKE_FLOWS="$W/tc/form-off" FC_OUT="$W/tc/nested-selftest-out" bash "$HERE/run_all.sh" "$W/tc/nested-work" > "$W/tc/nested.txt" 2>&1; NX=$?
+  [ "$NX" = 1 ] && grep -q -F "[take_check.sh exit=4] missing lines:" "$W/tc/nested.txt" && grep -q -F "run_all exit status (real-v5 default runs + self-test): 1" "$W/tc/nested.txt" && ! grep -q -i "unbound variable" "$W/tc/nested.txt" || TCMISS="$TCMISS [nested run with a failing take check: want exit 1, a clean 'take_check.sh exit=4' report and no crash, got exit $NX]"
+  cp -- "$W/tc/nested.txt" "$RAW/nested-take-failure.txt" 2>/dev/null
+fi
 echo "checker runs wall time: $((T1-T0)) s; self-test wall time: $((T2-T1)) s" | tee "$RAW/timing.txt"
 RC=0
 for f in pristine patched; do   # gating: real-v5 default mode, exactly one exit line each
