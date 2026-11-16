@@ -388,7 +388,7 @@ wsl.exe -d Ubuntu -e bash $RS 11.5 s11 C
 wsl.exe -d Ubuntu -e bash $RS 11.6 s11 C
 ```
 
-**52-57. Case E** double-mail window (plan lines 378-399). Expected: E.0 (it takes no argument: plan line 378; the E2 repeat is plan line 398) `"upsert_ack_delay_ms": 0` and `no-mail-hold`; E.1 the key, `GONE-OK`, restart readiness, driver alive; E.2 `HIT`; then 11.4 and 11.5 with argument `E` (not 11.6); 11.8 every line `"ok": true` for A, B, B2, C (and D if run; plan line 399), except a key listed in `b2-void.txt`; the E line (and the E2 line if the repeat ran) is judged under row DM, not by `ok` alone. Differs: E MISSED = one repeat as `E2` (about 8 min, plan line 398): run E.0 again WITHOUT an argument, then the four commands below (plan line 398), then judge as under 11.8:
+**52-57. Case E** double-mail window (plan lines 378-399). Expected: E.0 (it takes no argument: plan line 378; the E2 repeat is plan line 398) `"upsert_ack_delay_ms": 0` and `no-mail-hold`; E.1 the key, `GONE-OK`, restart readiness, driver alive; E.2 `HIT`; then 11.4 and 11.5 with argument `E` (not 11.6); 11.8 every line `"ok": true` for A, B, B2, C (and D if run; plan line 399), except a key listed in `b2-void.txt`; the E line (and the E2 line if the repeat ran) is judged under row DM, not by `ok` alone. Differs: E MISSED = one repeat as `E2` (about 8 min, plan line 398): run E.0 again WITHOUT an argument, then the four commands below (plan line 398: E.1 and E.2 with `E2`, then 11.4 and 11.5 with `E2`), then judge as under 11.8. The E.0 command is the one shown above; it takes no argument:
 
 ```powershell
 wsl.exe -d Ubuntu -e bash $RS E.1 s11 E2
@@ -397,7 +397,7 @@ wsl.exe -d Ubuntu -e bash $RS 11.4 s11 E2
 wsl.exe -d Ubuntu -e bash $RS 11.5 s11 E2
 ```
 
-E.0, as above; a double mail (`mails >= 2`) is a GO finding that blocks the crash-safe claim (plan line 399 wording); any not-ok A, B, B2, C (or D if run) line = STOP, except a key in `b2-void.txt` (listed, not counted); any other not-ok E or E2 line is a GO finding with its fields; `mails >= 2` as stated above; if E2 also MISSED, row DM carries "'processed once' is NOT shown for a crash between SMTP send and MarkDone (window untested); the take is not claimed crash-safe until it is tested and holds, is fixed, or the owner accepts in writing" into every owner-facing claim (plan line 398).
+Other results (plan lines 398-399): a double mail (`mails >= 2`) is a GO finding that blocks the crash-safe claim (plan line 399 wording); any not-ok A, B, B2, C (or D if run) line = STOP, except a key in `b2-void.txt` (listed, not counted); any other not-ok E or E2 line is a GO finding with its fields; if E2 also MISSED, row DM carries "'processed once' is NOT shown for a crash between SMTP send and MarkDone (window untested); the take is not claimed crash-safe until it is tested and holds, is fixed, or the owner accepts in writing" into every owner-facing claim (plan line 398).
 
 ```powershell
 wsl.exe -d Ubuntu -e bash $RS E.0 s11
@@ -568,7 +568,7 @@ Part B: the plan's own 20 pass/fail rows (plan section 7, lines 464-486). Fill i
 ## 7. What I did not do or could not check
 
 - Nothing here was run; every line is UNVERIFIED.
-- Second pass (reader findings C-1 to C-7): the PowerShell blocks are wrapped with their log names; both plan line 3 commands and the plan line 423 tar-file command are pasted in full (`<USER>` for the user folder); the P-2 body (plan lines 233-237) and the P-3a Write step are still [LEAD FILLS]; the run.sh forms for 0c.3r, 1.3d, 2.err, 11.7 and the repeat as `D` are my reading of plan lines 226, 264, 273, 296, 377 and are UNVERIFIED as exact conditions. I did not read plan lines 130-225, 268-305, 315-375 or 447-486 in this pass, and the plan's Linux user name in the realpath check (plan lines 264, 423) is not copied.
+- Second pass (reader findings C-1 to C-7): the PowerShell blocks are wrapped with their log names; both plan line 3 commands and the plan line 423 tar-file command are pasted in full (`<USER>` for the user folder); the P-2 body (plan lines 234-236) is now copied in full (B4-5, checked against the plan by sed; the lead still re-pins its four values) and the P-3a Write step has no command to copy (its bodies stay in the plan); the run.sh forms for 0c.3r, 1.3d, 2.err, 11.7 and the repeat as `D` are my reading of plan lines 226, 264, 273, 296, 377 and are UNVERIFIED as exact conditions. I did not read plan lines 130-225, 268-305, 315-375 or 447-486 in this pass, and the plan's Linux user name in the realpath check (plan lines 264, 423) is not copied.
 - The plan's paste bodies are cited by line, not copied, to avoid drift (the plan itself says each paste file is "the code span ... verbatim").
 - I assumed the step-to-run.sh mapping for steps with no explicit paste file name (for example `10`, `6`, `7` in plan line 226 are named; `1.3d`, `0c.3r`, `2.err`, `11.7` are conditional pastes I referenced by line, not by a command here).
 - The 49-minute figure and the notice wording come from the lead's answers and the old open-items page, not from the two input files; the plan has no step for them (Part A).
