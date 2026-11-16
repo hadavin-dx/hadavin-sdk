@@ -7,3 +7,6 @@
 - F6-06: rewritten to match 1(c).
 - F6-07 (new): missing/empty/non-string message_id; Nit for take, Major for client build; 422 guard and T20-style test proposed.
 - Counts line updated. F6-02 unchanged.
+
+## Reader pass
+- F6-AUDIT.md: plain summary and glossary added at top; F6-01 cell split into 5 numbered points ("processing" and "safe" explained); F6-03 README claim checked by grep over 68 markdown files (field names only in audit notes); F6-02 title and F6-07 "lost silently" reworded as unobserved/UNVERIFIED; one rating per severity cell (Nit*), counts line fixed; edit history moved to end; "caller" replaced by "sender".
