@@ -22,7 +22,7 @@ What is old, what replaced it, and how it is marked. Patch files were not edited
 | `DEAD-MAN-CHECK.md`, `unverified-claims-check.md` at the top level | SUPERSEDED (replaced by `v5/DEAD-MAN-CHECK.md` and `README.md`) | banner on line 1 |
 | `v2/` | SUPERSEDED | banner on `v2/README.md` line 1 and new `v2/SUPERSEDED-NOTE.md` |
 | `v3/` | SUPERSEDED but still cited by v5 for raw files and C7b evidence | banner on `v3/README.md` line 1 and new `v3/SUPERSEDED-NOTE.md` |
-| `v4/` | SUPERSEDED | new `v4/SUPERSEDED-NOTE.md` only: `v4/SHA256SUMS.txt` lists `README.md` and `DEAD-MAN-CHECK.md`, a banner in them would break `sha256sum -c` (run after my changes: all OK). `v4/DEAD-MAN-CHECK.md` still has its v3 title, unedited text (`v5/README.md:32`) |
+| `v4/` | SUPERSEDED | new `v4/SUPERSEDED-NOTE.md` only: `v4/SHA256SUMS.txt` lists `README.md` and `DEAD-MAN-CHECK.md`, a banner in them would break `sha256sum -c` (run after my changes: all OK; the independent evidence runner repeated that `sha256sum -c` run, `evidence-chain-r1.md` Part D). `v4/DEAD-MAN-CHECK.md` still has its v3 title, unedited text (`v5/README.md:32`) |
 | `v5/DEFERRED-A-01.patch`, `v5/CUT-C-01-FULL-NOT-FOR-THE-TAKE.patch` | DEFERRED / CUT, not superseded; named by their file names | no change |
 
 ## Reports of rounds that were replaced (not patches)
