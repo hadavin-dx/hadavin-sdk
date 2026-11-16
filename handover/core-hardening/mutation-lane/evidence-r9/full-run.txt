@@ -116,3 +116,76 @@ REFUSED: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpa
   PASS: T20.4 exit 129/130/143 (got 129)
   PASS: T20.4 file restored
   PASS: T20.4 state empty
+  PASS: T20.5 exit 129/130/143 (got 129)
+  PASS: T20.5 file restored
+  PASS: T20.5 state empty
+== T21 signal handler logic (deterministic): a signal while planted is only remembered, then delivered once
+handler logic ok
+  PASS: T21 handler logic
+== T22 state folder checks: wrong mode, a link, another owner are refused (exit 2)
+REFUSED: state folder /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9/full/tmpstate/hadavin-mutation-lane-0 is not a plain
+  PASS: T22a mode 755 refused (got 2)
+REFUSED: state folder /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9/full/tmpstate/hadavin-mutation-lane-0 is not a plain
+  PASS: T22b symlinked state folder refused (got 2)
+  PASS: T22b nothing written through the link
+REFUSED: state folder /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9/full/tmpstate/hadavin-mutation-lane-0 is not a plain
+  PASS: T22c other owner refused (got 2)
+== T23 forged state: a backup whose hash differs, a marker that is a link, --restore inside the real repository: all refused, nothing written
+./safety-tests.sh: line 1483:  2097 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X ${NCF---no-control} --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+RESTORE FAILED: the saved backup does not match the hash recorded in the marker: nothing written; the mutant may still be planted; marker and backup k
+  PASS: T23a hash mismatch refused, exit 3 because a marker exists and the mutant may still be planted (got 3)
+  PASS: T23a file not written
+RESTORE FAILED: state file /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9/full/tmpstate/hadavin-mutation-lane-0/b8648bbff
+  PASS: T23b marker as a link refused, exit 3 (got 3)
+  PASS: T23b file not written
+test group already gone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9/full/tmpstate/hadavin-mutation-lane-0/b8648bbffe3a88c0.backup; hash matches saved original: True
+  PASS: T23 genuine restore still works
+REFUSED: --root /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9/full/toy/repo is, contains or lies inside the real reposit
+exit 2 does NOT mean nothing is planted: nothing was written and the file under test was not checked; `--restore --sha COMMIT [--repo R]` compares the
+  PASS: T23c --restore in the real repository refused for that reason (got 2, reason hits 1)
+== T24 import check: the tests would load the target from another tree (exit 2); the right tree passes and is recorded
+REFUSED: import check: `import mod` loads '/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r9/full/toy/repo/src/mod.py', not /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchp
+  PASS: T24a refused (got 2)
+  PASS: T24a file unchanged
+  PASS: T24b recorded in the raw file
+  PASS: T24b raw file lists 4 environment names
+== T25 TESTS is an allowlist: every bypass named in review r2 is refused by the argument check (exit 2, message 'TESTS argument'), one check each
+  PASS: T25 @argsfile refused by the argument check (rc 2, hits 1)
+  PASS: T25 -k @argsfile refused by the argument check (rc 2, hits 1)
+  PASS: T25 -qc (clustered c) refused by the argument check (rc 2, hits 1)
+  PASS: T25 -qo (clustered o) refused by the argument check (rc 2, hits 1)
+  PASS: T25 -qp (clustered p) refused by the argument check (rc 2, hits 1)
+  PASS: T25 -c refused by the argument check (rc 2, hits 1)
+  PASS: T25 -cfoo.ini refused by the argument check (rc 2, hits 1)
+  PASS: T25 -oaddopts=-x refused by the argument check (rc 2, hits 1)
+  PASS: T25 --collect-only refused by the argument check (rc 2, hits 1)
+  PASS: T25 --co refused by the argument check (rc 2, hits 1)
+  PASS: T25 --setup-plan refused by the argument check (rc 2, hits 1)
+  PASS: T25 --setup-only refused by the argument check (rc 2, hits 1)
+  PASS: T25 --help refused by the argument check (rc 2, hits 1)
+  PASS: T25 -h refused by the argument check (rc 2, hits 1)
+  PASS: T25 --version refused by the argument check (rc 2, hits 1)
+  PASS: T25 -V refused by the argument check (rc 2, hits 1)
+  PASS: T25 --noconftest refused by the argument check (rc 2, hits 1)
+  PASS: T25 --ignore=tests refused by the argument check (rc 2, hits 1)
+  PASS: T25 --ignore tests refused by the argument check (rc 2, hits 1)
+  PASS: T25 -p other refused by the argument check (rc 2, hits 1)
+  PASS: T25 -pother refused by the argument check (rc 2, hits 1)
+  PASS: T25 -p (no value) refused by the argument check (rc 2, hits 1)
+  PASS: T25 -k (no value) refused by the argument check (rc 2, hits 1)
+  PASS: T25 --basetemp refused by the argument check (rc 2, hits 1)
+  PASS: T25 --rootdir refused by the argument check (rc 2, hits 1)
+  PASS: T25 --junitxml refused by the argument check (rc 2, hits 1)
+  PASS: T25 --confcutdir refused by the argument check (rc 2, hits 1)
+  PASS: T25 --override-ini refused by the argument check (rc 2, hits 1)
+  PASS: T25 --import-mode refused by the argument check (rc 2, hits 1)
+  PASS: T25 -p no:runner (core plugin) refused by the argument check (rc 2, hits 1)
+  PASS: T25 -p no:skipping (core plugin) refused by the argument check (rc 2, hits 1)
+  PASS: T25 -p no:python (core plugin) refused by the argument check (rc 2, hits 1)
+  PASS: T25 -p no:terminal (core plugin) refused by the argument check (rc 2, hits 1)
+  PASS: T25 -p no:mark (core plugin) refused by the argument check (rc 2, hits 1)
+  PASS: T25 -p no:assertion (core plugin) refused by the argument check (rc 2, hits 1)
+  PASS: T25 -p no:capture (core plugin) refused by the argument check (rc 2, hits 1)
+  PASS: T25 -p no:fixtures (core plugin) refused by the argument check (rc 2, hits 1)
+  PASS: T25 -p no:logging (core plugin) refused by the argument check (rc 2, hits 1)
+  PASS: T25 -p no:main (core plugin) refused by the argument check (rc 2, hits 1)
