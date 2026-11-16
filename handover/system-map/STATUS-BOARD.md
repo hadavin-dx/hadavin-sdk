@@ -1,5 +1,5 @@
 # STATUS BOARD system-map
-UPDATED_UTC: 2026-11-16T10:36:28Z (IST = UTC+5:30)
+UPDATED_UTC: 2026-11-16T10:37:44Z (IST = UTC+5:30)
 SESSION: system-map
 ORDER: 017-025; lead ANSWER 10:23Z item 8 (pause stays) read
 STATE: WORKING
@@ -7,12 +7,12 @@ BOOT_ID: 6bc0bf7e
 ITEMS_TOTAL: 20
 ITEMS_OPEN: 12 (rows below 100 percent or blocked in the table, counted by an agent; M3, M4 and M6 queue tags do not match the board, to reconcile)
 PERCENT: 85
-AGENTS_RUNNING: 7 (ORDER 026: M2 round 2; M4 alignment; M5 round 2 read; M6 B3; M8/M15 cut list; M17 v5 edits check; M10 ring aim). QUEUE tags M3, M4, M6 reconciled to the board (see QUEUE.md lines 13, 14, 16). Evidence: edits grep-verified single matches; scan and tests not re-run since.
+AGENTS_RUNNING: 6 (row 1 builder brief; T19 gap fill from unread plan lines; row DM crash-test read; M17 conflict wording; MASTER-MAP rows L8-X-020..024; write_outputs PIN guard draft). 7 ORDER 026 agents finished: M2 round 2 applied, M5 round 2 partly applied, M4/M6/M8/M10/M17 digested in work/agent-reports-batch4.md. Zoom-out finding: the ring log covers documents, not row 1 (no builder named), T19 (not runnable) or DM. Evidence: edits grep-verified; scan and tests not re-run.
 INTERRUPTED: none
 NEXT: patched-copy answer already applied everywhere; next: apply the 6 agent reports' wording fixes (STATUS-BOARD, OWNER-VIEW row 3, REPORT.md, README/LEAD-PAGE structure); scan_outputs.py fix and tests still to do. ORDER 024: sed never ran, counts 6 opus, 64 sonnet, 0 fable. M14: 1 failed (licence, branch artefact), 9390 passed, rc=1. HELD for the lead: v5 step J editor; D-04/D-05 (post only); QUESTIONS 8 (film pause); rehearsal trim; row 1 builder and date.
-CAPACITY: nproc 4, load 0.34, RAM 0 GB used of 15 GB, DISK / 24 GB free of 252 GB (40 percent used); top 3: /tmp/pytest-of-root 616M, /tmp/sm-fresh 624M, /tmp/claude-0 1.3G; nothing removed.
+CAPACITY: nproc 4, load 0.48, RAM 0 GB used of 15 GB, DISK / 24 GB free of 252 GB (40 percent used); top 3: /tmp/pytest-of-root 616M, /tmp/sm-fresh 624M, /tmp/claude-0 1.3G; nothing removed.
 FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); the studio lead starts Docker and runs the rehearsal (decision 12); no take date. (3) S9-5, S9-12, S9-3, S9-2 not yet applied in v5 or the scope sheet; S9-1 and S9-4 deferred, describe-only (decision 5). (4) the take-time value substitution (BL-wp6-G1) is not built. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.
-PUSHED_UTC: 2026-11-16T10:36:28Z
+PUSHED_UTC: 2026-11-16T10:37:44Z
 
 ## ITEMS
 | # | item | state | % | evidence file | note |
@@ -41,10 +41,9 @@ PUSHED_UTC: 2026-11-16T10:36:28Z
 ## AGENTS (from the real agent list at the last beat)
 | id | role | what it does | state |
 |---|---|---|---|
-| a9383eaeff9795187 | codebase-details | M2 FINAL-CROSSCHECK round 2 | running |
-| a4b94caec9c6cae89 | structural | M4 MASTER-MAP vs ONE-PLACE-TABLE | running |
-| a40d0955b3aa61ea1 | comprehension | M5 OWNER-VIEW round 2 read | running |
-| a7b27d08401b1b858 | codebase-details | M6 B3 row-keying fix | running |
-| a922aafa141299991 | structural | M8/M15 cut list points | running |
-| aad1d0e535f6db769 | implementation-readiness | M17 v5 edit lines check | running |
-| afc789c46691f2f52 | zoom-out | M10 ring aim | running |
+| a5df98b61f170e5e1 | implementation-readiness | row 1 builder brief | running |
+| ada54721b3dd5836a | implementation-readiness | T19 gaps from unread plan lines | running |
+| af568eecb807f0c5b | codebase-details | row DM crash test plain definition | running |
+| af2f32b0b7d96fdb6 | structural | M17 conflict wording | running |
+| acc1d6167023cf5f4 | structural | MASTER-MAP L8-X-020..024 rows | running |
+| a31cc48c9bbbf8f61 | codebase-details | write_outputs PIN guard draft | running |
