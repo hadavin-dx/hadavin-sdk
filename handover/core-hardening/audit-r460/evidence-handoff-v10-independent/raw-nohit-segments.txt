@@ -1,0 +1,227 @@
+## store/memory.py:185-210  [F-v10#17]
+                    r.model_copy(deep=True) for r in self._approvals.values() if r.status in statuses
+                ]
+    
+       ...
+                    (
+                        v
+## guard/http.py:85-98  [F-v10#17]
+        def lookup() -> None:
+            try:
+                box["answers"] = socket.getaddrinfo(host, port, type=socket.SOCK_STREAM)
+       ...
+            _STUCK.release()  # the thread never ran, so nothing else will give the permit back
+            raise
+## store/migrations/0001_core.sql:85-93  [F-v10#17]
+    CREATE INDEX dead_letters_by_run ON dead_letters (run_id, seq);
+    
+    CREATE TABLE spend (
+       ...
+    );
+    
+## store/migrate.py:86-90  [F-v10#17]
+    _ANY_CREATE = re.compile(r"\bCREATE\b", re.IGNORECASE)
+    _UNREAD = re.compile(
+        r"\bALTER\s+TABLE\b[^;]*\b(?:(?:BIG|SMALL)?SERIAL|SERIAL[248])\b|\bAS\s+IDENTITY\b|\bCREATE\s+SEQUENCE\b",
+        re.IGNORECASE,
+    )
+## llm/openai_compat.py:117-129  [F-v10#21]
+            started, used = time.monotonic(), [0, 0]
+            for _ in range(2):  # the forced answer missing: one more request (design 4.3)
+                got = self._retry(
+       ...
+                    got.calls = [ToolCall(name=forced, input=found)]
+                    break
+## config.py:57-58  [F-v10#29]
+        input_usd_per_mtok: Money
+        output_usd_per_mtok: Money
+## demos/ask-your-data/askdata/meter.py:48-55  [F-v10#39]
+    def worst_case_usd(route: Route, prompt_chars: int) -> Decimal:
+        """Input estimate (the core's pessimistic 3 characters a token) at the input rate plus `max_tokens` at the
+        output rate."""
+       ...
+            + Decimal(route.max_tokens) * route.output_usd_per_mtok
+        ) / M
+## k1b/loop.py:170-170  [F-v10#39]
+                    budget.charge(worst_case_usd(route_prices, system, messages))
+## k1b/loop.py:206-206  [F-v10#39]
+                    budget.charge(verdict.cost_usd)
+## llm/common.py:164-172  [F-v10#39]
+        tokens_in = tokens[0] or estimate_tokens(sent)
+        tokens_out = tokens[1] or estimate_tokens(text + json.dumps([c.input for c in calls]))
+        cost = (
+       ...
+        return Reply(
+            text=text,
+## llm/common.py:59-62  [F-v10#39]
+    def estimate_tokens(text: str) -> int:
+        """For a provider that reports no usage. Deliberately pessimistic (3 chars a token, never 0): a budget fed
+        zeros never fires."""
+        return max(1, len(text) // 3)
+## models.py:19-20  [F-v10#41]
+    def now() -> datetime:
+        return datetime.now(UTC)
+## runtime/agent_loop.py:425-425  [F-v10#43]
+                    reply = self.llm.chat(
+## config.py:349-349  [F-v10#47]
+        @model_validator(mode="after")
+## llm/anthropic.py:136-136  [F-v10#51]
+            # Thinking blocks are the model's working, never its answer: only text and tool calls are read.
+## llm/gemini.py:98-98  [F-v10#51]
+            # Thinking is billed as output; candidatesTokenCount leaves it out.
+## tests/test_k5_tools.py:608-608  [F-v10#52]
+            rt.llm = ScriptLLM([{"tool": "app"}, {"propose": mine, "evidence": evidence_ids}])
+## k1b/loop.py:115-122  [F-v10#56]
+    def worst_case_usd(route: Route, system: str, messages: list[dict[str, str]]) -> Decimal:
+        """Upper estimate for one abandoned call (one attempt, a full reply): the pessimistic input estimate plus
+        ``max_tokens`` of output. Charged when a call times out, because its real cost is unknown."""
+       ...
+            + Decimal(route.max_tokens) * route.output_usd_per_mtok
+        ) / Decimal(1_000_000)
+## runtime/agent_loop.py:440-440  [F-v10#63]
+                self.limits.charge(agent_id, reply.cost_usd)
+## cli.py:115-117  [F-v10#77]
+        rep.add_argument(
+            "--max-usd", required=True, type=_money, help="total cost cap for this invocation"
+        )
+## config.py:400-415  [F-v10#88]
+    class _UniqueKeyLoader(yaml.SafeLoader):
+        """A duplicate mapping key is an error: safe_load would keep the last value, silently changing a level."""
+    
+       ...
+        """``yaml.safe_load`` that refuses duplicate mapping keys."""
+        return yaml.load(text, Loader=_UniqueKeyLoader)  # noqa: S506  # nosec B506 - SafeLoader subclass
+## app.py:166-169  [F-v10#91]
+            detector = combine(members)
+            # The approval summary screen has no agent to charge, so it runs the unmetered members only; the judge
+            # screens the document and tool output, where untrusted text enters (config refuses a judge alone).
+            summary_detector = combine([m for m in members if m.backend != "llm_judge"])
+## tests/test_k3_pilot_env.py:61-61  [F-v10#99]
+                "llm": {"kind": "openai_compat", "base_url": "https://llm.example/v1"},
+## tests/test_p5p6_followups.py:82-82  [F-v10#99]
+        llm = {"kind": "openai_compat", "base_url": "https://llm.example/v1"}
+## tests/test_p5p6_followups.py:392-392  [F-v10#99]
+            "kind": "anthropic",
+## tests/test_p5_llm.py:38-46  [F-v10#99]
+        api = _llm(cfg_dir, {"kind": "anthropic", "api_key_secret_name": "a", "platform": "api"})
+        vertex = _llm(
+            cfg_dir, {"kind": "anthropic", "platform": "vertex", "project_id": "p", "region": "global"}
+       ...
+        # Retry settings say how the call is made, not which model answers: no new gate run.
+        tuned = {"kind": "anthropic", "api_key_secret_name": "a", "platform": "api", "max_attempts": 5}
+## llm/retry.py:23-23  [F-v10#108]
+    MAX_DELAY_S = 8.0
+## app.py:160-160  [F-v10#121]
+            )
+## backends/table.py:150-150  [F-v10#121]
+    class _AnchorSettings(KindSettings):
+## backends/table.py:221-222  [F-v10#121]
+        @model_validator(mode="after")
+        def _one_source(self) -> Ed25519LocalSettings:
+## tests/test_p5p6_followups.py:101-101  [F-v10#123]
+        rt.detector = AnyOf([RegexDetector(0.5), judge(model)])
+## tests/test_k5_tools.py:723-731  [F-v10#127]
+    def test_k5_run_budget_stops_run(tmp_path):
+        k5_tools.RESULTS["app"] = "ERROR 10.0.0.5"
+        llm = CostLLM([{"tool": "app"}, {"tool": "app"}, {"tool": "app"}, {"noaction": True}])
+       ...
+        assert "run_budget" in cards[-1].text
+        assert next(e for e in _events(rt, run) if e.operation == "abstain").caught_by == "guard"
+## limits.py:26-26  [F-v10#157]
+            if day >= budget.daily:
+## limits.py:28-28  [F-v10#157]
+            if month >= budget.monthly:
+## tools.py:1122-1122  [F-v10#185]
+                worker = threading.Thread(target=work, daemon=True, name="hadavin-tool")
+## guard/http.py:93-93  [F-v10#185]
+        worker = threading.Thread(target=lookup, daemon=True, name="hadavin-resolve")
+## tests/test_s5_runtime.py:76-76  [F-v10#186]
+        assert rt.store.get_run(run.run_id).cost_usd == Decimal("0.00225")
+## evals.py:73-73  [F-v10#225]
+                reply = llm.chat(
+## extract.py:47-47  [F-v10#225]
+            reply = llm.chat(
+## k1b/loop.py:94-94  [F-v10#225]
+                box["reply"] = llm.chat(*args, **kwargs)  # type: ignore[arg-type]
+## guard/judge.py:72-72  [F-v10#259]
+            reply = self.llm.chat(
+## guard/bedrock_guardrail.py:101-101  [F-v10#260]
+            resp = self._client.apply_guardrail(
+## demos/ask-your-data/askdata/pipeline.py:155-155  [F-v10#265]
+                    reply = self.llm.chat(
+## tests/fixtures/config/config.yaml:6-8  [F-v10#297]
+        input_usd_per_mtok: "3.00"
+        output_usd_per_mtok: "15.00"
+        max_tokens: 1024
+## tests/demo_askdata/test_meter.py:121-170  [F-v10#350]
+    def test_reserve_books_the_worst_case_and_settle_replaces_it_with_the_real_cost(tmp_path):
+        m = make(tmp_path)
+        m.reserve(Decimal("0.50"))
+       ...
+    
+    def test_remaining_is_the_smaller_of_the_two_rooms(tmp_path):
+## actions/secrets_file.py:34-64  [racks#38]
+            # ConfigError on `..`, absolute names or links out of the folder. The result is the real path, so
+            # O_NOFOLLOW below refuses a link swapped in after this check.
+            path = confined(self.root, name)
+       ...
+                        f"secret {name!r}: the mounted file cannot be read ({type(exc).__name__})"
+                    ) from None
+## .github/workflows/ci.yml:119-119  [racks#47]
+            run: bandit -q -r src demos -ll
+## actions/secrets_file.py:54-54  [racks#78]
+                if os.name != "nt" and mode & (stat.S_IROTH | stat.S_IWGRP | stat.S_IWOTH):
+## audit/signer.py:182-182  [racks#79]
+        _create(private_real, pem, 0o600)
+## tests/test_g4_parity.py:98-98  [racks#87]
+        "update its set of rules",
+## tests/test_g4_parity.py:221-222  [racks#87]
+            "we should delete from the queue only after a fix",
+            "drop table pressure",
+## approvals/gate.py:4-4  [racks#110]
+    (`sanitise_text` and its helpers) and G4 (`withhold_commands`, rewritten platform-neutral and fail closed).
+## approvals/gate.py:366-377  [racks#110]
+    
+    # G4: no command a person could paste to change a system reaches them. A change goes only through an action
+    # contract, the gate and a signed approval, which the executor runs itself. Model-derived text can still carry one
+       ...
+    # read-only. The SQL, `rm`, `curl | sh` and PowerShell shapes have no read form, so they are write shapes.
+    #
+## approvals/channel.py:19-21  [racks#110]
+        """WARDEN's G3 cleaning (`gate.sanitise_text`): no link, image, HTML, mention, control character or forged
+        markdown structure survives in text a person acts on; then G4 (`gate.withhold_commands`): no command a person could
+        paste to change a system, on any platform; then ONE redaction, last."""
+## approvals/gate.py:695-695  [racks#111]
+            end = text.find("\n", m.end())
+## tests/warden_port/privacy_corpus.py:42-42  [racks#127]
+            "card 4111 1111 1111 1111",
+## tests/warden_port/test_redaction.py:309-309  [racks#127]
+        for pan in ("4111 1111 1111 1111", "4111-1111-1111-1111"):
+## tests/warden_port/test_redaction.py:356-356  [racks#127]
+        assert "4111111111111111" not in redact("card 4111111111111111 declined").text
+## tests/warden_port/test_redaction.py:236-236  [racks#128]
+    
+## tests/warden_port/test_audit_chain.py:568-568  [racks#135]
+        found = _anchor_refusals("dev", _backends(ANCHOR, KMS, local))
+## audit/signer.py:98-98  [racks#135]
+        from `private_key_path` (dev and pilot only: a key file in an image or on a disk can be copied)."""
+## backends/table.py:126-126  [racks#135]
+        # (`require`, `disable`) is an explicit opt-down for dev, refused with iam_auth.
+## backends/table.py:214-214  [racks#135]
+        """The PEM key from a file (dev, pilot) or from the secrets kind (`private_key_secret_name`; prod allows
+## backends/table.py:254-254  [racks#135]
+        address: str  # https; plain http only to this machine (a dev server)
+## backends/table.py:591-591  [racks#135]
+    # Environment table (design §4.6): kinds allowed only in `dev`. The names are policy levels, not deployments
+## config.py:346-346  [racks#135]
+        )  # dev executor only
+## tools.py:361-361  [racks#135]
+        Without a pin (dev only; pilot and prod require one) it is an ordinary import."""
+## runtime/agent_loop.py:179-179  [racks#135]
+        # Keys the HMAC of the restored inputs on the gate's audit event (None: a plain hash, dev only).
+## runtime/agent_loop.py:572-572  [racks#135]
+            if self.hooks.post_card is None:  # no channel wired (dev slice-1): nothing to post or audit
+## actions/contract.py:34-34  [racks#135]
+        """Hadavin-run execution (Phase 2): refused in pilot and prod, kept in dev for the slice-1 tests."""
+## guard/redact.py:1162-1162  [racks#135]
+            "dev",
