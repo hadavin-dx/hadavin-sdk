@@ -311,13 +311,27 @@ function blob(tok,   n, c) {
   if (tok ~ /\//) {
     c = substr(tok, 1, 1)
     if (c == "/" || c == "." || c == "~") return -1
-    if (n >= 32 && tok ~ /[A-Z]/ && tok ~ /[a-z]/) return 1
+    if (tok ~ /[A-Z]/ && tok ~ /[a-z]/) return 1     # v6: from 24 characters (v5: 32): a mixed-case secret with slashes is hidden
     return -1
   }
+  if (tok ~ /\./ && dotted_secret(tok)) return 1
   if (is_uuid(tok)) return 1
   if (snake_name(tok)) return 0
   if (tok !~ /[-_+]/ && isid_camel(tok)) return 0
   return 1
+}
+# dotted_secret: a token with dots (a.b.c, 24 or more characters, upper and lower case and a digit) is hidden whole when
+# one of its pieces is not a plain name (plain = lower case word, CamelCase name, digits, 3 characters or fewer)
+function dotted_secret(tok,   n, p, i, x) {
+  if (length(tok) < 24 || tok !~ /[A-Z]/ || tok !~ /[a-z]/ || tok !~ /[0-9]/) return 0
+  n = split(tok, p, ".")
+  for (i = 1; i <= n; i++) {
+    x = p[i]
+    if (length(x) <= 3 || x ~ /^[0-9]+$/ || x ~ /^[a-z0-9_-]+$/) continue
+    if (isid_camel(x)) continue
+    return 1
+  }
+  return 0
 }
 function shape(tok,   out, st, ln, r) {
   out = ""
@@ -337,13 +351,25 @@ function piece(tok,   r, n, parts, i, o) {
     for (i = 1; i <= n; i++) o = o (i > 1 ? "/" : "") piece(parts[i])
     return o
   }
+  if (tok ~ /\./ && tok !~ /\//) {
+    n = split(tok, parts, "."); o = ""
+    for (i = 1; i <= n; i++) o = o (i > 1 ? "." : "") piece_nodot(parts[i])
+    return o
+  }
   return shape(tok)
 }
-function genmask(s,   out, st, ln, tok) {
+function piece_nodot(tok,   r) {
+  r = blob(tok)
+  if (r == 1) return "<masked-blob>"
+  return shape(tok)
+}
+function genmask(s,   out, st, ln, tok, tail) {
   out = ""
-  while (match(s, /[A-Za-z0-9+\/_-]+/)) {
+  while (match(s, /[A-Za-z0-9+\/_.-]+/)) {
     st = RSTART; ln = RLENGTH; tok = substr(s, st, ln)
-    out = out substr(s, 1, st - 1) piece(tok)
+    tail = ""
+    while (length(tok) > 1 && substr(tok, length(tok), 1) == ".") { tail = tail "."; tok = substr(tok, 1, length(tok) - 1) }
+    out = out substr(s, 1, st - 1) piece(tok) tail
     s = substr(s, st + ln)
   }
   return out s
@@ -475,11 +501,75 @@ function yaml_continue(b,   t, ind, nm) {
   }
   return b
 }
+
+# ---------------------------------------------------------------- pre-stage (-v MODE=pre), runs BEFORE the sed stage
+#  P1  length guard: a line longer than MAXL characters is cut to MAXL before the sed stage sees it (bounded time); the
+#      true length is added as  \005 LENGTH \005  at the end, and a line is appended to the file CF (a count for the summary).
+#  P2  a name that holds a byte outside plain ASCII (a zero-width space inside  pass<ZWSP>word, a look-alike letter, a
+#      non-English name) followed by  =  or  :  is renamed NONASCII_NAME_SECRET, so the sed stage hides its value (fail closed).
+#  P3  a secret-named assignment that opens a bracket it does not close on the line  NAME = (  [  {  $(  , or that ends in a
+#      backslash: every following line is hidden until the brackets close (or the backslash chain ends, or a "--" separator, or
+#      the end of the input). It never prints the rest raw, however many lines it takes (fail closed).
+function ml_scan(s,   i, n, c, pc) {
+  n = length(s)
+  for (i = 1; i <= n; i++) {
+    c = substr(s, i, 1)
+    if (ML_Q != "") { if (c == "\\") { i++; continue } ; if (c == ML_Q) ML_Q = ""; continue }
+    if (c == "\"" || c == "'") { ML_Q = c; continue }
+    if (c == "#") { pc = (i > 1) ? substr(s, i - 1, 1) : " "; if (pc ~ /[ \t]/) break; continue }
+    if (c == "(" || c == "[" || c == "{") ML_D++
+    else if (c == ")" || c == "]" || c == "}") { ML_D--; if (ML_D <= 0) { ML_D = 0; ML_Q = ""; return } }
+  }
+}
+function nonascii_names(s,   out, st, ln, m) {
+  out = ""
+  while (match(s, /[A-Za-z0-9_.\200-\377-]*[\200-\377][A-Za-z0-9_.\200-\377-]*["' \t]*[=:]/)) {
+    st = RSTART; ln = RLENGTH; m = substr(s, st, ln)
+    match(m, /["' \t]*[=:]$/)
+    out = out substr(s, 1, st - 1) "NONASCII_NAME_SECRET" substr(m, RSTART)
+    s = substr(s, st + ln)
+  }
+  return out s
+}
+function ml_start(b,   m, nm, rest) {
+  if (!match(b, /^[ \t]*((export|set|local|declare|readonly|var|let|const)[ \t]+(-[A-Za-z]+[ \t]+)?)?((self|this)\.)?["']?[]A-Za-z0-9_.[-]+["']?\]?[ \t]*(\+?=|:=)[ \t]*/)) return
+  m = substr(b, 1, RLENGTH); rest = substr(b, RLENGTH + 1)
+  nm = m
+  sub(/[ \t]*(\+?=|:=)[ \t]*$/, "", nm)
+  sub(/^[ \t]*((export|set|local|declare|readonly|var|let|const)[ \t]+(-[A-Za-z]+[ \t]+)?)?((self|this)\.)?/, "", nm)
+  gsub(/["'\]]/, "", nm)
+  if (!secret_name(nm)) return
+  if (rest ~ /\\[ \t]*$/) { MLBS = 1; return }
+  ML_D = 0; ML_Q = ""
+  ml_scan(rest)
+  if (ML_D <= 0) { ML_D = 0; ML_Q = "" }
+}
+function pre_line(   t, pfx, body, hid) {
+  PRE_N++
+  n0 = length($0)
+  t = $0
+  if (n0 > MAXL) { t = substr(t, 1, MAXL); if (CF != "") { print n0 >> CF; close(CF) } }
+  pfx = ""; body = t
+  if (match(t, /^(([^:]+[:-])?[0-9]+[-:])/)) { pfx = substr(t, 1, RLENGTH); body = substr(t, RLENGTH + 1) }
+  if (body == "--") { ML_D = 0; ML_Q = ""; MLBS = 0 }
+  hid = 0
+  if (MLBS) { MLBS = (body ~ /\\[ \t]*$/); hid = 1 }
+  else if (ML_D > 0) { ml_scan(body); hid = 1 }
+  if (hid) body = "<masked>"
+  else {
+    if (body ~ /[\200-\377]/) body = nonascii_names(body)
+    ml_start(body)
+  }
+  t = pfx body
+  if (n0 > MAXL) t = t "\005" n0 "\005"
+  print t
+}
 function emit(k,   o, n) {
   o = PFXS[k] BODYS[k]
   n = LEN[k]
   if (CUT > 0 && (length(o) > CUT || n > WIN)) {
     if (n <= WIN) n = length(o)
+    if (ATL[k]) n = "at least " n
     o = substr(o, 1, CUT) " ...[CUT: this line has " n " characters; the rest is not shown]"
   }
   print o
@@ -489,11 +579,17 @@ BEGIN {
   for (i = 1; i <= nsw; i++) SW[sw[i]] = 1
   WIN = (CUT > 0) ? CUT + 360 : 100000
   head = 1; tail = 0; pend = 0; CD = 0; CQ = ""; YIND = -1
+  ML_D = 0; ML_Q = ""; MLBS = 0
 }
+MODE == "pre" { pre_line(); next }
 {
   line = $0
   gsub(/\001/, "", line)
-  n0 = length(line)
+  nmark = 0
+  if (match(line, /\005[0-9]+\005$/)) { nmark = substr(line, RSTART + 1, RLENGTH - 2) + 0; line = substr(line, 1, RSTART - 1) }
+  n0 = length(line); atl = 0
+  if (nmark > n0) n0 = nmark
+  else if (MAXL > 0 && n0 >= MAXL) atl = 1
   if (n0 > WIN) line = substr(line, 1, WIN)
   pfx = ""; body = line
   if (match(line, /^(([^:]+[:-])?[0-9]+[-:])/)) {
@@ -525,11 +621,12 @@ BEGIN {
     }
     body = genmask(body)
   }
-  tail++; PFXS[tail] = pfx; BODYS[tail] = body; LEN[tail] = n0
-  while (tail - head >= 3) { emit(head); delete PFXS[head]; delete BODYS[head]; delete LEN[head]; head++ }
+  tail++; PFXS[tail] = pfx; BODYS[tail] = body; LEN[tail] = n0; ATL[tail] = atl
+  while (tail - head >= 3) { emit(head); delete PFXS[head]; delete BODYS[head]; delete LEN[head]; delete ATL[head]; head++ }
 }
 END {
-  while (head <= tail) { emit(head); delete PFXS[head]; delete BODYS[head]; delete LEN[head]; head++ }
+  if (MODE == "pre") exit
+  while (head <= tail) { emit(head); delete PFXS[head]; delete BODYS[head]; delete LEN[head]; delete ATL[head]; head++ }
 }
 AWKEOF
 }

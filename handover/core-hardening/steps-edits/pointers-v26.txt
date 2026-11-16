@@ -118,7 +118,7 @@ note|A or -B.md; rule ids R1 and |R4
 note|B.md; rule ids R1 and R4 to |R10
 note|B: left valid, cancelled in |8.6
 note|E item: it is the lead gate |G39
-note|ET-v25-A or -B.md; rule ids |R1
+note|ET-v26-A or -B.md; rule ids |R1
 note|Earlier v19 additions stay: |G30
 note|G36), the per-run key file (|G37
 note|G38), the end-date refusal (|G16
@@ -400,175 +400,173 @@ open|ys cancels the older key in |8.6
 open|| 12 | Helpers | Sheet 5.2, |G11
 open|| | 68 | R2 and R3 removed, |R4
 open||---|---| | 1 | ANSWERED by |Q23
-sheetA| 5; the rules, R1 and R4 to |R10
 sheetA| accept the risks of R1 and |R4
 sheetA| alive: the card first. | | |R9
-sheetA| first sent the sentence of |6.2
 sheetA| key. ## 6. The model key (|R1
 sheetA| one of the three alarms of |6.2
-sheetA| person and a post checker (|5.2
 sheetA| screen: revoke it at once (|8.3
 sheetA| start or end a step: "go" (|5.8
 sheetA| the card, then FREEZE. | | |R5
 sheetA| the numbers message names (|8.2
+sheetA| type `rm -- "<key file>"` (|R6
 sheetA| which. Contacts: delete by |R7
 sheetA|"post" (9), "revoke again" (|8.6
+sheetA|"restarted" came after 6.6; |6.7
+sheetA|). Watch it twice and check |R9
 sheetA|. ### The rules (R1, R4 to |R10
 sheetA|1-60` in the read terminal (|R6
-sheetA|5.7 only; keep it open from |5.1
 sheetA|8, other channel); the yes (|5.8
-sheetA|: "go" (5.8), "n8n is off" (|8.2
 sheetA|Chrome profile `demo-take` (|5.5
 sheetA|EZE. 4. Compare the notice (|R5
+sheetA|Latest start** (card words; |7.3
 sheetA|OFF (off in 6.1, back on in |8.7
 sheetA|` after the challenge line, |7.4
+sheetA|account. For the older key (|6.7
 sheetA|ad's message after the run (|8.2
 sheetA|agree: the card first, then |R1
 sheetA|ail under label `demo` that |R7
+sheetA|ard** (a printed checklist, |section 2
+sheetA|arted" (6.6), "n8n is off" (|8.2
+sheetA|asked address> Gap before |8.1
+sheetA|at the lead lists. Start at |5.1
 sheetA|auto-reload equal your yes (|R4
-sheetA|before create, N (jotted at |6.3
+sheetA|before the day (there is no |section 4
+sheetA|ble key (else none: read at |6.3
 sheetA|card (not part of it):** if |7.4
-sheetA|cel nothing, wait). Each of |8.2
-sheetA|create time (UTC, jotted at |6.3
-sheetA|d check items (a) to (f) of |R9
-sheetA|d from the numbers message (|section 3
 sheetA|done. I accept the risks of |R1
 sheetA|e card first, then R1, then |R10
 sheetA|e exit code is read only at |7.9
+sheetA|e from the numbers message (|section 3
 sheetA|e model key's cancel press, |card step 3
 sheetA|e numbers message gives it (|R6
-sheetA|e numbers message: once, at |6.2
-sheetA|e older key is cancelled at |6.2
 sheetA|en: revoke it at once (8.3, |8.4
-sheetA|exactly (list at the end of |section 2
-sheetA|exists yet. ### The rules (|R1
+sheetA|ettings figures:** first do |6.1
+sheetA|ey, no run. ### The rules (|R1
+sheetA|file path from the message (|R6
 sheetA|from the create press until |card step 5
-sheetA|grouping, the menu words of |5.3
+sheetA|had typed `end`, proceed at |7.9
 sheetA|he line, then the card. | | |R6
 sheetA|he message; any other size: |6.5
 sheetA|he screen; then FREEZE. | | |R4
-sheetA|he yes and the set phrases (|R8
 sheetA|hich wins | |---|---|---| | |R1
-sheetA|hing, wait). Each of 8.2 to |8.5
-sheetA|l; you read both at 6.2 and |7.1
+sheetA|l; you read both at 6.2 and |6.7
 sheetA|l`, `clear` and the grep of |5.7
 sheetA|lay at 6.3 and the paste at |6.4
+sheetA|led after you press create (|6.3
 sheetA|losed before you copied, or |6.6
-sheetA|lue for this run, sample in |section 3
-sheetA|m 3 to 5; the rules, R1 and |R4
+sheetA|lue for this run; sample in |section 3
 sheetA|m person (film pause) or do |card step 1
 sheetA|mbers message names (8.2 to |8.6
 sheetA|n it; describe; FREEZE. | | |R7
 sheetA|nel is the one you named at |5.1
+sheetA|no run. ### The rules (R1, |R4
 sheetA|none, describe, FREEZE. | | |R8
 sheetA|nt: delete exactly those as |R7
-sheetA|o 9 once before the day (no |section 4
 sheetA|o the values on your paper (|6.1
-sheetA|ost checker (5.2). Start at |5.1
-sheetA|printed one-page checklist, |section 2
+sheetA|p: "go" (5.8), "restarted" (|6.6
+sheetA|pend until you cancel it at |6.7
+sheetA|r screen, otherwise only at |6.7
 sheetA|rated items); an exit code (|7.9
 sheetA|rivacy switches OFF (off in |6.1
 sheetA|s <in words>, is it yours" (|R8
-sheetA|s one, and no file) goes to |6.5
 sheetA|scribe the times (8.8). | | |R10
 sheetA|send "none" for the time in |8.1
-sheetA|ss Enter on the start line (|7.3
-sheetA|t appears on screen anyway: |R1
 sheetA|t post; describe the times (|8.8
-sheetA|t time of my key (jotted at |6.3
 sheetA|te this run's demo mails as |R7
 sheetA|ted total; you read both at |6.2
 sheetA|text on your screen outside |6.3
-sheetA|ts yet. ### The rules (R1, |R4
-sheetA|u had typed `end`, go on at |7.9
-sheetA|ump from 3 to 5; the rules, |R1
+sheetA|therwise only at 6.7, after |6.6
+sheetA|thout `end`, and proceed at |8.1
+sheetA|ty paste gives one) goes to |6.5
 sheetA|utside 6.3 and the paste of |6.4
-sheetA|ver without `end`; go on at |8.1
+sheetA|witches OFF; when you reach |6.1
 sheetA|y the card and the deleting |R7
 sheetA|y's own one-time display at |6.3
-sheetB| 5; the rules, R1 and R4 to |R10
+sheetA|yes; "restarted" came after |6.6
+sheetA|you send exactly (list ends |section 2
 sheetB| accept the risks of R1 and |R4
 sheetB| alive: the card first. | | |R9
-sheetB| cancelled. ### The rules (|R1
 sheetB| key. ## 6. The model key (|R1
-sheetB| on your screen, or (ii) in |8.6
 sheetB| one of the three alarms of |6.2
-sheetB| person and a post checker (|5.2
 sheetB| screen: revoke it at once (|8.3
 sheetB| start or end a step: "go" (|5.8
 sheetB| the card, then FREEZE. | | |R5
 sheetB| the numbers message names (|8.2
+sheetB| type `rm -- "<key file>"` (|R6
 sheetB| which. Contacts: delete by |R7
 sheetB|"post" (9), "revoke again" (|8.6
+sheetB|"restarted" came after 6.6; |6.7
+sheetB|). Watch it twice and check |R9
 sheetB|. ### The rules (R1, R4 to |R10
 sheetB|1-60` in the read terminal (|R6
-sheetB|5.7 only; keep it open from |5.1
 sheetB|8, other channel); the yes (|5.8
-sheetB|: "go" (5.8), "n8n is off" (|8.2
 sheetB|Chrome profile `demo-take` (|5.5
 sheetB|EZE. 4. Compare the notice (|R5
+sheetB|Latest start** (card words; |7.3
 sheetB|OFF (off in 6.1, back on in |8.7
 sheetB|` after the challenge line, |7.4
+sheetB|account. For the older key (|7.11
 sheetB|ad's message after the run (|8.2
 sheetB|agree: the card first, then |R1
 sheetB|ail under label `demo` that |R7
+sheetB|alid until you cancel it at |7.11
+sheetB|ard** (a printed checklist, |section 2
+sheetB|arted" (6.6), "n8n is off" (|8.2
+sheetB|asked address> Gap before |8.1
+sheetB|at the lead lists. Start at |5.1
 sheetB|auto-reload equal your yes (|R4
-sheetB|before create, N (jotted at |6.3
+sheetB|before the day (there is no |section 4
+sheetB|ble key (else none: read at |6.3
 sheetB|card (not part of it):** if |7.4
-sheetB|cel nothing, wait). Each of |8.2
-sheetB|celled. ### The rules (R1, |R4
-sheetB|create time (UTC, jotted at |6.3
-sheetB|d check items (a) to (f) of |R9
-sheetB|d from the numbers message (|section 3
+sheetB|cel it at 7.11, so a missed |7.11
 sheetB|e card first, then R1, then |R10
 sheetB|e exit code is read only at |7.9
+sheetB|e from the numbers message (|section 3
 sheetB|e model key's cancel press, |card step 3
 sheetB|e numbers message gives it (|R6
 sheetB|en: revoke it at once (8.3, |8.4
-sheetB|exactly (list at the end of |section 2
+sheetB|ettings figures:** first do |6.1
+sheetB|file path from the message (|R6
 sheetB|from the create press until |card step 5
-sheetB|grouping, the menu words of |5.3
+sheetB|had typed `end`, proceed at |7.9
 sheetB|he line, then the card. | | |R6
 sheetB|he message; any other size: |6.5
 sheetB|he screen; then FREEZE. | | |R4
-sheetB|he yes and the set phrases (|R8
 sheetB|hich wins | |---|---|---| | |R1
-sheetB|hing, wait). Each of 8.2 to |8.5
-sheetB|l; you read both at 6.2 and |7.1
+sheetB|l; you read both at 6.2 and |6.7
 sheetB|l`, `clear` and the grep of |5.7
 sheetB|lay at 6.3 and the paste at |6.4
+sheetB|led after you press create (|6.3
 sheetB|losed before you copied, or |6.6
-sheetB|lue for this run, sample in |section 3
-sheetB|m 3 to 5; the rules, R1 and |R4
+sheetB|lue for this run; sample in |section 3
 sheetB|m person (film pause) or do |card step 1
 sheetB|mbers message names (8.2 to |8.6
 sheetB|n it; describe; FREEZE. | | |R7
-sheetB|ncel it in 8.6, so a missed |8.6
+sheetB|n your screen, otherwise at |7.11
 sheetB|nel is the one you named at |5.1
 sheetB|none, describe, FREEZE. | | |R8
 sheetB|nt: delete exactly those as |R7
-sheetB|o 9 once before the day (no |section 4
 sheetB|o the values on your paper (|6.1
-sheetB|ost checker (5.2). Start at |5.1
 sheetB|p it. I accept the risks of |R1
-sheetB|pend until you cancel it in |8.6
-sheetB|printed one-page checklist, |section 2
+sheetB|p: "go" (5.8), "restarted" (|6.6
+sheetB|pend until you cancel it at |7.11
+sheetB|pplies. ### The rules (R1, |R4
 sheetB|rated items); an exit code (|7.9
 sheetB|rivacy switches OFF (off in |6.1
+sheetB|rt applies. ### The rules (|R1
 sheetB|s <in words>, is it yours" (|R8
-sheetB|s one, and no file) goes to |6.5
 sheetB|scribe the times (8.8). | | |R10
 sheetB|send "none" for the time in |8.1
-sheetB|ss Enter on the start line (|7.3
-sheetB|t appears on screen anyway: |R1
+sheetB|st resort applies. A missed |7.11
 sheetB|t post; describe the times (|8.8
-sheetB|t time of my key (jotted at |6.3
 sheetB|te this run's demo mails as |R7
 sheetB|ted total; you read both at |6.2
 sheetB|text on your screen outside |6.3
-sheetB|u had typed `end`, go on at |7.9
-sheetB|ump from 3 to 5; the rules, |R1
+sheetB|thout `end`, and proceed at |8.1
+sheetB|ty paste gives one) goes to |6.5
 sheetB|utside 6.3 and the paste of |6.4
-sheetB|ver without `end`; go on at |8.1
+sheetB|witches OFF; when you reach |6.1
 sheetB|y the card and the deleting |R7
 sheetB|y's own one-time display at |6.3
+sheetB|yes; "restarted" came after |6.6
+sheetB|you send exactly (list ends |section 2

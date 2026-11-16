@@ -1,0 +1,22 @@
+cache redis://:kq01zv01wm01xd@localhost:6379/0 ok
+broker amqp://:kq02zv02wm02xd@mq:5672
+x //:kq03zv03wm03xd@host/p y
+docker login -u bob -p kq04zv04wm04xd registry
+redis-cli -a kq05zv05wm05xd ping
+ldapsearch -x -D cn=admin -w kq06zv06wm06xd -b dc=x
+zip -P kq07zv07wm07xd out.zip f.txt
+7z a -pkq08zv08wm08xd out.7z f
+htpasswd -b users.txt bob kq09zv09wm09xd
+smbclient //h/s -U bob%kq10zv10wm10xd
+SECRET_NAME = (
+    "kq11zv11wm11xd"
+)
+kept_after_m3a = 1
+API_KEY = \
+    kq12zv12wm12xd
+kept_after_m3b = 1
+TOKENS = [
+  "kq13zv13wm13xd",
+  "kq90zv90wm90xd"
+]
+kept_after_m3c = 1

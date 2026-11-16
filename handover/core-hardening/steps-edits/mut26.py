@@ -27,11 +27,11 @@ P = [
 ('P10', 'OWNER-SHEET-v26-SOURCE.md', 'switch it OFF yourself at once with the tool the numbers message names', 'say "stop" and wait', 'recording stop by voice'),
 ('P11', 'OWNER-SHEET-v26-SOURCE.md', 'Three phone alarms on the run day, all in IST: alarm 1 at the latest start, ', 'Two phone alarms on the run day, all in IST: ', 'first alarm removed'),
 ('P12', 'OWNER-SHEET-v26-SOURCE.md', 'Text between backticks is typed without the backticks. ', '', 'backtick sentence removed'),
-('P13', 'OWNER-SHEET-v26-SOURCE.md', "only if the window's last line is `paste key, Enter:` (otherwise do not paste, copy a harmless word and describe what the last line says), ", '', 'paste condition removed'),
-('P14', 'OWNER-SHEET-v26-SOURCE.md', ' with a paper note "READ" and "TEST" beside them', '', 'window labels removed'),
-('P15', 'OWNER-SHEET-v26-SOURCE.md', 'ignore a `.used` ending', 'ignore nothing', '.used rule removed'),
-('P16', 'OWNER-SHEET-v26-SOURCE.md', 'wait until the earliest key time has come, send', 'send', 'A older key cancelled early'),
-('P17', 'OWNER-SHEET-v26-SOURCE.md', 'reverses the order of `end` and the card, ', '', 'lead may reverse order'),
+('P13', 'OWNER-SHEET-v26-SOURCE.md', "only if the window's last line is `paste key, Enter:` (otherwise do not paste; copy a harmless word; describe the last line), ", '', 'paste condition removed'),
+('P14', 'OWNER-SHEET-v26-SOURCE.md', ' with paper notes "READ" and "TEST"', '', 'window labels removed'),
+('P15', 'OWNER-SHEET-v26-SOURCE.md', '(no earlier run used it or begins like it)', '(any run name will do)', 'run-name reuse rule removed'),
+('P16', 'OWNER-SHEET-v26-SOURCE.md', 'only at 6.7, after 6.6 passed (new key saved, size checked)', 'at 6.4', 'A older key cancelled before the key is saved'),
+('P17', 'OWNER-SHEET-v26-SOURCE.md', 'reverses `end` and the card, ', '', 'lead may reverse order'),
 ('P18', 'OWNER-SHEET-v26-SOURCE.md', 'within {{y}} minutes of the time `date -u` shows when the notice appeared (note that time at once)', 'within the minutes the message names', 'no clock for the notice window'),
 ('P19', 'OWNER-SHEET-v26-SOURCE.md', 'if 7.4 never happened, send "none" for the time in 8.1. ', '', 'run that never started'),
 ('P20', 'OWNER-SHEET-v26-SOURCE.md', 'SAMPLE (made-up values, never real):\n', '', 'SAMPLE label removed'),
@@ -46,7 +46,7 @@ P = [
 ('P30', 'OWNER-SHEET-v26-SOURCE.md', '**Key list** = the model account page', '**Key liszt** = the model account page', 'card term renamed'),
 ('P31', 'OWNER-SHEET-v26-SOURCE.md', 'Never "Select all", never empty Trash', 'Select all is fine', 'delete guard removed'),
 ('P32', 'OWNER-SHEET-v26-SOURCE.md', '**STOP RULE.**', '**RULE.**', 'STOP RULE renamed'),
-('P33', 'OWNER-SHEET-v26-SOURCE.md', 'letters, digits, single spaces and `. _ / - : = @ + ,` only', 'letters, digits, single spaces and `. _ / - : = @ + , !` only', 'R8 character list gets a character'),
+('P33', 'OWNER-SHEET-v26-SOURCE.md', "`. _ / - : = @ + , '` only", "`. _ / - : = @ + , ' !` only", 'R8 character list gets a character'),
 ('P34', 'OWNER-SHEET-v26-SOURCE.md', 'I accept the risks of R1 and R4:', 'I accept the risks of R1 and R4; (ok):', 'yes pattern gets a bracket char'),
 ('P35', 'OWNER-SHEET-v26-SOURCE.md', 'echo "exit $?"', 'echo exit', 'key-save line loses exit report'),
 ('P36', 'OWNER-SHEET-v26-SOURCE.md', 'set -C; umask 077; read -rs', 'set -C; umask 077; read -rs; (', 'key-save line breaks bash -n'),
@@ -57,7 +57,7 @@ P = [
 ('P41', 'v26-OPEN-FOR-LEAD-SOURCE.md', 'the card', 'card Part 2', 'Part 2 back in open list'),
 ('P43', 'OWNER-SHEET-v26-SOURCE.md', 'Mon 16 Nov 2026', 'Mon 17 Nov 2026', 'sheet date weekday'),
 ('P44', 'OWNER-SHEET-v26-SOURCE.md', '[[A: I will cancel the older key myself', '[[A: I will cancel the older key soon', 'A yes sentence changed'),
-('P45', 'OWNER-SHEET-v26-SOURCE.md', 'Until then the older key stays valid and can spend; the card does not stop it.', '', 'B older key fate removed'),
+('P45', 'OWNER-SHEET-v26-SOURCE.md', 'Until then the older key stays valid and can spend.', '', 'B older key fate removed'),
 ]
 S, N, O, C, FA = 'OWNER-SHEET-v26-SOURCE.md', 'LEAD-RELEASE-NOTE-v10-SOURCE.md', 'v26-OPEN-FOR-LEAD-SOURCE.md', 'v26-CHANGES.md', 'facts-v26.py'
 BW = BANNED_WORD
@@ -67,7 +67,7 @@ M = [
 ('M02', S, 'Expected total: USD {{total}} (not a limit)', 'Expected total: USD 0.82 (not a limit)', 'expected total line 0.81 to 0.82'),
 ('M03', S, 'Price per call at full size: USD {{price}}', 'Price per call at full size: USD 0.28', 'sample notice price line'),
 ('M04', S, 'expected total USD <expected total>, balance USD', 'expected total USD 0.82, balance USD', 'yes pattern total'),
-('M05', S, 'If you had typed `end`, go on at 7.9.', 'If you had typed `end`, go on at 7.5.', 'after-the-card pointer 7.9 to 7.5'),
+('M05', S, 'If you had typed `end`, proceed at 7.9.', 'If you had typed `end`, proceed at 7.5.', 'after-the-card pointer 7.9 to 7.5'),
 ('M06', S, 'back on in 8.7', 'back on in 8.5', 'pointer back on in 8.7 to 8.5'),
 ('M07', N, 'the HubSpot app secret revoke (G42, sheet 8.4)', 'the HubSpot app secret revoke (G42, sheet 8.3)', 'note pointer sheet 8.4 to 8.3'),
 ('M08', N, 'The order `end` then cancel (sheet 7.8)', 'The order `end` then cancel (sheet 7.6)', 'note pointer sheet 7.8 to 7.6'),
@@ -81,12 +81,12 @@ M = [
 ('M16', S, '`run-<run name>`', '`run-<runname>`', 'placeholder renamed (one place)'),
 ('M17', S, 'older key <its name or none>', 'older key <its name or nome>', 'yes placeholder spelled differently'),
 ('M18', N, '(Open 2 and 31)', '(Open 2 and 91)', 'list-form pointer Open 91'),
-('M19', S, 'The model key is still alive. The film person alone', 'The model key is still alive: if you must stop it, click Cancel beside each key and refresh the page twice to see the cancelled state. The film person alone', 'cancel rule paraphrased outside the card (7.6)'),
+('M19', S, 'minimise the test terminal. The film person alone', 'minimise the test terminal: if you must stop it, click Cancel beside each key and refresh the page twice to see the cancelled state. The film person alone', 'cancel rule paraphrased outside the card (6.6)'),
 ('M20', S, 'send "{{ph_hsr}}"', 'send "{{ph_apr}}"', 'wrong set phrase at 8.4'),
 ('M21', S, 'delete exactly those as R7 says', 'delete exactly those as R9 says', 'R7 to R9 in 5.4'),
 ('M22', S, 'The balance is at least the expected total.', 'The balance is at least the expected total plus 5.', 'check 3 changed'),
 ('M23', FA, 'Y, RL, FP, MG = 5, 15, 10, 10', 'Y, RL, FP, MG = 5, 15, 10, 15', 'margin changed in facts (sums)'),
-('M24', S, '[[A: (b) the older key named', '[[A: [[B: leftover]] (b) the older key named', 'nested marker left'),
+('M24', S, '[[A: L2 the older key named', '[[A: [[B: leftover]] L2 the older key named', 'nested marker left'),
 ('M25', S, 'The balance is at least the expected total.', 'The balance is at least the expected total. [[ left', 'stray marker left'),
 ('M26', N, "## 9. Kept from earlier appendices (lead's own use)", "## 9. Kept from earlier appendices (lead's own use) " + BW, 'banned word in note'),
 ('M27', O, '| 40 | Does the take program print', '| 41 | Does the take program print', 'open list numbering gap'),
@@ -107,7 +107,7 @@ M = [
 ('M42', O, 'the take program needs at least 860 seconds (14.33 minutes)', 'the take program needs at least 860 seconds (14.5 minutes)', 'open list minutes figure'),
 ('M43', N, 'the spend lock (G33)', 'the spend lock (G38)', 'note G33 to G38'),
 ('M44', S, '"go" (5.8)', '"go" (5.7)', 'R8 pointer go (5.8) to 5.7'),
-('M45', S, 'you read both at 6.2 and 7.1', 'you read both at 6.2 and 7.3', 'R4 pointer 7.1 to 7.3'),
+('M45', S, 'you read both at 6.2 and 6.7', 'you read both at 6.2 and 6.8', 'R4 pointer 6.7 to 6.8'),
 ('M46', S, 'after the model key\'s cancel press, card step 3)', 'after the model key\'s cancel press, card step 5)', '8.1 card step 3 to 5'),
 ('M47', S, '## 9. Posting (by {{postby}}', '## 9. Posting (by Wed 25 Nov 2026 15:00 UTC = 20:00 IST', 'post-by IST in sheet'),
 ('M48', C, 'sheet 8.2 no-key path', 'sheet 8.3 no-key path', 'CHANGES table pointer 8.2 to 8.3'),
@@ -129,34 +129,41 @@ Q = [
 ('Q02', S, '{{ceil}} x {{price}} = {{total}}', '{{ceil}} x {{price}} = 0.84', 'wrong total hardcoded'),
 ('Q03', S, 'Tokens in and out per call: {{tok_in}} and {{tok_out}}', 'Tokens in and out per call: {{tok_in}} and 12,000', 'wrong output tokens in the sample'),
 ('Q08', S, '(1) if a key is alive, do the card now; (2) then FREEZE', '(2) then FREEZE', 'STOP RULE step 1 deleted'),
-('Q09', S, 'you typed `end` (do not wait', 'you typed `end (do not wait', 'stray backtick in card gate (a)'),
+('Q09', S, 'W1 you typed `end`;', 'W1 you typed `end;', 'stray backtick in card gate W1'),
 ('Q10', S, 'press the cancel button; if a box asks, press the confirmation word', 'press the cancel button; if a box asks, press close', 'card cancel step changed'),
-('Q11', S, '(f) the test terminal shows a prompt (a line like `name@computer:~$`) before you typed `end`; ', '', 'card gate (f) deleted'),
+('Q11', S, 'W6 the test terminal shows a prompt before you typed `end`; ', '', 'card gate W6 deleted'),
 ('Q12', S, 'auto-reload off, balance at least the expected total', 'auto-reload on, balance at least the expected total', 'R4 auto-reload flipped to on'),
 ('Q13', S, 'Silence minutes: 3   Give-up minutes: 40', 'Silence minutes: 3   Give-up minutes: 40   Key: ' + SECRET, 'secret-shaped string (built from parts) in the sheet'),
 ('Q15', S, 'Give-up minutes: 40', 'Give-up minutes: 30', 'sample give-up minutes changed'),
 ('Q16', S, 'Silence minutes: 3', 'Silence minutes: 5', 'sample silence minutes changed'),
-('Q18', S, 'Contacts: those in the clean-up message (addresses ending `@example.com`', 'Contacts: those in the clean-up message (addresses ending `@example.org`', 'one delete-domain guard changed'),
+('Q18', S, 'and ending `@example.com`', 'and ending `@example.org`', 'one delete-domain guard changed'),
 ('Q20', N, 'program limit = 12.40 + 0.81 = 13.21', 'program limit = 12.40 + 0.81 = 13.12', 'lead note limit wrong'),
 ('Q22', S, 'Exit codes accepted: 0 only', 'Exit codes accepted: 0 or 1', 'accepted exit codes widened'),
-('Q24', S, 'Only five words in a lead message', 'Only four words in a lead message', 'R8 word count changed'),
+('Q24', S, 'Only six words in a lead message', 'Only five words in a lead message', 'R8 word count changed'),
 ]
 P = P + Q
+EXPECT = {}          # plant id -> the check codes MEANT to catch it (filled below from the learn run, then read by a person)
+def codes_of(lines): return set(re.match(r'FAIL (C\d+[a-z]?)', l)[1] for l in lines if re.match(r'FAIL (C\d+[a-z]?)', l))
 def main():
+    learn = os.environ.get('LEARN') == '1'
     tmp = tempfile.mkdtemp(); base = tmp + '/base/'; os.mkdir(base)
     for f in FILES:
         if os.path.exists(H + f): shutil.copy(H + f, base + f)
     b0, r0 = run(base); print('baseline failures: %d' % len(b0))
-    cau = mis = anc = 0
+    cau = mis = anc = inc = 0; norm = lambda x: re.sub(r'\d+ words', 'N words', x)
     for pid, f, old, new, what in P:
         d = tmp + '/' + pid + '/'; shutil.copytree(base, d)
         s = open(d + f, encoding='utf-8').read()
         if old not in s: print(pid, 'ANCHOR-NOT-FOUND', what); anc += 1; continue
         open(d + f, 'w', encoding='utf-8').write(s.replace(old, new, 1))
-        got, r = run(d); norm = lambda x: re.sub(r'\d+ words', 'N words', x); new_f = set(map(norm, got)) - set(map(norm, b0))
-        if old == new: new_f = set()
-        if new_f or 'Traceback' in r.stderr or 'rror' in r.stderr[:200]: cau += 1; print(pid, 'CAUGHT', what, '|', (sorted(new_f) or [r.stderr[-80:]])[0][:90])
-        else: mis += 1; print(pid, 'MISSED', what)
-    print('TOTAL plants %d: caught %d, missed %d, anchor-not-found %d' % (len(P), cau, mis, anc))
+        got, r = run(d); new_f = set(map(norm, got)) - set(map(norm, b0))
+        nc = codes_of(new_f)
+        if learn: print('LEARN', pid, sorted(nc), 'TB' if 'Traceback' in r.stderr else ''); continue
+        meant = EXPECT.get(pid)
+        if not meant: print(pid, 'NO-MEANT-CHECK-DECLARED', what); mis += 1; continue
+        if nc & meant: cau += 1; print(pid, 'CAUGHT by', ','.join(sorted(nc & meant)), '|', what)
+        elif nc: inc += 1; mis += 1; print(pid, 'MISSED (only other checks fired: %s; meant %s)' % (','.join(sorted(nc)), ','.join(sorted(meant))), what)
+        else: mis += 1; print(pid, 'MISSED (no check fired; meant %s)' % ','.join(sorted(meant)), what)
+    if not learn: print('TOTAL plants %d: caught by the meant check %d, missed %d (of them caught only by another check %d), anchor-not-found %d' % (len(P), cau, mis, inc, anc))
     shutil.rmtree(tmp)
 main()
