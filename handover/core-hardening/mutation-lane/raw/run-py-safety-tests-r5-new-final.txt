@@ -1,4 +1,4 @@
-HEADER (added by hand after the run, 2026-11-16 UTC): run.py ROUND 5 (sha256 in run-py-r5-final-sha256.txt) with the round-5 safety-tests.sh (T1-T62), one run, T35 included, RUN=lane run.py SCRATCH=<scratch> VENV=/home/user/hadavin-sdk/.venv
+HEADER (added by hand after the run, 2026-11-16 UTC): run.py ROUND 5 (sha256 in run-py-r5-final-sha256.txt) with the round-5 safety-tests.sh (T1-T62), one run, T35 included. RUN=<lane>/run.py SCRATCH=<scratch> VENV=/home/user/hadavin-sdk/.venv
 environment: linux, root user, python 3.13.18, pytest 9.1.1 in the venv used by the tests, toy repository with made-up files, no real mutants
 -----
 == T1 the real repository as --root is refused (exit 2)
@@ -7,14 +7,14 @@ REFUSED: --root /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/sc
   PASS: T1 exit 2
 == T2 SIGKILL while a mutant is planted
   file now: return2
-/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 46: 28718 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 46: 14315 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
   PASS: T2 file stays planted
 == T3 the next run refuses and says how to restore
 REFUSED: a mutant (X-m1) is still planted in src/mod.py from an earlier run that was killed. Restore with: python3 /home/user/hadavin-sdk/handover/core-hardenin
   exit code 2
   PASS: T3 exit 2
 == T4 marker lost: the tree check against a fresh git archive still refuses
-REFUSED: scratch tree differs from git archive 85a5016cf6dba1e3c9be8fa6d013ddeefecd5e07 + patches in 1 file(s), first: ['src/mod.py']: it may hold a planted cha
+REFUSED: scratch tree differs from git archive 2eca986a29ad0dcb753c9dffaaab6527ee94059e + patches in 1 file(s), first: ['src/mod.py']: it may hold a planted cha
   exit code 2
   PASS: T4 exit 2
 == T5 --restore puts the saved original back
@@ -57,11 +57,11 @@ REFUSED: mutant m1 file: must be relative to the root and contain no '..': '../r
   PASS: T11 exit 2
   PASS: T11 file unchanged
 == T12 symlinked folders inside the scratch root
-REFUSED: scratch tree differs from git archive 85a5016cf6dba1e3c9be8fa6d013ddeefecd5e07 + patches in 1 file(s), first: ['evil/']: it may hold a planted change; rebuild it from the archive
+REFUSED: scratch tree differs from git archive 2eca986a29ad0dcb753c9dffaaab6527ee94059e + patches in 1 file(s), first: ['evil/']: it may hold a planted change; rebuild it from the archive
   (extra symlinked folder 'evil') exit code 2
   PASS: T12b exit 2
   PASS: T12b real repo file unchanged
-REFUSED: scratch tree differs from git archive 85a5016cf6dba1e3c9be8fa6d013ddeefecd5e07 + patches in 2 file(s), first: ['src/', 'src/mod.py']: it may hold a planted change; rebuild it from the archive
+REFUSED: scratch tree differs from git archive 2eca986a29ad0dcb753c9dffaaab6527ee94059e + patches in 2 file(s), first: ['src/', 'src/mod.py']: it may hold a planted change; rebuild it from the archive
   (src itself is a link to the real repo) exit code 2
   PASS: T12a exit 2
   PASS: T12a real repo file unchanged
@@ -78,9 +78,9 @@ REFUSED: git rev-parse failed for --repo /tmp/claude-0/-home-user/957f9d59-4d7f-
   declared --extra: exit code 0
   PASS: T14b exit 0
 == T15 SIGKILL of run.py leaves the test group alive; --restore stops it and restores
-/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 84: 29846 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 84: 15333 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
   PASS: T15 orphan pytest alive
-stopped orphaned test group 29859; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r5final/tmpstate/hadavin-mutation-lane-0/970f90ce441e0205.backup; hash matches saved original: True
+stopped orphaned test group 15342; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r5final/tmpstate/hadavin-mutation-lane-0/970f90ce441e0205.backup; hash matches saved original: True
   PASS: T15 orphan stopped
   PASS: T15 file restored
 == T16 SIGHUP restores too (exit 129)
@@ -132,7 +132,7 @@ REFUSED: state folder /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c
 REFUSED: state folder /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r5final/tmpstate/hadavin-mutation-lane-0 is not a plain
   PASS: T22c other owner refused (got 2)
 == T23 forged state: a backup whose hash differs, a marker that is a link, --restore inside the real repository: all refused, nothing written
-/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 674: 31398 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 674: 17142 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
 REFUSED: the saved backup does not match the hash recorded in the marker: refused
   PASS: T23a hash mismatch refused (got 2)
   PASS: T23a file not written
@@ -243,7 +243,7 @@ REFUSED: import check: 'docs/note.txt' is not a plain .py module path, so the ch
   PASS: T34 run ends normally (rc 0) with verdict KILLED in the raw file
   PASS: T34 file restored
 == T35 --restore with another TMPDIR: the marker kept by a run that used the default folder is found; exit 3 while the file is still planted
-/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 674:  1193 Killed                  ( export TMPDIR=/tmp; exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 674: 19874 Killed                  ( export TMPDIR=/tmp; exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
 STILL PLANTED: src/mod.py differs from the backup kept by a run that used another TMPDIR; restore with: TMPDIR=/tmp python3 /home/user/hadavin-sdk/handover/core-hardening/mutation-lane/run.py --root /tmp/claude-0/-home-u
   PASS: T35a exit 3 (got 3) and the file is still planted
   PASS: T35b restoring with the right TMPDIR works
@@ -264,14 +264,14 @@ REFUSED: pytest would take its settings from /tmp/claude-0/-home-user/957f9d59-4
   PASS: T37b pyproject.toml with a pytest section above the root refused (rc 2, hits 1)
   PASS: T37c a setup.cfg above WITHOUT a pytest section is no setting: the run goes ahead (rc 0)
 == T38 --restore re-creates a deleted target with its recorded mode (review r3 minor)
-/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 674:  1440 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 674: 20210 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
 test group already gone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r5final/tmpstate/hadavin-mutation-lane-0/970f90ce441e0205.backup; hash matche
   PASS: T38 exit 0 and the file is back with the original text (rc 0)
   PASS: T38 mode 640 restored
   PASS: T38 state empty
 == T39 the orphan cannot be stopped (no permission) during --restore: the file is still restored (review r3 minor)
-/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 674:  1790 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
-True could NOT stop test group 1799 (Operation not permitted): file restored anyway; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r5final/tmpstate/hadavin-mutation-lane-0/970f90ce441e0205.backup; hash matche
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 674: 20625 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+True could NOT stop test group 20635 (Operation not permitted): file restored anyway; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r5final/tmpstate/hadavin-mutation-lane-0/970f90ce441e0205.backup; hash match
   PASS: T39 restore finished although stop_group raised PermissionError (rc 0)
   PASS: T39 the report says the orphan was not stopped
 == T40 a signal right after the leader was reaped must not signal its (maybe reused) number (review r3 minor)
@@ -323,28 +323,28 @@ interrupted as expected (<Signals.SIGTERM: 15>,)
   PASS: T42 PWR state empty
   PASS: T42 PWR no orphan pytest
 == T43 --restore must not stop a stranger that has the orphan's number (review r3 minor: start time + full argument list)
-/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 674:  3117 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 674: 23261 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
   PASS: T43 setup: the stranger (a pytest of its own that names the root) is its own group leader
-process 3198 is not this run's pytest (or cannot be verified): left alone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r5final/tmpstate/hadavin-mu
+process 23460 is not this run's pytest (or cannot be verified): left alone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r5final/tmpstate/hadavin-m
   PASS: T43a restore exit 0 and the file is back (rc 0)
   PASS: T43a the stranger was left alone
-/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 674:  3198 Killed                  ( cd "$T/root" && exec setsid "$T/root/.venv/bin/python" -m pytest -q -p no:cacheprovider tests/test_slow.py > /dev/null 2>&1 )
-/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 674:  3287 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
-stopped orphaned test group 3296; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r5final/tmpstate/hadavin-mutation-lane-0/970f90ce441e0205.backup; ha
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 674: 23460 Killed                  ( cd "$T/root" && exec setsid "$T/root/.venv/bin/python" -m pytest -q -p no:cacheprovider tests/test_slow.py > /dev/null 2>&1 )
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 674: 23642 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+stopped orphaned test group 23651; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r5final/tmpstate/hadavin-mutation-lane-0/970f90ce441e0205.backup; h
   PASS: T43b a marker with a group but no recorded identity: file restored (rc 0) and the group found by the recorded command (review r4 nit 7: fallback)
-/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 674:  3484 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
-process 3527 is not this run's pytest (or cannot be verified): left alone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r5final/tmpstate/hadavin-mu
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 674: 23956 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+process 23965 is not this run's pytest (or cannot be verified): left alone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r5final/tmpstate/hadavin-m
   PASS: T43c a marker with a group and NO identity and NO command at all: file restored (rc 0), nothing stopped on a guess
 == T44 the leader is dead but a member of the test group still runs: --restore stops it (review r3 minor)
-/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 674:  3815 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_spawn.py ) > /dev/null 2>&1
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 674: 24138 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_spawn.py ) > /dev/null 2>&1
   PASS: T44 setup: the leader is gone, 'sleep 3137' (a member of its group) still runs
-stopped orphaned test group 3824; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r5final/tmpstate/hadavin-mutation-lane-0/970f90ce441e0205.backup; hash matches saved ori
+stopped orphaned test group 24147; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r5final/tmpstate/hadavin-mutation-lane-0/970f90ce441e0205.backup; hash matches saved or
   PASS: T44 restore exit 0, file back (rc 0)
   PASS: T44 the surviving member was stopped
 == T45 SIGKILL before the second marker (no group recorded yet): --restore finds the group by the command the first marker names (review r3 minor)
-/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 674:  4198 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 674: 24461 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
   PASS: T45 setup: the orphan runs
-stopped orphaned test group 4216; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r5final/tmpstate/hadavin-mutation-lane-0/970f90ce441e0205.backup; ha
+stopped orphaned test group 24472; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r5final/tmpstate/hadavin-mutation-lane-0/970f90ce441e0205.backup; h
   PASS: T45 restore exit 0, file back (rc 0)
   PASS: T45 the orphan was stopped
 == T46 timeout branch with stop_group failing: signals disarmed BEFORE stop_group is called, the leader still stopped, and the result is a TIMEOUT verdict, not a traceback (review r4 evidence)
@@ -496,35 +496,35 @@ running: True zombie: True reaped: False
 returncode still None, leader reaped: stop_group calls: []
   PASS: T50 unreaped_child true while running and as a zombie, false once reaped; no stop_group call for a reaped leader whose returncode is None
 == T51 (review r4 evidence) --restore identity checks: start time, dead leader, works_in
-/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 507:  9735 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
-process 9879 is not this run's pytest (or cannot be verified): left alone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r5final/tmpstate/hadavin-mu
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 507: 29429 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+process 30245 is not this run's pytest (or cannot be verified): left alone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r5final/tmpstate/hadavin-m
   PASS: T51a identical command line, other start time: stranger left alone, file restored (rc 0)
-/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 507: 10170 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
-stopped orphaned test group 10400; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r5final/tmpstate/hadavin-mutation-lane-0/970f90ce441e0205.backup; h
-/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 507: 10400 Killed                  ( cd "$T/root" && exec setsid "${ARGV[@]}" > /dev/null 2>&1 )
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 507: 30426 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+stopped orphaned test group 30528; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r5final/tmpstate/hadavin-mutation-lane-0/970f90ce441e0205.backup; h
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 507: 30528 Killed                  ( cd "$T/root" && exec setsid "${ARGV[@]}" > /dev/null 2>&1 )
   PASS: T51a (control) identical command line AND identical start time: stopped (rc 0)
-/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 520: 10561 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 520: 31736 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
   PASS: T51b outside-root setup: the member of the dead leader's group runs
-process 10873 is not this run's pytest (or cannot be verified): left alone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r5final/tmpstate/hadavin-m
+process 969 is not this run's pytest (or cannot be verified): left alone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r5final/tmpstate/hadavin-mut
   PASS: T51b outside-root: member left alone, file restored (rc 0)
-/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 520: 10900 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 520:  1101 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
   PASS: T51b early-start setup: the member of the dead leader's group runs
-process 11153 is not this run's pytest (or cannot be verified): left alone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r5final/tmpstate/hadavin-m
+process 1226 is not this run's pytest (or cannot be verified): left alone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r5final/tmpstate/hadavin-mu
   PASS: T51b early-start: member left alone, file restored (rc 0)
-/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 520: 11232 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 520:  1289 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
   PASS: T51b control setup: the member of the dead leader's group runs
-stopped orphaned test group 11494; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r5final/tmpstate/hadavin-mutation-lane-0/970f90ce441e0205.backup; h
+stopped orphaned test group 1325; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r5final/tmpstate/hadavin-mutation-lane-0/970f90ce441e0205.backup; ha
   PASS: T51b control (member works in root, started after the recorded start): stopped (rc 0)
 works_in wrong: []
   PASS: T51c works_in matches whole path parts: /root2/x is not inside /root
 == T52 (review r4 nit 1) a plant that fails on the open file is a clean refusal, not RESTORE FAILED; --restore with the file already original clears the marker
 REFUSED: cannot plant into src/mod.py: Permission denied
   PASS: T52a read-only target: exit 2 (got 2) with 'cannot plant', no 'RESTORE FAILED', file unchanged, state empty
-/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 674: 11580 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 674:  1410 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
 test group already gone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r5final/tmpstate/hadavin-mutation-lane-0/970f90ce441e0205.backup (it already 
   PASS: T52b file already equals the backup (two names): --restore exit 0 (got 0), marker and backup cleared, nothing written
 == T53 (review r4 nit 2) a FIFO in place of the target: --restore refuses instead of hanging
-/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 674: 11868 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 674:  1501 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
   PASS: T53 FIFO as the target at --restore: refused, no hang (got 2; 124 or 137 = hung)
   PASS: T53 and the genuine restore works afterwards
 == T54 (review r4 nit 4) ANY file in the tree with two names is refused, not only the target
@@ -533,16 +533,16 @@ REFUSED: docs/note.txt is not a regular file with exactly one name (links: 2): a
 == T55 (review r4 nit 5) a background process that outlives the test leader is stopped and recorded
   PASS: T55a leftover 'sleep 3141' stopped (rc 0), the raw file says so
   T55b control run killed with SIGKILL: --restore stops its test group
-/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 674: 12190 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --control --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 674:  1618 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --control --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
   PASS: T55b setup: the control run's pytest still runs
   PASS: T55b the next run refuses and points at --restore (rc 2)
-control run: stopped orphaned test group 12199; no marker in /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r5final/tmpstate/hadavin-mutation-lane-0 or in ['/dev/shm', '/tmp'
+control run: stopped orphaned test group 1627; no marker in /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r5final/tmpstate/hadavin-mutation-lane-0 or in ['/dev/shm', '/tmp',
   PASS: T55b --restore exit 0 (got 0), the orphaned control test group stopped, state empty, file unchanged
 == T56 (review r4 nit 9) no /proc, no waitid: a refusal at the start, on any option
 REFUSED: this tool works on Linux only (it reads /proc to identify and stop an orphaned test run and uses waitid); on this system a --restore could not stop a leftover test run: refused
   PASS: T56 non-Linux: exit 2 (got 2) with 'Linux only'
 == T57 (review r4 nit 10) the restore command in the refusal carries --repo; --restore needs no git repository
-/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 674: 12409 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 674:  2845 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
 REFUSED: a mutant (X-m1) is still planted in src/mod.py from an earlier run that was killed. Restore with: python3 /home/user/hadavin-sdk/handover/core-hardening/mutation-lane/run.py --root /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchp
   PASS: T57a the printed command contains --repo /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r5final/toy/repo
 test group already gone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r5final/tmpstate/hadavin-mutation-lane-0/970f90ce441e0205.backup; hash matche
@@ -555,10 +555,10 @@ test group already gone; restored src/mod.py from /tmp/claude-0/-home-user/957f9
 returncode after reap: -9 still unreaped child: False
   PASS: T58d reap kills AND waits: no zombie, returncode set
 == T59 (review r4 nit 12) the restored mode does not depend on the umask
-/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 674: 12966 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 674:  3001 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
   PASS: T59 mode 640 after a restore under umask 077 (got 640)
 == T60 (review r4 nit 3) a folder swapped for a link between the path check and the write is not followed
-/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 674: 13194 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 674:  3143 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
 REFUSED: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r5final/toy/root/src/mod.py: the folder 'src' is a symbolic link or not a fol
   PASS: T60 the file behind the swapped link was not written
 == T62 (review r4 nit 4) a bind mount inside the root (one name per file, same filesystem) is refused
