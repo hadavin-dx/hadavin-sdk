@@ -1,0 +1,61 @@
+Status: resolved (round 1 of 2)
+# Cross-review of the ready-to-apply core patches (cloud/core-hardening, patches-ready), queue item F2
+Written 2026-11-16 09:02 UTC / 14:32 IST by flows-audit (egm:egm-resolve, run by the main session). Inputs: review-design-r1.md (R1-01..R1-14), review-codebase-r1.md (F1..F9), evidence-13.md (raw output of an evidence runner). Reviewer words are unverified until checked; where I checked, it says so.
+
+## Short answer (read this first)
+Do not apply the three patches as they stand. C-01 and A-01 are correct and small, and the new tests really fail on the old code, but each has Major problems that make a bad config or a stuck audit backlog fail quietly instead of loudly. G5-wording swaps one inexact sentence for another. Fix the items marked PROPOSE FIX below, then apply.
+- C-01: APPLY AFTER FIXES (2 Majors).
+- A-01: APPLY AFTER FIXES (3 Majors).
+- G5-wording: APPLY AFTER FIXES (1 Major, wording).
+- DEAD-MAN-CHECK.md: KEEP AS A NOTE, two sentences to correct (it is text only).
+Counts after merging duplicates: 0 Blocker, 6 Major, 14 Nit/Minor. Decisions: 17 PROPOSE FIX, 0 CONTEST, 0 ESCALATE, 3 DECLINE. Nobody needs to answer a question for these fixes; one choice (the token ceiling number) belongs to the studio head and is listed at the end.
+
+## What the evidence shows (evidence-13.md, raw; run on scratch trees of commit b4cce5b, so not the full repository)
+- Confirms: the new tests fail on the old code (15 failed, 55 passed on old source: C-01 8, A-01 5, test_p7_tick order 1, one manifest test that also fails on the patched tree). `ruff check`, `ruff format --check` and `bandit -ll` return 0 on the patched tree. All three patches apply alone and in order. Mutation checks: removing the price check, dropping the output price, changing `le` to `lt`, removing the ceiling and removing the step from STEPS were each caught by a test.
+- Gaps the runner states: the scratch trees hold only src, tests and pyproject.toml, so 22 demo tests did not collect (askdata missing) and 5 other tests fail in BOTH trees for missing repo files (README, CHANGELOG, .gitleaks.toml, a docs manifest, no .git). A sixth failure in the old tree is a uv.lock test (the lock file exists only in the patched tree because the runner created it). So "5 failed" is the same 5 before and after, not caused by the patches; it is not a green full-repository run.
+- Contradicts or adds: the A-01 tests that call the new function directly (drain count, skip of a kind without reconcile, log lines) did NOT fail when I mutated the step out of STEPS; only the list tests did. Those direct tests prove the function, not that the tick runs it. Covered by item A-05 below.
+- I checked myself: (a) `Decimal('NaN') <= 0` raises `InvalidOperation`, which is an ArithmeticError, not a ValueError; `Decimal('Infinity') > 0` is True. So R1-01/F1 is real. (b) `approvals/channel.py:29` runs `redact_text` as the last step on the channel text, so R1-11 (the new G5 header over-claims "nothing re-scans before text leaves") is real.
+
+## Patch C-01 (price above 0 and a ceiling on max_tokens): APPLY AFTER FIXES
+| id | sev | merged from | decision | what to change |
+|---|---|---|---|---|
+| C-1 | Major | R1-01, F1 | PROPOSE FIX | In the Money validator (`config.py:40-47`), refuse values that are not finite (`Decimal.is_finite()`) with a ValueError, and write the check as `not (p.is_finite() and p > 0)` for both prices. Add test cases "NaN" and "Infinity" for input and output price. Today "NaN" crashes `load_config` with a raw traceback and "Infinity" passes. Verified above. |
+| C-2 | Major | R1-02 | PROPOSE FIX | `MAX_ROUTE_TOKENS = 200_000` is a guess (README says so) and looks like a context size, not an output limit, so a 10x typo passes. Make it a Config setting with the default in `defaults.py` (same pattern as `executor_timeout_s`, `config.py:344`), and take the default from the provider's own output limits. The number is the studio head's decision (see end). |
+| C-3 | Minor | F2 | PROPOSE FIX | The check covers only the live llm kind. `backends.detector` with an `llm_judge` kind can name a route (`config.py:356-358`); a live detector route priced 0 would pass while the main llm kind is fake. Refuse zero prices for every route used by a live-kind component, or state the limit in the README. |
+| C-4 | Nit | R1-03 | DECLINE | Duplicate check in `k1b/replay.py:87`, tiny positive prices, `model_copy` skipping validation: harmless; one README line. |
+| C-5 | Nit | R1-04 | DECLINE | Fixture and error-text assumptions: the codebase reviewer verified `LIVE_LLM` against AnthropicSettings (`table.py:43-61`) and the error match (`config.py:453`); the runner's tests pass on the patched tree. Closed by evidence. |
+| C-6 | Nit | R1-14 | PROPOSE FIX | Add a rollout note to the README: any live config with a price of 0 or max_tokens above the ceiling now refuses to start. Demos were not grepped (no demos folder in either scratch tree). |
+
+## Patch A-01 (tick drains the audit outbox, logs a failed write): APPLY AFTER FIXES
+| id | sev | merged from | decision | what to change |
+|---|---|---|---|---|
+| A-1 | Major | R1-05 | PROPOSE FIX | The docstring and README say the step drains events held "in memory". The pending list lives in the process that wrote it, and the tick is a different program (ORDER 009 Q-X1). The step can only drain the shared table or directory. Reword both, and make the ERROR line say "lost if this process exits". |
+| A-2 | Major | R1-06, F4 | PROPOSE FIX | Replace `getattr(audit, "reconcile", None)` skipping by a direct call `ctx.app.audit.reconcile()`: the Protocol requires it (`audit/protocol.py:27`, `app.audit` is typed AuditSink), so a missing method should turn the step red in tick_state, not green. Separately give K1bAudit a `reconcile()` that calls `self.sink.reconcile()` and call it at the end of each k1b command, or delete the docstring promise in `k1b/audit_sink.py`. The K1bAudit choice stays with the lead (open point in the README). |
+| A-3 | Major | R1-07 | PROPOSE FIX | A stuck backlog logs `drained=0`, the same as an empty outbox, because `_drain` and the database-down path swallow errors. Make reconcile return how many are left; log WARNING `audit_reconcile remaining=<n>` when above 0, or fail the step when work remains and nothing drained. |
+| A-4 | Minor | F5, R1-07(b) | PROPOSE FIX | `LocalDirSink.write_outcome` has the WARNING but no ERROR when its last resort fails (`local_dir.py:130`, goes straight to the in-memory list); the chain kind has the ERROR. Add the same ERROR line and a test. |
+| A-5 | Minor | evidence | PROPOSE FIX | Add one test that runs the real tick path and asserts the audit step ran (the evidence mutation showed the direct-call tests keep passing if the step is removed from STEPS). |
+| A-6 | Nit | R1-08 | PROPOSE FIX | Cap the batch (about 100) in config; in chain `reconcile` catch per-row validation errors, log the event id and continue, so one bad row cannot starve the rows after it. |
+| A-7 | Nit | R1-09 | PROPOSE FIX | Log INFO only when the count is above 0. |
+| A-8 | Nit | F3, R1-14 | PROPOSE FIX | README: name the docstring hunk (it also adds `reprobe_sources` to the contract line) and the extra assertion in `test_p7_tick.py`. |
+| A-9 | Nit | R1-10, F6, F7 | DECLINE | Test style (direct assignment instead of monkeypatch) is safe for plain classes; reviewers found the fixtures valid and the runner confirms the tests run. |
+
+## Patch G5-wording (comments and docstrings only): APPLY AFTER FIXES
+| id | sev | merged from | decision | what to change |
+|---|---|---|---|---|
+| G-1 | Major | R1-11 | PROPOSE FIX | The new header in `approvals/gate.py` (lines 7-8) says "nothing in this repository re-scans text before it leaves". The approval channel does run one final redaction (`approvals/channel.py:29`; the Slack channel also redacts once more). Say: "there is no BLOCK verdict and no independent second detector; the channel runs one final redaction with the same patterns." Use the same words in the `guard/redact.py` docstring. |
+| G-2 | Nit | R1-12, F9 | PROPOSE FIX | `guard/redact.py:947` ("the gate re-scans with a fresh one") still implies G5; fix it. Tag `gate.py:9` and `:61-66` "(original design)". The evidence shows the G5 test file passes unchanged on old code, as expected for text-only changes. |
+
+## DEAD-MAN-CHECK.md (a documented check, no code)
+| id | sev | decision | what to change |
+|---|---|---|---|
+| D-1 | Nit | PROPOSE FIX | Remove "the A-01 warning log line covers that": that warning fires at write time only (see A-3). Add: "green means the step ran, not that the backlog is empty", until A-3 is applied. |
+| D-2 | Nit | PROPOSE FIX | State that the SQL (`make_interval`) is Postgres only, and add a one-line clock-skew note (`last_ok_at` uses the app clock, `now()` the database clock) (F8, R1-13). |
+
+## README claims
+RUNG lines for C-01, A-01 and G5 are honest (both reviewers). "git apply --check passed" is confirmed by the runner. "pytest, ruff and bandit were not run" was true when written; they now ran on scratch trees only (see evidence gaps). No secrets or personal data in any diff (both reviewers).
+
+## Not checked
+Demos and any other live-kind config (no demos folder in the scratch trees); the full repository test run (README, CHANGELOG, gitleaks file, docs manifest, .git missing); Postgres behaviour of the chain outbox and of the dead-man SQL; the real provider output limits for the token ceiling; whether the tick and the agent really share one audit store in a deployment; tick tests other than the order tests. Round 2 would re-read the fixed patches; it has not run.
+
+## Open for the studio head
+The ceiling number for max_tokens (C-2) and whether K1bAudit gets a `reconcile()` (A-2). Neither blocks the other fixes.
