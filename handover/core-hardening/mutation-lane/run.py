@@ -248,6 +248,20 @@ class Refused(Exception):
     pass
 
 
+# what a restore may fail with: a refusal, the operating system, or a bug of these kinds; anything else still ends in main(),
+# which maps it to exit 3 while this run's own marker exists
+RESTORE_ERRORS = (
+    Refused,
+    OSError,
+    RuntimeError,
+    ValueError,
+    TypeError,
+    LookupError,
+    AttributeError,
+    AssertionError,
+)
+
+
 class SafeOut:
     """r8: standard output and error that never fail. A closed pipe, /dev/full or a full disk made print() raise (and the
     flush at exit made Python exit with 1 or 120, which are no exit codes of this tool; found by the independent r7 run).
@@ -510,13 +524,18 @@ def _make_writable(fd: int, name: str, pfd: int, base: int, saved: bytes) -> tup
             return fd, False
     except OSError:  # an O_PATH descriptor (mode 000) cannot be read: assume it differs
         pass
-    os.chmod(f"/proc/self/fd/{fd}", stat.S_IMODE(st.st_mode) | 0o600)  # works on O_PATH descriptors, follows the inode
+    os.chmod(
+        f"/proc/self/fd/{fd}", stat.S_IMODE(st.st_mode) | 0o600
+    )  # works on O_PATH descriptors, follows the inode
     try:
         fd2 = os.open(name, base | os.O_RDWR, dir_fd=pfd)
     except OSError:
         return fd, False
     st2 = os.fstat(fd2)
-    if (st2.st_dev, st2.st_ino) != (st.st_dev, st.st_ino):  # swapped meanwhile: not the file we changed
+    if (st2.st_dev, st2.st_ino) != (
+        st.st_dev,
+        st.st_ino,
+    ):  # swapped meanwhile: not the file we changed
         os.close(fd2)
         return fd, False
     os.close(fd)
@@ -551,7 +570,9 @@ def restore_target(
                 raise
             fd = os.open(name, base | os.O_RDWR | os.O_CREAT | os.O_EXCL, mode or 0o644, dir_fd=pfd)
             created = writable = True
-        except PermissionError:  # a read-only file: it can still be compared (mode 000: not even that, O_PATH only)
+        except (
+            PermissionError
+        ):  # a read-only file: it can still be compared (mode 000: not even that, O_PATH only)
             try:
                 fd = os.open(name, base | os.O_RDONLY, dir_fd=pfd)
             except PermissionError:
@@ -1193,7 +1214,9 @@ def link_hint(root: pathlib.Path, rel) -> str:
     return ""
 
 
-def restore_from_marker(root: pathlib.Path, expected_ref: pathlib.Path | None = None) -> tuple[bool, str]:
+def restore_from_marker(
+    root: pathlib.Path, expected_ref: pathlib.Path | None = None
+) -> tuple[bool, str]:
     ensure_state()
     key = key_for(root)
     marker = STATE / f"{key}.planted.json"
@@ -1213,12 +1236,18 @@ def restore_from_marker(root: pathlib.Path, expected_ref: pathlib.Path | None = 
         raise Forged(f"marker names a backup other than {bk}: refused")
     saved = read_state(bk)
     if sha256(saved) != m["orig_sha256"]:
-        raise Refused("the saved backup does not match the hash recorded in the marker: nothing written")
-    if expected_ref is not None:  # --sha given on the restore command line: git, not the state folder, is the authority (r8 d)
+        raise Refused(
+            "the saved backup does not match the hash recorded in the marker: nothing written"
+        )
+    if (
+        expected_ref is not None
+    ):  # --sha given on the restore command line: git, not the state folder, is the authority (r8 d)
         try:
             want = read_regular(safe_rel(expected_ref, m["file"], "marker file"))
         except (Refused, OSError, TypeError) as e:
-            raise Refused(f"the git archive given with --sha has no usable {m['file']!r} ({e}): nothing written") from e
+            raise Refused(
+                f"the git archive given with --sha has no usable {m['file']!r} ({e}): nothing written"
+            ) from e
         if want != saved:
             raise Refused(
                 f"the saved backup differs from {m['file']} in the git archive given with --sha: the state folder may be "
@@ -1227,7 +1256,9 @@ def restore_from_marker(root: pathlib.Path, expected_ref: pathlib.Path | None = 
     try:
         # must_exist=False: a deleted target is re-created (review r3 minor); checked again right before the write
         target = safe_rel(root, m["file"], "marker file", must_exist=False)
-        orphan, settled = stop_orphan(m, root)  # r7 review N2: an orphan that could not be stopped is reported, not hidden
+        orphan, settled = stop_orphan(
+            m, root
+        )  # r7 review N2: an orphan that could not be stopped is reported, not hidden
         mode = (
             m.get("mode") if isinstance(m.get("mode"), int) and 0 <= m["mode"] <= 0o777 else 0o644
         )
@@ -1760,7 +1791,9 @@ def one(a, tests, m, results, ref) -> list[str]:
                     # written again) and verify on ONE open file (review r5 M3), never by path
                     _, back = restore_target(p2, orig, root, mode=stat.S_IMODE(sp.st_mode))
                     same_hash = back == orig and back == ref_bytes
-                except Exception as e:  # any failure (also a bug) to write the original back is a failed restore
+                except (
+                    RESTORE_ERRORS
+                ) as e:  # any failure (also a bug) to write the original back is a failed restore
                     print("RESTORE ERROR:", e, file=sys.stderr)
                     same_hash = False
                 if not same_hash:
@@ -1949,7 +1982,9 @@ def summarize(results: list[dict], planned: int, baseline_ran: bool = True) -> t
     return line, complete
 
 
-def may_be_planted(restore: bool, root: pathlib.Path, marker: pathlib.Path, e: BaseException) -> bool:
+def may_be_planted(
+    restore: bool, root: pathlib.Path, marker: pathlib.Path, e: BaseException
+) -> bool:
     """The ONE choke point for the exit code (r7 review M1; class: an exit code that says "nothing planted" while the mutant
     is planted). True when a mutant, or a test group of a control run, may still be in place: with `--restore` whenever a
     planted or control marker for this root exists (unless the marker is Forged: it names another root or backup, nothing is
@@ -1971,7 +2006,9 @@ def reject_output_inputs(paths: list[pathlib.Path], inputs: list[pathlib.Path]) 
         for i in inputs:
             try:
                 if os.path.samefile(o, i):
-                    raise Refused(f"output path {o} is the same file as the input {i}: refused (it would be overwritten)")
+                    raise Refused(
+                        f"output path {o} is the same file as the input {i}: refused (it would be overwritten)"
+                    )
             except OSError:
                 continue
 
@@ -2020,7 +2057,10 @@ def restore_args(a, repo_given: bool) -> str:
 
 
 def main():
-    sys.stdout, sys.stderr = SafeOut(1), SafeOut(2)  # first: even the first refusal text must not be able to fail
+    sys.stdout, sys.stderr = (
+        SafeOut(1),
+        SafeOut(2),
+    )  # first: even the first refusal text must not be able to fail
     if (
         tuple(sys.version_info[:3]) < MIN_PYTHON
     ):  # before anything else, on every option including --restore (review r5 nit 8)
@@ -2146,7 +2186,9 @@ def main():
                 # review r6 nit 2: a signal during the restore is remembered, never raised: the restore ends first
                 SIG.critical = True
                 expected_ref = None
-                if a.sha:  # r8 (d): the commit named on the command line decides what the original is
+                if (
+                    a.sha
+                ):  # r8 (d): the commit named on the command line decides what the original is
                     expected_ref = tmpref / "ref"
                     expected_ref.mkdir()
                     build_reference(a.repo, resolve_commit(a.repo, a.sha), a.patch, expected_ref)
@@ -2218,10 +2260,16 @@ def main():
             for o in outs:  # before anything is planted (review r4 nit 11, r6 nit 4)
                 check_out_path(o, root)
             if len({os.path.abspath(o) for o in outs}) != len(outs):
-                raise Refused("two output files have the same path (--out-json is also a raw file): refused")
+                raise Refused(
+                    "two output files have the same path (--out-json is also a raw file): refused"
+                )
             reject_output_inputs(
                 outs,
-                [pathlib.Path(__file__), *([pathlib.Path(a.list)] if a.list else []), *map(pathlib.Path, a.patch)],
+                [
+                    pathlib.Path(__file__),
+                    *([pathlib.Path(a.list)] if a.list else []),
+                    *map(pathlib.Path, a.patch),
+                ],
             )
             results = []
             a.ref_files = tree_files(ref)

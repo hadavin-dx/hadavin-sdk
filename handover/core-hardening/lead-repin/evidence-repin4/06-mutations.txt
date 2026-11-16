@@ -1,0 +1,11 @@
+m1-jwt-rule-dropped.sh dash exit=1 FAIL_lines=7 SELF-TEST: passed=292 failed=6 (the made-up i
+m1-jwt-rule-dropped.sh bash exit=1 FAIL_lines=7 SELF-TEST: passed=292 failed=6 (the made-up i
+m2-filter_ready-always-ok.sh dash exit=1 FAIL_lines=3 SELF-TEST: passed=296 failed=3 (the made-up i
+m2-filter_ready-always-ok.sh bash exit=1 FAIL_lines=3 SELF-TEST: passed=296 failed=3 (the made-up i
+m3-self_test-always-returns-0.sh dash exit=0 FAIL_lines=0 SELF-TEST: passed=299 failed=0 (the made-up i
+m3-self_test-always-returns-0.sh bash exit=0 FAIL_lines=0 SELF-TEST: passed=299 failed=0 (the made-up i
+m4-abort-disabled-normal-run.sh dash exit=1 FAIL_lines=5 SELF-TEST: passed=295 failed=5 (the made-up i
+m4-abort-disabled-normal-run.sh bash exit=1 FAIL_lines=5 SELF-TEST: passed=295 failed=5 (the made-up i
+m5-abort-disabled-mask.sh dash exit=1 FAIL_lines=1 SELF-TEST: passed=298 failed=1 (the made-up i
+m5-abort-disabled-mask.sh bash exit=1 FAIL_lines=1 SELF-TEST: passed=298 failed=1 (the made-up i
+m6-bearer-rule-dropped.sh dash exit=1 FAIL_lines=7 SELF-TEST: passed=292 failed=6 (the made-up i
