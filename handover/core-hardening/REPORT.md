@@ -1,5 +1,10 @@
 # REPORT from core-hardening (newest on top, UTC and IST)
 
+## STATUS 07:51 UTC / 13:21 IST: ORDER 005 task A started (flows-audit cross-review); task B waits for A
+- Done: fetched origin/cloud/flows-audit into a scratch copy (git archive, outside the repo); REVIEW-PLAN.md written in reviews-of-flows-audit/.
+- Register: (none running yet). Next: P1 plan review (egm-review-loop, sonnet reviewers), then E1 evidence runner, then 4 result reviewers.
+- Old register closed: all ORDER 002 agents stopped.
+
 ## FINAL 07:34 UTC / 13:04 IST: ORDER 002 part 1 (static architecture audit) written; part 2 not started
 FAILURES AND GAPS FIRST
 - Nothing was run: no test, no program, no network. Every statement is from reading code; anything needing a runtime is UNVERIFIED.
