@@ -1,0 +1,4 @@
+# CLAIMS-TABLE lane A rows A-001..A-050 cite check (agent a41943d), saved by flows-audit, condensed; checker words unverified. Static.
+Every quoted sentence exists at its cited line. Majors: A-036 (CLAIMS-TABLE ~549) verdict says quoted subject is not what the flow sends yet SUPPORTED -> OVERSTATED first; A-010 (~520) and A-045 (~558) "SUPPORTED ONLY BY RELAYED NUMBER" wrong, claim is not a number and 8 flow files say saveData none (A-007 grades same files UNSUPPORTED); A-007 (~517) "list would show no take runs" is inference, needs qualifier. Nits: A-012 (~522), A-026 (~539) second verdict word inside first phrase (could break count script); A-020 cites R:33 and R:41, basis only at R:33.
+Not checked: A-099..A-101; flow JSON node logic for A-005, A-011, A-018, A-024, A-029, A-034, A-037, A-039, A-046 (quote existence only); A-030/A-031 "line 40 block"; relayed-number rows (V7, lane3 raw files absent); desk repo.
+Sent to fixer a612be1 in the same batch.

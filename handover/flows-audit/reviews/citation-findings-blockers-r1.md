@@ -1,0 +1,6 @@
+# FINDINGS.md Blocker/Major rows cite check (agent a614659), saved by flows-audit, condensed; checker words unverified. Static.
+Result: no false file:line, node name, expression or quote in the 10 rows (5 Blocker F-002, F-003, F-007, F-031, F-037; 5 Major F-008, F-011, F-018, F-029, F-041). Severity and status agree FINDINGS vs LEDGER-ROWS for all 10.
+L1 LEDGER-ROWS.md:3 (F-002 fix cell) not word for word with FINDINGS.md:109: KEY vs KEYF; PGPASSWORD prefixes missing; T20 counter and "done sent=200 not422=0" only in FINDINGS; T21 "ON ANY STOP AFTER (2)" text and RUNBOOK step 18 (1b) pre-check missing in ledger. Re-copy once FINDINGS settles.
+S1 F-037 Blocker: row's own evidence says filled copy has 0 $env reads, worst case "state unknown and alert, none dropped"; rubric reads Major or Nit; Blocker is audit's own rating, lead to confirm. S2 F-031 rests on lead ruling Q22/Q30 item 2 (not read). S3 F-002 reason (2) not reachable in take; F-041 wording-only stays Major by Q27 item 9. Report only (lead).
+LOOSE: F-007 VIDEO-RUNSHEET.md:36 does not carry the false phrase; F-037 N8N-START.md:13 says the setting is needed, sets nothing. C1: where/evidence cells omit handover/demo/ prefix.
+Not read: QUESTIONS, ORDERS, FIX-PLAN, TAKE-CHECKLIST, RUNBOOK, lanes; contents of F-002/F-004/F-008 patches; EXCEPTIONS n8n-SQLite row.

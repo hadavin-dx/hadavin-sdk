@@ -67,7 +67,7 @@ Rule: pass = the patched run's failed tests are exactly these two names and no o
 AND the passed count is the baseline's plus the number of new tests: 9364 + 32 = 9396, with the same skipped and deselected counts.
 In a real checkout the second failure should disappear and the first one depends on what is in `handover/`; so in a real checkout, take the baseline
 by running the same command on the base branch first, and compare the two failed-test lists the same way. This pass could not do that (no checkout run).
-Result on the patched copy: see the line "patched full run" in `../../fix-patchcopies2.md` (filled in there with its raw output).
+Result on the patched copy (2026-11-16): `2 failed, 9396 passed, 454 skipped, 26 deselected in 247.81s`, exit 1; the two failed names are exactly the two above, and 9396 = 9364 + 32. Raw lines in `../../fix-patchcopies2.md`.
 
 Gate on the exit code of each command itself, never on a `| tail` pipe.
 
