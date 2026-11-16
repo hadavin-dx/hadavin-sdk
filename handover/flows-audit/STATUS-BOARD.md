@@ -1,13 +1,13 @@
-UPDATED_UTC: 2026-11-16T10:51:11Z
+UPDATED_UTC: 2026-11-16T10:51:40Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
 ITEMS_OPEN: 4
-PERCENT: 85
+PERCENT: 86
 AGENTS_RUNNING: 5
-CAPACITY: 1.15 load of 4 cores, mem 0/15 GB, RAM 912/16087 MB, disk 27G free of 252G, top3 327M /tmp/core-venv 683M /tmp/claude-0 871M /tmp/f3m , agents 5 (light+heavy per list)
+CAPACITY: 1.15 load of 4 cores, mem 0/15 GB, RAM 911/16087 MB, disk 27G free of 252G, top3 327M /tmp/core-venv 683M /tmp/claude-0 871M /tmp/f3m , agents 5 (light+heavy per list)
 INTERRUPTED: none
 FAILED: ROLES: PARKED by lead (client build, after video, no new lanes). Script r6: independent rerun 71 tests OK, gate rc 0, but 7 of 15 random mutants survive (lines 141,145,147,280,358,371,417); not fixed because parked; v4 doc security Blocker (Part C unguarded) unfixed
 claims: r5 counts independently rerun and match (113/69/48/28/69=327, 79 rows); BUT 37 Table 2 rows (41-77) have no LIVE/OUT tag; example.test vs example.com rows 2 and 5 rest on OWNER-STEPS v3 only; row 33 archive step unproven; 2 wrong cites (A-097, A-068); r6 fix pending (tags, desk-repo traces, cites)
@@ -37,8 +37,9 @@ citation check patches r3: unsourced relayed figures stay labelled relayed (144.
 zoom-out: queue may be over-built for one take; 3 take risks unowned (HubSpot id shape before rehearsal, test vs production webhook URL, clean-up of saved runs); asked lead in Q17, queue unchanged
 Q14/Q17 answered 10:58Z: applying (Q14 5 re-rates + recount, caption cut, F-001 drop, HubSpot row); F3 frozen after r7, F8/F2/F6 parked; OWNER-STEPS v4 is not in this tree (only v3), so the stranger read used v3 + q16 rows
 stranger read: OWNER-STEPS v3 not doable in 10 minutes (4 Blockers, 20 Majors, 13 Nits on v3, 8 on my q16 rows); v3 is the lead's file, findings saved for v4
-NEXT: Q14/Q17 fixer; F3 r7 evidence+security; F8 r6; claims sweep
-PUSHED_UTC: 2026-11-16T10:51:11Z
+F8 r6 fixer: n8n import never tried; psql gate stays a person step; mutants are the fixer's own (independent evidence run launched); Q18 asked (exit 4 vs 0)
+NEXT: Q14/Q17 fixer; F3 r7 evidence+security; F8 r6 evidence; claims sweep; Q18 waits
+PUSHED_UTC: 2026-11-16T10:51:40Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -58,11 +59,11 @@ PUSHED_UTC: 2026-11-16T10:51:11Z
 | id | role | model | what it does | started UTC | expected end UTC | % | state | last output |
 |---|---|---|---|---|---|---|---|---|
 | f3ev6 | F3 r6 evidence runner | sonnet | independent rerun, mutants on new code, e2e | 10:21 | 10:51 | 5 | running | fill_flows/evidence-f3-r6.md |
-| f8fix6 | F8 round 6 fixer | sonnet | 2 Blockers + 10 Majors (false all-clear), 3 real mutant gaps, non-UTF8 | 10:46 | 11:15 | 5 | running | flow-check/fix-f8-r6.md |
 | f3ev7 | F3 r7 evidence runner | sonnet | independent rerun, 25 new mutants, hostile inputs | 10:50 | 11:20 | 5 | running | fill_flows/evidence-f3-r7.md |
 | f3sec5 | F3 r7 security reviewer | sonnet | fresh security review of snapshot | 10:50 | 11:15 | 5 | running | (inline) |
 | q14fix | Q14/Q17 apply fixer | sonnet | re-rate 5 to Nit, recount once, cut caption, drop F-001, HubSpot row | 10:58 | 11:30 | 5 | running | fix-q14-q17.md |
 | onejob | one-place-per-job claims sweep | sonnet | duplicates and drift in CLAIMS-TABLE | 10:58 | 11:15 | 5 | running | (inline) |
+| f8ev6 | F8 r6 evidence runner | sonnet | take_check.sh only (rest parked) | 11:05 | 11:25 | 5 | running | flow-check/evidence-r6.md |
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
