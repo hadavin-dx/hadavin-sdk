@@ -67,9 +67,29 @@ stop_case() { # NAME SIGNAL EXPECTED-EXIT WORKDIR-GIVEN(0/1) [PHASE: selftest|ch
 stop_case A-sigterm TERM 143 0
 stop_case B-sigint INT 130 1
 stop_case C-sighup HUP 129 1
+# E needs a checker run that lasts: the real checkers end in under a second, so no signal could be aimed at them. In a mirror whose check_flows.py sleeps for 10 minutes the nine checker runs are all alive when the signal comes.
+F="$T/mirror-E/handover/flows-audit/flow-check"; mkdir -p "$F"
+for n in run_all.sh take_check.sh test_take_check.sh selftest.py take-warns.pin expected-counts.pin README.md; do [ ! -f "$SD/$n" ] || cp -- "$SD/$n" "$F/$n"; done
+cp -- "$SUT" "$F/run_all.sh"; printf 'import time\ntime.sleep(600)\n' > "$F/check_flows.py"
+ln -s "$(cd "$SD/../../demo" && pwd)" "$T/mirror-E/handover/demo"; ln -s "$(cd "$SD/../patches" && pwd)" "$T/mirror-E/handover/flows-audit/patches"
+SUT_REAL=$SUT; SUT=$F/run_all.sh
 stop_case E-sigterm-checkers TERM 143 1 checkers
+SUT=$SUT_REAL
 stop_case F-sigint-suite INT 130 1 suite
 stop_case G-sighup-nested HUP 129 1 nested
+# H (f8-r13): two SIGTERM in a row at selftest.py itself (run_all.sh and the time-limit command can both send one). The second used to cut the clean-up of the first short and leave fc-selftest-* in TMPDIR. Five tries, each aimed at the moment the work folder appears.
+DEMO=$(cd "$SD/../../demo" && pwd); HL=0
+for k in 1 2 3 4 5; do
+  mkdir -p "$T/h-tmp-$k"
+  env TMPDIR="$T/h-tmp-$k" FC_OUT="$T/h-out-$k" python3 -I "$SD/selftest.py" "$DEMO/n8n-flows-real-v5" "$DEMO/n8n-flows-real-v5" "$DEMO/n8n-flows-film-v5" > "$T/h-$k.txt" 2>&1 &
+  HP=$!; RUNPID=$HP
+  for i in $(seq 1 400); do [ -n "$(ls -A "$T/h-tmp-$k" 2>/dev/null | grep '^fc-selftest-[^o]')" ] && break; sleep 0.05; done
+  kill -TERM "$HP" 2>/dev/null; kill -TERM "$HP" 2>/dev/null
+  for i in $(seq 1 100); do kill -0 "$HP" 2>/dev/null || break; sleep 0.1; done
+  wait "$HP" 2>/dev/null; HRC=$?; RUNPID=""
+  [ "$HRC" = 143 ] && [ -z "$(ls -A "$T/h-tmp-$k" 2>/dev/null | grep '^fc-selftest-[^o]')" ] || { HL=$((HL+1)); echo "     try $k: exit $HRC, left in TMPDIR: $(ls -A "$T/h-tmp-$k" | tr '\n' ' ')"; }
+done
+[ "$HL" = 0 ]; ok $? "H-double-sigterm: selftest.py given two SIGTERM in a row exits 143 and leaves no work folder, 5 tries ($HL went wrong)"
 # D: the time limit at the real call site
 F="$T/mirror/handover/flows-audit/flow-check"; mkdir -p "$F"
 for n in run_all.sh take_check.sh test_take_check.sh check_flows.py take-warns.pin expected-counts.pin; do [ ! -f "$SD/$n" ] || cp -- "$SD/$n" "$F/$n"; done

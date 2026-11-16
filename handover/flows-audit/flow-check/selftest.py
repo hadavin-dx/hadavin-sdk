@@ -1613,11 +1613,24 @@ def main():
         return 2
     shutil.rmtree(OUT, ignore_errors=True)
     os.makedirs(OUT)
-    work = tempfile.mkdtemp(prefix="fc-selftest-")
     # f8-r12 (M2): a stop signal (time limit, Ctrl-C, closed terminal) must not leave the work folder behind: turn the signals into a normal exit so the clean-up below runs.
-    atexit.register(shutil.rmtree, work, ignore_errors=True)
+    # f8-r13: bug class = a clean-up that a second signal can cut short. run_all.sh and the time-limit command can each send SIGTERM, so a second one arrived while the first was inside shutil.rmtree and its SystemExit left the folder behind (seen in test_run_all_stop.sh case A). Now: (1) the clean-up is registered BEFORE the folder exists, (2) the first signal switches all three signals to "ignore" before it exits, (3) the signals are blocked while the folder is made, so none can arrive between the mkdir and the assignment.
+    held = []
+    atexit.register(lambda: [shutil.rmtree(h, ignore_errors=True) for h in held])
+
+    def _stop(n, _f):
+        for _s in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
+            signal.signal(_s, signal.SIG_IGN)
+        sys.exit(128 + n)
+
     for _sig in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
-        signal.signal(_sig, lambda n, _f: sys.exit(128 + n))
+        signal.signal(_sig, _stop)
+    _old = signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGTERM, signal.SIGINT, signal.SIGHUP})
+    try:
+        work = tempfile.mkdtemp(prefix="fc-selftest-")
+        held.append(work)
+    finally:
+        signal.pthread_sigmask(signal.SIG_SETMASK, _old)
     ok = bad = skipped = 0
     wt(
         OUT + "/CHECK-COMMAND.txt",
