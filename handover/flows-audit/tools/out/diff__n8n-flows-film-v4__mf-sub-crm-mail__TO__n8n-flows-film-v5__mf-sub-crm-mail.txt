@@ -1,0 +1,7 @@
+ADDED node CrmIdOk
+CHANGED SetCrmId.parameters: {"operation": "executeQuery", "query": "UPDATE mf_leads SET crm_id=$2, updated_at=now() WHERE lead_key=$1 AND claim_token=$3 AND state='processing' RETURNING lead_key;", "options": {"queryReplacement": "={{ [$('SubIn').first().json.lead_key, String($json.id), $('SubIn').first().json.claim_token] }}" -> {"operation": "executeQuery", "query": "UPDATE mf_leads SET crm_id=$2, updated_at=now() WHERE lead_key=$1 AND claim_token=$3 AND state='processing' RETURNING lead_key;", "options": {"queryReplacement": "={{ [$('SubIn').first().json.lead_key, String($json.id ?? $json.vid ?? ''), $('SubIn').first().js
+REMOVED edge ('SetCrmId', 0, 'OwnsClaim1')
+ADDED edge ('CrmIdOk', 0, 'OwnsClaim1')
+ADDED edge ('CrmIdOk', 1, 'OutStage')
+ADDED edge ('SetCrmId', 0, 'CrmIdOk')
+settings equal: True

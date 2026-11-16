@@ -1,0 +1,15 @@
+ADDED node CrmIdOk
+CHANGED Qualify.parameters: {"method": "POST", "url": "={{ $env.MF_STAGE_URL }}/qualify", "sendBody": true, "contentType": "json", "specifyBody": "json", "jsonBody": "={{ { lead_key: $('SubIn').first().json.lead_key, email: $('SubIn').first().json.email } }}", "options": {"timeout": "={{ Number($env.MF_STAGE_TIMEOUT_MS || 1500 -> {"method": "POST", "url": "={{ $env.DESK_URL }}/qualify", "sendBody": true, "contentType": "json", "specifyBody": "json", "jsonBody": "={{ { lead_key: $('SubIn').first().json.lead_key, email: $('SubIn').first().json.email } }}", "options": {"timeout": "={{ Number($env.DESK_TIMEOUT_MS || 10000) }}"}}
+CHANGED Qualify.maxTries: 3 -> 2
+CHANGED SetCrmId.parameters: {"operation": "executeQuery", "query": "UPDATE mf_leads SET crm_id=$2, updated_at=now() WHERE lead_key=$1 AND claim_token=$3 AND state='processing' RETURNING lead_key;", "options": {"queryReplacement": "={{ [$('SubIn').first().json.lead_key, String($json.id), $('SubIn').first().json.claim_token] }}" -> {"operation": "executeQuery", "query": "UPDATE mf_leads SET crm_id=$2, updated_at=now() WHERE lead_key=$1 AND claim_token=$3 AND state='processing' RETURNING lead_key;", "options": {"queryReplacement": "={{ [$('SubIn').first().json.lead_key, String($json.id ?? $json.vid ?? ''), $('SubIn').first().js
+CHANGED CrmUpsert.type: "n8n-nodes-base.httpRequest" -> "n8n-nodes-base.hubspot"
+CHANGED CrmUpsert.typeVersion: 4.2 -> 2.2
+CHANGED CrmUpsert.parameters: {"method": "POST", "url": "={{ $env.MF_CRM_URL }}/upsert", "sendBody": true, "contentType": "json", "specifyBody": "json", "jsonBody": "={{ { hadavin_lead_id: $('SubIn').first().json.lead_key, email: $('SubIn').first().json.email, label: $('Qualify').first().json.label } }}", "options": {"timeout":  -> {"authentication": "appToken", "resource": "contact", "operation": "upsert", "email": "={{ $('SubIn').first().json.email }}", "additionalFields": {"customPropertiesUi": {"customPropertiesValues": [{"property": "hadavin_lead_id", "value": "={{ $('SubIn').first().json.lead_key }}"}, {"property": "hada
+CHANGED CrmUpsert.credentials: null -> {"hubspotAppToken": {"id": "HS_CRED_PLACEHOLDER", "name": "hubspot-app-token"}}
+CHANGED CrmUpsert.maxTries: 3 -> 2
+CHANGED SendMail.parameters: {"fromEmail": "desk@example.test", "toEmail": "intake@example.test", "subject": "={{ '[demo] lead ' + $('SubIn').first().json.lead_key }}", "emailFormat": "text", "text": "made-up thank-you text", "options": {"appendAttribution": false}} -> {"fromEmail": "FROM_ADDRESS_PLACEHOLDER", "toEmail": "INTAKE_ADDRESS_PLACEHOLDER", "subject": "={{ '[demo] lead ' + $('SubIn').first().json.lead_key }}", "emailFormat": "text", "text": "made-up thank-you text", "options": {"appendAttribution": false}}
+REMOVED edge ('SetCrmId', 0, 'OwnsClaim1')
+ADDED edge ('CrmIdOk', 0, 'OwnsClaim1')
+ADDED edge ('CrmIdOk', 1, 'OutStage')
+ADDED edge ('SetCrmId', 0, 'CrmIdOk')
+settings equal: True

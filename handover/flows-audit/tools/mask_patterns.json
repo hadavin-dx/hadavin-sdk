@@ -1,0 +1,5 @@
+{
+  "key_name_regex": "(token|secret|password|passwd|apikey|api_key|authorization|bearer)",
+  "value_regexes": ["Bearer\\s+\\S+", "[A-Za-z0-9_\\-]{32,}", "[a-z][a-z0-9+.\\-]*://[^\\s/@:]+:[^\\s/@]+@\\S+"],
+  "note": "Used by dump_nodes.py (masking) and check_secrets.py (new files must contain no value matching these). Expressions starting with '=' are not masked (they are code, not values). Credential NAMES, URLs and SQL text are copied."
+}

@@ -1,0 +1,7 @@
+REMOVED node AlertUnknown
+REMOVED edge ('AlertUnknown', 0, 'OutUnknown')
+REMOVED edge ('UnknownNew', 0, 'AlertUnknown')
+REMOVED edge ('UnknownNewA', 0, 'AlertUnknown')
+ADDED edge ('UnknownNew', 0, 'OutUnknown')
+ADDED edge ('UnknownNewA', 0, 'OutUnknown')
+settings equal: True

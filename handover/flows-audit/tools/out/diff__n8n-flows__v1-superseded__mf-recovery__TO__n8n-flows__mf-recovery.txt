@@ -1,0 +1,40 @@
+REMOVED node RCrmSearch
+REMOVED node RMailAlready
+REMOVED node RMarkMailSent
+REMOVED node RMarkDone
+REMOVED node RCrmNone
+REMOVED node RCrmCreate
+REMOVED node RSetCrm
+REMOVED node RMarkUnknown
+REMOVED node RCrmExists
+REMOVED node RSaveLabel
+REMOVED node RItem
+REMOVED node RQualify
+REMOVED node RSendMail
+ADDED node RunSub
+ADDED node AlertFailed
+ADDED node MarkFailed
+ADDED node StuckRow
+ADDED node FailedRow
+CHANGED ClaimStuck.parameters: {"operation": "executeQuery", "query": "UPDATE mf_leads SET updated_at=now() WHERE lead_key IN (SELECT lead_key FROM mf_leads WHERE state NOT IN ('done','unknown') AND updated_at < now() - interval '20 seconds' ORDER BY created_at LIMIT 20 FOR UPDATE SKIP LOCKED) RETURNING lead_key, email, name, mai -> {"operation": "executeQuery", "query": "UPDATE mf_leads SET claimed_until=now() + interval '120 seconds', claim_token=gen_random_uuid()::text, attempts=attempts+1, updated_at=now() WHERE lead_key IN (SELECT lead_key FROM mf_leads WHERE state NOT IN ('done','review','unknown','failed') AND claimed_un
+CHANGED ClaimStuck.onError: null -> "continueRegularOutput"
+REMOVED edge ('ClaimStuck', 0, 'RItem')
+REMOVED edge ('RCrmCreate', 0, 'RSetCrm')
+REMOVED edge ('RCrmExists', 0, 'RSetCrm')
+REMOVED edge ('RCrmNone', 0, 'RCrmCreate')
+REMOVED edge ('RCrmNone', 1, 'RCrmExists')
+REMOVED edge ('RCrmSearch', 0, 'RCrmNone')
+REMOVED edge ('RItem', 0, 'RQualify')
+REMOVED edge ('RMailAlready', 0, 'RMarkUnknown')
+REMOVED edge ('RMailAlready', 1, 'RMarkMailSent')
+REMOVED edge ('RMarkMailSent', 0, 'RSendMail')
+REMOVED edge ('RQualify', 0, 'RSaveLabel')
+REMOVED edge ('RSaveLabel', 0, 'RCrmSearch')
+REMOVED edge ('RSendMail', 0, 'RMarkDone')
+REMOVED edge ('RSetCrm', 0, 'RMailAlready')
+ADDED edge ('ClaimStuck', 0, 'StuckRow')
+ADDED edge ('Every30s', 0, 'MarkFailed')
+ADDED edge ('FailedRow', 0, 'AlertFailed')
+ADDED edge ('MarkFailed', 0, 'FailedRow')
+ADDED edge ('StuckRow', 0, 'RunSub')
+settings equal: True

@@ -5,8 +5,9 @@ Usage:
   dump_nodes.py diff <a.json> <b.json>     node/param/connection differences a -> b
 Secret-looking parameter values are masked; only key names are printed."""
 import json, re, sys, glob, os
-SECRET_KEY = re.compile(r'(token|secret|password|passwd|apikey|api_key|authorization|bearer)', re.I)
-SECRET_VAL = re.compile(r'(Bearer\s+\S+|[A-Za-z0-9_\-]{32,}|postgres(ql)?://\S+)')
+_P = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'mask_patterns.json')))
+SECRET_KEY = re.compile(_P['key_name_regex'], re.I)
+SECRET_VAL = re.compile('|'.join('(?:%s)' % r for r in _P['value_regexes']))
 
 def mask(v, key=''):
     if isinstance(v, dict): return {k: mask(x, k) for k, x in v.items()}
@@ -34,7 +35,7 @@ def reachable(d, edges):
     while stack:
         for _, t in edges.get(stack.pop(), []):
             if t not in seen: seen.add(t); stack.append(t)
-    return {n['name']: ('Y' if n['name'] in seen else ('NO-INCOMING' if n['name'] not in incoming else 'UNREACHED-FROM-TRIGGER')) for n in d['nodes']}
+    return {n['name']: ('ENTRY' if n['name'] in entry else 'Y' if n['name'] in seen else ('NO-INCOMING' if n['name'] not in incoming else 'UNREACHED-FROM-TRIGGER')) for n in d['nodes']}
 
 def table(path):
     d, names, edges = load(path)
@@ -49,9 +50,22 @@ def table(path):
     dang = [(s, t) for s, l in edges.items() for _, t in l if t not in names]
     print(f"dangling edges: {dang}; node names unique: {len(names) == len(set(names))}")
 
+def flow_files(root):
+    return [f for f in sorted(glob.glob(os.path.join(root, 'n8n-*/**/*.json'), recursive=True))
+            if '/n8n-tests/' not in f.replace(os.sep, '/')]
+
+def check(path):
+    """exit 1 on unparsable file, duplicate node names or dangling edges"""
+    try: d, names, edges = load(path)
+    except Exception as e: print('PARSE-FAIL', path, e); return 1
+    dang = [(s, t) for s, l in edges.items() for _, t in l if t not in names]
+    dup = sorted({n for n in names if names.count(n) > 1})
+    print(path, 'dangling:', dang, 'duplicate names:', dup)
+    return 1 if dang or dup else 0
+
 def counts(root):
     tot = 0
-    for f in sorted(glob.glob(os.path.join(root, 'n8n-*/**/*.json'), recursive=True)):
+    for f in flow_files(root):
         try: d = json.load(open(f))
         except Exception as e: print('PARSE-FAIL', f, e); continue
         if isinstance(d, dict) and 'nodes' in d:
@@ -77,4 +91,5 @@ if __name__ == '__main__':
     if cmd == 'table': [table(p) for p in args]
     elif cmd == 'counts': counts(args[0])
     elif cmd == 'diff': diff(*args)
+    elif cmd == 'check': sys.exit(max([check(p) for p in args] or [0]))
     else: sys.exit(__doc__)

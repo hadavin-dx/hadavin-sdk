@@ -1,0 +1,14 @@
+REMOVED node FailedRow
+REMOVED node AlertFailed
+ADDED node AlertMark
+ADDED node AlertClaim
+ADDED node AlertRow
+ADDED node AlertSend
+CHANGED MarkFailed.parameters: {"operation": "executeQuery", "query": "UPDATE mf_leads SET state='failed', updated_at=now() WHERE state NOT IN ('done','review','unknown','failed') AND claimed_until < now() AND attempts >= 3 RETURNING lead_key;", "options": {}} -> {"operation": "executeQuery", "query": "UPDATE mf_leads SET state=CASE WHEN mail_sent THEN 'unknown' ELSE 'failed' END, updated_at=now() WHERE state NOT IN ('done','review','unknown','failed') AND claimed_until < now() AND attempts >= 3 RETURNING lead_key;", "options": {}}
+REMOVED edge ('FailedRow', 0, 'AlertFailed')
+REMOVED edge ('MarkFailed', 0, 'FailedRow')
+ADDED edge ('AlertClaim', 0, 'AlertRow')
+ADDED edge ('AlertRow', 0, 'AlertSend')
+ADDED edge ('AlertSend', 0, 'AlertMark')
+ADDED edge ('Every30s', 0, 'AlertClaim')
+settings equal: True

@@ -1,0 +1,49 @@
+{
+ "name": "fx-orphan",
+ "nodes": [
+  {
+   "name": "Start",
+   "type": "n8n-nodes-base.webhook",
+   "typeVersion": 1,
+   "parameters": {},
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "name": "Work",
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 1,
+   "parameters": {},
+   "position": [
+    0,
+    0
+   ]
+  },
+  {
+   "name": "Orphan",
+   "type": "n8n-nodes-base.set",
+   "typeVersion": 1,
+   "parameters": {},
+   "position": [
+    0,
+    0
+   ]
+  }
+ ],
+ "connections": {
+  "Start": {
+   "main": [
+    [
+     {
+      "node": "Work",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {}
+}

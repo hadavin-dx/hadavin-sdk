@@ -1,0 +1,57 @@
+REMOVED node MarkMailSent
+REMOVED node MailAlready
+REMOVED node CrmExists
+REMOVED node MarkDone
+REMOVED node ReplyDone
+REMOVED node Insert
+REMOVED node SendMail
+REMOVED node CrmNone
+REMOVED node SetCrm
+REMOVED node CrmCreate
+REMOVED node SaveLabel
+REMOVED node CrmSearch
+REMOVED node MarkUnknown
+REMOVED node Inserted
+REMOVED node StoredState
+REMOVED node ReplyRepeat
+REMOVED node Qualify
+ADDED node RunSub
+ADDED node Claimed
+ADDED node IsProcessing
+ADDED node Valid
+ADDED node ReplyReview
+ADDED node Stored
+ADDED node SubInput
+ADDED node ReplyStored
+ADDED node ReplyRan
+ADDED node Claim
+CHANGED Item.parameters: {"assignments": {"assignments": [{"id": "lead_key", "name": "lead_key", "value": "={{ $json.body.message_id }}", "type": "string"}, {"id": "email", "name": "email", "value": "={{ $json.body.from_email }}", "type": "string"}, {"id": "name", "name": "name", "value": "={{ $json.body.from_name }}", "typ -> {"assignments": {"assignments": [{"id": "lead_key", "name": "lead_key", "value": "={{ $json.body.message_id }}", "type": "string"}, {"id": "email", "name": "email", "value": "={{ $json.body.from_email }}", "type": "string"}, {"id": "name", "name": "name", "value": "={{ $json.body.from_name }}", "typ
+REMOVED edge ('CrmCreate', 0, 'SetCrm')
+REMOVED edge ('CrmExists', 0, 'SetCrm')
+REMOVED edge ('CrmNone', 0, 'CrmCreate')
+REMOVED edge ('CrmNone', 1, 'CrmExists')
+REMOVED edge ('CrmSearch', 0, 'CrmNone')
+REMOVED edge ('Insert', 0, 'Inserted')
+REMOVED edge ('Inserted', 0, 'Qualify')
+REMOVED edge ('Inserted', 1, 'StoredState')
+REMOVED edge ('Item', 0, 'Insert')
+REMOVED edge ('MailAlready', 0, 'MarkUnknown')
+REMOVED edge ('MailAlready', 1, 'MarkMailSent')
+REMOVED edge ('MarkDone', 0, 'ReplyDone')
+REMOVED edge ('MarkMailSent', 0, 'SendMail')
+REMOVED edge ('Qualify', 0, 'SaveLabel')
+REMOVED edge ('SaveLabel', 0, 'CrmSearch')
+REMOVED edge ('SendMail', 0, 'MarkDone')
+REMOVED edge ('SetCrm', 0, 'MailAlready')
+REMOVED edge ('StoredState', 0, 'ReplyRepeat')
+ADDED edge ('Claim', 0, 'Claimed')
+ADDED edge ('Claimed', 0, 'IsProcessing')
+ADDED edge ('Claimed', 1, 'Stored')
+ADDED edge ('IsProcessing', 0, 'SubInput')
+ADDED edge ('IsProcessing', 1, 'ReplyReview')
+ADDED edge ('Item', 0, 'Valid')
+ADDED edge ('RunSub', 0, 'ReplyRan')
+ADDED edge ('Stored', 0, 'ReplyStored')
+ADDED edge ('SubInput', 0, 'RunSub')
+ADDED edge ('Valid', 0, 'Claim')
+settings equal: True

@@ -1,0 +1,4 @@
+ADDED node AlertBackoff
+CHANGED AlertClaim.parameters: {"operation": "executeQuery", "query": "UPDATE mf_leads SET alert_until=now() + interval '60 seconds' * (1 + LEAST(alert_attempts, 4)), alert_token=gen_random_uuid()::text, alert_attempts=alert_attempts+1 WHERE lead_key IN (SELECT lead_key FROM mf_leads WHERE state IN ('unknown','failed') AND alert_ -> {"operation": "executeQuery", "query": "UPDATE mf_leads SET alert_until=now() + interval '720 seconds', alert_token=gen_random_uuid()::text, alert_attempts=alert_attempts+1 WHERE lead_key IN (SELECT lead_key FROM mf_leads WHERE state IN ('unknown','failed') AND alert_sent=false AND (alert_until IS N
+ADDED edge ('AlertSend', 1, 'AlertBackoff')
+settings equal: True
