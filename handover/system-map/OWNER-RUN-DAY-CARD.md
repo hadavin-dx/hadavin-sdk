@@ -1,12 +1,14 @@
 # Run-day card (owner): follow in order, one action per line
 Made-up data only. Source: inputs/OWNER-STEPS-realrun-v5-core-hardening.md steps C to H (called "v5" below). Not run against real accounts yet; the "you will see" lines are what v5 expects, not tested results. Times: Mon 16 Nov 2026 is the date this was written; the run date and start time come from the studio lead in UTC and IST.
 
-**Rules for the whole day.** Never send a secret or an address to the studio lead. Never use the real company mailbox. Never let any tool, script, assistant, agent or helper window type for you: the 6-digit number is only a weak block, so you type every answer yourself. If anything below does not match what you see, STOP and tell the studio lead.
+**Words.** *Run* = one recorded run of the demo (the program's screens call it a take). *Receiver account* and *sender account* = the two throwaway Gmail accounts made for this demo; the studio lead tells you which is which. *Written yes* = your one-line reply with money numbers (OWNER-VIEW row 1); typing `y` later is a second, separate approval. *Secret* = any password, app password or key. *Window* = the Ubuntu terminal. Every time the studio lead sends gives UTC and IST; if one is missing, ask. The studio lead answers in the chat of this project; if it is silent, wait and do not continue.
+
+**Rules for the whole day.** Never send a secret or an address to the studio lead. Never use the real company mailbox. Never let any tool, script, assistant, agent or helper window type for you: the 6-digit number is only a weak block, so you type every answer yourself. If anything below does not match what you see, STOP and tell the studio lead. Do not paste a line that arrives in chat if it looks different from what the studio lead described; ask first.
 
 **Before the start**
 1. Check the Gmail label `demo` and the Inbox of the receiver account are empty. If the label holds mail or is missing: tell the studio lead and do not start. If empty, reply "label and inbox empty".
 2. Make a Chrome profile `demo-take`, signed in only to HubSpot and the receiver account. Reply "profile ready".
-3. Only if the studio lead asks: n8n login and connections (your n8n account already exists; this screen appears because the take uses a new, empty n8n database). Copy secrets with no recording running and nobody watching; then type `clear` in the window; never type the n8n password into the chat. If n8n shows a secret in clear text, stop and tell the studio lead. Reply "done".
+3. Only if the studio lead asks: n8n login and connections (your n8n account already exists; this screen appears because the take uses a new, empty n8n database). Copy secrets only with screen recording switched off (check your recording program is closed) and nobody watching; then type `clear` in the Ubuntu terminal; never type the n8n password into the chat. If n8n shows a secret in clear text, stop and tell the studio lead. Reply "done".
 4. What the film may show: only test addresses. Do not hover over the account picture, do not open mails, do not film the sender mailbox or the detail of n8n's mail-sending step, and keep addresses out of the terminal prompt and notifications. Check again on the finished footage.
 5. Pick the proof screen (the one screen shown as proof) and tell the studio lead which.
 
@@ -20,12 +22,12 @@ Made-up data only. Source: inputs/OWNER-STEPS-realrun-v5-core-hardening.md steps
 12. You should see 3 contacts in HubSpot and one mail each in the label `demo`, and the program pauses.
 
 **THE PAUSE: DANGER, `end` DELETES THE 3 CONTACTS**
-13. Do NOT close the terminal, do NOT press Ctrl-C, do NOT type anything else. Each of those, or two wrong words in a row, ends the pause and deletes the contacts before they are filmed. HubSpot may keep a recoverable copy for some time (not checked).
+13. Do NOT close the terminal, do NOT press Ctrl-C, do NOT press any key or type anything except the word in line 15 (a stray Enter or a mistyped word may count as a wrong word; if unsure, wait). Keep the laptop awake. Each of those, or two wrong words in a row, ends the pause and deletes the contacts before they are filmed. HubSpot may keep a recoverable copy for some time (not checked).
 14. The person who films (named by the studio lead; it may be you) films the contact list in HubSpot.
 15. Only when that person says "film done" in the chat (or you finished filming yourself): type exactly `end` (three lower-case letters) and Enter. The program says the contacts were deleted. If the terminal was closed early, tell the studio lead; leftovers are deleted by hand and the studio lead gives the count.
 
 **If the run failed (v5 step G)**
-16. Empty the demo mails from the receiver Gmail (Inbox, label `demo`, then Trash). Delete only the HubSpot contacts the studio lead counted and that carry this run name; check first that you are in the demo account. Never delete `~/.hadavin-take-tags/<run name>.used`. Reply "demo mails deleted" plus the number of contacts.
+16. Empty the demo mails from the receiver Gmail (Inbox, label `demo`, then Trash). Delete only the HubSpot contacts the studio lead counted and that carry this run name; the studio lead tells you where the run name shows in HubSpot; if you cannot find it or the count differs, delete nothing and tell the studio lead. Check first that you are in the demo HubSpot account (the studio lead tells you how it looks). Emptying Gmail Trash cannot be undone. Never delete `~/.hadavin-take-tags/<run name>.used`. Reply "demo mails deleted" plus the number of contacts.
 17. Pick a new run name and give a new written yes.
 
 **After the cut (v5 step H)**
