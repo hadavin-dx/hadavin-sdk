@@ -16,7 +16,7 @@ printf 'import sys\nsys.path.insert(0, "src")\nfrom mod import f\ndef test_f():\
 mkdir docs; printf 'alpha\n' > docs/note.txt
 printf 'import subprocess, sys, time\nsys.path.insert(0, "src")\nfrom mod import f\ndef test_spawn():\n    subprocess.Popen(["sleep", "3137"])\n    time.sleep(30)\n' > tests/test_spawn.py
 printf 'import sys, time\nsys.path.insert(0, "src")\nfrom mod import f\ndef test_a():\n    print("before-timeout-marker", flush=True)\n\ndef test_b():\n    time.sleep(30)\n' > tests/test_partial.py
-printf 'import os\nBAD = [k for k in os.environ if (k.startswith("PYTEST_") and k != "PYTEST_CURRENT_TEST") or k in ("PYTHONSTARTUP", "PYTHONHOME", "PYTHONINSPECT", "PYTHONWARNINGS", "PYTHONUSERBASE")]\ndef test_env_clean():\n    assert BAD == [], BAD\n' > tests/test_env.py
+printf 'import os\nBAD = [k for k in os.environ if (k.startswith("PYTEST_") and k not in ("PYTEST_CURRENT_TEST", "PYTEST_VERSION")) or k in ("PYTHONSTARTUP", "PYTHONHOME", "PYTHONINSPECT", "PYTHONWARNINGS", "PYTHONUSERBASE")]\ndef test_env_clean():\n    assert BAD == [], BAD\n' > tests/test_env.py
 printf 'def test_w():\n    open("conftest.py", "w").write("# written by a test\\n")\n' > tests/test_writeconf.py
 printf 'def test_w():\n    open("data.bin", "w").write("x")\n' > tests/test_writedata.py
 printf 'import subprocess\ndef test_bg():\n    subprocess.Popen(["sleep", "3141"], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)\n' > tests/test_bg.py

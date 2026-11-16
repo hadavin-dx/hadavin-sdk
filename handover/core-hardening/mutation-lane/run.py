@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """Hand-planted mutation runner (evidence only: it runs and records, it never judges beyond the exit code).
+LINUX ONLY (it reads /proc and uses waitid to find and stop an orphaned test run); on another system it refuses
+at the start, on every option, including --restore.
 
 For ONE mutant (or a JSON list of them) in a SCRATCH copy of the code, never the real repo:
   1. read the target file, check `old` occurs exactly once, write the mutated text;
@@ -36,13 +38,30 @@ Safety (review 2 M2/M3, review 3 M-A..M-E and nits):
     (optionally `::node`) that resolve inside --root. Everything else is refused: any `@file` argument,
     clustered short flags (-qc ...), --collect-only/--co/--setup-plan/--setup-only/--help/--version,
     --noconftest, --ignore, -p with anything but `no:`, -c, -o, --rootdir, --basetemp, ...
+  * Every signal that can be sent and that ends a process by default is handled (all of signal.valid_signals() except
+    SIGKILL, SIGSTOP, SIGCHLD, SIGCONT, SIGWINCH, SIGURG, SIGTSTP, SIGTTIN, SIGTTOU, SIGPIPE, SIGXFSZ; review r4 M1),
+    in every window: planting, tests awaited, restore (T47). A real memory fault inside this very process (SIGSEGV
+    raised by the CPU, not sent by kill) cannot be handled in Python: it acts like SIGKILL, the marker stays.
   * While a mutant is planted a signal unwinds the run only while the tests are awaited; a signal at any other
     moment is remembered and delivered after the restore, and only the first signal ever acts (review 4 M3).
     No remaining window is known, but none is proven absent: T20 is a probabilistic burst test, T21 proves
     only the handler logic (not the timing). The cleanup after a failure (stop the test group, read what it
     printed) is itself guarded: a failure to stop the group falls back to killing the leader (T29).
-  * SIGTERM, SIGINT and SIGHUP restore the file, stop the test process group, remove the marker and
-    exit with 128 + the signal number (143, 130, 129).
+  * A handled signal restores the file, stops the test process group, removes the marker and exits with 128 + the
+    signal number (SIGTERM 143, SIGINT 130, SIGHUP 129).
+  * The pytest command carries `--rootdir=<root>` and `--confcutdir=<root>`; in addition a `setup.py`, `conftest.py`
+    or `pyproject.toml` in any folder ABOVE --root is refused (review r4 M2).
+  * After EACH mutant the scratch tree is compared with the git archive again (all files but `.venv` directly under
+    the root and the cache folders) and the result is written into that mutant's raw file; a mutant whose tests
+    changed the tree (wrote a conftest.py, an ini file, data) ends the loop with exit 4 before the next mutant
+    runs (review r4 M3). Files declared with --extra may exist; their content is not compared.
+  * Any regular file in the tree with more than one name is refused (not only the target). The file under test is
+    opened one folder at a time with O_NOFOLLOW from its parent's descriptor (a folder swapped for a link after
+    the checks is refused); its content is READ by path, and the restore is verified by hash after the write.
+  * After the test leader ends, processes of its group that are still alive are stopped and recorded in the raw
+    file. A control run (`--control`) keeps a control marker while its tests run; if run.py is killed with
+    SIGKILL, `--restore` stops the orphaned control test group.
+  * `--raw`, `--out-json` and every output file: no symbolic link, regular files only, checked before planting.
   * After the loop `raw/<prefix>-tree-diff.txt` records the differences between the scratch tree and
     a FRESH `git archive` extract (+ patches). Any difference other than the declared `--extra`
     files, or a marker left behind, gives exit code 4 (M-D).
@@ -54,13 +73,16 @@ Safety (review 2 M2/M3, review 3 M-A..M-E and nits):
   * pytest takes its settings from the first ini file found going UP from the test paths. If the scratch root
     has none and a folder above it has one (e.g. `addopts` in /tmp/pytest.ini), the run is REFUSED (put the
     ini inside --root, i.e. into the git archive).
-  * `--restore` also recovers a target that was deleted (re-created with O_EXCL and the recorded mode). The
+  * `--restore` also recovers a target that was deleted (re-created with O_EXCL and exactly the recorded mode, whatever
+    the umask), needs no git repository unless --repo is given, and clears the marker without writing if the file
+    already holds the original. The
     marker records the identity of the test process (start time and full argument list from /proc): an orphaned
     group is stopped only if that identity still matches (pid reuse), or, when its leader is already gone, if
-    group members started after it and work inside --root. If SIGKILL hit between the start and the marker
-    rewrite, the first marker holds the expected command and the group is found by that.
-  * Signals that end the run: SIGTERM, SIGINT, SIGHUP, SIGQUIT, SIGABRT, SIGALRM, SIGUSR1, SIGUSR2, SIGXCPU,
-    SIGVTALRM, SIGPROF, SIGIO, SIGPWR (exit 128+N). SIGKILL and SIGSTOP cannot be caught: use `--restore`.
+    group members started after it and work inside --root (a path argument counts only as a whole path part). If
+    SIGKILL hit between the start and the marker rewrite, or the marker lacks the identity, the first marker holds
+    the expected full command: the group is found by that command, in root, started after the run; with no
+    command recorded nothing is stopped.
+  * SIGKILL and SIGSTOP cannot be caught: use `--restore`.
 NOT A SANDBOX (read this): the tests run as this user with this user's full file rights. The tool checks the
 scratch tree and the files it plants into; it cannot stop a test from writing elsewhere. Paths inside --root
 are trusted as a whole: `.venv` (directly under the root) and the cache folders are NOT compared, so a mutant
@@ -75,7 +97,7 @@ Usage:
 mutants.json: [{"id": "m01", "file": "...", "old": "...", "new": "...", "desc": "..."}, ...]
 `--control` runs the unmutated tree once first and records it as <prefix>-baseline.txt.
 TESTS are pytest arguments (paths / -k ...). The command run is, with only the environment named above:
-  <root>/.venv/bin/python -m pytest -q -p no:cacheprovider --tb=line -rf TESTS
+  <root>/.venv/bin/python -m pytest -q -p no:cacheprovider --rootdir=<root> --confcutdir=<root> --tb=line -rf TESTS
 """
 
 import argparse
