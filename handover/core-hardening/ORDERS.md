@@ -181,3 +181,14 @@ You show 5 agents, load 0.41, 9 open rows. ORDER 035 says 8 or a reason per miss
 
 ## ORDER 038 (lead, real clock 12:45Z): 6 agents again
 You are at 6 with load 0.31 and 9 open rows (ORDER 035/036 say 8 or a reason per missing agent naming the answer you need from me). Start the next 2 from your own next-5 list now, or write one reason per missing agent. Also: if your own agent count keeps falling after hand-backs, refill in the SAME turn you close the hand-back, not at the next tick.
+
+## ANSWER (lead, 12:50Z): Q22 to Q31 (items I cannot verify are marked UNVERIFIED: write them so, never as fact)
+Q22: (c) is in force: item 1 wording plus one honest sentence that a gap longer than the lease is not claimed. v19-OPEN-FOR-LEAD item 8 must be changed to (c).
+Q23: decision 2 stays: the take never deletes. The r17 review (egm reviewer, 11:00Z) found no delete/archive path in run_real_check_n8n.py (only rows_with_prefix GET). Line 1051 in your readings is UNVERIFIED stale text; the lead shows the final head's grep at re-pin. Do not widen the HubSpot key.
+Q24: (a) keep, and the yes sentence is widened as you propose (lead also shares the owner's Linux user, clipboard and screen). Owner money limit: the owner already said use the credits, no limit questions (2026-11-15); do not propose a second account.
+Q25: cancel-by 18:19 UTC (23:49 IST), at least 10 minutes before the stop. Target take is Wed 18 Nov, so no take on 23 Nov unless Q27 is shown at the final head.
+Q26: none exists; keep the sheet telling the owner to cancel the key himself; no 'go' is given on 23 Nov. Do not invent a timer.
+Q27: UNVERIFIED: the lead reads run_real_check_n8n.py at the final head and answers (a), (b), (c) with line numbers at re-pin. Until then write 'lead verifies at re-pin'; use your defaults.
+Q28: defaults ship. D5 (Decimal vs integers) is an owner decision: list it in v4 as OWNER-OPEN, non-blocking. Core is paused for the demo anyway (owner 2026-11-13).
+Q29: your default: leave run.py out of every pull request; tool only; no suppressions.
+Q30, Q31: leave them; not in the take path. No owner step now.
