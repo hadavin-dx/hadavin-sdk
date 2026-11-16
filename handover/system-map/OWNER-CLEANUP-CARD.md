@@ -3,6 +3,9 @@ Made-up data only. Source: inputs/OWNER-STEPS-realrun-v5-core-hardening.md step 
 
 (Release words: steps 1 and 3 are released by "last run done" plus your "accepted"; step 2 by "delete these apps: ..."; step 4 by "run the check"; step 5 is a message you send, and the studio lead's reply is "n8n removal done"; step 6 by "secret files may be deleted"; step 7 comes last, after both step 6 and step 6a (6 and 6a can be done in either order). These release words are the studio lead's chat rules, not v5.)
 
+Made-up contacts after the take (UNVERIFIED until the lead's test run): After you type end, the program archives this take's three made-up contacts in HubSpot (archived is not the same as erased: HubSpot keeps them for a time); any it could not archive are listed, and you archive or delete them by hand from the list it prints. Do this once, on the run-day card, not again here.
+
+
 **STOP: do not do step 1 unless the studio lead has written "last run done" in the chat AND you have already replied "accepted" about the edited video (if the lead writes it first, reply that you have not yet accepted and wait). Revoking early breaks the next run.**
 **Deadline:** only if the studio lead has named a deadline in writing, in UTC and IST, may you do step 1 yourself once that time has passed without the release word, but only if you already replied "accepted" (a card addition, not in v5; the studio lead confirms it). Step 2 (delete) always waits for the studio lead's confirmed list. Neither the stop time nor a failed final run releases you. Tell the studio lead straight away.
 
