@@ -1,0 +1,55 @@
+f-sub-crm-mail.json': 2, 'handover/core-hardening/inputs/DECISION-one-store.md': 5, 'handover/demo/n8n-mainframe/build_mainframe.py'
+PASS D10b wave 1 touches 10 files (box says 10 files) :: 10
+INFO D11 occurrences of NOT FILMABLE in the report (prose should say zero rows) :: [(61, '- NOTHING IN THE EDIT TABLE HAS BEEN APPLIED. Every row says NOT APPLIED. Of the 94 rows (rows 1 to 72 keep th'), (64, '- SLIPS OF REPORT-c6n.md THAT I CORRECT HERE (my own, found by the c6n reviews): (c6o text, replaced by c6p; s')]
+PASS D12 no stale c6o counts (89 rows, 40 rows, 2 NOT FILMABLE) :: []
+PASS E1 every 'UTC = IST' pair is +5:30 (31 pairs) :: []
+PASS E2 every UTC/Z clock time (33) has its +5:30 IST on the same line :: []
+PASS E3 every UTC time inside a new text has its IST inside the same new text :: []
+PASS E4 18:04 UTC = 23:34 IST present and correct
+PASS E4 18:19 UTC = 23:49 IST present and correct
+PASS E4 18:29 UTC = 23:59 IST present and correct
+PASS E5 no wrong IST for the three money times anywhere
+PASS F1 weekday+date strings correct for 2026 (13 found) :: []
+PASS F2 every ISO date is in 2026 :: {'2026': 25}
+PASS F3 2026-11-18 is Wed
+PASS F3 2026-11-17 is Tue
+PASS F3 2026-11-23 is Mon
+PASS F3 2026-11-25 is Wed
+PASS F3 2026-11-16 is Mon
+PASS F4 every ISO date is a real calendar date :: []
+PASS G1 every '60.1 to X' is 61.9 (22) :: Counter({'60.1 to 61.9': 22})
+PASS G2 every '52.8 to X' is 54.9 (5) :: Counter({'52.8 to 54.9': 5})
+PASS G3 no 61.1 or other bound
+PASS G4 runs done always 10, unknown always 8 :: (Counter({'10': 2}), Counter({'8': 2}))
+PASS G5 K1 5 K2 5 K3B 5 K3 3 and sum 18 :: Counter({('5', '5', '5', '3'): 1})
+PASS G6 non-table lines with '18 runs' name both voided runs :: []
+INFO G7 new texts that say '18 runs' without naming both voided runs (the row's reason cell may name them) :: []
+PASS H1 option (a): card lines hold [36, 35, 22, 22] words, total 115 (whitespace split) :: ([36, 35, 22, 22], 115)
+PASS H2 option (a) seconds at 150 words a minute = 46.0 (rounds to 46) :: 46.0
+PASS H3 option (b): four lines found, total 87 words :: ([24, 30, 18, 15], 87)
+PASS H4 option (b) seconds = 34.8, said 'about 35 s' :: 34.8
+PASS H5 totals: 150 + 50 = 200 (a), 150 + 35 = 185 (b); scenes 25+40+25+60 = 150
+PASS H6 'about 46 s' and '115 words' and 'about 200 s' appear in box, row 11, section 3
+PASS H7 every 'N words, about M s' pair is consistent with 150 wpm (|M - N/2.5| <= 0.6) :: [('115', '46'), ('87', '35'), ('115', '46'), ('115', '46'), ('87', '35'), ('115', '46'), ('87', '35'), ('115', '46')]
+PASS H8 reading 1 card sentence word count as stated :: (25, '25')
+PASS H9 reading 2 sentence is 40 words (as stated) and about 16 s :: (40, 16.0)
+PASS I1 no 'row N' or 'rows N' reference inside new run-sheet text (44 run-sheet rows) :: []
+PASS I1b no 'row N' in ANY row's new text (all files) :: []
+INFO I2 internal labels (L-xxx, C-n, REPORT-c6x, 'section n', c6x) inside new texts :: [(70, 'C-8'), (72, 'C-8'), (91, 'C-8')]
+INFO I3 source-cite shapes (ORD:150 etc.) inside new texts :: [(25, 'RES:97'), (37, 'RES:97'), (47, 'RES:85'), (57, 'PLAN:125')]
+PASS J1 5a row set equals rows (run sheet or page statements) whose 'what the viewer sees' is not 'Nothing' (36) :: []
+PASS J2 5a each row: file label, line and view text equal the table :: []
+PASS J3 5a says 36 rows :: (36, 36)
+INFO J4 5a header names flow-file rows [62, 63, 64, 65, 66, 67, 68, 69, 92]; flow-file rows in table (real-v5 json + generator) :: [62, 63, 64, 65, 66, 67, 68, 69, 92]
+PASS J5 5a sorted ascending without duplicates :: [1, 3, 4, 12, 13, 14, 15, 17, 21, 23, 24, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 73, 74, 75, 76, 79, 80, 87, 88, 89]
+PASS K1 defined box labels (upper case) are not used before their definition (position of first use < definition) :: {}
+INFO K2 first use (lower case, position in box) vs definition position; use < definition means used before it is explained :: {'n8n': (541, 904), 'ready': (407, 2032)}
+PASS K3 every L- label used in the box is a row of the box question table (L-ROUND is allowed: it is named only as an old name) :: ['L-ROUND']
+INFO K4 L- labels that are never a table-row label anywhere (dangling references; L-SCENES was dropped) :: [('L-ROUND', [56, 154, 166]), ('L-SCENES', [203, 260, 575, 594]), ('L-X', [84])]
+PASS L1 box (lines 1 to 59) holds no setting name (UPPER_SNAKE names, EXECUTIONS_, N8N_, prune, flow-file field names) :: []
+PASS L2 the two setting names do appear after the box (section 3 L-SAVE)
+INFO L3 snake_case or file-like names in the box (not setting names; informational) :: ['build_mainframe.py']
+PASS M1 no secret-shaped string or e-mail address in the report (counts) :: {}
+SUMMARY: 4 FAILED: ['A1 ids are exactly 1..94, no duplicate', "D6 table 3b: rows tied, how many, 'only this' column all equal my recount from the status words", "D8 section 3 'rows tied to it' column equals my recount (L-DEL, L-CUT, L-SHEET: none)", 'D9 3c: ready list, default list, 91 total equal recount']
+
+EXIT 1
