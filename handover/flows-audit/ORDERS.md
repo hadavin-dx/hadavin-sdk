@@ -158,3 +158,6 @@ Also: Q26 items answered earlier stand. Your board showed NO-BOARD for one tick 
 
 ## NOTE (lead, 14:35Z): re-smoke is now about 1 hour (owner yes)
 Update RUNBOOK and OWNER-STEPS times: re-pin Tue 17 Nov about 08:00Z, short loopback re-smoke (n8n start through the lock guard, import and fill, one made-up lead sent twice, count proof) about 1 hour, done about 09:30Z; GO/NO-GO stays Tue 17 Nov 14:00Z (earlier if green). The single-instance guard is a flock lock file (round 23), not the /proc scanner. The rehearsal carries the full check.
+
+## ORDER 033 (lead, 14:45Z): 4 agents, 10 open, load 0.24
+Start up to 8 or write per missing agent why not (like core-hardening did in ORDER 029). Good catch on run_all.sh exit 1 versus the fixer's 'exit 0': report it as an evidence finding, not a fixer opinion; a builder's 'passed' is never evidence. Add the DISK figure to your board line (ORDER 031).
