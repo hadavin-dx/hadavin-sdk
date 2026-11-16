@@ -68,3 +68,46 @@ L[ie + 1:ie + 1] = [
     "| Lease wording approval (risks list item 12) | the studio lead has written 'lease wording approved' with the date and time in UTC and IST, and the repeat sent more than 45 seconds after the first send is written with its reply showing the repeat flag true | studio lead | the owner, if the card or caption must change | No: card line 1 and the scene 3 caption are not filmed without it |",
     "| Made-up domain and marker (rehearsal list item 12) | the made-up e-mail domain and the name marker on the owner sheet equal the ones in item 11 of the risks list | studio lead | the owner | No: no deletion instruction goes to the owner until they match |",
 ]
+
+# ---- more small fixes from the c6q reviews
+gsub("120 s for one lane3 run (K1, 144.3 s)", "120 s for two lane3 runs (K1, both 144.3 s, RESULTS.md line 85)")
+gsub("and I guessed that ORD:151's 'no takeover after expiry' meant that a second send does not claim the contact again; c6q withdrew that guess, and c6r keeps it withdrawn (a second send is not the recovery flow; the recovery flow does claim again):",
+     "and ORD:151's 'no takeover after expiry' is right for a second send (QUESTIONS.md line 24 gives the original reading: 'A second send after lease expiry does NOT take over; only the recovery flow does (every 30 s, at most 3 attempts)'); the only thing c6q withdrew is my guess that the recovery flow does not claim the contact again either, which LREP:80 contradicts:") if any("and I guessed that ORD:151's" in l for l in L) else None
+# ---- section 8: coverage of the c6q reviews
+i8 = find("COVERAGE OF THE c6p REVIEWS")
+COV = [
+    "COVERAGE OF THE c6q REVIEWS (review-c6q-design.md, review-c6q-naive.md, review-c6q-evidence.md, evidence-c6q-independent/00-SUMMARY.md, and the four items of the build coordinator); the line-by-line mapping with the exact lead questions is in c6r-CHANGES.md:",
+    "",
+    "| Review item | Fix | Where / check |",
+    "|---|---|---|",
+    "| Design M-A (plain statement on card line 1 and caption before G12 is approved) | approval gate and mandatory repeat more than 45 s after the first send | row 8 item 12; section 3e entry; check 'M-A' of verify-c6r.py |",
+    "| Design M-B ('it sends one alert' as fact) | card line 2 says 'it sends an alert'; 'one alert' only for stand-in tests | row 14 and the box; check 'one alert' |",
+    "| Design M-C (Q27 meaning decided silently; L-DEL says ANSWERED) | labelled MY ASSUMPTION and OWNER-OPEN (ORD:232); L-DEL says what is still open; the sentence does not block Wed 18 Nov | box, row 8 item 11, section 9; check 'M-C' |",
+    "| Design M-D (real-key scan: how the key reaches the search; what a hit means; repeat after deletion) | pattern file in memory or standard input, never a command line, never on disk; hit means cancel or replace the key and treat runs as compromised; item 16 repeats the search | row 6 items 15 and 16; check 'M-D' |",
+    "| Design M-E (failed-run saving bundled with successful-run saving) | new question L-SAVEERR (default No); rows 53, 55, 62, 64, 66, 68 wait; row 92 keeps the failed-run setting none | box, section 3, 3b, 3c; check 'M-E' and C-4a (defaults only) |",
+    "| Design M-F (two constructions in the length table) | one construction; the separate shorter rewrite of line 1 is gone | box table; check 'M-F' |",
+    "| Design minors (row 11 viewer cell; rounds text; report voice in rows 40, 48, 49; 'expected' and pruning in rows 50, 52, 14; made-up domain check; run length for the latest start 18:04 UTC (23:34 IST); one-screen 'what to type') | fixed in rows 6, 8, 11, 14, 40, 48, 49, 50, 52 and the box; the card row's own Time cell on run sheet line 41 is NOT edited by any row (a lead question, section 9) | c6r-CHANGES.md |",
+    "| Naive M1, M5, M6 (word 'take'; claim table; internal codes; what to type) | 'take' means the filmed run only and the recovery flow 'claims the contact again'; the claim table and the take database are named; C-3 to C-9, G12, K3B, the cut number are explained; a WHAT TO TYPE block opens the box | box; checks 'naive M1', 'naive M5', 'naive M6' |",
+    "| Naive M2 (length table: option (b) needs a text the box does not show) | one construction | box table |",
+    "| Naive M3 (row 11 viewer cell) | corrected | row 11 |",
+    "| Naive M4 (section 3e omits rehearsal item 15) | three entries added; the box says how many stopping steps there are | section 3e |",
+    "| Naive minors (72 edits; verify-c6p; row 8 'items 11 to 14'; section 2 one run; build_mainframe.py missing from section 1; 'line 59 if L-POST stays yes') | fixed; the section 0 order (history before how-to) and the use of 'EGM' and 'KEY' in four meanings are NOT fixed here (lead question, section 9) | c6r-CHANGES.md |",
+    "| Independent evidence (8 missed mutations: weekdays, lease sentence on caption row 21, capitalised 'The lease question', a wrong count of rows that apply on the default, a wrong wave 1 count, stale card length '58 s' in the box, '(within 45 seconds)' in row 14) and the stale v29 line | all eight are now caught by named checks of verify-c6r.py and each has a negative control; the v29 files and times are restated and the verifier fails if one changed after the stated check time | verify-c6r.py; neg_controls_c6r.py |",
+    "| Coordinator: source copy | stated in section 0: the rows are checked against the scratchpad copy; equality with the real files is unverified; 89 of 94 rows cannot be read in the repository | section 0 |",
+    "",
+]
+L[i8:i8] = COV
+# ---- section 9: new entries
+i9 = find("- [needs-lead] Not reviewed: this report was written")
+L[i9] = L[i9].replace("for c6q are run", "for c6r are run")
+NEW9 = [
+    "- [needs-owner] Q27 and the delete-path check (ORD:232 keeps them OWNER-OPEN). This report applies the strictest reading (no take on Mon 23 Nov unless (a), (b) and (c) are all shown) as its own assumption. Exact question for the owner, through the studio lead: does (b) alone make Mon 23 Nov possible, and what must the delete-path check show? Next step: write the answer under Q27 in ORDERS.md; the report's sentences in the box, row 8 item 11 and C-10b change with it.",
+    "- [needs-owner] L-SAVEERR: whether n8n may also save FAILED runs for the take (the owner's words cover successful runs only). Default no. Next step: the studio lead asks the owner; with yes, rows 53, 55, 62, 64, 66, 68 are applied and row 92 is re-issued with the failed-run setting all.",
+    "- [needs-lead] The card row's own Time cell on run sheet line 41 says '30 s EST' and no row edits it (an edit would need a text that contains a table border). Next step: change it to '40 s EST' when applying row 11, or say that the old cell stays.",
+    "- [needs-lead] Who adds the 45-second limit sentence to the owner sheet and the release note: no row edits them (the sheets are rebuilt by the studio lead). Next step: name the person.",
+    "- [needs-lead] The box is about 3,490 words: shorter than the c6p box would be impossible with the what-to-type block and the explained words the naive review asked for. Decide whether to move the second list of words into section 1 (the box then drops by about 450 words and the naive M5 explanations leave the box). Not done, because the two reviews ask for opposite things.",
+    "- [needs-lead] Section 0 starts with history before the how-to, and the words 'EGM' and 'KEY' (four meanings) are not defined in the box; fixing both means moving text between sections; the studio lead decides whether it is worth another round.",
+    "- [needs-lead] If scene 3 and card line 1 are cut (G12 not approved), the run sheet totals (150 s of scenes, 90 spoken words) fall; row 11 does not cover that case. Next step: the studio lead says whether a second set of totals is wanted.",
+    "- [unverified] Equality of the scratchpad copy with the real files: see section 0 (what the rows were checked against).",
+]
+L[i9 + 1:i9 + 1] = NEW9

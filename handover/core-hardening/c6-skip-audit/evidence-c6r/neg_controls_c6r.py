@@ -1,11 +1,11 @@
-"""Negative controls for verify-c6q.py. Builds changed copies of REPORT-c6q.md (never edits it), runs verify-c6q.py on each and records the exit code
+"""Negative controls for verify-c6r.py. Builds changed copies of REPORT-c6q.md (never edits it), runs verify-c6r.py on each and records the exit code
 and the raw output. A control copy with no change must exit 0; every changed copy must exit non-zero. Fake key-shaped strings are built from parts here.
-Usage: python3 neg_controls_c6q.py   Output: neg/<name>.txt per copy and neg-output.txt (summary). Exit 1 if any changed copy exits 0."""
+Usage: python3 neg_controls_c6r.py   Output: neg/<name>.txt per copy and neg-output.txt (summary). Exit 1 if any changed copy exits 0."""
 import re, subprocess, sys, os, tempfile
 D = "/home/user/hadavin-sdk/handover/core-hardening/c6-skip-audit/"
-E = D + "evidence-c6q/"
+E = D + "evidence-c6r/"
 os.makedirs(E + "neg", exist_ok=True)
-rep = open(D + "REPORT-c6q.md", encoding="utf-8").read()
+rep = open(D + "REPORT-c6r.md", encoding="utf-8").read()
 PAT = re.compile(r"^\| (\d+) \| (NOT APPLIED[^|]*?) \| (handover/[^|]+?) \| (\d+) \| ([^|]*) \| `(.*?)` \| `(.*?)` \| (.*) \| ([^|]*) \|$")
 L = rep.split("\n")
 
@@ -94,9 +94,9 @@ M["C2-source-cite-RES97-in-row25"] = mut_row(rep, 25, "new", lambda s: s + " (RE
 M["C3-reading-1-in-row13"] = mut_row(rep, 13, "new", lambda s: s + " (reading 1)")
 M["C4-this-report-in-row21-view"] = mut_row(rep, 21, "view", lambda s: s + " this report")
 M["C5-L-SCENES-back-in-3e"] = once("| Repeat-send check (rehearsal list item 13)", "| L-SCENES in 3e | Repeat-send check (rehearsal list item 13)")
-M["C6-length-table-number-wrong"] = once("| 115 | 46.0 |", "| 116 | 46.0 |")
+M["C6-length-table-number-wrong"] = once("| (a) | 115 | 46.0 |", "| (a) | 116 | 46.0 |")
 M["C8-C10b-pass-cell-says-only-b"] = once("all of (a), (b) and (c) are shown with line numbers", "(b) is shown")
-M["C9-no-take-line-twice-in-box"] = once("TO REVERSE A DEFAULT", "there is no take on that day unless (a), (b) and (c)\nTO REVERSE A DEFAULT")
+M["C9-Q27-reading-sentence-twice-in-box"] = once("TO REVERSE A DEFAULT", "this report applies the strictest reading of your answer Q27\nTO REVERSE A DEFAULT")
 M["C10-row90-ends-with-own-state"] = mut_row(rep, 90, "new", lambda s: s.rstrip()[: s.rstrip().rindex("`n8n`")] + "own state")
 b9 = [l for l in rep.split("\n") if l.startswith("- [needs-lead] Gate G12")][0]
 M["C11-section9-duplicate-bullet"] = rep.rstrip("\n") + "\n" + b9 + "\n"
@@ -110,7 +110,32 @@ M["C18-check-time-not-in-report"] = rep.replace(CTU_PLACEHOLDER, "00:00:00") if 
 M["C19-row11-total-wrong"] = mut_row(rep, 11, "new", lambda s: s.replace("about 190 s in all", "about 200 s in all", 1))
 M["C20-add-16-wording-back"] = rep + "\nThe longer sentence adds +16 s.\n"
 M["C21-tied-column-lacks-L-POST"] = re.sub(r"(\| L-POST \(new in c6q\).*\| )(11, 13, 21) \|$", r"\1 13, 21 |", rep, count=1, flags=re.M)
-M["O-REPORT-c6p-itself-must-fail"] = open(D + "REPORT-c6p.md", encoding="utf-8").read()
+
+# ---- c6r: the eight mutations the independent evidence of c6q did not catch, and the new classes of c6r
+M["E1-weekday-wrong-Thu-18-Nov"] = once("Wed 18 Nov 2026", "Thu 18 Nov 2026")
+M["E1b-weekday-wrong-Tue-23-Nov"] = once("Mon 23 Nov 2026", "Tue 23 Nov 2026")
+M["E2-lease-sentence-on-caption-row21"] = mut_row(rep, 21, "new", lambda s: s + " We make this claim only when the second send comes within 45 seconds of the first send.")
+M["E3-capital-The-lease-question-in-row13"] = mut_row(rep, 13, "new", lambda s: s + " The lease question is open.")
+M["E4-wrong-count-42-apply"] = once("36 apply on the default", "42 apply on the default")
+M["E5-wrong-wave1-91-rows"] = once("85 wave 1 rows", "91 wave 1 rows") if "85 wave 1 rows" in rep else once("applies the 85 wave 1", "applies the 91 wave 1 rows")
+M["E6-stale-58-s-in-box"] = rep[:box_end] + " The card needs about 58 s. " + rep[box_end:]
+M["E7-within-45-seconds-row14"] = mut_row(rep, 14, "new", lambda s: s + " (within 45 seconds)")
+M["E8-v29-file-missing-from-line"] = once("OWNER-SHEET-v29-B.md (written", "OWNER-SHEET-v29-X.md (written")
+M["R1-M-A-gate-removed-row8"] = mut_row(rep, 8, "new", lambda s: s.replace("lease wording approved", "lease wording seen"))
+M["R2-M-B-one-alert-fact-row14"] = mut_row(rep, 14, "new", lambda s: s.replace("it sends an alert, a warning mail", "it sends one alert, a warning mail", 1))
+M["R3-M-C-assumption-label-gone-box"] = once("MY ASSUMPTION", "THE RULE")
+M["R4-M-D-command-line-allowed-row6"] = mut_row(rep, 6, "new", lambda s: s.replace("never on a command line", "on a command line if short", 1))
+M["R5-M-D-hit-means-nothing-row6"] = mut_row(rep, 6, "new", lambda s: s.replace("cancels or replaces that key at once", "writes it down", 1))
+M["R6-M-E-row92-error-all"] = mut_row(rep, 92, "new", lambda s: s.replace('"saveDataErrorExecution": "none"', '"saveDataErrorExecution": "all"', 1))
+M["R7-M-E-row53-ready-again"] = mut_row(rep, 53, "st", lambda s: "NOT APPLIED; ready")
+M["R8-M-F-24-word-rewrite-back"] = rep + "\nWith answer 1 and option (b), line 1 is a 24-word rewrite.\n"
+M["R9-take-over-back-in-box"] = once("TO REVERSE A DEFAULT", "the recovery flow takes over the contact\nTO REVERSE A DEFAULT") if False else rep.replace("claim the contact again", "take over the contact", 1)
+M["R10-pipe-in-row-text"] = mut_row(rep, 15, "new", lambda s: s + " a | b")
+M["R11-source-copy-statement-gone"] = rep.replace("89 of the 94 rows", "most rows", 1)
+M["R12-L-SAVEERR-default-yes"] = "\n".join(l.replace("| No |", "| Yes |") if l.startswith("| L-SAVEERR | studio lead") else l for l in rep.split("\n"))
+M["R13-item12-made-up-domain-check-gone"] = mut_row(rep, 6, "new", lambda s: s.replace("made-up e-mail domain and the name marker", "made-up domain", 1))
+M["R14-IST-missing-next-to-22-10-example"] = rep.replace("22:10:00 IST", "22:10:00", 1)
+M["O-REPORT-c6q-itself-must-fail"] = open(D + "REPORT-c6q.md", encoding="utf-8").read()
 out = []
 bad = 0
 for name, text in M.items():
@@ -120,7 +145,7 @@ for name, text in M.items():
         continue
     p = os.path.join(tempfile.mkdtemp(), "REPORT-copy.md")
     open(p, "w", encoding="utf-8").write(text)
-    r = subprocess.run([sys.executable, "-I", E + "verify-c6q.py", p], capture_output=True, text=True)
+    r = subprocess.run([sys.executable, "-I", E + "verify-c6r.py", p], capture_output=True, text=True)
     open(E + "neg/" + name + ".txt", "w").write(r.stdout[-6000:] + r.stderr[-1500:] + "\nEXIT CODE %d\n" % r.returncode)
     failed = [l for l in r.stdout.split("\n") if l.startswith("FAIL")]
     want_zero = name.startswith("V0")

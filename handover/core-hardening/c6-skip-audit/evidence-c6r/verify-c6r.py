@@ -285,7 +285,7 @@ check("rows 11, 13, 14(not), 21 tie to L-POST and L-LEASE (13, 21) and the tied 
 ll = [l for l in txt if l.startswith("| L-LEASE | studio lead")]
 need = ["ORD:230", "ORD:186", "Q22 (c)", "NONE (the default)", "ANSWER 1", "ANSWER 2", "NOT TO BE SPOKEN AS FACT BEFORE C-9 PART 2", "WHAT 'NONE' CLAIMS, HONESTLY", "G12", "LRN:33", "LREP:80", "RECOMMENDATION", "REPLACES", "claim", "again"]
 check("section 3 L-LEASE: newest word, honest claim of 'none', G12 open, reading-2 facts not to be spoken, replacement, recommendation", len(ll) == 1 and all(x in ll[0] for x in need), [x for x in need if not ll or x not in ll[0]])
-check("L-LEASE definition is the true one (takeover only; repeat refused while the row exists)", "claim the contact again" in box and "may claim a contact that is not finished again" in full and "take over" not in full.replace("take over a contact","") and "NOT the time during which a repeat send is recognised" in full)
+check("L-LEASE definition is the true one (takeover only; repeat refused while the row exists)", "claim the contact again" in box and "may claim a contact that is not finished again" in full and "NOT the time during which a repeat send is recognised" in full)
 check("rows 17 and 81 say 'may' about the 45 s setting", "may be named" in bylead[81]["new"] and "neither 45 s nor 120 s" in bylead[81]["new"])
 check("rows 13 and 21 carry the plain statement and no 45-second sentence by default", "within 45 seconds" not in bylead[13]["new"] and "within 45" not in bylead[21]["new"] and "processed once" in bylead[13]["new"] and "processed once" in bylead[21]["new"])
 # C-10b, no-take line
@@ -331,7 +331,7 @@ got5 = [int(m.group(1)) for m in re.finditer(r"^\| (\d+) \| (?:run sheet|page st
 check("5a lists exactly the %d viewer-visible run-sheet and page rows" % len(vis), got5 == vis and any("PAGE-STATEMENTS" in bylead[k]["f"] for k in got5), (len(got5), len(vis)))
 check("5a text equals each row's own 'what the viewer sees' cell", all(("| %d | " % k) in a5 and bylead[k]["view"] in a5 for k in vis))
 # owner sheets
-cs = rd(H + "/handover/core-hardening/c6-skip-audit/evidence-c6q/static-checks-output.txt")
+cs = rd(H + "/handover/core-hardening/c6-skip-audit/evidence-c6r/static-checks-output.txt")
 ct = re.search(r"check time \(UTC\): (\S+)", cs).group(1)
 vs = sorted(int(m.group(1)) for f in glob.glob(H + "/handover/core-hardening/steps-edits/OWNER-SHEET-v*.md") for m in [re.search(r"OWNER-SHEET-v(\d+)", f)] if m)
 check("report names the check time %s and the newest sheet version on disk (v%s)" % (ct, vs[-1] if vs else "?"), bool(vs) and ("v%d" % vs[-1]) in full and ct[11:19] in full and ct[:10] in full, vs[-3:])
@@ -450,7 +450,7 @@ check("C-4a (defaults only): the four flow files then save successful runs (all)
 # M-F: one construction
 check("M-F: one construction (checked above); the box says so", "one construction" in box.lower(), "")
 # naive M1/M5/M6
-check("naive M1: 'take' is defined as the filmed run and 'the recovery flow claims the contact again' is used instead of 'takes over'", "TAKE = the one filmed run" in box and "claim" in box and "take over" not in raw.replace("Take over", ""), "")
+check("naive M1: 'take' is defined as the filmed run and 'the recovery flow claims the contact again' is used instead of 'takes over'", "TAKE = the one filmed run" in box and "claim the contact again" in box and "take over" not in raw.replace("does NOT take over; only the recovery flow does", ""), (box.count("claim the contact again"), raw.count("take over")))
 check("naive M5: the claim table is named in the box and every code word of the box is explained or replaced (K3B, K3, C-3 to C-9, G12 are defined)", all(x in box for x in ["CLAIM TABLE", "G12 =", "K3B AND K3 =", "THE CHECKS", "CUT NUMBER"]), "")
 check("naive M6: the box starts with a one-screen WHAT TO TYPE block before the first word list", box.find("WHAT TO TYPE") >= 0 and box.find("WHAT TO TYPE") < box.find("WORDS YOU NEED FIRST") and box.find("WORDS YOU NEED FIRST") - box.find("WHAT TO TYPE") < 2200, "")
 # the box: UTC with IST on the example time (coordinator item 4); no time example without IST within 40 characters
@@ -471,5 +471,6 @@ check("no row old or new text holds a raw '|' (it would break its table cell)", 
 # untouched files
 for nm in ("REPORT-c6q.md", "REPORT-c6p.md"):
     check("%s was not changed by this run (it is older than the build of REPORT-c6r.md and holds its own title line)" % nm, os.path.getmtime(H + "/handover/core-hardening/c6-skip-audit/" + nm) < os.path.getmtime(R) and rd(H + "/handover/core-hardening/c6-skip-audit/" + nm).startswith("# REPORT-" + nm[7:10]), "")
+check("row 6 item 12 checks that the sheet's made-up domain and marker equal the ones of the risks list item 11 before any deletion instruction", "made-up e-mail domain and the name marker by which the sheet tells the owner to find leftover contacts must be exactly the ones" in bylead[6]["new"], "")
 print("SUMMARY: %d checks, %d FAILED%s" % (TOTAL[0], len(FAILS), (": " + "; ".join(FAILS)) if FAILS else ""))
 sys.exit(1 if FAILS else 0)

@@ -211,40 +211,18 @@ TESTS are pytest arguments (paths / -k ...). The command run is, with only the e
 
 from __future__ import annotations
 
-import argparse
-import configparser
-import errno
-import fcntl
-import hashlib
-import io
-import json
 import os
-import pathlib
-import re
-import shlex
-import shutil
 import signal
-import stat
-import subprocess
 import sys
-import tarfile
-import tempfile
-import time
-import traceback
 
-
-def _early_term(signum, frame):
-    """r10 (independent r9 run: a signal 0 to 0.05 s after the start killed run.py with the default action): from the first
-    lines of this file until main() installs the real handlers nothing has been written, no marker exists and no file is
-    planted, so a signal simply ends the run with 128+N. (A signal while Python itself starts and loads the standard modules
-    imported above, about 20 to 50 ms, still has the default action and ends the process by that signal, shell status 128+N,
-    or a KeyboardInterrupt for Ctrl-C: nothing exists yet that could be left behind.)"""
-    os._exit(128 + signum)
-
-
-def _install_early() -> None:
-    for signum in signal.valid_signals():
-        if signum in (
+if __name__ == "__main__":
+    # r11 (independent r10 run: signals 0 to 0.2 s after the start ended 15 of 30 runs by the default action or by a
+    # KeyboardInterrupt traceback): the handlers are installed BEFORE the other standard modules are loaded (those took 20 to
+    # 50 ms under load). Until main() installs the real handlers nothing has been written, no marker exists and no file is
+    # planted, so a signal simply ends the run with 128+N. What stays: Python's own start-up (before the first line of this
+    # file, about 10 to 20 ms) cannot be handled in Python (impossible-now); nothing exists then that could be left behind.
+    for _sn in signal.valid_signals():
+        if _sn in (
             signal.SIGKILL,
             signal.SIGSTOP,
             signal.SIGCHLD,
@@ -259,14 +237,27 @@ def _install_early() -> None:
         ):
             continue
         try:
-            signal.signal(signum, _early_term)
+            signal.signal(_sn, lambda signum, frame: os._exit(128 + signum))
         except (OSError, ValueError):
             pass
 
-
-if __name__ == "__main__":
-    _install_early()
-
+import argparse
+import configparser
+import errno
+import fcntl
+import hashlib
+import io
+import json
+import pathlib
+import re
+import shlex
+import shutil
+import stat
+import subprocess
+import tarfile
+import tempfile
+import time
+import traceback
 
 # skipped in the tree comparison: `.venv` ONLY directly under the root (the scratch environment); the two
 # cache folders at any depth. A `.venv` deeper in the tree is compared like any other folder.

@@ -1883,5 +1883,24 @@ for MODEV in 436 432 410; do   # 0664 0660 0632
   chk "T99f m6 marker mode $(printf '%o' $MODEV) with --sha: exit 3 (got $rc), nothing written (still planted) (r10: exit 0, mode written)" "[ $rc -eq 3 ] && [ '$(last)' = return2 ] && keptstate"
   python3 "$RUN" --root "$T/root" --restore >/dev/null 2>&1
 done
+# g) independent r10 run D1/D2: the signal handlers are installed before the other standard modules are loaded
+python3 -B -I - "$RUN" <<'PY' >"$S/t99g.out" 2>&1; rc=$?
+import os, runpy, signal, sys
+run = sys.argv[1]
+class Hit:
+    done = False
+    @classmethod
+    def find_spec(cls, name, path=None, target=None):
+        if name in ("argparse", "tarfile", "subprocess", "json") and not cls.done:
+            cls.done = True
+            os.kill(os.getpid(), signal.SIGINT)   # a Ctrl-C at the first heavy import
+        return None
+sys.meta_path.insert(0, Hit)
+sys.argv = ["run.py", "--help"]
+runpy.run_path(run, run_name="__main__")
+print("not stopped")
+PY
+cut -c1-200 "$S/t99g.out" | head -3
+chk "T99g D1/D2 SIGINT at the first import after the handlers' place: exit 130 (got $rc), no traceback, no KeyboardInterrupt text (r10: exit 1 and a KeyboardInterrupt traceback)" "[ $rc -eq 130 ] && ! grep -q 'Traceback\|KeyboardInterrupt' '$S/t99g.out' && ! grep -q 'not stopped' '$S/t99g.out'"
 }
 echo "FAILED CHECKS: $FAILS (of $CHECKS checks run; skipped:${SKIPPED:- none})"
