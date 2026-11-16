@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T14:19:32Z
+UPDATED_UTC: 2026-11-16T14:26:54Z
 SESSION: core-hardening
 ORDER: 021 + decisions; 024; 027-029, 031, 032, 034-036, 038-040 and 14:00Z (6 running of 8, reason below); lead answers Q22-Q32 applied
 STATE: WORKING
@@ -6,12 +6,12 @@ BOOT_ID: 3dcae981
 ITEMS_TOTAL: 14
 ITEMS_OPEN: 8
 PERCENT: 96
-AGENTS_RUNNING: 7
-CAPACITY: load 0.49 of 4 cores, mem 1.0 of 15.7 GB used (14.2 GB available), DISK: 8.3 GB free (allowance about 39 GB, 79% used); top 3 disk users I created: /tmp/c8b, /tmp/c5v2, /tmp/c5v3 (not re-measured); MB freed this beat: 0 (free above 6 GB)
+AGENTS_RUNNING: 8
+CAPACITY: cores 4, load 0.44 of 4, RAM 1.1 of 15.7 GB used (15.0 GB available), DISK 8.4 GB free of about 39 GB allowance (79% used); top 3 disk users I created: /tmp/c8b, /tmp/c5v2, /tmp/c5v3 (not re-measured); MB freed this beat: 0 (free above 6 GB)
 INTERRUPTED: none
 FAILED: (1) Owner sheet v24 built (word limit 6,500 MISSED: A 7,797, B 7,730; cut pass RUNNING) after v23 built (v22 failed 3 reviews; all P1-P9 evidence findings fixed, checker caught 22 of 22 planted mistakes) but NOT releasable: LONGER than wanted (8,455 words vs goal about 6,000; v22 was 9,267), older-key cancel is the lead's/owner's A-or-B choice (Open row 62; both texts inline in [[ ]] markers), checker proves form only, nothing seen on Windows/WSL/PowerShell/n8n/Postgres, every vendor page/button/take behaviour UNVERIFIED, ORDER 034 outside-reader condition not shown, 9 new open items for the lead (rows 62-70); security review DONE: NOT releasable, 0 blockers + 6 majors (older key has no route or cancel right under B; no-key run cannot start clean-up; run-day date and balance never re-checked; HubSpot rotate can show a new secret; last-resort step unbounded); stranger review DONE (10 majors); independent evidence run DONE (54 planted mistakes, checker caught 32 and missed 22; stale Part 2 text, 14.4 vs 14.33, row 59 vs 68, B variant card list lacks (b), words used before defined); v24 fix builder RUNNING with four more inputs: outside-reader root cause (ORDER 034 now shown: one safety rule written as scattered text, copies disagree; fix = one linear script, one card, one source), zoom-out cut list (about 2,640 words), adversarial read (2 blockers, 7 majors: card (g) fires on the key display, sha256 line looks like a secret, no one to hear stop, no latest-start alarm, backticks, paste prompt, two Ubuntu windows, .used compare, older key cancelled early). (2) run.py r7 security review: 0 blockers, 1 major (--restore exits 2 while the mutant is still planted when the backup or marker is bad) + 7 nits; r7 weak proofs (T77c-f fail on r6 only via an unknown option; whole run is root only); r8 fix builder RUNNING; independent r7 evidence DONE: 353 of 353 pass, new findings sent to the r8 builder (stdout on /dev/full exits 1, 200000-deep JSON prints traceback, dangling symlink blocks --restore, forged marker with swapped backup accepted if the state folder is writable); S603 x2 and Q32 stay the lead's. (3) Core hand-off v7 NOT buildable (v8 now built, NOT reviewed yet; zoom-out of v7: right problem, wrong size, missed the existing demo meter, 7 of 12 PRs not spend work; Q33 asks the lead): security 0 blockers + 9 majors, readiness 0 blockers + 9 majors (existing chat code described as missing, refusal-code contradiction, adjust-role grants wrong, add_spend has no timestamp source, two tests would break, M1 content and E0 commands unspecified); NOTHING RUN; citation check RUNNING; v8 fix builder RUNNING; D5 (integer money default) OWNER-OPEN, needed before the first build step; 1 third-party item (provider-side spend limit and invoice comparison). (4) Checklist rev 14: full harness NOT re-run; never run on Windows, WSL, Git Bash, PowerShell. (5) Re-pin script v3 FAILED both independent checks (10 majors; fake secrets leaked, 3 of 12 planted breakages not caught); v4 BUILT (builder: self-test 299/0, 0 leaks in the 19 probe lines, 108 signal runs clean, CORRECTION: the real file has 7 planted breakages (m1-m7) run under 2 shells, 6 caught; one not killed: a forged "failed=0" tally; GNU sed only, nothing on Windows, macOS, WSL or busybox, `_local` report and Q27b value printing read not run, glossary not reader-tested); v4 FAILED independent security review (5 majors: sed file-name injection, YAML block scalars, names with the secret word not last, canary only checks whole string, hand command missing safety switch), naive reader (no pass/stop rule; verdict no) and citations (4 wrong); evidence runner still RUNNING; v5 fix builder RUNNING. Hand-off v7 failed; v8 BUILT then FAILED 4 independent reviews (security 6 majors, readiness 7, contradiction 8, citation: Money cite wrong 4 times); v9 builder RUNNING (spend-only split, Q33 default b). (6) 4 files absent (qualify_stage.py, take n8n_start.sh, V7 raw files, bible R460). (7) User must run: rm /c /mnt/c ; rmdir /z ; rm /home/user/hadavin-sdk/*.whl (stray files e, o and 5 whl files keep the stop hook firing; check e and o first: rm /home/user/hadavin-sdk/e /home/user/hadavin-sdk/o /home/user/hadavin-sdk/*.whl).
-NEXT: collect hand-backs, save copies, scan, commit, refill the same turn; v8 reviews (security uncapped, readiness, citation) when v8 lands; r8 reviews (security uncapped, evidence) when r8 lands; re-pin v4 reviews when v4 lands; v24 fix pass on v23 review findings
-PUSHED_UTC: 2026-11-16T14:19:32Z
+NEXT: on hand-back start replacement the same turn: v24 cut-pass reviews (security uncapped, stranger, evidence); re-pin v5 reviews (security uncapped, evidence, naive, citation); r8 reviews RUNNING; v9 citation then contradiction review then v10 builder RUNNING; c6j design review then one fix builder; EDITS round 6 resolver after the naive read
+PUSHED_UTC: 2026-11-16T14:26:54Z
 ## ITEMS (QUEUE.md ids; detail in REPORT.md)
 | # | item | state | % | evidence file | note |
 |---|---|---|---|---|---|
@@ -31,17 +31,19 @@ PUSHED_UTC: 2026-11-16T14:19:32Z
 | core audits | v7 failed security + readiness (9 majors each); v8 fix building | v8 build | 94 | audit-r460/review-handoff-v6-readiness.md | core PRs are the lead's |
 | lead re-pin list | v3 failed both reviews; v4 fix building | v4 build | 92 | lead-repin/evidence-repin3/ | search words are guesses |
 
-## AGENTS (7 running, counted from the real agent list at 2026-11-16T14:19:32Z)
+## AGENTS (8 running, counted from the real agent list at 2026-11-16T14:26:54Z)
 | agent id | purpose | started UTC | expected end UTC | state | produced so far |
 |---|---|---|---|---|---|
-| abee0fbad08116a54 | builder: run.py r8 fix pass | 13:46Z | 15:00Z | running | evidence-r8 partial |
-| a9368342382e82165 | builder: hand-off v9 (spend-only split) | 14:08Z | 15:10Z | running | nothing yet |
-| aaf4c382a0233d4bc | EVIDENCE RUNNER: independent run of re-pin v4 | 14:08Z | 14:50Z | running | nothing yet |
-| a3f52a0275c31fdd3 | builder: owner sheet v24 cut pass | 14:12Z | 15:12Z | running | nothing yet |
-| ad99c4296ad5e1eee | builder: re-pin v5 batched fix (security uncapped) | 14:13Z | 15:13Z | running | nothing yet |
-| ad72f5c8c37c98238 | builder: skip-audit c6j exact edit table | 14:17Z | 15:17Z | running | nothing yet |
-| a4b0af8d667889d0d | builder: owner-steps edits round 5 resolve (money/secret/delete) | 14:19Z | 14:55Z | running | nothing yet |
+| a3f52a0275c31fdd3 | builder: owner sheet v24 cut pass | 14:12Z | 15:12Z | running | partial files |
+| ad99c4296ad5e1eee | builder: re-pin v5 batched fix (security uncapped) | 14:13Z | 15:13Z | running | partial files |
+| af24cbe51ba600599 | citation checker: hand-off v9 | 14:23Z | 14:55Z | running | nothing yet |
+| a932e6d490853acfa | egm-design review: c6j filming safety | 14:25Z | 14:50Z | running | nothing yet |
+| a1db1114cf367d6de | egm-codebase-details security review: run.py r8 (uncapped) | 14:26Z | 14:55Z | running | nothing yet |
+| a0267a41f46574cb8 | EVIDENCE RUNNER: independent full run of run.py r8 tests | 14:26Z | 15:10Z | running | nothing yet |
+| a244860cde081a9d0 | egm-comprehension naive read: EDITS round 5 | 14:26Z | 14:45Z | running | nothing yet |
+| acf51c3c8707ccc31 | builder: hand-off v10 (fixes v9 security 9 majors, readiness 2 blockers + 9 majors; Q34: no migration 0006) | 14:27Z | 15:30Z | running | nothing yet |
 
-Missing from 8 (1 slot): no independent open row is left. Every remaining row waits on a builder: r8 reviews wait on abee0fbad08116a54, v24 reviews on a3f52a0275c31fdd3, v9 reviews on a9368342382e82165, re-pin v5 reviews on ad99c4296ad5e1eee, c6j reviews on ad72f5c8c37c98238, EDITS round 5 reviews on a4b0af8d667889d0d. No lead answer needed.
-Closed since last board: ae297976462ab23a8 (EDITS round 4 resolve), a58e71bd7439d15ca (c6i design review), aec64b3404f2c3e12 (c6i naive reader), adfa6c20cc306661c (EDITS r4 design review), aea059ebc6545e5de (EDITS r4 naive reader); all reports saved. FAILED so far this hour: c6i report not applicable (2 reviews failed it), EDITS round 4 not ready (4 majors, round 5 running), re-pin v4 failed 3 checks, v24 over the word limit.
-NEXT 5 independent tasks: (1) two reviews of EDITS round 5; (2) two reviews of c6j; (3) v24 three reviews after the cut pass; (4) r8 and v9 reviews when they land; (5) FINAL sweep when every row is DONE or BLOCKED.
+Missing from 8: none (8 running).
+Closed since last board (reports read and saved): abee0fbad08116a54 (r8 builder; its tests NOT fully run on the final script: see FAILED), ad72f5c8c37c98238 (c6j builder), a0fe833bccf517da5 (v9 readiness), ab31d0b9fd2c33ed7 (v9 security), a26a076110149aa9c (EDITS r5 design), a0acd03990a2aabb9 (c6j naive).
+NEW FAILURES this beat: v9 hand-off FAILED security (9 majors) and readiness (2 blockers, 9 majors); EDITS round 5 FAILED design (4 majors: crash-safe claim, lead certifying its own rehearsal, model key file path, unproven no-paid-call promise); c6j FAILED naive read (1 blocker: edit IDs do not match, 6 majors); run.py r8 builder says its final test script had no complete full run (3 test-script bugs fixed after one full run; independent run now RUNNING), forged-marker swap only partly closed, escape by setsid impossible to stop.
+NEXT 5 independent tasks: (1) v10 builder to finish and be reviewed (security uncapped); (2) c6k fix builder after the c6j design review; (3) EDITS round 6 resolver after the naive read (money/secret/delete uncapped); (4) v24 three reviews when the cut pass lands; (5) re-pin v5 four reviews when v5 lands.
