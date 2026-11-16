@@ -10,9 +10,9 @@ RULES OF THE QUEUE (owner HARD rule 2026-11-16: complete the video work by Wed 1
 ITEMS (mark each DONE / RUNNING / BLOCKED with date in this file; the lead reads it):
 M1 [DONE 2026-11-16] Third read of flows-audit top 10 findings against the real flow JSON; flow-graph check of the patched flows.
 M2 [REVIEWED 2026-11-16, fixes applied] FINAL-CROSSCHECK.md of all three audits with the combined cut list for the owner.
-M3 [RUNNING 2026-11-16] DRIFT CHECK of the take documents (critical path): inputs/ OWNER-STEPS, AGENT-SCOPE, DECISION-one-store, plan v5: every number, file name, port, step id and claim that appears in two documents must agree (list each disagreement with both quotes and line numbers; one place per job). Output handover/system-map/drift/REPORT.md with an exact fix list. Two egm reviewers.
-M4 [DONE 2026-11-16, reviews pending] MASTER-MAP refresh: add the new artefacts from this session (board duty files, queues, fill_flows when it lands, paste-check, steps-edits) to MASTER-MAP.md and ONE-PLACE-TABLE.md; mark duplicates.
-M5 [RUNNING: draft, 2 reviewers] OWNER VIEW: one-page plain-words status for the owner (what is done, what runs, what he must do by when for a take on Wed 18 Nov: accounts, Docker running, the written yes), built from the board and REPORT files of all three sessions (read others via git show).
-M6 Idle fallback: architecture audit rule R460 on the next unreviewed area of your own audit.
+M3 [REVIEWED, fixes applied 2026-11-16] DRIFT CHECK of the take documents (critical path): inputs/ OWNER-STEPS, AGENT-SCOPE, DECISION-one-store, plan v5: every number, file name, port, step id and claim that appears in two documents must agree (list each disagreement with both quotes and line numbers; one place per job). Output handover/system-map/drift/REPORT.md with an exact fix list. Two egm reviewers.
+M4 [REVIEWED round 1, fixes applied, round 2 running 2026-11-16] MASTER-MAP refresh: add the new artefacts from this session (board duty files, queues, fill_flows when it lands, paste-check, steps-edits) to MASTER-MAP.md and ONE-PLACE-TABLE.md; mark duplicates.
+M5 [round 2 applied; rewrite for M7 running] OWNER VIEW: one-page plain-words status for the owner (what is done, what runs, what he must do by when for a take on Wed 18 Nov: accounts, Docker running, the written yes), built from the board and REPORT files of all three sessions (read others via git show).
+M6 [RUNNING 2026-11-16] Idle fallback: architecture audit rule R460 on the next unreviewed area of your own audit.
 
 M7 [UPDATE 2026-11-16] Read inputs/FACTS-ALREADY-DONE.md: M3 drift check must flag every document that still lists a done item as an open owner step (OWNER-STEPS v3, handoff, orders); M5 OWNER VIEW lists only the still-owner-only items.
