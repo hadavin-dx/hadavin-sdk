@@ -1,0 +1,76 @@
+EVIDENCE patches r5 (evidence runner, not a judgement). Copy: /tmp/claude-0/-home-user/9d809a30-0790-5792-93c1-8c5abd22e849/scratchpad/patchev4/handover (real tree untouched; note: /home/user/hadavin-sdk is not a git repo, git apply works without one).
+FAILURES FIRST: none of the commands returned a non-zero rc except grep rc=1 meaning no hit (see section 3). Hits that exist: example.test x2 (build_mainframe.py), 355 and 380 (see section 3).
+
+=== 1. check_patches.sh (raw) ===
+PASS 5 patches
+check rc=0
+
+=== 2. git apply --check each, then all 5 together ===
+each --check rc=0 for F-001, F-002, F-003, F-004, F-008 (run on the original copy)
+together check rc=0
+together apply rc=0
+numstat:
+git apply --numstat over all 5 (added/removed): mf_leads.sql 7/2; build_mainframe.py 7/3 and 5/2 (two patches); VIDEO-RUNSHEET.md 85/67; PAGE-STATEMENTS-V4.md 15/24
+
+=== 3. grep -n -i -E in patched files (VIDEO-RUNSHEET.md, PAGE-STATEMENTS-V4.md, mf_leads.sql, build_mainframe.py); lines cut at 400 chars ===
+## 60\.1
+grep rc=1
+## 61\.9
+grep rc=1
+## film-v5
+grep rc=1
+## one database
+grep rc=1
+## approval
+grep rc=1
+## audit trail
+grep rc=1
+## lead decision
+grep rc=1
+## PLAN-4
+grep rc=1
+## WP6
+grep rc=1
+## example\.test
+handover/demo/n8n-mainframe/build_mainframe.py:13:STAGE_ENV, TMO_ENV, FROM = ("DESK_URL", "DESK_TIMEOUT_MS", "FROM_ADDRESS_PLACEHOLDER") if REAL else ("MF_STAGE_URL", "MF_STAGE_TIMEOUT_MS", "desk@example.test")
+handover/demo/n8n-mainframe/build_mainframe.py:14:MAIL_TO, ALERT_TO = ("INTAKE_ADDRESS_PLACEHOLDER", "={{ $env.DESK_ALERT_TO }}") if REAL else ("intake@example.test", "alerts@example.test")
+grep rc=0
+## scenes 5 to 11
+handover/demo/VIDEO-RUNSHEET.md:14:- Scenes 5 to 11 are NOT in this video. Their rows are in the last section of this file, for a possible later video.
+handover/demo/VIDEO-RUNSHEET.md:89:## LATER VIDEO (not for the take): rows for scenes 5 to 11
+handover/demo/VIDEO-RUNSHEET.md:103:These notes belonged to scenes 5 to 11 or to older plans. Nothing here is for the take.
+grep rc=0
+## scene 12
+grep rc=1
+## 355
+handover/demo/VIDEO-RUNSHEET.md:8:- "(sped up)" labels: the real wait is read from the stopwatch overlay in the take, never predicted. "Sped up" means the video is cut short; the stopwatch shows the real wait. Total for this video: 160 s (see Total running time). The older totals of 355 s and 380 s were for the old 11-scene plan.
+grep rc=0
+## 380
+handover/demo/VIDEO-RUNSHEET.md:8:- "(sped up)" labels: the real wait is read from the stopwatch overlay in the take, never predicted. "Sped up" means the video is cut short; the stopwatch shows the real wait. Total for this video: 160 s (see Total running time). The older totals of 355 s and 380 s were for the old 11-scene plan.
+handover/demo/n8n-mainframe/build_mainframe.py:118:               "={{ [$('AlertRow').item.json.lead_key, $('AlertRow').item.json.alert_token] }}", [770, 380], always=False, onError="continueRegularOutput")] if V4 else []),
+grep rc=0
+## processed once
+handover/demo/VIDEO-RUNSHEET.md:6:- Matched to the real take: lease 45 s; scenes 1 to 4 use a real mail service and a real CRM service, with made-up people only; the n8n execution list (the list of past runs that n8n keeps) is planned to be filmed but is HELD (as built, the 4 real-v5 flows save no runs, so the list is empty until the patch that makes them save runs is applied; see scene 1 and the 
+handover/demo/VIDEO-RUNSHEET.md:35:| Closing card (optional) | No clicks. Voice over one card with one line. | One line on the card: "A lead sent twice is processed once in this recording." No number and no recovery time. Show it only if the recording of scene 3 showed exactly 1 CRM row and 1 e-mail message; otherwise leave the card out. | 10 s EST | NO NUMBER on the card. The older figures (older
+handover/demo/VIDEO-RUNSHEET.md:46:- Closing card wording is the lead's (answer 10:31Z, question 15: the one line "a lead sent twice is processed once"); the words "in this recording" were added to bound it (the lead may keep or drop them, see REGENERATED-NOTE.md). Here "processed once" means: one CRM row and one e-mail message, as scene 3 shows. It does not mean the table state "processing" (the 
+grep rc=0
+
+=== 4. scene durations (patched VIDEO-RUNSHEET.md) ===
+Table, scenes 1-4 + card (Time column): 25 s + 40 s + 25 s + 60 s + 10 s = 160 s
+Stated in file: line 8 'Total for this video: 160 s'; line 38 '25 + 40 + 25 + 60 + 10 = 160 s, about 2 min 40 s'
+
+=== 5. word counts (patched VIDEO-RUNSHEET.md; cell 'What the viewer sees' per row; voice = quoted text after 'Voice') ===
+line 31 [1. Stack at rest] viewer-cell words=75 >40; voice segments words=[12]
+line 32 [2. One lead goes in] viewer-cell words=90 >40; voice segments words=[49]
+line 33 [3. Same lead sent again] viewer-cell words=103 >40; voice segments words=[31]
+   sentence>40 words (44): one CRM row and one e-mail message in this recording." The voice and the caption are added in the edit, only after the recording shows exactly 1 CRM row and 1 e-mail message; if it shows anything else
+line 34 [4. Kill n8n mid-lead, recovery] viewer-cell words=180 >40; voice segments words=[53]
+line 35 [Closing card (optional)] viewer-cell words=44 >40; voice segments words=[]
+   CARD LINE: A lead sent twice is processed once in this recording. words= 10
+line 94 [5. A lead that can never finis] viewer-cell words=32 ; voice segments words=[]
+line 95 [6. Doubtful case, step 1: the ] viewer-cell words=18 ; voice segments words=[]
+line 96 [7. Doubtful case, step 2: the ] viewer-cell words=41 >40; voice segments words=[]
+line 97 [8. Doubtful case, step 3: the ] viewer-cell words=22 ; voice segments words=[]
+line 98 [9. Doubtful case, step 4: one ] viewer-cell words=55 >40; voice segments words=[]
+line 99 [10. Doubtful case, step 5: the] viewer-cell words=30 ; voice segments words=[]
+line 100 [11. OPTIONAL: the alert mail i] viewer-cell words=14 ; voice segments words=[]
