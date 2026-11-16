@@ -6,7 +6,7 @@ Builder: sub-agent (Sonnet 5.5). No sub-agents, no spend, made-up data only. Thi
 2. **`ss` is not installed here**, so the port-wait loop of `gone()` saw no listener in every test (section 8 of the evidence). The loop with a real listener is untested.
 3. **P-4b is only a proposal** (in `LEAD-FILL-list-v5.md`). The "n8n-shaped" and "unreadable" definitions are my guess; the real definitions must come from the final-head `n8n_kill.py`, which I did not read. The tests used uid 65534 via `setpriv` and a non-dumpable stand-in; not tested: a real unreadable n8n, `hidepid` mounts, WSL. P-3b proves only that the control file belongs to the P-4b.sh that exists now and has the right line shape; that the hit lines came from a real run stays the lead's attestation (stated in the plan, UNVERIFIED 15).
 4. **The acceptance rule accepts `exit 3x`** (a number followed by a non-digit): the rule only requires a non-digit after the number. Accepted as written; not tightened.
-5. **The inline-span extractor of c3** still reports 4 spans failing syntax after placeholder replacement, in both the v4-patched plan and the v5-patched plan (evidence section 3: before 4, now 4). I did not diagnose them one by one in this pass; they are the same count as v4, so v5 adds none, but I did not prove they are the same four. NOT FIXED, not classified: the lead's next reviewer or the next pass should list them (`spans-index` rows with column 8 not `0/0`).
+5. The inline-span extractor of c3 reports 4 spans failing syntax after placeholders (same 4 in v4 and v5). I looked at them: two are a lone `&` (plan text about running in the background, not a command), two are log-line examples `== P-3b <UTC time>` and `== P-4b <UTC time>` (text, not commands). They are not commands, so no fix is needed; this is my reading of their text, not a reviewer's check.
 6. The plan's Git Bash commands are shipped as text for the lead or the owner to paste; the lead steps (a) (c) (d) depend on a person on the laptop. This cannot be removed by a patch (exception: needs the owner/lead).
 7. The patch is only valid applied after `plan-v5-fixes.patch` and never together with v1 to v4 (both wrong orders fail: evidence section 1).
 
@@ -37,6 +37,8 @@ Builder: sub-agent (Sonnet 5.5). No sub-agents, no spend, made-up data only. Thi
 | N7 | not in the task list | n/a | |
 | N8 | `grep -nE 'kill\|env.sh' pastes/P-4b.sh` must print nothing | fixed: P-3b word scan (p4b words exit=1 means nothing printed); tested with `kill` in a comment and `env.sh` | patch 117 |
 | extra | fill loop dropped a last row without newline | fixed (`\|\| [ -n "$id" ]`); tested | patch 8 |
+
+Patch line numbers in the table are approximate (taken by grep on keywords).
 
 ## 4. What I changed after first writing (honest log)
 Reworded the P-4b proposal (comments contained the two words the new scan rejects); added a 5 s wait after KILL in R2 (race found by test); changed the MISMATCH wording and re-extracted all spans from the final patched plan before the evidence run.

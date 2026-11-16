@@ -32,3 +32,6 @@ Evidence: patches-ready/v3/evidence-c7b.md.
 
 ## Q17 (2026-11-16, real-v5 plan edits): HubSpot node swap
 Real-v5's CrmUpsert is n8n's HubSpot node, which calls the internet, so the loopback re-smoke cannot run real-v5 unchanged. The edit list (paste-check/plan-v5-real-v5-edits.md, R8 step 2.1b) swaps ONLY that node for a loopback stand-in. Evidence then reads "real-v5 minus one node". Lead: accept, or choose another route? Also read the glue fill_flows.py and drive.py (not on this branch) and fix step 2.1's expected line.
+
+## Q18 (2026-11-16 10:30Z, lane c "not checked" read; lead decision needed)
+The zoom-out lane suggests: (1) stop C8 (mutation lane, run.py) and the C5 v5/C7 re-runs because decision 4 and necessity-r1.md say they are not in the take path; keep G5 wording + dead-man note only; (2) make the loopback re-smoke cases A and B (same id twice) plus one psql count on mf_leads the explicit pass/fail gate; (3) collapse C9/C10/C11/C4b into one who-types-what sheet; (4) QUEUE header rule 6 "ONE database" is stale vs decision 10. Default if no answer: I finish the rounds already running (run.py r2, C5 v5, C7b fix), start nothing new on C8/C5/C7, and keep v11 as the single owner sheet. Answer needed: stop C8/C5/C7 now? yes / no.
