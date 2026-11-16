@@ -16,7 +16,6 @@ sys.path.insert(0, HERE)
 import fill_flows as ff
 
 DEMO = os.environ.get("FF_DEMO_DIR") or os.path.normpath(os.path.join(HERE, "..", "..", "demo"))
-BASE = os.environ.get("FF_TEST_BASE", "/tmp/ff13")  # noqa: S108 - scratch dir for made-up data
 CANARY = "CANARY" + "-" + "q7x" + "-" + "zz"  # made-up, built from parts
 URL = "http://127.0.0.1:9/" + CANARY
 VALS = {
@@ -26,6 +25,14 @@ VALS = {
     "MF_STAGE_URL": "http://127.0.0.1:9/stage",
     "MF_STAGE_TIMEOUT_MS": "3000",
     "MF_CRM_URL": "http://127.0.0.1:9/crm",
+}
+PH_VALS = {  # made-up values for the six placeholder names
+    "PG_CREDENTIAL_ID": "phv-pg-1",
+    "SMTP_CREDENTIAL_ID": "phv-smtp-2",
+    "SUB_WORKFLOW_ID": "phv-sub-3",
+    "HS_CRED_PLACEHOLDER": "phv-hs-4",
+    "FROM_ADDRESS_PLACEHOLDER": "from" + "@" + "example.invalid",
+    "INTAKE_ADDRESS_PLACEHOLDER": "intake" + "@" + "example.invalid",
 }
 
 
@@ -64,6 +71,7 @@ def run(*args):
 def write_values(path, vals):
     with open(path, "w") as fh:
         fh.write("# made-up\n" + "".join(f"{k}={v}\n" for k, v in vals.items()))
+    os.chmod(path, 0o600)
 
 
 def tree_hash(d):
@@ -74,13 +82,23 @@ def tree_hash(d):
     return out
 
 
+def all_strings(folder):
+    found = set()
+    for n in os.listdir(folder):
+        found.update(ff.iter_strings(jload(os.path.join(folder, n))))
+    return found
+
+
 class Base(unittest.TestCase):
     def setUp(self):
-        os.makedirs(BASE, exist_ok=True)
-        self.t = tempfile.mkdtemp(dir=BASE)
+        self.t = tempfile.mkdtemp(prefix="ff13-", dir=os.environ.get("FF_TEST_BASE"))
         self.addCleanup(shutil.rmtree, self.t, True)
         self.vf = os.path.join(self.t, "flow-values.env")
         write_values(self.vf, VALS)
+        self.nflow = 0
+
+    def run(self, *args):  # noqa: A003 - shadows TestCase.run on purpose? no: see below
+        raise NotImplementedError
 
     def copy_flows(self, flavor):
         dst = os.path.join(self.t, "in-" + flavor)
@@ -91,6 +109,16 @@ class Base(unittest.TestCase):
             dirs_exist_ok=True,
         )
         return dst
+
+    def flow_dir(self, params, top=None):
+        """A folder with one tiny flow file whose single node carries `params`."""
+        self.nflow += 1
+        d = os.path.join(self.t, f"flow-{self.nflow}")
+        os.mkdir(d)
+        obj = {"name": "t", "nodes": [{"name": "n1", "parameters": params}], "connections": {}}
+        obj.update(top or {})
+        jdump(obj, os.path.join(d, "mf-x.json"))
+        return d
 
     def out(self, name="out"):
         return os.path.join(self.t, name)
