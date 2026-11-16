@@ -515,3 +515,9 @@ check("c6u names: the report names no 'evidence-c6t/' file and no 'c6t-APPLIED-R
 _ev = sorted(set(re.findall(r"evidence-c6u/([A-Za-z0-9_.-]+)", raw)))
 _evmiss = [f for f in _ev if f not in ("neg-output.txt", "verify-c6u-output.txt") and not os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), f))]
 check("c6u names: every evidence-c6u file the report names exists in this folder (neg-output.txt is written after this check): %s" % _ev, not _evmiss and len(_ev) >= 4, _evmiss)
+
+# c6u design M5 and naive 'steps 5 to 9' (class: a sentence found wrong stays out of the text; the quoted mention of the old words, in single quotes, is the only place)
+_w5 = re.findall(r"(?<!')(?:the |test )program(?: mf\.py)? is not among the audited files", raw)
+check("c6u M5: no sentence says the test program is not among the audited files (mf.py IS audited); the old words appear only quoted", not _w5, _w5[:2])
+_s59 = re.findall(r"(?<!')steps? 5 to 9", raw)
+check("c6u naive: no text says 'steps 5 to 9' for the list TASKS (5) to (9) (the old words appear only quoted)", not _s59, _s59[:2])

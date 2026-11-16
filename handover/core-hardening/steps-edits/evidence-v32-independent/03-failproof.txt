@@ -1,0 +1,21 @@
+checks in Part 9: 18 (C228 to C245)
+fail on built v31: 12
+  v31 fails C228 (6 line(s)); first: A holds the over-broad cancel scope 'any valid key of yours'
+  v31 fails C229 (3 line(s)); first: NOTE still says a failed key save cancels nothing in A
+  v31 fails C230 (7 line(s)); first: the cancel helper page OWNER-HELPER-v32.md does not exist
+  v31 fails C231 (4 line(s)); first: A lacks the end of the last resort 18:41 UTC = 00:11 IST (after the deadline, stranger M5)
+  v31 fails C232 (6 line(s)); first: sheet A lacks 'a fifth and a sixth phone alarm'
+  v31 fails C233 (8 line(s)); first: A: the typed yes does not carry the end of the last resort 18:41 UTC = 00:11 IST (stranger M5)
+  v31 fails C234 (3 line(s)); first: A: the raw recording is not placed and treated as secret
+  v31 fails C238 (25 line(s)); first: heading not in the verified list: OWNER-SHEET-vNN-A.md|# Owner sheet v31, sheet A: one filmed run
+  v31 fails C239 (36 line(s)); first: fact-use row differs from the verified list: LEAD-RELEASE-NOTE-vNN-SOURCE.md|a_cut|1
+  v31 fails C243 (1 line(s)); first: NOTE lacks the warning or the no-default wording
+  v31 fails C244 (4 line(s)); first: A keeps "before any message from the lead" (B1)
+  v31 fails C245 (2 line(s)); first: A sends the reader to "sheet section 2" (the STOP RULE is in section 1)
+do NOT fail on built v31 (cannot prove a change; reason in v32-CHANGES.md): ['C235', 'C236', 'C237', 'C240', 'C241', 'C242']
+fail on built v32: none
+v32-fail-proof: 0 problem(s)
+
+real	0m0.087s
+user	0m0.081s
+sys	0m0.004s

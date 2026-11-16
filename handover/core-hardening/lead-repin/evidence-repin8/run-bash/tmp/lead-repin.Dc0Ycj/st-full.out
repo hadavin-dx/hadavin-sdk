@@ -1503,3 +1503,111 @@ PASS (hidden): bare token TAB VALUE (last 6 characters)
 PASS (hidden, line-only final filter): bare token TAB VALUE (last 6 characters)
 PASS (hidden, sed stage alone): bare token TAB VALUE (last 6 characters)
 PASS (hidden): bare Password, several spaces (first 6 characters)
+PASS (hidden, line-only final filter): bare Password, several spaces (first 6 characters)
+PASS (hidden, sed stage alone): bare Password, several spaces (first 6 characters)
+PASS (hidden): bare Password, several spaces (last 6 characters)
+PASS (hidden, line-only final filter): bare Password, several spaces (last 6 characters)
+PASS (hidden, sed stage alone): bare Password, several spaces (last 6 characters)
+PASS (hidden): bare password, indented, mixed white space (first 6 characters)
+PASS (hidden, line-only final filter): bare password, indented, mixed white space (first 6 characters)
+PASS (hidden, sed stage alone): bare password, indented, mixed white space (first 6 characters)
+PASS (hidden): bare password, indented, mixed white space (last 6 characters)
+PASS (hidden, line-only final filter): bare password, indented, mixed white space (last 6 characters)
+PASS (hidden, sed stage alone): bare password, indented, mixed white space (last 6 characters)
+PASS (hidden): netrc style: user line, then password line (first 6 characters)
+PASS (hidden, line-only final filter): netrc style: user line, then password line (first 6 characters)
+PASS (hidden, sed stage alone): netrc style: user line, then password line (first 6 characters)
+PASS (hidden): netrc style: user line, then password line (last 6 characters)
+PASS (hidden, line-only final filter): netrc style: user line, then password line (last 6 characters)
+PASS (hidden, sed stage alone): netrc style: user line, then password line (last 6 characters)
+PASS (hidden): http -a user:password (first 6 characters)
+PASS (hidden, line-only final filter): http -a user:password (first 6 characters)
+PASS (hidden, sed stage alone): http -a user:password (first 6 characters)
+PASS (hidden): http -a user:password (last 6 characters)
+PASS (hidden, line-only final filter): http -a user:password (last 6 characters)
+PASS (hidden, sed stage alone): http -a user:password (last 6 characters)
+PASS (hidden): wget --user user:password (first 6 characters)
+PASS (hidden, line-only final filter): wget --user user:password (first 6 characters)
+PASS (hidden, sed stage alone): wget --user user:password (first 6 characters)
+PASS (hidden): wget --user user:password (last 6 characters)
+PASS (hidden, line-only final filter): wget --user user:password (last 6 characters)
+PASS (hidden, sed stage alone): wget --user user:password (last 6 characters)
+PASS (hidden): http --proxy-user user:password (first 6 characters)
+PASS (hidden, line-only final filter): http --proxy-user user:password (first 6 characters)
+PASS (hidden, sed stage alone): http --proxy-user user:password (first 6 characters)
+PASS (hidden): http --proxy-user user:password (last 6 characters)
+PASS (hidden, line-only final filter): http --proxy-user user:password (last 6 characters)
+PASS (hidden, sed stage alone): http --proxy-user user:password (last 6 characters)
+PASS (kept): text after a block value header stays (1)
+PASS (kept): text after a block value header stays (10)
+PASS (kept): text after a multi-line quoted value stays
+PASS (kept): text after a multi-line plain value stays
+PASS (kept): text after a long hidden container stays
+PASS (kept): docker run -p with a port number stays
+PASS (kept): mkdir -p with a number stays
+PASS (kept): ls -a stays
+PASS (kept): grep -a -n stays
+PASS (kept): text after a wrapped assignment stays (1)
+PASS (kept): text after a wrapped assignment stays (2)
+PASS (kept): text after a wrapped assignment stays (3)
+PASS (kept): text after a wrapped assignment stays (4)
+PASS (kept): text after a wrapped assignment stays (5)
+PASS (kept): text after a wrapped assignment stays (6)
+PASS (kept): a 30000-character line carries a cut notice with its true length
+PASS (kept): dotted CamelCase name stays
+PASS (kept): file name with dots stays
+PASS (kept): a name followed by a full stop stays
+PASS (kept): a NUL byte is removed and the removal is shown (tr stage and pre-stage)
+PASS (kept): mkdir -p with a path stays
+PASS (kept): a word after an ESC sequence stays and the removal is shown
+PASS (kept): a word after a bare CR stays (the CR is removed, not shown raw)
+PASS (kept): a CRLF line end is removed without a notice
+PASS (kept): backspace removed
+PASS (kept): vertical tab, form feed and DEL removed
+PASS (kept): bidi controls removed and counted
+PASS (kept): a TAB stays
+PASS (kept): a line with the word token or secret in prose is not hidden
+PASS (kept): text after a hidden bare password value stays
+PASS (kept): text after a block of ENCRYPTED DATA stays
+PASS (kept): the escaped closing quote stays after a hidden JSON value
+PASS (kept): the escaped closing single quote stays after a hidden value
+PASS (hidden): ENCRYPTED DATA block line 1
+PASS (hidden, sed stage alone): ENCRYPTED DATA block line 1
+PASS (hidden): ENCRYPTED DATA block line 2
+PASS (hidden, sed stage alone): ENCRYPTED DATA block line 2
+PASS (no control byte in the output)
+PASS (no bidi control in the output)
+PASS (no control byte in the output)
+PASS (no bidi control in the output)
+PASS (machinery): a weak filter stops the run with exit 3, opens no test-program file, leaves no folder
+PASS (machinery): a empty filter stops the run with exit 3, opens no test-program file, leaves no folder
+PASS (machinery): an identity filter (cat) makes --self-test fail with a non-zero exit code
+PASS (machinery): filter_ready refuses the useless rule file st-bad1.sed
+PASS (machinery): filter_ready refuses the useless rule file st-bad2.sed
+PASS (machinery): filter_ready refuses a useless awk program
+PASS (machinery): --mask with a damaged filter prints nothing, exits 3 and leaves no folder
+PASS (machinery): --mask passes the canary, hides the value and exits 0
+PASS (machinery): a normal run on a one-file folder ends with exit 0 and a SUMMARY line
+PASS (machinery): a normal run keeps exactly one work folder (the masked output copy)
+PASS (machinery): the file-mode check accepts mode 600 files in a 700 folder and sees a 644 file and a 755 folder
+PASS (machinery): a run started with umask 022 keeps only private files: the work folder 700, the output copy and the three rule files 600
+PASS (machinery): the kept work folder is mode 700 and every file in it is mode 600
+PASS (machinery): the kept folder holds only the output copy and the rule files (4 files, no file name list)
+PASS (machinery): a failure that only the return value of the self-test shows is a non-zero return
+PASS (machinery): the filter runs with LC_ALL=C (byte-wise matching)
+PASS (machinery): each judge refuses a result whose number of passed cases is not the planned number (a forged shorter list)
+PASS (machinery): each judge of the self-test result accepts a good result and rejects a FAIL line, a bad tally, an empty result and a non-zero return
+PASS (machinery): the left-out report counts one name with a line break and one symbolic link
+PASS (machinery): a file name with # & and a backslash is printed as file:line:word (no sed expression is built from names)
+PASS (machinery): a program planted in the current folder (PATH with a dot) is not run
+PASS (machinery): sh -x does not print a value (the script turns the trace off)
+PASS (machinery): signal TERM in the main phase: exit 143, no program of the run left running, no folder left
+PASS (machinery): signal HUP in the main phase: NOT TESTED (the program that started this self-test ignores HUP, for example nohup; start it without nohup to test this case)
+PASS (machinery): signal TERM while the file lists are made: exit 143 within 5 seconds, no program left
+PASS (machinery): the time limit (2 seconds here) ends a stuck run: exit 143, a message, no program and no folder left
+FAIL (machinery): a git call is missing a safety setting, or a GIT_* variable of the caller reached git, or git status ran without LEAD_REPIN_GIT_STATUS=1 (or did not run with it)
+PASS (machinery): a failing stage of the masking filter is recorded, and --mask then stops with exit 4 and says so
+PASS (machinery): a time limit of 26 digits falls back to the default and the run ends normally
+PASS (machinery): ten hostile lines of 20000 characters are masked in under 60 seconds (took 2)
+PASS (machinery): an exported bash function named sed does not replace the real sed
+PASS (machinery): a relative TMPDIR is refused with exit 2
