@@ -71,7 +71,10 @@ for n, t in ALL.items():
 # C06 banned vendor words (list read from the repo guard test; strings never printed)
 try:
     import ast
-    tree = ast.parse(open('/home/user/hadavin-sdk/tests/test_no_reference_material.py', encoding='utf-8').read())
+    _root = HERE
+    while not os.path.exists(_root + 'tests/test_no_reference_material.py') and _root != os.path.dirname(_root.rstrip('/')) + '/':
+        _root = os.path.dirname(_root.rstrip('/')) + '/'
+    tree = ast.parse(open(_root + 'tests/test_no_reference_material.py', encoding='utf-8').read())
     words = []
     for node in ast.walk(tree):
         if isinstance(node, ast.Assign) and any(getattr(x, 'id', '') == 'BANNED' for x in node.targets):
@@ -167,7 +170,7 @@ for n, t in (('A', A), ('B', B)):
 for n, t in (('A', A), ('B', B)):
     m = re.search(r"`(\(\s?set -C; umask 077; read -rs .*?echo \"exit \$\?\")`", t)
     if not m: fail('C15', n + ' key-save line not found'); continue
-    line = m[1].replace('<key file>', '/home/x/k')
+    line = m[1].replace('<key file>', 'kf')
     r = subprocess.run(['bash', '-n', '-c', line], capture_output=True, text=True)
     if r.returncode: fail('C15', n + ' bash -n: ' + r.stderr[:80])
 
@@ -231,7 +234,7 @@ else:
 # C20 angle-bracket placeholders in the sheet come from one list
 PH_OK = {'<amount or none>', '<call ceiling>', '<date>', '<expected total>', '<in words>', '<its name or none>', '<its name>', '<key file>', "<lead's answer>", '<model settings file>',
          '<name and how>', '<name>', '<number or none>', '<number>', '<page address>', '<path from the message>', '<range>', '<run name>', '<setting name>', '<step>',
-         '<test settings file name>', '<the balance you read on the prepaid page>', '<the word you read, it must be off>', '<word seen by the lead>', '<words>', '<time or never>', '<word, or "from the look key">', '<scopes the key page offers>', '<the older-key time of the message>', '<copied>', '<place>', '<how>', '<zone>', '<its last-used time, never or none>', '<address>', '<folder path>', '<minutes>', "<the lead's exact sentence>", '<masked address>', '<the cd line>', '<name and how to call>', '<yes or no>', '<sample word or unknown>'}
+         '<test settings file name>', '<the balance you read on the prepaid page>', '<the word you read, it must be off>', '<word seen by the lead>', '<words>', '<time or never>', '<word, or "from the look key">', '<scopes the key page offers>', '<the older-key time of the message>', '<copied>', '<place>', '<how>', '<zone>', '<its last-used time, never or none>', '<address>', '<folder path>', '<minutes>', "<the lead's exact sentence>", '<masked address>', '<the cd line>', '<name and how to call>', '<yes or no>', '<sample word or unknown>', '<name or none>', '<names, exact>'}
 for n, t in (('A', A), ('B', B)):
     for m in set(re.findall(r'<[A-Za-z][^<>\n]{0,45}>', t)):
         if m not in PH_OK: fail('C20', '%s: placeholder not in the list: %s' % (n, m))

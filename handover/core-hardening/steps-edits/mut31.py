@@ -12,7 +12,9 @@ ALLCOPIES = {'N01', 'R18', 'P30'}
 # (id, file, old, new, what)
 import ast
 def _banned():
-    t = ast.parse(open('/home/user/hadavin-sdk/tests/test_no_reference_material.py', encoding='utf-8').read())
+    r = H
+    while not os.path.exists(r + 'tests/test_no_reference_material.py') and r != os.path.dirname(r.rstrip('/')) + '/': r = os.path.dirname(r.rstrip('/')) + '/'
+    t = ast.parse(open(r + 'tests/test_no_reference_material.py', encoding='utf-8').read())
     for n in ast.walk(t):
         if isinstance(n, ast.Assign) and any(getattr(x, 'id', '') == 'BANNED' for x in n.targets): return [e.value for e in n.value.elts][0]
 BANNED_WORD = _banned()

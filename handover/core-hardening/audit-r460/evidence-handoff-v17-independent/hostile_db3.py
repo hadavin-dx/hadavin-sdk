@@ -67,7 +67,6 @@ for label, fn in (
     ("CREATE OR REPLACE FUNCTION spend_settle (own body)", lambda: rt.execute("CREATE OR REPLACE FUNCTION public.spend_settle(text,date,date,numeric,numeric) RETURNS TABLE(day_usd numeric, month_usd numeric) LANGUAGE sql AS 'SELECT 0::numeric, 0::numeric'")),
     ("ALTER FUNCTION spend_settle SECURITY INVOKER", lambda: rt.execute("ALTER FUNCTION spend_settle(text,date,date,numeric,numeric) SECURITY INVOKER")),
     ("ALTER FUNCTION spend_settle OWNER TO rt17", lambda: rt.execute("ALTER FUNCTION spend_settle(text,date,date,numeric,numeric) OWNER TO rt17")),
-    ("GRANT UPDATE ON spend TO rt17", lambda: rt.execute("GRANT UPDATE ON spend TO rt17")),
     ("SET ROLE migr17", lambda: rt.execute("SET ROLE migr17")),
     ("SET SESSION AUTHORIZATION op17", lambda: rt.execute("SET SESSION AUTHORIZATION op17")),
     ("call kill_switch_release", lambda: rt.execute("SELECT kill_switch_release()")),
@@ -77,6 +76,8 @@ for label, fn in (
     ("UPDATE kill_switch_log", lambda: rt.execute("UPDATE kill_switch_log SET new_on = true")),
 ):
     c = code(fn); expect(f"A1 runtime role: {label} is refused", c in ("42501", "42P01"), f"sqlstate={c}")
+rt.execute("GRANT UPDATE ON spend TO rt17")  # Postgres only warns (no error) when the grantor lacks the right; check the effect
+expect("A1 runtime role: GRANT UPDATE ON spend TO rt17 has no effect (the privilege is still absent)", not mg.execute("SELECT has_table_privilege('rt17','spend','UPDATE')").fetchone()[0])
 expect("A1 after all refused attempts the totals are unchanged", tot() == (Decimal("4"), Decimal("0")) and mtot() == (Decimal("4"), Decimal("0")), f"{tot()} {mtot()}")
 # via the function
 c = code(lambda: S("a", Decimal("1"), Decimal("0"))); expect("A2 settle (worst 1, nothing open) refused 23514", c == "23514", f"sqlstate={c}  total={tot()}")
@@ -118,15 +119,15 @@ s = mg.execute('SELECT "on","by" FROM kill_switch').fetchone(); expect("B2 engag
 # SET ROLE inside session: can runtime make session_user differ? try SET ROLE to a role it is not a member of
 c = code(lambda: rt.execute("SET ROLE op17")); expect("B3 SET ROLE op17 refused", c == "42501", str(c))
 # a role member case: grant rt17 membership in op17 -> by stays session_user (rt17) after SET ROLE
-mg.execute("GRANT op17 TO rt17"); rt.execute("SET ROLE op17")
+admin.execute("GRANT op17 TO rt17"); rt.execute("SET ROLE op17")
 rt.execute("SELECT kill_switch_release()"); s = mg.execute('SELECT "on","by" FROM kill_switch').fetchone()
 obs(f"B4 (only if an operator privilege is granted by membership) release after SET ROLE op17 records by={s[1]} (session_user, the login, not the SET ROLE role)")
 expect("B4 `by` is the login (session_user), not the SET ROLE role", s == (False, "rt17"), str(s))
-rt.execute("RESET ROLE"); mg.execute("REVOKE op17 FROM rt17")
+rt.execute("RESET ROLE"); admin.execute("REVOKE op17 FROM rt17")
 # engage twice / release on missing row
 mg.execute("DELETE FROM kill_switch") ; rt.execute("SELECT kill_switch_engage()")
 obs(f"B5 migration role deleted the kill_switch row; runtime engage silently succeeds, rows now={mg.execute('SELECT count(*) FROM kill_switch').fetchone()[0]} (engage = UPDATE ... WHERE id=1: no row, no error)")
-mg.execute("INSERT INTO kill_switch(id, \"on\", \"by\", ts) VALUES (1, false, 'restore', now())")
+mg.execute("INSERT INTO kill_switch(id, schema_version, \"on\", \"by\", ts) VALUES (1, 1, false, 'restore', now())")
 
 # ---- C. hostile values
 VALS = {"NaN": Decimal("NaN"), "Infinity": Decimal("Infinity"), "-Infinity": Decimal("-Infinity"), "negative": Decimal("-1"),
@@ -239,16 +240,18 @@ def lock_case(label, files_pre, newfile, number, hold_sql):
     for p in m.MIGRATIONS.glob("*.sql"): shutil.copy(p, tm / p.name)
     for f, n in files_pre: shutil.copy(H17 / f, tm / f"{n}.sql")
     for k in ("spend_decrease_log", "kill_switch_log"):
-        (m.GRANTS.__setitem__(k, m.Grant("table", "")) if any("decrease_log" in f for f, _ in files_pre + [(newfile, number)]) else m.GRANTS.pop(k, None))
+        (m.GRANTS.__setitem__(k, m.Grant("table", "")) if any("decrease_log" in f for f, _ in files_pre) else m.GRANTS.pop(k, None))
     m._migration_files = lambda folder=tm: sorted(Path(folder).glob("*.sql"))
     m.migrate(dsn("migr17", db), runtime_role="rt17")
     shutil.copy(H17 / newfile, tm / f"{number}.sql")
+    for k in ("spend_decrease_log", "kill_switch_log"):
+        (m.GRANTS.__setitem__(k, m.Grant("table", "")) if "decrease_log" in newfile else m.GRANTS.pop(k, None))
     hold = psycopg.connect(dsn("migr17", db)); hold.execute(hold_sql)
     t0 = time.monotonic(); c = None
     try: m.migrate(dsn("migr17", db, "options='-c statement_timeout=20000'"), runtime_role="rt17")
     except psycopg.Error as e: c = str(e.sqlstate)
     dt = time.monotonic() - t0; hold.rollback(); hold.close()
-    applied = psycopg.connect(dsn("migr17", db), autocommit=True).execute("SELECT count(*) FROM schema_migrations WHERE name LIKE %s", (number + "%",)).fetchone()[0]
+    applied = psycopg.connect(dsn("migr17", db), autocommit=True).execute("SELECT count(*) FROM schema_migrations WHERE version LIKE %s", (number + "%",)).fetchone()[0]
     expect(f"E {label} | hold: {hold_sql}", c == "55P03" and 4.5 <= dt <= 7 and applied == 0, f"sqlstate={c} after {dt:.2f}s, ledger rows for it={applied}")
     admin.execute(f"DROP DATABASE {db} WITH (FORCE)")
 for f, number, pre in (("spend_nonneg.sql", "0006_x", []), ("spend_nonneg_finite.sql", "0006_x", []),

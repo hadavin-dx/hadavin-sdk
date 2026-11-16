@@ -4,3 +4,4 @@
 16:56 FINAL full run started from evidence-r11/frozen
 17:14 full run 1: 1 failure T95d3 (genuine 0664 file refused by my m6 rule: git archive gives 0664). Fixed: refuse only group bit beyond git's. Full run 2 started
 17:15 T95d3 root cause: extract filter strips g+w from reference, so compare with mode in the tar header (REF_MODES). Full run 3 started (frozen hash in hashes.txt)
+17:31 full run 3: root 0/458, see report

@@ -218,10 +218,10 @@ for nm, t in (('N', NOTE), ('O', OPEN)):
     if re.search(r'Builder proposes B|safe default B\b|builder recommends A for money and chose neither', t): fail('C149', nm + ': still recommends B or contradicts itself on A and B')
     if re.search(r'older key stays valid unless its text appears', t): fail('C149', nm + ': stale description of B')
 if 'Money-safe default if you do not choose: A' not in NOTE: fail('C149', 'N: A is not named as the money-safe default')
-if 'Safe default if you do not answer: A' not in OPEN: fail('C149', 'O: row 71 does not name A as the safe default')
+if 'Money-safe default: A' not in OPEN: fail('C149', 'O: row 71 does not name A as the money-safe default')
 if '6.2 option A none at all' in NOTE or '6.6 and 6.7 option A exactly' in NOTE: fail('C150', 'N: G26 still says A has no older key at 6.2 (v26 A keeps the older key valid until 6.7)')
 if 'no valid key except the older key (if the message names one); 6.6 and the last checks of 6.7' not in NOTE: fail('C150', 'N: G26 not rewritten for the older key')
-if 'sheet B has a fourth alarm at 16:00 UTC = 21:30 IST' not in NOTE: fail('C151', 'N: G30 or alarms count wrong for B')
+if 'both sheets have four alarms, the fourth at 16:00 UTC = 21:30 IST' not in NOTE: fail('C151', 'N: G30 or alarms count wrong')
 if '4 owner: two alarms' in NOTE: fail('C151', 'N: the day order still says two alarms')
 if 'Test program asks you to type a figure: no' not in NOTE or 'G35' not in NOTE: fail('C152', 'N: typed-figure line / G35 missing')
 if 'Minimum think time' not in NOTE or 'Minimum think time' not in OPEN: fail('C153', 'note and open list must name the minimum think time slot')
@@ -308,10 +308,10 @@ for _n, _t in (('A', A), ('B', B), ('NOTE', NOTE), ('OPEN', OPEN)):             
     if 'unless you know something else uses' in _t: fail('C186', '%s holds the escape (describe the older key, then cancel anyway)' % _n)
 _i7 = A[A.find('Older key point (cannot be undone'):]; _i7 = _i7[:_i7.find('## 8.')] if '## 8.' in _i7 else _i7[:3000]
 if 'nothing else I know uses it' in _i7 or 'I cancel the older key <its name> now, the yes covers it' not in _i7: fail('C186', 'A 7.11: the forced cancel must use the phrase without the claim that nothing else uses the key')
-need('C187', 'Deadline backstop (an owner action through Sun 22 Nov)'); need('C187', 'a person who may cancel the older key if you cannot')       # S M3
+need('C187', 'Deadline backstop (an owner action on Sun 22 Nov and on Mon 23 Nov)'); need('C187', 'cancel helper: a person who may cancel any of your keys')       # S M3
 if F.get('bs') != 'Sun 22 Nov 2026 18:09 UTC = 23:39 IST': fail('C187', 'facts: backstop time is not Sun 22 Nov 2026 18:09 UTC = 23:39 IST')
-need('C187', 'Sun 22 Nov 2026 18:09 UTC = 23:39 IST'); need('C187', 'No yes yet: the reminder is not set'); need('C187', 'A missed 7.11: this reminder is the second chance')
-need('C187', 'set the **deadline reminder**')
+need('C187', 'Sun 22 Nov 2026 18:09 UTC = 23:39 IST'); need('C187', 'No yes yet: the reminders are not set'); need('C187', 'A missed 7.11: the reminders are the second and third chance')
+need('C187', 'set the two **deadline reminders**')
 if 'waits for your message "cancel the older key' in NOTE + OPEN or 'waits for your message "cancel the older key' in A: fail('C188', 'a text still says the older key in A waits for a lead message (S M1)')
 if 'does NOT wait for a message from you' not in NOTE: fail('C188', 'note: A older key still seems to wait for a lead message')
 _sb = F.get('sevenback', '?')
@@ -323,7 +323,7 @@ need('C191', 'no clipboard manager, remote-access or screen-capture tool running
 need('C192', 'never a file manager, a second terminal window or the clipboard (no copy and paste)')                      # S m6 film person
 need('C192', "the From column of the mail list shows the sender's throwaway address: the film person does not stop for")   # N B1
 need('C192', 'say aloud "film pause now"') if False else need('C192', 'aloud "film pause now"')
-need('C193', '**Name rule (8.3, 8.4):** revoke only an item whose exact name contains the run name')                      # S m7
+need('C193', '**Name rule (8.3, 8.4):** revoke only an entry whose exact name is in the numbers message row "Entries to revoke later"')                      # S m7
 _gm = F.get('gap_max', '?')
 need('C194', 'the latest start is at most %s minutes after the earliest key time' % _gm)
 need('C194', 'at most 60 minutes after the earliest key time')                                                           # literal, independent of facts-v31.py (the lead's cap is 60)                                  # S m3: gap cap
@@ -378,3 +378,101 @@ for _n, _t in (('A', A), ('B', B), ('NOTE', NOTE)):                             
     pass
 if '18:04 is a plan fact' not in NOTE or '18:04 is a plan fact' not in OPEN: fail('C209', 'note or open list lacks the sentence that 18:04 is a plan fact, not a start that fits a run (S m2)')
 if 'Older key point (cannot be undone' not in A: fail('C209', 'sheet lacks the older key point')
+
+# ---- Part 8 (v31, round 3): one check per finding of review-v30-security.md, review-v30-naive.md and review-v30-evidence.md. v31-fail-proof.py runs this part on the built v30 files.
+import glob as _glob, os as _os
+_V = globals().get('PAGEVER', 'v31')                                                                                       # v31-fail-proof.py sets PAGEVER = 'v30' to read the old pages
+def _pg(n): return open(D + n, encoding='utf-8').read()
+_AP = {k: _pg('OWNER-APPENDIX-%s-%s.md' % (_V, k)) for k in 'AB'}
+_FILM = _pg('OWNER-FILM-PERSON-%s.md' % _V)
+_BM = 'Mon 23 Nov 2026 18:09 UTC = 23:39 IST'
+if F.get('bm') != _BM: fail('C210', 'facts: the Monday reminder is not %s' % _BM)                                            # S M1: owner-side stop on deadline day
+for _nm, _t in (('A', A), ('B', B)):
+    for _s in (_BM, '18:19 UTC = 23:49 IST', '18:04 UTC = 23:34 IST', 'two **deadline reminders**', 'a key of L1 you find valid is cancelled by the card at once', 'Deadline backstop (an owner action on Sun 22 Nov and on Mon 23 Nov)'):
+        if _s not in _t: fail('C210', '%s lacks %r' % (_nm, _s))
+    if 'If your run day is Mon 23 Nov' in _t: fail('C210', '%s keeps the dead Mon 23 Nov paragraph' % _nm)
+    if _BM not in SHEETS_DISK[_nm]: fail('C210', 'sheet %s itself does not carry the Monday reminder' % _nm)
+    if '18:19 UTC = 23:49 IST' not in _pg('OWNER-CARD-%s-%s.md' % (_V, _nm)): fail('C210', 'card %s lacks the cancel-by pair 18:19 UTC = 23:49 IST' % _nm)
+for _nm, _t in (('A', A), ('B', B)):                                                                                       # S M2: cancel helper
+    for _s in ('cancel helper: a person who may cancel any of your keys', 'cancel helper <name or none>', 'if I cannot be reached while a key is alive and the cancel helper is none nobody else can cancel it and it can spend until the balance runs out', 'a role that can only cancel keys'):
+        if _s not in _t: fail('C211', '%s lacks %r' % (_nm, _s))
+if 'OWNER-OPEN' not in OPEN or 'cancel helper' not in OPEN: fail('C211', 'open list: the cancel helper is not kept as OWNER-OPEN')
+for _n, _t in (('NOTE', NOTE), ('OPEN', OPEN)):                                                                            # S M3: lead pages
+    if re.search(r'on your message|three; four|three alarms|Safe default if you do not answer', _t): fail('C212', '%s holds old wording on the older key, the alarm count or the default' % _n)
+if 'fourth alarm' in NOTE and 'both sheets' not in NOTE: fail('C212', 'note: the alarm count is not said to be four in both sheets')
+_w = 'will probably fail on Wed 18 Nov'
+_r71 = [l for l in OPEN.split('\n') if l.startswith('| 71 |')]
+if not _r71 or 'Money-safe default: A' not in _r71[0] or _w not in _r71[0] or abs(_r71[0].find(_w) - _r71[0].find('Money-safe default: A')) > 160: fail('C212', 'open row 71: the warning is not beside the default A')
+if NOTE.count(_w) < 2: fail('C212', 'note: the warning "%s" is not beside both mentions of A as the default (count %d)' % (_w, NOTE.count(_w)))
+# C213 (evidence H06): ANY phrasing in a lead page or sheet that makes the older-key cancel wait for, or be released by, a lead message
+_REL = re.compile(r"(?:on|after|upon|when|once|if) (?:your|the lead's|a lead|the lead|you send|you say) (?:message|word|words|sentence|tells)|(?:lead|you|it) (?:sends?|says?|gives?|writes?|tells?|messages?|releases?|allows?|permits?|approves?|confirms?|signals?|answers?)(?: the owner| him)? (?:the |him |it )?(?:words? |message |go-ahead |signal |release )?[\"“]?(?:cancel|release|go|ok)|waits? for (?:your|a|the lead)|(?:release|permission|go-ahead|signal) (?:from|of|by) (?:the )?lead|until (?:the lead|you) (?:says?|sends?|tells?)")
+_NEG = re.compile(r"\bno lead message\b|does NOT wait|not wait|no message from you|no word of the lead|\bnever\b|without|\bnor\b|was wrong|said so in|no message|not needed|not accepted|neither|no longer|is closed|no lead word|does not wait|not a|only the owner|owner's own")
+for _n, _t in (('NOTE', NOTE), ('OPEN', OPEN), ('A', A), ('B', B)):
+    for _sent in re.split(r'(?<=[.;|])\s+|\n', _t):
+        _l = _sent.lower()
+        if 'older key' in _l and 'cancel' in _l and _REL.search(_sent) and not _NEG.search(_sent): fail('C213', '%s: a sentence lets a lead message release the older-key cancel: %r' % (_n, _sent[:110]))
+for _nm, _t in (('A', A), ('B', B)):                                                                                       # S m1 name rule
+    if 'whose exact name contains the run name' in _t: fail('C214', '%s keeps the run-name rule for revoke names' % _nm)
+    if 'Entries to revoke later: app passwords <names, exact>; HubSpot apps <names, exact>' not in _t: fail('C214', '%s: the numbers sample lacks the row Entries to revoke later' % _nm)
+    if 'Sheet B cancels the older key at 7.11 even if it was used a day ago' not in _t: fail('C215', '%s lacks the B warning of 5.1 (m2)' % _nm)              # S m2
+    if 'It does not mean no valid key remains: the older key may still spend until it is cancelled' not in _t: fail('C216', '%s: card step 5 lacks the older-key sentence (m3)' % _nm)   # S m3
+    if 'The yes binds you to 7.11' not in _t or 'There is no older key.' not in _t: fail('C217', '%s: yes binding or the no-older-key wording missing (m4, N m8)' % _nm)       # S m4, N m8
+    if 'it is an instruction, not a technical guard' not in _t: fail('C218', '%s lacks the film-person guard honesty sentence (m5)' % _nm)                          # S m5
+for _nm in 'AB':                                                                                                           # N M-A1: 5.1 order and split
+    _t = SHEETS_DISK[_nm]; _i = _t.find('1. **Which sheet, then run name and key-list facts.**'); _j = _t.find('2. **People:**')
+    _b = _t[_i:_j]
+    if _i < 0 or not all(('\n   %s) ' % x) in _b for x in 'abc'): fail('C219', 'sheet %s: 5.1 is not split into a), b), c)' % _nm)
+    if 'today plus 7 days as a first guess' not in _b: fail('C219', 'sheet %s: 5.1 lacks the run day to use for the first reading' % _nm)
+    if _b.count('last-used time first') != 1: fail('C219', 'sheet %s: 5.1 repeats or lacks the sentence "last-used time first" (%d)' % (_nm, _b.count('last-used time first')))
+    if any(len(_p.split()) > 230 for _p in _b.split('\n')): fail('C219', 'sheet %s: a paragraph of 5.1 has more than 230 words' % _nm)
+for _nm, _t in (('A', A), ('B', B)):                                                                                       # N M-A3, m11
+    if 'from 5 minutes before the latest start do not press Enter' not in _t: fail('C220', '%s lacks the last-5-minutes rule' % _nm)
+    for _p in ('ends exactly at alarm 2', 'itself it is too late'):
+        if _p in _t: fail('C220', '%s keeps the old last-5-minutes wording %r' % (_nm, _p))
+if 'press F11' not in _FILM or 'preview' not in _FILM or 'item 3b' not in A: fail('C221', 'film page lacks how to show only the page area (F11, region, preview) or the sheet does not point to item 3b')    # N M-A4
+for _nm, _t in (('A', A), ('B', B)):                                                                                       # N minors
+    if 'that the From column of the mail list is not a stop' not in _t: fail('C222', '%s: 7.6 does not tell the film person about the From column (m1)' % _nm)
+    for _p in ('(STOP RULE below)', 'sample in section 3', 'list ends section 2'):
+        if _p in _AP[_nm]: fail('C222', 'appendix %s keeps the wrong pointer %r (m2)' % (_nm, _p))
+    for _src, _page in (('sheet', SHEETS_DISK[_nm]), ('appendix', _AP[_nm])):
+        if re.search(r'\(appendix \d+\) +\)', _page): fail('C222', '%s %s holds a stray "(appendix N) )" (m3)' % (_src, _nm))
+    if 'Remember my preferences' not in _t: fail('C222', '%s: 6.1 gives no path for Sync across your devices (m4)' % _nm)
+    if 'this sheet has no R2 or R3, nothing is missing' not in _t: fail('C222', '%s: the R-label sentence still sends a stranger looking for R2 (m5)' % _nm)
+    if '## 7. The run (UNVERIFIED), and what to do if the key is cancelled during the run' not in _t: fail('C222', '%s: heading of section 7 (m6)' % _nm)
+    if 'Words with one meaning here' not in _t: fail('C222', '%s lacks the definitions of message, take, deadline, wait, gap, post (m7)' % _nm)
+    if 'figure line' in _t or 'ends exactly' in _t: fail('C222', '%s: the unclear row name "figure line" is back (m9)' % _nm)
+    if 'are not an empty slot' not in _t: fail('C222', '%s: the owner-fill rows are not said to be no empty slot (m10)' % _nm)
+    if re.search(r'\btake sheet B\b|\btake B\b', _t.replace('if used less than 7 days ago take B', '')): fail('C222', '%s: "take sheet B" is back (word with two meanings, m7)' % _nm)
+if 'the sheet checks only the maximum' not in OPEN or 'sheet checks both at 5.7' in OPEN: fail('C223', 'open list: the 40-minute minimum is said to be checked by the sheet (v29 m7)')
+# C224 (evidence H09): every placeholder by exact spelling and count
+_LEAD_OK = ['[LEAD FILLS at re-pin: last-resort step]', '[LEAD FILLS at re-pin: minimum think time]', '[LEAD FILLS at re-pin: run length]', '[LEAD FILLS at re-pin: the three names]']
+_OWN_OK = ['[OWNER FILLS: cancel button word and confirmation box word, from the look key at 5.9]', '[OWNER FILLS: cancelled word and where you saw it]', '[OWNER FILLS: older key last-used time]']
+_GEN_OK = {'[LEAD FILLS at re-pin: ...]', '[LEAD FILLS ...]', '[OWNER FILLS: ...]', '[OWNER FILLS ...]'}
+for _n, _t in (('A', A), ('B', B), ('NOTE', NOTE), ('OPEN', OPEN)):
+    for _m in re.findall(r'\[(?:LEAD|OWNER) FILLS[^\]`\n]*\]', _t):
+        if _m not in _LEAD_OK + _OWN_OK and _m not in _GEN_OK: fail('C224', '%s: placeholder with a spelling that is not in the list: %r' % (_n, _m))
+for _nm, _t in (('A', _AP['A']), ('B', _AP['B'])):
+    _blk = _t[_t.find('SAMPLE (made-up values'):]; _o = _blk.find('```'); _blk = _blk[_o:_blk.find('```', _o + 3)] if _o >= 0 else ''
+    for _ph in _LEAD_OK + _OWN_OK:
+        if _blk.count(_ph) != 1: fail('C224', 'appendix %s sample: %r appears %d times (must be exactly 1)' % (_nm, _ph, _blk.count(_ph)))
+    if len(re.findall(r'\[LEAD FILLS', _blk)) != 4 or len(re.findall(r'\[OWNER FILLS', _blk)) != 3: fail('C224', 'appendix %s sample: placeholder count is not 4 LEAD and 3 OWNER' % _nm)
+# C225 (evidence H15): every fact the sources are built from is used by some source; a fact that no source uses is dead
+_srcs = ''.join(_pg(x) for x in ('OWNER-SHEET-%s-SOURCE.md' % _V, 'v%s-OPEN-FOR-LEAD-SOURCE.md' % _V[1:]) if os.path.exists(D + x)) if False else ''
+_ns = {}; exec(_pg('facts-%s.py' % _V), _ns)
+for _x in _glob.glob(D + '*-SOURCE.md'):
+    if _V in _x or 'NOTE' in _x and ('-v15-' in _x if _V == 'v31' else '-v14-' in _x): _srcs += open(_x, encoding='utf-8').read()
+_chk = ''.join(_pg(x) for x in ('check-%s.py' % _V, 'newchecks-%s.py' % _V, 'build-%s.py' % _V) if os.path.exists(D + x))
+_dead = [k for k in _ns['F'] if ('{{%s}}' % k) not in _srcs and not k.startswith('ph_') and ("F['%s']" % k) not in _chk and ("F.get('%s'" % k) not in _chk and ("'%s'" % k) not in _chk]
+if _dead: fail('C225', 'facts used by no source (dead): %s' % ', '.join(sorted(_dead)))
+# C226 (evidence 5): no email-shaped text in the owner pages except @example.com
+for _n, _t in (('A', A), ('B', B)):
+    for _m in re.finditer(r'[A-Za-z0-9._…-]+@[A-Za-z0-9.…-]+', _t):
+        if 'example.com' not in _m[0]: fail('C226', '%s holds an email-shaped text %r' % (_n, _m[0][:30]))
+# C227: staleness by file times read at run time, and no absolute path in any script of this package
+def _mt(n): return _os.path.getmtime(D + n)
+for _nm in 'AB':
+    for _built, _srcn in (('OWNER-SHEET-%s-%s.md' % (_V, _nm), 'OWNER-SHEET-%s-SOURCE.md' % _V), ('OWNER-CARD-%s-%s.md' % (_V, _nm), 'OWNER-SHEET-%s-SOURCE.md' % _V), ('OWNER-APPENDIX-%s-%s.md' % (_V, _nm), 'OWNER-SHEET-%s-SOURCE.md' % _V)):
+        for _dep in (_srcn, 'facts-%s.py' % _V, 'build-%s.py' % _V):
+            if os.path.exists(D + _dep) and _mt(_built) + 1 < _mt(_dep): fail('C227', '%s is older than %s (rebuild)' % (_built, _dep))
+for _fn in ('check-%s.py' % _V, 'newchecks-%s.py' % _V, 'build-%s.py' % _V, 'facts-%s.py' % _V, 'mut%s.py' % _V[1:], '%s-fail-proof.py' % _V):
+    if os.path.exists(D + _fn) and re.search(r"['\"]/(?:ho" + r"me|tmp|Users|mnt)/", _pg(_fn)): fail('C227', '%s holds a hard-coded absolute path' % _fn)
