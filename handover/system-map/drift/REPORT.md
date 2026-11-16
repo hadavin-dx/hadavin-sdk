@@ -165,3 +165,16 @@ Files here are copies in inputs/ unless named; the owners of the originals are o
 - DN-3 (Nit) v5:90 (C.3): add "your n8n account already exists; this screen appears only because the take uses a new, empty n8n database".
 - DN-4 (open, not proven stale) LEAD-PAGE.md:30,35 and STATUS-BOARD ask who starts Docker and runs the first laptop test; FACTS does not list it as done. Kept as a question (QUESTIONS.md item 1).
 Not checked: the other sessions' branches for this sweep, long lines in SWEEP.md, MASTER-MAP.md, and the demo archive folders.
+
+## 12. Three-way consistency M13 (v4 difflist, v5 steps, rehearsal plan PL), 16 Nov 2026 about 10:35 UTC / 16:05 IST
+No hard conflict in ports, exit codes, send counts or dates. Real disagreements are step letters and stale cross-references. "DL" = inputs/OWNER-STEPS-v4-difflist-core-hardening.md.
+- TW-1 (Major) DL:24-26 names step D = type y, E = end, F = filming; v5 has D = what the film may show, E = type y, F = film pause. DL:20/50 also swaps C.2 and C.3 (v5:89-90) and DL:49 puts the exit codes and the bold warning at the old step letters (v5:119, 124). Fix: mark DL "v4 lettering only" or add a v4 to v5 letter map (v4 D to v5 E, v4 E to v5 F, v4 F to v5 D).
+- TW-2 (Major) PL:492 says "OWNER-STEPS step 8" and PL:505 cites "OWNER-STEPS 75, 99, 164-166": old v3 numbering. Fix: PL:492 "step C.3"; replace line numbers with step ids and name the file.
+- TW-3 (Major) v5:170 "crash-safe (unless the rehearsal's crash test passed)" is looser than PL:398/505 (blocked until tested and holding, fixed, or accepted by the owner in writing; a double mail blocks it). Fix v5:170: "unless the studio lead tells you the crash test passed, or you accepted in writing".
+- TW-4 (Nit) v5:154 says the run folder is removed "in step 6"; v5:158 (step 5) removes it, step 6 deletes secret files. Fix: "step 5".
+- TW-5 (Nit) latest start: DL:49 "18:14 UTC / 23:44 IST", v5:17 and 201 "about 18:15 UTC / 23:45 IST". Use v5; quote the program's exact value once it is known.
+- TW-6 (Nit) v5:13 "a word plus 4 digits is likely" is unconfirmed (DL:52 says the pattern does not exist). Delete that sentence or have the studio lead confirm.
+- TW-7 (Nit) DL says "Who is who" and "For the studio lead" boxes exist; v5 has neither (v5:5 says the lead's list is in a separate file). v5 has 7 rules, DL says 5 (rules 6 and 7 are new). Write a v4 to v5 difflist or correct DL's text.
+- TW-8 (Nit) "take" (DL, PL, program screens) and "run" (v5:10): say once that they mean the same.
+In one document only, to add: the owner's own n8n ports (PL:121, 489: leave the owner's n8n alone) as one line in v5 C.3; the name of the rehearsal result file (PL:112 evidence-2\INDEX.md) in v5:74; the rehearsal duration (PL:445, 3.5 to 4.5 hours, US$0) in v5:26; whether the `.lock` file of v5:28 is the same as n8n.lock of PL:312 (not confirmed).
+Not checked: the program code (exit codes, 2-second rule, 14-minute limit), the review files behind v5, and PL's internal arithmetic.

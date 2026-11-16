@@ -60,7 +60,7 @@ Section 4 sources: rows 1, 3 and 6 carry file and line; for the other rows the f
 Not a real contradiction: SWEEP L4c-FD-001 says a patch "touches core src"; it edits the desk code, not the shared core.
 
 ## 5. Fixes that would collide
-- CH has two copies of the same patch: `patches/C-01-and-A-02.patch` (old) and `patches-ready/C-01.patch` plus `G5-wording.patch` (new). Overlapping hunks (the config.py price check is the same; the new files add the max_tokens bound, tests and the G5 wording), so they cannot both apply; remove the old file.
+- CH has two copies of the same patch: `patches/C-01-and-A-02.patch` (old) and `patches-ready/C-01.patch` plus `G5-wording.patch` (new). Overlapping hunks (the config.py price check is the same; the new files add the max_tokens bound, tests and the G5 wording), so they cannot both apply; archive `patches/C-01-and-A-02.patch` (never delete).
 - The C-01 hunk in `config.py` has the line `if self.environment != "dev":` as context; the stage rename (X-01) changes that line, so apply one, then redo the other.
 - Our two review patches A-02 and D2-01 write "Major" into CH's lane rows, while CH's section 2a says Nit. They apply cleanly (the agent dry-ran all five on a scratch copy; I did not repeat it); the ratings would disagree in one file.
 - SWEEP row 19 (hand-add a header to the flow JSON) would be lost when FA's patches F-002 and F-008 rebuild the flows from `build_mainframe.py`; put the header into the generator.

@@ -1,0 +1,10 @@
+# Clean-up card (owner): the studio lead releases ONE step at a time in chat
+Made-up data only. Source: inputs/OWNER-STEPS-realrun-v5-core-hardening.md step I (called "v5"). Not run yet. Deletes cannot be undone, and revoking too early makes a second run fail. Start only after you replied "accepted" AND the studio lead says the last run is done. The deadline comes from the studio lead (it is not tied to the stop time Mon 23 Nov 18:29 UTC / 23:59 IST). Run only the commands the studio lead sends, and only if each is a plain `cat <file>` or `shred -u <file>` on a path in your take-secrets folder, or the check command; if a command has a pipe, `;`, `curl` or a path outside that folder, do not run it and tell the studio lead.
+
+1. App passwords: in BOTH Gmail accounts (receiver and sender) go to myaccount.google.com > Security > App passwords and remove the ones made for this run. Screenshot each empty list, crop or cover addresses.
+2. HubSpot private apps: tell the studio lead which private apps were made for this run and which one the program used. If unsure, do not delete. After the studio lead confirms the list, delete those apps and take a screenshot.
+3. Save the screenshots in `C:\Users\<your-user>\Downloads\Hadavin\_local\real-run\` under the names the studio lead gives.
+4. Run the check command the studio lead sends in the Ubuntu terminal. Then type `echo $?`. Prints "refused as expected" (0): good. Prints "STILL WORKS" (3): revoke or delete again and run it again. "Could not tell" (2): wait for the studio lead.
+5. Tell the studio lead "retire check passed" and wait while it removes n8n's connections and saved runs, stops n8n, and removes the run folder and database container.
+6. Only then delete the secret files the studio lead names with `shred -u <names>` (if `shred` is missing, `rm`); check with `ls -l`. Never delete `~/.hadavin-take-tags/<run name>.used`. Reply "secret files deleted".
+7. Set the laptop sleep and lid settings back (Control Panel > Power Options) and sign out of the `demo-take` Chrome profile.

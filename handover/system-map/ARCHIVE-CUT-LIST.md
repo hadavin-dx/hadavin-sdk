@@ -22,3 +22,12 @@ Not recommended to move: handover/system-map/DECISION-one-store.md (cited by lin
 Also found: CLAUDE.md step 1 names files that are not in this checkout (handover/README.md, STUDIO-RULES.md, STATUS.md, studio-notes/, ledger.md); handover/evidence/ and promotion-inputs/ are cited but absent. Same-name different-content pairs (demo/ORDERS.md vs demo3/ORDERS.md; the two DECISION-one-store.md) are NOT duplicates.
 Every moved path cited as path:line "quote" makes tools/check_citations.py print NO-FILE and exit 1 until the citation is updated, so a move needs a citation update pass. Not tested: whether the secret scan in CI (gitleaks, history mode) treats a moved file as new, and whether the 19 .gitleaksignore entries (sha:path) still cover it.
 Review: work/review-m8-factcheck.md (3 Blockers, 4 Majors, all applied).
+
+## Reconciliation with FINAL-CROSSCHECK section 6 (M15, second reader, 16 Nov 2026 about 10:35 UTC / 16:05 IST)
+Status: the studio head should sign ONE list after the take, not before. Findings, not yet applied to the rows below:
+1. Scope: rows A to L here cover handover/demo, demo3 and their evidence; the crosscheck's 39 rows cover n8n-flows folders, scripts, notes and source fields. Only A, B, C, G, H, I here overlap crosscheck rows 34-35 (replaced rounds, patch and PR-text chains): merge them. Tracked or not is NOT checked for either list.
+2. Archive place conflicts: this list says archive/<same path> inside the repository; the crosscheck says OUTSIDE the repository because tests/test_no_reference_material.py scans the whole tree. The crosscheck is right; drop the in-repository default until the head names a place and a backup.
+3. Must stay (not archive): crosscheck rows 14, 23-25, 28-30, 32 (source fields, migrations, CI marker are code edits, not archives); row M here (cited 36 times in 16 files, one citation would break check_citations.py); row K (tools/partition.py line 11 hardcodes the path); handover/demo3/register.md (cited as source of truth). Rows D and E are cited by 12 files: hold until the citations change. Row L folds into crosscheck 34-35.
+4. `git rm --cached` for .pyc files (line 21) means "stop tracking, keep on disk"; flag it as such.
+5. Time: everything marked after the video belongs to one sign-off after the take; none of it is needed for the take. The one decision for the head: extract.py (crosscheck row 31).
+6. Gaps: no row for handover/demo/fixes/evidence-* (about 45 files) or demo/coverage evidence-r2/r3 (about 25); sizes are missing for rows G, H, J, K, L.
