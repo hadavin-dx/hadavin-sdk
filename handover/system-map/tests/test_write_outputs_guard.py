@@ -1,4 +1,4 @@
-import os, re, shutil, subprocess, sys, tempfile, unittest
+import ast, os, re, shutil, subprocess, sys, tempfile, unittest
 
 BASE = os.path.join(os.path.dirname(__file__), "..")
 sys.path.insert(0, os.path.join(BASE, "tools"))
@@ -56,6 +56,30 @@ PIN = {  # names of the job rows tools/write_outputs.py gives verdicts to (its P
 }
 
 
+PLAIN = {  # the 11 rows tools/write_outputs.py registers without a verdict table (its PLAIN dict)
+    'L6-J-015': 'LOG place: process output files (n8n.out, stage stderr, take-script result.json, notices)',
+    'L6-J-019': 'LOG place: lane3 evidence reports and raw logs (about 90 reports, raw/, progress notes, REPORT archive)',
+    'L6-J-024': 'FILTER place: Claim insert ON CONFLICT on mf_leads (the dedupe)',
+    'L6-J-025': 'FILTER place: shape check (Valid node regex) and review state',
+    'L6-J-026': 'FILTER place: stage.journal repeat guard (one model call per lead key)',
+    'L6-J-034': 'COUNTER place: independent count rule (one new, nine duplicate, one e-mail, one CRM row)',
+    'L6-J-041': 'RETRY place: mf-recovery sweep (every 30 s, lease 120 s, at most 3 attempts, marks failed or unknown)',
+    'L6-J-051': 'NOTICE place: alert mail for unknown or failed leads (AlertSend in mf-recovery)',
+    'L6-J-052': 'NOTICE place: lead intake mail inside the sub-workflow',
+    'L6-J-053': 'NOTICE place: proof screens for the video (n8n executions, mf_leads rows, HubSpot, Gmail)',
+    'L6-J-055': 'NOTICE place: refusal and start-question messages of the desk and real-run scripts',
+}
+
+
+def tool_literal(name, base=BASE):
+    """Reads one top-level literal (dict or set) such as PIN, PLAIN or FINGERPRINT out of tools/write_outputs.py without running the tool."""
+    tree = ast.parse(open(os.path.join(base, "tools", "write_outputs.py"), encoding="utf-8").read())
+    for node in tree.body:
+        if isinstance(node, ast.Assign) and getattr(node.targets[0], "id", None) == name:
+            return ast.literal_eval(node.value)
+    raise AssertionError("tools/write_outputs.py has no top-level %s literal" % name)
+
+
 class WriteOutputsGuard(unittest.TestCase):
     def test_hand_edited_sweep_is_not_overwritten(self):
         d = os.path.join(tempfile.mkdtemp(), "sm")
@@ -99,8 +123,9 @@ class WriteOutputsGuard(unittest.TestCase):
         self.assertIn("HAND-EDIT-92", open(table).read())
 
     def test_job_ids_used_by_write_outputs_still_name_the_same_jobs(self):
-        """Fails if a job row used by write_outputs.py is renamed, moved or renumbered.
-        PIN is a second copy of the PIN dict in tools/write_outputs.py: add new ids to both."""
+        """Fails if a job row used by write_outputs.py is renamed, moved or renumbered, or if the test's own copy of PIN or PLAIN
+        differs from the dicts in tools/write_outputs.py (R2-4): the copies here are read against the tool source, so a name changed
+        in only one place fails."""
         rows = {}
         with open(os.path.join(BASE, "work", "L6.md"), encoding="utf-8") as f:
             for l in f:
@@ -108,7 +133,12 @@ class WriteOutputsGuard(unittest.TestCase):
                 if m:
                     rows[m.group(1)] = [x.strip() for x in l.strip().strip("|").split(" | ")][1]
         self.assertEqual(len(PIN), 48)
-        for jid, name in PIN.items():
+        self.assertEqual(len(PLAIN), 11)
+        self.assertEqual(tool_literal("PIN"), PIN, "PIN here differs from PIN in tools/write_outputs.py")
+        self.assertEqual(tool_literal("PLAIN"), PLAIN, "PLAIN here differs from PLAIN in tools/write_outputs.py")
+        self.assertFalse(set(PIN) & set(PLAIN))
+        self.assertEqual(set(PIN) | set(PLAIN), set(rows), "a row of work/L6.md is in neither PIN nor PLAIN, or the reverse")
+        for jid, name in {**PIN, **PLAIN}.items():
             self.assertIn(jid, rows, "work/L6.md has no job row %s" % jid)
             self.assertEqual(rows[jid], name, "job %s was renamed or moved; re-check the PIN dict and the verdict tables in tools/write_outputs.py" % jid)
 
@@ -138,7 +168,7 @@ class WriteOutputsGuard(unittest.TestCase):
         d = self._copy_sm()
         r = self._run(d)
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
-        block, seen = None, {}
+        block, seen, ids = None, {}, []
         for line in open(os.path.join(d, "ONE-PLACE-TABLE.md"), encoding="utf-8"):
             m = re.match(r"## Job: (\w+)", line)
             if m:
@@ -149,10 +179,11 @@ class WriteOutputsGuard(unittest.TestCase):
             if rm and block:
                 self.assertEqual(rm.group(2), block, "row sits in the wrong block: " + line[:80])
                 seen[rm.group(1)] = block
+                ids.append(rm.group(1))
         self.assertEqual(seen.get("L6-J-001"), "STORE")
         self.assertEqual(seen.get("L6-J-015"), "LOG")
-        self.assertEqual(len(seen), len(set(seen)))
-        self.assertGreater(len(seen), 40)
+        self.assertEqual(len(ids), len(set(ids)), "a row appears twice in ONE-PLACE-TABLE.md")
+        self.assertEqual(len(ids), 49, "expected the 49 job rows that sit in blocks (59 rows minus the build-process appendix)")
 
     def test_line_order_does_not_change_the_output(self):
         """B3/B4-2: moving a job row to another line in work/L6.md (ids travel with their content) must not change any output."""
@@ -222,20 +253,140 @@ class WriteOutputsGuard(unittest.TestCase):
         self.assertIn("L6-J-060", out)
 
     def test_fix_plan_row_numbers_in_the_text_match_the_fix_plan(self):
-        """B4-9: 'Fix plan row N' in the generated files is generated from the fix plan list, not typed in."""
+        """B4-9, R2-1: every '@FIXROW:<finding id>@' token written in tools/write_outputs.py comes out as the number of the Fix plan row whose
+        'finding ids' cell holds that finding id. The number is checked at the sentence the token sits in, not against fixed numbers."""
         d = self._copy_sm()
         r = self._run(d)
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
-        text = open(os.path.join(d, "SWEEP.md"), encoding="utf-8").read()
-        self.assertNotIn("@FIXROW", text)
+        texts = {n: open(os.path.join(d, n), encoding="utf-8").read() for n in ("SWEEP.md", "ONE-PLACE-TABLE.md")}
+        for n, t in texts.items():  # R2-7: no unresolved token in either file
+            self.assertNotIn("@FIXROW", t, n)
+        sweep = texts["SWEEP.md"]
+        sec = sweep[sweep.index("\n## Fix plan\n"):]  # R2-6: the heading, not the first mention of the words
         table = {}
-        sec = text[text.index("Fix plan"):]
         for m in re.finditer(r"^\| (\d+) \| [^|]*\| ([^|]*) \|", sec, re.M):
             table[m.group(1)] = m.group(2)
-        for m in re.finditer(r"Fix plan row (\d+)", text):
-            self.assertIn(m.group(1), table)
-        self.assertIn("L6-FD-001", table.get("1", ""))
-        self.assertIn("L2-FD-018", table.get("7", ""))
+        self.assertGreaterEqual(len(table), 11)
+        for n, t in texts.items():
+            for m in re.finditer(r"Fix plan rows? (\d+)", t):
+                self.assertIn(m.group(1), table, "%s names a Fix plan row that does not exist" % n)
+        src = open(os.path.join(BASE, "tools", "write_outputs.py"), encoding="utf-8").read()
+        tokens = [(m.group(1), src[src.rfind("\n", 0, m.start()) + 1:m.start()][-45:]) for m in re.finditer(r"@FIXROW:([A-Za-z0-9-]+)@", src)]
+        self.assertEqual(sorted({t[0] for t in tokens}), ["L2-FD-018", "L6-FD-001", "L6-FD-003"])
+        for fid, before in tokens:
+            self.assertTrue(before.endswith("Fix plan row "), before)
+            found = [(n, m.group(1)) for n, t in texts.items() for m in re.finditer(re.escape(before) + r"(\d+)", t)]
+            self.assertTrue(found, "the sentence for %s was not found in the generated files: %r" % (fid, before))
+            for n, num in found:
+                self.assertIn(fid, re.split(r"[,\s]+", table.get(num, "")),
+                              "%s: 'Fix plan row %s' was written for %s but row %s holds %r" % (n, num, fid, num, table.get(num)))
+
+    def test_fix_plan_row_check_sees_an_off_by_one(self):
+        """R2-1 proof inside the suite: a copy of the tool with the row number shifted by one (enumerate(fixrows, 1) changed to 2 in _fixno) still
+        exits 0, but the number it writes points at a row that does not hold the finding; this is what the check above detects."""
+        d = self._copy_sm()
+        tool = os.path.join(d, "tools", "write_outputs.py")
+        text = open(tool, encoding="utf-8").read()
+        bad = text.replace("for i, r in enumerate(fixrows, 1) if m.group(1)", "for i, r in enumerate(fixrows, 2) if m.group(1)")
+        self.assertNotEqual(bad, text, "the _fixno line changed; update this mutation")
+        open(tool, "w", encoding="utf-8").write(bad)
+        r = self._run(d)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        sweep = open(os.path.join(d, "SWEEP.md"), encoding="utf-8").read()
+        sec = sweep[sweep.index("\n## Fix plan\n"):]
+        table = {m.group(1): m.group(2) for m in re.finditer(r"^\| (\d+) \| [^|]*\| ([^|]*) \|", sec, re.M)}
+        m = re.search(r"masking check first \(Fix plan row (\d+)\)", sweep)
+        self.assertIsNotNone(m)
+        self.assertNotIn("L6-FD-001", re.split(r"[,\s]+", table.get(m.group(1), "")))
+
+    # ---- R2-2: re-ratings, notes, type changes and duplicate marks are pinned to the text of the finding they were written for
+    def _edit_findings(self, d, fn):
+        path = os.path.join(d, "work", "merged-findings.md")
+        lines = open(path, encoding="utf-8").read().split("\n")
+        open(path, "w", encoding="utf-8").write("\n".join(fn(lines)))
+
+    def test_fingerprints_cover_exactly_the_keyed_findings(self):
+        """R2-2: FINGERPRINT has one entry per id named in RERATE, NOTE, RETYPE or DEDUP (read from the tool source), each a text of at most 40 characters."""
+        keyed = set(tool_literal("RERATE")) | set(tool_literal("NOTE")) | set(tool_literal("DEDUP")) | set(tool_literal("RETYPE"))
+        fp = tool_literal("FINGERPRINT")
+        self.assertEqual(set(fp), keyed)
+        self.assertEqual(len(fp), 18)
+        for k, v in fp.items():
+            self.assertTrue(0 < len(v) <= 40, k)
+
+    def test_reworded_finding_under_a_keyed_id_is_an_error_naming_the_id(self):
+        """R2-2: if the evidence text under an id that has a re-rating or note changes (lanes renumbered, merge.py run again), the tool stops and names the id."""
+        d = self._copy_sm()
+        self._edit_findings(d, lambda lines: [l.replace("| When the mail server is slow", "| When the mail server is fast", 1) if l.startswith("| L2-FD-008 |") else l for l in lines])
+        r = self._run(d)
+        out = r.stdout + r.stderr
+        self.assertNotEqual(r.returncode, 0, out)
+        self.assertIn("L2-FD-008", out)
+        self.assertIn("no longer starts with the text", out)
+        self.assertNotIn("Traceback", out)
+
+    def test_swapped_finding_ids_are_an_error_naming_an_id(self):
+        """R2-2: two keyed findings swap ids (their text stays); the notes would land on the wrong finding with exit 0 before; now the tool stops."""
+        d = self._copy_sm()
+        def swap(lines):
+            return [l.replace("| L2-FD-008 |", "| L6-TMP |", 1).replace("| L6-FD-005 |", "| L2-FD-008 |", 1).replace("| L6-TMP |", "| L6-FD-005 |", 1)
+                    if l.startswith(("| L2-FD-008 |", "| L6-FD-005 |")) else l for l in lines]
+        self._edit_findings(d, swap)
+        r = self._run(d)
+        out = r.stdout + r.stderr
+        self.assertNotEqual(r.returncode, 0, out)
+        self.assertIn("L2-FD-008", out)
+        self.assertIn("no longer starts with the text", out)
+
+    def test_every_keyed_finding_text_change_is_caught(self):
+        """R2-2: for each keyed id, changing the first character of its evidence text stops the tool and names that id."""
+        for fid in sorted(tool_literal("FINGERPRINT")):
+            with self.subTest(finding=fid):
+                d = self._copy_sm()
+                def change(lines):
+                    out = []
+                    for l in lines:
+                        if l.startswith("| %s |" % fid):
+                            c = l.split(" | ")
+                            c[3] = "X" + c[3][1:]
+                            l = " | ".join(c)
+                        out.append(l)
+                    return out
+                self._edit_findings(d, change)
+                r = self._run(d)
+                out = r.stdout + r.stderr
+                self.assertNotEqual(r.returncode, 0, out)
+                self.assertIn(fid, out)
+
+    def test_new_keyed_id_without_a_fingerprint_is_an_error_naming_the_id(self):
+        """R2-2: adding an id to DEDUP without a fingerprint stops the tool and names the id."""
+        d = self._copy_sm()
+        tool = os.path.join(d, "tools", "write_outputs.py")
+        text = open(tool, encoding="utf-8").read()
+        new = text.replace('DEDUP = {"L6-FD-001",', 'DEDUP = {"L2-FD-004", "L6-FD-001",', 1)
+        self.assertNotEqual(new, text, "the DEDUP line changed; update this test")
+        open(tool, "w", encoding="utf-8").write(new)
+        r = self._run(d)
+        out = r.stdout + r.stderr
+        self.assertNotEqual(r.returncode, 0, out)
+        self.assertIn("L2-FD-004", out)
+        self.assertIn("FINGERPRINT", out)
+
+    def test_renamed_row_message_gives_the_full_names_and_the_first_difference(self):
+        """R2-5: the renaming error prints the whole pinned and actual name and the position of the first difference, not names cut at 50 characters."""
+        d = self._copy_sm()
+        path = os.path.join(d, "work", "L6.md")
+        text = open(path, encoding="utf-8").read()
+        old = "mf-recovery sweep (every 30 s, lease 120 s"
+        self.assertIn(old, text)
+        open(path, "w", encoding="utf-8").write(text.replace(old, "mf-recovery sweep (every 31 s, lease 120 s", 1))
+        r = self._run(d)
+        out = r.stdout + r.stderr
+        self.assertNotEqual(r.returncode, 0, out)
+        self.assertIn("L6-J-041", out)
+        self.assertIn(PLAIN["L6-J-041"], out)  # the full pinned name, over 100 characters
+        self.assertIn("every 31 s", out)  # the actual name
+        self.assertIn("first difference at character %d" % (PLAIN["L6-J-041"].index("30 s") + 1), out)  # "3" is shared, the "0" differs
 
 
 if __name__ == "__main__":
