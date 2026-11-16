@@ -15,7 +15,7 @@ Short names used below (each explained once):
 
 ## 1. What I could not check, or only sampled (read this first)
 
-- I read all four files in full (OS 193 lines, SC 34 or 35, DE 28 or 29 depending on whether a last line without a line ending is counted, PL 558). I did not open any program, flow file, config or evidence file. Every statement of the form "the code does X at line N" is compared only between the documents, never against the code.
+- I read all four files in full (OS 193 lines, SC 35, DE 28, PL 558). I did not open any program, flow file, config or evidence file. Every statement of the form "the code does X at line N" is compared only between the documents, never against the code.
 - I did not verify any script line number quoted in PL section 11, any hash, sha or test count. They are only compared where two documents quote the same thing (they agree: 697/115, 810/2, 445, 71/6, 18/0).
 - I did not check whether files the documents point to exist (`WP6-RUNBOOK.md`, `plan-4-nlite.md`, `review-codebase-1.md`, `evidence-*`). They are outside the four inputs.
 - The target date "Wed 18 Nov" appears in only one place (DE:17). No document gives the date or time of the re-smoke run or of the filmed take, so I cannot check the schedule against the owner's Phase 0 deadline (Mon 16 Nov 18:29 UTC = 23:59 IST; checked by hand: UTC+5:30 is right).
