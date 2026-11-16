@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T12:03:12Z
-PUSHED_UTC: 2026-11-16T12:03:12Z
+UPDATED_UTC: 2026-11-16T12:03:54Z
+PUSHED_UTC: 2026-11-16T12:03:54Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
@@ -13,9 +13,9 @@ NEEDS_YOU, in this order (lead; one action each; times UTC / IST):
 FAILED: M14 test_licences_are_proprietary fails (1 failed, 9390 passed); the n8n run has not happened. Full text under Details at the end of this file. Times in the Details are UTC only; IST is +5:30.
 PROGRESS: 15 of 20 table items not done (table below; M3, M14, M20 are rows in it); mean 83.1 percent (1662 / 20). Percent is how far a page has been checked, not confidence the take will work.
 Terms: take = the one filmed run; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
-AGENTS_RUNNING: 8 running (ORDER 035 minimum met): cold reads of critical-path-r1 (r5), merged-findings, MASTER-MAP, banned-claims (r3), PLAN-002 (r2), README, SWEEP, drift/REPORT. 0 missing.
+AGENTS_RUNNING: 8 running (ORDER 035 minimum met): cold reads of SWEEP, drift/REPORT, critical-path-r1 (r6), banned-claims (r4), merged-findings legend, FINAL-CROSSCHECK, PLAN-002 (r3), core-hardening REVIEW. 0 missing.
 CAPACITY: nproc 4, load 0.11, RAM 889 MB used of 16087 MB, disk 45% used (22 GB free of 252 GB, `df -h .`); my disk users: work 2.3 MB, reviews-of-core-hardening 0.4 MB; freed 0 MB (ORDER 031).
-NEXT: digested through 451. Fix my own files from digests 424-433 (decision-list A3/A5/A13 split rows, open-items-table Person column, end-delete-cases step 15/18, cleanup 3a-0, rehearsal-limits plain words). Next 5 tasks with more capacity: (1) T19 steps actor and time; (2) banned-claims sources; (3) PLAN-002 L4 limit; (4) QUEUE glossary and dates; (5) core-hardening review files CORRECTIONS/REVIEW/LEDGER-ROWS.
+NEXT: digested through 457. Fix my own files from digests 424-433 (decision-list A3/A5/A13 split rows, open-items-table Person column, end-delete-cases step 15/18, cleanup 3a-0, rehearsal-limits plain words). Next 5 tasks with more capacity: (1) T19 steps actor and time; (2) banned-claims sources; (3) PLAN-002 L4 limit; (4) QUEUE glossary and dates; (5) core-hardening review files CORRECTIONS/REVIEW/LEDGER-ROWS.
 INTERRUPTED: none
 
 ## ITEMS
@@ -45,14 +45,14 @@ INTERRUPTED: none
 ## AGENTS
 | agent id | purpose | started (UTC) | expected end | state | produced so far |
 |---|---|---|---|---|---|
-| a20c3ec4 | critical-path-r1 r5 cold read (read-only) | before 12:03 | about +10 min | running | nothing yet |
-| a8d71455 | merged-findings cold read (read-only) | before 12:03 | about +10 min | running | nothing yet |
-| a3a2c884 | MASTER-MAP cold read (read-only) | before 12:03 | about +10 min | running | nothing yet |
-| a8d5544e | banned-claims r3 cold read (read-only) | before 12:03 | about +10 min | running | nothing yet |
-| aaeaf7f6 | PLAN-002 r2 cold read (read-only) | before 12:03 | about +10 min | running | nothing yet |
-| ab3215b8 | README cold read (read-only) | before 12:03 | about +10 min | running | nothing yet |
 | a73d993c | SWEEP cold read (read-only) | before 12:03 | about +10 min | running | nothing yet |
-| (new) | drift/REPORT cold read (read-only) | before 12:03 | about +10 min | running | nothing yet |
+| ab460561 | drift/REPORT cold read (read-only) | before 12:03 | about +10 min | running | nothing yet |
+| a39d8090 | critical-path-r1 r6 cold read (read-only) | before 12:03 | about +10 min | running | nothing yet |
+| a96e89c3 | banned-claims r4 cold read (read-only) | before 12:03 | about +10 min | running | nothing yet |
+| ab65be0b | merged-findings legend cold read (read-only) | before 12:03 | about +10 min | running | nothing yet |
+| a16eafcc | FINAL-CROSSCHECK cold read (read-only) | before 12:03 | about +10 min | running | nothing yet |
+| a3182c25 | PLAN-002 r3 cold read (read-only) | before 12:03 | about +10 min | running | nothing yet |
+| (new) | reviews-of-core-hardening/REVIEW cold read (read-only) | before 12:03 | about +10 min | running | nothing yet |
 
 Words: UTC = world time; IST = UTC plus 5 h 30 min. Cold read = an agent reads one page with no background and lists what it cannot follow. Held = a finding on a page that belongs to the lead, which I do not edit.
 

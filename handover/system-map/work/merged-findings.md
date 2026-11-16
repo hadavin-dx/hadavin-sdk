@@ -1,3 +1,5 @@
+LEGEND (added 16 Nov 2026 by the system-map session after a cold read; the table below is a record, not a to-do list). Lane prefixes L1 to L6 = the six read-only review lanes of PLAN-002.md. FD = finding. "DECISION line N" = DECISION-one-store.md line N, NOT inputs/DECISIONS-2026-11-16.md. "The take" = the one filmed run. Rows about the retired desk and portal (L1-FD-028, L3-FD-001, L3c-FD-009, L4c-FD-014, L6-FD-009, L4-FD-018) are archived, not to be fixed. Duplicate groups (merge when reading): L2-FD-001/002 with L6-FD-001; L2-FD-003 with L6-FD-002; L2-FD-008 with L6-FD-005; L2-FD-015 with L6-FD-004; L2-FD-004/019 with L6-FD-007; L2-FD-005 with L6-FD-008; L2-FD-007 with L6-FD-017; L2-FD-014 with L6-FD-012; L1-FD-006 with L6-FD-011; L1-FD-009 with L6-FD-022; L4-FD-004 with L6-FD-019. Rows citing L2-D-007, L1-W-006 and L5a-C-015 point to ids that are not in this file. This file has no owner or date column; owners and dates for open rows are in work/open-items-table.md.
+
 ## Findings
 
 | id | claim type | severity | evidence | conflicts with | job key |
