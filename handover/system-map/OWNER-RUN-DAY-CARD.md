@@ -9,7 +9,7 @@ Status: APPLIED 16 Nov 2026 after the studio lead's answer 10:23Z (the film paus
 5. Receiver account: the throwaway Gmail account that only receives the demo mails.
 6. Sender account: the throwaway Gmail account n8n sends from. The studio lead tells you which is which.
 7. Sales lead: one made-up person sent into the system; it shows as a contact in HubSpot. Each run makes three.
-8. Written yes: your one-line reply with money numbers (OWNER-VIEW row 1). Typing `y` later is a second, separate approval.
+8. Written yes: your one-line reply with money numbers (OWNER-VIEW row 1). Typing `y` later is a second, separate confirmation; it does not block any spending.
 9. Secret: any password, app password or key. Never send one to the studio lead.
 10. The pause: the moment the program stops and waits for you to type `end`; the contact list is filmed during it.
 
@@ -22,7 +22,7 @@ Lines ending "(card addition, not in v5)" add a check that v5 does not have.
 - Choose a run name unrelated to you, your company or any account. (card addition)
 - No up-arrow or `history` while filming. (card addition)
 - Never send a secret or an address to the studio lead. Never use the real company mailbox.
-- Never let any tool, script, assistant, agent or helper window type for you. The 6-digit number only blocks blind answers, so you type every answer yourself.
+- Never let any tool, script, assistant, agent or helper window type for you. The 6-digit number is meant to stop blind answers (untested; not a lock on spending), so you type every answer yourself.
 - If anything does not match what you see, STOP (type nothing, touch nothing) and tell the studio lead.
 
 ## Before the start
@@ -40,7 +40,7 @@ Lines ending "(card addition, not in v5)" add a check that v5 does not have.
 10. Type the start line the studio lead sends. Two login lines appear. Both must say "still works"; here that is GOOD (at clean-up, on the other card, you want "refused as expected"). Otherwise nothing was sent: do not start again until the studio lead says so.
 11. A notice shows the money figures and a random 6-digit number. Compare the figures with your written yes AND the studio lead's message. The notice shows the worst case of ONE call; your yes holds 3 times that. Check: one call times 3 equals your total; money spent so far plus your total stays at or below the spending backstop (card addition). Open the file `stage.env` (the studio lead sends its full path and the command to show it): the program does not print the backstop or stop time. If one figure differs or you cannot check, type nothing and tell the studio lead.
 12. The notice should not say contacts are deleted at the end (the take never deletes). If it does, type nothing and tell the studio lead; the notice text is being fixed.
-13. WARNING: typing `y` starts real spending, up to 3 paid model calls. It cannot be taken back. If all figures agree, type `y` and Enter yourself.
+13. WARNING: typing `y` confirms the run. The run is designed to make 3 paid model calls; nothing enforces that number. It cannot be taken back. If all figures agree, type `y` and Enter yourself.
 14. At the second prompt type `<6 digits> <your run name>` and Enter (your real number and name). The program is meant to refuse a pasted answer or one typed in under 2 seconds (not tested yet); type each answer yourself, slowly; a wrong line sends nothing: tell the studio lead and wait.
 15. While the program runs or is paused there is NO `$` prompt: type nothing, never `echo $?`. When the `$` prompt is back, type `echo $?` (one number; 0 is success) and tell the studio lead the number and the first five words of the last line, with any address, user name or folder path replaced by X.
 16. While the run sends, the studio lead stops and restarts n8n: YOU TOUCH NOTHING. You should then see 3 contacts in HubSpot and one mail each in the label `demo`. If a count looks wrong or the laptop sleeps, stop and tell the studio lead.

@@ -4,8 +4,8 @@ SESSION: system-map
 ORDER: 017-025; lead ANSWER 10:23Z item 8 (pause stays) read
 STATE: WORKING
 BOOT_ID: 6bc0bf7e
-ITEMS_TOTAL: 16
-ITEMS_OPEN: 4
+ITEMS_TOTAL: 20
+ITEMS_OPEN: 12 (rows below 100 percent or blocked in the table, counted by an agent; M3, M4 and M6 queue tags do not match the board, to reconcile)
 PERCENT: 85
 AGENTS_RUNNING: 6 (date check; banned-claims check; decision contradictions; rehearsal preflight list; orders vs board; cleanup card read). Evidence run: scan no defects, 74 tests OK, secret-pattern grep shows only the one allowed example literal. Applied: T19 gap facts (work/t19-gap-facts.md), M16 closed in QUEUE, one-store line 7.
 INTERRUPTED: none
@@ -38,9 +38,10 @@ PUSHED_UTC: 2026-11-16T10:31:33Z
 | M20 | SESSION-HANDOFF live state | IMPOSSIBLE-NOW (file is on the studio laptop, not in the repo) | 0 | | needs the lead's text |
 | M16 | flow-set question | DONE, closed by decision 1 (real-v5 only; film-v5 out) | 100 | flowset/REPORT.md | |
 
-## AGENTS (rebuilt from the real agent list; started 10:2xZ)
+## AGENTS (from the real agent list at the last beat)
 | id | role | what it does | state |
 |---|---|---|---|
-| aa42c47b | egm-implementation-readiness | merged rehearsal rows (T19, F8, six new) | running |
-| a98f3932 | egm-comprehension | round 2 read of OWNER-VIEW and card | running |
-| acc4e9c8 | egm-codebase-details | v5 lines to change for M17 | running |
+| a80246762d3bdca18 | egm-codebase-details | pages vs decisions 1-12 contradictions | running |
+| a099a255600ca11e8 | egm-comprehension | clean-up card irreversible-step read | running |
+| a4b5955c944f9bfea | egm-codebase-details | flow claims in LEAD-PAGE and row 2 | running |
+| (3 more being started this beat) | | | |
