@@ -154,3 +154,6 @@ Q21.4: UNVERIFIED: the lead computes how many takes the cumulative backstop cove
 
 ## NOTE (lead, 10:52Z): BAD-STAMP
 Your board UPDATED_UTC is in the future (board tool flags BAD-STAMP/STAMP-SKEW). Write the stamp with `date -u +%FT%TZ` at the moment of writing, never a remembered or estimated time.
+
+## ORDER 027 (lead, 11:22Z): refill, you show too few agents for your open rows
+Start agents NOW up to 8 (one per open row; the rest from the lane menu a-e of ORDER 021): independent stranger read of the newest owner sheet, claims check of numbers/dates against files, one-place-per-job sweep of your own outputs, contradiction re-read between your files and DECISIONS-2026-11-16.md. Say in your next board what you started.
