@@ -255,7 +255,7 @@ _DENY_NOTE = {"ALTER": "ALTER of anything but ADD on a table", "GRANT": "GRANT (
 
 # ---------------------------------------------------------------- body scans new in v19 (N3)
 CALLS_OK = {"date_trunc", "clock_timestamp", "now", "format", "coalesce", "least", "greatest", "length"}
-EXPR_CALLS_OK = CALLS_OK | {"btrim", "char_length"}   # calls a CHECK, DEFAULT, index or WHEN expression may use (v20 m1)
+EXPR_CALLS_OK = CALLS_OK | {"btrim", "char_length", "extract"}   # calls a CHECK, DEFAULT, index or WHEN expression may use (v20 m1)
 _SYNTAX_BEFORE_PAREN = {"IN", "VALUES", "AS", "AND", "OR", "NOT", "EXISTS", "ANY", "ALL", "SOME", "WHEN", "THEN", "ELSE", "CASE", "ON", "USING", "SELECT", "WHERE", "FROM", "JOIN", "SET", "INTO",
     "UPDATE", "DELETE", "INSERT", "RETURNING", "BETWEEN", "LIKE", "IS", "DISTINCT", "ONLY", "TABLE", "WITH", "IF", "ELSIF", "LOOP", "WHILE", "RETURN", "CONFLICT", "DO", "BY", "HAVING", "LIMIT",
     "UNION", "EXCEPT", "INTERSECT", "OVER", "FILTER", "TO", "END", "BEGIN", "DEFAULT", "CHECK", "UNIQUE", "KEY", "NULL", "TRUE", "FALSE", "EXECUTE", "RETURNS", "NUMERIC", "VARCHAR", "CHAR",
@@ -288,7 +288,7 @@ def _set_follows_update(toks, k):
         if t[0] not in ("word", "qid") and t != ("punct", "."): return False
         if _is(t, "SET", "SELECT", "WHERE", "FROM", "RETURNING", "VALUES", "AND", "OR"): return False
     return False
-KIND_WORDS = {"INSERT", "UPDATE", "DELETE", "TRUNCATE", "MERGE", "COPY", "SELECT", "WITH", "VALUES"}
+KIND_WORDS = {"INSERT", "UPDATE", "DELETE", "TRUNCATE", "MERGE", "COPY", "SELECT", "WITH"}
 def _kind_problems(toks, fn, kinds):
     """v20 F1: the statement kinds a body may use are pinned per function. A kind word counts unless it is part of ON CONFLICT DO UPDATE / FOR UPDATE / ON DELETE."""
     if kinds is PIN_ANY: return []

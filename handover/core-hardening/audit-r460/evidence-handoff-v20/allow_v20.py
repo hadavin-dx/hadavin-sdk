@@ -14,6 +14,7 @@ EXTRA_BY_FILE = {
 
 D2, D3 = "spend_decrease_log.sql", "spend_guarded_writes.sql"
 TRIGGER_PINS_BY_FILE = {
+ "0002_audit_chain.sql": {"audit_entries_append_only": "49ca8bc9a0bdf705", "audit_checkpoints_append_only": "6dd3e0175bd809ea", "audit_entries_no_truncate": "8db359d87e5a30bd", "audit_checkpoints_no_truncate": "203443c1e5a75393"},
  D2: {"spend_keep_keys": "838e3f094cdbb3b3", "spend_month_keep_keys": "7889de2345307f42", "spend_log_decrease": "0094f338b44898e1", "spend_month_log_decrease": "229c2ee37a492a12",
       "kill_switch_log_change": "e3b7d01729e27d0e", "kill_switch_log_insert": "4f245d287eb77632", "spend_decrease_log_append_only": "d5b941ccdc4c3fd3",
       "spend_decrease_log_no_truncate": "6f31277140ecc32f", "kill_switch_log_append_only": "f2f4994670185a57", "kill_switch_log_no_truncate": "3be02803615b2186"},

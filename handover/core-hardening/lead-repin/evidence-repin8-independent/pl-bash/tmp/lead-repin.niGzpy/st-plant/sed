@@ -1,0 +1,3 @@
+#!/bin/sh
+touch "/home/user/hadavin-sdk/handover/core-hardening/lead-repin/evidence-repin8-independent/pl-bash/tmp/lead-repin.niGzpy/st-plant/planted-ran"
+exec /bin/cat

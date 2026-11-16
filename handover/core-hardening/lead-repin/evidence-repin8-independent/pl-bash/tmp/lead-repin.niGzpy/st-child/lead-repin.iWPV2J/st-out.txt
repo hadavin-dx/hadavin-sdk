@@ -458,7 +458,7 @@ cache redis://:<masked>@localhost:6379/0 ok
 broker amqp://:<masked>@mq:5672
 x //:<masked>@host/p y
 mongodb://bob:<masked>@h/db
-clone https://<email-masked>/o/r.git
+clone https://<masked>@github.example/o/r.git
 ssh://:<masked>@h
 docker login -u bob -p <masked> registry
 redis-cli -a <masked> ping
@@ -543,7 +543,7 @@ foo := password :<masked>
 CREATE USER u IDENTIFIED BY <masked>;
 password = <masked> or <masked>
 note password is <masked>
-x https://zr226vxn226d@localhost/p
+x https://<masked>@localhost/p
 x https:\/\/bob:<masked>@h/p
 x https:\/\/<masked>@h/p
 conn bob:<masked>@db port

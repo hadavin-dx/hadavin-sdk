@@ -164,3 +164,18 @@ NEG nd8date caught | FAIL ND record carries a date: ND8: A|B <date and time in U
 NEG rehearsal caught | FAIL rehearsal alone: hing leaves the laptop. - The rehearsal comes aft
 NEG q195 caught | FAIL E-48 Q19.5 wording
 NEG m4 caught | FAIL E-12 lacks what happens next
+NEG e31 caught | FAIL E-31 unproven claim
+NEG line14 caught | FAIL line 14 lacks search path =
+NEG e14 caught | FAIL E-14 post meaning
+NEG r12nd15 caught | FAIL r12 ND15 missing
+NEG r12shred caught | FAIL r12 E-48 lacks Shredding does not revoke
+NEG r12key2 NOT CAUGHT | FAILURES 0
+FAIL negative control not caught: r12key2
+NEG r12slot caught | FAIL r12 E-12 lacks exactly one of these four labels
+NEG r12call caught | FAIL r12 E-12 delete call
+NEG r12pw caught | FAIL r12 E-09 lacks Never type a password inside a command line
+NEG r12vol caught | FAIL E-16 lacks UNVERIFIED
+NEG r12cut caught | FAIL r12 E-57 lacks Reply `cut accepted`
+NEG r12conf caught | FAIL confirmation letters
+NEG rowcount caught | FAIL ids differ {'E-58'}
+NEG conf caught | FAIL confirmation letters
