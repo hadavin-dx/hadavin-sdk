@@ -1,13 +1,13 @@
-UPDATED_UTC: 2026-11-16T11:23:13Z
+UPDATED_UTC: 2026-11-16T11:24:29Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
-STATE: WAITING-LEAD
+STATE: WORKING
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
-ITEMS_OPEN: 5
+ITEMS_OPEN: 6
 PERCENT: 95
-AGENTS_RUNNING: 3
-CAPACITY: 0.50 load of 4 cores, mem 0/15 GB, RAM 858/16087 MB, disk 27G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 1.4G /tmp/claude-0 , agents 3 (light+heavy per list)
+AGENTS_RUNNING: 7
+CAPACITY: 0.95 load of 4 cores, mem 0/15 GB, RAM 891/16087 MB, disk 27G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 1.4G /tmp/claude-0 , agents 7 (light+heavy per list)
 INTERRUPTED: none
 FAILED: ROLES: PARKED by lead (client build, after video, no new lanes). Script r6: independent rerun 71 tests OK, gate rc 0, but 7 of 15 random mutants survive (lines 141,145,147,280,358,371,417); not fixed because parked; v4 doc security Blocker (Part C unguarded) unfixed
 claims: r5 counts independently rerun and match (113/69/48/28/69=327, 79 rows); BUT 37 Table 2 rows (41-77) have no LIVE/OUT tag; example.test vs example.com rows 2 and 5 rest on OWNER-STEPS v3 only; row 33 archive step unproven; 2 wrong cites (A-097, A-068); r6 fix pending (tags, desk-repo traces, cites)
@@ -63,8 +63,8 @@ drift lane 008: 8 contradictions between audit files (DESK_ALERT_TO still open i
 owner sheet stranger r8: 3 Blockers 10 Majors (Step D cannot be done as written, Step A scope unclear, re-pin not in lead order); fixer aca4e60 running (reviews/stranger-ownersteps-r8.md)
 RW adversarial r1: 2 Blockers (A-016f general promise vs own A-016c; proof gate can pass while claim false), 7 Majors; lead rulings needed (reviews/adversarial-rw-r1.md)
 FIX-PLAN item 3 readiness r1: 5 Blockers 8 Majors (order item 3 needs item 4; no apply command; 12:11 vs 15:14; b6 cannot fail by exit code; export-back method missing); reviews/readiness-fixplan3-r1.md
-NEXT: running: F8 design Majors, RW adversarial fixer, FIX-PLAN item 3 fixer; next: Q25 told to lead, drift report, refill
-PUSHED_UTC: 2026-11-16T11:23:13Z
+NEXT: running 7: F8 design Majors, FIX-PLAN item 3, Q25 x3 appliers, citation check, zoom-out; next: collect and verify, second reviewers, drift, FINAL
+PUSHED_UTC: 2026-11-16T11:24:29Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -85,7 +85,11 @@ PUSHED_UTC: 2026-11-16T11:23:13Z
 |---|---|---|---|---|---|---|---|---|
 | f8fix8 | F8 fixer r8 (N04 N11) | sonnet | surviving mutants | 11:58 | 12:10 | 5 | running | flow-check/fix-f8-r8.md
 | a1da05e | F8 design Majors fixer | sonnet | 4 design Majors | 11:30 | 11:50 | 5 | running | flow-check/fix-f8-r9.md
-| a414a44 | RW adversarial fixer | sonnet | fix RW/CT per adversarial r1 | 11:35 | 11:50 | 5 | running | fix-rw-r1.md
+| acd3fea | citation check new RW/CT | sonnet | cites and cross-file values | 11:40 | 11:55 | 5 | running | (inline)
+| a6bb320 | zoom-out take path | sonnet | critical path gaps | 11:40 | 11:55 | 5 | running | (inline)
+| af25154 | Q25 owner sheet | sonnet | apply Q25 | 11:45 | 12:00 | 5 | running | fix-q25-os.md
+| a6a304a | Q25 run sheet + claims | sonnet | apply Q25 | 11:45 | 12:00 | 5 | running | fix-q25-rw.md
+| ae1552b | Q25 records | sonnet | apply Q25 to QUESTIONS REPORT etc | 11:45 | 12:00 | 5 | running | fix-q25-rec.md
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
