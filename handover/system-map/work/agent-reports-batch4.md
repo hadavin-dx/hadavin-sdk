@@ -1131,3 +1131,8 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 824 critical-path r23: opening, row 1, glossary. FIXED by opening block at top.
 - 825 M17 r12: baseline unknown, VERIFIED undefined. PARTLY FIXED by baseline block; owner and date NOT SET.
 - 826 ARCHIVE-CUT-LIST r14: row table missing. PARTLY FIXED: pointer to history lines 6-20; table copy TO DO. Lead notice written: work/LEAD-NOTICE-batch-1.md.
+- 827 open-items r17: circular 'row 1' wording, stacked notes. FIXED by prepended glossary; cells TO DO.
+- 828 row1-brief r13: r11+r12 scope, who writes OWNER-ONLY, paths. FIXED by CURRENT block.
+- 829 premortem r16: two gates confused. FIXED by Gate A/B block.
+- 830 PLAN-002 r24: stale line cites, REMAINDER vs STOP. FIXED by prepended block.
+- 831 L1c r16: line cites off by 2, history unmarked. FIXED by prepended block.

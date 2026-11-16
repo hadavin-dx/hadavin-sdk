@@ -1,3 +1,5 @@
+Gate A (blocks lane reads of files; PLAN-002 r21/r22 steps 0-4): FAIL. Gate B (blocks the take): program text and V5 both say `end` deletes nothing: UNVERIFIED. Lines 16-42 are history. Fixes 1-10 stand unless cut; none cut is confirmed. 'On HOLD' = the lead has not ruled on M17 (decisions/M17-end-never-deletes.md); it unblocks when the lead rules. Terms: studio lead, studio head, V5, M17, owner-only paths, C-01, decision 2/4/5, lane are defined in PLAN-002.md and LEAD-NOTICE-batch-1.md.
+
 # Pre-mortem of the take (independent design read, 16 Nov 2026). Facts about the program are UNVERIFIED: the program (scripts/run_real_check_n8n.py), flows and settings file were not read.
 Ranked by harm:
 1. V5 and the program disagree on whether `end` deletes (M17 not applied; V5 lines 31, 114, 124, 127-130 still say it deletes; program unchanged). Fix: make "program text and V5 match M17" a go/no-go gate; rehearsal tests: `end` makes zero HubSpot delete calls and prints the leftover list; a read-only token never attempts a delete.
