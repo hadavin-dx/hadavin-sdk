@@ -1,3 +1,0 @@
-$ python3 -I /home/user/hadavin-sdk/handover/flows-audit/flow-check/check_flows.py /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-real-v5 --expect-json /tmp/fc-selftest-ec9c4cfm/expect-list.json
-usage error: bad --expect-json file
-exit=2

@@ -21,10 +21,17 @@ column list, UPDATE ... FROM, WITH (CTE), quoted names. Columns are matched igno
 With --require-new-credentials: each node's credential must be the one the document
 (section 3 table) names for its login, and never the old shared one.
 Usage: python3 -I check_grants_cover_queries.py [--roles-doc PATH] [--require-new-credentials] <flow_folder> [...]
+Round 5: a flow file must be an object whose "nodes" is a list of objects (name and type text,
+parameters, credentials objects), at most 5 MB (the roles document too); anything else is one
+clean FAIL line, never a traceback. SQL-like text in the notes or any other parameter of a Postgres
+node is flagged (only its query field is read). A disabled Postgres node is flagged (it is still
+checked as if enabled). A forbidden keyword inside a string literal, a dollar-quoted string and an
+unbalanced quote are flagged (the check cannot tell data from SQL there; pass values as parameters).
 Rough parser: it can miss unusual SQL. The real proof is the database tests."""
 import json, re, sys, pathlib
 
 TABLE = "mf_leads"
+MAX_FILE_BYTES = 5 * 1024 * 1024   # a flow file or the roles document above this is refused unread
 KINDS = ("select", "insert", "update")
 FORBIDDEN = ("delete", "truncate", "drop", "alter", "create", "grant", "revoke", "copy",
              "merge", "call", "execute", "vacuum", "comment")
@@ -52,6 +59,54 @@ SQL_TEXT = re.compile(
 DEFAULT_DOC = pathlib.Path(__file__).resolve().parent.parent / "ROLES-PROPOSAL.md"
 
 
+def type_name(x):
+    return "null" if x is None else type(x).__name__
+
+
+def read_limited(path):
+    """Return (text, problem). A file over MAX_FILE_BYTES is refused before it is read."""
+    try:
+        size = pathlib.Path(path).stat().st_size
+        if size > MAX_FILE_BYTES:
+            return None, f"file is {size} bytes, over the {MAX_FILE_BYTES} byte limit (not read)"
+        return pathlib.Path(path).read_text(encoding="utf-8"), None
+    except (OSError, ValueError) as e:
+        return None, f"{type(e).__name__}: {e}"
+
+
+def flow_nodes(path):
+    """Return (nodes, problems) for one flow file; every malformed shape is a problem line."""
+    text, why = read_limited(path)
+    if why:
+        return None, [f"cannot read flow file ({why})"]
+    try:
+        data = json.loads(text)
+    except (ValueError, RecursionError) as e:
+        return None, [f"cannot read flow file ({type(e).__name__}: {e})"]
+    if not isinstance(data, dict):
+        return None, [f"malformed flow file: top level is {type_name(data)}, expected an object"]
+    raw = data.get("nodes")
+    if not isinstance(raw, list):
+        return None, [f"malformed flow file: 'nodes' is {type_name(raw)}, expected a list"]
+    nodes, problems = [], []
+    for i, x in enumerate(raw):
+        if not isinstance(x, dict):
+            problems.append(f"malformed node {i}: it is {type_name(x)}, expected an object")
+            continue
+        bad = [f"'{k}' is {type_name(x[k])}, expected text" for k in ("name", "type")
+               if k in x and not isinstance(x[k], str)]
+        bad += [f"'{k}' is {type_name(x[k])}, expected an object" for k in ("parameters", "credentials")
+                if x.get(k) is not None and not isinstance(x[k], dict)]
+        cr = x.get("credentials")
+        if isinstance(cr, dict) and cr.get("postgres") is not None and not isinstance(cr["postgres"], dict):
+            bad.append(f"credentials.postgres is {type_name(cr['postgres'])}, expected an object")
+        if bad:
+            problems.append(f"malformed node {i} ({x.get('name', '?')!s:.40}): " + "; ".join(bad))
+            continue
+        nodes.append(x)
+    return nodes, problems
+
+
 def toks(s):
     return re.findall(r"[a-z_]+", s)
 
@@ -59,10 +114,9 @@ def toks(s):
 def parse_grants(doc_path):
     """Return (grants, problems). grants: login -> {select, insert, update: set(cols)}."""
     problems, grants = [], {}
-    try:
-        text = pathlib.Path(doc_path).read_text(encoding="utf-8")
-    except OSError as e:
-        return {}, [f"cannot read roles document {doc_path}: {e}"]
+    text, why = read_limited(doc_path)
+    if why:
+        return {}, [f"cannot read roles document {doc_path}: {why}"]
     m = re.search(r"^## 4\..*?(?=^## 5\.)", text, re.S | re.M)
     if not m:
         return {}, ["roles document has no section 4"]
@@ -108,11 +162,21 @@ def foreign_db_access(node):
     return why
 
 
+def stray_sql_in_postgres_node(node):
+    """SQL-like text in a Postgres node outside its query field (notes, other parameters)."""
+    params = {k: v for k, v in (node.get("parameters") or {}).items() if k != "query"}
+    for txt in strings([params, node.get("notes")]):
+        m = SQL_TEXT.search(txt)
+        if m:
+            return (f"SQL-like text ({m.group(0)[:30]!r}) in the notes or another parameter of a Postgres "
+                    "node; only its query field is checked, so move the text out or into the query")
+    return None
+
+
 def parse_credentials(doc_path):
     """login -> n8n credential name, from the login table of the roles document."""
-    try:
-        text = pathlib.Path(doc_path).read_text(encoding="utf-8")
-    except OSError:
+    text, why = read_limited(doc_path)
+    if why:
         return {}
     out = {}
     for m in re.finditer(r"^\|\s*(mf_\w+)\s*\|[^\n]*\|\s*`([^`]+)`[^|\n]*\|\s*$", text, re.M):
@@ -128,8 +192,12 @@ def paren_free(sql):
     return sql
 
 
+LITERAL = re.compile(r"'(?:[^']|'')*'")
+DOLLAR_QUOTE = re.compile(r"\$(?:[A-Za-z_]\w*)?\$")
+
+
 def statements(sql):
-    s = re.sub(r"'[^']*'", "''", sql)
+    s = LITERAL.sub("''", sql)
     return [p.strip() for p in s.split(";") if p.strip()]
 
 
@@ -146,6 +214,14 @@ def analyse(sql):
     sts = statements(sql)
     if not sts:
         errors.append("empty query")
+    if DOLLAR_QUOTE.search(sql):
+        errors.append("dollar-quoted string not allowed (its body is not read by this check)")
+    if "'" in LITERAL.sub("", sql):
+        errors.append("unbalanced single quote (the rest of the query cannot be read)")
+    for lit in LITERAL.findall(sql):
+        for w in sorted({w for w in toks(lit.lower()) if w in FORBIDDEN}):
+            errors.append(f"forbidden keyword {w.upper()} inside a string literal "
+                          "(the check cannot tell data from SQL; pass it as a parameter)")
     for st in sts:
         low = st.lower()
         first = (toks(low) or [""])[0]
@@ -225,11 +301,10 @@ def run(folders, doc, out=print, require_new_cred=False):
             continue
         for f in sorted(fp.glob("mf-*.json")):
             flow = f.stem
-            try:
-                nodes = json.load(open(f, encoding="utf-8")).get("nodes", [])
-                nodes = [x for x in nodes if isinstance(x, dict)]
-            except (OSError, ValueError, AttributeError) as e:
-                fail(f"{label} {flow}: cannot read flow file ({type(e).__name__}: {e})")
+            nodes, shape_problems = flow_nodes(f)
+            for sp in shape_problems:
+                fail(f"{label} {flow}: {sp}")
+            if nodes is None:
                 continue
             file_pg = 0
             seen_files.add(flow)
@@ -239,6 +314,12 @@ def run(folders, doc, out=print, require_new_cred=False):
                         fail(f"{label} {flow} {node.get('name', '?')}: {why}")
                     continue
                 file_pg += 1
+                if node.get("disabled") not in (None, False):
+                    fail(f"{label} {flow} {node.get('name', '?')}: node is disabled "
+                         f"({node.get('disabled')!r}); it is checked as if enabled, remove it or enable it")
+                stray = stray_sql_in_postgres_node(node)
+                if stray:
+                    fail(f"{label} {flow} {node.get('name', '?')}: {stray}")
                 params = node.get("parameters") or {}
                 q = params.get("query", "")
                 q = q if isinstance(q, str) else ""
@@ -304,7 +385,11 @@ def main(argv):
             doc, args = args[1], args[2:]
         else:
             print(f"FAIL unknown option {args[0]}"); return 1
-    return 1 if run(args, doc, require_new_cred=newc) else 0
+    try:
+        return 1 if run(args, doc, require_new_cred=newc) else 0
+    except Exception as e:  # last safety net: an unexpected shape must never end in a traceback
+        print(f"FAIL internal error while checking ({type(e).__name__}: {e}); nothing is verified")
+        return 1
 
 
 if __name__ == "__main__":

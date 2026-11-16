@@ -1,21 +1,21 @@
-UPDATED_UTC: 2026-11-16T09:50:26Z
+UPDATED_UTC: 2026-11-16T09:51:05Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
 ITEMS_OPEN: 7
-PERCENT: 83
-AGENTS_RUNNING: 6
-CAPACITY: 0.62 load of 4 cores, mem 0/15 GB, disk free 28G, agents 6 (light+heavy per list)
+PERCENT: 84
+AGENTS_RUNNING: 7
+CAPACITY: 0.73 load of 4 cores, mem 0/15 GB, disk free 28G, agents 7 (light+heavy per list)
 INTERRUPTED: none
 FAILED: F8: $env nodes, 2 webhooks without auth, 7 false-pass Majors (fixer running)
 F3: rerun clean earlier; fresh security review r2 found no Blocker but 12 real Minor/Nit (nested-template lexer, delete recovery dead end, delete not idempotent, missing-value copy written); r5 fixer running; 3.9/3.10, macOS, live import not run
 ROLES: script FAILS repo gate (ruff 21 errors, format, bandit B608), crashes on nodes:null, ignores notes and disabled flag, no size limit (r5 fixer running); S3 credential check off by default; doc v4 2nd security review running
 claims: reviews found 16 Majors (swapped rows 13/18 cites, wrong OWNER-STEPS line, "lead" word, undefined labels, 114 SUPPORTED includes rows needing a run); r4 fixer running; F-01 still unreadable
 F5: round 4 reviews found 4 Blockers + about 20 Majors incl. false "not in this checkout" reason (programs ARE in handover/demo); r4 fixer running
-NEXT: collect F8, F3 r5, F5 r4, claims r4, ROLES doc review, ROLES script r5
-PUSHED_UTC: 2026-11-16T09:50:26Z
+NEXT: collect 7 agents; F8 fixer is 14 min in (check)
+PUSHED_UTC: 2026-11-16T09:51:05Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -40,6 +40,7 @@ PUSHED_UTC: 2026-11-16T09:50:26Z
 | aca2f0a2 | F5 round 4 fixer | sonnet | fix 5 facts Majors + 4 Blockers + Majors | 09:56 | 10:12 | 5 | running | fix-f5-r4.md |
 | a3e7d2e4 | ROLES script r5 fixer | sonnet | fix lint, bandit, null crash, notes, disabled, size | 09:57 | 10:10 | 5 | running | roles-coverage-check/fix-roles-r5.md |
 | a4083fcf | F3 round 5 fixer | sonnet | fix 12 security findings | 09:59 | 10:15 | 5 | running | fill_flows/fix-f3-r5.md |
+| ae99bdeb | ROLES zoom-out reviewer | egm-zoom-out | necessity and size check | 09:52 | 10:00 | 5 | running | inline |
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
