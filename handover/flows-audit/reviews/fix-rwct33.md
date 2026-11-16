@@ -1,0 +1,30 @@
+# fix-rwct33: one pass on RUNSHEET-WORDING.md (RW) and CLAIMS-TABLE.md (CT), from read r33 (M1 to M6) and r22 recheck
+Editor: this agent only. Static, made-up data, no secrets. Not committed. EGM: edit pass from a review; the lead runs the EGM result review (I did not invoke EGM skills). Bible not in this checkout; R-numbers not looked up.
+
+## NOT done or uncertain (first)
+- I ran nothing; everything is read from files. M1 is read from demo/n8n-flows-real-v5/mf-form.json line 293 (on disk, read): the reply of a repeat carries repeat true and the stored state in verdict. Not run.
+- Still needs the lead (not fixable here): which window shows the reply of POST 2 and at which moment ("NOT WRITTEN: LEAD FILLS", take scripts not in this checkout); who speaks/captures (NQ-A); NQ-B to NQ-F untouched as told.
+- M3 and M2 are conditions the lead must meet in the take: scene 3 shows only the columns lead key, state, attempts (mail sent, alert sent, last change cropped out), and the lead ID is legible in three places. If not, A-016a/b/f/h are not used. Nobody has checked yet that a crop is possible with the chosen frame method (step 6 (c)): the lead decides at the rehearsal.
+- M5: the phrase was added by script wherever a relayed number (60.8, 61.9, 60.1, 60.9, 61.2, 12 of 20, 2 of 5, 0 of 15, 12 of 12) had no phrase within 400 characters; a final scan finds none uncovered. I did not re-read every changed cell for style; the paste-pair check passes (no paste string was altered). Some inserts sit after a quoted old string rather than inside it (quoted old text is kept word for word).
+- M6: I regraded on the reader's list and on my own reading of the cells; I did not re-open the desk repository (absent) or re-read reviews-f1/trace-desk-repo.md.
+- r33 reader's remark that RW status line had PASTE 53: wrong. Recounted from rows: PASTE 55 (see below). The CT line that said PASTE 53, HELD 89 (195 rows) was stale and is corrected.
+- r22 items: not re-checked beyond what fix-rwct32 already did, except: item 1 (N-5a) reworded here (M4); item 4 (B-195/B-197 phrase) done in M5; lower items untouched.
+
+## Fixed by id
+- M1 (second-send item): ONE item chosen, named in the same words in A-016a, A-016b, A-016f, A-016h, step 15 and CT A-099: "the reply of POST 2 (the second send of the same lead ID) with the field repeat showing true and the label of row N-13 beside it". The n8n run list option is removed everywhere (grep: 0 hits of "two runs for the lead ID" in RW and CT). New viewer string row N-13 (HELD, screen tag): "In this reply, repeat true means the lead ID was already received." Added to the top-paragraph list of rows that say something to a viewer, to the first-use bullet, to the prepared-screen lists (lines for the screen set), and to the step 15 condition. CT: N-13 added to the "rows with no lane row" list (14 to 15 rows, "other ten are for the take"); CT line 69 no longer says NOT WRITTEN. No claim count changed (N-13 is not a claim).
+- M2 (lead ID legibility): condition LEAD ID LEGIBLE (readable without zooming in the first send, in the reply of the second send field lead_key, and in the mailbox message subject) added to A-016a, A-016b, A-016f, A-016h, step 15, new step 12a (6), input row (n) (both cells), CT A-099.
+- M3 (A-044a and alert sent): chose the crop option. Step 12a (5) now: in scene 3 only lead key, state, attempts are in the recording; mail sent, alert sent, last change are cropped out; otherwise the four rows are not used. Row (m), the first-use bullet, step 15 (COLUMNS CROPPED) and A-044a scope note (scene 10 only) are consistent. No "label or leave out".
+- M4 (N-5a): reworded as design ("n8n is built so that a second flow ... takes over"; "By this design, the handling continues ...") in RW and CT (same string, pair check passes); note added in RW row and CT verdict line that scene 4 shows only N-5b and no row of lead ID 2, so no takeover is claimed. No new lane row: claim counts unchanged (NQ-F stays open).
+- M5: exact phrase "reported by another test session; we have not seen its raw files" now at: RW A-002, A-016c notes, B-003a/b/d, RWQ-1 note and the other RW cells (13 inserts plus the "; not confirmed, D2" variants); CT lane A-002 verdict cell, A-099, Part 4 (line 1005), A-017, A-019, A-051, A-081, A-085, A-086, A-087 cells, lane A D1/D2 lines, B-185, B-201, B-032, B-056 and others (about 31 inserts); B-195/B-197 already had it.
+- M6: regraded from SUPPORTED to UNTRACED: B-017, B-018, B-049, B-064, B-065, B-066, B-068, B-069, B-089, B-090, B-158 (desk repository absent; cites known only from the trace file), B-207 (same absent stage as B-204), B-218 (only "credentials live in n8n's store" is shown). Counts now SUPPORTED 89, RELAYED-ONLY 64, OVERSTATED 84, UNSUPPORTED 15, UNTRACED 78 = 330; lane B 68/41/45/9/67. Every count sentence in CT and RW updated (header line 15, 116, 121, 122, 127, 170, Part 7 table, RW lines 33, 471; rowless counts 88/63/66/16 = 233, computed by hand from the 13 regraded ids, not by the old script). Desk-trace section note added. Flagged (96) and OVERSTATED (84) unchanged, so no RW row is needed.
+- Nit WL-14: CT now says at least SEVEN lead IDs (five of the scenes plus two control messages), as RW (3 places).
+- RW status line: recounted from rows: PASTE 55, DELETE 30, HELD 90 (N-13 added), NO PASTE 9, SUPERSEDED 14, total 198; section 1 now 56.
+
+## Outputs (run from handover/flows-audit)
+- claims-count.py: verdicts UNSUPPORTED 15, OVERSTATED 84, UNTRACED 78, SUPPORTED 89, RELAYED-ONLY 64, total 330; lanes A 100, B 226, X 4; to-do rows 87; offenders 0; ids 330 unique.
+- check_rw_ct_pairs.py: paste strings in RW 143, found word for word in CT 143, not found 0.
+- check_runsheet_paste.py: total rows 198 (sections 56/20/76/46); flagged 96, no missing row; UNTRACED 77 (65 without row); RESULT: PASS.
+- check_refs.py: PASS 5182 references. check_names.py: PASS 655 rows. check_secrets.py: PASS 0 hits in 2774 files. ruff format --check .: 900 files already formatted.
+
+## Files changed
+RUNSHEET-WORDING.md, CLAIMS-TABLE.md, this report. Scratch copies of the originals: scratchpad RW.orig and CT.orig (not in the repo).
