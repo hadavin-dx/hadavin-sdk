@@ -1,5 +1,5 @@
 # START HERE (system-map folder)
-STATE AS OF Mon 16 Nov 2026 09:35 UTC / 15:05 IST. Goal: one safe filmed take, made-up data only, by Mon 23 Nov 18:29 UTC / 23:59 IST (the stop time). Wed 18 Nov is only a target and is NOT confirmed. Dates: TAKE-BLOCKERS.md (Dates paragraph) is the one source.
+STATE AS OF Mon 16 Nov 2026 2026-11-16T10:20:53Z (IST = UTC+5:30). Goal: one safe filmed take, made-up data only, by Mon 23 Nov 18:29 UTC / 23:59 IST (the stop time). Wed 18 Nov is only a target and is NOT confirmed. Dates: TAKE-BLOCKERS.md (Dates paragraph) is the one source.
 WARNING: the CURRENT owner steps are inputs/OWNER-STEPS-realrun-v5-core-hardening.md (letters A to J, written Mon 16 Nov); the older inputs/OWNER-STEPS-realrun-v3.md (OS) is superseded and stale at steps 7 and 8 (wrong n8n port, database password model, HubSpot key rights; drift/REPORT.md D-01, D-02, D-03) and in its schedule (D-10, 'Wed to Sun'). Steps 1 to 9 are already done by the studio head (= v3 Phase 0; inputs/FACTS-ALREADY-DONE.md lines 3 and 5). Follow only the owner steps the studio lead re-issues in the chat.
 
 ## BEFORE THE TAKE: where each job lives (one place per job)
@@ -13,9 +13,9 @@ Read OWNER-VIEW.md (one page, owner-only items). The lead brings you any decisio
 
 ## If you are the studio lead (the Claude session that does the technical steps)
 1. FIRST: TAKE-BLOCKERS.md is your to-do list. Its order: START WITH ROW 1 (patched real-v5 copy, then fill the `$env` values); rows 1, 2 and 3 run in parallel (row 2 = the first rehearsal, which the studio lead runs, decision 12; row 3 = the four security text edits); then row 4 (take date); then row 5 (QUESTIONS item 1 and the HubSpot lines). Scope is decided: real-v5 only (decision 1). The studio lead starts Docker Desktop (plan-wp6-resmoke-v5.md:489; decided, lead 10:13Z item 3). The cloud session has no Docker.
-2. drift/REPORT.md: apply or reject the replacement texts for D-04, D-05, S-03 and L-01 (QUESTIONS item 2; D-01 to D-03 and D-10 are moot, v3 archived) (Blockers).
+2. drift/REPORT.md: APPLY D-01 to D-03, D-10, S-03, L-01 as text edits (lead 10:13Z). D-04 and D-05: decisions/D04-D05.md, the lead decides; post only, not a take blocker.
 3. FINAL-CROSSCHECK.md sections 2, 4 and 5: ratings that disagree and fixes that collide.
-4. QUESTIONS.md: open questions to you.
+4. QUESTIONS.md: only item 2 (D-04, D-05) and item 8 (film pause) are open.
 
 ## Reference (not needed for the take)
 SWEEP.md (findings and fix plan), ONE-PLACE-TABLE.md (one place per job), MASTER-MAP.md (every component), ARCHIVE-CUT-LIST.md (what to archive after the take, never delete), REPORT.md and QUEUE.md (this session's logs), work/ (evidence).
