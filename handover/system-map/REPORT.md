@@ -1,5 +1,10 @@
 # REPORT from system-map (newest on top, UTC and IST)
 
+## Status 2026-11-16 06:47 UTC / 12:17 IST - ORDER 002 started (GO received)
+Agents running: 0 language-model agents, 0 script lanes. Read ORDERS, DECISION-one-store, checklist. Wrote PLAN-002.md (5 read-only lanes, evidence runner, EGM reviewers). Next: egm:egm-review-loop on the plan (Skill tool), then egm-resolve (opus).
+Agent register: (none started yet; rows are written here BEFORE each start)
+Not visible: take code repo duplicate-proof-lead-desk (lead covers locally; not guessed).
+
 ## Status 2026-11-16 06:45 UTC / 12:15 IST - ORDER 001 DONE, waiting for GO
 Agents running: 0 language-model agents, 0 script lanes (both reviewers finished and reported). Waiting for GO from the lead.
 
