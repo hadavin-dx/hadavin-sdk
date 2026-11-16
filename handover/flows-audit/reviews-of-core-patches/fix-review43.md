@@ -32,7 +32,26 @@ Reader review r38:
 - Reader claim I could not match: 'line 3 describes batch 42 at 18:14 UTC (23:44 IST)' was true and is fixed; reader's remark that 'the live text cites design r38 B1/M2/M7/M8 at 539, 568, 598, 603, 624' was not matched line by line; a one-line key of which round a tag belongs to was added in the History table.
 
 ## Checks run (from handover/flows-audit, after the last edit)
-@@CHECKS@@
+    $ python3 -I reviews-of-core-patches/count_review.py reviews-of-core-patches/REVIEW.md
+    rows 28 ['C-1', 'C-2', 'C-3', 'C-4', 'C-5', 'C-6', 'C-7', 'C-8', 'A-1', 'A-2', 'A-3', 'A-4
+    severity {'Nit': 11, 'Minor': 13, 'Major': 4}
+    decision {'DECLINE': 3, 'PROPOSE FIX': 25}
+    $ python3 -I tools/check_refs.py
+    PASS 5182 references
+    $ python3 -I tools/check_names.py
+    PASS 655 rows
+    $ python3 -I tools/check_secrets.py
+    PASS 0 hits in 2811 files
+    $ python3 -I tools/check_counts.py
+    PASS 52 files / 655 nodes
+    $ ruff format --check .
+    937 files already formatted
+    $ sha256sum prefixes of patch-copies/*.patch
+    64fdf315  A-01.patch
+    e7ff677e  C-01-price-only.patch
+    ca4982eb  C-01.patch
+
+row counts, severities and decisions are unchanged from batch 42 (28 rows; Major 4, Minor 13, Nit 11; PROPOSE FIX 25, DECLINE 3). check_refs gives the same count (5182) as in batch 42 although this report adds references; I did not look into why.
 
 ## NOT checked
 - No reviewer has read the Z block after this batch. The reviewers' per-line claims outside the items above were not re-verified. The prose was not re-read in full (the file is about 610 KB); I read lines 1-12, 25, 35, 43, 77-79, 140, 285, 341, 379-407, 455-538, 539-607 and the History parts named above, and used text search for the rest.
