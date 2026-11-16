@@ -1,3 +1,13 @@
+# ORDER 034 answer (2026-11-16T11:53:45Z)
+FAILED first: owner sheet v16 failed all 5 reviews a second time (v15 also failed 5). I STOPPED the v17 builder (it had run 5 minutes and written nothing) and will not rewrite a third time before the root-cause readers report.
+Started instead: two readers who see ONLY the review findings, not the sheet or my notes: a cold reader (egm-comprehension: what is the same root cause across v14 to v16) and a zoom-out reader (egm-zoom-out: is the shape right, what can be cut or moved to the lead). I save their reports and fix the class once.
+Agents now 5 of 8 counting: checklist rev 10 builder, run.py r5 builder, two root-cause readers (4 running). Per missing agent (ORDER 029 form):
+- v17 builder: waits for the root-cause reports (your order).
+- 5 v17 reviewers + citation check: nothing to review until v17 exists.
+- rev 10 reviewers, citation checker, evidence runner: wait for the rev 10 builder hand-back (one writer per file).
+- r5 security reviewer + evidence runner: wait for the r5 builder hand-back.
+- C5, C7, C8 new work: stopped by Q18. C3b and C6: wait on lead answers (PROGRESS.md question; Q1/Q2). No other independent work exists; I will not start an agent without a purpose.
+
 # REPORT block 2026-11-16 11:10Z (core-hardening; newest on top; failures first)
 ## FAILED / OPEN first (clock 11:10Z at writing, corrected 11:22Z after claims-check; written from files; nothing re-run by me; n8n, Postgres 455 tests, pwsh, shellcheck, WSL, real head de6b574 never run)
 1. Owner sheet (money and secret path, no round cap): v13 failed stranger (8 majors), security (7 majors), citation (5 minors), adversarial (20). Worst: Emergency cancel spares the run key; key page shows the key once; no procedure for other secrets; run total is not a worst case (re-claim may repeat a model call). v14 built and then FAILED all 5 reviews (11:09-11:12Z): security 9 majors, stranger = blocker (blanks B1-B13 empty) + 17 majors, adversarial 43, contradiction 12, citation 6 minors; v15 builder running. About 20 values only the lead has are blank (steps-edits/v13-OPEN-FOR-LEAD.md L1-L20).
