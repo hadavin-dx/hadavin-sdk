@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T20:41:15Z
+UPDATED_UTC: 2026-11-16T20:41:35Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -7,11 +7,11 @@ ITEMS_TOTAL: 10
 ITEMS_OPEN: 30
 PERCENT: 70
 AGENTS_RUNNING: 2
-CAPACITY: 1.37 load of 4 cores, mem 1/15 GB, RAM 1071/16087 MB, disk 14G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 9.9G /tmp/claude-0 , agents 2 (light+heavy per list)
+CAPACITY: 1.23 load of 4 cores, mem 1/15 GB, RAM 1063/16087 MB, disk 14G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 9.9G /tmp/claude-0 , agents 2 (light+heavy per list)
 INTERRUPTED: none
 FAILED: none (F8 run_all.sh intermittent exit 1 is an evidence finding: 3 of 6 plain runs failed, cause unknown, fixer acf8ab59 on it; ruff format --check passes 741 files)
-NEXT: waiting on F8 evidence runner and FIX-PLAN fixer; then one F8 fixer
-PUSHED_UTC: 2026-11-16T20:41:15Z
+NEXT: F8 evidence r13 raw is in; F8 fixer r14 started
+PUSHED_UTC: 2026-11-16T20:41:35Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -30,8 +30,8 @@ PUSHED_UTC: 2026-11-16T20:41:15Z
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | state | produced so far |
 |---|---|---|---|---|---|---|---|
-| a3e1970f | F8 EVIDENCE RUNNER r13 (HEAVY) | sonnet | flow-check run_all + stop test; video path: YES (take check) | 20:33Z | 21:00Z | running | raw output pending |
 | ad0e03dc | FIX-PLAN fixer r65 | sonnet | fix plan; video path: YES (Tue re-pin), finishing only | 20:35Z | 21:20Z | running | none yet |
+| aF8fix14 | F8 FIXER r14 (HEAVY: one test run) | sonnet | swallowed stop Major + minors; video path: YES | 20:42Z | 21:15Z | running | none yet |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
 1. CLAIMS-TABLE 301-599 reader and RUNBOOK 433+ I-table reader (never read)
