@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T14:23:17Z
-PUSHED_UTC: 2026-11-16T14:23:17Z
+UPDATED_UTC: 2026-11-16T14:24:04Z
+PUSHED_UTC: 2026-11-16T14:24:04Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
@@ -45,11 +45,11 @@ INTERRUPTED: none
 ## AGENTS
 | agent id | purpose | started (UTC) | expected end | state | what it produced so far |
 |---|---|---|---|---|---|
-| a0f19326209309acf | cold read owner-timeline-draft | 14:23Z | +5 min | running | nothing yet |
-| (new) | re-read GLOSSARY | 2026-11-16T14:23Z | +5 min | running | nothing yet |
+| a35fb32fb993debe7 | re-read owner-timeline-draft | 14:25Z | +5 min | running | nothing yet |
+| (new) | cold read premortem-r1 | 2026-11-16T14:24Z | +5 min | running | nothing yet |
 
-CAPACITY: 2 running. Reason for the 6 missing slots: every owned page has had three to six reads, findings need facts only the studio lead has, and open work is my own edits. Digested through 1459.
-NEXT 5: decision-list row splits and options, GLOSSARY unknown-terms table, evidence-1/2 reruns (blocked until work/OWNER-ONLY.txt exists), premortem-r1/critical-path-r1, owner-timeline-draft fixes.
+CAPACITY: 2 running. Reason for the 6 missing slots: every owned page has had three to six reads, findings need facts only the studio lead has, and open work is my own edits. Digested through 1462.
+NEXT 5: decision-list row splits and options, premortem-r1/critical-path-r1, evidence-1/2 reruns (blocked until work/OWNER-ONLY.txt exists), owner-timeline-draft remaining cells, lane pages L1c-L5b.
 
 Words: UTC = world time; IST = UTC plus 5 h 30 min. Cold read = an agent reads one page with no background and lists what it cannot follow. Held = a finding on a page that belongs to the lead, which I do not edit.
 

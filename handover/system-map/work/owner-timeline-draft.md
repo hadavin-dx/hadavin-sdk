@@ -1,13 +1,20 @@
 # DRAFT: replacement for OWNER-VIEW "order of messages" (16 Nov 2026, from an independent style read; NOT applied)
 Held because: (1) the lead must say whether the film pause stays (QUESTIONS item 8); (2) OWNER-VIEW row 3 still says `end` DELETES, and decision 2 says it deletes nothing; (3) cells marked [studio lead fills] have no source file. Made-up data only. Times: UTC and IST (IST = UTC+5:30).
 
+Terms (one line each; meanings come from OWNER-RUN-DAY-CARD.md and the decisions of 16 Nov, so some are NOT RECORDED):
+- run = one recorded run of the demo on made-up data (the program calls it a "take"); run name = the one word you invent for it and never reuse.
+- rehearsal = a test run before the filmed run, with no real account; film pause = the moment the program stops and waits for you to type `end` while the contact list is filmed (unconfirmed, see below).
+- stage.env = a settings file in the run folder; you open it to compare numbers. demo-take = the Chrome profile used only for the run. v5 = version 5 of the owner's step list. A13 = the question on decision-list-for-lead.md whether a 4-hour rerun margin is kept. retire check, n8n removal and clean-up step 1: meaning NOT RECORDED here (the studio lead writes them).
+- The 6 digits in row 6 are the number the program prints in its second prompt; where it comes from beyond that is NOT RECORDED.
+Rows 7 to 9 may change: the film pause is not confirmed.
+
 The run never deletes anything. `end` only stops the run. Leftover made-up contacts are deleted by hand. Do nothing in a row until the message above it has arrived.
 
 | # | Who sends | Exact words | What you do | Can it be undone? |
 |---|---|---|---|---|
-| 1 | Studio lead | [studio lead fills: exact words]; run date and start time in UTC and IST, at least 3 hours ahead | Nothing until it arrives; then laptop plugged in, sleep Never, lid action Do nothing | yes |
+| 1 | Studio lead | TBD (owner of this cell: studio lead, due before the first rehearsal; time NOT SET); run date and start time in UTC and IST, at least 3 hours ahead | Nothing until it arrives; then laptop plugged in, sleep Never, lid action Do nothing | yes |
 | 2 | Studio lead | "rehearsal passed" and the result file name | No file name: do not send your yes | yes |
-| 3 | Studio lead | [studio lead fills]; at most 3 model calls, worst-case price of one call, 3 times that in US dollars, money spent so far, spending backstop, stop time, path of `stage.env` | Open `stage.env`; compare money spent so far and the backstop with the message; a number missing or different: type nothing, tell the studio lead | yes |
+| 3 | Studio lead | TBD (owner of this cell: studio lead, due before the first rehearsal); at most 3 model calls, worst-case price of one call, 3 times that in US dollars, money spent so far, spending backstop, stop time, path of `stage.env` | Open `stage.env`; compare money spent so far and the backstop with the message; a number missing or different: type nothing, tell the studio lead | yes |
 | 4 | You | "Yes, run <run name>, up to 3 model calls and up to US$<total> (3 times the worst-case price of one call), stop time Mon 23 Nov 2026 18:29 UTC / 23:59 IST." | Once per paid run, with a run name never used before | yes; no money moves until you type `y` |
 | 5 | Studio lead | "start now" | Terminal; type the lines the studio lead sends; both login lines must say "still works" (good here) | yes |
 | 6 | You | `y`, then `<6 digits> <run name>` | Type both yourself, only after the figures match your yes | NO: up to 3 paid calls start |
