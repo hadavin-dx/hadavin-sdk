@@ -1030,7 +1030,7 @@ self_test_meta() {
     [ "$st_stray" -gt 0 ] && pkill -x -f '^sleep 31$' 2>/dev/null
     rm -rf "$st_child"/lead-repin.??????
   done
-  st_pf=$WORK/st-pid; ( echo $$ > "$st_pf"; exec sleep 29 ) | LEAD_REPIN_NO_META=1 TMPDIR="$st_child" sh "$st_sa" --mask > /dev/null 2>&1 &
+  st_pf=$WORK/st-pid; sh -c 'echo $$ > "$1"; exec sleep 29' sh "$st_pf" | LEAD_REPIN_NO_META=1 TMPDIR="$st_child" sh "$st_sa" --mask > /dev/null 2>&1 &
   st_p=$!; sleep 3
   kill -s TERM "$st_p" 2>/dev/null; wait "$st_p"; st_r=$?; sleep 1
   st_stray=$(ps -A -o args= 2>/dev/null | grep -c -F -- "$st_child")
