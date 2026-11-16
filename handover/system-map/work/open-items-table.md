@@ -1,12 +1,12 @@
 # Open items that block the take (live page; Mon 16 Nov 2026)
 
 ## What this page is
-Seven rows (1a, 1b, 2, 3, 4, 4b, 5) must be answered before the take can start. All 5 rows block the take start. A row is open until its answer is written in this table's "Answer" column (until a reply file is named, answers go directly in this column). Former rows 3-19 and 22-25 are post-take or settled by the decisions of 16 Nov (which decision settles which row is in work/open-items-table-history-2.md); they are not tracked here. The "old #" column keeps the numbers other pages still cite. Every date below is a proposal by the system-map session (the Claude session that wrote this page); no one has agreed to it, and the studio lead accepts or changes each one.
+Seven rows (1a, 1b, 2, 3, 4, 4b, 5) must be answered before the take can start. All 7 rows block the take start. A row is open until its answer is written in this table's "Answer" column (until a reply file is named, answers go directly in this column). Former rows 3-19 and 22-25 are post-take or settled by the decisions of 16 Nov (which decision settles which row is in work/open-items-table-history-2.md); they are not tracked here. The "old #" column keeps the numbers other pages still cite. Every date below is a proposal by the system-map session (the Claude session that wrote this page); no one has agreed to it, and the studio lead accepts or changes each one.
 
 ## Words
 - take = one filmed run of the lead-intake demo on made-up data.
 - studio lead = the Claude session doing the technical steps.
-- studio head = the human who runs the studio; not named. Until a name is given, if nobody names the studio head by Mon 16 Nov 18:00 UTC / 23:30 IST, the studio lead asks the owner to answer row 1.
+- studio head = the human who runs the studio; not named. Until a name is given, if nobody names the studio head by Mon 16 Nov 18:00 UTC / 23:30 IST, the studio lead asks the owner to answer row 1a.
 - owner = the human at the laptop. Whether the owner is also the studio head is NOT SETTLED.
 - run (a) = the studio lead's short loopback self-check on its own side (decision 12). The first rehearsal = the first laptop test run (decision 12), a lead step.
 - decisions 2, 3 and 12 = items 2, 3 and 12 of handover/system-map/inputs/DECISIONS-2026-11-16.md.
