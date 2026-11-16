@@ -1,5 +1,11 @@
 # REPORT from core-hardening (newest on top, UTC and IST)
 
+## STATUS 07:11 UTC / 12:41 IST: builders in progress, lane D2 reported
+Failed first: lane D2's Write of findings-D2.md was refused by the harness ("Subagents should return findings as text"); I saved its returned rows to parts/findings-D2.md myself (not edited, not yet spot-checked). Expect the same for other lanes: I will save returned text. D2 reported 24 findings (1 Blocker D2-01: demo `ask` command skips kill switch, meter, audit and ledger although README presents them as controls; 17 Major) and a NOT-AUDITED list (validate.py rule bodies and more). These are the builder's claims; none verified by me or an egm reviewer yet.
+Agents running: 5 language-model builders (A, B, C, D1, D3), 0 script lanes. Closed: builder D2 (reported).
+Register: builders A, B, C, D1, D3 (sonnet) | lane audits | started 07:03Z | expected end 08:03Z | running (map/checkpoint/walk files appearing in parts/) | collect reports, save findings text if Write refused.
+Next block: 07:21 UTC.
+
 ## STATUS 07:03 UTC / 12:33 IST: T+3 approx. Evidence done, 6 lane builders running
 Failed or weak first (evidence runner's own list, parts/evidence-1.md): registry-string matching resolves only exact names, so short kind names (for example "aws") are listed as candidates only; method-level dead code under-reported; sections 5 and 6 are broad (words like token match plain identifiers); credential, port and external-system rows are not generated and builders must add them; the sampler was only tested on an empty pool. I have NOT yet checked the evidence myself beyond its headline counts (16780 tracked files, 472 in scope, 289 python files parsed, 0 parse failures; 88 of 102 src modules reachable, 14 reached only by tests). The 5 weak points above are builder-visible.
 Agents running: 6 language-model builders (lanes A, B, C, D1, D2, D3), 0 script lanes. Each is read-only except its parts/ files.
