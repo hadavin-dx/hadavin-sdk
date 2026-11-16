@@ -1,29 +1,32 @@
-UPDATED_UTC: 2026-11-16T08:46:57Z
+UPDATED_UTC: 2026-11-16T08:50:40Z
 SESSION: flows-audit
-ORDER: 007 (and 008 board)
-STATE: FINAL
+ORDER: 013 (and 008 board)
+STATE: WORKING
 BOOT_ID: e78580c0
-ITEMS_TOTAL: 6
-ITEMS_OPEN: 0
-PERCENT: 100
-AGENTS_RUNNING: 0
+ITEMS_TOTAL: 4
+ITEMS_OPEN: 3
+PERCENT: 10
+AGENTS_RUNNING: 5
 INTERRUPTED: none
-NEXT: none; waiting for the lead (Q4-Q9)
-PUSHED_UTC: 2026-11-16T08:46:57Z
+NEXT: collect lane and review reports; assemble CLAIMS-TABLE.md
+PUSHED_UTC: 2026-11-16T08:50:40Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
 |---|---|---|---|---|---|
-| 1 | patch fixes (F-001, F-002, F-004, F-008) | done | 100 | lanes7/evidence-7b-check-patches.txt | not run in n8n |
-| 2 | re-rate by one rule, counts table | done | 100 | FINDINGS.md | 45 rows: 8 Blocker, 8 Major, 29 Nit |
-| 3 | fix kinds, BEFORE/AFTER split, CUT-LIST | done | 100 | FIX-PLAN.md | reviewed 2 rounds |
-| 4 | verdicts, approvals, T-tests, NOT-covered | done | 100 | lanes7/N7-verdicts.md | reviewed 2 rounds |
-| 5 | new findings | done | 100 | lanes7/N7-new-findings.md | reviewed 2 rounds |
-| 6 | two-reviewer pass, resolve, drift, FINAL | done | 100 | reviews/drift-007.md, REPORT.md | cap of 2 rounds reached |
+| 1 | Q4-Q9 answers into QUESTIONS and FIX-PLAN | done | 100 | QUESTIONS.md, FIX-PLAN.md | |
+| 2 | CLAIMS-TABLE.md (2 lanes, then 2 reviewers) | running | 10 | lanes13/claims-A.md, claims-B.md | lanes write now |
+| 3 | cross-review of core patches (evidence + 2 reviewers) | running | 10 | reviews-of-core-patches/ | |
+| 4 | FINAL | open | 0 | | after 2 and 3 |
 
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | % | state | last output |
 |---|---|---|---|---|---|---|---|---|
+| a1b2b7ea0b42c07d2 | EVIDENCE RUNNER core patches | sonnet | pytest, ruff, bandit, before/after, mutation | 08:50 | 09:20 | 5 | running | reviews-of-core-patches/evidence-13.md |
+| af029ef6d7b9862bf | egm-codebase-details | sonnet | review core patches | 08:50 | 09:10 | 5 | running | none |
+| a00611c4ffec5962e | egm-design | sonnet | review core patches | 08:50 | 09:10 | 5 | running | none |
+| a3e8a880362397411 | claims lane A | sonnet | run sheet and statements claims | 08:50 | 09:15 | 5 | running | lanes13/claims-A.md |
+| aa12f4710cd6fb12a | claims lane B | sonnet | owner steps and docs claims | 08:50 | 09:15 | 5 | running | lanes13/claims-B.md |
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |

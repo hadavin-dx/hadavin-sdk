@@ -13,3 +13,11 @@ Q6. What does the video claim about the CRM (F-006)? Scene 5 runs on the stand-i
 Q7. Review rows (F-031): a sentence in the run sheet (cheap, discloses the gap) or one IF plus an alert in mf-recovery (closes it, needs a laptop test)? Recommendation: the sentence before the video, the IF after.
 Q8. Table screen (F-023): run it once on the laptop, or cut it from scene 10? Recommendation: do not run it; use a rehearsal screenshot or the Postgres node preview as the scene 10 picture (verdict 4: not needed for the take).
 Q9. Two demotions I made by the same rule that are not on your list: F-022 and F-025 (not in the take). In review round 2 I also demoted F-012 (a batch of several stuck leads is not reached in the take). In review round 1 I also demoted to Nit F-014 (with F-040 merged into it), F-019, F-035, F-036, F-039, F-044 and F-045, because none is reached in the filmed take; each says 'a Major for a client build'. Please overrule any you want kept as Major.
+
+## ANSWERED by ORDER 013 (lead, 2026-11-16)
+Q4 ANSWERED: the video says nothing about 'one database' unless the re-smoke proves n8n has no sqlite file. Default wording: 'n8n keeps its own records'. F-011 and F-041 stay AFTER the video (Nit); FIX-PLAN item 8 waits.
+Q5 ANSWERED: neither 'approval' nor 'audit trail' in the video. The narrow claim is 'the same lead id sent twice is processed once'.
+Q6 ANSWERED: 'a stand-in CRM' on screen for scene 5; 'HubSpot' only for scenes that use real-v5.
+Q7 ANSWERED: the sentence in the run sheet before the video; the IF plus alert after (F-031).
+Q8 ANSWERED: do not run the table screen; a rehearsal screenshot or the Postgres node preview for scene 10 (F-023).
+Q9 ANSWERED: all demotions accepted. F-012, F-014 (with F-040), F-019, F-022, F-025, F-035, F-036, F-039, F-044, F-045 stay Nit for the take, each noted 'Major for a client build'. Counts stay 45 rows = 8 Blocker, 8 Major, 29 Nit; BEFORE 17, AFTER 28.

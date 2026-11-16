@@ -17,3 +17,6 @@
 - [code] F-045 mask the e-mail before the model (client-build gate), F-034 path guard on DN1_DESK_REPO.
 - [text] F-032 retention rule, F-033 HubSpot option line, F-046 test ids, F-038 error-output check.
 - Archive per CUT-LIST.md (owner yes first, never delete; F-024, F-025, F-026, F-027): see CUT-LIST.md ORDER OF WORK; do NOT move dn1_common.py or n8n-tests/results/ until the raw result file has landed.
+
+## Lead answers applied (ORDER 013, 2026-11-16)
+Q4-Q9 are answered (QUESTIONS.md). Effect on this plan: item 8 (F-011 one database) is not done before the video; the run sheet says 'n8n keeps its own records', not 'one database'. Item 5 is the run-sheet sentence only (the IF plus alert stays AFTER). F-023: do not run the table screen; scene 10 uses a rehearsal screenshot or the Postgres node preview. No other item changes. The claims table (CLAIMS-TABLE.md) lists every video sentence these answers touch.
