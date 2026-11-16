@@ -42,14 +42,14 @@ INTERRUPTED: none
 | M20 | SESSION-HANDOFF live state | BLOCKED: file is on the studio laptop, not in the repo | 0 | | the lead pastes the text into inputs/; the lead has set no date |
 | M16 | flow-set question | DONE, closed by decision 1 (real-v5 only; film-v5 out) | 100 | flowset/REPORT.md | |
 
-## AGENTS (UPDATED_UTC 2026-11-16T14:32:15Z; PUSHED_UTC 2026-11-16T14:32:15Z)
+## AGENTS (UPDATED_UTC 2026-11-16T14:32:41Z; PUSHED_UTC 2026-11-16T14:32:41Z)
 | id | task | state |
 |---|---|---|
-| aee19dd15c1d1eb5d | re-read merged-findings | running |
-| (new) | cold read t19-row-and-steps-r3 | running |
+| (new) | cold read t19-gaps-r2 | running |
+| (new) | re-read open-items-table | running |
 
-CAPACITY: 2 of 8 slots used. Missing 6: remaining pages (L5ac, L5b, checklist, t19 pages, row-dm-plain, v5-edits-for-M17, decision list) await my edits and a mid-edit read is wasted; evidence-1, evidence-2 and partition are blocked by the missing work/OWNER-ONLY.txt; held pages are not mine to edit.
-NEXT 5: fix t19-and-stored-data-steps; fix t19-gap-facts; fix row-dm-plain; fix L5ac; fix v5-edits-for-M17.
+CAPACITY: 2 of 8 slots used. Missing 6: remaining pages (L5ac, L5b, checklist, t19 pages, row-dm-plain, merged-findings, v5-edits-for-M17, decision list) await my edits and a mid-edit read is wasted; evidence-1, evidence-2 and partition are blocked by the missing work/OWNER-ONLY.txt; held pages are not mine to edit.
+NEXT 5: fix merged-findings terms line; fix t19 pages; fix row-dm-plain; fix L5ac; fix v5-edits-for-M17.
 
 Words: UTC = world time; IST = UTC plus 5 h 30 min. Cold read = an agent reads one page with no background and lists what it cannot follow. Held = a finding on a page that belongs to the lead, which I do not edit.
 
