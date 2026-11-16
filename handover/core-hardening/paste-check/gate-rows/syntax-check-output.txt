@@ -8,3 +8,4 @@ block 1 identical to G1.sh
 block 2 identical to G2.sh
 blk1 = G1 block, blk2 = G2 block, blk3 = S10 line (patched plan: fixes, repin-v6, gate-rows)
 embedded python of G1 parses: see above run; G2 LC_ALL exported: 1
+embedded python of G1 parses (ast): ok (checked in the same run)
