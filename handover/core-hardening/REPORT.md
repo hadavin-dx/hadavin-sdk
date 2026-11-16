@@ -1,5 +1,13 @@
 # REPORT from core-hardening (newest on top, UTC and IST)
 
+## STATUS 06:55 UTC / 12:25 IST: BUILD START (T+0). ORDER 002 step 2, evidence runner starting
+Failed or open first: plan rounds hit the cap of 3 with findings still coming (round 3: 1 Blocker, 17 Major combined); all were written into AUDIT-PLAN.md "Rulings v4" but v4 was NOT re-reviewed by a fresh egm pass (cap reached). Plan took about 45 min, more than I budgeted. Result review will also judge plan fitness. No audit finding exists yet. Hard stop for part 1: T+135 = 09:10 UTC.
+Agents running: 1 language-model (evidence runner), 0 script lanes.
+Register (id | purpose | start | expected end | state | next):
+- EVIDENCE RUNNER (general-purpose, sonnet) | write and run parts/evidence-1.py, save parts/evidence-1.md | 06:55Z | 07:10Z | running | read output, start 6 builders
+Closed: round 3 egm-implementation-readiness and egm-design (reported).
+Next block: 07:05 UTC.
+
 ## STATUS 06:52 UTC / 12:22 IST: ORDER 002, plan review round 3 of max 3 (last)
 Failed/open: round 2 found 2 Blocker and 15 Major (plan-review-2.md); all valid and fixed in plan v3 (plan-resolve-1b.md). Not yet known whether v3 is clean. Still no audit finding exists; build has not started (about 30 min spent on plan rounds so far; plan rounds are slower than expected).
 Agents running: 2 language-model (round 3 reviewers), 0 script lanes.
