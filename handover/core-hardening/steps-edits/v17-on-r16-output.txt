@@ -185,9 +185,10 @@ FAIL r17 F-2 route B price in D.1 lacks 'up to five days'
 FAIL r17 F-2 route B price in D.1 lacks 'Route A is the safer one'
 FAIL r17 F-2 route B price in E-57 lacks 'up to five days'
 FAIL r17 F-2 route B price in E-57 lacks 'Route A is the safer one'
-FAIL r17 F-2 appendix landing lacks 'last page of the same sheet'
-FAIL r17 F-2 appendix landing lacks 'appends it unchanged'
-FAIL r17 F-2 header lacks 'Appendix K (after the last row) is part of the owner sheet'
+FAIL r17 F-2 appendix landing lacks 'a separate page, not part of the sheet'
+FAIL r17 F-2 appendix landing lacks 'links it from step 22 item 3'
+FAIL r17 F-2 link in owner text lacks 'the detail is on a separate page, Appendix K, which is linked from this step'
+FAIL r17 F-2 header lacks 'Appendix K (after the last row) is not a row and not part of the sheet'
 FAIL r17 F-5 D.4 lacks 'you follow the one order (the card) at once, from card step 1'
 FAIL r17 F-8 D.3 lacks 'A confirmation is exactly one of two messages'
 FAIL r17 F-8 D.3 lacks '`key revoked` is never a confirmation'
@@ -231,6 +232,6 @@ FAIL r17 pin B09 default lacks 'no reply counts as `another take`'
 FAIL r17 pin r17 key gone one word lacks 'so after it you do not type `key revoked` again'
 FAIL r17 pin r17 D.5 key gone lacks 'then write `key gone, no more decisions`'
 WORDS (non-space runs inside the NEW fences): E-48 NEW 3643 ; Appendix K (whole section) 928 ; OWNER-STEPS rows NEW 16609 ; NEW of all rows 18127 ; whole EDITS file 52990
-r17 checks: 94 phrase checks; 25 pins
+r17 checks: 95 phrase checks; 25 pins
 round 17 checks done
-FAILURES 97
+FAILURES 98

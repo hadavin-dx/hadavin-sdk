@@ -1,10 +1,7 @@
-in the box
-PASS section 8 has the COVERAGE OF THE c6r REVIEWS block and c6s-CHANGES.md exists and maps every finding id
-PASS section 9 holds the new open items (PLAN:125 conflict, leak scan program not written, card line 2 backed by stand-in tests only)
-PASS section 9 old items are closed or rewritten, not left stale (3,490-word box, history order)
+y order)
 PASS REPORT-c6r.md, REPORT-c6q.md and REPORT-c6p.md were not changed by this run
-PASS E-count: the start box states its own word count once and it equals the real count of the box (2381) :: (['2381'], 2381)
-PASS N5: the start box is under 2,500 words and section 1c exists before section 2 and holds the full lists (nothing deleted) :: 2381
+FAIL E-count: the start box states its own word count once and it equals the real count of the box (2382) :: (['2381'], 2382)
+PASS N5: the start box is under 2,500 words and section 1c exists before section 2 and holds the full lists (nothing deleted) :: 2382
 PASS E-title: the title line says IST = UTC + 5:30 :: # REPORT-c6u: video audit fix pass, supersedes REPORT-c6t.md (2026-11-16, UTC; IST = UTC + 5:30)
 PASS E-numbers: every row count in the start box (all 96, ready 49, default 38, check 3, owner 6, wave 1 87) equals the recount from the table, in every place it is printed :: []
 PASS E-defaults: the default of each question in the start box starts with the same word as the default in section 3 (15 labels compared; L-SHEET has none and L-DEL is 'as answered') :: []
@@ -27,7 +24,7 @@ PASS M2: the lease words that stay on the video (the label 'setting: lease 45 s'
 PASS M3: a check row C-12 exists for the alert mail seen in the loopback re-smoke, and TASK (5) says how to provoke it (the test K3)
 PASS M3: Table B has the cut cases 'line 2 cut' (55 words) and 'lines 1 and 2 cut' (44 words) with seconds, budget, total and Time cell recomputed from the quoted card lines :: ['| card line 2 cut (no alert mail seen) | 1, 2, 3, 4 = 150 s | 55 | 22.0 | 25 s | about 175 s | 25 s EST |']
 PASS M3: every row of Table B (6 cut cases) equals the recomputation from the quoted card lines (words, seconds at 150 words a minute, budget rounded up to 5, total, Time cell) :: [True, True, True, True, True, True]
-PASS M4: no sentence says the box was 'rewritten and shorter' without the real count next to it; the count is 2381
+FAIL M4: no sentence says the box was 'rewritten and shorter' without the real count next to it; the count is 2382
 PASS N1: the lists are STEPS (WHAT TO TYPE, steps 1 to 5) and TASKS (TASK (1) to TASK (12)); the box never says 'step 9', 'step 10' or '(9)' for a task
 PASS N2: 'claim' is defined once as reserve and 'statement' for a sentence in the video; the start box uses no other sense of 'claim' :: ['ery 30 seconds) may claim the contact again. ', "se question below, 'claim' means statement). "]
 PASS N3: in the start box 'row' means a row of the edit table (the box defines LINE and RECORD in 1c-A); no 'run sheet row' and no 'database row'
@@ -37,6 +34,6 @@ PASS m6: every 'second person' says who (someone who did not write the scan) :: 
 PASS E-defs: the start box itself holds ['G12 = YOUR gate', 'MY ASSUMPTION', 'LRN14:33', "this report's own reading", 'STUDIO LEAD = you'] and section 1c holds ["Q27 (a), (b), (c) = your plan's three questions", "EGM = the studio's review method", 'KEY = a secret code', 'a warning mail the system is built to send to a person', "this report's own reading"] :: []
 PASS E-scan: row 6 and section 1c both say the key scanner is read by a second person (someone who did not write the scan) and tested with a fake key before it touches a real key
 PASS E-defs2: the label of the wider reading of G12 stands whole in every place it is given (1), and 'EGM = ...' and 'KEY = ...' stand in every place they are defined (3, 2), none of them reworded
-SUMMARY: 199 checks, 0 FAILED
+SUMMARY: 199 checks, 4 FAILED: c6u N5: the start box is under 2,500 words (c6s: 3,488; 2382 words now) and states its own real count; box names no n8n setting; E-count: the start box states its own word count once and it equals the real count of the box (2382); M4: no sentence says the box was 'rewritten and shorter' without the real count next to it; the count is 2382
 
-EXIT CODE 0
+EXIT CODE 1

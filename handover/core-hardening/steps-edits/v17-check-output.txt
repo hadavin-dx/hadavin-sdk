@@ -305,3 +305,34 @@ NEG r17pin-m40not caught | FAIL r17 pin m40 not sure lacks 'Reply `yes`, `no, ot
 NEG r17pin-m41onl caught | FAIL r17 pin m41 only yes lacks 'Only `yes` together with `different key` means that nothi
 NEG r17pin-m43sto caught | FAIL r17 pin m43 stop looking lacks '`ok flow rehearsal`, `please stop looking`, `you may 
 NEG r17pin-m45C caught | FAIL r17 F-4 the new-key rule has numbers ['2', '30']
+NEG r17pin-m45H caught | FAIL r17 F-4 the new-key rule has numbers ['20', '30']
+NEG r17pin-m48G caught | FAIL r17 pin m48 G lacks 'Do not shred part (a) while a take is running'
+NEG r17pin-m51why caught | FAIL r17 pin m51 why lacks 'Security F2 of round 15: input line 112'
+NEG r17pin-m53unv caught | FAIL r17 pin m53 unverified lacks 'is not proven (UNVERIFIED)'
+NEG r17pin-m54typ caught | FAIL r17 pin m54 typed lacks 'Only your own typed messages count (key step B)'
+NEG r17pin-m60car caught | FAIL r17 pin m60 card 1 lacks 'on Mon 23 Nov 2026 it is at 18:19 UTC = 23:49 IST at the la
+NEG r17pin-B03no caught | FAIL r17 pin B03 no space lacks 'It contains no `..`, no space, no quote sign'
+NEG r17pin-B04ten caught | FAIL r17 pin B04 ten minutes lacks 'the 10 minutes between are only for the shred of the k
+NEG r17pin-B05ste caught | FAIL r17 pin B05 step 21 heading lacks '### Step 21. Watch the cut by Mon 23 Nov 2026 18:1
+NEG r17pin-B08nev caught | FAIL r17 pin B08 never opens lacks 'The assistant never opens the key file (this is a proc
+NEG r17pin-B09def caught | FAIL r17 F-8 D.3 lacks 'no reply counts as `another take`'
+NEG r17pin-B10for caught | FAIL r17 pin B10 forced revoke lacks 'revoke the key at that time anyway (key step I)'
+NEG r17pin-r17key caught | FAIL r17 pin r17 key gone one word lacks 'so after it you do not type `key revoked` again'
+NEG r17pin-r17D.5 caught | FAIL r16 F1 D5 lacks 'you revoke the key at that time anyway (key step I) and then write `
+NEG r17order-card caught | FAIL r16 F4 the numbered order is missing or out of order: [125, 415, 591, -1, 731, 898, 1
+NEG r17order-e16 caught | FAIL r17 F-1 the seven steps are missing or out of order in E-16: [440, 518, 687, -1, 817,
+NEG r17start-e55 caught | FAIL r17 F-1 start sentence in E-16 lacks 'Item 1 starts only when ALL of these are true, 
+NEG r17oldwords caught | FAIL r17 F-8 old words still has '`shred done 2`'
+NEG r17more caught | FAIL r17 F-8 old words still has '`more takes`'
+NEG r17abs caught | FAIL r17 absolute path in owner text: your last take (see /home/user/x/notes). The w
+NEG r17ord-code caught | FAIL r17 internal code in owner text: ORD:
+NEG r17dec-code caught | FAIL r17 internal code in owner text: DEC:
+NEG r17row-e48 caught | FAIL r17 internal code in owner text: row E-48
+NEG r17n1 caught | FAIL r17 N1 ND16 lacks 'I accept that until I revoke the secret key for the model it can s
+NEG r17alarm3 caught | FAIL r17 F-3 C lacks 'if a take is running, let it finish (key step K), then revoke the ke
+NEG r17routeb caught | FAIL r17 F-2 route B price in D.1 lacks 'Route A is the safer one'
+NEG r17appx caught | FAIL r17 F-2 appendix landing lacks 'a separate page, not part of the sheet'
+NEG r17applink caught | FAIL r17 F-2 link in owner text lacks 'the detail is on a separate page, Appendix K, which
+NEG r17thirty caught | FAIL r17 F-4 the new-key rule has numbers ['20', '30']
+NEG r17last caught | FAIL r14 3a key end
+FAILURES 0

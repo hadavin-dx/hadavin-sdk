@@ -18,3 +18,5 @@ m17 [/bin/bash]: KILLED-phase1 exit=1 fail_lines=12 SELF-TEST: passed=1570 faile
 m18 [/bin/bash]: KILLED-phase1 exit=1 fail_lines=4 SELF-TEST: passed=1578 failed=4 (the made-up input and output files were deleted) (9s)
 m19 [/bin/bash]: SURVIVED exit=0 SELF-TEST: passed=1615 failed=0 (the made-up input and output files were deleted) first_fail=[] (127s)
 m20 [/bin/bash]: KILLED-phase1 exit=1 fail_lines=7 SELF-TEST: passed=1576 failed=6 (the made-up input and output files were deleted) (3s)
+m21 [/bin/bash]: SURVIVED exit=0 SELF-TEST: passed=1615 failed=0 (the made-up input and output files were deleted) first_fail=[] (99s)
+m22 [/bin/bash]: SURVIVED exit=0 SELF-TEST: passed=1615 failed=0 (the made-up input and output files were deleted) first_fail=[] (93s)

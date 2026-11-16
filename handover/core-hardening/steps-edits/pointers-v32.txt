@@ -1,3 +1,45 @@
+changes| 111 in the lead pages, and |section 6
+changes| 7.11, 8.8, R1, R4, R8, R9, |Open 107, 110 and 111
+changes| Also open and not decided: |Open 102, 103, 107
+changes| after I read the diff (see |section 4
+changes| from the card; owner sheet |5.8
+changes| new pointers are 5.8, 6.7, |7.11
+changes| pointers are step numbers (|5.8
+changes| see section 5. Plants: see |section 5
+changes| the helper is "none". 4. **|Open 71
+changes| this file states only what |section 5
+changes| v31 once: new pointers are |5.8
+changes| | C232 | Z19 | | Naive M8: |section 7
+changes|(5.8, 6.6, 6.7, 7.11, 8.8), |R1
+changes|, 6.6, 6.7, 7.11, 8.8), R1, |R4
+changes|. Fail-proof of Part 9: see |section 5
+changes|.7, 7.11, 8.8), R1, R4, R8, |R9
+changes|.8, 6.7, 7.11, 8.8, R1, R4, |R8
+changes|1, 8.8), R1, R4, R8, R9 and |section 1
+changes|6, 6.7, 7.11, 8.8), R1, R4, |R8
+changes|6.7, 7.11, 8.8, R1, R4, R8, |R9
+changes|DB-2, the delete criterion, |Q27
+changes|alid key is described only; |7.11
+changes|are step numbers (5.8, 6.6, |6.7
+changes|arries a LEAD FILLS blank), |Open 111
+changes|asured numbers (commands in |section 5
+changes|d meanings, reading load of |7.11
+changes|e table in section 3 lists. |7.11
+changes|ed beyond what the table in |section 3
+changes|en: a failed key save skips |6.7
+changes|he reading-load proposal of |section 6
+changes|iled key save skips 6.7 and |7.11
+changes|mbers (5.8, 6.6, 6.7, 7.11, |8.8
+changes|my number, not the lead's), |Open 112
+changes|ointers are 5.8, 6.7, 7.11, |8.8
+changes|once: new pointers are 5.8, |6.7
+changes|ows I added for the lead:** |Open 110
+changes|re 5.8, 6.7, 7.11, 8.8, R1, |R4
+changes|rs are 5.8, 6.7, 7.11, 8.8, |R1
+changes|tep numbers (5.8, 6.6, 6.7, |7.11
+changes|ters are step numbers (5.8, |6.6
+changes|th and a sixth phone alarm; |5.8
+changes|the lead may refuse it (see |section 6
 note| (Open 71), the word count (|Open 75
 note| (c), in force (lead answer |Q22
 note| (within 2 minutes) at 6.3; |6.5
@@ -687,7 +729,6 @@ sheetA|run key (the three words at |5.9
 sheetA|s <in words>, is it yours" (|R8
 sheetA|s no. Your yes binds you to |7.11
 sheetA|s of it, and "confirmed" of |5.9
-sheetA|s the lead's open question (|Open 110
 sheetA|s; any other: no run (until |5.9
 sheetA|sage "wait" or a slow lead (|6.6
 sheetA|send "none" for the time in |8.1
@@ -923,7 +964,6 @@ sheetB|run key (the three words at |5.9
 sheetB|s <in words>, is it yours" (|R8
 sheetB|s no. Your yes binds you to |7.11
 sheetB|s of it, and "confirmed" of |5.9
-sheetB|s the lead's open question (|Open 110
 sheetB|s; any other: no run (until |5.9
 sheetB|sage "wait" or a slow lead (|6.6
 sheetB|send "none" for the time in |8.1

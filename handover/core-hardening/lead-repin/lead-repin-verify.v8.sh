@@ -162,8 +162,8 @@ bg_wait() { "$@" & BGPID=$!; wait "$BGPID"; bg_rc=$?; BGPID=; return "$bg_rc"; }
 #  9  e-mail addresses are replaced by <email-masked>.
 # Stage 2 (mask.awk), see the comments in that file.
 # planned number of checks (the canary alone; the whole --self-test): a run that passes fewer or more is NOT accepted
-CANARY_PLANNED=1582
-SELFTEST_PLANNED=1615
+CANARY_PLANNED=1588
+SELFTEST_PLANNED=1622
 SOH=$(printf '\001'); STX=$(printf '\002'); ETX=$(printf '\003'); ENQ=$(printf '\004')
 write_mask_sed() {
   # NAME RULE (one general rule, not a list of names): an identifier is secret when
@@ -1149,6 +1149,7 @@ self_test() {
     v8; printf 'client.set_password("%s")\n' "$vv"; v8_reg 'set_password("value")' LS
     # (evidence) a name followed only by white space and the value
     v8; printf 'password %s\n' "$vv"; v8_reg 'bare password VALUE (one space)' LS
+    v8; printf 'chat token xoxb-%s-%s sent\n' "$vv" "$vv"; v8_reg 'chat-service token xoxb- with a short value (sed rule alone)' LS
     v8; printf 'proxy sent Basic %s%s and then closed\n' "$vv" "$vv"; v8_reg 'Basic VALUE inside a sentence (sed rule alone)' LS
     v8; printf 'Basic %s%s\n' "$vv" "$vv"; v8_reg 'Basic VALUE at line start (sed rule alone)' LS
     v8; printf '# password %s\n' "$vv"; v8_reg 'commented-out bare password VALUE (#)' LS
@@ -1591,6 +1592,11 @@ EOF
   st_mf=$WORK/st-maskfail; mkdir "$st_mf"
   ( WORK=$st_mf; printf 'x\n' | mstage sh -c 'cat > /dev/null; exit 7'; printf 'x\n' | mstage sh -c 'cat > /dev/null; exit 141'; [ "$(cat "$WORK/mask.fail" 2>/dev/null)" = "sh 7" ] ) && st_mu=1 || st_mu=0
   rm -rf "$st_mf"
+  # v8 (evidence plant m19): the clean-up must refuse a folder whose name is not lead-repin.XXXXXX (a decoy folder with one file must survive)
+  st_dc=$st_child/decoy-guard; mkdir "$st_dc"; : > "$st_dc/keep"
+  ( WORK=$st_dc; CLEAN=1; WDPID=; cleanup ) > /dev/null 2>&1
+  if [ -f "$st_dc/keep" ]; then mt_ok "the clean-up refuses to delete a folder that is not a lead-repin work folder"; else mt_bad "the clean-up deleted a folder whose name is not lead-repin.XXXXXX"; fi
+  rm -rf "$st_dc"
   st_realtr=$(command -v tr)
   printf '#!/bin/sh\ncat > "%s/tr.in"\nif grep -a -q ZZFAILMARKZZ "%s/tr.in"; then exit 5; fi\nexec "%s" "$@" < "%s/tr.in"\n' "$st_fake" "$st_fake" "$st_realtr" "$st_fake" > "$st_fake/tr"; chmod +x "$st_fake/tr"
   st_o=$(printf 'ZZFAILMARKZZ\n' | PATH="$st_fake:$PATH" LEAD_REPIN_NO_META=1 TMPDIR="$st_child" sh "$st_sa" --mask 2>"$WORK/st-mf.err"); st_r=$?

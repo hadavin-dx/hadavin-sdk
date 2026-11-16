@@ -188,8 +188,10 @@ check("G5 settle of a worst case larger than what is open (3 > 2) refused 23514"
 r = rt.execute("SELECT * FROM spend_settle('a', %s, %s, %s)", (D, Decimal("-1"), Decimal("0"))).fetchone()
 check("G6 a negative worst case changes nothing (total stays 2.4)", r == (Decimal("2.4"), Decimal("2.4")), str(r))
 check("G6 a negative actual cost changes nothing", rt.execute("SELECT * FROM spend_settle('a', %s, %s, %s)", (D, Decimal("1"), Decimal("-5"))).fetchone() == (Decimal("2.4"), Decimal("2.4")))
-for v in ("NaN", "Infinity", "-1"):
+for v in ("NaN", "Infinity"):
     check(f"G7 reserve of {v} refused 23514", st(lambda: rt.execute("SELECT * FROM spend_reserve('a', %s, %s)", (D, Decimal(v)))) == "23514")
+_ua = mg.execute("SELECT usd, open_usd FROM spend WHERE agent_id='a'").fetchone()
+check("G7 reserve of -1: v19 refuses it by writing nothing (the function returns the unchanged totals, v18 raised 23514): total and open amount of the agent unchanged", rt.execute("SELECT * FROM spend_reserve('a', %s, %s)", (D, Decimal("-1"))).fetchall() == [(_ua[0], mg.execute("SELECT usd FROM spend_month WHERE agent_id='a'").fetchone()[0])] and mg.execute("SELECT usd, open_usd FROM spend WHERE agent_id='a'").fetchone() == _ua)
 check("G7 a settle with actual NaN refused 23514 and the total is unchanged", st(lambda: rt.execute("SELECT * FROM spend_settle('a', %s, %s, %s)", (D, Decimal("1"), Decimal("NaN")))) == "23514" and rt.execute("SELECT usd FROM spend WHERE agent_id='a'").fetchone()[0] == Decimal("2.4"))
 # unbounded inputs (coordinator item 4)
 check("G12 a reserve of 1000000000000 (the ceiling) refused 23514, 999999999999 accepted", st(lambda: rt.execute("SELECT * FROM spend_reserve('big', %s, %s)", (D, Decimal("1000000000000")))) == "23514" and st(lambda: rt.execute("SELECT * FROM spend_reserve('big', %s, %s)", (D, Decimal("999999999999")))) is None)
@@ -374,7 +376,7 @@ check("L m7 text: the DB-3 file has SET LOCAL statement_timeout as its second st
 dbp = "ma_" + secrets.token_hex(3); build(dbp, []); mgp = psycopg.connect(dsn("migr17", dbp), autocommit=True)
 def both(text, allowed, file="x.sql"):
     return (bool(g18.check_sql_text(file, text, allowed)), bool(g19.check_sql_text(file, text, allowed, atomic_tables=ATOMIC_TABLES_BY_FILE.get(file))))
-for lbl, stmt, probe in (('SET "role" TO rt17 (quoted name)', 'SET "role" TO rt17', None), ("SET session_authorization rt17 (one underscore word)", "SET session_authorization rt17", None), ("SELECT set_config('role','rt17',false)", "SELECT set_config('role','rt17',false)", None)):
+for lbl, stmt, probe in (('SET "role" TO rt17 (quoted name)', 'SET "role" TO rt17', None), ("SET session_authorization TO rt17 (one underscore word)", "SET session_authorization TO rt17", None), ("SELECT set_config('role','rt17',false)", "SELECT set_config('role','rt17',false)", None)):
     admin.execute("RESET ALL"); admin.execute(stmt); cu = admin.execute("SELECT current_user, session_user").fetchone(); admin.execute("RESET ALL")
     f18, f19 = both(stmt + ";\n", {})
     check(f"MA1 real server: {lbl} changes the session identity on 16.15 (current_user, session_user = {cu}); v18 guard flags it = {f18}; v19 guard flags it = {f19}", (cu[0] == "rt17" or cu[1] == "rt17") and f19)

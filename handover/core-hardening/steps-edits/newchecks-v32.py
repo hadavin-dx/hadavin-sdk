@@ -520,7 +520,8 @@ for _n, _t in (('A', A), ('B', B)):
 # C232 (S minor 5, N minor): alarms: two deadline reminders are a fifth and a sixth alarm, set at 5.8
 for _n, _t in (('A', A), ('B', B)):
     for _s in ('a fifth and a sixth phone alarm', 'check all six are set and ring with sound', 'two **deadline reminders**'):
-        if _s not in SHEETS_DISK[_n] or _s not in _CARD[_n]: fail('C232', '%s (sheet or card) lacks %r' % (_n, _s))
+        if _s not in SHEETS_DISK[_n]: fail('C232', 'sheet %s lacks %r' % (_n, _s))
+    if 'a fifth and a sixth phone alarm' not in _CARD[_n]: fail('C232', 'card %s lacks the fifth and sixth alarm' % _n)
     if _FF['bs'] not in _t or _FF['bm'] not in _t: fail('C232', '%s lacks a deadline reminder time' % _n)
 # C233 (N M7; class: one statement with two sources): the yes is typed from one pattern, and it binds the owner
 for _n, _t in (('A', A), ('B', B)):

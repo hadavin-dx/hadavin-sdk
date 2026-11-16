@@ -54,7 +54,7 @@ def run_block(src, name):
             SKIPPED_PORT.append("%s line %d: %s %s" % (name, node.lineno, type(e).__name__, str(e)[:70]))
 
 M = {}
-box_end = rep.index("## 0. Failures")
+box_end = rep.index("## Start here, part 2")
 run_block(open(E + "neg_ported_c6r.py", encoding="utf-8").read(), "neg_ported_c6r.py")
 run_block(open(E + "neg_new_c6s.py", encoding="utf-8").read(), "neg_new_c6s.py")
 for _k in ("S-F4g-sheet-v31-exists", "S-F4h-release-note-v15-exists", "S-F4i-v30-sheet-newer-than-check-time", "S-F4j-v30-B-file-missing"):

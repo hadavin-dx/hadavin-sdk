@@ -142,7 +142,7 @@ M = [
 ('M45', S, 'you read both at 6.2 and 6.7', 'you read both at 6.2 and 6.8', 'R4 pointer 6.7 to 6.8'),
 ('M46', S, 'after the model key\'s cancel press, card step 3)', 'after the model key\'s cancel press, card step 5)', '8.1 card step 3 to 5'),
 ('M47', S, '## 9. Posting (by {{postby}}', '## 9. Posting (by Wed 25 Nov 2026 15:00 UTC = 20:00 IST', 'post-by IST in sheet'),
-('M48', C, '6.7 in A now reads the last-used time', '6.9 in A now reads the last-used time', 'CHANGES table pointer 6.7 to 6.9'),
+('M48', C, 'a failed key save skips 6.7 and 7.11 still cancels in A', 'a failed key save skips 6.9 and 7.11 still cancels in A', 'CHANGES table pointer 6.7 to 6.9'),
 ('M49', O, "the sheet's 7.8 error sentence stays", "the sheet's 7.7 error sentence stays", 'open row pointer 7.8 to 7.7'),
 ('M50', N, 'gives 0.27; ceiling 3 gives expected total 0.81', 'gives 0.28; ceiling 3 gives expected total 0.81', 'note worked price'),
 ('M51', S, 'send "{{ph_dmd}}"', 'send "all done"', 'unlisted set phrase sent in 8.5'),

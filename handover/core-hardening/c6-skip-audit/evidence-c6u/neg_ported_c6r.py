@@ -1,4 +1,4 @@
-box_end = rep.index("## 0. Failures")
+box_end = rep.index("## Start here, part 2")
 M["V0-control-unchanged"] = rep
 M["V1a-oldquote-row1"] = mut_row(rep, 1, "old", lambda s: s.replace("Scene 4 caption", "Scene 4 captionX", 1))
 M["V1b-oldquote-row40"] = mut_row(rep, 40, "old", lambda s: s[:12] + "X" + s[12:])
@@ -59,22 +59,22 @@ M["C13-ORD147-departure-gone-from-section0"] = once("- DEPARTURE FROM ORD:147, S
 M["C14-item15-without-real-value"] = mut_row(rep, 6, "new", lambda s: s.replace("the real value of the customer-list key", "the customer-list key", 1))
 M["C15-L-POST-gone-from-box"] = "\n".join(l for l in rep.split("\n") if not l.startswith("| L-POST |"))
 M["C16-1051-line-without-UNVERIFIED"] = rep + "\nThe plan line 1051 is stale.\n"
-M["C17-ready-used-before-defined-in-box-intro"] = once("Every question has a default", "Every ready question has a default")
-M["C18-check-time-not-in-report"] = rep.replace(CTU_PLACEHOLDER, "00:00:00") if False else re.sub(r"2026-11-16T17:\d\d:\d\dZ", "2026-11-16T10:00:00Z", rep)
+M["C17-ready-used-before-defined-in-box-intro"] = once("Every question below has ONE status", "Every ready question below has ONE status")
+M["C18-check-time-not-in-report"] = rep.replace(CTU_PLACEHOLDER, "00:00:00") if False else re.sub(r"2026-11-16T18:\d\d:\d\dZ", "2026-11-16T10:00:00Z", rep)
 M["C19-row11-total-wrong"] = mut_row(rep, 11, "new", lambda s: s.replace("about 190 s in all", "about 200 s in all", 1))
 M["C20-add-16-wording-back"] = rep + "\nThe longer sentence adds +16 s.\n"
-M["C21-tied-column-lacks-L-POST"] = re.sub(r"(\| L-POST \(new in c6q\).*\| )(11, 13, 21) \|$", r"\1 13, 21 |", rep, count=1, flags=re.M)
+M["C21-tied-column-lacks-L-POST"] = re.sub(r"(\| L-POST \(new in c6q\).*\| )11, (13, 21, 96) \|$", r"\1 \2 |", rep, count=1, flags=re.M)
 
 # ---- c6r: the eight mutations the independent evidence of c6q did not catch, and the new classes of c6r
 M["E1-weekday-wrong-Thu-18-Nov"] = once("Wed 18 Nov 2026", "Thu 18 Nov 2026")
 M["E1b-weekday-wrong-Tue-23-Nov"] = once("Mon 23 Nov 2026", "Tue 23 Nov 2026")
 M["E2-lease-sentence-on-caption-row21"] = mut_row(rep, 21, "new", lambda s: s + " We make this claim only when the second send comes within 45 seconds of the first send.")
 M["E3-capital-The-lease-question-in-row13"] = mut_row(rep, 13, "new", lambda s: s + " The lease question is open.")
-M["E4-wrong-count-42-apply"] = once("36 apply on the default", "42 apply on the default")
-M["E5-wrong-wave1-91-rows"] = once("85 wave 1 rows", "91 wave 1 rows") if "85 wave 1 rows" in rep else once("applies the 85 wave 1", "applies the 91 wave 1 rows")
+M["E4-wrong-count-42-apply"] = once("ON DEFAULT (38:", "ON DEFAULT (42:")
+M["E5-wrong-wave1-91-rows"] = once("applies the 87 wave 1 rows", "applies the 91 wave 1 rows")
 M["E6-stale-58-s-in-box"] = rep[:box_end] + " The card needs about 58 s. " + rep[box_end:]
 M["E7-within-45-seconds-row14"] = mut_row(rep, 14, "new", lambda s: s + " (within 45 seconds)")
-M["E8-v29-file-missing-from-line"] = once("OWNER-SHEET-v29-B.md (written", "OWNER-SHEET-v29-X.md (written")
+M["E8-v29-file-missing-from-line"] = once("OWNER-SHEET-v32-B.md (written", "OWNER-SHEET-v32-X.md (written")
 M["R1-M-A-gate-removed-row8"] = mut_row(rep, 8, "new", lambda s: s.replace("lease wording approved", "lease wording seen"))
 M["R2-M-B-one-alert-fact-row14"] = mut_row(rep, 14, "new", lambda s: s.replace("it sends an alert, a warning mail", "it sends one alert, a warning mail", 1))
 M["R3-M-C-assumption-label-gone-box"] = once("MY ASSUMPTION", "THE RULE")
@@ -85,7 +85,7 @@ M["R7-M-E-row53-ready-again"] = mut_row(rep, 53, "st", lambda s: "NOT APPLIED; r
 M["R8-M-F-24-word-rewrite-back"] = rep + "\nWith answer 1 and option (b), line 1 is a 24-word rewrite.\n"
 M["R9-take-over-back-in-box"] = once("TO REVERSE A DEFAULT", "the recovery flow takes over the contact\nTO REVERSE A DEFAULT") if False else rep.replace("claim the contact again", "take over the contact", 1)
 M["R10-pipe-in-row-text"] = mut_row(rep, 15, "new", lambda s: s + " a | b")
-M["R11-source-copy-statement-gone"] = rep.replace("89 of the 94 rows", "most rows", 1)
+M["R11-source-copy-statement-gone"] = rep.replace("91 of 96 rows", "most rows")
 M["R12-L-SAVEERR-default-yes"] = "\n".join(l.replace("| No |", "| Yes |") if l.startswith("| L-SAVEERR | OWNER ONLY") else l for l in rep.split("\n"))
 M["R13-item12-made-up-domain-check-gone"] = mut_row(rep, 6, "new", lambda s: s.replace("made-up e-mail domain and the name marker", "made-up domain", 1))
 M["R14-IST-missing-next-to-22-10-example"] = rep.replace("00:10:00 IST", "00:10:00", 1)

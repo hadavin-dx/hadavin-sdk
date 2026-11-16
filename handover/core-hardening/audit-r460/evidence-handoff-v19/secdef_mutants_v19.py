@@ -97,7 +97,7 @@ addn("N04 DROP FUNCTION alone", "DROP FUNCTION kill_switch_engage();\n", {ENG: "
 # ---- MA1b: role and session switches, quoted and underscore spellings, set_config
 addn("N05 SELECT set_config('role', 'postgres', false) at top level", "SELECT set_config('role', 'postgres', false);\n")
 addn('N06 SET "role" TO postgres (quoted name)', 'SET "role" TO postgres;\n')
-addn("N07 SET session_authorization postgres (one underscore word)", "SET session_authorization postgres;\n")
+addn("N07 SET session_authorization TO postgres (one underscore word)", "SET session_authorization TO postgres;\n")
 addn('N08 RESET "role"', 'RESET "role";\n')
 addn('N09 SET LOCAL "role" = postgres', 'SET LOCAL "role" = postgres;\n')
 addn("N10 SET SESSION_AUTHORIZATION TO postgres", "SET SESSION_AUTHORIZATION TO postgres;\n")
