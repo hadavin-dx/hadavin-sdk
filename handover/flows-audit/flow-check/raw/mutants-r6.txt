@@ -1,0 +1,3 @@
+v_in_PH_and rc 1 KILLED SELFTEST: 500 as expected, 2 not as expected, 58 skipped (not applicable)
+sqldone1 rc 1 KILLED SELFTEST: 500 as expected, 2 not as expected, 58 skipped (not applicable)
+quiet_false rc 1 KILLED SELFTEST: 501 as expected, 1 not as expected, 58 skipped (not applicable)

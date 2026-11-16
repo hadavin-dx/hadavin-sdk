@@ -1,4 +1,4 @@
-$ python3 -I /home/user/hadavin-sdk/handover/flows-audit/flow-check/check_flows.py /tmp/fc-selftest-20t3wetb/wh-only /tmp/fc-selftest-20t3wetb/fm-only --files mf-form.json --baseline /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-real-v5 --quiet-info --fail-unverified
+$ python3 -I /home/user/hadavin-sdk/handover/flows-audit/flow-check/check_flows.py /tmp/fc-selftest-2ikfamze/wh-only /tmp/fc-selftest-2ikfamze/fm-only --files mf-form.json --baseline /home/user/hadavin-sdk/handover/flows-audit/flow-check/../../demo/n8n-flows-real-v5 --quiet-info --fail-unverified
 # ===== READ THIS FIRST (plain words; every line of this header starts with '#') =====
 # What this is: a read-only check of the exported n8n flow files (text files). It never started n8n.
 # Verdict: exit code 0 does NOT mean the flows are ready to film. It only means the checker found no structural FAIL.
@@ -10,20 +10,20 @@ $ python3 -I /home/user/hadavin-sdk/handover/flows-audit/flow-check/check_flows.
 # A credential id that is still a placeholder is always a WARN (use --require-real-credential-ids to make it a FAIL).
 # The numbers for THIS run (open decisions, known open problems, accepted IF branches) are printed in the closing block: 'OPEN LEAD DECISIONS' and 'Known open problems'.
 # =============================================================================
-### /tmp/fc-selftest-20t3wetb/wh-only
-WARN-LEAD-DECISION /tmp/fc-selftest-20t3wetb/wh-only/mf-form.json webhook Receive has no authentication (anyone who knows the address can post) [open web address: the owner decides, see REPORT.md; run with --require-webhook-auth to make it a FAIL]
-WARN /tmp/fc-selftest-20t3wetb/wh-only/mf-form.json webhook Receive: REPLY GAP: if ['Claim', 'RunSub', 'Stored'] fails the run stops and the caller gets no answer (error path has no reply; read from the file, n8n not run)
-  [/tmp/fc-selftest-20t3wetb/wh-only/mf-form.json] webhook Receive: 3 respondToWebhook node(s) reachable ['ReplyRan', 'ReplyReview', 'ReplyStored']; paths without a reply: none
-WARN /tmp/fc-selftest-20t3wetb/wh-only/mf-form.json 3 id(s) are still placeholders and must be replaced in n8n before import: Claim credential postgres id PG_CREDENTIAL_ID; RunSub sub-workflow id SUB_WORKFLOW_ID; Stored credential postgres id PG_CREDENTIAL_ID [run with --require-real-credential-ids to make this a FAIL]
-WARN /tmp/fc-selftest-20t3wetb/wh-only/mf-form.json external-call nodes without retryOnFail: ['Claim', 'RunSub', 'Stored']
-WARN /tmp/fc-selftest-20t3wetb/wh-only/mf-form.json this flow's run-saving settings ['saveDataSuccessExecution', 'saveDataErrorExecution', 'saveManualExecutions'] are off ('none' or false): n8n keeps no run list for those runs (saveManualExecutions off = a run started with 'Test workflow' is not kept either), so a person cannot open a past run to see what happened
+### /tmp/fc-selftest-2ikfamze/wh-only
+WARN-LEAD-DECISION /tmp/fc-selftest-2ikfamze/wh-only/mf-form.json webhook Receive has no authentication (anyone who knows the address can post) [open web address: the owner decides, see REPORT.md; run with --require-webhook-auth to make it a FAIL]
+WARN /tmp/fc-selftest-2ikfamze/wh-only/mf-form.json webhook Receive: REPLY GAP: if ['Claim', 'RunSub', 'Stored'] fails the run stops and the caller gets no answer (error path has no reply; read from the file, n8n not run)
+  [/tmp/fc-selftest-2ikfamze/wh-only/mf-form.json] webhook Receive: 3 respondToWebhook node(s) reachable ['ReplyRan', 'ReplyReview', 'ReplyStored']; paths without a reply: none
+WARN /tmp/fc-selftest-2ikfamze/wh-only/mf-form.json 3 id(s) are still placeholders and must be replaced in n8n before import: Claim credential postgres id PG_CREDENTIAL_ID; RunSub sub-workflow id SUB_WORKFLOW_ID; Stored credential postgres id PG_CREDENTIAL_ID [run with --require-real-credential-ids to make this a FAIL]
+WARN /tmp/fc-selftest-2ikfamze/wh-only/mf-form.json external-call nodes without retryOnFail: ['Claim', 'RunSub', 'Stored']
+WARN /tmp/fc-selftest-2ikfamze/wh-only/mf-form.json this flow's run-saving settings ['saveDataSuccessExecution', 'saveDataErrorExecution', 'saveManualExecutions'] are off ('none' or false): n8n keeps no run list for those runs (saveManualExecutions off = a run started with 'Test workflow' is not kept either), so a person cannot open a past run to see what happened
 mf-form.json nodes=12 connections=11 triggers=['Receive'] saveDataSuccess=none saveDataError=none saveManual=False
   credentials (node, kind, name, id): Claim postgres n8n-publish-pg PG_CREDENTIAL_ID; Stored postgres n8n-publish-pg PG_CREDENTIAL_ID
-### /tmp/fc-selftest-20t3wetb/fm-only
-WARN-LEAD-DECISION /tmp/fc-selftest-20t3wetb/fm-only/mf-form.json form trigger Receive has no authentication setting (anyone who knows the form address can submit; the n8n parameter name is itself n8n rule UNVERIFIED) [open web address: the owner decides, see REPORT.md; run with --require-webhook-auth to make it a FAIL]
-WARN /tmp/fc-selftest-20t3wetb/fm-only/mf-form.json 3 id(s) are still placeholders and must be replaced in n8n before import: Claim credential postgres id PG_CREDENTIAL_ID; RunSub sub-workflow id SUB_WORKFLOW_ID; Stored credential postgres id PG_CREDENTIAL_ID [run with --require-real-credential-ids to make this a FAIL]
-WARN /tmp/fc-selftest-20t3wetb/fm-only/mf-form.json external-call nodes without retryOnFail: ['Claim', 'RunSub', 'Stored']
-WARN /tmp/fc-selftest-20t3wetb/fm-only/mf-form.json this flow's run-saving settings ['saveDataSuccessExecution', 'saveDataErrorExecution', 'saveManualExecutions'] are off ('none' or false): n8n keeps no run list for those runs (saveManualExecutions off = a run started with 'Test workflow' is not kept either), so a person cannot open a past run to see what happened
+### /tmp/fc-selftest-2ikfamze/fm-only
+WARN-LEAD-DECISION /tmp/fc-selftest-2ikfamze/fm-only/mf-form.json form trigger Receive has no authentication setting (anyone who knows the form address can submit; the n8n parameter name is itself n8n rule UNVERIFIED) [open web address: the owner decides, see REPORT.md; run with --require-webhook-auth to make it a FAIL]
+WARN /tmp/fc-selftest-2ikfamze/fm-only/mf-form.json 3 id(s) are still placeholders and must be replaced in n8n before import: Claim credential postgres id PG_CREDENTIAL_ID; RunSub sub-workflow id SUB_WORKFLOW_ID; Stored credential postgres id PG_CREDENTIAL_ID [run with --require-real-credential-ids to make this a FAIL]
+WARN /tmp/fc-selftest-2ikfamze/fm-only/mf-form.json external-call nodes without retryOnFail: ['Claim', 'RunSub', 'Stored']
+WARN /tmp/fc-selftest-2ikfamze/fm-only/mf-form.json this flow's run-saving settings ['saveDataSuccessExecution', 'saveDataErrorExecution', 'saveManualExecutions'] are off ('none' or false): n8n keeps no run list for those runs (saveManualExecutions off = a run started with 'Test workflow' is not kept either), so a person cannot open a past run to see what happened
 mf-form.json nodes=12 connections=11 triggers=['Receive'] saveDataSuccess=none saveDataError=none saveManual=False
   credentials (node, kind, name, id): Claim postgres n8n-publish-pg PG_CREDENTIAL_ID; Stored postgres n8n-publish-pg PG_CREDENTIAL_ID
 WARN sql no --ddl file was given: the columns used in the SQL queries were NOT compared with any table definition; pass --ddl FILE (the take needs demo/n8n-flows-v4/mf_leads.sql, the table with the alert columns)
@@ -31,21 +31,21 @@ RESULT: 0 FAIL, 10 WARN
 OPEN LEAD DECISIONS: 2 webhook(s) without auth, 0 $env node(s)  (exit 0 does NOT mean authentication was checked)
 No static tool can see whether n8n blocks environment-variable access inside nodes (an n8n instance setting): check it on the machine that films the take; run with --block-env-access to see which steps depend on it.
 CREDENTIAL IDS STILL PLACEHOLDERS (6): these must be replaced in n8n before import (the id that n8n gives each credential and each sub-workflow):
-  - /tmp/fc-selftest-20t3wetb/wh-only/mf-form.json node Claim credential postgres id: PG_CREDENTIAL_ID
-  - /tmp/fc-selftest-20t3wetb/wh-only/mf-form.json node RunSub sub-workflow id: SUB_WORKFLOW_ID
-  - /tmp/fc-selftest-20t3wetb/wh-only/mf-form.json node Stored credential postgres id: PG_CREDENTIAL_ID
-  - /tmp/fc-selftest-20t3wetb/fm-only/mf-form.json node Claim credential postgres id: PG_CREDENTIAL_ID
-  - /tmp/fc-selftest-20t3wetb/fm-only/mf-form.json node RunSub sub-workflow id: SUB_WORKFLOW_ID
-  - /tmp/fc-selftest-20t3wetb/fm-only/mf-form.json node Stored credential postgres id: PG_CREDENTIAL_ID
+  - /tmp/fc-selftest-2ikfamze/wh-only/mf-form.json node Claim credential postgres id: PG_CREDENTIAL_ID
+  - /tmp/fc-selftest-2ikfamze/wh-only/mf-form.json node RunSub sub-workflow id: SUB_WORKFLOW_ID
+  - /tmp/fc-selftest-2ikfamze/wh-only/mf-form.json node Stored credential postgres id: PG_CREDENTIAL_ID
+  - /tmp/fc-selftest-2ikfamze/fm-only/mf-form.json node Claim credential postgres id: PG_CREDENTIAL_ID
+  - /tmp/fc-selftest-2ikfamze/fm-only/mf-form.json node RunSub sub-workflow id: SUB_WORKFLOW_ID
+  - /tmp/fc-selftest-2ikfamze/fm-only/mf-form.json node Stored credential postgres id: PG_CREDENTIAL_ID
 SQL COLUMNS NOT CHECKED: no --ddl file was given (the take needs demo/n8n-flows-v4/mf_leads.sql).
 Known open problems: 8
-  - /tmp/fc-selftest-20t3wetb/wh-only/mf-form.json: webhook Receive has no authentication (anyone who knows the address can post) [open web address: the owner decides, see REPORT.md; run with --require-webhook-auth to make it a FAIL]
-  - /tmp/fc-selftest-20t3wetb/wh-only/mf-form.json: webhook Receive: REPLY GAP: if ['Claim', 'RunSub', 'Stored'] fails the run stops and the caller gets no answer (error path has no reply; read from the file, n8n not run)
-  - /tmp/fc-selftest-20t3wetb/wh-only/mf-form.json: 3 id(s) are still placeholders and must be replaced in n8n before import: Claim credential postgres id PG_CREDENTIAL_ID; RunSub sub-workflow id SUB_WORKFLOW_ID; Stored credential postgres id PG_CREDENTIAL_ID [run with --require-real-credential-ids to make this a FAIL]
-  - /tmp/fc-selftest-20t3wetb/wh-only/mf-form.json: this flow's run-saving settings ['saveDataSuccessExecution', 'saveDataErrorExecution', 'saveManualExecutions'] are off ('none' or false): n8n keeps no run list for those runs (saveManualExecutions off = a run started with 'Test workflow' is not kept either), so a person cannot open a past run to see what happened
-  - /tmp/fc-selftest-20t3wetb/fm-only/mf-form.json: form trigger Receive has no authentication setting (anyone who knows the form address can submit; the n8n parameter name is itself n8n rule UNVERIFIED) [open web address: the owner decides, see REPORT.md; run with --require-webhook-auth to make it a FAIL]
-  - /tmp/fc-selftest-20t3wetb/fm-only/mf-form.json: 3 id(s) are still placeholders and must be replaced in n8n before import: Claim credential postgres id PG_CREDENTIAL_ID; RunSub sub-workflow id SUB_WORKFLOW_ID; Stored credential postgres id PG_CREDENTIAL_ID [run with --require-real-credential-ids to make this a FAIL]
-  - /tmp/fc-selftest-20t3wetb/fm-only/mf-form.json: this flow's run-saving settings ['saveDataSuccessExecution', 'saveDataErrorExecution', 'saveManualExecutions'] are off ('none' or false): n8n keeps no run list for those runs (saveManualExecutions off = a run started with 'Test workflow' is not kept either), so a person cannot open a past run to see what happened
+  - /tmp/fc-selftest-2ikfamze/wh-only/mf-form.json: webhook Receive has no authentication (anyone who knows the address can post) [open web address: the owner decides, see REPORT.md; run with --require-webhook-auth to make it a FAIL]
+  - /tmp/fc-selftest-2ikfamze/wh-only/mf-form.json: webhook Receive: REPLY GAP: if ['Claim', 'RunSub', 'Stored'] fails the run stops and the caller gets no answer (error path has no reply; read from the file, n8n not run)
+  - /tmp/fc-selftest-2ikfamze/wh-only/mf-form.json: 3 id(s) are still placeholders and must be replaced in n8n before import: Claim credential postgres id PG_CREDENTIAL_ID; RunSub sub-workflow id SUB_WORKFLOW_ID; Stored credential postgres id PG_CREDENTIAL_ID [run with --require-real-credential-ids to make this a FAIL]
+  - /tmp/fc-selftest-2ikfamze/wh-only/mf-form.json: this flow's run-saving settings ['saveDataSuccessExecution', 'saveDataErrorExecution', 'saveManualExecutions'] are off ('none' or false): n8n keeps no run list for those runs (saveManualExecutions off = a run started with 'Test workflow' is not kept either), so a person cannot open a past run to see what happened
+  - /tmp/fc-selftest-2ikfamze/fm-only/mf-form.json: form trigger Receive has no authentication setting (anyone who knows the form address can submit; the n8n parameter name is itself n8n rule UNVERIFIED) [open web address: the owner decides, see REPORT.md; run with --require-webhook-auth to make it a FAIL]
+  - /tmp/fc-selftest-2ikfamze/fm-only/mf-form.json: 3 id(s) are still placeholders and must be replaced in n8n before import: Claim credential postgres id PG_CREDENTIAL_ID; RunSub sub-workflow id SUB_WORKFLOW_ID; Stored credential postgres id PG_CREDENTIAL_ID [run with --require-real-credential-ids to make this a FAIL]
+  - /tmp/fc-selftest-2ikfamze/fm-only/mf-form.json: this flow's run-saving settings ['saveDataSuccessExecution', 'saveDataErrorExecution', 'saveManualExecutions'] are off ('none' or false): n8n keeps no run list for those runs (saveManualExecutions off = a run started with 'Test workflow' is not kept either), so a person cannot open a past run to see what happened
   - sql: no --ddl file was given: the columns used in the SQL queries were NOT compared with any table definition; pass --ddl FILE (the take needs demo/n8n-flows-v4/mf_leads.sql, the table with the alert columns)
 Not proven: that n8n accepts these files on import; what n8n really does when a step fails (for example whether a repeated lead key still gets its answer, and whether a failed step reaches the failure line: only a test run in n8n can show it); whether the SQL inside the postgres nodes is correct (only the column names are compared, and only with --ddl); who calls a web address, whether the flow is active, and test versus production web address; expression syntax beyond node names; secrets in a shape this scan does not list; every rule marked 'n8n rule UNVERIFIED' (webhook authentication values, credential kinds, retry limits, onError values, position of the error output, default responseMode, duplicate method+path or webhookId).
 Passing this check does NOT mean the flows are ready to film.

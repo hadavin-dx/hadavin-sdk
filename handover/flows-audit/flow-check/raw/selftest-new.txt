@@ -695,6 +695,8 @@ r6_sql_warn_counts_for_old_table (exit 0)                                as expe
 r6_sql_warn_counts_for_other_table_name (exit 0)                         as expected
 r6_sql_counts_zero_for_the_v4_table (exit 0)                             as expected
 r6_ddl_given_but_zero_queries_read_says_so_loudly (exit 0)               as expected
+r6_accept_if_that_matches_nothing_is_a_warn_and_counted (exit 0)         as expected
+r6_accept_if_that_matches_is_not_reported_stale (exit 0)                 as expected
 r6_quiet_info_hides_the_type_table_and_without_it_the_table_is_printed   as expected
 r6_secret_looking_key_with_placeholder_token_is_safe                     as expected
 r6_secret_looking_key_with_aws_example_key_is_safe                       as expected
@@ -702,6 +704,7 @@ r6_secret_looking_key_with_literal_value_fails                           as expe
 r6_ddl_file_not_utf8_is_a_usage_error_not_a_crash (exit 2)               as expected
 r6_flow_file_not_utf8_says_unreadable (exit 1)                           as expected
 r6_extra_json_file_not_utf8_says_unreadable (exit 1)                     as expected
+r6_any_crash_of_the_checker_is_exit_3_not_1                              as expected
 r5_python_older_than_3_10_exits_3_with_message                           as expected
 r5_result_line_counts_each_fail_once                                     as expected
 r5_deep_diff_added_to_empty_list_and_removed_to_empty_list               as expected
@@ -710,4 +713,4 @@ diff_text_header_line_exact (one header line per file, on screen and in the --di
 diff_text_exact_line (the change is one readable line, on screen and in the --diff-out file) as expected
 diff_out_unwritable_is_exit_3 (a broken output file is never exit 1)     as expected
 SKIPPED, by case name (a case is skipped on a file that lacks the node type it needs): form_trigger_auth_value_not_accepted=2, form_trigger_auth_without_credentials=2, form_trigger_without_auth_default=2, form_trigger_without_auth_strict=2, hubspot_credential_kind_wrong=4, hubspot_credential_missing=4, hubspot_credential_name_wrong=4, response_mode_missing_default_is_warn=2, response_mode_missing_fail_unverified=2, silent_error_external_call=1, webhook_auth_value_not_accepted=2, webhook_auth_value_not_accepted_default_is_warn=2, webhook_auth_without_credentials=2, webhook_auth_without_credentials_default_is_warn=2, webhook_auth_wrong_credential_kind=2, webhook_auth_wrong_credential_kind_default_is_warn=2, webhook_dead_branch=2, webhook_disabled_no_trigger=2, webhook_id_dict_no_crash=2, webhook_id_list_no_crash=2, webhook_id_reused_in_other_file=2, webhook_no_reply_node=2, webhook_parameters_list_no_crash=2, webhook_parameters_text_no_crash=2, webhook_path_reused_in_other_file=2, webhook_path_reused_with_slash_and_case=2, webhook_reply_node_disabled=2, write_node_continues_on_error=3
-SELFTEST: 649 as expected, 0 not as expected, 62 skipped (not applicable)
+SELFTEST: 652 as expected, 0 not as expected, 62 skipped (not applicable)

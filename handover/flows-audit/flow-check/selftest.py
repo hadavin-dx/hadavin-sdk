@@ -2444,8 +2444,8 @@ def main():
         [PRIS, "--quiet-info", "--accept-if", "mf-recovery.json=NoSuchNode:1"] + acc2,
         0,
         must=[
-            ("WARN", "accept-if: --accept-if mf-recovery.json=NoSuchNode:1 matched nothing"),
-            ("  - ", "accept-if: --accept-if mf-recovery.json=NoSuchNode:1 matched nothing"),
+            ("WARN", "accept-if --accept-if mf-recovery.json=NoSuchNode matched nothing"),
+            ("  - ", "accept-if: --accept-if mf-recovery.json=NoSuchNode matched nothing"),
         ],
     )
     check_out(
@@ -2530,6 +2530,22 @@ def main():
             ("FAIL", "mf-bad.json extra file is unreadable or not valid JSON"),
             ("FAIL", "file list"),
         ],
+    )
+    spec_e = importlib.util.spec_from_file_location("fc_entry", CK)
+    mod_e = importlib.util.module_from_spec(spec_e)
+    spec_e.loader.exec_module(mod_e)
+
+    def _boom(_argv):
+        raise RuntimeError("planted crash")
+
+    mod_e.main = _boom
+    buf_e = io.StringIO()
+    with contextlib.redirect_stdout(buf_e):
+        rc_e = mod_e.entry([])
+    report(
+        "r6_any_crash_of_the_checker_is_exit_3_not_1",
+        rc_e == 3 and "INTERNAL ERROR (exit 3)" in buf_e.getvalue(),
+        f"rc={rc_e}",
     )
     # internals: Python version branch, FAIL counter, deep_diff and the diff header
     spec = importlib.util.spec_from_file_location("fc_unit", CK)

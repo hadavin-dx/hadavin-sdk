@@ -128,8 +128,22 @@ ENVTOK = re.compile(
 )  # $env.X, $env?.X, $env["X"], bare $env, process.env.X, process.env["X"]
 # every way a malformed (but parsable) flow file can make the checker's own code raise: reported as a FAIL, never a Traceback
 READ_ERRORS = (OSError, ValueError, TypeError, KeyError, IndexError, AttributeError, RecursionError)
+# every ordinary Python error class (no blind "except Exception"); anything outside this list (for example KeyboardInterrupt) is not a checker fault
+ANY_CRASH = READ_ERRORS + (
+    ArithmeticError,
+    LookupError,
+    RuntimeError,
+    NameError,
+    AssertionError,
+    ImportError,
+    EOFError,
+    UnicodeError,
+    SyntaxError,
+)
 FAILS, WARNS, KNOWN = [], [], []
-ACCEPT_USED = set()  # (file, node) pairs of --accept-if that matched an IF node with exactly that gap
+ACCEPT_USED = (
+    set()
+)  # (file, node) pairs of --accept-if that matched an IF node with exactly that gap
 ACCEPTED_IF = []  # IF branches excused by a recorded --accept-if decision
 UNV = "n8n rule UNVERIFIED"  # rules about n8n itself that no source in this repo backs (from memory of n8n): WARN only; --fail-unverified makes them FAIL
 
@@ -1766,7 +1780,7 @@ def entry(argv):
     """main(), but a crash of the checker itself is reported as exit 3 (never as exit 1, which means 'a FAIL about the flows')."""
     try:
         return main(argv)
-    except READ_ERRORS as e:
+    except ANY_CRASH as e:  # any other crash is also "the checker broke", never exit 1 (exit 1 means a FAIL about the flows)
         print(f"INTERNAL ERROR (exit 3): the checker itself broke: {type(e).__name__}: {e}")
         return 3
 
