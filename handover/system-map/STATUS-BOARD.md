@@ -1,5 +1,5 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T16:00Z
+UPDATED_UTC: 16:03Z
 PUSHED_UTC: 2026-11-16T16:00Z
 SESSION: system-map
 ORDER: standing order of 14:48Z: keep 8 read-only reader agents running while I fix pages (queue mode)
@@ -48,19 +48,14 @@ INTERRUPTED: none
 | M16 | flow-set question | DONE, closed by decision 1 (real-v5 only; film-v5 out) | 100 | flowset/REPORT.md | |
 
 ## AGENTS
-
-| id | purpose | started UTC | state | next action |
-|---|---|---|---|---|
-| ade0ea1dddc089eb6 | cold read of work/L2.md (reports Blockers and Majors, edits nothing) | 16:00 | running | digest, then relaunch a reader the same turn |
-| a3d421a20aba476bb | cold read of work/L4c.md (reports Blockers and Majors, edits nothing) | 16:00 | running | digest, then relaunch a reader the same turn |
-| a1f5fca9724f02fc4 | cold read of work/L5ac.md (reports Blockers and Majors, edits nothing) | 16:00 | running | digest, then relaunch a reader the same turn |
-| a3ad1b9e7c663f34a | cold read of work/t19-terms.md (reports Blockers and Majors, edits nothing) | 16:00 | running | digest, then relaunch a reader the same turn |
-| a635030f682fcc014 | cold read of work/drift-report-revisions.md (reports Blockers and Majors, edits nothing) | 16:00 | running | digest, then relaunch a reader the same turn |
-| ad5b79eeff6fa81ea | cold read of work/drift-report.md (reports Blockers and Majors, edits nothing) | 16:00 | running | digest, then relaunch a reader the same turn |
-| aa9d76e478627e9ca | cold read of work/LEAD-NOTICE-batch-1.md (reports Blockers and Majors, edits nothing) | 16:00 | running | digest, then relaunch a reader the same turn |
-| a169e5a9ce818009d | cold read of work/review-ownerview-r1.md (reports Blockers and Majors, edits nothing) | 16:00 | running | digest, then relaunch a reader the same turn |
-
-Twenty-three earlier readers handed back and are digested as 1970-2000.
+- a1e85d138f6b43c52 | reader: work/L1.md | started ~16:03Z 2026-11-16 | running | next: digest the hand-back, replace the slot
+- ae1bf37cbaa7b9620 | reader: work/L3c.md | started ~16:03Z 2026-11-16 | running | next: digest the hand-back, replace the slot
+- ab4ff70c76220c8a7 | reader: work/L4c.md | started ~16:03Z 2026-11-16 | running | next: digest the hand-back, replace the slot
+- a250adf243bd7c1a0 | reader: work/L5b.md | started ~16:03Z 2026-11-16 | running | next: digest the hand-back, replace the slot
+- a88edb59494b91fbd | reader: work/L6.md | started ~16:03Z 2026-11-16 | running | next: digest the hand-back, replace the slot
+- a9d63c65f16cab762 | reader: work/L4.md | started ~16:03Z 2026-11-16 | running | next: digest the hand-back, replace the slot
+- ab5b91888d5f6078e | reader: work/L5a.md | started ~16:03Z 2026-11-16 | running | next: digest the hand-back, replace the slot
+- (see next push) | reader: work/plan-review-r2.md | started ~16:03Z 2026-11-16 | running | next: digest the hand-back, replace the slot
 
 ## Details (long text moved from the FAILED line)
 FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); the studio lead starts Docker and runs the rehearsal (decision 12); no take date. (3) S9-5, S9-12, S9-3, S9-2 not yet applied in v5 or the scope sheet; S9-1 and S9-4 deferred, describe-only (decision 5). (4) the take-time value substitution (BL-wp6-G1) is not built. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.
