@@ -1,0 +1,4 @@
+# Agent report (general-purpose, sonnet) for FINAL-CROSSCHECK part 1: ratings, duplicates, contradictions, patch collisions
+Saved by system-map as received (condensed to the tables). Unverified model output until checked: see the "checked by the lead session" lines in FINAL-CROSSCHECK.md. The agent read the two audits on disk and, from files not in this checkout, some of our own review files (reviews-of-system-map, reviews-of-system-map-2); those cites could not be re-opened here.
+Not checked by the agent: nothing was run; core src is not in the box; SWEEP rows 38-366 not read row by row; severity words differ per audit.
+Table 1 (same topic, different rating), Table 2 (duplicate ids), Table 3 (contradictions) and Table 4 (fix collisions): reproduced in FINAL-CROSSCHECK.md sections 2 to 5 with the lead session's own checks marked.
