@@ -1,10 +1,10 @@
 # Goldfish Annotated Review Report (egm:egm-resolve, round 1 of max 2)
 
-Status: resolved (lead instruction: judge on evidence, PROPOSE FIX for valid findings, no questions; ESCALATE items go to the laptop lead). Severities of the merged findings are mine, by the PLAN-005 rubric. Three reviewer ratings are CONTESTED (XR-14, XR-15, XR-18: reviewer Blocker, rubric Major). Separately, XR-25 and XR-29 re-rate target rows (13 Blocker rows to Major, 1 to Nit; 49 sampled Major rows to Nit); those are corrections to the target, not changes to reviewer findings.
+Status: resolved (lead instruction: judge on evidence, PROPOSE FIX for valid findings, no questions; ESCALATE items go to the laptop lead). Severities of the merged findings are mine, by the PLAN-005 rubric. Four reviewer ratings are CONTESTED (XR-13, XR-14, XR-15, XR-18: reviewer Blocker, rubric Major). Separately, XR-25 and XR-29 re-rate target rows (13 Blocker rows to Major, 1 to Nit; 49 sampled Major rows to Nit); those are corrections to the target, not changes to reviewer findings.
 
 **Target:** outputs of cloud session system-map (branch cloud/system-map, head 707768f), read-only. **Inputs:** lane-R5-B, -M1, -M2, -D, -Z, -C and evidence-5.md in this folder. 33 merged findings, deduplicated from the six lanes. Round 1 of the draft review (R5-V) added fixes XR-33 and corrected counts.
 
-Counts by category: PROPOSE FIX 29, ESCALATE 4, CONTEST 0 whole findings (3 severity CONTESTs above), DECLINE 0.
+Counts by category: PROPOSE FIX 29, ESCALATE 4, CONTEST 0 whole findings (4 severity CONTESTs above), DECLINE 0.
 
 ESCALATE first (need facts outside every file the reviewers could read: the take repo, the owner or the laptop lead): XR-21, XR-23, XR-30, XR-32.
 
@@ -98,7 +98,7 @@ Rubric (PLAN-005): Blocker = could lose or double-apply a lead or mail, leak, or
 
 ### XR-13 [fix plan rows 15, 16, 17] - Severity: Major
 * **Sources:** R5-D-6, R5-C-2, R5-C-27
-* **Discrepancy:** Same-class key-exposure Blockers are banded differently: row 15 (L4c-FD-001, vendor's default address) AFTER the video, row 16 (L4c-FD-002, key to a second server on redirect) BEFORE, with no reason. Rows 15-17 hold a finding, not an action; row 15 is cut mid-sentence ('which touches. (full text: Findings)'); 'pending patch', 'codeant', 'apply order matters' are unexplained. The desk is retired from the take (DECISION:15) and no desk code is in the tree.
+* **Discrepancy:** Reviewer severity Blocker (R5-C-2); CONTEST to Major by the rubric (a wording defect, not a lost lead or mail or a false published claim). Same-class key-exposure Blockers are banded differently: row 15 (L4c-FD-001, vendor's default address) AFTER the video, row 16 (L4c-FD-002, key to a second server on redirect) BEFORE, with no reason. Rows 15-17 hold a finding, not an action; row 15 is cut mid-sentence ('which touches. (full text: Findings)'); 'pending patch', 'codeant', 'apply order matters' are unexplained. The desk is retired from the take (DECISION:15) and no desk code is in the tree.
 * **AI Suggestion:** PROPOSE FIX
 * **Proposed edit (location):** SWEEP.md:376-378
 * **Change:** Put 15 and 16 in the same band; write each as an action ('do not run the desk in the take, or apply patch X then re-run test Y'); complete the cut text; explain 'codeant' (a code-scanning service) and the patch order in one line each.
@@ -126,7 +126,7 @@ Rubric (PLAN-005): Blocker = could lose or double-apply a lead or mail, leak, or
 
 ### XR-17 [decision (d): key rotation / history rewrite, and decision lists differ] - Severity: Major
 * **Sources:** R5-C-6, R5-D decisions 4
-* **Discrepancy:** Consequences are not stated (a history rewrite changes every commit id in a public repo; which keys are real is UNVERIFIED; the never-delete rule L6-EX-10 at SWEEP.md:414 says credential files are untracked and rotated, never archived, and row 7 also moves them to archive/). Fix row 7 mixes untrack/rotate, move to archive/ and rewrite in one cell. SWEEP.md:16-17 and REPORT.md:7 list the open decisions differently (R5-C reads a studio-head key decision; R5-D reads the fourth decision as 'independent count outside n8n; three roles vs a fourth identity').
+* **Discrepancy:** Consequences are not stated (a history rewrite changes every commit id in a public repo; which keys are real is UNVERIFIED; the never-delete rule L6-EX-10 at SWEEP.md:414 says credential files are untracked and rotated, never archived, and row 7 untracks creds-lane.json and moves the n8n working folders with keys to archive/, which L6-EX-10 (b)/(c) allow but its reason (a) does not cover). Fix row 7 mixes untrack/rotate, move to archive/ and rewrite in one cell. SWEEP.md:16-17 and REPORT.md:7 list the open decisions differently (R5-C reads a studio-head key decision; R5-D reads the fourth decision as 'independent count outside n8n; three roles vs a fourth identity').
 * **AI Suggestion:** PROPOSE FIX
 * **Proposed edit (location):** SWEEP.md:16-17,368; REPORT.md:7
 * **Change:** Make one list used in SWEEP headline, REPORT and fix plan. Split row 7 into three rows (untrack; rotate if real; rewrite history, with its consequence in one sentence).
@@ -182,7 +182,7 @@ Rubric (PLAN-005): Blocker = could lose or double-apply a lead or mail, leak, or
 
 ### XR-27 [sweep: rows with no claim] - Severity: Major
 * **Sources:** R5-M1 structural
-* **Discrepancy:** 12 of 70 sampled Major rows (lines 61-200) have no claim sentence, only quotes (L3-FD-002, 007, 009, 011, 013, 015, 021, 023, 031, 036, 038, 041). The quotes exist on the cited lines; whether they support a claim cannot be judged. L3-FD-040 itself says 'claim sentence missing'. A Major with no stated claim is a defect.
+* **Discrepancy:** The lane header says 12 sampled Major rows (lines 61-200) have no claim sentence, only quotes (L3-FD-002, 007, 009, 011, 013, 015, 021, 023, 031, 036, 038, 041); recount of the verdict text finds 11 labelled 'no claim' (L3-FD-013 has no such note); only 4 carry the severity tag 'no claim', 7 are tagged Nit (also counted in the 49 Nit of XR-29) and 2 AGREE. The quotes exist on the cited lines; whether they support a claim cannot be judged. L3-FD-040 itself says 'claim sentence missing'. A Major with no stated claim is a defect.
 * **AI Suggestion:** PROPOSE FIX
 * **Proposed edit (location):** SWEEP.md lane L3-FD rows (about 41 rows)
 * **Change:** Write one claim sentence per L3-FD row, or demote the row to Nit 'unreviewed quote'.
@@ -203,7 +203,7 @@ Rubric (PLAN-005): Blocker = could lose or double-apply a lead or mail, leak, or
 
 ### XR-30 [sweep: possible Blockers hidden as Major] - Severity: Major
 * **Sources:** R5-M1
-* **Discrepancy:** L3-FD-011: docs/settings.md says a bad DESK_BIND value stops the start but the desk starts with garbage (false doc sentence; Blocker if that doc is published). L2-FD-019: the fake CRM matches 'lead id OR e-mail' (mf-form.json:97, fakes.py:103); if the real HubSpot also merges on e-mail, two leads become one CRM row (lead loss). Both UNVERIFIABLE here.
+* **Discrepancy:** L3-FD-011: docs/settings.md says a bad DESK_BIND value stops the start but the desk starts with garbage (false doc sentence; Blocker if that doc is published). L2-FD-019: the fake CRM matches 'lead id OR e-mail' (fakes.py:103; mf-form.json:97 is the Claim INSERT keyed on lead_key); if the real HubSpot also merges on e-mail, two leads become one CRM row (lead loss). Both UNVERIFIABLE here.
 * **AI Suggestion:** ESCALATE
 * **Proposed edit (location):** SWEEP.md L3-FD-011, L2-FD-019
 * **Change:** Laptop lead checks (a) whether docs/settings.md is published, (b) HubSpot match rule on e-mail. Then re-rate.
