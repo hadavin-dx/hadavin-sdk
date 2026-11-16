@@ -879,3 +879,13 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 632 L1c r5: FD-021 rows, stacked. FIXED by CORRECTION (row fold TO DO).
 - 633 merged-findings r3: path-only rows, severity undefined. FIXED by LEGEND.
 - 634 M17 r4: three STATUS paragraphs. FIXED by READ FIRST.
+
+- 635 row1-builder-brief r5: stacked steps, fill script missing. FIXED by CURRENT ONLY paragraph.
+- 636 ARCHIVE-CUT-LIST r4: three verdicts. FIXED by VERDICTS paragraph.
+- 637 not-checked r5: patch not standalone. FIXED by COMPLETE paragraph.
+- 638 FINAL-CROSSCHECK r8: seven stacked blocks. FIXED by CURRENT paragraph (old blocks not deleted: held-page style).
+
+- 639 L5b r5: stacked paragraphs, lost definitions. FIXED by one ADDED paragraph naming itself the only current one.
+
+- 640 L2c r6: stacked corrections, dropped action. FIXED by CURRENT STATE paragraph.
+- 641 L1c r6: five CORRECTION paragraphs. FIXED by CURRENT STATE paragraph (rows not rewritten).
