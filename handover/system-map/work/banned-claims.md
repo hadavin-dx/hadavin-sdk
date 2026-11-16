@@ -32,3 +32,8 @@ Open: mirror this list into OWNER-VIEW row 6 and run-day step 27 once the studio
 - Where v5 step J (the owner steps file) disagrees with this list, this list wins.
 - "Nothing can spend before both typed answers" stays banned. It is lifted only when the studio lead names a result file that proves a closed gate exists; no such file exists today.
 - "Take" = the one filmed run. "Closed gate" = a check that stops a paid call before the owner types both answers (not built).
+
+## Added 16 Nov 2026, second pass
+- Deleting: banned = any claim that the system deletes data (this covers "deleted", "cleaned up", "permanently deleted", "erased"). Allowed only as a spoken fact: "I delete the made-up contacts by hand after the take."
+- One condition for every "unless" in this list (crash-safe, nothing can spend, tested with real accounts): the claim is allowed only when the studio lead names a result file that proves it, and the checker reads that file. Otherwise it stays banned.
+- Who names the checker: the studio head, by Tue 17 Nov 12:00 UTC / 17:30 IST. Until a name is written here, nobody may post.

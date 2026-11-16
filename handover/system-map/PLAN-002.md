@@ -1,3 +1,5 @@
+# NOTE 16 Nov 2026 (system-map, after a cold read): lane L4 and lane L6 must NOT open real-run/** or any owner-only or secrets folder (decision 5); each such folder gets one row, status NOT-READ, OWNER-ONLY, never opened. "DECISION" in this file means DECISION-one-store.md; "decisions 1-12" means inputs/DECISIONS-2026-11-16.md; a contradiction with either is a Blocker. KEEP-AS-IS is a valid verdict. "Job holder" = the one lane that does a job; "owner" = the person who gives the yes.
+
 # PLAN for ORDER 002 (system-map), version 3 (after plan review rounds 1 and 2 and egm:egm-resolve; 2026-11-16 ~07:00 UTC / 12:30 IST)
 ORDER 002 was written by the lead on 2026-11-16 (no clock time in the order). This is a STATIC review in a cloud box: no n8n runtime, no network to real services, made-up data only. Anything that needs a runtime to confirm is marked UNVERIFIED.
 

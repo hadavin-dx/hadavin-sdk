@@ -642,3 +642,11 @@ Blockers: all times are anchored to "now = 10:30 UTC" but the file says it was f
 - 443 CORRECTIONS (core-hardening review file): items 2 and 3 still specify C-01 full fix and A-01 text although decision 4 cut/deferred them; no dates; dead_letters wording conflicts with REVIEW.md:52; missing file:line on items 3, 5-8; cite 213-231 vs 213 and 223.
 - 444 OWNER-RUN-DAY-CARD (lead-owned, held): step 11 packs about 8 actions; step 13 `y` has no STOP and its warning conflicts with decision 5; steps 17, 21 and 22 pack actions and lack STOP; steps 22 and 25 duplicate the delete; no UTC/IST anywhere.
 - 445 STATUS-BOARD, banned-claims, TAKE-BLOCKERS, OWNER-VIEW, t19: see 434-438 (already recorded).
+
+## Digests 446-451 (16 Nov 2026)
+- 446 PLAN-002: lane L4 and L6 open real-run and owner-only folders (decision 5); no exclusion list in section 3 or partition.py; DECISION means two files; severity table ignores decisions 1-12; KEEP-AS-IS missing in verdict list; two meanings of owner; no UTC/IST on time boxes; undefined terms. Note added at top of PLAN-002.md.
+- 447 t19 steps r2: F8 vs line 7 vs C2-5 contradiction still open (lead must choose); T1-3 and T1-6 URL, port, reply text UNVERIFIED so not runnable; C2-4 has no command; T1-0, T1-5, T1-7, C2-1, C2-2, C2-5 pack several actions; 90 s and 180 s bounds have no over-limit rule.
+- 448 banned-claims r2: delete wording conflicts (line 10 vs 24); checker not named; D-04/D-05 undefined; "unless" conditions differ (lines 9, 16, 21); line 13 garbled sentence. Second pass section added.
+- 449 LEAD-PAGE (lead-owned, held): roles mixed (studio lead, lead, owner, you); "lead" used for sales request; rehearsal vs re-smoke vs run (a)/(b) not defined and run (a) stand-in cut by decision 1; times incomplete; items pack several actions; v3 file cited as current; items 3, 5, run (a) no person/date.
+- 450 egm-dryrun (file is egm-dryrun.md at the top level of system-map, not under work/): claims with no agent ids or saved reports; overclaim from one 3-line test; no end time; terms undefined; "not done on purpose" is not an allowed exception.
+- 451 merged-findings, MASTER-MAP, README, SWEEP, drift REPORT: reads running.
