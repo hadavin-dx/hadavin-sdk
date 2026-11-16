@@ -400,6 +400,7 @@ reviewer_ok() { # $1 = the reviewer line as written, $2 = the pin's own date, $3
   local out
   out=$(printf '%s' "$1" | python3 -I -c "$REVIEWER_PY_FULL" "${2:-}" "${4:-0}" "$REVIEWER_WORDS_ALL" "$REVIEWER_WORDS_NAME" "$REVIEWER_PHRASES_NAME" "${3:-}" "$REVIEWER_TESTONLY" "${5:--}" "$REVIEWER_WORDS_WEAK" "$REVIEWER_WORDS_NEG" "$REVIEWER_NEGATORS" "$REVIEWER_PARTICLES" "$REVIEWER_NOTREAD" 2>&1); REV_RC=$?
   REV_REASON=$out
+  if [ "$REV_RC" -ne 0 ]; then case $out in "REFUSED (rule: "*) ;; *) REV_RC=3; REV_REASON="HELPER ERROR: $out";; esac; fi   # a refusal always starts with REFUSED (rule: ; anything else (a crash, a missing python3) is a fault of the helper, not of the person
   [ "$REV_RC" -eq 0 ]
 }
 safe_text() { printf '%s' "$1" | python3 -I -c "$REVIEWER_NORM_PY

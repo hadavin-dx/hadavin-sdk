@@ -35,10 +35,10 @@ History in one line: the rows were edited in rounds 5, 6, 8 and 9 and in the fix
 ## Status at a glance (generated from the first cell of every row; one status per row, set inside the row)
 | status | rows | meaning |
 |---|---|---|
-| PASTE | 56 | A-001, A-016a, A-016d, A-077a, A-081a, A-083, A-087a, A-087b, A-098, B-003a, B-003d, B-010, B-011, B-016, B-019, B-024, B-037, B-038, B-042, B-054, B-056, B-059, B-062, B-088, B-092, B-100, B-101, B-130, B-145, B-147, B-150a, B-150b, B-150c, B-151, B-153, B-154, B-156, B-159, B-165, B-173, B-173b, B-182, B-183, B-189, B-195, B-197, N-6, V-11, V-57, X-1, X-2, X-4, X-5b, X-6a, X-6b, X-6c |
+| PASTE | 54 | A-001, A-016a, A-016d, A-077a, A-081a, A-083, A-087a, A-087b, A-098, B-003a, B-003d, B-010, B-011, B-016, B-019, B-024, B-037, B-038, B-042, B-054, B-056, B-059, B-062, B-088, B-092, B-100, B-101, B-130, B-145, B-147, B-150a, B-150b, B-150c, B-151, B-153, B-154, B-156, B-159, B-165, B-173, B-173b, B-182, B-183, B-189, N-6, V-11, V-57, X-1, X-2, X-4, X-5b, X-6a, X-6b, X-6c |
 | DELETE | 30 | A-002, A-016c, A-016e, A-017a, A-019a, A-020, A-020b, A-023a, A-024, A-050a, A-051a, A-053, A-073b, A-076a, A-076b, A-081b, A-085, A-086, A-091, B-093, B-094, B-095, B-102, B-189b, B-196, B-198, B-199, B-200, N-11a, V-41 |
-| HELD | 81 | A-001L, A-004, A-005, A-007, A-008a, A-008b, A-010, A-010b, A-010c, A-012, A-016b, A-016f, A-016g, A-016h, A-021, A-023b, A-026a, A-026b, A-026c, A-030, A-033a, A-033b, A-033c, A-035, A-036b, A-039, A-040, A-040b, A-041, A-041b, A-042, A-043, A-044a, A-044b, A-050c, A-057, A-059, A-073a, A-073c, A-075, A-076c, A-077b, A-084, A-088, A-092, A-097a, A-097b, B-003b, B-032, B-045, B-046, B-067, B-076, B-077, B-078, B-085, B-085b, B-091, B-168, B-172, B-172b, B-213, B-215, B-215b, B-219, N-1, N-10, N-11b, N-1b, N-2, N-4c, N-5a, N-5b, N-5c, N-9, P-155, S5-a, S5-b, S5-c, S5-voice, X-5a |
-| NO PASTE | 6 | A-036a, B-017, B-051, B-214, N-3, N-8 |
+| HELD | 84 | A-001L, A-004, A-005, A-007, A-008a, A-008b, A-010, A-010b, A-010c, A-012, A-016b, A-016f, A-016g, A-016h, A-021, A-023b, A-026a, A-026b, A-026c, A-030, A-033a, A-033b, A-033c, A-035, A-036b, A-039, A-040, A-040b, A-041, A-041b, A-042, A-043, A-044a, A-044b, A-050c, A-057, A-059, A-073a, A-073c, A-075, A-076c, A-077b, A-084, A-088, A-092, A-097a, A-097b, B-003b, B-032, B-045, B-046, B-067, B-076, B-077, B-078, B-085, B-085b, B-091, B-168, B-172, B-172b, B-195, B-197, B-213, B-214, B-215, B-215b, B-219, N-1, N-10, N-11b, N-1b, N-2, N-4c, N-5a, N-5b, N-5c, N-9, P-155, S5-a, S5-b, S5-c, S5-voice, X-5a |
+| NO PASTE | 5 | A-036a, B-017, B-051, N-3, N-8 |
 | SUPERSEDED | 12 | A-015, A-017b, A-019b, A-049, A-050b, A-051b, A-053b, A-087c, A-087d, B-003c, N-4a, N-4b |
 | total | 185 | one status per row |
 
