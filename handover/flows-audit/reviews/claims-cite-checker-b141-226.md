@@ -1,0 +1,9 @@
+# CLAIMS-TABLE cite check B-141..B-226 + X-1..X-4 (agent a0fc3951, egm-codebase-details), Majors, non-security
+Saved by flows-audit, condensed. Reviewer words unverified; static. 90 rows, about 120 line cites opened; 0 line cites fail. NOT on disk (cites unconfirmed): desk repo (read only via reviews-f1/trace-desk-repo.md), qualify_stage.py, crm_hubspot.py, take scripts, evidence-int-6 INDEX, evidence-int-mut-1/-2, n8n-rerun raw rows, lane3/T7b/AF1 raw. Not opened: PLAN-4-NLITE-FROM-LEAD.md, VIDEO-RUNSHEET.md cites, v3/v4 flow folders. SQL of ClaimStuck/MarkFailed/AlertMark not traced. Grade changes below are PROPOSALS for the lead, not applied.
+1 B-141 (CT 911) UNTRACED but quoted from N8N-START.md:51 ("built, not run"); B-176 (954) SUPPORTED on the same kind of statement. Fix: B-141 SUPPORTED, or B-176 UNTRACED.
+2 B-157 (931), B-194 (980) UNTRACED but files say them (N8N-START.md:13; DESIGN-A-README.md:23; n8n-skip-on-conflict.md:19; n8n-owns-vs-desk-owns.md:45). Fix: SUPPORTED (or OVERSTATED), add "stated in file, n8n docs not re-read".
+3 B-158 (932), X-3 (1052), B-207 (1001), B-218 (1012) UNTRACED though a file supports part: rule says OVERSTATED. X-3 already in RG-1; add B-207, B-218 to RG-1. Totals would move.
+4 X-4 (1053) UNSUPPORTED but updated_at part is true (mf_leads.sql:14): OVERSTATED (RG-2, RG-10 propose it).
+5 X-4 source label "DECISION:16" ambiguous: sentence is inputs/DECISION-one-store.md:16. Fix: full file name.
+6 Rule question, 11 rows RELAYED-ONLY (B-180, B-185, B-186, B-187, B-191, B-192, B-193, B-201, B-221, B-222, B-223) though the figure sits in a file on disk: line 47 mixes "file says so" and "raw file seen". Lead decides: SUPPORTED or reword line 47. B-199/B-200/B-197 same kind (RG-6, RG-12).
+Nit: B-145 (919) says mf-sub-crm-mail.json line 37 for the 10 s timeout; timeout is line 25, line 37 is waitBetweenTries 1000.
