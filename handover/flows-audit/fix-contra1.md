@@ -1,0 +1,22 @@
+# fix-contra1 (contradiction fixer, 2026-11-16, source reviews/contradictions-r1.md)
+Failures and not checked first: (1) I did not run n8n or any flow; all text only. (2) Item 3 rests on Q25-1 (credits yes) covering the HubSpot id probe: the lead's Q25 answer speaks of credits and sends, not of the probe by name; I applied the brief's rule (owner not asked; lead states the ceiling for up to 3 sends at take prep) and FIX-PLAN says so. (3) The checker's printed text 'ACCEPTED: recovery flow not part of the take (decision 4)' is in take_check.sh:145 and is frozen; FIX-PLAN now marks the number UNVERIFIED (decision 4 in DECISIONS-2026-11-16.md is core patches); the right number is Q27 item 8. (4) The agent list in REPORT's ORDER 030 block comes from STATUS-BOARD.md (times 11:50-12:01), not a live count. (5) `ruff format --check .` in handover/flows-audit still fails on 1 file: inputs/plan-wp6-resmoke-v5.md (lead's); `ruff check .` passes.
+Backup: scratchpad bak-fp5/ (FIX-PLAN, REPORT, QUESTIONS before edit).
+Items fixed (review item -> change):
+1 FIX-PLAN step 13 pass, step 11/12 wording, rule (b) third condition, rule (b3), values (5): proof of once = exactly 1 mail after a stated wait + mf_leads row; second reply time written in the log but not proof; no 'under 10 s' line; T19's own 10 s test bound kept (a test limit).
+3 FIX-PLAN step 10b, step 14, rule (b7): owner is not asked for a new yes (Q25-1); lead states ceiling for up to 3 sends at take prep; no owner step.
+4 FIX-PLAN rule (b), (b4), step 13: old label 'one mail sent, one row in state done' marked SUPERSEDED; scoped caption is the only caption. QUESTIONS Q24 item 5 (two places) SUPERSEDED note. REPORT Q24/Q23 line: T12 note and scoped caption.
+7 same as 1 and 4 (pass text in step 13).
+8 FIX-PLAN line 1: 2-3 day estimate marked SUPERSEDED by Q26 schedule; OPEN POINT: nothing shows steps 0-17 (two rehearsals, steps 11 and 13) fit the window (one rehearsal window 07:00Z-09:30Z). REPORT 'Not re-based' line updated.
+9 FIX-PLAN item 7 F-023 text and 'Lead answers applied ORDER 013': counts proof = SELECT-only read after the take (Q24-4). Rule (c): 'lead may restate item 9' -> lead kept the narrowing.
+10 'date X' replaced by Q26 values (re-pin by about 08:00Z Tue 17 Nov, 13:30 IST; hard latest Mon 23 Nov 18:29 UTC on NO-GO) in values (5), step 12, rule (b7); QUESTIONS Q24 item 1 and lead text, REPORT line: SUPERSEDED notes. Open point named: Q27 item 6.
+11 QUESTIONS Q26 item 1 marked ANSWERED (Q26 item 1).
+13 FIX-PLAN item 8 and QUESTIONS Q4 line: rating cite is Q21-3 (decisions item 10 is wording; the two wording cites in FIX-PLAN item 8 stay). '(decision 4)' marked unverified (see 3 above).
+14 REPORT: ORDER 023 'owner allows that edit' marked SUPERSEDED by ORDER 024; 'Agents: 0 running' marked historical; new ORDER 030 block at top: agents started this window (8, from the board), ruff format result (16 files formatted per lead; my run: 1 file left, the lead's), lint fixer.
+Open points stated plainly in FIX-PLAN, not decided: item 2 (Q27 item 9: T19-T21, F-011, F-041 in the take path; GO/NO-GO cannot be met today by the written ratings), item 12 (real-take port: no file names it; values (10)), item 6 (Q27 item 10), Q27 items 6 and 8 (last bullet of the Q26 section). Item 5 (TAKE-CHECKLIST Step A) is not FIX-PLAN text: nothing written.
+Must change in files I did not touch:
+- OWNER-STEPS-q16-rows.md: OS:140 T12 superseded already; make lead steps name the scoped caption; OS:54,133,134 'no date invented' next to Q26 dates; OS:67 'named in T6' vs T6 'lead at re-pin' (port); OS:14,47,62 Step A gone vs TC.
+- TAKE-CHECKLIST.md: TC:32 row 5 still has the 10 s reply as 'once' proof; TC:3 'no date invented'; TC:42 lists 'whether Step A stays' as open (Q25-1 answered; OS says Step A no longer exists); TC rows with old pass words 'one mail sent, one row in state done'.
+- FINDINGS.md NOT COVERED item 20 still says the probe needs the owner's written yes with numbers (superseded by Q25-1).
+- CLAIMS-TABLE.md: rule (b) is the rule it follows (scoped caption only, no reply-time proof).
+Checks (from /home/user/hadavin-sdk): `sh handover/flows-audit/tools/check_patches.sh` -> PASS 4 patches. count_findings.py output identical before and after (cmp, scratchpad bak-fp5/count-before.txt vs count-after.txt; 45 rows, Blocker 5, Major 7, Nit 33). FIX-PLAN.md is 72 lines (was 71).
+Agents started by me: 0.

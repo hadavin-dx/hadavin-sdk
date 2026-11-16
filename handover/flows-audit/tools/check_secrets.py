@@ -13,7 +13,7 @@ vals = [re.compile(r) for r in P["value_regexes"]]
 whole = re.compile(P["whole_token_regex"])
 allow = [re.compile(r) for r in P["allow_regexes"]]
 ident = re.compile(
-    r"-{32,}|(?:[A-Za-z]{1,20}\d{0,3}[A-Za-z]{0,3}|\d{1,4})(?:[_-](?:[A-Za-z]{1,20}\d{0,3}[A-Za-z]{0,3}|\d{1,4})){3,}"
+    r"-{32,}|(?:[A-Za-z]{1,20}\d{0,3}[A-Za-z]{0,3}|\d{1,4})(?:[_-](?:[A-Za-z]{1,20}\d{0,3}[A-Za-z]{0,3}|\d{1,4})){3,}[_-]?"
 )
 shaline = re.compile(
     r"[0-9a-f]{64}  [\w./-]+"

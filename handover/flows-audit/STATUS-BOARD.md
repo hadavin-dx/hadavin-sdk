@@ -1,17 +1,18 @@
-UPDATED_UTC: 2026-11-16T11:35:31Z
+UPDATED_UTC: 2026-11-16T11:38:16Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
-ITEMS_OPEN: 11
-PERCENT: 95
+ITEMS_OPEN: 12
+PERCENT: 55
 AGENTS_RUNNING: 8
-CAPACITY: 0.18 load of 4 cores, mem 0/15 GB, RAM 913/16087 MB, disk 26G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 1.8G /tmp/claude-0 , agents 8 (light+heavy per list)
+CAPACITY: 0.54 load of 4 cores, mem 0/15 GB, RAM 907/16087 MB, disk 26G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 1.9G /tmp/claude-0 , agents 8 (light+heavy per list)
 INTERRUPTED: none
 FAILED: FAILED: ruff format --check failed (17 files); my 16 files now formatted; inputs/plan-wp6-resmoke-v5.md is the lead's (1 left). ruff check has 53 lint errors in my tools: lint fixer running. F8 r10 Blocker: pin rewrite self-approves, fixer running
-NEXT: 8 lanes running; verify each hand-back with checkers
-PUSHED_UTC: 2026-11-16T11:35:31Z
+FAILED: ruff format --check on inputs/plan-wp6-resmoke-v5.md (lead-owned); check_refs unresolved CUT-LIST.md:17 (fixer running); lint fixer changed no_name.out (crash removed)
+NEXT: ORDER 030: started RW/CT fixer, owner-steps fixer, FIX-PLAN cite fixer, checklist cite check, refs fixer; ruff check 0, format done for my files
+PUSHED_UTC: 2026-11-16T11:38:16Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -30,14 +31,14 @@ PUSHED_UTC: 2026-11-16T11:35:31Z
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | % | state | last output |
 |---|---|---|---|---|---|---|---|---|
-| aa10943 | F8 fixer r10 | sonnet | 1 Blocker 7 Majors + ruff format | 11:42 | 12:20 | 50 | running | flow-check/fix-f8-r10.md
-| a49155e | lint fixer | sonnet | 53 ruff check errors in my tools | 11:50 | 12:15 | 40 | running | fix-lint.md
-| a31d0a4 | owner sheet stranger read | sonnet | comprehension read | 11:50 | 12:00 | 40 | running | (inline)
-| a0c7782 | FIX-PLAN citation check | sonnet | cites and counts | 11:50 | 12:05 | 40 | running | (inline)
-| a60684e | RW/CT adversarial read | sonnet | design review after Q25 | 11:55 | 12:10 | 30 | running | (inline)
-| a4949e3 | TAKE-CHECKLIST fixer r2 | sonnet | 15 Majors of stranger read r2 | 11:56 | 12:10 | 30 | running | fix-checklist3.md
-| a7442b7 | RUNBOOK writer | sonnet | merged order with commands, time boxes | 12:00 | 12:20 | 5 | running | fix-runbook.md
-| a92c85c | contradiction fixer | sonnet | fix FIX-PLAN/REPORT/QUESTIONS | 12:01 | 12:15 | 5 | running | fix-contra1.md
+| aa10943 | F8 fixer r10 | sonnet | flow-check pin/fixes | 11:00 | - | 70 | RUNNING | flow-check/fix-f8-r10.md |
+| a7442b7 | RUNBOOK writer | sonnet | RUNBOOK.md | 11:20 | - | 50 | RUNNING | fix-runbook.md |
+| a92c85c | contradiction fixer | sonnet | FIX-PLAN/REPORT/QUESTIONS | 11:20 | - | 70 | RUNNING | fix-contra1.md |
+| a27d6c9 | RW/CT fixer | sonnet | adversarial B1-M9 | 11:40 | - | 5 | RUNNING | fix-rwct3.md |
+| a36a8ea | OWNER-STEPS fixer | sonnet | stranger B1-B6 | 11:40 | - | 5 | RUNNING | fix-ownersteps3.md |
+| a6439c6 | FIX-PLAN cite fixer | sonnet | 3 wrong cites | 11:40 | - | 5 | RUNNING | fix-fixplan5.md |
+| a488a19 | citation check CHECKLIST | sonnet | TAKE-CHECKLIST cites | 11:41 | - | 5 | RUNNING | inline |
+| ae747e0 | check_refs fixer | sonnet | CUT-LIST:17 cite | 11:41 | - | 5 | RUNNING | fix-refs.md |
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |

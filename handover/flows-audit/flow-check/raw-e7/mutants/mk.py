@@ -1,4 +1,8 @@
-import sys, shutil, os, subprocess
+import os
+import shutil
+import sys
+import tempfile
+from pathlib import Path
 
 SRC = "/home/user/hadavin-sdk/handover"
 # id, file, line, old, new
@@ -77,7 +81,7 @@ M = [
 
 
 def build(mid):
-    d = f"/tmp/e7m/{mid}"
+    d = os.path.join(tempfile.gettempdir(), "e7m", mid)
     shutil.rmtree(d, ignore_errors=True)
     os.makedirs(d + "/flows-audit")
     os.symlink(SRC + "/demo", d + "/demo")
@@ -97,7 +101,7 @@ if __name__ == "__main__":
     for mid, f, ln, old, new in M:
         d = build(mid)
         p = f"{d}/flows-audit/flow-check/{f}"
-        t = open(p).read()
+        t = Path(p).read_text()
         if mid == "TCMISS":
             pass
         c = t.count(old)
@@ -113,8 +117,9 @@ if __name__ == "__main__":
             L[ln - 1] = L[ln - 1].replace(old, new, 1)
             t2 = "\n".join(L)
         else:
-            assert c == 1, (mid, c)
+            if c != 1:
+                raise SystemExit(f"{mid}: expected 1 match, got {c}")
             ln = t[: t.index(old)].count("\n") + 1
             t2 = t.replace(old, new, 1)
-        open(p, "w").write(t2)
+        Path(p).write_text(t2)
         print(mid, f, "line", ln, "|", old.strip()[:50], "->", new.strip()[:60])
