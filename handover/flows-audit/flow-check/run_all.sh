@@ -72,13 +72,13 @@ FC_OUT="${FC_OUT:-$W/selftest-out}" python3 -I "$HERE/selftest.py" "$D/n8n-flows
 T2=$(date +%s)
 # the take script itself: exit 0 and the lines the owner must see (a missing line sets this script's exit status to 1)
 # the take runs on the PATCHED copy (F-002 and F-008 applied, lead answers Q17-4 and Q18): exit 0 required, and the run-saving block must hold ACCEPTED lines only (no WARN)
-TAKE_CHECK_FLOWS="${RUN_ALL_TAKE_FLOWS:-$W/g/real}" TAKE_CHECK_FORM_EXPECT=15:14 bash "$HERE/take_check.sh" > "$RAW/take-check.txt" 2>&1; TC=$?
+TAKE_CHECK_FLOWS="${RUN_ALL_TAKE_FLOWS:-$W/g/real}" bash "$HERE/take_check.sh" > "$RAW/take-check.txt" 2>&1; TC=$?
 TCMISS=""   # set BEFORE the first use below (round 7 fix: it used to be set after the first two checks, so a failing take script ended this script with "TCMISS: unbound variable" and the first two checks were thrown away)
 # the FINAL line of take_check.sh must print the same number as its real exit status (a line that always says 0 would hide a failure)
 grep -q -F "FINAL: take_check exit status $TC." "$RAW/take-check.txt" || TCMISS="$TCMISS [FINAL line does not print exit status $TC]"
 grep -q -E "^WARN .*run-saving settings|^WARN accept-no-save" "$RAW/take-check.txt" && TCMISS="$TCMISS [a run-saving WARN on the patched copy]"
 grep -q -F "ACCEPTED: recovery flow not part of the take (decision 4)" "$RAW/take-check.txt" || TCMISS="$TCMISS [ACCEPTED line for the recovery flow]"
-for w in "NOTHING RAN IN n8n" "READ THIS BLOCK BEFORE ANYTHING ELSE" "Query strings read:" "GATE BEFORE THE FIRST SEND" "Is saving of past runs off" "key check" "FINAL: take_check exit status"; do
+for w in "RESULT: 0 FAIL," "WARN set equals the pinned set" "NOTHING RAN IN n8n" "READ THIS BLOCK BEFORE ANYTHING ELSE" "Query strings read:" "GATE BEFORE THE FIRST SEND" "Is saving of past runs off" "key check" "FINAL: take_check exit status"; do
   grep -q -F -- "$w" "$RAW/take-check.txt" || TCMISS="$TCMISS [$w]"
 done
 # lines that exist only while the checker itself reports the matching problem: required when it reports it, not otherwise (so this script can exit 0 on files that are fixed and filled)
@@ -136,6 +136,53 @@ for pair in "2:bad-ddl:TAKE_CHECK_DDL=$W/tc/bad-ddl.sql" "3:exit3:TAKE_CHECK_CK=
 done
 # (3) the saving-ON flows must be named in the top block with their reason (INFO), not shown silently
 [ "$(grep -c '^INFO: mf-.* run saving is ON' "$RAW/take-check.txt")" = 3 ] || TCMISS="$TCMISS [take_check: want 3 INFO lines saying run saving is ON on purpose (form, hook, sub-workflow)]"
+# Round 9 (review f8-design-r3), each case below must fail on the round-8 take_check.sh:
+# M2: run saving must be exactly all / all / True on every flow except the recovery flow (an odd word, a missing key, an empty settings block)
+# M3: a patched copy without the F-002 key check (only F-008 applied) must be exit 4
+# M1: the set of WARN lines is pinned (a new WARN, a missing pin file) and a disabled external-call node is a FAIL
+for nm in form-odd sub-nokey hook-emptyset f008-only warn-new; do cp -r -- "$W/g/real" "$W/tc/$nm" || TCMISS="$TCMISS [could not make the $nm test folder]"; done
+cp -r -- "$D/n8n-flows-real-v5" "$W/tc/f008-only-src" || TCMISS="$TCMISS [could not make the f008-only source]"
+python3 -I - "$W/tc" <<'PYEOF' || TCMISS="$TCMISS [round 9 test folders not built]"
+import json, sys
+def load(folder, fn):
+    return f"{sys.argv[1]}/{folder}/{fn}", json.load(open(f"{sys.argv[1]}/{folder}/{fn}", encoding="utf-8"))
+def save(p, j):
+    json.dump(j, open(p, "w", encoding="utf-8"))
+p, j = load("form-odd", "mf-form.json"); j["settings"]["saveDataSuccessExecution"] = "off"; save(p, j)
+p, j = load("sub-nokey", "mf-sub-crm-mail.json"); del j["settings"]["saveManualExecutions"]; save(p, j)
+p, j = load("hook-emptyset", "mf-hook.json"); j["settings"] = {}; save(p, j)
+p, j = load("warn-new", "mf-sub-crm-mail.json")
+for n in j["nodes"]:
+    if n["name"] == "MarkDone":
+        n["parameters"]["maxTries"] = 3   # a plain WARN: maxTries is ignored without retryOnFail
+save(p, j)
+# a patched copy that has F-008 but NOT F-002: the committed unpatched flows with run saving switched on (all / all / True) on the three flows that need it
+for fn in ("mf-form.json", "mf-hook.json", "mf-sub-crm-mail.json"):
+    p, j = load("f008-only-src", fn)
+    j.setdefault("settings", {}).update(saveDataSuccessExecution="all", saveDataErrorExecution="all", saveManualExecutions=True)
+    save(p, j)
+p, j = load("f008-only-src", "mf-form.json")
+PYEOF
+cp -r -- "$W/g/real" "$W/tc/disabled-send" && python3 -I - "$W/tc/disabled-send/mf-sub-crm-mail.json" <<'PYEOF' || TCMISS="$TCMISS [disabled-send test folder not built]"
+import json, sys
+p = sys.argv[1]
+j = json.load(open(p, encoding="utf-8"))
+for n in j["nodes"]:
+    if n["name"] == "SendMail":
+        n["disabled"] = True
+json.dump(j, open(p, "w", encoding="utf-8"))
+PYEOF
+tcfail form-run-saving-odd-word "RUN SAVING IS NOT EXACTLY all / all / True" TAKE_CHECK_FLOWS="$W/tc/form-odd"
+tcfail sub-run-saving-key-missing "RUN SAVING IS NOT EXACTLY all / all / True" TAKE_CHECK_FLOWS="$W/tc/sub-nokey"
+tcfail hook-run-saving-block-empty "RUN SAVING IS NOT EXACTLY all / all / True" TAKE_CHECK_FLOWS="$W/tc/hook-emptyset"
+tcfail key-check-absent-is-exit-4 "The take needs F-002: this script exits 4" TAKE_CHECK_FLOWS="$W/tc/f008-only-src"
+tcfail new-warn-changes-the-pin "THE WARN SET CHANGED against take-warns.pin" TAKE_CHECK_FLOWS="$W/tc/warn-new"
+tcfail warn-pin-file-missing "THE WARN BASELINE FILE IS MISSING" TAKE_CHECK_WARN_PIN="$W/tc/no-such.pin"
+env TAKE_CHECK_FLOWS="$W/tc/disabled-send" bash "$HERE/take_check.sh" > "$RAW/take-check-disabled-send.txt" 2>&1; x=$?
+[ "$x" = 1 ] && grep -q -F "is an external-call node and is disabled" "$RAW/take-check-disabled-send.txt" || TCMISS="$TCMISS [take_check disabled-send: want exit 1 and the disabled external-call FAIL, got exit $x]"
+# M4: the patched copy needs no count variable (the main take run above sets none), and the write option makes a pin that the same run accepts
+env TAKE_CHECK_FLOWS="$W/g/real" bash "$HERE/take_check.sh" --write-warn-pin "$W/tc/new.pin" > "$RAW/take-check-write-pin.txt" 2>&1; x=$?
+[ "$x" = 0 ] && cmp -s <(grep -v '^#' "$W/tc/new.pin") <(grep -v '^#' "$HERE/take-warns.pin") || TCMISS="$TCMISS [take_check --write-warn-pin: want exit 0 and a pin equal to take-warns.pin, got exit $x]"
 tcfail unpatched-run-saving "A FLOW THAT THE TAKE USES HAS RUN SAVING OFF"
 tcfail form-run-saving-off "mf-form.json this flow's run-saving settings" TAKE_CHECK_FLOWS="$W/tc/form-off" TAKE_CHECK_FORM_EXPECT=15:14
 tcfail sub-run-saving-off "mf-sub-crm-mail.json this flow's run-saving settings" TAKE_CHECK_FLOWS="$W/tc/sub-off" TAKE_CHECK_FORM_EXPECT=15:14
