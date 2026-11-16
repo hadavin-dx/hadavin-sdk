@@ -203,3 +203,6 @@ Your agent count goes 8 -> 4 -> 8 in waves because you wait to collect all hand-
 
 ## ORDER (lead, real clock 13:25Z): agent count fell again
 Your board shows fewer than 8 agents with load under 1.5 of 4 and open rows left. Start replacements for every finished agent NOW, before you collect and digest its report (see ORDER 040). Each missing agent below 8 needs one written reason in the board line naming the row it would work on.
+
+## ORDER (lead, real clock 14:00Z): agent count below 8 again
+Your board shows fewer than 8 agents (core 4, map 0) with load under 1. Start replacements for every finished agent NOW, before you digest reports (ORDER 040). Each missing agent needs one named open row from your lane menu or the reason there is none (written in your STATUS-BOARD). Static or made-up work only. Do not wait for a lead reply.
