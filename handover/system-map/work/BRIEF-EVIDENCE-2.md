@@ -28,7 +28,7 @@ WRITE: only work/evidence-2.md (write EVIDENCE RUNNER in its first line). The to
 ALLOWED: the commands below, `cat work/OWNER-ONLY.txt`, `git rev-parse HEAD`. NOT ALLOWED: network, git commit/push/checkout/reset, background processes, any other file write.
 Repo root /home/user/hadavin-sdk; run every command from handover/system-map.
 
-STEP 0: `cat work/OWNER-ONLY.txt ; echo rc=$?`. Ignore blank lines and lines starting with #; strip CR and a trailing slash. Paths are relative to the repo root; a path is listed if it equals a line or starts with a line plus a slash. If the file is missing or empty, write that in work/evidence-2.md and stop. Record only the count of lines, not the list. Never open a listed path.
+STEP 0: `cat work/OWNER-ONLY.txt ; echo rc=$?`. Ignore blank lines and lines starting with #; strip CR and a trailing slash. Paths are relative to the repo root; a path is listed if it equals a line or starts with a line plus a slash. If the file is missing or empty, write that in work/evidence-2.md and stop. Record two numbers, not the list: raw lines, and effective lines after the filtering above. You yourself never open, cat or grep a listed path. The step-1 tools may read the whole tree; only the recorded output is filtered. Normalise each output path to repo-root-relative (../../x, /home/user/hadavin-sdk/x and x are the same path), test it against the listed-path rule, and replace the whole output line if any path on it is listed (also inside a table row or traceback).
 Before writing, scan each output for every listed path (case-insensitive, both slash styles). If an output line names one, write `<PATH>: NOT READ` in its place. Mask any token-like string or e-mail address as <MASKED:secret>, <MASKED:address> or <MASKED:key>.
 
 STEP 1: run each command exactly. Write under one heading per command: the command, the exit code first, then the raw output; if longer than 40 lines keep the last 40 and write "trimmed". Piped commands start with `set -o pipefail;` and end with `; echo rc=$?`.
@@ -46,3 +46,4 @@ STEP 1: run each command exactly. Write under one heading per command: the comma
  8b. git diff --stat HEAD~3 -- ../../src ../../tests ; echo rc=$?
 If a command fails, record it and go on. If git reports "not a git repository" or no HEAD~3, record that text as the result.
 REPORT (to the caller): one line per command with its exit code, the path work/evidence-2.md, and the head SHA from `git rev-parse HEAD` (or the git error).
+If git is unavailable (not a git repository), record the error under the heading and report the head SHA as UNAVAILABLE. Files the tests write (such as __pycache__) are allowed.
