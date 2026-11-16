@@ -55,3 +55,17 @@ H3 | owner named: system-map (ONE-PLACE-TABLE.md) | 2026-11-16T16:23Z
 14: core-hardening edits step J (it owns the v5 sheet).
 15: lead fixes M-1 at the merge (qualify app.mf_leads in n8n_drive.py and the stale test); the read-only count role is separate and not planned for the take.
 8 (update 2026-11-16T16:45:09Z): owner said "scan yes" in chat; the lead ran it, counts only, no text read. Seven files: sk-ant 0, generic sk- 0, HubSpot pat- 0, AWS AKIA 0 in all seven. Loose patterns hit a few ordinary tokens: git-style hex ids in 1 file (REVIEW-real-run-v6), a few 16-letter words in 2 files; no mixed letter-and-digit key-like token in any of them. 1b | no: no key or secret needs changing on this evidence. Limits: pattern counts, not a read; an app password written as ordinary words with spaces could slip past; the lead did not open the files. Keep the digest lines visible (answer 1 stays: delete is not needed; reply 1 | keep).
+
+## Batch 3 (lead, 2026-11-16T16:50:21Z). Defaults chosen by the lead; owner may veto. 
+CORRECTION to the archive sentence, same facts: decision 2 of 2026-11-16 keeps the take's HubSpot key READ-ONLY (no archive or delete right). The program still calls archive after end; with a read-only key the call is refused and all three contacts are listed as left behind, which the owner archives or deletes by hand from the printed list. Whether the refusal prints cleanly: UNVERIFIED until the re-smoke. Wording for the pages: "The take's HubSpot key cannot archive or delete. After end the program tries once; whatever it cannot archive it lists, and you archive or delete those by hand."
+1: done, I corrected inputs/DECISIONS-2026-11-16.md line 3 (copy on your branch updated by me).
+2: builders r37, r38, r39 (laptop lead agents); finish about 17:15Z, 18:10Z, 18:40Z = 22:45, 23:40, 00:10 IST; then reviews and merge chain; re-pin target Tue 17 Nov 08:00Z (13:30 IST).
+3: F-002 and security rules A, E, F, I: not known to the lead; write UNVERIFIED, core-hardening names them if it can.
+4: [OWNER FILLS] look of the HubSpot accounts and proof-screen choices; films: Claude records via Playwright, the owner watches and posts; backstop line name: core-hardening reads it from stage.env.
+5: profile name and place: [OWNER FILLS at the profile and filming check]; deadline exception stays UNVERIFIED.
+6: HubSpot check line and date: [LEAD FILLS at re-pin]; login-key choice: closed after the scan (no key found in the seven files).
+7: third refill time 17:30Z (23:00 IST); percents for M1 M2 M4-M8 M10-M13 M20: [LEAD FILLS at refill from the live state]; video: post Wed 18 Nov 15:00Z = 20:30 IST (recording earlier that day).
+8: dollar limit: the API credits (US$189 prepaid, in-code backstop below it, window to Mon 23 Nov 18:29Z); agent-day estimate: about 2 days of agent time to the take.
+9: DESK_* meanings: UNVERIFIED, core-hardening confirms.
+10: generator path: UNVERIFIED, core-hardening names it; n8n_api.py is scripts/n8n_api.py in the take repo; crash test (DM): required; rehearsal-passed rule covers the loopback re-smoke and the rehearsal (answer 4.6); program notice and prompt text: edited by the fix builders, the lead approves.
+11: v4.2 lines 453 and 507: the lead corrects them in v4.3 (system-map drafts the wording from the sentence above); HubSpot key right: stays read-only by decision 2; whether HubSpot's filtered list shows archived contacts: UNVERIFIED, the re-smoke shows it.
