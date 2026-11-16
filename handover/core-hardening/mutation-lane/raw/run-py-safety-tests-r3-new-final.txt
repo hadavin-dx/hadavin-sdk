@@ -129,3 +129,75 @@ REFUSED: state folder /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c
 REFUSED: state folder /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r3/s-new/tmpstate/hadavin-mutation-lane-0 is not a plai
   PASS: T22c other owner refused (got 2)
 == T23 forged state: a backup whose hash differs, a marker that is a link, --restore inside the real repository: all refused, nothing written
+./safety-tests.sh: line 222:  1189 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+REFUSED: the saved backup does not match the hash recorded in the marker: refused
+  PASS: T23a hash mismatch refused (got 2)
+  PASS: T23a file not written
+REFUSED: state file /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r3/s-new/tmpstate/hadavin-mutation-lane-0/b70847efbbae39f
+  PASS: T23b marker as a link refused (got 2)
+  PASS: T23b file not written
+process 1198 is not this run's pytest: left alone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r3/s-new/tmpstate/hadavin-mutation-lane-0/b70847efbbae39f1.backup; hash matches saved original: True
+  PASS: T23 genuine restore still works
+REFUSED: --root /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r3/s-new/toy/repo is, contains or lies inside the real reposi
+  PASS: T23c --restore in the real repository refused for that reason (got 2, reason hits 1)
+== T24 import check: the tests would load the target from another tree (exit 2); the right tree passes and is recorded
+REFUSED: import check: `import mod` loads '/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r3/s-new/toy/repo/src/mod.py', not /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratch
+  PASS: T24a refused (got 2)
+  PASS: T24a file unchanged
+  PASS: T24b recorded in the raw file
+  PASS: T24b raw file lists 4 environment names
+== T25 TESTS is an allowlist: every bypass named in review r2 is refused by the argument check (exit 2, message 'TESTS argument'), one check each
+  PASS: T25 @argsfile refused by the argument check (rc 2, hits 1)
+  PASS: T25 -k @argsfile refused by the argument check (rc 2, hits 1)
+  PASS: T25 -qc (clustered c) refused by the argument check (rc 2, hits 1)
+  PASS: T25 -qo (clustered o) refused by the argument check (rc 2, hits 1)
+  PASS: T25 -qp (clustered p) refused by the argument check (rc 2, hits 1)
+  PASS: T25 -c refused by the argument check (rc 2, hits 1)
+  PASS: T25 -cfoo.ini refused by the argument check (rc 2, hits 1)
+  PASS: T25 -oaddopts=-x refused by the argument check (rc 2, hits 1)
+  PASS: T25 --collect-only refused by the argument check (rc 2, hits 1)
+  PASS: T25 --co refused by the argument check (rc 2, hits 1)
+  PASS: T25 --setup-plan refused by the argument check (rc 2, hits 1)
+  PASS: T25 --setup-only refused by the argument check (rc 2, hits 1)
+  PASS: T25 --help refused by the argument check (rc 2, hits 1)
+  PASS: T25 -h refused by the argument check (rc 2, hits 1)
+  PASS: T25 --version refused by the argument check (rc 2, hits 1)
+  PASS: T25 -V refused by the argument check (rc 2, hits 1)
+  PASS: T25 --noconftest refused by the argument check (rc 2, hits 1)
+  PASS: T25 --ignore=tests refused by the argument check (rc 2, hits 1)
+  PASS: T25 --ignore tests refused by the argument check (rc 2, hits 1)
+  PASS: T25 -p other refused by the argument check (rc 2, hits 1)
+  PASS: T25 -pother refused by the argument check (rc 2, hits 1)
+  PASS: T25 -p (no value) refused by the argument check (rc 2, hits 1)
+  PASS: T25 -k (no value) refused by the argument check (rc 2, hits 1)
+  PASS: T25 --basetemp refused by the argument check (rc 2, hits 1)
+  PASS: T25 --rootdir refused by the argument check (rc 2, hits 1)
+  PASS: T25 --junitxml refused by the argument check (rc 2, hits 1)
+  PASS: T25 --confcutdir refused by the argument check (rc 2, hits 1)
+  PASS: T25 --override-ini refused by the argument check (rc 2, hits 1)
+  PASS: T25 --import-mode refused by the argument check (rc 2, hits 1)
+  PASS: T25 path ../ outside root refused by the argument check (rc 2, hits 1)
+  PASS: T25 absolute path outside root refused by the argument check (rc 2, hits 1)
+  PASS: T25 path through a link out of the root refused by the argument check (rc 2, hits 1)
+  PASS: T25 -- terminator refused by the argument check (rc 2, hits 1)
+  PASS: T25 file unchanged, state empty
+  PASS: T25 the allowed forms still run (-q -x -p no:NAME -k -m path::node) (got 0)
+== T26 the start hook fails after the tests were started: the test group is still stopped (review 4 M2)
+RuntimeError as expected: start hook failed
+  PASS: T26 no orphan pytest left
+== T27 a mutant whose new text equals the old text is refused (exit 2)
+REFUSED: mutant m1: old text is empty or equal to new text (a no-op)
+  PASS: T27 exit 2 (got 2)
+== T28 a clean run leaves no temporary file in the state folder
+  PASS: T28 state empty (ls -A)
+== T29 stopping the test group fails (no permission): the leader is still stopped and signals stay disarmed (review r2 nit)
+raised as expected: RuntimeError
+SIG.allow after: False
+  PASS: T29 SIG.allow is False afterwards
+  PASS: T29 no orphan pytest left although stop_group failed
+== T30 import check fails closed: a target that is not a .py module is refused unless --skip-import-check (recorded)
+REFUSED: import check: 'docs/note.txt' is not a plain .py module path, so the check cannot tell which file the tests import; pass --skip-import-check if that is intended (it is recorded in the raw fil
+  PASS: T30a refused (rc 2, 'import check' hits 1)
+  PASS: T30a file unchanged
+  PASS: T30b with --skip-import-check it runs (rc 0) and the raw file says so
+== T31 a timeout keeps the output printed before it
