@@ -1,0 +1,14 @@
+EVIDENCE patches r4 (fixer r3, scratch copy /tmp/claude-0/-home-user/9d809a30-0790-5792-93c1-8c5abd22e849/scratchpad/ev, not a judgement; real tree untouched)
+--- check_patches.sh ---
+PASS 5 patches
+check rc=0
+--- sha256 (16) ---
+cf58ae2a907c5922  handover/flows-audit/patches/F-001-one-ddl.patch
+f5c34d37a0794bb5  handover/flows-audit/patches/F-002-take-key-check-and-claim-error-path.patch
+bbfc55822b7458c2  handover/flows-audit/patches/F-003-runsheet-claims.patch
+a46a4ea29cbe5ba3  handover/flows-audit/patches/F-004-page-statement-17.patch
+c9d61339d1619de9  handover/flows-audit/patches/F-008-save-runs-for-the-take.patch
+--- apply all 5 together ---
+together check rc=0
+together apply rc=0
+--- git status ---
