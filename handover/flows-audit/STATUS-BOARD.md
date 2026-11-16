@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T14:18:47Z
+UPDATED_UTC: 2026-11-16T14:19:10Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -7,13 +7,13 @@ ITEMS_TOTAL: 12
 ITEMS_OPEN: 30
 PERCENT: 70
 AGENTS_RUNNING: 8
-CAPACITY: 2.13 load of 4 cores, mem 1/15 GB, RAM 1042/16087 MB, disk 24G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 3.8G /tmp/claude-0 , agents 8 (light+heavy per list)
+CAPACITY: 2.15 load of 4 cores, mem 1/15 GB, RAM 1050/16087 MB, disk 24G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 3.8G /tmp/claude-0 , agents 8 (light+heavy per list)
 INTERRUPTED: none
 FAILED: - F8 reviewer_ok accepted Pat O.L.L.M. (fix running a2b5712); shellcheck not installed
 Percent basis (ORDER 041): 70 percent = 7 of 10 items verified by an independent check (checker run or fresh reviewer): see items.txt; no item closed since 13:59Z, so percent unchanged; agents finishing do not count.
 Percent basis (ORDER 041): 70 percent = 7 of 10 items verified by an independent check; none closed since 13:59Z; fixers reported but unverified.
-NEXT: REVIEW.md r19 reviews; F8 r9 evidence; r15 reads; claims r10; post-twice script (lead)
-PUSHED_UTC: 2026-11-16T14:18:47Z
+NEXT: REVIEW.md r19; F8 r9 evidence; r15 reads; claims r10; post-twice script (lead)
+PUSHED_UTC: 2026-11-16T14:19:10Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
