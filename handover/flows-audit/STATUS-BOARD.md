@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T20:11:39Z
+UPDATED_UTC: 2026-11-16T20:12:13Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -7,11 +7,11 @@ ITEMS_TOTAL: 10
 ITEMS_OPEN: 30
 PERCENT: 70
 AGENTS_RUNNING: 8
-CAPACITY: 1.06 load of 4 cores, mem 1/15 GB, RAM 1153/16087 MB, disk 15G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 9.0G /tmp/claude-0 , agents 8 (light+heavy per list)
+CAPACITY: 0.72 load of 4 cores, mem 1/15 GB, RAM 1141/16087 MB, disk 15G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 9.0G /tmp/claude-0 , agents 8 (light+heavy per list)
 INTERRUPTED: none
 FAILED: none (F8 run_all.sh intermittent exit 1 is an evidence finding: 3 of 6 plain runs failed, cause unknown, fixer acf8ab59 on it; ruff format --check passes 741 files)
 NEXT: see next5
-PUSHED_UTC: 2026-11-16T20:11:39Z
+PUSHED_UTC: 2026-11-16T20:12:13Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -31,7 +31,7 @@ PUSHED_UTC: 2026-11-16T20:11:39Z
 | id | role | model | what it does | started UTC | expected end UTC | state | produced so far |
 |---|---|---|---|---|---|---|---|
 | a7636841 | F8 fixer | sonnet | F8 r12 fixes (HEAVY only while it runs tests) | 19:20Z | 20:25Z | running | evidence-f8-r13-fixer.md pending |
-| a3a51c58 | TAKE-CHECKLIST reader r63 | sonnet | fresh read lines 80-end | 20:12Z | 20:27Z | running | report pending |
+| a860fa1c | TAKE-CHECKLIST fixer r63 | sonnet | fix M1-M15 (clock block frozen) | 20:13Z | 20:35Z | running | fix-takechecklist63.md pending |
 | a76c3617 | FINDINGS/LEDGER fixer r33 | sonnet | fix M1-M8 | 20:14Z | 20:35Z | running | fix-findings-ledger33.md pending |
 | ab2d6ddc | patch-copies reader r26 | sonnet | security-path read README+DMC | 20:17Z | 20:32Z | running | report pending |
 | add6db6a | FIX-PLAN reader r64 | sonnet | fresh read lines 85-end | 20:19Z | 20:33Z | running | report pending |
