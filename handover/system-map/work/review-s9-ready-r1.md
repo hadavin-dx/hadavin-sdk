@@ -1,0 +1,2 @@
+# Review round 1: can core-hardening apply APPLIED-S9.md (egm-implementation-readiness, 16 Nov 2026; summary saved by system-map)
+Verdict: no row applicable as written. Blockers B1-B8 and Majors M1-M5 are summarised in the last paragraph of drift/APPLIED-S9.md and QUESTIONS.md item 6. Wording-only items were fixed in APPLIED-S9.md (exit codes, v5:114 merge, C.3, word "take", secret-file meaning). The review read only APPLIED-S9, v5 and the scope sheet; it did not open program code or flow JSON.
