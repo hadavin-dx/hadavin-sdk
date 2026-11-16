@@ -53,7 +53,7 @@ INTERRUPTED: none
 - MERGE-V43 a05f5135652d6d253 | merge patches D, E, F, G into RUNBOOK-V4.3-PATCH.md | next: fresh egm reader
 - FIX-PH ac9fc17d866f2464b | glossary, H-1 first, safe-row rule on timing patch | next: append to merged patch
 - FIX-H3 a4f97738441b398a0 | final cap fix on timing-check-v42 part1 and part2 | next: digest, no third read
-- READ-LNb a25d37e48d91bb78d | round 2 cold reader on LEAD-NOTICE-batch-1.md | next: digest, capped
+- FIX-LN2 a2d12f453c2dcb56a | final cap fix on LEAD-NOTICE-batch-1.md | next: digest, no third read
 - EMPTY SLOTS (4 of 8): reason: other open items wait for the lead's answers (LEAD-NOTICE items 1-26) or for MERGE-V43 to hand back; decision list, critical path, open items and owner timeline are at the reader cap
 
 ## Details (long text moved from the FAILED line)

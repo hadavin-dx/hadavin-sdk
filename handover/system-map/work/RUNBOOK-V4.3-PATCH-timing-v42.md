@@ -2,24 +2,80 @@ Status: DRAFT, unverified
 
 # Runbook v4.3 patch, timing rows against v4.2 (49-minute window check)
 
+## Glossary (v4.2 = `inputs/lead-reviews/LEAD-RUNBOOK-TAKE-DAY-v4.2.md`; section numbers are v4.2's)
+
+- **take**: the one recorded run of the take program (the owner types `y`, the challenge and `end` on camera) that becomes the video. Defined in v4.2 section 9, W-05 (line 484), and in the section 3 schedule (line 218).
+- **re-smoke**: a loopback test run on a separate copy of the setup with stand-in services, never on the take's n8n; it starts only after the owner's yes and has no 1-hour limit. Defined in v4.2 section 8, T-12 (line 409), and section 3 (line 211).
+- **G6 / G7**: rows of the GO / NO-GO table in v4.2 section 5 (lines 265 and 266). G6 = the counts proof (exactly 1 mail) and the scene 4 rule; G7 = the NO-GO path with the chain of steps that must end before the money stop.
+- **Row 4**: one made-up lead sent through the real HubSpot trial account on Wed 18 Nov, 30 minutes. Defined in v4.2 section 9, W-02 (line 457), and section 3 (line 91).
+- **rehearsal**: two full practice runs of the take's choices before the take (rehearsal 2 repeats rehearsal 1 with new keys), about 2 hours. Defined in v4.2 section 9, W-03 (line 469).
+- **start-state gate**: five checks that the setup is clean before a send phase, about 25 minutes. Defined in v4.2 section 9, W-04 (line 478); section 3 (line 217) gives the time. Whether the 25 minutes is the gate alone or gate plus sign-off plus GO check is open (H-5).
+- **money stop**: the end of the window for any spend, Mon 23 Nov 18:29Z (23:59 IST). Defined in v4.2 section 3 (line 223) and section 4 (line 236); v4.2 has no separate definition beyond those lines (UNVERIFIED whether another section defines it).
+- **r28**: round 28 of the lane D review (see `work/RUNBOOK-V4.3-PATCH-laneD-28-32.md`). v4.2 marks "ROUND 28 PENDING" items (line 497) as not final: they apply only after r28's code change lands.
+
+## BLOCKING QUESTION FOR THE LEAD SESSION: H-1 (answer this first)
+
+**H-1. What do the 49 minutes contain?** Nothing in the files I read says. The only source for 49 minutes and the latest start 17:40Z is the lead's order at `handover/system-map/ORDERS.md` line 183 ("latest start about 17:40Z for window end 18:29Z"); it is not a measurement.
+
+Question: does the 49 minutes mean the take program's own run only (typed `y`, confirmation line, the run, scene 4 stop and restart, the two mailbox waits, post-take counts, its own clean-up), or also the start-state gate (about 25 min), the lead's watch (20 min), the extra Ctrl-C wait of up to 120 s (lines 493-494), or a failed-run clean-up? Known pieces from v4.2 that may or may not be inside (all lead estimates, none measured): scene 4 up to 248 s by the lines of this file (PH-13); two mailbox waits at least 340 s (PH-14); Ctrl-C wait up to 120 s; stop of n8n 53 s.
+
+Lines that depend on the answer: 94 and 218 (take about 1 h), 484, 107, 223, 236 (the 17:40Z figure itself), 450, 493-494, 524, 528. The held sub-rows H-1a and H-1b are in Section B.
+
+**DO NOT APPLY any row marked "DO NOT APPLY until H-1 is answered" until the lead session has answered H-1.**
+
+## One rule: which rows are safe to apply
+
+A row is safe to apply now only if neither its Old text, its New text nor its reason uses a 49-minute figure or the 17:40Z latest start. Any row that does use one is marked "DO NOT APPLY until H-1 is answered" in its heading. Safe rows (not using any 49-minute figure): PH-10, PH-11, PH-12, PH-13, PH-16, and the second change of PH-09 (the repeat of T-06 to T-10 at 04:12Z). Unsafe rows (use 49 or 17:40Z): PH-01, PH-02, PH-03, PH-04, PH-05, PH-06, PH-07, PH-08, PH-09 (first change), PH-14, PH-15, PH-17. All Section B rows are HELD. "Safe" means only that it does not wait for H-1; the lead still reviews every row before it is applied.
+
+## What the cited check-page rows say (one line each)
+
+C1 = `work/timing-check-v42-part1.md` (row numbers); C2 = `work/timing-check-v42-part2.md` (R-numbers). All gists are copied in short from those pages, which are themselves DRAFT, unverified.
+
+- C1 row 1 (v4.2 line 107): the money stop gives only the end of the window, no latest start.
+- C1 row 2 (line 223): the schedule table has no row for the latest start.
+- C1 row 3 (line 236): a run started after 17:40Z can still be spending after 18:29Z; the sentence says nothing about starting.
+- C1 row 4 (lines 94 and 218): the take is planned at 60 minutes, more than a 49-minute worst case; it matters only for a slipped take on Mon 23 Nov.
+- C1 row 5 (line 222) and row 6 (line 265): the 12:00Z cut-off for a slipped take is earlier than the 17:40Z latest start; two cut-offs exist and the file does not say which wins.
+- C1 row 7 (line 266, G7): "re-smoke 1 h" contradicts the no-1-hour-limit lines, the 25-minute gate is missing, "with margin" has no number.
+- C1 row 8 (line 88) and row 9 (line 211): a re-smoke with no limit could eat the window on Mon 23 Nov.
+- C1 row 16 (line 226): the same-day retake sentence is arithmetically right for the Wed take; it says nothing about the 17:40Z latest start for a retake on Mon 23 Nov.
+- C1 row 20 (line 76) and row 21 (line 109): the 49 and 17:40Z must be listed as the lead's unmeasured figures and as not yet set.
+- C2 R-05 (line 348): the 168-minute repeat counts T-07 in series although line 361 lets it run beside T-08.
+- C2 R-08 (line 377): the readiness loop can take up to 120 s, counted nowhere.
+- C2 R-17 (line 443): W-00 shares the practice hour; its waits are not added anywhere.
+- C2 R-24 (line 465): each failed Row 4 try uses time; no time per try is given.
+- C2 R-26 and R-27 (line 473): scene 4 stop (53 s) plus restart wait can exceed the 180 s limit; the measured scene 4 figure should be written to the take notes.
+- C2 R-28 and R-29 (lines 475 and 478): the new start-state gate in rehearsal 2 has no time; line 217 and line 478 read the 25 minutes two ways.
+- C2 R-30 and R-48 (lines 482 and 526): the 12:00Z slip limit is a stricter older planning limit; wording does not say whether it limits the start.
+- C2 R-31 (line 484) and R-49 (line 528): 60 is a slot and 49 the worst case, or the 60 should shrink; the retake sum is 225 min with 60 and 214 min with 49.
+- C2 R-33 (line 489): two mailbox waits of at least 170 s each are not timed in W-05.
+- C2 R-34 (lines 493-494): Ctrl-C can be inert up to 120 s, an extra that may need to be inside the 49.
+- C2 R-35 (line 497): a slow owner answer can push a take started at 17:40Z past 18:29Z, until r28 lands.
+- C2 R-36 (line 450): the program's refusal figure for "window too close" is not in v4.2.
+- C2 R-39 (line 508): with a 60-minute take the same-day retake watch ends 5 minutes too late.
+- C2 R-42 and R-60 (lines 510, 514, 595-596): "same day" clean-up cannot hold in IST after a late Monday take.
+- C2 R-46 (line 524): "take later, before 18:29Z" names the end of the window, but the take program must start by 17:40Z; the sentence also leaves out the 04:12Z start of a 168-minute repeat.
+- C2 R-56 (line 583): the "not checked" list does not name the 49-minute figure as a planning figure.
+- C2 "G7 and the stop time": the G7 chain sum and the stop time worked out; C2 cites G7 at line 265, the real line is 266.
+
 Written 2026-11-16 (UTC) by builder PATCH-H. Static work: files read, nothing run, no spend, no sub-agents. v4.2 and every other file are unchanged; only this file was written. Times in UTC (Z) first, then IST (IST = UTC + 5 h 30 min).
 
 ## Read first: what this page is and is not
 
-1. **Every 49-minute figure below is a PROPOSAL.** The only source for 49 minutes and the latest start 17:40Z is the lead's order at `handover/system-map/ORDERS.md` line 183 ("latest start about 17:40Z for window end 18:29Z"). It is not a measurement. I do not know what the 49 minutes contain. Nothing here decides that.
+1. **Every 49-minute figure below is a PROPOSAL.** (H-1 above is the blocking question.) The only source for 49 minutes and the latest start 17:40Z is the lead's order at `handover/system-map/ORDERS.md` line 183 ("latest start about 17:40Z for window end 18:29Z"). It is not a measurement. I do not know what the 49 minutes contain. Nothing here decides that.
 2. Source pages: `work/timing-check-v42-part1.md` (v4.2 lines 1-320, called "C1" with its row number) and `work/timing-check-v42-part2.md` (v4.2 lines 321-628, called "C2" with its R-number). Target file: `inputs/lead-reviews/LEAD-RUNBOOK-TAKE-DAY-v4.2.md` (called "v4.2"). Line numbers below are the real v4.2 line numbers; I opened each line.
 3. Old text is copied from v4.2 and was checked by script against the line (result in the last section). Where a v4.2 line is very long I quote only the part that changes; that part occurs once in the line.
 4. Arithmetic used (each step shown): 18:29Z - 49 min = 17:40Z; 17:40Z + 5:30 = 23:10 IST; 18:29Z + 5:30 = 23:59 IST; 17:40Z - 12:00Z = 5 h 40 min.
 5. Two things in the check pages were wrong or unclear and are handled here:
    - C2 cites the G7 row at line 265. It is line 266 (line 265 is G6). C1 has it right. Rows below use 266.
    - C1 row 16 and C2 row "Last possible start of a retake" give different latest first starts for a retake (16:51Z and 16:06Z). They count different things. See H-3b. I did not choose silently.
-6. Section A rows can be applied once the lead accepts them (the 49-based ones stay marked PROPOSAL until the lead answers H-1). Section B rows are HELD: a question is open and I wrote no answer.
+6. Which Section A rows are safe to apply is decided by the one rule above ("One rule: which rows are safe to apply"); nothing else on this page overrides it. Section B rows are HELD: a question is open and I wrote no answer.
 
 ## Section A. Patch rows
 
-Format per row: id, v4.2 line, Old text, New text, source.
+Format per row: id, v4.2 line, Old text, New text, source. Safe or not: see the one rule above.
 
-### PH-01 | v4.2 line 107 (GO / NO-GO rules)
+### PH-01 | v4.2 line 107 (GO / NO-GO rules) | DO NOT APPLY until H-1 is answered
 
 Old (line 107) >> Money stop Mon 23 Nov 18:29Z.
 
@@ -27,7 +83,7 @@ New (PROPOSAL) >> Money stop Mon 23 Nov 18:29Z (23:59 IST). Latest start of any 
 
 Source: C1 row 1.
 
-### PH-02 | v4.2 line 223 (section 3 table, new row above the money stop row)
+### PH-02 | v4.2 line 223 (section 3 table, new row above the money stop row) | DO NOT APPLY until H-1 is answered
 
 Old (line 223) >> | Credits / money stop | Mon 23 Nov 18:29 | 23:59 | Q26-1 |
 
@@ -37,7 +93,7 @@ New (PROPOSAL): keep the old row as it is and insert this row directly above it:
 
 Source: C1 row 2; C2 "G7 and the stop time".
 
-### PH-03 | v4.2 line 236 (spend method)
+### PH-03 | v4.2 line 236 (spend method) | DO NOT APPLY until H-1 is answered
 
 Old (line 236) >> Window end for any spend: Mon 23 Nov 18:29Z (23:59 IST).
 
@@ -45,7 +101,7 @@ New (PROPOSAL) >> Window end for any spend: Mon 23 Nov 18:29Z (23:59 IST). No ru
 
 Source: C1 row 3.
 
-### PH-04 | v4.2 line 76 (header, how figures are labelled)
+### PH-04 | v4.2 line 76 (header, how figures are labelled) | DO NOT APPLY until H-1 is answered
 
 Old (line 76) >> Every minute figure is the lead's own estimate from the Q26/Q27/Q30 answers or this file's step estimates, never a measurement.
 
@@ -53,7 +109,7 @@ New (PROPOSAL) >> Every minute figure is the lead's own estimate from the Q26/Q2
 
 Source: C1 row 20.
 
-### PH-05 | v4.2 line 109 (NOT DONE AT FREEZE list)
+### PH-05 | v4.2 line 109 (NOT DONE AT FREEZE list) | DO NOT APPLY until H-1 is answered
 
 Old (line 109) >> the time box and tripwire threshold of 8A;
 
@@ -61,7 +117,7 @@ New (PROPOSAL) >> the time box and tripwire threshold of 8A; what the 49-minute 
 
 Source: C1 row 21.
 
-### PH-06 | v4.2 line 88 (section 2 table row 3, re-smoke has no limit)
+### PH-06 | v4.2 line 88 (section 2 table row 3, re-smoke has no limit) | DO NOT APPLY until H-1 is answered
 
 Old (line 88) >> the ask states estimated clock times in UTC and IST and the cost;
 
@@ -69,7 +125,7 @@ New (PROPOSAL) >> the ask states estimated clock times in UTC and IST and the co
 
 Source: C1 row 8.
 
-### PH-07 | v4.2 line 211 (section 3 table, re-smoke row)
+### PH-07 | v4.2 line 211 (section 3 table, re-smoke row) | DO NOT APPLY until H-1 is answered
 
 Old (line 211) >> starts after 08:00 and after his yes; end: the lead states it in the ask
 
@@ -77,7 +133,7 @@ New (PROPOSAL) >> starts after 08:00 and after his yes; end: the lead states it 
 
 Source: C1 row 9.
 
-### PH-08 | v4.2 line 266 (G7)
+### PH-08 | v4.2 line 266 (G7) | DO NOT APPLY until H-1 is answered
 
 Why: "re-smoke 1 h" contradicts lines 88, 211 and 411 (no 1-hour limit); the 25-minute start-state gate is missing from the chain; "with margin" has no number.
 
@@ -85,11 +141,13 @@ Old (line 266) >> the chain after it (re-smoke 1 h, practice 1 h, Row 4 0.5 h, r
 
 New (PROPOSAL for the 17:40Z part) >> the chain after it (re-smoke: no limit, its end is stated in the lead's ask; practice 1 h, Row 4 0.5 h, rehearsal 2 h, start-state gate about 25 min, take about 1 h) must end before 18:29Z, and the take program must start by 17:40Z (23:10 IST). Example with a 1 h re-smoke: from 07:00Z (12:30 IST) the take starts at 07:00 + 1 h + 1 h + 0.5 h + 2 h + 25 min = 11:55Z (17:25 IST), 5 h 45 min before 17:40Z, and ends about 12:55Z (18:25 IST).
 
+**Conflict stated outright:** the example end time 12:55Z is AFTER the 12:00Z cut-off for a slipped take at v4.2 line 107 (and line 222, 265). This conflict is HELD at H-2 and is not resolved here; the example must not be read as allowed. H-2 also asks whether 12:00Z means the start or the end of the take.
+
 Arithmetic check: 07:00 + 1:00 = 08:00; + 1:00 = 09:00; + 0:30 = 09:30; + 2:00 = 11:30; + 0:25 = 11:55; + 1:00 = 12:55. 17:40 - 11:55 = 5 h 45 min.
 
 Source: C1 row 7; C2 "G7 and the stop time". Note: whether the 12:00Z slipped-take cut-off means "start" or "end" is H-2.
 
-### PH-09 | v4.2 line 524 (section 11, Tue NO-GO routing)
+### PH-09 | v4.2 line 524 (section 11, Tue NO-GO routing) | first change: DO NOT APPLY until H-1 is answered; second change: safe
 
 Old (line 524) >> take later, before Mon 23 Nov 18:29Z;
 
@@ -135,11 +193,11 @@ Source: C2 R-17. The 170 s is from v4.2 line 566 (take program defaults); not me
 
 Old (line 473) >> `<LIMIT_S>` = 180 s unless the rehearsal shows otherwise.
 
-New >> `<LIMIT_S>` = 180 s unless the rehearsal shows otherwise. The restart's readiness wait adds up to 120 s (12 tries of 10 s) to the 53 s stop, so the stop, the start and the takeover are measured together, not assumed. By the lines of this file the worst case adds to 53 + 120 + 45 + 30 = 248 s (4 min 8 s), more than 180 s, unless the 45 s lease already runs during the stop (not measured). If the measured total is over 180 s, scene 4 is cut (G6 rule 2).
+New >> `<LIMIT_S>` = 180 s unless the rehearsal shows otherwise. The restart's readiness wait adds up to 120 s (12 tries of 10 s) to the 53 s stop, so the stop, the start and the takeover are measured together, not assumed. By the lines of this file the worst case adds to 53 + 120 + 45 + 30 = 248 s (4 min 8 s), more than 180 s, unless the 45 s lease already runs during the stop (not measured). EXAMPLE FROM THE CHECK PAGE (C2 "Scene 4 total worst case"), UNMEASURED: 248 s is a sum of estimates, not a result; the rehearsal measures the real figure. If the measured total is over 180 s, scene 4 is cut (G6 rule 2).
 
-Source: C2 R-26, R-27 and its "Scene 4 total worst case" row. The lead writes the measured scene 4 figure into `<TAKE_NOTES>` so the 49 minutes can be rebuilt (H-1).
+Source: C2 R-26, R-27 and its "Scene 4 total worst case" row. The 248 s is an example from the check page, unmeasured. The lead writes the measured scene 4 figure into `<TAKE_NOTES>` so the 49 minutes can be rebuilt (H-1).
 
-### PH-14 | v4.2 line 489 (counts proof, two mailbox waits)
+### PH-14 | v4.2 line 489 (counts proof, two mailbox waits) | DO NOT APPLY until H-1 is answered
 
 Old (line 489) >> the intake mailbox count after `<WAIT_S>` and once more after the stated wait: exactly 1 mail.
 
@@ -149,11 +207,11 @@ Arithmetic check: 150 + 20 = 170; 2 x 170 = 340 s = 5 min 40 s.
 
 Source: C2 R-33.
 
-### PH-15 | v4.2 line 497 (ROUND 28 PENDING, slow answer)
+### PH-15 | v4.2 line 497 (ROUND 28 PENDING, slow answer) | DO NOT APPLY until H-1 is answered
 
 Old (line 497) >> Until then the window is checked only before the prompts, so a slow answer can run past it.
 
-New (PROPOSAL for the 17:40Z part) >> Until then the window is checked only before the prompts, so a slow answer can run past it: a take started right at 17:40Z (23:10 IST) ends after 18:29Z (23:59 IST) by as long as the owner needs to answer. Until r28 lands the lead sets an earlier latest start (the size of the margin is H-4).
+New (PROPOSAL for the 17:40Z part) >> Until then the window is checked only before the prompts, so a slow answer can run past it: a take started right at 17:40Z (23:10 IST) ends after 18:29Z (23:59 IST) by as long as the owner needs to answer. Until r28 lands the lead sets an earlier latest start (the size of the margin is H-4; "earlier latest start" is an example idea from the check page C2 R-35, which itself says its 10-minute margin is not measured; no figure is decided here).
 
 Source: C2 R-35. The margin figure is not written (H-4).
 
@@ -167,7 +225,7 @@ Arithmetic check: 15:00 - 225 min = 11:15; 11:15 - 20 min = 10:55; 10:00 + 60 mi
 
 Source: C2 R-39. This uses the planned 1 h take. If the real take is 49 minutes, see H-3.
 
-### PH-17 | v4.2 line 583 (not checked by this document)
+### PH-17 | v4.2 line 583 (not checked by this document) | DO NOT APPLY until H-1 is answered
 
 Old (line 583) >> whether n8n's public API has a credentials list route.
 
@@ -179,13 +237,9 @@ Source: C2 R-56.
 
 Each row names the v4.2 lines it would change and the question. When the lead answers, the row becomes a Section A row.
 
-### H-1 | What do the 49 minutes contain?
+### H-1 | What do the 49 minutes contain? (full question moved to the top of this page)
 
-Lines that depend on the answer: 94 and 218 (take about 1 h), 484, 107, 223, 236 (the 17:40Z figure itself), 450, 493-494, 524, 528.
-
-Question: does the 49 minutes mean the take program's own run only (typed `y`, confirmation line, the run, scene 4 stop and restart, the two mailbox waits, post-take counts, its own clean-up), or also the start-state gate (about 25 min), the lead's watch (20 min), the extra Ctrl-C wait of up to 120 s (lines 493-494), or a failed-run clean-up?
-
-Known pieces from v4.2 that may or may not be inside (all lead estimates, none measured): scene 4 up to 248 s by the lines of this file (PH-13); two mailbox waits at least 340 s (PH-14); Ctrl-C wait up to 120 s; stop of n8n 53 s.
+See "BLOCKING QUESTION FOR THE LEAD SESSION: H-1" at the top. It is not repeated here.
 
 Held sub-rows:
 - **H-1a, lines 493-494.** Old (line 493) >> Ctrl-C in the closing phase looks inert for up to 120 s: press it ONCE and wait.
