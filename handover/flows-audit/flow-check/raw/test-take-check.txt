@@ -332,3 +332,6 @@ ok   Q2: a flow file that sha256sum cannot read is printed as MISSING and is exi
 ok   A1: line 1 of take-warns.pin does not claim that a person read each line
 ok   B1: a changed flow file with the same counts and the same WARN lines is exit 4 (got exit 4)
 ok   B1: a pin without the flows sha256 line is exit 4 (got exit 4)
+ok   B2: reviewer line 'claude agent, 2026-11-16, pin sha256 378e1121' is exit 4 with exactly the message 'NOT A PERSON' and 'rule: listed word agent' (got exit 4)
+ok   B2: reviewer line 'TBD' is exit 4 with exactly the message 'NOT A PERSON' and 'rule: shape' (got exit 4)
+ok   B2: reviewer line 'x, 2026-11-16, pin sha256 378e1121' is exit 4 with exactly the message 'NOT A PERSON' and 'rule: name too short' (got exit 4)

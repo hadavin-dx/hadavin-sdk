@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T14:33:55Z
+UPDATED_UTC: 2026-11-16T14:37:43Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -7,12 +7,12 @@ ITEMS_TOTAL: 10
 ITEMS_OPEN: 30
 PERCENT: 70
 AGENTS_RUNNING: 8
-CAPACITY: 2.79 load of 4 cores, mem 1/15 GB, RAM 1125/16087 MB, disk 23G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 4.4G /tmp/claude-0 , agents 8 (light+heavy per list)
+CAPACITY: 2.56 load of 4 cores, mem 1/15 GB, RAM 1326/16087 MB, disk 22G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 5.3G /tmp/claude-0 , agents 8 (light+heavy per list)
 INTERRUPTED: none
 FAILED: - F8 reviewer_ok accepted Pat O.L.L.M. (fix running abfcd0a); check_secrets FAIL 1 hit flow-check/raw/test-take-check.txt:178; run_all.sh rc 1 (reviews/evidence-run-all-2.md)
 Percent basis (ORDER 041): 70 percent = 7 of 10 items verified by an independent check; none closed since 13:59Z; fixers reported but unverified.
-NEXT: REVIEW.md r20 readers; F8 evidence; CT sync; Q31 items
-PUSHED_UTC: 2026-11-16T14:33:55Z
+NEXT: see next5
+PUSHED_UTC: 2026-11-16T14:37:43Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -31,21 +31,21 @@ PUSHED_UTC: 2026-11-16T14:33:55Z
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | state | produced so far |
 |---|---|---|---|---|---|---|---|
-| abfcd0a | F8 r9 fixer (uncapped) | sonnet | check_secrets hit in flow-check, tests, --strict docs | 13:55Z | 14:50Z | running | log flow-check/fix-f8-r9.md |
-| aadd3a4 | Q31 round 3 lead read | sonnet | index, defaults, counts | 14:30Z | 14:45Z | running | none yet |
-| a74dc08 | CITATION CHECKER Q31 | sonnet | Q31 cites to other files | 14:31Z | 14:45Z | running | reviews/citation-r15-q31.md pending |
-| ad4b390 | REVIEW.md r20 design review (uncapped) | sonnet | rating rule, decisions, identity table | 14:32Z | 14:50Z | running | none yet |
-| a0ac58a | CLAIMS fixer r14 | sonnet | 5 Majors of design-angle read | 14:33Z | 14:50Z | running | log fix-claims14.md |
-| a1e940f | patch-copies fixer (uncapped) | sonnet | README, DEAD-MAN-CHECK, A-01, C-01 findings | 14:35Z | 14:55Z | running | log fix-patchcopies1.md |
-| a5d690e | RW fixer r12 | sonnet | 9 Majors of RW r5 read | 14:37Z | 14:55Z | running | log fix-rswording12.md |
-| aa375d4 | plan files stranger read r16 | sonnet | RUNBOOK/FIX-PLAN/TAKE-CHECKLIST | 14:37Z | 14:50Z | running | none yet |
+| abfcd0a | F8 fixer r9 (uncapped) | sonnet | check_secrets hit, run_all.sh exit 1 | 13:55Z | 14:50Z | running | fix-f8-r9.md in progress |
+| a0ac58a | claims fixer r14 + RW sync list | sonnet | 5 round-4 Majors, then sync 4 paste strings | 14:20Z | 14:50Z | running | fix-claims14.md in progress |
+| a1e940f | patch-copies fixer (uncapped) | sonnet | B1-B3, M4-M8 | 14:15Z | 14:50Z | running | fix-patchcopies1.md in progress |
+| af6612a | Q31 fixer round 3 + new items | sonnet | round-3 Majors, 5 new items, r16 items | 14:20Z | 14:50Z | running | fix-q31-3.md in progress |
+| aea5829 | plan files fixer r16 | sonnet | 6 Majors of stranger read r16 | 14:37Z | 15:00Z | running | fix-tcfp12.md in progress |
+| ac6c38b | REVIEW.md r20 fixer (uncapped) | sonnet | design r20 M1-M6, reader r20 B1+M2-M7, roles premise | 14:38Z | 15:10Z | running | fix-review13.md in progress |
+| a65a6e1 | RW round 6 reader | sonnet | stranger read RUNSHEET-WORDING | 14:39Z | 14:55Z | running | report pending |
+| af835e9 | citation checker RW sections 3+ | sonnet | cites in RW rows | 14:39Z | 14:55Z | running | reviews/citation-r17-rw3.md pending |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
-1. REVIEW.md round 20 reader + codebase reviews after the design review (uncapped)
-2. F8 r9 evidence runner + fresh uncapped review after abfcd0a (run_all.sh rc 1 and check_secrets FAIL still open)
-3. Sync CLAIMS-TABLE with RW string changes (SYNC LIST from fix-rswording12.md) after a0ac58a and a5d690e
-4. Fix Q31 r3 and r16 plan-file reader findings; QUESTIONS items for 5 BLOCKED inputs of fix-tcfp11 (report files, I24, 4a text time, post-twice branch time, answer-by table)
-5. Post-twice script review (waits on lead: Q29-4)
+1. Save and fix r6 RW read findings (after a65a6e1)
+2. F8 evidence runner on final head plus fresh uncapped review (after abfcd0a)
+3. Fresh REVIEW.md round 21 review (after ac6c38b)
+4. Fresh Q31 round 4 read, Blockers/Majors (after af6612a)
+5. Fresh claims read after sync (after a0ac58a)
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
