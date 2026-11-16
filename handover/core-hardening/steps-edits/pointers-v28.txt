@@ -1,31 +1,84 @@
-changes| card, If it fails, FREEZE, |R1
-changes| default; B text rewritten; |G26
-changes| term definitions and the B |7.11
-changes| | C125 | | M19 stop before |6.7
-changes| | cancel only at 6.7 after |6.6
-changes|.1, day split, L2 at 6.7 or |7.11
-changes|0 | | M4 clipboard order at |6.3
-changes|1 (B) 7.11 can be skipped | |7.11
-changes|30 C131 | | Security B1 (B) |7.11
-changes|: the click paths in 5.3 to |5.5
-changes|choice is still the lead's (|Open 71
-changes|didates: the click paths in |5.3
-changes|est key time not checked at |6.3
-changes|irm (needs-lead):** (a) B's |7.11
-changes|known good | cancel only at |6.7
-changes|ly at 8.1, day split, L2 at |6.7
-changes|numbers message or picks B (|Open 78
-changes|ogin | sender Gmail only at |8.3
-changes|rminal list, "none" only at |8.1
-changes|rth alarm; cancel-by before |7.11
-changes|s the run at normal waits | |R10
-changes|t be filled before create | |5.9
-changes|tra words are the look key (|5.9
-changes|ult; B text rewritten; G26, |G30
-changes|unprepared | phone tried at |5.3
-changes|y had the typed-figure gate |G35
-changes|y time not checked at 6.3 | |6.3
-changes|| M4 clipboard order at 6.3/|6.4
+changes| 6.7 heading is A-only; the |7.1
+changes| Gmail and HubSpot paths at |8.3
+changes| `read -rs` prompt at 6.5 | |6.5
+changes| aborted run, no end | RC1: |7.11
+changes| choice that is the lead's (|Open 75, 97
+changes| lead's "confirmed" at 5.9 (|Open 53
+changes| only the contact deleting; |8.3
+changes| run that ended before 6.7 (|Open 96
+changes| sample; the word counts in |Open 75
+changes|" is a FREEZE | RC1: R8 and |6.6
+changes|(UNVERIFIED) | C14b | | M-7 |6.3
+changes|, no last-used check | RC1: |7.11
+changes|, tolerated) | C114 | | M-9 |8.2
+changes|-1 never copy a key against |6.3
+changes|-7 6.3 one long paragraph | |6.3
+changes|.7 early Privacy switches | |5.9
+changes|.7 heading without content; |7.1
+changes|.9 and 6.3 and the paste at |6.4
+changes|6.4 and 8.1 | C111 | | m-10 |R8
+changes|; (c) the last-resort step (|Open 4
+changes|C139 | | m-8 stray space in |R1
+changes|Recall path | C114 | | N9 B |7.11
+changes|`rm` result | C132 | | m-14 |5.7
+changes|ad sends | C60 C163 | | m-5 |7.4
+changes|ad) | C161 C169 | | M-12 B: |7.11
+changes|aiting `read -rs` prompt at |6.5
+changes|ap of FREEZE, STOP RULE and |R10
+changes|at least that long again" | |7.4
+changes|ays "do its steps 2 to 4 as |5.9
+changes|but commands contain them | |R6
+changes|call and clipboard paths at |6.1
+changes|ches, one-time text named | |5.9
+changes|cording OFF has no method | |7.7
+changes|d "not releasable" removed; |section 4
+changes|d "wait" is a FREEZE | RC1: |R8
+changes|d the lead's "confirmed" at |5.9
+changes|differ on a live key | RC1: |card step 3
+changes|e against start-to-notice | |R10
+changes|e fixed printed commands of |5.7
+changes|e lead answers "confirmed" (|R8
+changes|e the `rm -f` | C111 | | N6 |5.9
+changes|ed commands of 5.7, 6.4 and |8.1
+changes|ed printed commands of 5.7, |6.4
+changes|er says "every exit route"; |G10
+changes|er-key time" | C149 | | N11 |R10
+changes|es and page paths missing | |5.5
+changes|essage before the deadline; |Open 96
+changes|g file reads as "differs" | |8.1
+changes|g: harmless) | none | | m-4 |R8
+changes|gainst other lead outputs | |R8
+changes|ge; M-15); (d) A against B (|Open 71, 97
+changes|hallenge, waits for `end` | |R10
+changes|he contact deleting; 8.3 to |8.5
+changes|ilm pause closes the chat | |7.6
+changes|is no run | C168 | | m-17 B |6.7
+changes|isplay not exempt in W7 and |R1
+changes|leave app passwords alive | |8.2
+changes|lm pause against the card | |7.6
+changes|ncelled word can be wrong | |5.9
+changes|nd HubSpot paths at 8.3 and |8.4
+changes|ne 18 exempts the look key; |5.9
+changes|ne point every exit passes: |7.11
+changes|ntent; 7.1 tick lists 6.7 | |6.7
+changes|nutes before latest start); |6.6
+changes|ok key is a declared state (|5.9
+changes|one-time display at 5.9 and |6.3
+changes|out content; 7.1 tick lists |6.7
+changes|r-key time" | C139 | | M-14 |6.6
+changes|s "as the first sentence of |8.7
+changes|tches back, line 37 against |8.7
+changes|ter a run that ended before |6.7
+changes|the planned cancel only (A, |6.7
+changes|the run day", "do 6.1 now"; |R1
+changes|the tidy step | C51 | | m-9 |R6
+changes|to-notice time: needs-lead (|Open 99
+changes|vacy switches | 5.9 says do |6.1
+changes|xempt in W7 and R1 | W7 and |R1
+changes|y's own one-time display at |5.9
+changes|| 5.9 "On the run day", "do |6.1
+changes|| C14l | | N8 Recall note | |6.1
+note| (Open 71), the word count (|Open 75
 note| (c), in force (lead answer |Q22
 note| (within 2 minutes) at 6.3; |6.5
 note| 0 accepted) | not read | | |G7
@@ -35,12 +88,15 @@ note| A text, and the yes (sheet |5.8
 note| API access | owner / lead (|G3
 note| Gmail is signed in only at |8.3
 note| HubSpot app secret revoke (|G42
+note| New lead word "confirmed" (|R8
 note| No file gives contact ids: |Open 10
 note| Older key, B: its own step |7.11
+note| R1. - One older-key point: |7.11
 note| Statements: every 1a gate (|G1
 note| The word limit is NOT met (|Open 75
 note| `look-<run name>` of sheet |5.9
 note| a separate database `n8n` (|G20
+note| aborted-run message for A (|Open 96
 note| and the lead's n8n timing (|G36
 note| answer Q23).** AGENT-SCOPE |section 3
 note| defined only there (R2 and |R3
@@ -63,7 +119,7 @@ note| message | | times | lead | |section 2
 note| never deletes (lead answer |Q23
 note| never write "measured" | | |G6
 note| no post check, so no post (|Open 12
-note| older key cancelled (A: at |6.7
+note| older key (A: cancelled at |6.7
 note| on Mon 23 Nov in any case (|Q26
 note| on Mon 23 Nov in any case, |Q26
 note| on any day on or after it; |Q26
@@ -81,7 +137,10 @@ note| removes it before the run (|G3
 note| sentence and the ban list (|section 5
 note| start or end a step (sheet |R8
 note| the builder chose neither (|Open 2 and 31
+note| the older key <its name>", |Open 96
+note| the run ends passes before |8.1
 note| the sheet), other channel (|G31
+note| then answer "confirmed" at |5.9
 note| to G15, G17 to G24, G31 to |G42
 note| total plus expected total (|section 2
 note| you to type a figure: no" (|G35
@@ -97,9 +156,10 @@ note|) and QUESTIONS.md line 55 (|Q21
 note|, sent with the run name at |5.1
 note|, two databases", only with |G19
 note|-balance question is asked, |Q24
+note|.md); rule ids R1 and R4 to |R10
 note|0 | Times by the formula of |section 2
 note|1 | Helpers named (roles in |section 7
-note|1:30 IST), model key (sheet |section 6
+note|25 "go". 4 owner: look key (|5.9
 note|4); lock file and refusals (|section 9
 note|6). 5 owner: the run (sheet |section 7
 note|9 additions stay: G30, G31, |G32
@@ -107,19 +167,20 @@ note|: Windows menu paths (sheet |5.3
 note|: every 1a gate (G1 to G15, |G17
 note|: the `-I` start line gate (|G39
 note|; owner cancels it at sheet |7.11
-note|A or -B.md; rule ids R1 and |R4
-note|B.md; rule ids R1 and R4 to |R10
+note|A is the one sent. In both, |7.11
 note|B: left valid, cancelled at |7.11
+note|D; you see the real word at |5.9
 note|E item: it is the lead gate |G39
-note|ET-v27-A or -B.md; rule ids |R1
 note|Earlier v19 additions stay: |G30
 note|G36), the per-run key file (|G37
 note|G38), the end-date refusal (|G16
 note|G6), US$180 against US$189 (|G14
 note|HubSpot key is not widened (|G21
+note|LM-v28.md); rule ids R1 and |R4
 note|Nov in any case, Q26 alone: |Q25
 note|R10 are defined only there (|R2
 note|Spot private-app page path (|8.4
+note|WNER-FILM-v28.md); rule ids |R1
 note|a cancelled key is unknown (|G34
 note|able, or reader missing | | |G3
 note|age is the pattern of sheet |5.8
@@ -128,6 +189,7 @@ note|all page, the paste method (|6.4
 note|an-up message then says so, |G27
 note|ancel cannot be undone, and |7.11
 note|and the owner cancels it at |7.11
+note|asked address> Gap before |8.1
 note|at the final version: yes" (|G39
 note|ate (G1 to G15, G17 to G24, |G31
 note|ays with you and the owner, |Open 79 and 82
@@ -135,6 +197,7 @@ note|bSpot app secrets for sheet |8.4
 note|bove the studio ceiling | | |G15
 note|by** is in the owner sheet (|section 9
 note|cel buffer (section 2, G10, |G30
+note|celled word and its source (|Open 53
 note|cept the older key; 5.6 and |6.2
 note|cision 7) | unconfirmed | | |G23
 note|clock (within 2 minutes) at |6.3
@@ -179,6 +242,7 @@ note|efore it goes to the owner (|Open 51
 note|eleased on Mon 23 Nov (Q25, |Q26
 note|elled" (G37); retire check (|section 8
 note|en once, on the card (sheet |section 2
+note|en words): you answer it at |5.9
 note|ep at the final check (Q23, |G1
 note|eparate Y, RL and FP lines (|G40
 note|er `end` then cancel (sheet |7.8
@@ -203,7 +267,6 @@ note|he exit code accepted then (|G18
 note|he rehearsal's real notice (|G17
 note|he second key-list reading (|8.1
 note|hown (section 0 item 1) | | |G2
-note|hree; four in B), look key (|5.9
 note|ight after `end`; the sheet |7.8
 note|il the sheet is changed | | |G36
 note|ils and there is no run | | |G33
@@ -221,11 +284,11 @@ note|larm and the cancel buffer (|section 2
 note|lder key is cancelled (A at |6.7
 note|lead states keep or revoke (|G42
 note|line each | any missing | | |G31
-note|list inside the sheet's own |section 2
 note|ll lead or owner decisions (|Open 71, 78, 79, 82, 83, 86 to 95
 note|m made no delete call" (G1, |G27
 note|matches the film search | | |G39
 note|may be reversed (item 10 of |section 0
+note|me display exempt in W7 and |R1
 note|ments: every 1a gate (G1 to |G15
 note|model program is restarted (|G16
 note|n8n credential check shown (|G3
@@ -254,14 +317,17 @@ note|ord and there is no run | | |G42
 note|ors 2 and 3): see item 6 of |section 0
 note|othing and find out why | | |G28
 note|ough two keys, and a missed |7.11
+note|our in B), model key (sheet |section 6
 note|ource | no source named | | |G14
 note|own; if shown, the order of |7.8
 note|p secret revoke (G42, sheet |8.4
+note|pen 53), the choice A or B (|Open 71
 note|permits only keys made from |6.3
 note|pes it by hand: no pasting, |R9
 note|pt file | stamp missing | | |G17
 note|r "keep, reason, end date"; |G42
 note|r and prep contact address (|G38
+note|r left valid and handled at |7.11
 note|r the list unreconciled | | |G4
 note|r writes his own reading at |5.6
 note|rd", "If it fails", FREEZE, |R1
@@ -286,6 +352,7 @@ note|shows only what owner sheet |R9
 note|source: ORDERS.md line 150 (|Q21
 note|sted; moved here from sheet |8.1
 note|suppressions (Q29). Q30 and |Q31
+note|t a cancel. The look key of |5.9
 note|t claims none | unknown | | |G22
 note|t phrase the owner sends at |5.1
 note|tatement | a difference | | |G30
@@ -320,12 +387,13 @@ open| for the time formula (Note |section 2
 open| it is | | 27 | ANSWERED by |Q26
 open| key, and is it read-only | |Q20
 open| minimum at the final head (|G36
-open| new safety steps (look key |5.9
 open| older head only | Decided (|Q27
 open| on Mon 23 Nov in any case (|Q25
 open| read it at the final head, |G36
-open| route (fourth phone alarm, |7.11
 open| run (the owner cannot tick |6.6
+open| single point 7.11) | in A, |7.11
+open| steps at 5.6, 6.2 alarm 4, |6.3
+open| the older key <its name>" (|Open 96
 open| tool recording one window (|G24
 open| | R2 and R3 removed, R4 to |R10
 open| | | 19 | Places and tools (|G24
@@ -335,6 +403,7 @@ open|, notice, challenge); Sheet |R9
 open|00 UTC = 21:30 IST | v27 B: |7.11
 open|23 | Independent reader for |G1
 open|3 (rows 59 and 68) | R2 and |R3
+open|5.6, 6.2 alarm 4, 6.3, 6.7, |7.11
 open|; G42; sheet 8.4) | the old |R8
 open|; both sheets stay | | 74 | |R2
 open|; the owner revokes them at |8.4
@@ -343,6 +412,7 @@ open|NT-SCOPE section 3) | sheet |7.4
 open|ZE with the key alive (Note |G35
 open|a cancelled key is unknown (|G34
 open|address on the opened page (|R7
+open|agraph was NOT proven safe (|Open 97
 open|akes the last-used check in |8.1
 open|alls the model after `end` (|G34
 open|ames (the post sentences) | |Q22
@@ -351,6 +421,7 @@ open|an fail a correct run (Note |G34
 open|ance figure in plain words (|Q24
 open|ancelling is irreversible): |R1
 open|and the owner cancels it at |7.11
+open|at a time); B is built, and |7.11
 open|bers for money (lead answer |Q28
 open|bers message (sheet 3, 7.5, |7.8
 open|ccepted | | 4 | Take port | |G7
@@ -366,6 +437,7 @@ open|e (sheet 6.4 key-save line, |6.6
 open|e is a FREEZE); the sheet's |7.8
 open|e names A or B | Decided by |Q22
 open|e numbers message (sheet 3, |7.5
+open|e older key stays valid and |7.11
 open|e sender throwaway address; |R9
 open|e whole balance" is small | |R4
 open|e) | | 12 | Helpers | Sheet |5.2
@@ -379,6 +451,7 @@ open|er key then blocks the run (|R4
 open|ere; list permission names (|G21
 open|et lists more owner tasks | |G22
 open|etting) at the final head | |Q27
+open|ey when the run ends before |6.7
 open|file; the phone is tried at |5.3
 open|first, then the card (sheet |7.8
 open|folder, cd line, gap before |8.1
@@ -389,15 +462,18 @@ open|hosen: the sheet says so in |R1
 open|ifies at final check" until |G16
 open|illed | v27 adds sheet step |5.9
 open|ing and spend lock | G3 and |G32
+open|is for you and the owner at |5.1
 open|ith `-I` (security major 1; |G39
 open|iting, checked by a human"; |G14
 open|lder key shown on screen at |5.7
-open|le. WHEN IT FAILS (v27): at |5.6
+open|le. WHEN IT FAILS (v28): at |5.6
 open|lm search never finds (Note |G38
 open|m pause ends without `end` (|G18
 open|major 2 of v26; AGENT-SCOPE |section 3
+open|n A, when a run ends before |6.7
 open|n of v23 (rows 59 and 68) | |R2
 open|nd one: ORDERS.md line 150 (|Q21
+open|nger M-15; the single point |7.11
 open|no run | | 39 | ANSWERED by |Q24
 open|nothing and send the words (|G18
 open|nt added (security major 4; |G32
@@ -406,13 +482,16 @@ open|on 23 Nov in any case (Q25, |Q26
 open|ot observe | Default: keep; |G25
 open|ot private-app page path of |8.4
 open|oth sheets stay | | 74 | R2/|R3
+open|ou and the owner at 5.1 and |5.8
+open|ou or from the look key: at |5.9
+open|r in the older-key steps at |5.6
 open|r, ceiling and spend lock | |G3
 open|rd", "If it fails", FREEZE, |R1
 open|re unused | Row 59 removed; |R2
-open|s "differs from the word at |6.3
-open|s (sample 20 s, a proposal; |Open 11
 open|s a mistake in the message (|G37
+open|s at 5.6, 6.2 alarm 4, 6.3, |6.7
 open|s revoke (security major 5; |G42
+open|s then yours to send before |6.3
 open|seconds` (security major 2; |G40
 open|ssage says "no"; the lead's |G1
 open|stranger blocker S1): sheet |section 1
@@ -424,12 +503,15 @@ open|t no file you read uses it (|G32
 open|t: none named means no run (|G31
 open|tement | | 32 | ANSWERED by |Q24
 open|the folder must exist (Note |G37
+open|the older-key steps at 5.6, |6.2
 open|the owner (card list L2) at |6.7
 open|then the recording tool and |G24
 open|tion R1 against the card) | |R1
 open|ton does (security major 3; |G41
 open|tranger blocker 1 of v26) | |R10
 open|ts (page, amount) or none | |R4
+open|ts means no run, checked at |5.8
+open|u answer "confirmed" (a new |R8
 open|urity blocker of v26) | B's |7.11
 open|ux user; none exists; Sheet |R1
 open|with itself | Edit line 14 (|G20
@@ -438,33 +520,44 @@ open|ys cancels the older key at |7.11
 open|| 12 | Helpers | Sheet 5.2, |G11
 open|| | 68 | R2 and R3 removed, |R4
 open||---|---| | 1 | ANSWERED by |Q23
-sheetA| (the fixed printed line of |6.4
+sheetA| 6.4. After the `exit 0` of |6.4
+sheetA| 7.11 still follows, before |8.1
+sheetA| Same words as the sheet. **|R9
 sheetA| accept the risks of R1 and |R4
 sheetA| alive: the card first. | | |R9
+sheetA| and describe which (8.3 to |8.5
+sheetA| cancel: only at 6.7, after |6.6
 sheetA| from the message (typed at |6.3
+sheetA| is a real key, alive until |card step 4
 sheetA| one of the three alarms of |6.2
+sheetA| run that ended before 6.7: |7.11
 sheetA| screen: revoke it at once (|8.3
-sheetA| start or end a step: "go" (|5.8
 sheetA| the card, then FREEZE. | | |R5
 sheetA| the numbers message names (|8.2
 sheetA| type `rm -- "<key file>"` (|R6
-sheetA| which. Contacts: delete by |R7
+sheetA|", FREEZE, no `end`) passes |7.11
 sheetA|"post" (9), "revoke again" (|8.6
 sheetA|"restarted" came after 6.6; |6.7
 sheetA|(it shares your Linux user, |R1
-sheetA|), you see the real word at |5.9
 sheetA|). Watch it twice and check |R9
+sheetA|): "go" (5.8), "confirmed" (|5.9
+sheetA|); you see the real word at |5.9
 sheetA|* = a numbered item such as |6.3
+sheetA|, at 7.11) and the deleting |R7
 sheetA|. ### The rules (R1, R4 to |R10
+sheetA|.9 and 6.3 and the paste at |6.4
+sheetA|.9 and 6.3 and the paste of |6.4
 sheetA|1-60` in the read terminal (|R6
 sheetA|8, other channel); the yes (|5.8
 sheetA|Chrome profile `demo-take` (|5.5
+sheetA|D; you see the real word at |5.9
+sheetA|ER-FILM-v28.md (R9, 8.8 and |section 9
 sheetA|EZE. 4. Compare the notice (|R5
 sheetA|IED). ## 6. The model key (|R1
 sheetA|Latest start** (card words; |7.3
 sheetA|OFF (off in 6.1, back on in |8.7
+sheetA|The planned cancel: only at |6.7
 sheetA|` after the challenge line, |7.4
-sheetA|account. For the older key (|6.7
 sheetA|ad's message after the run (|8.2
 sheetA|agree: the card first, then |R1
 sheetA|ail under label `demo` that |R7
@@ -475,36 +568,45 @@ sheetA|asked address> Gap before |8.1
 sheetA|at the lead lists. Start at |5.1
 sheetA|auto-reload equal your yes (|R4
 sheetA|ay be done on earlier days, |5.9
+sheetA|be the times (8.8). **Step |8.8
 sheetA|before the day (there is no |section 4
 sheetA|card (not part of it):** if |7.4
-sheetA|d (its list L2 included, at |6.7
-sheetA|d, at 6.7) and the deleting |R7
+sheetA|ck as the first sentence of |8.7
+sheetA|d (its list L2 included, at |7.11
 sheetA|description; "none" only at |8.1
 sheetA|done. I accept the risks of |R1
 sheetA|e card first, then R1, then |R10
 sheetA|e exit code is read only at |7.9
+sheetA|e fixed printed commands of |5.7
 sheetA|e from the numbers message (|section 3
+sheetA|e key's one-time display at |5.9
 sheetA|e model key's cancel press, |card step 3
 sheetA|e numbers message gives it (|R6
-sheetA|e; you see the real word at |5.9
+sheetA|ed commands of 5.7, 6.4 and |8.1
+sheetA|ed printed commands of 5.7, |6.4
 sheetA|en: revoke it at once (8.3, |8.4
-sheetA|ep 5 is done (a look key of |5.9
 sheetA|ettings figures:** first do |6.1
+sheetA|firmed" (5.9), "restarted" (|6.6
 sheetA|from the create press until |card step 5
+sheetA|go to the test terminal for |6.4
 sheetA|had typed `end`, proceed at |7.9
-sheetA|he Privacy switches back as |8.7
+sheetA|haring. ### The rules (R1, |R4
+sheetA|he clean-up message): "go" (|5.8
 sheetA|he line, then the card. | | |R6
 sheetA|he message; any other size: |6.5
+sheetA|he run key (the look key of |5.9
 sheetA|he screen; then FREEZE. | | |R4
 sheetA|hich wins | |---|---|---| | |R1
-sheetA|ill spend). ### The rules (|R1
+sheetA|il address (the one copy at |6.3
+sheetA|ing starts (after your yes, |7.11
+sheetA|is step and describe which (|8.3
 sheetA|l (the sender Gmail only at |8.3
 sheetA|l; you read both at 6.2 and |6.7
 sheetA|l`, `clear` and the grep of |5.7
-sheetA|lay at 6.3 and the paste at |6.4
-sheetA|lay at 6.3 and the paste of |6.4
-sheetA|lly 1, plus the look key of |5.9
+sheetA|led after you press create (|6.3
 sheetA|losed before you copied, or |6.6
+sheetA|low the film and post page (|R9
+sheetA|low the film and post page, |section 9
 sheetA|lue for this run; sample in |section 3
 sheetA|m person (film pause) or do |card step 1
 sheetA|mbers message names (8.2 to |8.6
@@ -514,65 +616,79 @@ sheetA|n). A run that ended before |6.7
 sheetA|nel is the one you named at |5.1
 sheetA|none, describe, FREEZE. | | |R8
 sheetA|nt: delete exactly those as |R7
+sheetA|nything else. The look key (|5.9
+sheetA|o `end`) passes 7.11 before |8.1
 sheetA|o the values on your paper (|6.1
 sheetA|ollow them in order: 5.1 to |5.8
-sheetA|p: "go" (5.8), "restarted" (|6.6
+sheetA|ollow). Contacts: delete by |R7
+sheetA|one-time display at 5.9 and |6.3
+sheetA|ook-<run name>` you make at |5.9
+sheetA|opy at 6.3 and the paste at |6.4
+sheetA|or sharing. ### The rules (|R1
+sheetA|ost page OWNER-FILM-v28.md (|R9
+sheetA|page OWNER-FILM-v28.md (R9, |8.8
 sheetA|pe the printed line of 6.4 (|R6
 sheetA|pend until you cancel it at |6.7
-sheetA|r screen, otherwise only at |6.7
+sheetA|post page. | Same page. | | |R10
 sheetA|rated items); an exit code (|7.9
-sheetA|ress create of the run key (|6.3
 sheetA|rivacy switches OFF (off in |6.1
+sheetA|run ends passes here before |8.1
 sheetA|run key (the three words at |5.9
 sheetA|s <in words>, is it yours" (|R8
-sheetA|scribe the times (8.8). | | |R10
+sheetA|s of it, and "confirmed" of |5.9
+sheetA|sage "wait" or a slow lead (|6.6
 sheetA|send "none" for the time in |8.1
-sheetA|spend). ### The rules (R1, |R4
+sheetA|sses here before 8.1).** If |6.7
 sheetA|t post; describe the times (|8.8
 sheetA|te this run's demo mails as |R7
 sheetA|ted total; you read both at |6.2
-sheetA|therwise only at 6.7, after |6.6
-sheetA|thout `end`, and proceed at |8.1
 sheetA|ty paste gives one) goes to |6.5
 sheetA|un `rm -f -- "<key file>"` (|R6
 sheetA|use your phone (UNVERIFIED; |5.3
-sheetA|utside the key's display at |6.3
-sheetA|witches OFF; when you reach |6.1
-sheetA|y switches are already OFF (|5.7
-sheetA|y's own one-time display at |6.3
+sheetA|ust be OFF again at 5.9 and |6.1
+sheetA|y switches must be OFF now (|6.1
+sheetA|y they must be OFF again at |5.9
+sheetA|y's own one-time display at |5.9
 sheetA|yes; "restarted" came after |6.6
+sheetA|yet: do its steps 2 to 4 as |5.9
 sheetA|you send exactly (list ends |section 2
-sheetB| (its list L2 included, and |7.11
-sheetB| (the fixed printed line of |6.4
+sheetB| 6.4. After the `exit 0` of |6.4
+sheetB| 7.11 still follows, before |8.1
 sheetB| I will cancel it myself at |7.11
+sheetB| Same words as the sheet. **|R9
 sheetB| accept the risks of R1 and |R4
 sheetB| alive: the card first. | | |R9
-sheetB| and 7.11) and the deleting |R7
+sheetB| and describe which (8.3 to |8.5
 sheetB| from the message (typed at |6.3
+sheetB| is a real key, alive until |card step 4
 sheetB| screen: revoke it at once (|8.3
-sheetB| start or end a step: "go" (|5.8
 sheetB| the card, then FREEZE. | | |R5
 sheetB| the numbers message names (|8.2
 sheetB| type `rm -- "<key file>"` (|R6
-sheetB| which. Contacts: delete by |R7
+sheetB|", FREEZE, no `end`) passes |7.11
 sheetB|"post" (9), "revoke again" (|8.6
 sheetB|"restarted" came after 6.6; |6.7
 sheetB|(it shares your Linux user, |R1
-sheetB|), you see the real word at |5.9
 sheetB|). Watch it twice and check |R9
+sheetB|): "go" (5.8), "confirmed" (|5.9
+sheetB|); you see the real word at |5.9
 sheetB|* = a numbered item such as |6.3
-sheetB|, "If it fails", FREEZE and |R1
+sheetB|, at 7.11) and the deleting |R7
 sheetB|. ### The rules (R1, R4 to |R10
+sheetB|.9 and 6.3 and the paste at |6.4
+sheetB|.9 and 6.3 and the paste of |6.4
 sheetB|1-60` in the read terminal (|R6
+sheetB|4 at the older-key time (do |7.11
 sheetB|8, other channel); the yes (|5.8
 sheetB|= one of the four alarms of |6.2
 sheetB|Chrome profile `demo-take` (|5.5
+sheetB|D; you see the real word at |5.9
+sheetB|ER-FILM-v28.md (R9, 8.8 and |section 9
 sheetB|EZE. 4. Compare the notice (|R5
 sheetB|IED). ## 6. The model key (|R1
 sheetB|Latest start** (card words; |7.3
 sheetB|OFF (off in 6.1, back on in |8.7
 sheetB|` after the challenge line, |7.4
-sheetB|account. For the older key (|7.11
 sheetB|ad's message after the run (|8.2
 sheetB|agree: the card first, then |R1
 sheetB|ail under label `demo` that |R7
@@ -584,73 +700,89 @@ sheetB|asked address> Gap before |8.1
 sheetB|at the lead lists. Start at |5.1
 sheetB|auto-reload equal your yes (|R4
 sheetB|ay be done on earlier days, |5.9
+sheetB|be the times (8.8). **Step |8.8
 sheetB|before the day (there is no |section 4
 sheetB|card (not part of it):** if |7.4
 sheetB|cel it at 7.11, so a missed |7.11
+sheetB|ck as the first sentence of |8.7
+sheetB|d (its list L2 included, at |7.11
 sheetB|description; "none" only at |8.1
 sheetB|done. I accept the risks of |R1
 sheetB|e card first, then R1, then |R10
 sheetB|e exit code is read only at |7.9
+sheetB|e fixed printed commands of |5.7
 sheetB|e from the numbers message (|section 3
+sheetB|e key's one-time display at |5.9
 sheetB|e model key's cancel press, |card step 3
 sheetB|e numbers message gives it (|R6
-sheetB|e; you see the real word at |5.9
+sheetB|ed commands of 5.7, 6.4 and |8.1
+sheetB|ed printed commands of 5.7, |6.4
 sheetB|en: revoke it at once (8.3, |8.4
-sheetB|ep 5 is done (a look key of |5.9
-sheetB|er your yes, do 7.11 before |8.1
 sheetB|ettings figures:** first do |6.1
-sheetB|every route after your yes; |7.11
+sheetB|firmed" (5.9), "restarted" (|6.6
 sheetB|from the create press until |card step 5
+sheetB|go to the test terminal for |6.4
 sheetB|had typed `end`, proceed at |7.9
-sheetB|he Privacy switches back as |8.7
+sheetB|haring. ### The rules (R1, |R4
+sheetB|he clean-up message): "go" (|5.8
 sheetB|he line, then the card. | | |R6
 sheetB|he message; any other size: |6.5
+sheetB|he run key (the look key of |5.9
 sheetB|he screen; then FREEZE. | | |R4
 sheetB|hich wins | |---|---|---| | |R1
+sheetB|il 7.11 (L2). The look key (|5.9
+sheetB|il address (the one copy at |6.3
 sheetB|ing starts (after your yes, |7.11
+sheetB|is step and describe which (|8.3
 sheetB|l (the sender Gmail only at |8.3
 sheetB|l; you read both at 6.2 and |6.7
 sheetB|l`, `clear` and the grep of |5.7
-sheetB|lay at 6.3 and the paste at |6.4
-sheetB|lay at 6.3 and the paste of |6.4
-sheetB|lly 1, plus the look key of |5.9
+sheetB|led after you press create (|6.3
 sheetB|losed before you copied, or |6.6
+sheetB|low the film and post page (|R9
+sheetB|low the film and post page, |section 9
 sheetB|lue for this run; sample in |section 3
 sheetB|m person (film pause) or do |card step 1
 sheetB|mbers message names (8.2 to |8.6
 sheetB|n 4); follow them in order: |5.1
 sheetB|n it; describe; FREEZE. | | |R7
-sheetB|n your screen, otherwise at |7.11
+sheetB|nce. The planned cancel: at |7.11
 sheetB|nel is the one you named at |5.1
 sheetB|none, describe, FREEZE. | | |R8
 sheetB|nt: delete exactly those as |R7
+sheetB|o `end`) passes 7.11 before |8.1
 sheetB|o the values on your paper (|6.1
 sheetB|ollow them in order: 5.1 to |5.8
-sheetB|p: "go" (5.8), "restarted" (|6.6
+sheetB|ollow). Contacts: delete by |R7
+sheetB|one-time display at 5.9 and |6.3
+sheetB|ook-<run name>` you make at |5.9
+sheetB|opy at 6.3 and the paste at |6.4
+sheetB|or sharing. ### The rules (|R1
+sheetB|ost page OWNER-FILM-v28.md (|R9
+sheetB|page OWNER-FILM-v28.md (R9, |8.8
 sheetB|pe the printed line of 6.4 (|R6
 sheetB|pend until you cancel it at |7.11
-sheetB|pplies. ### The rules (R1, |R4
+sheetB|post page. | Same page. | | |R10
+sheetB|r key may still spend until |7.11
 sheetB|rated items); an exit code (|7.9
-sheetB|ress create of the run key (|6.3
 sheetB|rivacy switches OFF (off in |6.1
-sheetB|rt applies. ### The rules (|R1
+sheetB|run ends passes here before |8.1
 sheetB|run key (the three words at |5.9
 sheetB|s <in words>, is it yours" (|R8
-sheetB|scribe the times (8.8). | | |R10
+sheetB|s of it, and "confirmed" of |5.9
+sheetB|sage "wait" or a slow lead (|6.6
 sheetB|send "none" for the time in |8.1
 sheetB|st resort applies. A missed |7.11
-sheetB|t 16:00 UTC = 21:30 IST (do |7.11
 sheetB|t post; describe the times (|8.8
 sheetB|te this run's demo mails as |R7
 sheetB|ted total; you read both at |6.2
-sheetB|thout `end`, and proceed at |8.1
 sheetB|ty paste gives one) goes to |6.5
 sheetB|un `rm -f -- "<key file>"` (|R6
 sheetB|use your phone (UNVERIFIED; |5.3
-sheetB|utside the key's display at |6.3
-sheetB|witches OFF; when you reach |6.1
-sheetB|y route, after your yes, do |7.11
-sheetB|y switches are already OFF (|5.7
-sheetB|y's own one-time display at |6.3
+sheetB|ust be OFF again at 5.9 and |6.1
+sheetB|y switches must be OFF now (|6.1
+sheetB|y they must be OFF again at |5.9
+sheetB|y's own one-time display at |5.9
 sheetB|yes; "restarted" came after |6.6
+sheetB|yet: do its steps 2 to 4 as |5.9
 sheetB|you send exactly (list ends |section 2

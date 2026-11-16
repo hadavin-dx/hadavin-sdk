@@ -21,7 +21,14 @@ cache = {}
 def L(p):
     if p not in cache: cache[p] = open(p, encoding="utf-8", errors="replace").read().split("\n")
     return cache[p]
-corpus = "\n".join("\n".join(L(p)) for r, p in code_files.items() if r.endswith((".py", ".sql", ".yml", ".yaml", ".toml", ".md", ".sh", ".txt", ".json")))
+corpus_words = set()
+for r, p in code_files.items():
+    if r.endswith((".py", ".sql", ".yml", ".yaml", ".toml", ".md", ".sh", ".txt", ".json")):
+        corpus_words.update(re.findall(r"[A-Za-z_][A-Za-z0-9_]*", "\n".join(L(p))))
+joined = {}
+def J(rel):
+    if rel not in joined: joined[rel] = "\n".join(L(code_files[rel]))
+    return joined[rel]
 def resolve(name):
     c = [r for r in code_files if r == name or r.endswith("/" + name)]
     pref = [r for r in c if r.startswith(("src/hadavin_sdk/", "tests/", "demos/", ".github/"))]
@@ -58,7 +65,7 @@ for doc in docs:
                     rel = cands[0]; ls = L(code_files[rel])
                     if hi > len(ls) or lo < 1: st = "RANGE"; detail = f"{rel} has {len(ls)} lines"
                     else:
-                        fa = [w for w in anc if re.search(r"\b" + re.escape(w) + r"\b", "\n".join(ls))]
+                        fa = [w for w in anc if re.search(r"\b" + re.escape(w) + r"\b", J(rel))]
                         win0 = "\n".join(ls[lo - 1:hi]); win2 = "\n".join(ls[max(0, lo - 3):hi + 2])
                         if not anc: st = "NOANCHOR"; detail = rel
                         elif not fa: st = "NOANCHOR_IN_FILE"; detail = rel
@@ -88,7 +95,7 @@ for doc in docs:
             core = re.sub(r"\(.*$", "", s0).split("::")[-1]
             if re.fullmatch(r"[A-Za-z_][\w.]*", core) and (("_" in core) or re.search(r"[a-z][A-Z]", core) or s0.endswith("(") or "." in core):
                 tot += 1; last = core.split(".")[-1]
-                if len(last) >= 4 and not re.search(r"\b" + re.escape(last) + r"\b", corpus): miss.setdefault(core, n)
+                if len(last) >= 4 and last not in corpus_words: miss.setdefault(core, n)
             elif re.fullmatch(r"[\w./-]+\.(?:py|sql|yml|md|sh|toml|tsv|txt|json)", s0):
                 if not resolve(s0) and not os.path.exists(os.path.join(os.path.dirname(doc), s0)) and not os.path.exists(os.path.join(os.path.dirname(doc), "evidence-handoff-v14", s0)):
                     pathmiss.setdefault(s0, n)

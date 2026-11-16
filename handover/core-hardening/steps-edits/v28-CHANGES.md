@@ -19,6 +19,8 @@
 ## Finding to fix to check
 Stranger review of v27 (review-v27-stranger.md) and security review of v27 (review-v27-security.md). "Fixed" = a text change in the source plus a check that fails on v27 or is named below.
 
+The check column names the closest existing or new check for the change. Only C160 to C170 are proven to fail on v27 (`python3 v28-fail-proof.py`); I did not run each older check on v27 for each row, so a cited older check is a guard, not proof that it would have caught the v27 text.
+
 | Finding | Fixed by which class change, or why not | Check |
 |---|---|---|
 | B-1 look key outside line 18 and the card | RC1: line 18 exempts the look key; 5.9 has its own steps 2 to 4 with no blank to compare; the card says "do its steps 2 to 4 as 5.9 says" | C162 C164 |
