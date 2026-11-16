@@ -1,62 +1,62 @@
 INFO cites found: 312 total, 231 distinct (path, range)
 HIT      doc line 244  injection.py:77-77  (found cost_usd)
 HIT      doc line 228  retry.py:63-63  (found OSError)
-HIT      doc line 49  llm/anthropic.py:80-88  (found routes)
-HIT      doc line 262  guard/judge.py:108-108  (found flagged)
+MISSING  doc line 49  llm/anthropic.py:80-88  (none of ['ALLOWED'] in file)  CODE: def make(settings: Any, deps: Any) -> AnthropicLLM: | name = settings.api_key_secret_name if settings.platform != "vertex" else None  CLAIM: ...'LLOWED["llm"]` is `{"routes"}`, `ALLOWED["detector"]` is `{"llm"}`. A kind factory builds its class by hand (`'
+MISSING  doc line 262  guard/judge.py:108-108  (none of ['spend_refused'] in file)  CODE: passed += v.reason_code != "guard_unavailable" and v.flagged == case["injection"]  CLAIM: ...'v12 the flagged `spend_refused` verdict satisfied `v.flagged == case["injection"]` for every injection case (`'
 HIT      doc line 55  tests/test_k5_postgres.py:58-58  (found Limits)
-MISSING  doc line 495  guard/judge.py:107-107  (none of ['reconnect', 'ScopedDetector'] in file)
-MOVED    doc line 124  runtime/agent_loop.py:310-312  (WORKING is at line 296)
+MISSING  doc line 495  guard/judge.py:107-107  (none of ['ScopedDetector'] in file)  CODE: v = injection_check(judge, case["text"], "golden")  CLAIM: ...'Detector` and of store `reconnect` on a real dropped connection; the estimator against real replies; whether `'
+MOVED    doc line 124  runtime/agent_loop.py:310-312  (WORKING is at line 296)  CODE: def _screen(self, run: Run, text: str, source: str): | """The injection check; a model-backed detector's call (llm_judge) is charged like any mod  CLAIM: ...'ls (readiness major 1: with one shared clock the test passed with the handler deleted) |\n| screen and judge (`'
 HIT      doc line 223  llm/common.py:184-189  (found Answer)
-MISSING  doc line 373  backends/table.py:543-551  (none of ['test_c8_every_detector_kind_is_classified', 'build_window_only_gate', 'callgate'] in file)
-HIT      doc line 261  agent_loop.py:325-351  (found handle)
+MISSING  doc line 373  backends/table.py:543-551  (none of ['test_c8_every_detector_kind_is_classified', 'build_window_only_gate'] in file)  CODE: "detector": { | "regex": Entry(RegexSettings, f"{_BUILTIN}:regex_detector", neutral=True),  CLAIM: ...' on `build_window_only_gate`) and **C8** `test_c8_every_detector_kind_is_classified` (every detector kind in `'
+RANGE-ONLY doc line 261  agent_loop.py:325-351   CODE: def handle( | self,  CLAIM: ...'d twice.\n- **One handler, three sites, plus the run start (readiness major 5).** `handle` is split: it keeps `'
 HIT      doc line 99  src/hadavin_sdk/config.py:451-454  (found ConfigError)
-MOVED    doc line 47  guard/bedrock_guardrail.py:101-101  (runtime is at line 66)
-MOVED    doc line 46  agent_loop.py:425-427  (read is at line 62)
-MOVED    doc line 458  guard/redact.py:1162-1162  (loop is at line 1005)
+MISSING  doc line 47  guard/bedrock_guardrail.py:101-101  (none of ['agent_loop'] in file)  CODE: resp = self._client.apply_guardrail(  CLAIM: ...'tract()` has no non-test caller. The demo has its own at `pipeline.py:155`. One paid call is not a `.chat(`: `'
+RANGE-ONLY doc line 46  agent_loop.py:425-427   CODE: reply = self.llm.chat( | messages,  CLAIM: ...'`agent_loop.py:325-541`; it creates the run, then redacts, screens, then loops over steps. The model call is `'
+MISSING  doc line 458  guard/redact.py:1162-1162  (none of ['agent_loop'] in file)  CODE: "dev",  CLAIM: ...'`, `:318-322`, `k1b/loop.py:94`, `:170`, `:205-206`, `llm/anthropic.py:136`, `evals.py:73`, `extract.py:47`, `'
 HIT      doc line 53  models.py:289-297  (found Shape)
-MISSING  doc line 298  tests/test_lockin_guard.py:642-646  (none of ['OWNER_YES', 'HELD'] in file)
-MOVED    doc line 44  limits.py:17-18  (read is at line 24)
+MISSING  doc line 298  tests/test_lockin_guard.py:642-646  (none of ['OWNER_YES', 'HELD'] in file)  CODE: def test_no_vendor_literal_in_migrations(): | folder = SRC / PKG / "store" / "migrations"  CLAIM: ...' inject `HELD` and `OWNER_YES` by monkeypatch** (the real dictionaries stay empty until the owner says yes). `'
+RANGE-ONLY doc line 44  limits.py:17-18   CODE: def charge(self, agent_id: str, usd: Decimal) -> tuple[Decimal, Decimal]: | return self.store.add_spend(agent_id, now().date(), usd)  CLAIM: ...'s | read |\n| F5 | `Limits(store, audit, registry)` has no clock; `charge` and `blocked` call `models.now()` (`'
 HIT      doc line 318  guard/bedrock_guardrail.py:28-29  (found _client)
 HIT      doc line 323  k1b/loop.py:84-107  (found _chat_bounded)
-HIT      doc line 113  k1b/loop.py:176-176  (found except)
-HIT      doc line 110  app.py:73-73  (found clock)
-MOVED    doc line 106  tests/test_p5_llm.py:230-230  (contracts is at line 22)
-MISSING  doc line 420  ci.yml:94-94  (file not found)
-MOVED    doc line 296  store/migrate.py:53-55  (UPDATE is at line 40)
-MISSING  doc line 420  ci.yml:81-81  (file not found)
-MISSING  doc line 420  ci.yml:77-77  (file not found)
-MISSING  doc line 106  tests/contracts/kinds/detectors.py:92-92  (none of ['test_k5_round9', 'test_p6_detectors', 'unmetered'] in file)
-MISSING  doc line 435  guard/injection.py:92-97  (none of ['decrease', 'card'] in file)
-MISSING  doc line 41  pipeline.py:232-236  (file not found)
-HIT      doc line 262  guard/injection.py:69-70  (found flag)
-MISSING  doc line 105  tests/test_p5_llm.py:38-46  (none of ['test_p5p6_followups', 'test_k3_pilot_env'] in file)
-HIT      doc line 364  bedrock_guardrail.py:101-101  (found guard)
+HIT      doc line 113  k1b/loop.py:176-176  (found ProviderError)
+RANGE-ONLY doc line 110  app.py:73-73   CODE: clock: Callable[[], datetime] = now,  CLAIM: ...'e). `clock` is `models.now` (`models.py:19-20`, returns UTC) by default; `app.build` passes its own `clock` (`'
+MISSING  doc line 106  tests/test_p5_llm.py:230-230  (none of ['test_p5p6_followups', 'warden_port', 'test_providers'] in file)  CODE: llm = make("llm", settings, routes=ROUTES)  CLAIM: ...'s.py:65,123,148,172,198`, `tests/test_p5p6_followups.py:300,302,417`, `tests/contracts/kinds/builtin.py:53`, `'
+RANGE-ONLY doc line 420  ci.yml:94-94   CODE: run: pytest -q -m perf -rs  CLAIM: ...'), `pytest -q -m "not live and not perf" -rs` (`ci.yml:88`), the timing tests alone `pytest -q -m perf -rs` (`'
+MOVED    doc line 296  store/migrate.py:53-55  (UPDATE is at line 40)  CODE: "spend": Grant("table", _RW), | "spend_month": Grant("table", _RW),  CLAIM: ...'ged by size; they are only recorded. The runtime role can also still switch the kill switch off by `UPDATE` (`'
+RANGE-ONLY doc line 420  ci.yml:81-81   CODE: run: ruff format --check src tests demos  CLAIM: ...'eck_gate4_vs_ci.py`: `ruff check src tests demos` and `ruff format --check src tests demos` (`ci.yml:79` and `'
+RANGE-ONLY doc line 420  ci.yml:77-77   CODE: run: uv sync --locked --no-build --all-extras --group test  CLAIM: ...'/ci.yml:86-87`) and sets environment for the timing step (`ci.yml:93`); CI also runs the dependency install (`'
+MISSING  doc line 106  tests/contracts/kinds/detectors.py:92-92  (none of ['test_k5_round9', 'test_p6_detectors'] in file)  CODE: return GuardrailDetector(client or GuardrailClient(), "contract-guardrail", "1", 0.5)  CLAIM: ...' need a gate or `unmetered=True`: `tests/test_p6_detectors.py:339` and `:355`, `tests/test_k5_round9.py:74`, `'
+RANGE-ONLY doc line 435  guard/injection.py:92-97   CODE: _LOG.warning( | "detector %s failed, run flagged: %s: %s",  CLAIM: ...'nts no agent text; **(d) a detector that raises an exception whose message holds the canary: the log line of `'
+RANGE-ONLY doc line 41  pipeline.py:232-236   CODE: """Replace the reservation with the real cost. False (and the question ends over budget) i | cannot be written."""  CLAIM: ...'serves **once per call** (`pipeline.py:147`, before `self.llm.chat` at `pipeline.py:155`) and settles after (`'
+HIT      doc line 262  guard/injection.py:69-70  (found injection_check)
+MISSING  doc line 105  tests/test_p5_llm.py:38-46  (none of ['test_p5p6_followups', 'test_k3_pilot_env'] in file)  CODE: api = _llm(cfg_dir, {"kind": "anthropic", "api_key_secret_name": "a", "platform": "api"}) | vertex = _llm(  CLAIM: ...'n `tests/test_k3_pilot_env.py:61`, `tests/test_p5p6_followups.py:82` and `tests/test_p5p6_followups.py:392`, `'
+RANGE-ONLY doc line 364  bedrock_guardrail.py:101-101   CODE: resp = self._client.apply_guardrail(  CLAIM: ..."s (inside the run's scope) | yes | cost copied into the verdict, no double charge |\n| the Bedrock guardrail (`"
 HIT      doc line 298  store/migrate.py:304-304  (found _migration_files)
-HIT      doc line 223  llm/bedrock.py:108-108  (found retryable)
+HIT      doc line 223  llm/bedrock.py:108-108  (found ResponseMetadata)
 HIT      doc line 495  guard/bedrock_guardrail.py:36-36  (found total_max_attempts)
-HIT      doc line 47  runtime/agent_loop.py:425-427  (found chat)
-RANGE-ONLY doc line 193  tests/test_k5_tools.py:723-731 
-MISSING  doc line 91  src/hadavin_sdk/config.py:400-415  (none of ['null'] in file)
-MOVED    doc line 458  runtime/agent_loop.py:440-441  (models is at line 31)
+MOVED    doc line 47  runtime/agent_loop.py:425-427  (_screen is at line 310)  CODE: reply = self.llm.chat( | messages,  CLAIM: ...'5-545 | read |\n| F8 | `.chat(` call sites in `src/`: `extract.py:47`, `evals.py:73`, `guard/judge.py:70-72`, `'
+RANGE-ONLY doc line 193  tests/test_k5_tools.py:723-731   CODE: def test_k5_run_budget_stops_run(tmp_path): | k5_tools.RESULTS["app"] = "ERROR 10.0.0.5"  CLAIM: ...'run ends in the same state and with the same reason as today and the test passes unchanged; E0-S2-1 runs it. `'
+RANGE-ONLY doc line 91  src/hadavin_sdk/config.py:400-415   CODE: class _UniqueKeyLoader(yaml.SafeLoader): | """A duplicate mapping key is an error: safe_load would keep the last value, silently chan  CLAIM: ...' an unquoted or quoted date is accepted (YAML reads an unquoted date as a date and `~`/`null`/empty as null, `'
+RANGE-ONLY doc line 458  runtime/agent_loop.py:440-441   CODE: self.limits.charge(agent_id, reply.cost_usd) | self.store.add_cost(run.run_id, reply.cost_usd)  CLAIM: ...'st the source and each holds what the sentence says** (`llm/common.py:59-62`, `:164-166`, `models.py:19-20`, `'
 HIT      doc line 50  src/hadavin_sdk/config.py:55-59  (found max_tokens)
-MOVED    doc line 409  table.py:155-155  (config is at line 5)
-MISSING  doc line 41  pipeline.py:147-147  (file not found)
-MOVED    doc line 49  backends/factory.py:17-54  (only is at line 1)
-HIT      doc line 262  guard/judge.py:100-108  (found qualify)
-MOVED    doc line 106  tests/warden_port/test_providers.py:65-65  (cannot is at line 63)
+MISSING  doc line 409  table.py:155-155  (none of ['_anchor_refusals'] in file)  CODE: retain_days: int = Field(default=1, ge=1)  CLAIM: ...'nes 377-398; also S-1, K1, H-0), `config.py` `_anchor_refusals` (`config.py:377`; H-1 edits `config.py`, not `'
+RANGE-ONLY doc line 41  pipeline.py:147-147   CODE: self.meter.reserve(worst, live=self.s.live)  CLAIM: ...'y:1-17`, `demos/ask-your-data/askdata/meter.py:211-229` | read |\n| F2 | The demo reserves **once per call** (`'
+RANGE-ONLY doc line 49  backends/factory.py:17-54   CODE: @dataclass(frozen=True) | class Deps:  CLAIM: ...'`make(capability, settings, provider, **available)` passes only the fields that `ALLOWED[capability]` lists (`'
+MISSING  doc line 262  guard/judge.py:100-108  (none of ['Runtime', '_screen'] in file)  CODE: def qualify(judge: JudgeDetector, golden: Path) -> tuple[int, int]: | """``(passed, n)`` over ``{"text": ..., "injection": bool}`` lines; a judge error fails it  CLAIM: ...'e other entries do not run). Callers that use `raise`: `Runtime._screen`, `k1b/loop.py:205` and **`qualify` (`'
+RANGE-ONLY doc line 106  tests/warden_port/test_providers.py:65-65   CODE: llm = make("llm", settings, routes=ROUTES)  CLAIM: ...'ake("llm"` in `tests/` finds 14 lines in 5 files (`tests/warden_port/test_bedrock_provider_r16.py:74,79,90`, `'
 HIT      doc line 45  anthropic.py:122-122  (found _retry)
-MOVED    doc line 106  tests/test_p6_detectors.py:339-339  (unmetered is at line 274)
-MOVED    doc line 244  common.py:164-172  (reply is at line 1)
+MISSING  doc line 106  tests/test_p6_detectors.py:339-339  (none of ['AnthropicLLM', 'ALLOWED'] in file)  CODE: v = injection_check(GuardrailDetector(Odd(), "g", "1", 0.5), CLEAN, "document")  CLAIM: ...' and the like) say `unmetered=True`. **Guardrail detector test sites** that need a gate or `unmetered=True`: `'
+MOVED    doc line 244  common.py:164-172  (cost_usd is at line 176)  CODE: tokens_in = tokens[0] or estimate_tokens(sent) | tokens_out = tokens[1] or estimate_tokens(text + json.dumps([c.input for c in calls]))  CLAIM: ...'ck` copies `reply.booked_usd`; `injection.combine` sums it beside `cost_usd` (`injection.py:77`). `reply()` (`'
 HIT      doc line 23  llm/retry.py:83-108  (found max_attempts)
 HIT      doc line 278  agent_loop.py:83-83  (found GUARD_STOP_REASONS)
 HIT      doc line 51  store/migrate.py:46-67  (found GRANTS)
-MOVED    doc line 53  guard/injection.py:77-77  (injection is at line 57)
-MISSING  doc line 258  src/hadavin_sdk/tools.py:1122-1122  (none of ['scope_missing', 'unattributed'] in file)
+RANGE-ONLY doc line 53  guard/injection.py:77-77   CODE: cost_usd=sum((v.cost_usd for v in verdicts), Decimal(0)),  CLAIM: ...'eason, latency_ms`); `Verdict` has `cost_usd` (`models.py:300-307`); `injection.combine` sums verdict costs (`'
+MISSING  doc line 258  src/hadavin_sdk/tools.py:1122-1122  (none of ['scope_missing'] in file)  CODE: worker = threading.Thread(target=work, daemon=True, name="hadavin-tool")  CLAIM: ...' is refused `scope_missing`. A call with a paid kind and no scope is refused `scope_missing` (5.3). Threads: `'
 HIT      doc line 289  backends/table.py:116-116  (found PostgresSettings)
-MOVED    doc line 298  store/migrate.py:93-94  (store is at line 1)
+RANGE-ONLY doc line 298  store/migrate.py:93-94   CODE: def _migration_files(folder: Path = MIGRATIONS) -> list[Path]: | return sorted(folder.glob("*.sql"))  CLAIM: ...'**\n   **(d) Held, with a seam that can be tested.** The runner applies every `*.sql` in `store/migrations/` (`'
 HIT      doc line 296  store/migrate.py:150-166  (found check_grants)
-HIT      doc line 262  guard/injection.py:81-81  (found combine)
-MISSING  doc line 420  ci.yml:83-88  (file not found)
-MOVED    doc line 42  llm/common.py:59-62  (reply is at line 1)
-MOVED    doc line 423  tests/fixtures/config/config.yaml:6-8  (loop is at line 25)
-INFO sample 60 {'HIT': 28, 'MOVED': 17, 'MISSING': 14, 'RANGE-ONLY': 1}
+MISSING  doc line 262  guard/injection.py:81-81  (none of ['STOPPED'] in file)  CODE: def combine(detectors: list[Detector]) -> Detector:  CLAIM: ...' posts a card (E0-S2-7).\n- **A list of detectors must not hide the refusal (security major F1).** `combine` (`'
+RANGE-ONLY doc line 420  ci.yml:83-88   CODE: run: psql --version | - name: Tests (no live calls)  CLAIM: ...'`ci.yml:93`); CI also runs the dependency install (`ci.yml:77`) and a database preparation step with `psql` (`'
+RANGE-ONLY doc line 42  llm/common.py:59-62   CODE: def estimate_tokens(text: str) -> int: | """For a provider that reports no usage. Deliberately pessimistic (3 chars a token, never   CLAIM: ...'), and the pricing inside `reply()` (`llm/common.py:164-172`). All use the 3-characters-per-token estimator (`'
+MISSING  doc line 423  tests/fixtures/config/config.yaml:6-8  (none of ['worst_case_usd'] in file)  CODE: input_usd_per_mtok: "3.00" | output_usd_per_mtok: "15.00"  CLAIM: ..." the old `k1b/loop.py:115-122` result and the demo meter's for the same route and text on the fixture route (`"
+INFO sample 60 {'HIT': 20, 'MOVED': 4, 'MISSING': 16, 'RANGE-ONLY': 20}

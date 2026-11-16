@@ -30,7 +30,7 @@ def resolve(path):
         if c.is_file():
             return c, ""
     if "/" not in path:
-        hits = list(srcroot.rglob(path)) + [h for h in (repo / "tests").rglob(path)]
+        hits = list(srcroot.rglob(path)) + [h for h in (repo / "tests").rglob(path)] + list((repo / ".github").rglob(path)) + [h for h in repo.glob("*/" + path)] + [h for h in (repo / "demos").rglob(path)]
         if len(hits) == 1:
             return hits[0], ""
         if len(hits) > 1:
@@ -38,6 +38,9 @@ def resolve(path):
     return None, ""
 stop = {"self", "None", "True", "False", "src", "hadavin_sdk", "tests"}
 out = {"HIT": 0, "MOVED": 0, "MISSING": 0, "RANGE-ONLY": 0}
+def snip(f, a, b):
+    L = f.read_text(errors="replace").split("\n")
+    return " | ".join(x.strip()[:90] for x in L[a - 1:min(b, a + 1)])
 for path, (a, b), ctx, line in sample:
     f, note = resolve(path)
     if f is None:
@@ -49,11 +52,11 @@ for path, (a, b), ctx, line in sample:
     ids = []
     for t in toks[::-1]:
         for w in re.findall(r"[A-Za-z_][A-Za-z0-9_]{3,}", t):
-            if w not in stop and not w.endswith(("py", "sql")) and w not in ids:
+            if w not in stop and not w.endswith(("py", "sql")) and w not in ids and ("_" in w or re.search(r"[A-Z]", w)):
                 ids.append(w)
     ids = ids[:6]
     if not ids:
-        out["RANGE-ONLY"] += 1; print(f"RANGE-ONLY doc line {line}  {path}:{a}-{b} {note}"); continue
+        out["RANGE-ONLY"] += 1; print(f"RANGE-ONLY doc line {line}  {path}:{a}-{b} {note}  CODE: {snip(f,a,b)}  CLAIM: ...{ctx[-110:]!r}"); continue
     seg = "\n".join(L[max(0, a - 2):min(len(L), b + 1)])
     inr = [i for i in ids if i in seg]
     if inr:
@@ -61,7 +64,8 @@ for path, (a, b), ctx, line in sample:
     else:
         where = [(i, n + 1) for i in ids for n, l in enumerate(L) if i in l]
         if where:
-            out["MOVED"] += 1; print(f"MOVED    doc line {line}  {path}:{a}-{b} {note} ({where[0][0]} is at line {where[0][1]})")
+            out["MOVED"] += 1; print(f"MOVED    doc line {line}  {path}:{a}-{b} {note} ({where[0][0]} is at line {where[0][1]})  CODE: {snip(f,a,b)}  CLAIM: ...{ctx[-110:]!r}")
         else:
-            out["MISSING"] += 1; print(f"MISSING  doc line {line}  {path}:{a}-{b} {note} (none of {ids[:3]} in file)")
+            out["MISSING"] += 1; print(f"MISSING  doc line {line}  {path}:{a}-{b} {note} (none of {ids[:3]} in file)  CODE: {snip(f,a,b)}  CLAIM: ...{ctx[-110:]!r}")
 print("INFO sample", len(sample), out)
+

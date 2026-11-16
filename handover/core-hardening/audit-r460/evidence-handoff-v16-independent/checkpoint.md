@@ -6,3 +6,4 @@ blockers: none yet. Finding so far: DB-2 file spend_decrease_log.sql contains 0 
 ## 2026-11-16T17:04:52Z
 done: ind16.py main run: 222 of 223 pass; the 1 FAIL = DB-2 file has no lock_timeout (57014 after my 14s cap, not 55P03). 
 next: mutations (50), builder rerun, cites, banned, summary.
+## 2026-11-16T17:09:44Z done: summary written; all clusters removed.

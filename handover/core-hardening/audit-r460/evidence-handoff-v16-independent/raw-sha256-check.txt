@@ -1,0 +1,7 @@
+held-sql/spend_decrease_log.sql: OK
+held-sql/spend_nonneg.sql: OK
+held-sql/spend_nonneg_finite.sql: OK
+held-sql/spend_nonneg_upgrade.sql: OK
+pg_v16.py: OK
+pg_run_v16.sh: OK
+secdef_guard_v16.py: OK
