@@ -31,7 +31,7 @@ Date: 2026-11-16, about 19:25 to 19:45 UTC (00:55 to 01:15 IST on 2026-11-17). F
 - M3 (status text too long): FIXED. Compact paragraph; old text moved to a History section.
 - M4/M5 (LIMIT_S skew, interval): LEAD DECIDES (see below). Recommended values written into D2 and the manual test; new row D9.
 - M6 (exit 74/72/75 wording, exit 0 row): FIXED.
-- Minors: umask for the second password file; log emptying after the lock; duplicated sentence removed; "Earlier text" reworded; TLS note; "words box" renamed. Item (v) rename to (v-c) and the re-grant after the revoke test: NOT DONE (not located in the time; will be done by the next pass or the lead on request).
+- Minors: umask for the second password file; log emptying after the lock; duplicated sentence removed; "Earlier text" reworded; TLS note; "words box" renamed. Item (v) renamed (v-c): FIXED. The re-grant of S5 after the revoke test: NOT DONE (not located); LEAD DECIDES whether another pass adds it.
 
 ## LEAD DECIDES
 1. Where the scheduler reads the password from: missing input is the scheduler operator's (D6) choice of secrets backend; asks the studio head. Default: a mode-600 file written by the scheduler.
