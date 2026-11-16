@@ -1,0 +1,5 @@
+# checkpoint v21 (builder, 2026-11-16; no commit by order)
+done: OWNER-SHEET-v21.md (118 lines, 7,943 words), LEAD-RELEASE-NOTE-v5.md (G1..G38), v21-CHANGES.md (one row per finding id), v21-MAP.md (carried over, funding leftovers fixed), v21-OPEN-FOR-LEAD.md (50 rows: 1, 8, 27, 32, 39 marked answered; 42-50 new), check-v21.py, evidence-v21/check-v21-raw.txt (exit 0, 0 problems, form only), evidence-v21/arith-v21.txt. v20 files unchanged.
+next (lead): answer Open 42-50, 43 and 44 and 36 first (no range, no earliest key time, no film cue = no run); EGM steps (evidence runner, reviewers, resolve, drift report).
+blockers: nothing run or seen except the checker; sheet longer, not shorter (v20 6,638 words); G1, G16 (lead verifies at re-pin), G30, G33-G36 are lead gates; checker not mutation-tested this round.
+counts: security 17 rows: 16 fixed, 1 partly (N5 second route, Open 48); stranger: 4 blockers fixed, majors: 1 not changed with reason (SM2 older key order), 1 not fixed (length), 1 partly (SM6 Windows clock zone), rest fixed; contradiction: M1-M6 fixed, m1-m15 13 fixed + 2 no change (m10, m11 already Open 24), note-120 fixed.

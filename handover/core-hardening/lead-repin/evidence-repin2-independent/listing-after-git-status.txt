@@ -1,0 +1,25 @@
+ M handover/core-hardening/steps-edits/OWNER-SHEET-v21.md
+ M handover/core-hardening/steps-edits/check-v21.py
+ M handover/core-hardening/steps-edits/v21-OPEN-FOR-LEAD.md
+?? handover/core-hardening/audit-r460/checkpoint-handoff-v6.md
+?? handover/core-hardening/lead-repin/evidence-repin2-independent/raw-3-run-root-bash.rc
+?? handover/core-hardening/lead-repin/evidence-repin2-independent/raw-3-run-root-bash.stderr
+?? handover/core-hardening/lead-repin/evidence-repin2-independent/raw-3-run-root-bash.stdout
+?? handover/core-hardening/lead-repin/evidence-repin2-independent/raw-3-run-root-dash.rc
+?? handover/core-hardening/lead-repin/evidence-repin2-independent/raw-3-run-root-dash.stderr
+?? handover/core-hardening/lead-repin/evidence-repin2-independent/raw-3-run-root-dash.stdout
+?? handover/core-hardening/lead-repin/evidence-repin2-independent/raw-4-run-nobody-bash.rc
+?? handover/core-hardening/lead-repin/evidence-repin2-independent/raw-4-run-nobody-bash.stderr
+?? handover/core-hardening/lead-repin/evidence-repin2-independent/raw-4-run-nobody-bash.stdout
+?? handover/core-hardening/lead-repin/evidence-repin2-independent/raw-4-run-nobody-dash.rc
+?? handover/core-hardening/lead-repin/evidence-repin2-independent/raw-4-run-nobody-dash.stderr
+?? handover/core-hardening/lead-repin/evidence-repin2-independent/raw-4-run-nobody-dash.stdout
+?? handover/core-hardening/lead-repin/evidence-repin2-independent/raw-5-qs37.stdout
+?? handover/core-hardening/lead-repin/evidence-repin2-independent/raw-6-empty-dash.stdout
+?? handover/core-hardening/lead-repin/evidence-repin2-independent/raw-6-empty.stdout
+?? handover/core-hardening/steps-edits/v21-MAP.md
+?? iniconfig-2.3.1-py3-none-any.whl
+?? packaging-26.3-py3-none-any.whl
+?? pluggy-1.7.0-py3-none-any.whl
+?? pygments-2.21.0-py3-none-any.whl
+?? pytest-9.2.0-py3-none-any.whl

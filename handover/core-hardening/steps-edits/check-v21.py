@@ -205,7 +205,7 @@ ex2 = min(hm('18:10'), B, we - dt.timedelta(minutes=45))
 if (ex2, ex2 + dt.timedelta(minutes=25), ex2 + dt.timedelta(minutes=35)) != (hm('17:44'), hm('18:09'), hm('18:19')): bad('example 2')
 if we - (ex2 + dt.timedelta(minutes=35)) != dt.timedelta(minutes=Z): bad('example 2: cancel-by is not exactly the buffer before the window end')
 for x in ['LS = 11:30 UTC = 17:00 IST', 'LF = 11:55 UTC = 17:25 IST', 'CB = 12:05 UTC = 17:35 IST', 'LF = 18:09:00 UTC = 23:39 IST', 'CB = 18:19:00 UTC = 23:49 IST',
-          '17:44:00 UTC = 23:14 IST', '18:14:40 UTC = 23:44:40 IST', 'window end - 45 min = 17:44:00', 'B = 18:14:40']: need_(x)
+          '17:44:00 UTC = 23:14 IST', '18:14:40 UTC = 23:44:40 IST', 'deadline - 45 min = 17:44:00', 'B = 18:14:40']: need_(x)
 ok('arithmetic, weekdays, UTC/IST pairs and buffer examples checked')
 
 # 8 the yes sentence uses only the second charset once placeholders are filled; step words; USD form

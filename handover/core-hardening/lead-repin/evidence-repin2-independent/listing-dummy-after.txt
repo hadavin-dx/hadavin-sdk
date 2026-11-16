@@ -1,0 +1,40 @@
+d 755 4096 1794834656.8979633010 outside -> 
+d 755 4096 1794834656.9019633010 dummy -> 
+d 755 4096 1794834656.9019633010 dummy/test_runs -> 
+d 755 4096 1794834656.9019633010 dummy/test_runs/my take/_local -> 
+d 755 4096 1794834656.9019633010 dummy/test_runs/my take/node_modules -> 
+d 755 4096 1794834656.9259633020 dummy/test_runs/my take/_local/secrets -> 
+d 755 4096 1794834656.9259633020 dummy/test_runs/my take/flows -> 
+d 755 4096 1794834656.9259633020 dummy/test_runs/my take/node_modules/pkg -> 
+d 755 4096 1794834656.9259633020 dummy/test_runs/my take/tests -> 
+d 755 4096 1794834656.9347942710 dummy/test_runs/my take -> 
+d 755 4096 1794834656.9347942710 dummy/test_runs/my take/scripts -> 
+d 755 4096 1794834693.7979646210 dummy/test_runs/my take/sub dir -> 
+f 0 53 1794834656.9299633020 dummy/test_runs/my take/scripts/unreadable.py -> 
+f 644 108 1794834656.9347942710 dummy/test_runs/my take/DECISION-one-store.md -> 
+f 644 108 1794834693.7979646210 outside/outside-secret.py -> 
+f 644 117 1794834656.9259633020 dummy/test_runs/my take/flows/f.json -> 
+f 644 14985 1794834656.9179633020 dummy/test_runs/my take/scripts/run_real_check_n8n.py -> 
+f 644 3125 1794834656.9219633020 dummy/test_runs/my take/scripts/crm_hubspot.py -> 
+f 644 333 1794834656.9179633020 dummy/test_runs/my take/scripts/n8n.py -> 
+f 644 37 1794834693.7979646210 dummy/test_runs/my take/sub dir/qs.py -> 
+f 644 49 1794834656.9259633020 dummy/test_runs/my take/test_helper.py -> 
+f 644 50 1794834656.9259633020 dummy/test_runs/my take/sub dir/n8n_drive.py -> 
+f 644 54 1794834656.9259633020 dummy/test_runs/my take/_local/secrets/s.py -> 
+f 644 68 1794834656.9259633020 dummy/test_runs/my take/tests/test_a.py -> 
+f 644 85 1794834693.7979646210 dummy/test_runs/my take/node_modules/pkg/x.py -> 
+l 777 102 1794834656.9347942710 dummy/test_runs/my take/scripts/link.py -> /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/ind/outside/outside-secret.py
+l 777 84 1794834656.9347942710 dummy/test_runs/my take/linkdir -> /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/ind/outside
+135ac7fefbe2297ab2d44dad0cd7fe2c795a9060ed59673eb8850e3c692b859f  dummy/test_runs/my take/flows/f.json
+21a3965b0f788c1b89edfc88596c315c1df8cfc1255156c58e42de1f00a3e406  dummy/test_runs/my take/scripts/unreadable.py
+4f1a8f56f5e2caf93065e88193866e9a91a99fbc538e9ab9bf1f76408dbb6bfa  dummy/test_runs/my take/scripts/run_real_check_n8n.py
+839ce085193b790c1b18cd4e94f110941e607b5c03d738704d81b0e85d1cb98c  dummy/test_runs/my take/sub dir/n8n_drive.py
+9ba3f0c24bff2e7b0d2ada640f3352a3f0ade56d3b54aea8390c7b69815d0537  outside/outside-secret.py
+a6c7b29799c9625cc933d528fef2b797c2ec010ed20a2dcb68b857fa68dfd41e  dummy/test_runs/my take/tests/test_a.py
+af9e5f727bdc95e5eb0ded7e5d300156318cb9f8d9cf5e0f10c1853783731f3b  dummy/test_runs/my take/_local/secrets/s.py
+b2cc096c48163371086d41e2005ac64f0c80360c95e37275090c7d2bce243728  dummy/test_runs/my take/DECISION-one-store.md
+c2c91778cfabaa80a111adbb698fcddc024784a5ba36b90cc9aac99c4a99dce0  dummy/test_runs/my take/scripts/crm_hubspot.py
+d1bfe1ddaccc448f8b4174283640be74cf65194814919da0fa06e1e604cae7ef  dummy/test_runs/my take/node_modules/pkg/x.py
+d3bb1ce644e9ffcc744547a1a71422d68e9305206392d15bbee7bed179e62459  dummy/test_runs/my take/test_helper.py
+de12ad4cae63dcfaf51e826cf2486fc30068e084f875d14eed874d449d2a0240  dummy/test_runs/my take/scripts/n8n.py
+fef7e57a9f10318e4c8f6f07b704c270a9519c8f20cff29ac311e4d8d23c7df1  dummy/test_runs/my take/sub dir/qs.py
