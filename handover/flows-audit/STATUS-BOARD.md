@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T11:29:37Z
+UPDATED_UTC: 2026-11-16T11:30:15Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -7,7 +7,7 @@ ITEMS_TOTAL: 12
 ITEMS_OPEN: 8
 PERCENT: 95
 AGENTS_RUNNING: 5
-CAPACITY: 0.71 load of 4 cores, mem 0/15 GB, RAM 915/16087 MB, disk 26G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 1.7G /tmp/claude-0 , agents 5 (light+heavy per list)
+CAPACITY: 0.79 load of 4 cores, mem 0/15 GB, RAM 918/16087 MB, disk 26G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 1.7G /tmp/claude-0 , agents 5 (light+heavy per list)
 INTERRUPTED: none
 FAILED: ROLES: PARKED by lead (client build, after video, no new lanes). Script r6: independent rerun 71 tests OK, gate rc 0, but 7 of 15 random mutants survive (lines 141,145,147,280,358,371,417); not fixed because parked; v4 doc security Blocker (Part C unguarded) unfixed
 claims: r5 counts independently rerun and match (113/69/48/28/69=327, 79 rows); BUT 37 Table 2 rows (41-77) have no LIVE/OUT tag; example.test vs example.com rows 2 and 5 rest on OWNER-STEPS v3 only; row 33 archive step unproven; 2 wrong cites (A-097, A-068); r6 fix pending (tags, desk-repo traces, cites)
@@ -64,8 +64,8 @@ owner sheet stranger r8: 3 Blockers 10 Majors (Step D cannot be done as written,
 RW adversarial r1: 2 Blockers (A-016f general promise vs own A-016c; proof gate can pass while claim false), 7 Majors; lead rulings needed (reviews/adversarial-rw-r1.md)
 FIX-PLAN item 3 readiness r1: 5 Blockers 8 Majors (order item 3 needs item 4; no apply command; 12:11 vs 15:14; b6 cannot fail by exit code; export-back method missing); reviews/readiness-fixplan3-r1.md
 ZOOM-OUT: plan dates (re-pin hard latest Mon 23 Nov) fall after the Wed 18 Nov deadline; r20/r21/r22 undefined; nothing scheduled to run the flow; Q26 for lead (reviews/zoomout-takepath-r1.md)
-NEXT: collect fixers, verify, Q26 applied
-PUSHED_UTC: 2026-11-16T11:29:37Z
+NEXT: collect fixers, verify with checkers
+PUSHED_UTC: 2026-11-16T11:30:15Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -85,10 +85,10 @@ PUSHED_UTC: 2026-11-16T11:29:37Z
 | id | role | model | what it does | started UTC | expected end UTC | % | state | last output |
 |---|---|---|---|---|---|---|---|---|
 | a6a304a | Q25 run sheet + claims | sonnet | apply Q25 + citation Majors | 11:45 | 12:10 | 60 | running | fix-q25-rw.md
-| a6d5343 | FIX-PLAN fixer | sonnet | readiness B1 M1-M6 + Q26 | 11:28 | 11:45 | 20 | running | fix-fixplan4.md
-| a9556f6 | EVIDENCE RUNNER F8 r9 | sonnet | run flow-check gates on copy | 11:33 | 11:50 | 5 | running | flow-check/evidence-r9.md
-| a60525c | F8 r9 code reviewer | sonnet | second reviewer on pin logic | 11:30 | 11:45 | 20 | running | (inline)
-| a212899 | TAKE-CHECKLIST stranger read | sonnet | comprehension read | 11:30 | 11:40 | 20 | running | (inline)
+| a6d5343 | FIX-PLAN fixer | sonnet | readiness B1 M1-M6 + Q26 | 11:28 | 11:45 | 30 | running | fix-fixplan4.md
+| ad41832 | EVIDENCE RUNNER F8 r9 | sonnet | run flow-check gates on copy | 11:30 | 11:50 | 20 | running | flow-check/evidence-r9.md
+| a60525c | F8 r9 code reviewer | sonnet | second reviewer on pin logic | 11:30 | 11:45 | 30 | running | (inline)
+| a79ab5b | TAKE-CHECKLIST fixer | sonnet | fix 15 stranger-read items | 11:36 | 11:50 | 5 | running | fix-checklist2.md
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
