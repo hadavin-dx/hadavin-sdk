@@ -1,17 +1,17 @@
-UPDATED_UTC: 2026-11-16T11:01:00Z
+UPDATED_UTC: 2026-11-16T11:06:00Z
 SESSION: core-hardening
-ORDER: 021 + decisions 10:02Z; 024; 027 (refill to 8, started); lead answers Q14 to Q21 applied
+ORDER: 021 + decisions 10:02Z; 024; 027 (refill to 8, done); lead answers Q14 to Q21 applied
 STATE: WORKING
 BOOT_ID: 3dcae981
 ITEMS_TOTAL: 11
 ITEMS_OPEN: 7
 PERCENT: 95
-AGENTS_RUNNING: 8
-CAPACITY: load 0.4 of 4 cores, mem 1.0 of 15.7 GB used (15.0 GB available), disk 8.9 GB free of 252 GB (78% used, limit 90%), top disk /tmp/claude-0 11G, /tmp/c8b 2.1G, /tmp/c5v2 1.8G (own scratch, kept until reviews finish, nothing removed this beat), 8 light and 0 heavy agents
+AGENTS_RUNNING: 7
+CAPACITY: load 0.1 of 4 cores, mem 0.9 of 15.7 GB used (15.1 GB available), disk 8.9 GB free of 252 GB (77% used, limit 90%), top disk /tmp/claude-0 11G, /tmp/c8b 2.1G, /tmp/c5v2 1.8G (own scratch, kept until reviews finish, nothing removed this beat), 7 light and 0 heavy agents
 INTERRUPTED: none
-FAILED: (1) v12 owner sheet failed all 3 reviews; v13 now built (28.6 KB vs 25 KB target, about 20 values only the lead has are blank, nothing run) and under 4 new reviews. (2) C7b fix 3 security review: hash ties hold but the withdrawn "no network" claim is still in REPORT-c7b-fix2.md line 13 (blocker), plus 4 majors (unlogged forward-apply, patch hashes, README pointer, missing checkpoint); one stale "14 tests" fixed; fix 4 running; no mutation run of the lookahead yet. (3) C3b v6 round 4: 5 readiness majors (checklist gaps: which file B1 edits, plan path, B vs C order, stale PF and newline in C9, D2 shell and resume); facts check clean; v7 fix pass running. (4) Contradiction sweep: full run 9514 was on a tree with A-01 and C-01 applied (decisions 4); DECISION-one-store.md:14 still says "ONE database"; no file names the take port (decision 6); HubSpot probe contact whose delete fails is on no list; "13 sends" unbacked. (5) run.py r3 still running. Lead-only items: claim wording A or B, lease wording approval, exit-code rule for C, run-card values, Remove-EC2 gate gap (describe-only). Stray /syntax-check-output.txt needs a manual rm by the user. Nothing run with n8n, Postgres, pwsh, shellcheck, WSL.
-NEXT: hand-backs of C7b fix 4, C3b v7, run.py r3; v13 reviews (stranger, security, citation, adversarial); one-place sweep; REPORT.md top block refresh; re-review C7b and C3b after fixes.
-PUSHED_UTC: 2026-11-16T11:01:00Z
+FAILED: (1) v13 owner sheet failed 3 reviews: stranger 0 blockers + 8 new majors, security 0 blockers + 7 majors, citation 0 blockers + 5 minors, adversarial 20 findings; v14 builder running (money/secret path, uncapped); about 20 values only the lead has stay blank; nothing run. (2) C7b fix 4 accepted by the round 5 reviewer (0 blockers, 0 majors); patch nit and Remove-EC2_x/Remove-S32 gap left unfixed on purpose (patch hash kept), lead decides; Postgres 455 tests, real head, v5 tree and a post-fix full re-run not run. (3) C3b v7 built (5 readiness majors fixed in text, patch unchanged), round 5 review running; WSL, real P-4b hit, cygpath and A1 to D2 as one pass untested. (4) Sweep: 9 places where copies disagree today (5 lease wordings, lease 45/20/120 s, port 5690 labelled "take" in the re-pin patch, one-database wording in DECISION-one-store.md:14, test counts, cancel-key timing in v10/v11 sheets); the 9514 run was on a tree with A-01 and C-01 applied (decision 4). (5) Edit list v10: round 6 0 blockers, 0 majors; claim wording A or B is the lead's decision 6. (6) run.py r3 still running. Lead-only: claim wording, lease wording approval and Q21.2 deviation, exit-code rule for C, run-card values, Remove-EC2 gap. Stray /syntax-check-output.txt needs a manual rm. Nothing run with n8n, Postgres, pwsh, shellcheck, WSL.
+NEXT: v14 hand-back then stranger, security, citation, adversarial again; C3b round 5 result; run.py r3 hand-back; REPORT.md top block paste; patches-ready README refresh review; v10 flow-facts review; cross-read of other sessions; superseded banners on old sheets after v14.
+PUSHED_UTC: 2026-11-16T11:06:00Z
 
 ## ITEMS (QUEUE.md ids; detail in REPORT.md)
 | # | item | state | % | evidence file | note |
@@ -19,26 +19,25 @@ PUSHED_UTC: 2026-11-16T11:01:00Z
 | C1 | cross-review flows-audit | done | 100 | reviews-of-flows-audit/REVIEW.md | |
 | C2 | hygiene patches | done | 100 | hygiene-patches/ | static |
 | C3 | paste check of re-smoke plan | done | 100 | paste-check/REPORT.md | nothing run with pwsh or n8n |
-| C3b | re-pin patch (ORDER 017) | v6 round 4: 5 readiness majors, facts clean; v7 fix running | 94 | paste-check/review-c3b-v6-readiness-r4.md, review-c3b-v6-facts-r4.md | |
+| C3b | re-pin patch (ORDER 017) | v7 built; round 5 review running | 95 | paste-check/handback-c3b-v7.md, review-c3b-v6-readiness-r4.md | |
 | C4 | steps vs decisions edits | done | 100 | steps-edits/EDITS.md | |
-| C4b | OWNER-STEPS | v13 built, 4 reviews running | 88 | steps-edits/handback-v13.md | money/secret path, uncapped |
+| C4b | OWNER-STEPS | v13 failed 3 reviews; v14 building | 88 | steps-edits/review-v13-stranger.md, review-v13-security.md, citation-check-v13.md | money/secret path, uncapped |
 | C5 | core patches | v5 done, no blocker or major | 100 | patches-ready/review/design-r5-c5v5.md | scope cut by decision 4; no new work (Q18) |
 | C6 | video audit | C6f round 2 done | 97 | c6-skip-audit/REPORT-c6f.md | questions Q1/Q2 wait for lead |
-| C7 | heavy lane: tests per patch | C7b fix 3 reviewed: 1 blocker (text) + 4 majors; fix 4 running | 94 | patches-ready/review/design-c7b-fix3-security-r4.md | flake = describe-only (Q16) |
+| C7 | heavy lane: tests per patch | C7b fix 4 round 5: 0 blockers, 0 majors | 97 | patches-ready/review/design-c7b-fix4-r5.md | flake = describe-only (Q16) |
 | C8 | mutation lane C-01 A-01 | run.py r3 running | 90 | mutation-lane/REPORT-runpy3.md | tool only, not in take path |
-| C9 | apply S9 decisions into owner steps | in v13 | 85 | steps-edits/ | |
-| C10 | who-types-what table | in v13 | 85 | steps-edits/ | |
-| C11 | HubSpot probe step | in v13 (probe app and key file deleted in 0.6) | 85 | steps-edits/ | |
-| edit list v10 | real-v5 edits | round 6: 0 blockers, 0 majors, 2 nits | 98 | paste-check/review-v10-r6.md | decision 6 (wording A/B) is the lead's |
+| C9 | apply S9 decisions into owner steps | in v14 | 86 | steps-edits/ | |
+| C10 | who-types-what table | in v14 | 86 | steps-edits/ | |
+| C11 | HubSpot probe step | in v14 (separate secrets procedure) | 86 | steps-edits/ | |
+| edit list v10 | real-v5 edits | round 6 clean; flow-facts second reviewer running | 98 | paste-check/review-v10-r6.md | decision 6 is the lead's |
 
-## AGENTS (8 running; lanes per ORDER 021 menu)
+## AGENTS (7 running; lanes per ORDER 021 menu)
 | id | role / lane | model | what it does | started UTC | expected end UTC | state |
 |---|---|---|---|---|---|---|
 | a935be1660a498231 | builder run.py r3 | sonnet | args allowlist, clean evidence | 10:29Z | 11:30Z | running |
-| a706358c335490d92 | builder C7b fix 4 | sonnet | withdraw claim, hashes, checkpoint, mutation check | 11:00Z | 11:40Z | running |
-| a40fe83dc8d6887c2 | builder C3b v7 | sonnet | 5 readiness majors | 11:00Z | 11:40Z | running |
-| ac9d55666f4434bb6 | reviewer v13 stranger (egm-comprehension) | sonnet | stranger read | 11:00Z | 11:15Z | running |
-| ac84e423cc9e353f2 | reviewer v13 security (egm-design) | sonnet | money/secret path | 11:00Z | 11:20Z | running |
-| a115856a06ab3efc4 | citation checker v13 | sonnet | files, numbers, refs | 11:00Z | 11:20Z | running |
-| a4d00c4e7920dc3ce | lane d adversarial reader v13 | sonnet | break the day card | 11:00Z | 11:20Z | running |
-| a2bcffdc40cbe9dc7 | lane c one-place-per-job sweep | sonnet | drift between my files | 11:01Z | 11:20Z | running |
+| a5d682623f8878623 | builder v14 owner sheet | sonnet | all v13 findings | 11:03Z | 11:50Z | running |
+| a452c9ecad713e9c4 | reviewer C3b v7 round 5 (egm-implementation-readiness) | sonnet | blockers and majors | 11:03Z | 11:20Z | running |
+| aa69462f2b2f363bf | lane e cross-read other sessions | sonnet | git show, new facts for blanks | 11:05Z | 11:25Z | running |
+| a99bd065461c53ff6 | builder patches-ready README refresh | sonnet | one index, kept scope | 11:05Z | 11:25Z | running |
+| a2179a8987602ba74 | lane a second reviewer v10 flow facts (egm-codebase-details) | sonnet | lease and claim facts | 11:05Z | 11:20Z | running |
+| ac8fb531a02095fd2 | builder REPORT.md top block draft | sonnet | failures first | 11:05Z | 11:25Z | running |
