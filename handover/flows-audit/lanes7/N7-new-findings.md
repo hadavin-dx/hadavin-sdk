@@ -16,7 +16,7 @@
 | N7-4 | Nit (path traced, mostly a negative result) | security | yes | lead e-mail in the Qualify error output: only OutStage receives it and OutStage drops it; the content of the error item itself is UNVERIFIED |
 | N7-5 | Major | ops | yes | five database nodes in the sub-flow have no onError; no mail can be double-sent, but a delivered mail can end as "unknown" and nobody is told a database error happened |
 | N7-6 | Major | ops | no (fault only) | alert loop has no cap and no giving-up signal (extends F-014) |
-| N7-7 | Major | inconsistent | yes, if the video says "one database" | the audit text says "one database" in five different ways; one paste-ready wording at the end |
+| N7-7 | Major | inconsistent | yes, if the video says "one database" | the audit text says "one database" in 15 different places; one paste-ready wording at the end |
 
 ---
 
@@ -117,8 +117,8 @@
   |---|---|---|---|---|
   | SetCrmId | no (mail not reached) | no | after the lease (45 s) ClaimStuck re-runs: Qualify returns the stored label (stage journal), HubSpot upsert runs again (keyed on e-mail, so the same contact), SetCrmId retried, mail then sent once | nothing; a second HubSpot write; if the database stays down for 3 attempts: `failed` + 1 alert |
   | MailClaim, error before commit | no | no | re-run sends the mail normally | nothing |
-  | MailClaim, answer lost AFTER commit (`mail_sent=true`, no SendMail ran) | no | **yes, not sent**, but flagged | re-run: MailClaim finds `mail_sent=true`, returns no row, MailRowBack false, MarkUnknownB -> `unknown` -> 1 alert "may or may not have been sent" | an alert; the mail truly was NOT sent. Same safe path as test K3B (RUN-ON-LAPTOP.md:8) |
-  | MarkDone | no (MailClaim already set `mail_sent=true`, so a re-run cannot send again) | no (the mail was delivered) | re-run: MailClaim returns no row -> MarkUnknownB -> `unknown` -> 1 alert | an alert saying "unknown" for a mail that was delivered. Same as test K3 (RUN-ON-LAPTOP.md:8). Noise, not damage |
+  | MailClaim, answer lost AFTER commit (`mail_sent=true`, no SendMail ran) | no | **yes, not sent**, but flagged | re-run: MailClaim finds `mail_sent=true`, returns no row, MailRowBack false, MarkUnknownB -> `unknown` -> 1 alert "may or may not have been sent" | an alert; the mail truly was NOT sent. Same safe path as test K3B (RUN-ON-LAPTOP.md:67) |
+  | MarkDone | no (MailClaim already set `mail_sent=true`, so a re-run cannot send again) | no (the mail was delivered) | re-run: MailClaim returns no row -> MarkUnknownB -> `unknown` -> 1 alert | an alert saying "unknown" for a mail that was delivered. Same as test K3 (RUN-ON-LAPTOP.md:67). Noise, not damage |
   | MarkUnknownA (after an SMTP error) | no | possibly (SMTP error may mean not sent) | state stays `processing` with `mail_sent=true`; re-run -> MailClaim no row -> MarkUnknownB -> `unknown` + alert | an alert (the intended result, one pass later) |
   | MarkUnknownB | no | n/a | re-run reaches MarkUnknownB again; after attempts >= 3, MarkFailed sets `unknown` (mail_sent is true) | an alert after about 3 leases + sweeps (about 3 minutes) |
   If the database stays down, the sweep nodes also fail silently (swallowed), so nothing resolves until it is back: see N7-1.
@@ -154,7 +154,7 @@
   | 9 | EXCEPTIONS.md row 3 | spend ledger and counters: proposed exception; "RETIRED only if the take makes no live model call" | PLAN-4-NLITE-FROM-LEAD.md:106 says the take makes up to 3 live model calls, so the ledger cannot be retired; the condition is already answered |
   | 10 | EXCEPTIONS.md:10 (definitions) | KEEP-ONE = "n8n Postgres, table mf_leads" | does not say whether n8n's own tables count as part of KEEP-ONE |
   | 11 | FIX-PLAN.md item 6 | F-011 "decided, Reading A: n8n on Postgres with its own role" and "three database roles (intake writer, recovery writer, read-only screen reader)" | F-011 says "three roles stay as in F-009/F-010 notes", but those notes list no three roles; with n8n's own role it is four roles, nowhere counted |
-  | 12 | CUT-LIST.md | no sentence about the one database. ORDER 007 item 5 names "CUT-LIST/FIX-PLAN item 6": CUT-LIST has no item 6 (its steps are 1, 2, 3, 3a, 3b, 4); item 6 is in FIX-PLAN only | the order's reference does not match the file |
+  | 12 | CUT-LIST.md | no sentence about the one database. ORDERS.md ORDER 007 contains no text 'CUT-LIST/FIX-PLAN item 6' (round 1 review: checked); the row was my own reading | no disagreement; FIX-PLAN item 6 is now F-012 (LIMIT 1), the role count lives in item 10 |
   | 13 | FLOWS-AUDIT.md:69 and :1413; lanes/L3-stores.md (classification rule line 3, n8n row, T9) | older text: DECISION-one-store.md "absent"; n8n SQLite "NOT IN ORDER TEXT, proposed EXCEPTION"; ledger exception | older than ORDER 004; says the opposite of row 2 for n8n's SQLite |
   | 14 | n8n-flows/N8N-START.md:4; REPORT.md:622 | "SQLite inside n8n ... Postgres 16 for the lead table (separate from n8n's own SQLite)"; "so they do NOT share one Postgres here" | true for the tests that ran; contradicts Reading A for the take |
   | 15 | n8n-mainframe/mf.py:12 vs PLAN-4-NLITE-FROM-LEAD.md:64 | `stage-journal.jsonl` (test) vs `stage.journal` (take) | see "file name" below |
