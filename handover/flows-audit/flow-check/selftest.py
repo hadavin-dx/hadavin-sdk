@@ -24,7 +24,6 @@ import io
 import json
 import os
 import shutil
-import subprocess
 import sys
 import tempfile
 import traceback
@@ -2735,73 +2734,6 @@ def main():
                     "ACCEPTED: recovery flow not part of the take (decision 4): " + dd_ + "/" + fn_
                 ],
             )
-
-        def take(name, folder, want_rc, want_text, not_text=()):
-            env = dict(
-                os.environ,
-                TAKE_CHECK_FLOWS=folder,
-                TAKE_CHECK_FORM_EXPECT="15:14",
-                TAKE_CHECK_CK=CK,
-            )
-            r = subprocess.run(
-                ["bash", HERE + "/take_check.sh"],
-                env=env,
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-            out = r.stdout + r.stderr
-            wt(f"{OUT}/{name}.out", f"$ take_check.sh on {folder}\n{out}exit={r.returncode}\n")
-            report(
-                f"{name} (take_check exit {want_rc})",
-                r.returncode == want_rc
-                and all(t in out for t in want_text)
-                and not any(t in out for t in not_text),
-                f"rc={r.returncode} missing={[t for t in want_text if t not in out]}",
-            )
-
-        take(
-            "q18_take_check_patched_recovery_none_is_exit_0",
-            PATCHED,
-            0,
-            (ACC_REC,),
-            (
-                "!!!",
-                "WARN demo",
-                "run-saving settings ['saveDataSuccessExecution', 'saveDataErrorExecution', 'saveManualExecutions'] are off ('none'",
-            ),
-        )
-        take(
-            "q18_take_check_saving_off_on_the_form_flow_is_exit_4",
-            f"{work}/q18-form-off",
-            4,
-            (
-                "A FLOW THAT THE TAKE USES HAS RUN SAVING OFF",
-                "mf-form.json this flow's run-saving settings",
-            ),
-        )
-        take(
-            "q18_take_check_saving_off_on_the_sub_workflow_is_exit_4",
-            f"{work}/q18-sub-off",
-            4,
-            (
-                "A FLOW THAT THE TAKE USES HAS RUN SAVING OFF",
-                "mf-sub-crm-mail.json this flow's run-saving settings",
-            ),
-        )
-        rf_ = f"{work}/q18-rec-saves"
-        shutil.copytree(PATCHED, rf_)
-        h = rj(f"{rf_}/mf-recovery.json")
-        for k in ("saveDataSuccessExecution", "saveDataErrorExecution"):
-            h["settings"][k] = "all"
-        h["settings"]["saveManualExecutions"] = True
-        wj(f"{rf_}/mf-recovery.json", h)
-        take(
-            "q18_take_check_recovery_saving_on_makes_the_accept_idle_exit_4",
-            rf_,
-            4,
-            ("accept-no-save --accept-no-save mf-recovery.json excused nothing",),
-        )
 
     if skipnames:
         print(

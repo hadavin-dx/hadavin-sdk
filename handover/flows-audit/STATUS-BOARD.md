@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T10:56:00Z
+UPDATED_UTC: 2026-11-16T10:56:12Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -6,8 +6,8 @@ BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
 ITEMS_OPEN: 3
 PERCENT: 91
-AGENTS_RUNNING: 4
-CAPACITY: 2.01 load of 4 cores, mem 0/15 GB, RAM 950/16087 MB, disk 27G free of 252G, top3 327M /tmp/core-venv 684M /tmp/claude-0 871M /tmp/f3m , agents 4 (light+heavy per list)
+AGENTS_RUNNING: 3
+CAPACITY: 2.01 load of 4 cores, mem 0/15 GB, RAM 943/16087 MB, disk 27G free of 252G, top3 327M /tmp/core-venv 684M /tmp/claude-0 871M /tmp/f3m , agents 3 (light+heavy per list)
 INTERRUPTED: none
 FAILED: ROLES: PARKED by lead (client build, after video, no new lanes). Script r6: independent rerun 71 tests OK, gate rc 0, but 7 of 15 random mutants survive (lines 141,145,147,280,358,371,417); not fixed because parked; v4 doc security Blocker (Part C unguarded) unfixed
 claims: r5 counts independently rerun and match (113/69/48/28/69=327, 79 rows); BUT 37 Table 2 rows (41-77) have no LIVE/OUT tag; example.test vs example.com rows 2 and 5 rest on OWNER-STEPS v3 only; row 33 archive step unproven; 2 wrong cites (A-097, A-068); r6 fix pending (tags, desk-repo traces, cites)
@@ -45,8 +45,9 @@ q16 rows fixed (8 of 8) but psql command is my own and unrun; 3 facts only the l
 q16 rows round 2 read: 13 Majors (who is 'you', order of lead steps, row 4 steps A-D, undefined vid/state/mailbox); fixing without a third review (round cap)
 q16 rows round 3 written (13 Majors addressed, not re-reviewed per round cap); open: take folder, address source (v3 says owner sends none, Q16 answer says owner types nothing), intake = receiving mailbox, DESK_ALERT_TO value: Q20
 claims pointers done (checker PASS 157 rows, counter 327); 15 wording conflicts left for the lead in fix-sweep.md (Q19 has the 5 that matter); sweep reviewer's A-050c claim was wrong (only A-036b and N-1 match)
-NEXT: Q18 fixer; F3 last fix + r7 evidence; F8 evidence; Q19 Q20 wait
-PUSHED_UTC: 2026-11-16T10:56:00Z
+F8 r6 evidence (10:50 version, files changed since): take_check printed 'key check present' with KeyOk node removed (text match), mutant M5 survives, saving 'all' gave no WARN line; forwarded to the Q18 fixer; re-run evidence after it
+NEXT: Q18 fixer (+3 evidence items); F3 last fix + r7 evidence; Q19 Q20 wait
+PUSHED_UTC: 2026-11-16T10:56:12Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -67,7 +68,6 @@ PUSHED_UTC: 2026-11-16T10:56:00Z
 |---|---|---|---|---|---|---|---|---|
 | f3ev6 | F3 r6 evidence runner | sonnet | independent rerun, mutants on new code, e2e | 10:21 | 10:51 | 5 | running | fill_flows/evidence-f3-r6.md |
 | f3ev7 | F3 r7 evidence runner | sonnet | independent rerun, 25 new mutants, hostile inputs | 10:50 | 11:20 | 5 | running | fill_flows/evidence-f3-r7.md |
-| f8ev6 | F8 r6 evidence runner | sonnet | take_check.sh only (rest parked) | 11:05 | 11:25 | 5 | running | flow-check/evidence-r6.md |
 | f3fix8 | F3 last fix batch (frozen) | sonnet | F1 F2 Majors + small nits, no new round | 11:10 | 11:35 | 5 | running | fill_flows/fix-f3-r8.md |
 | q18fix | Q18 F-008 patch + ACCEPTED checker | sonnet | manual-run saving ON, recovery none ACCEPTED, tests | 10:55 | 11:20 | 5 | running | flow-check/fix-q18.md |
 

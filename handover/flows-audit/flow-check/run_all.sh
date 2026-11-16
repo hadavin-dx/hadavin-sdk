@@ -101,7 +101,23 @@ tcfail() { # name expected-line env-assignments...
   env "$@" bash "$HERE/take_check.sh" > "$RAW/take-check-$nm.txt" 2>&1; x=$?
   [ "$x" = 4 ] && grep -q -F -- "$want" "$RAW/take-check-$nm.txt" || TCMISS="$TCMISS [take_check $nm: want exit 4 and '$want', got exit $x]"
 }
+# Q18: the take on the patched copy with ONE run-saving fault planted: each must be exit 4 with its own loud line (the checker must not hide it)
+for nm in form-off sub-off rec-saves; do cp -r -- "$W/g/real" "$W/tc/$nm" || TCMISS="$TCMISS [could not make the $nm test folder]"; done
+python3 -I - "$W/tc" <<'PYEOF' || TCMISS="$TCMISS [run-saving test folders not built]"
+import json, sys
+def edit(folder, fn, **kw):
+    p = f"{sys.argv[1]}/{folder}/{fn}"
+    j = json.load(open(p, encoding="utf-8"))
+    j["settings"].update(kw)
+    json.dump(j, open(p, "w", encoding="utf-8"))
+edit("form-off", "mf-form.json", saveDataSuccessExecution="none", saveDataErrorExecution="none")
+edit("sub-off", "mf-sub-crm-mail.json", saveDataSuccessExecution="none", saveDataErrorExecution="none")
+edit("rec-saves", "mf-recovery.json", saveDataSuccessExecution="all", saveDataErrorExecution="all", saveManualExecutions=True)
+PYEOF
 tcfail unpatched-run-saving "A FLOW THAT THE TAKE USES HAS RUN SAVING OFF"
+tcfail form-run-saving-off "mf-form.json this flow's run-saving settings" TAKE_CHECK_FLOWS="$W/tc/form-off" TAKE_CHECK_FORM_EXPECT=15:14
+tcfail sub-run-saving-off "mf-sub-crm-mail.json this flow's run-saving settings" TAKE_CHECK_FLOWS="$W/tc/sub-off" TAKE_CHECK_FORM_EXPECT=15:14
+tcfail recovery-accept-idle "accept-no-save --accept-no-save mf-recovery.json excused nothing" TAKE_CHECK_FLOWS="$W/tc/rec-saves" TAKE_CHECK_FORM_EXPECT=15:14
 tcfail no-table-file "THE TABLE FILE IS MISSING" TAKE_CHECK_DDL="$W/tc/does-not-exist.sql"
 tcfail old-table "A COLUMN OR TABLE IS MISSING" TAKE_CHECK_DDL="$D/n8n-flows/mf_leads.sql"
 tcfail zero-queries "0 QUERY STRINGS WERE READ" TAKE_CHECK_FLOWS="$W/tc/noquery"
