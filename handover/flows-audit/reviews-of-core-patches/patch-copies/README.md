@@ -182,26 +182,16 @@ The failures on old code:
 The passing controls: the priced live route and the fake model still load, the at-the-ceiling test (`max_tokens=200_000` loads and `0` is refused, both true on old code), and 16 NaN and Infinity price cases, which pydantic already refuses (pydantic 2.14.1 in `uv.lock`; `match="finite"` depends on that library's message text, so a library
 upgrade may need that one word changed). Those 16 pin today's behaviour and cannot fail on old code.
 
-### Results of the fourth pass (2026-11-16): price-only patch and the stricter criterion
-Seen in this pass, fresh `git archive b4cce5b` folders turned into a git repository with one commit (not a clone; `uv run --offline`, warm cache, `env -i`):
-- `git apply --check`: `C-01.patch` rc 0, `C-01-price-only.patch` rc 0, `A-01.patch` rc 0.
-- `C-01-price-only.patch` then `A-01.patch`, full run `-m "not live and not perf"`: `2 failed, 9394 passed, 454 skipped, 26 deselected in 248.76s`, exit 1; 9394 = 9364 + 30; failed: the same two guard tests. `test_licences_are_proprietary`: `Left contains 10 more items` (baseline: 10). Verdict by the criterion above: **NOT PASSED** (clause (e)).
-- The three test files `test_a01_audit_reconcile.py`, `test_c01_route_limits.py`, `test_p7_tick.py` on that copy: `71 passed` (24 + 6 + 41).
-- The same two new test files on unpatched code: `12 failed, 18 passed`. The price-only test file alone on unpatched code: `6 failed, 18 passed`; patched: `24 passed`.
-- `ruff check` (src and the test file) `All checks passed!`; `ruff format --check`: `104 files already formatted`. `bandit` was not re-run in this pass (the price-only patch adds no code that bandit has not seen in `C-01.patch`).
-- Not re-run in this pass: the full run with `C-01.patch` (the third-pass numbers below still stand for it), the `perf` tests, and the baseline (the third-pass baseline numbers are reused).
-
-### Results of the runs of the third pass (2026-11-16)
-All numbers below were seen in this pass, in real clones checked out at `b4cce5b` (with `uv run --offline`, from a warm `uv` cache; Python 3.13.18, pydantic 2.14.1 from `uv.lock`):
-- `git apply --check` on a fresh `git archive b4cce5b` extracted into a new folder, run with `env -i`: `C-01.patch` exit 0, `A-01.patch` exit 0 (final text of both files).
-- Baseline, unpatched clone, full run: `2 failed, 9364 passed, 454 skipped, 26 deselected in 239.30s`, exit 1. Failed: `test_no_vendor_brand_string_is_tracked`, `test_licences_are_proprietary` (causes above).
-- Patched clone, full run: `2 failed, 9396 passed, 454 skipped, 26 deselected in 277.71s`, exit 1; `diff` of the two failed lists prints nothing (same two names); 9396 = 9364 + 32.
-  **Honest limit:** this full run used the text of `A-01.patch` from 10 minutes before the final one; the final text only differs by two lines (the step logs `int(fn())`; the test for a kind
-  without `reconcile` asserts the tick's ERROR line). After that change I re-ran only `tests/test_a01_audit_reconcile.py`, `tests/test_c01_route_limits.py` and `tests/test_p7_tick.py`: `73 passed`.
-  The full run was not repeated on the final text.
-- Gates on the final patched clone: `ruff check`: `All checks passed!`; `ruff format --check`: `301 files already formatted`; `ruff format --check` on the 8 touched python files: `8 files already formatted`;
-  `bandit -q -r src demos tools -ll`: exit 0.
-- New tests on the unpatched clone (only the two new test files copied in), final text: `13 failed, 19 passed in 6.43s`.
+### Results of the fifth pass (2026-11-16): what was seen
+Seen in this pass in folders made from fresh `git archive b4cce5b` extracts, each turned into a git repository with one commit, patches applied, then `git add -A` (not a clone; `uv run --offline`, warm cache, `env -i`; Python and pydantic as in `uv.lock`). The clone-and-apply steps of the recipe were also run literally on a clone of the local checkout: both `git apply --check` exit 0, `apply exit=0`, and `git ls-files` then lists both new test files.
+- `git apply --check` on a fresh `b4cce5b` archive: `C-01.patch` rc 0, `C-01-price-only.patch` rc 0, `A-01.patch` rc 0. At head (`5b5b8933a`): `C-01.patch` rc 1, `C-01-price-only.patch` rc 1, `A-01.patch` rc 0.
+- Baseline (unpatched), full run: `2 failed, 9364 passed, 454 skipped, 26 deselected in 286.64s`, exit 1. Patched with `C-01-price-only.patch` then `A-01.patch`: `2 failed, 9394 passed, 454 skipped, 26 deselected in 286.29s`, exit 1 (9394 = 9364 + 30). Patched with `C-01.patch` then `A-01.patch`: `2 failed, 9396 passed, 454 skipped, 26 deselected in 233.17s`, exit 1 (9396 = 9364 + 32). In all three, the failed tests are the same two guard tests; (a) the `diff` is empty; (d1) `Left contains 10 more items` in all three logs; (d2) the same three offending files in all three logs.
+  Verdict by the pass rule for both patched runs: **ADDS NO NEW FAILURE** (the repository gate stays red because of the two baseline failures).
+  The full runs shared a 4-core machine with each other and with smaller jobs, so their times are not comparable.
+- Gates, exit codes: `ruff check` 0 (`All checks passed!`) on both copies; `ruff format --check` 0 (`299 files already formatted` unpatched, `301` patched with the default pair); `bandit -q -r src demos -ll` 0 on both (one `nosec` warning line); also 0 with `tools` added.
+- New tests on the unpatched copy: `12 failed, 18 passed` (price-only file) and `13 failed, 19 passed` (`C-01.patch`), both exit 1.
+- Not re-run in this pass: the `perf` tests, bandit and ruff on a patched copy of `C-01.patch` (the lint and bandit lines above are for the default pair), a run with an empty `uv` cache.
+- The runs of earlier passes (third and fourth) gave the same numbers for the same patch texts; they are not repeated here.
 
 ## What each patch is
 | Patch | Files | RUNG (tool ladder) | Tests added |
@@ -266,7 +256,7 @@ All numbers below were seen in this pass, in real clones checked out at `b4cce5b
   show a backlog; see the "What it does not cover" paragraph of `DEAD-MAN-CHECK.md`.
 - **A-8:** the docstring hunk named above and the extra assertion in `test_p7_tick.py` are now named (they were not in the first README).
 - The tests drive the real tick loop (`run_tick`, with the step list cut to `audit_reconcile`) against a minimal fake store and the in-memory audit table; they assign `log._append`,
-  `log._db.run` and `sink._write` on instances. In this third pass the test for a kind without `reconcile` got a log assertion (before, it took `caplog` and never read it:
+  `log._db.run` and `sink._write` on instances. In the third pass the test for a kind without `reconcile` got a log assertion (before, it took `caplog` and never read it:
   the tick's ERROR line `step=audit_reconcile error_kind=RuntimeError` is now asserted), and the step logs `int(fn())`, so a kind whose `reconcile` returns `None` fails the
   step (red in `tick_state`) instead of printing a logging error and recording a success. The test count stays 6 new tests (one test file grew by one line).
 - Negative tests: drain count and empty outbox after the step; a kind without reconcile fails the step and records no success; the log line holds type and id but not the error text or run id
@@ -295,4 +285,6 @@ Risk: sentences 2-4 touch a docstring that `REVIEW.md` row G-1 said might unders
 
 ## Not checked
 No live model or network call to a model. No database was started (standing order of this review). `K1bAudit` was not changed. The patches were not rebuilt for commits after
-`b4cce5b` (C-01 does not apply at head, see above). The `perf` tests were not run. A run with an EMPTY `uv` cache was not made (the runs used a warm cache, offline). Nothing was committed or pushed.
+`b4cce5b` (`C-01.patch` and `C-01-price-only.patch` do not apply at head; `A-01.patch` applies at head but its tests were not run there). The `perf` tests were not run. A run with an EMPTY `uv` cache was not made (the runs used a warm cache, offline).
+The full test runs were made in single-commit repositories built from `git archive`, not in clones (the clone and apply steps were run separately). `ruff` and `bandit` were not run on a copy patched with `C-01.patch`.
+`../REVIEW.md` is not edited by this pass (another session edits it); it may still quote older figures (for example "13 new tests fail on old code" belongs to an earlier version of the patch set); this folder's tables are the current ones. Nothing was committed or pushed.
