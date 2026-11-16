@@ -305,3 +305,20 @@ interrupted as expected (<Signals.SIGTERM: 15>,)
   PASS: T42 XCPU file restored
   PASS: T42 XCPU state empty
   PASS: T42 XCPU no orphan pytest
+  PASS: T42 VTALRM exit 154 (got 154)
+  PASS: T42 VTALRM file restored
+  PASS: T42 VTALRM state empty
+  PASS: T42 VTALRM no orphan pytest
+  PASS: T42 PROF exit 155 (got 155)
+  PASS: T42 PROF file restored
+  PASS: T42 PROF state empty
+  PASS: T42 PROF no orphan pytest
+  PASS: T42 IO exit 157 (got 157)
+  PASS: T42 IO file restored
+  PASS: T42 IO state empty
+  PASS: T42 IO no orphan pytest
+  PASS: T42 PWR exit 158 (got 158)
+  PASS: T42 PWR file restored
+  PASS: T42 PWR state empty
+  PASS: T42 PWR no orphan pytest
+== T43 --restore must not stop a stranger that has the orphan's number (review r3 minor: start time + full argument list)
