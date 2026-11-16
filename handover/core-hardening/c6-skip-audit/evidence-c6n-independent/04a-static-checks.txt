@@ -1,0 +1,70 @@
+## C-7: diff of the two flow folders (names only)
+Only in demo/n8n-flows-real-v5: V5-NODE-DIFF.txt
+Files demo/n8n-flows-real-v5/mf-recovery.json and demo/n8n-flows-film-v5/mf-recovery.json differ
+Files demo/n8n-flows-real-v5/mf-sub-crm-mail.json and demo/n8n-flows-film-v5/mf-sub-crm-mail.json differ
+## C-9 static: claim table definition and insert
+demo/n8n-mainframe/mf.py:45:    psql("CREATE TABLE mf_leads(lead_key text PRIMARY KEY, email text, name text, state text
+demo/n8n-mainframe/build_mainframe.py:83:            "ON CONFLICT (lead_key) DO NOTHING RETURNING lead_key, claim_token,
+mf-form ON CONFLICT hits: 1
+mf-hook ON CONFLICT hits: 1
+mf-recovery ON CONFLICT hits: 0
+mf-sub-crm-mail ON CONFLICT hits: 0
+## C-11a static: the plan row for the take's saving settings
+125:| executions (take) | `EXECUTIONS_DATA_SAVE_ON_SUCCESS=all`, `EXECUTIONS_DATA_SAVE_ON_ERROR=all`, `EXECUTIONS_DATA_SAVE_ON_PROGRESS=false`, `EXECUTIONS_DATA_SAVE_MANUAL_EXECUTIONS=false` (owner 2026-11-16; made-up data only) |
+271:- **1.2** `. $HOME/hadavin-smoke/env.sh; printf '%s\n' N8N_LISTEN_ADDRESS=127.0.0.1 N8N_PORT=5690 N8N_RUNNERS_BROKER_PORT=5691 $EG "N8N_DISABLED_MODULES=$MODS" EXECUTIONS_DATA_SAVE_ON_SUCCESS=all EXECUTIONS_DATA_SAVE_ON_ERROR=all EXECUTIONS_DATA_SAVE_ON_PR
+## DECISIONS file line of 'never deletes'
+3:2. TAKE IDENTITY is read-only: the take never deletes contacts; leftover made-
+## QUEUE header rule 6 present
+1
+## R460 in the bible folder (hits)
+0
+## files named in reports but absent from the copy
+scripts/run_real_check.py: 0 found
+scripts/run_real_check_n8n.py: 0 found
+scripts/hubspot_probe.py: 0 found
+report file for HB171: 0 found
+report file for HB180: 0 found
+report file for HB186: 0 found
+report file for HB189: 0 found
+report file for HB194: 0 found
+owner sheets steps-edits/ (v9..v19): 520
+## C-10c: owner sheets, hits per phrase (grep -c -i, one number per phrase: never deletes / read, create and change only / does not delete / key read-only)
+OWNER-SHEET-v19.md: 1 / 0 / 0 / 1
+OWNER-SHEET-v20.md: 0 / 0 / 0 / 0
+OWNER-SHEET-v21.md: 0 / 0 / 0 / 0
+OWNER-SHEET-v22.md: 0 / 0 / 0 / 1
+OWNER-SHEET-v23.md: 0 / 0 / 0 / 1
+OWNER-SHEET-v24-A.md: 0 / 0 / 0 / 1
+OWNER-SHEET-v24-B.md: 0 / 0 / 0 / 1
+OWNER-SHEET-v25-A.md: 0 / 0 / 0 / 1
+OWNER-SHEET-v25-B.md: 0 / 0 / 0 / 1
+OWNER-SHEET-v26-SOURCE.md: 0 / 0 / 0 / 1
+## C-10c line text: v19 hit
+30:| R7 | you | You delete only made-up contacts of this run and demo mails, by hand, one by one: the contacts from the clean-up message (exact addresses ending `@example.com`, the take-prep contact i
+## v25-A R7 (owner deletes by hand) present
+1
+## newest file in steps-edits (by modification time, UTC)
+2026-11-16T15:27:14Z OWNER-SHEET-v27-SOURCE.md
+2026-11-16T15:27:14Z v27-OPEN-FOR-LEAD.md
+2026-11-16T15:27:32Z review-c4-r9-design.md
+## ORDERS answers read (line numbers)
+150:Q21.1: take day: target Wed 18 Nov (not fixed); latest Mon 23 Nov before 18:29 UTC (= 
+151:Q21.2: read mf-form.json:97 and the v4 mf_leads.sql yourself (you have them): your own
+152:Q21.3: YES the stage.journal file is a second record (the one stated exception of deci
+153:Q21.4: UNVERIFIED: the lead computes how many takes the cumulative backstop covers fro
+185:## ANSWER (lead, 12:50Z): Q22 to Q31 (items I cannot verify are marked UNVERIFIED: wri
+186:Q22: (c) is in force: item 1 wording plus one honest sentence that a gap longer than t
+187:Q23: decision 2 stays: the take never deletes. The r17 review (egm reviewer, 11:00Z) f
+188:Q24: (a) keep, and the yes sentence is widened as you propose (lead also shares the ow
+189:Q25: cancel-by 18:19 UTC (23:49 IST), at least 10 minutes before the stop. Target take
+190:Q26: none exists; keep the sheet telling the owner to cancel the key himself; no 'go' 
+191:Q27: UNVERIFIED: the lead reads run_real_check_n8n.py at the final head and answers (a
+199:## ANSWER (lead, 13:03Z): Q32 (a) keep restore-on-sent-signal, documented; the tool st
+210:## ANSWER Q33 (lead, real clock 14:04Z): take option (b)
+216:## ANSWER Q34 (lead, real clock 14:22Z)
+## stale-notice and script names in plan 4 and help text (hits)
+1
+132:1. The take program (run_real_check_n8n.py, local take branch) has NO delete call: read-only HubSpot identity, archi
+148:Q20.4: UNVERIFIED: the lead reads the exit code from run_real_check_n8n.py at the final head; do not state one.
+187:Q23: decision 2 stays: the take never deletes. The r17 review (egm reviewer, 11:00Z) found no delete/archive path in
+191:Q27: UNVERIFIED: the lead reads run_real_check_n8n.py at the final head and answers (a), (b), (c) with line numbers 

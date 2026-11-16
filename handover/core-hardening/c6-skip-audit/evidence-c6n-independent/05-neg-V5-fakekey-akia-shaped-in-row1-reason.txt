@@ -1,0 +1,84 @@
+short names 35
+rows parsed 72
+C-1 old text once on its line: 72 of 72 ok, 0 bad
+ids consecutive from 1: True
+C-1b applied bottom-up in table order: 72 rows, 0 mismatches, 9 files written to /tmp/tmpzvrr8jis
+cites checked 271, beyond end of file 0
+internal labels in new texts: 0
+stale phrase '52.9' in new texts of rows: none
+stale phrase '0 rows' in new texts of rows: none
+stale phrase 'shows 0' in new texts of rows: none
+stale phrase 'never deletes' in new texts of rows: [8]
+stale phrase '70 to 75' in new texts of rows: none
+stale phrase '80 kills' in new texts of rows: none
+stale phrase 'archive|delete' in new texts of rows: none
+stale phrase "studio lead's made" in new texts of rows: none
+stale phrase 'studio lead table' in new texts of rows: none
+banned strings in report: none
+secret-like or e-mail strings in report: ['AKIAQWERTY12345678']
+C-4a mf-form.json [1, 1, 1] PASS
+C-4a mf-hook.json [1, 1, 1] PASS
+C-4a mf-recovery.json [1, 1, 1] PASS
+C-4a mf-sub-crm-mail.json [1, 1, 1] PASS
+recount ready 35 of 72
+table 3b recount: 10 question lines checked, all equal: True
+TOTAL line: | TOTAL | all rows | 72 | ready 35, on defaults only 34, with a check 3 | |
+lines with 18 runs and not naming both voided runs (report text): none
+rows whose new text has 18 without naming both voided runs: none
+rows with the 60.1 to 61.9 figure and no L-PAGE hold: none
+prose 'the lead' hits: 3 | 'claim' hits outside claim table/claim row/claimed: 1
+cite keys used but not defined: none
+labels missing from glossary: none
+--- c6m extra checks ---
+wrong-word slips 'studio lead' + made-up/table/name in new text or reason: none
+pipe-grep text 'archive|delete' anywhere in the report: 0
+'new in this report' near contact deletion: 0
+rows saying the take script archives as fact: none
+report cites Q19 : 10
+report cites Q22 : 5
+report cites Q23 : 13
+report cites Q25 : 2
+report cites Q27 : 10
+report cites Q21.1 : 2
+action box first (before section 0): True
+every row has a viewer column text: True
+IST given with the money stop: True | take target: True
+--- c6n extra checks ---
+bare 'lead' (not 'studio lead') in new texts, after removing the one exact decision sentence: none
+bare 'lead' in reason or viewer column (informational; quotes of old file text are allowed): 1
+bare 'lead' in report prose outside the edit table (informational): 46 [" files call a contact a 'lead'; this report says 'cont", "all the studio lead 'the lead'.\n- RE-PIN is the moment", 'h your own:\n\n`## ANSWER (lead, 2026-11-16T16:40Z = 22:', "all the studio lead 'the lead'; this report never does", " In quoted video words, 'lead' always means a made-up ", "deo statement call it a 'lead'). STATEMENT = a sentenc"]
+rows whose new text counts from the 'first reply': none
+rows saying 45 seconds without 'first send' in new text: none
+row 6 gap rule 'less than 30 seconds' present: True | from the first send: True
+row 21 gap rule under 30 s from first send: True
+contact-deletion grep text only in row 8 (not in row 6): True
+row 6 and row 8 name their list: True | row 8 why names both lists: True
+rows 6 and 8 carry the words 'verifies at the re-pin' or 'verifies at re-pin': [8]
+new texts that say 'two stores' or 'one store': none
+report prose mentions 'two stores' only as the rejected sentence (count): 4
+new texts with UTC and no IST: none
+prose lines with a clock time in UTC and no IST (informational): none
+c6n: lines with 18 runs (any case) and not naming both voided runs: none
+closing card spoken words: [52, 35, 34, 23] total 144, about 58 s at 150 words a minute; run sheet budget 30 s
+section 0 states the word count: True
+preface defines n8n is the tool                  before the box table: True
+preface defines TAKE is the one filmed run       before the box table: True
+preface defines RUN SHEET is the file            before the box table: True
+preface defines K3B and K3 are two crash tests   before the box table: True
+preface defines LANE3                            before the box table: True
+preface defines LEASE is a setting               before the box table: True
+preface defines ALERT is the one warning mail    before the box table: True
+preface defines STUDIO LEAD and the OWNER        before the box table: True
+preface defines RE-PIN is                        before the box table: True
+preface defines WAVE 1 is                        before the box table: True
+preface defines RISKS LIST                       before the box table: True
+preface defines REHEARSAL LIST                   before the box table: True
+box table cells holding a term that is only explained later or a developer setting: none
+answer line is one line starting '## ANSWER (lead, ': True
+section 3e gate rows: 7 (want 7: rehearsal list items 11 to 14 = 4, risks list items 11 and 12 = 2, row 23 = 1)
+every 3e row has 'studio lead' or 'the person who sees it' in the 'who stops' cell: True
+report still saying 'owner 2026-11-16' as a quote: 0
+section 8 heading says c6m reviews: True
+L-ONEDB tied to no row: True
+
+EXIT=0

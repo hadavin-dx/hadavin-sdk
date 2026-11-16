@@ -1,0 +1,17 @@
+LINE 298 is table row: True | col positions of UTC:
+   cell 6 (0=row id; 1=status;2=file;3=line;4=view;5=old;6=new;7=why;8=was) IST in cell: True
+   cell 7 (0=row id; 1=status;2=file;3=line;4=view;5=old;6=new;7=why;8=was) IST in cell: True
+LINE 300 is table row: True | col positions of UTC:
+   cell 6 (0=row id; 1=status;2=file;3=line;4=view;5=old;6=new;7=why;8=was) IST in cell: True
+LINE 494 is table row: True | col positions of UTC:
+   cell 5 (0=row id; 1=status;2=file;3=line;4=view;5=old;6=new;7=why;8=was) IST in cell: False
+LINE 42 is table row: False | col positions of UTC:
+    EARLIEST REALISTIC DATE: the audit cannot give one. The take target is Wed 18 Nov 2026 (not fixed; ORD:150), two days after this report. Steps (2) to (6) have no duration in any file, and step (4) nee
+LINE 165 is table row: True | col positions of UTC:
+   cell 3 (0=row id; 1=status;2=file;3=line;4=view;5=old;6=new;7=why;8=was) IST in cell: False
+LINE 294 Z-time cell:  [(5, False)]
+LINE 318 Z-time cell:  [(5, False)]
+row 13 spoken lines: [(52, 'A lead sent twice with the same id is processed once. We say')]
+row 14 spoken lines: [(35, 'When the system cannot tell whether a contact was fully hand'), (34, 'The made-up name and e-mail address sent to n8n may stay in '), (23, 'Not tested: other mailboxes, other CRMs (customer-record sys')]
+total words in the spoken lines: 144
+mentions of 144 words / 58 s / 30 s budget: [(64, '- SPOKEN LENGTH OF THE CLOSING CARD, NOT TESTED (new in this version; the new texts of rows 13 and 14 caused it): the four spoken card lines hold 144 words (52 + 35 + 34 + 23; counted by evidence-c6n/verify-c6n.py); at about 150 words a minute that is about 58'), (216, '| recovery flow | mf-recovery: it wakes every 30 seconds, looks at the claim table and finishes or alerts on contact records that were interrupted. Also called the recovery sweep. | NS:33 |'), (275, "| 24 | scene 1 | an empty execution list | the list shows the recovery flow's run every 30 seconds |"), (298, '| 6 | NOT APPLIED; ready | handover/demo/VIDEO-RUNSHEET.md | 71 | Nothing on screen; the take is blocked until the workflow list, the owner-sheet check and the saved-runs checks are written on the run sheet, and scene 3 is timed from the first send. | `10. Run'), (313, '| 21 | NOT APPLIED; on the default of L-LEASE | handover/demo/VIDEO-RUNSHEET.md | 32 | Scene 3 caption adds the sentence about the 45 seconds. | `Caption: "a lead sent twice with the same id is processed once". The screen is the evidence.` | `Caption: "a lead '), (315, '| 23 | NOT APPLIED; after check C-4; on the default of L-SAVE | handover/demo/VIDEO-RUNSHEET.md | 30 | Before scene 1 the old runs are hidden from the execution list and checked; none is on screen. | `Executions older than the take are pruned first; if a lefto')]
