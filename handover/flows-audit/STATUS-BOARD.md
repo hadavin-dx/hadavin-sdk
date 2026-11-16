@@ -1,13 +1,13 @@
-UPDATED_UTC: 2026-11-16T10:53:43Z
+UPDATED_UTC: 2026-11-16T10:54:56Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
 ITEMS_OPEN: 4
-PERCENT: 88
+PERCENT: 89
 AGENTS_RUNNING: 6
-CAPACITY: 1.75 load of 4 cores, mem 0/15 GB, RAM 909/16087 MB, disk 27G free of 252G, top3 327M /tmp/core-venv 683M /tmp/claude-0 871M /tmp/f3m , agents 6 (light+heavy per list)
+CAPACITY: 2.48 load of 4 cores, mem 0/15 GB, RAM 951/16087 MB, disk 27G free of 252G, top3 327M /tmp/core-venv 684M /tmp/claude-0 871M /tmp/f3m , agents 6 (light+heavy per list)
 INTERRUPTED: none
 FAILED: ROLES: PARKED by lead (client build, after video, no new lanes). Script r6: independent rerun 71 tests OK, gate rc 0, but 7 of 15 random mutants survive (lines 141,145,147,280,358,371,417); not fixed because parked; v4 doc security Blocker (Part C unguarded) unfixed
 claims: r5 counts independently rerun and match (113/69/48/28/69=327, 79 rows); BUT 37 Table 2 rows (41-77) have no LIVE/OUT tag; example.test vs example.com rows 2 and 5 rest on OWNER-STEPS v3 only; row 33 archive step unproven; 2 wrong cites (A-097, A-068); r6 fix pending (tags, desk-repo traces, cites)
@@ -41,8 +41,10 @@ F8 r6 fixer: n8n import never tried; psql gate stays a person step; mutants are 
 F3 r7 security review: 0 Blocker, 2 Major (check says OK for a marker-less copy and for a copy in a git/cloud folder or hard link), 13 Nit; lead froze F3 so one last fixer without a new review round
 claims sweep: no precedence rule between CLAIMS-TABLE and RUNSHEET-WORDING; 13 sentences with different paste wording in the two files (need lead decisions: saved-runs deletion, scene 3 caption, Q7 sentence, retention, 'normally one'); Q14 recount reproduced by me: 5/7/33, BEFORE 13 AFTER 32
 Q18 answered 11:10Z (exit 4 kept; F-008 patch to turn manual-run saving ON; recovery none printed as ACCEPTED): fixer launched
-NEXT: Q18 fixer; F3 last fix + r7 evidence; F8 r6 evidence; claims pointers; q16 rows; Q19 waits
-PUSHED_UTC: 2026-11-16T10:53:43Z
+q16 rows fixed (8 of 8) but psql command is my own and unrun; 3 facts only the lead has (take folder, where the From/intake addresses come from, is intake = RECEIVER): Q20
+q16 rows round 2 read: 13 Majors (who is 'you', order of lead steps, row 4 steps A-D, undefined vid/state/mailbox); fixing without a third review (round cap)
+NEXT: Q18 fixer; F3 last fix + r7 evidence; F8 evidence; claims pointers; q16 rows r3; Q19 Q20 wait
+PUSHED_UTC: 2026-11-16T10:54:56Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -66,8 +68,8 @@ PUSHED_UTC: 2026-11-16T10:53:43Z
 | f8ev6 | F8 r6 evidence runner | sonnet | take_check.sh only (rest parked) | 11:05 | 11:25 | 5 | running | flow-check/evidence-r6.md |
 | f3fix8 | F3 last fix batch (frozen) | sonnet | F1 F2 Majors + small nits, no new round | 11:10 | 11:35 | 5 | running | fill_flows/fix-f3-r8.md |
 | swfix | claims pointers fixer | sonnet | mechanical sweep items only | 11:20 | 11:40 | 5 | running | fix-sweep.md |
-| q16fix2 | q16 rows fixer | sonnet | stranger-read R1-R8 | 11:20 | 11:40 | 5 | running | fix-q16-rows-r2.md |
 | q18fix | Q18 F-008 patch + ACCEPTED checker | sonnet | manual-run saving ON, recovery none ACCEPTED, tests | 10:55 | 11:20 | 5 | running | flow-check/fix-q18.md |
+| q16fix3 | q16 rows round-2 fixer | sonnet | 13 Majors + cheap Nits | 11:05 | 11:25 | 5 | running | fix-q16-rows-r3.md |
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |
