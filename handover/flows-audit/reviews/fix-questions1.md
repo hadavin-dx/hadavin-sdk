@@ -6,7 +6,7 @@ Inputs read in full: reviews/questions-reader-r1.md (11 Majors; the reader's own
 
 ## What did not go perfectly (read first)
 
-1. No lead decision, time, rating or default was changed. Where two values clash and the files do not say which wins, the clause says LEAD DECIDES with an owner and a due time, and both values stay visible. That is 20 open clashes. They are decisions for the lead, not fixed by this pass.
+1. No lead decision, time, rating or default was changed. Where two values clash and the files do not say which wins, the clause says LEAD DECIDES with an owner and a due time, and both values stay visible. That is about 39 new LEAD DECIDES marks (49 in the file now, 10 before; one decision can carry two marks). They are decisions for the lead, not fixed by this pass.
 2. Some clauses rest on reviewer words, which I did not check against the other files: the 12:14Z, 12:25Z and 12:55Z take starts of item 85, the RUNBOOK 08:30Z against 09:45Z times of items 120 and 130 (I did not re-read RUNBOOK), the 07:30Z clash of item 108 with items 87 and 101, and the order of items 18, 21 and 26 in the two lists. Each clause says "reviewer words unverified".
 3. The IST pass was automatic: 787 bare times ending in Z got "(HH:MM IST)" added by a pattern. After a time that is later than 18:30Z the text says ", next day". A few forms were left alone on purpose (a time already followed by "(", "=" or "IST"; table cells of the answer-by column got a Z only). I spot-checked 8 places, not all 787.
 4. Line numbers below are the numbers after my edits (the file grew from 812 to 815 lines).
@@ -42,7 +42,7 @@ See the end of this file for the exact last lines.
 | r2 M12 item 74 | line 668 | fixed | Parts (74a-c), (74d), (74e) each with owner, time and default. |
 | r2 M12 items 75, 76 | lines 670, 672 | fixed | Parts with owner, time, default; the three-item overlap of run_real_check_n8n.py and the post-twice script is a LEAD DECIDES; the "none asks the owner" against (c) is a LEAD DECIDES. |
 | r2 M4, M5 items 80, 81 | lines 677, 678 | fixed (by clause) | Order against items 105 and 109 stated; LEAD DECIDES. |
-| r2 M9 item 85 | line ~684 | fixed (by clause) | The default 06:53Z gives take starts after 12:00Z in three of four cases: LEAD DECIDES. |
+| r2 M9 item 85 | line 697 | fixed (by clause) | The default 06:53Z gives take starts after 12:00Z in three of four cases: LEAD DECIDES. |
 | r2 M9 item 84 table, Sun 22 Nov row | lines 692, 695 | fixed | The replacement gate text was moved word for word into a paragraph below the table; the cell points to it. |
 | r2 M13 items 89 to 91 | lines 701 to 703 | fixed | The three repeated paragraphs (1272 characters, compared before replacing: all three equal) are written once in item 89; items 90 and 91 point to it. "A seventh counted row" is explained; the F-031 difference is a LEAD DECIDES. |
 | r2 M6 items 95, 96 | lines 707, 708 | fixed (by clause) | Both consequences kept, LEAD DECIDES. |
@@ -66,7 +66,7 @@ See the end of this file for the exact last lines.
 - r2 M12: item 76 header text about "none asks the owner" was kept as it was; the conflict is marked as LEAD DECIDES.
 - r2 M7: I did not re-read RUNBOOK to settle 08:30Z against 09:45Z. This needs the lead.
 - r2 M5 and M4: the order of decisions (which item is asked first) is kept as a LEAD DECIDES; it needs the lead.
-- The 20 LEAD DECIDES clauses above need the lead. No owner can be named by me.
+- The new LEAD DECIDES clauses (about 39 marks) need the lead. I named the lead as owner because the item asks the lead; no human is named by me.
 
 ## For the lead (problems in lines 1 to 419, frozen, not edited)
 
@@ -76,6 +76,13 @@ See the end of this file for the exact last lines.
 - Q13 line 270 ("listed once") conflicts with items 5 and 108.
 - Item 3 ceiling 3 against item 117 count 4.
 - Items 40 to 46 stand outside the main numbering.
-- The glossary was placed as line 421, directly before the "## Q31" heading, because line 420 belongs to the section above and the heading must stay the first line of Q31 for the checks.
+- The glossary was placed as line 421, directly before the "## Q31" heading, because the brief said before line 421; line 420 belongs to the section above. It sits above the Q31 heading, so a reader of the Q31 section starts one line earlier than before.
 
 ## Final check lines
+
+1. `sed -n 1,419p QUESTIONS.md | md5sum`: 682a52817ce62b3c (unchanged)
+2. `python3 -I tools/check_refs.py`: PASS 5190 references
+3. `check_names.py`: PASS 655 rows
+4. `check_secrets.py`: PASS 0 hits in 3022 files
+5. `check_counts.py`: PASS 52 files / 655 nodes
+6. `ruff format --check .`: 1147 files already formatted
