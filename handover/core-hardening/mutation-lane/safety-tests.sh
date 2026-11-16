@@ -217,7 +217,7 @@ kill -9 $RP; sleep 1; pkill -9 -f "$T/root/.venv/bin/python -m pytest"; wait $RP
 out=$(python3 "$RUN" --root "$T/root" --restore 2>&1); rc=$?; echo "$out" | cut -c1-220; chk "T35a exit 3 (got $rc) and the file is still planted" "[ $rc -eq 3 -a '$(last)' = return2 ]"
 TMPDIR=/tmp python3 "$RUN" --root "$T/root" --restore >/dev/null 2>&1; chk "T35b restoring with the right TMPDIR works" "[ '$(last)' = return1 ]"
 out=$(python3 "$RUN" --root "$T/root" --restore 2>&1); rc=$?; chk "T35c nothing planted anywhere: exit 0 (got $rc)" "[ $rc -eq 0 ]"
-rmdir /tmp/hadavin-mutation-lane-$(id -u) 2>/dev/null
+rm -f "/tmp/hadavin-mutation-lane-$(id -u)/$(printf %s "$(readlink -f "$T/root")" | sha256sum | cut -c1-16).lock"; rmdir "/tmp/hadavin-mutation-lane-$(id -u)" 2>/dev/null   # remove only what this test made
 fi
 }
 echo "FAILED CHECKS: $FAILS"

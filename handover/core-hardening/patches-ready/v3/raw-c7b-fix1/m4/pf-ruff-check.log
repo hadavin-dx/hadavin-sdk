@@ -1,0 +1,3 @@
+CMD: env -i PATH HOME /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/f1/pf/.venv/bin/ruff check (cwd pf = v3 patches + FIX, no handover)
+All checks passed!
+rc=0

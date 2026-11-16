@@ -1,0 +1,23 @@
+date: 2026-11-16T10:27:46Z
+CMD: git cat-file -t b4cce5b
+commit
+b4cce5b6ae80b45125604b8295ebb35bd2ea1c2c
+CMD: sha256sum -c SHA256SUMS.txt (cwd v3)
+C-01.patch: OK
+A-01.patch: OK
+G5-wording.patch: OK
+CMD: sha256sum v3/*.patch v4/*.patch v5/*.patch
+092d673af49ae925040c71021212203f4a32c36be47a67b4d492a10e7857986c  v3/A-01.patch
+fddf8a1590cefd20b83fef507a61923ed792cecc97bd5b0725db3fd47b68adcf  v3/C-01.patch
+0815212a3a0361a659b9c58da782e4c74ddcaffd7b0d50734a2a308ee04b089d  v3/G5-wording.patch
+1225323a3084bb780e82a5ff48cea6ef5e2f907b42c89bd364ec948bd0e3f195  v4/C-01-MINIMAL.patch
+ac2ab25f0dc606c7c991f6a03749ed8adeca0cf8e52a665d4035208bd5a755fe  v4/CUT-C-01-FULL-NOT-FOR-THE-TAKE.patch
+092d673af49ae925040c71021212203f4a32c36be47a67b4d492a10e7857986c  v4/DEFERRED-A-01.patch
+0815212a3a0361a659b9c58da782e4c74ddcaffd7b0d50734a2a308ee04b089d  v4/G5-wording.patch
+408a37120335dd69ad9cf7637eb6415a2fae33dda0e858733b054d079c5d4e4c  v5/C-01-MINIMAL.patch
+ac2ab25f0dc606c7c991f6a03749ed8adeca0cf8e52a665d4035208bd5a755fe  v5/CUT-C-01-FULL-NOT-FOR-THE-TAKE.patch
+092d673af49ae925040c71021212203f4a32c36be47a67b4d492a10e7857986c  v5/DEFERRED-A-01.patch
+0815212a3a0361a659b9c58da782e4c74ddcaffd7b0d50734a2a308ee04b089d  v5/G5-wording.patch
+CMD: uv --version / patch --version
+uv 0.11.32 (x86_64-unknown-linux-gnu)
+GNU patch 2.7.6

@@ -1,0 +1,8 @@
+CMD (cwd m4, clean base): patch -p1 --dry-run < /home/user/hadavin-sdk/handover/core-hardening/patches-ready/v3/C-01.patch
+checking file src/hadavin_sdk/config.py
+checking file src/hadavin_sdk/defaults.py
+checking file src/hadavin_sdk/backends/table.py
+checking file src/hadavin_sdk/k1b/replay.py
+checking file tests/test_c01_route_limits.py
+checking file tests/test_k1b_replay.py
+rc=0

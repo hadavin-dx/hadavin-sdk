@@ -1,0 +1,107 @@
+FFFFFF........                                                           [100%]
+=================================== FAILURES ===================================
+____________ test_a_known_id_that_reads_like_a_cloud_cmdlet_is_kept ____________
+
+    def test_a_known_id_that_reads_like_a_cloud_cmdlet_is_kept():
+        ident = "pln-ec2a" + "0" * 28
+>       assert withhold_commands(ident) == ident
+E       AssertionError: assert '[command withheld (G4)]' == 'pln-ec2a0000...0000000000000'
+E         
+E         - pln-ec2a0000000000000000000000000000
+E         + [command withheld (G4)]
+
+tests/test_g4_ids_not_withheld.py:26: AssertionError
+__________ test_no_id_is_withheld_for_any_first_four_hex_digits[run] ___________
+
+prefix = 'run'
+
+    @pytest.mark.parametrize("prefix", _PREFIXES)
+    def test_no_id_is_withheld_for_any_first_four_hex_digits(prefix):
+        tail = "0123456789abcdef" * 2  # 32 digits; the first four are replaced below
+        bad = []
+        for n in range(16**4):
+            ident = f"{prefix}-{n:04x}{tail[4:]}"
+            if withhold_commands(ident) != ident:
+                bad.append(ident)
+>       assert not bad, bad[:5]
+E       AssertionError: ['run-ec2a456789abcdef0123456789abcdef', 'run-ec2b456789abcdef0123456789abcdef', 'run-ec2c456789abcdef0123456789abcdef', 'run-ec2d456789abcdef0123456789abcdef', 'run-ec2e456789abcdef0123456789abcdef']
+E       assert not ['run-ec2a456789abcdef0123456789abcdef', 'run-ec2b456789abcdef0123456789abcdef', 'run-ec2c456789abcdef0123456789abcdef', 'run-ec2d456789abcdef0123456789abcdef', 'run-ec2e456789abcdef0123456789abcdef', 'run-ec2f456789abcdef0123456789abcdef']
+
+tests/test_g4_ids_not_withheld.py:38: AssertionError
+__________ test_no_id_is_withheld_for_any_first_four_hex_digits[pln] ___________
+
+prefix = 'pln'
+
+    @pytest.mark.parametrize("prefix", _PREFIXES)
+    def test_no_id_is_withheld_for_any_first_four_hex_digits(prefix):
+        tail = "0123456789abcdef" * 2  # 32 digits; the first four are replaced below
+        bad = []
+        for n in range(16**4):
+            ident = f"{prefix}-{n:04x}{tail[4:]}"
+            if withhold_commands(ident) != ident:
+                bad.append(ident)
+>       assert not bad, bad[:5]
+E       AssertionError: ['pln-ec2a456789abcdef0123456789abcdef', 'pln-ec2b456789abcdef0123456789abcdef', 'pln-ec2c456789abcdef0123456789abcdef', 'pln-ec2d456789abcdef0123456789abcdef', 'pln-ec2e456789abcdef0123456789abcdef']
+E       assert not ['pln-ec2a456789abcdef0123456789abcdef', 'pln-ec2b456789abcdef0123456789abcdef', 'pln-ec2c456789abcdef0123456789abcdef', 'pln-ec2d456789abcdef0123456789abcdef', 'pln-ec2e456789abcdef0123456789abcdef', 'pln-ec2f456789abcdef0123456789abcdef']
+
+tests/test_g4_ids_not_withheld.py:38: AssertionError
+__________ test_no_id_is_withheld_for_any_first_four_hex_digits[apr] ___________
+
+prefix = 'apr'
+
+    @pytest.mark.parametrize("prefix", _PREFIXES)
+    def test_no_id_is_withheld_for_any_first_four_hex_digits(prefix):
+        tail = "0123456789abcdef" * 2  # 32 digits; the first four are replaced below
+        bad = []
+        for n in range(16**4):
+            ident = f"{prefix}-{n:04x}{tail[4:]}"
+            if withhold_commands(ident) != ident:
+                bad.append(ident)
+>       assert not bad, bad[:5]
+E       AssertionError: ['apr-ec2a456789abcdef0123456789abcdef', 'apr-ec2b456789abcdef0123456789abcdef', 'apr-ec2c456789abcdef0123456789abcdef', 'apr-ec2d456789abcdef0123456789abcdef', 'apr-ec2e456789abcdef0123456789abcdef']
+E       assert not ['apr-ec2a456789abcdef0123456789abcdef', 'apr-ec2b456789abcdef0123456789abcdef', 'apr-ec2c456789abcdef0123456789abcdef', 'apr-ec2d456789abcdef0123456789abcdef', 'apr-ec2e456789abcdef0123456789abcdef', 'apr-ec2f456789abcdef0123456789abcdef']
+
+tests/test_g4_ids_not_withheld.py:38: AssertionError
+__________ test_no_id_is_withheld_for_any_first_four_hex_digits[evt] ___________
+
+prefix = 'evt'
+
+    @pytest.mark.parametrize("prefix", _PREFIXES)
+    def test_no_id_is_withheld_for_any_first_four_hex_digits(prefix):
+        tail = "0123456789abcdef" * 2  # 32 digits; the first four are replaced below
+        bad = []
+        for n in range(16**4):
+            ident = f"{prefix}-{n:04x}{tail[4:]}"
+            if withhold_commands(ident) != ident:
+                bad.append(ident)
+>       assert not bad, bad[:5]
+E       AssertionError: ['evt-ec2a456789abcdef0123456789abcdef', 'evt-ec2b456789abcdef0123456789abcdef', 'evt-ec2c456789abcdef0123456789abcdef', 'evt-ec2d456789abcdef0123456789abcdef', 'evt-ec2e456789abcdef0123456789abcdef']
+E       assert not ['evt-ec2a456789abcdef0123456789abcdef', 'evt-ec2b456789abcdef0123456789abcdef', 'evt-ec2c456789abcdef0123456789abcdef', 'evt-ec2d456789abcdef0123456789abcdef', 'evt-ec2e456789abcdef0123456789abcdef', 'evt-ec2f456789abcdef0123456789abcdef']
+
+tests/test_g4_ids_not_withheld.py:38: AssertionError
+__________ test_pseudo_random_ids_and_plan_hashes_are_never_withheld ___________
+
+    def test_pseudo_random_ids_and_plan_hashes_are_never_withheld():
+        # digits come from sha256 of a counter: the same 20,000 texts every run, no random generator needed
+        for i in range(20000):
+            d = [hashlib.sha256(f"g4-{i}-{k}".encode()).hexdigest() for k in range(3)]
+            text = " ".join(f"{p}-{d[0][j * 8 : j * 8 + 32]}" for j, p in enumerate(_PREFIXES))
+            text += f" plan {d[1]}{d[2]}"[:72]
+>           assert WITHHELD not in withhold_commands(text), text
+E           AssertionError: run-4ec29080fb20db80ec2c2ce743387884 pln-fb20db80ec2c2ce7433878846a48d205 apr-ec2c2ce7433878846a48d205ab1d5a58 evt-433878846a48d205ab1d5a582a3f43a9 plan 5e89304fa1e21c84bbd6ef66264aaadfe1789551c7413c10d799045bb3f89e9edc
+E           assert '[command withheld (G4)]' not in 'run-4ec2908...5bb3f89e9edc'
+E             
+E             '[command withheld (G4)]' is contained here:
+E               46a48d205 [command withheld (G4)] evt-433878846a48d205ab1d5a582a3f43a9 plan 5e89304fa1e21c84bbd6ef66264aaadfe1789551c7413c10d799045bb3f89e9edc
+E             ?           +++++++++++++++++++++++
+
+tests/test_g4_ids_not_withheld.py:47: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_g4_ids_not_withheld.py::test_a_known_id_that_reads_like_a_cloud_cmdlet_is_kept
+FAILED tests/test_g4_ids_not_withheld.py::test_no_id_is_withheld_for_any_first_four_hex_digits[run]
+FAILED tests/test_g4_ids_not_withheld.py::test_no_id_is_withheld_for_any_first_four_hex_digits[pln]
+FAILED tests/test_g4_ids_not_withheld.py::test_no_id_is_withheld_for_any_first_four_hex_digits[apr]
+FAILED tests/test_g4_ids_not_withheld.py::test_no_id_is_withheld_for_any_first_four_hex_digits[evt]
+FAILED tests/test_g4_ids_not_withheld.py::test_pseudo_random_ids_and_plan_hashes_are_never_withheld
+6 failed, 8 passed in 0.91s
+rc=1

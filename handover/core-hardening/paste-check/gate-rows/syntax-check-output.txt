@@ -1,9 +1,9 @@
-blocks 2
-blk0.sh bash -n rc=0
-blk0.sh dash -n rc=0
-blk0.sh identical to tested G1.sh
-blk1.sh bash -n rc=0
-blk1.sh dash -n rc=0
-blk1.sh identical to tested G2.sh
+blocks found 2
+G1.sh bash -n rc=0
+G1.sh dash -n rc=0
+G1.sh identical to tested file
+G2.sh bash -n rc=0
+G2.sh dash -n rc=0
+G2.sh identical to tested file
 S10 line bash -n rc=0
 S10 line dash -n rc=0

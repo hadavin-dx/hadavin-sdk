@@ -4,18 +4,18 @@ REFUSED: --root /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/sc
   PASS: T1 exit 2
 == T2 SIGKILL while a mutant is planted
   file now: return2
-./safety-tests.sh: line 39: 31734 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+./safety-tests.sh: line 39:  2655 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
   PASS: T2 file stays planted
 == T3 the next run refuses and says how to restore
 REFUSED: a mutant (X-m1) is still planted in src/mod.py from an earlier run that was killed. Restore with: python3 /home/user/hadavin-sdk/handover/core-hardenin
   exit code 2
   PASS: T3 exit 2
 == T4 marker lost: the tree check against a fresh git archive still refuses
-REFUSED: scratch tree differs from git archive 1cd210ffb84b24061be5f598a54391ffdd416d8c + patches in 1 file(s), first: ['src/mod.py']: it may hold a planted cha
+REFUSED: scratch tree differs from git archive 181fa15e63b3a22a46407d6237ae31cf84c314ae + patches in 1 file(s), first: ['src/mod.py']: it may hold a planted cha
   exit code 2
   PASS: T4 exit 2
 == T5 --restore puts the saved original back
-process 31744 is not this run's pytest: left alone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r3/s-new/tmpstate/hadavin-mutation-lane-0/b70847efbbae39f1.backup; hash matches saved original: True
+process 2664 is not this run's pytest: left alone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r3/s-new/tmpstate/hadavin-mutation-lane-0/b70847efbbae39f1.backup; hash matches saved original: True
   PASS: T5 file restored
   PASS: T5 state folder empty
 == T6 SIGTERM during a run restores the file and removes the marker
@@ -54,11 +54,11 @@ REFUSED: mutant m1 file: must be relative to the root and contain no '..': '../r
   PASS: T11 exit 2
   PASS: T11 file unchanged
 == T12 symlinked folders inside the scratch root
-REFUSED: scratch tree differs from git archive 1cd210ffb84b24061be5f598a54391ffdd416d8c + patches in 1 file(s), first: ['evil/']: it may hold a planted change; rebuild it from the archive
+REFUSED: scratch tree differs from git archive 181fa15e63b3a22a46407d6237ae31cf84c314ae + patches in 1 file(s), first: ['evil/']: it may hold a planted change; rebuild it from the archive
   (extra symlinked folder 'evil') exit code 2
   PASS: T12b exit 2
   PASS: T12b real repo file unchanged
-REFUSED: scratch tree differs from git archive 1cd210ffb84b24061be5f598a54391ffdd416d8c + patches in 2 file(s), first: ['src/', 'src/mod.py']: it may hold a planted change; rebuild it from the archive
+REFUSED: scratch tree differs from git archive 181fa15e63b3a22a46407d6237ae31cf84c314ae + patches in 2 file(s), first: ['src/', 'src/mod.py']: it may hold a planted change; rebuild it from the archive
   (src itself is a link to the real repo) exit code 2
   PASS: T12a exit 2
   PASS: T12a real repo file unchanged
@@ -75,9 +75,9 @@ REFUSED: git rev-parse failed for --repo /tmp/claude-0/-home-user/957f9d59-4d7f-
   declared --extra: exit code 0
   PASS: T14b exit 0
 == T15 SIGKILL of run.py leaves the test group alive; --restore stops it and restores
-./safety-tests.sh: line 77: 32464 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+./safety-tests.sh: line 77:  3189 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
   PASS: T15 orphan pytest alive
-stopped orphaned test group 32473; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r3/s-new/tmpstate/hadavin-mutation-lane-0/b70847efbbae39f1.backup; hash matches saved original: True
+stopped orphaned test group 3198; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r3/s-new/tmpstate/hadavin-mutation-lane-0/b70847efbbae39f1.backup; hash matches saved original: True
   PASS: T15 orphan stopped
   PASS: T15 file restored
 == T16 SIGHUP restores too (exit 129)
@@ -129,14 +129,14 @@ REFUSED: state folder /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c
 REFUSED: state folder /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r3/s-new/tmpstate/hadavin-mutation-lane-0 is not a plai
   PASS: T22c other owner refused (got 2)
 == T23 forged state: a backup whose hash differs, a marker that is a link, --restore inside the real repository: all refused, nothing written
-./safety-tests.sh: line 222:  1189 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+./safety-tests.sh: line 222:  4073 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
 REFUSED: the saved backup does not match the hash recorded in the marker: refused
   PASS: T23a hash mismatch refused (got 2)
   PASS: T23a file not written
 REFUSED: state file /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r3/s-new/tmpstate/hadavin-mutation-lane-0/b70847efbbae39f
   PASS: T23b marker as a link refused (got 2)
   PASS: T23b file not written
-process 1198 is not this run's pytest: left alone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r3/s-new/tmpstate/hadavin-mutation-lane-0/b70847efbbae39f1.backup; hash matches saved original: True
+process 4082 is not this run's pytest: left alone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r3/s-new/tmpstate/hadavin-mutation-lane-0/b70847efbbae39f1.backup; hash matches saved original: True
   PASS: T23 genuine restore still works
 REFUSED: --root /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/r3/s-new/toy/repo is, contains or lies inside the real reposi
   PASS: T23c --restore in the real repository refused for that reason (got 2, reason hits 1)
@@ -201,3 +201,22 @@ REFUSED: import check: 'docs/note.txt' is not a plain .py module path, so the ch
   PASS: T30a file unchanged
   PASS: T30b with --skip-import-check it runs (rc 0) and the raw file says so
 == T31 a timeout keeps the output printed before it
+  PASS: T31 raw file says TIMEOUT and holds the early output
+--- output printed before the timeout ---
+.
+  PASS: T31 file restored
+== T32 special files are never read: a FIFO in the tree, and a FIFO as the marker, give a refusal (exit 2) instead of a hang
+  PASS: T32a FIFO in the tree refused, no hang (got 2; 124 = hung)
+  PASS: T32b FIFO as marker refused, no hang (got 2; 124 = hung)
+== T33 a .venv folder deeper than the top is compared like any other folder (exit 2)
+  PASS: T33 nested .venv refused (got 2)
+== T34 test output that is not UTF-8 is replaced, not an error (fake python that prints byte 0xff and fails)
+  PASS: T34 run ends normally (rc 0) with verdict KILLED in the raw file
+  PASS: T34 file restored
+== T35 --restore with another TMPDIR: the marker kept by a run that used the default folder is found; exit 3 while the file is still planted
+./safety-tests.sh: line 222:  4785 Killed                  ( export TMPDIR=/tmp; exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+STILL PLANTED: src/mod.py differs from the backup kept by a run that used another TMPDIR; restore with: TMPDIR=/tmp python3 /home/user/hadavin-sdk/handover/core-hardening/mutation-lane/run.py --root /tmp/claude-0/-home-u
+  PASS: T35a exit 3 (got 3) and the file is still planted
+  PASS: T35b restoring with the right TMPDIR works
+  PASS: T35c nothing planted anywhere: exit 0 (got 0)
+FAILED CHECKS: 0

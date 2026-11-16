@@ -25,3 +25,7 @@ made-up-line\nbreak	104
 [1]+  Done                    ( $P -c "BEGIN" -c "LOCK TABLE app.mf_leads IN ACCESS EXCLUSIVE MODE" -c "SELECT pg_sleep(3)" -c "TRUNCATE app.mf_leads" -c "COMMIT" > /dev/null )
 rows after (the late insert waited, then landed AFTER the truncate, so it is a visible row, not a hidden loss):
 made-up-late
+=== primary key test (same table definition as the plan: lead_key text PRIMARY KEY)
+empty text '' : accepted
+ERROR:  null value in column "lead_key" of relation "t" violates not-null constraint
+ERROR:  duplicate key value violates unique constraint "t_pkey"

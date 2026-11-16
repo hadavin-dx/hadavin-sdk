@@ -1,0 +1,4 @@
+CMD: env -i PATH HOME uv run --all-extras --group test pytest -q -p no:cacheprovider tests/test_repo_rules.py tests/test_no_reference_material.py (cwd base_nh, now a git repo)
+...........................................                              [100%]
+43 passed in 5.28s
+rc=0
