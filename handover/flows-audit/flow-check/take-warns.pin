@@ -1,6 +1,7 @@
 # expected WARN lines of the take check (folder path removed, sorted); written by take_check.sh --write-warn-pin. Only the WARN lines below are covered by the sha256 line; every comment line (this one, reviewed by, date, flows sha256) is NOT protected by a hash, so a person must look at the git diff of this file. The reviewer line below says who, if anyone, confirmed the WARN lines.
 # reviewed by: flows-audit session, 2026-11-16, content read by that session only, lead to confirm
 # date (UTC): 2026-11-16
+# flows sha256 (the four flow files, combined, as printed in the top block of take_check.sh): 989f552965a1b1551395602ab1ac50d2a6625aecb007757dc42f968980e5e666
 # sha256 of the WARN lines below (LC_ALL=C sort, one per line): 378e11212191edcbb0773a829808263d023d52ec1d71873a97d52cf911e84d44
 WARN mf-form.json 3 id(s) are still placeholders and must be replaced in n8n before import: Claim credential postgres id PG_CREDENTIAL_ID; RunSub sub-workflow id SUB_WORKFLOW_ID; Stored credential postgres id PG_CREDENTIAL_ID [run with --require-real-credential-ids to make this a FAIL]
 WARN mf-form.json external-call nodes without retryOnFail: ['Claim', 'RunSub', 'Stored']

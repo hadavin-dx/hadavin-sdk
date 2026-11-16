@@ -1,6 +1,6 @@
 applied F-002-take-key-check-and-claim-error-path
 applied F-008-save-runs-for-the-take
-checker runs wall time: 0 s; self-test wall time: 8 s
+checker runs wall time: 0 s; self-test wall time: 6 s
 ==== real-v5 (THE TAKE) ====
 ---- default mode must be exit 0; strict mode shows what the owner's two open decisions would do ----
 [pristine]
@@ -48,7 +48,7 @@ RESULT: 4 FAIL, 16 WARN
 Known open problems: 10
 exit=1
 [selftest exit=0] SELFTEST: 682 as expected, 0 not as expected, 62 skipped (not applicable)
-[take_check.sh exit=0] missing lines: [take_check planted: want exit 4, got exit 1; first FAIL or !!! line of /tmp/r10c-ev/w2/tc/nested-raw-c/take-check-planted.txt: FAIL /tmp/r10c-ev/w2/tc/disabled-send/mf-sub-crm-mail.json node SendMail (emailSend) is an external-call node and is disabled: n8n passes data through it and it sends and writes nothing, so the flow would look fine and do no work (round 9, ]
+[take_check.sh exit=4] missing lines: [a !!! line: the take script found a table or column problem] [test_take_check.sh exit 1 (see raw/test-take-check.txt)] [take_check planted: want exit 4, got exit 1; first FAIL or !!! line of /tmp/claude-0/-home-user/9d809a30-0790-5792-93c1-8c5abd22e849/scratchpad/ra2/tc/nested-raw-c/take-check-planted.txt: !!! THE PIN HEADER HAS NO '# flows sha256 ...' LINE: a changed flow file with the same step counts and WARN lines would pass. This script exits 4.]
 run_all exit status (real-v5 default runs + self-test): 1
 real-v5 placeholder ids: 12 file(s) warn in the committed flows (pass --strict to make that a failure)
 COMMITTED PIN (take-warns.pin) reviewer line, as written: 'flows-audit session, 2026-11-16, content read by that session only, lead to confirm'. NOT confirmed by the lead: a bare take_check.sh exits 4 until the lead replaces that line (this run used a stand-in line, so its take check could pass).
