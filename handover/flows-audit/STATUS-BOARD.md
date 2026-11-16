@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T20:12:13Z
+UPDATED_UTC: 2026-11-16T20:13:37Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -7,11 +7,11 @@ ITEMS_TOTAL: 10
 ITEMS_OPEN: 30
 PERCENT: 70
 AGENTS_RUNNING: 8
-CAPACITY: 0.72 load of 4 cores, mem 1/15 GB, RAM 1141/16087 MB, disk 15G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 9.0G /tmp/claude-0 , agents 8 (light+heavy per list)
+CAPACITY: 0.44 load of 4 cores, mem 1/15 GB, RAM 1190/16087 MB, disk 15G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 9.0G /tmp/claude-0 , agents 8 (light+heavy per list)
 INTERRUPTED: none
 FAILED: none (F8 run_all.sh intermittent exit 1 is an evidence finding: 3 of 6 plain runs failed, cause unknown, fixer acf8ab59 on it; ruff format --check passes 741 files)
 NEXT: see next5
-PUSHED_UTC: 2026-11-16T20:12:13Z
+PUSHED_UTC: 2026-11-16T20:13:37Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -35,7 +35,7 @@ PUSHED_UTC: 2026-11-16T20:12:13Z
 | a76c3617 | FINDINGS/LEDGER fixer r33 | sonnet | fix M1-M8 | 20:14Z | 20:35Z | running | fix-findings-ledger33.md pending |
 | ab2d6ddc | patch-copies reader r26 | sonnet | security-path read README+DMC | 20:17Z | 20:32Z | running | report pending |
 | add6db6a | FIX-PLAN reader r64 | sonnet | fresh read lines 85-end | 20:19Z | 20:33Z | running | report pending |
-| a9f0257b | CLAIMS cite checker 2 | sonnet | cites B-061..B-140 | 20:19Z | 20:33Z | running | report pending |
+| a0fc3951 | CLAIMS cite checker 3 | sonnet | cites B-141..B-226 + X rows | 20:15Z | 20:30Z | running | report pending |
 | a82bc64d | RUNBOOK fixer 3 | sonnet | leftovers (I-table cells, labels) | 20:20Z | 20:45Z | running | fix-runbook54c.md pending |
 | a1525dba | REVIEW.md design reviewer r54 | sonnet | uncapped security-path review | 20:20Z | 20:35Z | running | report pending |
 
