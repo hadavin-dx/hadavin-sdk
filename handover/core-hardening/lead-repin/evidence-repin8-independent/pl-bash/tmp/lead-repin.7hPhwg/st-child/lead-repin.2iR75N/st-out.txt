@@ -4,7 +4,7 @@ password = <masked>
 {"api_key": <masked>, "other": 1}
 {"client_secret":<masked>}
 Authorization: <masked>
-header Bearer qzvxkwlpjrmn_7_ end
+header Bearer <masked> end
 value <masked> here
 value <masked> here
 value <masked>_10_Abcdef here
@@ -547,8 +547,8 @@ x https://<masked>@localhost/p
 x https:\/\/bob:<masked>@h/p
 x https:\/\/<masked>@h/p
 conn bob:<masked>@db port
-Bearer zr230v#xn230d end
-Bearer kq7z2
+Bearer <masked> end
+Bearer <masked>
 echo <masked> | sudo -S ls
 echo <masked> | kinit bob
 echo <masked> | ssh-add -
@@ -570,7 +570,7 @@ password = <masked>
 password = <masked>
 the token is <masked>
 run --token <masked>
-Bearer <ezs311vxo311d>
+Bearer <masked>
 api_key: <masked>
 secret <masked> <masked>
 x "password": <masked> y

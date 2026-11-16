@@ -135,10 +135,122 @@ FAIL r18 route recommendation sentence count 1
 FAIL r14 E-16 lacks card step 7
 FAIL r14 ND15 spots
 round 14 checks done
-Traceback (most recent call last):
-  File "/home/user/hadavin-sdk/handover/core-hardening/steps-edits/verify18.py", line 770, in <module>
-    need('E-48 B', ks('B'), 'count only when you type them yourself, as a new message', 'in a mail, a file, the output of a program', 'never count', 'asks you to type the words yourself in a new message', '`yes, no more takes`', '`start clean-up`', '`key gone, no more decisions`')
-                   ~~^^^^^
-  File "/home/user/hadavin-sdk/handover/core-hardening/steps-edits/verify18.py", line 753, in ks
-    _ti = t48.index('Table of the typed words'); _o += '\n' + t48[_ti:t48.index('The assistant never opens the key file', _ti)]
-ValueError: substring not found
+FAIL r15 E-16 lacks 'card step 7'
+FAIL r15 E-55 lacks 'the card of item 3 (the seven steps printed there)'
+FAIL r15 E-48 C lacks 'if no session is open or it does not ask, go straight to key'
+FAIL r15 E-48 G done lacks 'you have not written ALL of these, the assistant does not st'
+round 15 checks done
+FAIL r16 F4 the numbered order is missing or out of order: [-1, -1, -1, -1, 773, 940, 1120]
+r16 checks: 82 phrase checks; UTC=IST pairs 158 ; weekday-date pairs 71 ; banned 0 of 10 ; secret-shaped 0 ; input mtimes read at run time 3
+round 16 checks done
+FAIL r17 F-1 the seven steps are missing or out of order in card: [-1, -1, 423, -1, 781, 948, 1128]
+FAIL r17 F-1 pointer in E-16 lacks 'Item 1 starts only when ALL the conditions of key step G.2 are true (the list is'
+FAIL r17 F-1 pointer in E-16 lacks 'the seven steps printed there'
+FAIL r17 F-1 no copy of the list in E-16 still has 'Item 1 starts only when ALL of these are true'
+FAIL r17 F-1 no copy of the list in E-16 still has '`shred done other files` (or'
+FAIL r17 F-1 pointer in E-55 lacks 'Item 1 starts only when ALL the conditions of key step G.2 are true (the list is'
+FAIL r17 F-1 pointer in E-55 lacks 'the seven steps printed there'
+FAIL r17 F-1 no copy of the list in E-55 still has 'Item 1 starts only when ALL of these are true'
+FAIL r17 F-1 no copy of the list in E-55 still has '`shred done other files` (or'
+FAIL r17 F-8 D.5 lacks 'then card step 2 (the app passwords and the HubSpot apps'
+FAIL r17 F-8 D.5 lacks 'only then card step 3 (the shred of the key copies'
+FAIL r17 r confirmation lacks 'r. Round 17 and round 18 additions of the builder, to confirm:'
+FAIL r17 pin m34 word list lacks '| `key gone, no more decisions` | the key is gone AND there are no more takes AN'
+FAIL r17 pin m43 stop looking lacks '| `please stop looking` | you are about to type a secret: the assistant stops lo'
+FAIL r17 pin m60 card 1 lacks 'if you have not typed `yes, no more takes` by 18:19 UTC = 23:49 IST, revoke the '
+FAIL r17 pin B04 ten minutes lacks 'the 10 minutes between go first to the key (card step 1)'
+WORDS (non-space runs inside the NEW fences): E-48 NEW 4217 ; Appendix K (whole section) 1207 ; OWNER-STEPS rows NEW 17666 ; NEW of all rows 19184 ; whole EDITS file 55751
+r17 checks: 100 phrase checks; 25 pins
+round 17 checks done
+FAIL r18 count applied 'A confirmation cannot be withdrawn once the key is revoked.' is 0, expected 2
+FAIL r18 count applied 'No default pick: the assistant does not recommend a route' is 0, expected 1
+FAIL r18 count applied 'touch nothing that you are not sure about' is 0, expected 1
+FAIL r18 count applied 'Item 1 starts only when ALL the conditions of key step G.2 a' is 0, expected 2
+FAIL r18 count applied 'What you have not finished by 18:29 UTC = 23:59 IST you fini' is 0, expected 2
+FAIL r18 count applied 'Tue 24 Nov 2026 18:29 UTC = 23:59 IST' is 0, expected 6
+FAIL r18 count applied 'if you have not typed `yes, no more takes` by 18:19 UTC = 23' is 0, expected 1
+FAIL r18 count applied 'The assistant never does an owner item for you' is 0, expected 1
+FAIL r18 count applied 'touch NOTHING of that kind' is 0, expected 1
+FAIL r18 count applied 'your list says that your own n8n does not use it' is 0, expected 1
+FAIL r18 count applied '18:19 UTC = 23:49 IST' is 26, expected 27
+FAIL r18 count applied '18:29 UTC = 23:59 IST' is 16, expected 24
+FAIL r18 count applied '`yes, no more takes`' is 10, expected 15
+FAIL r18 count applied '`key gone, no more decisions`' is 15, expected 12
+FAIL r18 count applied '`cut accepted`' is 13, expected 15
+FAIL r18 count applied '`start clean-up`' is 8, expected 4
+FAIL r18 count applied '`shred done key copies`' is 10, expected 6
+FAIL r18 count applied '`shred done other files`' is 11, expected 7
+FAIL r18 count applied '`key revoked`' is 20, expected 15
+FAIL r18 forbidden wording in applied: recommends? route B
+FAIL r18 day sheet line is not in the applied sheet: 1. You: make sure that you have confirmed your last take with `yes, no
+FAIL r18 day sheet line is not in the applied sheet: 2. You: do your items 2 and 3, the quick web revokes, each only after 
+FAIL r18 day sheet line is not in the applied sheet: 3. You: shred the copy of the key in the take folder and the other cop
+FAIL r18 day sheet line is not in the applied sheet: 4. You: do your item 4 (save the screenshots) and your item 5, the ret
+FAIL r18 day sheet line is not in the applied sheet: Last day, Mon 23 Nov 2026: the 10 minutes between 18:19 UTC = 23:49 IS
+FAIL r18 day sheet line is not in the applied sheet: Your alarms. The assistant has no timer, and nobody else reminds you o
+FAIL r18 day sheet line is not in the applied sheet: D.5. The last time to revoke, and the last day. If you have not yet ty
+FAIL r18 day sheet line is not in the applied sheet: G.2. When you are done with parts (a) and (b), write `shred done key c
+FAIL r18 day sheet line is not in the applied sheet: | You type | The one event it tells the assistant | Key step |
+FAIL r18 day sheet line is not in the applied sheet: |---|---|---|
+FAIL r18 day sheet line is not in the applied sheet: | `route A` or `route B` | you choose the route (once, before your las
+FAIL r18 day sheet line is not in the applied sheet: | `no more takes` | you think this take was your last one; it is not f
+FAIL r18 day sheet line is not in the applied sheet: | `yes, no more takes` | the confirmation (final); the answer to the q
+FAIL r18 day sheet line is not in the applied sheet: | `another take` | you want another take; no reply counts as this word
+FAIL r18 day sheet line is not in the applied sheet: | `cut accepted` | route B: you watched the whole cut and accept it | 
+FAIL r18 day sheet line is not in the applied sheet: | `key gone, no more decisions` | the key is gone AND there are no mor
+FAIL r18 day sheet line is not in the applied sheet: | `key revoked` | the key is gone from the list at the provider; a rep
+FAIL r18 day sheet line is not in the applied sheet: | `key not revoked` | you could not revoke it; write the reason after 
+FAIL r18 day sheet line is not in the applied sheet: | `shred done key copies` | every file of parts (a) and (b) is shredde
+FAIL r18 day sheet line is not in the applied sheet: | `shred not done key copies` | at least one is not; write the last pa
+FAIL r18 day sheet line is not in the applied sheet: | `shred done other files` | every file of parts (c) and (d) is shredd
+FAIL r18 day sheet line is not in the applied sheet: | `shred not done other files` | at least one is not; write the last p
+FAIL r18 day sheet line is not in the applied sheet: | `start clean-up` | you have read the list of what the assistant will
+FAIL r18 day sheet line is not in the applied sheet: | `ok stand-in test` or `ok flow rehearsal` | your yes to that one tes
+FAIL r18 day sheet line is not in the applied sheet: | `please stop looking` | you are about to type a secret: the assistan
+FAIL r18 day sheet line is not in the applied sheet: | `you may look again` | you finished typing a secret; the assistant m
+FAIL r18 day sheet line is not in the applied sheet: | `new key typed; you may look again` | you typed a new key for the mo
+FAIL r18 day sheet line is not in the applied sheet: | `n8n.env done; you may look again` | you added your line to `n8n.env
+FAIL r18 appendix line is not in the applied sheet or in EDITS: The owner reads key steps A to K in step 22 item 3 of his sheet. This 
+FAIL r18 appendix line is not in the applied sheet or in EDITS: K-A (detail of key step A). Why the rule is fixed: a key that nobody i
+FAIL r18 appendix line is not in the applied sheet or in EDITS: K-D (detail of key step D). Route A: the clean-up removes the take's s
+FAIL r18 appendix line is not in the applied sheet or in EDITS: K-I (detail of key step I). Before the take you wrote down, in your ow
+FAIL r17 r18 link day sheet lacks '`OWNER-DAY-SHEET.md`'
+FAIL r17 r18 link day sheet lacks '`OWNER-APPENDIX-K.md`'
+FAIL r18 typed words: 0 rows, or a word has two rows
+FAIL r18 day sheet table row differs: | `route A` or `route B` | you choose the route (once, befor
+FAIL r18 day sheet table row differs: | `no more takes` | you think this take was your last one; i
+FAIL r18 day sheet table row differs: | `yes, no more takes` | the confirmation (final); the answe
+FAIL r18 day sheet table row differs: | `another take` | you want another take; no reply counts as
+FAIL r18 day sheet table row differs: | `cut accepted` | route B: you watched the whole cut and ac
+FAIL r18 day sheet table row differs: | `key gone, no more decisions` | the key is gone AND there 
+FAIL r18 day sheet table row differs: | `key revoked` | the key is gone from the list at the provi
+FAIL r18 day sheet table row differs: | `key not revoked` | you could not revoke it; write the rea
+FAIL r18 day sheet table row differs: | `shred done key copies` | every file of parts (a) and (b) 
+FAIL r18 day sheet table row differs: | `shred not done key copies` | at least one is not; write t
+FAIL r18 day sheet table row differs: | `shred done other files` | every file of parts (c) and (d)
+FAIL r18 day sheet table row differs: | `shred not done other files` | at least one is not; write 
+FAIL r18 day sheet table row differs: | `start clean-up` | you have read the list of what the assi
+FAIL r18 day sheet table row differs: | `ok stand-in test` or `ok flow rehearsal` | your yes to th
+FAIL r18 day sheet table row differs: | `please stop looking` | you are about to type a secret: th
+FAIL r18 day sheet table row differs: | `you may look again` | you finished typing a secret; the a
+FAIL r18 day sheet table row differs: | `new key typed; you may look again` | you typed a new key 
+FAIL r18 day sheet table row differs: | `n8n.env done; you may look again` | you added your line t
+r18 applied sheet words (wc -w method): 20436; day sheet 2020; appendix 1272
+r18 checks: 102 count/pair/forbidden checks; 52 failures in the section
+round 18 checks done
+FAIL r18 reversal anchor missing: A confirmation cannot be withdrawn once the key is
+FAIL r18 plant not caught: reversal revoke the key at that time anyway
+FAIL r18 reversal anchor missing: touch nothing that you are not sure about
+FAIL r18 reversal anchor missing: No default pick: the assistant does not recommend 
+FAIL r18 reversal anchor missing: touch NOTHING of that kind
+FAIL r18 reversal anchor missing: your list says that your own n8n does not use it
+FAIL r18 plant not caught: day sheet line 0
+FAIL r18 plant not caught: day sheet line 9
+FAIL r18 plant not caught: day sheet line 12
+FAIL r18 plant not caught: day sheet line 15
+FAIL r18 plant not caught: day sheet line 18
+FAIL r18 plant not caught: day sheet line 21
+FAIL r18 plant not caught: day sheet line 24
+FAIL r18 plant not caught: day sheet line 27
+r18 plants (planted, caught): {'occurrence': (153, 153), 'pair': (62, 62), 'reversal': (5, 4), 'day sheet': (10, 2), 'appendix': (5, 5)}
+FAILURES 113

@@ -24,11 +24,13 @@ R("if 'The spots that carry the recommendation' not in txt: F('r14 ND15 spots')"
 R("neg('r14nd15', 'The spots that carry the recommendation, so that all change together', 'Other spots', 'r14 ND15 spots')", "neg('r14nd15', 'The spot that would carry a recommendation, if the studio lead adds one', 'Other spots', 'r14 ND15 spots')")
 R("'if no session is open, go straight to key step I'", "'if no session is open or it does not ask, go straight to key step I'", 2)
 R("'you have written none of these, the assistant does not start item 1'", "'you have not written ALL of these, the assistant does not start item 1 in that session'")
+R("neg('r12key2', 'the one that you open at `http://localhost:5678`? If it is, revoking it breaks that n8n.\" Reply `same key`', 'the one in your n8n? If it is, revoking it breaks that n8n.\" Reply `same key`', 'r12 E-48 lacks http://localhost:5678')", "neg('r12key2', 'the one that you open at `http://localhost:5678`? If it is, revoking it breaks that n8n.\" Reply `same key`', 'the one in your n8n? If it is, revoking it breaks that n8n.\" Reply `same key`', 'r17 r12 key step F question lacks')")
+R("need17('F-5 E', ks('E'),", "need17('r12 key step F question', ks('F'), 'the one that you open at `http://localhost:5678`? If it is, revoking it breaks that n8n.\" Reply `same key`')\nneed17('F-5 E', ks('E'),")
 # the typed-word table is part of key step B for these checks
 R("""    return '\\n'.join(ls_[st[0]:(en[0] if en else len(ls_))])
 def need(""", """    _o = '\\n'.join(ls_[st[0]:(en[0] if en else len(ls_))])
     if letter == 'B':
-        _ti = t48.index('Table of the typed words'); _o += '\\n' + t48[_ti:t48.index('The assistant never opens the key file', _ti)]
+        _ti = t48.find('Table of the typed words'); _o += ('\\n' + t48[_ti:t48.index('The assistant never opens the key file', _ti)]) if _ti >= 0 else ''
     return _o
 def need(""")
 # the numbered order (the card) in its new sequence

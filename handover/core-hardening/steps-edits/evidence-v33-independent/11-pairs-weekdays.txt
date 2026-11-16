@@ -1,0 +1,13 @@
+LEAD-RELEASE-NOTE-v17.md       pairs  46  weekday-dates  28  lone-UTC   0  lone-IST   0
+OWNER-APPENDIX-v33-A.md        pairs  35  weekday-dates  21  lone-UTC   0  lone-IST   0
+OWNER-APPENDIX-v33-B.md        pairs  35  weekday-dates  20  lone-UTC   0  lone-IST   0
+OWNER-CARD-v33-A.md            pairs   8  weekday-dates   8  lone-UTC   0  lone-IST   0
+OWNER-CARD-v33-B.md            pairs   8  weekday-dates   8  lone-UTC   0  lone-IST   0
+OWNER-FILM-PERSON-v33.md       pairs   0  weekday-dates   0  lone-UTC   0  lone-IST   0
+OWNER-HELPER-v33.md            pairs   8  weekday-dates   5  lone-UTC   0  lone-IST   0
+OWNER-SHEET-v33-A.md           pairs   8  weekday-dates  16  lone-UTC   0  lone-IST   0
+OWNER-SHEET-v33-B.md           pairs   8  weekday-dates  16  lone-UTC   0  lone-IST   0
+v33-OPEN-FOR-LEAD.md           pairs  46  weekday-dates  27  lone-UTC   0  lone-IST   0
+BAD pairs/weekdays: 0
+required dates seen: {('Wed', '18', 'Nov'): 25, ('Sun', '22', 'Nov'): 36, ('Mon', '16', 'Nov'): 5, ('Mon', '23', 'Nov'): 68, ('Wed', '25', 'Nov'): 6}
+all weekday-dates seen: [('Mon', '16', 'Nov'), ('Mon', '23', 'Nov'), ('Sat', '21', 'Nov'), ('Sun', '15', 'Nov'), ('Sun', '22', 'Nov'), ('Wed', '11', 'Nov'), ('Wed', '18', 'Nov'), ('Wed', '25', 'Nov')]

@@ -54,7 +54,9 @@
 # folder) and prints which one it used.
 #   TAKE_PY CRM_PY DRIVE_PY N8N_PY FLOWS_DIR MODEL_DIR MODEL_SETTINGS ONE_STORE END_RE MODEL_RE DELETE_RE LEAD_REPIN_NO_STATUS
 # v8: a shell function inherited from the caller (bash: export -f sed) would replace the real program; remove them first
-unset -f sed awk grep tr find git ps head sort wc cat kill sleep date mktemp rm ls cut tee id uname mkdir cp mv chmod basename dirname env printf test 2>/dev/null
+unset -f compgen sed awk grep egrep fgrep tr find git ps head tail sort uniq wc cat kill sleep date mktemp rm ls cut tee id uname mkdir cp mv chmod basename dirname env printf test stat ln expr xargs readlink seq ss netstat sh bash dash cd pwd echo exit eval exec trap umask export command type read wait unset set 2>/dev/null
+# v9: bash only: every other function of the caller too (compgen does not exist in dash; the error is hidden)
+for fn_v in $(compgen -A function 2>/dev/null); do unset -f "$fn_v" 2>/dev/null; done
 set +x +v 2>/dev/null          # a trace option from the caller (sh -x, sh -v) would print every line, secret values included
 # PATH: keep only absolute folders. An empty or relative entry (a dot, for example) would let a program planted
 # in the current folder run instead of the real sed, awk, grep or git.
@@ -63,7 +65,7 @@ for pth_d in ${PATH:-}; do case $pth_d in /*) NEWPATH=${NEWPATH:+$NEWPATH:}$pth_
 IFS=$SAVE_IFS; PATH=${NEWPATH:-/usr/bin:/bin}; export PATH
 # (ENV and BASH_ENV are read by a shell when it STARTS, before this line: unsetting them here protects only the programs started below, not this shell itself)
 unset ENV BASH_ENV CDPATH GREP_OPTIONS GREP_COLOR GREP_COLORS SED_OPTIONS AWKPATH AWKLIBPATH POSIXLY_CORRECT BASH_XTRACEFD PS4 LOCPATH NLSPATH MALLOC_CONF
-unset SHELLOPTS BASHOPTS 2>/dev/null   # bash keeps these two read-only (a plain unset prints an error); they stay set there, and programs the script starts are not bash scripts
+command unset SHELLOPTS BASHOPTS 2>/dev/null   # bash keeps these two read-only (a plain unset prints an error); they stay set there, and programs the script starts are not bash scripts
 # v8: every GIT_*, LD_* and DYLD_* variable of the caller is removed (GIT_DIR or GIT_WORK_TREE would point git at another
 # folder; LD_PRELOAD would load a library into every program below), and git gets a fixed, safe setting set of its own
 for env_v in $(env 2>/dev/null | sed -n 's/^\(\(GIT\|LD\|DYLD\)_[A-Za-z0-9_]*\)=.*/\1/p'); do unset "$env_v" 2>/dev/null; done
@@ -163,9 +165,10 @@ bg_wait() { "$@" & BGPID=$!; wait "$BGPID"; bg_rc=$?; BGPID=; return "$bg_rc"; }
 #  9  e-mail addresses are replaced by <email-masked>.
 # Stage 2 (mask.awk), see the comments in that file.
 # planned number of checks (the canary alone; the whole --self-test): a run that passes fewer or more is NOT accepted
-CANARY_PLANNED=1601
+CANARY_PLANNED=1603
 SELFTEST_PLANNED=1635
 SOH=$(printf '\001'); STX=$(printf '\002'); ETX=$(printf '\003'); ENQ=$(printf '\004')
+DC1=$(printf '\021'); DC2=$(printf '\022'); RS=$(printf '\036')   # v9: private stand-ins used inside one rule block only
 write_mask_sed() {
   # NAME RULE (one general rule, not a list of names): an identifier is secret when
   #  (a) a STRONG word is anywhere inside it (secretValue, tokenString, passwordHash, authTokenValue, secretdata),
@@ -174,7 +177,7 @@ write_mask_sed() {
   #      (keyValue, saltHash), or
   #  (c) it ENDS in key, token, secret, password, pwd, credential (apiKey, accessToken).
   STRONG='(secret|passw[o0]?r?d|passphrase|credential|token|apikey|requirepass|masterauth|jsessionid|phpsessid|(db|root|admin|user|mysql|pg|redis|master|ssh|smtp|mail|ldap|sql|wifi|wpa|sys|login)(pass|pw|pwd))'
-  W='(keys?|tokens?|secrets?|passw[o0]?r?ds?|passphrases?|pass|pwd|pws?|psw|pswd|pat|credentials?|authorization|auth|bearer|private|cookies?|sessions?|signatures?|hmac|dsn|webhooks?|salt|otp|certs?|certificates?)'
+  W='(keys?|tokens?|secrets?|passw[o0]?r?ds?|passphrases?|passcodes?|pass|pwd|pws?|psw|pswd|pat|pins?|seeds?|sig|credentials?|authorization|auth|bearer|private|cookies?|sessions?|signatures?|hmac|dsn|webhooks?|salt|otp|certs?|certificates?)'
   WS='(value|string|data|text|hash|bytes|material|id|url|uri|name|code|list|file|path|ring|store)'
   SUF='(keys?|tokens?|secrets?|passw[o0]?r?ds?|pwd|credentials?)'
   # IDB: an identifier that contains a secret word; IDQ: the same inside quotes (spaces count as separators)
@@ -195,7 +198,7 @@ write_mask_sed() {
   {
     cat <<EOF
 :top
-/${YPRE}${IDB}["']?[[:space:]]*:[[:space:]]*((&[^[:space:]]+|![^[:space:]]*)[[:space:]]+)*([|>][-+0-9]*)?[[:space:]]*(#.*)?\$/I{
+/${YPRE}(${IDB}|data|stringdata|binarydata)["']?[[:space:]]*:[[:space:]]*((&[^[:space:]]+|![^[:space:]]*)[[:space:]]+)*([|>][-+0-9]*)?[[:space:]]*(#.*|\\[control bytes removed: [0-9]+\\])?\$/I{
 n
 /^${PFX0}[[:space:]]+[^[:space:]]|^${PFX0}- /{
 s/^${PFX0}.*/\1<masked>/
@@ -271,6 +274,10 @@ s/((${ID})${PRE}[[:space:]]*''')([^']|'[^']|''[^'])*'''/\1<masked>'''/Ig
 /(${ID})${PRE}[[:space:]]*""".*"""/I!s/((${ID})${PRE}[[:space:]]*""").*/\1<masked>/I
 /(${ID})${PRE}[[:space:]]*'''.*'''/I!s/((${ID})${PRE}[[:space:]]*''').*/\1<masked>/I
 s/(-----BEGIN [A-Z ]*(PRIVATE|SECRET|ENCRYPTED)[A-Z ]*-----).*/\1<masked>/
+s/(["'][A-Za-z]*(name|key|var|variable|env|id)["'][[:space:]]*:[[:space:]]*["'](${IDQ})["'][[:space:]]*,[[:space:]]*["'][A-Za-z]*(value|val|data|content)["'][[:space:]]*:[[:space:]]*)(${STR}|${UNQ})/\1"<masked>"/Ig
+s/["'][A-Za-z]*(name|key|var|variable|env|id)["'][[:space:]]*:[[:space:]]*["'](${IDQ})["']/${RS}&/Ig
+s/(["'][A-Za-z]*(value|val|data|content)["'][[:space:]]*:[[:space:]]*)(${STR}|${UNQ})[[:space:]]*,[[:space:]]*${RS}/\1"<masked>", ${RS}/Ig
+s/${RS}//g
 s/(["'](${IDQ})["'][[:space:]]*:[[:space:]]*)(${STR}|${UNQ})/\1"<masked>"/Ig
 s/(${BQD}(${IDQ})${BQD}[[:space:]]*:[[:space:]]*${BQD})([^\\\\]|\\\\[^"'])*${BQD}/\1<masked>${EBD}/Ig
 s/(${BQS}(${IDQ})${BQS}[[:space:]]*:[[:space:]]*${BQS})([^\\\\]|\\\\[^"'])*${BQS}/\1<masked>${EBS}/Ig
@@ -310,6 +317,9 @@ s/((${ID})[[:space:]]+)(${STR})/\1<masked>/Ig
 s/((${ID})[[:space:]]+(is|was|are|equals|set to|of)[[:space:]]+)[^[:space:]<"']([^]"')}]|[]"')}][^[:space:]])*/\1<masked>/Ig
 s/((${ID})["']?[[:space:]]*:[[:space:]]*)(${STR}|[^][{}[:space:]<"']([^]"')}]|[]"')}][^[:space:]])*)/\1<masked>/Ig
 s/((^|[[:space:]])--?([A-Za-z0-9]+[_-])*(keys?|tokens?|secrets?|passw[o0]?r?d|passphrase|pass|passin|passout|pwd|pw|psw|pswd|pat|credentials?|creds?|userpass|auth|bearer)([_-][A-Za-z0-9_-]*)?([[:space:]]+|=))(${STR}|[^[:space:]<-][^[:space:]]*)/\1<masked>/Ig
+s/((^|[[:space:]])--?${IDB}([[:space:]]+|=))(${STR}|[^[:space:]<-][^[:space:]]*)/\1<masked>/Ig
+s/((^|[^A-Za-z0-9_])--?(login|logon|userpass)([[:space:]]+|=)[A-Za-z0-9._@%+-]+:)[^[:space:]"'<,;&]+/\1<masked>/Ig
+s/((login|logon|userpass|userinfo|basic_?auth|creds?)["']?[[:space:]]*[=:][[:space:]]*["']?[A-Za-z0-9._@%+-]*:)[^[:space:]"'<,;&]+/\1<masked>/Ig
 s/((^|[[:space:]])(machine|default)([[:space:]].*)?[[:space:]](password|passwd|passw0rd|account)[[:space:]]+)[^[:space:]<][^[:space:]]*/\1<masked>/Ig
 :pwl
 s/(((^|[^A-Za-z0-9_])(${PWCMDS})[^|;&]*[[:space:]]-(p|P))[[:space:]]*)(${STR}|[^[:space:]<-][^[:space:]]*)/\1<masked>/I
@@ -322,12 +332,19 @@ s/((^|[^A-Za-z0-9_])htpasswd[^|;&]*[[:space:]]-[A-Za-z]*b[A-Za-z]*([[:space:]]+[
 s/((^|[^A-Za-z0-9_])(echo|printf)([[:space:]]+-[A-Za-z]+)*[[:space:]]+)[^[:space:]<|;&-][^[:space:]|;&]*([[:space:]]*\|[^|].*(stdin|passwd|password|login|chpasswd|sudo[[:space:]]+-S|kinit|ssh-add|passphrase-fd|cryptsetup))/\1<masked>\5/I
 s/((${ID})([[:space:]]+[A-Za-z0-9_]+){1,2}[[:space:]]*:[[:space:]]*)[^[:space:]<"'].*/\1<masked>/Ig
 s/(<(${IDB})([[:space:]][^>]*)?>)[^<]+<\//\1<masked><\//Ig
-s/((^|[^A-Za-z0-9])[A-Za-z0-9_.-]*(secret|passw[o0]?r?d|passphrase|credential|api[_.-]?key)[A-Za-z0-9_.-]*[[:space:]]*[=!]==?[[:space:]]*)(${STR})/\1<masked>/Ig
+s/((${ID})[[:space:]]*[=!]==?[[:space:]]*)"end"/\1${DC1}/Ig
+s/((${ID})[[:space:]]*[=!]==?[[:space:]]*)'end'/\1${DC2}/Ig
+s/((${ID})[[:space:]]*[=!]==?[[:space:]]*)(${STR})/\1<masked>/Ig
+s/((${ID})\.(equals|equalsignorecase|startswith|endswith|compare)[[:space:]]*\([[:space:]]*)(${STR})/\1<masked>/Ig
+s/${DC1}/"end"/g
+s/${DC2}/'end'/g
 s/(<masked>[[:space:]]*(\|\||\?\?|or|:-)[[:space:]]*)(${STR})/\1<masked>/Ig
 s/(IDENTIFIED[[:space:]]+(WITH[[:space:]]+[A-Za-z_]+[[:space:]]+)?BY[[:space:]]+)(${STR}|[^[:space:];<][^[:space:];]*)/\1<masked>/Ig
 s/(^${PFX0}[[:space:]]*([#;]+|\/\/+)?[[:space:]]*(requirepass|masterauth|auth-pass|bindpw|rootpw)[[:space:]]+)[^[:space:]<=].*/\1<masked>/I
 s/(<(${IDB})([[:space:]][^>]*)?>)<!\[CDATA\[([^]]|\][^]]|\]\][^>])*\]\]>/\1<masked>/Ig
-s/(^${PFX0}[[:space:]]*([#;]+|\/\/+)?[[:space:]]*(- +)?["']?[A-Za-z0-9_.-]*${STRONG}[A-Za-z0-9_.-]*["']?[[:space:]]+)[^][:space:]<"'=:;,(){}][^[:space:]]*/\1<masked>/I
+s/(^${PFX0}[[:space:]]*([#;>*$]+|\/\/+|--+)?[[:space:]]*(- +)?["']?${IDB}["']?[[:space:]]+)([^=:<[:space:]!>+*/%&|^#${STX}-]|[!>+*/%&|^${STX}-][^=]).*/\1<masked>/I
+s/((^|[^A-Za-z0-9_.-])(([A-Za-z0-9]+[_.-])*)(keys?|tokens?|secrets?|passw[o0]?r?ds?|passphrases?|passcodes?|pass|pwd|pws?|psw|pswd|pat|pins?|seeds?|sig|credentials?|creds?|apikeys?|api[_.-]keys?|authorization|auth|cookies?|sessions?|signatures?|hmac|dsn|webhooks?|salt|otp|certs?)["']?[[:space:]]+)([^=:<[:space:]!>+*/%&|^#${STX}-]|[!>+*/%&|^${STX}-][^=]).*/\1<masked>/I
+s/((^|[^A-Za-z0-9_.-])(([A-Za-z0-9]+[_.-])*)(secrets?|passw[o0]?r?ds?|passphrases?|passcodes?|credentials?|apikeys?|api[_.-]keys?|tokens?)["']?[[:space:]]+)#.*/\1<masked>/I
 s/((login|authenticate|authorize|sign_?in|basic_?auth|set_?pass(word)?|add_?user)[[:space:]]*\(([^(),]*,)[[:space:]]*)(${STR})/\1<masked>/Ig
 s/((set_?pass(word)?|set_?secret|set_?token|set_?api_?key)[[:space:]]*\([[:space:]]*)(${STR})/\1<masked>/Ig
 s/[A-Za-z0-9._%+-]+@([A-Za-z0-9-]+\.)+[A-Za-z]{2,}/<email-masked>/g
@@ -474,7 +491,7 @@ function secret_name(k,   n, w, i, x, joined) {
     if (x in SW) return 1
     if (x ~ /^(db|root|admin|user|mysql|pg|redis|master|ssh|smtp|mail|ldap|sql|wifi|wpa|sys|login)(pass|pw|pwd)$/) return 1
     if (x ~ /(key|keys|token|tokens|secret|secrets|password|passwords|passwd|passwds|pwd|credential|credentials)$/) return 1
-    if (x ~ /^(key|keys|pass|pwd|pw|pat|auth|cookie|cookies|session|sessions|signature|hmac|dsn|webhook|salt|otp|cert|certs)(value|string|data|text|hash|bytes|material|id|url|uri|name|code|list|file|path|ring|store)$/) return 1
+    if (x ~ /^(key|keys|pass|pwd|pw|pat|pin|seed|sig|auth|cookie|cookies|session|sessions|signature|hmac|dsn|webhook|salt|otp|cert|certs)(value|string|data|text|hash|bytes|material|id|url|uri|name|code|list|file|path|ring|store)$/) return 1
   }
   if (joined ~ /(secret|passw(or)?d|passphrase|credential|token|apikey|requirepass|masterauth|jsessionid|phpsessid)/) return 1
   return 0
@@ -524,8 +541,9 @@ function hide_containers(s,   out, key, kk, open, j, st, ln) {
   return out s
 }
 function is_nameline(b,   t, v) {
+  sub(/ \[control bytes removed: [0-9]+\]$/, "", b)
   t = tolower(b)
-  if (t !~ /^[ \t]*(- +)?[{,]?[ \t]*["']?(name|key|var|variable|env|envvar|header|field)["']?[ \t]*:/) return 0
+  if (t !~ /^[ \t]*(- +)?[{,]?[ \t]*["']?[a-z]*(name|key|var|variable|env|envvar|header|field)["']?[ \t]*:/) return 0
   v = b; sub(/^[^:]*:/, "", v); sub(/^[ \t"']+/, "", v); sub(/[]}, \t"']+$/, "", v)
   if (v == "") return 0
   if (v == "<masked>") return 1
@@ -533,7 +551,7 @@ function is_nameline(b,   t, v) {
   return secret_name(v)
 }
 function is_valueline(b) {
-  return (tolower(b) ~ /^[ \t]*(- +)?[{,]?[ \t]*["']?(value|val|secret|content|data|string|text)["']?[ \t]*:/)
+  return (tolower(b) ~ /^[ \t]*(- +)?[{,]?[ \t]*["']?[a-z]*(value|val|secret|content|data|string|text)["']?[ \t]*:/)
 }
 function mask_after_colon(b,   p, head, rest, c, q, i, n, ch, j) {
   p = index(b, ":")
@@ -592,8 +610,17 @@ function ml_scan(s,   i, n, c, pc) {
     else if (c == ")" || c == "]" || c == "}") { ML_D--; if (ML_D <= 0) { ML_D = 0; ML_Q = ""; return } }
   }
 }
-function nonascii_names(s,   out, st, ln, m) {
+function nonascii_names(s,   out, st, ln, m, t3) {
   out = ""
+  # v9: a word that mixes plain letters with a byte outside ASCII (a look-alike letter) and is followed by white space: renamed too
+  while (match(s, /[A-Za-z0-9_.-]*[\200-\377][A-Za-z0-9_.\200-\377-]*[ \t]+[^ \t]/)) {
+    m = substr(s, RSTART, RLENGTH); t3 = m; gsub(/[^A-Za-z]/, "", t3)
+    if (length(t3) < 3) break
+    sub(/[A-Za-z0-9_.\200-\377-]+/, "NONASCII_NAME_SECRET", m)
+    out = out substr(s, 1, RSTART - 1) m
+    s = substr(s, RSTART + RLENGTH)
+  }
+  s = out s; out = ""
   while (match(s, /[A-Za-z0-9_.\200-\377-]*[\200-\377][A-Za-z0-9_.\200-\377-]*["' \t]*[=:]/)) {
     st = RSTART; ln = RLENGTH; m = substr(s, st, ln)
     match(m, /["' \t]*[=:]$/)
@@ -613,9 +640,15 @@ function ml_start(b,   m, nm, rest, sec, t, tk) {
     sec = secret_name(nm)
   }
   if (sec && rest ~ /\\[ \t]*$/) { MLBS = 1; return }
+  if (sec && rest ~ /^[ \t]*(#.*)?$/ && (m ~ /[ \t]\+?=[ \t]*$/ || m ~ /:=/)) NXT = 3   # v9: the value is on the next line
   ML_D = 0; ML_Q = ""
   ml_scan(b)
   if (ML_D <= 0) { ML_D = 0; ML_Q = ""; return }
+  if (!sec && match(b, /^[ \t]*[A-Za-z_]+[ \t]+("[^"]*"[ \t]*)+\{/)) {
+    # v9: a block header with quoted labels (Terraform:  variable "db_password" {  ): hidden to its closing bracket when a label is a secret name
+    t = substr(b, RSTART, RLENGTH)
+    while (match(t, /"[^"]*"/)) { tk = substr(t, RSTART + 1, RLENGTH - 2); if (secret_name(tk)) { sec = 1; break }; t = substr(t, RSTART + RLENGTH) }
+  }
   if (!sec) {
     # the line opens a bracket it does not close: it is hidden onward when ANY name before an = or : on it is a secret name
     t = b
@@ -633,9 +666,34 @@ function ml_start(b,   m, nm, rest, sec, t, tk) {
 # line, backspace) and can split a secret name (pass<byte>word). Removed: a CR at the end of the line (a CRLF file), every other byte
 # 0x01-0x08, 0x0B-0x1F and 0x7F (a TAB stays), and the bidirectional controls (UTF-8 of U+200E, U+200F, U+202A-U+202E, U+2066-U+2069,
 # U+061C), which can reorder what is shown. CTLN = how many were removed (a CRLF line end is not counted).
+function uni_fold(t,   o, m, b2, b3, k) {
+  if (t !~ /[\200-\377]/) return t
+  gsub(/\357\274\235|\357\271\246/, "=", t)
+  gsub(/\357\274\232|\357\271\225|\352\236\211|\342\210\266|\357\271\223/, ":", t)
+  gsub(/\357\274\202|\342\200\234|\342\200\235|\342\200\236/, "\"", t)
+  gsub(/\357\274\207|\342\200\230|\342\200\231|\342\200\232|\342\200\233/, "'", t)
+  gsub(/\343\200\200|\302\240|\342\200[\200-\212]|\342\200\257|\342\201\237/, " ", t)
+  gsub(/\342\200[\213-\215]|\342\201\240|\357\273\277|\302\255/, "", t)
+  o = ""
+  while (match(t, /\357[\274\275][\200-\277]|[\316\317\320\321\324][\200-\277]/)) {
+    m = substr(t, RSTART, RLENGTH)
+    o = o substr(t, 1, RSTART - 1) ((m in HG) ? HG[m] : m)
+    t = substr(t, RSTART + RLENGTH)
+  }
+  return o t
+}
+function hg_init(   i, a, n, ln, un, lo) {
+  # look-alike letters (Cyrillic, Greek) and full-width letters and digits are folded to plain ASCII before the name rules run
+  n = split("\320\260=a \320\265=e \320\276=o \321\200=p \321\201=c \321\203=y \321\205=x \321\226=i \321\225=s \321\230=j \324\201=d \320\220=A \320\222=B \320\225=E \320\232=K \320\234=M \320\235=H \320\236=O \320\240=P \320\241=C \320\242=T \320\245=X \320\206=I \316\277=o \316\261=a \317\201=p \316\275=v \316\237=O \316\240=P \316\222=B \316\225=E \316\227=H \316\231=I \316\232=K \316\234=M \316\235=N \316\242=T \316\245=Y \316\247=X \316\226=Z", a, " ")
+  for (i = 1; i <= n; i++) HG[substr(a[i], 1, length(a[i]) - 2)] = substr(a[i], length(a[i]))
+  ln = "abcdefghijklmnopqrstuvwxyz"; un = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+  for (i = 0; i < 26; i++) { HG["\357\275" sprintf("%c", 129 + i)] = substr(ln, i + 1, 1); HG["\357\274" sprintf("%c", 161 + i)] = substr(un, i + 1, 1) }
+  for (i = 0; i < 10; i++) HG["\357\274" sprintf("%c", 144 + i)] = i
+}
 function ctl_strip(s,   t, n) {
   CTLN = 0
   sub(/\015+$/, "", s)
+  s = uni_fold(s)
   if (s ~ /[\001-\010\013-\037\177]/) { t = s; CTLN = gsub(/[\001-\010\013-\037\177]/, "", t); s = t }
   if (s ~ /\342[\200\201]|\330\234/) { t = s; n = gsub(/\342\200[\216\217\252-\256]|\342\201[\246-\251]|\330\234/, "", t); if (n > 0) { CTLN += n; s = t } }
   return s
@@ -675,6 +733,7 @@ function pre_line(   t, pfx, body, hid, cn, tag) {
   if (body == "--") { ML_D = 0; ML_Q = ""; MLBS = 0 }
   hid = 0
   if (MLBS) { MLBS = (body ~ /\\[ \t]*$/); hid = 1 }
+  else if (NXT > 0) { hid = 1; if (body !~ /^[ \t]*$/) { NXT = 0; MLBS = (body ~ /\\[ \t]*$/); ML_D = 0; ML_Q = ""; ml_scan(body) } else NXT-- }
   else if (ML_D > 0) { ml_scan(body); hid = 1 }
   if (hid) body = "<masked>"
   else {
@@ -698,9 +757,10 @@ function emit(k,   o, n) {
   print o
 }
 BEGIN {
-  nsw = split("key keys token tokens secret secrets password passwords passwd passwds passphrase passphrases pass pwd pw pws psw pswd pat credential credentials authorization auth bearer private apikey apikeys cookie cookies session sessions signature signatures hmac dsn webhook webhooks salt otp cert certs certificate certificates", sw, " ")
+  nsw = split("key keys token tokens secret secrets password passwords passwd passwds passphrase passphrases pass pwd pw pws psw pswd pat pin pins seed seeds sig passcode passcodes credential credentials authorization auth bearer private apikey apikeys cookie cookies session sessions signature signatures hmac dsn webhook webhooks salt otp cert certs certificate certificates", sw, " ")
   for (i = 1; i <= nsw; i++) SW[sw[i]] = 1
   WIN = (CUT > 0) ? CUT + 360 : 100000
+  hg_init(); NXT = 0
   head = 1; tail = 0; pend = 0; CD = 0; CQ = ""; YIND = -1
   ML_D = 0; ML_Q = ""; MLBS = 0
 }
@@ -1172,7 +1232,7 @@ self_test() {
     v8; printf 'http -a alice:%s example.test\n' "$vv"; v8_reg 'http -a user:password' LS
     v8; printf 'wget --user bob:%s url\n' "$vv"; v8_reg 'wget --user user:password' LS
     v8; printf 'http --proxy-user bob:%s x\n' "$vv"; v8_reg 'http --proxy-user user:password' LS
-    printf 'the token counter and a secret handshake are kept_prose_line\n'
+    printf 'a token, a secret; a key. kept_prose_line\n'
     printf -- '-----BEGIN ENCRYPTED DATA-----\n%s_70a_\n%s_70b_\n-----END ENCRYPTED DATA-----\nkept_after_enc_pem\n' "$base" "$base"
     v8; printf '{%s"password%s": %s"%s%s"}\n' "$BS" "$BS" "$BS" "$vv" "$BS"
     v8; printf '{%s'"'"'token%s'"'"': %s'"'"'%s%s'"'"'}\n' "$BS" "$BS" "$BS" "$vv" "$BS"
@@ -1392,8 +1452,8 @@ self_test() {
   chk_kept 'vertical tab, form feed and DEL removed' 'kept_vtff_word [control bytes removed: 3]'
   chk_kept 'bidi controls removed and counted' 'bidi kept_bidi_word   x [control bytes removed: 4]'
   chk_kept 'a TAB stays' "tab$(printf '\011')here kept_tab_word"
-  chk_kept 'a line with the word token or secret in prose is not hidden' 'the token counter and a secret handshake are kept_prose_line'
-  chk_kept 'text after a hidden bare password value stays' 'tail_kept_bare'
+  chk_kept 'a line with the word token or secret in prose, followed by punctuation, is not hidden' 'a token, a secret; a key. kept_prose_line'
+  chk_hidden 'v9: the rest of the line after a bare password value is hidden too' 'tail_kept_bare' LS
   chk_kept 'text after a block of ENCRYPTED DATA stays' 'kept_after_enc_pem'
   chk_kept 'the escaped closing quote stays after a hidden JSON value' '<masked>'"$BS"'"}'
   chk_kept 'the escaped closing single quote stays after a hidden value' "<masked>${BS}'}"

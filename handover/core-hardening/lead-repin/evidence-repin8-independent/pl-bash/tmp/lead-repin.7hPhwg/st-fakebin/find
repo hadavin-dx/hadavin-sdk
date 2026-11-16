@@ -1,0 +1,3 @@
+#!/bin/sh
+echo $$ > "/home/user/hadavin-sdk/handover/core-hardening/lead-repin/evidence-repin8-independent/pl-bash/tmp/lead-repin.7hPhwg/st-fakebin/find.pid"
+exec sleep 31

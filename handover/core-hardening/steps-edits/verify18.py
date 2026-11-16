@@ -750,7 +750,7 @@ def ks(letter):
     en = [k_ for k_ in range(st[0] + 1, len(ls_)) if ls_[k_].startswith('   Key step ')]
     _o = '\n'.join(ls_[st[0]:(en[0] if en else len(ls_))])
     if letter == 'B':
-        _ti = t48.index('Table of the typed words'); _o += '\n' + t48[_ti:t48.index('The assistant never opens the key file', _ti)]
+        _ti = t48.find('Table of the typed words'); _o += ('\n' + t48[_ti:t48.index('The assistant never opens the key file', _ti)]) if _ti >= 0 else ''
     return _o
 def need(label, text, *needles):
     for nd_ in needles:
@@ -1023,6 +1023,7 @@ need17('F-2 link in owner text', _E48, 'the detail is on a separate page, Append
 need17('F-2 header', txt, 'Appendix K (after the last row) is not a row and not part of the sheet')
 # F-5: D.4 and key step E follow the order of the actions
 need17('F-5 D.4', ks('D'), 'you follow the one order (the card) at once, from card step 1')
+need17('r12 key step F question', ks('F'), 'the one that you open at `http://localhost:5678`? If it is, revoking it breaks that n8n." Reply `same key`')
 need17('F-5 E', ks('E'), "(4) the one order (the card above)", "copies the take's result file and counts out of the take folder first")
 # F-8: confirmations and the ten minutes
 need17('F-8 D.3', ks('D'), 'A confirmation is exactly one of two messages', '`key revoked` is never a confirmation', 'no reply counts as `another take`', 'mean the opposite of each other')
@@ -1230,7 +1231,7 @@ if not os.environ.get('NO_NEG'):
     # negative controls for older checks (selected: row count, old text, ND range, confirmation letters, UTC pairing, banned scan not tested)
     neg('r12nd15', '15. **When the owner writes `no more takes`', '15. **Something else', 'r12 ND15 missing')
     neg('r12shred', 'Shredding does not revoke the key, and it is not reliable on every disk', 'Shredding revokes the key', 'r12 E-48 lacks')
-    neg('r12key2', 'the one that you open at `http://localhost:5678`? If it is, revoking it breaks that n8n." Reply `same key`', 'the one in your n8n? If it is, revoking it breaks that n8n." Reply `same key`', 'r12 E-48 lacks http://localhost:5678')
+    neg('r12key2', 'the one that you open at `http://localhost:5678`? If it is, revoking it breaks that n8n." Reply `same key`', 'the one in your n8n? If it is, revoking it breaks that n8n." Reply `same key`', 'r17 r12 key step F question lacks')
     neg('r12slot', 'exactly one of these four labels', 'exactly one of these labels', 'r12 E-12 lacks exactly one of these four labels')
     neg('r12call', 'The last step of the take program sends no delete request to HubSpot', 'The last step of the take program makes no delete call to HubSpot', 'delete call')
     neg('r12pw', 'Never type a password inside a command line, even if', 'Type the password on the command line if', 'r12 E-09 lacks')
