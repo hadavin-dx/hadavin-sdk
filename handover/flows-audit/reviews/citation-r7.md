@@ -6,11 +6,11 @@ Run 2026-11-16 (Mon). Tool: `python3 -I` scripts c1.py (citations), c2.py (UTC t
 
 | File | sha256 of the checked copy | Copy equals original when copied | Original at the end of the run |
 |---|---|---|---|
-| RUNBOOK.md | 8034738e0fd5874628b5971919d80c03106cc0f5a630068d1070e189c222b910 | yes | CHANGED (bef7226dd1bd5080834a48b2ae9322f961821bd32ca8aa2e271913d998992a8b): the results below are for the copy, not for the newer text |
-| TAKE-CHECKLIST.md | 0eb589ea3f4e0095cdbf68aec45454ccf3c2a30c433ef5b28465eb12111fd1af | yes | same |
-| FIX-PLAN.md | facf3c46a73bc4c96a95c3eff0d7da38c05ea18f93a168fc2175c1adeaaf4e7d | yes | same |
+| RUNBOOK.md | 8034738e0fd58746... | yes | CHANGED (bef7226dd1bd5080...): the results below are for the copy, not for the newer text |
+| TAKE-CHECKLIST.md | 0eb589ea3f4e0095... | yes | same |
+| FIX-PLAN.md | facf3c46a73bc4c9... | yes | same |
 
-Cited files (ORDERS.md 177 lines, sha256 7e55983537642dfe39b64d1e1d5e19592adaa4b2c2e2cb0bef9f58dedf0dd040; QUESTIONS.md 439 lines, sha256 706ce8361eba2b72182846f537c91887be7d01ea15a8671e7c9a32cecdcc0652) were read live; other sessions may edit them.
+Cited files (ORDERS.md 177 lines, sha256 7e55983537642dfe...; QUESTIONS.md 439 lines, sha256 706ce8361eba2b72...) were read live; other sessions may edit them.
 
 ## Failures first
 
