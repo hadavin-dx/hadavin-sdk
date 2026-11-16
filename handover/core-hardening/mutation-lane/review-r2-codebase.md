@@ -1,7 +1,0 @@
-# run.py r2 review, correctness and repo fit (egm reviewer, condensed copy), 2026-11-16
-Read-only; nothing executed. Evidence numbers confirmed against raw files: 85 PASS 0 FAIL (new-final), first run 84/1, OLD copy 30 PASS 13 FAIL (12 genuine plus weak T8), R1 code 60 PASS 25 FAIL (cascade explained).
-Major 1: MUTANTS-V2-PLAN.md and mutants-v2.json (111 ids = 53 C2 + 58 A2) target patches-ready/v2, not the v5 candidate. v5 C-01-MINIMAL has none of the symbols those mutants need; A-01 is deferred. Do not quote 53/58 as coverage of the take. v5's own evidence is 8 mutants (mutation-c01min.txt) and M1-M12 in raw/mutate-c01min.py. Add stale-for-v5 banner or regenerate. Also: line 3 says C2-52, C2-53 results exist; only C2-16 and A2-54..58 do.
-Major 2: raw/ruff-r2-after.txt cites S603 at run.py:206 and :477 but file now has :215 and :486: ruff ran on an older run.py. Re-run ruff check, ruff format --check, bash -n and sha256sum -c on final files.
-S603: repo precedent for reasoned inline noqa exists (tests/test_k5_classes.py:489, tests/demo_askdata/conftest.py:93); ruff excludes handover; bandit scans src and demos only. Recommendation: leave while in handover; lead confirms reading of "no suppressions".
-Minor: stop_orphan reads leader cmdline only, substring root match; SKIP_DIRS at any depth; FIFO hang in read_bytes/read_state; raw prefix overwrite follows symlinks; text=True strict decode; timeout output discarded; --restore exit 0 when marker under other TMPDIR; check_test_args prefix match.
-Not checked: nothing run; hashes unverified; pytest @file.

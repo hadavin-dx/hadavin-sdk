@@ -1,4 +1,0 @@
-cmd: uvx bandit -ll -q <8 touched src files>
-[manager]	WARNING	Test in comment: SafeLoader is not a test name or id, ignoring
-[manager]	WARNING	Test in comment: subclass is not a test name or id, ignoring
-bandit rc=0

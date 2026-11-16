@@ -1,5 +1,0 @@
-# test after removing the noqa lines (scratch kA = b4cce5b + v1 A-01 patch + proof file)
-$ pytest tests/test_a01_extra_proof.py
-..........                                                               [100%]
-10 passed in 1.35s
-rc=0

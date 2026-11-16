@@ -1,3 +1,0 @@
-test-helper: 1 of 1 killed
-not killed: []
-103 of 103 killed

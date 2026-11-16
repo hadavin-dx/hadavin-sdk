@@ -1,9 +1,0 @@
-blocks 2
-blk0.sh bash -n rc=0
-blk0.sh dash -n rc=0
-blk0.sh identical to tested G1.sh
-blk1.sh bash -n rc=0
-blk1.sh dash -n rc=0
-blk1.sh identical to tested G2.sh
-S10 line bash -n rc=0
-S10 line dash -n rc=0

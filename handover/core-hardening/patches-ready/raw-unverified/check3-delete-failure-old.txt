@@ -1,7 +1,0 @@
-warning: The `UV_NATIVE_TLS` environment variable is deprecated and will be removed in a future release. Use `UV_SYSTEM_CERTS` instead.
-OLD reconcile RAISED OSError disk-detail-xyz
-chain events after failed delete: 1 outbox rows: [(2,)]
-second reconcile -> 2 outbox rows: [(0,)] events: 2
-hasattr backlog: False last_corrupt: False
-OLD reconcile with bad row RAISED ValidationError
-good event drained: 0

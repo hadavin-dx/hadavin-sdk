@@ -1,1 +1,0 @@
-Request: look up record rec-001 and show it.

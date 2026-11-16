@@ -1,3 +1,0 @@
-$ /home/user/build/venv-pr76-313/bin/ruff format --check src tests demos
-324 files already formatted
-exit=0

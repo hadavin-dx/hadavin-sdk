@@ -1,6 +1,0 @@
-INVOICE INV-1001
-Supplier: Acme Widgets Ltd
-Your PO PO-77 USD
-Account Number:
-
-87654321

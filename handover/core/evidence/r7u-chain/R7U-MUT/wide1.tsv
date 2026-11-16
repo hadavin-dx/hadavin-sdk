@@ -1,7 +1,0 @@
-X01	SURVIVED-UNTIL-TIMEOUT	120s	[]	['................']	restored=True
-X05	SURVIVED-UNTIL-TIMEOUT	120s	[]	['.................']	restored=True
-X10	SURVIVED-UNTIL-TIMEOUT	120s	[]	['.................']	restored=True
-X11	SURVIVED-UNTIL-TIMEOUT	120s	[]	['.................']	restored=True
-X12	KILLED	37s	['FAILED tests/test_real_check_dry.py::test_dry_fakes_run_end_to_end - Assertio...']	['1 failed, 1 passed in 36.69s']	restored=True
-X14	KILLED	36s	['FAILED tests/test_real_check_dry.py::test_dry_fakes_run_end_to_end - Assertio...']	['1 failed, 1 passed in 36.32s']	restored=True
-X19	SURVIVED-UNTIL-TIMEOUT	120s	[]	['................']	restored=True

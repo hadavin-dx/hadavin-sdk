@@ -1,9 +1,0 @@
-# result-review-2a: egm-codebase-details round 2 (16 findings + section 4 vs code). Saved by the session; CONDENSED.
-Result: 16 of 16 supported by the code; no Blocker/Major "code says otherwise". Read limits: AUDIT-FINDINGS.md lines 215-572 only partly, MASTER-MAP.md 244-801 not read; A-03 exploitability and B-01 "separate process" need a runtime (UNVERIFIED); not opened: agent_loop 451-453, backends/table 37-38, llm/retry 100-103, llm/fake 50-53, gate.py 197-223.
-Fact mismatches (small):
-- D1-01/X-01: "dev_cfg (48 uses)" is wrong: tests/test_k3_pilot.py has 36 occurrences. Rule 21 is BRIEF-PREAMBLE.md:23 not :24.
-- D2-04: "only data/gold.jsonl exists" is inexact: data/ holds adversarial.dev.jsonl, adversarial.jsonl, exemplars.jsonl, gold.jsonl; gold.dev.jsonl and gold.test.jsonl are missing; no eval/ folder or lock.json; freeze() has no caller outside tests.
-- D3-01: owner name and path both on line 2 of the studio copy, line 3 is the bible path.
-- D3-07: CHANGELOG.md:10-11 also tells operators to rename the ledger row 0005_evidence to 0006_evidence; fix text must include it.
-Wrong lines (Nit): B-01 cli.py:287 should be 299; C-02 "~437" should be 440; X-02 budget.exhausted :154-156, reserve starts meter.py:211; k1b step "loop.py:104-109" should be 166-172.
-Section 4 friction: (1) positive price alone does not bound worst-case cost; max_tokens has no upper bound (config.py:59), plan and patch name only price. (2) A-02 "build G5 or keep text off" vs A-10 "delete dead gate lines in same change" may pull apart (unchecked whether those lines are the unported G5/G2 rules). (3) guard/producers.py:5 mentions an existing test tracking .chat( callers: check overlap before a new repo guard test. (4) A-03 fix closes only the public-argument path (tick.py:95 already passes stored decision). D2-01 "presents them as controls" is a mild stretch. D2-09 password goes via stdin, not argv (admin DSN is in argv).

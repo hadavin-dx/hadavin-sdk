@@ -1,5 +1,0 @@
-TREE CHECK after the loop
-compared: <fresh git archive b4cce5b + patches ['/home/user/hadavin-sdk/handover/core-hardening/patches-ready/v2/C-01.patch', '/home/user/hadavin-sdk/handover/core-hardening/patches-ready/v2/A-01.patch', '/home/user/hadavin-sdk/handover/core-hardening/patches-ready/v2/G5-wording.patch']> against /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/v2tree (skipping ['.pytest_cache', '.venv', '__pycache__']; symbolic links compared by target)
-declared extra files (allowed as 'only in root'): []
-differing files (0; 0 = clean): []
-marker left behind: False

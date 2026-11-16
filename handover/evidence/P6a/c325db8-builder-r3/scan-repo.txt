@@ -1,3 +1,0 @@
-$ python tools/scan_repo.py
-
-exit=0

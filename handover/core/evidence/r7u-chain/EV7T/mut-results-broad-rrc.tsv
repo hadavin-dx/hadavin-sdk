@@ -1,4 +1,0 @@
-N30	scripts/run_real_check.py	tests/test_r7s_findings.py tests/test_real_check_dry.py tests/test_r7t_findings.py	KILLED	['1 failed, 34 passed in 0.53s']
-N30	restored-byte-equal=True
-N32	scripts/run_real_check.py	tests/test_r7s_findings.py tests/test_real_check_dry.py tests/test_r7t_findings.py	KILLED	['1 failed, 44 passed in 112.03s (0:01:52)']
-N32	restored-byte-equal=True

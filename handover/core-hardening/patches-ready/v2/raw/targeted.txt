@@ -1,4 +1,0 @@
-cmd: env -i ... uv run --all-extras --group test pytest tests/test_c01_route_limits.py tests/test_a01_audit_reconcile.py tests/test_p7_tick.py tests/test_s2_audit.py tests/test_p3b_neutral_audit.py tests/warden_port/test_gate.py tests/warden_port/test_audit_chain.py -p no:cacheprovider -q
-rc=0
-.sss                                                                     [100%]
-217 passed, 3 skipped in 20.06s

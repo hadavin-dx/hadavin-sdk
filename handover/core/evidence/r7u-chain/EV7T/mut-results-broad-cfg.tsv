@@ -1,6 +1,0 @@
-N14	src/lead_desk/run_stats.py	tests/test_r7_no_replace_of_special.py tests/test_special_output_files.py tests/test_r7n_findings.py tests/test_r7t_findings.py	KILLED	['1 failed in 0.43s']
-N14	restored-byte-equal=True
-N22	src/lead_desk/config.py	tests/test_bind_refusals.py tests/test_r7h_findings.py tests/test_r7t_findings.py	KILLED	['1 failed, 22 passed in 0.90s']
-N22	restored-byte-equal=True
-N24	src/lead_desk/config.py	tests/test_bind_refusals.py tests/test_r7h_findings.py tests/test_r7t_findings.py	SURVIVED	['216 passed in 474.78s (0:07:54)']
-N24	restored-byte-equal=True
