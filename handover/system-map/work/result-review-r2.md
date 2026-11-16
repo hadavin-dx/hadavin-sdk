@@ -1,5 +1,5 @@
 # Result review round 2 (of max 2). Saved by the session lead from the reviewers' hand-backs.
-Status: codebase-details NOT YET REPORTED when this file was first written (section 4 is added when it reports).
+Status: all four reviewers reported.
 
 ## 1. Zoom-out (0 Blocker, 5 Major)
 - Z-M1: SWEEP Fix plan rows 3 and 4 (second alert channel; three roles plus a fourth identity and new scopes) are banded "before the video", against DECISION lines 14 and 16 and the refusal at ORDERS.md:197. Mark as laptop lead choice; each breaks "config only on proven flows".
@@ -33,4 +33,12 @@ Status: codebase-details NOT YET REPORTED when this file was first written (sect
 - C-M7: take, proof, the video, Hadavin, client undefined.
 - C-M8: severity cells contradict text (L1-FD-021 Blocker "lead decides"; "same:" unexplained; L2-FD-018 who decides force-push).
 
-## 4. Codebase-details: pending
+## 4. Codebase-details (2 Blocker, 4 Major, 2 misleading Nits)
+- K-B1: ONE-PLACE rows L6-J-008, 009, 020, 030, 048 say NOT-NEEDED / ARCHIVE for demos/ask-your-data, but callers exist: src/hadavin_sdk/guard/producers.py:63 and :68, pyproject.toml:29 extra askdata, ~37 files in tests/demo_askdata/, tests/test_stage_names.py:560, tests/test_ci_gitleaks_scope.py:174. Change to KEEP (or ARCHIVE blocked until those references move).
+- K-B2: rows L6-J-050 and L6-J-057 propose ARCHIVE of live gate config (.github/workflows/ci.yml:16 and :228, tools/mutation_runner.py:478; .github/dependabot.yml:10, .coderabbit.yaml:16). Rewrite as CHANGE or KEEP.
+- K-M3: L6-J-047 / L6-FD-016 call extract.py "dead" but guard/producers.py:36 and :58 register it and tests/test_s4_llm_guard.py imports it. Reword: no runtime caller, registered in guard registry.
+- K-M4: "empty in all 126 run folders" (L6-J-023, L6-FD-023, L2-FD-024) contradicted by work/L2.md:331-333 (fl45k6c logs 849/655/853 bytes). Say "most", with the counted number.
+- K-M5: Fix plan rows 1, 3, 4 band label contradicts DECISION line 16.
+- K-M6: L6-J-005 and L6-J-037 verdict NOT-NEEDED vs reason DUPLICATE / MERGE-INTO core Limits; proposal KEEP; yes column "no". Align (PLAN-002 5.3 gives DUPLICATE).
+- K-N1: Fix plan rows 13-18 cut-off action cells.
+- K-N2: L6-J-040 proposal ends "(L1-FD-016" unclosed; J-028 groups UnknownNewA/UnknownNew (mf-sub-crm-mail.json:326,358) with mf-hook, which is a different file; "MERGE-INTO mf-form" does not cover them.
