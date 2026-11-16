@@ -50,15 +50,15 @@ INTERRUPTED: none
 ## AGENTS
 | Slot | Agent | Job (read only, cold reader of work/ page) | State |
 |---|---|---|---|
-| 1 | reader | review-m6-r460.md (a342d1ed75882eb8f) | running |
-| 2 | reader | review-m8-factcheck.md (ae76ba479c4bc53a6) | running |
-| 3 | reader | review-lens-dependency.md (ac706ddedb3b6116e) | running |
-| 4 | reader | review-drift-readiness.md (a4a2cfdce4b5f974b) | running |
-| 5 | reader | plan-review-r1.md (new) | running |
-| 6 | reader | result-review-r1.md (new) | running |
-| 7 | reader | resolve-crosscheck-1.md (new) | running |
-| 8 | reader | o7-resolve-1.md (new) | running |
-Closed and digested through 1915. NEXT for me: one header fix per L-page for the 5 shared classes, plain-word rows in decision-list, three headline words in rehearsal-passed-limits-draft, banned-claims collapse, drift-report glossary. Held-page findings go to LEAD-NOTICE.
+| 1 | reader | plan-review-r1.md (a26e92e0f69c2935c) | running |
+| 2 | reader | result-review-r1.md (af10794e37556fd6f) | running |
+| 3 | reader | resolve-crosscheck-1.md (acfe7681767261c8f) | running |
+| 4 | reader | o7-resolve-1.md (ad6fdb17b1b6f681d) | running |
+| 5 | reader | o7-review-R1-codebase-r1.md (new) | running |
+| 6 | reader | o7-review-R2-design-r1.md (new) | running |
+| 7 | reader | o7-review-R4-zoomout-r2.md (new) | running |
+| 8 | reader | plan-resolve-r1.md (new) | running |
+Closed and digested through 1919. These are scratch notes; after this batch I stop reading scratch and read only deliverables. NEXT for me: legend header on each condensed note, one header fix per L-page for the 5 shared classes, plain-word rows in decision-list. Held-page findings go to LEAD-NOTICE.
 
 ## Details (long text moved from the FAILED line)
 FAILED: (1) M14 RE-RUN on core-hardening head 60338533, fresh clone: 1 failed, 9390 passed, 455 skipped (rc=1, 4 min 49 s): tests/test_repo_rules.py::test_licences_are_proprietary lists 11 problems in handover/promotion-inputs/*/LICENSE (first: apexc/LICENSE not the proprietary licence text); the earlier vendor-word failure is no longer there; owner core-hardening and the lead. (2) n8n has never run the changed flows (no Docker here); the studio lead starts Docker and runs the rehearsal (decision 12); no take date. (3) S9-5, S9-12, S9-3, S9-2 not yet applied in v5 or the scope sheet; S9-1 and S9-4 deferred, describe-only (decision 5). (4) the take-time value substitution (BL-wp6-G1) is not built. LICENCE-CAUSE (reviewer, unverified by a run): 7 LICENSE files (apexc, dealdesk, portal-kit, refunds proprietary-but-different; helios, warden, killswitch full Apache-2.0) differ from root LICENSE, plus killswitch/pyproject.toml (license Apache-2.0, other author) and portal-kit/pyproject.toml (no authors) = 10 of 11 problems; the 11th not found. Fix = copy root LICENSE over them and set license/authors; the owner must confirm the right to relicense the Apache ones first. core-hardening's files; not touched by system-map.
