@@ -3,7 +3,7 @@ For the lead only (the lead is the Claude session that gives the orders and does
 
 Written Mon 16 Nov 2026 (first version about 09:15 UTC / 14:45 IST), by the system-map session from the other sessions' files; page updated 2026-11-16 (date only; this is NOT the L-01 stamp, which is the line that starts "STAMP:" in LP-5). Made-up data only. A number or claim taken from another file shows its source as file:line or section.
 
-**L-01: the owner's reply (the exact rules are in LP-5).** The table of what each reply does is in OWNER-VIEW (before row 8) and on the L-01 page, the same table in both; if a table and a rule block differ, the rule block rules. The owner may paste a line from the lead's printed request, alone in its message. After every reply the lead tells the owner once, in the chat, whether it counted as an approval, counted as a refusal, or counted as nothing, and why. The L-01 page starts with a one-page Decision summary for the owner.
+**L-01: the owner's reply (the exact rules are in LP-5).** The table of what each reply does is in OWNER-VIEW (before row 8) and on the L-01 page, the same table in both; if a table and a rule block differ, the rule block rules. The owner may paste a line from the lead's printed request, alone in its message. After every reply the lead tells the owner once, in the chat, whether it counted as an approval, counted as a refusal, or counted as nothing, and why. The L-01 page starts with a Decision summary for the owner (about 1340 words) that stands alone.
 
 The list of look-alike messages, with what each is and is not, is in OWNER-VIEW (before row 8) and on the L-01 page (the same table in both); the lead must not treat any of them as another.
 
