@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T14:18:01Z
-PUSHED_UTC: 2026-11-16T14:18:01Z
+UPDATED_UTC: 2026-11-16T14:18:39Z
+PUSHED_UTC: 2026-11-16T14:18:39Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
@@ -45,10 +45,10 @@ INTERRUPTED: none
 ## AGENTS
 | agent id | purpose | started (UTC) | expected end | state | what it produced so far |
 |---|---|---|---|---|---|
-| (new) | sixth read of open-items-table | 2026-11-16T14:18Z | +5 min | running | nothing yet |
+| ad37f69470665cd7b | read GLOSSARY after Unknown-list rewrite | 2026-11-16T14:18Z | +5 min | running | nothing yet |
 
-CAPACITY: 1 running. Reason for the 7 missing slots: every owned page has had three to six reads and findings now need facts only the studio lead has; open work is my own edits. Digested through 1446.
-NEXT 5: GLOSSARY Unknown list, BRIEF-EVIDENCE-1/2, evidence-1/2 reruns, premortem-r1/critical-path-r1, decision-list C options and A3/A9/E9 rows.
+CAPACITY: 1 running. Reason for the 7 missing slots: every owned page has had three to six reads and findings now need facts only the studio lead has; open work is my own edits. Digested through 1447.
+NEXT 5: BRIEF-EVIDENCE-1/2, evidence-1/2 reruns, premortem-r1/critical-path-r1, decision-list C options and A3/A9/E9 rows, run-day-card-draft-v2 hold line.
 
 Words: UTC = world time; IST = UTC plus 5 h 30 min. Cold read = an agent reads one page with no background and lists what it cannot follow. Held = a finding on a page that belongs to the lead, which I do not edit.
 

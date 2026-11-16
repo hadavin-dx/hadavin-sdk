@@ -35,61 +35,10 @@ Written Mon 16 Nov 2026 by the system-map session. Only meanings found in files 
 - **Severity** in a finding row: the lane's own label; the lead session has confirmed none.
 
 ## Unknown terms: do not use in new text
-SWEEP.md is a held page (see Files), not an unknown. Every term below has meaning not recorded, who to ask: the lead session (it passes studio terms to the studio lead). Job keys: STORE to OTHER. Claim types: dead, idle, ops. L6 verdict words: OWNER to NOT-NEEDED. Where each term was seen is in the page that uses it.
-
-| term | meaning | who to ask |
-|---|---|---|
-| D-04 | not recorded | lead session |
-| D-05 | not recorded | lead session |
-| F-008 | not recorded | lead session |
-| LP-n | not recorded | lead session |
-| GO-1 | not recorded | lead session |
-| k1b | not recorded | lead session |
-| KeyOk | not recorded | lead session |
-| Claim | not recorded | lead session |
-| WARDEN | not recorded | lead session |
-| film-v5 / real-v5 | not recorded | lead session |
-| Mode A | not recorded | lead session |
-| WP6 P11 | not recorded | lead session |
-| D1 order | not recorded | lead session |
-| K1 to K6 | not recorded | lead session |
-| go1/v3/v4 | not recorded | lead session |
-| desk | not recorded | lead session |
-| rig | not recorded | lead session |
-| ONE-PLACE-TABLE | not recorded | lead session |
-| ORDER 002 | not recorded | lead session |
-| PLAN section 5.2 | not recorded | lead session |
-| C1 | not recorded | lead session |
-| K1b | not recorded | lead session |
-| P3 | not recorded | lead session |
-| design 12 | not recorded | lead session |
-| the spike | not recorded | lead session |
-| smk_count | not recorded | lead session |
-| drive.py | not recorded | lead session |
-| STOP class | not recorded | lead session |
-| F8 | not recorded | lead session |
-| freeze input | not recorded | lead session |
-| A4 | not recorded | lead session |
-| A13 | not recorded | lead session |
-| fill_flows.py | not recorded | lead session |
-| STORE | not recorded | lead session |
-| RETRY | not recorded | lead session |
-| NOTICE | not recorded | lead session |
-| FILTER | not recorded | lead session |
-| COUNTER | not recorded | lead session |
-| LOG | not recorded | lead session |
-| OTHER | not recorded | lead session |
-| dead | not recorded | lead session |
-| idle | not recorded | lead session |
-| ops | not recorded | lead session |
-| OWNER | not recorded | lead session |
-| NEEDED | not recorded | lead session |
-| CRM-COULD-DO | not recorded | lead session |
-| DUPLICATE | not recorded | lead session |
-| NOT-NEEDED | not recorded | lead session |
-| stand-in | not recorded | lead session |
-| refusal | not recorded | lead session |
-| Route config | not recorded | lead session |
+SWEEP.md is a held page (see Files), not an unknown. Each term below has meaning NOT RECORDED in any file; ask the lead session (it passes studio terms to the studio lead). Where each term was seen is in the page that uses it.
+- Ids and names: D-04 (its meaning is in decision-list-for-lead.md: a lead sent twice is processed once), D-05, F-008, LP-n, GO-1, k1b, K1b, KeyOk, WARDEN, F8, A4, A13, C1, P3, design 12, the spike, smk_count, drive.py, fill_flows.py, STOP class, freeze input, stand-in, refusal, Route config, desk, rig.
+- Versions and phases: film-v5 / real-v5, Mode A, WP6 P11, D1 order, K1 to K6, go1/v3/v4, ONE-PLACE-TABLE, ORDER 002, PLAN section 5.2.
+- Job keys (words in a job list): STORE, RETRY, NOTICE, FILTER, COUNTER, LOG, OTHER. Claim types: dead, idle, ops. L6 verdict words: OWNER, NEEDED, CRM-COULD-DO, DUPLICATE, NOT-NEEDED. Claim (as a flow step) is explained in work/not-checked-r2.md Terms.
 
 ## Lanes (one line each)
 L1, L2, L3, L4, L5 and L6 are the lane names. Each lane page (work/L<n>*.md) says in its own first lines what it covers; this glossary does not repeat that. L5a/L5b is a split of L5 that tools/partition.py must still apply (UNVERIFIED, from a hand-back).
