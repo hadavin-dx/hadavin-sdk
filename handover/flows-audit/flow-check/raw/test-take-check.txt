@@ -268,3 +268,26 @@ ok   reviewer line [no] 'Pat Smith, 2026-11-16, read with Gemini 9' reason has '
 ok   reviewer line [no] 'Pat y, 2026-11-16' reason has 'rule: name word too short' (got exit 1: REFUSED (rule: name word too short): every word of the name needs at least 2 letters (a si)
 ok   reviewer line [ok] '張伟, 2026-11-16'  (got exit 0: ok)
 ok   reviewer line [ok] 'Ortega y Gasset, 2026-11-16'  (got exit 0: ok)
+ok   reviewer line [ok] 'Pat Smith y Jones, 2026-11-16'  (got exit 0: ok)
+ok   reviewer line [ok] 'میلان‌الحسینی, 2026-11-16'  (got exit 0: ok)
+ok   reviewer line [ok] 'A. Jones, 2026-11-16'  (got exit 0: ok)
+ok   reviewer line [ok] 'Pat J., 2026-11-16'  (got exit 0: ok)
+ok   reviewer line [ok] 'Pat Smith, 2026-11-16, no LLM used'  (got exit 0: ok)
+ok   reviewer line [no] 'Pat Smith, 2026-11-16, an LLM read it' reason has 'rule: listed word llm' (got exit 1: REFUSED (rule: listed word llm): the note contains the whole word 'llm', which is on the l)
+ok   reviewer line [no] 'Pat Llamas, 2026-11-16' reason has 'rule: listed word llama' (got exit 1: REFUSED (rule: listed word llama): the name contains 'llamas', which is the listed word 'l)
+ok   reviewer line [no] 'Pat Alexa, 2026-11-16, read all lines' reason has 'rule: listed word alexa' (got exit 1: REFUSED (rule: listed word alexa): the name contains the whole word 'alexa', which is on t)
+ok   reviewer line [no] 'Pat Smith, 2026-11-16, jenkins read it' reason has 'rule: listed word jenkins' (got exit 1: REFUSED (rule: listed word jenkins): the note contains the whole word 'jenkins', which is )
+ok   reviewer line [no] 'Pat Smith, 2026-11-16, lead to confirm' reason has 'rule: lead to confirm' (got exit 1: REFUSED (rule: lead to confirm): the line says the lead still has to confirm it)
+ok   reviewer line: exactly 275 word-check cases ran (ran 275, listed 275)
+ok   word list: take_check.sh --reviewer-words prints six lines and exits 0 (got exit 0)
+ok   word list: README has this line exactly as take_check.sh prints it: Words refused in the name and in the note: claude claudebot ...
+ok   word list: README has this line exactly as take_check.sh prints it: Words refused in the name only: name nobody someone anonymou...
+ok   word list: README has this line exactly as take_check.sh prints it: Word pairs refused in the name only (two words in a row, an ...
+ok   word list: README has this line exactly as take_check.sh prints it: Tool names that are also real names: refused in the note, an...
+ok   word list: README has this line exactly as take_check.sh prints it: Words refused in the name and in the note, except that the n...
+ok   word list: README has this line exactly as take_check.sh prints it: Phrases in the note that say the lines were not read (regula...
+ok   word list: run_all.sh holds no copy of the list or of its rules (no line with three listed words, no stand-in test name, no REVIEWER_ variable) 
+ok   word list: the copy detector flags the old run_all.sh line (so the check above can fail)
+ok   word list: the copy detector flags the old stand-in name line
+ok   word list: take_check.sh --standin-name prints the stand-in name and run_all.sh asks for it (got 'Testonly Runall')
+ok   word list: run_all.sh asks take_check.sh for the pin line check and for the printable text
