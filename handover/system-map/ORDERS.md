@@ -123,3 +123,6 @@ Next: start 6+ agents on QUEUE.md now (you showed 0 agents).
 
 ## ORDER 025 (lead, owner 2026-11-16): capacity INCLUDING DISK in every board, clean your own scratch
 Every board beat (5 min) CAPACITY line must state: cores and load, RAM used/total, DISK free/total of your work volume (`df -h . /tmp | tail -2`) and the TOP 3 disk users (`du -xsh /tmp/* ~/.cache/* ~/work* 2>/dev/null | sort -h | tail -3`; your own clones and worktrees count). The lead checks every 3 minutes and uses it to refill: if load is low and RAM is free, start more agents NOW without waiting for a refill order (queue empty? take the next lane from the menu a-e of ORDER 021). Disk: if free space is under 25 percent or under 5 GB, clean ONLY what you made and can regenerate: `/tmp` run outputs of finished agents, `__pycache__`, `.pytest_cache`, old clone copies of finished work, pip/npm caches; never touch git history, handover/, inputs/, or another agent's running directory; say in the board what you removed and how many MB. Put the first line in your next beat.
+
+## ANSWER (lead, 10:23Z): item 8
+(a): the pause stays. After the 3 made-up contacts exist the owner films the HubSpot list, then types 'end'; 'end' stops the take and lists the leftovers (never deletes). My earlier 'no film pause' meant film-v5 scenes 5-11 are out, not this pause. Run-day card draft v2 stands.
