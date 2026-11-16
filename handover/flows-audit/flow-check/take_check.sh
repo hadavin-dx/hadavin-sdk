@@ -61,16 +61,30 @@ python3 -I "${TAKE_CHECK_CK:-$HERE/check_flows.py}" "$D" "${DDLOPT[@]}" "${PCOPT
   --quiet-info > "$OUT" 2>&1
 RC=$?
 PROBLEMS=()   # things this script itself found wrong (each one makes the exit status 4 when the checker exited 0)
+if [ ${#OVR[@]} -gt 0 ]; then
+  OVRTXT="ACTIVE ENVIRONMENT OVERRIDES: ${OVR[*]}"
+  if [ "${TAKE_CHECK_TEST:-}" = 1 ]; then OVRTXT="$OVRTXT (test flag TAKE_CHECK_TEST=1 is set: this is a test run, not a take check)"; else OVRTXT="$OVRTXT (NOT allowed outside tests: this script exits 4)"; PROBLEMS+=("environment override(s) without the test flag"); fi
+else
+  OVRTXT="OVERRIDES: none"
+fi
+FLOWSTXT="Flows folder checked: $D"; [ -n "$FLOWSARG" ] && FLOWSTXT="$FLOWSTXT (given with --flows)"
 echo "=== NOTHING RAN IN n8n. Import of these files into n8n was never tried. ==="
+echo "$OVRTXT"
+echo "$FLOWSTXT"
 if [ "$RC" -ge 2 ]; then
   echo "=== THE CHECKER DID NOT GIVE A VERDICT (its exit status is $RC: 2 = started wrongly, 3 = broke). Nothing below says anything about the flows. ==="
   cat "$OUT"
-  echo "FINAL: take_check exit status $RC. exit 0 would have meant: no definite fault in the files; NOTHING ran in n8n. The checker gave no verdict; open items: unknown."
+  echo "FINAL: take_check exit status $RC. $OVRTXT. exit 0 would have meant: no definite fault in the files; NOTHING ran in n8n. The checker gave no verdict; open items: unknown."
   exit "$RC"
 fi
 echo "=== READ THIS BLOCK BEFORE ANYTHING ELSE ==="
 echo "--- (1) The lead table and the column check ---"
+cnt() { grep -c -E -- "$1" "$OUT"; }   # N3: a closing-block line must appear exactly once (a flow text that imitates it must not win by being first)
+if [ ${#DDLOPT[@]} -gt 0 ] && [ "$(cnt '^SQL columns compared with the --ddl file:')" != 1 ]; then PROBLEMS+=("closing line 'SQL columns compared' not exactly once"); fi
+[ "$(cnt '^RESULT: ')" -le 1 ] || PROBLEMS+=("line 'RESULT:' seen more than once")
+[ "$(cnt '^Known open problems: ')" -le 1 ] || PROBLEMS+=("line 'Known open problems' seen more than once")
 QN=$(sed -n 's/^SQL columns compared with the --ddl file: \([0-9][0-9]*\) query string.*/\1/p' "$OUT" | head -n 1)
+UNCMP=$(sed -n 's/^SQL NOT COMPARED: query strings read but not compared[^=]*=\([0-9]*\);.*/\1/p' "$OUT" | head -n 1)
 COLW=$(sed -n 's/^SQL WARNS: column WARNs=\([0-9]*\) .*/\1/p' "$OUT" | head -n 1)
 TBLW=$(sed -n 's/^SQL WARNS: .* table WARNs=\([0-9]*\) .*/\1/p' "$OUT" | head -n 1)
 NOQ=$(sed -n 's/^SQL WARNS: .*(not compared)=\([0-9]*\).*/\1/p' "$OUT" | head -n 1)
@@ -78,13 +92,13 @@ if [ ${#DDLOPT[@]} -eq 0 ]; then
   echo "!!! THE TABLE FILE IS MISSING: demo/n8n-flows-v4/mf_leads.sql was not found, so the column names in the SQL steps were NOT checked. On the older table the alert steps fail on every run and no alert is sent. This script exits 4."
   PROBLEMS+=("table file missing")
 else
-  echo "Table definition used for the column check: demo/n8n-flows-v4/mf_leads.sql (the take needs THAT table, with the four alert columns, not the older one in demo/n8n-flows)."
-  echo "Query strings read: ${QN:-unknown}. Column WARNs: ${COLW:-unknown}. Table WARNs: ${TBLW:-unknown}. Postgres steps with no query text (not compared): ${NOQ:-unknown}."
+  echo "Table definition used for the column check: $DDL (the take needs demo/n8n-flows-v4/mf_leads.sql, with the four alert columns, not the older one in demo/n8n-flows)."
+  echo "Query strings read AND compared: ${QN:-unknown}. Query strings read but NOT compared (no table name, only {{ }}): ${UNCMP:-unknown}. Column WARNs: ${COLW:-unknown}. Table WARNs: ${TBLW:-unknown}. Postgres steps with no query text (not compared): ${NOQ:-unknown}."
   if [ -z "$QN" ] || [ "$QN" -eq 0 ]; then
     echo "!!! 0 QUERY STRINGS WERE READ (or the count line is missing): NO column was compared. This script exits 4."
     PROBLEMS+=("0 queries read")
   fi
-  if [ "${COLW:-1}" -gt 0 ] || [ "${TBLW:-1}" -gt 0 ] || [ "${NOQ:-1}" -gt 0 ]; then
+  if [ "${COLW:-1}" -gt 0 ] || [ "${TBLW:-1}" -gt 0 ] || [ "${NOQ:-1}" -gt 0 ] || [ "${UNCMP:-1}" -gt 0 ]; then
     echo "!!! A COLUMN OR TABLE IS MISSING, or a step was not compared (counts above, WARN lines further down): the alert or lead steps would fail on every run. This script exits 4."
     PROBLEMS+=("column/table WARN")
   fi
@@ -121,6 +135,8 @@ for p in files:
         print(f"{fn}: saveDataSuccessExecution={got[0]!r} saveDataErrorExecution={got[1]!r} saveManualExecutions={got[2]!r}")
 PYEOF
 )
+SBRC=$?   # N2: a helper that crashed must not look like "nothing wrong"
+if [ "$SBRC" -ne 0 ]; then echo "!!! THE RUN-SAVING HELPER FAILED (exit status $SBRC): run saving was not checked exactly. This script exits 4."; PROBLEMS+=("run-saving helper failed"); fi
 if [ -n "$SAVEBAD" ]; then
   echo "!!! RUN SAVING IS NOT EXACTLY all / all / True (successful runs, failed runs, runs started by hand) ON EVERY FLOW EXCEPT THE RECOVERY FLOW: the run list in n8n would be empty or undefined. Only the recovery flow (mf-recovery.json, ACCEPTED below) may differ. This script exits 4."
   printf '%s\n' "$SAVEBAD" | sed 's/^/    /'
@@ -146,20 +162,18 @@ echo "If n8n on the filming machine blocks environment-variable access inside st
 RESULTLINE=$(grep -h -E '^RESULT: ' "$OUT" | head -n 1)
 WARNN=$(sed -n 's/^RESULT: [0-9][0-9]* FAIL, \([0-9][0-9]*\) WARN.*/\1/p' "$OUT" | head -n 1)
 UNVN=$(grep -E "^WARN" "$OUT" | grep -c -F "n8n rule UNVERIFIED")
-NORM=$(mktemp /tmp/take-warns.XXXXXX) || exit 3
-trap 'rm -f -- "$OUT" "$NORM"' EXIT
 python3 -I - "$OUT" "$D" > "$NORM" <<'PYEOF'
 import sys
 out, d = sys.argv[1], sys.argv[2]
 lines = [l.rstrip("\n").replace(d + "/", "") for l in open(out, encoding="utf-8", errors="replace") if l.startswith("WARN")]
 print("\n".join(sorted(lines)))
 PYEOF
-if [ -n "$WRITEPIN" ]; then
-  { echo "# expected WARN lines of the take check (folder path removed, sorted); a person read each one; written by take_check.sh --write-warn-pin"; cat "$NORM"; } > "$WRITEPIN" || exit 3
-  echo "WARN set written to $WRITEPIN ($(grep -c . "$NORM") lines)."
-fi
+NRC=$?
+if [ "$NRC" -ne 0 ]; then echo "!!! THE WARN-LINE HELPER FAILED (exit status $NRC): the WARN set was not read. This script exits 4."; PROBLEMS+=("warn helper failed"); fi
+grep . "$NORM" | LC_ALL=C sort > "$NORM.now"
 echo "--- (6) Checker result and the WARN baseline ---"
 echo "${RESULTLINE:-RESULT line missing}. WARN lines that rest on an n8n rule nobody verified: $UNVN."
+PINNED=0
 if [ -z "$WARNN" ]; then
   echo "!!! THE CHECKER'S RESULT LINE IS MISSING: the WARN count is unknown. This script exits 4."
   PROBLEMS+=("result line missing")
@@ -167,16 +181,41 @@ elif [ ! -f "$PIN" ]; then
   echo "!!! THE WARN BASELINE FILE IS MISSING ($PIN): a new WARN (for example a disabled node, an unwired error output) could not be seen. This script exits 4."
   PROBLEMS+=("warn pin missing")
 else
-  grep -v -E '^#' "$PIN" | grep . | sort > "$NORM.pin"
-  grep . "$NORM" > "$NORM.now"
+  grep -v -E '^#' "$PIN" | grep . | LC_ALL=C sort > "$NORM.pin"
+  PINNED=$(grep -c . "$NORM.pin")
+  PINHASH=$(sha256sum < "$NORM.pin" | cut -d' ' -f1)
+  HDRHASH=$(sed -n 's/^# sha256 of the WARN lines below[^:]*: \([0-9a-f]\{64\}\)$/\1/p' "$PIN" | head -n 1)
+  HDRDATE=$(sed -n 's/^# date (UTC): \([0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}\)$/\1/p' "$PIN" | head -n 1)
+  if [ -z "$HDRDATE" ]; then echo "!!! THE PIN HEADER HAS NO DATE ('# date (UTC): YYYY-MM-DD'): nobody can tell when a person read these WARN lines. This script exits 4."; PROBLEMS+=("pin has no date"); fi
+  if [ -z "$HDRHASH" ]; then echo "!!! THE PIN HEADER HAS NO SHA-256 LINE: a hand edit of the pin cannot be seen. This script exits 4."; PROBLEMS+=("pin has no hash")
+  elif [ "$HDRHASH" != "$PINHASH" ]; then echo "!!! THE PIN FILE DOES NOT MATCH ITS OWN SHA-256 (header $HDRHASH, lines $PINHASH): it was edited after a person read it. This script exits 4."; PROBLEMS+=("pin hash differs"); fi
+  echo "Pinned WARN lines: $PINNED (pin dated ${HDRDATE:-unknown}, sha256 ${PINHASH:0:16}...). They stand for KNOWN DEFECTS and open decisions that a person read and accepted (for example: a missing answer to the caller when a step fails, steps that turn an error into normal-looking data, IF branches that lead nowhere, ids still to be filled). They are NOT fixed; exit 0 hides none of them."
   if cmp -s "$NORM.pin" "$NORM.now"; then
     echo "WARN set equals the pinned set ($(grep -c . "$NORM.now") lines in take-warns.pin): no new and no vanished WARN."
   else
-    echo "!!! THE WARN SET CHANGED against take-warns.pin (+ new, - gone). Read each line; if all are intended, write a new pin with: bash take_check.sh --write-warn-pin FILE. This script exits 4."
+    echo "!!! THE WARN SET CHANGED against take-warns.pin (+ new, - gone). Read each line; if all are intended, write a NEW pin file with: bash take_check.sh --write-warn-pin NEWFILE (the run then exits 4 on purpose; install the file by hand, see README). This script exits 4."
     diff "$NORM.pin" "$NORM.now" | grep -E '^[<>]' | sed -e 's/^> /  + /' -e 's/^< /  - /' | cut -c1-260
     PROBLEMS+=("warn set changed")
   fi
-  rm -f -- "$NORM.pin" "$NORM.now"
+fi
+if [ -n "$WRITEPIN" ]; then
+  # B1: written only after the comparison above, only when the checker found no FAIL and gave a RESULT line, into a file that did not exist; the run never counts as a pass
+  if [ "$RC" -ne 0 ] || [ -z "$WARNN" ]; then
+    echo "!!! NO PIN WRITTEN: the checker found a FAIL or gave no RESULT line, so this WARN set is not worth pinning. This script exits ${RC/0/4}."
+    PROBLEMS+=("pin not written")
+  else
+    DATE=$(date -u +%Y-%m-%d)
+    NEWHASH=$(sha256sum < "$NORM.now" | cut -d' ' -f1)
+    if ( set -C; { echo "# expected WARN lines of the take check (folder path removed, sorted); a person read each one; written by take_check.sh --write-warn-pin"; echo "# date (UTC): $DATE"; echo "# sha256 of the WARN lines below (LC_ALL=C sort, one per line): $NEWHASH"; cat "$NORM.now"; } > "$WRITEPIN" ) 2>/dev/null; then
+      echo "NEW PIN WRITTEN to $WRITEPIN ($(grep -c . "$NORM.now") lines). It is NOT in use. Difference against the pin in use (+ new, - gone):"
+      diff "$NORM.pin" "$NORM.now" 2>/dev/null | grep -E '^[<>]' | sed -e 's/^> /  + /' -e 's/^< /  - /' | cut -c1-260
+      echo "A person must read every line, then install it by hand (cp NEWFILE take-warns.pin next to this script) and commit it. This run exits 4: writing a pin is never a pass."
+      PROBLEMS+=("new pin written, not installed")
+    else
+      echo "!!! COULD NOT WRITE $WRITEPIN (it appeared meanwhile or the folder cannot be written). This script exits 4."
+      PROBLEMS+=("pin not written")
+    fi
+  fi
 fi
 echo "=== end of top block; full checker output follows ==="
 cat "$OUT"
@@ -184,5 +223,5 @@ KNOWN=$(sed -n 's/^Known open problems: \([0-9][0-9]*\).*/\1/p' "$OUT" | head -n
 OPEN=$(( ${KNOWN:-0} + 1 + ${#PROBLEMS[@]} ))   # the checker's own count, the psql gate (always a person's step), what this script found wrong (a missing key check is one of those)
 if [ "$RC" -eq 0 ] && [ ${#PROBLEMS[@]} -gt 0 ]; then RC=4; fi
 echo "Open items counted: checker known open problems ${KNOWN:-0} + psql gate 1 + problems of this script ${#PROBLEMS[@]} (entry flows without the key check: $NOKEY, counted inside the problems)."
-echo "FINAL: take_check exit status $RC. ${RESULTLINE:-RESULT line missing}. exit 0 = no definite fault in the files; NOTHING ran in n8n; open items: $OPEN. (1 = fault in a file, 4 = table check missing or failed.) This is not a pass for filming."
+echo "FINAL: take_check exit status $RC. ${RESULTLINE:-RESULT line missing}. $PINNED pinned WARN lines stand for known defects that are not fixed. $OVRTXT. exit 0 = no definite fault in the files; NOTHING ran in n8n; open items: $OPEN. (1 = fault in a file, 4 = table check missing or failed, or a check of this script failed.) This is not a pass for filming."
 exit $RC

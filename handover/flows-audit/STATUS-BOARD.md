@@ -1,17 +1,17 @@
-UPDATED_UTC: 2026-11-16T11:34:03Z
+UPDATED_UTC: 2026-11-16T11:35:11Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
 BOOT_ID: e78580c0
 ITEMS_TOTAL: 12
-ITEMS_OPEN: 10
+ITEMS_OPEN: 11
 PERCENT: 95
 AGENTS_RUNNING: 8
-CAPACITY: 0.49 load of 4 cores, mem 0/15 GB, RAM 895/16087 MB, disk 26G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 1.8G /tmp/claude-0 , agents 8 (light+heavy per list)
+CAPACITY: 0.26 load of 4 cores, mem 0/15 GB, RAM 907/16087 MB, disk 26G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 1.8G /tmp/claude-0 , agents 8 (light+heavy per list)
 INTERRUPTED: none
 FAILED: FAILED: ruff format --check failed (17 files); my 16 files now formatted; inputs/plan-wp6-resmoke-v5.md is the lead's (1 left). ruff check has 53 lint errors in my tools: lint fixer running. F8 r10 Blocker: pin rewrite self-approves, fixer running
-NEXT: 8 lanes running per ORDER 030
-PUSHED_UTC: 2026-11-16T11:34:03Z
+NEXT: 8 lanes; lead readiness says No: runbook + Q27 inputs
+PUSHED_UTC: 2026-11-16T11:35:11Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -30,14 +30,14 @@ PUSHED_UTC: 2026-11-16T11:34:03Z
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | % | state | last output |
 |---|---|---|---|---|---|---|---|---|
-| aa10943 | F8 fixer r10 | sonnet | 1 Blocker 7 Majors + ruff format | 11:42 | 12:20 | 40 | running | flow-check/fix-f8-r10.md
-| a49155e | lint fixer | sonnet | 53 ruff check errors in my tools | 11:50 | 12:15 | 20 | running | fix-lint.md
-| a31d0a4 | owner sheet stranger read | sonnet | comprehension read | 11:50 | 12:00 | 20 | running | (inline)
-| ad99254 | contradiction check | sonnet | files vs DECISIONS Q25 Q26 | 11:50 | 12:00 | 20 | running | (inline)
-| a0c7782 | FIX-PLAN citation check | sonnet | cites and counts | 11:50 | 12:05 | 20 | running | (inline)
-| a34c4a2 | lead readiness read | sonnet | could lead execute sheet+checklist | 11:50 | 12:05 | 20 | running | (inline)
-| a60684e | RW/CT adversarial read | sonnet | design review after Q25 | 11:55 | 12:10 | 5 | running | (inline)
-| a4949e3 | TAKE-CHECKLIST fixer r2 | sonnet | 15 Majors of stranger read r2 | 11:56 | 12:10 | 5 | running | fix-checklist3.md
+| aa10943 | F8 fixer r10 | sonnet | 1 Blocker 7 Majors + ruff format | 11:42 | 12:20 | 50 | running | flow-check/fix-f8-r10.md
+| a49155e | lint fixer | sonnet | 53 ruff check errors in my tools | 11:50 | 12:15 | 40 | running | fix-lint.md
+| a31d0a4 | owner sheet stranger read | sonnet | comprehension read | 11:50 | 12:00 | 40 | running | (inline)
+| a0c7782 | FIX-PLAN citation check | sonnet | cites and counts | 11:50 | 12:05 | 40 | running | (inline)
+| a60684e | RW/CT adversarial read | sonnet | design review after Q25 | 11:55 | 12:10 | 30 | running | (inline)
+| a4949e3 | TAKE-CHECKLIST fixer r2 | sonnet | 15 Majors of stranger read r2 | 11:56 | 12:10 | 30 | running | fix-checklist3.md
+| a7442b7 | RUNBOOK writer | sonnet | merged order with commands, time boxes | 12:00 | 12:20 | 5 | running | fix-runbook.md
+| a92c85c | contradiction fixer | sonnet | fix FIX-PLAN/REPORT/QUESTIONS | 12:01 | 12:15 | 5 | running | fix-contra1.md
 
 ## LOST OR INTERRUPTED (cumulative: keep every row until the lead writes ACK in the last column)
 | agent | what it was doing | cause | restarted? new id | ACK by lead |

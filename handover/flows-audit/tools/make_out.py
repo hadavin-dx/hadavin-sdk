@@ -3,12 +3,13 @@
 Names: path relative to handover/demo, '/' -> '__', '.json' stripped. Diff: diff__<a>__TO__<b>.txt.
 Writes ONLY under handover/flows-audit/tools/out."""
 
+import contextlib
+import io
 import os
-import subprocess
-import sys
+
+import dump_nodes
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-T = os.path.join(HERE, "dump_nodes.py")
 DEMO = os.path.join(HERE, "..", "..", "demo")
 OUT = os.path.join(HERE, "out")
 SUCC = {
@@ -26,8 +27,18 @@ SUCC = {
 }
 
 
+class Result:
+    def __init__(self, returncode, stdout):
+        self.returncode = returncode
+        self.stdout = stdout
+
+
 def run(*a):
-    return subprocess.run([sys.executable, T, *a], capture_output=True, text=True, cwd=DEMO)
+    """Run dump_nodes.py in this process (same code, same output) from the demo folder."""
+    buf = io.StringIO()
+    with contextlib.chdir(DEMO), contextlib.redirect_stdout(buf):
+        rc = dump_nodes.main(list(a))
+    return Result(rc, buf.getvalue())
 
 
 def nm(p):
@@ -36,12 +47,15 @@ def nm(p):
 
 os.makedirs(OUT, exist_ok=True)
 c = run("counts", ".")
-open(os.path.join(OUT, "counts.txt"), "w").write(c.stdout)
+with open(os.path.join(OUT, "counts.txt"), "w") as fh:
+    fh.write(c.stdout)
 files = [l.split(" ", 1)[1] for l in c.stdout.splitlines() if l[:1].isdigit()]
 for f in files:
     r = run("table", f)
-    assert r.returncode == 0, f
-    open(os.path.join(OUT, nm(f) + ".md"), "w").write(r.stdout)
+    if r.returncode != 0:
+        raise RuntimeError(f"dump_nodes table {f} failed with exit code {r.returncode}")
+    with open(os.path.join(OUT, nm(f) + ".md"), "w") as fh:
+        fh.write(r.stdout)
 n = 0
 for f in files:
     d, b = os.path.split(f)
@@ -56,8 +70,7 @@ for f in files:
     if f == "n8n-table-screen/mf-table-screen.json":
         pairs.append("n8n-table-screen-v2/mf-table-screen-v2.json")
     for g in pairs:
-        open(os.path.join(OUT, f"diff__{nm(f)}__TO__{nm(g)}.txt"), "w").write(
-            run("diff", f, g).stdout
-        )
+        with open(os.path.join(OUT, f"diff__{nm(f)}__TO__{nm(g)}.txt"), "w") as fh:
+            fh.write(run("diff", f, g).stdout)
         n += 1
 print(len(files), "tables;", n, "diffs")

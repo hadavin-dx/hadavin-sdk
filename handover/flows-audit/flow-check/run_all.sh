@@ -72,7 +72,7 @@ FC_OUT="${FC_OUT:-$W/selftest-out}" python3 -I "$HERE/selftest.py" "$D/n8n-flows
 T2=$(date +%s)
 # the take script itself: exit 0 and the lines the owner must see (a missing line sets this script's exit status to 1)
 # the take runs on the PATCHED copy (F-002 and F-008 applied, lead answers Q17-4 and Q18): exit 0 required, and the run-saving block must hold ACCEPTED lines only (no WARN)
-TAKE_CHECK_FLOWS="${RUN_ALL_TAKE_FLOWS:-$W/g/real}" bash "$HERE/take_check.sh" > "$RAW/take-check.txt" 2>&1; TC=$?
+bash "$HERE/take_check.sh" --flows "${RUN_ALL_TAKE_FLOWS:-$W/g/real}" > "$RAW/take-check.txt" 2>&1; TC=$?   # --flows is the documented way; no environment override is used for the take itself (round 10, M1)
 TCMISS=""   # set BEFORE the first use below (round 7 fix: it used to be set after the first two checks, so a failing take script ended this script with "TCMISS: unbound variable" and the first two checks were thrown away)
 # the FINAL line of take_check.sh must print the same number as its real exit status (a line that always says 0 would hide a failure)
 grep -q -F "FINAL: take_check exit status $TC." "$RAW/take-check.txt" || TCMISS="$TCMISS [FINAL line does not print exit status $TC]"
@@ -100,7 +100,7 @@ for p in glob.glob(sys.argv[1] + "/*.json"):
 PYEOF
 tcfail() { # name expected-line env-assignments...
   nm=$1; want=$2; shift 2
-  env "$@" bash "$HERE/take_check.sh" > "$RAW/take-check-$nm.txt" 2>&1; x=$?
+  env TAKE_CHECK_TEST=1 "$@" bash "$HERE/take_check.sh" > "$RAW/take-check-$nm.txt" 2>&1; x=$?   # TAKE_CHECK_TEST=1: the documented test flag that allows environment overrides (round 10, M1)
   [ "$x" = 4 ] && grep -q -F -- "$want" "$RAW/take-check-$nm.txt" && grep -q -F "FINAL: take_check exit status 4." "$RAW/take-check-$nm.txt" || TCMISS="$TCMISS [take_check $nm: want exit 4, the FINAL line with 4 and '$want', got exit $x]"
 }
 # Q18: the take on the patched copy with ONE run-saving fault planted: each must be exit 4 with its own loud line (the checker must not hide it)
@@ -125,13 +125,13 @@ j = json.load(open(p, encoding="utf-8"))
 j["nodes"] = [n for n in j["nodes"] if n["name"] != "KeyOk"]   # the connections that name KeyOk stay: the old text match still saw "KeyOk" there
 json.dump(j, open(p, "w", encoding="utf-8"))
 PYEOF
-TAKE_CHECK_FLOWS="$W/tc/keyok-gone" TAKE_CHECK_FORM_EXPECT=15:14 bash "$HERE/take_check.sh" > "$RAW/take-check-keyok-gone.txt" 2>&1
+TAKE_CHECK_TEST=1 TAKE_CHECK_FLOWS="$W/tc/keyok-gone" TAKE_CHECK_FORM_EXPECT=15:14 bash "$HERE/take_check.sh" > "$RAW/take-check-keyok-gone.txt" 2>&1
 grep -q -F "mf-form.json: key check ABSENT" "$RAW/take-check-keyok-gone.txt" && ! grep -q -F "mf-form.json: key check present" "$RAW/take-check-keyok-gone.txt" || TCMISS="$TCMISS [take_check: a removed KeyOk node must print 'key check ABSENT' for mf-form.json]"
 printf '\377\376 not utf-8 \200\n' > "$W/tc/bad-ddl.sql"
 printf 'import sys\nsys.exit(3)\n' > "$W/tc/exit3.py"
 for pair in "2:bad-ddl:TAKE_CHECK_DDL=$W/tc/bad-ddl.sql" "3:exit3:TAKE_CHECK_CK=$W/tc/exit3.py"; do
   want=${pair%%:*}; rest=${pair#*:}; nm=${rest%%:*}; assign=${rest#*:}
-  env "$assign" TAKE_CHECK_FLOWS="$W/g/real" TAKE_CHECK_FORM_EXPECT=15:14 bash "$HERE/take_check.sh" > "$RAW/take-check-$nm.txt" 2>&1; x=$?
+  env "$assign" TAKE_CHECK_TEST=1 TAKE_CHECK_FLOWS="$W/g/real" TAKE_CHECK_FORM_EXPECT=15:14 bash "$HERE/take_check.sh" > "$RAW/take-check-$nm.txt" 2>&1; x=$?
   [ "$x" = "$want" ] && grep -q -F "THE CHECKER DID NOT GIVE A VERDICT (its exit status is $want" "$RAW/take-check-$nm.txt" && grep -q -F "FINAL: take_check exit status $want." "$RAW/take-check-$nm.txt" || TCMISS="$TCMISS [take_check $nm: want exit $want and the no-verdict line, got exit $x]"
 done
 # (3) the saving-ON flows must be named in the top block with their reason (INFO), not shown silently
@@ -177,11 +177,11 @@ tcfail hook-run-saving-block-empty "RUN SAVING IS NOT EXACTLY all / all / True" 
 tcfail key-check-absent-is-exit-4 "The take needs F-002: this script exits 4" TAKE_CHECK_FLOWS="$W/tc/f008-only-src"
 tcfail new-warn-changes-the-pin "THE WARN SET CHANGED against take-warns.pin" TAKE_CHECK_FLOWS="$W/tc/warn-new"
 tcfail warn-pin-file-missing "THE WARN BASELINE FILE IS MISSING" TAKE_CHECK_WARN_PIN="$W/tc/no-such.pin"
-env TAKE_CHECK_FLOWS="$W/tc/disabled-send" bash "$HERE/take_check.sh" > "$RAW/take-check-disabled-send.txt" 2>&1; x=$?
+bash "$HERE/take_check.sh" --flows "$W/tc/disabled-send" > "$RAW/take-check-disabled-send.txt" 2>&1; x=$?
 [ "$x" = 1 ] && grep -q -F "is an external-call node and is disabled" "$RAW/take-check-disabled-send.txt" || TCMISS="$TCMISS [take_check disabled-send: want exit 1 and the disabled external-call FAIL, got exit $x]"
-# M4: the patched copy needs no count variable (the main take run above sets none), and the write option makes a pin that the same run accepts
-env TAKE_CHECK_FLOWS="$W/g/real" bash "$HERE/take_check.sh" --write-warn-pin "$W/tc/new.pin" > "$RAW/take-check-write-pin.txt" 2>&1; x=$?
-[ "$x" = 0 ] && cmp -s <(grep -v '^#' "$W/tc/new.pin") <(grep -v '^#' "$HERE/take-warns.pin") || TCMISS="$TCMISS [take_check --write-warn-pin: want exit 0 and a pin equal to take-warns.pin, got exit $x]"
+# Round 10 (review f8-r10): the take-level shell test (B1 pin writing, M1 overrides, M3 flow that is not a file, M4 pin hash, count change without an orphan) lives in test_take_check.sh; it runs on a temporary copy
+bash "$HERE/test_take_check.sh" "$W/g/real" "$W/tc/ttc" > "$RAW/test-take-check.txt" 2>&1; TT=$?
+[ "$TT" = 0 ] || TCMISS="$TCMISS [test_take_check.sh exit $TT (see raw/test-take-check.txt)]"
 tcfail unpatched-run-saving "A FLOW THAT THE TAKE USES HAS RUN SAVING OFF"
 tcfail form-run-saving-off "mf-form.json this flow's run-saving settings" TAKE_CHECK_FLOWS="$W/tc/form-off" TAKE_CHECK_FORM_EXPECT=15:14
 tcfail sub-run-saving-off "mf-sub-crm-mail.json this flow's run-saving settings" TAKE_CHECK_FLOWS="$W/tc/sub-off" TAKE_CHECK_FORM_EXPECT=15:14

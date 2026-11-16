@@ -11,7 +11,8 @@ import os
 import re
 import sys
 
-_P = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "mask_patterns.json")))
+with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "mask_patterns.json")) as _fh:
+    _P = json.load(_fh)
 SECRET_KEY = re.compile(_P["key_name_regex"], re.IGNORECASE)
 VALUE_RES = [re.compile(r) for r in _P["value_regexes"]]
 EXPR_RES = [re.compile(r) for r in _P["expression_regexes"]]
@@ -40,7 +41,8 @@ def mask(v, key=""):
 
 
 def load(path):
-    d = json.load(open(path))
+    with open(path) as fh:
+        d = json.load(fh)
     names = [n["name"] for n in d["nodes"]]
     edges = {}
     for src, v in d.get("connections", {}).items():
@@ -154,7 +156,7 @@ def check(path):
     """exit 1 on unparsable file, duplicate node names or dangling edges"""
     try:
         _d, names, edges = load(path)
-    except Exception as e:
+    except (OSError, ValueError, LookupError, TypeError, AttributeError) as e:
         print("PARSE-FAIL", path, e)
         return 1
     dang = [(s, t) for s, l in edges.items() for _, t in l if t not in names]
@@ -167,8 +169,9 @@ def counts(root):
     tot = 0
     for f in flow_files(root):
         try:
-            d = json.load(open(f))
-        except Exception as e:
+            with open(f) as fh:
+                d = json.load(fh)
+        except (OSError, ValueError) as e:
             print("PARSE-FAIL", f, e)
             continue
         if isinstance(d, dict) and "nodes" in d:
@@ -212,17 +215,26 @@ def diff(a, b):
     print("settings equal:", da.get("settings") == db.get("settings"))
 
 
-if __name__ == "__main__":
-    cmd, args = sys.argv[1], sys.argv[2:]
+def main(argv):
+    """Run one sub-command; returns the exit code (printing goes to stdout)."""
+    cmd, args = argv[0], argv[1:]
     if cmd == "table":
-        [table(p) for p in args]
+        for p in args:
+            table(p)
     elif cmd == "counts":
         counts(args[0])
     elif cmd == "diff":
         diff(*args)
     elif cmd == "skeleton":
-        [skeleton(p) for p in args]
+        for p in args:
+            skeleton(p)
     elif cmd == "check":
-        sys.exit(max([check(p) for p in args] or [0]))
+        return max([check(p) for p in args] or [0])
     else:
-        sys.exit(__doc__)
+        print(__doc__, file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

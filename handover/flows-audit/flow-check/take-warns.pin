@@ -1,4 +1,6 @@
 # expected WARN lines of the take check (folder path removed, sorted); a person read each one; written by take_check.sh --write-warn-pin
+# date (UTC): 2026-11-16
+# sha256 of the WARN lines below (LC_ALL=C sort, one per line): 378e11212191edcbb0773a829808263d023d52ec1d71873a97d52cf911e84d44
 WARN mf-form.json 3 id(s) are still placeholders and must be replaced in n8n before import: Claim credential postgres id PG_CREDENTIAL_ID; RunSub sub-workflow id SUB_WORKFLOW_ID; Stored credential postgres id PG_CREDENTIAL_ID [run with --require-real-credential-ids to make this a FAIL]
 WARN mf-form.json external-call nodes without retryOnFail: ['Claim', 'RunSub', 'Stored']
 WARN mf-form.json patch F-002 (Claim step: alwaysOutputData/onError) is UNPROVEN until a test run in n8n shows a repeated lead key still gets its answer

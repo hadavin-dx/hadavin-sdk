@@ -128,3 +128,17 @@ Each line says what is missing. Recommendation first. Nothing here blocks the ch
 3. Laptop run: no deliverable schedules the first real run (T19-T21 on the patched real-v5 copy, Postgres start, error output, id versus vid, 45 s lease against the Qualify duration). The lead's runbook with the actual commands for import, fill, take_check, POST twice, DB check, and the unseen scripts (scripts/n8n_api.py, run_real_check_n8n.py, n8n_drive.py): please provide or place them in the tree.
 4. Scene 4 (kill and takeover) in or out? If the claim is only "sent twice, one mail", scene 4 is extra risk. Recommendation: keep decision 1 (scenes 1-4) but film scene 4 only if the rehearsal shows takeover inside 3 minutes.
 5. Should Row 4 (one made-up lead through the real HubSpot trial) be the first thing done, since it is the only proof of the real-v5 HubSpot node, mail credential and DESK_URL?
+
+
+## Q27 (flows-audit, 2026-11-16 11:50Z): what only the lead can supply so the plan can be run (from the lead-readiness read, reviews/readiness-lead-r1.md)
+Failure first: a fresh reader says the lead could not run the plan today without questions. I can write the merged order and the per-step times from the files (RUNBOOK.md, in progress). I cannot supply these:
+1. Sha or path, command line and fallback for scripts/n8n_api.py, run_real_check_n8n.py, n8n_drive.py and the post-twice script (none is in the tree).
+2. The values behind the placeholders: who creates the Postgres, mail and HubSpot credentials in n8n, which HubSpot token scopes, mail login route, the two address setting names, the mailbox words.
+3. Owner of video editing, screen recording tool, who posts at 15:00Z and where.
+4. Date and time of the owner decision on the n8n single-instance guard (it blocks r22).
+5. The ledger path the GO/NO-GO test reads, and who decides.
+6. A real latest re-pin time on the NO-GO path, working back from Mon 23 Nov 18:29Z by practice run + Row 4 + rehearsal + take.
+7. A go/no-go rule between rehearsal end (09:30Z) and take (10:00Z), and what happens if the take slips.
+8. Q25 item 8: the decision number for 'recovery is not part of the take' (DECISIONS file names decision 1; ORDERS says decisions 1 and 4).
+9. (from the contradiction check) Does the Tue 17 Nov 14:00Z GO/NO-GO count T19-T21 (the real-n8n tests that lift F-002 from Blocker) as part of the Tuesday re-smoke, and are F-011 and F-041 (Major, rated 'never downgraded') part of the 'take path'? By the files' own ratings the answer today is an automatic NO-GO.
+10. (same check) The decisions file says the owner revokes the model key at clean-up (S9-3) and compares the settings-file figures (S9-2), and says the owner types y, the challenge and end (decision 7); Q25 item 7 says the owner does Step D only. Who does these three, and when?
