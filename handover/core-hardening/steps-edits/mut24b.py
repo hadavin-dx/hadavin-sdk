@@ -2,7 +2,7 @@
 CAUGHT = the checker prints a FAIL line that the unmodified package does not print. Prints caught and missed honestly."""
 import os, re, shutil, subprocess, sys, tempfile
 H = os.path.dirname(os.path.abspath(__file__)) + '/'
-FILES = ['facts-v24.py', 'build-v24.py', 'check-v24.py', 'OWNER-SHEET-v24-SOURCE.md', 'LEAD-RELEASE-NOTE-v8-SOURCE.md', 'v24-OPEN-FOR-LEAD-SOURCE.md', 'v24-CHANGES.md']
+FILES = ['facts-v24.py', 'build-v24.py', 'check-v24.py', 'OWNER-SHEET-v24-SOURCE.md', 'LEAD-RELEASE-NOTE-v8-SOURCE.md', 'v24-OPEN-FOR-LEAD-SOURCE.md', 'v24-CHANGES.md', 'pointers-v24.txt']
 def run(d):
     subprocess.run([sys.executable, '-B', d + 'build-v24.py', d], capture_output=True)
     r = subprocess.run([sys.executable, '-B', d + 'check-v24.py'], capture_output=True, text=True, env=dict(os.environ, V24_DIR=d))
@@ -28,7 +28,7 @@ P = [
 ('P11', 'OWNER-SHEET-v24-SOURCE.md', 'Three phone alarms on the run day, all in IST: one at the latest start, ', 'Two phone alarms on the run day, all in IST: ', 'third alarm removed'),
 ('P12', 'OWNER-SHEET-v24-SOURCE.md', 'Text between backticks is typed without the backticks. ', '', 'backtick sentence removed'),
 ('P13', 'OWNER-SHEET-v24-SOURCE.md', "only if the window's last line is `paste key, Enter:` (otherwise do not paste, copy a harmless word and tell in words what the last line says), ", '', 'paste condition removed'),
-('P14', 'OWNER-SHEET-v24-SOURCE.md', 'and stick a paper note "READ" and "TEST" beside them', 'and keep them open', 'window labels removed'),
+('P14', 'OWNER-SHEET-v24-SOURCE.md', ' with a paper note "READ" and "TEST" beside them', '', 'window labels removed'),
 ('P15', 'OWNER-SHEET-v24-SOURCE.md', 'ignore a `.used` ending', 'ignore nothing', '.used rule removed'),
 ('P16', 'OWNER-SHEET-v24-SOURCE.md', 'wait until the earliest key time has come, tell', 'tell', 'A older key cancelled early'),
 ('P17', 'OWNER-SHEET-v24-SOURCE.md', 'reverses the order of `end` and the card, ', '', 'lead may reverse order'),
@@ -41,7 +41,7 @@ P = [
 ('P24', 'OWNER-SHEET-v24-SOURCE.md', 'the balance and auto-reload equal your yes (R4)', 'the balance looks fine (R4)', 'balance re-check weakened'),
 ('P25', 'OWNER-SHEET-v24-SOURCE.md', 'last-resort step <step>. ', '', 'last-resort step out of the yes'),
 ('P26', 'OWNER-SHEET-v24-SOURCE.md', 'one line only: a second', 'a second', 'one-line warning removed'),
-('P27', 'OWNER-SHEET-v24-SOURCE.md', 'press the cancel button; if a box asks', 'press the cancel button (or at 7.8 click cancel); if a box asks', 'cancel rule is copied on top of the card'),
+('P27', 'OWNER-SHEET-v24-SOURCE.md', 'press the cancel button; if a box asks', 'press the cancel button (or at 7.8 click cancel); if a box asks', 'card step 3 gets a new pointer'),
 ('P29', 'OWNER-SHEET-v24-SOURCE.md', '8.3 and 8.4 say where', '8.3 and 8.9 say where', 'pointer to missing step'),
 ('P30', 'OWNER-SHEET-v24-SOURCE.md', '**Key list** = the model account page', '**Key liszt** = the model account page', 'card term renamed'),
 ('P31', 'OWNER-SHEET-v24-SOURCE.md', 'Never "Select all", never empty Trash', 'Select all is fine', 'delete guard removed'),

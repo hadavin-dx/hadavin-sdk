@@ -158,7 +158,7 @@ NOTE = ALL.get('LEAD-RELEASE-NOTE-v8.md', ''); OPEN = ALL.get('v24-OPEN-FOR-LEAD
 TEXTS = {'sheetA': A, 'sheetB': B, 'note': NOTE, 'open': OPEN, 'changes': CHG}
 # C16 every pointer target exists: Open N has a row, G N has a row, sheet N.M is a step, open rows run 1..n with no gap
 open_rows = [int(m[1]) for m in re.finditer(r'^\| (\d+) \|', OPEN, re.M)]
-if open_rows != list(range(1, len(open_rows) + 1)): fail('C16', 'open list rows are not numbered 1..n without a gap')
+if open_rows != [i for i in range(1, open_rows[-1] + 1) if i != 59]: fail('C16', 'open list rows are not 1..n in order with only the removed row 59 missing (rows are quoted as Open N)')
 g_rows = set(m[1] for m in re.finditer(r'^\| (G\d+) \|', NOTE, re.M))
 def step_ids(t):
     out = set(); cur = None
@@ -203,7 +203,7 @@ for n, t in TEXTS.items():
         pre = re.sub(r'\s+', ' ', t[max(0, m.start() - 28):m.start()])
         cur_ptr.add('%s|%s|%s' % (n, pre, m[0]))
 LEDGER = D + 'pointers-v24.txt'
-if '--accept-pointers' in sys.argv:
+if os.environ.get('ACCEPT_POINTERS') == '1':
     open(LEDGER, 'w', encoding='utf-8').write('\n'.join(sorted(cur_ptr)) + '\n'); print('pointers-v24.txt rewritten: %d entries (a person must have read each new one)' % len(cur_ptr))
 elif not os.path.exists(LEDGER): fail('C19', 'pointers-v24.txt missing')
 else:
@@ -237,9 +237,9 @@ for n, t in TEXTS.items():
     for q in set(re.findall(r'"([^"\n]{6,70})"', t)):
         for v in PHS:
             r = difflib.SequenceMatcher(None, q.lower(), v.lower()).ratio()
-            if q != v and r >= 0.88: fail('C21', '%s: quoted words %r look like the set phrase %r but differ' % (n, q, v))
+            if q != v and r >= 0.8: fail('C21', '%s: quoted words %r look like the set phrase %r but differ' % (n, q, v))
 # C22 the cancel rule text lives only on the card: paraphrases outside it, in any file
-CAN = [r'(?<!auto-)\b(reload|reloads|reloaded|refresh|refreshes|refreshed)\b', r'beside each key', r'click Cancel', r'cancelled (state|word) each time', r'press the cancel button', r'confirmation word']
+CAN = [r'(?<![Aa]uto-)\b(reload|reloads|reloaded|refresh|refreshes|refreshed)\b', r'beside each key', r'click Cancel', r'cancelled (state|word) each time', r'press the cancel button', r'confirmation word']
 for n, t in (('sheetA', A), ('sheetB', B)):
     i = t.find('### THE CARD'); j = t.find('### The rules'); out = t[:i] + t[j:]
     for p in CAN:
