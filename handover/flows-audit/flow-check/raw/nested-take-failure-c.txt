@@ -1,6 +1,6 @@
 applied F-002-take-key-check-and-claim-error-path
 applied F-008-save-runs-for-the-take
-checker runs wall time: 1 s; self-test wall time: 6 s
+checker runs wall time: 1 s; self-test wall time: 9 s
 ==== real-v5 (THE TAKE) ====
 ---- default mode must be exit 0; strict mode shows what the owner's two open decisions would do ----
 [pristine]
@@ -48,7 +48,7 @@ RESULT: 4 FAIL, 16 WARN
 Known open problems: 10
 exit=1
 [selftest exit=0] SELFTEST: 682 as expected, 0 not as expected, 62 skipped (not applicable)
-[take_check.sh exit=5] missing lines: [take_check planted: want exit 4, got exit 1; first FAIL or !!! line of /tmp/fc8.I9kuCG/tc/nested-raw-c/take-check-planted.txt: FAIL /tmp/fc8.I9kuCG/tc/disabled-send/mf-sub-crm-mail.json node SendMail (emailSend) is an external-call node and is disabled: n8n passes data through it and it sends and writes nothing, so the flow would look fine and do no work (round 9, ]
+[take_check.sh exit=5] missing lines: [take_check planted: want exit 4, got exit 1; first FAIL or !!! line of /tmp/fc8.sLStZN/tc/nested-raw-c/take-check-planted.txt: FAIL /tmp/fc8.sLStZN/tc/disabled-send/mf-sub-crm-mail.json node SendMail (emailSend) is an external-call node and is disabled: n8n passes data through it and it sends and writes nothing, so the flow would look fine and do no work (round 9, ]
 run_all exit status (real-v5 default runs + self-test): 1
 real-v5 placeholder ids: 12 file(s) warn in the committed flows (pass --strict to make that a failure)
 COMMITTED PIN (take-warns.pin) reviewer line (hidden characters removed, cut at 300): 'flows-audit session, 2026-11-16, content read by that session only, lead to confirm'. NOT confirmed by the lead: take_check.sh refuses it (REFUSED (rule: listed word session): the line contains the whole word 'session'), so a bare take_check.sh exits 4 until the lead replaces that line (this run used a stand-in line, so its take check could pass).

@@ -8,3 +8,4 @@ Result: 0 MISMATCH. 6 SOFT.
 | B-046 (line 324) | Q31 item 25 | same: item 25 does not name qualify_stage.py or qs_01 |
 | A-004 (line 451) | nearest Q31 item is 25 | re-smoke command and test list (hedged "nearest") |
 | N-4c, N-5c, N-8 | scene 9; scenes 5 and 9; between scene 4 and 5 | no line number given, nothing to check by line |
+(Also fix with the RW batch: A-085 old-sentence cell drop "(22:49 IST)" per citation-r16-rw.md.)
