@@ -42,10 +42,10 @@ index de442d1..09f6a45 100644
  # --- redaction (Config.evidence.stored_kinds may narrow this, never widen it) -------------------------------------------
 diff --git a/tests/test_c01_route_limits.py b/tests/test_c01_route_limits.py
 new file mode 100644
-index 0000000..d8ac2f4
+index 0000000..e1bc9b6
 --- /dev/null
 +++ b/tests/test_c01_route_limits.py
-@@ -0,0 +1,65 @@
+@@ -0,0 +1,64 @@
 +"""Audit C-01: a route with a zero or negative price, or an absurd max_tokens, is refused when the config loads.
 +
 +A price of 0 makes every reply cost 0, so no spend limit (per run, per day, per month) could ever fire. Each test
@@ -54,7 +54,6 @@ index 0000000..d8ac2f4
 +import pytest
 +import yaml
 +
-+from hadavin_sdk import defaults
 +from hadavin_sdk.config import ConfigError, load_config
 +
 +LIVE_LLM = {"kind": "anthropic", "api_key_secret_name": "a", "platform": "api"}
@@ -100,14 +99,14 @@ index 0000000..d8ac2f4
 +    assert cfg.routes["default"].output_usd_per_mtok == 0
 +
 +
++# The numbers are written out on purpose (not read from defaults.py): on the old code a test that named the new
++# constant would fail with an AttributeError, which proves nothing about behaviour.
 +def test_max_tokens_above_the_ceiling_is_refused(cfg_dir):
-+    with pytest.raises(ConfigError):
-+        _load(cfg_dir, max_tokens=defaults.MAX_ROUTE_TOKENS + 1)
++    with pytest.raises(ConfigError, match="less than or equal to 200000"):
++        _load(cfg_dir, max_tokens=200_001)
 +
 +
 +def test_max_tokens_at_the_ceiling_loads_and_zero_is_still_refused(cfg_dir):
-+    assert _load(cfg_dir, max_tokens=defaults.MAX_ROUTE_TOKENS).routes["default"].max_tokens == (
-+        defaults.MAX_ROUTE_TOKENS
-+    )
-+    with pytest.raises(ConfigError):
++    assert _load(cfg_dir, max_tokens=200_000).routes["default"].max_tokens == 200_000
++    with pytest.raises(ConfigError, match="greater than 0"):
 +        _load(cfg_dir, max_tokens=0)

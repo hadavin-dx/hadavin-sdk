@@ -117,22 +117,22 @@ index b580c24..ef46ded 100644
  STORE_NOT_READY = (
 diff --git a/tests/test_a01_audit_reconcile.py b/tests/test_a01_audit_reconcile.py
 new file mode 100644
-index 0000000..bc1ad54
+index 0000000..7a1b4af
 --- /dev/null
 +++ b/tests/test_a01_audit_reconcile.py
-@@ -0,0 +1,92 @@
+@@ -0,0 +1,122 @@
 +"""Audit A-01: nothing drained the audit outbox, and a failed audit write left no log line.
 +
 +The tick step `audit_reconcile` calls the audit kind's `reconcile` and logs how many events it wrote. The chain
 +kind logs a warning (error type and event id only, never the event body) when an outcome goes to the outbox."""
 +
 +import logging
++from datetime import UTC, datetime
 +
 +from hadavin_sdk.audit import chain as audit
 +from hadavin_sdk.audit.local_dir import LocalDirSink
 +from hadavin_sdk.models import AuditEvent
 +from hadavin_sdk.runtime import tick
-+from hadavin_sdk.runtime.tick import TickContext
 +
 +
 +def _event(i: int = 0) -> AuditEvent:
@@ -146,9 +146,32 @@ index 0000000..bc1ad54
 +    )
 +
 +
++class _FakeStore:
++    """Just enough store for `run_tick`: it answers the probe and remembers what each step saved."""
++
++    def __init__(self):
++        self.saved = {}
++
++    def get_tick_state(self, step):
++        return self.saved.get(step)
++
++    def save_tick_state(self, state):
++        self.saved[state.step] = state
++
++
 +class _FakeApp:
 +    def __init__(self, audit_sink):
 +        self.audit = audit_sink
++        self.store = _FakeStore()
++
++
++NOW = datetime(2026, 1, 1, tzinfo=UTC)
++
++
++def _run_only_the_audit_step(app) -> int:
++    """Run the real tick loop with only the step named audit_reconcile (none on old code: nothing runs)."""
++    steps = [s for s in tick.STEPS if s.name == "audit_reconcile"]
++    return tick.run_tick(app, NOW, steps)
 +
 +
 +def test_the_step_is_in_the_tick_list():
@@ -164,15 +187,22 @@ index 0000000..bc1ad54
 +    assert log._db.run("SELECT event_id FROM audit_outbox") == [(first.event_id,)]
 +    log._append = real
 +    caplog.set_level(logging.INFO, logger="hadavin_sdk.tick")
-+    tick.audit_reconcile(TickContext(_FakeApp(log), now=None))
++    app = _FakeApp(log)
++    assert _run_only_the_audit_step(app) == 0
 +    assert "audit_reconcile drained=1" in caplog.text
 +    assert log._db.run("SELECT event_id FROM audit_outbox") == []
++    assert app.store.saved["audit_reconcile"].last_ok_at == NOW
 +
 +
 +def test_a_kind_without_reconcile_is_skipped(caplog):
 +    caplog.set_level(logging.INFO, logger="hadavin_sdk.tick")
-+    tick.audit_reconcile(TickContext(_FakeApp(object()), now=None))
-+    assert "audit_reconcile" not in caplog.text
++    app = _FakeApp(object())
++    assert _run_only_the_audit_step(app) == 0
++    saved = app.store.saved.get("audit_reconcile")
++    assert (
++        saved is not None and saved.last_ok_at == NOW and saved.last_error is None
++    )  # ran, found nothing to do
++    assert "audit_reconcile drained" not in caplog.text
 +
 +
 +def test_a_failed_outcome_write_logs_type_and_id_but_never_the_body(caplog):
