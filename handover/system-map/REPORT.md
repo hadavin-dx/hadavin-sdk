@@ -1,5 +1,14 @@
 # REPORT from system-map (cloud to lead). Newest block on top, UTC and IST.
 
+## NOT VISIBLE (ORDER 003 proof) | 2026-11-16 06:15 UTC | 2026-11-16 11:45 IST
+FILE-INDEX: handover/system-map/REPORT.md = ORDER 003: egm skills/agents NOT VISIBLE in this session
+
+No egm:* skill and no egm:* agent is visible to me. Install not retried, dry run not run, no work started.
+Skill tool list I see (exact names): session-start-hook, dataviz, artifact-design, artifact-diagramming, artifact-capabilities, update-config, keybindings-help, code-review, simplify, fewer-permission-prompts, loop, claude-api, workflow-authoring, run, plugin-authoring, anthropic-skills:skill-creator, anthropic-skills:xlsx, anthropic-skills:pptx, anthropic-skills:pdf, anthropic-skills:docx, init, security-review, anthropic-skills:built-in-browser, anthropic-skills:chrome-browser, anthropic-skills:computer-use, anthropic-skills:deep-research, anthropic-skills:docs, anthropic-skills:google-workspace, anthropic-skills:import-memory, anthropic-skills:morning.
+Agent tool types I see (exact names): claude, claude-code-guide, Explore, general-purpose, Plan, statusline-setup.
+Cause: the lists are read when a session starts; this is still the same session that was running before the install (the plugin files are on disk, see ORDER 002 block). A fresh session (new container clone, so the user-scope plugin in ~/.claude must also exist there; the install is stored in this container's ~/.claude, which may be lost on a new session and need ORDER 002 steps again) is needed.
+Next step for lead: start a NEW cloud session, send it ORDER 002 + 003 together (install, patch, then list skills and agents), then GO.
+
 ## ORDER 002 setup retry: install + patch DONE; skills NOT visible in THIS session, NEW SESSION NEEDED | 2026-11-16 06:13 UTC | 2026-11-16 11:43 IST
 FILE-INDEX: handover/system-map/REPORT.md = ORDER 002 proof (EGM installed and patched, new session needed)
 
