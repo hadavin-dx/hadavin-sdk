@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T19:12:49Z
+UPDATED_UTC: 2026-11-16T19:13:51Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -7,11 +7,11 @@ ITEMS_TOTAL: 10
 ITEMS_OPEN: 30
 PERCENT: 70
 AGENTS_RUNNING: 8
-CAPACITY: 1.22 load of 4 cores, mem 1/15 GB, RAM 1109/16087 MB, disk 12G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 12G /tmp/claude-0 , agents 8 (light+heavy per list)
+CAPACITY: 4.65 load of 4 cores, mem 1/15 GB, RAM 1164/16087 MB, disk 12G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 12G /tmp/claude-0 , agents 8 (light+heavy per list)
 INTERRUPTED: none
 FAILED: none (F8 run_all.sh intermittent exit 1 is an evidence finding: 3 of 6 plain runs failed, cause unknown, fixer acf8ab59 on it; ruff format --check passes 741 files)
-NEXT: fixers r21/r29/r35, F8 reviewers and evidence runner running; empty slots none
-PUSHED_UTC: 2026-11-16T19:12:49Z
+NEXT: 8 of 8 slots used; fixers r21/r29/r35/r43/r39, F8 reviewers, evidence driver
+PUSHED_UTC: 2026-11-16T19:13:51Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -31,13 +31,13 @@ PUSHED_UTC: 2026-11-16T19:12:49Z
 | id | role | model | what it does | started UTC | expected end UTC | state | produced so far |
 |---|---|---|---|---|---|---|---|
 | a144d2ea | fixer | sonnet | plan-files r39 fixer (RUNBOOK, TAKE-CHECKLIST, FIX-PLAN) | 19:03Z | about 19:40Z | running | not yet |
-| aabf71c4 | evidence runner | sonnet | F8 r12 raw tests, new and old code (detached driver) | 19:09Z | about 19:55Z | running | evidence file started |
-| abe4d295 | reader | sonnet | RW/CT r43 stranger read | 18:58Z | about 19:25Z | running | not yet |
+| aabf71c4 | evidence runner | sonnet | F8 r12 raw tests; agent idle, its detached driver still runs (new and old code) | 19:09Z | about 19:55Z | driver running | evidence file in progress |
 | aa90da17 | fixer | sonnet | patch-copies README+DMC r21 fixer (uncapped) | 19:13Z | about 20:10Z | running | not yet |
 | a6bfb5b2 | fixer | sonnet | FINDINGS/LEDGER r29 fixer | 19:13Z | about 20:10Z | running | not yet |
 | ad79fb59 | fixer | sonnet | Q31 r35 fixer | 19:13Z | about 20:10Z | running | not yet |
 | ac860969 | reviewer | sonnet | F8 r12 egm-codebase-details (uncapped) | 19:13Z | about 19:35Z | running | not yet |
 | ad5cfec8 | reviewer | sonnet | F8 r12 egm-design (uncapped) | 19:13Z | about 19:35Z | running | not yet |
+| ae6c4e98 | fixer | sonnet | RW/CT r43 fixer | 19:13Z | about 20:10Z | running | not yet |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
 1 verify each fixer on hand-back with own commands (counts, checkers, ruff, sha, md5 clock block)
