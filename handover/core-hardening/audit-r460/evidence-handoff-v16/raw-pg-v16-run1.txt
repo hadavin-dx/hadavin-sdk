@@ -102,7 +102,7 @@ PASS H2 the OWNER (migration role) is also refused by the append-only trigger: T
 PASS H3 the refused statements changed nothing
 PASS H4 LIMIT STATED, not hidden: the database owner can DISABLE the trigger (tgenabled = D while off) and delete; an append-only trigger shows edits, it does not stop the owner
 PASS H5 the trigger is back on afterwards
-INFO I timing (runtime role, 20000 lowering UPDATEs, migration role = non-superuser, indicative, one run per script run; the script is run twice): without trigger 1635 ms, with trigger 3011 ms, +0.069 ms per lowering
+INFO I timing (runtime role, 20000 lowering UPDATEs, migration role = non-superuser, indicative, one run per script run; the script is run twice): without trigger 1501 ms, with trigger 2739 ms, +0.062 ms per lowering
 INFO I size: log 2211840 bytes, 20000 rows, 110.6 bytes per row, who = rtr_v16/rtr_v16
 PASS I1 the timing run's log rows record the RUNTIME login role, not postgres  [rtr_v16,rtr_v16]
 PASS I2 the log has one row per lowering (20000 rows)  [20000]
@@ -157,22 +157,26 @@ PASS N2 after the repair, real migrate() applies the upgrade file as 0007  [['00
 PASS N3 both constraints now carry the Infinity clause, same names, no second constraint  [["CHECK (((usd >= (0)::numeric) AND (usd < 'Infinity'::numeric)))", "CHECK (((usd >= (0)::numeric) AND (usd < 'Infinity'::numeric)))"]]
 PASS N4 the runtime role is now refused NaN (23514)
 PASS O1 the guard finds no problem in the 5 real migrations and the 4 held files
-FAIL O2 mutant 'pg_temp not last' differs from the file and the guard reports it
-FAIL O2 mutant 'public in path' differs from the file and the guard reports it
-FAIL O2 mutant 'no pg_temp' differs from the file and the guard reports it
-FAIL O2 mutant 'no SET search_path' differs from the file and the guard reports it
-PASS O2 mutant 'bare table (no %I)' differs from the file and the guard reports it  [mutant.sql: kill_switch_log_change changes a table without a %I schema]
-PASS O2 mutant 'no REVOKE' differs from the file and the guard reports it  [mutant.sql: kill_switch_log_change has no REVOKE ALL ON FUNCTION ... FROM PUBLIC]
+PASS O2 mutant 'spend_log_decrease: pg_temp not last' differs from the file and the guard reports it  [mutant.sql: spend_log_decrease search_path does not end with pg_temp]
+PASS O2 mutant 'spend_log_decrease: public in path' differs from the file and the guard reports it  [mutant.sql: spend_log_decrease search_path names public]
+PASS O2 mutant 'spend_log_decrease: no pg_temp' differs from the file and the guard reports it  [mutant.sql: spend_log_decrease search_path does not end with pg_temp]
+PASS O2 mutant 'spend_log_decrease: no SET search_path' differs from the file and the guard reports it  [mutant.sql: spend_log_decrease has no SET search_path]
+PASS O2 mutant 'spend_log_decrease: no REVOKE' differs from the file and the guard reports it  [mutant.sql: spend_log_decrease has no REVOKE ALL ON FUNCTION ... FROM PUBLIC]
+PASS O2 mutant 'kill_switch_log_change: pg_temp not last' differs from the file and the guard reports it  [mutant.sql: kill_switch_log_change search_path does not end with pg_temp]
+PASS O2 mutant 'kill_switch_log_change: public in path' differs from the file and the guard reports it  [mutant.sql: kill_switch_log_change search_path names public]
+PASS O2 mutant 'kill_switch_log_change: no pg_temp' differs from the file and the guard reports it  [mutant.sql: kill_switch_log_change search_path does not end with pg_temp]
+PASS O2 mutant 'kill_switch_log_change: no SET search_path' differs from the file and the guard reports it  [mutant.sql: kill_switch_log_change has no SET search_path]
+PASS O2 mutant 'kill_switch_log_change: no REVOKE' differs from the file and the guard reports it  [mutant.sql: kill_switch_log_change has no REVOKE ALL ON FUNCTION ... FROM PUBLIC]
+PASS O2 mutant 'kill_switch_log_change: bare table (no %I)' differs from the file and the guard reports it  [mutant.sql: kill_switch_log_change changes a table without a %I schema]
+PASS O2 mutant 'spend_log_decrease: bare table (no %I)' differs from the file and the guard reports it  [mutant.sql: spend_log_decrease changes a table without a %I schema]
 PASS O2 mutant 'undeclared SECURITY DEFINER' differs from the file and the guard reports it  [mutant.sql: SECURITY DEFINER function sneaky is not on the declared list]
 PASS O3 the held-file head spend_log_decrease search_path text is what the guard read (sanity)
-Traceback (most recent call last):
-  File "/home/user/hadavin-sdk/handover/core-hardening/audit-r460/evidence-handoff-v16/pg_v16.py", line 557, in <module>
-    pr = reader_problems(mp, "reader_v16")
-  File "/home/user/hadavin-sdk/handover/core-hardening/audit-r460/evidence-handoff-v16/pg_v16.py", line 553, in reader_problems
-    f = db.execute("SELECT rolsuper OR rolcreaterole OR rolcreatedb OR rolbypassrls OR rolreplication, rolvaliduntil FROM pg_roles WHERE rolname = %s", (role,)).fetchone()
-  File "/home/user/hadavin-sdk/.venv/lib/python3.13/site-packages/psycopg/cursor.py", line 250, in fetchone
-    record = self._tx.load_row(self._pos, self._make_row)
-  File "psycopg_binary/_psycopg/transform.pyx", line 515, in psycopg_binary._psycopg.Transformer.load_row
-  File "psycopg_binary/types/datetime.pyx", line 796, in psycopg_binary._psycopg.TimestamptzLoader.cload
-psycopg.DataError: timestamp too large (after year 10K): 'infinity'
-rc=1
+PASS P1 NEGATIVE TEST BEFORE the REVOKE: on a fresh database the reader CAN create temporary tables (PUBLIC has TEMP) and reader_problems reports exactly that  [['can create temporary tables']]
+PASS P2 after REVOKE TEMPORARY ... FROM PUBLIC (operator step, question L19) reader_problems is empty  [[]]
+PASS P3 the reader is refused CREATE TEMP TABLE (42501)
+PASS P4 NEGATIVE: a reader that is a member of the runtime role is reported
+PASS P5 a role whose VALID UNTIL is in the past cannot log in (password authentication failed)  [none/password-auth-failed]
+PASS P6 NEGATIVE: a reader role created without VALID UNTIL is reported ('has no VALID UNTIL')
+PASS P7 revoking by NOLOGIN stops new logins  [none/other:connection failed: connection to server on socket "/var/lib/]
+INFO 174 of 174 checks passed
+rc=0

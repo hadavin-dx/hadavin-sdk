@@ -1,0 +1,1 @@
+checkpoint-c6r started 2026-11-16T16:36Z by machine clock. note 1 16:50Z: read c6q, both reviews, evidence summary (now exists), ORDERS. Plan: build_c6r.py = build_c6q.py with c6r patches (base REPORT-c6p.md, read only) -> REPORT-c6r.md; verify-c6r.py extends verify-c6q.py.
