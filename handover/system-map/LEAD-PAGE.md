@@ -27,7 +27,7 @@ The old rows 16 to 23 here were written from the stale v3 steps file and contrad
 | watch the cut (v5 H) | OWNER-RUN-DAY-CARD.md step 18 |
 | clean-up (v5 I); the deadline is the lead's own and is NOT the stop time | OWNER-CLEANUP-CARD.md and its release words |
 | post (v5 J): the full must-NOT list and the rule that the lead's exact final words and a second checker come first | OWNER-VIEW.md row 6 |
-| latest start | Mon 23 Nov before about 18:15 UTC / 23:45 IST (stop time 18:29 UTC / 23:59 IST) |
+| latest start | Mon 23 Nov before 18:14:40 UTC / 23:44:40 IST (v5 rounds it to about 18:15 / 23:45) (stop time 18:29 UTC / 23:59 IST) |
 "Spending backstop" = a dollar limit in the settings file `stage.env`; the program does NOT enforce it and a person checks it (v5 line 52). Any US$ figure for an in-code backstop in older notes is unsourced and not to be used.
 
 ## 3. Decisions only you can make
