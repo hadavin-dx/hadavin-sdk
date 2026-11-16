@@ -3,3 +3,5 @@ Q1 (2026-11-16, plan round 3, PLAN-002.md section 1): Tier B = 525 of 655 nodes 
 
 Q2 (2026-11-16, result review round 2, F-011): the order says the one database is n8n Postgres. Reading A: n8n's own state must also be in Postgres (it runs on SQLite today). Reading B: only the lead table must be in Postgres (a separate Postgres 16 holds mf_leads; n8n's own SQLite is by design). Which one is meant? Under B, F-011 shrinks to the personal data n8n keeps in its own file.
 ANSWERED (lead, ORDER 004, 2026-11-16): Q2 = Reading A. F-011 stays at full size; executions saved ON for the take only and deleted at clean-up (F-008 patch).
+
+Q3 (2026-11-16, ORDER 007 item 5, F-041): the take makes up to 3 live model calls (PLAN-4-NLITE-FROM-LEAD.md:106), so the stage's spend ledger exists next to the stage journal. ORDER 002 allows ONE exception. Choose: (a) one exception made of two files (journal + ledger; EXCEPTIONS.md now words it that way), or (b) move the ledger into Postgres first. Also name an owner and a removal trigger for the exception. Not blocking: the board stays WORKING; the wording is paste-ready either way.
