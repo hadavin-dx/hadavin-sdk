@@ -1,0 +1,4 @@
+# Citation check of OWNER-STEPS-q16-rows.md r5 (agent a7232358; condensed by flows-audit; reviewer words unverified)
+Mismatches (sheet line): 47 v3 "steps 1 and 3" -> cite step 3 only (line 40); 52 README "lines 59 and following" -> check command at README 78-99; 43/50/56 ORDERS line 131 is the heading, text on 132; 60 v3 line 95/104 loose, line 103 is the `end` archive line; 67 "decision 5 of Q14/Q17" is Q17 item 5 only; 48 README import order is lines 115-141; 43 mf_leads.sql line 1 says "v3 table" though it has the four alert columns (add a note).
+Confirmed: six placeholders (README 9-11, fill_flows.py 65-72); mf-recovery 9-10, 124, 141, 177, 178, 204, 228; mf-sub-crm-mail 117, 146, 256, 257, 284; port 5690 once; decisions 2, 6, 8, 12.
+Not checked: which JSON holds each placeholder; psql command runs; HubSpot menu names; startup check covers mailboxes.
