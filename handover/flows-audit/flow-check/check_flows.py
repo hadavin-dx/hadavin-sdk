@@ -13,6 +13,7 @@ Options:
                                 node-level diff DIR vs DIR (patched vs unpatched); FAIL on any change the allowed patches do not explain
   --quiet-info                  do not print the type table and the placeholder list (the credential list per flow is always printed)
   --require-webhook-auth        a webhook or form trigger without authentication is a FAIL (default: WARN, counted as a known open problem)
+  --expect-credential KIND=NAME a node credential of this kind (for example postgres, smtp) must have exactly this name, else FAIL (repeatable)
   --block-env-access            a node that reads $env.X is a FAIL (default: WARN): use when the take switches off env access inside nodes
 
 F8 EXTENSION (flow-check/): started from patch-apply/check_flows.py (F4 round 3), nothing removed. New checks are listed in
@@ -27,7 +28,7 @@ every $('Name') and $node["Name"] inside an expression names a node of the same 
 Trigger = exact type n8n-nodes-base.webhook, n8n-nodes-base.executeWorkflowTrigger, n8n-nodes-base.formTrigger, or a type
 ending in 'Trigger'. respondToWebhook is NOT a trigger.
 F-002 alwaysOutputData/onError on Claim is only printed with a WARN (UNPROVEN until test T19): exit 0 does NOT clear F-002.
-Exit code: 0 only if no FAIL; 1 otherwise; 2 for a usage error."""
+Exit code: 0 only if no FAIL; 1 otherwise; 2 for a usage error (unknown option, missing value, unknown patch name, bad --expect)."""
 import json, os, re, sys, collections
 OPTS = {"webhook_auth": False, "table": False, "block_env": False, "cred_names": {}}
 
@@ -550,23 +551,22 @@ def main(argv):
             elif a == "--diff-base": diffbase = val()
             elif a == "--allow": allow = [x for x in val().split(",") if x]
             elif a == "--diff-out": diffout = val()
-            else: i -= 1; raise LookupError
+            elif a == "--quiet-info": quiet = True
+            elif a == "--require-webhook-auth": OPTS["webhook_auth"] = True
+            elif a == "--table": OPTS["table"] = True
+            elif a == "--block-env-access": OPTS["block_env"] = True
+            elif a.startswith("--"): print("usage error: unknown option", a); return 2
+            else: dirs.append(a)
         except IndexError: print("usage error: option %s needs a value" % a); return 2
-        except LookupError: i += 1
-        else: i += 1; continue
-        if False: pass
-        elif a == "--quiet-info": quiet = True
-        elif a == "--require-webhook-auth": OPTS["webhook_auth"] = True
-        elif a == "--table": OPTS["table"] = True
-        elif a == "--block-env-access": OPTS["block_env"] = True
-        elif a.startswith("--"): print("unknown option", a); return 2
-        else: dirs.append(a)
         i += 1
     if not dirs: print(__doc__); return 2
     for k, v in expect.items():
-        if files != ["all"] and k not in files: fail("--expect", "unknown file key %r (known: %s)" % (k, sorted(files)))
-        if not isinstance(v, dict) or set(v) - {"nodes", "connections"}: fail("--expect", "bad entry for %r: %r" % (k, v))
-    if allow and not set(allow) <= pc: fail("args", "--allow %s needs --patch-checks to name the same patches (got %s)" % (",".join(allow), ",".join(sorted(pc)) or "none"))
+        if files != ["all"] and k not in files: print("usage error: --expect: unknown file key %r (known: %s)" % (k, sorted(files))); return 2
+        if not isinstance(v, dict) or set(v) - {"nodes", "connections"}: print("usage error: --expect: bad entry for %r: %r" % (k, v)); return 2
+    if pc - {"F002", "F008"}: print("usage error: unknown --patch-checks name(s) %s (known: F002, F008)" % sorted(pc - {"F002", "F008"})); return 2
+    if set(allow) - {"F002", "F008"}: print("usage error: unknown --allow name(s) %s (known: F002, F008)" % sorted(set(allow) - {"F002", "F008"})); return 2
+    if allow and not set(allow) <= pc: print("usage error: --allow %s needs --patch-checks to name the same patches (got %s)" % (",".join(allow), ",".join(sorted(pc)) or "none")); return 2
+    if files == [""] or not files or any(not f.endswith(".json") for f in files if f != "all"): print("usage error: --files wants 'all' or a comma list of *.json names"); return 2
     diffsum = []
     print(HEADER, end="")
     for dr in dirs:
@@ -574,6 +574,7 @@ def main(argv):
         if not os.path.isdir(dr): fail(dr, "not a directory"); continue
         have = sorted(x for x in os.listdir(dr) if x.endswith(".json"))
         dfiles = have if files == ["all"] else files
+        if files == ["all"] and not have: fail(dr, "--files all: this folder holds no *.json file, so nothing was checked"); continue
         if have != sorted(dfiles): fail(dr, "file list %s != expected %s" % (have, sorted(dfiles)))
         for fn in dfiles:
             p = os.path.join(dr, fn); tag = "%s/%s" % (dr, fn)
@@ -595,7 +596,8 @@ def main(argv):
                     if bd2 and shape_ok(bd2, "diff-base/" + fn): node_diff(bd2, d, fn, allow, tag, diffsum)
             except Exception as e:
                 fail(tag, "checker could not finish this file (%s: %s)" % (type(e).__name__, e))
-        cross_file(dr, dfiles)
+        try: cross_file(dr, dfiles)
+        except Exception as e: fail(dr, "cross-file check could not finish (%s: %s)" % (type(e).__name__, e))
     if diffbase:
         text = "\n".join(diffsum) + "\n"
         print(text)
