@@ -14,7 +14,7 @@ The lead session gives orders to the system-map session (this one) through ORDER
 ## People and sessions (one table)
 | name | what it is | kind |
 |---|---|---|
-| lead session | the Claude session that gives the system-map session its orders (older pages write "the lead"; it is not the studio lead; "lead" alone is banned for a session; for a sales contact write "lead record" or "lead id") | Claude session |
+| lead session | the Claude session that gives the system-map session its orders (older pages write "the lead"; before: "the lead decides", after: "the lead session decides"; a sales contact is "lead record", never bare "lead"; it is not the studio lead; "lead" alone is banned for a session; for a sales contact write "lead record" or "lead id") | Claude session |
 | studio lead | the Claude session that does the technical steps on the take and messages the owner | Claude session |
 | core-hardening | a separate Claude session that owns V5 and the held pages | Claude session |
 | system-map session | this Claude session; it writes only inside handover/system-map/ | Claude session |
@@ -27,43 +27,43 @@ The lead session gives orders to the system-map session (this one) through ORDER
 |---|---|---|
 | held pages | listed in the table "Held pages" below | pages this session only digests and never edits |
 | V5 | inputs/OWNER-STEPS-realrun-v5-core-hardening.md | the owner's step list A to J for the filmed run |
-| decisions of 16 Nov | inputs/DECISIONS-2026-11-16.md | 12 items; known second-hand only (summary in STATUS-BOARD.md) |
-| one-store decision | DECISION-one-store (two copies: root file of 20 lines, inputs/DECISION-one-store.md of 28 lines) | where the demo keeps stored leads. Two copies exist (20 and 28 lines). Which one is current is open; the lead session has not answered. Until it does, cite both. "DECISION line N" means line N of that file |
-| OWNER-ONLY | work/OWNER-ONLY.txt (does not exist yet) | would list files only the owner opens; helpers never open them |
+| decisions of 16 Nov | inputs/DECISIONS-2026-11-16.md | 12 items; known second-hand only (the original is held by the lead session) (summary in STATUS-BOARD.md) |
+| one-store decision | DECISION-one-store (two copies: root file of 20 lines, inputs/DECISION-one-store.md of 28 lines) | where the demo keeps stored leads. The lead-intake demo = the demo that takes a made-up sales lead, stores it once, writes one HubSpot contact and sends one mail. Two copies exist (20 and 28 lines). Which one is current is open; the lead session has not answered. Until it does, cite both. "DECISION line N" means line N of that file |
+| OWNER-ONLY | work/OWNER-ONLY.txt (does not exist yet; until it exists, ask the lead session before opening any real-run file) | would list files only the owner opens; helpers never open them |
 | t19 pages | work/t19-*.md | pages about test T19 |
 | critical-path-r1 | work/critical-path-r1.md | when the first filmed take can happen |
 
-## Held pages (owner of each held page is unknown: core-hardening session or lead session; one row each; this session writes a one-line digest of what each cold read found and does not edit them)
+## Held pages (owner unconfirmed: core-hardening session or lead session; ask the lead session; this session writes a one-line digest of what each cold read found and does not edit them)
 | page | owner |
 |---|---|
-| OWNER-VIEW.md | core-hardening session (see the note above this table) |
-| OWNER-RUN-DAY-CARD.md | core-hardening session (see the note above this table) |
-| OWNER-CLEANUP-CARD.md | core-hardening session (see the note above this table) |
-| LEAD-PAGE.md | lead session (see the note above this table) |
-| TAKE-BLOCKERS.md | lead session (see the note above this table) |
-| SWEEP.md | lead session (see the note above this table) |
-| MASTER-MAP.md | lead session (see the note above this table) |
-| README.md | lead session (see the note above this table) |
-| QUESTIONS.md | lead session (see the note above this table) |
-| QUEUE.md | lead session (see the note above this table) |
-| ORDERS.md | lead session (see the note above this table) |
-| inputs/ (folder) | lead session (see the note above this table) |
-| tools/ (folder) | lead session (see the note above this table) |
-| tests/ (folder) | lead session (see the note above this table) |
+| OWNER-VIEW.md | core-hardening session |
+| OWNER-RUN-DAY-CARD.md | core-hardening session |
+| OWNER-CLEANUP-CARD.md | core-hardening session |
+| LEAD-PAGE.md | lead session |
+| TAKE-BLOCKERS.md | lead session |
+| SWEEP.md | lead session |
+| MASTER-MAP.md | lead session |
+| README.md | lead session |
+| QUESTIONS.md | lead session |
+| QUEUE.md | lead session |
+| ORDERS.md | lead session |
+| inputs/ (folder) | lead session |
+| tools/ (folder) | lead session |
+| tests/ (folder) | lead session |
 
 ## Words used on the pages (one definition each)
 - **take**: one recorded run of the lead-intake demo on made-up data. The one claim it makes: "a lead sent twice with the same id is processed once". Say "take" only for the filmed run, not for preparation.
 - **lead record**: one made-up sales contact. **lead id**: that record's id. **HubSpot**: the sales-contact tool the demo writes contacts to. **n8n**: the tool that runs the demo steps.
 - **T19**: the test that sends the same made-up lead twice and expects one mail, one HubSpot write and one stored row in the demo's database (which store: see work/t19-gap-facts.md "Purpose"). Not run yet.
 - **row N**: row N of the table on that page, unless the page writes "TAKE-BLOCKERS row N".
-- **READ / SKIMMED / NOT-READ / OWNER-ONLY-FILE**: (a read status, not the file). READ = a lane opened all of it. SKIMMED = part. NOT-READ = none, so the lane says nothing about it. OWNER-ONLY-FILE = a lane did not open it because only the owner may how much of a file a lane read: all / part / none (so the lane says nothing about that file) / a file only the owner may open.
+- **READ / SKIMMED / NOT-READ / OWNER-ONLY-FILE** (a read status of a file, not the file itself): READ = a lane opened all of it. SKIMMED = it opened part. NOT-READ = it opened none, so it says nothing about the file. OWNER-ONLY-FILE = it did not open the file because only the owner may.
 - **UNVERIFIED**: stated, not checked against a file or command output. **NOT VISIBLE**: the lane could not see it. **NOT FOUND**: searched, not present. **NOT SET / TO DO**: nobody has filled it in.
 - **Severity** in a finding row: the lane's own label; the lead session has confirmed none.
 
-D-04 is not unknown: it is the rule that a lead sent twice is processed once (decision-list-for-lead.md, Reading notes).
+D-04 is not unknown: it is the rule that a lead record sent twice is processed once (decision-list-for-lead.md, Reading notes).
 
-## Unknown terms: do not use in new text
-Each term has meaning not recorded in any file. Ask the lead session first (it passes studio terms to the studio lead), then the owner. If you meet one, write "term (undefined)" and do not guess. "Pages" = up to three pages that use it now (computed by search on 16 Nov).
+## Unknown terms: do not use in new text (safe to ignore when reading older pages: every row marked "no live page"; the others may appear on pages you read, so write "term (undefined)")
+Each term has meaning not recorded in any file. What to do instead: write "term (undefined)" and do not guess; mf_leads may be written "stored-leads table (name unconfirmed)". Ask the lead session first (it passes studio terms to the studio lead), then the owner. "Pages" = up to three pages that use it now (computed by search on 16 Nov).
 | term | pages |
 |---|---|
 | mf_leads (probably a stored-leads table; UNVERIFIED) | DECISION-one-store.md, MASTER-MAP.md, ONE-PLACE-TABLE.md |
@@ -103,7 +103,7 @@ Each term has meaning not recorded in any file. Ask the lead session first (it p
 | ORDER 002 | ORDERS.md, PLAN-002.md, REPORT.md |
 | PLAN section 5.2 | L6.md, agent-reports-batch4.md |
 
-Job keys: STORE, RETRY, NOTICE, FILTER, COUNTER, LOG, OTHER (meanings not recorded; they label what a flow step is for). Claim types: dead, idle, ops (meanings not recorded). L6 verdict words: OWNER, NEEDED, CRM-COULD-DO, DUPLICATE, NOT-NEEDED. Claim (as a flow step) is explained in work/not-checked-r2.md Terms.
+Job keys: STORE, RETRY, NOTICE, FILTER, COUNTER, LOG, OTHER (meanings not recorded; do not use). Claim types: dead, idle, ops (meanings not recorded; do not use). L6 verdict words: OWNER, NEEDED, CRM-COULD-DO, DUPLICATE, NOT-NEEDED. Claim (as a flow step) is explained in work/not-checked-r2.md Terms.
 The one-store decision's source copy is also unknown (same asking rule).
 
 ## Lanes (one line each)
