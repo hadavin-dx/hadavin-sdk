@@ -1,0 +1,5 @@
+d1-no-bearer-rule: rc=1 | SELF-TEST: passed=1012 failed=9 (the made-up input and output files were deleted) | first FAIL: FAIL (secret still visible): bare Bearer value
+d2-awk-blob-threshold: rc=1 | SELF-TEST: passed=1013 failed=8 (the made-up input and output files were deleted) | first FAIL: FAIL (secret still visible): UUID
+d3-no-email-rule: rc=1 | SELF-TEST: passed=1011 failed=10 (the made-up input and output files were deleted) | first FAIL: FAIL (secret still visible): e-mail address
+d4-no-term-trap: rc=1 | SELF-TEST: passed=1021 failed=1 (the made-up input and output files were deleted) | first FAIL: FAIL (machinery): signal TERM in the main phase (exit=143 wanted 143, programs left=0, folders left=1)
+d5-pem-rule-off: rc=1 | SELF-TEST: passed=1010 failed=11 (the made-up input and output files were deleted) | first FAIL: FAIL (secret still visible): private key block opener with the body on the same line (first 6 characters)

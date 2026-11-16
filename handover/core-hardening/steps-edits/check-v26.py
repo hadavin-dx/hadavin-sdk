@@ -79,7 +79,7 @@ for n, t in (('A', A), ('B', B)):
     if '[[' in t or ']]' in t or '{{' in t: fail('C08', n + ' has a marker')
 if 'I will cancel the older key myself' not in A or 'stays valid during the run and I understand' in A: fail('C08', 'A yes sentence wrong')
 if 'stays valid during the run and I understand' not in B or 'I will cancel the older key myself' in B: fail('C08', 'B yes sentence wrong')
-if 'cancel the older key <its name>' not in B or 'always (the deadline forbids a valid paid key after it)' not in B: fail('C08', 'B older key route missing')
+if 'cancel the older key <its name>' not in B or '7.11, always, by ' + F['okb'] not in B: fail('C08', 'B older key route missing')
 # C09 the cancel rule lives only on the card
 for n, t in (('A', A), ('B', B)):
     i = t.find('### THE CARD'); j = t.find('### The rules')
@@ -89,7 +89,7 @@ for n, t in (('A', A), ('B', B)):
         if re.search(p, out): fail('C09', '%s cancel rule text %r outside the card' % (n, p))
 # C10 words used in the card are defined inside the card first
 for n, t in (('A', A), ('B', B)):
-    i = t.find('**Words on this card'); j = t.find('**Blanks:**')
+    i = t.find('**Words on this card'); j = t.find('**Blanks, filled before')
     k = t.find('**When (any one')
     if i < 0 or j < 0 or k < 0: fail('C10', n + ' card parts'); continue
     for m in re.finditer(r'\*\*([A-Z][A-Za-z -]+)\*\* =', t[i:j]):
@@ -120,12 +120,12 @@ for n, t in (('A', A), ('B', B)):
     i = t.find('**Set phrases'); lst = t[i:i + 1500]
     for k, v in F.items():
         if k.startswith('ph_') and v not in lst and not (k == 'ph_older' and n == 'B'): fail('C12', '%s set phrase missing from list: %s' % (n, v))
-    if n == 'B' and F['ph_older'] in t: fail('C12', 'B holds the older-key phrase')
+    if n == 'A' and 'send "%s"' % F['ph_older'] not in t: fail('C12', 'A lacks the older-key send at 6.7')
     for m in re.finditer(r'(?:tell(?:ing)?|[Ss]end) "([^"]+)"', t):
         if m[1] not in [v for k, v in F.items() if k.startswith('ph_')] and m[1] != 'none': fail('C12', '%s told phrase not in list: %s' % (n, m[1]))
 # C13 yes pattern characters
 for n, t in (('A', A), ('B', B)):
-    m = re.search(r'follows this pattern, each `<\.\.\.>` filled: "(.*?)" Amounts have two decimals', t, re.S)
+    m = re.search(r'in this pattern: "(.*?)" Amounts have two decimals', t, re.S)
     if not m: fail('C13', n + ' yes pattern not found'); continue
     y = re.sub(r'<[^>]*>', 'x', m[1])
     bad = set(re.sub(r"[A-Za-z0-9 .:,_/=@+\-]", '', y))
@@ -134,7 +134,7 @@ for n, t in (('A', A), ('B', B)):
 # C14 adversarial and stranger invariants
 INV = [('C14a', 'the key\'s own one-time display at 6.3 and the paste at 6.4'), ('C14b', 'switch it OFF yourself at once'), ('C14c', 'Three phone alarms'),
        ('C14d', 'Text between backticks is typed without the backticks'), ('C14e', 'only if the window\'s last line is `paste key, Enter:`'),
-       ('C14f', '"READ" and "TEST"'), ('C14g', 'ignore a `.used` ending'), ('C14h', 'reverses the order of `end` and the card'), ('C14i', 'minutes of the time `date -u` shows'),
+       ('C14f', '"READ" and "TEST"'), ('C14g', 'A **run name** is 4 to 12 lowercase letters and digits'), ('C14h', 'reverses `end` and the card'), ('C14i', 'minutes of the time `date -u` shows'),
        ('C14j', 'if 7.4 never happened, send "none"'), ('C14k', 'SAMPLE (made-up values'), ('C14l', 'no key was made'), ('C14m', 'never use rotate'),
        ('C14n', 'set -C; umask 077; read -rs'), ('C14o', 'last-resort step <step>'), ('C14p', 'one line only'), ('C14q', 'weekday, month, day and year must equal the run day'),
        ('C14r', 'balance and auto-reload equal your yes'), ('C14s', 'Never "Select all", never empty Trash'.replace('Never "Select all", never empty Trash', 'Never "Select all", never empty Trash')),
@@ -213,7 +213,7 @@ else:
 # C20 angle-bracket placeholders in the sheet come from one list
 PH_OK = {'<amount or none>', '<call ceiling>', '<date>', '<expected total>', '<in words>', '<its name or none>', '<its name>', '<key file>', "<lead's answer>", '<model settings file>',
          '<name and how>', '<name>', '<number or none>', '<number>', '<page address>', '<path from the message>', '<range>', '<run name>', '<setting name>', '<step>',
-         '<test settings file name>', '<the balance you read on the prepaid page>', '<the word you read, it must be off>', '<word seen by the lead>', '<words>', '<copied>', '<place>', '<how>', '<zone>', '<its last-used time, never or none>'}
+         '<test settings file name>', '<the balance you read on the prepaid page>', '<the word you read, it must be off>', '<word seen by the lead>', '<words>', '<copied>', '<place>', '<how>', '<zone>', '<its last-used time, never or none>', '<address>', '<folder path>', '<minutes>', "<the lead's exact sentence>", '<masked address>', '<the cd line>', '<name and how to call>', '<yes or no>'}
 for n, t in (('A', A), ('B', B)):
     for m in set(re.findall(r'<[A-Za-z][^<>\n]{0,45}>', t)):
         if m not in PH_OK: fail('C20', '%s: placeholder not in the list: %s' % (n, m))
@@ -250,8 +250,8 @@ for n in ('note', 'open'):
         for m in re.finditer(p, TEXTS[n]): fail('C22', '%s: cancel-rule wording %r' % (n, m[0]))
 # C23 fixed sentences that must stay (each one is a rule the reviews asked for)
 KEEP = ['**STOP RULE.**', 'A key alive: the card first', 'The balance is at least the expected total.', 'If two rules disagree: the card first, then R1, then R10', 'Never "Select all", never empty Trash',
-        'letters, digits, single spaces and `. _ / - : = @ + ,` only', 'A submitted 2 times with the same person id, 1 contact, 1 mail; B submitted 10 times, 1 contact, 1 mail',
-        'paper note "READ" and "TEST" beside them', 'No word of the lead resumes a run whose key was alive', 'a wait never delays the card'.capitalize()]
+        'letters, digits, single spaces and `. _ / - : = @ + , \'` only', 'A submitted 2 times with the same person id, 1 contact, 1 mail; B submitted 10 times, 1 contact, 1 mail',
+        'paper notes "READ" and "TEST"', 'No word of the lead resumes a run whose key was alive', 'a wait never delays the card'.capitalize()]
 for n, t in (('A', A), ('B', B)):
     for s_ in KEEP:
         if s_ not in t: fail('C23', '%s lacks the fixed sentence %r' % (n, s_))
@@ -262,7 +262,7 @@ mr = re.search(r'single spaces and `([^`]+)` only', A)
 if mr:
     allowed = set(mr[1].replace(' ', '')) | set('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ')
     for n, t in (('A', A), ('B', B)):
-        m = re.search(r'follows this pattern, each `<\.\.\.>` filled: "(.*?)" Amounts have two decimals', t, re.S)
+        m = re.search(r'in this pattern: "(.*?)" Amounts have two decimals', t, re.S)
         if m and set(re.sub(r'<[^>]*>', 'x', m[1])) - allowed: fail('C24', n + ': yes pattern holds a character R8 does not allow')
 else: fail('C24', 'R8 character list not found')
 # C25 the three window facts of 5.1 and the three alarms agree (set once in the card words and in 6.2)
