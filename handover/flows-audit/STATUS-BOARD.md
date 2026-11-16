@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T19:42:11Z
+UPDATED_UTC: 2026-11-16T19:43:03Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -7,11 +7,11 @@ ITEMS_TOTAL: 10
 ITEMS_OPEN: 30
 PERCENT: 70
 AGENTS_RUNNING: 8
-CAPACITY: 4.98 load of 4 cores, mem 1/15 GB, RAM 1183/16087 MB, disk 19G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 4.8G /tmp/claude-0 , agents 8 (light+heavy per list)
+CAPACITY: 8.52 load of 4 cores, mem 1/15 GB, RAM 1253/16087 MB, disk 19G free of 252G, top3 459M /tmp/tmp.ddW834IdiF 522M /tmp/tmp.4gOIkjhGSB 4.8G /tmp/claude-0 , agents 8 (light+heavy per list)
 INTERRUPTED: none
 FAILED: none (F8 run_all.sh intermittent exit 1 is an evidence finding: 3 of 6 plain runs failed, cause unknown, fixer acf8ab59 on it; ruff format --check passes 741 files)
-NEXT: fixers/readers running
-PUSHED_UTC: 2026-11-16T19:42:11Z
+NEXT: load 8.1 at 19:43Z, no new heavy runs until under 6
+PUSHED_UTC: 2026-11-16T19:43:03Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
@@ -30,13 +30,13 @@ PUSHED_UTC: 2026-11-16T19:42:11Z
 ## AGENTS
 | id | role | model | what it does | started UTC | expected end UTC | state | produced so far |
 |---|---|---|---|---|---|---|---|
-| a5bd0aec | fixer | sonnet | patch-copies README+DEAD-MAN-CHECK r22 (uncapped) | 19:37Z | 20:37Z | working | - |
 | a1bdef8f | fixer | sonnet | FINDINGS/LEDGER r31 | 19:41Z | 20:41Z | working | - |
 | acf7be5f | fixer | sonnet | QUESTIONS Q31 r49 | 19:46Z | 20:46Z | working | - |
 | a4341ca7 | fixer | sonnet | TAKE-CHECKLIST + FIX-PLAN r43 | 19:48Z | 20:48Z | working | - |
-| a2eb5ccf | reviewer | sonnet | REVIEW.md Z1 (4A) design (uncapped) | 19:44Z | 20:00Z | working | - |
+| a7013236 | fixer | sonnet | REVIEW.md r49 (uncapped) | 19:49Z | 20:49Z | working | - |
 | a4929f91 | reader | sonnet | CLAIMS-TABLE 300-600 | 19:45Z | 20:00Z | working | - |
 | a55ebcd3 | reader | sonnet | RUNBOOK 1-220 r50 | 19:46Z | 20:00Z | working | - |
+| a7b8dca1 | reader | sonnet | patch-copies README 1-330 r23 (uncapped) | 19:49Z | 20:05Z | working | - |
 | aabf71c4 | evidence runner | sonnet | F8 r12 evidence (driver running) | 19:00Z | 20:00Z | waiting driver | partial |
 
 ## NEXT 5 (not started, no capacity or waits on a running fix)
