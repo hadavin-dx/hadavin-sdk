@@ -1,0 +1,15 @@
+baseline (unmodified copy): rc=0 FAIL lines=0
+H01 CAUGHT rc=1 codes=C03,C79 | deadline moved 10 minutes in the facts file, sources rebuilt
+H02 CAUGHT rc=1 codes=C108 | one [OWNER FILLS: ...] placeholder misspelled
+H03 CAUGHT rc=1 codes=C04 | wrong weekday for deadline day in sheet
+H04 CAUGHT rc=1 codes=C01,C19,C201 | built sheet A pointer to non-existent appendix part (built file edited, no rebuild)
+H05 ANCHOR NOT FOUND
+H06 MISSED rc=0 codes=- | lead page tells owner by message to cancel the older key
+H07 ANCHOR NOT FOUND
+H08 CAUGHT rc=1 codes=C04 | lead note: wrong IST pair literal for 18:04
+H09 MISSED rc=0 codes=- | second placeholder spelling changed
+H10 ANCHOR NOT FOUND
+H11 CAUGHT rc=1 codes=C01,C08,C10,C104,C12,C127,C128,C137,C145,C14j,C165,C173,C197,C25,C27,C29,C30,C46,C61,C86,C87,C90 | built card B truncated: last 15 lines removed
+H12 CAUGHT rc=1 codes=C03,C04,C19,C73 | post-by IST pair wrong in facts
+H13 ANCHOR NOT FOUND
+SUMMARY mutations 13: caught 7, missed 2, anchor-missing 4

@@ -1,0 +1,3 @@
+#!/bin/sh
+echo $$ > "/home/user/hadavin-sdk/handover/core-hardening/lead-repin/evidence-repin7-independent/tmp_root/lead-repin.gWUVEs/st-fakebin/git.pid"
+exec sleep 31
