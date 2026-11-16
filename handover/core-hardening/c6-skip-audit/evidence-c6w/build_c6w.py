@@ -286,7 +286,7 @@ def extra3b(t):
     # fourth trim pass
     t = rsub(t, r"Your line starts the builder\. The G12 approval is ONE line in ORDERS\.md \(form in the WORDS list, item G12\), written only after the loopback re-smoke of TASK \(5\) has put its results on the run sheet\.", "Your line starts the builder.", 1)
     t = rsub(t, r"Answer forms: L-CARD, L-CARDCUT, L-CARDTEXT, L-CARDLEASE \(keep or drop\), L-POST, L-APPROX, L-SAVE, L-PAGE, L-ONEDB, L-CUT yes or no; L-CARDLEN a or b; L-LEASE none, 1 or 2; L-KILL a or b; L-DEL no reply\.", "Answer forms: yes or no, except L-CARDLEN a or b; L-LEASE none, 1 or 2; L-KILL a or b; L-DEL no reply; L-CARDLEASE keep or drop.", 1)
-    t = rsub(t, r"The defaults cut nothing by hand: rows 11 to 14 write the whole card \(90 words, about 36 s, budget 40 s\), row 96 sets the card's Time cell to the same 40 s, and a gate keeps the held lines off the film \(shorter cases: Table B, section 1c; each a hand edit and a further round\)\.", "Rows 11 to 14 write the whole card (90 words, about 36 s, budget 40 s); row 96 sets its Time cell to 40 s; a gate keeps the held lines off the film (shorter cases: Table B, section 1c; each needs a hand edit and a further round).", 1)
+    t = rsub(t, r"The defaults cut nothing by hand: rows 11 to 14 write the whole card \(90 words, about 36 s, budget 40 s\), row 96 sets the card's Time cell to the same 40 s, and a gate keeps the held lines off the film \(shorter cases: Table B, section 1c; each a hand edit and a further round\)\.", "Rows 11 to 14 write the whole card (90 words, about 36 s, budget 40 s) and its Time cell on the run sheet is set to 40 s; a gate keeps the held lines off the film (shorter cases: Table B, section 1c; each needs a hand edit and a further round).", 1)
     t = rsub(t, r"\(a builder applies rows 23, 58, 59 and lists them in c6w-APPLIED-ROWS\.md\): \(1\)", ": (1)", 1)
 
     # fifth trim pass
@@ -329,6 +329,17 @@ def extra3b(t):
     t = _h + _tl
 
     t = sub(t, "| 1 | run sheet, line 90 | Scene 4 shows no test result in seconds; the live stopwatch, the label 'sped up, real wait' and the label 'setting: lease 45 s' stay. |", "| 1 | run sheet, line 90 | Scene 4 shows no test result in seconds; the live stopwatch and the label 'sped up, real wait' stay; the label 'setting: lease 45 s' stays only after G12 is approved. |", 1)
+
+    t = sub(t, "RELEASE NOTE VERSIONS: v12 = LRN (older), v14 = LRN14, v18 = the newest; v16 is cited once (G19).", "RELEASE NOTE VERSIONS: v12 = LRN (older), v14 = LRN14, v18 = the newest; v16 is cited once (G19). STEP = one numbered line of WHAT TO TYPE; CHECK = a test by a script of this folder or a run in n8n (C-1 to C-11, section 7); KEY = a secret code (word list in the box); PRIMARY KEY = the database rule that allows one row per contact id; 'lead' is used only inside quotes and file names, otherwise 'contact'.", 1)
+    t = sub(t, "5a. WHAT CHANGES", "READING THE REASON CELLS: in the full table the reason cell after its first stop is history of earlier versions; rows 39 and 76 are two edits of two different lines that show the same viewer text.\n5a. WHAT CHANGES", 1)
+    _k = t.index("## Start here, part 2")
+    _h, _tl = t[:_k], t[_k:]
+    assert _h.count("reached only through you.") == 1
+    _h = _h.replace("reached only through you.", "reached only through you; if you are also the owner, the two roles stay separate.", 1)
+    t = _h + _tl
+
+    t = sub(t, "only the take's own 45 s lease setting may be named.`", "only the take's own 45 s lease setting may be named, and only after G12 is approved.`", 1)
+    t = sub(t, "1, 2, 5, 15, 17, 19, 30, 34, 83, 93 and 94", "1, 2, 5, 15, 17, 19, 30, 34, 81, 83, 93 and 94", 2)
     # real written times of the newest sheet and release note (read from the files; the c6v text carried older times)
     import os as _os, datetime as _dt
     _st = _os.environ.get("C6V_STEPS") or _os.path.join(_os.path.dirname(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))), "steps-edits")

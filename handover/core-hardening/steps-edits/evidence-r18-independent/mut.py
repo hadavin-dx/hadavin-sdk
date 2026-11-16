@@ -48,11 +48,19 @@ def m18(d):
     a=blk.index('NEW'); new=blk[a:]
     print('E-26 NEW:',new[:400].replace('\n',' | '))
     d['EDITS.md']=t
-M[17]=(M[17][0],lambda d:None)
+M[17]=('M18 deleted safety sentence The assistant never opens the files, EDITS+day',multi(rep('EDITS.md',' The assistant never opens the files.','',True),rep('r18-OWNER-DAY-SHEET.md',' The assistant never opens the files.','',True)))
 def m19(d):
     t=d['r18-OWNER-DAY-SHEET.md']; a=[l for l in t.split('\n') if l.startswith('2. You:')][0]; b=[l for l in t.split('\n') if l.startswith('3. You:')][0]
     t=t.replace(a,'@@A').replace(b,'@@B').replace('@@A',b.replace('3. You:','2. You:',1)).replace('@@B',a.replace('2. You:','3. You:',1)); d['r18-OWNER-DAY-SHEET.md']=t
 M[18]=(M[18][0],m19)
+def m22(d):
+    for f in ['EDITS.md','r18-OWNER-APPENDIX-K.md']:
+        t=d[f]; i=t.index('K-D (detail of key step D).'); j=t.index('\n',i); line=t[i:j]; sents=line.split('. ')
+        d[f]=t[:i]+'. '.join([sents[0]]+sents[2:])+t[j:]
+M+=[('M21 10 minutes -> 20 minutes (last-day window length) EDITS+day',multi(rep('EDITS.md','there are only 10 minutes','there are only 20 minutes',True),rep('r18-OWNER-DAY-SHEET.md','there are only 10 minutes','there are only 20 minutes',True))),
+('M22 deleted 2nd sentence of K-D (file+EDITS section)',m22),
+('M23 deleted (never its content) EDITS+day',multi(rep('EDITS.md',' (never its content)','',True),rep('r18-OWNER-DAY-SHEET.md',' (never its content)','',True))),
+('M24 reversed default: neither written treated as shred done (EDITS+day)',multi(rep('EDITS.md','If you write neither, the assistant treats it as `shred not done key copies` or `shred not done other files`.','If you write neither, the assistant treats it as `shred done key copies` or `shred done other files`.',True),rep('r18-OWNER-DAY-SHEET.md','If you write neither, the assistant treats it as `shred not done key copies` or `shred not done other files`.','If you write neither, the assistant treats it as `shred done key copies` or `shred done other files`.',True)))]
 only=sys.argv[1:]
 out=[]
 for name,fn in M:
