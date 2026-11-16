@@ -103,3 +103,9 @@ tree diff rc 0
   declared --extra: exit code 0
   PASS: T14b exit 0
 == T15 SIGKILL of run.py leaves the test group alive; --restore stops it and restores
+/home/user/hadavin-sdk/handover/core-hardening/mutation-lane/safety-tests.sh: line 70: kill: (22652) - No such process
+  FAIL: T15 orphan pytest alive
+no marker: nothing to restore
+  PASS: T15 orphan stopped
+  PASS: T15 file restored
+== T16 SIGHUP restores too (exit 129)

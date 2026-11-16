@@ -1,0 +1,21 @@
+# Finding-to-line map, C3b v4 (2026-11-16). "plan line" = line of inputs/plan-wp6-resmoke-v5.md after BOTH patches (fixes, then v4). "patch line" = line of paste-check/plan-v5-repin-v4.patch (the `+` line that holds the text). Each finding was checked against the v3-applied plan first (all were real; none rejected).
+| finding | what v4 does | plan line | patch line | test (evidence-c3g.md section) |
+|---|---|---|---|---|
+| naive M1 (sha256 tie vs CR fix; control never CR-scanned; patch said runner does not change P-4b files but "fix each listed file") | P-3b scan list now includes `pastes/P-4b.control.txt`; CR fix excludes both P-4b files; hit in either = STOP, no sed, lead rewrites and re-makes the control; ASCII+LF rule in P-3a, P-4b rules, WORDS | 241, 231, 243, 4 | 104, 90, 107, 12 | 4 cases B, C |
+| naive M2 / N5 (leftover count hidden in lead-only paragraph; no plan path; no channel) | count is RE-PIN step (d) AND the first action of the P-2 bullet and named in the Preconditions header; Grep tool pattern and output mode given; reporting channel = line `STOP leftover placeholder or marker` in PROGRESS.md plus the reply | 3, 230, 234 | 11, 89, 94 | 2 |
+| naive M3 (container path, clashing variable P, "same shell") | laptop path form `C:/Users/rakes/...`, variable `PF` (not `P`), every command sets its own `PF=`; the path is a guess = question 9 | 3 | 11 | 2 (last, names) |
+| naive M4 (strings.txt CR check after the fill) | CR test inside the fill command, before the loop; output `strings.txt holds a CR (CRLF): STOP` | 3 | 11 | 5 (CRLF case) |
+| naive M5 / facts N1 (wording-diff rule not mechanical; not in order; no source for exit 3; no "no literal 3" rule) | `grep -iE`; rule applied line by line to `+` lines (allowed texts listed; any other `exit` text or no literal 3 = STOP); placed in step (c); source stated as the lead's statement | 3 | 11 | 5 (acceptance cases) |
+| naive M6 (P-3b pass line prose; empty hash; bare 20) | every output is echo-labelled; one literal expected log; `P-4b files ok` or `P-4b files STOP`; labelled `strings bad lines:` and `strings lines:` | 241 | 104 | 4 (A to O) |
+| naive M7 (resume after P-4b STOP does not re-tie the hash) | resume at P-3b (read-only), then P-4b, then P-5; question 2 default updated | 243 | 107 | 4 (G, K), 7 |
+| naive N1 ("table after WORDS") | now "placeholder paragraph at the end of the WORDS line" | 244 | 108 | grep |
+| naive N2 / facts M2 (who fills `<folder>`/`<pid>` in R2; what is the lead's yes) | kept the restrictive gated runner version; "lead's yes" = line `LEAD-YES R2 pid=<digits>` in PROGRESS.md; R2 states it; new question 8 (marker in WORDS) | 4, 110 | 12, 55 | 2 |
+| naive N3 (H1/H2: missing path prints nothing) | fill command prints `FILE-MISSING` when the file is not in `scripts/` of the commit; rule: STOP (lead looks up the folder, question 6) | 3 | 11 | 5 (H1 row) |
+| naive N4 / facts N4 (flip every place; 1b has no marker) | rule "flip every place" with a list command; 1b has its own marker; the list file gives the plan line of each marker place | 3, 243 | 11, 107 | 2 (partial flip) |
+| naive N6 (several `== P-4b` blocks) | "read the block of the LAST `== P-4b` line"; same for P-3b | 241, 243 | 104, 107 | text |
+| naive N7 (24/10 only with both patches) | stated next to the counts | 3 | 11 | 2 |
+| facts M1 (control is a claim, unanchored hash, later lines unchecked) | first line tested `head -n1 | grep -qxF "P-4b.sh sha256 <hash>"`; every later line must match `^P-4b-HIT pid=[0-9]+$`, at least one; the attestation limit is stated plainly in P-4b and UNVERIFIED 15 | 241, 243, 567 | 104, 107, 244 | 4 (G, H, I, J, K), 7 |
+| facts N2 (missing P-4b.sh gives empty hash, `grep -qF ""` matches) | guard `[ -n "$h" ]`, `-s`, and anchored whole-line test; missing file gives `P-4b files STOP` | 241 | 104 | 4 (D, F) |
+| facts N3 (control not in CR scan) | control file is in the scan list | 241 | 104 | 4 (C) |
+| facts N5 (13.3 `gone` GONE-FAIL after the control n8n is gone on exit 3) | stated in 13.1 and 13.3: STOP, not a pass; runner does not run `gone` or R2 again | 416, 417 | 127, 128 | 6 |
+| not in the findings, added by me | U1 row says "attestation by the lead, not proof"; UNVERIFIED 16 lists the new Git Bash commands and the guessed `PF` path; question 9 | 476, 568 | 168, 245, 11 | none |

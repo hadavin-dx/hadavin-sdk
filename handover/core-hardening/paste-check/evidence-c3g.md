@@ -315,3 +315,10 @@ syntax end
 P-4b files ok
 strings bad lines: 0
 strings lines: 20
+## 8 the acceptance-rule checker used in section 5 (a test helper, NOT part of the plan)
+```
+# mechanical check of the acceptance rule on stdin
+in=$(grep -v '^+++' | grep '^+'); bad=$(echo "$in" | grep -i exit | grep -vF -e 'exit 2' -e 'sys.exit(2)' -e 'exit 3' -e 'sys.exit(3)' | wc -l); three=$(echo "$in" | grep -cF -e 'exit 3' -e 'sys.exit(3)')
+if [ "$bad" -gt 0 ] || [ "$three" -lt 1 ]; then echo "STOP (other exit lines=$bad, literal 3 lines=$three)"; else echo "ACCEPT"; fi
+```
+Processes started by this builder: python stand-ins as uid 65534 (two runs, pids printed above), each ended by exact pid; pgrep afterwards: 0 left. No sub-agents, no commits, nothing under inputs/ edited.

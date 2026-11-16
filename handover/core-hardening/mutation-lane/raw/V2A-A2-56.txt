@@ -1,0 +1,18 @@
+MUTANT V2A-A2-56  VERDICT: SURVIVED
+description: local_dir write_outcome: except widened to BaseException
+base commit: b4cce5b   root: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/v2tree   file: src/hadavin_sdk/audit/local_dir.py
+command: /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/v2tree/.venv/bin/python -m pytest -q -p no:cacheprovider --tb=line -rf tests/test_a01_audit_reconcile.py tests/test_p7_tick.py tests/test_s2_audit.py tests/test_p3b_neutral_audit.py   (cwd=/tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/v2tree; environment: PATH, HOME, PYTHONDONTWRITEBYTECODE only)
+rc: 0
+restore check: saved original == file after restore (byte compare): True; sha256 equals git-archive reference: True
+pytest summary line: 118 passed in 18.19s
+first failing test: -
+all failing tests (0): -
+--- OLD TEXT (full) ---
+        except Exception as exc:  # noqa: BLE001 - disk errors, a corrupt index line: the contract is "never raises"
+--- NEW TEXT (full) ---
+        except BaseException as exc:  # noqa: BLE001 - disk errors, a corrupt index line: the contract is "never raises"
+--- PYTEST OUTPUT (full) ---
+........................................................................ [ 61%]
+..............................................                           [100%]
+118 passed in 18.19s
+
