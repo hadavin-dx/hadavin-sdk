@@ -501,3 +501,11 @@ safety-tests.sh: line 522:  7220 Killed                  ( exec python3 "$RUN" -
 stopped orphaned test group 7301; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/s1/tmpstate/hadavin-mutation-lane-0/2005ad976e2dd969.backup; hash ma
 safety-tests.sh: line 522:  7301 Killed                  ( cd "$T/root" && exec setsid "${ARGV[@]}" > /dev/null 2>&1 )
   PASS: T51a (control) identical command line AND identical start time: stopped (rc 0)
+safety-tests.sh: line 535:  7471 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T51b outside-root setup: the member of the dead leader's group runs
+process 7761 is not this run's pytest (or cannot be verified): left alone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/s1/tmpstate/hadavin-mutatio
+  PASS: T51b outside-root: member left alone, file restored (rc 0)
+safety-tests.sh: line 535:  7791 Killed                  ( exec python3 "$RUN" --root "$T/root" --sha "$SHA" --repo "$T/repo" --prefix X --raw "$S/rawT" --pythonpath "$T/root/src" --id m1 --file src/mod.py --old 'return 1' --new 'return 2' -- tests/test_slow.py ) > /dev/null 2>&1
+  PASS: T51b early-start setup: the member of the dead leader's group runs
+process 7985 is not this run's pytest (or cannot be verified): left alone; restored src/mod.py from /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/s1/tmpstate/hadavin-mutatio
+  PASS: T51b early-start: member left alone, file restored (rc 0)
