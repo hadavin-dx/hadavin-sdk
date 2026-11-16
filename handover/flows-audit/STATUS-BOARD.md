@@ -1,4 +1,4 @@
-UPDATED_UTC: 2026-11-16T12:04:17Z
+UPDATED_UTC: 2026-11-16T12:04:43Z
 SESSION: flows-audit
 ORDER: 018 (queue 015, fails 017, board 008)
 STATE: WORKING
@@ -7,7 +7,7 @@ ITEMS_TOTAL: 12
 ITEMS_OPEN: 10
 PERCENT: 96
 AGENTS_RUNNING: 8
-CAPACITY: 2.42 load of 4 cores, mem 0/15 GB, RAM 974/16087 MB, disk 26G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 2.2G /tmp/claude-0 , agents 8 (light+heavy per list)
+CAPACITY: 2.45 load of 4 cores, mem 0/15 GB, RAM 977/16087 MB, disk 26G free of 252G, top3 327M /tmp/core-venv 345M /tmp/e7m 2.2G /tmp/claude-0 , agents 8 (light+heavy per list)
 INTERRUPTED: none
 FAILED: FAILED: ruff format --check failed (17 files); my 16 files now formatted; inputs/plan-wp6-resmoke-v5.md is the lead's (1 left). ruff check has 53 lint errors in my tools: lint fixer running. F8 r10 Blocker: pin rewrite self-approves, fixer running
 FAILED: ruff format --check on inputs/plan-wp6-resmoke-v5.md (lead-owned); check_refs unresolved CUT-LIST.md:17 (fixer running); lint fixer changed no_name.out (crash removed)
@@ -17,8 +17,8 @@ RW/CT: B-003c vs B-219 overlap, B-101 old quote, B-010 note, A-016f id in public
 FINDINGS/patches: F-003 patch contradicts Q25/Q28 (caption, CRM row, stopwatch, owner stops n8n) - drift B1,M1-M7
 QUESTIONS: F-011/F-041 gate text conflict (Q27-9 vs Q21)
 core-patches REVIEW: X-2 grant list wrong, C-3 consumers incomplete, A-6 reason, Major count (round 3, 4 Majors)
-NEXT: 8 lanes running
-PUSHED_UTC: 2026-11-16T12:04:17Z
+NEXT: 8 lanes running; evidence runner a565b6b checks run_all.sh exit (lead: earlier exit 1)
+PUSHED_UTC: 2026-11-16T12:04:43Z
 
 ## ITEMS
 | # | item | state | % | evidence or output file | note |
