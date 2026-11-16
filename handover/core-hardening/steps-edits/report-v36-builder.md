@@ -1,7 +1,7 @@
 # Owner sheet v36 builder hand-back (condensed copy), 2026-11-16
 ## Failures and gaps first
-1. Full plant run mut36.py (about 330 plants) was not finished at hand-back (pid 22677 under heavy-slot): 230 caught, 0 missed, 1 ANCHOR-NOT-FOUND (X23: stale v35 sentence in the repoint table, fixed after the run started). Need the TOTAL line and one clean re-run through heavy-slot.sh.
-2. Two queued wrappers (fail-proof, gap-proof) would overwrite evidence; the direct outputs (evidence-v36/fail-proof-direct.out, gap-proof-direct.out) are the evidence. I stopped the two queued wrappers (pids 22680, 22682).
+1. FINAL (update): mut36.py finished: TOTAL plants 329, caught by the meant check 325, missed 0, anchor-not-found 3 (X23, Z17, AB06: old plants whose anchor text was reworded; X23 repointed after the run started; Z17 and AB06 still need re-anchoring; no clean total exists yet). Next step: re-anchor Z17 and AB06 and re-run mut36.py once through heavy-slot.sh (the lead's single mutation batch can cover it).
+2. Two queued wrappers (fail-proof, gap-proof) would overwrite evidence; the direct outputs (evidence-v36/fail-proof-direct.out, gap-proof-direct.out) are the evidence. I stopped the two queued wrappers (pid 22680 had gone, 22682 was a defunct shell).
 3. No independent evidence runner or egm reviewer has seen v36. Nothing live was run. Vendor paths and words, the cancel-only role, Recall, how the lead starts and stops the model program, the 55-minute window: UNVERIFIED.
 4. Own slips: first build over every cap (sheet A 6,494, total 15,851), fixed by moving text; banned wording "told" fixed; 13 existing pinned checks re-pointed (listed in v36-CHANGES section 3; lead must confirm none was weakened without a design reason). Stale "v19" prose in LEAD-RELEASE-NOTE-v20-SOURCE.md.
 ## Results
