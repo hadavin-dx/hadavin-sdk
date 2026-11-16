@@ -24,3 +24,18 @@ def sub(m):
 b = re.sub(r'"([0-9a-f]{16})"', sub, a)
 b = b.replace("v20", "v21").replace("secdef_guard_v21.fingerprint", "secdef_guard_v21.fingerprint")
 open("allow_v21.py", "w").write(b)
+
+# v21 B1: ADD_PINS_BY_FILE, computed from the held files as they are now (the pins are reviewed text, printed in raw/raw-add-pins-v21.txt)
+import secdef_guard_v21 as _g
+_t = open("allow_v21.py").read()
+_pins = {}
+for _f in sorted(glob.glob("held-sql/*.sql")):
+    _n = os.path.basename(_f)
+    _fp = set()
+    for _st in _g.split_statements(_g.tokenize(open(_f).read())):
+        if _g._lead(_st)[:2] == ["ALTER", "TABLE"] and any(_g._is(_x, "ADD") for _x in _st): _fp.add(_g.fingerprint(_st))
+    if _fp: _pins[_n] = _fp
+_t = _t.replace("def check(g, name, text):", "ADD_PINS_BY_FILE = " + repr({k: sorted(v) for k, v in _pins.items()}) + "   # v21 B1: fingerprints of every ALTER TABLE ... ADD statement of a held file\ndef check(g, name, text):", 1)
+_t = _t.replace("kinds=KINDS_BY_FILE.get(name))", "kinds=KINDS_BY_FILE.get(name),\n                            add_pins=(set(ADD_PINS_BY_FILE[name]) if name in ADD_PINS_BY_FILE else None))", 1)
+open("allow_v21.py", "w").write(_t)
+print("add pins", {k: len(v) for k, v in _pins.items()})

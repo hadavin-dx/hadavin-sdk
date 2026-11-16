@@ -30,7 +30,9 @@ KINDS_BY_FILE = {
  D3: {"spend_reserve(text,date,numeric)": {"INSERT", "UPDATE", "SELECT"}, "spend_settle(text,date,numeric,numeric)": {"UPDATE", "SELECT"},
       "kill_switch_engage()": {"INSERT", "UPDATE"}, "kill_switch_release()": {"UPDATE"}},
 }
+ADD_PINS_BY_FILE = {'spend_guarded_writes.sql': ['143a98d95ee24daa', '156b2404645796e7', '2fb7d7520586cce1', '40282382be811a4c', '6657c5c86c8d7780', 'a85f18eea448552f', 'cc245308140cd057', 'e73eefd80fa153a4', 'f4bf6b54018ba5d4', 'ffc11090e7a5b422'], 'spend_nonneg.sql': ['218ca1805b82c990', '7c7f8e948a3d2ef2'], 'spend_nonneg_finite.sql': ['8029775c7249384d', 'd1acc8678c0e682d'], 'spend_nonneg_upgrade.sql': ['d5cbfe6dc4f2d178', 'f48b9856bb955ca1']}   # v21 B1: fingerprints of every ALTER TABLE ... ADD statement of a held file
 def check(g, name, text):
     """the one call every runner uses: the real file name picks every pin"""
     return g.check_sql_text(name, text, ALLOWED_BY_FILE.get(name, {}), extra_statements=EXTRA_BY_FILE.get(name, ()), atomic_tables=ATOMIC_TABLES_BY_FILE.get(name),
-                            trigger_pins=TRIGGER_PINS_BY_FILE.get(name), fn_pins=FN_PINS_BY_FILE.get(name), kinds=KINDS_BY_FILE.get(name))
+                            trigger_pins=TRIGGER_PINS_BY_FILE.get(name), fn_pins=FN_PINS_BY_FILE.get(name), kinds=KINDS_BY_FILE.get(name),
+                            add_pins=(set(ADD_PINS_BY_FILE[name]) if name in ADD_PINS_BY_FILE else None))

@@ -176,6 +176,15 @@ PASS W17 control: ON CONFLICT (..) and PRIMARY KEY (..) are still syntax: v21 fl
 PASS W18 control: alias column list over a pinned relation only: v21 flags=0 ; v20 flags=1 ; v19 flags=1 ; v18 flags=0 ; v17 flags=0 ; v16 flags=0
 PASS W19 control: SET LOCAL lock_timeout = '5s' and statement_timeout = '60s': v21 flags=0 ; v20 flags=0 ; v19 flags=0 ; v18 flags=0 ; v17 flags=0 ; v16 flags=0
 PASS W20 control: DB-3 file with the new pins: v21 flags=0 ; v20 flags=1 ; v19 flags=0 ; v18 flags=0 ; v17 flags=0 ; v16 flags=0
+PASS W21 (H75) CHECK (true) in place of the agent-id rule on both tables: v21 flags=2 ; v20 flags=0  (v20 MISSES it) ; v19 flags=0 ; v18 flags=0 ; v17 flags=0 ; v16 flags=0  (v18 MISSES it)
+PASS W22 (H76) ceiling 1e30 on both tables: v21 flags=4 ; v20 flags=0  (v20 MISSES it) ; v19 flags=0 ; v18 flags=0 ; v17 flags=0 ; v16 flags=0  (v18 MISSES it)
+PASS W23 (H67) the ceiling of spend.usd dropped (spend only): v21 flags=1 ; v20 flags=0  (v20 MISSES it) ; v19 flags=0 ; v18 flags=0 ; v17 flags=0 ; v16 flags=0  (v18 MISSES it)
+PASS W24 (H68) open_usd check weakened by OR true (spend only): v21 flags=1 ; v20 flags=0  (v20 MISSES it) ; v19 flags=0 ; v18 flags=0 ; v17 flags=0 ; v16 flags=0  (v18 MISSES it)
+PASS W25 day window widened to year 9999: v21 flags=1 ; v20 flags=0  (v20 MISSES it) ; v19 flags=0 ; v18 flags=0 ; v17 flags=0 ; v16 flags=0  (v18 MISSES it)
+PASS W26 open_usd column default changed to 5: v21 flags=1 ; v20 flags=0  (v20 MISSES it) ; v19 flags=0 ; v18 flags=0 ; v17 flags=0 ; v16 flags=0  (v18 MISSES it)
+PASS W27 DB-1 default file with CHECK (usd >= 0 OR true): v21 flags=2 ; v20 flags=0  (v20 MISSES it) ; v19 flags=0 ; v18 flags=0 ; v17 flags=0 ; v16 flags=0  (v18 MISSES it)
+PASS W28 control: the real DB-3 file with the ADD pins: v21 flags=0 ; v20 flags=0 ; v19 flags=0 ; v18 flags=0 ; v17 flags=0 ; v16 flags=0
+PASS W29 control: the real DB-1 default file with the ADD pins: v21 flags=0 ; v20 flags=0 ; v19 flags=0 ; v18 flags=0 ; v17 flags=0 ; v16 flags=0
 PASS R01 quoted mixed-case name "Evil": v21 flags=3 ; v20 flags=3 ; v19 flags=3 ; v18 flags=1 ; v17 flags=1 ; v16 flags=0
 PASS R02 schema-qualified public.evil: v21 flags=3 ; v20 flags=3 ; v19 flags=3 ; v18 flags=1 ; v17 flags=1 ; v16 flags=0
 PASS R03 CREATE FUNCTION (no OR REPLACE): v21 flags=3 ; v20 flags=3 ; v19 flags=3 ; v18 flags=2 ; v17 flags=1 ; v16 flags=0
@@ -224,4 +233,4 @@ PASS real file spend_guarded_writes.sql: []
 PASS real file spend_nonneg.sql: []
 PASS real file spend_nonneg_finite.sql: []
 PASS real file spend_nonneg_upgrade.sql: []
-226 checks passed, 0 failed; mutants the v19 guard misses: 50; the v18 guard misses: 102; the v17 guard misses: 137; the v16 guard misses: 165; of the 38 NEW v20 mutants that must be flagged the v19 guard misses 37 and flags 1 (the others are listed above without the 'v19 MISSES' mark); of the 16 NEW v21 mutants that must be flagged the v20 guard misses 12 and flags 4
+235 checks passed, 0 failed; mutants the v19 guard misses: 57; the v18 guard misses: 109; the v17 guard misses: 144; the v16 guard misses: 172; of the 38 NEW v20 mutants that must be flagged the v19 guard misses 37 and flags 1 (the others are listed above without the 'v19 MISSES' mark); of the 23 NEW v21 mutants that must be flagged the v20 guard misses 19 and flags 4

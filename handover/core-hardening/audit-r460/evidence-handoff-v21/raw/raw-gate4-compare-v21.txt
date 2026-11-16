@@ -1,0 +1,9 @@
+ruff: rc=0
+format: rc=0
+perf: rc=0
+bandit: rc=0
+pytest failing names in baseline: 2; in this run: 2; new ones: 0
+pytest last line: rc=1
+pytest summary (this run): 2 failed, 9364 passed, 454 skipped, 26 deselected in 195.94s (0:03:15)
+pytest summary (baseline): 2 failed, 9364 passed, 454 skipped, 26 deselected in 196.26s (0:03:16)
+rc=0

@@ -176,6 +176,23 @@ check("G1 runtime role: direct UPDATE of spend refused 42501", st(lambda: rt.exe
 check("G1 runtime role: direct UPDATE of spend_month refused 42501", st(lambda: rt.execute("UPDATE spend_month SET usd = 0")) == "42501")
 check("G1 runtime role: direct UPDATE of kill_switch refused 42501", st(lambda: rt.execute("UPDATE kill_switch SET \"on\" = FALSE")) == "42501")
 check("G1 runtime role: DELETE of kill_switch refused 42501", st(lambda: rt.execute("DELETE FROM kill_switch")) == "42501")
+# G13 (independent runner G7 of v20: a LOCK outside a transaction fails with 25P01 before any right is checked, so it tests nothing): the runtime login locks INSIDE a transaction
+lk = psycopg.connect(dsn("rt17", db))   # not autocommit: the first statement opens a transaction
+for t in ("spend", "spend_month", "kill_switch"):
+    check(f"G13 runtime role inside a transaction: LOCK TABLE {t} IN ACCESS EXCLUSIVE MODE refused 42501", st(lambda: lk.execute(f"LOCK TABLE {t} IN ACCESS EXCLUSIVE MODE")) == "42501")
+    lk.rollback()
+    check(f"G13 runtime role inside a transaction: SELECT ... FOR UPDATE on {t} refused 42501", st(lambda: lk.execute(f"SELECT 1 FROM {t} FOR UPDATE")) == "42501")
+    lk.rollback()
+    info(f"G13 {t}: LOCK IN ACCESS SHARE MODE gives {st(lambda: lk.execute(f'LOCK TABLE {t} IN ACCESS SHARE MODE'))}; LOCK IN ROW EXCLUSIVE MODE gives {(lk.rollback(), st(lambda: lk.execute(f'LOCK TABLE {t} IN ROW EXCLUSIVE MODE')))[1]} (recorded, not judged: a lock that blocks others is a nuisance for the migration role, not a write)")
+    lk.rollback()
+lk.close()
+# G6b (independent runner G6 of v20): every silent no-op of spend_settle is listed and shown to leave the amounts alone and to return NO row (the STORE turns the empty result into an error, 5.6c item 3)
+snap = lambda: mg.execute("SELECT COALESCE(SUM(usd),0), COALESCE(SUM(open_usd),0) FROM spend").fetchone()
+before = snap()
+for lab, args in (("NULL day", ("a", None, Decimal("1"), Decimal("1"))), ("NULL worst", ("a", D, None, Decimal("1"))), ("NULL actual", ("a", D, Decimal("1"), None)), ("agent without a row", ("nobody-here", D, Decimal("1"), Decimal("1")))):
+    got = [None]
+    e = st(lambda: got.__setitem__(0, rt.execute("SELECT * FROM spend_settle(%s, %s, %s, %s)", args).fetchone()))
+    check(f"G6b settle with {lab}: no error, no row, amounts unchanged", e is None and got[0] is None and snap() == before, f"err={e} row={got[0]}")
 for t in ("spend", "spend_month", "kill_switch"):
     check(f"G1 runtime role: DELETE FROM {t} refused 42501", st(lambda: rt.execute(f"DELETE FROM {t}")) == "42501")
     check(f"G1 runtime role: TRUNCATE {t} refused 42501", st(lambda: rt.execute(f"TRUNCATE {t}")) == "42501")

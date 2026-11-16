@@ -16,7 +16,7 @@ M["W-G12-gate-flipped-all"] = _all("I do not approve it", "I approve it")
 M["W-G12-OPEN-to-CLOSED"] = _all("G12 OPEN", "G12 CLOSED")
 for _n in (0, 2):
     M["W-G12-open-to-closed-copy%d" % _n] = _nth("G12 open", "G12 closed", _n)
-M["W-G12-open-is-open-to-approved"] = _nth("G12 is open", "G12 is approved by default", 0)
+M["W-G12-open-is-open-to-approved"] = _nth("G12 is still OPEN", "G12 is approved by default", 0)
 M["W-NOTHING-APPLIED-to-EVERYTHING"] = _nth("NOTHING IN THIS REPORT HAS BEEN APPLIED TO ANY FILE", "EVERYTHING IN THIS REPORT HAS BEEN APPLIED TO ANY FILE", 0)
 M["W-NOTHING-APPLIED-sentence-deleted"] = _nth("NOTHING IN THIS REPORT HAS BEEN APPLIED TO ANY FILE", "", 0)
 M["W-take-no-delete-to-has-delete"] = _nth("has NO delete call", "has a delete call", 0)
@@ -38,10 +38,8 @@ M["W-ORD230-quote-deleted-1"] = _nth("lease sentence stays out of the public pos
 M["W-ORD230-quote-deleted-last"] = _nth("lease sentence stays out of the public post", "", 2)
 M["W-filmed-only-after-approval-deleted"] = _nth("Those words are filmed only after your written approval; otherwise you cut them by hand.", "", 0)
 M["W-10-files-to-12"] = _nth("to 10 files", "to 12 files", 0)
-M["W-10-files-to-12-second"] = _nth("to 10 files", "to 12 files", 1)
 M["W-twelve-TASKS-to-ten"] = _nth("twelve numbered TASKS", "ten numbered TASKS", 0)
 M["W-two-OPEN-to-three-1"] = _nth("two OPEN", "three OPEN", 0)
-M["W-two-OPEN-to-three-2"] = _nth("two OPEN", "three OPEN", 1)
 M["W-wave1-95-to-96-one-place"] = _nth("95 wave 1 rows", "96 wave 1 rows", 0)
 M["W-ready-57-to-56-one-place"] = _nth("57 ready", "56 ready", 0)
 M["W-rows-104-to-105-one-place"] = _nth("104 rows", "105 rows", 0)
@@ -54,7 +52,7 @@ M["W-card-line-3-first-copy-edited"] = _nth(_q3, _q3.replace("may stay", "never 
 M["W-card-line-2-one-copy-edited"] = _nth("We make no statement about how quickly an alert mail arrives.", "An alert mail arrives within 30 seconds.", 1)
 M["W-card-line-1-one-copy-edited"] = _nth('A lead sent twice with the same id is processed once.', 'A lead sent twice with the same id is never processed twice.', 2)
 # pipe in a table cell not escaped (row 96)
-M["W-row96-pipe-unescaped"] = _nth("`own runs. \\| 35 s EST`", "`own runs. | 35 s EST`", 0)
+M["W-row96-pipe-unescaped"] = _nth("`own runs. \\| 30 s EST`", "`own runs. | 30 s EST`", 0)
 M["W-row96-anchor-30-s-EST-only"] = _nth("`own runs. \\| 30 s EST`", "`30 s EST`", 0)
 # rows moved: row 96 after row 12 (it then cannot apply on the text row 14 changed)
 _L = rep.split("\n")
@@ -68,19 +66,19 @@ M["W-box-extra-words"] = _nth("## Start here: what I need from you", "## Start h
 # ---- c6w class 7: the 7 classes the independent run on c6v missed (one changed copy at EVERY copy), and each defect class of the two c6v reviews restored
 _ct8 = _ctn[11:19]
 _ctn2 = _ctn[:17] + ("%02d" % ((int(_ctn[17:19]) + 1) % 60)) + "Z"
-for _n in range(0, 2):
+for _n in range(0, rep.count("at the check time " + _ct8 + " UTC")):
     M["W-C7-check-time-changed-copy%d" % _n] = _nth("at the check time " + _ct8 + " UTC", "at the check time " + _ctn2[11:19] + " UTC", _n)
 M["W-C7-check-time-Z-form-changed"] = _nth(_ct8 + "Z = ", _ctn2[11:19] + "Z = ", 0)
-for _n in range(0, 7):
+for _n in range(0, rep.count("OWNER-SHEET-v34-A.md")):
     M["W-C7-sheet-v34A-to-v33A-copy%d" % _n] = _nth("OWNER-SHEET-v34-A.md", "OWNER-SHEET-v33-A.md", _n)
 M["W-C7-Five-to-Four"] = _nth("Five items are OPEN", "Four items are OPEN", 0)
-for _n in range(0, 9):
+for _n in range(0, rep.count("line 33")):
     M["W-C7-line33-to-34-copy%d" % _n] = _nth("line 33", "line 34", _n)
-for _n in range(0, 2):
+for _n in range(0, rep.count("LRN14:33")):
     M["W-C7-LRN14-33-to-34-copy%d" % _n] = _nth("LRN14:33", "LRN14:34", _n)
-for _n in range(0, 7):
+for _n in range(0, rep.count("release note v18")):
     M["W-C7-v18-to-v17-copy%d" % _n] = _nth("release note v18", "release note v17", _n)
-for _n in range(0, 3):
+for _n in range(0, rep.count("LEAD-RELEASE-NOTE-v18.md")):
     M["W-C7-v18-file-to-v17-copy%d" % _n] = _nth("LEAD-RELEASE-NOTE-v18.md", "LEAD-RELEASE-NOTE-v17.md", _n)
 _ll_idx = [k for k, l in enumerate(rep.split("\n")) if l.startswith("| L-LEASE |") and "45-second" in l]
 for _n, _k in enumerate(_ll_idx):
@@ -92,7 +90,7 @@ for _n in range(0, _cb):
 M["W-C7-answer-line-names-c6v"] = _nth("c6w apply all defaults to REPORT-c6w.md", "c6v apply all defaults to REPORT-c6v.md", 0)
 M["W-C7-answer-line-label-only"] = _nth("c6w apply all defaults to REPORT-c6w.md", "c6w apply all defaults to REPORT-c6v.md", 0)
 M["W-C7-lines-8-33-149-equal"] = _nth("its lines 8 and 149 differ", "its lines 8, 33, 149 and 150 equal the newest note", 0)
-M["W-C7-two-G12-forms"] = _nth("only after the loopback re-smoke of TASK (5)", "only after the loopback re-smoke of TASK (5)", 0) if False else _nth("`## G12 (studio lead, <UTC> = <IST>): approved:", "`## G12 (studio lead, <UTC> = <IST>): lease wording approved:", 1)
+M["W-C7-two-G12-forms"] = _nth("only after the loopback re-smoke of TASK (5)", "only after the loopback re-smoke of TASK (5)", 0) if False else _nth("`## G12 (studio lead, <UTC> = <IST>): approved:", "`## G12 (studio lead, <UTC> = <IST>): lease wording approved:", 0)
 M["W-C7-lease-wording-approved-added"] = _nth("a second person", "lease wording approved, a second person", 0)
 for _k in (1, 19):
     M["W-C7-row%d-G12-hold-removed" % _k] = mut_row(rep, _k, "view", lambda x: x.replace("G12", "xxx")) if "G12" in PAT.match(L[rowidx(_k)]).group(5) + PAT.match(L[rowidx(_k)]).group(7) + PAT.match(L[rowidx(_k)]).group(8) else None

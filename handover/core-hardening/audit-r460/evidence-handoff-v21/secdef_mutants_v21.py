@@ -246,6 +246,21 @@ add21("W18 control: alias column list over a pinned relation only", ATOMX("SELEC
 add21("W19 control: SET LOCAL lock_timeout = '5s' and statement_timeout = '60s'", "SET LOCAL lock_timeout = '5s';\nSET LOCAL statement_timeout = '60s';\n", {}, "x.sql", "clean")
 add21("W20 control: DB-3 file with the new pins", DB3TXT, ALLOWED_BY_FILE[DB3], DB3, "clean", opts=REAL)
 
+# ---- B1 of the independent runner of v20 (H67, H68, H75, H76): the text of ALTER TABLE ... ADD must be the pinned text
+ADDP = {"add_pins": "real"}
+DB1F = "spend_nonneg.sql"; DB1TXT = open(os.path.join(HERE, "held-sql", DB1F)).read()
+ID_RE = "CHECK (agent_id ~ '^[A-Za-z0-9][A-Za-z0-9._:@/+-]{0,199}$')"
+assert DB3TXT.count(ID_RE) == 2 and DB3TXT.count("1000000000000::numeric") == 4
+add21("W21 (H75) CHECK (true) in place of the agent-id rule on both tables", DB3TXT.replace(ID_RE, "CHECK (true)"), ALLOWED_BY_FILE[DB3], DB3, opts=ADDP)
+add21("W22 (H76) ceiling 1e30 on both tables", DB3TXT.replace("1000000000000::numeric", "1000000000000000000000000000000::numeric"), ALLOWED_BY_FILE[DB3], DB3, opts=ADDP)
+add21("W23 (H67) the ceiling of spend.usd dropped (spend only)", DB3TXT.replace("CHECK (usd >= 0 AND usd < 1000000000000::numeric);\nALTER TABLE spend ADD CONSTRAINT spend_agent_len", "CHECK (usd >= 0);\nALTER TABLE spend ADD CONSTRAINT spend_agent_len", 1), ALLOWED_BY_FILE[DB3], DB3, opts=ADDP)
+add21("W24 (H68) open_usd check weakened by OR true (spend only)", DB3TXT.replace("CHECK (open_usd >= 0 AND open_usd < 1000000000000::numeric);\nALTER TABLE spend ADD CONSTRAINT spend_guarded_ok", "CHECK (open_usd >= 0 OR true);\nALTER TABLE spend ADD CONSTRAINT spend_guarded_ok", 1), ALLOWED_BY_FILE[DB3], DB3, opts=ADDP)
+add21("W25 day window widened to year 9999", DB3TXT.replace("day < DATE '2100-01-01'", "day < DATE '9999-01-01'", 1), ALLOWED_BY_FILE[DB3], DB3, opts=ADDP)
+add21("W26 open_usd column default changed to 5", DB3TXT.replace("ALTER TABLE spend ADD COLUMN open_usd numeric NOT NULL DEFAULT 0;", "ALTER TABLE spend ADD COLUMN open_usd numeric NOT NULL DEFAULT 5;", 1), ALLOWED_BY_FILE[DB3], DB3, opts=ADDP)
+add21("W27 DB-1 default file with CHECK (usd >= 0 OR true)", DB1TXT.replace("usd >= 0", "usd >= 0 OR true"), ALLOWED_BY_FILE.get(DB1F, {}), DB1F, opts=ADDP)
+add21("W28 control: the real DB-3 file with the ADD pins", DB3TXT, ALLOWED_BY_FILE[DB3], DB3, "clean", opts=ADDP)
+add21("W29 control: the real DB-1 default file with the ADD pins", DB1TXT, ALLOWED_BY_FILE.get(DB1F, {}), DB1F, "clean", opts=ADDP)
+
 # the independent runner's spellings
 for fname in ("spellings.json", "spellings2.json"):
     for k, txt in json.load(open(os.path.join(HERE, fname))).items():
@@ -261,6 +276,7 @@ def realpinsP(file, o):
 def realpins(file, o):
     if not o: return {"trigger_pins": PIN_ANY, "fn_pins": PIN_ANY, "kinds": PIN_ANY}
     r = {"trigger_pins": PIN_ANY, "fn_pins": PIN_ANY, "kinds": PIN_ANY}
+    if o.get("add_pins") == "real": r["add_pins"] = set(A20.ADD_PINS_BY_FILE[file])
     if o.get("trigger_pins") == "real": r["trigger_pins"] = A20.TRIGGER_PINS_BY_FILE.get(file)
     if o.get("fn_pins") == "real": r["fn_pins"] = A20.FN_PINS_BY_FILE.get(file)
     if o.get("kinds") == "real": r["kinds"] = A20.KINDS_BY_FILE.get(file)

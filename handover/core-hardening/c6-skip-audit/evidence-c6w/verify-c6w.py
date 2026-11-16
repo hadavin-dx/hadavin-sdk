@@ -278,6 +278,8 @@ if os.path.exists(_chgp):
 _runlog = open(_E_ + "/run-log.txt").read().count("run_all.sh start") if os.path.exists(_E_ + "/run-log.txt") else None
 _rr = re.search(r"I ran the full pipeline run_all\.sh (\d+) time\(s\)", raw)
 _want = {"verify checks": TOTAL[0] + 1, "full runs of run_all.sh": _runlog, "negative changed copies": _num(r"^SUMMARY: (\d+) copies", _E_ + "/neg-output.txt"), "negative wrong copies": _num(r"^SUMMARY: \d+ copies, (\d+) wrong", _E_ + "/neg-output.txt"), "scanned files": _num(r"^SCANNED (\d+) files", _E_ + "/scan-c6w-output.txt")}
+if os.environ.get("C6V_SNAPSHOT"):   # inside the negative controls the neg-output and scan files of the same run are not final yet: only the two counts fixed beforehand are compared
+    _want = dict((k, v) for k, v in _want.items() if k in ("verify checks", "full runs of run_all.sh"))
 _badc = [(k, _cnt.get(k), v) for k, v in _want.items() if _cnt.get(k) != v]
 check("V13: every COUNT line of c6w-CHANGES.md equals the number in the output file (verify checks counted live, run-log.txt lines, neg-output.txt, scan-c6w-output.txt) and the run count in the report equals the run-log lines (differences: %s)" % _badc, os.path.exists(_chgp) and not _badc and _rr is not None and int(_rr.group(1)) == _runlog, _badc)
 print("SUMMARY: %d checks, %d FAILED%s" % (TOTAL[0], len(FAILS), (": " + "; ".join(FAILS)) if FAILS else ""))

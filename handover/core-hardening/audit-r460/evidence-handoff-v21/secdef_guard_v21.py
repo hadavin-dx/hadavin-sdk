@@ -431,7 +431,7 @@ def _sigs(part_toks, name, problems, pre, kind):
         keys.append(sigkey(na[0], na[2]))
     return keys
 
-def check_sql_text(name, text, allowed, grants_allowed=(), extra_statements=(), atomic_tables=None, trigger_pins=None, fn_pins=None, kinds=None):
+def check_sql_text(name, text, allowed, grants_allowed=(), extra_statements=(), atomic_tables=None, trigger_pins=None, fn_pins=None, kinds=None, add_pins=None):
     """allowed: {"fname(type,type)": "definer" | "invoker"} for THIS file only; extra_statements: fingerprints pinned for this file; atomic_tables: the relations a
     BEGIN ATOMIC body of this file may use. Returns a list of problems (empty = clean). Anything that matches no shape (module docstring) is a problem."""
     problems, created_at, revoked_at, definer_keys = [], {}, {}, set()
@@ -459,6 +459,7 @@ def check_sql_text(name, text, allowed, grants_allowed=(), extra_statements=(), 
             else:
                 acts = _split_commas_top(st[i + 1:])
                 if not acts or not all(_is(a[0], "ADD") for a in acts): problems.append(pre + f"ALTER TABLE: every action must start with ADD (DISABLE TRIGGER, DROP CONSTRAINT, SET, OWNER, ENABLE are refused): {short!r}")
+                elif add_pins is not None and fingerprint(st) not in add_pins: problems.append(pre + f"ALTER TABLE ... ADD whose text is not the pinned text of this file (the CHECK expression, the column and the constraint name are pinned, v21 B1): {short!r}")
             continue
         if first == ["COMMENT"] and lead[1:2] == ["ON"]: continue
         if first == ["DROP"] and len(st) == 7 and _is(st[1], "TRIGGER") and _is(st[2], "IF") and _is(st[3], "EXISTS") and st[4][0] in ("word", "qid") and _is(st[5], "ON") and st[6][0] in ("word", "qid"):

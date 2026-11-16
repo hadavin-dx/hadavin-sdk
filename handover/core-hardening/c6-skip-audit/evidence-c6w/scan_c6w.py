@@ -9,7 +9,7 @@ SECRET = [("AK" + "IA[A-Z0-9]{12,}", "aws-key-shape"), ("s" + "k-[A-Za-z0-9_-]{1
 MAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
 files = [H + "handover/core-hardening/c6-skip-audit/REPORT-c6w.md"]
 for r, d, fs in os.walk(E):
-    d[:] = [x for x in d if x not in ("tree", "steps-snapshot")]   # copies of the audited demo files and of the owner sheets are not this run's output
+    d[:] = [x for x in d if x not in ("tree", "steps-snapshot", "steps-frozen")]   # copies of the audited demo files and of the owner sheets are not this run's output
     if "/neg" in r.replace(E, "/") and r != E.rstrip("/"):
         pass
     for f in fs:
@@ -28,7 +28,7 @@ for f in sorted(files):
     tot["banned"] += b; tot["secret"] += sec; tot["mail"] += len(ml)
     if b or sec or ml:
         out.append("HIT %s: banned %d, secret-shaped %d, other e-mail-shaped %d" % (f.replace(H, ""), b, sec, len(ml)))
-out.append("SCANNED (own output only; folders tree/ and steps-snapshot/ are skipped): %s" % ", ".join(sorted(set(os.path.relpath(f, H) .split("/")[-2] + "/" for f in files))))
+out.append("SCANNED (own output only; folders tree/, steps-snapshot/ and steps-frozen/ are skipped): %s" % ", ".join(sorted(set(os.path.relpath(f, H) .split("/")[-2] + "/" for f in files))))
 out.append("SCANNED %d files; banned names list has %d entries (read at run time); totals %s" % (len(files), len(B), tot))
 open(E + "scan-c6w-output.txt", "w").write("\n".join(out) + "\n")
 print("\n".join(out))

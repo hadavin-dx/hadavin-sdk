@@ -107,7 +107,7 @@ cs = rd(H + "/handover/core-hardening/c6-skip-audit/evidence-c6w/static-checks-o
 ct = re.search(r"check time \(UTC\): (\S+)", cs).group(1)
 import ctime_c6w
 EX = ctime_c6w.example_times(ct)[:2]   # the first example answer time of the box (UTC, IST), derived from the check time
-vs = sorted(int(m.group(1)) for f in glob.glob(STEPS + "/OWNER-SHEET-v*.md") for m in [re.search(r"OWNER-SHEET-v(\d+)", f)] if m)
+vs = sorted(int(m.group(1)) for f in glob.glob(STEPS + "/OWNER-SHEET-v*.md") if "SOURCE" not in f for m in [re.search(r"OWNER-SHEET-v(\d+)", f)] if m)
 check("report names the check time %s and the newest sheet version on disk (v%s)" % (ct, vs[-1] if vs else "?"), bool(vs) and ("v%d" % vs[-1]) in full and ct[11:19] in full and ct[:10] in full, vs[-3:])
 import datetime
 ct_dt = datetime.datetime.strptime(ct, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=datetime.timezone.utc).timestamp()
@@ -118,7 +118,7 @@ _changed = lambda f: os.path.getmtime(f) > ct_dt and _hrec.get(os.path.basename(
 late = [os.path.basename(f) for f in glob.glob(STEPS + "/OWNER-SHEET-v*.md") if _changed(f)]
 check("no owner sheet changed (content hash) after the stated check time (C-10c is current); a file written again with identical content does not count", not late, late)
 check("no claim that v25 or v26 is the newest", not re.search(r"(?i)newest[^.|]{0,60}v2[56]\b(?!-SOURCE\b)", full), "")
-NEWV0 = max(int(re.search(r"-v(\d+)-", f).group(1)) for f in glob.glob(STEPS + "/OWNER-SHEET-v*-*.md"))
+NEWV0 = max(int(re.search(r"-v(\d+)-", f).group(1)) for f in glob.glob(STEPS + "/OWNER-SHEET-v*-[AB].md"))
 check("L-SHEET reads 'confirm the one final sheet' and names the newest version (v%d) A, B and SOURCE" % NEWV0, any(l.startswith("| L-SHEET (was Q10)") and "Confirm the one final owner sheet" in l and ("OWNER-SHEET-v%d-A.md" % NEWV0) in l and ("OWNER-SHEET-v%d-B.md" % NEWV0) in l and ("OWNER-SHEET-v%d-SOURCE.md" % NEWV0) in l for l in txt))
 # section 9 duplicates
 s9 = txt[[i for i, l in enumerate(txt) if l.startswith("## 9.")][0]:]
@@ -267,7 +267,7 @@ sec1b = raw[raw.index("## 1b."):raw.index("## 2. ")]
 m_ = re.search(r"NEWEST OWNER SHEET VERSION NAMED IN THIS REPORT: v(\d+) \(at the check time (\d\d:\d\d:\d\d) UTC = (\d\d:\d\d:\d\d) IST\); NEWEST RELEASE NOTE NAMED: v(\d+)\.", raw)
 rnv = sorted(int(re.search(r"v(\d+)", os.path.basename(f)).group(1)) for f in glob.glob(STEPS + "/LEAD-RELEASE-NOTE-v*.md") if "SOURCE" not in f)
 check("F4 the report names the newest owner sheet version (v%d) and release note (v%d) on disk, and the check time" % (NEWV, rnv[-1]), bool(m_) and int(m_.group(1)) == NEWV and int(m_.group(4)) == rnv[-1] and m_.group(2) == ct[11:19], (m_.groups() if m_ else None, NEWV, rnv[-1]))
-hi = [f for f in glob.glob(STEPS + "/*") if re.search(r"(OWNER-SHEET|LEAD-RELEASE-NOTE)-v(\d+)", f) and int(re.search(r"-v(\d+)", f).group(1)) > (NEWV if "OWNER-SHEET" in f else rnv[-1])]
+hi = [f for f in glob.glob(STEPS + "/*") if "SOURCE" not in f and re.search(r"(OWNER-SHEET|LEAD-RELEASE-NOTE)-v(\d+)", f) and int(re.search(r"-v(\d+)", f).group(1)) > (NEWV if "OWNER-SHEET" in f else rnv[-1])]
 check("F4 no owner sheet or release note has a version higher than the one named", not hi, hi)
 check("F4 release note v14 is cited for G12 as still open (LRN14:33, LRN14:8) and the short name LRN14 is defined", "LRN14:33" in sec0 and "LRN14:8" in raw and "| LRN14 |" in raw and "LRN14:33" in box and "does not close it" in sec0, "")
 check("F4 the wider reading of G12 ('processed once' beside a crash scene) is labelled the report's own assumption in the box, row 8 and section 9", "this report's own reading" in box and "this report's own reading" in bylead[8]["why"] and any("own assumption" in l and "G12" in l for l in b9), "")
@@ -528,3 +528,13 @@ _w5 = re.findall(r"(?<!')(?:the |test )program(?: mf\.py)? is not among the audi
 check("c6w M5: no sentence says the test program is not among the audited files (mf.py IS audited); the old words appear only quoted", not _w5, _w5[:2])
 _s59 = re.findall(r"(?<!')steps? 5 to 9", raw)
 check("c6w naive: no text says 'steps 5 to 9' for the list TASKS (5) to (9) (the old words appear only quoted)", not _s59, _s59[:2])
+
+# D-late: every owner sheet or release note file in the LIVE folder written after the freeze is named in the report with its real written time (UTC); the report reads only the frozen copy
+_live = os.environ.get("C6V_STEPS_LIVE"); _frz = os.environ.get("C6V_FREEZE")
+_lt = []
+if _live and _frz and os.path.isdir(_live):
+    _fz = datetime.datetime.strptime(_frz, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=datetime.timezone.utc).timestamp()
+    _lt = [f for f in glob.glob(_live + "/OWNER-SHEET-v*.md") + glob.glob(_live + "/LEAD-RELEASE-NOTE-v*.md") if os.path.getmtime(f) > _fz]
+_ltbad = [os.path.basename(f) for f in _lt if not re.search(re.escape(os.path.basename(f)) + r" \(written " + datetime.datetime.fromtimestamp(os.path.getmtime(f), datetime.timezone.utc).strftime("%H:%M:%S") + " UTC", full)]
+_frozen_ok = (not _frz) or all(os.path.getmtime(f) <= datetime.datetime.strptime(_frz, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=datetime.timezone.utc).timestamp() for f in glob.glob(STEPS + "/OWNER-SHEET-v*.md"))
+check("D-late: every sheet or release note file written after the freeze (%d found in the live folder) is named in the report with its real written time (UTC), and the folder read by the checks holds none of them" % len(_lt), not _ltbad and _frozen_ok, _ltbad)

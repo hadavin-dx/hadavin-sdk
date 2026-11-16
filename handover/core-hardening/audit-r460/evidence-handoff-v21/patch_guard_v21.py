@@ -113,5 +113,10 @@ rep('re.match(r"\\s*(ALTER|GRANT|REVOKE|CREATE|DROP|SET)\\b", _sql_of(tk), re.I 
 rep('        elif atomic and _is(tk, "CASE"): depth += 1\n        elif atomic and _is(tk, "END"):\n', '        elif atomic and _is(tk, "CASE") and not (k and _is(toks[k - 1], "AS")): depth += 1\n        elif atomic and _is(tk, "END") and not (k and _is(toks[k - 1], "AS")):\n')
 # v21 security m11 (invoker functions rested on the pin only): the call allow-list now also applies to the body of an INVOKER function (a `set_config('role', ...)` in a trigger of the caller's session changes the caller's role)
 rep('    if definer: out += _call_problems(toks, fn)', '    out += _call_problems(toks, fn)')
+
+# v21 B1 of the independent runner of v20 (H67, H68, H75, H76: the text of an ALTER TABLE ... ADD CONSTRAINT ... CHECK line was not pinned, so CHECK (true) or a ceiling of 1e30 passed): add_pins pins every ALTER TABLE ... ADD statement of a listed file by fingerprint.
+rep('trigger_pins=None, fn_pins=None, kinds=None):\n', 'trigger_pins=None, fn_pins=None, kinds=None, add_pins=None):\n')
+rep('                if not acts or not all(_is(a[0], "ADD") for a in acts): problems.append(pre + f"ALTER TABLE: every action must start with ADD (DISABLE TRIGGER, DROP CONSTRAINT, SET, OWNER, ENABLE are refused): {short!r}")\n',
+    '                if not acts or not all(_is(a[0], "ADD") for a in acts): problems.append(pre + f"ALTER TABLE: every action must start with ADD (DISABLE TRIGGER, DROP CONSTRAINT, SET, OWNER, ENABLE are refused): {short!r}")\n                elif add_pins is not None and fingerprint(st) not in add_pins: problems.append(pre + f"ALTER TABLE ... ADD whose text is not the pinned text of this file (the CHECK expression, the column and the constraint name are pinned, v21 B1): {short!r}")\n')
 open("secdef_guard_v21.py", "w").write(src)
 print("written", len(src))

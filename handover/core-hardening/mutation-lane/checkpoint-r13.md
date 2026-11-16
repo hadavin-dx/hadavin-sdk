@@ -2,3 +2,4 @@
 18:50 dev runs ok (dev2 0/31 fail on r13; r12 code: T100a, T101a/b/c fail=5); controls N0-N10 root+nobody all 17 rows match; 4 mutants killed; full run next
 19:00 relay items done (raw ., /, top-level refused; Child exact path text + identity + cwd real; clamp group+other write). mutants killed except raw-no-toplevel (not run: would write into /). slot wait: n/a yet. frozen; full run via heavy-slot next
 19:25 full run 1 (head 4d1134e0): root 1 of 476 failed (T39: the new NOTE text held an apostrophe, breaking the test's quoting), nobody 0 of 121. Fixed wording; final full run 2 queued (slot wait 7 min the first time); time box overrun noted
+19:45 final full run 2 (head run.r13.py c5a145b9...): root 0 of 476, nobody 0 of 121, none skipped, slot wait 0 s (run 1 waited 7 min). Controls N0-N10 re-run on final head in progress. NEXT: report. NOT DONE: mutation proof of raw top-level guard (would write into /), signal window/limit d/pointer file/launcher (lead).

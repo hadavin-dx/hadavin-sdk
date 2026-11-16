@@ -8,6 +8,8 @@ for d in "$HERE" "$SRC"; do
   if ! runuser -u nobody -- test -r "$d" -a -x "$d" 2>/dev/null; then echo "PRECHECK FAILED: the OS user nobody cannot enter $d (every folder on the path needs the x bit for others); copy this folder and the source to a world-readable place such as /opt and run again; nothing was tested"; exit 3; fi
 done
 runuser -u nobody -- test -r "$HERE/agent_probe_v21.py" || { echo "PRECHECK FAILED: nobody cannot read $HERE/agent_probe_v21.py; nothing was tested"; exit 3; }
+# v21 (independent runner G4 of v20): the probe imports the product package, which needs pydantic and pydantic_settings; without them 10 of 12 checks fail with a traceback that looks like a leak test result.
+if ! runuser -u nobody -- "$PY" -I -B -c "import sys; sys.path.insert(0, sys.argv[1]); import pydantic, pydantic_settings, hadavin_sdk.config" "$SRC" >/dev/null 2>&1; then echo "PRECHECK FAILED: as the OS user nobody, $PY cannot import pydantic, pydantic_settings and hadavin_sdk.config from $SRC; copy the installed packages of the project's virtual environment into the folder you pass as <src> (cp -rn <venv>/lib/python*/site-packages/. <src>/); nothing was tested"; exit 3; fi
 T="$(mktemp -d /tmp/hv21sec.XXXXXX)"; chmod 755 "$T"; trap 'rm -rf "$T"' EXIT
 mkdir "$T/ops" "$T/agent"; chmod 755 "$T/ops" "$T/agent"
 printf '%s' "postgres""://auditrd:""fake""@db.invalid/x" > "$T/ops/audit-reader-dsn"; chmod 0400 "$T/ops/audit-reader-dsn"

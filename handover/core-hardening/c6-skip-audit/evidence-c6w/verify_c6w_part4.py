@@ -78,7 +78,7 @@ _ids = ["design B1", "design M1", "design M2", "design M3", "design M4", "design
 _cm = [x for x in _ids if not os.path.exists(_chg) or ("| %s |" % x) not in rd(_chg)]
 check("V12: c6w-CHANGES.md exists and has its own row for each of the %d finding ids of the two c6v reviews (missing: %s)" % (len(_ids), _cm), os.path.exists(_chg) and not _cm, _cm)
 # ---- the 7 classes the independent run on c6v found missed: a changed sentence at ONE copy of several (the census of class 1 in verify_c6w_part3.py counts every copy of each phrase below; these checks read the meaning)
-_nv = max(int(m.group(1)) for f in glob.glob(STEPS + "/OWNER-SHEET-v*.md") for m in [re.search(r"OWNER-SHEET-v(\d+)", f)] if m)
+_nv = max(int(m.group(1)) for f in glob.glob(STEPS + "/OWNER-SHEET-v*.md") if "SOURCE" not in f for m in [re.search(r"OWNER-SHEET-v(\d+)", f)] if m)
 _nrn = int(re.search(r"-v(\d+)", _rnl_[-1]).group(1))
 _reg = boxs + sec1c
 _sv = sorted(set(int(x) for x in re.findall(r"OWNER-SHEET-v(\d+)-[AB]", _reg)))

@@ -21,7 +21,11 @@ if ! ls "$S"/OWNER-SHEET-v[0-9]*-[AB].md >/dev/null 2>&1; then echo "MISSING INP
 need "$R/tests/test_no_reference_material.py" "tests/test_no_reference_material.py (the list of banned names)"
 need "$H/c6-skip-audit/REPORT-c6s.md" "c6-skip-audit/REPORT-c6s.md (the report the base build starts from)"
 if [ "$miss" -ne 0 ]; then echo "run_all.sh stopped: fix the missing input(s) above"; exit 2; fi
-export C6V_TREE C6V_STEPS="$S"
+# FREEZE: the owner sheets and release notes are still being rewritten by another session while this report is checked, so every check reads a FROZEN copy of the files written up to the freeze time; later files are named in the report and compared by the build (see 'FILES WRITTEN AFTER THE FREEZE')
+FREEZE="${C6V_FREEZE:-2026-11-16T19:30:00Z}"
+rm -rf "$E/steps-frozen" && mkdir "$E/steps-frozen" && find "$S" -maxdepth 1 -type f \( -name 'OWNER-SHEET-v*.md' -o -name 'LEAD-RELEASE-NOTE-v*.md' \) ! -newermt "$FREEZE" -exec cp -p {} "$E/steps-frozen"/ \;
+C6V_STEPS_LIVE="$S"; S="$E/steps-frozen"
+export C6V_TREE C6V_STEPS="$S" C6V_STEPS_LIVE C6V_FREEZE="$FREEZE"
 cd "$E"
 echo "run_all.sh start $(date -u +%FT%TZ)" >> run-log.txt   # one line per full run; the check script counts these lines and compares them with the run count in the report and in c6w-CHANGES.md
 bash static-checks.sh > static-checks-output.txt 2>&1; src=$?; echo "static-checks exit $src"; if [ "$src" -ne 0 ]; then tail -n 3 static-checks-output.txt; echo "run_all.sh stopped: static-checks.sh failed (see the lines above)"; exit 2; fi
@@ -29,8 +33,8 @@ bash static-checks.sh > static-checks-output.txt 2>&1; src=$?; echo "static-chec
 rm -rf "$E/steps-snapshot" && mkdir "$E/steps-snapshot" && cp -p "$S"/OWNER-SHEET-v*.md "$S"/LEAD-RELEASE-NOTE-v*.md "$E/steps-snapshot"/
 python3 -B -I build_c6w.py || exit 1
 C6V_MAKE_CENSUS=1 python3 -B -I verify-c6w.py | tail -n 1
-python3 -B -I verify-c6w.py > verify-c6w-output.txt 2>&1; vrc=$?; echo "verify exit $vrc"; tail -n 1 verify-c6w-output.txt | cut -c1-200
+python3 -B -I scan_c6w.py > /dev/null 2>&1; scrc=$?; echo "scan exit $scrc"; tail -n 1 scan-c6w-output.txt
 C6V_SNAPSHOT="$E/steps-snapshot" C6V_STEPS="$E/steps-snapshot" python3 -B -I neg_controls_c6w.py > /dev/null 2>&1; nrc=$?; echo "neg exit $nrc"; tail -n 1 neg-output.txt
 rm -rf "$E/steps-snapshot"   # a temporary copy of the sheets for the negative controls
-python3 -B -I scan_c6w.py > /dev/null 2>&1; scrc=$?; echo "scan exit $scrc"; tail -n 1 scan-c6w-output.txt
+python3 -B -I verify-c6w.py > verify-c6w-output.txt 2>&1; vrc=$?; echo "verify exit $vrc"; tail -n 1 verify-c6w-output.txt | cut -c1-200
 [ "$vrc" -eq 0 ] && [ "$nrc" -eq 0 ] && [ "$scrc" -eq 0 ]

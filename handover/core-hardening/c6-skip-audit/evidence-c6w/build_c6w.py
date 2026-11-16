@@ -345,7 +345,7 @@ def extra3b(t):
     t = sub(t, "(40 words; it REPLACES sentence 1; not to be spoken as fact before check C-9 part 2). | none.", "(40 words; it REPLACES sentence 1; not to be spoken as fact before check C-9 part 2). 1 and 2 also need the G12 approval first. | none.", 1)
     t = t.replace("two names for sheet A and B", "two names for the A file and the B file of one owner sheet")
     # real written times of the newest sheet and release note (read from the files; the c6v text carried older times)
-    import os as _os, datetime as _dt
+    import os as _os, datetime as _dt, re as _re_, glob as _gl_
     _st = _os.environ.get("C6V_STEPS") or _os.path.join(_os.path.dirname(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))), "steps-edits")
     def _wt(n):
         d = _dt.datetime.fromtimestamp(_os.path.getmtime(_os.path.join(_st, n)), _dt.timezone.utc)
@@ -354,6 +354,33 @@ def extra3b(t):
     for _old, _fn in (("18:56:54 UTC = 00:26:54 IST", "OWNER-SHEET-v34-A.md"), ("18:56:55 UTC = 00:26:55 IST", "LEAD-RELEASE-NOTE-v18.md")):
         _u, _i = _wt(_fn)
         t = t.replace(_old, "%s UTC = %s IST" % (_u, _i))
+    # files written after the freeze: named with their real written time and compared by this script with the file of the previous version
+    import filecmp as _fc
+    _live = _os.environ.get("C6V_STEPS_LIVE")
+    _frz = _os.environ.get("C6V_FREEZE", "2026-11-16T19:30:00Z")
+    if _live and _os.path.isdir(_live):
+        _fdt = _dt.datetime.strptime(_frz, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=_dt.timezone.utc).timestamp()
+        _late = sorted(n for n in _os.listdir(_live) if _re_.match(r"(OWNER-SHEET|LEAD-RELEASE-NOTE)-v\d+", n) and n.endswith(".md") and _os.path.getmtime(_os.path.join(_live, n)) > _fdt)
+        _parts = []
+        for n in _late:
+            _u, _i = (lambda d: (d.strftime("%H:%M:%S"), (d + _dt.timedelta(hours=5, minutes=30)).strftime("%H:%M:%S")))(_dt.datetime.fromtimestamp(_os.path.getmtime(_os.path.join(_live, n)), _dt.timezone.utc))
+            m = _re_.match(r"(OWNER-SHEET|LEAD-RELEASE-NOTE)-v(\d+)(.*)\.md$", n)
+            prev = "%s-v%d%s.md" % (m.group(1), int(m.group(2)) - 1, m.group(3))
+            pp = _os.path.join(_live, prev)
+            if "SOURCE" in n:
+                how = "a draft that was not compared"
+            elif not _os.path.exists(pp):
+                how = "no file of the previous version to compare"
+            elif m.group(1) == "LEAD-RELEASE-NOTE":
+                how = "byte-identical to %s" % prev if _fc.cmp(pp, _os.path.join(_live, n), shallow=False) else "DIFFERENT from %s" % prev
+            else:
+                a_ = open(pp, encoding="utf-8").read().replace("v%d" % (int(m.group(2)) - 1), "v%d" % int(m.group(2)))
+                how = "equal to %s after the version number is changed" % prev if a_ == open(_os.path.join(_live, n), encoding="utf-8").read() else "DIFFERENT from %s beyond the version number" % prev
+            _parts.append("%s (written %s UTC = %s IST; %s)" % (n, _u, _i, how))
+        if _parts:
+            _fin_r = max(int(_re_.search(r"-v(\d+)", f).group(1)) for f in _gl_.glob(_st + "/LEAD-RELEASE-NOTE-v*.md") if "SOURCE" not in f)
+            _txt = " FILES WRITTEN AFTER THE FREEZE (%s = 01:00:00 IST on 2026-11-17, the time up to which this report reads the files): %s. This report names the newest version before the freeze and reads none of these; if the lead finishes a later version, the version numbers named here need a new check." % (_frz, "; ".join(_parts))
+            t = sub(t, "NEWEST RELEASE NOTE NAMED: v%d." % _fin_r, "NEWEST RELEASE NOTE NAMED: v%d.%s" % (_fin_r, _txt), 1)
     return t
 
 
