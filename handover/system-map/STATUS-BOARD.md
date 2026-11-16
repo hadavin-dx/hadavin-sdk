@@ -1,6 +1,6 @@
 # STATUS BOARD system-map (top: what the lead must do; the log is further down)
-UPDATED_UTC: 2026-11-16T14:59:34Z
-PUSHED_UTC: 2026-11-16T14:59:34Z
+UPDATED_UTC: 2026-11-16T15:00:08Z
+PUSHED_UTC: 2026-11-16T15:00:08Z
 SESSION: system-map
 STATE: WORKING (video scope: real-v5 only, scenes 1 to 4, decision 1)
 BLOCKED: the changed n8n flows have never been run (decision 12: the lead runs the first rehearsal). 1 test fails (a licence-file check, M14; decision 11: licence files are never changed).
@@ -15,7 +15,7 @@ PROGRESS: 5 of 20 table items at 100 percent (M1, M11, M12, M13, M16); mean abou
 Terms: take = the one filmed run; rehearsal = test run on the laptop without a real account; loopback = a self-check on the lead's own machine before it; helper = a read-only agent that reads one page and lists what it cannot follow (cold read); digest = my short note of a helper's report; ORDER n = a standing order in ORDERS.md.
 AGENTS_RUNNING: 8 of 8 (2026-11-16T14:52:51Z)
 CAPACITY nproc=4 load=0.17 disk: 18G free
-NEXT: hand-backs digested through 1624. Next 5 independent tasks: fix L5ac old lines 2-8; fix GLOSSARY Majors (digest 1545); fix L5b; fix v5-edits-for-M17; fix decision-list-for-lead rows.
+NEXT: hand-backs digested through 1630. Next 5 independent tasks: fix L5ac old lines 2-8; fix GLOSSARY Majors (digest 1545); fix L5b; fix v5-edits-for-M17; fix decision-list-for-lead rows.
 INTERRUPTED: none
 
 ## ITEMS
@@ -43,21 +43,12 @@ INTERRUPTED: none
 | M16 | flow-set question | DONE, closed by decision 1 (real-v5 only; film-v5 out) | 100 | flowset/REPORT.md | |
 
 ## AGENTS
-UPDATED_UTC: 2026-11-16T14:59:34Z | PUSHED_UTC: 2026-11-16T14:59:34Z
-| id | purpose | state |
-|---|---|---|
-| a93921ab4f6712335 | cold read L5b 200-end | running |
-| ac42d4d03f5ceca39 | cold read L3 270-end | running |
-| acdf230aa66f521d2 | cold read L1 200-end | running |
-| a53053c9c98bb5c86 | cold read L2 310-end | running |
-| a9736197cd289fa57 | cold read merged-findings 200-end | running |
-| aaaccbd483fcb454b | cold read L5ac 40-end | running |
-| (2 new this beat, ids in session list) | decision-list-for-lead whole; L6 50-130 | running |
-| (1 slot) | cold read L4c 270-end launched earlier; closed | see below |
-Closed and digested 1614-1624: a7be941d222d498d6, aed356e98c4570f40, abbe3b6ab0e90ba10, a96cc4f1bf77fa6c4, a19edbe24451b8ff7, aae6258c0d19aa2c4, ab92f3515be1723d8, abfc502f31b9968f2, ab1318946b2bfbce8, a0e284175225d5644, a08e5640583626469.
-FINDING: the 7 re-reads show the key clean-up did NOT close the class gap: no purpose line, "real-v5 scenes 1 to 4" undefined. Fixed on all 12 pages this beat (PURPOSE line, scope in words, DECISION tied to DECISION-one-store.md). Needs another re-read to confirm: not yet proven.
-CAPACITY: 8 of 8 (counts as started; check ListAgents). No missing slots.
-NEXT 5: re-read two cleaned pages to test the purpose and scope fix; one group note with grep patterns above each 71-row table (L2, L4c, L5b); L1c finding sentences FD-001, FD-016, FD-021; findings-table column legend in L4c and merged-findings; t19-gaps-r2 as one row per gap. Held-page items (1580, 1582, 1588) to LEAD-NOTICE.
+UPDATED_UTC: 2026-11-16T15:00:08Z | PUSHED_UTC: 2026-11-16T15:00:08Z
+Running (8): decision-list-for-lead whole (a602134eee67160a4); L6 50-130 (a8b6a4cf908a8ee42); six new this beat: L4 270-end, L3c 130-end, L1c 130-end, L5a 130-end, critical-path-r1, owner-timeline-draft (ids in session list).
+Closed and digested 1625-1630: a9736197cd289fa57, aaaccbd483fcb454b, a93921ab4f6712335, acdf230aa66f521d2, a53053c9c98bb5c86, ac42d4d03f5ceca39.
+FINDING: readers of later ranges cannot see the KEY at the top. Class fix: a REMINDER line (job keys, take, DECISION, UNVERIFIED) now sits under every section heading on all 12 pages. Not yet proven by a re-read.
+CAPACITY: 8 of 8. No missing slots.
+NEXT 5: claim column for L3 Findings and merged-findings L3 rows; L1 blank line 334, FD-021, FD-025; L5b status line and void findings FD-003 to 005; group note with grep patterns above 71-row tables; L1c finding sentences. Held-page items (1580, 1582, 1588) to LEAD-NOTICE.
 
 
 ## Details (long text moved from the FAILED line)

@@ -2,6 +2,7 @@ Older notes: work/L4c-history.md and work/L4c-history-2.md (ignore). Cite findin
 Key (added 16 Nov): finding id prefixes S-, X-, J-, K-, D-, T-, F- label the kind of row and FD- is a finding; the meaning of each letter is NOT RECORDED, so read an id as a name only. The findings are in the table further down this file (search the heading Findings). The one-store decision copies are handover/system-map/DECISION-one-store.md (20 lines) and handover/system-map/inputs/DECISION-one-store.md (28 lines). Mode A and the Stores section: meaning NOT RECORDED. Questions in this file go to the lead session, which passes studio questions to the studio lead.
 
 ## Status 16 Nov 2026 (the only status block)
+> REMINDER (full KEY at the top of this page): job keys COUNTER = counts events, FILTER = refuses input, RETRY = repeats a failed step, LOG = records output, STORE = holds data, NOTICE = alerts a person, OTHER = none of these. take = the one recorded demo run planned for 23 Nov 2026. DECISION line N = line N of DECISION-one-store.md (text not recorded here). UNVERIFIED = nobody checked.
 - Counts: 26 findings (L4c-FD-001 to FD-026). Blocker outside the quarantine: FD-002 only. FD-001 and FD-003 are also security Blockers but are QUARANTINED (see below), so nothing is done with them.
 - Quarantined rows (do not act on them; these rows touch the earlier real-run folder, which this lane must not reopen): S-003 to S-006, X-001 to X-003, J-003, J-004, J-008, K-001 to K-004, D-002, T-001, T-004, F-001, FD-001, FD-003, FD-007, FD-008, FD-019, FD-020, FD-022 to FD-024. The list came from a reader and is UNVERIFIED.
 - Who rules: only the studio head (the human who runs the studio) rules on the real-run quarantine; no date is set. Until then FD-001 and FD-003 have owner studio head and next step "rule on real-run".
@@ -9,6 +10,7 @@ Key (added 16 Nov): finding id prefixes S-, X-, J-, K-, D-, T-, F- label the kin
 - Coverage: 38 of 137 files READ; 99 NOT-READ (list in Checkpoint).
 
 ## Terms
+> REMINDER (full KEY at the top of this page): job keys COUNTER = counts events, FILTER = refuses input, RETRY = repeats a failed step, LOG = records output, STORE = holds data, NOTICE = alerts a person, OTHER = none of these. take = the one recorded demo run planned for 23 Nov 2026. DECISION line N = line N of DECISION-one-store.md (text not recorded here). UNVERIFIED = nobody checked.
 take = the filmed run of the lead-intake demo on made-up data. desk = the earlier lead-handling demo product; "retired from the take" = the studio lead's decision that its store is not used in the take, resting on lines 7 and 15 of DECISION-one-store.md (root copy 20 lines or inputs/ copy 28 lines; source unknown), which this lane never opened: UNVERIFIED, so rows FD-013 and FD-014 carry "premise unverified". lane = one read-only audit slice. job key = a label for what a store or job is for: LOG, RETRY, COUNTER, STORE, NOTICE, FILTER, OTHER. studio lead = the Claude session doing the technical steps. PLAN table = the severity table of PLAN-002.md. Mode A = NOT RECORDED.
 
 # Lane L4c
@@ -32,6 +34,7 @@ take = the filmed run of the lead-intake demo on made-up data. desk = the earlie
 NOTE 16 Nov 2026 (system-map session): this lane marked seven files under handover/demo/real-run/ as READ before decision 5 (the lead reads only masked take outputs, never owner-only or real-run folders) was applied. Whether these files are masked builder notes or owner-only is NOT known: the studio lead must say. Until then the continuation lane must not open real-run, and nothing in this file may be used for the take. Line 146 'none describes the take stores' holds only for the 38 files read, not for all 137.
 
 ## Coverage
+> REMINDER (full KEY at the top of this page): job keys COUNTER = counts events, FILTER = refuses input, RETRY = repeats a failed step, LOG = records output, STORE = holds data, NOTICE = alerts a person, OTHER = none of these. take = the one recorded demo run planned for 23 Nov 2026. DECISION line N = line N of DECISION-one-store.md (text not recorded here). UNVERIFIED = nobody checked.
 Lane is PARTIAL. READ 38, SKIMMED 0, NOT-READ 99 (of 137). Honest reason: the 137 reports hold about 1.4 MB of text; my context budget ran out after 38 full reads, so the other 99 were not opened (not even grepped as "nothing found"). They are NOT-READ and a second continuation lane is needed for them. Nothing in this file says "nothing found" about a NOT-READ file. A grep for postgres, mf_leads, stage.journal, sqlite and journal over the folder list was run only to find where to read first; it is not a read.
 | path | bytes | status | note |
 |---|---|---|---|
@@ -174,6 +177,7 @@ Lane is PARTIAL. READ 38, SKIMMED 0, NOT-READ 99 (of 137). Honest reason: the 13
 | handover/demo/triage/SUMMARY-codeant6-sec-nits.md | 4169 | READ | full |
 
 ## Components
+> REMINDER (full KEY at the top of this page): job keys COUNTER = counts events, FILTER = refuses input, RETRY = repeats a failed step, LOG = records output, STORE = holds data, NOTICE = alerts a person, OTHER = none of these. take = the one recorded demo run planned for 23 Nov 2026. DECISION line N = line N of DECISION-one-store.md (text not recorded here). UNVERIFIED = nobody checked.
 General finding for the 38 files read: they are builder notes and fresh-reviewer reports about patches to the desk (the Mode A product), its CI checks and its scripts. None describes the take's own stores (Postgres `mf_leads`, `stage.journal`, n8n data); see L4c-FD-014 and L4-FD-001.
 | id | name | purpose | evidence | job keys |
 |---|---|---|---|---|
@@ -186,6 +190,7 @@ General finding for the 38 files read: they are builder notes and fresh-reviewer
 | L4c-C-007 | secret-scan config (.gitleaks.toml, exceptions.txt, tools/hygiene.py) | decides which text counts as a leak; allowlists for lock-file hashes and the public Sonar project key | `handover/demo/gitleaks/REVIEW-2.md:12 "pipeline compiles every exception with Python"` | FILTER |
 
 ## Stores
+> REMINDER (full KEY at the top of this page): job keys COUNTER = counts events, FILTER = refuses input, RETRY = repeats a failed step, LOG = records output, STORE = holds data, NOTICE = alerts a person, OTHER = none of these. take = the one recorded demo run planned for 23 Nov 2026. DECISION line N = line N of DECISION-one-store.md (text not recorded here). UNVERIFIED = nobody checked.
 All stores below belong to the desk or to review tooling. None is a store of the take per DECISION-one-store.md.
 | id | name | purpose | job owner | inputs | outputs | failure path | retry | timeout | idempotency | logs to | identity | tested where | used by | evidence | job keys |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
@@ -197,16 +202,19 @@ All stores below belong to the desk or to review tooling. None is a store of the
 | L4c-S-006 | desk log (desk-1.log in the run folder) | desk text log for a run | desk | desk events | text lines | tracebacks end up here when a setting is refused after the question | N/A: log | N/A: none | N/A: append | file | desk process | read by reviewers | reviewers | `handover/demo/real-run/REVIEW-v3-fresh.md:10 "the desk ended while starting"` | LOG |
 
 ## Workflows
+> REMINDER (full KEY at the top of this page): job keys COUNTER = counts events, FILTER = refuses input, RETRY = repeats a failed step, LOG = records output, STORE = holds data, NOTICE = alerts a person, OTHER = none of these. take = the one recorded demo run planned for 23 Nov 2026. DECISION line N = line N of DECISION-one-store.md (text not recorded here). UNVERIFIED = nobody checked.
 | id | name | purpose | job owner | inputs | outputs | failure path | retry | timeout | idempotency | logs to | identity | tested where | used by | evidence | job keys |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | L4c-W-001 | n8n proof recipe (proof.json result rule) | independent check of one run: exactly one new, nine duplicate, one email, one CRM row | n8n Code node plus the desk (take owner NOT decided here) | replies from the desk and fakes | MATCH or MISMATCH text | false MISMATCH under a 503 busy answer (start again) | UNVERIFIED | UNVERIFIED | UNVERIFIED | UNVERIFIED | UNVERIFIED | rule tested in node with stand-in values only (10 reply sets) | owner step recipe | `handover/demo/triage/SUMMARY-codeant2-sec.md:26 "the rule was checked in node only"` | COUNTER |
 
 ## Workflow walk
+> REMINDER (full KEY at the top of this page): job keys COUNTER = counts events, FILTER = refuses input, RETRY = repeats a failed step, LOG = records output, STORE = holds data, NOTICE = alerts a person, OTHER = none of these. take = the one recorded demo run planned for 23 Nov 2026. DECISION line N = line N of DECISION-one-store.md (text not recorded here). UNVERIFIED = nobody checked.
 | id | flow | node | type | trigger or branch | error path | retry or timeout | on kill or restart | on duplicate | on out-of-order | on empty or huge input | writes where | person sees | identity | evidence |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | L4c-WK-001 | n8n proof recipe | the Code node that waits for the desk to finish and builds the result | Code | after the desk answers | false MISMATCH under 503 per recipe | UNVERIFIED | UNVERIFIED | counts nine duplicate as expected | UNVERIFIED | UNVERIFIED | N/A: returns a value | MATCH or MISMATCH text in n8n | UNVERIFIED | `handover/demo/triage/SUMMARY-codeant2-sec.md:6 "A real n8n was not run"` |
 
 ## Scripts
+> REMINDER (full KEY at the top of this page): job keys COUNTER = counts events, FILTER = refuses input, RETRY = repeats a failed step, LOG = records output, STORE = holds data, NOTICE = alerts a person, OTHER = none of these. take = the one recorded demo run planned for 23 Nov 2026. DECISION line N = line N of DECISION-one-store.md (text not recorded here). UNVERIFIED = nobody checked.
 | id | name | purpose | job owner | inputs | outputs | failure path | retry | timeout | idempotency | logs to | identity | tested where | used by | evidence | job keys |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | L4c-X-001 | scripts/run_real_check.py | real-service check of the desk with a start question | script itself | config file, key files, answer at a terminal | counts, result file | refuses with one fixed line and exit 2 before the question; exit 3 on failure | N/A: no retry | UNVERIFIED | N/A: one run | stdout, result file | script user | tests/test_take_script_refusals.py, test_real_check_dry.py | lead, reviewers | `handover/demo/real-run/NOTES-start-prompt.md:18 "NEW module constant NO_TERMINAL_TEXT"` | FILTER |
@@ -217,6 +225,7 @@ All stores below belong to the desk or to review tooling. None is a store of the
 | L4c-X-006 | tools/hygiene.py | git grep scan minus exceptions.txt | script itself | patterns.txt, exceptions.txt | list of hits | any hit fails test_hygiene | N/A: none | N/A: none | N/A: pure | none | none | tests/test_hygiene.py | CI | `handover/demo/gitleaks/REVIEW-2.md:12 "pipeline compiles every exception with Python"` | FILTER |
 
 ## Jobs
+> REMINDER (full KEY at the top of this page): job keys COUNTER = counts events, FILTER = refuses input, RETRY = repeats a failed step, LOG = records output, STORE = holds data, NOTICE = alerts a person, OTHER = none of these. take = the one recorded demo run planned for 23 Nov 2026. DECISION line N = line N of DECISION-one-store.md (text not recorded here). UNVERIFIED = nobody checked.
 | id | name | purpose | job owner | inputs | outputs | failure path | retry | timeout | idempotency | logs to | identity | tested where | used by | evidence | job keys |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | L4c-J-001 | desk locked-database retry (_locked_retry) | tries a busy write again | desk (conflicts with DECISION line 7: the take retries through the n8n recovery flow) | busy database error | success or swallow with log | swallowed and logged, row shows stalled | 3 tries; 1 try for a spent write gate | write deadline | UNVERIFIED | desk log | desk process | tests/test_sonar_p2_gaps.py | desk | `handover/demo/sonar/NOTES-p2-v23.md:10 "sqlite3.OperationalError with the text"` | RETRY |
@@ -229,6 +238,7 @@ All stores below belong to the desk or to review tooling. None is a store of the
 | L4c-J-008 | refusal messages (fixed one-line texts) | tells the person why a start was refused | scripts | bad setting | one line `refused: NAME: text` | mixed formats remain | N/A: none | N/A: none | N/A: pure | stdout | script user | tests/test_take_script_refusals.py | person at terminal | `handover/demo/real-run/REVIEW-v4-fresh.md:14 "three refusal formats are mixed in the same script"` | NOTICE |
 
 ## Credentials
+> REMINDER (full KEY at the top of this page): job keys COUNTER = counts events, FILTER = refuses input, RETRY = repeats a failed step, LOG = records output, STORE = holds data, NOTICE = alerts a person, OTHER = none of these. take = the one recorded demo run planned for 23 Nov 2026. DECISION line N = line N of DECISION-one-store.md (text not recorded here). UNVERIFIED = nobody checked.
 Names only, no values were seen.
 | id | name | purpose | job owner | inputs | outputs | failure path | retry | timeout | idempotency | logs to | identity | tested where | used by | evidence | job keys |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
@@ -240,6 +250,7 @@ Names only, no values were seen.
 | L4c-K-006 | n8n API key file (setting name NOT FOUND in the files read) | key for scripts/n8n_api.py | scripts | N/A: credential | N/A: credential | key could be sent to a second server on redirect in old code | N/A: credential | N/A: credential | N/A: credential | none | scripts | tests/test_n8n_api_url.py | n8n_api.py | `handover/demo/triage/SUMMARY-codeant2-sec.md:24 "on the old code the second server receives the key"` | OTHER |
 
 ## Docs and tests and folders
+> REMINDER (full KEY at the top of this page): job keys COUNTER = counts events, FILTER = refuses input, RETRY = repeats a failed step, LOG = records output, STORE = holds data, NOTICE = alerts a person, OTHER = none of these. take = the one recorded demo run planned for 23 Nov 2026. DECISION line N = line N of DECISION-one-store.md (text not recorded here). UNVERIFIED = nobody checked.
 | id | name | purpose | evidence | job keys |
 |---|---|---|---|---|
 | L4c-D-001 | triage/SUMMARY-codeant*-sec and -rt files | builder hand-backs for CodeAnt fix rounds 2 to 6; unreviewed when written | `handover/demo/triage/SUMMARY-codeant5-sec.md:1 "previous versions kept as codeant3-*-r4.patch"` | OTHER |
@@ -251,6 +262,7 @@ Names only, no values were seen.
 | L4c-F-001 | handover/demo/triage, sonar, semgrep, skips, real-run, layout, coverage, fixes, gitleaks, hang | patch builder notes, reviews and evidence about the desk and its CI | `handover/demo/triage/PATCH-NOTES.md:11 "do NOT convert now"` | OTHER |
 
 ## Findings
+> REMINDER (full KEY at the top of this page): job keys COUNTER = counts events, FILTER = refuses input, RETRY = repeats a failed step, LOG = records output, STORE = holds data, NOTICE = alerts a person, OTHER = none of these. take = the one recorded demo run planned for 23 Nov 2026. DECISION line N = line N of DECISION-one-store.md (text not recorded here). UNVERIFIED = nobody checked.
 Severity by the PLAN table. Several Blockers are fixed only in pending patches (not merged): that is stated, not deferred.
 | id | claim type | severity | evidence | conflicts with | job key |
 |---|---|---|---|---|---|
@@ -282,6 +294,7 @@ Severity by the PLAN table. Several Blockers are fixed only in pending patches (
 | L4c-FD-026 | inconsistent | Nit | Extends L4-FD-011: yet another base head (3598120) in the sonar series: `handover/demo/sonar/NOTES-p2-feed-constants.md:2 "base pr-3-tests 3598120"` | `handover/demo/scans/SCAN-TABLE.md:14 "2db392650e8b"` | OTHER |
 
 ## Checkpoint
+> REMINDER (full KEY at the top of this page): job keys COUNTER = counts events, FILTER = refuses input, RETRY = repeats a failed step, LOG = records output, STORE = holds data, NOTICE = alerts a person, OTHER = none of these. take = the one recorded demo run planned for 23 Nov 2026. DECISION line N = line N of DECISION-one-store.md (text not recorded here). UNVERIFIED = nobody checked.
 Done: 38 of 137 files READ (coverage 3, fixes 2, gitleaks 2, hang 2, layout 2, real-run 7, semgrep 6, skips 2, sonar 3, triage 9). Rows: 7 components, 6 stores, 1 workflow, 1 walk row, 6 scripts, 8 jobs, 6 credentials, 7 doc/test/folder rows,  26 findings (3 labelled Blocker: FD-001, FD-002, FD-003; FD-001 and FD-003 quarantined; 18 Major, 5 Nit).
 Next (for a further continuation lane): 99 NOT-READ files, in this order: real-run REVIEW-core-hunks-v6-fresh, REVIEW-start-prompt-fresh (and a md5 check of REVIEW-v4-fresh-copy); semgrep REVIEW-1, REVIEW-6, v7 to v9 pr-body and claims files (look for numbers in claims); skips CRLF notes and reviews; fixes REVIEW-2; layout REVIEW-1; triage REVIEW-codeant-A..C and codeant2-sec; sonar NOTES and REVIEW series (p1, p2, p3, nodemo, probe).
 Blockers: none beyond the Status block. No file was changed except this one. No secret, key, token or personal e-mail value was copied; credentials are listed by name.

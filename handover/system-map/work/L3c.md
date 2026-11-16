@@ -1,12 +1,14 @@
 Older notes: work/L3c-history.md and work/L3c-history-2.md (ignore). Cite finding ids (FD-nnn), not line numbers.
 
 ## Status 16 Nov 2026 (the only status block)
+> REMINDER (full KEY at the top of this page): job keys COUNTER = counts events, FILTER = refuses input, RETRY = repeats a failed step, LOG = records output, STORE = holds data, NOTICE = alerts a person, OTHER = none of these. take = the one recorded demo run planned for 23 Nov 2026. DECISION line N = line N of DECISION-one-store.md (text not recorded here). UNVERIFIED = nobody checked.
 - Coverage: 158 evidence files listed; 92 READ, 66 NOT-READ (48 of those only had header counts taken by search; they stay NOT-READ). A NOT-READ file is never "nothing found".
 - Severity: the lane's own labels. Five findings (FD-001, FD-009, FD-010, FD-014, FD-032) depend on terms nobody has defined (below), so their severity cells read Unrated, not Major. No one has confirmed any severity.
 - Claim types (the "type" column): inconsistent = two files disagree; unverified = not checked; ops = an operating problem; idle, duplicate and security are also used and their meanings are NOT RECORDED. NOT VISIBLE = the lane could not see it.
 - Owner of the open terms in the Terms block: the studio lead (the Claude session doing the technical steps); due Tue 17 Nov 12:00 UTC / 17:30 IST (proposal of the system-map session).
 
 ## Terms (defined once; "UNVERIFIED" = the lane did not check it)
+> REMINDER (full KEY at the top of this page): job keys COUNTER = counts events, FILTER = refuses input, RETRY = repeats a failed step, LOG = records output, STORE = holds data, NOTICE = alerts a person, OTHER = none of these. take = the one recorded demo run planned for 23 Nov 2026. DECISION line N = line N of DECISION-one-store.md (text not recorded here). UNVERIFIED = nobody checked.
 - take = the filmed run of the lead-intake demo on made-up data. lane = one read-only audit slice. job keys = STORE, RETRY, NOTICE, FILTER, COUNTER, LOG, OTHER (what a store or job is for).
 - desk = a retired earlier demo front end (UNVERIFIED; this lane's cells "desk (retired from take)" rest on it). FD-009 and FD-030 are conditional on that premise. DECISION line 15 = line 15 of DECISION-one-store.md (root copy 20 lines or inputs/ copy 28 lines; source unknown); its sentence was not quoted by this lane, so every row citing it is a premise UNVERIFIED.
 - NOT RECORDED (ask the studio lead): main, head, 56 F, E marks, stage.journal, egm, rung table, code-last rule, stack builder, "fix-N rM" (probably patch number N, review round M).
@@ -31,6 +33,7 @@ Older notes: work/L3c-history.md and work/L3c-history-2.md (ignore). Cite findin
 
 
 ## Coverage
+> REMINDER (full KEY at the top of this page): job keys COUNTER = counts events, FILTER = refuses input, RETRY = repeats a failed step, LOG = records output, STORE = holds data, NOTICE = alerts a person, OTHER = none of these. take = the one recorded demo run planned for 23 Nov 2026. DECISION line N = line N of DECISION-one-store.md (text not recorded here). UNVERIFIED = nobody checked.
 Lane status: PARTIAL. 158 rows: READ 92, SKIMMED 0, NOT-READ 66. A NOT-READ row is never "nothing found". For 48 of the NOT-READ review rows only the header counts were taken by grep (see note); they stay NOT-READ.
 | path | bytes | status | note |
 |---|---|---|---|
@@ -194,6 +197,7 @@ Lane status: PARTIAL. 158 rows: READ 92, SKIMMED 0, NOT-READ 66. A NOT-READ row 
 | handover/demo3/evidence/xdist-root-cause.md | 3745 | READ | Q11, proven |
 
 ## Components
+> REMINDER (full KEY at the top of this page): job keys COUNTER = counts events, FILTER = refuses input, RETRY = repeats a failed step, LOG = records output, STORE = holds data, NOTICE = alerts a person, OTHER = none of these. take = the one recorded demo run planned for 23 Nov 2026. DECISION line N = line N of DECISION-one-store.md (text not recorded here). UNVERIFIED = nobody checked.
 | id | name | purpose | evidence | job keys |
 |---|---|---|---|---|
 | L3c-C-001 | cold-reader reports Q5, Q5b, Q6, Q6b | four fresh-clone reads of README, settings, portal, n8n recipe, tests and real-services text | `handover/demo3/evidence/cold-reader-readme.md:1 "Cold reader Q5: README quick start on Linux"` | OTHER |
@@ -209,6 +213,7 @@ Lane status: PARTIAL. 158 rows: READ 92, SKIMMED 0, NOT-READ 66. A NOT-READ row 
 | L3c-R-001 | heads named in these reports: base f3c39cf8, old main 61ded9e, PR 12 head 8d65577, PR 14 heads d5b4451 then edadd00 then 6b1fe49 then c14a514 | commits the evidence was run on | `handover/demo3/evidence/hostile-f7-rerun-edadd00.md:1 "F7 rerun, head edadd00 (PR #14)"`; `handover/demo3/evidence/reader-pr12-e-marks.md:7 "PR #12 head 8d65577"` | OTHER |
 
 ## Stores
+> REMINDER (full KEY at the top of this page): job keys COUNTER = counts events, FILTER = refuses input, RETRY = repeats a failed step, LOG = records output, STORE = holds data, NOTICE = alerts a person, OTHER = none of these. take = the one recorded demo run planned for 23 Nov 2026. DECISION line N = line N of DECISION-one-store.md (text not recorded here). UNVERIFIED = nobody checked.
 | id | name | purpose | job owner | inputs | outputs | failure path | retry | timeout | idempotency | logs to | identity | tested where | used by | evidence | job keys |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | L3c-S-001 | desk spend ledger (live model cost file) | keeps run and total spend against caps for the desk live model step | desk (retired from take) | reserve and settle calls | running totals against caps | file kinds refused with exit 4 | N/A: ledger is not a retry store | UNVERIFIED | UNVERIFIED | itself | UNVERIFIED | UNVERIFIED: tests are named only in the resolve rows | desk live qualifier | `handover/demo3/evidence/resolve-lane3-fix-2-r12.md:6 "Spend ledger plain open"`; `handover/demo3/evidence/resolve-lane3-fix-2-r12.md:8 "Ledger lock name from unresolved path"` | COUNTER |
@@ -221,14 +226,17 @@ Lane status: PARTIAL. 158 rows: READ 92, SKIMMED 0, NOT-READ 66. A NOT-READ row 
 | L3c-S-008 | crash.flag file beside the book | arms one crash point in the desk | evidence runner | point name | desk exits 137 at the point | point never reached then plain kill | N/A: flag | UNVERIFIED | N/A: flag | none | UNVERIFIED | crash soaks | crash_desk script | `handover/demo3/evidence/crash-soak.md:42 "documented crash script with the flag file"` | OTHER |
 
 ## Workflows
+> REMINDER (full KEY at the top of this page): job keys COUNTER = counts events, FILTER = refuses input, RETRY = repeats a failed step, LOG = records output, STORE = holds data, NOTICE = alerts a person, OTHER = none of these. take = the one recorded demo run planned for 23 Nov 2026. DECISION line N = line N of DECISION-one-store.md (text not recorded here). UNVERIFIED = nobody checked.
 | id | name | purpose | job owner | inputs | outputs | failure path | retry | timeout | idempotency | logs to | identity | tested where | used by | evidence | job keys |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | L3c-W-001 | n8n desk workflows desk-form, desk-webhook, proof (the desk recipe) | send leads to the desk on port 8765 | desk recipe (not the take flows) | web form or webhook calls | desk replies | UNVERIFIED: never run in a real n8n | retryOnFail true, 3 tries, 1000 ms per the reader | 15000 ms per the reader | UNVERIFIED | n8n execution history | UNVERIFIED | NOT RUN: no n8n in the box | desk recipe | `handover/demo3/evidence/cold-reader-n8n-limits.md:6 "have 8765 / 8766 / 5679 written into the URLs"` | RETRY |
 
 ## Workflow walk
+> REMINDER (full KEY at the top of this page): job keys COUNTER = counts events, FILTER = refuses input, RETRY = repeats a failed step, LOG = records output, STORE = holds data, NOTICE = alerts a person, OTHER = none of these. take = the one recorded demo run planned for 23 Nov 2026. DECISION line N = line N of DECISION-one-store.md (text not recorded here). UNVERIFIED = nobody checked.
 NONE FOUND: no workflow JSON was opened in this lane (only reports); the node-level walk of the desk recipe workflows stays UNVERIFIED and is not claimed.
 
 ## Scripts
+> REMINDER (full KEY at the top of this page): job keys COUNTER = counts events, FILTER = refuses input, RETRY = repeats a failed step, LOG = records output, STORE = holds data, NOTICE = alerts a person, OTHER = none of these. take = the one recorded demo run planned for 23 Nov 2026. DECISION line N = line N of DECISION-one-store.md (text not recorded here). UNVERIFIED = nobody checked.
 | id | name | purpose | job owner | inputs | outputs | failure path | retry | timeout | idempotency | logs to | identity | tested where | used by | evidence | job keys |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | L3c-X-001 | scripts/reset.sh (lead_desk repo, NOT VISIBLE: lead_desk scripts/reset.sh) | stop desk and demo server by pid file, then delete the data folder | fix-5 | pid files, ports | stopped processes, exit 2 to 8 | refusals 5, 6, 7 before any delete | none | RESET_STOP_WAIT_SECONDS | UNVERIFIED | stdout and stderr | UNVERIFIED | test_reset_scripts, test_reset_order_and_words | reset | `handover/demo3/evidence/resolve-lane3-fix-5-r8.md:9 "read_pid_file"` | OTHER |
@@ -239,6 +247,7 @@ NONE FOUND: no workflow JSON was opened in this lane (only reports); the node-le
 | L3c-X-006 | scripts/crash_desk.py (NOT VISIBLE: lead_desk scripts) | desk that exits 137 at a named point | soaks | flag file | exit 137 | UNVERIFIED | none | UNVERIFIED | UNVERIFIED | stdout | UNVERIFIED | soaks Q3, Q3b, Q3c | soaks | `handover/demo3/evidence/cold-reader-tests-realservices.md:5 "PYTHONPATH=src python scripts/crash_desk.py"` | OTHER |
 
 ## Jobs
+> REMINDER (full KEY at the top of this page): job keys COUNTER = counts events, FILTER = refuses input, RETRY = repeats a failed step, LOG = records output, STORE = holds data, NOTICE = alerts a person, OTHER = none of these. take = the one recorded demo run planned for 23 Nov 2026. DECISION line N = line N of DECISION-one-store.md (text not recorded here). UNVERIFIED = nobody checked.
 | id | name | purpose | job owner | inputs | outputs | failure path | retry | timeout | idempotency | logs to | identity | tested where | used by | evidence | job keys |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | L3c-J-001 | cold-reader runs Q5 to Q6b | follow README and docs literally on a clean clone | evidence runner | clean clone of f3c39cf | fail, unclear and wording lists | listed per document | none | 50 minute box | N/A: read-only | evidence files | UNVERIFIED | itself | fix-1, fix-2, fix-6 resolves | `handover/demo3/evidence/cold-reader-tests-realservices.md:44 "in a combined command; the harness blocked it before it ran"` | OTHER |
@@ -250,6 +259,7 @@ NONE FOUND: no workflow JSON was opened in this lane (only reports); the node-le
 | L3c-J-007 | mutation runs Q8 and Q8b | one exact-text change per mutant | evidence runner | base f3c39cf8 | killed or survived per mutant | survivors listed | none | UNVERIFIED | N/A: mutation | raw jsonl | UNVERIFIED | itself | fix-3, fix-7 | `handover/demo3/evidence/mutation-identity-claims.md:14 "Survivors after BOTH sets (verbatim) - 8"` | FILTER |
 
 ## Credentials
+> REMINDER (full KEY at the top of this page): job keys COUNTER = counts events, FILTER = refuses input, RETRY = repeats a failed step, LOG = records output, STORE = holds data, NOTICE = alerts a person, OTHER = none of these. take = the one recorded demo run planned for 23 Nov 2026. DECISION line N = line N of DECISION-one-store.md (text not recorded here). UNVERIFIED = nobody checked.
 | id | name | purpose | job owner | inputs | outputs | failure path | retry | timeout | idempotency | logs to | identity | tested where | used by | evidence | job keys |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | L3c-K-001 | AWS_ACCESS_KEY_ID (name only, seen set in a runner shell) | sandbox proxy variable | evidence runner shell | N/A: credential | N/A: credential | none | N/A: credential | N/A: credential | N/A: credential | none | process env | UNVERIFIED | none | `handover/demo3/evidence/e9-fix-6-r2-report.md:22 "I did not unset them, so the"` | OTHER |
@@ -262,6 +272,7 @@ NONE FOUND: no workflow JSON was opened in this lane (only reports); the node-le
 | L3c-K-008 | DESK_SMTPP_PASSWORD_FILE (name only) | mailbox password file path | desk (retired from take) | N/A: credential | N/A: credential | exit 4 when missing with smtp_provider | N/A: credential | N/A: credential | N/A: credential | none | file owner | cold read Q5b | desk SMTP provider | `handover/demo3/evidence/cold-reader-settings-portal.md:70 "each missing -> exit 4"` | OTHER |
 
 ## Docs and tests and folders
+> REMINDER (full KEY at the top of this page): job keys COUNTER = counts events, FILTER = refuses input, RETRY = repeats a failed step, LOG = records output, STORE = holds data, NOTICE = alerts a person, OTHER = none of these. take = the one recorded demo run planned for 23 Nov 2026. DECISION line N = line N of DECISION-one-store.md (text not recorded here). UNVERIFIED = nobody checked.
 | id | name | purpose | evidence | job keys |
 |---|---|---|---|---|
 | L3c-D-001 | review reports (about 90) | per-round findings by fresh reviewers | `handover/demo3/evidence/review-lane3-fix-3-r4.md:2 "This pass found nothing real"` | LOG |
@@ -277,6 +288,7 @@ NONE FOUND: no workflow JSON was opened in this lane (only reports); the node-le
 | L3c-F-001 | evidence/raw/q10 | 72 logs of the fakes test file | `handover/demo3/evidence/flake-chase-fakes.md:22 "handover/demo3/evidence/raw/q10/"` | LOG |
 
 ## Findings
+> REMINDER (full KEY at the top of this page): job keys COUNTER = counts events, FILTER = refuses input, RETRY = repeats a failed step, LOG = records output, STORE = holds data, NOTICE = alerts a person, OTHER = none of these. take = the one recorded demo run planned for 23 Nov 2026. DECISION line N = line N of DECISION-one-store.md (text not recorded here). UNVERIFIED = nobody checked.
 | id | claim type | severity | evidence | conflicts with | job key |
 |---|---|---|---|---|---|
 | L3c-FD-001 | inconsistent | Unrated | the word main names two commits: `handover/demo3/evidence/failures.md:4 "The 56 F on main 61ded9e"`; `handover/demo3/evidence/e10-fix-5-r4-report.md:3 "itself is at 61ded9e (main)"`; `handover/demo3/evidence/hang-hunt.md:41 "collected 3605"`; versus `handover/demo3/evidence/crash-soak.md:3 "Public main f3c39cf89ec989f032ea48a23cfd824b88da9c68"` | `handover/demo3/evidence/suite-pr14-6b1fe49.md:9 "3683 + 200 = 3883 = collected items"` | OTHER |
@@ -318,6 +330,7 @@ NONE FOUND: no workflow JSON was opened in this lane (only reports); the node-le
 | L3c-FD-037 | unverified | Major | cold readers could not test portal masking, banners with real services, n8n, Windows or any real HubSpot or mail account; claims about them stay unproven: `handover/demo3/evidence/cold-reader-tests-realservices.md:41 "Real HubSpot run of"`; `handover/demo3/evidence/cold-reader-settings-portal.md:171 "eye button, polling, buttons paused"` | none | NOTICE |
 
 ## Checkpoint
+> REMINDER (full KEY at the top of this page): job keys COUNTER = counts events, FILTER = refuses input, RETRY = repeats a failed step, LOG = records output, STORE = holds data, NOTICE = alerts a person, OTHER = none of these. take = the one recorded demo run planned for 23 Nov 2026. DECISION line N = line N of DECISION-one-store.md (text not recorded here). UNVERIFIED = nobody checked.
 Rewritten once at the end (not every 25 files; the 45 minute box and the context budget ran out first). READ 92, SKIMMED 0, NOT-READ 66 of 158 rows. Lane status PARTIAL.
 done: all 29 resolve files, all fix-3, fix-4, fix-7, fix-8, fix-9 reviews and needed-check-1, all checkpoints, cold readers, soaks, runners, paused notes, readers, py313, unskip, xdist, suite-pr14, mutation, load. Header counts of 48 unread reviews were taken by grep and are used only in FD-007; they are not a reading of those files.
 supersession answer in short: for each fix chain the final round is the only one to keep (FD-033); soak chain Q3, Q3b, Q3c: Q3c holds the fixed harness but only for blind mail; hostile chain: c14a514 only; PR 14 suite chain: edadd00 and 6b1fe49 are complete, d5b4451 is truncated; xdist: Q11 proves, Q1 guessed.

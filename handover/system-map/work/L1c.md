@@ -1,10 +1,12 @@
 Older notes: work/L1c-history.md and work/L1c-history-2.md (ignore them). Cite finding ids, not line numbers (the Components, Stores and Workflows tables name files with line numbers inside the cell; those are the lane's own cites, not rechecked).
 
 ## Status (the only status block)
+> REMINDER (full KEY at the top of this page): job keys COUNTER = counts events, FILTER = refuses input, RETRY = repeats a failed step, LOG = records output, STORE = holds data, NOTICE = alerts a person, OTHER = none of these. take = the one recorded demo run planned for 23 Nov 2026. DECISION line N = line N of DECISION-one-store.md (text not recorded here). UNVERIFIED = nobody checked.
 Blockers: L1c-FD-001 and L1c-FD-021 (false public claim or credential exposure, per the severity table of PLAN-002.md). L1c-FD-016 (a second retry engine in a retired desk) is labelled Major in its cell; one older note called it a Blocker; the decision belongs to the studio head and has no date, so it stays Major here. Reads: 68 of 86 files READ or SKIMMED (37 READ, 31 SKIMMED), 18 NOT-READ.
 Stale cells corrected below: "all three bodies" rests on pr3-body.md only (the PR 2 and PR 4 bodies were not read); "PR 4 merged" conflicts with the raw JSON (state open), so it is UNVERIFIED; "DECISION line 7" should read DECISION line 15.
 
 ## Terms
+> REMINDER (full KEY at the top of this page): job keys COUNTER = counts events, FILTER = refuses input, RETRY = repeats a failed step, LOG = records output, STORE = holds data, NOTICE = alerts a person, OTHER = none of these. take = the one recorded demo run planned for 23 Nov 2026. DECISION line N = line N of DECISION-one-store.md (text not recorded here). UNVERIFIED = nobody checked.
 - take = the one filmed run of the lead-intake demo on made-up data. DECISION = DECISION-one-store.md (root copy of 20 lines or inputs/ copy of 28 lines; source unknown, so cite both; "DECISION line 7" in old cells should read "line 15"; not inputs/DECISIONS-2026-11-16.md). Rule used for severity: a false public claim or a credential exposure is a Blocker; the studio head (the human who runs the studio) may change a label, no date set. desk = the retired earlier demo front end (archived, not to be fixed). reaper = the desk's retry job (L1-J-004), meaning UNVERIFIED. job keys = STORE, RETRY, NOTICE, FILTER, COUNTER, LOG, OTHER (see work/GLOSSARY.md and work/merged-findings.md). mf_leads = a stored-leads table name, UNVERIFIED. severity table = the table in PLAN-002.md that maps a finding type to a severity. PLAN-002.md = the plan that set up the six read-only lanes. FD-xxx / L1c-FD-xxx = a finding id in this file. "not checked in this lane" = replaces UNVERIFIED in older text.
 
 # Lane L1c
@@ -27,6 +29,7 @@ Stale cells corrected below: "all three bodies" rests on pr3-body.md only (the P
 
 
 ## Coverage
+> REMINDER (full KEY at the top of this page): job keys COUNTER = counts events, FILTER = refuses input, RETRY = repeats a failed step, LOG = records output, STORE = holds data, NOTICE = alerts a person, OTHER = none of these. take = the one recorded demo run planned for 23 Nov 2026. DECISION line N = line N of DECISION-one-store.md (text not recorded here). UNVERIFIED = nobody checked.
 PARTIAL: 68 of 86 files were READ or SKIMMED (37 READ, 31 SKIMMED); 18 files are still NOT-READ (older versions of PR texts and Semgrep bodies; some facts about them come from grep and are in the note column). Nothing may be concluded from the absence of findings in a NOT-READ file. Patch chains and raw JSON are SKIMMED per family as the lead allowed: followup patches (5 files): headers by grep plus suppression-marker grep; merge-ready patches (11 files) and drift/speed/semgrep patches: file lists and marker grep, hygiene-v3 marker lines seen; raw JSON (16 files, 4.9 MB, all under pr-stack): key fields by grep only (state, merged, file counts, review states, login counts, secret patterns), no JSON line was read in full. No secret or personal e-mail value was found by regex over the pr-stack, pr-text, followup, merge-ready, reuse, speed and drift folders (AKIA key, GitHub token, Slack token, sk- key, private key header: 0 matches). Ids without citation lines in this file for raw JSON are deliberate: JSON lines were not read.
 | path | bytes | status | note |
 |---|---|---|---|
@@ -118,6 +121,7 @@ PARTIAL: 68 of 86 files were READ or SKIMMED (37 READ, 31 SKIMMED); 18 files are
 | handover/demo/speed/fake-hubspot-read-body-before-answer.patch | 3165 | READ | whole file (67 lines) |
 
 ## Components
+> REMINDER (full KEY at the top of this page): job keys COUNTER = counts events, FILTER = refuses input, RETRY = repeats a failed step, LOG = records output, STORE = holds data, NOTICE = alerts a person, OTHER = none of these. take = the one recorded demo run planned for 23 Nov 2026. DECISION line N = line N of DECISION-one-store.md (text not recorded here). UNVERIFIED = nobody checked.
 | id | name | purpose | evidence | job keys |
 |---|---|---|---|---|
 | L1c-C-001 | core branches P1a, P1b, P2d-1, P4a, P4b1, P2a-1, mutation-runner-keywords, ci-scan-config-guard (and fix1) | the core pieces the demo was compared with; none is the take | `handover/demo/reuse/CORE-TO-DEMO.md:12 "Nine of these ten are unmerged"` | COUNTER; FILTER |
@@ -138,6 +142,7 @@ PARTIAL: 68 of 86 files were READ or SKIMMED (37 READ, 31 SKIMMED); 18 files are
 | L1c-R-004 | sdk repo branch demo/handover (carrier of the speed files) | where speed files were to be pushed for the cloud session | `handover/demo/speed/RUNBOOK-SPEED-3.md:20 "Carrier: sdk repo"` | OTHER |
 
 ## Stores
+> REMINDER (full KEY at the top of this page): job keys COUNTER = counts events, FILTER = refuses input, RETRY = repeats a failed step, LOG = records output, STORE = holds data, NOTICE = alerts a person, OTHER = none of these. take = the one recorded demo run planned for 23 Nov 2026. DECISION line N = line N of DECISION-one-store.md (text not recorded here). UNVERIFIED = nobody checked.
 | id | name | purpose | job owner | inputs | outputs | failure path | retry | timeout | idempotency | logs to | identity | tested where | used by | evidence | job keys |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | L1c-S-001 | desk CRM-copy refusal counter (memory only) | counts refusals while an earlier copy call runs and picks the wait step | desk.py (retired from the take by DECISION) | refused copy call | wait of about 10, 60, 180 or at most 420 seconds | UNVERIFIED | wait steps | 420 s at most | exclusive call per lead | UNVERIFIED | desk process | tests/test_codeant_desk.py | desk reaper and mirror pass | `handover/demo/pr-text/REVIEW-MAP-PR4.md:50 "the refusal count is kept in memory only"`; `handover/demo/pr-text/REVIEW-MAP-PR4.md:147 "covers the two desk.py behaviour changes"` | RETRY; COUNTER |
@@ -149,6 +154,7 @@ PARTIAL: 68 of 86 files were READ or SKIMMED (37 READ, 31 SKIMMED); 18 files are
 | L1c-S-007 | github-current copies of the three live pull request bodies | frozen copy of what GitHub showed at 2026-11-13 | demo session | public API | 3 markdown files | N/A: snapshot | N/A: snapshot | N/A: snapshot | N/A: snapshot | itself | none | N/A: snapshot | pr-text review | `handover/demo/pr-text/github-current/pr3-body.md:1 "fetched from the public GitHub API at 2026-11-13"` | STORE |
 
 ## Workflows
+> REMINDER (full KEY at the top of this page): job keys COUNTER = counts events, FILTER = refuses input, RETRY = repeats a failed step, LOG = records output, STORE = holds data, NOTICE = alerts a person, OTHER = none of these. take = the one recorded demo run planned for 23 Nov 2026. DECISION line N = line N of DECISION-one-store.md (text not recorded here). UNVERIFIED = nobody checked.
 | id | name | purpose | job owner | inputs | outputs | failure path | retry | timeout | idempotency | logs to | identity | tested where | used by | evidence | job keys |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | L1c-W-001 | semgrep.yml (own pull request; final body v9 in lane L4) | ERROR-level scan with p/python and p/javascript over five folders | GitHub | pull request and push to main | findings in the job log only | exit 3 is a tool error and fails with no retry | exit 2 retried up to 3 tries 20 s apart | 20 minutes | concurrency group per ref cancels only pull request runs | GitHub job log | GitHub Actions with contents read only | tests/test_nosemgrep_form.py and tests/test_gitleaks_semgrep_lock.py | public demo repo (not merged at body v6) | `handover/demo/pr-text/semgrep-pr-body-v6.md:26 "makes up to 3 tries, 20 seconds apart"`; `handover/demo/pr-text/semgrep-pr-body-v6.md:94 "No test in this repository checks the retry and exit-code logic"` | RETRY; LOG |
@@ -157,6 +163,7 @@ PARTIAL: 68 of 86 files were READ or SKIMMED (37 READ, 31 SKIMMED); 18 files are
 | L1c-W-004 | codeql.yml evidence copy | CodeQL for python, actions, javascript-typescript | GitHub | pull request to main, push to main, weekly | alerts | UNVERIFIED | N/A: CI | 30 minutes | N/A: CI | GitHub security tab | GitHub Actions | itself | public demo repo | `handover/demo/pr-stack/evidence-ab-workflows.txt:25 "weekly, Monday"` | LOG |
 
 ## Workflow walk
+> REMINDER (full KEY at the top of this page): job keys COUNTER = counts events, FILTER = refuses input, RETRY = repeats a failed step, LOG = records output, STORE = holds data, NOTICE = alerts a person, OTHER = none of these. take = the one recorded demo run planned for 23 Nov 2026. DECISION line N = line N of DECISION-one-store.md (text not recorded here). UNVERIFIED = nobody checked.
 | id | flow | node | type | trigger or branch | error path | retry or timeout | on kill or restart | on duplicate | on out-of-order | on empty or huge input | writes where | person sees | identity | evidence |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | L1c-WK-001 | L1c-W-001 | install Semgrep from the lock | CI step | pull request or push to main | broken install is reported as install problem | N/A: CI | UNVERIFIED | N/A: CI | N/A: CI | UNVERIFIED | runner disk | red check | GitHub Actions | `handover/demo/pr-text/semgrep-pr-body-v6.md:20 "It installs Semgrep 1.185.0 from a lock file"` |
@@ -166,6 +173,7 @@ PARTIAL: 68 of 86 files were READ or SKIMMED (37 READ, 31 SKIMMED); 18 files are
 | L1c-WK-005 | L1c-W-002 | SonarQube scan with the token | CI step | after tests | UNVERIFIED | N/A: CI | UNVERIFIED | N/A: CI | N/A: CI | UNVERIFIED | SonarCloud | quality gate | repository secret SONAR_TOKEN | `handover/demo/pr-stack/evidence-ab-workflows.txt:213 "SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}"` |
 
 ## Scripts
+> REMINDER (full KEY at the top of this page): job keys COUNTER = counts events, FILTER = refuses input, RETRY = repeats a failed step, LOG = records output, STORE = holds data, NOTICE = alerts a person, OTHER = none of these. take = the one recorded demo run planned for 23 Nov 2026. DECISION line N = line N of DECISION-one-store.md (text not recorded here). UNVERIFIED = nobody checked.
 | id | name | purpose | job owner | inputs | outputs | failure path | retry | timeout | idempotency | logs to | identity | tested where | used by | evidence | job keys |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | L1c-X-001 | scan step shell of semgrep.yml | run the scan and map exit codes | GitHub | semgrep exit code | exit status and messages | exit 3 fails with NOT findings text | 3 tries on exit 2 | 20 minute job | N/A: CI | job log | GitHub Actions | stand-in program outside the repository only | semgrep.yml | `handover/demo/pr-text/semgrep-pr-body-v6.md:28 "The four number tests in the scan step use"` | RETRY |
@@ -177,6 +185,7 @@ PARTIAL: 68 of 86 files were READ or SKIMMED (37 READ, 31 SKIMMED); 18 files are
 | L1c-X-007 | scripts/http_guard.py | opt-in no-redirect and no-proxy open_http | demo session | URL | HTTP answer | refuses 3xx when asked | N/A: script | UNVERIFIED | N/A: script | N/A: script | script user | tests/test_http_guard.py | n8n_api | `handover/demo/pr-text/REVIEW-MAP-PR4.md:68 "refuses to follow a 3xx"` | FILTER |
 
 ## Jobs
+> REMINDER (full KEY at the top of this page): job keys COUNTER = counts events, FILTER = refuses input, RETRY = repeats a failed step, LOG = records output, STORE = holds data, NOTICE = alerts a person, OTHER = none of these. take = the one recorded demo run planned for 23 Nov 2026. DECISION line N = line N of DECISION-one-store.md (text not recorded here). UNVERIFIED = nobody checked.
 | id | name | purpose | job owner | inputs | outputs | failure path | retry | timeout | idempotency | logs to | identity | tested where | used by | evidence | job keys |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | L1c-J-001 | review bots re-run on every push | post inline comments and nitpick summaries | CodeAnt, DeepSource, CodeRabbit (outside services) | pushes to pull requests | bot comments | CodeRabbit and CodeAnt skip on size or base | UNVERIFIED | UNVERIFIED | NOT idempotent: same comment repeated per review, see L1c-FD-003 | GitHub conversation | GitHub app (permissions NOT VISIBLE) | NOT FOUND | lead hand-ticking | `handover/demo/pr-stack/CARRY-OVER-CHECKLIST.md:111 "tests/test_burst_retry.py:139"`; `handover/demo/pr-stack/CARRY-OVER-CHECKLIST.md:164 "tests/test_burst_retry.py:139"` | NOTICE |
@@ -187,6 +196,7 @@ PARTIAL: 68 of 86 files were READ or SKIMMED (37 READ, 31 SKIMMED); 18 files are
 | L1c-J-006 | hand-ticking of the carry-over checklist | person moves bot findings into the single pull request | lead | CARRY-OVER-CHECKLIST.md | ticked rows | UNVERIFIED | N/A: manual | N/A: manual | N/A: manual | the same file | lead | N/A: manual | lead | `handover/demo/pr-stack/CARRY-OVER-CHECKLIST.md:6 "So none is known to be resolved"` | NOTICE |
 
 ## Credentials
+> REMINDER (full KEY at the top of this page): job keys COUNTER = counts events, FILTER = refuses input, RETRY = repeats a failed step, LOG = records output, STORE = holds data, NOTICE = alerts a person, OTHER = none of these. take = the one recorded demo run planned for 23 Nov 2026. DECISION line N = line N of DECISION-one-store.md (text not recorded here). UNVERIFIED = nobody checked.
 | id | name | purpose | job owner | inputs | outputs | failure path | retry | timeout | idempotency | logs to | identity | tested where | used by | evidence | job keys |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | L1c-K-001 | SONAR_TOKEN (exposure analysis; also L1-K-001) | token for the scan step | repository owner | N/A: credential | N/A: credential | scan step fails without it | N/A: credential | N/A: credential | N/A: credential | GitHub | GitHub Actions on the same runner as the repository test code | NOT FOUND | sonar.yml | `handover/demo/pr-stack/evidence-ab-workflows.txt:160 "the SONAR_TOKEN secret is NOT in the environment of the install and test steps"` | OTHER |
@@ -194,6 +204,7 @@ PARTIAL: 68 of 86 files were READ or SKIMMED (37 READ, 31 SKIMMED); 18 files are
 | L1c-K-003 | Semgrep: no account, no token (absence recorded) | shows no new credential is needed | N/A: no credential | N/A: credential | N/A: credential | N/A: credential | N/A: credential | N/A: credential | N/A: credential | none | GitHub Actions with contents read only | NOT FOUND | semgrep.yml | `handover/demo/pr-text/semgrep-pr-body-v6.md:76 "The job uses no repository secret and no token"` | OTHER |
 
 ## Docs and tests and folders
+> REMINDER (full KEY at the top of this page): job keys COUNTER = counts events, FILTER = refuses input, RETRY = repeats a failed step, LOG = records output, STORE = holds data, NOTICE = alerts a person, OTHER = none of these. take = the one recorded demo run planned for 23 Nov 2026. DECISION line N = line N of DECISION-one-store.md (text not recorded here). UNVERIFIED = nobody checked.
 | id | name | purpose | evidence | job keys |
 |---|---|---|---|---|
 | L1c-D-001 | handover/demo/pr-stack/AB-PAPER.md | decision paper A (one pull request) against B (merge in order); says the evidence supports A; draft, not an EGM review | `handover/demo/pr-stack/AB-PAPER.md:82 "the evidence **supports A**"`; `handover/demo/pr-stack/AB-PAPER.md:6 "Draft by a drafter, not an EGM review"` | N/A: no job key |
@@ -218,6 +229,7 @@ PARTIAL: 68 of 86 files were READ or SKIMMED (37 READ, 31 SKIMMED); 18 files are
 | L1c-F-004 | handover/demo/pr-text (28 files in this lane) | proposed and current pull request texts and Semgrep bodies | `handover/demo/pr-text/proposed/VERIFY.md:6 "The PRs were OPENED at 17:36:53Z"` | N/A: no job key |
 
 ## Findings
+> REMINDER (full KEY at the top of this page): job keys COUNTER = counts events, FILTER = refuses input, RETRY = repeats a failed step, LOG = records output, STORE = holds data, NOTICE = alerts a person, OTHER = none of these. take = the one recorded demo run planned for 23 Nov 2026. DECISION line N = line N of DECISION-one-store.md (text not recorded here). UNVERIFIED = nobody checked.
 | id | claim type | severity | evidence | conflicts with | job key |
 |---|---|---|---|---|---|
 | L1c-FD-001 | security | Blocker (cell said Major; see Status) | The SonarQube job runs the repository's own test code on the same runner and in the same job as the later scan step that holds the SONAR_TOKEN secret; the workflow file itself says test code could write to the cache, to GITHUB_ENV or plant coverage.xml, and calls the two-job split an open owner decision. By the severity table a credentials finding is a Blocker; documented and accepted by the builder, so the lead decides. Exact next step: the repository owner decides the two-job split. `handover/demo/pr-stack/evidence-ab-workflows.txt:160 "the SONAR_TOKEN secret is NOT in the environment of the install and test steps"`; `handover/demo/pr-stack/evidence-ab-workflows.txt:165 "is an open owner decision"`; `handover/demo/pr-text/proposed/pr4-user-description-v5.md:41 "Splitting them into two jobs is still an open owner decision."` | none | OTHER |
@@ -254,6 +266,7 @@ PARTIAL: 68 of 86 files were READ or SKIMMED (37 READ, 31 SKIMMED); 18 files are
 | L1c-FD-032 | duplicate | Nit | Review scope differs by bot: CodeAnt is told to skip demo_only and the lock files while DeepSource and earlier CodeAnt comments cover demo_only, so one finding class is reported by one bot and silenced for another. `handover/demo/pr-stack/evidence-ab-workflows.txt:318 "demo_only/**"`; `handover/demo/pr-stack/CARRY-OVER-CHECKLIST.md:37 "demo_only/fakes.py:134"` | none | NOTICE |
 
 ## Checkpoint
+> REMINDER (full KEY at the top of this page): job keys COUNTER = counts events, FILTER = refuses input, RETRY = repeats a failed step, LOG = records output, STORE = holds data, NOTICE = alerts a person, OTHER = none of these. take = the one recorded demo run planned for 23 Nov 2026. DECISION line N = line N of DECISION-one-store.md (text not recorded here). UNVERIFIED = nobody checked.
 Written at the end of the pass (one rewrite, not every 25 files, because the file was prepared from notes taken while reading). Reads: 37 READ, 31 SKIMMED, 18 NOT-READ of 86; lane PARTIAL.
 Done: all review, resolve and report files of reuse, followup, merge-ready (2), pr-stack (decision paper, checklist in full, all evidence text files, checklist.py), pr-text (VERIFY, review map, list-rows, final v5 texts, pr4-A, Semgrep body v6 and claims v6, current copy of pull request 3), speed (runbook, phase-4 evidence, fake-hubspot patch); patch families and raw JSON skimmed by headers and key fields; secret and e-mail regex over the whole lane folders (0 matches).
 Final per chain: followup = followup-ab-v3.patch; merge-ready hygiene = v3; PR texts = v5 for pr2, pr3, pr4 (pr4-A for the one-pull-request way); Semgrep body = v9 in demo/semgrep/main-61ded9e-v9 (lane L4), v6 is the last inside pr-text; CORE-TO-DEMO after resolve 3, confirmed by REVIEW-4.

@@ -16,6 +16,7 @@
 Older legends (eleven stacked notes, r9 to r13) are in work/merged-findings-history.md and work/merged-findings-history-2.md (ignore them). Cite finding ids or section names, not line numbers (the only line numbers on this page are "DECISION line N", which means a line of that file).
 
 ## Legend (the only one)
+> REMINDER (full KEY at the top of this page): job keys COUNTER = counts events, FILTER = refuses input, RETRY = repeats a failed step, LOG = records output, STORE = holds data, NOTICE = alerts a person, OTHER = none of these. take = the one recorded demo run planned for 23 Nov 2026. DECISION line N = line N of DECISION-one-store.md (text not recorded here). UNVERIFIED = nobody checked.
 - Lanes L1 to L6 = the six read-only review lanes of PLAN-002.md (meaning from the lane pages; see work/GLOSSARY.md). FD = finding. A row id is `<lane>-FD-<n>`.
 - Severity cell = the lane's own label (Blocker, Major, Nit). No severity is confirmed by the studio lead, so the confirmed Blocker count is zero. Each row shows its lane's own label.
 - The take = the one filmed run of the lead-intake demo on made-up data. lead = the studio lead = the Claude session doing the technical steps; owner = the human at the laptop.
@@ -29,6 +30,7 @@ Older legends (eleven stacked notes, r9 to r13) are in work/merged-findings-hist
 - Rows with a bare quote and no claim (L3-FD-001 to L3-FD-042 and L3-FD-040): the claim sentence is TO DO; the lane page L3 holds the context.
 
 ## Findings
+> REMINDER (full KEY at the top of this page): job keys COUNTER = counts events, FILTER = refuses input, RETRY = repeats a failed step, LOG = records output, STORE = holds data, NOTICE = alerts a person, OTHER = none of these. take = the one recorded demo run planned for 23 Nov 2026. DECISION line N = line N of DECISION-one-store.md (text not recorded here). UNVERIFIED = nobody checked.
 | id | claim type | severity | evidence | conflicts with | job key |
 |---|---|---|---|---|---|
 | L1c-FD-021 | inconsistent | Blocker | Extends L1-FD-023: all three live pull request bodies (2, 3 and 4), not only 4, carry the false sentence that the final tree is identical to pull request 1; the measured difference is 95 files. By the severity table a false claim is a Blocker (L1 rated it Major). Whether the corrected v5 texts were pasted is UNVERIFIED. `handover/demo/pr-text/github-current/pr3-body.md:5 "(checked: the final tree is identical)"`; `handover/demo/pr-text/github-current/pr2-body.md:5 "(checked: the final tree is identical)"`; `handover/demo/pr-text/proposed/VERIFY.md:25 "95 files changed, 5513 insertions(+), 271 deletions(-)"`; `handover/demo/pr-text/REVIEW-pr2-4.md:3 "is FALSE now"` | none | NOTICE |
