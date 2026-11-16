@@ -1,5 +1,5 @@
 # STATUS BOARD system-map
-UPDATED_UTC: 2026-11-16T10:15:07Z (IST = UTC+5:30)
+UPDATED_UTC: 2026-11-16T10:15:35Z (IST = UTC+5:30)
 SESSION: system-map
 ORDER: 017-024; lead ANSWER 10:20Z (take uses the PATCHED real-v5 copy) read; ORDER 024 done
 STATE: WORKING
@@ -7,7 +7,7 @@ BOOT_ID: 6bc0bf7e
 ITEMS_TOTAL: 16
 ITEMS_OPEN: 5
 PERCENT: 80
-AGENTS_RUNNING: 5 now plus 3 starting (see list): run-day card vs v5; run-day naive read; LEAD-PAGE structure; M17 end-never-deletes text; stale unpatched-flow text search; new: M19 stranger test, TAKE-BLOCKERS/README style, post-claim consistency. M20 IMPOSSIBLE-NOW: SESSION-HANDOFF.md is a studio-laptop file, not in the repo; the lead must paste its live-state text.
+AGENTS_RUNNING: 6 (LEAD-PAGE structure; stale unpatched-flow text search; M19 stranger test; TAKE-BLOCKERS/README style; post-claim consistency; run-day card rewrite draft). M17 written: decisions/M17-end-never-deletes.md (program script not in checkout, so UNVERIFIED against it). M18 exists. M20 IMPOSSIBLE-NOW (handoff file is on the lead's laptop).
 INTERRUPTED: none
 NEXT: apply the lead's ANSWER (patched copy: F-002 and F-008 applied, then fill_flows) to QUESTIONS 7, TAKE-BLOCKERS rows 1 and 2, README and LEAD-PAGE (my earlier note recommended the unpatched files; now superseded). Then collect the 6 reports and apply wording fixes; scan_outputs.py fix and tests still to do. ORDER 024: sed never ran, counts 6 opus, 64 sonnet, 0 fable. M14: 1 failed (licence, branch artefact), 9390 passed, rc=1. HELD for the lead: does end delete (QUESTIONS 1); v5 step J editor; D-04/D-05; rehearsal trim; row 1 builder and date.
 CAPACITY: nproc 4, load 0.11, mem 15 GB total 0 used, disk 40 percent
