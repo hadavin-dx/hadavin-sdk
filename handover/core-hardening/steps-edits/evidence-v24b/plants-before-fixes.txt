@@ -1,0 +1,21 @@
+baseline failures: 0
+P01 CAUGHT call ceiling changed | FAIL C03 facts money differs
+P02 CAUGHT ledger changed (limit 13.21 to 13.31) | FAIL C03 facts money differs
+P03 CAUGHT 860 s changed | FAIL C03 860 s is not 14.33 min
+P04 CAUGHT deadline minute | FAIL C03 deadline pairs
+P05 CAUGHT IST offset | FAIL C03 deadline pairs
+P06 CAUGHT weekday of deadline | FAIL C04 OWNER-SHEET-v24-A.md wrong weekday Tue 23 Nov 2026
+P07 CAUGHT post-by pair | FAIL C03 post-by
+P09 CAUGHT card (g) exception removed | FAIL C14a A lacks "the key's own one-time display at 6.3 and the paste at 6.4"
+P10 CAUGHT recording stop by voice | FAIL C14b A lacks 'switch it OFF yourself at once'
+P11 CAUGHT third alarm removed | FAIL C14c A lacks 'Three phone alarms'
+P12 CAUGHT backtick sentence removed | FAIL C14d A lacks 'Text between backticks is typed without the backticks'
+P13 CAUGHT paste condition removed | FAIL C14e A lacks "only if the window's last line is `paste key, Enter:`"
+P14 ANCHOR-NOT-FOUND window labels removed
+P15 CAUGHT .used rule removed | FAIL C14g A lacks 'ignore a `.used` ending'
+P16 CAUGHT A older key cancelled early | FAIL C14w A older key cancel not after earliest key time
+P17 CAUGHT lead may reverse order | FAIL C14h A lacks 'reverses the order of `end` and the card'
+P18 CAUGHT no clock for the notice window | FAIL C14i A lacks 'minutes of the time `date -u` shows'
+P19 CAUGHT run that never started | FAIL C14j A lacks 'if 7.4 never happened, tell "none"'
+P20 CAUGHT SAMPLE label removed | FAIL C14k A lacks 'SAMPLE (made-up values'
+P21 CAUGHT HubSpot rotate allowed | FAIL C14m A lacks 'never use rotate'

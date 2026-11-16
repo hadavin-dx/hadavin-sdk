@@ -1,0 +1,58 @@
+MATCH 1 VIDEO-RUNSHEET.md 4 'real CRM service in scenes 1 to 5'
+MATCH 2 VIDEO-RUNSHEET.md 5 'then the caption is the measured median and max at'
+MATCH 3 VIDEO-RUNSHEET.md 5 'All V7 and lane3 numbers moved to the closing card'
+MATCH 4 VIDEO-RUNSHEET.md 14 'and appear only on the closing card, labelled as h'
+MATCH 5 VIDEO-RUNSHEET.md 23 'Recovery wording: NONE for now (lead 17:05Z droppe'
+MATCH 6 VIDEO-RUNSHEET.md 24 'Lane3 K3 = killed after the CRM write.'
+MATCH 7 VIDEO-RUNSHEET.md 30 'Executions older than the take are pruned first; i'
+MATCH 8 VIDEO-RUNSHEET.md 31 'to the form entry on the LOOPBACK address, path mf'
+MATCH 9 VIDEO-RUNSHEET.md 32 'Caption: "a lead sent twice with the same id is pr'
+MATCH 10 VIDEO-RUNSHEET.md 33 'Caption: "recovery takes about the lease plus 25 t'
+MATCH 11 VIDEO-RUNSHEET.md 33 '60 s EST (real wait: unmeasured at 45 s; planning '
+MATCH 12 VIDEO-RUNSHEET.md 33 'NO NUMBER measured for 45 s. Basis of the estimate'
+MATCH 13 VIDEO-RUNSHEET.md 33 'Those go on the closing card only.'
+MATCH 14 VIDEO-RUNSHEET.md 41 'Voice over one card, six short lines.'
+MATCH 15 VIDEO-RUNSHEET.md 41 ' Line 2, history (older flow version v3, stand-ins'
+MATCH 16 VIDEO-RUNSHEET.md 41 'V7 first table: K1, K2, K3, K3B, n=20 each, lost 0'
+MATCH 17 VIDEO-RUNSHEET.md 59 '10. Step-2 fault for a real mailbox and the Slack '
+MATCH 18 VIDEO-RUNSHEET.md 71 '10. Run the whole take once with a stopwatch; comp'
+MATCH 19 VIDEO-RUNSHEET.md 79 '5. Whether the recovery estimate "lease plus 25 to'
+MATCH 20 VIDEO-RUNSHEET.md 90 'Scene 4 caption (FINAL, lane3 HB194, lease 45 s, f'
+MATCH 21 PAGE-STATEMENTS-V4.md 120 'at the 45 s film lease nothing is measured.'
+MATCH 22 PAGE-STATEMENTS-V4.md 139 '- Lease 45 s: nothing measured. Lease 120 s: one l'
+MATCH 23 PAGE-STATEMENTS-V4.md 149 '20. "At the film lease of 45 s, a lead interrupted'
+MATCH 24 PAGE-STATEMENTS-V4.md 149 'Raw: lane3 HB194 table; file name not given to me,'
+MATCH 25 PAGE-STATEMENTS-V4.md 150 '(killed after the mail left: unknown + 1 alert); l'
+MATCH 26 PAGE-STATEMENTS-V4.md 153 'lead ends unknown with 1 alert to the owner, no se'
+MATCH 27 PAGE-STATEMENTS-V4.md 159 'Caption rule: only K1 and K2 (done), or the range.'
+MATCH 28 PAGE-STATEMENTS-V4.md 161 'Caption wording: "about a minute after the crash ('
+MATCH 29 N8N-START.md 15 '## Execution saving: all four settings are REQUIRE'
+MATCH 30 N8N-START.md 17 'EXECUTIONS_DATA_SAVE_ON_SUCCESS=none'
+MATCH 31 N8N-START.md 18 'EXECUTIONS_DATA_SAVE_ON_ERROR=none'
+MATCH 32 N8N-START.md 23 '- SAVE_ON_SUCCESS=none: n8n stores no run data (no'
+MATCH 33 N8N-START.md 24 '- SAVE_ON_ERROR=none: the same for runs that fail.'
+MATCH 34 N8N-START.md 27 'Without them n8n keeps run data. The lane3 grep (a'
+MATCH 35 N8N-START.md 48 'My flows never put a key into n8n; the likely rout'
+MATCH 36 mf.py 276 'Pass: key 0 hits and SMTP password 0 hits (credent'
+MATCH 37 mf-form.json 424 '"saveDataSuccessExecution": "none"'
+MATCH 38 mf-form.json 425 '"saveDataErrorExecution": "none"'
+MATCH 39 mf-hook.json 424 '"saveDataSuccessExecution": "none"'
+MATCH 40 mf-hook.json 425 '"saveDataErrorExecution": "none"'
+MATCH 41 mf-recovery.json 337 '"saveDataSuccessExecution": "none"'
+MATCH 42 mf-recovery.json 338 '"saveDataErrorExecution": "none"'
+MATCH 43 mf-sub-crm-mail.json 809 '"saveDataSuccessExecution": "none"'
+MATCH 44 mf-sub-crm-mail.json 810 '"saveDataErrorExecution": "none"'
+MATCH 45 DECISION-one-store.md 14 '**ONE database for everything we own: the single P'
+edit rows 45 mismatch 0
+cites 86 bad 0
+applied all 45 edits to copies in /tmp/claude-0/-home-user/957f9d59-4d7f-59c1-9611-e85bd7c6c466/scratchpad/c6j-sim-6kj1cxnc
+STALE-CHECK 'lease plus 25 to 30 s (an estimate' remaining 0
+STALE-CHECK 'killed after the mail left' remaining 0
+STALE-CHECK 'killed after the mail left' remaining 1
+STALE-CHECK '60.1 to 61.9' remaining 4
+STALE-CHECK 'From n8n up: 52.9' remaining 0
+STALE-CHECK 'Raw not seen by me' remaining 0
+STALE-CHECK 'scenes 1 to 5' remaining 0
+STALE-CHECK '80 kills' remaining 0
+STALE-CHECK 'up to 13 min late' remaining 0
+STALE-CHECK 'about a minute after the crash' remaining 1

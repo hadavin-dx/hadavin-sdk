@@ -744,12 +744,12 @@ self_test() {
     printf 'machine h login bob password kq97mv%s\n' wm97mv
     printf 'Passw0rd list: alice=kq98mw%s, bob=kq99mx%s\n' wm98mw wm99mx
     printf 'mysql|kq93mr|wm93mr|LS\nsshpass|kq94ms|wm94ms|LS\nxml attribute pair|kq96mu|wm96mu|LS\nnetrc|kq97mv|wm97mv|LS\nPassw0rd list|kq98mw|wm99mx|LS\n' >> "$WORK/st-pt.txt"
-    printf '20 hex characters in a triple-quote body|a1b2c3d4e5f6|b7b8c9d0|S\n' >> "$WORK/st-pt.txt"
+    printf '20 hex characters in a triple-quote body|a1b2c3d4e5f6|b7b8c9d0|LA\n' >> "$WORK/st-pt.txt"
     # only the web-address rule hides these (no secret name stands near them)
     printf 'see https://bob:kq90pw%s@host.example/p for details\n' wm90pw
     printf 'see https://bob:kq91pw@wm91pw@host.example/p for details\n'
     printf 'web address only|kq90pw|wm90pw|LS\nweb address password with an at sign|kq91pw|wm91pw|LS\n' >> "$WORK/st-pt.txt"
-    printf -- '-----BEGIN PRIVATE KEY----- kq92pk%s\n' wm92pk
+    printf -- '-----BEGIN PRIVATE KEY----- kq92pk%s -----END PRIVATE KEY-----\n' wm92pk
     printf 'private key block opener with the body on the same line|kq92pk|wm92pk|S\n' >> "$WORK/st-pt.txt"
     printf 'nul?b %s\n' x >/dev/null
     printf 'a\000b kept_nul_line\n'
