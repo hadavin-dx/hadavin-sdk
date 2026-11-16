@@ -347,3 +347,6 @@ ok   B2: reviewer line 'Pat Smith, 2026-11-16, pin sha256 378e1121, lead to conf
 ok   B2: 'Jane Q. Roe-Smith, 2026-11-16, pin sha256 378e1121, read all 4 WARN lines' is accepted (would-be pass with the override: exit 5) (got exit 5)
 ok   M1: reviewer line 'TBD., 2026-11-16, pin sha256 378e1121' is exit 4 with the reviewer-line message (got exit 4)
 ok   M1: reviewer line 'Claude-Code, 2026-11-16, pin sha256 378e1121' is exit 4 with the reviewer-line message (got exit 4)
+ok   M1: reviewer line 'Agent., 2026-11-16, pin sha256 378e1121' is exit 4 with the reviewer-line message (got exit 4)
+ok   M1: reviewer line 'Unknown-, 2026-11-16, pin sha256 378e1121' is exit 4 with the reviewer-line message (got exit 4)
+ok   M1: reviewer line 'Sonnet Opus, 2026-11-16, pin sha256 378e1121' is exit 4 with the reviewer-line message (got exit 4)
