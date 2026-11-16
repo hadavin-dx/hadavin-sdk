@@ -1,5 +1,11 @@
 # REPORT from system-map (newest on top, UTC and IST)
 
+## Status 08:10 UTC / 13:40 IST - ORDER 005: round 1 fixes applied and pushed; result review round 2 (last) starting
+Failed or not checked: 65 Nits; MASTER-MAP rows one by one; no runtime. Round 1 found 4 Blocker, 9 Major, 15 Nit in my own deliverables (worst: my C-01 patch damaged two sentences of the target; a wrong "B-06 README:38" correction; "MISSED" overstated for demo-local code; scale printed without the uncited-findings rule; no inline rung table). All fixed; patches regenerated and dry-run (work/evidence-ch-3-patch-dryrun.txt). Measured: 4 of 150 findings uncited (2.7 percent); 10 of 10 re-read CONFIRMED rows hold. Verdict unchanged: RELIABLE WITH CORRECTIONS.
+Closed (13): V1-V4, V5a, V5b, V6, H1, H2, RUN, RV1, RV2, RV3 (all sonnet, read only). egm-resolve (opus via Skill) done, report work/result-resolve-1.md.
+Registered now (sonnet, read only, expected end 08:30 UTC): R2a egm-codebase-details | R2b egm-comprehension | R2c egm-zoom-out (fresh, round 2 of max 2).
+Critical path: 3 reviewers -> apply last fixes (Blocker/Major only; Nits fixed without review) -> drift report -> FINAL. Load: 4 cores, load 0.1, 14 GB free.
+
 ## Status 08:03 UTC - ORDER 005: deliverables v1 written; result review round 1 starting (3 fresh egm reviewers)
 Failed or not checked: the 65 Nits; the MASTER-MAP rows one by one; no runtime; verifier Major lines were not re-sampled by me (only the 5 Blockers). Verdict so far: RELIABLE WITH CORRECTIONS (85 of 85 Blockers+Majors checked, 0 WRONG as whole findings; 3 of 5 Blockers and 24 of 80 Majors rated too high; 15 cites past end of file).
 Closed (10): V1, V2, V3, V4, V5a, V5b, V6, H1, H2, RUN (all sonnet, read only; outputs in reviews-of-core-hardening/work/). 0 left running.
