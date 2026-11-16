@@ -7,7 +7,7 @@ Status: draft; the lead's "D-04 apply" is still pending, so the narrow wording i
 
 ## Not allowed in the post, the captions or the spoken words
 Crash-safe (unless the crash test passed and the lead says so); a spending cap or limit; "nothing can spend before the typed answers"; independent or separate count; portal, approval step or audit trail; no data kept in n8n; one person through two doors is one contact; any recovery or alert time; n8n cannot reach the internet; the caption number 60.1 to 61.9 s; anything from scenes 5 to 11. [v5 step J; DECISIONS 1 and 5; OWNER-VIEW row 6]
-UNVERIFIED as banned (no file lists them, but the files do not support them): "deleted" or "cleaned up" (decision 2 and v5 step F disagree); "tested with real accounts" (none of these steps has run against real accounts).
+NOT ALLOWED until the studio lead rules (one status per phrase; "UNVERIFIED" must not be read as permission): "deleted" or "cleaned up" (decision 2 and v5 step F disagree; line 24 bans the stronger forms, and line 27 says to ask the studio lead for phrases on no list); "tested with real accounts" (not allowed, same as line 20: none of these steps has run against real accounts).
 
 ## When watching the edited video (twice)
 Real address on screen: reply "an address is visible" with the minute and second. Words from the not-allowed list: reply the minute and second. Say "accepted" only if no further run will be needed. [v5 step H] Checking the words against this list is added by this session and is UNVERIFIED as expected of the owner.

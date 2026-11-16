@@ -110,3 +110,6 @@ The two files disagree on seven shared words, and each breaks its own "one meani
 - "run" (four meanings), "blocker" (fault grade vs thing that stops the take), "pause" (undefined), owner named three ways (studio head, owner, you).
 - Dates: LEAD-PAGE :13 and :31 copy the latest start; TAKE-BLOCKERS Dates paragraph is the one source.
 Not applied: renaming across files is not a safe mechanical edit.
+
+## BATCH 37 (banned-claims consistency, aeb1692)
+Applied in work/banned-claims.md line 10: one status per phrase ("deleted", "cleaned up", "tested with real accounts" all NOT ALLOWED until the studio lead rules). Not applied, needs the lead's "D-04 apply": OWNER-VIEW row 6 and D04-D05.md still lack the bans on "nothing can spend before the typed answers", caption 60.1 to 61.9 s, scenes 5 to 11, and the long list in banned-claims lines 17-26 (row 6 only covers them with its general "say nothing else"). Row 6 uses the word "ledger" for the printed list while banned-claims bans "ledger" in the post.
