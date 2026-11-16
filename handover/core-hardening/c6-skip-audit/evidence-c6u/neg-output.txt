@@ -47,7 +47,7 @@ C14-item15-without-real-value                    exit 1  OK  failed checks: 1 (n
 C15-L-POST-gone-from-box                         exit 1  OK  failed checks: 5 (new vs unchanged: 5); first new: FAIL table 3b equals the recount (13 lines) :: (13, 14)
 C16-1051-line-without-UNVERIFIED                 exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL every line that names plan line 1051 says it is UNVERIFIED :: [852]
 C17-ready-used-before-defined-in-box-intro       exit 1  OK  failed checks: 3 (new vs unchanged: 3); first new: FAIL c6u N5: the start box is under 2,500 words (c6s: 3,488; 2382 words now) and states its own real count :: 
-C18-check-time-not-in-report                     exit 1  OK  failed checks: 3 (new vs unchanged: 3); first new: FAIL every 'UTC = IST' pair is exactly UTC + 5:30 (91 pairs) :: [('10', '00', '23', '49'), ('10', '00', '23', 
+C18-check-time-not-in-report                     exit 1  OK  failed checks: 3 (new vs unchanged: 3); first new: FAIL every 'UTC = IST' pair is exactly UTC + 5:30 (91 pairs) :: [('10', '00', '23', '50'), ('10', '00', '23', 
 C19-row11-total-wrong                            exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL row 11 states the same words, seconds, budget and total (about 190 s) :: - The one video: scenes 1 to 4 a
 C20-add-16-wording-back                          exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL answer 2 replaces answer 1: net +15 words and no 'add 16' wording
 C21-tied-column-lacks-L-POST                     exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL section 3 'rows tied to it' column equals the recount
@@ -97,6 +97,7 @@ S-F3e-dump-kept                                  exit 1  OK  failed checks: 1 (n
 S-F3f-swap-gone                                  exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL F3 swap point named
 S-F3g-item16-after-deletion-only                 exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL part 2 statement at line 289 could not run on this report (ValueError: substring not found)
 S-F3h-3e-scan-row-old                            exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL F3 the stop-rule row and check C-6 carry the same rules
+S-F3i-C6-no-second-person                        exit 1  OK  failed checks: 7 (new vs unchanged: 7); first new: FAIL c6u N5: the start box is under 2,500 words (c6s: 3,488; 2375 words now) and states its own real count :: 
 S-F3j-row6-reason-11-to-14                       exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL F3 row 6 reason says items 11 to 16
 S-F4a-newest-line-says-v29                       exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL F4 the report names the newest owner sheet version (v32) and release note (v16) on disk, and the check ti
 S-F4b-release-note-v13-named                     exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL F4 the report names the newest owner sheet version (v32) and release note (v16) on disk, and the check ti
@@ -168,7 +169,7 @@ T-E19b-sheet-v32-SOURCE-newer                    exit 1  OK  failed checks: 3 (n
 T-E20-release-note-v16-newer                     exit 1  OK  failed checks: 2 (new vs unchanged: 2); first new: FAIL E-mtime: no owner sheet and no release note (any variant, SOURCE included) was written after the check ti
 T-E20b-release-note-v16-SOURCE-newer             exit 1  OK  failed checks: 2 (new vs unchanged: 2); first new: FAIL E-mtime: no owner sheet and no release note (any variant, SOURCE included) was written after the check ti
 T-E21-release-note-v17-exists                    exit 1  OK  failed checks: 4 (new vs unchanged: 4); first new: FAIL F4 the report names the newest owner sheet version (v32) and release note (v17) on disk, and the check ti
-T-E22-sheet-v33-exists                           exit 1  OK  failed checks: 7 (new vs unchanged: 7); first new: FAIL report names the check time 2026-11-16T18:19:44Z and the newest sheet version on disk (v33) :: [32, 32, 3
+T-E22-sheet-v33-exists                           exit 1  OK  failed checks: 7 (new vs unchanged: 7); first new: FAIL report names the check time 2026-11-16T18:20:53Z and the newest sheet version on disk (v33) :: [32, 32, 3
 T-E23-sheet-v32-B-missing                        exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL the real v32 files on disk are ['OWNER-SHEET-v32-A.md', 'OWNER-SHEET-v32-SOURCE.md'] and the report names
 T-E17b-sheet-v32-time-wrong                      exit 1  OK  failed checks: 2 (new vs unchanged: 2); first new: FAIL every 'UTC = IST' pair is exactly UTC + 5:30 (91 pairs) :: [('10', '00', '23', '41')]
 T-E24-EGM-undefined-1c                           exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL E-defs2: the label of the wider reading of G12 stands whole in every place it is given (1), and 'EGM = ..
@@ -218,5 +219,4 @@ U-row96-old-text-not-once                        exit 1  OK  failed checks: 2 (n
 U-stale-evidence-c6t-name                        exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL c6u names: the report names no 'evidence-c6t/' file and no 'c6t-APPLIED-ROWS.md' (this run's files carry 
 U-applied-rows-c6t-name                          exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL c6u names: the report names no 'evidence-c6t/' file and no 'c6t-APPLIED-ROWS.md' (this run's files carry 
 U-evidence-file-missing                          exit 1  OK  failed checks: 1 (new vs unchanged: 1); first new: FAIL c6u names: every evidence-c6u file the report names exists in this folder (neg-output.txt is written afte
-PORT-SKIPPED (target text of an older control no longer exists in c6u; its rule has a new control): neg_new_c6s.py line 35: AssertionError ('| C-6 |', 'a second person (someone who did not write the scan) test
-SUMMARY: 220 copies, 0 wrong
+SUMMARY: 221 copies, 0 wrong

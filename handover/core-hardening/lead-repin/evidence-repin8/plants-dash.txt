@@ -35,3 +35,4 @@ n10 [/bin/dash]: KILLED-phase1 exit=1 fail_lines=6 SELF-TEST: passed=1576 failed
 n11 [/bin/dash]: KILLED-phase1 exit=1 fail_lines=6 SELF-TEST: passed=1576 failed=6 (the made-up input and output files were deleted) (2s)
 n12 [/bin/dash]: KILLED-phase1 exit=1 fail_lines=6 SELF-TEST: passed=1576 failed=6 (the made-up input and output files were deleted) (2s)
 n13 [/bin/dash]: KILLED-phase1 exit=1 fail_lines=6 SELF-TEST: passed=1576 failed=6 (the made-up input and output files were deleted) (2s)
+n14 [/bin/dash]: KILLED-phase2 exit=1 SELF-TEST: passed=1614 failed=1 (the made-up input and output files were deleted) first_fail=['FAIL (machinery): an exported bash function named sed replaced the real sed or the run failed (exit=3)'] (81s)
